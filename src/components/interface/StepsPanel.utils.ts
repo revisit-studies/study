@@ -1,12 +1,12 @@
 import type { ParticipantData, SkipConditions, StudyConfig } from '../../parser/types';
 import type { Sequence, StoredAnswer } from '../../store/types';
-import { findBlockForStep, findIndexOfBlock, getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
+import { findBlockForStep, getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { parseTrialOrder } from '../../utils/parseTrialOrder';
 import {
-  areComponentAnswersCorrect,
-  getSkipConditionCorrectAnswers,
+  conditionIsTriggered,
+  getConditionTargetIndex,
   type SkipEvaluationAnswer,
-} from '../../store/hooks/useNextStep.utils';
+} from '../../utils/skipConditions';
 
 export function getDynamicComponentsForBlock(
   node: Sequence,
@@ -69,7 +69,7 @@ export function formatSkipConditionSummary(condition: SkipConditions[number]) {
   return `If ${formatReference(condition.name)} has ${pluralize(condition.value, result, result)} repeated ${condition.value === 1 ? 'response' : 'responses'}, skip to ${target}.`;
 }
 
-function conditionComponentIsPossible(condition: SkipConditions[number], sequence: Sequence) {
+function shouldShowSkipConditionForBlock(condition: SkipConditions[number], sequence: Sequence) {
   if (condition.check === 'block') {
     return getSequenceFlatMap(sequence).length > 0;
   }
@@ -79,7 +79,7 @@ function conditionComponentIsPossible(condition: SkipConditions[number], sequenc
 
 export function getSkipConditionSummariesForBlock(sequence: Sequence) {
   return sequence.skip
-    .filter((condition) => conditionComponentIsPossible(condition, sequence))
+    .filter((condition) => shouldShowSkipConditionForBlock(condition, sequence))
     .map(formatSkipConditionSummary);
 }
 
@@ -116,70 +116,7 @@ function getAnswersForSkipEvaluation(participantAnswers: ParticipantData['answer
   }, {});
 }
 
-function getConditionTargetIndex(condition: SkipConditions[number], sequence: Sequence, flatSequence: string[]) {
-  if (condition.to === 'end') {
-    return flatSequence.length;
-  }
-
-  const targetComponentIndex = flatSequence.indexOf(condition.to);
-  if (targetComponentIndex !== -1) {
-    return targetComponentIndex;
-  }
-
-  const targetBlockIndex = findIndexOfBlock(sequence, condition.to);
-  return targetBlockIndex === -1 ? null : targetBlockIndex;
-}
-
-function conditionIsTriggered(
-  condition: SkipConditions[number] & { firstIndex: number; lastIndex: number },
-  answersForSkipEvaluation: Record<string, SkipEvaluationAnswer>,
-  studyConfig: StudyConfig,
-) {
-  const validationCandidates = Object.entries(answersForSkipEvaluation).reduce<Record<string, SkipEvaluationAnswer>>((acc, [key, responseObj]) => {
-    const componentIndex = parseTrialOrder(key.slice(key.lastIndexOf('_') + 1)).step;
-    if (componentIndex !== null && componentIndex >= condition.firstIndex && componentIndex <= condition.lastIndex) {
-      acc[key] = responseObj;
-    }
-    return acc;
-  }, {});
-
-  const componentsToCheck = condition.check !== 'block'
-    ? Object.entries(validationCandidates).filter(([key]) => key.slice(0, key.lastIndexOf('_')) === condition.name)
-    : Object.entries(validationCandidates);
-
-  if (componentsToCheck.length === 0) {
-    return false;
-  }
-
-  if (condition.check === 'response') {
-    const [, response] = componentsToCheck[0];
-    return condition.comparison === 'equal'
-      ? condition.value === response.answer[condition.responseId]
-      : condition.value !== response.answer[condition.responseId];
-  }
-
-  if (condition.check === 'responses') {
-    const [componentId, response] = componentsToCheck[0];
-    return !areComponentAnswersCorrect(
-      response.answer,
-      studyConfig.components[componentId.slice(0, componentId.lastIndexOf('_'))],
-      studyConfig,
-    );
-  }
-
-  if (componentsToCheck.length < condition.value) {
-    return false;
-  }
-
-  const correctAnswers = getSkipConditionCorrectAnswers(componentsToCheck, studyConfig);
-  const numCorrect = correctAnswers.filter((correct) => correct).length;
-  const numIncorrect = correctAnswers.length - numCorrect;
-
-  return (condition.condition === 'numCorrect' && numCorrect === condition.value)
-    || (condition.condition === 'numIncorrect' && numIncorrect === condition.value);
-}
-
-export function getBranchSkippedTrialOrders(
+export function getSkippedTrialOrders(
   sequence: Sequence,
   participantAnswers: ParticipantData['answers'],
   studyConfig: StudyConfig,

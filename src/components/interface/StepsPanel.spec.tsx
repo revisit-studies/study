@@ -5,9 +5,9 @@ import type { StudyConfig } from '../../parser/types';
 import { Sequence, StoredAnswer } from '../../store/types';
 import {
   formatSkipConditionSummary,
-  getBranchSkippedTrialOrders,
   getDynamicComponentsForBlock,
   getSkipConditionSummariesForBlock,
+  getSkippedTrialOrders,
 } from './StepsPanel.utils';
 
 function buildStoredAnswer(
@@ -243,8 +243,8 @@ describe('StepsPanel skip summaries', () => {
   });
 });
 
-describe('StepsPanel branch-skipped trial detection', () => {
-  test('marks only rows omitted by a triggered branch as skipped', () => {
+describe('StepsPanel skipped trial detection', () => {
+  test('marks only rows omitted by a triggered skip as skipped', () => {
     const sequence: Sequence = {
       order: 'fixed',
       orderPath: 'root',
@@ -270,7 +270,7 @@ describe('StepsPanel branch-skipped trial detection', () => {
       interruptions: [],
     };
 
-    const skippedTrialOrders = getBranchSkippedTrialOrders(
+    const skippedTrialOrders = getSkippedTrialOrders(
       sequence,
       {
         trial1_0: buildStoredAnswer('trial1', 0, { q1: 'Red' }),
@@ -282,7 +282,45 @@ describe('StepsPanel branch-skipped trial detection', () => {
     expect([...skippedTrialOrders]).toEqual([1]);
   });
 
-  test('does not mark randomization or condition omissions as branch skipped', () => {
+  test('does not mark the end sentinel as skipped when skipping to end', () => {
+    const sequence: Sequence = {
+      order: 'fixed',
+      orderPath: 'root',
+      components: [
+        {
+          order: 'fixed',
+          orderPath: 'root-0',
+          components: ['trial1'],
+          skip: [{
+            name: 'trial1',
+            check: 'response',
+            responseId: 'q1',
+            comparison: 'notEqual',
+            value: 'Blue',
+            to: 'end',
+          }],
+          interruptions: [],
+        },
+        'middle',
+        'end',
+      ],
+      skip: [],
+      interruptions: [],
+    };
+
+    const skippedTrialOrders = getSkippedTrialOrders(
+      sequence,
+      {
+        trial1_0: buildStoredAnswer('trial1', 0, { q1: 'Red' }),
+        end_2: buildStoredAnswer('end', 2, {}),
+      },
+      buildStudyConfig(sequence),
+    );
+
+    expect([...skippedTrialOrders]).toEqual([1]);
+  });
+
+  test('does not mark randomization or condition omissions as skipped', () => {
     const sequence: Sequence = {
       order: 'fixed',
       orderPath: 'root',
@@ -294,7 +332,7 @@ describe('StepsPanel branch-skipped trial detection', () => {
       interruptions: [],
     };
 
-    const skippedTrialOrders = getBranchSkippedTrialOrders(
+    const skippedTrialOrders = getSkippedTrialOrders(
       sequence,
       {
         trial1_0: buildStoredAnswer('trial1', 0, { q1: 'Blue' }),

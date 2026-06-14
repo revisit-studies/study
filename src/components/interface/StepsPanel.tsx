@@ -15,7 +15,7 @@ import {
 } from '@mantine/core';
 import {
   IconArrowsShuffle, IconBinaryTree, IconBrain, IconCheck, IconChevronUp, IconDice3, IconDice5, IconInfoCircle,
-  IconArrowsSplit,
+  IconArrowForward,
   IconPackageImport,
   IconX,
 } from '@tabler/icons-react';
@@ -29,9 +29,9 @@ import { isDynamicBlock } from '../../parser/utils';
 import { componentAnswersAreCorrect } from '../../utils/correctAnswer';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 import {
-  getBranchSkippedTrialOrders,
   getDynamicComponentsForBlock,
   getSkipConditionSummariesForBlock,
+  getSkippedTrialOrders,
 } from './StepsPanel.utils';
 
 function hasRandomization(responses: Response[]) {
@@ -92,11 +92,14 @@ function countComponentsInSequence(sequence: Sequence, participantAnswers: Parti
   return count;
 }
 
+type ExclusionReason = 'excluded' | 'skipped';
+
 type StepItemBase = {
   label: string;
   indentLevel: number;
   path: string; // Unique path from root for stable keying
-  exclusionReason?: 'excluded' | 'branch';
+  exclusionReason?: ExclusionReason;
+  parentExclusionReason?: ExclusionReason;
 };
 
 type ComponentStepItem = StepItemBase & {
@@ -262,8 +265,8 @@ export function StepsPanel({
     return map;
   }, [studyConfig.components]);
 
-  const branchSkippedTrialOrders = useMemo(() => (participantSequence
-    ? getBranchSkippedTrialOrders(participantSequence, participantAnswers, studyConfig)
+  const skippedTrialOrders = useMemo(() => (participantSequence
+    ? getSkippedTrialOrders(participantSequence, participantAnswers, studyConfig)
     : new Set<number>()), [participantAnswers, participantSequence, studyConfig]);
 
   useEffect(() => {
@@ -299,7 +302,14 @@ export function StepsPanel({
       let idx = 0;
       let dynamicIdx = 0;
 
-      const traverse = (node: string | Sequence, indentLevel: number, parentNode: Sequence, parentPath: string, dynamic = false) => {
+      const traverse = (
+        node: string | Sequence,
+        indentLevel: number,
+        parentNode: Sequence,
+        parentPath: string,
+        dynamic = false,
+        parentExclusionReason?: ExclusionReason,
+      ) => {
         if (typeof node === 'string') {
           // Check to see if the component is from imported library
           const {
@@ -311,15 +321,16 @@ export function StepsPanel({
           // Generate component identifier for participantAnswers lookup
           const componentIdentifier = dynamic ? `${parentNode.id}_${idx}_${node}_${dynamicIdx}` : `${node}_${idx}`;
           const componentPath = `${parentPath}.${node}_${dynamic ? dynamicIdx : idx}`;
-          const isBranchSkipped = !dynamic && branchSkippedTrialOrders.has(idx);
+          const isSkipped = !dynamic && skippedTrialOrders.has(idx);
 
           newFlatTree.push({
             type: 'component',
             label,
             indentLevel,
             path: componentPath,
-            isExcluded: isBranchSkipped,
-            exclusionReason: isBranchSkipped ? 'branch' : undefined,
+            isExcluded: isSkipped,
+            exclusionReason: isSkipped ? 'skipped' : undefined,
+            parentExclusionReason,
             isLibraryImport,
             importedLibraryName,
 
@@ -367,9 +378,10 @@ export function StepsPanel({
             componentCountCache.set(matchingStudySequence, numComponentsInStudySequence);
           }
         }
-        const isBranchSkippedBlock = numComponentsInSequence > 0
+        const isSkippedBlock = numComponentsInSequence > 0
           && Array.from({ length: numComponentsInSequence }, (_, offset) => blockStartIndex + offset)
-            .every((trialOrder) => branchSkippedTrialOrders.has(trialOrder));
+            .every((trialOrder) => skippedTrialOrders.has(trialOrder));
+        const exclusionReason = isSkippedBlock ? 'skipped' : undefined;
         const skipSummaries = getSkipConditionSummariesForBlock(node);
 
         // Determine label for block - extract sequence name for library sequences
@@ -387,8 +399,9 @@ export function StepsPanel({
           label: blockLabel,
           indentLevel,
           path: blockPath,
-          isExcluded: isBranchSkippedBlock,
-          exclusionReason: isBranchSkippedBlock ? 'branch' : undefined,
+          isExcluded: isSkippedBlock,
+          exclusionReason,
+          parentExclusionReason,
 
           // Block Attributes
           order: node.order,
@@ -412,7 +425,7 @@ export function StepsPanel({
         const blockComponents = [...node.components, ...dynamicComponents];
         if (blockComponents.length > 0) {
           blockComponents.forEach((child) => {
-            traverse(child, indentLevel + 1, node, blockPath, node.order === 'dynamic');
+            traverse(child, indentLevel + 1, node, blockPath, node.order === 'dynamic', exclusionReason);
           });
         }
         if (node.order === 'dynamic') {
@@ -493,6 +506,7 @@ export function StepsPanel({
                     label,
                     indentLevel: excludedIndentLevel,
                     path: childPath,
+                    parentExclusionReason: 'excluded',
                     isLibraryImport,
                     importedLibraryName,
                     component: studyConfig.components[child],
@@ -516,6 +530,7 @@ export function StepsPanel({
                     label: childBlockLabel,
                     indentLevel: excludedIndentLevel,
                     path: childBlockPath,
+                    parentExclusionReason: 'excluded',
                     order: child.order,
                     orderPath: child.orderPath,
                     numInterruptions: 0,
@@ -572,7 +587,7 @@ export function StepsPanel({
     // Set full and rendered flat tree
     setFullFlatTree(newFlatTree);
     setRenderedFlatTree(newFlatTree);
-  }, [branchSkippedTrialOrders, fullOrder, participantAnswers, participantSequence, studyConfig.components, studyId]);
+  }, [fullOrder, participantAnswers, participantSequence, skippedTrialOrders, studyConfig.components, studyId]);
 
   const collapseBlock = useCallback((startIndex: number, startItem: StepItem) => {
     setRenderedFlatTree((prevRenderedFlatTree) => {
@@ -703,11 +718,13 @@ export function StepsPanel({
             indentLevel,
             isExcluded,
             exclusionReason,
+            parentExclusionReason,
           } = item;
           const comp = item.type === 'component' ? item : undefined;
           const block = item.type === 'block' ? item : undefined;
           const isComponent = !!comp;
-          const isBranchSkipped = exclusionReason === 'branch';
+          const isSkipped = exclusionReason === 'skipped';
+          const showExclusionBadge = isExcluded && exclusionReason && exclusionReason !== parentExclusionReason;
           const {
             href,
             isInterruption,
@@ -794,7 +811,7 @@ export function StepsPanel({
                   active={!isExcluded && href === location.pathname}
                   disabled={isExcluded && isComponent}
                   style={{
-                    opacity: isBranchSkipped ? 0.65 : isExcluded ? 0.5 : 1,
+                    opacity: isSkipped ? 0.65 : isExcluded ? 0.5 : 1,
                     cursor: isExcluded && isComponent ? 'not-allowed' : 'pointer',
                   }}
                   rightSection={
@@ -826,7 +843,7 @@ export function StepsPanel({
                           position="right"
                           withArrow
                         >
-                          <IconArrowsSplit size={16} style={{ marginRight: 4, flexShrink: 0 }} color="teal" />
+                          <IconArrowForward size={16} style={{ marginRight: 4, flexShrink: 0 }} color="blue" />
                         </Tooltip>
                       )}
                       {(resolvedComponent?.responseOrder === 'random' || (!participantSequence && componentName && studyConfig.components[componentName]?.responseOrder === 'random')) && (
@@ -854,9 +871,9 @@ export function StepsPanel({
                       >
                         {label}
                       </Text>
-                      {isComponent && isBranchSkipped && (
-                        <Badge ml={5} color="teal" variant="light">
-                          Skipped
+                      {isComponent && showExclusionBadge && (
+                        <Badge ml={5} color="gray" variant="light">
+                          {isSkipped ? 'Skipped' : 'Excluded'}
                         </Badge>
                       )}
                       {isComponent && label !== 'end' && (
@@ -876,9 +893,9 @@ export function StepsPanel({
                           {numComponentsInStudySequence}
                         </Badge>
                       )}
-                      {!isComponent && isExcluded && (
-                        <Badge ml={5} color={isBranchSkipped ? 'teal' : 'gray'} variant="light">
-                          {isBranchSkipped ? 'Skipped' : 'Excluded'}
+                      {!isComponent && showExclusionBadge && (
+                        <Badge ml={5} color="gray" variant="light">
+                          {isSkipped ? 'Skipped' : 'Excluded'}
                         </Badge>
                       )}
                       {numInterruptions !== undefined && numInterruptions > 0 && (
