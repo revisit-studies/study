@@ -10,8 +10,27 @@ import { DownloadTidy, download } from './DownloadTidy';
 import { ParticipantDataWithStatus } from '../../storage/types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { downloadParticipantsAudioZip, downloadParticipantsProvenanceZip, downloadParticipantsScreenRecordingZip } from '../../utils/handleDownloadFiles';
+import { useAuth } from '../../store/hooks/useAuth';
+import type { ParticipantTags } from '../../analysis/individualStudy/thinkAloud/types';
+import type { StorageEngine } from '../../storage/engines/types';
+import { getParticipantQualitativeCodes } from './qualitativeCodes';
 
 type ParticipantDataFetcher = ParticipantDataWithStatus[] | (() => Promise<ParticipantDataWithStatus[]>);
+type ParticipantDataWithQualitativeCodes = ParticipantDataWithStatus & { qualitativeCodes: ParticipantTags };
+
+async function attachQualitativeCodesToParticipants(
+  participants: ParticipantDataWithStatus[],
+  storageEngine: StorageEngine | undefined,
+  authEmail: string,
+): Promise<ParticipantDataWithQualitativeCodes[]> {
+  return Promise.all(participants.map(async (participant) => {
+    const qualitativeCodes = await getParticipantQualitativeCodes(storageEngine, authEmail, participant);
+    return {
+      ...participant,
+      qualitativeCodes,
+    };
+  }));
+}
 
 export function DownloadButtons({
   visibleParticipants, studyId, gap, fileName, hasAudio, hasScreenRecording,
@@ -22,6 +41,7 @@ export function DownloadButtons({
   const [loadingAudio, setLoadingAudio] = useState(false);
   const [loadingScreenRecording, setLoadingScreenRecording] = useState(false);
   const { storageEngine } = useStorageEngine();
+  const auth = useAuth();
 
   const fetchParticipants = async () => {
     const currParticipants = typeof visibleParticipants === 'function' ? await visibleParticipants() : visibleParticipants;
@@ -30,8 +50,13 @@ export function DownloadButtons({
 
   const handleDownloadJSON = async () => {
     const currParticipants = await fetchParticipants();
+    const participantsWithQualitativeCodes = await attachQualitativeCodesToParticipants(
+      currParticipants,
+      storageEngine,
+      auth.user.user?.email || 'temp',
+    );
     const currFileName = fileName ? `${fileName}.json` : `${studyId}_all.json`;
-    download(JSON.stringify(currParticipants, null, 2), currFileName);
+    download(JSON.stringify(participantsWithQualitativeCodes, null, 2), currFileName);
   };
 
   const handleOpenTidy = async () => {

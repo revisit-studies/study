@@ -101,11 +101,13 @@ function makeStorageEngine(
   configs: Record<string, StudyConfig>,
   getTranscription = vi.fn(),
   engine = 'firebase',
+  getParticipantAndTaskTags = vi.fn().mockResolvedValue({ participantTags: [], taskTags: {} }),
 ): StorageEngine {
   return {
     getAllConfigsFromHash: vi.fn().mockResolvedValue(configs),
     getEngine: vi.fn(() => engine),
     getTranscription,
+    getParticipantAndTaskTags,
   } as unknown as StorageEngine;
 }
 
@@ -260,6 +262,45 @@ describe('getTableData', () => {
     expect(getTranscription).toHaveBeenCalledTimes(2);
     expect(getTranscription).toHaveBeenCalledWith('testComponent_0', 'p1');
     expect(getTranscription).toHaveBeenCalledWith('testComponent_0', 'p2');
+  });
+
+  test('adds TA qualitative codes to the corresponding task rows', async () => {
+    const qualitativeCodes = {
+      participantTags: [{ id: 'participant-code', name: 'Hesitation', color: '#ff0000' }],
+      taskTags: {
+        testComponent_0: [{ id: 'task-code', name: 'Chart Reading', color: '#0000ff' }],
+      },
+    };
+    const getParticipantAndTaskTags = vi.fn().mockResolvedValue(qualitativeCodes);
+    const storageEngine = makeStorageEngine({
+      'hash-1': configSimple,
+    }, vi.fn(), 'firebase', getParticipantAndTaskTags);
+
+    const tableData = await getTableData(
+      ['qualitativeCodes'],
+      [makeParticipant()],
+      storageEngine,
+      'test-study',
+      false,
+      'analyst@example.com',
+    );
+
+    const answerRow = tableData.rows.find((row) => row.responseId === 'response');
+    expect(getParticipantAndTaskTags).toHaveBeenCalledWith('analyst@example.com', 'p1', false);
+    expect(tableData.header).toContain('qualitativeCodes');
+    expect(tableData.rows).not.toContainEqual(expect.objectContaining({
+      trialId: 'qualitativeCodes',
+    }));
+    expect(answerRow).toEqual(expect.objectContaining({
+      participantId: 'p1',
+      trialId: 'testComponent',
+      trialOrder: '0',
+      responseId: 'response',
+      qualitativeCodes: JSON.stringify({
+        participantTags: qualitativeCodes.participantTags,
+        taskTags: qualitativeCodes.taskTags.testComponent_0,
+      }),
+    }));
   });
 
   test('includes participant status, condition, tags, and metadata rows', async () => {

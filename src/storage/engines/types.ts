@@ -994,16 +994,24 @@ export abstract class StorageEngine {
     return await this._getFromStorage(`audio/transcriptAndTags/${tagType}`, 'tags');
   }
 
-  async getAllParticipantAndTaskTags(authEmail: string, participantId: string) {
+  async getParticipantAndTaskTags(authEmail: string, participantId: string, createIfMissing = false) {
     const tags = await this._getFromStorage(`audio/transcriptAndTags/${authEmail}/${participantId}`, 'participantTags');
 
     if (tags?.participantTags) {
       return tags;
     }
 
-    this.saveAllParticipantAndTaskTags(authEmail, participantId, { participantTags: [], taskTags: {} });
+    const emptyTags: ParticipantTags = { participantTags: [], taskTags: {} };
 
-    return { participantTags: [], taskTags: {} };
+    if (createIfMissing) {
+      await this.saveAllParticipantAndTaskTags(authEmail, participantId, emptyTags);
+    }
+
+    return emptyTags;
+  }
+
+  async getAllParticipantAndTaskTags(authEmail: string, participantId: string) {
+    return this.getParticipantAndTaskTags(authEmail, participantId, true);
   }
 
   async saveAllParticipantAndTaskTags(authEmail: string, participantId: string, participantTags: ParticipantTags) {

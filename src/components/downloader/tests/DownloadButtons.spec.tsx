@@ -10,11 +10,27 @@ import { DownloadButtons } from '../DownloadButtons';
 import { download } from '../DownloadTidy';
 import { downloadParticipantsAudioZip, downloadParticipantsScreenRecordingZip } from '../../../utils/handleDownloadFiles';
 import type { ParticipantDataWithStatus } from '../../../storage/types';
+import { makeStoredAnswer } from '../../../tests/utils';
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
+const mockState = vi.hoisted(() => ({
+  storageEngine: {
+    getEngine: vi.fn(() => 'firebase'),
+    getParticipantAndTaskTags: vi.fn(),
+  },
+}));
+
 vi.mock('../../../storage/storageEngineHooks', () => ({
-  useStorageEngine: () => ({ storageEngine: { getEngine: () => 'firebase' } }),
+  useStorageEngine: () => ({ storageEngine: mockState.storageEngine }),
+}));
+
+vi.mock('../../../store/hooks/useAuth', () => ({
+  useAuth: () => ({
+    user: {
+      user: { email: 'analyst@example.com' },
+    },
+  }),
 }));
 
 vi.mock('@mantine/hooks', () => ({
@@ -58,6 +74,11 @@ const baseProps = {
   studyId: 'test-study',
   visibleParticipants: [] as ParticipantDataWithStatus[],
 };
+
+beforeEach(() => {
+  mockState.storageEngine.getEngine.mockReturnValue('firebase');
+  mockState.storageEngine.getParticipantAndTaskTags.mockResolvedValue({ participantTags: [], taskTags: {} });
+});
 
 // ── tests ─────────────────────────────────────────────────────────────────────
 
@@ -167,6 +188,43 @@ describe('DownloadButtons click handlers', () => {
       expect.stringContaining('p1'),
       'test-study_all.json',
     );
+  });
+
+  test('JSON button includes TA participant and task qualitative codes', async () => {
+    const participantTag = { id: 'participant-code', name: 'Hesitation', color: '#ff0000' };
+    const taskTag = { id: 'task-code', name: 'Chart Reading', color: '#0000ff' };
+    const participantWithAnswers = {
+      ...participant,
+      answers: {
+        trial_1: makeStoredAnswer({ identifier: 'trial_1', trialOrder: '1' }),
+        trial_0: makeStoredAnswer({ identifier: 'trial_0', trialOrder: '0' }),
+      },
+    };
+    mockState.storageEngine.getParticipantAndTaskTags.mockResolvedValueOnce({
+      participantTags: [participantTag],
+      taskTags: {
+        trial_1: [],
+        trial_0: [taskTag],
+      },
+    });
+
+    await act(async () => {
+      render(<DownloadButtons studyId="test-study" visibleParticipants={[participantWithAnswers]} />);
+    });
+
+    const jsonBtn = screen.getByText('json-icon').closest('button')!;
+    await act(async () => { fireEvent.click(jsonBtn); });
+
+    expect(mockState.storageEngine.getParticipantAndTaskTags).toHaveBeenCalledWith('analyst@example.com', 'p1', false);
+    const exportedJson = vi.mocked(download).mock.calls[0][0];
+    expect(JSON.parse(exportedJson)[0].qualitativeCodes).toEqual({
+      participantTags: [participantTag],
+      taskTags: {
+        trial_0: [taskTag],
+        trial_1: [],
+      },
+    });
+    expect(Object.keys(JSON.parse(exportedJson)[0].qualitativeCodes.taskTags)).toEqual(['trial_0', 'trial_1']);
   });
 
   test('JSON button uses custom fileName when provided', async () => {
