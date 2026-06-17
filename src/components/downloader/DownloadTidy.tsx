@@ -28,8 +28,8 @@ import { getCleanedDuration } from '../../utils/getCleanedDuration';
 import { showNotification } from '../../utils/notifications';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 import { parseConditionParam } from '../../utils/handleConditionLogic';
-import type { ParticipantTags } from '../../analysis/individualStudy/thinkAloud/types';
 import { getAnswerIdentifier, getParticipantQualitativeCodes } from './qualitativeCodes';
+import type { DownloadedQualitativeCodes } from './qualitativeCodes';
 
 const OPTIONAL_COMMON_PROPS = [
   'condition',
@@ -53,7 +53,8 @@ const OPTIONAL_COMMON_PROPS = [
   'responseMax',
   'configHash',
   'metaData',
-  'qualitativeCodes',
+  'participantTags',
+  'taskTags',
 ] as const;
 
 const REQUIRED_PROPS = [
@@ -109,24 +110,25 @@ function participantDataToRows(
   properties: Property[],
   studyConfig?: StudyConfig,
   transcripts?: Record<string, string | null>,
-  qualitativeCodes?: ParticipantTags,
+  qualitativeCodes?: DownloadedQualitativeCodes,
 ): [TidyRow[], string[]] {
   const percentComplete = ((Object.entries(participant.answers).filter(([_, entry]) => entry.endTime !== -1).length / (Object.entries(participant.answers).length)) * 100).toFixed(2);
   const newHeaders = new Set<string>();
   const participantConditions = parseConditionParam(participant.conditions ?? participant.searchParams?.condition);
   const conditionValue = participantConditions.length > 0 ? participantConditions.join(',') : 'default';
   const metaData = JSON.stringify(participant.metadata);
+  const participantQualitativeTags = JSON.stringify(qualitativeCodes?.participantTags ?? []);
 
   return [[
-    {
+    ...(properties.includes('participantTags') ? [{
       participantId: participant.participantId,
       trialId: 'participantTags',
       trialOrder: null,
       responseId: 'participantTags',
-      answer: JSON.stringify(participant.participantTags),
+      answer: participantQualitativeTags,
       ...(properties.includes('condition') ? { condition: conditionValue } : {}),
       ...(properties.includes('stage') ? { stage: participant.stage } : {}),
-    },
+    }] : []),
     ...(properties.includes('metaData') ? [{
       participantId: participant.participantId,
       trialId: 'metaData',
@@ -143,10 +145,7 @@ function participantDataToRows(
       const trialConfig = studyConfig?.components?.[trialId];
       const completeComponent = trialConfig && studyConfig ? studyComponentToIndividualComponent(trialConfig, studyConfig) : undefined;
       const identifier = getAnswerIdentifier(trialAnswer);
-      const trialQualitativeCodes = {
-        participantTags: qualitativeCodes?.participantTags ?? [],
-        taskTags: qualitativeCodes?.taskTags[identifier] ?? [],
-      };
+      const taskQualitativeTags = JSON.stringify(qualitativeCodes?.taskTags[identifier] ?? []);
 
       const duration = trialAnswer.endTime === -1 ? undefined : trialAnswer.endTime - trialAnswer.startTime;
       const cleanedDuration = getCleanedDuration(trialAnswer);
@@ -199,8 +198,8 @@ function participantDataToRows(
         if (properties.includes('answer')) {
           tidyRow.answer = typeof value === 'object' ? JSON.stringify(value) : value;
         }
-        if (properties.includes('qualitativeCodes')) {
-          tidyRow.qualitativeCodes = JSON.stringify(trialQualitativeCodes);
+        if (properties.includes('taskTags')) {
+          tidyRow.taskTags = taskQualitativeTags;
         }
         if (properties.includes('transcript')) {
           tidyRow.transcript = transcripts?.[`${participant.participantId}_${identifier}`] ?? undefined;
@@ -313,10 +312,11 @@ export async function getTableData(
   });
   const header = combinedProperties
     .filter((p) => p !== 'condition' || hasCondition)
-    .filter((p) => p !== 'metaData');
+    .filter((p) => p !== 'metaData')
+    .filter((p) => p !== 'participantTags');
   const allData = await Promise.all(data.map(async (participant) => {
     const participantConfig = allConfigs[participant.participantConfigHash];
-    const qualitativeCodes = selectedProperties.includes('qualitativeCodes')
+    const qualitativeCodes = selectedProperties.includes('participantTags') || selectedProperties.includes('taskTags')
       ? await getParticipantQualitativeCodes(storageEngine, authEmail, participant)
       : undefined;
     const partDataToRows = await participantDataToRows(

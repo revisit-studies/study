@@ -218,9 +218,9 @@ describe('DownloadButtons click handlers', () => {
     expect(mockState.storageEngine.getParticipantAndTaskTags).toHaveBeenCalledWith('analyst@example.com', 'p1', false);
     const exportedJson = vi.mocked(download).mock.calls[0][0];
     expect(JSON.parse(exportedJson)[0].qualitativeCodes).toEqual({
-      participantTags: [participantTag],
+      participantTags: [{ id: participantTag.id, name: participantTag.name }],
       taskTags: {
-        trial_0: [taskTag],
+        trial_0: [{ id: taskTag.id, name: taskTag.name }],
         trial_1: [],
       },
     });

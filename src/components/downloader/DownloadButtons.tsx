@@ -11,12 +11,12 @@ import { ParticipantDataWithStatus } from '../../storage/types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { downloadParticipantsAudioZip, downloadParticipantsProvenanceZip, downloadParticipantsScreenRecordingZip } from '../../utils/handleDownloadFiles';
 import { useAuth } from '../../store/hooks/useAuth';
-import type { ParticipantTags } from '../../analysis/individualStudy/thinkAloud/types';
 import type { StorageEngine } from '../../storage/engines/types';
 import { getParticipantQualitativeCodes } from './qualitativeCodes';
+import type { DownloadedQualitativeCodes } from './qualitativeCodes';
 
 type ParticipantDataFetcher = ParticipantDataWithStatus[] | (() => Promise<ParticipantDataWithStatus[]>);
-type ParticipantDataWithQualitativeCodes = ParticipantDataWithStatus & { qualitativeCodes: ParticipantTags };
+type ParticipantDataWithQualitativeCodes = ParticipantDataWithStatus & { qualitativeCodes: DownloadedQualitativeCodes };
 
 async function attachQualitativeCodesToParticipants(
   participants: ParticipantDataWithStatus[],

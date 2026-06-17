@@ -1,10 +1,19 @@
-import type { ParticipantTags } from '../../analysis/individualStudy/thinkAloud/types';
+import type { ParticipantTags, Tag } from '../../analysis/individualStudy/thinkAloud/types';
 import type { StorageEngine } from '../../storage/engines/types';
 import type { ParticipantDataWithStatus } from '../../storage/types';
 import type { StoredAnswer } from '../../store/types';
 import { parseTrialOrder } from '../../utils/parseTrialOrder';
 
-export const createEmptyQualitativeCodes = (): ParticipantTags => ({
+export type DownloadedTag = Pick<Tag, 'id' | 'name'>;
+
+export interface DownloadedQualitativeCodes {
+  participantTags: DownloadedTag[];
+  taskTags: Record<string, DownloadedTag[]>;
+}
+
+const removeTagColor = ({ id, name }: Tag): DownloadedTag => ({ id, name });
+
+export const createEmptyQualitativeCodes = (): DownloadedQualitativeCodes => ({
   participantTags: [],
   taskTags: {},
 });
@@ -16,9 +25,11 @@ export function getAnswerIdentifier(answer: Pick<StoredAnswer, 'componentName' |
 export function normalizeQualitativeCodes(
   qualitativeCodes: ParticipantTags | undefined,
   participant: ParticipantDataWithStatus,
-): ParticipantTags {
-  const storedTaskTags = qualitativeCodes?.taskTags ?? {};
-  const taskTags: ParticipantTags['taskTags'] = {};
+): DownloadedQualitativeCodes {
+  const storedTaskTags = Object.fromEntries(
+    Object.entries(qualitativeCodes?.taskTags ?? {}).map(([identifier, tags]) => [identifier, tags.map(removeTagColor)]),
+  );
+  const taskTags: DownloadedQualitativeCodes['taskTags'] = {};
 
   Object.values(participant.answers).sort((a, b) => {
     const aOrder = parseTrialOrder(a.trialOrder);
@@ -42,7 +53,7 @@ export function normalizeQualitativeCodes(
   });
 
   return {
-    participantTags: qualitativeCodes?.participantTags ?? [],
+    participantTags: qualitativeCodes?.participantTags.map(removeTagColor) ?? [],
     taskTags,
   };
 }
@@ -53,13 +64,13 @@ export async function getParticipantQualitativeCodes(
   participant: ParticipantDataWithStatus,
 ) {
   if (!storageEngine) {
-    return normalizeQualitativeCodes(createEmptyQualitativeCodes(), participant);
+    return normalizeQualitativeCodes(undefined, participant);
   }
 
   try {
     const qualitativeCodes = await storageEngine.getParticipantAndTaskTags(authEmail, participant.participantId, false);
     return normalizeQualitativeCodes(qualitativeCodes, participant);
   } catch {
-    return normalizeQualitativeCodes(createEmptyQualitativeCodes(), participant);
+    return normalizeQualitativeCodes(undefined, participant);
   }
 }
