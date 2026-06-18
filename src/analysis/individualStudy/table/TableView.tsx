@@ -303,9 +303,8 @@ export function TableView({
             ]}
           />
         </Group>
-        <ParticipantRejectModal selectedParticipants={selectedParticipants} refresh={handleRefresh} />
         <SegmentedControl
-          size="xs"
+          size="sm"
           value={timelineMode}
           onChange={(value) => setTimelineMode(value as TimelineMode)}
           data={[
@@ -313,6 +312,7 @@ export function TableView({
             { value: 'uniform', label: 'Uniform' },
           ]}
         />
+        <ParticipantRejectModal selectedParticipants={selectedParticipants} refresh={handleRefresh} />
       </Flex>
     ),
   });

@@ -28,14 +28,14 @@ function taskFill({
   isCorrect: boolean,
 }) {
   if (incomplete) {
-    return '#ffe8cc';
+    return '#e9ecef';
   }
 
   if (!hasCorrect) {
-    return '#dee2e6';
+    return 'lightgray';
   }
 
-  return isCorrect ? '#40c057' : '#fa5252';
+  return isCorrect ? '#bfe8c6' : '#f3c1c1';
 }
 
 export function SingleTask({
@@ -107,8 +107,9 @@ export function SingleTask({
   return (
     <g
       onClick={() => navigateToTrial(trialOrder, participantId, studyId, condition)}
-      onMouseEnter={onHover}
-      onMouseLeave={onHoverEnd}
+      onPointerEnter={onHover}
+      onPointerLeave={onHoverEnd}
+      onPointerCancel={onHoverEnd}
       style={{ cursor: 'pointer' }}
     >
       <rect
