@@ -226,25 +226,24 @@ export function AllTasksTimeline({
     });
   }, [xScale, maxHeight, participantData.answers, timelineMode]);
 
-  const hoveredTask = tasks.find((task) => task.identifier === hoveredTaskIdentifier);
-  const nonHoveredTasks = tasks.filter((task) => task.identifier !== hoveredTaskIdentifier);
-
   return (
-    <Center>
-      <Stack gap={15} style={{ width: '100%' }}>
-        <Box style={{ width: '100%', overflowX: timelineMode === 'uniform' ? 'auto' : 'visible', overflowY: 'visible' }}>
+    <Center style={{ width: '100%', minWidth: 0 }}>
+      <Stack gap={15} style={{ width: '100%', minWidth: 0 }}>
+        <Box style={{
+          width: '100%', maxWidth: '100%', minWidth: 0, overflowX: timelineMode === 'uniform' ? 'auto' : 'visible', overflowY: 'visible',
+        }}
+        >
           <svg
             onMouseLeave={() => setHoveredTaskIdentifier(null)}
             style={{
               width: timelineWidth,
-              minWidth: timelineWidth,
               height: maxHeight,
+              display: 'block',
               overflow: 'visible',
             }}
           >
             {tasks.map((t) => t.line)}
-            {nonHoveredTasks.map((t) => t.label)}
-            {hoveredTask?.label}
+            {tasks.map((t) => t.label)}
             {browsedAway}
           </svg>
         </Box>

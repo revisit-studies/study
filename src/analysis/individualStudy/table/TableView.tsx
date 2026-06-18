@@ -289,9 +289,8 @@ export function TableView({
     positionToolbarAlertBanner: 'none',
     renderTopToolbarCustomActions: () => (
       <Flex mb={8} p={8} gap="md" align="center">
-        <ParticipantRejectModal selectedParticipants={selectedParticipants} refresh={handleRefresh} />
         <SegmentedControl
-          size="xs"
+          size="sm"
           value={timelineMode}
           onChange={(value) => setTimelineMode(value as TimelineMode)}
           data={[
@@ -299,6 +298,7 @@ export function TableView({
             { value: 'uniform', label: 'Uniform' },
           ]}
         />
+        <ParticipantRejectModal selectedParticipants={selectedParticipants} refresh={handleRefresh} />
       </Flex>
     ),
   });
