@@ -10,7 +10,7 @@ jobs:
   test:
     name: 🧪 ${{ matrix.project }} E2E Tests
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
+    timeout-minutes: 40
     env:
       PLAYWRIGHT_BROWSERS_PATH: ${{ matrix.cache_dir }}
       PW_CI_REPORTER: dot

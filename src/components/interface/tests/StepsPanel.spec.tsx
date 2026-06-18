@@ -38,6 +38,7 @@ vi.mock('react-router', () => ({
 
 vi.mock('../../../utils/getSequenceFlatMap', () => ({
   addPathToComponentBlock: (seq: Sequence) => seq,
+  getSequenceFlatMap: vi.fn(() => []),
 }));
 
 vi.mock('../../../utils/encryptDecryptIndex', () => ({
@@ -65,8 +66,11 @@ vi.mock('@mantine/core', () => ({
       Dropdown: ({ children }: { children: ReactNode }) => <div>{children}</div>,
     },
   ),
-  NavLink: ({ children, onClick }: { children?: ReactNode; onClick?: () => void }) => (
-    <div role="link" onClick={onClick}>{children}</div>
+  NavLink: ({ children, label, onClick }: { children?: ReactNode; label?: ReactNode; onClick?: () => void }) => (
+    <div role="link" onClick={onClick}>
+      {label}
+      {children}
+    </div>
   ),
   Text: ({ children }: { children: ReactNode }) => <p>{children}</p>,
   Tooltip: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -76,6 +80,7 @@ vi.mock('@mantine/core', () => ({
 }));
 
 vi.mock('@tabler/icons-react', () => ({
+  IconArrowForward: () => null,
   IconArrowsShuffle: () => null,
   IconBinaryTree: () => null,
   IconBrain: () => null,
@@ -448,19 +453,20 @@ describe('StepsPanel excluded blocks and components', () => {
         components: ['intro'], // 'survey' is excluded
         skip: [],
       },
+      'end',
     ],
     skip: [],
   };
 
   test('renders excluded component from study sequence', async () => {
-    const { container } = await act(async () => render(
+    const { getAllByText } = await act(async () => render(
       <StepsPanel
         participantSequence={participantWithExcludedComponent}
         participantAnswers={{}}
         studyConfig={studyConfigWithExtraComponents}
       />,
     ));
-    expect(container).toBeDefined();
+    expect(getAllByText('Excluded')).toHaveLength(1);
   });
 
   // Study config: block1 has [nested1, nested2 (excluded)]
@@ -527,19 +533,20 @@ describe('StepsPanel excluded blocks and components', () => {
         ],
         skip: [],
       },
+      'end',
     ],
     skip: [],
   };
 
   test('renders excluded block with string children', async () => {
-    const { container } = await act(async () => render(
+    const { getAllByText } = await act(async () => render(
       <StepsPanel
         participantSequence={participantWithExcludedBlock}
         participantAnswers={{}}
         studyConfig={studyConfigWithExcludedBlock}
       />,
     ));
-    expect(container).toBeDefined();
+    expect(getAllByText('Excluded')).toHaveLength(1);
   });
 
   // Excluded block with a nested sub-block
@@ -594,14 +601,14 @@ describe('StepsPanel excluded blocks and components', () => {
   });
 
   test('excluded block with nested sub-block children', async () => {
-    const { container } = await act(async () => render(
+    const { getAllByText } = await act(async () => render(
       <StepsPanel
         participantSequence={participantWithExcludedBlock}
         participantAnswers={{}}
         studyConfig={studyConfigWithNestedExcludedBlock}
       />,
     ));
-    expect(container).toBeDefined();
+    expect(getAllByText('Excluded')).toHaveLength(1);
   });
 });
 
