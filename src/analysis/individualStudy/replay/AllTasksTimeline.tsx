@@ -3,8 +3,9 @@ import {
 } from 'react';
 import * as d3 from 'd3';
 import {
-  Box, Center, Stack, Tooltip, Text,
+  Box, Stack, Tooltip, Text,
 } from '@mantine/core';
+import { useResizeObserver } from '@mantine/hooks';
 import { ParticipantData } from '../../../storage/types';
 import { SingleTaskLabelLines } from './SingleTaskLabelLines';
 import { SingleTask } from './SingleTask';
@@ -33,6 +34,8 @@ export function AllTasksTimeline({
   participantData, width, studyId, studyConfig, maxLength, taskOrder = 'sequence', timelineMode = 'time',
 }: { participantData: ParticipantData, width: number, studyId: string, studyConfig: StudyConfig | undefined, maxLength: number | undefined, taskOrder?: ReplayTaskOrder, timelineMode?: TimelineMode }) {
   const [hoveredTaskIdentifier, setHoveredTaskIdentifier] = useState<string | null>(null);
+  const [timelineContainerRef, { width: containerWidth }] = useResizeObserver();
+  const availableWidth = Math.max(containerWidth || width, 0);
 
   const percentComplete = useMemo(() => {
     const incompleteEntries = Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0);
@@ -42,15 +45,15 @@ export function AllTasksTimeline({
 
   const timelineWidth = useMemo(() => {
     if (timelineMode === 'time') {
-      return width;
+      return availableWidth;
     }
 
     return getUniformTimelineMetrics({
-      availableWidth: width,
+      availableWidth,
       taskCount: Object.entries(participantData.answers || {}).length,
       margin,
     }).timelineWidth;
-  }, [participantData.answers, timelineMode, width]);
+  }, [availableWidth, participantData.answers, timelineMode]);
 
   const xScale = useMemo(() => {
     if (timelineMode === 'uniform') {
@@ -225,28 +228,30 @@ export function AllTasksTimeline({
   }, [xScale, maxHeight, participantData.answers, timelineMode]);
 
   return (
-    <Center style={{ width: '100%', minWidth: 0 }}>
-      <Stack gap={15} style={{ width: '100%', minWidth: 0 }}>
-        <Box style={{
-          width: '100%', maxWidth: '100%', minWidth: 0, overflowX: timelineMode === 'uniform' ? 'auto' : 'visible', overflowY: 'visible',
+    <Box
+      ref={timelineContainerRef}
+      style={{
+        width: '100%',
+        maxWidth: '100%',
+        minWidth: 0,
+        overflowX: timelineMode === 'uniform' ? 'auto' : 'visible',
+        overflowY: 'visible',
+      }}
+    >
+      <svg
+        onMouseLeave={() => setHoveredTaskIdentifier(null)}
+        style={{
+          width: timelineWidth,
+          height: maxHeight,
+          display: 'block',
+          overflow: 'visible',
         }}
-        >
-          <svg
-            onMouseLeave={() => setHoveredTaskIdentifier(null)}
-            style={{
-              width: timelineWidth,
-              height: maxHeight,
-              display: 'block',
-              overflow: 'visible',
-            }}
-          >
-            {tasks.map((t) => t.line)}
-            {tasks.map((t) => t.label)}
-            {browsedAway}
-          </svg>
-        </Box>
-      </Stack>
-    </Center>
+      >
+        {tasks.map((t) => t.line)}
+        {tasks.map((t) => t.label)}
+        {browsedAway}
+      </svg>
+    </Box>
 
   );
 }
