@@ -268,6 +268,14 @@ export function TableView({
     enablePagination: false,
     enableRowVirtualization: true,
     mantinePaperProps: { style: { maxHeight: '100%', display: 'flex', flexDirection: 'column' } },
+    mantineDetailPanelProps: {
+      style: {
+        flex: '1 1 100%',
+        maxWidth: '100%',
+        minWidth: 0,
+        width: '100%',
+      },
+    },
     layoutMode: 'grid',
     renderDetailPanel: ({ row }) => {
       const r = row.original;
