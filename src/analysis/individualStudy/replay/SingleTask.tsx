@@ -16,6 +16,26 @@ const LABEL_MAX_WIDTH = 160;
 const ICON_SIZE = 14;
 const ICON_GAP = 2;
 
+function taskFill({
+  incomplete,
+  hasCorrect,
+  isCorrect,
+}: {
+  incomplete: boolean,
+  hasCorrect: boolean,
+  isCorrect: boolean,
+}) {
+  if (incomplete) {
+    return '#e9ecef';
+  }
+
+  if (!hasCorrect) {
+    return 'lightgray';
+  }
+
+  return isCorrect ? '#bfe8c6' : '#f3c1c1';
+}
+
 export function SingleTask({
   xScale,
   identifier,
@@ -67,13 +87,16 @@ export function SingleTask({
   return (
     <g
       onClick={() => navigateToTrial(trialOrder, participantId, studyId, condition)}
-      onMouseEnter={onHover}
-      onMouseLeave={onHoverEnd}
+      onPointerEnter={onHover}
+      onPointerLeave={onHoverEnd}
+      onPointerCancel={onHoverEnd}
       style={{ cursor: 'pointer' }}
     >
       <rect
-        opacity={1}
-        fill={isHovered ? 'cornflowerblue' : incomplete ? '#e9ecef' : 'lightgray'}
+        opacity={isDimmed ? 0.45 : 1}
+        fill={taskFill({ incomplete, hasCorrect, isCorrect })}
+        stroke={isHovered ? 'cornflowerblue' : undefined}
+        strokeWidth={isHovered ? 3 : 0}
         x={xScale(scaleStart) + TASK_GAP}
         width={Math.max(0, xScale(scaleEnd) - xScale(scaleStart) - TASK_GAP * 2)}
         y={height - TIMELINE_HEIGHT}
