@@ -13,12 +13,10 @@ import type {
   ReactComponent,
   VegaComponent,
   VideoComponent,
-  WebsiteComponent,
 } from '../../parser/types';
 import type { StoreState } from '../../store/types';
 import { ComponentController } from '../ComponentController';
 import { ErrorBoundary } from '../ErrorBoundary';
-import { IframeController } from '../IframeController';
 import { ImageController } from '../ImageController';
 import { MarkdownController } from '../MarkdownController';
 import { ReactComponentController } from '../ReactComponentController';
@@ -258,7 +256,6 @@ const missingReactConfig: ReactComponent = { type: 'react-component', path: 'non
 const vegaPathConfig: VegaComponent = { type: 'vega', path: '/test.json', response: [] };
 const vegaInlineConfig: VegaComponent = { type: 'vega', config: {}, response: [] };
 const videoConfig: VideoComponent = { type: 'video', path: '/test.mp4', response: [] };
-const websiteConfig: WebsiteComponent = { type: 'website', path: 'https://example.com', response: [] };
 
 // ── ErrorBoundary ─────────────────────────────────────────────────────────────
 
@@ -430,70 +427,6 @@ describe('VideoController', () => {
     const vimeoConfig: VideoComponent = { type: 'video', path: 'https://vimeo.com/123456789', response: [] };
     const html = renderToStaticMarkup(<VideoController currentConfig={vimeoConfig} />);
     expect(html).toContain('LoadingOverlay');
-  });
-});
-
-// ── IframeController ──────────────────────────────────────────────────────────
-
-describe('IframeController', () => {
-  test('covers sendMessage via answers effect on mount', async () => {
-    render(<IframeController currentConfig={websiteConfig} answers={{}} />);
-    // answers effect fires sendMessage; ref.current is the iframe element in jsdom
-    // so postMessage is invoked on its contentWindow — no assertion needed beyond no-throw
-  });
-
-  test('covers sendMessage via provState effect', async () => {
-    render(
-      <IframeController
-        currentConfig={websiteConfig}
-        answers={{}}
-        provState={{ event: 'test' }}
-      />,
-    );
-    // provState effect fires sendMessage
-  });
-
-  test('dispatches store actions when an ANSWERS window message arrives with matching iframeId', async () => {
-    vi.spyOn(crypto, 'randomUUID').mockReturnValue(
-      '11111111-2222-3333-4444-555555555555' as `${string}-${string}-${string}-${string}-${string}`,
-    );
-    const mockDispatch = vi.fn();
-    vi.mocked(useStoreDispatch).mockReturnValueOnce(mockDispatch);
-    render(<IframeController currentConfig={websiteConfig} answers={{}} />);
-    window.dispatchEvent(new MessageEvent('message', {
-      data: { iframeId: '11111111-2222-3333-4444-555555555555', type: '@REVISIT_COMMS/ANSWERS', message: { q1: 'yes' } },
-    }));
-    await waitFor(() => expect(mockDispatch).toHaveBeenCalled());
-  });
-
-  test('sends STUDY_DATA when a WINDOW_READY message arrives and parameters are set', async () => {
-    vi.spyOn(crypto, 'randomUUID').mockReturnValue(
-      '11111111-2222-3333-4444-555555555555' as `${string}-${string}-${string}-${string}-${string}`,
-    );
-    const websiteWithParams: WebsiteComponent = {
-      type: 'website', path: 'https://example.com', parameters: { key: 'val' }, response: [],
-    };
-    render(<IframeController currentConfig={websiteWithParams} answers={{}} />);
-    window.dispatchEvent(new MessageEvent('message', {
-      data: { iframeId: '11111111-2222-3333-4444-555555555555', type: '@REVISIT_COMMS/WINDOW_READY' },
-    }));
-    // sendMessage called with STUDY_DATA; ref.current.contentWindow.postMessage fires
-  });
-
-  test('renders iframe with the original src for an http path', () => {
-    const html = renderToStaticMarkup(
-      <IframeController currentConfig={{ type: 'website', path: 'https://example.com/study', response: [] }} answers={{}} />,
-    );
-    expect(html).toContain('<iframe');
-    expect(html).toContain('https://example.com/study');
-  });
-
-  test('renders iframe with PREFIX prepended for a relative path', () => {
-    const html = renderToStaticMarkup(
-      <IframeController currentConfig={{ type: 'website', path: 'my-study/index.html', response: [] }} answers={{}} />,
-    );
-    expect(html).toContain('<iframe');
-    expect(html).toContain('/test/'); // matches PREFIX mock value
   });
 });
 

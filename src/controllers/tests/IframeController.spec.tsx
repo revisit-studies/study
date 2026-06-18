@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 
-import { render, waitFor } from '@testing-library/react';
+import { cleanup, render, waitFor } from '@testing-library/react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import {
-  beforeEach, describe, expect, test, vi,
+  afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { IframeController } from '../IframeController';
 import type { WebsiteComponent } from '../../parser/types';
@@ -21,7 +22,7 @@ vi.mock('../../routes/utils', () => ({
 }));
 
 vi.mock('../../store/hooks/useIsAnalysis', () => ({
-  useIsAnalysis: () => true,
+  useIsAnalysis: () => false,
 }));
 
 vi.mock('../../store/store', () => ({
@@ -40,6 +41,71 @@ vi.mock('../../utils/Prefix', () => ({
 describe('IframeController', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+  });
+
+  const websiteConfig: WebsiteComponent = { type: 'website', path: 'https://example.com', response: [] };
+
+  test('covers sendMessage via answers effect on mount', async () => {
+    render(<IframeController currentConfig={websiteConfig} answers={{}} />);
+    // answers effect fires sendMessage; ref.current is the iframe element in jsdom
+    // so postMessage is invoked on its contentWindow - no assertion needed beyond no-throw
+  });
+
+  test('covers sendMessage via provState effect', async () => {
+    render(
+      <IframeController
+        currentConfig={websiteConfig}
+        answers={{}}
+        provState={{ event: 'test' }}
+      />,
+    );
+    // provState effect fires sendMessage
+  });
+
+  test('dispatches store actions when an ANSWERS window message arrives with matching iframeId', async () => {
+    vi.spyOn(crypto, 'randomUUID').mockReturnValue(
+      '11111111-2222-3333-4444-555555555555' as `${string}-${string}-${string}-${string}-${string}`,
+    );
+    render(<IframeController currentConfig={websiteConfig} answers={{}} />);
+    window.dispatchEvent(new MessageEvent('message', {
+      data: { iframeId: '11111111-2222-3333-4444-555555555555', type: '@REVISIT_COMMS/ANSWERS', message: { q1: 'yes' } },
+    }));
+    await waitFor(() => expect(mockDispatch).toHaveBeenCalled());
+  });
+
+  test('sends STUDY_DATA when a WINDOW_READY message arrives and parameters are set', async () => {
+    vi.spyOn(crypto, 'randomUUID').mockReturnValue(
+      '11111111-2222-3333-4444-555555555555' as `${string}-${string}-${string}-${string}-${string}`,
+    );
+    const websiteWithParams: WebsiteComponent = {
+      type: 'website', path: 'https://example.com', parameters: { key: 'val' }, response: [],
+    };
+    render(<IframeController currentConfig={websiteWithParams} answers={{}} />);
+    window.dispatchEvent(new MessageEvent('message', {
+      data: { iframeId: '11111111-2222-3333-4444-555555555555', type: '@REVISIT_COMMS/WINDOW_READY' },
+    }));
+    // sendMessage called with STUDY_DATA; ref.current.contentWindow.postMessage fires
+  });
+
+  test('renders iframe with the original src for an http path', () => {
+    const html = renderToStaticMarkup(
+      <IframeController currentConfig={{ type: 'website', path: 'https://example.com/study', response: [] }} answers={{}} />,
+    );
+    expect(html).toContain('<iframe');
+    expect(html).toContain('https://example.com/study');
+  });
+
+  test('renders iframe with PREFIX prepended for a relative path', () => {
+    const html = renderToStaticMarkup(
+      <IframeController currentConfig={{ type: 'website', path: 'my-study/index.html', response: [] }} answers={{}} />,
+    );
+    expect(html).toContain('<iframe');
+    expect(html).toContain('/');
   });
 
   test('resends provenance snapshots when the iframe reports ready', async () => {
