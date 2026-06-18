@@ -843,7 +843,7 @@ export function StepsPanel({
                           position="right"
                           withArrow
                         >
-                          <IconArrowForward size={16} style={{ marginRight: 4, flexShrink: 0 }} color="blue" />
+                          <IconArrowForward size={16} style={{ marginRight: 4, flexShrink: 0 }} color="purple" />
                         </Tooltip>
                       )}
                       {(resolvedComponent?.responseOrder === 'random' || (!participantSequence && componentName && studyConfig.components[componentName]?.responseOrder === 'random')) && (
