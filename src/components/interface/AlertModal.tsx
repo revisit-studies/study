@@ -24,6 +24,16 @@ export function AlertModal() {
 
   useEffect(() => setOpened(alertModal.show), [alertModal.show]);
   const isStorageEngineAlert = alertModal.title === 'Failed to connect to the storage engine';
+  const handleClose = useCallback(() => {
+    if (isStorageEngineAlert) {
+      return;
+    }
+    close();
+  }, [close, isStorageEngineAlert]);
+
+  const handleReconnect = useCallback(() => {
+    window.location.reload();
+  }, []);
 
   const diagnosticsMessage = useMemo(() => {
     if (!opened || !isStorageEngineAlert) {
@@ -55,14 +65,14 @@ export function AlertModal() {
       centered
       size={isStorageEngineAlert ? '70%' : 'lg'}
       withCloseButton={false}
-      onClose={close}
+      onClose={handleClose}
     >
       <Alert
         color="red"
         radius="xs"
         title={alertModal.title}
         icon={<IconAlertCircle />}
-        onClose={close}
+        onClose={isStorageEngineAlert ? undefined : close}
         styles={{ root: { backgroundColor: 'unset' } }}
       >
         <Text my="xs">
@@ -101,7 +111,7 @@ export function AlertModal() {
         )}
 
         <Group w="100%" justify="end">
-          <Button onClick={close} color="red" variant="filled" m="xs">
+          <Button onClick={isStorageEngineAlert ? handleReconnect : close} color="red" variant="filled" m="xs">
             {isStorageEngineAlert ? 'Reconnect' : 'Continue Study'}
           </Button>
         </Group>
