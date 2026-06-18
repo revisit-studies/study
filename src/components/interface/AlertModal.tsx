@@ -101,7 +101,9 @@ export function AlertModal() {
         )}
 
         <Group w="100%" justify="end">
-          <Button onClick={close} color="red" variant="filled" m="xs">Continue Study</Button>
+          <Button onClick={close} color="red" variant="filled" m="xs">
+            {isStorageEngineAlert ? 'Reconnect' : 'Continue Study'}
+          </Button>
         </Group>
       </Alert>
     </Modal>

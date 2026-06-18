@@ -91,6 +91,7 @@ describe('AlertModal', () => {
     expect(html).toContain('mailto:test@test.com');
     expect(html).toContain('Study ID: test-study');
     expect(html).toContain('Participant ID: p1');
+    expect(html).toContain('Reconnect');
   });
 
   test('does not show diagnostics for regular (non-storage) alert', () => {
