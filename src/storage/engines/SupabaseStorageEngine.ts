@@ -4,6 +4,7 @@ import {
   REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageObject, StorageObjectType, StoredUser,
   CloudStorageEngine, cleanupModes,
 } from './types';
+import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
 
 export class SupabaseStorageEngine extends CloudStorageEngine {
   private supabase = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY);
@@ -683,10 +684,16 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     }
   }
 
-  protected async _addDirectoryNameToSnapshots(directoryName: string, studyId: string) {
+  protected async _addDirectoryNameToSnapshots(
+    directoryName: string,
+    studyId: string,
+    participantCounts?: SnapshotParticipantCounts,
+  ) {
     const snapshots = await this.getSnapshots(studyId);
     if (!snapshots[directoryName]) {
-      snapshots[directoryName] = { name: directoryName };
+      snapshots[directoryName] = participantCounts
+        ? { name: directoryName, participantCounts }
+        : { name: directoryName };
       await this.supabase
         .from('revisit')
         .upsert({
@@ -714,7 +721,25 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
   protected async _changeDirectoryNameInSnapshots(oldName: string, newName: string, studyId: string) {
     const snapshots = await this.getSnapshots(studyId);
     if (snapshots[oldName]) {
-      snapshots[oldName] = { name: newName };
+      snapshots[oldName] = { ...snapshots[oldName], name: newName };
+      await this.supabase
+        .from('revisit')
+        .upsert({
+          studyId: `${this.collectionPrefix}${studyId}`,
+          docId: 'snapshots',
+          data: snapshots,
+        });
+    }
+  }
+
+  protected async _updateSnapshotParticipantCounts(
+    snapshotName: string,
+    studyId: string,
+    participantCounts: SnapshotParticipantCounts,
+  ) {
+    const snapshots = await this.getSnapshots(studyId);
+    if (snapshots[snapshotName]) {
+      snapshots[snapshotName] = { ...snapshots[snapshotName], participantCounts };
       await this.supabase
         .from('revisit')
         .upsert({

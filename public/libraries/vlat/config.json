@@ -6,7 +6,7 @@
   "baseComponents": {
     "line": {
       "type": "image",
-      "path": "libraries/vlat/assets/VLAT1.png",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/vlat/VLAT1.png",
       "style": {
         "width": "800px"
       },
@@ -16,7 +16,7 @@
     },
     "bar": {
       "type": "image",
-      "path": "libraries/vlat/assets/VLAT2.png",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/vlat/VLAT2.png",
       "style": {
         "width": "800px"
       },
@@ -26,7 +26,7 @@
     },
     "stackbar": {
       "type": "image",
-      "path": "libraries/vlat/assets/VLAT3.png",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/vlat/VLAT3.png",
       "style": {
         "width": "800px"
       },
@@ -36,7 +36,7 @@
     },
     "stackbar100": {
       "type": "image",
-      "path": "libraries/vlat/assets/VLAT4.png",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/vlat/VLAT4.png",
       "style": {
         "width": "800px"
       },
@@ -46,7 +46,7 @@
     },
     "pie": {
       "type": "image",
-      "path": "libraries/vlat/assets/VLAT5.png",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/vlat/VLAT5.png",
       "style": {
         "width": "800px"
       },
@@ -56,7 +56,7 @@
     },
     "histogram": {
       "type": "image",
-      "path": "libraries/vlat/assets/VLAT6.png",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/vlat/VLAT6.png",
       "style": {
         "width": "800px"
       },
@@ -66,7 +66,7 @@
     },
     "scatterplot": {
       "type": "image",
-      "path": "libraries/vlat/assets/VLAT7.png",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/vlat/VLAT7.png",
       "style": {
         "width": "800px"
       },
@@ -76,7 +76,7 @@
     },
     "area": {
       "type": "image",
-      "path": "libraries/vlat/assets/VLAT8.png",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/vlat/VLAT8.png",
       "style": {
         "width": "800px"
       },
@@ -86,7 +86,7 @@
     },
     "stackarea": {
       "type": "image",
-      "path": "libraries/vlat/assets/VLAT9.png",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/vlat/VLAT9.png",
       "style": {
         "width": "800px"
       },
@@ -96,7 +96,7 @@
     },
     "bubble": {
       "type": "image",
-      "path": "libraries/vlat/assets/VLAT10.png",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/vlat/VLAT10.png",
       "style": {
         "width": "800px"
       },
@@ -106,7 +106,7 @@
     },
     "map": {
       "type": "image",
-      "path": "libraries/vlat/assets/VLAT11.png",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/vlat/VLAT11.png",
       "style": {
         "width": "800px"
       },
@@ -116,7 +116,7 @@
     },
     "treemap": {
       "type": "image",
-      "path": "libraries/vlat/assets/VLAT12.png",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/vlat/VLAT12.png",
       "style": {
         "width": "800px"
       },
@@ -1358,7 +1358,7 @@
       "instruction": "What is the total length of the metro system in Beijing?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "libraries/vlat/assets/VLAT10.png",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/vlat/VLAT10.png",
       "style": {
         "width": "800px"
       },

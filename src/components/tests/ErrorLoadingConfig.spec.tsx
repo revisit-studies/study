@@ -105,4 +105,50 @@ describe('ErrorLoadingConfig', () => {
     expect(textOnly).toContain('Default Contact Email');
     expect(textOnly).toContain('contact@revisit.dev');
   });
+
+  test('renders default-firebase-config warning category and message', () => {
+    const issues: ParsedConfig<StudyConfig>['errors'] = [
+      {
+        category: 'default-firebase-config',
+        instancePath: 'environment/VITE_FIREBASE_CONFIG',
+        message: 'This study is connected to ReVISit\'s default Firebase project. Participant data may not be saved to a backend controlled by the study designer.',
+        params: {
+          action: 'Set VITE_FIREBASE_CONFIG to a Firebase project controlled by the study designer or choose another storage engine',
+        },
+      },
+    ];
+
+    const html = renderToStaticMarkup(
+      <MantineProvider>
+        <ErrorLoadingConfig issues={issues} type="warning" />
+      </MantineProvider>,
+    );
+    const textOnly = html.replace(/<[^>]*>/g, ' ');
+
+    expect(textOnly).toContain('Default Firebase Config');
+    expect(textOnly).toContain('default Firebase project');
+  });
+
+  test('renders default-supabase-config warning category and message', () => {
+    const issues: ParsedConfig<StudyConfig>['errors'] = [
+      {
+        category: 'default-supabase-config',
+        instancePath: 'environment/VITE_SUPABASE_URL',
+        message: 'This study is connected to ReVISit\'s default Supabase project. Participant data may not be saved to a backend controlled by the study designer.',
+        params: {
+          action: 'Set VITE_SUPABASE_URL to a Supabase project controlled by the study designer or choose another storage engine',
+        },
+      },
+    ];
+
+    const html = renderToStaticMarkup(
+      <MantineProvider>
+        <ErrorLoadingConfig issues={issues} type="warning" />
+      </MantineProvider>,
+    );
+    const textOnly = html.replace(/<[^>]*>/g, ' ');
+
+    expect(textOnly).toContain('Default Supabase Config');
+    expect(textOnly).toContain('default Supabase project');
+  });
 });
