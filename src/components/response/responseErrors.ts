@@ -3,19 +3,14 @@ import {
 } from '../../parser/types';
 import { CustomResponseValidate, StoredAnswer } from '../../store/types';
 import {
-  checkCheckboxResponseForValidation,
-  checkDropdownResponse,
-  checkMatrixResponse,
-  checkNumericalResponse,
-  isEmptyCustomResponseValue,
   isOtherSelectionIncomplete,
   REQUIRED_ERROR_MESSAGE,
+  validateResponse,
+} from './responseValidation';
+import type {
   ResponseIssueSummary,
   ResponseIssueType,
-  ResponseValidationResult,
-  shouldBypassValidationForStandaloneDontKnow,
-  usesStandaloneDontKnowField,
-  validateResponse,
+  ResponseValidationOptions,
 } from './responseValidation';
 
 export {
@@ -28,13 +23,13 @@ export {
   REQUIRED_ERROR_MESSAGE,
   shouldBypassValidationForStandaloneDontKnow,
   usesStandaloneDontKnowField,
-};
+} from './responseValidation';
 
 export type {
   ResponseIssueSummary,
   ResponseIssueType,
   ResponseValidationResult,
-};
+} from './responseValidation';
 
 export type ResponseValidationIssue = {
   type: 'none' | 'unanswered' | 'invalid';
@@ -104,6 +99,33 @@ export function generateCustomResponseErrorMessage(
   }
 
   return null;
+}
+
+export function generateInvalidResponseErrorMessage(
+  response: Response,
+  value: StoredAnswer['answer'][string],
+  values: StoredAnswer['answer'],
+  options: ResponseValidationOptions = {},
+): string | null {
+  const result = validateResponse(response, value, values, options);
+
+  if (result.issueType === 'none') {
+    return null;
+  }
+
+  if (result.issueType === 'unanswered') {
+    return REQUIRED_ERROR_MESSAGE;
+  }
+
+  if (response.type === 'custom' && options.loadError) {
+    return result.message ?? null;
+  }
+
+  if (isOtherSelectionIncomplete(response, value, values)) {
+    return REQUIRED_ERROR_MESSAGE;
+  }
+
+  return result.blocksProgression ? result.message ?? 'Incorrect input' : null;
 }
 
 export function generateErrorMessage(

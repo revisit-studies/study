@@ -21,7 +21,7 @@ jobs:
           cache: 'yarn'
 
       - name: Install yarn packages (from cache if available)
-        run: yarn install --immutable
+        run: yarn install --frozen-lockfile
 
       - name: Run linter
         run: yarn lint
