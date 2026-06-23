@@ -43,6 +43,25 @@ describe.each([
     expect(initial).toEqual({ participantTags: [], taskTags: {} });
   });
 
+  test('participant/task tag reads only create storage records when requested', async () => {
+    const participant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    const storagePath = `audio/transcriptAndTags/${ownerKey}/${participant.participantId}`;
+
+    const readOnlyDefault = await storageEngine.getParticipantAndTaskTags(ownerKey, participant.participantId);
+    expect(readOnlyDefault).toEqual({ participantTags: [], taskTags: {} });
+
+    // @ts-expect-error using protected method for testing
+    const afterReadOnlyDefault = await storageEngine._getFromStorage(storagePath, 'participantTags');
+    expect(afterReadOnlyDefault).toBeNull();
+
+    const createIfMissingDefault = await storageEngine.getParticipantAndTaskTags(ownerKey, participant.participantId, true);
+    expect(createIfMissingDefault).toEqual({ participantTags: [], taskTags: {} });
+
+    // @ts-expect-error using protected method for testing
+    const afterCreateIfMissing = await storageEngine._getFromStorage(storagePath, 'participantTags');
+    expect(afterCreateIfMissing).toEqual({ participantTags: [], taskTags: {} });
+  });
+
   test('get participant/task tag defaults is stable across repeated reads', async () => {
     const participant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
 
