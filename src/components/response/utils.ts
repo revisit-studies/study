@@ -6,11 +6,9 @@ import {
 import { CustomResponseValidate, StoredAnswer } from '../../store/types';
 import { parseStringOptionValue } from '../../utils/stringOptions';
 import {
-  isOtherSelectionIncomplete,
-  REQUIRED_ERROR_MESSAGE,
+  generateInvalidResponseErrorMessage,
   usesStandaloneDontKnowField,
-  validateResponse,
-} from './responseValidation';
+} from './responseErrors';
 
 type ResponseDefault = JsonValue;
 type ResponseWithDefault = Response & { default?: ResponseDefault };
@@ -161,30 +159,15 @@ export const generateValidation = (
     if (response.required || response.type === 'custom') {
       validateObj = {
         ...validateObj,
-        [response.id]: (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => {
-          const result = validateResponse(response, value, values, {
+        [response.id]: (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => generateInvalidResponseErrorMessage(
+          response,
+          value,
+          values,
+          {
             customValidate: customResponseValidators[response.id],
             loadError: customResponseLoadErrors[response.id],
-          });
-
-          if (result.issueType === 'none') {
-            return null;
-          }
-
-          if (result.issueType === 'unanswered') {
-            return REQUIRED_ERROR_MESSAGE;
-          }
-
-          if (response.type === 'custom' && customResponseLoadErrors[response.id]) {
-            return result.message ?? null;
-          }
-
-          if (isOtherSelectionIncomplete(response, value, values)) {
-            return REQUIRED_ERROR_MESSAGE;
-          }
-
-          return result.blocksProgression ? result.message ?? 'Incorrect input' : null;
-        },
+          },
+        ),
       };
     }
   });
