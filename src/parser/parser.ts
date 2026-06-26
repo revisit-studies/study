@@ -20,6 +20,14 @@ import {
   shouldWarnForDefaultSupabaseConfig,
 } from '../utils/defaultStorageConfig';
 
+const modules = import.meta.glob(
+  [
+    '../public/**/*.{mjs,js,mts,ts,jsx,tsx}',
+    '!../public/**/*.spec.{mjs,js,mts,ts,jsx,tsx}',
+  ],
+  { eager: false }, // the parser only checks if the path exists
+);
+
 const ajv1 = new Ajv({ allowUnionTypes: true });
 ajv1.addSchema(globalSchema);
 const globalValidate = ajv1.getSchema<GlobalConfig>('#/definitions/GlobalConfig')!;
@@ -310,6 +318,29 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
       category: 'skip-validation',
     });
   });
+
+  // Verify that paths to React components exist under the correct base directory
+  if (studyConfig.baseComponents != null) {
+    for (const key of ['baseComponents', 'components'] as const) {
+      for (const [name, component] of Object.entries(studyConfig[key] ?? {})) {
+        if (
+          'path' in component
+            && component.path != null
+            && component.type === 'react-component'
+            && !(`../public/${component.path}` in modules)
+        ) {
+          errors.push({
+            message: 'Unresolved path',
+            instancePath: `/${key}/${name}/path`,
+            params: {
+              action: 'Make sure the React component is in `src/public/`, not `public/`',
+            },
+            category: 'undefined-component',
+          });
+        }
+      }
+    }
+  }
 
   return { errors, warnings };
 }
