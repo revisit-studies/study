@@ -710,4 +710,38 @@ describe('VegaController — signal and event coverage', () => {
 
     expect(mockDispatch).toHaveBeenCalled();
   });
+
+  test('ignores replayed provenance for signals missing from the active vega config', async () => {
+    type SignalHandler = (name: string, value: string | Record<string, string>) => void;
+    let capturedOnNewView: ((v: View) => void) | undefined;
+
+    vi.mocked(getJsonAssetByPath).mockResolvedValueOnce({
+      $schema: 'vega',
+      config: { signals: [{ name: 'revisitAnswer' }] },
+    });
+
+    mockVegaImpl = (props: {
+      signalListeners?: Record<string, SignalHandler>;
+      onNewView?: (v: View) => void;
+    }) => {
+      capturedOnNewView = props.onNewView;
+      return React.createElement('div', null, 'Vega');
+    };
+
+    render(
+      <VegaController
+        currentConfig={{ type: 'vega', path: '/chart.json', response: [] }}
+        provState={{ event: { key: 'tooltip', value: { category: 'A' } } }}
+      />,
+    );
+
+    await waitFor(() => expect(capturedOnNewView).toBeDefined());
+
+    const fakeView = { signal: vi.fn().mockReturnValue({ run: vi.fn() }) } as unknown as View;
+    await act(async () => {
+      capturedOnNewView?.(fakeView);
+    });
+
+    expect(fakeView.signal).not.toHaveBeenCalled();
+  });
 });
