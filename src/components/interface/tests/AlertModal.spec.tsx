@@ -1,13 +1,18 @@
 import { ReactNode } from 'react';
+import {
+  cleanup, fireEvent, render, screen,
+} from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
-  beforeEach, describe, expect, test, vi,
+  afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { AlertModal } from '../AlertModal';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
 let mockAlertModal = { show: false, title: '', message: '' };
+let mockSetAlertModal = vi.fn();
+let mockStoreDispatch = vi.fn();
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
@@ -24,8 +29,8 @@ vi.mock('../../../store/store', () => ({
       language: 'en',
     },
   }),
-  useStoreActions: () => ({ setAlertModal: vi.fn() }),
-  useStoreDispatch: () => vi.fn(),
+  useStoreActions: () => ({ setAlertModal: mockSetAlertModal }),
+  useStoreDispatch: () => mockStoreDispatch,
 }));
 
 vi.mock('@mantine/core', () => ({
@@ -67,6 +72,13 @@ vi.mock('@tabler/icons-react', () => ({
 describe('AlertModal', () => {
   beforeEach(() => {
     mockAlertModal = { show: false, title: '', message: '' };
+    mockSetAlertModal = vi.fn((payload) => payload);
+    mockStoreDispatch = vi.fn();
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.clearAllMocks();
   });
 
   test('renders nothing when alertModal.show is false', () => {
@@ -91,6 +103,7 @@ describe('AlertModal', () => {
     expect(html).toContain('mailto:test@test.com');
     expect(html).toContain('Study ID: test-study');
     expect(html).toContain('Participant ID: p1');
+    expect(html).toContain('Reconnect');
   });
 
   test('does not show diagnostics for regular (non-storage) alert', () => {
@@ -104,5 +117,36 @@ describe('AlertModal', () => {
     mockAlertModal = { show: true, title: 'Error', message: 'msg' };
     const html = renderToStaticMarkup(<AlertModal />);
     expect(html).toContain('Continue Study');
+  });
+
+  test('reconnect reloads the page without closing storage engine alert', () => {
+    const reloadSpy = vi.fn();
+    const originalLocation = window.location;
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: {
+        href: 'https://example.com/study',
+        reload: reloadSpy,
+      },
+    });
+    mockAlertModal = {
+      show: true,
+      title: 'Failed to connect to the storage engine',
+      message: 'Connection refused',
+    };
+
+    try {
+      render(<AlertModal />);
+      fireEvent.click(screen.getByRole('button', { name: 'Reconnect' }));
+
+      expect(reloadSpy).toHaveBeenCalledTimes(1);
+      expect(mockSetAlertModal).not.toHaveBeenCalled();
+      expect(mockStoreDispatch).not.toHaveBeenCalled();
+    } finally {
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        value: originalLocation,
+      });
+    }
   });
 });
