@@ -23,10 +23,13 @@ import { StorageEngine } from '../../storage/engines/types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
 import { useAsync } from '../../store/hooks/useAsync';
+import { useAuth } from '../../store/hooks/useAuth';
 import { getCleanedDuration } from '../../utils/getCleanedDuration';
 import { showNotification } from '../../utils/notifications';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 import { parseConditionParam } from '../../utils/handleConditionLogic';
+import { getAnswerIdentifier, getParticipantQualitativeCodes } from './qualitativeCodes';
+import type { DownloadedQualitativeCodes } from './qualitativeCodes';
 
 const OPTIONAL_COMMON_PROPS = [
   'condition',
@@ -50,6 +53,8 @@ const OPTIONAL_COMMON_PROPS = [
   'responseMax',
   'configHash',
   'metaData',
+  'participantTags',
+  'taskTags',
 ] as const;
 
 const REQUIRED_PROPS = [
@@ -105,23 +110,25 @@ function participantDataToRows(
   properties: Property[],
   studyConfig?: StudyConfig,
   transcripts?: Record<string, string | null>,
+  qualitativeCodes?: DownloadedQualitativeCodes,
 ): [TidyRow[], string[]] {
   const percentComplete = ((Object.entries(participant.answers).filter(([_, entry]) => entry.endTime !== -1).length / (Object.entries(participant.answers).length)) * 100).toFixed(2);
   const newHeaders = new Set<string>();
   const participantConditions = parseConditionParam(participant.conditions ?? participant.searchParams?.condition);
   const conditionValue = participantConditions.length > 0 ? participantConditions.join(',') : 'default';
   const metaData = JSON.stringify(participant.metadata);
+  const participantQualitativeTags = JSON.stringify(qualitativeCodes?.participantTags ?? []);
 
   return [[
-    {
+    ...(properties.includes('participantTags') ? [{
       participantId: participant.participantId,
       trialId: 'participantTags',
       trialOrder: null,
       responseId: 'participantTags',
-      answer: JSON.stringify(participant.participantTags),
+      answer: participantQualitativeTags,
       ...(properties.includes('condition') ? { condition: conditionValue } : {}),
       ...(properties.includes('stage') ? { stage: participant.stage } : {}),
-    },
+    }] : []),
     ...(properties.includes('metaData') ? [{
       participantId: participant.participantId,
       trialId: 'metaData',
@@ -137,6 +144,8 @@ function participantDataToRows(
       const { trialOrder } = trialAnswer;
       const trialConfig = studyConfig?.components?.[trialId];
       const completeComponent = trialConfig && studyConfig ? studyComponentToIndividualComponent(trialConfig, studyConfig) : undefined;
+      const identifier = getAnswerIdentifier(trialAnswer);
+      const taskQualitativeTags = JSON.stringify(qualitativeCodes?.taskTags[identifier] ?? []);
 
       const duration = trialAnswer.endTime === -1 ? undefined : trialAnswer.endTime - trialAnswer.startTime;
       const cleanedDuration = getCleanedDuration(trialAnswer);
@@ -189,8 +198,10 @@ function participantDataToRows(
         if (properties.includes('answer')) {
           tidyRow.answer = typeof value === 'object' ? JSON.stringify(value) : value;
         }
+        if (properties.includes('taskTags')) {
+          tidyRow.taskTags = taskQualitativeTags;
+        }
         if (properties.includes('transcript')) {
-          const identifier = trialAnswer.identifier || `${trialId}_${trialOrder}`;
           tidyRow.transcript = transcripts?.[`${participant.participantId}_${identifier}`] ?? undefined;
         }
         if (properties.includes('correctAnswer')) {
@@ -261,6 +272,7 @@ export async function getTableData(
   storageEngine: StorageEngine | undefined,
   studyId: string,
   hasAudio?: boolean,
+  authEmail = 'temp',
 ) {
   if (!storageEngine) {
     return { header: [], rows: [], missingConfigCount: 0 };
@@ -280,7 +292,7 @@ export async function getTableData(
       .filter((answer) => ((answer?.endTime ?? -1) > 0) || ((answer?.startTime ?? -1) > 0))
       .map((answer) => ({ answer, participantId: p.participantId })));
     const tasks = allAnswers.map(({ answer, participantId }) => async () => {
-      const identifier = answer.identifier || `${answer.componentName}_${answer.trialOrder}`;
+      const identifier = getAnswerIdentifier(answer);
       const key = `${participantId}_${identifier}`;
 
       try {
@@ -300,14 +312,19 @@ export async function getTableData(
   });
   const header = combinedProperties
     .filter((p) => p !== 'condition' || hasCondition)
-    .filter((p) => p !== 'metaData');
+    .filter((p) => p !== 'metaData')
+    .filter((p) => p !== 'participantTags');
   const allData = await Promise.all(data.map(async (participant) => {
     const participantConfig = allConfigs[participant.participantConfigHash];
+    const qualitativeCodes = selectedProperties.includes('participantTags') || selectedProperties.includes('taskTags')
+      ? await getParticipantQualitativeCodes(storageEngine, authEmail, participant)
+      : undefined;
     const partDataToRows = await participantDataToRows(
       participant,
       combinedProperties,
       hasStoredStudyConfig(participantConfig) ? participantConfig : undefined,
       transcripts,
+      qualitativeCodes,
     );
 
     return partDataToRows;
@@ -351,6 +368,7 @@ export function DownloadTidy({
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [showTranscriptWarning, setShowTranscriptWarning] = useState(false);
+  const auth = useAuth();
 
   const [selectedProperties, setSelectedProperties] = useState<Array<OptionalProperty>>([
     'condition',
@@ -369,7 +387,7 @@ export function DownloadTidy({
   ]);
 
   const { storageEngine } = useStorageEngine();
-  const { value: tableData, status: tableDataStatus, error: tableError } = useAsync(getTableData, [selectedProperties, data, storageEngine, studyId, hasAudio]);
+  const { value: tableData, status: tableDataStatus, error: tableError } = useAsync(getTableData, [selectedProperties, data, storageEngine, studyId, hasAudio, auth.user.user?.email || 'temp']);
   const isFirebase = storageEngine?.getEngine() === 'firebase';
   const transcriptAvailable = isFirebase && !!hasAudio;
   const selectedParticipantCount = data.length;

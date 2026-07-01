@@ -101,11 +101,13 @@ function makeStorageEngine(
   configs: Record<string, StudyConfig>,
   getTranscription = vi.fn(),
   engine = 'firebase',
+  getParticipantAndTaskTags = vi.fn().mockResolvedValue({ participantTags: [], taskTags: {} }),
 ): StorageEngine {
   return {
     getAllConfigsFromHash: vi.fn().mockResolvedValue(configs),
     getEngine: vi.fn(() => engine),
     getTranscription,
+    getParticipantAndTaskTags,
   } as unknown as StorageEngine;
 }
 
@@ -262,7 +264,51 @@ describe('getTableData', () => {
     expect(getTranscription).toHaveBeenCalledWith('testComponent_0', 'p2');
   });
 
-  test('includes participant status, condition, tags, and metadata rows', async () => {
+  test('adds TA participant tags as participant-level row and task tags to task rows', async () => {
+    const qualitativeCodes = {
+      participantTags: [{ id: 'participant-code', name: 'Hesitation', color: '#ff0000' }],
+      taskTags: {
+        testComponent_0: [{ id: 'task-code', name: 'Chart Reading', color: '#0000ff' }],
+      },
+    };
+    const getParticipantAndTaskTags = vi.fn().mockResolvedValue(qualitativeCodes);
+    const storageEngine = makeStorageEngine({
+      'hash-1': configSimple,
+    }, vi.fn(), 'firebase', getParticipantAndTaskTags);
+
+    const tableData = await getTableData(
+      ['participantTags', 'taskTags'],
+      [makeParticipant()],
+      storageEngine,
+      'test-study',
+      false,
+      'analyst@example.com',
+    );
+
+    const answerRow = tableData.rows.find((row) => row.responseId === 'response');
+    const participantTagsRows = tableData.rows.filter((row) => row.responseId === 'participantTags');
+    expect(getParticipantAndTaskTags).toHaveBeenCalledWith('analyst@example.com', 'p1', false);
+    expect(tableData.header).toContain('taskTags');
+    expect(tableData.header).not.toContain('participantTags');
+    expect(participantTagsRows).toHaveLength(1);
+    expect(participantTagsRows[0]).toEqual(expect.objectContaining({
+      participantId: 'p1',
+      trialId: 'participantTags',
+      trialOrder: null,
+      responseId: 'participantTags',
+      answer: JSON.stringify([{ id: 'participant-code', name: 'Hesitation' }]),
+    }));
+    expect(answerRow).toEqual(expect.objectContaining({
+      participantId: 'p1',
+      trialId: 'testComponent',
+      trialOrder: '0',
+      responseId: 'response',
+      taskTags: JSON.stringify([{ id: 'task-code', name: 'Chart Reading' }]),
+    }));
+    expect(answerRow?.participantTags).toBeUndefined();
+  });
+
+  test('includes participant status, condition, and metadata rows', async () => {
     const rejectedAt = 300;
     const participant = makeParticipant({
       completed: true,
@@ -291,20 +337,12 @@ describe('getTableData', () => {
       'test-study',
     );
 
-    const participantTagsRow = tableData.rows.find((row) => row.responseId === 'participantTags');
     const metaDataRow = tableData.rows.find((row) => row.responseId === 'metaData');
     const answerRow = tableData.rows.find((row) => row.responseId === 'response');
 
     expect(tableData.header).toEqual(expect.arrayContaining(['condition', 'stage', 'status', 'rejectReason', 'rejectTime', 'percentComplete']));
     expect(tableData.header).not.toContain('metaData');
-    expect(participantTagsRow).toEqual(expect.objectContaining({
-      participantId: 'p1',
-      trialId: 'participantTags',
-      responseId: 'participantTags',
-      answer: JSON.stringify(['pilot', 'review']),
-      condition: 'alpha,beta',
-      stage: 'COMPLETE',
-    }));
+    expect(tableData.rows.find((row) => row.responseId === 'participantTags')).toBeUndefined();
     expect(metaDataRow).toEqual(expect.objectContaining({
       participantId: 'p1',
       trialId: 'metaData',
