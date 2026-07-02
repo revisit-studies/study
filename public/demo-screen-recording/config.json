@@ -3,15 +3,10 @@
   "studyMetadata": {
     "title": "Screen Recording",
     "version": "pilot",
-    "authors": [
-      "The reVISit Team"
-    ],
+    "authors": ["The reVISit Team"],
     "date": "2026-02-23",
     "description": "A simple demo of using screen recording on stimuli that render an external website, where provenance tracking is difficult to implement.",
-    "organizations": [
-      "University of Utah",
-      "WPI"
-    ]
+    "organizations": ["University of Utah", "WPI"]
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
@@ -25,9 +20,7 @@
     "recordScreen": true,
     "recordScreenFPS": 30
   },
-  "importedLibraries": [
-    "screen-recording"
-  ],
+  "importedLibraries": ["screen-recording"],
   "components": {
     "introduction": {
       "type": "markdown",
@@ -51,7 +44,7 @@
       "recordScreen": true,
       "clickToRecord": true
     },
-    "barChart_audio_screen": {
+    "barChart_screen": {
       "type": "website",
       "nextButtonLocation": "sidebar",
       "meta": {
@@ -60,6 +53,7 @@
       "description": "Question that asks users to count the number of bars that have a value greater than 1.",
       "instruction": "How many bars have a value greater than 1? (Both audio and screen recording are enabled on this page)",
       "path": "demo-screen-recording/assets/bar-chart.html",
+      "recordAudio": false,
       "response": [
         {
           "id": "html-response",
@@ -80,7 +74,7 @@
       "$screen-recording.components.screenRecordingPermission",
       "external_website_audio",
       "external_website_audio_screen",
-      "barChart_audio_screen"
+      "barChart_screen"
     ]
   }
 }
