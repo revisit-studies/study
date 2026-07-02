@@ -26,8 +26,8 @@ export function useRecordingConfig() {
   );
 
   const currentComponentHasClickToRecord = useMemo(
-    () => stepConfig?.clickToRecord ?? !!clickToRecord,
-    [clickToRecord, stepConfig],
+    () => currentComponentHasAudioRecording && (stepConfig?.clickToRecord ?? !!clickToRecord),
+    [clickToRecord, stepConfig, currentComponentHasAudioRecording],
   );
 
   return {
