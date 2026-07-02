@@ -11,7 +11,7 @@ test('Test library VLAT full sequence', async ({ page }) => {
   await resetClientStudyState(page);
   await page.goto('/library-vlat');
 
-  await expect(page.getByRole('heading', { name: 'VLAT: Assessing Visual Literacy' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'VLAT: Assessing Visual Literacy', level: 1 })).toBeVisible();
   await nextClick(page);
 
   const questionArray = new Array(53).fill(null);

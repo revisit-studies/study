@@ -40,7 +40,7 @@ async function advanceToSidebarFormElements(page: Page) {
     const canAdvance = await nextButton.isVisible().catch(() => false)
       && await nextButton.isEnabled().catch(() => false);
     if (canAdvance) {
-      await nextClick(page).catch(() => {});
+      await nextClick(page).catch(() => { });
       await page.waitForTimeout(150);
     }
   }
@@ -68,6 +68,7 @@ test('Test questionnaire component with responses and randomizing questions and 
   const ageInput = page.getByPlaceholder('Enter your age here, range from 0 - 100');
   await expect(ageInput).toBeVisible({ timeout: 10000 });
   await ageInput.fill('120');
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
   await expect(page.getByText('Please enter a value between 0 and 100')).toBeVisible();
   await ageInput.fill('12');
 
@@ -134,8 +135,9 @@ test('Test questionnaire component with responses and randomizing questions and 
   // Custom Response page
   await expect(page.getByText('Custom Response')).toBeVisible();
   const customResponseNextButton = page.getByRole('button', { name: 'Next', exact: true });
-  await expect(customResponseNextButton).toBeDisabled();
+  await expect(customResponseNextButton).toBeEnabled();
   await page.getByRole('button', { name: 'Bar', exact: true }).click();
+  await customResponseNextButton.click();
   await expect(page.getByText('Set confidence to at least 70 to continue.')).toBeVisible();
   await page.getByLabel('Confidence').fill('80');
   await page.getByLabel('Rationale').fill('Useful for comparing categories');
@@ -202,6 +204,7 @@ test('Test questionnaire component with responses and randomizing questions and 
   const sidebarAgeInput = await advanceToSidebarFormElements(page);
   await sidebarAgeInput.fill('120');
   await sidebarAgeInput.press('Tab');
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
   await expect(page.getByText('Please enter a value between 0 and 100')).toBeVisible();
   await sidebarAgeInput.fill('12');
 

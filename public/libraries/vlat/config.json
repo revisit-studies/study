@@ -1,12 +1,12 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.1/src/parser/LibraryConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/LibraryConfigSchema.json",
   "description": "Visualization Literacy Assessment Test (VLAT) is developed to measure users' ability to read, understand, and use data visualizations to solve problems. The VLAT consists of 12 data visualizations and 53 multiple-choice questions. This library contains 53 components, each corresponding to a question of the VLAT. It also includes a sequence of all 53 components (the full VLAT).",
   "reference": "S. Lee, S.-H. Kim, and B. C. Kwon, \"VLAT: Development of a Visualization Literacy Assessment Test,\" IEEE Transactions on Visualization and Computer Graphics, vol. 23, no. 1, pp. 551-560, Jan. 2017",
   "doi": "10.1109/TVCG.2016.2598920",
   "baseComponents": {
     "line": {
       "type": "image",
-      "path": "libraries/vlat/assets/VLAT1.png",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/vlat/VLAT1.png",
       "style": {
         "width": "800px"
       },
@@ -16,7 +16,7 @@
     },
     "bar": {
       "type": "image",
-      "path": "libraries/vlat/assets/VLAT2.png",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/vlat/VLAT2.png",
       "style": {
         "width": "800px"
       },
@@ -26,7 +26,7 @@
     },
     "stackbar": {
       "type": "image",
-      "path": "libraries/vlat/assets/VLAT3.png",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/vlat/VLAT3.png",
       "style": {
         "width": "800px"
       },
@@ -36,7 +36,7 @@
     },
     "stackbar100": {
       "type": "image",
-      "path": "libraries/vlat/assets/VLAT4.png",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/vlat/VLAT4.png",
       "style": {
         "width": "800px"
       },
@@ -46,7 +46,7 @@
     },
     "pie": {
       "type": "image",
-      "path": "libraries/vlat/assets/VLAT5.png",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/vlat/VLAT5.png",
       "style": {
         "width": "800px"
       },
@@ -56,7 +56,7 @@
     },
     "histogram": {
       "type": "image",
-      "path": "libraries/vlat/assets/VLAT6.png",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/vlat/VLAT6.png",
       "style": {
         "width": "800px"
       },
@@ -66,7 +66,7 @@
     },
     "scatterplot": {
       "type": "image",
-      "path": "libraries/vlat/assets/VLAT7.png",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/vlat/VLAT7.png",
       "style": {
         "width": "800px"
       },
@@ -76,7 +76,7 @@
     },
     "area": {
       "type": "image",
-      "path": "libraries/vlat/assets/VLAT8.png",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/vlat/VLAT8.png",
       "style": {
         "width": "800px"
       },
@@ -86,7 +86,7 @@
     },
     "stackarea": {
       "type": "image",
-      "path": "libraries/vlat/assets/VLAT9.png",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/vlat/VLAT9.png",
       "style": {
         "width": "800px"
       },
@@ -96,7 +96,7 @@
     },
     "bubble": {
       "type": "image",
-      "path": "libraries/vlat/assets/VLAT10.png",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/vlat/VLAT10.png",
       "style": {
         "width": "800px"
       },
@@ -106,7 +106,7 @@
     },
     "map": {
       "type": "image",
-      "path": "libraries/vlat/assets/VLAT11.png",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/vlat/VLAT11.png",
       "style": {
         "width": "800px"
       },
@@ -116,7 +116,7 @@
     },
     "treemap": {
       "type": "image",
-      "path": "libraries/vlat/assets/VLAT12.png",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/vlat/VLAT12.png",
       "style": {
         "width": "800px"
       },
@@ -1358,7 +1358,7 @@
       "instruction": "What is the total length of the metro system in Beijing?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "libraries/vlat/assets/VLAT10.png",
+      "path": "https://raw.githubusercontent.com/revisit-studies/library-assets/v1/vlat/VLAT10.png",
       "style": {
         "width": "800px"
       },

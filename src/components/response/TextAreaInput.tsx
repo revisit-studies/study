@@ -1,6 +1,5 @@
 import { Textarea } from '@mantine/core';
 import { LongTextResponse } from '../../parser/types';
-import { generateErrorMessage } from './utils';
 import classes from './css/Input.module.css';
 import { InputLabel } from './InputLabel';
 
@@ -8,12 +7,14 @@ export function TextAreaInput({
   response,
   disabled,
   answer,
+  error,
   index,
   enumerateQuestions,
 }: {
   response: LongTextResponse;
   disabled: boolean;
   answer: { value?: string };
+  error?: string | null;
   index: number;
   enumerateQuestions: boolean;
 }) {
@@ -36,9 +37,9 @@ export function TextAreaInput({
       {...answer}
         // This is necessary so the component doesnt switch from uncontrolled to controlled, which can cause issues.
       value={answer.value || ''}
-      error={generateErrorMessage(response, answer)}
+      error={error}
       withErrorStyles={required}
-      errorProps={{ c: required ? 'red' : 'orange' }}
+      errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
       classNames={{ input: classes.fixDisabled }}
     />
   );

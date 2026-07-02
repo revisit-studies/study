@@ -5,6 +5,7 @@ import type {
   Answer, ComponentBlock, ConfigResponseBlockLocation, CustomResponse, InterruptionBlock, JsonValue, ParsedStringOption, ParticipantData, ResponseBlockLocation, SkipConditions, StudyConfig, ValueOf,
 } from '../parser/types';
 import { type REVISIT_MODE } from '../storage/engines/types';
+import type { StimulusIssueReason } from '../components/response/stimulusErrors';
 
 /**
  * The ParticipantMetadata object contains metadata about the participant. This includes the user agent, resolution, language, and IP address. This object is used to store information about the participant that is not directly related to the study itself.
@@ -21,6 +22,7 @@ export interface ParticipantMetadata {
 }
 
 export type TrrackedProvenance = ProvenanceGraph<any, any>;
+export type StoredProvenance = Record<ResponseBlockLocation, TrrackedProvenance | undefined>;
 
 // timestamp, event type, event data
 type FocusEvent = [number, 'focus', string];
@@ -35,7 +37,12 @@ type ScrollEvent = [number, 'scroll', number[]];
 type VisibilityEvent = [number, 'visibility', string];
 export type EventType = MouseMoveEvent | MouseDownEvent | MouseUpEvent | KeydownEvent | KeyupEvent | ScrollEvent | FocusEvent | InputEvent | ResizeEvent | VisibilityEvent;
 
-export type ValidationStatus = { valid: boolean, values: object }
+export type ValidationStatus = {
+  valid: boolean;
+  values: object;
+  reason?: StimulusIssueReason;
+  message?: string;
+}
 export type TrialValidation = Record<
   string,
   {
@@ -43,7 +50,7 @@ export type TrialValidation = Record<
     belowStimulus: ValidationStatus;
     sidebar: ValidationStatus;
     stimulus: ValidationStatus;
-    provenanceGraph: Record<ResponseBlockLocation, TrrackedProvenance | undefined>;
+    provenanceGraph: StoredProvenance;
   }
 >;
 
@@ -81,8 +88,6 @@ export interface StoredAnswer {
   startTime: number;
   /** Time that the user ended interaction with the component in epoch milliseconds. */
   endTime: number;
-  /** The entire provenance graph exported from a Trrack instance from a React component. This will only be present if you are using React components and you're utilizing [Trrack](https://apps.vdl.sci.utah.edu/trrack) */
-  provenanceGraph: Record<ResponseBlockLocation, TrrackedProvenance | undefined>;
   /**
    * A list containing the time (in epoch milliseconds), the action (focus, input, keypress, mousedown, mouseup, mousemove, resize, scroll or visibility), and then either a coordinate pertaining to where the event took place on the screen or string related to such event. Below is an example of the windowEvents list.
    *
@@ -129,6 +134,8 @@ export interface StoredAnswer {
   questionOrders: Record<string, string[]>;
   /** The order of the form elements in a base response. */
   formOrder?: Record<string, string[]>;
+  /** Whether required-response errors were revealed for this trial after a Next attempt. */
+  responseSubmitAttempted?: boolean;
 }
 
 export interface JumpFunctionParameters<T> {
@@ -148,7 +155,19 @@ export interface StimulusParams<T, S = never> {
   parameters: T;
   provenanceState?: S;
   answers: ParticipantData['answers'];
-  setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: StoredAnswer['answer'] }) => void
+  setAnswer: ({
+    status,
+    provenanceGraph,
+    answers,
+    reason,
+    message,
+  }: {
+    status: boolean,
+    provenanceGraph?: TrrackedProvenance,
+    answers: StoredAnswer['answer'],
+    reason?: StimulusIssueReason,
+    message?: string,
+  }) => void
 }
 
 export interface CustomResponseField<TValue extends JsonValue = JsonValue> {
@@ -185,7 +204,11 @@ export interface Sequence {
   conditional?: boolean;
 }
 
-export type FormElementProvenance = { form: StoredAnswer['answer'] };
+export type FormElementProvenance = {
+  form: StoredAnswer['answer'];
+  showResponseErrors?: boolean;
+};
+export type AlertModalState = { show: boolean, message: string, title: string };
 export interface StoreState {
   studyId: string;
   participantId: string;
@@ -194,8 +217,10 @@ export interface StoreState {
   config: StudyConfig;
   showStudyBrowser: boolean;
   showHelpText: boolean;
-  alertModal: { show: boolean, message: string, title: string };
+  alertModal: AlertModalState;
   trialValidation: TrialValidation;
+  responseSubmitAttempted: Record<string, boolean>;
+  stimulusSubmitAttempted: Record<string, boolean>;
   reactiveAnswers: Record<string, ValueOf<StoredAnswer['answer']>>;
   metadata: ParticipantMetadata;
   analysisProvState: Record<ConfigResponseBlockLocation, FormElementProvenance | undefined> & { stimulus: unknown | undefined };

@@ -27,6 +27,8 @@ import { parseTrialOrder } from '../../utils/parseTrialOrder';
 import { useUpdateProvenance } from './useUpdateProvenance';
 import { useReplayContext } from '../../store/hooks/useReplay';
 import { syncChannel, syncEmitter } from '../../utils/syncReplay';
+import type { StoredProvenance } from '../../store/types';
+import { getLegacyStoredAnswerProvenance } from '../../store/provenance';
 
 const margin = {
   left: 20, top: 0, right: 20, bottom: 0,
@@ -63,6 +65,12 @@ export function AudioProvenanceVis({
   } = useReplayContext();
 
   const { storageEngine } = useStorageEngine();
+  const legacyProvenanceGraph = useMemo(
+    () => getLegacyStoredAnswerProvenance(answers[taskName]),
+    [answers, taskName],
+  );
+  const [storedProvenanceGraph, setStoredProvenanceGraph] = useState<StoredProvenance | null>(legacyProvenanceGraph);
+  const provenanceGraph = storedProvenanceGraph ?? legacyProvenanceGraph;
 
   const [analysisHasAudio, _setAnalysisHasAudio] = useState(true);
 
@@ -98,8 +106,36 @@ export function AudioProvenanceVis({
 
   const trrackForTrial = useRef<Trrack<object, string> | null>(null);
 
+  useEffect(() => {
+    let canceled = false;
+
+    async function fetchProvenance() {
+      if (!taskName || !participantId || !storageEngine) {
+        setStoredProvenanceGraph(legacyProvenanceGraph);
+        return;
+      }
+
+      try {
+        const storedProvenance = await storageEngine.getProvenance(taskName, participantId);
+        if (!canceled) {
+          setStoredProvenanceGraph(storedProvenance ?? legacyProvenanceGraph);
+        }
+      } catch {
+        if (!canceled) {
+          setStoredProvenanceGraph(legacyProvenanceGraph);
+        }
+      }
+    }
+
+    fetchProvenance();
+
+    return () => {
+      canceled = true;
+    };
+  }, [legacyProvenanceGraph, participantId, storageEngine, taskName]);
+
   const _setCurrentResponseNodes = useEvent((node: string | null, location: ResponseBlockLocation) => {
-    const graph = answers[taskName]?.provenanceGraph[location];
+    const graph = provenanceGraph?.[location];
     if (graph && node) {
       if (!currentGlobalNode || graph.nodes[node].createdOn > currentGlobalNode.time || playTime < currentGlobalNode.time) {
         setCurrentGlobalNode({ name: node || '', time: graph.nodes[node].createdOn });
@@ -135,7 +171,6 @@ export function AudioProvenanceVis({
     const participantIdListener = (newId: string) => {
       setSearchParams((params) => {
         params.set('participantId', newId || '');
-        params.delete('currentTrial');
         return params;
       });
     };
@@ -148,7 +183,6 @@ export function AudioProvenanceVis({
 
       const params = new URLSearchParams(routerLocation.search);
       params.set('participantId', participantId || '');
-      params.delete('currentTrial');
       const search = params.toString();
 
       if (context === 'provenanceVis') {
@@ -179,26 +213,28 @@ export function AudioProvenanceVis({
     };
   }, [answers, context, navigate, participantId, routerLocation.search, setSearchParams, studyId]);
 
-  useUpdateProvenance('aboveStimulus', playTime, answers[taskName]?.provenanceGraph.aboveStimulus, currentResponseNodes.aboveStimulus, _setCurrentResponseNodes, saveProvenance);
+  useUpdateProvenance('aboveStimulus', playTime, provenanceGraph?.aboveStimulus, currentResponseNodes.aboveStimulus, _setCurrentResponseNodes, saveProvenance);
 
-  useUpdateProvenance('belowStimulus', playTime, answers[taskName]?.provenanceGraph.belowStimulus, currentResponseNodes.belowStimulus, _setCurrentResponseNodes, saveProvenance);
+  useUpdateProvenance('belowStimulus', playTime, provenanceGraph?.belowStimulus, currentResponseNodes.belowStimulus, _setCurrentResponseNodes, saveProvenance);
 
-  useUpdateProvenance('sidebar', playTime, answers[taskName]?.provenanceGraph.sidebar, currentResponseNodes.sidebar, _setCurrentResponseNodes, saveProvenance);
+  useUpdateProvenance('sidebar', playTime, provenanceGraph?.sidebar, currentResponseNodes.sidebar, _setCurrentResponseNodes, saveProvenance);
 
   // Create an instance of trrack to ensure getState works, incase the saved state is not a full state node.
   useEffect(() => {
-    if (taskName && answers[taskName]?.provenanceGraph) {
+    trrackForTrial.current = null;
+
+    if (taskName && provenanceGraph) {
       const reg = Registry.create();
 
       const trrack = initializeTrrack({ registry: reg, initialState: {} });
 
-      if (answers[taskName]?.provenanceGraph.stimulus) {
-        trrack.importObject(structuredClone(answers[taskName]?.provenanceGraph!.stimulus));
+      if (provenanceGraph.stimulus) {
+        trrack.importObject(structuredClone(provenanceGraph.stimulus));
 
         trrackForTrial.current = trrack;
       }
     }
-  }, [answers, taskName]);
+  }, [provenanceGraph, taskName]);
 
   const _setCurrentNode = useCallback((node: string | undefined) => {
     if (!node) {
@@ -206,21 +242,21 @@ export function AudioProvenanceVis({
     }
 
     if (taskName && trrackForTrial.current && context === 'provenanceVis' && saveProvenance) {
-      saveProvenance({ prov: trrackForTrial.current.getState(answers[taskName]?.provenanceGraph.stimulus?.nodes[node]), location: 'stimulus' });
+      saveProvenance({ prov: trrackForTrial.current.getState(provenanceGraph?.stimulus?.nodes[node]), location: 'stimulus' });
 
       trrackForTrial.current.to(node);
     }
 
     _setCurrentResponseNodes(node, 'stimulus');
     setCurrentNode(node);
-  }, [taskName, context, _setCurrentResponseNodes, saveProvenance, answers]);
+  }, [taskName, context, _setCurrentResponseNodes, saveProvenance, provenanceGraph]);
 
   // use effect to control the current provenance node based on the changing playtime.
   useEffect(() => {
-    if (!taskName || !trrackForTrial.current || !answers[taskName]?.provenanceGraph) {
+    if (!taskName || !trrackForTrial.current || !provenanceGraph) {
       return;
     }
-    const provGraph = answers[taskName]?.provenanceGraph;
+    const provGraph = provenanceGraph;
 
     if (!provGraph.stimulus) {
       return;
@@ -252,7 +288,7 @@ export function AudioProvenanceVis({
     if (tempNode.id !== currentNode) {
       _setCurrentNode(tempNode.id);
     }
-  }, [_setCurrentNode, currentNode, participantId, playTime, taskName, answers]);
+  }, [_setCurrentNode, currentNode, participantId, playTime, taskName, provenanceGraph]);
 
   useEffect(() => {
     if (duration === 0) {
@@ -368,13 +404,13 @@ export function AudioProvenanceVis({
             </Box>
           ) : null}
 
-        {xScale && taskName && answers[taskName]?.provenanceGraph
+        {xScale && taskName && provenanceGraph
           ? (
             <TaskProvenanceTimeline
               xScale={xScale}
               trialName={taskName}
               currentNode={currentGlobalNode?.name || ''}
-              answers={answers}
+              provenanceGraph={provenanceGraph}
               width={waveSurferWidth || (width - margin.left - margin.right)}
               height={25}
               margin={margin}

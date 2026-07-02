@@ -28,37 +28,72 @@ async function fetchGlobalConfigArray() {
   return parseGlobalConfig(configs);
 }
 
-export function GlobalConfigParser() {
-  const [globalConfig, setGlobalConfig] = useState<Nullable<GlobalConfig>>(null);
+function HomeRoute({ globalConfig }: { globalConfig: GlobalConfig }) {
   const [studyConfigs, setStudyConfigs] = useState<Record<string, ParsedConfig<StudyConfig> | null>>({});
 
   useEffect(() => {
-    async function fetchData() {
-      if (globalConfig) {
-        setStudyConfigs(await fetchStudyConfigs(globalConfig));
+    let cancelled = false;
+
+    async function fetchData(currentGlobalConfig: GlobalConfig) {
+      const configs = await fetchStudyConfigs(currentGlobalConfig);
+      if (!cancelled) {
+        setStudyConfigs(configs);
       }
     }
-    fetchData();
+
+    fetchData(globalConfig);
+
+    return () => {
+      cancelled = true;
+    };
   }, [globalConfig]);
 
+  return (
+    <>
+      <PageTitle title="ReVISit | Home" />
+      <AppShell
+        padding="md"
+        header={{ height: 70 }}
+      >
+        <AppHeader studyIds={globalConfig.configsList} studyConfigs={studyConfigs} />
+        <ConfigSwitcher
+          globalConfig={globalConfig}
+          studyConfigs={studyConfigs}
+        />
+      </AppShell>
+    </>
+  );
+}
+
+export function GlobalConfigParser() {
+  const [globalConfig, setGlobalConfig] = useState<Nullable<GlobalConfig>>(null);
+
   useEffect(() => {
-    if (globalConfig) return;
+    if (globalConfig) {
+      return undefined;
+    }
 
     fetchGlobalConfigArray().then((gc) => {
       setGlobalConfig(gc);
     });
+
+    return undefined;
   }, [globalConfig]);
 
   // Initialize storage engine
   const { storageEngine, setStorageEngine } = useStorageEngine();
   useEffect(() => {
-    if (storageEngine !== undefined) return;
+    if (storageEngine !== undefined) {
+      return undefined;
+    }
 
     async function fn() {
       const _storageEngine = await initializeStorageEngine();
       setStorageEngine(_storageEngine);
     }
     fn();
+
+    return undefined;
   }, [setStorageEngine, storageEngine]);
 
   const analysisProtectedCallback = async (studyId: string) => {
@@ -76,21 +111,7 @@ export function GlobalConfigParser() {
           <Routes>
             <Route
               path="/"
-              element={(
-                <>
-                  <PageTitle title="ReVISit | Home" />
-                  <AppShell
-                    padding="md"
-                    header={{ height: 70 }}
-                  >
-                    <AppHeader studyIds={globalConfig.configsList} />
-                    <ConfigSwitcher
-                      globalConfig={globalConfig}
-                      studyConfigs={studyConfigs}
-                    />
-                  </AppShell>
-                </>
-              )}
+              element={<HomeRoute globalConfig={globalConfig} />}
             />
             <Route
               path="/:studyId/*"

@@ -26,6 +26,7 @@ export function useRecording() {
 
   const recordVideoRef = useRef<HTMLVideoElement>(null);
   const [screenRecordingError, setRecordingError] = useState<string | null>(null);
+  const [audioRecordingError, setAudioRecordingError] = useState<string | null>(null);
   const [isScreenRecording, setIsScreenRecording] = useState(false);
   const [isAudioRecording, setIsAudioRecording] = useState(false);
   const [screenWithAudioRecording, setScreenWithAudioRecording] = useState(false);
@@ -152,7 +153,7 @@ export function useRecording() {
     const audioRecorder = (currentComponentHasAudioRecording && audioMediaStream.current) ? new MediaRecorder(audioMediaStream.current) : null;
     audioMediaRecorder.current = audioRecorder;
 
-    let chunks : Blob[] = [];
+    let chunks: Blob[] = [];
     mediaRecorder.addEventListener('dataavailable', (event: BlobEvent) => {
       if (event.data && event.data.size > 0) {
         chunks.push(event.data);
@@ -266,7 +267,7 @@ export function useRecording() {
       const recorder = new MediaRecorder(s);
       audioMediaRecorder.current = recorder;
 
-      let chunks : Blob[] = [];
+      let chunks: Blob[] = [];
 
       recorder.addEventListener('start', () => {
         chunks = [];
@@ -287,9 +288,13 @@ export function useRecording() {
       });
 
       recorder.start();
+      setAudioRecordingError(null);
+      setIsAudioRecording(true);
+    }).catch((err) => {
+      console.error('Error accessing microphone:', err);
+      setAudioRecordingError('Microphone permission denied');
+      setIsAudioRecording(false);
     });
-
-    setIsAudioRecording(true);
   }, [storageEngine, isMuted]);
 
   // For study with just audio recording
@@ -315,7 +320,7 @@ export function useRecording() {
       startAudioRecording(identifier);
     }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentComponent, identifier, currentComponentHasAudioRecording]);
 
   // For study with screen recording
@@ -347,6 +352,9 @@ export function useRecording() {
       document.title = `RECORD THIS TAB: ${pageTitle}`;
 
       try {
+        setRecordingError(null);
+        setAudioRecordingError(null);
+
         const screenStream = studyHasScreenRecording ? await navigator.mediaDevices.getDisplayMedia({
           video: { displaySurface: 'browser', ...(recordScreenFPS ? { frameRate: { ideal: recordScreenFPS } } : {}) },
           audio: false,
@@ -358,10 +366,18 @@ export function useRecording() {
 
         screenMediaStream.current = screenStream;
 
-        const micStream = studyHasAudioRecording ? await navigator.mediaDevices.getUserMedia({
-          audio: true,
-          video: false,
-        }) : null;
+        let micStream: MediaStream | null = null;
+        if (studyHasAudioRecording) {
+          try {
+            micStream = await navigator.mediaDevices.getUserMedia({
+              audio: true,
+              video: false,
+            });
+          } catch (err) {
+            console.error('Error accessing microphone:', err);
+            setAudioRecordingError('Microphone permission denied');
+          }
+        }
 
         audioMediaStream.current = micStream;
 
@@ -393,11 +409,10 @@ export function useRecording() {
         setIsAudioCapturing(micStream !== null);
         setIsMediaCapturing(screenStream !== null || micStream !== null);
         setScreenCaptureStarted(true);
-        setScreenWithAudioRecording(!!recordAudio);
-        setRecordingError(null);
+        setScreenWithAudioRecording(micStream !== null && !!recordAudio);
       } catch (err) {
         console.error('Error accessing screen:', err);
-        setRecordingError('Recording permission denied or not supported.');
+        setRecordingError('Recording permission denied');
       } finally {
         document.title = pageTitle;
       }
@@ -483,6 +498,7 @@ export function useRecording() {
   return {
     recordVideoRef,
     studyHasScreenRecording,
+    studyHasAudioRecording,
     isMuted,
     setIsMuted,
     recordAudio,
@@ -491,6 +507,7 @@ export function useRecording() {
     startScreenRecording,
     stopScreenRecording,
     screenRecordingError,
+    audioRecordingError,
     isScreenRecording,
     isAudioRecording,
     isScreenCapturing,
@@ -504,6 +521,13 @@ export function useRecording() {
     isRejected,
     isSpeakingWhileMuted,
     showMutedWarning,
+    audioStatus: audioRecordingError
+      ? 'denied'
+      : isAudioRecording
+        ? 'recording'
+        : currentComponentHasAudioRecording
+          ? 'pending'
+          : 'idle',
   };
 }
 

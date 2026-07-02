@@ -36,6 +36,8 @@ import {
   buildProvenanceLegendEntries,
 } from '../../../components/audioAnalysis/provenanceColors';
 import { revisitPageId, syncChannel } from '../../../utils/syncReplay';
+import { getLegacyStoredAnswerProvenance } from '../../../store/provenance';
+import { buildTaskNavigationTarget } from './taskNavigation';
 
 const margin = {
   left: 5, top: 0, right: 5, bottom: 0,
@@ -47,6 +49,29 @@ function getParticipantData(trrackId: string | undefined, storageEngine: Storage
   }
 
   return null;
+}
+
+function getLegacyProvenance(answer: unknown) {
+  return getLegacyStoredAnswerProvenance(answer);
+}
+
+async function getTaskProvenance(
+  storageEngine: StorageEngine | undefined,
+  participantId: string,
+  currentTrial: string,
+  answer: unknown,
+) {
+  const legacyProvenance = getLegacyProvenance(answer);
+
+  if (!storageEngine || !participantId || !currentTrial) {
+    return legacyProvenance;
+  }
+
+  try {
+    return await storageEngine.getProvenance(currentTrial, participantId) ?? legacyProvenance;
+  } catch {
+    return legacyProvenance;
+  }
 }
 
 async function getParticipantTags(authEmail: string, trrackId: string | undefined, studyId: string, storageEngine: StorageEngine | undefined) {
@@ -91,6 +116,7 @@ export function ThinkAloudFooter({
   const participantId = useMemo(() => searchParams.get('participantId') || '', [searchParams]);
 
   const { value: participant } = useAsync(getParticipantData, [participantId, storageEngine]);
+  const { value: provenanceGraph } = useAsync(getTaskProvenance, [storageEngine, participantId, currentTrial, participant?.answers[currentTrial]]);
 
   const { value: taskTags, execute: pullTags } = useAsync(getTags, [storageEngine, 'task']);
 
@@ -107,6 +133,7 @@ export function ThinkAloudFooter({
     async function fetchAssetsUrl() {
       if (!storageEngine || !participantId || !currentTrial) {
         setAudioUrl(null);
+        setScreenRecordingUrl(null);
         return;
       }
 
@@ -228,7 +255,6 @@ export function ThinkAloudFooter({
 
     setSearchParams((params) => {
       params.set('participantId', visibleParticipants[index] || '');
-      params.delete('currentTrial');
       return params;
     });
   }, [participantId, setSearchParams, visibleParticipants]);
@@ -267,19 +293,19 @@ export function ThinkAloudFooter({
       return;
     }
 
-    const { step, funcIndex } = parseTrialOrder(answer.trialOrder);
-    if (step === null) {
+    const navigationTarget = buildTaskNavigationTarget({
+      answerIdentifier,
+      trialOrder: answer.trialOrder,
+      isReplay,
+      studyId,
+      search: location.search,
+    });
+
+    if (!navigationTarget) {
       return;
     }
 
-    const pathname = isReplay ? (funcIndex === null
-      ? `/${studyId}/${encryptIndex(step)}`
-      : `/${studyId}/${encryptIndex(step)}/${encryptIndex(funcIndex)}`) : `/analysis/stats/${studyId}/tagging/${encodeURIComponent(answerIdentifier)}`;
-
-    navigate({
-      pathname,
-      search: location.search,
-    });
+    navigate(navigationTarget);
 
     if (answer.trialOrder) {
       syncChannel.postMessage({
@@ -353,13 +379,12 @@ export function ThinkAloudFooter({
   const [timeString, setTimeString] = useState<string>('');
 
   const provenanceLegendEntries = useMemo(() => {
-    const answer = participant?.answers[currentTrial];
-    if (!answer?.provenanceGraph) {
+    if (!provenanceGraph) {
       return new Map<string, { label: string; color: string }>();
     }
 
-    return buildProvenanceLegendEntries(Object.values(answer.provenanceGraph));
-  }, [participant, currentTrial]);
+    return buildProvenanceLegendEntries(Object.values(provenanceGraph));
+  }, [provenanceGraph]);
 
   const tasksList = useMemo(() => orderedAnswers
     .filter((answer) => answer.identifier && answer.componentName)
@@ -471,7 +496,6 @@ export function ThinkAloudFooter({
               onChange={(e: string | null) => {
                 setSearchParams((params) => {
                   params.set('participantId', e || '');
-                  params.delete('currentTrial');
                   return params;
                 });
                 syncChannel.postMessage({
@@ -594,7 +618,7 @@ export function ThinkAloudFooter({
             )}
             {screenRecordingUrl && (
               <Tooltip label="Download screen recording">
-                <ActionIcon variant="filled" size={30} onClick={handleDownloadScreenRecording}>
+                <ActionIcon variant="light" size={30} onClick={handleDownloadScreenRecording}>
                   <IconDeviceDesktopDown />
                 </ActionIcon>
               </Tooltip>

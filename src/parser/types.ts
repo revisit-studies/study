@@ -347,8 +347,26 @@ export interface StringOption {
   infoText?: string;
 }
 
+/**
+ * The MatrixQuestionOption interface is used to define the question options for matrix responses.
+ * The label is the fallback text displayed to participants, and the value is the key stored in the participant's data.
+ * The optional left and right labels allow bipolar rows to label each side of the matrix without changing stored values.
+ * When `leftLabel` is specified, it takes precedence over `label` for the left-side row text.
+ */
+export interface MatrixQuestionOption extends StringOption {
+  /** The label displayed on the left side of the matrix row. Takes precedence over label when specified. Defaults to label. */
+  leftLabel?: string;
+  /** The label displayed on the right side of the matrix row. */
+  rightLabel?: string;
+}
+
 /** StringOption normalized to always include a value. */
 export interface ParsedStringOption extends Omit<StringOption, 'value'> {
+  value: string;
+}
+
+/** MatrixQuestionOption normalized to always include a value. */
+export interface ParsedMatrixQuestionOption extends Omit<MatrixQuestionOption, 'value'> {
   value: string;
 }
 
@@ -508,8 +526,8 @@ export interface LikertResponse extends BaseResponse {
 interface BaseMatrixResponse extends BaseResponse {
   /** The answer options (columns). We provide some shortcuts for a likelihood scale (ranging from highly unlikely to highly likely) and a satisfaction scale (ranging from highly unsatisfied to highly satisfied) with either 5 or 7 options to choose from. */
   answerOptions: (StringOption | string)[] | `likely${5 | 7}` | `satisfaction${5 | 7}`;
-  /** The question options (rows) are the prompts for each response you'd like to record. */
-  questionOptions: (StringOption | string)[];
+  /** The question options (rows) are the prompts for each response you'd like to record. Use `leftLabel` and `rightLabel` on object options to display bipolar row labels such as `"Obstructive - Supportive"` on either side of the matrix. */
+  questionOptions: (MatrixQuestionOption | string)[];
   /** The order in which the questions are displayed. Defaults to fixed. */
   questionOrder?: 'fixed' | 'random';
 }
@@ -529,12 +547,17 @@ interface BaseMatrixResponse extends BaseResponse {
  *   "answerOptions": "satisfaction5",
  *   "questionOptions": [
  *     "The tool we created",
- *     "The technique we developed",
+ *     {
+ *       "label": "Obstructive - Supportive",
+ *       "value": "obstructive-supportive",
+ *       "leftLabel": "Obstructive",
+ *       "rightLabel": "Supportive"
+ *     },
  *     "The authors of the tools"
  *   ],
  *   "default": {
  *     "The tool we created": "Highly Satisfied",
- *     "The technique we developed": "Satisfied",
+ *     "obstructive-supportive": "Satisfied",
  *     "The authors of the tools": "Neutral"
  *   },
  *   "questionOrder": "random"
@@ -1029,6 +1052,12 @@ export interface BaseIndividualComponent {
   nextButtonEnableTime?: number;
   /** The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig. */
   nextButtonDisableTime?: number;
+  /** The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component. */
+  nextButtonAutoAdvanceTime?: number;
+  /** The time in milliseconds before auto-advance when the warning message is shown. Defaults to 30000. */
+  nextButtonAutoAdvanceWarningTime?: number;
+  /** The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining number and `{unit}` to interpolate `second`/`seconds`. */
+  nextButtonAutoAdvanceWarningMessage?: string;
   /** Whether to show the previous button. If present, will override the previous button setting in the uiConfig. */
   previousButton?: boolean;
   /** The text that is displayed on the previous button. If present, will override the previous button text setting in the uiConfig. */
@@ -1116,8 +1145,8 @@ export interface MarkdownComponent extends BaseIndividualComponent {
  * ```
  *
  * For in depth examples, see the following studies, and their associated codebases.
- * https://revisit.dev/study/demo-react-trrack (https://github.com/revisit-studies/study/tree/v2.4.1/src/public/demo-react-trrack/assets)
- * https://revisit.dev/study/example-brush-interactions (https://github.com/revisit-studies/study/tree/v2.4.1/src/public/example-brush-interactions/assets)
+ * https://revisit.dev/study/demo-react-trrack (https://github.com/revisit-studies/study/tree/v2.4.3/src/public/demo-react-trrack/assets)
+ * https://revisit.dev/study/example-brush-interactions (https://github.com/revisit-studies/study/tree/v2.4.3/src/public/example-brush-interactions/assets)
  */
 export interface ReactComponent extends BaseIndividualComponent {
   type: 'react-component';
@@ -1807,7 +1836,7 @@ export type BaseComponents = Record<string, Partial<IndividualComponent>>;
  * The StudyConfig interface is used to define the properties of a study configuration. This is a JSON object with four main components: the StudyMetadata, the UIConfig, the Components, and the Sequence. Below is the general template that should be followed when constructing a Study configuration file.
  * ```json
  * {
- *   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.1/src/parser/StudyConfigSchema.json",
+ *   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/StudyConfigSchema.json",
  *   "studyMetadata": {
  *     ...
  *   },
@@ -1854,7 +1883,7 @@ export interface StudyConfig {
  *
  * ```json
  * {
- *   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.1/src/parser/LibraryConfigSchema.json",
+ *   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/LibraryConfigSchema.json",
  *   "baseComponents": {
  *     // BaseComponents here are defined exactly as is in the StudyConfig
  *   },
@@ -1888,7 +1917,7 @@ export interface LibraryConfig {
   baseComponents?: BaseComponents;
 }
 
-export type ErrorWarningCategory = 'invalid-config' | 'invalid-library-config' | 'undefined-library' | 'undefined-base-component' | 'undefined-component' | 'sequence-validation' | 'skip-validation' | 'unused-component' | 'disabled-sidebar' | 'default-contact-email';
+export type ErrorWarningCategory = 'invalid-config' | 'invalid-library-config' | 'undefined-library' | 'undefined-base-component' | 'undefined-component' | 'sequence-validation' | 'skip-validation' | 'unused-component' | 'disabled-sidebar' | 'default-contact-email' | 'default-firebase-config' | 'default-supabase-config';
 
 /**
  * @ignore
