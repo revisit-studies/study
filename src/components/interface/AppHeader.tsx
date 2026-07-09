@@ -189,7 +189,7 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
     const timeoutId = window.setTimeout(() => {
       storeDispatch(setAlertModal({
         show: true,
-        message: 'You may be behind a firewall blocking access, or the server collecting data may be down. Study data will not be saved. If you\'re taking the study you will not be compensated for your efforts. You are welcome to look around.',
+        message: 'You may be behind a firewall blocking access, or the server collecting data may be down. Study data will not be saved. If you\'re taking the study you will not be compensated for your efforts.',
         title: 'Failed to connect to the storage engine',
       }));
       setFirstMount(false);
