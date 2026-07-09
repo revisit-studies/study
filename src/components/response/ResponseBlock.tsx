@@ -166,11 +166,8 @@ export function ResponseBlock({
   const hasCorrectAnswer = currentCheckAnswer?.correct ?? false;
   const checkAnswerResponses = currentCheckAnswer?.responses;
   const usedAllAttempts = attemptsUsed >= trainingAttempts && trainingAttempts >= 0;
-  // Enable next button if there is correct answer feedback, at least one attempt has been used, and either failed training is allowed and the participant has used all attempts, or the participant has answered correctly within the allowed attempts
-  const enableNextButton = hasCorrectAnswerFeedback && attemptsUsed > 0 && (
-    (allowFailedTraining && attemptsUsed >= trainingAttempts)
-    || (hasCorrectAnswer && attemptsUsed <= trainingAttempts)
-  );
+  // Unlock Next after a correct answer, or once attempts run out if failed training is allowed. usedAllAttempts excludes -1, so unlimited attempts require a correct answer
+  const enableNextButton = hasCorrectAnswerFeedback && attemptsUsed > 0 && (hasCorrectAnswer || (allowFailedTraining && usedAllAttempts));
   const bypassValidationForFailedTraining = hasCorrectAnswerFeedback && allowFailedTraining && usedAllAttempts;
   const disabledAttempts = usedAllAttempts || hasCorrectAnswer;
   const showBtnsInLocation = useMemo(() => location === (config?.nextButtonLocation ?? studyConfig.uiConfig.nextButtonLocation ?? 'belowStimulus'), [config, studyConfig, location]);
@@ -734,7 +731,7 @@ export function ResponseBlock({
           onCheckAnswer={!isAnalysis && hasCorrectAnswerFeedback && !disabledAttempts ? checkAnswerProvideFeedback : undefined}
           checkAnswer={showBtnsInLocation && hasCorrectAnswerFeedback ? (
             <Button
-              disabled={hasCorrectAnswer || (attemptsUsed >= trainingAttempts && trainingAttempts >= 0)}
+              disabled={disabledAttempts}
               onClick={() => checkAnswerProvideFeedback()}
               px={location === 'sidebar' ? 8 : undefined}
             >

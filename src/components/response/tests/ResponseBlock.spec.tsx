@@ -241,6 +241,14 @@ function incorrectCount(store: StudyStore['store']) {
   return store.getState().answers.trial1_0?.incorrectAnswers?.q1?.value.length ?? 0;
 }
 
+function findButton(container: HTMLElement, label: string) {
+  return Array.from(container.querySelectorAll('button')).find((b) => b.textContent === label)!;
+}
+
+function countButtons(container: HTMLElement, label: string) {
+  return Array.from(container.querySelectorAll('button')).filter((b) => b.textContent === label).length;
+}
+
 // ── setup ─────────────────────────────────────────────────────────────────────
 
 beforeEach(() => {
@@ -351,10 +359,8 @@ describe('ResponseBlock', () => {
     const { container } = await renderWithStore(
       <ResponseBlock config={configWithFeedback} location="belowStimulus" />,
     );
-    const checkBtn = Array.from(container.querySelectorAll('button')).find(
-      (b) => b.textContent === 'Check Answer',
-    );
-    await act(async () => { fireEvent.click(checkBtn!); });
+    const checkBtn = findButton(container, 'Check Answer');
+    await act(async () => { fireEvent.click(checkBtn); });
     // After a correct answer the Check Answer button should become disabled
     expect(checkBtn).toHaveProperty('disabled', true);
   });
@@ -430,8 +436,7 @@ describe('ResponseBlock onCheckAnswer', () => {
         <ResponseBlock config={feedbackEnterConfig} location="sidebar" />
       </>,
     );
-    const nextButtons = Array.from(container.querySelectorAll('button')).filter((b) => b.textContent === 'Next');
-    expect(nextButtons).toHaveLength(1);
+    expect(countButtons(container, 'Next')).toBe(1);
     expect(capturedNextButtonProps.onCheckAnswer).toBeDefined();
     await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
     expect(container.querySelectorAll('[data-testid="feedback-alert-q1"]')).toHaveLength(1);
@@ -443,18 +448,19 @@ describe('ResponseBlock onCheckAnswer', () => {
     const { container } = await renderWithStore(
       <ResponseBlock config={feedbackEnterConfig} location="sidebar" />,
     );
-    expect(Array.from(container.querySelectorAll('button')).filter((b) => b.textContent === 'Next')).toHaveLength(0);
+    expect(countButtons(container, 'Next')).toBe(0);
     expect(capturedNextButtonProps.onCheckAnswer).toBeUndefined();
   });
 
-  test('does not pass onCheckAnswer after all attempts are used', async () => {
+  test('does not pass onCheckAnswer and disables Check Answer after all attempts are used', async () => {
     // uiConfig mock sets trainingAttempts: 2
     vi.mocked(responseAnswerIsCorrect).mockReturnValue(false);
-    const { store } = await renderWithStore(<ResponseBlock config={feedbackEnterConfig} location="belowStimulus" />);
+    const { container, store } = await renderWithStore(<ResponseBlock config={feedbackEnterConfig} location="belowStimulus" />);
     await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
     await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
     expect(store.getState().checkAnswer.trial1_0.attemptsUsed).toBe(2);
     expect(capturedNextButtonProps.onCheckAnswer).toBeUndefined();
+    expect(findButton(container, 'Check Answer')).toHaveProperty('disabled', true);
     expect(incorrectCount(store)).toBe(2);
   });
 
@@ -463,9 +469,7 @@ describe('ResponseBlock onCheckAnswer', () => {
       <ResponseBlock config={feedbackEnterConfig} location="belowStimulus" />,
     );
     await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
-    const checkBtn = Array.from(container.querySelectorAll('button')).find(
-      (b) => b.textContent === 'Check Answer',
-    );
+    const checkBtn = findButton(container, 'Check Answer');
     expect(checkBtn).toHaveProperty('disabled', true);
     expect(capturedNextButtonProps.onCheckAnswer).toBeUndefined();
     expect(container.querySelectorAll('[data-testid="feedback-alert-q1"]')).toHaveLength(1);
@@ -477,7 +481,7 @@ describe('ResponseBlock onCheckAnswer', () => {
     const { container } = await renderWithStore(
       <ResponseBlock config={feedbackEnterConfig} location="belowStimulus" />,
     );
-    expect(Array.from(container.querySelectorAll('button')).filter((b) => b.textContent === 'Next')).toHaveLength(1);
+    expect(countButtons(container, 'Next')).toBe(1);
     expect(capturedNextButtonProps.onCheckAnswer).toBeUndefined();
   });
 
@@ -485,7 +489,7 @@ describe('ResponseBlock onCheckAnswer', () => {
     const { container } = await renderWithStore(
       <ResponseBlock config={{ ...baseConfig, nextOnEnter: true } as IndividualComponent} location="belowStimulus" />,
     );
-    expect(Array.from(container.querySelectorAll('button')).filter((b) => b.textContent === 'Next')).toHaveLength(1);
+    expect(countButtons(container, 'Next')).toBe(1);
     expect(capturedNextButtonProps.onCheckAnswer).toBeUndefined();
   });
 });
@@ -503,9 +507,7 @@ describe('ResponseBlock check-answer state persistence', () => {
     vi.mocked(responseAnswerIsCorrect).mockReturnValue(false);
     const studyStore = await makeStudyStore();
     const first = render(withStore(studyStore, <ResponseBlock config={feedbackConfig} location="belowStimulus" />));
-    const checkBtn = Array.from(first.container.querySelectorAll('button')).find(
-      (b) => b.textContent === 'Check Answer',
-    )!;
+    const checkBtn = findButton(first.container, 'Check Answer');
     await act(async () => { fireEvent.click(checkBtn); });
     expect(studyStore.store.getState().checkAnswer.trial1_0.attemptsUsed).toBe(1);
     first.unmount();
@@ -522,9 +524,7 @@ describe('ResponseBlock check-answer state persistence', () => {
       <ResponseBlock config={feedbackConfig} location="belowStimulus" />,
     );
     expect(store.getState().checkAnswer.trial1_0).toEqual(persisted);
-    const checkBtn = Array.from(container.querySelectorAll('button')).find(
-      (b) => b.textContent === 'Check Answer',
-    );
+    const checkBtn = findButton(container, 'Check Answer');
     expect(checkBtn).toHaveProperty('disabled', true);
     expect(container.querySelectorAll('[data-testid="feedback-alert-q1"]')).toHaveLength(1);
   });
@@ -534,9 +534,7 @@ describe('ResponseBlock check-answer state persistence', () => {
       <ResponseBlock config={feedbackConfig} location="belowStimulus" />,
     );
     expect(store.getState().checkAnswer.trial1_0).toBeUndefined();
-    const checkBtn = Array.from(container.querySelectorAll('button')).find(
-      (b) => b.textContent === 'Check Answer',
-    );
+    const checkBtn = findButton(container, 'Check Answer');
     expect(checkBtn).toHaveProperty('disabled', false);
   });
 
@@ -579,29 +577,35 @@ describe('ResponseBlock check-answer state persistence', () => {
 // ── unlimited attempts (trainingAttempts: -1) ─────────────────────────────────
 
 describe('ResponseBlock unlimited attempts', () => {
-  test('trainingAttempts: -1 never disables Check Answer and Next unlocks after the first check', async () => {
+  const unlimitedConfig = {
+    ...baseConfig,
+    provideFeedback: true,
+    correctAnswer: [{ id: 'q1', answer: 'correct' }],
+    trainingAttempts: -1,
+  } as IndividualComponent;
+
+  test('keeps Check Answer enabled and Next disabled after wrong answers', async () => {
     vi.mocked(responseAnswerIsCorrect).mockReturnValue(false);
-    const unlimitedConfig = {
-      ...baseConfig,
-      provideFeedback: true,
-      correctAnswer: [{ id: 'q1', answer: 'correct' }],
-      trainingAttempts: -1,
-    } as IndividualComponent;
     const { container, store } = await renderWithStore(
       <ResponseBlock config={unlimitedConfig} location="belowStimulus" />,
     );
-    const checkBtn = Array.from(container.querySelectorAll('button')).find(
-      (b) => b.textContent === 'Check Answer',
-    )!;
+    const checkBtn = findButton(container, 'Check Answer');
     await act(async () => { fireEvent.click(checkBtn); });
     await act(async () => { fireEvent.click(checkBtn); });
     await act(async () => { fireEvent.click(checkBtn); });
     expect(store.getState().checkAnswer.trial1_0.attemptsUsed).toBe(3);
+    // Unlimited attempts: Check Answer never locks, and Next stays disabled until correct
     expect(checkBtn).toHaveProperty('disabled', false);
     expect(container.querySelector('[data-testid="feedback-alert-q1"]')?.getAttribute('data-title')).toBe('Incorrect Answer');
-    const nextBtn = Array.from(container.querySelectorAll('button')).find(
-      (b) => b.textContent === 'Next',
-    )!;
-    expect(nextBtn).toHaveProperty('disabled', false);
+    expect(findButton(container, 'Next')).toHaveProperty('disabled', true);
+  });
+
+  test('enables Next once the answer is correct', async () => {
+    vi.mocked(responseAnswerIsCorrect).mockReturnValue(true);
+    const { container } = await renderWithStore(
+      <ResponseBlock config={unlimitedConfig} location="belowStimulus" />,
+    );
+    await act(async () => { fireEvent.click(findButton(container, 'Check Answer')); });
+    expect(findButton(container, 'Next')).toHaveProperty('disabled', false);
   });
 });
