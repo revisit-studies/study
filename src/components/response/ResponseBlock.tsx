@@ -20,7 +20,6 @@ import {
 } from '../../store/store';
 
 import { NextButton } from '../NextButton';
-import { shouldIgnoreEnter } from '../keyboardUtils';
 import {
   generateInitFields, mergeReactiveAnswers, useAnswerField,
 } from './utils';
@@ -589,24 +588,6 @@ export function ResponseBlock({
     }));
   }, [allResponsesWithDefaults, allowFailedTraining, attemptsUsed, config, hasCorrectAnswerFeedback, hasResponseIssues, hasStimulusIssue, identifier, navigate, revealResponseErrors, revealStimulusErrors, saveIncorrectAnswer, setCheckAnswerResult, storeDispatch, trainingAttempts, trialValidation]);
 
-  const nextOnEnter = config?.nextOnEnter ?? studyConfig.uiConfig.nextOnEnter;
-
-  useEffect(() => {
-    if (nextOnEnter && showBtnsInLocation && hasCorrectAnswerFeedback && !disabledAttempts) {
-      const handleKeyDown = (event: KeyboardEvent) => {
-        if (event.key === 'Enter' && !shouldIgnoreEnter(event.target)) {
-          checkAnswerProvideFeedback();
-        }
-      };
-
-      window.addEventListener('keydown', handleKeyDown);
-      return () => {
-        window.removeEventListener('keydown', handleKeyDown);
-      };
-    }
-    return undefined;
-  }, [checkAnswerProvideFeedback, nextOnEnter, showBtnsInLocation, hasCorrectAnswerFeedback, disabledAttempts]);
-
   const nextButtonText = useMemo(() => config?.nextButtonText ?? studyConfig.uiConfig.nextButtonText ?? 'Next', [config, studyConfig]);
 
   useEffect(() => {
@@ -750,6 +731,7 @@ export function ResponseBlock({
           config={config}
           location={location}
           onNext={handleNextClick}
+          onCheckAnswer={!isAnalysis && hasCorrectAnswerFeedback && !disabledAttempts ? checkAnswerProvideFeedback : undefined}
           checkAnswer={showBtnsInLocation && hasCorrectAnswerFeedback ? (
             <Button
               disabled={hasCorrectAnswer || (attemptsUsed >= trainingAttempts && trainingAttempts >= 0)}
