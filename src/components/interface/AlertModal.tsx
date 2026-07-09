@@ -23,7 +23,7 @@ export function AlertModal() {
   const close = useCallback(() => storeDispatch(setAlertModal({ ...alertModal, show: false, title: '' })), [alertModal, setAlertModal, storeDispatch]);
 
   useEffect(() => setOpened(alertModal.show), [alertModal.show]);
-  const isStorageEngineAlert = alertModal.title === 'Failed to connect to the storage engine';
+  const isStorageEngineAlert = alertModal.title === 'Failed to connect to the storage engine' || alertModal.title === 'Failed to Save Response';
   const handleClose = useCallback(() => {
     if (isStorageEngineAlert) {
       return;

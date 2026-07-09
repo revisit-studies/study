@@ -42,7 +42,7 @@ export function useNextStep() {
 
   const storeDispatch = useStoreDispatch();
   const {
-    saveTrialAnswer, setReactiveAnswers, setMatrixAnswersRadio, setMatrixAnswersCheckbox, setRankingAnswers,
+    saveTrialAnswer, setReactiveAnswers, setMatrixAnswersRadio, setMatrixAnswersCheckbox, setRankingAnswers, setAlertModal,
   } = useStoreActions();
   const { storageEngine } = useStorageEngine();
 
@@ -95,23 +95,17 @@ export function useNextStep() {
         const answersToPersist = { ...answers, [identifier]: toSave };
 
         if (storageEngine) {
-          storageEngine.saveAnswers(answersToPersist).catch((error) => {
+          const onSaveFailure = (error: unknown) => {
             console.error('Failed to save participant response data', error);
-            showNotification({
+            storeDispatch(setAlertModal({
+              show: true,
+              message: 'Your response could not be saved because the connection to the server was interrupted. Please check your internet connection, then click Reconnect to try again.',
               title: 'Failed to Save Response',
-              message: 'Your response could not be saved. Please check your connection and try again.',
-              color: 'red',
-            });
-          });
+            }));
+          };
+          storageEngine.saveAnswers(answersToPersist).catch(onSaveFailure);
           if (provenanceGraph) {
-            storageEngine.saveProvenance(provenanceGraph, identifier).catch((error) => {
-              console.error('Failed to save participant response data', error);
-              showNotification({
-                title: 'Failed to Save Response',
-                message: 'Your response could not be saved. Please check your connection and try again.',
-                color: 'red',
-              });
-            });
+            storageEngine.saveProvenance(provenanceGraph, identifier).catch(onSaveFailure);
           }
         }
 
@@ -176,7 +170,7 @@ export function useNextStep() {
         color: 'red',
       });
     }
-  }, [currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, clickedPrevious, sequence, answers, startTime, funcIndex, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, setRankingAnswers, studyConfig, participantSequence, navigate, studyId, responseSubmitAttempted]);
+  }, [currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, clickedPrevious, sequence, answers, startTime, funcIndex, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, setRankingAnswers, setAlertModal, studyConfig, participantSequence, navigate, studyId, responseSubmitAttempted]);
 
   return {
     isNextDisabled,

@@ -18,6 +18,7 @@ const mockSetReactiveAnswers = vi.fn((payload) => ({ type: 'setReactiveAnswers',
 const mockSetMatrixAnswersCheckbox = vi.fn((payload) => ({ type: 'setMatrixAnswersCheckbox', payload }));
 const mockSetMatrixAnswersRadio = vi.fn((payload) => ({ type: 'setMatrixAnswersRadio', payload }));
 const mockSetRankingAnswers = vi.fn((payload) => ({ type: 'setRankingAnswers', payload }));
+const mockSetAlertModal = vi.fn((payload) => ({ type: 'setAlertModal', payload }));
 
 let mockStoredAnswer: {
   answer: Record<string, string>;
@@ -83,6 +84,7 @@ vi.mock('../../store', () => ({
     setMatrixAnswersRadio: mockSetMatrixAnswersRadio,
     setMatrixAnswersCheckbox: mockSetMatrixAnswersCheckbox,
     setRankingAnswers: mockSetRankingAnswers,
+    setAlertModal: mockSetAlertModal,
   }),
   useStoreDispatch: () => mockDispatch,
   useAreResponsesValid: () => true,
@@ -148,6 +150,7 @@ describe('useNextStep', () => {
     mockSetMatrixAnswersCheckbox.mockClear();
     mockSetMatrixAnswersRadio.mockClear();
     mockSetRankingAnswers.mockClear();
+    mockSetAlertModal.mockClear();
     mockDispatch.mockClear();
     mockAnswers = {};
     mockTrialValidation = {
@@ -206,7 +209,7 @@ describe('useNextStep', () => {
     vi.restoreAllMocks();
   });
 
-  test('continues locally and shows an error when persistence fails', async () => {
+  test('continues locally and shows the blocking storage modal when persistence fails', async () => {
     mockSaveAnswers
       .mockRejectedValueOnce(new Error('write failed'))
       .mockResolvedValueOnce(undefined);
@@ -224,11 +227,12 @@ describe('useNextStep', () => {
       responseSubmitAttempted: true,
     }));
     expect(mockNavigate).toHaveBeenCalledTimes(1);
-    expect(mockShowNotification).toHaveBeenCalledWith({
+    expect(mockSetAlertModal).toHaveBeenCalledWith({
+      show: true,
+      message: 'Your response could not be saved because the connection to the server was interrupted. Please check your internet connection, then click Reconnect to try again.',
       title: 'Failed to Save Response',
-      message: 'Your response could not be saved. Please check your connection and try again.',
-      color: 'red',
     });
+    expect(mockShowNotification).not.toHaveBeenCalled();
     expect(mockStoredAnswer.endTime).toBeGreaterThan(-1);
 
     await capturedGoToNextStep?.();
@@ -237,6 +241,40 @@ describe('useNextStep', () => {
     expect(mockSaveTrialAnswer).toHaveBeenCalledTimes(1);
     expect(mockStoredAnswer.endTime).toBeGreaterThan(-1);
     expect(mockNavigate).toHaveBeenCalledTimes(2);
+  });
+
+  test('shows the blocking storage modal when provenance persistence fails', async () => {
+    mockSaveAnswers.mockResolvedValueOnce(undefined);
+    mockSaveProvenance.mockRejectedValueOnce(new Error('provenance write failed'));
+    mockTrialValidation = {
+      intro_0: {
+        ...(mockTrialValidation.intro_0 as Record<string, unknown>),
+        provenanceGraph: { nodes: {} },
+      },
+    };
+
+    renderToStaticMarkup(<HookHarness />);
+
+    await capturedGoToNextStep?.();
+    await Promise.resolve();
+
+    expect(mockSaveProvenance).toHaveBeenCalledTimes(1);
+    expect(mockSetAlertModal).toHaveBeenCalledWith(expect.objectContaining({
+      show: true,
+      title: 'Failed to Save Response',
+    }));
+  });
+
+  test('does not show the storage modal when persistence succeeds', async () => {
+    mockSaveAnswers.mockResolvedValueOnce(undefined);
+
+    renderToStaticMarkup(<HookHarness />);
+
+    await capturedGoToNextStep?.();
+    await Promise.resolve();
+
+    expect(mockSaveAnswers).toHaveBeenCalledTimes(1);
+    expect(mockSetAlertModal).not.toHaveBeenCalled();
   });
 
   test('does not disable next when stimulus validation fails', () => {

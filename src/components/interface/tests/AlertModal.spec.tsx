@@ -106,6 +106,18 @@ describe('AlertModal', () => {
     expect(html).toContain('Reconnect');
   });
 
+  test('treats mid-study save failure alert as a blocking storage alert', () => {
+    mockAlertModal = {
+      show: true,
+      title: 'Failed to Save Response',
+      message: 'Your response could not be saved',
+    };
+    const html = renderToStaticMarkup(<AlertModal />);
+    expect(html).toContain('Reconnect');
+    expect(html).not.toContain('Continue Study');
+    expect(html).toContain('Study ID: test-study');
+  });
+
   test('does not show diagnostics for regular (non-storage) alert', () => {
     mockAlertModal = { show: true, title: 'Generic Error', message: 'Test' };
     const html = renderToStaticMarkup(<AlertModal />);
