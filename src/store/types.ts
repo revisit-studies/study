@@ -136,6 +136,32 @@ export interface StoredAnswer {
   formOrder?: Record<string, string[]>;
   /** Whether required-response errors were revealed for this trial after a Next attempt. */
   responseSubmitAttempted?: boolean;
+  /** Check Answer state for this trial: attempts used and per-response correctness at the last check. */
+  checkAnswer?: CheckAnswerState;
+}
+
+/**
+ * The CheckAnswerState object is a data structure describing the participant's interaction with an individual component when they click "Check Answer". It is the data structure used as values of the `checkAnswer` object of [StoreState](../StoreState). The general structure for this is below:
+ *
+ * ```json
+ * {
+ *   "attemptsUsed": 2,
+ *   "correct": false,
+ *   "responses": {
+ *     "barChart": true,
+ *     "lineChart": false
+ *   }
+ * }
+ * ```
+ * In the example above the participant answered `barChart` correctly but `lineChart` incorrectly, so the trial is not yet correct.
+ */
+export interface CheckAnswerState {
+  /** How many times the participant has clicked "Check Answer" for this trial. */
+  attemptsUsed: number;
+  /** Whether every response was correct at the last check. */
+  correct: boolean;
+  /** The correctness of each response at the last check. Keys are the "id"s in the [Response](../BaseResponse) list of the component in your [StudyConfiguration](../StudyConfig); values indicate whether that response was correct. */
+  responses: Record<string, boolean>;
 }
 
 export interface JumpFunctionParameters<T> {
@@ -221,6 +247,7 @@ export interface StoreState {
   trialValidation: TrialValidation;
   responseSubmitAttempted: Record<string, boolean>;
   stimulusSubmitAttempted: Record<string, boolean>;
+  checkAnswer: Record<string, CheckAnswerState>;
   reactiveAnswers: Record<string, ValueOf<StoredAnswer['answer']>>;
   metadata: ParticipantMetadata;
   analysisProvState: Record<ConfigResponseBlockLocation, FormElementProvenance | undefined> & { stimulus: unknown | undefined };

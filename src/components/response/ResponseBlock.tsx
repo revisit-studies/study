@@ -3,7 +3,7 @@ import {
 } from '@mantine/core';
 
 import React, {
-  useEffect, useMemo, useState, useCallback, useRef,
+  useEffect, useMemo, useCallback, useRef,
 } from 'react';
 import isEqual from 'lodash.isequal';
 import { IconAlertTriangle } from '@tabler/icons-react';
@@ -69,7 +69,7 @@ export function ResponseBlock({
 }: Props) {
   const storeDispatch = useStoreDispatch();
   const {
-    updateResponseBlockValidation, saveIncorrectAnswer, setResponseSubmitAttempt, setStimulusSubmitAttempt,
+    updateResponseBlockValidation, saveIncorrectAnswer, setResponseSubmitAttempt, setStimulusSubmitAttempt, setCheckAnswerResult,
   } = useStoreActions();
 
   const currentStep = useCurrentStep();
@@ -155,15 +155,23 @@ export function ResponseBlock({
   const provideFeedback = useMemo(() => config?.provideFeedback ?? studyConfig.uiConfig.provideFeedback, [config, studyConfig]);
   const hasCorrectAnswerFeedback = !!provideFeedback && ((config?.correctAnswer?.length || 0) > 0);
   const allowFailedTraining = useMemo(() => config?.allowFailedTraining ?? studyConfig.uiConfig.allowFailedTraining ?? true, [config, studyConfig]);
-  const [attemptsUsed, setAttemptsUsed] = useState(0);
   const trainingAttempts = useMemo(() => config?.trainingAttempts ?? studyConfig.uiConfig.trainingAttempts ?? 2, [config, studyConfig]);
-  const [enableNextButton, setEnableNextButton] = useState(false);
-  const [hasCorrectAnswer, setHasCorrectAnswer] = useState(false);
   const identifier = useCurrentIdentifier();
   const savedSubmitAttempt = storedAnswerData?.responseSubmitAttempted ?? status?.responseSubmitAttempted ?? false;
   const currentSubmitAttempt = useStoreSelector((state) => state.responseSubmitAttempted[identifier]);
   const liveErrors = currentSubmitAttempt ?? savedSubmitAttempt;
+  const savedCheckAnswer = storedAnswerData?.checkAnswer ?? status?.checkAnswer;
+  const currentCheckAnswer = useStoreSelector((state) => state.checkAnswer[identifier]);
+  const storeAnswers = useStoreSelector((state) => state.answers);
+  const attemptsUsed = currentCheckAnswer?.attemptsUsed ?? 0;
+  const hasCorrectAnswer = currentCheckAnswer?.correct ?? false;
+  const checkAnswerResponses = currentCheckAnswer?.responses;
   const usedAllAttempts = attemptsUsed >= trainingAttempts && trainingAttempts >= 0;
+  // Enable next button if there is correct answer feedback, at least one attempt has been used, and either failed training is allowed and the participant has used all attempts, or the participant has answered correctly within the allowed attempts
+  const enableNextButton = hasCorrectAnswerFeedback && attemptsUsed > 0 && (
+    (allowFailedTraining && attemptsUsed >= trainingAttempts)
+    || (hasCorrectAnswer && attemptsUsed <= trainingAttempts)
+  );
   const bypassValidationForFailedTraining = hasCorrectAnswerFeedback && allowFailedTraining && usedAllAttempts;
   const disabledAttempts = usedAllAttempts || hasCorrectAnswer;
   const showBtnsInLocation = useMemo(() => location === (config?.nextButtonLocation ?? studyConfig.uiConfig.nextButtonLocation ?? 'belowStimulus'), [config, studyConfig, location]);
@@ -474,23 +482,49 @@ export function ResponseBlock({
       }),
     );
   }, [actions, answerValidator, bypassValidationForFailedTraining, identifier, isAnalysis, liveErrors, location, storeDispatch, trrack, updateResponseBlockValidation]);
-  const [alertConfig, setAlertConfig] = useState(Object.fromEntries(allResponsesWithDefaults.map((response) => ([response.id, {
-    visible: false,
-    title: 'Correct Answer',
-    message: 'The correct answer is: ',
-    color: 'green',
-  }]))));
-  const updateAlertConfig = (id: string, visible: boolean, title: string, message: string, color: string) => {
-    setAlertConfig((conf) => ({
-      ...conf,
-      [id]: {
-        visible,
-        title,
-        message,
-        color,
-      },
-    }));
-  };
+  const alertConfig = useMemo(() => Object.fromEntries(allResponsesWithDefaults.map((response) => {
+    const hiddenAlert = {
+      visible: false,
+      title: 'Correct Answer',
+      message: 'The correct answer is: ',
+      color: 'green',
+    };
+    if (!hasCorrectAnswerFeedback || !checkAnswerResponses || !Object.hasOwn(checkAnswerResponses, response.id) || response.type === 'textOnly' || response.type === 'divider') {
+      return [response.id, hiddenAlert];
+    }
+    if (checkAnswerResponses[response.id]) {
+      return [response.id, {
+        visible: true, title: 'Correct Answer', message: 'You have answered the question correctly.', color: 'green',
+      }];
+    }
+    let message = '';
+    // -1 gives unlimited attempts
+    if (trainingAttempts === -1) {
+      message = 'Please try again.';
+    } else if (attemptsUsed >= trainingAttempts) {
+      message = `You didn't answer this question correctly after ${trainingAttempts} attempts. ${allowFailedTraining ? 'You can continue to the next question.' : 'Unfortunately you have not met the criteria for continuing this study.'}`;
+    } else if (trainingAttempts - attemptsUsed === 1) {
+      message = 'Please try again. You have 1 attempt left.';
+    } else {
+      message = `Please try again. You have ${trainingAttempts - attemptsUsed} attempts left.`;
+    }
+    if (response.type === 'checkbox') {
+      const correct = config?.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
+      const incorrectValues = storeAnswers[identifier]?.incorrectAnswers?.[response.id]?.value;
+      const lastIncorrect = incorrectValues?.[incorrectValues.length - 1];
+      if (Array.isArray(correct)) {
+        const suppliedAnswer = Array.isArray(lastIncorrect) ? lastIncorrect as string[] : [];
+        const matches = findMatchingStrings(suppliedAnswer, correct);
+
+        const tooManySelected = correct.length === matches.length && suppliedAnswer.length > correct.length ? 'However, you have selected too many boxes. ' : '';
+
+        message = `You have successfully checked ${matches.length}/${correct.length} correct boxes. ${tooManySelected}${message}`;
+      }
+    }
+    return [response.id, {
+      visible: true, title: 'Incorrect Answer', message, color: 'red',
+    }];
+  })), [allResponsesWithDefaults, allowFailedTraining, attemptsUsed, checkAnswerResponses, config, hasCorrectAnswerFeedback, identifier, storeAnswers, trainingAttempts]);
   const checkAnswerProvideFeedback = useCallback(() => {
     if (hasStimulusIssue) {
       revealStimulusErrors();
@@ -503,7 +537,6 @@ export function ResponseBlock({
     }
 
     const newAttemptsUsed = attemptsUsed + 1;
-    setAttemptsUsed(newAttemptsUsed);
 
     const trialValidationCopy = structuredClone(trialValidation[identifier]);
     const allAnswers = (trialValidationCopy ? Object.values(trialValidationCopy).reduce((acc, curr) => {
@@ -527,6 +560,7 @@ export function ResponseBlock({
         )];
       }),
     );
+    const allCorrect = Object.values(correctAnswers).every((isCorrect) => isCorrect);
 
     if (hasCorrectAnswerFeedback) {
       (config?.correctAnswer ?? []).forEach((configCorrectAnswer) => {
@@ -534,52 +568,26 @@ export function ResponseBlock({
         if (!response || response.type === 'textOnly' || response.type === 'divider') {
           return;
         }
-        if (correctAnswers[response.id] && !alertConfig[response.id]?.message.includes('You\'ve failed to answer this question correctly')) {
-          updateAlertConfig(response.id, true, 'Correct Answer', 'You have answered the question correctly.', 'green');
-        } else {
+        if (!correctAnswers[response.id]) {
           storeDispatch(saveIncorrectAnswer({ question: identifier, identifier: response.id, answer: allAnswers[response.id] }));
-          let message = '';
-          if (trainingAttempts === -1) {
-            message = 'Please try again.';
-          } else if (newAttemptsUsed >= trainingAttempts) {
-            message = `You didn't answer this question correctly after ${trainingAttempts} attempts. ${allowFailedTraining ? 'You can continue to the next question.' : 'Unfortunately you have not met the criteria for continuing this study.'}`;
-
-            // If the user has failed the training, wait 5 seconds and redirect to a fail page
-            if (!allowFailedTraining) {
-              setTimeout(() => {
-                navigate(`./../__trainingFailed${window.location.search}`);
-              }, 5000);
-            }
-          } else if (trainingAttempts - newAttemptsUsed === 1) {
-            message = 'Please try again. You have 1 attempt left.';
-          } else {
-            message = `Please try again. You have ${trainingAttempts - newAttemptsUsed} attempts left.`;
-          }
-          if (response.type === 'checkbox') {
-            const correct = config?.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
-
-            const suppliedAnswer = allAnswers[response.id] as string[];
-            const matches = findMatchingStrings(suppliedAnswer, correct);
-
-            const tooManySelected = correct.length === matches.length && suppliedAnswer.length > correct.length ? 'However, you have selected too many boxes. ' : '';
-
-            message = `You have successfully checked ${matches.length}/${correct.length} correct boxes. ${tooManySelected}${message}`;
-          }
-          updateAlertConfig(response.id, true, 'Incorrect Answer', message, 'red');
         }
       });
 
-      setHasCorrectAnswer(Object.values(correctAnswers).every((isCorrect) => isCorrect));
-      setEnableNextButton(
-        (
-          allowFailedTraining && newAttemptsUsed >= trainingAttempts
-        ) || (
-          Object.values(correctAnswers).every((isCorrect) => isCorrect)
-          && newAttemptsUsed <= trainingAttempts
-        ),
-      );
+      // If the user has failed the training, wait 5 seconds and redirect to a fail page
+      if (!allCorrect && trainingAttempts >= 0 && newAttemptsUsed >= trainingAttempts && !allowFailedTraining) {
+        setTimeout(() => {
+          navigate(`./../__trainingFailed${window.location.search}`);
+        }, 5000);
+      }
     }
-  }, [alertConfig, allResponsesWithDefaults, allowFailedTraining, attemptsUsed, config, hasCorrectAnswerFeedback, hasResponseIssues, hasStimulusIssue, identifier, navigate, revealResponseErrors, revealStimulusErrors, saveIncorrectAnswer, storeDispatch, trainingAttempts, trialValidation]);
+
+    storeDispatch(setCheckAnswerResult({
+      identifier,
+      attemptsUsed: newAttemptsUsed,
+      correct: allCorrect,
+      responses: correctAnswers,
+    }));
+  }, [allResponsesWithDefaults, allowFailedTraining, attemptsUsed, config, hasCorrectAnswerFeedback, hasResponseIssues, hasStimulusIssue, identifier, navigate, revealResponseErrors, revealStimulusErrors, saveIncorrectAnswer, setCheckAnswerResult, storeDispatch, trainingAttempts, trialValidation]);
 
   const nextOnEnter = config?.nextOnEnter ?? studyConfig.uiConfig.nextOnEnter;
 
@@ -608,6 +616,15 @@ export function ResponseBlock({
 
     storeDispatch(setResponseSubmitAttempt({ identifier, attempted: savedSubmitAttempt }));
   }, [currentSubmitAttempt, identifier, isAnalysis, savedSubmitAttempt, setResponseSubmitAttempt, storeDispatch]);
+
+  useEffect(() => {
+    // If in analysis or does not have a saved check answer, do not set the check answer result
+    if (isAnalysis || currentCheckAnswer !== undefined || savedCheckAnswer === undefined) {
+      return;
+    }
+
+    storeDispatch(setCheckAnswerResult({ identifier, ...savedCheckAnswer }));
+  }, [currentCheckAnswer, identifier, isAnalysis, savedCheckAnswer, setCheckAnswerResult, storeDispatch]);
 
   const handleNextClick = useCallback(() => {
     if (hasStimulusIssue) {
@@ -695,16 +712,7 @@ export function ResponseBlock({
                     />
                   </div>
                 )
-              ) : (
-                <FeedbackAlert
-                  response={response}
-                  correctAnswer={correctAnswer}
-                  alertConfig={alertConfig}
-                  identifier={identifier}
-                  attemptsUsed={attemptsUsed}
-                  trainingAttempts={trainingAttempts}
-                />
-              )}
+              ) : null}
             </React.Fragment>
           );
         })}

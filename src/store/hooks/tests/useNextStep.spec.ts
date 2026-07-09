@@ -21,6 +21,7 @@ let mockIdentifier = 'trial1_0';
 let mockFlatSequence = ['trial1', 'attentionCheck', 'end'];
 let mockAnswers: Record<string, StoredAnswer> = {};
 let mockTrialValidation: Record<string, Record<string, object>> = {};
+let mockCheckAnswer: Record<string, { attemptsUsed: number; correct: boolean; responses: Record<string, boolean> }> = {};
 let mockSequence = defaultSequence;
 let mockModes = { dataCollectionEnabled: true, developmentModeEnabled: false, dataSharingEnabled: false };
 let mockNavigate = vi.fn();
@@ -52,6 +53,7 @@ vi.mock('../../store', () => ({
     modes: mockModes,
     clickedPrevious: false,
     responseSubmitAttempted: { [mockIdentifier]: true },
+    checkAnswer: mockCheckAnswer,
   } as StoreState),
   useStoreDispatch: () => mockDispatch,
   useStoreActions: () => ({
@@ -243,6 +245,7 @@ describe('useNextStep', () => {
     mockSaveProvenance = vi.fn().mockResolvedValue(undefined);
     mockDispatch = vi.fn();
     mockSaveTrialAnswer = vi.fn((payload) => ({ type: 'saveTrialAnswer', payload }));
+    mockCheckAnswer = {};
     mockSetReactiveAnswers.mockClear();
     mockSetMatrixAnswersCheckbox.mockClear();
     mockSetMatrixAnswersRadio.mockClear();
@@ -297,6 +300,14 @@ describe('useNextStep', () => {
     const { result } = renderHook(() => useNextStep());
     act(() => { result.current.goToNextStep(); });
     expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  test('goToNextStep persists checkAnswer state with the saved answer', () => {
+    mockCheckAnswer = { trial1_0: { attemptsUsed: 2, correct: true, responses: { q1: true } } };
+    const { result } = renderHook(() => useNextStep());
+    act(() => { result.current.goToNextStep(); });
+    const savedPayload = mockSaveTrialAnswer.mock.calls[0][0] as Record<string, unknown>;
+    expect(savedPayload.checkAnswer).toEqual({ attemptsUsed: 2, correct: true, responses: { q1: true } });
   });
 
   test('goToNextStep(false) marks answer as timed out', () => {
