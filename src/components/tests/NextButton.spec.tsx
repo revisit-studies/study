@@ -274,6 +274,50 @@ describe('NextButton', () => {
     expect(onNext).not.toHaveBeenCalled();
   });
 
+  test('nextOnEnter: Enter runs onCheckAnswer instead of onNext while it is provided', async () => {
+    const onNext = vi.fn();
+    const onCheckAnswer = vi.fn();
+    mockStudyConfig = { uiConfig: { ...mockStudyConfig.uiConfig, nextOnEnter: true } };
+    await act(async () => {
+      render(<NextButton checkAnswer={null} onCheckAnswer={onCheckAnswer} onNext={onNext} />);
+    });
+    await act(async () => { fireEvent.keyDown(window, { key: 'Enter' }); });
+    expect(onCheckAnswer).toHaveBeenCalledTimes(1);
+    expect(onNext).not.toHaveBeenCalled();
+  });
+
+  test('nextOnEnter: Enter runs onCheckAnswer even while the Next button is disabled', async () => {
+    const onNext = vi.fn();
+    const onCheckAnswer = vi.fn();
+    mockStudyConfig = { uiConfig: { ...mockStudyConfig.uiConfig, nextOnEnter: true } };
+    await act(async () => {
+      render(<NextButton checkAnswer={null} onCheckAnswer={onCheckAnswer} onNext={onNext} disabled />);
+    });
+    await act(async () => { fireEvent.keyDown(window, { key: 'Enter' }); });
+    expect(onCheckAnswer).toHaveBeenCalledTimes(1);
+    expect(onNext).not.toHaveBeenCalled();
+  });
+
+  test('nextOnEnter: the enable timer gates onNext but not onCheckAnswer', async () => {
+    const onNext = vi.fn();
+    const onCheckAnswer = vi.fn();
+    mockStudyConfig = {
+      uiConfig: { ...mockStudyConfig.uiConfig, nextOnEnter: true, nextButtonEnableTime: 5000 },
+    };
+    let rerender!: ReturnType<typeof render>['rerender'];
+    await act(async () => {
+      ({ rerender } = render(<NextButton checkAnswer={null} onCheckAnswer={onCheckAnswer} onNext={onNext} />));
+    });
+    await act(async () => { fireEvent.keyDown(window, { key: 'Enter' }); });
+    expect(onCheckAnswer).toHaveBeenCalledTimes(1);
+    expect(onNext).not.toHaveBeenCalled();
+    await act(async () => {
+      rerender(<NextButton checkAnswer={null} onNext={onNext} />);
+    });
+    await act(async () => { fireEvent.keyDown(window, { key: 'Enter' }); });
+    expect(onNext).not.toHaveBeenCalled();
+  });
+
   test('resets auto-advance state when the current identifier changes', async () => {
     const config = {
       type: 'questionnaire',

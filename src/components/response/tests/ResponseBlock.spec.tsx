@@ -17,7 +17,7 @@ import { responseAnswerIsCorrect } from '../../../utils/correctAnswer';
 
 // ── mocks ────────────────────────────────────────────────────────────────────
 
-const { mockStoredAnswerData } = vi.hoisted(() => ({
+const { mockStoredAnswerData, capturedNextButtonProps, mockIsAnalysis } = vi.hoisted(() => ({
   mockStoredAnswerData: {
     formOrder: { response: ['q1'] },
     questionOrders: {},
@@ -25,6 +25,10 @@ const { mockStoredAnswerData } = vi.hoisted(() => ({
     responseSubmitAttempted: undefined as boolean | undefined,
     checkAnswer: undefined as { attemptsUsed: number; correct: boolean; responses: Record<string, boolean> } | undefined,
   },
+  capturedNextButtonProps: {
+    onCheckAnswer: undefined as (() => void) | undefined,
+  },
+  mockIsAnalysis: { value: false },
 }));
 
 vi.mock('@mantine/core', () => ({
@@ -83,6 +87,10 @@ vi.mock('../../../store/hooks/useStoredAnswer', () => ({
   useStoredAnswer: vi.fn(() => mockStoredAnswerData),
 }));
 
+vi.mock('../../../store/hooks/useIsAnalysis', () => ({
+  useIsAnalysis: vi.fn(() => mockIsAnalysis.value),
+}));
+
 vi.mock('../../../store/hooks/useWindowEvents', () => ({
   useWindowEvents: vi.fn(() => ({ current: [] })),
 }));
@@ -135,12 +143,17 @@ vi.mock('../FeedbackAlert', () => ({
 }));
 
 vi.mock('../../NextButton', () => ({
-  NextButton: ({ label, disabled, checkAnswer }: { label?: string; disabled?: boolean; checkAnswer?: ReactNode }) => (
-    <div>
-      {checkAnswer}
-      <button type="button" disabled={disabled}>{label}</button>
-    </div>
-  ),
+  NextButton: ({
+    label, disabled, checkAnswer, onCheckAnswer,
+  }: { label?: string; disabled?: boolean; checkAnswer?: ReactNode; onCheckAnswer?: () => void }) => {
+    capturedNextButtonProps.onCheckAnswer = onCheckAnswer;
+    return (
+      <div>
+        {checkAnswer}
+        <button type="button" disabled={disabled}>{label}</button>
+      </div>
+    );
+  },
 }));
 
 // ── fixtures ──────────────────────────────────────────────────────────────────
@@ -235,6 +248,8 @@ beforeEach(() => {
   mockStoredAnswerData.formOrder = { response: ['q1'] };
   mockStoredAnswerData.responseSubmitAttempted = undefined;
   mockStoredAnswerData.checkAnswer = undefined;
+  capturedNextButtonProps.onCheckAnswer = undefined;
+  mockIsAnalysis.value = false;
 });
 
 // Unmount between tests so window keydown listeners from prior renders don't leak
@@ -343,18 +358,6 @@ describe('ResponseBlock', () => {
     // After a correct answer the Check Answer button should become disabled
     expect(checkBtn).toHaveProperty('disabled', true);
   });
-
-  test('nextOnEnter=true registers keydown listener that fires checkAnswerProvideFeedback', async () => {
-    const configWithEnter = {
-      ...baseConfig,
-      nextOnEnter: true,
-      provideFeedback: true,
-      correctAnswer: [{ id: 'q1', answer: 'correct' }],
-    } as IndividualComponent;
-    await renderWithStore(<ResponseBlock config={configWithEnter} location="belowStimulus" />);
-    await act(async () => { fireEvent.keyDown(window, { key: 'Enter' }); });
-    // Verifies the listener registered without throwing
-  });
 });
 
 // ── focus recovery on validation errors ──────────────────────────────────────
@@ -410,7 +413,7 @@ describe('ResponseBlock focus recovery', () => {
 
 // ── Check Answer via keyboard ─────────────────────────────────────────────────
 
-describe('ResponseBlock keyboard Check Answer', () => {
+describe('ResponseBlock onCheckAnswer', () => {
   const feedbackEnterConfig = {
     ...baseConfig,
     nextOnEnter: true,
@@ -418,7 +421,7 @@ describe('ResponseBlock keyboard Check Answer', () => {
     correctAnswer: [{ id: 'q1', answer: 'correct' }],
   } as IndividualComponent;
 
-  test('one Enter press shows one feedback alert and saves one incorrect answer across all mounted locations', async () => {
+  test('passes onCheckAnswer to NextButton and grades once when called', async () => {
     vi.mocked(responseAnswerIsCorrect).mockReturnValue(false);
     const { container, store } = await renderWithStore(
       <>
@@ -427,77 +430,63 @@ describe('ResponseBlock keyboard Check Answer', () => {
         <ResponseBlock config={feedbackEnterConfig} location="sidebar" />
       </>,
     );
-    await act(async () => { fireEvent.keyDown(window, { key: 'Enter' }); });
+    const nextButtons = Array.from(container.querySelectorAll('button')).filter((b) => b.textContent === 'Next');
+    expect(nextButtons).toHaveLength(1);
+    expect(capturedNextButtonProps.onCheckAnswer).toBeDefined();
+    await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
     expect(container.querySelectorAll('[data-testid="feedback-alert-q1"]')).toHaveLength(1);
     expect(incorrectCount(store)).toBe(1);
     expect(store.getState().checkAnswer.trial1_0.attemptsUsed).toBe(1);
   });
 
-  test('non-owner response block ignores Enter', async () => {
-    vi.mocked(responseAnswerIsCorrect).mockReturnValue(false);
-    const { container, store } = await renderWithStore(
+  test('does not pass onCheckAnswer when location does not match nextButtonLocation', async () => {
+    const { container } = await renderWithStore(
       <ResponseBlock config={feedbackEnterConfig} location="sidebar" />,
     );
-    await act(async () => { fireEvent.keyDown(window, { key: 'Enter' }); });
-    expect(container.querySelectorAll('[data-testid="feedback-alert-q1"]')).toHaveLength(0);
-    expect(incorrectCount(store)).toBe(0);
+    expect(Array.from(container.querySelectorAll('button')).filter((b) => b.textContent === 'Next')).toHaveLength(0);
+    expect(capturedNextButtonProps.onCheckAnswer).toBeUndefined();
   });
 
-  test('Enter pressed inside a textarea does not trigger Check Answer', async () => {
-    vi.mocked(responseAnswerIsCorrect).mockReturnValue(false);
-    const { container, store } = await renderWithStore(
-      <ResponseBlock config={feedbackEnterConfig} location="belowStimulus" />,
-    );
-    const textarea = document.createElement('textarea');
-    document.body.appendChild(textarea);
-    try {
-      await act(async () => { fireEvent.keyDown(textarea, { key: 'Enter' }); });
-      expect(container.querySelectorAll('[data-testid="feedback-alert-q1"]')).toHaveLength(0);
-      expect(incorrectCount(store)).toBe(0);
-    } finally {
-      document.body.removeChild(textarea);
-    }
-  });
-
-  test('Enter stops counting attempts once training attempts are exhausted', async () => {
+  test('does not pass onCheckAnswer after all attempts are used', async () => {
     // uiConfig mock sets trainingAttempts: 2
     vi.mocked(responseAnswerIsCorrect).mockReturnValue(false);
     const { store } = await renderWithStore(<ResponseBlock config={feedbackEnterConfig} location="belowStimulus" />);
-    await act(async () => { fireEvent.keyDown(window, { key: 'Enter' }); });
-    await act(async () => { fireEvent.keyDown(window, { key: 'Enter' }); });
-    await act(async () => { fireEvent.keyDown(window, { key: 'Enter' }); });
-    expect(incorrectCount(store)).toBe(2);
+    await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
+    await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
     expect(store.getState().checkAnswer.trial1_0.attemptsUsed).toBe(2);
+    expect(capturedNextButtonProps.onCheckAnswer).toBeUndefined();
+    expect(incorrectCount(store)).toBe(2);
   });
 
-  test('Enter on the focused Check Answer button defers to its synthesized click (no double handling)', async () => {
-    vi.mocked(responseAnswerIsCorrect).mockReturnValue(false);
+  test('does not pass onCheckAnswer after a correct answer', async () => {
     const { container, store } = await renderWithStore(
       <ResponseBlock config={feedbackEnterConfig} location="belowStimulus" />,
     );
-    const checkBtn = Array.from(container.querySelectorAll('button')).find(
-      (b) => b.textContent === 'Check Answer',
-    )!;
-    // Avoid double-running when Enter on a focused button also triggers click
-    await act(async () => { fireEvent.keyDown(checkBtn, { key: 'Enter' }); });
-    expect(incorrectCount(store)).toBe(0);
-    await act(async () => { fireEvent.click(checkBtn); });
-    expect(incorrectCount(store)).toBe(1);
-  });
-
-  test('Enter after a correct answer does not re-run feedback', async () => {
-    const { container, store } = await renderWithStore(
-      <ResponseBlock config={feedbackEnterConfig} location="belowStimulus" />,
-    );
-    await act(async () => { fireEvent.keyDown(window, { key: 'Enter' }); });
+    await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
     const checkBtn = Array.from(container.querySelectorAll('button')).find(
       (b) => b.textContent === 'Check Answer',
     );
     expect(checkBtn).toHaveProperty('disabled', true);
-    await act(async () => { fireEvent.keyDown(window, { key: 'Enter' }); });
+    expect(capturedNextButtonProps.onCheckAnswer).toBeUndefined();
     expect(container.querySelectorAll('[data-testid="feedback-alert-q1"]')).toHaveLength(1);
-    expect(incorrectCount(store)).toBe(0);
     expect(store.getState().checkAnswer.trial1_0.attemptsUsed).toBe(1);
+  });
+
+  test('does not pass onCheckAnswer in analysis mode', async () => {
+    mockIsAnalysis.value = true;
+    const { container } = await renderWithStore(
+      <ResponseBlock config={feedbackEnterConfig} location="belowStimulus" />,
+    );
+    expect(Array.from(container.querySelectorAll('button')).filter((b) => b.textContent === 'Next')).toHaveLength(1);
+    expect(capturedNextButtonProps.onCheckAnswer).toBeUndefined();
+  });
+
+  test('does not pass onCheckAnswer when there is no correct answer feedback', async () => {
+    const { container } = await renderWithStore(
+      <ResponseBlock config={{ ...baseConfig, nextOnEnter: true } as IndividualComponent} location="belowStimulus" />,
+    );
+    expect(Array.from(container.querySelectorAll('button')).filter((b) => b.textContent === 'Next')).toHaveLength(1);
+    expect(capturedNextButtonProps.onCheckAnswer).toBeUndefined();
   });
 });
 
