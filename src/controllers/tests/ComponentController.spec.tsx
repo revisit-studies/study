@@ -695,7 +695,7 @@ describe('VegaController — signal and event coverage', () => {
     render(
       <VegaController
         currentConfig={{ type: 'vega', path: '/chart.json', response: [] }}
-        provState={{ event: { key: 'testKey', value: 'testVal' } }}
+        provState={{ event: { key: 'mySignal', value: 'testVal' } }}
       />,
     );
 
@@ -709,6 +709,7 @@ describe('VegaController — signal and event coverage', () => {
     });
 
     expect(mockDispatch).toHaveBeenCalled();
+    expect(fakeView.signal).toHaveBeenCalledWith('mySignal', 'testVal');
   });
 
   test('ignores replayed provenance for signals missing from the active vega config', async () => {
