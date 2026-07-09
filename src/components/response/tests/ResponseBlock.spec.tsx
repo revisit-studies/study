@@ -360,8 +360,7 @@ describe('ResponseBlock', () => {
 // ── focus recovery on validation errors ──────────────────────────────────────
 
 describe('ResponseBlock focus recovery', () => {
-  // jsdom implements neither CSS.escape (used by scrollToFirstUnresolvedQuestion)
-  // nor scrollIntoView, so stub both and restore after each test to avoid leaking
+  // Stub browser APIs missing in jsdom that are used by the focus/scroll logic
   const scrollSpy = vi.fn();
   let originalScrollIntoView: typeof HTMLElement.prototype.scrollIntoView;
   beforeEach(() => {
@@ -409,7 +408,7 @@ describe('ResponseBlock focus recovery', () => {
   });
 });
 
-// ── keyboard Check Answer (issue #1237) ──────────────────────────────────────
+// ── Check Answer via keyboard ─────────────────────────────────────────────────
 
 describe('ResponseBlock keyboard Check Answer', () => {
   const feedbackEnterConfig = {
@@ -479,8 +478,7 @@ describe('ResponseBlock keyboard Check Answer', () => {
     const checkBtn = Array.from(container.querySelectorAll('button')).find(
       (b) => b.textContent === 'Check Answer',
     )!;
-    // the browser synthesizes a click for Enter on a focused button, so the
-    // global handler must skip the keydown
+    // Avoid double-running when Enter on a focused button also triggers click
     await act(async () => { fireEvent.keyDown(checkBtn, { key: 'Enter' }); });
     expect(incorrectCount(store)).toBe(0);
     await act(async () => { fireEvent.click(checkBtn); });
