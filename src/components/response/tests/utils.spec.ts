@@ -18,6 +18,7 @@ import {
   checkCheckboxResponseForValidation,
   generateCustomResponseErrorMessage,
   generateErrorMessage,
+  getResponseIssueType,
   REQUIRED_ERROR_MESSAGE,
   shouldBypassValidationForStandaloneDontKnow,
   usesStandaloneDontKnowField,
@@ -337,6 +338,42 @@ describe('validateResponse', () => {
     });
   });
 
+  test('scalar requiredValue accepts only the configured value', () => {
+    const response: Response = {
+      ...requiredShortText,
+      requiredValue: 'expected',
+    };
+
+    expect(validateResponse(response, 'expected', { q1: 'expected' })).toMatchObject({
+      valid: true,
+      issueType: 'none',
+      blocksProgression: false,
+    });
+    expect(validateResponse(response, 'different', { q1: 'different' })).toMatchObject({
+      valid: false,
+      issueType: 'invalid',
+      reason: 'requiredValueMismatch',
+      blocksProgression: true,
+    });
+  });
+
+  test.each(['textOnly', 'divider', 'reactive'] as const)(
+    '%s responses do not participate in response validation',
+    (type) => {
+      const response = {
+        id: 'display-only',
+        prompt: 'Display only',
+        type,
+      } as Response;
+
+      expect(validateResponse(response, undefined, {})).toEqual({
+        valid: true,
+        issueType: 'none',
+        blocksProgression: false,
+      });
+    },
+  );
+
   test('numerical min, max, and range are inclusive', () => {
     const response: NumericalResponse = {
       id: 'q1', prompt: 'Question', type: 'numerical', required: true, min: 1, max: 10,
@@ -433,6 +470,30 @@ describe('validateResponse', () => {
     expect(validateResponse(response, {}, { ranking: {} })).toMatchObject({
       issueType: 'unanswered',
       blocksProgression: true,
+    });
+    expect(validateResponse(response, { A: '0' }, { ranking: { A: '0' } })).toEqual({
+      valid: true,
+      issueType: 'none',
+      blocksProgression: false,
+    });
+  });
+
+  test('Mantine and progression adapters agree for required response states', () => {
+    const response: Response = {
+      ...requiredShortText,
+      requiredValue: 'expected',
+    };
+    const validator = generateValidation([response])[response.id];
+    const cases = [
+      { value: '', expectedError: REQUIRED_ERROR_MESSAGE, expectedIssue: 'unanswered' },
+      { value: 'different', expectedError: 'Incorrect input', expectedIssue: 'invalid' },
+      { value: 'expected', expectedError: null, expectedIssue: null },
+    ] as const;
+
+    cases.forEach(({ value, expectedError, expectedIssue }) => {
+      const values = { [response.id]: value };
+      expect(validator(value, values)).toBe(expectedError);
+      expect(getResponseIssueType(response, values)).toBe(expectedIssue);
     });
   });
 
