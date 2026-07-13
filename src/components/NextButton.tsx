@@ -5,6 +5,7 @@ import {
 import { IconInfoCircle, IconAlertTriangle } from '@tabler/icons-react';
 import { useNavigate } from 'react-router';
 import { useNextStep } from '../store/hooks/useNextStep';
+import { shouldIgnoreEnter } from './keyboardUtils';
 import type { IndividualComponent, ResponseBlockLocation } from '../parser/types';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { useCurrentIdentifier } from '../routes/utils';
@@ -99,7 +100,7 @@ export function NextButton({
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Enter' && !disabled && !isNextDisabled && buttonTimerSatisfied) {
+      if (event.key === 'Enter' && !shouldIgnoreEnter(event.target) && !disabled && !isNextDisabled && buttonTimerSatisfied) {
         onNext();
       }
     };

@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import {
-  render, act, cleanup, screen,
+  render, act, cleanup, screen, fireEvent,
 } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
@@ -244,6 +244,34 @@ describe('NextButton', () => {
       window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
     });
     expect(onNext).toHaveBeenCalled();
+  });
+
+  test('nextOnEnter: Enter inside a textarea does not call onNext', async () => {
+    const onNext = vi.fn();
+    mockStudyConfig = { uiConfig: { ...mockStudyConfig.uiConfig, nextOnEnter: true } };
+    await act(async () => {
+      render(<NextButton checkAnswer={null} onNext={onNext} />);
+    });
+    const textarea = document.createElement('textarea');
+    document.body.appendChild(textarea);
+    try {
+      await act(async () => { fireEvent.keyDown(textarea, { key: 'Enter' }); });
+      expect(onNext).not.toHaveBeenCalled();
+    } finally {
+      document.body.removeChild(textarea);
+    }
+  });
+
+  test('nextOnEnter: Enter on a focused button is left to its synthesized click', async () => {
+    const onNext = vi.fn();
+    mockStudyConfig = { uiConfig: { ...mockStudyConfig.uiConfig, nextOnEnter: true } };
+    let container!: HTMLElement;
+    await act(async () => {
+      ({ container } = render(<NextButton checkAnswer={null} onNext={onNext} />));
+    });
+    const button = container.querySelector('button')!;
+    await act(async () => { fireEvent.keyDown(button, { key: 'Enter' }); });
+    expect(onNext).not.toHaveBeenCalled();
   });
 
   test('resets auto-advance state when the current identifier changes', async () => {
