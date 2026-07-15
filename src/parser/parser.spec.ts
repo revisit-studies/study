@@ -1564,6 +1564,68 @@ describe('Parser Warnings', () => {
     });
   });
 
+  test('fills factor values from at-sign template tokens in generated component parameters', async () => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2024-01-01',
+        description: 'Test',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'researcher@university.edu',
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: true,
+      },
+      baseComponents: {
+        factorComponent: {
+          type: 'react-component',
+          path: 'test/assets/Factor.tsx',
+          parameters: {
+            label: '@m/@n',
+            contact: 'researcher@example.edu',
+            unknownToken: '@missing',
+          },
+          response: [],
+        },
+      },
+      components: {},
+      factors: {
+        m: ['m1', 'm2'],
+        n: ['n1', 'n2'],
+      },
+      sequence: {
+        type: 'factor',
+        action: 'nest',
+        id: 'nestedFactors',
+        factorsToCross: [
+          { factor: 'm' },
+          { factor: 'n' },
+        ],
+        component: 'factorComponent',
+      },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toEqual([]);
+    expect(result.components._m2_n2).toMatchObject({
+      parameters: {
+        label: 'm2/n2',
+        contact: 'researcher@example.edu',
+        unknownToken: '@missing',
+        m: 'm2',
+        n: 'n2',
+      },
+    });
+  });
+
   test('accepts cross action for factors and expands to crossed fixed sequence', async () => {
     const studyConfig = {
       $schema: '',

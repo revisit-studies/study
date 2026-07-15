@@ -1759,12 +1759,14 @@ export interface ComponentBlock {
   conditional?: boolean;
 }
 
-export type FactorAction = 'nest' | 'cross' | 'zip';
+export type FactorAction = 'nest' | 'cross' | 'zip' | 'concat' | 'repeat';
 
 export interface FactorDefinition {
   factorsToCross: FactorReference[];
   action: FactorAction;
   order?: ComponentOrder;
+  /** The number of times to repeat factor values when action is repeat. Defaults to 1. */
+  numRepeats?: number;
   component: string;
   parameters?: Record<string, unknown>
 }

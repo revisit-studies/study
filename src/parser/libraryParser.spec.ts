@@ -2,7 +2,7 @@ import {
   describe, expect, test, vi,
 } from 'vitest';
 import {
-  createFactorComponents, expandFactorSequences, expandLibrarySequences, verifyLibraryUsage, loadLibrariesParseNamespace, resolveFactorReferences, validateFactorGraph,
+  createFactorComponents, expandFactorSequences, expandLibrarySequences, fillTemplate, verifyLibraryUsage, loadLibrariesParseNamespace, resolveFactorReferences, validateFactorGraph,
 } from './libraryParser';
 import {
   ComponentBlock, LibraryConfig, StudyConfig, InheritedComponent, IndividualComponent, ParserErrorWarning,
@@ -13,6 +13,21 @@ import { isDynamicBlock, isFactorSequence } from './utils';
 function isComponentBlock(value: unknown): value is ComponentBlock {
   return typeof value === 'object' && value !== null && 'components' in value && !isDynamicBlock(value as StudyConfig['sequence']);
 }
+
+describe('Factor Templates', () => {
+  test('fills factor values using braced and at-sign template tokens', () => {
+    expect(fillTemplate(`data=$${'{data}'}; vis=@visType`, {
+      data: 'd1',
+      visType: 'bar',
+    })).toBe('data=d1; vis=bar');
+  });
+
+  test('does not replace at-sign text when it is not a factor token', () => {
+    expect(fillTemplate('email contact@revisit.dev and @missing', {
+      data: 'd1',
+    })).toBe('email contact@revisit.dev and @missing');
+  });
+});
 
 describe('Factor Expansion', () => {
   test('resolves reusable top-level factor references', () => {
@@ -112,11 +127,20 @@ describe('Factor Expansion', () => {
         ageGroup: ['young', 'old'],
         learningStrategies: ['monologue', 'scaffolding', 'conceptual'],
         topics: ['sleep', 'cholesterol', 'alzheimer', 'vitamin', 'sugar', 'flu'],
+        Ok_googleLearningStrategySlots: {
+          action: 'repeat',
+          order: 'fixed',
+          numRepeats: 2,
+          factorsToCross: [
+            { factor: 'learningStrategies' },
+          ],
+          component: 'factorComponent',
+        },
         Ok_googleTopicAssignments: {
           action: 'zip',
           order: 'random',
           factorsToCross: [
-            { factor: 'learningStrategies', numSamples: 6 },
+            { factor: 'Ok_googleLearningStrategySlots' },
             { factor: 'topics', numSamples: 6 },
           ],
           component: 'factorComponent',
@@ -165,11 +189,20 @@ describe('Factor Expansion', () => {
         ageGroup: ['young', 'old'],
         learningStrategies: ['monologue', 'scaffolding', 'conceptual'],
         topics: ['sleep', 'cholesterol', 'alzheimer', 'vitamin', 'sugar', 'flu'],
+        Ok_googleLearningStrategySlots: {
+          action: 'repeat',
+          order: 'fixed',
+          numRepeats: 2,
+          factorsToCross: [
+            { factor: 'learningStrategies' },
+          ],
+          component: 'factorComponent',
+        },
         Ok_googleTopicAssignments: {
           action: 'zip',
           order: 'random',
           factorsToCross: [
-            { factor: 'learningStrategies', numSamples: 6 },
+            { factor: 'Ok_googleLearningStrategySlots' },
             { factor: 'topics', numSamples: 6 },
           ],
           component: 'factorComponent',
@@ -312,6 +345,63 @@ describe('Factor Expansion', () => {
       expect(result.components).toEqual([
         '_m1_n1',
         '_m2_n2',
+      ]);
+    }
+  });
+
+  test('expands concat action into concatenated component values', () => {
+    const sequence: StudyConfig['sequence'] = {
+      type: 'factor',
+      action: 'concat',
+      id: 'concatenatedFactors',
+      factorsToCross: [
+        { factor: 'm' },
+        { factor: 'n', numSamples: 2 },
+      ],
+      component: 'factorComponent',
+    };
+
+    const result = expandFactorSequences(sequence, {}, {
+      m: ['m1', 'm2'],
+      n: ['n1', 'n2', 'n3'],
+    });
+
+    expect(isComponentBlock(result)).toBe(true);
+    if (isComponentBlock(result)) {
+      expect(result.order).toBe('fixed');
+      expect(result.components).toEqual([
+        '_m1',
+        '_m2',
+        '_n1',
+        '_n2',
+      ]);
+    }
+  });
+
+  test('expands repeat action into repeated component values', () => {
+    const sequence: StudyConfig['sequence'] = {
+      type: 'factor',
+      action: 'repeat',
+      id: 'repeatedFactors',
+      numRepeats: 2,
+      factorsToCross: [
+        { factor: 'm' },
+      ],
+      component: 'factorComponent',
+    };
+
+    const result = expandFactorSequences(sequence, {}, {
+      m: ['m1', 'm2'],
+    });
+
+    expect(isComponentBlock(result)).toBe(true);
+    if (isComponentBlock(result)) {
+      expect(result.order).toBe('fixed');
+      expect(result.components).toEqual([
+        '_m1',
+        '_m2',
+        '_m1',
+        '_m2',
       ]);
     }
   });

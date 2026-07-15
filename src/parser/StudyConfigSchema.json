@@ -1004,7 +1004,9 @@
       "enum": [
         "nest",
         "cross",
-        "zip"
+        "zip",
+        "concat",
+        "repeat"
       ],
       "type": "string"
     },
@@ -1022,6 +1024,10 @@
             "$ref": "#/definitions/FactorReference"
           },
           "type": "array"
+        },
+        "numRepeats": {
+          "description": "The number of times to repeat factor values when action is repeat. Defaults to 1.",
+          "type": "number"
         },
         "order": {
           "$ref": "#/definitions/ComponentOrder"
@@ -1070,6 +1076,10 @@
         },
         "id": {
           "type": "string"
+        },
+        "numRepeats": {
+          "description": "The number of times to repeat factor values when action is repeat. Defaults to 1.",
+          "type": "number"
         },
         "order": {
           "$ref": "#/definitions/ComponentOrder"
