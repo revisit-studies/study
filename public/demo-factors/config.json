@@ -22,6 +22,16 @@
       "type": "react-component",
       "path": "demo-factors/assets/Factors.tsx",
       "response": []
+    },
+    "factorKeywordComponent": {
+      "type": "react-component",
+      "path": "demo-factors/assets/Factors.tsx",
+      "parameters": {
+        "atSyntaxLabel": "@data shown as @visType for @task",
+        "bracedSyntaxLabel": "${data}/${visType}/${task}",
+        "literalEmail": "contact@revisit.dev"
+      },
+      "response": []
     }
   },
   "components": {
@@ -166,13 +176,67 @@
       ],
       "component": "factorComponent"
     },
+    "factorKeywordBlock": {
+      "action": "nest",
+      "order": "fixed",
+      "factorsToCross": [
+        {
+          "factor": "data",
+          "numSamples": 1
+        },
+        {
+          "factor": "visType",
+          "numSamples": 1
+        },
+        {
+          "factor": "task",
+          "numSamples": 1
+        }
+      ],
+      "component": "factorKeywordComponent"
+    },
+    "concatBlock": {
+      "action": "concat",
+      "order": "fixed",
+      "factorsToCross": [
+        {
+          "factor": "data"
+        },
+        {
+          "factor": "task",
+          "numSamples": 2
+        }
+      ],
+      "component": "factorComponent"
+    },
+    "repeatBlock": {
+      "action": "repeat",
+      "order": "fixed",
+      "numRepeats": 2,
+      "factorsToCross": [
+        {
+          "factor": "visType"
+        }
+      ],
+      "component": "factorComponent"
+    },
+    "Ok_googleLearningStrategySlots": {
+      "action": "repeat",
+      "order": "fixed",
+      "numRepeats": 2,
+      "factorsToCross": [
+        {
+          "factor": "learningStrategies"
+        }
+      ],
+      "component": "factorComponent"
+    },
     "Ok_googleTopicAssignments": {
       "action": "zip",
       "order": "random",
       "factorsToCross": [
         {
-          "factor": "learningStrategies",
-          "numSamples": 6
+          "factor": "Ok_googleLearningStrategySlots"
         },
         {
           "factor": "topics",
@@ -236,6 +300,18 @@
         "factor": "sampledDerivedBlock"
       },
       {
+        "type": "factor",
+        "factor": "factorKeywordBlock"
+      },
+      {
+        "type": "factor",
+        "factor": "concatBlock"
+      },
+      {
+        "type": "factor",
+        "factor": "repeatBlock"
+      },
+      {
         "id": "Ok_googleTutorialByAgeGroup",
         "order": "fixed",
         "components": [
@@ -245,9 +321,7 @@
             "parameters": {
               "ageGroup": "young"
             },
-            "components": [
-              "Ok_googleTutorialYoung"
-            ]
+            "components": ["Ok_googleTutorialYoung"]
           },
           {
             "id": "Ok_googleTutorialOldBlock",
@@ -255,9 +329,7 @@
             "parameters": {
               "ageGroup": "old"
             },
-            "components": [
-              "Ok_googleTutorialOld"
-            ]
+            "components": ["Ok_googleTutorialOld"]
           }
         ]
       },

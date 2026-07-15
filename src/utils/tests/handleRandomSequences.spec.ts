@@ -147,6 +147,79 @@ describe('Generating sequences works as expected', () => {
     ]);
   });
 
+  test('generateSequenceArray preserves concatenated ordering for concat factors', () => {
+    const concatFactorConfig: StudyConfig = {
+      ...config,
+      uiConfig: {
+        ...config.uiConfig,
+        numSequences: 1,
+      },
+      factors: {
+        m: ['m1', 'm2'],
+        n: ['n1', 'n2', 'n3'],
+      },
+      sequence: {
+        type: 'factor',
+        action: 'concat',
+        id: 'concatenatedFactors',
+        factorsToCross: [
+          { factor: 'm' },
+          { factor: 'n', numSamples: 2 },
+        ],
+        component: 'factorComponent',
+      },
+    };
+
+    const sequenceArray = generateSequenceArray(concatFactorConfig);
+
+    expect(sequenceArray).toHaveLength(1);
+    expect(sequenceArray[0].order).toBe('fixed');
+    expect(sequenceArray[0].components).toEqual([
+      '_m1',
+      '_m2',
+      '_n1',
+      '_n2',
+      'end',
+    ]);
+  });
+
+  test('generateSequenceArray repeats factor values for repeat factors', () => {
+    const repeatFactorConfig: StudyConfig = {
+      ...config,
+      uiConfig: {
+        ...config.uiConfig,
+        numSequences: 1,
+      },
+      factors: {
+        m: ['m1', 'm2'],
+      },
+      sequence: {
+        type: 'factor',
+        action: 'repeat',
+        id: 'repeatedFactors',
+        numRepeats: 3,
+        factorsToCross: [
+          { factor: 'm' },
+        ],
+        component: 'factorComponent',
+      },
+    };
+
+    const sequenceArray = generateSequenceArray(repeatFactorConfig);
+
+    expect(sequenceArray).toHaveLength(1);
+    expect(sequenceArray[0].order).toBe('fixed');
+    expect(sequenceArray[0].components).toEqual([
+      '_m1',
+      '_m2',
+      '_m1',
+      '_m2',
+      '_m1',
+      '_m2',
+      'end',
+    ]);
+  });
+
   test('generateSequenceArray preserves ordering when a factor is used as a factor', () => {
     const nestedFactorConfig: StudyConfig = {
       ...config,
@@ -317,11 +390,20 @@ describe('Generating sequences works as expected', () => {
         ageGroup: ['young', 'old'],
         learningStrategies: ['monologue', 'scaffolding', 'conceptual'],
         topics: ['sleep', 'cholesterol', 'alzheimer', 'vitamin', 'sugar', 'flu'],
+        Ok_googleLearningStrategySlots: {
+          action: 'repeat',
+          order: 'fixed',
+          numRepeats: 2,
+          factorsToCross: [
+            { factor: 'learningStrategies' },
+          ],
+          component: 'factorComponent',
+        },
         Ok_googleTopicAssignments: {
           action: 'zip',
           order: 'random',
           factorsToCross: [
-            { factor: 'learningStrategies', numSamples: 6 },
+            { factor: 'Ok_googleLearningStrategySlots' },
             { factor: 'topics', numSamples: 6 },
           ],
           component: 'factorComponent',
@@ -347,22 +429,22 @@ describe('Generating sequences works as expected', () => {
       expect(sequenceArray).toHaveLength(2);
       expect(sequenceArray[0].parameters).toEqual({ ageGroup: 'young' });
       expect(sequenceArray[0].components).toEqual([
-        '_young_scaffolding_cholesterol',
-        '_young_conceptual_alzheimer',
-        '_young_monologue_vitamin',
-        '_young_scaffolding_sugar',
-        '_young_conceptual_flu',
-        '_young_monologue_sleep',
+        '_young_monologue_cholesterol',
+        '_young_scaffolding_alzheimer',
+        '_young_conceptual_vitamin',
+        '_young_monologue_sugar',
+        '_young_scaffolding_flu',
+        '_young_conceptual_sleep',
         'end',
       ]);
       expect(sequenceArray[1].parameters).toEqual({ ageGroup: 'old' });
       expect(sequenceArray[1].components).toEqual([
-        '_old_scaffolding_cholesterol',
-        '_old_conceptual_alzheimer',
-        '_old_monologue_vitamin',
-        '_old_scaffolding_sugar',
-        '_old_conceptual_flu',
-        '_old_monologue_sleep',
+        '_old_monologue_cholesterol',
+        '_old_scaffolding_alzheimer',
+        '_old_conceptual_vitamin',
+        '_old_monologue_sugar',
+        '_old_scaffolding_flu',
+        '_old_conceptual_sleep',
         'end',
       ]);
       expect(sequenceArray[0].components.filter((component) => (

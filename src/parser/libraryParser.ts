@@ -75,9 +75,16 @@ function namespaceLibrarySequenceComponents(sequence: StudyConfig['sequence'], l
 
 // 1. Replace ${var} in a single string
 export function fillTemplate(str: string, vars: Record<string, unknown>): string {
-  return str.replace(/\$\{(\w+)\}/g, (_, key) => (vars[key] !== undefined && vars[key] !== null
+  const fillBracedToken = (_: string, key: string) => (vars[key] !== undefined && vars[key] !== null
     ? String(vars[key])
-    : ''));
+    : '');
+  const fillAtToken = (match: string, prefix: string, key: string) => (vars[key] !== undefined && vars[key] !== null
+    ? `${prefix}${String(vars[key])}`
+    : match);
+
+  return str
+    .replace(/\$\{(\w+)\}/g, fillBracedToken)
+    .replace(/(^|[^A-Za-z0-9_@])@([A-Za-z_]\w*)\b/g, fillAtToken);
 }
 
 // 2. Recursively replace in any TS value
@@ -117,6 +124,7 @@ function factorSequenceFromReference(
     id: reference.id ?? reference.factor,
     action: definition.action,
     order: reference.order ?? definition.order,
+    numRepeats: definition.numRepeats,
     factorsToCross: definition.factorsToCross,
     component: definition.component,
   };

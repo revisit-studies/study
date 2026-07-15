@@ -73,6 +73,7 @@ function factorDefinitionToSequence(id: string, definition: FactorDefinition): F
     id,
     action: definition.action,
     order: definition.order,
+    numRepeats: definition.numRepeats,
     factorsToCross: definition.factorsToCross,
     component: definition.component,
     ...(definition.parameters !== undefined ? { parameters: definition.parameters } : {}),
@@ -273,6 +274,17 @@ function factorCombinationFromIndices(
   ];
 }
 
+function factorCombinationFromValue(
+  value: FactorValue,
+  depth: number,
+  depthToFactorMap: Record<number, string>,
+): FactorCombination {
+  return [
+    appendFactorValueName('', factorValueName(value)),
+    factorValueParameters(value, depth, depthToFactorMap),
+  ];
+}
+
 export function combineCrossFactors(
   factors: FactorValue[][],
   depthToFactorMap: Record<number, string>,
@@ -320,10 +332,30 @@ export function combineZipFactors(
   ));
 }
 
+export function combineConcatFactors(
+  factors: FactorValue[][],
+  depthToFactorMap: Record<number, string>,
+): FactorCombination[] {
+  return factors.flatMap((factorValues, depth) => (
+    factorValues.map((value) => factorCombinationFromValue(value, depth, depthToFactorMap))
+  ));
+}
+
+export function combineRepeatFactors(
+  factors: FactorValue[][],
+  depthToFactorMap: Record<number, string>,
+  numRepeats = 1,
+): FactorCombination[] {
+  const repeatedFactors = combineConcatFactors(factors, depthToFactorMap);
+
+  return Array.from({ length: numRepeats }, () => repeatedFactors).flat();
+}
+
 export function combineFactorsByAction(
   action: FactorSequence['action'],
   factors: FactorValue[][],
   depthToFactorMap: Record<number, string>,
+  numRepeats?: number,
 ): FactorCombination[] {
   if (factors.length === 0 || factors.some((factor) => factor.length === 0)) {
     return [];
@@ -335,6 +367,14 @@ export function combineFactorsByAction(
 
   if (action === 'zip') {
     return combineZipFactors(factors, depthToFactorMap);
+  }
+
+  if (action === 'concat') {
+    return combineConcatFactors(factors, depthToFactorMap);
+  }
+
+  if (action === 'repeat') {
+    return combineRepeatFactors(factors, depthToFactorMap, numRepeats);
   }
 
   return combineFactors(0, factors, '', depthToFactorMap, {});
@@ -383,7 +423,7 @@ export function getFactorCombinations(
     ? 'nest'
     : block.action;
 
-  return combineFactorsByAction(action, factorValues, depthToFactorMap);
+  return combineFactorsByAction(action, factorValues, depthToFactorMap, block.numRepeats);
 }
 
 type UniqueComponentEntry = { component: SequenceBlock; indices: number[] };
