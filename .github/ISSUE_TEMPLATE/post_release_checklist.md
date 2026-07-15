@@ -1,6 +1,6 @@
 ---
 name: Post-release checklist
-about: Track follow-up after a reVISit release
+about: Verify deployment and downstream updates after a reVISit release
 title: 'Post-release Checklist vX.Y.Z'
 labels: QA
 assignees: ''
@@ -12,45 +12,47 @@ assignees: ''
 ### Release Automation
 
 - [ ] Confirm the `Release new version` workflow completed successfully
-- [ ] Confirm the release commit and `vX.Y.Z` tag were created
-- [ ] Confirm version-pinned repository and raw GitHub URLs reference `vX.Y.Z`
-- [ ] Confirm the GitHub release was created with release notes
-- [ ] Review the generated GitHub release notes for accuracy
+- [ ] Confirm the release commit and `vX.Y.Z` tag were created and version-pinned URLs reference the new tag
+- [ ] Confirm the GitHub release was created and review the generated release notes
 - [ ] Confirm the production deployment completed successfully
-- [ ] Confirm the production deployment is serving the release commit
-- [ ] Smoke test the production study and analysis pages
+- [ ] Smoke test the production website
 
 ### Storage
 
-- [ ] Run `./scripts/clear-out-firebase.sh --include-dev --jobs 8` and review the planned deletions
-- [ ] Confirm the Firebase project, prefixes, and studies are correct
+- [ ] Run the Firebase cleanup in dry-run mode and review the planned deletions (`./scripts/clear-out-firebase.sh --include-dev --jobs 8`)
 - [ ] Clear Firebase test data (`./scripts/clear-out-firebase.sh --include-dev --jobs 8 --execute`)
 
 ## [Documentation Repository](https://github.com/revisit-studies/reVISit-studies.github.io)
 
-- [ ] Check that the repo deployed
+- [ ] Confirm the documentation deployment completed successfully
 - [ ] Spot-check the live documentation and library list
 - [ ] Remove old bug fix version
 
 ## [Template Repository](https://github.com/revisit-studies/template)
 
-- [ ] Update the template repository by running the `sync-from-upstream` workflow
-- [ ] Run the template repository and check for bugs
+- [ ] Run the `Sync from Upstream` workflow with `upstream_ref` set to `vX.Y.Z`
+- [ ] Confirm the deployment completed successfully
+- [ ] Smoke test the deployed website
 
 ## [Replication Studies Repository](https://github.com/revisit-studies/replication-studies)
 
-- [ ] Update the replication studies repository
-- [ ] Run the replication studies repository and check for bugs
+- [ ] Run the `Sync from Upstream` workflow with `upstream_ref` set to `vX.Y.Z`
+- [ ] Confirm the deployment completed successfully
+- [ ] Smoke test the deployed website
 
 ## [ReVISitPy Repository](https://github.com/revisit-studies/revisitpy)
 
-- [ ] Confirm the downstream update workflow completed successfully
+- [ ] Confirm the `Create a new minor version and push to PyPi and GitHub` workflow completed successfully
+- [ ] Confirm the new [`revisitpy`](https://pypi.org/project/revisitpy/) version is available on PyPI
 
 ## [ReVISitPy Server Repository](https://github.com/revisit-studies/revisitpy-server)
 
-- [ ] Confirm the downstream update workflow completed successfully
+- [ ] Confirm the `Create a new version and push to PyPi and GitHub` workflow completed successfully
+- [ ] Confirm the new [`revisitpy-server`](https://pypi.org/project/revisitpy-server/) version is available on PyPI
 
-## Follow-up
+## TODOs
 
-- [ ] Create and link issues for any non-blocking problems found after release
-- [ ] Confirm all post-release checks are complete
+Create or link issues for any bugs found during post-release verification.
+Add any other required follow-up tasks.
+
+- [ ] ...

@@ -1,6 +1,6 @@
 ---
 name: Pre-release checklist
-about: Track readiness for a reVISit release
+about: Prepare and review an upcoming reVISit release
 title: 'Pre-release Checklist vX.Y.Z'
 labels: QA
 assignees: ''
@@ -14,15 +14,15 @@ assignees: ''
 - [ ] Confirm all required checks pass
 - [ ] Confirm the pull request has the required approvals
 - [ ] Confirm the release pull request preview deployed successfully
-- [ ] Create and link the post-release checklist issue
+- [ ] Create the post-release checklist issue and link it here
 
 ## [Study Repository](https://github.com/revisit-studies/study)
 
 ### Run Studies
 
-Run every study in `public/global.json`'s `configsList` through its expected end-to-end flow in the release pull request preview. Confirm each study reaches its expected completion or final state without an unexpected crash or error. When a study produces participant data, confirm its answers and completion status appear correctly in the analysis pages. Keep this list synchronized with `configsList` when studies are added or removed.
+Run each study in the release PR preview. Confirm it completes without unexpected errors and its participant data appears correctly in the analysis pages.
 
-#### Demos
+#### Demo Studies
 
 - [ ] `demo-html`
 - [ ] `demo-html-input`
@@ -43,7 +43,7 @@ Run every study in `public/global.json`'s `configsList` through its expected end
 - [ ] `demo-upset`
 - [ ] `demo-choropleth-map`
 
-#### Examples
+#### Example Studies
 
 - [ ] `example-VLAT-adaptive`
 - [ ] `example-brush-interactions`
@@ -51,7 +51,24 @@ Run every study in `public/global.json`'s `configsList` through its expected end
 - [ ] `example-llm-chatbot`
 - [ ] `example-mvnv`
 
-#### Library Examples
+#### Tutorials
+
+- [ ] `tutorial`
+- [ ] `tutorial-replication`
+
+#### Tests
+
+- [ ] `test-audio`
+- [ ] `test-component-timeout`
+- [ ] `test-device-restriction`
+- [ ] `test-library`
+- [ ] `test-likert-matrix`
+- [ ] `test-parser-errors`
+- [ ] `test-randomization`
+- [ ] `test-skip-logic`
+- [ ] `test-step-logic`
+
+#### Libraries
 
 - [ ] `library-adaptive-vlat`
 - [ ] `library-beauvis`
@@ -76,23 +93,6 @@ Run every study in `public/global.json`'s `configsList` through its expected end
 - [ ] `library-virtual-chinrest`
 - [ ] `library-vlat`
 
-#### Tests
-
-- [ ] `test-audio`
-- [ ] `test-component-timeout`
-- [ ] `test-device-restriction`
-- [ ] `test-library`
-- [ ] `test-likert-matrix`
-- [ ] `test-parser-errors`
-- [ ] `test-randomization`
-- [ ] `test-skip-logic`
-- [ ] `test-step-logic`
-
-#### Tutorial
-
-- [ ] `tutorial`
-- [ ] `tutorial-replication`
-
 ### Analysis Pages
 
 - [ ] Study Summary
@@ -109,7 +109,7 @@ Run every study in `public/global.json`'s `configsList` through its expected end
   - [ ] Add participant tags
   - [ ] Navigate to the next and previous participant tasks
   - [ ] Add task tags
-  - [ ] Load transcripts (studies with audio e.g. `demo-screen-recording`)
+  - [ ] Load transcripts (e.g. `demo-screen-recording`)
   - [ ] Download audio/screen recordings (e.g. `demo-screen-recording`)
   - [ ] Reject / Undo reject participant works correctly
 - [ ] Trial Stats
@@ -125,7 +125,7 @@ Run every study in `public/global.json`'s `configsList` through its expected end
   - [ ] Add participant tags
   - [ ] Navigate to the next and previous participant tasks
   - [ ] Add task tags
-  - [ ] Load transcripts (studies with audio e.g. `demo-screen-recording`)
+  - [ ] Load transcripts (e.g. `demo-screen-recording`)
   - [ ] Download audio/screen recordings (e.g. `demo-screen-recording`)
   - [ ] Reject / Undo reject participant works correctly
 - [ ] Live Monitor
@@ -133,6 +133,7 @@ Run every study in `public/global.json`'s `configsList` through its expected end
   - [ ] Check participant count header
   - [ ] Check live monitor tracker
 - [ ] Config
+  - [ ] Filter works correctly
   - [ ] Download configs (by selecting from the table) / Download config (single download from actions column)
   - [ ] Compare configs
   - [ ] View config
@@ -140,38 +141,43 @@ Run every study in `public/global.json`'s `configsList` through its expected end
   - [ ] Changing ReVISit Modes updates the study card and study browser
   - [ ] Add a new stage and edit stage color
   - [ ] Create a data snapshot
+  - [ ] Confirm Manage is only accessible to administrators
 - [ ] File download
   - [ ] JSON export
   - [ ] Tidy download export
   - [ ] Download audio recordings
   - [ ] Download screen recordings
   - [ ] Download provenance data
-- [ ] Change config from the config dropdown
+- [ ] Change study from the study dropdown
 - [ ] Click Go to study and confirm it opens the study
 
 ### Generated Files
 
 - [ ] If parser types changed, regenerate the study config schemas using `yarn generate-schemas`
-- [ ] If libraries changed, regenerate library docs and example studies using `yarn generate-library-docs` and `yarn generate-library-examples`
+- [ ] If libraries changed, regenerate library documentation and example studies using `yarn generate-library-docs` and `yarn generate-library-examples`
 
-### Docs
+### Documentation
 
 - [ ] Update comments in `store/types.ts`, `parser/types.ts`, `storage/types.ts`, `storage/engines/types.ts`
 - [ ] Update `typedocReadMe.md`
-- [ ] Verify docs links in the [Study Repository](https://github.com/revisit-studies/study) are up to date and point to the current reVISit documentation pages
+- [ ] Verify documentation links in the [Study Repository](https://github.com/revisit-studies/study) are up-to-date and point to the current reVISit documentation pages
 
 ## [Documentation Repository](https://github.com/revisit-studies/reVISit-studies.github.io)
 
-- [ ] Review docs
-- [ ] Review [library list](https://revisit.dev/docs/designing-studies/plugin-libraries/)
-- [ ] Check for typos
-- [ ] Check for outdated docs
-- [ ] Check for expired links
-- [ ] Check the adoption Google Form for updated published papers
-- [ ] Validate example code
+- [ ] Update documentation for release changes
 - [ ] Update screenshots
+- [ ] Review documentation for accuracy, typos, outdated content, and expired links
+- [ ] Review [library list](https://revisit.dev/docs/designing-studies/plugin-libraries/)
+- [ ] Check the adoption Google Form for newly published papers
+- [ ] Validate example code
 
-## Cleanup and Sign-off
+## [ReVISitPy Repository](https://github.com/revisit-studies/revisitpy)
 
-- [ ] Resolve or link all release-blocking issues
-- [ ] Confirm the release is approved to merge
+- [ ] If parser types or schemas changed, confirm they are compatible with ReVISitPy code generation
+
+## TODOs
+
+Create or link any release-blocking issues or bugs found during release QA.
+Add any other tasks that must be completed before the release.
+
+- [ ] ...
