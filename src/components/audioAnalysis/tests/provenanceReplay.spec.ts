@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import type { TrrackedProvenance } from '../../../store/types';
-import { getReplayNodeId, getReplaySelection, type ProvenanceTraversalEvent } from '../provenanceReplay';
+import type { ProvenanceTraversalEvent, TrrackedProvenance } from '../../../store/types';
+import { getReplayNodeId, getReplaySelection } from '../provenanceReplay';
 
 function makeNode(id: string, createdOn: number, children: string[], parent?: string) {
   return {

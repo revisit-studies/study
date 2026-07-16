@@ -82,12 +82,6 @@
             registry
         });
 
-        const rootNodeId = trrack.graph.backend.root;
-        const traversalEvents = [{
-            nodeId: rootNodeId,
-            createdOn: trrack.graph.backend.nodes[rootNodeId].createdOn
-        }];
-
         async function loadComponent() {
             const response = await fetch('./DotCounter.svelte');
             const source = await response.text();
@@ -128,31 +122,16 @@
                 }
             });
 
-            function recordTraversal() {
-                const lastCreatedOn = traversalEvents[traversalEvents.length - 1].createdOn;
-                traversalEvents.push({
-                    nodeId: trrack.graph.backend.current,
-                    createdOn: Math.max(Date.now(), lastCreatedOn + 1)
-                });
-            }
-
-            function updateRevisit(shouldRecordTraversal = false) {
-                if (shouldRecordTraversal) {
-                    recordTraversal();
-                }
-
+            function updateRevisit() {
                 const dots = trrack.getState().dots;
                 component.$set({ dots });
                 Revisit.postAnswers({
                     [taskId]: dots.length
                 });
-                Revisit.postProvenance({
-                    ...trrack.graph.backend,
-                    traversalEvents: [...traversalEvents]
-                });
+                Revisit.postProvenance(trrack.graph.backend);
             }
 
-            trrack.currentChange(() => updateRevisit(true));
+            trrack.currentChange(updateRevisit);
             updateRevisit();
 
             Revisit.onProvenanceReceive((provenanceState) => {

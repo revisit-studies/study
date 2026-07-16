@@ -1,43 +1,16 @@
-import type { TrrackedProvenance } from '../../store/types';
-
-export type ProvenanceTraversalEvent = {
-  nodeId: string;
-  createdOn: number;
-};
+import { getProvenanceTraversalEvents } from '../../store/provenance';
+import type { ProvenanceTraversalEvent, TrrackedProvenance } from '../../store/types';
 
 export type ProvenanceReplaySelection = ProvenanceTraversalEvent & {
   fromTraversal: boolean;
 };
-
-type ReplayableProvenance = TrrackedProvenance & {
-  traversalEvents?: unknown;
-};
-
-function getTraversalEvents(provenance: ReplayableProvenance): ProvenanceTraversalEvent[] {
-  if (!Array.isArray(provenance.traversalEvents)) {
-    return [];
-  }
-
-  return provenance.traversalEvents
-    .filter((event): event is ProvenanceTraversalEvent => (
-      typeof event === 'object'
-      && event !== null
-      && 'nodeId' in event
-      && typeof event.nodeId === 'string'
-      && event.nodeId in provenance.nodes
-      && 'createdOn' in event
-      && typeof event.createdOn === 'number'
-      && Number.isFinite(event.createdOn)
-    ))
-    .sort((first, second) => first.createdOn - second.createdOn);
-}
 
 export function getReplaySelection(
   provenance: TrrackedProvenance,
   playTime: number,
   currentNode?: string | null,
 ): ProvenanceReplaySelection {
-  const traversalEvents = getTraversalEvents(provenance as ReplayableProvenance);
+  const traversalEvents = getProvenanceTraversalEvents(provenance);
 
   if (traversalEvents.length > 0) {
     let replaySelection = {

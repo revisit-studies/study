@@ -147,12 +147,6 @@
         registry
     });
 
-    const rootNodeId = trrack.graph.backend.root;
-    const traversalEvents = [{
-        nodeId: rootNodeId,
-        createdOn: trrack.graph.backend.nodes[rootNodeId].createdOn
-    }];
-
     // Render the dots on screen using state from trrack
     const dotActions = dots(trrack.getState().dots);
 
@@ -182,32 +176,17 @@
         setLimitState(removeButton, removeControl, removeTooltip, currentDots.length === 0);
     }
 
-    function recordTraversal() {
-        const lastCreatedOn = traversalEvents[traversalEvents.length - 1].createdOn;
-        traversalEvents.push({
-            nodeId: trrack.graph.backend.current,
-            createdOn: Math.max(Date.now(), lastCreatedOn + 1)
-        });
-    }
-
-    function publishState(shouldRecordTraversal = false) {
-        if (shouldRecordTraversal) {
-            recordTraversal();
-        }
-
+    function publishState() {
         const dots = trrack.getState().dots;
         renderState(dots);
         Revisit.postAnswers({
             [taskId]: dots.length
         });
-        Revisit.postProvenance({
-            ...trrack.graph.backend,
-            traversalEvents: [...traversalEvents]
-        });
+        Revisit.postProvenance(trrack.graph.backend);
     }
 
     // Register a listener to update the dot chart based on trrack updates.
-    trrack.currentChange(() => publishState(true));
+    trrack.currentChange(publishState);
 
     // Bind button to update dots
     addButton.onclick = () => {
