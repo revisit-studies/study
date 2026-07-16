@@ -19,6 +19,7 @@ let mockStudyConfig: {
   uiConfig: {
     nextButtonDisableTime: number | undefined;
     nextButtonEnableTime: number | undefined;
+    nextButtonAlignment?: 'left' | 'center' | 'right';
     nextOnEnter: boolean;
     previousButtonText: string;
     timeoutReject: boolean;
@@ -74,7 +75,9 @@ vi.mock('@mantine/core', () => ({
       {children}
     </button>
   ),
-  Group: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Group: ({ children, justify }: { children: ReactNode; justify?: string }) => (
+    <div data-justify={justify}>{children}</div>
+  ),
 }));
 
 vi.mock('@tabler/icons-react', () => ({
@@ -154,6 +157,64 @@ describe('NextButton', () => {
     );
     expect(html).toContain('Check Answer');
   });
+
+  test('right-aligns the action group by default', () => {
+    const html = renderToStaticMarkup(<NextButton checkAnswer={null} onNext={vi.fn()} />);
+    expect(html).toContain('data-justify="flex-end"');
+  });
+
+  test.each([
+    ['left', 'flex-start'],
+    ['center', 'center'],
+    ['right', 'flex-end'],
+  ] as const)('uses the global %s alignment', (alignment, justify) => {
+    mockStudyConfig = {
+      uiConfig: {
+        ...mockStudyConfig.uiConfig,
+        nextButtonAlignment: alignment,
+      },
+    };
+
+    const html = renderToStaticMarkup(<NextButton checkAnswer={null} onNext={vi.fn()} />);
+    expect(html).toContain(`data-justify="${justify}"`);
+  });
+
+  test('component alignment overrides the global alignment', () => {
+    mockStudyConfig = {
+      uiConfig: {
+        ...mockStudyConfig.uiConfig,
+        nextButtonAlignment: 'left',
+      },
+    };
+
+    const html = renderToStaticMarkup(
+      <NextButton
+        config={{
+          type: 'questionnaire', response: [], nextButtonAlignment: 'center',
+        }}
+        checkAnswer={null}
+        onNext={vi.fn()}
+      />,
+    );
+    expect(html).toContain('data-justify="center"');
+  });
+
+  test.each(['sidebar', 'aboveStimulus', 'belowStimulus'] as const)(
+    'keeps Previous, Check Answer, and Next in order at %s',
+    (location) => {
+      const html = renderToStaticMarkup(
+        <NextButton
+          config={{ type: 'questionnaire', response: [], previousButton: true }}
+          location={location}
+          checkAnswer={<button type="button">Check Answer</button>}
+          onNext={vi.fn()}
+        />,
+      );
+
+      expect(html.indexOf('Previous')).toBeLessThan(html.indexOf('Check Answer'));
+      expect(html.indexOf('Check Answer')).toBeLessThan(html.indexOf('Next'));
+    },
+  );
 
   test('shows "Please wait" alert after render when nextButtonEnableTime is set', async () => {
     mockStudyConfig = {

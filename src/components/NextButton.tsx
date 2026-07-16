@@ -16,6 +16,12 @@ import {
   getAutoAdvanceWarning,
 } from './nextButtonTimeout';
 
+const nextButtonJustify = {
+  left: 'flex-start',
+  center: 'center',
+  right: 'flex-end',
+} as const;
+
 type Props = {
   label?: string;
   disabled?: boolean;
@@ -115,10 +121,11 @@ export function NextButton({
 
   const nextButtonDisabled = disabled || isNextDisabled || !buttonTimerSatisfied;
   const previousButtonText = config?.previousButtonText ?? studyConfig.uiConfig.previousButtonText ?? 'Previous';
+  const nextButtonAlignment = config?.nextButtonAlignment ?? studyConfig.uiConfig.nextButtonAlignment ?? 'right';
 
   return (
     <>
-      <Group justify="right" gap="xs" mt="sm">
+      <Group justify={nextButtonJustify[nextButtonAlignment]} gap="xs" mt="sm" wrap="wrap">
         {config?.previousButton && (
           <PreviousButton
             label={previousButtonText}
