@@ -21,6 +21,7 @@ let mockIdentifier = 'trial1_0';
 let mockFlatSequence = ['trial1', 'attentionCheck', 'end'];
 let mockAnswers: Record<string, StoredAnswer> = {};
 let mockTrialValidation: Record<string, Record<string, object>> = {};
+let mockCheckAnswer: Record<string, { attemptsUsed: number; correct: boolean; responses: Record<string, boolean> }> = {};
 let mockSequence = defaultSequence;
 let mockModes = { dataCollectionEnabled: true, developmentModeEnabled: false, dataSharingEnabled: false };
 let mockNavigate = vi.fn();
@@ -53,6 +54,7 @@ vi.mock('../../store', () => ({
     modes: mockModes,
     clickedPrevious: false,
     responseSubmitAttempted: { [mockIdentifier]: true },
+    checkAnswer: mockCheckAnswer,
   } as StoreState),
   useStoreDispatch: () => mockDispatch,
   useStoreActions: () => ({
@@ -246,6 +248,7 @@ describe('useNextStep', () => {
     mockFlushPendingParticipantData = vi.fn().mockResolvedValue(undefined);
     mockDispatch = vi.fn();
     mockSaveTrialAnswer = vi.fn((payload) => ({ type: 'saveTrialAnswer', payload }));
+    mockCheckAnswer = {};
     mockSetReactiveAnswers.mockClear();
     mockSetMatrixAnswersCheckbox.mockClear();
     mockSetMatrixAnswersRadio.mockClear();
@@ -302,6 +305,14 @@ describe('useNextStep', () => {
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 
+  test('goToNextStep persists checkAnswer state with the saved answer', async () => {
+    mockCheckAnswer = { trial1_0: { attemptsUsed: 2, correct: true, responses: { q1: true } } };
+    const { result } = renderHook(() => useNextStep());
+    await act(async () => { await result.current.goToNextStep(); });
+    const savedPayload = mockSaveTrialAnswer.mock.calls[0][0] as Record<string, unknown>;
+    expect(savedPayload.checkAnswer).toEqual({ attemptsUsed: 2, correct: true, responses: { q1: true } });
+  });
+
   test('goToNextStep(false) marks answer as timed out', async () => {
     const { result } = renderHook(() => useNextStep());
     await act(async () => { await result.current.goToNextStep(false); });
@@ -326,6 +337,26 @@ describe('useNextStep', () => {
     await act(async () => { await result.current.goToNextStep(); });
     const savedPayload = mockSaveTrialAnswer.mock.calls[0][0] as Record<string, object | boolean>;
     expect(savedPayload.answer).toEqual({ q1: 'Blue', q2: 'Cat' });
+  });
+
+  test('goToNextStep snapshots the provenance graph before saving it', async () => {
+    const liveGraph = { nodes: { a: { id: 'a' } } };
+    mockTrialValidation = {
+      trial1_0: {
+        stimulus: { valid: true, values: {} },
+        aboveStimulus: { valid: true, values: { q1: 'Blue' } },
+        belowStimulus: { valid: true, values: {} },
+        sidebar: { valid: true, values: {} },
+        provenanceGraph: {
+          aboveStimulus: liveGraph, belowStimulus: null, stimulus: null, sidebar: null,
+        },
+      },
+    };
+    const { result } = renderHook(() => useNextStep());
+    await act(async () => { await result.current.goToNextStep(); });
+    const savedGraph = mockSaveProvenance.mock.calls[0][0] as Record<string, object | null>;
+    expect(savedGraph.aboveStimulus).toEqual(liveGraph);
+    expect(savedGraph.aboveStimulus).not.toBe(liveGraph);
   });
 
   test('goToNextStep navigates with funcIndex increment when funcIndex is set', async () => {

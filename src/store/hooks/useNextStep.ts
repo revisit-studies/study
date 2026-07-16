@@ -10,8 +10,8 @@ import {
   useCurrentIdentifier, useCurrentStep, useStudyId,
 } from '../../routes/utils';
 
-import { StoredAnswer, ValidationStatus } from '../types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
+import { getAnswersFromAllLocations } from '../../utils/getAnswersFromAllLocations';
 import { useStoredAnswer } from './useStoredAnswer';
 import { useWindowEvents } from './useWindowEvents';
 import { findBlockForStep } from '../../utils/getSequenceFlatMap';
@@ -39,6 +39,7 @@ export function useNextStep() {
   const { funcIndex } = useParams();
   const identifier = useCurrentIdentifier();
   const responseSubmitAttempted = useStoreSelector((state) => state.responseSubmitAttempted[identifier] ?? false);
+  const checkAnswerState = useStoreSelector((state) => state.checkAnswer[identifier]);
 
   const storeDispatch = useStoreDispatch();
   const {
@@ -68,14 +69,9 @@ export function useNextStep() {
         return;
       }
       // Get answer from across the 3 response blocks and the provenance graph
-      const trialValidationCopy = structuredClone(trialValidation[identifier]);
-      const answer = trialValidationCopy ? Object.values(trialValidationCopy).reduce((acc, curr) => {
-        if (Object.hasOwn(curr, 'values')) {
-          return { ...acc, ...(curr as ValidationStatus).values };
-        }
-        return acc;
-      }, {}) as StoredAnswer['answer'] : {};
-      const { provenanceGraph } = trialValidationCopy || {};
+      const validation = trialValidation[identifier];
+      const answer = getAnswersFromAllLocations(validation);
+      const provenanceGraph = validation?.provenanceGraph ? structuredClone(validation.provenanceGraph) : undefined;
       const endTime = Date.now();
       const answerToPersist = collectData ? answer : {};
 
@@ -91,6 +87,7 @@ export function useNextStep() {
           windowEvents: currentWindowEvents,
           timedOut: !collectData,
           responseSubmitAttempted,
+          checkAnswer: checkAnswerState,
         };
         const answersToPersist = { ...answers, [identifier]: toSave };
 
@@ -173,7 +170,7 @@ export function useNextStep() {
         color: 'red',
       });
     }
-  }, [currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, clickedPrevious, sequence, answers, startTime, funcIndex, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, setRankingAnswers, setAlertModal, studyConfig, participantSequence, navigate, studyId, responseSubmitAttempted]);
+  }, [currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, clickedPrevious, sequence, answers, startTime, funcIndex, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, setRankingAnswers, setAlertModal, studyConfig, participantSequence, navigate, studyId, responseSubmitAttempted, checkAnswerState]);
 
   return {
     isNextDisabled,

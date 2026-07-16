@@ -78,6 +78,7 @@ vi.mock('../../store', () => ({
     modes: { dataCollectionEnabled: true },
     clickedPrevious: false,
     responseSubmitAttempted: { intro_0: true },
+    checkAnswer: {},
   }),
   useStoreActions: () => ({
     saveTrialAnswer: mockSaveTrialAnswer,
