@@ -30,6 +30,7 @@ let mockIsAnalysis = false;
 let mockStoredAnswer = defaultStoredAnswer;
 let mockSaveAnswers = vi.fn();
 let mockSaveProvenance = vi.fn();
+let mockFlushPendingParticipantData = vi.fn();
 let mockDispatch = vi.fn();
 let mockSaveTrialAnswer = vi.fn((payload) => ({ type: 'saveTrialAnswer', payload }));
 const mockSetReactiveAnswers = vi.fn((payload) => ({ type: 'setReactiveAnswers', payload }));
@@ -76,6 +77,7 @@ vi.mock('../../../storage/storageEngineHooks', () => ({
     storageEngine: {
       saveAnswers: mockSaveAnswers,
       saveProvenance: mockSaveProvenance,
+      flushPendingParticipantData: mockFlushPendingParticipantData,
     },
   }),
 }));
@@ -241,6 +243,7 @@ describe('useNextStep', () => {
     mockStoredAnswer = defaultStoredAnswer;
     mockSaveAnswers = vi.fn().mockResolvedValue(undefined);
     mockSaveProvenance = vi.fn().mockResolvedValue(undefined);
+    mockFlushPendingParticipantData = vi.fn().mockResolvedValue(undefined);
     mockDispatch = vi.fn();
     mockSaveTrialAnswer = vi.fn((payload) => ({ type: 'saveTrialAnswer', payload }));
     mockSetReactiveAnswers.mockClear();
@@ -272,42 +275,42 @@ describe('useNextStep', () => {
     expect(result.current.isNextDisabled).toBe(false);
   });
 
-  test('goToNextStep navigates to next step', () => {
+  test('goToNextStep navigates to next step', async () => {
     const { result } = renderHook(() => useNextStep());
-    act(() => { result.current.goToNextStep(); });
+    await act(async () => { await result.current.goToNextStep(); });
     expect(mockNavigate).toHaveBeenCalledWith('/test-study/1');
   });
 
-  test('goToNextStep dispatches saveTrialAnswer and clears form state', () => {
+  test('goToNextStep dispatches saveTrialAnswer and clears form state', async () => {
     mockStoredAnswer = defaultStoredAnswer;
     const { result } = renderHook(() => useNextStep());
-    act(() => { result.current.goToNextStep(); });
+    await act(async () => { await result.current.goToNextStep(); });
     expect(mockDispatch).toHaveBeenCalled();
     expect(mockSaveTrialAnswer).toHaveBeenCalled();
   });
 
-  test('goToNextStep saves answers to storage engine', () => {
+  test('goToNextStep saves answers to storage engine', async () => {
     const { result } = renderHook(() => useNextStep());
-    act(() => { result.current.goToNextStep(); });
+    await act(async () => { await result.current.goToNextStep(); });
     expect(mockSaveAnswers).toHaveBeenCalled();
   });
 
-  test('goToNextStep does nothing when currentStep is not a number', () => {
+  test('goToNextStep does nothing when currentStep is not a number', async () => {
     mockCurrentStep = 'reviewer-0';
     const { result } = renderHook(() => useNextStep());
-    act(() => { result.current.goToNextStep(); });
+    await act(async () => { await result.current.goToNextStep(); });
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 
-  test('goToNextStep(false) marks answer as timed out', () => {
+  test('goToNextStep(false) marks answer as timed out', async () => {
     const { result } = renderHook(() => useNextStep());
-    act(() => { result.current.goToNextStep(false); });
+    await act(async () => { await result.current.goToNextStep(false); });
     const savedPayload = mockSaveTrialAnswer.mock.calls[0][0] as Record<string, object | boolean>;
     expect(savedPayload.timedOut).toBe(true);
     expect(savedPayload.answer).toEqual({});
   });
 
-  test('goToNextStep collects answers from trialValidation', () => {
+  test('goToNextStep collects answers from trialValidation', async () => {
     mockTrialValidation = {
       trial1_0: {
         stimulus: { valid: true, values: { q1: 'Blue' } },
@@ -320,30 +323,30 @@ describe('useNextStep', () => {
       },
     };
     const { result } = renderHook(() => useNextStep());
-    act(() => { result.current.goToNextStep(); });
+    await act(async () => { await result.current.goToNextStep(); });
     const savedPayload = mockSaveTrialAnswer.mock.calls[0][0] as Record<string, object | boolean>;
     expect(savedPayload.answer).toEqual({ q1: 'Blue', q2: 'Cat' });
   });
 
-  test('goToNextStep navigates with funcIndex increment when funcIndex is set', () => {
+  test('goToNextStep navigates with funcIndex increment when funcIndex is set', async () => {
     mockFuncIndex = '0';
     const { result } = renderHook(() => useNextStep());
-    act(() => { result.current.goToNextStep(); });
+    await act(async () => { await result.current.goToNextStep(); });
     expect(mockNavigate).toHaveBeenCalledWith('/test-study/0/1');
   });
 
-  test('goToNextStep skips saving when data collection is disabled', () => {
+  test('goToNextStep skips saving when data collection is disabled', async () => {
     mockModes = { dataCollectionEnabled: false, developmentModeEnabled: false, dataSharingEnabled: false };
     const { result } = renderHook(() => useNextStep());
-    act(() => { result.current.goToNextStep(); });
+    await act(async () => { await result.current.goToNextStep(); });
     expect(mockSaveTrialAnswer).not.toHaveBeenCalled();
     expect(mockNavigate).toHaveBeenCalled();
   });
 
-  test('goToNextStep skips saving when answer already has endTime > -1', () => {
+  test('goToNextStep skips saving when answer already has endTime > -1', async () => {
     mockStoredAnswer = { endTime: 100 } as StoredAnswer;
     const { result } = renderHook(() => useNextStep());
-    act(() => { result.current.goToNextStep(); });
+    await act(async () => { await result.current.goToNextStep(); });
     expect(mockSaveTrialAnswer).not.toHaveBeenCalled();
     expect(mockNavigate).toHaveBeenCalled();
   });
@@ -382,7 +385,7 @@ describe('useNextStep', () => {
     mockAnswers = {};
 
     const { result } = renderHook(() => useNextStep());
-    act(() => { result.current.goToNextStep(); });
+    await act(async () => { await result.current.goToNextStep(); });
     expect(mockNavigate).toHaveBeenCalledWith('/test-study/2');
   });
 });

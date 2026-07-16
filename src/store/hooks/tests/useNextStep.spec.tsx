@@ -13,6 +13,7 @@ const mockNavigate = vi.fn();
 const mockShowNotification = vi.fn();
 const mockSaveAnswers = vi.fn();
 const mockSaveProvenance = vi.fn(() => Promise.resolve());
+const mockFlushPendingParticipantData = vi.fn(() => Promise.resolve());
 const mockSaveTrialAnswer = vi.fn((payload) => ({ type: 'saveTrialAnswer', payload }));
 const mockSetReactiveAnswers = vi.fn((payload) => ({ type: 'setReactiveAnswers', payload }));
 const mockSetMatrixAnswersCheckbox = vi.fn((payload) => ({ type: 'setMatrixAnswersCheckbox', payload }));
@@ -39,7 +40,7 @@ let mockStoredAnswer: {
 };
 
 let mockAnswers: Record<string, unknown>;
-let capturedGoToNextStep: ((collectData?: boolean) => void) | undefined;
+let capturedGoToNextStep: ((collectData?: boolean) => Promise<void>) | undefined;
 let mockSequence: {
   id: string;
   orderPath: string;
@@ -102,6 +103,7 @@ vi.mock('../../../storage/storageEngineHooks', () => ({
     storageEngine: {
       saveAnswers: mockSaveAnswers,
       saveProvenance: mockSaveProvenance,
+      flushPendingParticipantData: mockFlushPendingParticipantData,
     },
   }),
 }));
@@ -145,6 +147,7 @@ describe('useNextStep', () => {
     mockShowNotification.mockReset();
     mockSaveAnswers.mockReset();
     mockSaveProvenance.mockClear();
+    mockFlushPendingParticipantData.mockClear();
     mockSaveTrialAnswer.mockClear();
     mockSetReactiveAnswers.mockClear();
     mockSetMatrixAnswersCheckbox.mockClear();
@@ -209,7 +212,7 @@ describe('useNextStep', () => {
     vi.restoreAllMocks();
   });
 
-  test('continues locally and shows the blocking storage modal when persistence fails', async () => {
+  test('blocks navigation and shows the storage modal when saveAnswers fails, then retries successfully', async () => {
     mockSaveAnswers
       .mockRejectedValueOnce(new Error('write failed'))
       .mockResolvedValueOnce(undefined);
@@ -219,31 +222,45 @@ describe('useNextStep', () => {
     expect(capturedGoToNextStep).toBeDefined();
 
     await capturedGoToNextStep?.();
-    await Promise.resolve();
 
     expect(mockSaveAnswers).toHaveBeenCalledTimes(1);
-    expect(mockSaveTrialAnswer).toHaveBeenCalledTimes(1);
-    expect(mockSaveTrialAnswer).toHaveBeenCalledWith(expect.objectContaining({
-      responseSubmitAttempted: true,
-    }));
-    expect(mockNavigate).toHaveBeenCalledTimes(1);
+    expect(mockSaveTrialAnswer).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalled();
     expect(mockSetAlertModal).toHaveBeenCalledWith({
       show: true,
       message: 'Your response could not be saved because the connection to the server was interrupted. Please check your internet connection, then click Reconnect to try again.',
       title: 'Failed to Save Response',
     });
     expect(mockShowNotification).not.toHaveBeenCalled();
+    expect(mockStoredAnswer.endTime).toBe(-1);
+
+    await capturedGoToNextStep?.();
+
+    expect(mockSaveAnswers).toHaveBeenCalledTimes(2);
+    expect(mockSaveTrialAnswer).toHaveBeenCalledTimes(1);
     expect(mockStoredAnswer.endTime).toBeGreaterThan(-1);
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
+  });
+
+  test('blocks navigation when the flushed queued write fails', async () => {
+    mockSaveAnswers.mockResolvedValueOnce(undefined);
+    mockFlushPendingParticipantData.mockRejectedValueOnce(new Error('queued write failed'));
+
+    renderToStaticMarkup(<HookHarness />);
 
     await capturedGoToNextStep?.();
 
     expect(mockSaveAnswers).toHaveBeenCalledTimes(1);
-    expect(mockSaveTrialAnswer).toHaveBeenCalledTimes(1);
-    expect(mockStoredAnswer.endTime).toBeGreaterThan(-1);
-    expect(mockNavigate).toHaveBeenCalledTimes(2);
+    expect(mockFlushPendingParticipantData).toHaveBeenCalledTimes(1);
+    expect(mockSaveTrialAnswer).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(mockSetAlertModal).toHaveBeenCalledWith(expect.objectContaining({
+      show: true,
+      title: 'Failed to Save Response',
+    }));
   });
 
-  test('shows the blocking storage modal when provenance persistence fails', async () => {
+  test('blocks navigation and shows the storage modal when provenance persistence fails', async () => {
     mockSaveAnswers.mockResolvedValueOnce(undefined);
     mockSaveProvenance.mockRejectedValueOnce(new Error('provenance write failed'));
     mockTrialValidation = {
@@ -256,24 +273,26 @@ describe('useNextStep', () => {
     renderToStaticMarkup(<HookHarness />);
 
     await capturedGoToNextStep?.();
-    await Promise.resolve();
 
     expect(mockSaveProvenance).toHaveBeenCalledTimes(1);
+    expect(mockSaveTrialAnswer).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalled();
     expect(mockSetAlertModal).toHaveBeenCalledWith(expect.objectContaining({
       show: true,
       title: 'Failed to Save Response',
     }));
   });
 
-  test('does not show the storage modal when persistence succeeds', async () => {
+  test('flushes the queued write and navigates when persistence succeeds', async () => {
     mockSaveAnswers.mockResolvedValueOnce(undefined);
 
     renderToStaticMarkup(<HookHarness />);
 
     await capturedGoToNextStep?.();
-    await Promise.resolve();
 
     expect(mockSaveAnswers).toHaveBeenCalledTimes(1);
+    expect(mockFlushPendingParticipantData).toHaveBeenCalledTimes(1);
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
     expect(mockSetAlertModal).not.toHaveBeenCalled();
   });
 
