@@ -10,8 +10,8 @@ import {
   useCurrentIdentifier, useCurrentStep, useStudyId,
 } from '../../routes/utils';
 
-import { StoredAnswer, ValidationStatus } from '../types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
+import { getAnswersFromAllLocations } from '../../utils/getAnswersFromAllLocations';
 import { useStoredAnswer } from './useStoredAnswer';
 import { useWindowEvents } from './useWindowEvents';
 import { findBlockForStep } from '../../utils/getSequenceFlatMap';
@@ -69,14 +69,9 @@ export function useNextStep() {
         return;
       }
       // Get answer from across the 3 response blocks and the provenance graph
-      const trialValidationCopy = structuredClone(trialValidation[identifier]);
-      const answer = trialValidationCopy ? Object.values(trialValidationCopy).reduce((acc, curr) => {
-        if (Object.hasOwn(curr, 'values')) {
-          return { ...acc, ...(curr as ValidationStatus).values };
-        }
-        return acc;
-      }, {}) as StoredAnswer['answer'] : {};
-      const { provenanceGraph } = trialValidationCopy || {};
+      const validation = trialValidation[identifier];
+      const answer = getAnswersFromAllLocations(validation);
+      const provenanceGraph = validation?.provenanceGraph ? structuredClone(validation.provenanceGraph) : undefined;
       const endTime = Date.now();
       const answerToPersist = collectData ? answer : {};
 

@@ -33,7 +33,7 @@ import { shouldUseStimulusValidation } from './stimulusErrors';
 import { ResponseSwitcher } from './ResponseSwitcher';
 import { FeedbackAlert } from './FeedbackAlert';
 import {
-  CustomResponseField, FormElementProvenance, StoredAnswer, ValidationStatus,
+  CustomResponseField, FormElementProvenance, StoredAnswer,
 } from '../../store/types';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
@@ -42,6 +42,9 @@ import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import { responseAnswerIsCorrect } from '../../utils/correctAnswer';
 import { getCustomResponseModule, getCustomResponseModuleLoadError } from './customResponseModules';
 import { appendStimulusShowErrorsToGraph } from './stimulusProvenance';
+import { useStorageEngine } from '../../storage/storageEngineHooks';
+import { showNotification } from '../../utils/notifications';
+import { getAnswersFromAllLocations } from '../../utils/getAnswersFromAllLocations';
 
 type Props = {
   status?: StoredAnswer;
@@ -68,7 +71,7 @@ export function ResponseBlock({
 }: Props) {
   const storeDispatch = useStoreDispatch();
   const {
-    updateResponseBlockValidation, saveIncorrectAnswer, setResponseSubmitAttempt, setStimulusSubmitAttempt, setCheckAnswerResult,
+    updateResponseBlockValidation, saveIncorrectAnswer, saveTrialAnswer, setResponseSubmitAttempt, setStimulusSubmitAttempt, setCheckAnswerResult,
   } = useStoreActions();
 
   const currentStep = useCurrentStep();
@@ -162,6 +165,8 @@ export function ResponseBlock({
   const savedCheckAnswer = storedAnswerData?.checkAnswer ?? status?.checkAnswer;
   const currentCheckAnswer = useStoreSelector((state) => state.checkAnswer[identifier]);
   const storeAnswers = useStoreSelector((state) => state.answers);
+  const dataCollectionEnabled = useStoreSelector((state) => state.modes.dataCollectionEnabled);
+  const { storageEngine } = useStorageEngine();
   const attemptsUsed = currentCheckAnswer?.attemptsUsed ?? 0;
   const hasCorrectAnswer = currentCheckAnswer?.correct ?? false;
   const checkAnswerResponses = currentCheckAnswer?.responses;
@@ -235,19 +240,7 @@ export function ResponseBlock({
     ),
     [customResponseModules],
   );
-  const combinedLiveValues = useMemo(() => {
-    const validationForStep = trialValidation[identifier];
-    if (!validationForStep) {
-      return {};
-    }
-
-    return Object.values(validationForStep).reduce((acc, curr) => {
-      if (Object.hasOwn(curr, 'values')) {
-        return { ...acc, ...(curr as ValidationStatus).values };
-      }
-      return acc;
-    }, {}) as StoredAnswer['answer'];
-  }, [identifier, trialValidation]);
+  const combinedLiveValues = useMemo(() => getAnswersFromAllLocations(trialValidation[identifier]), [identifier, trialValidation]);
   const combinedAnalysisValues = useMemo(
     () => ['aboveStimulus', 'belowStimulus', 'sidebar'].reduce((acc, responseLocation) => {
       const locationProv = analysisProvState[responseLocation as ResponseBlockLocation] as FormElementProvenance | undefined;
@@ -534,13 +527,7 @@ export function ResponseBlock({
 
     const newAttemptsUsed = attemptsUsed + 1;
 
-    const trialValidationCopy = structuredClone(trialValidation[identifier]);
-    const allAnswers = (trialValidationCopy ? Object.values(trialValidationCopy).reduce((acc, curr) => {
-      if (Object.hasOwn(curr, 'values')) {
-        return { ...acc, ...(curr as ValidationStatus).values };
-      }
-      return acc;
-    }, {}) : {}) as StoredAnswer['answer'];
+    const allAnswers = getAnswersFromAllLocations(trialValidation[identifier]);
 
     const correctAnswers = Object.fromEntries(
       (config?.correctAnswer ?? []).map((configCorrectAnswer) => {
@@ -568,13 +555,6 @@ export function ResponseBlock({
           storeDispatch(saveIncorrectAnswer({ question: identifier, identifier: response.id, answer: allAnswers[response.id] }));
         }
       });
-
-      // If the user has failed the training, wait 5 seconds and redirect to a fail page
-      if (!allCorrect && trainingAttempts >= 0 && newAttemptsUsed >= trainingAttempts && !allowFailedTraining) {
-        setTimeout(() => {
-          navigate(`./../__trainingFailed${window.location.search}`);
-        }, 5000);
-      }
     }
 
     storeDispatch(setCheckAnswerResult({
@@ -583,7 +563,7 @@ export function ResponseBlock({
       correct: allCorrect,
       responses: correctAnswers,
     }));
-  }, [allResponsesWithDefaults, allowFailedTraining, attemptsUsed, config, hasCorrectAnswerFeedback, hasResponseIssues, hasStimulusIssue, identifier, navigate, revealResponseErrors, revealStimulusErrors, saveIncorrectAnswer, setCheckAnswerResult, storeDispatch, trainingAttempts, trialValidation]);
+  }, [allResponsesWithDefaults, attemptsUsed, config, hasCorrectAnswerFeedback, hasResponseIssues, hasStimulusIssue, identifier, revealResponseErrors, revealStimulusErrors, saveIncorrectAnswer, setCheckAnswerResult, storeDispatch, trialValidation]);
 
   const nextButtonText = useMemo(() => config?.nextButtonText ?? studyConfig.uiConfig.nextButtonText ?? 'Next', [config, studyConfig]);
 
@@ -603,6 +583,49 @@ export function ResponseBlock({
 
     storeDispatch(setCheckAnswerResult({ identifier, ...savedCheckAnswer }));
   }, [currentCheckAnswer, identifier, isAnalysis, savedCheckAnswer, setCheckAnswerResult, storeDispatch]);
+
+  useEffect(() => {
+    // Do not save the check answer result if in analysis, if the buttons are not shown in this location, if there is no current check answer, or if the current check answer has the same number of attempts used as the stored answer
+    if (isAnalysis || !showBtnsInLocation || currentCheckAnswer === undefined || currentCheckAnswer.attemptsUsed === storeAnswers[identifier]?.checkAnswer?.attemptsUsed) {
+      return;
+    }
+
+    const draftAnswer = {
+      ...storeAnswers[identifier],
+      answer: getAnswersFromAllLocations(trialValidation[identifier]),
+      checkAnswer: currentCheckAnswer,
+    };
+
+    storeDispatch(saveTrialAnswer(draftAnswer));
+
+    if (dataCollectionEnabled && storageEngine) {
+      storageEngine.saveAnswers({
+        ...storeAnswers,
+        [identifier]: draftAnswer,
+      }).catch((error) => {
+        console.error('Failed to save Check Answer progress', error);
+        showNotification({
+          title: 'Failed to Save Response',
+          message: 'Your response could not be saved. Please check your connection and try again.',
+          color: 'red',
+        });
+      });
+    }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentCheckAnswer, dataCollectionEnabled, identifier, isAnalysis, saveTrialAnswer, showBtnsInLocation, storageEngine, storeAnswers, storeDispatch]);
+
+  // If the user has failed the training, wait 5 seconds and redirect to a fail page
+  useEffect(() => {
+    if (isAnalysis || !showBtnsInLocation || currentCheckAnswer === undefined || hasCorrectAnswer || allowFailedTraining || !usedAllAttempts) {
+      return undefined;
+    }
+
+    const timer = setTimeout(() => {
+      navigate(`./../__trainingFailed${window.location.search}`);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [allowFailedTraining, currentCheckAnswer, hasCorrectAnswer, isAnalysis, navigate, showBtnsInLocation, usedAllAttempts]);
 
   const handleNextClick = useCallback(() => {
     if (hasStimulusIssue) {
@@ -646,6 +669,7 @@ export function ResponseBlock({
                   <div data-question-id={response.id}>
                     <ResponseSwitcher
                       storedAnswer={storedAnswer}
+                      answerFinalized={!!status && status.endTime !== -1}
                       form={{
                         ...answerValidator.getInputProps(response.id),
                       }}

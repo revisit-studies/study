@@ -336,6 +336,26 @@ describe('useNextStep', () => {
     expect(savedPayload.answer).toEqual({ q1: 'Blue', q2: 'Cat' });
   });
 
+  test('goToNextStep snapshots the provenance graph before saving it', () => {
+    const liveGraph = { nodes: { a: { id: 'a' } } };
+    mockTrialValidation = {
+      trial1_0: {
+        stimulus: { valid: true, values: {} },
+        aboveStimulus: { valid: true, values: { q1: 'Blue' } },
+        belowStimulus: { valid: true, values: {} },
+        sidebar: { valid: true, values: {} },
+        provenanceGraph: {
+          aboveStimulus: liveGraph, belowStimulus: null, stimulus: null, sidebar: null,
+        },
+      },
+    };
+    const { result } = renderHook(() => useNextStep());
+    act(() => { result.current.goToNextStep(); });
+    const savedGraph = mockSaveProvenance.mock.calls[0][0] as Record<string, object | null>;
+    expect(savedGraph.aboveStimulus).toEqual(liveGraph);
+    expect(savedGraph.aboveStimulus).not.toBe(liveGraph);
+  });
+
   test('goToNextStep navigates with funcIndex increment when funcIndex is set', () => {
     mockFuncIndex = '0';
     const { result } = renderHook(() => useNextStep());

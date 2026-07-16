@@ -8,7 +8,7 @@ import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import type { IndividualComponent, StudyConfig } from '../../../parser/types';
-import type { CheckAnswerState, Sequence } from '../../../store/types';
+import type { CheckAnswerState, Sequence, StoredAnswer } from '../../../store/types';
 import type { REVISIT_MODE } from '../../../storage/engines/types';
 import { studyStoreCreator, StudyStoreContext } from '../../../store/store';
 import { ResponseBlock } from '../ResponseBlock';
@@ -17,7 +17,9 @@ import { responseAnswerIsCorrect } from '../../../utils/correctAnswer';
 
 // ── mocks ────────────────────────────────────────────────────────────────────
 
-const { mockStoredAnswerData, capturedNextButtonProps, mockIsAnalysis } = vi.hoisted(() => ({
+const {
+  mockStoredAnswerData, capturedNextButtonProps, capturedSwitcherProps, mockIsAnalysis, mockNavigate, mockSaveAnswers, mockAnswerField,
+} = vi.hoisted(() => ({
   mockStoredAnswerData: {
     formOrder: { response: ['q1'] },
     questionOrders: {},
@@ -28,8 +30,27 @@ const { mockStoredAnswerData, capturedNextButtonProps, mockIsAnalysis } = vi.hoi
   capturedNextButtonProps: {
     onCheckAnswer: undefined as (() => void) | undefined,
   },
+  capturedSwitcherProps: {
+    storedAnswer: undefined as Record<string, unknown> | undefined,
+    answerFinalized: undefined as boolean | undefined,
+  },
   mockIsAnalysis: { value: false },
+  mockNavigate: vi.fn(),
+  mockSaveAnswers: vi.fn(() => Promise.resolve()),
+  mockAnswerField: {
+    values: {} as Record<string, unknown>,
+    isValid: vi.fn(() => true),
+    setValues: vi.fn(),
+    setInitialValues: vi.fn(),
+    reset: vi.fn(),
+    getInputProps: vi.fn(() => ({ value: '', onChange: vi.fn() })),
+  },
 }));
+
+vi.mock('../../../storage/storageEngineHooks', () => {
+  const storageEngine = { saveAnswers: mockSaveAnswers, saveProvenance: vi.fn(() => Promise.resolve()) };
+  return { useStorageEngine: vi.fn(() => ({ storageEngine })) };
+});
 
 vi.mock('@mantine/core', () => ({
   Box: ({ children, className }: { children?: ReactNode; className?: string }) => <div className={className}>{children}</div>,
@@ -42,7 +63,7 @@ vi.mock('@mantine/core', () => ({
 }));
 
 vi.mock('react-router', () => ({
-  useNavigate: vi.fn(() => vi.fn()),
+  useNavigate: vi.fn(() => mockNavigate),
   useParams: vi.fn(() => ({})),
   useSearchParams: vi.fn(() => [new URLSearchParams()]),
 }));
@@ -101,22 +122,12 @@ vi.mock('../../../routes/utils', () => ({
   useStudyId: vi.fn(() => 'test-study'),
 }));
 
-vi.mock('../utils', () => {
-  const answerField = {
-    values: {},
-    isValid: vi.fn(() => true),
-    setValues: vi.fn(),
-    setInitialValues: vi.fn(),
-    reset: vi.fn(),
-    getInputProps: vi.fn(() => ({ value: '', onChange: vi.fn() })),
-  };
-  return {
-    generateInitFields: vi.fn(() => ({})),
-    mergeReactiveAnswers: vi.fn((_: unknown, values: unknown) => values),
-    useAnswerField: vi.fn(() => answerField),
-    usesStandaloneDontKnowField: vi.fn(() => false),
-  };
-});
+vi.mock('../utils', () => ({
+  generateInitFields: vi.fn(() => ({})),
+  mergeReactiveAnswers: vi.fn((_: unknown, values: unknown) => values),
+  useAnswerField: vi.fn(() => mockAnswerField),
+  usesStandaloneDontKnowField: vi.fn(() => false),
+}));
 
 vi.mock('../../../utils/correctAnswer', () => ({
   responseAnswerIsCorrect: vi.fn(() => true),
@@ -128,12 +139,16 @@ vi.mock('../customResponseModules', () => ({
 }));
 
 vi.mock('../ResponseSwitcher', () => ({
-  ResponseSwitcher: ({ response }: { response: { id: string; type: string } }) => (
-    <div data-testid={`switcher-${response.type}`}>
-      {response.type}
-      <input data-testid={`control-${response.id}`} />
-    </div>
-  ),
+  ResponseSwitcher: ({ response, storedAnswer, answerFinalized }: { response: { id: string; type: string }; storedAnswer?: Record<string, unknown>; answerFinalized?: boolean }) => {
+    capturedSwitcherProps.storedAnswer = storedAnswer;
+    capturedSwitcherProps.answerFinalized = answerFinalized;
+    return (
+      <div data-testid={`switcher-${response.type}`}>
+        {response.type}
+        <input data-testid={`control-${response.id}`} />
+      </div>
+    );
+  },
 }));
 
 vi.mock('../FeedbackAlert', () => ({
@@ -219,8 +234,8 @@ const metadata = {
 
 type StudyStore = Awaited<ReturnType<typeof studyStoreCreator>>;
 
-async function makeStudyStore(): Promise<StudyStore> {
-  return studyStoreCreator('test-study', storeConfig, storeSequence, metadata, {}, modes, 'p1', false, false);
+async function makeStudyStore(modesOverride: Partial<Record<REVISIT_MODE, boolean>> = {}, answers: Record<string, StoredAnswer> = {}): Promise<StudyStore> {
+  return studyStoreCreator('test-study', storeConfig, storeSequence, metadata, answers, { ...modes, ...modesOverride }, 'p1', false, false);
 }
 
 function withStore(studyStore: StudyStore, ui: ReactNode) {
@@ -257,7 +272,12 @@ beforeEach(() => {
   mockStoredAnswerData.responseSubmitAttempted = undefined;
   mockStoredAnswerData.checkAnswer = undefined;
   capturedNextButtonProps.onCheckAnswer = undefined;
+  capturedSwitcherProps.storedAnswer = undefined;
+  capturedSwitcherProps.answerFinalized = undefined;
   mockIsAnalysis.value = false;
+  mockNavigate.mockClear();
+  mockSaveAnswers.mockClear();
+  mockAnswerField.values = {};
 });
 
 // Unmount between tests so window keydown listeners from prior renders don't leak
@@ -348,6 +368,20 @@ describe('ResponseBlock', () => {
       <ResponseBlock config={baseConfig} location="belowStimulus" status={status} />,
     );
     expect(container.querySelector('div')).toBeTruthy();
+  });
+
+  test('passes answerFinalized to ResponseSwitcher when the trial is finished', async () => {
+    const status = makeStoredAnswer({ answer: { q1: 'hello' }, endTime: 100 });
+    await renderWithStore(<ResponseBlock config={baseConfig} location="belowStimulus" status={status} />);
+    expect(capturedSwitcherProps.storedAnswer).toEqual({ q1: 'hello' });
+    expect(capturedSwitcherProps.answerFinalized).toBe(true);
+  });
+
+  test('passes answerFinalized=false to ResponseSwitcher while the trial is in progress', async () => {
+    const status = makeStoredAnswer({ answer: { q1: 'hello' }, endTime: -1 });
+    await renderWithStore(<ResponseBlock config={baseConfig} location="belowStimulus" status={status} />);
+    expect(capturedSwitcherProps.storedAnswer).toEqual({ q1: 'hello' });
+    expect(capturedSwitcherProps.answerFinalized).toBe(false);
   });
 
   test('clicking Check Answer calls checkAnswerProvideFeedback', async () => {
@@ -536,6 +570,94 @@ describe('ResponseBlock check-answer state persistence', () => {
     expect(store.getState().checkAnswer.trial1_0).toBeUndefined();
     const checkBtn = findButton(container, 'Check Answer');
     expect(checkBtn).toHaveProperty('disabled', false);
+  });
+
+  test('persists each grading attempt to storage before Next', async () => {
+    vi.mocked(responseAnswerIsCorrect).mockReturnValue(false);
+    mockAnswerField.values = { q1: '42' };
+    const { container } = await renderWithStore(
+      <ResponseBlock config={feedbackConfig} location="belowStimulus" />,
+    );
+    await act(async () => { fireEvent.click(findButton(container, 'Check Answer')); });
+    expect(mockSaveAnswers).toHaveBeenCalledTimes(1);
+    await act(async () => { fireEvent.click(findButton(container, 'Check Answer')); });
+    expect(mockSaveAnswers).toHaveBeenCalledTimes(2);
+    expect(mockSaveAnswers).toHaveBeenLastCalledWith(expect.objectContaining({
+      trial1_0: expect.objectContaining({
+        answer: { q1: '42' },
+        checkAnswer: { attemptsUsed: 2, correct: false, responses: { q1: false } },
+      }),
+    }));
+  });
+
+  test('saves the graded draft to Redux', async () => {
+    vi.mocked(responseAnswerIsCorrect).mockReturnValue(false);
+    mockAnswerField.values = { q1: '42' };
+    const { container, store } = await renderWithStore(
+      <ResponseBlock config={feedbackConfig} location="belowStimulus" />,
+    );
+    await act(async () => { fireEvent.click(findButton(container, 'Check Answer')); });
+    expect(store.getState().answers.trial1_0).toMatchObject({
+      answer: { q1: '42' },
+      checkAnswer: { attemptsUsed: 1, correct: false, responses: { q1: false } },
+    });
+  });
+
+  test('saves the draft to Redux even when data collection is disabled', async () => {
+    vi.mocked(responseAnswerIsCorrect).mockReturnValue(false);
+    const studyStore = await makeStudyStore({ dataCollectionEnabled: false });
+    const { container } = render(withStore(studyStore, <ResponseBlock config={feedbackConfig} location="belowStimulus" />));
+    await act(async () => { fireEvent.click(findButton(container, 'Check Answer')); });
+    expect(studyStore.store.getState().answers.trial1_0.checkAnswer).toEqual({ attemptsUsed: 1, correct: false, responses: { q1: false } });
+    expect(mockSaveAnswers).not.toHaveBeenCalled();
+  });
+
+  test('does not re-persist when restoring a saved checkAnswer', async () => {
+    const persisted: CheckAnswerState = { attemptsUsed: 1, correct: false, responses: { q1: false } };
+    mockStoredAnswerData.checkAnswer = persisted;
+    const studyStore = await makeStudyStore({}, { trial1_0: makeStoredAnswer({ identifier: 'trial1_0', checkAnswer: persisted }) });
+    render(withStore(studyStore, <ResponseBlock config={feedbackConfig} location="belowStimulus" />));
+    expect(mockSaveAnswers).not.toHaveBeenCalled();
+  });
+
+  test('redirects to the training-failed page after the final failed attempt', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.mocked(responseAnswerIsCorrect).mockReturnValue(false);
+      const noFailConfig = { ...feedbackConfig, allowFailedTraining: false } as IndividualComponent;
+      const { container } = await renderWithStore(<ResponseBlock config={noFailConfig} location="belowStimulus" />);
+      await act(async () => { fireEvent.click(findButton(container, 'Check Answer')); });
+      await act(async () => { fireEvent.click(findButton(container, 'Check Answer')); });
+      await act(async () => { vi.advanceTimersByTime(5000); });
+      expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining('__trainingFailed'));
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('redirects to the training-failed page when restoring a failed training state', async () => {
+    vi.useFakeTimers();
+    try {
+      mockStoredAnswerData.checkAnswer = { attemptsUsed: 2, correct: false, responses: { q1: false } };
+      const noFailConfig = { ...feedbackConfig, allowFailedTraining: false } as IndividualComponent;
+      await renderWithStore(<ResponseBlock config={noFailConfig} location="belowStimulus" />);
+      await act(async () => { vi.advanceTimersByTime(5000); });
+      expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining('__trainingFailed'));
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('does not redirect a restored failure when allowFailedTraining is true', async () => {
+    vi.useFakeTimers();
+    try {
+      mockStoredAnswerData.checkAnswer = { attemptsUsed: 2, correct: false, responses: { q1: false } };
+      await renderWithStore(<ResponseBlock config={feedbackConfig} location="belowStimulus" />);
+      await act(async () => { vi.advanceTimersByTime(5000); });
+      expect(mockNavigate).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   test('restores mixed per-response feedback in the correct locations', async () => {
