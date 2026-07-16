@@ -41,6 +41,7 @@ export function ResponseSwitcher({
   response,
   form,
   storedAnswer,
+  answerFinalized,
   index,
   config,
   dontKnowCheckbox,
@@ -53,6 +54,7 @@ export function ResponseSwitcher({
   response: Response;
   form: GetInputPropsReturnType;
   storedAnswer?: StoredAnswer['answer'];
+  answerFinalized?: boolean;
   index: number;
   config: IndividualComponent;
   dontKnowCheckbox?: GetInputPropsReturnType;
@@ -74,14 +76,16 @@ export function ResponseSwitcher({
   const completed = useStoreSelector((state) => state.completed);
   const usesStandaloneDontKnow = usesStandaloneDontKnowField(response);
 
+  const finalStoredAnswer = isAnalysis || answerFinalized || completed ? storedAnswer : undefined;
+
   // Don't update if we're in analysis mode
-  const ans = useMemo(() => (isAnalysis || (Object.keys(storedAnswer || {}).length > 0 && !nextConfig?.previousButton) || completed ? { value: storedAnswer![response.id], readOnly: true } : form) || { value: undefined }, [isAnalysis, storedAnswer, response.id, form, nextConfig?.previousButton, completed]);
+  const ans = useMemo(() => (isAnalysis || (Object.keys(finalStoredAnswer || {}).length > 0 && !nextConfig?.previousButton) || completed ? { value: finalStoredAnswer![response.id], readOnly: true } : form) || { value: undefined }, [isAnalysis, finalStoredAnswer, response.id, form, nextConfig?.previousButton, completed]);
   const dontKnowValue = usesStandaloneDontKnow
-    ? ((Object.keys(storedAnswer || {}).length > 0 ? { checked: storedAnswer![`${response.id}-dontKnow`] } : dontKnowCheckbox) || { checked: undefined })
+    ? ((Object.keys(finalStoredAnswer || {}).length > 0 ? { checked: finalStoredAnswer![`${response.id}-dontKnow`] } : dontKnowCheckbox) || { checked: undefined })
     : { checked: undefined };
   const dontKnowChecked = !!dontKnowValue.checked;
-  const otherValue = (Object.keys(storedAnswer || {}).length > 0 ? { value: storedAnswer![`${response.id}-other`] } : otherInput) || { value: undefined };
-  const inputDisabled = !!(Object.keys(storedAnswer || {}).length > 0 || disabled || completed);
+  const otherValue = (Object.keys(finalStoredAnswer || {}).length > 0 ? { value: finalStoredAnswer![`${response.id}-other`] } : otherInput) || { value: undefined };
+  const inputDisabled = !!(Object.keys(finalStoredAnswer || {}).length > 0 || disabled || completed);
 
   const [searchParams] = useSearchParams();
 
