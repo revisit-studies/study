@@ -113,6 +113,14 @@ vi.mock('localforage', () => ({
 
 // Complete in-memory Firestore mock — no emulator needed.
 vi.mock('firebase/firestore', () => {
+  type QueryConstraint = {
+    type: 'where' | 'limit';
+    field?: string;
+    operator?: string;
+    value?: unknown;
+    count?: number;
+  };
+
   function resolveSentinels(data: DocData): DocData {
     const now = Date.now();
     const result: DocData = {};
@@ -172,12 +180,47 @@ vi.mock('firebase/firestore', () => {
     return docs;
   }
 
-  function mockGetDocs(collRef: { _path: string }) {
-    const docs = getDocsInCollection(collRef._path);
+  function mockGetDocs(collRef: { _path: string; _constraints?: QueryConstraint[] }) {
+    let docs = getDocsInCollection(collRef._path);
+    (collRef._constraints ?? []).forEach((constraint) => {
+      if (constraint.type === 'where') {
+        docs = docs.filter((document) => {
+          const fieldValue = document.data()[constraint.field!];
+          if (constraint.operator === '==') return fieldValue === constraint.value;
+          if (constraint.operator === '>') {
+            return fieldValue !== undefined
+              && fieldValue !== null
+              && String(fieldValue) > String(constraint.value);
+          }
+          return true;
+        });
+      } else if (constraint.type === 'limit') {
+        docs = docs.slice(0, constraint.count);
+      }
+    });
     return Promise.resolve({
       docs,
       forEach: (cb: (d: { id: string; data: () => DocData }) => void) => docs.forEach(cb),
     });
+  }
+
+  function mockQuery(collRef: { _path: string }, ...constraints: QueryConstraint[]) {
+    return { ...collRef, _constraints: constraints };
+  }
+
+  function mockWhere(field: string, operator: string, value: unknown): QueryConstraint {
+    return {
+      type: 'where', field, operator, value,
+    };
+  }
+
+  function mockLimit(count: number): QueryConstraint {
+    return { type: 'limit', count };
+  }
+
+  async function mockGetCountFromServer(collRef: { _path: string; _constraints?: QueryConstraint[] }) {
+    const snapshot = await mockGetDocs(collRef);
+    return { data: () => ({ count: snapshot.docs.length }) };
   }
 
   function mockUpdateDoc(docRef: { _path: string }, data: DocData) {
@@ -215,6 +258,24 @@ vi.mock('firebase/firestore', () => {
     };
   }
 
+  let transactionChain = Promise.resolve<unknown>(undefined);
+  function mockRunTransaction<T>(
+    _firestore: object,
+    operation: (transaction: {
+      get: typeof mockGetDoc;
+      set: typeof mockSetDoc;
+      update: typeof mockUpdateDoc;
+    }) => Promise<T>,
+  ) {
+    const result = transactionChain.then(() => operation({
+      get: mockGetDoc,
+      set: mockSetDoc,
+      update: mockUpdateDoc,
+    }));
+    transactionChain = result.then(() => undefined, () => undefined);
+    return result;
+  }
+
   class MockTimestamp {
     constructor(public seconds: number, public nanoseconds: number) { }
 
@@ -227,6 +288,11 @@ vi.mock('firebase/firestore', () => {
     setDoc: vi.fn(mockSetDoc),
     getDoc: vi.fn(mockGetDoc),
     getDocs: vi.fn(mockGetDocs),
+    getCountFromServer: vi.fn(mockGetCountFromServer),
+    query: vi.fn(mockQuery),
+    where: vi.fn(mockWhere),
+    limit: vi.fn(mockLimit),
+    runTransaction: vi.fn(mockRunTransaction),
     updateDoc: vi.fn(mockUpdateDoc),
     onSnapshot: vi.fn(mockOnSnapshot),
     writeBatch: vi.fn(mockWriteBatch),
@@ -400,6 +466,16 @@ describe.each([
     expect(participantData!.participantTags).toEqual([]);
   });
 
+  test('fresh participant startup does not scan all sequence assignments', async () => {
+    const scanSpy = vi.spyOn(storageEngine, 'getAllSequenceAssignments');
+
+    const participant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    expect(scanSpy).not.toHaveBeenCalled();
+
+    await storageEngine.getParticipantCompletionStatus(participant.participantId);
+    expect(scanSpy).not.toHaveBeenCalled();
+  });
+
   test('initializeParticipantSession sets conditions from searchParams condition', async () => {
     const participantSession = await storageEngine.initializeParticipantSession({ condition: 'color' }, configSimple, participantMetadata);
 
@@ -473,13 +549,36 @@ describe.each([
     }
   });
 
+  test('concurrent participant starts reserve unique sequence and creation indexes', async () => {
+    const engines = Array.from({ length: 12 }, () => new TestEngine(true));
+    await Promise.all(engines.map(async (engine) => {
+      await engine.connect();
+      await engine.initializeStudyDb(studyId);
+    }));
+
+    const sessions = await Promise.all(engines.map((engine, index) => (
+      engine.initializeParticipantSession(
+        {},
+        configSimple,
+        participantMetadata,
+        `concurrent-${index}`,
+      )
+    )));
+    const assignments = (await storageEngine.getAllSequenceAssignments(studyId))
+      .filter((assignment) => assignment.participantId.startsWith('concurrent-'));
+
+    expect(new Set(assignments.map((assignment) => assignment.sequenceIndex)).size).toBe(12);
+    expect(assignments.map((assignment) => assignment.sequenceIndex).sort((a, b) => a! - b!))
+      .toEqual(Array.from({ length: 12 }, (_, index) => index));
+    expect(new Set(sessions.map((session) => session.participantIndex)).size).toBe(12);
+    expect(sessions.map((session) => session.participantIndex).sort((a, b) => a - b))
+      .toEqual(Array.from({ length: 12 }, (_, index) => index + 1));
+  });
+
   test('initializeParticipantSession omits conditions field in sequence assignment when empty', async () => {
-    // @ts-expect-error accessing protected method for spying
-    const createSequenceAssignmentSpy = vi.spyOn(storageEngine, '_createSequenceAssignment');
-
-    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
-
-    const sequenceAssignmentPayload = (createSequenceAssignmentSpy.mock.calls[0] as DocData[])[1];
+    const participant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    const sequenceAssignmentPayload = (await storageEngine.getAllSequenceAssignments(studyId))
+      .find((assignment) => assignment.participantId === participant.participantId)!;
     expect(Object.hasOwn(sequenceAssignmentPayload, 'conditions')).toBe(false);
   });
 

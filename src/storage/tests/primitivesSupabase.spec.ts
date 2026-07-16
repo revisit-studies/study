@@ -39,48 +39,73 @@ vi.mock('@supabase/supabase-js', () => {
 
   function applyFilters(
     rows: Array<RowData>,
-    filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'like' }>,
+    filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'like' | 'not' }>,
   ): Array<RowData> {
     return rows.filter((row) => filters.every(({ col, val, type }) => {
       const colVal = getFieldValue(row, col);
       if (type === 'eq') return colVal === val;
+      if (type === 'not') return colVal !== null && colVal !== undefined;
       return typeof colVal === 'string' && matchLike(colVal, String(val));
     }));
   }
 
   function makeQueryBuilder(getRows: () => Array<RowData>) {
-    let op: 'select' | 'upsert' | 'update' | 'delete' | null = null;
+    let op: 'select' | 'insert' | 'upsert' | 'update' | 'delete' | null = null;
     let payload: RowData | RowData[] | Partial<RowData> | null = null;
-    const filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'like' }> = [];
+    const filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'like' | 'not' }> = [];
     let isSingle = false;
+    let allowMissingSingle = false;
+    let requestedCount = false;
+    let headOnly = false;
+    let resultLimit: number | undefined;
 
     const qb = {
-      select(_fields?: string) { op = 'select'; return qb; },
+      select(_fields?: string, options?: { count?: string; head?: boolean }) {
+        if (op === null) op = 'select';
+        requestedCount = options?.count === 'exact';
+        headOnly = options?.head === true;
+        return qb;
+      },
+      insert(row: RowData | RowData[]) { op = 'insert'; payload = row; return qb; },
       upsert(row: RowData | RowData[]) { op = 'upsert'; payload = row; return qb; },
       update(obj: Partial<RowData>) { op = 'update'; payload = obj; return qb; },
       delete() { op = 'delete'; return qb; },
       eq(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'eq' }); return qb; },
       like(col: string, val: string) { filters.push({ col, val, type: 'like' }); return qb; },
+      not(col: string, _operator: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'not' }); return qb; },
+      order(_col: string, _options?: { ascending?: boolean }) { return qb; },
+      limit(count: number) { resultLimit = count; return qb; },
       single() { isSingle = true; return qb; },
+      maybeSingle() { isSingle = true; allowMissingSingle = true; return qb; },
       then(
-        resolve: (val: { data: RowData | RowData[] | null; error: { message: string; code?: string } | null }) => void,
+        resolve: (val: { data: RowData | RowData[] | null; error: { message: string; code?: string } | null; count?: number | null }) => void,
         reject?: (err: Error) => void,
       ) {
         Promise.resolve().then(() => {
           const rows = getRows();
           if (op === 'select') {
-            const matched = applyFilters(rows, filters);
+            let matched = applyFilters(rows, filters);
+            const count = requestedCount ? matched.length : null;
+            if (resultLimit !== undefined) matched = matched.slice(0, resultLimit);
+            if (headOnly) {
+              resolve({ data: null, error: null, count });
+              return;
+            }
             // Return deep copies so later mutations to revisitRows don't alias into returned data
             if (isSingle) {
               if (matched.length === 0) {
-                resolve({ data: null, error: { message: 'No rows', code: 'PGRST116' } });
+                resolve({
+                  data: null,
+                  error: allowMissingSingle ? null : { message: 'No rows', code: 'PGRST116' },
+                  count,
+                });
               } else {
-                resolve({ data: JSON.parse(JSON.stringify(matched[0])), error: null });
+                resolve({ data: JSON.parse(JSON.stringify(matched[0])), error: null, count });
               }
             } else {
-              resolve({ data: JSON.parse(JSON.stringify(matched)), error: null });
+              resolve({ data: JSON.parse(JSON.stringify(matched)), error: null, count });
             }
-          } else if (op === 'upsert') {
+          } else if (op === 'insert' || op === 'upsert') {
             const toUpsert = (Array.isArray(payload)
               ? payload
               : [payload]) as Array<RowData>;

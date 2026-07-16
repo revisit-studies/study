@@ -220,6 +220,26 @@ vi.mock('firebase/firestore', () => {
     };
   }
 
+  function mockQuery(collRef: { _path: string }) {
+    return collRef;
+  }
+
+  async function mockGetCountFromServer(collRef: { _path: string }) {
+    const snapshot = await mockGetDocs(collRef);
+    return { data: () => ({ count: snapshot.docs.length }) };
+  }
+
+  function mockRunTransaction<T>(
+    _firestore: object,
+    operation: (transaction: {
+      get: typeof mockGetDoc;
+      set: typeof mockSetDoc;
+      update: typeof mockUpdateDoc;
+    }) => Promise<T>,
+  ) {
+    return operation({ get: mockGetDoc, set: mockSetDoc, update: mockUpdateDoc });
+  }
+
   class MockTimestamp {
     constructor(public seconds: number, public nanoseconds: number) { }
 
@@ -232,6 +252,11 @@ vi.mock('firebase/firestore', () => {
     setDoc: vi.fn(mockSetDoc),
     getDoc: vi.fn(mockGetDoc),
     getDocs: vi.fn(mockGetDocs),
+    getCountFromServer: vi.fn(mockGetCountFromServer),
+    query: vi.fn(mockQuery),
+    where: vi.fn(() => ({})),
+    limit: vi.fn(() => ({})),
+    runTransaction: vi.fn(mockRunTransaction),
     updateDoc: vi.fn(mockUpdateDoc),
     onSnapshot: vi.fn(mockOnSnapshot),
     writeBatch: vi.fn(mockWriteBatch),

@@ -63,6 +63,11 @@ class TestStorageEngine extends StorageEngine {
 
   protected _createSequenceAssignment = vi.fn(async () => { });
 
+  protected _allocateSequenceAssignment = vi.fn(async () => ({
+    sequenceIndex: 0,
+    creationIndex: 0,
+  }));
+
   protected _getSequenceAssignment = vi.fn(async () => null);
 
   protected _updateSequenceAssignmentFields = vi.fn(async () => { });

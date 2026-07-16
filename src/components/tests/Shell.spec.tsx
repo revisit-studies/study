@@ -227,6 +227,20 @@ describe('Shell', () => {
     render(<Shell globalConfig={globalConfig} />);
     await waitFor(() => expect(mockStorageEngine!.initializeStudyDb).toHaveBeenCalled(), { timeout: 3000 });
     await waitFor(() => expect(vi.mocked(studyStoreCreator)).toHaveBeenCalled(), { timeout: 3000 });
+    expect(mockStorageEngine.initializeParticipantSession).toHaveBeenCalledWith(
+      expect.any(Object),
+      mockActiveConfig,
+      expect.any(Object),
+      undefined,
+      {
+        modesDocument: {
+          developmentModeEnabled: false,
+          dataSharingEnabled: false,
+          dataCollectionEnabled: true,
+        },
+        sequenceArray: ['seq1'],
+      },
+    );
   });
 
   test('calls setSequenceArray when getSequenceArray returns null', async () => {

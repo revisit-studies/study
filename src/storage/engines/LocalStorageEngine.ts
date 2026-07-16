@@ -1,8 +1,28 @@
 import localforage from 'localforage';
 import {
-  REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageEngine, StorageObject, StorageObjectType, cleanupModes,
+  REVISIT_MODE, SequenceAssignment, SequenceAssignmentAllocation, SnapshotDocContent, StorageEngine, StorageObject, StorageObjectType, cleanupModes,
 } from './types';
 import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
+
+const localAllocationLocks = new Map<string, Promise<void>>();
+
+async function withLocalAllocationLock<T>(key: string, operation: () => Promise<T>): Promise<T> {
+  const previous = localAllocationLocks.get(key) ?? Promise.resolve();
+  let release: () => void = () => undefined;
+  const current = new Promise<void>((resolve) => { release = resolve; });
+  const queued = previous.then(() => current);
+  localAllocationLocks.set(key, queued);
+  await previous;
+
+  try {
+    return await operation();
+  } finally {
+    release();
+    if (localAllocationLocks.get(key) === queued) {
+      localAllocationLocks.delete(key);
+    }
+  }
+}
 
 export class LocalStorageEngine extends StorageEngine {
   private studyDatabase = localforage.createInstance({
@@ -73,6 +93,69 @@ export class LocalStorageEngine extends StorageEngine {
     const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath) || {};
     sequenceAssignments[participantId] = sequenceAssignment;
     await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
+  }
+
+  protected async _allocateSequenceAssignment(
+    participantId: string,
+    sequenceAssignment: SequenceAssignment,
+  ): Promise<SequenceAssignmentAllocation> {
+    await this.verifyStudyDatabase();
+    if (this.studyId === undefined) {
+      throw new Error('Study ID is not set');
+    }
+
+    const sequenceAssignmentPath = `${this.collectionPrefix}${this.studyId}/sequenceAssignment`;
+    return withLocalAllocationLock(sequenceAssignmentPath, async () => {
+      const assignmentsByParticipant = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(
+        sequenceAssignmentPath,
+      ) || {};
+      const existingAssignment = assignmentsByParticipant[participantId];
+      const assignments = Object.values(assignmentsByParticipant);
+
+      if (existingAssignment) {
+        const sequenceIndex = existingAssignment.sequenceIndex
+          ?? assignments.filter((assignment) => !assignment.rejected)
+            .sort((a, b) => a.timestamp - b.timestamp)
+            .findIndex((assignment) => assignment.participantId === participantId);
+        const creationIndex = existingAssignment.creationIndex
+          ?? assignments.sort((a, b) => a.createdTime - b.createdTime)
+            .findIndex((assignment) => assignment.participantId === participantId);
+        return { sequenceIndex, creationIndex };
+      }
+
+      const reusableAssignment = assignments
+        .filter((assignment) => assignment.rejected && !assignment.claimed)
+        .sort((a, b) => a.timestamp - b.timestamp)[0];
+      const creationIndex = assignments.length;
+      const logicalSlotCount = assignments
+        .filter((assignment) => !assignment.claimedParticipantId).length;
+      const sequenceIndex = reusableAssignment?.sequenceIndex
+        ?? (reusableAssignment
+          ? assignments.filter((assignment) => (
+            !assignment.rejected && assignment.timestamp < reusableAssignment.timestamp
+          )).length
+          : logicalSlotCount);
+
+      if (reusableAssignment) {
+        assignmentsByParticipant[reusableAssignment.participantId] = {
+          ...reusableAssignment,
+          claimed: true,
+          sequenceIndex,
+        };
+      }
+
+      assignmentsByParticipant[participantId] = {
+        ...sequenceAssignment,
+        ...(reusableAssignment ? {
+          timestamp: reusableAssignment.timestamp,
+          claimedParticipantId: reusableAssignment.participantId,
+        } : {}),
+        sequenceIndex,
+        creationIndex,
+      };
+      await this.studyDatabase.setItem(sequenceAssignmentPath, assignmentsByParticipant);
+      return { sequenceIndex, creationIndex };
+    });
   }
 
   protected async _updateSequenceAssignmentFields(participantId: string, updatedFields: Partial<SequenceAssignment>) {

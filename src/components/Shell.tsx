@@ -233,12 +233,12 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
         await storageEngine.saveConfig(activeConfig);
 
-        const sequenceArray = await storageEngine.getSequenceArray();
+        let sequenceArray = await storageEngine.getSequenceArray();
 
         if (!sequenceArray) {
-          const generatedSequenceArray = await generateSequenceArray(activeConfig);
+          sequenceArray = await generateSequenceArray(activeConfig);
 
-          await storageEngine.setSequenceArray(generatedSequenceArray);
+          await storageEngine.setSequenceArray(sequenceArray);
         }
 
         // Get or generate participant session
@@ -257,6 +257,10 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           activeConfig,
           initialMetadata,
           participantId || urlParticipantId,
+          {
+            modesDocument: resolvedModes,
+            sequenceArray,
+          },
         );
 
         if (studyCondition.length > 0 && resolvedModes.developmentModeEnabled) {

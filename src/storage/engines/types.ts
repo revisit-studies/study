@@ -45,6 +45,13 @@ export type SequenceAssignment = {
   isDynamic: boolean; // Whether the study contains dynamic blocks
   stage: string; // The stage of the participant in the study
   conditions?: string[]; // The study condition(s) assigned to this participant.
+  sequenceIndex?: number; // Stable zero-based Latin-square slot for bounded assignment lookup.
+  creationIndex?: number; // Stable zero-based participant creation order.
+};
+
+export type SequenceAssignmentAllocation = {
+  sequenceIndex: number;
+  creationIndex: number;
 };
 
 export type REVISIT_MODE = 'dataCollectionEnabled' | 'developmentModeEnabled' | 'dataSharingEnabled';
@@ -70,7 +77,7 @@ export interface StageInfo {
   color: string;
 }
 
-interface StageData {
+export interface StageData {
   currentStage: StageInfo;
   allStages: StageInfo[];
 }
@@ -78,6 +85,11 @@ interface StageData {
 type ModesAndStageData = {
   modes: Record<REVISIT_MODE, boolean>;
   stageData: StageData;
+};
+
+export type ParticipantSessionBootstrapData = {
+  modesDocument: Record<REVISIT_MODE, boolean> & { stage?: StageData };
+  sequenceArray: Sequence[];
 };
 
 export interface ConditionData {
@@ -243,6 +255,13 @@ export abstract class StorageEngine {
   // Creates a sequence assignment for the given participantId and sequenceAssignment. Cloud storage engines should use the realtime database to create the sequence assignment and should use the server to prevent race conditions (i.e. using server timestamps).
   protected abstract _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment, withServerTimestamp: boolean): Promise<void>;
 
+  // Atomically reserves a stable sequence slot and creation index and persists the assignment.
+  // Implementations must use a transaction, compare-and-swap counter, or equivalent bounded operation.
+  protected abstract _allocateSequenceAssignment(
+    participantId: string,
+    sequenceAssignment: SequenceAssignment,
+  ): Promise<SequenceAssignmentAllocation>;
+
   // Updates specific top-level fields in an existing sequence assignment without modifying timestamp fields.
   // This operation is a shallow patch (no deep merge for nested objects).
   protected abstract _updateSequenceAssignmentFields(
@@ -403,8 +422,11 @@ export abstract class StorageEngine {
     }
   }
 
-  private async getModesAndStageData(studyId: string): Promise<ModesAndStageData> {
-    const modesDoc = await this.getModes(studyId);
+  private async getModesAndStageData(
+    studyId: string,
+    existingModesDocument?: Record<REVISIT_MODE, boolean> & { stage?: StageData },
+  ): Promise<ModesAndStageData> {
+    const modesDoc = existingModesDocument ?? await this.getModes(studyId);
     const { stage, ...modeValues } = modesDoc;
 
     if (stage) {
@@ -715,10 +737,7 @@ export abstract class StorageEngine {
 
     // Skip saving config if the active config is already saved in storage
     if (currentConfigHash === configHash) {
-      const storedConfig = await this._getFromStorage(`configs/${configHash}`, 'config');
-      if (storedConfig && Object.keys(storedConfig).length > 0) {
-        return;
-      }
+      return;
     }
 
     // Push the config to storage and cache it, since it won't change
@@ -810,97 +829,56 @@ export abstract class StorageEngine {
   // This function is one of the most critical functions in the storage engine.
   // It uses the notion of sequence intents and assignments to determine the current sequence for the participant.
   // It handles rejected participants and allows for reusing a rejected participant's sequence.
-  protected async _getSequence(conditions?: string[], bootstrapData?: ModesAndStageData) {
+  protected async _getSequence(
+    sequenceArray: Sequence[],
+    conditions?: string[],
+    bootstrapData?: ModesAndStageData,
+  ) {
     if (!this.currentParticipantId) {
       throw new Error('Participant not initialized');
     }
     if (this.studyId === undefined) {
       throw new Error('Study ID is not set');
     }
-    let sequenceAssignments = await this.getAllSequenceAssignments(this.studyId);
-
     const { modes, stageData } = bootstrapData ?? await this.getModesAndStageData(this.studyId);
     const currentStage = stageData.currentStage.stageName;
 
-    // Find all rejected documents
-    const rejectedDocs = sequenceAssignments
-      .filter((doc) => doc.rejected && !doc.claimed);
-    if (rejectedDocs.length > 0) {
-      const firstReject = rejectedDocs[0];
-      const firstRejectTime = firstReject.timestamp;
-      if (modes.dataCollectionEnabled) {
-        // Make the sequence assignment document for the participant
-        const participantSequenceAssignmentData: SequenceAssignment = {
-          participantId: this.currentParticipantId,
-          timestamp: firstRejectTime, // Use the timestamp of the first reject
-          rejected: false,
-          claimed: false,
-          claimedParticipantId: firstReject.participantId,
-          completed: null,
-          createdTime: new Date().getTime(), // Placeholder, will be set to server timestamp in cloud engines
-          total: 0,
-          answered: [],
-          isDynamic: false,
-          stage: currentStage,
-          ...(conditions ? { conditions } : {}),
-        };
-        // Mark the first reject as claimed
-        await this._claimSequenceAssignment(firstReject.participantId, firstReject);
-        // Set the participant's sequence assignment document
-        await this._createSequenceAssignment(this.currentParticipantId, participantSequenceAssignmentData, false);
-      }
-    } else if (modes.dataCollectionEnabled) {
-      const timestamp = new Date().getTime();
-      const participantSequenceAssignmentData: SequenceAssignment = {
-        participantId: this.currentParticipantId,
-        timestamp, // Placeholder, will be set to server timestamp in cloud engines
-        rejected: false,
-        claimed: false,
-        completed: null,
-        createdTime: timestamp, // Placeholder, will be set to server timestamp in cloud engines
-        total: 0,
-        answered: [],
-        isDynamic: false,
-        stage: currentStage,
-        ...(conditions ? { conditions } : {}),
-      };
-      await this._createSequenceAssignment(this.currentParticipantId, participantSequenceAssignmentData, true);
-    }
-
-    // Query all the intents to get a sequence and find our position in the queue
-    sequenceAssignments = await this.getAllSequenceAssignments(this.studyId);
-
-    // Get the latin square
-    const sequenceArray = await this.getSequenceArray();
-    if (!sequenceArray) {
-      throw new Error('Latin square not initialized');
-    }
-
-    // Get the current row
-    const intentIndex = sequenceAssignments.filter((assignment) => !assignment.rejected).findIndex(
-      (assignment) => assignment.participantId === this.currentParticipantId,
-    ) % sequenceArray.length;
     if (sequenceArray.length === 0) {
       throw new Error('Something really bad happened with sequence assignment');
     }
-    // If index = -1, we probably have data collection disabled. Give a random assignment.
-    if (intentIndex === -1) {
+
+    if (!modes.dataCollectionEnabled) {
       return {
         currentRow: sequenceArray[Math.floor(Math.random() * sequenceArray.length)],
         creationIndex: 1,
       };
     }
-    const currentRow = sequenceArray[intentIndex];
+
+    const timestamp = Date.now();
+    const participantSequenceAssignmentData: SequenceAssignment = {
+      participantId: this.currentParticipantId,
+      timestamp,
+      rejected: false,
+      claimed: false,
+      completed: null,
+      createdTime: timestamp,
+      total: 0,
+      answered: [],
+      isDynamic: false,
+      stage: currentStage,
+      ...(conditions ? { conditions } : {}),
+    };
+    const allocation = await this._allocateSequenceAssignment(
+      this.currentParticipantId,
+      participantSequenceAssignmentData,
+    );
+    const currentRow = sequenceArray[allocation.sequenceIndex % sequenceArray.length];
 
     if (!currentRow) {
       throw new Error('Latin square is empty');
     }
 
-    const creationSorted = sequenceAssignments.sort((a, b) => a.createdTime - b.createdTime);
-
-    const creationIndex = creationSorted.findIndex((assignment) => assignment.participantId === this.currentParticipantId) + 1;
-
-    return { currentRow, creationIndex };
+    return { currentRow, creationIndex: allocation.creationIndex + 1 };
   }
 
   // Initializes or resumes a participant session for the given studyId. This will create a new participant data object if it does not exist, or update the existing one.
@@ -909,6 +887,7 @@ export abstract class StorageEngine {
     config: StudyConfig,
     metadata: ParticipantMetadata,
     urlParticipantId?: string,
+    bootstrapData?: ParticipantSessionBootstrapData,
   ) {
     await this.verifyStudyDatabase();
 
@@ -934,7 +913,10 @@ export abstract class StorageEngine {
       throw new Error('Study ID is not set');
     }
 
-    const { modes, stageData } = await this.getModesAndStageData(this.studyId);
+    const { modes, stageData } = await this.getModesAndStageData(
+      this.studyId,
+      bootstrapData?.modesDocument,
+    );
     const currentStage = stageData.currentStage.stageName;
 
     if (isParticipantData(participant)) {
@@ -947,7 +929,15 @@ export abstract class StorageEngine {
     const participantConfigHash = await hash(JSON.stringify(config));
     const parsedConditions = parseConditionParam(searchParams.condition);
     const conditions = parsedConditions.length > 0 ? parsedConditions : undefined;
-    const { currentRow, creationIndex } = await this._getSequence(conditions, { modes, stageData });
+    const sequenceArray = bootstrapData?.sequenceArray ?? await this.getSequenceArray();
+    if (!sequenceArray) {
+      throw new Error('Latin square not initialized');
+    }
+    const { currentRow, creationIndex } = await this._getSequence(
+      sequenceArray,
+      conditions,
+      { modes, stageData },
+    );
     this.participantData = {
       participantId: this.currentParticipantId,
       participantConfigHash,
@@ -1425,10 +1415,10 @@ export abstract class StorageEngine {
       throw new Error('Participant not initialized');
     }
 
-    const sequenceAssignments = await this.getAllSequenceAssignments(studyIdToUse);
-    const sequenceAssignment = sequenceAssignments.find(
-      (assignment) => assignment.participantId === participantIdToUse,
-    );
+    if (studyIdToUse !== this.studyId) {
+      await this.initializeStudyDb(studyIdToUse);
+    }
+    const sequenceAssignment = await this._getSequenceAssignment(participantIdToUse);
 
     return sequenceAssignment ? sequenceAssignment.completed !== null : false;
   }

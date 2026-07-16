@@ -2,7 +2,7 @@ import { AuthError, createClient } from '@supabase/supabase-js';
 import localforage from 'localforage';
 import {
   REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageObject, StorageObjectType, StoredUser,
-  CloudStorageEngine, cleanupModes,
+  CloudStorageEngine, SequenceAssignmentAllocation, cleanupModes,
 } from './types';
 import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
 
@@ -102,8 +102,10 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
   protected async _verifyStudyDatabase() {
     const { error } = await this.supabase
       .from('revisit')
-      .select('*')
-      .eq('studyId', `${this.collectionPrefix}${this.studyId}`);
+      .select('docId')
+      .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
+      .eq('docId', 'connect')
+      .limit(1);
     if (error || !this.studyId) {
       throw new Error('Study database not initialized or does not exist');
     }
@@ -170,6 +172,209 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       })
       .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
       .eq('docId', `sequenceAssignment_${participantId}`);
+  }
+
+  private async getSequenceAllocatorSeed() {
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+    const studyId = `${this.collectionPrefix}${this.studyId}`;
+    const [totalResult, replacementResult] = await Promise.all([
+      this.supabase
+        .from('revisit')
+        .select('docId', { count: 'exact', head: true })
+        .eq('studyId', studyId)
+        .like('docId', 'sequenceAssignment_%'),
+      this.supabase
+        .from('revisit')
+        .select('docId', { count: 'exact', head: true })
+        .eq('studyId', studyId)
+        .like('docId', 'sequenceAssignment_%')
+        .not('data->claimedParticipantId', 'is', null),
+    ]);
+    if (totalResult.error || replacementResult.error) {
+      throw new Error('Failed to initialize sequence assignment allocator');
+    }
+    return {
+      nextSequenceIndex: (totalResult.count ?? 0) - (replacementResult.count ?? 0),
+      nextCreationIndex: totalResult.count ?? 0,
+      version: 0,
+    };
+  }
+
+  private async getOrCreateSequenceAllocator() {
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+    const studyId = `${this.collectionPrefix}${this.studyId}`;
+    const allocatorPath = 'sequenceAllocator';
+    const { data: existingAllocator } = await this.supabase
+      .from('revisit')
+      .select('data')
+      .eq('studyId', studyId)
+      .eq('docId', allocatorPath)
+      .maybeSingle();
+    if (existingAllocator) {
+      return existingAllocator.data as {
+        nextSequenceIndex: number;
+        nextCreationIndex: number;
+        version: number;
+      };
+    }
+
+    const seed = await this.getSequenceAllocatorSeed();
+    const { error } = await this.supabase
+      .from('revisit')
+      .insert({ studyId, docId: allocatorPath, data: seed });
+    if (error && error.code !== '23505') {
+      throw new Error('Failed to create sequence assignment allocator');
+    }
+
+    const { data: allocator, error: allocatorError } = await this.supabase
+      .from('revisit')
+      .select('data')
+      .eq('studyId', studyId)
+      .eq('docId', allocatorPath)
+      .single();
+    if (allocatorError || !allocator) {
+      throw new Error('Failed to retrieve sequence assignment allocator');
+    }
+    return allocator.data as typeof seed;
+  }
+
+  protected async _allocateSequenceAssignment(
+    participantId: string,
+    sequenceAssignment: SequenceAssignment,
+  ): Promise<SequenceAssignmentAllocation> {
+    await this.verifyStudyDatabase();
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+
+    const existingAssignment = await this._getSequenceAssignment(participantId);
+    if (existingAssignment) {
+      if (
+        existingAssignment.sequenceIndex !== undefined
+        && existingAssignment.creationIndex !== undefined
+      ) {
+        return {
+          sequenceIndex: existingAssignment.sequenceIndex,
+          creationIndex: existingAssignment.creationIndex,
+        };
+      }
+
+      const assignments = await this.getAllSequenceAssignments(this.studyId);
+      return {
+        sequenceIndex: assignments.filter((assignment) => !assignment.rejected)
+          .findIndex((assignment) => assignment.participantId === participantId),
+        creationIndex: assignments.sort((a, b) => a.createdTime - b.createdTime)
+          .findIndex((assignment) => assignment.participantId === participantId),
+      };
+    }
+
+    const studyId = `${this.collectionPrefix}${this.studyId}`;
+    const [{ data: reusableRow }, initialAllocator] = await Promise.all([
+      this.supabase
+        .from('revisit')
+        .select('docId, data, createdAt')
+        .eq('studyId', studyId)
+        .like('docId', 'sequenceAssignment_%')
+        .eq('data->rejected', true)
+        .eq('data->claimed', false)
+        .order('createdAt', { ascending: true })
+        .limit(1)
+        .maybeSingle(),
+      this.getOrCreateSequenceAllocator(),
+    ]);
+
+    let reusableAssignment = reusableRow?.data as SequenceAssignment | undefined;
+    let reusableSequenceIndex = reusableAssignment?.sequenceIndex;
+    if (reusableAssignment && reusableSequenceIndex === undefined) {
+      const assignments = await this.getAllSequenceAssignments(this.studyId);
+      const reusableTimestamp = reusableAssignment.timestamp;
+      reusableSequenceIndex = assignments.filter((assignment) => (
+        !assignment.rejected && assignment.timestamp < reusableTimestamp
+      )).length;
+    }
+
+    if (reusableRow && reusableAssignment && reusableSequenceIndex !== undefined) {
+      const { data: claimedRows } = await this.supabase
+        .from('revisit')
+        .update({
+          data: {
+            ...reusableAssignment,
+            claimed: true,
+            sequenceIndex: reusableSequenceIndex,
+          },
+        })
+        .eq('studyId', studyId)
+        .eq('docId', reusableRow.docId)
+        .eq('data->rejected', true)
+        .eq('data->claimed', false)
+        .select('data');
+      if (!claimedRows || claimedRows.length === 0) {
+        reusableAssignment = undefined;
+        reusableSequenceIndex = undefined;
+      }
+    }
+
+    const allocatorPath = 'sequenceAllocator';
+    let allocation: SequenceAssignmentAllocation | undefined;
+    for (let attempt = 0; attempt < 10 && !allocation; attempt += 1) {
+      // The version predicate makes the JSON counter update an atomic compare-and-swap.
+      let allocator: {
+        nextSequenceIndex: number;
+        nextCreationIndex: number;
+        version: number;
+      };
+      if (attempt === 0) {
+        allocator = initialAllocator;
+      } else {
+        // eslint-disable-next-line no-await-in-loop
+        allocator = (await this.supabase
+          .from('revisit')
+          .select('data')
+          .eq('studyId', studyId)
+          .eq('docId', allocatorPath)
+          .single()).data?.data as typeof allocator;
+      }
+      const sequenceIndex = reusableSequenceIndex ?? allocator.nextSequenceIndex;
+      const creationIndex = allocator.nextCreationIndex;
+      const nextAllocator = {
+        nextSequenceIndex: reusableSequenceIndex === undefined
+          ? allocator.nextSequenceIndex + 1
+          : allocator.nextSequenceIndex,
+        nextCreationIndex: allocator.nextCreationIndex + 1,
+        version: allocator.version + 1,
+      };
+      // eslint-disable-next-line no-await-in-loop
+      const { data: updatedAllocatorRows } = await this.supabase
+        .from('revisit')
+        .update({ data: nextAllocator })
+        .eq('studyId', studyId)
+        .eq('docId', allocatorPath)
+        .eq('data->version', allocator.version)
+        .select('data');
+      if (updatedAllocatorRows && updatedAllocatorRows.length === 1) {
+        allocation = { sequenceIndex, creationIndex };
+      }
+    }
+    if (!allocation) {
+      throw new Error('Failed to reserve a sequence assignment after concurrent updates');
+    }
+
+    await this._createSequenceAssignment(participantId, {
+      ...sequenceAssignment,
+      ...(reusableRow && reusableAssignment ? {
+        timestamp: (reusableAssignment as SequenceAssignment & { withServerTimestamp?: boolean }).withServerTimestamp
+          ? new Date(reusableRow.createdAt).getTime()
+          : reusableAssignment.timestamp,
+        claimedParticipantId: reusableAssignment.participantId,
+      } : {}),
+      sequenceIndex: allocation.sequenceIndex,
+      creationIndex: allocation.creationIndex,
+    }, !reusableAssignment);
+    return allocation;
   }
 
   protected async _updateSequenceAssignmentFields(participantId: string, updatedFields: Partial<SequenceAssignment>) {
