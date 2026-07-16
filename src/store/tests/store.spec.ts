@@ -442,6 +442,20 @@ describe('studyStoreCreator', () => {
     expect(store.getState().answers.myFunc_5_intro_0).toBeUndefined();
     expect(store.getState().funcSequence.myFunc).toBeUndefined();
   });
+
+  test('deleteDynamicBlockAnswers only deletes the exact funcIndex, not partial matches', async () => {
+    const { store, actions } = await studyStoreCreator('test', minimalConfig, minimalSequence, metadata, emptyAnswers, modes, 'p1', false, false);
+    for (let i = 0; i <= 10; i += 1) {
+      store.dispatch(actions.pushToFuncSequence({
+        component: 'intro', funcName: 'myFunc', index: 5, funcIndex: i, parameters: {}, correctAnswer: [],
+      }));
+    }
+    expect(store.getState().answers.myFunc_5_intro_1).toBeDefined();
+    expect(store.getState().answers.myFunc_5_intro_10).toBeDefined();
+    store.dispatch(actions.deleteDynamicBlockAnswers({ currentStep: 5, funcIndex: 1, funcName: 'myFunc' }));
+    expect(store.getState().answers.myFunc_5_intro_1).toBeUndefined();
+    expect(store.getState().answers.myFunc_5_intro_10).toBeDefined();
+  });
 });
 
 describe('useStoreActions hook', () => {

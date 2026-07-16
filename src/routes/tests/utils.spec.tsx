@@ -188,6 +188,18 @@ describe('useCurrentComponent', () => {
     const { result } = renderHook(() => useCurrentComponent());
     expect(result.current).toBe('CompA');
   });
+
+  test('answer lookup matches the exact funcIndex, not a partial suffix', async () => {
+    mockParams = { studyId: 'test-study', index: '0', funcIndex: '1' };
+    mockFlatSequence = ['myFunc', 'end'];
+    mockAnswers = {
+      myFunc_0_CompEleven_11: { componentName: 'CompEleven' },
+      myFunc_0_CompOne_1: { componentName: 'CompOne' },
+    };
+    vi.mocked(getComponent).mockReturnValue(null);
+    const { result } = renderHook(() => useCurrentComponent());
+    expect(result.current).toBe('CompOne');
+  });
 });
 
 describe('useCurrentIdentifier', () => {
