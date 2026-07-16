@@ -131,6 +131,8 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
     }, {} as Listeners);
   }, [handleRevisitAnswer, handleSignalEvt, vegaConfig]);
 
+  const configuredSignalNames = useMemo(() => new Set(Object.keys(signalListeners)), [signalListeners]);
+
   useEffect(() => {
     async function fetchVega() {
       setLoading(true);
@@ -154,9 +156,11 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
 
   useEffect(() => {
     if (view && provState && provState.event && provState.event.key) {
-      view!.signal(provState.event.key, structuredClone(provState.event.value)).run();
+      if (configuredSignalNames.has(provState.event.key)) {
+        view.signal(provState.event.key, structuredClone(provState.event.value)).run();
+      }
     }
-  }, [view, provState]);
+  }, [configuredSignalNames, view, provState]);
 
   // If the vega spec can't be fetched (404) or parsed (invalid JSON), clear
   // stimulus validation so the participant isn't stuck on a trial that can

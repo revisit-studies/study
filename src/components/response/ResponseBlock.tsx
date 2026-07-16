@@ -20,6 +20,7 @@ import {
 } from '../../store/store';
 
 import { NextButton } from '../NextButton';
+import { shouldIgnoreEnter } from '../keyboardUtils';
 import {
   generateInitFields, mergeReactiveAnswers, useAnswerField,
 } from './utils';
@@ -354,7 +355,13 @@ export function ResponseBlock({
         }
       }
     });
-    (topmostElement as HTMLElement | null)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const target = topmostElement as HTMLElement | null;
+    target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Focus the first focusable element within the target element
+    const focusable = target?.querySelector<HTMLElement>(
+      'button:not(:disabled), input:not([type="hidden"]):not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href], [tabindex]:not([tabindex="-1"])',
+    );
+    focusable?.focus({ preventScroll: true });
   }, [unresolvedResponseIds]);
   const stickyVisibleRef = useRef(false);
   const stickyVisible = showBtnsInLocation && errors && !!summaryMessage;
@@ -577,9 +584,9 @@ export function ResponseBlock({
   const nextOnEnter = config?.nextOnEnter ?? studyConfig.uiConfig.nextOnEnter;
 
   useEffect(() => {
-    if (nextOnEnter) {
+    if (nextOnEnter && showBtnsInLocation && hasCorrectAnswerFeedback && !disabledAttempts) {
       const handleKeyDown = (event: KeyboardEvent) => {
-        if (event.key === 'Enter') {
+        if (event.key === 'Enter' && !shouldIgnoreEnter(event.target)) {
           checkAnswerProvideFeedback();
         }
       };
@@ -589,8 +596,8 @@ export function ResponseBlock({
         window.removeEventListener('keydown', handleKeyDown);
       };
     }
-    return () => { };
-  }, [checkAnswerProvideFeedback, nextOnEnter]);
+    return undefined;
+  }, [checkAnswerProvideFeedback, nextOnEnter, showBtnsInLocation, hasCorrectAnswerFeedback, disabledAttempts]);
 
   const nextButtonText = useMemo(() => config?.nextButtonText ?? studyConfig.uiConfig.nextButtonText ?? 'Next', [config, studyConfig]);
 
