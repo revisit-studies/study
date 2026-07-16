@@ -10,6 +10,7 @@ import type { WebsiteComponent } from '../../parser/types';
 
 const mockDispatch = vi.fn();
 const mockSetReactiveAnswers = vi.fn((payload) => ({ type: 'setReactiveAnswers', payload }));
+const mockUpdateProvenance = vi.fn((payload) => ({ type: 'updateProvenance', payload }));
 const mockUpdateResponseBlockValidation = vi.fn((payload) => ({ type: 'updateResponseBlockValidation', payload }));
 
 vi.mock('react-redux', () => ({
@@ -28,6 +29,7 @@ vi.mock('../../store/hooks/useIsAnalysis', () => ({
 vi.mock('../../store/store', () => ({
   useStoreActions: () => ({
     setReactiveAnswers: mockSetReactiveAnswers,
+    updateProvenance: mockUpdateProvenance,
     updateResponseBlockValidation: mockUpdateResponseBlockValidation,
   }),
   useStoreDispatch: () => mockDispatch,
@@ -76,6 +78,29 @@ describe('IframeController', () => {
       data: { iframeId: '11111111-2222-3333-4444-555555555555', type: '@REVISIT_COMMS/ANSWERS', message: { q1: 'yes' } },
     }));
     await waitFor(() => expect(mockDispatch).toHaveBeenCalled());
+  });
+
+  test('stores provenance independently from answer validation', async () => {
+    vi.spyOn(crypto, 'randomUUID').mockReturnValue(
+      '11111111-2222-3333-4444-555555555555' as `${string}-${string}-${string}-${string}-${string}`,
+    );
+    render(<IframeController currentConfig={websiteConfig} answers={{}} />);
+    const provenanceGraph = { root: 'root', current: 'root', nodes: {} };
+
+    window.dispatchEvent(new MessageEvent('message', {
+      data: {
+        iframeId: '11111111-2222-3333-4444-555555555555',
+        type: '@REVISIT_COMMS/PROVENANCE',
+        message: provenanceGraph,
+      },
+    }));
+
+    await waitFor(() => expect(mockUpdateProvenance).toHaveBeenCalledWith({
+      location: 'stimulus',
+      identifier: 'countDots_0',
+      provenanceGraph,
+    }));
+    expect(mockUpdateResponseBlockValidation).not.toHaveBeenCalled();
   });
 
   test('sends STUDY_DATA when a WINDOW_READY message arrives and parameters are set', async () => {

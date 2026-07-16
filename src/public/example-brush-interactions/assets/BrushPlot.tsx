@@ -6,13 +6,14 @@ import {
 } from 'react';
 import { from, escape } from 'arquero';
 import ColumnTable from 'arquero/dist/types/table/column-table';
-import { Registry, initializeTrrack } from '@trrack/core';
+import { Registry } from '@trrack/core';
 import * as d3 from 'd3';
 import debounce from 'lodash.debounce';
 import { Scatter } from './Scatter';
 import { Bar } from './Bar';
 import { StimulusParams } from '../../../store/types';
 import { BrushParams, BrushState, SelectionType } from './types';
+import { useRevisitTrrack } from '../../../store/hooks/useRevisitTrrack';
 
 export function BrushPlot({
   parameters, setAnswer, provenanceState, updateState = () => null,
@@ -50,7 +51,7 @@ export function BrushPlot({
   }, [data]);
 
   // creating provenance tracking
-  const { actions, trrack } = useMemo(() => {
+  const { actions, registry } = useMemo(() => {
     const reg = Registry.create();
 
     const brush = reg.register('brush', (state, currBrush: BrushState) => {
@@ -73,15 +74,6 @@ export function BrushPlot({
       return state;
     });
 
-    const trrackInst = initializeTrrack({
-      registry: reg,
-      initialState: {
-        all: {
-          hasBrush: false, x1: null, x2: null, y1: null, y2: null, ids: [],
-        },
-      },
-    });
-
     return {
       actions: {
         brush,
@@ -89,9 +81,17 @@ export function BrushPlot({
         brushResize,
         clearBrush,
       },
-      trrack: trrackInst,
+      registry: reg,
     };
   }, []);
+  const trrack = useRevisitTrrack({
+    registry,
+    initialState: {
+      all: {
+        hasBrush: false, x1: null, x2: null, y1: null, y2: null, ids: [],
+      },
+    },
+  });
 
   const moveBrushCallback = useCallback((selType: SelectionType, state: BrushState) => {
     if (selType === 'drag') {
@@ -151,7 +151,6 @@ export function BrushPlot({
 
     setAnswer({
       status: true,
-      provenanceGraph: trrack.graph.backend,
       answers: {},
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps

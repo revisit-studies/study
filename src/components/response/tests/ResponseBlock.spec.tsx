@@ -42,6 +42,7 @@ vi.mock('@trrack/core', () => ({
   },
   initializeTrrack: vi.fn(() => ({
     apply: vi.fn(),
+    currentChange: vi.fn(() => vi.fn()),
     graph: { backend: {} },
   })),
 }));
@@ -52,6 +53,7 @@ vi.mock('../../../store/store', () => ({
   useFlatSequence: vi.fn(() => [{ id: 'trial1', component: 'trial1' }]),
   useStoreDispatch: vi.fn(() => vi.fn()),
   useStoreActions: vi.fn(() => ({
+    updateProvenance: vi.fn((v: unknown) => v),
     updateResponseBlockValidation: vi.fn((v: unknown) => v),
     saveIncorrectAnswer: saveIncorrectAnswerSpy,
     setResponseSubmitAttempt: vi.fn((v: unknown) => v),

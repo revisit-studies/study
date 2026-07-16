@@ -21,6 +21,48 @@
   let onDataReceiveCallback = null;
   let onProvenanceReceiveCallback = null;
   let onAnswerReceiveCallback = null;
+  const managedTrrackSubscriptions = new Set();
+
+  const appendTraversalEvent = (previousProvenance, incomingProvenance, observedAt) => {
+    const isSameGraph = previousProvenance?.root === incomingProvenance.root;
+    const previousEvents = isSameGraph && Array.isArray(previousProvenance?.traversalEvents)
+      ? previousProvenance.traversalEvents
+      : [];
+    const incomingEvents = Array.isArray(incomingProvenance.traversalEvents)
+      ? incomingProvenance.traversalEvents
+      : [];
+    const traversalEvents = incomingEvents.length >= previousEvents.length
+      ? incomingEvents
+      : previousEvents;
+    const currentNodeId = incomingProvenance.current;
+    const currentNode = incomingProvenance.nodes?.[currentNodeId];
+
+    if (!currentNode || traversalEvents.at(-1)?.nodeId === currentNodeId) {
+      return traversalEvents.length > 0
+        ? { ...incomingProvenance, traversalEvents }
+        : incomingProvenance;
+    }
+
+    const isNewNode = !isSameGraph || !previousProvenance?.nodes?.[currentNodeId];
+    const eventTime = isNewNode ? currentNode.createdOn : observedAt;
+    const previousEventTime = traversalEvents.at(-1)?.createdOn ?? Number.NEGATIVE_INFINITY;
+
+    return {
+      ...incomingProvenance,
+      traversalEvents: [
+        ...traversalEvents,
+        {
+          nodeId: currentNodeId,
+          createdOn: Math.max(eventTime, previousEventTime + 1),
+        },
+      ],
+    };
+  };
+
+  const disposeManagedTrracks = () => {
+    managedTrrackSubscriptions.forEach((unsubscribe) => unsubscribe());
+    managedTrrackSubscriptions.clear();
+  };
 
   window.addEventListener('message', function (e) {
     const data = e.data;
@@ -41,8 +83,34 @@
     postAnswers: (answers) => {
       sendMessage("ANSWERS", answers);
     },
+    /**
+     * @deprecated Use Revisit.createTrrack so every traversal is reported automatically.
+     */
     postProvenance: (provenance) => {
       sendMessage("PROVENANCE", provenance);
+    },
+    createTrrack: ({ initializeTrrack, ...options }) => {
+      if (typeof initializeTrrack !== 'function') {
+        throw new TypeError('Revisit.createTrrack requires the Trrack initializeTrrack function.');
+      }
+
+      const trrack = initializeTrrack(options);
+      let previousProvenance;
+      const publishProvenance = () => {
+        const provenance = appendTraversalEvent(
+          previousProvenance,
+          trrack.graph.backend,
+          Date.now(),
+        );
+        previousProvenance = provenance;
+        sendMessage("PROVENANCE", provenance);
+      };
+      const unsubscribe = trrack.currentChange(publishProvenance);
+
+      managedTrrackSubscriptions.add(unsubscribe);
+      publishProvenance();
+
+      return trrack;
     },
     postEvent: (eventName, objectId) => {
       sendMessage("EVENT", { eventName, objectId });
@@ -72,4 +140,9 @@
     },
     false
   );
+  window.addEventListener('pagehide', (event) => {
+    if (!event.persisted) {
+      disposeManagedTrracks();
+    }
+  });
 })();

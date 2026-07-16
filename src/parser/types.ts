@@ -1117,12 +1117,13 @@ export interface MarkdownComponent extends BaseIndividualComponent {
  * ```ts
  * {
  *   parameters: T;
- *   setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: Record<string, any> }) => void
+ *   setAnswer: ({ status, answers }: { status: boolean, answers: Record<string, any> }) => void
  * }
  * ```
  *
  * `parameters` is the same object passed in from the ReactComponent type below, allowing you to pass options in from the config to your component.
- * `setAnswer` is a callback function allowing the creator of the ReactComponent to programmatically set the answer, as well as the provenance graph. This can be useful if you don't use the default answer interface, and instead have something more unique.
+ * `setAnswer` is a callback function allowing the creator of the ReactComponent to programmatically set the answer. This can be useful if you don't use the default answer interface, and instead have something more unique.
+ * Use `useRevisitTrrack` instead of `initializeTrrack` when the component needs provenance. The managed hook creates the Trrack instance and reports apply, undo, redo, and other traversals automatically.
  *
  * So, for example, if I had the following ReactComponent in my config:
  * ```json
@@ -1219,16 +1220,14 @@ export interface ImageComponent extends BaseIndividualComponent {
  *   </script>
  * ```
  *
- * If the html website implements Trrack library for provenance tracking, you can send the provenance graph back to reVISit by calling `Revisit.postProvenance` as shown in the example below. You need to call this each time the Trrack state is updated so that reVISit is kept aware of the changes in the provenance graph.
+ * If the html website implements Trrack provenance tracking, create the instance through `Revisit.createTrrack`. reVISit subscribes before returning the instance and automatically reports apply, undo, redo, and other traversals.
  *
  * ```ts
- * const trrack = initializeTrrack({
+ * const trrack = Revisit.createTrrack({
+ *     initializeTrrack,
  *     initialState,
  *     registry
  *   });
- *
- *   ...
- *   Revisit.postProvenance(trrack.graph.backend);
  * ```
 
  */

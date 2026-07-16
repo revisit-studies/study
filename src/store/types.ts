@@ -170,6 +170,7 @@ export interface StimulusParams<T, S = never> {
     message,
   }: {
     status: boolean,
+    /** @deprecated Use useRevisitTrrack so provenance is captured automatically. */
     provenanceGraph?: TrrackedProvenance,
     answers: StoredAnswer['answer'],
     reason?: StimulusIssueReason,

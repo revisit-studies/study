@@ -19,6 +19,15 @@ for (const demoTitle of demos) {
   test(`${demoTitle} initializes its answer and enforces dot limits`, async ({ page }) => {
     await resetClientStudyState(page);
     await openStudyFromLanding(page, 'Demo Studies', demoTitle);
+    await page.evaluate(() => {
+      const capturedProvenance: unknown[] = [];
+      (window as unknown as { capturedProvenance: unknown[] }).capturedProvenance = capturedProvenance;
+      window.addEventListener('message', (event) => {
+        if (event.data?.type === '@REVISIT_COMMS/PROVENANCE') {
+          capturedProvenance.push(event.data.message);
+        }
+      });
+    });
     await nextClick(page);
 
     const frame = page.frameLocator('#root iframe');
@@ -57,5 +66,15 @@ for (const demoTitle of demos) {
     await expect(removeButton).toBeEnabled();
     await frame.getByRole('button', { name: 'Redo' }).click();
     await expectDotCount(frame, 0);
+
+    const latestTraversalNodeIds = await page.evaluate(() => {
+      const messages = (window as unknown as {
+        capturedProvenance: Array<{ traversalEvents?: Array<{ nodeId: string }> }>;
+      }).capturedProvenance;
+      return messages.at(-1)?.traversalEvents?.map(({ nodeId }) => nodeId) ?? [];
+    });
+    expect(latestTraversalNodeIds.length).toBeGreaterThan(3);
+    expect(latestTraversalNodeIds.at(-3)).toBe(latestTraversalNodeIds.at(-1));
+    expect(latestTraversalNodeIds.at(-2)).not.toBe(latestTraversalNodeIds.at(-1));
   });
 }
