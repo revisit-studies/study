@@ -23,7 +23,7 @@
     "postinstall": "husky"
   },
   "lint-staged": {
-    "*.{tsx,jsx,ts,js}": "yarn lint"
+    "src/**/*.{tsx,jsx,ts,js}": "yarn lint"
   },
   "resolutions": {
     "vitest/vite": "7.3.2"

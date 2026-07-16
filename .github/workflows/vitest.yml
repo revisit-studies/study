@@ -22,5 +22,10 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
+      # revisit-mcp-ts is not a yarn workspace, so the root install does not
+      # cover it. Its specs run as part of the root suite and need these deps.
+      - name: Install MCP dependencies
+        run: yarn --cwd revisit-mcp-ts install --frozen-lockfile
+
       - name: Run unit tests
         run: yarn unittest
