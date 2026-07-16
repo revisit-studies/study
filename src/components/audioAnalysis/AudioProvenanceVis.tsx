@@ -11,7 +11,7 @@ import { useResizeObserver, useThrottledCallback } from '@mantine/hooks';
 import { WaveForm, WaveSurfer } from 'wavesurfer-react';
 import * as d3 from 'd3';
 import {
-  Registry, Trrack, initializeTrrack, isRootNode,
+  Registry, Trrack, initializeTrrack,
 } from '@trrack/core';
 import WaveSurferType from 'wavesurfer.js';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
@@ -28,6 +28,7 @@ import { useReplayContext } from '../../store/hooks/useReplay';
 import { syncChannel, syncEmitter } from '../../utils/syncReplay';
 import type { StoredProvenance } from '../../store/types';
 import { getLegacyStoredAnswerProvenance } from '../../store/provenance';
+import { getReplaySelection } from './provenanceReplay';
 
 const margin = {
   left: 20, top: 0, right: 20, bottom: 0,
@@ -133,11 +134,12 @@ export function AudioProvenanceVis({
     };
   }, [legacyProvenanceGraph, participantId, storageEngine, taskName]);
 
-  const _setCurrentResponseNodes = useEvent((node: string | null, location: ResponseBlockLocation) => {
+  const _setCurrentResponseNodes = useEvent((node: string | null, location: ResponseBlockLocation, createdOn?: number) => {
     const graph = provenanceGraph?.[location];
     if (graph && node) {
-      if (!currentGlobalNode || graph.nodes[node].createdOn > currentGlobalNode.time || playTime < currentGlobalNode.time) {
-        setCurrentGlobalNode({ name: node || '', time: graph.nodes[node].createdOn });
+      const replayEventTime = createdOn ?? graph.nodes[node].createdOn;
+      if (!currentGlobalNode || replayEventTime > currentGlobalNode.time || playTime < currentGlobalNode.time) {
+        setCurrentGlobalNode({ name: node || '', time: replayEventTime });
       }
     }
 
@@ -235,7 +237,7 @@ export function AudioProvenanceVis({
     }
   }, [provenanceGraph, taskName]);
 
-  const _setCurrentNode = useCallback((node: string | undefined) => {
+  const _setCurrentNode = useCallback((node: string | undefined, createdOn?: number) => {
     if (!node) {
       return;
     }
@@ -246,7 +248,7 @@ export function AudioProvenanceVis({
       trrackForTrial.current.to(node);
     }
 
-    _setCurrentResponseNodes(node, 'stimulus');
+    _setCurrentResponseNodes(node, 'stimulus', createdOn);
     setCurrentNode(node);
   }, [taskName, context, _setCurrentResponseNodes, saveProvenance, provenanceGraph]);
 
@@ -261,31 +263,13 @@ export function AudioProvenanceVis({
       return;
     }
 
-    if (!currentNode || !provGraph.stimulus.nodes[currentNode]) {
-      _setCurrentNode(provGraph.stimulus.root as string);
-      return;
-    }
+    const replaySelection = getReplaySelection(provGraph.stimulus, playTime, currentNode);
 
-    let tempNode = provGraph.stimulus.nodes[currentNode];
-
-    while (true) {
-      if (playTime < tempNode.createdOn) {
-        if (!isRootNode(tempNode)) {
-          const parentNode = tempNode.parent;
-
-          tempNode = provGraph.stimulus.nodes[parentNode];
-        } else break;
-      } else if (tempNode.children.length > 0) {
-        const child = tempNode.children[0];
-
-        if (playTime > provGraph.stimulus.nodes[child].createdOn) {
-          tempNode = provGraph.stimulus.nodes[child];
-        } else break;
-      } else break;
-    }
-
-    if (tempNode.id !== currentNode) {
-      _setCurrentNode(tempNode.id);
+    if (replaySelection.nodeId !== currentNode) {
+      _setCurrentNode(
+        replaySelection.nodeId,
+        replaySelection.fromTraversal ? replaySelection.createdOn : undefined,
+      );
     }
   }, [_setCurrentNode, currentNode, participantId, playTime, taskName, provenanceGraph]);
 
