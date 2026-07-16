@@ -10,6 +10,7 @@ import { Sequence, StoredAnswer } from '../../../store/types';
 import { makeStudyConfig, makeStoredAnswer } from '../../../tests/utils';
 import { getDynamicComponentsForBlock } from '../StepsPanel.utils';
 import { StepsPanel } from '../StepsPanel';
+import { UNKNOWN_ANSWER_LABEL } from '../UnknownAnswerIcon';
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
@@ -50,10 +51,6 @@ vi.mock('../../../parser/utils', () => ({
   isInheritedComponent: () => false,
 }));
 
-vi.mock('../../../utils/correctAnswer', () => ({
-  componentAnswersAreCorrect: vi.fn(() => true),
-}));
-
 vi.mock('@mantine/core', () => ({
   Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
   Box: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -84,13 +81,14 @@ vi.mock('@tabler/icons-react', () => ({
   IconArrowsShuffle: () => null,
   IconBinaryTree: () => null,
   IconBrain: () => null,
-  IconCheck: () => null,
+  IconCheck: () => <span>icon-check</span>,
   IconChevronUp: () => null,
   IconDice3: () => null,
   IconDice5: () => null,
   IconInfoCircle: () => null,
   IconPackageImport: () => null,
-  IconX: () => null,
+  IconSquareFilled: ({ 'aria-label': ariaLabel }: { 'aria-label'?: string }) => <span aria-label={ariaLabel}>icon-square-filled</span>,
+  IconX: () => <span>icon-x</span>,
 }));
 
 // ── fixtures ──────────────────────────────────────────────────────────────────
@@ -155,6 +153,108 @@ describe('StepsPanel rendering', () => {
       />,
     ));
     expect(container).toBeDefined();
+  });
+});
+
+describe('StepsPanel answer status indicators', () => {
+  const makeStatusConfig = (correctAnswer?: Answer[]) => makeStudyConfig({
+    uiConfig: {
+      withSidebar: true,
+      sidebarWidth: 300,
+      showTitleBar: true,
+    },
+    components: {
+      intro: {
+        type: 'questionnaire',
+        response: [{
+          id: 'q1',
+          type: 'radio',
+          prompt: 'Question',
+          options: ['A', 'B'],
+        }],
+        correctAnswer,
+      },
+    },
+    sequence: minimalSequence,
+  });
+
+  const makeCompletedAnswer = (answer: StoredAnswer['answer'], endTime = 100) => makeStoredAnswer({
+    answer,
+    identifier: 'intro_0',
+    componentName: 'intro',
+    trialOrder: 'root_0',
+    startTime: 1,
+    endTime,
+  });
+
+  test('shows an accessible unknown indicator for a submitted response without correct answers', async () => {
+    const participantAnswer = makeCompletedAnswer({ q1: 'A' });
+    const { getAllByLabelText, container } = await act(async () => render(
+      <StepsPanel
+        participantSequence={minimalSequence}
+        participantAnswers={{ intro_0: participantAnswer }}
+        studyConfig={makeStatusConfig()}
+      />,
+    ));
+
+    expect(getAllByLabelText(UNKNOWN_ANSWER_LABEL).length).toBeGreaterThan(0);
+    expect(container.textContent).toContain('icon-square-filled');
+    expect(container.textContent).not.toContain('icon-check');
+    expect(container.textContent).not.toContain('icon-x');
+  });
+
+  test('preserves correct and incorrect indicators when correct answers are configured', async () => {
+    const { container } = await act(async () => render(
+      <StepsPanel
+        participantSequence={minimalSequence}
+        participantAnswers={{ intro_0: makeCompletedAnswer({ q1: 'A' }) }}
+        studyConfig={makeStatusConfig([{ id: 'q1', answer: 'A' }])}
+      />,
+    ));
+
+    expect(container.textContent).toContain('icon-check');
+    expect(container.textContent).not.toContain('icon-square-filled');
+
+    cleanup();
+
+    const incorrect = await act(async () => render(
+      <StepsPanel
+        participantSequence={minimalSequence}
+        participantAnswers={{ intro_0: makeCompletedAnswer({ q1: 'B' }) }}
+        studyConfig={makeStatusConfig([{ id: 'q1', answer: 'A' }])}
+      />,
+    ));
+
+    expect(incorrect.container.textContent).toContain('icon-x');
+    expect(incorrect.container.textContent).not.toContain('icon-square-filled');
+  });
+
+  test('shows no answer-status indicator for incomplete or unanswered components', async () => {
+    const { container } = await act(async () => render(
+      <StepsPanel
+        participantSequence={minimalSequence}
+        participantAnswers={{ intro_0: makeCompletedAnswer({ q1: 'A' }, -1) }}
+        studyConfig={makeStatusConfig()}
+      />,
+    ));
+
+    expect(container.textContent).not.toContain('icon-square-filled');
+    expect(container.textContent).not.toContain('icon-check');
+    expect(container.textContent).not.toContain('icon-x');
+
+    cleanup();
+
+    const unanswered = await act(async () => render(
+      <StepsPanel
+        participantSequence={minimalSequence}
+        participantAnswers={{ intro_0: makeCompletedAnswer({}) }}
+        studyConfig={makeStatusConfig()}
+      />,
+    ));
+
+    expect(unanswered.container.textContent).not.toContain('icon-square-filled');
+    expect(unanswered.container.textContent).not.toContain('icon-check');
+    expect(unanswered.container.textContent).not.toContain('icon-x');
   });
 });
 
