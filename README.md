@@ -54,7 +54,7 @@ yarn test
 
 ## Release Instructions
 
-Releasing reVISit.dev happens automatically when a PR is merged into the `main` branch. The name of the pull request should be the title of the release, e.g. `v1.0.0`. Releasing creates a tag with the same name as the PR, but the official GitHub release should be created manually. The `main` branch is protected and requires two reviews before merging.
+Releasing reVISit.dev happens automatically when a PR is merged into the `main` branch. The pull request title must exactly match the release version, e.g. `v1.0.0`. The release workflow updates version-pinned references, creates a release commit, and pushes a tag with the same name as the PR. Pushing the tag automatically creates the official GitHub release with generated release notes. The `main` branch is protected and requires two reviews before merging.
 
 The workflow for release looks as follows:
 Develop features on feature branch
@@ -63,4 +63,6 @@ Dev branch
 | PR (1 per release)
 Main branch
 | Run release workflow on merge
-References are updated and commit is tagged
+References are updated, and a release commit and tag are pushed
+| Tag push and repository dispatch events
+GitHub release is created and downstream builds are triggered
