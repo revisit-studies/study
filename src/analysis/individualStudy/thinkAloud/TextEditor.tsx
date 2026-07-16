@@ -41,10 +41,13 @@ export function TextEditor({
 
   const { value: tags, execute: pullTags } = useAsync(getTags, [storageEngine]);
 
-  const setTags = useCallback((_tags: Tag[]) => {
-    if (storageEngine) {
-      storageEngine.saveTags(_tags, 'text').then(() => pullTags(storageEngine));
+  const setTags = useCallback(async (_tags: Tag[]) => {
+    if (!storageEngine) {
+      return;
     }
+
+    await storageEngine.saveTags(_tags, 'text');
+    await pullTags(storageEngine);
   }, [pullTags, storageEngine]);
 
   const textRefs = useRef<HTMLTextAreaElement[]>([]);
@@ -128,7 +131,7 @@ export function TextEditor({
     setTags(tagsCopy);
   }, [setTags, tags]);
 
-  const createTagCallback = useCallback((t: Tag) => { setTags([...(tags || []), t]); }, [setTags, tags]);
+  const createTagCallback = useCallback((t: Tag) => setTags([...(tags || []), t]), [setTags, tags]);
 
   const addTextRefCallback = useCallback((i: number, ref: HTMLTextAreaElement) => {
     textRefs.current[i] = ref;

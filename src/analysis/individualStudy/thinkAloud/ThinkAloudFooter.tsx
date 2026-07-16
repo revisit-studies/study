@@ -329,9 +329,16 @@ export function ThinkAloudFooter({
     navigateToTask(orderedAnswers[nextIndex].identifier);
   }, [currentTrial, navigateToTask, orderedAnswers]);
 
-  const setTags = useCallback((_tags: Tag[], type: 'task' | 'participant') => {
-    if (storageEngine) {
-      storageEngine.saveTags(_tags, type).then(() => { type === 'task' ? pullTags(storageEngine, type) : pullAllParticipantTags(storageEngine, type); });
+  const setTags = useCallback(async (_tags: Tag[], type: 'task' | 'participant') => {
+    if (!storageEngine) {
+      return;
+    }
+
+    await storageEngine.saveTags(_tags, type);
+    if (type === 'task') {
+      await pullTags(storageEngine, type);
+    } else {
+      await pullAllParticipantTags(storageEngine, type);
     }
   }, [pullAllParticipantTags, pullTags, storageEngine]);
 
@@ -359,9 +366,9 @@ export function ThinkAloudFooter({
     setTags(tagsCopy, 'participant');
   }, [setTags, allParticipantTags]);
 
-  const createTaskTagCallback = useCallback((t: Tag) => { setTags([...(taskTags || []), t], 'task'); }, [setTags, taskTags]);
+  const createTaskTagCallback = useCallback((t: Tag) => setTags([...(taskTags || []), t], 'task'), [setTags, taskTags]);
 
-  const createParticipantTagCallback = useCallback((t: Tag) => { setTags([...(taskTags || []), t], 'participant'); }, [setTags, taskTags]);
+  const createParticipantTagCallback = useCallback((t: Tag) => setTags([...(allParticipantTags || []), t], 'participant'), [allParticipantTags, setTags]);
 
   useEffect(() => {
     const t = transcriptLines ? transcriptLines[jumpedToLine]?.start || 0 : 0;
