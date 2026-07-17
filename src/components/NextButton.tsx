@@ -16,12 +16,19 @@ import {
   getAutoAdvanceWarning,
 } from './nextButtonTimeout';
 
+const nextButtonJustify = {
+  left: 'flex-start',
+  center: 'center',
+  right: 'flex-end',
+} as const;
+
 type Props = {
   label?: string;
   disabled?: boolean;
   config?: IndividualComponent;
   location?: ResponseBlockLocation;
   checkAnswer: JSX.Element | null;
+  onCheckAnswer?: () => void;
   onNext: () => void;
 };
 
@@ -31,6 +38,7 @@ export function NextButton({
   config,
   location,
   checkAnswer,
+  onCheckAnswer,
   onNext,
 }: Props) {
   const { isNextDisabled, goToNextStep } = useNextStep();
@@ -100,7 +108,15 @@ export function NextButton({
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Enter' && !shouldIgnoreEnter(event.target) && !disabled && !isNextDisabled && buttonTimerSatisfied) {
+      if (event.key !== 'Enter' || shouldIgnoreEnter(event.target)) {
+        return;
+      }
+
+      if (onCheckAnswer) {
+        onCheckAnswer();
+        return;
+      }
+      if (!disabled && !isNextDisabled && buttonTimerSatisfied) {
         onNext();
       }
     };
@@ -111,14 +127,15 @@ export function NextButton({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [disabled, isNextDisabled, buttonTimerSatisfied, onNext, nextOnEnter]);
+  }, [disabled, isNextDisabled, buttonTimerSatisfied, onCheckAnswer, onNext, nextOnEnter]);
 
   const nextButtonDisabled = disabled || isNextDisabled || !buttonTimerSatisfied;
   const previousButtonText = config?.previousButtonText ?? studyConfig.uiConfig.previousButtonText ?? 'Previous';
+  const nextButtonAlignment = config?.nextButtonAlignment ?? studyConfig.uiConfig.nextButtonAlignment ?? 'right';
 
   return (
     <>
-      <Group justify="right" gap="xs" mt="sm">
+      <Group justify={nextButtonJustify[nextButtonAlignment]} gap="xs" mt="sm" wrap="wrap">
         {config?.previousButton && (
           <PreviousButton
             label={previousButtonText}

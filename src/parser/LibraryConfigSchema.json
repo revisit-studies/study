@@ -80,6 +80,10 @@
             "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
             "type": "object"
           },
+          "nextButtonAlignment": {
+            "$ref": "#/definitions/NextButtonAlignment",
+            "description": "The horizontal alignment of the navigation action group. If present, will override the alignment setting in the uiConfig."
+          },
           "nextButtonAutoAdvanceTime": {
             "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
             "type": "number"
@@ -956,6 +960,10 @@
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
         },
+        "nextButtonAlignment": {
+          "$ref": "#/definitions/NextButtonAlignment",
+          "description": "The horizontal alignment of the navigation action group. If present, will override the alignment setting in the uiConfig."
+        },
         "nextButtonAutoAdvanceTime": {
           "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
           "type": "number"
@@ -1230,6 +1238,10 @@
           "additionalProperties": {},
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
+        },
+        "nextButtonAlignment": {
+          "$ref": "#/definitions/NextButtonAlignment",
+          "description": "The horizontal alignment of the navigation action group. If present, will override the alignment setting in the uiConfig."
         },
         "nextButtonAutoAdvanceTime": {
           "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
@@ -1761,6 +1773,10 @@
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
         },
+        "nextButtonAlignment": {
+          "$ref": "#/definitions/NextButtonAlignment",
+          "description": "The horizontal alignment of the navigation action group. If present, will override the alignment setting in the uiConfig."
+        },
         "nextButtonAutoAdvanceTime": {
           "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
           "type": "number"
@@ -2207,6 +2223,14 @@
         }
       ]
     },
+    "NextButtonAlignment": {
+      "enum": [
+        "left",
+        "center",
+        "right"
+      ],
+      "type": "string"
+    },
     "NumberOption": {
       "additionalProperties": false,
       "description": "The NumberOption interface is used to define the options for a slider response. The label is the text that is displayed to the user, and the value is the value that is stored in the data file.",
@@ -2360,6 +2384,10 @@
           "additionalProperties": {},
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
+        },
+        "nextButtonAlignment": {
+          "$ref": "#/definitions/NextButtonAlignment",
+          "description": "The horizontal alignment of the navigation action group. If present, will override the alignment setting in the uiConfig."
         },
         "nextButtonAutoAdvanceTime": {
           "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
@@ -2782,6 +2810,10 @@
           "additionalProperties": {},
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
+        },
+        "nextButtonAlignment": {
+          "$ref": "#/definitions/NextButtonAlignment",
+          "description": "The horizontal alignment of the navigation action group. If present, will override the alignment setting in the uiConfig."
         },
         "nextButtonAutoAdvanceTime": {
           "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
@@ -3601,6 +3633,10 @@
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
         },
+        "nextButtonAlignment": {
+          "$ref": "#/definitions/NextButtonAlignment",
+          "description": "The horizontal alignment of the navigation action group. If present, will override the alignment setting in the uiConfig."
+        },
         "nextButtonAutoAdvanceTime": {
           "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
           "type": "number"
@@ -3767,6 +3803,10 @@
           "additionalProperties": {},
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
+        },
+        "nextButtonAlignment": {
+          "$ref": "#/definitions/NextButtonAlignment",
+          "description": "The horizontal alignment of the navigation action group. If present, will override the alignment setting in the uiConfig."
         },
         "nextButtonAutoAdvanceTime": {
           "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
@@ -3943,6 +3983,10 @@
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
         },
+        "nextButtonAlignment": {
+          "$ref": "#/definitions/NextButtonAlignment",
+          "description": "The horizontal alignment of the navigation action group. If present, will override the alignment setting in the uiConfig."
+        },
         "nextButtonAutoAdvanceTime": {
           "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
           "type": "number"
@@ -4113,6 +4157,10 @@
           "additionalProperties": {},
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
+        },
+        "nextButtonAlignment": {
+          "$ref": "#/definitions/NextButtonAlignment",
+          "description": "The horizontal alignment of the navigation action group. If present, will override the alignment setting in the uiConfig."
         },
         "nextButtonAutoAdvanceTime": {
           "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",

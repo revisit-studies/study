@@ -1,5 +1,7 @@
 /* eslint-disable no-await-in-loop */
-import { expect, test, type FrameLocator } from '@playwright/test';
+import {
+  expect, test, type FrameLocator, type Page,
+} from '@playwright/test';
 import {
   nextClick,
   openStudyFromLanding,
@@ -7,27 +9,98 @@ import {
 } from './utils';
 
 const demos = [
-  'HTML with Trrack library',
-  'Svelte with Trrack library',
+  {
+    title: 'HTML with Trrack library',
+    studyId: 'demo-html-trrack',
+  },
+  {
+    title: 'Svelte with Trrack library',
+    studyId: 'demo-svelte-trrack',
+  },
 ] as const;
+
+type RecordedReplay = {
+  participantId: string;
+  startTime: number;
+  endTime: number;
+  traversalTimes: number[];
+};
 
 async function expectDotCount(frame: FrameLocator, count: number) {
   await expect(frame.locator('circle')).toHaveCount(count);
 }
 
-for (const demoTitle of demos) {
-  test(`${demoTitle} initializes its answer and enforces dot limits`, async ({ page }) => {
+async function readStoredValue(page: Page, key: string) {
+  return page.evaluate(async (storageKey) => new Promise<unknown>((resolve) => {
+    const openRequest = indexedDB.open('revisit');
+
+    openRequest.onerror = () => resolve(null);
+    openRequest.onsuccess = () => {
+      const database = openRequest.result;
+      if (!database.objectStoreNames.contains('keyvaluepairs')) {
+        database.close();
+        resolve(null);
+        return;
+      }
+
+      const transaction = database.transaction('keyvaluepairs', 'readonly');
+      const getRequest = transaction.objectStore('keyvaluepairs').get(storageKey);
+      getRequest.onerror = () => resolve(null);
+      getRequest.onsuccess = () => resolve(getRequest.result ?? null);
+      transaction.oncomplete = () => database.close();
+    };
+  }), key);
+}
+
+async function readRecordedReplay(page: Page, studyId: string): Promise<RecordedReplay | null> {
+  const assignments = await readStoredValue(page, `dev-${studyId}/sequenceAssignment`) as Record<string, unknown> | null;
+  const participantId = Object.keys(assignments ?? {})[0];
+  if (!participantId) {
+    return null;
+  }
+
+  const participant = await readStoredValue(
+    page,
+    `dev-${studyId}/participants/${participantId}_participantData`,
+  ) as { answers?: Record<string, { startTime?: number; endTime?: number }> } | null;
+  const provenance = await readStoredValue(
+    page,
+    `dev-${studyId}/provenance/${participantId}_countDots_1`,
+  ) as { stimulus?: { traversalEvents?: Array<{ createdOn?: number }> } } | null;
+  const answer = participant?.answers?.countDots_1;
+  const traversalTimes = provenance?.stimulus?.traversalEvents
+    ?.map((event) => event.createdOn)
+    .filter((createdOn): createdOn is number => typeof createdOn === 'number') ?? [];
+
+  if (typeof answer?.startTime !== 'number' || typeof answer.endTime !== 'number') {
+    return null;
+  }
+
+  return {
+    participantId,
+    startTime: answer.startTime,
+    endTime: answer.endTime,
+    traversalTimes,
+  };
+}
+
+async function seekReplay(page: Page, recording: RecordedReplay, targetTime: number) {
+  const timer = page.locator('footer svg').last();
+  await expect(timer).toBeVisible();
+  const timerBounds = await timer.boundingBox();
+  if (!timerBounds) {
+    throw new Error('Analysis replay timer has no bounds');
+  }
+
+  const fraction = (targetTime - recording.startTime) / (recording.endTime - recording.startTime);
+  const x = 20 + Math.min(1, Math.max(0, fraction)) * (timerBounds.width - 40);
+  await timer.click({ position: { x, y: timerBounds.height / 2 } });
+}
+
+for (const demo of demos) {
+  test(`${demo.title} initializes its answer and enforces dot limits`, async ({ page }) => {
     await resetClientStudyState(page);
-    await openStudyFromLanding(page, 'Demo Studies', demoTitle);
-    await page.evaluate(() => {
-      const capturedProvenance: unknown[] = [];
-      (window as unknown as { capturedProvenance: unknown[] }).capturedProvenance = capturedProvenance;
-      window.addEventListener('message', (event) => {
-        if (event.data?.type === '@REVISIT_COMMS/PROVENANCE') {
-          capturedProvenance.push(event.data.message);
-        }
-      });
-    });
+    await openStudyFromLanding(page, 'Demo Studies', demo.title);
     await nextClick(page);
 
     const frame = page.frameLocator('#root iframe');
@@ -66,15 +139,64 @@ for (const demoTitle of demos) {
     await expect(removeButton).toBeEnabled();
     await frame.getByRole('button', { name: 'Redo' }).click();
     await expectDotCount(frame, 0);
+  });
 
-    const latestTraversalNodeIds = await page.evaluate(() => {
-      const messages = (window as unknown as {
-        capturedProvenance: Array<{ traversalEvents?: Array<{ nodeId: string }> }>;
-      }).capturedProvenance;
-      return messages.at(-1)?.traversalEvents?.map(({ nodeId }) => nodeId) ?? [];
-    });
-    expect(latestTraversalNodeIds.length).toBeGreaterThan(3);
-    expect(latestTraversalNodeIds.at(-3)).toBe(latestTraversalNodeIds.at(-1));
-    expect(latestTraversalNodeIds.at(-2)).not.toBe(latestTraversalNodeIds.at(-1));
+  test(`${demo.title} replays Undo and Redo in recorded order`, async ({ page }) => {
+    await resetClientStudyState(page);
+    await openStudyFromLanding(page, 'Demo Studies', demo.title);
+    await nextClick(page);
+
+    const participantFrame = page.frameLocator('#root iframe');
+    const addButton = participantFrame.getByRole('button', { name: 'Add' });
+    const replayPath = new URL(page.url()).pathname;
+
+    await expectDotCount(participantFrame, 1);
+    await page.waitForTimeout(150);
+    await addButton.click();
+    await expectDotCount(participantFrame, 2);
+    await page.waitForTimeout(150);
+    await addButton.click();
+    await expectDotCount(participantFrame, 3);
+    await page.waitForTimeout(150);
+    await participantFrame.getByRole('button', { name: 'Undo' }).click();
+    await expectDotCount(participantFrame, 2);
+    await page.waitForTimeout(150);
+    await participantFrame.getByRole('button', { name: 'Redo' }).click();
+    await expectDotCount(participantFrame, 3);
+    await page.waitForTimeout(150);
+    await nextClick(page);
+
+    await expect.poll(async () => {
+      const storedReplay = await readRecordedReplay(page, demo.studyId);
+      return storedReplay?.traversalTimes.length ?? 0;
+    }, { timeout: 15000 }).toBeGreaterThanOrEqual(5);
+
+    const recording = await readRecordedReplay(page, demo.studyId);
+    if (!recording) {
+      throw new Error(`No recorded replay found for ${demo.studyId}`);
+    }
+
+    const [initial, addTwo, addThree, undoTwo, redoThree] = recording.traversalTimes;
+    const replayTargets = [
+      { count: 1, time: (recording.startTime + addTwo) / 2 },
+      { count: 2, time: (addTwo + addThree) / 2 },
+      { count: 3, time: (addThree + undoTwo) / 2 },
+      { count: 2, time: (undoTwo + redoThree) / 2 },
+      { count: 3, time: (redoThree + recording.endTime) / 2 },
+    ];
+
+    expect(initial).toBeLessThanOrEqual(addTwo);
+    await page.goto(`${replayPath}?participantId=${recording.participantId}&revisitPageId=e2e-trrack-replay`);
+
+    const replayFrame = page.frameLocator('#root iframe');
+    for (const target of replayTargets) {
+      await seekReplay(page, recording, target.time);
+      await expectDotCount(replayFrame, target.count);
+    }
+
+    for (const target of [...replayTargets].reverse()) {
+      await seekReplay(page, recording, target.time);
+      await expectDotCount(replayFrame, target.count);
+    }
   });
 }

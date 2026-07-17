@@ -7,7 +7,7 @@ import {
   ParsedStringOption, ResponseBlockLocation, StudyConfig, ValueOf, Answer, ParticipantData,
 } from '../parser/types';
 import type {
-  AlertModalState, StoredAnswer, TrialValidation, TrrackedProvenance, StoreState, Sequence, ParticipantMetadata, ValidationStatus,
+  AlertModalState, CheckAnswerState, StoredAnswer, TrialValidation, TrrackedProvenance, StoreState, Sequence, ParticipantMetadata, ValidationStatus,
 } from './types';
 import { getSequenceFlatMap } from '../utils/getSequenceFlatMap';
 import { REVISIT_MODE } from '../storage/engines/types';
@@ -137,6 +137,7 @@ export async function studyStoreCreator(
     trialValidation: Object.keys(answers).length > 0 ? allValid : emptyValidation,
     responseSubmitAttempted: {},
     stimulusSubmitAttempted: {},
+    checkAnswer: {},
     reactiveAnswers: {},
     metadata,
     analysisProvState: {
@@ -380,6 +381,9 @@ export async function studyStoreCreator(
       setStimulusSubmitAttempt(state, { payload }: PayloadAction<{ identifier: string; attempted: boolean }>) {
         state.stimulusSubmitAttempted[payload.identifier] = payload.attempted;
       },
+      setCheckAnswerResult(state, { payload }: PayloadAction<{ identifier: string } & CheckAnswerState>) {
+        state.checkAnswer[payload.identifier] = { attemptsUsed: payload.attemptsUsed, correct: payload.correct, responses: payload.responses };
+      },
       saveTrialAnswer(state, { payload }: PayloadAction<{ identifier: string } & StoredAnswer>) {
         state.answers[payload.identifier] = { ...payload };
       },
@@ -415,12 +419,16 @@ export async function studyStoreCreator(
       deleteDynamicBlockAnswers(state, { payload }: PayloadAction<{ currentStep: number, funcIndex: number, funcName: string }>) {
         const { currentStep, funcIndex, funcName } = payload;
 
-        // regex to match all keys that start with the current step and funcIndex
-        const regex = new RegExp(`.*_${currentStep}_.*_${funcIndex}`);
-        // delete all keys that match the regex
+        // Dynamic block keys have the form `${funcName}_${currentStep}_${componentName}_${funcIndex}`
+        const matchesDeletedIteration = (key: string) => key.startsWith(`${funcName}_${currentStep}_`) && key.endsWith(`_${funcIndex}`);
         Object.keys(state.answers).forEach((key) => {
-          if (key.match(regex)) {
+          if (matchesDeletedIteration(key)) {
             delete state.answers[key];
+          }
+        });
+        Object.keys(state.checkAnswer).forEach((key) => {
+          if (matchesDeletedIteration(key)) {
+            delete state.checkAnswer[key];
           }
         });
 

@@ -64,6 +64,55 @@ describe('Component auto-advance config parsing', () => {
   });
 });
 
+describe('Next button alignment config parsing', () => {
+  function makeStudyConfig(nextButtonAlignment: string, componentOverride?: string) {
+    return {
+      $schema: '',
+      studyMetadata: {
+        title: 'Next Button Alignment Test',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2026-07-16',
+        description: 'Ensures next button alignment options are validated.',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'test@test.com',
+        logoPath: '',
+        withProgressBar: true,
+        withSidebar: true,
+        nextButtonAlignment,
+      },
+      components: {
+        question1: {
+          type: 'questionnaire',
+          response: [],
+          ...(componentOverride === undefined ? {} : { nextButtonAlignment: componentOverride }),
+        },
+      },
+      sequence: {
+        order: 'fixed',
+        components: ['question1'],
+      },
+    };
+  }
+
+  test.each(['left', 'center', 'right'])('accepts the %s alignment globally and on a component', async (alignment) => {
+    const result = await parseStudyConfig(JSON.stringify(makeStudyConfig(alignment, alignment)));
+
+    expect(result.errors).toEqual([]);
+  });
+
+  test('rejects an unsupported alignment', async () => {
+    const result = await parseStudyConfig(JSON.stringify(makeStudyConfig('stretch')));
+
+    const hasAlignmentError = result.errors.some(
+      (error) => error.instancePath?.includes('nextButtonAlignment'),
+    );
+    expect(hasAlignmentError).toBe(true);
+  });
+});
+
 describe('BaseComponent Macro Expansion', () => {
   describe('.co. macro expansion in baseComponent references', () => {
     test('expands .co. to .components. in baseComponent field', async () => {

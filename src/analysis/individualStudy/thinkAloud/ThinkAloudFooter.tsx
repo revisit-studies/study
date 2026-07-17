@@ -329,13 +329,20 @@ export function ThinkAloudFooter({
     navigateToTask(orderedAnswers[nextIndex].identifier);
   }, [currentTrial, navigateToTask, orderedAnswers]);
 
-  const setTags = useCallback((_tags: Tag[], type: 'task' | 'participant') => {
-    if (storageEngine) {
-      storageEngine.saveTags(_tags, type).then(() => { type === 'task' ? pullTags(storageEngine, type) : pullAllParticipantTags(storageEngine, type); });
+  const setTags = useCallback(async (_tags: Tag[], type: 'task' | 'participant') => {
+    if (!storageEngine) {
+      return;
+    }
+
+    await storageEngine.saveTags(_tags, type);
+    if (type === 'task') {
+      await pullTags(storageEngine, type);
+    } else {
+      await pullAllParticipantTags(storageEngine, type);
     }
   }, [pullAllParticipantTags, pullTags, storageEngine]);
 
-  const editTaskTagCallback = useCallback((oldTag: Tag, newTag: Tag) => {
+  const editTaskTagCallback = useCallback(async (oldTag: Tag, newTag: Tag) => {
     if (!taskTags) {
       return;
     }
@@ -344,10 +351,10 @@ export function ThinkAloudFooter({
     const tagsCopy = Array.from(taskTags);
     tagsCopy[tagIndex] = newTag;
 
-    setTags(tagsCopy, 'task');
+    await setTags(tagsCopy, 'task');
   }, [setTags, taskTags]);
 
-  const editParticipantTagCallback = useCallback((oldTag: Tag, newTag: Tag) => {
+  const editParticipantTagCallback = useCallback(async (oldTag: Tag, newTag: Tag) => {
     if (!allParticipantTags) {
       return;
     }
@@ -356,12 +363,12 @@ export function ThinkAloudFooter({
     const tagsCopy = Array.from(allParticipantTags);
     tagsCopy[tagIndex] = newTag;
 
-    setTags(tagsCopy, 'participant');
+    await setTags(tagsCopy, 'participant');
   }, [setTags, allParticipantTags]);
 
-  const createTaskTagCallback = useCallback((t: Tag) => { setTags([...(taskTags || []), t], 'task'); }, [setTags, taskTags]);
+  const createTaskTagCallback = useCallback((t: Tag) => setTags([...(taskTags || []), t], 'task'), [setTags, taskTags]);
 
-  const createParticipantTagCallback = useCallback((t: Tag) => { setTags([...(taskTags || []), t], 'participant'); }, [setTags, taskTags]);
+  const createParticipantTagCallback = useCallback((t: Tag) => setTags([...(allParticipantTags || []), t], 'participant'), [allParticipantTags, setTags]);
 
   useEffect(() => {
     const t = transcriptLines ? transcriptLines[jumpedToLine]?.start || 0 : 0;

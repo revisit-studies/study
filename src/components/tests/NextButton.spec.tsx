@@ -19,6 +19,7 @@ let mockStudyConfig: {
   uiConfig: {
     nextButtonDisableTime: number | undefined;
     nextButtonEnableTime: number | undefined;
+    nextButtonAlignment?: 'left' | 'center' | 'right';
     nextOnEnter: boolean;
     previousButtonText: string;
     timeoutReject: boolean;
@@ -74,7 +75,9 @@ vi.mock('@mantine/core', () => ({
       {children}
     </button>
   ),
-  Group: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Group: ({ children, justify }: { children: ReactNode; justify?: string }) => (
+    <div data-justify={justify}>{children}</div>
+  ),
 }));
 
 vi.mock('@tabler/icons-react', () => ({
@@ -154,6 +157,64 @@ describe('NextButton', () => {
     );
     expect(html).toContain('Check Answer');
   });
+
+  test('right-aligns the action group by default', () => {
+    const html = renderToStaticMarkup(<NextButton checkAnswer={null} onNext={vi.fn()} />);
+    expect(html).toContain('data-justify="flex-end"');
+  });
+
+  test.each([
+    ['left', 'flex-start'],
+    ['center', 'center'],
+    ['right', 'flex-end'],
+  ] as const)('uses the global %s alignment', (alignment, justify) => {
+    mockStudyConfig = {
+      uiConfig: {
+        ...mockStudyConfig.uiConfig,
+        nextButtonAlignment: alignment,
+      },
+    };
+
+    const html = renderToStaticMarkup(<NextButton checkAnswer={null} onNext={vi.fn()} />);
+    expect(html).toContain(`data-justify="${justify}"`);
+  });
+
+  test('component alignment overrides the global alignment', () => {
+    mockStudyConfig = {
+      uiConfig: {
+        ...mockStudyConfig.uiConfig,
+        nextButtonAlignment: 'left',
+      },
+    };
+
+    const html = renderToStaticMarkup(
+      <NextButton
+        config={{
+          type: 'questionnaire', response: [], nextButtonAlignment: 'center',
+        }}
+        checkAnswer={null}
+        onNext={vi.fn()}
+      />,
+    );
+    expect(html).toContain('data-justify="center"');
+  });
+
+  test.each(['sidebar', 'aboveStimulus', 'belowStimulus'] as const)(
+    'keeps Previous, Check Answer, and Next in order at %s',
+    (location) => {
+      const html = renderToStaticMarkup(
+        <NextButton
+          config={{ type: 'questionnaire', response: [], previousButton: true }}
+          location={location}
+          checkAnswer={<button type="button">Check Answer</button>}
+          onNext={vi.fn()}
+        />,
+      );
+
+      expect(html.indexOf('Previous')).toBeLessThan(html.indexOf('Check Answer'));
+      expect(html.indexOf('Check Answer')).toBeLessThan(html.indexOf('Next'));
+    },
+  );
 
   test('shows "Please wait" alert after render when nextButtonEnableTime is set', async () => {
     mockStudyConfig = {
@@ -271,6 +332,50 @@ describe('NextButton', () => {
     });
     const button = container.querySelector('button')!;
     await act(async () => { fireEvent.keyDown(button, { key: 'Enter' }); });
+    expect(onNext).not.toHaveBeenCalled();
+  });
+
+  test('nextOnEnter: Enter runs onCheckAnswer instead of onNext while it is provided', async () => {
+    const onNext = vi.fn();
+    const onCheckAnswer = vi.fn();
+    mockStudyConfig = { uiConfig: { ...mockStudyConfig.uiConfig, nextOnEnter: true } };
+    await act(async () => {
+      render(<NextButton checkAnswer={null} onCheckAnswer={onCheckAnswer} onNext={onNext} />);
+    });
+    await act(async () => { fireEvent.keyDown(window, { key: 'Enter' }); });
+    expect(onCheckAnswer).toHaveBeenCalledTimes(1);
+    expect(onNext).not.toHaveBeenCalled();
+  });
+
+  test('nextOnEnter: Enter runs onCheckAnswer even while the Next button is disabled', async () => {
+    const onNext = vi.fn();
+    const onCheckAnswer = vi.fn();
+    mockStudyConfig = { uiConfig: { ...mockStudyConfig.uiConfig, nextOnEnter: true } };
+    await act(async () => {
+      render(<NextButton checkAnswer={null} onCheckAnswer={onCheckAnswer} onNext={onNext} disabled />);
+    });
+    await act(async () => { fireEvent.keyDown(window, { key: 'Enter' }); });
+    expect(onCheckAnswer).toHaveBeenCalledTimes(1);
+    expect(onNext).not.toHaveBeenCalled();
+  });
+
+  test('nextOnEnter: the enable timer gates onNext but not onCheckAnswer', async () => {
+    const onNext = vi.fn();
+    const onCheckAnswer = vi.fn();
+    mockStudyConfig = {
+      uiConfig: { ...mockStudyConfig.uiConfig, nextOnEnter: true, nextButtonEnableTime: 5000 },
+    };
+    let rerender!: ReturnType<typeof render>['rerender'];
+    await act(async () => {
+      ({ rerender } = render(<NextButton checkAnswer={null} onCheckAnswer={onCheckAnswer} onNext={onNext} />));
+    });
+    await act(async () => { fireEvent.keyDown(window, { key: 'Enter' }); });
+    expect(onCheckAnswer).toHaveBeenCalledTimes(1);
+    expect(onNext).not.toHaveBeenCalled();
+    await act(async () => {
+      rerender(<NextButton checkAnswer={null} onNext={onNext} />);
+    });
+    await act(async () => { fireEvent.keyDown(window, { key: 'Enter' }); });
     expect(onNext).not.toHaveBeenCalled();
   });
 

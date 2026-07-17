@@ -19,7 +19,6 @@
     "unittest": "vitest",
     "unittest-coverage": "vitest run --coverage --coverage.reporter=text",
     "find-revisit-users": "bash scripts/find-revisit-users.sh",
-    "preinstall": "node -e \"if(!/yarn\\.js$/.test(process.env.npm_execpath))throw new Error('Use yarn')\"",
     "postinstall": "husky"
   },
   "lint-staged": {

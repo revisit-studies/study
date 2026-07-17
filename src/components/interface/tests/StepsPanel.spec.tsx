@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { forwardRef, ReactNode } from 'react';
 import {
   render, act, cleanup, fireEvent,
 } from '@testing-library/react';
@@ -10,6 +10,7 @@ import { Sequence, StoredAnswer } from '../../../store/types';
 import { makeStudyConfig, makeStoredAnswer } from '../../../tests/utils';
 import { getDynamicComponentsForBlock } from '../StepsPanel.utils';
 import { StepsPanel } from '../StepsPanel';
+import { UNKNOWN_ANSWER_LABEL } from '../UnknownAnswerIcon';
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
@@ -50,13 +51,11 @@ vi.mock('../../../parser/utils', () => ({
   isInheritedComponent: () => false,
 }));
 
-vi.mock('../../../utils/correctAnswer', () => ({
-  componentAnswersAreCorrect: vi.fn(() => true),
-}));
-
 vi.mock('@mantine/core', () => ({
   Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
-  Box: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Box: forwardRef<HTMLDivElement, { children: ReactNode }>(function Box({ children }, ref) { // eslint-disable-line prefer-arrow-callback
+    return <div ref={ref}>{children}</div>;
+  }),
   Code: ({ children }: { children: ReactNode }) => <code>{children}</code>,
   Flex: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   HoverCard: Object.assign(
@@ -73,7 +72,7 @@ vi.mock('@mantine/core', () => ({
     </div>
   ),
   Text: ({ children }: { children: ReactNode }) => <p>{children}</p>,
-  Tooltip: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Tooltip: ({ children }: { children: ReactNode }) => children,
   Button: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => (
     <button type="button" onClick={onClick}>{children}</button>
   ),
@@ -84,13 +83,19 @@ vi.mock('@tabler/icons-react', () => ({
   IconArrowsShuffle: () => null,
   IconBinaryTree: () => null,
   IconBrain: () => null,
-  IconCheck: () => null,
+  IconCheck: ({
+    'aria-label': ariaLabel,
+    color,
+  }: {
+    'aria-label'?: string;
+    color?: string;
+  }) => <span aria-label={ariaLabel} data-color={color}>icon-check</span>,
   IconChevronUp: () => null,
   IconDice3: () => null,
   IconDice5: () => null,
   IconInfoCircle: () => null,
   IconPackageImport: () => null,
-  IconX: () => null,
+  IconX: () => <span>icon-x</span>,
 }));
 
 // ── fixtures ──────────────────────────────────────────────────────────────────
@@ -155,6 +160,109 @@ describe('StepsPanel rendering', () => {
       />,
     ));
     expect(container).toBeDefined();
+  });
+});
+
+describe('StepsPanel answer status indicators', () => {
+  const makeStatusConfig = (correctAnswer?: Answer[]) => makeStudyConfig({
+    uiConfig: {
+      withSidebar: true,
+      sidebarWidth: 300,
+      showTitleBar: true,
+    },
+    components: {
+      intro: {
+        type: 'questionnaire',
+        response: [{
+          id: 'q1',
+          type: 'radio',
+          prompt: 'Question',
+          options: ['A', 'B'],
+        }],
+        correctAnswer,
+      },
+    },
+    sequence: minimalSequence,
+  });
+
+  const makeCompletedAnswer = (answer: StoredAnswer['answer'], endTime = 100) => makeStoredAnswer({
+    answer,
+    identifier: 'intro_0',
+    componentName: 'intro',
+    trialOrder: 'root_0',
+    startTime: 1,
+    endTime,
+  });
+
+  test('shows an accessible grey checkmark for a submitted response without correct answers', async () => {
+    const participantAnswer = makeCompletedAnswer({ q1: 'A' });
+    const { getAllByLabelText, container } = await act(async () => render(
+      <StepsPanel
+        participantSequence={minimalSequence}
+        participantAnswers={{ intro_0: participantAnswer }}
+        studyConfig={makeStatusConfig()}
+      />,
+    ));
+
+    const unknownIcons = getAllByLabelText(UNKNOWN_ANSWER_LABEL);
+    expect(unknownIcons.length).toBeGreaterThan(0);
+    expect(unknownIcons[0].getAttribute('data-color')).toBe('var(--mantine-color-gray-6)');
+    expect(container.textContent).toContain('icon-check');
+    expect(container.textContent).not.toContain('icon-x');
+  });
+
+  test('preserves correct and incorrect indicators when correct answers are configured', async () => {
+    const { container } = await act(async () => render(
+      <StepsPanel
+        participantSequence={minimalSequence}
+        participantAnswers={{ intro_0: makeCompletedAnswer({ q1: 'A' }) }}
+        studyConfig={makeStatusConfig([{ id: 'q1', answer: 'A' }])}
+      />,
+    ));
+
+    expect(container.textContent).toContain('icon-check');
+    expect(container.querySelector(`[aria-label="${UNKNOWN_ANSWER_LABEL}"]`)).toBeNull();
+
+    cleanup();
+
+    const incorrect = await act(async () => render(
+      <StepsPanel
+        participantSequence={minimalSequence}
+        participantAnswers={{ intro_0: makeCompletedAnswer({ q1: 'B' }) }}
+        studyConfig={makeStatusConfig([{ id: 'q1', answer: 'A' }])}
+      />,
+    ));
+
+    expect(incorrect.container.textContent).toContain('icon-x');
+    expect(incorrect.container.querySelector(`[aria-label="${UNKNOWN_ANSWER_LABEL}"]`)).toBeNull();
+  });
+
+  test('shows no answer-status indicator for incomplete or unanswered components', async () => {
+    const { container } = await act(async () => render(
+      <StepsPanel
+        participantSequence={minimalSequence}
+        participantAnswers={{ intro_0: makeCompletedAnswer({ q1: 'A' }, -1) }}
+        studyConfig={makeStatusConfig()}
+      />,
+    ));
+
+    expect(container.querySelector(`[aria-label="${UNKNOWN_ANSWER_LABEL}"]`)).toBeNull();
+    expect(container.textContent).not.toContain('icon-check');
+    expect(container.textContent).not.toContain('icon-x');
+
+    cleanup();
+
+    const unanswered = await act(async () => render(
+      <StepsPanel
+        participantSequence={minimalSequence}
+        participantAnswers={{ intro_0: makeCompletedAnswer({}) }}
+        studyConfig={makeStatusConfig()}
+      />,
+    ));
+
+    expect(unanswered.container.querySelector(`[aria-label="${UNKNOWN_ANSWER_LABEL}"]`)).toBeNull();
+    expect(unanswered.container.textContent).not.toContain('icon-check');
+    expect(unanswered.container.textContent).not.toContain('icon-x');
   });
 });
 
