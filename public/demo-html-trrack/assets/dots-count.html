@@ -5,7 +5,40 @@
     <meta charset="UTF-8">
     <title>Trrack Demo</title>
     <script src="https://d3js.org/d3.v7.js"></script>
+    <style>
+        .limit-control {
+            display: inline-block;
+            position: relative;
+        }
 
+        .limit-tooltip {
+            background: #1f2933;
+            border-radius: 4px;
+            bottom: calc(100% + 8px);
+            color: #ffffff;
+            font: 12px/1.4 Arial, Helvetica, sans-serif;
+            left: 50%;
+            opacity: 0;
+            padding: 6px 8px;
+            pointer-events: none;
+            position: absolute;
+            transform: translateX(-50%);
+            visibility: hidden;
+            white-space: nowrap;
+            z-index: 1;
+        }
+
+        .limit-control:hover .limit-tooltip,
+        .limit-control:focus .limit-tooltip,
+        .limit-control:focus-within .limit-tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .limit-tooltip[hidden] {
+            display: none;
+        }
+    </style>
 </head>
 
 <body>
@@ -17,8 +50,14 @@
         <div class="non-btns">
             <div id="dots">
                 <div>
-                    <button id="add">Add</button>
-                    <button id="rem">Remove</button>
+                    <span class="limit-control" id="add-control">
+                        <button id="add">Add</button>
+                        <span class="limit-tooltip" id="add-limit-tooltip" role="tooltip" hidden>Maximum of 20 dots reached.</span>
+                    </span>
+                    <span class="limit-control" id="remove-control">
+                        <button id="rem">Remove</button>
+                        <span class="limit-tooltip" id="remove-limit-tooltip" role="tooltip" hidden>Minimum of 0 dots reached.</span>
+                    </span>
                 </div>
             </div>
         </div>
@@ -32,6 +71,7 @@
 
     // Task id should match the task's answer id in the config file
     const taskId = 'circlesCount';
+    const maxDots = 20;
 
     function dots(initialDots) {
         const height = 50;
@@ -110,30 +150,68 @@
     // Render the dots on screen using state from trrack
     const dotActions = dots(trrack.getState().dots);
 
-    // Register a listener to update the dot chart based on trrack updates.
-    trrack.currentChange(() => {
+    const addButton = document.getElementById("add");
+    const removeButton = document.getElementById("rem");
+    const addControl = document.getElementById("add-control");
+    const removeControl = document.getElementById("remove-control");
+    const addTooltip = document.getElementById("add-limit-tooltip");
+    const removeTooltip = document.getElementById("remove-limit-tooltip");
+
+    function setLimitState(button, control, tooltip, disabled) {
+        button.disabled = disabled;
+        tooltip.hidden = !disabled;
+
+        if (disabled) {
+            button.setAttribute("aria-describedby", tooltip.id);
+            control.tabIndex = 0;
+        } else {
+            button.removeAttribute("aria-describedby");
+            control.removeAttribute("tabindex");
+        }
+    }
+
+    function renderState(currentDots) {
+        dotActions.update(currentDots);
+        setLimitState(addButton, addControl, addTooltip, currentDots.length >= maxDots);
+        setLimitState(removeButton, removeControl, removeTooltip, currentDots.length === 0);
+    }
+
+    function publishState() {
         const dots = trrack.getState().dots;
-        dotActions.update(dots);
+        renderState(dots);
         Revisit.postAnswers({
             [taskId]: dots.length
         });
         Revisit.postProvenance(trrack.graph.backend);
-    });
+    }
+
+    // Register a listener to update the dot chart based on trrack updates.
+    trrack.currentChange(publishState);
 
     // Bind button to update dots
-    document.getElementById("add").onclick = () =>
-        trrack.apply("Add Dot", updateDots("add"));
+    addButton.onclick = () => {
+        if (trrack.getState().dots.length < maxDots) {
+            trrack.apply("Add Dot", updateDots("add"));
+        }
+    };
 
-    document.getElementById("rem").onclick = () =>
-        trrack.apply("Remove Dot", updateDots("remove"));
+    removeButton.onclick = () => {
+        if (trrack.getState().dots.length > 0) {
+            trrack.apply("Remove Dot", updateDots("remove"));
+        }
+    };
 
     // Bind undo/redo
     document.getElementById("undo").onclick = () => trrack.undo();
     document.getElementById("redo").onclick = () => trrack.redo();
 
     Revisit.onProvenanceReceive((prov) => {
-        dotActions.update(prov.dots);
-    })
+        if (Array.isArray(prov?.dots)) {
+            renderState(prov.dots);
+        }
+    });
+
+    publishState();
 
 </script>
 

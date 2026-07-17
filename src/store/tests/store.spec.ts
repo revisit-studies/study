@@ -8,7 +8,7 @@ import {
   studyStoreCreator, useAreResponsesValid, useFlatSequence, useStoreActions, StudyStoreContext,
 } from '../store';
 import type { ResponseBlockLocation, StudyConfig } from '../../parser/types';
-import type { Sequence, StoredAnswer } from '../types';
+import type { Sequence, StoredAnswer, TrrackedProvenance } from '../types';
 import type { ParticipantData } from '../../storage/types';
 import type { REVISIT_MODE } from '../../storage/engines/types';
 import { makeStoredAnswer } from '../../tests/utils';
@@ -387,6 +387,70 @@ describe('studyStoreCreator', () => {
     }));
   });
 
+  test('updateResponseBlockValidation records provenance traversal automatically', async () => {
+    const { store, actions } = await studyStoreCreator('test', minimalConfig, minimalSequence, metadata, emptyAnswers, modes, 'p1', false, false);
+    const rootNode = {
+      id: 'root', createdOn: 100, children: ['child'],
+    } as TrrackedProvenance['nodes'][string];
+    const childNode = {
+      id: 'child', parent: 'root', createdOn: 200, children: [],
+    } as unknown as TrrackedProvenance['nodes'][string];
+    const makeGraph = (current: string, includeChild = true): TrrackedProvenance => ({
+      root: 'root',
+      current,
+      nodes: includeChild
+        ? { root: rootNode, child: childNode }
+        : { root: { ...rootNode, children: [] } },
+    } as TrrackedProvenance);
+    const dispatchProvenance = (provenanceGraph: TrrackedProvenance) => store.dispatch(
+      actions.updateResponseBlockValidation({
+        location: 'stimulus',
+        identifier: 'intro_0',
+        status: true,
+        values: {},
+        provenanceGraph,
+      }),
+    );
+    const now = vi.spyOn(Date, 'now');
+
+    now.mockReturnValueOnce(1000);
+    dispatchProvenance(makeGraph('root', false));
+    now.mockReturnValueOnce(1100);
+    dispatchProvenance(makeGraph('child'));
+    now.mockReturnValueOnce(1200);
+    dispatchProvenance(makeGraph('root'));
+    now.mockReturnValueOnce(1300);
+    dispatchProvenance(makeGraph('child'));
+    now.mockReturnValueOnce(1400);
+    dispatchProvenance(makeGraph('child'));
+    now.mockReturnValueOnce(1500);
+    dispatchProvenance(makeGraph('root'));
+    const branchNode = {
+      id: 'branch', parent: 'root', createdOn: 1600, children: [],
+    } as unknown as TrrackedProvenance['nodes'][string];
+    now.mockReturnValueOnce(1550);
+    dispatchProvenance({
+      root: 'root',
+      current: 'branch',
+      nodes: {
+        root: { ...rootNode, children: ['child', 'branch'] },
+        child: childNode,
+        branch: branchNode,
+      },
+    } as TrrackedProvenance);
+
+    now.mockRestore();
+
+    expect(store.getState().trialValidation.intro_0.provenanceGraph.stimulus?.traversalEvents).toEqual([
+      { nodeId: 'root', createdOn: 100 },
+      { nodeId: 'child', createdOn: 200 },
+      { nodeId: 'root', createdOn: 1200 },
+      { nodeId: 'child', createdOn: 1300 },
+      { nodeId: 'root', createdOn: 1500 },
+      { nodeId: 'branch', createdOn: 1600 },
+    ]);
+  });
+
   test('saveTrialAnswer updates answers state', async () => {
     const { store, actions } = await studyStoreCreator('test', minimalConfig, minimalSequence, metadata, emptyAnswers, modes, 'p1', false, false);
     store.dispatch(actions.saveTrialAnswer(makeStoredAnswer({
@@ -454,6 +518,20 @@ describe('studyStoreCreator', () => {
     store.dispatch(actions.deleteDynamicBlockAnswers({ currentStep: 5, funcIndex: 0, funcName: 'myFunc' }));
     expect(store.getState().answers.myFunc_5_intro_0).toBeUndefined();
     expect(store.getState().funcSequence.myFunc).toBeUndefined();
+  });
+
+  test('deleteDynamicBlockAnswers only deletes the exact funcIndex, not partial matches', async () => {
+    const { store, actions } = await studyStoreCreator('test', minimalConfig, minimalSequence, metadata, emptyAnswers, modes, 'p1', false, false);
+    for (let i = 0; i <= 10; i += 1) {
+      store.dispatch(actions.pushToFuncSequence({
+        component: 'intro', funcName: 'myFunc', index: 5, funcIndex: i, parameters: {}, correctAnswer: [],
+      }));
+    }
+    expect(store.getState().answers.myFunc_5_intro_1).toBeDefined();
+    expect(store.getState().answers.myFunc_5_intro_10).toBeDefined();
+    store.dispatch(actions.deleteDynamicBlockAnswers({ currentStep: 5, funcIndex: 1, funcName: 'myFunc' }));
+    expect(store.getState().answers.myFunc_5_intro_1).toBeUndefined();
+    expect(store.getState().answers.myFunc_5_intro_10).toBeDefined();
   });
 
   test('deleteDynamicBlockAnswers clears checkAnswer state for the deleted steps', async () => {

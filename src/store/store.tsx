@@ -14,6 +14,21 @@ import { REVISIT_MODE } from '../storage/engines/types';
 import { studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
 import { randomizeOptions, randomizeQuestionOrder, randomizeForm } from '../utils/handleResponseRandomization';
 import { getInitialStimulusValidation } from '../components/response/stimulusErrors';
+import { appendProvenanceTraversalEvent } from './provenance';
+
+type UpdateResponseBlockValidationInput = {
+  location: ResponseBlockLocation;
+  identifier: string;
+  status: boolean;
+  values: object;
+  provenanceGraph?: TrrackedProvenance;
+  reason?: ValidationStatus['reason'];
+  message?: ValidationStatus['message'];
+};
+
+type UpdateResponseBlockValidationPayload = UpdateResponseBlockValidationInput & {
+  provenanceObservedAt: number;
+};
 
 export async function studyStoreCreator(
   studyId: string,
@@ -283,47 +298,49 @@ export async function studyStoreCreator(
           state.rankingAnswers = {};
         }
       },
-      updateResponseBlockValidation: (
-        state,
-        {
-          payload,
-        }: PayloadAction<{
-          location: ResponseBlockLocation;
-          identifier: string;
-          status: boolean;
-          values: object;
-          provenanceGraph?: TrrackedProvenance;
-          reason?: ValidationStatus['reason'];
-          message?: ValidationStatus['message'];
-        }>,
-      ) => {
-        if (!state.trialValidation[payload.identifier]) {
-          return;
-        }
-        const currentValidation = state.trialValidation[payload.identifier]?.[payload.location];
-        const currentValues = currentValidation?.values;
-        const finalReason = payload.status ? undefined : (payload.reason ?? currentValidation?.reason);
-        const finalMessage = payload.status ? undefined : (payload.message ?? currentValidation?.message);
+      updateResponseBlockValidation: {
+        reducer(state, { payload }: PayloadAction<UpdateResponseBlockValidationPayload>) {
+          if (!state.trialValidation[payload.identifier]) {
+            return;
+          }
+          const currentValidation = state.trialValidation[payload.identifier]?.[payload.location];
+          const currentValues = currentValidation?.values;
+          const finalReason = payload.status ? undefined : (payload.reason ?? currentValidation?.reason);
+          const finalMessage = payload.status ? undefined : (payload.message ?? currentValidation?.message);
 
-        if (Object.keys(payload.values).length > 0) {
-          state.trialValidation[payload.identifier][payload.location] = {
-            valid: payload.status,
-            values: { ...currentValues, ...payload.values },
-            reason: finalReason,
-            message: finalMessage,
-          };
-        } else {
-          state.trialValidation[payload.identifier][payload.location] = {
-            valid: payload.status,
-            values: currentValues || {},
-            reason: finalReason,
-            message: finalMessage,
-          };
-        }
+          if (Object.keys(payload.values).length > 0) {
+            state.trialValidation[payload.identifier][payload.location] = {
+              valid: payload.status,
+              values: { ...currentValues, ...payload.values },
+              reason: finalReason,
+              message: finalMessage,
+            };
+          } else {
+            state.trialValidation[payload.identifier][payload.location] = {
+              valid: payload.status,
+              values: currentValues || {},
+              reason: finalReason,
+              message: finalMessage,
+            };
+          }
 
-        if (payload.provenanceGraph) {
-          state.trialValidation[payload.identifier].provenanceGraph[payload.location] = payload.provenanceGraph;
-        }
+          if (payload.provenanceGraph) {
+            const previousProvenance = state.trialValidation[payload.identifier].provenanceGraph[payload.location];
+            state.trialValidation[payload.identifier].provenanceGraph[payload.location] = appendProvenanceTraversalEvent(
+              previousProvenance as TrrackedProvenance | undefined,
+              payload.provenanceGraph,
+              payload.provenanceObservedAt,
+            );
+          }
+        },
+        prepare(payload: UpdateResponseBlockValidationInput) {
+          return {
+            payload: {
+              ...payload,
+              provenanceObservedAt: Date.now(),
+            },
+          };
+        },
       },
       setResponseSubmitAttempt(state, { payload }: PayloadAction<{ identifier: string; attempted: boolean }>) {
         state.responseSubmitAttempted[payload.identifier] = payload.attempted;
@@ -369,16 +386,15 @@ export async function studyStoreCreator(
       deleteDynamicBlockAnswers(state, { payload }: PayloadAction<{ currentStep: number, funcIndex: number, funcName: string }>) {
         const { currentStep, funcIndex, funcName } = payload;
 
-        // regex to match all keys that start with the current step and funcIndex
-        const regex = new RegExp(`.*_${currentStep}_.*_${funcIndex}`);
-        // delete all keys that match the regex
+        // Dynamic block keys have the form `${funcName}_${currentStep}_${componentName}_${funcIndex}`
+        const matchesDeletedIteration = (key: string) => key.startsWith(`${funcName}_${currentStep}_`) && key.endsWith(`_${funcIndex}`);
         Object.keys(state.answers).forEach((key) => {
-          if (key.match(regex)) {
+          if (matchesDeletedIteration(key)) {
             delete state.answers[key];
           }
         });
         Object.keys(state.checkAnswer).forEach((key) => {
-          if (key.match(regex)) {
+          if (matchesDeletedIteration(key)) {
             delete state.checkAnswer[key];
           }
         });

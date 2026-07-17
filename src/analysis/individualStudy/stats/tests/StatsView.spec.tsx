@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { forwardRef, ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
   beforeEach, describe, expect, test, vi,
@@ -31,7 +31,9 @@ vi.mock('@mantine/core', () => ({
   Box: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Divider: () => <hr />,
   Flex: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  Paper: ({ children, ref: _ref }: { children: ReactNode; ref?: React.Ref<HTMLElement> }) => <div>{children}</div>,
+  Paper: forwardRef<HTMLDivElement, { children: ReactNode }>(function Paper({ children }, ref) { // eslint-disable-line prefer-arrow-callback
+    return <div ref={ref}>{children}</div>;
+  }),
   Text: ({ children }: { children: ReactNode }) => <p>{children}</p>,
   Title: ({ children }: { children: ReactNode }) => <h5>{children}</h5>,
   Collapse: ({ children, in: open }: { children: ReactNode; in?: boolean }) => (

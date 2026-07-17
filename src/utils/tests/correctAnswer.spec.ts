@@ -2,7 +2,10 @@ import { describe, expect, test } from 'vitest';
 import {
   Answer, Response, StoredAnswer,
 } from '../../parser/types';
-import { componentAnswersAreCorrect, responseAnswerIsCorrect } from '../correctAnswer';
+import { makeStoredAnswer } from '../../tests/utils';
+import {
+  componentAnswersAreCorrect, getComponentAnswerStatus, responseAnswerIsCorrect,
+} from '../correctAnswer';
 
 type TestStoredAnswer = StoredAnswer['answer'][string];
 type TestCorrectAnswer = Answer['answer'];
@@ -231,6 +234,41 @@ describe('correctAnswer utilities', () => {
 
       expect(componentAnswersAreCorrect(userAnswers, correctAnswers, responses)).toBe(false);
       expect(componentAnswersAreCorrect({ customSequence: ['A', 'B'] }, correctAnswers, responses)).toBe(true);
+    });
+  });
+
+  describe('getComponentAnswerStatus', () => {
+    test('returns null for missing, incomplete, and unanswered components', () => {
+      expect(getComponentAnswerStatus(undefined, [])).toBeNull();
+      expect(getComponentAnswerStatus(makeStoredAnswer({
+        answer: { q1: 'A' },
+        endTime: -1,
+      }), [])).toBeNull();
+      expect(getComponentAnswerStatus(makeStoredAnswer({
+        answer: {},
+        endTime: 100,
+      }), [])).toBeNull();
+    });
+
+    test('returns unknown for a completed submitted response without correct answers', () => {
+      expect(getComponentAnswerStatus(makeStoredAnswer({
+        answer: { q1: 'A' },
+        endTime: 100,
+      }), [])).toBe('unknown');
+    });
+
+    test('returns correct or incorrect when correct answers are configured', () => {
+      const componentAnswer = makeStoredAnswer({
+        answer: { q1: 'A', notes: 'Participant explanation' },
+        endTime: 100,
+      });
+      const correctAnswers = [{ id: 'q1', answer: 'A' }];
+
+      expect(getComponentAnswerStatus(componentAnswer, correctAnswers)).toBe('correct');
+      expect(getComponentAnswerStatus(
+        { ...componentAnswer, answer: { ...componentAnswer.answer, q1: 'B' } },
+        correctAnswers,
+      )).toBe('incorrect');
     });
   });
 });
