@@ -342,7 +342,7 @@ export function ThinkAloudFooter({
     }
   }, [pullAllParticipantTags, pullTags, storageEngine]);
 
-  const editTaskTagCallback = useCallback((oldTag: Tag, newTag: Tag) => {
+  const editTaskTagCallback = useCallback(async (oldTag: Tag, newTag: Tag) => {
     if (!taskTags) {
       return;
     }
@@ -351,10 +351,10 @@ export function ThinkAloudFooter({
     const tagsCopy = Array.from(taskTags);
     tagsCopy[tagIndex] = newTag;
 
-    setTags(tagsCopy, 'task');
+    await setTags(tagsCopy, 'task');
   }, [setTags, taskTags]);
 
-  const editParticipantTagCallback = useCallback((oldTag: Tag, newTag: Tag) => {
+  const editParticipantTagCallback = useCallback(async (oldTag: Tag, newTag: Tag) => {
     if (!allParticipantTags) {
       return;
     }
@@ -363,7 +363,7 @@ export function ThinkAloudFooter({
     const tagsCopy = Array.from(allParticipantTags);
     tagsCopy[tagIndex] = newTag;
 
-    setTags(tagsCopy, 'participant');
+    await setTags(tagsCopy, 'participant');
   }, [setTags, allParticipantTags]);
 
   const createTaskTagCallback = useCallback((t: Tag) => setTags([...(taskTags || []), t], 'task'), [setTags, taskTags]);

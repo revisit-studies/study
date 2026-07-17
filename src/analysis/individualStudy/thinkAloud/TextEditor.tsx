@@ -119,7 +119,7 @@ export function TextEditor({
     }, 1);
   });
 
-  const editTagCallback = useCallback((oldTag: Tag, newTag: Tag) => {
+  const editTagCallback = useCallback(async (oldTag: Tag, newTag: Tag) => {
     if (!tags) {
       return;
     }
@@ -128,7 +128,7 @@ export function TextEditor({
     const tagsCopy = Array.from(tags);
     tagsCopy[tagIndex] = newTag;
 
-    setTags(tagsCopy);
+    await setTags(tagsCopy);
   }, [setTags, tags]);
 
   const createTagCallback = useCallback((t: Tag) => setTags([...(tags || []), t]), [setTags, tags]);
