@@ -369,16 +369,15 @@ export async function studyStoreCreator(
       deleteDynamicBlockAnswers(state, { payload }: PayloadAction<{ currentStep: number, funcIndex: number, funcName: string }>) {
         const { currentStep, funcIndex, funcName } = payload;
 
-        // regex to match all keys that start with the current step and funcIndex
-        const regex = new RegExp(`.*_${currentStep}_.*_${funcIndex}`);
-        // delete all keys that match the regex
+        // Dynamic block keys have the form `${funcName}_${currentStep}_${componentName}_${funcIndex}`
+        const matchesDeletedIteration = (key: string) => key.startsWith(`${funcName}_${currentStep}_`) && key.endsWith(`_${funcIndex}`);
         Object.keys(state.answers).forEach((key) => {
-          if (key.match(regex)) {
+          if (matchesDeletedIteration(key)) {
             delete state.answers[key];
           }
         });
         Object.keys(state.checkAnswer).forEach((key) => {
-          if (key.match(regex)) {
+          if (matchesDeletedIteration(key)) {
             delete state.checkAnswer[key];
           }
         });
