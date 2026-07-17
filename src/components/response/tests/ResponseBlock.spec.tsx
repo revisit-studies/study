@@ -3,7 +3,6 @@ import { Provider } from 'react-redux';
 import {
   render, act, fireEvent, cleanup,
 } from '@testing-library/react';
-import { renderToStaticMarkup } from 'react-dom/server';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
@@ -300,25 +299,29 @@ afterEach(() => cleanup());
 describe('ResponseBlock', () => {
   test('renders without error', async () => {
     const studyStore = await makeStudyStore();
-    const html = renderToStaticMarkup(withStore(studyStore, <ResponseBlock config={baseConfig} location="belowStimulus" />));
+    const { container } = render(withStore(studyStore, <ResponseBlock config={baseConfig} location="belowStimulus" />));
+    const html = container.innerHTML;
     expect(html).toContain('<div');
   });
 
   test('renders ResponseSwitcher for response at matching location', async () => {
     const studyStore = await makeStudyStore();
-    const html = renderToStaticMarkup(withStore(studyStore, <ResponseBlock config={baseConfig} location="belowStimulus" />));
+    const { container } = render(withStore(studyStore, <ResponseBlock config={baseConfig} location="belowStimulus" />));
+    const html = container.innerHTML;
     expect(html).toContain('switcher-shortText');
   });
 
   test('shows NextButton when location matches nextButtonLocation', async () => {
     const studyStore = await makeStudyStore();
-    const html = renderToStaticMarkup(withStore(studyStore, <ResponseBlock config={baseConfig} location="belowStimulus" />));
+    const { container } = render(withStore(studyStore, <ResponseBlock config={baseConfig} location="belowStimulus" />));
+    const html = container.innerHTML;
     expect(html).toContain('Next');
   });
 
   test('omits NextButton when location does not match nextButtonLocation', async () => {
     const studyStore = await makeStudyStore();
-    const html = renderToStaticMarkup(withStore(studyStore, <ResponseBlock config={baseConfig} location="sidebar" />));
+    const { container } = render(withStore(studyStore, <ResponseBlock config={baseConfig} location="sidebar" />));
+    const html = container.innerHTML;
     expect(html).not.toContain('Next');
   });
 
@@ -332,13 +335,15 @@ describe('ResponseBlock', () => {
       ],
     } as IndividualComponent;
     const studyStore = await makeStudyStore();
-    const html = renderToStaticMarkup(withStore(studyStore, <ResponseBlock config={hiddenConfig} location="belowStimulus" />));
+    const { container } = render(withStore(studyStore, <ResponseBlock config={hiddenConfig} location="belowStimulus" />));
+    const html = container.innerHTML;
     expect(html).not.toContain('switcher-shortText');
   });
 
   test('renders with provided style prop without error', async () => {
     const studyStore = await makeStudyStore();
-    const html = renderToStaticMarkup(withStore(studyStore, <ResponseBlock config={baseConfig} location="belowStimulus" style={{ color: 'red' }} />));
+    const { container } = render(withStore(studyStore, <ResponseBlock config={baseConfig} location="belowStimulus" style={{ color: 'red' }} />));
+    const html = container.innerHTML;
     expect(html).toContain('switcher-shortText');
   });
 
@@ -348,7 +353,8 @@ describe('ResponseBlock', () => {
       nextButtonText: 'Submit',
     } as IndividualComponent;
     const studyStore = await makeStudyStore();
-    const html = renderToStaticMarkup(withStore(studyStore, <ResponseBlock config={configWithText} location="belowStimulus" />));
+    const { container } = render(withStore(studyStore, <ResponseBlock config={configWithText} location="belowStimulus" />));
+    const html = container.innerHTML;
     expect(html).toContain('Submit');
   });
 
@@ -359,7 +365,8 @@ describe('ResponseBlock', () => {
       correctAnswer: [{ id: 'q1', answer: 'correct' }],
     } as IndividualComponent;
     const studyStore = await makeStudyStore();
-    const html = renderToStaticMarkup(withStore(studyStore, <ResponseBlock config={configWithFeedback} location="belowStimulus" />));
+    const { container } = render(withStore(studyStore, <ResponseBlock config={configWithFeedback} location="belowStimulus" />));
+    const html = container.innerHTML;
     expect(html).toContain('Check Answer');
   });
 
@@ -369,7 +376,8 @@ describe('ResponseBlock', () => {
       response: [{ type: 'textOnly', id: 'q1', prompt: 'Read this.' }],
     } as IndividualComponent;
     const studyStore = await makeStudyStore();
-    const html = renderToStaticMarkup(withStore(studyStore, <ResponseBlock config={textOnlyConfig} location="belowStimulus" />));
+    const { container } = render(withStore(studyStore, <ResponseBlock config={textOnlyConfig} location="belowStimulus" />));
+    const html = container.innerHTML;
     expect(html).toContain('switcher-textOnly');
   });
 

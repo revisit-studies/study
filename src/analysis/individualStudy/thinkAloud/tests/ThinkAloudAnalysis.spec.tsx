@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { forwardRef, ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
   render, act, cleanup, fireEvent, waitFor,
@@ -116,7 +116,11 @@ vi.mock('@mantine/core', () => ({
   ),
   Grid: Object.assign(
     ({ children }: { children: ReactNode }) => <div>{children}</div>,
-    { Col: ({ children, ref: _r, ...rest }: { children: ReactNode; ref?: React.Ref<HTMLElement> }) => <div {...rest}>{children}</div> },
+    {
+      Col: forwardRef<HTMLDivElement, { children: ReactNode }>(function Col({ children, ...rest }, ref) { // eslint-disable-line prefer-arrow-callback
+        return <div ref={ref} {...rest}>{children}</div>;
+      }),
+    },
   ),
   Group: ({ children, style }: { children: ReactNode; style?: object }) => <div style={style}>{children}</div>,
   HoverCard: Object.assign(
@@ -157,17 +161,19 @@ vi.mock('@mantine/core', () => ({
       {rightSection}
     </div>
   ),
-  Stack: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Stack: forwardRef<HTMLDivElement, { children: ReactNode }>(function Stack({ children }, ref) { // eslint-disable-line prefer-arrow-callback
+    return <div ref={ref}>{children}</div>;
+  }),
   Text: ({ children }: { children: ReactNode }) => <p>{children}</p>,
-  Textarea: ({
-    value, onChange, onKeyDown, onFocus, placeholder, onBlur, defaultValue,
-  }: {
+  Textarea: forwardRef<HTMLTextAreaElement, {
     value?: string; defaultValue?: string; onChange?: React.ChangeEventHandler<HTMLTextAreaElement>;
     onKeyDown?: React.KeyboardEventHandler<HTMLTextAreaElement>; onFocus?: React.FocusEventHandler<HTMLTextAreaElement>;
     placeholder?: string; onBlur?: React.FocusEventHandler<HTMLTextAreaElement>;
-  }) => (
-    <textarea data-testid="textarea" value={value} defaultValue={defaultValue} onChange={onChange} onKeyDown={onKeyDown} onFocus={onFocus} placeholder={placeholder} onBlur={onBlur} />
-  ),
+  }>(function Textarea({ // eslint-disable-line prefer-arrow-callback
+    value, onChange, onKeyDown, onFocus, placeholder, onBlur, defaultValue,
+  }, ref) {
+    return <textarea ref={ref} data-testid="textarea" value={value} defaultValue={defaultValue} onChange={onChange} onKeyDown={onKeyDown} onFocus={onFocus} placeholder={placeholder} onBlur={onBlur} />;
+  }),
   TextInput: ({ placeholder, value }: { placeholder?: string; value?: string }) => <input placeholder={placeholder} defaultValue={value} />,
   Tooltip: ({ children, label }: { children: ReactNode; label?: ReactNode }) => <div title={String(label)}>{children}</div>,
   useCombobox: () => ({ toggleDropdown: vi.fn(), openDropdown: vi.fn(), closeDropdown: vi.fn() }),

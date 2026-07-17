@@ -44,7 +44,9 @@ vi.mock('@mantine/core', () => ({
       Panel: ({ children }: { children: ReactNode }) => <div>{children}</div>,
     },
   ),
-  Text: ({ children }: { children: ReactNode }) => <p>{children}</p>,
+  Text: ({ children, span }: { children: ReactNode; span?: boolean }) => (
+    span ? <span>{children}</span> : <p>{children}</p>
+  ),
   Tooltip: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
