@@ -8,10 +8,15 @@ import {
 import { ParticipantData } from '../../../storage/types';
 import { SingleTaskLabelLines } from './SingleTaskLabelLines';
 import { SingleTask } from './SingleTask';
-import { StoredAnswer, StudyConfig } from '../../../parser/types';
+import { StudyConfig } from '../../../parser/types';
 import { getComponentAnswerStatus } from '../../../utils/correctAnswer';
 import { parseConditionParam } from '../../../utils/handleConditionLogic';
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
+import {
+  compareReplayAnswerEntries,
+  orderedReplayAnswerEntries,
+  ReplayTaskOrder,
+} from './taskOrdering';
 
 const LABEL_GAP = 25;
 const CHARACTER_SIZE = 8;
@@ -20,15 +25,9 @@ const margin = {
   left: 20, top: 20, right: 20, bottom: 20,
 };
 
-const sortedTaskNames = (a: [string, StoredAnswer], b: [string, StoredAnswer]) => {
-  const splitA = a[1].trialOrder.split('_');
-  const splitB = b[1].trialOrder.split('_');
-  return splitA[0] === splitB[0] ? +splitA[1] - +splitB[1] : +splitA[0] - +splitB[0];
-};
-
 export function AllTasksTimeline({
-  participantData, width, studyId, studyConfig, maxLength,
-}: { participantData: ParticipantData, width: number, studyId: string, studyConfig: StudyConfig | undefined, maxLength: number | undefined }) {
+  participantData, width, studyId, studyConfig, maxLength, taskOrder = 'sequence',
+}: { participantData: ParticipantData, width: number, studyId: string, studyConfig: StudyConfig | undefined, maxLength: number | undefined, taskOrder?: ReplayTaskOrder }) {
   const [hoveredTaskIdentifier, setHoveredTaskIdentifier] = useState<string | null>(null);
 
   const percentComplete = useMemo(() => {
@@ -54,20 +53,25 @@ export function AllTasksTimeline({
   }, [participantData.answers, percentComplete, width]);
 
   const maxHeight = useMemo(() => {
-    // Sort the entires by start time and filter out entries without start time
-    const sortedEntries = Object.entries(participantData.answers || {}).filter((answer) => !!(answer[1].startTime)).sort((a, b) => a[1].startTime - b[1].startTime);
+    const incompleteEntries = Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0).sort(compareReplayAnswerEntries);
+    const incompleteEntryIndexes = new Map(incompleteEntries.map(([identifier], index) => [identifier, index]));
+    const sortedEntries = orderedReplayAnswerEntries(participantData.answers, taskOrder);
 
     let currentHeight = 0;
     let _maxHeight = 0;
 
     sortedEntries.forEach((entry, i) => {
-      const [_name, answer] = entry;
+      const [identifier, answer] = entry;
 
       // Check if the previous entry overlaps with the current entry
       const prev = i > 0 ? sortedEntries[i - currentHeight - 1] : null;
+      const prevScale = prev && prev[1].startTime ? xScale : incompleteXScale;
+      const prevStart = prev ? prev[1].startTime ? prev[1].startTime : incompleteEntryIndexes.get(prev[0]) ?? 0 : 0;
+      const scale = answer.startTime === 0 ? incompleteXScale : xScale;
+      const scaleStart = answer.startTime ? answer.startTime : incompleteEntryIndexes.get(identifier) ?? 0;
 
       // If the previous entry overlaps with the current entry , increase the height
-      if (prev && prev[0].length * (CHARACTER_SIZE + 1) + xScale(prev[1].startTime) > xScale(answer.startTime)) {
+      if (prev && prev[0].length * (CHARACTER_SIZE + 1) + prevScale(prevStart) > scale(scaleStart)) {
         currentHeight += 1;
       } else {
         currentHeight = 0;
@@ -79,7 +83,7 @@ export function AllTasksTimeline({
     });
 
     return (_maxHeight + 1) * LABEL_GAP + margin.top + margin.bottom;
-  }, [participantData.answers, xScale]);
+  }, [incompleteXScale, participantData.answers, taskOrder, xScale]);
 
   const conditionParam = useMemo(() => {
     const parsedConditions = parseConditionParam(participantData.conditions ?? participantData.searchParams?.condition);
@@ -90,11 +94,9 @@ export function AllTasksTimeline({
   const tasks: { identifier: string, line: JSX.Element, label: JSX.Element }[] = useMemo(() => {
     let currentHeight = 0;
 
-    const incompleteEntries = Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0).sort(sortedTaskNames);
-
-    const sortedEntries = Object.entries(participantData.answers || {}).filter((answer) => !!(answer[1].startTime)).sort((a, b) => a[1].startTime - b[1].startTime);
-
-    const combined = [...sortedEntries, ...incompleteEntries];
+    const incompleteEntries = Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0).sort(compareReplayAnswerEntries);
+    const incompleteEntryIndexes = new Map(incompleteEntries.map(([identifier], index) => [identifier, index]));
+    const combined = orderedReplayAnswerEntries(participantData.answers, taskOrder);
 
     const allElements = combined.map((entry, i) => {
       const scale = entry[1].startTime === 0 ? incompleteXScale : xScale;
@@ -104,9 +106,10 @@ export function AllTasksTimeline({
       const prev = i > 0 ? combined[i - currentHeight - 1] : null;
 
       const prevScale = prev && prev[1].startTime ? xScale : incompleteXScale;
-      const prevStart = prev ? prev[1].startTime ? prev[1].startTime : incompleteEntries.indexOf(prev) : 0;
-      const scaleStart = answer.startTime ? answer.startTime : incompleteEntries.indexOf(entry);
-      const scaleEnd = answer.endTime > 0 ? answer.endTime : incompleteEntries.indexOf(entry) + 1;
+      const prevStart = prev ? prev[1].startTime ? prev[1].startTime : incompleteEntryIndexes.get(prev[0]) ?? 0 : 0;
+      const incompleteEntryIndex = incompleteEntryIndexes.get(identifier) ?? 0;
+      const scaleStart = answer.startTime ? answer.startTime : incompleteEntryIndex;
+      const scaleEnd = answer.endTime > 0 ? answer.endTime : incompleteEntryIndex + 1;
 
       if (prev && prev[0].length * (CHARACTER_SIZE + 1) + prevScale(prevStart) > scale(scaleStart)) {
         currentHeight += 1;
@@ -160,7 +163,7 @@ export function AllTasksTimeline({
     });
 
     return allElements;
-  }, [participantData.answers, participantData.participantId, incompleteXScale, xScale, studyConfig, maxHeight, studyId, conditionParam, hoveredTaskIdentifier]);
+  }, [participantData.answers, participantData.participantId, incompleteXScale, xScale, studyConfig, maxHeight, studyId, conditionParam, hoveredTaskIdentifier, taskOrder]);
 
   // Find entries of someone browsing away. Show them
   const browsedAway = useMemo(() => {

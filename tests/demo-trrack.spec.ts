@@ -72,7 +72,12 @@ async function readRecordedReplay(page: Page, studyId: string): Promise<Recorded
     ?.map((event) => event.createdOn)
     .filter((createdOn): createdOn is number => typeof createdOn === 'number') ?? [];
 
-  if (typeof answer?.startTime !== 'number' || typeof answer.endTime !== 'number') {
+  if (
+    typeof answer?.startTime !== 'number'
+    || typeof answer.endTime !== 'number'
+    || answer.startTime <= 0
+    || answer.endTime < answer.startTime
+  ) {
     return null;
   }
 
@@ -85,7 +90,7 @@ async function readRecordedReplay(page: Page, studyId: string): Promise<Recorded
 }
 
 async function seekReplay(page: Page, recording: RecordedReplay, targetTime: number) {
-  const timer = page.locator('footer svg').last();
+  const timer = page.getByTestId('replay-timer');
   await expect(timer).toBeVisible();
   const timerBounds = await timer.boundingBox();
   if (!timerBounds) {

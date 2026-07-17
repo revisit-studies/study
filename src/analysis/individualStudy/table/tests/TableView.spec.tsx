@@ -18,11 +18,17 @@ type MrtColumn = {
   Cell: ({ cell }: { cell: { getValue(): unknown } }) => ReactNode;
 };
 
-let capturedTableOptions: { columns: MrtColumn[] } | null = null;
+type CapturedTableOptions = {
+  columns: MrtColumn[];
+  renderDetailPanel: ({ row }: { row: { original: ParticipantDataWithStatus } }) => ReactNode;
+  renderTopToolbarCustomActions: () => ReactNode;
+};
+
+let capturedTableOptions: CapturedTableOptions | null = null;
 
 vi.mock('mantine-react-table', () => ({
   MantineReactTable: () => <div>MantineReactTable</div>,
-  useMantineReactTable: (opts: { columns: MrtColumn[] }) => { capturedTableOptions = opts; return opts; },
+  useMantineReactTable: (opts: CapturedTableOptions) => { capturedTableOptions = opts; return opts; },
 }));
 
 vi.mock('react-router', () => ({
@@ -41,6 +47,7 @@ vi.mock('@mantine/core', () => ({
   ActionIcon: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => <button type="button" onClick={onClick}>{children}</button>,
   Spoiler: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Box: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  SegmentedControl: ({ data }: { data: { value: string; label: string }[] }) => <div>{data.map(({ value, label }) => <span key={value}>{label}</span>)}</div>,
 }));
 
 vi.mock('@tabler/icons-react', () => ({
@@ -51,7 +58,7 @@ vi.mock('@tabler/icons-react', () => ({
 }));
 
 vi.mock('../../replay/AllTasksTimeline', () => ({
-  AllTasksTimeline: () => <div>AllTasksTimeline</div>,
+  AllTasksTimeline: ({ taskOrder }: { taskOrder: string }) => <div data-task-order={taskOrder}>AllTasksTimeline</div>,
 }));
 
 vi.mock('../../ParticipantRejectModal', () => ({
@@ -124,6 +131,27 @@ describe('TableView', () => {
     );
     expect(html).toContain('MantineReactTable');
     expect(capturedTableOptions).not.toBeNull();
+  });
+
+  test('offers sequence and answer-time ordering beside the timeline controls', () => {
+    renderToStaticMarkup(
+      <TableView {...defaultProps} visibleParticipants={[makeParticipant()]} />,
+    );
+
+    const html = renderToStaticMarkup(capturedTableOptions!.renderTopToolbarCustomActions());
+    expect(html).toContain('Order');
+    expect(html).toContain('Sequence');
+    expect(html).toContain('Answer time');
+  });
+
+  test('uses sequence ordering by default for participant timelines', () => {
+    const participant = makeParticipant();
+    renderToStaticMarkup(
+      <TableView {...defaultProps} visibleParticipants={[participant]} />,
+    );
+
+    const html = renderToStaticMarkup(capturedTableOptions!.renderDetailPanel({ row: { original: participant } }));
+    expect(html).toContain('data-task-order="sequence"');
   });
 
   // ── Status column ──────────────────────────────────────────────────────────

@@ -39,7 +39,7 @@ test('Test image component', async ({ page }) => {
   await expect(img2).toBeVisible();
 
   // Select a response and click next
-  await page.getByLabel('No').check();
+  await page.getByRole('radio', { name: 'No', exact: true }).check();
   await page.keyboard.press('Enter');
 
   // Check the page contains the question
