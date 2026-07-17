@@ -7,7 +7,6 @@ import {
   openStudyFromLanding,
   resetClientStudyState,
 } from './utils';
-import { encryptIndex } from '../src/utils/encryptDecryptIndex';
 
 const demos = [
   {
@@ -149,6 +148,7 @@ for (const demo of demos) {
 
     const participantFrame = page.frameLocator('#root iframe');
     const addButton = participantFrame.getByRole('button', { name: 'Add' });
+    const replayPath = new URL(page.url()).pathname;
 
     await expectDotCount(participantFrame, 1);
     await page.waitForTimeout(150);
@@ -186,7 +186,7 @@ for (const demo of demos) {
     ];
 
     expect(initial).toBeLessThanOrEqual(addTwo);
-    await page.goto(`/${demo.studyId}/${encryptIndex(1)}?participantId=${recording.participantId}&revisitPageId=e2e-trrack-replay`);
+    await page.goto(`${replayPath}?participantId=${recording.participantId}&revisitPageId=e2e-trrack-replay`);
 
     const replayFrame = page.frameLocator('#root iframe');
     for (const target of replayTargets) {

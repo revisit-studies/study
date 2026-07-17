@@ -74,7 +74,19 @@ vi.mock('@trrack/core', () => ({
   },
   initializeTrrack: vi.fn(() => ({
     apply: vi.fn(),
-    graph: { backend: {} },
+    graph: {
+      backend: {
+        root: 'root',
+        current: 'root',
+        nodes: {
+          root: {
+            id: 'root',
+            createdOn: 0,
+            children: [],
+          },
+        },
+      },
+    },
   })),
 }));
 
