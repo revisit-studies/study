@@ -63,7 +63,7 @@ export function useNextStep() {
   const startTime = useMemo(() => Date.now(), [funcIndex, currentStep]);
 
   const windowEvents = useWindowEvents();
-  const goToNextStep = useCallback(async (collectData = true) => {
+  const goToNextStep = useCallback((collectData = true) => {
     try {
       if (typeof currentStep !== 'number') {
         return;
@@ -92,20 +92,18 @@ export function useNextStep() {
         const answersToPersist = { ...answers, [identifier]: toSave };
 
         if (storageEngine) {
-          try {
-            await storageEngine.saveAnswers(answersToPersist);
-            if (provenanceGraph) {
-              await storageEngine.saveProvenance(provenanceGraph, identifier);
-            }
-            await storageEngine.flushPendingParticipantData();
-          } catch (error) {
+          const onSaveFailure = (error: unknown) => {
             console.error('Failed to save participant response data', error);
             storeDispatch(setAlertModal({
               show: true,
               message: 'Your response could not be saved because the connection to the server was interrupted. Please check your internet connection, then click Reconnect to try again.',
               title: 'Failed to Save Response',
             }));
-            return;
+          };
+
+          storageEngine.saveAnswers(answersToPersist).catch(onSaveFailure);
+          if (provenanceGraph) {
+            storageEngine.saveProvenance(provenanceGraph, identifier).catch(onSaveFailure);
           }
         }
 

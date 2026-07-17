@@ -180,6 +180,8 @@ export abstract class StorageEngine {
 
   private participantDataWriteError: Error | null = null;
 
+  private participantDataWriteErrorListeners = new Set<(error: Error) => void>();
+
   private pendingAssetUploads = new Map<string, Promise<void>>();
 
   private pendingAssetOperations = new Set<Promise<unknown>>();
@@ -203,6 +205,14 @@ export abstract class StorageEngine {
 
   isCloudEngine() {
     return this.cloudEngine;
+  }
+
+  subscribeToParticipantDataWriteErrors(callback: (error: Error) => void) {
+    this.participantDataWriteErrorListeners.add(callback);
+
+    return () => {
+      this.participantDataWriteErrorListeners.delete(callback);
+    };
   }
 
   protected shouldDeferInitialParticipantDataPersistence() {
@@ -438,7 +448,12 @@ export abstract class StorageEngine {
   }
 
   private recordParticipantDataWriteError(error: unknown) {
-    this.participantDataWriteError = normalizeError(error);
+    const normalizedError = normalizeError(error);
+    this.participantDataWriteError = normalizedError;
+
+    this.participantDataWriteErrorListeners.forEach((listener) => {
+      listener(normalizedError);
+    });
   }
 
   private consumeParticipantDataWriteError() {

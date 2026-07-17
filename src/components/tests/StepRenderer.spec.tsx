@@ -2,11 +2,16 @@ import { ReactNode } from 'react';
 import { render, act } from '@testing-library/react';
 import {
   describe, expect, test, vi,
+  beforeEach, afterEach,
 } from 'vitest';
 import { StepRenderer } from '../StepRenderer';
 import { shouldConfirmTabClose } from '../../utils/closeTabConfirmation';
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
+
+const mockDispatch = vi.fn();
+const mockSetAlertModal = vi.fn((payload) => ({ type: 'setAlertModal', payload }));
+const mockSubscribeToParticipantDataWriteErrors = vi.fn();
 
 vi.mock('../interface/AppAside', () => ({
   AppAside: () => <div data-testid="app-aside" />,
@@ -97,8 +102,19 @@ vi.mock('../../store/store', () => ({
     analysisHasScreenRecording: false,
     analysisCanPlayScreenRecording: false,
   }),
-  useStoreDispatch: () => vi.fn(),
-  useStoreActions: () => ({ toggleStudyBrowser: vi.fn() }),
+  useStoreDispatch: () => mockDispatch,
+  useStoreActions: () => ({
+    toggleStudyBrowser: vi.fn(),
+    setAlertModal: mockSetAlertModal,
+  }),
+}));
+
+vi.mock('../../storage/storageEngineHooks', () => ({
+  useStorageEngine: () => ({
+    storageEngine: {
+      subscribeToParticipantDataWriteErrors: mockSubscribeToParticipantDataWriteErrors,
+    },
+  }),
 }));
 
 vi.mock('../../routes/utils', () => ({
@@ -153,6 +169,42 @@ vi.mock('lodash.debounce', () => ({
 // ── tests ─────────────────────────────────────────────────────────────────────
 
 describe('StepRenderer', () => {
+  beforeEach(() => {
+    mockDispatch.mockClear();
+    mockSetAlertModal.mockClear();
+    mockSubscribeToParticipantDataWriteErrors.mockReset();
+    vi.mocked(shouldConfirmTabClose).mockReturnValue(false);
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  test('shows the blocking storage modal when a queued participant data write fails', async () => {
+    let onParticipantDataWriteError: ((error: Error) => void) | undefined;
+    const unsubscribe = vi.fn();
+    mockSubscribeToParticipantDataWriteErrors.mockImplementation((callback) => {
+      onParticipantDataWriteError = callback;
+      return unsubscribe;
+    });
+
+    const { unmount } = await act(async () => render(<StepRenderer />));
+    act(() => {
+      onParticipantDataWriteError?.(new Error('write failed'));
+    });
+
+    expect(mockSetAlertModal).toHaveBeenCalledWith({
+      show: true,
+      message: 'Your response could not be saved because the connection to the server was interrupted. Please check your internet connection, then click Reconnect to try again.',
+      title: 'Failed to Save Response',
+    });
+    expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'setAlertModal' }));
+
+    unmount();
+    expect(unsubscribe).toHaveBeenCalledTimes(1);
+  });
+
   test('renders the app shell', async () => {
     const { getByTestId } = await act(async () => render(<StepRenderer />));
     expect(getByTestId('app-shell')).toBeDefined();

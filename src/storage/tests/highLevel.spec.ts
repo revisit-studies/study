@@ -233,6 +233,33 @@ class DeferredInitialWriteLocalStorageEngine extends DelayedLocalStorageEngine {
   }
 }
 
+class FailingParticipantDataLocalStorageEngine extends LocalStorageEngine {
+  private failNextParticipantDataWrite = false;
+
+  constructor(testing: boolean = false) {
+    super(testing);
+    this.participantDataWriteDelayMs = 0;
+  }
+
+  failNextWrite() {
+    this.failNextParticipantDataWrite = true;
+  }
+
+  protected override async _pushToStorage<T extends StorageObjectType>(
+    prefix: string,
+    type: T,
+    objectToUpload: StorageObject<T>,
+  ) {
+    const isParticipantDataWrite = type === 'participantData' && prefix.startsWith('participants/');
+    if (isParticipantDataWrite && this.failNextParticipantDataWrite) {
+      this.failNextParticipantDataWrite = false;
+      throw new Error('Participant data upload failed');
+    }
+
+    return super._pushToStorage(prefix, type, objectToUpload);
+  }
+}
+
 describe.each([
   { TestEngine: LocalStorageEngine },
 ])('describe object $TestEngine', ({ TestEngine }) => {
@@ -813,6 +840,26 @@ describe.each([
 
     const participantData = await storageEngine.getParticipantData(participantSession.participantId);
     expect(participantData?.answers).toEqual(secondAnswers);
+  });
+
+  test('notifies subscribers when a queued participant data write fails', async () => {
+    storageEngine = new FailingParticipantDataLocalStorageEngine(true);
+    await storageEngine.connect();
+    await storageEngine.initializeStudyDb(studyId);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+    const onWriteError = vi.fn();
+    storageEngine.subscribeToParticipantDataWriteErrors(onWriteError);
+
+    (storageEngine as FailingParticipantDataLocalStorageEngine).failNextWrite();
+    await storageEngine.saveAnswers({
+      intro_0: makeStoredAnswer('intro_0', 100),
+    });
+
+    await expect(storageEngine.flushPendingParticipantData()).rejects.toThrow('Participant data upload failed');
+    expect(onWriteError).toHaveBeenCalledWith(expect.objectContaining({
+      message: 'Participant data upload failed',
+    }));
   });
 
   test('saveAnswers strips inline provenance and stores it as a task asset', async () => {
