@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { forwardRef, ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
   render, act, cleanup,
@@ -72,7 +72,9 @@ vi.mock('@mantine/core', () => ({
   ),
   Progress: ({ value }: { value: number }) => <div data-testid="progress" data-value={value} />,
   Space: () => <span />,
-  Title: ({ children }: { children: ReactNode }) => <h1>{children}</h1>,
+  Title: forwardRef<HTMLHeadingElement, { children: ReactNode }>(function Title({ children }, ref) { // eslint-disable-line prefer-arrow-callback
+    return <h1 ref={ref}>{children}</h1>;
+  }),
   Tooltip: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Text: ({ children }: { children: ReactNode }) => <p>{children}</p>,
 }));

@@ -528,12 +528,10 @@ export function DownloadTidy({
         <Progress value={downloadProgress} animated />
       )}
       <Box>
-        <Text size="sm" fw={500} mb="xs">
-          <Flex align="center" gap="xs">
-            <IconLayoutColumns size={16} />
-            Optional columns:
-          </Flex>
-        </Text>
+        <Flex align="center" gap="xs" mb="xs">
+          <IconLayoutColumns size={16} />
+          <Text size="sm" fw={500}>Optional columns:</Text>
+        </Flex>
         <Flex wrap="wrap" gap="4px">
           {OPTIONAL_COMMON_PROPS.filter((prop) => prop !== 'transcript' || transcriptAvailable).map((prop) => {
             const isSelected = selectedProperties.includes(prop);

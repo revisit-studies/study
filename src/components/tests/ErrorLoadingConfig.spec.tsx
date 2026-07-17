@@ -1,10 +1,25 @@
-import { renderToStaticMarkup } from 'react-dom/server';
 import { MantineProvider } from '@mantine/core';
-import { describe, expect, test } from 'vitest';
+import { cleanup, render } from '@testing-library/react';
+import {
+  afterEach, beforeEach, describe, expect, test, vi,
+} from 'vitest';
 import { ParsedConfig, StudyConfig } from '../../parser/types';
 import { ErrorLoadingConfig } from '../ErrorLoadingConfig';
 
 describe('ErrorLoadingConfig', () => {
+  beforeEach(() => {
+    vi.stubGlobal('matchMedia', vi.fn(() => ({
+      matches: false,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    })));
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
+
   test('separates non-combinable grouped messages on new lines', () => {
     const issues: ParsedConfig<StudyConfig>['errors'] = [
       {
@@ -21,13 +36,14 @@ describe('ErrorLoadingConfig', () => {
       },
     ];
 
-    const html = renderToStaticMarkup(
+    const { container } = render(
       <MantineProvider>
         <ErrorLoadingConfig issues={issues} type="error" />
       </MantineProvider>,
     );
+    const html = container.innerHTML;
 
-    expect(html).toMatch(/First validation issue[\s\S]*<br\/>[\s\S]*Second validation issue/);
+    expect(html).toMatch(/First validation issue[\s\S]*<br>[\s\S]*Second validation issue/);
   });
 
   test('keeps dominant required-property message for anyOf alternatives', () => {
@@ -70,11 +86,12 @@ describe('ErrorLoadingConfig', () => {
       },
     ];
 
-    const html = renderToStaticMarkup(
+    const { container } = render(
       <MantineProvider>
         <ErrorLoadingConfig issues={issues} type="error" />
       </MantineProvider>,
     );
+    const html = container.innerHTML;
     const textOnly = html.replace(/<[^>]*>/g, ' ');
 
     expect(textOnly).toMatch(/Missing required property\s+type/);
@@ -95,11 +112,12 @@ describe('ErrorLoadingConfig', () => {
       },
     ];
 
-    const html = renderToStaticMarkup(
+    const { container } = render(
       <MantineProvider>
         <ErrorLoadingConfig issues={issues} type="error" />
       </MantineProvider>,
     );
+    const html = container.innerHTML;
     const textOnly = html.replace(/<[^>]*>/g, ' ');
 
     expect(textOnly).toContain('Default Contact Email');
@@ -118,11 +136,12 @@ describe('ErrorLoadingConfig', () => {
       },
     ];
 
-    const html = renderToStaticMarkup(
+    const { container } = render(
       <MantineProvider>
         <ErrorLoadingConfig issues={issues} type="warning" />
       </MantineProvider>,
     );
+    const html = container.innerHTML;
     const textOnly = html.replace(/<[^>]*>/g, ' ');
 
     expect(textOnly).toContain('Default Firebase Config');
@@ -141,11 +160,12 @@ describe('ErrorLoadingConfig', () => {
       },
     ];
 
-    const html = renderToStaticMarkup(
+    const { container } = render(
       <MantineProvider>
         <ErrorLoadingConfig issues={issues} type="warning" />
       </MantineProvider>,
     );
+    const html = container.innerHTML;
     const textOnly = html.replace(/<[^>]*>/g, ' ');
 
     expect(textOnly).toContain('Default Supabase Config');

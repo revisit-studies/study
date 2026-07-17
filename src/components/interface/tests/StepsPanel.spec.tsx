@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { forwardRef, ReactNode } from 'react';
 import {
   render, act, cleanup, fireEvent,
 } from '@testing-library/react';
@@ -53,7 +53,9 @@ vi.mock('../../../parser/utils', () => ({
 
 vi.mock('@mantine/core', () => ({
   Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
-  Box: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Box: forwardRef<HTMLDivElement, { children: ReactNode }>(function Box({ children }, ref) { // eslint-disable-line prefer-arrow-callback
+    return <div ref={ref}>{children}</div>;
+  }),
   Code: ({ children }: { children: ReactNode }) => <code>{children}</code>,
   Flex: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   HoverCard: Object.assign(
@@ -70,7 +72,7 @@ vi.mock('@mantine/core', () => ({
     </div>
   ),
   Text: ({ children }: { children: ReactNode }) => <p>{children}</p>,
-  Tooltip: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Tooltip: ({ children }: { children: ReactNode }) => children,
   Button: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => (
     <button type="button" onClick={onClick}>{children}</button>
   ),

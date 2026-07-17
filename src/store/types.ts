@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
+import type { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
 import type { GetInputPropsReturnType } from '@mantine/form/lib/types';
 import type {
   Answer, ComponentBlock, ConfigResponseBlockLocation, CustomResponse, InterruptionBlock, JsonValue, ParsedStringOption, ParticipantData, ResponseBlockLocation, SkipConditions, StudyConfig, ValueOf,
@@ -21,7 +21,14 @@ export interface ParticipantMetadata {
   ip: string | null;
 }
 
-export type TrrackedProvenance = ProvenanceGraph<any, any>;
+export type ProvenanceTraversalEvent = {
+  nodeId: string;
+  createdOn: number;
+};
+
+export type TrrackedProvenance = ProvenanceGraph<any, any> & {
+  traversalEvents?: ProvenanceTraversalEvent[];
+};
 export type StoredProvenance = Record<ResponseBlockLocation, TrrackedProvenance | undefined>;
 
 // timestamp, event type, event data
