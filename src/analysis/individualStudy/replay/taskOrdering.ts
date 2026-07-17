@@ -2,6 +2,7 @@ import { StoredAnswer } from '../../../parser/types';
 import { parseTrialOrder } from '../../../utils/parseTrialOrder';
 
 export type ReplayAnswerEntry = [string, StoredAnswer];
+export type ReplayTaskOrder = 'sequence' | 'answer-time';
 
 export function compareReplayAnswerEntries(a: ReplayAnswerEntry, b: ReplayAnswerEntry) {
   const aOrder = parseTrialOrder(a[1].trialOrder);
@@ -18,6 +19,22 @@ export function compareReplayAnswerEntries(a: ReplayAnswerEntry, b: ReplayAnswer
   return a[0].localeCompare(b[0]);
 }
 
-export function orderedReplayAnswerEntries(answers: Record<string, StoredAnswer> = {}) {
-  return Object.entries(answers).sort(compareReplayAnswerEntries);
+export function orderedReplayAnswerEntries(
+  answers: Record<string, StoredAnswer> = {},
+  taskOrder: ReplayTaskOrder = 'sequence',
+) {
+  const entries = Object.entries(answers);
+
+  if (taskOrder === 'answer-time') {
+    const completed = entries
+      .filter(([, answer]) => answer.startTime !== 0)
+      .sort((a, b) => a[1].startTime - b[1].startTime || compareReplayAnswerEntries(a, b));
+    const incomplete = entries
+      .filter(([, answer]) => answer.startTime === 0)
+      .sort(compareReplayAnswerEntries);
+
+    return [...completed, ...incomplete];
+  }
+
+  return entries.sort(compareReplayAnswerEntries);
 }

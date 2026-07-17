@@ -74,4 +74,25 @@ describe('orderedReplayAnswerEntries', () => {
 
     expect(entries.map(([identifier]) => identifier)).toEqual(['task_a', 'task_b']);
   });
+
+  test('orders completed entries chronologically when answer-time order is selected', () => {
+    const entries = orderedReplayAnswerEntries({
+      task_0: answer('task_0', '0', 3000),
+      task_2: answer('task_2', '2', 1000),
+      task_1: answer('task_1', '1', 2000),
+    }, 'answer-time');
+
+    expect(entries.map(([identifier]) => identifier)).toEqual(['task_2', 'task_1', 'task_0']);
+  });
+
+  test('keeps incomplete entries after chronological entries in sequence order', () => {
+    const entries = orderedReplayAnswerEntries({
+      task_3: answer('task_3', '3', 0, 0),
+      task_2: answer('task_2', '2', 1000),
+      task_1: answer('task_1', '1', 0, 0),
+      task_0: answer('task_0', '0', 2000),
+    }, 'answer-time');
+
+    expect(entries.map(([identifier]) => identifier)).toEqual(['task_2', 'task_0', 'task_1', 'task_3']);
+  });
 });

@@ -50,6 +50,7 @@ export function Timer({
 
   return (
     <svg
+      data-testid="replay-timer"
       onClick={clickOnSvg}
       style={{
         width, height, position: 'absolute', zIndex: 10000,

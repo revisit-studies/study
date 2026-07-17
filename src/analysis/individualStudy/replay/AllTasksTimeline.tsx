@@ -15,6 +15,7 @@ import { studyComponentToIndividualComponent } from '../../../utils/handleCompon
 import {
   compareReplayAnswerEntries,
   orderedReplayAnswerEntries,
+  ReplayTaskOrder,
 } from './taskOrdering';
 
 const LABEL_GAP = 25;
@@ -25,8 +26,8 @@ const margin = {
 };
 
 export function AllTasksTimeline({
-  participantData, width, studyId, studyConfig, maxLength,
-}: { participantData: ParticipantData, width: number, studyId: string, studyConfig: StudyConfig | undefined, maxLength: number | undefined }) {
+  participantData, width, studyId, studyConfig, maxLength, taskOrder = 'sequence',
+}: { participantData: ParticipantData, width: number, studyId: string, studyConfig: StudyConfig | undefined, maxLength: number | undefined, taskOrder?: ReplayTaskOrder }) {
   const [hoveredTaskIdentifier, setHoveredTaskIdentifier] = useState<string | null>(null);
 
   const percentComplete = useMemo(() => {
@@ -54,7 +55,7 @@ export function AllTasksTimeline({
   const maxHeight = useMemo(() => {
     const incompleteEntries = Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0).sort(compareReplayAnswerEntries);
     const incompleteEntryIndexes = new Map(incompleteEntries.map(([identifier], index) => [identifier, index]));
-    const sortedEntries = orderedReplayAnswerEntries(participantData.answers);
+    const sortedEntries = orderedReplayAnswerEntries(participantData.answers, taskOrder);
 
     let currentHeight = 0;
     let _maxHeight = 0;
@@ -82,7 +83,7 @@ export function AllTasksTimeline({
     });
 
     return (_maxHeight + 1) * LABEL_GAP + margin.top + margin.bottom;
-  }, [incompleteXScale, participantData.answers, xScale]);
+  }, [incompleteXScale, participantData.answers, taskOrder, xScale]);
 
   const conditionParam = useMemo(() => {
     const parsedConditions = parseConditionParam(participantData.conditions ?? participantData.searchParams?.condition);
@@ -95,7 +96,7 @@ export function AllTasksTimeline({
 
     const incompleteEntries = Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0).sort(compareReplayAnswerEntries);
     const incompleteEntryIndexes = new Map(incompleteEntries.map(([identifier], index) => [identifier, index]));
-    const combined = orderedReplayAnswerEntries(participantData.answers);
+    const combined = orderedReplayAnswerEntries(participantData.answers, taskOrder);
 
     const allElements = combined.map((entry, i) => {
       const scale = entry[1].startTime === 0 ? incompleteXScale : xScale;
@@ -162,7 +163,7 @@ export function AllTasksTimeline({
     });
 
     return allElements;
-  }, [participantData.answers, participantData.participantId, incompleteXScale, xScale, studyConfig, maxHeight, studyId, conditionParam, hoveredTaskIdentifier]);
+  }, [participantData.answers, participantData.participantId, incompleteXScale, xScale, studyConfig, maxHeight, studyId, conditionParam, hoveredTaskIdentifier, taskOrder]);
 
   // Find entries of someone browsing away. Show them
   const browsedAway = useMemo(() => {
