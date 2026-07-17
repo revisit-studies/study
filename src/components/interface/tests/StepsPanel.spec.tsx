@@ -81,13 +81,18 @@ vi.mock('@tabler/icons-react', () => ({
   IconArrowsShuffle: () => null,
   IconBinaryTree: () => null,
   IconBrain: () => null,
-  IconCheck: () => <span>icon-check</span>,
+  IconCheck: ({
+    'aria-label': ariaLabel,
+    color,
+  }: {
+    'aria-label'?: string;
+    color?: string;
+  }) => <span aria-label={ariaLabel} data-color={color}>icon-check</span>,
   IconChevronUp: () => null,
   IconDice3: () => null,
   IconDice5: () => null,
   IconInfoCircle: () => null,
   IconPackageImport: () => null,
-  IconSquareFilled: ({ 'aria-label': ariaLabel }: { 'aria-label'?: string }) => <span aria-label={ariaLabel}>icon-square-filled</span>,
   IconX: () => <span>icon-x</span>,
 }));
 
@@ -187,7 +192,7 @@ describe('StepsPanel answer status indicators', () => {
     endTime,
   });
 
-  test('shows an accessible unknown indicator for a submitted response without correct answers', async () => {
+  test('shows an accessible grey checkmark for a submitted response without correct answers', async () => {
     const participantAnswer = makeCompletedAnswer({ q1: 'A' });
     const { getAllByLabelText, container } = await act(async () => render(
       <StepsPanel
@@ -197,9 +202,10 @@ describe('StepsPanel answer status indicators', () => {
       />,
     ));
 
-    expect(getAllByLabelText(UNKNOWN_ANSWER_LABEL).length).toBeGreaterThan(0);
-    expect(container.textContent).toContain('icon-square-filled');
-    expect(container.textContent).not.toContain('icon-check');
+    const unknownIcons = getAllByLabelText(UNKNOWN_ANSWER_LABEL);
+    expect(unknownIcons.length).toBeGreaterThan(0);
+    expect(unknownIcons[0].getAttribute('data-color')).toBe('var(--mantine-color-gray-6)');
+    expect(container.textContent).toContain('icon-check');
     expect(container.textContent).not.toContain('icon-x');
   });
 
@@ -213,7 +219,7 @@ describe('StepsPanel answer status indicators', () => {
     ));
 
     expect(container.textContent).toContain('icon-check');
-    expect(container.textContent).not.toContain('icon-square-filled');
+    expect(container.querySelector(`[aria-label="${UNKNOWN_ANSWER_LABEL}"]`)).toBeNull();
 
     cleanup();
 
@@ -226,7 +232,7 @@ describe('StepsPanel answer status indicators', () => {
     ));
 
     expect(incorrect.container.textContent).toContain('icon-x');
-    expect(incorrect.container.textContent).not.toContain('icon-square-filled');
+    expect(incorrect.container.querySelector(`[aria-label="${UNKNOWN_ANSWER_LABEL}"]`)).toBeNull();
   });
 
   test('shows no answer-status indicator for incomplete or unanswered components', async () => {
@@ -238,7 +244,7 @@ describe('StepsPanel answer status indicators', () => {
       />,
     ));
 
-    expect(container.textContent).not.toContain('icon-square-filled');
+    expect(container.querySelector(`[aria-label="${UNKNOWN_ANSWER_LABEL}"]`)).toBeNull();
     expect(container.textContent).not.toContain('icon-check');
     expect(container.textContent).not.toContain('icon-x');
 
@@ -252,7 +258,7 @@ describe('StepsPanel answer status indicators', () => {
       />,
     ));
 
-    expect(unanswered.container.textContent).not.toContain('icon-square-filled');
+    expect(unanswered.container.querySelector(`[aria-label="${UNKNOWN_ANSWER_LABEL}"]`)).toBeNull();
     expect(unanswered.container.textContent).not.toContain('icon-check');
     expect(unanswered.container.textContent).not.toContain('icon-x');
   });

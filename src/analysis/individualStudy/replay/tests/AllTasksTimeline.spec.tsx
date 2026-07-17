@@ -29,10 +29,15 @@ vi.mock('@mantine/core', () => ({
 }));
 
 vi.mock('@tabler/icons-react', () => ({
-  IconCheck: () => <span>icon-check</span>,
+  IconCheck: ({
+    'aria-label': ariaLabel,
+    color,
+  }: {
+    'aria-label'?: string;
+    color?: string;
+  }) => <span aria-label={ariaLabel} data-color={color}>icon-check</span>,
   IconMicrophone: () => <span>icon-microphone</span>,
   IconProgress: () => <span>icon-progress</span>,
-  IconSquareFilled: ({ 'aria-label': ariaLabel }: { 'aria-label'?: string }) => <span aria-label={ariaLabel}>icon-square-filled</span>,
   IconX: () => <span>icon-x</span>,
 }));
 
@@ -141,11 +146,12 @@ describe('SingleTask', () => {
     expect(html).toContain('icon-x');
   });
 
-  test('shows an accessible blue square for an unknown response', () => {
+  test('shows an accessible grey checkmark for an unknown response', () => {
     const html = renderToStaticMarkup(
       <svg><SingleTask {...baseProps} answerStatus="unknown" /></svg>,
     );
-    expect(html).toContain('icon-square-filled');
+    expect(html).toContain('icon-check');
+    expect(html).toContain('var(--mantine-color-gray-6)');
     expect(html).toContain('Response recorded; correctness not configured.');
   });
 
@@ -167,7 +173,7 @@ describe('SingleTask', () => {
     const html = renderToStaticMarkup(<svg><SingleTask {...baseProps} /></svg>);
     expect(html).not.toContain('icon-check');
     expect(html).not.toContain('icon-x');
-    expect(html).not.toContain('icon-square-filled');
+    expect(html).not.toContain('Response recorded; correctness not configured.');
   });
 });
 
@@ -218,7 +224,8 @@ describe('AllTasksTimeline', () => {
     );
     expect(html).toContain('q1');
     expect(html).toContain('yes');
-    expect(html).toContain('icon-square-filled');
+    expect(html).toContain('icon-check');
+    expect(html).toContain('var(--mantine-color-gray-6)');
     expect(html).toContain('Response recorded; correctness not configured.');
   });
 
