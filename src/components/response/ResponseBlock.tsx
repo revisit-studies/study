@@ -63,6 +63,19 @@ function findMatchingStrings(arr1: string[], arr2: string[]): string[] {
   return matches;
 }
 
+function collectResponseValuesFromAnalysisState(
+  analysisProvState: Partial<Record<ResponseBlockLocation, FormElementProvenance>>,
+  status?: StoredAnswer,
+): StoredAnswer['answer'] {
+  return (['aboveStimulus', 'belowStimulus', 'sidebar'] as ResponseBlockLocation[]).reduce((acc, responseLocation) => {
+    const locationProv = analysisProvState[responseLocation];
+    return {
+      ...acc,
+      ...(locationProv?.form || {}),
+    };
+  }, { ...(status?.answer || {}) } as StoredAnswer['answer']);
+}
+
 export function ResponseBlock({
   config,
   location,
@@ -242,13 +255,10 @@ export function ResponseBlock({
   );
   const combinedLiveValues = useMemo(() => getAnswersFromAllLocations(trialValidation[identifier]), [identifier, trialValidation]);
   const combinedAnalysisValues = useMemo(
-    () => ['aboveStimulus', 'belowStimulus', 'sidebar'].reduce((acc, responseLocation) => {
-      const locationProv = analysisProvState[responseLocation as ResponseBlockLocation] as FormElementProvenance | undefined;
-      return {
-        ...acc,
-        ...(locationProv?.form || {}),
-      };
-    }, { ...(status?.answer || {}) } as StoredAnswer['answer']),
+    () => collectResponseValuesFromAnalysisState(
+      analysisProvState as Partial<Record<ResponseBlockLocation, FormElementProvenance>>,
+      status,
+    ),
     [analysisProvState, status],
   );
   const combinedValues = useMemo(

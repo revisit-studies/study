@@ -18,10 +18,12 @@ import {
   checkCheckboxResponseForValidation,
   generateCustomResponseErrorMessage,
   generateErrorMessage,
+  getResponseIssueType,
   REQUIRED_ERROR_MESSAGE,
   shouldBypassValidationForStandaloneDontKnow,
   usesStandaloneDontKnowField,
 } from '../responseErrors';
+import { validateResponse } from '../responseValidation';
 
 describe('generateInitFields', () => {
   const originalWindow = globalThis.window;
@@ -294,6 +296,252 @@ describe('generateValidation custom', () => {
     });
 
     expect(error).toBeNull();
+  });
+});
+
+describe('validateResponse', () => {
+  const requiredShortText: Response = {
+    id: 'q1', prompt: 'Question', type: 'shortText', required: true,
+  };
+
+  test('required empty scalar returns unanswered and blocks progression', () => {
+    expect(validateResponse(requiredShortText, '', { q1: '' })).toEqual({
+      valid: false,
+      issueType: 'unanswered',
+      blocksProgression: true,
+    });
+  });
+
+  test('optional empty scalar returns valid and non-blocking', () => {
+    const response: Response = {
+      ...requiredShortText,
+      required: false,
+    };
+
+    expect(validateResponse(response, '', { q1: '' })).toEqual({
+      valid: true,
+      issueType: 'none',
+      blocksProgression: false,
+    });
+  });
+
+  test('optional invalid numerical value is invalid but non-blocking', () => {
+    const response: NumericalResponse = {
+      id: 'q1', prompt: 'Question', type: 'numerical', required: false, min: 1,
+    };
+
+    expect(validateResponse(response, 0, { q1: 0 })).toMatchObject({
+      valid: false,
+      issueType: 'invalid',
+      message: 'Please enter a value of 1 or greater',
+      blocksProgression: false,
+    });
+  });
+
+  test('scalar requiredValue accepts only the configured value', () => {
+    const response: Response = {
+      ...requiredShortText,
+      requiredValue: 'expected',
+    };
+
+    expect(validateResponse(response, 'expected', { q1: 'expected' })).toMatchObject({
+      valid: true,
+      issueType: 'none',
+      blocksProgression: false,
+    });
+    expect(validateResponse(response, 'different', { q1: 'different' })).toMatchObject({
+      valid: false,
+      issueType: 'invalid',
+      reason: 'requiredValueMismatch',
+      blocksProgression: true,
+    });
+  });
+
+  test.each(['textOnly', 'divider', 'reactive'] as const)(
+    '%s responses do not participate in response validation',
+    (type) => {
+      const response = {
+        id: 'display-only',
+        prompt: 'Display only',
+        type,
+      } as Response;
+
+      expect(validateResponse(response, undefined, {})).toEqual({
+        valid: true,
+        issueType: 'none',
+        blocksProgression: false,
+      });
+    },
+  );
+
+  test('numerical min, max, and range are inclusive', () => {
+    const response: NumericalResponse = {
+      id: 'q1', prompt: 'Question', type: 'numerical', required: true, min: 1, max: 10,
+    };
+
+    expect(validateResponse(response, 1, { q1: 1 }).valid).toBe(true);
+    expect(validateResponse(response, 10, { q1: 10 }).valid).toBe(true);
+    expect(validateResponse(response, 0, { q1: 0 }).message).toBe('Please enter a value between 1 and 10');
+    expect(validateResponse(response, 11, { q1: 11 }).message).toBe('Please enter a value between 1 and 10');
+  });
+
+  test('checkbox and dropdown min/max produce current messages', () => {
+    const checkboxResponse: CheckboxResponse = {
+      id: 'checkbox', prompt: 'Question', type: 'checkbox', required: true, options: [], minSelections: 2, maxSelections: 3,
+    };
+    const dropdownResponse: DropdownResponse = {
+      id: 'dropdown', prompt: 'Question', type: 'dropdown', required: true, options: [], maxSelections: 1,
+    };
+
+    expect(validateResponse(checkboxResponse, ['A'], { checkbox: ['A'] }).message).toBe('Please select at least 2 options');
+    expect(validateResponse(checkboxResponse, ['A', 'B', 'C', 'D'], { checkbox: ['A', 'B', 'C', 'D'] }).message).toBe('Please select at most 3 options');
+    expect(validateResponse(dropdownResponse, ['A', 'B'], { dropdown: ['A', 'B'] }).message).toBe('Please select at most 1 options');
+  });
+
+  test('checkbox requiredValue exact set equality ignores order', () => {
+    const response: CheckboxResponse = {
+      id: 'q1', prompt: 'Question', type: 'checkbox', required: true, options: [], requiredValue: ['A', 'B'],
+    };
+
+    expect(validateResponse(response, ['B', 'A'], { q1: ['B', 'A'] }).valid).toBe(true);
+    expect(validateResponse(response, ['A'], { q1: ['A'] })).toMatchObject({
+      valid: false,
+      issueType: 'invalid',
+      reason: 'requiredValueMismatch',
+      blocksProgression: true,
+    });
+  });
+
+  test('matrix required states distinguish untouched, partial, and complete values', () => {
+    const response: MatrixResponse = {
+      id: 'matrix', prompt: 'Question', type: 'matrix-radio', required: true, answerOptions: ['0', '1'], questionOptions: ['q1', 'q2'],
+    };
+
+    expect(validateResponse(response, { q1: '', q2: '' }, { matrix: { q1: '', q2: '' } })).toMatchObject({
+      issueType: 'unanswered',
+      blocksProgression: true,
+    });
+    expect(validateResponse(response, { q1: '0', q2: '' }, { matrix: { q1: '0', q2: '' } })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please answer all questions in the matrix to continue.',
+    });
+    expect(validateResponse(response, { q1: '0', q2: '1' }, { matrix: { q1: '0', q2: '1' } }).valid).toBe(true);
+  });
+
+  test('standalone withDontKnow bypasses required, min/max, and requiredValue validation', () => {
+    const response: NumericalResponse = {
+      id: 'q1', prompt: 'Question', type: 'numerical', required: true, min: 10, requiredValue: 42, withDontKnow: true,
+    };
+
+    expect(validateResponse(response, '', { q1: '', 'q1-dontKnow': true })).toEqual({
+      valid: true,
+      issueType: 'none',
+      blocksProgression: false,
+    });
+  });
+
+  test('matrix withDontKnow does not use the standalone bypass', () => {
+    const response: MatrixResponse = {
+      id: 'matrix', prompt: 'Question', type: 'matrix-radio', required: true, withDontKnow: true, answerOptions: ['0', '1'], questionOptions: ['q1'],
+    };
+
+    expect(validateResponse(response, { q1: '' }, { matrix: { q1: '' }, 'matrix-dontKnow': true })).toMatchObject({
+      issueType: 'unanswered',
+      blocksProgression: true,
+    });
+  });
+
+  test('withOther selected without text is invalid', () => {
+    const response: Response = {
+      id: 'q1', prompt: 'Question', type: 'radio', required: true, options: [], withOther: true,
+    };
+
+    expect(validateResponse(response, 'other', { q1: 'other', 'q1-other': '' })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please fill in Other to continue.',
+    });
+  });
+
+  test('ranking required empty object is unanswered', () => {
+    const response: Response = {
+      id: 'ranking', prompt: 'Rank', type: 'ranking-categorical', required: true, options: [],
+    };
+
+    expect(validateResponse(response, {}, { ranking: {} })).toMatchObject({
+      issueType: 'unanswered',
+      blocksProgression: true,
+    });
+    expect(validateResponse(response, { A: '0' }, { ranking: { A: '0' } })).toEqual({
+      valid: true,
+      issueType: 'none',
+      blocksProgression: false,
+    });
+  });
+
+  test('Mantine and progression adapters agree for required response states', () => {
+    const response: Response = {
+      ...requiredShortText,
+      requiredValue: 'expected',
+    };
+    const validator = generateValidation([response])[response.id];
+    const cases = [
+      { value: '', expectedError: REQUIRED_ERROR_MESSAGE, expectedIssue: 'unanswered' },
+      { value: 'different', expectedError: 'Incorrect input', expectedIssue: 'invalid' },
+      { value: 'expected', expectedError: null, expectedIssue: null },
+    ] as const;
+
+    cases.forEach(({ value, expectedError, expectedIssue }) => {
+      const values = { [response.id]: value };
+      expect(validator(value, values)).toBe(expectedError);
+      expect(getResponseIssueType(response, values)).toBe(expectedIssue);
+    });
+  });
+
+  test('custom response empty required value is unanswered', () => {
+    const response: CustomResponse = {
+      id: 'custom', prompt: 'Question', type: 'custom', required: true, path: 'custom-response/Example.tsx',
+    };
+
+    expect(validateResponse(response, null, { custom: null })).toMatchObject({
+      issueType: 'unanswered',
+      blocksProgression: true,
+    });
+  });
+
+  test('custom response custom validator message is invalid', () => {
+    const response: CustomResponse = {
+      id: 'custom', prompt: 'Question', type: 'custom', required: true, path: 'custom-response/Example.tsx',
+    };
+    const customValidate: CustomResponseValidate = () => 'Custom validation failed.';
+
+    expect(validateResponse(response, { value: true }, { custom: { value: true } }, { customValidate })).toMatchObject({
+      valid: false,
+      issueType: 'invalid',
+      message: 'Custom validation failed.',
+      blocksProgression: true,
+    });
+  });
+
+  test('custom response load error is invalid for both required and optional responses', () => {
+    const requiredResponse: CustomResponse = {
+      id: 'custom-required', prompt: 'Question', type: 'custom', required: true, path: 'custom-response/Example.tsx',
+    };
+    const optionalResponse: CustomResponse = {
+      ...requiredResponse,
+      id: 'custom-optional',
+      required: false,
+    };
+
+    expect(validateResponse(requiredResponse, null, {}, { loadError: 'Unable to load custom response module at custom-response/Example.tsx' })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Unable to load custom response module at custom-response/Example.tsx',
+      blocksProgression: true,
+    });
+    expect(validateResponse(optionalResponse, null, {}, { loadError: 'Unable to load custom response module at custom-response/Example.tsx' })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Unable to load custom response module at custom-response/Example.tsx',
+      blocksProgression: false,
+    });
   });
 });
 
