@@ -91,7 +91,7 @@ export function useCurrentComponent(): string {
       const decryptedFuncIndex = funcIndex ? decryptIndex(funcIndex) : 0;
 
       // Check if answer exists for this index, if so get the component name and return early
-      const currentAnswer = Object.entries(_answers).find(([key, _]) => key.startsWith(`${funcName}_${currentStep}_`) && key.endsWith(`${decryptedFuncIndex}`));
+      const currentAnswer = Object.entries(_answers).find(([key, _]) => key.startsWith(`${funcName}_${currentStep}_`) && key.endsWith(`_${decryptedFuncIndex}`));
       const answerCompName = currentAnswer ? currentAnswer[1].componentName : null;
       if (answerCompName !== null) {
         setCompName(answerCompName);

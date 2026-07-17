@@ -70,6 +70,7 @@ export interface StudyMetadata {
  */
 export type ResponseBlockLocation = 'sidebar' | 'aboveStimulus' | 'belowStimulus' | 'stimulus';
 export type ConfigResponseBlockLocation = Exclude<ResponseBlockLocation, 'stimulus'>;
+export type NextButtonAlignment = 'left' | 'center' | 'right';
 
 /**
  * UserBrowser is used to define a minimum browser requirement for the study to run.
@@ -234,6 +235,7 @@ export type Styles = {
  *   "contactEmail": "contact@revisit.dev",
  *   "withProgressBar": true,
  *   "withSidebar": true,
+ *   "nextButtonAlignment": "center",
  *   "helpTextPath": "<study-name>/assets/help.md",
  *   "autoDownloadStudy": true,
  *   "autoDownloadTime": 5000,
@@ -275,6 +277,8 @@ export interface UIConfig {
   nextButtonText?: string;
   /** The location of the next button. */
   nextButtonLocation?: ConfigResponseBlockLocation;
+  /** The horizontal alignment of the navigation action group. Defaults to right. */
+  nextButtonAlignment?: NextButtonAlignment;
   /** The time in milliseconds to wait before the next button is enabled. */
   nextButtonEnableTime?: number;
   /** The time in milliseconds to wait before the next button is disabled. */
@@ -1048,6 +1052,8 @@ export interface BaseIndividualComponent {
   nextButtonText?: string;
   /** The location of the next button. If present, will override the  next button location setting in the uiConfig. */
   nextButtonLocation?: ConfigResponseBlockLocation;
+  /** The horizontal alignment of the navigation action group. If present, will override the alignment setting in the uiConfig. */
+  nextButtonAlignment?: NextButtonAlignment;
   /** The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig. */
   nextButtonEnableTime?: number;
   /** The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig. */

@@ -1,23 +1,19 @@
 import {
   Group, ColorSwatch, useCombobox, Combobox, Pill, PillsInput, Input,
-  Popover,
-  ActionIcon,
-  Box,
   CheckIcon,
   Text,
   Tooltip,
 } from '@mantine/core';
-import { IconEdit } from '@tabler/icons-react';
 import { useCallback, useMemo } from 'react';
 import { Tag } from '../types';
 import { Pills } from './Pills';
 import { TagEditor } from './TagEditor';
-import { AddTagDropdown } from './AddTagDropdown';
+import { EditTagPopover } from './EditTagPopover';
 
 export function TagSelector({
   tags, selectedTags, onSelectTags, disabled = false, tagsEmptyText, createTagCallback, editTagCallback, width,
 }: {
-  tags: Tag[], selectedTags: Tag[], onSelectTags: (t: Tag[]) => void, disabled?: boolean, tagsEmptyText: string, editTagCallback: (oldTag: Tag, newTag: Tag) => void, createTagCallback: (t: Tag) => void, width: number
+  tags: Tag[], selectedTags: Tag[], onSelectTags: (t: Tag[]) => void, disabled?: boolean, tagsEmptyText: string, editTagCallback: (oldTag: Tag, newTag: Tag) => void | Promise<void>, createTagCallback: (t: Tag) => void | Promise<void>, width: number
 }) {
   const combobox = useCombobox();
 
@@ -55,32 +51,7 @@ export function TagSelector({
             <Text style={{ width: width - 120 }} truncate="end">{tag.name}</Text>
           </Group>
         </Tooltip>
-        <Box onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-        }}
-        >
-          <Popover trapFocus withinPortal={false}>
-            <Popover.Target>
-              <ActionIcon
-                variant="light"
-                size="sm"
-              >
-                <IconEdit />
-              </ActionIcon>
-            </Popover.Target>
-            <Popover.Dropdown>
-              <AddTagDropdown
-                editTag
-                currentNames={tags.map((t) => t.id)}
-                addTagCallback={(newTag: Tag) => {
-                  editTagCallback(tag, newTag);
-                }}
-                editableTag={tag}
-              />
-            </Popover.Dropdown>
-          </Popover>
-        </Box>
+        <EditTagPopover tag={tag} currentNames={tags.map((t) => t.name)} editTagCallback={editTagCallback} />
       </Group>
     </Combobox.Option>
   )), [editTagCallback, selectedTags, tags, width]);
@@ -96,36 +67,7 @@ export function TagSelector({
             <Text style={{ width: width - 100 }} truncate="end">{tag.name}</Text>
           </Group>
         </Tooltip>
-        <Box onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-        }}
-        >
-          <Popover trapFocus withinPortal={false}>
-            <Popover.Target>
-              <ActionIcon
-                variant="light"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                }}
-              >
-                <IconEdit />
-              </ActionIcon>
-            </Popover.Target>
-            <Popover.Dropdown>
-              <AddTagDropdown
-                editTag
-                currentNames={tags.map((t) => t.id)}
-                addTagCallback={(newTag: Tag) => {
-                  editTagCallback(tag, newTag);
-                }}
-                editableTag={tag}
-              />
-            </Popover.Dropdown>
-          </Popover>
-        </Box>
+        <EditTagPopover tag={tag} currentNames={tags.map((t) => t.name)} editTagCallback={editTagCallback} />
       </Group>
     </Combobox.Option>
   )), [editTagCallback, selectedTags, tags, width]);
