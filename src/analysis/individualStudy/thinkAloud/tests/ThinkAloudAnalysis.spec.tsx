@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
-  render, act, cleanup, fireEvent,
+  render, act, cleanup, fireEvent, waitFor,
 } from '@testing-library/react';
 import {
   afterEach, beforeAll, beforeEach, describe, expect, test, vi,
@@ -62,9 +62,24 @@ const mockTranscriptLine = vi.fn(({
   </div>
 ));
 
-const mockTagSelector = vi.fn(({ onSelectTags, editTagCallback, tags }: { onSelectTags?: (t: Tag[]) => void; editTagCallback?: (oldTag: Tag, newTag: Tag) => void; tags?: Tag[] }) => (
+const mockTagSelector = vi.fn(({
+  onSelectTags, editTagCallback, createTagCallback, tags, tagsEmptyText,
+}: {
+  onSelectTags?: (t: Tag[]) => void;
+  editTagCallback?: (oldTag: Tag, newTag: Tag) => void;
+  createTagCallback?: (tag: Tag) => void | Promise<void>;
+  tags?: Tag[];
+  tagsEmptyText?: string;
+}) => (
   <div data-testid="tag-selector">
     <button type="button" onClick={() => onSelectTags?.([])}>select-tags</button>
+    <button
+      type="button"
+      data-testid={`create-${tagsEmptyText}`}
+      onClick={() => { createTagCallback?.({ id: 'new-tag', name: 'New Tag', color: '#fd7e14' }); }}
+    >
+      create-tag
+    </button>
     {tags && tags.length > 0 && (
       <button type="button" onClick={() => editTagCallback?.(tags[0], { ...tags[0], name: 'edited' })}>edit-tag</button>
     )}
@@ -652,6 +667,42 @@ describe('ThinkAloudFooter', () => {
       await act(async () => { fireEvent.click(taskTagsBtn); });
     }
     expect(mockFooterStorageEngine.saveAllParticipantAndTaskTags).toHaveBeenCalled();
+  });
+
+  test('create tag callbacks append definitions from the matching tag type', async () => {
+    const taskTag = makeTag({ id: 'task-tag', name: 'Task Tag' });
+    const participantTag = makeTag({ id: 'participant-tag', name: 'Participant Tag' });
+    vi.mocked(useAsync).mockImplementation((_fn, args) => ({
+      value: Array.isArray(args) && args[1] === 'task' ? [taskTag]
+        : Array.isArray(args) && args[1] === 'participant' ? [participantTag] : null,
+      status: 'success',
+      execute: vi.fn(),
+      error: null,
+    }));
+    mockFooterStorageEngine.saveTags.mockClear();
+    mockFooterStorageEngine.saveAllParticipantAndTaskTags.mockClear();
+
+    const { getByTestId } = await act(async () => render(
+      <RealThinkAloudFooter {...footerDefaultProps} storageEngine={makeStorageEngine(mockFooterStorageEngine)} />,
+    ));
+    fireEvent.click(getByTestId('create-Add Participant Tags'));
+    fireEvent.click(getByTestId('create-Add Task Tags'));
+
+    await waitFor(() => {
+      expect(mockFooterStorageEngine.saveTags).toHaveBeenCalledWith([
+        participantTag,
+        { id: 'new-tag', name: 'New Tag', color: '#fd7e14' },
+      ], 'participant');
+      expect(mockFooterStorageEngine.saveTags).toHaveBeenCalledWith([
+        taskTag,
+        { id: 'new-tag', name: 'New Tag', color: '#fd7e14' },
+      ], 'task');
+    });
+    expect(mockFooterStorageEngine.saveTags).not.toHaveBeenCalledWith(
+      expect.arrayContaining([taskTag]),
+      'participant',
+    );
+    expect(mockFooterStorageEngine.saveAllParticipantAndTaskTags).not.toHaveBeenCalled();
   });
 
   test('editTagCallback saves updated tags', async () => {
