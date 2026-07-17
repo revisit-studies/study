@@ -6,6 +6,8 @@ import {
   IconCheck, IconDeviceDesktop, IconMicrophone, IconProgress, IconX,
 } from '@tabler/icons-react';
 import { useNavigateToTrial } from '../../../utils/useNavigateToTrial';
+import type { ComponentAnswerStatus } from '../../../utils/correctAnswer';
+import { UnknownAnswerIcon } from '../../../components/interface/UnknownAnswerIcon';
 
 const LABEL_MARGIN = 3;
 const TIMELINE_HEIGHT = 25;
@@ -21,8 +23,7 @@ export function SingleTask({
   identifier,
   height,
   labelHeight = 0,
-  isCorrect,
-  hasCorrect,
+  answerStatus,
   hasAudio,
   hasScreenRecording,
   scaleStart,
@@ -41,8 +42,7 @@ export function SingleTask({
   height: number,
   xScale: d3.ScaleLinear<number, number>,
   labelHeight?: number,
-  isCorrect: boolean,
-  hasCorrect: boolean,
+  answerStatus: ComponentAnswerStatus | null,
   hasAudio: boolean,
   hasScreenRecording: boolean,
   scaleStart: number,
@@ -60,9 +60,29 @@ export function SingleTask({
   const [ref, { width: labelWidth }] = useResizeObserver();
 
   const navigateToTrial = useNavigateToTrial();
-  const iconCount = (incomplete || hasCorrect ? 1 : 0) + (hasAudio ? 1 : 0) + (hasScreenRecording ? 1 : 0);
+  const iconCount = (incomplete || answerStatus ? 1 : 0) + (hasAudio ? 1 : 0) + (hasScreenRecording ? 1 : 0);
   const iconsWidth = iconCount * (ICON_SIZE + ICON_GAP);
   const labelOpacity = isDimmed ? 0.35 : 1;
+
+  const answerStatusIcon = answerStatus === 'correct'
+    ? (
+      <IconCheck
+        color="var(--mantine-color-green-6)"
+        style={{ marginTop: 2, strokeWidth: 4 }}
+        size="14"
+      />
+    )
+    : answerStatus === 'incorrect'
+      ? (
+        <IconX
+          color="var(--mantine-color-red-6)"
+          style={{ marginTop: 2, strokeWidth: 4 }}
+          size={14}
+        />
+      )
+      : answerStatus === 'unknown'
+        ? <UnknownAnswerIcon size={14} style={{ marginTop: 2 }} />
+        : null;
 
   return (
     <g
@@ -120,24 +140,12 @@ export function SingleTask({
                 size="14"
               />
             )}
-            {(incomplete ? (
+            {incomplete ? (
               <IconProgress
                 color="orange"
                 size="14"
               />
-            ) : hasCorrect ? isCorrect ? (
-              <IconCheck
-                color="var(--mantine-color-green-6)"
-                style={{ marginTop: 2, strokeWidth: 4 }}
-                size="14"
-              />
-            ) : (
-              <IconX
-                color="var(--mantine-color-red-6)"
-                style={{ marginTop: 2, strokeWidth: 4 }}
-                size={14}
-              />
-            ) : '')}
+            ) : answerStatusIcon}
           </Group>
 
         </Center>

@@ -29,7 +29,13 @@ vi.mock('@mantine/core', () => ({
 }));
 
 vi.mock('@tabler/icons-react', () => ({
-  IconCheck: () => <span>icon-check</span>,
+  IconCheck: ({
+    'aria-label': ariaLabel,
+    color,
+  }: {
+    'aria-label'?: string;
+    color?: string;
+  }) => <span aria-label={ariaLabel} data-color={color}>icon-check</span>,
   IconMicrophone: () => <span>icon-microphone</span>,
   IconProgress: () => <span>icon-progress</span>,
   IconX: () => <span>icon-x</span>,
@@ -41,10 +47,6 @@ vi.mock('@mantine/hooks', () => ({
 
 vi.mock('../../../../utils/useNavigateToTrial', () => ({
   useNavigateToTrial: () => vi.fn(),
-}));
-
-vi.mock('../../../../utils/correctAnswer', () => ({
-  componentAnswersAreCorrect: vi.fn(() => true),
 }));
 
 vi.mock('../../../../utils/handleConditionLogic', () => ({
@@ -120,8 +122,7 @@ describe('SingleTask', () => {
     participantId: 'pid-1',
     studyId: 'test-study',
     incomplete: false,
-    isCorrect: false,
-    hasCorrect: false,
+    answerStatus: null,
     hasAudio: false,
     hasScreenRecording: false,
   };
@@ -131,18 +132,27 @@ describe('SingleTask', () => {
     expect(html).toContain('trial1_0');
   });
 
-  test('shows check icon when hasCorrect and isCorrect', () => {
+  test('shows check icon for a correct response', () => {
     const html = renderToStaticMarkup(
-      <svg><SingleTask {...baseProps} hasCorrect isCorrect /></svg>,
+      <svg><SingleTask {...baseProps} answerStatus="correct" /></svg>,
     );
     expect(html).toContain('icon-check');
   });
 
-  test('shows x icon when hasCorrect and not isCorrect', () => {
+  test('shows x icon for an incorrect response', () => {
     const html = renderToStaticMarkup(
-      <svg><SingleTask {...baseProps} hasCorrect isCorrect={false} /></svg>,
+      <svg><SingleTask {...baseProps} answerStatus="incorrect" /></svg>,
     );
     expect(html).toContain('icon-x');
+  });
+
+  test('shows an accessible grey checkmark for an unknown response', () => {
+    const html = renderToStaticMarkup(
+      <svg><SingleTask {...baseProps} answerStatus="unknown" /></svg>,
+    );
+    expect(html).toContain('icon-check');
+    expect(html).toContain('var(--mantine-color-gray-6)');
+    expect(html).toContain('Response recorded; correctness not configured.');
   });
 
   test('shows microphone icon when hasAudio', () => {
@@ -159,10 +169,11 @@ describe('SingleTask', () => {
     expect(html).toContain('icon-progress');
   });
 
-  test('no correctness icon when hasCorrect is false', () => {
+  test('shows no answer-status icon when status is null', () => {
     const html = renderToStaticMarkup(<svg><SingleTask {...baseProps} /></svg>);
     expect(html).not.toContain('icon-check');
     expect(html).not.toContain('icon-x');
+    expect(html).not.toContain('Response recorded; correctness not configured.');
   });
 });
 
@@ -195,7 +206,7 @@ describe('AllTasksTimeline', () => {
     expect(html).toContain('trial1_0');
   });
 
-  test('handles participant with answer values (tooltip shows answer)', () => {
+  test('shows an unknown indicator and tooltip value for an answer without configured correctness', () => {
     const participant = makeParticipant({
       answers: {
         trial1_0: makeAnswer({ startTime: t0, endTime: t0 + 5_000, answer: { q1: 'yes' } }),
@@ -213,6 +224,9 @@ describe('AllTasksTimeline', () => {
     );
     expect(html).toContain('q1');
     expect(html).toContain('yes');
+    expect(html).toContain('icon-check');
+    expect(html).toContain('var(--mantine-color-gray-6)');
+    expect(html).toContain('Response recorded; correctness not configured.');
   });
 
   test('handles participant with incomplete answer (startTime === 0)', () => {
