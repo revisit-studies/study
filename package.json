@@ -8,7 +8,7 @@
     "serve": "vite --host=0.0.0.0 --port=8080",
     "typecheck": "tsc --noEmit",
     "build": "tsc && vite build",
-    "lint": "eslint src",
+    "lint": "eslint src revisit-mcp-ts/src",
     "generate-schema:StudyConfig": "ts-json-schema-generator --path src/parser/types.ts --out src/parser/StudyConfigSchema.json --type StudyConfig --no-type-check",
     "generate-schema:GlobalConfig": "ts-json-schema-generator --path src/parser/types.ts --out src/parser/GlobalConfigSchema.json --type GlobalConfig --no-type-check",
     "generate-schema:LibraryConfig": "ts-json-schema-generator --path src/parser/types.ts --out src/parser/LibraryConfigSchema.json --type LibraryConfig --no-type-check",
@@ -20,10 +20,11 @@
     "unittest-coverage": "vitest run --coverage --coverage.reporter=text",
     "find-revisit-users": "bash scripts/find-revisit-users.sh",
     "preinstall": "node -e \"if(!/yarn\\.js$/.test(process.env.npm_execpath))throw new Error('Use yarn')\"",
-    "postinstall": "husky"
+    "postinstall": "husky && yarn --cwd revisit-mcp-ts install --frozen-lockfile"
   },
   "lint-staged": {
-    "src/**/*.{tsx,jsx,ts,js}": "yarn lint"
+    "src/**/*.{tsx,jsx,ts,js}": "yarn lint",
+    "revisit-mcp-ts/src/**/*.{ts,js}": "yarn lint"
   },
   "resolutions": {
     "vitest/vite": "7.3.2"

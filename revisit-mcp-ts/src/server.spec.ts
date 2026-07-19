@@ -54,21 +54,29 @@ describe('Revisit MCP server', () => {
     expect(text).toBe(`Revisit Framework Version: ${version}`);
   });
 
-  test('getcitation returns the BibTeX citation', async () => {
+  test('getcitation returns the BibTeX citations', async () => {
     const text = await callToolText('getcitation');
+    expect(text).toContain('@ARTICLE{revisit2');
+    expect(text).toContain('doi={10.1109/TVCG.2025.3633896}');
     expect(text).toContain('@INPROCEEDINGS{revisit');
     expect(text).toContain('doi={10.1109/VIS54172.2023.00015}');
   });
 
-  test('getconfigschema returns an existing schema path', async () => {
+  test('getconfigschema returns the study config schema contents', async () => {
+    const expected = await fs.readFile(
+      path.join(STUDY_ROOT, 'src', 'parser', 'StudyConfigSchema.json'),
+      'utf-8',
+    );
     const text = await callToolText('getconfigschema');
-    expect(text).toBe(path.join(STUDY_ROOT, 'src', 'parser', 'StudyConfigSchema.json'));
-    await expect(fs.access(text)).resolves.toBeUndefined();
+    expect(text).toBe(expected);
   });
 
-  test('gettypes returns an existing types path', async () => {
+  test('gettypes returns the config types contents', async () => {
+    const expected = await fs.readFile(
+      path.join(STUDY_ROOT, 'src', 'parser', 'types.ts'),
+      'utf-8',
+    );
     const text = await callToolText('gettypes');
-    expect(text).toBe(path.join(STUDY_ROOT, 'src', 'parser', 'types.ts'));
-    await expect(fs.access(text)).resolves.toBeUndefined();
+    expect(text).toBe(expected);
   });
 });

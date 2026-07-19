@@ -17,7 +17,7 @@ const compat = new FlatCompat({
 });
 
 export default [{
-  ignores: ['public/**', 'src/public/**', 'revisit-mcp-ts/**'],
+  ignores: ['public/**', 'src/public/**'],
 }, ...fixupConfigRules(compat.extends(
   'airbnb-base',
   'airbnb/rules/react',
@@ -117,5 +117,18 @@ export default [{
       contextType: 'static public field',
       displayName: 'static public field',
     }],
+  },
+}, {
+  // Node MCP package: deps live in revisit-mcp-ts/node_modules; allow SDK .js specifiers.
+  files: ['revisit-mcp-ts/**/*.{ts,js}'],
+  rules: {
+    'import/no-unresolved': 'off',
+    'import/extensions': ['error', 'ignorePackages', {
+      ts: 'never',
+      js: 'always',
+    }],
+    'react/react-in-jsx-scope': 'off',
+    'react/prop-types': 'off',
+    'react/display-name': 'off',
   },
 }];
