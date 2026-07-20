@@ -10,9 +10,12 @@
     "test": "yarn --cwd .. unittest run revisit-mcp-ts/src"
   },
   "keywords": [],
-  "author": "",
+  "author": "The reVISit Team",
   "license": "BSD-3-Clause",
   "description": "MCP server for building reVISit studies",
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.2",
     "zod": "^3.25.76"
