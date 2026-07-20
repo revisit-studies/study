@@ -56,206 +56,92 @@
     "crossBlock": {
       "action": "cross",
       "order": "fixed",
-      "factorsToCross": [
-        {
-          "factor": "data"
-        },
-        {
-          "factor": "visType"
-        }
-      ],
+      "values": [{"factor": "data"}, {"factor": "visType"}],
       "component": "factorComponent"
     },
     "nestBlock": {
       "action": "nest",
-      "factorsToCross": [
-        {
-          "factor": "data"
-        },
-        {
-          "factor": "visType"
-        }
-      ],
+      "values": [{"factor": "data"}, {"factor": "visType"}],
       "component": "factorComponent"
     },
     "zipBlock": {
       "action": "zip",
       "order": "latinSquare",
-      "factorsToCross": [
-        {
-          "factor": "data"
-        },
-        {
-          "factor": "visType"
-        }
-      ],
+      "values": [{"factor": "data"}, {"factor": "visType"}],
       "component": "factorComponent"
     },
     "zipThenTaskBlock": {
       "action": "nest",
       "order": "random",
-      "factorsToCross": [
-        {
-          "factor": "zipBlock"
-        },
-        {
-          "factor": "task"
-        }
-      ],
+      "values": [{"factor": "zipBlock"}, {"factor": "task"}],
       "component": "factorComponent"
     },
     "crossZipWithTaskBlock": {
       "action": "cross",
       "order": "fixed",
-      "factorsToCross": [
-        {
-          "factor": "zipBlock"
-        },
-        {
-          "factor": "task"
-        }
-      ],
+      "values": [{"factor": "zipBlock"}, {"factor": "task"}],
       "component": "factorComponent"
     },
     "zipZipWithTaskBlock": {
       "action": "zip",
       "order": "fixed",
-      "factorsToCross": [
-        {
-          "factor": "zipBlock"
-        },
-        {
-          "factor": "task"
-        }
-      ],
+      "values": [{"factor": "zipBlock"}, {"factor": "task"}],
       "component": "factorComponent"
     },
     "nestCrossWithTaskBlock": {
       "action": "nest",
       "order": "latinSquare",
-      "factorsToCross": [
-        {
-          "factor": "crossBlock"
-        },
-        {
-          "factor": "task"
-        }
-      ],
+      "values": [{"factor": "crossBlock"}, {"factor": "task"}],
       "component": "factorComponent"
     },
     "sampledPrimitiveBlock": {
       "action": "nest",
       "order": "fixed",
-      "factorsToCross": [
-        {
-          "factor": "data"
-        },
-        {
-          "factor": "visType",
-          "numSamples": 2
-        },
-        {
-          "factor": "task",
-          "numSamples": 2
-        }
-      ],
+      "values": [{"factor": "data"}, {"factor": "visType", "numSamples": 2}, {"factor": "task", "numSamples": 2}],
       "component": "factorComponent"
     },
     "sampledDerivedBlock": {
       "action": "nest",
       "order": "fixed",
-      "factorsToCross": [
-        {
-          "factor": "zipBlock",
-          "numSamples": 1
-        },
-        {
-          "factor": "task",
-          "numSamples": 2
-        }
-      ],
+      "values": [{"factor": "zipBlock", "numSamples": 1}, {"factor": "task", "numSamples": 2}],
       "component": "factorComponent"
     },
     "factorKeywordBlock": {
       "action": "nest",
       "order": "fixed",
-      "factorsToCross": [
-        {
-          "factor": "data",
-          "numSamples": 1
-        },
-        {
-          "factor": "visType",
-          "numSamples": 1
-        },
-        {
-          "factor": "task",
-          "numSamples": 1
-        }
-      ],
+      "values": [{"factor": "data", "numSamples": 1}, {"factor": "visType", "numSamples": 1}, {"factor": "task", "numSamples": 1}],
       "component": "factorKeywordComponent"
     },
     "concatBlock": {
       "action": "concat",
       "order": "fixed",
-      "factorsToCross": [
-        {
-          "factor": "data"
-        },
-        {
-          "factor": "task",
-          "numSamples": 2
-        }
-      ],
+      "values": [{"factor": "data"}, {"factor": "task", "numSamples": 2}],
       "component": "factorComponent"
     },
     "repeatBlock": {
       "action": "repeat",
       "order": "fixed",
       "numRepeats": 2,
-      "factorsToCross": [
-        {
-          "factor": "visType"
-        }
-      ],
+      "values": [{"factor": "visType"}],
       "component": "factorComponent"
     },
     "Ok_googleLearningStrategySlots": {
       "action": "repeat",
       "order": "fixed",
       "numRepeats": 2,
-      "factorsToCross": [
-        {
-          "factor": "learningStrategies"
-        }
-      ],
+      "values": [{"factor": "learningStrategies"}],
       "component": "factorComponent"
     },
     "Ok_googleTopicAssignments": {
       "action": "zip",
       "order": "random",
-      "factorsToCross": [
-        {
-          "factor": "Ok_googleLearningStrategySlots"
-        },
-        {
-          "factor": "topics",
-          "numSamples": 6
-        }
-      ],
+      "values": [{"factor": "Ok_googleLearningStrategySlots"}, {"factor": "topics", "numSamples": 6}],
       "component": "factorComponent"
     },
     "Ok_google": {
       "action": "nest",
       "order": "fixed",
-      "factorsToCross": [
-        {
-          "factor": "ageGroup"
-        },
-        {
-          "factor": "Ok_googleTopicAssignments"
-        }
-      ],
+      "values": [{"factor": "ageGroup"}, {"factor": "Ok_googleTopicAssignments"}],
       "component": "factorComponent"
     }
   },

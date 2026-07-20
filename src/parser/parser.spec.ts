@@ -1536,7 +1536,7 @@ describe('Parser Warnings', () => {
         type: 'factor',
         action: 'nest',
         id: 'nestedFactors',
-        factorsToCross: [
+        values: [
           { factor: 'm' },
           { factor: 'n' },
         ],
@@ -1604,7 +1604,7 @@ describe('Parser Warnings', () => {
         type: 'factor',
         action: 'nest',
         id: 'nestedFactors',
-        factorsToCross: [
+        values: [
           { factor: 'm' },
           { factor: 'n' },
         ],
@@ -1662,7 +1662,7 @@ describe('Parser Warnings', () => {
         type: 'factor',
         action: 'cross',
         id: 'crossedFactors',
-        factorsToCross: [
+        values: [
           { factor: 'm' },
           { factor: 'n' },
         ],
@@ -1724,7 +1724,7 @@ describe('Parser Warnings', () => {
         type: 'factor',
         action: 'zip',
         id: 'zippedFactors',
-        factorsToCross: [
+        values: [
           { factor: 'm' },
           { factor: 'n' },
         ],
@@ -1781,7 +1781,7 @@ describe('Parser Warnings', () => {
         zippedFactors: {
           action: 'zip',
           order: 'random',
-          factorsToCross: [
+          values: [
             { factor: 'm' },
             { factor: 'n' },
           ],
@@ -1855,7 +1855,7 @@ describe('Parser Warnings', () => {
         zipDataVis: {
           action: 'zip',
           order: 'random',
-          factorsToCross: [
+          values: [
             { factor: 'data' },
             { factor: 'visType' },
           ],
@@ -1864,7 +1864,7 @@ describe('Parser Warnings', () => {
         zipThenTask: {
           action: 'nest',
           order: 'latinSquare',
-          factorsToCross: [
+          values: [
             { factor: 'zipDataVis' },
             { factor: 'task' },
           ],
@@ -1936,12 +1936,12 @@ describe('Parser Warnings', () => {
       factors: {
         a: {
           action: 'nest',
-          factorsToCross: [{ factor: 'b' }],
+          values: [{ factor: 'b' }],
           component: 'factorComponent',
         },
         b: {
           action: 'nest',
-          factorsToCross: [{ factor: 'a' }],
+          values: [{ factor: 'a' }],
           component: 'factorComponent',
         },
       },
@@ -2038,7 +2038,7 @@ describe('Parser Warnings', () => {
         type: 'factor',
         action: 'cross',
         id: 'crossedFactors',
-        factorsToCross: [
+        values: [
           { factor: 'm' },
           { factor: 'n' },
         ],

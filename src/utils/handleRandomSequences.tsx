@@ -74,7 +74,7 @@ function factorDefinitionToSequence(id: string, definition: FactorDefinition): F
     action: definition.action,
     order: definition.order,
     numRepeats: definition.numRepeats,
-    factorsToCross: definition.factorsToCross,
+    values: definition.values,
     component: definition.component,
     ...(definition.parameters !== undefined ? { parameters: definition.parameters } : {}),
   };
@@ -394,7 +394,7 @@ export function getFactorCombinations(
 
   const depthToFactorMap: Record<number, string> = {};
   const nextStack = [...stack, block.id];
-  const factorValues = block.factorsToCross.map((factorReference, depth): FactorValue[] => {
+  const factorValues = block.values.map((factorReference, depth): FactorValue[] => {
     const factor = factors[factorReference.factor];
 
     if (!factor) {
@@ -419,7 +419,7 @@ export function getFactorCombinations(
   const action = options.expandPossibleSamples
     && block.action === 'zip'
     && block.order === 'random'
-    && block.factorsToCross.some((factorReference) => factorReference.numSamples !== undefined)
+    && block.values.some((factorReference) => factorReference.numSamples !== undefined)
     ? 'nest'
     : block.action;
 

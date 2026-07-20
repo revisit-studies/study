@@ -1019,7 +1019,7 @@
         "component": {
           "type": "string"
         },
-        "factorsToCross": {
+        "values": {
           "items": {
             "$ref": "#/definitions/FactorReference"
           },
@@ -1038,7 +1038,7 @@
         }
       },
       "required": [
-        "factorsToCross",
+        "values",
         "action",
         "component"
       ],
@@ -1068,7 +1068,7 @@
         "component": {
           "type": "string"
         },
-        "factorsToCross": {
+        "values": {
           "items": {
             "$ref": "#/definitions/FactorReference"
           },
@@ -1096,7 +1096,7 @@
       "required": [
         "action",
         "component",
-        "factorsToCross",
+        "values",
         "id",
         "type"
       ],
