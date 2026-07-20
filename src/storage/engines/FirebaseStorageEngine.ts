@@ -263,10 +263,13 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     const participantSequenceAssignmentDoc = doc(sequenceAssignmentCollection, participantId);
     const allocatorDoc = doc(this.studyCollection, 'sequenceAssignmentAllocator');
 
-    const [existingAssignment, existingAllocatorSnapshot] = await Promise.all([
-      this._getSequenceAssignment(participantId),
+    const [existingAssignmentSnapshot, existingAllocatorSnapshot] = await Promise.all([
+      getDoc(participantSequenceAssignmentDoc),
       getDoc(allocatorDoc),
     ]);
+    const existingAssignment = existingAssignmentSnapshot.exists()
+      ? existingAssignmentSnapshot.data() as SequenceAssignment
+      : null;
     if (existingAssignment) {
       if (
         existingAssignment.sequenceIndex !== undefined
@@ -278,12 +281,20 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
         };
       }
 
-      const assignments = await this.getAllSequenceAssignments(this.studyId);
+      const [sequenceCount, creationCount] = await Promise.all([
+        getCountFromServer(query(
+          sequenceAssignmentCollection,
+          where('rejected', '==', false),
+          where('timestamp', '<', existingAssignment.timestamp),
+        )),
+        getCountFromServer(query(
+          sequenceAssignmentCollection,
+          where('createdTime', '<', existingAssignment.createdTime),
+        )),
+      ]);
       return {
-        sequenceIndex: assignments.filter((assignment) => !assignment.rejected)
-          .findIndex((assignment) => assignment.participantId === participantId),
-        creationIndex: assignments.sort((a, b) => a.createdTime - b.createdTime)
-          .findIndex((assignment) => assignment.participantId === participantId),
+        sequenceIndex: sequenceCount.data().count,
+        creationIndex: creationCount.data().count,
       };
     }
 
@@ -315,14 +326,12 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     const reusableData = reusableDocument?.data() as SequenceAssignment | undefined;
     let legacyReusableIndex: number | undefined;
     if (reusableData && reusableData.sequenceIndex === undefined) {
-      const assignments = await this.getAllSequenceAssignments(this.studyId);
-      const storedTimestamp = (reusableData as { timestamp: unknown }).timestamp;
-      const reusableTimestamp = storedTimestamp instanceof Timestamp
-        ? storedTimestamp.toMillis()
-        : Number(storedTimestamp);
-      legacyReusableIndex = assignments.filter((assignment) => (
-        !assignment.rejected && assignment.timestamp < reusableTimestamp
-      )).length;
+      const sequenceCount = await getCountFromServer(query(
+        sequenceAssignmentCollection,
+        where('rejected', '==', false),
+        where('timestamp', '<', reusableData.timestamp),
+      ));
+      legacyReusableIndex = sequenceCount.data().count;
     }
 
     return runTransaction(this.firestore, async (transaction) => {

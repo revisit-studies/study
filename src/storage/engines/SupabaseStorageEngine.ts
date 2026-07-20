@@ -242,6 +242,51 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     return allocator.data as typeof seed;
   }
 
+  private async getLegacySequenceIndex(timestamp: number) {
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+    const studyId = `${this.collectionPrefix}${this.studyId}`;
+    const [serverTimestampResult, storedTimestampResult] = await Promise.all([
+      this.supabase
+        .from('revisit')
+        .select('docId', { count: 'exact', head: true })
+        .eq('studyId', studyId)
+        .like('docId', 'sequenceAssignment_%')
+        .eq('data->rejected', false)
+        .eq('data->withServerTimestamp', true)
+        .lt('createdAt', new Date(timestamp).toISOString()),
+      this.supabase
+        .from('revisit')
+        .select('docId', { count: 'exact', head: true })
+        .eq('studyId', studyId)
+        .like('docId', 'sequenceAssignment_%')
+        .eq('data->rejected', false)
+        .eq('data->withServerTimestamp', false)
+        .lt('data->timestamp', timestamp),
+    ]);
+    if (serverTimestampResult.error || storedTimestampResult.error) {
+      throw new Error('Failed to derive legacy sequence assignment index');
+    }
+    return (serverTimestampResult.count ?? 0) + (storedTimestampResult.count ?? 0);
+  }
+
+  private async getLegacyCreationIndex(createdTime: number) {
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+    const { count, error } = await this.supabase
+      .from('revisit')
+      .select('docId', { count: 'exact', head: true })
+      .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
+      .like('docId', 'sequenceAssignment_%')
+      .lt('createdAt', new Date(createdTime).toISOString());
+    if (error) {
+      throw new Error('Failed to derive legacy participant creation index');
+    }
+    return count ?? 0;
+  }
+
   protected async _allocateSequenceAssignment(
     participantId: string,
     sequenceAssignment: SequenceAssignment,
@@ -263,12 +308,13 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
         };
       }
 
-      const assignments = await this.getAllSequenceAssignments(this.studyId);
+      const [sequenceIndex, creationIndex] = await Promise.all([
+        this.getLegacySequenceIndex(existingAssignment.timestamp),
+        this.getLegacyCreationIndex(existingAssignment.createdTime),
+      ]);
       return {
-        sequenceIndex: assignments.filter((assignment) => !assignment.rejected)
-          .findIndex((assignment) => assignment.participantId === participantId),
-        creationIndex: assignments.sort((a, b) => a.createdTime - b.createdTime)
-          .findIndex((assignment) => assignment.participantId === participantId),
+        sequenceIndex,
+        creationIndex,
       };
     }
 
@@ -290,11 +336,12 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     let reusableAssignment = reusableRow?.data as SequenceAssignment | undefined;
     let reusableSequenceIndex = reusableAssignment?.sequenceIndex;
     if (reusableAssignment && reusableSequenceIndex === undefined) {
-      const assignments = await this.getAllSequenceAssignments(this.studyId);
-      const reusableTimestamp = reusableAssignment.timestamp;
-      reusableSequenceIndex = assignments.filter((assignment) => (
-        !assignment.rejected && assignment.timestamp < reusableTimestamp
-      )).length;
+      const reusableTimestamp = (reusableAssignment as SequenceAssignment & {
+        withServerTimestamp?: boolean;
+      }).withServerTimestamp
+        ? new Date(reusableRow!.createdAt).getTime()
+        : reusableAssignment.timestamp;
+      reusableSequenceIndex = await this.getLegacySequenceIndex(reusableTimestamp);
     }
 
     if (reusableRow && reusableAssignment && reusableSequenceIndex !== undefined) {

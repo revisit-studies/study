@@ -18,6 +18,12 @@ type RowData = Record<string, string | number | boolean | null | object>;
 const revisitRows: RowData[] = [];
 const storageFiles: Record<string, string> = {};
 const localStore: Record<string, string | number | object | null> = {};
+const supabaseOperations: Array<{
+  op: string | null;
+  filters: Array<{ col: string; type: string; val: string | number | boolean | null }>;
+  headOnly: boolean;
+  limit?: number;
+}> = [];
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 vi.mock('@supabase/supabase-js', () => {
@@ -44,12 +50,13 @@ vi.mock('@supabase/supabase-js', () => {
 
   function applyFilters(
     rows: Array<RowData>,
-    filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'like' | 'not' }>,
+    filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'like' | 'not' | 'lt' }>,
   ): Array<RowData> {
     return rows.filter((row) => filters.every(({ col, val, type }) => {
       const colVal = getFieldValue(row, col);
       if (type === 'eq') return colVal === val;
       if (type === 'not') return colVal !== null && colVal !== undefined;
+      if (type === 'lt') return colVal !== undefined && colVal !== null && colVal < val!;
       return typeof colVal === 'string' && matchLike(colVal, String(val));
     }));
   }
@@ -57,7 +64,7 @@ vi.mock('@supabase/supabase-js', () => {
   function makeQueryBuilder(getRows: () => Array<RowData>) {
     let op: 'select' | 'insert' | 'upsert' | 'update' | 'delete' | null = null;
     let payload: RowData | RowData[] | Partial<RowData> | null = null;
-    const filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'like' | 'not' }> = [];
+    const filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'like' | 'not' | 'lt' }> = [];
     let isSingle = false;
     let allowMissingSingle = false;
     let requestedCount = false;
@@ -77,6 +84,7 @@ vi.mock('@supabase/supabase-js', () => {
       update(obj: Partial<RowData>) { op = 'update'; payload = obj; return qb; },
       delete() { op = 'delete'; return qb; },
       eq(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'eq' }); return qb; },
+      lt(col: string, val: string | number) { filters.push({ col, val, type: 'lt' }); return qb; },
       like(col: string, val: string) { filters.push({ col, val, type: 'like' }); return qb; },
       not(col: string, _operator: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'not' }); return qb; },
       order(col: string, options?: { ascending?: boolean }) {
@@ -91,6 +99,12 @@ vi.mock('@supabase/supabase-js', () => {
         reject?: (err: Error) => void,
       ) {
         Promise.resolve().then(() => {
+          supabaseOperations.push({
+            op,
+            filters: filters.map((filter) => ({ ...filter })),
+            headOnly,
+            limit: resultLimit,
+          });
           const rows = getRows();
           if (op === 'select') {
             let matched = applyFilters(rows, filters);
@@ -357,6 +371,7 @@ describe.each([
     await storageEngine.setSequenceArray(
       sequenceArray,
     );
+    supabaseOperations.length = 0;
   });
 
   afterEach(async () => {
@@ -428,9 +443,131 @@ describe.each([
 
     const participant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
     expect(scanSpy).not.toHaveBeenCalled();
+    const assignmentQueries = supabaseOperations.filter((operation) => operation.filters.some(
+      (filter) => filter.col === 'docId' && filter.type === 'like' && filter.val === 'sequenceAssignment_%',
+    ));
+    expect(assignmentQueries.filter((operation) => operation.headOnly)).toHaveLength(2);
+    expect(assignmentQueries.filter((operation) => !operation.headOnly)).toEqual([
+      expect.objectContaining({ limit: 1 }),
+    ]);
 
+    supabaseOperations.length = 0;
     await storageEngine.getParticipantCompletionStatus(participant.participantId);
     expect(scanSpy).not.toHaveBeenCalled();
+    expect(supabaseOperations.filter((operation) => operation.filters.some(
+      (filter) => filter.col === 'docId' && filter.type === 'like' && filter.val === 'sequenceAssignment_%',
+    ))).toHaveLength(0);
+  });
+
+  test('fresh participant startup with an initialized allocator skips legacy counts', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'allocator-seed');
+    await storageEngine.clearCurrentParticipantId();
+    supabaseOperations.length = 0;
+
+    const scanSpy = vi.spyOn(storageEngine, 'getAllSequenceAssignments');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'post-seed');
+
+    const assignmentQueries = supabaseOperations.filter((operation) => operation.filters.some(
+      (filter) => filter.col === 'docId' && filter.type === 'like' && filter.val === 'sequenceAssignment_%',
+    ));
+    expect(scanSpy).not.toHaveBeenCalled();
+    expect(assignmentQueries.filter((operation) => operation.headOnly)).toHaveLength(0);
+    expect(assignmentQueries.filter((operation) => !operation.headOnly)).toEqual([
+      expect.objectContaining({ limit: 1 }),
+    ]);
+  });
+
+  test('returning legacy assignment derives its indexes without an assignment scan', async () => {
+    const createAssignment = (
+      storageEngine as unknown as {
+        _createSequenceAssignment: (
+          participantId: string,
+          assignment: SequenceAssignment,
+          withServerTimestamp: boolean,
+        ) => Promise<void>;
+      }
+    )._createSequenceAssignment.bind(storageEngine);
+    await createAssignment('legacy-returning', {
+      participantId: 'legacy-returning',
+      timestamp: 1,
+      rejected: false,
+      claimed: false,
+      completed: null,
+      createdTime: 1,
+      total: 0,
+      answered: [],
+      isDynamic: false,
+      stage: 'DEFAULT',
+    }, false);
+    supabaseOperations.length = 0;
+
+    const scanSpy = vi.spyOn(storageEngine, 'getAllSequenceAssignments');
+    const participant = await storageEngine.initializeParticipantSession(
+      {},
+      configSimple,
+      participantMetadata,
+      'legacy-returning',
+    );
+
+    const unboundedReads = supabaseOperations.filter((operation) => (
+      !operation.headOnly
+      && operation.limit === undefined
+      && operation.filters.some(
+        (filter) => filter.col === 'docId' && filter.type === 'like' && filter.val === 'sequenceAssignment_%',
+      )
+    ));
+    expect(participant.participantIndex).toBe(1);
+    expect(scanSpy).not.toHaveBeenCalled();
+    expect(unboundedReads).toHaveLength(0);
+    expect(supabaseOperations.filter((operation) => operation.headOnly)).toHaveLength(3);
+  });
+
+  test('legacy rejected-slot reuse uses bounded counts instead of an assignment scan', async () => {
+    const createAssignment = (
+      storageEngine as unknown as {
+        _createSequenceAssignment: (
+          participantId: string,
+          assignment: SequenceAssignment,
+          withServerTimestamp: boolean,
+        ) => Promise<void>;
+      }
+    )._createSequenceAssignment.bind(storageEngine);
+    for (let index = 0; index < 5; index += 1) {
+      // Sequential writes intentionally build a deterministic legacy assignment history.
+      // eslint-disable-next-line no-await-in-loop
+      await createAssignment(`legacy-${index}`, {
+        participantId: `legacy-${index}`,
+        timestamp: index,
+        rejected: index === 1,
+        claimed: false,
+        completed: null,
+        createdTime: index,
+        total: 0,
+        answered: [],
+        isDynamic: false,
+        stage: 'DEFAULT',
+      }, false);
+    }
+    supabaseOperations.length = 0;
+
+    const scanSpy = vi.spyOn(storageEngine, 'getAllSequenceAssignments');
+    const participant = await storageEngine.initializeParticipantSession(
+      {},
+      configSimple,
+      participantMetadata,
+      'legacy-replacement',
+    );
+
+    const unboundedReads = supabaseOperations.filter((operation) => (
+      !operation.headOnly
+      && operation.limit === undefined
+      && operation.filters.some(
+        (filter) => filter.col === 'docId' && filter.type === 'like' && filter.val === 'sequenceAssignment_%',
+      )
+    ));
+    expect(participant.sequence).toEqual(sequenceArray[1]);
+    expect(scanSpy).not.toHaveBeenCalled();
+    expect(unboundedReads).toHaveLength(0);
   });
 
   test('initializeParticipantSession sets conditions from searchParams condition', async () => {
