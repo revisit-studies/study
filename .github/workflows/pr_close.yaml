@@ -6,6 +6,7 @@ on:
 concurrency:
   group: pages-deployment
   cancel-in-progress: false
+  queue: max
 
 # Keep the existing publisher until a maintainer approves the initial force-push cutover.
 jobs:
