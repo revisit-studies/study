@@ -3,6 +3,11 @@ on:
   pull_request:
     types: [closed]
 
+concurrency:
+  group: pages-deployment
+  cancel-in-progress: false
+
+# Keep the existing publisher until a maintainer approves the initial force-push cutover.
 jobs:
   delete_preview:
     runs-on: ubuntu-latest
@@ -10,10 +15,30 @@ jobs:
       contents: write
       pull-requests: write
     steps:
+      - uses: actions/checkout@v3
+        if: ${{ vars.PAGES_SINGLE_COMMIT == 'true' }}
+
+      - uses: actions/checkout@v3
+        if: ${{ vars.PAGES_SINGLE_COMMIT == 'true' }}
+        with:
+          ref: gh-pages
+          path: .pages
+          fetch-depth: 1
+
+      - name: make empty snapshot directory
+        if: ${{ vars.PAGES_SINGLE_COMMIT == 'true' }}
+        run: mkdir empty-pages
+
+      - name: delete preview from current-only snapshot
+        if: ${{ vars.PAGES_SINGLE_COMMIT == 'true' }}
+        run: .github/scripts/publish-pages-snapshot.sh ./empty-pages "PR${{ github.event.number }}" ./.pages
+
       - name: make empty dir
+        if: ${{ vars.PAGES_SINGLE_COMMIT != 'true' }}
         run: mkdir public
 
       - name: delete folder
+        if: ${{ vars.PAGES_SINGLE_COMMIT != 'true' }}
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
