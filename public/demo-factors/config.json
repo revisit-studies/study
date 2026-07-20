@@ -32,15 +32,6 @@
         "literalEmail": "contact@revisit.dev"
       },
       "response": []
-    },
-    "nestedFactorKeywordComponent": {
-      "type": "react-component",
-      "path": "demo-factors/assets/Factors.tsx",
-      "parameters": {
-        "nestedAtSyntaxLabel": "@zipBlock includes @data and @visType for @task",
-        "nestedBracedSyntaxLabel": "${zipBlock}/${data}/${visType}/${task}"
-      },
-      "response": []
     }
   },
   "components": {
@@ -65,192 +56,93 @@
     "crossBlock": {
       "action": "cross",
       "order": "fixed",
-      "factorsToCross": [
-        {
-          "factor": "data"
-        },
-        {
-          "factor": "visType"
-        }
-      ]
+      "values": [{"factor": "data"}, {"factor": "visType"}],
+      "component": "factorComponent"
     },
     "nestBlock": {
       "action": "nest",
-      "factorsToCross": [
-        {
-          "factor": "data"
-        },
-        {
-          "factor": "visType"
-        }
-      ]
+      "values": [{"factor": "data"}, {"factor": "visType"}],
+      "component": "factorComponent"
     },
     "zipBlock": {
       "action": "zip",
       "order": "latinSquare",
-      "factorsToCross": [
-        {
-          "factor": "data"
-        },
-        {
-          "factor": "visType"
-        }
-      ]
+      "values": [{"factor": "data"}, {"factor": "visType"}],
+      "component": "factorComponent"
     },
     "zipThenTaskBlock": {
       "action": "nest",
       "order": "random",
-      "factorsToCross": [
-        {
-          "factor": "zipBlock"
-        },
-        {
-          "factor": "task"
-        }
-      ]
+      "values": [{"factor": "zipBlock"}, {"factor": "task"}],
+      "component": "factorComponent"
     },
     "crossZipWithTaskBlock": {
       "action": "cross",
       "order": "fixed",
-      "factorsToCross": [
-        {
-          "factor": "zipBlock"
-        },
-        {
-          "factor": "task"
-        }
-      ]
+      "values": [{"factor": "zipBlock"}, {"factor": "task"}],
+      "component": "factorComponent"
     },
     "zipZipWithTaskBlock": {
       "action": "zip",
       "order": "fixed",
-      "factorsToCross": [
-        {
-          "factor": "zipBlock"
-        },
-        {
-          "factor": "task"
-        }
-      ]
+      "values": [{"factor": "zipBlock"}, {"factor": "task"}],
+      "component": "factorComponent"
     },
     "nestCrossWithTaskBlock": {
       "action": "nest",
       "order": "latinSquare",
-      "factorsToCross": [
-        {
-          "factor": "crossBlock"
-        },
-        {
-          "factor": "task"
-        }
-      ]
+      "values": [{"factor": "crossBlock"}, {"factor": "task"}],
+      "component": "factorComponent"
     },
     "sampledPrimitiveBlock": {
       "action": "nest",
       "order": "fixed",
-      "factorsToCross": [
-        {
-          "factor": "data"
-        },
-        {
-          "factor": "visType",
-          "numSamples": 2
-        },
-        {
-          "factor": "task",
-          "numSamples": 2
-        }
-      ]
+      "values": [{"factor": "data"}, {"factor": "visType", "numSamples": 2}, {"factor": "task", "numSamples": 2}],
+      "component": "factorComponent"
     },
     "sampledDerivedBlock": {
       "action": "nest",
       "order": "fixed",
-      "factorsToCross": [
-        {
-          "factor": "zipBlock",
-          "numSamples": 1
-        },
-        {
-          "factor": "task",
-          "numSamples": 2
-        }
-      ]
+      "values": [{"factor": "zipBlock", "numSamples": 1}, {"factor": "task", "numSamples": 2}],
+      "component": "factorComponent"
     },
     "factorKeywordBlock": {
       "action": "nest",
       "order": "fixed",
-      "factorsToCross": [
-        {
-          "factor": "data",
-          "numSamples": 1
-        },
-        {
-          "factor": "visType",
-          "numSamples": 1
-        },
-        {
-          "factor": "task",
-          "numSamples": 1
-        }
-      ]
+      "values": [{"factor": "data", "numSamples": 1}, {"factor": "visType", "numSamples": 1}, {"factor": "task", "numSamples": 1}],
+      "component": "factorKeywordComponent"
     },
     "concatBlock": {
       "action": "concat",
       "order": "fixed",
-      "factorsToCross": [
-        {
-          "factor": "data"
-        },
-        {
-          "factor": "task",
-          "numSamples": 2
-        }
-      ]
+      "values": [{"factor": "data"}, {"factor": "task", "numSamples": 2}],
+      "component": "factorComponent"
     },
     "repeatBlock": {
       "action": "repeat",
       "order": "fixed",
       "numRepeats": 2,
-      "factorsToCross": [
-        {
-          "factor": "visType"
-        }
-      ]
+      "values": [{"factor": "visType"}],
+      "component": "factorComponent"
     },
     "Ok_googleLearningStrategySlots": {
       "action": "repeat",
       "order": "fixed",
       "numRepeats": 2,
-      "factorsToCross": [
-        {
-          "factor": "learningStrategies"
-        }
-      ]
+      "values": [{"factor": "learningStrategies"}],
+      "component": "factorComponent"
     },
     "Ok_googleTopicAssignments": {
       "action": "zip",
       "order": "random",
-      "factorsToCross": [
-        {
-          "factor": "Ok_googleLearningStrategySlots"
-        },
-        {
-          "factor": "topics",
-          "numSamples": 6
-        }
-      ]
+      "values": [{"factor": "Ok_googleLearningStrategySlots"}, {"factor": "topics", "numSamples": 6}],
+      "component": "factorComponent"
     },
     "Ok_google": {
       "action": "nest",
       "order": "fixed",
-      "factorsToCross": [
-        {
-          "factor": "ageGroup"
-        },
-        {
-          "factor": "Ok_googleTopicAssignments"
-        }
-      ]
+      "values": [{"factor": "ageGroup"}, {"factor": "Ok_googleTopicAssignments"}],
+      "component": "factorComponent"
     }
   },
   "betweenSubjectsFactors": ["ageGroup"],
@@ -259,63 +151,51 @@
     "components": [
       {
         "type": "factor",
-        "factor": "crossBlock",
-        "component": "factorComponent"
+        "factor": "crossBlock"
       },
       {
         "type": "factor",
-        "factor": "nestBlock",
-        "component": "factorComponent"
+        "factor": "nestBlock"
       },
       {
         "type": "factor",
-        "factor": "zipBlock",
-        "component": "factorComponent"
+        "factor": "zipBlock"
       },
       {
         "type": "factor",
-        "factor": "zipThenTaskBlock",
-        "component": "factorComponent"
+        "factor": "zipThenTaskBlock"
       },
       {
         "type": "factor",
-        "factor": "crossZipWithTaskBlock",
-        "component": "factorComponent"
+        "factor": "crossZipWithTaskBlock"
       },
       {
         "type": "factor",
-        "factor": "zipZipWithTaskBlock",
-        "component": "nestedFactorKeywordComponent"
+        "factor": "zipZipWithTaskBlock"
       },
       {
         "type": "factor",
-        "factor": "nestCrossWithTaskBlock",
-        "component": "factorComponent"
+        "factor": "nestCrossWithTaskBlock"
       },
       {
         "type": "factor",
-        "factor": "sampledPrimitiveBlock",
-        "component": "factorComponent"
+        "factor": "sampledPrimitiveBlock"
       },
       {
         "type": "factor",
-        "factor": "sampledDerivedBlock",
-        "component": "factorComponent"
+        "factor": "sampledDerivedBlock"
       },
       {
         "type": "factor",
-        "factor": "factorKeywordBlock",
-        "component": "factorKeywordComponent"
+        "factor": "factorKeywordBlock"
       },
       {
         "type": "factor",
-        "factor": "concatBlock",
-        "component": "factorComponent"
+        "factor": "concatBlock"
       },
       {
         "type": "factor",
-        "factor": "repeatBlock",
-        "component": "factorComponent"
+        "factor": "repeatBlock"
       },
       {
         "id": "Ok_googleTutorialByAgeGroup",
@@ -341,20 +221,17 @@
       },
       {
         "type": "factor",
-        "factor": "Ok_google",
-        "component": "factorComponent"
+        "factor": "Ok_google"
       },
       {
         "type": "factor",
         "factor": "nestBlock",
-        "component": "factorComponent",
         "id": "nestBlockFixedReuse",
         "order": "fixed"
       },
       {
         "type": "factor",
         "factor": "crossZipWithTaskBlock",
-        "component": "factorComponent",
         "id": "crossZipWithTaskRandomReuse",
         "order": "random"
       }

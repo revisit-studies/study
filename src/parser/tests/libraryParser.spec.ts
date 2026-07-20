@@ -38,7 +38,6 @@ describe('Factor Expansion', () => {
           type: 'factor',
           factor: 'sharedFactors',
           id: 'sharedFactorsFirstUse',
-          component: 'factorComponent',
         },
       ],
     };
@@ -46,10 +45,11 @@ describe('Factor Expansion', () => {
     const result = resolveFactorReferences(sequence, {
       sharedFactors: {
         action: 'zip',
-        factorsToCross: [
+        values: [
           { factor: 'm' },
           { factor: 'n' },
         ],
+        component: 'factorComponent',
       },
     });
 
@@ -70,7 +70,7 @@ describe('Factor Expansion', () => {
       action: 'nest',
       order: 'random',
       id: 'zipThenTask',
-      factorsToCross: [
+      values: [
         { factor: 'zipDataVis' },
         { factor: 'task' },
       ],
@@ -87,10 +87,11 @@ describe('Factor Expansion', () => {
         zipDataVis: {
           action: 'zip',
           order: 'random',
-          factorsToCross: [
+          values: [
             { factor: 'data' },
             { factor: 'visType' },
           ],
+          component: 'factorComponent',
         },
       },
     );
@@ -112,7 +113,7 @@ describe('Factor Expansion', () => {
       type: 'factor',
       action: 'nest',
       id: 'Ok_google',
-      factorsToCross: [
+      values: [
         { factor: 'ageGroup' },
         { factor: 'Ok_googleTopicAssignments' },
       ],
@@ -130,17 +131,19 @@ describe('Factor Expansion', () => {
           action: 'repeat',
           order: 'fixed',
           numRepeats: 2,
-          factorsToCross: [
+          values: [
             { factor: 'learningStrategies' },
           ],
+          component: 'factorComponent',
         },
         Ok_googleTopicAssignments: {
           action: 'zip',
           order: 'random',
-          factorsToCross: [
+          values: [
             { factor: 'Ok_googleLearningStrategySlots' },
             { factor: 'topics', numSamples: 6 },
           ],
+          component: 'factorComponent',
         },
       },
     );
@@ -148,7 +151,7 @@ describe('Factor Expansion', () => {
     expect(isFactorSequence(result)).toBe(true);
     if (isFactorSequence(result)) {
       expect(result.id).toBe('Ok_google');
-      expect(result.factorsToCross).toEqual([
+      expect(result.values).toEqual([
         { factor: 'ageGroup' },
         { factor: 'Ok_googleTopicAssignments' },
       ]);
@@ -190,24 +193,26 @@ describe('Factor Expansion', () => {
           action: 'repeat',
           order: 'fixed',
           numRepeats: 2,
-          factorsToCross: [
+          values: [
             { factor: 'learningStrategies' },
           ],
+          component: 'factorComponent',
         },
         Ok_googleTopicAssignments: {
           action: 'zip',
           order: 'random',
-          factorsToCross: [
+          values: [
             { factor: 'Ok_googleLearningStrategySlots' },
             { factor: 'topics', numSamples: 6 },
           ],
+          component: 'factorComponent',
         },
       },
       sequence: {
         type: 'factor',
         action: 'nest',
         id: 'Ok_google',
-        factorsToCross: [
+        values: [
           { factor: 'ageGroup' },
           { factor: 'Ok_googleTopicAssignments' },
         ],
@@ -239,11 +244,13 @@ describe('Factor Expansion', () => {
     validateFactorGraph({
       a: {
         action: 'nest',
-        factorsToCross: [{ factor: 'b' }],
+        values: [{ factor: 'b' }],
+        component: 'factorComponent',
       },
       b: {
         action: 'nest',
-        factorsToCross: [{ factor: 'a' }],
+        values: [{ factor: 'a' }],
+        component: 'factorComponent',
       },
     }, errors);
 
@@ -258,7 +265,7 @@ describe('Factor Expansion', () => {
       type: 'factor',
       action: 'nest',
       id: 'nestedFactors',
-      factorsToCross: [
+      values: [
         { factor: 'm' },
         { factor: 'n' },
       ],
@@ -290,7 +297,7 @@ describe('Factor Expansion', () => {
       type: 'factor',
       action: 'cross',
       id: 'crossedFactors',
-      factorsToCross: [
+      values: [
         { factor: 'm' },
         { factor: 'n' },
       ],
@@ -320,7 +327,7 @@ describe('Factor Expansion', () => {
       type: 'factor',
       action: 'zip',
       id: 'zippedFactors',
-      factorsToCross: [
+      values: [
         { factor: 'm' },
         { factor: 'n' },
       ],
@@ -347,7 +354,7 @@ describe('Factor Expansion', () => {
       type: 'factor',
       action: 'concat',
       id: 'concatenatedFactors',
-      factorsToCross: [
+      values: [
         { factor: 'm' },
         { factor: 'n', numSamples: 2 },
       ],
@@ -377,7 +384,7 @@ describe('Factor Expansion', () => {
       action: 'repeat',
       id: 'repeatedFactors',
       numRepeats: 2,
-      factorsToCross: [
+      values: [
         { factor: 'm' },
       ],
       component: 'factorComponent',

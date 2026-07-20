@@ -965,7 +965,7 @@
           "description": "The base component used to render every component generated from this factor sequence.",
           "type": "string"
         },
-        "factorsToCross": {
+        "values": {
           "items": {
             "$ref": "#/definitions/FactorReference"
           },
@@ -993,7 +993,7 @@
       "required": [
         "action",
         "component",
-        "factorsToCross",
+        "values",
         "id",
         "type"
       ],

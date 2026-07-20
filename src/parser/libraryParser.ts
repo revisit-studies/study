@@ -125,8 +125,8 @@ function factorSequenceFromReference(
     action: definition.action,
     order: reference.order ?? definition.order,
     numRepeats: definition.numRepeats,
-    factorsToCross: definition.factorsToCross,
-    component: reference.component,
+    values: definition.values,
+    component: definition.component,
   };
 
   if (parameters !== undefined) {
@@ -211,12 +211,12 @@ function hasRandomFactorSampling(
 ): boolean {
   if (
     definition.order === 'random'
-    && definition.factorsToCross.some((factorReference) => factorReference.numSamples !== undefined)
+    && definition.values.some((factorReference) => factorReference.numSamples !== undefined)
   ) {
     return true;
   }
 
-  return definition.factorsToCross.some((factorReference) => {
+  return definition.values.some((factorReference) => {
     if (visitedFactors.has(factorReference.factor)) {
       return false;
     }
@@ -265,7 +265,7 @@ export function validateFactorGraph(
 
     visitingFactors.add(factorName);
 
-    factor.factorsToCross.forEach((factorReference) => {
+    factor.values.forEach((factorReference) => {
       const referencedFactor = factors[factorReference.factor];
 
       if (!referencedFactor) {
