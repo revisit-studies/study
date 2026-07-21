@@ -245,7 +245,10 @@ vi.mock('@visdesignlab/upset2-react', () => ({
   Upset: () => null,
 }));
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllEnvs();
+});
 
 // ── typed fixtures ────────────────────────────────────────────────────────────
 
@@ -554,11 +557,40 @@ describe('ComponentController — effect coverage (render-based)', () => {
     );
   });
 
-  test('setAlertModal dispatched when engine does not match env', async () => {
+  test('shows localStorage fallback warning when cloud engine falls back in development', async () => {
+    vi.stubEnv('VITE_STORAGE_ENGINE', 'firebase');
+    vi.stubEnv('PROD', false);
     const mockDispatch = vi.fn();
     vi.mocked(useStoreDispatch).mockReturnValue(mockDispatch);
+    vi.mocked(useStorageEngine).mockReturnValue({
+      storageEngine: makeStorageEngine({ getEngine: vi.fn<() => 'localStorage'>(() => 'localStorage') }),
+      setStorageEngine: vi.fn(),
+    });
     render(<ComponentController />);
     await waitFor(() => expect(mockDispatch).toHaveBeenCalled());
+    expect(mockStoreActions.setAlertModal).toHaveBeenCalledWith({
+      show: true,
+      message: 'There was an issue connecting to the firebase database, so this development build is using localStorage instead. Study data will not be saved to cloud storage.',
+      title: 'Using localStorage fallback',
+    });
+  });
+
+  test('shows storage disconnected alert when cloud engine falls back in production', async () => {
+    vi.stubEnv('VITE_STORAGE_ENGINE', 'firebase');
+    vi.stubEnv('PROD', true);
+    const mockDispatch = vi.fn();
+    vi.mocked(useStoreDispatch).mockReturnValue(mockDispatch);
+    vi.mocked(useStorageEngine).mockReturnValue({
+      storageEngine: makeStorageEngine({ getEngine: vi.fn<() => 'localStorage'>(() => 'localStorage') }),
+      setStorageEngine: vi.fn(),
+    });
+    render(<ComponentController />);
+    await waitFor(() => expect(mockDispatch).toHaveBeenCalled());
+    expect(mockStoreActions.setAlertModal).toHaveBeenCalledWith({
+      show: true,
+      message: 'There was an issue connecting to the firebase database. This could be caused by a network issue or your adblocker. If you are using an adblocker, please disable it for this website and refresh.',
+      title: 'Failed to connect to the storage engine',
+    });
   });
 
   test('isAnalysis=true returns early from block effect', async () => {

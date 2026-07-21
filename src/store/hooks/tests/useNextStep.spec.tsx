@@ -18,6 +18,7 @@ const mockSetReactiveAnswers = vi.fn((payload) => ({ type: 'setReactiveAnswers',
 const mockSetMatrixAnswersCheckbox = vi.fn((payload) => ({ type: 'setMatrixAnswersCheckbox', payload }));
 const mockSetMatrixAnswersRadio = vi.fn((payload) => ({ type: 'setMatrixAnswersRadio', payload }));
 const mockSetRankingAnswers = vi.fn((payload) => ({ type: 'setRankingAnswers', payload }));
+const mockSetAlertModal = vi.fn((payload) => ({ type: 'setAlertModal', payload }));
 
 let mockStoredAnswer: {
   answer: Record<string, string>;
@@ -84,6 +85,7 @@ vi.mock('../../store', () => ({
     setMatrixAnswersRadio: mockSetMatrixAnswersRadio,
     setMatrixAnswersCheckbox: mockSetMatrixAnswersCheckbox,
     setRankingAnswers: mockSetRankingAnswers,
+    setAlertModal: mockSetAlertModal,
   }),
   useStoreDispatch: () => mockDispatch,
   useAreResponsesValid: () => true,
@@ -142,13 +144,14 @@ describe('useNextStep', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     mockNavigate.mockReset();
     mockShowNotification.mockReset();
-    mockSaveAnswers.mockReset();
+    mockSaveAnswers.mockReset().mockResolvedValue(undefined);
     mockSaveProvenance.mockClear();
     mockSaveTrialAnswer.mockClear();
     mockSetReactiveAnswers.mockClear();
     mockSetMatrixAnswersCheckbox.mockClear();
     mockSetMatrixAnswersRadio.mockClear();
     mockSetRankingAnswers.mockClear();
+    mockSetAlertModal.mockClear();
     mockDispatch.mockClear();
     mockAnswers = {};
     mockTrialValidation = {
@@ -207,37 +210,62 @@ describe('useNextStep', () => {
     vi.restoreAllMocks();
   });
 
-  test('continues locally and shows an error when persistence fails', async () => {
-    mockSaveAnswers
-      .mockRejectedValueOnce(new Error('write failed'))
-      .mockResolvedValueOnce(undefined);
+  test('shows the storage modal after a direct answer persistence failure', async () => {
+    mockSaveAnswers.mockRejectedValueOnce(new Error('write failed'));
 
     renderToStaticMarkup(<HookHarness />);
 
     expect(capturedGoToNextStep).toBeDefined();
 
-    await capturedGoToNextStep?.();
+    capturedGoToNextStep?.();
     await Promise.resolve();
 
     expect(mockSaveAnswers).toHaveBeenCalledTimes(1);
     expect(mockSaveTrialAnswer).toHaveBeenCalledTimes(1);
-    expect(mockSaveTrialAnswer).toHaveBeenCalledWith(expect.objectContaining({
-      responseSubmitAttempted: true,
-    }));
     expect(mockNavigate).toHaveBeenCalledTimes(1);
-    expect(mockShowNotification).toHaveBeenCalledWith({
+    expect(mockSetAlertModal).toHaveBeenCalledWith({
+      show: true,
+      message: 'Your response could not be saved because the connection to the server was interrupted. Please check your internet connection, then click Retry. You can continue once your response is fully saved.',
       title: 'Failed to Save Response',
-      message: 'Your response could not be saved. Please check your connection and try again.',
-      color: 'red',
     });
+    expect(mockShowNotification).not.toHaveBeenCalled();
     expect(mockStoredAnswer.endTime).toBeGreaterThan(-1);
+  });
 
-    await capturedGoToNextStep?.();
+  test('shows the storage modal after a provenance persistence failure', async () => {
+    mockSaveAnswers.mockResolvedValueOnce(undefined);
+    mockSaveProvenance.mockRejectedValueOnce(new Error('provenance write failed'));
+    mockTrialValidation = {
+      intro_0: {
+        ...(mockTrialValidation.intro_0 as Record<string, unknown>),
+        provenanceGraph: { nodes: {} },
+      },
+    };
+
+    renderToStaticMarkup(<HookHarness />);
+
+    capturedGoToNextStep?.();
+    await Promise.resolve();
+
+    expect(mockSaveProvenance).toHaveBeenCalledTimes(1);
+    expect(mockSaveTrialAnswer).toHaveBeenCalledTimes(1);
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
+    expect(mockSetAlertModal).toHaveBeenCalledWith(expect.objectContaining({
+      show: true,
+      title: 'Failed to Save Response',
+    }));
+  });
+
+  test('schedules the queued write and navigates without flushing it', async () => {
+    mockSaveAnswers.mockResolvedValueOnce(undefined);
+
+    renderToStaticMarkup(<HookHarness />);
+
+    capturedGoToNextStep?.();
 
     expect(mockSaveAnswers).toHaveBeenCalledTimes(1);
-    expect(mockSaveTrialAnswer).toHaveBeenCalledTimes(1);
-    expect(mockStoredAnswer.endTime).toBeGreaterThan(-1);
-    expect(mockNavigate).toHaveBeenCalledTimes(2);
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
+    expect(mockSetAlertModal).not.toHaveBeenCalled();
   });
 
   test('does not disable next when stimulus validation fails', () => {

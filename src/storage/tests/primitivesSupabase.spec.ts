@@ -61,6 +61,7 @@ vi.mock('@supabase/supabase-js', () => {
       delete() { op = 'delete'; return qb; },
       eq(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'eq' }); return qb; },
       like(col: string, val: string) { filters.push({ col, val, type: 'like' }); return qb; },
+      limit(_count: number) { return qb; },
       single() { isSingle = true; return qb; },
       then(
         resolve: (val: { data: RowData | RowData[] | null; error: { message: string; code?: string } | null }) => void,

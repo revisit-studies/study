@@ -27,13 +27,15 @@ import { ScreenRecordingRejection } from './interface/ScreenRecordingRejection';
 import { ReplayContext, useReplay } from '../store/hooks/useReplay';
 import { DeviceWarning } from './interface/DeviceWarning';
 import { handleBeforeUnload, shouldConfirmTabClose } from '../utils/closeTabConfirmation';
+import { useStorageEngine } from '../storage/storageEngineHooks';
 
 const STUDY_BROWSER_WIDTH = 360;
 
 export function StepRenderer() {
   const windowEvents = useRef<EventType[]>([]);
   const dispatch = useStoreDispatch();
-  const { toggleStudyBrowser } = useStoreActions();
+  const { toggleStudyBrowser, setAlertModal } = useStoreActions();
+  const { storageEngine } = useStorageEngine();
 
   const isAnalysis = useIsAnalysis();
   const studyConfig = useStudyConfig();
@@ -57,6 +59,21 @@ export function StepRenderer() {
 
   const analysisHasScreenRecording = useStoreSelector((state) => state.analysisHasScreenRecording);
   const analysisCanPlayScreenRecording = useStoreSelector((state) => state.analysisCanPlayScreenRecording);
+
+  useEffect(() => {
+    if (!storageEngine) {
+      return undefined;
+    }
+
+    return storageEngine.subscribeToParticipantDataWriteErrors((error) => {
+      console.error('Failed to save participant response data', error);
+      dispatch(setAlertModal({
+        show: true,
+        message: 'Your response could not be saved because the connection to the server was interrupted. Please check your internet connection, then click Retry. You can continue once your response is fully saved.',
+        title: 'Failed to Save Response',
+      }));
+    });
+  }, [dispatch, setAlertModal, storageEngine]);
 
   // Attach event listeners
   useEffect(() => {
