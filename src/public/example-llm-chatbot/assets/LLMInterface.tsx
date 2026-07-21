@@ -7,14 +7,13 @@ import ChatInterface from './ChatInterface';
 import ImageDisplay from './ImageDisplay';
 import { StimulusParams } from '../../../store/types';
 import { ChatMessage, ChatProvenanceState } from './types';
-import { useRevisitTrrack } from '../../../store/hooks/useRevisitTrrack';
 
 type ChatTrrackState = {
   messages: ChatMessage[];
 };
 
 export default function LLMInterface({
-  setAnswer, provenanceState,
+  setAnswer, provenanceState, useTrrack,
 }: StimulusParams<ChatProvenanceState>) {
   // Setup provenance tracking (Trrack)
   const { actions, registry } = useMemo<{
@@ -38,7 +37,7 @@ export default function LLMInterface({
       registry: reg,
     };
   }, []);
-  const trrack = useRevisitTrrack({
+  const trrack = useTrrack({
     registry,
     initialState: {
       messages: [] as ChatMessage[],

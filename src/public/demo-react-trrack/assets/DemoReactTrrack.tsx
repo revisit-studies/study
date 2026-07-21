@@ -6,7 +6,6 @@ import {
 } from '@mantine/core';
 import { Registry } from '@trrack/core';
 import { StimulusParams } from '../../../store/types';
-import { useRevisitTrrack } from '../../../store/hooks/useRevisitTrrack';
 
 /** State shape for provenance tracking (used during replay) */
 interface StroopState {
@@ -22,7 +21,9 @@ interface StroopTrialParams {
 /** Normalize input to uppercase for consistent answers */
 const toCapped = (value: string) => value.toUpperCase();
 
-function StroopColorTask({ parameters, setAnswer, provenanceState }: StimulusParams<StroopTrialParams, StroopState>) {
+function StroopColorTask({
+  parameters, setAnswer, provenanceState, useTrrack,
+}: StimulusParams<StroopTrialParams, StroopState>) {
   const { displayText = '', textColor = 'black' } = parameters;
 
   // Create Trrack instance and actions once (see provenance-tracking docs)
@@ -37,7 +38,7 @@ function StroopColorTask({ parameters, setAnswer, provenanceState }: StimulusPar
       registry: reg,
     };
   }, []);
-  const trrack = useRevisitTrrack({
+  const trrack = useTrrack({
     registry,
     initialState: { response: '' },
   });

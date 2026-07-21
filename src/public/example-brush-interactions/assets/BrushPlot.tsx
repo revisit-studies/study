@@ -13,10 +13,9 @@ import { Scatter } from './Scatter';
 import { Bar } from './Bar';
 import { StimulusParams } from '../../../store/types';
 import { BrushParams, BrushState, SelectionType } from './types';
-import { useRevisitTrrack } from '../../../store/hooks/useRevisitTrrack';
 
 export function BrushPlot({
-  parameters, setAnswer, provenanceState, updateState = () => null,
+  parameters, setAnswer, provenanceState, useTrrack, updateState = () => null,
 }: StimulusParams<BrushParams, {all: {brush: BrushState}}> & {updateState: (b: BrushState) => void}) {
   const [filteredTable, setFilteredTable] = useState<ColumnTable | null>(null);
   const [brushState, setBrushState] = useState<BrushState>(provenanceState ? (provenanceState.all.brush || provenanceState.all) : {
@@ -84,7 +83,7 @@ export function BrushPlot({
       registry: reg,
     };
   }, []);
-  const trrack = useRevisitTrrack({
+  const trrack = useTrrack({
     registry,
     initialState: {
       all: {

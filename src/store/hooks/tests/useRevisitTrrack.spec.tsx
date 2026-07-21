@@ -8,9 +8,8 @@ import {
 import type { ConfigureTrrackOptions } from '@trrack/core';
 import {
   RevisitProvenanceProvider,
-  useRevisitTrrack,
 } from '../useRevisitTrrack';
-import type { TrrackedProvenance } from '../../types';
+import type { TrrackedProvenance, UseTrrack } from '../../types';
 
 const trrackMock = vi.hoisted(() => {
   let listener: (() => void) | undefined;
@@ -85,8 +84,8 @@ function setupStimulus(
     initialState: { count: 0 },
   } as ConfigureTrrackOptions<{ count: number }, string>;
 
-  function Stimulus() {
-    useRevisitTrrack(options);
+  function Stimulus({ useTrrack }: { useTrrack: UseTrrack }) {
+    useTrrack(options);
     useLayoutEffect(() => {
       onLayout?.();
     }, []);
@@ -95,7 +94,7 @@ function setupStimulus(
 
   return render(
     <RevisitProvenanceProvider onProvenanceChange={onProvenanceChange}>
-      <Stimulus />
+      {(useTrrack) => <Stimulus useTrrack={useTrrack} />}
     </RevisitProvenanceProvider>,
   );
 }
@@ -163,19 +162,5 @@ describe('useRevisitTrrack', () => {
     expect(onProvenanceChange.mock.calls[1][0].traversalEvents?.map(({ nodeId }: { nodeId: string }) => nodeId)).toEqual([
       'root', 'child',
     ]);
-  });
-
-  test('requires the reVISit stimulus provider', () => {
-    function InvalidStimulus() {
-      useRevisitTrrack({
-        registry: {},
-        initialState: {},
-      } as ConfigureTrrackOptions<Record<string, never>, string>);
-      return null;
-    }
-
-    expect(() => render(<InvalidStimulus />)).toThrow(
-      'useRevisitTrrack must be used within a reVISit React stimulus.',
-    );
   });
 });

@@ -1123,13 +1123,14 @@ export interface MarkdownComponent extends BaseIndividualComponent {
  * ```ts
  * {
  *   parameters: T;
+ *   useTrrack: (options: ConfigureTrrackOptions) => Trrack;
  *   setAnswer: ({ status, answers }: { status: boolean, answers: Record<string, any> }) => void
  * }
  * ```
  *
  * `parameters` is the same object passed in from the ReactComponent type below, allowing you to pass options in from the config to your component.
  * `setAnswer` is a callback function allowing the creator of the ReactComponent to programmatically set the answer. This can be useful if you don't use the default answer interface, and instead have something more unique.
- * Use `useRevisitTrrack` instead of `initializeTrrack` when the component needs provenance. The managed hook creates the Trrack instance and reports apply, undo, redo, and other traversals automatically.
+ * Call the `useTrrack` function supplied in `StimulusParams` when the component needs provenance. It creates the Trrack instance and reports apply, undo, redo, and other traversals automatically.
  *
  * So, for example, if I had the following ReactComponent in my config:
  * ```json
@@ -1146,7 +1147,7 @@ export interface MarkdownComponent extends BaseIndividualComponent {
  * My react component, CoolComponent.tsx, would exist in src/public/my_study/assets, and look something like this:
  *
  * ```ts
- * export default function CoolComponent({ parameters, setAnswer }: StimulusParams<{name: string, age: number}>) {
+ * export default function CoolComponent({ parameters, setAnswer, useTrrack }: StimulusParams<{name: string, age: number}>) {
  *   // render something
  * }
  * ```

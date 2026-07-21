@@ -4,7 +4,6 @@ import {
 import { Button, Tooltip } from '@mantine/core';
 import * as d3 from 'd3';
 import { StimulusParams } from '../../../store/types';
-import { useRevisitTrrack } from '../../../store/hooks/useRevisitTrrack';
 import type { CsvRow, MapParameters, MapState } from './types';
 import {
   initialState,
@@ -25,6 +24,7 @@ function Map({
   parameters,
   setAnswer,
   provenanceState,
+  useTrrack,
 }: StimulusParams<MapParameters, MapState>) {
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -37,7 +37,7 @@ function Map({
   );
 
   // Initialize Trrack instance
-  const trrack = useRevisitTrrack({ initialState, registry });
+  const trrack = useTrrack({ initialState, registry });
 
   // Sync selected states to trrack
   useEffect(() => {

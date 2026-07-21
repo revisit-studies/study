@@ -4,25 +4,11 @@ import {
 import { initializeTrrack } from '@trrack/core';
 import type { ConfigureTrrackOptions, Trrack } from '@trrack/core';
 import { appendProvenanceTraversalEvent } from '../provenance';
-import type { TrrackedProvenance } from '../types';
+import type { TrrackedProvenance, UseTrrack } from '../types';
 
 export type ProvenanceChangeHandler = (provenance: TrrackedProvenance) => void;
 
 const RevisitProvenanceContext = createContext<ProvenanceChangeHandler | null>(null);
-
-export function RevisitProvenanceProvider({
-  children,
-  onProvenanceChange,
-}: {
-  children: ReactNode;
-  onProvenanceChange: ProvenanceChangeHandler;
-}) {
-  return (
-    <RevisitProvenanceContext.Provider value={onProvenanceChange}>
-      {children}
-    </RevisitProvenanceContext.Provider>
-  );
-}
 
 export function useManagedTrrack<State, Event extends string = string>(
   options: ConfigureTrrackOptions<State, Event>,
@@ -90,7 +76,7 @@ export function useManagedTrrack<State, Event extends string = string>(
  * Creates a Trrack instance whose complete traversal history is automatically
  * reported to reVISit for participant replay.
  */
-export function useRevisitTrrack<State, Event extends string = string>(
+function useRevisitTrrack<State, Event extends string = string>(
   options: ConfigureTrrackOptions<State, Event>,
 ): Trrack<State, Event> {
   const onProvenanceChange = useContext(RevisitProvenanceContext);
@@ -100,4 +86,18 @@ export function useRevisitTrrack<State, Event extends string = string>(
   }
 
   return useManagedTrrack(options, onProvenanceChange);
+}
+
+export function RevisitProvenanceProvider({
+  children,
+  onProvenanceChange,
+}: {
+  children: (useTrrack: UseTrrack) => ReactNode;
+  onProvenanceChange: ProvenanceChangeHandler;
+}) {
+  return (
+    <RevisitProvenanceContext.Provider value={onProvenanceChange}>
+      {children(useRevisitTrrack)}
+    </RevisitProvenanceContext.Provider>
+  );
 }

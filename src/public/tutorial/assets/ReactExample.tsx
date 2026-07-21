@@ -3,9 +3,10 @@ import { Registry } from '@trrack/core';
 import BrushPlotWrapper from './BrushPlotWrapper';
 import { StimulusParams } from '../../../store/types';
 import { BrushParams, BrushState } from '../../example-brush-interactions/assets/types';
-import { useRevisitTrrack } from '../../../store/hooks/useRevisitTrrack';
 
-export default function ReactExample({ parameters, setAnswer, provenanceState }: StimulusParams<BrushParams, BrushState>) {
+export default function ReactExample({
+  parameters, setAnswer, provenanceState, useTrrack,
+}: StimulusParams<BrushParams, BrushState>) {
   const [brushState, setBrushState] = useState<BrushState>();
 
   // creating provenance tracking
@@ -24,7 +25,7 @@ export default function ReactExample({ parameters, setAnswer, provenanceState }:
       registry: reg,
     };
   }, []);
-  const trrack = useRevisitTrrack({
+  const trrack = useTrrack({
     registry,
     initialState: {
       brush: {
@@ -44,6 +45,6 @@ export default function ReactExample({ parameters, setAnswer, provenanceState }:
   }, [actions, setAnswer, trrack]);
 
   return (
-    <BrushPlotWrapper params={parameters} state={provenanceState || brushState} onStateChange={onStateChange} answers={{}} />
+    <BrushPlotWrapper params={parameters} state={provenanceState || brushState} onStateChange={onStateChange} answers={{}} useTrrack={useTrrack} />
   );
 }

@@ -89,12 +89,15 @@ export function ReactComponentController({ currentConfig, provState, answers }: 
               key={identifier}
               onProvenanceChange={onProvenanceChange}
             >
-              <StimulusComponent
-                parameters={currentConfig.parameters}
-                setAnswer={setAnswer}
-                answers={answers}
-                provenanceState={provState}
-              />
+              {(useTrrack) => (
+                <StimulusComponent
+                  parameters={currentConfig.parameters}
+                  setAnswer={setAnswer}
+                  answers={answers}
+                  provenanceState={provState}
+                  useTrrack={useTrrack}
+                />
+              )}
             </RevisitProvenanceProvider>
           </ErrorBoundary>
         )
