@@ -37,6 +37,7 @@ let mockVegaImpl: React.FC = () => React.createElement('div', null, 'Vega');
 
 let mockStoreActions = {
   setReactiveAnswers: vi.fn(),
+  updateProvenance: vi.fn(),
   updateResponseBlockValidation: vi.fn(),
   setAlertModal: vi.fn(),
   setAnalysisCanPlayScreenRecording: vi.fn(),
@@ -225,6 +226,7 @@ vi.mock('@trrack/core', () => ({
   },
   initializeTrrack: vi.fn(() => ({
     apply: vi.fn(),
+    currentChange: vi.fn(() => vi.fn()),
     graph: { backend: {} },
   })),
 }));
@@ -541,6 +543,7 @@ describe('ComponentController — effect coverage (render-based)', () => {
     vi.mocked(useStoreDispatch).mockReturnValue(vi.fn());
     mockStoreActions = {
       setReactiveAnswers: vi.fn(),
+      updateProvenance: vi.fn(),
       updateResponseBlockValidation: vi.fn(),
       setAlertModal: vi.fn(),
       setAnalysisCanPlayScreenRecording: vi.fn(),
@@ -634,6 +637,7 @@ describe('ComponentController — effect coverage (render-based)', () => {
     const setAnalysisCanPlaySpy = vi.fn().mockReturnValue('PLAY_ACTION');
     mockStoreActions = {
       setReactiveAnswers: vi.fn(),
+      updateProvenance: vi.fn(),
       updateResponseBlockValidation: vi.fn(),
       setAlertModal: vi.fn(),
       setAnalysisCanPlayScreenRecording: setAnalysisCanPlaySpy,
@@ -688,6 +692,7 @@ describe('VegaController — signal and event coverage', () => {
     vi.mocked(useStoreDispatch).mockReturnValue(vi.fn());
     mockStoreActions = {
       setReactiveAnswers: vi.fn(),
+      updateProvenance: vi.fn(),
       updateResponseBlockValidation: vi.fn(),
       setAlertModal: vi.fn(),
       setAnalysisCanPlayScreenRecording: vi.fn(),

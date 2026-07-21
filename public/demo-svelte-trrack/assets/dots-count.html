@@ -77,7 +77,8 @@
             }
         );
 
-        const trrack = initializeTrrack({
+        const trrack = Revisit.createTrrack({
+            initializeTrrack,
             initialState,
             registry
         });
@@ -128,7 +129,6 @@
                 Revisit.postAnswers({
                     [taskId]: dots.length
                 });
-                Revisit.postProvenance(trrack.graph.backend);
             }
 
             trrack.currentChange(updateRevisit);

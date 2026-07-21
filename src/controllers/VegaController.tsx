@@ -2,16 +2,17 @@ import {
   useCallback, useEffect, useMemo, useState,
 } from 'react';
 import { Vega, VisualizationSpec, View } from 'react-vega';
-import { initializeTrrack, Registry } from '@trrack/core';
+import { Registry } from '@trrack/core';
 import { VegaProps } from 'react-vega/lib/Vega';
 import { ValueOf, VegaComponent } from '../parser/types';
 import { getJsonAssetByPath } from '../utils/getStaticAsset';
 import { ResourceNotFound } from '../ResourceNotFound';
 import { useStoreActions, useStoreDispatch } from '../store/store';
-import { StimulusParams } from '../store/types';
+import { StimulusParams, TrrackedProvenance } from '../store/types';
 import { useCurrentIdentifier } from '../routes/utils';
 import { useEvent } from '../store/hooks/useEvent';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
+import { useManagedTrrack } from '../store/hooks/useRevisitTrrack';
 
 type Listeners = { [key: string]: (key: string, value: { responseId: string, response: string | number }) => void };
 
@@ -34,11 +35,11 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
 
   const identifier = useCurrentIdentifier();
 
-  const { updateResponseBlockValidation, setReactiveAnswers } = useStoreActions();
+  const { updateProvenance, updateResponseBlockValidation, setReactiveAnswers } = useStoreActions();
   const isAnalysis = useIsAnalysis();
   const [view, setView] = useState<View>();
 
-  const { actions, trrack } = useMemo(() => {
+  const { actions, registry } = useMemo(() => {
     const reg = Registry.create();
 
     const signalAction = reg.register('signal', (state, signalEvt) => {
@@ -46,20 +47,27 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
       return state;
     });
 
-    const trrackInst = initializeTrrack({
-      registry: reg,
-      initialState: {
-        event: {},
-      },
-    });
-
     return {
       actions: {
         signalAction,
       },
-      trrack: trrackInst,
+      registry: reg,
     };
   }, []);
+  const reportProvenance = useCallback((provenanceGraph: TrrackedProvenance) => {
+    if (isAnalysis) return;
+    storeDispatch(updateProvenance({
+      location: 'stimulus',
+      identifier,
+      provenanceGraph,
+    }));
+  }, [identifier, isAnalysis, storeDispatch, updateProvenance]);
+  const trrack = useManagedTrrack({
+    registry,
+    initialState: {
+      event: {},
+    },
+  }, reportProvenance, identifier);
 
   const setAnswer = useCallback(({
     status,
@@ -95,7 +103,6 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
     // Save provenance state after every event
     setAnswer({
       status: stimulusStatus,
-      provenanceGraph: trrack.graph.backend,
       answers: stimulusAnswer,
     });
   });
@@ -112,7 +119,6 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
 
     setAnswer({
       status: true,
-      provenanceGraph: trrack.graph.backend,
       answers: { [responseId]: response },
     });
   });

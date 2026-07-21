@@ -21,12 +21,23 @@ type UpdateResponseBlockValidationInput = {
   identifier: string;
   status: boolean;
   values: object;
+  /** @deprecated Use the managed Trrack APIs, which report provenance separately. */
   provenanceGraph?: TrrackedProvenance;
   reason?: ValidationStatus['reason'];
   message?: ValidationStatus['message'];
 };
 
 type UpdateResponseBlockValidationPayload = UpdateResponseBlockValidationInput & {
+  provenanceObservedAt: number;
+};
+
+type UpdateProvenanceInput = {
+  location: ResponseBlockLocation;
+  identifier: string;
+  provenanceGraph: TrrackedProvenance;
+};
+
+type UpdateProvenancePayload = UpdateProvenanceInput & {
   provenanceObservedAt: number;
 };
 
@@ -334,6 +345,28 @@ export async function studyStoreCreator(
           }
         },
         prepare(payload: UpdateResponseBlockValidationInput) {
+          return {
+            payload: {
+              ...payload,
+              provenanceObservedAt: Date.now(),
+            },
+          };
+        },
+      },
+      updateProvenance: {
+        reducer(state, { payload }: PayloadAction<UpdateProvenancePayload>) {
+          if (!state.trialValidation[payload.identifier]) {
+            return;
+          }
+
+          const previousProvenance = state.trialValidation[payload.identifier].provenanceGraph[payload.location];
+          state.trialValidation[payload.identifier].provenanceGraph[payload.location] = appendProvenanceTraversalEvent(
+            previousProvenance as TrrackedProvenance | undefined,
+            payload.provenanceGraph,
+            payload.provenanceObservedAt,
+          );
+        },
+        prepare(payload: UpdateProvenanceInput) {
           return {
             payload: {
               ...payload,

@@ -8,7 +8,7 @@ import React, {
 import isEqual from 'lodash.isequal';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { useNavigate } from 'react-router';
-import { Registry, initializeTrrack } from '@trrack/core';
+import { Registry } from '@trrack/core';
 import {
   IndividualComponent,
   ResponseBlockLocation,
@@ -33,7 +33,7 @@ import { shouldUseStimulusValidation } from './stimulusErrors';
 import { ResponseSwitcher } from './ResponseSwitcher';
 import { FeedbackAlert } from './FeedbackAlert';
 import {
-  CustomResponseField, FormElementProvenance, StoredAnswer,
+  CustomResponseField, FormElementProvenance, StoredAnswer, TrrackedProvenance,
 } from '../../store/types';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
@@ -42,6 +42,7 @@ import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import { responseAnswerIsCorrect } from '../../utils/correctAnswer';
 import { getCustomResponseModule, getCustomResponseModuleLoadError } from './customResponseModules';
 import { appendStimulusShowErrorsToGraph } from './stimulusProvenance';
+import { useManagedTrrack } from '../../store/hooks/useRevisitTrrack';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { showNotification } from '../../utils/notifications';
 import { getAnswersFromAllLocations } from '../../utils/getAnswersFromAllLocations';
@@ -84,10 +85,12 @@ export function ResponseBlock({
 }: Props) {
   const storeDispatch = useStoreDispatch();
   const {
-    updateResponseBlockValidation, saveIncorrectAnswer, saveTrialAnswer, setResponseSubmitAttempt, setStimulusSubmitAttempt, setCheckAnswerResult,
+    updateProvenance, updateResponseBlockValidation, saveIncorrectAnswer, saveTrialAnswer, setResponseSubmitAttempt, setStimulusSubmitAttempt, setCheckAnswerResult,
   } = useStoreActions();
 
   const currentStep = useCurrentStep();
+  const identifier = useCurrentIdentifier();
+  const isAnalysis = useIsAnalysis();
   const currentProvenance = useStoreSelector((state) => state.analysisProvState[location]) as FormElementProvenance | undefined;
 
   const storedAnswer = useMemo(() => currentProvenance?.form || status?.answer, [currentProvenance, status]);
@@ -126,7 +129,7 @@ export function ResponseBlock({
   }), [allResponses]);
 
   // Set up trrack to store provenance graph of the answerValidator status
-  const { actions, trrack } = useMemo(() => {
+  const { actions, registry } = useMemo(() => {
     const reg = Registry.create();
 
     const updateFormAction = reg.register('update', (state, payload: StoredAnswer['answer']) => {
@@ -138,22 +141,29 @@ export function ResponseBlock({
       return state;
     });
 
-    const trrackInst = initializeTrrack({
-      registry: reg,
-      initialState: {
-        form: null,
-        showResponseErrors: false,
-      },
-    });
-
     return {
       actions: {
         updateFormAction,
         updateShowResponseErrorsAction,
       },
-      trrack: trrackInst,
+      registry: reg,
     };
   }, []);
+  const reportProvenance = useCallback((provenanceGraph: TrrackedProvenance) => {
+    if (isAnalysis) return;
+    storeDispatch(updateProvenance({
+      location,
+      identifier,
+      provenanceGraph,
+    }));
+  }, [identifier, isAnalysis, location, storeDispatch, updateProvenance]);
+  const trrack = useManagedTrrack({
+    registry,
+    initialState: {
+      form: null,
+      showResponseErrors: false,
+    },
+  }, reportProvenance, identifier);
 
   const reactiveAnswers = useStoreSelector((state) => state.reactiveAnswers);
 
@@ -163,7 +173,6 @@ export function ResponseBlock({
   const trialValidation = useStoreSelector((state) => state.trialValidation);
   const analysisProvState = useStoreSelector((state) => state.analysisProvState);
   const { goToNextStep } = useNextStep();
-  const isAnalysis = useIsAnalysis();
 
   const studyConfig = useStudyConfig();
 
@@ -171,7 +180,6 @@ export function ResponseBlock({
   const hasCorrectAnswerFeedback = !!provideFeedback && ((config?.correctAnswer?.length || 0) > 0);
   const allowFailedTraining = useMemo(() => config?.allowFailedTraining ?? studyConfig.uiConfig.allowFailedTraining ?? true, [config, studyConfig]);
   const trainingAttempts = useMemo(() => config?.trainingAttempts ?? studyConfig.uiConfig.trainingAttempts ?? 2, [config, studyConfig]);
-  const identifier = useCurrentIdentifier();
   const savedSubmitAttempt = storedAnswerData?.responseSubmitAttempted ?? status?.responseSubmitAttempted ?? false;
   const currentSubmitAttempt = useStoreSelector((state) => state.responseSubmitAttempted[identifier]);
   const liveErrors = currentSubmitAttempt ?? savedSubmitAttempt;
@@ -405,7 +413,6 @@ export function ResponseBlock({
         identifier,
         status: answerValidator.isValid(),
         values: structuredClone(answerValidator.values),
-        provenanceGraph: trrack.graph.backend,
       });
     }
     // Disable exhaustive-deps because we only want this to run when there is a new storedAnswer
@@ -459,7 +466,6 @@ export function ResponseBlock({
         identifier,
         status: answerValidator.isValid() || bypassValidationForFailedTraining,
         values: structuredClone(answerValidator.values),
-        provenanceGraph: trrack.graph.backend,
       }),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -477,7 +483,6 @@ export function ResponseBlock({
         identifier,
         status: answerValidator.isValid() || bypassValidationForFailedTraining,
         values: structuredClone(answerValidator.values),
-        provenanceGraph: trrack.graph.backend,
       }),
     );
   }, [actions, answerValidator, bypassValidationForFailedTraining, identifier, isAnalysis, liveErrors, location, storeDispatch, trrack, updateResponseBlockValidation]);

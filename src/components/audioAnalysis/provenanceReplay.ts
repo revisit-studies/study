@@ -5,29 +5,15 @@ export type ProvenanceReplaySelection = ProvenanceTraversalEvent & {
   fromTraversal: boolean;
 };
 
-export function getReplaySelection(
+/**
+ * @deprecated Graph creation order cannot reproduce undo, redo, or arbitrary
+ * traversal. Retained only for provenance recorded before traversal events.
+ */
+function getLegacyReplaySelection(
   provenance: TrrackedProvenance,
   playTime: number,
   currentNode?: string | null,
 ): ProvenanceReplaySelection {
-  const traversalEvents = getProvenanceTraversalEvents(provenance);
-
-  if (traversalEvents.length > 0) {
-    let replaySelection = {
-      nodeId: provenance.root as string,
-      createdOn: provenance.nodes[provenance.root].createdOn,
-      fromTraversal: true,
-    };
-
-    traversalEvents.forEach((event) => {
-      if (event.createdOn <= playTime) {
-        replaySelection = { ...event, fromTraversal: true };
-      }
-    });
-
-    return replaySelection;
-  }
-
   if (!currentNode || !provenance.nodes[currentNode]) {
     return {
       nodeId: provenance.root as string,
@@ -63,6 +49,32 @@ export function getReplaySelection(
     createdOn: replayNode.createdOn,
     fromTraversal: false,
   };
+}
+
+export function getReplaySelection(
+  provenance: TrrackedProvenance,
+  playTime: number,
+  currentNode?: string | null,
+): ProvenanceReplaySelection {
+  const traversalEvents = getProvenanceTraversalEvents(provenance);
+
+  if (traversalEvents.length > 0) {
+    let replaySelection = {
+      nodeId: provenance.root as string,
+      createdOn: provenance.nodes[provenance.root].createdOn,
+      fromTraversal: true,
+    };
+
+    traversalEvents.forEach((event) => {
+      if (event.createdOn <= playTime) {
+        replaySelection = { ...event, fromTraversal: true };
+      }
+    });
+
+    return replaySelection;
+  }
+
+  return getLegacyReplaySelection(provenance, playTime, currentNode);
 }
 
 export function getReplayNodeId(

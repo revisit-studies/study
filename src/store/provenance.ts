@@ -56,7 +56,7 @@ export function appendProvenanceTraversalEvent(
     ? incomingEvents
     : previousEvents;
   const currentNodeId = incomingProvenance.current as string;
-  const currentNode = incomingProvenance.nodes[currentNodeId];
+  const currentNode = incomingProvenance.nodes?.[currentNodeId];
 
   if (!currentNode || traversalEvents.at(-1)?.nodeId === currentNodeId) {
     return traversalEvents.length > 0

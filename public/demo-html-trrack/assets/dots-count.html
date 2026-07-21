@@ -142,7 +142,8 @@
 
 
     // Initialize Trrack
-    const trrack = initializeTrrack({
+    const trrack = Revisit.createTrrack({
+        initializeTrrack,
         initialState,
         registry
     });
@@ -182,7 +183,6 @@
         Revisit.postAnswers({
             [taskId]: dots.length
         });
-        Revisit.postProvenance(trrack.graph.backend);
     }
 
     // Register a listener to update the dot chart based on trrack updates.

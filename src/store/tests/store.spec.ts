@@ -387,7 +387,7 @@ describe('studyStoreCreator', () => {
     }));
   });
 
-  test('updateResponseBlockValidation records provenance traversal automatically', async () => {
+  test('deprecated answer reporting records provenance traversal as a compatibility fallback', async () => {
     const { store, actions } = await studyStoreCreator('test', minimalConfig, minimalSequence, metadata, emptyAnswers, modes, 'p1', false, false);
     const rootNode = {
       id: 'root', createdOn: 100, children: ['child'],
@@ -449,6 +449,37 @@ describe('studyStoreCreator', () => {
       { nodeId: 'root', createdOn: 1500 },
       { nodeId: 'branch', createdOn: 1600 },
     ]);
+  });
+
+  test('updateProvenance preserves source traversal timestamps independently of validation', async () => {
+    const { store, actions } = await studyStoreCreator('test', minimalConfig, minimalSequence, metadata, emptyAnswers, modes, 'p1', false, false);
+    const provenanceGraph = {
+      root: 'root',
+      current: 'root',
+      nodes: {
+        root: { id: 'root', createdOn: 100, children: ['child'] },
+        child: {
+          id: 'child', parent: 'root', createdOn: 200, children: [],
+        },
+      },
+      traversalEvents: [
+        { nodeId: 'root', createdOn: 100 },
+        { nodeId: 'child', createdOn: 200 },
+        { nodeId: 'root', createdOn: 300 },
+      ],
+    } as unknown as TrrackedProvenance;
+    const previousValidation = store.getState().trialValidation.intro_0.stimulus;
+
+    store.dispatch(actions.updateProvenance({
+      location: 'stimulus',
+      identifier: 'intro_0',
+      provenanceGraph,
+    }));
+
+    expect(store.getState().trialValidation.intro_0.provenanceGraph.stimulus?.traversalEvents).toEqual(
+      provenanceGraph.traversalEvents,
+    );
+    expect(store.getState().trialValidation.intro_0.stimulus).toEqual(previousValidation);
   });
 
   test('saveTrialAnswer updates answers state', async () => {

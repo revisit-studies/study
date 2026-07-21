@@ -3,11 +3,12 @@ import {
 } from 'react';
 import { ModuleNamespace } from 'vite/types/hot';
 import { ParticipantData, ReactComponent } from '../parser/types';
-import { StimulusParams } from '../store/types';
+import { StimulusParams, TrrackedProvenance } from '../store/types';
 import { ResourceNotFound } from '../ResourceNotFound';
 import { useStoreDispatch, useStoreActions } from '../store/store';
 import { useCurrentIdentifier } from '../routes/utils';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
+import { RevisitProvenanceProvider } from '../store/hooks/useRevisitTrrack';
 import { ErrorBoundary } from './ErrorBoundary';
 
 const modules = import.meta.glob(
@@ -24,8 +25,16 @@ export function ReactComponentController({ currentConfig, provState, answers }: 
   const identifier = useCurrentIdentifier();
 
   const storeDispatch = useStoreDispatch();
-  const { updateResponseBlockValidation, setReactiveAnswers } = useStoreActions();
+  const { updateProvenance, updateResponseBlockValidation, setReactiveAnswers } = useStoreActions();
   const isAnalysis = useIsAnalysis();
+  const onProvenanceChange = useCallback((provenanceGraph: TrrackedProvenance) => {
+    if (isAnalysis) return;
+    storeDispatch(updateProvenance({
+      location: 'stimulus',
+      identifier,
+      provenanceGraph,
+    }));
+  }, [identifier, isAnalysis, storeDispatch, updateProvenance]);
   const setAnswer = useCallback(({
     status,
     provenanceGraph,
@@ -76,12 +85,20 @@ export function ReactComponentController({ currentConfig, provState, answers }: 
       {StimulusComponent
         ? (
           <ErrorBoundary onError={handleRuntimeError}>
-            <StimulusComponent
-              parameters={currentConfig.parameters}
-              setAnswer={setAnswer}
-              answers={answers}
-              provenanceState={provState}
-            />
+            <RevisitProvenanceProvider
+              key={identifier}
+              onProvenanceChange={onProvenanceChange}
+            >
+              {(useTrrack) => (
+                <StimulusComponent
+                  parameters={currentConfig.parameters}
+                  setAnswer={setAnswer}
+                  answers={answers}
+                  provenanceState={provState}
+                  useTrrack={useTrrack}
+                />
+              )}
+            </RevisitProvenanceProvider>
           </ErrorBoundary>
         )
         : <ResourceNotFound path={currentConfig.path} />}

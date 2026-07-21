@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
+import type { ConfigureTrrackOptions, Trrack } from '@trrack/core';
 import type { GetInputPropsReturnType } from '@mantine/form/lib/types';
 import type {
   Answer, ComponentBlock, ConfigResponseBlockLocation, CustomResponse, InterruptionBlock, JsonValue, ParsedStringOption, ParticipantData, ResponseBlockLocation, SkipConditions, StudyConfig, ValueOf,
@@ -184,10 +185,16 @@ export interface JumpFunctionReturnVal {
   correctAnswer?: Answer[],
 }
 
+export type UseTrrack = <State, Event extends string = string>(
+  options: ConfigureTrrackOptions<State, Event>,
+) => Trrack<State, Event>;
+
 export interface StimulusParams<T, S = never> {
   parameters: T;
   provenanceState?: S;
   answers: ParticipantData['answers'];
+  /** Creates a managed Trrack instance whose complete traversal history is automatically captured by reVISit. */
+  useTrrack: UseTrrack;
   setAnswer: ({
     status,
     provenanceGraph,
@@ -196,6 +203,7 @@ export interface StimulusParams<T, S = never> {
     message,
   }: {
     status: boolean,
+    /** @deprecated Use the useTrrack StimulusParam so provenance is captured automatically. */
     provenanceGraph?: TrrackedProvenance,
     answers: StoredAnswer['answer'],
     reason?: StimulusIssueReason,
