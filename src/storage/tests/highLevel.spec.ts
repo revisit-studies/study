@@ -10,7 +10,9 @@ import { generateSequenceArray } from '../../utils/handleRandomSequences';
 import { hash } from '../engines/utils/storageEngineHelpers';
 import { Sequence, StoredAnswer, TrrackedProvenance } from '../../store/types';
 import { LocalStorageEngine } from '../engines/LocalStorageEngine';
-import { StorageEngine, StorageObject, StorageObjectType } from '../engines/types';
+import {
+  SequenceAssignment, StorageEngine, StorageObject, StorageObjectType,
+} from '../engines/types';
 import { filterSequenceByCondition } from '../../utils/handleConditionLogic';
 
 const studyId = 'test-study';
@@ -236,6 +238,10 @@ class DeferredInitialWriteLocalStorageEngine extends DelayedLocalStorageEngine {
 class FailingParticipantDataLocalStorageEngine extends LocalStorageEngine {
   private failNextParticipantDataWrite = false;
 
+  private failNextProvenanceDataWrite = false;
+
+  private failNextProgressDataWrite = false;
+
   constructor(testing: boolean = false) {
     super(testing);
     this.participantDataWriteDelayMs = 0;
@@ -245,18 +251,47 @@ class FailingParticipantDataLocalStorageEngine extends LocalStorageEngine {
     this.failNextParticipantDataWrite = true;
   }
 
+  failNextProvenanceWrite() {
+    this.failNextProvenanceDataWrite = true;
+  }
+
+  failNextProgressWrite() {
+    this.failNextProgressDataWrite = true;
+  }
+
+  getPersistedParticipantData(participantId: string) {
+    return this._getFromStorage(`participants/${participantId}`, 'participantData');
+  }
+
   protected override async _pushToStorage<T extends StorageObjectType>(
     prefix: string,
     type: T,
     objectToUpload: StorageObject<T>,
   ) {
     const isParticipantDataWrite = type === 'participantData' && prefix.startsWith('participants/');
+    const isProvenanceWrite = prefix.startsWith('provenance/');
     if (isParticipantDataWrite && this.failNextParticipantDataWrite) {
       this.failNextParticipantDataWrite = false;
       throw new Error('Participant data upload failed');
     }
+    if (isProvenanceWrite && this.failNextProvenanceDataWrite) {
+      this.failNextProvenanceDataWrite = false;
+      throw new Error('Provenance upload failed');
+    }
 
     return super._pushToStorage(prefix, type, objectToUpload);
+  }
+
+  protected override async _updateSequenceAssignmentFields(
+    participantId: string,
+    updatedFields: Partial<SequenceAssignment>,
+  ) {
+    if (this.failNextProgressDataWrite) {
+      this.failNextProgressDataWrite = false;
+      throw new Error('Progress update failed');
+    }
+
+    return super._updateSequenceAssignmentFields(participantId, updatedFields);
   }
 }
 
@@ -860,6 +895,100 @@ describe.each([
     expect(onWriteError).toHaveBeenCalledWith(expect.objectContaining({
       message: 'Participant data upload failed',
     }));
+  });
+
+  test('retryFailedWrites reconnects and fully persists the latest participant snapshot', async () => {
+    const failingStorageEngine = new FailingParticipantDataLocalStorageEngine(true);
+    storageEngine = failingStorageEngine;
+    await storageEngine.connect();
+    await storageEngine.initializeStudyDb(studyId);
+    const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    const answers = {
+      intro_0: makeStoredAnswer('intro_0', 100),
+    };
+    const progressData = {
+      total: 2,
+      answered: ['intro_0'],
+      isDynamic: false,
+    };
+
+    failingStorageEngine.failNextWrite();
+    failingStorageEngine.failNextProgressWrite();
+    await storageEngine.saveAnswers(answers);
+    await expect(storageEngine.updateProgressData(progressData)).rejects.toThrow('Progress update failed');
+    await expect(storageEngine.flushPendingParticipantData()).rejects.toThrow('Participant data upload failed');
+
+    await storageEngine.retryFailedWrites();
+
+    const persistedParticipant = await failingStorageEngine.getPersistedParticipantData(participantSession.participantId);
+    expect(persistedParticipant).toEqual(expect.objectContaining({ answers }));
+    const sequenceAssignments = await storageEngine.getAllSequenceAssignments(studyId);
+    const sequenceAssignment = sequenceAssignments.find(
+      (assignment) => assignment.participantId === participantSession.participantId,
+    );
+    expect(sequenceAssignment).toEqual(expect.objectContaining(progressData));
+  });
+
+  test('retryFailedWrites persists failed progress before resolving', async () => {
+    const failingStorageEngine = new FailingParticipantDataLocalStorageEngine(true);
+    storageEngine = failingStorageEngine;
+    await storageEngine.connect();
+    await storageEngine.initializeStudyDb(studyId);
+    const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    const progressData = {
+      total: 4,
+      answered: ['intro_0', 'trial_0'],
+      isDynamic: false,
+    };
+    const onWriteError = vi.fn();
+    storageEngine.subscribeToParticipantDataWriteErrors(onWriteError);
+
+    failingStorageEngine.failNextProgressWrite();
+    await expect(storageEngine.updateProgressData(progressData)).rejects.toThrow('Progress update failed');
+    expect(onWriteError).toHaveBeenCalledWith(expect.objectContaining({
+      message: 'Progress update failed',
+    }));
+
+    await storageEngine.retryFailedWrites();
+
+    const sequenceAssignments = await storageEngine.getAllSequenceAssignments(studyId);
+    const sequenceAssignment = sequenceAssignments.find(
+      (assignment) => assignment.participantId === participantSession.participantId,
+    );
+    expect(sequenceAssignment).toEqual(expect.objectContaining(progressData));
+  });
+
+  test('retryFailedWrites retries failed provenance before resolving', async () => {
+    const failingStorageEngine = new FailingParticipantDataLocalStorageEngine(true);
+    storageEngine = failingStorageEngine;
+    await storageEngine.connect();
+    await storageEngine.initializeStudyDb(studyId);
+    const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    const provenanceGraph = {
+      root: 'root',
+      current: 'root',
+      nodes: {
+        root: {
+          id: 'root',
+          createdOn: 10,
+          children: [],
+        },
+      },
+    } as unknown as TrrackedProvenance;
+    const storedProvenanceToRetry = {
+      aboveStimulus: undefined,
+      belowStimulus: undefined,
+      sidebar: undefined,
+      stimulus: provenanceGraph,
+    };
+
+    failingStorageEngine.failNextProvenanceWrite();
+    await expect(storageEngine.saveProvenance(storedProvenanceToRetry, 'intro_0')).rejects.toThrow('Provenance upload failed');
+
+    await storageEngine.retryFailedWrites();
+
+    const storedProvenance = await storageEngine.getProvenance('intro_0', participantSession.participantId);
+    expect(storedProvenance).toEqual(expect.objectContaining({ stimulus: provenanceGraph }));
   });
 
   test('saveAnswers strips inline provenance and stores it as a task asset', async () => {

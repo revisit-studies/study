@@ -1,17 +1,59 @@
 import { ReactNode } from 'react';
-import { render, act } from '@testing-library/react';
+import { render, act, cleanup } from '@testing-library/react';
 import {
   describe, expect, test, vi,
   beforeEach, afterEach,
 } from 'vitest';
 import { StepRenderer } from '../StepRenderer';
 import { shouldConfirmTabClose } from '../../utils/closeTabConfirmation';
+import { LocalStorageEngine } from '../../storage/engines/LocalStorageEngine';
+import { StorageObject, StorageObjectType } from '../../storage/engines/types';
+import { ParticipantData } from '../../storage/types';
+import { StoredAnswer } from '../../store/types';
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
 const mockDispatch = vi.fn();
 const mockSetAlertModal = vi.fn((payload) => ({ type: 'setAlertModal', payload }));
 const mockSubscribeToParticipantDataWriteErrors = vi.fn();
+let mockStorageEngine: Pick<LocalStorageEngine, 'subscribeToParticipantDataWriteErrors'> = {
+  subscribeToParticipantDataWriteErrors: mockSubscribeToParticipantDataWriteErrors,
+};
+
+class FailingQueuedWriteStorageEngine extends LocalStorageEngine {
+  private failNextParticipantDataWrite = false;
+
+  constructor() {
+    super(true);
+    this.participantDataWriteDelayMs = 0;
+  }
+
+  initializeParticipantForTest(participantData: ParticipantData) {
+    this.currentParticipantId = participantData.participantId;
+    this.participantData = participantData;
+  }
+
+  failNextWrite() {
+    this.failNextParticipantDataWrite = true;
+  }
+
+  protected override async _pushToStorage<T extends StorageObjectType>(
+    prefix: string,
+    type: T,
+    objectToUpload: StorageObject<T>,
+  ) {
+    if (
+      type === 'participantData'
+      && prefix.startsWith('participants/')
+      && this.failNextParticipantDataWrite
+    ) {
+      this.failNextParticipantDataWrite = false;
+      throw new Error('Queued participant upload failed');
+    }
+
+    return super._pushToStorage(prefix, type, objectToUpload);
+  }
+}
 
 vi.mock('../interface/AppAside', () => ({
   AppAside: () => <div data-testid="app-aside" />,
@@ -111,9 +153,7 @@ vi.mock('../../store/store', () => ({
 
 vi.mock('../../storage/storageEngineHooks', () => ({
   useStorageEngine: () => ({
-    storageEngine: {
-      subscribeToParticipantDataWriteErrors: mockSubscribeToParticipantDataWriteErrors,
-    },
+    storageEngine: mockStorageEngine,
   }),
 }));
 
@@ -173,11 +213,15 @@ describe('StepRenderer', () => {
     mockDispatch.mockClear();
     mockSetAlertModal.mockClear();
     mockSubscribeToParticipantDataWriteErrors.mockReset();
+    mockStorageEngine = {
+      subscribeToParticipantDataWriteErrors: mockSubscribeToParticipantDataWriteErrors,
+    };
     vi.mocked(shouldConfirmTabClose).mockReturnValue(false);
     vi.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
+    cleanup();
     vi.restoreAllMocks();
   });
 
@@ -196,13 +240,52 @@ describe('StepRenderer', () => {
 
     expect(mockSetAlertModal).toHaveBeenCalledWith({
       show: true,
-      message: 'Your response could not be saved because the connection to the server was interrupted. Please check your internet connection, then click Reconnect to try again.',
+      message: 'Your response could not be saved because the connection to the server was interrupted. Please check your internet connection, then click Retry. You can continue once your response is fully saved.',
       title: 'Failed to Save Response',
     });
     expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'setAlertModal' }));
 
     unmount();
     expect(unsubscribe).toHaveBeenCalledTimes(1);
+  });
+
+  test('connects a real delayed write failure to the blocking storage modal', async () => {
+    const storageEngine = new FailingQueuedWriteStorageEngine();
+    await storageEngine.connect();
+    await storageEngine.initializeStudyDb('listener-integration-study');
+    storageEngine.initializeParticipantForTest({
+      participantId: 'participant-1',
+      participantConfigHash: 'config-hash',
+      sequence: {} as ParticipantData['sequence'],
+      participantIndex: 1,
+      answers: {},
+      searchParams: {},
+      metadata: {
+        userAgent: 'test-agent',
+        resolution: { width: 1920, height: 1080 },
+        language: 'en-US',
+        ip: '',
+      },
+      rejected: false,
+      participantTags: [],
+      stage: 'DEFAULT',
+    });
+    mockStorageEngine = storageEngine;
+    await act(async () => render(<StepRenderer />));
+    const answer = {
+      identifier: 'intro_0',
+      answer: { response: 'saved locally' },
+    } as unknown as StoredAnswer;
+
+    storageEngine.failNextWrite();
+    await storageEngine.saveAnswers({ intro_0: answer });
+    await expect(storageEngine.flushPendingParticipantData()).rejects.toThrow('Queued participant upload failed');
+
+    expect(mockSetAlertModal).toHaveBeenCalledWith(expect.objectContaining({
+      show: true,
+      title: 'Failed to Save Response',
+    }));
+    expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'setAlertModal' }));
   });
 
   test('renders the app shell', async () => {

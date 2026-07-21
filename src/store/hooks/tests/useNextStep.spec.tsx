@@ -225,7 +225,7 @@ describe('useNextStep', () => {
     expect(mockNavigate).toHaveBeenCalledTimes(1);
     expect(mockSetAlertModal).toHaveBeenCalledWith({
       show: true,
-      message: 'Your response could not be saved because the connection to the server was interrupted. Please check your internet connection, then click Reconnect to try again.',
+      message: 'Your response could not be saved because the connection to the server was interrupted. Please check your internet connection, then click Retry. You can continue once your response is fully saved.',
       title: 'Failed to Save Response',
     });
     expect(mockShowNotification).not.toHaveBeenCalled();

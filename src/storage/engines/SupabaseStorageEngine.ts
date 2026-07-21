@@ -430,15 +430,15 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
   }
 
   async connect() {
-    return new Promise<void>((resolve, reject) => {
-      // Check if the Supabase client is connected
-      if (this.supabase) {
-        this.connected = true;
-        resolve();
-      } else {
-        reject(new Error('Failed to connect to Supabase'));
-      }
-    });
+    const { error } = await this.supabase
+      .from('revisit')
+      .select('studyId')
+      .limit(1);
+
+    this.connected = !error;
+    if (error) {
+      throw new Error('Failed to connect to Supabase');
+    }
   }
 
   async getModes(studyId: string) {
