@@ -15,12 +15,10 @@ export function StatsView(
     studyConfig,
     visibleParticipants,
     allConfigs = {},
-    studyId,
   }: {
     studyConfig: StudyConfig;
     visibleParticipants: ParticipantDataWithStatus[];
     allConfigs?: Record<string, StudyConfig>;
-    studyId?: string;
   },
 ) {
   const { trialId } = useParams();
@@ -33,7 +31,7 @@ export function StatsView(
   return (
     <>
       {overviewData && (
-        <OverviewStats overviewData={overviewData} studyId={studyId} showStoredCountMismatch={false} />
+        <OverviewStats overviewData={overviewData} />
       )}
       <Paper shadow="sm" p="md" mt="md" withBorder>
         {

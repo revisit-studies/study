@@ -146,7 +146,7 @@ describe('StatsView', () => {
   test('shows OverviewStats when trialId is set and not "end"', () => {
     vi.mocked(useParams).mockReturnValue({ trialId: 'trial1' });
     const html = renderToStaticMarkup(
-      <StatsView studyConfig={emptyConfig} visibleParticipants={[mockParticipant]} studyId="my-study" />,
+      <StatsView studyConfig={emptyConfig} visibleParticipants={[mockParticipant]} />,
     );
     expect(html).toContain('OverviewStats');
   });
