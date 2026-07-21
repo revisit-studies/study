@@ -164,16 +164,6 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     };
   }, [selectedParticipants]);
 
-  const showStoredCountMismatch = useMemo(() => {
-    const hasStageFilter = !(selectedStages.length === 1 && selectedStages[0] === 'ALL');
-    const hasConfigFilter = !(selectedConfigs.length === 1 && selectedConfigs[0] === 'ALL');
-    const hasConditionFilter = availableConditions.length > 0 && !(selectedConditions.length === 1 && selectedConditions[0] === 'ALL');
-
-    return !hasStageFilter
-      && !hasConfigFilter
-      && !hasConditionFilter;
-  }, [selectedStages, selectedConfigs, selectedConditions, availableConditions.length]);
-
   const currentConfigHash = currentConfigHashValue ?? undefined;
   const isFirebaseEngine = storageEngine?.getEngine() === 'firebase';
   const codingEnabled = isFirebaseEngine && hasAudioRecording;
@@ -583,9 +573,6 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                     studyConfig={studyConfig}
                     visibleParticipants={visibleParticipants}
                     allConfigs={allConfigs}
-                    studyId={canonicalStudyId ?? undefined}
-                    showStoredCountMismatch={showStoredCountMismatch}
-                    includedParticipants={includedParticipants}
                     currentConfigLabel={currentConfigLabel}
                   />
                 )}
@@ -594,7 +581,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 {studyConfig && <TableView width={width} stageColors={stageColors} visibleParticipants={visibleParticipants} studyConfig={studyConfig} allConfigs={allConfigs} refresh={() => execute(studyConfig, storageEngine, canonicalStudyId ?? undefined)} selectedParticipants={selectedParticipants} onSelectionChange={setSelectedParticipants} />}
               </Tabs.Panel>
               <Tabs.Panel style={{ overflow: 'auto' }} value="stats" pt="xs">
-                {studyConfig && <StatsView studyConfig={studyConfig} visibleParticipants={visibleParticipants} allConfigs={allConfigs} studyId={canonicalStudyId ?? undefined} />}
+                {studyConfig && <StatsView studyConfig={studyConfig} visibleParticipants={visibleParticipants} allConfigs={allConfigs} />}
               </Tabs.Panel>
               <Tabs.Panel value="tagging" pt="xs">
                 {studyConfig && codingEnabled

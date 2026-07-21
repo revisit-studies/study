@@ -11,17 +11,11 @@ export function SummaryView({
   visibleParticipants,
   studyConfig,
   allConfigs = {},
-  studyId,
-  showStoredCountMismatch = false,
-  includedParticipants = ['completed', 'inProgress', 'rejected'],
   currentConfigLabel,
 }: {
   visibleParticipants: ParticipantDataWithStatus[];
   studyConfig: StudyConfig;
   allConfigs?: Record<string, StudyConfig>;
-  studyId?: string;
-  showStoredCountMismatch?: boolean;
-  includedParticipants?: string[];
   currentConfigLabel?: string;
 }) {
   const overviewData = useMemo(
@@ -52,12 +46,7 @@ export function SummaryView({
 
   return (
     <Stack gap="md">
-      <OverviewStats
-        overviewData={overviewData}
-        studyId={studyId}
-        showStoredCountMismatch={showStoredCountMismatch}
-        includedParticipants={includedParticipants}
-      />
+      <OverviewStats overviewData={overviewData} />
       <Group align="flex-start" gap="md" grow>
         <ComponentStats
           visibleParticipants={visibleParticipants}
