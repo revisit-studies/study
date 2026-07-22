@@ -1767,7 +1767,6 @@ export interface FactorDefinition {
   order?: ComponentOrder;
   /** The number of times to repeat factor values when action is repeat. Defaults to 1. */
   numRepeats?: number;
-  component: string;
   parameters?: Record<string, unknown>
 }
 
@@ -1776,11 +1775,15 @@ export type Factor = string[] | FactorDefinition;
 export interface FactorSequence extends FactorDefinition {
   type: 'factor',
   id: string;
+  /** The base component used to render every component generated from this factor sequence. */
+  component: string;
 }
 
 export interface FactorSequenceReference {
   type: 'factor';
   factor: string;
+  /** The base component used to render every component generated from this factor sequence. */
+  component: string;
   id?: string;
   order?: ComponentOrder;
   parameters?: Record<string, unknown>

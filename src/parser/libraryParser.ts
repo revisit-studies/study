@@ -126,7 +126,7 @@ function factorSequenceFromReference(
     order: reference.order ?? definition.order,
     numRepeats: definition.numRepeats,
     factorsToCross: definition.factorsToCross,
-    component: definition.component,
+    component: reference.component,
   };
 
   if (parameters !== undefined) {

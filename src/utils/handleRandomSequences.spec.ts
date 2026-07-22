@@ -3,7 +3,7 @@ import {
 } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { QuestionnaireComponent, StudyConfig } from '../parser/types';
-import { generateSequenceArray } from './handleRandomSequences';
+import { generateSequenceArray, getFactorCombinations } from './handleRandomSequences';
 import { getSequenceFlatMap } from './getSequenceFlatMap';
 
 const components = Object.fromEntries(Array(50).fill(0).map((_, idx) => [`component_${idx}`, { type: 'questionnaire', response: [] } as QuestionnaireComponent]));
@@ -238,7 +238,6 @@ describe('Generating sequences works as expected', () => {
             { factor: 'data' },
             { factor: 'visType' },
           ],
-          component: 'factorComponent',
         },
       },
       sequence: {
@@ -263,6 +262,52 @@ describe('Generating sequences works as expected', () => {
       '_d2_v2_t1',
       '_d2_v2_t2',
       'end',
+    ]);
+  });
+
+  test('getFactorCombinations includes nested factor parameters for derived factor references', () => {
+    const combinations = getFactorCombinations(
+      {
+        action: 'zip',
+        order: 'fixed',
+        id: 'zipZipWithTaskBlock',
+        factorsToCross: [
+          { factor: 'zipBlock' },
+          { factor: 'task' },
+        ],
+      },
+      {
+        data: ['d1', 'd2'],
+        visType: ['v1', 'v2', 'v3'],
+        task: ['t1', 't2', 't3'],
+        zipBlock: {
+          action: 'zip',
+          order: 'latinSquare',
+          factorsToCross: [
+            { factor: 'data' },
+            { factor: 'visType' },
+          ],
+        },
+      },
+    );
+
+    expect(combinations).toContainEqual([
+      '_d1_v1_t1',
+      {
+        zipBlock: 'd1_v1',
+        data: 'd1',
+        visType: 'v1',
+        task: 't1',
+      },
+    ]);
+    expect(combinations).toContainEqual([
+      '_d2_v2_t2',
+      {
+        zipBlock: 'd2_v2',
+        data: 'd2',
+        visType: 'v2',
+        task: 't2',
+      },
     ]);
   });
 
@@ -354,7 +399,6 @@ describe('Generating sequences works as expected', () => {
             { factor: 'data' },
             { factor: 'visType' },
           ],
-          component: 'factorComponent',
         },
       },
       sequence: {
@@ -397,7 +441,6 @@ describe('Generating sequences works as expected', () => {
           factorsToCross: [
             { factor: 'learningStrategies' },
           ],
-          component: 'factorComponent',
         },
         Ok_googleTopicAssignments: {
           action: 'zip',
@@ -406,7 +449,6 @@ describe('Generating sequences works as expected', () => {
             { factor: 'Ok_googleLearningStrategySlots' },
             { factor: 'topics', numSamples: 6 },
           ],
-          component: 'factorComponent',
         },
       },
       betweenSubjectsFactors: ['ageGroup'],
