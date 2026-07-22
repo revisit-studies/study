@@ -1,3 +1,4 @@
+
 # Mini-VLAT: A Short and Effective Measure of Visualization Literacy
 
 This is a demo of the library `mini-vlat`.
@@ -30,5 +31,7 @@ DOI: [10.1111/cgf.14809](https://dx.doi.org/10.1111/cgf.14809)
 ## Available Sequences
 
 - full
+
+
 
 

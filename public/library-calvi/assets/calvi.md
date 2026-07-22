@@ -7,7 +7,7 @@ The Critical Thinking Assessment for Literacy in Visualizations (CALVI) library 
 
 ## Reference
 
-Lily W. Ge, Yuan Cui, and Matthew Kay. 2023. CALVI: Critical Thinking Assessment for Literacy in Visualizations. In Proceedings of the 2023 CHI Conference on Human Factors in Computing Systems (CHI '23). Association for Computing Machinery, New York, NY, USA, Article 815, 1–18.
+Lily W. Ge, Yuan Cui, and Matthew Kay. 2023. CALVI: Critical Thinking Assessment for Literacy in Visualizations. In Proceedings of the 2023 CHI Conference on Human Factors in Computing Systems (CHI '23). Association for Computing Machinery, New York, NY, USA, Article 815, 1-18.
 
 DOI: [10.1145/3544548.3581406](https://dx.doi.org/10.1145/3544548.3581406)
 
@@ -81,5 +81,7 @@ DOI: [10.1145/3544548.3581406](https://dx.doi.org/10.1145/3544548.3581406)
 - full
 - fullBank
 - specificBank
+
+
 
 

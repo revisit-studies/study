@@ -1,8 +1,15 @@
+
 # Testing the Microphone
 
 This is a demo of the library `mic-check`.
 
 This is a library for testing the microphone. It provides a component that listens to the microphone and only enables the next button when audio is detected.
+
+
+
+
+
+
 
 
 
@@ -13,5 +20,7 @@ This is a library for testing the microphone. It provides a component that liste
 ## Available Sequences
 
 None
+
+
 
 

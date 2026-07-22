@@ -55,7 +55,7 @@ describe('libraryDocGenerator', () => {
       sequences: {},
     }, false);
 
-    expect(exampleMd).toContain('This is an example study of the library `demo-lib`.');
+    expect(exampleMd).toContain('This is a demo of the library `demo-lib`.');
     expect(exampleMd).toContain('Some reference');
     expect(exampleMd).not.toContain(':::note[Reference]');
 
@@ -119,6 +119,40 @@ describe('libraryDocGenerator', () => {
     expect(fs.existsSync(docsOut)).toBe(true);
     expect(fs.existsSync(exampleOut)).toBe(true);
     expect(fs.readFileSync(docsOut, 'utf8')).toContain('# alpha');
-    expect(fs.readFileSync(exampleOut, 'utf8')).toContain('This is an example study');
+    expect(fs.readFileSync(exampleOut, 'utf8')).toContain('# alpha');
+    expect(fs.readFileSync(exampleOut, 'utf8')).toContain('This is a demo');
+  });
+
+  it('preserves an existing example study title while regenerating its content', () => {
+    const base = fs.mkdtempSync(path.join(os.tmpdir(), 'lib-doc-title-'));
+    tempDirs.push(base);
+    const libraryName = 'alpha';
+    const librariesPath = path.join(base, 'public', 'libraries', libraryName);
+    const exampleAssetsPath = path.join(base, 'public', `library-${libraryName}`, 'assets');
+
+    fs.mkdirSync(librariesPath, { recursive: true });
+    fs.mkdirSync(exampleAssetsPath, { recursive: true });
+    fs.writeFileSync(
+      path.join(librariesPath, 'config.json'),
+      JSON.stringify({
+        description: 'Updated description',
+        components: {},
+        sequences: {},
+      }),
+    );
+    fs.writeFileSync(
+      path.join(exampleAssetsPath, `${libraryName}.md`),
+      '# Custom Alpha Title\n\nOld description',
+    );
+
+    generateLibraryDocs(base);
+
+    const docsOutput = fs.readFileSync(path.join(base, 'docsLibraries', `${libraryName}.md`), 'utf8');
+    const exampleOutput = fs.readFileSync(path.join(exampleAssetsPath, `${libraryName}.md`), 'utf8');
+    expect(docsOutput).toContain('# alpha');
+    expect(docsOutput).not.toContain('# Custom Alpha Title');
+    expect(exampleOutput).toContain('# Custom Alpha Title');
+    expect(exampleOutput).toContain('Updated description');
+    expect(exampleOutput).not.toContain('Old description');
   });
 });

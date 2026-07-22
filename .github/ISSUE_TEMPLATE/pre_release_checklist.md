@@ -154,7 +154,7 @@ Run each study in the release PR preview. Confirm it completes without unexpecte
 ### Generated Files
 
 - [ ] If parser types changed, regenerate the study config schemas using `yarn generate-schemas`
-- [ ] If libraries changed, regenerate library documentation and example studies using `yarn generate-library-docs` and `yarn generate-library-examples`
+- [ ] If libraries changed, regenerate library documentation and example studies using `yarn generate-library-examples`
 
 ### Documentation
 

@@ -1,7 +1,7 @@
 
 # ueq
 
-This is an example study of the library `ueq`.
+This is a demo of the library `ueq`.
 
 User Experience Questionnaire (UEQ) is a fast and reliable questionnaire to measure the User Experience of interactive products. This library contains one component with 26 questions. The component is the full UEQ questionnaire with 26 questions.
 

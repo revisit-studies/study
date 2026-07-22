@@ -1,3 +1,4 @@
+
 # NASA-TLX: NASA Task Load Index
 
 This is a demo of the library `nasa-tlx`.
@@ -57,3 +58,5 @@ The overall workload score is calculated by summing all adjusted scores and divi
 Overall Workload = Σ(Adjusted Scores) ÷ 15
 
 This weighted workload score accounts for both perceived intensity and individual prioritization, improving sensitivity and personalization in workload analysis.
+
+

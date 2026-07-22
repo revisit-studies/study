@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/LibraryConfigSchema.json",
-  "description": "This is a library for getting screen recording permissions and starting screen recording.",
+  "description": "This is a required library for screen recording. It provides a component that request user permission for screen and microphone permissions. Then, it starts screen capture until the end of the study.",
   "components": {
     "screenRecordingPermission": {
       "description": "Get permission to start Screen recording",

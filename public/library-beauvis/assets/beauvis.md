@@ -1,7 +1,6 @@
 
 # Beauvis: Assessing Aesthetics of Visualizations
 
-
 This is a demo of the library `beauvis`.
 
 BeauVis is a validated scale for assessing the aesthetic pleasure of visualizations. This library contains three components for the 3-, 4-, and 5-item versions of the BeauVis scale.
@@ -25,5 +24,7 @@ Link: [https://www.aviz.fr/Research/BeauVis-Scale](https://www.aviz.fr/Research/
 ## Available Sequences
 
 None
+
+
 
 
