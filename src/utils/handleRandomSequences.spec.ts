@@ -54,7 +54,7 @@ describe('Generating sequences works as expected', () => {
         type: 'factor',
         action: 'nest',
         id: 'nestedFactors',
-        factorsToCross: [
+        values: [
           { factor: 'm' },
           { factor: 'n' },
         ],
@@ -92,7 +92,7 @@ describe('Generating sequences works as expected', () => {
         type: 'factor',
         action: 'cross',
         id: 'crossedFactors',
-        factorsToCross: [
+        values: [
           { factor: 'm' },
           { factor: 'n' },
         ],
@@ -128,7 +128,7 @@ describe('Generating sequences works as expected', () => {
         type: 'factor',
         action: 'zip',
         id: 'zippedFactors',
-        factorsToCross: [
+        values: [
           { factor: 'm' },
           { factor: 'n' },
         ],
@@ -162,7 +162,7 @@ describe('Generating sequences works as expected', () => {
         type: 'factor',
         action: 'concat',
         id: 'concatenatedFactors',
-        factorsToCross: [
+        values: [
           { factor: 'm' },
           { factor: 'n', numSamples: 2 },
         ],
@@ -198,7 +198,7 @@ describe('Generating sequences works as expected', () => {
         action: 'repeat',
         id: 'repeatedFactors',
         numRepeats: 3,
-        factorsToCross: [
+        values: [
           { factor: 'm' },
         ],
         component: 'factorComponent',
@@ -234,7 +234,7 @@ describe('Generating sequences works as expected', () => {
         zipDataVis: {
           action: 'zip',
           order: 'random',
-          factorsToCross: [
+          values: [
             { factor: 'data' },
             { factor: 'visType' },
           ],
@@ -244,7 +244,7 @@ describe('Generating sequences works as expected', () => {
         type: 'factor',
         action: 'nest',
         id: 'zipThenTask',
-        factorsToCross: [
+        values: [
           { factor: 'zipDataVis' },
           { factor: 'task' },
         ],
@@ -271,7 +271,7 @@ describe('Generating sequences works as expected', () => {
         action: 'zip',
         order: 'fixed',
         id: 'zipZipWithTaskBlock',
-        factorsToCross: [
+        values: [
           { factor: 'zipBlock' },
           { factor: 'task' },
         ],
@@ -283,7 +283,7 @@ describe('Generating sequences works as expected', () => {
         zipBlock: {
           action: 'zip',
           order: 'latinSquare',
-          factorsToCross: [
+          values: [
             { factor: 'data' },
             { factor: 'visType' },
           ],
@@ -327,7 +327,7 @@ describe('Generating sequences works as expected', () => {
         action: 'nest',
         order: 'random',
         id: 'randomizedFactors',
-        factorsToCross: [
+        values: [
           { factor: 'm' },
           { factor: 'n' },
         ],
@@ -364,7 +364,7 @@ describe('Generating sequences works as expected', () => {
         type: 'factor',
         action: 'nest',
         id: 'sampledFactors',
-        factorsToCross: [
+        values: [
           { factor: 'm', numSamples: 2 },
           { factor: 'n', numSamples: 1 },
         ],
@@ -395,7 +395,7 @@ describe('Generating sequences works as expected', () => {
         task: ['t1', 't2'],
         zippedDataVis: {
           action: 'zip',
-          factorsToCross: [
+          values: [
             { factor: 'data' },
             { factor: 'visType' },
           ],
@@ -405,7 +405,7 @@ describe('Generating sequences works as expected', () => {
         type: 'factor',
         action: 'nest',
         id: 'sampledDerivedFactors',
-        factorsToCross: [
+        values: [
           { factor: 'zippedDataVis', numSamples: 1 },
           { factor: 'task' },
         ],
@@ -438,14 +438,14 @@ describe('Generating sequences works as expected', () => {
           action: 'repeat',
           order: 'fixed',
           numRepeats: 2,
-          factorsToCross: [
+          values: [
             { factor: 'learningStrategies' },
           ],
         },
         Ok_googleTopicAssignments: {
           action: 'zip',
           order: 'random',
-          factorsToCross: [
+          values: [
             { factor: 'Ok_googleLearningStrategySlots' },
             { factor: 'topics', numSamples: 6 },
           ],
@@ -456,7 +456,7 @@ describe('Generating sequences works as expected', () => {
         type: 'factor',
         action: 'nest',
         id: 'Ok_google',
-        factorsToCross: [
+        values: [
           { factor: 'ageGroup' },
           { factor: 'Ok_googleTopicAssignments' },
         ],
@@ -519,7 +519,7 @@ describe('Generating sequences works as expected', () => {
         type: 'factor',
         action: 'nest',
         id: 'betweenSubjectFactors',
-        factorsToCross: [
+        values: [
           { factor: 'data' },
           { factor: 'task' },
         ],

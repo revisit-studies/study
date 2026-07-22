@@ -65,7 +65,7 @@
     "crossBlock": {
       "action": "cross",
       "order": "fixed",
-      "factorsToCross": [
+      "values": [
         {
           "factor": "data"
         },
@@ -76,7 +76,7 @@
     },
     "nestBlock": {
       "action": "nest",
-      "factorsToCross": [
+      "values": [
         {
           "factor": "data"
         },
@@ -88,7 +88,7 @@
     "zipBlock": {
       "action": "zip",
       "order": "latinSquare",
-      "factorsToCross": [
+      "values": [
         {
           "factor": "data"
         },
@@ -100,7 +100,7 @@
     "zipThenTaskBlock": {
       "action": "nest",
       "order": "random",
-      "factorsToCross": [
+      "values": [
         {
           "factor": "zipBlock"
         },
@@ -112,7 +112,7 @@
     "crossZipWithTaskBlock": {
       "action": "cross",
       "order": "fixed",
-      "factorsToCross": [
+      "values": [
         {
           "factor": "zipBlock"
         },
@@ -124,7 +124,7 @@
     "zipZipWithTaskBlock": {
       "action": "zip",
       "order": "fixed",
-      "factorsToCross": [
+      "values": [
         {
           "factor": "zipBlock"
         },
@@ -136,7 +136,7 @@
     "nestCrossWithTaskBlock": {
       "action": "nest",
       "order": "latinSquare",
-      "factorsToCross": [
+      "values": [
         {
           "factor": "crossBlock"
         },
@@ -148,7 +148,7 @@
     "sampledPrimitiveBlock": {
       "action": "nest",
       "order": "fixed",
-      "factorsToCross": [
+      "values": [
         {
           "factor": "data"
         },
@@ -165,7 +165,7 @@
     "sampledDerivedBlock": {
       "action": "nest",
       "order": "fixed",
-      "factorsToCross": [
+      "values": [
         {
           "factor": "zipBlock",
           "numSamples": 1
@@ -179,7 +179,7 @@
     "factorKeywordBlock": {
       "action": "nest",
       "order": "fixed",
-      "factorsToCross": [
+      "values": [
         {
           "factor": "data",
           "numSamples": 1
@@ -197,7 +197,7 @@
     "concatBlock": {
       "action": "concat",
       "order": "fixed",
-      "factorsToCross": [
+      "values": [
         {
           "factor": "data"
         },
@@ -211,7 +211,7 @@
       "action": "repeat",
       "order": "fixed",
       "numRepeats": 2,
-      "factorsToCross": [
+      "values": [
         {
           "factor": "visType"
         }
@@ -221,7 +221,7 @@
       "action": "repeat",
       "order": "fixed",
       "numRepeats": 2,
-      "factorsToCross": [
+      "values": [
         {
           "factor": "learningStrategies"
         }
@@ -230,7 +230,7 @@
     "Ok_googleTopicAssignments": {
       "action": "zip",
       "order": "random",
-      "factorsToCross": [
+      "values": [
         {
           "factor": "Ok_googleLearningStrategySlots"
         },
@@ -243,7 +243,7 @@
     "Ok_google": {
       "action": "nest",
       "order": "fixed",
-      "factorsToCross": [
+      "values": [
         {
           "factor": "ageGroup"
         },

@@ -949,12 +949,6 @@
           "description": "The base component used to render every component generated from this factor sequence.",
           "type": "string"
         },
-        "factorsToCross": {
-          "items": {
-            "$ref": "#/definitions/FactorReference"
-          },
-          "type": "array"
-        },
         "id": {
           "type": "string"
         },
@@ -972,14 +966,20 @@
         "type": {
           "const": "factor",
           "type": "string"
+        },
+        "values": {
+          "items": {
+            "$ref": "#/definitions/FactorReference"
+          },
+          "type": "array"
         }
       },
       "required": [
         "action",
         "component",
-        "factorsToCross",
         "id",
-        "type"
+        "type",
+        "values"
       ],
       "type": "object"
     },
