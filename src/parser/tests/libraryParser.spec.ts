@@ -38,6 +38,7 @@ describe('Factor Expansion', () => {
           type: 'factor',
           factor: 'sharedFactors',
           id: 'sharedFactorsFirstUse',
+          component: 'factorComponent',
         },
       ],
     };
@@ -49,7 +50,6 @@ describe('Factor Expansion', () => {
           { factor: 'm' },
           { factor: 'n' },
         ],
-        component: 'factorComponent',
       },
     });
 
@@ -91,7 +91,6 @@ describe('Factor Expansion', () => {
             { factor: 'data' },
             { factor: 'visType' },
           ],
-          component: 'factorComponent',
         },
       },
     );
@@ -134,7 +133,6 @@ describe('Factor Expansion', () => {
           factorsToCross: [
             { factor: 'learningStrategies' },
           ],
-          component: 'factorComponent',
         },
         Ok_googleTopicAssignments: {
           action: 'zip',
@@ -143,7 +141,6 @@ describe('Factor Expansion', () => {
             { factor: 'Ok_googleLearningStrategySlots' },
             { factor: 'topics', numSamples: 6 },
           ],
-          component: 'factorComponent',
         },
       },
     );
@@ -196,7 +193,6 @@ describe('Factor Expansion', () => {
           factorsToCross: [
             { factor: 'learningStrategies' },
           ],
-          component: 'factorComponent',
         },
         Ok_googleTopicAssignments: {
           action: 'zip',
@@ -205,7 +201,6 @@ describe('Factor Expansion', () => {
             { factor: 'Ok_googleLearningStrategySlots' },
             { factor: 'topics', numSamples: 6 },
           ],
-          component: 'factorComponent',
         },
       },
       sequence: {
@@ -245,12 +240,10 @@ describe('Factor Expansion', () => {
       a: {
         action: 'nest',
         factorsToCross: [{ factor: 'b' }],
-        component: 'factorComponent',
       },
       b: {
         action: 'nest',
         factorsToCross: [{ factor: 'a' }],
-        component: 'factorComponent',
       },
     }, errors);
 

@@ -962,6 +962,7 @@
           "$ref": "#/definitions/FactorAction"
         },
         "component": {
+          "description": "The base component used to render every component generated from this factor sequence.",
           "type": "string"
         },
         "factorsToCross": {
@@ -1001,6 +1002,10 @@
     "FactorSequenceReference": {
       "additionalProperties": false,
       "properties": {
+        "component": {
+          "description": "The base component used to render every component generated from this factor sequence.",
+          "type": "string"
+        },
         "factor": {
           "type": "string"
         },
@@ -1021,7 +1026,8 @@
       },
       "required": [
         "type",
-        "factor"
+        "factor",
+        "component"
       ],
       "type": "object"
     },

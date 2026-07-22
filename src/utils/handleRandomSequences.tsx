@@ -18,6 +18,7 @@ import {
 type SequenceBlock = ComponentBlock | DynamicBlock | FactorSequence | FactorSequenceReference;
 export type FactorCombination = [string, Record<string, string>];
 type FactorValue = string | FactorCombination;
+type FactorCombinationBlock = FactorDefinition & { id: string };
 type BetweenSubjectsFactorLevels = { factorName: string; levels: string[] };
 type BetweenSubjectsAssignment = Record<string, string>;
 type FactorCombinationOptions = {
@@ -49,16 +50,25 @@ function factorValueName(value: FactorValue): string {
   return isFactorCombination(value) ? value[0] : value;
 }
 
+function factorCombinationParameterValue(value: FactorCombination): string {
+  return value[0].startsWith('_') ? value[0].slice(1) : value[0];
+}
+
 function factorValueParameters(
   value: FactorValue,
   depth: number,
   depthToFactorMap: Record<number, string>,
 ): Record<string, string> {
+  const factorName = depthToFactorMap[depth];
+
   if (isFactorCombination(value)) {
+    if (factorName !== undefined) {
+      return { [factorName]: factorCombinationParameterValue(value), ...value[1] };
+    }
+
     return value[1];
   }
 
-  const factorName = depthToFactorMap[depth];
   return factorName !== undefined ? { [factorName]: value } : {};
 }
 
@@ -67,15 +77,13 @@ function appendFactorValueName(currentComponent: string, valueName: string): str
   return `${currentComponent}_${normalizedValueName}`;
 }
 
-function factorDefinitionToSequence(id: string, definition: FactorDefinition): FactorSequence {
+function factorDefinitionToCombinationBlock(id: string, definition: FactorDefinition): FactorCombinationBlock {
   return {
-    type: 'factor',
     id,
     action: definition.action,
     order: definition.order,
     numRepeats: definition.numRepeats,
     factorsToCross: definition.factorsToCross,
-    component: definition.component,
     ...(definition.parameters !== undefined ? { parameters: definition.parameters } : {}),
   };
 }
@@ -206,7 +214,7 @@ function filterSequenceByBetweenSubjectsAssignment(
 function applyFactorNumSamples(
   values: FactorValue[],
   numSamples?: number,
-  order?: FactorSequence['order'],
+  order?: FactorDefinition['order'],
   options: FactorCombinationOptions = {},
 ): FactorValue[] {
   if (options.ignoreNumSamples || numSamples === undefined) {
@@ -352,7 +360,7 @@ export function combineRepeatFactors(
 }
 
 export function combineFactorsByAction(
-  action: FactorSequence['action'],
+  action: FactorDefinition['action'],
   factors: FactorValue[][],
   depthToFactorMap: Record<number, string>,
   numRepeats?: number,
@@ -381,7 +389,7 @@ export function combineFactorsByAction(
 }
 
 export function getFactorCombinations(
-  block: FactorSequence,
+  block: FactorCombinationBlock,
   factors: Record<string, Factor>,
   onError?: (message: string) => void,
   stack: string[] = [],
@@ -396,6 +404,7 @@ export function getFactorCombinations(
   const nextStack = [...stack, block.id];
   const factorValues = block.factorsToCross.map((factorReference, depth): FactorValue[] => {
     const factor = factors[factorReference.factor];
+    depthToFactorMap[depth] = factorReference.factor;
 
     if (!factor) {
       onError?.(`Factor \`${factorReference.factor}\` is not defined in factors`);
@@ -404,7 +413,7 @@ export function getFactorCombinations(
 
     if (isFactorDefinition(factor)) {
       return applyFactorNumSamples(getFactorCombinations(
-        factorDefinitionToSequence(factorReference.factor, factor),
+        factorDefinitionToCombinationBlock(factorReference.factor, factor),
         factors,
         onError,
         nextStack,
@@ -412,7 +421,6 @@ export function getFactorCombinations(
       ), factorReference.numSamples, block.order, options);
     }
 
-    depthToFactorMap[depth] = factorReference.factor;
     return applyFactorNumSamples(factor, factorReference.numSamples, block.order, options);
   });
 

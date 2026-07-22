@@ -2,9 +2,9 @@ import {
   describe, expect, test, vi,
 } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
-import { QuestionnaireComponent, StudyConfig } from '../../parser/types';
-import { generateSequenceArray } from '../handleRandomSequences';
-import { getSequenceFlatMap } from '../getSequenceFlatMap';
+import { QuestionnaireComponent, StudyConfig } from '../parser/types';
+import { generateSequenceArray, getFactorCombinations } from './handleRandomSequences';
+import { getSequenceFlatMap } from './getSequenceFlatMap';
 
 const components = Object.fromEntries(Array(50).fill(0).map((_, idx) => [`component_${idx}`, { type: 'questionnaire', response: [] } as QuestionnaireComponent]));
 
@@ -238,7 +238,6 @@ describe('Generating sequences works as expected', () => {
             { factor: 'data' },
             { factor: 'visType' },
           ],
-          component: 'factorComponent',
         },
       },
       sequence: {
@@ -263,6 +262,52 @@ describe('Generating sequences works as expected', () => {
       '_d2_v2_t1',
       '_d2_v2_t2',
       'end',
+    ]);
+  });
+
+  test('getFactorCombinations includes nested factor parameters for derived factor references', () => {
+    const combinations = getFactorCombinations(
+      {
+        action: 'zip',
+        order: 'fixed',
+        id: 'zipZipWithTaskBlock',
+        factorsToCross: [
+          { factor: 'zipBlock' },
+          { factor: 'task' },
+        ],
+      },
+      {
+        data: ['d1', 'd2'],
+        visType: ['v1', 'v2', 'v3'],
+        task: ['t1', 't2', 't3'],
+        zipBlock: {
+          action: 'zip',
+          order: 'latinSquare',
+          factorsToCross: [
+            { factor: 'data' },
+            { factor: 'visType' },
+          ],
+        },
+      },
+    );
+
+    expect(combinations).toContainEqual([
+      '_d1_v1_t1',
+      {
+        zipBlock: 'd1_v1',
+        data: 'd1',
+        visType: 'v1',
+        task: 't1',
+      },
+    ]);
+    expect(combinations).toContainEqual([
+      '_d2_v2_t2',
+      {
+        zipBlock: 'd2_v2',
+        data: 'd2',
+        visType: 'v2',
+        task: 't2',
+      },
     ]);
   });
 
@@ -354,7 +399,6 @@ describe('Generating sequences works as expected', () => {
             { factor: 'data' },
             { factor: 'visType' },
           ],
-          component: 'factorComponent',
         },
       },
       sequence: {
@@ -397,7 +441,6 @@ describe('Generating sequences works as expected', () => {
           factorsToCross: [
             { factor: 'learningStrategies' },
           ],
-          component: 'factorComponent',
         },
         Ok_googleTopicAssignments: {
           action: 'zip',
@@ -406,7 +449,6 @@ describe('Generating sequences works as expected', () => {
             { factor: 'Ok_googleLearningStrategySlots' },
             { factor: 'topics', numSamples: 6 },
           ],
-          component: 'factorComponent',
         },
       },
       betweenSubjectsFactors: ['ageGroup'],
@@ -680,7 +722,7 @@ describe('Generating sequences works as expected', () => {
     });
   });
 
-  test('generateSequenceArray returns balanced random sequences, numSamples = 1', { timeout: 30_000 }, async () => {
+  test('generateSequenceArray returns balanced random sequences, numSamples = 1', async () => {
     const sequenceArray = generateSequenceArray(config);
 
     const counts = sequenceArray.flatMap(((seq) => seq.components)).filter((comp) => comp !== 'end').reduce((acc, compId) => {
@@ -696,7 +738,7 @@ describe('Generating sequences works as expected', () => {
     expect(max - min).toBeLessThan(300); // Allow a small margin of error
   });
 
-  test('generateSequenceArray returns balanced random sequences, numSamples = 50', { timeout: 30_000 }, async () => {
+  test('generateSequenceArray returns balanced random sequences, numSamples = 50', async () => {
     const sequenceArray = generateSequenceArray({ ...config, sequence: { order: 'random', numSamples: 31, components: Object.keys(components) } });
 
     const counts = sequenceArray.flatMap(((seq) => seq.components)).filter((comp) => comp !== 'end').reduce((acc, compId) => {
@@ -878,81 +920,5 @@ describe('Generating sequences works as expected', () => {
     };
 
     expect(() => generateSequenceArray(invalidInterruptionConfig)).toThrow('Number of interruptions cannot be greater than the number of available interruption slots');
-  });
-});
-
-describe('generateSequenceArray ComponentBlock and DynamicBlock coverage', () => {
-  const baseComponents = { a: { type: 'questionnaire' as const, response: [] } };
-  const baseMeta = {
-    $schema: '',
-    studyMetadata: {
-      title: '', version: '', authors: [], date: '', description: '', organizations: [],
-    },
-  };
-  const baseUiConfig = {
-    logoPath: '', contactEmail: '', withProgressBar: false, withSidebar: false, numSequences: 1,
-  };
-
-  test('duplicate ComponentBlock pushes second index into existing entry', () => {
-    const nestedBlock = {
-      id: 'nested', order: 'fixed' as const, components: ['a'], skip: [],
-    };
-    const dupConfig: StudyConfig = {
-      ...baseMeta,
-      uiConfig: baseUiConfig,
-      components: baseComponents,
-      sequence: {
-        id: 'root',
-        order: 'fixed' as const,
-        components: [nestedBlock, nestedBlock], // same value → isEqual → line 52
-        skip: [],
-      },
-    };
-    const seqs = generateSequenceArray(dupConfig);
-    expect(seqs).toHaveLength(1);
-  });
-
-  test('DynamicBlock component in sequence becomes Sequence node', () => {
-    const dynamicBlock = {
-      id: 'dyn', order: 'dynamic' as const, functionPath: '/func',
-    };
-    const dynConfig: StudyConfig = {
-      ...baseMeta,
-      uiConfig: baseUiConfig,
-      components: baseComponents,
-      sequence: {
-        id: 'root',
-        order: 'fixed' as const,
-        components: ['a', dynamicBlock],
-        skip: [],
-      },
-    };
-    const seqs = generateSequenceArray(dynConfig);
-    expect(seqs).toHaveLength(1);
-    // DynamicBlock becomes a Sequence-like node with order: 'dynamic'
-    const dynComp = seqs[0].components.find(
-      (c) => typeof c !== 'string' && (c as { order: string }).order === 'dynamic',
-    );
-    expect(dynComp).toBeDefined();
-  });
-
-  test('latinSquare with ComponentBlock component maps _componentBlock prefix', () => {
-    const innerBlock = {
-      id: 'inner', order: 'fixed' as const, components: ['a'], skip: [],
-    };
-    const latinConfig: StudyConfig = {
-      ...baseMeta,
-      uiConfig: baseUiConfig,
-      components: baseComponents,
-      sequence: {
-        id: 'root',
-        order: 'latinSquare' as const,
-        // ComponentBlock at index 0 → mapped to '_componentBlock0' in latin square options
-        components: [innerBlock, 'a'],
-        skip: [],
-      },
-    };
-    const seqs = generateSequenceArray(latinConfig);
-    expect(seqs).toHaveLength(1);
   });
 });

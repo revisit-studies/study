@@ -1785,7 +1785,6 @@ describe('Parser Warnings', () => {
             { factor: 'm' },
             { factor: 'n' },
           ],
-          component: 'factorComponent',
         },
       },
       sequence: {
@@ -1794,6 +1793,7 @@ describe('Parser Warnings', () => {
           {
             type: 'factor',
             factor: 'zippedFactors',
+            component: 'factorComponent',
           },
         ],
       },
@@ -1859,7 +1859,6 @@ describe('Parser Warnings', () => {
             { factor: 'data' },
             { factor: 'visType' },
           ],
-          component: 'factorComponent',
         },
         zipThenTask: {
           action: 'nest',
@@ -1868,7 +1867,6 @@ describe('Parser Warnings', () => {
             { factor: 'zipDataVis' },
             { factor: 'task' },
           ],
-          component: 'factorComponent',
         },
       },
       sequence: {
@@ -1877,6 +1875,7 @@ describe('Parser Warnings', () => {
           {
             type: 'factor',
             factor: 'zipThenTask',
+            component: 'factorComponent',
           },
         ],
       },
@@ -1902,7 +1901,80 @@ describe('Parser Warnings', () => {
       ]);
     }
     expect(result.components._d2_v2_t2).toMatchObject({
-      parameters: { data: 'd2', visType: 'v2', task: 't2' },
+      parameters: {
+        zipDataVis: 'd2_v2',
+        data: 'd2',
+        visType: 'v2',
+        task: 't2',
+      },
+    });
+  });
+
+  test('passes nested reusable factor parameters into generated component parameters', async () => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2024-01-01',
+        description: 'Test',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'researcher@university.edu',
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: true,
+      },
+      baseComponents: {
+        factorComponent: {
+          type: 'react-component',
+          path: 'test/assets/Factor.tsx',
+          response: [],
+        },
+      },
+      components: {},
+      factors: {
+        data: ['d1', 'd2'],
+        visType: ['v1', 'v2', 'v3'],
+        task: ['t1', 't2', 't3'],
+        zipBlock: {
+          action: 'zip',
+          order: 'fixed',
+          factorsToCross: [
+            { factor: 'data' },
+            { factor: 'visType' },
+          ],
+        },
+        zipZipWithTaskBlock: {
+          action: 'zip',
+          order: 'fixed',
+          factorsToCross: [
+            { factor: 'zipBlock' },
+            { factor: 'task' },
+          ],
+        },
+      },
+      sequence: {
+        type: 'factor',
+        factor: 'zipZipWithTaskBlock',
+        component: 'factorComponent',
+      },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toEqual([]);
+    expect(result.components._d1_v1_t1).toMatchObject({
+      parameters: {
+        zipBlock: 'd1_v1',
+        data: 'd1',
+        visType: 'v1',
+        task: 't1',
+      },
     });
   });
 
@@ -1937,17 +2009,16 @@ describe('Parser Warnings', () => {
         a: {
           action: 'nest',
           factorsToCross: [{ factor: 'b' }],
-          component: 'factorComponent',
         },
         b: {
           action: 'nest',
           factorsToCross: [{ factor: 'a' }],
-          component: 'factorComponent',
         },
       },
       sequence: {
         type: 'factor',
         factor: 'a',
+        component: 'factorComponent',
       },
     };
 
