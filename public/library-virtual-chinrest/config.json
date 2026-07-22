@@ -25,7 +25,7 @@
   "components": {
     "introduction": {
       "type": "markdown",
-      "path": "library-virtual-chinrest/assets/introduction.md",
+      "path": "library-virtual-chinrest/assets/virtual-chinrest.md",
       "response": [],
       "nextButtonLocation": "belowStimulus"
     }
