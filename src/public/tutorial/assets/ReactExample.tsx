@@ -1,17 +1,25 @@
+import { useCallback, useState } from 'react';
 import BrushPlotWrapper from './BrushPlotWrapper';
+import { StimulusParams } from '../../../store/types';
+import { BrushParams, BrushState } from '../../example-brush-interactions/assets/types';
 
-export default function ReactExample() {
+type BrushProvenanceState = { all: { brush: BrushState } };
+
+export default function ReactExample({
+  parameters, setAnswer, provenanceState, useTrrack,
+}: StimulusParams<BrushParams, BrushProvenanceState>) {
+  const [brushState, setBrushState] = useState<BrushState>();
+
+  const onStateChange = useCallback((b: BrushState) => {
+    setBrushState(b);
+
+    setAnswer({
+      answers: {},
+      status: true,
+    });
+  }, [setAnswer]);
+
   return (
-    <BrushPlotWrapper
-      params={{
-        dataset: 'penguin',
-        x: 'Body Mass (g)',
-        y: 'Flipper Length (mm)',
-        category: 'Species',
-        ids: 'id',
-        brushType: 'Slider Selection',
-      }}
-      answers={{}}
-    />
+    <BrushPlotWrapper params={parameters} state={provenanceState?.all.brush ?? brushState} onStateChange={onStateChange} answers={{}} useTrrack={useTrrack} />
   );
 }

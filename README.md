@@ -54,7 +54,7 @@ yarn test
 
 ## Release Instructions
 
-Releasing reVISit.dev happens automatically when a PR is merged into the `main` branch. The name of the pull request should be the title of the release, e.g. `v1.0.0`. Releasing creates a tag with the same name as the PR, but the official GitHub release should be created manually. The `main` branch is protected and requires two reviews before merging.
+Releasing reVISit.dev happens automatically when a PR is merged into the `main` branch. The pull request title must exactly match the release version, e.g. `v1.0.0`. The release workflow updates version-pinned references, creates a release commit, and pushes a tag with the same name as the PR. Pushing the tag automatically creates the official GitHub release with generated release notes. The `main` branch is protected and requires two reviews before merging.
 
 The workflow for release looks as follows:
 Develop features on feature branch
@@ -63,36 +63,6 @@ Dev branch
 | PR (1 per release)
 Main branch
 | Run release workflow on merge
-References are updated and commit is tagged
-
-### Release Follow-Up
-
-- [ ] Verify docs links in the [Study Repository](https://github.com/revisit-studies/study) are up to date and point to the current reVISit documentation pages.
-- [ ] After the release is complete, run the template update process so downstream study templates include the latest release changes.
-
-
-## QC Checklist
-
-### [Study Repository](https://github.com/revisit-studies/study)
-
-**Studies**
-- [ ] Review all studies for any crashes/bugs
-- [ ] Check provenance data (audio, screen, etc.)
-
-**File Download**
-- [ ] JSON export
-- [ ] Tidy download export
-- [ ] Download audio recordings
-- [ ] Download screen recordings
-- [ ] Download configs
-
-**Docs**
-- [ ] Update comments in `store/types.ts`, `parser/types.ts`, `storage/types.ts`, `storage/engines/types.ts`
-- [ ] Update `typedocReadMe.md`
-
-### [Documentation Repository](https://github.com/revisit-studies/reVISit-studies.github.io)
-- [ ] Review docs
-- [ ] Review [library list](https://revisit.dev/docs/designing-studies/plugin-libraries/)
-- [ ] Check for typos / outdated docs
-- [ ] Validate example code
-- [ ] Update screenshots
+References are updated, and a release commit and tag are pushed
+| Tag push and repository dispatch events
+GitHub release is created and downstream builds are triggered

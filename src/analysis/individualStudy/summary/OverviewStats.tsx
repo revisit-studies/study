@@ -2,64 +2,16 @@ import {
   Flex, Paper, Text, Title, Tooltip,
 } from '@mantine/core';
 import { IconAlertTriangle } from '@tabler/icons-react';
-import { useMemo } from 'react';
 import { convertNumberToString } from './utils';
 import { OverviewData } from '../../types';
-import { useStorageEngine } from '../../../storage/storageEngineHooks';
-import { useAsync } from '../../../store/hooks/useAsync';
-import { StorageEngine } from '../../../storage/engines/types';
-
-async function getStoredParticipantCounts(storageEngine: StorageEngine, studyId: string | undefined) {
-  if (!storageEngine || !studyId) return null;
-  return storageEngine.getParticipantsStatusCounts(studyId);
-}
 
 export function OverviewStats({
   overviewData,
-  studyId,
-  showStoredCountMismatch = false,
-  includedParticipants = ['completed', 'inProgress', 'rejected'],
 }: {
   overviewData: OverviewData;
-  studyId?: string;
-  showStoredCountMismatch?: boolean;
-  includedParticipants?: string[];
 }) {
   // Check if there are participants with invalid clean time (e.g. due to a window events bug)
   const hasExcluded = overviewData && overviewData.participantsWithInvalidCleanTimeCount > 0;
-
-  const { storageEngine } = useStorageEngine();
-
-  // Get the stored participant counts from the storage engine
-  const { value: storedCounts } = useAsync(
-    getStoredParticipantCounts,
-    showStoredCountMismatch && storageEngine && studyId ? [storageEngine, studyId] : null,
-  );
-
-  const mismatchDetails = useMemo(() => {
-    if (!showStoredCountMismatch || !storedCounts) return null;
-    return {
-      completed: {
-        current: includedParticipants.includes('completed') ? storedCounts.completed : 0,
-        calculated: overviewData.participantCounts.completed,
-      },
-      inProgress: {
-        current: includedParticipants.includes('inProgress') ? storedCounts.inProgress : 0,
-        calculated: overviewData.participantCounts.inProgress,
-      },
-      rejected: {
-        current: includedParticipants.includes('rejected') ? storedCounts.rejected : 0,
-        calculated: overviewData.participantCounts.rejected,
-      },
-    };
-  }, [overviewData.participantCounts, showStoredCountMismatch, storedCounts, includedParticipants]);
-
-  // Check if the stored participant counts match the calculated participant counts
-  const hasMismatch = (type: 'completed' | 'inProgress' | 'rejected') => {
-    if (!mismatchDetails) return false;
-    const details = mismatchDetails[type];
-    return details.current !== details.calculated;
-  };
 
   return (
     <Paper shadow="sm" p="md" withBorder>
@@ -70,36 +22,15 @@ export function OverviewStats({
           <Text size="sm" c="dimmed">Total Participants</Text>
         </Flex>
         <Flex direction="column">
-          <Flex align="center" gap="xs">
-            {hasMismatch('completed') && mismatchDetails && (
-              <Tooltip label={`Calculated: ${mismatchDetails.completed.calculated}, Stored: ${mismatchDetails.completed.current}`}>
-                <IconAlertTriangle size={16} color="orange" />
-              </Tooltip>
-            )}
-            <Text size="xl" fw="bold" c="green">{overviewData.participantCounts.completed}</Text>
-          </Flex>
+          <Text size="xl" fw="bold" c="green">{overviewData.participantCounts.completed}</Text>
           <Text size="sm" c="dimmed">Completed</Text>
         </Flex>
         <Flex direction="column">
-          <Flex align="center" gap="xs">
-            {hasMismatch('inProgress') && mismatchDetails && (
-              <Tooltip label={`Calculated: ${mismatchDetails.inProgress.calculated}, Stored: ${mismatchDetails.inProgress.current}`}>
-                <IconAlertTriangle size={16} color="orange" />
-              </Tooltip>
-            )}
-            <Text size="xl" fw="bold" c="yellow">{overviewData.participantCounts.inProgress}</Text>
-          </Flex>
+          <Text size="xl" fw="bold" c="yellow">{overviewData.participantCounts.inProgress}</Text>
           <Text size="sm" c="dimmed">In Progress</Text>
         </Flex>
         <Flex direction="column">
-          <Flex align="center" gap="xs">
-            {hasMismatch('rejected') && mismatchDetails && (
-              <Tooltip label={`Calculated: ${mismatchDetails.rejected.calculated}, Stored: ${mismatchDetails.rejected.current}`}>
-                <IconAlertTriangle size={16} color="orange" />
-              </Tooltip>
-            )}
-            <Text size="xl" fw="bold" c="red">{overviewData.participantCounts.rejected}</Text>
-          </Flex>
+          <Text size="xl" fw="bold" c="red">{overviewData.participantCounts.rejected}</Text>
           <Text size="sm" c="dimmed">Rejected</Text>
         </Flex>
         <Flex direction="column">

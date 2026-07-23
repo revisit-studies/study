@@ -45,6 +45,51 @@ type StartupStorageStatus = Pick<StorageEngine, 'getEngine' | 'isConnected'>;
 
 const GENERIC_STARTUP_ERROR = 'There was a problem loading the study.';
 const RESUME_STARTUP_ERROR = 'This study session could not be resumed.';
+const STUDY_LOADING_MESSAGE = 'Loading your study. This may take a moment.';
+const STUDY_LOADING_MESSAGE_DELAY_MS = 1500;
+
+export function StudyLoadingOverlay({ visible }: { visible: boolean }) {
+  const [showMessage, setShowMessage] = useState(false);
+
+  useEffect(() => {
+    if (!visible) {
+      setShowMessage(false);
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setShowMessage(true);
+    }, STUDY_LOADING_MESSAGE_DELAY_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [visible]);
+
+  return (
+    <>
+      <LoadingOverlay visible={visible} />
+      {visible && showMessage && (
+        <Text
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          style={{
+            position: 'fixed',
+            top: 'calc(50% + 40px)',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 1001,
+            width: 'calc(100% - 32px)',
+            maxWidth: 420,
+            textAlign: 'center',
+            pointerEvents: 'none',
+          }}
+        >
+          {STUDY_LOADING_MESSAGE}
+        </Text>
+      )}
+    </>
+  );
+}
 
 export function getScreenOrientationType(screen: Screen) {
   return screen.orientation?.type ?? '';
@@ -463,7 +508,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
   return (
     <>
-      <LoadingOverlay visible={isLoading} />
+      <StudyLoadingOverlay visible={isLoading} />
       {showCompletionCheckError && (
         <Stack
           align="center"

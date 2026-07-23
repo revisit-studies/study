@@ -540,12 +540,14 @@ function RankingPairwiseComponent({
 export function RankingInput({
   response,
   answer,
+  error,
   index: idx,
   disabled,
   enumerateQuestions,
 }: {
   response: RankingResponse;
   answer: { value: Record<string, string> };
+  error?: string | null;
   index: number;
   disabled: boolean;
   enumerateQuestions: boolean;
@@ -559,7 +561,8 @@ export function RankingInput({
     numItems,
   } = response;
 
-  const [error, setError] = useState<string | null>(null);
+  const [localError, setError] = useState<string | null>(null);
+  const displayError = localError || error;
 
   const componentProps = {
     disabled, options, answer, responseId: response.id, numItems,
@@ -571,9 +574,9 @@ export function RankingInput({
         <InputLabel prompt={prompt} required={required} index={idx} enumerateQuestions={enumerateQuestions} infoText={infoText} />
       )}
       {secondaryText && <Text c="dimmed" size="sm" mt={0}>{secondaryText}</Text>}
-      {error && (
+      {displayError && (
         <Text c={required ? 'red' : 'orange'} size="sm" mt="xs">
-          {error}
+          {displayError}
         </Text>
       )}
       <Box mt="md">

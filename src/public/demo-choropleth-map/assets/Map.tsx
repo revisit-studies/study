@@ -3,8 +3,6 @@ import {
 } from 'react';
 import { Button, Tooltip } from '@mantine/core';
 import * as d3 from 'd3';
-import { initializeTrrack } from '@trrack/core';
-
 import { StimulusParams } from '../../../store/types';
 import type { CsvRow, MapParameters, MapState } from './types';
 import {
@@ -26,6 +24,7 @@ function Map({
   parameters,
   setAnswer,
   provenanceState,
+  useTrrack,
 }: StimulusParams<MapParameters, MapState>) {
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -38,17 +37,13 @@ function Map({
   );
 
   // Initialize Trrack instance
-  const trrack = useMemo(
-    () => initializeTrrack({ initialState, registry }),
-    [],
-  );
+  const trrack = useTrrack({ initialState, registry });
 
   // Sync selected states to trrack
   useEffect(() => {
     trrack.apply('select', selectStateAction(selectedStates));
 
     setAnswer({
-      provenanceGraph: trrack.graph.backend,
       status: true,
       answers: { selectedStates },
     });
@@ -59,7 +54,6 @@ function Map({
     trrack.apply('hover', hoverStateAction(hoveredState));
 
     setAnswer({
-      provenanceGraph: trrack.graph.backend,
       status: true,
       answers: { hoveredState },
     });

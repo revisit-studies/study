@@ -26,14 +26,22 @@ import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { useCurrentStep } from '../../routes/utils';
 import { TextOnlyInput } from './TextOnlyInput';
 import { useFetchStylesheet } from '../../utils/fetchStylesheet';
-import { parseStringOptionValue } from '../../utils/stringOptions';
-import { getDefaultFieldValue, usesStandaloneDontKnowField } from './utils';
+import { parseStringOptionValue, parseStringOptions } from '../../utils/stringOptions';
+import {
+  getDefaultFieldValue,
+} from './utils';
+import {
+  generateErrorMessage,
+  REQUIRED_ERROR_MESSAGE,
+  usesStandaloneDontKnowField,
+} from './responseErrors';
 import { CustomResponseField } from '../../store/types';
 
 export function ResponseSwitcher({
   response,
   form,
   storedAnswer,
+  answerFinalized,
   index,
   config,
   dontKnowCheckbox,
@@ -41,10 +49,12 @@ export function ResponseSwitcher({
   disabled,
   field,
   customError,
+  errors,
 }: {
   response: Response;
   form: GetInputPropsReturnType;
   storedAnswer?: StoredAnswer['answer'];
+  answerFinalized?: boolean;
   index: number;
   config: IndividualComponent;
   dontKnowCheckbox?: GetInputPropsReturnType;
@@ -52,6 +62,7 @@ export function ResponseSwitcher({
   disabled?: boolean;
   field?: CustomResponseField;
   customError?: string | null;
+  errors?: boolean;
 }) {
   const studyConfig = useStudyConfig();
   const isAnalysis = useIsAnalysis();
@@ -65,14 +76,16 @@ export function ResponseSwitcher({
   const completed = useStoreSelector((state) => state.completed);
   const usesStandaloneDontKnow = usesStandaloneDontKnowField(response);
 
+  const finalStoredAnswer = isAnalysis || answerFinalized || completed ? storedAnswer : undefined;
+
   // Don't update if we're in analysis mode
-  const ans = useMemo(() => (isAnalysis || (Object.keys(storedAnswer || {}).length > 0 && !nextConfig?.previousButton) || completed ? { value: storedAnswer![response.id] } : form) || { value: undefined }, [isAnalysis, storedAnswer, response.id, form, nextConfig?.previousButton, completed]);
+  const ans = useMemo(() => (isAnalysis || (Object.keys(finalStoredAnswer || {}).length > 0 && !nextConfig?.previousButton) || completed ? { value: finalStoredAnswer![response.id], readOnly: true } : form) || { value: undefined }, [isAnalysis, finalStoredAnswer, response.id, form, nextConfig?.previousButton, completed]);
   const dontKnowValue = usesStandaloneDontKnow
-    ? ((Object.keys(storedAnswer || {}).length > 0 ? { checked: storedAnswer![`${response.id}-dontKnow`] } : dontKnowCheckbox) || { checked: undefined })
+    ? ((Object.keys(finalStoredAnswer || {}).length > 0 ? { checked: finalStoredAnswer![`${response.id}-dontKnow`] } : dontKnowCheckbox) || { checked: undefined })
     : { checked: undefined };
   const dontKnowChecked = !!dontKnowValue.checked;
-  const otherValue = (Object.keys(storedAnswer || {}).length > 0 ? { value: storedAnswer![`${response.id}-other`] } : otherInput) || { value: undefined };
-  const inputDisabled = !!(Object.keys(storedAnswer || {}).length > 0 || disabled || completed);
+  const otherValue = (Object.keys(finalStoredAnswer || {}).length > 0 ? { value: finalStoredAnswer![`${response.id}-other`] } : otherInput) || { value: undefined };
+  const inputDisabled = !!(Object.keys(finalStoredAnswer || {}).length > 0 || disabled || completed);
 
   const [searchParams] = useSearchParams();
 
@@ -147,17 +160,97 @@ export function ResponseSwitcher({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [response.paramCapture, (response as MatrixResponse).questionOptions, (response as SliderResponse).startingValue, response.type, searchParams]);
 
-  const responseStyle = response.style || {};
+  const responseStyle = useMemo(() => response.style || {}, [response.style]);
   const responseDividers = useMemo(() => response.withDivider ?? config?.responseDividers ?? studyConfig.uiConfig.responseDividers, [response, config, studyConfig]);
   const customResponseValue = useMemo<JsonValue | null>(() => (ans.value ?? null) as JsonValue | null, [ans.value]);
+  const validationValues = useMemo(() => ({
+    [response.id]: ans.value,
+    [`${response.id}-dontKnow`]: dontKnowChecked,
+    [`${response.id}-other`]: otherValue.value,
+  }), [response.id, ans.value, dontKnowChecked, otherValue.value]);
+  const errorOptions = useMemo(() => {
+    if (response.type === 'radio' || response.type === 'checkbox' || response.type === 'buttons' || response.type === 'dropdown') {
+      return parseStringOptions(response.options);
+    }
+
+    if (response.type === 'likert') {
+      const startValue = response.start ?? 1;
+      const spacingValue = response.spacing ?? 1;
+      return Array.from({ length: Number(response.numItems) }, (_, idx) => {
+        const value = startValue + (idx * spacingValue);
+        return { label: `${value}`, value: `${value}` };
+      });
+    }
+
+    return undefined;
+  }, [response]);
+  const responseError = useMemo(() => {
+    if (
+      response.type === 'reactive'
+      || response.type === 'custom'
+      || response.type === 'textOnly'
+      || response.type === 'divider'
+      || response.type === 'ranking-sublist'
+      || response.type === 'ranking-categorical'
+      || response.type === 'ranking-pairwise'
+    ) {
+      return null;
+    }
+
+    return generateErrorMessage(
+      response,
+      ans as { value?: number | string | string[] | Record<string, string>; checked?: string[] },
+      errorOptions,
+      { showRequiredErrors: errors, values: validationValues },
+    );
+  }, [response, ans, errorOptions, errors, validationValues]);
+  const rankingError = useMemo(() => {
+    if (
+      response.type !== 'ranking-sublist'
+      && response.type !== 'ranking-categorical'
+      && response.type !== 'ranking-pairwise'
+    ) {
+      return null;
+    }
+
+    return errors
+      && response.required
+      && !dontKnowChecked
+      && Object.keys((ans.value as Record<string, string>) || {}).length === 0
+      ? REQUIRED_ERROR_MESSAGE
+      : null;
+  }, [response, errors, dontKnowChecked, ans.value]);
+  const displayError = response.type === 'custom' ? customError : (
+    response.type === 'ranking-sublist'
+    || response.type === 'ranking-categorical'
+    || response.type === 'ranking-pairwise'
+      ? rankingError
+      : responseError
+  );
+  const responseWrapperStyle = useMemo(() => {
+    if (!displayError) {
+      return responseStyle;
+    }
+
+    const errorColor = response.required === false ? 'orange' : 'red';
+
+    return {
+      ...responseStyle,
+      border: `1px solid var(--mantine-color-${errorColor}-3)`,
+      backgroundColor: `var(--mantine-color-${errorColor}-0)`,
+      borderRadius: 'var(--mantine-radius-md)',
+      padding: 'var(--mantine-spacing-sm)',
+    };
+  }, [displayError, response.required, responseStyle]);
 
   return (
-    <Box mb={responseDividers ? 'xl' : 'lg'} className="response" id={response.id} style={responseStyle}>
+    <Box mb={responseDividers ? 'xl' : 'lg'} className="response" id={response.id} style={responseWrapperStyle}>
       {response.type === 'numerical' && (
       <NumericInput
         response={response}
         disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: number }}
+        error={responseError}
         index={index}
         enumerateQuestions={enumerateQuestions}
       />
@@ -167,6 +260,7 @@ export function ResponseSwitcher({
         response={response}
         disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string }}
+        error={responseError}
         index={index}
         enumerateQuestions={enumerateQuestions}
       />
@@ -176,6 +270,7 @@ export function ResponseSwitcher({
         response={response}
         disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string }}
+        error={responseError}
         index={index}
         enumerateQuestions={enumerateQuestions}
       />
@@ -185,6 +280,7 @@ export function ResponseSwitcher({
         response={response}
         disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string }}
+        error={responseError}
         index={index}
         enumerateQuestions={enumerateQuestions}
       />
@@ -194,6 +290,7 @@ export function ResponseSwitcher({
         response={response}
         disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string }}
+        error={responseError}
         index={index}
         enumerateQuestions={enumerateQuestions}
       />
@@ -203,6 +300,7 @@ export function ResponseSwitcher({
         response={response}
         disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: number }}
+        error={responseError}
         index={index}
         enumerateQuestions={enumerateQuestions}
       />
@@ -212,6 +310,7 @@ export function ResponseSwitcher({
         response={response}
         disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string }}
+        error={responseError}
         index={index}
         enumerateQuestions={enumerateQuestions}
         otherValue={otherValue}
@@ -222,6 +321,7 @@ export function ResponseSwitcher({
         response={response}
         disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string[] }}
+        error={responseError}
         index={index}
         enumerateQuestions={enumerateQuestions}
         otherValue={otherValue}
@@ -233,6 +333,7 @@ export function ResponseSwitcher({
         response={response}
         disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: Record<string, string> }}
+        error={rankingError}
         index={index}
         enumerateQuestions={enumerateQuestions}
       />
@@ -250,6 +351,7 @@ export function ResponseSwitcher({
         disabled={isDisabled}
         response={response}
         answer={ans as { value: Record<string, string> }}
+        error={responseError}
         index={index}
         enumerateQuestions={enumerateQuestions}
       />
@@ -259,6 +361,7 @@ export function ResponseSwitcher({
         response={response}
         disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string }}
+        error={responseError}
         index={index}
         enumerateQuestions={enumerateQuestions}
       />

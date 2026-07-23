@@ -1,5 +1,7 @@
 import type { ResponseBlockLocation } from '../parser/types';
-import type { StoredAnswer, StoredProvenance } from './types';
+import type {
+  ProvenanceTraversalEvent, StoredAnswer, StoredProvenance, TrrackedProvenance,
+} from './types';
 
 export const PROVENANCE_LOCATIONS: ResponseBlockLocation[] = [
   'aboveStimulus',
@@ -18,6 +20,58 @@ export function createEmptyProvenance(): StoredProvenance {
     belowStimulus: undefined,
     sidebar: undefined,
     stimulus: undefined,
+  };
+}
+
+export function getProvenanceTraversalEvents(
+  provenance: TrrackedProvenance,
+): ProvenanceTraversalEvent[] {
+  if (!Array.isArray(provenance.traversalEvents)) {
+    return [];
+  }
+
+  return provenance.traversalEvents
+    .filter((event): event is ProvenanceTraversalEvent => (
+      typeof event === 'object'
+      && event !== null
+      && typeof event.nodeId === 'string'
+      && event.nodeId in provenance.nodes
+      && typeof event.createdOn === 'number'
+      && Number.isFinite(event.createdOn)
+    ))
+    .sort((first, second) => first.createdOn - second.createdOn);
+}
+
+export function appendProvenanceTraversalEvent(
+  previousProvenance: TrrackedProvenance | undefined,
+  incomingProvenance: TrrackedProvenance,
+  observedAt: number,
+): TrrackedProvenance {
+  const isSameGraph = previousProvenance?.root === incomingProvenance.root;
+  const previousEvents = isSameGraph && previousProvenance
+    ? getProvenanceTraversalEvents(previousProvenance)
+    : [];
+  const incomingEvents = getProvenanceTraversalEvents(incomingProvenance);
+  const traversalEvents = incomingEvents.length >= previousEvents.length
+    ? incomingEvents
+    : previousEvents;
+  const currentNodeId = incomingProvenance.current as string;
+  const currentNode = incomingProvenance.nodes?.[currentNodeId];
+
+  if (!currentNode || traversalEvents.at(-1)?.nodeId === currentNodeId) {
+    return traversalEvents.length > 0
+      ? { ...incomingProvenance, traversalEvents }
+      : incomingProvenance;
+  }
+
+  const isNewNode = !isSameGraph || !previousProvenance?.nodes[currentNodeId];
+  const eventTime = isNewNode ? currentNode.createdOn : observedAt;
+  const previousEventTime = traversalEvents.at(-1)?.createdOn ?? Number.NEGATIVE_INFINITY;
+  const createdOn = Math.max(eventTime, previousEventTime + 1);
+
+  return {
+    ...incomingProvenance,
+    traversalEvents: [...traversalEvents, { nodeId: currentNodeId, createdOn }],
   };
 }
 

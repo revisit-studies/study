@@ -4,14 +4,13 @@ import {
 import {
   ChangeEvent, useMemo,
 } from 'react';
-import { MatrixResponse, ParsedStringOption } from '../../parser/types';
+import { MatrixResponse, ParsedMatrixQuestionOption, ParsedStringOption } from '../../parser/types';
 import { useStoreDispatch, useStoreActions } from '../../store/store';
 import checkboxClasses from './css/Checkbox.module.css';
 import radioClasses from './css/Radio.module.css';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { InputLabel } from './InputLabel';
 import { OptionLabel } from './OptionLabel';
-import { generateErrorMessage } from './utils';
 import { parseStringOptions } from '../../utils/stringOptions';
 import { getMatrixAnswerOptions, isMatrixDontKnowValue, MATRIX_DONT_KNOW_OPTION } from '../../utils/responseOptions';
 
@@ -110,12 +109,14 @@ export function MatrixInput({
   answer,
   index,
   disabled,
+  error,
   enumerateQuestions,
 }: {
   response: MatrixResponse;
   answer: { value?: Record<string, string> };
   index: number;
   disabled: boolean;
+  error?: string | null;
   enumerateQuestions: boolean;
 }) {
   const { setMatrixAnswersRadio, setMatrixAnswersCheckbox } = useStoreActions();
@@ -133,8 +134,8 @@ export function MatrixInput({
     [response],
   );
 
-  const questions = useMemo(
-    () => parseStringOptions(response.questionOptions),
+  const questions = useMemo<ParsedMatrixQuestionOption[]>(
+    () => parseStringOptions(response.questionOptions) as ParsedMatrixQuestionOption[],
     [response.questionOptions],
   );
   const questionsByValue = useMemo(
@@ -187,10 +188,9 @@ export function MatrixInput({
     dispatchCheckboxUpdate(option.value, isChecked);
   };
 
-  const error = generateErrorMessage(response, normalizedAnswer);
-
   const _n = _choices.length;
   const _m = orderedQuestions.length;
+  const hasRightQuestionLabels = questions.some((question) => question.rightLabel);
   const dontKnowIndex = _choices.findIndex(
     (choice) => isMatrixDontKnowValue(choice.value) || isMatrixDontKnowValue(choice.label),
   );
@@ -202,7 +202,7 @@ export function MatrixInput({
       <Box
         style={{
           display: 'grid',
-          gridTemplateColumns: 'auto 1fr',
+          gridTemplateColumns: hasRightQuestionLabels ? 'auto 1fr auto' : 'auto 1fr',
           gridTemplateRows: 'auto 1fr',
         }}
         m="md"
@@ -269,6 +269,14 @@ export function MatrixInput({
             </Box>
           ))}
         </div>
+        {hasRightQuestionLabels && (
+          <div
+            style={{
+              borderBottom: '1px solid var(--mantine-color-dark-0)',
+              borderLeft: '1px solid var(--mantine-color-dark-0)',
+            }}
+          />
+        )}
         {/* Row Headers */}
         <div
           style={{
@@ -295,7 +303,10 @@ export function MatrixInput({
               miw={140}
               maw={400}
             >
-              <OptionLabel label={(questionsByValue[questionKey]?.label || questionKey)} infoText={questionsByValue[questionKey]?.infoText} />
+              <OptionLabel
+                label={(questionsByValue[questionKey]?.leftLabel || questionsByValue[questionKey]?.label || questionKey)}
+                infoText={questionsByValue[questionKey]?.infoText}
+              />
             </Box>
           ))}
         </div>
@@ -359,6 +370,42 @@ export function MatrixInput({
             </div>
           ))}
         </div>
+        {hasRightQuestionLabels && (
+          <div
+            style={{
+              height: '100%',
+              display: 'grid',
+              gridTemplateRows: `repeat(${_m}, 1fr)`,
+            }}
+          >
+            {orderedQuestions.map((questionKey, idx) => (
+              <Box
+                key={`question-${idx}-right-label`}
+                style={{
+                  height: '80px',
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'safe center',
+                  justifyContent: 'start',
+                  borderLeft: '1px solid var(--mantine-color-dark-0)',
+                  backgroundColor: `${(idx + 1) % 2 === 0 ? 'var(--mantine-color-gray-2)' : 'white'}`,
+                  overflowY: 'auto',
+                }}
+                ta="left"
+                p="sm"
+                miw={140}
+                maw={400}
+              >
+                {questionsByValue[questionKey]?.rightLabel && (
+                  <OptionLabel
+                    label={questionsByValue[questionKey].rightLabel}
+                    infoText={questionsByValue[questionKey]?.infoText}
+                  />
+                )}
+              </Box>
+            ))}
+          </div>
+        )}
       </Box>
       {error && (
         <Text c={required ? 'red' : 'orange'} size="sm" mt="xs">

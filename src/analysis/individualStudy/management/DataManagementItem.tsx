@@ -1,7 +1,9 @@
 import {
   Text, LoadingOverlay, Box, Title, Flex, Modal, TextInput, Button, Tooltip, Space, Table,
 } from '@mantine/core';
-import { useCallback, useEffect, useState } from 'react';
+import {
+  useCallback, useEffect, useRef, useState,
+} from 'react';
 import { IconTrashX, IconRefresh, IconPencil } from '@tabler/icons-react';
 import { openConfirmModal } from '@mantine/modals';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
@@ -9,6 +11,10 @@ import { showNotification, RevisitNotification } from '../../../utils/notificati
 import { DownloadButtons } from '../../../components/downloader/DownloadButtons';
 import { ActionResponse, SnapshotDocContent } from '../../../storage/engines/types';
 import { ParticipantDataWithStatus } from '../../../storage/types';
+import {
+  SnapshotParticipantCounts,
+  calculateSnapshotParticipantCounts,
+} from '../../../storage/engines/utils/snapshotParticipantCounts';
 
 type SnapshotAction =
   | { type: 'create', archive: boolean }
@@ -16,6 +22,41 @@ type SnapshotAction =
   | { type: 'restore', snapshot: string }
   | { type: 'deleteSnapshot', snapshot: string }
   | { type: 'deleteLive' };
+
+function getSnapshotStudyId(snapshotKey: string) {
+  return snapshotKey.slice(snapshotKey.indexOf('-') + 1);
+}
+
+function getSnapshotDateKey(snapshotName: string): string | null {
+  const regex = /-snapshot-(.+)$/;
+  const match = snapshotName.match(regex);
+
+  return match?.[1] ?? null;
+}
+
+function getDateFromSnapshotName(snapshotName: string): string | null {
+  return getSnapshotDateKey(snapshotName)?.replace('T', ' ') ?? null;
+}
+
+function compareSnapshotsByDate(
+  [leftKey]: [string, SnapshotDocContent[string]],
+  [rightKey]: [string, SnapshotDocContent[string]],
+) {
+  const leftDate = getSnapshotDateKey(leftKey);
+  const rightDate = getSnapshotDateKey(rightKey);
+
+  if (!leftDate && !rightDate) {
+    return leftKey.localeCompare(rightKey);
+  }
+  if (!leftDate) {
+    return 1;
+  }
+  if (!rightDate) {
+    return -1;
+  }
+
+  return rightDate.localeCompare(leftDate);
+}
 
 export function DataManagementItem({ studyId, refresh }: { studyId: string, refresh: () => Promise<ParticipantDataWithStatus[]> }) {
   const [modalArchiveOpened, setModalArchiveOpened] = useState<boolean>(false);
@@ -32,6 +73,10 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
 
   const [loading, setLoading] = useState<boolean>(false);
   const [snapshotListLoading, setSnapshotListLoading] = useState<boolean>(false);
+  const [snapshotCountStatus, setSnapshotCountStatus] = useState<Record<string, 'loading' | 'failed'>>({});
+  const snapshotCountBackfills = useRef(new Set<string>());
+  const snapshotCountBackfillQueue = useRef(Promise.resolve());
+  const snapshotCountBackfillGeneration = useRef(0);
 
   const { storageEngine } = useStorageEngine();
 
@@ -49,6 +94,83 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
   useEffect(() => {
     refreshSnapshots();
   }, [refreshSnapshots]);
+
+  useEffect(() => () => {
+    snapshotCountBackfillGeneration.current += 1;
+  }, []);
+
+  useEffect(() => {
+    snapshotCountBackfillGeneration.current += 1;
+    snapshotCountBackfills.current.clear();
+    setSnapshotCountStatus({});
+  }, [storageEngine, studyId]);
+
+  useEffect(() => {
+    if (!storageEngine) {
+      return undefined;
+    }
+
+    const backfillGeneration = snapshotCountBackfillGeneration.current;
+
+    Object.entries(snapshots).forEach(([snapshotKey, snapshotItem]) => {
+      if (snapshotItem.participantCounts || snapshotCountBackfills.current.has(snapshotKey)) {
+        return;
+      }
+
+      snapshotCountBackfills.current.add(snapshotKey);
+      setSnapshotCountStatus((previous) => ({ ...previous, [snapshotKey]: 'loading' }));
+
+      snapshotCountBackfillQueue.current = snapshotCountBackfillQueue.current
+        .catch(() => undefined)
+        .then(async () => {
+          if (snapshotCountBackfillGeneration.current !== backfillGeneration) {
+            return;
+          }
+
+          const participants = await storageEngine.getAllParticipantsData(getSnapshotStudyId(snapshotKey));
+          const participantCounts = calculateSnapshotParticipantCounts(participants);
+
+          if (snapshotCountBackfillGeneration.current !== backfillGeneration) {
+            return;
+          }
+
+          await storageEngine.updateSnapshotParticipantCounts(studyId, snapshotKey, participantCounts);
+
+          if (snapshotCountBackfillGeneration.current !== backfillGeneration) {
+            return;
+          }
+
+          setSnapshots((previousSnapshots) => {
+            if (!previousSnapshots[snapshotKey]) {
+              return previousSnapshots;
+            }
+
+            return {
+              ...previousSnapshots,
+              [snapshotKey]: {
+                ...previousSnapshots[snapshotKey],
+                participantCounts,
+              },
+            };
+          });
+          setSnapshotCountStatus((previous) => {
+            const remaining = { ...previous };
+            delete remaining[snapshotKey];
+            return remaining;
+          });
+        })
+        .catch((error) => {
+          console.error(`Failed to backfill participant counts for snapshot ${snapshotKey}:`, error);
+          if (snapshotCountBackfillGeneration.current !== backfillGeneration) {
+            return;
+          }
+          snapshotCountBackfills.current.delete(snapshotKey);
+          setSnapshotCountStatus((previous) => ({ ...previous, [snapshotKey]: 'failed' }));
+        });
+    });
+
+    return undefined;
+  }, [snapshots, storageEngine, studyId]);
 
   if (!storageEngine) {
     return null;
@@ -123,20 +245,24 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
     onConfirm: () => handleRestoreSnapshot(snapshot),
   });
 
-  const getDateFromSnapshotName = (snapshotName: string): string | null => {
-    const regex = /-snapshot-(.+)$/;
-    const match = snapshotName.match(regex);
+  const fetchParticipants = async (snapshotName: string) => (
+    await storageEngine.getAllParticipantsData(getSnapshotStudyId(snapshotName))
+  );
 
-    if (match && match[1]) {
-      const dateStuff = match[1];
-      return dateStuff.replace('T', ' ');
+  const renderParticipantCount = (
+    snapshotKey: string,
+    participantCounts: SnapshotParticipantCounts | undefined,
+    countKey: keyof SnapshotParticipantCounts,
+  ) => {
+    if (participantCounts) {
+      return participantCounts[countKey];
     }
-    return null;
-  };
 
-  const fetchParticipants = async (snapshotName: string) => {
-    const strippedFilename = snapshotName.slice(snapshotName.indexOf('-') + 1);
-    return await storageEngine.getAllParticipantsData(strippedFilename);
+    if (snapshotCountStatus[snapshotKey] === 'failed') {
+      return 'Unavailable';
+    }
+
+    return 'Loading...';
   };
 
   return (
@@ -230,19 +356,26 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
                   <Table.Tr>
                     <Table.Th>Snapshot Name</Table.Th>
                     <Table.Th>Date Created</Table.Th>
+                    <Table.Th>Completed</Table.Th>
+                    <Table.Th>In Progress</Table.Th>
+                    <Table.Th>Rejected</Table.Th>
                     <Table.Th>Actions</Table.Th>
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
-                  {Object.entries(snapshots).map(
+                  {Object.entries(snapshots).sort(compareSnapshotsByDate).map(
                     ([key, snapshotItem]) => (
                       <Table.Tr key={key}>
                         <Table.Td>{snapshotItem.name}</Table.Td>
                         <Table.Td>{getDateFromSnapshotName(key)}</Table.Td>
+                        <Table.Td>{renderParticipantCount(key, snapshotItem.participantCounts, 'completed')}</Table.Td>
+                        <Table.Td>{renderParticipantCount(key, snapshotItem.participantCounts, 'inProgress')}</Table.Td>
+                        <Table.Td>{renderParticipantCount(key, snapshotItem.participantCounts, 'rejected')}</Table.Td>
                         <Table.Td>
                           <Flex>
                             <Tooltip label="Rename">
                               <Button
+                                aria-label={`Rename snapshot ${snapshotItem.name}`}
                                 color="green"
                                 variant="light"
                                 px={4}
@@ -254,6 +387,7 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
                             </Tooltip>
                             <Tooltip label="Restore Snapshot">
                               <Button
+                                aria-label={`Restore snapshot ${snapshotItem.name}`}
                                 color="blue"
                                 variant="light"
                                 px={4}
@@ -266,6 +400,7 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
 
                             <Tooltip label="Delete Snapshot">
                               <Button
+                                aria-label={`Delete snapshot ${snapshotItem.name}`}
                                 color="red"
                                 px={4}
                                 variant="light"

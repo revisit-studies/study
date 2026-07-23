@@ -1,5 +1,5 @@
 import {
-  JSX, useMemo,
+  JSX, useMemo, useState,
 } from 'react';
 import * as d3 from 'd3';
 import {
@@ -8,10 +8,15 @@ import {
 import { ParticipantData } from '../../../storage/types';
 import { SingleTaskLabelLines } from './SingleTaskLabelLines';
 import { SingleTask } from './SingleTask';
-import { StoredAnswer, StudyConfig } from '../../../parser/types';
-import { componentAnswersAreCorrect } from '../../../utils/correctAnswer';
+import { StudyConfig } from '../../../parser/types';
+import { getComponentAnswerStatus } from '../../../utils/correctAnswer';
 import { parseConditionParam } from '../../../utils/handleConditionLogic';
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
+import {
+  compareReplayAnswerEntries,
+  orderedReplayAnswerEntries,
+  ReplayTaskOrder,
+} from './taskOrdering';
 
 const LABEL_GAP = 25;
 const CHARACTER_SIZE = 8;
@@ -20,15 +25,11 @@ const margin = {
   left: 20, top: 20, right: 20, bottom: 20,
 };
 
-const sortedTaskNames = (a: [string, StoredAnswer], b: [string, StoredAnswer]) => {
-  const splitA = a[1].trialOrder.split('_');
-  const splitB = b[1].trialOrder.split('_');
-  return splitA[0] === splitB[0] ? +splitA[1] - +splitB[1] : +splitA[0] - +splitB[0];
-};
-
 export function AllTasksTimeline({
-  participantData, width, studyId, studyConfig, maxLength,
-}: { participantData: ParticipantData, width: number, studyId: string, studyConfig: StudyConfig | undefined, maxLength: number | undefined }) {
+  participantData, width, studyId, studyConfig, maxLength, taskOrder = 'sequence',
+}: { participantData: ParticipantData, width: number, studyId: string, studyConfig: StudyConfig | undefined, maxLength: number | undefined, taskOrder?: ReplayTaskOrder }) {
+  const [hoveredTaskIdentifier, setHoveredTaskIdentifier] = useState<string | null>(null);
+
   const percentComplete = useMemo(() => {
     const incompleteEntries = Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0);
 
@@ -52,17 +53,25 @@ export function AllTasksTimeline({
   }, [participantData.answers, percentComplete, width]);
 
   const maxHeight = useMemo(() => {
-    const sortedEntries = Object.entries(participantData.answers || {}).filter((answer) => !!(answer[1].startTime)).sort((a, b) => a[1].startTime - b[1].startTime);
+    const incompleteEntries = Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0).sort(compareReplayAnswerEntries);
+    const incompleteEntryIndexes = new Map(incompleteEntries.map(([identifier], index) => [identifier, index]));
+    const sortedEntries = orderedReplayAnswerEntries(participantData.answers, taskOrder);
 
     let currentHeight = 0;
     let _maxHeight = 0;
 
     sortedEntries.forEach((entry, i) => {
-      const [_name, answer] = entry;
+      const [identifier, answer] = entry;
 
+      // Check if the previous entry overlaps with the current entry
       const prev = i > 0 ? sortedEntries[i - currentHeight - 1] : null;
+      const prevScale = prev && prev[1].startTime ? xScale : incompleteXScale;
+      const prevStart = prev ? prev[1].startTime ? prev[1].startTime : incompleteEntryIndexes.get(prev[0]) ?? 0 : 0;
+      const scale = answer.startTime === 0 ? incompleteXScale : xScale;
+      const scaleStart = answer.startTime ? answer.startTime : incompleteEntryIndexes.get(identifier) ?? 0;
 
-      if (prev && prev[0].length * (CHARACTER_SIZE + 1) + xScale(prev[1].startTime) > xScale(answer.startTime)) {
+      // If the previous entry overlaps with the current entry , increase the height
+      if (prev && prev[0].length * (CHARACTER_SIZE + 1) + prevScale(prevStart) > scale(scaleStart)) {
         currentHeight += 1;
       } else {
         currentHeight = 0;
@@ -74,7 +83,7 @@ export function AllTasksTimeline({
     });
 
     return (_maxHeight + 1) * LABEL_GAP + margin.top + margin.bottom;
-  }, [participantData.answers, xScale]);
+  }, [incompleteXScale, participantData.answers, taskOrder, xScale]);
 
   const conditionParam = useMemo(() => {
     const parsedConditions = parseConditionParam(participantData.conditions ?? participantData.searchParams?.condition);
@@ -82,26 +91,25 @@ export function AllTasksTimeline({
   }, [participantData.conditions, participantData.searchParams?.condition]);
 
   // Creating labels for the tasks
-  const tasks: { line: JSX.Element, label: JSX.Element }[] = useMemo(() => {
+  const tasks: { identifier: string, line: JSX.Element, label: JSX.Element }[] = useMemo(() => {
     let currentHeight = 0;
 
-    const incompleteEntries = Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0).sort(sortedTaskNames);
-
-    const sortedEntries = Object.entries(participantData.answers || {}).filter((answer) => !!(answer[1].startTime)).sort((a, b) => a[1].startTime - b[1].startTime);
-
-    const combined = [...sortedEntries, ...incompleteEntries];
+    const incompleteEntries = Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0).sort(compareReplayAnswerEntries);
+    const incompleteEntryIndexes = new Map(incompleteEntries.map(([identifier], index) => [identifier, index]));
+    const combined = orderedReplayAnswerEntries(participantData.answers, taskOrder);
 
     const allElements = combined.map((entry, i) => {
       const scale = entry[1].startTime === 0 ? incompleteXScale : xScale;
 
-      const [name, answer] = entry;
+      const [identifier, answer] = entry;
 
       const prev = i > 0 ? combined[i - currentHeight - 1] : null;
 
       const prevScale = prev && prev[1].startTime ? xScale : incompleteXScale;
-      const prevStart = prev ? prev[1].startTime ? prev[1].startTime : incompleteEntries.indexOf(prev) : 0;
-      const scaleStart = answer.startTime ? answer.startTime : incompleteEntries.indexOf(entry);
-      const scaleEnd = answer.endTime > 0 ? answer.endTime : incompleteEntries.indexOf(entry) + 1;
+      const prevStart = prev ? prev[1].startTime ? prev[1].startTime : incompleteEntryIndexes.get(prev[0]) ?? 0 : 0;
+      const incompleteEntryIndex = incompleteEntryIndexes.get(identifier) ?? 0;
+      const scaleStart = answer.startTime ? answer.startTime : incompleteEntryIndex;
+      const scaleEnd = answer.endTime > 0 ? answer.endTime : incompleteEntryIndex + 1;
 
       if (prev && prev[0].length * (CHARACTER_SIZE + 1) + prevScale(prevStart) > scale(scaleStart)) {
         currentHeight += 1;
@@ -109,23 +117,23 @@ export function AllTasksTimeline({
         currentHeight = 0;
       }
 
-      const split = name.split('_');
-      const joinExceptLast = split.slice(0, split.length - 1).join('_');
-
-      const component = studyConfig?.components[joinExceptLast];
+      const component = studyConfig?.components[answer.componentName];
       const resolvedComponent = component && studyConfig
         ? studyComponentToIndividualComponent(component, studyConfig)
         : undefined;
-      const isCorrect = componentAnswersAreCorrect(answer.answer, answer.correctAnswer, resolvedComponent?.response);
-      const hasCorrect = !!((resolvedComponent && resolvedComponent.correctAnswer) || answer.correctAnswer.length > 0);
+      const correctAnswers = answer.correctAnswer.length > 0
+        ? answer.correctAnswer
+        : resolvedComponent?.correctAnswer;
+      const answerStatus = getComponentAnswerStatus(answer, correctAnswers, resolvedComponent?.response);
       const hasAudio = resolvedComponent?.recordAudio ?? studyConfig?.uiConfig?.recordAudio ?? false;
       const hasScreenRecording = resolvedComponent?.recordScreen ?? studyConfig?.uiConfig?.recordScreen ?? false;
 
       return {
-        line: <SingleTaskLabelLines key={name} labelHeight={currentHeight * LABEL_GAP} height={maxHeight} xScale={scale} scaleStart={scaleStart} />,
+        identifier,
+        line: <SingleTaskLabelLines key={identifier} labelHeight={currentHeight * LABEL_GAP} height={maxHeight} xScale={scale} scaleStart={scaleStart} />,
         label: (
           <Tooltip
-            key={`${name}-tooltip`}
+            key={`${identifier}-tooltip`}
             withinPortal
             position="bottom-start"
             px={4}
@@ -148,22 +156,21 @@ export function AllTasksTimeline({
             )}
           >
             <g>
-              <SingleTask incomplete={answer.startTime === 0} isCorrect={isCorrect} hasCorrect={hasCorrect} hasAudio={hasAudio} hasScreenRecording={hasScreenRecording} key={name} labelHeight={currentHeight * LABEL_GAP} height={maxHeight} name={name} xScale={scale} scaleStart={scaleStart} scaleEnd={scaleEnd} trialOrder={answer.trialOrder} participantId={participantData.participantId} studyId={studyId} condition={conditionParam} />
+              <SingleTask incomplete={answer.startTime === 0} answerStatus={answerStatus} hasAudio={hasAudio} hasScreenRecording={hasScreenRecording} key={identifier} labelHeight={currentHeight * LABEL_GAP} height={maxHeight} identifier={identifier} xScale={scale} scaleStart={scaleStart} scaleEnd={scaleEnd} trialOrder={answer.trialOrder} participantId={participantData.participantId} studyId={studyId} condition={conditionParam} isHovered={hoveredTaskIdentifier === identifier} isDimmed={hoveredTaskIdentifier !== null && hoveredTaskIdentifier !== identifier} onHover={() => setHoveredTaskIdentifier(identifier)} onHoverEnd={() => setHoveredTaskIdentifier(null)} />
             </g>
           </Tooltip>),
       };
     });
 
     return allElements;
-  }, [participantData.answers, participantData.participantId, incompleteXScale, xScale, studyConfig, maxHeight, studyId, conditionParam]);
+  }, [participantData.answers, participantData.participantId, incompleteXScale, xScale, studyConfig, maxHeight, studyId, conditionParam, hoveredTaskIdentifier, taskOrder]);
 
   // Find entries of someone browsing away. Show them
   const browsedAway = useMemo(() => {
     const sortedEntries = Object.entries(participantData.answers || {}).sort((a, b) => a[1].startTime - b[1].startTime);
 
     return sortedEntries.map((entry) => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const [name, answer] = entry;
+      const [, answer] = entry;
 
       const browsedAwayList: [number, number][] = [];
       let currentBrowsedAway: [number, number] = [-1, -1];
@@ -185,17 +192,21 @@ export function AllTasksTimeline({
       }
 
       return (
-        browsedAwayList.map((browse, i) => <Tooltip withinPortal key={i} label="Browsed away"><rect x={xScale(browse[0])} width={xScale(browse[1]) - xScale(browse[0])} y={maxHeight - 5} height={10} /></Tooltip>)
+        browsedAwayList.map((browse, i) => <Tooltip withinPortal key={i} label="Browsed away"><rect x={xScale(browse[0])} width={Math.max(0, xScale(browse[1]) - xScale(browse[0]))} y={maxHeight - 5} height={10} /></Tooltip>)
       );
     });
   }, [xScale, maxHeight, participantData.answers]);
 
+  const hoveredTask = tasks.find((task) => task.identifier === hoveredTaskIdentifier);
+  const nonHoveredTasks = tasks.filter((task) => task.identifier !== hoveredTaskIdentifier);
+
   return (
     <Center>
       <Stack gap={15} style={{ width: '100%' }}>
-        <svg style={{ width, height: maxHeight, overflow: 'visible' }}>
+        <svg onMouseLeave={() => setHoveredTaskIdentifier(null)} style={{ width, height: maxHeight, overflow: 'visible' }}>
           {tasks.map((t) => t.line)}
-          {tasks.map((t) => t.label)}
+          {nonHoveredTasks.map((t) => t.label)}
+          {hoveredTask?.label}
           {browsedAway}
         </svg>
       </Stack>

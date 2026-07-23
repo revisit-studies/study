@@ -23,7 +23,6 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
   useEffect(() => {
     setAnswer({
       status: screenCapturing && (studyHasAudioRecording ? audioCapturingSuccess : true),
-      provenanceGraph: undefined,
       answers: {
         screenRecordingPermission: screenCapturing,
       },

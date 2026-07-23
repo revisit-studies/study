@@ -23,10 +23,13 @@ import { StorageEngine } from '../../storage/engines/types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
 import { useAsync } from '../../store/hooks/useAsync';
+import { useAuth } from '../../store/hooks/useAuth';
 import { getCleanedDuration } from '../../utils/getCleanedDuration';
 import { showNotification } from '../../utils/notifications';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 import { parseConditionParam } from '../../utils/handleConditionLogic';
+import { getAnswerIdentifier, getParticipantQualitativeCodes } from './qualitativeCodes';
+import type { DownloadedQualitativeCodes } from './qualitativeCodes';
 
 const OPTIONAL_COMMON_PROPS = [
   'condition',
@@ -49,6 +52,9 @@ const OPTIONAL_COMMON_PROPS = [
   'responseMin',
   'responseMax',
   'configHash',
+  'metaData',
+  'participantTags',
+  'taskTags',
 ] as const;
 
 const REQUIRED_PROPS = [
@@ -102,30 +108,44 @@ export function download(graph: string, filename: string) {
 function participantDataToRows(
   participant: ParticipantDataWithStatus,
   properties: Property[],
-  studyConfig: StudyConfig,
+  studyConfig?: StudyConfig,
   transcripts?: Record<string, string | null>,
+  qualitativeCodes?: DownloadedQualitativeCodes,
 ): [TidyRow[], string[]] {
   const percentComplete = ((Object.entries(participant.answers).filter(([_, entry]) => entry.endTime !== -1).length / (Object.entries(participant.answers).length)) * 100).toFixed(2);
   const newHeaders = new Set<string>();
   const participantConditions = parseConditionParam(participant.conditions ?? participant.searchParams?.condition);
   const conditionValue = participantConditions.length > 0 ? participantConditions.join(',') : 'default';
+  const metaData = JSON.stringify(participant.metadata);
+  const participantQualitativeTags = JSON.stringify(qualitativeCodes?.participantTags ?? []);
 
   return [[
-    {
+    ...(properties.includes('participantTags') ? [{
       participantId: participant.participantId,
       trialId: 'participantTags',
       trialOrder: null,
       responseId: 'participantTags',
-      answer: JSON.stringify(participant.participantTags),
+      answer: participantQualitativeTags,
       ...(properties.includes('condition') ? { condition: conditionValue } : {}),
       ...(properties.includes('stage') ? { stage: participant.stage } : {}),
-    },
+    }] : []),
+    ...(properties.includes('metaData') ? [{
+      participantId: participant.participantId,
+      trialId: 'metaData',
+      trialOrder: null,
+      responseId: 'metaData',
+      answer: metaData,
+      ...(properties.includes('condition') ? { condition: conditionValue } : {}),
+      ...(properties.includes('stage') ? { stage: participant.stage } : {}),
+    }] : []),
     ...Object.values(participant.answers).map((trialAnswer) => {
       // Get the whole component, including the base component if there is inheritance
       const trialId = trialAnswer.componentName;
       const { trialOrder } = trialAnswer;
-      const trialConfig = studyConfig.components[trialId];
-      const completeComponent = studyComponentToIndividualComponent(trialConfig, studyConfig);
+      const trialConfig = studyConfig?.components?.[trialId];
+      const completeComponent = trialConfig && studyConfig ? studyComponentToIndividualComponent(trialConfig, studyConfig) : undefined;
+      const identifier = getAnswerIdentifier(trialAnswer);
+      const taskQualitativeTags = JSON.stringify(qualitativeCodes?.taskTags[identifier] ?? []);
 
       const duration = trialAnswer.endTime === -1 ? undefined : trialAnswer.endTime - trialAnswer.startTime;
       const cleanedDuration = getCleanedDuration(trialAnswer);
@@ -144,7 +164,7 @@ function participantDataToRows(
           newHeaders.add(`parameters_${_key}`);
         });
 
-        const response = completeComponent.response.find((resp) => resp.id === key);
+        const response = completeComponent?.response.find((resp) => resp.id === key);
         if (properties.includes('condition')) {
           tidyRow.condition = conditionValue;
         }
@@ -167,10 +187,10 @@ function participantDataToRows(
           tidyRow.percentComplete = percentComplete;
         }
         if (properties.includes('description')) {
-          tidyRow.description = completeComponent.description;
+          tidyRow.description = completeComponent?.description;
         }
         if (properties.includes('instruction')) {
-          tidyRow.instruction = completeComponent.instruction;
+          tidyRow.instruction = completeComponent?.instruction;
         }
         if (properties.includes('responsePrompt')) {
           tidyRow.responsePrompt = response?.prompt;
@@ -178,12 +198,14 @@ function participantDataToRows(
         if (properties.includes('answer')) {
           tidyRow.answer = typeof value === 'object' ? JSON.stringify(value) : value;
         }
+        if (properties.includes('taskTags')) {
+          tidyRow.taskTags = taskQualitativeTags;
+        }
         if (properties.includes('transcript')) {
-          const identifier = trialAnswer.identifier || `${trialId}_${trialOrder}`;
           tidyRow.transcript = transcripts?.[`${participant.participantId}_${identifier}`] ?? undefined;
         }
         if (properties.includes('correctAnswer')) {
-          const configCorrectAnswer = completeComponent.correctAnswer?.find((ans) => ans.id === key)?.answer;
+          const configCorrectAnswer = completeComponent?.correctAnswer?.find((ans) => ans.id === key)?.answer;
           const answerCorrectAnswer = trialAnswer.correctAnswer.find((ans) => ans.id === key)?.answer;
           const correctAnswer = answerCorrectAnswer || configCorrectAnswer;
           tidyRow.correctAnswer = typeof correctAnswer === 'object' ? JSON.stringify(correctAnswer) : correctAnswer;
@@ -201,7 +223,7 @@ function participantDataToRows(
           tidyRow.cleanedDuration = cleanedDuration;
         }
         if (properties.includes('meta')) {
-          tidyRow.meta = JSON.stringify(completeComponent.meta, null, 2);
+          tidyRow.meta = completeComponent?.meta ? JSON.stringify(completeComponent.meta, null, 2) : undefined;
         }
         if (properties.includes('responseMin')) {
           tidyRow.responseMin = response?.type === 'numerical' ? response.min : undefined;
@@ -240,21 +262,27 @@ function participantDataToRows(
     }).flat()], Array.from(newHeaders)];
 }
 
-async function getTableData(
+function hasStoredStudyConfig(config: StudyConfig | null | undefined): config is StudyConfig {
+  return config ? Object.keys(config).length > 0 : false;
+}
+
+export async function getTableData(
   selectedProperties: Property[],
   data: ParticipantDataWithStatus[],
   storageEngine: StorageEngine | undefined,
   studyId: string,
   hasAudio?: boolean,
+  authEmail = 'temp',
 ) {
   if (!storageEngine) {
-    return { header: [], rows: [] };
+    return { header: [], rows: [], missingConfigCount: 0 };
   }
 
   const combinedProperties = [...REQUIRED_PROPS, ...selectedProperties];
 
   const allConfigHashes = [...new Set(data.map((part) => part.participantConfigHash))];
   const allConfigs = await storageEngine.getAllConfigsFromHash(allConfigHashes, studyId);
+  const participantsMissingConfig = data.filter((participant) => !hasStoredStudyConfig(allConfigs[participant.participantConfigHash]));
 
   const transcripts: Record<string, string | null> = {};
   const transcriptAvailable = storageEngine.getEngine() === 'firebase' && !!hasAudio;
@@ -264,7 +292,7 @@ async function getTableData(
       .filter((answer) => ((answer?.endTime ?? -1) > 0) || ((answer?.startTime ?? -1) > 0))
       .map((answer) => ({ answer, participantId: p.participantId })));
     const tasks = allAnswers.map(({ answer, participantId }) => async () => {
-      const identifier = answer.identifier || `${answer.componentName}_${answer.trialOrder}`;
+      const identifier = getAnswerIdentifier(answer);
       const key = `${participantId}_${identifier}`;
 
       try {
@@ -282,9 +310,22 @@ async function getTableData(
     const legacyStudyCondition = (p as { studyCondition?: string | string[] }).studyCondition;
     return parseConditionParam(p.conditions ?? legacyStudyCondition ?? p.searchParams?.condition).length > 0;
   });
-  const header = combinedProperties.filter((p) => p !== 'condition' || hasCondition);
+  const header = combinedProperties
+    .filter((p) => p !== 'condition' || hasCondition)
+    .filter((p) => p !== 'metaData')
+    .filter((p) => p !== 'participantTags');
   const allData = await Promise.all(data.map(async (participant) => {
-    const partDataToRows = await participantDataToRows(participant, combinedProperties, allConfigs[participant.participantConfigHash], transcripts);
+    const participantConfig = allConfigs[participant.participantConfigHash];
+    const qualitativeCodes = selectedProperties.includes('participantTags') || selectedProperties.includes('taskTags')
+      ? await getParticipantQualitativeCodes(storageEngine, authEmail, participant)
+      : undefined;
+    const partDataToRows = await participantDataToRows(
+      participant,
+      combinedProperties,
+      hasStoredStudyConfig(participantConfig) ? participantConfig : undefined,
+      transcripts,
+      qualitativeCodes,
+    );
 
     return partDataToRows;
   }));
@@ -292,9 +333,21 @@ async function getTableData(
   const rows = allData.map((partData) => partData[0]);
   const newHeaders = new Set(allData.map((partData) => partData[1]).flat());
 
-  const flatRows = rows.flat().sort((a, b) => (a !== b ? a.participantId.localeCompare(b.participantId) : a.trialOrder - b.trialOrder));
+  // Sort rows by participantId and trialOrder
+  const flatRows = rows.flat().sort((a, b) => {
+    const participantIdCompare = a.participantId.localeCompare(b.participantId);
+    if (participantIdCompare) {
+      return participantIdCompare;
+    }
 
-  return { header: [...header, ...newHeaders], rows: flatRows };
+    return Number(a.trialOrder ?? -1) - Number(b.trialOrder ?? -1);
+  });
+
+  return {
+    header: [...header, ...newHeaders],
+    rows: flatRows,
+    missingConfigCount: participantsMissingConfig.length,
+  };
 }
 
 export function DownloadTidy({
@@ -315,6 +368,7 @@ export function DownloadTidy({
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [showTranscriptWarning, setShowTranscriptWarning] = useState(false);
+  const auth = useAuth();
 
   const [selectedProperties, setSelectedProperties] = useState<Array<OptionalProperty>>([
     'condition',
@@ -333,11 +387,12 @@ export function DownloadTidy({
   ]);
 
   const { storageEngine } = useStorageEngine();
-  const { value: tableData, status: tableDataStatus, error: tableError } = useAsync(getTableData, [selectedProperties, data, storageEngine, studyId, hasAudio]);
+  const { value: tableData, status: tableDataStatus, error: tableError } = useAsync(getTableData, [selectedProperties, data, storageEngine, studyId, hasAudio, auth.user.user?.email || 'temp']);
   const isFirebase = storageEngine?.getEngine() === 'firebase';
   const transcriptAvailable = isFirebase && !!hasAudio;
   const selectedParticipantCount = data.length;
   const warnLargeTranscriptDownload = selectedProperties.includes('transcript') && selectedParticipantCount > 50;
+  const missingConfigCount = tableData?.missingConfigCount ?? 0;
 
   const downloadTidy = useCallback(async (skipWarning = false) => {
     if (!tableData) {
@@ -440,16 +495,43 @@ export function DownloadTidy({
           selected participants, so it may take a while.
         </Alert>
       )}
+      {missingConfigCount > 0 && (
+        <Alert
+          color="orange"
+          icon={<IconAlertTriangle />}
+          mb="sm"
+          styles={{
+            icon: {
+              alignSelf: 'center',
+            },
+          }}
+        >
+          <Flex direction="column">
+            <Text size="sm">
+              Stored study configs could not be loaded for
+              {' '}
+              {missingConfigCount}
+              {' '}
+              selected
+              {' '}
+              {missingConfigCount === 1 ? 'participant' : 'participants'}
+              {'. '}
+              Config-derived columns, such as description and instruction, may be blank for those rows.
+            </Text>
+            <Text size="sm">
+              To restore the current config, reload the study page. However, historical configs that differ from the current config must be restored from a storage snapshot or backup.
+            </Text>
+          </Flex>
+        </Alert>
+      )}
       {isDownloading && (
         <Progress value={downloadProgress} animated />
       )}
       <Box>
-        <Text size="sm" fw={500} mb="xs">
-          <Flex align="center" gap="xs">
-            <IconLayoutColumns size={16} />
-            Optional columns:
-          </Flex>
-        </Text>
+        <Flex align="center" gap="xs" mb="xs">
+          <IconLayoutColumns size={16} />
+          <Text size="sm" fw={500}>Optional columns:</Text>
+        </Flex>
         <Flex wrap="wrap" gap="4px">
           {OPTIONAL_COMMON_PROPS.filter((prop) => prop !== 'transcript' || transcriptAvailable).map((prop) => {
             const isSelected = selectedProperties.includes(prop);

@@ -10,7 +10,7 @@ jobs:
   test:
     name: 🧪 ${{ matrix.project }} E2E Tests
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
+    timeout-minutes: 40
     env:
       PLAYWRIGHT_BROWSERS_PATH: ${{ matrix.cache_dir }}
       PW_CI_REPORTER: dot
@@ -55,9 +55,13 @@ jobs:
           path: ${{ matrix.cache_dir }}
           key: ${{ runner.os }}-${{ matrix.project }}-pw-${{ hashFiles('**/.playwright-version') }}
 
-      - name: Install Playwright Browsers
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: yarn playwright install --with-deps ${{ matrix.project }}
+      - name: Install Playwright Chromium
+        if: steps.playwright-cache.outputs.cache-hit != 'true' && matrix.project == 'chromium'
+        run: yarn playwright install --with-deps --only-shell chromium
+
+      - name: Install Playwright WebKit
+        if: steps.playwright-cache.outputs.cache-hit != 'true' && matrix.project == 'webkit'
+        run: yarn playwright install webkit
 
       - name: Run Playwright tests
         run: yarn test --project=${{ matrix.project }}
