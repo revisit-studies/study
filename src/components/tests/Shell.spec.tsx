@@ -64,6 +64,10 @@ vi.mock('../ErrorLoadingConfig', () => ({
   ErrorLoadingConfig: () => <div data-testid="error-loading-config" />,
 }));
 
+vi.mock('../StartupErrorScreen', () => ({
+  StartupErrorScreen: () => <div role="alert">startup fallback</div>,
+}));
+
 vi.mock('../../ResourceNotFound', () => ({
   ResourceNotFound: () => <div data-testid="resource-not-found" />,
 }));
@@ -214,6 +218,16 @@ describe('Shell', () => {
     expect(getByTestId('loading-overlay')).toBeDefined();
   });
 
+  test('shows startup fallback when study config loading rejects', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+    vi.mocked(getStudyConfig).mockRejectedValue(new Error('study config failed'));
+
+    const { getByRole } = render(<Shell globalConfig={globalConfig} />);
+
+    await waitFor(() => expect(getByRole('alert').textContent).toBe('startup fallback'));
+    expect(consoleSpy).toHaveBeenCalledWith('Error loading study config:', expect.any(Error));
+  });
+
   test('shows ResourceNotFound for an invalid study ID', async () => {
     vi.mocked(resolveConfigKey).mockReturnValue(null);
     const { getByTestId } = await act(async () => render(<Shell globalConfig={globalConfig} />));
@@ -361,5 +375,31 @@ describe('Shell', () => {
     await waitFor(() => expect(vi.mocked(studyStoreCreator)).toHaveBeenCalled(), { timeout: 3000 });
 
     consoleSpy.mockRestore();
+  });
+
+  test('shows startup fallback when participant-store recovery also fails', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+    vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
+    vi.mocked(studyStoreCreator).mockRejectedValueOnce(new Error('fallback store failed'));
+
+    mockStorageEngine = {
+      initializeStudyDb: vi.fn().mockRejectedValue(new Error('participant init failed')),
+      isConnected: vi.fn().mockReturnValue(true),
+      getEngine: vi.fn().mockReturnValue('firebase'),
+      getModes: vi.fn().mockResolvedValue({
+        developmentModeEnabled: false,
+        dataSharingEnabled: false,
+        dataCollectionEnabled: true,
+      }),
+      peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
+    };
+
+    const { getByRole } = render(<Shell globalConfig={globalConfig} />);
+
+    await waitFor(() => expect(getByRole('alert').textContent).toBe('startup fallback'));
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'Error initializing fallback study store:',
+      expect.any(Error),
+    );
   });
 });
