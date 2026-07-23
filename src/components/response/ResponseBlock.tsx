@@ -600,13 +600,14 @@ export function ResponseBlock({
   }, [currentCheckAnswer, identifier, isAnalysis, savedCheckAnswer, setCheckAnswerResult, storeDispatch]);
 
   useEffect(() => {
-    // Do not save the check answer result if in analysis, if the buttons are not shown in this location, if there is no current check answer, or if the current check answer has the same number of attempts used as the stored answer
-    if (isAnalysis || !showBtnsInLocation || currentCheckAnswer === undefined || currentCheckAnswer.attemptsUsed === storeAnswers[identifier]?.checkAnswer?.attemptsUsed) {
+    const storedAnswerForIdentifier = storeAnswers[identifier];
+    // Dynamic block navigation briefly uses a loading identifier with no stored answer.
+    if (isAnalysis || !showBtnsInLocation || currentCheckAnswer === undefined || storedAnswerForIdentifier === undefined || currentCheckAnswer.attemptsUsed === storedAnswerForIdentifier.checkAnswer?.attemptsUsed) {
       return;
     }
 
     const draftAnswer = {
-      ...storeAnswers[identifier],
+      ...storedAnswerForIdentifier,
       answer: getAnswersFromAllLocations(trialValidation[identifier]),
       checkAnswer: currentCheckAnswer,
     };

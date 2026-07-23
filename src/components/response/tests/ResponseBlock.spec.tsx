@@ -17,7 +17,7 @@ import { responseAnswerIsCorrect } from '../../../utils/correctAnswer';
 // ── mocks ────────────────────────────────────────────────────────────────────
 
 const {
-  mockStoredAnswerData, capturedNextButtonProps, capturedSwitcherProps, mockIsAnalysis, mockNavigate, mockSaveAnswers, mockAnswerField,
+  mockStoredAnswerData, capturedNextButtonProps, capturedSwitcherProps, mockIsAnalysis, mockCurrentIdentifier, mockNavigate, mockSaveAnswers, mockAnswerField,
 } = vi.hoisted(() => ({
   mockStoredAnswerData: {
     formOrder: { response: ['q1'] },
@@ -34,6 +34,7 @@ const {
     answerFinalized: undefined as boolean | undefined,
   },
   mockIsAnalysis: { value: false },
+  mockCurrentIdentifier: { value: 'trial1_0' },
   mockNavigate: vi.fn(),
   mockSaveAnswers: vi.fn(() => Promise.resolve()),
   mockAnswerField: {
@@ -130,7 +131,7 @@ vi.mock('../../../store/hooks/useWindowEvents', () => ({
 
 vi.mock('../../../routes/utils', () => ({
   useCurrentStep: vi.fn(() => 0),
-  useCurrentIdentifier: vi.fn(() => 'trial1_0'),
+  useCurrentIdentifier: vi.fn(() => mockCurrentIdentifier.value),
   useStudyId: vi.fn(() => 'test-study'),
 }));
 
@@ -287,6 +288,7 @@ beforeEach(() => {
   capturedSwitcherProps.storedAnswer = undefined;
   capturedSwitcherProps.answerFinalized = undefined;
   mockIsAnalysis.value = false;
+  mockCurrentIdentifier.value = 'trial1_0';
   mockNavigate.mockClear();
   mockSaveAnswers.mockClear();
   mockAnswerField.values = {};
@@ -639,6 +641,24 @@ describe('ResponseBlock check-answer state persistence', () => {
     const studyStore = await makeStudyStore({}, { trial1_0: makeStoredAnswer({ identifier: 'trial1_0', checkAnswer: persisted }) });
     render(withStore(studyStore, <ResponseBlock config={feedbackConfig} location="belowStimulus" />));
     expect(mockSaveAnswers).not.toHaveBeenCalled();
+  });
+
+  test('does not persist check-answer state while a dynamic component is loading', async () => {
+    const loadingIdentifier = 'dynamicBlock_1___dynamicLoading_0';
+    mockCurrentIdentifier.value = loadingIdentifier;
+    const studyStore = await makeStudyStore();
+    studyStore.store.dispatch(studyStore.actions.setCheckAnswerResult({
+      identifier: loadingIdentifier,
+      attemptsUsed: 1,
+      correct: true,
+      responses: { q1: true },
+    }));
+
+    render(withStore(studyStore, <ResponseBlock config={feedbackConfig} location="belowStimulus" />));
+    await act(async () => {});
+
+    expect(studyStore.store.getState().answers).not.toHaveProperty('undefined');
+    expect(studyStore.store.getState().answers).not.toHaveProperty(loadingIdentifier);
   });
 
   test('redirects to the training-failed page after the final failed attempt', async () => {
