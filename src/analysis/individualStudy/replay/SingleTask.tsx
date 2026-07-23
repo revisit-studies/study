@@ -20,22 +20,24 @@ const ICON_GAP = 2;
 
 function taskFill({
   incomplete,
-  hasCorrect,
-  isCorrect,
+  answerStatus,
 }: {
   incomplete: boolean,
-  hasCorrect: boolean,
-  isCorrect: boolean,
+  answerStatus: ComponentAnswerStatus | null,
 }) {
   if (incomplete) {
     return '#e9ecef';
   }
 
-  if (!hasCorrect) {
-    return 'lightgray';
+  if (answerStatus === 'correct') {
+    return '#bfe8c6';
   }
 
-  return isCorrect ? '#bfe8c6' : '#f3c1c1';
+  if (answerStatus === 'incorrect') {
+    return '#f3c1c1';
+  }
+
+  return 'lightgray';
 }
 
 export function SingleTask({
@@ -114,7 +116,7 @@ export function SingleTask({
     >
       <rect
         opacity={isDimmed ? 0.45 : 1}
-        fill={taskFill({ incomplete, hasCorrect, isCorrect })}
+        fill={taskFill({ incomplete, answerStatus })}
         stroke={isHovered ? 'cornflowerblue' : undefined}
         strokeWidth={isHovered ? 3 : 0}
         x={xScale(scaleStart) + TASK_GAP}
