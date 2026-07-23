@@ -227,6 +227,8 @@ export function AllTasksTimeline({
     });
   }, [xScale, maxHeight, participantData.answers, timelineMode]);
 
+  const hoveredTask = tasks.find((task) => task.identifier === hoveredTaskIdentifier);
+
   return (
     <Box
       ref={timelineContainerRef}
@@ -240,6 +242,8 @@ export function AllTasksTimeline({
     >
       <svg
         onMouseLeave={() => setHoveredTaskIdentifier(null)}
+        onPointerLeave={() => setHoveredTaskIdentifier(null)}
+        onPointerCancel={() => setHoveredTaskIdentifier(null)}
         style={{
           width: timelineWidth,
           height: maxHeight,
@@ -248,8 +252,9 @@ export function AllTasksTimeline({
         }}
       >
         {tasks.map((t) => t.line)}
-        {tasks.map((t) => t.label)}
+        {tasks.filter((t) => t.identifier !== hoveredTaskIdentifier).map((t) => t.label)}
         {browsedAway}
+        {hoveredTask?.label}
       </svg>
     </Box>
 
