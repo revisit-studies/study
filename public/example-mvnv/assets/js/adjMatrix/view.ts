@@ -819,7 +819,7 @@ class View {
     let xOffset = 10;
 
     if (this.controller.configuration.adjMatrix.edgeBars && this.controller.configuration.isMultiEdge) {
-      let legendFile = 'assets/adj-matrix/';
+      let legendFile = 'adj-matrix/';
       legendFile += this.controller.configuration.isMultiEdge ? 'nestedSquaresLegend' : 'edgeBarsLegendSingleEdge';
       legendFile += '.png';
       d3.select('#legend-svg').append('g').append('svg:image')
