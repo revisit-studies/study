@@ -521,7 +521,14 @@ describe('studyStoreCreator', () => {
       component: 'intro', funcName: 'myFunc', index: 5, funcIndex: 0, parameters: {}, correctAnswer: [],
     }));
     expect(store.getState().funcSequence.myFunc).toEqual(['intro']);
-    expect(store.getState().answers.myFunc_5_intro_0).toBeDefined();
+    expect(store.getState().answers.myFunc_5_intro_0).toMatchObject({
+      identifier: 'myFunc_5_intro_0',
+      componentName: 'intro',
+      trialOrder: '5_0',
+      optionOrders: {},
+      questionOrders: {},
+      formOrder: [],
+    });
     store.dispatch(actions.pushToFuncSequence({
       component: 'intro', funcName: 'myFunc', index: 5, funcIndex: 0, parameters: {}, correctAnswer: [],
     }));

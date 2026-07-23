@@ -20,7 +20,7 @@ const {
   mockStoredAnswerData, capturedNextButtonProps, capturedSwitcherProps, mockIsAnalysis, mockCurrentIdentifier, mockNavigate, mockSaveAnswers, mockAnswerField,
 } = vi.hoisted(() => ({
   mockStoredAnswerData: {
-    formOrder: { response: ['q1'] },
+    formOrder: { response: ['q1'] } as { response: string[] } | undefined,
     questionOrders: {},
     optionOrders: {},
     responseSubmitAttempted: undefined as boolean | undefined,
@@ -156,7 +156,7 @@ vi.mock('../ResponseSwitcher', () => ({
     capturedSwitcherProps.storedAnswer = storedAnswer;
     capturedSwitcherProps.answerFinalized = answerFinalized;
     return (
-      <div data-testid={`switcher-${response.type}`}>
+      <div data-testid={`switcher-${response.type}`} data-response-id={response.id}>
         {response.type}
         <input data-testid={`control-${response.id}`} />
       </div>
@@ -312,6 +312,31 @@ describe('ResponseBlock', () => {
     const { container } = render(withStore(studyStore, <ResponseBlock config={baseConfig} location="belowStimulus" />));
     const html = container.innerHTML;
     expect(html).toContain('switcher-shortText');
+  });
+
+  test('uses configured response order when a legacy answer has no formOrder', async () => {
+    mockStoredAnswerData.formOrder = undefined;
+    const studyStore = await makeStudyStore();
+    const { container } = render(withStore(studyStore, <ResponseBlock config={baseConfig} location="belowStimulus" />));
+
+    expect(container.querySelector('[data-response-id="q1"]')).not.toBeNull();
+  });
+
+  test('preserves persisted randomized response order', async () => {
+    mockStoredAnswerData.formOrder = { response: ['q2', 'q1'] };
+    const config = {
+      ...baseConfig,
+      response: [
+        ...baseConfig.response!,
+        {
+          type: 'shortText', id: 'q2', prompt: 'Question 2', required: false,
+        },
+      ],
+    } as IndividualComponent;
+    const studyStore = await makeStudyStore();
+    const { container } = render(withStore(studyStore, <ResponseBlock config={config} location="belowStimulus" />));
+
+    expect(Array.from(container.querySelectorAll('[data-response-id]')).map((element) => element.getAttribute('data-response-id'))).toEqual(['q2', 'q1']);
   });
 
   test('shows NextButton when location matches nextButtonLocation', async () => {
@@ -616,13 +641,25 @@ describe('ResponseBlock check-answer state persistence', () => {
   test('saves the graded draft to Redux', async () => {
     vi.mocked(responseAnswerIsCorrect).mockReturnValue(false);
     mockAnswerField.values = { q1: '42' };
-    const { container, store } = await renderWithStore(
-      <ResponseBlock config={feedbackConfig} location="belowStimulus" />,
-    );
+    const persistedOptionOrders = { q1: [{ label: 'Forty two', value: '42' }] };
+    const persistedQuestionOrders = { matrix: ['row2', 'row1'] };
+    const studyStore = await makeStudyStore({}, {
+      trial1_0: makeStoredAnswer({
+        identifier: 'trial1_0',
+        optionOrders: persistedOptionOrders,
+        questionOrders: persistedQuestionOrders,
+        formOrder: { response: ['q1'] },
+      }),
+    });
+    const { container } = render(withStore(studyStore, <ResponseBlock config={feedbackConfig} location="belowStimulus" />));
     await act(async () => { fireEvent.click(findButton(container, 'Check Answer')); });
-    expect(store.getState().answers.trial1_0).toMatchObject({
+    expect(studyStore.store.getState().answers.trial1_0).toMatchObject({
+      identifier: 'trial1_0',
       answer: { q1: '42' },
       checkAnswer: { attemptsUsed: 1, correct: false, responses: { q1: false } },
+      optionOrders: persistedOptionOrders,
+      questionOrders: persistedQuestionOrders,
+      formOrder: { response: ['q1'] },
     });
   });
 
@@ -659,6 +696,47 @@ describe('ResponseBlock check-answer state persistence', () => {
 
     expect(studyStore.store.getState().answers).not.toHaveProperty('undefined');
     expect(studyStore.store.getState().answers).not.toHaveProperty(loadingIdentifier);
+  });
+
+  test('does not persist check-answer state into a restored dynamic loading record', async () => {
+    const loadingIdentifier = 'dynamicBlock_1___dynamicLoading_0';
+    mockCurrentIdentifier.value = loadingIdentifier;
+    const malformedLoadingAnswer = {
+      answer: {},
+      checkAnswer: undefined,
+    } as unknown as StoredAnswer;
+    const studyStore = await makeStudyStore({}, { [loadingIdentifier]: malformedLoadingAnswer });
+    studyStore.store.dispatch(studyStore.actions.setCheckAnswerResult({
+      identifier: loadingIdentifier,
+      attemptsUsed: 1,
+      correct: true,
+      responses: { q1: true },
+    }));
+
+    render(withStore(studyStore, <ResponseBlock config={feedbackConfig} location="belowStimulus" />));
+    await act(async () => {});
+
+    expect(studyStore.store.getState().answers).not.toHaveProperty('undefined');
+    expect(studyStore.store.getState().answers[loadingIdentifier]).toEqual(malformedLoadingAnswer);
+    expect(mockSaveAnswers).not.toHaveBeenCalled();
+  });
+
+  test('repairs a missing internal identifier from the resolved route key', async () => {
+    vi.mocked(responseAnswerIsCorrect).mockReturnValue(false);
+    const answerWithoutIdentifier = {
+      ...makeStoredAnswer({ identifier: 'trial1_0' }),
+      identifier: undefined,
+    } as unknown as StoredAnswer;
+    const studyStore = await makeStudyStore({}, { trial1_0: answerWithoutIdentifier });
+    const { container } = render(withStore(studyStore, <ResponseBlock config={feedbackConfig} location="belowStimulus" />));
+
+    await act(async () => { fireEvent.click(findButton(container, 'Check Answer')); });
+
+    expect(studyStore.store.getState().answers).not.toHaveProperty('undefined');
+    expect(studyStore.store.getState().answers.trial1_0.identifier).toBe('trial1_0');
+    expect(mockSaveAnswers).toHaveBeenLastCalledWith(expect.objectContaining({
+      trial1_0: expect.objectContaining({ identifier: 'trial1_0' }),
+    }));
   });
 
   test('redirects to the training-failed page after the final failed attempt', async () => {
