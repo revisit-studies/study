@@ -5,6 +5,7 @@ import {
 import { parseTrialOrder } from '../../utils/parseTrialOrder';
 import { getComponent } from '../../utils/handleComponentInheritance';
 import { decryptIndex } from '../../utils/encryptDecryptIndex';
+import { findFuncBlock } from '../../utils/getSequenceFlatMap';
 import type { IndividualComponent } from '../../parser/types';
 import { makeStudyConfig } from '../../tests/utils';
 import {
@@ -86,6 +87,7 @@ beforeEach(() => {
   vi.mocked(parseTrialOrder).mockReturnValue({ step: null, funcIndex: null });
   vi.mocked(getComponent).mockReturnValue({ type: 'markdown', path: '/test.md', response: [] } as IndividualComponent);
   vi.mocked(decryptIndex).mockImplementation((x: string) => parseInt(x, 10));
+  vi.mocked(findFuncBlock).mockReturnValue(undefined);
 });
 
 describe('useStudyId', () => {
@@ -183,7 +185,9 @@ describe('useCurrentComponent', () => {
     mockParams = { studyId: 'test-study', index: '0', funcIndex: '0' };
     mockFlatSequence = ['myFunc', 'end'];
     mockAnswers = { myFunc_0_CompA_0: { componentName: 'CompA' } };
-    vi.mocked(getComponent).mockReturnValue(null);
+    vi.mocked(getComponent).mockImplementation((name) => (name === 'CompA'
+      ? { type: 'markdown', path: 'comp-a.md', response: [] } as IndividualComponent
+      : null));
     vi.mocked(decryptIndex).mockReturnValue(0);
     const { result } = renderHook(() => useCurrentComponent());
     expect(result.current).toBe('CompA');
@@ -196,9 +200,47 @@ describe('useCurrentComponent', () => {
       myFunc_0_CompEleven_11: { componentName: 'CompEleven' },
       myFunc_0_CompOne_1: { componentName: 'CompOne' },
     };
-    vi.mocked(getComponent).mockReturnValue(null);
+    vi.mocked(getComponent).mockImplementation((name) => (name === 'CompEleven' || name === 'CompOne'
+      ? { type: 'markdown', path: 'component.md', response: [] } as IndividualComponent
+      : null));
     const { result } = renderHook(() => useCurrentComponent());
     expect(result.current).toBe('CompOne');
+  });
+
+  test('recreates a dynamic iteration when its only stored answer is malformed', async () => {
+    mockParams = { studyId: 'test-study', index: '0', funcIndex: '0' };
+    mockFlatSequence = ['myFunc', 'end'];
+    mockAnswers = {
+      myFunc_0___dynamicLoading_0: { componentName: undefined },
+    };
+    vi.mocked(findFuncBlock).mockReturnValue({
+      id: 'myFunc',
+      order: 'dynamic',
+      functionPath: 'demo-dynamic/assets/dynamic.tsx',
+    });
+    vi.mocked(getComponent).mockImplementation((name) => (name === 'HSLColorCodes'
+      ? { type: 'react-component', path: 'demo-dynamic/assets/HSL.tsx', response: [] } as IndividualComponent
+      : null));
+
+    const { result } = renderHook(() => useCurrentComponent());
+
+    expect(result.current).toBe('HSLColorCodes');
+  });
+
+  test('skips a malformed answer before a valid configured answer for the same iteration', async () => {
+    mockParams = { studyId: 'test-study', index: '0', funcIndex: '0' };
+    mockFlatSequence = ['myFunc', 'end'];
+    mockAnswers = {
+      myFunc_0___dynamicLoading_0: { componentName: undefined },
+      myFunc_0_CompA_0: { componentName: 'CompA' },
+    };
+    vi.mocked(getComponent).mockImplementation((name) => (name === 'CompA'
+      ? { type: 'markdown', path: 'comp-a.md', response: [] } as IndividualComponent
+      : null));
+
+    const { result } = renderHook(() => useCurrentComponent());
+
+    expect(result.current).toBe('CompA');
   });
 });
 

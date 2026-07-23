@@ -33,7 +33,7 @@ export function ButtonsInput({
   } = response;
 
   const storedAnswer = useStoredAnswer();
-  const optionOrders: Record<string, ParsedStringOption[]> = useMemo(() => (storedAnswer ? storedAnswer.optionOrders : {}), [storedAnswer]);
+  const optionOrders: Record<string, ParsedStringOption[]> = useMemo(() => storedAnswer?.optionOrders ?? {}, [storedAnswer]);
 
   const orderedOptions = useMemo(
     () => parseStringOptions(optionOrders[response.id] || options),

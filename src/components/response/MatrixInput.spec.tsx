@@ -35,9 +35,7 @@ vi.mock('../../store/store', () => ({
 }));
 
 vi.mock('../../store/hooks/useStoredAnswer', () => ({
-  useStoredAnswer: () => ({
-    questionOrders: {},
-  }),
+  useStoredAnswer: () => ({}),
 }));
 
 vi.mock('./InputLabel', () => ({

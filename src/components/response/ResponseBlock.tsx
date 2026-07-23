@@ -103,7 +103,7 @@ export function ResponseBlock({
     ? formOrders.response
       .map((id) => config?.response?.find((r) => r.id === id))
       .filter((r): r is Response => r !== undefined)
-    : []
+    : config?.response ?? []
   ), [config?.response, formOrders]);
 
   const responses = useMemo(() => allResponses.filter((r) => (r.location ? r.location === location : location === 'belowStimulus')), [allResponses, location]);
@@ -600,13 +600,18 @@ export function ResponseBlock({
   }, [currentCheckAnswer, identifier, isAnalysis, savedCheckAnswer, setCheckAnswerResult, storeDispatch]);
 
   useEffect(() => {
-    // Do not save the check answer result if in analysis, if the buttons are not shown in this location, if there is no current check answer, or if the current check answer has the same number of attempts used as the stored answer
-    if (isAnalysis || !showBtnsInLocation || currentCheckAnswer === undefined || currentCheckAnswer.attemptsUsed === storeAnswers[identifier]?.checkAnswer?.attemptsUsed) {
+    const storedAnswerForIdentifier = storeAnswers[identifier];
+    // Dynamic block navigation briefly uses a loading identifier. Never persist
+    // against it, even if a malformed loading record was restored from storage.
+    if (isAnalysis || !showBtnsInLocation || identifier.includes('__dynamicLoading') || currentCheckAnswer === undefined || storedAnswerForIdentifier === undefined || currentCheckAnswer.attemptsUsed === storedAnswerForIdentifier.checkAnswer?.attemptsUsed) {
       return;
     }
 
     const draftAnswer = {
-      ...storeAnswers[identifier],
+      ...storedAnswerForIdentifier,
+      // The resolved route key is authoritative for legacy records that were
+      // persisted without their internal identifier.
+      identifier,
       answer: getAnswersFromAllLocations(trialValidation[identifier]),
       checkAnswer: currentCheckAnswer,
     };
