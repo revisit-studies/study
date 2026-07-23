@@ -157,6 +157,26 @@ describe('StepsPanel tree walking', () => {
 
     expect(getDynamicComponentsForBlock(block, participantAnswers, 2)).toEqual(['generatedA']);
   });
+
+  test('does not include malformed dynamic answers without component names', () => {
+    const block: Sequence = {
+      id: 'dynamicDrawing',
+      order: 'dynamic',
+      orderPath: 'root-0',
+      components: [],
+      skip: [],
+      interruptions: [],
+    };
+
+    const participantAnswers = {
+      dynamicDrawing_2_generatedA_0: {
+        componentName: 'generatedA',
+      } as StoredAnswer,
+      dynamicDrawing_2___dynamicLoading_1: {} as StoredAnswer,
+    };
+
+    expect(getDynamicComponentsForBlock(block, participantAnswers, 2)).toEqual(['generatedA']);
+  });
 });
 
 describe('StepsPanel skip summaries', () => {
