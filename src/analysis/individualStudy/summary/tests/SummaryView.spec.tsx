@@ -7,9 +7,6 @@ import { cleanup } from '@testing-library/react';
 import { StudyConfig } from '../../../../parser/types';
 import { ParticipantDataWithStatus } from '../../../../storage/types';
 import { OverviewData } from '../../../types';
-import { useStorageEngine } from '../../../../storage/storageEngineHooks';
-import { useAsync } from '../../../../store/hooks/useAsync';
-import { makeStorageEngine } from '../../../../tests/utils';
 import { createMockStudyConfig } from '../../../tests/testUtils';
 import { SummaryView } from '../SummaryView';
 import { OverviewStats } from '../OverviewStats';
@@ -51,14 +48,6 @@ vi.mock('@tabler/icons-react', () => ({
   IconAlertTriangle: () => <span>alert</span>,
 }));
 
-vi.mock('../../../../storage/storageEngineHooks', () => ({
-  useStorageEngine: vi.fn(() => ({ storageEngine: undefined })),
-}));
-
-vi.mock('../../../../store/hooks/useAsync', () => ({
-  useAsync: vi.fn(() => ({ value: null, status: 'idle', error: null })),
-}));
-
 // ── fixture helpers ──────────────────────────────────────────────────────────
 
 function makeOverviewData(overrides: Partial<OverviewData> = {}): OverviewData {
@@ -91,7 +80,6 @@ describe('SummaryView', () => {
       <SummaryView
         visibleParticipants={noParticipants}
         studyConfig={emptyConfig}
-        studyId="test-study"
       />,
     );
     expect(html).toContain('Overview Statistics');
@@ -110,7 +98,7 @@ describe('OverviewStats', () => {
 
   test('renders participant counts and stat labels', () => {
     const html = renderToStaticMarkup(
-      <OverviewStats overviewData={makeOverviewData()} studyId="test-study" />,
+      <OverviewStats overviewData={makeOverviewData()} />,
     );
     expect(html).toContain('Total Participants');
     expect(html).toContain('Completed');
@@ -121,48 +109,10 @@ describe('OverviewStats', () => {
     expect(html).toContain('Correctness');
   });
 
-  test('shows mismatch alert when stored counts differ from calculated counts', () => {
-    vi.mocked(useAsync).mockReturnValue({
-      execute: vi.fn(), value: { completed: 3, inProgress: 5, rejected: 0 }, status: 'success', error: null,
-    } as ReturnType<typeof useAsync>);
-    vi.mocked(useStorageEngine).mockReturnValue({ storageEngine: makeStorageEngine(), setStorageEngine: vi.fn() });
-
-    const html = renderToStaticMarkup(
-      <OverviewStats
-        overviewData={makeOverviewData({
-          participantCounts: {
-            total: 10, completed: 7, inProgress: 2, rejected: 1,
-          },
-        })}
-        studyId="test-study"
-        showStoredCountMismatch
-      />,
-    );
-    // Alert triangle appears for the mismatched field
-    expect(html).toContain('alert');
-  });
-
-  test('no mismatch alert when stored counts match calculated counts', () => {
-    vi.mocked(useAsync).mockReturnValue({
-      execute: vi.fn(), value: { completed: 7, inProgress: 2, rejected: 1 }, status: 'success', error: null,
-    } as ReturnType<typeof useAsync>);
-    vi.mocked(useStorageEngine).mockReturnValue({ storageEngine: makeStorageEngine(), setStorageEngine: vi.fn() });
-
-    const html = renderToStaticMarkup(
-      <OverviewStats
-        overviewData={makeOverviewData()}
-        studyId="test-study"
-        showStoredCountMismatch
-      />,
-    );
-    expect(html).not.toContain('alert');
-  });
-
   test('shows excluded-participants warning when participantsWithInvalidCleanTimeCount > 0', () => {
     const html = renderToStaticMarkup(
       <OverviewStats
         overviewData={makeOverviewData({ participantsWithInvalidCleanTimeCount: 3 })}
-        studyId="test-study"
       />,
     );
     expect(html).toContain('alert');
@@ -172,18 +122,9 @@ describe('OverviewStats', () => {
     const html = renderToStaticMarkup(
       <OverviewStats
         overviewData={makeOverviewData({ participantsWithInvalidCleanTimeCount: 0 })}
-        studyId="test-study"
       />,
     );
     expect(html).not.toContain('alert');
-  });
-
-  test('no stored counts fetched when studyId is undefined', () => {
-    renderToStaticMarkup(
-      <OverviewStats overviewData={makeOverviewData()} />,
-    );
-    // useAsync should have been called with null as immediate (no fetch)
-    expect(vi.mocked(useAsync).mock.calls[0][1]).toBeNull();
   });
 });
 

@@ -161,6 +161,15 @@ function cloneParticipantDataSnapshot(participantData: ParticipantData) {
   return structuredClone(participantData);
 }
 
+type AssetRetryOperation = () => Promise<unknown>;
+
+type ProgressData = { total: number; answered: string[]; isDynamic: boolean };
+
+type ProgressDataWrite = {
+  participantId: string;
+  progressData: ProgressData;
+};
+
 export abstract class StorageEngine {
   protected engine: 'localStorage' | 'supabase' | 'firebase';
 
@@ -192,11 +201,17 @@ export abstract class StorageEngine {
 
   private participantDataWriteError: Error | null = null;
 
+  private participantDataWriteErrorListeners = new Set<(error: Error) => void>();
+
   private pendingAssetUploads = new Map<string, Promise<void>>();
 
   private pendingAssetOperations = new Set<Promise<unknown>>();
 
   private failedAssetUploads = new Map<string, Error>();
+
+  private failedAssetRetryOperations = new Map<string, AssetRetryOperation>();
+
+  private pendingProgressDataWrite: ProgressDataWrite | undefined;
 
   private assetUploadActivityVersion = 0;
 
@@ -215,6 +230,14 @@ export abstract class StorageEngine {
 
   isCloudEngine() {
     return this.cloudEngine;
+  }
+
+  subscribeToParticipantDataWriteErrors(callback: (error: Error) => void) {
+    this.participantDataWriteErrorListeners.add(callback);
+
+    return () => {
+      this.participantDataWriteErrorListeners.delete(callback);
+    };
   }
 
   protected shouldDeferInitialParticipantDataPersistence() {
@@ -460,7 +483,12 @@ export abstract class StorageEngine {
   }
 
   private recordParticipantDataWriteError(error: unknown) {
-    this.participantDataWriteError = normalizeError(error);
+    const normalizedError = normalizeError(error);
+    this.participantDataWriteError = normalizedError;
+
+    this.participantDataWriteErrorListeners.forEach((listener) => {
+      listener(normalizedError);
+    });
   }
 
   private consumeParticipantDataWriteError() {
@@ -579,6 +607,33 @@ export abstract class StorageEngine {
     }
   }
 
+  async retryFailedWrites() {
+    await this.connect();
+    if (!this.isConnected()) {
+      throw new Error(`Failed to reconnect to ${this.getEngine()} storage engine`);
+    }
+
+    await this.persistCurrentParticipantData({ immediate: true });
+
+    const { pendingProgressDataWrite } = this;
+    if (pendingProgressDataWrite) {
+      await this.updateProgressData(
+        pendingProgressDataWrite.progressData,
+        pendingProgressDataWrite.participantId,
+      );
+    }
+
+    const failedAssetRetryOperations = [...this.failedAssetRetryOperations.entries()];
+    await Promise.all(failedAssetRetryOperations.map(
+      ([assetKey, operation]) => this.trackAssetOperation(assetKey, operation),
+    ));
+
+    const assetUploadError = await this.waitForPendingAssetUploads();
+    if (assetUploadError) {
+      throw assetUploadError;
+    }
+  }
+
   private recordAssetUploadError(assetKey: string, error: unknown) {
     this.failedAssetUploads.set(assetKey, normalizeError(error));
   }
@@ -604,11 +659,13 @@ export abstract class StorageEngine {
   private trackAssetOperation<T>(assetKey: string, operation: () => Promise<T>) {
     this.noteAssetUploadActivity();
     this.clearAssetUploadError(assetKey);
+    this.failedAssetRetryOperations.delete(assetKey);
 
     const operationPromise = operation()
       .catch((error) => {
         const normalizedError = normalizeError(error);
         this.recordAssetUploadError(assetKey, normalizedError);
+        this.failedAssetRetryOperations.set(assetKey, operation);
         throw normalizedError;
       })
       .finally(() => {
@@ -1380,7 +1437,7 @@ export abstract class StorageEngine {
 
   // Updates the progress data in the sequence assignment
   async updateProgressData(
-    progressData: { total: number; answered: string[]; isDynamic: boolean },
+    progressData: ProgressData,
     participantId?: string,
   ) {
     if (!this.studyId) {
@@ -1392,14 +1449,29 @@ export abstract class StorageEngine {
       throw new Error('Participant not initialized');
     }
 
-    const existingAssignment = await this._getSequenceAssignment(targetParticipantId);
+    const progressDataWrite: ProgressDataWrite = {
+      participantId: targetParticipantId,
+      progressData: structuredClone(progressData),
+    };
+    this.pendingProgressDataWrite = progressDataWrite;
 
-    if (existingAssignment) {
-      await this._updateSequenceAssignmentFields(targetParticipantId, {
-        total: progressData.total,
-        answered: progressData.answered,
-        isDynamic: progressData.isDynamic,
-      });
+    try {
+      const existingAssignment = await this._getSequenceAssignment(targetParticipantId);
+
+      if (existingAssignment) {
+        await this._updateSequenceAssignmentFields(targetParticipantId, {
+          total: progressData.total,
+          answered: progressData.answered,
+          isDynamic: progressData.isDynamic,
+        });
+      }
+
+      if (this.pendingProgressDataWrite === progressDataWrite) {
+        this.pendingProgressDataWrite = undefined;
+      }
+    } catch (error) {
+      this.recordParticipantDataWriteError(error);
+      throw error;
     }
   }
 
@@ -1709,6 +1781,8 @@ export abstract class StorageEngine {
     this.pendingAssetUploads.clear();
     this.pendingAssetOperations.clear();
     this.failedAssetUploads.clear();
+    this.failedAssetRetryOperations.clear();
+    this.pendingProgressDataWrite = undefined;
     this.assetUploadActivityVersion = 0;
     this.participantData = undefined;
     if (this.studyId) {

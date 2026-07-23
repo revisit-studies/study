@@ -12,7 +12,7 @@ const PREFIX = '@REVISIT_COMMS';
 
 export function IframeController({ currentConfig, provState, answers }: { currentConfig: WebsiteComponent; provState?: unknown, answers: ParticipantData['answers'] }) {
   const {
-    setReactiveAnswers, updateResponseBlockValidation,
+    setReactiveAnswers, updateProvenance, updateResponseBlockValidation,
   } = useStoreActions();
   const storeDispatch = useStoreDispatch();
   const dispatch = useDispatch();
@@ -96,15 +96,10 @@ export function IframeController({ currentConfig, provState, answers }: { curren
             break;
           case `${PREFIX}/PROVENANCE`: {
             if (isAnalysis) return;
-            const currentStimulusValidation = stimulusValidationRef.current;
-            storeDispatch(updateResponseBlockValidation({
+            storeDispatch(updateProvenance({
               location: 'stimulus',
               identifier,
-              values: {},
-              status: currentStimulusValidation?.valid ?? true,
               provenanceGraph: data.message,
-              reason: currentStimulusValidation?.reason,
-              message: currentStimulusValidation?.message,
             }));
             break;
           }
@@ -117,7 +112,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, [storeDispatch, dispatch, iframeId, currentConfig, sendMessage, setReactiveAnswers, updateResponseBlockValidation, identifier, isAnalysis, provState, answers]);
+  }, [storeDispatch, dispatch, iframeId, currentConfig, sendMessage, setReactiveAnswers, updateProvenance, updateResponseBlockValidation, identifier, isAnalysis, provState, answers]);
 
   return (
     <iframe

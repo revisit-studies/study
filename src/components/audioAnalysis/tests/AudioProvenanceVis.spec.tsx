@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { forwardRef, ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
   render, act, cleanup, renderHook,
@@ -20,12 +20,16 @@ vi.mock('wavesurfer-react', () => ({
 }));
 
 vi.mock('@mantine/core', () => ({
-  Box: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+  Box: forwardRef<HTMLDivElement, { children?: ReactNode }>(function Box({ children }, ref) { // eslint-disable-line prefer-arrow-callback
+    return <div ref={ref}>{children}</div>;
+  }),
   Group: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
   LoadingOverlay: ({ visible }: { visible: boolean }) => (
     visible ? <div data-testid="loading-overlay" /> : null
   ),
-  Stack: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+  Stack: forwardRef<HTMLDivElement, { children?: ReactNode }>(function Stack({ children }, ref) { // eslint-disable-line prefer-arrow-callback
+    return <div ref={ref}>{children}</div>;
+  }),
 }));
 
 vi.mock('@mantine/hooks', () => ({

@@ -75,7 +75,9 @@ vi.mock('@mantine/core', () => ({
   }) => React.createElement('button', { type: 'button', onClick, disabled }, children),
   Flex: ({ children }: { children?: React.ReactNode }) => React.createElement('div', null, children),
   Group: ({ children }: { children?: React.ReactNode }) => React.createElement('div', null, children),
-  Paper: ({ children }: { children?: React.ReactNode }) => React.createElement('div', null, children),
+  Paper: React.forwardRef<HTMLDivElement, { children?: React.ReactNode }>(function Paper({ children }, ref) { // eslint-disable-line prefer-arrow-callback
+    return React.createElement('div', { ref }, children);
+  }),
   Stack: ({ children }: { children?: React.ReactNode }) => React.createElement('div', null, children),
   Text: ({ children }: { children?: React.ReactNode }) => React.createElement('span', null, children),
 }));

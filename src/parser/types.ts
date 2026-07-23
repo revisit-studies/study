@@ -70,6 +70,7 @@ export interface StudyMetadata {
  */
 export type ResponseBlockLocation = 'sidebar' | 'aboveStimulus' | 'belowStimulus' | 'stimulus';
 export type ConfigResponseBlockLocation = Exclude<ResponseBlockLocation, 'stimulus'>;
+export type NextButtonAlignment = 'left' | 'center' | 'right';
 
 /**
  * UserBrowser is used to define a minimum browser requirement for the study to run.
@@ -234,6 +235,7 @@ export type Styles = {
  *   "contactEmail": "contact@revisit.dev",
  *   "withProgressBar": true,
  *   "withSidebar": true,
+ *   "nextButtonAlignment": "center",
  *   "helpTextPath": "<study-name>/assets/help.md",
  *   "autoDownloadStudy": true,
  *   "autoDownloadTime": 5000,
@@ -275,6 +277,8 @@ export interface UIConfig {
   nextButtonText?: string;
   /** The location of the next button. */
   nextButtonLocation?: ConfigResponseBlockLocation;
+  /** The horizontal alignment of the navigation action group. Defaults to right. */
+  nextButtonAlignment?: NextButtonAlignment;
   /** The time in milliseconds to wait before the next button is enabled. */
   nextButtonEnableTime?: number;
   /** The time in milliseconds to wait before the next button is disabled. */
@@ -1048,6 +1052,8 @@ export interface BaseIndividualComponent {
   nextButtonText?: string;
   /** The location of the next button. If present, will override the  next button location setting in the uiConfig. */
   nextButtonLocation?: ConfigResponseBlockLocation;
+  /** The horizontal alignment of the navigation action group. If present, will override the alignment setting in the uiConfig. */
+  nextButtonAlignment?: NextButtonAlignment;
   /** The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig. */
   nextButtonEnableTime?: number;
   /** The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig. */
@@ -1117,12 +1123,14 @@ export interface MarkdownComponent extends BaseIndividualComponent {
  * ```ts
  * {
  *   parameters: T;
- *   setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: Record<string, any> }) => void
+ *   useTrrack: (options: ConfigureTrrackOptions) => Trrack;
+ *   setAnswer: ({ status, answers }: { status: boolean, answers: Record<string, any> }) => void
  * }
  * ```
  *
  * `parameters` is the same object passed in from the ReactComponent type below, allowing you to pass options in from the config to your component.
- * `setAnswer` is a callback function allowing the creator of the ReactComponent to programmatically set the answer, as well as the provenance graph. This can be useful if you don't use the default answer interface, and instead have something more unique.
+ * `setAnswer` is a callback function allowing the creator of the ReactComponent to programmatically set the answer. This can be useful if you don't use the default answer interface, and instead have something more unique.
+ * Call the `useTrrack` function supplied in `StimulusParams` when the component needs provenance. It creates the Trrack instance and reports apply, undo, redo, and other traversals automatically.
  *
  * So, for example, if I had the following ReactComponent in my config:
  * ```json
@@ -1139,7 +1147,7 @@ export interface MarkdownComponent extends BaseIndividualComponent {
  * My react component, CoolComponent.tsx, would exist in src/public/my_study/assets, and look something like this:
  *
  * ```ts
- * export default function CoolComponent({ parameters, setAnswer }: StimulusParams<{name: string, age: number}>) {
+ * export default function CoolComponent({ parameters, setAnswer, useTrrack }: StimulusParams<{name: string, age: number}>) {
  *   // render something
  * }
  * ```
@@ -1219,16 +1227,14 @@ export interface ImageComponent extends BaseIndividualComponent {
  *   </script>
  * ```
  *
- * If the html website implements Trrack library for provenance tracking, you can send the provenance graph back to reVISit by calling `Revisit.postProvenance` as shown in the example below. You need to call this each time the Trrack state is updated so that reVISit is kept aware of the changes in the provenance graph.
+ * If the html website implements Trrack provenance tracking, create the instance through `Revisit.createTrrack`. reVISit subscribes before returning the instance and automatically reports apply, undo, redo, and other traversals.
  *
  * ```ts
- * const trrack = initializeTrrack({
+ * const trrack = Revisit.createTrrack({
+ *     initializeTrrack,
  *     initialState,
  *     registry
  *   });
- *
- *   ...
- *   Revisit.postProvenance(trrack.graph.backend);
  * ```
 
  */

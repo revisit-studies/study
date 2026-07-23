@@ -91,16 +91,18 @@ test('Check Answer reveals unanswered validation without consuming training atte
   await expect(checkAnswerButton).toBeEnabled();
 });
 
-test('test', async ({ page }) => {
+async function goToClevelandTraining(page: Page) {
+  await resetClientStudyState(page);
   await page.goto('/');
   await page.getByRole('tab', { name: 'Example Studies' }).click();
-
-  // Click on cleveland
   await page.getByLabel('Example Studies').locator('div').filter({ hasText: 'Dynamic React.js Stimuli: A Graphical Perception Experiment' })
     .getByText('Go to Study')
     .click();
-
   await goToTraining(page);
+}
+
+test('blocks a failed participant and lets the next participant pass training', async ({ page }) => {
+  await goToClevelandTraining(page);
 
   // Answer the training question incorrectly
   await page.getByPlaceholder('0-100').fill('50');
@@ -135,4 +137,38 @@ test('test', async ({ page }) => {
   // First non-training trial should not require Check Answer.
   await expect(page.getByPlaceholder('0-100')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Check Answer' })).toBeHidden();
+});
+
+test('a failed training survives a mid-trial refresh', async ({ page }) => {
+  await goToClevelandTraining(page);
+
+  // Fail once and refresh: the attempt is restored from storage, so it cannot be reset
+  await page.getByPlaceholder('0-100').fill('50');
+  await page.getByRole('button', { name: 'Check Answer' }).click();
+  await expect(page.getByText('Please try again. You have 1 attempt left.')).toBeVisible();
+  await page.reload();
+  await expect(page.getByText('Please try again. You have 1 attempt left.')).toBeVisible();
+
+  // Fail the last attempt, then refresh within the 5s delay: the redirect still fires
+  await page.getByPlaceholder('0-100').fill('52');
+  await page.getByRole('button', { name: 'Check Answer' }).click();
+  await expect(page.getByText(/after 2 attempts/)).toBeVisible();
+  await page.reload();
+  await expect(page.getByText('you are not eligible to participate')).toBeVisible({ timeout: 15000 });
+});
+
+test('a correct answer survives a mid-trial refresh', async ({ page }) => {
+  await goToClevelandTraining(page);
+
+  await page.getByPlaceholder('0-100').fill('66');
+  await page.getByRole('button', { name: 'Check Answer' }).click();
+  await expect(page.getByText('You have answered the question correctly.')).toBeVisible();
+
+  await page.reload();
+
+  // The graded answer is restored, so the disabled input is not empty and Next works
+  await expect(page.getByPlaceholder('0-100')).toHaveValue('66');
+  await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeEnabled();
+  await nextClick(page);
+  await expect(page.getByPlaceholder('0-100')).toHaveValue('');
 });

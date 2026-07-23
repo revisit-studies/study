@@ -26,8 +26,9 @@ import { addPathToComponentBlock } from '../../utils/getSequenceFlatMap';
 import { useStudyId } from '../../routes/utils';
 import { encryptIndex } from '../../utils/encryptDecryptIndex';
 import { isDynamicBlock } from '../../parser/utils';
-import { componentAnswersAreCorrect } from '../../utils/correctAnswer';
+import { getComponentAnswerStatus } from '../../utils/correctAnswer';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
+import { UnknownAnswerIcon } from './UnknownAnswerIcon';
 import {
   getDynamicComponentsForBlock,
   getSkipConditionSummariesForBlock,
@@ -753,17 +754,19 @@ export function StepsPanel({
           const correctAnswer = componentAnswer?.correctAnswer?.length
             ? componentAnswer.correctAnswer
             : resolvedComponent?.correctAnswer;
-          const correct = correctAnswer
-            && componentAnswer
-            && Object.keys(componentAnswer.answer).length > 0
-            && componentAnswersAreCorrect(componentAnswer.answer, correctAnswer, resolvedComponent?.response);
-          const correctIncorrectIcon = correctAnswer && componentAnswer && componentAnswer?.endTime > -1
-            ? (correct
-              ? <IconCheck size={16} style={{ marginRight: 4, flexShrink: 0 }} color="green" />
-              : <IconX size={16} style={{ marginRight: 4, flexShrink: 0 }} color="red" />
-            )
-            : null;
-          const correctAnswerJSONText = correctAnswer
+          const answerStatus = getComponentAnswerStatus(
+            componentAnswer,
+            correctAnswer,
+            resolvedComponent?.response,
+          );
+          const answerStatusIcon = answerStatus === 'correct'
+            ? <IconCheck size={16} style={{ marginRight: 4, flexShrink: 0 }} color="green" />
+            : answerStatus === 'incorrect'
+              ? <IconX size={16} style={{ marginRight: 4, flexShrink: 0 }} color="red" />
+              : answerStatus === 'unknown'
+                ? <UnknownAnswerIcon size={16} style={{ marginRight: 4, flexShrink: 0 }} />
+                : null;
+          const correctAnswerJSONText = correctAnswer?.length
             ? JSON.stringify(correctAnswer, null, 2)
             : undefined;
           const responseJSONText = resolvedComponent && JSON.stringify(resolvedComponent.response, null, 2);
@@ -856,7 +859,7 @@ export function StepsPanel({
                           <IconDice5 size={16} opacity={0.8} style={{ marginRight: 4, flexShrink: 0 }} color="black" />
                         </Tooltip>
                       )}
-                      {correctIncorrectIcon}
+                      {answerStatusIcon}
                       <Text
                         size="sm"
                         title={orderPath ?? label}
@@ -941,7 +944,7 @@ export function StepsPanel({
                       {componentAnswer && Object.keys(componentAnswer.answer).length > 0 && (
                         <Box>
                           <Text fw={900} display="inline-block" mr={2}>
-                            {correctIncorrectIcon}
+                            {answerStatusIcon}
                             Participant Answer:
                           </Text>
                           {' '}

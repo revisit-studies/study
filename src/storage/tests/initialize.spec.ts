@@ -81,6 +81,16 @@ describe('initializeStorageEngine', () => {
     expect(mocks.MockLocal).toHaveBeenCalledOnce();
   });
 
+  test('does not fall back to LocalStorageEngine in production when supabase fails to connect', async () => {
+    vi.stubEnv('PROD', true);
+    vi.stubEnv('VITE_STORAGE_ENGINE', 'supabase');
+    mocks.mockSupabaseIsConnected.mockReturnValue(false);
+    const storageEngine = await initializeStorageEngine();
+    expect(storageEngine).toBeInstanceOf(mocks.MockSupabase);
+    expect(mocks.MockSupabase).toHaveBeenCalledOnce();
+    expect(mocks.MockLocal).not.toHaveBeenCalled();
+  });
+
   test('creates FirebaseStorageEngine and connects when env is firebase', async () => {
     vi.stubEnv('VITE_STORAGE_ENGINE', 'firebase');
     await initializeStorageEngine();
@@ -96,6 +106,16 @@ describe('initializeStorageEngine', () => {
     await initializeStorageEngine();
     expect(mocks.MockFirebase).toHaveBeenCalledOnce();
     expect(mocks.MockLocal).toHaveBeenCalledOnce();
+  });
+
+  test('does not fall back to LocalStorageEngine in production when firebase fails to connect', async () => {
+    vi.stubEnv('PROD', true);
+    vi.stubEnv('VITE_STORAGE_ENGINE', 'firebase');
+    mocks.mockFirebaseIsConnected.mockReturnValue(false);
+    const storageEngine = await initializeStorageEngine();
+    expect(storageEngine).toBeInstanceOf(mocks.MockFirebase);
+    expect(mocks.MockFirebase).toHaveBeenCalledOnce();
+    expect(mocks.MockLocal).not.toHaveBeenCalled();
   });
 
   test('creates LocalStorageEngine when env is localStorage', async () => {

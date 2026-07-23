@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { HTMLAttributes, ReactNode } from 'react';
 import {
   render, act, cleanup, waitFor,
 } from '@testing-library/react';
@@ -6,7 +6,7 @@ import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { useRoutes } from 'react-router';
-import { Shell } from '../Shell';
+import { Shell, StudyLoadingOverlay } from '../Shell';
 import type { ParsedConfig, StudyConfig } from '../../parser/types';
 import { getStudyConfig, resolveConfigKey } from '../../utils/fetchConfig';
 import { makeGlobalConfig, makeStudyConfig } from '../../tests/utils';
@@ -93,7 +93,7 @@ vi.mock('@mantine/core', () => ({
     visible ? <div data-testid="loading-overlay" /> : null
   ),
   Stack: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  Text: ({ children }: { children: ReactNode }) => <p>{children}</p>,
+  Text: ({ children, ...props }: HTMLAttributes<HTMLParagraphElement>) => <p {...props}>{children}</p>,
   Title: ({ children }: { children: ReactNode }) => <h1>{children}</h1>,
 }));
 
@@ -161,8 +161,52 @@ describe('Shell', () => {
 
   afterEach(() => {
     cleanup();
+    vi.useRealTimers();
     vi.clearAllMocks();
     vi.unstubAllGlobals();
+  });
+
+  test('shows loading context only after startup remains pending for 1.5 seconds', () => {
+    vi.useFakeTimers();
+
+    const { getByTestId, getByRole, queryByRole } = render(<StudyLoadingOverlay visible />);
+
+    expect(getByTestId('loading-overlay')).toBeDefined();
+    expect(queryByRole('status')).toBeNull();
+
+    act(() => vi.advanceTimersByTime(1499));
+    expect(queryByRole('status')).toBeNull();
+
+    act(() => vi.advanceTimersByTime(1));
+    expect(getByRole('status').textContent).toBe('Loading your study. This may take a moment.');
+    expect(getByRole('status').getAttribute('aria-live')).toBe('polite');
+    expect(getByRole('status').getAttribute('aria-atomic')).toBe('true');
+  });
+
+  test('cancels the loading message when startup completes before the delay', () => {
+    vi.useFakeTimers();
+    const clearTimeoutSpy = vi.spyOn(window, 'clearTimeout');
+
+    const { queryByRole, queryByTestId, rerender } = render(<StudyLoadingOverlay visible />);
+
+    rerender(<StudyLoadingOverlay visible={false} />);
+    act(() => vi.advanceTimersByTime(1500));
+
+    expect(clearTimeoutSpy).toHaveBeenCalled();
+    expect(queryByTestId('loading-overlay')).toBeNull();
+    expect(queryByRole('status')).toBeNull();
+  });
+
+  test('removes loading context as soon as startup completes', () => {
+    vi.useFakeTimers();
+
+    const { getByRole, queryByRole, rerender } = render(<StudyLoadingOverlay visible />);
+
+    act(() => vi.advanceTimersByTime(1500));
+    expect(getByRole('status')).toBeDefined();
+
+    rerender(<StudyLoadingOverlay visible={false} />);
+    expect(queryByRole('status')).toBeNull();
   });
 
   test('shows loading overlay when routes are not yet initialized', async () => {

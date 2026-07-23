@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { forwardRef, ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
   render, act, cleanup,
@@ -42,9 +42,9 @@ import type {
 // ── mocks ────────────────────────────────────────────────────────────────────
 
 vi.mock('@mantine/core', () => {
-  function Div({ children }: { children?: ReactNode }) {
-    return <div>{children}</div>;
-  }
+  const Div = forwardRef<HTMLDivElement, { children?: ReactNode }>(function Div({ children }, ref) { // eslint-disable-line prefer-arrow-callback
+    return <div ref={ref}>{children}</div>;
+  });
   function Span({ children }: { children?: ReactNode }) {
     return <span>{children}</span>;
   }

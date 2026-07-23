@@ -59,6 +59,7 @@
         import { Registry, initializeTrrack } from 'https://cdn.jsdelivr.net/npm/@trrack/core@1.3.0/+esm';
 
         const taskId = 'circlesCount';
+        const maxDots = 20;
         const initialState = {
             dots: [1]
         };
@@ -76,7 +77,8 @@
             }
         );
 
-        const trrack = initializeTrrack({
+        const trrack = Revisit.createTrrack({
+            initializeTrrack,
             initialState,
             registry
         });
@@ -97,12 +99,25 @@
 
         try {
             const DotCounter = await loadComponent();
+
+            function addDot() {
+                if (trrack.getState().dots.length < maxDots) {
+                    trrack.apply('Add Dot', updateDots('add'));
+                }
+            }
+
+            function removeDot() {
+                if (trrack.getState().dots.length > 0) {
+                    trrack.apply('Remove Dot', updateDots('remove'));
+                }
+            }
+
             const component = new DotCounter({
                 target: document.getElementById('app'),
                 props: {
                     dots: trrack.getState().dots,
-                    addDot: () => trrack.apply('Add Dot', updateDots('add')),
-                    removeDot: () => trrack.apply('Remove Dot', updateDots('remove')),
+                    addDot,
+                    removeDot,
                     undo: () => trrack.undo(),
                     redo: () => trrack.redo()
                 }
@@ -114,7 +129,6 @@
                 Revisit.postAnswers({
                     [taskId]: dots.length
                 });
-                Revisit.postProvenance(trrack.graph.backend);
             }
 
             trrack.currentChange(updateRevisit);

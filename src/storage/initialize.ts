@@ -3,6 +3,14 @@ import { FirebaseStorageEngine } from './engines/FirebaseStorageEngine';
 import { SupabaseStorageEngine } from './engines/SupabaseStorageEngine';
 import { StorageEngine } from './engines/types';
 
+async function connectStorageEngine(storageEngine: StorageEngine, storageEngineName: string) {
+  try {
+    await storageEngine.connect();
+  } catch (error) {
+    console.warn(`Failed to connect to ${storageEngineName} storage engine`, error);
+  }
+}
+
 export async function initializeStorageEngine() {
   let storageEngine: StorageEngine | undefined;
   let fallback = false;
@@ -11,9 +19,11 @@ export async function initializeStorageEngine() {
 
   if (storageEngineName === 'supabase') {
     const supabaseStorageEngine = new SupabaseStorageEngine();
-    await supabaseStorageEngine.connect();
+    await connectStorageEngine(supabaseStorageEngine, storageEngineName);
 
     if (supabaseStorageEngine.isConnected()) {
+      storageEngine = supabaseStorageEngine;
+    } else if (import.meta.env.PROD) {
       storageEngine = supabaseStorageEngine;
     } else {
       fallback = true;
@@ -22,9 +32,11 @@ export async function initializeStorageEngine() {
 
   if (storageEngineName === 'firebase') {
     const firebaseStorageEngine = new FirebaseStorageEngine();
-    await firebaseStorageEngine.connect();
+    await connectStorageEngine(firebaseStorageEngine, storageEngineName);
 
     if (firebaseStorageEngine.isConnected()) {
+      storageEngine = firebaseStorageEngine;
+    } else if (import.meta.env.PROD) {
       storageEngine = firebaseStorageEngine;
     } else {
       fallback = true;

@@ -1,7 +1,7 @@
-import { ReactNode } from 'react';
+import { forwardRef, ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
-  render, act, cleanup, fireEvent,
+  render, act, cleanup, fireEvent, waitFor,
 } from '@testing-library/react';
 import {
   afterEach, beforeAll, beforeEach, describe, expect, test, vi,
@@ -62,9 +62,24 @@ const mockTranscriptLine = vi.fn(({
   </div>
 ));
 
-const mockTagSelector = vi.fn(({ onSelectTags, editTagCallback, tags }: { onSelectTags?: (t: Tag[]) => void; editTagCallback?: (oldTag: Tag, newTag: Tag) => void; tags?: Tag[] }) => (
+const mockTagSelector = vi.fn(({
+  onSelectTags, editTagCallback, createTagCallback, tags, tagsEmptyText,
+}: {
+  onSelectTags?: (t: Tag[]) => void;
+  editTagCallback?: (oldTag: Tag, newTag: Tag) => void;
+  createTagCallback?: (tag: Tag) => void | Promise<void>;
+  tags?: Tag[];
+  tagsEmptyText?: string;
+}) => (
   <div data-testid="tag-selector">
     <button type="button" onClick={() => onSelectTags?.([])}>select-tags</button>
+    <button
+      type="button"
+      data-testid={`create-${tagsEmptyText}`}
+      onClick={() => { createTagCallback?.({ id: 'new-tag', name: 'New Tag', color: '#fd7e14' }); }}
+    >
+      create-tag
+    </button>
     {tags && tags.length > 0 && (
       <button type="button" onClick={() => editTagCallback?.(tags[0], { ...tags[0], name: 'edited' })}>edit-tag</button>
     )}
@@ -101,7 +116,11 @@ vi.mock('@mantine/core', () => ({
   ),
   Grid: Object.assign(
     ({ children }: { children: ReactNode }) => <div>{children}</div>,
-    { Col: ({ children, ref: _r, ...rest }: { children: ReactNode; ref?: React.Ref<HTMLElement> }) => <div {...rest}>{children}</div> },
+    {
+      Col: forwardRef<HTMLDivElement, { children: ReactNode }>(function Col({ children, ...rest }, ref) { // eslint-disable-line prefer-arrow-callback
+        return <div ref={ref} {...rest}>{children}</div>;
+      }),
+    },
   ),
   Group: ({ children, style }: { children: ReactNode; style?: object }) => <div style={style}>{children}</div>,
   HoverCard: Object.assign(
@@ -142,17 +161,19 @@ vi.mock('@mantine/core', () => ({
       {rightSection}
     </div>
   ),
-  Stack: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Stack: forwardRef<HTMLDivElement, { children: ReactNode }>(function Stack({ children }, ref) { // eslint-disable-line prefer-arrow-callback
+    return <div ref={ref}>{children}</div>;
+  }),
   Text: ({ children }: { children: ReactNode }) => <p>{children}</p>,
-  Textarea: ({
-    value, onChange, onKeyDown, onFocus, placeholder, onBlur, defaultValue,
-  }: {
+  Textarea: forwardRef<HTMLTextAreaElement, {
     value?: string; defaultValue?: string; onChange?: React.ChangeEventHandler<HTMLTextAreaElement>;
     onKeyDown?: React.KeyboardEventHandler<HTMLTextAreaElement>; onFocus?: React.FocusEventHandler<HTMLTextAreaElement>;
     placeholder?: string; onBlur?: React.FocusEventHandler<HTMLTextAreaElement>;
-  }) => (
-    <textarea data-testid="textarea" value={value} defaultValue={defaultValue} onChange={onChange} onKeyDown={onKeyDown} onFocus={onFocus} placeholder={placeholder} onBlur={onBlur} />
-  ),
+  }>(function Textarea({ // eslint-disable-line prefer-arrow-callback
+    value, onChange, onKeyDown, onFocus, placeholder, onBlur, defaultValue,
+  }, ref) {
+    return <textarea ref={ref} data-testid="textarea" value={value} defaultValue={defaultValue} onChange={onChange} onKeyDown={onKeyDown} onFocus={onFocus} placeholder={placeholder} onBlur={onBlur} />;
+  }),
   TextInput: ({ placeholder, value }: { placeholder?: string; value?: string }) => <input placeholder={placeholder} defaultValue={value} />,
   Tooltip: ({ children, label }: { children: ReactNode; label?: ReactNode }) => <div title={String(label)}>{children}</div>,
   useCombobox: () => ({ toggleDropdown: vi.fn(), openDropdown: vi.fn(), closeDropdown: vi.fn() }),
@@ -652,6 +673,42 @@ describe('ThinkAloudFooter', () => {
       await act(async () => { fireEvent.click(taskTagsBtn); });
     }
     expect(mockFooterStorageEngine.saveAllParticipantAndTaskTags).toHaveBeenCalled();
+  });
+
+  test('create tag callbacks append definitions from the matching tag type', async () => {
+    const taskTag = makeTag({ id: 'task-tag', name: 'Task Tag' });
+    const participantTag = makeTag({ id: 'participant-tag', name: 'Participant Tag' });
+    vi.mocked(useAsync).mockImplementation((_fn, args) => ({
+      value: Array.isArray(args) && args[1] === 'task' ? [taskTag]
+        : Array.isArray(args) && args[1] === 'participant' ? [participantTag] : null,
+      status: 'success',
+      execute: vi.fn(),
+      error: null,
+    }));
+    mockFooterStorageEngine.saveTags.mockClear();
+    mockFooterStorageEngine.saveAllParticipantAndTaskTags.mockClear();
+
+    const { getByTestId } = await act(async () => render(
+      <RealThinkAloudFooter {...footerDefaultProps} storageEngine={makeStorageEngine(mockFooterStorageEngine)} />,
+    ));
+    fireEvent.click(getByTestId('create-Add Participant Tags'));
+    fireEvent.click(getByTestId('create-Add Task Tags'));
+
+    await waitFor(() => {
+      expect(mockFooterStorageEngine.saveTags).toHaveBeenCalledWith([
+        participantTag,
+        { id: 'new-tag', name: 'New Tag', color: '#fd7e14' },
+      ], 'participant');
+      expect(mockFooterStorageEngine.saveTags).toHaveBeenCalledWith([
+        taskTag,
+        { id: 'new-tag', name: 'New Tag', color: '#fd7e14' },
+      ], 'task');
+    });
+    expect(mockFooterStorageEngine.saveTags).not.toHaveBeenCalledWith(
+      expect.arrayContaining([taskTag]),
+      'participant',
+    );
+    expect(mockFooterStorageEngine.saveAllParticipantAndTaskTags).not.toHaveBeenCalled();
   });
 
   test('editTagCallback saves updated tags', async () => {
