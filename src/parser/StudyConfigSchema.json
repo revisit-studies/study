@@ -991,7 +991,7 @@
       "anyOf": [
         {
           "items": {
-            "type": "string"
+            "$ref": "#/definitions/FactorOption"
           },
           "type": "array"
         },
@@ -1016,15 +1016,6 @@
         "action": {
           "$ref": "#/definitions/FactorAction"
         },
-        "component": {
-          "type": "string"
-        },
-        "values": {
-          "items": {
-            "$ref": "#/definitions/FactorReference"
-          },
-          "type": "array"
-        },
         "numRepeats": {
           "description": "The number of times to repeat factor values when action is repeat. Defaults to 1.",
           "type": "number"
@@ -1035,14 +1026,26 @@
         "parameters": {
           "additionalProperties": {},
           "type": "object"
+        },
+        "values": {
+          "items": {
+            "$ref": "#/definitions/FactorReference"
+          },
+          "type": "array"
         }
       },
       "required": [
         "values",
-        "action",
-        "component"
+        "action"
       ],
       "type": "object"
+    },
+    "FactorOption": {
+      "type": [
+        "string",
+        "number",
+        "boolean"
+      ]
     },
     "FactorReference": {
       "additionalProperties": false,
@@ -1066,16 +1069,20 @@
           "$ref": "#/definitions/FactorAction"
         },
         "component": {
+          "description": "The base component used to render every component generated from this factor sequence.",
           "type": "string"
         },
-        "values": {
-          "items": {
-            "$ref": "#/definitions/FactorReference"
-          },
-          "type": "array"
+        "conditional": {
+          "type": "boolean"
         },
         "id": {
           "type": "string"
+        },
+        "interruptions": {
+          "items": {
+            "$ref": "#/definitions/InterruptionBlock"
+          },
+          "type": "array"
         },
         "numRepeats": {
           "description": "The number of times to repeat factor values when action is repeat. Defaults to 1.",
@@ -1088,23 +1095,36 @@
           "additionalProperties": {},
           "type": "object"
         },
+        "skip": {
+          "$ref": "#/definitions/SkipConditions"
+        },
         "type": {
           "const": "factor",
           "type": "string"
+        },
+        "values": {
+          "items": {
+            "$ref": "#/definitions/FactorReference"
+          },
+          "type": "array"
         }
       },
       "required": [
         "action",
         "component",
-        "values",
         "id",
-        "type"
+        "type",
+        "values"
       ],
       "type": "object"
     },
     "FactorSequenceReference": {
       "additionalProperties": false,
       "properties": {
+        "component": {
+          "description": "The base component used to render every component generated from this factor sequence.",
+          "type": "string"
+        },
         "factor": {
           "type": "string"
         },
@@ -1125,7 +1145,8 @@
       },
       "required": [
         "type",
-        "factor"
+        "factor",
+        "component"
       ],
       "type": "object"
     },

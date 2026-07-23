@@ -2,7 +2,7 @@ import {
   describe, expect, test, vi,
 } from 'vitest';
 import {
-  createFactorComponents, expandFactorSequences, expandLibrarySequences, fillTemplate, verifyLibraryUsage, loadLibrariesParseNamespace, resolveFactorReferences, validateFactorGraph,
+  createFactorComponents, deepFillTemplate, expandFactorSequences, expandLibrarySequences, fillTemplate, verifyLibraryUsage, loadLibrariesParseNamespace, resolveFactorReferences, validateFactorGraph,
 } from './libraryParser';
 import {
   ComponentBlock, LibraryConfig, StudyConfig, InheritedComponent, IndividualComponent, ParserErrorWarning,
@@ -27,9 +27,34 @@ describe('Factor Templates', () => {
       data: 'd1',
     })).toBe('email contact@revisit.dev and @missing');
   });
+
+  test('preserves the type of an exact at-sign factor token', () => {
+    expect(deepFillTemplate({ r1: '@r1' }, { r1: 0.3 })).toEqual({ r1: 0.3 });
+  });
 });
 
 describe('Factor Expansion', () => {
+  test('expands numeric primitive factors', () => {
+    const sequence: StudyConfig['sequence'] = {
+      type: 'factor',
+      action: 'nest',
+      id: 'trials',
+      values: [{ factor: 'vis' }, { factor: 'r1' }],
+      component: 'factorComponent',
+    };
+    const result = expandFactorSequences(sequence, {}, {
+      vis: ['pcp', 'scatter'],
+      r1: [0.3, 0.4],
+    });
+
+    expect(isComponentBlock(result) && result.components).toEqual([
+      '_pcp_0.3',
+      '_pcp_0.4',
+      '_scatter_0.3',
+      '_scatter_0.4',
+    ]);
+  });
+
   test('resolves reusable top-level factor references', () => {
     const sequence: StudyConfig['sequence'] = {
       order: 'fixed',

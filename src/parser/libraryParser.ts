@@ -88,9 +88,13 @@ export function fillTemplate(str: string, vars: Record<string, unknown>): string
 }
 
 // 2. Recursively replace in any TS value
-export function deepFillTemplate<T>(value: T, vars: Record<string, string>): T {
+export function deepFillTemplate<T>(value: T, vars: Record<string, unknown>): T {
   // Strings: apply template replacement
   if (typeof value === 'string') {
+    const exactToken = value.match(/^@([A-Za-z_]\w*)$/);
+    if (exactToken && vars[exactToken[1]] !== undefined && vars[exactToken[1]] !== null) {
+      return vars[exactToken[1]] as T;
+    }
     return fillTemplate(value, vars) as unknown as T;
   }
 
@@ -132,7 +136,6 @@ function factorSequenceFromReference(
   if (parameters !== undefined) {
     factorSequence.parameters = parameters;
   }
-
   return factorSequence;
 }
 
@@ -351,7 +354,7 @@ export function createFactorComponents(config: StudyConfig): Record<string, Indi
       const baseParameters = baseComponent && 'parameters' in baseComponent && baseComponent.parameters
         ? baseComponent.parameters
         : {};
-      const parameters = block.parameters ?? { ...baseParameters, ...c[1] };
+      const parameters = { ...baseParameters, ...block.parameters, ...c[1] };
       const component = merge(
         {},
         baseComponent,
@@ -389,7 +392,9 @@ export function expandFactorSequences(
       id: sequence.id,
       order: sequence.order ?? 'fixed',
       components: componentsToCross.map((c) => c[0]),
-      skip: [],
+      skip: sequence.skip || [],
+      ...(sequence.interruptions !== undefined ? { interruptions: sequence.interruptions } : {}),
+      ...(sequence.conditional !== undefined ? { conditional: sequence.conditional } : {}),
     };
   }
 

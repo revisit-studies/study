@@ -1794,6 +1794,8 @@ export interface ComponentBlock {
   conditional?: boolean;
 }
 
+export type FactorOption = string | number | boolean;
+
 export type FactorAction = 'nest' | 'cross' | 'zip' | 'concat' | 'repeat';
 
 export interface FactorDefinition {
@@ -1805,13 +1807,16 @@ export interface FactorDefinition {
   parameters?: Record<string, unknown>
 }
 
-export type Factor = string[] | FactorDefinition;
+export type Factor = FactorOption[] | FactorDefinition;
 
 export interface FactorSequence extends FactorDefinition {
   type: 'factor',
   id: string;
   /** The base component used to render every component generated from this factor sequence. */
   component: string;
+  interruptions?: InterruptionBlock[];
+  skip?: SkipConditions;
+  conditional?: boolean;
 }
 
 export interface FactorSequenceReference {

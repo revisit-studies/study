@@ -544,6 +544,35 @@ describe('Generating sequences works as expected', () => {
     ]);
   });
 
+  test('assigns numeric factors between participants', () => {
+    const betweenSubjectsConfig: StudyConfig = {
+      ...config,
+      uiConfig: {
+        ...config.uiConfig,
+        numSequences: 2,
+      },
+      factors: {
+        vis: ['pcp', 'scatter'],
+        r1: [0.3, 0.4],
+      },
+      betweenSubjectsFactors: ['vis'],
+      sequence: {
+        type: 'factor',
+        action: 'nest',
+        id: 'trials',
+        values: [{ factor: 'vis' }, { factor: 'r1' }],
+        component: 'factorComponent',
+      },
+    };
+
+    const sequenceArray = generateSequenceArray(betweenSubjectsConfig);
+
+    expect(sequenceArray[0].parameters).toEqual({ vis: 'pcp' });
+    expect(sequenceArray[0].components).toEqual(['_pcp_0.3', '_pcp_0.4', 'end']);
+    expect(sequenceArray[1].parameters).toEqual({ vis: 'scatter' });
+    expect(sequenceArray[1].components).toEqual(['_scatter_0.3', '_scatter_0.4', 'end']);
+  });
+
   test('generateSequenceArray filters pre-expanded between-subjects components', () => {
     const parsedBetweenSubjectsConfig: StudyConfig = {
       ...config,

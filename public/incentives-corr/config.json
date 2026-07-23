@@ -1,0 +1,568 @@
+{
+  "$schema": "../../src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Correlation Judgements using Visualization",
+    "version": "pilot",
+    "authors": [
+      "Abhraneel Sarma"
+    ],
+    "date": "2026-02-08",
+    "description": "A correlation judgement study.",
+    "organizations": [
+      "Graz University of Technology"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "asarma@tugraz.at",
+    "helpTextPath": "incentives-corr/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true,
+    "urlParticipantIdParam": "PROLIFIC_PID",
+    "participantNameField": "introduction.prolificId",
+    "studyEndMsg": "Thank you for completing the study! Please wait while we automatically redirect you to Prolific. Or you can click on this [link](https://app.prolific.com/submissions/complete?cc=C1PEMLO4)",
+    "studyEndAutoRedirectURL": "https://app.prolific.com/submissions/complete?cc=C1PEMLO4",
+    "studyEndAutoRedirectDelay": 10000
+  },
+  "baseComponents": {
+    "tutorial": {
+      "type": "markdown",
+      "path": "incentives-corr/assets/02-tutorial-@vis.md",
+      "response": []
+    },
+    "practice": {
+      "type": "react-component",
+      "path": "incentives-corr/assets/Practice.tsx",
+      "stylesheetPath": "incentives-corr/assets/task.css",
+      "helpTextPath": "incentives-corr/assets/help-@vis.md",
+      "response": [
+        {
+          "id": "training",
+          "prompt": "",
+          "required": true,
+          "type": "reactive",
+          "location": "belowStimulus"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "training",
+          "answer": "true"
+        }
+      ]
+    },
+    "test": {
+      "type": "react-component",
+      "path": "incentives-corr/assets/Task.tsx",
+      "stylesheetPath": "incentives-corr/assets/task.css",
+      "helpTextPath": "incentives-corr/assets/help-@vis.md",
+      "response": [
+        {
+          "id": "test",
+          "prompt": "",
+          "required": true,
+          "type": "reactive",
+          "location": "belowStimulus"
+        }
+      ]
+    },
+    "summary": {
+      "type": "react-component",
+      "path": "incentives-corr/assets/Summary.tsx",
+      "response": []
+    }
+  },
+  "components": {
+    "introduction-base": {
+      "type": "markdown",
+      "path": "incentives-corr/assets/00-intro-base.md",
+      "response": [
+        {
+          "id": "prolificId",
+          "prompt": "Prolific ID:",
+          "required": false,
+          "location": "belowStimulus",
+          "type": "shortText",
+          "paramCapture": "PROLIFIC_PID",
+          "placeholder": "Prolific ID"
+        }
+      ]
+    },
+    "introduction-inc": {
+      "type": "markdown",
+      "path": "incentives-corr/assets/00-intro-inc.md",
+      "response": [
+        {
+          "id": "prolificId",
+          "prompt": "Prolific ID:",
+          "required": false,
+          "location": "belowStimulus",
+          "type": "shortText",
+          "paramCapture": "PROLIFIC_PID",
+          "placeholder": "Prolific ID"
+        }
+      ]
+    },
+    "consent-base": {
+      "type": "markdown",
+      "path": "incentives-corr/assets/01-consent-base.md",
+      "previousButton": true,
+      "previousButtonText": "Back",
+      "response": [
+        {
+          "id": "consentApproval",
+          "prompt": "By clicking on 'Yes' below, you indicate that you have understood the Information Sheet and agree to participate in this study.",
+          "type": "radio",
+          "options": [
+            "Yes",
+            "No"
+          ]
+        }
+      ]
+    },
+    "consent-inc": {
+      "type": "markdown",
+      "path": "incentives-corr/assets/01-consent-inc.md",
+      "previousButton": true,
+      "previousButtonText": "Back",
+      "response": [
+        {
+          "id": "consentApproval",
+          "prompt": "By clicking on 'Yes' below, you indicate that you have understood the Information Sheet and agree to participate in this study.",
+          "type": "radio",
+          "options": [
+            "Yes",
+            "No"
+          ]
+        }
+      ]
+    },
+    "task-details-base": {
+      "type": "markdown",
+      "path": "incentives-corr/assets/04-instructions-base.md",
+      "response": []
+    },
+    "task-details-inc": {
+      "type": "markdown",
+      "path": "incentives-corr/assets/04-instructions-inc.md",
+      "response": []
+    },
+    "attention-1-pcp": {
+      "baseComponent": "test",
+      "parameters": {
+        "taskid": "attention",
+        "attentionIndex": 1,
+        "vis": "pcp",
+        "r1": 0.01,
+        "r2": 0.99
+      }
+    },
+    "attention-2-pcp": {
+      "baseComponent": "test",
+      "parameters": {
+        "taskid": "attention",
+        "attentionIndex": 2,
+        "vis": "pcp",
+        "r1": 0.01,
+        "r2": 0.99
+      }
+    },
+    "attention-3-pcp": {
+      "baseComponent": "test",
+      "parameters": {
+        "taskid": "attention",
+        "attentionIndex": 3,
+        "vis": "pcp",
+        "r1": 0.01,
+        "r2": 0.99
+      }
+    },
+    "attention-4-pcp": {
+      "baseComponent": "test",
+      "parameters": {
+        "taskid": "attention",
+        "attentionIndex": 4,
+        "vis": "pcp",
+        "r1": 0.01,
+        "r2": 0.99
+      }
+    },
+    "attention-5-pcp": {
+      "baseComponent": "test",
+      "parameters": {
+        "taskid": "attention",
+        "attentionIndex": 5,
+        "vis": "pcp",
+        "r1": 0.01,
+        "r2": 0.99
+      }
+    },
+    "attention-1-scatter": {
+      "baseComponent": "test",
+      "parameters": {
+        "taskid": "attention",
+        "attentionIndex": 1,
+        "vis": "scatter",
+        "r1": 0.01,
+        "r2": 0.99
+      }
+    },
+    "attention-2-scatter": {
+      "baseComponent": "test",
+      "parameters": {
+        "taskid": "attention",
+        "attentionIndex": 2,
+        "vis": "scatter",
+        "r1": 0.01,
+        "r2": 0.99
+      }
+    },
+    "attention-3-scatter": {
+      "baseComponent": "test",
+      "parameters": {
+        "taskid": "attention",
+        "attentionIndex": 3,
+        "vis": "scatter",
+        "r1": 0.01,
+        "r2": 0.99
+      }
+    },
+    "attention-4-scatter": {
+      "baseComponent": "test",
+      "parameters": {
+        "taskid": "attention",
+        "attentionIndex": 4,
+        "vis": "scatter",
+        "r1": 0.01,
+        "r2": 0.99
+      }
+    },
+    "attention-5-scatter": {
+      "baseComponent": "test",
+      "parameters": {
+        "taskid": "attention",
+        "attentionIndex": 5,
+        "vis": "scatter",
+        "r1": 0.01,
+        "r2": 0.99
+      }
+    },
+    "qual-q-base": {
+      "baseComponent": "summary",
+      "parameters": {
+        "inc": "base"
+      },
+      "response": [
+        {
+          "id": "prolificId",
+          "prompt": "",
+          "required": false,
+          "hidden": true,
+          "paramCapture": "PROLIFIC_PID",
+          "type": "reactive"
+        },
+        {
+          "id": "qual-strategy",
+          "prompt": "Please describe the strategy that you used in determining which plot had a higher correlation.",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "longText"
+        },
+        {
+          "id": "qual-incentive-freq",
+          "prompt": "How often do you encounter surveys with performance-based bonuses?",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "Never",
+          "rightLabel": "Very Often",
+          "labelLocation": "inline"
+        },
+        {
+          "id": "qual-incentives-history",
+          "prompt": "If you have encountered performance-based bonuses in surveys previously, what has been your experience with receiving such bonuses?",
+          "secondaryText": "If you have not encountered performance-based bonuses in surveys, please write 'N/A' in the text box.",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "longText"
+        },
+        {
+          "id": "qual-incentive-effect",
+          "prompt": "If you would have been paid a guaranteed amount of $1.25 and awarded a bonus of $0.05 for every correct response instead of $3 guaranteed, how do you think your performance would have changed?",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "longText"
+        }
+      ]
+    },
+    "qual-q-inc": {
+      "baseComponent": "summary",
+      "parameters": {
+        "inc": "inc"
+      },
+      "response": [
+        {
+          "id": "prolificId",
+          "prompt": "",
+          "required": false,
+          "hidden": true,
+          "paramCapture": "PROLIFIC_PID",
+          "type": "reactive"
+        },
+        {
+          "id": "qual-strategy",
+          "prompt": "Please describe the strategy that you used in determining which plot had a higher correlation.",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "longText"
+        },
+        {
+          "id": "qual-incentive-freq",
+          "prompt": "How often do you encounter surveys with performance-based bonuses?",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "leftLabel": "Never",
+          "rightLabel": "Very Often",
+          "labelLocation": "inline"
+        },
+        {
+          "id": "qual-incentives-history",
+          "prompt": "If you have encountered performance-based bonuses in surveys previously, what has been your experience with receiving such bonuses?",
+          "secondaryText": "If you have not encountered performance-based bonuses in surveys, please write 'N/A' in the text box.",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "longText"
+        },
+        {
+          "id": "qual-incentive-effect",
+          "prompt": "If you were given a guaranteed amount of $3 instead of $1.25 plus $0.05 for every correct response, how do you think your performance would have changed?",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "longText"
+        }
+      ]
+    }
+  },
+  "factors": {
+    "vis": [
+      "pcp",
+      "scatter"
+    ],
+    "r1": [
+      0.3,
+      0.4,
+      0.5,
+      0.6,
+      0.7
+    ],
+    "delta": [
+      0.03,
+      0.04,
+      0.05,
+      0.06,
+      0.07,
+      0.08,
+      0.09,
+      0.1,
+      0.12,
+      0.14,
+      0.18,
+      0.22,
+      0.26
+    ],
+    "r1Training": [
+      0.3,
+      0.9,
+      0.6,
+      0.6,
+      0.3,
+      0.5,
+      0.9,
+      0.6,
+      0.99
+    ],
+    "r2Training": [
+      0.7,
+      0.6,
+      0.3,
+      0.9,
+      0.1,
+      0.3,
+      0.8,
+      0.7,
+      0.9
+    ],
+    "phaseTraining": [
+      "training"
+    ],
+    "tutorialBlock": {
+      "action": "nest",
+      "values": [
+        {
+          "factor": "vis"
+        }
+      ]
+    },
+    "trainingPairs": {
+      "action": "zip",
+      "values": [
+        {
+          "factor": "r1Training"
+        },
+        {
+          "factor": "r2Training"
+        }
+      ]
+    },
+    "trainingBlock": {
+      "action": "nest",
+      "order": "random",
+      "values": [
+        {
+          "factor": "phaseTraining"
+        },
+        {
+          "factor": "vis"
+        },
+        {
+          "factor": "trainingPairs"
+        }
+      ]
+    }
+  },
+  "betweenSubjectsFactors": [
+    "vis"
+  ],
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      {
+        "id": "base",
+        "conditional": true,
+        "order": "fixed",
+        "components": [
+          "introduction-base",
+          "consent-base"
+        ]
+      },
+      {
+        "id": "inc",
+        "conditional": true,
+        "order": "fixed",
+        "components": [
+          "introduction-inc",
+          "consent-inc"
+        ]
+      },
+      {
+        "type": "factor",
+        "factor": "tutorialBlock",
+        "component": "tutorial"
+      },
+      {
+        "type": "factor",
+        "factor": "trainingBlock",
+        "component": "practice"
+      },
+      {
+        "id": "base",
+        "conditional": true,
+        "order": "fixed",
+        "components": [
+          "task-details-base"
+        ]
+      },
+      {
+        "id": "inc",
+        "conditional": true,
+        "order": "fixed",
+        "components": [
+          "task-details-inc"
+        ]
+      },
+      {
+        "type": "factor",
+        "id": "testBlock",
+        "action": "cross",
+        "order": "random",
+        "values": [
+          {
+            "factor": "vis"
+          },
+          {
+            "factor": "r1"
+          },
+          {
+            "factor": "delta"
+          }
+        ],
+        "component": "test",
+        "parameters": {
+          "taskid": "test"
+        },
+        "interruptions": [
+          {
+            "spacing": "random",
+            "numInterruptions": 1,
+            "components": [
+              "attention-1-pcp",
+              "attention-1-scatter"
+            ]
+          },
+          {
+            "spacing": "random",
+            "numInterruptions": 1,
+            "components": [
+              "attention-2-pcp",
+              "attention-2-scatter"
+            ]
+          },
+          {
+            "spacing": "random",
+            "numInterruptions": 1,
+            "components": [
+              "attention-3-pcp",
+              "attention-3-scatter"
+            ]
+          },
+          {
+            "spacing": "random",
+            "numInterruptions": 1,
+            "components": [
+              "attention-4-pcp",
+              "attention-4-scatter"
+            ]
+          },
+          {
+            "spacing": "random",
+            "numInterruptions": 1,
+            "components": [
+              "attention-5-pcp",
+              "attention-5-scatter"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "base",
+        "conditional": true,
+        "order": "fixed",
+        "components": [
+          "qual-q-base"
+        ]
+      },
+      {
+        "id": "inc",
+        "conditional": true,
+        "order": "fixed",
+        "components": [
+          "qual-q-inc"
+        ]
+      }
+    ]
+  }
+}

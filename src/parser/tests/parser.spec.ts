@@ -1,9 +1,12 @@
 import {
   describe, expect, test, vi,
 } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { ComponentBlock, StudyConfig } from './types';
 import { parseStudyConfig } from './parser';
 import { isDynamicBlock, isFactorSequence } from './utils';
+import { generateSequenceArray } from '../utils/handleRandomSequences';
+import { getSequenceFlatMap } from '../utils/getSequenceFlatMap';
 
 // Mock the fetch function for library loading
 global.fetch = vi.fn();
@@ -2051,6 +2054,64 @@ describe('Parser Warnings', () => {
     expect(result.errors).toEqual([]);
     expect(result.components._m2_n2).toMatchObject({
       parameters: { m: 'm2', n: 'n2' },
+    });
+  });
+
+  test('keeps Zach\'s factor demo valid', async () => {
+    const config = readFileSync(new URL('../../public/demo-factors/config.json', import.meta.url), 'utf8');
+    const result = await parseStudyConfig(config);
+
+    expect(result.errors).toEqual([]);
+  });
+
+  test('parses the factorized correlation study', async () => {
+    const config = readFileSync(new URL('../../public/incentives-corr/config.json', import.meta.url), 'utf8');
+    const result = await parseStudyConfig(config);
+    const generatedComponents = Object.values(result.components);
+
+    expect(result.errors).toEqual([]);
+    expect(generatedComponents.filter((component) => (
+      'parameters' in component && component.parameters?.taskid === 'test'
+    ))).toHaveLength(130);
+    expect(generatedComponents.filter((component) => (
+      'parameters' in component && component.parameters?.r1Training !== undefined
+    ))).toHaveLength(18);
+    expect(generatedComponents.filter((component) => (
+      'parameters' in component
+      && component.parameters?.vis === 'pcp'
+      && component.parameters.r1Training !== undefined
+    )).map((component) => (
+      'parameters' in component
+        ? [component.parameters?.r1Training, component.parameters?.r2Training]
+        : []
+    ))).toEqual(expect.arrayContaining([
+      [0.3, 0.7],
+      [0.9, 0.6],
+      [0.6, 0.3],
+      [0.6, 0.9],
+      [0.3, 0.1],
+      [0.5, 0.3],
+      [0.9, 0.8],
+      [0.6, 0.7],
+      [0.99, 0.9],
+    ]));
+
+    const sequences = generateSequenceArray({
+      ...result,
+      uiConfig: { ...result.uiConfig, numSequences: 2 },
+    });
+    sequences.forEach((sequence) => {
+      const componentNames = getSequenceFlatMap(sequence);
+      const sequenceComponents = componentNames.map((name) => result.components[name]).filter(Boolean);
+      expect(sequenceComponents.filter((component) => (
+        'parameters' in component && component.parameters?.taskid === 'test'
+      ))).toHaveLength(65);
+      expect(sequenceComponents.filter((component) => (
+        'parameters' in component && component.parameters?.taskid === 'attention'
+      ))).toHaveLength(5);
+      expect(sequenceComponents.filter((component) => (
+        'parameters' in component && component.parameters?.r1Training !== undefined
+      ))).toHaveLength(9);
     });
   });
 });

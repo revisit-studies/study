@@ -3,10 +3,16 @@
   "studyMetadata": {
     "title": "Factors Demo",
     "version": "pilot",
-    "authors": ["The reVISit Team"],
+    "authors": [
+      "The reVISit Team"
+    ],
     "date": "2023-04-14",
     "description": "A simple demo of using stimuli in an HTML file that renders a D3 visualization. Data is collected via a numeric response field.",
-    "organizations": ["University of Utah", "WPI", "University of Toronto"]
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
@@ -47,12 +53,37 @@
     }
   },
   "factors": {
-    "data": ["d1", "d2"],
-    "visType": ["v1", "v2", "v3"],
-    "task": ["t1", "t2", "t3"],
-    "ageGroup": ["young", "old"],
-    "learningStrategies": ["monologue", "scaffolding", "conceptual"],
-    "topics": ["sleep", "cholesterol", "alzheimer", "vitamin", "sugar", "flu"],
+    "data": [
+      "d1",
+      "d2"
+    ],
+    "visType": [
+      "v1",
+      "v2",
+      "v3"
+    ],
+    "task": [
+      "t1",
+      "t2",
+      "t3"
+    ],
+    "ageGroup": [
+      "young",
+      "old"
+    ],
+    "learningStrategies": [
+      "monologue",
+      "scaffolding",
+      "conceptual"
+    ],
+    "topics": [
+      "sleep",
+      "cholesterol",
+      "alzheimer",
+      "vitamin",
+      "sugar",
+      "flu"
+    ],
     "crossBlock": {
       "action": "cross",
       "order": "fixed",
@@ -145,7 +176,9 @@
       "component": "factorComponent"
     }
   },
-  "betweenSubjectsFactors": ["ageGroup"],
+  "betweenSubjectsFactors": [
+    "ageGroup"
+  ],
   "sequence": {
     "order": "fixed",
     "components": [
@@ -207,7 +240,9 @@
             "parameters": {
               "ageGroup": "young"
             },
-            "components": ["Ok_googleTutorialYoung"]
+            "components": [
+              "Ok_googleTutorialYoung"
+            ]
           },
           {
             "id": "Ok_googleTutorialOldBlock",
@@ -215,7 +250,9 @@
             "parameters": {
               "ageGroup": "old"
             },
-            "components": ["Ok_googleTutorialOld"]
+            "components": [
+              "Ok_googleTutorialOld"
+            ]
           }
         ]
       },
