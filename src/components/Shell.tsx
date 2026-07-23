@@ -289,7 +289,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
     async function initializeUserStoreRouting() {
       // Check that we have a storage engine and active config (studyId is set for config, but typescript complains)
-      if (!storageEngine || !activeConfig || !canonicalStudyId) return;
+      if (!storageEngine || !activeConfig || !canonicalStudyId || (activeConfig.errors?.length ?? 0) > 0) return;
       setIsCompletionCheckResolved(false);
       setCompletionCheckError(null);
 
@@ -493,32 +493,25 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
             },
             {
               path: '/:index/:funcIndex?',
-              element:
-                activeConfig.errors.length > 0 ? (
-                  <>
-                    <Title order={2} mb={8}>
-                      Error loading config
-                    </Title>
-                    <ErrorLoadingConfig
-                      issues={activeConfig.errors}
-                      type="error"
-                    />
-                  </>
-                ) : (
-                  <ComponentController />
-                ),
+              element: <ComponentController />,
             },
           ],
         },
       ]);
     }
-    initializeUserStoreRouting();
+    initializeUserStoreRouting().catch((error) => {
+      console.error('Unhandled error initializing user store routing:', error);
+      if (!isCancelled) {
+        setStartupError({ error });
+      }
+    });
     return () => {
       isCancelled = true;
     };
   }, [storageEngine, activeConfig, canonicalStudyId, searchParams, participantId, studyCondition]);
 
   const routing = useRoutes(routes);
+  const hasConfigErrors = (activeConfig?.errors?.length ?? 0) > 0;
   const { isLoading, showCompletionCheckError } = getShellUiState({
     isValidStudyId,
     hasRoutes: routes.length > 0,
@@ -531,6 +524,18 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
   if (startupError) {
     content = <StartupErrorScreen error={startupError.error} />;
+  } else if (activeConfig && hasConfigErrors) {
+    content = (
+      <>
+        <Title order={2} mb={8}>
+          Error loading config
+        </Title>
+        <ErrorLoadingConfig
+          issues={activeConfig.errors}
+          type="error"
+        />
+      </>
+    );
   } else if (!isValidStudyId) {
     content = <ResourceNotFound />;
   } else if (routing && store) {
@@ -545,8 +550,8 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
   return (
     <>
-      <StudyLoadingOverlay visible={!startupError && isLoading} />
-      {showCompletionCheckError && (
+      <StudyLoadingOverlay visible={!startupError && !hasConfigErrors && isLoading} />
+      {!startupError && !hasConfigErrors && showCompletionCheckError && (
         <Stack
           align="center"
           gap="sm"

@@ -228,6 +228,31 @@ describe('Shell', () => {
     expect(consoleSpy).toHaveBeenCalledWith('Error loading study config:', expect.any(Error));
   });
 
+  test('shows detailed config errors without initializing the participant store', async () => {
+    vi.mocked(getStudyConfig).mockResolvedValue({
+      errors: [{
+        message: 'There was an issue validating your config file',
+        instancePath: 'root',
+        params: {},
+        category: 'invalid-config',
+      }],
+      warnings: [],
+    } as unknown as ParsedConfig<StudyConfig>);
+    mockStorageEngine = {
+      initializeStudyDb: vi.fn(),
+    };
+
+    const { getByTestId, getByText, queryByTestId } = render(
+      <Shell globalConfig={globalConfig} />,
+    );
+
+    await waitFor(() => expect(getByTestId('error-loading-config')).toBeDefined());
+    expect(getByText('Error loading config')).toBeDefined();
+    expect(queryByTestId('loading-overlay')).toBeNull();
+    expect(mockStorageEngine.initializeStudyDb).not.toHaveBeenCalled();
+    expect(vi.mocked(studyStoreCreator)).not.toHaveBeenCalled();
+  });
+
   test('shows ResourceNotFound for an invalid study ID', async () => {
     vi.mocked(resolveConfigKey).mockReturnValue(null);
     const { getByTestId } = await act(async () => render(<Shell globalConfig={globalConfig} />));

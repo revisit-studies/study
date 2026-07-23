@@ -1,5 +1,5 @@
 import { MantineProvider } from '@mantine/core';
-import { render, waitFor } from '@testing-library/react';
+import { cleanup, render, waitFor } from '@testing-library/react';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
@@ -80,6 +80,7 @@ describe('GlobalConfigParser startup failures', () => {
   });
 
   afterEach(() => {
+    cleanup();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
