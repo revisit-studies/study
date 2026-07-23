@@ -100,7 +100,7 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
     isAudioRecording,
     setIsMuted,
     isMuted,
-    clickToRecord,
+    currentComponentHasClickToRecord,
     isSpeakingWhileMuted,
     showMutedWarning,
     screenRecordingError,
@@ -136,12 +136,12 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
   useEffect(() => {
     if (!(isMuted && isSpeakingWhileMuted)) return undefined;
 
-    const notificationId = showNotification({ title: 'You are muted', message: getMutedInstruction(clickToRecord), color: 'red' });
+    const notificationId = showNotification({ title: 'You are muted', message: getMutedInstruction(currentComponentHasClickToRecord), color: 'red' });
 
     return () => {
       hideNotification(notificationId);
     };
-  }, [clickToRecord, isMuted, isSpeakingWhileMuted]);
+  }, [currentComponentHasClickToRecord, isMuted, isSpeakingWhileMuted]);
 
   const { funcIndex } = useParams();
 
@@ -234,7 +234,7 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
                 {screenRecordingError && <Text c="red" size="sm" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{screenRecordingError}</Text>}
                 {audioStatus === 'denied' && audioRecordingError && <Text c="red" size="sm" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{audioRecordingError}</Text>}
                 {audioStatus === 'recording' && !isMuted && <RecordingAudioWaveform />}
-                {clickToRecord && showAudioStatus && (audioStatus === 'denied' ? (
+                {currentComponentHasClickToRecord && showAudioStatus && (audioStatus === 'denied' ? (
                   <ActionIcon color="red" variant="light" size="md" aria-label="Microphone error" data-disabled aria-disabled tabIndex={-1}>
                     <IconMicrophoneOff style={{ width: '70%', height: '70%' }} stroke={1.5} />
                   </ActionIcon>
