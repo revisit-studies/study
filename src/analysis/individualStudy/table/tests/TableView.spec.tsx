@@ -58,7 +58,9 @@ vi.mock('@tabler/icons-react', () => ({
 }));
 
 vi.mock('../../replay/AllTasksTimeline', () => ({
-  AllTasksTimeline: ({ taskOrder }: { taskOrder: string }) => <div data-task-order={taskOrder}>AllTasksTimeline</div>,
+  AllTasksTimeline: ({ taskOrder, timelineMode }: { taskOrder: string; timelineMode: string }) => (
+    <div data-task-order={taskOrder} data-timeline-mode={timelineMode}>AllTasksTimeline</div>
+  ),
 }));
 
 vi.mock('../../ParticipantRejectModal', () => ({
@@ -142,9 +144,11 @@ describe('TableView', () => {
     expect(html).toContain('Order');
     expect(html).toContain('Sequence');
     expect(html).toContain('Answer time');
+    expect(html).toContain('Time');
+    expect(html).toContain('Uniform');
   });
 
-  test('uses sequence ordering by default for participant timelines', () => {
+  test('uses sequence ordering and time sizing by default for participant timelines', () => {
     const participant = makeParticipant();
     renderToStaticMarkup(
       <TableView {...defaultProps} visibleParticipants={[participant]} />,
@@ -152,6 +156,7 @@ describe('TableView', () => {
 
     const html = renderToStaticMarkup(capturedTableOptions!.renderDetailPanel({ row: { original: participant } }));
     expect(html).toContain('data-task-order="sequence"');
+    expect(html).toContain('data-timeline-mode="time"');
   });
 
   // ── Status column ──────────────────────────────────────────────────────────
