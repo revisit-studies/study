@@ -11,6 +11,7 @@ import type { StudyConfig, ParsedConfig } from '../../parser/types';
 import { getStudyConfig } from '../../utils/fetchConfig';
 import { useAsync } from '../../store/hooks/useAsync';
 import { makeGlobalConfig } from '../../tests/utils';
+import { parseStudyConfig } from '../../parser/parser';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
@@ -115,6 +116,10 @@ vi.mock('../individualStudy/config/ConfigView', () => ({
 }));
 vi.mock('../../components/downloader/DownloadButtons', () => ({
   DownloadButtons: () => <div>DownloadButtons</div>,
+}));
+
+vi.mock('../../components/StartupErrorScreen', () => ({
+  StartupErrorScreen: () => <div role="alert">startup fallback</div>,
 }));
 
 vi.mock('react-vega', () => ({
@@ -309,6 +314,38 @@ describe('StudyAnalysisTabs', () => {
     });
     addEventSpy.mockRestore();
     postMessageSpy.mockRestore();
+  });
+
+  test('shows startup fallback when analysis study config loading rejects', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.mocked(getStudyConfig).mockRejectedValue(new Error('analysis config failed'));
+
+    render(<StudyAnalysisTabs globalConfig={mockGlobalConfig} />);
+
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toBe('startup fallback'));
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'Failed to load study config for analysis:',
+      expect.any(Error),
+    );
+  });
+
+  test('shows startup fallback when widget analysis config parsing rejects', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockParams = { studyId: '__revisit-widget', analysisTab: 'summary' };
+    vi.mocked(parseStudyConfig).mockRejectedValue(new Error('widget config failed'));
+
+    render(<StudyAnalysisTabs globalConfig={mockGlobalConfig} />);
+    await act(async () => {
+      window.dispatchEvent(new MessageEvent('message', {
+        data: { type: 'revisitWidget/CONFIG', payload: '{}' },
+      }));
+    });
+
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toBe('startup fallback'));
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'Failed to load widget study config for analysis:',
+      expect.any(Error),
+    );
   });
 
   test('firing MultiSelect onChange covers stage/config filter branches', async () => {

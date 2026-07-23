@@ -40,6 +40,7 @@ import {
   parseConditionParam,
   resolveParticipantConditions,
 } from '../utils/handleConditionLogic';
+import { StartupErrorScreen } from './StartupErrorScreen';
 
 type StartupStorageStatus = Pick<StorageEngine, 'getEngine' | 'isConnected'>;
 
@@ -185,6 +186,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   // Pull study config
   const routeStudyId = useStudyId();
   const [activeConfig, setActiveConfig] = useState<ParsedConfig<StudyConfig> | null>(null);
+  const [startupError, setStartupError] = useState<{ error: unknown } | null>(null);
   const canonicalStudyId = useMemo(() => {
     if (routeStudyId === '__revisit-widget') {
       return routeStudyId;
@@ -195,25 +197,49 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   const isValidStudyId = routeStudyId === '__revisit-widget' || canonicalStudyId !== null;
 
   useEffect(() => {
+    let cancelled = false;
+
     if (routeStudyId !== '__revisit-widget') {
       const loadStudyConfig = async () => {
-        const config = await getStudyConfig(routeStudyId, globalConfig);
-        setActiveConfig(config);
+        try {
+          const config = await getStudyConfig(routeStudyId, globalConfig);
+          if (!cancelled) {
+            setActiveConfig(config);
+          }
+        } catch (error) {
+          console.error('Error loading study config:', error);
+          if (!cancelled) {
+            setStartupError({ error });
+          }
+        }
       };
 
       loadStudyConfig();
-      return undefined;
+      return () => {
+        cancelled = true;
+      };
     }
 
     if (globalConfig && routeStudyId) {
       const messageListener = (event: MessageEvent) => {
         if (event.data.type === 'revisitWidget/CONFIG') {
           const loadWidgetConfig = async () => {
-            const config = await parseStudyConfig(event.data.payload);
-            setActiveConfig(config);
+            try {
+              const config = await parseStudyConfig(event.data.payload);
+              if (!cancelled) {
+                setActiveConfig(config);
+              }
 
-            const sequenceArray = await generateSequenceArray(config);
-            window.parent.postMessage({ type: 'revisitWidget/SEQUENCE_ARRAY', payload: sequenceArray }, '*');
+              const sequenceArray = await generateSequenceArray(config);
+              if (!cancelled) {
+                window.parent.postMessage({ type: 'revisitWidget/SEQUENCE_ARRAY', payload: sequenceArray }, '*');
+              }
+            } catch (error) {
+              console.error('Error loading widget study config:', error);
+              if (!cancelled) {
+                setStartupError({ error });
+              }
+            }
           };
 
           loadWidgetConfig();
@@ -225,6 +251,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       window.parent.postMessage({ type: 'revisitWidget/READY' }, '*');
 
       return () => {
+        cancelled = true;
         window.removeEventListener('message', messageListener);
       };
     }
@@ -262,7 +289,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
     async function initializeUserStoreRouting() {
       // Check that we have a storage engine and active config (studyId is set for config, but typescript complains)
-      if (!storageEngine || !activeConfig || !canonicalStudyId) return;
+      if (!storageEngine || !activeConfig || !canonicalStudyId || (activeConfig.errors?.length ?? 0) > 0) return;
       setIsCompletionCheckResolved(false);
       setCompletionCheckError(null);
 
@@ -412,35 +439,43 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           ? getInitialStartupAlert(error, developmentModeEnabledForAlert, resumeParticipantId)
           : undefined;
 
-        // Fallback: initialize the store with empty data
-        const generatedSequences = await generateSequenceArray(activeConfig);
+        try {
+          // Preserve the existing disconnected-storage and participant alert recovery paths.
+          const generatedSequences = await generateSequenceArray(activeConfig);
 
-        const matchingSequence = generatedSequences[0];
-        const fallbackSequence = filterSequenceByCondition(
-          matchingSequence,
-          studyCondition,
-        );
+          const matchingSequence = generatedSequences[0];
+          const fallbackSequence = filterSequenceByCondition(
+            matchingSequence,
+            studyCondition,
+          );
 
-        const emptyStore = await studyStoreCreator(
-          canonicalStudyId,
-          activeConfig,
-          fallbackSequence,
-          createEmptyParticipantMetadata(),
-          {},
-          fallbackModes,
-          '',
-          false,
-          isStorageFailure,
-          false,
-          initialAlertModal,
-        );
+          const emptyStore = await studyStoreCreator(
+            canonicalStudyId,
+            activeConfig,
+            fallbackSequence,
+            createEmptyParticipantMetadata(),
+            {},
+            fallbackModes,
+            '',
+            false,
+            isStorageFailure,
+            false,
+            initialAlertModal,
+          );
 
-        if (isCancelled) {
+          if (isCancelled) {
+            return;
+          }
+
+          setStore(emptyStore);
+          setIsCompletionCheckResolved(true);
+        } catch (fallbackError) {
+          console.error('Error initializing fallback study store:', fallbackError);
+          if (!isCancelled) {
+            setStartupError({ error });
+          }
           return;
         }
-
-        setStore(emptyStore);
-        setIsCompletionCheckResolved(true);
       }
 
       if (isCancelled) {
@@ -458,32 +493,25 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
             },
             {
               path: '/:index/:funcIndex?',
-              element:
-                activeConfig.errors.length > 0 ? (
-                  <>
-                    <Title order={2} mb={8}>
-                      Error loading config
-                    </Title>
-                    <ErrorLoadingConfig
-                      issues={activeConfig.errors}
-                      type="error"
-                    />
-                  </>
-                ) : (
-                  <ComponentController />
-                ),
+              element: <ComponentController />,
             },
           ],
         },
       ]);
     }
-    initializeUserStoreRouting();
+    initializeUserStoreRouting().catch((error) => {
+      console.error('Unhandled error initializing user store routing:', error);
+      if (!isCancelled) {
+        setStartupError({ error });
+      }
+    });
     return () => {
       isCancelled = true;
     };
   }, [storageEngine, activeConfig, canonicalStudyId, searchParams, participantId, studyCondition]);
 
   const routing = useRoutes(routes);
+  const hasConfigErrors = (activeConfig?.errors?.length ?? 0) > 0;
   const { isLoading, showCompletionCheckError } = getShellUiState({
     isValidStudyId,
     hasRoutes: routes.length > 0,
@@ -494,7 +522,21 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
   let content: ReactNode = null;
 
-  if (!isValidStudyId) {
+  if (startupError) {
+    content = <StartupErrorScreen error={startupError.error} />;
+  } else if (activeConfig && hasConfigErrors) {
+    content = (
+      <>
+        <Title order={2} mb={8}>
+          Error loading config
+        </Title>
+        <ErrorLoadingConfig
+          issues={activeConfig.errors}
+          type="error"
+        />
+      </>
+    );
+  } else if (!isValidStudyId) {
     content = <ResourceNotFound />;
   } else if (routing && store) {
     content = (
@@ -508,8 +550,8 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
   return (
     <>
-      <StudyLoadingOverlay visible={isLoading} />
-      {showCompletionCheckError && (
+      <StudyLoadingOverlay visible={!startupError && !hasConfigErrors && isLoading} />
+      {!startupError && !hasConfigErrors && showCompletionCheckError && (
         <Stack
           align="center"
           gap="sm"
