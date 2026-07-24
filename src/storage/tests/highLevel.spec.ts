@@ -366,23 +366,16 @@ describe.each([
     expect(setHashSpy).not.toHaveBeenCalled();
   });
 
-  test('saveConfig restores missing config storage when the hash pointer is unchanged', async () => {
-    const configHash = await hash(JSON.stringify(configSimple));
+  test('saveConfig skips storage reads when the hash pointer is unchanged', async () => {
     await storageEngine.saveConfig(configSimple);
-
-    await (
-      storageEngine as unknown as {
-        _deleteFromStorage: StorageEngine['_deleteFromStorage'];
-      }
-    )._deleteFromStorage(`configs/${configHash}`, 'config');
-
-    let storedHashes = await storageEngine.getAllConfigsFromHash([configHash], studyId);
-    expect(storedHashes[configHash]).toBeNull();
+    const getFromStorageSpy = vi.spyOn(
+      storageEngine as unknown as { _getFromStorage: (...args: unknown[]) => Promise<unknown> },
+      '_getFromStorage',
+    );
 
     await storageEngine.saveConfig(configSimple);
 
-    storedHashes = await storageEngine.getAllConfigsFromHash([configHash], studyId);
-    expect(storedHashes[configHash]).toEqual(configSimple);
+    expect(getFromStorageSpy).not.toHaveBeenCalled();
   });
 
   test('getCurrentParticipantId returns the current participant ID', async () => {
@@ -431,6 +424,39 @@ describe.each([
     expect(participantData!.metadata).toEqual(participantMetadata);
     expect(participantData!.rejected).toBe(false);
     expect(participantData!.participantTags).toEqual([]);
+  });
+
+  test('fresh participant startup does not scan all sequence assignments', async () => {
+    const scanSpy = vi.spyOn(storageEngine, 'getAllSequenceAssignments');
+
+    const participant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    expect(scanSpy).not.toHaveBeenCalled();
+
+    await storageEngine.getParticipantCompletionStatus(participant.participantId);
+    expect(scanSpy).not.toHaveBeenCalled();
+  });
+
+  test('participant bootstrap reuses prefetched modes and sequence array', async () => {
+    const modesSpy = vi.spyOn(storageEngine, 'getModes');
+    const sequenceSpy = vi.spyOn(storageEngine, 'getSequenceArray');
+    const modesDocument = await storageEngine.getModes(studyId);
+    const prefetchedSequenceArray = await storageEngine.getSequenceArray();
+    modesSpy.mockClear();
+    sequenceSpy.mockClear();
+
+    await storageEngine.initializeParticipantSession(
+      {},
+      configSimple,
+      participantMetadata,
+      undefined,
+      {
+        modesDocument,
+        sequenceArray: prefetchedSequenceArray!,
+      },
+    );
+
+    expect(modesSpy).not.toHaveBeenCalled();
+    expect(sequenceSpy).not.toHaveBeenCalled();
   });
 
   test('initializeParticipantSession reads modes only once for a new participant', async () => {
@@ -544,15 +570,76 @@ describe.each([
     }
   });
 
-  test('initializeParticipantSession omits conditions field in sequence assignment when empty', async () => {
-    const createSequenceAssignmentSpy = vi.spyOn(
-      storageEngine as unknown as { _createSequenceAssignment: (...args: unknown[]) => Promise<void> },
-      '_createSequenceAssignment',
+  test('concurrent participant starts reserve unique sequence and creation indexes', async () => {
+    const engines = Array.from({ length: 12 }, () => new TestEngine(true));
+    await Promise.all(engines.map(async (engine) => {
+      await engine.connect();
+      await engine.initializeStudyDb(studyId);
+    }));
+
+    const sessions = await Promise.all(engines.map((engine, index) => (
+      engine.initializeParticipantSession(
+        {},
+        configSimple,
+        participantMetadata,
+        `concurrent-${index}`,
+      )
+    )));
+    const assignments = (await storageEngine.getAllSequenceAssignments(studyId))
+      .filter((assignment) => assignment.participantId.startsWith('concurrent-'));
+
+    expect(new Set(assignments.map((assignment) => assignment.sequenceIndex)).size).toBe(12);
+    expect(assignments.map((assignment) => assignment.sequenceIndex).sort((a, b) => a! - b!))
+      .toEqual(Array.from({ length: 12 }, (_, index) => index));
+    expect(new Set(sessions.map((session) => session.participantIndex)).size).toBe(12);
+  });
+
+  test('allocator bootstraps legacy assignments without duplicating a sequence slot', async () => {
+    const createAssignment = (
+      storageEngine as unknown as {
+        _createSequenceAssignment: (
+          participantId: string,
+          assignment: SequenceAssignment,
+          withServerTimestamp: boolean,
+        ) => Promise<void>;
+      }
+    )._createSequenceAssignment.bind(storageEngine);
+    for (let index = 0; index < 5; index += 1) {
+      // Sequential writes intentionally build a deterministic legacy assignment history.
+      // eslint-disable-next-line no-await-in-loop
+      await createAssignment(`legacy-${index}`, {
+        participantId: `legacy-${index}`,
+        timestamp: index,
+        rejected: index === 1,
+        claimed: false,
+        completed: null,
+        createdTime: index,
+        total: 0,
+        answered: [],
+        isDynamic: false,
+        stage: 'DEFAULT',
+      }, false);
+    }
+
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'legacy-replacement');
+    await storageEngine.clearCurrentParticipantId();
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'post-legacy-participant');
+
+    const assignments = await storageEngine.getAllSequenceAssignments(studyId);
+    const replacement = assignments.find(
+      (assignment) => assignment.participantId === 'legacy-replacement',
     );
+    const appended = assignments.find(
+      (assignment) => assignment.participantId === 'post-legacy-participant',
+    );
+    expect(replacement?.sequenceIndex).toBe(1);
+    expect(appended?.sequenceIndex).toBe(5);
+  });
 
-    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
-
-    const sequenceAssignmentPayload = createSequenceAssignmentSpy.mock.calls[0][1] as Record<string, unknown>;
+  test('initializeParticipantSession omits conditions field in sequence assignment when empty', async () => {
+    const participant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    const sequenceAssignmentPayload = (await storageEngine.getAllSequenceAssignments(studyId))
+      .find((assignment) => assignment.participantId === participant.participantId)!;
     expect(Object.hasOwn(sequenceAssignmentPayload, 'conditions')).toBe(false);
   });
 
