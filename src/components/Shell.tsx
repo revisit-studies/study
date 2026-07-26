@@ -6,9 +6,7 @@ import {
 } from 'react';
 import { Provider } from 'react-redux';
 import { RouteObject, useRoutes, useSearchParams } from 'react-router';
-import {
-  Button, LoadingOverlay, Stack, Text, Title,
-} from '@mantine/core';
+import { LoadingOverlay, Title } from '@mantine/core';
 import {
   GlobalConfig,
   Nullable,
@@ -28,165 +26,23 @@ import { StepRenderer } from './StepRenderer';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import { generateSequenceArray } from '../utils/handleRandomSequences';
 import { getStudyConfig, resolveConfigKey } from '../utils/fetchConfig';
-import type { AlertModalState, ParticipantMetadata } from '../store/types';
+import { ParticipantMetadata } from '../store/types';
 import { ErrorLoadingConfig } from './ErrorLoadingConfig';
 import { ResourceNotFound } from '../ResourceNotFound';
 import { encryptIndex } from '../utils/encryptDecryptIndex';
 import { parseStudyConfig } from '../parser/parser';
 import { hash } from '../storage/engines/utils/storageEngineHelpers';
-import type { StorageEngine, REVISIT_MODE } from '../storage/engines/types';
 import {
   filterSequenceByCondition,
   parseConditionParam,
   resolveParticipantConditions,
 } from '../utils/handleConditionLogic';
-import { StartupErrorScreen } from './StartupErrorScreen';
-
-type StartupStorageStatus = Pick<StorageEngine, 'getEngine' | 'isConnected'>;
-
-const GENERIC_STARTUP_ERROR = 'There was a problem loading the study.';
-const RESUME_STARTUP_ERROR = 'This study session could not be resumed.';
-const STUDY_LOADING_MESSAGE = 'Loading your study. This may take a moment.';
-const STUDY_LOADING_MESSAGE_DELAY_MS = 1500;
-
-export function StudyLoadingOverlay({ visible }: { visible: boolean }) {
-  const [showMessage, setShowMessage] = useState(false);
-
-  useEffect(() => {
-    if (!visible) {
-      setShowMessage(false);
-      return undefined;
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      setShowMessage(true);
-    }, STUDY_LOADING_MESSAGE_DELAY_MS);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [visible]);
-
-  return (
-    <>
-      <LoadingOverlay visible={visible} />
-      {visible && showMessage && (
-        <Text
-          role="status"
-          aria-live="polite"
-          aria-atomic="true"
-          style={{
-            position: 'fixed',
-            top: 'calc(50% + 40px)',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 1001,
-            width: 'calc(100% - 32px)',
-            maxWidth: 420,
-            textAlign: 'center',
-            pointerEvents: 'none',
-          }}
-        >
-          {STUDY_LOADING_MESSAGE}
-        </Text>
-      )}
-    </>
-  );
-}
-
-export function getScreenOrientationType(screen: Screen) {
-  return screen.orientation?.type ?? '';
-}
-
-export function isStorageStartupFailure(
-  storageEngine: StartupStorageStatus,
-  configuredEngine: string,
-) {
-  return !storageEngine.isConnected() || storageEngine.getEngine() !== configuredEngine;
-}
-
-export function getStartupErrorMessage(error: unknown) {
-  if (error instanceof Error && error.message.trim().length > 0) {
-    return error.message;
-  }
-
-  if (typeof error === 'string' && error.trim().length > 0) {
-    return error;
-  }
-
-  return GENERIC_STARTUP_ERROR;
-}
-
-export function getInitialStartupAlert(
-  error: unknown,
-  developmentModeEnabled: boolean,
-  resumeParticipantId?: string | null,
-): AlertModalState {
-  return {
-    show: true,
-    title: 'Problem loading the study',
-    message: developmentModeEnabled
-      ? getStartupErrorMessage(error)
-      : (resumeParticipantId ? RESUME_STARTUP_ERROR : GENERIC_STARTUP_ERROR),
-  };
-}
-
-export function getShellUiState({
-  isValidStudyId,
-  hasRoutes,
-  hasStore,
-  isCompletionCheckResolved,
-  completionCheckError,
-}: {
-  isValidStudyId: boolean;
-  hasRoutes: boolean;
-  hasStore: boolean;
-  isCompletionCheckResolved: boolean;
-  completionCheckError: string | null;
-}) {
-  return {
-    isLoading: isValidStudyId && (!hasRoutes || !hasStore || !isCompletionCheckResolved),
-    showCompletionCheckError: completionCheckError !== null,
-  };
-}
-
-function createParticipantMetadata(ip: string = ''): ParticipantMetadata {
-  return {
-    language: navigator.language,
-    userAgent: navigator.userAgent,
-    resolution: {
-      width: window.screen.width,
-      height: window.screen.height,
-      availHeight: window.screen.availHeight,
-      availWidth: window.screen.availWidth,
-      colorDepth: window.screen.colorDepth,
-      orientation: getScreenOrientationType(window.screen),
-      pixelDepth: window.screen.pixelDepth,
-    },
-    ip,
-  };
-}
-
-function createEmptyParticipantMetadata(): ParticipantMetadata {
-  return {
-    language: '',
-    userAgent: '',
-    resolution: {
-      width: 0,
-      height: 0,
-      availHeight: 0,
-      availWidth: 0,
-      colorDepth: 0,
-      orientation: '',
-      pixelDepth: 0,
-    },
-    ip: '',
-  };
-}
+import { materializeParticipantConfig } from '../parser/libraryParser';
 
 export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   // Pull study config
   const routeStudyId = useStudyId();
   const [activeConfig, setActiveConfig] = useState<ParsedConfig<StudyConfig> | null>(null);
-  const [startupError, setStartupError] = useState<{ error: unknown } | null>(null);
   const canonicalStudyId = useMemo(() => {
     if (routeStudyId === '__revisit-widget') {
       return routeStudyId;
@@ -197,52 +53,20 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   const isValidStudyId = routeStudyId === '__revisit-widget' || canonicalStudyId !== null;
 
   useEffect(() => {
-    let cancelled = false;
-
     if (routeStudyId !== '__revisit-widget') {
-      const loadStudyConfig = async () => {
-        try {
-          const config = await getStudyConfig(routeStudyId, globalConfig);
-          if (!cancelled) {
-            setActiveConfig(config);
-          }
-        } catch (error) {
-          console.error('Error loading study config:', error);
-          if (!cancelled) {
-            setStartupError({ error });
-          }
-        }
-      };
-
-      loadStudyConfig();
-      return () => {
-        cancelled = true;
-      };
+      getStudyConfig(routeStudyId, globalConfig).then((config) => {
+        setActiveConfig(config);
+      });
+      return () => { };
     }
-
     if (globalConfig && routeStudyId) {
       const messageListener = (event: MessageEvent) => {
         if (event.data.type === 'revisitWidget/CONFIG') {
-          const loadWidgetConfig = async () => {
-            try {
-              const config = await parseStudyConfig(event.data.payload);
-              if (!cancelled) {
-                setActiveConfig(config);
-              }
-
-              const sequenceArray = await generateSequenceArray(config);
-              if (!cancelled) {
-                window.parent.postMessage({ type: 'revisitWidget/SEQUENCE_ARRAY', payload: sequenceArray }, '*');
-              }
-            } catch (error) {
-              console.error('Error loading widget study config:', error);
-              if (!cancelled) {
-                setStartupError({ error });
-              }
-            }
-          };
-
-          loadWidgetConfig();
+          parseStudyConfig(event.data.payload).then(async (config) => {
+            setActiveConfig(config);
+            const sequenceArray = await generateSequenceArray(config);
+            window.parent.postMessage({ type: 'revisitWidget/SEQUENCE_ARRAY', payload: sequenceArray }, '*');
+          });
         }
       };
 
@@ -251,18 +75,14 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       window.parent.postMessage({ type: 'revisitWidget/READY' }, '*');
 
       return () => {
-        cancelled = true;
         window.removeEventListener('message', messageListener);
       };
     }
-
-    return undefined;
+    return () => { };
   }, [globalConfig, routeStudyId]);
 
   const [routes, setRoutes] = useState<RouteObject[]>([]);
   const [store, setStore] = useState<Nullable<StudyStore>>(null);
-  const [isCompletionCheckResolved, setIsCompletionCheckResolved] = useState(false);
-  const [completionCheckError, setCompletionCheckError] = useState<string | null>(null);
   const { storageEngine } = useStorageEngine();
   const [searchParams] = useSearchParams();
 
@@ -270,68 +90,62 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   const studyCondition = useMemo(() => parseConditionParam(searchParams.get('condition')), [searchParams]);
 
   useEffect(() => {
-    let isCancelled = false;
-
-    async function fetchParticipantIp() {
-      const ipTimeoutController = new AbortController();
-      const ipTimeoutId = window.setTimeout(() => ipTimeoutController.abort(), 1200);
-
-      try {
-        const ipRes = await fetch('https://api.ipify.org?format=json', {
-          signal: ipTimeoutController.signal,
-        }).catch(() => '');
-
-        return ipRes instanceof Response ? await ipRes.json() as { ip: string } : { ip: '' };
-      } finally {
-        window.clearTimeout(ipTimeoutId);
-      }
-    }
-
     async function initializeUserStoreRouting() {
       // Check that we have a storage engine and active config (studyId is set for config, but typescript complains)
-      if (!storageEngine || !activeConfig || !canonicalStudyId || (activeConfig.errors?.length ?? 0) > 0) return;
-      setIsCompletionCheckResolved(false);
-      setCompletionCheckError(null);
+      if (!storageEngine || !activeConfig || !canonicalStudyId) return;
 
-      let modes: Record<REVISIT_MODE, boolean> | null = null;
-      const urlParticipantId = activeConfig.uiConfig.urlParticipantIdParam
-        ? searchParams.get(activeConfig.uiConfig.urlParticipantIdParam) ?? undefined
-        : undefined;
       try {
         // Make sure that we have a study database and that the study database has a sequence array
         await storageEngine.initializeStudyDb(canonicalStudyId);
-
-        const activeHashPromise = hash(JSON.stringify(activeConfig));
-
         await storageEngine.saveConfig(activeConfig);
 
         const sequenceArray = await storageEngine.getSequenceArray();
-
         if (!sequenceArray) {
-          const generatedSequenceArray = await generateSequenceArray(activeConfig);
-
-          await storageEngine.setSequenceArray(generatedSequenceArray);
+          await storageEngine.setSequenceArray(
+            await generateSequenceArray(activeConfig),
+          );
         }
 
+        const modes = await storageEngine.getModes(canonicalStudyId);
+
         // Get or generate participant session
+        const urlParticipantId = activeConfig.uiConfig.urlParticipantIdParam
+          ? searchParams.get(activeConfig.uiConfig.urlParticipantIdParam)
+          || undefined
+          : undefined;
         const searchParamsObject = Object.fromEntries(searchParams.entries());
 
-        const [resolvedModes, activeHash] = await Promise.all([
-          storageEngine.getModes(canonicalStudyId),
-          activeHashPromise,
-        ]);
-        modes = resolvedModes;
+        const ipTimeoutController = new AbortController();
+        const ipTimeoutId = window.setTimeout(() => ipTimeoutController.abort(), 1200);
+        const ipRes = await fetch('https://api.ipify.org?format=json', {
+          signal: ipTimeoutController.signal,
+        }).catch(() => '');
+        window.clearTimeout(ipTimeoutId);
+        const ip: { ip: string } = ipRes instanceof Response ? await ipRes.json() : { ip: '' };
 
-        const initialMetadata = createParticipantMetadata();
+        const metadata: ParticipantMetadata = {
+          language: navigator.language,
+          userAgent: navigator.userAgent,
+          resolution: {
+            width: window.screen.width,
+            height: window.screen.height,
+            availHeight: window.screen.availHeight,
+            availWidth: window.screen.availWidth,
+            colorDepth: window.screen.colorDepth,
+            orientation: window.screen.orientation.type,
+            pixelDepth: window.screen.pixelDepth,
+          },
+          ip: ip.ip,
+        };
 
         let participantSession = await storageEngine.initializeParticipantSession(
           searchParamsObject,
           activeConfig,
-          initialMetadata,
+          metadata,
           participantId || urlParticipantId,
         );
 
-        if (studyCondition.length > 0 && resolvedModes.developmentModeEnabled) {
+        if (studyCondition.length > 0 && modes.developmentModeEnabled) {
           const updatedSearchParams = {
             ...participantSession.searchParams,
             condition: studyCondition.join(','),
@@ -344,142 +158,81 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
             conditions: studyCondition,
           };
         }
+        const activeHash = await hash(JSON.stringify(activeConfig));
+
         let participantConfig = activeConfig;
+
         if (participantSession.participantConfigHash !== activeHash) {
-          participantConfig = (await storageEngine.getAllConfigsFromHash(
-            [participantSession.participantConfigHash],
-            canonicalStudyId,
-          ))[participantSession.participantConfigHash] as ParsedConfig<StudyConfig>;
+          participantConfig = (await storageEngine.getAllConfigsFromHash([participantSession.participantConfigHash], canonicalStudyId))[participantSession.participantConfigHash] as ParsedConfig<StudyConfig>;
         }
 
-        const resolvedCondition = resolveParticipantConditions({
+        const effectiveStudyCondition = resolveParticipantConditions({
           urlCondition: studyCondition,
           participantConditions: participantSession.conditions,
           participantSearchParamCondition: participantSession.searchParams?.condition,
-          allowUrlOverride: resolvedModes.developmentModeEnabled,
+          allowUrlOverride: modes.developmentModeEnabled,
         });
-        const filteredParticipantSequence = filterSequenceByCondition(participantSession.sequence, resolvedCondition);
-
+        const filteredParticipantSequence = filterSequenceByCondition(participantSession.sequence, effectiveStudyCondition);
+        const participantCompleted = await storageEngine.getParticipantCompletionStatus(participantSession.participantId);
+        // Resolve participant-global templates only after loading the participant's persisted
+        // sequence, while keeping the canonical config used for hashing unchanged.
+        const runtimeConfig = materializeParticipantConfig(
+          participantConfig,
+          filteredParticipantSequence.parameters || {},
+        );
         // Initialize the redux stores
         const newStore = await studyStoreCreator(
           canonicalStudyId,
-          participantConfig,
+          runtimeConfig,
           filteredParticipantSequence,
-          participantSession.metadata,
+          metadata,
           participantSession.answers,
-          resolvedModes,
+          modes,
           participantSession.participantId,
-          false,
+          participantCompleted,
           false,
           participantSession.participantConfigHash !== activeHash,
         );
-
-        if (isCancelled) {
-          return;
-        }
-
         setStore(newStore);
-
-        if (resolvedModes.dataCollectionEnabled) {
-          fetchParticipantIp().then(async (ip) => {
-            if (isCancelled || !ip.ip || participantSession.metadata.ip === ip.ip) {
-              return;
-            }
-
-            const metadataWithIp = createParticipantMetadata(ip.ip);
-            participantSession = {
-              ...participantSession,
-              metadata: metadataWithIp,
-            };
-
-            await storageEngine.updateParticipantMetadata(metadataWithIp);
-
-            if (!isCancelled) {
-              newStore.store.dispatch(newStore.actions.setMetadata(metadataWithIp));
-            }
-          }).catch((error) => {
-            console.error('Error fetching participant IP:', error);
-          });
-        }
-
-        if (!resolvedModes.dataCollectionEnabled) {
-          setIsCompletionCheckResolved(true);
-        } else {
-          storageEngine.getParticipantCompletionStatus(participantSession.participantId).then((participantCompleted) => {
-            if (!isCancelled) {
-              newStore.store.dispatch(newStore.actions.setParticipantCompleted(participantCompleted));
-              setIsCompletionCheckResolved(true);
-            }
-          }).catch((error) => {
-            console.error('Error fetching participant completion status:', error);
-            if (!isCancelled) {
-              setCompletionCheckError('We could not verify whether this study session was already completed. Please reload this page and try again.');
-              // A transient completion-status lookup failure should not block study entry.
-              setIsCompletionCheckResolved(true);
-            }
-          });
-        }
       } catch (error) {
         console.error('Error initializing user store routing:', error);
-        const isStorageFailure = isStorageStartupFailure(
-          storageEngine,
-          import.meta.env.VITE_STORAGE_ENGINE,
+        // Fallback: initialize the store with empty data
+        const generatedSequences = generateSequenceArray(activeConfig);
+        const matchingSequence = generatedSequences[0];
+        const fallbackSequence = filterSequenceByCondition(
+          matchingSequence,
+          studyCondition,
         );
-        const resolvedModes = modes ?? await storageEngine.getModes(canonicalStudyId).catch(() => null);
-        const developmentModeEnabledForAlert = resolvedModes?.developmentModeEnabled ?? false;
-        const fallbackModes = {
-          developmentModeEnabled: resolvedModes?.developmentModeEnabled ?? true,
-          dataSharingEnabled: resolvedModes?.dataSharingEnabled ?? true,
-          dataCollectionEnabled: false,
-        };
-        const resumeParticipantId = participantId
-          || urlParticipantId
-          || await storageEngine.peekCurrentParticipantId(canonicalStudyId).catch(() => undefined);
-        const initialAlertModal = !isStorageFailure
-          ? getInitialStartupAlert(error, developmentModeEnabledForAlert, resumeParticipantId)
-          : undefined;
+        const fallbackConfig = materializeParticipantConfig(
+          activeConfig,
+          fallbackSequence.parameters || {},
+        );
 
-        try {
-          // Preserve the existing disconnected-storage and participant alert recovery paths.
-          const generatedSequences = await generateSequenceArray(activeConfig);
-
-          const matchingSequence = generatedSequences[0];
-          const fallbackSequence = filterSequenceByCondition(
-            matchingSequence,
-            studyCondition,
-          );
-
-          const emptyStore = await studyStoreCreator(
-            canonicalStudyId,
-            activeConfig,
-            fallbackSequence,
-            createEmptyParticipantMetadata(),
-            {},
-            fallbackModes,
-            '',
-            false,
-            isStorageFailure,
-            false,
-            initialAlertModal,
-          );
-
-          if (isCancelled) {
-            return;
-          }
-
-          setStore(emptyStore);
-          setIsCompletionCheckResolved(true);
-        } catch (fallbackError) {
-          console.error('Error initializing fallback study store:', fallbackError);
-          if (!isCancelled) {
-            setStartupError({ error });
-          }
-          return;
-        }
-      }
-
-      if (isCancelled) {
-        return;
+        const emptyStore = await studyStoreCreator(
+          canonicalStudyId,
+          fallbackConfig,
+          fallbackSequence,
+          {
+            language: '',
+            userAgent: '',
+            resolution: {
+              width: 0,
+              height: 0,
+              availHeight: 0,
+              availWidth: 0,
+              colorDepth: 0,
+              orientation: '',
+              pixelDepth: 0,
+            },
+            ip: '',
+          },
+          {},
+          { developmentModeEnabled: true, dataSharingEnabled: true, dataCollectionEnabled: false },
+          '',
+          false,
+          true,
+        );
+        setStore(emptyStore);
       }
 
       // Initialize the routing
@@ -493,85 +246,46 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
             },
             {
               path: '/:index/:funcIndex?',
-              element: <ComponentController />,
+              element:
+                activeConfig.errors.length > 0 ? (
+                  <>
+                    <Title order={2} mb={8}>
+                      Error loading config
+                    </Title>
+                    <ErrorLoadingConfig
+                      issues={activeConfig.errors}
+                      type="error"
+                    />
+                  </>
+                ) : (
+                  <ComponentController />
+                ),
             },
           ],
         },
       ]);
     }
-    initializeUserStoreRouting().catch((error) => {
-      console.error('Unhandled error initializing user store routing:', error);
-      if (!isCancelled) {
-        setStartupError({ error });
-      }
-    });
-    return () => {
-      isCancelled = true;
-    };
+    initializeUserStoreRouting();
   }, [storageEngine, activeConfig, canonicalStudyId, searchParams, participantId, studyCondition]);
 
   const routing = useRoutes(routes);
-  const hasConfigErrors = (activeConfig?.errors?.length ?? 0) > 0;
-  const { isLoading, showCompletionCheckError } = getShellUiState({
-    isValidStudyId,
-    hasRoutes: routes.length > 0,
-    hasStore: store !== null,
-    isCompletionCheckResolved,
-    completionCheckError,
-  });
 
-  let content: ReactNode = null;
+  let toRender: ReactNode = null;
 
-  if (startupError) {
-    content = <StartupErrorScreen error={startupError.error} />;
-  } else if (activeConfig && hasConfigErrors) {
-    content = (
-      <>
-        <Title order={2} mb={8}>
-          Error loading config
-        </Title>
-        <ErrorLoadingConfig
-          issues={activeConfig.errors}
-          type="error"
-        />
-      </>
-    );
-  } else if (!isValidStudyId) {
-    content = <ResourceNotFound />;
-  } else if (routing && store) {
-    content = (
+  // Definitely a 404
+  if (!isValidStudyId) {
+    toRender = <ResourceNotFound />;
+  } else if (routes.length === 0) {
+    toRender = <LoadingOverlay visible />;
+  } else {
+    // If routing is null, we didn't match any routes
+    toRender = routing && store ? (
       <StudyStoreContext.Provider value={store}>
         <Provider store={store.store}>{routing}</Provider>
       </StudyStoreContext.Provider>
+    ) : (
+      <ResourceNotFound />
     );
-  } else if (!isLoading) {
-    content = <ResourceNotFound />;
   }
-
-  return (
-    <>
-      <StudyLoadingOverlay visible={!startupError && !hasConfigErrors && isLoading} />
-      {!startupError && !hasConfigErrors && showCompletionCheckError && (
-        <Stack
-          align="center"
-          gap="sm"
-          style={{
-            position: 'fixed',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            zIndex: 1001,
-            maxWidth: 420,
-            textAlign: 'center',
-          }}
-        >
-          <Text>{completionCheckError}</Text>
-          <Button onClick={() => window.location.reload()}>
-            Reload
-          </Button>
-        </Stack>
-      )}
-      {content}
-    </>
-  );
+  return toRender;
 }

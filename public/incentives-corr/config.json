@@ -26,11 +26,6 @@
     "studyEndAutoRedirectDelay": 10000
   },
   "baseComponents": {
-    "tutorial": {
-      "type": "markdown",
-      "path": "incentives-corr/assets/02-tutorial-@vis.md",
-      "response": []
-    },
     "practice": {
       "type": "react-component",
       "path": "incentives-corr/assets/Practice.tsx",
@@ -74,6 +69,11 @@
     }
   },
   "components": {
+    "tutorial": {
+      "type": "markdown",
+      "path": "incentives-corr/assets/02-tutorial-@vis.md",
+      "response": []
+    },
     "introduction-base": {
       "type": "markdown",
       "path": "incentives-corr/assets/00-intro-base.md",
@@ -148,102 +148,47 @@
       "path": "incentives-corr/assets/04-instructions-inc.md",
       "response": []
     },
-    "attention-1-pcp": {
+    "attention-1": {
       "baseComponent": "test",
       "parameters": {
         "taskid": "attention",
         "attentionIndex": 1,
-        "vis": "pcp",
         "r1": 0.01,
         "r2": 0.99
       }
     },
-    "attention-2-pcp": {
+    "attention-2": {
       "baseComponent": "test",
       "parameters": {
         "taskid": "attention",
         "attentionIndex": 2,
-        "vis": "pcp",
         "r1": 0.01,
         "r2": 0.99
       }
     },
-    "attention-3-pcp": {
+    "attention-3": {
       "baseComponent": "test",
       "parameters": {
         "taskid": "attention",
         "attentionIndex": 3,
-        "vis": "pcp",
         "r1": 0.01,
         "r2": 0.99
       }
     },
-    "attention-4-pcp": {
+    "attention-4": {
       "baseComponent": "test",
       "parameters": {
         "taskid": "attention",
         "attentionIndex": 4,
-        "vis": "pcp",
         "r1": 0.01,
         "r2": 0.99
       }
     },
-    "attention-5-pcp": {
+    "attention-5": {
       "baseComponent": "test",
       "parameters": {
         "taskid": "attention",
         "attentionIndex": 5,
-        "vis": "pcp",
-        "r1": 0.01,
-        "r2": 0.99
-      }
-    },
-    "attention-1-scatter": {
-      "baseComponent": "test",
-      "parameters": {
-        "taskid": "attention",
-        "attentionIndex": 1,
-        "vis": "scatter",
-        "r1": 0.01,
-        "r2": 0.99
-      }
-    },
-    "attention-2-scatter": {
-      "baseComponent": "test",
-      "parameters": {
-        "taskid": "attention",
-        "attentionIndex": 2,
-        "vis": "scatter",
-        "r1": 0.01,
-        "r2": 0.99
-      }
-    },
-    "attention-3-scatter": {
-      "baseComponent": "test",
-      "parameters": {
-        "taskid": "attention",
-        "attentionIndex": 3,
-        "vis": "scatter",
-        "r1": 0.01,
-        "r2": 0.99
-      }
-    },
-    "attention-4-scatter": {
-      "baseComponent": "test",
-      "parameters": {
-        "taskid": "attention",
-        "attentionIndex": 4,
-        "vis": "scatter",
-        "r1": 0.01,
-        "r2": 0.99
-      }
-    },
-    "attention-5-scatter": {
-      "baseComponent": "test",
-      "parameters": {
-        "taskid": "attention",
-        "attentionIndex": 5,
-        "vis": "scatter",
         "r1": 0.01,
         "r2": 0.99
       }
@@ -348,6 +293,10 @@
     }
   },
   "factors": {
+    "incentive": [
+      "base",
+      "inc"
+    ],
     "vis": [
       "pcp",
       "scatter"
@@ -396,45 +345,21 @@
       0.7,
       0.9
     ],
-    "phaseTraining": [
-      "training"
-    ],
-    "tutorialBlock": {
-      "action": "nest",
-      "values": [
-        {
-          "factor": "vis"
-        }
-      ]
-    },
     "trainingPairs": {
-      "action": "zip",
-      "values": [
-        {
-          "factor": "r1Training"
-        },
-        {
-          "factor": "r2Training"
-        }
+      "zip": [
+        "r1Training",
+        "r2Training"
       ]
     },
-    "trainingBlock": {
-      "action": "nest",
-      "order": "random",
-      "values": [
-        {
-          "factor": "phaseTraining"
-        },
-        {
-          "factor": "vis"
-        },
-        {
-          "factor": "trainingPairs"
-        }
+    "testTrials": {
+      "cross": [
+        "r1",
+        "delta"
       ]
     }
   },
-  "betweenSubjectsFactors": [
+  "betweenSubjects": [
+    "incentive",
     "vis"
   ],
   "sequence": {
@@ -442,8 +367,10 @@
     "components": [
       {
         "id": "base",
-        "conditional": true,
         "order": "fixed",
+        "parameters": {
+          "incentive": "base"
+        },
         "components": [
           "introduction-base",
           "consent-base"
@@ -451,56 +378,49 @@
       },
       {
         "id": "inc",
-        "conditional": true,
         "order": "fixed",
+        "parameters": {
+          "incentive": "inc"
+        },
         "components": [
           "introduction-inc",
           "consent-inc"
         ]
       },
+      "tutorial",
       {
         "type": "factor",
-        "factor": "tutorialBlock",
-        "component": "tutorial"
-      },
-      {
-        "type": "factor",
-        "factor": "trainingBlock",
-        "component": "practice"
+        "id": "training",
+        "factor": "trainingPairs",
+        "components": "practice",
+        "order": "random"
       },
       {
         "id": "base",
-        "conditional": true,
         "order": "fixed",
+        "parameters": {
+          "incentive": "base"
+        },
         "components": [
           "task-details-base"
         ]
       },
       {
         "id": "inc",
-        "conditional": true,
         "order": "fixed",
+        "parameters": {
+          "incentive": "inc"
+        },
         "components": [
           "task-details-inc"
         ]
       },
       {
         "type": "factor",
-        "id": "testBlock",
-        "action": "cross",
+        "id": "test",
+        "factor": "testTrials",
         "order": "random",
-        "values": [
-          {
-            "factor": "vis"
-          },
-          {
-            "factor": "r1"
-          },
-          {
-            "factor": "delta"
-          }
-        ],
-        "component": "test",
+        "components": "test",
         "parameters": {
           "taskid": "test"
         },
@@ -509,56 +429,55 @@
             "spacing": "random",
             "numInterruptions": 1,
             "components": [
-              "attention-1-pcp",
-              "attention-1-scatter"
+              "attention-1"
             ]
           },
           {
             "spacing": "random",
             "numInterruptions": 1,
             "components": [
-              "attention-2-pcp",
-              "attention-2-scatter"
+              "attention-2"
             ]
           },
           {
             "spacing": "random",
             "numInterruptions": 1,
             "components": [
-              "attention-3-pcp",
-              "attention-3-scatter"
+              "attention-3"
             ]
           },
           {
             "spacing": "random",
             "numInterruptions": 1,
             "components": [
-              "attention-4-pcp",
-              "attention-4-scatter"
+              "attention-4"
             ]
           },
           {
             "spacing": "random",
             "numInterruptions": 1,
             "components": [
-              "attention-5-pcp",
-              "attention-5-scatter"
+              "attention-5"
             ]
           }
         ]
       },
       {
         "id": "base",
-        "conditional": true,
         "order": "fixed",
+        "parameters": {
+          "incentive": "base"
+        },
         "components": [
           "qual-q-base"
         ]
       },
       {
         "id": "inc",
-        "conditional": true,
         "order": "fixed",
+        "parameters": {
+          "incentive": "inc"
+        },
         "components": [
           "qual-q-inc"
         ]

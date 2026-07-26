@@ -1,15 +1,15 @@
 import Ajv from 'ajv';
+import isEqual from 'lodash.isequal';
 import merge from 'lodash.merge';
 import librarySchema from './LibraryConfigSchema.json';
 import {
-  ComponentBlock, FactorDefinition, FactorSequence, FactorSequenceReference, IndividualComponent, LibraryConfig, ParsedConfig, ParserErrorWarning, StudyConfig,
+  ComponentBlock, Factor, FactorBlock, FactorExpression, FactorOption, IndividualComponent, LibraryConfig, ParsedConfig, ParserErrorWarning, StudyConfig,
 } from './types';
 import {
-  isDynamicBlock, isFactorDefinition, isFactorSequence, isFactorSequenceReference, isInheritedComponent,
+  isDynamicBlock, isFactorBlock, isInheritedComponent,
 } from './utils';
 import { PREFIX } from '../utils/Prefix';
-import { getFactorCombinations } from '../utils/handleRandomSequences';
-import { findAllFactorSequences, getSequenceFlatMapWithInterruptions } from '../utils/getSequenceFlatMap';
+import { getSequenceFlatMapWithInterruptions } from '../utils/getSequenceFlatMap';
 
 const ajv = new Ajv({ allowUnionTypes: true });
 ajv.addSchema(librarySchema);
@@ -55,7 +55,7 @@ function normalizeSkipTargets(skipConditions?: ComponentBlock['skip']): Componen
 }
 
 function namespaceLibrarySequenceComponents(sequence: StudyConfig['sequence'], libraryName: string): StudyConfig['sequence'] {
-  if (isDynamicBlock(sequence) || isFactorSequence(sequence) || isFactorSequenceReference(sequence)) {
+  if (isDynamicBlock(sequence) || isFactorBlock(sequence)) {
     return sequence;
   }
   return {
@@ -75,9 +75,9 @@ function namespaceLibrarySequenceComponents(sequence: StudyConfig['sequence'], l
 
 // 1. Replace ${var} in a single string
 export function fillTemplate(str: string, vars: Record<string, unknown>): string {
-  const fillBracedToken = (_: string, key: string) => (vars[key] !== undefined && vars[key] !== null
+  const fillBracedToken = (match: string, key: string) => (vars[key] !== undefined && vars[key] !== null
     ? String(vars[key])
-    : '');
+    : match);
   const fillAtToken = (match: string, prefix: string, key: string) => (vars[key] !== undefined && vars[key] !== null
     ? `${prefix}${String(vars[key])}`
     : match);
@@ -118,301 +118,304 @@ export function deepFillTemplate<T>(value: T, vars: Record<string, unknown>): T 
   return value;
 }
 
-function factorSequenceFromReference(
-  reference: FactorSequenceReference,
-  definition: FactorDefinition,
-): FactorSequence {
-  const parameters = reference.parameters ?? definition.parameters;
-  const factorSequence: FactorSequence = {
-    type: 'factor',
-    id: reference.id ?? reference.factor,
-    action: definition.action,
-    order: reference.order ?? definition.order,
-    numRepeats: definition.numRepeats,
-    values: definition.values,
-    component: definition.component,
-  };
+type FactorCondition = Record<string, FactorOption>;
+type FactorCompileResult = {
+  sequence: StudyConfig['sequence'];
+  components: Record<string, IndividualComponent>;
+};
 
-  if (parameters !== undefined) {
-    factorSequence.parameters = parameters;
-  }
-  return factorSequence;
-}
-
-export function resolveFactorReferences(
-  sequence: StudyConfig['sequence'],
-  factors: StudyConfig['factors'] = {},
-  errors: ParserErrorWarning[] = [],
-): StudyConfig['sequence'] {
-  if (isDynamicBlock(sequence) || isFactorSequence(sequence)) {
-    return sequence;
-  }
-
-  if (isFactorSequenceReference(sequence)) {
-    const factor = factors[sequence.factor];
-
-    if (!factor) {
-      errors.push({
-        message: `Factor \`${sequence.factor}\` is not defined in factors`,
-        instancePath: '/sequence/',
-        params: { action: 'Add the factor to factors or update the reference name' },
-        category: 'sequence-validation',
-      });
-
-      return {
-        id: sequence.id ?? sequence.factor,
-        order: 'fixed',
-        components: [],
-      };
-    }
-
-    if (!isFactorDefinition(factor)) {
-      errors.push({
-        message: `Factor \`${sequence.factor}\` is a primitive factor and cannot be used as a sequence factor`,
-        instancePath: '/sequence/',
-        params: { action: 'Reference a derived factor definition from the sequence' },
-        category: 'sequence-validation',
-      });
-
-      return {
-        id: sequence.id ?? sequence.factor,
-        order: 'fixed',
-        components: [],
-      };
-    }
-
-    return factorSequenceFromReference(sequence, factor);
-  }
-
-  return {
-    ...sequence,
-    components: sequence.components.map((component) => (
-      typeof component === 'object'
-        ? resolveFactorReferences(component, factors, errors)
-        : component
-    )),
-  };
-}
-
-function addFactorError(errors: ParserErrorWarning[], message: string) {
-  if (errors.some((error) => error.instancePath === '/factors/' && error.message === message)) {
-    return;
-  }
-
-  errors.push({
-    message,
-    instancePath: '/factors/',
-    params: { action: 'Check that referenced factors are defined and do not form cycles' },
-    category: 'sequence-validation',
-  });
-}
-
-function hasRandomFactorSampling(
-  definition: FactorDefinition,
-  factors: StudyConfig['factors'] = {},
-  visitedFactors = new Set<string>(),
-): boolean {
-  if (
-    definition.order === 'random'
-    && definition.values.some((factorReference) => factorReference.numSamples !== undefined)
-  ) {
-    return true;
-  }
-
-  return definition.values.some((factorReference) => {
-    if (visitedFactors.has(factorReference.factor)) {
-      return false;
-    }
-
-    const factor = factors[factorReference.factor];
-    if (!isFactorDefinition(factor)) {
-      return false;
-    }
-
-    const nextVisitedFactors = new Set(visitedFactors);
-    nextVisitedFactors.add(factorReference.factor);
-    return hasRandomFactorSampling(factor, factors, nextVisitedFactors);
-  });
-}
-
-export function validateFactorGraph(
-  factors: StudyConfig['factors'] = {},
-  errors: ParserErrorWarning[] = [],
+function addFactorError(
+  errors: ParserErrorWarning[],
+  message: string,
+  instancePath = '/factors/',
 ) {
-  const visitedFactors = new Set<string>();
-  const visitingFactors = new Set<string>();
-  const reportedCycles = new Set<string>();
+  if (!errors.some((error) => error.instancePath === instancePath && error.message === message)) {
+    errors.push({
+      message,
+      instancePath,
+      params: { action: 'Check the factor definition and its references' },
+      category: 'sequence-validation',
+    });
+  }
+}
 
-  const visit = (factorName: string, path: string[]) => {
-    const factor = factors[factorName];
+function mergeFactorConditions(
+  left: FactorCondition,
+  right: FactorCondition,
+  errors: ParserErrorWarning[],
+): FactorCondition | null {
+  const conflict = Object.keys(left).find(
+    (name) => Object.hasOwn(right, name) && !Object.is(left[name], right[name]),
+  );
 
-    if (!isFactorDefinition(factor)) {
+  if (conflict) {
+    addFactorError(errors, `Factor \`${conflict}\` has conflicting values in one condition`);
+    return null;
+  }
+
+  return { ...left, ...right };
+}
+
+function crossFactorConditions(
+  conditionSets: FactorCondition[][],
+  errors: ParserErrorWarning[],
+): FactorCondition[] {
+  return conditionSets.reduce<FactorCondition[]>((conditions, nextConditions) => (
+    conditions.flatMap((condition) => nextConditions.flatMap((nextCondition) => {
+      const merged = mergeFactorConditions(condition, nextCondition, errors);
+      return merged ? [merged] : [];
+    }))
+  ), [{}]);
+}
+
+function zipFactorConditions(
+  conditionSets: FactorCondition[][],
+  factorName: string,
+  errors: ParserErrorWarning[],
+): FactorCondition[] {
+  const lengths = conditionSets.map((conditions) => conditions.length);
+  if (new Set(lengths).size > 1) {
+    addFactorError(
+      errors,
+      `Zip factor \`${factorName}\` requires inputs with equal lengths; received ${lengths.join(', ')}`,
+    );
+    return [];
+  }
+
+  return Array.from({ length: lengths[0] ?? 0 }, (_, index) => (
+    conditionSets.reduce<FactorCondition | null>((condition, conditions) => (
+      condition ? mergeFactorConditions(condition, conditions[index], errors) : null
+    ), {})
+  )).filter((condition): condition is FactorCondition => condition !== null);
+}
+
+export function resolveFactorConditions(
+  factorSource: string | FactorExpression,
+  factors: Record<string, Factor>,
+  errors: ParserErrorWarning[] = [],
+  stack: string[] = [],
+  expressionName = 'inline',
+): FactorCondition[] {
+  if (typeof factorSource === 'string') {
+    if (stack.includes(factorSource)) {
+      addFactorError(errors, `Circular factor reference: ${[...stack, factorSource].join(' -> ')}`);
+      return [];
+    }
+  }
+
+  const factorName = typeof factorSource === 'string' ? factorSource : expressionName;
+  const factor = typeof factorSource === 'string' ? factors[factorSource] : factorSource;
+  if (!factor) {
+    addFactorError(errors, `Factor \`${factorSource}\` is not defined`);
+    return [];
+  }
+  if (Array.isArray(factor)) {
+    if (factor.length === 0) {
+      addFactorError(errors, `Factor \`${factorName}\` must contain at least one value`);
+    }
+    return factor.map((value) => ({ [factorName]: value }));
+  }
+
+  const inputs = 'cross' in factor ? factor.cross : factor.zip;
+  if (inputs.length === 0) {
+    addFactorError(errors, `Factor expression \`${factorName}\` must reference at least one factor`);
+    return [];
+  }
+
+  const conditionSets = inputs.map((input) => (
+    resolveFactorConditions(
+      input,
+      factors,
+      errors,
+      typeof factorSource === 'string' ? [...stack, factorSource] : stack,
+    )
+  ));
+  return 'cross' in factor
+    ? crossFactorConditions(conditionSets, errors)
+    : zipFactorConditions(conditionSets, factorName, errors);
+}
+
+export function createFactorConditionId(
+  blockId: string,
+  condition: FactorCondition,
+): string {
+  const conditionId = Object.entries(condition)
+    .map(([name, value]) => `${encodeURIComponent(name)}=${encodeURIComponent(String(value))}`)
+    .join('__');
+  return conditionId ? `${encodeURIComponent(blockId)}__${conditionId}` : encodeURIComponent(blockId);
+}
+
+function compileFactorBlock(
+  block: FactorBlock,
+  config: StudyConfig,
+  errors: ParserErrorWarning[],
+): FactorCompileResult {
+  const components: Record<string, IndividualComponent> = {};
+  const componentIds: string[] = [];
+  const baseComponents = typeof block.components === 'string'
+    ? [block.components]
+    : block.components;
+  const conditions = resolveFactorConditions(block.factor, config.factors || {}, errors, [], block.id);
+  conditions.forEach((condition) => {
+    const conflict = Object.keys(condition).find(
+      (name) => block.parameters
+        && Object.hasOwn(block.parameters, name)
+        && !Object.is(block.parameters[name], condition[name]),
+    );
+    if (conflict) {
+      addFactorError(
+        errors,
+        `Factor block \`${block.id}\` parameter \`${conflict}\` conflicts with its factor value`,
+        '/sequence/',
+      );
       return;
     }
 
-    if (visitingFactors.has(factorName)) {
-      const cycleStart = path.indexOf(factorName);
-      const cycle = path.slice(cycleStart);
-      const cycleKey = cycle.join(' -> ');
-
-      if (!reportedCycles.has(cycleKey)) {
-        reportedCycles.add(cycleKey);
-        addFactorError(errors, `Circular factor reference: ${cycleKey}`);
-      }
-      return;
-    }
-
-    if (visitedFactors.has(factorName)) {
-      return;
-    }
-
-    visitingFactors.add(factorName);
-
-    factor.values.forEach((factorReference) => {
-      const referencedFactor = factors[factorReference.factor];
-
-      if (!referencedFactor) {
+    const conditionId = createFactorConditionId(block.id, condition);
+    const conditionComponentIds = baseComponents.flatMap((baseComponent) => {
+      const template = config.baseComponents?.[baseComponent];
+      if (!template) {
         addFactorError(
           errors,
-          `Factor \`${factorReference.factor}\` referenced by factor \`${factorName}\` is not defined in factors`,
+          `Factor block \`${block.id}\` references undefined base component \`${baseComponent}\``,
+          '/sequence/',
         );
-        return;
+        return [];
       }
 
-      if (isFactorDefinition(referencedFactor)) {
-        visit(factorReference.factor, [...path, factorReference.factor]);
+      const parameters = {
+        ...('parameters' in template ? template.parameters : {}),
+        ...block.parameters,
+        ...condition,
+      };
+      const componentId = `${conditionId}__${encodeURIComponent(baseComponent)}`;
+      const component = deepFillTemplate(
+        merge({}, template, { parameters }),
+        parameters,
+      ) as IndividualComponent;
+
+      if (
+        config.components[componentId]
+        || (components[componentId] && !isEqual(components[componentId], component))
+      ) {
+        addFactorError(
+          errors,
+          `Generated component ID \`${componentId}\` is already used by another component`,
+          '/sequence/',
+        );
+        return [];
       }
+
+      components[componentId] = component;
+      return [componentId];
     });
+    componentIds.push(...conditionComponentIds);
+  });
 
-    visitingFactors.delete(factorName);
-    visitedFactors.add(factorName);
+  return {
+    sequence: {
+      id: block.id,
+      order: block.order ?? 'fixed',
+      components: componentIds,
+      ...(block.interruptions !== undefined ? { interruptions: block.interruptions } : {}),
+      ...(block.skip !== undefined ? { skip: block.skip } : {}),
+      ...(block.conditional !== undefined ? { conditional: block.conditional } : {}),
+    },
+    components,
   };
-
-  Object.keys(factors).forEach((factorName) => visit(factorName, [factorName]));
 }
 
-export function validateBetweenSubjectsFactors(
+export function compileFactorBlocks(
+  sequence: StudyConfig['sequence'],
+  config: StudyConfig,
+  errors: ParserErrorWarning[] = [],
+): FactorCompileResult {
+  if (isDynamicBlock(sequence)) {
+    return { sequence, components: {} };
+  }
+  if (isFactorBlock(sequence)) {
+    return compileFactorBlock(sequence, config, errors);
+  }
+
+  const components: Record<string, IndividualComponent> = {};
+  const compiledSequence: ComponentBlock = {
+    ...sequence,
+    components: sequence.components.map((component) => {
+      if (typeof component === 'string') {
+        return component;
+      }
+
+      const compiled = compileFactorBlocks(component, config, errors);
+      Object.entries(compiled.components).forEach(([componentId, compiledComponent]) => {
+        if (components[componentId] && !isEqual(components[componentId], compiledComponent)) {
+          addFactorError(
+            errors,
+            `Generated component ID \`${componentId}\` is already used by another factor block`,
+            '/sequence/',
+          );
+        } else {
+          components[componentId] = compiledComponent;
+        }
+      });
+      return compiled.sequence;
+    }),
+  };
+
+  return { sequence: compiledSequence, components };
+}
+
+/**
+ * Creates the runtime config for one participant without mutating the canonical study config.
+ * Call this after sequence assignment so participant-global parameters can resolve component
+ * inheritance and templates such as `@vis` and `${vis}` before the Redux store is created.
+ */
+export function materializeParticipantConfig(
+  config: StudyConfig,
+  globalParameters: Record<string, unknown>,
+): StudyConfig {
+  const components = Object.fromEntries(
+    Object.entries(config.components).map(([componentId, component]) => {
+      const inheritedComponent = isInheritedComponent(component) && config.baseComponents
+        ? merge({}, config.baseComponents[component.baseComponent], component)
+        : component;
+      const parameters = {
+        ...('parameters' in inheritedComponent ? inheritedComponent.parameters : {}),
+        ...globalParameters,
+      };
+      return [
+        componentId,
+        deepFillTemplate({ ...inheritedComponent, parameters }, parameters),
+      ];
+    }),
+  );
+
+  return { ...config, components };
+}
+
+export function validateBetweenSubjects(
   config: StudyConfig,
   warnings: ParserErrorWarning[] = [],
 ) {
-  config.betweenSubjectsFactors?.forEach((factorName, index) => {
+  config.betweenSubjects?.forEach((factorName, index) => {
     const factor = config.factors?.[factorName];
-    const instancePath = `/betweenSubjectsFactors/${index}`;
+    const instancePath = `/betweenSubjects/${index}`;
 
-    if (!factor) {
+    if (!factor || !Array.isArray(factor) || factor.length === 0) {
       warnings.push({
-        message: `Between-subjects factor \`${factorName}\` is not defined in factors`,
+        message: !factor
+          ? `Between-subjects factor \`${factorName}\` is not defined in factors`
+          : `Between-subjects factor \`${factorName}\` must be a non-empty primitive factor`,
         instancePath,
-        params: { action: 'Add the factor to factors or remove it from betweenSubjectsFactors' },
-        category: 'sequence-validation',
-      });
-      return;
-    }
-
-    if (isFactorDefinition(factor)) {
-      warnings.push({
-        message: `Between-subjects factor \`${factorName}\` must be a primitive factor with levels`,
-        instancePath,
-        params: { action: 'Use a primitive factor level array in betweenSubjectsFactors' },
-        category: 'sequence-validation',
-      });
-      return;
-    }
-
-    if (factor.length === 0) {
-      warnings.push({
-        message: `Between-subjects factor \`${factorName}\` has no levels`,
-        instancePath,
-        params: { action: 'Add at least one level to this factor or remove it from betweenSubjectsFactors' },
+        params: { action: 'Use a non-empty primitive factor defined in factors' },
         category: 'sequence-validation',
       });
     }
   });
-}
-
-export function createFactorComponents(config: StudyConfig): Record<string, IndividualComponent> {
-  const factorSequences = findAllFactorSequences(config.sequence);
-
-  if (!config.factors || !config.baseComponents) {
-    return {};
-  }
-
-  const newComponents: Record<string, IndividualComponent> = {};
-
-  factorSequences.forEach((block) => {
-    const baseComponent = config.baseComponents![block.component];
-
-    const allCombs = getFactorCombinations(
-      block,
-      config.factors!,
-      undefined,
-      [],
-      { expandPossibleSamples: true, ignoreNumSamples: true },
-    );
-
-    allCombs.forEach((c) => {
-      const baseParameters = baseComponent && 'parameters' in baseComponent && baseComponent.parameters
-        ? baseComponent.parameters
-        : {};
-      const parameters = { ...baseParameters, ...block.parameters, ...c[1] };
-      const component = merge(
-        {},
-        baseComponent,
-        { parameters },
-      );
-      newComponents[c[0]] = deepFillTemplate(component, c[1]) as IndividualComponent;
-    });
-  });
-
-  return newComponents;
-}
-
-export function expandFactorSequences(
-  sequence: StudyConfig['sequence'],
-  importedLibrariesData: Record<string, LibraryConfig>,
-  factors: NonNullable<StudyConfig['factors']>,
-  errors: ParserErrorWarning[] = [],
-): StudyConfig['sequence'] {
-  if (isDynamicBlock(sequence) || isFactorSequenceReference(sequence)) {
-    return sequence;
-  }
-
-  if (isFactorSequence(sequence)) {
-    if (hasRandomFactorSampling(sequence, factors)) {
-      return sequence;
-    }
-
-    const componentsToCross = getFactorCombinations(
-      sequence,
-      factors,
-      (message) => addFactorError(errors, message),
-    );
-
-    return {
-      id: sequence.id,
-      order: sequence.order ?? 'fixed',
-      components: componentsToCross.map((c) => c[0]),
-      skip: sequence.skip || [],
-      ...(sequence.interruptions !== undefined ? { interruptions: sequence.interruptions } : {}),
-      ...(sequence.conditional !== undefined ? { conditional: sequence.conditional } : {}),
-    };
-  }
-
-  return {
-    ...sequence,
-    components: (sequence.components || []).map((component) => {
-      if (typeof component === 'object') {
-        return expandFactorSequences(component, importedLibrariesData, factors, errors);
-      }
-
-      return component;
-    }),
-  };
 }
 
 // Recursively iterate through sequences (sequence.components) and replace any library sequence references with the actual library sequence
 export function expandLibrarySequences(sequence: StudyConfig['sequence'], importedLibrariesData: Record<string, LibraryConfig>, errors: ParserErrorWarning[] = []): StudyConfig['sequence'] {
-  if (isDynamicBlock(sequence) || isFactorSequence(sequence) || isFactorSequenceReference(sequence)) {
+  if (isDynamicBlock(sequence) || isFactorBlock(sequence)) {
     return sequence;
   }
   return {

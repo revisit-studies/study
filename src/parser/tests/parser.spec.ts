@@ -4,7 +4,7 @@ import {
 import { readFileSync } from 'node:fs';
 import { ComponentBlock, StudyConfig } from './types';
 import { parseStudyConfig } from './parser';
-import { isDynamicBlock, isFactorSequence } from './utils';
+import { isDynamicBlock, isFactorBlock } from './utils';
 import { generateSequenceArray } from '../utils/handleRandomSequences';
 import { getSequenceFlatMap } from '../utils/getSequenceFlatMap';
 
@@ -16,7 +16,7 @@ function isComponentBlock(value: unknown): value is ComponentBlock {
     && value !== null
     && 'components' in value
     && !isDynamicBlock(value as StudyConfig['sequence'])
-    && !isFactorSequence(value as StudyConfig['sequence']);
+    && !isFactorBlock(value as StudyConfig['sequence']);
 }
 
 describe('BaseComponent Macro Expansion', () => {
@@ -1503,560 +1503,6 @@ describe('Parser Warnings', () => {
     expect(contactEmailWarning).toBeUndefined();
   });
 
-  test('accepts nest order for factors and expands to nested fixed sequence', async () => {
-    const studyConfig = {
-      $schema: '',
-      studyMetadata: {
-        title: 'Test Study',
-        version: '1.0',
-        authors: ['Test'],
-        date: '2024-01-01',
-        description: 'Test',
-        organizations: ['Test Org'],
-      },
-      uiConfig: {
-        contactEmail: 'researcher@university.edu',
-        helpTextPath: '',
-        logoPath: '',
-        withProgressBar: true,
-        autoDownloadStudy: false,
-        withSidebar: true,
-      },
-      baseComponents: {
-        factorComponent: {
-          type: 'react-component',
-          path: 'test/assets/Factor.tsx',
-          parameters: { label: `$${'{m}'}/$${'{n}'}` },
-          response: [],
-        },
-      },
-      components: {},
-      factors: {
-        m: ['m1', 'm2'],
-        n: ['n1', 'n2', 'n3'],
-      },
-      sequence: {
-        type: 'factor',
-        action: 'nest',
-        id: 'nestedFactors',
-        values: [
-          { factor: 'm' },
-          { factor: 'n' },
-        ],
-        component: 'factorComponent',
-      },
-    };
-
-    const result = await parseStudyConfig(JSON.stringify(studyConfig));
-
-    expect(result.errors).toEqual([]);
-    expect(isComponentBlock(result.sequence)).toBe(true);
-    if (isComponentBlock(result.sequence)) {
-      expect(result.sequence.order).toBe('fixed');
-      expect(result.sequence.components).toEqual([
-        '_m1_n1',
-        '_m1_n2',
-        '_m1_n3',
-        '_m2_n1',
-        '_m2_n2',
-        '_m2_n3',
-      ]);
-    }
-    expect(result.components._m1_n1).toMatchObject({
-      parameters: { label: 'm1/n1' },
-    });
-  });
-
-  test('fills factor values from at-sign template tokens in generated component parameters', async () => {
-    const studyConfig = {
-      $schema: '',
-      studyMetadata: {
-        title: 'Test Study',
-        version: '1.0',
-        authors: ['Test'],
-        date: '2024-01-01',
-        description: 'Test',
-        organizations: ['Test Org'],
-      },
-      uiConfig: {
-        contactEmail: 'researcher@university.edu',
-        helpTextPath: '',
-        logoPath: '',
-        withProgressBar: true,
-        autoDownloadStudy: false,
-        withSidebar: true,
-      },
-      baseComponents: {
-        factorComponent: {
-          type: 'react-component',
-          path: 'test/assets/Factor.tsx',
-          parameters: {
-            label: '@m/@n',
-            contact: 'researcher@example.edu',
-            unknownToken: '@missing',
-          },
-          response: [],
-        },
-      },
-      components: {},
-      factors: {
-        m: ['m1', 'm2'],
-        n: ['n1', 'n2'],
-      },
-      sequence: {
-        type: 'factor',
-        action: 'nest',
-        id: 'nestedFactors',
-        values: [
-          { factor: 'm' },
-          { factor: 'n' },
-        ],
-        component: 'factorComponent',
-      },
-    };
-
-    const result = await parseStudyConfig(JSON.stringify(studyConfig));
-
-    expect(result.errors).toEqual([]);
-    expect(result.components._m2_n2).toMatchObject({
-      parameters: {
-        label: 'm2/n2',
-        contact: 'researcher@example.edu',
-        unknownToken: '@missing',
-        m: 'm2',
-        n: 'n2',
-      },
-    });
-  });
-
-  test('accepts cross action for factors and expands to crossed fixed sequence', async () => {
-    const studyConfig = {
-      $schema: '',
-      studyMetadata: {
-        title: 'Test Study',
-        version: '1.0',
-        authors: ['Test'],
-        date: '2024-01-01',
-        description: 'Test',
-        organizations: ['Test Org'],
-      },
-      uiConfig: {
-        contactEmail: 'researcher@university.edu',
-        helpTextPath: '',
-        logoPath: '',
-        withProgressBar: true,
-        autoDownloadStudy: false,
-        withSidebar: true,
-      },
-      baseComponents: {
-        factorComponent: {
-          type: 'react-component',
-          path: 'test/assets/Factor.tsx',
-          parameters: { label: `$${'{m}'}/$${'{n}'}` },
-          response: [],
-        },
-      },
-      components: {},
-      factors: {
-        m: ['m1', 'm2'],
-        n: ['n1', 'n2'],
-      },
-      sequence: {
-        type: 'factor',
-        action: 'cross',
-        id: 'crossedFactors',
-        values: [
-          { factor: 'm' },
-          { factor: 'n' },
-        ],
-        component: 'factorComponent',
-        parameters: { label: `$${'{m}'}/$${'{n}'}` },
-      },
-    };
-
-    const result = await parseStudyConfig(JSON.stringify(studyConfig));
-
-    expect(result.errors).toEqual([]);
-    expect(isComponentBlock(result.sequence)).toBe(true);
-    if (isComponentBlock(result.sequence)) {
-      expect(result.sequence.order).toBe('fixed');
-      expect(result.sequence.components).toEqual([
-        '_m1_n1',
-        '_m2_n2',
-        '_m2_n1',
-        '_m1_n2',
-      ]);
-    }
-    expect(result.components._m2_n2).toMatchObject({
-      parameters: { label: 'm2/n2' },
-    });
-  });
-
-  test('accepts zip action for factors and expands to zipped fixed sequence', async () => {
-    const studyConfig = {
-      $schema: '',
-      studyMetadata: {
-        title: 'Test Study',
-        version: '1.0',
-        authors: ['Test'],
-        date: '2024-01-01',
-        description: 'Test',
-        organizations: ['Test Org'],
-      },
-      uiConfig: {
-        contactEmail: 'researcher@university.edu',
-        helpTextPath: '',
-        logoPath: '',
-        withProgressBar: true,
-        autoDownloadStudy: false,
-        withSidebar: true,
-      },
-      baseComponents: {
-        factorComponent: {
-          type: 'react-component',
-          path: 'test/assets/Factor.tsx',
-          response: [],
-        },
-      },
-      components: {},
-      factors: {
-        m: ['m1', 'm2'],
-        n: ['n1', 'n2', 'n3'],
-      },
-      sequence: {
-        type: 'factor',
-        action: 'zip',
-        id: 'zippedFactors',
-        values: [
-          { factor: 'm' },
-          { factor: 'n' },
-        ],
-        component: 'factorComponent',
-      },
-    };
-
-    const result = await parseStudyConfig(JSON.stringify(studyConfig));
-
-    expect(result.errors).toEqual([]);
-    expect(isComponentBlock(result.sequence)).toBe(true);
-    if (isComponentBlock(result.sequence)) {
-      expect(result.sequence.order).toBe('fixed');
-      expect(result.sequence.components).toEqual([
-        '_m1_n1',
-        '_m2_n2',
-      ]);
-    }
-    expect(result.components._m2_n2).toMatchObject({
-      parameters: { m: 'm2', n: 'n2' },
-    });
-  });
-
-  test('accepts reusable top-level factors referenced from the sequence', async () => {
-    const studyConfig = {
-      $schema: '',
-      studyMetadata: {
-        title: 'Test Study',
-        version: '1.0',
-        authors: ['Test'],
-        date: '2024-01-01',
-        description: 'Test',
-        organizations: ['Test Org'],
-      },
-      uiConfig: {
-        contactEmail: 'researcher@university.edu',
-        helpTextPath: '',
-        logoPath: '',
-        withProgressBar: true,
-        autoDownloadStudy: false,
-        withSidebar: true,
-      },
-      baseComponents: {
-        factorComponent: {
-          type: 'react-component',
-          path: 'test/assets/Factor.tsx',
-          response: [],
-        },
-      },
-      components: {},
-      factors: {
-        m: ['m1', 'm2'],
-        n: ['n1', 'n2', 'n3'],
-        zippedFactors: {
-          action: 'zip',
-          order: 'random',
-          values: [
-            { factor: 'm' },
-            { factor: 'n' },
-          ],
-          component: 'factorComponent',
-        },
-      },
-      sequence: {
-        order: 'fixed',
-        components: [
-          {
-            type: 'factor',
-            factor: 'zippedFactors',
-          },
-        ],
-      },
-    };
-
-    const result = await parseStudyConfig(JSON.stringify(studyConfig));
-
-    expect(result.errors).toEqual([]);
-    expect(isComponentBlock(result.sequence)).toBe(true);
-    if (isComponentBlock(result.sequence)) {
-      expect(result.sequence.components).toEqual([
-        {
-          id: 'zippedFactors',
-          order: 'random',
-          components: [
-            '_m1_n1',
-            '_m2_n2',
-          ],
-          skip: [],
-        },
-      ]);
-    }
-    expect(result.components._m1_n1).toMatchObject({
-      parameters: { m: 'm1', n: 'n1' },
-    });
-  });
-
-  test('accepts a derived factor as a factor of another reusable factor', async () => {
-    const studyConfig = {
-      $schema: '',
-      studyMetadata: {
-        title: 'Test Study',
-        version: '1.0',
-        authors: ['Test'],
-        date: '2024-01-01',
-        description: 'Test',
-        organizations: ['Test Org'],
-      },
-      uiConfig: {
-        contactEmail: 'researcher@university.edu',
-        helpTextPath: '',
-        logoPath: '',
-        withProgressBar: true,
-        autoDownloadStudy: false,
-        withSidebar: true,
-      },
-      baseComponents: {
-        factorComponent: {
-          type: 'react-component',
-          path: 'test/assets/Factor.tsx',
-          response: [],
-        },
-      },
-      components: {},
-      factors: {
-        data: ['d1', 'd2'],
-        visType: ['v1', 'v2', 'v3'],
-        task: ['t1', 't2'],
-        zipDataVis: {
-          action: 'zip',
-          order: 'random',
-          values: [
-            { factor: 'data' },
-            { factor: 'visType' },
-          ],
-          component: 'factorComponent',
-        },
-        zipThenTask: {
-          action: 'nest',
-          order: 'latinSquare',
-          values: [
-            { factor: 'zipDataVis' },
-            { factor: 'task' },
-          ],
-          component: 'factorComponent',
-        },
-      },
-      sequence: {
-        order: 'fixed',
-        components: [
-          {
-            type: 'factor',
-            factor: 'zipThenTask',
-          },
-        ],
-      },
-    };
-
-    const result = await parseStudyConfig(JSON.stringify(studyConfig));
-
-    expect(result.errors).toEqual([]);
-    expect(isComponentBlock(result.sequence)).toBe(true);
-    if (isComponentBlock(result.sequence)) {
-      expect(result.sequence.components).toEqual([
-        {
-          id: 'zipThenTask',
-          order: 'latinSquare',
-          components: [
-            '_d1_v1_t1',
-            '_d1_v1_t2',
-            '_d2_v2_t1',
-            '_d2_v2_t2',
-          ],
-          skip: [],
-        },
-      ]);
-    }
-    expect(result.components._d2_v2_t2).toMatchObject({
-      parameters: { data: 'd2', visType: 'v2', task: 't2' },
-    });
-  });
-
-  test('reports cycles among reusable factors', async () => {
-    const studyConfig = {
-      $schema: '',
-      studyMetadata: {
-        title: 'Test Study',
-        version: '1.0',
-        authors: ['Test'],
-        date: '2024-01-01',
-        description: 'Test',
-        organizations: ['Test Org'],
-      },
-      uiConfig: {
-        contactEmail: 'researcher@university.edu',
-        helpTextPath: '',
-        logoPath: '',
-        withProgressBar: true,
-        autoDownloadStudy: false,
-        withSidebar: true,
-      },
-      baseComponents: {
-        factorComponent: {
-          type: 'react-component',
-          path: 'test/assets/Factor.tsx',
-          response: [],
-        },
-      },
-      components: {},
-      factors: {
-        a: {
-          action: 'nest',
-          values: [{ factor: 'b' }],
-          component: 'factorComponent',
-        },
-        b: {
-          action: 'nest',
-          values: [{ factor: 'a' }],
-          component: 'factorComponent',
-        },
-      },
-      sequence: {
-        type: 'factor',
-        factor: 'a',
-      },
-    };
-
-    const result = await parseStudyConfig(JSON.stringify(studyConfig));
-
-    expect(result.errors).toContainEqual(expect.objectContaining({
-      message: 'Circular factor reference: a -> b -> a',
-      instancePath: '/factors/',
-    }));
-  });
-
-  test('warns when a between-subjects factor is not defined', async () => {
-    const studyConfig = {
-      $schema: '',
-      studyMetadata: {
-        title: 'Test Study',
-        version: '1.0',
-        authors: ['Test'],
-        date: '2024-01-01',
-        description: 'Test',
-        organizations: ['Test Org'],
-      },
-      uiConfig: {
-        contactEmail: 'researcher@university.edu',
-        helpTextPath: '',
-        logoPath: '',
-        withProgressBar: true,
-        autoDownloadStudy: false,
-        withSidebar: true,
-      },
-      components: {
-        intro: {
-          type: 'questionnaire',
-          response: [],
-        },
-      },
-      factors: {
-        data: ['d1', 'd2'],
-      },
-      betweenSubjectsFactors: ['missingFactor'],
-      sequence: {
-        order: 'fixed',
-        components: ['intro'],
-      },
-    };
-
-    const result = await parseStudyConfig(JSON.stringify(studyConfig));
-
-    expect(result.errors).toEqual([]);
-    expect(result.warnings).toContainEqual(expect.objectContaining({
-      message: 'Between-subjects factor `missingFactor` is not defined in factors',
-      instancePath: '/betweenSubjectsFactors/0',
-    }));
-  });
-
-  test('uses factor values as parameters when factor and base component omit parameters', async () => {
-    const studyConfig = {
-      $schema: '',
-      studyMetadata: {
-        title: 'Test Study',
-        version: '1.0',
-        authors: ['Test'],
-        date: '2024-01-01',
-        description: 'Test',
-        organizations: ['Test Org'],
-      },
-      uiConfig: {
-        contactEmail: 'researcher@university.edu',
-        helpTextPath: '',
-        logoPath: '',
-        withProgressBar: true,
-        autoDownloadStudy: false,
-        withSidebar: true,
-      },
-      baseComponents: {
-        factorComponent: {
-          type: 'react-component',
-          path: 'test/assets/Factor.tsx',
-          response: [],
-        },
-      },
-      components: {},
-      factors: {
-        m: ['m1', 'm2'],
-        n: ['n1', 'n2'],
-      },
-      sequence: {
-        type: 'factor',
-        action: 'cross',
-        id: 'crossedFactors',
-        values: [
-          { factor: 'm' },
-          { factor: 'n' },
-        ],
-        component: 'factorComponent',
-      },
-    };
-
-    const result = await parseStudyConfig(JSON.stringify(studyConfig));
-
-    expect(result.errors).toEqual([]);
-    expect(result.components._m2_n2).toMatchObject({
-      parameters: { m: 'm2', n: 'n2' },
-    });
-  });
-
   test('keeps Zach\'s factor demo valid', async () => {
     const config = readFileSync(new URL('../../public/demo-factors/config.json', import.meta.url), 'utf8');
     const result = await parseStudyConfig(config);
@@ -2072,14 +1518,13 @@ describe('Parser Warnings', () => {
     expect(result.errors).toEqual([]);
     expect(generatedComponents.filter((component) => (
       'parameters' in component && component.parameters?.taskid === 'test'
-    ))).toHaveLength(130);
+    ))).toHaveLength(65);
     expect(generatedComponents.filter((component) => (
       'parameters' in component && component.parameters?.r1Training !== undefined
-    ))).toHaveLength(18);
+    ))).toHaveLength(9);
     expect(generatedComponents.filter((component) => (
       'parameters' in component
-      && component.parameters?.vis === 'pcp'
-      && component.parameters.r1Training !== undefined
+      && component.parameters?.r1Training !== undefined
     )).map((component) => (
       'parameters' in component
         ? [component.parameters?.r1Training, component.parameters?.r2Training]
@@ -2098,11 +1543,25 @@ describe('Parser Warnings', () => {
 
     const sequences = generateSequenceArray({
       ...result,
-      uiConfig: { ...result.uiConfig, numSequences: 2 },
+      uiConfig: { ...result.uiConfig, numSequences: 4 },
     });
+    expect(sequences.map((sequence) => sequence.parameters)).toEqual([
+      { incentive: 'base', vis: 'pcp' },
+      { incentive: 'base', vis: 'scatter' },
+      { incentive: 'inc', vis: 'pcp' },
+      { incentive: 'inc', vis: 'scatter' },
+    ]);
     sequences.forEach((sequence) => {
       const componentNames = getSequenceFlatMap(sequence);
       const sequenceComponents = componentNames.map((name) => result.components[name]).filter(Boolean);
+      const incentive = sequence.parameters?.incentive;
+      const otherIncentive = incentive === 'base' ? 'inc' : 'base';
+      expect(componentNames).toContain(`introduction-${incentive}`);
+      expect(componentNames).toContain(`task-details-${incentive}`);
+      expect(componentNames).toContain(`qual-q-${incentive}`);
+      expect(componentNames).not.toContain(`introduction-${otherIncentive}`);
+      expect(componentNames).not.toContain(`task-details-${otherIncentive}`);
+      expect(componentNames).not.toContain(`qual-q-${otherIncentive}`);
       expect(sequenceComponents.filter((component) => (
         'parameters' in component && component.parameters?.taskid === 'test'
       ))).toHaveLength(65);

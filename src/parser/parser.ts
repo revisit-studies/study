@@ -7,10 +7,10 @@ import {
 } from './types';
 import { getSequenceFlatMapWithInterruptions } from '../utils/getSequenceFlatMap';
 import {
-  createFactorComponents, expandFactorSequences, expandLibrarySequences, loadLibrariesParseNamespace, resolveFactorReferences, validateBetweenSubjectsFactors, validateFactorGraph, verifyLibraryUsage,
+  compileFactorBlocks, expandLibrarySequences, loadLibrariesParseNamespace, validateBetweenSubjects, verifyLibraryUsage,
 } from './libraryParser';
 import {
-  isDynamicBlock, isFactorSequence, isFactorSequenceReference, isInheritedComponent,
+  isDynamicBlock, isFactorBlock, isInheritedComponent,
 } from './utils';
 
 const ajv1 = new Ajv({ allowUnionTypes: true });
@@ -67,7 +67,7 @@ function verifyStudySkip(
     }
   };
 
-  if (isDynamicBlock(sequence) || isFactorSequence(sequence) || isFactorSequenceReference(sequence)) {
+  if (isDynamicBlock(sequence) || isFactorBlock(sequence)) {
     return;
   }
 
@@ -108,7 +108,7 @@ function verifyStudySkip(
 }
 
 function isUrlConditionalBlock(sequence: StudyConfig['sequence']): boolean {
-  return !isFactorSequence(sequence) && !isFactorSequenceReference(sequence) && sequence.conditional === true && Boolean(sequence.id);
+  return !isFactorBlock(sequence) && sequence.conditional === true && Boolean(sequence.id);
 }
 
 function hasConditionalBlock(sequence: StudyConfig['sequence']): boolean {
@@ -116,7 +116,7 @@ function hasConditionalBlock(sequence: StudyConfig['sequence']): boolean {
     return true;
   }
 
-  if (isDynamicBlock(sequence) || isFactorSequence(sequence) || isFactorSequenceReference(sequence)) {
+  if (isDynamicBlock(sequence) || isFactorBlock(sequence)) {
     return false;
   }
 
@@ -134,7 +134,7 @@ function hasConditionalBlockInsideRestrictedOrderAncestor(
     return true;
   }
 
-  if (isDynamicBlock(sequence) || isFactorSequence(sequence) || isFactorSequenceReference(sequence)) {
+  if (isDynamicBlock(sequence) || isFactorBlock(sequence)) {
     return false;
   }
 
@@ -343,13 +343,10 @@ export async function parseStudyConfig(fileData: string): Promise<ParsedConfig<S
 
     // Expand the imported sequences to use the correct component names
     data.sequence = expandLibrarySequences(data.sequence, importedLibrariesData, errors);
-    validateFactorGraph(data.factors, errors);
-    validateBetweenSubjectsFactors(data, warnings);
-    data.sequence = resolveFactorReferences(data.sequence, data.factors, errors);
-    data.components = { ...data.components, ...createFactorComponents(data) };
-    if (data.factors) {
-      data.sequence = expandFactorSequences(data.sequence, importedLibrariesData, data.factors, errors);
-    }
+    validateBetweenSubjects(data, warnings);
+    const compiledFactors = compileFactorBlocks(data.sequence, data, errors);
+    data.sequence = compiledFactors.sequence;
+    data.components = { ...data.components, ...compiledFactors.components };
 
     const { errors: parserErrors, warnings: parserWarnings } = verifyStudyConfig(data, importedLibrariesData);
     errors = [...errors, ...parserErrors];

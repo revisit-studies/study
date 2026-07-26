@@ -2,12 +2,12 @@ import {
   describe, expect, test, vi,
 } from 'vitest';
 import {
-  createFactorComponents, deepFillTemplate, expandFactorSequences, expandLibrarySequences, fillTemplate, verifyLibraryUsage, loadLibrariesParseNamespace, resolveFactorReferences, validateFactorGraph,
+  compileFactorBlocks, createFactorConditionId, deepFillTemplate, expandLibrarySequences, fillTemplate, resolveFactorConditions, verifyLibraryUsage, loadLibrariesParseNamespace,
 } from './libraryParser';
 import {
   ComponentBlock, LibraryConfig, StudyConfig, InheritedComponent, IndividualComponent, ParserErrorWarning,
 } from './types';
-import { isDynamicBlock, isFactorSequence } from './utils';
+import { isDynamicBlock } from './utils';
 
 // Helper function to check if a value is a ComponentBlock
 function isComponentBlock(value: unknown): value is ComponentBlock {
@@ -31,404 +31,108 @@ describe('Factor Templates', () => {
   test('preserves the type of an exact at-sign factor token', () => {
     expect(deepFillTemplate({ r1: '@r1' }, { r1: 0.3 })).toEqual({ r1: 0.3 });
   });
+
+  test('preserves unresolved participant-global tokens', () => {
+    const unresolved = `@vis/$${'{vis}'}`;
+    expect(fillTemplate(unresolved, {})).toBe(unresolved);
+  });
 });
 
-describe('Factor Expansion', () => {
-  test('expands numeric primitive factors', () => {
-    const sequence: StudyConfig['sequence'] = {
-      type: 'factor',
-      action: 'nest',
-      id: 'trials',
-      values: [{ factor: 'vis' }, { factor: 'r1' }],
-      component: 'factorComponent',
-    };
-    const result = expandFactorSequences(sequence, {}, {
-      vis: ['pcp', 'scatter'],
-      r1: [0.3, 0.4],
-    });
+describe('Factor Compiler', () => {
+  const factors: NonNullable<StudyConfig['factors']> = {
+    r1: [0.3, 0.6],
+    delta: [0.03, 0.18],
+    r2: [0.7, 0.9],
+    crossed: { cross: ['r1', 'delta'] },
+    zipped: { zip: ['r1', 'r2'] },
+  };
 
-    expect(isComponentBlock(result) && result.components).toEqual([
-      '_pcp_0.3',
-      '_pcp_0.4',
-      '_scatter_0.3',
-      '_scatter_0.4',
+  test('resolves named and inline factor expressions', () => {
+    expect(resolveFactorConditions('crossed', factors)).toEqual([
+      { r1: 0.3, delta: 0.03 },
+      { r1: 0.3, delta: 0.18 },
+      { r1: 0.6, delta: 0.03 },
+      { r1: 0.6, delta: 0.18 },
+    ]);
+    expect(resolveFactorConditions('zipped', factors)).toEqual([
+      { r1: 0.3, r2: 0.7 },
+      { r1: 0.6, r2: 0.9 },
+    ]);
+    expect(resolveFactorConditions({ zip: ['r1', 'r2'] }, factors)).toEqual([
+      { r1: 0.3, r2: 0.7 },
+      { r1: 0.6, r2: 0.9 },
     ]);
   });
 
-  test('resolves reusable top-level factor references', () => {
-    const sequence: StudyConfig['sequence'] = {
-      order: 'fixed',
-      components: [
-        {
-          type: 'factor',
-          factor: 'sharedFactors',
-          id: 'sharedFactorsFirstUse',
-        },
-      ],
-    };
+  test('reports invalid zip lengths and cycles', () => {
+    const errors: ParserErrorWarning[] = [];
+    resolveFactorConditions('badZip', {
+      short: [1],
+      long: [1, 2],
+      badZip: { zip: ['short', 'long'] },
+    }, errors);
+    resolveFactorConditions('a', {
+      a: { cross: ['b'] },
+      b: { cross: ['a'] },
+    }, errors);
 
-    const result = resolveFactorReferences(sequence, {
-      sharedFactors: {
-        action: 'zip',
-        values: [
-          { factor: 'm' },
-          { factor: 'n' },
-        ],
-        component: 'factorComponent',
-      },
-    });
-
-    expect(isComponentBlock(result)).toBe(true);
-    if (isComponentBlock(result)) {
-      expect(result.components[0]).toMatchObject({
-        type: 'factor',
-        id: 'sharedFactorsFirstUse',
-        action: 'zip',
-        component: 'factorComponent',
-      });
-    }
+    expect(errors.map((error) => error.message)).toEqual(expect.arrayContaining([
+      'Zip factor `badZip` requires inputs with equal lengths; received 1, 2',
+      'Circular factor reference: a -> b -> a',
+    ]));
   });
 
-  test('expands a factor used as a factor inside another factor', () => {
-    const sequence: StudyConfig['sequence'] = {
-      type: 'factor',
-      action: 'nest',
-      order: 'random',
-      id: 'zipThenTask',
-      values: [
-        { factor: 'zipDataVis' },
-        { factor: 'task' },
-      ],
-      component: 'factorComponent',
-    };
-
-    const result = expandFactorSequences(
-      sequence,
-      {},
-      {
-        data: ['d1', 'd2'],
-        visType: ['v1', 'v2', 'v3'],
-        task: ['t1', 't2'],
-        zipDataVis: {
-          action: 'zip',
-          order: 'random',
-          values: [
-            { factor: 'data' },
-            { factor: 'visType' },
-          ],
-          component: 'factorComponent',
-        },
-      },
-    );
-
-    expect(isComponentBlock(result)).toBe(true);
-    if (isComponentBlock(result)) {
-      expect(result.order).toBe('random');
-      expect(result.components).toEqual([
-        '_d1_v1_t1',
-        '_d1_v1_t2',
-        '_d2_v2_t1',
-        '_d2_v2_t2',
-      ]);
-    }
-  });
-
-  test('preserves factor sequences with random sampled factors for sequence allocation', () => {
-    const sequence: StudyConfig['sequence'] = {
-      type: 'factor',
-      action: 'nest',
-      id: 'Ok_google',
-      values: [
-        { factor: 'ageGroup' },
-        { factor: 'Ok_googleTopicAssignments' },
-      ],
-      component: 'factorComponent',
-    };
-
-    const result = expandFactorSequences(
-      sequence,
-      {},
-      {
-        ageGroup: ['young', 'old'],
-        learningStrategies: ['monologue', 'scaffolding', 'conceptual'],
-        topics: ['sleep', 'cholesterol', 'alzheimer', 'vitamin', 'sugar', 'flu'],
-        Ok_googleLearningStrategySlots: {
-          action: 'repeat',
-          order: 'fixed',
-          numRepeats: 2,
-          values: [
-            { factor: 'learningStrategies' },
-          ],
-          component: 'factorComponent',
-        },
-        Ok_googleTopicAssignments: {
-          action: 'zip',
-          order: 'random',
-          values: [
-            { factor: 'Ok_googleLearningStrategySlots' },
-            { factor: 'topics', numSamples: 6 },
-          ],
-          component: 'factorComponent',
-        },
-      },
-    );
-
-    expect(isFactorSequence(result)).toBe(true);
-    if (isFactorSequence(result)) {
-      expect(result.id).toBe('Ok_google');
-      expect(result.values).toEqual([
-        { factor: 'ageGroup' },
-        { factor: 'Ok_googleTopicAssignments' },
-      ]);
-    }
-  });
-
-  test('creates all possible components for random sampled zip factors', () => {
+  test('compiles factor components into one flat sequence', () => {
     const config: StudyConfig = {
       $schema: '',
       studyMetadata: {
-        title: 'Test Study',
-        version: '1.0',
-        authors: ['Test'],
-        date: '2024-01-01',
-        description: 'Test',
-        organizations: ['Test Org'],
+        title: '', version: '', authors: [], date: '', description: '', organizations: [],
       },
       uiConfig: {
-        contactEmail: 'researcher@university.edu',
-        helpTextPath: '',
-        logoPath: '',
-        withProgressBar: true,
-        autoDownloadStudy: false,
-        withSidebar: true,
+        logoPath: '', contactEmail: '', withProgressBar: true, withSidebar: true,
       },
       baseComponents: {
-        factorComponent: {
+        trial: {
           type: 'react-component',
-          path: 'test/assets/Factor.tsx',
+          path: 'study/assets/Trial.tsx',
+          response: [],
+        },
+        confidence: {
+          type: 'markdown',
+          path: 'study/assets/confidence-@r1.md',
           response: [],
         },
       },
       components: {},
-      factors: {
-        ageGroup: ['young', 'old'],
-        learningStrategies: ['monologue', 'scaffolding', 'conceptual'],
-        topics: ['sleep', 'cholesterol', 'alzheimer', 'vitamin', 'sugar', 'flu'],
-        Ok_googleLearningStrategySlots: {
-          action: 'repeat',
-          order: 'fixed',
-          numRepeats: 2,
-          values: [
-            { factor: 'learningStrategies' },
-          ],
-          component: 'factorComponent',
-        },
-        Ok_googleTopicAssignments: {
-          action: 'zip',
-          order: 'random',
-          values: [
-            { factor: 'Ok_googleLearningStrategySlots' },
-            { factor: 'topics', numSamples: 6 },
-          ],
-          component: 'factorComponent',
-        },
-      },
+      factors,
       sequence: {
         type: 'factor',
-        action: 'nest',
-        id: 'Ok_google',
-        values: [
-          { factor: 'ageGroup' },
-          { factor: 'Ok_googleTopicAssignments' },
-        ],
-        component: 'factorComponent',
+        id: 'test',
+        factor: 'crossed',
+        components: ['trial', 'confidence'],
+        order: 'random',
       },
     };
 
-    const components = createFactorComponents(config);
+    const result = compileFactorBlocks(config.sequence, config);
 
-    expect(components._young_conceptual_vitamin).toMatchObject({
-      parameters: {
-        ageGroup: 'young',
-        learningStrategies: 'conceptual',
-        topics: 'vitamin',
-      },
-    });
-    expect(components._old_monologue_flu).toMatchObject({
-      parameters: {
-        ageGroup: 'old',
-        learningStrategies: 'monologue',
-        topics: 'flu',
-      },
-    });
-  });
-
-  test('validates cycles in reusable factor graph', () => {
-    const errors: ParserErrorWarning[] = [];
-
-    validateFactorGraph({
-      a: {
-        action: 'nest',
-        values: [{ factor: 'b' }],
-        component: 'factorComponent',
-      },
-      b: {
-        action: 'nest',
-        values: [{ factor: 'a' }],
-        component: 'factorComponent',
-      },
-    }, errors);
-
-    expect(errors).toContainEqual(expect.objectContaining({
-      message: 'Circular factor reference: a -> b -> a',
-      instancePath: '/factors/',
-    }));
-  });
-
-  test('expands nest action into nested component combinations with fixed sequence ordering', () => {
-    const sequence: StudyConfig['sequence'] = {
-      type: 'factor',
-      action: 'nest',
-      id: 'nestedFactors',
-      values: [
-        { factor: 'm' },
-        { factor: 'n' },
-      ],
-      component: 'factorComponent',
-      parameters: {},
-    };
-
-    const result = expandFactorSequences(sequence, {}, {
-      m: ['m1', 'm2'],
-      n: ['n1', 'n2', 'n3'],
-    });
-
-    expect(isComponentBlock(result)).toBe(true);
-    if (isComponentBlock(result)) {
-      expect(result.order).toBe('fixed');
-      expect(result.components).toEqual([
-        '_m1_n1',
-        '_m1_n2',
-        '_m1_n3',
-        '_m2_n1',
-        '_m2_n2',
-        '_m2_n3',
-      ]);
-    }
-  });
-
-  test('expands cross action into crossed component combinations with fixed sequence ordering', () => {
-    const sequence: StudyConfig['sequence'] = {
-      type: 'factor',
-      action: 'cross',
-      id: 'crossedFactors',
-      values: [
-        { factor: 'm' },
-        { factor: 'n' },
-      ],
-      component: 'factorComponent',
-      parameters: {},
-    };
-
-    const result = expandFactorSequences(sequence, {}, {
-      m: ['m1', 'm2'],
-      n: ['n1', 'n2'],
-    });
-
-    expect(isComponentBlock(result)).toBe(true);
-    if (isComponentBlock(result)) {
-      expect(result.order).toBe('fixed');
-      expect(result.components).toEqual([
-        '_m1_n1',
-        '_m2_n2',
-        '_m2_n1',
-        '_m1_n2',
-      ]);
-    }
-  });
-
-  test('expands zip action into zipped component combinations with fixed sequence ordering', () => {
-    const sequence: StudyConfig['sequence'] = {
-      type: 'factor',
-      action: 'zip',
-      id: 'zippedFactors',
-      values: [
-        { factor: 'm' },
-        { factor: 'n' },
-      ],
-      component: 'factorComponent',
-    };
-
-    const result = expandFactorSequences(sequence, {}, {
-      m: ['m1', 'm2'],
-      n: ['n1', 'n2', 'n3'],
-    });
-
-    expect(isComponentBlock(result)).toBe(true);
-    if (isComponentBlock(result)) {
-      expect(result.order).toBe('fixed');
-      expect(result.components).toEqual([
-        '_m1_n1',
-        '_m2_n2',
-      ]);
-    }
-  });
-
-  test('expands concat action into concatenated component values', () => {
-    const sequence: StudyConfig['sequence'] = {
-      type: 'factor',
-      action: 'concat',
-      id: 'concatenatedFactors',
-      values: [
-        { factor: 'm' },
-        { factor: 'n', numSamples: 2 },
-      ],
-      component: 'factorComponent',
-    };
-
-    const result = expandFactorSequences(sequence, {}, {
-      m: ['m1', 'm2'],
-      n: ['n1', 'n2', 'n3'],
-    });
-
-    expect(isComponentBlock(result)).toBe(true);
-    if (isComponentBlock(result)) {
-      expect(result.order).toBe('fixed');
-      expect(result.components).toEqual([
-        '_m1',
-        '_m2',
-        '_n1',
-        '_n2',
-      ]);
-    }
-  });
-
-  test('expands repeat action into repeated component values', () => {
-    const sequence: StudyConfig['sequence'] = {
-      type: 'factor',
-      action: 'repeat',
-      id: 'repeatedFactors',
-      numRepeats: 2,
-      values: [
-        { factor: 'm' },
-      ],
-      component: 'factorComponent',
-    };
-
-    const result = expandFactorSequences(sequence, {}, {
-      m: ['m1', 'm2'],
-    });
-
-    expect(isComponentBlock(result)).toBe(true);
-    if (isComponentBlock(result)) {
-      expect(result.order).toBe('fixed');
-      expect(result.components).toEqual([
-        '_m1',
-        '_m2',
-        '_m1',
-        '_m2',
-      ]);
-    }
+    expect(isComponentBlock(result.sequence) && result.sequence.components).toEqual([
+      'test__r1=0.3__delta=0.03__trial',
+      'test__r1=0.3__delta=0.03__confidence',
+      'test__r1=0.3__delta=0.18__trial',
+      'test__r1=0.3__delta=0.18__confidence',
+      'test__r1=0.6__delta=0.03__trial',
+      'test__r1=0.6__delta=0.03__confidence',
+      'test__r1=0.6__delta=0.18__trial',
+      'test__r1=0.6__delta=0.18__confidence',
+    ]);
+    expect(result.components['test__r1=0.3__delta=0.03__confidence'])
+      .toMatchObject({ path: 'study/assets/confidence-0.3.md' });
+    expect(isComponentBlock(result.sequence) && result.sequence.order).toBe('random');
+    expect(createFactorConditionId('training', {
+      r1Training: 0.6,
+      r2Training: 0.9,
+    })).toBe('training__r1Training=0.6__r2Training=0.9');
   });
 });
 

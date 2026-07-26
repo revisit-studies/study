@@ -505,10 +505,7 @@
                 "$ref": "#/definitions/DynamicBlock"
               },
               {
-                "$ref": "#/definitions/FactorSequence"
-              },
-              {
-                "$ref": "#/definitions/FactorSequenceReference"
+                "$ref": "#/definitions/FactorBlock"
               }
             ]
           },
@@ -996,84 +993,40 @@
           "type": "array"
         },
         {
-          "$ref": "#/definitions/FactorDefinition"
+          "$ref": "#/definitions/FactorExpression"
         }
       ]
     },
-    "FactorAction": {
-      "enum": [
-        "nest",
-        "cross",
-        "zip",
-        "concat",
-        "repeat"
-      ],
-      "type": "string"
-    },
-    "FactorDefinition": {
+    "FactorBlock": {
       "additionalProperties": false,
       "properties": {
-        "action": {
-          "$ref": "#/definitions/FactorAction"
-        },
-        "numRepeats": {
-          "description": "The number of times to repeat factor values when action is repeat. Defaults to 1.",
-          "type": "number"
-        },
-        "order": {
-          "$ref": "#/definitions/ComponentOrder"
-        },
-        "parameters": {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        "values": {
-          "items": {
-            "$ref": "#/definitions/FactorReference"
-          },
-          "type": "array"
-        }
-      },
-      "required": [
-        "values",
-        "action"
-      ],
-      "type": "object"
-    },
-    "FactorOption": {
-      "type": [
-        "string",
-        "number",
-        "boolean"
-      ]
-    },
-    "FactorReference": {
-      "additionalProperties": false,
-      "properties": {
-        "factor": {
-          "type": "string"
-        },
-        "numSamples": {
-          "type": "number"
-        }
-      },
-      "required": [
-        "factor"
-      ],
-      "type": "object"
-    },
-    "FactorSequence": {
-      "additionalProperties": false,
-      "properties": {
-        "action": {
-          "$ref": "#/definitions/FactorAction"
-        },
-        "component": {
-          "description": "The base component used to render every component generated from this factor sequence.",
-          "type": "string"
+        "components": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "One or more base components materialized for every factor condition."
         },
         "conditional": {
           "type": "boolean"
+        },
+        "factor": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/definitions/FactorExpression"
+            }
+          ],
+          "description": "Named factor or inline factor expression to materialize at this sequence location."
         },
         "id": {
           "type": "string"
@@ -1083,10 +1036,6 @@
             "$ref": "#/definitions/InterruptionBlock"
           },
           "type": "array"
-        },
-        "numRepeats": {
-          "description": "The number of times to repeat factor values when action is repeat. Defaults to 1.",
-          "type": "number"
         },
         "order": {
           "$ref": "#/definitions/ComponentOrder"
@@ -1101,54 +1050,56 @@
         "type": {
           "const": "factor",
           "type": "string"
-        },
-        "values": {
-          "items": {
-            "$ref": "#/definitions/FactorReference"
-          },
-          "type": "array"
         }
       },
       "required": [
-        "action",
-        "component",
-        "id",
         "type",
-        "values"
+        "id",
+        "factor",
+        "components"
       ],
       "type": "object"
     },
-    "FactorSequenceReference": {
-      "additionalProperties": false,
-      "properties": {
-        "component": {
-          "description": "The base component used to render every component generated from this factor sequence.",
-          "type": "string"
-        },
-        "factor": {
-          "type": "string"
-        },
-        "id": {
-          "type": "string"
-        },
-        "order": {
-          "$ref": "#/definitions/ComponentOrder"
-        },
-        "parameters": {
-          "additionalProperties": {},
+    "FactorExpression": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "cross": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "cross"
+          ],
           "type": "object"
         },
-        "type": {
-          "const": "factor",
-          "type": "string"
+        {
+          "additionalProperties": false,
+          "properties": {
+            "zip": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "zip"
+          ],
+          "type": "object"
         }
-      },
-      "required": [
-        "type",
-        "factor",
-        "component"
-      ],
-      "type": "object"
+      ]
+    },
+    "FactorOption": {
+      "type": [
+        "string",
+        "number",
+        "boolean"
+      ]
     },
     "ImageComponent": {
       "additionalProperties": false,
@@ -3425,8 +3376,8 @@
           "$ref": "#/definitions/BaseComponents",
           "description": "The base components that are used in the study. These components can be used to template other components. See [BaseComponents](../../type-aliases/BaseComponents) for more information."
         },
-        "betweenSubjectsFactors": {
-          "description": "Primitive factor names that should be assigned between participants. Each participant sequence receives one level for each listed factor.",
+        "betweenSubjects": {
+          "description": "Primitive factor names assigned once per participant and passed to every component as global parameters.",
           "items": {
             "type": "string"
           },
@@ -3469,10 +3420,7 @@
               "$ref": "#/definitions/DynamicBlock"
             },
             {
-              "$ref": "#/definitions/FactorSequence"
-            },
-            {
-              "$ref": "#/definitions/FactorSequenceReference"
+              "$ref": "#/definitions/FactorBlock"
             }
           ]
         },

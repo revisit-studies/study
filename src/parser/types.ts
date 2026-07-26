@@ -1781,7 +1781,7 @@ export interface ComponentBlock {
   /** The type of order. This can be random (pure random), latinSquare (random with some guarantees), or fixed. */
   order: ComponentOrder;
   /** The components that are included in the order. */
-  components: (string | ComponentBlock | DynamicBlock | FactorSequence | FactorSequenceReference)[];
+  components: (string | ComponentBlock | DynamicBlock | FactorBlock)[];
   /** Parameters associated with the block. Between-subjects factors can use these to keep or remove whole nested blocks during sequence allocation. */
   parameters?: Record<string, unknown>;
   /** The number of samples to use for the random assignments. This means you can randomize across 3 components while only showing a participant 2 at a time. */
@@ -1796,42 +1796,24 @@ export interface ComponentBlock {
 
 export type FactorOption = string | number | boolean;
 
-export type FactorAction = 'nest' | 'cross' | 'zip' | 'concat' | 'repeat';
+export type FactorExpression =
+  | { cross: string[] }
+  | { zip: string[] };
 
-export interface FactorDefinition {
-  values: FactorReference[];
-  action: FactorAction;
-  order?: ComponentOrder;
-  /** The number of times to repeat factor values when action is repeat. Defaults to 1. */
-  numRepeats?: number;
-  parameters?: Record<string, unknown>
-}
+export type Factor = FactorOption[] | FactorExpression;
 
-export type Factor = FactorOption[] | FactorDefinition;
-
-export interface FactorSequence extends FactorDefinition {
-  type: 'factor',
+export interface FactorBlock {
+  type: 'factor';
   id: string;
-  /** The base component used to render every component generated from this factor sequence. */
-  component: string;
+  /** Named factor or inline factor expression to materialize at this sequence location. */
+  factor: string | FactorExpression;
+  /** One or more base components materialized for every factor condition. */
+  components: string | string[];
+  order?: ComponentOrder;
+  parameters?: Record<string, unknown>;
   interruptions?: InterruptionBlock[];
   skip?: SkipConditions;
   conditional?: boolean;
-}
-
-export interface FactorSequenceReference {
-  type: 'factor';
-  factor: string;
-  /** The base component used to render every component generated from this factor sequence. */
-  component: string;
-  id?: string;
-  order?: ComponentOrder;
-  parameters?: Record<string, unknown>
-}
-
-export interface FactorReference {
-  factor: string;
-  numSamples?: number;
 }
 
 /** An InheritedComponent is a component that inherits properties from a baseComponent. This is used to avoid repeating properties in components. This also means that components in the baseComponents object can be partially defined, while components in the components object can inherit from them and must be fully defined and include all properties (after potentially merging with a base component). */
@@ -1925,9 +1907,9 @@ export interface StudyConfig {
   components: Record<string, IndividualComponent | InheritedComponent>
   /** Primitive factor levels and reusable derived factor definitions that can be referenced from the sequence. */
   factors?: Record<string, Factor>;
-  /** Primitive factor names that should be assigned between participants. Each participant sequence receives one level for each listed factor. */
-  betweenSubjectsFactors?: string[];
-  sequence: ComponentBlock | DynamicBlock | FactorSequence | FactorSequenceReference;
+  /** Primitive factor names assigned once per participant and passed to every component as global parameters. */
+  betweenSubjects?: string[];
+  sequence: ComponentBlock | DynamicBlock | FactorBlock;
 }
 
 /**  LibraryConfig is used to define the properties of a library configuration. This is a JSON object with three main components: baseComponents, components, and the sequences. Libraries are useful for defining components and sequences of these components that are to be reused across multiple studies. We (the reVISit team) provide several libraries that can be used in your study configurations. Check the public/libraries folder in the reVISit-studies repository for available libraries. We also plan to accept community contributions for libraries. If you have a library that you think would be useful for others, please reach out to us. We would love to include it in our repository.

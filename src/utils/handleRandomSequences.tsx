@@ -3,30 +3,17 @@ import isEqual from 'lodash.isequal';
 import {
   ComponentBlock,
   DynamicBlock,
-  Factor,
-  FactorDefinition,
   FactorOption,
-  FactorSequence,
-  FactorSequenceReference,
+  FactorBlock,
   RandomInterruption,
   StudyConfig,
 } from '../parser/types';
 import { Sequence } from '../store/types';
-import {
-  isDynamicBlock, isFactorDefinition, isFactorSequence, isFactorSequenceReference,
-} from '../parser/utils';
+import { isDynamicBlock, isFactorBlock } from '../parser/utils';
 
-type SequenceBlock = ComponentBlock | DynamicBlock | FactorSequence | FactorSequenceReference;
-export type FactorCombination = [string, Record<string, FactorOption>];
-type FactorValue = FactorOption | FactorCombination;
-type FactorCombinationBlock = FactorDefinition & { id: string };
+type SequenceBlock = ComponentBlock | DynamicBlock | FactorBlock;
 type BetweenSubjectsFactorLevels = { factorName: string; levels: FactorOption[] };
 type BetweenSubjectsAssignment = Record<string, FactorOption>;
-type FactorCombinationOptions = {
-  expandPossibleSamples?: boolean;
-  ignoreNumSamples?: boolean;
-  randomizeSamples?: boolean;
-};
 
 function shuffle<T>(array: T[]) {
   let currentIndex = array.length;
@@ -43,54 +30,8 @@ function shuffle<T>(array: T[]) {
   }
 }
 
-function isFactorCombination(value: FactorValue): value is FactorCombination {
-  return Array.isArray(value);
-}
-
-function factorValueName(value: FactorValue): string {
-  return isFactorCombination(value) ? value[0] : String(value);
-}
-
-function factorCombinationParameterValue(value: FactorCombination): string {
-  return value[0].startsWith('_') ? value[0].slice(1) : value[0];
-}
-
-function factorValueParameters(
-  value: FactorValue,
-  depth: number,
-  depthToFactorMap: Record<number, string>,
-): Record<string, FactorOption> {
-  const factorName = depthToFactorMap[depth];
-
-  if (isFactorCombination(value)) {
-    if (factorName !== undefined) {
-      return { [factorName]: factorCombinationParameterValue(value), ...value[1] };
-    }
-
-    return value[1];
-  }
-
-  return factorName !== undefined ? { [factorName]: value } : {};
-}
-
-function appendFactorValueName(currentComponent: string, valueName: string): string {
-  const normalizedValueName = valueName.startsWith('_') ? valueName.slice(1) : valueName;
-  return `${currentComponent}_${normalizedValueName}`;
-}
-
-function factorDefinitionToCombinationBlock(id: string, definition: FactorDefinition): FactorCombinationBlock {
-  return {
-    id,
-    action: definition.action,
-    order: definition.order,
-    numRepeats: definition.numRepeats,
-    values: definition.values,
-    ...(definition.parameters !== undefined ? { parameters: definition.parameters } : {}),
-  };
-}
-
 function getBetweenSubjectsFactorLevels(config: StudyConfig): BetweenSubjectsFactorLevels[] {
-  return config.betweenSubjectsFactors?.flatMap((factorName) => {
+  return config.betweenSubjects?.flatMap((factorName) => {
     const factor = config.factors?.[factorName];
 
     if (!Array.isArray(factor) || factor.length === 0) {
@@ -125,21 +66,6 @@ function getBetweenSubjectsAssignments(config: StudyConfig): BetweenSubjectsAssi
   }
 
   return combineBetweenSubjectsAssignments(factorLevels);
-}
-
-function getFactorsForBetweenSubjectsAssignment(
-  factors: NonNullable<StudyConfig['factors']>,
-  assignment: BetweenSubjectsAssignment,
-): NonNullable<StudyConfig['factors']> {
-  const assignedFactors = { ...factors };
-
-  Object.entries(assignment).forEach(([factorName, factorLevel]) => {
-    if (Array.isArray(assignedFactors[factorName])) {
-      assignedFactors[factorName] = [factorLevel];
-    }
-  });
-
-  return assignedFactors;
 }
 
 function getComponentParameters(
@@ -212,230 +138,6 @@ function filterSequenceByBetweenSubjectsAssignment(
   };
 }
 
-function applyFactorNumSamples(
-  values: FactorValue[],
-  numSamples?: number,
-  order?: FactorDefinition['order'],
-  options: FactorCombinationOptions = {},
-): FactorValue[] {
-  if (options.ignoreNumSamples || numSamples === undefined) {
-    return values;
-  }
-
-  if (values.length === 0) {
-    return [];
-  }
-
-  const sampleValues = numSamples > values.length
-    ? Array.from({ length: numSamples }, (_, index) => values[index % values.length])
-    : values;
-  const orderedValues = order === 'random' && options.randomizeSamples
-    ? structuredClone(sampleValues)
-    : sampleValues;
-  if (order === 'random' && options.randomizeSamples) {
-    shuffle(orderedValues);
-  }
-
-  return orderedValues.slice(0, numSamples);
-}
-
-export function combineFactors(depth: number, factors: FactorValue[][], currentComponent: string, depthToFactorMap: Record<number, string>, currentParams: Record<string, FactorOption>): FactorCombination[] {
-  const newComponents: FactorCombination[] = factors[depth].map((f) => [
-    appendFactorValueName(currentComponent, factorValueName(f)),
-    { ...currentParams, ...factorValueParameters(f, depth, depthToFactorMap) },
-  ]);
-
-  if (factors.length - 1 > depth) {
-    const nextComponents = newComponents.map((c) => combineFactors(depth + 1, factors, c[0], depthToFactorMap, c[1])).flat();
-
-    return nextComponents;
-  }
-
-  return newComponents;
-}
-
-function combineIndexDimensions(lengths: number[]): number[][] {
-  if (lengths.length === 0) {
-    return [[]];
-  }
-
-  return Array.from({ length: lengths[0] }, (_, index) => (
-    combineIndexDimensions(lengths.slice(1)).map((rest) => [index, ...rest])
-  )).flat();
-}
-
-function factorCombinationFromIndices(
-  factors: FactorValue[][],
-  indices: number[],
-  depthToFactorMap: Record<number, string>,
-): FactorCombination {
-  const values = indices.map((index, depth) => factors[depth][index]);
-  const params = values.reduce<Record<string, FactorOption>>((acc, value, depth) => ({
-    ...acc,
-    ...factorValueParameters(value, depth, depthToFactorMap),
-  }), {});
-
-  return [
-    values.reduce<string>((componentName, value) => (
-      appendFactorValueName(componentName, factorValueName(value))
-    ), ''),
-    params,
-  ];
-}
-
-function factorCombinationFromValue(
-  value: FactorValue,
-  depth: number,
-  depthToFactorMap: Record<number, string>,
-): FactorCombination {
-  return [
-    appendFactorValueName('', factorValueName(value)),
-    factorValueParameters(value, depth, depthToFactorMap),
-  ];
-}
-
-export function combineCrossFactors(
-  factors: FactorValue[][],
-  depthToFactorMap: Record<number, string>,
-): FactorCombination[] {
-  if (factors.length === 0 || factors.some((factor) => factor.length === 0)) {
-    return [];
-  }
-
-  const firstFactorIndices = Array.from({ length: factors[0].length }, (_, index) => index);
-  const offsets = combineIndexDimensions(factors.slice(1).map((factor) => factor.length));
-
-  return offsets.flatMap((offset, offsetIndex) => {
-    const orderedFirstFactorIndices = offsetIndex % 2 === 0
-      ? firstFactorIndices
-      : [...firstFactorIndices].reverse();
-
-    return orderedFirstFactorIndices.map((firstFactorIndex) => {
-      const indices = [
-        firstFactorIndex,
-        ...offset.map((factorOffset, index) => (
-          (firstFactorIndex + factorOffset) % factors[index + 1].length
-        )),
-      ];
-
-      return factorCombinationFromIndices(factors, indices, depthToFactorMap);
-    });
-  });
-}
-
-export function combineZipFactors(
-  factors: FactorValue[][],
-  depthToFactorMap: Record<number, string>,
-): FactorCombination[] {
-  if (factors.length === 0 || factors.some((factor) => factor.length === 0)) {
-    return [];
-  }
-
-  const zipLength = Math.min(...factors.map((factor) => factor.length));
-  return Array.from({ length: zipLength }, (_, index) => (
-    factorCombinationFromIndices(
-      factors,
-      factors.map(() => index),
-      depthToFactorMap,
-    )
-  ));
-}
-
-export function combineConcatFactors(
-  factors: FactorValue[][],
-  depthToFactorMap: Record<number, string>,
-): FactorCombination[] {
-  return factors.flatMap((factorValues, depth) => (
-    factorValues.map((value) => factorCombinationFromValue(value, depth, depthToFactorMap))
-  ));
-}
-
-export function combineRepeatFactors(
-  factors: FactorValue[][],
-  depthToFactorMap: Record<number, string>,
-  numRepeats = 1,
-): FactorCombination[] {
-  const repeatedFactors = combineConcatFactors(factors, depthToFactorMap);
-
-  return Array.from({ length: numRepeats }, () => repeatedFactors).flat();
-}
-
-export function combineFactorsByAction(
-  action: FactorDefinition['action'],
-  factors: FactorValue[][],
-  depthToFactorMap: Record<number, string>,
-  numRepeats?: number,
-): FactorCombination[] {
-  if (factors.length === 0 || factors.some((factor) => factor.length === 0)) {
-    return [];
-  }
-
-  if (action === 'cross') {
-    return combineCrossFactors(factors, depthToFactorMap);
-  }
-
-  if (action === 'zip') {
-    return combineZipFactors(factors, depthToFactorMap);
-  }
-
-  if (action === 'concat') {
-    return combineConcatFactors(factors, depthToFactorMap);
-  }
-
-  if (action === 'repeat') {
-    return combineRepeatFactors(factors, depthToFactorMap, numRepeats);
-  }
-
-  return combineFactors(0, factors, '', depthToFactorMap, {});
-}
-
-export function getFactorCombinations(
-  block: FactorCombinationBlock,
-  factors: Record<string, Factor>,
-  onError?: (message: string) => void,
-  stack: string[] = [],
-  options: FactorCombinationOptions = {},
-): FactorCombination[] {
-  if (stack.includes(block.id)) {
-    onError?.(`Circular factor reference: ${[...stack, block.id].join(' -> ')}`);
-    return [];
-  }
-
-  const depthToFactorMap: Record<number, string> = {};
-  const nextStack = [...stack, block.id];
-
-  const factorValues = block.values.map((factorReference, depth): FactorValue[] => {
-    const factor = factors[factorReference.factor];
-    depthToFactorMap[depth] = factorReference.factor;
-
-    if (!factor) {
-      onError?.(`Factor \`${factorReference.factor}\` is not defined in factors`);
-      return [];
-    }
-
-    if (isFactorDefinition(factor)) {
-      return applyFactorNumSamples(getFactorCombinations(
-        factorDefinitionToCombinationBlock(factorReference.factor, factor),
-        factors,
-        onError,
-        nextStack,
-        options,
-      ), factorReference.numSamples, block.order, options);
-    }
-
-    return applyFactorNumSamples(factor, factorReference.numSamples, block.order, options);
-  });
-
-  const action = options.expandPossibleSamples
-    && block.action === 'zip'
-    && block.order === 'random'
-    && block.values.some((factorReference) => factorReference.numSamples !== undefined)
-    ? 'nest'
-    : block.action;
-
-  return combineFactorsByAction(action, factorValues, depthToFactorMap, block.numRepeats);
-}
-
 type UniqueComponentEntry = { component: SequenceBlock; indices: number[] };
 
 function findMatchingUnique(
@@ -481,8 +183,7 @@ function generateLatinSquare(config: StudyConfig, path: string) {
       if (
         typeof locationInSequence === 'string'
         || isDynamicBlock(locationInSequence)
-        || isFactorSequence(locationInSequence)
-        || isFactorSequenceReference(locationInSequence)
+        || isFactorBlock(locationInSequence)
       ) {
         return;
       }
@@ -490,12 +191,10 @@ function generateLatinSquare(config: StudyConfig, path: string) {
     }
   });
 
-  const options = isFactorSequence(locationInSequence)
-    ? getFactorCombinations(
-      locationInSequence,
-      config.factors || {},
-    ).map((combination) => combination[0])
-    : (locationInSequence as ComponentBlock).components.map((c: unknown, i: number) => (typeof c === 'string' ? c : `_componentBlock${i}`));
+  if (typeof locationInSequence === 'string' || isDynamicBlock(locationInSequence) || isFactorBlock(locationInSequence)) {
+    return [];
+  }
+  const options = locationInSequence.components.map((c: unknown, i: number) => (typeof c === 'string' ? c : `_componentBlock${i}`));
   shuffle(options);
   const newSquare: string[][] = latinSquare<string>(options, true);
   return newSquare;
@@ -556,7 +255,6 @@ function _componentBlockToSequence(
   order: StudyConfig['sequence'],
   latinSquareObject: Record<string, string[][]>,
   path: string,
-  factors: NonNullable<StudyConfig['factors']>,
 ): Sequence {
   if (isDynamicBlock(order)) {
     return {
@@ -570,47 +268,11 @@ function _componentBlockToSequence(
     };
   }
 
-  if (isFactorSequence(order)) {
-    const componentsToCross = getFactorCombinations(
-      order,
-      factors,
-      undefined,
-      [],
-      { randomizeSamples: true },
-    );
-    const factorOrder = order.order ?? 'fixed';
-    let computedComponents = componentsToCross.map((c) => c[0]);
-
-    if (factorOrder === 'random') {
-      computedComponents = structuredClone(computedComponents);
-      shuffle(computedComponents);
-    } else if (factorOrder === 'latinSquare') {
-      const latinSquareRow = latinSquareObject[path]?.pop();
-
-      if (!latinSquareRow) {
-        throw new Error(
-          `Latin square exhausted for path: ${path}. `
-          + 'This should not happen as we pre-generate enough rows. Please report this issue.',
-        );
-      }
-
-      computedComponents = latinSquareRow;
-    }
-
+  if (isFactorBlock(order)) {
     return {
       id: order.id,
       orderPath: path,
-      order: factorOrder,
-      components: computedComponents,
-      skip: [],
-    };
-  }
-
-  if (isFactorSequenceReference(order)) {
-    return {
-      id: order.id ?? order.factor,
-      orderPath: path,
-      order: 'fixed',
+      order: order.order ?? 'fixed',
       components: [],
       skip: [],
       interruptions: [],
@@ -663,7 +325,7 @@ function _componentBlockToSequence(
         const actualIndex = matchedUnique.indices[seenCount] ?? matchedUnique.indices[0];
         seenCounts.set(matchedUnique.component, seenCount + 1);
 
-        computedComponents[i] = _componentBlockToSequence(curr, latinSquareObject, `${path}-${actualIndex}`, factors) as unknown as ComponentBlock;
+        computedComponents[i] = _componentBlockToSequence(curr, latinSquareObject, `${path}-${actualIndex}`) as unknown as ComponentBlock;
       } else {
         // This should never happen - all component blocks should be in uniqueComponents
         throw new Error(`Unexpected: component block not found in uniqueComponents map at path ${path}`);
@@ -718,23 +380,13 @@ function _componentBlockToSequence(
 function componentBlockToSequence(
   order: StudyConfig['sequence'],
   latinSquareObject: Record<string, string[][]>,
-  factors: NonNullable<StudyConfig['factors']>,
 ): Sequence {
-  const orderCopy = structuredClone(order);
-
-  return _componentBlockToSequence(orderCopy, latinSquareObject, 'root', factors);
+  return _componentBlockToSequence(order, latinSquareObject, 'root');
 }
 
 function _createRandomOrders(order: StudyConfig['sequence'], paths: string[], path: string, index: number) {
   const newPath = path.length > 0 ? `${path}-${index}` : 'root';
-  if (isDynamicBlock(order) || isFactorSequenceReference(order)) {
-    return;
-  }
-
-  if (isFactorSequence(order)) {
-    if (order.order === 'latinSquare') {
-      paths.push(newPath);
-    }
+  if (isDynamicBlock(order) || isFactorBlock(order)) {
     return;
   }
 
@@ -743,7 +395,7 @@ function _createRandomOrders(order: StudyConfig['sequence'], paths: string[], pa
   }
 
   order.components.forEach((comp, i) => {
-    if (typeof comp !== 'string' && !isDynamicBlock(comp) && !isFactorSequence(comp) && !isFactorSequenceReference(comp)) {
+    if (typeof comp !== 'string' && !isDynamicBlock(comp) && !isFactorBlock(comp)) {
       _createRandomOrders(comp, paths, newPath, i);
     }
   });
@@ -767,14 +419,7 @@ function _countPathUsage(
   pathCounts: Record<string, number>,
   path: string,
 ): void {
-  if (isDynamicBlock(order) || isFactorSequenceReference(order)) {
-    return;
-  }
-
-  if (isFactorSequence(order)) {
-    if (order.order === 'latinSquare') {
-      pathCounts[path] = (pathCounts[path] || 0) + 1;
-    }
+  if (isDynamicBlock(order) || isFactorBlock(order)) {
     return;
   }
 
@@ -803,8 +448,7 @@ function _countPathUsage(
       typeof curr !== 'string'
       && !Array.isArray(curr)
       && !isDynamicBlock(curr)
-      && !isFactorSequence(curr)
-      && !isFactorSequenceReference(curr)
+      && !isFactorBlock(curr)
     ) {
       const matchedUnique = findMatchingUnique(curr, uniqueComponents);
 
@@ -847,22 +491,19 @@ export function generateSequenceArray(config: StudyConfig): Sequence[] {
   const sequenceArray: Sequence[] = [];
   Array.from({ length: numSequences }).forEach((_, sequenceIndex) => {
     const betweenSubjectsAssignment = betweenSubjectsAssignments[sequenceIndex % betweenSubjectsAssignments.length] || {};
-    const assignedFactors = getFactorsForBetweenSubjectsAssignment(
-      config.factors || {},
-      betweenSubjectsAssignment,
-    );
 
     // Generate a sequence
     let sequence = componentBlockToSequence(
       config.sequence,
       latinSquareObject,
-      assignedFactors,
     );
-    sequence = filterSequenceByBetweenSubjectsAssignment(
-      sequence,
-      config,
-      betweenSubjectsAssignment,
-    );
+    if (Object.keys(betweenSubjectsAssignment).length > 0) {
+      sequence = filterSequenceByBetweenSubjectsAssignment(
+        sequence,
+        config,
+        betweenSubjectsAssignment,
+      );
+    }
     sequence.components.push('end');
 
     // Add the sequence to the array
