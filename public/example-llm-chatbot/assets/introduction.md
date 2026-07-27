@@ -95,6 +95,8 @@ All key settings live in `ChatInterface.tsx`. These are the most relevant parame
 **Change the assistant behavior (system prompt):**
 Edit `prePrompt` and `toolPolicy` to control how the assistant responds and when it should use tools.
 
+Learn more: [Message roles and instruction following](https://developers.openai.com/api/docs/guides/text#message-roles-and-instruction-following)
+
 **Change the model:**
 Update `model` (currently `gpt-5.2`) in both the tool-selection request and the streaming request.
 
