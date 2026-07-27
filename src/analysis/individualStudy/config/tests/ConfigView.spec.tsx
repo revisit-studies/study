@@ -182,7 +182,7 @@ describe('ConfigView', () => {
   test('renderTopToolbarCustomActions renders nothing when no rows are checked', () => {
     renderToStaticMarkup(<ConfigView visibleParticipants={[]} studyId="test-study" />);
     const html = renderToStaticMarkup(capturedTableOptions!.renderTopToolbarCustomActions());
-    expect(html).not.toContain('Download Configs');
+    expect(html).not.toContain('Download Config');
     expect(html).not.toContain('Compare');
   });
 
@@ -279,16 +279,30 @@ describe('ConfigView', () => {
     });
 
     const toolbar = renderToStaticMarkup(capturedTableOptions!.renderTopToolbarCustomActions());
-    expect(toolbar).toContain('Download Configs');
+    expect(toolbar).toContain('Download Config (');
+    expect(toolbar).not.toContain('Download Configs');
 
     const user = userEvent.setup();
     const { getByText } = render(capturedTableOptions!.renderTopToolbarCustomActions());
-    await user.click(getByText(/Download Configs/));
+    await user.click(getByText(/Download Config/));
 
     expect(downloadConfigFilesZip).toHaveBeenCalledWith(expect.objectContaining({
       studyId: 'test-study',
       hashes: [mockConfigInfo.hash],
     }));
+  });
+
+  test('toolbar shows plural label when multiple rows are selected', async () => {
+    const participants = [makeParticipant({ participantConfigHash: mockConfigInfo.hash })];
+    await act(async () => {
+      render(<ConfigView visibleParticipants={participants} studyId="test-study" />);
+    });
+    await act(async () => {
+      capturedTableOptions!.onRowSelectionChange({ hashA: true, hashB: true });
+    });
+
+    const toolbar = renderToStaticMarkup(capturedTableOptions!.renderTopToolbarCustomActions());
+    expect(toolbar).toContain('Download Configs (');
   });
 
   test('handleCompareConfigs opens compare modal when two rows are selected', async () => {
