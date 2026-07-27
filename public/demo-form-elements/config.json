@@ -982,9 +982,9 @@
         {
           "id": "q-likert",
           "prompt": "Likert scale example",
-          "secondaryText": "A Likert example with 7 items",
+          "secondaryText": "A Likert example with 6 items",
           "type": "likert",
-          "numItems": 7,
+          "numItems": 6,
           "rightLabel": "Like",
           "leftLabel": "Dislike",
           "labelLocation": "above",
