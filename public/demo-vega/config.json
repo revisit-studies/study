@@ -261,13 +261,13 @@
       "nextButtonLocation": "sidebar",
       "response": [
         {
-          "id": "vegaDemoResponse1",
+          "id": "vegaDemoResponse2",
           "prompt": "You selected:",
           "location": "sidebar",
           "type": "reactive"
         },
         {
-          "id": "vegaDemoConfidence1",
+          "id": "vegaDemoConfidence2",
           "prompt": "How confident are you with your answer?",
           "location": "sidebar",
           "type": "slider",
