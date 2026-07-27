@@ -20,6 +20,7 @@ import { ParticipantRejectModal } from '../ParticipantRejectModal';
 import { participantName } from '../../../utils/participantName';
 import { AllTasksTimeline } from '../replay/AllTasksTimeline';
 import { ReplayTaskOrder } from '../replay/taskOrdering';
+import { TimelineMode } from '../replay/timelineLayout';
 import { youtubeReadableDuration } from '../../../utils/humanReadableDuration';
 import { getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
 import { MetaCell } from './MetaCell';
@@ -56,6 +57,7 @@ export function TableView({
   const { studyId } = useParams();
   const [checked, setChecked] = useState<MrtRowSelectionState>({});
   const [taskOrder, setTaskOrder] = useState<ReplayTaskOrder>('sequence');
+  const [timelineMode, setTimelineMode] = useState<TimelineMode>('time');
 
   useEffect(() => {
     const newSelectedParticipants = Object.keys(checked).filter((v) => checked[v])
@@ -268,6 +270,14 @@ export function TableView({
     enablePagination: false,
     enableRowVirtualization: true,
     mantinePaperProps: { style: { maxHeight: '100%', display: 'flex', flexDirection: 'column' } },
+    mantineDetailPanelProps: {
+      style: {
+        flex: '1 1 100%',
+        maxWidth: '100%',
+        minWidth: 0,
+        width: '100%',
+      },
+    },
     layoutMode: 'grid',
     renderDetailPanel: ({ row }) => {
       const r = row.original;
@@ -277,7 +287,7 @@ export function TableView({
       }
 
       return (
-        <AllTasksTimeline maxLength={undefined} studyConfig={allConfigs[r.participantConfigHash] ?? studyConfig} studyId={studyId || ''} participantData={r} width={width - 60} taskOrder={taskOrder} />
+        <AllTasksTimeline maxLength={undefined} studyConfig={allConfigs[r.participantConfigHash] ?? studyConfig} studyId={studyId || ''} participantData={r} width={width - 60} taskOrder={taskOrder} timelineMode={timelineMode} />
       );
     },
     defaultColumn: {
@@ -301,6 +311,15 @@ export function TableView({
             ]}
           />
         </Group>
+        <SegmentedControl
+          size="sm"
+          value={timelineMode}
+          onChange={(value) => setTimelineMode(value as TimelineMode)}
+          data={[
+            { value: 'time', label: 'Time' },
+            { value: 'uniform', label: 'Uniform' },
+          ]}
+        />
         <ParticipantRejectModal selectedParticipants={selectedParticipants} refresh={handleRefresh} />
       </Flex>
     ),
