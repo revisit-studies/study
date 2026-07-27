@@ -279,7 +279,7 @@ describe('ConfigView', () => {
     });
 
     const toolbar = renderToStaticMarkup(capturedTableOptions!.renderTopToolbarCustomActions());
-    expect(toolbar).toContain('Download Config (');
+    expect(toolbar).toContain('Download Config ');
     expect(toolbar).not.toContain('Download Configs');
 
     const user = userEvent.setup();
@@ -302,7 +302,7 @@ describe('ConfigView', () => {
     });
 
     const toolbar = renderToStaticMarkup(capturedTableOptions!.renderTopToolbarCustomActions());
-    expect(toolbar).toContain('Download Configs (');
+    expect(toolbar).toContain('Download Configs ');
   });
 
   test('handleCompareConfigs opens compare modal when two rows are selected', async () => {

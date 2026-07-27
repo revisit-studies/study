@@ -223,9 +223,7 @@ export function ConfigView({
           {selectedConfigHashes.length > 0 && (
             <Group>
               <Button onClick={handleDownloadConfigs}>
-                {`${downloadConfigLabel} (`}
-                {selectedConfigHashes.length}
-                )
+                {`${downloadConfigLabel} (${selectedConfigHashes.length})`}
               </Button>
               {selectedConfigHashes.length === 2 && (
                 <Button
