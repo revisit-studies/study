@@ -6,7 +6,7 @@
     "authors": [
       "The reVISit Team"
     ],
-    "date": "2026-02-23",
+    "date": "2026-07-27",
     "description": "A demo of vega stimuli",
     "organizations": [
       "University of Utah",
@@ -255,7 +255,7 @@
         "metadata": 1
       },
       "description": "A demonstration of including a Vega visualization in an external file.",
-      "instruction": "Select the movie with highest World Wide Gross.",
+      "instruction": "Select the movie with the highest Worldwide Gross.",
       "type": "vega",
       "path": "demo-vega/specs/vegademo2.specs.json",
       "nextButtonLocation": "sidebar",
