@@ -200,10 +200,14 @@ function generateLatinSquare(config: StudyConfig, path: string) {
   return newSquare;
 }
 
-function generateLatinSquareRows(config: StudyConfig, path: string, count: number): string[][] {
+function generateLatinSquareRows(config: StudyConfig, path: string, minimumRowCount: number): string[][] {
   const rows: string[][] = [];
-  for (let i = 0; i < count; i += 1) {
-    rows.push(...generateLatinSquare(config, path));
+  while (rows.length < minimumRowCount) {
+    const square = generateLatinSquare(config, path);
+    if (square.length === 0) {
+      return rows;
+    }
+    rows.push(...square);
   }
   return rows;
 }
@@ -254,6 +258,7 @@ function insertRandomInterruptions(
 function _componentBlockToSequence(
   order: StudyConfig['sequence'],
   latinSquareObject: Record<string, string[][]>,
+  latinSquareRowIndex: number,
   path: string,
 ): Sequence {
   if (isDynamicBlock(order)) {
@@ -288,12 +293,12 @@ function _componentBlockToSequence(
 
     computedComponents = randomArr;
   } else if (order.order === 'latinSquare' && latinSquareObject) {
-    const latinSquareRow = latinSquareObject[path]?.pop();
+    const latinSquareRows = latinSquareObject[path];
+    const latinSquareRow = latinSquareRows?.[latinSquareRowIndex % latinSquareRows.length];
 
     if (!latinSquareRow) {
       throw new Error(
-        `Latin square exhausted for path: ${path}. `
-        + 'This should not happen as we pre-generate enough rows. Please report this issue.',
+        `Latin square is unavailable for path: ${path}.`,
       );
     }
 
@@ -325,7 +330,12 @@ function _componentBlockToSequence(
         const actualIndex = matchedUnique.indices[seenCount] ?? matchedUnique.indices[0];
         seenCounts.set(matchedUnique.component, seenCount + 1);
 
-        computedComponents[i] = _componentBlockToSequence(curr, latinSquareObject, `${path}-${actualIndex}`) as unknown as ComponentBlock;
+        computedComponents[i] = _componentBlockToSequence(
+          curr,
+          latinSquareObject,
+          latinSquareRowIndex,
+          `${path}-${actualIndex}`,
+        ) as unknown as ComponentBlock;
       } else {
         // This should never happen - all component blocks should be in uniqueComponents
         throw new Error(`Unexpected: component block not found in uniqueComponents map at path ${path}`);
@@ -380,8 +390,9 @@ function _componentBlockToSequence(
 function componentBlockToSequence(
   order: StudyConfig['sequence'],
   latinSquareObject: Record<string, string[][]>,
+  latinSquareRowIndex: number,
 ): Sequence {
-  return _componentBlockToSequence(order, latinSquareObject, 'root');
+  return _componentBlockToSequence(order, latinSquareObject, latinSquareRowIndex, 'root');
 }
 
 function _createRandomOrders(order: StudyConfig['sequence'], paths: string[], path: string, index: number) {
@@ -476,26 +487,30 @@ export function generateSequenceArray(config: StudyConfig): Sequence[] {
   const paths = createRandomOrders(config.sequence);
   const pathUsageCounts = countPathUsage(config.sequence);
   const betweenSubjectsAssignments = getBetweenSubjectsAssignments(config);
+  const numSequences = config.uiConfig.numSequences || 1000;
+  const assignmentCount = betweenSubjectsAssignments.length;
+  const latinSquareRowCount = Math.ceil(numSequences / assignmentCount);
 
-  // Pre-generate enough latin square rows for each path based on usage count
-  // We generate enough rows to cover the maximum usage in a single sequence
+  // One Latin-square row is shared by every between-subject assignment in a batch.
+  // This crosses ordering with the between-subject design instead of balancing only globally.
   const latinSquareObject: Record<string, string[][]> = paths
     .map((p) => {
       const usageCount = pathUsageCounts[p] || 1;
-      return { [p]: generateLatinSquareRows(config, p, usageCount) };
+      return { [p]: generateLatinSquareRows(config, p, latinSquareRowCount * usageCount) };
     })
     .reduce((acc, curr) => ({ ...acc, ...curr }), {});
 
-  const numSequences = config.uiConfig.numSequences || 1000;
-
   const sequenceArray: Sequence[] = [];
   Array.from({ length: numSequences }).forEach((_, sequenceIndex) => {
-    const betweenSubjectsAssignment = betweenSubjectsAssignments[sequenceIndex % betweenSubjectsAssignments.length] || {};
+    const betweenSubjectsAssignment = betweenSubjectsAssignments[sequenceIndex % assignmentCount] || {};
+    // Advance only after every between-subject assignment has received the current row.
+    const latinSquareRowIndex = Math.floor(sequenceIndex / assignmentCount);
 
     // Generate a sequence
     let sequence = componentBlockToSequence(
       config.sequence,
       latinSquareObject,
+      latinSquareRowIndex,
     );
     if (Object.keys(betweenSubjectsAssignment).length > 0) {
       sequence = filterSequenceByBetweenSubjectsAssignment(
@@ -508,14 +523,6 @@ export function generateSequenceArray(config: StudyConfig): Sequence[] {
 
     // Add the sequence to the array
     sequenceArray.push(sequence);
-
-    // Refill latin square arrays that are empty
-    Object.entries(latinSquareObject).forEach(([key, value]) => {
-      if (value.length === 0) {
-        const usageCount = pathUsageCounts[key] || 1;
-        latinSquareObject[key] = generateLatinSquareRows(config, key, usageCount);
-      }
-    });
   });
 
   return sequenceArray;

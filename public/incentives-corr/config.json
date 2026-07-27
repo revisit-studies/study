@@ -419,7 +419,7 @@
         "type": "factor",
         "id": "test",
         "factor": "testTrials",
-        "order": "random",
+        "order": "latinSquare",
         "components": "test",
         "parameters": {
           "taskid": "test"

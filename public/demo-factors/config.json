@@ -54,16 +54,6 @@
       "type": "markdown",
       "path": "demo-factors/assets/ok-google-tutorial-@ageGroup.md",
       "response": []
-    },
-    "Ok_googleTutorialYoung": {
-      "type": "markdown",
-      "path": "demo-factors/assets/ok-google-tutorial-young.md",
-      "response": []
-    },
-    "Ok_googleTutorialOld": {
-      "type": "markdown",
-      "path": "demo-factors/assets/ok-google-tutorial-old.md",
-      "response": []
     }
   },
   "factors": {
