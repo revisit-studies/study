@@ -5,7 +5,7 @@ export default function Summary({
   parameters,
 }: StimulusParams<{ inc: 'base' | 'inc' }>) {
   const correct = Object.values(answers).filter((answer) => (
-    answer.answer.taskid === 'test' && answer.answer.correct === true
+    answer.answer.taskid === 'test' && answer.answer.test === true
   )).length;
   const bonus = Math.round(correct * 5) / 100;
 

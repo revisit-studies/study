@@ -43,7 +43,7 @@
       "correctAnswer": [
         {
           "id": "training",
-          "answer": "true"
+          "answer": true
         }
       ]
     },
@@ -57,8 +57,19 @@
           "id": "test",
           "prompt": "",
           "required": true,
-          "type": "reactive",
-          "location": "belowStimulus"
+          "type": "buttons",
+          "options": [
+            "false",
+            "true"
+          ],
+          "location": "belowStimulus",
+          "hidden": true
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "test",
+          "answer": true
         }
       ]
     },
@@ -418,7 +429,12 @@
       {
         "type": "factor",
         "id": "test",
-        "factor": "testTrials",
+        "factor": {
+          "cross": [
+            "r1",
+            "delta"
+          ]
+        },
         "order": "latinSquare",
         "components": "test",
         "parameters": {

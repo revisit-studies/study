@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useNextStep } from '../../../store/hooks/useNextStep';
+import { useEvent } from '../../../store/hooks/useEvent';
 import { StimulusParams } from '../../../store/types';
 import Comparison from './Comparison';
 
@@ -24,6 +25,7 @@ export default function Task({
   setAnswer,
 }: StimulusParams<TestParameters | AttentionParameters>) {
   const { goToNextStep } = useNextStep();
+  const advanceToNextStep = useEvent(() => goToNextStep());
   const values = useMemo(() => {
     const r2 = parameters.taskid === 'test'
       ? Number((parameters.r1 + parameters.delta).toFixed(2))
@@ -33,7 +35,7 @@ export default function Task({
   const [valueA, valueB] = values;
 
   const completedTests = Object.values(answers).filter((answer) => answer.answer.taskid === 'test');
-  const totalCorrect = completedTests.filter((answer) => answer.answer.correct === true).length;
+  const totalCorrect = completedTests.filter((answer) => answer.answer.test === true).length;
   const trialIndex = completedTests.length + 1;
   const datasetFolder = parameters.taskid === 'test' ? 'test' : 'attention';
   const attentionSuffix = parameters.taskid === 'attention' ? `-${parameters.attentionIndex}` : '';
@@ -42,7 +44,7 @@ export default function Task({
     setAnswer({
       status: true,
       answers: {
-        test: true,
+        test: correct,
         taskid: parameters.taskid,
         trial: parameters.taskid === 'test' ? trialIndex : parameters.attentionIndex,
         r1: parameters.r1,
@@ -51,11 +53,11 @@ export default function Task({
           : parameters.r2,
         response,
         answer: valueA > valueB ? 1 : 2,
-        correct,
         total: totalCorrect + (parameters.taskid === 'test' && correct ? 1 : 0),
       },
     });
-    window.setTimeout(goToNextStep, 1000);
+    // useEvent ensures the delayed call reads the answer submitted above.
+    window.setTimeout(advanceToNextStep, 1000);
   };
 
   return (
