@@ -125,7 +125,6 @@
     "order": "fixed",
     "components": [
       "introduction",
-      "introduction",
       {
         "order": "latinSquare",
         "numSamples": 5,
