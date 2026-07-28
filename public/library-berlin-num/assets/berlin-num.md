@@ -7,7 +7,7 @@ The Berlin Numeracy Test is a psychometrically sound instrument that quickly ass
 
 ## Reference
 
-Cokely ET, Galesic M, Schulz E, Ghazal S, Garcia-Retamero R. Measuring Risk Literacy: The Berlin Numeracy Test. Judgment and Decision Making. 2012;7(1):25-47.
+E. T. Cokely, M. Galesic, E. Schulz, S. Ghazal, and R. Garcia-Retamero, “Measuring risk literacy: The Berlin Numeracy Test,” Judgment and Decision Making, vol. 7, no. 1, pp. 25–47, 2012.
 
 DOI: [10.1017/S1930297500001819](https://dx.doi.org/10.1017/S1930297500001819)
 

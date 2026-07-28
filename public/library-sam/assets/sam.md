@@ -7,7 +7,7 @@ The Self-Assessment Manikin (SAM) is a non-verbal pictorial assessment technique
 
 ## Reference
 
-Bradley, M. M., & Lang, P. J. (1994). Measuring emotion: The Self-Assessment Manikin and the semantic differential. Journal of Behavior Therapy and Experimental Psychiatry, 25(1), 49–59.
+M. M. Bradley and P. J. Lang, “Measuring emotion: The Self-Assessment Manikin and the semantic differential,” Journal of Behavior Therapy and Experimental Psychiatry, vol. 25, no. 1, pp. 49–59, 1994.
 
 DOI: [10.1016/0005-7916(94)90063-9](https://dx.doi.org/10.1016/0005-7916(94)90063-9)
 

@@ -7,7 +7,7 @@ The NASA-TLX is a widely used subjective workload assessment tool. It consists o
 
 ## Reference
 
-Hart, Sandra G., and Lowell E. Staveland. "Development of NASA-TLX (Task Load Index): Results of empirical and theoretical research." Advances in psychology. Vol. 52. North-Holland, 1988. 139-183.
+S. G. Hart and L. E. Staveland, “Development of NASA-TLX (Task Load Index): Results of empirical and theoretical research,” in Advances in Psychology, vol. 52, North-Holland, 1988, pp. 139–183.
 
 DOI: [10.1016/S0166-4115(08)62386-9](https://dx.doi.org/10.1016/S0166-4115(08)62386-9)
 

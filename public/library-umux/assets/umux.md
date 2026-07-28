@@ -7,7 +7,7 @@ The evaluation you're about to complete is the Usability Metric for User Experie
 
 ## Reference
 
-Finstad, Kraig. "The usability metric for user experience." Interacting with computers 22.5 (2010): 323-327.
+K. Finstad, “The usability metric for user experience,” Interacting with Computers, vol. 22, no. 5, pp. 323–327, 2010.
 
 DOI: [10.1016/j.intcom.2010.04.004](https://dx.doi.org/10.1016/j.intcom.2010.04.004)
 

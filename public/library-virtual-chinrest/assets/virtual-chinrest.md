@@ -7,7 +7,7 @@ A library for visual calibration tasks including virtual chinrest (card size) an
 
 ## Reference
 
-Li, Q., Joo, S. J., Yeatman, J. D., & Reinecke, K. (2020). Controlling for Participants' Viewing Distance in Large-Scale, Psychophysical Online Experiments Using a Virtual Chinrest. Scientific Reports, 10(1), 1-11. doi: 10.1038/s41598-019-57204-1
+Q. Li, S. J. Joo, J. D. Yeatman, and K. Reinecke, “Controlling for participants' viewing distance in large-scale, psychophysical online experiments using a virtual chinrest,” Scientific Reports, vol. 10, Art. no. 904, 2020.
 
 DOI: [10.1038/s41598-019-57204-1](https://dx.doi.org/10.1038/s41598-019-57204-1)
 
