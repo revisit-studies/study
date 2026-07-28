@@ -480,7 +480,7 @@ describe('validateResponse', () => {
 
   test('pairwise ranking requires at least one complete pair', () => {
     const response: Response = {
-      id: 'ranking', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: [],
+      id: 'ranking', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: ['A', 'B', 'C'],
     };
 
     expect(validateResponse(response, {}, { ranking: {} })).toMatchObject({
@@ -507,6 +507,53 @@ describe('validateResponse', () => {
       valid: true,
       issueType: 'none',
       blocksProgression: false,
+    });
+  });
+
+  test('pairwise ranking rejects malformed restored/default answers', () => {
+    const response: Response = {
+      id: 'ranking', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: ['A', 'B', 'C'],
+    };
+
+    // Same option on both sides of a pair (self-comparison)
+    const selfPair = { A_0: 'pair-0-high', A_1: 'pair-0-low' };
+    expect(validateResponse(response, selfPair, { ranking: selfPair })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please complete at least one pair to continue.',
+    });
+
+    // Multiple items stuffed into one slot
+    const doubleSlot = { A_0: 'pair-0-high', B_1: 'pair-0-high', C_2: 'pair-0-low' };
+    expect(validateResponse(response, doubleSlot, { ranking: doubleSlot })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please complete at least one pair to continue.',
+    });
+
+    // Option ids that are not part of the configured options
+    const unknownIds = { X_0: 'pair-0-high', Y_1: 'pair-0-low' };
+    expect(validateResponse(response, unknownIds, { ranking: unknownIds })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please complete at least one pair to continue.',
+    });
+  });
+
+  test('pairwise ranking handles option values containing underscores and plain default keys', () => {
+    const response: Response = {
+      id: 'ranking', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: ['new_york', 'los_angeles'],
+    };
+
+    // Generated instance keys (`<option>_<counter>`) on underscore option values
+    const instanceKeys = { new_york_0: 'pair-0-high', los_angeles_1: 'pair-0-low' };
+    expect(validateResponse(response, instanceKeys, { ranking: instanceKeys }).valid).toBe(true);
+
+    // Default answers use plain option values as keys (see RankingResponse docs)
+    const plainKeys = { new_york: 'pair-0-high', los_angeles: 'pair-0-low' };
+    expect(validateResponse(response, plainKeys, { ranking: plainKeys }).valid).toBe(true);
+
+    // Self-pair still detected across differing key styles
+    const selfPair = { new_york: 'pair-0-high', new_york_1: 'pair-0-low' };
+    expect(validateResponse(response, selfPair, { ranking: selfPair })).toMatchObject({
+      issueType: 'invalid',
     });
   });
 

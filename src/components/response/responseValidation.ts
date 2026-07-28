@@ -4,10 +4,11 @@ import {
   DropdownResponse,
   MatrixResponse,
   NumericalResponse,
+  RankingResponse,
   Response,
 } from '../../parser/types';
 import { CustomResponseValidate, StoredAnswer } from '../../store/types';
-import { parseStringOptionValue } from '../../utils/stringOptions';
+import { parseStringOptions, parseStringOptionValue } from '../../utils/stringOptions';
 
 export const REQUIRED_ERROR_MESSAGE = 'Please answer this question to continue.';
 
@@ -102,19 +103,38 @@ export function checkNumericalResponse(response: NumericalResponse, value: numbe
   return null;
 }
 
-export function checkPairwiseRankingResponse(value: Record<string, string>) {
-  const pairs: Record<string, { high: boolean; low: boolean }> = {};
+export function getRankingBaseItemId(instanceId: string, optionValues: Set<string>): string {
+  if (optionValues.has(instanceId)) {
+    return instanceId;
+  }
 
-  Object.values(value).forEach((location) => {
+  const matchingOption = [...optionValues]
+    .filter((optionValue) => instanceId.startsWith(`${optionValue}_`))
+    .sort((first, second) => second.length - first.length)
+    .find((optionValue) => /^\d+$/.test(instanceId.slice(optionValue.length + 1)));
+
+  return matchingOption ?? instanceId;
+}
+
+export function checkPairwiseRankingResponse(response: RankingResponse, value: Record<string, string>) {
+  const optionValues = new Set(parseStringOptions(response.options).map((option) => option.value));
+  const pairs: Record<string, { high: string[]; low: string[] }> = {};
+
+  Object.entries(value).forEach(([itemId, location]) => {
     const match = location.match(/^pair-(\d+)-(high|low)$/);
     if (match) {
       const [, pairId, position] = match;
-      if (!pairs[pairId]) pairs[pairId] = { high: false, low: false };
-      pairs[pairId][position as 'high' | 'low'] = true;
+      if (!pairs[pairId]) pairs[pairId] = { high: [], low: [] };
+      pairs[pairId][position as 'high' | 'low'].push(getRankingBaseItemId(itemId, optionValues));
     }
   });
 
-  const hasCompletePair = Object.values(pairs).some((pair) => pair.high && pair.low);
+  // Check if there is at least one pair that has both a high and low selection, and that both selections are valid option values
+  const hasCompletePair = Object.values(pairs).some((pair) => pair.high.length === 1
+    && pair.low.length === 1
+    && optionValues.has(pair.high[0])
+    && optionValues.has(pair.low[0])
+    && pair.high[0] !== pair.low[0]);
   if (!hasCompletePair) {
     return 'Please complete at least one pair to continue.';
   }
@@ -257,7 +277,7 @@ export function validateResponse(
       }
 
       if (response.type === 'ranking-pairwise') {
-        const pairwiseError = checkPairwiseRankingResponse(value as Record<string, string>);
+        const pairwiseError = checkPairwiseRankingResponse(response, value as Record<string, string>);
         return pairwiseError
           ? createValidationResult(response, 'invalid', { message: pairwiseError })
           : createValidationResult(response, 'none');
