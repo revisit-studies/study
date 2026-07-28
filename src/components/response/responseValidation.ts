@@ -102,6 +102,25 @@ export function checkNumericalResponse(response: NumericalResponse, value: numbe
   return null;
 }
 
+export function checkPairwiseRankingResponse(value: Record<string, string>) {
+  const pairs: Record<string, { high: boolean; low: boolean }> = {};
+
+  Object.values(value).forEach((location) => {
+    const match = location.match(/^pair-(\d+)-(high|low)$/);
+    if (match) {
+      const [, pairId, position] = match;
+      if (!pairs[pairId]) pairs[pairId] = { high: false, low: false };
+      pairs[pairId][position as 'high' | 'low'] = true;
+    }
+  });
+
+  const hasCompletePair = Object.values(pairs).some((pair) => pair.high && pair.low);
+  if (!hasCompletePair) {
+    return 'Please complete at least one pair to continue.';
+  }
+  return null;
+}
+
 export function checkMatrixResponse(response: MatrixResponse, value: Record<string, string>) {
   const expectedQuestionKeys = response.questionOptions.map((entry) => parseStringOptionValue(entry));
   const unanswered = expectedQuestionKeys.some((questionKey) => {
@@ -233,7 +252,18 @@ export function validateResponse(
     }
 
     if (response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') {
-      return createValidationResult(response, Object.keys(value).length === 0 && response.required ? 'unanswered' : 'none');
+      if (Object.keys(value).length === 0) {
+        return createValidationResult(response, response.required ? 'unanswered' : 'none');
+      }
+
+      if (response.type === 'ranking-pairwise') {
+        const pairwiseError = checkPairwiseRankingResponse(value as Record<string, string>);
+        return pairwiseError
+          ? createValidationResult(response, 'invalid', { message: pairwiseError })
+          : createValidationResult(response, 'none');
+      }
+
+      return createValidationResult(response, 'none');
     }
   }
 

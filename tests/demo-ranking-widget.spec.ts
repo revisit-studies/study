@@ -228,9 +228,19 @@ test('Test ranking response(sublist, categorical, pairwise) and validation', asy
   // Pairwise ranking
   // duplicate pair check, then valid non-duplicate pair and clear validation
   await expect(page.getByText('Rank the following options by pairing them up.')).toBeVisible();
+  const nextButton = page.getByRole('button', { name: 'Next', exact: true });
   await dragFromAvailableInPairwise(page, 'Ball State University', 'HIGH', 0);
+  await settleAfterDrag(page);
+  // An incomplete pair (HIGH filled, LOW empty) should not allow progression
+  await nextButton.click();
+  await expect(page.getByText('Please complete at least one pair to continue.')).toBeVisible();
+  await expect(page.getByText('Rank the following options by pairing them up.')).toBeVisible();
+  // Revealing errors smooth-scrolls to the unresolved question; wait for the
+  // scroll to settle so the next drag's coordinates are stable.
+  await page.waitForTimeout(600);
   await dragFromAvailableInPairwise(page, 'University of Rochester', 'LOW', 0);
   await settleAfterDrag(page);
+  await expect(page.getByText('Please complete at least one pair to continue.')).toHaveCount(0);
 
   await page.getByRole('button', { name: 'Add New Pair' }).click();
   await dragFromAvailableInPairwise(page, 'Ball State University', 'HIGH', 1);

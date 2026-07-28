@@ -478,6 +478,38 @@ describe('validateResponse', () => {
     });
   });
 
+  test('pairwise ranking requires at least one complete pair', () => {
+    const response: Response = {
+      id: 'ranking', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: [],
+    };
+
+    expect(validateResponse(response, {}, { ranking: {} })).toMatchObject({
+      issueType: 'unanswered',
+      blocksProgression: true,
+    });
+
+    // Only one half of a pair is filled
+    expect(validateResponse(response, { A_0: 'pair-0-high' }, { ranking: { A_0: 'pair-0-high' } })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please complete at least one pair to continue.',
+      blocksProgression: true,
+    });
+
+    // Two halves in different pairs, but no single complete pair
+    const splitPairs = { A_0: 'pair-0-high', B_1: 'pair-1-low' };
+    expect(validateResponse(response, splitPairs, { ranking: splitPairs })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please complete at least one pair to continue.',
+    });
+
+    const completePair = { A_0: 'pair-0-high', B_1: 'pair-0-low' };
+    expect(validateResponse(response, completePair, { ranking: completePair })).toEqual({
+      valid: true,
+      issueType: 'none',
+      blocksProgression: false,
+    });
+  });
+
   test('Mantine and progression adapters agree for required response states', () => {
     const response: Response = {
       ...requiredShortText,
