@@ -21,13 +21,16 @@ import cx from 'clsx';
 import {
   Box, Button, Flex, Group, Paper, Stack, Text,
 } from '@mantine/core';
-import { useMemo, useState, useEffect } from 'react';
+import {
+  useCallback, useEffect, useMemo, useState,
+} from 'react';
 import { InputLabel } from './InputLabel';
 import { OptionLabel } from './OptionLabel';
 import classes from './css/RankingDnd.module.css';
 import { ParsedStringOption, RankingResponse, StringOption } from '../../parser/types';
 import { useStoreActions, useStoreDispatch } from '../../store/store';
 import { parseStringOptions } from '../../utils/stringOptions';
+import { getRankingInstanceIndex } from './responseValidation';
 
 type Item = { id: string; symbol: string; option: ParsedStringOption };
 
@@ -351,10 +354,43 @@ function RankingPairwiseComponent({
   const { onChange } = answer as { onChange?: (value: Record<string, string>) => void };
   const { sensors, updateAnswer } = useRankingLogic(responseId, onChange);
   const items = useMemo(() => createItems(options), [options]);
-  const [pairIds, setPairIds] = useState<string[]>(['0']);
+  const optionIds = useMemo(() => new Set(items.map((item) => item.id)), [items]);
+
+  const scanRestoredAnswer = useCallback((value: Record<string, string> | undefined) => {
+    const restoredPairIds = new Set<string>();
+    let maxPairId = -1;
+    let maxInstanceIndex = -1;
+    Object.entries(value || {}).forEach(([itemId, location]) => {
+      const match = location.match(/^pair-(\d+)-(high|low)$/);
+      if (!match) return;
+      restoredPairIds.add(match[1]);
+      maxPairId = Math.max(maxPairId, parseInt(match[1], 10));
+      const instanceIndex = getRankingInstanceIndex(itemId, optionIds);
+      if (instanceIndex !== null) maxInstanceIndex = Math.max(maxInstanceIndex, instanceIndex);
+    });
+    return { restoredPairIds, maxPairId, maxInstanceIndex };
+  }, [optionIds]);
+
+  const [pairIds, setPairIds] = useState<string[]>(() => {
+    const { restoredPairIds } = scanRestoredAnswer(answer?.value);
+    return restoredPairIds.size > 0 ? [...restoredPairIds].sort((a, b) => parseInt(a, 10) - parseInt(b, 10)) : ['0'];
+  });
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [instanceCounter, setInstanceCounter] = useState(0);
-  const [nextPairId, setNextPairId] = useState(1);
+  const [instanceCounter, setInstanceCounter] = useState(() => scanRestoredAnswer(answer?.value).maxInstanceIndex + 1);
+  const [nextPairId, setNextPairId] = useState(() => Math.max(scanRestoredAnswer(answer?.value).maxPairId + 1, 1));
+
+  useEffect(() => {
+    const { restoredPairIds, maxPairId, maxInstanceIndex } = scanRestoredAnswer(answer?.value);
+    setPairIds((prev) => {
+      const merged = [...prev];
+      restoredPairIds.forEach((pairId) => {
+        if (!merged.includes(pairId)) merged.push(pairId);
+      });
+      return merged.length === prev.length ? prev : merged.sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
+    });
+    setNextPairId((prev) => Math.max(prev, maxPairId + 1));
+    setInstanceCounter((prev) => Math.max(prev, maxInstanceIndex + 1));
+  }, [answer?.value, scanRestoredAnswer]);
 
   const { pairs, unassigned } = useMemo(() => {
     const pairMap: Record<string, { high: string[], low: string[] }> = {};

@@ -116,6 +116,15 @@ export function getRankingBaseItemId(instanceId: string, optionValues: Set<strin
   return matchingOption ?? instanceId;
 }
 
+export function getRankingInstanceIndex(instanceId: string, optionValues: Set<string>): number | null {
+  const baseItemId = getRankingBaseItemId(instanceId, optionValues);
+  if (!optionValues.has(baseItemId) || baseItemId === instanceId) {
+    return null;
+  }
+
+  return Number(instanceId.slice(baseItemId.length + 1));
+}
+
 export function checkPairwiseRankingResponse(response: RankingResponse, value: Record<string, string>) {
   const optionValues = new Set(parseStringOptions(response.options).map((option) => option.value));
   const pairs: Record<string, { high: string[]; low: string[] }> = {};

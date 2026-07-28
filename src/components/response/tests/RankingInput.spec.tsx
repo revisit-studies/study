@@ -536,6 +536,114 @@ describe('RankingPairwiseComponent', () => {
     expect(capturedOnDragEnd).toBeDefined();
   });
 
+  test('restored answer initializes pair rows from answer.value (no phantom pair 0)', async () => {
+    const answer = { value: { 'Item A_0': 'pair-1-high' } };
+    const { getAllByRole } = render(
+      <RankingInput {...baseProps} response={makeResponse('ranking-pairwise')} answer={answer} />,
+    );
+    // Only the restored pair-1 row should render; without restoration a default
+    // empty pair-0 row would appear alongside it.
+    let xButtons = getAllByRole('button').filter((b) => b.textContent === 'X');
+    expect(xButtons.length).toBe(1);
+
+    const addBtn = getAllByRole('button').find((b) => b.textContent === 'Add New Pair');
+    await act(async () => { fireEvent.click(addBtn!); });
+    xButtons = getAllByRole('button').filter((b) => b.textContent === 'X');
+    expect(xButtons.length).toBe(2);
+  });
+
+  test('restored answer: Add New Pair targets a fresh pair id, not an existing one', async () => {
+    const onChange = vi.fn();
+    const answer = {
+      value: { 'Item A_0': 'pair-1-high' },
+      onChange,
+    } as unknown as { value: Record<string, string> };
+    const { getAllByRole } = render(
+      <RankingInput {...baseProps} response={makeResponse('ranking-pairwise')} answer={answer} />,
+    );
+    const addBtn = getAllByRole('button').find((b) => b.textContent === 'Add New Pair');
+    await act(async () => { fireEvent.click(addBtn!); });
+
+    // Removing the newly added pair must leave the restored pair-1 data intact;
+    // if Add had reused pair id 1, this would wipe 'Item A_0'.
+    const xButtons = getAllByRole('button').filter((b) => b.textContent === 'X');
+    await act(async () => { fireEvent.click(xButtons[xButtons.length - 1]!); });
+    expect(onChange).toHaveBeenCalledWith({ 'Item A_0': 'pair-1-high' });
+  });
+
+  test('restored answer: new instance keys never overwrite existing keys', async () => {
+    const onChange = vi.fn();
+    const answer = {
+      value: { 'Item A_0': 'pair-1-high', 'Item B_1': 'pair-1-low' },
+      onChange,
+    } as unknown as { value: Record<string, string> };
+    render(
+      <RankingInput {...baseProps} response={makeResponse('ranking-pairwise')} answer={answer} />,
+    );
+    // Re-adding Item A from unassigned must generate a fresh suffix (_2), not
+    // reuse _0 and silently relocate the restored 'Item A_0' entry.
+    await act(async () => {
+      capturedOnDragEnd?.(makeDragEnd('Item A', 'pair-2-high'));
+    });
+    expect(onChange).toHaveBeenCalledWith({
+      'Item A_0': 'pair-1-high',
+      'Item B_1': 'pair-1-low',
+      'Item A_2': 'pair-2-high',
+    });
+  });
+
+  test('option value ending in digits is not mistaken for a generated instance', async () => {
+    const onChange = vi.fn();
+    const response = makeResponse('ranking-pairwise', { options: ['route_66', 'Item B'] });
+    // Default-style answer keyed by the plain option value
+    const answer = {
+      value: { route_66: 'pair-0-high' },
+      onChange,
+    } as unknown as { value: Record<string, string> };
+    render(
+      <RankingInput {...baseProps} response={response} answer={answer} />,
+    );
+    // If 'route_66' were parsed as instance 66 of 'route', the counter would jump
+    // to 67; it must stay at 0 for the first generated instance.
+    await act(async () => {
+      capturedOnDragEnd?.(makeDragEnd('Item B', 'pair-0-low'));
+    });
+    expect(onChange).toHaveBeenCalledWith({
+      route_66: 'pair-0-high',
+      'Item B_0': 'pair-0-low',
+    });
+  });
+
+  test('counters resync when answer.value is replaced while mounted', async () => {
+    const onChange = vi.fn();
+    const emptyAnswer = { value: {}, onChange } as unknown as { value: Record<string, string> };
+    const { rerender } = render(
+      <RankingInput {...baseProps} response={makeResponse('ranking-pairwise')} answer={emptyAnswer} />,
+    );
+
+    // Simulate an async answer restoration after mount
+    const restoredAnswer = {
+      value: { 'Item A_0': 'pair-1-high', 'Item B_1': 'pair-1-low' },
+      onChange,
+    } as unknown as { value: Record<string, string> };
+    await act(async () => {
+      rerender(
+        <RankingInput {...baseProps} response={makeResponse('ranking-pairwise')} answer={restoredAnswer} />,
+      );
+    });
+
+    // Without resyncing, the counter would still be 0 and this drag would emit
+    // 'Item A_0', overwriting the restored key.
+    await act(async () => {
+      capturedOnDragEnd?.(makeDragEnd('Item A', 'pair-2-high'));
+    });
+    expect(onChange).toHaveBeenCalledWith({
+      'Item A_0': 'pair-1-high',
+      'Item B_1': 'pair-1-low',
+      'Item A_2': 'pair-2-high',
+    });
+  });
+
   test('handleRemovePair via X button', async () => {
     const answer = { value: { 'Item A_0': 'pair-0-high' } };
     const { getAllByRole } = render(
