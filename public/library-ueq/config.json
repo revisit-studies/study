@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "User Experience Questionnaire (UEQ)",
+    "title": "UEQ: User Experience Questionnaire",
     "version": "1.0.0",
     "authors": [
       "The reVISit Team"
@@ -17,7 +17,7 @@
     "contactEmail": "",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
-    "withSidebar": true
+    "withSidebar": false
   },
   "importedLibraries": [
     "ueq"

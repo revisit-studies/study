@@ -1,5 +1,5 @@
 
-# ueq-s
+# UEQ-S: User Experience Questionnaire (Short Version)
 
 This is a demo of the library `ueq-s`.
 
