@@ -592,6 +592,32 @@ describe('RankingPairwiseComponent', () => {
     });
   });
 
+  test('option values containing underscores render inside pairs', () => {
+    const response = makeResponse('ranking-pairwise', { options: ['new_york', 'other_option'] });
+    const answer = { value: { new_york_0: 'pair-0-high' } };
+    const { getAllByText } = render(
+      <RankingInput {...baseProps} response={response} answer={answer} />,
+    );
+    // Once in the pair slot, once in the Available Items list — with naive
+    // underscore splitting the pair slot entry resolves to 'new' and disappears.
+    expect(getAllByText('new_york').length).toBe(2);
+  });
+
+  test('option values containing underscores drag from unassigned as new instances', async () => {
+    const onChange = vi.fn();
+    const response = makeResponse('ranking-pairwise', { options: ['new_york', 'other_option'] });
+    const answer = { value: {}, onChange } as unknown as { value: Record<string, string> };
+    render(
+      <RankingInput {...baseProps} response={response} answer={answer} />,
+    );
+    // With includes('_') detection, 'new_york' would be treated as an existing
+    // instance and written without a counter suffix.
+    await act(async () => {
+      capturedOnDragEnd?.(makeDragEnd('new_york', 'pair-0-high'));
+    });
+    expect(onChange).toHaveBeenCalledWith({ new_york_0: 'pair-0-high' });
+  });
+
   test('option value ending in digits is not mistaken for a generated instance', async () => {
     const onChange = vi.fn();
     const response = makeResponse('ranking-pairwise', { options: ['route_66', 'Item B'] });

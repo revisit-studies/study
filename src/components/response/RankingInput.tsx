@@ -30,7 +30,7 @@ import classes from './css/RankingDnd.module.css';
 import { ParsedStringOption, RankingResponse, StringOption } from '../../parser/types';
 import { useStoreActions, useStoreDispatch } from '../../store/store';
 import { parseStringOptions } from '../../utils/stringOptions';
-import { getRankingInstanceIndex } from './responseValidation';
+import { getRankingBaseItemId, getRankingInstanceIndex } from './responseValidation';
 
 type Item = { id: string; symbol: string; option: ParsedStringOption };
 
@@ -323,18 +323,28 @@ function RankingCategoricalComponent({
   );
 }
 
-function checkForDuplicatePair(answer: Record<string, string>, targetPairId: string): boolean {
+function checkForDuplicatePair(
+  answer: Record<string, string>,
+  targetPairId: string,
+  optionIds: Set<string>,
+  candidateBaseId?: string,
+): boolean {
   const pairMap: Record<string, Set<string>> = {};
 
   Object.entries(answer).forEach(([itemId, location]) => {
     const match = location.match(/^pair-(\d+)-(high|low)$/);
     if (match) {
       const pairId = match[1];
-      const baseItemId = itemId.split('_')[0];
+      const baseItemId = getRankingBaseItemId(itemId, optionIds);
       if (!pairMap[pairId]) pairMap[pairId] = new Set();
       pairMap[pairId].add(baseItemId);
     }
   });
+
+  if (candidateBaseId) {
+    if (!pairMap[targetPairId]) pairMap[targetPairId] = new Set();
+    pairMap[targetPairId].add(candidateBaseId);
+  }
 
   const targetPairSignature = [...(pairMap[targetPairId] || [])].sort().join('|');
   if (!targetPairSignature) return false;
@@ -430,8 +440,8 @@ function RankingPairwiseComponent({
       return;
     }
 
-    const isFromUnassigned = !draggedId.includes('_');
-    const baseItemId = isFromUnassigned ? draggedId : draggedId.split('_')[0];
+    const isFromUnassigned = optionIds.has(draggedId);
+    const baseItemId = getRankingBaseItemId(draggedId, optionIds);
     const targetMatch = targetId.match(/^pair-(\d+)-(high|low)$/);
 
     if (targetMatch) {
@@ -450,7 +460,7 @@ function RankingPairwiseComponent({
       const oppositeLocationId = `pair-${targetPairId}-${oppositePosition}`;
 
       const existingInOpposite = Object.entries(newAnswer).some(([instId, loc]) => {
-        const existingBaseId = instId.split('_')[0];
+        const existingBaseId = getRankingBaseItemId(instId, optionIds);
         return loc === oppositeLocationId && existingBaseId === baseItemId;
       });
 
@@ -460,12 +470,9 @@ function RankingPairwiseComponent({
         return;
       }
 
-      if (isFromUnassigned) {
-        const tempAnswer = { ...newAnswer, [`${draggedId}_temp`]: targetId };
-        if (checkForDuplicatePair(tempAnswer, targetPairId)) {
-          setError?.('This would create a duplicate pair.');
-          return;
-        }
+      if (isFromUnassigned && checkForDuplicatePair(newAnswer, targetPairId, optionIds, baseItemId)) {
+        setError?.('This would create a duplicate pair.');
+        return;
       }
     }
 
@@ -483,9 +490,9 @@ function RankingPairwiseComponent({
 
   const activeItem = useMemo(() => {
     if (!activeId) return null;
-    const baseItemId = activeId.includes('_') ? activeId.split('_')[0] : activeId;
+    const baseItemId = getRankingBaseItemId(activeId, optionIds);
     return items.find((i) => i.id === baseItemId) || null;
-  }, [activeId, items]);
+  }, [activeId, items, optionIds]);
 
   const handleRemovePair = (pairId: string) => {
     if (disabled) return;
@@ -531,7 +538,7 @@ function RankingPairwiseComponent({
                   >
                     <Stack>
                       {pair[position].map((instanceId) => {
-                        const baseItemId = instanceId.split('_')[0];
+                        const baseItemId = getRankingBaseItemId(instanceId, optionIds);
                         const item = items.find((i) => i.id === baseItemId);
                         return item ? (
                           <SortableItem
