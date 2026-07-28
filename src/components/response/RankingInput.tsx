@@ -31,11 +31,12 @@ import { parseStringOptions } from '../../utils/stringOptions';
 
 type Item = { id: string; symbol: string; option: ParsedStringOption };
 
-function SortableItem({ item, index }: { item: Item; index?: number }) {
+function SortableItem({ item, index, disabled }: { item: Item; index?: number; disabled?: boolean }) {
   const {
     attributes, listeners, setNodeRef, transform, transition, isDragging,
   } = useSortable({
     id: item.symbol,
+    disabled,
   });
 
   const style: React.CSSProperties = {
@@ -49,7 +50,7 @@ function SortableItem({ item, index }: { item: Item; index?: number }) {
       style={{
         ...style, margin: '0 auto', minWidth: '200px',
       }}
-      className={cx(classes.item, { [classes.itemDragging]: isDragging })}
+      className={cx(classes.item, { [classes.itemDragging]: isDragging, [classes.itemDisabled]: disabled })}
       {...attributes}
       {...listeners}
       withBorder
@@ -190,7 +191,7 @@ function RankingSublistComponent({
           <SortableContext items={state.selected.map((i) => i.symbol)} strategy={verticalListSortingStrategy}>
             <Stack>
               {state.selected.map((item, index) => (
-                <SortableItem key={item.symbol} item={item} index={index + 1} />
+                <SortableItem key={item.symbol} item={item} index={index + 1} disabled={disabled} />
               ))}
             </Stack>
           </SortableContext>
@@ -201,7 +202,7 @@ function RankingSublistComponent({
           <SortableContext items={state.unassigned.map((i) => i.symbol)} strategy={verticalListSortingStrategy}>
             <Stack>
               {state.unassigned.map((item) => (
-                <SortableItem key={item.symbol} item={item} />
+                <SortableItem key={item.symbol} item={item} disabled={disabled} />
               ))}
             </Stack>
           </SortableContext>
@@ -304,7 +305,7 @@ function RankingCategoricalComponent({
             <SortableContext items={state[category].map((i) => i.symbol)} strategy={verticalListSortingStrategy}>
               <Stack>
                 {state[category].map((item) => (
-                  <SortableItem key={item.symbol} item={item} />
+                  <SortableItem key={item.symbol} item={item} disabled={disabled} />
                 ))}
               </Stack>
             </SortableContext>
@@ -470,6 +471,7 @@ function RankingPairwiseComponent({
       <Flex justify="flex-end" mb="md">
         <Button
           variant="outline"
+          disabled={disabled}
           onClick={() => {
             if (!disabled) {
               setPairIds((prev) => [...prev, nextPairId.toString()]);
@@ -499,6 +501,7 @@ function RankingPairwiseComponent({
                           <SortableItem
                             key={instanceId}
                             item={{ ...item, id: baseItemId, symbol: instanceId }}
+                            disabled={disabled}
                           />
                         ) : null;
                       })}
@@ -523,7 +526,7 @@ function RankingPairwiseComponent({
           <SortableContext items={unassigned.map((i) => i.id)} strategy={verticalListSortingStrategy}>
             <Stack>
               {unassigned.map((item) => (
-                <SortableItem key={item.id} item={item} />
+                <SortableItem key={item.id} item={item} disabled={disabled} />
               ))}
             </Stack>
           </SortableContext>
