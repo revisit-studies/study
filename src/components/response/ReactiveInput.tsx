@@ -27,13 +27,13 @@ export function ReactiveInput({
       size="md"
     >
       {answer.value && (
-      <List>
-        {Array.isArray(answer.value)
-          ? (answer.value).map((item) => <List.Item key={item}>{item}</List.Item>)
-          : typeof answer.value === 'object'
-            ? Object.entries(answer.value).map(([key, val]) => <List.Item key={key}>{`${key}: ${typeof val === 'object' ? JSON.stringify(val) : val}`}</List.Item>)
-            : <List.Item>{answer.value}</List.Item>}
-      </List>
+        <List>
+          {Array.isArray(answer.value)
+            ? (answer.value).map((item) => <List.Item key={item}>{item}</List.Item>)
+            : typeof answer.value === 'object'
+              ? Object.entries(answer.value).map(([key, val]) => <List.Item key={key}>{`${key}: ${typeof val === 'object' ? JSON.stringify(val) : val}`}</List.Item>)
+              : <List.Item>{answer.value}</List.Item>}
+        </List>
       )}
     </Input.Wrapper>
   );

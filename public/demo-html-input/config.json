@@ -34,7 +34,10 @@
         }
       ],
       "path": "demo-html-input/assets/bar-chart-interaction.html",
-      "instructionLocation": "aboveStimulus"
+      "instructionLocation": "aboveStimulus",
+      "style": {
+        "height": "480px"
+      }
     }
   },
   "components": {
