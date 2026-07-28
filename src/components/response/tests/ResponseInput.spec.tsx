@@ -235,7 +235,7 @@ vi.mock('@dnd-kit/utilities', () => ({
 vi.mock('clsx', () => ({ default: vi.fn((...args: unknown[]) => args.filter(Boolean).join(' ')) }));
 
 vi.mock('../../../store/hooks/useStoredAnswer', () => ({
-  useStoredAnswer: vi.fn(() => ({ questionOrders: {}, optionOrders: {} })),
+  useStoredAnswer: vi.fn(() => ({})),
 }));
 
 vi.mock('../utils', () => ({

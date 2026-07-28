@@ -19,6 +19,15 @@ import {
   shouldWarnForDefaultFirebaseConfig,
   shouldWarnForDefaultSupabaseConfig,
 } from '../utils/defaultStorageConfig';
+import { studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
+
+const modules = import.meta.glob(
+  [
+    '../public/**/*.{mjs,js,mts,ts,jsx,tsx}',
+    '!../public/**/*.spec.{mjs,js,mts,ts,jsx,tsx}',
+  ],
+  { eager: false }, // the parser only checks if the path exists
+);
 
 const ajv1 = new Ajv({ allowUnionTypes: true });
 ajv1.addSchema(globalSchema);
@@ -111,6 +120,28 @@ function verifyStudySkip(
   // If this block has a skip, add the skip.to component to the skipTargets array
   if (sequence.skip && sequence.skip.length > 0) {
     skipTargets.push(...sequence.skip.map((skip) => skip.to).filter((target) => target !== 'end'));
+  }
+}
+
+function verifyReactComponent(
+  instancePath: string,
+  component: Partial<IndividualComponent>,
+  errors: ParserErrorWarning[],
+) {
+  if (
+    'path' in component
+      && component.path != null
+      && component.type === 'react-component'
+      && !(`../public/${component.path}` in modules)
+  ) {
+    errors.push({
+      message: 'Unresolved path',
+      instancePath,
+      params: {
+        action: 'Make sure the React component is in `src/public/`, not `public/`',
+      },
+      category: 'undefined-component',
+    });
   }
 }
 
@@ -310,6 +341,21 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
       category: 'skip-validation',
     });
   });
+
+  // Verify that paths to React components exist under the correct base directory
+
+  for (const [name, component] of Object.entries(studyConfig.baseComponents ?? {})) {
+    verifyReactComponent(`/baseComponents/${name}/path`, component, errors);
+  }
+
+  for (const [name, component] of Object.entries(studyConfig.components ?? {})) {
+    if ('path' in component) {
+      const mergedComponent = studyComponentToIndividualComponent(component, studyConfig);
+      verifyReactComponent(`/components/${name}/path`, mergedComponent, errors);
+    } else {
+      // Path is inherited and will be verified on the base component
+    }
+  }
 
   return { errors, warnings };
 }

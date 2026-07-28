@@ -143,7 +143,8 @@ export function MatrixInput({
     [questions],
   );
 
-  const { questionOrders } = useStoredAnswer();
+  const storedAnswer = useStoredAnswer();
+  const questionOrders = useMemo(() => storedAnswer?.questionOrders ?? {}, [storedAnswer]);
   const orderedQuestions = useMemo(() => questionOrders[response.id] || questions.map((question) => question.value), [questionOrders, questions, response.id]);
   const answerValue = useMemo(
     () => (answer.value && typeof answer.value === 'object' && !Array.isArray(answer.value) ? answer.value : {}),
