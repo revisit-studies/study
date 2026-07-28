@@ -44,28 +44,6 @@
         "borderRadius": "12px"
       }
     },
-    "react-component": {
-      "type": "react-component",
-      "path": "demo-react-trrack/assets/DemoReactTrrack.tsx",
-      "parameters": {
-        "speed": 100
-      },
-      "style": {
-        "width": "900px",
-        "margin": "20px auto",
-        "padding": "20px",
-        "backgroundColor": "#ffe7c7",
-        "borderRadius": "10px"
-      },
-      "response": [
-        {
-          "id": "react-component-style",
-          "prompt": "This is a react component with the following style: <br> `width: 900px` <br> `margin: 20px auto` <br> `padding: 20px`  <br>  `backgroundColor: #ffe7c7` <br> `borderRadius: 10px`",
-          "type": "textOnly",
-          "location": "aboveStimulus"
-        }
-      ]
-    },
     "image-component": {
       "type": "image",
       "path": "demo-image/assets/uncertainty-1.png",
@@ -553,7 +531,6 @@
         "order": "fixed",
         "components": [
           "markdown-component",
-          "react-component",
           "image-component",
           "website-component",
           "vega-component",
