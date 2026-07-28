@@ -3,7 +3,7 @@
 
 This is a demo of the library `virtual-chinrest`.
 
-A library for visual calibration tasks including virtual chinrest (card size) and viewing distance calibration using blindspot tracking. It is based on the [`jsPsych` plugin](https://github.com/QishengLi/virtual_chinrest) also see the [documentation](https://www.jspsych.org/v7/plugins/virtual-chinrest/).
+A library for visual calibration tasks including virtual chinrest (card size) and viewing distance calibration using blindspot tracking. It is based on the [`jsPsych` plugin](https://github.com/QishengLi/virtual_chinrest). See the [documentation](https://www.jspsych.org/v7/plugins/virtual-chinrest/) for more information.
 
 ## Reference
 

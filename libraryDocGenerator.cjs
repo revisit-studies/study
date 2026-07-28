@@ -45,11 +45,11 @@ import StructuredLinks from '@site/src/components/StructuredLinks/StructuredLink
         {name: "${library} Code", url: "https://github.com/revisit-studies/study/tree/main/public/library-${library}"}
       ]}
       ${(libraryConfig.doi || libraryConfig.externalLink)
-      ? `referenceLinks={[
+    ? `referenceLinks={[
         ${libraryConfig.doi ? `{name: "DOI", url: "https://dx.doi.org/${libraryConfig.doi}"}` : ''}${libraryConfig.doi && libraryConfig.externalLink ? ',' : ''}
         ${libraryConfig.externalLink ? `{name: "${library}", url: "${libraryConfig.externalLink}"}` : ''}
       ]}`
-      : ''}
+    : ''}
   />` : ''}
 `;
 

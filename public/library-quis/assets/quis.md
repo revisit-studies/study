@@ -1,5 +1,5 @@
 
-# QUIS: Questionnaire for User Interface Satisfaction
+# QUIS: Questionnaire for User Interaction Satisfaction
 
 This is a demo of the library `quis`.
 

@@ -3,7 +3,7 @@
 
 This is a demo of the library `adaptive-vlat`.
 
-A-VLAT is a short, adaptive visualization literacy test, which are built upon the existing static assessments VLAT. 
+A-VLAT is a short, adaptive visualization literacy test, which is built upon the existing static VLAT assessment. 
 
 This library contains a sequence of the full A-VLAT questionnaire. 
 

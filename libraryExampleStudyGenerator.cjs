@@ -45,7 +45,7 @@ const createExampleConfig = (libraryName) => ({
 });
 
 const getLibraries = (libsPath) => fs.readdirSync(libsPath)
-  .filter(library => !library.startsWith('.') && !library.endsWith('.DS_Store'));
+  .filter((library) => !library.startsWith('.') && !library.endsWith('.DS_Store'));
 
 const generateLibraryExamples = (base, generateDocsFn = generateLibraryDocs) => {
   const librariesPath = path.join(base, 'public', 'libraries');
