@@ -9,7 +9,7 @@ The paper recommends using the 5-item version where it's feasible, but the 3 or 
 
 ## Reference
 
-T. He, P. Isenberg, R. Dachselt, and T. Isenberg, “BeauVis: A Validated Scale for Measuring the Aesthetic Pleasure of Visual Representations,” IEEE Transactions on Visualization and Computer Graphics, pp. 1–11, 2022
+T. He, P. Isenberg, R. Dachselt, and T. Isenberg, “BeauVis: A Validated Scale for Measuring the Aesthetic Pleasure of Visual Representations,” IEEE Transactions on Visualization and Computer Graphics, vol. 29, no. 1, pp. 363–373, Jan. 2023
 
 DOI: [10.1109/TVCG.2022.3209390](https://dx.doi.org/10.1109/TVCG.2022.3209390)
 

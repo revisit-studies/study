@@ -146,9 +146,9 @@
     "plate5": {
       "meta": {
         "plateNumber": 5,
-        "normal-color-vision-see": 5,
-        "red-color-blindness-see": 3,
-        "green-color-blindness-see": 3,
+        "normal-color-vision-see": 3,
+        "red-color-blindness-see": 5,
+        "green-color-blindness-see": 5,
         "total-color-blindness-see": "nothing",
         "plateType": "transformation"
       },
@@ -557,8 +557,8 @@
       "meta": {
         "plateNumber": 17,
         "normal-color-vision-see": 42,
-        "red-color-blindness-see": 4,
-        "green-color-blindness-see": 2,
+        "red-color-blindness-see": 2,
+        "green-color-blindness-see": 4,
         "total-color-blindness-see": "nothing",
         "plateType": "diagnostic"
       },
@@ -679,7 +679,7 @@
     "plate21": {
       "meta": {
         "plateNumber": 21,
-        "normal-color-vision-see": "a orange wiggly line",
+        "normal-color-vision-see": "an orange wiggly line",
         "red-color-blindness-see": "nothing",
         "green-color-blindness-see": "nothing",
         "total-color-blindness-see": "nothing",
@@ -708,9 +708,9 @@
     "plate22": {
       "meta": {
         "plateNumber": 22,
-        "normal-color-vision-see": "a blue-grenn/yellow-green wiggly line",
-        "red-color-blindness-see": "a blue-green and red wiggle line",
-        "green-color-blindness-see": "a blue-green and red wiggle line",
+        "normal-color-vision-see": "a blue-green/yellow-green wiggly line",
+        "red-color-blindness-see": "a blue-green and red wiggly line",
+        "green-color-blindness-see": "a blue-green and red wiggly line",
         "total-color-blindness-see": "nothing",
         "plateType": "transformation"
       },
@@ -738,8 +738,8 @@
       "meta": {
         "plateNumber": 23,
         "normal-color-vision-see": "a red-orange wiggly line",
-        "red-color-blindness-see": "a blue-green wiggle line",
-        "green-color-blindness-see": "a blue-green wiggle line",
+        "red-color-blindness-see": "a blue-green wiggly line",
+        "green-color-blindness-see": "a blue-green wiggly line",
         "total-color-blindness-see": "nothing",
         "plateType": "transformation"
       },
