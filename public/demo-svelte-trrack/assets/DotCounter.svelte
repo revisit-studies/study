@@ -7,7 +7,7 @@
 
   $: visibleDots = Array.isArray(dots) ? dots : [];
   $: atMaximum = visibleDots.length >= 20;
-  $: atMinimum = visibleDots.length === 0;
+  $: atMinimum = visibleDots.length <= 1;
 </script>
 
 <div class="container">
@@ -26,7 +26,7 @@
     <span class="limit-control" tabindex={atMinimum ? 0 : undefined}>
       <button type="button" on:click={removeDot} disabled={atMinimum} aria-describedby={atMinimum ? 'remove-limit-tooltip' : undefined}>Remove</button>
       {#if atMinimum}
-        <span class="limit-tooltip" id="remove-limit-tooltip" role="tooltip">Minimum of 0 dots reached.</span>
+        <span class="limit-tooltip" id="remove-limit-tooltip" role="tooltip">Minimum of 1 dot reached.</span>
       {/if}
     </span>
   </div>
@@ -55,12 +55,11 @@
     bottom: calc(100% + 8px);
     color: #ffffff;
     font: 12px/1.4 Arial, Helvetica, sans-serif;
-    left: 50%;
+    left: 0;
     opacity: 0;
     padding: 6px 8px;
     pointer-events: none;
     position: absolute;
-    transform: translateX(-50%);
     visibility: hidden;
     white-space: nowrap;
     z-index: 1;

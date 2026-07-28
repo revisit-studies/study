@@ -59,6 +59,7 @@
         import { Registry, initializeTrrack } from 'https://cdn.jsdelivr.net/npm/@trrack/core@1.3.0/+esm';
 
         const taskId = 'circlesCount';
+        const minDots = 1;
         const maxDots = 20;
         const initialState = {
             dots: [1]
@@ -107,7 +108,7 @@
             }
 
             function removeDot() {
-                if (trrack.getState().dots.length > 0) {
+                if (trrack.getState().dots.length > minDots) {
                     trrack.apply('Remove Dot', updateDots('remove'));
                 }
             }
