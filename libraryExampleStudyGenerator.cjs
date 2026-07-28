@@ -11,6 +11,8 @@ const fs = require('fs');
 const path = require('path');
 const { generateLibraryDocs } = require('./libraryDocGenerator.cjs');
 
+const LIBRARIES_TO_SKIP = new Set(['test']);
+
 // Create example study config template
 const createExampleConfig = (libraryName) => ({
   $schema: 'https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/StudyConfigSchema.json',
@@ -45,7 +47,9 @@ const createExampleConfig = (libraryName) => ({
 });
 
 const getLibraries = (libsPath) => fs.readdirSync(libsPath)
-  .filter((library) => !library.startsWith('.') && !library.endsWith('.DS_Store'));
+  .filter((library) => !library.startsWith('.')
+    && !library.endsWith('.DS_Store')
+    && !LIBRARIES_TO_SKIP.has(library));
 
 const generateLibraryExamples = (base, generateDocsFn = generateLibraryDocs) => {
   const librariesPath = path.join(base, 'public', 'libraries');

@@ -6,6 +6,8 @@
 const fs = require('fs');
 const path = require('path');
 
+const LIBRARIES_TO_SKIP = new Set(['test']);
+
 const generateMd = (library, libraryConfig, forDocs, title = library) => `
 # ${title}
 
@@ -54,7 +56,9 @@ import StructuredLinks from '@site/src/components/StructuredLinks/StructuredLink
 `;
 
 const getLibraries = (libsPath) => fs.readdirSync(libsPath)
-  .filter((library) => !library.startsWith('.') && !library.endsWith('.DS_Store'));
+  .filter((library) => !library.startsWith('.')
+    && !library.endsWith('.DS_Store')
+    && !LIBRARIES_TO_SKIP.has(library));
 
 // The documentation repository uses the library name as the title; preserve custom titles for existing example studies in the study repository
 const getExistingTitle = (markdownPath) => {

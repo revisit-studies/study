@@ -88,6 +88,7 @@ describe('libraryDocGenerator', () => {
     fs.mkdirSync(libsPath, { recursive: true });
     fs.mkdirSync(path.join(libsPath, 'alpha'));
     fs.mkdirSync(path.join(libsPath, '.hidden'));
+    fs.mkdirSync(path.join(libsPath, 'test'));
     fs.writeFileSync(path.join(libsPath, '.DS_Store'), '');
 
     expect(getLibraries(libsPath)).toEqual(['alpha']);
