@@ -71,7 +71,7 @@ const generateLibraryExamples = (base, generateDocsFn = generateLibraryDocs) => 
       // Create config.json
       const configPath = path.join(examplePath, 'config.json');
       const configContent = createExampleConfig(library);
-      fs.writeFileSync(configPath, JSON.stringify(configContent, null, 2));
+      fs.writeFileSync(configPath, `${JSON.stringify(configContent, null, 2)}\n`);
       // eslint-disable-next-line no-console
       console.log(`Created/Updated ${exampleFolderName}/config.json`);
     }
