@@ -1,4 +1,4 @@
-# VLAT: Assessing Visual Literacy
+# VLAT: Assessing Visualization Literacy
 
 This is a demo of the library `vlat`.
 
@@ -6,9 +6,11 @@ Visualization Literacy Assessment Test (VLAT) was developed to measure users' ab
 
 ## Reference
 
-S. Lee, S.-H. Kim, and B. C. Kwon, "VLAT: Development of a Visualization Literacy Assessment Test," IEEE Transactions on Visualization and Computer Graphics, vol. 23, no. 1, pp. 551-560, Jan. 2017
+S. Lee, S.-H. Kim, and B. C. Kwon, “VLAT: Development of a Visualization Literacy Assessment Test,” IEEE Transactions on Visualization and Computer Graphics, vol. 23, no. 1, pp. 551–560, Jan. 2017.
 
 DOI: [10.1109/TVCG.2016.2598920](https://dx.doi.org/10.1109/TVCG.2016.2598920)
+
+Link: [https://www.bckwon.com/publication/vlat/](https://www.bckwon.com/publication/vlat/)
 
 ## Available Components
 

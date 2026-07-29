@@ -9,9 +9,7 @@
     ],
     "date": "2026-02-23",
     "description": "Example study using the virtual chinrest calibration library.",
-    "organizations": [
-      ""
-    ]
+    "organizations": []
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",

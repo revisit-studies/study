@@ -15,14 +15,43 @@
           "location": "aboveStimulus",
           "type": "matrix-radio",
           "questionOptions": [
-            { "label": "0: Terrible, 9: Wonderful", "value": "terrible-wonderful"},
-            { "label": "0: Difficult, 9: Easy", "value": "difficult-easy" },
-            { "label": "0: Frustrating, 9: Satisfying", "value": "frustrating-satisfying" },
-            { "label": "0: Inadequate power, 9: Adequate power", "value": "inadequate-adequate-power" },
-            { "label": "0: Dull, 9: Stimulating", "value": "dull-stimulating" },
-            { "label": "0: Rigid, 9: Flexible", "value": "rigid-flexible" }
+            {
+              "label": "0: Terrible, 9: Wonderful",
+              "value": "terrible-wonderful"
+            },
+            {
+              "label": "0: Difficult, 9: Easy",
+              "value": "difficult-easy"
+            },
+            {
+              "label": "0: Frustrating, 9: Satisfying",
+              "value": "frustrating-satisfying"
+            },
+            {
+              "label": "0: Inadequate power, 9: Adequate power",
+              "value": "inadequate-adequate-power"
+            },
+            {
+              "label": "0: Dull, 9: Stimulating",
+              "value": "dull-stimulating"
+            },
+            {
+              "label": "0: Rigid, 9: Flexible",
+              "value": "rigid-flexible"
+            }
           ],
-          "answerOptions": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+          "answerOptions": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9"
+          ],
           "withDontKnow": true
         }
       ]
@@ -36,13 +65,36 @@
           "required": true,
           "location": "aboveStimulus",
           "type": "matrix-radio",
-          "answerOptions": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+          "answerOptions": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9"
+          ],
           "withDontKnow": true,
           "questionOptions": [
-            { "label": "Characters on the computer screen  \n(0: Hard to read, 9: Easy to read)", "value": "characters-readable" },
-            { "label": "Highlighting on the screen simplifies task  \n(0: Not at all, 9: Very much)", "value": "highlighting-helps" },
-            { "label": "Organization of information on screen  \n(0: Confusing, 9: Very clear)", "value": "screen-organization" },
-            { "label": "Sequence of screens  \n(0: Confusing, 9: Very clear)", "value": "screen-sequence" }
+            {
+              "label": "Characters on the computer screen  \n(0: Hard to read, 9: Easy to read)",
+              "value": "characters-readable"
+            },
+            {
+              "label": "Highlighting on the screen simplifies task  \n(0: Not at all, 9: Very much)",
+              "value": "highlighting-helps"
+            },
+            {
+              "label": "Organization of information on screen  \n(0: Confusing, 9: Very clear)",
+              "value": "screen-organization"
+            },
+            {
+              "label": "Sequence of screens  \n(0: Confusing, 9: Very clear)",
+              "value": "screen-sequence"
+            }
           ]
         }
       ]
@@ -56,15 +108,44 @@
           "required": true,
           "location": "aboveStimulus",
           "type": "matrix-radio",
-          "answerOptions": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+          "answerOptions": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9"
+          ],
           "withDontKnow": true,
           "questionOptions": [
-            { "label": "Use of terms throughout system  \n(0: Inconsistent, 9: Consistent)", "value": "term-consistency" },
-            { "label": "Computer terminology is related to the task you are doing  \n(0: Never, 9: Always)", "value": "term-relevance" },
-            { "label": "Position of messages on screen  \n(0: Inconsistent, 9: Consistent)", "value": "message-position" },
-            { "label": "Messages on screen which prompt user for input  \n(0: Confusing, 9: Clear)", "value": "input-prompts" },
-            { "label": "Computer keeps you informed about what it is doing  \n(0: Never, 9: Always)", "value": "system-feedback" },
-            { "label": "Error messages  \n(0: Unhelpful, 9: Helpful)", "value": "error-messages" }
+            {
+              "label": "Use of terms throughout system  \n(0: Inconsistent, 9: Consistent)",
+              "value": "term-consistency"
+            },
+            {
+              "label": "Computer terminology is related to the task you are doing  \n(0: Never, 9: Always)",
+              "value": "term-relevance"
+            },
+            {
+              "label": "Position of messages on screen  \n(0: Inconsistent, 9: Consistent)",
+              "value": "message-position"
+            },
+            {
+              "label": "Messages on screen which prompt user for input  \n(0: Confusing, 9: Clear)",
+              "value": "input-prompts"
+            },
+            {
+              "label": "Computer keeps you informed about what it is doing  \n(0: Never, 9: Always)",
+              "value": "system-feedback"
+            },
+            {
+              "label": "Error messages  \n(0: Unhelpful, 9: Helpful)",
+              "value": "error-messages"
+            }
           ]
         }
       ]
@@ -78,15 +159,44 @@
           "required": true,
           "location": "aboveStimulus",
           "type": "matrix-radio",
-          "answerOptions": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+          "answerOptions": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9"
+          ],
           "withDontKnow": true,
           "questionOptions": [
-            { "label": "Learning to operate the system  \n(0: Difficult, 9: Easy)", "value": "learning-operation" },
-            { "label": "Exploring new features by trial and error  \n(0: Difficult, 9: Easy)", "value": "exploring-features" },
-            { "label": "Remembering names and use of commands  \n(0: Difficult, 9: Easy)", "value": "remembering-commands" },
-            { "label": "Tasks can be performed in a straight-forward manner  \n(0: Never, 9: Always)", "value": "straight-forward-tasks" },
-            { "label": "Help messages on the screen  \n(0: Unhelpful, 9: Helpful)", "value": "help-messages" },
-            { "label": "Supplemental reference materials  \n(0: Confusing, 9: Clear)", "value": "reference-materials" }
+            {
+              "label": "Learning to operate the system  \n(0: Difficult, 9: Easy)",
+              "value": "learning-operation"
+            },
+            {
+              "label": "Exploring new features by trial and error  \n(0: Difficult, 9: Easy)",
+              "value": "exploring-features"
+            },
+            {
+              "label": "Remembering names and use of commands  \n(0: Difficult, 9: Easy)",
+              "value": "remembering-commands"
+            },
+            {
+              "label": "Tasks can be performed in a straight-forward manner  \n(0: Never, 9: Always)",
+              "value": "straight-forward-tasks"
+            },
+            {
+              "label": "Help messages on the screen  \n(0: Unhelpful, 9: Helpful)",
+              "value": "help-messages"
+            },
+            {
+              "label": "Supplemental reference materials  \n(0: Confusing, 9: Clear)",
+              "value": "reference-materials"
+            }
           ]
         }
       ]
@@ -100,14 +210,40 @@
           "required": true,
           "location": "aboveStimulus",
           "type": "matrix-radio",
-          "answerOptions": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+          "answerOptions": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9"
+          ],
           "withDontKnow": true,
           "questionOptions": [
-            { "label": "System speed  \n(0: Too slow, 9: Fast enough)", "value": "system-speed" },
-            { "label": "System reliability  \n(0: Unreliable, 9: Reliable)", "value": "system-reliability" },
-            { "label": "System tends to be  \n(0: Noisy, 9: Quiet)", "value": "system-noise" },
-            { "label": "Correcting your mistakes  \n(0: Difficult, 9: Easy)", "value": "correcting-mistakes" },
-            { "label": "Experienced and inexperienced users' needs are taken into consideration  \n(0: Never, 9: Always)", "value": "user-needs" }
+            {
+              "label": "System speed  \n(0: Too slow, 9: Fast enough)",
+              "value": "system-speed"
+            },
+            {
+              "label": "System reliability  \n(0: Unreliable, 9: Reliable)",
+              "value": "system-reliability"
+            },
+            {
+              "label": "System tends to be  \n(0: Noisy, 9: Quiet)",
+              "value": "system-noise"
+            },
+            {
+              "label": "Correcting your mistakes  \n(0: Difficult, 9: Easy)",
+              "value": "correcting-mistakes"
+            },
+            {
+              "label": "Experienced and inexperienced users' needs are taken into consideration  \n(0: Never, 9: Always)",
+              "value": "user-needs"
+            }
           ]
         }
       ]
@@ -121,14 +257,40 @@
           "required": true,
           "location": "aboveStimulus",
           "type": "matrix-radio",
-          "answerOptions": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+          "answerOptions": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9"
+          ],
           "withDontKnow": true,
           "questionOptions": [
-            { "label": "Use of colors and sounds  \n(0: Poor, 9: Good)", "value": "colors-and-sounds" },
-            { "label": "System feedback  \n(0: Poor, 9: Good)", "value": "system-feedback" },
-            { "label": "System response to errors  \n(0: Awkward, 9: Gracious)", "value": "error-response" },
-            { "label": "System messages and reports  \n(0: Poor, 9: Good)", "value": "system-messages" },
-            { "label": "System clutter and UI \"noise\"  \n(0: Poor, 9: Good)", "value": "system-clutter" }
+            {
+              "label": "Use of colors and sounds  \n(0: Poor, 9: Good)",
+              "value": "colors-and-sounds"
+            },
+            {
+              "label": "System feedback  \n(0: Poor, 9: Good)",
+              "value": "system-feedback"
+            },
+            {
+              "label": "System response to errors  \n(0: Awkward, 9: Gracious)",
+              "value": "error-response"
+            },
+            {
+              "label": "System messages and reports  \n(0: Poor, 9: Good)",
+              "value": "system-messages"
+            },
+            {
+              "label": "System clutter and UI \"noise\"  \n(0: Poor, 9: Good)",
+              "value": "system-clutter"
+            }
           ]
         }
       ]
@@ -149,6 +311,3 @@
     }
   }
 }
-
-
-

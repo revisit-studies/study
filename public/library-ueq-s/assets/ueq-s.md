@@ -6,7 +6,7 @@ The Short Version of the User Experience Questionnaire (UEQ-S) is a short versio
 
 ## Reference
 
-M. Schrepp, A. Hinderks, and J. Thomaschewski, Design and Evaluation of a Short Version of the User Experience Questionnaire (UEQ-S), International Journal of Interactive Multimedia and Artificial Intelligence, vol. 4, no. 6, pp. 103–108, Sep. 2017.
+M. Schrepp, A. Hinderks, and J. Thomaschewski, “Design and Evaluation of a Short Version of the User Experience Questionnaire (UEQ-S),” International Journal of Interactive Multimedia and Artificial Intelligence, vol. 4, no. 6, pp. 103–108, Sep. 2017.
 
 DOI: [10.9781/ijimai.2017.09.001](https://dx.doi.org/10.9781/ijimai.2017.09.001)
 

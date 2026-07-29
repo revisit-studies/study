@@ -1,8 +1,9 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/LibraryConfigSchema.json",
   "description": "Visualization Literacy Assessment Test (VLAT) was developed to measure users' ability to read, understand, and use data visualizations to solve problems. The VLAT consists of 12 data visualizations and 53 multiple-choice questions. This library contains 53 components, each corresponding to a question of the VLAT. It also includes a sequence of all 53 components (the full VLAT).",
-  "reference": "S. Lee, S.-H. Kim, and B. C. Kwon, \"VLAT: Development of a Visualization Literacy Assessment Test,\" IEEE Transactions on Visualization and Computer Graphics, vol. 23, no. 1, pp. 551-560, Jan. 2017",
+  "reference": "S. Lee, S.-H. Kim, and B. C. Kwon, “VLAT: Development of a Visualization Literacy Assessment Test,” IEEE Transactions on Visualization and Computer Graphics, vol. 23, no. 1, pp. 551–560, Jan. 2017.",
   "doi": "10.1109/TVCG.2016.2598920",
+  "externalLink": "https://www.bckwon.com/publication/vlat/",
   "baseComponents": {
     "line": {
       "type": "image",
@@ -147,12 +148,18 @@
           "location": "sidebar",
           "type": "radio",
           "options": [
-            "57.36",
-            "47.82",
-            "50.24",
-            "39.72",
+            "$57.36",
+            "$47.82",
+            "$50.24",
+            "$39.72",
             "Skip"
           ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res-line-value",
+          "answer": "$50.24"
         }
       ],
       "withSidebar": true
@@ -186,6 +193,12 @@
           ]
         }
       ],
+      "correctAnswer": [
+        {
+          "id": "res-line-extremum",
+          "answer": "December"
+        }
+      ],
       "withSidebar": true
     },
     "line-range": {
@@ -217,6 +230,12 @@
           ]
         }
       ],
+      "correctAnswer": [
+        {
+          "id": "res-line-range",
+          "answer": "$37.04 - $60.95"
+        }
+      ],
       "withSidebar": true
     },
     "line-trends": {
@@ -245,6 +264,12 @@
             "Staying",
             "Skip"
           ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res-line-trends",
+          "answer": "Falling"
         }
       ],
       "withSidebar": true
@@ -278,6 +303,12 @@
           ]
         }
       ],
+      "correctAnswer": [
+        {
+          "id": "res-line-comparisons",
+          "answer": "$15"
+        }
+      ],
       "withSidebar": true
     },
     "bar-value": {
@@ -293,7 +324,6 @@
       },
       "instruction": "What is the average internet speed in Japan?",
       "instructionLocation": "sidebar",
-      "nextButtonDisableTime": 5000,
       "response": [
         {
           "id": "res-bar-value",
@@ -308,6 +338,12 @@
             "16 Mbps",
             "Skip"
           ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res-bar-value",
+          "answer": "15 Mbps"
         }
       ],
       "withSidebar": true
@@ -341,6 +377,12 @@
           ]
         }
       ],
+      "correctAnswer": [
+        {
+          "id": "res-bar-extremum",
+          "answer": "South Korea"
+        }
+      ],
       "withSidebar": true
     },
     "bar-range": {
@@ -372,6 +414,12 @@
           ]
         }
       ],
+      "correctAnswer": [
+        {
+          "id": "res-bar-range",
+          "answer": "2 - 20.5 Mbps"
+        }
+      ],
       "withSidebar": true
     },
     "bar-comparisons": {
@@ -395,12 +443,18 @@
           "required": true,
           "location": "sidebar",
           "options": [
-            "5 Countries",
-            "6 Countries",
-            "7 Countries",
-            "8 Countries",
+            "5 countries",
+            "6 countries",
+            "7 countries",
+            "8 countries",
             "Skip"
           ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res-bar-comparisons",
+          "answer": "7 countries"
         }
       ],
       "withSidebar": true
@@ -434,6 +488,12 @@
           ]
         }
       ],
+      "correctAnswer": [
+        {
+          "id": "res-stackbar-value-absolute",
+          "answer": "$12"
+        }
+      ],
       "withSidebar": true
     },
     "stackbar-value-relative": {
@@ -463,6 +523,12 @@
             "6 to 10",
             "Skip"
           ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res-stackbar-value-relative",
+          "answer": "4 to 10"
         }
       ],
       "withSidebar": true
@@ -496,6 +562,12 @@
           ]
         }
       ],
+      "correctAnswer": [
+        {
+          "id": "res-stackbar-extremum",
+          "answer": "Washington D.C."
+        }
+      ],
       "withSidebar": true
     },
     "stackbar-comparisons-absolute": {
@@ -525,6 +597,12 @@
           ]
         }
       ],
+      "correctAnswer": [
+        {
+          "id": "res-stackbar-comparisons-absolute",
+          "answer": "True"
+        }
+      ],
       "withSidebar": true
     },
     "stackbar-comparisons-relative": {
@@ -538,7 +616,7 @@
         "P": 0.47,
         "D": 0.32
       },
-      "instruction": "The ratio of the cost of Soda to the cost of Water in Orlando is higher than in that of Washington D.C.",
+      "instruction": "The ratio of the cost of Soda to the cost of Water in Orlando is higher than that of Washington D.C.",
       "instructionLocation": "sidebar",
       "response": [
         {
@@ -552,6 +630,12 @@
             "False",
             "Skip"
           ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res-stackbar-comparisons-relative",
+          "answer": "False"
         }
       ],
       "withSidebar": true
@@ -585,6 +669,12 @@
           ]
         }
       ],
+      "correctAnswer": [
+        {
+          "id": "res-stackbar100-value-relative",
+          "answer": "38%"
+        }
+      ],
       "withSidebar": true
     },
     "stackbar100-extremum": {
@@ -616,6 +706,12 @@
           ]
         }
       ],
+      "correctAnswer": [
+        {
+          "id": "res-stackbar100-extremum",
+          "answer": "College Graduate"
+        }
+      ],
       "withSidebar": true
     },
     "stackbar100-comparisons-relative": {
@@ -643,6 +739,12 @@
             "False",
             "Skip"
           ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res-stackbar100-comparisons-relative",
+          "answer": "False"
         }
       ],
       "withSidebar": true
@@ -676,6 +778,12 @@
           ]
         }
       ],
+      "correctAnswer": [
+        {
+          "id": "res-pie-value-relative",
+          "answer": "25%"
+        }
+      ],
       "withSidebar": true
     },
     "pie-extremum": {
@@ -707,6 +815,12 @@
           ]
         }
       ],
+      "correctAnswer": [
+        {
+          "id": "res-pie-extremum",
+          "answer": "Lenovo"
+        }
+      ],
       "withSidebar": true
     },
     "pie-comparisons-relative": {
@@ -734,6 +848,12 @@
             "False",
             "Skip"
           ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res-pie-comparisons-relative",
+          "answer": "True"
         }
       ],
       "withSidebar": true
@@ -767,6 +887,12 @@
           ]
         }
       ],
+      "correctAnswer": [
+        {
+          "id": "res-histogram-value-derived",
+          "answer": "153"
+        }
+      ],
       "withSidebar": true
     },
     "histogram-extremum-derived": {
@@ -798,6 +924,12 @@
           ]
         }
       ],
+      "correctAnswer": [
+        {
+          "id": "res-histogram-extremum-derived",
+          "answer": "4.4-4.6"
+        }
+      ],
       "withSidebar": true
     },
     "histogram-comparisons-derived": {
@@ -825,6 +957,12 @@
             "False",
             "Skip"
           ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res-histogram-comparisons-derived",
+          "answer": "True"
         }
       ],
       "withSidebar": true
@@ -858,6 +996,12 @@
           ]
         }
       ],
+      "correctAnswer": [
+        {
+          "id": "res-scatterplot-value",
+          "answer": "70.5kg"
+        }
+      ],
       "withSidebar": true
     },
     "scatterplot-extremum": {
@@ -887,6 +1031,12 @@
             "200cm",
             "Skip"
           ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res-scatterplot-extremum",
+          "answer": "197.1cm"
         }
       ],
       "withSidebar": true
@@ -920,6 +1070,12 @@
           ]
         }
       ],
+      "correctAnswer": [
+        {
+          "id": "res-scatterplot-range",
+          "answer": "53.9 - 123.6kg"
+        }
+      ],
       "withSidebar": true
     },
     "scatterplot-anomalies": {
@@ -951,6 +1107,12 @@
           ]
         }
       ],
+      "correctAnswer": [
+        {
+          "id": "res-scatterplot-anomalies",
+          "answer": "175.3cm"
+        }
+      ],
       "withSidebar": true
     },
     "scatterplot-clusters": {
@@ -978,6 +1140,12 @@
             "False",
             "Skip"
           ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res-scatterplot-clusters",
+          "answer": "True"
         }
       ],
       "withSidebar": true
@@ -1009,6 +1177,12 @@
           ]
         }
       ],
+      "correctAnswer": [
+        {
+          "id": "res-scatterplot-correlations",
+          "answer": "False"
+        }
+      ],
       "withSidebar": true
     },
     "scatterplot-comparisons": {
@@ -1036,6 +1210,12 @@
             "False",
             "Skip"
           ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res-scatterplot-comparisons",
+          "answer": "False"
         }
       ],
       "withSidebar": true
@@ -1069,6 +1249,12 @@
           ]
         }
       ],
+      "correctAnswer": [
+        {
+          "id": "res-area-value",
+          "answer": "$5.1"
+        }
+      ],
       "withSidebar": true
     },
     "area-extremum": {
@@ -1098,6 +1284,12 @@
             "December 2014",
             "Skip"
           ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res-area-extremum",
+          "answer": "December 2014"
         }
       ],
       "withSidebar": true
@@ -1131,6 +1323,12 @@
           ]
         }
       ],
+      "correctAnswer": [
+        {
+          "id": "res-area-range",
+          "answer": "$4.6 - $6.0"
+        }
+      ],
       "withSidebar": true
     },
     "area-trends": {
@@ -1159,6 +1357,12 @@
             "Staying",
             "Skip"
           ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res-area-trends",
+          "answer": "Falling"
         }
       ],
       "withSidebar": true
@@ -1192,6 +1396,12 @@
           ]
         }
       ],
+      "correctAnswer": [
+        {
+          "id": "res-stackarea-value-absolute",
+          "answer": "4200"
+        }
+      ],
       "withSidebar": true
     },
     "stackarea-value-relative": {
@@ -1221,6 +1431,12 @@
             "1 to 4",
             "Skip"
           ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res-stackarea-value-relative",
+          "answer": "1 to 1"
         }
       ],
       "withSidebar": true
@@ -1254,6 +1470,12 @@
           ]
         }
       ],
+      "correctAnswer": [
+        {
+          "id": "res-stackarea-extremum",
+          "answer": "2012"
+        }
+      ],
       "withSidebar": true
     },
     "stackarea-trends": {
@@ -1282,6 +1504,12 @@
             "Staying",
             "Skip"
           ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res-stackarea-trends",
+          "answer": "Rising"
         }
       ],
       "withSidebar": true
@@ -1313,6 +1541,12 @@
           ]
         }
       ],
+      "correctAnswer": [
+        {
+          "id": "res-stackarea-comparisons",
+          "answer": "False"
+        }
+      ],
       "withSidebar": true
     },
     "stackarea-comparisons-relative": {
@@ -1340,6 +1574,12 @@
             "False",
             "Skip"
           ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res-stackarea-comparisons-relative",
+          "answer": "False"
         }
       ],
       "withSidebar": true
@@ -1379,6 +1619,12 @@
           ]
         }
       ],
+      "correctAnswer": [
+        {
+          "id": "res-bubble-value",
+          "answer": "530km"
+        }
+      ],
       "withSidebar": true
     },
     "bubble-extremum": {
@@ -1410,6 +1656,12 @@
           ]
         }
       ],
+      "correctAnswer": [
+        {
+          "id": "res-bubble-extremum",
+          "answer": "New York City"
+        }
+      ],
       "withSidebar": true
     },
     "bubble-range": {
@@ -1433,12 +1685,18 @@
           "required": true,
           "location": "sidebar",
           "options": [
-            "150 - 600 km",
-            "240 - 380 km",
-            "240 - 560 km",
-            "180 - 560 km",
+            "150 - 600km",
+            "240 - 380km",
+            "240 - 560km",
+            "180 - 560km",
             "Skip"
           ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res-bubble-range",
+          "answer": "180 - 560km"
         }
       ],
       "withSidebar": true
@@ -1472,6 +1730,12 @@
           ]
         }
       ],
+      "correctAnswer": [
+        {
+          "id": "res-bubble-anomalies",
+          "answer": "New York City"
+        }
+      ],
       "withSidebar": true
     },
     "bubble-clusters": {
@@ -1499,6 +1763,12 @@
             "False",
             "Skip"
           ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res-bubble-clusters",
+          "answer": "False"
         }
       ],
       "withSidebar": true
@@ -1530,6 +1800,12 @@
           ]
         }
       ],
+      "correctAnswer": [
+        {
+          "id": "res-bubble-trends",
+          "answer": "False"
+        }
+      ],
       "withSidebar": true
     },
     "bubble-comparisons": {
@@ -1557,6 +1833,12 @@
             "False",
             "Skip"
           ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res-bubble-comparisons",
+          "answer": "False"
         }
       ],
       "withSidebar": true
@@ -1590,6 +1872,12 @@
           ]
         }
       ],
+      "correctAnswer": [
+        {
+          "id": "res-map-value-approximate",
+          "answer": "3.4 - 4.6%"
+        }
+      ],
       "withSidebar": true
     },
     "map-extremum": {
@@ -1621,6 +1909,12 @@
           ]
         }
       ],
+      "correctAnswer": [
+        {
+          "id": "res-map-extremum",
+          "answer": "New Mexico (NM)"
+        }
+      ],
       "withSidebar": true
     },
     "map-comparisons": {
@@ -1648,6 +1942,12 @@
             "False",
             "Skip"
           ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res-map-comparisons",
+          "answer": "True"
         }
       ],
       "withSidebar": true
@@ -1681,6 +1981,12 @@
           ]
         }
       ],
+      "correctAnswer": [
+        {
+          "id": "res-treemap-extremum-relative",
+          "answer": "Google"
+        }
+      ],
       "withSidebar": true
     },
     "treemap-comparisons-relative": {
@@ -1710,6 +2016,12 @@
           ]
         }
       ],
+      "correctAnswer": [
+        {
+          "id": "res-treemap-comparisons-relative",
+          "answer": "False"
+        }
+      ],
       "withSidebar": true
     },
     "treemap-hierarchical": {
@@ -1737,6 +2049,12 @@
             "False",
             "Skip"
           ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res-treemap-hierarchical",
+          "answer": "False"
         }
       ],
       "withSidebar": true
