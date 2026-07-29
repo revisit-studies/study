@@ -8,7 +8,16 @@ const path = require('path');
 
 const LIBRARIES_TO_SKIP = new Set(['test']);
 
-const generateMd = (library, libraryConfig, forDocs, title = library) => `
+// The template leaves trailing spaces and blank lines wherever an optional field is missing.
+// Trim each line, collapse the runs of blank lines those gaps leave behind, and end the file with a single newline.
+const normalizeMd = (markdown) => `${markdown
+  .split('\n')
+  .map((line) => line.trimEnd())
+  .join('\n')
+  .replace(/\n{3,}/g, '\n\n')
+  .trim()}\n`;
+
+const generateMd = (library, libraryConfig, forDocs, title = library) => normalizeMd(`
 # ${title}
 
 ${!forDocs ? `This is a demo of the library \`${library}\`.` : ''}
@@ -44,16 +53,17 @@ import StructuredLinks from '@site/src/components/StructuredLinks/StructuredLink
         {name: "${library} Demo", url: "https://revisit.dev/study/library-${library}"}
       ]}
       codeLinks={[
-        {name: "${library} Code", url: "https://github.com/revisit-studies/study/tree/main/public/library-${library}"}
+        {name: "${library} Demo Code", url: "https://github.com/revisit-studies/study/tree/main/public/library-${library}"},
+        {name: "${library} Library Code", url: "https://github.com/revisit-studies/study/tree/main/public/libraries/${library}"}
       ]}
       ${(libraryConfig.doi || libraryConfig.externalLink)
-      ? `referenceLinks={[
+    ? `referenceLinks={[
         ${libraryConfig.doi ? `{name: "DOI", url: "https://dx.doi.org/${libraryConfig.doi}"}` : ''}${libraryConfig.doi && libraryConfig.externalLink ? ',' : ''}
         ${libraryConfig.externalLink ? `{name: "${library}", url: "${libraryConfig.externalLink}"}` : ''}
       ]}`
-      : ''}
+    : ''}
   />` : ''}
-`;
+`);
 
 const getLibraries = (libsPath) => fs.readdirSync(libsPath)
   .filter((library) => !library.startsWith('.')

@@ -1,4 +1,3 @@
-
 # UMUX: Usability Metric for User Experience
 
 This is a demo of the library `umux`.
@@ -11,8 +10,6 @@ K. Finstad, “The usability metric for user experience,” Interacting with Com
 
 DOI: [10.1016/j.intcom.2010.04.004](https://dx.doi.org/10.1016/j.intcom.2010.04.004)
 
-
-
 ## Available Components
 
 - umux
@@ -20,7 +17,3 @@ DOI: [10.1016/j.intcom.2010.04.004](https://dx.doi.org/10.1016/j.intcom.2010.04.
 ## Available Sequences
 
 None
-
-
-
-

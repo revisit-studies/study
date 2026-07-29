@@ -1,4 +1,3 @@
-
 # SAM: Self-Assessment Manikin
 
 This is a demo of the library `sam`.
@@ -11,8 +10,6 @@ M. M. Bradley and P. J. Lang, “Measuring emotion: The Self-Assessment Manikin 
 
 DOI: [10.1016/0005-7916(94)90063-9](https://dx.doi.org/10.1016/0005-7916(94)90063-9)
 
-
-
 ## Available Components
 
 - arousal
@@ -22,7 +19,3 @@ DOI: [10.1016/0005-7916(94)90063-9](https://dx.doi.org/10.1016/0005-7916(94)9006
 ## Available Sequences
 
 - 3-dimensions
-
-
-
-

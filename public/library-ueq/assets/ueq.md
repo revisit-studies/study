@@ -1,4 +1,3 @@
-
 # UEQ: User Experience Questionnaire
 
 This is a demo of the library `ueq`.
@@ -20,7 +19,3 @@ Link: [https://www.ueq-online.org/](https://www.ueq-online.org/)
 ## Available Sequences
 
 None
-
-
-
-

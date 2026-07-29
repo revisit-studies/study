@@ -1,4 +1,3 @@
-
 # SUS: System Usability Scale
 
 This is a demo of the library `sus`.
@@ -11,8 +10,6 @@ J. Brooke, “SUS: A ‘Quick and Dirty’ Usability Scale,” Usability Evaluat
 
 DOI: [10.1201/9781498710411-35](https://dx.doi.org/10.1201/9781498710411-35)
 
-
-
 ## Available Components
 
 - sus
@@ -20,7 +17,3 @@ DOI: [10.1201/9781498710411-35](https://dx.doi.org/10.1201/9781498710411-35)
 ## Available Sequences
 
 None
-
-
-
-

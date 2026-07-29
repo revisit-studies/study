@@ -1,4 +1,3 @@
-
 # Berlin Numeracy Test
 
 This is a demo of the library `berlin-num`.
@@ -25,7 +24,3 @@ Link: [http://www.riskliteracy.org/](http://www.riskliteracy.org/)
 - adaptive
 - four-items
 - single-item
-
-
-
-

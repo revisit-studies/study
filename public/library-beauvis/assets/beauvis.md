@@ -1,4 +1,3 @@
-
 # BeauVis: Assessing Aesthetics of Visualizations
 
 This is a demo of the library `beauvis`.
@@ -24,7 +23,3 @@ Link: [https://www.aviz.fr/Research/BeauVis-Scale](https://www.aviz.fr/Research/
 ## Available Sequences
 
 None
-
-
-
-

@@ -1,4 +1,3 @@
-
 # CALVI: Critical Thinking Assessment for Literacy in Visualizations
 
 This is a demo of the library `calvi`.
@@ -10,8 +9,6 @@ The Critical Thinking Assessment for Literacy in Visualizations (CALVI) library 
 L. W. Ge, Y. Cui, and M. Kay, “CALVI: Critical Thinking Assessment for Literacy in Visualizations,” in Proceedings of the 2023 CHI Conference on Human Factors in Computing Systems (CHI '23), New York, NY, USA: Association for Computing Machinery, 2023, Art. no. 815, pp. 1–18.
 
 DOI: [10.1145/3544548.3581406](https://dx.doi.org/10.1145/3544548.3581406)
-
-
 
 ## Available Components
 
@@ -81,7 +78,3 @@ DOI: [10.1145/3544548.3581406](https://dx.doi.org/10.1145/3544548.3581406)
 - full
 - fullBank
 - specificBank
-
-
-
-

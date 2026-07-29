@@ -1,4 +1,3 @@
-
 # Mini-VLAT: A Short and Effective Measure of Visualization Literacy
 
 This is a demo of the library `mini-vlat`.
@@ -10,8 +9,6 @@ Mini-VLAT is a short and effective measure of visualization literacy. Mini-VLAT 
 S. Pandey and A. Ottley, “Mini‐VLAT: A Short and Effective Measure of Visualization Literacy,” Computer Graphics Forum, vol. 42, no. 3, pp. 1–11, Jun. 2023
 
 DOI: [10.1111/cgf.14809](https://dx.doi.org/10.1111/cgf.14809)
-
-
 
 ## Available Components
 
@@ -31,7 +28,3 @@ DOI: [10.1111/cgf.14809](https://dx.doi.org/10.1111/cgf.14809)
 ## Available Sequences
 
 - full
-
-
-
-

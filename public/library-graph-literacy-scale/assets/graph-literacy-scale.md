@@ -1,4 +1,3 @@
-
 # Graph Literacy Scale
 
 This is a demo of the library `graph-literacy-scale`.
@@ -10,8 +9,6 @@ The Graph Literacy Scale is a 13-item instrument that measures people's ability 
 M. Galesic and R. Garcia-Retamero, “Graph literacy: A cross-cultural comparison,” Medical Decision Making, vol. 31, no. 3, pp. 444–457, 2011.
 
 DOI: [10.1177/0272989X10373805](https://dx.doi.org/10.1177/0272989X10373805)
-
-
 
 ## Available Components
 
@@ -32,7 +29,3 @@ DOI: [10.1177/0272989X10373805](https://dx.doi.org/10.1177/0272989X10373805)
 ## Available Sequences
 
 - full
-
-
-
-

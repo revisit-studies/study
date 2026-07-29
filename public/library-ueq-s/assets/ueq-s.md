@@ -1,4 +1,3 @@
-
 # UEQ-S: User Experience Questionnaire (Short Version)
 
 This is a demo of the library `ueq-s`.
@@ -11,8 +10,6 @@ M. Schrepp, A. Hinderks, and J. Thomaschewski, Design and Evaluation of a Short 
 
 DOI: [10.9781/ijimai.2017.09.001](https://dx.doi.org/10.9781/ijimai.2017.09.001)
 
-
-
 ## Available Components
 
 - ueq-s
@@ -20,7 +17,3 @@ DOI: [10.9781/ijimai.2017.09.001](https://dx.doi.org/10.9781/ijimai.2017.09.001)
 ## Available Sequences
 
 None
-
-
-
-

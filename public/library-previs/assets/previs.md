@@ -1,9 +1,8 @@
-
 # PREVis: Perceived Readability Evaluation for Visualizations
 
 This is a demo of the library `previs`.
 
-PREVis allows you to quickly and reliably measure how readable people find a data visualization. There are 4 individual scales in PREVis, each measuring a particular dimension of perceived readability. This library includes four components, one for each individual scale, as well as a sequence containing all four scales (the full PREVis). 
+PREVis allows you to quickly and reliably measure how readable people find a data visualization. There are 4 individual scales in PREVis, each measuring a particular dimension of perceived readability. This library includes four components, one for each individual scale, as well as a sequence containing all four scales (the full PREVis).
 
 When using this library, please replace the `vis-example.png` file with your own visualization.
 
@@ -25,7 +24,3 @@ Link: [https://aviz.fr/PREVis/](https://aviz.fr/PREVis/)
 ## Available Sequences
 
 - 4dimensions
-
-
-
-

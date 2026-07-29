@@ -1,4 +1,3 @@
-
 # Virtual Chinrest Calibration
 
 This is a demo of the library `virtual-chinrest`.
@@ -21,7 +20,3 @@ Link: [https://github.com/QishengLi/virtual_chinrest](https://github.com/Qisheng
 ## Available Sequences
 
 - full
-
-
-
-

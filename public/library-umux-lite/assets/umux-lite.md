@@ -1,4 +1,3 @@
-
 # UMUX-Lite: Usability Metric for User Experience (Short Version, 2 Items)
 
 This is a demo of the library `umux-lite`.
@@ -11,8 +10,6 @@ J. R. Lewis, B. S. Utesch, and D. E. Maher, “UMUX-LITE: When there's no time f
 
 DOI: [10.1145/2470654.2481287](https://dx.doi.org/10.1145/2470654.2481287)
 
-
-
 ## Available Components
 
 - umux-lite
@@ -20,7 +17,3 @@ DOI: [10.1145/2470654.2481287](https://dx.doi.org/10.1145/2470654.2481287)
 ## Available Sequences
 
 None
-
-
-
-

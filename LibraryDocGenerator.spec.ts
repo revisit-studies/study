@@ -81,6 +81,42 @@ describe('libraryDocGenerator', () => {
     expect(docsWithDoiOnly).not.toContain('{name: "demo-lib", url:');
   });
 
+  it('generateMd trims trailing whitespace and ends with a single newline', () => {
+    const md: string = generateMd('demo-lib', {
+      description: 'Description with a trailing space \n\nSecond paragraph.',
+      components: { alpha: {} },
+      sequences: {},
+    }, false);
+
+    expect(md.startsWith('# demo-lib')).toBe(true);
+    expect(md.endsWith('\n')).toBe(true);
+    expect(md.endsWith('\n\n')).toBe(false);
+    md.split('\n').forEach((line) => {
+      expect(line).toBe(line.trimEnd());
+    });
+  });
+
+  it('generateMd collapses the blank lines left by missing optional fields', () => {
+    const md: string = generateMd('demo-lib', {
+      description: 'Demo description',
+      components: {},
+      sequences: {},
+    }, false);
+
+    expect(md).not.toContain('\n\n\n');
+  });
+
+  it('generateMd links both the example study and the library source', () => {
+    const md: string = generateMd('demo-lib', {
+      description: 'Demo description',
+      components: {},
+      sequences: {},
+    }, true);
+
+    expect(md).toContain('{name: "demo-lib Demo Code", url: "https://github.com/revisit-studies/study/tree/main/public/library-demo-lib"}');
+    expect(md).toContain('{name: "demo-lib Library Code", url: "https://github.com/revisit-studies/study/tree/main/public/libraries/demo-lib"}');
+  });
+
   it('getLibraries filters hidden entries and .DS_Store entries', () => {
     const base = fs.mkdtempSync(path.join(os.tmpdir(), 'lib-doc-list-'));
     tempDirs.push(base);

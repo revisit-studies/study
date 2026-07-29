@@ -1,4 +1,3 @@
-
 # QUIS: Questionnaire for User Interaction Satisfaction
 
 This is a demo of the library `quis`.
@@ -29,7 +28,3 @@ Link: [https://isr.umd.edu/news/story/quis-questionnaire-for-user-interaction-sa
 ## Available Sequences
 
 - 6-dimensions
-
-
-
-

@@ -1,4 +1,3 @@
-
 # NASA-TLX: NASA Task Load Index
 
 This is a demo of the library `nasa-tlx`.
@@ -10,8 +9,6 @@ The NASA-TLX is a widely used subjective workload assessment tool. It consists o
 S. G. Hart and L. E. Staveland, “Development of NASA-TLX (Task Load Index): Results of empirical and theoretical research,” in Advances in Psychology, vol. 52, North-Holland, 1988, pp. 139–183.
 
 DOI: [10.1016/S0166-4115(08)62386-9](https://dx.doi.org/10.1016/S0166-4115(08)62386-9)
-
-
 
 ## Available Components
 
@@ -58,5 +55,3 @@ The overall workload score is calculated by summing all adjusted scores and divi
 Overall Workload = Σ(Adjusted Scores) ÷ 15
 
 This weighted workload score accounts for both perceived intensity and individual prioritization, improving sensitivity and personalization in workload analysis.
-
-
