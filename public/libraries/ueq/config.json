@@ -146,10 +146,10 @@
               "rightLabel": "Efficient"
             },
             {
-              "label": "Confusing - Clear",
-              "value": "confusing-clear",
-              "leftLabel": "Confusing",
-              "rightLabel": "Clear"
+              "label": "Clear - Confusing",
+              "value": "clear-confusing",
+              "leftLabel": "Clear",
+              "rightLabel": "Confusing"
             },
             {
               "label": "Impractical - Practical",
