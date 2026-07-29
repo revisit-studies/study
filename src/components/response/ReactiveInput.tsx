@@ -9,7 +9,7 @@ export function ReactiveInput({
   enumerateQuestions,
 }: {
   response: ReactiveResponse;
-  answer: { value?: string[] };
+  answer: { value?: string[] | string | number | Record<string, unknown> | null };
   index: number;
   enumerateQuestions: boolean;
 }) {
@@ -26,7 +26,7 @@ export function ReactiveInput({
       description={secondaryText}
       size="md"
     >
-      {answer.value && (
+      {answer.value !== undefined && answer.value !== null && answer.value !== '' && (
         <List>
           {Array.isArray(answer.value)
             ? (answer.value).map((item) => <List.Item key={item}>{item}</List.Item>)
