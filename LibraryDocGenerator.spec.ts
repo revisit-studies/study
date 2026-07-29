@@ -124,6 +124,36 @@ describe('libraryDocGenerator', () => {
     expect(fs.readFileSync(exampleOut, 'utf8')).toContain('This is a demo');
   });
 
+  it('removes stale documentation for skipped and removed libraries', () => {
+    const base = fs.mkdtempSync(path.join(os.tmpdir(), 'lib-doc-stale-'));
+    tempDirs.push(base);
+    const librariesPath = path.join(base, 'public', 'libraries', 'alpha');
+    const docsLibrariesPath = path.join(base, 'docsLibraries');
+
+    fs.mkdirSync(librariesPath, { recursive: true });
+    fs.mkdirSync(path.join(base, 'public', 'libraries', 'test'), { recursive: true });
+    fs.writeFileSync(
+      path.join(librariesPath, 'config.json'),
+      JSON.stringify({
+        description: 'Alpha description',
+        components: {},
+        sequences: {},
+      }),
+    );
+
+    // Documentation left behind by an earlier run, for a skipped library and for a
+    // library that has since been removed
+    fs.mkdirSync(docsLibrariesPath, { recursive: true });
+    fs.writeFileSync(path.join(docsLibrariesPath, 'test.md'), '# test');
+    fs.writeFileSync(path.join(docsLibrariesPath, 'removed-lib.md'), '# removed-lib');
+
+    generateLibraryDocs(base);
+
+    expect(fs.existsSync(path.join(docsLibrariesPath, 'alpha.md'))).toBe(true);
+    expect(fs.existsSync(path.join(docsLibrariesPath, 'test.md'))).toBe(false);
+    expect(fs.existsSync(path.join(docsLibrariesPath, 'removed-lib.md'))).toBe(false);
+  });
+
   it('preserves an existing example study title while regenerating its content', () => {
     const base = fs.mkdtempSync(path.join(os.tmpdir(), 'lib-doc-title-'));
     tempDirs.push(base);

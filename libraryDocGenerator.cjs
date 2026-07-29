@@ -47,11 +47,11 @@ import StructuredLinks from '@site/src/components/StructuredLinks/StructuredLink
         {name: "${library} Code", url: "https://github.com/revisit-studies/study/tree/main/public/library-${library}"}
       ]}
       ${(libraryConfig.doi || libraryConfig.externalLink)
-    ? `referenceLinks={[
+      ? `referenceLinks={[
         ${libraryConfig.doi ? `{name: "DOI", url: "https://dx.doi.org/${libraryConfig.doi}"}` : ''}${libraryConfig.doi && libraryConfig.externalLink ? ',' : ''}
         ${libraryConfig.externalLink ? `{name: "${library}", url: "${libraryConfig.externalLink}"}` : ''}
       ]}`
-    : ''}
+      : ''}
   />` : ''}
 `;
 
@@ -106,6 +106,19 @@ const generateLibraryDocs = (base) => {
       console.log(`Documentation saved to ${exampleDocsPath}`);
     }
   });
+
+  // Remove documentation for libraries that are skipped or no longer exist, so a stale
+  // file cannot be copied to the documentation repository
+  const expectedDocs = new Set(libraries.map((library) => `${library}.md`));
+  fs.readdirSync(docsLibrariesPath)
+    .filter((file) => file.endsWith('.md') && !expectedDocs.has(file))
+    .forEach((file) => {
+      const staleDocPath = path.join(docsLibrariesPath, file);
+      fs.rmSync(staleDocPath);
+
+      // eslint-disable-next-line no-console
+      console.log(`Removed stale documentation ${staleDocPath}`);
+    });
 
   // eslint-disable-next-line no-console
   console.log('Library documentation generated');
