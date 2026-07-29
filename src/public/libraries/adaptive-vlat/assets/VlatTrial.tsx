@@ -19,7 +19,7 @@ export default function VlatTrial({ parameters, setAnswer, answers }: StimulusPa
 
   useEffect(() => {
     setAnswer({
-      status: true,
+      status: currentanswer !== '',
       answers: {
         [taskid]: currentanswer,
         score: parameters.score,
