@@ -639,6 +639,53 @@ describe('RankingPairwiseComponent', () => {
     });
   });
 
+  test('moving a placed item cannot create a duplicate pair', async () => {
+    const onChange = vi.fn();
+    // pair-0 = {A, B}, pair-1 = {A}, pair-2 = {B}; moving B from pair-2 into
+    // pair-1 would make pair-1 a duplicate of the intact pair-0
+    const answer = {
+      value: {
+        [rankingInstanceKey('Item A', 0)]: 'pair-0-high',
+        [rankingInstanceKey('Item B', 1)]: 'pair-0-low',
+        [rankingInstanceKey('Item A', 2)]: 'pair-1-high',
+        [rankingInstanceKey('Item B', 3)]: 'pair-2-high',
+      },
+      onChange,
+    } as unknown as { value: Record<string, string> };
+    render(
+      <RankingInput {...baseProps} response={makeResponse('ranking-pairwise')} answer={answer} />,
+    );
+    await act(async () => {
+      capturedOnDragEnd?.(makeDragEnd(pairwisePlacedDragId(rankingInstanceKey('Item B', 3)), 'pair-1-low'));
+    });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  test('moving a placed item that breaks its source pair is allowed', async () => {
+    const onChange = vi.fn();
+    // pair-0 = {A, B}, pair-1 = {A}; moving B out of pair-0 into pair-1 leaves
+    // pair-0 = {A}, so the result is not a duplicate
+    const answer = {
+      value: {
+        [rankingInstanceKey('Item A', 0)]: 'pair-0-high',
+        [rankingInstanceKey('Item B', 1)]: 'pair-0-low',
+        [rankingInstanceKey('Item A', 2)]: 'pair-1-high',
+      },
+      onChange,
+    } as unknown as { value: Record<string, string> };
+    render(
+      <RankingInput {...baseProps} response={makeResponse('ranking-pairwise')} answer={answer} />,
+    );
+    await act(async () => {
+      capturedOnDragEnd?.(makeDragEnd(pairwisePlacedDragId(rankingInstanceKey('Item B', 1)), 'pair-1-low'));
+    });
+    expect(onChange).toHaveBeenCalledWith({
+      [rankingInstanceKey('Item A', 0)]: 'pair-0-high',
+      [rankingInstanceKey('Item A', 2)]: 'pair-1-high',
+      [rankingInstanceKey('Item B', 1)]: 'pair-1-low',
+    });
+  });
+
   test('an item can move between HIGH and LOW within its own pair', async () => {
     const onChange = vi.fn();
     const answer = {

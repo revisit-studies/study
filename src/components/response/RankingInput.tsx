@@ -500,7 +500,9 @@ function RankingPairwiseComponent({
         return;
       }
 
-      if (isFromAvailable && checkForDuplicatePair(newAnswer, targetPairId, optionIds, baseItemId)) {
+      const answerAfterMove = { ...newAnswer };
+      if (!isFromAvailable) delete answerAfterMove[draggedKey];
+      if (checkForDuplicatePair(answerAfterMove, targetPairId, optionIds, baseItemId)) {
         setError?.('This would create a duplicate pair.');
         return;
       }
