@@ -9,9 +9,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { generateLibraryDocs } = require('./libraryDocGenerator.cjs');
-
-const LIBRARIES_TO_SKIP = new Set(['test']);
+const { generateLibraryDocs, getLibraries } = require('./libraryDocGenerator.cjs');
 
 // Create example study config template
 const createExampleConfig = (libraryName) => ({
@@ -46,11 +44,6 @@ const createExampleConfig = (libraryName) => ({
   },
 });
 
-const getLibraries = (libsPath) => fs.readdirSync(libsPath)
-  .filter((library) => !library.startsWith('.')
-    && !library.endsWith('.DS_Store')
-    && !LIBRARIES_TO_SKIP.has(library));
-
 const generateLibraryExamples = (base, generateDocsFn = generateLibraryDocs) => {
   const librariesPath = path.join(base, 'public', 'libraries');
   const publicPath = path.join(base, 'public');
@@ -59,13 +52,6 @@ const generateLibraryExamples = (base, generateDocsFn = generateLibraryDocs) => 
   const libraries = getLibraries(librariesPath);
 
   libraries.forEach((library) => {
-    // Skip hidden folders and files, and libraries in skip list
-    if (library.startsWith('.')) {
-      // eslint-disable-next-line no-console
-      console.log(`Skipping ${library} library`);
-      return;
-    }
-
     const exampleFolderName = `library-${library}`;
     const examplePath = path.join(publicPath, exampleFolderName);
 
