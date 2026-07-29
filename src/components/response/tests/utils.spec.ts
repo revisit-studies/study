@@ -510,6 +510,25 @@ describe('validateResponse', () => {
     });
   });
 
+  test('pairwise ranking requires every pair to be complete', () => {
+    const response: Response = {
+      id: 'ranking', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: ['A', 'B', 'C', 'D'],
+    };
+
+    // pair-0 is complete but pair-1 only has a HIGH item
+    const halfPair = { A_0: 'pair-0-high', B_1: 'pair-0-low', C_2: 'pair-1-high' };
+    expect(validateResponse(response, halfPair, { ranking: halfPair })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please complete or remove unfinished pairs to continue.',
+      blocksProgression: true,
+    });
+
+    const twoPairs = {
+      A_0: 'pair-0-high', B_1: 'pair-0-low', C_2: 'pair-1-high', D_3: 'pair-1-low',
+    };
+    expect(validateResponse(response, twoPairs, { ranking: twoPairs }).valid).toBe(true);
+  });
+
   test('pairwise ranking rejects malformed restored/default answers', () => {
     const response: Response = {
       id: 'ranking', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: ['A', 'B', 'C'],

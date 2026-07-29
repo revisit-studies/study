@@ -167,14 +167,19 @@ export function checkPairwiseRankingResponse(response: RankingResponse, value: R
     }
   });
 
-  // Check if there is at least one pair that has both a high and low selection, and that both selections are valid option values
-  const hasCompletePair = Object.values(pairs).some((pair) => pair.high.length === 1
+  // A pair is complete when both sides hold exactly one distinct configured option
+  const isCompletePair = (pair: { high: string[]; low: string[] }) => pair.high.length === 1
     && pair.low.length === 1
     && optionValues.has(pair.high[0])
     && optionValues.has(pair.low[0])
-    && pair.high[0] !== pair.low[0]);
-  if (!hasCompletePair) {
+    && pair.high[0] !== pair.low[0];
+
+  const pairList = Object.values(pairs);
+  if (!pairList.some(isCompletePair)) {
     return 'Please complete at least one pair to continue.';
+  }
+  if (!pairList.every(isCompletePair)) {
+    return 'Please complete or remove unfinished pairs to continue.';
   }
   return null;
 }
