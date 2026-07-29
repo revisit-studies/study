@@ -544,6 +544,36 @@ describe('validateResponse', () => {
     });
   });
 
+  test('pairwise ranking rejects malformed restored/default locations', () => {
+    const response: Response = {
+      id: 'ranking', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: ['A', 'B', 'C'],
+    };
+    const malformedLocation = {
+      A_0: 'pair-0-high',
+      B_1: 'pair-0-low',
+      C_2: 'bogus',
+    };
+
+    expect(validateResponse(response, malformedLocation, { ranking: malformedLocation })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please complete or remove invalid pairs to continue.',
+      blocksProgression: true,
+    });
+  });
+
+  test('pairwise ranking rejects non-string restored/default locations', () => {
+    const response: Response = {
+      id: 'ranking', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: ['A', 'B'],
+    };
+    const malformedLocation = { A: null } as unknown as Record<string, string>;
+
+    expect(validateResponse(response, malformedLocation, { ranking: malformedLocation })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please complete or remove invalid pairs to continue.',
+      blocksProgression: true,
+    });
+  });
+
   test.each([
     ['self-comparisons', { A_0: 'pair-0-high', A_1: 'pair-0-low' }],
     ['multiple items in one slot', { A_0: 'pair-0-high', B_1: 'pair-0-high', C_2: 'pair-0-low' }],
@@ -618,6 +648,19 @@ describe('validateResponse', () => {
     expect(validateResponse(response, selfPair, { ranking: selfPair })).toMatchObject({
       issueType: 'invalid',
     });
+  });
+
+  test('pairwise instance keys support an empty configured option value', () => {
+    const response: Response = {
+      id: 'ranking',
+      prompt: 'Rank',
+      type: 'ranking-pairwise',
+      required: true,
+      options: [{ label: 'No value', value: '' }, 'B'],
+    };
+
+    const pair = { 'instance-0-': 'pair-0-high', B: 'pair-0-low' };
+    expect(validateResponse(response, pair, { ranking: pair }).valid).toBe(true);
   });
 
   test('Mantine and progression adapters agree for required response states', () => {

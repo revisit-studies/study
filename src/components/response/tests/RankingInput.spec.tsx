@@ -621,6 +621,45 @@ describe('RankingPairwiseComponent', () => {
     });
   });
 
+  test('duplicate pair detection does not collide on delimiter characters in option values', async () => {
+    const response = makeResponse('ranking-pairwise', { options: ['a', 'b|c', 'a|b', 'c'] });
+    const { answer, onChange } = makePairwiseAnswer({
+      [rankingInstanceKey('a', 0)]: 'pair-0-high',
+      [rankingInstanceKey('b|c', 1)]: 'pair-0-low',
+      [rankingInstanceKey('a|b', 2)]: 'pair-1-high',
+    });
+    render(<RankingInput {...baseProps} response={response} answer={answer} />);
+
+    await act(async () => {
+      capturedOnDragEnd?.(makeDragEnd(pairwiseAvailableDragId('c'), 'pair-1-low'));
+    });
+
+    expect(onChange).toHaveBeenCalledWith({
+      [rankingInstanceKey('a', 0)]: 'pair-0-high',
+      [rankingInstanceKey('b|c', 1)]: 'pair-0-low',
+      [rankingInstanceKey('a|b', 2)]: 'pair-1-high',
+      [rankingInstanceKey('c', 3)]: 'pair-1-low',
+    });
+  });
+
+  test('matching unfinished pairs remain allowed until both pairs are complete', async () => {
+    const { answer, onChange } = makePairwiseAnswer({
+      [rankingInstanceKey('Item A', 0)]: 'pair-0-high',
+    });
+    const { getByRole } = render(
+      <RankingInput {...baseProps} response={makeResponse('ranking-pairwise')} answer={answer} />,
+    );
+    await act(async () => {
+      fireEvent.click(getByRole('button', { name: 'Add New Pair' }));
+      capturedOnDragEnd?.(makeDragEnd(pairwiseAvailableDragId('Item A'), 'pair-1-high'));
+    });
+
+    expect(onChange).toHaveBeenCalledWith({
+      [rankingInstanceKey('Item A', 0)]: 'pair-0-high',
+      [rankingInstanceKey('Item A', 1)]: 'pair-1-high',
+    });
+  });
+
   test('dropping onto an item card is ignored', async () => {
     const { answer, onChange } = makePairwiseAnswer({
       [rankingInstanceKey('Item A', 0)]: 'pair-0-high',
@@ -803,6 +842,30 @@ describe('RankingPairwiseComponent', () => {
     });
   });
 
+  test('an empty option value remains visible and draggable as a tagged instance', async () => {
+    const response = makeResponse('ranking-pairwise', {
+      options: [{ label: 'No value', value: '' }, 'Item B'],
+    });
+    const { answer, onChange } = makePairwiseAnswer();
+    const { getAllByText, rerender } = render(
+      <RankingInput {...baseProps} response={response} answer={answer} />,
+    );
+
+    await act(async () => {
+      capturedOnDragEnd?.(makeDragEnd(pairwiseAvailableDragId(''), 'pair-0-high'));
+    });
+    expect(onChange).toHaveBeenCalledWith({ [rankingInstanceKey('', 0)]: 'pair-0-high' });
+
+    rerender(
+      <RankingInput
+        {...baseProps}
+        response={response}
+        answer={{ value: { [rankingInstanceKey('', 0)]: 'pair-0-high' } }}
+      />,
+    );
+    expect(getAllByText('No value').length).toBe(2);
+  });
+
   test('async restoration replaces the untouched default pair 0 row', async () => {
     const { rerender, getAllByRole } = render(
       <RankingInput {...baseProps} response={makeResponse('ranking-pairwise')} answer={{ value: {} }} />,
@@ -822,6 +885,113 @@ describe('RankingPairwiseComponent', () => {
     // The restored pair 1 replaces the untouched placeholder — no phantom
     // empty pair 0 row remains
     expect(getAllByRole('button').filter((b) => b.textContent === 'X').length).toBe(1);
+  });
+
+  test('authoritative answer replacement removes stale restored pair rows', async () => {
+    const { rerender, getAllByRole } = render(
+      <RankingInput
+        {...baseProps}
+        response={makeResponse('ranking-pairwise')}
+        answer={{ value: { [rankingInstanceKey('Item A', 0)]: 'pair-1-high' } }}
+      />,
+    );
+    expect(getAllByRole('button').filter((b) => b.textContent === 'X').length).toBe(1);
+
+    await act(async () => {
+      rerender(
+        <RankingInput
+          {...baseProps}
+          response={makeResponse('ranking-pairwise')}
+          answer={{ value: { [rankingInstanceKey('Item B', 1)]: 'pair-2-high' } }}
+        />,
+      );
+    });
+
+    expect(getAllByRole('button').filter((b) => b.textContent === 'X').length).toBe(1);
+  });
+
+  test('authoritative replacement discards locally added empty rows', async () => {
+    const { rerender, getAllByRole, getByRole } = render(
+      <RankingInput
+        {...baseProps}
+        response={makeResponse('ranking-pairwise')}
+        answer={{ value: { [rankingInstanceKey('Item A', 0)]: 'pair-1-high' } }}
+      />,
+    );
+    await act(async () => {
+      fireEvent.click(getByRole('button', { name: 'Add New Pair' }));
+    });
+    expect(getAllByRole('button').filter((b) => b.textContent === 'X').length).toBe(2);
+
+    await act(async () => {
+      rerender(
+        <RankingInput
+          {...baseProps}
+          response={makeResponse('ranking-pairwise')}
+          answer={{ value: { [rankingInstanceKey('Item B', 1)]: 'pair-3-high' } }}
+        />,
+      );
+    });
+
+    expect(getAllByRole('button').filter((b) => b.textContent === 'X').length).toBe(1);
+  });
+
+  test('semantically unchanged answer props retain locally added empty rows', async () => {
+    const restoredValue = { [rankingInstanceKey('Item A', 0)]: 'pair-1-high' };
+    const { rerender, getAllByRole, getByRole } = render(
+      <RankingInput
+        {...baseProps}
+        response={makeResponse('ranking-pairwise')}
+        answer={{ value: restoredValue }}
+      />,
+    );
+    await act(async () => {
+      fireEvent.click(getByRole('button', { name: 'Add New Pair' }));
+    });
+
+    await act(async () => {
+      rerender(
+        <RankingInput
+          {...baseProps}
+          response={makeResponse('ranking-pairwise')}
+          answer={{ value: { ...restoredValue } }}
+        />,
+      );
+    });
+
+    expect(getAllByRole('button').filter((b) => b.textContent === 'X').length).toBe(2);
+  });
+
+  test('authoritative replacement with an empty answer restores one placeholder row', async () => {
+    const { rerender, getAllByRole } = render(
+      <RankingInput
+        {...baseProps}
+        response={makeResponse('ranking-pairwise')}
+        answer={{ value: { [rankingInstanceKey('Item A', 0)]: 'pair-1-high' } }}
+      />,
+    );
+
+    await act(async () => {
+      rerender(
+        <RankingInput
+          {...baseProps}
+          response={makeResponse('ranking-pairwise')}
+          answer={{ value: {} }}
+        />,
+      );
+    });
+
+    expect(getAllByRole('button').filter((b) => b.textContent === 'X').length).toBe(1);
+  });
+
+  test('non-string restored locations do not crash pair rendering', () => {
+    expect(() => render(
+      <RankingInput
+        {...baseProps}
+        response={makeResponse('ranking-pairwise')}
+        answer={{ value: { 'Item A': null } as unknown as Record<string, string> }}
+      />,
+    )).not.toThrow();
   });
 
   test('counters resync when answer.value is replaced while mounted', async () => {

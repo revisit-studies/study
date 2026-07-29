@@ -332,7 +332,7 @@ function checkForDuplicatePair(
   const pairMap: Record<string, Set<string>> = {};
 
   Object.entries(answer).forEach(([itemId, location]) => {
-    const match = location.match(/^pair-(\d+)-(high|low)$/);
+    const match = typeof location === 'string' ? location.match(/^pair-(\d+)-(high|low)$/) : null;
     if (match) {
       const pairId = match[1];
       const baseItemId = getRankingBaseItemId(itemId, optionIds);
@@ -341,15 +341,24 @@ function checkForDuplicatePair(
     }
   });
 
-  if (candidateBaseId) {
+  if (candidateBaseId !== undefined) {
     if (!pairMap[targetPairId]) pairMap[targetPairId] = new Set();
     pairMap[targetPairId].add(candidateBaseId);
   }
 
-  const targetPairSignature = [...(pairMap[targetPairId] || [])].sort().join('|');
-  if (!targetPairSignature) return false;
+  const targetPairItems = pairMap[targetPairId];
+  if (!targetPairItems || targetPairItems.size !== 2) return false;
+  const targetPairSignature = JSON.stringify([...targetPairItems].sort());
 
-  return Object.entries(pairMap).some(([pairId, itemSet]) => pairId !== targetPairId && [...itemSet].sort().join('|') === targetPairSignature);
+  return Object.entries(pairMap).some(([pairId, itemSet]) => (
+    pairId !== targetPairId
+    && itemSet.size === 2
+    && JSON.stringify([...itemSet].sort()) === targetPairSignature
+  ));
+}
+
+function getPairwiseAnswerSignature(value: Record<string, string> | undefined): string {
+  return JSON.stringify(Object.entries(value || {}).sort(([firstKey], [secondKey]) => firstKey.localeCompare(secondKey)));
 }
 
 // 'available' = dragged from Available Items, 'placed' = already in a pair
@@ -390,7 +399,7 @@ function RankingPairwiseComponent({
     let maxPairId = -1;
     let maxInstanceIndex = -1;
     Object.entries(value || {}).forEach(([itemId, location]) => {
-      const match = location.match(/^pair-(\d+)-(high|low)$/);
+      const match = typeof location === 'string' ? location.match(/^pair-(\d+)-(high|low)$/) : null;
       if (!match) return;
       restoredPairIds.add(match[1]);
       maxPairId = Math.max(maxPairId, parseInt(match[1], 10));
@@ -400,37 +409,45 @@ function RankingPairwiseComponent({
     return { restoredPairIds, maxPairId, maxInstanceIndex };
   }, [optionIds]);
 
-  const [pairIds, setPairIds] = useState<string[]>(() => {
-    const { restoredPairIds } = scanRestoredAnswer(answer?.value);
-    return restoredPairIds.size > 0 ? [...restoredPairIds].sort((a, b) => parseInt(a, 10) - parseInt(b, 10)) : ['0'];
-  });
+  const restoredAnswerState = useMemo(() => scanRestoredAnswer(answer?.value), [answer?.value, scanRestoredAnswer]);
+  const [localPairIds, setLocalPairIds] = useState<string[]>(
+    () => (restoredAnswerState.restoredPairIds.size > 0 ? [] : ['0']),
+  );
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [instanceCounter, setInstanceCounter] = useState(() => scanRestoredAnswer(answer?.value).maxInstanceIndex + 1);
-  const [nextPairId, setNextPairId] = useState(() => Math.max(scanRestoredAnswer(answer?.value).maxPairId + 1, 1));
+  const [instanceCounter, setInstanceCounter] = useState(() => restoredAnswerState.maxInstanceIndex + 1);
+  const [nextPairId, setNextPairId] = useState(() => Math.max(restoredAnswerState.maxPairId + 1, 1));
   const hasPlaceholderPairRef = useRef(Object.keys(answer?.value || {}).length === 0);
+  const lastEmittedAnswerSignatureRef = useRef<string | null>(null);
+  const lastObservedAnswerSignatureRef = useRef(getPairwiseAnswerSignature(answer?.value));
+  const pairIds = useMemo(() => (
+    [...new Set([...restoredAnswerState.restoredPairIds, ...localPairIds])]
+      .sort((a, b) => parseInt(a, 10) - parseInt(b, 10))
+  ), [localPairIds, restoredAnswerState.restoredPairIds]);
 
   useEffect(() => {
-    const { restoredPairIds, maxPairId, maxInstanceIndex } = scanRestoredAnswer(answer?.value);
-    setPairIds((prev) => {
-      if (hasPlaceholderPairRef.current && restoredPairIds.size > 0) {
-        hasPlaceholderPairRef.current = false;
-        return [...restoredPairIds].sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
-      }
-      const merged = [...prev];
-      restoredPairIds.forEach((pairId) => {
-        if (!merged.includes(pairId)) merged.push(pairId);
-      });
-      return merged.length === prev.length ? prev : merged.sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
-    });
-    setNextPairId((prev) => Math.max(prev, maxPairId + 1));
-    setInstanceCounter((prev) => Math.max(prev, maxInstanceIndex + 1));
-  }, [answer?.value, scanRestoredAnswer]);
+    const answerSignature = getPairwiseAnswerSignature(answer?.value);
+    const hasSemanticAnswerChange = answerSignature !== lastObservedAnswerSignatureRef.current;
+    const isLocallyEmittedAnswer = answerSignature === lastEmittedAnswerSignatureRef.current;
+    lastObservedAnswerSignatureRef.current = answerSignature;
+    if (isLocallyEmittedAnswer) lastEmittedAnswerSignatureRef.current = null;
+
+    if (hasSemanticAnswerChange && !isLocallyEmittedAnswer) {
+      const isEmptyAnswer = Object.keys(answer?.value || {}).length === 0;
+      hasPlaceholderPairRef.current = isEmptyAnswer;
+      setLocalPairIds(isEmptyAnswer ? ['0'] : []);
+    } else if (hasPlaceholderPairRef.current && restoredAnswerState.restoredPairIds.size > 0) {
+      hasPlaceholderPairRef.current = false;
+      setLocalPairIds((prev) => prev.filter((pairId) => pairId !== '0'));
+    }
+    setNextPairId((prev) => Math.max(prev, restoredAnswerState.maxPairId + 1));
+    setInstanceCounter((prev) => Math.max(prev, restoredAnswerState.maxInstanceIndex + 1));
+  }, [answer?.value, restoredAnswerState]);
 
   const { pairs, unassigned } = useMemo(() => {
     const pairMap: Record<string, { high: string[], low: string[] }> = {};
 
     Object.entries(answer?.value || {}).forEach(([itemId, location]) => {
-      const match = location.match(/^pair-(\d+)-(high|low)$/);
+      const match = typeof location === 'string' ? location.match(/^pair-(\d+)-(high|low)$/) : null;
       if (match) {
         const [, pairId, position] = match;
         if (!pairMap[pairId]) pairMap[pairId] = { high: [], low: [] };
@@ -464,8 +481,16 @@ function RankingPairwiseComponent({
 
     if (targetId === 'unassigned') {
       if (!isFromAvailable) {
+        const sourceLocation = newAnswer[draggedKey];
+        const sourceMatch = typeof sourceLocation === 'string'
+          ? sourceLocation.match(/^pair-(\d+)-(high|low)$/)
+          : null;
+        if (sourceMatch) {
+          setLocalPairIds((prev) => [...new Set([...prev, sourceMatch[1]])]);
+        }
         delete newAnswer[draggedKey];
         setError?.(null);
+        lastEmittedAnswerSignatureRef.current = getPairwiseAnswerSignature(newAnswer);
         updateAnswer(newAnswer);
       }
       return;
@@ -521,7 +546,18 @@ function RankingPairwiseComponent({
       newAnswer[draggedKey] = targetId;
     }
 
+    hasPlaceholderPairRef.current = false;
+    const sourceLocation = !isFromAvailable ? answer.value[draggedKey] : null;
+    const sourceMatch = typeof sourceLocation === 'string'
+      ? sourceLocation.match(/^pair-(\d+)-(high|low)$/)
+      : null;
+    setLocalPairIds((prev) => [...new Set([
+      ...prev,
+      targetPairId,
+      ...(sourceMatch ? [sourceMatch[1]] : []),
+    ])]);
     setError?.(null);
+    lastEmittedAnswerSignatureRef.current = getPairwiseAnswerSignature(newAnswer);
     updateAnswer(newAnswer);
   };
 
@@ -539,13 +575,14 @@ function RankingPairwiseComponent({
     hasPlaceholderPairRef.current = false;
     const newAnswer = { ...answer.value };
     Object.keys(newAnswer).forEach((key) => {
-      if (newAnswer[key].startsWith(`pair-${pairId}-`)) {
+      if (typeof newAnswer[key] === 'string' && newAnswer[key].startsWith(`pair-${pairId}-`)) {
         delete newAnswer[key];
       }
     });
 
-    setPairIds((prev) => prev.filter((id) => id !== pairId));
+    setLocalPairIds((prev) => prev.filter((id) => id !== pairId));
     setError?.(null);
+    lastEmittedAnswerSignatureRef.current = getPairwiseAnswerSignature(newAnswer);
     updateAnswer(newAnswer);
   };
 
@@ -558,7 +595,7 @@ function RankingPairwiseComponent({
           onClick={() => {
             if (!disabled) {
               hasPlaceholderPairRef.current = false;
-              setPairIds((prev) => [...prev, nextPairId.toString()]);
+              setLocalPairIds((prev) => [...prev, nextPairId.toString()]);
               setNextPairId((prev) => prev + 1);
             }
           }}

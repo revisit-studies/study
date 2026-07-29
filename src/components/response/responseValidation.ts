@@ -109,7 +109,7 @@ export function makeRankingInstanceKey(baseItemId: string, instanceIndex: number
 }
 
 function parseTaggedRankingInstanceKey(instanceId: string): { baseItemId: string; instanceIndex: number } | null {
-  const match = instanceId.match(/^instance-(\d+)-(.+)$/);
+  const match = instanceId.match(/^instance-(\d+)-(.*)$/);
   if (!match) {
     return null;
   }
@@ -157,15 +157,22 @@ export function getRankingInstanceIndex(instanceId: string, optionValues: Set<st
 export function checkPairwiseRankingResponse(response: RankingResponse, value: Record<string, string>) {
   const optionValues = new Set(parseStringOptions(response.options).map((option) => option.value));
   const pairs: Record<string, { high: string[]; low: string[] }> = {};
+  let hasInvalidLocation = false;
 
   Object.entries(value).forEach(([itemId, location]) => {
-    const match = location.match(/^pair-(\d+)-(high|low)$/);
-    if (match) {
-      const [, pairId, position] = match;
-      if (!pairs[pairId]) pairs[pairId] = { high: [], low: [] };
-      pairs[pairId][position as 'high' | 'low'].push(getRankingBaseItemId(itemId, optionValues));
+    const match = typeof location === 'string' ? location.match(/^pair-(\d+)-(high|low)$/) : null;
+    if (!match) {
+      hasInvalidLocation = true;
+      return;
     }
+    const [, pairId, position] = match;
+    if (!pairs[pairId]) pairs[pairId] = { high: [], low: [] };
+    pairs[pairId][position as 'high' | 'low'].push(getRankingBaseItemId(itemId, optionValues));
   });
+
+  if (hasInvalidLocation) {
+    return 'Please complete or remove invalid pairs to continue.';
+  }
 
   // A pair is complete when both sides hold exactly one distinct configured option
   const isCompletePair = (pair: { high: string[]; low: string[] }) => pair.high.length === 1
