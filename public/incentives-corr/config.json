@@ -25,6 +25,16 @@
     "studyEndAutoRedirectURL": "https://app.prolific.com/submissions/complete?cc=C1PEMLO4",
     "studyEndAutoRedirectDelay": 10000
   },
+  "factors": {
+    "incentive": ["base", "inc"],
+    "vis": ["pcp", "scatter"],
+    "r1": [0.3, 0.4, 0.5, 0.6, 0.7],
+    "delta": [0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.12, 0.14, 0.18, 0.22, 0.26],
+    "r1Training": [0.3,0.9, 0.6, 0.6, 0.3, 0.5, 0.9, 0.6, 0.99],
+    "r2Training": [0.7, 0.6, 0.3, 0.9, 0.1, 0.3, 0.8, 0.7, 0.9],
+    "trainingPairs": { "zip": ["r1Training", "r2Training"] },
+    "testTrials": { "cross": ["r1", "delta"]}
+  },
   "baseComponents": {
     "practice": {
       "type": "react-component",
@@ -40,12 +50,7 @@
           "location": "belowStimulus"
         }
       ],
-      "correctAnswer": [
-        {
-          "id": "training",
-          "answer": true
-        }
-      ]
+      "correctAnswer": [{"id": "training", "answer": true}]
     },
     "test": {
       "type": "react-component",
@@ -66,12 +71,7 @@
           "hidden": true
         }
       ],
-      "correctAnswer": [
-        {
-          "id": "test",
-          "answer": true
-        }
-      ]
+      "correctAnswer": [{"id": "test", "answer": true}]
     },
     "summary": {
       "type": "react-component",
@@ -85,9 +85,9 @@
       "path": "incentives-corr/assets/02-tutorial-@vis.md",
       "response": []
     },
-    "introduction-base": {
+    "introduction": {
       "type": "markdown",
-      "path": "incentives-corr/assets/00-intro-base.md",
+      "path": "incentives-corr/assets/00-intro-@incentive.md",
       "response": [
         {
           "id": "prolificId",
@@ -100,24 +100,9 @@
         }
       ]
     },
-    "introduction-inc": {
+    "consent": {
       "type": "markdown",
-      "path": "incentives-corr/assets/00-intro-inc.md",
-      "response": [
-        {
-          "id": "prolificId",
-          "prompt": "Prolific ID:",
-          "required": false,
-          "location": "belowStimulus",
-          "type": "shortText",
-          "paramCapture": "PROLIFIC_PID",
-          "placeholder": "Prolific ID"
-        }
-      ]
-    },
-    "consent-base": {
-      "type": "markdown",
-      "path": "incentives-corr/assets/01-consent-base.md",
+      "path": "incentives-corr/assets/01-consent-@incentive.md",
       "previousButton": true,
       "previousButtonText": "Back",
       "response": [
@@ -125,38 +110,13 @@
           "id": "consentApproval",
           "prompt": "By clicking on 'Yes' below, you indicate that you have understood the Information Sheet and agree to participate in this study.",
           "type": "radio",
-          "options": [
-            "Yes",
-            "No"
-          ]
+          "options": ["Yes", "No"]
         }
       ]
     },
-    "consent-inc": {
+    "task-details": {
       "type": "markdown",
-      "path": "incentives-corr/assets/01-consent-inc.md",
-      "previousButton": true,
-      "previousButtonText": "Back",
-      "response": [
-        {
-          "id": "consentApproval",
-          "prompt": "By clicking on 'Yes' below, you indicate that you have understood the Information Sheet and agree to participate in this study.",
-          "type": "radio",
-          "options": [
-            "Yes",
-            "No"
-          ]
-        }
-      ]
-    },
-    "task-details-base": {
-      "type": "markdown",
-      "path": "incentives-corr/assets/04-instructions-base.md",
-      "response": []
-    },
-    "task-details-inc": {
-      "type": "markdown",
-      "path": "incentives-corr/assets/04-instructions-inc.md",
+      "path": "incentives-corr/assets/04-instructions-@incentives.md",
       "response": []
     },
     "attention-1": {
@@ -203,201 +163,14 @@
         "r1": 0.01,
         "r2": 0.99
       }
-    },
-    "qual-q-base": {
-      "baseComponent": "summary",
-      "parameters": {
-        "inc": "base"
-      },
-      "response": [
-        {
-          "id": "prolificId",
-          "prompt": "",
-          "required": false,
-          "hidden": true,
-          "paramCapture": "PROLIFIC_PID",
-          "type": "reactive"
-        },
-        {
-          "id": "qual-strategy",
-          "prompt": "Please describe the strategy that you used in determining which plot had a higher correlation.",
-          "required": true,
-          "location": "belowStimulus",
-          "type": "longText"
-        },
-        {
-          "id": "qual-incentive-freq",
-          "prompt": "How often do you encounter surveys with performance-based bonuses?",
-          "required": true,
-          "location": "belowStimulus",
-          "type": "likert",
-          "numItems": 5,
-          "leftLabel": "Never",
-          "rightLabel": "Very Often",
-          "labelLocation": "inline"
-        },
-        {
-          "id": "qual-incentives-history",
-          "prompt": "If you have encountered performance-based bonuses in surveys previously, what has been your experience with receiving such bonuses?",
-          "secondaryText": "If you have not encountered performance-based bonuses in surveys, please write 'N/A' in the text box.",
-          "required": true,
-          "location": "belowStimulus",
-          "type": "longText"
-        },
-        {
-          "id": "qual-incentive-effect",
-          "prompt": "If you would have been paid a guaranteed amount of $1.25 and awarded a bonus of $0.05 for every correct response instead of $3 guaranteed, how do you think your performance would have changed?",
-          "required": true,
-          "location": "belowStimulus",
-          "type": "longText"
-        }
-      ]
-    },
-    "qual-q-inc": {
-      "baseComponent": "summary",
-      "parameters": {
-        "inc": "inc"
-      },
-      "response": [
-        {
-          "id": "prolificId",
-          "prompt": "",
-          "required": false,
-          "hidden": true,
-          "paramCapture": "PROLIFIC_PID",
-          "type": "reactive"
-        },
-        {
-          "id": "qual-strategy",
-          "prompt": "Please describe the strategy that you used in determining which plot had a higher correlation.",
-          "required": true,
-          "location": "belowStimulus",
-          "type": "longText"
-        },
-        {
-          "id": "qual-incentive-freq",
-          "prompt": "How often do you encounter surveys with performance-based bonuses?",
-          "required": true,
-          "location": "belowStimulus",
-          "type": "likert",
-          "numItems": 5,
-          "leftLabel": "Never",
-          "rightLabel": "Very Often",
-          "labelLocation": "inline"
-        },
-        {
-          "id": "qual-incentives-history",
-          "prompt": "If you have encountered performance-based bonuses in surveys previously, what has been your experience with receiving such bonuses?",
-          "secondaryText": "If you have not encountered performance-based bonuses in surveys, please write 'N/A' in the text box.",
-          "required": true,
-          "location": "belowStimulus",
-          "type": "longText"
-        },
-        {
-          "id": "qual-incentive-effect",
-          "prompt": "If you were given a guaranteed amount of $3 instead of $1.25 plus $0.05 for every correct response, how do you think your performance would have changed?",
-          "required": true,
-          "location": "belowStimulus",
-          "type": "longText"
-        }
-      ]
     }
   },
-  "factors": {
-    "incentive": [
-      "base",
-      "inc"
-    ],
-    "vis": [
-      "pcp",
-      "scatter"
-    ],
-    "r1": [
-      0.3,
-      0.4,
-      0.5,
-      0.6,
-      0.7
-    ],
-    "delta": [
-      0.03,
-      0.04,
-      0.05,
-      0.06,
-      0.07,
-      0.08,
-      0.09,
-      0.1,
-      0.12,
-      0.14,
-      0.18,
-      0.22,
-      0.26
-    ],
-    "r1Training": [
-      0.3,
-      0.9,
-      0.6,
-      0.6,
-      0.3,
-      0.5,
-      0.9,
-      0.6,
-      0.99
-    ],
-    "r2Training": [
-      0.7,
-      0.6,
-      0.3,
-      0.9,
-      0.1,
-      0.3,
-      0.8,
-      0.7,
-      0.9
-    ],
-    "trainingPairs": {
-      "zip": [
-        "r1Training",
-        "r2Training"
-      ]
-    },
-    "testTrials": {
-      "cross": [
-        "r1",
-        "delta"
-      ]
-    }
-  },
-  "betweenSubjects": [
-    "incentive",
-    "vis"
-  ],
+  "betweenSubjects": ["incentive", "vis"],
   "sequence": {
     "order": "fixed",
     "components": [
-      {
-        "id": "base",
-        "order": "fixed",
-        "parameters": {
-          "incentive": "base"
-        },
-        "components": [
-          "introduction-base",
-          "consent-base"
-        ]
-      },
-      {
-        "id": "inc",
-        "order": "fixed",
-        "parameters": {
-          "incentive": "inc"
-        },
-        "components": [
-          "introduction-inc",
-          "consent-inc"
-        ]
-      },
+      "introduction",
+      "consent",
       "tutorial",
       {
         "type": "factor",
@@ -406,96 +179,20 @@
         "components": "practice",
         "order": "random"
       },
-      {
-        "id": "base",
-        "order": "fixed",
-        "parameters": {
-          "incentive": "base"
-        },
-        "components": [
-          "task-details-base"
-        ]
-      },
-      {
-        "id": "inc",
-        "order": "fixed",
-        "parameters": {
-          "incentive": "inc"
-        },
-        "components": [
-          "task-details-inc"
-        ]
-      },
+      "task-details",
       {
         "type": "factor",
         "id": "test",
-        "factor": {
-          "cross": [
-            "r1",
-            "delta"
-          ]
-        },
+        "factor": {"cross": ["r1","delta"]},
         "order": "latinSquare",
         "components": "test",
-        "parameters": {
-          "taskid": "test"
-        },
+        "parameters": {"taskid": "test"},
         "interruptions": [
-          {
-            "spacing": "random",
-            "numInterruptions": 1,
-            "components": [
-              "attention-1"
-            ]
-          },
-          {
-            "spacing": "random",
-            "numInterruptions": 1,
-            "components": [
-              "attention-2"
-            ]
-          },
-          {
-            "spacing": "random",
-            "numInterruptions": 1,
-            "components": [
-              "attention-3"
-            ]
-          },
-          {
-            "spacing": "random",
-            "numInterruptions": 1,
-            "components": [
-              "attention-4"
-            ]
-          },
-          {
-            "spacing": "random",
-            "numInterruptions": 1,
-            "components": [
-              "attention-5"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "base",
-        "order": "fixed",
-        "parameters": {
-          "incentive": "base"
-        },
-        "components": [
-          "qual-q-base"
-        ]
-      },
-      {
-        "id": "inc",
-        "order": "fixed",
-        "parameters": {
-          "incentive": "inc"
-        },
-        "components": [
-          "qual-q-inc"
+          {"spacing": "random", "numInterruptions": 1, "components": [ "attention-1"]},
+          {"spacing": "random", "numInterruptions": 1, "components": [ "attention-2"]},
+          {"spacing": "random", "numInterruptions": 1, "components": [ "attention-3"]},
+          {"spacing": "random", "numInterruptions": 1, "components": [ "attention-4"]},
+          {"spacing": "random", "numInterruptions": 1, "components": [ "attention-5"]}
         ]
       }
     ]
