@@ -28,7 +28,7 @@ const createExampleConfig = (libraryName) => ({
     contactEmail: '',
     logoPath: 'revisitAssets/revisitLogoSquare.svg',
     withProgressBar: true,
-    withSidebar: true,
+    withSidebar: false,
   },
   importedLibraries: [libraryName],
   components: {

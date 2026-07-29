@@ -33,6 +33,7 @@ describe('libraryExampleStudyGenerator', () => {
     const config = createExampleConfig('my-lib');
 
     expect(config.studyMetadata.title).toBe('my-lib Example Study');
+    expect(config.uiConfig.withSidebar).toBe(false);
     expect(config.importedLibraries).toEqual(['my-lib']);
     expect(config.components.introduction.path).toBe('library-my-lib/assets/my-lib.md');
     expect(config.sequence.components).toEqual(['introduction']);
