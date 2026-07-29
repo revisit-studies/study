@@ -11,6 +11,14 @@ Link: [https://www.colour-blindness.com/colour-blindness-tests/ishihara-colour-t
 ## Available Components
 
 - plate1
+- plate2
+- plate3
+- plate4
+- plate5
+- plate6
+- plate7
+- plate8
+- plate9
 - plate10
 - plate11
 - plate12
@@ -21,19 +29,11 @@ Link: [https://www.colour-blindness.com/colour-blindness-tests/ishihara-colour-t
 - plate17
 - plate18
 - plate19
-- plate2
 - plate20
 - plate21
 - plate22
 - plate23
 - plate24
-- plate3
-- plate4
-- plate5
-- plate6
-- plate7
-- plate8
-- plate9
 
 ## Available Sequences
 

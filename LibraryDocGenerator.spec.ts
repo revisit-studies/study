@@ -81,6 +81,19 @@ describe('libraryDocGenerator', () => {
     expect(docsWithDoiOnly).not.toContain('{name: "demo-lib", url:');
   });
 
+  it('generateMd sorts numbered components and sequences numerically', () => {
+    const md: string = generateMd('demo-lib', {
+      description: 'Demo description',
+      components: {
+        plate10: {}, plate2: {}, plate1: {}, plate20: {},
+      },
+      sequences: { seq10: {}, seq2: {} },
+    }, false);
+
+    expect(md).toContain('- plate1\n- plate2\n- plate10\n- plate20');
+    expect(md).toContain('- seq2\n- seq10');
+  });
+
   it('generateMd trims trailing whitespace and ends with a single newline', () => {
     const md: string = generateMd('demo-lib', {
       description: 'Description with a trailing space \n\nSecond paragraph.',

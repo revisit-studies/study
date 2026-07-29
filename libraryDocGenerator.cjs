@@ -34,12 +34,12 @@ ${libraryConfig.externalLink ? `Link: [${libraryConfig.externalLink}](${libraryC
 
 ## Available Components
 
-${Object.keys(libraryConfig.components).map((component) => `- ${component}`).sort((a, b) => a.localeCompare(b)).join('\n')}
+${Object.keys(libraryConfig.components).map((component) => `- ${component}`).sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).join('\n')}
 
 ## Available Sequences
 
 ${Object.keys(libraryConfig.sequences).length > 0
-    ? Object.keys(libraryConfig.sequences).map((sequence) => `- ${sequence}`).sort((a, b) => a.localeCompare(b)).join('\n')
+    ? Object.keys(libraryConfig.sequences).map((sequence) => `- ${sequence}`).sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).join('\n')
     : 'None'}
 
 ${libraryConfig.additionalDescription ? `## Additional Description\n\n${libraryConfig.additionalDescription}` : ''}

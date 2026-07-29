@@ -13,10 +13,6 @@ DOI: [10.1177/0272989X10373805](https://dx.doi.org/10.1177/0272989X10373805)
 ## Available Components
 
 - Q1
-- Q10
-- Q11
-- Q12
-- Q13
 - Q2
 - Q3
 - Q4
@@ -25,6 +21,10 @@ DOI: [10.1177/0272989X10373805](https://dx.doi.org/10.1177/0272989X10373805)
 - Q7
 - Q8
 - Q9
+- Q10
+- Q11
+- Q12
+- Q13
 
 ## Available Sequences
 
