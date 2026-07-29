@@ -1,7 +1,4 @@
-
-# QUIS: Questionnaire for User Interface Satisfaction
-
-
+# QUIS: Questionnaire for User Interaction Satisfaction
 
 This is a demo of the library `quis`.
 
@@ -9,13 +6,13 @@ The Questionnaire for User Interaction Satisfaction (QUIS) is a measurement tool
 
 ## Reference
 
-Chin, J. P., Diehl, V. A. and Norman, K. L. (1988). Development of an instrument measuring user satisfaction of the human-computer interface. Proceedings of SIGCHI '88, (pp. 213-218), New York: ACM/SIGCHI. 
+J. P. Chin, V. A. Diehl, and K. L. Norman, “Development of an instrument measuring user satisfaction of the human-computer interface,” in Proceedings of the SIGCHI Conference on Human Factors in Computing Systems (CHI '88), New York, NY, USA: ACM, 1988, pp. 213–218.
 
- Chin, J. P., Norman, K. L., and Shneiderman, B. (1987). Subjective user evaluation of CF PASCAL programming tools.  Technical Report (CAR-TR-304).  College Park, MD:  Human-Computer Interaction Laboratory, Center for Automation Research, University of Maryland. 
+J. P. Chin, K. L. Norman, and B. Shneiderman, “Subjective user evaluation of CF PASCAL programming tools,” Human-Computer Interaction Laboratory, Center for Automation Research, University of Maryland, College Park, MD, USA, Tech. Rep. CAR-TR-304, 1987.
 
- Harper, B. D. and Norman, K. L. (1993). Improving User Satisfaction: The Questionnaire for User Interaction Satisfaction Version 5.5. Proceedings of the 1st Annual Mid-Atlantic Human Factors Conference, (pp. 224-228), Virginia Beach, VA.
+B. D. Harper and K. L. Norman, “Improving user satisfaction: The Questionnaire for User Interaction Satisfaction version 5.5,” in Proceedings of the 1st Annual Mid-Atlantic Human Factors Conference, Virginia Beach, VA, USA, 1993, pp. 224–228.
 
-
+DOI: [10.1145/57167.57203](https://dx.doi.org/10.1145/57167.57203)
 
 Link: [https://isr.umd.edu/news/story/quis-questionnaire-for-user-interaction-satisfaction-70-isr-ip](https://isr.umd.edu/news/story/quis-questionnaire-for-user-interaction-satisfaction-70-isr-ip)
 
@@ -31,5 +28,3 @@ Link: [https://isr.umd.edu/news/story/quis-questionnaire-for-user-interaction-sa
 ## Available Sequences
 
 - 6-dimensions
-
-

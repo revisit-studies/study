@@ -1,4 +1,3 @@
-
 # UMUX-Lite: Usability Metric for User Experience (Short Version, 2 Items)
 
 This is a demo of the library `umux-lite`.
@@ -7,11 +6,9 @@ The UMUX-Lite is a two-item questionnaire derived from the original UMUX. It is 
 
 ## Reference
 
-Lewis, James R., Brian S. Utesch, and Deborah E. Maher. "UMUX-LITE: when there's no time for the SUS." Proceedings of the SIGCHI conference on human factors in computing systems. 2013.
+J. R. Lewis, B. S. Utesch, and D. E. Maher, “UMUX-LITE: When there's no time for the SUS,” in Proceedings of the SIGCHI Conference on Human Factors in Computing Systems (CHI '13), New York, NY, USA: ACM, 2013, pp. 2099–2102.
 
 DOI: [10.1145/2470654.2481287](https://dx.doi.org/10.1145/2470654.2481287)
-
-
 
 ## Available Components
 
@@ -20,7 +17,3 @@ DOI: [10.1145/2470654.2481287](https://dx.doi.org/10.1145/2470654.2481287)
 ## Available Sequences
 
 None
-
-
-
-

@@ -1,13 +1,13 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "A-VLAT: Adaptive Visualization Literacy Assessment Test)",
+    "title": "A-VLAT: Adaptive Visualization Literacy Assessment Test",
     "version": "pilot",
     "authors": [
       "The reVISit Team"
     ],
     "date": "2026-02-23",
-    "description": "A replication of the adaptive VLAT questionnaire by Cui et al.,",
+    "description": "A replication of the adaptive VLAT questionnaire by Cui et al.",
     "organizations": [
       "University of Utah",
       "WPI"

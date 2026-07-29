@@ -98,12 +98,12 @@ describe('isPreviousDisabled', () => {
     expect(result.current.isPreviousDisabled).toBe(true);
   });
 
-  test('is false when in analysis mode with valid step', () => {
+  test('is true when in analysis mode with valid step', () => {
     useIsAnalysisMock.mockReturnValue(true);
     useCurrentStepMock.mockReturnValue(1);
     const { result } = renderHook(() => usePreviousStep());
-    // isPreviousDisabled is based on step number, not analysis mode
-    expect(result.current.isPreviousDisabled).toBe(false);
+    // The previous button is disabled during replay, mirroring the next button
+    expect(result.current.isPreviousDisabled).toBe(true);
   });
 });
 
@@ -145,10 +145,10 @@ describe('goToPreviousStep', () => {
 
   // --- Analysis-specific tests from original file ---
 
-  test('keeps the previous button enabled during analysis replay', () => {
+  test('disables the previous button during analysis replay', () => {
     useIsAnalysisMock.mockReturnValue(true);
     const { result } = renderHook(() => usePreviousStep());
-    expect(result.current.isPreviousDisabled).toBe(false);
+    expect(result.current.isPreviousDisabled).toBe(true);
   });
 
   test('keeps previous enabled for the first item inside a dynamic block', () => {

@@ -9,7 +9,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { generateLibraryDocs } = require('./libraryDocGenerator.cjs');
+const { generateLibraryDocs, getLibraries } = require('./libraryDocGenerator.cjs');
 
 // Create example study config template
 const createExampleConfig = (libraryName) => ({
@@ -23,10 +23,10 @@ const createExampleConfig = (libraryName) => ({
     organizations: ['University of Utah', 'WPI'],
   },
   uiConfig: {
-    contactEmail: '',
+    contactEmail: 'contact@revisit.dev',
     logoPath: 'revisitAssets/revisitLogoSquare.svg',
     withProgressBar: true,
-    withSidebar: true,
+    withSidebar: false,
   },
   importedLibraries: [libraryName],
   components: {
@@ -44,9 +44,6 @@ const createExampleConfig = (libraryName) => ({
   },
 });
 
-const getLibraries = (libsPath) => fs.readdirSync(libsPath)
-  .filter(library => !library.startsWith('.') && !library.endsWith('.DS_Store'));
-
 const generateLibraryExamples = (base, generateDocsFn = generateLibraryDocs) => {
   const librariesPath = path.join(base, 'public', 'libraries');
   const publicPath = path.join(base, 'public');
@@ -55,13 +52,6 @@ const generateLibraryExamples = (base, generateDocsFn = generateLibraryDocs) => 
   const libraries = getLibraries(librariesPath);
 
   libraries.forEach((library) => {
-    // Skip hidden folders and files, and libraries in skip list
-    if (library.startsWith('.')) {
-      // eslint-disable-next-line no-console
-      console.log(`Skipping ${library} library`);
-      return;
-    }
-
     const exampleFolderName = `library-${library}`;
     const examplePath = path.join(publicPath, exampleFolderName);
 
@@ -81,7 +71,7 @@ const generateLibraryExamples = (base, generateDocsFn = generateLibraryDocs) => 
       // Create config.json
       const configPath = path.join(examplePath, 'config.json');
       const configContent = createExampleConfig(library);
-      fs.writeFileSync(configPath, JSON.stringify(configContent, null, 2));
+      fs.writeFileSync(configPath, `${JSON.stringify(configContent, null, 2)}\n`);
       // eslint-disable-next-line no-console
       console.log(`Created/Updated ${exampleFolderName}/config.json`);
     }

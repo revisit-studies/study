@@ -768,7 +768,7 @@ export const VLATQuestions: VLATQuestion[] = [
     question: 'What is the range of the total length of the metro systems?',
     img: 'VLAT10',
     name: '49',
-    options: ['150 - 600 km', '240 - 380 km', '240 - 560 km', '180 - 560 km', 'Skip'],
+    options: ['150 - 600km', '240 - 380km', '240 - 560km', '180 - 560km', 'Skip'],
     answer: '',
     trueAnswer: 3,
     required: true,
