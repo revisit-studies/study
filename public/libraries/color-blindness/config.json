@@ -611,7 +611,8 @@
           "prompt": "Enter the pattern you see:",
           "required": true,
           "location": "sidebar",
-          "type": "shortText"
+          "type": "shortText",
+          "withDontKnow": true
         }
       ],
       "correctAnswer": [],
@@ -640,7 +641,8 @@
           "prompt": "Enter the pattern you see:",
           "required": true,
           "location": "sidebar",
-          "type": "shortText"
+          "type": "shortText",
+          "withDontKnow": true
         }
       ],
       "correctAnswer": [],
@@ -655,7 +657,7 @@
         "total-color-blindness-see": "nothing",
         "plateType": "vanishing"
       },
-      "instruction": "What number do you see in this image?",
+      "instruction": "What pattern do you see in this image?",
       "instructionLocation": "sidebar",
       "type": "image",
       "path": "libraries/color-blindness/assets/Ishihara20.png",
@@ -666,10 +668,10 @@
       "response": [
         {
           "id": "plate20-response",
-          "prompt": "Enter the number you see:",
+          "prompt": "Enter the pattern you see:",
           "required": true,
           "location": "sidebar",
-          "type": "numerical",
+          "type": "shortText",
           "withDontKnow": true
         }
       ],
@@ -699,7 +701,8 @@
           "prompt": "Enter the pattern you see:",
           "required": true,
           "location": "sidebar",
-          "type": "shortText"
+          "type": "shortText",
+          "withDontKnow": true
         }
       ],
       "correctAnswer": [],
@@ -714,7 +717,7 @@
         "total-color-blindness-see": "nothing",
         "plateType": "transformation"
       },
-      "instruction": "What do you see in this image?",
+      "instruction": "What pattern do you see in this image?",
       "instructionLocation": "sidebar",
       "type": "image",
       "path": "libraries/color-blindness/assets/Ishihara22.png",
@@ -725,10 +728,11 @@
       "response": [
         {
           "id": "plate22-response",
-          "prompt": "Enter what you see:",
+          "prompt": "Enter the pattern you see:",
           "required": true,
           "location": "sidebar",
-          "type": "shortText"
+          "type": "shortText",
+          "withDontKnow": true
         }
       ],
       "correctAnswer": [],
@@ -743,7 +747,7 @@
         "total-color-blindness-see": "nothing",
         "plateType": "transformation"
       },
-      "instruction": "What number do you see in this image?",
+      "instruction": "What pattern do you see in this image?",
       "instructionLocation": "sidebar",
       "type": "image",
       "path": "libraries/color-blindness/assets/Ishihara23.png",
@@ -754,10 +758,10 @@
       "response": [
         {
           "id": "plate23-response",
-          "prompt": "Enter the number you see:",
+          "prompt": "Enter the pattern you see:",
           "required": true,
           "location": "sidebar",
-          "type": "numerical",
+          "type": "shortText",
           "withDontKnow": true
         }
       ],
@@ -773,7 +777,7 @@
         "total-color-blindness-see": "a wiggly line",
         "plateType": "demonstration"
       },
-      "instruction": "What number do you see in this image?",
+      "instruction": "What pattern do you see in this image?",
       "instructionLocation": "sidebar",
       "type": "image",
       "path": "libraries/color-blindness/assets/Ishihara24.png",
@@ -787,7 +791,8 @@
           "prompt": "Enter what you see:",
           "required": true,
           "location": "sidebar",
-          "type": "shortText"
+          "type": "shortText",
+          "withDontKnow": true
         }
       ],
       "correctAnswer": [],
