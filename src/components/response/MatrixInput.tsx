@@ -290,14 +290,13 @@ export function MatrixInput({
             <Box
               key={`question-${idx}-label`}
               style={{
-                height: '80px',
+                minHeight: '80px',
                 width: '100%',
                 display: 'flex',
                 alignItems: 'safe center',
                 justifyContent: 'end',
                 borderRight: '1px solid var(--mantine-color-dark-0)',
                 backgroundColor: `${(idx + 1) % 2 === 0 ? 'var(--mantine-color-gray-2)' : 'white'}`,
-                overflowY: 'auto',
               }}
               ta="right"
               p="sm"
@@ -383,14 +382,13 @@ export function MatrixInput({
               <Box
                 key={`question-${idx}-right-label`}
                 style={{
-                  height: '80px',
+                  minHeight: '80px',
                   width: '100%',
                   display: 'flex',
                   alignItems: 'safe center',
                   justifyContent: 'start',
                   borderLeft: '1px solid var(--mantine-color-dark-0)',
                   backgroundColor: `${(idx + 1) % 2 === 0 ? 'var(--mantine-color-gray-2)' : 'white'}`,
-                  overflowY: 'auto',
                 }}
                 ta="left"
                 p="sm"
