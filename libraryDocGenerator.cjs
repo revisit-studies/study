@@ -8,43 +8,26 @@ const path = require('path');
 
 const LIBRARIES_TO_SKIP = new Set(['test']);
 
-// The template leaves trailing spaces and blank lines wherever an optional field is missing.
-// Trim each line, collapse the runs of blank lines those gaps leave behind, and end the file with a single newline.
-const normalizeMd = (markdown) => `${markdown
-  .split('\n')
-  .map((line) => line.trimEnd())
-  .join('\n')
-  .replace(/\n{3,}/g, '\n\n')
-  .trim()}\n`;
+const joinMdSections = (sections) => `${sections.filter((section) => section !== undefined).join('\n\n')}\n`;
 
-const generateMd = (library, libraryConfig, forDocs, title = library) => normalizeMd(`
-# ${title}
-
-${!forDocs ? `This is a demo of the library \`${library}\`.` : ''}
-
-${libraryConfig.description}
-
-${libraryConfig.reference || libraryConfig.doi || libraryConfig.externalLink ? '## Reference' : ''}
-
-${libraryConfig.reference ? (forDocs ? `:::note[Reference]\n${libraryConfig.reference}\n:::` : `${libraryConfig.reference}`) : ''}
-
-${libraryConfig.doi ? `DOI: [${libraryConfig.doi}](https://dx.doi.org/${libraryConfig.doi})` : ''}
-
-${libraryConfig.externalLink ? `Link: [${libraryConfig.externalLink}](${libraryConfig.externalLink})` : ''}
-
-## Available Components
-
-${Object.keys(libraryConfig.components).map((component) => `- ${component}`).sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).join('\n')}
-
-## Available Sequences
-
-${Object.keys(libraryConfig.sequences).length > 0
+const generateMd = (library, libraryConfig, forDocs, title = library) => joinMdSections([
+  `# ${title}`,
+  !forDocs ? `This is a demo of the library \`${library}\`.` : undefined,
+  libraryConfig.description,
+  libraryConfig.reference || libraryConfig.doi || libraryConfig.externalLink ? '## Reference' : undefined,
+  libraryConfig.reference
+    ? (forDocs ? `:::note[Reference]\n${libraryConfig.reference}\n:::` : libraryConfig.reference)
+    : undefined,
+  libraryConfig.doi ? `DOI: [${libraryConfig.doi}](https://dx.doi.org/${libraryConfig.doi})` : undefined,
+  libraryConfig.externalLink ? `Link: [${libraryConfig.externalLink}](${libraryConfig.externalLink})` : undefined,
+  '## Available Components',
+  Object.keys(libraryConfig.components).map((component) => `- ${component}`).sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).join('\n') || undefined,
+  '## Available Sequences',
+  Object.keys(libraryConfig.sequences).length > 0
     ? Object.keys(libraryConfig.sequences).map((sequence) => `- ${sequence}`).sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).join('\n')
-    : 'None'}
-
-${libraryConfig.additionalDescription ? `## Additional Description\n\n${libraryConfig.additionalDescription}` : ''}
-
-${forDocs
+    : 'None',
+  libraryConfig.additionalDescription ? `## Additional Description\n\n${libraryConfig.additionalDescription}` : undefined,
+  forDocs
     ? `<!-- Importing Links -->
 import StructuredLinks from '@site/src/components/StructuredLinks/StructuredLinks.tsx';
 
@@ -62,8 +45,8 @@ import StructuredLinks from '@site/src/components/StructuredLinks/StructuredLink
         ${libraryConfig.externalLink ? `{name: "${library}", url: "${libraryConfig.externalLink}"}` : ''}
       ]}`
     : ''}
-  />` : ''}
-`);
+  />` : undefined,
+]);
 
 const getLibraries = (libsPath) => fs.readdirSync(libsPath)
   .filter((library) => !library.startsWith('.')

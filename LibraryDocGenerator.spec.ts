@@ -94,9 +94,9 @@ describe('libraryDocGenerator', () => {
     expect(md).toContain('- seq2\n- seq10');
   });
 
-  it('generateMd trims trailing whitespace and ends with a single newline', () => {
+  it('generateMd starts at the heading and ends with a single newline', () => {
     const md: string = generateMd('demo-lib', {
-      description: 'Description with a trailing space \n\nSecond paragraph.',
+      description: 'Description\n\nSecond paragraph.',
       components: { alpha: {} },
       sequences: {},
     }, false);
@@ -104,9 +104,23 @@ describe('libraryDocGenerator', () => {
     expect(md.startsWith('# demo-lib')).toBe(true);
     expect(md.endsWith('\n')).toBe(true);
     expect(md.endsWith('\n\n')).toBe(false);
-    md.split('\n').forEach((line) => {
-      expect(line).toBe(line.trimEnd());
-    });
+  });
+
+  it('generateMd preserves intentional whitespace in author-provided Markdown', () => {
+    const description = 'First line  \nSecond line\n\n\nFourth paragraph.';
+    const reference = 'Reference line  \ncontinued';
+    const additionalDescription = '```text\nfirst  \n\n\nsecond\n```';
+    const md: string = generateMd('demo-lib', {
+      description,
+      reference,
+      components: {},
+      sequences: {},
+      additionalDescription,
+    }, false);
+
+    expect(md).toContain(description);
+    expect(md).toContain(reference);
+    expect(md).toContain(`## Additional Description\n\n${additionalDescription}`);
   });
 
   it('generateMd collapses the blank lines left by missing optional fields', () => {
