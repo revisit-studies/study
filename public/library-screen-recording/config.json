@@ -14,7 +14,7 @@
     ]
   },
   "uiConfig": {
-    "contactEmail": "",
+    "contactEmail": "contact@revisit.dev",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "withSidebar": false,
@@ -26,7 +26,7 @@
   "components": {
     "introduction": {
       "type": "markdown",
-      "path": "library-screen-recording/assets/screen-recording-introduction.md",
+      "path": "library-screen-recording/assets/screen-recording.md",
       "response": []
     },
     "demo-recording": {

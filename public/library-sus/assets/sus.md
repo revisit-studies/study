@@ -1,7 +1,4 @@
-
 # SUS: System Usability Scale
-
-
 
 This is a demo of the library `sus`.
 
@@ -9,11 +6,9 @@ The System Usability Scale (SUS) is a 10-item questionnaire that measures percei
 
 ## Reference
 
-J. Brooke, “SUS: A ‘Quick and Dirty’ Usability Scale,” Usability Evaluation In Industry, pp. 207–212, Jun. 1996
+J. Brooke, “SUS: A ‘Quick and Dirty’ Usability Scale,” Usability Evaluation in Industry, pp. 207–212, Jun. 1996.
 
 DOI: [10.1201/9781498710411-35](https://dx.doi.org/10.1201/9781498710411-35)
-
-
 
 ## Available Components
 
@@ -22,5 +17,3 @@ DOI: [10.1201/9781498710411-35](https://dx.doi.org/10.1201/9781498710411-35)
 ## Available Sequences
 
 None
-
-
