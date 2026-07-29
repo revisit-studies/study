@@ -472,40 +472,39 @@ function RankingPairwiseComponent({
     }
 
     const targetMatch = targetId.match(/^pair-(\d+)-(high|low)$/);
+    if (!targetMatch) return;
 
-    if (targetMatch) {
-      const [, targetPairId, targetPosition] = targetMatch;
+    const [, targetPairId, targetPosition] = targetMatch;
 
-      const currentItemsInPosition = Object.entries(newAnswer).filter(
-        ([instId, loc]) => loc === targetId && instId !== draggedKey,
-      ).length;
+    const currentItemsInPosition = Object.entries(newAnswer).filter(
+      ([instId, loc]) => loc === targetId && instId !== draggedKey,
+    ).length;
 
-      if (currentItemsInPosition >= 1) {
-        setError?.('You can only place one item in each box.');
-        return;
-      }
+    if (currentItemsInPosition >= 1) {
+      setError?.('You can only place one item in each box.');
+      return;
+    }
 
-      const oppositePosition = targetPosition === 'high' ? 'low' : 'high';
-      const oppositeLocationId = `pair-${targetPairId}-${oppositePosition}`;
+    const oppositePosition = targetPosition === 'high' ? 'low' : 'high';
+    const oppositeLocationId = `pair-${targetPairId}-${oppositePosition}`;
 
-      const existingInOpposite = Object.entries(newAnswer).some(([instId, loc]) => {
-        const existingBaseId = getRankingBaseItemId(instId, optionIds);
-        const isDraggedInstance = !isFromAvailable && instId === draggedKey;
-        return !isDraggedInstance && loc === oppositeLocationId && existingBaseId === baseItemId;
-      });
+    const existingInOpposite = Object.entries(newAnswer).some(([instId, loc]) => {
+      const existingBaseId = getRankingBaseItemId(instId, optionIds);
+      const isDraggedInstance = !isFromAvailable && instId === draggedKey;
+      return !isDraggedInstance && loc === oppositeLocationId && existingBaseId === baseItemId;
+    });
 
-      if (existingInOpposite) {
-        const itemLabel = items.find((i) => i.id === baseItemId)?.option.label;
-        setError?.(`Item "${itemLabel}" cannot be in both HIGH and LOW.`);
-        return;
-      }
+    if (existingInOpposite) {
+      const itemLabel = items.find((i) => i.id === baseItemId)?.option.label;
+      setError?.(`Item "${itemLabel}" cannot be in both HIGH and LOW.`);
+      return;
+    }
 
-      const answerAfterMove = { ...newAnswer };
-      if (!isFromAvailable) delete answerAfterMove[draggedKey];
-      if (checkForDuplicatePair(answerAfterMove, targetPairId, optionIds, baseItemId)) {
-        setError?.('This would create a duplicate pair.');
-        return;
-      }
+    const answerAfterMove = { ...newAnswer };
+    if (!isFromAvailable) delete answerAfterMove[draggedKey];
+    if (checkForDuplicatePair(answerAfterMove, targetPairId, optionIds, baseItemId)) {
+      setError?.('This would create a duplicate pair.');
+      return;
     }
 
     if (isFromAvailable) {

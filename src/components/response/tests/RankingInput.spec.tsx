@@ -639,6 +639,32 @@ describe('RankingPairwiseComponent', () => {
     });
   });
 
+  test('dropping onto an item card is ignored', async () => {
+    const onChange = vi.fn();
+    const answer = {
+      value: { [rankingInstanceKey('Item A', 0)]: 'pair-0-high' },
+      onChange,
+    } as unknown as { value: Record<string, string> };
+    render(
+      <RankingInput {...baseProps} response={makeResponse('ranking-pairwise')} answer={answer} />,
+    );
+    // Dropping onto another item card (not a zone) must not store the card's
+    // drag id as an answer location
+    await act(async () => {
+      capturedOnDragEnd?.(makeDragEnd(
+        pairwiseAvailableDragId('Item B'),
+        pairwisePlacedDragId(rankingInstanceKey('Item A', 0)),
+      ));
+    });
+    await act(async () => {
+      capturedOnDragEnd?.(makeDragEnd(
+        pairwisePlacedDragId(rankingInstanceKey('Item A', 0)),
+        pairwiseAvailableDragId('Item B'),
+      ));
+    });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
   test('moving a placed item cannot create a duplicate pair', async () => {
     const onChange = vi.fn();
     // pair-0 = {A, B}, pair-1 = {A}, pair-2 = {B}; moving B from pair-2 into
