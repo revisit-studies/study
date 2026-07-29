@@ -103,11 +103,31 @@ export function checkNumericalResponse(response: NumericalResponse, value: numbe
   return null;
 }
 
+// Instance keys (`instance-<index>-<optionValue>`) never collide with option values; legacy keys still parse.
+export function makeRankingInstanceKey(baseItemId: string, instanceIndex: number): string {
+  return `instance-${instanceIndex}-${baseItemId}`;
+}
+
+function parseTaggedRankingInstanceKey(instanceId: string): { baseItemId: string; instanceIndex: number } | null {
+  const match = instanceId.match(/^instance-(\d+)-(.+)$/);
+  if (!match) {
+    return null;
+  }
+
+  return { baseItemId: match[2], instanceIndex: parseInt(match[1], 10) };
+}
+
 export function getRankingBaseItemId(instanceId: string, optionValues: Set<string>): string {
+  const tagged = parseTaggedRankingInstanceKey(instanceId);
+  if (tagged) {
+    return tagged.baseItemId;
+  }
+
   if (optionValues.has(instanceId)) {
     return instanceId;
   }
 
+  // Legacy generated keys: `<optionValue>_<counter>`, longest option match first
   const matchingOption = [...optionValues]
     .filter((optionValue) => instanceId.startsWith(`${optionValue}_`))
     .sort((first, second) => second.length - first.length)
@@ -117,6 +137,11 @@ export function getRankingBaseItemId(instanceId: string, optionValues: Set<strin
 }
 
 export function getRankingInstanceIndex(instanceId: string, optionValues: Set<string>): number | null {
+  const tagged = parseTaggedRankingInstanceKey(instanceId);
+  if (tagged) {
+    return tagged.instanceIndex;
+  }
+
   const baseItemId = getRankingBaseItemId(instanceId, optionValues);
   if (!optionValues.has(baseItemId) || baseItemId === instanceId) {
     return null;

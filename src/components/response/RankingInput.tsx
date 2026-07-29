@@ -30,7 +30,7 @@ import classes from './css/RankingDnd.module.css';
 import { ParsedStringOption, RankingResponse, StringOption } from '../../parser/types';
 import { useStoreActions, useStoreDispatch } from '../../store/store';
 import { parseStringOptions } from '../../utils/stringOptions';
-import { getRankingBaseItemId, getRankingInstanceIndex } from './responseValidation';
+import { getRankingBaseItemId, getRankingInstanceIndex, makeRankingInstanceKey } from './responseValidation';
 
 type Item = { id: string; symbol: string; option: ParsedStringOption };
 
@@ -501,8 +501,14 @@ function RankingPairwiseComponent({
     }
 
     if (isFromAvailable) {
-      newAnswer[`${draggedKey}_${instanceCounter}`] = targetId;
-      setInstanceCounter((c) => c + 1);
+      let instanceIndex = instanceCounter;
+      let candidateKey = makeRankingInstanceKey(draggedKey, instanceIndex);
+      while (optionIds.has(candidateKey) || candidateKey in newAnswer) {
+        instanceIndex += 1;
+        candidateKey = makeRankingInstanceKey(draggedKey, instanceIndex);
+      }
+      newAnswer[candidateKey] = targetId;
+      setInstanceCounter(instanceIndex + 1);
     } else {
       delete newAnswer[draggedKey];
       newAnswer[draggedKey] = targetId;

@@ -557,6 +557,44 @@ describe('validateResponse', () => {
     });
   });
 
+  test('pairwise ranking distinguishes options "model" and "model_0" from generated instances', () => {
+    const response: Response = {
+      id: 'ranking', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: ['model', 'model_0'],
+    };
+
+    // A tagged instance of 'model' paired against the real option 'model_0' —
+    // two distinct items, valid (the legacy key 'model_0' would have been
+    // ambiguous here)
+    const taggedPair = { 'instance-0-model': 'pair-0-high', model_0: 'pair-0-low' };
+    expect(validateResponse(response, taggedPair, { ranking: taggedPair }).valid).toBe(true);
+
+    // A tagged instance of 'model' against the plain default key 'model' is a
+    // self-pair
+    const selfPair = { 'instance-0-model': 'pair-0-high', model: 'pair-0-low' };
+    expect(validateResponse(response, selfPair, { ranking: selfPair })).toMatchObject({
+      issueType: 'invalid',
+    });
+
+    // Legacy generated keys are still recognized when unambiguous
+    const legacyPair = { model_66: 'pair-0-high', model_0: 'pair-0-low' };
+    expect(validateResponse(response, legacyPair, { ranking: legacyPair }).valid).toBe(true);
+  });
+
+  test('pairwise instance keys keep option values containing hyphens intact', () => {
+    const response: Response = {
+      id: 'ranking', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: ['e-bike', 'car'],
+    };
+
+    // The option value sits at the end of the key, so its own hyphens are safe
+    const pair = { 'instance-0-e-bike': 'pair-0-high', car: 'pair-0-low' };
+    expect(validateResponse(response, pair, { ranking: pair }).valid).toBe(true);
+
+    const selfPair = { 'instance-0-e-bike': 'pair-0-high', 'e-bike': 'pair-0-low' };
+    expect(validateResponse(response, selfPair, { ranking: selfPair })).toMatchObject({
+      issueType: 'invalid',
+    });
+  });
+
   test('Mantine and progression adapters agree for required response states', () => {
     const response: Response = {
       ...requiredShortText,

@@ -176,6 +176,11 @@ function pairwisePlacedDragId(instanceId: string) {
   return `placed:${instanceId}`;
 }
 
+// Generated instance keys are tagged (see makeRankingInstanceKey)
+function rankingInstanceKey(baseItemId: string, instanceIndex: number) {
+  return `instance-${instanceIndex}-${baseItemId}`;
+}
+
 // ══ RankingSublistComponent ══════════════════════════════════════════════════
 
 describe('RankingSublistComponent', () => {
@@ -478,6 +483,65 @@ describe('RankingPairwiseComponent', () => {
     expect(onChange).toHaveBeenCalledWith({});
   });
 
+  test('instances of "model" are never confused with the option "model_0"', async () => {
+    const onChange = vi.fn();
+    const response = makeResponse('ranking-pairwise', {
+      options: [
+        { label: 'Original model', value: 'model' },
+        { label: 'Model 0', value: 'model_0' },
+      ],
+    });
+    render(
+      <RankingInput
+        {...baseProps}
+        response={response}
+        answer={{ value: {}, onChange } as unknown as { value: Record<string, string> }}
+      />,
+    );
+    // The generated instance key is a tagged tuple, not the legacy 'model_0'
+    // string that would collide with the real option value
+    await act(async () => {
+      capturedOnDragEnd?.(makeDragEnd(pairwiseAvailableDragId('model'), 'pair-0-high'));
+    });
+    expect(onChange).toHaveBeenCalledWith({ [rankingInstanceKey('model', 0)]: 'pair-0-high' });
+  });
+
+  test('a placed instance of "model" renders as its own label, not "Model 0"', () => {
+    const response = makeResponse('ranking-pairwise', {
+      options: [
+        { label: 'Original model', value: 'model' },
+        { label: 'Model 0', value: 'model_0' },
+      ],
+    });
+    const answer = { value: { [rankingInstanceKey('model', 0)]: 'pair-0-high' } };
+    const { getAllByText } = render(
+      <RankingInput {...baseProps} response={response} answer={answer} />,
+    );
+    // Once in the pair slot, once in Available Items
+    expect(getAllByText('Original model').length).toBe(2);
+    // 'Model 0' only appears in Available Items
+    expect(getAllByText('Model 0').length).toBe(1);
+  });
+
+  test('generated keys skip indices that collide with a configured option value', async () => {
+    const onChange = vi.fn();
+    // Pathological config: an option literally named like a generated key
+    const response = makeResponse('ranking-pairwise', { options: ['model', 'instance-0-model'] });
+    render(
+      <RankingInput
+        {...baseProps}
+        response={response}
+        answer={{ value: {}, onChange } as unknown as { value: Record<string, string> }}
+      />,
+    );
+    await act(async () => {
+      capturedOnDragEnd?.(makeDragEnd(pairwiseAvailableDragId('model'), 'pair-0-high'));
+    });
+    // index 0 would produce the option value 'instance-0-model'; the guard
+    // bumps to index 1
+    expect(onChange).toHaveBeenCalledWith({ 'instance-1-model': 'pair-0-high' });
+  });
+
   test('moving an assigned plain default key moves it instead of duplicating', async () => {
     const onChange = vi.fn();
     // Defaults are documented as plain option-value keys; moving the placed
@@ -508,7 +572,7 @@ describe('RankingPairwiseComponent', () => {
     await act(async () => {
       capturedOnDragEnd?.(makeDragEnd(pairwiseAvailableDragId('Item A'), 'pair-0-high'));
     });
-    expect(onChange).toHaveBeenCalledWith({ 'Item A_0': 'pair-0-high' });
+    expect(onChange).toHaveBeenCalledWith({ [rankingInstanceKey('Item A', 0)]: 'pair-0-high' });
   });
 
   test('handleDragEnd: position already occupied (one item limit)', async () => {
@@ -571,7 +635,7 @@ describe('RankingPairwiseComponent', () => {
       'Item A_0': 'pair-0-high',
       'Item B_1': 'pair-0-low',
       'Item A_2': 'pair-1-high',
-      'Item C_3': 'pair-1-low',
+      [rankingInstanceKey('Item C', 3)]: 'pair-1-low',
     });
   });
 
@@ -644,7 +708,7 @@ describe('RankingPairwiseComponent', () => {
     expect(onChange).toHaveBeenCalledWith({
       'Item A_0': 'pair-1-high',
       'Item B_1': 'pair-1-low',
-      'Item A_2': 'pair-2-high',
+      [rankingInstanceKey('Item A', 2)]: 'pair-2-high',
     });
   });
 
@@ -671,7 +735,7 @@ describe('RankingPairwiseComponent', () => {
     await act(async () => {
       capturedOnDragEnd?.(makeDragEnd(pairwiseAvailableDragId('new_york'), 'pair-0-high'));
     });
-    expect(onChange).toHaveBeenCalledWith({ new_york_0: 'pair-0-high' });
+    expect(onChange).toHaveBeenCalledWith({ [rankingInstanceKey('new_york', 0)]: 'pair-0-high' });
   });
 
   test('option value ending in digits is not mistaken for a generated instance', async () => {
@@ -692,7 +756,7 @@ describe('RankingPairwiseComponent', () => {
     });
     expect(onChange).toHaveBeenCalledWith({
       route_66: 'pair-0-high',
-      'Item B_0': 'pair-0-low',
+      [rankingInstanceKey('Item B', 0)]: 'pair-0-low',
     });
   });
 
@@ -722,7 +786,7 @@ describe('RankingPairwiseComponent', () => {
     expect(onChange).toHaveBeenCalledWith({
       'Item A_0': 'pair-1-high',
       'Item B_1': 'pair-1-low',
-      'Item A_2': 'pair-2-high',
+      [rankingInstanceKey('Item A', 2)]: 'pair-2-high',
     });
   });
 
