@@ -8,14 +8,12 @@ Below we describe what makes the chatbot good for studies, the core features, an
 
 ## Relevant Files:
 
-https://github.com/revisit-studies/study/blob/main/public/example-llm-chatbot/config.json
-
 * [The Config](https://github.com/revisit-studies/study/blob/main/public/example-llm-chatbot/config.json)
 * [The React Files](https://github.com/revisit-studies/study/tree/main/src/public/example-llm-chatbot)
 
 ## Features
 
-This study uses the [OpenAI Responses API](https://platform.openai.com/docs/api-reference/responses).
+This study uses the [OpenAI Responses API](https://developers.openai.com/api/reference/resources/responses).
 
 ### Conversation Memory
 
@@ -43,7 +41,7 @@ In this study, the model requests the image or the dataset only when a question 
 
 To call tools, we use a two-step request flow. A short planning call asks whether tools are needed, and a second call delivers the final answer with the tool results.
 
-Learn more: [Function calling](https://platform.openai.com/docs/guides/function-calling)
+Learn more: [Function calling](https://developers.openai.com/api/docs/guides/function-calling)
 
 ### Provenance and Results are Recorded
 
@@ -97,21 +95,21 @@ All key settings live in `ChatInterface.tsx`. These are the most relevant parame
 **Change the assistant behavior (system prompt):**
 Edit `prePrompt` and `toolPolicy` to control how the assistant responds and when it should use tools.
 
-Learn more: [System instructions](https://platform.openai.com/docs/guides/responses#system-instructions)
+Learn more: [Message roles and instruction following](https://developers.openai.com/api/docs/guides/text#message-roles-and-instruction-following)
 
 **Change the model:**
 Update `model` (currently `gpt-5.2`) in both the tool-selection request and the streaming request.
 
-Learn more: [Model list](https://platform.openai.com/docs/models)
+Learn more: [Model list](https://developers.openai.com/api/docs/models)
 
 **Change response length and style:**
 * `max_output_tokens`: maximum reply length.
 * `temperature`: creativity level.
 
-Learn more: [Responses API parameters](https://platform.openai.com/docs/api-reference/responses)
+Learn more: [Responses API parameters](https://developers.openai.com/api/reference/resources/responses)
 
 **Change the data or chart image:**
 * Dataset: replace `assets/data/clustered-heatmap.csv` to your dataset.
 * Chart image: replace the OpenAI `file_id` to your image returned by `get_chart_image_file_id`.
 
-Learn more: [Files API](https://platform.openai.com/docs/api-reference/files)
+Learn more: [Files API](https://developers.openai.com/api/reference/resources/files)

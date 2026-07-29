@@ -7,8 +7,9 @@ vi.mock('../Prefix', () => ({ PREFIX: '/prefix/' }));
 
 afterEach(() => vi.restoreAllMocks());
 
-function mockFetch(text: string) {
+function mockFetch(text: string, ok = true) {
   vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({
+    ok,
     text: () => Promise.resolve(text),
     json: () => Promise.resolve(JSON.parse(text)),
   })));
@@ -22,6 +23,11 @@ describe('getStaticAssetByPath', () => {
 
   test('returns undefined when the response is the ReVISit index page', async () => {
     mockFetch('<html><head><title>ReVISit</title></head></html>');
+    await expect(getStaticAssetByPath('/missing')).resolves.toBeUndefined();
+  });
+
+  test('returns undefined when the response is not ok (e.g. a custom 404 page)', async () => {
+    mockFetch('<html><head></head><body>redirecting…</body></html>', false);
     await expect(getStaticAssetByPath('/missing')).resolves.toBeUndefined();
   });
 });
