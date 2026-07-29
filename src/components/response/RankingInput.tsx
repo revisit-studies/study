@@ -485,7 +485,8 @@ function RankingPairwiseComponent({
 
       const existingInOpposite = Object.entries(newAnswer).some(([instId, loc]) => {
         const existingBaseId = getRankingBaseItemId(instId, optionIds);
-        return loc === oppositeLocationId && existingBaseId === baseItemId;
+        const isDraggedInstance = !isFromAvailable && instId === draggedKey;
+        return !isDraggedInstance && loc === oppositeLocationId && existingBaseId === baseItemId;
       });
 
       if (existingInOpposite) {

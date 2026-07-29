@@ -639,6 +639,22 @@ describe('RankingPairwiseComponent', () => {
     });
   });
 
+  test('an item can move between HIGH and LOW within its own pair', async () => {
+    const onChange = vi.fn();
+    const answer = {
+      value: { [rankingInstanceKey('Item A', 0)]: 'pair-0-high' },
+      onChange,
+    } as unknown as { value: Record<string, string> };
+    render(
+      <RankingInput {...baseProps} response={makeResponse('ranking-pairwise')} answer={answer} />,
+    );
+    // The moving instance itself must not count as "already in the opposite side"
+    await act(async () => {
+      capturedOnDragEnd?.(makeDragEnd(pairwisePlacedDragId(rankingInstanceKey('Item A', 0)), 'pair-0-low'));
+    });
+    expect(onChange).toHaveBeenCalledWith({ [rankingInstanceKey('Item A', 0)]: 'pair-0-low' });
+  });
+
   test('handleDragEnd: move existing positioned item to a new pair position', async () => {
     const onChange = vi.fn();
     const answer = {
