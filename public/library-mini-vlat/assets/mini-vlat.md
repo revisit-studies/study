@@ -6,13 +6,15 @@ Mini-VLAT is a short and effective measure of visualization literacy. Mini-VLAT 
 
 ## Reference
 
-S. Pandey and A. Ottley, “Mini‐VLAT: A Short and Effective Measure of Visualization Literacy,” Computer Graphics Forum, vol. 42, no. 3, pp. 1–11, Jun. 2023
+S. Pandey and A. Ottley, “Mini‐VLAT: A Short and Effective Measure of Visualization Literacy,” Computer Graphics Forum, vol. 42, no. 3, pp. 1–11, Jun. 2023.
 
 DOI: [10.1111/cgf.14809](https://dx.doi.org/10.1111/cgf.14809)
 
+Link: [https://washuvis.github.io/minivlat/](https://washuvis.github.io/minivlat/)
+
 ## Available Components
 
-- areachar
+- areachart
 - barchart
 - bubblechart
 - choropleth
@@ -22,7 +24,7 @@ DOI: [10.1111/cgf.14809](https://dx.doi.org/10.1111/cgf.14809)
 - scatterplot
 - stackedarea
 - stackedbar
-- stackedBar100
+- stackedbar100
 - treemap
 
 ## Available Sequences

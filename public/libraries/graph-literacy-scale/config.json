@@ -152,7 +152,7 @@
       "response": [
         {
           "id": "res-Q3",
-          "prompt": "Of all the people who die from cancer, approximately what percentage dies from lung cancer?___%",
+          "prompt": "Of all the people who die from cancer, approximately what percentage dies from lung cancer? ___%",
           "required": true,
           "location": "sidebar",
           "type": "numerical"
@@ -174,7 +174,7 @@
       "response": [
         {
           "id": "res-Q4",
-          "prompt": "Approximately what percentage of people who die from cancer die from colon cancer, breast cancer, and prostate cancer taken together?___%",
+          "prompt": "Approximately what percentage of people who die from cancer die from colon cancer, breast cancer, and prostate cancer taken together? ___%",
           "required": true,
           "location": "sidebar",
           "type": "numerical"
@@ -196,7 +196,7 @@
       "response": [
         {
           "id": "res-Q5",
-          "prompt": "Approximately what percentage of people had Adeolitis in the year 2000?___%",
+          "prompt": "Approximately what percentage of people had Adeolitis in the year 2000? ___%",
           "required": true,
           "location": "sidebar",
           "type": "numerical"
@@ -237,7 +237,9 @@
       "correctAnswer": [
         {
           "id": "res-Q7",
-          "answer": 24
+          "answer": 24,
+          "acceptableLow": 23,
+          "acceptableHigh": 25
         }
       ],
       "meta": {
@@ -246,7 +248,7 @@
       "response": [
         {
           "id": "res-Q7",
-          "prompt": "According to your best guess, what will the percentage of people with Adeolitis be in the year 2010?___%",
+          "prompt": "According to your best guess, what will the percentage of people with Adeolitis be in the year 2010? ___%",
           "required": true,
           "location": "sidebar",
           "type": "numerical"

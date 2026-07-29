@@ -8,7 +8,7 @@ When using this library, please replace the `vis-example.png` file with your own
 
 ## Reference
 
-A.-F. Cabouat, T. He, P. Isenberg, and T. Isenberg, “PREVis: Perceived Readability Evaluation for Visualizations,” IEEE Transactions on Visualization and Computer Graphics, vol. 31, no. 1, pp. 1083–1093, Jan. 2025
+A.-F. Cabouat, T. He, P. Isenberg, and T. Isenberg, “PREVis: Perceived Readability Evaluation for Visualizations,” IEEE Transactions on Visualization and Computer Graphics, vol. 31, no. 1, pp. 1083–1093, Jan. 2025.
 
 DOI: [10.1109/TVCG.2024.3456318](https://dx.doi.org/10.1109/TVCG.2024.3456318)
 
