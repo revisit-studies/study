@@ -776,6 +776,27 @@ describe('RankingPairwiseComponent', () => {
     });
   });
 
+  test('async restoration replaces the untouched default pair 0 row', async () => {
+    const { rerender, getAllByRole } = render(
+      <RankingInput {...baseProps} response={makeResponse('ranking-pairwise')} answer={{ value: {} }} />,
+    );
+    // Empty answer renders the single default pair 0 row
+    expect(getAllByRole('button').filter((b) => b.textContent === 'X').length).toBe(1);
+
+    await act(async () => {
+      rerender(
+        <RankingInput
+          {...baseProps}
+          response={makeResponse('ranking-pairwise')}
+          answer={{ value: { [rankingInstanceKey('Item A', 0)]: 'pair-1-high' } }}
+        />,
+      );
+    });
+    // The restored pair 1 replaces the untouched placeholder — no phantom
+    // empty pair 0 row remains
+    expect(getAllByRole('button').filter((b) => b.textContent === 'X').length).toBe(1);
+  });
+
   test('counters resync when answer.value is replaced while mounted', async () => {
     const onChange = vi.fn();
     const emptyAnswer = { value: {}, onChange } as unknown as { value: Record<string, string> };

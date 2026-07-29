@@ -118,13 +118,13 @@ function parseTaggedRankingInstanceKey(instanceId: string): { baseItemId: string
 }
 
 export function getRankingBaseItemId(instanceId: string, optionValues: Set<string>): string {
+  if (optionValues.has(instanceId)) {
+    return instanceId;
+  }
+
   const tagged = parseTaggedRankingInstanceKey(instanceId);
   if (tagged) {
     return tagged.baseItemId;
-  }
-
-  if (optionValues.has(instanceId)) {
-    return instanceId;
   }
 
   // Legacy generated keys: `<optionValue>_<counter>`, longest option match first
@@ -137,6 +137,10 @@ export function getRankingBaseItemId(instanceId: string, optionValues: Set<strin
 }
 
 export function getRankingInstanceIndex(instanceId: string, optionValues: Set<string>): number | null {
+  if (optionValues.has(instanceId)) {
+    return null;
+  }
+
   const tagged = parseTaggedRankingInstanceKey(instanceId);
   if (tagged) {
     return tagged.instanceIndex;

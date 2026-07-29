@@ -580,6 +580,17 @@ describe('validateResponse', () => {
     expect(validateResponse(response, legacyPair, { ranking: legacyPair }).valid).toBe(true);
   });
 
+  test('an option value that looks like a tagged key resolves as itself', () => {
+    const response: Response = {
+      id: 'ranking', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: ['model', 'instance-0-model'],
+    };
+
+    // Both entries are plain default keys; the configured option
+    // 'instance-0-model' must not be parsed as an instance of 'model'
+    const pair = { 'instance-0-model': 'pair-0-high', model: 'pair-0-low' };
+    expect(validateResponse(response, pair, { ranking: pair }).valid).toBe(true);
+  });
+
   test('pairwise instance keys keep option values containing hyphens intact', () => {
     const response: Response = {
       id: 'ranking', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: ['e-bike', 'car'],

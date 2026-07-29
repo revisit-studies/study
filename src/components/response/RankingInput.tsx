@@ -22,7 +22,7 @@ import {
   Box, Button, Flex, Group, Paper, Stack, Text,
 } from '@mantine/core';
 import {
-  useCallback, useEffect, useMemo, useState,
+  useCallback, useEffect, useMemo, useRef, useState,
 } from 'react';
 import { InputLabel } from './InputLabel';
 import { OptionLabel } from './OptionLabel';
@@ -407,10 +407,15 @@ function RankingPairwiseComponent({
   const [activeId, setActiveId] = useState<string | null>(null);
   const [instanceCounter, setInstanceCounter] = useState(() => scanRestoredAnswer(answer?.value).maxInstanceIndex + 1);
   const [nextPairId, setNextPairId] = useState(() => Math.max(scanRestoredAnswer(answer?.value).maxPairId + 1, 1));
+  const hasPlaceholderPairRef = useRef(Object.keys(answer?.value || {}).length === 0);
 
   useEffect(() => {
     const { restoredPairIds, maxPairId, maxInstanceIndex } = scanRestoredAnswer(answer?.value);
     setPairIds((prev) => {
+      if (hasPlaceholderPairRef.current && restoredPairIds.size > 0) {
+        hasPlaceholderPairRef.current = false;
+        return [...restoredPairIds].sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
+      }
       const merged = [...prev];
       restoredPairIds.forEach((pairId) => {
         if (!merged.includes(pairId)) merged.push(pairId);
@@ -530,6 +535,7 @@ function RankingPairwiseComponent({
   const handleRemovePair = (pairId: string) => {
     if (disabled) return;
 
+    hasPlaceholderPairRef.current = false;
     const newAnswer = { ...answer.value };
     Object.keys(newAnswer).forEach((key) => {
       if (newAnswer[key].startsWith(`pair-${pairId}-`)) {
@@ -550,6 +556,7 @@ function RankingPairwiseComponent({
           disabled={disabled}
           onClick={() => {
             if (!disabled) {
+              hasPlaceholderPairRef.current = false;
               setPairIds((prev) => [...prev, nextPairId.toString()]);
               setNextPairId((prev) => prev + 1);
             }
