@@ -181,6 +181,15 @@ export function checkPairwiseRankingResponse(response: RankingResponse, value: R
   if (!pairList.every(isCompletePair)) {
     return 'Please complete or remove unfinished pairs to continue.';
   }
+
+  const pairSignatures = pairList.map((pair) => JSON.stringify([
+    pair.high[0],
+    pair.low[0],
+  ].sort()));
+  if (new Set(pairSignatures).size !== pairSignatures.length) {
+    return 'This would create a duplicate pair.';
+  }
+
   return null;
 }
 

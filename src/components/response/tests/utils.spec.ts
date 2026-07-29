@@ -526,6 +526,24 @@ describe('validateResponse', () => {
     expect(validateResponse(response, twoPairs, { ranking: twoPairs }).valid).toBe(true);
   });
 
+  test('pairwise ranking rejects duplicate restored/default pairs', () => {
+    const response: Response = {
+      id: 'ranking', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: ['A', 'B'],
+    };
+    const duplicatePairs = {
+      A_0: 'pair-0-high',
+      B_1: 'pair-0-low',
+      B_2: 'pair-1-high',
+      A_3: 'pair-1-low',
+    };
+
+    expect(validateResponse(response, duplicatePairs, { ranking: duplicatePairs })).toMatchObject({
+      issueType: 'invalid',
+      message: 'This would create a duplicate pair.',
+      blocksProgression: true,
+    });
+  });
+
   test.each([
     ['self-comparisons', { A_0: 'pair-0-high', A_1: 'pair-0-low' }],
     ['multiple items in one slot', { A_0: 'pair-0-high', B_1: 'pair-0-high', C_2: 'pair-0-low' }],
