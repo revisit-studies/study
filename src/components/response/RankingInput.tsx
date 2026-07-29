@@ -477,7 +477,7 @@ function RankingPairwiseComponent({
     const [, targetPairId, targetPosition] = targetMatch;
 
     const currentItemsInPosition = Object.entries(newAnswer).filter(
-      ([instId, loc]) => loc === targetId && instId !== draggedKey,
+      ([instId, loc]) => loc === targetId && !(!isFromAvailable && instId === draggedKey),
     ).length;
 
     if (currentItemsInPosition >= 1) {

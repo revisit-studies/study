@@ -488,14 +488,12 @@ describe('validateResponse', () => {
       blocksProgression: true,
     });
 
-    // Only one half of a pair is filled
     expect(validateResponse(response, { A_0: 'pair-0-high' }, { ranking: { A_0: 'pair-0-high' } })).toMatchObject({
       issueType: 'invalid',
       message: 'Please complete at least one pair to continue.',
       blocksProgression: true,
     });
 
-    // Two halves in different pairs, but no single complete pair
     const splitPairs = { A_0: 'pair-0-high', B_1: 'pair-1-low' };
     expect(validateResponse(response, splitPairs, { ranking: splitPairs })).toMatchObject({
       issueType: 'invalid',
@@ -515,7 +513,6 @@ describe('validateResponse', () => {
       id: 'ranking', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: ['A', 'B', 'C', 'D'],
     };
 
-    // pair-0 is complete but pair-1 only has a HIGH item
     const halfPair = { A_0: 'pair-0-high', B_1: 'pair-0-low', C_2: 'pair-1-high' };
     expect(validateResponse(response, halfPair, { ranking: halfPair })).toMatchObject({
       issueType: 'invalid',
@@ -529,28 +526,16 @@ describe('validateResponse', () => {
     expect(validateResponse(response, twoPairs, { ranking: twoPairs }).valid).toBe(true);
   });
 
-  test('pairwise ranking rejects malformed restored/default answers', () => {
+  test.each([
+    ['self-comparisons', { A_0: 'pair-0-high', A_1: 'pair-0-low' }],
+    ['multiple items in one slot', { A_0: 'pair-0-high', B_1: 'pair-0-high', C_2: 'pair-0-low' }],
+    ['unknown option IDs', { X_0: 'pair-0-high', Y_1: 'pair-0-low' }],
+  ])('pairwise ranking rejects %s in restored/default answers', (_caseName, value) => {
     const response: Response = {
       id: 'ranking', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: ['A', 'B', 'C'],
     };
 
-    // Same option on both sides of a pair (self-comparison)
-    const selfPair = { A_0: 'pair-0-high', A_1: 'pair-0-low' };
-    expect(validateResponse(response, selfPair, { ranking: selfPair })).toMatchObject({
-      issueType: 'invalid',
-      message: 'Please complete at least one pair to continue.',
-    });
-
-    // Multiple items stuffed into one slot
-    const doubleSlot = { A_0: 'pair-0-high', B_1: 'pair-0-high', C_2: 'pair-0-low' };
-    expect(validateResponse(response, doubleSlot, { ranking: doubleSlot })).toMatchObject({
-      issueType: 'invalid',
-      message: 'Please complete at least one pair to continue.',
-    });
-
-    // Option ids that are not part of the configured options
-    const unknownIds = { X_0: 'pair-0-high', Y_1: 'pair-0-low' };
-    expect(validateResponse(response, unknownIds, { ranking: unknownIds })).toMatchObject({
+    expect(validateResponse(response, value, { ranking: value })).toMatchObject({
       issueType: 'invalid',
       message: 'Please complete at least one pair to continue.',
     });
@@ -561,15 +546,14 @@ describe('validateResponse', () => {
       id: 'ranking', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: ['new_york', 'los_angeles'],
     };
 
-    // Generated instance keys (`<option>_<counter>`) on underscore option values
+    // Legacy instance keys remain valid for option values containing underscores.
     const instanceKeys = { new_york_0: 'pair-0-high', los_angeles_1: 'pair-0-low' };
     expect(validateResponse(response, instanceKeys, { ranking: instanceKeys }).valid).toBe(true);
 
-    // Default answers use plain option values as keys (see RankingResponse docs)
+    // Configured defaults use plain option values as keys.
     const plainKeys = { new_york: 'pair-0-high', los_angeles: 'pair-0-low' };
     expect(validateResponse(response, plainKeys, { ranking: plainKeys }).valid).toBe(true);
 
-    // Self-pair still detected across differing key styles
     const selfPair = { new_york: 'pair-0-high', new_york_1: 'pair-0-low' };
     expect(validateResponse(response, selfPair, { ranking: selfPair })).toMatchObject({
       issueType: 'invalid',
@@ -581,20 +565,16 @@ describe('validateResponse', () => {
       id: 'ranking', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: ['model', 'model_0'],
     };
 
-    // A tagged instance of 'model' paired against the real option 'model_0' —
-    // two distinct items, valid (the legacy key 'model_0' would have been
-    // ambiguous here)
+    // Tagged keys distinguish a generated model instance from the configured model_0 option.
     const taggedPair = { 'instance-0-model': 'pair-0-high', model_0: 'pair-0-low' };
     expect(validateResponse(response, taggedPair, { ranking: taggedPair }).valid).toBe(true);
 
-    // A tagged instance of 'model' against the plain default key 'model' is a
-    // self-pair
     const selfPair = { 'instance-0-model': 'pair-0-high', model: 'pair-0-low' };
     expect(validateResponse(response, selfPair, { ranking: selfPair })).toMatchObject({
       issueType: 'invalid',
     });
 
-    // Legacy generated keys are still recognized when unambiguous
+    // Unambiguous legacy instance keys remain supported.
     const legacyPair = { model_66: 'pair-0-high', model_0: 'pair-0-low' };
     expect(validateResponse(response, legacyPair, { ranking: legacyPair }).valid).toBe(true);
   });
@@ -604,8 +584,6 @@ describe('validateResponse', () => {
       id: 'ranking', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: ['model', 'instance-0-model'],
     };
 
-    // Both entries are plain default keys; the configured option
-    // 'instance-0-model' must not be parsed as an instance of 'model'
     const pair = { 'instance-0-model': 'pair-0-high', model: 'pair-0-low' };
     expect(validateResponse(response, pair, { ranking: pair }).valid).toBe(true);
   });
@@ -615,7 +593,6 @@ describe('validateResponse', () => {
       id: 'ranking', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: ['e-bike', 'car'],
     };
 
-    // The option value sits at the end of the key, so its own hyphens are safe
     const pair = { 'instance-0-e-bike': 'pair-0-high', car: 'pair-0-low' };
     expect(validateResponse(response, pair, { ranking: pair }).valid).toBe(true);
 

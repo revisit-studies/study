@@ -244,6 +244,7 @@ test('Test ranking response(sublist, categorical, pairwise) and validation', asy
 
   await page.getByRole('button', { name: 'Add New Pair' }).click();
   await dragFromAvailableInPairwise(page, 'Ball State University', 'HIGH', 1);
+  await settleAfterDrag(page);
   await dragFromAvailableInPairwise(page, 'University of Rochester', 'LOW', 1);
   await settleAfterDrag(page);
   await expect(page.getByText('This would create a duplicate pair.')).toBeVisible();

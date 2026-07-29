@@ -176,9 +176,13 @@ function pairwisePlacedDragId(instanceId: string) {
   return `placed:${instanceId}`;
 }
 
-// Generated instance keys are tagged (see makeRankingInstanceKey)
 function rankingInstanceKey(baseItemId: string, instanceIndex: number) {
   return `instance-${instanceIndex}-${baseItemId}`;
+}
+
+function makePairwiseAnswer(value: Record<string, string> = {}) {
+  const onChange = vi.fn();
+  return { answer: { value, onChange }, onChange };
 }
 
 // ══ RankingSublistComponent ══════════════════════════════════════════════════
@@ -434,7 +438,6 @@ describe('RankingPairwiseComponent', () => {
     const addBtn = buttons.find((b) => b.textContent === 'Add New Pair');
     expect(addBtn).toBeDefined();
     await act(async () => { fireEvent.click(addBtn!); });
-    // Should have added a new pair without error
     expect(getAllByRole('button').length).toBeGreaterThan(0);
   });
 
@@ -469,11 +472,7 @@ describe('RankingPairwiseComponent', () => {
   });
 
   test('handleDragEnd: drop to unassigned removes item from pair', async () => {
-    const onChange = vi.fn();
-    const answer = {
-      value: { 'Item A_0': 'pair-0-high' },
-      onChange,
-    } as unknown as { value: Record<string, string> };
+    const { answer, onChange } = makePairwiseAnswer({ 'Item A_0': 'pair-0-high' });
     render(
       <RankingInput {...baseProps} response={makeResponse('ranking-pairwise')} answer={answer} />,
     );
@@ -484,7 +483,7 @@ describe('RankingPairwiseComponent', () => {
   });
 
   test('instances of "model" are never confused with the option "model_0"', async () => {
-    const onChange = vi.fn();
+    const { answer, onChange } = makePairwiseAnswer();
     const response = makeResponse('ranking-pairwise', {
       options: [
         { label: 'Original model', value: 'model' },
@@ -495,11 +494,9 @@ describe('RankingPairwiseComponent', () => {
       <RankingInput
         {...baseProps}
         response={response}
-        answer={{ value: {}, onChange } as unknown as { value: Record<string, string> }}
+        answer={answer}
       />,
     );
-    // The generated instance key is a tagged tuple, not the legacy 'model_0'
-    // string that would collide with the real option value
     await act(async () => {
       capturedOnDragEnd?.(makeDragEnd(pairwiseAvailableDragId('model'), 'pair-0-high'));
     });
@@ -517,43 +514,45 @@ describe('RankingPairwiseComponent', () => {
     const { getAllByText } = render(
       <RankingInput {...baseProps} response={response} answer={answer} />,
     );
-    // Once in the pair slot, once in Available Items
     expect(getAllByText('Original model').length).toBe(2);
-    // 'Model 0' only appears in Available Items
     expect(getAllByText('Model 0').length).toBe(1);
   });
 
   test('generated keys skip indices that collide with a configured option value', async () => {
-    const onChange = vi.fn();
-    // Pathological config: an option literally named like a generated key
+    const { answer, onChange } = makePairwiseAnswer();
     const response = makeResponse('ranking-pairwise', { options: ['model', 'instance-0-model'] });
     render(
       <RankingInput
         {...baseProps}
         response={response}
-        answer={{ value: {}, onChange } as unknown as { value: Record<string, string> }}
+        answer={answer}
       />,
     );
     await act(async () => {
       capturedOnDragEnd?.(makeDragEnd(pairwiseAvailableDragId('model'), 'pair-0-high'));
     });
-    // index 0 would produce the option value 'instance-0-model'; the guard
-    // bumps to index 1
     expect(onChange).toHaveBeenCalledWith({ 'instance-1-model': 'pair-0-high' });
   });
 
-  test('moving an assigned plain default key moves it instead of duplicating', async () => {
-    const onChange = vi.fn();
-    // Defaults are documented as plain option-value keys; moving the placed
-    // default must relocate it, not treat it as a fresh drop from Available
-    // Items that would leave the original behind.
-    const answer = {
-      value: { 'Item A': 'pair-0-high' },
-      onChange,
-    } as unknown as { value: Record<string, string> };
+  test('an occupied slot rejects the same option dropped from Available Items', async () => {
+    const { answer, onChange } = makePairwiseAnswer({ 'Item A': 'pair-0-high' });
     render(
       <RankingInput {...baseProps} response={makeResponse('ranking-pairwise')} answer={answer} />,
     );
+    await act(async () => {
+      capturedOnDragEnd?.(makeDragEnd(pairwiseAvailableDragId('Item A'), 'pair-0-high'));
+    });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  test('moving an assigned plain default key moves it instead of duplicating', async () => {
+    const { answer, onChange } = makePairwiseAnswer({ 'Item A': 'pair-0-high' });
+    const { getByRole } = render(
+      <RankingInput {...baseProps} response={makeResponse('ranking-pairwise')} answer={answer} />,
+    );
+    await act(async () => {
+      fireEvent.click(getByRole('button', { name: 'Add New Pair' }));
+    });
     await act(async () => {
       capturedOnDragEnd?.(makeDragEnd(pairwisePlacedDragId('Item A'), 'pair-1-high'));
     });
@@ -561,12 +560,12 @@ describe('RankingPairwiseComponent', () => {
   });
 
   test('handleDragEnd: drop from unassigned to pair-high', async () => {
-    const onChange = vi.fn();
+    const { answer, onChange } = makePairwiseAnswer();
     render(
       <RankingInput
         {...baseProps}
         response={makeResponse('ranking-pairwise')}
-        answer={{ value: {}, onChange } as unknown as { value: Record<string, string> }}
+        answer={answer}
       />,
     );
     await act(async () => {
@@ -576,49 +575,33 @@ describe('RankingPairwiseComponent', () => {
   });
 
   test('handleDragEnd: position already occupied (one item limit)', async () => {
-    const onChange = vi.fn();
-    const answer = {
-      value: { 'Item A_0': 'pair-0-high' },
-      onChange,
-    } as unknown as { value: Record<string, string> };
+    const { answer, onChange } = makePairwiseAnswer({ 'Item A_0': 'pair-0-high' });
     render(
       <RankingInput {...baseProps} response={makeResponse('ranking-pairwise')} answer={answer} />,
     );
     await act(async () => {
-      // Try to drop another item into pair-0-high which already has an item
       capturedOnDragEnd?.(makeDragEnd(pairwiseAvailableDragId('Item B'), 'pair-0-high'));
     });
     expect(onChange).not.toHaveBeenCalled();
   });
 
   test('handleDragEnd: same item in opposite position error', async () => {
-    const onChange = vi.fn();
-    const answer = {
-      value: { 'Item A_0': 'pair-0-high' },
-      onChange,
-    } as unknown as { value: Record<string, string> };
+    const { answer, onChange } = makePairwiseAnswer({ 'Item A_0': 'pair-0-high' });
     render(
       <RankingInput {...baseProps} response={makeResponse('ranking-pairwise')} answer={answer} />,
     );
     await act(async () => {
-      // Try to drop Item A into the opposite position (pair-0-low)
       capturedOnDragEnd?.(makeDragEnd(pairwiseAvailableDragId('Item A'), 'pair-0-low'));
     });
     expect(onChange).not.toHaveBeenCalled();
   });
 
   test('handleDragEnd: duplicate pair detection (covers checkForDuplicatePair)', async () => {
-    const onChange = vi.fn();
-    // pair-0 = {A, B}; pair-1 already holds A, so completing it with B would
-    // duplicate pair-0 and the drop must be rejected
-    const answer = {
-      value: {
-        'Item A_0': 'pair-0-high',
-        'Item B_1': 'pair-0-low',
-        'Item A_2': 'pair-1-high',
-      },
-      onChange,
-    } as unknown as { value: Record<string, string> };
+    const { answer, onChange } = makePairwiseAnswer({
+      'Item A_0': 'pair-0-high',
+      'Item B_1': 'pair-0-low',
+      'Item A_2': 'pair-1-high',
+    });
     render(
       <RankingInput {...baseProps} response={makeResponse('ranking-pairwise')} answer={answer} />,
     );
@@ -627,7 +610,6 @@ describe('RankingPairwiseComponent', () => {
     });
     expect(onChange).not.toHaveBeenCalled();
 
-    // A non-duplicating completion (Item C) is accepted
     await act(async () => {
       capturedOnDragEnd?.(makeDragEnd(pairwiseAvailableDragId('Item C'), 'pair-1-low'));
     });
@@ -640,16 +622,12 @@ describe('RankingPairwiseComponent', () => {
   });
 
   test('dropping onto an item card is ignored', async () => {
-    const onChange = vi.fn();
-    const answer = {
-      value: { [rankingInstanceKey('Item A', 0)]: 'pair-0-high' },
-      onChange,
-    } as unknown as { value: Record<string, string> };
+    const { answer, onChange } = makePairwiseAnswer({
+      [rankingInstanceKey('Item A', 0)]: 'pair-0-high',
+    });
     render(
       <RankingInput {...baseProps} response={makeResponse('ranking-pairwise')} answer={answer} />,
     );
-    // Dropping onto another item card (not a zone) must not store the card's
-    // drag id as an answer location
     await act(async () => {
       capturedOnDragEnd?.(makeDragEnd(
         pairwiseAvailableDragId('Item B'),
@@ -666,18 +644,14 @@ describe('RankingPairwiseComponent', () => {
   });
 
   test('moving a placed item cannot create a duplicate pair', async () => {
-    const onChange = vi.fn();
     // pair-0 = {A, B}, pair-1 = {A}, pair-2 = {B}; moving B from pair-2 into
     // pair-1 would make pair-1 a duplicate of the intact pair-0
-    const answer = {
-      value: {
-        [rankingInstanceKey('Item A', 0)]: 'pair-0-high',
-        [rankingInstanceKey('Item B', 1)]: 'pair-0-low',
-        [rankingInstanceKey('Item A', 2)]: 'pair-1-high',
-        [rankingInstanceKey('Item B', 3)]: 'pair-2-high',
-      },
-      onChange,
-    } as unknown as { value: Record<string, string> };
+    const { answer, onChange } = makePairwiseAnswer({
+      [rankingInstanceKey('Item A', 0)]: 'pair-0-high',
+      [rankingInstanceKey('Item B', 1)]: 'pair-0-low',
+      [rankingInstanceKey('Item A', 2)]: 'pair-1-high',
+      [rankingInstanceKey('Item B', 3)]: 'pair-2-high',
+    });
     render(
       <RankingInput {...baseProps} response={makeResponse('ranking-pairwise')} answer={answer} />,
     );
@@ -688,17 +662,13 @@ describe('RankingPairwiseComponent', () => {
   });
 
   test('moving a placed item that breaks its source pair is allowed', async () => {
-    const onChange = vi.fn();
     // pair-0 = {A, B}, pair-1 = {A}; moving B out of pair-0 into pair-1 leaves
     // pair-0 = {A}, so the result is not a duplicate
-    const answer = {
-      value: {
-        [rankingInstanceKey('Item A', 0)]: 'pair-0-high',
-        [rankingInstanceKey('Item B', 1)]: 'pair-0-low',
-        [rankingInstanceKey('Item A', 2)]: 'pair-1-high',
-      },
-      onChange,
-    } as unknown as { value: Record<string, string> };
+    const { answer, onChange } = makePairwiseAnswer({
+      [rankingInstanceKey('Item A', 0)]: 'pair-0-high',
+      [rankingInstanceKey('Item B', 1)]: 'pair-0-low',
+      [rankingInstanceKey('Item A', 2)]: 'pair-1-high',
+    });
     render(
       <RankingInput {...baseProps} response={makeResponse('ranking-pairwise')} answer={answer} />,
     );
@@ -713,15 +683,12 @@ describe('RankingPairwiseComponent', () => {
   });
 
   test('an item can move between HIGH and LOW within its own pair', async () => {
-    const onChange = vi.fn();
-    const answer = {
-      value: { [rankingInstanceKey('Item A', 0)]: 'pair-0-high' },
-      onChange,
-    } as unknown as { value: Record<string, string> };
+    const { answer, onChange } = makePairwiseAnswer({
+      [rankingInstanceKey('Item A', 0)]: 'pair-0-high',
+    });
     render(
       <RankingInput {...baseProps} response={makeResponse('ranking-pairwise')} answer={answer} />,
     );
-    // The moving instance itself must not count as "already in the opposite side"
     await act(async () => {
       capturedOnDragEnd?.(makeDragEnd(pairwisePlacedDragId(rankingInstanceKey('Item A', 0)), 'pair-0-low'));
     });
@@ -729,16 +696,13 @@ describe('RankingPairwiseComponent', () => {
   });
 
   test('handleDragEnd: move existing positioned item to a new pair position', async () => {
-    const onChange = vi.fn();
-    const answer = {
-      value: { 'Item A_0': 'pair-0-high' },
-      onChange,
-    } as unknown as { value: Record<string, string> };
-    render(
+    const { answer, onChange } = makePairwiseAnswer({ 'Item A_0': 'pair-0-high' });
+    const { getByRole } = render(
       <RankingInput {...baseProps} response={makeResponse('ranking-pairwise')} answer={answer} />,
     );
-    // Move an already-placed instance to a different pair — the key is kept,
-    // only its location changes
+    await act(async () => {
+      fireEvent.click(getByRole('button', { name: 'Add New Pair' }));
+    });
     await act(async () => {
       capturedOnDragEnd?.(makeDragEnd(pairwisePlacedDragId('Item A_0'), 'pair-1-high'));
     });
@@ -762,11 +726,7 @@ describe('RankingPairwiseComponent', () => {
   });
 
   test('restored answer: Add New Pair targets a fresh pair id, not an existing one', async () => {
-    const onChange = vi.fn();
-    const answer = {
-      value: { 'Item A_0': 'pair-1-high' },
-      onChange,
-    } as unknown as { value: Record<string, string> };
+    const { answer, onChange } = makePairwiseAnswer({ 'Item A_0': 'pair-1-high' });
     const { getAllByRole } = render(
       <RankingInput {...baseProps} response={makeResponse('ranking-pairwise')} answer={answer} />,
     );
@@ -781,16 +741,16 @@ describe('RankingPairwiseComponent', () => {
   });
 
   test('restored answer: new instance keys never overwrite existing keys', async () => {
-    const onChange = vi.fn();
-    const answer = {
-      value: { 'Item A_0': 'pair-1-high', 'Item B_1': 'pair-1-low' },
-      onChange,
-    } as unknown as { value: Record<string, string> };
-    render(
+    const { answer, onChange } = makePairwiseAnswer({
+      'Item A_0': 'pair-1-high',
+      'Item B_1': 'pair-1-low',
+    });
+    const { getByRole } = render(
       <RankingInput {...baseProps} response={makeResponse('ranking-pairwise')} answer={answer} />,
     );
-    // Re-adding Item A from unassigned must generate a fresh suffix (_2), not
-    // reuse _0 and silently relocate the restored 'Item A_0' entry.
+    await act(async () => {
+      fireEvent.click(getByRole('button', { name: 'Add New Pair' }));
+    });
     await act(async () => {
       capturedOnDragEnd?.(makeDragEnd(pairwiseAvailableDragId('Item A'), 'pair-2-high'));
     });
@@ -813,9 +773,8 @@ describe('RankingPairwiseComponent', () => {
   });
 
   test('option values containing underscores drag from unassigned as new instances', async () => {
-    const onChange = vi.fn();
+    const { answer, onChange } = makePairwiseAnswer();
     const response = makeResponse('ranking-pairwise', { options: ['new_york', 'other_option'] });
-    const answer = { value: {}, onChange } as unknown as { value: Record<string, string> };
     render(
       <RankingInput {...baseProps} response={response} answer={answer} />,
     );
@@ -828,13 +787,8 @@ describe('RankingPairwiseComponent', () => {
   });
 
   test('option value ending in digits is not mistaken for a generated instance', async () => {
-    const onChange = vi.fn();
     const response = makeResponse('ranking-pairwise', { options: ['route_66', 'Item B'] });
-    // Default-style answer keyed by the plain option value
-    const answer = {
-      value: { route_66: 'pair-0-high' },
-      onChange,
-    } as unknown as { value: Record<string, string> };
+    const { answer, onChange } = makePairwiseAnswer({ route_66: 'pair-0-high' });
     render(
       <RankingInput {...baseProps} response={response} answer={answer} />,
     );
@@ -871,9 +825,8 @@ describe('RankingPairwiseComponent', () => {
   });
 
   test('counters resync when answer.value is replaced while mounted', async () => {
-    const onChange = vi.fn();
-    const emptyAnswer = { value: {}, onChange } as unknown as { value: Record<string, string> };
-    const { rerender } = render(
+    const { answer: emptyAnswer, onChange } = makePairwiseAnswer();
+    const { rerender, getByRole } = render(
       <RankingInput {...baseProps} response={makeResponse('ranking-pairwise')} answer={emptyAnswer} />,
     );
 
@@ -881,11 +834,14 @@ describe('RankingPairwiseComponent', () => {
     const restoredAnswer = {
       value: { 'Item A_0': 'pair-1-high', 'Item B_1': 'pair-1-low' },
       onChange,
-    } as unknown as { value: Record<string, string> };
+    };
     await act(async () => {
       rerender(
         <RankingInput {...baseProps} response={makeResponse('ranking-pairwise')} answer={restoredAnswer} />,
       );
+    });
+    await act(async () => {
+      fireEvent.click(getByRole('button', { name: 'Add New Pair' }));
     });
 
     // Without resyncing, the counter would still be 0 and this drag would emit
