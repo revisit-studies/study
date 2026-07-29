@@ -23,7 +23,7 @@ const createExampleConfig = (libraryName) => ({
     organizations: ['University of Utah', 'WPI'],
   },
   uiConfig: {
-    contactEmail: '',
+    contactEmail: 'contact@revisit.dev',
     logoPath: 'revisitAssets/revisitLogoSquare.svg',
     withProgressBar: true,
     withSidebar: false,
