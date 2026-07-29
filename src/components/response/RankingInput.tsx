@@ -352,6 +352,25 @@ function checkForDuplicatePair(
   return Object.entries(pairMap).some(([pairId, itemSet]) => pairId !== targetPairId && [...itemSet].sort().join('|') === targetPairSignature);
 }
 
+// 'available' = dragged from Available Items, 'placed' = already in a pair
+type PairwiseDragSource = 'available' | 'placed';
+
+function makePairwiseDragId(source: PairwiseDragSource, id: string): string {
+  return `${source}:${id}`;
+}
+
+function parsePairwiseDragId(dragId: string): { source: PairwiseDragSource; id: string } | null {
+  if (dragId.startsWith('available:')) {
+    return { source: 'available', id: dragId.slice('available:'.length) };
+  }
+
+  if (dragId.startsWith('placed:')) {
+    return { source: 'placed', id: dragId.slice('placed:'.length) };
+  }
+
+  return null;
+}
+
 function RankingPairwiseComponent({
   options, disabled, answer, responseId, setError,
 }: {
@@ -429,26 +448,31 @@ function RankingPairwiseComponent({
     setActiveId(null);
     if (disabled || !event.over) return;
 
-    const draggedId = event.active.id as string;
+    const draggedRef = parsePairwiseDragId(event.active.id as string);
+    if (!draggedRef) return;
+    const isFromAvailable = draggedRef.source === 'available';
+    const draggedKey = draggedRef.id;
+    const baseItemId = isFromAvailable ? draggedRef.id : getRankingBaseItemId(draggedRef.id, optionIds);
+
     const targetId = event.over.id as string;
     const newAnswer = { ...answer.value };
 
     if (targetId === 'unassigned') {
-      delete newAnswer[draggedId];
-      setError?.(null);
-      updateAnswer(newAnswer);
+      if (!isFromAvailable) {
+        delete newAnswer[draggedKey];
+        setError?.(null);
+        updateAnswer(newAnswer);
+      }
       return;
     }
 
-    const isFromUnassigned = optionIds.has(draggedId);
-    const baseItemId = getRankingBaseItemId(draggedId, optionIds);
     const targetMatch = targetId.match(/^pair-(\d+)-(high|low)$/);
 
     if (targetMatch) {
       const [, targetPairId, targetPosition] = targetMatch;
 
       const currentItemsInPosition = Object.entries(newAnswer).filter(
-        ([instId, loc]) => loc === targetId && instId !== draggedId,
+        ([instId, loc]) => loc === targetId && instId !== draggedKey,
       ).length;
 
       if (currentItemsInPosition >= 1) {
@@ -470,18 +494,18 @@ function RankingPairwiseComponent({
         return;
       }
 
-      if (isFromUnassigned && checkForDuplicatePair(newAnswer, targetPairId, optionIds, baseItemId)) {
+      if (isFromAvailable && checkForDuplicatePair(newAnswer, targetPairId, optionIds, baseItemId)) {
         setError?.('This would create a duplicate pair.');
         return;
       }
     }
 
-    if (isFromUnassigned) {
-      newAnswer[`${draggedId}_${instanceCounter}`] = targetId;
+    if (isFromAvailable) {
+      newAnswer[`${draggedKey}_${instanceCounter}`] = targetId;
       setInstanceCounter((c) => c + 1);
     } else {
-      delete newAnswer[draggedId];
-      newAnswer[draggedId] = targetId;
+      delete newAnswer[draggedKey];
+      newAnswer[draggedKey] = targetId;
     }
 
     setError?.(null);
@@ -490,7 +514,9 @@ function RankingPairwiseComponent({
 
   const activeItem = useMemo(() => {
     if (!activeId) return null;
-    const baseItemId = getRankingBaseItemId(activeId, optionIds);
+    const draggedRef = parsePairwiseDragId(activeId);
+    if (!draggedRef) return null;
+    const baseItemId = draggedRef.source === 'available' ? draggedRef.id : getRankingBaseItemId(draggedRef.id, optionIds);
     return items.find((i) => i.id === baseItemId) || null;
   }, [activeId, items, optionIds]);
 
@@ -533,7 +559,7 @@ function RankingPairwiseComponent({
               <Box key={position} style={{ width: '300px' }}>
                 <DroppableZone id={`pair-${pairId}-${position}`} title={position.toUpperCase()}>
                   <SortableContext
-                    items={pair[position]}
+                    items={pair[position].map((instanceId) => makePairwiseDragId('placed', instanceId))}
                     strategy={verticalListSortingStrategy}
                   >
                     <Stack>
@@ -543,7 +569,7 @@ function RankingPairwiseComponent({
                         return item ? (
                           <SortableItem
                             key={instanceId}
-                            item={{ ...item, id: baseItemId, symbol: instanceId }}
+                            item={{ ...item, id: baseItemId, symbol: makePairwiseDragId('placed', instanceId) }}
                             disabled={disabled}
                           />
                         ) : null;
@@ -566,10 +592,10 @@ function RankingPairwiseComponent({
         ))}
 
         <DroppableZone id="unassigned" title="Available Items">
-          <SortableContext items={unassigned.map((i) => i.id)} strategy={verticalListSortingStrategy}>
+          <SortableContext items={unassigned.map((i) => makePairwiseDragId('available', i.id))} strategy={verticalListSortingStrategy}>
             <Stack>
               {unassigned.map((item) => (
-                <SortableItem key={item.id} item={item} disabled={disabled} />
+                <SortableItem key={item.id} item={{ ...item, symbol: makePairwiseDragId('available', item.id) }} disabled={disabled} />
               ))}
             </Stack>
           </SortableContext>
