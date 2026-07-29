@@ -13,8 +13,8 @@ export default function VlatTrial({ parameters, setAnswer, answers }: StimulusPa
   const [answerChecked, setAnswerChecked] = useState(false);
 
   useEffect(() => {
-    const hasIncrrectAnswer = Object.keys(answers[answerKey]?.incorrectAnswers || {}).length > 0;
-    setAnswerChecked(hasIncrrectAnswer);
+    const hasIncorrectAnswer = Object.keys(answers[answerKey]?.incorrectAnswers || {}).length > 0;
+    setAnswerChecked(hasIncorrectAnswer);
   }, [answers, answerKey]);
 
   useEffect(() => {
@@ -65,16 +65,16 @@ export default function VlatTrial({ parameters, setAnswer, answers }: StimulusPa
           >
             <Stack mt={30}>
               {
-                    activeQuestion.options.map((op:string, idx:number) => (
-                      <Radio
-                        disabled={(userAnswer !== undefined && userAnswer !== '') || answerChecked}
-                        value={`${String.fromCharCode(65 + idx)}`}
-                        label={`${String.fromCharCode(65 + idx)}. ${op}`}
-                        key={`op${idx}`}
-                        onClick={() => setCurrentAnswer(String.fromCharCode(65 + idx))}
-                      />
-                    ))
-                  }
+                activeQuestion.options.map((op: string, idx: number) => (
+                  <Radio
+                    disabled={(userAnswer !== undefined && userAnswer !== '') || answerChecked}
+                    value={`${String.fromCharCode(65 + idx)}`}
+                    label={`${String.fromCharCode(65 + idx)}. ${op}`}
+                    key={`op${idx}`}
+                    onClick={() => setCurrentAnswer(String.fromCharCode(65 + idx))}
+                  />
+                ))
+              }
             </Stack>
 
           </Radio.Group>
