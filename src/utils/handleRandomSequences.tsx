@@ -9,13 +9,15 @@ import {
 import { Sequence } from '../store/types';
 import { isDynamicBlock } from '../parser/utils';
 
-function shuffle<T>(array: T[]) {
+type RandomSource = () => number;
+
+function shuffle<T>(array: T[], random: RandomSource) {
   let currentIndex = array.length;
 
   // While there remain elements to shuffle...
   while (currentIndex !== 0) {
     // Pick a remaining element...
-    const randomIndex = Math.floor(Math.random() * currentIndex);
+    const randomIndex = Math.floor(random() * currentIndex);
     currentIndex -= 1;
 
     // And swap it with the current element.
@@ -58,7 +60,7 @@ function findUniqueComponents(
   return uniqueComponents;
 }
 
-function generateLatinSquare(config: StudyConfig, path: string) {
+function generateLatinSquare(config: StudyConfig, path: string, random: RandomSource) {
   const pathArr = path.split('-');
 
   let locationInSequence: Partial<ComponentBlock> | Partial<DynamicBlock> | string = {};
@@ -74,15 +76,20 @@ function generateLatinSquare(config: StudyConfig, path: string) {
   });
 
   const options = (locationInSequence as ComponentBlock).components.map((c: unknown, i: number) => (typeof c === 'string' ? c : `_componentBlock${i}`));
-  shuffle(options);
+  shuffle(options, random);
   const newSquare: string[][] = latinSquare<string>(options, true);
   return newSquare;
 }
 
-function generateLatinSquareRows(config: StudyConfig, path: string, count: number): string[][] {
+function generateLatinSquareRows(
+  config: StudyConfig,
+  path: string,
+  count: number,
+  random: RandomSource,
+): string[][] {
   const rows: string[][] = [];
   for (let i = 0; i < count; i += 1) {
-    rows.push(...generateLatinSquare(config, path));
+    rows.push(...generateLatinSquare(config, path, random));
   }
   return rows;
 }
@@ -90,6 +97,7 @@ function generateLatinSquareRows(config: StudyConfig, path: string, count: numbe
 function insertRandomInterruptions(
   components: (string | ComponentBlock | DynamicBlock)[],
   randomInterruptions: RandomInterruption[],
+  random: RandomSource,
 ) {
   const totalInterruptions = randomInterruptions
     .reduce((count, interruption) => count + interruption.numInterruptions, 0);
@@ -102,7 +110,7 @@ function insertRandomInterruptions(
     { length: components.length - 1 },
     (_, index) => index + 1,
   );
-  shuffle(availableLocations);
+  shuffle(availableLocations, random);
 
   const interruptionsByLocation = new Map<number, string[][]>();
   randomInterruptions.forEach((interruption) => {
@@ -135,6 +143,7 @@ function _componentBlockToSequence(
   latinSquareObject: Record<string, string[][]>,
   path: string,
   config: StudyConfig,
+  random: RandomSource,
 ): Sequence {
   if (isDynamicBlock(order)) {
     return {
@@ -153,7 +162,7 @@ function _componentBlockToSequence(
   if (order.order === 'random') {
     const randomArr = structuredClone(order.components);
 
-    shuffle(randomArr);
+    shuffle(randomArr, random);
 
     computedComponents = randomArr;
   } else if (order.order === 'latinSquare' && latinSquareObject) {
@@ -194,7 +203,13 @@ function _componentBlockToSequence(
         const actualIndex = matchedUnique.indices[seenCount] ?? matchedUnique.indices[0];
         seenCounts.set(matchedUnique.component, seenCount + 1);
 
-        computedComponents[i] = _componentBlockToSequence(curr, latinSquareObject, `${path}-${actualIndex}`, config) as unknown as ComponentBlock;
+        computedComponents[i] = _componentBlockToSequence(
+          curr,
+          latinSquareObject,
+          `${path}-${actualIndex}`,
+          config,
+          random,
+        ) as unknown as ComponentBlock;
       } else {
         // This should never happen - all component blocks should be in uniqueComponents
         throw new Error(`Unexpected: component block not found in uniqueComponents map at path ${path}`);
@@ -229,7 +244,11 @@ function _componentBlockToSequence(
           groupedRandomInterruptions.push(order.interruptions[interruptionIndex] as RandomInterruption);
         }
 
-        computedComponents = insertRandomInterruptions(computedComponents, groupedRandomInterruptions);
+        computedComponents = insertRandomInterruptions(
+          computedComponents,
+          groupedRandomInterruptions,
+          random,
+        );
       }
     }
   }
@@ -249,10 +268,11 @@ function componentBlockToSequence(
   order: StudyConfig['sequence'],
   latinSquareObject: Record<string, string[][]>,
   config: StudyConfig,
+  random: RandomSource,
 ): Sequence {
   const orderCopy = structuredClone(order);
 
-  return _componentBlockToSequence(orderCopy, latinSquareObject, 'root', config);
+  return _componentBlockToSequence(orderCopy, latinSquareObject, 'root', config, random);
 }
 
 function _createRandomOrders(order: StudyConfig['sequence'], paths: string[], path: string, index: number) {
@@ -338,7 +358,7 @@ function countPathUsage(order: StudyConfig['sequence']): Record<string, number> 
   return pathCounts;
 }
 
-export function generateSequenceArray(config: StudyConfig): Sequence[] {
+function createSequenceGenerator(config: StudyConfig, random: RandomSource) {
   const paths = createRandomOrders(config.sequence);
   const pathUsageCounts = countPathUsage(config.sequence);
 
@@ -347,29 +367,64 @@ export function generateSequenceArray(config: StudyConfig): Sequence[] {
   const latinSquareObject: Record<string, string[][]> = paths
     .map((p) => {
       const usageCount = pathUsageCounts[p] || 1;
-      return { [p]: generateLatinSquareRows(config, p, usageCount) };
+      return { [p]: generateLatinSquareRows(config, p, usageCount, random) };
     })
     .reduce((acc, curr) => ({ ...acc, ...curr }), {});
 
-  const numSequences = config.uiConfig.numSequences || 1000;
-
-  const sequenceArray: Sequence[] = [];
-  Array.from({ length: numSequences }).forEach(() => {
-    // Generate a sequence
-    const sequence = componentBlockToSequence(config.sequence, latinSquareObject, config);
+  return () => {
+    const sequence = componentBlockToSequence(
+      config.sequence,
+      latinSquareObject,
+      config,
+      random,
+    );
     sequence.components.push('end');
 
-    // Add the sequence to the array
-    sequenceArray.push(sequence);
-
-    // Refill latin square arrays that are empty
     Object.entries(latinSquareObject).forEach(([key, value]) => {
       if (value.length === 0) {
         const usageCount = pathUsageCounts[key] || 1;
-        latinSquareObject[key] = generateLatinSquareRows(config, key, usageCount);
+        latinSquareObject[key] = generateLatinSquareRows(
+          config,
+          key,
+          usageCount,
+          random,
+        );
       }
     });
+
+    return sequence;
+  };
+}
+
+export function generateSequenceArray(
+  config: StudyConfig,
+  random: RandomSource = Math.random,
+): Sequence[] {
+  const numSequences = config.uiConfig.numSequences || 1000;
+  const generateNextSequence = createSequenceGenerator(config, random);
+  const sequenceArray: Sequence[] = [];
+
+  Array.from({ length: numSequences }).forEach(() => {
+    sequenceArray.push(generateNextSequence());
   });
 
   return sequenceArray;
+}
+
+export function generateSequenceAtIndex(
+  config: StudyConfig,
+  index: number,
+  random: RandomSource,
+): Sequence {
+  if (!Number.isInteger(index) || index < 0) {
+    throw new Error(`Sequence index must be a non-negative integer; received ${index}`);
+  }
+
+  const generateNextSequence = createSequenceGenerator(config, random);
+  let sequence: Sequence | null = null;
+  for (let currentIndex = 0; currentIndex <= index; currentIndex += 1) {
+    sequence = generateNextSequence();
+  }
+
+  return sequence!;
 }

@@ -41,6 +41,7 @@ import {
   resolveParticipantConditions,
 } from '../utils/handleConditionLogic';
 import { StartupErrorScreen } from './StartupErrorScreen';
+import { createCompactSequenceDescriptor } from '../utils/sequenceDescriptor';
 
 type StartupStorageStatus = Pick<StorageEngine, 'getEngine' | 'isConnected'>;
 
@@ -305,12 +306,13 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
         await storageEngine.saveConfig(activeConfig);
 
-        const sequenceArray = await storageEngine.getSequenceArray();
+        const sequenceArtifact = await storageEngine.getSequenceArtifact();
 
-        if (!sequenceArray) {
-          const generatedSequenceArray = await generateSequenceArray(activeConfig);
-
-          await storageEngine.setSequenceArray(generatedSequenceArray);
+        if (!sequenceArtifact) {
+          const activeHash = await activeHashPromise;
+          await storageEngine.setSequenceDescriptor(
+            createCompactSequenceDescriptor(activeHash, activeConfig),
+          );
         }
 
         // Get or generate participant session

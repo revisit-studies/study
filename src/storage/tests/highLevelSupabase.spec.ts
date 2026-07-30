@@ -12,6 +12,7 @@ import { Sequence } from '../../store/types';
 import { StorageEngine, SequenceAssignment, StoredUser } from '../engines/types';
 import { filterSequenceByCondition } from '../../utils/handleConditionLogic';
 import { SupabaseStorageEngine } from '../engines/SupabaseStorageEngine';
+import { createCompactSequenceDescriptor } from '../../utils/sequenceDescriptor';
 
 type RowData = Record<string, string | number | boolean | null | object>;
 
@@ -703,6 +704,17 @@ describe.each([
   test('getSequenceArray returns the sequence array', async () => {
     const sequences = await storageEngine.getSequenceArray();
     expect(sequences).toEqual(sequenceArray);
+  });
+
+  test('stores compact sequence descriptors without expanding them', async () => {
+    const descriptor = createCompactSequenceDescriptor(
+      await hash(JSON.stringify(configSimple)),
+      configSimple,
+    );
+    await storageEngine.setSequenceDescriptor(descriptor);
+
+    expect(await storageEngine.getSequenceArtifact()).toEqual(descriptor);
+    expect(await storageEngine.getSequenceArray()).toBeNull();
   });
 
   test('getSequenceArray returns empty array if no sequences are set', async () => {
