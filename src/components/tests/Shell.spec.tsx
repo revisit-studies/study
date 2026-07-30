@@ -6,7 +6,7 @@ import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { useRoutes } from 'react-router';
-import { Shell, StudyLoadingOverlay } from '../Shell';
+import { getStartupErrorMessage, Shell, StudyLoadingOverlay } from '../Shell';
 import type { ParsedConfig, StudyConfig } from '../../parser/types';
 import { getStudyConfig, resolveConfigKey } from '../../utils/fetchConfig';
 import { makeGlobalConfig, makeStudyConfig } from '../../tests/utils';
@@ -181,6 +181,17 @@ describe('Shell', () => {
     expect(getByRole('status').textContent).toBe('Loading your study. This may take a moment.');
     expect(getByRole('status').getAttribute('aria-live')).toBe('polite');
     expect(getByRole('status').getAttribute('aria-atomic')).toBe('true');
+  });
+
+  test('explains Firebase index ownership and one-time project scope', () => {
+    const message = getStartupErrorMessage(
+      new Error('The query requires an index. You can create it here: https://console.firebase.google.com/example'),
+    );
+
+    expect(message).toContain('one-time setup for this Firebase project/database');
+    expect(message).toContain('does not need to be repeated for each study');
+    expect(message).toContain('study owner (Study Designer)');
+    expect(message).toContain('https://console.firebase.google.com/example');
   });
 
   test('cancels the loading message when startup completes before the delay', () => {

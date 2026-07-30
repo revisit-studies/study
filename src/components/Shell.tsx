@@ -103,15 +103,19 @@ export function isStorageStartupFailure(
 }
 
 export function getStartupErrorMessage(error: unknown) {
-  if (error instanceof Error && error.message.trim().length > 0) {
-    return error.message;
+  let message = '';
+  if (error instanceof Error) {
+    message = error.message.trim();
+  } else if (typeof error === 'string') {
+    message = error.trim();
+  }
+  if (!message) return GENERIC_STARTUP_ERROR;
+
+  if (message.toLowerCase().includes('query requires an index')) {
+    return `${message}\n\nCreating this index is a one-time setup for this Firebase project/database; it does not need to be repeated for each study. It must be completed by the study owner (Study Designer) who administers the Firebase deployment.`;
   }
 
-  if (typeof error === 'string' && error.trim().length > 0) {
-    return error;
-  }
-
-  return GENERIC_STARTUP_ERROR;
+  return message;
 }
 
 export function getInitialStartupAlert(
