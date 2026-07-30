@@ -1,13 +1,13 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "Passing Data from reVISit to HTML and back",
+    "title": "Passing Data from reVISit to HTML and Back",
     "version": "pilot",
     "authors": [
       "The reVISit Team"
     ],
     "date": "2026-02-23",
-    "description": "A demo of how to pass visualization data from reVISit to HTML and send user answers from HTML back to the reVISit.",
+    "description": "A demo of how to pass visualization data from reVISit to HTML and send user answers from HTML back to reVISit.",
     "organizations": [
       "University of Utah",
       "WPI"
@@ -48,7 +48,7 @@
     },
     "bar-chart-1": {
       "baseComponent": "bar-chart",
-      "description": "A trial for the user to click the larges bar",
+      "description": "A trial for the user to click the largest bar",
       "instruction": "Click on the largest bar",
       "parameters": {
         "barData": [

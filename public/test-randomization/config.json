@@ -24,7 +24,7 @@
       "type": "questionnaire",
       "response": [],
       "nextButtonLocation": "belowStimulus",
-      "instruction": "Please answer the following questions...",
+      "instruction": "Continue to the next trial.",
       "instructionLocation": "aboveStimulus"
     }
   },
@@ -35,7 +35,7 @@
       "response": [],
       "nextButtonLocation": "belowStimulus",
       "instructionLocation": "aboveStimulus",
-      "description": "this is an introduction to the study",
+      "description": "This is an introduction to the study.",
       "meta": {
         "difficulty": "easy"
       }

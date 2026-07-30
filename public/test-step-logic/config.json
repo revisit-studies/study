@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "Step logic test",
+    "title": "Using Step Logic",
     "description": "This is a test of the step logic feature.",
     "version": "1.0.0",
     "authors": [
