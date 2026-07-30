@@ -2,10 +2,10 @@
 
 Before we begin, please read the following consent form carefully and thereafter complete the section below.
 
-**Goal:** To evaluate peoples perception of values presented on a chart.
+**Goal:** To evaluate people's perception of values presented on a chart.
 
 **Procedure:** In this experiment you are asked to judge what percentage the smaller value is compared to the larger value
-using Bar, Stacked Bar and Pie Charts.
+using Bar, Stacked Bar, Pie, and Bubble Charts.
 
 **Duration:** The estimated completion time for the experiment is __ minutes.
 

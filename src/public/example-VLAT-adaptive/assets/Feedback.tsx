@@ -25,7 +25,7 @@ export default function Feedback({ answers }: StimulusParams<any>) {
 
   const replayRecord = topAnswer.map((item) => {
     const ans = item[1].answer[taskid];
-    const correctAns = item[1].correctAnswer[0].answer;
+    const correctAns = item[1].correctAnswer?.[0]?.answer;
     const activeQidx = item[1].parameters.activeQuestionIdx;
     const correct = ans === correctAns;
     if (correct) correctNum += 1;
@@ -36,6 +36,13 @@ export default function Feedback({ answers }: StimulusParams<any>) {
       correct,
     };
   });
+
+  // Nothing to review if the participant has not completed any dynamic trials
+  if (replayRecord.length === 0) {
+    return (
+      <Text>No completed trials to review yet.</Text>
+    );
+  }
 
   return (
     <Grid maw={1800}>
@@ -72,7 +79,7 @@ export default function Feedback({ answers }: StimulusParams<any>) {
             ))}
           </Group>
           <Center>
-            <Text w="80%" mt={20} size="sm" c="grey">*This score is based on an adaptive testing methodology and cannot be mapped to 0-1 or 0-100. Instead, it can be used to compare runs between yourself or with other peoples’ scores.</Text>
+            <Text w="80%" mt={20} size="sm" c="grey">*This score is based on an adaptive testing methodology and cannot be mapped to 0-1 or 0-100. Instead, it can be used to compare your own runs with each other or with other people's scores.</Text>
 
           </Center>
         </Card>

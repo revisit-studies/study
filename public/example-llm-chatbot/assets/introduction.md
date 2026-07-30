@@ -4,7 +4,7 @@ This demo study shows how to use an LLM-based chatbot in a reVISit study. Partic
 
 > **Note:** The chatbot does not work when running this study on `localhost`. The default proxy server only accepts requests from `https://revisit.dev`, so requests from other origins are blocked by CORS. To develop locally, run your own proxy and point `VITE_OPENAI_API_URL` to it (see the "Set up the API Key" section below).
 
-All of the input and output is tracked by trrack, so you can analyze how participants interact with the chatbot and what information they request. You could also combine this with audio or screen capture to run a remote unmoderated study.
+All of the input and output is tracked by Trrack, so you can analyze how participants interact with the chatbot and what information they request. You could also combine this with audio or screen capture to run a remote unmoderated study.
 
 Below we describe what makes the chatbot good for studies, the core features, and how to customize it.
 
@@ -113,7 +113,7 @@ Learn more: [Model list](https://developers.openai.com/api/docs/models)
 Learn more: [Responses API parameters](https://developers.openai.com/api/reference/resources/responses)
 
 **Change the data or chart image:**
-* Dataset: replace `assets/data/clustered-heatmap.csv` to your dataset.
-* Chart image: replace the OpenAI `file_id` to your image returned by `get_chart_image_file_id`.
+* Dataset: replace `assets/data/clustered-heatmap.csv` with your dataset.
+* Chart image: replace the OpenAI `file_id` with your image returned by `get_chart_image_file_id`.
 
 Learn more: [Files API](https://developers.openai.com/api/reference/resources/files)

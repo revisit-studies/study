@@ -1,5 +1,5 @@
 import {
-  Grid, Radio, Image, Box, Stack, Title, Center,
+  Grid, Radio, Image, Box, Stack, Title, Center, Text
 } from '@mantine/core';
 import { VLATQuestions } from '../../libraries/adaptive-vlat/assets/vlatQ';
 
@@ -13,7 +13,7 @@ export default function FeedbackTrial({
   userAnswer,
   correctAnswer,
 }: FeedbackTrialProps) {
-  const activeQuestion = VLATQuestions.filter((q) => q.originID === activeQuestionIdx)[0];
+  const activeQuestion = VLATQuestions.find((q) => q.originID === activeQuestionIdx);
   const images = import.meta.glob('../../../public/libraries/adaptive-vlat/assets/vlatImg/*.png', { eager: true });
   const imgMap: Record<string, string> = {};
 
@@ -25,6 +25,12 @@ export default function FeedbackTrial({
     }
   }
 
+  if (!activeQuestion) {
+    return (
+      <Text>Question not found.</Text>
+    );
+  }
+
   return (
     <Box>
       <Grid>
@@ -32,7 +38,7 @@ export default function FeedbackTrial({
           <Image
             radius="sm"
             src={imgMap[activeQuestion.img]}
-            alt="VIS"
+            alt={`Visualization for question ${activeQuestionIdx}`}
             w="100%"
             maw={900}
           />
@@ -46,15 +52,15 @@ export default function FeedbackTrial({
           >
             <Stack mt={20}>
               {
-                    activeQuestion.options.map((op:string, idx:number) => (
-                      <Radio
-                        disabled
-                        value={`${String.fromCharCode(65 + idx)}`}
-                        label={`${String.fromCharCode(65 + idx)}. ${op}`}
-                        key={`op${idx}`}
-                      />
-                    ))
-                  }
+                activeQuestion.options.map((op: string, idx: number) => (
+                  <Radio
+                    disabled
+                    value={`${String.fromCharCode(65 + idx)}`}
+                    label={`${String.fromCharCode(65 + idx)}. ${op}`}
+                    key={`op${idx}`}
+                  />
+                ))
+              }
             </Stack>
 
           </Radio.Group>
