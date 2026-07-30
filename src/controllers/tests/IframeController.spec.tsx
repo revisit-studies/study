@@ -12,6 +12,7 @@ const mockDispatch = vi.fn();
 const mockSetReactiveAnswers = vi.fn((payload) => ({ type: 'setReactiveAnswers', payload }));
 const mockUpdateProvenance = vi.fn((payload) => ({ type: 'updateProvenance', payload }));
 const mockUpdateResponseBlockValidation = vi.fn((payload) => ({ type: 'updateResponseBlockValidation', payload }));
+const mockIsAnalysis = { value: false };
 
 vi.mock('react-redux', () => ({
   useDispatch: () => vi.fn(),
@@ -23,7 +24,7 @@ vi.mock('../../routes/utils', () => ({
 }));
 
 vi.mock('../../store/hooks/useIsAnalysis', () => ({
-  useIsAnalysis: () => false,
+  useIsAnalysis: () => mockIsAnalysis.value,
 }));
 
 vi.mock('../../store/store', () => ({
@@ -43,6 +44,7 @@ vi.mock('../../utils/Prefix', () => ({
 describe('IframeController', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockIsAnalysis.value = false;
   });
 
   afterEach(() => {
@@ -131,6 +133,18 @@ describe('IframeController', () => {
     );
     expect(html).toContain('<iframe');
     expect(html).toContain('/');
+  });
+
+  test('makes the iframe inert and non-interactive during analysis replay', () => {
+    mockIsAnalysis.value = true;
+    const { container } = render(
+      <IframeController currentConfig={{ type: 'website', path: 'my-study/index.html', response: [] }} answers={{}} />,
+    );
+    const iframe = container.querySelector('iframe');
+
+    expect(iframe?.hasAttribute('inert')).toBe(true);
+    expect(iframe?.getAttribute('aria-disabled')).toBe('true');
+    expect(iframe?.style.pointerEvents).toBe('none');
   });
 
   test('resends provenance snapshots when the iframe reports ready', async () => {

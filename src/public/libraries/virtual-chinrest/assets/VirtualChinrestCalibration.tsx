@@ -1,12 +1,11 @@
 /* eslint-disable react/no-unescaped-entities */
-import {
-  useState, useRef, useEffect, useMemo,
-} from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   Slider, Button, Stack, Text,
 } from '@mantine/core';
 import { StimulusParams } from '../../../../store/types';
 import { useIsAnalysis } from '../../../../store/hooks/useIsAnalysis';
+import { useStoredAnswer } from '../../../../store/hooks/useStoredAnswer';
 import cardImage from './card.png';
 
 interface VirtualChinrestCalibrationProps extends StimulusParams<{ taskid: string }> {
@@ -22,7 +21,6 @@ const calculateHeight = (width: number, aspectRatio:number) => Math.round(width 
 export default function VirtualChinrestCalibration({
   parameters,
   setAnswer,
-  answers,
   itemWidthMM = 85.6, // Standard credit card width
   itemHeightMM = 53.98, // Standard credit card height
   fixedCorner = 'top-left', // Default to top-left fixed corner
@@ -34,16 +32,12 @@ export default function VirtualChinrestCalibration({
   const [hasMovedSlider, setHasMovedSlider] = useState(false);
   const [showMoveSliderWarning, setShowMoveSliderWarning] = useState(false);
   const isAnalysis = useIsAnalysis();
+  const storedAnswer = useStoredAnswer();
 
   const { taskid } = parameters;
   const pixelsPerMM = itemWidthPx / itemWidthMM; // pixel to MM conversion
-  const storedPixelsPerMM = useMemo(() => {
-    const storedAnswer = Object.values(answers).find(
-      (answer) => answer.componentName === '$virtual-chinrest.components.card-size',
-    );
-    const storedValue = Number(storedAnswer?.answer?.[taskid]);
-    return Number.isFinite(storedValue) && storedValue > 0 ? storedValue : null;
-  }, [answers, taskid]);
+  const storedValue = Number(storedAnswer?.answer?.[taskid]);
+  const storedPixelsPerMM = Number.isFinite(storedValue) && storedValue > 0 ? storedValue : null;
 
   // Set references
   const containerRef = useRef<HTMLDivElement>(null);

@@ -117,7 +117,14 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   return (
     <iframe
       ref={ref}
-      style={{ width: '100%', flexGrow: 1, border: 0 }}
+      inert={(isAnalysis ? '' : undefined) as never}
+      aria-disabled={isAnalysis}
+      style={{
+        width: '100%',
+        flexGrow: 1,
+        border: 0,
+        pointerEvents: isAnalysis ? 'none' : undefined,
+      }}
       src={
         currentConfig.path.startsWith('http')
           ? currentConfig.path

@@ -106,6 +106,7 @@ export function SliderInput({
             {/* Slider track */}
             <Box
               ref={ref}
+              data-testid="smeq-slider-track"
               aria-disabled={disabled}
               style={{
                 width: 22,
@@ -119,6 +120,7 @@ export function SliderInput({
             >
               {/* smeq vertical bar will always be withBar = true */}
               <Box
+                data-testid="smeq-slider-thumb"
                 style={{
                   position: 'absolute',
                   left: 20,

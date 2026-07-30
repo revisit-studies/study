@@ -4,12 +4,33 @@ import {
 import {
   Stack, List, Text, Container, Button,
 } from '@mantine/core';
-import { StimulusParams } from '../../../../store/types';
+import {
+  StimulusParams, StoredAnswer,
+} from '../../../../store/types';
 import { useStoreSelector } from '../../../../store/store';
 import { useIsAnalysis } from '../../../../store/hooks/useIsAnalysis';
+import { useStoredAnswer } from '../../../../store/hooks/useStoredAnswer';
 
 // Utility functions
 const degToRadians = (degrees: number) => (degrees * Math.PI) / 180;
+const cardSizeComponent = '$virtual-chinrest.components.card-size';
+
+export function findPreviousCardSizeAnswer(
+  answers: Record<string, StoredAnswer>,
+  currentTrialOrder: StoredAnswer['trialOrder'] | undefined,
+) {
+  const currentStep = Number.parseInt(currentTrialOrder ?? '', 10);
+  if (!Number.isFinite(currentStep)) {
+    return undefined;
+  }
+
+  return Object.values(answers)
+    .filter((answer) => (
+      answer.componentName === cardSizeComponent
+      && Number.parseInt(answer.trialOrder, 10) < currentStep
+    ))
+    .sort((a, b) => Number.parseInt(b.trialOrder, 10) - Number.parseInt(a.trialOrder, 10))[0];
+}
 
 export default function ViewingDistanceCalibration({ parameters, setAnswer }: StimulusParams<{ blindspotAngle: number }>) {
   const ballRef = useRef<HTMLDivElement>(null);
@@ -19,12 +40,12 @@ export default function ViewingDistanceCalibration({ parameters, setAnswer }: St
   const isAnalysis = useIsAnalysis();
 
   const ans = useStoreSelector((state) => state.answers);
-  const cardSizeAnswer = Object.values(ans).find((answer) => answer.componentName === '$virtual-chinrest.components.card-size');
+  const currentAnswer = useStoredAnswer();
+  const cardSizeAnswer = findPreviousCardSizeAnswer(ans, currentAnswer?.trialOrder);
   const pixelsPerMM = Number(cardSizeAnswer?.answer?.pixelsPerMM);
-  const storedAnswer = Object.values(ans).find((answer) => answer.componentName === '$virtual-chinrest.components.blindspot-distance');
-  const storedViewingDistance = Number(storedAnswer?.answer?.['dist-calibration-MM']);
+  const storedViewingDistance = Number(currentAnswer?.answer?.['dist-calibration-MM']);
   const storedBallPositions = useMemo(() => {
-    const value = storedAnswer?.answer?.['ball-positions'];
+    const value = currentAnswer?.answer?.['ball-positions'];
     if (typeof value !== 'string') {
       return [];
     }
@@ -37,7 +58,7 @@ export default function ViewingDistanceCalibration({ parameters, setAnswer }: St
     } catch {
       return [];
     }
-  }, [storedAnswer]);
+  }, [currentAnswer]);
 
   // States
   const [ballPositions, setBallPositions] = useState<number[]>([]);
@@ -114,7 +135,7 @@ export default function ViewingDistanceCalibration({ parameters, setAnswer }: St
   };
 
   useEffect(() => {
-    if (viewingDistance !== null && ballPositions.length === 5) {
+    if (!isAnalysis && viewingDistance !== null && ballPositions.length === 5) {
       setAnswer({
         status: true,
         answers: {
@@ -125,7 +146,7 @@ export default function ViewingDistanceCalibration({ parameters, setAnswer }: St
         },
       });
     }
-  }, [viewingDistance, ballPositions, setAnswer]);
+  }, [isAnalysis, viewingDistance, ballPositions, setAnswer]);
 
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {

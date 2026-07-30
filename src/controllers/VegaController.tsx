@@ -226,6 +226,8 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
   }
 
   return (
-    <InternalVega spec={structuredClone(vegaConfig)} signalListeners={signalListeners as never} onNewView={handleNewView} actions={currentConfig.withActions} />
+    <div inert={(isAnalysis ? '' : undefined) as never} style={{ display: 'contents' }}>
+      <InternalVega spec={structuredClone(vegaConfig)} signalListeners={signalListeners as never} onNewView={handleNewView} actions={currentConfig.withActions} />
+    </div>
   );
 }

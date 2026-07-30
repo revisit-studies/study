@@ -835,7 +835,7 @@ describe('VegaController — signal and event coverage', () => {
       return React.createElement('div', null, 'Vega');
     };
 
-    render(
+    const { container } = render(
       <VegaController currentConfig={{ type: 'vega', path: '/chart.json', response: [] }} />,
     );
     await waitFor(() => expect(capturedSignalListeners.mySignal).toBeDefined());
@@ -844,6 +844,7 @@ describe('VegaController — signal and event coverage', () => {
     capturedSignalListeners.revisitAnswer('revisitAnswer', { responseId: 'r1', response: 'yes' });
 
     expect(mockTrrackApply).not.toHaveBeenCalled();
+    expect(container.firstElementChild?.hasAttribute('inert')).toBe(true);
   });
 
   test('ignores replayed provenance for signals missing from the active vega config', async () => {
