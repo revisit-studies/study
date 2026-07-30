@@ -988,7 +988,7 @@
       "anyOf": [
         {
           "items": {
-            "$ref": "#/definitions/FactorOption"
+            "$ref": "#/definitions/FactorValue"
           },
           "type": "array"
         },
@@ -996,6 +996,14 @@
           "$ref": "#/definitions/FactorExpression"
         }
       ]
+    },
+    "FactorAction": {
+      "description": "Operations that combine factor conditions.",
+      "enum": [
+        "cross",
+        "zip"
+      ],
+      "type": "string"
     },
     "FactorBlock": {
       "additionalProperties": false,
@@ -1018,14 +1026,7 @@
           "type": "boolean"
         },
         "factor": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "$ref": "#/definitions/FactorExpression"
-            }
-          ],
+          "$ref": "#/definitions/FactorOption",
           "description": "Named factor or inline factor expression to materialize at this sequence location."
         },
         "id": {
@@ -1061,40 +1062,38 @@
       "type": "object"
     },
     "FactorExpression": {
-      "anyOf": [
-        {
-          "additionalProperties": false,
-          "properties": {
-            "cross": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            }
-          },
-          "required": [
-            "cross"
-          ],
-          "type": "object"
+      "additionalProperties": false,
+      "description": "A recursively composable expression over named factors or nested expressions.",
+      "properties": {
+        "action": {
+          "$ref": "#/definitions/FactorAction"
         },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "zip": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            }
+        "factors": {
+          "items": {
+            "$ref": "#/definitions/FactorOption"
           },
-          "required": [
-            "zip"
-          ],
-          "type": "object"
+          "type": "array"
         }
-      ]
+      },
+      "required": [
+        "action",
+        "factors"
+      ],
+      "type": "object"
     },
     "FactorOption": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/FactorExpression"
+        }
+      ],
+      "description": "A named factor reference or another inline factor expression."
+    },
+    "FactorValue": {
+      "description": "A primitive level stored by a factor.",
       "type": [
         "string",
         "number",

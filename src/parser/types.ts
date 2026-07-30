@@ -1794,19 +1794,28 @@ export interface ComponentBlock {
   conditional?: boolean;
 }
 
-export type FactorOption = string | number | boolean;
+/** A primitive level stored by a factor. */
+export type FactorValue = string | number | boolean;
 
-export type FactorExpression =
-  | { cross: string[] }
-  | { zip: string[] };
+/** Operations that combine factor conditions. */
+export type FactorAction = 'cross' | 'zip';
 
-export type Factor = FactorOption[] | FactorExpression;
+/** A named factor reference or another inline factor expression. */
+export type FactorOption = string | FactorExpression;
+
+/** A recursively composable expression over named factors or nested expressions. */
+export interface FactorExpression {
+  action: FactorAction;
+  factors: FactorOption[];
+}
+
+export type Factor = FactorValue[] | FactorExpression;
 
 export interface FactorBlock {
   type: 'factor';
   id: string;
   /** Named factor or inline factor expression to materialize at this sequence location. */
-  factor: string | FactorExpression;
+  factor: FactorOption;
   /** One or more base components materialized for every factor condition. */
   components: string | string[];
   order?: ComponentOrder;

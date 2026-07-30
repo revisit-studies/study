@@ -911,6 +911,14 @@
       ],
       "type": "object"
     },
+    "FactorAction": {
+      "description": "Operations that combine factor conditions.",
+      "enum": [
+        "cross",
+        "zip"
+      ],
+      "type": "string"
+    },
     "FactorBlock": {
       "additionalProperties": false,
       "properties": {
@@ -932,14 +940,7 @@
           "type": "boolean"
         },
         "factor": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "$ref": "#/definitions/FactorExpression"
-            }
-          ],
+          "$ref": "#/definitions/FactorOption",
           "description": "Named factor or inline factor expression to materialize at this sequence location."
         },
         "id": {
@@ -975,38 +976,35 @@
       "type": "object"
     },
     "FactorExpression": {
+      "additionalProperties": false,
+      "description": "A recursively composable expression over named factors or nested expressions.",
+      "properties": {
+        "action": {
+          "$ref": "#/definitions/FactorAction"
+        },
+        "factors": {
+          "items": {
+            "$ref": "#/definitions/FactorOption"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "action",
+        "factors"
+      ],
+      "type": "object"
+    },
+    "FactorOption": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "properties": {
-            "cross": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            }
-          },
-          "required": [
-            "cross"
-          ],
-          "type": "object"
+          "type": "string"
         },
         {
-          "additionalProperties": false,
-          "properties": {
-            "zip": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            }
-          },
-          "required": [
-            "zip"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/FactorExpression"
         }
-      ]
+      ],
+      "description": "A named factor reference or another inline factor expression."
     },
     "ImageComponent": {
       "additionalProperties": false,

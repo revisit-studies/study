@@ -3,8 +3,8 @@ import isEqual from 'lodash.isequal';
 import {
   ComponentBlock,
   DynamicBlock,
-  FactorOption,
   FactorBlock,
+  FactorValue,
   RandomInterruption,
   StudyConfig,
 } from '../parser/types';
@@ -12,8 +12,8 @@ import { Sequence } from '../store/types';
 import { isDynamicBlock, isFactorBlock } from '../parser/utils';
 
 type SequenceBlock = ComponentBlock | DynamicBlock | FactorBlock;
-type BetweenSubjectsFactorLevels = { factorName: string; levels: FactorOption[] };
-type BetweenSubjectsAssignment = Record<string, FactorOption>;
+type BetweenSubjectsFactorLevels = { factorName: string; levels: FactorValue[] };
+type BetweenSubjectsAssignment = Record<string, FactorValue>;
 
 function shuffle<T>(array: T[]) {
   let currentIndex = array.length;

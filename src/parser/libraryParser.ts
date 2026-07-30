@@ -3,7 +3,7 @@ import isEqual from 'lodash.isequal';
 import merge from 'lodash.merge';
 import librarySchema from './LibraryConfigSchema.json';
 import {
-  ComponentBlock, Factor, FactorBlock, FactorExpression, FactorOption, IndividualComponent, LibraryConfig, ParsedConfig, ParserErrorWarning, StudyConfig,
+  ComponentBlock, Factor, FactorBlock, FactorOption, FactorValue, IndividualComponent, LibraryConfig, ParsedConfig, ParserErrorWarning, StudyConfig,
 } from './types';
 import {
   isDynamicBlock, isFactorBlock, isInheritedComponent,
@@ -118,7 +118,7 @@ export function deepFillTemplate<T>(value: T, vars: Record<string, unknown>): T 
   return value;
 }
 
-type FactorCondition = Record<string, FactorOption>;
+type FactorCondition = Record<string, FactorValue>;
 type FactorCompileResult = {
   sequence: StudyConfig['sequence'];
   components: Record<string, IndividualComponent>;
@@ -190,7 +190,7 @@ function zipFactorConditions(
 }
 
 export function resolveFactorConditions(
-  factorSource: string | FactorExpression,
+  factorSource: FactorOption,
   factors: Record<string, Factor>,
   errors: ParserErrorWarning[] = [],
   stack: string[] = [],
@@ -216,21 +216,22 @@ export function resolveFactorConditions(
     return factor.map((value) => ({ [factorName]: value }));
   }
 
-  const inputs = 'cross' in factor ? factor.cross : factor.zip;
+  const { action, factors: inputs } = factor;
   if (inputs.length === 0) {
     addFactorError(errors, `Factor expression \`${factorName}\` must reference at least one factor`);
     return [];
   }
 
-  const conditionSets = inputs.map((input) => (
+  const conditionSets = inputs.map((input, index) => (
     resolveFactorConditions(
       input,
       factors,
       errors,
       typeof factorSource === 'string' ? [...stack, factorSource] : stack,
+      `${factorName}.${action}[${index}]`,
     )
   ));
-  return 'cross' in factor
+  return action === 'cross'
     ? crossFactorConditions(conditionSets, errors)
     : zipFactorConditions(conditionSets, factorName, errors);
 }

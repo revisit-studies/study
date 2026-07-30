@@ -90,49 +90,57 @@
       "flu"
     ],
     "crossBlock": {
-      "cross": [
+      "action": "cross",
+      "factors": [
         "data",
         "visType"
       ]
     },
     "nestBlock": {
-      "cross": [
+      "action": "cross",
+      "factors": [
         "data",
         "visType"
       ]
     },
     "zipBlock": {
-      "zip": [
+      "action": "zip",
+      "factors": [
         "data",
         "visType"
       ]
     },
     "zipThenTaskBlock": {
-      "cross": [
+      "action": "cross",
+      "factors": [
         "zipBlock",
         "task"
       ]
     },
     "crossZipWithTaskBlock": {
-      "cross": [
+      "action": "cross",
+      "factors": [
         "zipBlock",
         "task"
       ]
     },
     "zipZipWithTaskBlock": {
-      "zip": [
+      "action": "zip",
+      "factors": [
         "zipBlock",
         "task"
       ]
     },
     "nestCrossWithTaskBlock": {
-      "cross": [
+      "action": "cross",
+      "factors": [
         "crossBlock",
         "task"
       ]
     },
     "factorKeywordBlock": {
-      "cross": [
+      "action": "cross",
+      "factors": [
         "data",
         "visType",
         "task"
@@ -147,13 +155,15 @@
       "conceptual"
     ],
     "Ok_googleTopicAssignments": {
-      "zip": [
+      "action": "zip",
+      "factors": [
         "Ok_googleLearningStrategySlots",
         "topics"
       ]
     },
     "Ok_google": {
-      "cross": [
+      "action": "cross",
+      "factors": [
         "Ok_googleTopicAssignments"
       ]
     }
@@ -180,7 +190,8 @@
         "type": "factor",
         "id": "zipBlockLatinSquare",
         "factor": {
-          "zip": [
+          "action": "zip",
+          "factors": [
             "data",
             "visType"
           ]

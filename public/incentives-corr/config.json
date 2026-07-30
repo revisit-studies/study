@@ -26,14 +26,72 @@
     "studyEndAutoRedirectDelay": 10000
   },
   "factors": {
-    "incentive": ["base", "inc"],
-    "vis": ["pcp", "scatter"],
-    "r1": [0.3, 0.4, 0.5, 0.6, 0.7],
-    "delta": [0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.12, 0.14, 0.18, 0.22, 0.26],
-    "r1Training": [0.3,0.9, 0.6, 0.6, 0.3, 0.5, 0.9, 0.6, 0.99],
-    "r2Training": [0.7, 0.6, 0.3, 0.9, 0.1, 0.3, 0.8, 0.7, 0.9],
-    "trainingPairs": { "zip": ["r1Training", "r2Training"] },
-    "testTrials": { "cross": ["r1", "delta"]}
+    "incentive": [
+      "base",
+      "inc"
+    ],
+    "vis": [
+      "pcp",
+      "scatter"
+    ],
+    "r1": [
+      0.3,
+      0.4,
+      0.5,
+      0.6,
+      0.7
+    ],
+    "delta": [
+      0.03,
+      0.04,
+      0.05,
+      0.06,
+      0.07,
+      0.08,
+      0.09,
+      0.1,
+      0.12,
+      0.14,
+      0.18,
+      0.22,
+      0.26
+    ],
+    "r1Training": [
+      0.3,
+      0.9,
+      0.6,
+      0.6,
+      0.3,
+      0.5,
+      0.9,
+      0.6,
+      0.99
+    ],
+    "r2Training": [
+      0.7,
+      0.6,
+      0.3,
+      0.9,
+      0.1,
+      0.3,
+      0.8,
+      0.7,
+      0.9
+    ],
+    "trainingPairs": {
+      "action": "zip",
+      "factors": [
+        "r1Training",
+        "r2Training"
+      ]
+    },
+    "testTrials": {
+      "action": "cross",
+      "factors": [
+        "r1",
+        "delta"
+      ]
+    }
   },
   "baseComponents": {
     "practice": {
@@ -50,7 +108,12 @@
           "location": "belowStimulus"
         }
       ],
-      "correctAnswer": [{"id": "training", "answer": true}]
+      "correctAnswer": [
+        {
+          "id": "training",
+          "answer": true
+        }
+      ]
     },
     "test": {
       "type": "react-component",
@@ -71,7 +134,12 @@
           "hidden": true
         }
       ],
-      "correctAnswer": [{"id": "test", "answer": true}]
+      "correctAnswer": [
+        {
+          "id": "test",
+          "answer": true
+        }
+      ]
     },
     "summary": {
       "type": "react-component",
@@ -110,7 +178,10 @@
           "id": "consentApproval",
           "prompt": "By clicking on 'Yes' below, you indicate that you have understood the Information Sheet and agree to participate in this study.",
           "type": "radio",
-          "options": ["Yes", "No"]
+          "options": [
+            "Yes",
+            "No"
+          ]
         }
       ]
     },
@@ -165,7 +236,10 @@
       }
     }
   },
-  "betweenSubjects": ["incentive", "vis"],
+  "betweenSubjects": [
+    "incentive",
+    "vis"
+  ],
   "sequence": {
     "order": "fixed",
     "components": [
@@ -183,16 +257,48 @@
       {
         "type": "factor",
         "id": "test",
-        "factor": {"cross": ["r1","delta"]},
+        "factor": "testTrials",
         "order": "latinSquare",
         "components": "test",
-        "parameters": {"taskid": "test"},
+        "parameters": {
+          "taskid": "test"
+        },
         "interruptions": [
-          {"spacing": "random", "numInterruptions": 1, "components": [ "attention-1"]},
-          {"spacing": "random", "numInterruptions": 1, "components": [ "attention-2"]},
-          {"spacing": "random", "numInterruptions": 1, "components": [ "attention-3"]},
-          {"spacing": "random", "numInterruptions": 1, "components": [ "attention-4"]},
-          {"spacing": "random", "numInterruptions": 1, "components": [ "attention-5"]}
+          {
+            "spacing": "random",
+            "numInterruptions": 1,
+            "components": [
+              "attention-1"
+            ]
+          },
+          {
+            "spacing": "random",
+            "numInterruptions": 1,
+            "components": [
+              "attention-2"
+            ]
+          },
+          {
+            "spacing": "random",
+            "numInterruptions": 1,
+            "components": [
+              "attention-3"
+            ]
+          },
+          {
+            "spacing": "random",
+            "numInterruptions": 1,
+            "components": [
+              "attention-4"
+            ]
+          },
+          {
+            "spacing": "random",
+            "numInterruptions": 1,
+            "components": [
+              "attention-5"
+            ]
+          }
         ]
       }
     ]

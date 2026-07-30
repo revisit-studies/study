@@ -43,8 +43,15 @@ describe('Factor Compiler', () => {
     r1: [0.3, 0.6],
     delta: [0.03, 0.18],
     r2: [0.7, 0.9],
-    crossed: { cross: ['r1', 'delta'] },
-    zipped: { zip: ['r1', 'r2'] },
+    crossed: { action: 'cross', factors: ['r1', 'delta'] },
+    zipped: { action: 'zip', factors: ['r1', 'r2'] },
+    nested: {
+      action: 'cross',
+      factors: [
+        { action: 'zip', factors: ['r1', 'r2'] },
+        'delta',
+      ],
+    },
   };
 
   test('resolves named and inline factor expressions', () => {
@@ -58,9 +65,15 @@ describe('Factor Compiler', () => {
       { r1: 0.3, r2: 0.7 },
       { r1: 0.6, r2: 0.9 },
     ]);
-    expect(resolveFactorConditions({ zip: ['r1', 'r2'] }, factors)).toEqual([
+    expect(resolveFactorConditions({ action: 'zip', factors: ['r1', 'r2'] }, factors)).toEqual([
       { r1: 0.3, r2: 0.7 },
       { r1: 0.6, r2: 0.9 },
+    ]);
+    expect(resolveFactorConditions('nested', factors)).toEqual([
+      { r1: 0.3, r2: 0.7, delta: 0.03 },
+      { r1: 0.3, r2: 0.7, delta: 0.18 },
+      { r1: 0.6, r2: 0.9, delta: 0.03 },
+      { r1: 0.6, r2: 0.9, delta: 0.18 },
     ]);
   });
 
@@ -69,11 +82,11 @@ describe('Factor Compiler', () => {
     resolveFactorConditions('badZip', {
       short: [1],
       long: [1, 2],
-      badZip: { zip: ['short', 'long'] },
+      badZip: { action: 'zip', factors: ['short', 'long'] },
     }, errors);
     resolveFactorConditions('a', {
-      a: { cross: ['b'] },
-      b: { cross: ['a'] },
+      a: { action: 'cross', factors: ['b'] },
+      b: { action: 'cross', factors: ['a'] },
     }, errors);
 
     expect(errors.map((error) => error.message)).toEqual(expect.arrayContaining([
