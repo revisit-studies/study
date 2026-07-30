@@ -8,13 +8,14 @@ import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { useRoutes } from 'react-router';
-import { Shell, StudyLoadingOverlay } from '../Shell';
+import { Shell, StudyIndexRoute, StudyLoadingOverlay } from '../Shell';
 import type { ParsedConfig, StudyConfig } from '../../parser/types';
 import { getStudyConfig, resolveConfigKey } from '../../utils/fetchConfig';
 import { makeGlobalConfig, makeStudyConfig } from '../../tests/utils';
 import { studyStoreCreator } from '../../store/store';
 import { parseConditionParam } from '../../utils/handleConditionLogic';
 import { parseStudyConfig } from '../../parser/parser';
+import { StartupInteractionProvider } from '../StartupContext';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
@@ -258,6 +259,64 @@ describe('Shell', () => {
     expect(getByTestId('study-interface').getAttribute('aria-busy')).toBe('true');
     expect(getByTestId('study-interface').hasAttribute('inert')).toBe(true);
     expect(mockStorageEngine.initializeStudyDb).toHaveBeenCalledTimes(1);
+  });
+
+  test('mounts the first stimulus provisionally at the root route', () => {
+    const { getByTestId } = render(
+      <StartupInteractionProvider value>
+        <StudyIndexRoute />
+      </StartupInteractionProvider>,
+    );
+
+    expect(getByTestId('component-controller')).toBeDefined();
+  });
+
+  test('keeps the preview store mounted until participant completion is authoritative', async () => {
+    vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
+    const pendingCompletion = new Promise<boolean>(() => {});
+    mockStorageEngine = {
+      initializeStudyDb: vi.fn().mockResolvedValue(undefined),
+      saveConfig: vi.fn().mockResolvedValue(undefined),
+      getSequenceArray: vi.fn().mockResolvedValue(['seq1']),
+      getModes: vi.fn().mockResolvedValue({
+        developmentModeEnabled: false,
+        dataSharingEnabled: false,
+        dataCollectionEnabled: true,
+      }),
+      initializeParticipantSession: vi.fn().mockResolvedValue(baseSession),
+      getParticipantCompletionStatus: vi.fn(() => pendingCompletion),
+      peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
+      getAllConfigsFromHash: vi.fn().mockResolvedValue({}),
+      isConnected: vi.fn().mockReturnValue(true),
+      getEngine: vi.fn().mockReturnValue('firebase'),
+    };
+
+    const { getByTestId } = render(<Shell globalConfig={globalConfig} />);
+
+    await waitFor(() => expect(mockStorageEngine!.getParticipantCompletionStatus).toHaveBeenCalled());
+    expect(getByTestId('study-loading-barrier')).toBeDefined();
+    expect(getByTestId('study-interface').hasAttribute('inert')).toBe(true);
+  });
+
+  test('routes transient provider startup failures to blocking retry', async () => {
+    vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
+    mockStorageEngine = {
+      initializeStudyDb: vi.fn().mockRejectedValue(new Error('provider unavailable')),
+      getModes: vi.fn().mockResolvedValue({
+        developmentModeEnabled: false,
+        dataSharingEnabled: false,
+        dataCollectionEnabled: true,
+      }),
+      peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
+      isConnected: vi.fn().mockReturnValue(true),
+      getEngine: vi.fn().mockReturnValue(import.meta.env.VITE_STORAGE_ENGINE),
+    };
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    const { getByRole } = render(<Shell globalConfig={globalConfig} />);
+
+    await waitFor(() => expect(getByRole('alert')).toBeDefined());
+    expect(vi.mocked(studyStoreCreator)).toHaveBeenCalledTimes(1);
   });
 
   test('shows startup fallback when study config loading rejects', async () => {

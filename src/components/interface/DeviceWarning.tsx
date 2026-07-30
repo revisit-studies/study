@@ -123,7 +123,7 @@ export function DeviceWarning({
     };
   }, [shouldRunDisplayCountdown]);
 
-  if (developmentModeEnabled || (!isRejected && !hasAnyViolation)) {
+  if (startupInteractionBlocked || developmentModeEnabled || (!isRejected && !hasAnyViolation)) {
     return null;
   }
 

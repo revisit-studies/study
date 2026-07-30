@@ -8,6 +8,7 @@ import {
 } from 'vitest';
 import type { IndividualComponent } from '../../parser/types';
 import { NextButton } from '../NextButton';
+import { StartupInteractionProvider } from '../StartupContext';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
@@ -149,6 +150,37 @@ describe('NextButton', () => {
     mockIsNextDisabled = true;
     const html = renderToStaticMarkup(<NextButton checkAnswer={null} onNext={vi.fn()} />);
     expect(html).toContain('disabled');
+  });
+
+  test('does not start timers or handle Enter while participant startup is blocked', () => {
+    vi.useFakeTimers();
+    mockStudyConfig.uiConfig.nextOnEnter = true;
+    mockStudyConfig.uiConfig.timeoutReject = true;
+    const onNext = vi.fn();
+
+    const { getByRole } = render(
+      <StartupInteractionProvider value>
+        <NextButton
+          config={{
+            type: 'questionnaire',
+            response: [],
+            nextButtonDisableTime: 100,
+            nextButtonAutoAdvanceTime: 100,
+          }}
+          checkAnswer={null}
+          onNext={onNext}
+        />
+      </StartupInteractionProvider>,
+    );
+    act(() => {
+      vi.advanceTimersByTime(500);
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    });
+
+    expect(getByRole('button', { name: 'Next' }).hasAttribute('disabled')).toBe(true);
+    expect(onNext).not.toHaveBeenCalled();
+    expect(mockGoToNextStep).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 
   test('renders checkAnswer element when provided', () => {

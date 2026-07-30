@@ -15,6 +15,7 @@ import {
   DEFAULT_AUTO_ADVANCE_WARNING_TIME,
   getAutoAdvanceWarning,
 } from './nextButtonTimeout';
+import { useStartupInteractionBlocked } from './StartupContext';
 
 const nextButtonJustify = {
   left: 'flex-start',
@@ -45,6 +46,7 @@ export function NextButton({
   const studyConfig = useStudyConfig();
   const navigate = useNavigate();
   const identifier = useCurrentIdentifier();
+  const startupInteractionBlocked = useStartupInteractionBlocked();
 
   const nextButtonDisableTime = config?.nextButtonDisableTime ?? studyConfig.uiConfig.nextButtonDisableTime;
   const nextButtonEnableTime = config?.nextButtonEnableTime ?? studyConfig.uiConfig.nextButtonEnableTime ?? 0;
@@ -56,6 +58,11 @@ export function NextButton({
   const autoAdvanceTriggered = useRef(false);
   // Use the current identifier so nested function-sequence items reset their timer state.
   useEffect(() => {
+    if (startupInteractionBlocked) {
+      setTimer(undefined);
+      return undefined;
+    }
+
     autoAdvanceTriggered.current = false;
     const start = Date.now();
     setTimer(0);
@@ -65,25 +72,25 @@ export function NextButton({
     return () => {
       clearInterval(interval);
     };
-  }, [identifier]);
+  }, [identifier, startupInteractionBlocked]);
 
   useEffect(() => {
-    if (timer === undefined) {
+    if (startupInteractionBlocked || timer === undefined) {
       return;
     }
     if (nextButtonDisableTime && timer >= nextButtonDisableTime && studyConfig.uiConfig.timeoutReject) {
       navigate(`./../__timedOut${window.location.search}`);
     }
-  }, [nextButtonDisableTime, timer, navigate, studyConfig.uiConfig.timeoutReject]);
+  }, [nextButtonDisableTime, timer, navigate, startupInteractionBlocked, studyConfig.uiConfig.timeoutReject]);
 
   useEffect(() => {
-    if (timer === undefined || nextButtonAutoAdvanceTime === undefined || timer < nextButtonAutoAdvanceTime || autoAdvanceTriggered.current) {
+    if (startupInteractionBlocked || timer === undefined || nextButtonAutoAdvanceTime === undefined || timer < nextButtonAutoAdvanceTime || autoAdvanceTriggered.current) {
       return;
     }
 
     autoAdvanceTriggered.current = true;
     goToNextStep(false);
-  }, [goToNextStep, nextButtonAutoAdvanceTime, timer]);
+  }, [goToNextStep, nextButtonAutoAdvanceTime, startupInteractionBlocked, timer]);
 
   const buttonTimerSatisfied = useMemo(
     () => {
@@ -121,15 +128,16 @@ export function NextButton({
       }
     };
 
-    if (nextOnEnter) {
+    if (nextOnEnter && !startupInteractionBlocked) {
       window.addEventListener('keydown', handleKeyDown);
     }
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [disabled, isNextDisabled, buttonTimerSatisfied, onCheckAnswer, onNext, nextOnEnter]);
+  }, [disabled, isNextDisabled, buttonTimerSatisfied, onCheckAnswer, onNext, nextOnEnter, startupInteractionBlocked]);
 
-  const nextButtonDisabled = disabled || isNextDisabled || !buttonTimerSatisfied;
+  const nextButtonDisabled = startupInteractionBlocked
+    || disabled || isNextDisabled || !buttonTimerSatisfied;
   const previousButtonText = config?.previousButtonText ?? studyConfig.uiConfig.previousButtonText ?? 'Previous';
   const nextButtonAlignment = config?.nextButtonAlignment ?? studyConfig.uiConfig.nextButtonAlignment ?? 'right';
 

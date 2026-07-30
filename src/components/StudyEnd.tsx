@@ -17,6 +17,7 @@ import {
   DEFAULT_STUDY_END_FINALIZE_STATE,
   StudyEndFinalizeLoopState,
 } from './StudyEnd.utils';
+import { useStartupInteractionBlocked } from './StartupContext';
 
 export function StudyEnd() {
   const studyConfig = useStudyConfig();
@@ -26,6 +27,7 @@ export function StudyEnd() {
 
   const isAnalysis = useIsAnalysis();
   const dataCollectionEnabled = useStoreSelector((state) => state.modes.dataCollectionEnabled);
+  const startupInteractionBlocked = useStartupInteractionBlocked();
 
   const [completed, setCompleted] = useState(false);
   const [finalizeState, setFinalizeState] = useState<StudyEndFinalizeLoopState>(DEFAULT_STUDY_END_FINALIZE_STATE);
@@ -37,6 +39,10 @@ export function StudyEnd() {
   }, [storageEngine]);
 
   useEffect(() => {
+    if (startupInteractionBlocked) {
+      return undefined;
+    }
+
     // Don't save to the storage engine in analysis
     if (!isAnalysis) {
       const finalizeLoop = createStudyEndFinalizeLoop({
@@ -69,7 +75,7 @@ export function StudyEnd() {
     dispatch(setIsSubmittingFinal(false));
     return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [startupInteractionBlocked]);
 
   // Disable browser back button on study end
   useDisableBrowserBack();
