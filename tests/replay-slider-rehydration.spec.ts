@@ -1,7 +1,6 @@
 import { expect, test } from '@playwright/test';
 import {
   nextClick,
-  openStudyFromLanding,
   readParticipantRecording,
   readStoredValue,
   resetClientStudyState,
@@ -10,7 +9,13 @@ import {
 
 test('SMEQ replay restores the saved slider value without writing participant data', async ({ page }) => {
   await resetClientStudyState(page);
-  await openStudyFromLanding(page, 'Tests', 'SMEQ: Subjective Mental Effort Questionnaire');
+  await page.goto('/');
+  await page.getByRole('tab', { name: 'Tests' }).click();
+  await page.getByLabel('Tests').locator('div')
+    .filter({ hasText: 'SMEQ: Subjective Mental Effort Questionnaire' })
+    .first()
+    .getByText('Go to Study')
+    .click();
   await nextClick(page);
 
   const participantTrack = page.getByTestId('smeq-slider-track');
