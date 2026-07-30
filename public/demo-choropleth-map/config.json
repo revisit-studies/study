@@ -29,7 +29,7 @@
     },
     "mapComponent": {
       "description": "Choropleth map colored by unemployment rate.",
-      "instruction": "Select top 3 states with highest unemployment rates.",
+      "instruction": "Select the top 3 states with the highest unemployment rates.",
       "type": "react-component",
       "path": "demo-choropleth-map/assets/Map.tsx",
       "nextButtonLocation": "sidebar",

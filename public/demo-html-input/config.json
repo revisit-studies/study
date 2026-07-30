@@ -48,8 +48,8 @@
     },
     "bar-chart-1": {
       "baseComponent": "bar-chart",
-      "description": "A trial for the user to click the largest bar",
-      "instruction": "Click on the largest bar",
+      "description": "A trial for the user to click the largest bar.",
+      "instruction": "Click on the largest bar.",
       "parameters": {
         "barData": [
           0.32,
@@ -64,8 +64,8 @@
     },
     "bar-chart-2": {
       "baseComponent": "bar-chart",
-      "description": "A trial for the user to click the smallest bar",
-      "instruction": "Click on the smallest bar",
+      "description": "A trial for the user to click the smallest bar.",
+      "instruction": "Click on the smallest bar.",
       "parameters": {
         "barData": [
           1.2,

@@ -817,7 +817,7 @@
         {
           "id": "title",
           "type": "textOnly",
-          "prompt": "# Form Elements in Sidebars \n\n This page shows form elements that can be used in the sidebar. \n\n For all elements that have horizontal and vertical variants, you should always use the vertical one in the sidebars. \n\n Matrix form elements are not supported in the sidebar. \n\n Limit Likert scales to 7 or less to fit. \n\n Limit the number of buttons to avoid overflow.",
+          "prompt": "# Form Elements in Sidebars \n\n This page shows form elements that can be used in the sidebar. \n\n For all elements that have horizontal and vertical variants, you should always use the vertical one in the sidebars. \n\n Matrix form elements are not supported in the sidebar. \n\n Limit Likert scales to 6 or fewer to fit. \n\n Limit the number of buttons to avoid overflow.",
           "restartEnumeration": true
         },
         {
