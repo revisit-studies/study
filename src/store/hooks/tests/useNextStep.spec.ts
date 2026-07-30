@@ -38,6 +38,7 @@ const mockSetReactiveAnswers = vi.fn((payload) => ({ type: 'setReactiveAnswers',
 const mockSetMatrixAnswersCheckbox = vi.fn((payload) => ({ type: 'setMatrixAnswersCheckbox', payload }));
 const mockSetMatrixAnswersRadio = vi.fn((payload) => ({ type: 'setMatrixAnswersRadio', payload }));
 const mockSetRankingAnswers = vi.fn((payload) => ({ type: 'setRankingAnswers', payload }));
+const mockSetClickedPrevious = vi.fn((payload) => ({ type: 'setClickedPrevious', payload }));
 
 // ── module mocks ─────────────────────────────────────────────────────────────
 
@@ -63,6 +64,7 @@ vi.mock('../../store', () => ({
     setMatrixAnswersCheckbox: mockSetMatrixAnswersCheckbox,
     setMatrixAnswersRadio: mockSetMatrixAnswersRadio,
     setRankingAnswers: mockSetRankingAnswers,
+    setClickedPrevious: mockSetClickedPrevious,
   }),
   useAreResponsesValid: () => mockAreResponsesValid,
   useFlatSequence: () => mockFlatSequence,
@@ -253,6 +255,7 @@ describe('useNextStep', () => {
     mockSetMatrixAnswersCheckbox.mockClear();
     mockSetMatrixAnswersRadio.mockClear();
     mockSetRankingAnswers.mockClear();
+    mockSetClickedPrevious.mockClear();
   });
 
   test('isNextDisabled is false when step is a number, not analysis, and responses are valid', () => {

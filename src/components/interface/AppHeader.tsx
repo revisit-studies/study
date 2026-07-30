@@ -48,9 +48,11 @@ import {
   shouldWarnForDefaultFirebaseConfig,
   shouldWarnForDefaultSupabaseConfig,
 } from '../../utils/defaultStorageConfig';
+import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 
 export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { developmentModeEnabled: boolean; dataCollectionEnabled: boolean }) {
   const studyConfig = useStoreSelector((state) => state.config);
+  const isAnalysis = useIsAnalysis();
 
   const answers = useStoreSelector((state) => state.answers);
   const storageEngineFailedToConnect = useStoreSelector((state) => state.storageEngineFailedToConnect);
@@ -310,6 +312,7 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
                 {developmentModeEnabled && (
                   <Menu.Item
                     leftSection={<IconUserPlus size={14} />}
+                    disabled={isAnalysis}
                     onClick={() => getNewParticipant(storageEngine, studyHref)}
                   >
                     Next Participant

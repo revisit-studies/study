@@ -20,7 +20,7 @@ import { useStoreSelector, useStoreDispatch, useStoreActions } from '../store/st
 import { AnalysisFooter } from './interface/AnalysisFooter';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import { studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
-import { useCurrentComponent } from '../routes/utils';
+import { useCurrentComponent, useCurrentIdentifier } from '../routes/utils';
 import { useFetchStylesheet } from '../utils/fetchStylesheet';
 import { RecordingContext, useRecording } from '../store/hooks/useRecording';
 import { ScreenRecordingRejection } from './interface/ScreenRecordingRejection';
@@ -40,6 +40,7 @@ export function StepRenderer() {
   const isAnalysis = useIsAnalysis();
   const studyConfig = useStudyConfig();
   const currentComponent = useCurrentComponent();
+  const currentIdentifier = useCurrentIdentifier();
 
   const componentConfig = useMemo(() => studyComponentToIndividualComponent(studyConfig.components[currentComponent] || {}, studyConfig), [currentComponent, studyConfig]);
 
@@ -54,6 +55,15 @@ export function StepRenderer() {
 
   const screenRecording = useRecording();
   const replay = useReplay();
+  const { resetReplay } = replay;
+  const previousReplayIdentifier = useRef(currentIdentifier);
+
+  useEffect(() => {
+    if (isAnalysis && previousReplayIdentifier.current !== currentIdentifier) {
+      resetReplay();
+    }
+    previousReplayIdentifier.current = currentIdentifier;
+  }, [currentIdentifier, isAnalysis, resetReplay]);
 
   const { isRejected: isScreenRecordingUserRejected } = screenRecording;
 
@@ -209,7 +219,12 @@ export function StepRenderer() {
             <AlertModal />
             <ConfigVersionWarningModal />
             <Flex direction="row" gap="xs" style={{ width: '100%', maxWidth: rowMaxWidth }}>
-              <AppNavBar width={sidebarWidth} top={showTitleBar ? 70 : 0} sidebarOpen={sidebarOpen} />
+              <AppNavBar
+                width={sidebarWidth}
+                top={showTitleBar ? 70 : 0}
+                bottom={isAnalysis ? 125 + (hasAudio ? 55 : 0) : 0}
+                sidebarOpen={sidebarOpen}
+              />
               {/* 10px is the gap between the sidebar and the main content */}
               <AppShell.Main
                 className="main"
@@ -234,7 +249,7 @@ export function StepRenderer() {
               </AppShell.Main>
             </Flex>
             {isAnalysis && (
-            <AnalysisFooter setHasAudio={setHasAudio} key={currentComponent} />
+            <AnalysisFooter setHasAudio={setHasAudio} key={currentIdentifier} />
             )}
           </AppShell>
         </ReplayContext.Provider>

@@ -19,6 +19,7 @@ const mockSetMatrixAnswersCheckbox = vi.fn((payload) => ({ type: 'setMatrixAnswe
 const mockSetMatrixAnswersRadio = vi.fn((payload) => ({ type: 'setMatrixAnswersRadio', payload }));
 const mockSetRankingAnswers = vi.fn((payload) => ({ type: 'setRankingAnswers', payload }));
 const mockSetAlertModal = vi.fn((payload) => ({ type: 'setAlertModal', payload }));
+const mockSetClickedPrevious = vi.fn((payload) => ({ type: 'setClickedPrevious', payload }));
 
 let mockStoredAnswer: {
   answer: Record<string, string>;
@@ -53,6 +54,7 @@ let mockStudyConfig: {
 };
 let mockTrialValidation: Record<string, unknown>;
 let capturedIsNextDisabled: boolean | undefined;
+let mockClickedPrevious = false;
 
 const mockDispatch = vi.fn((action) => {
   if (action.type === 'saveTrialAnswer') {
@@ -75,7 +77,7 @@ vi.mock('../../store', () => ({
     sequence: mockSequence,
     answers: mockAnswers,
     modes: { dataCollectionEnabled: true },
-    clickedPrevious: false,
+    clickedPrevious: mockClickedPrevious,
     responseSubmitAttempted: { intro_0: true },
     checkAnswer: {},
   }),
@@ -86,6 +88,7 @@ vi.mock('../../store', () => ({
     setMatrixAnswersCheckbox: mockSetMatrixAnswersCheckbox,
     setRankingAnswers: mockSetRankingAnswers,
     setAlertModal: mockSetAlertModal,
+    setClickedPrevious: mockSetClickedPrevious,
   }),
   useStoreDispatch: () => mockDispatch,
   useAreResponsesValid: () => true,
@@ -152,6 +155,7 @@ describe('useNextStep', () => {
     mockSetMatrixAnswersRadio.mockClear();
     mockSetRankingAnswers.mockClear();
     mockSetAlertModal.mockClear();
+    mockSetClickedPrevious.mockClear();
     mockDispatch.mockClear();
     mockAnswers = {};
     mockTrialValidation = {
@@ -200,6 +204,7 @@ describe('useNextStep', () => {
     };
     capturedGoToNextStep = undefined;
     capturedIsNextDisabled = undefined;
+    mockClickedPrevious = false;
 
     vi.stubGlobal('window', {
       location: { search: '' },
@@ -305,6 +310,23 @@ describe('useNextStep', () => {
 
     expect(mockNavigate).toHaveBeenCalledTimes(1);
     expect(mockNavigate.mock.calls[0][0]).toContain('?participantId=p-1');
+  });
+
+  test('updates a revisited answer without replacing its original timeline interval', async () => {
+    mockClickedPrevious = true;
+    mockStoredAnswer.startTime = 1_000;
+    mockStoredAnswer.endTime = 2_000;
+
+    renderToStaticMarkup(<HookHarness />);
+    capturedGoToNextStep?.();
+    await Promise.resolve();
+
+    expect(mockSaveTrialAnswer).toHaveBeenCalledWith(expect.objectContaining({
+      answer: { response: 'saved-answer' },
+      startTime: 1_000,
+      endTime: 2_000,
+    }));
+    expect(mockSetClickedPrevious).toHaveBeenCalledWith(false);
   });
 
   test('marks timed out auto-advance answers as empty and does not use cleared answers for skip logic', async () => {

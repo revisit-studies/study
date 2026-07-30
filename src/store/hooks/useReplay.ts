@@ -25,8 +25,6 @@ export function useReplay() {
 
   const [seekTime, _setSeekTime] = useState(0);
 
-  const playTimeStamp = useRef(Date.now());
-
   const [duration, _setDuration] = useState(0);
   const internalDuration = useRef(duration);
 
@@ -35,29 +33,21 @@ export function useReplay() {
   const [isPlaying, _setIsPlaying] = useState(false);
 
   const [hasEnded, setHasEnded] = useState(false);
+  const timerValue = useRef<number>(0);
 
   const setDuration = useCallback((d: number) => {
     _setDuration(d);
     internalDuration.current = d;
+    setHasEnded(d > 0 && timerValue.current >= d);
   }, []);
-
-  const timerValue = useRef<number>(0);
-
-  useEffect(() => {
-    if (duration > 0 && (timerValue.current >= duration || (replayRef.current && timerValue.current >= replayRef.current.duration))) {
-      setHasEnded(true);
-    }
-  }, [duration, isPlaying]);
 
   const setSpeed = useCallback((newSpeed: number, isRemoteTriggered = false) => {
     setIsMasterPlayer(!isRemoteTriggered);
     internalSpeed.current = newSpeed;
     _setSpeed(newSpeed);
-    _setSeekTime(replayRef.current?.currentTime || timerValue.current);
-    playTimeStamp.current = Date.now();
+    _setSeekTime(timerValue.current);
   }, []);
 
-  const mediaTimeUpdateTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const syntheticReplayTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [searchParams] = useSearchParams();
@@ -126,21 +116,12 @@ export function useReplay() {
     } else {
       videoRef.current?.play();
     }
-
-    const elem = replayRef.current;
-    if (elem) {
-      if (mediaTimeUpdateTimer.current) {
-        clearInterval(mediaTimeUpdateTimer.current);
-      }
-      mediaTimeUpdateTimer.current = setInterval(() => {
-        emitterRef.current.emit('timeupdate', elem.currentTime);
-      }, 30);
-    }
   }, []);
 
   const handleSeeked = useCallback(() => {
     const t = replayRef.current?.currentTime || 0;
     _setSeekTime(t);
+    timerValue.current = t;
 
     emitterRef.current.emit('timeupdate', t);
     if (videoRef.current === replayRef.current) {
@@ -155,7 +136,6 @@ export function useReplay() {
   const setSeekTime = useCallback((time: number, isRemoteTriggered = false) => {
     setIsMasterPlayer(!isRemoteTriggered);
     _setSeekTime(time);
-    playTimeStamp.current = Date.now();
     if (replayRef.current) {
       replayRef.current.currentTime = time;
     }
@@ -169,15 +149,17 @@ export function useReplay() {
       return;
     }
 
-    _setIsPlaying(false);
-
-    if (mediaTimeUpdateTimer.current) {
-      clearInterval(mediaTimeUpdateTimer.current);
-      mediaTimeUpdateTimer.current = null;
+    const mediaEndedBeforeTask = replayRef.current?.ended
+      && internalDuration.current > 0
+      && timerValue.current < internalDuration.current;
+    if (mediaEndedBeforeTask) {
+      return;
     }
-    const t = replayRef.current?.currentTime || 0;
-    emitterRef.current.emit('pause', t);
-    timerValue.current = t;
+
+    _setIsPlaying(false);
+    _setSeekTime(timerValue.current);
+
+    emitterRef.current.emit('pause', timerValue.current);
 
     if (videoRef.current === replayRef.current) {
       if (audioRef.current) {
@@ -186,6 +168,16 @@ export function useReplay() {
     } else {
       videoRef.current?.pause();
     }
+  }, []);
+
+  const handleEnded = useCallback(() => {
+    if (internalDuration.current > 0 && timerValue.current < internalDuration.current) {
+      _setIsPlaying(true);
+      return;
+    }
+
+    _setIsPlaying(false);
+    setHasEnded(internalDuration.current > 0);
   }, []);
 
   const forceEmitTimeUpdate = useCallback(() => {
@@ -202,20 +194,22 @@ export function useReplay() {
 
     if (originalVideo) {
       originalVideo.playbackRate = internalSpeed.current;
-      originalVideo.currentTime = initialTimestamp;
+      originalVideo.currentTime = timerValue.current;
 
       originalVideo.removeEventListener('play', handlePlay);
       originalVideo.removeEventListener('pause', handlePause);
       originalVideo.removeEventListener('seeked', handleSeeked);
+      originalVideo.removeEventListener('ended', handleEnded);
     }
 
     if (originalAudio) {
       originalAudio.playbackRate = internalSpeed.current;
-      originalAudio.currentTime = initialTimestamp;
+      originalAudio.currentTime = timerValue.current;
 
       originalAudio.removeEventListener('play', handlePlay);
       originalAudio.removeEventListener('pause', handlePause);
       originalAudio.removeEventListener('seeked', handleSeeked);
+      originalAudio.removeEventListener('ended', handleEnded);
     }
 
     replayRef.current = (videoRef.current?.src ? videoRef.current : null) ?? (audioRef.current?.src ? audioRef.current : null);
@@ -224,9 +218,10 @@ export function useReplay() {
       replayRef.current.addEventListener('play', handlePlay);
       replayRef.current.addEventListener('pause', handlePause);
       replayRef.current.addEventListener('seeked', handleSeeked);
+      replayRef.current.addEventListener('ended', handleEnded);
     }
     forceEmitTimeUpdate();
-  }, [handlePlay, handlePause, handleSeeked, initialTimestamp, forceEmitTimeUpdate]);
+  }, [handlePlay, handlePause, handleSeeked, handleEnded, forceEmitTimeUpdate]);
 
   // this should be the only way to start video/audio
   const setIsPlaying = useCallback((playing: boolean, isRemoteTriggered = false) => {
@@ -252,10 +247,6 @@ export function useReplay() {
 
     return () => {
       isMountedRef.current = false;
-      if (mediaTimeUpdateTimer.current) {
-        clearInterval(mediaTimeUpdateTimer.current);
-        mediaTimeUpdateTimer.current = null;
-      }
       if (syntheticReplayTimer.current) {
         clearInterval(syntheticReplayTimer.current);
         syntheticReplayTimer.current = null;
@@ -267,57 +258,48 @@ export function useReplay() {
       replayRef.current?.removeEventListener('play', handlePlay);
       replayRef.current?.removeEventListener('pause', handlePause);
       replayRef.current?.removeEventListener('seeked', handleSeeked);
+      replayRef.current?.removeEventListener('ended', handleEnded);
     };
-  }, [handlePause, handlePlay, handleSeeked]);
+  }, [handleEnded, handlePause, handlePlay, handleSeeked]);
 
   useEffect(() => {
     if (isPlaying) {
-      playTimeStamp.current = Date.now();
-    } else {
-      _setSeekTime((t) => {
-        const diff = ((Date.now() - playTimeStamp.current) * internalSpeed.current) / 1000; // issue
-        const ctime = diff < 0.5 ? t : t + diff;
-        if (replayRef.current) {
-          replayRef.current.currentTime = ctime;
+      let lastTickTime = Date.now();
+      syntheticReplayTimer.current = setInterval(() => {
+        if (!isMountedRef.current) {
+          if (syntheticReplayTimer.current) {
+            clearInterval(syntheticReplayTimer.current);
+            syntheticReplayTimer.current = null;
+          }
+          return;
         }
-        return ctime;
-      });
-    }
 
-    // setup timer to emit events if both video and audio aren't present.
-    if (!audioRef.current && !videoRef.current) {
-      if (isPlaying) {
-        let lastTickTime = Date.now();
-        syntheticReplayTimer.current = setInterval(() => {
-          if (!isMountedRef.current) {
-            if (syntheticReplayTimer.current) {
-              clearInterval(syntheticReplayTimer.current);
-              syntheticReplayTimer.current = null;
-            }
-            return;
-          }
+        const now = Date.now();
+        const nextTime = getNextSyntheticReplayTime(
+          timerValue.current,
+          lastTickTime,
+          now,
+          internalSpeed.current,
+        );
+        lastTickTime = now;
+        timerValue.current = internalDuration.current > 0
+          ? Math.min(nextTime, internalDuration.current)
+          : nextTime;
+        emitterRef.current.emit('timeupdate', timerValue.current);
 
-          const now = Date.now();
-          timerValue.current = getNextSyntheticReplayTime(
-            timerValue.current,
-            lastTickTime,
-            now,
-            internalSpeed.current,
-          );
-          lastTickTime = now;
-          emitterRef.current.emit('timeupdate', timerValue.current);
-          if (internalDuration.current > 0 && timerValue.current >= internalDuration.current) {
-            if (syntheticReplayTimer.current) {
-              clearInterval(syntheticReplayTimer.current);
-              syntheticReplayTimer.current = null;
-            }
-            setIsPlaying(false);
+        if (internalDuration.current > 0 && timerValue.current >= internalDuration.current) {
+          if (syntheticReplayTimer.current) {
+            clearInterval(syntheticReplayTimer.current);
+            syntheticReplayTimer.current = null;
           }
-        }, 30);
-      } else if (syntheticReplayTimer.current) {
-        clearInterval(syntheticReplayTimer.current);
-        syntheticReplayTimer.current = null;
-      }
+          _setSeekTime(timerValue.current);
+          setHasEnded(true);
+          setIsPlaying(false);
+        }
+      }, 30);
+    } else if (syntheticReplayTimer.current) {
+      clearInterval(syntheticReplayTimer.current);
+      syntheticReplayTimer.current = null;
     }
 
     return () => {
@@ -327,6 +309,28 @@ export function useReplay() {
       }
     };
   }, [isPlaying, setIsPlaying]);
+
+  const resetReplay = useCallback(() => {
+    replayRef.current?.pause();
+    if (videoRef.current) {
+      videoRef.current.currentTime = 0;
+    }
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+    }
+    if (syntheticReplayTimer.current) {
+      clearInterval(syntheticReplayTimer.current);
+      syntheticReplayTimer.current = null;
+    }
+    replayRef.current = null;
+    timerValue.current = 0;
+    internalDuration.current = 0;
+    _setSeekTime(0);
+    _setDuration(0);
+    _setIsPlaying(false);
+    setHasEnded(false);
+    emitterRef.current.emit('timeupdate', 0);
+  }, []);
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -374,8 +378,9 @@ export function useReplay() {
       replayEvent,
       forceEmitTimeUpdate,
       hasEnded,
+      resetReplay,
     }),
-    [replayEvent, seekTime, setSeekTime, duration, speed, isPlaying, setIsPlaying, updateReplayRef, setSpeed, forceEmitTimeUpdate, setDuration, hasEnded],
+    [replayEvent, seekTime, setSeekTime, duration, speed, isPlaying, setIsPlaying, updateReplayRef, setSpeed, forceEmitTimeUpdate, setDuration, hasEnded, resetReplay],
   );
 
   return value;

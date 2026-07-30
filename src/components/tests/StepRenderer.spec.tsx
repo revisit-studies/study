@@ -131,6 +131,7 @@ vi.mock('../../store/hooks/useReplay', () => ({
     forceEmitTimeUpdate: vi.fn(),
     setDuration: vi.fn(),
     hasEnded: false,
+    resetReplay: vi.fn(),
     replayEvent: { on: vi.fn(), off: vi.fn(), emit: vi.fn() },
   }),
   ReplayContext: { Provider: ({ children }: { children: ReactNode }) => <span>{children}</span> },
@@ -159,6 +160,7 @@ vi.mock('../../storage/storageEngineHooks', () => ({
 
 vi.mock('../../routes/utils', () => ({
   useCurrentComponent: () => 'intro',
+  useCurrentIdentifier: () => 'intro_0',
 }));
 
 vi.mock('../../utils/handleComponentInheritance', () => ({

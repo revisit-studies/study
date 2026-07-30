@@ -327,6 +327,62 @@ describe('useReplay — public setIsPlaying with hasEnded=true', () => {
   });
 });
 
+describe('useReplay — task clock is authoritative', () => {
+  test('continues to the task duration after shorter media ends', () => {
+    vi.useFakeTimers();
+    const { result } = renderHook(() => useReplay());
+    const video = makeVideoWithSrc();
+    video.play = vi.fn(async () => {});
+    video.pause = vi.fn();
+    Object.defineProperty(video, 'ended', { value: false, configurable: true });
+
+    act(() => {
+      result.current.videoRef.current = video;
+      result.current.updateReplayRef();
+      result.current.setDuration(3);
+      result.current.setIsPlaying(true);
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(1_000);
+      video.dispatchEvent(new Event('pause'));
+      Object.defineProperty(video, 'ended', { value: true, configurable: true });
+      video.dispatchEvent(new Event('ended'));
+    });
+    expect(result.current.isPlaying).toBe(true);
+    expect(result.current.hasEnded).toBe(false);
+
+    act(() => {
+      vi.advanceTimersByTime(2_100);
+    });
+    expect(result.current.seekTime).toBe(3);
+    expect(result.current.hasEnded).toBe(true);
+    expect(result.current.isPlaying).toBe(false);
+  });
+
+  test('resetReplay pauses and clears task timing without changing speed', () => {
+    const { result } = renderHook(() => useReplay());
+    const video = makeVideoWithSrc();
+    video.pause = vi.fn();
+
+    act(() => {
+      result.current.videoRef.current = video;
+      result.current.updateReplayRef();
+      result.current.setDuration(10);
+      result.current.setSeekTime(4);
+      result.current.setSpeed(2);
+      result.current.resetReplay();
+    });
+
+    expect(video.pause).toHaveBeenCalled();
+    expect(result.current.seekTime).toBe(0);
+    expect(result.current.duration).toBe(0);
+    expect(result.current.isPlaying).toBe(false);
+    expect(result.current.hasEnded).toBe(false);
+    expect(result.current.speed).toBe(2);
+  });
+});
+
 describe('useReplay — cleanup', () => {
   test('clears the synthetic replay timer on unmount', () => {
     vi.useFakeTimers();
