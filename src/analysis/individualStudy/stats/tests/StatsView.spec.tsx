@@ -205,8 +205,23 @@ describe('TrialVisualization', () => {
 // ── ResponseVisualization ────────────────────────────────────────────────────
 
 describe('ResponseVisualization', () => {
+  const answeredParticipant = {
+    ...mockParticipant,
+    answers: {
+      trial1_0: {
+        answer: { q1: 'A' },
+        startTime: 1,
+        endTime: 2,
+        componentName: 'trial1',
+        trialOrder: '0',
+        windowEvents: [],
+        timedOut: false,
+      },
+    },
+  } as unknown as ParticipantData;
+
   const baseProps = {
-    participantData: [] as ParticipantData[],
+    participantData: [answeredParticipant] as ParticipantData[],
     trialId: 'trial1',
     trialConfig: mockTrialConfig,
   };
@@ -266,6 +281,20 @@ describe('ResponseVisualization', () => {
     );
     expect(html).toContain('icon-radio');
     expect(html).toContain('VegaLite');
+  });
+
+  test('radio type: shows a no-data message instead of a chart when there are no responses', () => {
+    const html = renderToStaticMarkup(
+      <ResponseVisualization
+        {...baseProps}
+        participantData={[]}
+        response={{
+          type: 'radio', id: 'q1', prompt: 'Pick one', options: ['A', 'B'],
+        }}
+      />,
+    );
+    expect(html).toContain('No responses for this task yet.');
+    expect(html).not.toContain('VegaLite');
   });
 
   test('numerical type: shows numerical icon and VegaLite chart', () => {

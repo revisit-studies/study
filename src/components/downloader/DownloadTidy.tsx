@@ -207,7 +207,7 @@ function participantDataToRows(
         if (properties.includes('correctAnswer')) {
           const configCorrectAnswer = completeComponent?.correctAnswer?.find((ans) => ans.id === key)?.answer;
           const answerCorrectAnswer = trialAnswer.correctAnswer.find((ans) => ans.id === key)?.answer;
-          const correctAnswer = answerCorrectAnswer || configCorrectAnswer;
+          const correctAnswer = answerCorrectAnswer ?? configCorrectAnswer;
           tidyRow.correctAnswer = typeof correctAnswer === 'object' ? JSON.stringify(correctAnswer) : correctAnswer;
         }
         if (properties.includes('startTime')) {

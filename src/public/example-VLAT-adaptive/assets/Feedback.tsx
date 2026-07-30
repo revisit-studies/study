@@ -79,7 +79,7 @@ export default function Feedback({ answers }: StimulusParams<any>) {
             ))}
           </Group>
           <Center>
-            <Text w="80%" mt={20} size="sm" c="grey">*This score is based on an adaptive testing methodology and cannot be mapped to 0-1 or 0-100. Instead, it can be used to compare your own runs with each other or with other people's scores.</Text>
+            <Text w="80%" mt={20} size="sm" c="grey">*This score is based on an adaptive testing methodology and cannot be mapped to 0-1 or 0-100. Instead, it can be used to compare your own runs with each other or with other people&apos;s scores.</Text>
 
           </Center>
         </Card>

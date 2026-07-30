@@ -1,5 +1,5 @@
 import {
-  Grid, Radio, Image, Box, Stack, Title, Center, Text
+  Grid, Radio, Image, Box, Stack, Title, Center, Text,
 } from '@mantine/core';
 import { VLATQuestions } from '../../libraries/adaptive-vlat/assets/vlatQ';
 

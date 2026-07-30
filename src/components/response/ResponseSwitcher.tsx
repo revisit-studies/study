@@ -147,7 +147,7 @@ export function ResponseSwitcher({
       return Object.fromEntries(response.questionOptions.map((entry) => [parseStringOptionValue(entry), '']));
     }
 
-    if (response.type === 'slider' && response.startingValue) {
+    if (response.type === 'slider' && response.startingValue !== undefined) {
       return response.startingValue.toString();
     }
 
