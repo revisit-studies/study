@@ -1,17 +1,25 @@
 /* eslint-disable react/no-unescaped-entities */
-import { useState, useRef, useEffect } from 'react';
+import {
+  useState, useRef, useEffect, useMemo,
+} from 'react';
 import {
   Slider, Button, Stack, Text,
 } from '@mantine/core';
+import { Registry } from '@trrack/core';
 import { StimulusParams } from '../../../../store/types';
 import { useIsAnalysis } from '../../../../store/hooks/useIsAnalysis';
 import { useStoredAnswer } from '../../../../store/hooks/useStoredAnswer';
 import cardImage from './card.png';
 
-interface VirtualChinrestCalibrationProps extends StimulusParams<{ taskid: string }> {
+interface VirtualChinrestCalibrationProps extends StimulusParams<{ taskid: string }, CardCalibrationState> {
   itemWidthMM: number;
   itemHeightMM: number;
   fixedCorner: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+}
+
+interface CardCalibrationState {
+  itemWidthPx: number;
+  isCalibrationComplete: boolean;
 }
 
 // --- utility functions
@@ -21,10 +29,36 @@ const calculateHeight = (width: number, aspectRatio:number) => Math.round(width 
 export default function VirtualChinrestCalibration({
   parameters,
   setAnswer,
+  provenanceState,
+  useTrrack,
   itemWidthMM = 85.6, // Standard credit card width
   itemHeightMM = 53.98, // Standard credit card height
   fixedCorner = 'top-left', // Default to top-left fixed corner
 }: VirtualChinrestCalibrationProps) {
+  const { actions, registry } = useMemo(() => {
+    const reg = Registry.create();
+    return {
+      actions: {
+        setWidth: reg.register('set-width', (state, itemWidthPx: number) => {
+          state.itemWidthPx = itemWidthPx;
+          return state;
+        }),
+        complete: reg.register('complete', (state, isCalibrationComplete: boolean) => {
+          state.isCalibrationComplete = isCalibrationComplete;
+          return state;
+        }),
+      },
+      registry: reg,
+    };
+  }, []);
+  const trrack = useTrrack<CardCalibrationState>({
+    registry,
+    initialState: {
+      itemWidthPx: 300,
+      isCalibrationComplete: false,
+    },
+  });
+
   // Set states
   const [itemWidthPx, setItemWidthPx] = useState(300); // default starting slider value (unit is px)
   const [isCalibrationComplete, setIsCalibrationComplete] = useState(false);
@@ -60,6 +94,15 @@ export default function VirtualChinrestCalibration({
   }, []);
 
   useEffect(() => {
+    const replayWidth = Number(provenanceState?.itemWidthPx);
+    if (Number.isFinite(replayWidth) && replayWidth > 0) {
+      setItemWidthPx(replayWidth);
+      setHasMovedSlider(replayWidth !== 300);
+      setIsCalibrationComplete(provenanceState?.isCalibrationComplete === true);
+      setShowMoveSliderWarning(false);
+      return;
+    }
+
     if (storedPixelsPerMM === null) {
       return;
     }
@@ -68,11 +111,12 @@ export default function VirtualChinrestCalibration({
     setHasMovedSlider(true);
     setIsCalibrationComplete(true);
     setShowMoveSliderWarning(false);
-  }, [itemWidthMM, storedPixelsPerMM]);
+  }, [itemWidthMM, provenanceState, storedPixelsPerMM]);
 
   // Handle a change in the slider
   const handleSliderChange = (value: number) => {
     setItemWidthPx(value);
+    trrack.apply('Adjust card size', actions.setWidth(value));
     setHasMovedSlider(true);
     setShowMoveSliderWarning(false);
   };
@@ -92,6 +136,7 @@ export default function VirtualChinrestCalibration({
       },
     });
 
+    trrack.apply('Complete card calibration', actions.complete(true));
     setIsCalibrationComplete(true);
   };
 
@@ -131,6 +176,7 @@ export default function VirtualChinrestCalibration({
         {/* Card container that changes size */}
         <div
           ref={containerRef}
+          data-testid="virtual-card"
           style={{
             width: `${itemWidthPx}px`,
             height: `${calculateHeight(itemWidthPx, aspectRatio)}px`,

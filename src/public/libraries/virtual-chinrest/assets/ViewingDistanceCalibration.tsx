@@ -4,6 +4,7 @@ import {
 import {
   Stack, List, Text, Container, Button,
 } from '@mantine/core';
+import { Registry } from '@trrack/core';
 import {
   StimulusParams, StoredAnswer,
 } from '../../../../store/types';
@@ -15,6 +16,12 @@ import { parseTrialOrder } from '../../../../utils/parseTrialOrder';
 // Utility functions
 const degToRadians = (degrees: number) => (degrees * Math.PI) / 180;
 const cardSizeComponent = '$virtual-chinrest.components.card-size';
+
+interface ViewingDistanceState {
+  ballPosition: number;
+  ballPositions: number[];
+  viewingDistance: number | null;
+}
 
 function compareTrialOrders(left: string, right: string) {
   const leftOrder = parseTrialOrder(left);
@@ -43,7 +50,37 @@ export function findPreviousCardSizeAnswer(
     .sort((a, b) => compareTrialOrders(b.trialOrder, a.trialOrder) ?? 0)[0];
 }
 
-export default function ViewingDistanceCalibration({ parameters, setAnswer }: StimulusParams<{ blindspotAngle: number }>) {
+export default function ViewingDistanceCalibration({
+  parameters,
+  provenanceState,
+  setAnswer,
+  useTrrack,
+}: StimulusParams<{ blindspotAngle: number }, ViewingDistanceState>) {
+  const { actions, registry } = useMemo(() => {
+    const reg = Registry.create();
+    return {
+      actions: {
+        recordMeasurement: reg.register('record-measurement', (
+          state: ViewingDistanceState,
+          measurement: ViewingDistanceState,
+        ) => {
+          state.ballPosition = measurement.ballPosition;
+          state.ballPositions = measurement.ballPositions;
+          state.viewingDistance = measurement.viewingDistance;
+          return state;
+        }),
+      },
+      registry: reg,
+    };
+  }, []);
+  const trrack = useTrrack<ViewingDistanceState>({
+    registry,
+    initialState: {
+      ballPosition: 740,
+      ballPositions: [],
+      viewingDistance: null,
+    },
+  });
   const ballRef = useRef<HTMLDivElement>(null);
   const squareRef = useRef<HTMLDivElement>(null);
   const animationFrameRef = useRef<number | null>(null);
@@ -80,7 +117,7 @@ export default function ViewingDistanceCalibration({ parameters, setAnswer }: St
 
   // Calculate viewing distance function
   const calculateViewingDistance = useCallback((positions: number[]) => {
-    if (!positions.length || !pixelsPerMM || !squareRef.current) return;
+    if (!positions.length || !pixelsPerMM || !squareRef.current) return null;
 
     const avgBallPos = positions.reduce((a, b) => a + b, 0) / positions.length;
     const squareRect = squareRef.current.getBoundingClientRect();
@@ -90,6 +127,7 @@ export default function ViewingDistanceCalibration({ parameters, setAnswer }: St
 
     setViewingDistance(viewDistance);
     setIsTracking(false);
+    return viewDistance;
   }, [blindspotAngle, pixelsPerMM]);
 
   // Reset ball to starting position
@@ -174,14 +212,18 @@ export default function ViewingDistanceCalibration({ parameters, setAnswer }: St
           stopTracking();
           const ballRect = ballRef.current.getBoundingClientRect();
           const newPosition = ballRect.left;
+          const replayBallPosition = Number.parseFloat(ballRef.current.style.left || '740');
+          const newPositions = [...ballPositions, newPosition];
+          const nextViewingDistance = newPositions.length >= 5
+            ? calculateViewingDistance(newPositions)
+            : null;
 
-          setBallPositions((prev) => {
-            const newPositions = [...prev, newPosition];
-            if (newPositions.length >= 5) {
-              calculateViewingDistance(newPositions);
-            }
-            return newPositions;
-          });
+          setBallPositions(newPositions);
+          trrack.apply('Record viewing-distance measurement', actions.recordMeasurement({
+            ballPosition: replayBallPosition,
+            ballPositions: newPositions,
+            viewingDistance: nextViewingDistance,
+          }));
 
           setClickCount((prev) => prev - 1);
           resetBall();
@@ -191,7 +233,15 @@ export default function ViewingDistanceCalibration({ parameters, setAnswer }: St
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [isAnalysis, isTracking, startBlindspotTracking, calculateViewingDistance]);
+  }, [
+    actions,
+    ballPositions,
+    calculateViewingDistance,
+    isAnalysis,
+    isTracking,
+    startBlindspotTracking,
+    trrack,
+  ]);
 
   // Reset state when pixelsPerMM changes
   useEffect(() => {
@@ -210,6 +260,17 @@ export default function ViewingDistanceCalibration({ parameters, setAnswer }: St
   }, []);
 
   useEffect(() => {
+    if (provenanceState) {
+      setBallPositions(provenanceState.ballPositions);
+      setViewingDistance(provenanceState.viewingDistance);
+      setIsTracking(false);
+      setClickCount(Math.max(0, 5 - provenanceState.ballPositions.length));
+      if (ballRef.current) {
+        ballRef.current.style.left = `${provenanceState.ballPosition}px`;
+      }
+      return;
+    }
+
     if (!Number.isFinite(storedViewingDistance) || storedViewingDistance <= 0) {
       return;
     }
@@ -218,7 +279,7 @@ export default function ViewingDistanceCalibration({ parameters, setAnswer }: St
     setViewingDistance(storedViewingDistance);
     setIsTracking(false);
     setClickCount(Math.max(0, 5 - storedBallPositions.length));
-  }, [storedBallPositions, storedViewingDistance]);
+  }, [provenanceState, storedBallPositions, storedViewingDistance]);
 
   // Cleanup animation frame on unmount
   useEffect(() => () => {
@@ -234,6 +295,11 @@ export default function ViewingDistanceCalibration({ parameters, setAnswer }: St
     setIsTracking(false);
     setClickCount(5);
     resetBall();
+    trrack.apply('Reset viewing-distance measurements', actions.recordMeasurement({
+      ballPosition: 740,
+      ballPositions: [],
+      viewingDistance: null,
+    }));
     // clear submitted answers
     setAnswer({
       status: false,
@@ -281,6 +347,7 @@ export default function ViewingDistanceCalibration({ parameters, setAnswer }: St
         >
           <div
             ref={ballRef}
+            data-testid="blindspot-ball"
             style={{
               position: 'absolute',
               width: '30px',

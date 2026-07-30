@@ -1,6 +1,10 @@
 /* eslint-disable no-await-in-loop */
 import { test, expect, Page } from '@playwright/test';
-import { nextClick, waitForStudyEndMessage } from './utils';
+import {
+  nextClick,
+  readStoredValue,
+  waitForStudyEndMessage,
+} from './utils';
 
 test.setTimeout(180000);
 
@@ -176,6 +180,7 @@ test('test', async ({ page, browserName }) => {
 
   const taskTimeoutMs = 5000;
   const maxTaskLoops = 20;
+  let firstTaskParticipantPath = '';
 
   await page.goto('/');
 
@@ -236,6 +241,9 @@ test('test', async ({ page, browserName }) => {
     }
     const questionBefore = await getCurrentTaskQuestion(page);
     await answerCurrentMvnvPrompt(page, taskTimeoutMs, questionBefore);
+    if (i === 0) {
+      firstTaskParticipantPath = new URL(page.url()).pathname;
+    }
     if (await isFinished()) {
       break;
     }
@@ -250,4 +258,39 @@ test('test', async ({ page, browserName }) => {
 
   // Check that the thank you message is displayed
   await waitForStudyEndMessage(page);
+
+  const assignments = await readStoredValue<Record<string, unknown>>(
+    page,
+    'dev-example-mvnv/sequenceAssignment',
+  );
+  const participantId = Object.keys(assignments ?? {})[0];
+  if (!participantId) {
+    throw new Error('No recorded MVNV answer found');
+  }
+
+  type MvnvAnswer = {
+    answer?: Record<string, unknown>;
+    componentName?: string;
+  };
+  await expect.poll(async () => {
+    const participant = await readStoredValue<{ answers?: Record<string, MvnvAnswer> }>(
+      page,
+      `dev-example-mvnv/participants/${participantId}_participantData`,
+    );
+    return Object.values(participant?.answers ?? {})
+      .some((answer) => (
+        answer.componentName?.startsWith('task')
+        && Array.isArray(answer.answer?.['iframe-task'])
+      ));
+  }, { timeout: 15000 }).toBe(true);
+
+  await page.goto(`${firstTaskParticipantPath}?participantId=${participantId}&revisitPageId=e2e-mvnv-replay`);
+  await expect(page.locator('#root iframe')).toHaveCount(1, { timeout: 15000 }).catch(async () => {
+    throw new Error(`MVNV replay did not render an iframe at ${page.url()}: ${await page.locator('body').innerText()}`);
+  });
+  const replayFrame = page.frameLocator('#root iframe');
+  await expect.poll(async () => replayFrame.locator('.answerBox rect').evaluateAll((rects) => (
+    rects.some((rect) => getComputedStyle(rect).fill !== 'rgb(255, 255, 255)')
+  )), { timeout: 15000 }).toBe(true);
+  await expect.poll(async () => replayFrame.locator('.answer').count(), { timeout: 15000 }).toBeGreaterThan(0);
 });

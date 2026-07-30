@@ -11,6 +11,29 @@ const revisitTaskID = 'iframe-task';
 let revisitAnswers;
 // let vis;
 
+function rehydrateAdjMatrixAnswer(selectedIds) {
+  if (
+    typeof window.controller === 'undefined' ||
+    !window.controller.view ||
+    typeof window.controller.view.updateCheckBox !== 'function'
+  ) {
+    return;
+  }
+
+  const answerBox = Object.fromEntries(selectedIds.map((id) => [id, true]));
+  window.controller.view.updateCheckBox({ selections: { answerBox } });
+
+  d3.selectAll('.answer').classed('answer', false);
+  const answerSelectors = selectedIds.flatMap((id) => [
+    `#topoRow${id}`,
+    `#attrRow${id}`,
+    `#topoCol${id}`,
+  ]);
+  if (answerSelectors.length > 0) {
+    d3.selectAll(answerSelectors.join(',')).classed('answer', true);
+  }
+}
+
 function rehydrateRevisitAnswer() {
   if (!revisitAnswers || !taskList || currentTask === undefined) {
     return;
@@ -35,12 +58,17 @@ function rehydrateRevisitAnswer() {
   selectedList.exit().remove();
 
   if (typeof graph !== 'undefined' && Array.isArray(graph.nodes)) {
-    const selectedIds = graph.nodes
-      .filter((node) => selectedNames.includes(node.shortName))
-      .map((node) => node.id);
+    const selectedNodes = graph.nodes
+      .filter((node) => selectedNames.includes(node.name));
+    const selectedIds = selectedNodes.map((node) => node.id);
+    taskList[currentTask].answer.nodes = selectedNodes.map((node) => ({
+      id: node.id,
+      name: node.name,
+    }));
     d3.selectAll('.node')
       .classed('clicked', (node) => selectedIds.includes(node.id))
       .classed('selected', (node) => selectedIds.includes(node.id));
+    rehydrateAdjMatrixAnswer(selectedIds);
   }
 }
 

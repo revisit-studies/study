@@ -1,39 +1,69 @@
 import { ReactNode } from 'react';
-import { render, waitFor } from '@testing-library/react';
+import { cleanup, render, waitFor } from '@testing-library/react';
 import {
-  beforeEach, describe, expect, test, vi,
+  afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import VirtualChinrestCalibration from '../VirtualChinrestCalibration';
-import { findPreviousCardSizeAnswer } from '../ViewingDistanceCalibration';
+import ViewingDistanceCalibration, { findPreviousCardSizeAnswer } from '../ViewingDistanceCalibration';
 
 const mockStoredAnswer = vi.hoisted(() => ({ value: undefined as unknown }));
+const mockAnswers = vi.hoisted(() => ({ value: {} as Record<string, unknown> }));
+const mockApply = vi.hoisted(() => vi.fn());
+const mockIsAnalysis = vi.hoisted(() => ({ value: true }));
 
-vi.mock('@mantine/core', () => ({
-  Slider: ({ disabled, value }: { disabled?: boolean, value?: number }) => (
-    <div data-testid="slider" data-disabled={disabled} data-value={value} />
-  ),
-  Button: ({ children, disabled }: { children?: ReactNode, disabled?: boolean }) => (
-    <button type="button" disabled={disabled}>{children}</button>
-  ),
-  Stack: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
-  Text: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+vi.mock('@trrack/core', () => ({
+  Registry: {
+    create: () => ({
+      register: () => vi.fn(),
+    }),
+  },
 }));
 
+vi.mock('@mantine/core', () => {
+  const List = Object.assign(
+    ({ children }: { children?: ReactNode }) => <ul>{children}</ul>,
+    { Item: ({ children }: { children?: ReactNode }) => <li>{children}</li> },
+  );
+  return {
+    Slider: ({ disabled, value }: { disabled?: boolean, value?: number }) => (
+      <div data-testid="slider" data-disabled={disabled} data-value={value} />
+    ),
+    Button: ({ children, disabled, onClick }: { children?: ReactNode, disabled?: boolean, onClick?: () => void }) => (
+      <button type="button" disabled={disabled} onClick={onClick}>{children}</button>
+    ),
+    Container: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+    List,
+    Stack: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+    Text: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+  };
+});
+
 vi.mock('../../../../../store/hooks/useIsAnalysis', () => ({
-  useIsAnalysis: () => true,
+  useIsAnalysis: () => mockIsAnalysis.value,
 }));
 
 vi.mock('../../../../../store/hooks/useStoredAnswer', () => ({
   useStoredAnswer: () => mockStoredAnswer.value,
 }));
 
+vi.mock('../../../../../store/store', () => ({
+  useStoreSelector: (selector: (state: { answers: Record<string, unknown> }) => unknown) => selector({ answers: mockAnswers.value }),
+}));
+
+const useTrrack = vi.fn(() => ({ apply: mockApply })) as never;
+
 describe('VirtualChinrestCalibration replay', () => {
+  afterEach(cleanup);
+
   beforeEach(() => {
+    mockApply.mockReset();
+    mockIsAnalysis.value = true;
     mockStoredAnswer.value = {
       componentName: '$virtual-chinrest.components.card-size',
       trialOrder: '2',
       answer: { pixelsPerMM: 5 },
     };
+    mockAnswers.value = {};
   });
 
   test('rehydrates the saved calibration and keeps analysis controls read-only', async () => {
@@ -50,7 +80,7 @@ describe('VirtualChinrestCalibration replay', () => {
           },
         } as never}
         setAnswer={vi.fn()}
-        useTrrack={vi.fn() as never}
+        useTrrack={useTrrack}
       />,
     );
 
@@ -59,6 +89,83 @@ describe('VirtualChinrestCalibration replay', () => {
     expect((getByRole('button', { name: 'Confirm Size' }) as HTMLButtonElement).disabled).toBe(true);
     expect(getByText(/Calibration Complete/)).toBeDefined();
     expect(getByText(/5.00/)).toBeDefined();
+  });
+
+  test('replays card-size adjustments from provenance state', async () => {
+    const props = {
+      parameters: { taskid: 'pixelsPerMM' },
+      itemWidthMM: 85.6,
+      itemHeightMM: 53.98,
+      fixedCorner: 'top-left' as const,
+      answers: {},
+      setAnswer: vi.fn(),
+      useTrrack,
+    };
+    const { getByTestId, queryByText, rerender } = render(
+      <VirtualChinrestCalibration
+        {...props}
+        provenanceState={{ itemWidthPx: 250, isCalibrationComplete: false }}
+      />,
+    );
+
+    await waitFor(() => expect(getByTestId('slider').getAttribute('data-value')).toBe('250'));
+    expect(queryByText(/Calibration Complete/)).toBeNull();
+
+    rerender(
+      <VirtualChinrestCalibration
+        {...props}
+        provenanceState={{ itemWidthPx: 420, isCalibrationComplete: true }}
+      />,
+    );
+    await waitFor(() => expect(getByTestId('slider').getAttribute('data-value')).toBe('420'));
+    expect(queryByText(/Calibration Complete/)).not.toBeNull();
+  });
+
+  test('replays each viewing-distance measurement from provenance state', async () => {
+    mockIsAnalysis.value = false;
+    mockStoredAnswer.value = {
+      componentName: '$virtual-chinrest.components.blindspot-distance',
+      trialOrder: '10_1',
+      answer: { 'dist-calibration-MM': 500 },
+    };
+    mockAnswers.value = {
+      card: {
+        componentName: '$virtual-chinrest.components.card-size',
+        trialOrder: '10_0',
+        answer: { pixelsPerMM: 5 },
+      },
+    };
+    const props = {
+      parameters: { blindspotAngle: 13.5 },
+      answers: {},
+      setAnswer: vi.fn(),
+      useTrrack,
+    };
+    const { getByRole, getByText, rerender } = render(
+      <ViewingDistanceCalibration
+        {...props}
+        provenanceState={{ ballPosition: 600, ballPositions: [600], viewingDistance: null }}
+      />,
+    );
+
+    await waitFor(() => expect(getByText(/Remaining measurements:/).textContent).toContain('4'));
+
+    rerender(
+      <ViewingDistanceCalibration
+        {...props}
+        provenanceState={{
+          ballPosition: 400,
+          ballPositions: [600, 550, 500, 450, 400],
+          viewingDistance: 500,
+        }}
+      />,
+    );
+    await waitFor(() => expect(getByText(/Remaining measurements:/).textContent).toContain('0'));
+    expect(getByText(/50.0/)).toBeDefined();
+
+    getByRole('button', { name: 'Retake' }).click();
+    await waitFor(() => expect(getByText(/Remaining measurements:/).textContent).toContain('5'));
+    expect(mockApply).toHaveBeenCalledWith('Reset viewing-distance measurements', undefined);
   });
 
   test('selects the closest preceding card calibration for repeated library sequences', () => {

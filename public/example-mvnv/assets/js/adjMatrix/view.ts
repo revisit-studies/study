@@ -1833,6 +1833,7 @@ class View {
     d3.select('.loading').style('display', 'none');
 
     this.controller.model.setUpProvenance();
+    rehydrateRevisitAnswer();
     window.focus();
 
     // Draw buttons for alternative sorts

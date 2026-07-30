@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 import { expect, test } from '@playwright/test';
 import {
   nextClick,
@@ -9,13 +10,7 @@ import {
 
 test('SMEQ replay restores the saved slider value without writing participant data', async ({ page }) => {
   await resetClientStudyState(page);
-  await page.goto('/');
-  await page.getByRole('tab', { name: 'Tests' }).click();
-  await page.getByLabel('Tests').locator('div')
-    .filter({ hasText: 'SMEQ: Subjective Mental Effort Questionnaire' })
-    .first()
-    .getByText('Go to Study')
-    .click();
+  await page.goto('/library-smeq');
   await nextClick(page);
 
   const participantTrack = page.getByTestId('smeq-slider-track');
@@ -58,4 +53,47 @@ test('SMEQ replay restores the saved slider value without writing participant da
   const expectedOffset = (savedValue / 150) * trackBounds.height;
   expect(Math.abs(displayedOffset - expectedOffset)).toBeLessThan(2);
   expect(await readStoredValue(page, participantKey)).toEqual(participantBeforeReplay);
+});
+
+test('NASA-TLX replay keeps the restored slider thumb visible', async ({ page }) => {
+  await resetClientStudyState(page);
+  await page.goto('/library-nasa-tlx');
+  await nextClick(page);
+
+  const sourceOptions = page.getByRole('radio');
+  await expect(sourceOptions).toHaveCount(30);
+  const sourceOptionCount = await sourceOptions.count();
+  for (let index = 0; index < sourceOptionCount; index += 2) {
+    await sourceOptions.nth(index).check();
+  }
+  await nextClick(page);
+
+  const participantSliders = page.getByRole('slider');
+  await expect(participantSliders).toHaveCount(6);
+  await participantSliders.first().focus();
+  await participantSliders.first().press('ArrowRight');
+  const replayPath = new URL(page.url()).pathname;
+  await nextClick(page);
+
+  await expect.poll(async () => (
+    await readParticipantRecording(
+      page,
+      'library-nasa-tlx',
+      '$nasa-tlx.components.nasa-tlx_2',
+    )
+  )?.participantId ?? '', { timeout: 15000 }).not.toBe('');
+  const recording = await readParticipantRecording(
+    page,
+    'library-nasa-tlx',
+    '$nasa-tlx.components.nasa-tlx_2',
+  );
+  if (!recording) {
+    throw new Error('No recorded NASA-TLX answer found');
+  }
+  const savedValue = String(recording.answer['mental-demand']);
+
+  await page.goto(`${replayPath}?participantId=${recording.participantId}&revisitPageId=e2e-nasa-tlx-replay`);
+  const replayThumb = page.getByRole('slider').first();
+  await expect(replayThumb).toBeVisible();
+  await expect(replayThumb).toHaveAttribute('aria-valuenow', savedValue);
 });

@@ -159,9 +159,16 @@ vi.mock('@mantine/core', () => {
       </div>
     ),
     Slider: ({
-      disabled, max, min, value,
-    }: { disabled?: boolean; max?: number; min?: number; value?: number }) => (
-      <div data-slider data-disabled={disabled} data-min={min} data-max={max} data-value={value} />
+      classNames, disabled, max, min, value,
+    }: { classNames?: { thumb?: string }; disabled?: boolean; max?: number; min?: number; value?: number }) => (
+      <div
+        data-slider
+        data-disabled={disabled}
+        data-min={min}
+        data-max={max}
+        data-value={value}
+        data-thumb-class={classNames?.thumb}
+      />
     ),
     Paper: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
     Button: ({ children }: { children?: ReactNode }) => <button type="button">{children}</button>,
@@ -832,6 +839,7 @@ describe('SliderInput', () => {
     );
     expect(container.querySelector('[data-slider]')?.getAttribute('data-value')).toBe('25');
     expect(container.querySelector('[data-slider]')?.getAttribute('data-disabled')).toBe('true');
+    expect(container.querySelector('[data-slider]')?.getAttribute('data-thumb-class')).toBeTruthy();
 
     rerender(
       <SliderInput
