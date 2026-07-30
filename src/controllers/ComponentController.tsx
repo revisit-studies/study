@@ -42,6 +42,7 @@ import { getComponentContainerStyle } from '../utils/componentStyle';
 import { compileTemplate } from '../utils/handlebars';
 import { generateStimulusErrorMessage } from '../components/response/stimulusErrors';
 import { getStimulusProvenanceState, getStimulusShowErrorsFromState } from '../components/response/stimulusProvenance';
+import { useStartupInteractionBlocked } from '../components/StartupContext';
 
 // current active stimuli presented to the user
 export function ComponentController() {
@@ -79,6 +80,7 @@ export function ComponentController() {
   const currentStimulusSubmitAttempted = useStoreSelector((state) => state.stimulusSubmitAttempted[currentIdentifier]);
   const sequence = useStoreSelector((state) => state.sequence);
   const modes = useStoreSelector((state) => state.modes);
+  const startupInteractionBlocked = useStartupInteractionBlocked();
 
   const [searchParams] = useSearchParams();
 
@@ -127,7 +129,7 @@ export function ComponentController() {
   // Find current block, if it has an ID, add it as a participant tag
   const prevBlockForStepRef = useRef<string[]>([]);
   useEffect(() => {
-    if (isAnalysis || !storageEngine) {
+    if (startupInteractionBlocked || isAnalysis || !storageEngine) {
       return;
     }
     const blockForStep = findBlockForStep(sequence, currentStep)
@@ -139,7 +141,7 @@ export function ComponentController() {
       storageEngine.addParticipantTags(blockForStep);
     }
     prevBlockForStepRef.current = blockForStep;
-  }, [currentStep, storageEngine, sequence, isAnalysis]);
+  }, [currentStep, startupInteractionBlocked, storageEngine, sequence, isAnalysis]);
 
   const currentConfig = useMemo(() => {
     const toReturn = currentComponent && currentComponent !== 'end' && !currentComponent.startsWith('__') && studyComponentToIndividualComponent(stepConfig, studyConfig) as IndividualComponent;
@@ -226,7 +228,7 @@ export function ComponentController() {
 
   // Automatically forward a user to their last completed trial if they are returning to the study
   useEffect(() => {
-    if (!studyConfig.globalVariables && status && status.endTime > 0 && !isAnalysis && !modes.developmentModeEnabled && currentComponent !== 'end' && !currentComponent.startsWith('__') && typeof currentStep === 'number') {
+    if (!startupInteractionBlocked && !studyConfig.globalVariables && status && status.endTime > 0 && !isAnalysis && !modes.developmentModeEnabled && currentComponent !== 'end' && !currentComponent.startsWith('__') && typeof currentStep === 'number') {
       let lastAnsweredTrialOrder = '0';
       Object.values(answers).forEach((a) => {
         if (a.endTime > 0) {
@@ -241,7 +243,7 @@ export function ComponentController() {
         navigate(`/${studyId}/${encryptIndex(indexNumber)}${funcIndexNumber !== undefined ? `/${encryptIndex(funcIndexNumber)}` : ''}${window.location.search}`);
       }
     }
-  }, [studyConfig.globalVariables, answers, currentComponent, currentStep, funcIndex, isAnalysis, modes.developmentModeEnabled, navigate, status, studyId]);
+  }, [startupInteractionBlocked, studyConfig.globalVariables, answers, currentComponent, currentStep, funcIndex, isAnalysis, modes.developmentModeEnabled, navigate, status, studyId]);
 
   const templateData = useMemo(
     () => ({

@@ -1,4 +1,4 @@
-import type { HTMLAttributes, ReactNode } from 'react';
+import { StrictMode, type HTMLAttributes, type ReactNode } from 'react';
 import {
   render, act, cleanup, waitFor,
 } from '@testing-library/react';
@@ -131,6 +131,10 @@ vi.mock('react-redux', () => ({
 vi.mock('../../store/store', () => ({
   studyStoreCreator: vi.fn().mockResolvedValue({
     store: { getState: vi.fn(() => ({ config: { uiConfig: {} }, metadata: {} })), dispatch: vi.fn(), subscribe: vi.fn() },
+    actions: {
+      setMetadata: vi.fn((metadata) => ({ type: 'setMetadata', payload: metadata })),
+      setParticipantCompleted: vi.fn((completed) => ({ type: 'setParticipantCompleted', payload: completed })),
+    },
   }),
   StudyStoreContext: {
     Provider: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -441,6 +445,27 @@ describe('Shell', () => {
     expect(getByTestId('loading-overlay')).toBeDefined();
   });
 
+  test('mounts the study interface behind an inert barrier while participant startup resolves once', async () => {
+    vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
+    const pendingInitialization = new Promise<void>(() => {});
+
+    mockStorageEngine = {
+      initializeStudyDb: vi.fn(() => pendingInitialization),
+    };
+
+    const { getByTestId } = render(
+      <StrictMode>
+        <Shell globalConfig={globalConfig} />
+      </StrictMode>,
+    );
+
+    await waitFor(() => expect(getByTestId('routing')).toBeDefined());
+    expect(getByTestId('study-loading-barrier')).toBeDefined();
+    expect(getByTestId('study-interface').getAttribute('aria-busy')).toBe('true');
+    expect(getByTestId('study-interface').hasAttribute('inert')).toBe(true);
+    expect(mockStorageEngine.initializeStudyDb).toHaveBeenCalledTimes(1);
+  });
+
   test('shows startup fallback when study config loading rejects', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
     vi.mocked(getStudyConfig).mockRejectedValue(new Error('study config failed'));
@@ -530,7 +555,7 @@ describe('Shell', () => {
       getEngine: vi.fn().mockReturnValue('firebase'),
     };
 
-    render(<Shell globalConfig={globalConfig} />);
+    const { queryByTestId, getByTestId } = render(<Shell globalConfig={globalConfig} />);
     await waitFor(() => expect(mockStorageEngine!.initializeStudyDb).toHaveBeenCalled(), { timeout: 3000 });
     await waitFor(() => expect(vi.mocked(studyStoreCreator)).toHaveBeenCalled(), { timeout: 3000 });
     expect(mockStorageEngine.initializeParticipantSession).toHaveBeenCalledWith(
@@ -548,6 +573,9 @@ describe('Shell', () => {
       },
     );
     await waitFor(() => expect(fetch).toHaveBeenCalled());
+    await waitFor(() => expect(queryByTestId('study-loading-barrier')).toBeNull(), { timeout: 3000 });
+    expect(getByTestId('study-interface').getAttribute('aria-busy')).toBe('false');
+    expect(getByTestId('study-interface').hasAttribute('inert')).toBe(false);
   });
 
   test.each(['p1', ''])('does not collect or overwrite participant metadata during replay (participantId=%s)', async (participantId) => {
@@ -810,7 +838,15 @@ describe('Shell', () => {
   test('shows startup fallback when participant-store recovery also fails', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
     vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
-    vi.mocked(studyStoreCreator).mockRejectedValueOnce(new Error('fallback store failed'));
+    vi.mocked(studyStoreCreator)
+      .mockResolvedValueOnce({
+        store: { getState: vi.fn(), dispatch: vi.fn(), subscribe: vi.fn() },
+        actions: {
+          setMetadata: vi.fn(),
+          setParticipantCompleted: vi.fn(),
+        },
+      } as never)
+      .mockRejectedValueOnce(new Error('fallback store failed'));
 
     mockStorageEngine = {
       initializeStudyDb: vi.fn().mockRejectedValue(new Error('participant init failed')),

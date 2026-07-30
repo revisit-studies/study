@@ -14,6 +14,7 @@ import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { getComponent } from '../utils/handleComponentInheritance';
 import { getGlobalStoreContextBeforeTrial } from '../store/globalStoreProvenance';
 import { useGlobalStoreSavePending } from '../store/hooks/useGlobalStoreSavePending';
+import { useStartupInteractionBlocked } from '../components/StartupContext';
 
 export function useStudyId(): string {
   const { studyId } = useParams();
@@ -62,6 +63,7 @@ export function useCurrentComponent(): string {
   const studyId = useStudyId();
   const storeDispatch = useStoreDispatch();
   const { pushToFuncSequence } = useStoreActions();
+  const startupInteractionBlocked = useStartupInteractionBlocked();
 
   const currentComponent = useMemo(() => (typeof currentStep === 'number' ? getComponent(flatSequence[currentStep], studyConfig) : currentStep.includes('reviewer-') || currentStep.startsWith('__') ? currentStep : null), [currentStep, flatSequence, studyConfig]);
 
@@ -97,10 +99,10 @@ export function useCurrentComponent(): string {
   }, [currentComponent, currentStep, flatSequence, studyConfig.sequence]);
 
   useEffect(() => {
-    if (!savePending && !funcIndex && nextFunc && typeof currentStep === 'number') {
+    if (!startupInteractionBlocked && !savePending && !funcIndex && nextFunc && typeof currentStep === 'number') {
       navigate(`/${studyId}/${encryptIndex(currentStep)}/${encryptIndex(0)}${window.location.search}`);
     }
-  }, [savePending, currentStep, funcIndex, navigate, nextFunc, studyId]);
+  }, [startupInteractionBlocked, savePending, currentStep, funcIndex, navigate, nextFunc, studyId]);
 
   useEffect(() => {
     if (savePending) return;
@@ -153,12 +155,14 @@ export function useCurrentComponent(): string {
         } else {
           setGeneratedComponent(null);
 
-          navigate(`/${studyId}/${encryptIndex(currentStep + 1)}${window.location.search}`);
+          if (!startupInteractionBlocked) {
+            navigate(`/${studyId}/${encryptIndex(currentStep + 1)}${window.location.search}`);
+          }
         }
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [savePending, globalGraph, currentStep, funcIndex, participantSequence, studyConfig.sequence, savedComponentName, generatedScope, isAnalysis]);
+  }, [startupInteractionBlocked, savePending, globalGraph, currentStep, funcIndex, participantSequence, studyConfig.sequence, savedComponentName, generatedScope, isAnalysis]);
 
   if (typeof currentStep === 'number' && flatSequence[currentStep] === 'end') {
     return 'end';
