@@ -32,7 +32,6 @@ import {
 } from './utils';
 import {
   generateErrorMessage,
-  REQUIRED_ERROR_MESSAGE,
   usesStandaloneDontKnowField,
 } from './responseErrors';
 import { CustomResponseField } from '../../store/types';
@@ -190,9 +189,6 @@ export function ResponseSwitcher({
       || response.type === 'custom'
       || response.type === 'textOnly'
       || response.type === 'divider'
-      || response.type === 'ranking-sublist'
-      || response.type === 'ranking-categorical'
-      || response.type === 'ranking-pairwise'
     ) {
       return null;
     }
@@ -204,29 +200,7 @@ export function ResponseSwitcher({
       { showRequiredErrors: errors, values: validationValues },
     );
   }, [response, ans, errorOptions, errors, validationValues]);
-  const rankingError = useMemo(() => {
-    if (
-      response.type !== 'ranking-sublist'
-      && response.type !== 'ranking-categorical'
-      && response.type !== 'ranking-pairwise'
-    ) {
-      return null;
-    }
-
-    return errors
-      && response.required
-      && !dontKnowChecked
-      && Object.keys((ans.value as Record<string, string>) || {}).length === 0
-      ? REQUIRED_ERROR_MESSAGE
-      : null;
-  }, [response, errors, dontKnowChecked, ans.value]);
-  const displayError = response.type === 'custom' ? customError : (
-    response.type === 'ranking-sublist'
-    || response.type === 'ranking-categorical'
-    || response.type === 'ranking-pairwise'
-      ? rankingError
-      : responseError
-  );
+  const displayError = response.type === 'custom' ? customError : responseError;
   const responseWrapperStyle = useMemo(() => {
     if (!displayError) {
       return responseStyle;
@@ -333,7 +307,7 @@ export function ResponseSwitcher({
         response={response}
         disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: Record<string, string> }}
-        error={rankingError}
+        error={responseError}
         index={index}
         enumerateQuestions={enumerateQuestions}
       />
