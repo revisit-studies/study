@@ -10,26 +10,37 @@ import {
 import { useStoreSelector } from '../../../../store/store';
 import { useIsAnalysis } from '../../../../store/hooks/useIsAnalysis';
 import { useStoredAnswer } from '../../../../store/hooks/useStoredAnswer';
+import { parseTrialOrder } from '../../../../utils/parseTrialOrder';
 
 // Utility functions
 const degToRadians = (degrees: number) => (degrees * Math.PI) / 180;
 const cardSizeComponent = '$virtual-chinrest.components.card-size';
 
+function compareTrialOrders(left: string, right: string) {
+  const leftOrder = parseTrialOrder(left);
+  const rightOrder = parseTrialOrder(right);
+  if (leftOrder.step === null || rightOrder.step === null) {
+    return undefined;
+  }
+
+  return leftOrder.step - rightOrder.step
+    || (leftOrder.funcIndex ?? -1) - (rightOrder.funcIndex ?? -1);
+}
+
 export function findPreviousCardSizeAnswer(
   answers: Record<string, StoredAnswer>,
   currentTrialOrder: StoredAnswer['trialOrder'] | undefined,
 ) {
-  const currentStep = Number.parseInt(currentTrialOrder ?? '', 10);
-  if (!Number.isFinite(currentStep)) {
+  if (!currentTrialOrder || parseTrialOrder(currentTrialOrder).step === null) {
     return undefined;
   }
 
   return Object.values(answers)
     .filter((answer) => (
       answer.componentName === cardSizeComponent
-      && Number.parseInt(answer.trialOrder, 10) < currentStep
+      && (compareTrialOrders(answer.trialOrder, currentTrialOrder) ?? 0) < 0
     ))
-    .sort((a, b) => Number.parseInt(b.trialOrder, 10) - Number.parseInt(a.trialOrder, 10))[0];
+    .sort((a, b) => compareTrialOrders(b.trialOrder, a.trialOrder) ?? 0)[0];
 }
 
 export default function ViewingDistanceCalibration({ parameters, setAnswer }: StimulusParams<{ blindspotAngle: number }>) {

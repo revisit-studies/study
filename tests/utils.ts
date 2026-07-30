@@ -202,7 +202,8 @@ export async function seekReplay(
     throw new Error('Analysis replay timer has no bounds');
   }
 
-  const fraction = (targetTime - startTime) / (endTime - startTime);
+  const duration = endTime - startTime;
+  const fraction = duration === 0 ? 0 : (targetTime - startTime) / duration;
   const x = 20 + Math.min(1, Math.max(0, fraction)) * (timerBounds.width - 40);
   await timer.click({ position: { x, y: timerBounds.height / 2 } });
 }

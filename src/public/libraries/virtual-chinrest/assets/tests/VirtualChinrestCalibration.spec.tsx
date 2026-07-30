@@ -65,25 +65,25 @@ describe('VirtualChinrestCalibration replay', () => {
     const closestCard = findPreviousCardSizeAnswer({
       card_0: {
         componentName: '$virtual-chinrest.components.card-size',
-        trialOrder: '0',
+        trialOrder: '9_4',
         answer: { pixelsPerMM: 2 },
       },
       distance_1: {
         componentName: '$virtual-chinrest.components.blindspot-distance',
-        trialOrder: '1',
+        trialOrder: '9_5',
         answer: { 'dist-calibration-MM': 400 },
       },
       card_2: {
         componentName: '$virtual-chinrest.components.card-size',
-        trialOrder: '2',
+        trialOrder: '10_0',
         answer: { pixelsPerMM: 5 },
       },
       distance_3: {
         componentName: '$virtual-chinrest.components.blindspot-distance',
-        trialOrder: '3',
+        trialOrder: '10_1',
         answer: { 'dist-calibration-MM': 500 },
       },
-    } as never, '3');
+    } as never, '10_1');
 
     expect(closestCard?.answer.pixelsPerMM).toBe(5);
   });
