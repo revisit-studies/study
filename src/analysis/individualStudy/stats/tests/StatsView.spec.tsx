@@ -283,6 +283,34 @@ describe('ResponseVisualization', () => {
     expect(html).toContain('VegaLite');
   });
 
+  test('radio type: shows the no-data message when answers exist but lack this response', () => {
+    const participantWithoutQ1 = {
+      ...mockParticipant,
+      answers: {
+        trial1_0: {
+          answer: { other: 'B' },
+          startTime: 1,
+          endTime: 2,
+          componentName: 'trial1',
+          trialOrder: '0',
+          windowEvents: [],
+          timedOut: false,
+        },
+      },
+    } as unknown as ParticipantData;
+    const html = renderToStaticMarkup(
+      <ResponseVisualization
+        {...baseProps}
+        participantData={[participantWithoutQ1]}
+        response={{
+          type: 'radio', id: 'q1', prompt: 'Pick one', options: ['A', 'B'],
+        }}
+      />,
+    );
+    expect(html).toContain('No responses for this task yet.');
+    expect(html).not.toContain('VegaLite');
+  });
+
   test('radio type: shows a no-data message instead of a chart when there are no responses', () => {
     const html = renderToStaticMarkup(
       <ResponseVisualization

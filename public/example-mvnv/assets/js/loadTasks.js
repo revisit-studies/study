@@ -249,7 +249,7 @@ d3.select('#freeFormAnswer').on('input', function () {
 //function that updates the answer in the side panel as well as in the results field in tasks
 //answer is either an array of node objects or a string from the answer box;
 function updateAnswer(answer, type) {
-  const postAnswer = Array.isArray(answer) ? answer.map((a) => a.name) : answer;
+  const postAnswer = Array.isArray(answer) ? answer.map((a) => a.shortName) : answer;
   Revisit.postAnswers({
     [revisitTaskID]: postAnswer,
   });

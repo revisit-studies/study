@@ -55,7 +55,8 @@ export function ResponseVisualization({
 
       return answerData;
     })).flat();
-    return data;
+
+    return data.filter((row) => row[response.id] !== undefined && row[response.id] !== null && row[response.id] !== '');
   }, [participantData, response.type, trialId, correctAnswer, response.id]);
 
   // Completion times for the metadata timing histogram
@@ -214,7 +215,7 @@ export function ResponseVisualization({
       };
       return spec;
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps, @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line react-hooks/exhaustive-deps, @typescript-eslint/no-explicit-any
   }, [participantData, questionData, timingData, response.id, (response as any).max, (response as any).min, (response as any).numItems, (response as any).options, response.type, trialId, correctAnswer]);
 
   return (
@@ -312,12 +313,12 @@ export function ResponseVisualization({
                     </Code>
                     <br />
                     {correctAnswer && (
-                    <>
-                      <Text fw={700}>Correct Answer: </Text>
-                      <Code block>
-                        {JSON.stringify(correctAnswer, null, 2)}
-                      </Code>
-                    </>
+                      <>
+                        <Text fw={700}>Correct Answer: </Text>
+                        <Code block>
+                          {JSON.stringify(correctAnswer, null, 2)}
+                        </Code>
+                      </>
                     )}
                   </>
                 )}
