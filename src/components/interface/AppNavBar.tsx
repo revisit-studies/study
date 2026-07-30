@@ -40,7 +40,6 @@ export function AppNavBar({
       bg="gray.1"
       display={sidebarOpen ? 'block' : 'none'}
       style={{
-        alignSelf: 'flex-start',
         marginTop: top,
         maxHeight: `max(0px, calc(100dvh - ${top + bottom}px))`,
         overflowY: 'auto',

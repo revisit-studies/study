@@ -129,5 +129,6 @@ describe('AppNavBar', () => {
     expect(html).toContain('max-height:max(0px, calc(100dvh - 195px))');
     expect(html).toContain('overflow-y:auto');
     expect(html).toContain('position:sticky');
+    expect(html).not.toContain('align-self:flex-start');
   });
 });

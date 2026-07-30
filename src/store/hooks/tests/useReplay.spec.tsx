@@ -224,7 +224,7 @@ describe('useReplay — handlePlay/Seeked/Pause via video element events', () =>
     expect(audio.muted).toBe(true);
   });
 
-  test('handleSeeked: seeked event updates seekTime', () => {
+  test('handleSeeked: seeked event preserves the task seekTime', () => {
     const { result } = renderHook(() => useReplay());
     const video = makeVideoWithSrc();
     act(() => {
@@ -328,6 +328,40 @@ describe('useReplay — public setIsPlaying with hasEnded=true', () => {
 });
 
 describe('useReplay — task clock is authoritative', () => {
+  test('keeps task time when shorter media clamps a seek and resumes media when seeking back', () => {
+    const { result } = renderHook(() => useReplay());
+    const video = makeVideoWithSrc();
+    video.play = vi.fn(async () => {});
+    video.pause = vi.fn();
+    Object.defineProperty(video, 'duration', { value: 1, configurable: true });
+    Object.defineProperty(video, 'paused', { value: true, configurable: true });
+
+    act(() => {
+      result.current.videoRef.current = video;
+      result.current.updateReplayRef();
+      result.current.setSeekTime(3);
+      video.dispatchEvent(new Event('seeked'));
+    });
+
+    expect(video.currentTime).toBe(1);
+    expect(result.current.seekTime).toBe(3);
+
+    vi.mocked(video.play).mockClear();
+    act(() => {
+      result.current.setIsPlaying(true);
+    });
+    expect(video.play).not.toHaveBeenCalled();
+    expect(result.current.isPlaying).toBe(true);
+
+    act(() => {
+      result.current.setSeekTime(0.5);
+    });
+
+    expect(video.currentTime).toBe(0.5);
+    expect(video.play).toHaveBeenCalledOnce();
+    expect(result.current.seekTime).toBe(0.5);
+  });
+
   test('continues to the task duration after shorter media ends', () => {
     vi.useFakeTimers();
     const { result } = renderHook(() => useReplay());

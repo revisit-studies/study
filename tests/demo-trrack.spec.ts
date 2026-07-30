@@ -205,12 +205,18 @@ for (const demo of demos) {
     }
 
     await seekReplay(page, recording, recording.endTime - 1);
-    const timerLine = page.getByTestId('replay-timer').locator('line');
-    await expect.poll(async () => Number(await timerLine.getAttribute('x1'))).toBeGreaterThan(20);
+    const replayTimer = page.getByTestId('replay-timer');
+    const timerLine = replayTimer.locator('line');
+    const normalizedTimerPosition = async () => (
+      Number(await timerLine.getAttribute('x1'))
+      / await replayTimer.evaluate((element) => element.getBoundingClientRect().width)
+    );
+    await expect.poll(normalizedTimerPosition).toBeGreaterThan(0.5);
     const replayPathBeforeNavigation = new URL(page.url()).pathname;
     await page.getByRole('button', { name: 'Next Task' }).click();
     await expect.poll(() => new URL(page.url()).pathname).not.toBe(replayPathBeforeNavigation);
-    await expect(page.getByTestId('replay-timer')).toBeVisible();
-    await expect.poll(async () => Number(await timerLine.getAttribute('x1'))).toBeLessThanOrEqual(20);
+    await expect(replayTimer).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
+    await expect.poll(normalizedTimerPosition).toBeLessThan(0.05);
   });
 }
