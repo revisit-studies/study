@@ -46,6 +46,7 @@ export type SequenceAssignment = {
   stage: string; // The stage of the participant in the study
   conditions?: string[]; // The study condition(s) assigned to this participant.
   sequenceIndex?: number; // Stable zero-based Latin-square slot for bounded assignment lookup.
+  reusableSequenceIndex?: number; // New vacancy created when a participant rejects a previously reused slot.
   creationIndex?: number; // Stable zero-based participant creation order.
 };
 

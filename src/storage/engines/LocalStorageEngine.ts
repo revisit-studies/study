@@ -127,9 +127,9 @@ export class LocalStorageEngine extends StorageEngine {
         .filter((assignment) => assignment.rejected && !assignment.claimed)
         .sort((a, b) => a.timestamp - b.timestamp)[0];
       const creationIndex = assignments.length;
-      const logicalSlotCount = assignments
-        .filter((assignment) => !assignment.claimedParticipantId).length;
-      const sequenceIndex = reusableAssignment?.sequenceIndex
+      const logicalSlotCount = assignments.filter((assignment) => !assignment.claimed).length;
+      const sequenceIndex = reusableAssignment?.reusableSequenceIndex
+        ?? reusableAssignment?.sequenceIndex
         ?? (reusableAssignment
           ? assignments.filter((assignment) => (
             !assignment.rejected && assignment.timestamp < reusableAssignment.timestamp
@@ -216,38 +216,54 @@ export class LocalStorageEngine extends StorageEngine {
   protected async _rejectParticipantRealtime(participantId: string) {
     await this.verifyStudyDatabase();
     const sequenceAssignmentPath = `${this.collectionPrefix}${this.studyId}/sequenceAssignment`;
-    const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath) || {};
+    await withLocalAllocationLock(sequenceAssignmentPath, async () => {
+      const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(
+        sequenceAssignmentPath,
+      ) || {};
+      const participantSequenceAssignment = sequenceAssignments[participantId];
+      if (!participantSequenceAssignment) {
+        return;
+      }
 
-    const participantSequenceAssignment = sequenceAssignments[participantId];
+      // If this participant reused a rejected slot, release that source slot and create
+      // a distinct vacancy for this rejection.
+      const claimedAssignmentData = participantSequenceAssignment.claimedParticipantId
+        ? sequenceAssignments[participantSequenceAssignment.claimedParticipantId]
+        : Object.values(sequenceAssignments).find(
+          (assignment) => assignment.claimed
+            && assignment.timestamp === participantSequenceAssignment.timestamp,
+        );
+      if (claimedAssignmentData) {
+        const assignments = Object.values(sequenceAssignments);
+        const indexedSlots = assignments.flatMap((assignment) => [
+          assignment.sequenceIndex,
+          assignment.reusableSequenceIndex,
+        ]).filter((index): index is number => index !== undefined);
+        const logicalSlotCount = assignments.filter((assignment) => !assignment.claimed).length;
+        const reusableSequenceIndex = Math.max(
+          logicalSlotCount,
+          indexedSlots.length > 0 ? Math.max(...indexedSlots) + 1 : 0,
+        );
 
-    // If this was a claimed sequence assignment, we need to mark it as available again
-    const claimedAssignmentData = participantSequenceAssignment?.claimedParticipantId
-      ? sequenceAssignments[participantSequenceAssignment.claimedParticipantId]
-      : Object.values(sequenceAssignments).find(
-        (assignment) => assignment.claimed && assignment.timestamp === participantSequenceAssignment.timestamp,
-      );
-    if (participantSequenceAssignment && claimedAssignmentData) {
-      // Mark the claimed assignment as available again
-      claimedAssignmentData.claimed = false;
-      claimedAssignmentData.rejected = true; // Mark it as rejected
+        sequenceAssignments[claimedAssignmentData.participantId] = {
+          ...claimedAssignmentData,
+          claimed: false,
+          rejected: true,
+        };
+        sequenceAssignments[participantId] = {
+          ...participantSequenceAssignment,
+          timestamp: new Date().getTime(),
+          rejected: true,
+          reusableSequenceIndex,
+        };
+      } else {
+        sequenceAssignments[participantId] = {
+          ...participantSequenceAssignment,
+          rejected: true,
+        };
+      }
       await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
-
-      // Delete the participant's sequence assignment
-      // delete sequenceAssignments[participantId];
-      sequenceAssignments[participantId] = {
-        ...participantSequenceAssignment,
-        timestamp: new Date().getTime(),
-        rejected: true,
-      };
-      await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
-      return;
-    }
-
-    // Handle the original participant's sequence assignment
-    if (participantSequenceAssignment) {
-      participantSequenceAssignment.rejected = true;
-      await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
-    }
+    });
   }
 
   protected async _undoRejectParticipantRealtime(participantId: string) {
@@ -257,15 +273,20 @@ export class LocalStorageEngine extends StorageEngine {
 
     const participantSequenceAssignment = sequenceAssignments[participantId];
     if (participantSequenceAssignment) {
-      participantSequenceAssignment.rejected = false;
+      const updatedParticipantSequenceAssignment = {
+        ...participantSequenceAssignment,
+        rejected: false,
+      };
+      delete updatedParticipantSequenceAssignment.reusableSequenceIndex;
       if (participantSequenceAssignment.claimedParticipantId) {
         const claimedAssignmentData = sequenceAssignments[participantSequenceAssignment.claimedParticipantId];
         if (claimedAssignmentData) {
           claimedAssignmentData.claimed = true;
           claimedAssignmentData.rejected = true;
-          participantSequenceAssignment.timestamp = claimedAssignmentData.timestamp;
+          updatedParticipantSequenceAssignment.timestamp = claimedAssignmentData.timestamp;
         }
       }
+      sequenceAssignments[participantId] = updatedParticipantSequenceAssignment;
       await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
     }
   }

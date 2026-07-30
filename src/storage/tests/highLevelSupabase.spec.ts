@@ -18,6 +18,7 @@ type RowData = Record<string, string | number | boolean | null | object>;
 const revisitRows: RowData[] = [];
 const storageFiles: Record<string, string> = {};
 const localStore: Record<string, string | number | object | null> = {};
+let nextSupabaseSelectError: { message: string; code?: string } | null = null;
 const supabaseOperations: Array<{
   op: string | null;
   filters: Array<{ col: string; type: string; val: string | number | boolean | null }>;
@@ -105,6 +106,12 @@ vi.mock('@supabase/supabase-js', () => {
             headOnly,
             limit: resultLimit,
           });
+          if (op === 'select' && nextSupabaseSelectError) {
+            const error = nextSupabaseSelectError;
+            nextSupabaseSelectError = null;
+            resolve({ data: null, error });
+            return;
+          }
           const rows = getRows();
           if (op === 'select') {
             let matched = applyFilters(rows, filters);
@@ -371,6 +378,7 @@ describe.each([
     await storageEngine.setSequenceArray(
       sequenceArray,
     );
+    nextSupabaseSelectError = null;
     supabaseOperations.length = 0;
   });
 
@@ -457,6 +465,15 @@ describe.each([
     expect(supabaseOperations.filter((operation) => operation.filters.some(
       (filter) => filter.col === 'docId' && filter.type === 'like' && filter.val === 'sequenceAssignment_%',
     ))).toHaveLength(0);
+  });
+
+  test('participant completion lookup propagates provider failures', async () => {
+    const participant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    nextSupabaseSelectError = { message: 'permission denied', code: '42501' };
+
+    await expect(
+      storageEngine.getParticipantCompletionStatus(participant.participantId),
+    ).rejects.toThrow('Failed to retrieve sequence assignment');
   });
 
   test('fresh participant startup with an initialized allocator skips legacy counts', async () => {
@@ -892,6 +909,10 @@ describe.each([
     expect(sequenceAssignment4!.createdTime).toBeDefined();
     expect(sequenceAssignment4!.createdTime).toBeGreaterThanOrEqual(sequenceAssignment3!.createdTime);
     expect(sequenceAssignment4!.completed).toBeNull();
+    expect(new Set([
+      sequenceAssignment3!.sequenceIndex,
+      sequenceAssignment4!.sequenceIndex,
+    ]).size).toBe(2);
 
     // Check the length of sequence assignments
     sequenceAssignments = await storageEngine.getAllSequenceAssignments(studyId);
