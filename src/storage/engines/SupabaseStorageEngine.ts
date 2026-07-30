@@ -106,13 +106,13 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
   }
 
   protected async _verifyStudyDatabase() {
-    const { error } = await this.supabase
+    const { data, error } = await this.supabase
       .from('revisit')
       .select('docId')
       .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
       .eq('docId', 'connect')
-      .limit(1);
-    if (error || !this.studyId) {
+      .maybeSingle();
+    if (error || !data || !this.studyId) {
       throw new Error('Study database not initialized or does not exist');
     }
   }
@@ -214,12 +214,15 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     }
     const studyId = `${this.collectionPrefix}${this.studyId}`;
     const allocatorPath = 'sequenceAllocator';
-    const { data: existingAllocator } = await this.supabase
+    const { data: existingAllocator, error: existingAllocatorError } = await this.supabase
       .from('revisit')
       .select('data')
       .eq('studyId', studyId)
       .eq('docId', allocatorPath)
       .maybeSingle();
+    if (existingAllocatorError) {
+      throw new Error('Failed to retrieve sequence assignment allocator');
+    }
     if (existingAllocator) {
       return existingAllocator.data as SupabaseSequenceAllocator;
     }
@@ -386,7 +389,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
         .like('docId', 'sequenceAssignment_%')
         .eq('data->rejected', true)
         .eq('data->claimed', false)
-        .order('createdAt', { ascending: true })
+        .order('data->timestamp', { ascending: true })
         .limit(1)
         .maybeSingle(),
       this.getOrCreateSequenceAllocator(),

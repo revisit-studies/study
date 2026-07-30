@@ -118,9 +118,12 @@ vi.mock('@supabase/supabase-js', () => {
             const count = requestedCount ? matched.length : null;
             if (orderBy) {
               matched = [...matched].sort((a, b) => {
-                const aValue = String(getFieldValue(a, orderBy!.col) ?? '');
-                const bValue = String(getFieldValue(b, orderBy!.col) ?? '');
-                return (aValue.localeCompare(bValue)) * (orderBy!.ascending ? 1 : -1);
+                const aValue = getFieldValue(a, orderBy!.col);
+                const bValue = getFieldValue(b, orderBy!.col);
+                const comparison = typeof aValue === 'number' && typeof bValue === 'number'
+                  ? aValue - bValue
+                  : String(aValue ?? '').localeCompare(String(bValue ?? ''));
+                return comparison * (orderBy!.ascending ? 1 : -1);
               });
             }
             if (resultLimit !== undefined) matched = matched.slice(0, resultLimit);
@@ -476,6 +479,36 @@ describe.each([
     ).rejects.toThrow('Failed to retrieve sequence assignment');
   });
 
+  test('study verification rejects a missing connect row', async () => {
+    const connectRowIndex = revisitRows.findIndex(
+      (row) => row.docId === 'connect',
+    );
+    expect(connectRowIndex).toBeGreaterThanOrEqual(0);
+    revisitRows.splice(connectRowIndex, 1);
+
+    const verifyStudyDatabase = (
+      storageEngine as unknown as {
+        _verifyStudyDatabase: () => Promise<void>;
+      }
+    )._verifyStudyDatabase.bind(storageEngine);
+    await expect(verifyStudyDatabase())
+      .rejects.toThrow('Study database not initialized or does not exist');
+  });
+
+  test('allocator lookup propagates provider failures without attempting initialization', async () => {
+    nextSupabaseSelectError = { message: 'permission denied', code: '42501' };
+    const getOrCreateSequenceAllocator = (
+      storageEngine as unknown as {
+        getOrCreateSequenceAllocator: () => Promise<unknown>;
+      }
+    ).getOrCreateSequenceAllocator.bind(storageEngine);
+
+    await expect(getOrCreateSequenceAllocator())
+      .rejects.toThrow('Failed to retrieve sequence assignment allocator');
+    expect(supabaseOperations).toHaveLength(1);
+    expect(supabaseOperations[0]).toMatchObject({ op: 'select', headOnly: false });
+  });
+
   test('fresh participant startup with an initialized allocator skips legacy counts', async () => {
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'allocator-seed');
     await storageEngine.clearCurrentParticipantId();
@@ -585,6 +618,50 @@ describe.each([
     expect(participant.sequence).toEqual(sequenceArray[1]);
     expect(scanSpy).not.toHaveBeenCalled();
     expect(unboundedReads).toHaveLength(0);
+  });
+
+  test('rejected-slot reuse selects the earliest assignment timestamp', async () => {
+    const createAssignment = (
+      storageEngine as unknown as {
+        _createSequenceAssignment: (
+          participantId: string,
+          assignment: SequenceAssignment,
+          withServerTimestamp: boolean,
+        ) => Promise<void>;
+      }
+    )._createSequenceAssignment.bind(storageEngine);
+    const rejectedAssignment = (
+      participantId: string,
+      timestamp: number,
+      sequenceIndex: number,
+    ): SequenceAssignment => ({
+      participantId,
+      timestamp,
+      rejected: true,
+      claimed: false,
+      completed: null,
+      createdTime: timestamp,
+      total: 0,
+      answered: [],
+      isDynamic: false,
+      stage: 'DEFAULT',
+      sequenceIndex,
+      creationIndex: sequenceIndex,
+    });
+    await createAssignment('newer-rejected', rejectedAssignment('newer-rejected', 20, 1), false);
+    await createAssignment('older-rejected', rejectedAssignment('older-rejected', 10, 0), false);
+
+    const participant = await storageEngine.initializeParticipantSession(
+      {},
+      configSimple,
+      participantMetadata,
+      'ordered-replacement',
+    );
+    const assignments = await storageEngine.getAllSequenceAssignments(studyId);
+
+    expect(participant.sequence).toEqual(sequenceArray[0]);
+    expect(assignments.find(({ participantId }) => participantId === 'older-rejected')?.claimed).toBe(true);
+    expect(assignments.find(({ participantId }) => participantId === 'newer-rejected')?.claimed).toBe(false);
   });
 
   test('initializeParticipantSession sets conditions from searchParams condition', async () => {

@@ -116,11 +116,12 @@ vi.mock('localforage', () => ({
 // Complete in-memory Firestore mock — no emulator needed.
 vi.mock('firebase/firestore', () => {
   type QueryConstraint = {
-    type: 'where' | 'limit';
+    type: 'where' | 'limit' | 'orderBy';
     field?: string;
     operator?: string;
     value?: unknown;
     count?: number;
+    direction?: 'asc' | 'desc';
   };
 
   function resolveSentinels(data: DocData): DocData {
@@ -209,6 +210,21 @@ vi.mock('firebase/firestore', () => {
           }
           return true;
         });
+      } else if (constraint.type === 'orderBy') {
+        docs = [...docs].sort((a, b) => {
+          const aValue = a.data()[constraint.field!];
+          const bValue = b.data()[constraint.field!];
+          const toComparableNumber = (value: unknown) => (
+            value
+            && typeof value === 'object'
+            && 'toMillis' in value
+            && typeof value.toMillis === 'function'
+              ? value.toMillis()
+              : Number(value)
+          );
+          return (toComparableNumber(aValue) - toComparableNumber(bValue))
+            * (constraint.direction === 'desc' ? -1 : 1);
+        });
       } else if (constraint.type === 'limit') {
         docs = docs.slice(0, constraint.count);
       }
@@ -231,6 +247,10 @@ vi.mock('firebase/firestore', () => {
 
   function mockLimit(count: number): QueryConstraint {
     return { type: 'limit', count };
+  }
+
+  function mockOrderBy(field: string, direction: 'asc' | 'desc' = 'asc'): QueryConstraint {
+    return { type: 'orderBy', field, direction };
   }
 
   async function mockGetCountFromServer(collRef: { _path: string; _constraints?: QueryConstraint[] }) {
@@ -306,6 +326,7 @@ vi.mock('firebase/firestore', () => {
     getCountFromServer: vi.fn(mockGetCountFromServer),
     query: vi.fn(mockQuery),
     where: vi.fn(mockWhere),
+    orderBy: vi.fn(mockOrderBy),
     limit: vi.fn(mockLimit),
     runTransaction: vi.fn(mockRunTransaction),
     updateDoc: vi.fn(mockUpdateDoc),
@@ -615,6 +636,50 @@ describe.each([
     expect(participant.sequence).toEqual(sequenceArray[1]);
     expect(scanSpy).not.toHaveBeenCalled();
     expect(countMock).toHaveBeenCalledTimes(3);
+  });
+
+  test('rejected-slot reuse selects the earliest assignment timestamp', async () => {
+    const createAssignment = (
+      storageEngine as unknown as {
+        _createSequenceAssignment: (
+          participantId: string,
+          assignment: SequenceAssignment,
+          withServerTimestamp: boolean,
+        ) => Promise<void>;
+      }
+    )._createSequenceAssignment.bind(storageEngine);
+    const rejectedAssignment = (
+      participantId: string,
+      timestamp: number,
+      sequenceIndex: number,
+    ): SequenceAssignment => ({
+      participantId,
+      timestamp,
+      rejected: true,
+      claimed: false,
+      completed: null,
+      createdTime: timestamp,
+      total: 0,
+      answered: [],
+      isDynamic: false,
+      stage: 'DEFAULT',
+      sequenceIndex,
+      creationIndex: sequenceIndex,
+    });
+    await createAssignment('newer-rejected', rejectedAssignment('newer-rejected', 20, 1), false);
+    await createAssignment('older-rejected', rejectedAssignment('older-rejected', 10, 0), false);
+
+    const participant = await storageEngine.initializeParticipantSession(
+      {},
+      configSimple,
+      participantMetadata,
+      'ordered-replacement',
+    );
+    const assignments = await storageEngine.getAllSequenceAssignments(studyId);
+
+    expect(participant.sequence).toEqual(sequenceArray[0]);
+    expect(assignments.find(({ participantId }) => participantId === 'older-rejected')?.claimed).toBe(true);
+    expect(assignments.find(({ participantId }) => participantId === 'newer-rejected')?.claimed).toBe(false);
   });
 
   test('initializeParticipantSession sets conditions from searchParams condition', async () => {

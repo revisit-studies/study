@@ -27,6 +27,7 @@ import {
   initializeFirestore,
   limit,
   onSnapshot,
+  orderBy,
   query,
   runTransaction,
   serverTimestamp,
@@ -319,6 +320,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
         sequenceAssignmentCollection,
         where('rejected', '==', true),
         where('claimed', '==', false),
+        orderBy('timestamp', 'asc'),
         limit(1),
       )),
     ]);

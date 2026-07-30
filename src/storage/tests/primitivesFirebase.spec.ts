@@ -255,6 +255,7 @@ vi.mock('firebase/firestore', () => {
     getCountFromServer: vi.fn(mockGetCountFromServer),
     query: vi.fn(mockQuery),
     where: vi.fn(() => ({})),
+    orderBy: vi.fn(() => ({})),
     limit: vi.fn(() => ({})),
     runTransaction: vi.fn(mockRunTransaction),
     updateDoc: vi.fn(mockUpdateDoc),
