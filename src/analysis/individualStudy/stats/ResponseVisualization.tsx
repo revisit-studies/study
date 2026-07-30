@@ -58,6 +58,14 @@ export function ResponseVisualization({
     return data;
   }, [participantData, response.type, trialId, correctAnswer, response.id]);
 
+  // Completion times for the metadata timing histogram
+  const timingData = useMemo(() => (response.type === 'metadata'
+    ? participantData
+      .map((p) => Object.entries(p.answers).filter(([key]) => key.slice(0, key.lastIndexOf('_')) === trialId))
+      .map((p) => p.filter(([_, value]) => value.endTime !== -1).map(([_, value]) => (value.endTime - value.startTime) / 1000))
+      .flat()
+    : []), [participantData, response.type, trialId]);
+
   // eslint-disable-next-line consistent-return
   const vegaLiteSpec = useMemo(() => {
     const baseSpec = {
@@ -71,11 +79,6 @@ export function ResponseVisualization({
 
     // Timing visualization for metadata block
     if (response.type === 'metadata') {
-      const timingData = participantData
-        .map((p) => Object.entries(p.answers).filter(([key]) => key.slice(0, key.lastIndexOf('_')) === trialId))
-        .map((p) => p.filter(([_, value]) => value.endTime !== -1).map(([_, value]) => (value.endTime - value.startTime) / 1000))
-        .flat();
-
       // Histogram of completion times
       const spec = {
         ...baseSpec,
@@ -212,7 +215,7 @@ export function ResponseVisualization({
       return spec;
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps, @typescript-eslint/no-explicit-any
-  }, [participantData, questionData, response.id, (response as any).max, (response as any).min, (response as any).numItems, (response as any).options, response.type, trialId, correctAnswer]);
+  }, [participantData, questionData, timingData, response.id, (response as any).max, (response as any).min, (response as any).numItems, (response as any).options, response.type, trialId, correctAnswer]);
 
   return (
     <Paper p="lg" withBorder ref={ref}>
@@ -288,34 +291,36 @@ export function ResponseVisualization({
           </ScrollArea>
 
           <ScrollArea mih={200}>
-            {response.type === 'metadata'
-              ? (
-                <VegaLite
-                  spec={vegaLiteSpec as VisualizationSpec}
-                  actions={false}
-                  width={(dms.width / 2) - 60}
-                  height={270}
-                  padding={0}
-                  style={{ justifySelf: 'center' }}
-                />
-              )
-              : (
-                <>
-                  <Text fw={700}>Response Specification: </Text>
-                  <Code block>
-                    {JSON.stringify(response, null, 2)}
-                  </Code>
-                  <br />
-                  {correctAnswer && (
+            {response.type === 'metadata' && timingData.length === 0
+              ? <Text>No responses for this task yet.</Text>
+              : response.type === 'metadata'
+                ? (
+                  <VegaLite
+                    spec={vegaLiteSpec as VisualizationSpec}
+                    actions={false}
+                    width={(dms.width / 2) - 60}
+                    height={270}
+                    padding={0}
+                    style={{ justifySelf: 'center' }}
+                  />
+                )
+                : (
                   <>
-                    <Text fw={700}>Correct Answer: </Text>
+                    <Text fw={700}>Response Specification: </Text>
                     <Code block>
-                      {JSON.stringify(correctAnswer, null, 2)}
+                      {JSON.stringify(response, null, 2)}
                     </Code>
+                    <br />
+                    {correctAnswer && (
+                    <>
+                      <Text fw={700}>Correct Answer: </Text>
+                      <Code block>
+                        {JSON.stringify(correctAnswer, null, 2)}
+                      </Code>
+                    </>
+                    )}
                   </>
-                  )}
-                </>
-              )}
+                )}
 
           </ScrollArea>
         </SimpleGrid>

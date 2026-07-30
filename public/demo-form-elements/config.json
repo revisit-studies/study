@@ -841,7 +841,7 @@
         {
           "id": "q-slider",
           "prompt": "Slider example",
-          "secondaryText": "A slider for 0-100 with 3 breakpoints for bad, mid, and good",
+          "secondaryText": "A slider for 0 to 100 with three breakpoints for Bad, Mid, and Good",
           "type": "slider",
           "startingValue": 50,
           "spacing": 50,
