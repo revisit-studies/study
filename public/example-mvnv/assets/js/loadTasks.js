@@ -8,7 +8,46 @@ let participantCollection;
 
 const taskLocation = 'sidebar';
 const revisitTaskID = 'iframe-task';
+let revisitAnswers;
 // let vis;
+
+function rehydrateRevisitAnswer() {
+  if (!revisitAnswers || !taskList || currentTask === undefined) {
+    return;
+  }
+
+  const trialId = new URLSearchParams(window.location.search).get('trialid');
+  const trialAnswer = Object.values(revisitAnswers).find(
+    (answer) => answer.componentName === trialId,
+  );
+  const selectedNames = trialAnswer?.answer?.[revisitTaskID];
+  if (!Array.isArray(selectedNames)) {
+    return;
+  }
+
+  taskList[currentTask].answer.nodes = selectedNames.map((name) => ({ name }));
+
+  const selectedList = d3
+    .select('#selectedNodeList')
+    .selectAll('li')
+    .data(selectedNames);
+  selectedList.enter().append('li').merge(selectedList).text((name) => name);
+  selectedList.exit().remove();
+
+  if (typeof graph !== 'undefined' && Array.isArray(graph.nodes)) {
+    const selectedIds = graph.nodes
+      .filter((node) => selectedNames.includes(node.shortName))
+      .map((node) => node.id);
+    d3.selectAll('.node')
+      .classed('clicked', (node) => selectedIds.includes(node.id))
+      .classed('selected', (node) => selectedIds.includes(node.id));
+  }
+}
+
+Revisit.onAnswersReceive((answers) => {
+  revisitAnswers = answers;
+  rehydrateRevisitAnswer();
+});
 
 function detectBrowser() {
   var nAgt = navigator.userAgent;
@@ -732,6 +771,7 @@ async function resetPanel() {
   } else {
     window.controller.loadTask(currentTask);
   }
+  rehydrateRevisitAnswer();
 
   if (onTrials && currentTask === 0) {
     setTimeout(

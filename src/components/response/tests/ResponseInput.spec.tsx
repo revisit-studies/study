@@ -792,6 +792,53 @@ describe('SliderInput', () => {
     expect(mockOnChange).toHaveBeenCalled();
     cleanup();
   });
+
+  test('rehydrates the SMEQ thumb when the replayed answer changes', () => {
+    const { container, rerender } = render(
+      <SliderInput
+        response={{ ...base, smeqStyle: true } as Parameters<typeof SliderInput>[0]['response']}
+        disabled
+        answer={{ value: 20 }}
+        index={1}
+        enumerateQuestions={false}
+      />,
+    );
+    expect(container.querySelector('[title="20"]')).not.toBeNull();
+
+    rerender(
+      <SliderInput
+        response={{ ...base, smeqStyle: true } as Parameters<typeof SliderInput>[0]['response']}
+        disabled
+        answer={{ value: 80 }}
+        index={1}
+        enumerateQuestions={false}
+      />,
+    );
+    expect(container.querySelector('[title="80"]')).not.toBeNull();
+    cleanup();
+  });
+
+  test('does not update a disabled SMEQ slider', () => {
+    let capturedCallback: ((pos: { x: number; y: number }) => void) | null = null;
+    vi.mocked(useMove).mockImplementationOnce((fn: (pos: { x: number; y: number }) => void) => {
+      capturedCallback = fn;
+      return { ref: { current: null }, active: false };
+    });
+    const mockOnChange = vi.fn();
+    render(
+      <SliderInput
+        response={{ ...base, smeqStyle: true } as Parameters<typeof SliderInput>[0]['response']}
+        disabled
+        answer={{ value: 40, onChange: mockOnChange }}
+        index={1}
+        enumerateQuestions={false}
+      />,
+    );
+
+    act(() => { capturedCallback?.({ x: 0, y: 0.5 }); });
+    expect(mockOnChange).not.toHaveBeenCalled();
+    cleanup();
+  });
 });
 
 // ── MatrixInput ───────────────────────────────────────────────────────────────

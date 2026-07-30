@@ -1,9 +1,12 @@
 /* eslint-disable react/no-unescaped-entities */
-import { useState, useRef, useEffect } from 'react';
+import {
+  useState, useRef, useEffect, useMemo,
+} from 'react';
 import {
   Slider, Button, Stack, Text,
 } from '@mantine/core';
 import { StimulusParams } from '../../../../store/types';
+import { useIsAnalysis } from '../../../../store/hooks/useIsAnalysis';
 import cardImage from './card.png';
 
 interface VirtualChinrestCalibrationProps extends StimulusParams<{ taskid: string }> {
@@ -19,6 +22,7 @@ const calculateHeight = (width: number, aspectRatio:number) => Math.round(width 
 export default function VirtualChinrestCalibration({
   parameters,
   setAnswer,
+  answers,
   itemWidthMM = 85.6, // Standard credit card width
   itemHeightMM = 53.98, // Standard credit card height
   fixedCorner = 'top-left', // Default to top-left fixed corner
@@ -29,9 +33,17 @@ export default function VirtualChinrestCalibration({
   const [sliderRange, setSliderRange] = useState({ min: 100, max: 500 });
   const [hasMovedSlider, setHasMovedSlider] = useState(false);
   const [showMoveSliderWarning, setShowMoveSliderWarning] = useState(false);
+  const isAnalysis = useIsAnalysis();
 
   const { taskid } = parameters;
   const pixelsPerMM = itemWidthPx / itemWidthMM; // pixel to MM conversion
+  const storedPixelsPerMM = useMemo(() => {
+    const storedAnswer = Object.values(answers).find(
+      (answer) => answer.componentName === '$virtual-chinrest.components.card-size',
+    );
+    const storedValue = Number(storedAnswer?.answer?.[taskid]);
+    return Number.isFinite(storedValue) && storedValue > 0 ? storedValue : null;
+  }, [answers, taskid]);
 
   // Set references
   const containerRef = useRef<HTMLDivElement>(null);
@@ -52,6 +64,17 @@ export default function VirtualChinrestCalibration({
     window.addEventListener('resize', updateSliderRange);
     return () => window.removeEventListener('resize', updateSliderRange);
   }, []);
+
+  useEffect(() => {
+    if (storedPixelsPerMM === null) {
+      return;
+    }
+
+    setItemWidthPx(storedPixelsPerMM * itemWidthMM);
+    setHasMovedSlider(true);
+    setIsCalibrationComplete(true);
+    setShowMoveSliderWarning(false);
+  }, [itemWidthMM, storedPixelsPerMM]);
 
   // Handle a change in the slider
   const handleSliderChange = (value: number) => {
@@ -95,6 +118,7 @@ export default function VirtualChinrestCalibration({
       <Text size="md"> If you do not have access to a real card, you can use a ruler to measure the image width to 3.37 inches or 85.6mm. </Text>
       <Text size="md"> Once you are finished, click "Confirm Size" and then "Next". </Text>
       <Slider
+        disabled={isAnalysis}
         min={sliderRange.min}
         max={sliderRange.max}
         value={itemWidthPx}
@@ -147,6 +171,7 @@ export default function VirtualChinrestCalibration({
         )
       }
       <Button
+        disabled={isAnalysis}
         onClick={handleCalibrationComplete}
         size="lg"
         variant="transparent"

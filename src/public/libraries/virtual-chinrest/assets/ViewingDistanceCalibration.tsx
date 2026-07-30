@@ -1,11 +1,12 @@
 import {
-  useState, useRef, useEffect, useCallback,
+  useState, useRef, useEffect, useCallback, useMemo,
 } from 'react';
 import {
   Stack, List, Text, Container, Button,
 } from '@mantine/core';
 import { StimulusParams } from '../../../../store/types';
 import { useStoreSelector } from '../../../../store/store';
+import { useIsAnalysis } from '../../../../store/hooks/useIsAnalysis';
 
 // Utility functions
 const degToRadians = (degrees: number) => (degrees * Math.PI) / 180;
@@ -15,10 +16,28 @@ export default function ViewingDistanceCalibration({ parameters, setAnswer }: St
   const squareRef = useRef<HTMLDivElement>(null);
   const animationFrameRef = useRef<number | null>(null);
   const { blindspotAngle } = parameters;
+  const isAnalysis = useIsAnalysis();
 
   const ans = useStoreSelector((state) => state.answers);
   const cardSizeAnswer = Object.values(ans).find((answer) => answer.componentName === '$virtual-chinrest.components.card-size');
   const pixelsPerMM = Number(cardSizeAnswer?.answer?.pixelsPerMM);
+  const storedAnswer = Object.values(ans).find((answer) => answer.componentName === '$virtual-chinrest.components.blindspot-distance');
+  const storedViewingDistance = Number(storedAnswer?.answer?.['dist-calibration-MM']);
+  const storedBallPositions = useMemo(() => {
+    const value = storedAnswer?.answer?.['ball-positions'];
+    if (typeof value !== 'string') {
+      return [];
+    }
+
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) && parsed.every((position) => typeof position === 'number')
+        ? parsed
+        : [];
+    } catch {
+      return [];
+    }
+  }, [storedAnswer]);
 
   // States
   const [ballPositions, setBallPositions] = useState<number[]>([]);
@@ -110,6 +129,10 @@ export default function ViewingDistanceCalibration({ parameters, setAnswer }: St
 
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
+      if (isAnalysis) {
+        return;
+      }
+
       if (event.code === 'Space') {
         event.preventDefault();
 
@@ -136,7 +159,7 @@ export default function ViewingDistanceCalibration({ parameters, setAnswer }: St
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [isTracking, startBlindspotTracking, calculateViewingDistance]);
+  }, [isAnalysis, isTracking, startBlindspotTracking, calculateViewingDistance]);
 
   // Reset state when pixelsPerMM changes
   useEffect(() => {
@@ -153,6 +176,17 @@ export default function ViewingDistanceCalibration({ parameters, setAnswer }: St
       setClickCount(5);
     };
   }, []);
+
+  useEffect(() => {
+    if (!Number.isFinite(storedViewingDistance) || storedViewingDistance <= 0) {
+      return;
+    }
+
+    setBallPositions(storedBallPositions);
+    setViewingDistance(storedViewingDistance);
+    setIsTracking(false);
+    setClickCount(Math.max(0, 5 - storedBallPositions.length));
+  }, [storedBallPositions, storedViewingDistance]);
 
   // Cleanup animation frame on unmount
   useEffect(() => () => {
@@ -244,7 +278,7 @@ export default function ViewingDistanceCalibration({ parameters, setAnswer }: St
           ballPositions.length > 0 && (
             <>
               <Text ta="left"> Not happy with your measurements? You can restart by clicking &quot;Retake&quot;.</Text>
-              <Button size="md-compact" w="fit-content" color="indigo" onClick={handleRetake}>Retake</Button>
+              <Button disabled={isAnalysis} size="md-compact" w="fit-content" color="indigo" onClick={handleRetake}>Retake</Button>
             </>
           )
         }
