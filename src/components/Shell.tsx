@@ -668,8 +668,9 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   } else if (!isValidStudyId) {
     content = <ResourceNotFound />;
   } else if (routing && renderedStore) {
+    const startupStoreKey = store ? 'authoritative' : 'preview';
     content = (
-      <StudyStoreContext.Provider value={renderedStore}>
+      <StudyStoreContext.Provider key={startupStoreKey} value={renderedStore}>
         <Provider store={renderedStore.store}>{routing}</Provider>
       </StudyStoreContext.Provider>
     );

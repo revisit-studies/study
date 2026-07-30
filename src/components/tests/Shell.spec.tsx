@@ -1,4 +1,6 @@
-import { StrictMode, type HTMLAttributes, type ReactNode } from 'react';
+import {
+  StrictMode, useEffect, type HTMLAttributes, type ReactNode,
+} from 'react';
 import {
   render, act, cleanup, waitFor,
 } from '@testing-library/react';
@@ -18,6 +20,19 @@ import { parseStudyConfig } from '../../parser/parser';
 
 let mockStudyId = 'test-study';
 let mockStorageEngine: Record<string, ReturnType<typeof vi.fn>> | null = null;
+let routingMountCount = 0;
+let routingUnmountCount = 0;
+
+function RoutingMountProbe() {
+  useEffect(() => {
+    routingMountCount += 1;
+    return () => {
+      routingUnmountCount += 1;
+    };
+  }, []);
+
+  return <div data-testid="routing" />;
+}
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
@@ -149,6 +164,8 @@ describe('Shell', () => {
   beforeEach(() => {
     mockStudyId = 'test-study';
     mockStorageEngine = null;
+    routingMountCount = 0;
+    routingUnmountCount = 0;
     vi.mocked(getStudyConfig).mockResolvedValue(null);
     vi.mocked(resolveConfigKey).mockReturnValue('test-study');
     vi.mocked(parseConditionParam).mockReturnValue([]);
@@ -318,9 +335,14 @@ describe('Shell', () => {
 
   test('happy path: initializeUserStoreRouting runs and renders study', async () => {
     vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
+    vi.mocked(useRoutes).mockReturnValue(<RoutingMountProbe />);
+    let resolveStudyInitialization: (() => void) | undefined;
+    const studyInitialization = new Promise<void>((resolve) => {
+      resolveStudyInitialization = resolve;
+    });
 
     mockStorageEngine = {
-      initializeStudyDb: vi.fn().mockResolvedValue(undefined),
+      initializeStudyDb: vi.fn(() => studyInitialization),
       saveConfig: vi.fn().mockResolvedValue(undefined),
       getSequenceArray: vi.fn().mockResolvedValue(['seq1']), // non-null → no setSequenceArray
       getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
@@ -334,10 +356,14 @@ describe('Shell', () => {
 
     const { queryByTestId, getByTestId } = render(<Shell globalConfig={globalConfig} />);
     await waitFor(() => expect(mockStorageEngine!.initializeStudyDb).toHaveBeenCalled(), { timeout: 3000 });
+    await waitFor(() => expect(routingMountCount).toBe(1), { timeout: 3000 });
+    await act(async () => resolveStudyInitialization?.());
     await waitFor(() => expect(vi.mocked(studyStoreCreator)).toHaveBeenCalled(), { timeout: 3000 });
     await waitFor(() => expect(queryByTestId('study-loading-barrier')).toBeNull(), { timeout: 3000 });
     expect(getByTestId('study-interface').getAttribute('aria-busy')).toBe('false');
     expect(getByTestId('study-interface').hasAttribute('inert')).toBe(false);
+    expect(routingMountCount).toBe(2);
+    expect(routingUnmountCount).toBe(1);
   });
 
   test('calls setSequenceArray when getSequenceArray returns null', async () => {
