@@ -2,7 +2,7 @@ import { AuthError, createClient } from '@supabase/supabase-js';
 import localforage from 'localforage';
 import {
   REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageObject, StorageObjectType, StoredUser,
-  CloudStorageEngine, cleanupModes,
+  CloudStorageEngine, cleanupModes, SequenceBuildClaim, SequenceBuildRecord,
 } from './types';
 import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
 
@@ -36,7 +36,12 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     }
   }
 
-  protected async _pushToStorage<T extends StorageObjectType>(prefix: string, type: T, objectToUpload: StorageObject<T>) {
+  protected async _pushToStorage<T extends StorageObjectType>(
+    prefix: string,
+    type: T,
+    objectToUpload: StorageObject<T>,
+    options?: { cache?: boolean },
+  ) {
     await this.verifyStudyDatabase();
 
     let uploadObject: Blob | Buffer<ArrayBuffer> = new Blob();
@@ -53,6 +58,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       .from('revisit')
       .upload(`${this.collectionPrefix}${this.studyId}/${prefix}_${type}`, uploadObject, {
         upsert: true,
+        ...(options?.cache ? { cacheControl: '31536000' } : {}),
       });
 
     if (error) {
@@ -132,6 +138,88 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       })
       .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
       .eq('docId', 'currentConfigHash');
+  }
+
+  private async getSequenceBuild(configHash: string) {
+    const { data } = await this.supabase
+      .from('revisit')
+      .select('data')
+      .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
+      .eq('docId', `sequenceBuild_${configHash}`)
+      .maybeSingle();
+    return data?.data as SequenceBuildRecord | undefined;
+  }
+
+  protected async _claimSequenceBuild(
+    configHash: string,
+    candidate: SequenceBuildRecord,
+    now: number,
+  ): Promise<SequenceBuildClaim> {
+    const studyId = `${this.collectionPrefix}${this.studyId}`;
+    const docId = `sequenceBuild_${configHash}`;
+    const existing = await this.getSequenceBuild(configHash);
+    if (existing?.status === 'ready'
+      || (existing?.status === 'building' && existing.leaseExpiresAt > now)) {
+      return { record: existing, shouldPublish: false };
+    }
+
+    if (!existing) {
+      const { error } = await this.supabase
+        .from('revisit')
+        .insert({ studyId, docId, data: candidate });
+      if (!error) {
+        return { record: candidate, shouldPublish: true };
+      }
+      const winner = await this.getSequenceBuild(configHash);
+      if (!winner) {
+        throw new Error('Failed to establish sequence build record');
+      }
+      return { record: winner, shouldPublish: false };
+    }
+
+    const claimed: SequenceBuildRecord = {
+      ...existing,
+      status: 'building',
+      publisherId: candidate.publisherId,
+      leaseExpiresAt: candidate.leaseExpiresAt,
+      attempts: existing.attempts + 1,
+      updatedAt: now,
+    };
+    const { data } = await this.supabase
+      .from('revisit')
+      .update({ data: claimed })
+      .eq('studyId', studyId)
+      .eq('docId', docId)
+      .eq('data->>publisherId', existing.publisherId)
+      .eq('data->>updatedAt', String(existing.updatedAt))
+      .select('data')
+      .maybeSingle();
+    if (data) {
+      return { record: claimed, shouldPublish: true };
+    }
+
+    const winner = await this.getSequenceBuild(configHash);
+    if (!winner) {
+      throw new Error('Failed to claim sequence build record');
+    }
+    return { record: winner, shouldPublish: false };
+  }
+
+  protected async _updateSequenceBuild(
+    configHash: string,
+    publisherId: string,
+    updates: Pick<SequenceBuildRecord, 'status' | 'leaseExpiresAt' | 'updatedAt'>,
+  ) {
+    const existing = await this.getSequenceBuild(configHash);
+    if (!existing || existing.publisherId !== publisherId) {
+      return;
+    }
+    await this.supabase
+      .from('revisit')
+      .update({ data: { ...existing, ...updates } })
+      .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
+      .eq('docId', `sequenceBuild_${configHash}`)
+      .eq('data->>publisherId', publisherId);
   }
 
   public async getAllSequenceAssignments(studyId: string) {

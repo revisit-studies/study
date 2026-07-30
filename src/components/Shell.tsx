@@ -305,22 +305,15 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
         await storageEngine.saveConfig(activeConfig);
 
-        const sequenceArray = await storageEngine.getSequenceArray();
-
-        if (!sequenceArray) {
-          const generatedSequenceArray = await generateSequenceArray(activeConfig);
-
-          await storageEngine.setSequenceArray(generatedSequenceArray);
-        }
+        const activeHash = await activeHashPromise;
+        const [resolvedModes] = await Promise.all([
+          storageEngine.getModes(canonicalStudyId),
+          storageEngine.prepareSequenceArray(activeConfig, activeHash),
+        ]);
+        modes = resolvedModes;
 
         // Get or generate participant session
         const searchParamsObject = Object.fromEntries(searchParams.entries());
-
-        const [resolvedModes, activeHash] = await Promise.all([
-          storageEngine.getModes(canonicalStudyId),
-          activeHashPromise,
-        ]);
-        modes = resolvedModes;
 
         const initialMetadata = createParticipantMetadata();
 

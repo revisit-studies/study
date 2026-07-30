@@ -27,6 +27,7 @@ import {
   onSnapshot,
   serverTimestamp,
   setDoc,
+  runTransaction,
   updateDoc,
   writeBatch,
 } from 'firebase/firestore';
@@ -44,6 +45,8 @@ import {
   SnapshotDocContent,
   StoredUser,
   cleanupModes,
+  SequenceBuildClaim,
+  SequenceBuildRecord,
 } from './types';
 import { EditedText, TaglessEditedText } from '../../analysis/individualStudy/thinkAloud/types';
 import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
@@ -108,7 +111,12 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     return storageObj;
   }
 
-  protected async _pushToStorage<T extends StorageObjectType>(prefix: string, type: T, objectToUpload: StorageObject<T>) {
+  protected async _pushToStorage<T extends StorageObjectType>(
+    prefix: string,
+    type: T,
+    objectToUpload: StorageObject<T>,
+    options?: { cache?: boolean },
+  ) {
     const storageRef = ref(
       this.storage,
       `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`,
@@ -120,7 +128,11 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       const blob = new Blob([JSON.stringify(objectToUpload)], {
         type: 'application/json',
       });
-      await uploadBytes(storageRef, blob);
+      await uploadBytes(
+        storageRef,
+        blob,
+        options?.cache ? { cacheControl: 'public,max-age=31536000' } : undefined,
+      );
     }
   }
 
@@ -169,6 +181,49 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       'configHash',
     );
     await setDoc(configHashDoc, { configHash });
+  }
+
+  protected async _claimSequenceBuild(
+    configHash: string,
+    candidate: SequenceBuildRecord,
+    now: number,
+  ): Promise<SequenceBuildClaim> {
+    const buildDoc = doc(this.studyCollection, `sequenceBuild_${configHash}`);
+    return runTransaction(this.firestore, async (transaction) => {
+      const snapshot = await transaction.get(buildDoc);
+      const existing = snapshot.exists() ? snapshot.data() as SequenceBuildRecord : null;
+      if (existing?.status === 'ready'
+        || (existing?.status === 'building' && existing.leaseExpiresAt > now)) {
+        return { record: existing, shouldPublish: false };
+      }
+
+      const claimed = existing
+        ? {
+          ...existing,
+          status: 'building' as const,
+          publisherId: candidate.publisherId,
+          leaseExpiresAt: candidate.leaseExpiresAt,
+          attempts: existing.attempts + 1,
+          updatedAt: now,
+        }
+        : candidate;
+      transaction.set(buildDoc, claimed);
+      return { record: claimed, shouldPublish: true };
+    });
+  }
+
+  protected async _updateSequenceBuild(
+    configHash: string,
+    publisherId: string,
+    updates: Pick<SequenceBuildRecord, 'status' | 'leaseExpiresAt' | 'updatedAt'>,
+  ) {
+    const buildDoc = doc(this.studyCollection, `sequenceBuild_${configHash}`);
+    await runTransaction(this.firestore, async (transaction) => {
+      const snapshot = await transaction.get(buildDoc);
+      if (snapshot.exists() && snapshot.data().publisherId === publisherId) {
+        transaction.update(buildDoc, updates);
+      }
+    });
   }
 
   public async getAllSequenceAssignments(studyId: string) {
