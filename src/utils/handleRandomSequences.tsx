@@ -411,7 +411,9 @@ export function generateSequenceArray(
   return sequenceArray;
 }
 
-export function generateSequenceAtIndex(
+// Compact descriptors persist this algorithm version. Keep behavior changes
+// behind a new version and update the independent V1 golden fixture deliberately.
+export function generateSequenceAtIndexV1(
   config: StudyConfig,
   index: number,
   random: RandomSource,
@@ -427,4 +429,12 @@ export function generateSequenceAtIndex(
   }
 
   return sequence!;
+}
+
+export function generateSequenceAtIndex(
+  config: StudyConfig,
+  index: number,
+  random: RandomSource,
+): Sequence {
+  return generateSequenceAtIndexV1(config, index, random);
 }

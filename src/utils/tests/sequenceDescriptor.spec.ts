@@ -12,6 +12,7 @@ import {
   parseCompactSequenceDescriptor,
   resolveCompactSequence,
 } from '../sequenceDescriptor';
+import versionOneGolden from './sequenceDescriptor.v1.golden.json';
 
 const configHash = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
 
@@ -102,12 +103,8 @@ describe('compact sequence descriptors', () => {
       resolveCompactSequence(config, descriptor, 11),
     ];
 
-    expect(selectedSequences.map(summarizeComponents)).toEqual([
-      ['dynamic-trials[]', 'finish', 'random-trials[b,break,c]', 'end'],
-      ['finish', 'dynamic-trials[]', 'random-trials[a,break,c]', 'end'],
-      ['random-trials[b,break,c]', 'dynamic-trials[]', 'finish', 'end'],
-    ]);
-    expect(selectedSequences[0].components[2]).toMatchObject({
+    expect(selectedSequences.map(summarizeComponents)).toEqual(versionOneGolden);
+    expect(selectedSequences[0].components[0]).toMatchObject({
       conditional: true,
       interruptions: [{
         spacing: 'random',
@@ -131,6 +128,28 @@ describe('compact sequence descriptors', () => {
     expect(() => resolveCompactSequence(config, descriptor, 12)).toThrow(
       'outside the descriptor range',
     );
+    expect(() => resolveCompactSequence(config, {
+      ...descriptor,
+      seed: 'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789',
+    }, 0)).toThrow('does not match this study config');
+    expect(() => resolveCompactSequence(config, {
+      ...descriptor,
+      numSequences: 11,
+    }, 0)).toThrow('does not match this study config');
+  });
+
+  test('reconstructs a late row without replaying all earlier assignments', () => {
+    const lateConfig = {
+      ...config,
+      uiConfig: { ...config.uiConfig, numSequences: 1000 },
+    };
+    const descriptor = createCompactSequenceDescriptor(configHash, lateConfig);
+    const startedAt = performance.now();
+
+    const lateRow = resolveCompactSequence(lateConfig, descriptor, 999);
+
+    expect(lateRow.components.at(-1)).toBe('end');
+    expect(performance.now() - startedAt).toBeLessThan(100);
   });
 
   test('is materially smaller than the expanded library-calvi sequence artifact', () => {

@@ -1,9 +1,6 @@
 import { StudyConfig } from '../parser/types';
 import { Sequence } from '../store/types';
-import {
-  generateSequenceArray,
-  generateSequenceAtIndex,
-} from './handleRandomSequences';
+import { generateSequenceAtIndexV1 } from './handleRandomSequences';
 
 export const COMPACT_SEQUENCE_FORMAT = 'revisit-compact-sequence';
 export const COMPACT_SEQUENCE_ALGORITHM_VERSION = 1;
@@ -73,7 +70,11 @@ export function createCompactSequenceDescriptor(
 
 function createVersionOneRandom(seed: string) {
   /* eslint-disable no-bitwise -- Versioned PRNG requires stable 32-bit integer operations. */
-  let state = Number.parseInt(seed.slice(0, 8), 16) >>> 0;
+  let state = 2166136261;
+  for (let index = 0; index < seed.length; index += 1) {
+    state ^= seed.charCodeAt(index);
+    state = Math.imul(state, 16777619) >>> 0;
+  }
 
   return () => {
     state = (state + 0x6D2B79F5) >>> 0;
@@ -85,12 +86,65 @@ function createVersionOneRandom(seed: string) {
   /* eslint-enable no-bitwise */
 }
 
+function greatestCommonDivisor(a: number, b: number): number {
+  return b === 0 ? a : greatestCommonDivisor(b, a % b);
+}
+
+function getVersionOneCycleLength(config: StudyConfig) {
+  const visit = (block: StudyConfig['sequence']): number[] => {
+    if (!('components' in block)) {
+      return [];
+    }
+    const current = block.order === 'latinSquare' ? [block.components.length] : [];
+    return [
+      ...current,
+      ...block.components.flatMap((component) => (
+        typeof component === 'string' || Array.isArray(component)
+          ? []
+          : visit(component)
+      )),
+    ];
+  };
+
+  return visit(config.sequence).reduce((cycle, length) => (
+    length > 0 ? (cycle * length) / greatestCommonDivisor(cycle, length) : cycle
+  ), 1);
+}
+
+function resolveVersionOneSequence(
+  config: StudyConfig,
+  descriptor: CompactSequenceDescriptor,
+  index: number,
+) {
+  // V1 partitions rows into deterministic Latin-square cycles. Reconstructing a
+  // late assignment therefore performs at most one cycle of work instead of
+  // replaying every earlier participant row.
+  const cycleLength = getVersionOneCycleLength(config);
+  const cycle = Math.floor(index / cycleLength);
+  const indexWithinCycle = index % cycleLength;
+  return generateSequenceAtIndexV1(
+    config,
+    indexWithinCycle,
+    createVersionOneRandom(`${descriptor.seed}:${cycle}`),
+  );
+}
+
 export function resolveCompactSequence(
   config: StudyConfig,
   descriptorValue: unknown,
   index: number,
 ): Sequence {
   const descriptor = parseCompactSequenceDescriptor(descriptorValue);
+  const expectedSequenceCount = config.uiConfig.numSequences || 1000;
+  if (
+    descriptor.seed !== descriptor.configHash
+    || descriptor.numSequences !== expectedSequenceCount
+  ) {
+    throw new Error(
+      'The stored sequence descriptor does not match this study config. '
+      + 'Republish the study sequence.',
+    );
+  }
   if (!Number.isInteger(index) || index < 0 || index >= descriptor.numSequences) {
     throw new Error(
       `Sequence index ${index} is outside the descriptor range of `
@@ -100,7 +154,7 @@ export function resolveCompactSequence(
 
   switch (descriptor.version) {
     case 1:
-      return generateSequenceAtIndex(config, index, createVersionOneRandom(descriptor.seed));
+      return resolveVersionOneSequence(config, descriptor, index);
     default:
       throw new Error(
         `Sequence descriptor version ${String(descriptor.version)} is not supported. `
@@ -124,9 +178,9 @@ export function expandCompactSequence(
 
   switch (descriptor.version) {
     case 1:
-      return generateSequenceArray(
-        configWithDescriptorCount,
-        createVersionOneRandom(descriptor.seed),
+      return Array.from(
+        { length: descriptor.numSequences },
+        (_, index) => resolveVersionOneSequence(configWithDescriptorCount, descriptor, index),
       );
     default:
       throw new Error(

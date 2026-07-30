@@ -210,6 +210,8 @@ export abstract class StorageEngine {
 
   private assetUploadActivityVersion = 0;
 
+  private activeConfigHash: string | null = null;
+
   constructor(engine: typeof this.engine, testing: boolean) {
     this.engine = engine;
     this.testing = testing;
@@ -776,6 +778,7 @@ export abstract class StorageEngine {
     const currentConfigHash = await this._getCurrentConfigHash();
     // Hash the provided config
     const configHash = await hash(JSON.stringify(config));
+    this.activeConfigHash = configHash;
 
     // Skip saving config if the active config is already saved in storage
     if (currentConfigHash === configHash) {
@@ -792,17 +795,6 @@ export abstract class StorageEngine {
       config,
     );
     await this._cacheStorageObject(`configs/${configHash}`, 'config');
-
-    // Clear sequence array if the config has changed.
-    // Keep currentParticipantId so existing participant sessions can continue
-    // against their original participantConfigHash.
-    if (currentConfigHash && currentConfigHash !== configHash) {
-      try {
-        await this._deleteFromStorage('', 'sequenceArray');
-      } catch {
-        // pass, if this happens, we didn't have a sequence array yet
-      }
-    }
 
     if (currentConfigHash !== configHash) {
       await this._setCurrentConfigHash(configHash);
@@ -938,7 +930,8 @@ export abstract class StorageEngine {
     // Query all the intents to get a sequence and find our position in the queue
     sequenceAssignments = await this.getAllSequenceAssignments(this.studyId);
 
-    const sequenceArtifact = await this.getSequenceArtifact();
+    const configHash = await hash(JSON.stringify(config));
+    const sequenceArtifact = await this.getSequenceArtifact(configHash);
     if (!sequenceArtifact) {
       throw new Error('Study sequence is not initialized');
     }
@@ -948,7 +941,6 @@ export abstract class StorageEngine {
       sequenceCount = sequenceArtifact.length;
     } else {
       const descriptor = parseCompactSequenceDescriptor(sequenceArtifact);
-      const configHash = await hash(JSON.stringify(config));
       if (descriptor.configHash !== configHash) {
         throw new Error(
           'The stored sequence descriptor does not match this study config. '
@@ -1800,13 +1792,31 @@ export abstract class StorageEngine {
   }
 
   // Gets the versioned sequence artifact from the storage engine.
-  async getSequenceArtifact() {
+  async getSequenceArtifact(configHash?: string) {
     await this.verifyStudyDatabase();
 
-    const sequenceArtifact = await this._getFromStorage(
-      '',
+    const resolvedConfigHash = configHash ?? this.activeConfigHash;
+    let sequenceArtifact = await this._getFromStorage(
+      resolvedConfigHash ? `sequenceArrays/${resolvedConfigHash}` : '',
       'sequenceArray',
     );
+    if (
+      resolvedConfigHash
+      && (
+        sequenceArtifact === null
+        || sequenceArtifact === undefined
+        || (
+          typeof sequenceArtifact === 'object'
+          && !Array.isArray(sequenceArtifact)
+          && Object.keys(sequenceArtifact).length === 0
+        )
+      )
+    ) {
+      const currentConfigHash = await this._getCurrentConfigHash();
+      if (currentConfigHash === null || currentConfigHash === resolvedConfigHash) {
+        sequenceArtifact = await this._getFromStorage('', 'sequenceArray');
+      }
+    }
 
     if (
       sequenceArtifact === null
@@ -1830,8 +1840,8 @@ export abstract class StorageEngine {
   }
 
   // Gets a legacy expanded sequence array, if one is stored.
-  async getSequenceArray() {
-    const sequenceArtifact = await this.getSequenceArtifact();
+  async getSequenceArray(configHash?: string) {
+    const sequenceArtifact = await this.getSequenceArtifact(configHash);
     return Array.isArray(sequenceArtifact) ? sequenceArtifact : null;
   }
 
@@ -1846,7 +1856,13 @@ export abstract class StorageEngine {
   async setSequenceDescriptor(descriptor: CompactSequenceDescriptor) {
     await this.verifyStudyDatabase();
 
-    await this._pushToStorage('', 'sequenceArray', parseCompactSequenceDescriptor(descriptor));
+    const parsedDescriptor = parseCompactSequenceDescriptor(descriptor);
+    this.activeConfigHash = parsedDescriptor.configHash;
+    await this._pushToStorage(
+      `sequenceArrays/${parsedDescriptor.configHash}`,
+      'sequenceArray',
+      parsedDescriptor,
+    );
   }
 
   protected async __testingReset() {
@@ -1860,6 +1876,7 @@ export abstract class StorageEngine {
     this.failedAssetRetryOperations.clear();
     this.pendingProgressDataWrite = undefined;
     this.assetUploadActivityVersion = 0;
+    this.activeConfigHash = null;
     this.participantData = undefined;
     if (this.studyId) {
       await this.clearCurrentParticipantId();

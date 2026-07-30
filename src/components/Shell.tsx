@@ -306,12 +306,12 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
         await storageEngine.saveConfig(activeConfig);
 
-        const sequenceArtifact = await storageEngine.getSequenceArtifact();
+        const sequenceArtifactHash = await activeHashPromise;
+        const sequenceArtifact = await storageEngine.getSequenceArtifact(sequenceArtifactHash);
 
         if (!sequenceArtifact) {
-          const activeHash = await activeHashPromise;
           await storageEngine.setSequenceDescriptor(
-            createCompactSequenceDescriptor(activeHash, activeConfig),
+            createCompactSequenceDescriptor(sequenceArtifactHash, activeConfig),
           );
         }
 

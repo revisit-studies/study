@@ -457,18 +457,35 @@ describe.each([
     expect(participantSession.participantConfigHash).toBe(configHash);
   });
 
-  test('initializeParticipantSession rejects a descriptor for another config', async () => {
+  test('a descriptor for another config cannot replace the active config artifact', async () => {
     const descriptor = createCompactSequenceDescriptor(
       await hash(JSON.stringify(configSimple2)),
       configSimple2,
     );
     await storageEngine.setSequenceDescriptor(descriptor);
 
-    await expect(storageEngine.initializeParticipantSession(
+    const participant = await storageEngine.initializeParticipantSession(
       {},
       configSimple,
       participantMetadata,
-    )).rejects.toThrow('stored sequence descriptor does not match this study config');
+    );
+
+    expect(participant.sequence).toEqual(sequenceArray[0]);
+  });
+
+  test('retains independent descriptors across overlapping config publications', async () => {
+    const firstHash = await hash(JSON.stringify(configSimple));
+    const secondHash = await hash(JSON.stringify(configSimple2));
+    const firstDescriptor = createCompactSequenceDescriptor(firstHash, configSimple);
+    const secondDescriptor = createCompactSequenceDescriptor(secondHash, configSimple2);
+
+    await Promise.all([
+      storageEngine.setSequenceDescriptor(firstDescriptor),
+      storageEngine.setSequenceDescriptor(secondDescriptor),
+    ]);
+
+    expect(await storageEngine.getSequenceArtifact(firstHash)).toEqual(firstDescriptor);
+    expect(await storageEngine.getSequenceArtifact(secondHash)).toEqual(secondDescriptor);
   });
 
   test('initializeParticipantSession reads modes only once for a new participant', async () => {
