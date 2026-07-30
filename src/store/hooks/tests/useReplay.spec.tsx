@@ -162,8 +162,16 @@ describe('useReplay — syncEmitter listener', () => {
     const listenerEntry = onCalls.find(([event]) => event === 'replaySync');
     const listener = listenerEntry?.[1] as ((v: { seekTime: number; isPlaying: boolean; speed: number }) => void) | undefined;
     expect(listener).toBeDefined();
+    act(() => { result.current.setDuration(3); });
     act(() => { listener?.({ seekTime: 3, isPlaying: false, speed: 1.5 }); });
     expect(result.current.speed).toBe(1.5);
+    expect(result.current.seekTime).toBe(3);
+    expect(result.current.hasEnded).toBe(true);
+
+    act(() => { result.current.setIsPlaying(true); });
+    expect(result.current.seekTime).toBe(0);
+    expect(result.current.hasEnded).toBe(false);
+    expect(result.current.isPlaying).toBe(true);
   });
 
   test('cleanup removes the replaySync listener on unmount', () => {
@@ -308,17 +316,14 @@ describe('useReplay — handlePlay/Seeked/Pause via video element events', () =>
 });
 
 describe('useReplay — public setIsPlaying with hasEnded=true', () => {
-  test('setIsPlaying resets hasEnded and seeks to 0', () => {
+  test('seeking to task end sets hasEnded and one play activation restarts from 0', () => {
     const { result } = renderHook(() => useReplay());
-    // Drive hasEnded to true
-    act(() => {
-      result.current.setSeekTime(15);
-    });
     act(() => {
       result.current.setDuration(10);
+      result.current.setSeekTime(10);
     });
     expect(result.current.hasEnded).toBe(true);
-    // setIsPlaying(true) with hasEnded → resets + seeks to 0
+
     act(() => {
       result.current.setIsPlaying(true);
     });

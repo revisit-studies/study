@@ -15,7 +15,11 @@ import { StoredAnswer } from '../../store/types';
 
 const mockDispatch = vi.fn();
 const mockSetAlertModal = vi.fn((payload) => ({ type: 'setAlertModal', payload }));
+const mockResetAnalysisProvenance = vi.fn(() => ({ type: 'resetAnalysisProvenance' }));
+const mockResetReplay = vi.fn();
 const mockSubscribeToParticipantDataWriteErrors = vi.fn();
+let mockCurrentIdentifier = 'intro_0';
+let mockIsAnalysis = false;
 let mockStorageEngine: Pick<LocalStorageEngine, 'subscribeToParticipantDataWriteErrors'> = {
   subscribeToParticipantDataWriteErrors: mockSubscribeToParticipantDataWriteErrors,
 };
@@ -106,7 +110,7 @@ vi.mock('../../store/hooks/useStudyConfig', () => ({
 }));
 
 vi.mock('../../store/hooks/useIsAnalysis', () => ({
-  useIsAnalysis: () => false,
+  useIsAnalysis: () => mockIsAnalysis,
 }));
 
 vi.mock('../../store/hooks/useWindowEvents', () => ({
@@ -131,7 +135,7 @@ vi.mock('../../store/hooks/useReplay', () => ({
     forceEmitTimeUpdate: vi.fn(),
     setDuration: vi.fn(),
     hasEnded: false,
-    resetReplay: vi.fn(),
+    resetReplay: mockResetReplay,
     replayEvent: { on: vi.fn(), off: vi.fn(), emit: vi.fn() },
   }),
   ReplayContext: { Provider: ({ children }: { children: ReactNode }) => <span>{children}</span> },
@@ -149,6 +153,7 @@ vi.mock('../../store/store', () => ({
   useStoreActions: () => ({
     toggleStudyBrowser: vi.fn(),
     setAlertModal: mockSetAlertModal,
+    resetAnalysisProvenance: mockResetAnalysisProvenance,
   }),
 }));
 
@@ -160,7 +165,7 @@ vi.mock('../../storage/storageEngineHooks', () => ({
 
 vi.mock('../../routes/utils', () => ({
   useCurrentComponent: () => 'intro',
-  useCurrentIdentifier: () => 'intro_0',
+  useCurrentIdentifier: () => mockCurrentIdentifier,
 }));
 
 vi.mock('../../utils/handleComponentInheritance', () => ({
@@ -214,7 +219,11 @@ describe('StepRenderer', () => {
   beforeEach(() => {
     mockDispatch.mockClear();
     mockSetAlertModal.mockClear();
+    mockResetAnalysisProvenance.mockClear();
+    mockResetReplay.mockClear();
     mockSubscribeToParticipantDataWriteErrors.mockReset();
+    mockCurrentIdentifier = 'intro_0';
+    mockIsAnalysis = false;
     mockStorageEngine = {
       subscribeToParticipantDataWriteErrors: mockSubscribeToParticipantDataWriteErrors,
     };
@@ -298,6 +307,18 @@ describe('StepRenderer', () => {
   test('renders outlet (study content area)', async () => {
     const { getAllByTestId } = await act(async () => render(<StepRenderer />));
     expect(getAllByTestId('outlet').length).toBeGreaterThan(0);
+  });
+
+  test('resets replay and analysis provenance before rendering a new analysis identifier', async () => {
+    mockIsAnalysis = true;
+    const { rerender } = await act(async () => render(<StepRenderer />));
+
+    mockCurrentIdentifier = 'task_1';
+    await act(async () => rerender(<StepRenderer />));
+
+    expect(mockResetReplay).toHaveBeenCalledOnce();
+    expect(mockResetAnalysisProvenance).toHaveBeenCalledOnce();
+    expect(mockDispatch).toHaveBeenCalledWith({ type: 'resetAnalysisProvenance' });
   });
 
   test('window event listeners fire debounced callbacks', async () => {

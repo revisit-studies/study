@@ -1,7 +1,7 @@
 import { AppShell, Button, Flex } from '@mantine/core';
 import { Outlet } from 'react-router';
 import {
-  useEffect, useMemo, useRef,
+  useEffect, useLayoutEffect, useMemo, useRef,
   useState,
 } from 'react';
 import type { CSSProperties } from 'react';
@@ -34,7 +34,9 @@ const STUDY_BROWSER_WIDTH = 360;
 export function StepRenderer() {
   const windowEvents = useRef<EventType[]>([]);
   const dispatch = useStoreDispatch();
-  const { toggleStudyBrowser, setAlertModal } = useStoreActions();
+  const {
+    toggleStudyBrowser, setAlertModal, resetAnalysisProvenance,
+  } = useStoreActions();
   const { storageEngine } = useStorageEngine();
 
   const isAnalysis = useIsAnalysis();
@@ -58,12 +60,13 @@ export function StepRenderer() {
   const { resetReplay } = replay;
   const previousReplayIdentifier = useRef(currentIdentifier);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (isAnalysis && previousReplayIdentifier.current !== currentIdentifier) {
       resetReplay();
+      dispatch(resetAnalysisProvenance());
     }
     previousReplayIdentifier.current = currentIdentifier;
-  }, [currentIdentifier, isAnalysis, resetReplay]);
+  }, [currentIdentifier, dispatch, isAnalysis, resetAnalysisProvenance, resetReplay]);
 
   const { isRejected: isScreenRecordingUserRejected } = screenRecording;
 

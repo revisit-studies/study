@@ -159,7 +159,7 @@ export function useReplay() {
       replayRef.current.play();
     }
     emitterRef.current.emit('timeupdate', time);
-    setHasEnded(false);
+    setHasEnded(internalDuration.current > 0 && time >= internalDuration.current);
   }, []);
 
   const handlePause = useCallback(() => {
@@ -248,7 +248,11 @@ export function useReplay() {
     }
 
     setIsMasterPlayer(!isRemoteTriggered);
-    if (hasEnded) {
+    if (
+      playing
+      && internalDuration.current > 0
+      && timerValue.current >= internalDuration.current
+    ) {
       setHasEnded(false);
       setSeekTime(0);
     }
@@ -262,7 +266,7 @@ export function useReplay() {
     } else {
       replayRef.current?.pause();
     }
-  }, [hasEnded, setSeekTime, updateIsPlaying]);
+  }, [setSeekTime, updateIsPlaying]);
 
   useEffect(() => {
     isMountedRef.current = true;
