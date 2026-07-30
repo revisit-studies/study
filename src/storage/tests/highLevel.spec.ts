@@ -594,6 +594,50 @@ describe.each([
     expect(new Set(sessions.map((session) => session.participantIndex)).size).toBe(12);
   });
 
+  test('uses a study-scoped Web Lock across storage engine contexts', async () => {
+    const requestedKeys: string[] = [];
+    const queues = new Map<string, Promise<void>>();
+    vi.stubGlobal('navigator', {
+      locks: {
+        request: async <T>(key: string, operation: () => Promise<T>) => {
+          requestedKeys.push(key);
+          const previous = queues.get(key) ?? Promise.resolve();
+          let release: () => void = () => undefined;
+          const current = new Promise<void>((resolve) => { release = resolve; });
+          queues.set(key, previous.then(() => current));
+          await previous;
+          try {
+            return await operation();
+          } finally {
+            release();
+          }
+        },
+      },
+    });
+    const engines = [new TestEngine(true), new TestEngine(true)];
+    await Promise.all(engines.map(async (engine) => {
+      await engine.connect();
+      await engine.initializeStudyDb(studyId);
+    }));
+
+    try {
+      const sessions = await Promise.all(engines.map((engine, index) => (
+        engine.initializeParticipantSession(
+          {},
+          configSimple,
+          participantMetadata,
+          `web-lock-context-${index}`,
+        )
+      )));
+
+      expect(requestedKeys).toHaveLength(2);
+      expect(new Set(requestedKeys).size).toBe(1);
+      expect(new Set(sessions.map((session) => session.participantIndex)).size).toBe(2);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   test('allocator bootstraps legacy assignments without duplicating a sequence slot', async () => {
     const createAssignment = (
       storageEngine as unknown as {

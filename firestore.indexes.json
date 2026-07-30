@@ -17,6 +17,20 @@
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "sequenceAssignment",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "rejected",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "timestamp",
+          "order": "ASCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": []

@@ -171,7 +171,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     }
 
     // Create a sequence assignment for the participant in the study collection
-    await this.supabase
+    const { error } = await this.supabase
       .from('revisit')
       .upsert({
         studyId: `${this.collectionPrefix}${this.studyId}`,
@@ -180,6 +180,9 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       })
       .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
       .eq('docId', `sequenceAssignment_${participantId}`);
+    if (error) {
+      throw new Error('Failed to create sequence assignment');
+    }
   }
 
   private async getSequenceAllocatorSeed() {
@@ -409,94 +412,10 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     if (rpcAllocation) {
       return rpcAllocation;
     }
-
-    const existingAssignment = await this._getSequenceAssignment(participantId);
-    if (existingAssignment) {
-      if (
-        existingAssignment.sequenceIndex !== undefined
-        && existingAssignment.creationIndex !== undefined
-      ) {
-        return {
-          sequenceIndex: existingAssignment.sequenceIndex,
-          creationIndex: existingAssignment.creationIndex,
-        };
-      }
-
-      const [sequenceIndex, creationIndex] = await Promise.all([
-        this.getLegacySequenceIndex(existingAssignment.timestamp),
-        this.getLegacyCreationIndex(existingAssignment.createdTime),
-      ]);
-      return {
-        sequenceIndex,
-        creationIndex,
-      };
-    }
-
-    const studyId = `${this.collectionPrefix}${this.studyId}`;
-    const [{ data: reusableRow }, initialAllocator] = await Promise.all([
-      this.supabase
-        .from('revisit')
-        .select('docId, data, createdAt')
-        .eq('studyId', studyId)
-        .like('docId', 'sequenceAssignment_%')
-        .eq('data->rejected', true)
-        .eq('data->claimed', false)
-        .order('data->timestamp', { ascending: true })
-        .limit(1)
-        .maybeSingle(),
-      this.getOrCreateSequenceAllocator(),
-    ]);
-
-    let reusableAssignment = reusableRow?.data as SequenceAssignment | undefined;
-    let reusableSequenceIndex = reusableAssignment?.reusableSequenceIndex
-      ?? reusableAssignment?.sequenceIndex;
-    if (reusableAssignment && reusableSequenceIndex === undefined) {
-      const reusableTimestamp = (reusableAssignment as SequenceAssignment & {
-        withServerTimestamp?: boolean;
-      }).withServerTimestamp
-        ? new Date(reusableRow!.createdAt).getTime()
-        : reusableAssignment.timestamp;
-      reusableSequenceIndex = await this.getLegacySequenceIndex(reusableTimestamp);
-    }
-
-    if (reusableRow && reusableAssignment && reusableSequenceIndex !== undefined) {
-      const { data: claimedRows } = await this.supabase
-        .from('revisit')
-        .update({
-          data: {
-            ...reusableAssignment,
-            claimed: true,
-            sequenceIndex: reusableSequenceIndex,
-          },
-        })
-        .eq('studyId', studyId)
-        .eq('docId', reusableRow.docId)
-        .eq('data->rejected', true)
-        .eq('data->claimed', false)
-        .select('data');
-      if (!claimedRows || claimedRows.length === 0) {
-        reusableAssignment = undefined;
-        reusableSequenceIndex = undefined;
-      }
-    }
-
-    const allocation = await this.reserveSequenceAllocator(
-      initialAllocator,
-      reusableSequenceIndex,
+    throw new Error(
+      'Supabase sequence allocation is unavailable. '
+      + 'Apply the allocate_sequence_assignment migration before starting participants.',
     );
-
-    await this._createSequenceAssignment(participantId, {
-      ...sequenceAssignment,
-      ...(reusableRow && reusableAssignment ? {
-        timestamp: (reusableAssignment as SequenceAssignment & { withServerTimestamp?: boolean }).withServerTimestamp
-          ? new Date(reusableRow.createdAt).getTime()
-          : reusableAssignment.timestamp,
-        claimedParticipantId: reusableAssignment.participantId,
-      } : {}),
-      sequenceIndex: allocation.sequenceIndex,
-      creationIndex: allocation.creationIndex,
-    }, !reusableAssignment);
-    return allocation;
   }
 
   protected async _updateSequenceAssignmentFields(participantId: string, updatedFields: Partial<SequenceAssignment>) {
@@ -656,6 +575,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
           ...data.data,
           rejected: true,
           timestamp: new Date().getTime(),
+          withServerTimestamp: false,
           ...(reusableSequenceIndex === undefined ? {} : { reusableSequenceIndex }),
         },
       })

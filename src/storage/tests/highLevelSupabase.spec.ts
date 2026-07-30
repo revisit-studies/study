@@ -27,6 +27,7 @@ const supabaseOperations: Array<{
 }> = [];
 const supabaseRpcOperations: Array<{ name: string; participantId: string }> = [];
 let nextSupabaseRpcError: { message: string; code: string } | null = null;
+let nextSupabaseMutationError: { message: string; code: string } | null = null;
 let supabaseRpcChain = Promise.resolve<unknown>(undefined);
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
@@ -284,6 +285,12 @@ vi.mock('@supabase/supabase-js', () => {
             }));
             resolve({ data: toInsert, error: null });
           } else if (op === 'upsert') {
+            if (nextSupabaseMutationError) {
+              const error = nextSupabaseMutationError;
+              nextSupabaseMutationError = null;
+              resolve({ data: null, error });
+              return;
+            }
             const toUpsert = (Array.isArray(payload)
               ? payload
               : [payload]) as Array<RowData>;
@@ -522,6 +529,7 @@ describe.each([
     );
     nextSupabaseSelectError = null;
     nextSupabaseRpcError = null;
+    nextSupabaseMutationError = null;
     supabaseOperations.length = 0;
     supabaseRpcOperations.length = 0;
     supabaseRpcChain = Promise.resolve();
@@ -780,6 +788,60 @@ describe.each([
     }]);
   });
 
+  test('concurrent starts for the same participant recover one allocation', async () => {
+    const engines = [new TestEngine(true), new TestEngine(true)];
+    await Promise.all(engines.map(async (engine) => {
+      await engine.connect();
+      await engine.initializeStudyDb(studyId);
+    }));
+
+    const sessions = await Promise.all(engines.map((engine) => (
+      engine.initializeParticipantSession({}, configSimple, participantMetadata, 'same-participant')
+    )));
+
+    expect(sessions[0].sequence).toEqual(sessions[1].sequence);
+    expect((await storageEngine.getAllSequenceAssignments(studyId)).filter(
+      (assignment) => assignment.participantId === 'same-participant',
+    )).toHaveLength(1);
+  });
+
+  test('fails closed when the allocation RPC migration is unavailable', async () => {
+    nextSupabaseRpcError = { message: 'function not found', code: 'PGRST202' };
+
+    await expect(storageEngine.initializeParticipantSession(
+      {},
+      configSimple,
+      participantMetadata,
+      'migration-required',
+    )).rejects.toThrow('Apply the allocate_sequence_assignment migration');
+  });
+
+  test('propagates assignment upsert failures', async () => {
+    const createAssignment = (
+      storageEngine as unknown as {
+        _createSequenceAssignment: (
+          participantId: string,
+          assignment: SequenceAssignment,
+          withServerTimestamp: boolean,
+        ) => Promise<void>;
+      }
+    )._createSequenceAssignment.bind(storageEngine);
+    nextSupabaseMutationError = { message: 'permission denied', code: '42501' };
+
+    await expect(createAssignment('write-failure', {
+      participantId: 'write-failure',
+      timestamp: 1,
+      rejected: false,
+      claimed: false,
+      completed: null,
+      createdTime: 1,
+      total: 0,
+      answered: [],
+      isDynamic: false,
+      stage: 'DEFAULT',
+    }, false)).rejects.toThrow('Failed to create sequence assignment');
+  });
+
   test('concurrent starts claim one rejected slot at most once', async () => {
     const createAssignment = (
       storageEngine as unknown as {
@@ -919,6 +981,40 @@ describe.each([
     expect(participant.sequence).toEqual(sequenceArray[0]);
     expect(assignments.find(({ participantId }) => participantId === 'older-rejected')?.claimed).toBe(true);
     expect(assignments.find(({ participantId }) => participantId === 'newer-rejected')?.claimed).toBe(false);
+  });
+
+  test('production rejection timestamps preserve FIFO reuse order', async () => {
+    const startParticipant = async (participantId: string) => {
+      const engine = new TestEngine(true);
+      await engine.connect();
+      await engine.initializeStudyDb(studyId);
+      const session = await engine.initializeParticipantSession(
+        {},
+        configSimple,
+        participantMetadata,
+        participantId,
+      );
+      return { engine, session };
+    };
+    const first = await startParticipant('fifo-first');
+    const second = await startParticipant('fifo-second');
+    vi.useFakeTimers();
+    vi.setSystemTime(100);
+    await second.engine.rejectParticipant(second.session.participantId, 'rejected first');
+    vi.setSystemTime(200);
+    await first.engine.rejectParticipant(first.session.participantId, 'rejected second');
+    vi.useRealTimers();
+
+    const replacementOne = (await startParticipant('fifo-replacement-one')).session;
+    const replacementTwo = (await startParticipant('fifo-replacement-two')).session;
+    const assignments = await storageEngine.getAllSequenceAssignments(studyId);
+
+    expect(assignments.find(
+      ({ participantId }) => participantId === replacementOne.participantId,
+    )?.claimedParticipantId).toBe(second.session.participantId);
+    expect(assignments.find(
+      ({ participantId }) => participantId === replacementTwo.participantId,
+    )?.claimedParticipantId).toBe(first.session.participantId);
   });
 
   test('initializeParticipantSession sets conditions from searchParams condition', async () => {

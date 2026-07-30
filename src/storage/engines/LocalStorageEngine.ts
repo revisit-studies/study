@@ -7,6 +7,10 @@ import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
 const localAllocationLocks = new Map<string, Promise<void>>();
 
 async function withLocalAllocationLock<T>(key: string, operation: () => Promise<T>): Promise<T> {
+  if (typeof navigator !== 'undefined' && navigator.locks) {
+    return navigator.locks.request(`revisit-sequence-allocation:${key}`, operation);
+  }
+
   const previous = localAllocationLocks.get(key) ?? Promise.resolve();
   let release: () => void = () => undefined;
   const current = new Promise<void>((resolve) => { release = resolve; });

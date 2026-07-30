@@ -175,7 +175,7 @@ begin
       'withServerTimestamp', reusable_doc_id is null,
       'claimedParticipantId', case
         when reusable_doc_id is null then null
-        else to_jsonb(replace(reusable_doc_id, 'sequenceAssignment_', ''))
+        else to_jsonb(substr(reusable_doc_id, length('sequenceAssignment_') + 1))
       end,
       'sequenceIndex', sequence_index,
       'creationIndex', creation_index

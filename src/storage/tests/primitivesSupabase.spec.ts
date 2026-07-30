@@ -5,7 +5,7 @@ import { ParticipantMetadata, StudyConfig } from '../../parser/types';
 import testConfigSimple from './testConfigSimple.json';
 import { generateSequenceArray } from '../../utils/handleRandomSequences';
 import { SupabaseStorageEngine } from '../engines/SupabaseStorageEngine';
-import { StorageEngine, cleanupModes } from '../engines/types';
+import { SequenceAssignment, StorageEngine, cleanupModes } from '../engines/types';
 import { hash } from '../engines/utils/storageEngineHelpers';
 
 type RowData = Record<string, string | number | boolean | null | object>;
@@ -152,6 +152,48 @@ vi.mock('@supabase/supabase-js', () => {
     AuthError: class AuthError extends Error { },
     createClient: () => ({
       from: (_table: string) => makeQueryBuilder(() => revisitRows),
+      rpc: async (_name: string, args: {
+        p_study_id: string;
+        p_participant_id: string;
+        p_assignment: SequenceAssignment;
+      }) => {
+        const docId = `sequenceAssignment_${args.p_participant_id}`;
+        const existing = revisitRows.find(
+          (row) => row.studyId === args.p_study_id && row.docId === docId,
+        );
+        if (existing) {
+          const assignment = existing.data as SequenceAssignment;
+          return {
+            data: {
+              sequenceIndex: assignment.sequenceIndex,
+              creationIndex: assignment.creationIndex,
+            },
+            error: null,
+          };
+        }
+        const assignmentCount = revisitRows.filter(
+          (row) => row.studyId === args.p_study_id
+            && String(row.docId).startsWith('sequenceAssignment_'),
+        ).length;
+        revisitRows.push({
+          studyId: args.p_study_id,
+          docId,
+          data: {
+            ...args.p_assignment,
+            withServerTimestamp: true,
+            sequenceIndex: assignmentCount,
+            creationIndex: assignmentCount,
+          },
+          createdAt: new Date().toISOString(),
+        });
+        return {
+          data: {
+            sequenceIndex: assignmentCount,
+            creationIndex: assignmentCount,
+          },
+          error: null,
+        };
+      },
       schema: (schemaName: string) => ({
         from: (_table: string) => makeQueryBuilder(() => {
           if (schemaName === 'storage') {
