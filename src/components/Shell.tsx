@@ -53,7 +53,10 @@ import {
 import { StartupErrorScreen } from './StartupErrorScreen';
 import { materializeParticipantConfig } from '../parser/libraryParser';
 import { useStudyColorMode } from './AppThemeProvider';
-import { StartupInteractionProvider } from './StartupContext';
+import {
+  StartupInteractionProvider,
+  useStartupInteractionBlocked,
+} from './StartupContext';
 
 type StartupStorageStatus = Pick<StorageEngine, 'getEngine' | 'isConnected'>;
 type StartupPhase = 'config-loading' | 'participant-loading' | 'ready' | 'error';
@@ -107,6 +110,11 @@ export function StudyLoadingOverlay({
       {visible && (
         <div
           data-testid="study-loading-barrier"
+          role="dialog"
+          aria-modal="true"
+          aria-busy="true"
+          aria-live="polite"
+          aria-label={STUDY_LOADING_MESSAGE}
           style={{
             position: 'fixed',
             inset: 0,
@@ -139,6 +147,14 @@ export function StudyLoadingOverlay({
       )}
     </>
   );
+}
+
+export function StudyIndexRoute() {
+  const startupInteractionBlocked = useStartupInteractionBlocked();
+
+  return startupInteractionBlocked
+    ? <ComponentController />
+    : <NavigateWithParams to={encryptIndex(0)} replace />;
 }
 
 export function getScreenOrientationType(screen: Screen) {
@@ -376,7 +392,7 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
           children: [
             {
               path: '/',
-              element: <NavigateWithParams to={encryptIndex(0)} replace />,
+              element: <StudyIndexRoute />,
             },
             {
               path: '/:index/:funcIndex?',
@@ -571,9 +587,15 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
           return;
         }
 
-        setStore(newStore);
+        const finishStartup = (participantCompleted: boolean) => {
+          newStore.store.dispatch(newStore.actions.setParticipantCompleted(participantCompleted));
+          setStore(newStore);
+          setIsCompletionCheckResolved(true);
+          setStartupPhase('ready');
 
-        if (resolvedModes.dataCollectionEnabled && !searchParams.has('participantId')) {
+          if (!resolvedModes.dataCollectionEnabled || searchParams.has('participantId')) {
+            return;
+          }
           fetchParticipantIp().then(async (ip) => {
             if (!isCurrentStartup() || !ip.ip || participantSession.metadata.ip === ip.ip) {
               return;
@@ -593,23 +615,20 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
           }).catch((error) => {
             console.error('Error fetching participant IP:', error);
           });
-        }
+        };
 
         if (!resolvedModes.dataCollectionEnabled) {
-          setIsCompletionCheckResolved(true);
-          setStartupPhase('ready');
+          finishStartup(false);
         } else {
           storageEngine.getParticipantCompletionStatus(participantSession.participantId).then((participantCompleted) => {
             if (isCurrentStartup()) {
-              newStore.store.dispatch(newStore.actions.setParticipantCompleted(participantCompleted || !!participantSession.finalized));
-              setIsCompletionCheckResolved(true);
-              setStartupPhase('ready');
+              finishStartup(participantCompleted || !!participantSession.finalized);
             }
           }).catch((error) => {
             console.error('Error fetching participant completion status:', error);
             if (isCurrentStartup()) {
-              setCompletionCheckError('We could not verify whether this study session was already completed. Please reload this page and try again.');
-              setIsCompletionCheckResolved(true);
+              setStartupError({ error, retryParticipantStartup: true });
+              setStartupPhase('error');
             }
           });
         }
@@ -644,6 +663,14 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
         const initialAlertModal = !isStorageFailure
           ? getInitialStartupAlert(error, developmentModeEnabledForAlert, resumeParticipantId)
           : undefined;
+
+        if (!isStorageFailure) {
+          if (isCurrentStartup()) {
+            setStartupError({ error, retryParticipantStartup: true });
+            setStartupPhase('error');
+          }
+          return;
+        }
 
         try {
           // Preserve the existing disconnected-storage and participant alert recovery paths.

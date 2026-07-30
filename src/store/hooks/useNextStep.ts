@@ -40,6 +40,7 @@ import {
   getConditionTargetIndex,
   getStoredAnswersForSkipEvaluation,
 } from '../../utils/skipConditions';
+import { useStartupInteractionBlocked } from '../../components/StartupContext';
 
 export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
   const context = useContext(StudyStoreContext);
@@ -69,6 +70,7 @@ export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
   const { storageEngine } = useStorageEngine();
 
   const studyId = useStudyId();
+  const startupInteractionBlocked = useStartupInteractionBlocked();
 
   const { dataCollectionEnabled } = modes;
 
@@ -102,6 +104,7 @@ export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
     let navigated = false;
     let bypassResponseValidation = false;
     const route = window.location.href;
+    if (startupInteractionBlocked) return;
     try {
       if (isNextDisabled) {
         return;
@@ -421,10 +424,10 @@ export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
     } finally {
       if (locked && !navigated) storeDispatch(setGlobalStoreSubmitting(false));
     }
-  }, [assetIdentifier, context, entryStore, setGlobalStoreSubmitting, setGlobalStoreError, acceptGlobalStoreSubmission, setResponseSubmitAttempt, setStimulusSubmitAttempt, resolvedComponentConfig, isNextDisabled, currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, clickedPrevious, sequence, answers, startTime, funcIndex, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, setRankingAnswers, setAlertModal, studyConfig, participantSequence, navigate, studyId, responseSubmitAttempted, checkAnswerState, responseConfig, correctAnswerConfig]);
+  }, [startupInteractionBlocked, assetIdentifier, context, entryStore, setGlobalStoreSubmitting, setGlobalStoreError, acceptGlobalStoreSubmission, setResponseSubmitAttempt, setStimulusSubmitAttempt, resolvedComponentConfig, isNextDisabled, currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, clickedPrevious, sequence, answers, startTime, funcIndex, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, setRankingAnswers, setAlertModal, studyConfig, participantSequence, navigate, studyId, responseSubmitAttempted, checkAnswerState, responseConfig, correctAnswerConfig]);
 
   return {
-    isNextDisabled,
+    isNextDisabled: isNextDisabled || startupInteractionBlocked,
     goToNextStep,
   };
 }
