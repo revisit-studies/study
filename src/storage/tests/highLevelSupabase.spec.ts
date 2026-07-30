@@ -25,9 +25,133 @@ const supabaseOperations: Array<{
   headOnly: boolean;
   limit?: number;
 }> = [];
+const supabaseRpcOperations: Array<{ name: string; participantId: string }> = [];
+let nextSupabaseRpcError: { message: string; code: string } | null = null;
+let supabaseRpcChain = Promise.resolve<unknown>(undefined);
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 vi.mock('@supabase/supabase-js', () => {
+  async function allocateSequenceAssignmentRpc(args: {
+    p_study_id: string;
+    p_participant_id: string;
+    p_assignment: SequenceAssignment;
+  }) {
+    const assignmentDocId = `sequenceAssignment_${args.p_participant_id}`;
+    const existingRow = revisitRows.find(
+      (row) => row.studyId === args.p_study_id && row.docId === assignmentDocId,
+    );
+    if (existingRow) {
+      const existing = existingRow.data as SequenceAssignment;
+      if (existing.sequenceIndex !== undefined && existing.creationIndex !== undefined) {
+        return {
+          sequenceIndex: existing.sequenceIndex,
+          creationIndex: existing.creationIndex,
+        };
+      }
+      const assignments = revisitRows.filter(
+        (row) => row.studyId === args.p_study_id
+          && String(row.docId).startsWith('sequenceAssignment_'),
+      );
+      return {
+        sequenceIndex: assignments.filter((row) => {
+          const assignment = row.data as SequenceAssignment & { withServerTimestamp?: boolean };
+          const timestamp = assignment.withServerTimestamp
+            ? new Date(String(row.createdAt)).getTime()
+            : assignment.timestamp;
+          return !assignment.rejected && timestamp < existing.timestamp;
+        }).length,
+        creationIndex: assignments.filter(
+          (row) => new Date(String(row.createdAt)).getTime()
+            < new Date(String(existingRow.createdAt)).getTime(),
+        ).length,
+      };
+    }
+
+    const assignmentRows = revisitRows.filter(
+      (row) => row.studyId === args.p_study_id
+        && String(row.docId).startsWith('sequenceAssignment_'),
+    );
+    let allocatorRow = revisitRows.find(
+      (row) => row.studyId === args.p_study_id && row.docId === 'sequenceAllocator',
+    );
+    const allocator = allocatorRow
+      ? allocatorRow.data as { nextSequenceIndex: number; nextCreationIndex: number; version: number }
+      : {
+        nextSequenceIndex: assignmentRows.filter(
+          (row) => !(row.data as SequenceAssignment).claimed,
+        ).length,
+        nextCreationIndex: assignmentRows.length,
+        version: 0,
+      };
+    const reusableRow = assignmentRows
+      .filter((row) => {
+        const assignment = row.data as SequenceAssignment;
+        return assignment.rejected && !assignment.claimed;
+      })
+      .sort((a, b) => {
+        const assignmentA = a.data as SequenceAssignment & { withServerTimestamp?: boolean };
+        const assignmentB = b.data as SequenceAssignment & { withServerTimestamp?: boolean };
+        const timestampA = assignmentA.withServerTimestamp
+          ? new Date(String(a.createdAt)).getTime()
+          : assignmentA.timestamp;
+        const timestampB = assignmentB.withServerTimestamp
+          ? new Date(String(b.createdAt)).getTime()
+          : assignmentB.timestamp;
+        return timestampA - timestampB;
+      })[0];
+    const reusable = reusableRow?.data as
+      (SequenceAssignment & { withServerTimestamp?: boolean }) | undefined;
+    const reusableTimestamp = reusable?.withServerTimestamp
+      ? new Date(String(reusableRow!.createdAt)).getTime()
+      : reusable?.timestamp;
+    const sequenceIndex = reusable
+      ? reusable.reusableSequenceIndex
+        ?? reusable.sequenceIndex
+        ?? assignmentRows.filter((row) => {
+          const assignment = row.data as SequenceAssignment & { withServerTimestamp?: boolean };
+          const timestamp = assignment.withServerTimestamp
+            ? new Date(String(row.createdAt)).getTime()
+            : assignment.timestamp;
+          return !assignment.rejected && timestamp < reusableTimestamp!;
+        }).length
+      : allocator.nextSequenceIndex;
+    const creationIndex = allocator.nextCreationIndex;
+
+    if (reusableRow && reusable) {
+      reusableRow.data = { ...reusable, claimed: true, sequenceIndex };
+    }
+    revisitRows.push({
+      studyId: args.p_study_id,
+      docId: assignmentDocId,
+      data: {
+        ...args.p_assignment,
+        ...(reusable ? {
+          timestamp: reusableTimestamp,
+          claimedParticipantId: reusable.participantId,
+          withServerTimestamp: false,
+        } : { withServerTimestamp: true }),
+        sequenceIndex,
+        creationIndex,
+      },
+      createdAt: new Date().toISOString(),
+    });
+    allocatorRow ??= {
+      studyId: args.p_study_id,
+      docId: 'sequenceAllocator',
+      data: {},
+      createdAt: new Date().toISOString(),
+    };
+    allocatorRow.data = {
+      nextSequenceIndex: reusable ? allocator.nextSequenceIndex : allocator.nextSequenceIndex + 1,
+      nextCreationIndex: allocator.nextCreationIndex + 1,
+      version: allocator.version + 1,
+    };
+    if (!revisitRows.includes(allocatorRow)) {
+      revisitRows.push(allocatorRow);
+    }
+    return { sequenceIndex, creationIndex };
+  }
+
   function matchLike(value: string, pattern: string): boolean {
     const regexStr = `^${pattern
       .replace(/[.+^${}()|[\]\\]/g, '\\$&')
@@ -204,6 +328,21 @@ vi.mock('@supabase/supabase-js', () => {
     AuthError: class AuthError extends Error { },
     createClient: () => ({
       from: (_table: string) => makeQueryBuilder(() => revisitRows),
+      rpc: (name: string, args: {
+        p_study_id: string;
+        p_participant_id: string;
+        p_assignment: SequenceAssignment;
+      }) => {
+        supabaseRpcOperations.push({ name, participantId: args.p_participant_id });
+        if (nextSupabaseRpcError) {
+          const error = nextSupabaseRpcError;
+          nextSupabaseRpcError = null;
+          return Promise.resolve({ data: null, error });
+        }
+        const result = supabaseRpcChain.then(() => allocateSequenceAssignmentRpc(args));
+        supabaseRpcChain = result.then(() => undefined, () => undefined);
+        return result.then((data) => ({ data, error: null }));
+      },
       schema: (schemaName: string) => ({
         from: (_table: string) => makeQueryBuilder(() => {
           if (schemaName === 'storage') {
@@ -382,7 +521,10 @@ describe.each([
       sequenceArray,
     );
     nextSupabaseSelectError = null;
+    nextSupabaseRpcError = null;
     supabaseOperations.length = 0;
+    supabaseRpcOperations.length = 0;
+    supabaseRpcChain = Promise.resolve();
   });
 
   afterEach(async () => {
@@ -457,10 +599,11 @@ describe.each([
     const assignmentQueries = supabaseOperations.filter((operation) => operation.filters.some(
       (filter) => filter.col === 'docId' && filter.type === 'like' && filter.val === 'sequenceAssignment_%',
     ));
-    expect(assignmentQueries.filter((operation) => operation.headOnly)).toHaveLength(2);
-    expect(assignmentQueries.filter((operation) => !operation.headOnly)).toEqual([
-      expect.objectContaining({ limit: 1 }),
-    ]);
+    expect(assignmentQueries).toHaveLength(0);
+    expect(supabaseRpcOperations).toEqual([{
+      name: 'allocate_sequence_assignment',
+      participantId: participant.participantId,
+    }]);
 
     supabaseOperations.length = 0;
     await storageEngine.getParticipantCompletionStatus(participant.participantId);
@@ -513,6 +656,7 @@ describe.each([
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'allocator-seed');
     await storageEngine.clearCurrentParticipantId();
     supabaseOperations.length = 0;
+    supabaseRpcOperations.length = 0;
 
     const scanSpy = vi.spyOn(storageEngine, 'getAllSequenceAssignments');
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'post-seed');
@@ -521,10 +665,11 @@ describe.each([
       (filter) => filter.col === 'docId' && filter.type === 'like' && filter.val === 'sequenceAssignment_%',
     ));
     expect(scanSpy).not.toHaveBeenCalled();
-    expect(assignmentQueries.filter((operation) => operation.headOnly)).toHaveLength(0);
-    expect(assignmentQueries.filter((operation) => !operation.headOnly)).toEqual([
-      expect.objectContaining({ limit: 1 }),
-    ]);
+    expect(assignmentQueries).toHaveLength(0);
+    expect(supabaseRpcOperations).toEqual([{
+      name: 'allocate_sequence_assignment',
+      participantId: 'post-seed',
+    }]);
   });
 
   test('returning legacy assignment derives its indexes without an assignment scan', async () => {
@@ -569,7 +714,119 @@ describe.each([
     expect(participant.participantIndex).toBe(1);
     expect(scanSpy).not.toHaveBeenCalled();
     expect(unboundedReads).toHaveLength(0);
-    expect(supabaseOperations.filter((operation) => operation.headOnly)).toHaveLength(3);
+    expect(supabaseOperations.filter((operation) => operation.headOnly)).toHaveLength(0);
+    expect(supabaseRpcOperations).toEqual([{
+      name: 'allocate_sequence_assignment',
+      participantId: 'legacy-returning',
+    }]);
+  });
+
+  test('allocator uses one RPC for existing, rejected, and conflict paths', async () => {
+    const allocate = (
+      storageEngine as unknown as {
+        _allocateSequenceAssignment: (
+          participantId: string,
+          assignment: SequenceAssignment,
+        ) => Promise<{ sequenceIndex: number; creationIndex: number }>;
+      }
+    )._allocateSequenceAssignment.bind(storageEngine);
+    const assignment: SequenceAssignment = {
+      participantId: 'operation-existing',
+      timestamp: Date.now(),
+      rejected: false,
+      claimed: false,
+      completed: null,
+      createdTime: Date.now(),
+      total: 0,
+      answered: [],
+      isDynamic: false,
+      stage: 'DEFAULT',
+    };
+
+    const initialAllocation = await allocate('operation-existing', assignment);
+    supabaseRpcOperations.length = 0;
+    const recoveredAllocation = await allocate('operation-existing', assignment);
+    // No participant-data record exists between these calls. A startup retry must recover
+    // the committed assignment rather than consume another allocator position.
+    expect(recoveredAllocation).toEqual(initialAllocation);
+    expect((await storageEngine.getAllSequenceAssignments(studyId)).filter(
+      (storedAssignment) => storedAssignment.participantId === 'operation-existing',
+    )).toHaveLength(1);
+    expect(supabaseRpcOperations).toEqual([{
+      name: 'allocate_sequence_assignment',
+      participantId: 'operation-existing',
+    }]);
+
+    await storageEngine.rejectParticipant('operation-existing', 'operation-count rejection');
+    supabaseRpcOperations.length = 0;
+    await allocate('operation-rejected', {
+      ...assignment,
+      participantId: 'operation-rejected',
+    });
+    expect(supabaseRpcOperations).toEqual([{
+      name: 'allocate_sequence_assignment',
+      participantId: 'operation-rejected',
+    }]);
+
+    supabaseRpcOperations.length = 0;
+    nextSupabaseRpcError = { message: 'lock timeout', code: '55P03' };
+    await expect(allocate('operation-conflict', {
+      ...assignment,
+      participantId: 'operation-conflict',
+    })).rejects.toThrow('lock timeout');
+    expect(supabaseRpcOperations).toEqual([{
+      name: 'allocate_sequence_assignment',
+      participantId: 'operation-conflict',
+    }]);
+  });
+
+  test('concurrent starts claim one rejected slot at most once', async () => {
+    const createAssignment = (
+      storageEngine as unknown as {
+        _createSequenceAssignment: (
+          participantId: string,
+          assignment: SequenceAssignment,
+          withServerTimestamp: boolean,
+        ) => Promise<void>;
+      }
+    )._createSequenceAssignment.bind(storageEngine);
+    await Promise.all([0, 1].map((index) => createAssignment(`rejected-source-${index}`, {
+      participantId: `rejected-source-${index}`,
+      timestamp: index,
+      rejected: true,
+      claimed: false,
+      completed: null,
+      createdTime: index,
+      total: 0,
+      answered: [],
+      isDynamic: false,
+      stage: 'DEFAULT',
+      sequenceIndex: index,
+      creationIndex: index,
+    }, false)));
+
+    const engines = [new TestEngine(true), new TestEngine(true)];
+    await Promise.all(engines.map(async (engine) => {
+      await engine.connect();
+      await engine.initializeStudyDb(studyId);
+    }));
+    await Promise.all(engines.map((engine, index) => engine.initializeParticipantSession(
+      {},
+      configSimple,
+      participantMetadata,
+      `rejected-contender-${index}`,
+    )));
+
+    const assignments = await storageEngine.getAllSequenceAssignments(studyId);
+    const contenders = assignments.filter(
+      (assignment) => assignment.participantId.startsWith('rejected-contender-'),
+    );
+    expect(contenders.map((assignment) => assignment.claimedParticipantId).sort()).toEqual([
+      'rejected-source-0',
+      'rejected-source-1',
+    ]);
+    expect(new Set(contenders.map((assignment) => assignment.sequenceIndex)).size).toBe(2);
+    expect(contenders.map((assignment) => assignment.sequenceIndex).sort()).toEqual([0, 1]);
   });
 
   test('legacy rejected-slot reuse uses bounded counts instead of an assignment scan', async () => {

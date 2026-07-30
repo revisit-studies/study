@@ -55,6 +55,31 @@ import {
 import { EditedText, TaglessEditedText } from '../../analysis/individualStudy/thinkAloud/types';
 import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
 
+type FirebaseSequenceAllocator = {
+  nextSequenceIndex: number;
+  nextCreationIndex: number;
+};
+
+class FirebaseAllocatorSeedRequired extends Error {}
+
+class FirebaseLegacyAssignmentIndexRequired extends Error {
+  constructor(public assignment: SequenceAssignment) {
+    super('Legacy sequence assignment requires bounded index lookup');
+  }
+}
+
+class FirebaseLegacyReusableIndexRequired extends Error {
+  constructor(public timestamp: number) {
+    super('Legacy reusable sequence assignment requires bounded index lookup');
+  }
+}
+
+class FirebaseReusableCandidateConflict extends Error {
+  constructor() {
+    super('Reusable sequence assignment changed during allocation');
+  }
+}
+
 export class FirebaseStorageEngine extends CloudStorageEngine {
   private RECAPTCHAV3TOKEN = import.meta.env.VITE_RECAPTCHAV3TOKEN;
 
@@ -263,88 +288,26 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     );
     const participantSequenceAssignmentDoc = doc(sequenceAssignmentCollection, participantId);
     const allocatorDoc = doc(this.studyCollection, 'sequenceAssignmentAllocator');
-
-    const [existingAssignmentSnapshot, existingAllocatorSnapshot] = await Promise.all([
-      getDoc(participantSequenceAssignmentDoc),
-      getDoc(allocatorDoc),
-    ]);
-    const existingAssignment = existingAssignmentSnapshot.exists()
-      ? existingAssignmentSnapshot.data() as SequenceAssignment
-      : null;
-    if (existingAssignment) {
-      if (
-        existingAssignment.sequenceIndex !== undefined
-        && existingAssignment.creationIndex !== undefined
-      ) {
-        return {
-          sequenceIndex: existingAssignment.sequenceIndex,
-          creationIndex: existingAssignment.creationIndex,
-        };
-      }
-
-      const [sequenceCount, creationCount] = await Promise.all([
-        getCountFromServer(query(
-          sequenceAssignmentCollection,
-          where('rejected', '==', false),
-          where('timestamp', '<', existingAssignment.timestamp),
-        )),
-        getCountFromServer(query(
-          sequenceAssignmentCollection,
-          where('createdTime', '<', existingAssignment.createdTime),
-        )),
-      ]);
-      return {
-        sequenceIndex: sequenceCount.data().count,
-        creationIndex: creationCount.data().count,
-      };
-    }
-
-    const allocatorSeedPromise = existingAllocatorSnapshot.exists()
-      ? Promise.resolve(existingAllocatorSnapshot.data() as {
-        nextSequenceIndex: number;
-        nextCreationIndex: number;
-      })
-      : Promise.all([
-        getCountFromServer(sequenceAssignmentCollection),
-        getCountFromServer(query(
-          sequenceAssignmentCollection,
-          where('claimed', '==', true),
-        )),
-      ]).then(([totalAssignments, claimedAssignments]) => ({
-        nextSequenceIndex: totalAssignments.data().count - claimedAssignments.data().count,
-        nextCreationIndex: totalAssignments.data().count,
-      }));
-    const [allocatorSeed, reusableSnapshot] = await Promise.all([
-      allocatorSeedPromise,
-      getDocs(query(
+    const getReusableDocument = async () => {
+      const reusableSnapshot = await getDocs(query(
         sequenceAssignmentCollection,
         where('rejected', '==', true),
         where('claimed', '==', false),
         orderBy('timestamp', 'asc'),
         limit(1),
-      )),
-    ]);
-    const reusableDocument = reusableSnapshot.docs[0];
-    const reusableData = reusableDocument?.data() as SequenceAssignment | undefined;
-    let legacyReusableIndex: number | undefined;
-    if (
-      reusableData
-      && reusableData.reusableSequenceIndex === undefined
-      && reusableData.sequenceIndex === undefined
-    ) {
-      const sequenceCount = await getCountFromServer(query(
-        sequenceAssignmentCollection,
-        where('rejected', '==', false),
-        where('timestamp', '<', reusableData.timestamp),
       ));
-      legacyReusableIndex = sequenceCount.data().count;
-    }
+      return reusableSnapshot.docs[0];
+    };
 
-    return runTransaction(this.firestore, async (transaction) => {
+    const reserve = (
+      reusableDocument: Awaited<ReturnType<typeof getReusableDocument>>,
+      allocatorSeed?: FirebaseSequenceAllocator,
+      legacyReusableIndex?: number,
+    ) => runTransaction(this.firestore, async (transaction) => {
       const [currentAssignmentSnapshot, allocatorSnapshot, reusableAssignmentSnapshot] = await Promise.all([
         transaction.get(participantSequenceAssignmentDoc),
         transaction.get(allocatorDoc),
-        reusableDocument ? transaction.get(doc(sequenceAssignmentCollection, reusableDocument.id)) : null,
+        reusableDocument ? transaction.get(reusableDocument.ref) : null,
       ]);
 
       if (currentAssignmentSnapshot.exists()) {
@@ -353,7 +316,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
           currentAssignment.sequenceIndex === undefined
           || currentAssignment.creationIndex === undefined
         ) {
-          throw new Error('Existing sequence assignment is missing allocator metadata');
+          throw new FirebaseLegacyAssignmentIndexRequired(currentAssignment);
         }
         return {
           sequenceIndex: currentAssignment.sequenceIndex,
@@ -362,24 +325,33 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       }
 
       const allocator = allocatorSnapshot.exists()
-        ? allocatorSnapshot.data() as typeof allocatorSeed
+        ? allocatorSnapshot.data() as FirebaseSequenceAllocator
         : allocatorSeed;
+      if (!allocator) {
+        throw new FirebaseAllocatorSeedRequired();
+      }
       const reusableAssignment = reusableAssignmentSnapshot?.exists()
         ? reusableAssignmentSnapshot.data() as SequenceAssignment
         : undefined;
-      const canReuse = reusableAssignment?.rejected && !reusableAssignment.claimed;
+      const canReuse = !!reusableAssignment?.rejected && !reusableAssignment.claimed;
+      if (reusableDocument && !canReuse) {
+        throw new FirebaseReusableCandidateConflict();
+      }
       const sequenceIndex = canReuse
         ? reusableAssignment.reusableSequenceIndex
           ?? reusableAssignment.sequenceIndex
           ?? legacyReusableIndex
         : allocator.nextSequenceIndex;
+      if (canReuse && sequenceIndex === undefined) {
+        throw new FirebaseLegacyReusableIndexRequired(reusableAssignment.timestamp);
+      }
       if (sequenceIndex === undefined || sequenceIndex < 0) {
         throw new Error('Unable to determine sequence assignment index');
       }
       const creationIndex = allocator.nextCreationIndex;
 
       if (canReuse && reusableDocument) {
-        transaction.update(doc(sequenceAssignmentCollection, reusableDocument.id), {
+        transaction.update(reusableDocument.ref, {
           claimed: true,
           sequenceIndex,
         });
@@ -402,7 +374,74 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       });
 
       return { sequenceIndex, creationIndex };
-    });
+    }, { maxAttempts: 5 });
+
+    const allocateWithLegacyFallback = async (
+      reusableDocument: Awaited<ReturnType<typeof getReusableDocument>>,
+      allocatorSeed?: FirebaseSequenceAllocator,
+      legacyReusableIndex?: number,
+      candidateConflicts: number = 0,
+    ): Promise<SequenceAssignmentAllocation> => {
+      try {
+        return await reserve(reusableDocument, allocatorSeed, legacyReusableIndex);
+      } catch (error) {
+        if (error instanceof FirebaseLegacyAssignmentIndexRequired) {
+          const [sequenceCount, creationCount] = await Promise.all([
+            getCountFromServer(query(
+              sequenceAssignmentCollection,
+              where('rejected', '==', false),
+              where('timestamp', '<', error.assignment.timestamp),
+            )),
+            getCountFromServer(query(
+              sequenceAssignmentCollection,
+              where('createdTime', '<', error.assignment.createdTime),
+            )),
+          ]);
+          return {
+            sequenceIndex: sequenceCount.data().count,
+            creationIndex: creationCount.data().count,
+          };
+        }
+        if (error instanceof FirebaseAllocatorSeedRequired && allocatorSeed === undefined) {
+          const [totalAssignments, claimedAssignments] = await Promise.all([
+            getCountFromServer(sequenceAssignmentCollection),
+            getCountFromServer(query(
+              sequenceAssignmentCollection,
+              where('claimed', '==', true),
+            )),
+          ]);
+          return allocateWithLegacyFallback(reusableDocument, {
+            nextSequenceIndex: totalAssignments.data().count - claimedAssignments.data().count,
+            nextCreationIndex: totalAssignments.data().count,
+          }, legacyReusableIndex, candidateConflicts);
+        }
+        if (error instanceof FirebaseLegacyReusableIndexRequired && legacyReusableIndex === undefined) {
+          const sequenceCount = await getCountFromServer(query(
+            sequenceAssignmentCollection,
+            where('rejected', '==', false),
+            where('timestamp', '<', error.timestamp),
+          ));
+          return allocateWithLegacyFallback(
+            reusableDocument,
+            allocatorSeed,
+            sequenceCount.data().count,
+            candidateConflicts,
+          );
+        }
+        if (error instanceof FirebaseReusableCandidateConflict && candidateConflicts < 5) {
+          const nextReusableDocument = await getReusableDocument();
+          return allocateWithLegacyFallback(
+            nextReusableDocument,
+            allocatorSeed,
+            undefined,
+            candidateConflicts + 1,
+          );
+        }
+        throw error;
+      }
+    };
+
+    return allocateWithLegacyFallback(await getReusableDocument());
   }
 
   protected async _updateSequenceAssignmentFields(participantId: string, updatedFields: Partial<SequenceAssignment>) {

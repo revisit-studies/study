@@ -170,13 +170,17 @@ vi.mock('firebase/firestore', () => {
 
   function getDocsInCollection(collPath: string) {
     const prefix = `${collPath}/`;
-    const docs: Array<{ id: string; data: () => DocData }> = [];
+    const docs: Array<{ id: string; data: () => DocData; ref: { _path: string; id: string } }> = [];
     for (const [path, data] of Object.entries(firestoreData)) {
       if (path.startsWith(prefix)) {
         const remainder = path.slice(prefix.length);
         if (!remainder.includes('/')) {
           const copy = { ...data };
-          docs.push({ id: remainder, data: () => copy });
+          docs.push({
+            id: remainder,
+            data: () => copy,
+            ref: { _path: path, id: remainder },
+          });
         }
       }
     }
@@ -515,7 +519,7 @@ describe.each([
     expect(scanSpy).not.toHaveBeenCalled();
     expect(countMock).toHaveBeenCalledTimes(2);
     expect(getDocsMock).toHaveBeenCalledTimes(1);
-    expect(transactionMock).toHaveBeenCalledTimes(1);
+    expect(transactionMock).toHaveBeenCalledTimes(2);
 
     const getDocMock = vi.mocked(getDoc);
     getDocMock.mockClear();
@@ -591,8 +595,146 @@ describe.each([
     expect(participant.participantIndex).toBe(1);
     expect(scanSpy).not.toHaveBeenCalled();
     expect(countMock).toHaveBeenCalledTimes(2);
-    expect(getDocsMock).not.toHaveBeenCalled();
-    expect(transactionMock).not.toHaveBeenCalled();
+    expect(getDocsMock).toHaveBeenCalledTimes(1);
+    expect(transactionMock).toHaveBeenCalledTimes(1);
+  });
+
+  test('allocator bounds provider operations for existing, rejected, and conflict paths', async () => {
+    await storageEngine.initializeParticipantSession(
+      {},
+      configSimple,
+      participantMetadata,
+      'operation-existing',
+    );
+
+    const allocate = (
+      storageEngine as unknown as {
+        _allocateSequenceAssignment: (
+          participantId: string,
+          assignment: SequenceAssignment,
+        ) => Promise<{ sequenceIndex: number; creationIndex: number }>;
+      }
+    )._allocateSequenceAssignment.bind(storageEngine);
+    const assignment: SequenceAssignment = {
+      participantId: 'operation-existing',
+      timestamp: Date.now(),
+      rejected: false,
+      claimed: false,
+      completed: null,
+      createdTime: Date.now(),
+      total: 0,
+      answered: [],
+      isDynamic: false,
+      stage: 'DEFAULT',
+    };
+    const getDocsMock = vi.mocked(getDocs);
+    const transactionMock = vi.mocked(runTransaction);
+    getDocsMock.mockClear();
+    transactionMock.mockClear();
+
+    await allocate('operation-existing', assignment);
+    expect(getDocsMock).toHaveBeenCalledTimes(1);
+    expect(transactionMock).toHaveBeenCalledTimes(1);
+
+    await storageEngine.rejectParticipant('operation-existing', 'operation-count rejection');
+    getDocsMock.mockClear();
+    transactionMock.mockClear();
+    await allocate('operation-rejected', {
+      ...assignment,
+      participantId: 'operation-rejected',
+    });
+    expect(getDocsMock).toHaveBeenCalledTimes(1);
+    expect(transactionMock).toHaveBeenCalledTimes(1);
+
+    getDocsMock.mockClear();
+    transactionMock.mockClear();
+    transactionMock.mockRejectedValueOnce(new Error('transaction contention exhausted'));
+    await expect(allocate('operation-conflict', {
+      ...assignment,
+      participantId: 'operation-conflict',
+    })).rejects.toThrow('transaction contention exhausted');
+    expect(getDocsMock).toHaveBeenCalledTimes(1);
+    expect(transactionMock).toHaveBeenCalledTimes(1);
+  });
+
+  test('concurrent starts claim one rejected slot at most once', async () => {
+    const createAssignment = (
+      storageEngine as unknown as {
+        _createSequenceAssignment: (
+          participantId: string,
+          assignment: SequenceAssignment,
+          withServerTimestamp: boolean,
+        ) => Promise<void>;
+      }
+    )._createSequenceAssignment.bind(storageEngine);
+    await Promise.all([0, 1].map((index) => createAssignment(`rejected-source-${index}`, {
+      participantId: `rejected-source-${index}`,
+      timestamp: index,
+      rejected: true,
+      claimed: false,
+      completed: null,
+      createdTime: index,
+      total: 0,
+      answered: [],
+      isDynamic: false,
+      stage: 'DEFAULT',
+      sequenceIndex: index,
+      creationIndex: index,
+    }, false)));
+
+    const engines = [new TestEngine(true), new TestEngine(true)];
+    await Promise.all(engines.map(async (engine) => {
+      await engine.connect();
+      await engine.initializeStudyDb(studyId);
+    }));
+    await Promise.all(engines.map((engine, index) => engine.initializeParticipantSession(
+      {},
+      configSimple,
+      participantMetadata,
+      `rejected-contender-${index}`,
+    )));
+
+    const assignments = await storageEngine.getAllSequenceAssignments(studyId);
+    const contenders = assignments.filter(
+      (assignment) => assignment.participantId.startsWith('rejected-contender-'),
+    );
+    expect(contenders.map((assignment) => assignment.claimedParticipantId).sort()).toEqual([
+      'rejected-source-0',
+      'rejected-source-1',
+    ]);
+    expect(new Set(contenders.map((assignment) => assignment.sequenceIndex)).size).toBe(2);
+    expect(contenders.map((assignment) => assignment.sequenceIndex).sort()).toEqual([0, 1]);
+  });
+
+  test('startup retry recovers an assignment after participant persistence did not run', async () => {
+    const allocate = (
+      storageEngine as unknown as {
+        _allocateSequenceAssignment: (
+          participantId: string,
+          assignment: SequenceAssignment,
+        ) => Promise<{ sequenceIndex: number; creationIndex: number }>;
+      }
+    )._allocateSequenceAssignment.bind(storageEngine);
+    const assignment: SequenceAssignment = {
+      participantId: 'participant-write-retry',
+      timestamp: Date.now(),
+      rejected: false,
+      claimed: false,
+      completed: null,
+      createdTime: Date.now(),
+      total: 0,
+      answered: [],
+      isDynamic: false,
+      stage: 'DEFAULT',
+    };
+
+    const initialAllocation = await allocate('participant-write-retry', assignment);
+    const recoveredAllocation = await allocate('participant-write-retry', assignment);
+
+    expect(recoveredAllocation).toEqual(initialAllocation);
+    expect((await storageEngine.getAllSequenceAssignments(studyId)).filter(
+      (storedAssignment) => storedAssignment.participantId === 'participant-write-retry',
+    )).toHaveLength(1);
   });
 
   test('legacy rejected-slot reuse uses bounded counts instead of an assignment scan', async () => {

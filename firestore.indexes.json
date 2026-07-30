@@ -1,0 +1,23 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "sequenceAssignment",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "rejected",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "claimed",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "timestamp",
+          "order": "ASCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

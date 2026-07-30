@@ -15,6 +15,8 @@ type SupabaseSequenceAllocator = {
 export class SupabaseStorageEngine extends CloudStorageEngine {
   private supabase = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY);
 
+  private allocatorRpcAvailable: boolean | undefined;
+
   protected participantStore = localforage.createInstance({
     name: 'revisit-supabase',
   });
@@ -349,13 +351,63 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     return count ?? 0;
   }
 
+  private async allocateSequenceAssignmentWithRpc(
+    participantId: string,
+    sequenceAssignment: SequenceAssignment,
+  ): Promise<SequenceAssignmentAllocation | null> {
+    if (
+      !this.studyId
+      || this.allocatorRpcAvailable === false
+      || typeof this.supabase.rpc !== 'function'
+    ) {
+      return null;
+    }
+
+    const { data, error } = await this.supabase.rpc('allocate_sequence_assignment', {
+      p_study_id: `${this.collectionPrefix}${this.studyId}`,
+      p_participant_id: participantId,
+      p_assignment: sequenceAssignment,
+    });
+    if (error) {
+      if (error.code === 'PGRST202' || error.code === '42883') {
+        this.allocatorRpcAvailable = false;
+        return null;
+      }
+      throw new Error(`Failed to reserve a sequence assignment: ${error.message}`);
+    }
+
+    const allocation = (Array.isArray(data) ? data[0] : data) as {
+      sequenceIndex?: number;
+      creationIndex?: number;
+    } | null;
+    if (
+      !allocation
+      || typeof allocation.sequenceIndex !== 'number'
+      || typeof allocation.creationIndex !== 'number'
+    ) {
+      throw new Error('Sequence assignment allocator returned an invalid result');
+    }
+    this.allocatorRpcAvailable = true;
+    return {
+      sequenceIndex: allocation.sequenceIndex,
+      creationIndex: allocation.creationIndex,
+    };
+  }
+
   protected async _allocateSequenceAssignment(
     participantId: string,
     sequenceAssignment: SequenceAssignment,
   ): Promise<SequenceAssignmentAllocation> {
-    await this.verifyStudyDatabase();
     if (!this.studyId) {
       throw new Error('Study ID is not set');
+    }
+
+    const rpcAllocation = await this.allocateSequenceAssignmentWithRpc(
+      participantId,
+      sequenceAssignment,
+    );
+    if (rpcAllocation) {
+      return rpcAllocation;
     }
 
     const existingAssignment = await this._getSequenceAssignment(participantId);

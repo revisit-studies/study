@@ -118,6 +118,15 @@ vi.mock('localforage', () => ({
 }));
 
 vi.mock('firebase/firestore', () => {
+  type QueryConstraint = {
+    type: 'where' | 'limit' | 'orderBy';
+    field?: string;
+    operator?: string;
+    value?: unknown;
+    count?: number;
+    direction?: 'asc' | 'desc';
+  };
+
   function resolveSentinels(data: DocData): DocData {
     const now = Date.now();
     const result: DocData = {};
@@ -164,21 +173,42 @@ vi.mock('firebase/firestore', () => {
 
   function getDocsInCollection(collPath: string) {
     const prefix = `${collPath}/`;
-    const docs: Array<{ id: string; data: () => DocData }> = [];
+    const docs: Array<{ id: string; data: () => DocData; ref: { _path: string; id: string } }> = [];
     for (const [path, data] of Object.entries(firestoreData)) {
       if (path.startsWith(prefix)) {
         const remainder = path.slice(prefix.length);
         if (!remainder.includes('/')) {
           const copy = { ...data };
-          docs.push({ id: remainder, data: () => copy });
+          docs.push({
+            id: remainder,
+            data: () => copy,
+            ref: { _path: path, id: remainder },
+          });
         }
       }
     }
     return docs;
   }
 
-  function mockGetDocs(collRef: { _path: string }) {
-    const docs = getDocsInCollection(collRef._path);
+  function mockGetDocs(collRef: { _path: string; _constraints?: QueryConstraint[] }) {
+    let docs = getDocsInCollection(collRef._path);
+    (collRef._constraints ?? []).forEach((constraint) => {
+      if (constraint.type === 'where') {
+        docs = docs.filter((document) => {
+          const fieldValue = document.data()[constraint.field!];
+          if (constraint.operator === '==') return fieldValue === constraint.value;
+          if (constraint.operator === '<') return Number(fieldValue) < Number(constraint.value);
+          return true;
+        });
+      } else if (constraint.type === 'orderBy') {
+        docs = [...docs].sort((a, b) => {
+          const comparison = Number(a.data()[constraint.field!]) - Number(b.data()[constraint.field!]);
+          return constraint.direction === 'desc' ? -comparison : comparison;
+        });
+      } else {
+        docs = docs.slice(0, constraint.count);
+      }
+    });
     return Promise.resolve({
       docs,
       forEach: (cb: (d: { id: string; data: () => DocData }) => void) => docs.forEach(cb),
@@ -220,8 +250,8 @@ vi.mock('firebase/firestore', () => {
     };
   }
 
-  function mockQuery(collRef: { _path: string }) {
-    return collRef;
+  function mockQuery(collRef: { _path: string }, ...constraints: QueryConstraint[]) {
+    return { ...collRef, _constraints: constraints };
   }
 
   async function mockGetCountFromServer(collRef: { _path: string }) {
@@ -254,9 +284,13 @@ vi.mock('firebase/firestore', () => {
     getDocs: vi.fn(mockGetDocs),
     getCountFromServer: vi.fn(mockGetCountFromServer),
     query: vi.fn(mockQuery),
-    where: vi.fn(() => ({})),
-    orderBy: vi.fn(() => ({})),
-    limit: vi.fn(() => ({})),
+    where: vi.fn((field: string, operator: string, value: unknown) => ({
+      type: 'where', field, operator, value,
+    })),
+    limit: vi.fn((count: number) => ({ type: 'limit', count })),
+    orderBy: vi.fn((field: string, direction: 'asc' | 'desc' = 'asc') => ({
+      type: 'orderBy', field, direction,
+    })),
     runTransaction: vi.fn(mockRunTransaction),
     updateDoc: vi.fn(mockUpdateDoc),
     onSnapshot: vi.fn(mockOnSnapshot),
