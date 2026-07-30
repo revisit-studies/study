@@ -23,7 +23,13 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       .download(`${this.collectionPrefix}${studyId || this.studyId}/${prefix}_${type}`);
 
     if (error) {
-      return {} as StorageObject<T>;
+      if (
+        ('statusCode' in error && String(error.statusCode) === '404')
+        || error.message.toLowerCase().includes('not found')
+      ) {
+        return {} as StorageObject<T>;
+      }
+      throw new Error(`Failed to download from Supabase: ${error.message}`);
     }
 
     const dataToParse = this.testing ? new Blob([data as unknown as string], { type: 'application/json' }) : data;
@@ -40,7 +46,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     prefix: string,
     type: T,
     objectToUpload: StorageObject<T>,
-    options?: { cache?: boolean },
+    options?: { cache?: boolean; studyId?: string },
   ) {
     await this.verifyStudyDatabase();
 
@@ -56,7 +62,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
 
     const { error } = await this.supabase.storage
       .from('revisit')
-      .upload(`${this.collectionPrefix}${this.studyId}/${prefix}_${type}`, uploadObject, {
+      .upload(`${this.collectionPrefix}${options?.studyId ?? this.studyId}/${prefix}_${type}`, uploadObject, {
         upsert: true,
         ...(options?.cache ? { cacheControl: '31536000' } : {}),
       });
@@ -140,11 +146,11 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       .eq('docId', 'currentConfigHash');
   }
 
-  private async getSequenceBuild(configHash: string) {
+  private async getSequenceBuild(configHash: string, studyId: string = this.studyId!) {
     const { data } = await this.supabase
       .from('revisit')
       .select('data')
-      .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
+      .eq('studyId', `${this.collectionPrefix}${studyId}`)
       .eq('docId', `sequenceBuild_${configHash}`)
       .maybeSingle();
     return data?.data as SequenceBuildRecord | undefined;
@@ -154,10 +160,11 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     configHash: string,
     candidate: SequenceBuildRecord,
     now: number,
+    studyIdValue: string = this.studyId!,
   ): Promise<SequenceBuildClaim> {
-    const studyId = `${this.collectionPrefix}${this.studyId}`;
+    const studyId = `${this.collectionPrefix}${studyIdValue}`;
     const docId = `sequenceBuild_${configHash}`;
-    const existing = await this.getSequenceBuild(configHash);
+    const existing = await this.getSequenceBuild(configHash, studyIdValue);
     if (existing?.status === 'ready'
       || (existing?.status === 'building' && existing.leaseExpiresAt > now)) {
       return { record: existing, shouldPublish: false };
@@ -170,7 +177,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       if (!error) {
         return { record: candidate, shouldPublish: true };
       }
-      const winner = await this.getSequenceBuild(configHash);
+      const winner = await this.getSequenceBuild(configHash, studyIdValue);
       if (!winner) {
         throw new Error('Failed to establish sequence build record');
       }
@@ -198,7 +205,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       return { record: claimed, shouldPublish: true };
     }
 
-    const winner = await this.getSequenceBuild(configHash);
+    const winner = await this.getSequenceBuild(configHash, studyIdValue);
     if (!winner) {
       throw new Error('Failed to claim sequence build record');
     }
@@ -209,17 +216,58 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     configHash: string,
     publisherId: string,
     updates: Pick<SequenceBuildRecord, 'status' | 'leaseExpiresAt' | 'updatedAt'>,
+    studyId: string = this.studyId!,
   ) {
-    const existing = await this.getSequenceBuild(configHash);
+    const existing = await this.getSequenceBuild(configHash, studyId);
     if (!existing || existing.publisherId !== publisherId) {
       return;
     }
     await this.supabase
       .from('revisit')
       .update({ data: { ...existing, ...updates } })
-      .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
+      .eq('studyId', `${this.collectionPrefix}${studyId}`)
       .eq('docId', `sequenceBuild_${configHash}`)
       .eq('data->>publisherId', publisherId);
+  }
+
+  protected override async _getSequenceBuildProviderTime() {
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+    const studyId = `${this.collectionPrefix}${this.studyId}`;
+    const docId = `sequenceBuildClock_${crypto.randomUUID()}`;
+    const { error: insertError } = await this.supabase
+      .from('revisit')
+      .insert({ studyId, docId, data: {} });
+    if (insertError) {
+      throw new Error('Failed to establish the Supabase server clock');
+    }
+    const { data, error } = await this.supabase
+      .from('revisit')
+      .select('createdAt')
+      .eq('studyId', studyId)
+      .eq('docId', docId)
+      .single();
+    await this.supabase
+      .from('revisit')
+      .delete()
+      .eq('studyId', studyId)
+      .eq('docId', docId);
+    if (error || !data?.createdAt) {
+      throw new Error('Failed to read the Supabase server clock');
+    }
+    return new Date(data.createdAt).getTime();
+  }
+
+  protected override async _deleteSequenceBuild(configHash: string) {
+    const { error } = await this.supabase
+      .from('revisit')
+      .delete()
+      .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
+      .eq('docId', `sequenceBuild_${configHash}`);
+    if (error) {
+      throw new Error('Failed to delete Supabase sequence build record');
+    }
   }
 
   public async getAllSequenceAssignments(studyId: string) {

@@ -25,10 +25,10 @@ export class LocalStorageEngine extends StorageEngine {
     prefix: string,
     type: T,
     objectToUpload: StorageObject<T>,
-    _options?: { cache?: boolean },
+    options?: { cache?: boolean; studyId?: string },
   ) {
     await this.verifyStudyDatabase();
-    const storageKey = `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`;
+    const storageKey = `${this.collectionPrefix}${options?.studyId ?? this.studyId}/${prefix}_${type}`;
     await this.studyDatabase.setItem(storageKey, objectToUpload);
   }
 
@@ -64,8 +64,9 @@ export class LocalStorageEngine extends StorageEngine {
     configHash: string,
     candidate: SequenceBuildRecord,
     now: number,
+    studyId: string = this.studyId!,
   ): Promise<SequenceBuildClaim> {
-    const key = `${this.collectionPrefix}${this.studyId}/sequenceBuild/${configHash}`;
+    const key = `${this.collectionPrefix}${studyId}/sequenceBuild/${configHash}`;
     const existing = await this.studyDatabase.getItem<SequenceBuildRecord>(key);
     if (existing && existing.status !== 'failed' && existing.leaseExpiresAt > now) {
       return { record: existing, shouldPublish: false };
@@ -92,12 +93,18 @@ export class LocalStorageEngine extends StorageEngine {
     configHash: string,
     publisherId: string,
     updates: Pick<SequenceBuildRecord, 'status' | 'leaseExpiresAt' | 'updatedAt'>,
+    studyId: string = this.studyId!,
   ) {
-    const key = `${this.collectionPrefix}${this.studyId}/sequenceBuild/${configHash}`;
+    const key = `${this.collectionPrefix}${studyId}/sequenceBuild/${configHash}`;
     const existing = await this.studyDatabase.getItem<SequenceBuildRecord>(key);
     if (existing?.publisherId === publisherId) {
       await this.studyDatabase.setItem(key, { ...existing, ...updates });
     }
+  }
+
+  protected override async _deleteSequenceBuild(configHash: string) {
+    const key = `${this.collectionPrefix}${this.studyId}/sequenceBuild/${configHash}`;
+    await this.studyDatabase.removeItem(key);
   }
 
   public async getAllSequenceAssignments(studyId: string) {

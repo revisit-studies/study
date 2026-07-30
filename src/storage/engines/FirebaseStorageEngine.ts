@@ -102,7 +102,15 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       const blob = await getBlob(storageRef);
       const fullProvStr = await blob.text();
       storageObj = JSON.parse(fullProvStr);
-    } catch {
+    } catch (error) {
+      if (
+        typeof error !== 'object'
+        || error === null
+        || !('code' in error)
+        || error.code !== 'storage/object-not-found'
+      ) {
+        throw error;
+      }
       console.warn(
         `${prefix} does not have ${type} for ${this.collectionPrefix}${this.studyId}.`,
       );
@@ -115,11 +123,11 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     prefix: string,
     type: T,
     objectToUpload: StorageObject<T>,
-    options?: { cache?: boolean },
+    options?: { cache?: boolean; studyId?: string },
   ) {
     const storageRef = ref(
       this.storage,
-      `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`,
+      `${this.collectionPrefix}${options?.studyId ?? this.studyId}/${prefix}_${type}`,
     );
 
     if (objectToUpload instanceof Blob) {
@@ -187,8 +195,13 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     configHash: string,
     candidate: SequenceBuildRecord,
     now: number,
+    studyId: string = this.studyId!,
   ): Promise<SequenceBuildClaim> {
-    const buildDoc = doc(this.studyCollection, `sequenceBuild_${configHash}`);
+    const studyCollection = collection(
+      this.firestore,
+      `${this.collectionPrefix}${studyId}`,
+    );
+    const buildDoc = doc(studyCollection, `sequenceBuild_${configHash}`);
     return runTransaction(this.firestore, async (transaction) => {
       const snapshot = await transaction.get(buildDoc);
       const existing = snapshot.exists() ? snapshot.data() as SequenceBuildRecord : null;
@@ -216,14 +229,43 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     configHash: string,
     publisherId: string,
     updates: Pick<SequenceBuildRecord, 'status' | 'leaseExpiresAt' | 'updatedAt'>,
+    studyId: string = this.studyId!,
   ) {
-    const buildDoc = doc(this.studyCollection, `sequenceBuild_${configHash}`);
+    const studyCollection = collection(
+      this.firestore,
+      `${this.collectionPrefix}${studyId}`,
+    );
+    const buildDoc = doc(studyCollection, `sequenceBuild_${configHash}`);
     await runTransaction(this.firestore, async (transaction) => {
       const snapshot = await transaction.get(buildDoc);
       if (snapshot.exists() && snapshot.data().publisherId === publisherId) {
         transaction.update(buildDoc, updates);
       }
     });
+  }
+
+  protected override async _getSequenceBuildProviderTime() {
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+    const clockDoc = doc(this.studyCollection, 'sequenceBuildClock');
+    await setDoc(clockDoc, { now: serverTimestamp() });
+    const snapshot = await getDoc(clockDoc);
+    const value = snapshot.data()?.now;
+    if (value instanceof Timestamp) {
+      return value.toMillis();
+    }
+    if (typeof value === 'number') {
+      return value;
+    }
+    throw new Error('Failed to read the Firebase server clock');
+  }
+
+  protected override async _deleteSequenceBuild(configHash: string) {
+    const buildDoc = doc(this.studyCollection, `sequenceBuild_${configHash}`);
+    const batch = writeBatch(this.firestore);
+    batch.delete(buildDoc);
+    await batch.commit();
   }
 
   public async getAllSequenceAssignments(studyId: string) {

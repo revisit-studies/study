@@ -91,6 +91,7 @@ const defaultStageColor = '#F05A30';
 export type StorageObjectType =
   | 'sequenceArray'
   | 'sequenceBuild'
+  | 'sequenceLegacyOwner'
   | 'participantData'
   | 'config'
   | string;
@@ -99,6 +100,8 @@ export type StorageObject<T extends StorageObjectType> =
   ? Sequence[]
   : T extends 'sequenceBuild'
   ? SequenceBuildRecord
+  : T extends 'sequenceLegacyOwner'
+  ? { configHash: string }
   : T extends 'participantData'
   ? ParticipantData
   : T extends 'config'
@@ -228,7 +231,7 @@ export abstract class StorageEngine {
 
   private activeConfigHash: string | null = null;
 
-  private legacySequenceArrayCompatible = false;
+  private legacySequenceArrayConfigHash: string | null = null;
 
   private sequenceArrays = new Map<string, Sequence[]>();
 
@@ -276,7 +279,7 @@ export abstract class StorageEngine {
     prefix: string,
     type: T,
     objectToUpload: StorageObject<T>,
-    options?: { cache?: boolean },
+    options?: { cache?: boolean; studyId?: string },
   ): Promise<void>;
 
   // Deletes an object from the storage engine. The object is identified by its type and studyId.
@@ -299,6 +302,7 @@ export abstract class StorageEngine {
     configHash: string,
     candidate: SequenceBuildRecord,
     now: number,
+    _studyId?: string,
   ): Promise<SequenceBuildClaim> {
     const prefix = `sequenceBuilds/${configHash}`;
     const existing = await this._getFromStorage(prefix, 'sequenceBuild');
@@ -325,12 +329,21 @@ export abstract class StorageEngine {
     configHash: string,
     publisherId: string,
     updates: Pick<SequenceBuildRecord, 'status' | 'leaseExpiresAt' | 'updatedAt'>,
+    _studyId?: string,
   ): Promise<void> {
     const prefix = `sequenceBuilds/${configHash}`;
     const existing = await this._getFromStorage(prefix, 'sequenceBuild');
     if (existing?.publisherId === publisherId) {
       await this._pushToStorage(prefix, 'sequenceBuild', { ...existing, ...updates });
     }
+  }
+
+  protected async _getSequenceBuildProviderTime() {
+    return Date.now();
+  }
+
+  protected async _deleteSequenceBuild(configHash: string) {
+    await this._deleteFromStorage(`sequenceBuilds/${configHash}`, 'sequenceBuild');
   }
 
   /* General/Realtime ---------------------------------------------------- */
@@ -844,7 +857,20 @@ export abstract class StorageEngine {
     // Hash the provided config
     const configHash = await hash(JSON.stringify(config));
     this.activeConfigHash = configHash;
-    this.legacySequenceArrayCompatible = currentConfigHash === configHash;
+    const legacyOwner = await this._getFromStorage('', 'sequenceLegacyOwner');
+    if (legacyOwner && typeof legacyOwner === 'object' && 'configHash' in legacyOwner) {
+      this.legacySequenceArrayConfigHash = legacyOwner.configHash;
+    } else if (currentConfigHash) {
+      const legacySequenceArray = await this._getFromStorage('', 'sequenceArray');
+      if (Array.isArray(legacySequenceArray)) {
+        await this._pushToStorage(
+          '',
+          'sequenceLegacyOwner',
+          { configHash: currentConfigHash },
+        );
+        this.legacySequenceArrayConfigHash = currentConfigHash;
+      }
+    }
 
     // Skip saving config if the active config is already saved in storage
     if (currentConfigHash === configHash) {
@@ -864,6 +890,17 @@ export abstract class StorageEngine {
 
     if (currentConfigHash !== configHash) {
       await this._setCurrentConfigHash(configHash);
+      if (!this.legacySequenceArrayConfigHash) {
+        const legacySequenceArray = await this._getFromStorage('', 'sequenceArray');
+        if (Array.isArray(legacySequenceArray)) {
+          await this._pushToStorage(
+            '',
+            'sequenceLegacyOwner',
+            { configHash },
+          );
+          this.legacySequenceArrayConfigHash = configHash;
+        }
+      }
     }
   }
 
@@ -1834,6 +1871,7 @@ export abstract class StorageEngine {
   }
 
   private async publishSequenceArray(
+    studyId: string,
     configHash: string,
     publisherId: string,
     sequenceArray: Sequence[],
@@ -1843,27 +1881,32 @@ export abstract class StorageEngine {
         this.sequenceArtifactPrefix(configHash),
         'sequenceArray',
         sequenceArray,
-        { cache: true },
+        { cache: true, studyId },
       );
       await this._updateSequenceBuild(configHash, publisherId, {
         status: 'ready',
         leaseExpiresAt: 0,
         updatedAt: Date.now(),
-      });
+      }, studyId);
     } catch {
       await this._updateSequenceBuild(configHash, publisherId, {
         status: 'failed',
         leaseExpiresAt: 0,
         updatedAt: Date.now(),
-      }).catch(() => undefined);
+      }, studyId).catch(() => undefined);
     }
   }
 
   async prepareSequenceArray(config: StudyConfig, configHash: string) {
     await this.verifyStudyDatabase();
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+    const studyId = this.studyId;
     this.activeConfigHash = configHash;
 
-    const cachedSequenceArray = this.sequenceArrays.get(configHash);
+    const cacheKey = `${studyId}:${configHash}`;
+    const cachedSequenceArray = this.sequenceArrays.get(cacheKey);
     if (cachedSequenceArray) {
       return cachedSequenceArray;
     }
@@ -1873,19 +1916,19 @@ export abstract class StorageEngine {
       'sequenceArray',
     );
     if (Array.isArray(storedSequenceArray)) {
-      this.sequenceArrays.set(configHash, storedSequenceArray);
+      this.sequenceArrays.set(cacheKey, storedSequenceArray);
       return storedSequenceArray;
     }
 
-    if (this.legacySequenceArrayCompatible) {
+    if (this.legacySequenceArrayConfigHash === configHash) {
       const legacySequenceArray = await this._getFromStorage('', 'sequenceArray');
       if (Array.isArray(legacySequenceArray)) {
-        this.sequenceArrays.set(configHash, legacySequenceArray);
+        this.sequenceArrays.set(cacheKey, legacySequenceArray);
         return legacySequenceArray;
       }
     }
 
-    const now = Date.now();
+    const now = await this._getSequenceBuildProviderTime();
     const publisherId = uuidv4();
     const claim = await this._claimSequenceBuild(configHash, {
       seed: uuidv4(),
@@ -1895,15 +1938,15 @@ export abstract class StorageEngine {
       leaseExpiresAt: now + StorageEngine.sequenceBuildLeaseMs,
       attempts: 1,
       updatedAt: now,
-    }, now);
+    }, now, studyId);
     if (claim.record.algorithmVersion !== 1) {
       throw new Error(`Unsupported sequence algorithm version: ${claim.record.algorithmVersion}`);
     }
     const generatedSequenceArray = generateSequenceArray(config, claim.record.seed);
-    this.sequenceArrays.set(configHash, generatedSequenceArray);
+    this.sequenceArrays.set(cacheKey, generatedSequenceArray);
 
     if (claim.shouldPublish) {
-      this.publishSequenceArray(configHash, publisherId, generatedSequenceArray);
+      this.publishSequenceArray(studyId, configHash, publisherId, generatedSequenceArray);
     }
 
     return generatedSequenceArray;
@@ -1914,7 +1957,9 @@ export abstract class StorageEngine {
     await this.verifyStudyDatabase();
 
     if (this.activeConfigHash) {
-      const activeSequenceArray = this.sequenceArrays.get(this.activeConfigHash);
+      const activeSequenceArray = this.sequenceArrays.get(
+        `${this.studyId}:${this.activeConfigHash}`,
+      );
       if (activeSequenceArray) {
         return activeSequenceArray;
       }
@@ -1924,7 +1969,10 @@ export abstract class StorageEngine {
         'sequenceArray',
       );
       if (Array.isArray(storedSequenceArray)) {
-        this.sequenceArrays.set(this.activeConfigHash, storedSequenceArray);
+        this.sequenceArrays.set(
+          `${this.studyId}:${this.activeConfigHash}`,
+          storedSequenceArray,
+        );
         return storedSequenceArray;
       }
     }
@@ -1943,8 +1991,48 @@ export abstract class StorageEngine {
 
     await this._pushToStorage('', 'sequenceArray', latinSquare);
     if (this.activeConfigHash) {
-      this.sequenceArrays.set(this.activeConfigHash, latinSquare);
+      await this._pushToStorage(
+        '',
+        'sequenceLegacyOwner',
+        { configHash: this.activeConfigHash },
+      );
+      this.legacySequenceArrayConfigHash = this.activeConfigHash;
+      this.sequenceArrays.set(`${this.studyId}:${this.activeConfigHash}`, latinSquare);
     }
+  }
+
+  async cleanupObsoleteSequenceArtifacts(candidateConfigHashes: string[]) {
+    await this.verifyStudyDatabase();
+    const retainedConfigHashes = new Set<string>();
+    const currentConfigHash = await this._getCurrentConfigHash();
+    if (currentConfigHash) {
+      retainedConfigHashes.add(currentConfigHash);
+    }
+    if (this.studyId) {
+      const assignments = await this.getAllSequenceAssignments(this.studyId);
+      const participantData = await Promise.all(assignments.map(
+        (assignment) => this._getFromStorage(
+          `participants/${assignment.participantId}`,
+          'participantData',
+        ),
+      ));
+      participantData.forEach((participant) => {
+        if (participant && typeof participant === 'object' && 'participantConfigHash' in participant) {
+          retainedConfigHashes.add(participant.participantConfigHash);
+        }
+      });
+    }
+
+    await Promise.all(candidateConfigHashes
+      .filter((configHash) => !retainedConfigHashes.has(configHash))
+      .map(async (configHash) => {
+        await this._deleteFromStorage(
+          this.sequenceArtifactPrefix(configHash),
+          'sequenceArray',
+        ).catch(() => undefined);
+        await this._deleteSequenceBuild(configHash).catch(() => undefined);
+        this.sequenceArrays.delete(`${this.studyId}:${configHash}`);
+      }));
   }
 
   protected async __testingReset() {
@@ -1959,7 +2047,7 @@ export abstract class StorageEngine {
     this.pendingProgressDataWrite = undefined;
     this.assetUploadActivityVersion = 0;
     this.activeConfigHash = null;
-    this.legacySequenceArrayCompatible = false;
+    this.legacySequenceArrayConfigHash = null;
     this.sequenceArrays.clear();
     this.participantData = undefined;
     if (this.studyId) {

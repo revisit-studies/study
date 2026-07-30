@@ -30,6 +30,10 @@ class PublicationTrackingEngine extends LocalStorageEngine {
 
   private uploadRelease = Promise.resolve();
 
+  private providerTime: number | null = null;
+
+  private failSequenceRead = false;
+
   failNextSequenceUpload() {
     this.failSequenceUpload = true;
     this.uploadStarted = new Promise((resolve) => {
@@ -53,6 +57,38 @@ class PublicationTrackingEngine extends LocalStorageEngine {
 
   releaseSequenceUpload() {
     this.releaseUploadResolve?.();
+  }
+
+  useProviderTime(now: number) {
+    this.providerTime = now;
+  }
+
+  failNextSequenceRead() {
+    this.failSequenceRead = true;
+  }
+
+  getStoredSequenceArray(configHash: string) {
+    return this._getFromStorage(`sequenceArrays/${configHash}`, 'sequenceArray');
+  }
+
+  protected override async _getSequenceBuildProviderTime() {
+    return this.providerTime ?? super._getSequenceBuildProviderTime();
+  }
+
+  protected override async _getFromStorage<T extends StorageObjectType>(
+    prefix: string,
+    type: T,
+    studyId?: string,
+  ) {
+    if (
+      this.failSequenceRead
+      && type === 'sequenceArray'
+      && prefix.startsWith('sequenceArrays/')
+    ) {
+      this.failSequenceRead = false;
+      throw new Error('transient provider failure');
+    }
+    return super._getFromStorage(prefix, type, studyId);
   }
 
   claimSequenceBuild(configHash: string, candidate: SequenceBuildRecord, now: number) {
@@ -190,6 +226,88 @@ describe('sequence artifact publication', () => {
 
     expect(resolvedArray).toEqual(legacyArray);
     expect(PublicationTrackingEngine.uploadCount).toBe(0);
+  });
+
+  test('does not reuse a legacy array after the config hash changes', async () => {
+    const engine = new PublicationTrackingEngine(true);
+    await initializeEngine(engine, 'sequence-publication-legacy-transition');
+    const legacyArray = generateSequenceArray(config, 'legacy-seed');
+    await engine.setSequenceArray(legacyArray);
+    await engine.saveConfig(changedConfig);
+    const changedHash = await hash(JSON.stringify(changedConfig));
+
+    const resolvedArray = await engine.prepareSequenceArray(changedConfig, changedHash);
+
+    expect(resolvedArray).not.toEqual(legacyArray);
+    expect(PublicationTrackingEngine.uploadCount).toBe(1);
+  });
+
+  test('does not turn a transient artifact read failure into legacy fallback', async () => {
+    const engine = new PublicationTrackingEngine(true);
+    const studyId = 'sequence-publication-read-failure';
+    await initializeEngine(engine, studyId);
+    await engine.setSequenceArray(generateSequenceArray(config, 'legacy-seed'));
+    const configHash = await hash(JSON.stringify(config));
+    const resumedEngine = new PublicationTrackingEngine(true);
+    await initializeEngine(resumedEngine, studyId);
+    resumedEngine.failNextSequenceRead();
+
+    await expect(resumedEngine.prepareSequenceArray(config, configHash))
+      .rejects.toThrow('transient provider failure');
+  });
+
+  test('scopes cached sequence state to study and config hash', async () => {
+    const engine = new PublicationTrackingEngine(true);
+    const configHash = await hash(JSON.stringify(config));
+    await initializeEngine(engine, 'sequence-publication-study-a');
+    await engine.prepareSequenceArray(config, configHash);
+    await new Promise((resolve) => { setTimeout(resolve, 0); });
+
+    await initializeEngine(engine, 'sequence-publication-study-b');
+    await engine.prepareSequenceArray(config, configHash);
+
+    expect(PublicationTrackingEngine.uploadCount).toBe(2);
+  });
+
+  test('uses provider time for publication leases', async () => {
+    const engine = new PublicationTrackingEngine(true);
+    await initializeEngine(engine, 'sequence-publication-provider-time');
+    engine.useProviderTime(500);
+    const configHash = await hash(JSON.stringify(config));
+    engine.holdNextSequenceUpload();
+
+    await engine.prepareSequenceArray(config, configHash);
+    await engine.waitForSequenceUpload();
+    const claim = await engine.claimSequenceBuild(configHash, {
+      seed: 'ignored',
+      algorithmVersion: 1,
+      status: 'building',
+      publisherId: 'clock-skewed-client',
+      leaseExpiresAt: 30_499,
+      attempts: 1,
+      updatedAt: 499,
+    }, 499);
+
+    expect(claim.shouldPublish).toBe(false);
+    expect(claim.record.leaseExpiresAt).toBe(30_500);
+    engine.releaseSequenceUpload();
+  });
+
+  test('cleanup removes only explicitly nominated unreferenced artifacts', async () => {
+    const engine = new PublicationTrackingEngine(true);
+    await initializeEngine(engine, 'sequence-publication-cleanup');
+    const firstHash = await hash(JSON.stringify(config));
+    await engine.prepareSequenceArray(config, firstHash);
+    await new Promise((resolve) => { setTimeout(resolve, 0); });
+    await engine.saveConfig(changedConfig);
+    const activeHash = await hash(JSON.stringify(changedConfig));
+    await engine.prepareSequenceArray(changedConfig, activeHash);
+    await new Promise((resolve) => { setTimeout(resolve, 0); });
+
+    await engine.cleanupObsoleteSequenceArtifacts([firstHash, activeHash]);
+
+    expect(await engine.getStoredSequenceArray(firstHash)).toBeNull();
+    expect(await engine.getStoredSequenceArray(activeHash)).not.toBeNull();
   });
 
   test('config changes retain the previous hash-keyed artifact', async () => {
