@@ -11,3 +11,7 @@
 .itemDragging {
   box-shadow: var(--mantine-shadow-sm);
 }
+
+.itemDisabled {
+  cursor: not-allowed;
+}

@@ -4,10 +4,11 @@ import {
   DropdownResponse,
   MatrixResponse,
   NumericalResponse,
+  RankingResponse,
   Response,
 } from '../../parser/types';
 import { CustomResponseValidate, StoredAnswer } from '../../store/types';
-import { parseStringOptionValue } from '../../utils/stringOptions';
+import { parseStringOptions, parseStringOptionValue } from '../../utils/stringOptions';
 
 export const REQUIRED_ERROR_MESSAGE = 'Please answer this question to continue.';
 
@@ -99,6 +100,103 @@ export function checkNumericalResponse(response: NumericalResponse, value: numbe
   if (max !== undefined && numValue > max) {
     return `Please enter a value of ${max} or less`;
   }
+  return null;
+}
+
+// Instance keys (`instance-<index>-<optionValue>`) never collide with option values; legacy keys still parse.
+export function makeRankingInstanceKey(baseItemId: string, instanceIndex: number): string {
+  return `instance-${instanceIndex}-${baseItemId}`;
+}
+
+function parseTaggedRankingInstanceKey(instanceId: string): { baseItemId: string; instanceIndex: number } | null {
+  const match = instanceId.match(/^instance-(\d+)-(.*)$/);
+  if (!match) {
+    return null;
+  }
+
+  return { baseItemId: match[2], instanceIndex: parseInt(match[1], 10) };
+}
+
+export function getRankingBaseItemId(instanceId: string, optionValues: Set<string>): string {
+  if (optionValues.has(instanceId)) {
+    return instanceId;
+  }
+
+  const tagged = parseTaggedRankingInstanceKey(instanceId);
+  if (tagged) {
+    return tagged.baseItemId;
+  }
+
+  // Legacy generated keys: `<optionValue>_<counter>`, longest option match first
+  const matchingOption = [...optionValues]
+    .filter((optionValue) => instanceId.startsWith(`${optionValue}_`))
+    .sort((first, second) => second.length - first.length)
+    .find((optionValue) => /^\d+$/.test(instanceId.slice(optionValue.length + 1)));
+
+  return matchingOption ?? instanceId;
+}
+
+export function getRankingInstanceIndex(instanceId: string, optionValues: Set<string>): number | null {
+  if (optionValues.has(instanceId)) {
+    return null;
+  }
+
+  const tagged = parseTaggedRankingInstanceKey(instanceId);
+  if (tagged) {
+    return tagged.instanceIndex;
+  }
+
+  const baseItemId = getRankingBaseItemId(instanceId, optionValues);
+  if (!optionValues.has(baseItemId) || baseItemId === instanceId) {
+    return null;
+  }
+
+  return Number(instanceId.slice(baseItemId.length + 1));
+}
+
+export function checkPairwiseRankingResponse(response: RankingResponse, value: Record<string, string>) {
+  const optionValues = new Set(parseStringOptions(response.options).map((option) => option.value));
+  const pairs: Record<string, { high: string[]; low: string[] }> = {};
+  let hasInvalidLocation = false;
+
+  Object.entries(value).forEach(([itemId, location]) => {
+    const match = typeof location === 'string' ? location.match(/^pair-(\d+)-(high|low)$/) : null;
+    if (!match) {
+      hasInvalidLocation = true;
+      return;
+    }
+    const [, pairId, position] = match;
+    if (!pairs[pairId]) pairs[pairId] = { high: [], low: [] };
+    pairs[pairId][position as 'high' | 'low'].push(getRankingBaseItemId(itemId, optionValues));
+  });
+
+  if (hasInvalidLocation) {
+    return 'Please complete or remove invalid pairs to continue.';
+  }
+
+  // A pair is complete when both sides hold exactly one distinct configured option
+  const isCompletePair = (pair: { high: string[]; low: string[] }) => pair.high.length === 1
+    && pair.low.length === 1
+    && optionValues.has(pair.high[0])
+    && optionValues.has(pair.low[0])
+    && pair.high[0] !== pair.low[0];
+
+  const pairList = Object.values(pairs);
+  if (!pairList.some(isCompletePair)) {
+    return 'Please complete at least one pair to continue.';
+  }
+  if (!pairList.every(isCompletePair)) {
+    return 'Please complete or remove unfinished pairs to continue.';
+  }
+
+  const pairSignatures = pairList.map((pair) => JSON.stringify([
+    pair.high[0],
+    pair.low[0],
+  ].sort()));
+  if (new Set(pairSignatures).size !== pairSignatures.length) {
+    return 'This would create a duplicate pair.';
+  }
+
   return null;
 }
 
@@ -233,7 +331,18 @@ export function validateResponse(
     }
 
     if (response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') {
-      return createValidationResult(response, Object.keys(value).length === 0 && response.required ? 'unanswered' : 'none');
+      if (Object.keys(value).length === 0) {
+        return createValidationResult(response, response.required ? 'unanswered' : 'none');
+      }
+
+      if (response.type === 'ranking-pairwise') {
+        const pairwiseError = checkPairwiseRankingResponse(response, value as Record<string, string>);
+        return pairwiseError
+          ? createValidationResult(response, 'invalid', { message: pairwiseError })
+          : createValidationResult(response, 'none');
+      }
+
+      return createValidationResult(response, 'none');
     }
   }
 
