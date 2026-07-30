@@ -3,8 +3,8 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import {
   describe, expect, it, vi,
 } from 'vitest';
-import type { MatrixResponse } from '../../parser/types';
-import { MatrixInput } from './MatrixInput';
+import type { MatrixResponse } from '../../../parser/types';
+import { MatrixInput } from '../MatrixInput';
 
 vi.mock('@mantine/core', () => {
   const Radio = Object.assign(
@@ -26,7 +26,7 @@ vi.mock('@mantine/core', () => {
   };
 });
 
-vi.mock('../../store/store', () => ({
+vi.mock('../../../store/store', () => ({
   useStoreActions: () => ({
     setMatrixAnswersCheckbox: vi.fn((payload) => payload),
     setMatrixAnswersRadio: vi.fn((payload) => payload),
@@ -34,15 +34,15 @@ vi.mock('../../store/store', () => ({
   useStoreDispatch: () => vi.fn(),
 }));
 
-vi.mock('../../store/hooks/useStoredAnswer', () => ({
+vi.mock('../../../store/hooks/useStoredAnswer', () => ({
   useStoredAnswer: () => ({}),
 }));
 
-vi.mock('./InputLabel', () => ({
+vi.mock('../InputLabel', () => ({
   InputLabel: ({ prompt }: { prompt: string }) => <label>{prompt}</label>,
 }));
 
-vi.mock('./OptionLabel', () => ({
+vi.mock('../OptionLabel', () => ({
   OptionLabel: ({ label }: { label: string }) => <span>{label}</span>,
 }));
 

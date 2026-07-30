@@ -1,14 +1,14 @@
 import {
   describe, expect, test,
 } from 'vitest';
-import type { StudyConfig } from '../../parser/types';
-import { Sequence, StoredAnswer } from '../../store/types';
+import type { StudyConfig } from '../../../parser/types';
+import { Sequence, StoredAnswer } from '../../../store/types';
 import {
   formatSkipConditionSummary,
   getDynamicComponentsForBlock,
   getSkipConditionSummariesForBlock,
   getSkippedTrialOrders,
-} from './StepsPanel.utils';
+} from '../StepsPanel.utils';
 
 function buildStoredAnswer(
   componentName: string,
