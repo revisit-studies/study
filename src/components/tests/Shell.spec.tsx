@@ -6,7 +6,9 @@ import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { useRoutes } from 'react-router';
-import { getStartupErrorMessage, Shell, StudyLoadingOverlay } from '../Shell';
+import {
+  getShellUiState, getStartupErrorMessage, Shell, StudyLoadingOverlay,
+} from '../Shell';
 import type { ParsedConfig, StudyConfig } from '../../parser/types';
 import { getStudyConfig, resolveConfigKey } from '../../utils/fetchConfig';
 import { makeGlobalConfig, makeStudyConfig } from '../../tests/utils';
@@ -218,6 +220,36 @@ describe('Shell', () => {
 
     rerender(<StudyLoadingOverlay visible={false} />);
     expect(queryByRole('status')).toBeNull();
+  });
+
+  test('removes loading context once study content is ready while completion verification continues', () => {
+    vi.useFakeTimers();
+
+    const {
+      getByRole, getByTestId, queryByRole, rerender,
+    } = render(<StudyLoadingOverlay visible />);
+
+    act(() => vi.advanceTimersByTime(1500));
+    expect(getByRole('status')).toBeDefined();
+
+    rerender(<StudyLoadingOverlay visible showMessage={false} />);
+
+    expect(getByTestId('loading-overlay')).toBeDefined();
+    expect(queryByRole('status')).toBeNull();
+  });
+
+  test('does not describe ready study content as still loading during completion verification', () => {
+    expect(getShellUiState({
+      isValidStudyId: true,
+      hasRoutes: true,
+      hasStore: true,
+      isCompletionCheckResolved: false,
+      completionCheckError: null,
+    })).toEqual({
+      isLoading: true,
+      showLoadingMessage: false,
+      showCompletionCheckError: false,
+    });
   });
 
   test('shows loading overlay when routes are not yet initialized', async () => {

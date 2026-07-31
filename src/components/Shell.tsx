@@ -48,26 +48,32 @@ const RESUME_STARTUP_ERROR = 'This study session could not be resumed.';
 const STUDY_LOADING_MESSAGE = 'Loading your study. This may take a moment.';
 const STUDY_LOADING_MESSAGE_DELAY_MS = 1500;
 
-export function StudyLoadingOverlay({ visible }: { visible: boolean }) {
-  const [showMessage, setShowMessage] = useState(false);
+export function StudyLoadingOverlay({
+  visible,
+  showMessage = true,
+}: {
+  visible: boolean;
+  showMessage?: boolean;
+}) {
+  const [showDelayedMessage, setShowDelayedMessage] = useState(false);
 
   useEffect(() => {
-    if (!visible) {
-      setShowMessage(false);
+    if (!visible || !showMessage) {
+      setShowDelayedMessage(false);
       return undefined;
     }
 
     const timeoutId = window.setTimeout(() => {
-      setShowMessage(true);
+      setShowDelayedMessage(true);
     }, STUDY_LOADING_MESSAGE_DELAY_MS);
 
     return () => window.clearTimeout(timeoutId);
-  }, [visible]);
+  }, [showMessage, visible]);
 
   return (
     <>
       <LoadingOverlay visible={visible} />
-      {visible && showMessage && (
+      {visible && showMessage && showDelayedMessage && (
         <Text
           role="status"
           aria-live="polite"
@@ -147,6 +153,7 @@ export function getShellUiState({
 }) {
   return {
     isLoading: isValidStudyId && (!hasRoutes || !hasStore || !isCompletionCheckResolved),
+    showLoadingMessage: isValidStudyId && (!hasRoutes || !hasStore),
     showCompletionCheckError: completionCheckError !== null,
   };
 }
@@ -492,7 +499,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   }, [storageEngine, activeConfig, canonicalStudyId, searchParams, participantId, studyCondition]);
 
   const routing = useRoutes(routes);
-  const { isLoading, showCompletionCheckError } = getShellUiState({
+  const { isLoading, showLoadingMessage, showCompletionCheckError } = getShellUiState({
     isValidStudyId,
     hasRoutes: routes.length > 0,
     hasStore: store !== null,
@@ -516,7 +523,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
   return (
     <>
-      <StudyLoadingOverlay visible={isLoading} />
+      <StudyLoadingOverlay visible={isLoading} showMessage={showLoadingMessage} />
       {showCompletionCheckError && (
         <Stack
           align="center"
