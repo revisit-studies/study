@@ -168,6 +168,28 @@ describe('VirtualChinrestCalibration replay', () => {
     expect(mockApply).toHaveBeenCalledWith('Reset viewing-distance measurements', undefined);
   });
 
+  test('defaults missing measurements in a legacy replay state', async () => {
+    mockAnswers.value = {
+      card: {
+        componentName: '$virtual-chinrest.components.card-size',
+        trialOrder: '1',
+        answer: { pixelsPerMM: 5 },
+      },
+    };
+    const { getByTestId, getByText } = render(
+      <ViewingDistanceCalibration
+        parameters={{ blindspotAngle: 13.5 }}
+        answers={{}}
+        provenanceState={{ ballPosition: 500 } as never}
+        setAnswer={vi.fn()}
+        useTrrack={useTrrack}
+      />,
+    );
+
+    await waitFor(() => expect(getByText(/Remaining measurements:/).textContent).toContain('5'));
+    expect(getByTestId('blindspot-ball').style.left).toBe('500px');
+  });
+
   test('selects the closest preceding card calibration for repeated library sequences', () => {
     const closestCard = findPreviousCardSizeAnswer({
       card_0: {

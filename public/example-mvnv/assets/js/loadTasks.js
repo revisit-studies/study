@@ -9,7 +9,69 @@ let participantCollection;
 const taskLocation = 'sidebar';
 const revisitTaskID = 'iframe-task';
 let revisitAnswers;
+let revisitProvenanceState;
+let revisitProvenanceGraph;
+let revisitProvenanceTaskID;
+let revisitPreviousSelection = '';
 // let vis;
+
+function createRevisitProvenanceNode(id, state, createdOn, parent) {
+  return {
+    id,
+    label: parent ? 'Update MVNV answer selection' : 'Root',
+    event: parent ? 'mvnv-answer-selection' : 'Root',
+    createdOn,
+    artifacts: [],
+    meta: { annotation: [], bookmark: [] },
+    children: [],
+    state: { type: 'checkpoint', val: state },
+    level: parent ? revisitProvenanceGraph.nodes[parent].level + 1 : 0,
+    ...(parent ? { parent, sideEffects: { do: [], undo: [] } } : {}),
+  };
+}
+
+function postRevisitProvenanceState(state) {
+  const answerBox = state?.selections?.answerBox;
+  const taskID = taskList?.[currentTask]?.taskID;
+  if (!answerBox || !taskID || typeof Revisit === 'undefined') {
+    return;
+  }
+
+  const selectedIds = Object.keys(answerBox);
+  const serializedSelection = JSON.stringify(selectedIds);
+  if (revisitProvenanceTaskID === taskID && serializedSelection === revisitPreviousSelection) {
+    return;
+  }
+
+  const createdOn = Date.now();
+  const nodeID = crypto.randomUUID();
+  const replayState = { selectedIds };
+  if (revisitProvenanceTaskID !== taskID) {
+    revisitProvenanceTaskID = taskID;
+    revisitProvenanceGraph = {
+      root: nodeID,
+      current: nodeID,
+      nodes: {
+        [nodeID]: createRevisitProvenanceNode(nodeID, replayState, createdOn),
+      },
+      traversalEvents: [{ nodeId: nodeID, createdOn }],
+    };
+  } else {
+    const parent = revisitProvenanceGraph.current;
+    revisitProvenanceGraph.nodes[parent].children.push(nodeID);
+    revisitProvenanceGraph.nodes[nodeID] = createRevisitProvenanceNode(
+      nodeID,
+      replayState,
+      createdOn,
+      parent,
+    );
+    revisitProvenanceGraph.current = nodeID;
+    revisitProvenanceGraph.traversalEvents.push({ nodeId: nodeID, createdOn });
+  }
+
+  revisitPreviousSelection = serializedSelection;
+  Revisit.postProvenance(revisitProvenanceGraph);
+}
 
 function rehydrateAdjMatrixAnswer(selectedIds) {
   if (
@@ -34,22 +96,13 @@ function rehydrateAdjMatrixAnswer(selectedIds) {
   }
 }
 
-function rehydrateRevisitAnswer() {
-  if (!revisitAnswers || !taskList || currentTask === undefined) {
-    return;
-  }
-
-  const trialId = new URLSearchParams(window.location.search).get('trialid');
-  const trialAnswer = Object.values(revisitAnswers).find(
-    (answer) => answer.componentName === trialId,
-  );
-  const selectedNames = trialAnswer?.answer?.[revisitTaskID];
-  if (!Array.isArray(selectedNames)) {
-    return;
-  }
-
-  taskList[currentTask].answer.nodes = selectedNames.map((name) => ({ name }));
-
+function rehydrateSelectedNodes(selectedNodes) {
+  const selectedNames = selectedNodes.map((node) => node.name);
+  const selectedIds = selectedNodes.map((node) => node.id);
+  taskList[currentTask].answer.nodes = selectedNodes.map((node) => ({
+    id: node.id,
+    name: node.name,
+  }));
   const selectedList = d3
     .select('#selectedNodeList')
     .selectAll('li')
@@ -57,24 +110,41 @@ function rehydrateRevisitAnswer() {
   selectedList.enter().append('li').merge(selectedList).text((name) => name);
   selectedList.exit().remove();
 
-  if (typeof graph !== 'undefined' && Array.isArray(graph.nodes)) {
-    const selectedNodes = graph.nodes
-      .filter((node) => selectedNames.includes(node.name));
-    const selectedIds = selectedNodes.map((node) => node.id);
-    taskList[currentTask].answer.nodes = selectedNodes.map((node) => ({
-      id: node.id,
-      name: node.name,
-    }));
-    d3.selectAll('.node')
-      .classed('clicked', (node) => selectedIds.includes(node.id))
-      .classed('selected', (node) => selectedIds.includes(node.id));
-    rehydrateAdjMatrixAnswer(selectedIds);
+  d3.selectAll('.node')
+    .classed('clicked', (node) => selectedIds.includes(node.id))
+    .classed('selected', (node) => selectedIds.includes(node.id));
+  rehydrateAdjMatrixAnswer(selectedIds);
+}
+
+function rehydrateRevisitState() {
+  if (!taskList || currentTask === undefined || typeof graph === 'undefined' || !Array.isArray(graph.nodes)) {
+    return;
+  }
+
+  if (Array.isArray(revisitProvenanceState?.selectedIds)) {
+    const selectedIds = new Set(revisitProvenanceState.selectedIds.map(String));
+    rehydrateSelectedNodes(graph.nodes.filter((node) => selectedIds.has(String(node.id))));
+    return;
+  }
+
+  const trialId = new URLSearchParams(window.location.search).get('trialid');
+  const trialAnswer = Object.values(revisitAnswers || {}).find(
+    (answer) => answer.componentName === trialId,
+  );
+  const selectedNames = trialAnswer?.answer?.[revisitTaskID];
+  if (Array.isArray(selectedNames)) {
+    rehydrateSelectedNodes(graph.nodes.filter((node) => selectedNames.includes(node.name)));
   }
 }
 
 Revisit.onAnswersReceive((answers) => {
   revisitAnswers = answers;
-  rehydrateRevisitAnswer();
+  rehydrateRevisitState();
+});
+
+Revisit.onProvenanceReceive((state) => {
+  revisitProvenanceState = state;
+  rehydrateRevisitState();
 });
 
 function detectBrowser() {
@@ -799,7 +869,7 @@ async function resetPanel() {
   } else {
     window.controller.loadTask(currentTask);
   }
-  rehydrateRevisitAnswer();
+  rehydrateRevisitState();
 
   if (onTrials && currentTask === 0) {
     setTimeout(
@@ -818,6 +888,8 @@ async function resetPanel() {
 }
 
 async function pushProvenance(provGraph, initialState = false, collectionName) {
+  postRevisitProvenanceState(provGraph);
+
   //make sure this is not just a reload, and not an initialState:
   //avoid clearing out provenance when the user reloads the page;
   if (getCookie('onPage').length > 0) {

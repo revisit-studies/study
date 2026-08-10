@@ -23,6 +23,30 @@ interface ViewingDistanceState {
   viewingDistance: number | null;
 }
 
+function normalizeViewingDistanceState(state: unknown): ViewingDistanceState | null {
+  if (typeof state !== 'object' || state === null) {
+    return null;
+  }
+
+  const candidate = state as Partial<ViewingDistanceState>;
+  const hasReplayState = 'ballPosition' in candidate
+    || 'ballPositions' in candidate
+    || 'viewingDistance' in candidate;
+  if (!hasReplayState) {
+    return null;
+  }
+
+  return {
+    ballPosition: Number.isFinite(candidate.ballPosition) ? candidate.ballPosition! : 740,
+    ballPositions: Array.isArray(candidate.ballPositions)
+      ? candidate.ballPositions.filter((position) => Number.isFinite(position))
+      : [],
+    viewingDistance: Number.isFinite(candidate.viewingDistance)
+      ? candidate.viewingDistance!
+      : null,
+  };
+}
+
 function compareTrialOrders(left: string, right: string) {
   const leftOrder = parseTrialOrder(left);
   const rightOrder = parseTrialOrder(right);
@@ -92,6 +116,10 @@ export default function ViewingDistanceCalibration({
   const cardSizeAnswer = findPreviousCardSizeAnswer(ans, currentAnswer?.trialOrder);
   const pixelsPerMM = Number(cardSizeAnswer?.answer?.pixelsPerMM);
   const storedViewingDistance = Number(currentAnswer?.answer?.['dist-calibration-MM']);
+  const replayState = useMemo(
+    () => normalizeViewingDistanceState(provenanceState),
+    [provenanceState],
+  );
   const storedBallPositions = useMemo(() => {
     const value = currentAnswer?.answer?.['ball-positions'];
     if (typeof value !== 'string') {
@@ -260,13 +288,13 @@ export default function ViewingDistanceCalibration({
   }, []);
 
   useEffect(() => {
-    if (provenanceState) {
-      setBallPositions(provenanceState.ballPositions);
-      setViewingDistance(provenanceState.viewingDistance);
+    if (replayState) {
+      setBallPositions(replayState.ballPositions);
+      setViewingDistance(replayState.viewingDistance);
       setIsTracking(false);
-      setClickCount(Math.max(0, 5 - provenanceState.ballPositions.length));
+      setClickCount(Math.max(0, 5 - replayState.ballPositions.length));
       if (ballRef.current) {
-        ballRef.current.style.left = `${provenanceState.ballPosition}px`;
+        ballRef.current.style.left = `${replayState.ballPosition}px`;
       }
       return;
     }
@@ -279,7 +307,7 @@ export default function ViewingDistanceCalibration({
     setViewingDistance(storedViewingDistance);
     setIsTracking(false);
     setClickCount(Math.max(0, 5 - storedBallPositions.length));
-  }, [provenanceState, storedBallPositions, storedViewingDistance]);
+  }, [replayState, storedBallPositions, storedViewingDistance]);
 
   // Cleanup animation frame on unmount
   useEffect(() => () => {
