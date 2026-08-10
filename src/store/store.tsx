@@ -236,14 +236,6 @@ export async function studyStoreCreator(
       saveAnalysisState(state, { payload }: PayloadAction<{ prov: any, location: ResponseBlockLocation }>) {
         state.analysisProvState[payload.location] = payload.prov;
       },
-      resetAnalysisProvenance(state) {
-        state.analysisProvState = {
-          aboveStimulus: undefined,
-          belowStimulus: undefined,
-          stimulus: undefined,
-          sidebar: undefined,
-        };
-      },
       setAnalysisIsPlaying(state, { payload }: PayloadAction<boolean>) {
         state.analysisIsPlaying = payload;
       },

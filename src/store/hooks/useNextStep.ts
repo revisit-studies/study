@@ -43,7 +43,7 @@ export function useNextStep() {
 
   const storeDispatch = useStoreDispatch();
   const {
-    saveTrialAnswer, setReactiveAnswers, setMatrixAnswersRadio, setMatrixAnswersCheckbox, setRankingAnswers, setAlertModal, setClickedPrevious,
+    saveTrialAnswer, setReactiveAnswers, setMatrixAnswersRadio, setMatrixAnswersCheckbox, setRankingAnswers, setAlertModal,
   } = useStoreActions();
   const { storageEngine } = useStorageEngine();
 
@@ -79,13 +79,12 @@ export function useNextStep() {
       const currentWindowEvents = windowEvents && 'current' in windowEvents && windowEvents.current ? windowEvents.current.splice(0, windowEvents.current.length) : [];
 
       if (dataCollectionEnabled && (storedAnswer.endTime === -1 || clickedPrevious)) {
-        const isRevisitingCompletedAnswer = storedAnswer.endTime > -1;
         const toSave = {
           ...storedAnswer,
           answer: answerToPersist,
-          startTime: isRevisitingCompletedAnswer ? storedAnswer.startTime : startTime,
-          endTime: isRevisitingCompletedAnswer ? storedAnswer.endTime : endTime,
-          windowEvents: isRevisitingCompletedAnswer ? storedAnswer.windowEvents : currentWindowEvents,
+          startTime,
+          endTime,
+          windowEvents: currentWindowEvents,
           timedOut: !collectData,
           responseSubmitAttempted,
           checkAnswer: checkAnswerState,
@@ -118,7 +117,6 @@ export function useNextStep() {
         storeDispatch(setMatrixAnswersRadio(null));
         storeDispatch(setRankingAnswers(null));
       }
-      storeDispatch(setClickedPrevious(false));
 
       let nextStep = currentStep + 1;
 
@@ -170,7 +168,7 @@ export function useNextStep() {
         color: 'red',
       });
     }
-  }, [currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, clickedPrevious, sequence, answers, startTime, funcIndex, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, setRankingAnswers, setAlertModal, setClickedPrevious, studyConfig, participantSequence, navigate, studyId, responseSubmitAttempted, checkAnswerState]);
+  }, [currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, clickedPrevious, sequence, answers, startTime, funcIndex, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, setRankingAnswers, setAlertModal, studyConfig, participantSequence, navigate, studyId, responseSubmitAttempted, checkAnswerState]);
 
   return {
     isNextDisabled,

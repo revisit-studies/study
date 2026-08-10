@@ -1,7 +1,7 @@
 import { AppShell, Button, Flex } from '@mantine/core';
 import { Outlet } from 'react-router';
 import {
-  useEffect, useLayoutEffect, useMemo, useRef,
+  useEffect, useMemo, useRef,
   useState,
 } from 'react';
 import type { CSSProperties } from 'react';
@@ -20,7 +20,7 @@ import { useStoreSelector, useStoreDispatch, useStoreActions } from '../store/st
 import { AnalysisFooter } from './interface/AnalysisFooter';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import { studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
-import { useCurrentComponent, useCurrentIdentifier } from '../routes/utils';
+import { useCurrentComponent } from '../routes/utils';
 import { useFetchStylesheet } from '../utils/fetchStylesheet';
 import { RecordingContext, useRecording } from '../store/hooks/useRecording';
 import { ScreenRecordingRejection } from './interface/ScreenRecordingRejection';
@@ -34,15 +34,12 @@ const STUDY_BROWSER_WIDTH = 360;
 export function StepRenderer() {
   const windowEvents = useRef<EventType[]>([]);
   const dispatch = useStoreDispatch();
-  const {
-    toggleStudyBrowser, setAlertModal, resetAnalysisProvenance,
-  } = useStoreActions();
+  const { toggleStudyBrowser, setAlertModal } = useStoreActions();
   const { storageEngine } = useStorageEngine();
 
   const isAnalysis = useIsAnalysis();
   const studyConfig = useStudyConfig();
   const currentComponent = useCurrentComponent();
-  const currentIdentifier = useCurrentIdentifier();
 
   const componentConfig = useMemo(() => studyComponentToIndividualComponent(studyConfig.components[currentComponent] || {}, studyConfig), [currentComponent, studyConfig]);
 
@@ -57,16 +54,6 @@ export function StepRenderer() {
 
   const screenRecording = useRecording();
   const replay = useReplay();
-  const { resetReplay } = replay;
-  const previousReplayIdentifier = useRef(currentIdentifier);
-
-  useLayoutEffect(() => {
-    if (isAnalysis && previousReplayIdentifier.current !== currentIdentifier) {
-      resetReplay();
-      dispatch(resetAnalysisProvenance());
-    }
-    previousReplayIdentifier.current = currentIdentifier;
-  }, [currentIdentifier, dispatch, isAnalysis, resetAnalysisProvenance, resetReplay]);
 
   const { isRejected: isScreenRecordingUserRejected } = screenRecording;
 
@@ -252,7 +239,7 @@ export function StepRenderer() {
               </AppShell.Main>
             </Flex>
             {isAnalysis && (
-            <AnalysisFooter setHasAudio={setHasAudio} key={currentIdentifier} />
+            <AnalysisFooter setHasAudio={setHasAudio} key={currentComponent} />
             )}
           </AppShell>
         </ReplayContext.Provider>

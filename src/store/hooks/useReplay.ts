@@ -336,28 +336,6 @@ export function useReplay() {
     };
   }, [isPlaying, setIsPlaying]);
 
-  const resetReplay = useCallback(() => {
-    replayRef.current?.pause();
-    if (videoRef.current) {
-      videoRef.current.currentTime = 0;
-    }
-    if (audioRef.current) {
-      audioRef.current.currentTime = 0;
-    }
-    if (syntheticReplayTimer.current) {
-      clearInterval(syntheticReplayTimer.current);
-      syntheticReplayTimer.current = null;
-    }
-    replayRef.current = null;
-    timerValue.current = 0;
-    internalDuration.current = 0;
-    _setSeekTime(0);
-    _setDuration(0);
-    updateIsPlaying(false);
-    setHasEnded(false);
-    emitterRef.current.emit('timeupdate', 0);
-  }, [updateIsPlaying]);
-
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const replaySyncListener = (newValue: any) => {
@@ -404,9 +382,8 @@ export function useReplay() {
       replayEvent,
       forceEmitTimeUpdate,
       hasEnded,
-      resetReplay,
     }),
-    [replayEvent, seekTime, setSeekTime, duration, speed, isPlaying, setIsPlaying, updateReplayRef, setSpeed, forceEmitTimeUpdate, setDuration, hasEnded, resetReplay],
+    [replayEvent, seekTime, setSeekTime, duration, speed, isPlaying, setIsPlaying, updateReplayRef, setSpeed, forceEmitTimeUpdate, setDuration, hasEnded],
   );
 
   return value;

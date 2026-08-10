@@ -398,28 +398,6 @@ describe('useReplay — task clock is authoritative', () => {
     expect(result.current.hasEnded).toBe(true);
     expect(result.current.isPlaying).toBe(false);
   });
-
-  test('resetReplay pauses and clears task timing without changing speed', () => {
-    const { result } = renderHook(() => useReplay());
-    const video = makeVideoWithSrc();
-    video.pause = vi.fn();
-
-    act(() => {
-      result.current.videoRef.current = video;
-      result.current.updateReplayRef();
-      result.current.setDuration(10);
-      result.current.setSeekTime(4);
-      result.current.setSpeed(2);
-      result.current.resetReplay();
-    });
-
-    expect(video.pause).toHaveBeenCalled();
-    expect(result.current.seekTime).toBe(0);
-    expect(result.current.duration).toBe(0);
-    expect(result.current.isPlaying).toBe(false);
-    expect(result.current.hasEnded).toBe(false);
-    expect(result.current.speed).toBe(2);
-  });
 });
 
 describe('useReplay — cleanup', () => {

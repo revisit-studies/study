@@ -3,7 +3,6 @@ import { checkSavedAnswers } from './checkSavedAnswers';
 import {
   nextClick,
   openStudyFromLanding,
-  readStoredComponentTiming,
   resetClientStudyState,
   waitForStudyEndMessage,
 } from './utils';
@@ -41,8 +40,6 @@ test('Test website component with previous button', async ({ page }) => {
 
   const iframeContent = await page.frameLocator('iframe').getByRole('link', { name: 'Try The Demo' });
   await expect(iframeContent).toBeVisible();
-  await expect.poll(() => readStoredComponentTiming(page, 'barChart')).not.toBeNull();
-  const originalTiming = await readStoredComponentTiming(page, 'barChart');
 
   // Go to previous page
   await page.getByRole('button', { name: 'Previous', exact: true }).click();
@@ -58,8 +55,6 @@ test('Test website component with previous button', async ({ page }) => {
   // Click on the next button
   await nextClick(page);
   await expect(iframeContent).toBeVisible();
-  const revisitedTiming = await readStoredComponentTiming(page, 'barChart');
-  expect(revisitedTiming).toEqual(originalTiming);
 
   // Go to previous page
   await page.getByRole('button', { name: 'Previous', exact: true }).click();

@@ -203,20 +203,5 @@ for (const demo of demos) {
       await seekReplay(page, recording, target.time);
       await expectDotCount(replayFrame, target.count);
     }
-
-    await seekReplay(page, recording, recording.endTime - 1);
-    const replayTimer = page.getByTestId('replay-timer');
-    const timerLine = replayTimer.locator('line');
-    const normalizedTimerPosition = async () => (
-      Number(await timerLine.getAttribute('x1'))
-      / await replayTimer.evaluate((element) => element.getBoundingClientRect().width)
-    );
-    await expect.poll(normalizedTimerPosition).toBeGreaterThan(0.5);
-    const replayPathBeforeNavigation = new URL(page.url()).pathname;
-    await page.getByRole('button', { name: 'Next Task' }).click();
-    await expect.poll(() => new URL(page.url()).pathname).not.toBe(replayPathBeforeNavigation);
-    await expect(replayTimer).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
-    await expect.poll(normalizedTimerPosition).toBeLessThan(0.05);
   });
 }

@@ -306,20 +306,10 @@ describe('studyStoreCreator', () => {
     expect(store.getState().checkAnswer.intro_0).toEqual({ attemptsUsed: 2, correct: true, responses: { q1: true } });
   });
 
-  test('analysis provenance actions update and reset every location', async () => {
+  test('saveAnalysisState action updates analysisProvState', async () => {
     const { store, actions } = await studyStoreCreator('test', minimalConfig, minimalSequence, metadata, emptyAnswers, modes, 'p1', false, false);
     store.dispatch(actions.saveAnalysisState({ prov: { nodes: [] }, location: 'stimulus' }));
     expect(store.getState().analysisProvState.stimulus).toEqual({ nodes: [] });
-    store.dispatch(actions.saveAnalysisState({ prov: { form: { response: 'old' } }, location: 'sidebar' }));
-
-    store.dispatch(actions.resetAnalysisProvenance());
-
-    expect(store.getState().analysisProvState).toEqual({
-      aboveStimulus: undefined,
-      belowStimulus: undefined,
-      stimulus: undefined,
-      sidebar: undefined,
-    });
   });
 
   test('setAnalysisHasAudio, HasScreenRecording, CanPlayScreenRecording, HasProvenance', async () => {
