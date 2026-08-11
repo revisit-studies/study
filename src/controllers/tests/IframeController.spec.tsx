@@ -7,6 +7,7 @@ import {
 } from 'vitest';
 import { IframeController } from '../IframeController';
 import type { WebsiteComponent } from '../../parser/types';
+import { ReplayContext } from '../../store/hooks/useReplay';
 
 const mockDispatch = vi.fn();
 const mockSetReactiveAnswers = vi.fn((payload) => ({ type: 'setReactiveAnswers', payload }));
@@ -193,5 +194,47 @@ describe('IframeController', () => {
       },
       '*',
     );
+  });
+
+  test('uses saved answers until analysis replay starts', async () => {
+    mockIsAnalysis.value = true;
+    const provState = { selectedIds: [] };
+    const answers = { task: { answer: { 'iframe-task': ['Saved node'] } } } as never;
+    const renderController = (seekTime: number) => (
+      <ReplayContext.Provider value={{ seekTime, isPlaying: false } as never}>
+        <IframeController
+          currentConfig={{ type: 'website', path: 'example/index.html', response: [] }}
+          provState={provState}
+          answers={answers}
+        />
+      </ReplayContext.Provider>
+    );
+    const { rerender } = render(renderController(0));
+    const iframe = document.querySelector('iframe')!;
+    const postMessage = vi.fn();
+    Object.defineProperty(iframe, 'contentWindow', {
+      value: { postMessage },
+      configurable: true,
+    });
+
+    await waitFor(() => expect(iframe.src).toContain('id='));
+    const iframeId = new URL(iframe.src).searchParams.get('id');
+    window.dispatchEvent(new MessageEvent('message', {
+      data: { type: '@REVISIT_COMMS/WINDOW_READY', iframeId },
+    }));
+
+    expect(postMessage).toHaveBeenCalledWith(expect.objectContaining({
+      type: '@REVISIT_COMMS/ANSWERS',
+      message: answers,
+    }), '*');
+    expect(postMessage).not.toHaveBeenCalledWith(expect.objectContaining({
+      type: '@REVISIT_COMMS/PROVENANCE',
+    }), '*');
+
+    rerender(renderController(1));
+    await waitFor(() => expect(postMessage).toHaveBeenCalledWith(expect.objectContaining({
+      type: '@REVISIT_COMMS/PROVENANCE',
+      message: provState,
+    }), '*'));
   });
 });
