@@ -19,7 +19,8 @@ export function getDynamicComponentsForBlock(
 
   return Object.entries(participantAnswers)
     .filter(([key]) => key.startsWith(`${node.id}_${index}_`))
-    .map(([_, value]) => value.componentName);
+    .map(([_, value]) => value.componentName)
+    .filter((componentName): componentName is string => typeof componentName === 'string' && componentName.length > 0);
 }
 
 function formatReference(reference: string) {

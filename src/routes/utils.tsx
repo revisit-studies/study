@@ -90,10 +90,19 @@ export function useCurrentComponent(): string {
       const funcName = flatSequence[currentStep];
       const decryptedFuncIndex = funcIndex ? decryptIndex(funcIndex) : 0;
 
-      // Check if answer exists for this index, if so get the component name and return early
-      const currentAnswer = Object.entries(_answers).find(([key, _]) => key.startsWith(`${funcName}_${currentStep}_`) && key.endsWith(`_${decryptedFuncIndex}`));
-      const answerCompName = currentAnswer ? currentAnswer[1].componentName : null;
-      if (answerCompName !== null) {
+      // Restore only answers that resolve to a configured component. Malformed
+      // loading records must not prevent the dynamic function from recreating
+      // the requested iteration.
+      const currentAnswer = Object.entries(_answers).find(([key, answer]) => {
+        const answerCompName = answer.componentName;
+        return key.startsWith(`${funcName}_${currentStep}_`)
+          && key.endsWith(`_${decryptedFuncIndex}`)
+          && typeof answerCompName === 'string'
+          && answerCompName.length > 0
+          && Boolean(getComponent(answerCompName, studyConfig));
+      });
+      const answerCompName = currentAnswer?.[1].componentName;
+      if (answerCompName) {
         setCompName(answerCompName);
         setIndexWhenSettingComponentName(decryptedFuncIndex);
         return;

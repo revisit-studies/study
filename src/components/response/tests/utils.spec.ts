@@ -478,6 +478,191 @@ describe('validateResponse', () => {
     });
   });
 
+  test('pairwise ranking requires at least one complete pair', () => {
+    const response: Response = {
+      id: 'ranking', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: ['A', 'B', 'C'],
+    };
+
+    expect(validateResponse(response, {}, { ranking: {} })).toMatchObject({
+      issueType: 'unanswered',
+      blocksProgression: true,
+    });
+
+    expect(validateResponse(response, { A_0: 'pair-0-high' }, { ranking: { A_0: 'pair-0-high' } })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please complete at least one pair to continue.',
+      blocksProgression: true,
+    });
+
+    const splitPairs = { A_0: 'pair-0-high', B_1: 'pair-1-low' };
+    expect(validateResponse(response, splitPairs, { ranking: splitPairs })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please complete at least one pair to continue.',
+    });
+
+    const completePair = { A_0: 'pair-0-high', B_1: 'pair-0-low' };
+    expect(validateResponse(response, completePair, { ranking: completePair })).toEqual({
+      valid: true,
+      issueType: 'none',
+      blocksProgression: false,
+    });
+  });
+
+  test('pairwise ranking requires every pair to be complete', () => {
+    const response: Response = {
+      id: 'ranking', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: ['A', 'B', 'C', 'D'],
+    };
+
+    const halfPair = { A_0: 'pair-0-high', B_1: 'pair-0-low', C_2: 'pair-1-high' };
+    expect(validateResponse(response, halfPair, { ranking: halfPair })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please complete or remove unfinished pairs to continue.',
+      blocksProgression: true,
+    });
+
+    const twoPairs = {
+      A_0: 'pair-0-high', B_1: 'pair-0-low', C_2: 'pair-1-high', D_3: 'pair-1-low',
+    };
+    expect(validateResponse(response, twoPairs, { ranking: twoPairs }).valid).toBe(true);
+  });
+
+  test('pairwise ranking rejects duplicate restored/default pairs', () => {
+    const response: Response = {
+      id: 'ranking', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: ['A', 'B'],
+    };
+    const duplicatePairs = {
+      A_0: 'pair-0-high',
+      B_1: 'pair-0-low',
+      B_2: 'pair-1-high',
+      A_3: 'pair-1-low',
+    };
+
+    expect(validateResponse(response, duplicatePairs, { ranking: duplicatePairs })).toMatchObject({
+      issueType: 'invalid',
+      message: 'This would create a duplicate pair.',
+      blocksProgression: true,
+    });
+  });
+
+  test('pairwise ranking rejects malformed restored/default locations', () => {
+    const response: Response = {
+      id: 'ranking', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: ['A', 'B', 'C'],
+    };
+    const malformedLocation = {
+      A_0: 'pair-0-high',
+      B_1: 'pair-0-low',
+      C_2: 'bogus',
+    };
+
+    expect(validateResponse(response, malformedLocation, { ranking: malformedLocation })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please complete or remove invalid pairs to continue.',
+      blocksProgression: true,
+    });
+  });
+
+  test('pairwise ranking rejects non-string restored/default locations', () => {
+    const response: Response = {
+      id: 'ranking', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: ['A', 'B'],
+    };
+    const malformedLocation = { A: null } as unknown as Record<string, string>;
+
+    expect(validateResponse(response, malformedLocation, { ranking: malformedLocation })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please complete or remove invalid pairs to continue.',
+      blocksProgression: true,
+    });
+  });
+
+  test.each([
+    ['self-comparisons', { A_0: 'pair-0-high', A_1: 'pair-0-low' }],
+    ['multiple items in one slot', { A_0: 'pair-0-high', B_1: 'pair-0-high', C_2: 'pair-0-low' }],
+    ['unknown option IDs', { X_0: 'pair-0-high', Y_1: 'pair-0-low' }],
+  ])('pairwise ranking rejects %s in restored/default answers', (_caseName, value) => {
+    const response: Response = {
+      id: 'ranking', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: ['A', 'B', 'C'],
+    };
+
+    expect(validateResponse(response, value, { ranking: value })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please complete at least one pair to continue.',
+    });
+  });
+
+  test('pairwise ranking handles option values containing underscores and plain default keys', () => {
+    const response: Response = {
+      id: 'ranking', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: ['new_york', 'los_angeles'],
+    };
+
+    // Legacy instance keys remain valid for option values containing underscores.
+    const instanceKeys = { new_york_0: 'pair-0-high', los_angeles_1: 'pair-0-low' };
+    expect(validateResponse(response, instanceKeys, { ranking: instanceKeys }).valid).toBe(true);
+
+    // Configured defaults use plain option values as keys.
+    const plainKeys = { new_york: 'pair-0-high', los_angeles: 'pair-0-low' };
+    expect(validateResponse(response, plainKeys, { ranking: plainKeys }).valid).toBe(true);
+
+    const selfPair = { new_york: 'pair-0-high', new_york_1: 'pair-0-low' };
+    expect(validateResponse(response, selfPair, { ranking: selfPair })).toMatchObject({
+      issueType: 'invalid',
+    });
+  });
+
+  test('pairwise ranking distinguishes options "model" and "model_0" from generated instances', () => {
+    const response: Response = {
+      id: 'ranking', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: ['model', 'model_0'],
+    };
+
+    // Tagged keys distinguish a generated model instance from the configured model_0 option.
+    const taggedPair = { 'instance-0-model': 'pair-0-high', model_0: 'pair-0-low' };
+    expect(validateResponse(response, taggedPair, { ranking: taggedPair }).valid).toBe(true);
+
+    const selfPair = { 'instance-0-model': 'pair-0-high', model: 'pair-0-low' };
+    expect(validateResponse(response, selfPair, { ranking: selfPair })).toMatchObject({
+      issueType: 'invalid',
+    });
+
+    // Unambiguous legacy instance keys remain supported.
+    const legacyPair = { model_66: 'pair-0-high', model_0: 'pair-0-low' };
+    expect(validateResponse(response, legacyPair, { ranking: legacyPair }).valid).toBe(true);
+  });
+
+  test('an option value that looks like a tagged key resolves as itself', () => {
+    const response: Response = {
+      id: 'ranking', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: ['model', 'instance-0-model'],
+    };
+
+    const pair = { 'instance-0-model': 'pair-0-high', model: 'pair-0-low' };
+    expect(validateResponse(response, pair, { ranking: pair }).valid).toBe(true);
+  });
+
+  test('pairwise instance keys keep option values containing hyphens intact', () => {
+    const response: Response = {
+      id: 'ranking', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: ['e-bike', 'car'],
+    };
+
+    const pair = { 'instance-0-e-bike': 'pair-0-high', car: 'pair-0-low' };
+    expect(validateResponse(response, pair, { ranking: pair }).valid).toBe(true);
+
+    const selfPair = { 'instance-0-e-bike': 'pair-0-high', 'e-bike': 'pair-0-low' };
+    expect(validateResponse(response, selfPair, { ranking: selfPair })).toMatchObject({
+      issueType: 'invalid',
+    });
+  });
+
+  test('pairwise instance keys support an empty configured option value', () => {
+    const response: Response = {
+      id: 'ranking',
+      prompt: 'Rank',
+      type: 'ranking-pairwise',
+      required: true,
+      options: [{ label: 'No value', value: '' }, 'B'],
+    };
+
+    const pair = { 'instance-0-': 'pair-0-high', B: 'pair-0-low' };
+    expect(validateResponse(response, pair, { ranking: pair }).valid).toBe(true);
+  });
+
   test('Mantine and progression adapters agree for required response states', () => {
     const response: Response = {
       ...requiredShortText,

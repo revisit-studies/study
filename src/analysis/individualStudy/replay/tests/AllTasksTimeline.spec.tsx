@@ -16,6 +16,7 @@ import { SingleTaskLabelLines } from '../SingleTaskLabelLines';
 // ── mocks ────────────────────────────────────────────────────────────────────
 
 vi.mock('@mantine/core', () => ({
+  Box: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Center: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Stack: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Tooltip: ({ children, label }: { children: ReactNode; label?: ReactNode }) => (
@@ -137,6 +138,7 @@ describe('SingleTask', () => {
       <svg><SingleTask {...baseProps} answerStatus="correct" /></svg>,
     );
     expect(html).toContain('icon-check');
+    expect(html).toContain('fill="#bfe8c6"');
   });
 
   test('shows x icon for an incorrect response', () => {
@@ -144,6 +146,7 @@ describe('SingleTask', () => {
       <svg><SingleTask {...baseProps} answerStatus="incorrect" /></svg>,
     );
     expect(html).toContain('icon-x');
+    expect(html).toContain('fill="#f3c1c1"');
   });
 
   test('shows an accessible grey checkmark for an unknown response', () => {
@@ -153,6 +156,7 @@ describe('SingleTask', () => {
     expect(html).toContain('icon-check');
     expect(html).toContain('var(--mantine-color-gray-6)');
     expect(html).toContain('Response recorded; correctness not configured.');
+    expect(html).toContain('fill="lightgray"');
   });
 
   test('shows microphone icon when hasAudio', () => {
@@ -275,6 +279,39 @@ describe('AllTasksTimeline', () => {
     );
     // Browsed-away rect should be rendered inside a Tooltip
     expect(html).toContain('<rect');
+  });
+
+  test('uses equal-width task slots and omits browsed-away intervals in uniform mode', () => {
+    const participant = makeParticipant({
+      answers: {
+        trial1_0: makeAnswer({
+          windowEvents: [
+            [t0 + 1_000, 'visibility', 'hidden'],
+            [t0 + 3_000, 'visibility', 'visible'],
+          ],
+        }),
+        trial2_1: makeAnswer({
+          componentName: 'trial2',
+          trialOrder: '1_0',
+          startTime: t0 + 20_000,
+          endTime: t0 + 40_000,
+        }),
+      },
+    });
+
+    const html = renderToStaticMarkup(
+      <AllTasksTimeline
+        participantData={participant}
+        width={600}
+        studyId="test-study"
+        studyConfig={emptyConfig}
+        maxLength={undefined}
+        timelineMode="uniform"
+      />,
+    );
+
+    expect(html).toContain('width:136px');
+    expect(html).not.toContain('Browsed away');
   });
 
   test('handles all tracked window event types without error', () => {

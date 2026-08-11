@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "VLAT: Assessing Visual Literacy",
+    "title": "VLAT: Assessing Visualization Literacy",
     "version": "1.0.0",
     "authors": [
       "The reVISit Team"
@@ -14,7 +14,7 @@
     ]
   },
   "uiConfig": {
-    "contactEmail": "",
+    "contactEmail": "contact@revisit.dev",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "withSidebar": true

@@ -21,21 +21,25 @@ import cx from 'clsx';
 import {
   Box, Button, Flex, Group, Paper, Stack, Text,
 } from '@mantine/core';
-import { useMemo, useState, useEffect } from 'react';
+import {
+  useCallback, useEffect, useMemo, useRef, useState,
+} from 'react';
 import { InputLabel } from './InputLabel';
 import { OptionLabel } from './OptionLabel';
 import classes from './css/RankingDnd.module.css';
 import { ParsedStringOption, RankingResponse, StringOption } from '../../parser/types';
 import { useStoreActions, useStoreDispatch } from '../../store/store';
 import { parseStringOptions } from '../../utils/stringOptions';
+import { getRankingBaseItemId, getRankingInstanceIndex, makeRankingInstanceKey } from './responseValidation';
 
 type Item = { id: string; symbol: string; option: ParsedStringOption };
 
-function SortableItem({ item, index }: { item: Item; index?: number }) {
+function SortableItem({ item, index, disabled }: { item: Item; index?: number; disabled?: boolean }) {
   const {
     attributes, listeners, setNodeRef, transform, transition, isDragging,
   } = useSortable({
     id: item.symbol,
+    disabled,
   });
 
   const style: React.CSSProperties = {
@@ -49,7 +53,7 @@ function SortableItem({ item, index }: { item: Item; index?: number }) {
       style={{
         ...style, margin: '0 auto', minWidth: '200px',
       }}
-      className={cx(classes.item, { [classes.itemDragging]: isDragging })}
+      className={cx(classes.item, { [classes.itemDragging]: isDragging, [classes.itemDisabled]: disabled })}
       {...attributes}
       {...listeners}
       withBorder
@@ -190,7 +194,7 @@ function RankingSublistComponent({
           <SortableContext items={state.selected.map((i) => i.symbol)} strategy={verticalListSortingStrategy}>
             <Stack>
               {state.selected.map((item, index) => (
-                <SortableItem key={item.symbol} item={item} index={index + 1} />
+                <SortableItem key={item.symbol} item={item} index={index + 1} disabled={disabled} />
               ))}
             </Stack>
           </SortableContext>
@@ -201,7 +205,7 @@ function RankingSublistComponent({
           <SortableContext items={state.unassigned.map((i) => i.symbol)} strategy={verticalListSortingStrategy}>
             <Stack>
               {state.unassigned.map((item) => (
-                <SortableItem key={item.symbol} item={item} />
+                <SortableItem key={item.symbol} item={item} disabled={disabled} />
               ))}
             </Stack>
           </SortableContext>
@@ -304,7 +308,7 @@ function RankingCategoricalComponent({
             <SortableContext items={state[category].map((i) => i.symbol)} strategy={verticalListSortingStrategy}>
               <Stack>
                 {state[category].map((item) => (
-                  <SortableItem key={item.symbol} item={item} />
+                  <SortableItem key={item.symbol} item={item} disabled={disabled} />
                 ))}
               </Stack>
             </SortableContext>
@@ -319,23 +323,61 @@ function RankingCategoricalComponent({
   );
 }
 
-function checkForDuplicatePair(answer: Record<string, string>, targetPairId: string): boolean {
+function checkForDuplicatePair(
+  answer: Record<string, string>,
+  targetPairId: string,
+  optionIds: Set<string>,
+  candidateBaseId?: string,
+): boolean {
   const pairMap: Record<string, Set<string>> = {};
 
   Object.entries(answer).forEach(([itemId, location]) => {
-    const match = location.match(/^pair-(\d+)-(high|low)$/);
+    const match = typeof location === 'string' ? location.match(/^pair-(\d+)-(high|low)$/) : null;
     if (match) {
       const pairId = match[1];
-      const baseItemId = itemId.split('_')[0];
+      const baseItemId = getRankingBaseItemId(itemId, optionIds);
       if (!pairMap[pairId]) pairMap[pairId] = new Set();
       pairMap[pairId].add(baseItemId);
     }
   });
 
-  const targetPairSignature = [...(pairMap[targetPairId] || [])].sort().join('|');
-  if (!targetPairSignature) return false;
+  if (candidateBaseId !== undefined) {
+    if (!pairMap[targetPairId]) pairMap[targetPairId] = new Set();
+    pairMap[targetPairId].add(candidateBaseId);
+  }
 
-  return Object.entries(pairMap).some(([pairId, itemSet]) => pairId !== targetPairId && [...itemSet].sort().join('|') === targetPairSignature);
+  const targetPairItems = pairMap[targetPairId];
+  if (!targetPairItems || targetPairItems.size !== 2) return false;
+  const targetPairSignature = JSON.stringify([...targetPairItems].sort());
+
+  return Object.entries(pairMap).some(([pairId, itemSet]) => (
+    pairId !== targetPairId
+    && itemSet.size === 2
+    && JSON.stringify([...itemSet].sort()) === targetPairSignature
+  ));
+}
+
+function getPairwiseAnswerSignature(value: Record<string, string> | undefined): string {
+  return JSON.stringify(Object.entries(value || {}).sort(([firstKey], [secondKey]) => firstKey.localeCompare(secondKey)));
+}
+
+// 'available' = dragged from Available Items, 'placed' = already in a pair
+type PairwiseDragSource = 'available' | 'placed';
+
+function makePairwiseDragId(source: PairwiseDragSource, id: string): string {
+  return `${source}:${id}`;
+}
+
+function parsePairwiseDragId(dragId: string): { source: PairwiseDragSource; id: string } | null {
+  if (dragId.startsWith('available:')) {
+    return { source: 'available', id: dragId.slice('available:'.length) };
+  }
+
+  if (dragId.startsWith('placed:')) {
+    return { source: 'placed', id: dragId.slice('placed:'.length) };
+  }
+
+  return null;
 }
 
 function RankingPairwiseComponent({
@@ -350,16 +392,62 @@ function RankingPairwiseComponent({
   const { onChange } = answer as { onChange?: (value: Record<string, string>) => void };
   const { sensors, updateAnswer } = useRankingLogic(responseId, onChange);
   const items = useMemo(() => createItems(options), [options]);
-  const [pairIds, setPairIds] = useState<string[]>(['0']);
+  const optionIds = useMemo(() => new Set(items.map((item) => item.id)), [items]);
+
+  const scanRestoredAnswer = useCallback((value: Record<string, string> | undefined) => {
+    const restoredPairIds = new Set<string>();
+    let maxPairId = -1;
+    let maxInstanceIndex = -1;
+    Object.entries(value || {}).forEach(([itemId, location]) => {
+      const match = typeof location === 'string' ? location.match(/^pair-(\d+)-(high|low)$/) : null;
+      if (!match) return;
+      restoredPairIds.add(match[1]);
+      maxPairId = Math.max(maxPairId, parseInt(match[1], 10));
+      const instanceIndex = getRankingInstanceIndex(itemId, optionIds);
+      if (instanceIndex !== null) maxInstanceIndex = Math.max(maxInstanceIndex, instanceIndex);
+    });
+    return { restoredPairIds, maxPairId, maxInstanceIndex };
+  }, [optionIds]);
+
+  const restoredAnswerState = useMemo(() => scanRestoredAnswer(answer?.value), [answer?.value, scanRestoredAnswer]);
+  const [localPairIds, setLocalPairIds] = useState<string[]>(
+    () => (restoredAnswerState.restoredPairIds.size > 0 ? [] : ['0']),
+  );
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [instanceCounter, setInstanceCounter] = useState(0);
-  const [nextPairId, setNextPairId] = useState(1);
+  const [instanceCounter, setInstanceCounter] = useState(() => restoredAnswerState.maxInstanceIndex + 1);
+  const [nextPairId, setNextPairId] = useState(() => Math.max(restoredAnswerState.maxPairId + 1, 1));
+  const hasPlaceholderPairRef = useRef(Object.keys(answer?.value || {}).length === 0);
+  const lastEmittedAnswerSignatureRef = useRef<string | null>(null);
+  const lastObservedAnswerSignatureRef = useRef(getPairwiseAnswerSignature(answer?.value));
+  const pairIds = useMemo(() => (
+    [...new Set([...restoredAnswerState.restoredPairIds, ...localPairIds])]
+      .sort((a, b) => parseInt(a, 10) - parseInt(b, 10))
+  ), [localPairIds, restoredAnswerState.restoredPairIds]);
+
+  useEffect(() => {
+    const answerSignature = getPairwiseAnswerSignature(answer?.value);
+    const hasSemanticAnswerChange = answerSignature !== lastObservedAnswerSignatureRef.current;
+    const isLocallyEmittedAnswer = answerSignature === lastEmittedAnswerSignatureRef.current;
+    lastObservedAnswerSignatureRef.current = answerSignature;
+    if (isLocallyEmittedAnswer) lastEmittedAnswerSignatureRef.current = null;
+
+    if (hasSemanticAnswerChange && !isLocallyEmittedAnswer) {
+      const isEmptyAnswer = Object.keys(answer?.value || {}).length === 0;
+      hasPlaceholderPairRef.current = isEmptyAnswer;
+      setLocalPairIds(isEmptyAnswer ? ['0'] : []);
+    } else if (hasPlaceholderPairRef.current && restoredAnswerState.restoredPairIds.size > 0) {
+      hasPlaceholderPairRef.current = false;
+      setLocalPairIds((prev) => prev.filter((pairId) => pairId !== '0'));
+    }
+    setNextPairId((prev) => Math.max(prev, restoredAnswerState.maxPairId + 1));
+    setInstanceCounter((prev) => Math.max(prev, restoredAnswerState.maxInstanceIndex + 1));
+  }, [answer?.value, restoredAnswerState]);
 
   const { pairs, unassigned } = useMemo(() => {
     const pairMap: Record<string, { high: string[], low: string[] }> = {};
 
     Object.entries(answer?.value || {}).forEach(([itemId, location]) => {
-      const match = location.match(/^pair-(\d+)-(high|low)$/);
+      const match = typeof location === 'string' ? location.match(/^pair-(\d+)-(high|low)$/) : null;
       if (match) {
         const [, pairId, position] = match;
         if (!pairMap[pairId]) pairMap[pairId] = { high: [], low: [] };
@@ -382,86 +470,119 @@ function RankingPairwiseComponent({
     setActiveId(null);
     if (disabled || !event.over) return;
 
-    const draggedId = event.active.id as string;
+    const draggedRef = parsePairwiseDragId(event.active.id as string);
+    if (!draggedRef) return;
+    const isFromAvailable = draggedRef.source === 'available';
+    const draggedKey = draggedRef.id;
+    const baseItemId = isFromAvailable ? draggedRef.id : getRankingBaseItemId(draggedRef.id, optionIds);
+
     const targetId = event.over.id as string;
     const newAnswer = { ...answer.value };
 
     if (targetId === 'unassigned') {
-      delete newAnswer[draggedId];
-      setError?.(null);
-      updateAnswer(newAnswer);
+      if (!isFromAvailable) {
+        const sourceLocation = newAnswer[draggedKey];
+        const sourceMatch = typeof sourceLocation === 'string'
+          ? sourceLocation.match(/^pair-(\d+)-(high|low)$/)
+          : null;
+        if (sourceMatch) {
+          setLocalPairIds((prev) => [...new Set([...prev, sourceMatch[1]])]);
+        }
+        delete newAnswer[draggedKey];
+        setError?.(null);
+        lastEmittedAnswerSignatureRef.current = getPairwiseAnswerSignature(newAnswer);
+        updateAnswer(newAnswer);
+      }
       return;
     }
 
-    const isFromUnassigned = !draggedId.includes('_');
-    const baseItemId = isFromUnassigned ? draggedId : draggedId.split('_')[0];
     const targetMatch = targetId.match(/^pair-(\d+)-(high|low)$/);
+    if (!targetMatch) return;
 
-    if (targetMatch) {
-      const [, targetPairId, targetPosition] = targetMatch;
+    const [, targetPairId, targetPosition] = targetMatch;
 
-      const currentItemsInPosition = Object.entries(newAnswer).filter(
-        ([instId, loc]) => loc === targetId && instId !== draggedId,
-      ).length;
+    const currentItemsInPosition = Object.entries(newAnswer).filter(
+      ([instId, loc]) => loc === targetId && !(!isFromAvailable && instId === draggedKey),
+    ).length;
 
-      if (currentItemsInPosition >= 1) {
-        setError?.('You can only place one item in each box.');
-        return;
-      }
-
-      const oppositePosition = targetPosition === 'high' ? 'low' : 'high';
-      const oppositeLocationId = `pair-${targetPairId}-${oppositePosition}`;
-
-      const existingInOpposite = Object.entries(newAnswer).some(([instId, loc]) => {
-        const existingBaseId = instId.split('_')[0];
-        return loc === oppositeLocationId && existingBaseId === baseItemId;
-      });
-
-      if (existingInOpposite) {
-        const itemLabel = items.find((i) => i.id === baseItemId)?.option.label;
-        setError?.(`Item "${itemLabel}" cannot be in both HIGH and LOW.`);
-        return;
-      }
-
-      if (isFromUnassigned) {
-        const tempAnswer = { ...newAnswer, [`${draggedId}_temp`]: targetId };
-        if (checkForDuplicatePair(tempAnswer, targetPairId)) {
-          setError?.('This would create a duplicate pair.');
-          return;
-        }
-      }
+    if (currentItemsInPosition >= 1) {
+      setError?.('You can only place one item in each box.');
+      return;
     }
 
-    if (isFromUnassigned) {
-      newAnswer[`${draggedId}_${instanceCounter}`] = targetId;
-      setInstanceCounter((c) => c + 1);
+    const oppositePosition = targetPosition === 'high' ? 'low' : 'high';
+    const oppositeLocationId = `pair-${targetPairId}-${oppositePosition}`;
+
+    const existingInOpposite = Object.entries(newAnswer).some(([instId, loc]) => {
+      const existingBaseId = getRankingBaseItemId(instId, optionIds);
+      const isDraggedInstance = !isFromAvailable && instId === draggedKey;
+      return !isDraggedInstance && loc === oppositeLocationId && existingBaseId === baseItemId;
+    });
+
+    if (existingInOpposite) {
+      const itemLabel = items.find((i) => i.id === baseItemId)?.option.label;
+      setError?.(`Item "${itemLabel}" cannot be in both HIGH and LOW.`);
+      return;
+    }
+
+    const answerAfterMove = { ...newAnswer };
+    if (!isFromAvailable) delete answerAfterMove[draggedKey];
+    if (checkForDuplicatePair(answerAfterMove, targetPairId, optionIds, baseItemId)) {
+      setError?.('This would create a duplicate pair.');
+      return;
+    }
+
+    if (isFromAvailable) {
+      let instanceIndex = instanceCounter;
+      let candidateKey = makeRankingInstanceKey(draggedKey, instanceIndex);
+      while (optionIds.has(candidateKey) || candidateKey in newAnswer) {
+        instanceIndex += 1;
+        candidateKey = makeRankingInstanceKey(draggedKey, instanceIndex);
+      }
+      newAnswer[candidateKey] = targetId;
+      setInstanceCounter(instanceIndex + 1);
     } else {
-      delete newAnswer[draggedId];
-      newAnswer[draggedId] = targetId;
+      delete newAnswer[draggedKey];
+      newAnswer[draggedKey] = targetId;
     }
 
+    hasPlaceholderPairRef.current = false;
+    const sourceLocation = !isFromAvailable ? answer.value[draggedKey] : null;
+    const sourceMatch = typeof sourceLocation === 'string'
+      ? sourceLocation.match(/^pair-(\d+)-(high|low)$/)
+      : null;
+    setLocalPairIds((prev) => [...new Set([
+      ...prev,
+      targetPairId,
+      ...(sourceMatch ? [sourceMatch[1]] : []),
+    ])]);
     setError?.(null);
+    lastEmittedAnswerSignatureRef.current = getPairwiseAnswerSignature(newAnswer);
     updateAnswer(newAnswer);
   };
 
   const activeItem = useMemo(() => {
     if (!activeId) return null;
-    const baseItemId = activeId.includes('_') ? activeId.split('_')[0] : activeId;
+    const draggedRef = parsePairwiseDragId(activeId);
+    if (!draggedRef) return null;
+    const baseItemId = draggedRef.source === 'available' ? draggedRef.id : getRankingBaseItemId(draggedRef.id, optionIds);
     return items.find((i) => i.id === baseItemId) || null;
-  }, [activeId, items]);
+  }, [activeId, items, optionIds]);
 
   const handleRemovePair = (pairId: string) => {
     if (disabled) return;
 
+    hasPlaceholderPairRef.current = false;
     const newAnswer = { ...answer.value };
     Object.keys(newAnswer).forEach((key) => {
-      if (newAnswer[key].startsWith(`pair-${pairId}-`)) {
+      if (typeof newAnswer[key] === 'string' && newAnswer[key].startsWith(`pair-${pairId}-`)) {
         delete newAnswer[key];
       }
     });
 
-    setPairIds((prev) => prev.filter((id) => id !== pairId));
+    setLocalPairIds((prev) => prev.filter((id) => id !== pairId));
     setError?.(null);
+    lastEmittedAnswerSignatureRef.current = getPairwiseAnswerSignature(newAnswer);
     updateAnswer(newAnswer);
   };
 
@@ -470,9 +591,11 @@ function RankingPairwiseComponent({
       <Flex justify="flex-end" mb="md">
         <Button
           variant="outline"
+          disabled={disabled}
           onClick={() => {
             if (!disabled) {
-              setPairIds((prev) => [...prev, nextPairId.toString()]);
+              hasPlaceholderPairRef.current = false;
+              setLocalPairIds((prev) => [...prev, nextPairId.toString()]);
               setNextPairId((prev) => prev + 1);
             }
           }}
@@ -488,17 +611,18 @@ function RankingPairwiseComponent({
               <Box key={position} style={{ width: '300px' }}>
                 <DroppableZone id={`pair-${pairId}-${position}`} title={position.toUpperCase()}>
                   <SortableContext
-                    items={pair[position]}
+                    items={pair[position].map((instanceId) => makePairwiseDragId('placed', instanceId))}
                     strategy={verticalListSortingStrategy}
                   >
                     <Stack>
                       {pair[position].map((instanceId) => {
-                        const baseItemId = instanceId.split('_')[0];
+                        const baseItemId = getRankingBaseItemId(instanceId, optionIds);
                         const item = items.find((i) => i.id === baseItemId);
                         return item ? (
                           <SortableItem
                             key={instanceId}
-                            item={{ ...item, id: baseItemId, symbol: instanceId }}
+                            item={{ ...item, id: baseItemId, symbol: makePairwiseDragId('placed', instanceId) }}
+                            disabled={disabled}
                           />
                         ) : null;
                       })}
@@ -520,10 +644,10 @@ function RankingPairwiseComponent({
         ))}
 
         <DroppableZone id="unassigned" title="Available Items">
-          <SortableContext items={unassigned.map((i) => i.id)} strategy={verticalListSortingStrategy}>
+          <SortableContext items={unassigned.map((i) => makePairwiseDragId('available', i.id))} strategy={verticalListSortingStrategy}>
             <Stack>
               {unassigned.map((item) => (
-                <SortableItem key={item.id} item={item} />
+                <SortableItem key={item.id} item={{ ...item, symbol: makePairwiseDragId('available', item.id) }} disabled={disabled} />
               ))}
             </Stack>
           </SortableContext>

@@ -217,14 +217,13 @@ export function ConfigView({
     positionToolbarAlertBanner: 'none',
     renderTopToolbarCustomActions: () => {
       const selectedConfigHashes = Object.keys(checked).filter((key) => checked[key]);
+      const downloadConfigLabel = `Download Config${selectedConfigHashes.length === 1 ? '' : 's'}`;
       return (
         <Flex>
           {selectedConfigHashes.length > 0 && (
             <Group>
               <Button onClick={handleDownloadConfigs}>
-                Download Configs (
-                {selectedConfigHashes.length}
-                )
+                {`${downloadConfigLabel} (${selectedConfigHashes.length})`}
               </Button>
               {selectedConfigHashes.length === 2 && (
                 <Button

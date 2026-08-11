@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/LibraryConfigSchema.json",
-  "description": "This library is the Ishihara color blindness test. Each component contains an image of an Ishihara plate. The meta attribute of each plate describe what normal vision people, red color blind people, green color blind people, and total color blind people see from this plate. The user is asked to identify the number or pattern in the image. The library also contains two sequences: a short test and a full test. The short test contains 4 components and the full test contains all 24 components.",
+  "description": "This library is the Ishihara color blindness test. Each component contains an image of an Ishihara plate. The meta attribute of each plate describes what normal vision people, red color blind people, green color blind people, and total color blind people see from this plate. The user is asked to identify the number or pattern in the image. The library also contains two sequences: a short test and a full test. The short test contains 4 components and the full test contains all 24 components.",
   "externalLink": "https://www.colour-blindness.com/colour-blindness-tests/ishihara-colour-test-plates/",
   "components": {
     "plate1": {
@@ -146,9 +146,9 @@
     "plate5": {
       "meta": {
         "plateNumber": 5,
-        "normal-color-vision-see": 5,
-        "red-color-blindness-see": 3,
-        "green-color-blindness-see": 3,
+        "normal-color-vision-see": 3,
+        "red-color-blindness-see": 5,
+        "green-color-blindness-see": 5,
         "total-color-blindness-see": "nothing",
         "plateType": "transformation"
       },
@@ -557,8 +557,8 @@
       "meta": {
         "plateNumber": 17,
         "normal-color-vision-see": 42,
-        "red-color-blindness-see": 4,
-        "green-color-blindness-see": 2,
+        "red-color-blindness-see": 2,
+        "green-color-blindness-see": 4,
         "total-color-blindness-see": "nothing",
         "plateType": "diagnostic"
       },
@@ -611,7 +611,8 @@
           "prompt": "Enter the pattern you see:",
           "required": true,
           "location": "sidebar",
-          "type": "shortText"
+          "type": "shortText",
+          "withDontKnow": true
         }
       ],
       "correctAnswer": [],
@@ -640,7 +641,8 @@
           "prompt": "Enter the pattern you see:",
           "required": true,
           "location": "sidebar",
-          "type": "shortText"
+          "type": "shortText",
+          "withDontKnow": true
         }
       ],
       "correctAnswer": [],
@@ -655,7 +657,7 @@
         "total-color-blindness-see": "nothing",
         "plateType": "vanishing"
       },
-      "instruction": "What number do you see in this image?",
+      "instruction": "What pattern do you see in this image?",
       "instructionLocation": "sidebar",
       "type": "image",
       "path": "libraries/color-blindness/assets/Ishihara20.png",
@@ -666,10 +668,10 @@
       "response": [
         {
           "id": "plate20-response",
-          "prompt": "Enter the number you see:",
+          "prompt": "Enter the pattern you see:",
           "required": true,
           "location": "sidebar",
-          "type": "numerical",
+          "type": "shortText",
           "withDontKnow": true
         }
       ],
@@ -679,7 +681,7 @@
     "plate21": {
       "meta": {
         "plateNumber": 21,
-        "normal-color-vision-see": "a orange wiggly line",
+        "normal-color-vision-see": "an orange wiggly line",
         "red-color-blindness-see": "nothing",
         "green-color-blindness-see": "nothing",
         "total-color-blindness-see": "nothing",
@@ -699,7 +701,8 @@
           "prompt": "Enter the pattern you see:",
           "required": true,
           "location": "sidebar",
-          "type": "shortText"
+          "type": "shortText",
+          "withDontKnow": true
         }
       ],
       "correctAnswer": [],
@@ -708,13 +711,13 @@
     "plate22": {
       "meta": {
         "plateNumber": 22,
-        "normal-color-vision-see": "a blue-grenn/yellow-green wiggly line",
-        "red-color-blindness-see": "a blue-green and red wiggle line",
-        "green-color-blindness-see": "a blue-green and red wiggle line",
+        "normal-color-vision-see": "a blue-green/yellow-green wiggly line",
+        "red-color-blindness-see": "a blue-green and red wiggly line",
+        "green-color-blindness-see": "a blue-green and red wiggly line",
         "total-color-blindness-see": "nothing",
         "plateType": "transformation"
       },
-      "instruction": "What do you see in this image?",
+      "instruction": "What pattern do you see in this image?",
       "instructionLocation": "sidebar",
       "type": "image",
       "path": "libraries/color-blindness/assets/Ishihara22.png",
@@ -725,10 +728,11 @@
       "response": [
         {
           "id": "plate22-response",
-          "prompt": "Enter what you see:",
+          "prompt": "Enter the pattern you see:",
           "required": true,
           "location": "sidebar",
-          "type": "shortText"
+          "type": "shortText",
+          "withDontKnow": true
         }
       ],
       "correctAnswer": [],
@@ -738,12 +742,12 @@
       "meta": {
         "plateNumber": 23,
         "normal-color-vision-see": "a red-orange wiggly line",
-        "red-color-blindness-see": "a blue-green wiggle line",
-        "green-color-blindness-see": "a blue-green wiggle line",
+        "red-color-blindness-see": "a blue-green wiggly line",
+        "green-color-blindness-see": "a blue-green wiggly line",
         "total-color-blindness-see": "nothing",
         "plateType": "transformation"
       },
-      "instruction": "What number do you see in this image?",
+      "instruction": "What pattern do you see in this image?",
       "instructionLocation": "sidebar",
       "type": "image",
       "path": "libraries/color-blindness/assets/Ishihara23.png",
@@ -754,10 +758,10 @@
       "response": [
         {
           "id": "plate23-response",
-          "prompt": "Enter the number you see:",
+          "prompt": "Enter the pattern you see:",
           "required": true,
           "location": "sidebar",
-          "type": "numerical",
+          "type": "shortText",
           "withDontKnow": true
         }
       ],
@@ -773,7 +777,7 @@
         "total-color-blindness-see": "a wiggly line",
         "plateType": "demonstration"
       },
-      "instruction": "What number do you see in this image?",
+      "instruction": "What pattern do you see in this image?",
       "instructionLocation": "sidebar",
       "type": "image",
       "path": "libraries/color-blindness/assets/Ishihara24.png",
@@ -787,7 +791,8 @@
           "prompt": "Enter what you see:",
           "required": true,
           "location": "sidebar",
-          "type": "shortText"
+          "type": "shortText",
+          "withDontKnow": true
         }
       ],
       "correctAnswer": [],

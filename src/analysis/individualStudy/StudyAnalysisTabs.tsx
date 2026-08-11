@@ -15,7 +15,9 @@ import {
 } from 'react';
 import { useResizeObserver } from '@mantine/hooks';
 import { AppHeader } from '../interface/AppHeader';
-import { GlobalConfig, ParticipantDataWithStatus, StudyConfig } from '../../parser/types';
+import {
+  GlobalConfig, ParticipantDataWithStatus, ParsedConfig, StudyConfig,
+} from '../../parser/types';
 import { getStudyConfig, resolveConfigKey } from '../../utils/fetchConfig';
 import { LiveMonitorView } from './LiveMonitor/LiveMonitorView';
 import { SummaryView } from './summary/SummaryView';
@@ -34,6 +36,7 @@ import 'mantine-react-table/styles.css';
 import { ThinkAloudAnalysis } from './thinkAloud/ThinkAloudAnalysis';
 import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
 import { ConfigView } from './config/ConfigView';
+import { StartupErrorScreen } from '../../components/StartupErrorScreen';
 
 const TABLE_HEADER_HEIGHT = 37; // Height of the tabs header
 
@@ -80,7 +83,8 @@ async function getCurrentConfigHashForStudy(
 
 export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig; }) {
   const { studyId: routeStudyId } = useParams();
-  const [studyConfig, setStudyConfig] = useState<StudyConfig | undefined>(undefined);
+  const [studyConfig, setStudyConfig] = useState<ParsedConfig<StudyConfig> | undefined>(undefined);
+  const [startupError, setStartupError] = useState<{ error: unknown } | null>(null);
 
   const [includedParticipants, setIncludedParticipants] = useState<string[]>(['completed', 'inProgress', 'rejected']);
 
@@ -328,29 +332,58 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   }, [allConditions]);
 
   useEffect(() => {
+    let cancelled = false;
+    setStartupError(null);
+    setStudyConfig(undefined);
+
     if (!routeStudyId) return () => { };
     if (routeStudyId === '__revisit-widget') {
-      const messageListener = async (event: MessageEvent) => {
+      const messageListener = (event: MessageEvent) => {
         if (event.data.type === 'revisitWidget/CONFIG' && storageEngine) {
-          const cf = await parseStudyConfig(event.data.payload);
-          setStudyConfig(cf);
+          parseStudyConfig(event.data.payload)
+            .then((cf) => {
+              if (!cancelled) {
+                setStudyConfig(cf);
+              }
+            })
+            .catch((error) => {
+              console.error('Failed to load widget study config for analysis:', error);
+              if (!cancelled) {
+                setStartupError({ error });
+              }
+            });
         }
       };
 
       window.addEventListener('message', messageListener);
       window.parent.postMessage({ type: 'revisitWidget/READY' }, '*');
       return () => {
+        cancelled = true;
         window.removeEventListener('message', messageListener);
       };
     }
-    getStudyConfig(routeStudyId, globalConfig).then((cf) => {
-      if (cf) {
-        setStudyConfig(cf);
-      }
-    });
 
-    return () => { };
+    getStudyConfig(routeStudyId, globalConfig)
+      .then((cf) => {
+        if (!cancelled && cf) {
+          setStudyConfig(cf);
+        }
+      })
+      .catch((error) => {
+        console.error('Failed to load study config for analysis:', error);
+        if (!cancelled) {
+          setStartupError({ error });
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [routeStudyId, globalConfig, storageEngine]);
+
+  if (startupError) {
+    return <StartupErrorScreen error={startupError.error} />;
+  }
 
   if (!routeStudyId) {
     return (
