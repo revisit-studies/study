@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
-import { StudyConfig } from '../parser/types';
-import { studyStoreCreator } from './store';
-import { ParticipantMetadata, Sequence } from './types';
+import { StudyConfig } from '../../parser/types';
+import { studyStoreCreator } from '../store';
+import { ParticipantMetadata, Sequence } from '../types';
 
 const metadata: ParticipantMetadata = {
   userAgent: '',
@@ -10,7 +10,7 @@ const metadata: ParticipantMetadata = {
   ip: null,
 };
 
-describe('studyStoreCreator', () => {
+describe('studyStoreCreator factor parameters', () => {
   test('adds between-subjects sequence parameters to component answers', async () => {
     const config: StudyConfig = {
       $schema: '',

@@ -133,7 +133,7 @@ describe('factor sequence actions', () => {
 
   test('parses the factor-action demo', async () => {
     const config = readFileSync(
-      new URL('../../../public/demo-factors/config.json', import.meta.url),
+      'public/demo-factors/config.json',
       'utf8',
     );
 

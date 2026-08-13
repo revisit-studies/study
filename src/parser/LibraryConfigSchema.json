@@ -80,6 +80,22 @@
             "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
             "type": "object"
           },
+          "nextButtonAlignment": {
+            "$ref": "#/definitions/NextButtonAlignment",
+            "description": "The horizontal alignment of the navigation action group. If present, will override the alignment setting in the uiConfig."
+          },
+          "nextButtonAutoAdvanceTime": {
+            "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
+            "type": "number"
+          },
+          "nextButtonAutoAdvanceWarningMessage": {
+            "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining number and `{unit}` to interpolate `second`/`seconds`.",
+            "type": "string"
+          },
+          "nextButtonAutoAdvanceWarningTime": {
+            "description": "The time in milliseconds before auto-advance when the warning message is shown. Defaults to 30000.",
+            "type": "number"
+          },
           "nextButtonDisableTime": {
             "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
             "type": "number"
@@ -1103,6 +1119,22 @@
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
         },
+        "nextButtonAlignment": {
+          "$ref": "#/definitions/NextButtonAlignment",
+          "description": "The horizontal alignment of the navigation action group. If present, will override the alignment setting in the uiConfig."
+        },
+        "nextButtonAutoAdvanceTime": {
+          "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
+          "type": "number"
+        },
+        "nextButtonAutoAdvanceWarningMessage": {
+          "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining number and `{unit}` to interpolate `second`/`seconds`.",
+          "type": "string"
+        },
+        "nextButtonAutoAdvanceWarningTime": {
+          "description": "The time in milliseconds before auto-advance when the warning message is shown. Defaults to 30000.",
+          "type": "number"
+        },
         "nextButtonDisableTime": {
           "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
           "type": "number"
@@ -1366,6 +1398,22 @@
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
         },
+        "nextButtonAlignment": {
+          "$ref": "#/definitions/NextButtonAlignment",
+          "description": "The horizontal alignment of the navigation action group. If present, will override the alignment setting in the uiConfig."
+        },
+        "nextButtonAutoAdvanceTime": {
+          "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
+          "type": "number"
+        },
+        "nextButtonAutoAdvanceWarningMessage": {
+          "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining number and `{unit}` to interpolate `second`/`seconds`.",
+          "type": "string"
+        },
+        "nextButtonAutoAdvanceWarningTime": {
+          "description": "The time in milliseconds before auto-advance when the warning message is shown. Defaults to 30000.",
+          "type": "number"
+        },
         "nextButtonDisableTime": {
           "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
           "type": "number"
@@ -1577,7 +1625,7 @@
     },
     "LibraryConfig": {
       "additionalProperties": false,
-      "description": "LibraryConfig is used to define the properties of a library configuration. This is a JSON object with three main components: baseComponents, components, and the sequences. Libraries are useful for defining components and sequences of these components that are to be reused across multiple studies. We (the reVISit team) provide several libraries that can be used in your study configurations. Check the public/libraries folder in the reVISit-studies repository for available libraries. We also plan to accept community contributions for libraries. If you have a library that you think would be useful for others, please reach out to us. We would love to include it in our repository.\n\nBelow is the general template that should be followed when constructing a Library configuration file.\n\n```json {  \"$schema\": \"https://raw.githubusercontent.com/revisit-studies/study/v2.4.1/src/parser/LibraryConfigSchema.json\",  \"baseComponents\": {    // BaseComponents here are defined exactly as is in the StudyConfig  },  \"components\": {    // Components here are defined exactly as is in the StudyConfig  },  \"sequences\": {    // Sequences here are defined as \"key\": \"value\" pairs where the key is the name of the sequence and the value is a ComponentBlock, just like in the StudyConfig  } } ```",
+      "description": "LibraryConfig is used to define the properties of a library configuration. This is a JSON object with three main components: baseComponents, components, and the sequences. Libraries are useful for defining components and sequences of these components that are to be reused across multiple studies. We (the reVISit team) provide several libraries that can be used in your study configurations. Check the public/libraries folder in the reVISit-studies repository for available libraries. We also plan to accept community contributions for libraries. If you have a library that you think would be useful for others, please reach out to us. We would love to include it in our repository.\n\nBelow is the general template that should be followed when constructing a Library configuration file.\n\n```json {  \"$schema\": \"https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/LibraryConfigSchema.json\",  \"baseComponents\": {    // BaseComponents here are defined exactly as is in the StudyConfig  },  \"components\": {    // Components here are defined exactly as is in the StudyConfig  },  \"sequences\": {    // Sequences here are defined as \"key\": \"value\" pairs where the key is the name of the sequence and the value is a ComponentBlock, just like in the StudyConfig  } } ```",
       "properties": {
         "$schema": {
           "description": "A required json schema property. This should point to the github link for the version of the schema you would like. The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration. See examples for more information",
@@ -1886,6 +1934,22 @@
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
         },
+        "nextButtonAlignment": {
+          "$ref": "#/definitions/NextButtonAlignment",
+          "description": "The horizontal alignment of the navigation action group. If present, will override the alignment setting in the uiConfig."
+        },
+        "nextButtonAutoAdvanceTime": {
+          "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
+          "type": "number"
+        },
+        "nextButtonAutoAdvanceWarningMessage": {
+          "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining number and `{unit}` to interpolate `second`/`seconds`.",
+          "type": "string"
+        },
+        "nextButtonAutoAdvanceWarningTime": {
+          "description": "The time in milliseconds before auto-advance when the warning message is shown. Defaults to 30000.",
+          "type": "number"
+        },
         "nextButtonDisableTime": {
           "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
           "type": "number"
@@ -2074,11 +2138,11 @@
           "type": "string"
         },
         "questionOptions": {
-          "description": "The question options (rows) are the prompts for each response you'd like to record.",
+          "description": "The question options (rows) are the prompts for each response you'd like to record. Use `leftLabel` and `rightLabel` on object options to display bipolar row labels such as `\"Obstructive - Supportive\"` on either side of the matrix.",
           "items": {
             "anyOf": [
               {
-                "$ref": "#/definitions/StringOption"
+                "$ref": "#/definitions/MatrixQuestionOption"
               },
               {
                 "type": "string"
@@ -2140,9 +2204,39 @@
       ],
       "type": "object"
     },
+    "MatrixQuestionOption": {
+      "additionalProperties": false,
+      "description": "The MatrixQuestionOption interface is used to define the question options for matrix responses. The label is the fallback text displayed to participants, and the value is the key stored in the participant's data. The optional left and right labels allow bipolar rows to label each side of the matrix without changing stored values. When `leftLabel` is specified, it takes precedence over `label` for the left-side row text.",
+      "properties": {
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the option. This does not accept markdown.",
+          "type": "string"
+        },
+        "label": {
+          "description": "The label displayed to participants. Markdown is supported.",
+          "type": "string"
+        },
+        "leftLabel": {
+          "description": "The label displayed on the left side of the matrix row. Takes precedence over label when specified. Defaults to label.",
+          "type": "string"
+        },
+        "rightLabel": {
+          "description": "The label displayed on the right side of the matrix row.",
+          "type": "string"
+        },
+        "value": {
+          "description": "The value stored in the participant's data. Defaults to label.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "label"
+      ],
+      "type": "object"
+    },
     "MatrixRadioResponse": {
       "additionalProperties": false,
-      "description": "The MatrixRadioResponse interface defines a matrix where each row accepts exactly one selected option. `questionOptions` are rendered as rows, and `answerOptions` are rendered as columns. `answerOptions` can be custom labels/values or one of the built-in shortcuts: `satisfaction5`, `satisfaction7`, `likely5`, `likely7`.\n\nExample: ```json {   \"id\": \"multi-satisfaction\",   \"prompt\": \"Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable) for the following items.\",   \"location\": \"aboveStimulus\",   \"type\": \"matrix-radio\",   \"answerOptions\": \"satisfaction5\",   \"questionOptions\": [     \"The tool we created\",     \"The technique we developed\",     \"The authors of the tools\"   ],   \"default\": {     \"The tool we created\": \"Highly Satisfied\",     \"The technique we developed\": \"Satisfied\",     \"The authors of the tools\": \"Neutral\"   },   \"questionOrder\": \"random\" } ```",
+      "description": "The MatrixRadioResponse interface defines a matrix where each row accepts exactly one selected option. `questionOptions` are rendered as rows, and `answerOptions` are rendered as columns. `answerOptions` can be custom labels/values or one of the built-in shortcuts: `satisfaction5`, `satisfaction7`, `likely5`, `likely7`.\n\nExample: ```json {   \"id\": \"multi-satisfaction\",   \"prompt\": \"Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable) for the following items.\",   \"location\": \"aboveStimulus\",   \"type\": \"matrix-radio\",   \"answerOptions\": \"satisfaction5\",   \"questionOptions\": [     \"The tool we created\",     {       \"label\": \"Obstructive - Supportive\",       \"value\": \"obstructive-supportive\",       \"leftLabel\": \"Obstructive\",       \"rightLabel\": \"Supportive\"     },     \"The authors of the tools\"   ],   \"default\": {     \"The tool we created\": \"Highly Satisfied\",     \"obstructive-supportive\": \"Satisfied\",     \"The authors of the tools\": \"Neutral\"   },   \"questionOrder\": \"random\" } ```",
       "properties": {
         "answerOptions": {
           "anyOf": [
@@ -2214,11 +2308,11 @@
           "type": "string"
         },
         "questionOptions": {
-          "description": "The question options (rows) are the prompts for each response you'd like to record.",
+          "description": "The question options (rows) are the prompts for each response you'd like to record. Use `leftLabel` and `rightLabel` on object options to display bipolar row labels such as `\"Obstructive - Supportive\"` on either side of the matrix.",
           "items": {
             "anyOf": [
               {
-                "$ref": "#/definitions/StringOption"
+                "$ref": "#/definitions/MatrixQuestionOption"
               },
               {
                 "type": "string"
@@ -2289,6 +2383,14 @@
           "$ref": "#/definitions/MatrixCheckboxResponse"
         }
       ]
+    },
+    "NextButtonAlignment": {
+      "enum": [
+        "left",
+        "center",
+        "right"
+      ],
+      "type": "string"
     },
     "NumberOption": {
       "additionalProperties": false,
@@ -2443,6 +2545,22 @@
           "additionalProperties": {},
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
+        },
+        "nextButtonAlignment": {
+          "$ref": "#/definitions/NextButtonAlignment",
+          "description": "The horizontal alignment of the navigation action group. If present, will override the alignment setting in the uiConfig."
+        },
+        "nextButtonAutoAdvanceTime": {
+          "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
+          "type": "number"
+        },
+        "nextButtonAutoAdvanceWarningMessage": {
+          "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining number and `{unit}` to interpolate `second`/`seconds`.",
+          "type": "string"
+        },
+        "nextButtonAutoAdvanceWarningTime": {
+          "description": "The time in milliseconds before auto-advance when the warning message is shown. Defaults to 30000.",
+          "type": "number"
         },
         "nextButtonDisableTime": {
           "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
@@ -2812,7 +2930,7 @@
     },
     "ReactComponent": {
       "additionalProperties": false,
-      "description": "The ReactComponent interface is used to define the properties of a react component. This component is used to render react code with certain parameters. These parameters can be used within your react code to render different things.\n\nUnlike other types of components, the path for a React component is relative to the `src/public/` folder. Similar to our standard assets, we suggest creating a folder named `src/public/{studyName}/assets` to house all of the React component assets for a particular study. Your React component which you link to in the path must be default exported from its file.\n\nReact components created this way have a generic prop type passed to the component on render, `<StimulusParams<T>>`, which has the following types.\n\n```ts {   parameters: T;   setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: Record<string, any> }) => void } ```\n\n`parameters` is the same object passed in from the ReactComponent type below, allowing you to pass options in from the config to your component. `setAnswer` is a callback function allowing the creator of the ReactComponent to programmatically set the answer, as well as the provenance graph. This can be useful if you don't use the default answer interface, and instead have something more unique.\n\nSo, for example, if I had the following ReactComponent in my config: ```json {   \"type\": \"react-component\",   \"path\": \"my_study/CoolComponent.tsx\",   \"parameters\": {     \"name\": \"Zach\",     \"age\": 26   } } ```\n\nMy react component, CoolComponent.tsx, would exist in src/public/my_study/assets, and look something like this:\n\n```ts export default function CoolComponent({ parameters, setAnswer }: StimulusParams<{name: string, age: number}>) {   // render something } ```\n\nFor in depth examples, see the following studies, and their associated codebases. https://revisit.dev/study/demo-react-trrack (https://github.com/revisit-studies/study/tree/v2.4.1/src/public/demo-react-trrack/assets) https://revisit.dev/study/example-brush-interactions (https://github.com/revisit-studies/study/tree/v2.4.1/src/public/example-brush-interactions/assets)",
+      "description": "The ReactComponent interface is used to define the properties of a react component. This component is used to render react code with certain parameters. These parameters can be used within your react code to render different things.\n\nUnlike other types of components, the path for a React component is relative to the `src/public/` folder. Similar to our standard assets, we suggest creating a folder named `src/public/{studyName}/assets` to house all of the React component assets for a particular study. Your React component which you link to in the path must be default exported from its file.\n\nReact components created this way have a generic prop type passed to the component on render, `<StimulusParams<T>>`, which has the following types.\n\n```ts {   parameters: T;   useTrrack: (options: ConfigureTrrackOptions) => Trrack;   setAnswer: ({ status, answers }: { status: boolean, answers: Record<string, any> }) => void } ```\n\n`parameters` is the same object passed in from the ReactComponent type below, allowing you to pass options in from the config to your component. `setAnswer` is a callback function allowing the creator of the ReactComponent to programmatically set the answer. This can be useful if you don't use the default answer interface, and instead have something more unique. Call the `useTrrack` function supplied in `StimulusParams` when the component needs provenance. It creates the Trrack instance and reports apply, undo, redo, and other traversals automatically.\n\nSo, for example, if I had the following ReactComponent in my config: ```json {   \"type\": \"react-component\",   \"path\": \"my_study/CoolComponent.tsx\",   \"parameters\": {     \"name\": \"Zach\",     \"age\": 26   } } ```\n\nMy react component, CoolComponent.tsx, would exist in src/public/my_study/assets, and look something like this:\n\n```ts export default function CoolComponent({ parameters, setAnswer, useTrrack }: StimulusParams<{name: string, age: number}>) {   // render something } ```\n\nFor in depth examples, see the following studies, and their associated codebases. https://revisit.dev/study/demo-react-trrack (https://github.com/revisit-studies/study/tree/v2.4.3/src/public/demo-react-trrack/assets) https://revisit.dev/study/example-brush-interactions (https://github.com/revisit-studies/study/tree/v2.4.3/src/public/example-brush-interactions/assets)",
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
@@ -2853,6 +2971,22 @@
           "additionalProperties": {},
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
+        },
+        "nextButtonAlignment": {
+          "$ref": "#/definitions/NextButtonAlignment",
+          "description": "The horizontal alignment of the navigation action group. If present, will override the alignment setting in the uiConfig."
+        },
+        "nextButtonAutoAdvanceTime": {
+          "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
+          "type": "number"
+        },
+        "nextButtonAutoAdvanceWarningMessage": {
+          "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining number and `{unit}` to interpolate `second`/`seconds`.",
+          "type": "string"
+        },
+        "nextButtonAutoAdvanceWarningTime": {
+          "description": "The time in milliseconds before auto-advance when the warning message is shown. Defaults to 30000.",
+          "type": "number"
         },
         "nextButtonDisableTime": {
           "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
@@ -3660,6 +3794,22 @@
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
         },
+        "nextButtonAlignment": {
+          "$ref": "#/definitions/NextButtonAlignment",
+          "description": "The horizontal alignment of the navigation action group. If present, will override the alignment setting in the uiConfig."
+        },
+        "nextButtonAutoAdvanceTime": {
+          "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
+          "type": "number"
+        },
+        "nextButtonAutoAdvanceWarningMessage": {
+          "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining number and `{unit}` to interpolate `second`/`seconds`.",
+          "type": "string"
+        },
+        "nextButtonAutoAdvanceWarningTime": {
+          "description": "The time in milliseconds before auto-advance when the warning message is shown. Defaults to 30000.",
+          "type": "number"
+        },
         "nextButtonDisableTime": {
           "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
           "type": "number"
@@ -3814,6 +3964,22 @@
           "additionalProperties": {},
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
+        },
+        "nextButtonAlignment": {
+          "$ref": "#/definitions/NextButtonAlignment",
+          "description": "The horizontal alignment of the navigation action group. If present, will override the alignment setting in the uiConfig."
+        },
+        "nextButtonAutoAdvanceTime": {
+          "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
+          "type": "number"
+        },
+        "nextButtonAutoAdvanceWarningMessage": {
+          "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining number and `{unit}` to interpolate `second`/`seconds`.",
+          "type": "string"
+        },
+        "nextButtonAutoAdvanceWarningTime": {
+          "description": "The time in milliseconds before auto-advance when the warning message is shown. Defaults to 30000.",
+          "type": "number"
         },
         "nextButtonDisableTime": {
           "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
@@ -3978,6 +4144,22 @@
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
         },
+        "nextButtonAlignment": {
+          "$ref": "#/definitions/NextButtonAlignment",
+          "description": "The horizontal alignment of the navigation action group. If present, will override the alignment setting in the uiConfig."
+        },
+        "nextButtonAutoAdvanceTime": {
+          "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
+          "type": "number"
+        },
+        "nextButtonAutoAdvanceWarningMessage": {
+          "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining number and `{unit}` to interpolate `second`/`seconds`.",
+          "type": "string"
+        },
+        "nextButtonAutoAdvanceWarningTime": {
+          "description": "The time in milliseconds before auto-advance when the warning message is shown. Defaults to 30000.",
+          "type": "number"
+        },
         "nextButtonDisableTime": {
           "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",
           "type": "number"
@@ -4095,7 +4277,7 @@
     },
     "WebsiteComponent": {
       "additionalProperties": false,
-      "description": "The WebsiteComponent interface is used to define the properties of a website component. A WebsiteComponent is used to render an iframe with a website inside of it. This can be used to display an external website or an html file that is located in the public folder. ```json {   \"type\": \"website\",   \"path\": \"<study-name>/assets/website.html\" } ```\n\nTo pass a data from the config to the website, you can use the `parameters` field as below:\n\n```json {   \"type\": \"website\",   \"path\": \"<study-name>/website.html\",   \"parameters\": {     \"barData\": [0.32, 0.01, 1.2, 1.3, 0.82, 0.4, 0.3]   },   \"response\": [     {       \"id\": \"barChart\",       \"prompt\": \"Your selected answer:\",       \"location\": \"belowStimulus\",       \"type\": \"reactive\"     }   ] } ``` In the `website.html` file, by including `revisit-communicate.js`, you can use the `Revisit.onDataReceive` method to retrieve the data, and `Revisit.postAnswers` to send the user's responses back to the reVISit as shown in the example below:\n\n```html <script src=\"../../revisitUtilities/revisit-communicate.js\"></script> <script> Revisit.onDataReceive((data) => {     const barData = data['barData'];     ...   });\n\n  // Call out that 'barChart' needs to match ID in 'response' object   Revisit.postAnswers({ barChart: userAnswer });   </script> ```\n\nIf the html website implements Trrack library for provenance tracking, you can send the provenance graph back to reVISit by calling `Revisit.postProvenance` as shown in the example below. You need to call this each time the Trrack state is updated so that reVISit is kept aware of the changes in the provenance graph.\n\n```ts const trrack = initializeTrrack({     initialState,     registry   });\n\n  ...   Revisit.postProvenance(trrack.graph.backend); ```",
+      "description": "The WebsiteComponent interface is used to define the properties of a website component. A WebsiteComponent is used to render an iframe with a website inside of it. This can be used to display an external website or an html file that is located in the public folder. ```json {   \"type\": \"website\",   \"path\": \"<study-name>/assets/website.html\" } ```\n\nTo pass a data from the config to the website, you can use the `parameters` field as below:\n\n```json {   \"type\": \"website\",   \"path\": \"<study-name>/website.html\",   \"parameters\": {     \"barData\": [0.32, 0.01, 1.2, 1.3, 0.82, 0.4, 0.3]   },   \"response\": [     {       \"id\": \"barChart\",       \"prompt\": \"Your selected answer:\",       \"location\": \"belowStimulus\",       \"type\": \"reactive\"     }   ] } ``` In the `website.html` file, by including `revisit-communicate.js`, you can use the `Revisit.onDataReceive` method to retrieve the data, and `Revisit.postAnswers` to send the user's responses back to the reVISit as shown in the example below:\n\n```html <script src=\"../../revisitUtilities/revisit-communicate.js\"></script> <script> Revisit.onDataReceive((data) => {     const barData = data['barData'];     ...   });\n\n  // Call out that 'barChart' needs to match ID in 'response' object   Revisit.postAnswers({ barChart: userAnswer });   </script> ```\n\nIf the html website implements Trrack provenance tracking, create the instance through `Revisit.createTrrack`. reVISit subscribes before returning the instance and automatically reports apply, undo, redo, and other traversals.\n\n```ts const trrack = Revisit.createTrrack({     initializeTrrack,     initialState,     registry   }); ```",
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
@@ -4136,6 +4318,22 @@
           "additionalProperties": {},
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
+        },
+        "nextButtonAlignment": {
+          "$ref": "#/definitions/NextButtonAlignment",
+          "description": "The horizontal alignment of the navigation action group. If present, will override the alignment setting in the uiConfig."
+        },
+        "nextButtonAutoAdvanceTime": {
+          "description": "The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component.",
+          "type": "number"
+        },
+        "nextButtonAutoAdvanceWarningMessage": {
+          "description": "The warning message shown before auto-advance. Include `{seconds}` to interpolate the remaining number and `{unit}` to interpolate `second`/`seconds`.",
+          "type": "string"
+        },
+        "nextButtonAutoAdvanceWarningTime": {
+          "description": "The time in milliseconds before auto-advance when the warning message is shown. Defaults to 30000.",
+          "type": "number"
         },
         "nextButtonDisableTime": {
           "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig.",

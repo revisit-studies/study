@@ -3,15 +3,20 @@ import {
 } from 'vitest';
 import {
   compileFactorBlocks, createFactorConditionId, deepFillTemplate, expandLibrarySequences, fillTemplate, resolveFactorConditions, verifyLibraryUsage, loadLibrariesParseNamespace,
-} from './libraryParser';
+} from '../libraryParser';
 import {
-  ComponentBlock, LibraryConfig, StudyConfig, InheritedComponent, IndividualComponent, ParserErrorWarning,
-} from './types';
-import { isDynamicBlock } from './utils';
+  ComponentBlock, DynamicBlock, FactorBlock, LibraryConfig, StudyConfig, InheritedComponent, IndividualComponent, ParserErrorWarning,
+} from '../types';
+import { isDynamicBlock, isFactorBlock } from '../utils';
+import calviConfig from '../../../public/libraries/calvi/config.json';
+import vlatConfig from '../../../public/libraries/vlat/config.json';
 
-// Helper function to check if a value is a ComponentBlock
-function isComponentBlock(value: unknown): value is ComponentBlock {
-  return typeof value === 'object' && value !== null && 'components' in value && !isDynamicBlock(value as StudyConfig['sequence']);
+function isComponentBlock(value: string | ComponentBlock | DynamicBlock | FactorBlock): value is ComponentBlock {
+  return typeof value === 'object'
+    && value !== null
+    && 'components' in value
+    && !isDynamicBlock(value)
+    && !isFactorBlock(value);
 }
 
 describe('Factor Templates', () => {
@@ -150,7 +155,6 @@ describe('Factor Compiler', () => {
 });
 
 describe('Library Macro Expansion', () => {
-  // Mock library data for testing
   const mockLibraryData: Record<string, LibraryConfig> = {
     testLib: {
       $schema: '',
@@ -471,7 +475,6 @@ describe('Library Macro Expansion', () => {
     });
 
     test('expands .co. within expanded .se. sequences', () => {
-      // Create a library with a sequence that uses .co. internally
       const libraryWithCoInSequence: Record<string, LibraryConfig> = {
         testLib: {
           ...mockLibraryData.testLib,
@@ -497,7 +500,6 @@ describe('Library Macro Expansion', () => {
         const expandedSequence = result.components[0];
         expect(typeof expandedSequence).toBe('object');
         if (isComponentBlock(expandedSequence)) {
-          // Components in the sequence should be namespaced with .components.
           expect(expandedSequence.components).toEqual([
             '$testLib.components.component1',
             '$testLib.components.component2',
@@ -546,7 +548,6 @@ describe('Library Macro Expansion', () => {
 
       expect(isComponentBlock(result)).toBe(true);
       if (isComponentBlock(result)) {
-        // Should only replace the first .co.
         expect(result.components).toEqual(['$testLib.components.component1']);
       }
     });
@@ -603,7 +604,6 @@ describe('Library Macro Expansion', () => {
         expect(result.components).toHaveLength(1);
         const expandedSequence = result.components[0];
         if (isComponentBlock(expandedSequence)) {
-          // Component should be namespaced
           expect(expandedSequence.components).toEqual(['$testLib.components.component1']);
         }
       }
@@ -642,7 +642,6 @@ describe('Library Macro Expansion', () => {
         expect(result.components).toHaveLength(1);
         const expandedSequence = result.components[0];
         if (isComponentBlock(expandedSequence)) {
-          // Component should remain the same
           expect(expandedSequence.components).toEqual(['$testLib.components.component1']);
         }
       }
@@ -771,7 +770,6 @@ describe('Library Macro Expansion', () => {
       const errors: ParserErrorWarning[] = [];
       expandLibrarySequences(sequence, mockLibraryData, errors);
 
-      // Should have collected errors from expansion
       expect(errors.length).toBe(2);
       expect(errors.some((e) => e.message?.includes('missingLib'))).toBe(true);
       expect(errors.some((e) => e.message?.includes('anotherMissingLib'))).toBe(true);
@@ -789,7 +787,6 @@ describe('Library Macro Expansion', () => {
 
       expect(isComponentBlock(result)).toBe(true);
       if (isComponentBlock(result)) {
-        // Should only replace the first .co.
         expect(result.components).toEqual(['$testLib.components.component.with.dots']);
       }
     });
@@ -804,8 +801,6 @@ describe('Library Macro Expansion', () => {
 
       expect(isComponentBlock(result)).toBe(true);
       if (isComponentBlock(result)) {
-        // .se. gets replaced first, then the string becomes .sequences.co.something
-        // The .co. won't be in the right position to be replaced again
         expect(result.components[0]).toContain('.sequences.');
       }
     });
@@ -825,10 +820,11 @@ describe('Library Macro Expansion', () => {
     });
 
     test('handles undefined/null components array gracefully', () => {
-      const sequence = {
+      const sequence: StudyConfig['sequence'] = {
         order: 'fixed',
+        // @ts-expect-error intentionally passing undefined to test edge case
         components: undefined,
-      } as unknown as StudyConfig['sequence'];
+      };
 
       const result = expandLibrarySequences(sequence, mockLibraryData);
 
@@ -856,9 +852,9 @@ describe('Library Macro Expansion', () => {
     });
 
     test('preserves interruptions property', () => {
-      const interruptions = [
+      const interruptions: ComponentBlock['interruptions'] = [
         {
-          spacing: 'random' as const,
+          spacing: 'random',
           numInterruptions: 1,
           components: ['breakComponent'],
         },
@@ -879,13 +875,13 @@ describe('Library Macro Expansion', () => {
     });
 
     test('preserves skip conditions', () => {
-      const skip = [
+      const skip: ComponentBlock['skip'] = [
         {
           name: 'skipCondition',
-          check: 'response' as const,
+          check: 'response',
           responseId: 'response1',
           value: 'yes',
-          comparison: 'equal' as const,
+          comparison: 'equal',
           to: 'nextComponent',
         },
       ];
@@ -1515,6 +1511,40 @@ describe('verifyLibraryUsage', () => {
 });
 
 describe('loadLibrariesParseNamespace', () => {
+  test('loads CALVI and VLAT configs with tag-pinned external image assets', async () => {
+    const libraryConfigs: Record<string, LibraryConfig> = {
+      calvi: calviConfig as LibraryConfig,
+      vlat: vlatConfig as LibraryConfig,
+    };
+
+    global.fetch = vi.fn().mockImplementation((path: URL | RequestInfo) => {
+      const pathString = path.toString();
+      const libraryName = pathString.includes('/calvi/')
+        ? 'calvi'
+        : 'vlat';
+
+      return Promise.resolve({
+        text: async () => JSON.stringify(libraryConfigs[libraryName]),
+      });
+    });
+
+    const errors: ParserErrorWarning[] = [];
+    const warnings: ParserErrorWarning[] = [];
+
+    const result = await loadLibrariesParseNamespace(['calvi', 'vlat'], errors, warnings);
+    const assetBaseUrl = 'https://raw.githubusercontent.com/revisit-studies/library-assets/v1';
+    const calviN1 = result.calvi.components['$calvi.components.N1'] as { path: string };
+    const vlatLine = result.vlat.components['$vlat.components.line-value'] as { path: string };
+
+    expect(errors).toHaveLength(0);
+    expect(result.calvi.sequences?.full).toBeDefined();
+    expect(result.calvi.sequences?.specificBank).toBeDefined();
+    expect(result.calvi.sequences?.fullBank).toBeDefined();
+    expect(result.vlat.sequences?.full).toBeDefined();
+    expect(calviN1.path).toBe(`${assetBaseUrl}/calvi/questions/normal/N1.jpg`);
+    expect(vlatLine.path).toBe(`${assetBaseUrl}/vlat/VLAT1.png`);
+  });
+
   test('loads libraries and namespaces components correctly', async () => {
     const mockLibraryConfig = {
       $schema: '',
@@ -1602,12 +1632,12 @@ describe('loadLibrariesParseNamespace', () => {
     const result = await loadLibrariesParseNamespace(['testLib'], errors, warnings);
 
     const derivedComp = result.testLib.components['$testLib.components.derivedComp'];
-    const derivedCompRecord = derivedComp as Record<string, unknown>;
     expect(derivedComp).toBeDefined();
+    const derivedCompRecord = derivedComp as IndividualComponent & Record<string, string>;
     expect(derivedCompRecord.instructionText).toBe('Override text');
     expect(derivedCompRecord.type).toBe('markdown');
     expect(derivedCompRecord.path).toBe('base.md');
-    expect(derivedCompRecord.baseComponent).toBeUndefined(); // Should be removed
+    expect(derivedCompRecord.baseComponent).toBeUndefined();
     expect(result.testLib.__revisitInheritedComponentMetadata).toEqual({
       '$testLib.components.derivedComp': {
         baseComponent: 'baseComp',
@@ -1712,7 +1742,6 @@ describe('loadLibrariesParseNamespace', () => {
 
     await loadLibrariesParseNamespace(['testLib'], errors, warnings);
 
-    // Warnings array should exist even if empty
     expect(Array.isArray(warnings)).toBe(true);
   });
 
@@ -1787,9 +1816,9 @@ describe('loadLibrariesParseNamespace', () => {
     const result = await loadLibrariesParseNamespace(['testLib'], errors, warnings);
 
     const derivedComp = result.testLib.components['$testLib.components.derivedComp'];
-    const derivedCompRecord = derivedComp as Record<string, unknown> & { meta?: Record<string, unknown> };
+    const derivedCompRecord = derivedComp as IndividualComponent & Record<string, string> & { meta?: Record<string, string> };
     expect(derivedCompRecord.instructionText).toBe('Override instruction');
     expect(derivedCompRecord.meta?.customProp).toBe('derived value');
-    expect(derivedCompRecord.meta?.baseProp).toBe('base value'); // Merged from base
+    expect(derivedCompRecord.meta?.baseProp).toBe('base value');
   });
 });
