@@ -911,14 +911,6 @@
       ],
       "type": "object"
     },
-    "FactorAction": {
-      "description": "Operations that combine factor conditions.",
-      "enum": [
-        "cross",
-        "zip"
-      ],
-      "type": "string"
-    },
     "FactorBlock": {
       "additionalProperties": false,
       "properties": {
@@ -976,24 +968,85 @@
       "type": "object"
     },
     "FactorExpression": {
-      "additionalProperties": false,
-      "description": "A recursively composable expression over named factors or nested expressions.",
-      "properties": {
-        "action": {
-          "$ref": "#/definitions/FactorAction"
-        },
-        "factors": {
-          "items": {
-            "$ref": "#/definitions/FactorOption"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "action": {
+              "enum": [
+                "cross",
+                "zip",
+                "concat"
+              ],
+              "type": "string"
+            },
+            "factors": {
+              "items": {
+                "$ref": "#/definitions/FactorOption"
+              },
+              "type": "array"
+            }
           },
-          "type": "array"
+          "required": [
+            "action",
+            "factors"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "action": {
+              "const": "sample",
+              "type": "string"
+            },
+            "factors": {
+              "items": {
+                "$ref": "#/definitions/FactorOption"
+              },
+              "type": "array"
+            },
+            "numSamples": {
+              "description": "Number of conditions randomly selected for each participant.",
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "action",
+            "factors",
+            "numSamples"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "action": {
+              "const": "repeat",
+              "type": "string"
+            },
+            "factors": {
+              "items": {
+                "$ref": "#/definitions/FactorOption"
+              },
+              "type": "array"
+            },
+            "numRepeats": {
+              "description": "Number of times the concatenated condition sequence is repeated.",
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "action",
+            "factors",
+            "numRepeats"
+          ],
+          "type": "object"
         }
-      },
-      "required": [
-        "action",
-        "factors"
       ],
-      "type": "object"
+      "description": "A recursively composable expression over named factors or nested expressions."
     },
     "FactorOption": {
       "anyOf": [

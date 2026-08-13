@@ -9,7 +9,7 @@ import {
   StudyConfig,
 } from '../parser/types';
 import { Sequence } from '../store/types';
-import { isDynamicBlock, isFactorBlock } from '../parser/utils';
+import { isDynamicBlock, isFactorBlock, isFactorPlanBlock } from '../parser/utils';
 
 type SequenceBlock = ComponentBlock | DynamicBlock | FactorBlock;
 type BetweenSubjectsFactorLevels = { factorName: string; levels: FactorValue[] };
@@ -212,8 +212,8 @@ function generateLatinSquareRows(config: StudyConfig, path: string, minimumRowCo
   return rows;
 }
 
-function insertRandomInterruptions(
-  components: (string | SequenceBlock)[],
+function insertRandomInterruptions<T>(
+  components: (string | T)[],
   randomInterruptions: RandomInterruption[],
 ) {
   const totalInterruptions = randomInterruptions
@@ -244,7 +244,7 @@ function insertRandomInterruptions(
     }
   });
 
-  const newComponents: (string | SequenceBlock)[] = [];
+  const newComponents: (string | T)[] = [];
   for (let i = 0; i < components.length; i += 1) {
     interruptionsByLocation.get(i)?.forEach((interruptionComponents) => {
       newComponents.push(...interruptionComponents);
@@ -319,10 +319,13 @@ function _componentBlockToSequence(
 
   // Track how many times we've seen each unique component
   const seenCounts = new Map<SequenceBlock, number>();
+  let sequenceComponents: Sequence['components'] = [];
 
   for (let i = 0; i < computedComponents.length; i += 1) {
     const curr = computedComponents[i];
-    if (typeof curr !== 'string' && !Array.isArray(curr)) {
+    if (typeof curr === 'string') {
+      sequenceComponents.push(curr);
+    } else if (!Array.isArray(curr)) {
       const matchedUnique = findMatchingUnique(curr, uniqueComponents);
 
       if (matchedUnique) {
@@ -330,12 +333,17 @@ function _componentBlockToSequence(
         const actualIndex = matchedUnique.indices[seenCount] ?? matchedUnique.indices[0];
         seenCounts.set(matchedUnique.component, seenCount + 1);
 
-        computedComponents[i] = _componentBlockToSequence(
+        const childSequence = _componentBlockToSequence(
           curr,
           latinSquareObject,
           latinSquareRowIndex,
           `${path}-${actualIndex}`,
-        ) as unknown as ComponentBlock;
+        );
+        if (isFactorPlanBlock(curr)) {
+          sequenceComponents.push(...childSequence.components);
+        } else {
+          sequenceComponents.push(childSequence);
+        }
       } else {
         // This should never happen - all component blocks should be in uniqueComponents
         throw new Error(`Unexpected: component block not found in uniqueComponents map at path ${path}`);
@@ -347,19 +355,19 @@ function _componentBlockToSequence(
   if (order.interruptions) {
     for (let interruptionIndex = 0; interruptionIndex < order.interruptions.length; interruptionIndex += 1) {
       const interruption = order.interruptions[interruptionIndex];
-      const newComponents: (string | SequenceBlock)[] = [];
+      const newComponents: Sequence['components'] = [];
       if (interruption.spacing !== 'random') {
-        for (let i = 0; i < computedComponents.length; i += 1) {
+        for (let i = 0; i < sequenceComponents.length; i += 1) {
           if (
             i === interruption.firstLocation
             || (i > interruption.firstLocation && i % interruption.spacing === 0)
           ) {
             newComponents.push(...interruption.components);
           }
-          newComponents.push(computedComponents[i]);
+          newComponents.push(sequenceComponents[i]);
         }
 
-        computedComponents = newComponents;
+        sequenceComponents = newComponents;
       } else {
         const groupedRandomInterruptions: RandomInterruption[] = [interruption];
         while (
@@ -370,7 +378,7 @@ function _componentBlockToSequence(
           groupedRandomInterruptions.push(order.interruptions[interruptionIndex] as RandomInterruption);
         }
 
-        computedComponents = insertRandomInterruptions(computedComponents, groupedRandomInterruptions);
+        sequenceComponents = insertRandomInterruptions(sequenceComponents, groupedRandomInterruptions);
       }
     }
   }
@@ -379,7 +387,7 @@ function _componentBlockToSequence(
     id: order.id,
     orderPath: path,
     order: order.order,
-    components: computedComponents.flat() as Sequence['components'],
+    components: sequenceComponents,
     skip: order.skip || [],
     interruptions: order.interruptions || [],
     conditional: order.conditional,

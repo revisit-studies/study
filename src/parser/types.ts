@@ -1797,17 +1797,43 @@ export interface ComponentBlock {
 /** A primitive level stored by a factor. */
 export type FactorValue = string | number | boolean;
 
-/** Operations that combine factor conditions. */
-export type FactorAction = 'cross' | 'zip';
+/** Operations that combine or allocate factor conditions. */
+export type FactorAction = 'cross' | 'zip' | 'concat' | 'sample' | 'repeat';
 
 /** A named factor reference or another inline factor expression. */
 export type FactorOption = string | FactorExpression;
 
-/** A recursively composable expression over named factors or nested expressions. */
-export interface FactorExpression {
-  action: FactorAction;
+interface FactorCombinationExpression {
+  action: 'cross' | 'zip' | 'concat';
   factors: FactorOption[];
 }
+
+interface FactorSampleExpression {
+  action: 'sample';
+  factors: FactorOption[];
+  /**
+   * Number of conditions randomly selected for each participant.
+   * @asType integer
+   * @minimum 1
+   */
+  numSamples: number;
+}
+
+interface FactorRepeatExpression {
+  action: 'repeat';
+  factors: FactorOption[];
+  /**
+   * Number of times the concatenated condition sequence is repeated.
+   * @asType integer
+   * @minimum 1
+   */
+  numRepeats: number;
+}
+
+/** A recursively composable expression over named factors or nested expressions. */
+export type FactorExpression = FactorCombinationExpression
+  | FactorSampleExpression
+  | FactorRepeatExpression;
 
 export type Factor = FactorValue[] | FactorExpression;
 

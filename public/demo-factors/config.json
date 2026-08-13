@@ -110,6 +110,27 @@
         "visType"
       ]
     },
+    "concatBlock": {
+      "action": "concat",
+      "factors": [
+        "data",
+        "task"
+      ]
+    },
+    "repeatBlock": {
+      "action": "repeat",
+      "factors": [
+        "task"
+      ],
+      "numRepeats": 2
+    },
+    "sampleBlock": {
+      "action": "sample",
+      "factors": [
+        "topics"
+      ],
+      "numSamples": 2
+    },
     "zipThenTaskBlock": {
       "action": "cross",
       "factors": [
@@ -205,6 +226,24 @@
         "factor": "zipThenTaskBlock",
         "components": "factorComponent",
         "order": "random"
+      },
+      {
+        "type": "factor",
+        "id": "concatBlockFixed",
+        "factor": "concatBlock",
+        "components": "factorComponent"
+      },
+      {
+        "type": "factor",
+        "id": "repeatBlockFixed",
+        "factor": "repeatBlock",
+        "components": "factorComponent"
+      },
+      {
+        "type": "factor",
+        "id": "sampleBlockRandom",
+        "factor": "sampleBlock",
+        "components": "factorComponent"
       },
       {
         "type": "factor",
