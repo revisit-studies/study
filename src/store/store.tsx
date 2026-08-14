@@ -482,6 +482,11 @@ export function useAreResponsesValid(id: string) {
     if (id.includes('reviewer-')) {
       return true;
     }
+
+    if (!state.trialValidation[id]) {
+      return false;
+    }
+
     const valid = !(state.trialValidation[id]) ? true : Object.values(state.trialValidation[id]).every((x) => {
       if (typeof x === 'object' && 'valid' in x) {
         return x.valid;

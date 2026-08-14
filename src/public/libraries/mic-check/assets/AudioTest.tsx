@@ -5,10 +5,24 @@ import {
   useEffect,
 } from 'react';
 import { StimulusParams } from '../../../../store/types';
+import { useStoreSelector } from '../../../../store/store';
 import { RecordingAudioWaveform } from '../../../../components/interface/RecordingAudioWaveform';
 
 export function AudioTest({ setAnswer }: StimulusParams<undefined>) {
+  const { dataCollectionEnabled } = useStoreSelector((state) => state.modes);
   useEffect(() => {
+    if (!dataCollectionEnabled) {
+      setAnswer({
+        status: true,
+        answers: {
+          audioTest: true,
+        },
+      });
+      return;
+    }
+
+    setAnswer({ status: false, answers: {} });
+
     const _stream = navigator.mediaDevices.getUserMedia({
       audio: true,
     });
@@ -45,6 +59,7 @@ export function AudioTest({ setAnswer }: StimulusParams<undefined>) {
                 audioTest: true,
               },
             });
+            break;
           }
         }
 
