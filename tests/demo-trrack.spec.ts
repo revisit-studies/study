@@ -129,22 +129,21 @@ for (const demo of demos) {
     await expect(addButton).toBeEnabled();
     await addButton.click();
 
-    for (let count = 20; count > 1; count -= 1) {
+    for (let count = 20; count > 0; count -= 1) {
       await removeButton.click();
     }
 
-    await expectDotCount(frame, 1);
-    await expect(page.getByRole('listitem').filter({ hasText: '1' })).toHaveCount(1);
+    await expectDotCount(frame, 0);
     await expect(removeButton).toBeDisabled();
     await removeButton.locator('..').hover();
     await expect(frame.getByRole('tooltip')).toBeVisible();
-    await expect(frame.getByRole('tooltip')).toHaveText('Minimum of 1 dot reached.');
+    await expect(frame.getByRole('tooltip')).toHaveText('Minimum of 0 dots reached.');
 
     await frame.getByRole('button', { name: 'Undo' }).click();
-    await expectDotCount(frame, 2);
+    await expectDotCount(frame, 1);
     await expect(removeButton).toBeEnabled();
     await frame.getByRole('button', { name: 'Redo' }).click();
-    await expectDotCount(frame, 1);
+    await expectDotCount(frame, 0);
   });
 
   test(`${demo.title} replays Undo and Redo in recorded order`, async ({ page }) => {
