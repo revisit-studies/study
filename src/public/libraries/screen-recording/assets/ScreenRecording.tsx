@@ -27,7 +27,7 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
       setAnswer({
         status: true,
         answers: {
-          audioTest: true,
+          screenRecordingPermission: true,
         },
       });
       return;
@@ -113,10 +113,7 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
               <strong>Click the button below</strong>
               {' '}
               to enable screen and audio recording.
-              <Button type="button"
-                      onClick={screenCapturing ? stopCapture : startCapture}
-                      disabled={!dataCollectionEnabled}
-                      display="block" mt="sm">
+              <Button type="button" onClick={screenCapturing ? stopCapture : startCapture} display="block" mt="sm">
                 {screenCapturing ? 'Stop Recording' : 'Start Recording'}
               </Button>
               <video
