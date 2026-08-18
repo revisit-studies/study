@@ -29,7 +29,7 @@ async function answerMatrixCheckboxRows(
 }
 
 async function advanceToSidebarFormElements(page: Page) {
-  const sidebarAgeInput = page.locator('input[placeholder="Enter your age here, range from 0 - 100"]:visible').first();
+  const sidebarAgeInput = page.locator('input[placeholder="Enter your age here, range from 0 to 100"]:visible').first();
 
   for (let i = 0; i < 3; i += 1) {
     if (await sidebarAgeInput.isVisible().catch(() => false)) {
@@ -65,7 +65,7 @@ test('Test questionnaire component with responses and randomizing questions and 
   // Fill the survey: Form Elements
 
   // Number input
-  const ageInput = page.getByPlaceholder('Enter your age here, range from 0 - 100');
+  const ageInput = page.getByPlaceholder('Enter your age here, range from 0 to 100');
   await expect(ageInput).toBeVisible({ timeout: 10000 });
   await ageInput.fill('120');
   await page.getByRole('button', { name: 'Next', exact: true }).click();
@@ -237,7 +237,7 @@ test('Test questionnaire component with responses and randomizing questions and 
   await page.getByRole('radio', { name: 'Option 1' }).nth(1).click();
 
   // Likert scale
-  await page.getByRole('radio', { name: '6' }).nth(0).click();
+  await page.getByRole('radio', { name: '5' }).nth(0).click();
 
   // Go to the next page
   await nextClick(page);

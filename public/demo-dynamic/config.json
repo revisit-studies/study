@@ -35,7 +35,7 @@
         {
           "id": "buttonResponse",
           "type": "buttons",
-          "prompt": "Choose the square with a high saturation",
+          "prompt": "Choose the square with the higher saturation.",
           "location": "belowStimulus",
           "options": [
             "Left",

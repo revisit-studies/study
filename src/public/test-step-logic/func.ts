@@ -10,5 +10,5 @@ export default function func({ answers, customParameters }: JumpFunctionParamete
     return { component: null };
   }
 
-  return { component: 'reactComponent', parameters: { n: topAnswerLength || 0 }, correctAnswer: [{ id: 'test', answer: 'correct' }] };
+  return { component: 'reactComponent', parameters: { n: topAnswerLength || 0 } };
 }

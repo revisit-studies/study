@@ -124,4 +124,11 @@ describe('ResponseSwitcher stored answer locking', () => {
     expect(capturedStringInputProps.disabled).toBe(true);
     expect(capturedStringInputProps.answer).toMatchObject({ value: 'stored', readOnly: true });
   });
+
+  test('does not crash for a completed participant without a stored answer', () => {
+    mockStoreState.completed = true;
+    expect(() => renderSwitcher({ storedAnswer: undefined, answerFinalized: false })).not.toThrow();
+    expect(capturedStringInputProps.disabled).toBe(true);
+    expect(capturedStringInputProps.answer).toMatchObject({ value: undefined, readOnly: true });
+  });
 });

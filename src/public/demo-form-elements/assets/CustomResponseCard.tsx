@@ -61,6 +61,10 @@ export const validate: CustomResponseValidate = (value, _values, response) => {
     return `Set confidence to at least ${minimumConfidence} to continue.`;
   }
 
+  if (structuredValue.confidence > 100) {
+    return 'Set confidence to 100 or less to continue.';
+  }
+
   return null;
 };
 
@@ -115,6 +119,7 @@ export default function CustomResponseCard({
           description={`Choose a confidence of at least ${minimumConfidence}.`}
           min={0}
           max={100}
+          clampBehavior="none"
           value={structuredValue.confidence ?? undefined}
           onChange={(nextValue) => updateValue({ confidence: normalizeConfidenceValue(nextValue) })}
           onBlur={() => field.onBlur()}

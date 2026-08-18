@@ -86,7 +86,9 @@ export function TableView({
         accessorFn: (row: ParticipantDataWithStatus) => {
           const incompleteEntries = Object.entries(row.answers || {}).filter((e) => e[1].startTime === 0);
 
-          return { percent: (Object.entries(row.answers).length - incompleteEntries.length) / (getSequenceFlatMap(row.sequence).length - 1), completed: row.completed, rejected: row.rejected };
+          const denominator = Math.max(getSequenceFlatMap(row.sequence).length - 1, 1);
+
+          return { percent: (Object.entries(row.answers).length - incompleteEntries.length) / denominator, completed: row.completed, rejected: row.rejected };
         },
         header: 'Status',
         size: 100,
