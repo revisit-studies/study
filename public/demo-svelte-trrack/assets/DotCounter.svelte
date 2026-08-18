@@ -55,12 +55,11 @@
     bottom: calc(100% + 8px);
     color: #ffffff;
     font: 12px/1.4 Arial, Helvetica, sans-serif;
-    left: 50%;
+    left: 0;
     opacity: 0;
     padding: 6px 8px;
     pointer-events: none;
     position: absolute;
-    transform: translateX(-50%);
     visibility: hidden;
     white-space: nowrap;
     z-index: 1;

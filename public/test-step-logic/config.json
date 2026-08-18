@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "Step logic test",
+    "title": "Using Step Logic",
     "description": "This is a test of the step logic feature.",
     "version": "1.0.0",
     "authors": [
@@ -67,46 +67,9 @@
         }
       ]
     },
-    "attentionCheck": {
-      "type": "questionnaire",
-      "instruction": "Are you paying attention?",
-      "response": [
-        {
-          "id": "q1",
-          "type": "radio",
-          "prompt": "Are you paying attention?",
-          "location": "belowStimulus",
-          "options": [
-            "Yes",
-            "No"
-          ]
-        }
-      ],
-      "correctAnswer": [
-        {
-          "id": "q1",
-          "answer": "Yes"
-        }
-      ]
-    },
-    "continuingComponent": {
-      "type": "markdown",
-      "path": "test-skip-logic/continuingComponent.md",
-      "response": []
-    },
     "reactComponent": {
       "type": "react-component",
       "path": "test-step-logic/Example.tsx",
-      "response": []
-    },
-    "targetComponent": {
-      "type": "markdown",
-      "path": "test-skip-logic/targetComponent.md",
-      "response": []
-    },
-    "targetBlockComponent": {
-      "type": "markdown",
-      "path": "test-skip-logic/targetBlockComponent.md",
       "response": []
     }
   },

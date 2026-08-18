@@ -59,7 +59,7 @@ test('Test vega component with reactive response', async ({ page }) => {
   await expect(nextButton).toBeEnabled();
   await nextClick(page);
 
-  await expect(page.getByText('Select the movie with highest World Wide Gross.')).toBeVisible();
+  await expect(page.getByText('Select the movie with the highest Worldwide Gross.')).toBeVisible();
 
   const fieldSelects = page.locator('main select');
   await expect(fieldSelects.nth(0)).toBeVisible();

@@ -23,8 +23,8 @@
     "trial": {
       "type": "questionnaire",
       "response": [],
-      "nextButtonLocation": "aboveStimulus",
-      "instruction": "Please answer the following questions...",
+      "nextButtonLocation": "belowStimulus",
+      "instruction": "Continue to the next trial.",
       "instructionLocation": "aboveStimulus"
     }
   },
@@ -33,9 +33,9 @@
       "type": "markdown",
       "path": "test-randomization/assets/introduction.md",
       "response": [],
-      "nextButtonLocation": "aboveStimulus",
+      "nextButtonLocation": "belowStimulus",
       "instructionLocation": "aboveStimulus",
-      "description": "this is an introduction to the study",
+      "description": "This is an introduction to the study.",
       "meta": {
         "difficulty": "easy"
       }
@@ -110,21 +110,20 @@
       "type": "markdown",
       "path": "test-randomization/assets/break.md",
       "response": [],
-      "nextButtonLocation": "aboveStimulus",
+      "nextButtonLocation": "belowStimulus",
       "instructionLocation": "aboveStimulus"
     },
     "break2": {
       "type": "markdown",
       "path": "test-randomization/assets/break.md",
       "response": [],
-      "nextButtonLocation": "aboveStimulus",
+      "nextButtonLocation": "belowStimulus",
       "instructionLocation": "aboveStimulus"
     }
   },
   "sequence": {
     "order": "fixed",
     "components": [
-      "introduction",
       "introduction",
       {
         "order": "latinSquare",

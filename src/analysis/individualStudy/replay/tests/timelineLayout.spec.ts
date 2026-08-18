@@ -3,7 +3,7 @@ import {
   expect,
   test,
 } from 'vitest';
-import { getUniformTimelineMetrics } from './timelineLayout';
+import { getUniformTimelineMetrics } from '../timelineLayout';
 
 describe('getUniformTimelineMetrics', () => {
   test('fills available width when tasks can be wider than the minimum', () => {

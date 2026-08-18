@@ -1,13 +1,13 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "Test LIKERT",
+    "title": "Test Likert and Matrix Responses",
     "version": "pilot",
     "authors": [
       "The reVISit Team"
     ],
     "date": "2026-02-23",
-    "description": "Testing for likert",
+    "description": "A test of Likert and matrix responses.",
     "organizations": [
       "University of Utah",
       "WPI"
@@ -34,10 +34,10 @@
         {
           "id": "my_likert",
           "prompt": "How likely would you be to own each of the following pets?",
-          "secondaryText": "1 = Not at all confident, 5 = Very confident",
+          "secondaryText": "1 = Highly Unlikely, 5 = Highly Likely",
           "location": "aboveStimulus",
           "type": "matrix-radio",
-          "answerOptions": "satisfaction5",
+          "answerOptions": "likely5",
           "questionOptions": [
             "Cat",
             "Dog",
@@ -49,7 +49,6 @@
         {
           "id": "additional_likert",
           "prompt": "For each animal, select all that apply.",
-          "secondaryText": "1 = Not at all confident, 5 = Very confident",
           "location": "aboveStimulus",
           "type": "matrix-checkbox",
           "answerOptions": [
@@ -69,12 +68,12 @@
         },
         {
           "id": "q1",
-          "prompt": "How useful did you find the rectangular selection method? ",
+          "prompt": "How useful did you find the rectangular selection method?",
           "location": "aboveStimulus",
           "type": "likert",
           "numItems": 7,
-          "rightLabel": "Like",
-          "leftLabel": "Dislike"
+          "rightLabel": "Very useful",
+          "leftLabel": "Not useful"
         }
       ],
       "type": "questionnaire"
