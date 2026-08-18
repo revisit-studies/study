@@ -42,6 +42,7 @@ export function SliderInput({
 
   // Numeric label
   const labelValues = useMemo(() => generateSliderBreakValues(min, max, spacing), [min, max, spacing]);
+  const smeqLabelValues = useMemo(() => [min, ...labelValues, max], [min, max, labelValues]);
 
   // For smeq style (vertical slider)
   const [val, setVal] = useState((answer as { value?: number }).value ?? (min + max) / 2);
@@ -75,7 +76,7 @@ export function SliderInput({
               height: 450, position: 'relative', minWidth: 30, textAlign: 'right', flexShrink: 0,
             }}
             >
-              {labelValues.map((label) => {
+              {smeqLabelValues.map((label) => {
                 const labelPosition = ((label - min) / (max - min)) * 100;
                 return (
                   <Box
@@ -120,7 +121,7 @@ export function SliderInput({
               />
 
               {/* Mark - numeric label */}
-              {labelValues.map((value) => {
+              {smeqLabelValues.map((value) => {
                 const markPosition = ((value - min) / (max - min)) * 100;
                 return (
                   <Box
@@ -140,6 +141,7 @@ export function SliderInput({
 
               {/* Mark - value */}
               {options.map((option) => {
+                if (!option.label) return null;
                 const markPosition = ((option.value - min) / (max - min)) * 100;
                 return (
                   <Box
@@ -147,8 +149,8 @@ export function SliderInput({
                     style={{
                       position: 'absolute',
                       bottom: `${markPosition}%`,
-                      left: option.label !== '' ? 20 : 2,
-                      width: option.label !== '' ? 20 : 20,
+                      left: 20,
+                      width: 20,
                       height: 1,
                       backgroundColor: 'var(--mantine-color-gray-7)',
                       transform: 'translateY(50%)',

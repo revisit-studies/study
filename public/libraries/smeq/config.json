@@ -57,6 +57,7 @@
               "value": 150
             }
           ],
+          "spacing": 10,
           "step": 1,
           "startingValue": 0,
           "required": true
