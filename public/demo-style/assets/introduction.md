@@ -29,7 +29,7 @@ Apply specific styling directly to components or responses:
 
 **UI Elements:** Progress bar, sidebar, logo, background color, etc.
 
-**Component Types:** Markdown, Images, Videos, Vega visualizations, Websites, and Questionnaires.
+**Component Types:** Markdown, Images, Videos, React Components, Vega visualizations, Websites, and Questionnaires.
 
 **Response Types:** Text inputs, dropdowns, radio buttons, checkboxes, sliders, Likert scales, and matrix responses.
 
