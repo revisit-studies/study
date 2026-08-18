@@ -38,9 +38,13 @@ export function AllTasksTimeline({
   const availableWidth = Math.max(containerWidth || width, 0);
 
   const percentComplete = useMemo(() => {
+    const totalEntries = Object.entries(participantData.answers || {}).length;
+    if (totalEntries === 0) {
+      return 1;
+    }
     const incompleteEntries = Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0);
 
-    return (Object.entries(participantData.answers).length - incompleteEntries.length) / (Object.entries(participantData.answers).length);
+    return (totalEntries - incompleteEntries.length) / totalEntries;
   }, [participantData.answers]);
 
   const timelineWidth = useMemo(() => {
@@ -169,14 +173,14 @@ export function AllTasksTimeline({
               <Stack gap={0}>
                 {Object.entries(answer.answer).map((a) => {
                   const [id, componentAnswer] = a;
-                  const correctAnswer = resolvedComponent?.correctAnswer?.find((c) => c.id === id)?.answer;
+                  const correctAnswer = correctAnswers?.find((c) => c.id === id)?.answer;
                   const participantAnswer = (componentAnswer === undefined || componentAnswer === null || componentAnswer === '')
                     ? 'N/A'
                     : typeof componentAnswer === 'object'
                       ? JSON.stringify(componentAnswer)
                       : componentAnswer;
 
-                  return <Text key={id}>{`${id}: ${participantAnswer} ${correctAnswer ? `[${typeof correctAnswer === 'object' ? JSON.stringify(correctAnswer) : correctAnswer}]` : ''}`}</Text>;
+                  return <Text key={id}>{`${id}: ${participantAnswer} ${correctAnswer !== undefined ? `[${typeof correctAnswer === 'object' ? JSON.stringify(correctAnswer) : correctAnswer}]` : ''}`}</Text>;
                 })}
               </Stack>
             )}

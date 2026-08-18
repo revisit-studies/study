@@ -51,7 +51,7 @@ export default function VlatTrial({ parameters, setAnswer, answers }: StimulusPa
           <Image
             radius="sm"
             src={imgMap[activeQuestion.img] || ''}
-            alt="VIS"
+            alt={`Visualization for question ${parameters.qidx}`}
             w="100%"
             maw={900}
           />

@@ -1,5 +1,5 @@
 import {
-  useEffect, useMemo, useRef, useState,
+  useEffect, useRef, useState,
 } from 'react';
 import { Button, Tooltip } from '@mantine/core';
 import * as d3 from 'd3';
@@ -42,22 +42,19 @@ function Map({
   // Sync selected states to trrack
   useEffect(() => {
     trrack.apply('select', selectStateAction(selectedStates));
-
-    setAnswer({
-      status: true,
-      answers: { selectedStates },
-    });
-  }, [selectedStates, setAnswer, trrack]);
+  }, [selectedStates, trrack]);
 
   // Sync hovered state to trrack
   useEffect(() => {
     trrack.apply('hover', hoverStateAction(hoveredState));
+  }, [hoveredState, trrack]);
 
+  useEffect(() => {
     setAnswer({
-      status: true,
-      answers: { hoveredState },
+      status: selectedStates.length === 3,
+      answers: { selectedStates, hoveredState },
     });
-  }, [hoveredState, setAnswer, trrack]);
+  }, [selectedStates, hoveredState, setAnswer]);
 
   // Restore provenance state when replaying
   useEffect(() => {

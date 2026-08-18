@@ -386,7 +386,7 @@ d3.select('#freeFormAnswer').on('input', function () {
 //function that updates the answer in the side panel as well as in the results field in tasks
 //answer is either an array of node objects or a string from the answer box;
 function updateAnswer(answer, type) {
-  const postAnswer = answer.map((a) => a.name);
+  const postAnswer = Array.isArray(answer) ? answer.map((a) => a.shortName) : answer;
   Revisit.postAnswers({
     [revisitTaskID]: postAnswer,
   });
@@ -1217,7 +1217,7 @@ async function loadTasks(visType, tasksType, taskNum) {
   //reset currentTask to 0
 
   //check if taskNum was passed in through the URL
-  if (taskNum) {
+  if (taskNum !== undefined && taskNum !== null && taskNum !== '') {
     setCookie('onTask', taskNum);
   }
   let cachedTask = getCookie('onTask');

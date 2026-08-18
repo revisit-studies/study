@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { IndividualComponent } from '../../parser/types';
+import { IndividualComponent } from '../../../parser/types';
 import {
   evaluateStimulusIssue,
   generateStimulusErrorMessage,
   getInitialStimulusValidation,
   getStimulusIssueType,
   shouldUseStimulusValidation,
-} from './stimulusErrors';
+} from '../stimulusErrors';
 
 describe('getInitialStimulusValidation', () => {
   it('marks forced-completion videos as invalid initially', () => {

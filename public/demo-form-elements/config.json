@@ -34,7 +34,7 @@
         {
           "id": "title",
           "type": "textOnly",
-          "prompt": "# Form Element\n\n This page shows many of the form elements that are supported in reVISit.",
+          "prompt": "# Form Elements\n\n This page shows many of the form elements that are supported in reVISit.",
           "restartEnumeration": true
         },
         {
@@ -54,7 +54,7 @@
           "secondaryText": "A numeric example that is required to complete and has an option to say 'Don't know'.",
           "infoText": "This numerical input accepts values between 0 and 100.",
           "type": "numerical",
-          "placeholder": "Enter your age here, range from 0 - 100",
+          "placeholder": "Enter your age here, range from 0 to 100",
           "max": 100,
           "min": 0,
           "withDontKnow": true
@@ -129,7 +129,7 @@
         },
         {
           "id": "q-multiselect-dropdown",
-          "prompt": "Multiselect dropdown example - which chart have you used before?",
+          "prompt": "Multiselect dropdown example - which charts have you used before?",
           "secondaryText": "Dropdown for multi-selection",
           "infoText": "Select the chart types you have used before. You have to select at least 2 options and up to 3 options.",
           "type": "dropdown",
@@ -206,7 +206,7 @@
           "type": "radio",
           "options": [
             "Option 1",
-            "Option 2 this is long a long option that will wrap"
+            "Option 2 is a long option that will wrap"
           ],
           "horizontal": true,
           "withOther": true
@@ -255,7 +255,7 @@
           "id": "q-multi-satisfaction",
           "prompt": "Rate your satisfaction from 1 (Highly Unsatisfied) to 5 (Highly Satisfied) for the following items.",
           "secondaryText": "A simple matrix of Likert responses with predefined options for satisfaction.",
-          "infoText": "This is a matrix radio where you rate each item on a 5 point scale from 'Highly Unsatisfied' to 'Highly Satisfied'.",
+          "infoText": "This is a matrix radio where you rate each item on a 5-point scale from 'Highly Unsatisfied' to 'Highly Satisfied'.",
           "type": "matrix-radio",
           "answerOptions": "satisfaction5",
           "questionOptions": [
@@ -393,10 +393,7 @@
           ],
           "minSelections": 1,
           "maxSelections": 3,
-          "default": [
-            "Line",
-            "test"
-          ]
+          "default": "Line"
         },
         {
           "id": "default-radio",
@@ -820,7 +817,7 @@
         {
           "id": "title",
           "type": "textOnly",
-          "prompt": "# Form Elements in Sidebars \n\n This page shows form elements that can be used in the sidebar. \n\n For all elements that have horizontal and vertical variants, you should always use the vertical one in the sidebars. \n\n Matrix form elements are not supported in the sidebar. \n\n Limit Likert scales to 7 or less to fit. \n\n Limit the number of buttons to avoid overflow.",
+          "prompt": "# Form Elements in Sidebars \n\n This page shows form elements that can be used in the sidebar. \n\n For all elements that have horizontal and vertical variants, you should always use the vertical one in the sidebars. \n\n Matrix form elements are not supported in the sidebar. \n\n Limit Likert scales to 6 or fewer to fit. \n\n Limit the number of buttons to avoid overflow.",
           "restartEnumeration": true
         },
         {
@@ -835,7 +832,7 @@
           "prompt": "Numerical example",
           "secondaryText": "A numeric example that is required to complete and has an option to say 'Don't know'.",
           "type": "numerical",
-          "placeholder": "Enter your age here, range from 0 - 100",
+          "placeholder": "Enter your age here, range from 0 to 100",
           "max": 100,
           "min": 0,
           "withDontKnow": true,
@@ -844,7 +841,7 @@
         {
           "id": "q-slider",
           "prompt": "Slider example",
-          "secondaryText": "A slider for 0-100 with 3 breakpoints for bad, mid, and good",
+          "secondaryText": "A slider for 0 to 100 with three breakpoints for Bad, Mid, and Good",
           "type": "slider",
           "startingValue": 50,
           "spacing": 50,
@@ -910,7 +907,7 @@
         },
         {
           "id": "q-multiselect-dropdown",
-          "prompt": "Multiselect dropdown example - which chart have you used before?",
+          "prompt": "Multiselect dropdown example - which charts have you used before?",
           "secondaryText": "Dropdown for multi-selection",
           "infoText": "Select the chart types you have used before. You have to select at least 2 options and up to 3 options.",
           "type": "dropdown",
@@ -982,9 +979,9 @@
         {
           "id": "q-likert",
           "prompt": "Likert scale example",
-          "secondaryText": "A Likert example with 7 items",
+          "secondaryText": "A Likert example with 5 items",
           "type": "likert",
-          "numItems": 7,
+          "numItems": 5,
           "rightLabel": "Like",
           "leftLabel": "Dislike",
           "labelLocation": "above",

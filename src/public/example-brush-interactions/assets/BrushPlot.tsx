@@ -103,6 +103,9 @@ export function BrushPlot({
   // debouncing the trrack callback
   const debouncedCallback = useMemo(() => debounce(moveBrushCallback, 100, { maxWait: 100 }), [moveBrushCallback]);
 
+  // Cancel any pending debounced call when it is replaced or the component unmounts
+  useEffect(() => () => debouncedCallback.cancel(), [debouncedCallback]);
+
   // brush callback, updating state, finding the selected points, and pushing to trrack
   const brushedSpaceCallback = useCallback((sel: [[number | null, number | null], [number | null, number | null]], xScale: any, yScale: any, selType: SelectionType, ids?: string[]) => {
     if (!xScale || !yScale) {

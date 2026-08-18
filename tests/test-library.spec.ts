@@ -4,7 +4,7 @@ import {
   resetClientStudyState,
 } from './utils';
 
-test('parser errors are shown correctly', async ({ page }) => {
+test('library components and sequences are imported correctly', async ({ page }) => {
   await resetClientStudyState(page);
   await page.goto('/');
 
@@ -56,4 +56,8 @@ test('parser errors are shown correctly', async ({ page }) => {
   await expect(page.getByText('test md file')).toBeVisible();
   await expect(page.getByText('What did you think of the')).toBeVisible();
   await nextClick(page);
+  await page.waitForTimeout(100);
+
+  await expect(page.getByText('new instruction.')).toBeVisible();
+  await expect(page.getByRole('radio', { name: 'True' })).toBeVisible();
 });

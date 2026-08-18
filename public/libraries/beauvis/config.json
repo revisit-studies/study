@@ -9,7 +9,8 @@
       "type": "image",
       "path": "libraries/beauvis/assets/vis-example.png",
       "style": {
-        "width": "800px"
+        "width": "800px",
+        "margin": "0 0 32px 0"
       },
       "response": [
         {

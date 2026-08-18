@@ -182,6 +182,8 @@ test('test', async ({ page, browserName }) => {
   const taskTimeoutMs = 5000;
   const maxTaskLoops = 20;
   let firstTaskParticipantPath = '';
+  const taskZeroQuestion = 'Find the North American with the most Tweets';
+  let sawTaskZero = false;
 
   await page.goto('/');
 
@@ -241,6 +243,11 @@ test('test', async ({ page, browserName }) => {
       await expect(qText).toBeVisible({ timeout: 5000 });
     }
     const questionBefore = await getCurrentTaskQuestion(page);
+    // Check if the current question is the task zero question
+    if (questionBefore === taskZeroQuestion) {
+      await expect(page.getByText(taskZeroQuestion)).toBeVisible();
+      sawTaskZero = true;
+    }
     await answerCurrentMvnvPrompt(page, taskTimeoutMs, questionBefore);
     if (i === 0) {
       firstTaskParticipantPath = new URL(page.url()).pathname;
@@ -256,6 +263,8 @@ test('test', async ({ page, browserName }) => {
       return !!questionAfter;
     }, { timeout: 5000 }).toBe(true).catch(() => { });
   }
+
+  expect(sawTaskZero).toBe(true);
 
   // Check that the thank you message is displayed
   await waitForStudyEndMessage(page);

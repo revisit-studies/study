@@ -113,7 +113,7 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
         );
       } else if (response.type === 'custom') {
         initField = null;
-      } else if (response.type === 'slider' && response.startingValue) {
+      } else if (response.type === 'slider' && response.startingValue !== undefined) {
         initField = response.startingValue.toString();
       }
 

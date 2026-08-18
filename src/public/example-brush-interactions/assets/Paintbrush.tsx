@@ -71,6 +71,17 @@ export function Paintbrush(
         setIsBrushing(false);
       });
     }
+
+    // Stop brushing even when the mouse is released outside the SVG
+    const stopBrushing = () => setIsBrushing(false);
+    window.addEventListener('mouseup', stopBrushing);
+
+    return () => {
+      svg.on('mousemove', null);
+      svg.on('mousedown', null);
+      svg.on('mouseup', null);
+      window.removeEventListener('mouseup', stopBrushing);
+    };
   }, [brushPosition, brushState.ids, data, isBrushing, isSelect, params, setBrushedSpace, xScale, yScale]);
 
   return (
