@@ -268,10 +268,12 @@ test('Test questionnaire component with responses and randomizing questions and 
   const replaySidebar = page.locator('.sidebar');
   const replayFooter = page.locator('footer');
   await expect(replaySidebar).toBeVisible();
-  await replaySidebar.evaluate((element) => {
-    element.scrollTop = element.scrollHeight;
+  expect(await replaySidebar.evaluate((element) => getComputedStyle(element).overflowY)).not.toBe('auto');
+  await page.evaluate(() => {
+    window.scrollTo(0, document.documentElement.scrollHeight);
   });
-  await expect.poll(() => replaySidebar.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+  expect(await replaySidebar.evaluate((element) => element.scrollTop)).toBe(0);
 
   const replaySidebarBox = await replaySidebar.boundingBox();
   const replayFooterBox = await replayFooter.boundingBox();

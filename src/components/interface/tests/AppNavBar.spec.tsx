@@ -117,7 +117,7 @@ describe('AppNavBar', () => {
     expect(html).toContain('display:none');
   });
 
-  test('constrains the sidebar between the fixed header and replay footer', () => {
+  test('reserves room below the sidebar for the replay footer', () => {
     mockStudyConfig = {
       components: { trial1: { response: [], instruction: 'Do the task' } },
       uiConfig: { instructionLocation: 'sidebar' },
@@ -126,10 +126,10 @@ describe('AppNavBar', () => {
       <AppNavBar width={300} top={70} bottom={125} sidebarOpen />,
     );
 
-    expect(html).toContain('max-height:max(0px, calc(100dvh - 195px))');
-    expect(html).toContain('overflow-y:auto');
-    expect(html).toContain('position:sticky');
-    expect(html).not.toContain('align-self:flex-start');
+    expect(html).toContain('margin-bottom:125px');
+    expect(html).toContain('position:relative');
+    expect(html).not.toContain('overflow-y:auto');
+    expect(html).not.toContain('max-height:');
   });
 
   test('keeps participant sidebar and content under one page scrollbar', () => {
@@ -142,6 +142,7 @@ describe('AppNavBar', () => {
     );
 
     expect(html).toContain('position:relative');
+    expect(html).toContain('margin-bottom:0');
     expect(html).not.toContain('overflow-y:auto');
     expect(html).not.toContain('max-height:');
   });
