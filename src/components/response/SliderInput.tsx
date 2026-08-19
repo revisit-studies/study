@@ -121,7 +121,7 @@ export function SliderInput({
               />
 
               {/* Mark - numeric label */}
-              {smeqLabelValues.map((value) => {
+              {labelValues.map((value) => {
                 const markPosition = ((value - min) / (max - min)) * 100;
                 return (
                   <Box
@@ -141,7 +141,6 @@ export function SliderInput({
 
               {/* Mark - value */}
               {options.map((option) => {
-                if (!option.label) return null;
                 const markPosition = ((option.value - min) / (max - min)) * 100;
                 return (
                   <Box
@@ -149,7 +148,7 @@ export function SliderInput({
                     style={{
                       position: 'absolute',
                       bottom: `${markPosition}%`,
-                      left: 20,
+                      left: option.label !== '' ? 20 : 2,
                       width: 20,
                       height: 1,
                       backgroundColor: 'var(--mantine-color-gray-7)',
