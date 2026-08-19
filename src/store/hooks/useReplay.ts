@@ -43,14 +43,29 @@ export function useReplay() {
   const [speed, _setSpeed] = useState(1);
   const [isPlaying, _setIsPlaying] = useState(false);
   const internalIsPlaying = useRef(false);
+  const timerValue = useRef<number>(0);
 
   const updateIsPlaying = useCallback((playing: boolean) => {
     internalIsPlaying.current = playing;
     _setIsPlaying(playing);
   }, []);
 
+  const requestReplayPlayback = useCallback((media: HTMLMediaElement) => {
+    const handlePlaybackFailure = () => {
+      if (isMountedRef.current && replayRef.current === media) {
+        updateIsPlaying(false);
+        emitterRef.current.emit('pause', timerValue.current);
+      }
+    };
+
+    try {
+      media.play().catch(handlePlaybackFailure);
+    } catch {
+      handlePlaybackFailure();
+    }
+  }, [updateIsPlaying]);
+
   const [hasEnded, setHasEnded] = useState(false);
-  const timerValue = useRef<number>(0);
 
   const setDuration = useCallback((d: number) => {
     _setDuration(d);
@@ -156,21 +171,23 @@ export function useReplay() {
       && replayRef.current?.paused
       && mediaIncludesTime(replayRef.current, time)
     ) {
-      replayRef.current.play();
+      requestReplayPlayback(replayRef.current);
     }
     emitterRef.current.emit('timeupdate', time);
     setHasEnded(internalDuration.current > 0 && time >= internalDuration.current);
-  }, []);
+  }, [requestReplayPlayback]);
 
   const handlePause = useCallback(() => {
     if (!isMountedRef.current) {
       return;
     }
 
-    const mediaEndedBeforeTask = replayRef.current?.ended
+    const mediaUnavailableBeforeTaskEnd = replayRef.current
+      && internalIsPlaying.current
       && internalDuration.current > 0
-      && timerValue.current < internalDuration.current;
-    if (mediaEndedBeforeTask) {
+      && timerValue.current < internalDuration.current
+      && (replayRef.current.ended || !mediaIncludesTime(replayRef.current, timerValue.current));
+    if (mediaUnavailableBeforeTaskEnd) {
       return;
     }
 
@@ -189,6 +206,12 @@ export function useReplay() {
   }, [updateIsPlaying]);
 
   const handleEnded = useCallback(() => {
+    const mediaTime = replayRef.current?.currentTime;
+    if (typeof mediaTime === 'number' && mediaTime > timerValue.current) {
+      timerValue.current = Math.min(mediaTime, internalDuration.current || mediaTime);
+      emitterRef.current.emit('timeupdate', timerValue.current);
+    }
+
     if (internalDuration.current > 0 && timerValue.current < internalDuration.current) {
       updateIsPlaying(true);
       return;
@@ -207,27 +230,23 @@ export function useReplay() {
    * This avoids re-assigning on every render.
    */
   const updateReplayRef = useCallback(() => {
+    const previousReplay = replayRef.current;
     const originalVideo = videoRef.current;
     const originalAudio = audioRef.current;
+
+    previousReplay?.removeEventListener('play', handlePlay);
+    previousReplay?.removeEventListener('pause', handlePause);
+    previousReplay?.removeEventListener('seeked', handleSeeked);
+    previousReplay?.removeEventListener('ended', handleEnded);
 
     if (originalVideo) {
       originalVideo.playbackRate = internalSpeed.current;
       seekMedia(originalVideo, timerValue.current);
-
-      originalVideo.removeEventListener('play', handlePlay);
-      originalVideo.removeEventListener('pause', handlePause);
-      originalVideo.removeEventListener('seeked', handleSeeked);
-      originalVideo.removeEventListener('ended', handleEnded);
     }
 
     if (originalAudio) {
       originalAudio.playbackRate = internalSpeed.current;
       seekMedia(originalAudio, timerValue.current);
-
-      originalAudio.removeEventListener('play', handlePlay);
-      originalAudio.removeEventListener('pause', handlePause);
-      originalAudio.removeEventListener('seeked', handleSeeked);
-      originalAudio.removeEventListener('ended', handleEnded);
     }
 
     replayRef.current = (videoRef.current?.src ? videoRef.current : null) ?? (audioRef.current?.src ? audioRef.current : null);
@@ -262,11 +281,11 @@ export function useReplay() {
       && replayRef.current
       && mediaIncludesTime(replayRef.current, timerValue.current)
     ) {
-      replayRef.current.play();
+      requestReplayPlayback(replayRef.current);
     } else {
       replayRef.current?.pause();
     }
-  }, [setSeekTime, updateIsPlaying]);
+  }, [requestReplayPlayback, setSeekTime, updateIsPlaying]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -301,12 +320,18 @@ export function useReplay() {
         }
 
         const now = Date.now();
-        const nextTime = getNextSyntheticReplayTime(
-          timerValue.current,
-          lastTickTime,
-          now,
-          internalSpeed.current,
-        );
+        const media = replayRef.current;
+        const mediaIsAvailable = media
+          && !media.ended
+          && mediaIncludesTime(media, timerValue.current);
+        const nextTime = mediaIsAvailable
+          ? Math.max(timerValue.current, media.currentTime)
+          : getNextSyntheticReplayTime(
+            timerValue.current,
+            lastTickTime,
+            now,
+            internalSpeed.current,
+          );
         lastTickTime = now;
         timerValue.current = internalDuration.current > 0
           ? Math.min(nextTime, internalDuration.current)

@@ -210,17 +210,7 @@ test('Test questionnaire component with responses and randomizing questions and 
   const sidebarReplayPath = new URL(page.url()).pathname;
   const sidebar = page.locator('.sidebar');
   await expect(sidebar).toBeVisible();
-  const sidebarOverflow = await sidebar.evaluate((element) => ({
-    clientHeight: element.clientHeight,
-    overflowY: getComputedStyle(element).overflowY,
-    scrollHeight: element.scrollHeight,
-  }));
-  expect(sidebarOverflow.overflowY).toBe('auto');
-  expect(sidebarOverflow.scrollHeight).toBeGreaterThan(sidebarOverflow.clientHeight);
-  await sidebar.evaluate((element) => {
-    element.scrollTop = element.scrollHeight;
-  });
-  await expect.poll(() => sidebar.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+  expect(await sidebar.evaluate((element) => getComputedStyle(element).overflowY)).not.toBe('auto');
 
   await sidebarAgeInput.fill('120');
   await sidebarAgeInput.press('Tab');

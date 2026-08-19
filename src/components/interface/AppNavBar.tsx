@@ -41,10 +41,12 @@ export function AppNavBar({
       display={sidebarOpen ? 'block' : 'none'}
       style={{
         marginTop: top,
-        maxHeight: `max(0px, calc(100dvh - ${top + bottom}px))`,
-        overflowY: 'auto',
-        position: 'sticky',
-        top,
+        ...(bottom > 0 ? {
+          maxHeight: `max(0px, calc(100dvh - ${top + bottom}px))`,
+          overflowY: 'auto',
+          position: 'sticky',
+          top,
+        } : { position: 'relative' }),
         zIndex: 0,
       }}
       w={width}

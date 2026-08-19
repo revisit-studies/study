@@ -131,4 +131,18 @@ describe('AppNavBar', () => {
     expect(html).toContain('position:sticky');
     expect(html).not.toContain('align-self:flex-start');
   });
+
+  test('keeps participant sidebar and content under one page scrollbar', () => {
+    mockStudyConfig = {
+      components: { trial1: { response: [], instruction: 'Do the task' } },
+      uiConfig: { instructionLocation: 'sidebar' },
+    };
+    const html = renderToStaticMarkup(
+      <AppNavBar width={300} top={70} bottom={0} sidebarOpen />,
+    );
+
+    expect(html).toContain('position:relative');
+    expect(html).not.toContain('overflow-y:auto');
+    expect(html).not.toContain('max-height:');
+  });
 });

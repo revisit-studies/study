@@ -531,14 +531,14 @@ export function ThinkAloudFooter({
             <Select
               leftSection={(
                 <Tooltip label="Previous Task">
-                  <ActionIcon aria-label="Previous Task" size="sm" variant="light" onClick={() => nextTaskCallback(-1)}>
+                  <ActionIcon size="sm" variant="light" onClick={() => nextTaskCallback(-1)}>
                     <IconArrowLeft />
                   </ActionIcon>
                 </Tooltip>
               )}
               rightSection={(
                 <Tooltip label="Next Task">
-                  <ActionIcon aria-label="Next Task" size="sm" variant="light" onClick={() => nextTaskCallback(1)} style={{ pointerEvents: 'all' }}>
+                  <ActionIcon size="sm" variant="light" onClick={() => nextTaskCallback(1)} style={{ pointerEvents: 'all' }}>
                     <IconArrowRight />
                   </ActionIcon>
                 </Tooltip>

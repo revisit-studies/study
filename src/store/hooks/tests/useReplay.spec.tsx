@@ -289,6 +289,23 @@ describe('useReplay — handlePlay/Seeked/Pause via video element events', () =>
     expect(result.current.replayRef.current).toBe(audio);
   });
 
+  test('updateReplayRef detaches listeners from the previous media element', () => {
+    const { result } = renderHook(() => useReplay());
+    const originalVideo = makeVideoWithSrc();
+    const replacementVideo = makeVideoWithSrc();
+
+    act(() => {
+      result.current.videoRef.current = originalVideo;
+      result.current.updateReplayRef();
+      result.current.videoRef.current = replacementVideo;
+      result.current.updateReplayRef();
+      originalVideo.dispatchEvent(new Event('play'));
+    });
+
+    expect(result.current.replayRef.current).toBe(replacementVideo);
+    expect(result.current.isPlaying).toBe(false);
+  });
+
   test('media replay continues emitting timeupdate events after play state changes', () => {
     vi.useFakeTimers();
     const { result } = renderHook(() => useReplay());
@@ -333,6 +350,56 @@ describe('useReplay — public setIsPlaying with hasEnded=true', () => {
 });
 
 describe('useReplay — task clock is authoritative', () => {
+  test('does not advance beyond pending or stalled media progress', () => {
+    vi.useFakeTimers();
+    const { result } = renderHook(() => useReplay());
+    const video = makeVideoWithSrc();
+    video.play = vi.fn(() => new Promise<void>(() => {}));
+    Object.defineProperty(video, 'duration', { value: 3, configurable: true });
+    Object.defineProperty(video, 'currentTime', { value: 0.25, writable: true, configurable: true });
+
+    const timeUpdateListener = vi.fn();
+    act(() => {
+      result.current.videoRef.current = video;
+      result.current.updateReplayRef();
+      video.currentTime = 0.25;
+      result.current.setDuration(3);
+      result.current.replayEvent.on('timeupdate', timeUpdateListener);
+      result.current.setIsPlaying(true);
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(1_000);
+    });
+
+    expect(timeUpdateListener).toHaveBeenLastCalledWith(0.25);
+    expect(result.current.hasEnded).toBe(false);
+  });
+
+  test('stops the task clock when media playback is rejected', async () => {
+    vi.useFakeTimers();
+    const { result } = renderHook(() => useReplay());
+    const video = makeVideoWithSrc();
+    video.play = vi.fn(async () => { throw new Error('autoplay blocked'); });
+    Object.defineProperty(video, 'duration', { value: 3, configurable: true });
+
+    act(() => {
+      result.current.videoRef.current = video;
+      result.current.updateReplayRef();
+      result.current.setDuration(3);
+      result.current.setIsPlaying(true);
+    });
+    await act(async () => Promise.resolve());
+
+    act(() => {
+      vi.advanceTimersByTime(1_000);
+    });
+
+    expect(result.current.isPlaying).toBe(false);
+    expect(result.current.seekTime).toBe(0);
+    expect(result.current.hasEnded).toBe(false);
+  });
+
   test('keeps task time when shorter media clamps a seek and resumes media when seeking back', () => {
     const { result } = renderHook(() => useReplay());
     const video = makeVideoWithSrc();
@@ -384,6 +451,7 @@ describe('useReplay — task clock is authoritative', () => {
 
     act(() => {
       vi.advanceTimersByTime(1_000);
+      video.currentTime = 1;
       video.dispatchEvent(new Event('pause'));
       Object.defineProperty(video, 'ended', { value: true, configurable: true });
       video.dispatchEvent(new Event('ended'));
