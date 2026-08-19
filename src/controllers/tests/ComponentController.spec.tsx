@@ -34,6 +34,7 @@ import { makeStoredAnswer, makeStorageEngine } from '../../tests/utils';
 // ── mutable state ────────────────────────────────────────────────────────────
 
 let mockVegaImpl: React.FC = () => React.createElement('div', null, 'Vega');
+const mockTrrackApply = vi.fn();
 
 let mockStoreActions = {
   setReactiveAnswers: vi.fn(),
@@ -225,7 +226,7 @@ vi.mock('@trrack/core', () => ({
     })),
   },
   initializeTrrack: vi.fn(() => ({
-    apply: vi.fn(),
+    apply: mockTrrackApply,
     currentChange: vi.fn(() => vi.fn()),
     graph: { backend: {} },
   })),
@@ -738,7 +739,18 @@ describe('VegaController — signal and event coverage', () => {
 
     await waitFor(() => expect(capturedOnNewView).toBeDefined());
 
-    const fakeView = { signal: vi.fn().mockReturnValue({ run: vi.fn() }) } as unknown as View;
+    const signalValues: Record<string, unknown> = {
+      mySignal: 'initial',
+      revisitAnswer: {},
+    };
+    const fakeView = {
+      signal: vi.fn((name: string, value?: unknown) => {
+        if (value === undefined) return signalValues[name];
+        signalValues[name] = value;
+        return fakeView;
+      }),
+      run: vi.fn(),
+    } as unknown as View;
     await act(async () => {
       capturedSignalListeners.mySignal?.('mySignal', 'hello');
       capturedSignalListeners.revisitAnswer?.('revisitAnswer', { responseId: 'r1', response: 'yes' });
@@ -747,6 +759,92 @@ describe('VegaController — signal and event coverage', () => {
 
     expect(mockDispatch).toHaveBeenCalled();
     expect(fakeView.signal).toHaveBeenCalledWith('mySignal', 'testVal');
+  });
+
+  test('restores cumulative signals and resets them when replay seeks to the root', async () => {
+    type SignalHandler = (name: string, value: string | Record<string, string>) => void;
+    let capturedOnNewView: ((v: View) => void) | undefined;
+
+    vi.mocked(getJsonAssetByPath).mockResolvedValueOnce({
+      $schema: 'vega',
+      config: { signals: [{ name: 'xField' }, { name: 'yField' }] },
+    });
+
+    mockVegaImpl = (props: {
+      signalListeners?: Record<string, SignalHandler>;
+      onNewView?: (v: View) => void;
+    }) => {
+      capturedOnNewView = props.onNewView;
+      return React.createElement('div', null, 'Vega');
+    };
+
+    const { rerender } = render(
+      <VegaController
+        currentConfig={{ type: 'vega', path: '/chart.json', response: [] }}
+        provState={{ signals: { xField: 'Worldwide Gross', yField: 'US Gross' } }}
+      />,
+    );
+
+    await waitFor(() => expect(capturedOnNewView).toBeDefined());
+
+    const signalValues: Record<string, unknown> = {
+      xField: 'Rotten Tomatoes Rating',
+      yField: 'IMDB Rating',
+    };
+    const fakeView = {
+      signal: vi.fn((name: string, value?: unknown) => {
+        if (value === undefined) return signalValues[name];
+        signalValues[name] = value;
+        return fakeView;
+      }),
+      run: vi.fn(),
+    } as unknown as View;
+    await act(async () => {
+      capturedOnNewView?.(fakeView);
+    });
+
+    expect(signalValues).toEqual({
+      xField: 'Worldwide Gross',
+      yField: 'US Gross',
+    });
+
+    rerender(
+      <VegaController
+        currentConfig={{ type: 'vega', path: '/chart.json', response: [] }}
+        provState={{ signals: {} }}
+      />,
+    );
+
+    expect(signalValues).toEqual({
+      xField: 'Rotten Tomatoes Rating',
+      yField: 'IMDB Rating',
+    });
+  });
+
+  test('does not track signal events fired while applying replay state', async () => {
+    type SignalHandler = (name: string, value: string | Record<string, string>) => void;
+    let capturedSignalListeners: Record<string, SignalHandler> = {};
+
+    vi.mocked(useIsAnalysis).mockReturnValue(true);
+    vi.mocked(getJsonAssetByPath).mockResolvedValueOnce({
+      $schema: 'vega',
+      config: { signals: [{ name: 'mySignal' }, { name: 'revisitAnswer' }] },
+    });
+    mockVegaImpl = (props: { signalListeners?: Record<string, SignalHandler> }) => {
+      capturedSignalListeners = props.signalListeners ?? {};
+      return React.createElement('div', null, 'Vega');
+    };
+
+    const { container } = render(
+      <VegaController currentConfig={{ type: 'vega', path: '/chart.json', response: [] }} />,
+    );
+    await waitFor(() => expect(capturedSignalListeners.mySignal).toBeDefined());
+
+    capturedSignalListeners.mySignal('mySignal', 'replayed');
+    capturedSignalListeners.revisitAnswer('revisitAnswer', { responseId: 'r1', response: 'yes' });
+
+    expect(mockTrrackApply).not.toHaveBeenCalled();
+    expect(container.firstElementChild?.hasAttribute('inert')).toBe(true);
   });
 
   test('ignores replayed provenance for signals missing from the active vega config', async () => {
@@ -775,11 +873,19 @@ describe('VegaController — signal and event coverage', () => {
 
     await waitFor(() => expect(capturedOnNewView).toBeDefined());
 
-    const fakeView = { signal: vi.fn().mockReturnValue({ run: vi.fn() }) } as unknown as View;
+    const signalValues: Record<string, unknown> = { revisitAnswer: {} };
+    const fakeView = {
+      signal: vi.fn((name: string, value?: unknown) => {
+        if (value === undefined) return signalValues[name];
+        signalValues[name] = value;
+        return fakeView;
+      }),
+      run: vi.fn(),
+    } as unknown as View;
     await act(async () => {
       capturedOnNewView?.(fakeView);
     });
 
-    expect(fakeView.signal).not.toHaveBeenCalled();
+    expect(vi.mocked(fakeView.signal).mock.calls.some(([signalName]) => signalName === 'tooltip')).toBe(false);
   });
 });

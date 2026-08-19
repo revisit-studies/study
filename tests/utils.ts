@@ -127,3 +127,83 @@ export async function waitForStudyEndMessage(page: Page, timeout = 30000) {
     await expect(defaultCompleted.or(prolificCompleted)).toBeVisible({ timeout });
   }
 }
+
+export async function readStoredValue<T>(page: Page, key: string): Promise<T | null> {
+  return page.evaluate(async (storageKey) => new Promise<T | null>((resolve) => {
+    const openRequest = indexedDB.open('revisit');
+
+    openRequest.onerror = () => resolve(null);
+    openRequest.onsuccess = () => {
+      const database = openRequest.result;
+      if (!database.objectStoreNames.contains('keyvaluepairs')) {
+        database.close();
+        resolve(null);
+        return;
+      }
+
+      const transaction = database.transaction('keyvaluepairs', 'readonly');
+      const getRequest = transaction.objectStore('keyvaluepairs').get(storageKey);
+      getRequest.onerror = () => resolve(null);
+      getRequest.onsuccess = () => resolve((getRequest.result as T | undefined) ?? null);
+      transaction.oncomplete = () => database.close();
+    };
+  }), key);
+}
+
+export async function readParticipantRecording(
+  page: Page,
+  studyId: string,
+  identifier: string,
+) {
+  const assignments = await readStoredValue<Record<string, unknown>>(
+    page,
+    `dev-${studyId}/sequenceAssignment`,
+  );
+  const participantId = Object.keys(assignments ?? {})[0];
+  if (!participantId) {
+    return null;
+  }
+
+  const participant = await readStoredValue<{
+    answers?: Record<string, {
+      answer?: Record<string, unknown>;
+      startTime?: number;
+      endTime?: number;
+    }>;
+  }>(page, `dev-${studyId}/participants/${participantId}_participantData`);
+  const answer = participant?.answers?.[identifier];
+  if (
+    typeof answer?.startTime !== 'number'
+    || typeof answer.endTime !== 'number'
+    || answer.startTime <= 0
+    || answer.endTime < answer.startTime
+  ) {
+    return null;
+  }
+
+  return {
+    answer: answer.answer ?? {},
+    endTime: answer.endTime,
+    participantId,
+    startTime: answer.startTime,
+  };
+}
+
+export async function seekReplay(
+  page: Page,
+  startTime: number,
+  endTime: number,
+  targetTime: number,
+) {
+  const timer = page.getByTestId('replay-timer');
+  await expect(timer).toBeVisible();
+  const timerBounds = await timer.boundingBox();
+  if (!timerBounds) {
+    throw new Error('Analysis replay timer has no bounds');
+  }
+
+  const duration = endTime - startTime;
+  const fraction = duration === 0 ? 0 : (targetTime - startTime) / duration;
+  const x = 20 + Math.min(1, Math.max(0, fraction)) * (timerBounds.width - 40);
+  await timer.click({ position: { x, y: timerBounds.height / 2 } });
+}

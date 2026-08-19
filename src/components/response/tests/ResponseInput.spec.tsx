@@ -158,8 +158,17 @@ vi.mock('@mantine/core', () => {
         <select multiple>{data?.map((d) => <option key={d.label}>{d.label}</option>)}</select>
       </div>
     ),
-    Slider: ({ min, max }: { min?: number; max?: number }) => (
-      <div data-slider data-min={min} data-max={max} />
+    Slider: ({
+      classNames, disabled, max, min, value,
+    }: { classNames?: { thumb?: string }; disabled?: boolean; max?: number; min?: number; value?: number }) => (
+      <div
+        data-slider
+        data-disabled={disabled}
+        data-min={min}
+        data-max={max}
+        data-value={value}
+        data-thumb-class={classNames?.thumb}
+      />
     ),
     Paper: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
     Button: ({ children }: { children?: ReactNode }) => <button type="button">{children}</button>,
@@ -790,6 +799,80 @@ describe('SliderInput', () => {
     // Call the captured callback to exercise the drag handler
     act(() => { capturedCallback?.({ x: 0, y: 0.5 }); });
     expect(mockOnChange).toHaveBeenCalled();
+    cleanup();
+  });
+
+  test('rehydrates the SMEQ thumb when the replayed answer changes', () => {
+    const { container, rerender } = render(
+      <SliderInput
+        response={{ ...base, smeqStyle: true } as Parameters<typeof SliderInput>[0]['response']}
+        disabled
+        answer={{ value: 20 }}
+        index={1}
+        enumerateQuestions={false}
+      />,
+    );
+    expect(container.querySelector('[title="20"]')).not.toBeNull();
+
+    rerender(
+      <SliderInput
+        response={{ ...base, smeqStyle: true } as Parameters<typeof SliderInput>[0]['response']}
+        disabled
+        answer={{ value: 80 }}
+        index={1}
+        enumerateQuestions={false}
+      />,
+    );
+    expect(container.querySelector('[title="80"]')).not.toBeNull();
+    cleanup();
+  });
+
+  test('rehydrates a read-only NASA-TLX slider when the replayed answer changes', () => {
+    const { container, rerender } = render(
+      <SliderInput
+        response={{ ...base, tlxStyle: true } as Parameters<typeof SliderInput>[0]['response']}
+        disabled
+        answer={{ value: 25 }}
+        index={1}
+        enumerateQuestions={false}
+      />,
+    );
+    expect(container.querySelector('[data-slider]')?.getAttribute('data-value')).toBe('25');
+    expect(container.querySelector('[data-slider]')?.getAttribute('data-disabled')).toBe('true');
+    expect(container.querySelector('[data-slider]')?.getAttribute('data-thumb-class')).toBeTruthy();
+
+    rerender(
+      <SliderInput
+        response={{ ...base, tlxStyle: true } as Parameters<typeof SliderInput>[0]['response']}
+        disabled
+        answer={{ value: 75 }}
+        index={1}
+        enumerateQuestions={false}
+      />,
+    );
+    expect(container.querySelector('[data-slider]')?.getAttribute('data-value')).toBe('75');
+    cleanup();
+  });
+
+  test('does not update a disabled SMEQ slider', () => {
+    let capturedCallback: ((pos: { x: number; y: number }) => void) | null = null;
+    vi.mocked(useMove).mockImplementationOnce((fn: (pos: { x: number; y: number }) => void) => {
+      capturedCallback = fn;
+      return { ref: { current: null }, active: false };
+    });
+    const mockOnChange = vi.fn();
+    render(
+      <SliderInput
+        response={{ ...base, smeqStyle: true } as Parameters<typeof SliderInput>[0]['response']}
+        disabled
+        answer={{ value: 40, onChange: mockOnChange }}
+        index={1}
+        enumerateQuestions={false}
+      />,
+    );
+
+    act(() => { capturedCallback?.({ x: 0, y: 0.5 }); });
+    expect(mockOnChange).not.toHaveBeenCalled();
     cleanup();
   });
 });
