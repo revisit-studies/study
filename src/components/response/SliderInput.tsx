@@ -1,7 +1,7 @@
 import {
   Box, Flex, Input, Slider, SliderProps, Tooltip,
 } from '@mantine/core';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMove } from '@mantine/hooks';
 import { SliderResponse } from '../../parser/types';
 import classes from './css/SliderInput.module.css';
@@ -49,7 +49,15 @@ export function SliderInput({
   const normalizedValue = (val - min) / (max - min);
   const [hovered, setHovered] = useState(false);
 
+  useEffect(() => {
+    setVal(answer.value ?? (min + max) / 2);
+  }, [answer.value, max, min]);
+
   const { ref } = useMove(({ y }) => {
+    if (disabled) {
+      return;
+    }
+
     // Convert y position to slider value
     const rawValue = Math.max(min, Math.min(max, min + (1 - y) * (max - min)));
     const stepSize = step ?? (snap ? 0.001 : (max - min) / 100);
@@ -99,17 +107,21 @@ export function SliderInput({
             {/* Slider track */}
             <Box
               ref={ref}
+              data-testid="smeq-slider-track"
+              aria-disabled={disabled}
               style={{
                 width: 22,
                 height: 450,
                 position: 'relative',
                 flexShrink: 0,
+                pointerEvents: disabled ? 'none' : undefined,
               }}
               onMouseEnter={() => setHovered(true)}
               onMouseLeave={() => setHovered(false)}
             >
               {/* smeq vertical bar will always be withBar = true */}
               <Box
+                data-testid="smeq-slider-thumb"
                 style={{
                   position: 'absolute',
                   left: 20,
@@ -215,7 +227,11 @@ export function SliderInput({
           step={step ?? (snap ? 0.001 : (max - min) / 100)}
           h={hasLabels ? 40 : undefined}
           {...answer}
-          classNames={{ track: tlxStyle ? classes.track : '', bar: classes.fixDisabled }}
+          classNames={{
+            track: tlxStyle ? classes.track : '',
+            bar: classes.fixDisabled,
+            thumb: tlxStyle ? classes.fixDisabledThumb : '',
+          }}
           restrictToMarks={snap}
           label={(value) => value}
           showLabelOnHover

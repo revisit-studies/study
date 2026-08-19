@@ -5,7 +5,9 @@ import {
 import {
   nextClick,
   openStudyFromLanding,
+  readStoredValue,
   resetClientStudyState,
+  seekReplay,
 } from './utils';
 
 const demos = [
@@ -30,43 +32,21 @@ async function expectDotCount(frame: FrameLocator, count: number) {
   await expect(frame.locator('circle')).toHaveCount(count);
 }
 
-async function readStoredValue(page: Page, key: string) {
-  return page.evaluate(async (storageKey) => new Promise<unknown>((resolve) => {
-    const openRequest = indexedDB.open('revisit');
-
-    openRequest.onerror = () => resolve(null);
-    openRequest.onsuccess = () => {
-      const database = openRequest.result;
-      if (!database.objectStoreNames.contains('keyvaluepairs')) {
-        database.close();
-        resolve(null);
-        return;
-      }
-
-      const transaction = database.transaction('keyvaluepairs', 'readonly');
-      const getRequest = transaction.objectStore('keyvaluepairs').get(storageKey);
-      getRequest.onerror = () => resolve(null);
-      getRequest.onsuccess = () => resolve(getRequest.result ?? null);
-      transaction.oncomplete = () => database.close();
-    };
-  }), key);
-}
-
 async function readRecordedReplay(page: Page, studyId: string): Promise<RecordedReplay | null> {
-  const assignments = await readStoredValue(page, `dev-${studyId}/sequenceAssignment`) as Record<string, unknown> | null;
+  const assignments = await readStoredValue<Record<string, unknown>>(page, `dev-${studyId}/sequenceAssignment`);
   const participantId = Object.keys(assignments ?? {})[0];
   if (!participantId) {
     return null;
   }
 
-  const participant = await readStoredValue(
+  const participant = await readStoredValue<{ answers?: Record<string, { startTime?: number; endTime?: number }> }>(
     page,
     `dev-${studyId}/participants/${participantId}_participantData`,
-  ) as { answers?: Record<string, { startTime?: number; endTime?: number }> } | null;
-  const provenance = await readStoredValue(
+  );
+  const provenance = await readStoredValue<{ stimulus?: { traversalEvents?: Array<{ createdOn?: number }> } }>(
     page,
     `dev-${studyId}/provenance/${participantId}_countDots_1`,
-  ) as { stimulus?: { traversalEvents?: Array<{ createdOn?: number }> } } | null;
+  );
   const answer = participant?.answers?.countDots_1;
   const traversalTimes = provenance?.stimulus?.traversalEvents
     ?.map((event) => event.createdOn)
@@ -87,19 +67,6 @@ async function readRecordedReplay(page: Page, studyId: string): Promise<Recorded
     endTime: answer.endTime,
     traversalTimes,
   };
-}
-
-async function seekReplay(page: Page, recording: RecordedReplay, targetTime: number) {
-  const timer = page.getByTestId('replay-timer');
-  await expect(timer).toBeVisible();
-  const timerBounds = await timer.boundingBox();
-  if (!timerBounds) {
-    throw new Error('Analysis replay timer has no bounds');
-  }
-
-  const fraction = (targetTime - recording.startTime) / (recording.endTime - recording.startTime);
-  const x = 20 + Math.min(1, Math.max(0, fraction)) * (timerBounds.width - 40);
-  await timer.click({ position: { x, y: timerBounds.height / 2 } });
 }
 
 for (const demo of demos) {
@@ -195,12 +162,12 @@ for (const demo of demos) {
 
     const replayFrame = page.frameLocator('#root iframe');
     for (const target of replayTargets) {
-      await seekReplay(page, recording, target.time);
+      await seekReplay(page, recording.startTime, recording.endTime, target.time);
       await expectDotCount(replayFrame, target.count);
     }
 
     for (const target of [...replayTargets].reverse()) {
-      await seekReplay(page, recording, target.time);
+      await seekReplay(page, recording.startTime, recording.endTime, target.time);
       await expectDotCount(replayFrame, target.count);
     }
   });
