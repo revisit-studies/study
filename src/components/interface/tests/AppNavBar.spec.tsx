@@ -43,9 +43,9 @@ vi.mock('../../response/ResponseBlock', () => ({
 
 vi.mock('@mantine/core', () => ({
   Box: ({
-    children, display, w,
-  }: { children: ReactNode; display?: string; w?: number }) => (
-    <div style={{ display, width: w }}>{children}</div>
+    children, display, w, style,
+  }: { children: ReactNode; display?: string; w?: number; style?: React.CSSProperties }) => (
+    <div style={{ display, width: w, ...style }}>{children}</div>
   ),
   Text: ({ children }: { children: ReactNode }) => <span>{children}</span>,
 }));
@@ -67,7 +67,7 @@ describe('AppNavBar', () => {
       uiConfig: { instructionLocation: 'sidebar' },
     };
     const html = renderToStaticMarkup(
-      <AppNavBar width={300} top={60} sidebarOpen />,
+      <AppNavBar width={300} top={60} bottom={0} sidebarOpen />,
     );
     expect(html).toBe('');
   });
@@ -78,7 +78,7 @@ describe('AppNavBar', () => {
       uiConfig: { instructionLocation: 'sidebar' },
     };
     const html = renderToStaticMarkup(
-      <AppNavBar width={300} top={60} sidebarOpen />,
+      <AppNavBar width={300} top={60} bottom={0} sidebarOpen />,
     );
     expect(html).toContain('data-testid="response-block"');
   });
@@ -89,7 +89,7 @@ describe('AppNavBar', () => {
       uiConfig: { instructionLocation: 'sidebar' },
     };
     const html = renderToStaticMarkup(
-      <AppNavBar width={300} top={60} sidebarOpen />,
+      <AppNavBar width={300} top={60} bottom={0} sidebarOpen />,
     );
     expect(html).toContain('Complete the task');
     expect(html).toContain('Task:');
@@ -101,7 +101,7 @@ describe('AppNavBar', () => {
       uiConfig: { instructionLocation: 'aboveStimulus' },
     };
     const html = renderToStaticMarkup(
-      <AppNavBar width={300} top={60} sidebarOpen />,
+      <AppNavBar width={300} top={60} bottom={0} sidebarOpen />,
     );
     expect(html).not.toContain('Task:');
   });
@@ -112,8 +112,38 @@ describe('AppNavBar', () => {
       uiConfig: { instructionLocation: 'sidebar' },
     };
     const html = renderToStaticMarkup(
-      <AppNavBar width={300} top={60} sidebarOpen={false} />,
+      <AppNavBar width={300} top={60} bottom={0} sidebarOpen={false} />,
     );
     expect(html).toContain('display:none');
+  });
+
+  test('reserves room below the sidebar for the replay footer', () => {
+    mockStudyConfig = {
+      components: { trial1: { response: [], instruction: 'Do the task' } },
+      uiConfig: { instructionLocation: 'sidebar' },
+    };
+    const html = renderToStaticMarkup(
+      <AppNavBar width={300} top={70} bottom={125} sidebarOpen />,
+    );
+
+    expect(html).toContain('margin-bottom:125px');
+    expect(html).toContain('position:relative');
+    expect(html).not.toContain('overflow-y:auto');
+    expect(html).not.toContain('max-height:');
+  });
+
+  test('keeps participant sidebar and content under one page scrollbar', () => {
+    mockStudyConfig = {
+      components: { trial1: { response: [], instruction: 'Do the task' } },
+      uiConfig: { instructionLocation: 'sidebar' },
+    };
+    const html = renderToStaticMarkup(
+      <AppNavBar width={300} top={70} bottom={0} sidebarOpen />,
+    );
+
+    expect(html).toContain('position:relative');
+    expect(html).toContain('margin-bottom:0');
+    expect(html).not.toContain('overflow-y:auto');
+    expect(html).not.toContain('max-height:');
   });
 });

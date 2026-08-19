@@ -7,6 +7,42 @@ const PROLIFIC_COMPLETED_MESSAGE = /Thank you for completing the study\.\s*You m
 
 type StudyTitleMatcher = string | RegExp;
 
+export async function readStoredComponentTiming(page: Page, componentName: string) {
+  return page.evaluate(async (name) => new Promise<{ participantId: string; startTime: number; endTime: number } | null>((resolve) => {
+    const request = indexedDB.open('revisit');
+    request.onerror = () => resolve(null);
+    request.onsuccess = () => {
+      const database = request.result;
+      const transaction = database.transaction('keyvaluepairs', 'readonly');
+      const store = transaction.objectStore('keyvaluepairs');
+      const keysRequest = store.getAllKeys();
+      const valuesRequest = store.getAll();
+      keysRequest.onerror = () => resolve(null);
+      valuesRequest.onerror = () => resolve(null);
+      transaction.oncomplete = () => {
+        const participantKeys = keysRequest.result
+          .map((key, index) => ({ key: String(key), value: valuesRequest.result[index] }))
+          .filter(({ key }) => key.includes('/participants/') && key.endsWith('_participantData'));
+        for (const { value } of participantKeys) {
+          const participant = value as { participantId?: string; answers?: Record<string, { componentName?: string; startTime?: number; endTime?: number }> } | null;
+          const answer = Object.values(participant?.answers ?? {}).find((candidate) => candidate.componentName === name);
+          if (participant?.participantId && typeof answer?.startTime === 'number' && typeof answer.endTime === 'number') {
+            database.close();
+            resolve({
+              participantId: participant.participantId,
+              startTime: answer.startTime,
+              endTime: answer.endTime,
+            });
+            return;
+          }
+        }
+        database.close();
+        resolve(null);
+      };
+    };
+  }), componentName);
+}
+
 export async function resetClientStudyState(page: Page) {
   await page.goto('/');
 
