@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - dev
   workflow_dispatch:
   pull_request:
 
@@ -30,17 +31,11 @@ jobs:
 
       - run: yarn install --immutable
 
-      # If on main without env vars, build with .env file
-      - name: Build with .env file
-        if: ${{ vars.VITE_STORAGE_ENGINE == '' }}
+      - name: Build main Firebase deployment
         run: yarn build
-
-      # If on main with env vars, build with github environment variables
-      - name: Build with github environment variables
-        if: ${{ vars.VITE_STORAGE_ENGINE != '' }}
-        run: VITE_STORAGE_ENGINE=$VITE_STORAGE_ENGINE yarn build
         env:
-          VITE_STORAGE_ENGINE: ${{ vars.VITE_STORAGE_ENGINE }}
+          VITE_BASE_PATH: "/study/"
+          VITE_STORAGE_ENGINE: firebase
 
       - uses: actions/checkout@v3
         if: ${{ vars.PAGES_SINGLE_COMMIT == 'true' }}
@@ -49,20 +44,39 @@ jobs:
           path: .pages
           fetch-depth: 1
 
-      - name: Deploy current-only snapshot
+      - name: Deploy current-only main Firebase snapshot
         if: ${{ vars.PAGES_SINGLE_COMMIT == 'true' }}
         run: .github/scripts/publish-pages-snapshot.sh ./dist '' ./.pages
 
       - uses: peaceiris/actions-gh-pages@v3
         if: ${{ vars.PAGES_SINGLE_COMMIT != 'true' }}
-        name: Deploy
+        name: Deploy main Firebase snapshot
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          keep_files: true
+          publish_dir: ./dist
+
+      - name: Build main Supabase deployment
+        run: yarn build
+        env:
+          VITE_BASE_PATH: "/study/supabase/"
+          VITE_STORAGE_ENGINE: supabase
+
+      - name: Deploy current-only main Supabase snapshot
+        if: ${{ vars.PAGES_SINGLE_COMMIT == 'true' }}
+        run: .github/scripts/publish-pages-snapshot.sh ./dist supabase ./.pages
+
+      - uses: peaceiris/actions-gh-pages@v3
+        if: ${{ vars.PAGES_SINGLE_COMMIT != 'true' }}
+        name: Deploy main Supabase snapshot
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
+          destination_dir: "supabase"
 
   deploy-dev:
     runs-on: ubuntu-latest
-    if: ${{ github.ref == 'refs/heads/dev'}}
+    if: ${{ github.ref == 'refs/heads/dev' }}
     permissions:
       contents: write
     steps:
@@ -75,10 +89,11 @@ jobs:
 
       - run: yarn install --immutable
 
-      - name: Build dev branch
-        run: VITE_BASE_PATH=/dev yarn build
+      - name: Build dev Firebase deployment
+        run: yarn build
         env:
-          VITE_BASE_PATH: "/dev/"
+          VITE_BASE_PATH: "/study/dev/"
+          VITE_STORAGE_ENGINE: firebase
 
       - uses: actions/checkout@v3
         if: ${{ vars.PAGES_SINGLE_COMMIT == 'true' }}
@@ -87,17 +102,35 @@ jobs:
           path: .pages
           fetch-depth: 1
 
-      - name: Deploy current-only dev snapshot
+      - name: Deploy current-only dev Firebase snapshot
         if: ${{ vars.PAGES_SINGLE_COMMIT == 'true' }}
         run: .github/scripts/publish-pages-snapshot.sh ./dist dev ./.pages
 
       - uses: peaceiris/actions-gh-pages@v3
         if: ${{ vars.PAGES_SINGLE_COMMIT != 'true' }}
-        name: Deploy dev branch
+        name: Deploy dev Firebase snapshot
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
           destination_dir: "dev"
+
+      - name: Build dev Supabase deployment
+        run: yarn build
+        env:
+          VITE_BASE_PATH: "/study/dev-supabase/"
+          VITE_STORAGE_ENGINE: supabase
+
+      - name: Deploy current-only dev Supabase snapshot
+        if: ${{ vars.PAGES_SINGLE_COMMIT == 'true' }}
+        run: .github/scripts/publish-pages-snapshot.sh ./dist dev-supabase ./.pages
+
+      - uses: peaceiris/actions-gh-pages@v3
+        if: ${{ vars.PAGES_SINGLE_COMMIT != 'true' }}
+        name: Deploy dev Supabase snapshot
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          destination_dir: "dev-supabase"
 
   pr-deploy:
     runs-on: ubuntu-latest

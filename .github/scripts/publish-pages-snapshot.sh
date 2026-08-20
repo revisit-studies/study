@@ -22,7 +22,11 @@ if [[ ! -d "$pages_checkout/.git" ]]; then
   exit 2
 fi
 
-if [[ -n "$destination_dir" && "$destination_dir" != "dev" && ! "$destination_dir" =~ ^PR[0-9]+$ ]]; then
+if [[ -n "$destination_dir"
+  && "$destination_dir" != "dev"
+  && "$destination_dir" != "supabase"
+  && "$destination_dir" != "dev-supabase"
+  && ! "$destination_dir" =~ ^PR[0-9]+$ ]]; then
   echo "Unsupported Pages destination: $destination_dir" >&2
   exit 2
 fi
@@ -32,7 +36,8 @@ pages_checkout="$(cd "$pages_checkout" && pwd -P)"
 
 git -C "$pages_checkout" config user.name "github-actions[bot]"
 git -C "$pages_checkout" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-git -C "$pages_checkout" checkout --orphan pages-snapshot
+snapshot_branch="pages-snapshot-${destination_dir:-root}"
+git -C "$pages_checkout" checkout --orphan "$snapshot_branch"
 
 if [[ -z "$destination_dir" ]]; then
   rsync -a --delete \
@@ -40,6 +45,8 @@ if [[ -z "$destination_dir" ]]; then
     --exclude='/.nojekyll' \
     --exclude='/CNAME' \
     --exclude='/dev/' \
+    --exclude='/supabase/' \
+    --exclude='/dev-supabase/' \
     --exclude='/PR[0-9]*/' \
     "$publish_dir/" "$pages_checkout/"
 else
