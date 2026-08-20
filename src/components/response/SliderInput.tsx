@@ -1,10 +1,9 @@
 import {
   Box, Flex, Input, Slider, SliderProps, Tooltip,
 } from '@mantine/core';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMove } from '@mantine/hooks';
 import { SliderResponse } from '../../parser/types';
-import { generateErrorMessage } from './utils';
 import classes from './css/SliderInput.module.css';
 import { InputLabel } from './InputLabel';
 import { generateSliderBreakValues } from './sliderBreaks';
@@ -13,12 +12,14 @@ export function SliderInput({
   response,
   disabled,
   answer,
+  error,
   index,
   enumerateQuestions,
 }: {
   response: SliderResponse;
   disabled: boolean;
-  answer: object;
+  answer: { value?: number; onChange?: (value: number) => void };
+  error?: string | null;
   index: number;
   enumerateQuestions: boolean;
 }) {
@@ -38,33 +39,41 @@ export function SliderInput({
 
   const [min, max] = useMemo(() => [Math.min(...options.map((opt) => opt.value)), Math.max(...options.map((opt) => opt.value))], [options]);
   const hasLabels = options.some((opt) => opt.label !== '');
-  const errorMessage = generateErrorMessage(response, answer);
 
   // Numeric label
   const labelValues = useMemo(() => generateSliderBreakValues(min, max, spacing), [min, max, spacing]);
+  const smeqLabelValues = useMemo(() => [min, ...labelValues, max], [min, max, labelValues]);
 
   // For smeq style (vertical slider)
   const [val, setVal] = useState((answer as { value?: number }).value ?? (min + max) / 2);
   const normalizedValue = (val - min) / (max - min);
   const [hovered, setHovered] = useState(false);
 
+  useEffect(() => {
+    setVal(answer.value ?? (min + max) / 2);
+  }, [answer.value, max, min]);
+
   const { ref } = useMove(({ y }) => {
+    if (disabled) {
+      return;
+    }
+
     // Convert y position to slider value
     const rawValue = Math.max(min, Math.min(max, min + (1 - y) * (max - min)));
     const stepSize = step ?? (snap ? 0.001 : (max - min) / 100);
     // Round to nearest step
     const snappedValue = Math.round((rawValue - min) / stepSize) * stepSize + min;
     setVal(snappedValue);
-    (answer as { onChange?: (value: number) => void })?.onChange?.(snappedValue);
+    answer.onChange?.(snappedValue);
   });
 
   return (
     <Input.Wrapper
       label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
       description={secondaryText}
-      error={errorMessage}
+      error={error}
       style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
-      errorProps={{ c: required ? 'red' : 'orange' }}
+      errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
     >
       {/* Vertical slider for SMEQ style */}
       {smeqStyle ? (
@@ -75,7 +84,7 @@ export function SliderInput({
               height: 450, position: 'relative', minWidth: 30, textAlign: 'right', flexShrink: 0,
             }}
             >
-              {labelValues.map((label) => {
+              {smeqLabelValues.map((label) => {
                 const labelPosition = ((label - min) / (max - min)) * 100;
                 return (
                   <Box
@@ -98,17 +107,21 @@ export function SliderInput({
             {/* Slider track */}
             <Box
               ref={ref}
+              data-testid="smeq-slider-track"
+              aria-disabled={disabled}
               style={{
                 width: 22,
                 height: 450,
                 position: 'relative',
                 flexShrink: 0,
+                pointerEvents: disabled ? 'none' : undefined,
               }}
               onMouseEnter={() => setHovered(true)}
               onMouseLeave={() => setHovered(false)}
             >
               {/* smeq vertical bar will always be withBar = true */}
               <Box
+                data-testid="smeq-slider-thumb"
                 style={{
                   position: 'absolute',
                   left: 20,
@@ -148,7 +161,7 @@ export function SliderInput({
                       position: 'absolute',
                       bottom: `${markPosition}%`,
                       left: option.label !== '' ? 20 : 2,
-                      width: option.label !== '' ? 20 : 20,
+                      width: 20,
                       height: 1,
                       backgroundColor: 'var(--mantine-color-gray-7)',
                       transform: 'translateY(50%)',
@@ -214,7 +227,11 @@ export function SliderInput({
           step={step ?? (snap ? 0.001 : (max - min) / 100)}
           h={hasLabels ? 40 : undefined}
           {...answer}
-          classNames={{ track: tlxStyle ? classes.track : '', bar: classes.fixDisabled }}
+          classNames={{
+            track: tlxStyle ? classes.track : '',
+            bar: classes.fixDisabled,
+            thumb: tlxStyle ? classes.fixDisabledThumb : '',
+          }}
           restrictToMarks={snap}
           label={(value) => value}
           showLabelOnHover

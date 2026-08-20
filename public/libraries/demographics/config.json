@@ -4,7 +4,7 @@
   "components": {
     "demographics": {
       "type": "questionnaire",
-      "description": "Basic demographic questions including gender, age, and education",
+      "description": "Basic demographic questions including gender, age, and education.",
       "response": [
         {
           "id": "gender",

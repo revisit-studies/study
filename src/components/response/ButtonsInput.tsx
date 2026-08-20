@@ -3,7 +3,6 @@ import {
 } from '@mantine/core';
 import { useMemo } from 'react';
 import { ButtonsResponse, ParsedStringOption } from '../../parser/types';
-import { generateErrorMessage } from './utils';
 import classes from './css/ButtonsInput.module.css';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { InputLabel } from './InputLabel';
@@ -14,12 +13,14 @@ export function ButtonsInput({
   response,
   disabled,
   answer,
+  error,
   index,
   enumerateQuestions,
 }: {
   response: ButtonsResponse;
   disabled: boolean;
   answer: { value?: string };
+  error?: string | null;
   index: number;
   enumerateQuestions: boolean;
 }) {
@@ -32,14 +33,12 @@ export function ButtonsInput({
   } = response;
 
   const storedAnswer = useStoredAnswer();
-  const optionOrders: Record<string, ParsedStringOption[]> = useMemo(() => (storedAnswer ? storedAnswer.optionOrders : {}), [storedAnswer]);
+  const optionOrders: Record<string, ParsedStringOption[]> = useMemo(() => storedAnswer?.optionOrders ?? {}, [storedAnswer]);
 
   const orderedOptions = useMemo(
     () => parseStringOptions(optionOrders[response.id] || options),
     [optionOrders, options, response.id],
   );
-
-  const error = useMemo(() => generateErrorMessage(response, answer, orderedOptions), [response, answer, orderedOptions]);
 
   return (
     <FocusTrap>
@@ -50,7 +49,7 @@ export function ButtonsInput({
         key={response.id}
         {...answer}
         error={error}
-        errorProps={{ c: required ? 'red' : 'orange' }}
+        errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
         style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
       >
         <Flex justify="space-between" align="center" gap="xl" mt="xs">

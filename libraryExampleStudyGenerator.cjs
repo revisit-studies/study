@@ -9,12 +9,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { exec } = require('child_process');
-
-// Path to the libraries directory containing reusable components and sequences
-const librariesPath = path.join(__dirname, './public/libraries');
-const publicPath = path.join(__dirname, './public');
-
+const { generateLibraryDocs, getLibraries } = require('./libraryDocGenerator.cjs');
 
 // Create example study config template
 const createExampleConfig = (libraryName) => ({
@@ -28,10 +23,10 @@ const createExampleConfig = (libraryName) => ({
     organizations: ['University of Utah', 'WPI'],
   },
   uiConfig: {
-    contactEmail: '',
+    contactEmail: 'contact@revisit.dev',
     logoPath: 'revisitAssets/revisitLogoSquare.svg',
     withProgressBar: true,
-    withSidebar: true,
+    withSidebar: false,
   },
   importedLibraries: [libraryName],
   components: {
@@ -49,60 +44,56 @@ const createExampleConfig = (libraryName) => ({
   },
 });
 
-// Process each library
-const libraries = fs.readdirSync(librariesPath)
-  .filter(library => !library.startsWith('.') && !library.endsWith('.DS_Store'));
+const generateLibraryExamples = (base, generateDocsFn = generateLibraryDocs) => {
+  const librariesPath = path.join(base, 'public', 'libraries');
+  const publicPath = path.join(base, 'public');
 
-libraries.forEach((library) => {
-  // Skip hidden folders and files, and libraries in skip list
-  if (library.startsWith('.')) {
-    // eslint-disable-next-line no-console
-    console.log(`Skipping ${library} library`);
-    return;
-  }
+  // Process each library
+  const libraries = getLibraries(librariesPath);
 
-  const exampleFolderName = `library-${library}`;
-  const examplePath = path.join(publicPath, exampleFolderName);
+  libraries.forEach((library) => {
+    const exampleFolderName = `library-${library}`;
+    const examplePath = path.join(publicPath, exampleFolderName);
 
-  // Check if example folder already exists
-  if (!fs.existsSync(examplePath)) {
-    // Create the example folder
-    fs.mkdirSync(examplePath);
-    // eslint-disable-next-line no-console
-    console.log(`Created ${exampleFolderName} directory`);
+    // Check if example folder already exists
+    if (!fs.existsSync(examplePath)) {
+      // Create the example folder
+      fs.mkdirSync(examplePath);
+      // eslint-disable-next-line no-console
+      console.log(`Created ${exampleFolderName} directory`);
 
-    // Create assets directory
-    const assetsPath = path.join(examplePath, 'assets');
-    fs.mkdirSync(assetsPath);
-    // eslint-disable-next-line no-console
-    console.log(`Created ${exampleFolderName}/assets directory`);
+      // Create assets directory
+      const assetsPath = path.join(examplePath, 'assets');
+      fs.mkdirSync(assetsPath);
+      // eslint-disable-next-line no-console
+      console.log(`Created ${exampleFolderName}/assets directory`);
 
-    // Create config.json
-    const configPath = path.join(examplePath, 'config.json');
-    const configContent = createExampleConfig(library);
-    fs.writeFileSync(configPath, JSON.stringify(configContent, null, 2));
-    // eslint-disable-next-line no-console
-    console.log(`Created/Updated ${exampleFolderName}/config.json`);
-  }
+      // Create config.json
+      const configPath = path.join(examplePath, 'config.json');
+      const configContent = createExampleConfig(library);
+      fs.writeFileSync(configPath, `${JSON.stringify(configContent, null, 2)}\n`);
+      // eslint-disable-next-line no-console
+      console.log(`Created/Updated ${exampleFolderName}/config.json`);
+    }
+  });
 
-});
-
-// eslint-disable-next-line no-console
-console.log('Library example generation complete');
-
-// Run libraryDocGenerator.cjs after example generation
-// To generate the library.md files which will be placed in the assets/ folder of each example study for the introduction component
-// eslint-disable-next-line no-console
-console.log('Generating library documentation...');
-exec('node libraryDocGenerator.cjs', (error, stdout, stderr) => {
-  if (error) {
-    console.error(`Error running libraryDocGenerator.cjs: ${error}`);
-    return;
-  }
-  if (stderr) {
-    console.error(`libraryDocGenerator.cjs stderr: ${stderr}`);
-    return;
-  }
   // eslint-disable-next-line no-console
-  console.log(stdout);
-});
+  console.log('Library example generation complete');
+
+  // Generate library.md files in the same base directory so example-study assets
+  // are written to the requested target tree, not the caller's current working directory.
+  // eslint-disable-next-line no-console
+  console.log('Generating library documentation...');
+  try {
+    generateDocsFn(base);
+  } catch (error) {
+    console.error(`Error running libraryDocGenerator.cjs: ${error}`);
+    throw error;
+  }
+};
+
+if (require.main === module) {
+  generateLibraryExamples(__dirname);
+}
+
+module.exports = { createExampleConfig, getLibraries, generateLibraryExamples };

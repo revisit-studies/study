@@ -2,20 +2,20 @@
 
 This demo study shows how to use an LLM-based chatbot in a reVISit study. Participants can ask questions about a clustered heatmap, and the chatbot responds with streaming text. When a question needs exact data values or visual details, the chatbot can request the dataset or the chart image through tools.
 
-All of the input and output is tracked by trrack, so you can analyze how participants interact with the chatbot and what information they request. You could also combine this with audio or screen capture to run a remote unmoderated study.
+> **Note:** The chatbot does not work when running this study on `localhost`. The default proxy server only accepts requests from `https://revisit.dev`, so requests from other origins are blocked by CORS. To develop locally, run your own proxy and point `VITE_OPENAI_API_URL` to it (see the "Set up the API Key" section below).
+
+All of the input and output is tracked by Trrack, so you can analyze how participants interact with the chatbot and what information they request. You could also combine this with audio or screen capture to run a remote unmoderated study.
 
 Below we describe what makes the chatbot good for studies, the core features, and how to customize it.
 
 ## Relevant Files:
-
-https://github.com/revisit-studies/study/blob/main/public/example-llm-chatbot/config.json
 
 * [The Config](https://github.com/revisit-studies/study/blob/main/public/example-llm-chatbot/config.json)
 * [The React Files](https://github.com/revisit-studies/study/tree/main/src/public/example-llm-chatbot)
 
 ## Features
 
-This study uses the [OpenAI Responses API](https://platform.openai.com/docs/api-reference/responses).
+This study uses the [OpenAI Responses API](https://developers.openai.com/api/reference/resources/responses).
 
 ### Conversation Memory
 
@@ -43,7 +43,7 @@ In this study, the model requests the image or the dataset only when a question 
 
 To call tools, we use a two-step request flow. A short planning call asks whether tools are needed, and a second call delivers the final answer with the tool results.
 
-Learn more: [Function calling](https://platform.openai.com/docs/guides/function-calling)
+Learn more: [Function calling](https://developers.openai.com/api/docs/guides/function-calling)
 
 ### Provenance and Results are Recorded
 
@@ -62,6 +62,8 @@ Follow that repo to set your OpenAI API key and deploy the proxy.
 In `.env`, set `VITE_OPENAI_API_URL`:
 * Local development: `VITE_OPENAI_API_URL="http://localhost:3000"`
 * Production: `VITE_OPENAI_API_URL=https://apps.vdl.sci.utah.edu/openai-proxy`
+
+The production proxy restricts allowed origins to `https://revisit.dev`, so it cannot be used from `localhost` — running your own proxy locally is required for local development.
 
 ### Request Payloads (what we send to the API)
 
@@ -97,21 +99,21 @@ All key settings live in `ChatInterface.tsx`. These are the most relevant parame
 **Change the assistant behavior (system prompt):**
 Edit `prePrompt` and `toolPolicy` to control how the assistant responds and when it should use tools.
 
-Learn more: [System instructions](https://platform.openai.com/docs/guides/responses#system-instructions)
+Learn more: [Message roles and instruction following](https://developers.openai.com/api/docs/guides/text#message-roles-and-instruction-following)
 
 **Change the model:**
 Update `model` (currently `gpt-5.2`) in both the tool-selection request and the streaming request.
 
-Learn more: [Model list](https://platform.openai.com/docs/models)
+Learn more: [Model list](https://developers.openai.com/api/docs/models)
 
 **Change response length and style:**
 * `max_output_tokens`: maximum reply length.
 * `temperature`: creativity level.
 
-Learn more: [Responses API parameters](https://platform.openai.com/docs/api-reference/responses)
+Learn more: [Responses API parameters](https://developers.openai.com/api/reference/resources/responses)
 
 **Change the data or chart image:**
-* Dataset: replace `assets/data/clustered-heatmap.csv` to your dataset.
-* Chart image: replace the OpenAI `file_id` to your image returned by `get_chart_image_file_id`.
+* Dataset: replace `assets/data/clustered-heatmap.csv` with your dataset.
+* Chart image: replace the OpenAI `file_id` with your image returned by `get_chart_image_file_id`.
 
-Learn more: [Files API](https://platform.openai.com/docs/api-reference/files)
+Learn more: [Files API](https://developers.openai.com/api/reference/resources/files)

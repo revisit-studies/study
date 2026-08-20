@@ -6,6 +6,7 @@ import {
   useCallback, useEffect, useMemo, useState,
 } from 'react';
 import { useStoreActions, useStoreDispatch, useStoreSelector } from '../../store/store';
+import { useStorageEngine } from '../../storage/storageEngineHooks';
 
 export function AlertModal() {
   const alertModal = useStoreSelector((state) => state.alertModal);
@@ -17,13 +18,43 @@ export function AlertModal() {
 
   const { setAlertModal } = useStoreActions();
   const storeDispatch = useStoreDispatch();
+  const { storageEngine } = useStorageEngine();
 
   const [opened, setOpened] = useState(alertModal.show);
   const [copied, setCopied] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
   const close = useCallback(() => storeDispatch(setAlertModal({ ...alertModal, show: false, title: '' })), [alertModal, setAlertModal, storeDispatch]);
 
   useEffect(() => setOpened(alertModal.show), [alertModal.show]);
-  const isStorageEngineAlert = alertModal.title === 'Failed to connect to the storage engine';
+  const isSaveResponseAlert = alertModal.title === 'Failed to Save Response';
+  const isStorageEngineAlert = alertModal.title === 'Failed to connect to the storage engine' || isSaveResponseAlert;
+  const handleClose = useCallback(() => {
+    if (isStorageEngineAlert) {
+      return;
+    }
+    close();
+  }, [close, isStorageEngineAlert]);
+
+  const handleStorageAction = useCallback(async () => {
+    if (!isSaveResponseAlert) {
+      window.location.reload();
+      return;
+    }
+
+    if (!storageEngine) {
+      return;
+    }
+
+    setIsRetrying(true);
+    try {
+      await storageEngine.retryFailedWrites();
+      close();
+    } catch (error) {
+      console.error('Failed to retry participant response data persistence', error);
+    } finally {
+      setIsRetrying(false);
+    }
+  }, [close, isSaveResponseAlert, storageEngine]);
 
   const diagnosticsMessage = useMemo(() => {
     if (!opened || !isStorageEngineAlert) {
@@ -55,14 +86,14 @@ export function AlertModal() {
       centered
       size={isStorageEngineAlert ? '70%' : 'lg'}
       withCloseButton={false}
-      onClose={close}
+      onClose={handleClose}
     >
       <Alert
         color="red"
         radius="xs"
         title={alertModal.title}
         icon={<IconAlertCircle />}
-        onClose={close}
+        onClose={isStorageEngineAlert ? undefined : close}
         styles={{ root: { backgroundColor: 'unset' } }}
       >
         <Text my="xs">
@@ -101,7 +132,15 @@ export function AlertModal() {
         )}
 
         <Group w="100%" justify="end">
-          <Button onClick={close} color="red" variant="filled" m="xs">Continue Study</Button>
+          <Button
+            onClick={isStorageEngineAlert ? handleStorageAction : close}
+            color="red"
+            variant="filled"
+            m="xs"
+            loading={isRetrying}
+          >
+            {isSaveResponseAlert ? 'Retry' : (isStorageEngineAlert ? 'Reconnect' : 'Continue Study')}
+          </Button>
         </Group>
       </Alert>
     </Modal>

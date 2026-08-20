@@ -179,6 +179,7 @@ export function StageManagementItem({ studyId }: { studyId: string }) {
             <Table.Tr key={stage.stageName}>
               <Table.Td>
                 <Radio
+                  aria-label={`Set current stage to ${stage.stageName}`}
                   checked={currentStage.stageName === stage.stageName}
                   onChange={() => handleSetCurrentStage(stage.stageName, stage.color)}
                 />
@@ -223,6 +224,7 @@ export function StageManagementItem({ studyId }: { studyId: string }) {
                   <Group gap="xs">
                     <ActionIcon
                       size="sm"
+                      aria-label={`Save stage ${stage.stageName}`}
                       color="green"
                       onClick={() => handleSaveEdit(stage.stageName)}
                     >
@@ -230,6 +232,7 @@ export function StageManagementItem({ studyId }: { studyId: string }) {
                     </ActionIcon>
                     <ActionIcon
                       size="sm"
+                      aria-label={`Cancel editing stage ${stage.stageName}`}
                       color="gray"
                       onClick={handleCancelEdit}
                     >
@@ -239,6 +242,7 @@ export function StageManagementItem({ studyId }: { studyId: string }) {
                 ) : (
                   <ActionIcon
                     size="sm"
+                    aria-label={`Edit stage ${stage.stageName}`}
                     onClick={() => handleEditStage(index)}
                   >
                     <IconEdit size={16} />
@@ -271,6 +275,7 @@ export function StageManagementItem({ studyId }: { studyId: string }) {
                 <Group gap="xs">
                   <ActionIcon
                     size="sm"
+                    aria-label="Save new stage"
                     color="green"
                     onClick={handleSaveNewStage}
                   >
@@ -278,6 +283,7 @@ export function StageManagementItem({ studyId }: { studyId: string }) {
                   </ActionIcon>
                   <ActionIcon
                     size="sm"
+                    aria-label="Cancel new stage"
                     color="gray"
                     onClick={handleCancelAddNewStage}
                   >

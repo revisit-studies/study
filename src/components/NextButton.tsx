@@ -5,6 +5,7 @@ import {
 import { IconInfoCircle, IconAlertTriangle } from '@tabler/icons-react';
 import { useNavigate } from 'react-router';
 import { useNextStep } from '../store/hooks/useNextStep';
+import { shouldIgnoreEnter } from './keyboardUtils';
 import type { IndividualComponent, ResponseBlockLocation } from '../parser/types';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { useCurrentIdentifier } from '../routes/utils';
@@ -15,12 +16,20 @@ import {
   getAutoAdvanceWarning,
 } from './nextButtonTimeout';
 
+const nextButtonJustify = {
+  left: 'flex-start',
+  center: 'center',
+  right: 'flex-end',
+} as const;
+
 type Props = {
   label?: string;
   disabled?: boolean;
   config?: IndividualComponent;
   location?: ResponseBlockLocation;
   checkAnswer: JSX.Element | null;
+  onCheckAnswer?: () => void;
+  onNext: () => void;
 };
 
 export function NextButton({
@@ -29,6 +38,8 @@ export function NextButton({
   config,
   location,
   checkAnswer,
+  onCheckAnswer,
+  onNext,
 }: Props) {
   const { isNextDisabled, goToNextStep } = useNextStep();
   const studyConfig = useStudyConfig();
@@ -97,8 +108,16 @@ export function NextButton({
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Enter' && !disabled && !isNextDisabled && buttonTimerSatisfied) {
-        goToNextStep();
+      if (event.key !== 'Enter' || shouldIgnoreEnter(event.target)) {
+        return;
+      }
+
+      if (onCheckAnswer) {
+        onCheckAnswer();
+        return;
+      }
+      if (!disabled && !isNextDisabled && buttonTimerSatisfied) {
+        onNext();
       }
     };
 
@@ -108,14 +127,15 @@ export function NextButton({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [disabled, isNextDisabled, buttonTimerSatisfied, goToNextStep, nextOnEnter]);
+  }, [disabled, isNextDisabled, buttonTimerSatisfied, onCheckAnswer, onNext, nextOnEnter]);
 
   const nextButtonDisabled = disabled || isNextDisabled || !buttonTimerSatisfied;
   const previousButtonText = config?.previousButtonText ?? studyConfig.uiConfig.previousButtonText ?? 'Previous';
+  const nextButtonAlignment = config?.nextButtonAlignment ?? studyConfig.uiConfig.nextButtonAlignment ?? 'right';
 
   return (
     <>
-      <Group justify="right" gap="xs" mt="sm">
+      <Group justify={nextButtonJustify[nextButtonAlignment]} gap="xs" mt="sm" wrap="wrap">
         {config?.previousButton && (
           <PreviousButton
             label={previousButtonText}
@@ -126,7 +146,7 @@ export function NextButton({
         <Button
           type="submit"
           disabled={nextButtonDisabled}
-          onClick={() => goToNextStep()}
+          onClick={() => onNext()}
           px={location === 'sidebar' && checkAnswer ? 8 : undefined}
         >
           {label}

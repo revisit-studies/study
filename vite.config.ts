@@ -1,7 +1,7 @@
-/// <reference types="vitest/config" />
 import { fileURLToPath, URL } from 'node:url';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react-swc';
+import { coverageConfigDefaults } from 'vitest/config';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ command, mode }) => {
@@ -21,11 +21,31 @@ export default defineConfig(({ command, mode }) => {
       },
     },
     test: {
+      environment: 'jsdom',
       exclude: ['./tests/**', 'node_modules/**'],
       setupFiles: ['vitest-localstorage-mock'],
       fileParallelism: true,
       maxWorkers: '100%',
       minWorkers: 1,
+      coverage: {
+        provider: 'v8',
+        all: true,
+        exclude: [
+          ...coverageConfigDefaults.exclude,
+          'public/**',
+          'src/public/**',
+          'dist/**',
+          'eslint.config.js',
+          'vite.config.ts',
+          'playwright.config.ts',
+          'src/vite-env.d.ts',
+          'src/lodash.d.ts',
+          'src/main.tsx',
+          'src/analysis/types.ts',
+          'tests/checkSavedAnswers.ts',
+          'tests/utils.ts',
+        ],
+      },
     },
   };
 });

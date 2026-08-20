@@ -10,18 +10,12 @@ import { getOverviewStats } from './utils';
 export function SummaryView({
   visibleParticipants,
   studyConfig,
-  allConfigs,
-  studyId,
-  showStoredCountMismatch,
-  includedParticipants,
+  allConfigs = {},
   currentConfigLabel,
 }: {
   visibleParticipants: ParticipantDataWithStatus[];
   studyConfig: StudyConfig;
-  allConfigs: Record<string, StudyConfig>;
-  studyId?: string;
-  showStoredCountMismatch: boolean;
-  includedParticipants: string[];
+  allConfigs?: Record<string, StudyConfig>;
   currentConfigLabel?: string;
 }) {
   const overviewData = useMemo(
@@ -52,12 +46,7 @@ export function SummaryView({
 
   return (
     <Stack gap="md">
-      <OverviewStats
-        overviewData={overviewData}
-        studyId={studyId}
-        showStoredCountMismatch={showStoredCountMismatch}
-        includedParticipants={includedParticipants}
-      />
+      <OverviewStats overviewData={overviewData} />
       <Group align="flex-start" gap="md" grow>
         <ComponentStats
           visibleParticipants={visibleParticipants}

@@ -114,14 +114,14 @@ function renderConfigListCell(
 export function ComponentStats({
   visibleParticipants,
   studyConfig,
-  allConfigs,
-  selectedConfigRows,
+  allConfigs = {},
+  selectedConfigRows = [],
   currentConfigLabel,
 }: {
   visibleParticipants: ParticipantDataWithStatus[];
   studyConfig: StudyConfig;
-  allConfigs: Record<string, StudyConfig>;
-  selectedConfigRows: Array<{ configHash: string; configLabel: string; studyConfig: StudyConfig }>;
+  allConfigs?: Record<string, StudyConfig>;
+  selectedConfigRows?: Array<{ configHash: string; configLabel: string; studyConfig: StudyConfig }>;
   currentConfigLabel?: string;
 }) {
   const useSelectedConfigRows = selectedConfigRows.length > 0;

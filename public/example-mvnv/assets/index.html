@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
 <meta charset="utf-8">
-<title>Multivariate Network Visusalization Survey </title>
+<title>Multivariate Network Visualization Survey</title>
 <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
 <!-- <link rel="shortcut icon" href="favicon.ico" /> -->
@@ -56,7 +56,7 @@
 Using a Validated Design and Crowdsourcing Approach</a> 
                           </h2>
 
-                         <p> Here you can go through the survey as our crowdsourced participants did, or simply browse through the tasks. Note that survey responses will <strong>not</strong> be recorded.</Note>
+                         <p> Here you can go through the survey as our crowdsourced participants did, or simply browse through the tasks. Note that survey responses will <strong>not</strong> be recorded.</p>
 
                        <br/>
                        <br/>
@@ -152,7 +152,7 @@ Using a Validated Design and Crowdsourcing Approach</a>
     <div class="hit" style=display:none>
         <nav class="navbar trialSection" role="navigation" id="trialBar" aria-label="main navigation">
             <p class="card-header-title">
-                Get familiar with the visualization with the practice questions below. Your answers for these question
+                Get familiar with the visualization with the practice questions below. Your answers for these questions
                 are not part of the survey!
             </p>
         </nav>
@@ -818,7 +818,7 @@ Using a Validated Design and Crowdsourcing Approach</a>
 
     } = getUrlVars();
 
-    taskNum = eval(taskNum)-1;
+    taskNum = Number.parseInt(taskNum, 10)-1;
     let reload = false;
 
     if (taskNum !== undefined && vis!==undefined){

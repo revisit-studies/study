@@ -1,5 +1,5 @@
 import {
-  Flex, Image, Select, Title, Space, Grid, AppShell, Button,
+  Flex, Image, Select, Title, Space, Grid, AppShell, Button, Text,
 } from '@mantine/core';
 
 import { useLocation, useNavigate, useParams } from 'react-router';
@@ -7,20 +7,28 @@ import { useLocation, useNavigate, useParams } from 'react-router';
 import { IconListCheck, IconSettings } from '@tabler/icons-react';
 import { PREFIX } from '../../utils/Prefix';
 
+const STUDY_SCHEMA_VERSION_REGEX = /\/study\/(v\d+\.\d+\.\d+)\//;
+
 export function AppHeader({
   studyIds,
   selectedStudyId,
   studyHref,
+  studyConfigs,
 }: {
   studyIds: string[];
   selectedStudyId?: string;
   studyHref?: string;
+  studyConfigs?: Record<string, { $schema: string } | null>;
 }) {
   const navigate = useNavigate();
   const { studyId } = useParams();
   const location = useLocation();
 
   const selectorData = studyIds.map((id) => ({ value: id, label: id })).sort((a, b) => a.label.localeCompare(b.label));
+  const revisitVersion = studyIds
+    .map((id) => studyConfigs?.[id]?.$schema.match(STUDY_SCHEMA_VERSION_REGEX)?.[1])
+    .filter((version): version is string => version !== undefined)
+    .sort((a, b) => b.localeCompare(a, undefined, { numeric: true }))[0];
 
   const inAnalysis = location.pathname.includes('analysis');
 
@@ -39,6 +47,7 @@ export function AppHeader({
 
         <Grid.Col span={6}>
           <Flex
+            align="center"
             justify="flex-end"
             direction="row"
           >
@@ -58,7 +67,8 @@ export function AppHeader({
               </>
             )}
 
-            <IconSettings onClick={() => navigate('/settings')} style={{ cursor: 'pointer', marginTop: inAnalysis ? 6 : undefined }} />
+            {revisitVersion && <Text c="dimmed" size="sm" mr="sm">{`reVISit ${revisitVersion}`}</Text>}
+            <IconSettings onClick={() => navigate('/settings')} style={{ cursor: 'pointer' }} />
           </Flex>
         </Grid.Col>
       </Grid>

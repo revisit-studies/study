@@ -20,7 +20,7 @@ export function usePreviousStep() {
   const answers = useStoreSelector((state) => state.answers);
 
   // Status of the previous button. If true, the previous button should be disabled
-  const isPreviousDisabled = typeof currentStep !== 'number' || (currentStep <= 0 && (!funcIndex || decryptIndex(funcIndex) <= 0));
+  const isPreviousDisabled = typeof currentStep !== 'number' || isAnalysis || (currentStep <= 0 && (!funcIndex || decryptIndex(funcIndex) <= 0));
 
   const buildSearch = useCallback(() => window.location.search, []);
 

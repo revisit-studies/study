@@ -1,23 +1,43 @@
 import {
-  useCallback, useEffect, useMemo, useRef,
+  useCallback, useContext, useEffect, useMemo, useRef, useState,
 } from 'react';
 import { useDispatch } from 'react-redux';
 import { useCurrentComponent, useCurrentIdentifier } from '../routes/utils';
-import { useStoreDispatch, useStoreActions } from '../store/store';
+import { useStoreDispatch, useStoreActions, useStoreSelector } from '../store/store';
 import { ParticipantData, WebsiteComponent } from '../parser/types';
 import { PREFIX as BASE_PREFIX } from '../utils/Prefix';
+import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
+import { ReplayContext } from '../store/hooks/useReplay';
 
 const PREFIX = '@REVISIT_COMMS';
 
 export function IframeController({ currentConfig, provState, answers }: { currentConfig: WebsiteComponent; provState?: unknown, answers: ParticipantData['answers'] }) {
   const {
-    setReactiveAnswers, updateResponseBlockValidation,
+    setReactiveAnswers, updateProvenance, updateResponseBlockValidation,
   } = useStoreActions();
   const storeDispatch = useStoreDispatch();
   const dispatch = useDispatch();
   const identifier = useCurrentIdentifier();
+  const isAnalysis = useIsAnalysis();
+  const replay = useContext(ReplayContext);
+  const initialReplayTime = useRef(replay?.seekTime ?? 0);
+  const [hasReplayStarted, setHasReplayStarted] = useState(false);
+  const stimulusValidation = useStoreSelector((state) => state.trialValidation[identifier]?.stimulus);
+
+  useEffect(() => {
+    if (replay && (replay.isPlaying || replay.seekTime !== initialReplayTime.current)) {
+      setHasReplayStarted(true);
+    }
+  }, [replay]);
+
+  const shouldSendProvenance = !isAnalysis || !replay || hasReplayStarted;
 
   const ref = useRef<HTMLIFrameElement>(null);
+  const stimulusValidationRef = useRef(stimulusValidation);
+
+  useEffect(() => {
+    stimulusValidationRef.current = stimulusValidation;
+  }, [stimulusValidation]);
 
   const iframeId = useMemo(
     () => (crypto.randomUUID ? crypto.randomUUID() : `testID-${Date.now()}`),
@@ -43,10 +63,10 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   );
 
   useEffect(() => {
-    if (provState) {
+    if (provState && shouldSendProvenance) {
       sendMessage('PROVENANCE', provState);
     }
-  }, [provState, sendMessage]);
+  }, [provState, sendMessage, shouldSendProvenance]);
 
   useEffect(() => {
     if (answers) {
@@ -63,10 +83,21 @@ export function IframeController({ currentConfig, provState, answers }: { curren
             if (currentConfig.parameters) {
               sendMessage('STUDY_DATA', currentConfig.parameters);
             }
+            if (provState && shouldSendProvenance) {
+              sendMessage('PROVENANCE', provState);
+            }
+            if (answers) {
+              sendMessage('ANSWERS', answers);
+            }
             break;
           case `${PREFIX}/READY`:
             break;
           case `${PREFIX}/ANSWERS`:
+            if (isAnalysis) return;
+            stimulusValidationRef.current = {
+              valid: true,
+              values: data.message,
+            };
             storeDispatch(setReactiveAnswers(data.message));
             storeDispatch(updateResponseBlockValidation({
               location: 'stimulus',
@@ -75,15 +106,15 @@ export function IframeController({ currentConfig, provState, answers }: { curren
               values: data.message,
             }));
             break;
-          case `${PREFIX}/PROVENANCE`:
-            storeDispatch(updateResponseBlockValidation({
+          case `${PREFIX}/PROVENANCE`: {
+            if (isAnalysis) return;
+            storeDispatch(updateProvenance({
               location: 'stimulus',
               identifier,
-              values: {},
-              status: true,
               provenanceGraph: data.message,
             }));
             break;
+          }
           default:
             break;
         }
@@ -93,12 +124,19 @@ export function IframeController({ currentConfig, provState, answers }: { curren
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, [storeDispatch, dispatch, iframeId, currentConfig, sendMessage, setReactiveAnswers, updateResponseBlockValidation, identifier]);
+  }, [storeDispatch, dispatch, iframeId, currentConfig, sendMessage, setReactiveAnswers, updateProvenance, updateResponseBlockValidation, identifier, isAnalysis, provState, answers, shouldSendProvenance]);
 
   return (
     <iframe
       ref={ref}
-      style={{ width: '100%', flexGrow: 1, border: 0 }}
+      inert={(isAnalysis ? '' : undefined) as never}
+      aria-disabled={isAnalysis}
+      style={{
+        width: '100%',
+        flexGrow: 1,
+        border: 0,
+        pointerEvents: isAnalysis ? 'none' : undefined,
+      }}
       src={
         currentConfig.path.startsWith('http')
           ? currentConfig.path

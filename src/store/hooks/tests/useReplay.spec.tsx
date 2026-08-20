@@ -1,0 +1,491 @@
+import { renderHook, act } from '@testing-library/react';
+import React from 'react';
+import {
+  afterEach, beforeEach, describe, expect, test, vi,
+} from 'vitest';
+import { useSearchParams } from 'react-router';
+import { ReplayContext, useReplay, useReplayContext } from '../useReplay';
+import { syncEmitter } from '../../../utils/syncReplay';
+
+vi.mock('react-router', () => ({
+  useSearchParams: vi.fn(() => [new URLSearchParams(), vi.fn()]),
+}));
+
+vi.mock('../../../utils/syncReplay', () => ({
+  syncChannel: { postMessage: vi.fn() },
+  syncEmitter: {
+    on: vi.fn(),
+    off: vi.fn(),
+  },
+}));
+
+const useSearchParamsMock = vi.mocked(useSearchParams);
+const makeSearchParamsResult = (params = new URLSearchParams()) => (
+  [params, vi.fn()] as ReturnType<typeof useSearchParams>
+);
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  useSearchParamsMock.mockReturnValue(makeSearchParamsResult());
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
+
+describe('useReplayContext', () => {
+  test('throws when used outside a ReplayContext.Provider', () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+    expect(() => renderHook(() => useReplayContext())).toThrow('useReplayContext must be used within a ReplayProvider');
+    consoleSpy.mockRestore();
+  });
+
+  test('returns the context value when wrapped in a provider', () => {
+    const fakeValue = { seekTime: 42 } as ReturnType<typeof useReplay>;
+    const wrapper = ({ children }: { children: React.ReactNode }) => React.createElement(
+      ReplayContext.Provider,
+      { value: fakeValue },
+      children,
+    );
+    const { result } = renderHook(() => useReplayContext(), { wrapper });
+    expect(result.current.seekTime).toBe(42);
+  });
+});
+
+describe('useReplay — initialTimestamp from search params', () => {
+  test('defaults to seekTime 0 when no t param is set', () => {
+    const { result } = renderHook(() => useReplay());
+    expect(result.current.seekTime).toBe(0);
+  });
+
+  test('parses a numeric millisecond t param (divided by 1000 → seconds)', () => {
+    useSearchParamsMock.mockReturnValue(makeSearchParamsResult(new URLSearchParams({ t: '5000' })));
+    const { result } = renderHook(() => useReplay());
+    // 5000 ms → 5 seconds; seekTime is set to initialTimestamp on mount
+    expect(result.current.seekTime).toBe(5);
+  });
+
+  test('parses an hms-format t param like 1h2m3s', () => {
+    useSearchParamsMock.mockReturnValue(makeSearchParamsResult(new URLSearchParams({ t: '1h2m3s' })));
+    const { result } = renderHook(() => useReplay());
+    // 1*3600 + 2*60 + 3 = 3723 seconds
+    expect(result.current.seekTime).toBe(3723);
+  });
+
+  test('parses a t param with only minutes and seconds (0m30s)', () => {
+    useSearchParamsMock.mockReturnValue(makeSearchParamsResult(new URLSearchParams({ t: '0m30s' })));
+    const { result } = renderHook(() => useReplay());
+    expect(result.current.seekTime).toBe(30);
+  });
+});
+
+describe('useReplay — returned state defaults', () => {
+  test('starts with isPlaying false and duration 0', () => {
+    const { result } = renderHook(() => useReplay());
+    expect(result.current.isPlaying).toBe(false);
+    expect(result.current.duration).toBe(0);
+  });
+
+  test('starts with speed 1', () => {
+    const { result } = renderHook(() => useReplay());
+    expect(result.current.speed).toBe(1);
+  });
+
+  test('starts with hasEnded false', () => {
+    const { result } = renderHook(() => useReplay());
+    expect(result.current.hasEnded).toBe(false);
+  });
+});
+
+describe('useReplay — returned function invocation', () => {
+  test('setSeekTime updates seekTime', () => {
+    const { result } = renderHook(() => useReplay());
+    act(() => { result.current.setSeekTime(10); });
+    expect(result.current.seekTime).toBe(10);
+  });
+
+  test('setSpeed updates speed', () => {
+    const { result } = renderHook(() => useReplay());
+    act(() => { result.current.setSpeed(2); });
+    expect(result.current.speed).toBe(2);
+  });
+
+  test('setDuration updates duration', () => {
+    const { result } = renderHook(() => useReplay());
+    act(() => { result.current.setDuration(120); });
+    expect(result.current.duration).toBe(120);
+  });
+
+  test('setIsPlaying true sets isPlaying', () => {
+    const { result } = renderHook(() => useReplay());
+    act(() => { result.current.setIsPlaying(true); });
+    expect(result.current.isPlaying).toBe(true);
+  });
+
+  test('setIsPlaying false after true stops playing', () => {
+    const { result } = renderHook(() => useReplay());
+    act(() => {
+      result.current.setIsPlaying(true);
+      result.current.setIsPlaying(false);
+    });
+    expect(result.current.isPlaying).toBe(false);
+  });
+
+  test('forceEmitTimeUpdate can be called without crashing', () => {
+    const { result } = renderHook(() => useReplay());
+    act(() => { result.current.forceEmitTimeUpdate(); });
+  });
+
+  test('updateReplayRef can be called with null refs without crashing', () => {
+    const { result } = renderHook(() => useReplay());
+    act(() => { result.current.updateReplayRef(); });
+  });
+
+  test('setSeekTime with isRemoteTriggered=true sets isMasterPlayer to false (covers remote path)', () => {
+    const { result } = renderHook(() => useReplay());
+    act(() => { result.current.setSeekTime(5, true); });
+    expect(result.current.seekTime).toBe(5);
+  });
+
+  test('setSpeed with isRemoteTriggered=true covers remote path', () => {
+    const { result } = renderHook(() => useReplay());
+    act(() => { result.current.setSpeed(1.5, true); });
+    expect(result.current.speed).toBe(1.5);
+  });
+});
+
+describe('useReplay — syncEmitter listener', () => {
+  test('replaySyncListener body is covered when called via captured on() arg', () => {
+    const { result } = renderHook(() => useReplay());
+    // Find the listener registered with syncEmitter.on('replaySync', ...)
+    const onCalls = vi.mocked(syncEmitter.on).mock.calls;
+    const listenerEntry = onCalls.find(([event]) => event === 'replaySync');
+    const listener = listenerEntry?.[1] as ((v: { seekTime: number; isPlaying: boolean; speed: number }) => void) | undefined;
+    expect(listener).toBeDefined();
+    act(() => { result.current.setDuration(3); });
+    act(() => { listener?.({ seekTime: 3, isPlaying: false, speed: 1.5 }); });
+    expect(result.current.speed).toBe(1.5);
+    expect(result.current.seekTime).toBe(3);
+    expect(result.current.hasEnded).toBe(true);
+
+    act(() => { result.current.setIsPlaying(true); });
+    expect(result.current.seekTime).toBe(0);
+    expect(result.current.hasEnded).toBe(false);
+    expect(result.current.isPlaying).toBe(true);
+  });
+
+  test('cleanup removes the replaySync listener on unmount', () => {
+    const { unmount } = renderHook(() => useReplay());
+    unmount();
+    expect(vi.mocked(syncEmitter.off)).toHaveBeenCalledWith('replaySync');
+  });
+});
+
+// ── video/audio event callbacks ────────────────────────────────────────────────
+
+function makeVideoWithSrc(): HTMLVideoElement {
+  const video = document.createElement('video');
+  Object.defineProperty(video, 'src', { value: 'fake.mp4', writable: true, configurable: true });
+  return video;
+}
+
+describe('useReplay — hasEnded via timerValue >= duration', () => {
+  test('setHasEnded(true) when timerValue.current >= duration', () => {
+    const { result } = renderHook(() => useReplay());
+    act(() => {
+      result.current.setSeekTime(15); // sets timerValue.current = 15
+    });
+    act(() => {
+      result.current.setDuration(10); // effect fires: 15 >= 10 → setHasEnded(true)
+    });
+    expect(result.current.hasEnded).toBe(true);
+  });
+});
+
+describe('useReplay — handlePlay/Seeked/Pause via video element events', () => {
+  test('handlePlay: play event sets isPlaying true', () => {
+    const { result } = renderHook(() => useReplay());
+    const video = makeVideoWithSrc();
+    act(() => {
+      result.current.videoRef.current = video;
+      result.current.updateReplayRef();
+    });
+    act(() => {
+      video.dispatchEvent(new Event('play'));
+    });
+    expect(result.current.isPlaying).toBe(true);
+  });
+
+  test('handlePlay: with audioRef set mutes audio', () => {
+    const { result } = renderHook(() => useReplay());
+    const video = makeVideoWithSrc();
+    const audio = document.createElement('audio');
+    audio.play = vi.fn(async () => { });
+    act(() => {
+      result.current.videoRef.current = video;
+      result.current.audioRef.current = audio;
+      result.current.updateReplayRef(); // replayRef = video (has src)
+    });
+    act(() => {
+      video.dispatchEvent(new Event('play'));
+    });
+    expect(audio.muted).toBe(true);
+  });
+
+  test('handleSeeked: seeked event preserves the task seekTime', () => {
+    const { result } = renderHook(() => useReplay());
+    const video = makeVideoWithSrc();
+    act(() => {
+      result.current.videoRef.current = video;
+      result.current.updateReplayRef();
+    });
+    act(() => {
+      video.dispatchEvent(new Event('seeked'));
+    });
+    expect(result.current.seekTime).toBe(0); // currentTime defaults to 0
+  });
+
+  test('handleSeeked: audio-as-replayRef path covers else-if branch', () => {
+    const { result } = renderHook(() => useReplay());
+    const audio = document.createElement('audio');
+    Object.defineProperty(audio, 'src', { value: 'fake.mp3', writable: true, configurable: true });
+    const video = document.createElement('video'); // no src → not chosen as replayRef
+    act(() => {
+      result.current.audioRef.current = audio;
+      result.current.videoRef.current = video;
+      result.current.updateReplayRef(); // replayRef = audio
+    });
+    act(() => {
+      audio.dispatchEvent(new Event('seeked')); // handleSeeked fires; else-if branch runs
+    });
+    expect(result.current.seekTime).toBe(0);
+  });
+
+  test('handlePause: pause event sets isPlaying false', () => {
+    const { result } = renderHook(() => useReplay());
+    const video = makeVideoWithSrc();
+    act(() => {
+      result.current.videoRef.current = video;
+      result.current.updateReplayRef();
+    });
+    act(() => {
+      video.dispatchEvent(new Event('play')); // start playing
+    });
+    expect(result.current.isPlaying).toBe(true);
+    act(() => {
+      video.dispatchEvent(new Event('pause'));
+    });
+    expect(result.current.isPlaying).toBe(false);
+  });
+
+  test('updateReplayRef sets replayRef to audioRef when videoRef has no src', () => {
+    const { result } = renderHook(() => useReplay());
+    const audio = document.createElement('audio');
+    Object.defineProperty(audio, 'src', { value: 'fake.mp3', writable: true, configurable: true });
+    act(() => {
+      result.current.audioRef.current = audio;
+      result.current.updateReplayRef();
+    });
+    expect(result.current.replayRef.current).toBe(audio);
+  });
+
+  test('updateReplayRef detaches listeners from the previous media element', () => {
+    const { result } = renderHook(() => useReplay());
+    const originalVideo = makeVideoWithSrc();
+    const replacementVideo = makeVideoWithSrc();
+
+    act(() => {
+      result.current.videoRef.current = originalVideo;
+      result.current.updateReplayRef();
+      result.current.videoRef.current = replacementVideo;
+      result.current.updateReplayRef();
+      originalVideo.dispatchEvent(new Event('play'));
+    });
+
+    expect(result.current.replayRef.current).toBe(replacementVideo);
+    expect(result.current.isPlaying).toBe(false);
+  });
+
+  test('media replay continues emitting timeupdate events after play state changes', () => {
+    vi.useFakeTimers();
+    const { result } = renderHook(() => useReplay());
+    const video = makeVideoWithSrc();
+    const timeUpdateListener = vi.fn();
+
+    act(() => {
+      result.current.videoRef.current = video;
+      result.current.updateReplayRef();
+      result.current.replayEvent.on('timeupdate', timeUpdateListener);
+    });
+    timeUpdateListener.mockClear();
+
+    act(() => {
+      video.dispatchEvent(new Event('play'));
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    expect(result.current.isPlaying).toBe(true);
+    expect(timeUpdateListener).toHaveBeenCalled();
+  });
+});
+
+describe('useReplay — public setIsPlaying with hasEnded=true', () => {
+  test('seeking to task end sets hasEnded and one play activation restarts from 0', () => {
+    const { result } = renderHook(() => useReplay());
+    act(() => {
+      result.current.setDuration(10);
+      result.current.setSeekTime(10);
+    });
+    expect(result.current.hasEnded).toBe(true);
+
+    act(() => {
+      result.current.setIsPlaying(true);
+    });
+    expect(result.current.hasEnded).toBe(false);
+    expect(result.current.seekTime).toBe(0);
+  });
+});
+
+describe('useReplay — task clock is authoritative', () => {
+  test('does not advance beyond pending or stalled media progress', () => {
+    vi.useFakeTimers();
+    const { result } = renderHook(() => useReplay());
+    const video = makeVideoWithSrc();
+    video.play = vi.fn(() => new Promise<void>(() => {}));
+    Object.defineProperty(video, 'duration', { value: 3, configurable: true });
+    Object.defineProperty(video, 'currentTime', { value: 0.25, writable: true, configurable: true });
+
+    const timeUpdateListener = vi.fn();
+    act(() => {
+      result.current.videoRef.current = video;
+      result.current.updateReplayRef();
+      video.currentTime = 0.25;
+      result.current.setDuration(3);
+      result.current.replayEvent.on('timeupdate', timeUpdateListener);
+      result.current.setIsPlaying(true);
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(1_000);
+    });
+
+    expect(timeUpdateListener).toHaveBeenLastCalledWith(0.25);
+    expect(result.current.hasEnded).toBe(false);
+  });
+
+  test('stops the task clock when media playback is rejected', async () => {
+    vi.useFakeTimers();
+    const { result } = renderHook(() => useReplay());
+    const video = makeVideoWithSrc();
+    video.play = vi.fn(async () => { throw new Error('autoplay blocked'); });
+    Object.defineProperty(video, 'duration', { value: 3, configurable: true });
+
+    act(() => {
+      result.current.videoRef.current = video;
+      result.current.updateReplayRef();
+      result.current.setDuration(3);
+      result.current.setIsPlaying(true);
+    });
+    await act(async () => Promise.resolve());
+
+    act(() => {
+      vi.advanceTimersByTime(1_000);
+    });
+
+    expect(result.current.isPlaying).toBe(false);
+    expect(result.current.seekTime).toBe(0);
+    expect(result.current.hasEnded).toBe(false);
+  });
+
+  test('keeps task time when shorter media clamps a seek and resumes media when seeking back', () => {
+    const { result } = renderHook(() => useReplay());
+    const video = makeVideoWithSrc();
+    video.play = vi.fn(async () => {});
+    video.pause = vi.fn();
+    Object.defineProperty(video, 'duration', { value: 1, configurable: true });
+    Object.defineProperty(video, 'paused', { value: true, configurable: true });
+
+    act(() => {
+      result.current.videoRef.current = video;
+      result.current.updateReplayRef();
+      result.current.setSeekTime(3);
+      video.dispatchEvent(new Event('seeked'));
+    });
+
+    expect(video.currentTime).toBe(1);
+    expect(result.current.seekTime).toBe(3);
+
+    vi.mocked(video.play).mockClear();
+    act(() => {
+      result.current.setIsPlaying(true);
+    });
+    expect(video.play).not.toHaveBeenCalled();
+    expect(result.current.isPlaying).toBe(true);
+
+    act(() => {
+      result.current.setSeekTime(0.5);
+    });
+
+    expect(video.currentTime).toBe(0.5);
+    expect(video.play).toHaveBeenCalledOnce();
+    expect(result.current.seekTime).toBe(0.5);
+  });
+
+  test('continues to the task duration after shorter media ends', () => {
+    vi.useFakeTimers();
+    const { result } = renderHook(() => useReplay());
+    const video = makeVideoWithSrc();
+    video.play = vi.fn(async () => {});
+    video.pause = vi.fn();
+    Object.defineProperty(video, 'ended', { value: false, configurable: true });
+
+    act(() => {
+      result.current.videoRef.current = video;
+      result.current.updateReplayRef();
+      result.current.setDuration(3);
+      result.current.setIsPlaying(true);
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(1_000);
+      video.currentTime = 1;
+      video.dispatchEvent(new Event('pause'));
+      Object.defineProperty(video, 'ended', { value: true, configurable: true });
+      video.dispatchEvent(new Event('ended'));
+    });
+    expect(result.current.isPlaying).toBe(true);
+    expect(result.current.hasEnded).toBe(false);
+
+    act(() => {
+      vi.advanceTimersByTime(2_100);
+    });
+    expect(result.current.seekTime).toBe(3);
+    expect(result.current.hasEnded).toBe(true);
+    expect(result.current.isPlaying).toBe(false);
+  });
+});
+
+describe('useReplay — cleanup', () => {
+  test('clears the synthetic replay timer on unmount', () => {
+    vi.useFakeTimers();
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+    const { result, unmount } = renderHook(() => useReplay());
+
+    act(() => {
+      result.current.setDuration(0.01);
+      result.current.setIsPlaying(true);
+    });
+
+    unmount();
+
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    expect(consoleSpy).not.toHaveBeenCalled();
+    consoleSpy.mockRestore();
+  });
+});

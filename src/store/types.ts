@@ -1,10 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
+import type { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
+import type { ConfigureTrrackOptions, Trrack } from '@trrack/core';
 import type { GetInputPropsReturnType } from '@mantine/form/lib/types';
 import type {
   Answer, ComponentBlock, ConfigResponseBlockLocation, CustomResponse, InterruptionBlock, JsonValue, ParsedStringOption, ParticipantData, ResponseBlockLocation, SkipConditions, StudyConfig, ValueOf,
 } from '../parser/types';
 import { type REVISIT_MODE } from '../storage/engines/types';
+import type { StimulusIssueReason } from '../components/response/stimulusErrors';
 
 /**
  * The ParticipantMetadata object contains metadata about the participant. This includes the user agent, resolution, language, and IP address. This object is used to store information about the participant that is not directly related to the study itself.
@@ -20,7 +22,14 @@ export interface ParticipantMetadata {
   ip: string | null;
 }
 
-export type TrrackedProvenance = ProvenanceGraph<any, any>;
+export type ProvenanceTraversalEvent = {
+  nodeId: string;
+  createdOn: number;
+};
+
+export type TrrackedProvenance = ProvenanceGraph<any, any> & {
+  traversalEvents?: ProvenanceTraversalEvent[];
+};
 export type StoredProvenance = Record<ResponseBlockLocation, TrrackedProvenance | undefined>;
 
 // timestamp, event type, event data
@@ -36,7 +45,12 @@ type ScrollEvent = [number, 'scroll', number[]];
 type VisibilityEvent = [number, 'visibility', string];
 export type EventType = MouseMoveEvent | MouseDownEvent | MouseUpEvent | KeydownEvent | KeyupEvent | ScrollEvent | FocusEvent | InputEvent | ResizeEvent | VisibilityEvent;
 
-export type ValidationStatus = { valid: boolean, values: object }
+export type ValidationStatus = {
+  valid: boolean;
+  values: object;
+  reason?: StimulusIssueReason;
+  message?: string;
+}
 export type TrialValidation = Record<
   string,
   {
@@ -128,6 +142,34 @@ export interface StoredAnswer {
   questionOrders: Record<string, string[]>;
   /** The order of the form elements in a base response. */
   formOrder?: Record<string, string[]>;
+  /** Whether required-response errors were revealed for this trial after a Next attempt. */
+  responseSubmitAttempted?: boolean;
+  /** Check Answer state for this trial: attempts used and per-response correctness at the last check. */
+  checkAnswer?: CheckAnswerState;
+}
+
+/**
+ * The CheckAnswerState object is a data structure describing the participant's interaction with an individual component when they click "Check Answer". It is the data structure used as values of the `checkAnswer` object of [StoreState](../StoreState). The general structure for this is below:
+ *
+ * ```json
+ * {
+ *   "attemptsUsed": 2,
+ *   "correct": false,
+ *   "responses": {
+ *     "barChart": true,
+ *     "lineChart": false
+ *   }
+ * }
+ * ```
+ * In the example above the participant answered `barChart` correctly but `lineChart` incorrectly, so the trial is not yet correct.
+ */
+export interface CheckAnswerState {
+  /** How many times the participant has clicked "Check Answer" for this trial. */
+  attemptsUsed: number;
+  /** Whether every response was correct at the last check. */
+  correct: boolean;
+  /** The correctness of each response at the last check. Keys are the "id"s in the [Response](../BaseResponse) list of the component in your [StudyConfiguration](../StudyConfig); values indicate whether that response was correct. */
+  responses: Record<string, boolean>;
 }
 
 export interface JumpFunctionParameters<T> {
@@ -143,11 +185,30 @@ export interface JumpFunctionReturnVal {
   correctAnswer?: Answer[],
 }
 
+export type UseTrrack = <State, Event extends string = string>(
+  options: ConfigureTrrackOptions<State, Event>,
+) => Trrack<State, Event>;
+
 export interface StimulusParams<T, S = never> {
   parameters: T;
   provenanceState?: S;
   answers: ParticipantData['answers'];
-  setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: StoredAnswer['answer'] }) => void
+  /** Creates a managed Trrack instance whose complete traversal history is automatically captured by reVISit. */
+  useTrrack: UseTrrack;
+  setAnswer: ({
+    status,
+    provenanceGraph,
+    answers,
+    reason,
+    message,
+  }: {
+    status: boolean,
+    /** @deprecated Use the useTrrack StimulusParam so provenance is captured automatically. */
+    provenanceGraph?: TrrackedProvenance,
+    answers: StoredAnswer['answer'],
+    reason?: StimulusIssueReason,
+    message?: string,
+  }) => void
 }
 
 export interface CustomResponseField<TValue extends JsonValue = JsonValue> {
@@ -184,7 +245,10 @@ export interface Sequence {
   conditional?: boolean;
 }
 
-export type FormElementProvenance = { form: StoredAnswer['answer'] };
+export type FormElementProvenance = {
+  form: StoredAnswer['answer'];
+  showResponseErrors?: boolean;
+};
 export type AlertModalState = { show: boolean, message: string, title: string };
 export interface StoreState {
   studyId: string;
@@ -196,6 +260,9 @@ export interface StoreState {
   showHelpText: boolean;
   alertModal: AlertModalState;
   trialValidation: TrialValidation;
+  responseSubmitAttempted: Record<string, boolean>;
+  stimulusSubmitAttempted: Record<string, boolean>;
+  checkAnswer: Record<string, CheckAnswerState>;
   reactiveAnswers: Record<string, ValueOf<StoredAnswer['answer']>>;
   metadata: ParticipantMetadata;
   analysisProvState: Record<ConfigResponseBlockLocation, FormElementProvenance | undefined> & { stimulus: unknown | undefined };

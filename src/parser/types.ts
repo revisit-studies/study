@@ -70,6 +70,7 @@ export interface StudyMetadata {
  */
 export type ResponseBlockLocation = 'sidebar' | 'aboveStimulus' | 'belowStimulus' | 'stimulus';
 export type ConfigResponseBlockLocation = Exclude<ResponseBlockLocation, 'stimulus'>;
+export type NextButtonAlignment = 'left' | 'center' | 'right';
 
 /**
  * UserBrowser is used to define a minimum browser requirement for the study to run.
@@ -234,6 +235,7 @@ export type Styles = {
  *   "contactEmail": "contact@revisit.dev",
  *   "withProgressBar": true,
  *   "withSidebar": true,
+ *   "nextButtonAlignment": "center",
  *   "helpTextPath": "<study-name>/assets/help.md",
  *   "autoDownloadStudy": true,
  *   "autoDownloadTime": 5000,
@@ -275,6 +277,8 @@ export interface UIConfig {
   nextButtonText?: string;
   /** The location of the next button. */
   nextButtonLocation?: ConfigResponseBlockLocation;
+  /** The horizontal alignment of the navigation action group. Defaults to right. */
+  nextButtonAlignment?: NextButtonAlignment;
   /** The time in milliseconds to wait before the next button is enabled. */
   nextButtonEnableTime?: number;
   /** The time in milliseconds to wait before the next button is disabled. */
@@ -347,8 +351,26 @@ export interface StringOption {
   infoText?: string;
 }
 
+/**
+ * The MatrixQuestionOption interface is used to define the question options for matrix responses.
+ * The label is the fallback text displayed to participants, and the value is the key stored in the participant's data.
+ * The optional left and right labels allow bipolar rows to label each side of the matrix without changing stored values.
+ * When `leftLabel` is specified, it takes precedence over `label` for the left-side row text.
+ */
+export interface MatrixQuestionOption extends StringOption {
+  /** The label displayed on the left side of the matrix row. Takes precedence over label when specified. Defaults to label. */
+  leftLabel?: string;
+  /** The label displayed on the right side of the matrix row. */
+  rightLabel?: string;
+}
+
 /** StringOption normalized to always include a value. */
 export interface ParsedStringOption extends Omit<StringOption, 'value'> {
+  value: string;
+}
+
+/** MatrixQuestionOption normalized to always include a value. */
+export interface ParsedMatrixQuestionOption extends Omit<MatrixQuestionOption, 'value'> {
   value: string;
 }
 
@@ -508,8 +530,8 @@ export interface LikertResponse extends BaseResponse {
 interface BaseMatrixResponse extends BaseResponse {
   /** The answer options (columns). We provide some shortcuts for a likelihood scale (ranging from highly unlikely to highly likely) and a satisfaction scale (ranging from highly unsatisfied to highly satisfied) with either 5 or 7 options to choose from. */
   answerOptions: (StringOption | string)[] | `likely${5 | 7}` | `satisfaction${5 | 7}`;
-  /** The question options (rows) are the prompts for each response you'd like to record. */
-  questionOptions: (StringOption | string)[];
+  /** The question options (rows) are the prompts for each response you'd like to record. Use `leftLabel` and `rightLabel` on object options to display bipolar row labels such as `"Obstructive - Supportive"` on either side of the matrix. */
+  questionOptions: (MatrixQuestionOption | string)[];
   /** The order in which the questions are displayed. Defaults to fixed. */
   questionOrder?: 'fixed' | 'random';
 }
@@ -529,12 +551,17 @@ interface BaseMatrixResponse extends BaseResponse {
  *   "answerOptions": "satisfaction5",
  *   "questionOptions": [
  *     "The tool we created",
- *     "The technique we developed",
+ *     {
+ *       "label": "Obstructive - Supportive",
+ *       "value": "obstructive-supportive",
+ *       "leftLabel": "Obstructive",
+ *       "rightLabel": "Supportive"
+ *     },
  *     "The authors of the tools"
  *   ],
  *   "default": {
  *     "The tool we created": "Highly Satisfied",
- *     "The technique we developed": "Satisfied",
+ *     "obstructive-supportive": "Satisfied",
  *     "The authors of the tools": "Neutral"
  *   },
  *   "questionOrder": "random"
@@ -1025,6 +1052,8 @@ export interface BaseIndividualComponent {
   nextButtonText?: string;
   /** The location of the next button. If present, will override the  next button location setting in the uiConfig. */
   nextButtonLocation?: ConfigResponseBlockLocation;
+  /** The horizontal alignment of the navigation action group. If present, will override the alignment setting in the uiConfig. */
+  nextButtonAlignment?: NextButtonAlignment;
   /** The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig. */
   nextButtonEnableTime?: number;
   /** The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig. */
@@ -1094,12 +1123,14 @@ export interface MarkdownComponent extends BaseIndividualComponent {
  * ```ts
  * {
  *   parameters: T;
- *   setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: Record<string, any> }) => void
+ *   useTrrack: (options: ConfigureTrrackOptions) => Trrack;
+ *   setAnswer: ({ status, answers }: { status: boolean, answers: Record<string, any> }) => void
  * }
  * ```
  *
  * `parameters` is the same object passed in from the ReactComponent type below, allowing you to pass options in from the config to your component.
- * `setAnswer` is a callback function allowing the creator of the ReactComponent to programmatically set the answer, as well as the provenance graph. This can be useful if you don't use the default answer interface, and instead have something more unique.
+ * `setAnswer` is a callback function allowing the creator of the ReactComponent to programmatically set the answer. This can be useful if you don't use the default answer interface, and instead have something more unique.
+ * Call the `useTrrack` function supplied in `StimulusParams` when the component needs provenance. It creates the Trrack instance and reports apply, undo, redo, and other traversals automatically.
  *
  * So, for example, if I had the following ReactComponent in my config:
  * ```json
@@ -1116,7 +1147,7 @@ export interface MarkdownComponent extends BaseIndividualComponent {
  * My react component, CoolComponent.tsx, would exist in src/public/my_study/assets, and look something like this:
  *
  * ```ts
- * export default function CoolComponent({ parameters, setAnswer }: StimulusParams<{name: string, age: number}>) {
+ * export default function CoolComponent({ parameters, setAnswer, useTrrack }: StimulusParams<{name: string, age: number}>) {
  *   // render something
  * }
  * ```
@@ -1196,16 +1227,14 @@ export interface ImageComponent extends BaseIndividualComponent {
  *   </script>
  * ```
  *
- * If the html website implements Trrack library for provenance tracking, you can send the provenance graph back to reVISit by calling `Revisit.postProvenance` as shown in the example below. You need to call this each time the Trrack state is updated so that reVISit is kept aware of the changes in the provenance graph.
+ * If the html website implements Trrack provenance tracking, create the instance through `Revisit.createTrrack`. reVISit subscribes before returning the instance and automatically reports apply, undo, redo, and other traversals.
  *
  * ```ts
- * const trrack = initializeTrrack({
+ * const trrack = Revisit.createTrrack({
+ *     initializeTrrack,
  *     initialState,
  *     registry
  *   });
- *
- *   ...
- *   Revisit.postProvenance(trrack.graph.backend);
  * ```
 
  */
@@ -1894,7 +1923,7 @@ export interface LibraryConfig {
   baseComponents?: BaseComponents;
 }
 
-export type ErrorWarningCategory = 'invalid-config' | 'invalid-library-config' | 'undefined-library' | 'undefined-base-component' | 'undefined-component' | 'sequence-validation' | 'skip-validation' | 'unused-component' | 'disabled-sidebar' | 'default-contact-email';
+export type ErrorWarningCategory = 'invalid-config' | 'invalid-library-config' | 'undefined-library' | 'undefined-base-component' | 'undefined-component' | 'sequence-validation' | 'skip-validation' | 'unused-component' | 'disabled-sidebar' | 'default-contact-email' | 'default-firebase-config' | 'default-supabase-config';
 
 /**
  * @ignore

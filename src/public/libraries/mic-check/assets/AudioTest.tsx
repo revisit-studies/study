@@ -41,7 +41,6 @@ export function AudioTest({ setAnswer }: StimulusParams<undefined>) {
             soundDetected = true;
             setAnswer({
               status: true,
-              provenanceGraph: undefined,
               answers: {
                 audioTest: true,
               },

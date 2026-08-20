@@ -699,7 +699,7 @@ var View = /** @class */ (function () {
         var yOffset = 30;
         var xOffset = 10;
         if (this.controller.configuration.adjMatrix.edgeBars && this.controller.configuration.isMultiEdge) {
-            var legendFile = 'assets/adj-matrix/';
+            var legendFile = 'adj-matrix/';
             legendFile += this.controller.configuration.isMultiEdge ? 'nestedSquaresLegend' : 'edgeBarsLegendSingleEdge';
             legendFile += '.png';
             d3.select('#legend-svg').append('g').append('svg:image')
@@ -1538,6 +1538,7 @@ var View = /** @class */ (function () {
         nonAnswerColumn.attr('cursor', 'pointer');
         d3.select('.loading').style('display', 'none');
         this.controller.model.setUpProvenance();
+        rehydrateRevisitState();
         window.focus();
         // Draw buttons for alternative sorts
         var initalY = -this.margins.left + 10;

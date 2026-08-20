@@ -125,6 +125,7 @@ export function ThinkAloudFooter({
     async function fetchAssetsUrl() {
       if (!storageEngine || !participantId || !currentTrial) {
         setAudioUrl(null);
+        setScreenRecordingUrl(null);
         return;
       }
 
@@ -328,13 +329,20 @@ export function ThinkAloudFooter({
     navigateToTask(orderedAnswers[nextIndex].identifier);
   }, [currentTrial, navigateToTask, orderedAnswers]);
 
-  const setTags = useCallback((_tags: Tag[], type: 'task' | 'participant') => {
-    if (storageEngine) {
-      storageEngine.saveTags(_tags, type).then(() => { type === 'task' ? pullTags(storageEngine, type) : pullAllParticipantTags(storageEngine, type); });
+  const setTags = useCallback(async (_tags: Tag[], type: 'task' | 'participant') => {
+    if (!storageEngine) {
+      return;
+    }
+
+    await storageEngine.saveTags(_tags, type);
+    if (type === 'task') {
+      await pullTags(storageEngine, type);
+    } else {
+      await pullAllParticipantTags(storageEngine, type);
     }
   }, [pullAllParticipantTags, pullTags, storageEngine]);
 
-  const editTaskTagCallback = useCallback((oldTag: Tag, newTag: Tag) => {
+  const editTaskTagCallback = useCallback(async (oldTag: Tag, newTag: Tag) => {
     if (!taskTags) {
       return;
     }
@@ -343,10 +351,10 @@ export function ThinkAloudFooter({
     const tagsCopy = Array.from(taskTags);
     tagsCopy[tagIndex] = newTag;
 
-    setTags(tagsCopy, 'task');
+    await setTags(tagsCopy, 'task');
   }, [setTags, taskTags]);
 
-  const editParticipantTagCallback = useCallback((oldTag: Tag, newTag: Tag) => {
+  const editParticipantTagCallback = useCallback(async (oldTag: Tag, newTag: Tag) => {
     if (!allParticipantTags) {
       return;
     }
@@ -355,12 +363,12 @@ export function ThinkAloudFooter({
     const tagsCopy = Array.from(allParticipantTags);
     tagsCopy[tagIndex] = newTag;
 
-    setTags(tagsCopy, 'participant');
+    await setTags(tagsCopy, 'participant');
   }, [setTags, allParticipantTags]);
 
-  const createTaskTagCallback = useCallback((t: Tag) => { setTags([...(taskTags || []), t], 'task'); }, [setTags, taskTags]);
+  const createTaskTagCallback = useCallback((t: Tag) => setTags([...(taskTags || []), t], 'task'), [setTags, taskTags]);
 
-  const createParticipantTagCallback = useCallback((t: Tag) => { setTags([...(taskTags || []), t], 'participant'); }, [setTags, taskTags]);
+  const createParticipantTagCallback = useCallback((t: Tag) => setTags([...(allParticipantTags || []), t], 'participant'), [allParticipantTags, setTags]);
 
   useEffect(() => {
     const t = transcriptLines ? transcriptLines[jumpedToLine]?.start || 0 : 0;
@@ -410,12 +418,12 @@ export function ThinkAloudFooter({
         <AudioProvenanceVis setHasAudio={setHasAudio} saveProvenance={saveProvenance} setTime={onTimeUpdate} setTimeString={(_t) => setTimeString(_t)} answers={participant ? participant.answers : {}} taskName={currentTrial} context={isReplay ? 'provenanceVis' : 'audioAnalysis'} />
         {xScale && transcriptLines ? <TranscriptSegmentsVis startTime={xScale.domain()[0]} xScale={xScale} transcriptLines={transcriptLines} currentShownTranscription={currentShownTranscription || 0} /> : null}
 
-        <Group gap="xs" style={{ width: '100%' }} justify="center" wrap="nowrap">
+        <Group gap="xs" style={{ width: '100%' }} justify="center" wrap="nowrap" mb={isReplay ? 0 : 'md'}>
           <Group wrap="nowrap">
             <Text ff="monospace" style={{ textAlign: 'right' }} mt="lg" c="dimmed">{timeString}</Text>
 
             <Tooltip label={hasEnded ? 'Restart' : isPlaying ? 'Pause' : 'Play'}>
-              <ActionIcon mt={25} size="lg" variant="light" onClick={() => { setIsPlaying(!isPlaying); }}>
+              <ActionIcon aria-label={hasEnded ? 'Restart' : isPlaying ? 'Pause' : 'Play'} mt={25} size="lg" variant="light" onClick={() => { setIsPlaying(!isPlaying); }}>
                 {hasEnded ? <IconRestore /> : isPlaying ? <IconPlayerPauseFilled /> : <IconPlayerPlayFilled />}
               </ActionIcon>
             </Tooltip>
@@ -599,7 +607,7 @@ export function ThinkAloudFooter({
             )}
             {screenRecordingUrl && (
               <Tooltip label="Download screen recording">
-                <ActionIcon variant="filled" size={30} onClick={handleDownloadScreenRecording}>
+                <ActionIcon variant="light" size={30} onClick={handleDownloadScreenRecording}>
                   <IconDeviceDesktopDown />
                 </ActionIcon>
               </Tooltip>

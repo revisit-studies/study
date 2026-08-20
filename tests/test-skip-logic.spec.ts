@@ -189,7 +189,7 @@ async function getTags(page: Page) {
   });
 }
 
-test('test', async ({ page }) => {
+test('evaluates response, block, nested, and attention-check skip conditions', async ({ page }) => {
   await page.goto('/test-skip-logic');
 
   // Make sure that we loaded in

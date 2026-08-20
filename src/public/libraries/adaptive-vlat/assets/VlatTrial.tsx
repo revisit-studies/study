@@ -13,13 +13,13 @@ export default function VlatTrial({ parameters, setAnswer, answers }: StimulusPa
   const [answerChecked, setAnswerChecked] = useState(false);
 
   useEffect(() => {
-    const hasIncrrectAnswer = Object.keys(answers[answerKey]?.incorrectAnswers || {}).length > 0;
-    setAnswerChecked(hasIncrrectAnswer);
+    const hasIncorrectAnswer = Object.keys(answers[answerKey]?.incorrectAnswers || {}).length > 0;
+    setAnswerChecked(hasIncorrectAnswer);
   }, [answers, answerKey]);
 
   useEffect(() => {
     setAnswer({
-      status: true,
+      status: currentanswer !== '',
       answers: {
         [taskid]: currentanswer,
         score: parameters.score,
@@ -51,7 +51,7 @@ export default function VlatTrial({ parameters, setAnswer, answers }: StimulusPa
           <Image
             radius="sm"
             src={imgMap[activeQuestion.img] || ''}
-            alt="VIS"
+            alt={`Visualization for question ${parameters.qidx}`}
             w="100%"
             maw={900}
           />
@@ -65,16 +65,16 @@ export default function VlatTrial({ parameters, setAnswer, answers }: StimulusPa
           >
             <Stack mt={30}>
               {
-                    activeQuestion.options.map((op:string, idx:number) => (
-                      <Radio
-                        disabled={(userAnswer !== undefined && userAnswer !== '') || answerChecked}
-                        value={`${String.fromCharCode(65 + idx)}`}
-                        label={`${String.fromCharCode(65 + idx)}. ${op}`}
-                        key={`op${idx}`}
-                        onClick={() => setCurrentAnswer(String.fromCharCode(65 + idx))}
-                      />
-                    ))
-                  }
+                activeQuestion.options.map((op: string, idx: number) => (
+                  <Radio
+                    disabled={(userAnswer !== undefined && userAnswer !== '') || answerChecked}
+                    value={`${String.fromCharCode(65 + idx)}`}
+                    label={`${String.fromCharCode(65 + idx)}. ${op}`}
+                    key={`op${idx}`}
+                    onClick={() => setCurrentAnswer(String.fromCharCode(65 + idx))}
+                  />
+                ))
+              }
             </Stack>
 
           </Radio.Group>

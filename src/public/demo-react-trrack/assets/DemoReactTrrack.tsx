@@ -4,7 +4,7 @@ import {
 import {
   Box, Center, Stack, Text, TextInput,
 } from '@mantine/core';
-import { initializeTrrack, Registry } from '@trrack/core';
+import { Registry } from '@trrack/core';
 import { StimulusParams } from '../../../store/types';
 
 /** State shape for provenance tracking (used during replay) */
@@ -21,35 +21,36 @@ interface StroopTrialParams {
 /** Normalize input to uppercase for consistent answers */
 const toCapped = (value: string) => value.toUpperCase();
 
-function StroopColorTask({ parameters, setAnswer, provenanceState }: StimulusParams<StroopTrialParams, StroopState>) {
+function StroopColorTask({
+  parameters, setAnswer, provenanceState, useTrrack,
+}: StimulusParams<StroopTrialParams, StroopState>) {
   const { displayText = '', textColor = 'black' } = parameters;
 
   // Create Trrack instance and actions once (see provenance-tracking docs)
-  const { actions, trrack } = useMemo(() => {
+  const { actions, registry } = useMemo(() => {
     const reg = Registry.create();
     const setResponseAction = reg.register('setResponse', (state, nextResponse: string) => {
       state.response = nextResponse;
       return state;
     });
-    const trrackInst = initializeTrrack({
-      registry: reg,
-      initialState: { response: '' },
-    });
     return {
       actions: { setResponseAction },
-      trrack: trrackInst,
+      registry: reg,
     };
   }, []);
+  const trrack = useTrrack({
+    registry,
+    initialState: { response: '' },
+  });
 
   const [responseText, setResponseText] = useState('');
 
-  // Update local state, record in provenance, and pass to reVISit
+  // Update local state and answer; reVISit records provenance automatically.
   const updateAnswer = useCallback((value: string) => {
     setResponseText(value);
     trrack.apply('Set response', actions.setResponseAction(value));
     setAnswer({
       status: value.trim().length > 0,
-      provenanceGraph: trrack.graph.backend,
       answers: { stroopAnswer: value },
     });
   }, [actions, setAnswer, trrack]);

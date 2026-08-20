@@ -6,7 +6,7 @@
     "authors": [
       "The reVISit Team"
     ],
-    "date": "2026-02-23",
+    "date": "2026-06-08",
     "description": "This is a reVISit variation study of JND(Just Noticeable Difference) Scatter Plot experiment.",
     "organizations": [
       "University of Utah",
@@ -15,7 +15,7 @@
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
-    "helpTextPath": "ScatterJND-study/assets/help.md",
+    "helpTextPath": "tutorial/assets/help.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,

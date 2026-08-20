@@ -18,11 +18,30 @@
   margin-bottom: 20px;
 }
 
+/* ResponseBlock wraps each response before rendering the styled card. Place
+ * those wrappers on the demo grid so custom response ids can keep styling the cards. */
+.responseBlock > div {
+  min-width: 0;
+}
+
+.responseBlock > div > .response {
+  box-sizing: border-box;
+  height: 100%;
+  min-width: 0;
+}
+
+.responseBlock > div > .response:has(input[type="checkbox"], input[type="radio"]) {
+  overflow-x: auto;
+}
+
 /* Positions the title across the full width at the top */
-#layout-title {
+.responseBlock > div:has(> #layout-title) {
   grid-row: 1;
   /* Span across all 6 columns */
   grid-column: span 6;
+}
+
+#layout-title {
   border: none;
   box-shadow: none;
   padding: 0;
@@ -38,7 +57,7 @@
 }
 
 /* Positions the color response in the first 2 columns of row 2 */
-#layout-color {
+.responseBlock > div:has(> #layout-color) {
   /* Places the color response in row 2 */
   grid-row: 2;
   /* Spans across 2 columns */
@@ -46,31 +65,31 @@
 }
 
 /* Positions the website response in columns 3-4 of row 2 */
-#layout-website {
+.responseBlock > div:has(> #layout-website) {
   grid-row: 2;
   grid-column: span 2;
 }
 
 /* Positions the web enjoyment response in columns 5-6 of row 2 */
-#layout-web-enjoyment {
+.responseBlock > div:has(> #layout-web-enjoyment) {
   grid-row: 2;
   grid-column: span 2;
 }
 
 /* Positions the website design response in the first 3 columns of row 3 */
-#layout-website-design {
+.responseBlock > div:has(> #layout-website-design) {
   grid-row: 3;
   grid-column: span 3;
 }
 
 /* Positions the preference response in columns 4-6 of row 3 */
-#layout-preference {
+.responseBlock > div:has(> #layout-preference) {
   grid-row: 3;
   grid-column: span 3;
 }
 
 /* Positions the opinion response across the full width in row 4 */
-#layout-opinion {
+.responseBlock > div:has(> #layout-opinion) {
   grid-row: 4;
   grid-column: span 6;
 }

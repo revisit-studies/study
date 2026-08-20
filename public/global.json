@@ -8,6 +8,7 @@
     "demo-form-elements",
     "demo-training",
     "demo-html-trrack",
+    "demo-svelte-trrack",
     "demo-react-trrack",
     "demo-screen-recording",
     "demo-image",
@@ -41,6 +42,8 @@
     "library-screen-recording",
     "library-smeq",
     "library-sus",
+    "library-ueq",
+    "library-ueq-s",
     "library-umux",
     "library-umux-lite",
     "library-virtual-chinrest",
@@ -91,6 +94,9 @@
     },
     "demo-html-trrack": {
       "path": "demo-html-trrack/config.json"
+    },
+    "demo-svelte-trrack": {
+      "path": "demo-svelte-trrack/config.json"
     },
     "demo-react-trrack": {
       "path": "demo-react-trrack/config.json"
@@ -187,6 +193,14 @@
     },
     "library-sus": {
       "path": "library-sus/config.json",
+      "test": true
+    },
+    "library-ueq": {
+      "path": "library-ueq/config.json",
+      "test": true
+    },
+    "library-ueq-s": {
+      "path": "library-ueq-s/config.json",
       "test": true
     },
     "library-vlat": {

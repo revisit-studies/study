@@ -1,6 +1,10 @@
 /* eslint-disable no-await-in-loop */
 import { test, expect, Page } from '@playwright/test';
-import { nextClick, waitForStudyEndMessage } from './utils';
+import {
+  nextClick,
+  readStoredComponentTiming,
+  waitForStudyEndMessage,
+} from './utils';
 
 async function answerMatrixRadioRows(page: Page, responseId: string, rowCount: number) {
   for (let row = 0; row < rowCount; row += 1) {
@@ -29,7 +33,7 @@ async function answerMatrixCheckboxRows(
 }
 
 async function advanceToSidebarFormElements(page: Page) {
-  const sidebarAgeInput = page.locator('input[placeholder="Enter your age here, range from 0 - 100"]:visible').first();
+  const sidebarAgeInput = page.locator('input[placeholder="Enter your age here, range from 0 to 100"]:visible').first();
 
   for (let i = 0; i < 3; i += 1) {
     if (await sidebarAgeInput.isVisible().catch(() => false)) {
@@ -40,7 +44,7 @@ async function advanceToSidebarFormElements(page: Page) {
     const canAdvance = await nextButton.isVisible().catch(() => false)
       && await nextButton.isEnabled().catch(() => false);
     if (canAdvance) {
-      await nextClick(page).catch(() => {});
+      await nextClick(page).catch(() => { });
       await page.waitForTimeout(150);
     }
   }
@@ -60,14 +64,16 @@ test('Test questionnaire component with responses and randomizing questions and 
     .getByText('Go to Study')
     .click();
 
+  const shortSidebarReplayPath = new URL(page.url()).pathname;
   await nextClick(page);
 
   // Fill the survey: Form Elements
 
   // Number input
-  const ageInput = page.getByPlaceholder('Enter your age here, range from 0 - 100');
+  const ageInput = page.getByPlaceholder('Enter your age here, range from 0 to 100');
   await expect(ageInput).toBeVisible({ timeout: 10000 });
   await ageInput.fill('120');
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
   await expect(page.getByText('Please enter a value between 0 and 100')).toBeVisible();
   await ageInput.fill('12');
 
@@ -134,8 +140,9 @@ test('Test questionnaire component with responses and randomizing questions and 
   // Custom Response page
   await expect(page.getByText('Custom Response')).toBeVisible();
   const customResponseNextButton = page.getByRole('button', { name: 'Next', exact: true });
-  await expect(customResponseNextButton).toBeDisabled();
+  await expect(customResponseNextButton).toBeEnabled();
   await page.getByRole('button', { name: 'Bar', exact: true }).click();
+  await customResponseNextButton.click();
   await expect(page.getByText('Set confidence to at least 70 to continue.')).toBeVisible();
   await page.getByLabel('Confidence').fill('80');
   await page.getByLabel('Rationale').fill('Useful for comparing categories');
@@ -200,8 +207,14 @@ test('Test questionnaire component with responses and randomizing questions and 
 
   // Number input
   const sidebarAgeInput = await advanceToSidebarFormElements(page);
+  const sidebarReplayPath = new URL(page.url()).pathname;
+  const sidebar = page.locator('.sidebar');
+  await expect(sidebar).toBeVisible();
+  expect(await sidebar.evaluate((element) => getComputedStyle(element).overflowY)).not.toBe('auto');
+
   await sidebarAgeInput.fill('120');
   await sidebarAgeInput.press('Tab');
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
   await expect(page.getByText('Please enter a value between 0 and 100')).toBeVisible();
   await sidebarAgeInput.fill('12');
 
@@ -234,11 +247,50 @@ test('Test questionnaire component with responses and randomizing questions and 
   await page.getByRole('radio', { name: 'Option 1' }).nth(1).click();
 
   // Likert scale
-  await page.getByRole('radio', { name: '6' }).nth(0).click();
+  await page.getByRole('radio', { name: '5' }).nth(0).click();
 
   // Go to the next page
   await nextClick(page);
 
   // Check that the thank you message is displayed
   await waitForStudyEndMessage(page);
+
+  await expect.poll(() => readStoredComponentTiming(page, 'Sidebar Form Elements')).not.toBeNull();
+  const sidebarTiming = await readStoredComponentTiming(page, 'Sidebar Form Elements');
+  if (!sidebarTiming) {
+    throw new Error('Sidebar form timing was not stored');
+  }
+
+  const replaySearch = `participantId=${encodeURIComponent(sidebarTiming.participantId)}&revisitPageId=e2e-sidebar-replay`;
+  await page.goto(`${sidebarReplayPath}?${replaySearch}`);
+  await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
+
+  const replaySidebar = page.locator('.sidebar');
+  const replayFooter = page.locator('footer');
+  await expect(replaySidebar).toBeVisible();
+  expect(await replaySidebar.evaluate((element) => getComputedStyle(element).overflowY)).not.toBe('auto');
+  await page.evaluate(() => {
+    window.scrollTo(0, document.documentElement.scrollHeight);
+  });
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+  expect(await replaySidebar.evaluate((element) => element.scrollTop)).toBe(0);
+
+  const replaySidebarBox = await replaySidebar.boundingBox();
+  const replayFooterBox = await replayFooter.boundingBox();
+  expect(replaySidebarBox).not.toBeNull();
+  expect(replayFooterBox).not.toBeNull();
+  expect((replaySidebarBox?.y ?? 0) + (replaySidebarBox?.height ?? 0))
+    .toBeLessThanOrEqual((replayFooterBox?.y ?? 0) + 1);
+
+  await page.goto(`${shortSidebarReplayPath}?${replaySearch}`);
+  await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
+  const shortSidebar = page.locator('.sidebar');
+  await expect(shortSidebar).toBeVisible();
+  const shortSidebarLayout = await shortSidebar.evaluate((element) => ({
+    alignSelf: getComputedStyle(element).alignSelf,
+    clientHeight: element.clientHeight,
+    scrollHeight: element.scrollHeight,
+  }));
+  expect(shortSidebarLayout.alignSelf).not.toBe('flex-start');
+  expect(shortSidebarLayout.scrollHeight).toBeLessThanOrEqual(shortSidebarLayout.clientHeight);
 });

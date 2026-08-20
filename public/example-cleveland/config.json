@@ -7,7 +7,7 @@
       "The reVISit Team"
     ],
     "date": "2026-02-23",
-    "description": "A demo using dynamic React components as stimuli to replicate a Heer/Bostock perception study (doi:10.1145/1753326.1753357) that extends Cleveland & McGill graphical perception task (doi:10.1080/01621459.1984.10478080), with a consent form, brief training, a post study survey. Data is collected via form elements in validated fields.",
+    "description": "A demo using dynamic React components as stimuli to replicate a Heer/Bostock perception study (doi:10.1145/1753326.1753357) that extends Cleveland & McGill graphical perception task (doi:10.1080/01621459.1984.10478080), with a consent form, brief training, and a post-study survey. Data is collected via form elements in validated fields.",
     "organizations": [
       "University of Utah",
       "WPI"
@@ -442,7 +442,7 @@
       "response": [
         {
           "id": "q1",
-          "prompt": "Which chart type you think is the most difficult",
+          "prompt": "Which chart type do you think is the most difficult?",
           "location": "aboveStimulus",
           "type": "dropdown",
           "placeholder": "Enter your preference",
@@ -464,7 +464,7 @@
         },
         {
           "id": "q3",
-          "prompt": "From scale 1-5 how much do you like this study",
+          "prompt": "On a scale from 1 to 5, how much do you like this study?",
           "location": "aboveStimulus",
           "type": "likert",
           "numItems": 5,

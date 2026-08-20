@@ -16,12 +16,12 @@ export default function dynamic({ answers, currentStep, currentBlock }: JumpFunc
     qid.push(qidx);
     correct.push(cor ? 1 : 0);
   });
-  const [nxtidx, score] = getVLATnextqid(qid, correct);
-  const correctOption = +VLATQuestions.filter((q) => q.originID === nxtidx)[0].trueAnswer;
-
   if (topAnswer.length === 27) {
     return { component: null };
   }
+
+  const [nxtidx, score] = getVLATnextqid(qid, correct);
+  const correctOption = +VLATQuestions.filter((q) => q.originID === nxtidx)[0].trueAnswer;
 
   return {
     component: '$adaptive-vlat.components.VlatTrial',

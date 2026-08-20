@@ -1,0 +1,52 @@
+name: Dependency lockfile drift
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/dependency-lock-drift.yml'
+      - '.npmrc'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'scripts/check-lockfile-drift.mjs'
+      - 'yarn.lock'
+  push:
+    branches:
+      - dev
+      - main
+    paths:
+      - '.github/workflows/dependency-lock-drift.yml'
+      - '.npmrc'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'scripts/check-lockfile-drift.mjs'
+      - 'yarn.lock'
+
+jobs:
+  check:
+    name: Check npm lock matches Yarn lock
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Use the lockfile generator version
+        run: npm install --global npm@11.12.1
+
+      - name: Check npm lockfile metadata
+        run: |
+          cp yarn.lock "$RUNNER_TEMP/yarn.lock"
+          npm install --package-lock-only --ignore-scripts
+          cp "$RUNNER_TEMP/yarn.lock" yarn.lock
+          git diff --exit-code -- package-lock.json
+
+      - name: Check for dependency drift
+        run: node scripts/check-lockfile-drift.mjs
+
+      - name: Verify npm install and build
+        run: |
+          npm ci
+          npm run build

@@ -46,21 +46,29 @@
     },
     "react-component": {
       "type": "react-component",
-      "path": "demo-react-trrack/assets/DemoReactTrrack.tsx",
+      "path": "demo-style/assets/Map.tsx",
       "parameters": {
-        "speed": 100
+        "dataset": "unemployment2020",
+        "valueField": "rate",
+        "legendTitle": "Unemployment Rate (%)",
+        "domain": [
+          0,
+          14
+        ]
       },
       "style": {
-        "width": "900px",
-        "margin": "20px auto",
-        "padding": "20px",
-        "backgroundColor": "#ffe7c7",
-        "borderRadius": "10px"
+        "width": "700px",
+        "margin": "24px auto",
+        "padding": "24px",
+        "backgroundColor": "#f6f9fc",
+        "border": "1px solid #dbe5ef",
+        "borderRadius": "16px",
+        "filter": "drop-shadow(0 12px 24px rgba(15, 23, 42, 0.08))"
       },
       "response": [
         {
           "id": "react-component-style",
-          "prompt": "This is a react component with the following style: <br> `width: 900px` <br> `margin: 20px auto` <br> `padding: 20px`  <br>  `backgroundColor: #ffe7c7` <br> `borderRadius: 10px`",
+          "prompt": "This React map component has the following style: <br> `width: 700px` <br> `margin: 24px auto` <br> `padding: 24px` <br> `backgroundColor: #f6f9fc` <br> `border: 1px solid #dbe5ef` <br> `borderRadius: 16px` <br> `filter: drop-shadow(0 12px 24px rgba(15, 23, 42, 0.08))`",
           "type": "textOnly",
           "location": "aboveStimulus"
         }

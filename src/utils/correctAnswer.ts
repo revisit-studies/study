@@ -100,3 +100,29 @@ export function componentAnswersAreCorrect(
 
   return allCorrect;
 }
+
+export type ComponentAnswerStatus = 'correct' | 'incorrect' | 'unknown';
+
+export function getComponentAnswerStatus(
+  componentAnswer: StoredAnswer | undefined,
+  componentCorrectAnswers: IndividualComponent['correctAnswer'],
+  responses?: Response[],
+): ComponentAnswerStatus | null {
+  if (
+    !componentAnswer
+    || componentAnswer.endTime < 0
+    || Object.keys(componentAnswer.answer).length === 0
+  ) {
+    return null;
+  }
+
+  if (!componentCorrectAnswers?.length) {
+    return 'unknown';
+  }
+
+  return componentAnswersAreCorrect(
+    componentAnswer.answer,
+    componentCorrectAnswers,
+    responses,
+  ) ? 'correct' : 'incorrect';
+}
