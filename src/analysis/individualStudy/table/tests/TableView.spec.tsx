@@ -146,6 +146,7 @@ describe('TableView', () => {
     expect(html).toContain('Answer time');
     expect(html).toContain('Time');
     expect(html).toContain('Uniform');
+    expect(html).toContain('Long gaps in Time mode are marked //');
   });
 
   test('uses sequence ordering and time sizing by default for participant timelines', () => {
