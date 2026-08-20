@@ -68,6 +68,24 @@ describe('Text response validation config parsing', () => {
     },
   );
 
+  test.each(['email', 'phoneNumber', 'usState', 'postalCode', 'url', 'date', 'time'])('accepts the %s built-in validation for short text responses', async (builtInValidation) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], { builtInValidation });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toEqual([]);
+  });
+
+  test('rejects an unsupported built-in validation', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], { builtInValidation: 'currency' });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors.some((error) => error.instancePath.includes('builtInValidation'))).toBe(true);
+  });
+
   test('accepts minimum and maximum lengths for short and long text responses', async () => {
     const studyConfig = makeStudyConfig('contains');
     studyConfig.components.question1.response.forEach((response) => {

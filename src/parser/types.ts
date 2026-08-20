@@ -444,6 +444,19 @@ export interface NumericalResponse extends BaseResponse {
 export type TextValidationType = 'matchesRegex' | 'contains' | 'doesNotContain';
 
 /**
+ * The built-in validation operations available for short text responses.
+ *
+ * - `email`: An email in `local@domain.tld` format, such as `test@revisit.dev`.
+ * - `phoneNumber`: A 10-digit US phone number in `000-000-0000` format.
+ * - `usState`: An uppercase abbreviation for one of the 50 US states, such as `UT` or `TX`.
+ * - `postalCode`: A US ZIP Code in `00000` or `00000-0000` format.
+ * - `url`: An absolute HTTP or HTTPS URL, such as `https://revisit.dev`.
+ * - `date`: A real calendar date in `MM/DD/YYYY` format.
+ * - `time`: A 24-hour time in `HH:mm` format.
+ */
+export type BuiltInValidationType = 'email' | 'phoneNumber' | 'usState' | 'postalCode' | 'url' | 'date' | 'time';
+
+/**
  * A validation rule applied to a short or long text response.
  * Rules are evaluated in array order, and the first failing rule is displayed to the participant.
  *
@@ -484,14 +497,15 @@ export interface TextValidationRule {
  *   "prompt": "Short text example",
  *   "location": "aboveStimulus",
  *   "type": "shortText",
- *   "default": "ReVISit is great",
- *   "placeholder": "Enter your answer here",
+ *   "default": "test@revisit.dev",
+ *   "placeholder": "test@revisit.dev",
+ *   "builtInValidation": "email",
  *   "minLength": 3,
  *   "maxLength": 100,
  *   "textValidation": [
  *     {
- *       "type": "contains",
- *       "value": "ReVISit"
+ *       "type": "doesNotContain",
+ *       "value": "invalid"
  *     }
  *   ]
  * }
@@ -508,6 +522,12 @@ export interface ShortTextResponse extends BaseResponse {
   minLength?: number;
   /** The maximum number of characters accepted in the response. */
   maxLength?: number;
+  /**
+   * Applies one predefined format from BuiltInValidationType to the response value.
+   * For example, use `"email"` for `test@revisit.dev`, `"date"` for `06/24/2009`,
+   * or `"time"` for `14:28`.
+   */
+  builtInValidation?: BuiltInValidationType;
   /** Validation rules applied to the response value in array order. */
   textValidation?: TextValidationRule[];
 }

@@ -1,5 +1,6 @@
 import isEqual from 'lodash.isequal';
 import {
+  BuiltInValidationType,
   CheckboxResponse,
   DropdownResponse,
   LongTextResponse,
@@ -112,6 +113,80 @@ const DEFAULT_TEXT_VALIDATION_MESSAGES: Record<TextValidationRule['type'], strin
   doesNotContain: 'Please enter a value that does not contain the restricted text.',
 };
 
+const US_STATE_ABBREVIATIONS = new Set([
+  'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
+  'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
+  'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
+  'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
+  'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY',
+]);
+
+function isHttpUrl(value: string) {
+  if (value.trim() !== value) {
+    return false;
+  }
+
+  try {
+    const url = new URL(value);
+    return (url.protocol === 'http:' || url.protocol === 'https:') && url.hostname.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+function isDateInMonthDayYearFormat(value: string) {
+  const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!match) {
+    return false;
+  }
+
+  const month = Number(match[1]);
+  const day = Number(match[2]);
+  const year = Number(match[3]);
+  const isLeapYear = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+  const daysInMonth = [31, isLeapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+  return year >= 1
+    && month >= 1
+    && month <= 12
+    && day >= 1
+    && day <= daysInMonth[month - 1];
+}
+
+const BUILT_IN_TEXT_VALIDATIONS: Record<
+BuiltInValidationType,
+{ passes: (value: string) => boolean; message: string }
+> = {
+  email: {
+    passes: (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value),
+    message: 'Please enter a valid email address.',
+  },
+  phoneNumber: {
+    passes: (value) => /^\d{3}-\d{3}-\d{4}$/.test(value),
+    message: 'Please enter a valid phone number in the format 000-000-0000.',
+  },
+  usState: {
+    passes: (value) => US_STATE_ABBREVIATIONS.has(value),
+    message: 'Please enter a valid two-letter US state abbreviation.',
+  },
+  postalCode: {
+    passes: (value) => /^\d{5}(?:-\d{4})?$/.test(value),
+    message: 'Please enter a valid US postal code in the format 00000 or 00000-0000.',
+  },
+  url: {
+    passes: isHttpUrl,
+    message: 'Please enter a valid URL beginning with http:// or https://.',
+  },
+  date: {
+    passes: isDateInMonthDayYearFormat,
+    message: 'Please enter a valid date in MM/DD/YYYY format.',
+  },
+  time: {
+    passes: (value) => /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value),
+    message: 'Please enter a valid time in HH:mm format.',
+  },
+};
+
 function textValidationRulePasses(rule: TextValidationRule, value: string) {
   if (rule.type === 'contains') {
     return value.includes(rule.value);
@@ -140,6 +215,13 @@ export function checkTextResponse(response: ShortTextResponse | LongTextResponse
   }
   if (maxLength !== undefined && value.length > maxLength) {
     return `Please enter at most ${maxLength} characters.`;
+  }
+
+  if (response.type === 'shortText' && response.builtInValidation) {
+    const validation = BUILT_IN_TEXT_VALIDATIONS[response.builtInValidation];
+    if (!validation.passes(value)) {
+      return validation.message;
+    }
   }
 
   const failedRule = response.textValidation?.find((rule) => !textValidationRulePasses(rule, value));

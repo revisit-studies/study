@@ -459,6 +459,196 @@ describe('validateResponse', () => {
     });
   });
 
+  test.each([
+    'test@revisit.dev',
+    'participant@university.edu',
+  ])('accepts a valid email address: %s', (value) => {
+    const response: ShortTextResponse = {
+      id: 'email', prompt: 'Email', type: 'shortText', builtInValidation: 'email',
+    };
+
+    expect(validateResponse(response, value, { email: value }).valid).toBe(true);
+  });
+
+  test.each([
+    'test',
+    'test@revisit',
+    '@revisit.dev',
+    'test@.dev',
+    'test @revisit.dev',
+  ])('rejects an invalid email address: %s', (value) => {
+    const response: ShortTextResponse = {
+      id: 'email', prompt: 'Email', type: 'shortText', builtInValidation: 'email',
+    };
+
+    expect(validateResponse(response, value, { email: value })).toMatchObject({
+      valid: false,
+      message: 'Please enter a valid email address.',
+    });
+  });
+
+  test('accepts a US phone number with two hyphens', () => {
+    const response: ShortTextResponse = {
+      id: 'phone', prompt: 'Phone', type: 'shortText', builtInValidation: 'phoneNumber',
+    };
+    const value = '800-000-0000';
+
+    expect(validateResponse(response, value, { phone: value }).valid).toBe(true);
+  });
+
+  test.each([
+    '8000000000',
+    '800 000 0000',
+    '800-000-000',
+    '+1-800-000-0000',
+  ])('rejects a phone number outside the 000-000-0000 format: %s', (value) => {
+    const response: ShortTextResponse = {
+      id: 'phone', prompt: 'Phone', type: 'shortText', builtInValidation: 'phoneNumber',
+    };
+
+    expect(validateResponse(response, value, { phone: value })).toMatchObject({
+      valid: false,
+      message: 'Please enter a valid phone number in the format 000-000-0000.',
+    });
+  });
+
+  test.each([
+    'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
+    'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
+    'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
+    'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
+    'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY',
+  ])('accepts a valid US state abbreviation: %s', (value) => {
+    const response: ShortTextResponse = {
+      id: 'state', prompt: 'State', type: 'shortText', builtInValidation: 'usState',
+    };
+
+    expect(validateResponse(response, value, { state: value }).valid).toBe(true);
+  });
+
+  test.each(['ZZ', 'tx', 'New York', 'DC'])('rejects an invalid US state abbreviation: %s', (value) => {
+    const response: ShortTextResponse = {
+      id: 'state', prompt: 'State', type: 'shortText', builtInValidation: 'usState',
+    };
+
+    expect(validateResponse(response, value, { state: value })).toMatchObject({
+      valid: false,
+      message: 'Please enter a valid two-letter US state abbreviation.',
+    });
+  });
+
+  test.each(['12345', '12345-6789'])('accepts a valid US postal code: %s', (value) => {
+    const response: ShortTextResponse = {
+      id: 'postal', prompt: 'Postal code', type: 'shortText', builtInValidation: 'postalCode',
+    };
+
+    expect(validateResponse(response, value, { postal: value }).valid).toBe(true);
+  });
+
+  test.each(['1234', '123456789', '12345 6789', 'ABCDE'])('rejects an invalid US postal code: %s', (value) => {
+    const response: ShortTextResponse = {
+      id: 'postal', prompt: 'Postal code', type: 'shortText', builtInValidation: 'postalCode',
+    };
+
+    expect(validateResponse(response, value, { postal: value })).toMatchObject({
+      valid: false,
+      message: 'Please enter a valid US postal code in the format 00000 or 00000-0000.',
+    });
+  });
+
+  test.each([
+    'https://revisit.dev',
+    'http://localhost:8080/study?id=test',
+  ])('accepts a valid HTTP URL: %s', (value) => {
+    const response: ShortTextResponse = {
+      id: 'url', prompt: 'URL', type: 'shortText', builtInValidation: 'url',
+    };
+
+    expect(validateResponse(response, value, { url: value }).valid).toBe(true);
+  });
+
+  test.each([
+    'revisit.dev',
+    'ftp://revisit.dev',
+    'https://',
+    ' https://revisit.dev',
+    'not a url',
+  ])('rejects an invalid HTTP URL: %s', (value) => {
+    const response: ShortTextResponse = {
+      id: 'url', prompt: 'URL', type: 'shortText', builtInValidation: 'url',
+    };
+
+    expect(validateResponse(response, value, { url: value })).toMatchObject({
+      valid: false,
+      message: 'Please enter a valid URL beginning with http:// or https://.',
+    });
+  });
+
+  test.each([
+    '06/24/2009',
+    '02/29/2024',
+    '12/31/2026',
+  ])('accepts a valid MM/DD/YYYY date: %s', (value) => {
+    const response: ShortTextResponse = {
+      id: 'date', prompt: 'Date', type: 'shortText', builtInValidation: 'date',
+    };
+
+    expect(validateResponse(response, value, { date: value }).valid).toBe(true);
+  });
+
+  test.each([
+    '6/24/2009',
+    '02/29/2025',
+    '04/31/2025',
+    '13/01/2025',
+    '00/01/2025',
+    '01/01/0000',
+  ])('rejects an invalid MM/DD/YYYY date: %s', (value) => {
+    const response: ShortTextResponse = {
+      id: 'date', prompt: 'Date', type: 'shortText', builtInValidation: 'date',
+    };
+
+    expect(validateResponse(response, value, { date: value })).toMatchObject({
+      valid: false,
+      message: 'Please enter a valid date in MM/DD/YYYY format.',
+    });
+  });
+
+  test.each(['00:00', '14:28', '23:59'])('accepts a valid HH:mm time: %s', (value) => {
+    const response: ShortTextResponse = {
+      id: 'time', prompt: 'Time', type: 'shortText', builtInValidation: 'time',
+    };
+
+    expect(validateResponse(response, value, { time: value }).valid).toBe(true);
+  });
+
+  test.each(['2:28', '24:00', '14:60', '02:28 PM'])('rejects an invalid HH:mm time: %s', (value) => {
+    const response: ShortTextResponse = {
+      id: 'time', prompt: 'Time', type: 'shortText', builtInValidation: 'time',
+    };
+
+    expect(validateResponse(response, value, { time: value })).toMatchObject({
+      valid: false,
+      message: 'Please enter a valid time in HH:mm format.',
+    });
+  });
+
+  test('applies built-in validation before configured text validation rules', () => {
+    const response: ShortTextResponse = {
+      id: 'email',
+      prompt: 'Email',
+      type: 'shortText',
+      builtInValidation: 'email',
+      textValidation: [{ type: 'doesNotContain', value: 'invalid' }],
+    };
+
+    expect(validateResponse(response, 'not-an-email', { email: 'not-an-email' }).message)
+      .toBe('Please enter a valid email address.');
+    expect(validateResponse(response, 'invalid@revisit.dev', { email: 'invalid@revisit.dev' }).message)
+      .toBe('Please enter a value that does not contain the restricted text.');
+    expect(validateResponse(response, 'test@revisit.dev', { email: 'test@revisit.dev' }).valid).toBe(true);
+  });
+
   test('checkbox and dropdown min/max produce current messages', () => {
     const checkboxResponse: CheckboxResponse = {
       id: 'checkbox', prompt: 'Question', type: 'checkbox', required: true, options: [], minSelections: 2, maxSelections: 3,
