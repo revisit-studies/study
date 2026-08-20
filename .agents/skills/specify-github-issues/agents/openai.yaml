@@ -1,0 +1,4 @@
+interface:
+  display_name: "Specify GitHub Issues"
+  short_description: "Clarify issues, then label specified."
+  default_prompt: "Use $specify-github-issues on issue #123 to draft clarifying questions with recommended defaults, then update the issue after I review the answers."
