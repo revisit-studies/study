@@ -37,6 +37,7 @@ import { ScreenRecordingReplay } from '../components/screenRecording/ScreenRecor
 import { decryptIndex, encryptIndex } from '../utils/encryptDecryptIndex';
 import { useRecordingConfig } from '../store/hooks/useRecordingConfig';
 import { getComponentContainerStyle } from '../utils/componentStyle';
+import { compileTemplate } from '../utils/handlebars';
 import { generateStimulusErrorMessage } from '../components/response/stimulusErrors';
 import { getStimulusProvenanceState, getStimulusShowErrorsFromState } from '../components/response/stimulusProvenance';
 
@@ -280,7 +281,7 @@ export function ComponentController() {
       </Center>
     );
   }
-  const instruction = currentConfig?.instruction || '';
+  const instruction = compileTemplate(currentConfig?.instruction || '', currentConfig?.parameters ?? {});
   const instructionLocation = currentConfig.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar';
   const instructionInSideBar = instructionLocation === 'sidebar';
 

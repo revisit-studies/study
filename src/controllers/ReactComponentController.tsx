@@ -10,6 +10,7 @@ import { useCurrentIdentifier } from '../routes/utils';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import { RevisitProvenanceProvider } from '../store/hooks/useRevisitTrrack';
 import { ErrorBoundary } from './ErrorBoundary';
+import { compileTemplate } from '../utils/handlebars';
 
 const modules = import.meta.glob(
   [
@@ -20,7 +21,8 @@ const modules = import.meta.glob(
 ) as Record<string, ModuleNamespace>;
 
 export function ReactComponentController({ currentConfig, provState, answers }: { currentConfig: ReactComponent; provState?: unknown, answers: ParticipantData['answers'] }) {
-  const reactPath = `../public/${currentConfig.path}`;
+  const templatedPath = compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true });
+  const reactPath = `../public/${templatedPath}`;
   const StimulusComponent = reactPath in modules ? modules[reactPath].default : null;
   const identifier = useCurrentIdentifier();
 

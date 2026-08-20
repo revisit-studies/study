@@ -6,14 +6,20 @@ import { ImageComponent } from '../parser/types';
 import { PREFIX } from '../utils/Prefix';
 import { getStaticAssetByPath } from '../utils/getStaticAsset';
 import { ResourceNotFound } from '../ResourceNotFound';
+import { compileTemplate } from '../utils/handlebars';
 
 export function ImageController({ currentConfig }: { currentConfig: ImageComponent; }) {
+  const templatedPath = useMemo(
+    () => compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true }),
+    [currentConfig.path, currentConfig.parameters],
+  );
+
   const url = useMemo(() => {
-    if (currentConfig.path.startsWith('http')) {
-      return currentConfig.path;
+    if (templatedPath.startsWith('http')) {
+      return templatedPath;
     }
-    return `${PREFIX}${currentConfig.path}`;
-  }, [currentConfig.path]);
+    return `${PREFIX}${templatedPath}`;
+  }, [templatedPath]);
 
   const [loading, setLoading] = useState(true);
   const [assetFound, setAssetFound] = useState(false);

@@ -13,6 +13,7 @@ import { useCurrentIdentifier } from '../routes/utils';
 import { useEvent } from '../store/hooks/useEvent';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import { useManagedTrrack } from '../store/hooks/useRevisitTrrack';
+import { compileTemplate } from '../utils/handlebars';
 
 type Listeners = { [key: string]: (key: string, value: { responseId: string, response: string | number }) => void };
 
@@ -155,7 +156,8 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
 
       let config: VisualizationSpec | undefined;
       if ('path' in currentConfig) {
-        config = await getJsonAssetByPath(currentConfig.path);
+        const templatedPath = compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true });
+        config = await getJsonAssetByPath(templatedPath);
       } else {
         config = currentConfig.config as VisualizationSpec;
       }
