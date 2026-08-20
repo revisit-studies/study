@@ -1709,6 +1709,13 @@
           "description": "The path to the external stylesheet file.",
           "type": "string"
         },
+        "textValidation": {
+          "description": "Validation rules applied to the response value in array order.",
+          "items": {
+            "$ref": "#/definitions/TextValidationRule"
+          },
+          "type": "array"
+        },
         "type": {
           "const": "longText",
           "type": "string"
@@ -3169,6 +3176,13 @@
           "description": "The path to the external stylesheet file.",
           "type": "string"
         },
+        "textValidation": {
+          "description": "Validation rules applied to the response value in array order.",
+          "items": {
+            "$ref": "#/definitions/TextValidationRule"
+          },
+          "type": "array"
+        },
         "type": {
           "const": "shortText",
           "type": "string"
@@ -3574,6 +3588,34 @@
         "type"
       ],
       "type": "object"
+    },
+    "TextValidationRule": {
+      "additionalProperties": false,
+      "description": "A validation rule applied to a short or long text response. Rules are evaluated in array order, and the first failing rule is displayed to the participant.\n\nFor example, the following rules accept a value such as `ReVISit is great`: it must start with `ReVISit`, contain `great`, and not contain `invalid`. See the [MDN regular expression syntax cheat sheet](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet) for help writing regular expression patterns. ```json \"textValidation\": [   {     \"type\": \"matchesRegex\",     \"value\": \"^ReVISit\"   },   {     \"type\": \"contains\",     \"value\": \"great\"   },   {     \"type\": \"doesNotContain\",     \"value\": \"invalid\"   } ] ```",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/TextValidationType",
+          "description": "The operation used to validate the response value."
+        },
+        "value": {
+          "description": "The regular expression pattern or text value used by the validation operation.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "value"
+      ],
+      "type": "object"
+    },
+    "TextValidationType": {
+      "description": "The validation operations available for short and long text responses.",
+      "enum": [
+        "matchesRegex",
+        "contains",
+        "doesNotContain"
+      ],
+      "type": "string"
     },
     "VegaComponent": {
       "anyOf": [

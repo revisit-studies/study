@@ -6,6 +6,7 @@ import {
   NumericalResponse,
   RankingResponse,
   Response,
+  TextValidationRule,
 } from '../../parser/types';
 import { CustomResponseValidate, StoredAnswer } from '../../store/types';
 import { parseStringOptions, parseStringOptionValue } from '../../utils/stringOptions';
@@ -101,6 +102,35 @@ export function checkNumericalResponse(response: NumericalResponse, value: numbe
     return `Please enter a value of ${max} or less`;
   }
   return null;
+}
+
+const DEFAULT_TEXT_VALIDATION_MESSAGES: Record<TextValidationRule['type'], string> = {
+  matchesRegex: 'Please enter a value that matches the required format.',
+  contains: 'Please enter a value containing the required text.',
+  doesNotContain: 'Please enter a value that does not contain the restricted text.',
+};
+
+function textValidationRulePasses(rule: TextValidationRule, value: string) {
+  if (rule.type === 'contains') {
+    return value.includes(rule.value);
+  }
+
+  if (rule.type === 'doesNotContain') {
+    return !value.includes(rule.value);
+  }
+
+  try {
+    return new RegExp(rule.value).test(value);
+  } catch {
+    return false;
+  }
+}
+
+export function checkTextResponse(rules: TextValidationRule[] | undefined, value: string) {
+  const failedRule = rules?.find((rule) => !textValidationRulePasses(rule, value));
+  return failedRule
+    ? DEFAULT_TEXT_VALIDATION_MESSAGES[failedRule.type]
+    : null;
 }
 
 // Instance keys (`instance-<index>-<optionValue>`) never collide with option values; legacy keys still parse.
@@ -395,6 +425,13 @@ export function validateResponse(
     const numericalError = checkNumericalResponse(response, value as unknown as number);
     return numericalError
       ? createValidationResult(response, 'invalid', { message: numericalError })
+      : createValidationResult(response, 'none');
+  }
+
+  if (response.type === 'shortText' || response.type === 'longText') {
+    const textError = checkTextResponse(response.textValidation, value.toString());
+    return textError
+      ? createValidationResult(response, 'invalid', { message: textError })
       : createValidationResult(response, 'none');
   }
 

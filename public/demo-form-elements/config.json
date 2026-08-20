@@ -303,6 +303,56 @@
         }
       ]
     },
+    "Text Validation": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "text-validation-title",
+          "type": "textOnly",
+          "prompt": "# Text Validation\n\nThis page demonstrates validation rules for short and long text responses. Enter a value that satisfies each instruction, then continue to see how the rules are validated. For help writing regular expression patterns, see the [MDN regular expression syntax cheat sheet](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet).",
+          "restartEnumeration": true
+        },
+        {
+          "id": "text-validation-regex",
+          "type": "shortText",
+          "prompt": "Enter a code with three uppercase letters, a hyphen, and three digits.",
+          "secondaryText": "For example: ABC-123. This response uses matchesRegex with the pattern ^[A-Z]{3}-\\d{3}$.",
+          "placeholder": "ABC-123",
+          "textValidation": [
+            {
+              "type": "matchesRegex",
+              "value": "^[A-Z]{3}-\\d{3}$"
+            }
+          ]
+        },
+        {
+          "id": "text-validation-contains",
+          "type": "shortText",
+          "prompt": "Enter a short response that contains the exact text “ReVISit”.",
+          "secondaryText": "The contains validation is case-sensitive.",
+          "placeholder": "I use ReVISit for...",
+          "textValidation": [
+            {
+              "type": "contains",
+              "value": "ReVISit"
+            }
+          ]
+        },
+        {
+          "id": "text-validation-does-not-contain",
+          "type": "longText",
+          "prompt": "Enter a sentence that does not contain the exact lowercase text “invalid”.",
+          "secondaryText": "This long text response uses doesNotContain and is case-sensitive.",
+          "placeholder": "Describe a valid response...",
+          "textValidation": [
+            {
+              "type": "doesNotContain",
+              "value": "invalid"
+            }
+          ]
+        }
+      ]
+    },
     "Default Values": {
       "type": "questionnaire",
       "response": [
@@ -995,6 +1045,7 @@
     "components": [
       "Introduction",
       "Form Elements",
+      "Text Validation",
       "Default Values",
       "Custom Response",
       "Randomizing Options",

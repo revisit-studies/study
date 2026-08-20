@@ -440,6 +440,41 @@ export interface NumericalResponse extends BaseResponse {
   max?: number;
 }
 
+/** The validation operations available for short and long text responses. */
+export type TextValidationType = 'matchesRegex' | 'contains' | 'doesNotContain';
+
+/**
+ * A validation rule applied to a short or long text response.
+ * Rules are evaluated in array order, and the first failing rule is displayed to the participant.
+ *
+ * For example, the following rules accept a value such as `ReVISit is great`: it must start with
+ * `ReVISit`, contain `great`, and not contain `invalid`.
+ * See the [MDN regular expression syntax cheat sheet](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet)
+ * for help writing regular expression patterns.
+ * ```json
+ * "textValidation": [
+ *   {
+ *     "type": "matchesRegex",
+ *     "value": "^ReVISit"
+ *   },
+ *   {
+ *     "type": "contains",
+ *     "value": "great"
+ *   },
+ *   {
+ *     "type": "doesNotContain",
+ *     "value": "invalid"
+ *   }
+ * ]
+ * ```
+ */
+export interface TextValidationRule {
+  /** The operation used to validate the response value. */
+  type: TextValidationType;
+  /** The regular expression pattern or text value used by the validation operation. */
+  value: string;
+}
+
 /**
  * The ShortTextResponse interface is used to define the properties of a short text response.
  * ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder.
@@ -461,6 +496,8 @@ export interface ShortTextResponse extends BaseResponse {
   placeholder?: string;
   /** The default value of the response. Specify a string such as `"Jane Doe"`. */
   default?: string;
+  /** Validation rules applied to the response value in array order. */
+  textValidation?: TextValidationRule[];
 }
 
 /**
@@ -484,6 +521,8 @@ export interface LongTextResponse extends BaseResponse {
   placeholder?: string;
   /** The default value of the response. Specify a string such as `"I enjoyed this study because..."`. */
   default?: string;
+  /** Validation rules applied to the response value in array order. */
+  textValidation?: TextValidationRule[];
 }
 
 /**

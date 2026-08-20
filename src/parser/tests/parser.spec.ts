@@ -15,6 +15,66 @@ function mockFetchText(body: string) {
   return { text: () => Promise.resolve(body) } as Response;
 }
 
+describe('Text response validation config parsing', () => {
+  function makeStudyConfig(validationType: string) {
+    return {
+      $schema: '',
+      studyMetadata: {
+        title: 'Text Validation Test',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2026-08-20',
+        description: 'Ensures text validation rules are accepted.',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: '',
+        logoPath: '',
+        withProgressBar: true,
+        withSidebar: false,
+      },
+      components: {
+        question1: {
+          type: 'questionnaire',
+          response: [
+            {
+              id: 'short',
+              prompt: 'Short response',
+              type: 'shortText',
+              textValidation: [{ type: validationType, value: 'ReVISit' }],
+            },
+            {
+              id: 'long',
+              prompt: 'Long response',
+              type: 'longText',
+              textValidation: [{ type: validationType, value: 'ReVISit' }],
+            },
+          ],
+        },
+      },
+      sequence: {
+        order: 'fixed',
+        components: ['question1'],
+      },
+    };
+  }
+
+  test.each(['matchesRegex', 'contains', 'doesNotContain'])(
+    'accepts the %s validation type for short and long text responses',
+    async (validationType) => {
+      const result = await parseStudyConfig(JSON.stringify(makeStudyConfig(validationType)));
+
+      expect(result.errors).toEqual([]);
+    },
+  );
+
+  test('rejects an unsupported text validation type', async () => {
+    const result = await parseStudyConfig(JSON.stringify(makeStudyConfig('startsWith')));
+
+    expect(result.errors.some((error) => error.instancePath.includes('textValidation'))).toBe(true);
+  });
+});
+
 describe('Component auto-advance config parsing', () => {
   test('accepts component-level auto-advance timeout options on a base component', async () => {
     const studyConfig = {

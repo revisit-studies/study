@@ -3,7 +3,8 @@ import {
   afterEach, beforeEach, describe, expect, it, test,
 } from 'vitest';
 import type {
-  CheckboxResponse, CustomResponse, DropdownResponse, MatrixResponse, NumericalResponse, Response,
+  CheckboxResponse, CustomResponse, DropdownResponse, LongTextResponse, MatrixResponse,
+  NumericalResponse, Response, ShortTextResponse,
 } from '../../../parser/types';
 import type { CustomResponseValidate } from '../../../store/types';
 import {
@@ -383,6 +384,49 @@ describe('validateResponse', () => {
     expect(validateResponse(response, 10, { q1: 10 }).valid).toBe(true);
     expect(validateResponse(response, 0, { q1: 0 }).message).toBe('Please enter a value between 1 and 10');
     expect(validateResponse(response, 11, { q1: 11 }).message).toBe('Please enter a value between 1 and 10');
+  });
+
+  test.each([
+    { type: 'shortText' as const },
+    { type: 'longText' as const },
+  ])('$type applies text validation rules in order', ({ type }) => {
+    const response: ShortTextResponse | LongTextResponse = {
+      id: 'q1',
+      prompt: 'Question',
+      type,
+      textValidation: [
+        { type: 'contains', value: 'ReVISit' },
+        { type: 'doesNotContain', value: 'invalid' },
+        { type: 'matchesRegex', value: '^ReVISit' },
+      ],
+    };
+
+    expect(validateResponse(response, 'ReVISit response', { q1: 'ReVISit response' }).valid).toBe(true);
+    expect(validateResponse(response, 'response', { q1: 'response' })).toMatchObject({
+      valid: false,
+      issueType: 'invalid',
+      message: 'Please enter a value containing the required text.',
+    });
+    expect(validateResponse(response, 'ReVISit invalid', { q1: 'ReVISit invalid' })).toMatchObject({
+      valid: false,
+      issueType: 'invalid',
+      message: 'Please enter a value that does not contain the restricted text.',
+    });
+  });
+
+  test('invalid regular expressions fail validation without throwing', () => {
+    const response: ShortTextResponse = {
+      id: 'q1',
+      prompt: 'Question',
+      type: 'shortText',
+      textValidation: [{ type: 'matchesRegex', value: '[' }],
+    };
+
+    expect(validateResponse(response, 'value', { q1: 'value' })).toMatchObject({
+      valid: false,
+      issueType: 'invalid',
+      message: 'Please enter a value that matches the required format.',
+    });
   });
 
   test('checkbox and dropdown min/max produce current messages', () => {
