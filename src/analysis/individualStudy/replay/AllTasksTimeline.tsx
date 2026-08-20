@@ -321,10 +321,10 @@ export function AllTasksTimeline({
           return (
             <Tooltip withinPortal key={`${gap.startTime}-${gap.endTime}`} label={label}>
               <g data-testid="timeline-gap-break" aria-label={label}>
-                <rect x={gap.startX} width={gap.endX - gap.startX} y={0} height={maxHeight} fill="var(--mantine-color-orange-1)" />
-                <line x1={gap.startX} x2={gap.startX} y1={0} y2={maxHeight} stroke="var(--mantine-color-orange-7)" strokeDasharray="3 2" />
-                <line x1={gap.endX} x2={gap.endX} y1={0} y2={maxHeight} stroke="var(--mantine-color-orange-7)" strokeDasharray="3 2" />
-                <text x={midpoint} y={maxHeight / 2} textAnchor="middle" dominantBaseline="middle" fontSize={12} fontWeight={700} fill="var(--mantine-color-orange-9)">&#47;&#47;</text>
+                <rect x={gap.startX} width={gap.endX - gap.startX} y={maxHeight - 25} height={25} fill="var(--mantine-color-orange-1)" />
+                <line x1={gap.startX} x2={gap.startX} y1={maxHeight - 25} y2={maxHeight} stroke="var(--mantine-color-orange-7)" strokeDasharray="3 2" />
+                <line x1={gap.endX} x2={gap.endX} y1={maxHeight - 25} y2={maxHeight} stroke="var(--mantine-color-orange-7)" strokeDasharray="3 2" />
+                <text x={midpoint} y={maxHeight - 12.5} textAnchor="middle" dominantBaseline="middle" fontSize={12} fontWeight={700} fill="var(--mantine-color-orange-9)">&#47;&#47;</text>
               </g>
             </Tooltip>
           );
