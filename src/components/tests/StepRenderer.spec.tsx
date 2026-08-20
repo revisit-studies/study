@@ -117,8 +117,10 @@ vi.mock('../interface/DeviceWarning', () => ({
 
 vi.mock('../../store/hooks/useStudyConfig', () => ({
   useStudyConfig: () => ({
+    studyMetadata: { title: 'Test Study' },
     studyRules: undefined,
     uiConfig: {
+      logoPath: 'logo.svg',
       withSidebar: true,
       sidebarWidth: 300,
       showTitleBar: true,
@@ -369,6 +371,8 @@ describe('StepRenderer', () => {
     expect(pdfExportMocks.buildFilename).toHaveBeenCalledWith('intro');
     const [exportRoot, filename] = pdfExportMocks.saveElement.mock.calls[0] as [HTMLElement, string];
     expect(exportRoot.hasAttribute('data-pdf-export-root')).toBe(true);
+    expect(exportRoot.querySelector('[data-pdf-export-header]')?.textContent).toContain('Test Study');
+    expect(exportRoot.querySelector('[data-pdf-export-header]')?.textContent).toContain('intro');
     expect(filename).toBe('intro_2026-08-20T14-37-09.pdf');
     expect(pdfExportMocks.hideNotification).toHaveBeenCalledWith('notification-id');
     expect(pdfExportMocks.showNotification).toHaveBeenCalledWith(expect.objectContaining({ title: 'PDF exported' }));

@@ -35,6 +35,7 @@ import {
 } from '../utils/pdfExport';
 import { hideNotification, showNotification } from '../utils/notifications';
 import { PdfExportMenuItem } from './interface/PdfExportMenuItem';
+import { PREFIX } from '../utils/Prefix';
 
 const STUDY_BROWSER_WIDTH = 360;
 
@@ -306,8 +307,38 @@ export function StepRenderer() {
               data-pdf-export-root
               direction="row"
               gap="xs"
-              style={{ width: '100%', maxWidth: rowMaxWidth }}
+              style={{
+                alignItems: 'stretch', width: '100%', maxWidth: rowMaxWidth,
+              }}
             >
+              <header
+                data-pdf-export-header
+                style={{
+                  alignItems: 'center',
+                  borderBottom: '1px solid #dee2e6',
+                  display: 'none',
+                  gap: 12,
+                  marginBottom: 20,
+                  paddingBottom: 16,
+                  width: '100%',
+                }}
+              >
+                {studyConfig.uiConfig.logoPath && (
+                  <img
+                    alt="Study logo"
+                    src={`${PREFIX}${studyConfig.uiConfig.logoPath}`}
+                    style={{ height: 40, maxWidth: 120, objectFit: 'contain' }}
+                  />
+                )}
+                <div>
+                  <div style={{ fontSize: 20, fontWeight: 700 }}>
+                    {studyConfig.studyMetadata.title}
+                  </div>
+                  <div style={{ color: '#5f6368', fontSize: 12 }}>
+                    {currentComponent}
+                  </div>
+                </div>
+              </header>
               <AppNavBar
                 width={sidebarWidth}
                 top={showTitleBar ? 70 : 0}

@@ -42,19 +42,29 @@ describe('PDF export helpers', () => {
 
   test('prepares the cloned study layout without changing the live element', () => {
     const liveElement = document.createElement('div');
-    liveElement.style.display = 'flex';
+    liveElement.setAttribute('data-pdf-export-root', '');
     liveElement.innerHTML = `
+      <header data-pdf-export-header style="display: none"></header>
       <aside class="sidebar" style="display: block; width: 300px"></aside>
       <main class="main" style="width: calc(100% - 310px)"></main>
     `;
-    const clonedElement = liveElement.cloneNode(true) as HTMLElement;
+    const clonedContainer = document.createElement('div');
+    clonedContainer.append(liveElement.cloneNode(true));
 
-    preparePdfClone(clonedElement);
+    preparePdfClone(clonedContainer, { exportWidth: 920, sidebarWidth: 300 });
 
-    expect(clonedElement.style.display).toBe('block');
-    expect(clonedElement.querySelector<HTMLElement>('.sidebar')?.style.width).toBe('100%');
-    expect(clonedElement.querySelector<HTMLElement>('.main')?.style.width).toBe('100%');
-    expect(liveElement.style.display).toBe('flex');
+    const clonedElement = clonedContainer.querySelector<HTMLElement>('[data-pdf-export-root]');
+    expect(clonedElement?.style.padding).toBe('16px 16px 32px');
+    expect(clonedElement?.style.display).toBe('grid');
+    expect(clonedElement?.style.width).toBe('920px');
+    expect(clonedElement?.style.gridTemplateColumns).toBe('300px minmax(0, 1fr)');
+    expect(clonedElement?.querySelector<HTMLElement>('[data-pdf-export-header]')?.style.display).toBe('flex');
+    expect(clonedElement?.querySelector<HTMLElement>('.sidebar')?.style.width).toBe('300px');
+    expect(clonedElement?.querySelector<HTMLElement>('.main')?.style.gridColumn).toBe('2');
+    expect(clonedElement?.querySelector<HTMLElement>('.main')?.style.width).toBe('100%');
+    expect(clonedElement?.querySelector<HTMLElement>('.main')?.style.paddingBottom).toBe('32px');
+    expect(liveElement.querySelector<HTMLElement>('[data-pdf-export-header]')?.style.display).toBe('none');
+    expect(liveElement.style.padding).toBe('');
   });
 
   test('identifies cross-origin iframes that cannot be captured', () => {

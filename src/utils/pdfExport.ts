@@ -49,29 +49,62 @@ export function getPdfExportUnsupportedReason(element: HTMLElement) {
     : undefined;
 }
 
-export function preparePdfClone(clonedElement: HTMLElement) {
-  clonedElement.style.display = 'block';
-  clonedElement.style.width = '100%';
-  clonedElement.style.maxWidth = 'none';
-  clonedElement.style.backgroundColor = 'white';
+export function preparePdfClone(
+  clonedElement: HTMLElement,
+  layout: { exportWidth?: number; sidebarWidth?: number } = {},
+) {
+  const exportRoot = clonedElement.matches('[data-pdf-export-root]')
+    ? clonedElement
+    : clonedElement.querySelector<HTMLElement>('[data-pdf-export-root]');
 
-  const sidebar = clonedElement.querySelector<HTMLElement>('.sidebar');
-  if (sidebar && sidebar.style.display !== 'none') {
-    sidebar.style.width = '100%';
-    sidebar.style.minWidth = '0';
-    sidebar.style.marginTop = '0';
-    sidebar.style.marginBottom = '16px';
+  if (!exportRoot) {
+    return;
   }
 
-  const main = clonedElement.querySelector<HTMLElement>('.main');
+  exportRoot.style.boxSizing = 'border-box';
+  exportRoot.style.display = 'grid';
+  exportRoot.style.width = layout.exportWidth ? `${layout.exportWidth}px` : '100%';
+  exportRoot.style.maxWidth = 'none';
+  exportRoot.style.padding = '16px 16px 32px';
+  exportRoot.style.backgroundColor = 'white';
+
+  const header = exportRoot.querySelector<HTMLElement>('[data-pdf-export-header]');
+  if (header) {
+    header.style.display = 'flex';
+    header.style.gridColumn = '1 / -1';
+  }
+
+  const sidebar = exportRoot.querySelector<HTMLElement>('.sidebar');
+  if (sidebar && sidebar.style.display !== 'none') {
+    const sidebarWidth = layout.sidebarWidth
+      ? `${layout.sidebarWidth}px`
+      : sidebar.style.width || `${sidebar.getBoundingClientRect().width}px`;
+    exportRoot.style.gridTemplateColumns = `${sidebarWidth} minmax(0, 1fr)`;
+    exportRoot.style.columnGap = '10px';
+    sidebar.style.gridColumn = '1';
+    sidebar.style.marginTop = '0';
+    sidebar.style.marginBottom = '0';
+  } else {
+    exportRoot.style.gridTemplateColumns = 'minmax(0, 1fr)';
+  }
+
+  const main = exportRoot.querySelector<HTMLElement>('.main');
   if (main) {
+    main.style.boxSizing = 'border-box';
+    main.style.gridColumn = sidebar && sidebar.style.display !== 'none' ? '2' : '1';
     main.style.width = '100%';
+    main.style.minWidth = '0';
     main.style.minHeight = 'auto';
-    main.style.padding = '0';
+    main.style.paddingBottom = '32px';
   }
 }
 
 export async function saveElementAsPdf(element: HTMLElement, filename: string) {
+  const exportWidth = element.getBoundingClientRect().width;
+  const sidebar = element.querySelector<HTMLElement>('.sidebar');
+  const sidebarWidth = sidebar && sidebar.style.display !== 'none'
+    ? sidebar.getBoundingClientRect().width
+    : undefined;
   const options = {
     margin: PDF_MARGIN_MM,
     filename,
@@ -85,7 +118,7 @@ export async function saveElementAsPdf(element: HTMLElement, filename: string) {
       backgroundColor: '#ffffff',
       logging: false,
       onclone: (_clonedDocument: Document, clonedElement: HTMLElement) => {
-        preparePdfClone(clonedElement);
+        preparePdfClone(clonedElement, { exportWidth, sidebarWidth });
       },
       scale: 2,
       useCORS: true,
