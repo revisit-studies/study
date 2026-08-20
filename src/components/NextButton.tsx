@@ -135,7 +135,7 @@ export function NextButton({
 
   return (
     <>
-      <Group justify={nextButtonJustify[nextButtonAlignment]} gap="xs" mt="sm" wrap="wrap">
+      <Group data-html2canvas-ignore justify={nextButtonJustify[nextButtonAlignment]} gap="xs" mt="sm" wrap="wrap">
         {config?.previousButton && (
           <PreviousButton
             label={previousButtonText}
@@ -177,7 +177,7 @@ export function NextButton({
                 <Alert mt="md" title="Next button disabled" color="red" icon={<IconAlertTriangle />}>
                   The next button has timed out and is now disabled.
                   <Group justify="right" mt="sm">
-                    <Button onClick={() => goToNextStep(false)} variant="link" color="red">Proceed</Button>
+                    <Button data-html2canvas-ignore onClick={() => goToNextStep(false)} variant="link" color="red">Proceed</Button>
                   </Group>
                 </Alert>
               ))}

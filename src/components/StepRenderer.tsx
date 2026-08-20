@@ -1,12 +1,14 @@
-import { AppShell, Button, Flex } from '@mantine/core';
+import {
+  ActionIcon, AppShell, Button, Flex, Menu,
+} from '@mantine/core';
 import { Outlet } from 'react-router';
 import {
-  useEffect, useMemo, useRef,
+  useCallback, useEffect, useMemo, useRef,
   useState,
 } from 'react';
 import type { CSSProperties } from 'react';
 import debounce from 'lodash.debounce';
-import { IconArrowLeft } from '@tabler/icons-react';
+import { IconArrowLeft, IconDotsVertical } from '@tabler/icons-react';
 import { AppAside } from './interface/AppAside';
 import { AppHeader } from './interface/AppHeader';
 import { AppNavBar } from './interface/AppNavBar';
@@ -28,6 +30,11 @@ import { ReplayContext, useReplay } from '../store/hooks/useReplay';
 import { DeviceWarning } from './interface/DeviceWarning';
 import { handleBeforeUnload, shouldConfirmTabClose } from '../utils/closeTabConfirmation';
 import { useStorageEngine } from '../storage/storageEngineHooks';
+import {
+  buildPdfFilename, getPdfExportUnsupportedReason, saveElementAsPdf,
+} from '../utils/pdfExport';
+import { hideNotification, showNotification } from '../utils/notifications';
+import { PdfExportMenuItem } from './interface/PdfExportMenuItem';
 
 const STUDY_BROWSER_WIDTH = 360;
 
@@ -172,6 +179,63 @@ export function StepRenderer() {
   );
 
   const [hasAudio, setHasAudio] = useState<boolean>();
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const exportInProgressRef = useRef(false);
+  const pdfExportRootRef = useRef<HTMLDivElement>(null);
+
+  const exportCurrentComponent = useCallback(async () => {
+    if (exportInProgressRef.current) {
+      return;
+    }
+
+    const exportRoot = pdfExportRootRef.current;
+    if (!exportRoot) {
+      showNotification({
+        title: 'PDF export failed',
+        message: 'The current study page is not available to export.',
+        color: 'red',
+      });
+      return;
+    }
+
+    const unsupportedReason = getPdfExportUnsupportedReason(exportRoot);
+    if (unsupportedReason) {
+      showNotification({
+        title: 'PDF export unavailable',
+        message: unsupportedReason,
+        color: 'red',
+      });
+      return;
+    }
+
+    exportInProgressRef.current = true;
+    setIsExportingPdf(true);
+    const notificationId = showNotification({
+      title: 'Preparing PDF',
+      message: 'Your download will begin when the PDF is ready.',
+    });
+
+    try {
+      await saveElementAsPdf(exportRoot, buildPdfFilename(currentComponent));
+      hideNotification(notificationId);
+      showNotification({
+        title: 'PDF exported',
+        message: 'The current study page was downloaded.',
+        color: 'green',
+      });
+    } catch (error) {
+      console.error('Failed to export study page as PDF', error);
+      hideNotification(notificationId);
+      showNotification({
+        title: 'PDF export failed',
+        message: 'The current study page could not be exported. Please try again.',
+        color: 'red',
+      });
+    } finally {
+      exportInProgressRef.current = false;
+      setIsExportingPdf(false);
+    }
+  }, [currentComponent]);
 
   useEffect(() => {
     if (!shouldConfirmClose) {
@@ -201,14 +265,49 @@ export function StepRenderer() {
           >
             {asideOpen && <AppAside />}
             {showTitleBar && (
-            <AppHeader developmentModeEnabled={developmentModeEnabled} dataCollectionEnabled={dataCollectionEnabled} />
+            <AppHeader
+              developmentModeEnabled={developmentModeEnabled}
+              dataCollectionEnabled={dataCollectionEnabled}
+              isExportingPdf={isExportingPdf}
+              onExportPdf={exportCurrentComponent}
+            />
+            )}
+            {!showTitleBar && (
+              <Menu position="bottom-end" withinPortal>
+                <Menu.Target>
+                  <ActionIcon
+                    data-html2canvas-ignore
+                    aria-label="Study actions"
+                    size="lg"
+                    variant="subtle"
+                    color="gray"
+                    style={{
+                      position: 'fixed', right: 10, top: 10, zIndex: 100,
+                    }}
+                  >
+                    <IconDotsVertical />
+                  </ActionIcon>
+                </Menu.Target>
+                <Menu.Dropdown>
+                  <PdfExportMenuItem
+                    isExportingPdf={isExportingPdf}
+                    onExportPdf={exportCurrentComponent}
+                  />
+                </Menu.Dropdown>
+              </Menu>
             )}
             <DeviceWarning developmentModeEnabled={developmentModeEnabled} />
             {isScreenRecordingUserRejected && <ScreenRecordingRejection />}
             <HelpModal />
             <AlertModal />
             <ConfigVersionWarningModal />
-            <Flex direction="row" gap="xs" style={{ width: '100%', maxWidth: rowMaxWidth }}>
+            <Flex
+              ref={pdfExportRootRef}
+              data-pdf-export-root
+              direction="row"
+              gap="xs"
+              style={{ width: '100%', maxWidth: rowMaxWidth }}
+            >
               <AppNavBar
                 width={sidebarWidth}
                 top={showTitleBar ? 70 : 0}
@@ -225,15 +324,16 @@ export function StepRenderer() {
                 w={sidebarOpen ? `calc(100% - ${sidebarWidth}px - 10px)` : '100%'}
               >
                 {!showTitleBar && !showStudyBrowser && developmentModeEnabled && (
-                <Button
-                  variant="subtle"
-                  leftSection={<IconArrowLeft size={14} />}
-                  onClick={() => dispatch(toggleStudyBrowser())}
-                  size="xs"
-                  style={{ position: 'fixed', top: '10px', right: '10px' }}
-                >
-                  Study Browser
-                </Button>
+                  <Button
+                    data-html2canvas-ignore
+                    variant="subtle"
+                    leftSection={<IconArrowLeft size={14} />}
+                    onClick={() => dispatch(toggleStudyBrowser())}
+                    size="xs"
+                    style={{ position: 'fixed', top: '10px', right: '50px' }}
+                  >
+                    Study Browser
+                  </Button>
                 )}
                 <Outlet />
               </AppShell.Main>

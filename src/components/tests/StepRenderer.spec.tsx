@@ -1,5 +1,7 @@
-import { ReactNode } from 'react';
-import { render, act, cleanup } from '@testing-library/react';
+import { forwardRef, ReactNode } from 'react';
+import {
+  render, act, cleanup, waitFor,
+} from '@testing-library/react';
 import {
   describe, expect, test, vi,
   beforeEach, afterEach,
@@ -16,6 +18,14 @@ import { StoredAnswer } from '../../store/types';
 const mockDispatch = vi.fn();
 const mockSetAlertModal = vi.fn((payload) => ({ type: 'setAlertModal', payload }));
 const mockSubscribeToParticipantDataWriteErrors = vi.fn();
+const pdfExportMocks = vi.hoisted(() => ({
+  buildFilename: vi.fn((_componentName: string) => 'intro_2026-08-20T14-37-09.pdf'),
+  getUnsupportedReason: vi.fn((_element: HTMLElement): string | undefined => undefined),
+  hideNotification: vi.fn((_notificationId: string) => {}),
+  saveElement: vi.fn((_element: HTMLElement, _filename: string): Promise<void> => Promise.resolve()),
+  showNotification: vi.fn((_notification: unknown) => 'notification-id'),
+}));
+let mockShowTitleBar = true;
 let mockStorageEngine: Pick<LocalStorageEngine, 'subscribeToParticipantDataWriteErrors'> = {
   subscribeToParticipantDataWriteErrors: mockSubscribeToParticipantDataWriteErrors,
 };
@@ -60,7 +70,21 @@ vi.mock('../interface/AppAside', () => ({
 }));
 
 vi.mock('../interface/AppHeader', () => ({
-  AppHeader: () => <div data-testid="app-header" />,
+  AppHeader: ({
+    isExportingPdf,
+    onExportPdf,
+  }: {
+    isExportingPdf?: boolean;
+    onExportPdf?: () => Promise<void> | void;
+  }) => (
+    <button
+      type="button"
+      disabled={isExportingPdf}
+      onClick={() => { onExportPdf?.(); }}
+    >
+      Export PDF
+    </button>
+  ),
 }));
 
 vi.mock('../interface/AppNavBar', () => ({
@@ -165,7 +189,7 @@ vi.mock('../../utils/handleComponentInheritance', () => ({
   studyComponentToIndividualComponent: vi.fn(() => ({
     withSidebar: true,
     sidebarWidth: 300,
-    showTitleBar: true,
+    showTitleBar: mockShowTitleBar,
     windowEventDebounceTime: 100,
   })),
 }));
@@ -179,11 +203,27 @@ vi.mock('../../utils/closeTabConfirmation', () => ({
   shouldConfirmTabClose: vi.fn(() => false),
 }));
 
+vi.mock('../../utils/pdfExport', () => ({
+  buildPdfFilename: (componentName: string) => pdfExportMocks.buildFilename(componentName),
+  getPdfExportUnsupportedReason: (element: HTMLElement) => pdfExportMocks.getUnsupportedReason(element),
+  saveElementAsPdf: (element: HTMLElement, filename: string) => pdfExportMocks.saveElement(element, filename),
+}));
+
+vi.mock('../../utils/notifications', () => ({
+  hideNotification: (notificationId: string) => pdfExportMocks.hideNotification(notificationId),
+  showNotification: (notification: unknown) => pdfExportMocks.showNotification(notification),
+}));
+
 vi.mock('react-router', () => ({
   Outlet: () => <div data-testid="outlet" />,
 }));
 
 vi.mock('@mantine/core', () => ({
+  ActionIcon: ({
+    'aria-label': ariaLabel, children,
+  }: { 'aria-label'?: string; children: ReactNode }) => (
+    <button type="button" aria-label={ariaLabel}>{children}</button>
+  ),
   AppShell: Object.assign(
     ({ children }: { children: ReactNode }) => <div data-testid="app-shell">{children}</div>,
     {
@@ -195,11 +235,27 @@ vi.mock('@mantine/core', () => ({
     },
   ),
   Button: ({ children }: { children: ReactNode }) => <button type="button">{children}</button>,
-  Flex: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Flex: forwardRef<HTMLDivElement, { children: ReactNode }>(function Flex({ children }, ref) { // eslint-disable-line prefer-arrow-callback
+    return <div ref={ref} data-pdf-export-root>{children}</div>;
+  }),
+  Menu: Object.assign(
+    ({ children }: { children: ReactNode }) => <div>{children}</div>,
+    {
+      Target: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+      Dropdown: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+      Item: ({
+        children, disabled, onClick,
+      }: { children: ReactNode; disabled?: boolean; onClick?: () => void }) => (
+        <button type="button" disabled={disabled} onClick={onClick}>{children}</button>
+      ),
+    },
+  ),
 }));
 
 vi.mock('@tabler/icons-react', () => ({
   IconArrowLeft: () => null,
+  IconDotsVertical: () => null,
+  IconFileTypePdf: () => null,
 }));
 
 vi.mock('lodash.debounce', () => ({
@@ -213,6 +269,12 @@ describe('StepRenderer', () => {
     mockDispatch.mockClear();
     mockSetAlertModal.mockClear();
     mockSubscribeToParticipantDataWriteErrors.mockReset();
+    pdfExportMocks.buildFilename.mockClear();
+    pdfExportMocks.getUnsupportedReason.mockReset().mockReturnValue(undefined);
+    pdfExportMocks.hideNotification.mockClear();
+    pdfExportMocks.saveElement.mockReset().mockResolvedValue(undefined);
+    pdfExportMocks.showNotification.mockClear();
+    mockShowTitleBar = true;
     mockStorageEngine = {
       subscribeToParticipantDataWriteErrors: mockSubscribeToParticipantDataWriteErrors,
     };
@@ -296,6 +358,64 @@ describe('StepRenderer', () => {
   test('renders outlet (study content area)', async () => {
     const { getAllByTestId } = await act(async () => render(<StepRenderer />));
     expect(getAllByTestId('outlet').length).toBeGreaterThan(0);
+  });
+
+  test('exports the current study content', async () => {
+    const { getByRole } = await act(async () => render(<StepRenderer />));
+
+    getByRole('button', { name: 'Export PDF' }).click();
+
+    await waitFor(() => expect(pdfExportMocks.saveElement).toHaveBeenCalledTimes(1));
+    expect(pdfExportMocks.buildFilename).toHaveBeenCalledWith('intro');
+    const [exportRoot, filename] = pdfExportMocks.saveElement.mock.calls[0] as [HTMLElement, string];
+    expect(exportRoot.hasAttribute('data-pdf-export-root')).toBe(true);
+    expect(filename).toBe('intro_2026-08-20T14-37-09.pdf');
+    expect(pdfExportMocks.hideNotification).toHaveBeenCalledWith('notification-id');
+    expect(pdfExportMocks.showNotification).toHaveBeenCalledWith(expect.objectContaining({ title: 'PDF exported' }));
+  });
+
+  test('offers PDF export when the title bar is hidden', async () => {
+    mockShowTitleBar = false;
+    const { getByRole, queryByRole } = await act(async () => render(<StepRenderer />));
+
+    expect(getByRole('button', { name: 'Study actions' })).toBeDefined();
+    expect(queryByRole('button', { name: 'Export PDF' })).toBeNull();
+    getByRole('button', { name: 'Export page as PDF' }).click();
+
+    await waitFor(() => expect(pdfExportMocks.saveElement).toHaveBeenCalledTimes(1));
+  });
+
+  test('reports that pages containing external websites cannot be exported', async () => {
+    pdfExportMocks.getUnsupportedReason.mockReturnValue(
+      'Pages containing external websites cannot currently be exported to PDF.',
+    );
+    const { getByRole } = await act(async () => render(<StepRenderer />));
+
+    getByRole('button', { name: 'Export PDF' }).click();
+
+    expect(pdfExportMocks.saveElement).not.toHaveBeenCalled();
+    expect(pdfExportMocks.showNotification).toHaveBeenCalledWith({
+      title: 'PDF export unavailable',
+      message: 'Pages containing external websites cannot currently be exported to PDF.',
+      color: 'red',
+    });
+  });
+
+  test('reports a PDF generation failure and allows retrying', async () => {
+    pdfExportMocks.saveElement
+      .mockRejectedValueOnce(new Error('canvas failed'))
+      .mockResolvedValueOnce(undefined);
+    const { getByRole } = await act(async () => render(<StepRenderer />));
+    const exportButton = getByRole('button', { name: 'Export PDF' });
+
+    exportButton.click();
+    await waitFor(() => expect(pdfExportMocks.showNotification).toHaveBeenCalledWith(expect.objectContaining({
+      title: 'PDF export failed',
+      color: 'red',
+    })));
+    exportButton.click();
+
+    await waitFor(() => expect(pdfExportMocks.saveElement).toHaveBeenCalledTimes(2));
   });
 
   test('window event listeners fire debounced callbacks', async () => {
