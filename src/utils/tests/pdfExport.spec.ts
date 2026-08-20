@@ -87,6 +87,7 @@ describe('PDF export helpers', () => {
     expect(clonedElement?.querySelector<HTMLElement>('.sidebar')?.style.width).toBe('300px');
     expect(clonedElement?.querySelector<HTMLElement>('.main')?.style.gridColumn).toBe('2');
     expect(clonedElement?.querySelector<HTMLElement>('.main')?.style.width).toBe('100%');
+    expect(clonedElement?.querySelector<HTMLElement>('.main')?.style.paddingInline).toBe('16px');
     expect(clonedElement?.querySelector<HTMLElement>('.main')?.style.paddingBottom).toBe('32px');
     expect(liveElement.querySelector<HTMLElement>('[data-pdf-export-header]')?.style.display).toBe('none');
     expect(liveElement.style.padding).toBe('');
@@ -111,6 +112,7 @@ describe('PDF export helpers', () => {
     html2PdfMocks.from.mockClear();
     html2PdfMocks.save.mockReset().mockResolvedValue(undefined);
     const element = document.createElement('main');
+    vi.spyOn(element, 'getBoundingClientRect').mockReturnValue({ width: 2400 } as DOMRect);
 
     await saveElementAsPdf(element, 'introduction_2026-08-20T14-37-09.pdf');
 
@@ -122,7 +124,16 @@ describe('PDF export helpers', () => {
       pagebreak: expect.objectContaining({
         avoid: expect.arrayContaining(['[data-question-id]']),
       }),
+      html2canvas: expect.objectContaining({ width: 920, windowWidth: 920 }),
       jsPDF: expect.objectContaining({ format: 'a4', orientation: 'portrait' }),
     }));
+
+    const options = html2PdfMocks.set.mock.calls[0][0] as {
+      html2canvas: { onclone: (document: Document, element: HTMLElement) => void };
+    };
+    const clonedElement = document.createElement('main');
+    clonedElement.setAttribute('data-pdf-export-root', '');
+    options.html2canvas.onclone(document, clonedElement);
+    expect(clonedElement.style.width).toBe('920px');
   });
 });

@@ -1,6 +1,7 @@
 import html2pdf from 'html2pdf.js';
 
 const PDF_MARGIN_MM = 10;
+const PDF_MAX_WIDTH_PX = 920;
 
 function padDatePart(value: number) {
   return `${value}`.padStart(2, '0');
@@ -103,12 +104,13 @@ export function preparePdfClone(
     main.style.width = '100%';
     main.style.minWidth = '0';
     main.style.minHeight = 'auto';
+    main.style.paddingInline = '16px';
     main.style.paddingBottom = '32px';
   }
 }
 
 export async function saveElementAsPdf(element: HTMLElement, filename: string) {
-  const exportWidth = element.getBoundingClientRect().width;
+  const exportWidth = Math.min(element.getBoundingClientRect().width, PDF_MAX_WIDTH_PX);
   const sidebar = element.querySelector<HTMLElement>('.sidebar');
   const sidebarWidth = sidebar && sidebar.style.display !== 'none'
     ? sidebar.getBoundingClientRect().width
@@ -130,6 +132,8 @@ export async function saveElementAsPdf(element: HTMLElement, filename: string) {
       },
       scale: 2,
       useCORS: true,
+      width: exportWidth,
+      windowWidth: exportWidth,
     },
     jsPDF: {
       format: 'a4',

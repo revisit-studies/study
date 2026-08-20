@@ -393,6 +393,8 @@ describe('StepRenderer', () => {
     await waitFor(() => expect(pdfExportMocks.waitForNextPaint).toHaveBeenCalledTimes(1));
     expect(pdfExportMocks.showNotification).toHaveBeenCalledWith(expect.objectContaining({
       title: 'Preparing PDF',
+      animated: false,
+      autoClose: false,
     }));
     expect(pdfExportMocks.saveElement).not.toHaveBeenCalled();
 

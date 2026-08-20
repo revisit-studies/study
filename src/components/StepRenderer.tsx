@@ -214,6 +214,8 @@ export function StepRenderer() {
     const notificationId = showNotification({
       title: 'Preparing PDF',
       message: 'Your download will begin when the PDF is ready.',
+      animated: false,
+      autoClose: false,
     });
 
     try {

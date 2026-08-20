@@ -93,6 +93,52 @@ test('exports the current study component as a PDF download', async ({ page }) =
   await expect(selectedResponse).toBeChecked();
 });
 
+test('fits wide development layouts inside the PDF capture', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 2400, height: 1200 });
+  await resetClientStudyState(page);
+  await openStudyFromLanding(page, 'Demo Studies', 'HTML as a Stimulus');
+  await expect(page.getByText(/embed HTML elements into the study page/i)).toBeVisible();
+
+  await page.getByRole('button', { name: 'Study actions' }).click();
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('menuitem', { name: 'Export page as PDF' }).click();
+  const download = await downloadPromise;
+  const downloadPath = testInfo.outputPath('wide-layout.pdf');
+  await download.saveAs(downloadPath);
+  const pdf = await readFile(downloadPath);
+  const jpegImages = extractJpegImages(pdf);
+  const largestJpeg = jpegImages.sort((left, right) => right.byteLength - left.byteLength)[0];
+
+  const rightEdgeNonWhiteRatio = await page.evaluate(async (base64) => {
+    const image = new Image();
+    image.src = `data:image/jpeg;base64,${base64}`;
+    await image.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = 200;
+    canvas.height = 200;
+    const context = canvas.getContext('2d');
+    if (!context) {
+      throw new Error('Canvas rendering is unavailable');
+    }
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    let nonWhitePixels = 0;
+    const edgeWidth = 10;
+    for (let y = 0; y < canvas.height; y += 1) {
+      for (let x = canvas.width - edgeWidth; x < canvas.width; x += 1) {
+        const index = (y * canvas.width + x) * 4;
+        if (pixels[index] < 245 || pixels[index + 1] < 245 || pixels[index + 2] < 245) {
+          nonWhitePixels += 1;
+        }
+      }
+    }
+
+    return nonWhitePixels / (edgeWidth * canvas.height);
+  }, Buffer.from(largestJpeg).toString('base64'));
+
+  expect(rightEdgeNonWhiteRatio).toBeLessThan(0.05);
+});
+
 test('exports long components across multiple PDF pages', async ({ page }) => {
   await resetClientStudyState(page);
   await openStudyFromLanding(page, 'Demo Studies', 'Form Elements Demo');
