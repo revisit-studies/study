@@ -281,7 +281,10 @@ export function ComponentController() {
       </Center>
     );
   }
-  const instruction = compileTemplate(currentConfig?.instruction || '', currentConfig?.parameters ?? {});
+  const instruction = useMemo(
+    () => compileTemplate(currentConfig?.instruction || '', currentConfig?.parameters ?? {}),
+    [currentConfig?.instruction, currentConfig?.parameters],
+  );
   const instructionLocation = currentConfig.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar';
   const instructionInSideBar = instructionLocation === 'sidebar';
 
