@@ -49,6 +49,14 @@ export function getPdfExportUnsupportedReason(element: HTMLElement) {
     : undefined;
 }
 
+export function waitForNextPaint() {
+  return new Promise<void>((resolve) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => resolve());
+    });
+  });
+}
+
 export function preparePdfClone(
   clonedElement: HTMLElement,
   layout: { exportWidth?: number; sidebarWidth?: number } = {},

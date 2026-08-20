@@ -24,6 +24,7 @@ const pdfExportMocks = vi.hoisted(() => ({
   hideNotification: vi.fn((_notificationId: string) => {}),
   saveElement: vi.fn((_element: HTMLElement, _filename: string): Promise<void> => Promise.resolve()),
   showNotification: vi.fn((_notification: unknown) => 'notification-id'),
+  waitForNextPaint: vi.fn((): Promise<void> => Promise.resolve()),
 }));
 let mockShowTitleBar = true;
 let mockStorageEngine: Pick<LocalStorageEngine, 'subscribeToParticipantDataWriteErrors'> = {
@@ -209,6 +210,7 @@ vi.mock('../../utils/pdfExport', () => ({
   buildPdfFilename: (componentName: string) => pdfExportMocks.buildFilename(componentName),
   getPdfExportUnsupportedReason: (element: HTMLElement) => pdfExportMocks.getUnsupportedReason(element),
   saveElementAsPdf: (element: HTMLElement, filename: string) => pdfExportMocks.saveElement(element, filename),
+  waitForNextPaint: () => pdfExportMocks.waitForNextPaint(),
 }));
 
 vi.mock('../../utils/notifications', () => ({
@@ -276,6 +278,7 @@ describe('StepRenderer', () => {
     pdfExportMocks.hideNotification.mockClear();
     pdfExportMocks.saveElement.mockReset().mockResolvedValue(undefined);
     pdfExportMocks.showNotification.mockClear();
+    pdfExportMocks.waitForNextPaint.mockReset().mockResolvedValue(undefined);
     mockShowTitleBar = true;
     mockStorageEngine = {
       subscribeToParticipantDataWriteErrors: mockSubscribeToParticipantDataWriteErrors,
@@ -376,6 +379,25 @@ describe('StepRenderer', () => {
     expect(filename).toBe('intro_2026-08-20T14-37-09.pdf');
     expect(pdfExportMocks.hideNotification).toHaveBeenCalledWith('notification-id');
     expect(pdfExportMocks.showNotification).toHaveBeenCalledWith(expect.objectContaining({ title: 'PDF exported' }));
+  });
+
+  test('waits for the preparing notification to paint before generating the PDF', async () => {
+    let finishPaint: (() => void) | undefined;
+    pdfExportMocks.waitForNextPaint.mockImplementationOnce(() => new Promise((resolve) => {
+      finishPaint = resolve;
+    }));
+    const { getByRole } = await act(async () => render(<StepRenderer />));
+
+    getByRole('button', { name: 'Export PDF' }).click();
+
+    await waitFor(() => expect(pdfExportMocks.waitForNextPaint).toHaveBeenCalledTimes(1));
+    expect(pdfExportMocks.showNotification).toHaveBeenCalledWith(expect.objectContaining({
+      title: 'Preparing PDF',
+    }));
+    expect(pdfExportMocks.saveElement).not.toHaveBeenCalled();
+
+    await act(async () => finishPaint?.());
+    await waitFor(() => expect(pdfExportMocks.saveElement).toHaveBeenCalledTimes(1));
   });
 
   test('offers PDF export when the title bar is hidden', async () => {

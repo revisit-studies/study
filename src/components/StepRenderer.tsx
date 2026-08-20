@@ -31,7 +31,7 @@ import { DeviceWarning } from './interface/DeviceWarning';
 import { handleBeforeUnload, shouldConfirmTabClose } from '../utils/closeTabConfirmation';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import {
-  buildPdfFilename, getPdfExportUnsupportedReason, saveElementAsPdf,
+  buildPdfFilename, getPdfExportUnsupportedReason, saveElementAsPdf, waitForNextPaint,
 } from '../utils/pdfExport';
 import { hideNotification, showNotification } from '../utils/notifications';
 import { PdfExportMenuItem } from './interface/PdfExportMenuItem';
@@ -217,6 +217,7 @@ export function StepRenderer() {
     });
 
     try {
+      await waitForNextPaint();
       await saveElementAsPdf(exportRoot, buildPdfFilename(currentComponent));
       hideNotification(notificationId);
       showNotification({

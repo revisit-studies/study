@@ -1,8 +1,9 @@
 import {
-  describe, expect, test, vi,
+  afterEach, describe, expect, test, vi,
 } from 'vitest';
 import {
   buildPdfFilename, getPdfExportUnsupportedReason, preparePdfClone, saveElementAsPdf,
+  waitForNextPaint,
 } from '../pdfExport';
 
 const html2PdfMocks = vi.hoisted(() => ({
@@ -26,6 +27,10 @@ vi.mock('html2pdf.js', () => ({
 }));
 
 describe('PDF export helpers', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   test('builds a filesystem-safe filename with the local export time', () => {
     const exportedAt = new Date(2026, 7, 20, 14, 37, 9);
 
@@ -38,6 +43,26 @@ describe('PDF export helpers', () => {
 
     expect(buildPdfFilename('   /:   ', exportedAt))
       .toBe('study-page_2026-01-02T03-04-05.pdf');
+  });
+
+  test('waits through two animation frames so pending UI can paint', async () => {
+    const callbacks: FrameRequestCallback[] = [];
+    vi.stubGlobal('requestAnimationFrame', vi.fn((callback: FrameRequestCallback) => {
+      callbacks.push(callback);
+      return callbacks.length;
+    }));
+    let resolved = false;
+    const paintPromise = waitForNextPaint().then(() => {
+      resolved = true;
+    });
+
+    callbacks.shift()?.(0);
+    await Promise.resolve();
+    expect(resolved).toBe(false);
+
+    callbacks.shift()?.(16);
+    await paintPromise;
+    expect(resolved).toBe(true);
   });
 
   test('prepares the cloned study layout without changing the live element', () => {
