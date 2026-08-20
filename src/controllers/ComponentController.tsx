@@ -240,6 +240,11 @@ export function ComponentController() {
     }
   }, [answers, currentComponent, currentStep, funcIndex, isAnalysis, modes.developmentModeEnabled, navigate, status, studyId]);
 
+  const instruction = useMemo(
+    () => compileTemplate(currentConfig?.instruction || '', currentConfig?.parameters ?? {}),
+    [currentConfig?.instruction, currentConfig?.parameters],
+  );
+
   // We're not using hooks below here, so we can return early if we're at the end of the study.
   // This avoids issues with the component config being undefined for the end of the study.
   if (currentComponent === 'end') {
@@ -281,10 +286,6 @@ export function ComponentController() {
       </Center>
     );
   }
-  const instruction = useMemo(
-    () => compileTemplate(currentConfig?.instruction || '', currentConfig?.parameters ?? {}),
-    [currentConfig?.instruction, currentConfig?.parameters],
-  );
   const instructionLocation = currentConfig.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar';
   const instructionInSideBar = instructionLocation === 'sidebar';
 

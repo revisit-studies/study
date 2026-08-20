@@ -76,7 +76,8 @@
         "country": "France",
         "continent": "Europe",
         "hintFile": "hint-europe",
-        "funFact": "the Eiffel Tower"
+        "funFact": "the Eiffel Tower",
+        "hintLevel": "direct"
       }
     },
     "quiz-2": {
@@ -86,7 +87,8 @@
         "country": "Germany",
         "continent": "Europe",
         "hintFile": "hint-europe",
-        "funFact": "Oktoberfest"
+        "funFact": "Oktoberfest",
+        "hintLevel": "misleading"
       }
     },
     "quiz-3": {
@@ -96,7 +98,8 @@
         "country": "Japan",
         "continent": "Asia",
         "hintFile": "hint-asia",
-        "funFact": "cherry blossom season"
+        "funFact": "cherry blossom season",
+        "hintLevel": "misleading"
       }
     },
     "quiz-4": {
@@ -106,7 +109,8 @@
         "country": "India",
         "continent": "Asia",
         "hintFile": "hint-asia",
-        "funFact": "its colorful festivals"
+        "funFact": "its colorful festivals",
+        "hintLevel": "obscure"
       }
     },
     "quiz-5": {
@@ -116,7 +120,8 @@
         "country": "Brazil",
         "continent": "Americas",
         "hintFile": "hint-americas",
-        "funFact": "the Amazon rainforest"
+        "funFact": "the Amazon rainforest",
+        "hintLevel": "obscure"
       }
     },
     "quiz-6": {
@@ -126,7 +131,8 @@
         "country": "Canada",
         "continent": "Americas",
         "hintFile": "hint-americas",
-        "funFact": "maple syrup"
+        "funFact": "maple syrup",
+        "hintLevel": "obscure"
       }
     }
   },
