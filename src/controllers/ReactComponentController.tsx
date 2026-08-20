@@ -72,15 +72,15 @@ export function ReactComponentController({ currentConfig, provState, answers }: 
   // validation so the participant isn't stuck on a trial that can never load.
   useEffect(() => {
     if (!StimulusComponent) {
-      console.error(`Stimulus component not found at "${currentConfig.path}". Clearing stimulus validation so the participant is not stuck.`);
+      console.error(`Stimulus component not found at "${templatedPath}". Clearing stimulus validation so the participant is not stuck.`);
       clearStimulusValidation();
     }
-  }, [StimulusComponent, currentConfig.path, clearStimulusValidation]);
+  }, [StimulusComponent, templatedPath, clearStimulusValidation]);
 
   const handleRuntimeError = useCallback((error: unknown) => {
-    console.error(`Stimulus component "${currentConfig.path}" threw at runtime. Clearing stimulus validation so the participant is not stuck.`, error);
+    console.error(`Stimulus component "${templatedPath}" threw at runtime. Clearing stimulus validation so the participant is not stuck.`, error);
     clearStimulusValidation();
-  }, [currentConfig.path, clearStimulusValidation]);
+  }, [templatedPath, clearStimulusValidation]);
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
@@ -103,7 +103,7 @@ export function ReactComponentController({ currentConfig, provState, answers }: 
             </RevisitProvenanceProvider>
           </ErrorBoundary>
         )
-        : <ResourceNotFound path={currentConfig.path} />}
+        : <ResourceNotFound path={templatedPath} />}
     </Suspense>
   );
 }

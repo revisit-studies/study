@@ -37,6 +37,11 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
 
   const identifier = useCurrentIdentifier();
 
+  const templatedPath = useMemo(
+    () => ('path' in currentConfig ? compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true }) : undefined),
+    [currentConfig],
+  );
+
   const { updateProvenance, updateResponseBlockValidation, setReactiveAnswers } = useStoreActions();
   const isAnalysis = useIsAnalysis();
   const [view, setView] = useState<View>();
@@ -156,8 +161,7 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
 
       let config: VisualizationSpec | undefined;
       if ('path' in currentConfig) {
-        const templatedPath = compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true });
-        config = await getJsonAssetByPath(templatedPath);
+        config = await getJsonAssetByPath(templatedPath as string);
       } else {
         config = currentConfig.config as VisualizationSpec;
       }
@@ -170,7 +174,7 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
     if (currentConfig) {
       fetchVega();
     }
-  }, [currentConfig]);
+  }, [currentConfig, templatedPath]);
 
   useEffect(() => {
     if (!view || !provState) {
@@ -207,7 +211,7 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
   useEffect(() => {
     if (isAnalysis) return;
     if (!loading && 'path' in currentConfig && !vegaConfig) {
-      console.error(`Vega spec at "${currentConfig.path}" could not be loaded or parsed. Clearing stimulus validation so the participant is not stuck.`);
+      console.error(`Vega spec at "${templatedPath}" could not be loaded or parsed. Clearing stimulus validation so the participant is not stuck.`);
       storeDispatch(updateResponseBlockValidation({
         location: 'stimulus',
         identifier,
@@ -215,13 +219,13 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
         values: {},
       }));
     }
-  }, [isAnalysis, loading, vegaConfig, currentConfig, identifier, storeDispatch, updateResponseBlockValidation]);
+  }, [isAnalysis, loading, vegaConfig, currentConfig, templatedPath, identifier, storeDispatch, updateResponseBlockValidation]);
 
   if (loading) {
     return <div>Loading...</div>;
   }
   if ('path' in currentConfig && !vegaConfig) {
-    return <ResourceNotFound path={currentConfig.path} />;
+    return <ResourceNotFound path={templatedPath as string} />;
   }
   if (!vegaConfig) {
     return <div>Failed to load vega config</div>;

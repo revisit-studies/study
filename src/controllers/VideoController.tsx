@@ -207,7 +207,7 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
     const identifier = `${currentComponent}_${currentStep}`;
 
     if (!assetFound) {
-      console.error(`Video asset at "${currentConfig.path}" could not be loaded. Clearing stimulus validation so the participant is not stuck.`);
+      console.error(`Video asset at "${templatedPath}" could not be loaded. Clearing stimulus validation so the participant is not stuck.`);
       storeDispatch(
         updateResponseBlockValidation({
           location: 'stimulus',
@@ -231,7 +231,7 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
         }),
       );
     }
-  }, [currentComponent, currentConfig.forceCompletion, currentConfig.path, currentStep, storeDispatch, updateResponseBlockValidation, loading, assetFound, isAnalysis]);
+  }, [currentComponent, currentConfig.forceCompletion, templatedPath, currentStep, storeDispatch, updateResponseBlockValidation, loading, assetFound, isAnalysis]);
 
   // Set the validation to valid if forceCompletion is true and the video is played
   const endedCallback = useCallback(() => {
@@ -264,5 +264,5 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
     )
     : loading
       ? <LoadingOverlay />
-      : <ResourceNotFound path={currentConfig.path} />;
+      : <ResourceNotFound path={templatedPath} />;
 }

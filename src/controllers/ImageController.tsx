@@ -37,5 +37,5 @@ export function ImageController({ currentConfig }: { currentConfig: ImageCompone
 
   return loading || assetFound
     ? <Image mx="auto" src={url} />
-    : <ResourceNotFound path={currentConfig.path} />;
+    : <ResourceNotFound path={templatedPath} />;
 }

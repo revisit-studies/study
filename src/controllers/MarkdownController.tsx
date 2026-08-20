@@ -40,5 +40,5 @@ export function MarkdownController({ currentConfig }: { currentConfig: MarkdownC
 
   return loading || foundAsset
     ? <ReactMarkdownWrapper text={renderedText} />
-    : <ResourceNotFound path={currentConfig.path} />;
+    : <ResourceNotFound path={templatedPath} />;
 }
