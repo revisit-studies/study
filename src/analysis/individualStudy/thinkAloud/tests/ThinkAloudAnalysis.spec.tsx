@@ -454,6 +454,23 @@ describe('ThinkAloudAnalysis (DOM)', () => {
     expect(container.textContent).toContain('No transcripts found');
   });
 
+  test('shows an empty state and participant controls when a stale task selects a participant with no answers', async () => {
+    vi.mocked(useParams).mockReturnValue({ studyId: 'test-study', trialId: 'stale-trial' });
+    vi.mocked(useAsync).mockImplementation((_fn, args) => ({
+      value: args?.length === 2 ? mockParticipant : null,
+      status: 'success',
+      execute: vi.fn(),
+      error: null,
+    }));
+
+    const { getByText, getByTestId } = await act(async () => render(
+      <ThinkAloudAnalysis visibleParticipants={[mockParticipant]} storageEngine={mockStorageEngine} />,
+    ));
+
+    expect(getByText('No components or transcripts to display for this participant')).toBeDefined();
+    expect(getByTestId('think-aloud-footer')).toBeDefined();
+  });
+
   test('renders ThinkAloudFooter', async () => {
     const { getAllByTestId } = await act(async () => render(
       <ThinkAloudAnalysis visibleParticipants={[mockParticipant]} storageEngine={mockStorageEngine} />,
@@ -559,17 +576,21 @@ describe('ThinkAloudFooter', () => {
     expect(mockFooterStorageEngine.getScreenRecording).toHaveBeenCalled();
   });
 
-  test('nextParticipantCallback via prev/next ActionIcons updates search params', async () => {
-    const { getAllByRole } = await act(async () => render(
-      <RealThinkAloudFooter {...footerDefaultProps} visibleParticipants={['p1', 'p2']} />,
+  test('next participant remains usable when there is no current task', async () => {
+    const updatedParams = new URLSearchParams('participantId=p1');
+    mockSetSearchParams.mockImplementation((updater: (params: URLSearchParams) => void) => {
+      updater(updatedParams);
+    });
+    const { getByTitle } = await act(async () => render(
+      <RealThinkAloudFooter {...footerDefaultProps} currentTrial="" visibleParticipants={['p1', 'p2']} />,
     ));
-    // Click all buttons — at least one should be a participant nav button that triggers setSearchParams
-    const buttons = getAllByRole('button');
-    for (const btn of buttons) {
-      act(() => { fireEvent.click(btn); });
-      if (mockSetSearchParams.mock.calls.length > 0) break;
-    }
+
+    const nextParticipantButton = getByTitle('Next Participant').querySelector('button');
+    expect(nextParticipantButton).not.toBeNull();
+    await act(async () => { fireEvent.click(nextParticipantButton!); });
+
     expect(mockSetSearchParams).toHaveBeenCalled();
+    expect(updatedParams.get('participantId')).toBe('p2');
   });
 
   test('renders all participants in select dropdown', async () => {
