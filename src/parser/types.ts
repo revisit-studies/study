@@ -484,8 +484,16 @@ export interface TextValidationRule {
  *   "prompt": "Short text example",
  *   "location": "aboveStimulus",
  *   "type": "shortText",
- *   "default": "Jane Doe",
- *   "placeholder": "Enter your answer here"
+ *   "default": "ReVISit is great",
+ *   "placeholder": "Enter your answer here",
+ *   "minLength": 3,
+ *   "maxLength": 100,
+ *   "textValidation": [
+ *     {
+ *       "type": "contains",
+ *       "value": "ReVISit"
+ *     }
+ *   ]
  * }
  * ```
  *
@@ -496,6 +504,10 @@ export interface ShortTextResponse extends BaseResponse {
   placeholder?: string;
   /** The default value of the response. Specify a string such as `"Jane Doe"`. */
   default?: string;
+  /** The minimum number of characters accepted in the response. */
+  minLength?: number;
+  /** The maximum number of characters accepted in the response. */
+  maxLength?: number;
   /** Validation rules applied to the response value in array order. */
   textValidation?: TextValidationRule[];
 }
@@ -510,7 +522,15 @@ export interface ShortTextResponse extends BaseResponse {
  *   "location": "aboveStimulus",
  *   "type": "longText",
  *   "default": "I enjoyed this study because...",
- *   "placeholder": "Please enter your first name"
+ *   "placeholder": "Please enter your comments",
+ *   "minLength": 20,
+ *   "maxLength": 500,
+ *   "textValidation": [
+ *     {
+ *       "type": "doesNotContain",
+ *       "value": "invalid"
+ *     }
+ *   ]
  * }
  * ```
  *
@@ -521,6 +541,10 @@ export interface LongTextResponse extends BaseResponse {
   placeholder?: string;
   /** The default value of the response. Specify a string such as `"I enjoyed this study because..."`. */
   default?: string;
+  /** The minimum number of characters accepted in the response. */
+  minLength?: number;
+  /** The maximum number of characters accepted in the response. */
+  maxLength?: number;
   /** Validation rules applied to the response value in array order. */
   textValidation?: TextValidationRule[];
 }

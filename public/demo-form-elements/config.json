@@ -350,6 +350,30 @@
               "value": "invalid"
             }
           ]
+        },
+        {
+          "id": "text-length-title",
+          "type": "textOnly",
+          "prompt": "## Minimum and Maximum Length\n\nShort and long text responses can require a minimum number of characters, a maximum number of characters, or both.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "text-length-short",
+          "type": "shortText",
+          "prompt": "Enter between 3 and 10 characters.",
+          "secondaryText": "This short text response uses minLength: 3 and maxLength: 10.",
+          "placeholder": "3–10 characters",
+          "minLength": 3,
+          "maxLength": 10
+        },
+        {
+          "id": "text-length-long",
+          "type": "longText",
+          "prompt": "Enter between 20 and 100 characters.",
+          "secondaryText": "This long text response uses minLength: 20 and maxLength: 100.",
+          "placeholder": "20–100 characters",
+          "minLength": 20,
+          "maxLength": 100
         }
       ]
     },

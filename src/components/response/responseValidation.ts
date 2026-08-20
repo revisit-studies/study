@@ -2,10 +2,12 @@ import isEqual from 'lodash.isequal';
 import {
   CheckboxResponse,
   DropdownResponse,
+  LongTextResponse,
   MatrixResponse,
   NumericalResponse,
   RankingResponse,
   Response,
+  ShortTextResponse,
   TextValidationRule,
 } from '../../parser/types';
 import { CustomResponseValidate, StoredAnswer } from '../../store/types';
@@ -126,8 +128,21 @@ function textValidationRulePasses(rule: TextValidationRule, value: string) {
   }
 }
 
-export function checkTextResponse(rules: TextValidationRule[] | undefined, value: string) {
-  const failedRule = rules?.find((rule) => !textValidationRulePasses(rule, value));
+export function checkTextResponse(response: ShortTextResponse | LongTextResponse, value: string) {
+  const { minLength, maxLength } = response;
+
+  if (minLength !== undefined && maxLength !== undefined
+    && (value.length < minLength || value.length > maxLength)) {
+    return `Please enter between ${minLength} and ${maxLength} characters.`;
+  }
+  if (minLength !== undefined && value.length < minLength) {
+    return `Please enter at least ${minLength} characters.`;
+  }
+  if (maxLength !== undefined && value.length > maxLength) {
+    return `Please enter at most ${maxLength} characters.`;
+  }
+
+  const failedRule = response.textValidation?.find((rule) => !textValidationRulePasses(rule, value));
   return failedRule
     ? DEFAULT_TEXT_VALIDATION_MESSAGES[failedRule.type]
     : null;
@@ -429,7 +444,7 @@ export function validateResponse(
   }
 
   if (response.type === 'shortText' || response.type === 'longText') {
-    const textError = checkTextResponse(response.textValidation, value.toString());
+    const textError = checkTextResponse(response, value.toString());
     return textError
       ? createValidationResult(response, 'invalid', { message: textError })
       : createValidationResult(response, 'none');

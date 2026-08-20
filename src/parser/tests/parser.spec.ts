@@ -68,6 +68,17 @@ describe('Text response validation config parsing', () => {
     },
   );
 
+  test('accepts minimum and maximum lengths for short and long text responses', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    studyConfig.components.question1.response.forEach((response) => {
+      Object.assign(response, { minLength: 3, maxLength: 100 });
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toEqual([]);
+  });
+
   test('rejects an unsupported text validation type', async () => {
     const result = await parseStudyConfig(JSON.stringify(makeStudyConfig('startsWith')));
 

@@ -414,6 +414,36 @@ describe('validateResponse', () => {
     });
   });
 
+  test.each([
+    { type: 'shortText' as const },
+    { type: 'longText' as const },
+  ])('$type enforces inclusive minimum and maximum text lengths', ({ type }) => {
+    const response: ShortTextResponse | LongTextResponse = {
+      id: 'q1',
+      prompt: 'Question',
+      type,
+      minLength: 3,
+      maxLength: 5,
+    };
+
+    expect(validateResponse(response, 'abc', { q1: 'abc' }).valid).toBe(true);
+    expect(validateResponse(response, 'abcde', { q1: 'abcde' }).valid).toBe(true);
+    expect(validateResponse(response, 'ab', { q1: 'ab' }).message).toBe('Please enter between 3 and 5 characters.');
+    expect(validateResponse(response, 'abcdef', { q1: 'abcdef' }).message).toBe('Please enter between 3 and 5 characters.');
+  });
+
+  test('reports minimum-only and maximum-only text length errors', () => {
+    const minimumResponse: ShortTextResponse = {
+      id: 'minimum', prompt: 'Question', type: 'shortText', minLength: 3,
+    };
+    const maximumResponse: LongTextResponse = {
+      id: 'maximum', prompt: 'Question', type: 'longText', maxLength: 5,
+    };
+
+    expect(validateResponse(minimumResponse, 'ab', { minimum: 'ab' }).message).toBe('Please enter at least 3 characters.');
+    expect(validateResponse(maximumResponse, 'abcdef', { maximum: 'abcdef' }).message).toBe('Please enter at most 5 characters.');
+  });
+
   test('invalid regular expressions fail validation without throwing', () => {
     const response: ShortTextResponse = {
       id: 'q1',
