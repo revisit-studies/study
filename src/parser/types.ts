@@ -448,7 +448,7 @@ export type TextValidationType = 'matchesRegex' | 'contains' | 'doesNotContain';
  *
  * - `email`: An email in `local@domain.tld` format, such as `test@revisit.dev`.
  * - `phoneNumber`: A 10-digit US phone number in `000-000-0000` format.
- * - `usState`: An uppercase abbreviation for one of the 50 US states, such as `UT` or `TX`.
+ * - `usState`: The full name or two-letter abbreviation of one of the 50 US states, such as `Utah` or `UT`.
  * - `postalCode`: A US ZIP Code in `00000` or `00000-0000` format.
  * - `url`: An absolute HTTP or HTTPS URL, such as `https://revisit.dev`.
  * - `date`: A real calendar date in `MM/DD/YYYY` format.

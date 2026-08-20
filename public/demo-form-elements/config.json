@@ -400,9 +400,9 @@
         {
           "id": "built-in-validation-us-state",
           "type": "shortText",
-          "prompt": "Enter a two-letter US state abbreviation.",
-          "secondaryText": "For example: UT or TX. This response uses the usState built-in validation.",
-          "placeholder": "UT",
+          "prompt": "Enter a US state name or two-letter abbreviation.",
+          "secondaryText": "For example: Utah or UT. This response uses the usState built-in validation.",
+          "placeholder": "Utah or UT",
           "builtInValidation": "usState"
         },
         {
