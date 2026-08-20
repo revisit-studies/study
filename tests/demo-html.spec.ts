@@ -17,9 +17,13 @@ test('Test website component with previous button', async ({ page }) => {
   await openStudyFromLanding(page, 'Demo Studies', 'HTML as a Stimulus');
 
   await expect(page.getByText(/example study.*embed html elements/i)).toBeVisible();
+  const downloadLink = page.getByRole('link', { name: 'Download stimulus' });
+  await expect(downloadLink).toHaveAttribute('href', '/demo-html/assets/introduction.md');
+  await expect(downloadLink).toHaveAttribute('download', '');
 
   // Click on the next button
   await nextClick(page);
+  await expect(downloadLink).toHaveCount(0);
 
   // Check the page contains the question
   const questionText = await page.getByText('How many bars have a value greater than 1?');

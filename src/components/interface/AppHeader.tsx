@@ -16,6 +16,7 @@ import {
 } from '@mantine/core';
 import {
   IconChartHistogram,
+  IconDownload,
   IconDotsVertical,
   IconMail,
   IconMicrophone,
@@ -275,6 +276,22 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
               >
                 Help
               </Button>
+            )}
+
+            {componentConfig.type === 'markdown' && componentConfig.allowDownload !== false && (
+              <Tooltip label="Download stimulus">
+                <ActionIcon
+                  component="a"
+                  href={`${PREFIX}${componentConfig.path}`}
+                  download
+                  aria-label="Download stimulus"
+                  size="lg"
+                  variant="subtle"
+                  color="gray"
+                >
+                  <IconDownload />
+                </ActionIcon>
+              </Tooltip>
             )}
 
             <Menu

@@ -17,7 +17,9 @@ describe('studyComponentToIndividualComponent', () => {
   });
 
   test('merges the base component with the inherited component', () => {
-    const base: IndividualComponent = { type: 'markdown', path: '/base.md', response: [] };
+    const base: IndividualComponent = {
+      type: 'markdown', path: '/base.md', response: [], allowDownload: false,
+    };
     const inherited: InheritedComponent = { baseComponent: 'base', path: '/override.md' };
     const config = makeStudyConfig({ baseComponents: { base } });
 
@@ -25,6 +27,17 @@ describe('studyComponentToIndividualComponent', () => {
 
     expect(result).toHaveProperty('path', '/override.md');
     expect(result).toHaveProperty('type', 'markdown');
+    expect(result).toHaveProperty('allowDownload', false);
+  });
+
+  test('allows an inherited component to override the Markdown download setting', () => {
+    const base: IndividualComponent = {
+      type: 'markdown', path: '/base.md', response: [], allowDownload: false,
+    };
+    const inherited: InheritedComponent = { baseComponent: 'base', allowDownload: true };
+    const config = makeStudyConfig({ baseComponents: { base } });
+
+    expect(studyComponentToIndividualComponent(inherited, config)).toHaveProperty('allowDownload', true);
   });
 
   test('falls back to the component itself when studyConfig has no baseComponents', () => {

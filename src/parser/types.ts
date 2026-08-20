@@ -1109,6 +1109,8 @@ export interface MarkdownComponent extends BaseIndividualComponent {
   type: 'markdown';
   /** The path to the markdown file. This should be a relative path from the public folder. */
   path: string;
+  /** Controls whether the participant can download the Markdown stimulus. Defaults to true. */
+  allowDownload?: boolean;
 }
 
 /**

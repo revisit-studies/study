@@ -14,6 +14,17 @@ import { getNewParticipant } from '../../../utils/nextParticipant';
 let mockStorageEngineFailedToConnect = false;
 let mockedCurrentComponent = 'componentA';
 let mockIsAnalysis = false;
+let mockedComponentConfig: {
+  withProgressBar: boolean;
+  showTitle: boolean;
+  type: 'markdown' | 'questionnaire';
+  path?: string;
+  allowDownload?: boolean;
+} = {
+  withProgressBar: false,
+  showTitle: true,
+  type: 'questionnaire',
+};
 
 let mockedRecordingContext = {
   isScreenRecording: false,
@@ -45,9 +56,21 @@ const mockStudyConfig = {
 };
 
 vi.mock('@mantine/core', () => ({
-  ActionIcon: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => (
-    <button type="button" onClick={onClick}>{children}</button>
-  ),
+  ActionIcon: ({
+    children, component, href, download, onClick, 'aria-label': ariaLabel,
+  }: {
+    children: ReactNode;
+    component?: string;
+    href?: string;
+    download?: boolean;
+    onClick?: () => void;
+    'aria-label'?: string;
+  }) => {
+    if (component === 'a') {
+      return <a href={href} download={download} aria-label={ariaLabel}>{children}</a>;
+    }
+    return <button type="button" onClick={onClick} aria-label={ariaLabel}>{children}</button>;
+  },
   AppShell: Object.assign(
     ({ children }: { children: ReactNode }) => <div>{children}</div>,
     { Header: ({ children }: { children: ReactNode }) => <header>{children}</header> },
@@ -87,6 +110,7 @@ vi.mock('@mantine/core', () => ({
 
 vi.mock('@tabler/icons-react', () => ({
   IconChartHistogram: () => null,
+  IconDownload: () => null,
   IconDotsVertical: () => null,
   IconMail: () => null,
   IconMicrophone: () => null,
@@ -140,10 +164,7 @@ vi.mock('../RecordingAudioWaveform', () => ({
 }));
 
 vi.mock('../../../utils/handleComponentInheritance', () => ({
-  studyComponentToIndividualComponent: vi.fn(() => ({
-    withProgressBar: false,
-    showTitle: true,
-  })),
+  studyComponentToIndividualComponent: vi.fn(() => mockedComponentConfig),
 }));
 
 vi.mock('../../../store/hooks/useRecording', () => ({
@@ -207,6 +228,11 @@ describe('AppHeader', () => {
     mockStorageEngineFailedToConnect = false;
     mockIsAnalysis = false;
     mockedCurrentComponent = 'componentA';
+    mockedComponentConfig = {
+      withProgressBar: false,
+      showTitle: true,
+      type: 'questionnaire',
+    };
     mockedRecordingContext = {
       isScreenRecording: false,
       isAudioRecording: false,
@@ -259,6 +285,41 @@ describe('AppHeader', () => {
     expect(html).toContain('Demo Mode');
     // Dev mode controls should not appear
     expect(html).not.toContain('Study Browser');
+  });
+
+  test.each([undefined, true])('shows the Markdown download when allowDownload is %s', (allowDownload) => {
+    mockedComponentConfig = {
+      withProgressBar: false,
+      showTitle: true,
+      type: 'markdown',
+      path: 'test-study/assets/stimulus.md',
+      allowDownload,
+    };
+
+    const { container } = render(
+      <AppHeader developmentModeEnabled={false} dataCollectionEnabled />,
+    );
+
+    const downloadLink = container.querySelector('a[aria-label="Download stimulus"]');
+    expect(downloadLink).not.toBeNull();
+    expect(downloadLink?.getAttribute('href')).toBe('/test-study/assets/stimulus.md');
+    expect(downloadLink?.hasAttribute('download')).toBe(true);
+  });
+
+  test('hides the Markdown download when allowDownload is false', () => {
+    mockedComponentConfig = {
+      withProgressBar: false,
+      showTitle: true,
+      type: 'markdown',
+      path: 'test-study/assets/stimulus.md',
+      allowDownload: false,
+    };
+
+    const { container } = render(
+      <AppHeader developmentModeEnabled={false} dataCollectionEnabled />,
+    );
+
+    expect(container.querySelector('a[aria-label="Download stimulus"]')).toBeNull();
   });
 
   // --- Audio/recording state tests from original file ---

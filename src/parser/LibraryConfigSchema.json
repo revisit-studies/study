@@ -32,6 +32,10 @@
       "additionalProperties": {
         "additionalProperties": false,
         "properties": {
+          "allowDownload": {
+            "description": "Controls whether the participant can download the Markdown stimulus. Defaults to true.",
+            "type": "boolean"
+          },
           "allowFailedTraining": {
             "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
             "type": "boolean"
@@ -1188,6 +1192,10 @@
       "additionalProperties": false,
       "description": "An InheritedComponent is a component that inherits properties from a baseComponent. This is used to avoid repeating properties in components. This also means that components in the baseComponents object can be partially defined, while components in the components object can inherit from them and must be fully defined and include all properties (after potentially merging with a base component).",
       "properties": {
+        "allowDownload": {
+          "description": "Controls whether the participant can download the Markdown stimulus. Defaults to true.",
+          "type": "boolean"
+        },
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
           "type": "boolean"
@@ -1733,6 +1741,10 @@
       "additionalProperties": false,
       "description": "The MarkdownComponent interface is used to define the properties of a markdown component. The components can be used to render many different things, such as consent forms, instructions, and debriefs. Additionally, you can use the markdown component to render images, videos, and other media, with supporting text. Markdown components can have responses (e.g. in a consent form), or no responses (e.g. in a help text file). Here's an example with no responses for a simple help text file:\n\n```json {   \"type\": \"markdown\",   \"path\": \"<study-name>/assets/help.md\",   \"response\": [] } ```",
       "properties": {
+        "allowDownload": {
+          "description": "Controls whether the participant can download the Markdown stimulus. Defaults to true.",
+          "type": "boolean"
+        },
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
           "type": "boolean"

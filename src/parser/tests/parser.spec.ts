@@ -15,6 +15,72 @@ function mockFetchText(body: string) {
   return { text: () => Promise.resolve(body) } as Response;
 }
 
+describe('Markdown download config parsing', () => {
+  function makeStudyConfig(allowDownload?: boolean | string) {
+    return {
+      $schema: '',
+      studyMetadata: {
+        title: 'Markdown Download Test',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2026-08-20',
+        description: 'Ensures Markdown downloads can be configured.',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'test@test.com',
+        logoPath: '',
+        withProgressBar: true,
+        withSidebar: true,
+      },
+      components: {
+        instructions: {
+          type: 'markdown',
+          path: 'test-study/assets/instructions.md',
+          response: [],
+          ...(allowDownload === undefined ? {} : { allowDownload }),
+        },
+      },
+      sequence: {
+        order: 'fixed',
+        components: ['instructions'],
+      },
+    };
+  }
+
+  test.each([undefined, true, false])('accepts allowDownload set to %s', async (allowDownload) => {
+    const result = await parseStudyConfig(JSON.stringify(makeStudyConfig(allowDownload)));
+
+    expect(result.errors).toEqual([]);
+  });
+
+  test.each([undefined, true])('accepts inherited allowDownload override set to %s', async (allowDownload) => {
+    const directConfig = makeStudyConfig(false);
+    const studyConfig = {
+      ...directConfig,
+      baseComponents: {
+        markdownInstructions: directConfig.components.instructions,
+      },
+      components: {
+        instructions: {
+          baseComponent: 'markdownInstructions',
+          ...(allowDownload === undefined ? {} : { allowDownload }),
+        },
+      },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toEqual([]);
+  });
+
+  test('rejects a non-boolean allowDownload value', async () => {
+    const result = await parseStudyConfig(JSON.stringify(makeStudyConfig('yes')));
+
+    expect(result.errors.some((error) => error.instancePath?.includes('allowDownload'))).toBe(true);
+  });
+});
+
 describe('Component auto-advance config parsing', () => {
   test('accepts component-level auto-advance timeout options on a base component', async () => {
     const studyConfig = {
