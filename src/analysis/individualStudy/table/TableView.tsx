@@ -322,6 +322,7 @@ export function TableView({
             { value: 'uniform', label: 'Uniform' },
           ]}
         />
+        <Text size="xs" c="dimmed">Long gaps in Time mode are marked //</Text>
         <ParticipantRejectModal selectedParticipants={selectedParticipants} refresh={handleRefresh} />
       </Flex>
     ),

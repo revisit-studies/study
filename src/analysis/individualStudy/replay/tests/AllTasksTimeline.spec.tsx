@@ -314,6 +314,50 @@ describe('AllTasksTimeline', () => {
     expect(html).not.toContain('Browsed away');
   });
 
+  test('marks a large time gap but omits the marker in uniform mode', () => {
+    const participant = makeParticipant({
+      answers: {
+        trial1_0: makeAnswer({ endTime: t0 + 5_000 }),
+        trial2_1: makeAnswer({
+          componentName: 'trial2', trialOrder: '1_0', startTime: t0 + 3_605_000, endTime: t0 + 3_610_000,
+        }),
+      },
+    });
+    const props = {
+      participantData: participant,
+      width: 600,
+      studyId: 'test-study',
+      studyConfig: emptyConfig,
+      maxLength: undefined,
+    };
+
+    const timeHtml = renderToStaticMarkup(<AllTasksTimeline {...props} />);
+    const uniformHtml = renderToStaticMarkup(<AllTasksTimeline {...props} timelineMode="uniform" />);
+
+    expect(timeHtml).toContain('data-testid="timeline-gap-break"');
+    expect(timeHtml).toContain('gap — no component timing recorded');
+    expect(uniformHtml).not.toContain('timeline-gap-break');
+  });
+
+  test('keeps invalid completed timing selectable without drawing a timed bar', () => {
+    const html = renderToStaticMarkup(
+      <AllTasksTimeline
+        participantData={makeParticipant({
+          answers: {
+            invalid_0: makeAnswer({ componentName: 'invalid', startTime: -1, endTime: t0 + 5_000 }),
+          },
+        })}
+        width={600}
+        studyId="test-study"
+        studyConfig={emptyConfig}
+        maxLength={undefined}
+      />,
+    );
+
+    expect(html).toContain('invalid_0');
+    expect(html).toMatch(/fill="lightgray"[^>]*width="0"/);
+  });
+
   test('handles all tracked window event types without error', () => {
     const participant = makeParticipant({
       answers: {

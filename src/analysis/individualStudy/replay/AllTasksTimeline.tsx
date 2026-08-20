@@ -9,7 +9,7 @@ import { useResizeObserver } from '@mantine/hooks';
 import { ParticipantData } from '../../../storage/types';
 import { SingleTaskLabelLines } from './SingleTaskLabelLines';
 import { SingleTask } from './SingleTask';
-import { StudyConfig } from '../../../parser/types';
+import { StoredAnswer, StudyConfig } from '../../../parser/types';
 import { getComponentAnswerStatus } from '../../../utils/correctAnswer';
 import { parseConditionParam } from '../../../utils/handleConditionLogic';
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
@@ -19,9 +19,12 @@ import {
   ReplayTaskOrder,
 } from './taskOrdering';
 import {
+  getGapAwareTimelineLayout,
   getUniformTimelineMetrics,
+  isValidTimelineInterval,
   TimelineMode,
 } from './timelineLayout';
+import { youtubeReadableDuration } from '../../../utils/humanReadableDuration';
 
 const LABEL_GAP = 25;
 const CHARACTER_SIZE = 8;
@@ -29,6 +32,16 @@ const CHARACTER_SIZE = 8;
 const margin = {
   left: 20, top: 20, right: 20, bottom: 20,
 };
+
+function invalidTimelineAnchor(answer: Pick<StoredAnswer, 'startTime' | 'endTime'>, xScale: d3.ScaleLinear<number, number>) {
+  if (Number.isFinite(answer.startTime) && answer.startTime > 0) {
+    return answer.startTime;
+  }
+  if (Number.isFinite(answer.endTime) && answer.endTime > 0) {
+    return answer.endTime;
+  }
+  return xScale.domain()[0];
+}
 
 export function AllTasksTimeline({
   participantData, width, studyId, studyConfig, maxLength, taskOrder = 'sequence', timelineMode = 'time',
@@ -59,25 +72,38 @@ export function AllTasksTimeline({
     }).timelineWidth;
   }, [availableWidth, participantData.answers, timelineMode]);
 
-  const xScale = useMemo(() => {
+  const { xScale, collapsedGaps, completedTimelineEnd } = useMemo(() => {
     if (timelineMode === 'uniform') {
-      return d3.scaleLinear([margin.left, timelineWidth - margin.right]).domain([0, Math.max(Object.entries(participantData.answers || {}).length, 1)]).clamp(true);
+      return {
+        xScale: d3.scaleLinear([margin.left, timelineWidth - margin.right]).domain([0, Math.max(Object.entries(participantData.answers || {}).length, 1)]).clamp(true),
+        collapsedGaps: [],
+        completedTimelineEnd: timelineWidth - margin.right,
+      };
     }
 
-    const allStartTimes = Object.values(participantData.answers || {}).filter((answer) => answer.startTime).map((answer) => [answer.startTime, answer.endTime]).flat();
-
-    const extent = d3.extent(allStartTimes) as [number, number];
-
-    const scale = d3.scaleLinear([margin.left, (timelineWidth * percentComplete - (percentComplete !== 1 ? 0 : margin.right))]).domain([extent[0], maxLength ? extent[0] + maxLength : extent[1]]).clamp(true);
-
-    return scale;
+    const layout = getGapAwareTimelineLayout({
+      answers: participantData.answers || {},
+      rangeStart: margin.left,
+      rangeEnd: timelineWidth * percentComplete - (percentComplete !== 1 ? 0 : margin.right),
+      maxLength,
+    });
+    return { xScale: layout.scale, collapsedGaps: layout.collapsedGaps, completedTimelineEnd: layout.rangeEnd };
   }, [maxLength, participantData.answers, percentComplete, timelineMode, timelineWidth]);
 
+  const renderedTimelineWidth = useMemo(() => {
+    if (timelineMode === 'uniform') {
+      return timelineWidth;
+    }
+    const originalCompletedEnd = timelineWidth * percentComplete - (percentComplete !== 1 ? 0 : margin.right);
+    const incompleteWidth = Math.max(0, timelineWidth - margin.right - originalCompletedEnd);
+    return Math.max(timelineWidth, completedTimelineEnd + incompleteWidth + margin.right);
+  }, [completedTimelineEnd, percentComplete, timelineMode, timelineWidth]);
+
   const incompleteXScale = useMemo(() => {
-    const scale = d3.scaleLinear([timelineWidth * percentComplete, timelineWidth - margin.right]).domain([0, Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0).length]).clamp(true);
+    const scale = d3.scaleLinear([completedTimelineEnd, renderedTimelineWidth - margin.right]).domain([0, Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0).length]).clamp(true);
 
     return scale;
-  }, [participantData.answers, percentComplete, timelineWidth]);
+  }, [completedTimelineEnd, participantData.answers, renderedTimelineWidth]);
 
   const maxHeight = useMemo(() => {
     const incompleteEntries = Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0).sort(compareReplayAnswerEntries);
@@ -93,10 +119,18 @@ export function AllTasksTimeline({
 
       // Check if the previous entry overlaps with the current entry
       const prev = i > 0 ? sortedEntries[i - currentHeight - 1] : null;
-      const prevScale = timelineMode === 'uniform' || (prev && prev[1].startTime) ? xScale : incompleteXScale;
-      const prevStart = prev ? timelineMode === 'uniform' ? entryIndexes.get(prev[0]) ?? 0 : prev[1].startTime ? prev[1].startTime : incompleteEntryIndexes.get(prev[0]) ?? 0 : 0;
+      const prevScale = timelineMode === 'uniform' || (prev && prev[1].startTime !== 0) ? xScale : incompleteXScale;
+      const prevStart = prev ? timelineMode === 'uniform'
+        ? entryIndexes.get(prev[0]) ?? 0
+        : prev[1].startTime === 0
+          ? incompleteEntryIndexes.get(prev[0]) ?? 0
+          : isValidTimelineInterval(prev[1]) ? prev[1].startTime : invalidTimelineAnchor(prev[1], xScale) : 0;
       const scale = timelineMode === 'uniform' || answer.startTime !== 0 ? xScale : incompleteXScale;
-      const scaleStart = timelineMode === 'uniform' ? entryIndexes.get(identifier) ?? 0 : answer.startTime ? answer.startTime : incompleteEntryIndexes.get(identifier) ?? 0;
+      const scaleStart = timelineMode === 'uniform'
+        ? entryIndexes.get(identifier) ?? 0
+        : answer.startTime === 0
+          ? incompleteEntryIndexes.get(identifier) ?? 0
+          : isValidTimelineInterval(answer) ? answer.startTime : invalidTimelineAnchor(answer, xScale);
 
       // If the previous entry overlaps with the current entry , increase the height
       if (prev && prev[0].length * (CHARACTER_SIZE + 1) + prevScale(prevStart) > scale(scaleStart)) {
@@ -134,12 +168,21 @@ export function AllTasksTimeline({
 
       const prev = i > 0 ? combined[i - currentHeight - 1] : null;
 
-      const prevScale = timelineMode === 'uniform' || (prev && prev[1].startTime) ? xScale : incompleteXScale;
-      const prevStart = prev ? timelineMode === 'uniform' ? entryIndexes.get(prev[0]) ?? 0 : prev[1].startTime ? prev[1].startTime : incompleteEntryIndexes.get(prev[0]) ?? 0 : 0;
+      const prevScale = timelineMode === 'uniform' || (prev && prev[1].startTime !== 0) ? xScale : incompleteXScale;
+      const prevStart = prev ? timelineMode === 'uniform'
+        ? entryIndexes.get(prev[0]) ?? 0
+        : prev[1].startTime === 0
+          ? incompleteEntryIndexes.get(prev[0]) ?? 0
+          : isValidTimelineInterval(prev[1]) ? prev[1].startTime : invalidTimelineAnchor(prev[1], xScale) : 0;
       const incompleteEntryIndex = incompleteEntryIndexes.get(identifier) ?? 0;
       const uniformEntryIndex = entryIndexes.get(identifier) ?? 0;
-      const scaleStart = timelineMode === 'uniform' ? uniformEntryIndex : answer.startTime ? answer.startTime : incompleteEntryIndex;
-      const scaleEnd = timelineMode === 'uniform' ? uniformEntryIndex + 1 : answer.endTime > 0 ? answer.endTime : incompleteEntryIndex + 1;
+      const hasValidTiming = isValidTimelineInterval(answer);
+      const scaleStart = timelineMode === 'uniform'
+        ? uniformEntryIndex
+        : answer.startTime === 0 ? incompleteEntryIndex : hasValidTiming ? answer.startTime : invalidTimelineAnchor(answer, xScale);
+      const scaleEnd = timelineMode === 'uniform'
+        ? uniformEntryIndex + 1
+        : answer.startTime === 0 ? incompleteEntryIndex + 1 : hasValidTiming ? answer.endTime : scaleStart;
 
       if (prev && prev[0].length * (CHARACTER_SIZE + 1) + prevScale(prevStart) > scale(scaleStart)) {
         currentHeight += 1;
@@ -240,7 +283,7 @@ export function AllTasksTimeline({
         width: '100%',
         maxWidth: '100%',
         minWidth: 0,
-        overflowX: timelineMode === 'uniform' ? 'auto' : 'visible',
+        overflowX: timelineMode === 'uniform' || renderedTimelineWidth > availableWidth ? 'auto' : 'visible',
         overflowY: 'visible',
       }}
     >
@@ -249,7 +292,7 @@ export function AllTasksTimeline({
         onPointerLeave={() => setHoveredTaskIdentifier(null)}
         onPointerCancel={() => setHoveredTaskIdentifier(null)}
         style={{
-          width: timelineWidth,
+          width: renderedTimelineWidth,
           height: maxHeight,
           display: 'block',
           overflow: 'visible',
@@ -258,6 +301,18 @@ export function AllTasksTimeline({
         {tasks.map((t) => t.line)}
         {tasks.filter((t) => t.identifier !== hoveredTaskIdentifier).map((t) => t.label)}
         {browsedAway}
+        {collapsedGaps.map((gap) => {
+          const label = `${youtubeReadableDuration(gap.duration)} gap — no component timing recorded`;
+          return (
+            <Tooltip withinPortal key={`${gap.startTime}-${gap.endTime}`} label={label}>
+              <g data-testid="timeline-gap-break" aria-label={label}>
+                <rect x={gap.startX} width={gap.endX - gap.startX} y={maxHeight - 25} height={25} fill="whitesmoke" />
+                <line x1={gap.startX + 3} x2={gap.startX + 7} y1={maxHeight - 7} y2={maxHeight - 18} stroke="gray" strokeWidth={2} />
+                <line x1={gap.startX + 9} x2={gap.startX + 13} y1={maxHeight - 7} y2={maxHeight - 18} stroke="gray" strokeWidth={2} />
+              </g>
+            </Tooltip>
+          );
+        })}
         {hoveredTask?.label}
       </svg>
     </Box>
