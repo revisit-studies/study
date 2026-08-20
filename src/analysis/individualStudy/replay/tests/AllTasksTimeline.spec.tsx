@@ -315,11 +315,12 @@ describe('AllTasksTimeline', () => {
   });
 
   test('marks a large time gap but omits the marker in uniform mode', () => {
+    const gapDuration = ((3 * 24 + 5) * 60 * 60 + 2 * 60 + 4) * 1_000;
     const participant = makeParticipant({
       answers: {
         trial1_0: makeAnswer({ endTime: t0 + 5_000 }),
         trial2_1: makeAnswer({
-          componentName: 'trial2', trialOrder: '1_0', startTime: t0 + 3_605_000, endTime: t0 + 3_610_000,
+          componentName: 'trial2', trialOrder: '1_0', startTime: t0 + 5_000 + gapDuration, endTime: t0 + 10_000 + gapDuration,
         }),
       },
     });
@@ -335,7 +336,7 @@ describe('AllTasksTimeline', () => {
     const uniformHtml = renderToStaticMarkup(<AllTasksTimeline {...props} timelineMode="uniform" />);
 
     expect(timeHtml).toContain('data-testid="timeline-gap-break"');
-    expect(timeHtml).toContain('gap — no component timing recorded');
+    expect(timeHtml).toContain('3d 5h 2m 4s gap — no component timing recorded');
     expect(uniformHtml).not.toContain('timeline-gap-break');
   });
 

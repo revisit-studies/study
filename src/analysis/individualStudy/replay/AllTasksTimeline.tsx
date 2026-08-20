@@ -24,7 +24,6 @@ import {
   isValidTimelineInterval,
   TimelineMode,
 } from './timelineLayout';
-import { youtubeReadableDuration } from '../../../utils/humanReadableDuration';
 
 const LABEL_GAP = 25;
 const CHARACTER_SIZE = 8;
@@ -41,6 +40,24 @@ function invalidTimelineAnchor(answer: Pick<StoredAnswer, 'startTime' | 'endTime
     return answer.endTime;
   }
   return xScale.domain()[0];
+}
+
+function readableGapDuration(msDuration: number) {
+  let secondsRemaining = Math.floor(msDuration / 1000);
+  const units = [
+    ['d', 86_400],
+    ['h', 3_600],
+    ['m', 60],
+    ['s', 1],
+  ] as const;
+
+  const parts = units.flatMap(([label, seconds]) => {
+    const value = Math.floor(secondsRemaining / seconds);
+    secondsRemaining %= seconds;
+    return value > 0 ? [`${value}${label}`] : [];
+  });
+
+  return parts.join(' ') || '0s';
 }
 
 export function AllTasksTimeline({
@@ -302,7 +319,7 @@ export function AllTasksTimeline({
         {tasks.filter((t) => t.identifier !== hoveredTaskIdentifier).map((t) => t.label)}
         {browsedAway}
         {collapsedGaps.map((gap) => {
-          const label = `${youtubeReadableDuration(gap.duration)} gap — no component timing recorded`;
+          const label = `${readableGapDuration(gap.duration)} gap — no component timing recorded`;
           return (
             <Tooltip withinPortal key={`${gap.startTime}-${gap.endTime}`} label={label}>
               <g data-testid="timeline-gap-break" aria-label={label}>
