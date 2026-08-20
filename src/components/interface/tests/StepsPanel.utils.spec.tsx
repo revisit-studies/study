@@ -35,7 +35,7 @@ function buildStoredAnswer(
 
 function buildStudyConfig(sequence: Sequence): StudyConfig {
   return {
-    $schema: 'https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/StudyConfigSchema.json',
+    $schema: 'https://raw.githubusercontent.com/revisit-studies/study/v2.4.4/src/parser/StudyConfigSchema.json',
     studyMetadata: {
       title: 'Study browser skip logic test',
       description: 'Test config',

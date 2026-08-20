@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/LibraryConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.4/src/parser/LibraryConfigSchema.json",
   "description": "The Usability Metric for User Experience (UMUX) is a short, standardized usability questionnaire developed as a concise and conceptually similar alternative to the System Usability Scale (SUS). It includes four statements designed to assess the perceived effectiveness, efficiency, and satisfaction of a system.",
   "reference": "K. Finstad, “The usability metric for user experience,” Interacting with Computers, vol. 22, no. 5, pp. 323–327, 2010.",
   "doi": "10.1016/j.intcom.2010.04.004",

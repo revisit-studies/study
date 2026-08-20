@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/LibraryConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.4/src/parser/LibraryConfigSchema.json",
   "description": "BeauVis is a validated scale for assessing the aesthetic pleasure of visualizations. This library contains three components for the 3-, 4-, and 5-item versions of the BeauVis scale.\n\nThe paper recommends using the 5-item version where it's feasible, but the 3 or 4 item versions can be used when participant time is a concern. When using this library, please replace the `vis-example.png` file with the visualization you want to evaluate.",
   "reference": "T. He, P. Isenberg, R. Dachselt, and T. Isenberg, “BeauVis: A Validated Scale for Measuring the Aesthetic Pleasure of Visual Representations,” IEEE Transactions on Visualization and Computer Graphics, vol. 29, no. 1, pp. 363–373, Jan. 2023.",
   "doi": "10.1109/TVCG.2022.3209390",
