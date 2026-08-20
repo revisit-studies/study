@@ -337,6 +337,9 @@ describe('AllTasksTimeline', () => {
 
     expect(timeHtml).toContain('data-testid="timeline-gap-break"');
     expect(timeHtml).toContain('3d 5h 2m 4s gap — no component timing recorded');
+    expect(timeHtml).toContain('fill="var(--mantine-color-orange-1)"');
+    expect(timeHtml).toContain('stroke-dasharray="3 2"');
+    expect(timeHtml).toContain('font-weight="700"');
     expect(uniformHtml).not.toContain('timeline-gap-break');
   });
 

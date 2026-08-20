@@ -315,21 +315,23 @@ export function AllTasksTimeline({
           overflow: 'visible',
         }}
       >
-        {tasks.map((t) => t.line)}
-        {tasks.filter((t) => t.identifier !== hoveredTaskIdentifier).map((t) => t.label)}
-        {browsedAway}
         {collapsedGaps.map((gap) => {
           const label = `${readableGapDuration(gap.duration)} gap — no component timing recorded`;
+          const midpoint = (gap.startX + gap.endX) / 2;
           return (
             <Tooltip withinPortal key={`${gap.startTime}-${gap.endTime}`} label={label}>
               <g data-testid="timeline-gap-break" aria-label={label}>
-                <rect x={gap.startX} width={gap.endX - gap.startX} y={maxHeight - 25} height={25} fill="whitesmoke" />
-                <line x1={gap.startX + 3} x2={gap.startX + 7} y1={maxHeight - 7} y2={maxHeight - 18} stroke="gray" strokeWidth={2} />
-                <line x1={gap.startX + 9} x2={gap.startX + 13} y1={maxHeight - 7} y2={maxHeight - 18} stroke="gray" strokeWidth={2} />
+                <rect x={gap.startX} width={gap.endX - gap.startX} y={0} height={maxHeight} fill="var(--mantine-color-orange-1)" />
+                <line x1={gap.startX} x2={gap.startX} y1={0} y2={maxHeight} stroke="var(--mantine-color-orange-7)" strokeDasharray="3 2" />
+                <line x1={gap.endX} x2={gap.endX} y1={0} y2={maxHeight} stroke="var(--mantine-color-orange-7)" strokeDasharray="3 2" />
+                <text x={midpoint} y={maxHeight / 2} textAnchor="middle" dominantBaseline="middle" fontSize={12} fontWeight={700} fill="var(--mantine-color-orange-9)">&#47;&#47;</text>
               </g>
             </Tooltip>
           );
         })}
+        {tasks.map((t) => t.line)}
+        {tasks.filter((t) => t.identifier !== hoveredTaskIdentifier).map((t) => t.label)}
+        {browsedAway}
         {hoveredTask?.label}
       </svg>
     </Box>

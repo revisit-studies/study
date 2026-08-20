@@ -5,6 +5,8 @@ export type TimelineMode = 'time' | 'uniform';
 
 export const UNIFORM_TASK_MIN_WIDTH = 48;
 export const TIMELINE_GAP_BREAK_WIDTH = 16;
+const TIMELINE_GAP_PERCENT_THRESHOLD = 0.05;
+const TIMELINE_GAP_DURATION_THRESHOLD = 30_000;
 
 export function isValidTimelineInterval(answer: Pick<StoredAnswer, 'startTime' | 'endTime'>) {
   return Number.isFinite(answer.startTime)
@@ -84,7 +86,9 @@ export function getGapAwareTimelineLayout({
     startTime: merged[index].endTime,
     endTime: interval.startTime,
     duration: interval.startTime - merged[index].endTime,
-  })).filter((gap) => domainSpan > 0 && gap.duration / domainSpan > 0.1);
+  })).filter((gap) => domainSpan > 0
+    && (gap.duration / domainSpan > TIMELINE_GAP_PERCENT_THRESHOLD
+      || gap.duration > TIMELINE_GAP_DURATION_THRESHOLD));
   const collapsedDuration = gaps.reduce((total, gap) => total + gap.duration, 0);
   const retainedDuration = Math.max(0, domainSpan - collapsedDuration);
   const effectiveRangeEnd = Math.max(safeRangeEnd, rangeStart + gaps.length * TIMELINE_GAP_BREAK_WIDTH);

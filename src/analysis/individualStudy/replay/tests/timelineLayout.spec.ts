@@ -44,6 +44,28 @@ describe('getGapAwareTimelineLayout', () => {
     expect(layout.collapsedGaps).toEqual([]);
   });
 
+  test('compresses gaps over 5% of the timeline or over 30 seconds', () => {
+    const percentageLayout = getGapAwareTimelineLayout({
+      answers: {
+        first: { startTime: t0, endTime: t0 + 1_000 },
+        second: { startTime: t0 + 7_000, endTime: t0 + 100_000 },
+      },
+      rangeStart: 20,
+      rangeEnd: 620,
+    });
+    const durationLayout = getGapAwareTimelineLayout({
+      answers: {
+        first: { startTime: t0, endTime: t0 + 1_000 },
+        second: { startTime: t0 + 32_000, endTime: t0 + 1_000_000 },
+      },
+      rangeStart: 20,
+      rangeEnd: 620,
+    });
+
+    expect(percentageLayout.collapsedGaps).toHaveLength(1);
+    expect(durationLayout.collapsedGaps).toHaveLength(1);
+  });
+
   test('uses the break width for gaps between zero-duration intervals', () => {
     const layout = getGapAwareTimelineLayout({
       answers: {
