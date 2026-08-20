@@ -132,6 +132,22 @@ test('Test questionnaire component with responses and randomizing questions and 
   // Go to the next page
   await nextClick(page);
 
+  // Fill the survey: Text Validation
+  await expect(page.getByText('Text Validation', { exact: true })).toBeVisible();
+  await page.getByPlaceholder('ABC-123').fill('ABC-123');
+  await page.getByPlaceholder('I use ReVISit for...').fill('I use ReVISit');
+  await page.getByPlaceholder('Describe a valid response...').fill('This response is valid.');
+  await page.getByPlaceholder('3–10 characters').fill('valid');
+  await page.getByPlaceholder('20–100 characters').fill('This response has enough characters.');
+  await page.getByPlaceholder('test@revisit.dev').fill('test@revisit.dev');
+  await page.getByPlaceholder('800-000-0000').fill('800-000-0000');
+  await page.getByPlaceholder('Utah or UT').fill('Utah');
+  await page.getByPlaceholder('12345-6789').fill('12345-6789');
+  await page.getByPlaceholder('https://revisit.dev').fill('https://revisit.dev');
+  await page.getByPlaceholder('MM/DD/YYYY').fill('06/24/2009');
+  await page.getByPlaceholder('HH:mm').fill('14:28');
+  await nextClick(page);
+
   // Default Values should be fully answerable via defaults
   await expect(page.getByText('Default Values Demo')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeEnabled();

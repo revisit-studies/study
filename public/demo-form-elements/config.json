@@ -385,7 +385,7 @@
           "id": "built-in-validation-email",
           "type": "shortText",
           "prompt": "Enter an email address.",
-          "secondaryText": "For example: test@revisit.dev. This response uses the email built-in validation.",
+          "secondaryText": "For example: test@revisit.dev.",
           "placeholder": "test@revisit.dev",
           "builtInValidation": "email"
         },
@@ -393,7 +393,7 @@
           "id": "built-in-validation-phone-number",
           "type": "shortText",
           "prompt": "Enter a 10-digit US phone number with two hyphens.",
-          "secondaryText": "For example: 800-000-0000. This response uses the phoneNumber built-in validation.",
+          "secondaryText": "For example: 800-000-0000.",
           "placeholder": "800-000-0000",
           "builtInValidation": "phoneNumber"
         },
@@ -401,7 +401,7 @@
           "id": "built-in-validation-us-state",
           "type": "shortText",
           "prompt": "Enter a US state name or two-letter abbreviation.",
-          "secondaryText": "For example: Utah or UT. This response uses the usState built-in validation.",
+          "secondaryText": "For example: Utah or UT.",
           "placeholder": "Utah or UT",
           "builtInValidation": "usState"
         },
@@ -409,7 +409,7 @@
           "id": "built-in-validation-postal-code",
           "type": "shortText",
           "prompt": "Enter a US postal code.",
-          "secondaryText": "For example: 12345 or 12345-6789. This response uses the postalCode built-in validation.",
+          "secondaryText": "For example: 12345 or 12345-6789.",
           "placeholder": "12345-6789",
           "builtInValidation": "postalCode"
         },
@@ -417,7 +417,7 @@
           "id": "built-in-validation-url",
           "type": "shortText",
           "prompt": "Enter an HTTP or HTTPS URL.",
-          "secondaryText": "For example: https://revisit.dev. This response uses the url built-in validation.",
+          "secondaryText": "For example: https://revisit.dev.",
           "placeholder": "https://revisit.dev",
           "builtInValidation": "url"
         },
@@ -425,7 +425,7 @@
           "id": "built-in-validation-date",
           "type": "shortText",
           "prompt": "Enter a date in MM/DD/YYYY format.",
-          "secondaryText": "For example: 06/24/2009. This response uses the date built-in validation.",
+          "secondaryText": "For example: 06/24/2009.",
           "placeholder": "MM/DD/YYYY",
           "builtInValidation": "date"
         },
@@ -433,7 +433,7 @@
           "id": "built-in-validation-time",
           "type": "shortText",
           "prompt": "Enter a time in 24-hour HH:mm format.",
-          "secondaryText": "For example: 14:28. This response uses the time built-in validation.",
+          "secondaryText": "For example: 14:28.",
           "placeholder": "HH:mm",
           "builtInValidation": "time"
         }
