@@ -15,9 +15,9 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
         with:
           ref: gh-pages
           path: .pages
@@ -30,7 +30,7 @@ jobs:
         run: .github/scripts/publish-pages-snapshot.sh ./empty-pages "PR${{ github.event.number }}" ./.pages
 
       - name: Comment on PR
-        uses: hasura/comment-progress@v2.2.0
+        uses: hasura/comment-progress@v2.3.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
