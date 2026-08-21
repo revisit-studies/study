@@ -77,7 +77,7 @@ export function ReactMarkdownWrapper({ text, required, inline }: { text: string;
       const asteriskNode: Element = {
         type: 'element',
         tagName: 'span',
-        properties: { style: 'color: #fa5252; margin-left: 4px' },
+        properties: { className: 'required-asterisk' },
         children: [
           {
             type: 'text',
