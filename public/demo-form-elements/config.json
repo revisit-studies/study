@@ -518,6 +518,18 @@
           "default": "Prefilled long text value for local testing."
         },
         {
+          "id": "default-date",
+          "type": "date",
+          "prompt": "Date default",
+          "default": "06/24/2009"
+        },
+        {
+          "id": "default-time",
+          "type": "time",
+          "prompt": "Time default",
+          "default": "14:28"
+        },
+        {
           "id": "default-likert",
           "type": "likert",
           "prompt": "Likert default (numeric)",
@@ -565,6 +577,13 @@
             }
           ],
           "default": "pie"
+        },
+        {
+          "id": "default-dropdown-country",
+          "type": "dropdown",
+          "prompt": "Country dropdown default",
+          "options": "countries",
+          "default": "US"
         },
         {
           "id": "default-dropdown-multiselect",

@@ -3,6 +3,7 @@ import { test, expect, Page } from '@playwright/test';
 import {
   nextClick,
   readStoredComponentTiming,
+  seekReplay,
   waitForStudyEndMessage,
 } from './utils';
 
@@ -140,6 +141,7 @@ test('Test questionnaire component with responses and randomizing questions and 
 
   // Fill the survey: Text Validation
   await expect(page.getByText('Text Validation', { exact: true })).toBeVisible();
+  const textValidationReplayPath = new URL(page.url()).pathname;
   const regexInput = page.getByPlaceholder('ABC-123');
   await regexInput.fill('^[A-Z]{3}-\\d{3}$');
   await nextClick(page);
@@ -166,6 +168,9 @@ test('Test questionnaire component with responses and randomizing questions and 
 
   // Default Values should be fully answerable via defaults
   await expect(page.getByText('Default Values Demo')).toBeVisible();
+  await expect(page.getByLabel('Date default')).toHaveValue('06/24/2009');
+  await expect(page.getByLabel('Time default')).toHaveValue('14:28');
+  await expect(page.getByPlaceholder('Select a country')).toHaveValue(/United States/);
   await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeEnabled();
   await nextClick(page);
 
@@ -287,13 +292,26 @@ test('Test questionnaire component with responses and randomizing questions and 
   // Check that the thank you message is displayed
   await waitForStudyEndMessage(page);
 
+  await expect.poll(() => readStoredComponentTiming(page, 'Text Validation')).not.toBeNull();
+  const textValidationTiming = await readStoredComponentTiming(page, 'Text Validation');
   await expect.poll(() => readStoredComponentTiming(page, 'Sidebar Form Elements')).not.toBeNull();
   const sidebarTiming = await readStoredComponentTiming(page, 'Sidebar Form Elements');
-  if (!sidebarTiming) {
-    throw new Error('Sidebar form timing was not stored');
+  if (!textValidationTiming || !sidebarTiming) {
+    throw new Error('Form element timing was not stored');
   }
 
   const replaySearch = `participantId=${encodeURIComponent(sidebarTiming.participantId)}&revisitPageId=e2e-sidebar-replay`;
+  await page.goto(`${textValidationReplayPath}?${replaySearch}`);
+  await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
+  await seekReplay(
+    page,
+    textValidationTiming.startTime,
+    textValidationTiming.endTime,
+    textValidationTiming.endTime,
+  );
+  await expect(page.getByPlaceholder('MM/DD/YYYY')).toHaveValue('06/24/2009');
+  await expect(page.getByLabel('Select a time.')).toHaveValue('14:28');
+
   await page.goto(`${sidebarReplayPath}?${replaySearch}`);
   await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
 
