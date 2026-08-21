@@ -8,11 +8,12 @@ const A4_LANDSCAPE_HEIGHT_MM = 210;
 const A4_PORTRAIT_WIDTH_MM = A4_LANDSCAPE_HEIGHT_MM;
 const A4_PORTRAIT_HEIGHT_MM = A4_LANDSCAPE_WIDTH_MM;
 const PDF_VIDEO_FRAME_WAIT_MS = 1500;
+const PDF_RESOURCE_WAIT_MS = 10000;
 const PDF_LARGE_SVG_ELEMENT_THRESHOLD = 1000;
 const PDF_MAX_CAPTURE_SCALE = 2;
-const PDF_MIN_CAPTURE_SCALE = 0.5;
+const PDF_MAX_RASTER_DIMENSION = 8192;
+const PDF_MAX_RASTER_PIXELS = 16000000;
 const PDF_SNAPSHOT_PADDING_PX = 32;
-const PDF_PERFORMANCE_MEASURE_PREFIX = 'revisit.pdf-export';
 const PDF_PORTRAIT_FIT_ADVANTAGE = 1.3;
 const PDF_PRINTABLE_ASPECT_RATIO = (A4_LANDSCAPE_HEIGHT_MM - (PDF_MARGIN_MM * 2))
   / (A4_LANDSCAPE_WIDTH_MM - (PDF_MARGIN_MM * 2));
@@ -72,6 +73,8 @@ export interface PdfVideoSnapshot {
   dataUrl?: string;
   height: number;
   index: number;
+  objectFit: string;
+  objectPosition: string;
   width: number;
 }
 
@@ -97,43 +100,92 @@ interface PdfPageLayout {
   orientation: 'landscape' | 'portrait';
 }
 
-function recordPdfExportMeasure(name: string, start: number) {
-  try {
-    performance.measure(`${PDF_PERFORMANCE_MEASURE_PREFIX}.${name}`, {
-      end: performance.now(),
-      start,
-    });
-  } catch {
-    // Export must not fail if a browser cannot record optional performance timing.
-  }
+function getBoundedRasterSize(width: number, height: number, preferredScale = 1) {
+  const safeWidth = Math.max(width, 1);
+  const safeHeight = Math.max(height, 1);
+  const scale = Math.min(
+    preferredScale,
+    PDF_MAX_RASTER_DIMENSION / Math.max(safeWidth, safeHeight),
+    Math.sqrt(PDF_MAX_RASTER_PIXELS / (safeWidth * safeHeight)),
+  );
+
+  return {
+    height: Math.max(1, Math.floor(safeHeight * scale)),
+    scale,
+    width: Math.max(1, Math.floor(safeWidth * scale)),
+  };
 }
 
-function clearPdfExportMeasures() {
-  try {
-    performance.getEntriesByType('measure')
-      .filter((entry) => entry.name.startsWith(PDF_PERFORMANCE_MEASURE_PREFIX))
-      .forEach((entry) => performance.clearMeasures(entry.name));
-  } catch {
-    // Export must not fail if a browser cannot clear optional performance timing.
+function isPdfRenderedElement(element: HTMLElement) {
+  if (element.hidden) {
+    return false;
   }
+
+  const sourceWindow = element.ownerDocument.defaultView;
+  if (!sourceWindow) {
+    return true;
+  }
+
+  const style = sourceWindow.getComputedStyle(element);
+  return style.display !== 'none'
+    && style.contentVisibility !== 'hidden'
+    && style.opacity !== '0'
+    && style.visibility !== 'hidden'
+    && style.visibility !== 'collapse';
 }
 
-async function measurePdfExportPhase<T>(name: string, operation: () => Promise<T>) {
-  const start = performance.now();
-  try {
-    return await operation();
-  } finally {
-    recordPdfExportMeasure(name, start);
-  }
+function withPdfTimeout<T>(promise: Promise<T>, message: string) {
+  return new Promise<T>((resolve, reject) => {
+    const timeoutId = window.setTimeout(() => reject(new Error(message)), PDF_RESOURCE_WAIT_MS);
+    promise.then(
+      (value) => {
+        window.clearTimeout(timeoutId);
+        resolve(value);
+      },
+      (error) => {
+        window.clearTimeout(timeoutId);
+        reject(error);
+      },
+    );
+  });
 }
 
-function measurePdfExportSyncPhase<T>(name: string, operation: () => T) {
-  const start = performance.now();
-  try {
-    return operation();
-  } finally {
-    recordPdfExportMeasure(name, start);
-  }
+function waitForPdfLoad(
+  target: EventTarget,
+  startLoading: () => void,
+  timeoutMessage: string,
+  errorMessage?: string,
+) {
+  return new Promise<void>((resolve, reject) => {
+    let timeoutId = 0;
+    let handleLoad = () => {};
+    let handleError = () => {};
+    const cleanup = () => {
+      window.clearTimeout(timeoutId);
+      target.removeEventListener('load', handleLoad);
+      target.removeEventListener('error', handleError);
+    };
+    handleLoad = () => {
+      cleanup();
+      resolve();
+    };
+    handleError = () => {
+      cleanup();
+      if (errorMessage) {
+        reject(new Error(errorMessage));
+      } else {
+        resolve();
+      }
+    };
+    timeoutId = window.setTimeout(() => {
+      cleanup();
+      reject(new Error(timeoutMessage));
+    }, PDF_RESOURCE_WAIT_MS);
+
+    target.addEventListener('load', handleLoad, { once: true });
+    target.addEventListener('error', handleError, { once: true });
+    startLoading();
+  });
 }
 
 function getPdfFitScale(
@@ -210,18 +262,55 @@ export function buildPdfFilename(componentName: string, exportedAt: Date = new D
   return `${safeComponentName}_${timestamp}.pdf`;
 }
 
-export function getPdfExportUnsupportedReason(element: HTMLElement) {
-  const hasCrossOriginIframe = Array.from(element.querySelectorAll('iframe')).some((iframe) => {
-    if (iframe.srcdoc || !iframe.getAttribute('src')) {
-      return false;
-    }
+function hasUnsupportedPdfIframe(
+  iframe: HTMLIFrameElement,
+  visitedDocuments: Set<Document>,
+): boolean {
+  if (!isPdfRenderedElement(iframe)) {
+    return false;
+  }
 
+  const sandbox = iframe.getAttribute('sandbox');
+  if (sandbox !== null && !sandbox.split(/\s+/).includes('allow-same-origin')) {
+    return true;
+  }
+
+  const source = iframe.getAttribute('src');
+  if (source && !iframe.srcdoc) {
     try {
-      return new URL(iframe.src, window.location.href).origin !== window.location.origin;
+      if (new URL(iframe.src, window.location.href).origin !== window.location.origin) {
+        return true;
+      }
     } catch {
       return true;
     }
-  });
+  }
+
+  let iframeDocument: Document | null;
+  try {
+    iframeDocument = iframe.contentDocument;
+    if (!iframeDocument?.documentElement) {
+      return true;
+    }
+  } catch {
+    return true;
+  }
+
+  if (visitedDocuments.has(iframeDocument)) {
+    return false;
+  }
+  visitedDocuments.add(iframeDocument);
+
+  return Array.from(iframeDocument.querySelectorAll('iframe')).some((nestedIframe) => (
+    hasUnsupportedPdfIframe(nestedIframe, visitedDocuments)
+  ));
+}
+
+export function getPdfExportUnsupportedReason(element: HTMLElement) {
+  const visitedDocuments = new Set<Document>();
+  const hasCrossOriginIframe = Array.from(element.querySelectorAll('iframe')).some((iframe) => (
+    hasUnsupportedPdfIframe(iframe, visitedDocuments)
+  ));
 
   return hasCrossOriginIframe
     ? 'Pages containing external websites cannot currently be exported to PDF.'
@@ -253,6 +342,14 @@ function waitForIframeImages(iframeDocument: Document) {
       await image.decode().catch(() => undefined);
     }
   }));
+}
+
+function waitForPdfStylesheet(stylesheet: HTMLLinkElement, absoluteHref: string) {
+  return waitForPdfLoad(
+    stylesheet,
+    () => { stylesheet.href = absoluteHref; },
+    'Timed out while preparing embedded page styles.',
+  );
 }
 
 function prepareIframeClone(
@@ -297,11 +394,7 @@ function prepareIframeClone(
       return Promise.resolve();
     }
 
-    return new Promise<void>((resolve) => {
-      stylesheet.addEventListener('load', () => resolve(), { once: true });
-      stylesheet.addEventListener('error', () => resolve(), { once: true });
-      stylesheet.href = absoluteHref;
-    });
+    return waitForPdfStylesheet(stylesheet, absoluteHref);
   }));
 }
 
@@ -346,20 +439,15 @@ function getIframeCaptureSize(iframe: HTMLIFrameElement, iframeDocument: Documen
 
 function getIframeCaptureScale(
   captureWidth: number,
+  captureHeight: number,
   displayWidth: number,
   pageScale?: number,
 ) {
-  if (pageScale === undefined || captureWidth === 0 || displayWidth === 0) {
-    return PDF_MAX_CAPTURE_SCALE;
-  }
+  const preferredScale = pageScale === undefined || displayWidth === 0
+    ? PDF_MAX_CAPTURE_SCALE
+    : (displayWidth * pageScale * PDF_MAX_CAPTURE_SCALE) / captureWidth;
 
-  return Math.min(
-    PDF_MAX_CAPTURE_SCALE,
-    Math.max(
-      PDF_MIN_CAPTURE_SCALE,
-      (displayWidth * pageScale * PDF_MAX_CAPTURE_SCALE) / captureWidth,
-    ),
-  );
+  return getBoundedRasterSize(captureWidth, captureHeight, preferredScale).scale;
 }
 
 function inlineSvgPresentationStyles(sourceSvg: SVGSVGElement, clonedSvg: SVGSVGElement) {
@@ -383,15 +471,15 @@ function inlineSvgPresentationStyles(sourceSvg: SVGSVGElement, clonedSvg: SVGSVG
   });
 }
 
-function loadSvgImage(document: Document, source: string) {
-  return new Promise<HTMLImageElement>((resolve, reject) => {
-    const image = document.createElement('img');
-    image.addEventListener('load', () => resolve(image), { once: true });
-    image.addEventListener('error', () => reject(new Error('The SVG could not be rasterized.')), {
-      once: true,
-    });
-    image.src = source;
-  });
+async function loadSvgImage(document: Document, source: string) {
+  const image = document.createElement('img');
+  await waitForPdfLoad(
+    image,
+    () => { image.src = source; },
+    'Timed out while rasterizing an embedded visualization.',
+    'The SVG could not be rasterized.',
+  );
+  return image;
 }
 
 function waitForPdfImage(image: HTMLImageElement) {
@@ -399,10 +487,12 @@ function waitForPdfImage(image: HTMLImageElement) {
     return Promise.resolve();
   }
 
-  return new Promise<void>((resolve, reject) => {
-    image.addEventListener('load', () => resolve(), { once: true });
-    image.addEventListener('error', () => reject(new Error('The embedded page snapshot could not be loaded.')), { once: true });
-  });
+  return waitForPdfLoad(
+    image,
+    () => {},
+    'Timed out while loading an embedded page snapshot.',
+    'The embedded page snapshot could not be loaded.',
+  );
 }
 
 async function captureSvgSnapshot(svg: SVGSVGElement, index: number, scale: number) {
@@ -429,8 +519,9 @@ async function captureSvgSnapshot(svg: SVGSVGElement, index: number, scale: numb
   try {
     const image = await loadSvgImage(svg.ownerDocument, objectUrl);
     const canvas = svg.ownerDocument.createElement('canvas');
-    canvas.width = Math.max(1, Math.ceil(width * scale));
-    canvas.height = Math.max(1, Math.ceil(height * scale));
+    const rasterSize = getBoundedRasterSize(width, height, scale);
+    canvas.width = rasterSize.width;
+    canvas.height = rasterSize.height;
     const context = canvas.getContext('2d');
     if (!context) {
       return undefined;
@@ -460,11 +551,11 @@ async function captureLargeSvgSnapshots(iframeDocument: Document, scale: number)
     return [];
   }
 
-  const snapshots = await Promise.all(svgs.map((svg, index) => (
-    captureSvgSnapshot(svg, index, scale)
-  )));
-
-  return snapshots.filter((snapshot): snapshot is PdfSvgSnapshot => snapshot !== undefined);
+  return svgs.reduce<Promise<PdfSvgSnapshot[]>>(async (pendingSnapshots, svg, index) => {
+    const snapshots = await pendingSnapshots;
+    const snapshot = await captureSvgSnapshot(svg, index, scale);
+    return snapshot ? [...snapshots, snapshot] : snapshots;
+  }, Promise.resolve([]));
 }
 
 async function replaceLargeSvgsWithSnapshots(
@@ -533,18 +624,27 @@ function cropIframeSnapshot(
 export async function capturePdfIframeSnapshots(element: HTMLElement, pageScale?: number) {
   const iframes = Array.from(element.querySelectorAll('iframe'));
 
-  return Promise.all(iframes.map(async (iframe, index): Promise<PdfIframeSnapshot> => {
+  return iframes.reduce<Promise<PdfIframeSnapshot[]>>(async (
+    pendingSnapshots,
+    iframe,
+    index,
+  ) => {
+    const snapshots = await pendingSnapshots;
+    if (!isPdfRenderedElement(iframe)) {
+      return snapshots;
+    }
+
     const iframeDocument = iframe.contentDocument;
     const iframeRoot = iframeDocument?.documentElement;
     if (!iframeDocument || !iframeRoot) {
       throw new Error('The embedded page is not available for PDF export.');
     }
 
-    await Promise.all([
+    await withPdfTimeout(Promise.all([
       iframeDocument.fonts?.ready,
       waitForIframeImages(iframeDocument),
       waitForIframePaint(iframe),
-    ]);
+    ]), 'Timed out while preparing embedded page content.');
     const captureSize = getIframeCaptureSize(iframe, iframeDocument);
     const width = Math.ceil(captureSize.width);
     const height = Math.ceil(captureSize.height);
@@ -553,61 +653,80 @@ export async function capturePdfIframeSnapshots(element: HTMLElement, pageScale?
     }
     const captureScale = getIframeCaptureScale(
       width,
+      height,
       iframe.getBoundingClientRect().width,
       pageScale,
     );
-    const svgSnapshots = await measurePdfExportPhase(
-      'iframe.svg-snapshots',
-      () => captureLargeSvgSnapshots(iframeDocument, captureScale),
-    );
+    const svgSnapshots = await captureLargeSvgSnapshots(iframeDocument, captureScale);
 
-    const canvas = await measurePdfExportPhase('iframe.raster', () => (
-      html2canvas(iframeRoot, {
-        backgroundColor: '#ffffff',
-        height,
-        logging: false,
-        onclone: async (clonedDocument) => {
-          await prepareIframeClone(clonedDocument, iframeDocument, width);
-          await replaceLargeSvgsWithSnapshots(clonedDocument, svgSnapshots);
-        },
-        scale: captureScale,
-        useCORS: true,
-        width,
-        windowHeight: height,
-        windowWidth: width,
-      })
-    ));
+    const canvas = await html2canvas(iframeRoot, {
+      backgroundColor: '#ffffff',
+      height,
+      logging: false,
+      onclone: async (clonedDocument) => {
+        await prepareIframeClone(clonedDocument, iframeDocument, width);
+        await replaceLargeSvgsWithSnapshots(clonedDocument, svgSnapshots);
+      },
+      scale: captureScale,
+      useCORS: true,
+      width,
+      windowHeight: height,
+      windowWidth: width,
+    });
 
-    return {
-      dataUrl: measurePdfExportSyncPhase('iframe.encode', () => (
-        cropIframeSnapshot(canvas, captureSize).toDataURL('image/png')
-      )),
+    return [...snapshots, {
+      dataUrl: cropIframeSnapshot(canvas, captureSize).toDataURL('image/png'),
       index,
-    };
-  }));
+    }];
+  }, Promise.resolve([]));
 }
 
 export function capturePdfCanvasSnapshots(element: HTMLElement) {
   const canvases = Array.from(element.querySelectorAll('canvas'));
 
-  return canvases.map((canvas, index): PdfCanvasSnapshot => {
+  return canvases.flatMap((canvas, index): PdfCanvasSnapshot[] => {
+    if (!isPdfRenderedElement(canvas)) {
+      return [];
+    }
+
     const bounds = canvas.getBoundingClientRect();
     const width = Math.ceil(bounds.width || canvas.width);
     const height = Math.ceil(bounds.height || canvas.height);
 
     if (canvas.width === 0 || canvas.height === 0) {
-      return { height, index, width };
+      return [{ height, index, width }];
     }
 
     try {
-      return {
-        dataUrl: canvas.toDataURL('image/png'),
+      const preferredScale = Math.min(
+        1,
+        Math.sqrt(((Math.max(width, 1) * Math.max(height, 1)) * 4)
+          / (canvas.width * canvas.height)),
+      );
+      const rasterSize = getBoundedRasterSize(canvas.width, canvas.height, preferredScale);
+      let dataUrl: string;
+      if (rasterSize.width === canvas.width && rasterSize.height === canvas.height) {
+        dataUrl = canvas.toDataURL('image/png');
+      } else {
+        const rasterCanvas = canvas.ownerDocument.createElement('canvas');
+        rasterCanvas.width = rasterSize.width;
+        rasterCanvas.height = rasterSize.height;
+        const context = rasterCanvas.getContext('2d');
+        if (!context) {
+          return [{ height, index, width }];
+        }
+        context.drawImage(canvas, 0, 0, rasterCanvas.width, rasterCanvas.height);
+        dataUrl = rasterCanvas.toDataURL('image/png');
+      }
+
+      return [{
+        dataUrl,
         height,
         index,
         width,
-      };
+      }];
     } catch {
-      return { height, index, width };
+      return [{ height, index, width }];
     }
   });
 }
@@ -638,29 +757,44 @@ function waitForVideoFrame(video: HTMLVideoElement) {
 
 export async function capturePdfVideoSnapshots(element: HTMLElement) {
   const videos = Array.from(element.querySelectorAll('video'));
+  const renderedVideos = videos.flatMap((video, index) => (
+    isPdfRenderedElement(video) ? [{ index, video }] : []
+  ));
 
-  return Promise.all(videos.map(async (video, index): Promise<PdfVideoSnapshot> => {
+  return Promise.all(renderedVideos.map(async ({ index, video }): Promise<PdfVideoSnapshot> => {
     await waitForVideoFrame(video);
     const bounds = video.getBoundingClientRect();
     const width = Math.ceil(bounds.width || video.videoWidth);
     const height = Math.ceil(bounds.height || video.videoHeight);
+    const computedStyle = video.ownerDocument.defaultView?.getComputedStyle(video);
+    const objectFit = computedStyle?.objectFit || 'fill';
+    const objectPosition = computedStyle?.objectPosition || '50% 50%';
 
     if (video.videoWidth === 0 || video.videoHeight === 0) {
-      return { height, index, width };
+      return {
+        height, index, objectFit, objectPosition, width,
+      };
     }
 
     try {
       const canvas = video.ownerDocument.createElement('canvas');
-      const captureWidth = Math.min(
-        video.videoWidth,
-        Math.max(width * 2, 1),
-        PDF_MAX_WIDTH_PX * 2,
+      const preferredScale = Math.min(
+        1,
+        Math.sqrt(((Math.max(width, 1) * Math.max(height, 1)) * 4)
+          / (video.videoWidth * video.videoHeight)),
       );
-      canvas.width = captureWidth;
-      canvas.height = Math.round(captureWidth * (video.videoHeight / video.videoWidth));
+      const rasterSize = getBoundedRasterSize(
+        video.videoWidth,
+        video.videoHeight,
+        preferredScale,
+      );
+      canvas.width = rasterSize.width;
+      canvas.height = rasterSize.height;
       const context = canvas.getContext('2d');
       if (!context) {
-        return { height, index, width };
+        return {
+          height, index, objectFit, objectPosition, width,
+        };
       }
 
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -669,12 +803,46 @@ export async function capturePdfVideoSnapshots(element: HTMLElement) {
         dataUrl: canvas.toDataURL('image/png'),
         height,
         index,
+        objectFit,
+        objectPosition,
         width,
       };
     } catch {
-      return { height, index, width };
+      return {
+        height, index, objectFit, objectPosition, width,
+      };
     }
   }));
+}
+
+export function copyPdfElementState(sourceElement: HTMLElement, clonedElement: HTMLElement) {
+  const sourceElements = [sourceElement, ...sourceElement.querySelectorAll<HTMLElement>('*')];
+  const clonedElements = [clonedElement, ...clonedElement.querySelectorAll<HTMLElement>('*')];
+
+  sourceElements.forEach((source, index) => {
+    const clone = clonedElements[index];
+    if (!clone) {
+      return;
+    }
+
+    if (source instanceof HTMLInputElement && clone instanceof HTMLInputElement) {
+      clone.checked = source.checked;
+      clone.indeterminate = source.indeterminate;
+      clone.value = source.value;
+    } else if (source instanceof HTMLSelectElement && clone instanceof HTMLSelectElement) {
+      Array.from(source.options).forEach((option, optionIndex) => {
+        if (clone.options[optionIndex]) {
+          clone.options[optionIndex].selected = option.selected;
+        }
+      });
+      clone.selectedIndex = source.selectedIndex;
+    } else if (source instanceof HTMLTextAreaElement && clone instanceof HTMLTextAreaElement) {
+      clone.value = source.value;
+    }
+
+    clone.scrollLeft = source.scrollLeft;
+    clone.scrollTop = source.scrollTop;
+  });
 }
 
 function mountPdfSource(element: HTMLElement, exportWidth: number) {
@@ -783,9 +951,10 @@ export function replacePdfVideosWithSnapshots(
       image.alt = 'Current video frame';
       image.src = snapshot.dataUrl;
       image.style.display = 'block';
-      image.style.height = 'auto';
+      image.style.height = snapshot.height > 0 ? `${snapshot.height}px` : 'auto';
       image.style.maxWidth = '100%';
-      image.style.objectFit = 'contain';
+      image.style.objectFit = snapshot.objectFit;
+      image.style.objectPosition = snapshot.objectPosition;
       image.style.width = snapshot.width > 0 ? `${snapshot.width}px` : '100%';
       replacementTarget.replaceWith(image);
 
@@ -803,6 +972,7 @@ export function replacePdfVideosWithSnapshots(
     placeholder.style.backgroundColor = '#1f1f1f';
     placeholder.style.color = '#ffffff';
     placeholder.style.display = 'flex';
+    placeholder.style.height = snapshot.height > 0 ? `${snapshot.height}px` : 'auto';
     placeholder.style.justifyContent = 'center';
     placeholder.style.maxWidth = '100%';
     placeholder.style.padding = '16px';
@@ -886,8 +1056,6 @@ export function preparePdfClone(
 }
 
 export async function saveElementAsPdf(element: HTMLElement, filename: string) {
-  clearPdfExportMeasures();
-  const exportStart = performance.now();
   const elementWidth = element.getBoundingClientRect().width;
   const initialExportWidth = Math.min(elementWidth, PDF_MAX_WIDTH_PX);
   const pageScale = elementWidth > 0 ? initialExportWidth / elementWidth : 1;
@@ -897,16 +1065,18 @@ export async function saveElementAsPdf(element: HTMLElement, filename: string) {
     capturePdfVideoSnapshots(element),
   ]);
   const pdfSource = element.cloneNode(true) as HTMLElement;
-  const canvasImages = replacePdfCanvasesWithSnapshots(pdfSource, canvasSnapshots);
-  const iframeImages = replacePdfIframesWithSnapshots(pdfSource, iframeSnapshots);
-  const videoImages = replacePdfVideosWithSnapshots(pdfSource, videoSnapshots);
   const sidebar = element.querySelector<HTMLElement>('.sidebar');
-  const sidebarWidth = sidebar && sidebar.style.display !== 'none'
+  const sidebarWidth = sidebar && isPdfRenderedElement(sidebar)
     ? sidebar.getBoundingClientRect().width
     : undefined;
   const pdfSourceHost = mountPdfSource(pdfSource, initialExportWidth);
+  const existingPdfOverlays = new Set(document.querySelectorAll('.html2pdf__overlay'));
 
   try {
+    copyPdfElementState(element, pdfSource);
+    const canvasImages = replacePdfCanvasesWithSnapshots(pdfSource, canvasSnapshots);
+    const iframeImages = replacePdfIframesWithSnapshots(pdfSource, iframeSnapshots);
+    const videoImages = replacePdfVideosWithSnapshots(pdfSource, videoSnapshots);
     preparePdfClone(pdfSource, {
       exportWidth: initialExportWidth,
       sidebarWidth,
@@ -958,12 +1128,13 @@ export async function saveElementAsPdf(element: HTMLElement, filename: string) {
       },
     };
 
-    await measurePdfExportPhase(
-      'page.raster-and-save',
-      () => html2pdf().set(options).from(pdfSource).save(),
-    );
+    await html2pdf().set(options).from(pdfSource).save();
   } finally {
     pdfSourceHost.remove();
-    recordPdfExportMeasure('total', exportStart);
+    document.querySelectorAll('.html2pdf__overlay').forEach((overlay) => {
+      if (!existingPdfOverlays.has(overlay)) {
+        overlay.remove();
+      }
+    });
   }
 }

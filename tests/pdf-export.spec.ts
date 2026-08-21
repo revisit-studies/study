@@ -241,6 +241,79 @@ test('captures source canvas pixels in the PDF', async ({ page }, testInfo) => {
   expect(canvasPixels.cyanPixels).toBeGreaterThan(100);
 });
 
+test('preserves selected and scrolled state in the PDF', async ({ page }, testInfo) => {
+  await resetClientStudyState(page);
+  await openStudyFromLanding(page, 'Demo Studies', 'HTML as a Stimulus');
+  await expect(page.getByText(/embed HTML elements into the study page/i)).toBeVisible();
+  await page.getByRole('main').evaluate((main) => {
+    const style = document.createElement('style');
+    style.textContent = `
+      #pdf-select-state-marker { background: #ff0000; height: 80px; width: 300px; }
+      #pdf-state-select:has(option[value="second"]:checked) + #pdf-select-state-marker {
+        background: #ff00ff;
+      }
+    `;
+    const select = document.createElement('select');
+    select.id = 'pdf-state-select';
+    select.innerHTML = '<option value="first">First</option><option value="second">Second</option>';
+    select.value = 'second';
+    const selectMarker = document.createElement('div');
+    selectMarker.id = 'pdf-select-state-marker';
+    const scroller = document.createElement('div');
+    scroller.style.height = '80px';
+    scroller.style.overflow = 'hidden';
+    scroller.style.width = '300px';
+    scroller.innerHTML = `
+      <div style="background: #ffff00; height: 80px"></div>
+      <div style="background: #00ffff; height: 80px"></div>
+    `;
+    main.append(style, select, selectMarker, scroller);
+    scroller.scrollTop = 80;
+  });
+
+  await page.getByRole('button', { name: 'Study actions' }).click();
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('menuitem', { name: 'Export page as PDF' }).click();
+  const download = await downloadPromise;
+  const downloadPath = testInfo.outputPath('preserved-state.pdf');
+  await download.saveAs(downloadPath);
+  const pdf = await readFile(downloadPath);
+  const jpegImages = extractJpegImages(pdf);
+  const largestJpeg = jpegImages.sort((left, right) => right.byteLength - left.byteLength)[0];
+
+  const statePixels = await page.evaluate(async (base64) => {
+    const image = new Image();
+    image.src = `data:image/jpeg;base64,${base64}`;
+    await image.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = 300;
+    canvas.height = 200;
+    const context = canvas.getContext('2d');
+    if (!context) {
+      throw new Error('Canvas rendering is unavailable');
+    }
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    let cyanPixels = 0;
+    let magentaPixels = 0;
+    for (let index = 0; index < pixels.length; index += 4) {
+      const red = pixels[index];
+      const green = pixels[index + 1];
+      const blue = pixels[index + 2];
+      if (red > 150 && blue > 150 && green < 120) {
+        magentaPixels += 1;
+      }
+      if (green > 150 && blue > 150 && red < 120) {
+        cyanPixels += 1;
+      }
+    }
+    return { cyanPixels, magentaPixels };
+  }, Buffer.from(largestJpeg).toString('base64'));
+
+  expect(statePixels.magentaPixels).toBeGreaterThan(100);
+  expect(statePixels.cyanPixels).toBeGreaterThan(100);
+});
+
 test('captures same-origin iframe contents in the PDF', async ({ page }, testInfo) => {
   await resetClientStudyState(page);
   await openStudyFromLanding(page, 'Demo Studies', 'HTML as a Stimulus');
@@ -314,25 +387,6 @@ test('captures iframe content beyond reported document bounds', async ({ page },
   const download = await downloadPromise;
   const downloadPath = testInfo.outputPath('mvnv-multi-edge-adjacency-matrix.pdf');
   await download.saveAs(downloadPath);
-  await expect.poll(() => page.evaluate(() => (
-    performance.getEntriesByName('revisit.pdf-export.total').length
-  ))).toBeGreaterThan(0);
-  const exportPerformance = await page.evaluate(() => (
-    performance.getEntriesByType('measure')
-      .filter((entry) => entry.name.startsWith('revisit.pdf-export'))
-      .map((entry) => ({ duration: entry.duration, name: entry.name }))
-  ));
-  await testInfo.attach('pdf-export-performance', {
-    body: JSON.stringify(exportPerformance, null, 2),
-    contentType: 'application/json',
-  });
-  expect(exportPerformance.map((entry) => entry.name)).toEqual(expect.arrayContaining([
-    'revisit.pdf-export.iframe.svg-snapshots',
-    'revisit.pdf-export.iframe.raster',
-    'revisit.pdf-export.iframe.encode',
-    'revisit.pdf-export.page.raster-and-save',
-    'revisit.pdf-export.total',
-  ]));
   const pdf = await readFile(downloadPath);
   const jpegImages = extractJpegImages(pdf);
   const largestJpeg = jpegImages.sort((left, right) => right.byteLength - left.byteLength)[0];
@@ -531,6 +585,27 @@ test('reports external website components as unsupported instead of downloading 
   await page.locator('input[data-path="html-response"]').fill('2');
   await nextClick(page);
   await expect(page.locator('iframe[src^="https://www.revisit.dev"]')).toBeVisible();
+  let downloaded = false;
+  page.on('download', () => { downloaded = true; });
+
+  await page.getByRole('button', { name: 'Study actions' }).click();
+  await page.getByRole('menuitem', { name: 'Export page as PDF' }).click();
+
+  await expect(page.getByText('Pages containing external websites cannot currently be exported to PDF.')).toBeVisible();
+  await page.waitForTimeout(250);
+  expect(downloaded).toBe(false);
+});
+
+test('reports inaccessible sandboxed iframe content as unsupported', async ({ page }) => {
+  await resetClientStudyState(page);
+  await openStudyFromLanding(page, 'Demo Studies', 'HTML as a Stimulus');
+  await expect(page.getByText(/embed HTML elements into the study page/i)).toBeVisible();
+  await page.getByRole('main').evaluate((main) => {
+    const iframe = document.createElement('iframe');
+    iframe.setAttribute('sandbox', '');
+    iframe.srcdoc = '<p>Sandboxed content</p>';
+    main.append(iframe);
+  });
   let downloaded = false;
   page.on('download', () => { downloaded = true; });
 

@@ -4,7 +4,8 @@ import {
 import {
   buildPdfFilename, capturePdfCanvasSnapshots, capturePdfIframeSnapshots,
   capturePdfVideoSnapshots,
-  getPdfExportUnsupportedReason, preparePdfClone, replacePdfIframesWithSnapshots,
+  copyPdfElementState, getPdfExportUnsupportedReason, preparePdfClone,
+  replacePdfIframesWithSnapshots,
   replacePdfCanvasesWithSnapshots, replacePdfVideosWithSnapshots, saveElementAsPdf,
   selectPdfPageLayout, waitForNextPaint,
 } from '../pdfExport';
@@ -34,8 +35,10 @@ vi.mock('html2pdf.js', () => ({
 
 describe('PDF export helpers', () => {
   afterEach(() => {
+    document.body.innerHTML = '';
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
+    vi.useRealTimers();
   });
 
   test('builds a filesystem-safe filename with the local export time', () => {
@@ -151,16 +154,44 @@ describe('PDF export helpers', () => {
 
   test('identifies cross-origin iframes that cannot be captured', () => {
     const element = document.createElement('main');
-    element.innerHTML = `
-      <iframe src="/same-origin-content"></iframe>
-      <iframe src="https://example.com/external-content"></iframe>
-    `;
+    const sameOriginIframe = document.createElement('iframe');
+    sameOriginIframe.src = '/same-origin-content';
+    Object.defineProperty(sameOriginIframe, 'contentDocument', {
+      value: document.implementation.createHTMLDocument('Same-origin content'),
+    });
+    const externalIframe = document.createElement('iframe');
+    externalIframe.src = 'https://example.com/external-content';
+    element.append(sameOriginIframe, externalIframe);
 
     expect(getPdfExportUnsupportedReason(element))
       .toBe('Pages containing external websites cannot currently be exported to PDF.');
 
-    element.querySelector('iframe:last-child')?.remove();
+    externalIframe.remove();
     expect(getPdfExportUnsupportedReason(element)).toBeUndefined();
+  });
+
+  test('rejects inaccessible and nested external iframe content', () => {
+    const element = document.createElement('main');
+    const sandboxedIframe = document.createElement('iframe');
+    sandboxedIframe.srcdoc = '<p>Sandboxed content</p>';
+    sandboxedIframe.setAttribute('sandbox', '');
+    element.append(sandboxedIframe);
+
+    expect(getPdfExportUnsupportedReason(element))
+      .toBe('Pages containing external websites cannot currently be exported to PDF.');
+
+    sandboxedIframe.remove();
+    const outerIframe = document.createElement('iframe');
+    outerIframe.src = '/hosted-content';
+    const outerDocument = document.implementation.createHTMLDocument('Hosted content');
+    const nestedIframe = outerDocument.createElement('iframe');
+    nestedIframe.src = 'https://example.com/nested-content';
+    outerDocument.body.append(nestedIframe);
+    Object.defineProperty(outerIframe, 'contentDocument', { value: outerDocument });
+    element.append(outerIframe);
+
+    expect(getPdfExportUnsupportedReason(element))
+      .toBe('Pages containing external websites cannot currently be exported to PDF.');
   });
 
   test('captures an accessible iframe document for the PDF clone', async () => {
@@ -213,8 +244,9 @@ describe('PDF export helpers', () => {
     stylesheet.rel = 'stylesheet';
     stylesheet.href = 'css/chart.css';
     clonedDocument.head.append(stylesheet);
-    Object.defineProperty(stylesheet, 'sheet', { value: {} });
-    await captureOptions.onclone(clonedDocument);
+    const prepareClone = captureOptions.onclone(clonedDocument);
+    stylesheet.dispatchEvent(new Event('load'));
+    await prepareClone;
 
     expect(clonedDocument.querySelector('base')?.href)
       .toBe('https://revisit.test/study/example/assets/');
@@ -224,9 +256,33 @@ describe('PDF export helpers', () => {
     expect(clonedDocument.documentElement.style.overflow).toBe('visible');
   });
 
+  test('times out when embedded page resources never become ready', async () => {
+    vi.useFakeTimers();
+    const element = document.createElement('main');
+    const iframe = document.createElement('iframe');
+    const iframeDocument = document.implementation.createHTMLDocument('Stalled content');
+    Object.defineProperty(iframeDocument, 'fonts', {
+      value: { ready: new Promise<void>(() => {}) },
+    });
+    Object.defineProperty(iframe, 'contentDocument', { value: iframeDocument });
+    element.append(iframe);
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+      callback(0);
+      return 1;
+    });
+
+    const capture = expect(capturePdfIframeSnapshots(element)).rejects
+      .toThrow('Timed out while preparing embedded page content.');
+    await vi.advanceTimersByTimeAsync(10000);
+
+    await capture;
+  });
+
   test('captures the current video frame for the PDF clone', async () => {
     const element = document.createElement('main');
     const video = document.createElement('video');
+    video.style.objectFit = 'cover';
+    video.style.objectPosition = '25% 75%';
     element.append(video);
     Object.defineProperty(video, 'readyState', { value: HTMLMediaElement.HAVE_CURRENT_DATA });
     Object.defineProperty(video, 'videoWidth', { value: 1280 });
@@ -240,6 +296,8 @@ describe('PDF export helpers', () => {
       dataUrl: 'data:image/png;base64,video-frame',
       height: 360,
       index: 0,
+      objectFit: 'cover',
+      objectPosition: '25% 75%',
       width: 640,
     }]);
     expect(drawImage).toHaveBeenCalledWith(video, 0, 0, 1280, 720);
@@ -268,6 +326,23 @@ describe('PDF export helpers', () => {
     expect(images[0]?.style.height).toBe('300px');
   });
 
+  test('downsamples oversized source canvases before encoding them', () => {
+    const element = document.createElement('main');
+    const canvas = document.createElement('canvas');
+    canvas.width = 10000;
+    canvas.height = 10000;
+    element.append(canvas);
+    vi.spyOn(canvas, 'getBoundingClientRect').mockReturnValue({ height: 500, width: 500 } as DOMRect);
+    const drawImage = vi.fn();
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({ drawImage } as unknown as CanvasRenderingContext2D);
+    vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue('data:image/png;base64,canvas');
+
+    expect(capturePdfCanvasSnapshots(element)).toEqual([{
+      dataUrl: 'data:image/png;base64,canvas', height: 500, index: 0, width: 500,
+    }]);
+    expect(drawImage).toHaveBeenCalledWith(canvas, 0, 0, 1000, 1000);
+  });
+
   test('uses a readable fallback when canvas pixels cannot be captured', () => {
     const element = document.createElement('main');
     element.append(document.createElement('canvas'));
@@ -279,6 +354,42 @@ describe('PDF export helpers', () => {
       .toBe('Canvas unavailable in PDF');
   });
 
+  test('does not expose hidden rendering canvases in the PDF clone', () => {
+    const element = document.createElement('main');
+    const visibleCanvas = document.createElement('canvas');
+    const hiddenCanvas = document.createElement('canvas');
+    hiddenCanvas.style.display = 'none';
+    element.append(visibleCanvas, hiddenCanvas);
+    vi.spyOn(visibleCanvas, 'toDataURL').mockReturnValue('data:image/png;base64,canvas');
+
+    const snapshots = capturePdfCanvasSnapshots(element);
+    expect(snapshots.map(({ index }) => index)).toEqual([0]);
+
+    const clonedElement = element.cloneNode(true) as HTMLElement;
+    replacePdfCanvasesWithSnapshots(clonedElement, snapshots);
+    expect(clonedElement.querySelectorAll('canvas')).toHaveLength(1);
+    expect((clonedElement.querySelector('canvas') as HTMLElement).style.display).toBe('none');
+  });
+
+  test('copies current form and scroll state into the mounted PDF clone', () => {
+    const source = document.createElement('main');
+    source.innerHTML = `
+      <select><option>First</option><option>Second</option></select>
+      <div style="height: 20px; overflow: auto"><div style="height: 200px"></div></div>
+    `;
+    const sourceSelect = source.querySelector('select') as HTMLSelectElement;
+    const sourceScroller = source.querySelector('div') as HTMLDivElement;
+    sourceSelect.selectedIndex = 1;
+    sourceScroller.scrollTop = 75;
+    const clone = source.cloneNode(true) as HTMLElement;
+    document.body.append(source, clone);
+
+    copyPdfElementState(source, clone);
+
+    expect(clone.querySelector('select')?.selectedIndex).toBe(1);
+    expect((clone.querySelector('div') as HTMLDivElement).scrollTop).toBe(75);
+  });
+
   test('replaces Plyr controls with the captured frame or a readable fallback', () => {
     const element = document.createElement('main');
     element.innerHTML = `
@@ -288,15 +399,29 @@ describe('PDF export helpers', () => {
 
     const images = replacePdfVideosWithSnapshots(element, [
       {
-        dataUrl: 'data:image/png;base64,video-frame', height: 360, index: 0, width: 640,
+        dataUrl: 'data:image/png;base64,video-frame',
+        height: 360,
+        index: 0,
+        objectFit: 'cover',
+        objectPosition: '25% 75%',
+        width: 640,
       },
-      { height: 360, index: 1, width: 640 },
+      {
+        height: 360,
+        index: 1,
+        objectFit: 'contain',
+        objectPosition: '50% 50%',
+        width: 640,
+      },
     ]);
 
     expect(element.querySelectorAll('video')).toHaveLength(0);
     expect(element.querySelectorAll('button')).toHaveLength(0);
     expect(images[0]?.alt).toBe('Current video frame');
     expect(images[0]?.style.width).toBe('640px');
+    expect(images[0]?.style.height).toBe('360px');
+    expect(images[0]?.style.objectFit).toBe('cover');
+    expect(images[0]?.style.objectPosition).toBe('25% 75%');
     expect(element.querySelector('[aria-label="Video frame unavailable in PDF"]')?.textContent)
       .toBe('Video frame unavailable in PDF');
   });
@@ -338,5 +463,24 @@ describe('PDF export helpers', () => {
     clonedElement.setAttribute('data-pdf-export-root', '');
     options.html2canvas.onclone(document, clonedElement);
     expect(clonedElement.style.width).toBe('920px');
+  });
+
+  test('removes only the html2pdf overlay created by a failed export', async () => {
+    const existingOverlay = document.createElement('div');
+    existingOverlay.className = 'html2pdf__overlay';
+    document.body.append(existingOverlay);
+    html2PdfMocks.save.mockImplementationOnce(() => {
+      const failedOverlay = document.createElement('div');
+      failedOverlay.className = 'html2pdf__overlay';
+      document.body.append(failedOverlay);
+      return Promise.reject(new Error('canvas failed'));
+    });
+    const element = document.createElement('main');
+    element.setAttribute('data-pdf-export-root', '');
+    vi.spyOn(element, 'getBoundingClientRect').mockReturnValue({ width: 920 } as DOMRect);
+
+    await expect(saveElementAsPdf(element, 'failed.pdf')).rejects.toThrow('canvas failed');
+
+    expect(Array.from(document.querySelectorAll('.html2pdf__overlay'))).toEqual([existingOverlay]);
   });
 });
