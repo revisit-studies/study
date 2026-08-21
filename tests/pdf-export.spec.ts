@@ -22,7 +22,7 @@ function extractJpegImages(pdf: Uint8Array) {
   return images;
 }
 
-test('exports the current study component as a PDF download', async ({ page }) => {
+test('exports the current study component as a PDF download', async ({ page }, testInfo) => {
   await resetClientStudyState(page);
   await openStudyFromLanding(page, 'Demo Studies', [
     'Images as Stimuli: Decision-Making with Uncertainty Visualizations',
@@ -37,7 +37,8 @@ test('exports the current study component as a PDF download', async ({ page }) =
   await selectedResponse.check();
   const routeBeforeExport = page.url();
   const nextButton = page.getByRole('button', { name: 'Next', exact: true });
-  expect(await nextButton.evaluate((element) => Boolean(element.closest('[data-html2canvas-ignore]')))).toBe(true);
+  expect(await nextButton.evaluate((element) => Boolean(element.closest('[data-html2canvas-ignore]')))).toBe(false);
+  await expect(nextButton).toBeEnabled();
 
   await page.getByRole('button', { name: 'Study actions' }).click();
   const downloadPromise = page.waitForEvent('download');
@@ -45,9 +46,9 @@ test('exports the current study component as a PDF download', async ({ page }) =
   const download = await downloadPromise;
 
   expect(download.suggestedFilename()).toMatch(/^dotplot-low_\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}\.pdf$/);
-  const downloadPath = await download.path();
-  expect(downloadPath).not.toBeNull();
-  const pdf = await readFile(downloadPath!);
+  const downloadPath = testInfo.outputPath('with-next-button.pdf');
+  await download.saveAs(downloadPath);
+  const pdf = await readFile(downloadPath);
   expect(pdf.subarray(0, 4).toString()).toBe('%PDF');
   expect(pdf.byteLength).toBeGreaterThan(10000);
   const mediaBox = Buffer.from(pdf).toString('latin1').match(/\/MediaBox \[0 0 ([\d.]+) ([\d.]+)\]/);
@@ -69,19 +70,27 @@ test('exports the current study component as a PDF download', async ({ page }) =
     }
     context.drawImage(image, 0, 0, canvas.width, canvas.height);
     const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    let blueButtonPixels = 0;
     let nonWhitePixels = 0;
     const brightnessBuckets = new Set<number>();
-    for (let index = 0; index < pixels.length; index += 4) {
-      const red = pixels[index];
-      const green = pixels[index + 1];
-      const blue = pixels[index + 2];
-      if (red < 245 || green < 245 || blue < 245) {
-        nonWhitePixels += 1;
+    for (let y = 0; y < canvas.height; y += 1) {
+      for (let x = 0; x < canvas.width; x += 1) {
+        const index = (y * canvas.width + x) * 4;
+        const red = pixels[index];
+        const green = pixels[index + 1];
+        const blue = pixels[index + 2];
+        if (red < 245 || green < 245 || blue < 245) {
+          nonWhitePixels += 1;
+        }
+        if (x < 100 && y > 90 && blue > 150 && blue - red > 50) {
+          blueButtonPixels += 1;
+        }
+        brightnessBuckets.add(Math.round((red + green + blue) / 24));
       }
-      brightnessBuckets.add(Math.round((red + green + blue) / 24));
     }
 
     return {
+      blueButtonPixels,
       brightnessBuckets: brightnessBuckets.size,
       height: image.naturalHeight,
       nonWhiteRatio: nonWhitePixels / (canvas.width * canvas.height),
@@ -92,6 +101,7 @@ test('exports the current study component as a PDF download', async ({ page }) =
   expect(pixelSummary.height).toBeGreaterThan(500);
   expect(pixelSummary.nonWhiteRatio).toBeGreaterThan(0.01);
   expect(pixelSummary.brightnessBuckets).toBeGreaterThan(5);
+  expect(pixelSummary.blueButtonPixels).toBeGreaterThan(20);
   expect(page.url()).toBe(routeBeforeExport);
   await expect(selectedResponse).toBeChecked();
 });

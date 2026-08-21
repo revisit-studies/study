@@ -135,7 +135,7 @@ export function NextButton({
 
   return (
     <>
-      <Group data-html2canvas-ignore justify={nextButtonJustify[nextButtonAlignment]} gap="xs" mt="sm" wrap="wrap">
+      <Group justify={nextButtonJustify[nextButtonAlignment]} gap="xs" mt="sm" wrap="wrap">
         {config?.previousButton && (
           <PreviousButton
             label={previousButtonText}
