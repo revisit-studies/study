@@ -149,7 +149,7 @@ function isUrlConditionalBlock(sequence: StudyConfig['sequence']): boolean {
   return sequence.conditional === true && Boolean(sequence.id);
 }
 
-function verifyTextResponseLengthConstraints(
+function verifyTextResponseConstraints(
   componentPath: string,
   component: Partial<IndividualComponent>,
   errors: ParserErrorWarning[],
@@ -203,6 +203,23 @@ function verifyTextResponseLengthConstraints(
         category: 'invalid-config',
       });
     }
+
+    response.textValidation?.forEach((rule, ruleIndex) => {
+      if (rule.type !== 'matchesRegex') {
+        return;
+      }
+
+      try {
+        RegExp(rule.value);
+      } catch {
+        errors.push({
+          message: 'matchesRegex value must be a valid regular expression',
+          instancePath: `${responsePath}/textValidation/${ruleIndex}/value`,
+          params: { action: 'Fix the regular expression pattern' },
+          category: 'invalid-config',
+        });
+      }
+    });
   });
 }
 
@@ -251,10 +268,10 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
   verifyLibraryUsage(studyConfig, errors, warnings, importedLibrariesData);
 
   Object.entries(studyConfig.baseComponents ?? {}).forEach(([componentName, component]) => {
-    verifyTextResponseLengthConstraints(`/baseComponents/${componentName}`, component, errors);
+    verifyTextResponseConstraints(`/baseComponents/${componentName}`, component, errors);
   });
   Object.entries(studyConfig.components).forEach(([componentName, component]) => {
-    verifyTextResponseLengthConstraints(`/components/${componentName}`, component, errors);
+    verifyTextResponseConstraints(`/components/${componentName}`, component, errors);
   });
 
   const hasConditional = hasConditionalBlock(studyConfig.sequence);

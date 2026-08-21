@@ -68,6 +68,18 @@ describe('Text response validation config parsing', () => {
     },
   );
 
+  test.each([0, 1])('rejects a malformed regular expression for response %s', async (responseIndex) => {
+    const studyConfig = makeStudyConfig('matchesRegex');
+    studyConfig.components.question1.response[responseIndex].textValidation[0].value = '[';
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'matchesRegex value must be a valid regular expression',
+      instancePath: `/components/question1/response/${responseIndex}/textValidation/0/value`,
+    }));
+  });
+
   test('accepts character and word length constraints for short and long text responses', async () => {
     const studyConfig = makeStudyConfig('contains');
     studyConfig.components.question1.response.forEach((response) => {
