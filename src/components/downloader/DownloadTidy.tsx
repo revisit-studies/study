@@ -55,6 +55,7 @@ const OPTIONAL_COMMON_PROPS = [
   'metaData',
   'participantTags',
   'taskTags',
+  'windowEvents',
 ] as const;
 
 const REQUIRED_PROPS = [
@@ -234,29 +235,31 @@ function participantDataToRows(
         return tidyRow;
       }).flat();
 
-      const windowEventsCount = {
-        focus: trialAnswer.windowEvents.filter((event) => event[1] === 'focus').length,
-        input: trialAnswer.windowEvents.filter((event) => event[1] === 'input').length,
-        keydown: trialAnswer.windowEvents.filter((event) => event[1] === 'keydown').length,
-        keyup: trialAnswer.windowEvents.filter((event) => event[1] === 'keyup').length,
-        mousemove: trialAnswer.windowEvents.filter((event) => event[1] === 'mousemove').length,
-        mousedown: trialAnswer.windowEvents.filter((event) => event[1] === 'mousedown').length,
-        mouseup: trialAnswer.windowEvents.filter((event) => event[1] === 'mouseup').length,
-        resize: trialAnswer.windowEvents.filter((event) => event[1] === 'resize').length,
-        scroll: trialAnswer.windowEvents.filter((event) => event[1] === 'scroll').length,
-        visibility: trialAnswer.windowEvents.filter((event) => event[1] === 'visibility').length,
-      };
+      if (properties.includes('windowEvents')) {
+        const windowEventsCount = {
+          focus: trialAnswer.windowEvents.filter((event) => event[1] === 'focus').length,
+          input: trialAnswer.windowEvents.filter((event) => event[1] === 'input').length,
+          keydown: trialAnswer.windowEvents.filter((event) => event[1] === 'keydown').length,
+          keyup: trialAnswer.windowEvents.filter((event) => event[1] === 'keyup').length,
+          mousemove: trialAnswer.windowEvents.filter((event) => event[1] === 'mousemove').length,
+          mousedown: trialAnswer.windowEvents.filter((event) => event[1] === 'mousedown').length,
+          mouseup: trialAnswer.windowEvents.filter((event) => event[1] === 'mouseup').length,
+          resize: trialAnswer.windowEvents.filter((event) => event[1] === 'resize').length,
+          scroll: trialAnswer.windowEvents.filter((event) => event[1] === 'scroll').length,
+          visibility: trialAnswer.windowEvents.filter((event) => event[1] === 'visibility').length,
+        };
 
-      // Add a window events count row for each component
-      rows.push({
-        participantId: participant.participantId,
-        trialId,
-        trialOrder,
-        responseId: 'windowEvents',
-        answer: JSON.stringify(windowEventsCount),
-        ...(properties.includes('condition') ? { condition: conditionValue } : {}),
-        ...(properties.includes('stage') ? { stage: participant.stage } : {}),
-      } as TidyRow);
+        // Add a window events count row for each component
+        rows.push({
+          participantId: participant.participantId,
+          trialId,
+          trialOrder,
+          responseId: 'windowEvents',
+          answer: JSON.stringify(windowEventsCount),
+          ...(properties.includes('condition') ? { condition: conditionValue } : {}),
+          ...(properties.includes('stage') ? { stage: participant.stage } : {}),
+        } as TidyRow);
+      }
 
       return rows;
     }).flat()], Array.from(newHeaders)];
@@ -313,7 +316,8 @@ export async function getTableData(
   const header = combinedProperties
     .filter((p) => p !== 'condition' || hasCondition)
     .filter((p) => p !== 'metaData')
-    .filter((p) => p !== 'participantTags');
+    .filter((p) => p !== 'participantTags')
+    .filter((p) => p !== 'windowEvents');
   const allData = await Promise.all(data.map(async (participant) => {
     const participantConfig = allConfigs[participant.participantConfigHash];
     const qualitativeCodes = selectedProperties.includes('participantTags') || selectedProperties.includes('taskTags')
