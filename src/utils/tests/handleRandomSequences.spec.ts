@@ -207,6 +207,47 @@ describe('Generating sequences works as expected', () => {
     expect(sequenceArray[1].parameters).toEqual({ ageGroup: 'old' });
   });
 
+  test('generateSequenceArray filters components using inherited between-subject parameters', () => {
+    const inheritedParametersConfig: StudyConfig = {
+      ...config,
+      uiConfig: {
+        ...config.uiConfig,
+        numSequences: 2,
+      },
+      factors: {
+        ageGroup: ['young', 'old'],
+      },
+      betweenSubjects: ['ageGroup'],
+      baseComponents: {
+        youngTrial: {
+          type: 'react-component',
+          path: 'test/assets/Trial.tsx',
+          response: [],
+          parameters: { ageGroup: 'young' },
+        },
+        oldTrial: {
+          type: 'react-component',
+          path: 'test/assets/Trial.tsx',
+          response: [],
+          parameters: { ageGroup: 'old' },
+        },
+      },
+      components: {
+        youngTrial: { baseComponent: 'youngTrial' },
+        oldTrial: { baseComponent: 'oldTrial' },
+      },
+      sequence: {
+        order: 'fixed',
+        components: ['youngTrial', 'oldTrial'],
+      },
+    };
+
+    const sequenceArray = generateSequenceArray(inheritedParametersConfig);
+
+    expect(sequenceArray[0].components).toEqual(['youngTrial', 'end']);
+    expect(sequenceArray[1].components).toEqual(['oldTrial', 'end']);
+  });
+
   test('generateSequenceArray balances Latin-square positions without between-subject factors', () => {
     const trialIds = ['a', 'b', 'c', 'd'];
     const sequenceArray = generateSequenceArray(

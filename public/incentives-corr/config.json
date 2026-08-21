@@ -98,7 +98,7 @@
       "type": "react-component",
       "path": "incentives-corr/assets/Practice.tsx",
       "stylesheetPath": "incentives-corr/assets/task.css",
-      "helpTextPath": "incentives-corr/assets/help-@vis.md",
+      "helpTextPath": "incentives-corr/assets/help-{{vis}}.md",
       "response": [
         {
           "id": "training",
@@ -122,7 +122,7 @@
         "taskid": "test"
       },
       "stylesheetPath": "incentives-corr/assets/task.css",
-      "helpTextPath": "incentives-corr/assets/help-@vis.md",
+      "helpTextPath": "incentives-corr/assets/help-{{vis}}.md",
       "response": [
         {
           "id": "test",
@@ -153,12 +153,12 @@
   "components": {
     "tutorial": {
       "type": "markdown",
-      "path": "incentives-corr/assets/02-tutorial-@vis.md",
+      "path": "incentives-corr/assets/02-tutorial-{{vis}}.md",
       "response": []
     },
     "introduction": {
       "type": "markdown",
-      "path": "incentives-corr/assets/00-intro-@incentive.md",
+      "path": "incentives-corr/assets/00-intro-{{incentive}}.md",
       "response": [
         {
           "id": "prolificId",
@@ -173,7 +173,7 @@
     },
     "consent": {
       "type": "markdown",
-      "path": "incentives-corr/assets/01-consent-@incentive.md",
+      "path": "incentives-corr/assets/01-consent-{{incentive}}.md",
       "previousButton": true,
       "previousButtonText": "Back",
       "response": [
@@ -190,7 +190,7 @@
     },
     "task-details": {
       "type": "markdown",
-      "path": "incentives-corr/assets/04-instructions-@incentive.md",
+      "path": "incentives-corr/assets/04-instructions-{{incentive}}.md",
       "response": []
     },
     "attention-1": {

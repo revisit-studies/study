@@ -357,7 +357,7 @@ describe('factor sequence actions', () => {
     const result = await parseStudyConfig(config);
     const rootSequence = result.sequence as ComponentBlock;
     const trialSequence = rootSequence.components[1] as ComponentBlock;
-    const redWordBlueInkId = 'stroopTrials__word=RED__inkColor=BLUE__stroopTrial';
+    const redWordBlueInkId = 'stroopTrials__word=%22RED%22__inkColor=%22BLUE%22__stroopTrial';
 
     expect(result.errors).toEqual([]);
     expect(trialSequence).toMatchObject({

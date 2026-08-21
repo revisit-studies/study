@@ -25,7 +25,10 @@
       "action": "zip",
       "factors": ["taskOrder", "interfaceOrder"]
     },
-    "taskType": ["C", "E"],
+    "taskType": [
+      { "taskType": "C", "taskKind": "creation" },
+      { "taskType": "E", "taskKind": "editing" }
+    ],
     "scheduledTasks": {
       "action": "cross",
       "factors": ["taskType", "taskInterfaceOrder"]
@@ -42,14 +45,14 @@
       "parameters": {
         "formula": "y = β₀ + β₁x₁ + β₂x₂ + ⋯ + βₘxₘ",
         "timeLimitSeconds": 390,
-        "taskCode": "@{taskType}",
-        "taskKind": "@taskType",
-        "interfaceName": "@interfaceOrder"
+        "taskCode": "{{taskType}}{{taskOrder}}",
+        "taskKind": "{{taskKind}}",
+        "interfaceName": "{{interfaceOrder}}"
       }
     },
     "taskReflection": {
       "type": "questionnaire",
-      "instruction": "Reflect on the **@taskCode** task using the @interfaceName interface.",
+      "instruction": "Reflect on the **{{taskType}}{{taskOrder}}** task using the {{interfaceOrder}} interface.",
       "response": [
         {
           "id": "ease",

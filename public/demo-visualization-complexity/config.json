@@ -9492,7 +9492,7 @@
       "instructionLocation": "aboveStimulus",
       "nextButtonLocation": "belowStimulus",
       "parameters": {
-        "stimulusNumber": "@stimulusNumber"
+        "stimulusNumber": "{{stimulusNumber}}"
       },
       "response": []
     }
