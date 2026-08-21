@@ -19,6 +19,7 @@ const { capturedStringInputProps, mockIsAnalysis, mockStoreState } = vi.hoisted(
       order: 'fixed', orderPath: 'root', components: ['trial1'], skip: [],
     },
     completed: false,
+    answers: {},
   },
 }));
 
@@ -50,6 +51,7 @@ vi.mock('../../../utils/fetchStylesheet', () => ({
 
 vi.mock('../../../store/store', () => ({
   useStoreSelector: vi.fn((selector: (state: unknown) => unknown) => selector(mockStoreState)),
+  useFlatSequence: vi.fn(() => []),
 }));
 
 vi.mock('../CustomResponseInput', () => ({

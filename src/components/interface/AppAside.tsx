@@ -1,4 +1,5 @@
 import {
+  Badge,
   Box,
   Button,
   CloseButton,
@@ -74,6 +75,7 @@ export function AppAside() {
     isInputAllowed,
     isDisplayAllowed,
   }), [isBrowserAllowed, isDeviceAllowed, isDisplayAllowed, isInputAllowed, studyConfig.studyRules]);
+  const betweenSubjectsEntries = useMemo(() => Object.entries(sequence.parameters || {}), [sequence.parameters]);
 
   return (
     <AppShell.Aside className="studyBrowser" data-testid="app-aside" p="0">
@@ -146,6 +148,27 @@ export function AppAside() {
             )}
           </Flex>
         </Flex>
+        {betweenSubjectsEntries.length > 0 && (
+          <Flex direction="row" gap={4} align="center" mt={4} wrap="wrap">
+            <Text size="xs" fw={700} c="dimmed">
+              Between Subjects:
+            </Text>
+            {betweenSubjectsEntries.map(([factorName, factorLevel]) => (
+              <Tooltip
+                key={factorName}
+                label={`Between-subjects factor: ${factorName} = ${String(factorLevel)}`}
+                withinPortal
+                position="bottom"
+              >
+                <Badge size="sm" color="teal" variant="light">
+                  {factorName}
+                  =
+                  {String(factorLevel)}
+                </Badge>
+              </Tooltip>
+            ))}
+          </Flex>
+        )}
       </AppShell.Section>
 
       <AppShell.Section

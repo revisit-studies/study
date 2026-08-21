@@ -41,6 +41,7 @@ import {
   resolveParticipantConditions,
 } from '../utils/handleConditionLogic';
 import { StartupErrorScreen } from './StartupErrorScreen';
+import { materializeParticipantConfig } from '../parser/libraryParser';
 
 type StartupStorageStatus = Pick<StorageEngine, 'getEngine' | 'isConnected'>;
 
@@ -181,7 +182,6 @@ function createEmptyParticipantMetadata(): ParticipantMetadata {
     ip: '',
   };
 }
-
 export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   // Pull study config
   const routeStudyId = useStudyId();
@@ -359,11 +359,16 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           allowUrlOverride: resolvedModes.developmentModeEnabled,
         });
         const filteredParticipantSequence = filterSequenceByCondition(participantSession.sequence, resolvedCondition);
-
+        // Resolve participant-global templates only after loading the participant's persisted
+        // sequence, while keeping the canonical config used for hashing unchanged.
+        const runtimeConfig = materializeParticipantConfig(
+          participantConfig,
+          filteredParticipantSequence.parameters || {},
+        );
         // Initialize the redux stores
         const newStore = await studyStoreCreator(
           canonicalStudyId,
-          participantConfig,
+          runtimeConfig,
           filteredParticipantSequence,
           participantSession.metadata,
           participantSession.answers,
@@ -448,10 +453,14 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
             matchingSequence,
             studyCondition,
           );
+          const fallbackConfig = materializeParticipantConfig(
+            activeConfig,
+            fallbackSequence.parameters || {},
+          );
 
           const emptyStore = await studyStoreCreator(
             canonicalStudyId,
-            activeConfig,
+            fallbackConfig,
             fallbackSequence,
             createEmptyParticipantMetadata(),
             {},

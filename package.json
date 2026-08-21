@@ -58,6 +58,7 @@
     "diff": "^8.0.2",
     "eslint-config-airbnb": "^19.0.4",
     "firebase": "^11.2.0",
+    "handlebars": "^4.7.9",
     "hjson": "^3.2.2",
     "jszip": "^3.10.1",
     "localforage": "^1.10.0",

@@ -1044,6 +1044,8 @@ export interface BaseIndividualComponent {
   instruction?: string;
   /** The location of the instructions. If present, will override the instruction location setting in the uiConfig. */
   instructionLocation?: ConfigResponseBlockLocation;
+  /** The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files. */
+  parameters?: Record<string, unknown>;
   /** The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. If present, will override the help text path set in the uiConfig. */
   helpTextPath?: string;
   /** Whether enter key should move to the next question. If present, will override the enter key setting in the uiConfig. */
@@ -1160,8 +1162,6 @@ export interface ReactComponent extends BaseIndividualComponent {
   type: 'react-component';
   /** The path to the react component. This should be a relative path from the src/public folder. */
   path: string;
-  /** The parameters that are passed to the react component. These can be used within your react component to render different things. */
-  parameters?: Record<string, unknown>;
 }
 
 /**
@@ -1242,8 +1242,6 @@ export interface WebsiteComponent extends BaseIndividualComponent {
   type: 'website';
   /** The path to the website. This should be a relative path from the public folder or could be an external website. */
   path: string;
-  /** The parameters that are passed to the website (iframe). These can be used within your website to render different things. */
-  parameters?: Record<string, unknown>;
 }
 
 /**
@@ -1773,13 +1771,15 @@ export interface DynamicBlock {
  *
  * The skip property is used to define skip conditions. This is used to skip to a different component or block based on the response to a component or the number of correct or incorrect responses in a block. Please see [SkipConditions](../../type-aliases/SkipConditions) for more specific information.
 */
+export type ComponentOrder = 'random' | 'latinSquare' | 'fixed';
+
 export interface ComponentBlock {
   /** The id of the block. This is used to identify the block in the SkipConditions and is only required if you want to refer to the whole block in the condition.to property. */
   id?: string
   /** The type of order. This can be random (pure random), latinSquare (random with some guarantees), or fixed. */
-  order: 'random' | 'latinSquare' | 'fixed';
+  order: ComponentOrder;
   /** The components that are included in the order. */
-  components: (string | ComponentBlock | DynamicBlock)[];
+  components: (string | ComponentBlock | DynamicBlock | FactorBlock)[];
   /** The number of samples to use for the random assignments. This means you can randomize across 3 components while only showing a participant 2 at a time. */
   numSamples?: number;
   /** The interruptions property specifies an array of interruptions. These can be used for breaks or attention checks.  */
@@ -1787,6 +1787,113 @@ export interface ComponentBlock {
   /** The skip conditions for the block. */
   skip?: SkipConditions;
   /** The conditional property shows the block only when the URL condition matches its `id`. */
+  conditional?: boolean;
+}
+
+/** A primitive value stored by a factor or used for between-subjects allocation. */
+export type FactorPrimitive = string | number | boolean;
+
+/** A parameter value stored in an object-valued factor level. */
+export type FactorObjectValue = FactorPrimitive | FactorPrimitive[];
+
+/**
+ * A condition whose properties are materialized together as component parameters.
+ * Object levels keep related values, such as a caption and its selected items, atomic.
+ */
+export type FactorObject = Record<string, FactorObjectValue>;
+
+/** A primitive level or an atomic object-valued condition stored by a factor. */
+export type FactorValue = FactorPrimitive | FactorObject;
+
+/**
+ * A reusable list of factor values with participant-level ordering and optional sampling.
+ * The selected order is shared by every reference to the named factor in one sequence.
+ */
+export interface OrderedFactorValues {
+  values: FactorValue[];
+  order?: ComponentOrder;
+  numSamples?: number;
+}
+
+/** Operations that combine or allocate factor conditions. */
+export type FactorAction = 'cross' | 'zip' | 'concat' | 'keep' | 'remove' | 'sample' | 'repeat';
+
+/** A named factor reference or another inline factor expression. */
+export type FactorOption = string | FactorExpression;
+
+interface FactorCombinationExpression {
+  action: 'cross' | 'zip';
+  factors: FactorOption[];
+  /** Optional output parameter names, one for each input factor. */
+  as?: string[];
+}
+
+interface FactorConcatExpression {
+  action: 'concat';
+  factors: FactorOption[];
+}
+
+interface FactorSampleExpression {
+  action: 'sample';
+  factors: FactorOption[];
+  /** Whether selected conditions may repeat. */
+  samplingStrategy: 'withoutReplacement' | 'withReplacement';
+  /**
+   * Number of conditions randomly selected for each participant.
+   * @asType integer
+   * @minimum 1
+   */
+  numSamples: number;
+}
+
+interface FactorRepeatExpression {
+  action: 'repeat';
+  factors: FactorOption[];
+  /**
+   * Number of times the concatenated condition sequence is repeated.
+   * @asType integer
+   * @minimum 1
+   */
+  numRepeats: number;
+}
+
+interface FactorKeepRemoveExpressionBase {
+  /** Named factor or expression whose conditions are selected. */
+  factor: FactorOption;
+  /** Parameter values used to select matching conditions. */
+  condition?: FactorObject;
+  /** Complete factor conditions, or a factor expression that resolves to them, used to select matching conditions. */
+  items?: FactorObject[] | FactorOption;
+}
+
+interface FactorKeepExpression extends FactorKeepRemoveExpressionBase {
+  action: 'keep';
+}
+
+interface FactorRemoveExpression extends FactorKeepRemoveExpressionBase {
+  action: 'remove';
+}
+
+/** A recursively composable expression over named factors or nested expressions. */
+export type FactorExpression = FactorCombinationExpression
+  | FactorConcatExpression
+  | FactorKeepExpression
+  | FactorRemoveExpression
+  | FactorSampleExpression
+  | FactorRepeatExpression;
+
+export type Factor = FactorValue[] | OrderedFactorValues | FactorExpression;
+
+export interface FactorBlock {
+  type: 'factor';
+  id: string;
+  /** Named factor or inline factor expression to materialize at this sequence location. */
+  factor: FactorOption;
+  /** One or more base components materialized for every factor condition. */
+  components: string | string[];
+  order?: ComponentOrder;
+  interruptions?: InterruptionBlock[];
+  skip?: SkipConditions;
   conditional?: boolean;
 }
 
@@ -1879,8 +1986,11 @@ export interface StudyConfig {
   baseComponents?: BaseComponents;
   /** The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents. */
   components: Record<string, IndividualComponent | InheritedComponent>
-  /** The order of the components in the study. This might include some randomness. */
-  sequence: ComponentBlock | DynamicBlock;
+  /** Primitive factor levels and reusable derived factor definitions that can be referenced from the sequence. */
+  factors?: Record<string, Factor>;
+  /** Primitive factor names assigned once per participant and passed to every component as global parameters. */
+  betweenSubjects?: string[];
+  sequence: ComponentBlock | DynamicBlock | FactorBlock;
 }
 
 /**  LibraryConfig is used to define the properties of a library configuration. This is a JSON object with three main components: baseComponents, components, and the sequences. Libraries are useful for defining components and sequences of these components that are to be reused across multiple studies. We (the reVISit team) provide several libraries that can be used in your study configurations. Check the public/libraries folder in the reVISit-studies repository for available libraries. We also plan to accept community contributions for libraries. If you have a library that you think would be useful for others, please reach out to us. We would love to include it in our repository.

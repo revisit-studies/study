@@ -8,6 +8,7 @@ import { ParticipantData, WebsiteComponent } from '../parser/types';
 import { PREFIX as BASE_PREFIX } from '../utils/Prefix';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import { ReplayContext } from '../store/hooks/useReplay';
+import { compileTemplate } from '../utils/handlebars';
 
 const PREFIX = '@REVISIT_COMMS';
 
@@ -31,6 +32,11 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   }, [replay]);
 
   const shouldSendProvenance = !isAnalysis || !replay || hasReplayStarted;
+
+  const templatedPath = useMemo(
+    () => compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true }),
+    [currentConfig.path, currentConfig.parameters],
+  );
 
   const ref = useRef<HTMLIFrameElement>(null);
   const stimulusValidationRef = useRef(stimulusValidation);
@@ -138,9 +144,9 @@ export function IframeController({ currentConfig, provState, answers }: { curren
         pointerEvents: isAnalysis ? 'none' : undefined,
       }}
       src={
-        currentConfig.path.startsWith('http')
-          ? currentConfig.path
-          : `${BASE_PREFIX}${currentConfig.path}?trialid=${currentComponent}&id=${iframeId}`
+        templatedPath.startsWith('http')
+          ? templatedPath
+          : `${BASE_PREFIX}${templatedPath}?trialid=${currentComponent}&id=${iframeId}`
       }
     />
   );

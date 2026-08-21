@@ -17,6 +17,7 @@ import {
   IconArrowsShuffle, IconBinaryTree, IconBrain, IconCheck, IconChevronUp, IconDice3, IconDice5, IconInfoCircle,
   IconArrowForward,
   IconPackageImport,
+  IconUserPlus,
   IconX,
 } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router';
@@ -119,6 +120,7 @@ type BlockStepItem = StepItemBase & {
   type: 'block';
   order: Sequence['order'];
   orderPath?: string; // Order path for blocks
+  parameters?: Sequence['parameters'];
   conditional?: boolean;
   numInterruptions?: number;
   numComponentsInSequence?: number;
@@ -280,15 +282,17 @@ export function StepsPanel({
           isLibraryImport,
           importedLibraryName,
         } = parseLibraryComponentReference(key);
+        const component = studyComponentToIndividualComponent(studyConfig.components[key], studyConfig);
 
         return {
           type: 'component',
-          label,
+          label: component.description || label,
           indentLevel: 0,
           path: `browse.${key}`,
           href: `/${studyId}/reviewer-${key}`,
           isLibraryImport,
           importedLibraryName,
+          component,
           componentName: key,
         };
       });
@@ -318,6 +322,9 @@ export function StepsPanel({
             isLibraryImport,
             importedLibraryName,
           } = parseLibraryComponentReference(node);
+          const component = studyConfig.components[node]
+            ? studyComponentToIndividualComponent(studyConfig.components[node], studyConfig)
+            : undefined;
 
           // Generate component identifier for participantAnswers lookup
           const componentIdentifier = dynamic ? `${parentNode.id}_${idx}_${node}_${dynamicIdx}` : `${node}_${idx}`;
@@ -326,7 +333,7 @@ export function StepsPanel({
 
           newFlatTree.push({
             type: 'component',
-            label,
+            label: component?.description || label,
             indentLevel,
             path: componentPath,
             isExcluded: isSkipped,
@@ -338,7 +345,7 @@ export function StepsPanel({
             // Component Attributes
             href: dynamic ? `/${studyId}/${encryptIndex(idx)}/${encryptIndex(dynamicIdx)}` : `/${studyId}/${encryptIndex(idx)}`,
             isInterruption: (parentNode.interruptions || []).flatMap((intr) => intr.components).includes(node),
-            component: studyConfig.components[node],
+            component,
             componentAnswer: participantAnswers[componentIdentifier],
             componentName: node,
           });
@@ -407,6 +414,7 @@ export function StepsPanel({
           // Block Attributes
           order: node.order,
           orderPath: node.orderPath,
+          parameters: node.parameters,
           conditional: node.conditional,
           numInterruptions: node.components.filter((comp) => typeof comp === 'string' && blockInterruptions.includes(comp)).length,
           numComponentsInSequence,
@@ -738,6 +746,7 @@ export function StepsPanel({
           const {
             order,
             orderPath,
+            parameters: blockParameters,
             conditional,
             numInterruptions,
             numComponentsInSequence,
@@ -748,6 +757,12 @@ export function StepsPanel({
           } = (block ?? {}) as Partial<BlockStepItem>;
           const isLibraryImport = isComponent ? isComponentLibraryImport : isBlockLibraryImport;
           const importedLibraryName = isComponent ? componentImportedLibraryName : blockImportedLibraryName;
+          const betweenSubjectsEntries = !isComponent && blockParameters
+            ? Object.entries(blockParameters)
+            : [];
+          const betweenSubjectsLabel = betweenSubjectsEntries
+            .map(([factorName, factorLevel]) => `${factorName}=${String(factorLevel)}`)
+            .join(', ');
           const resolvedComponent = component
             ? studyComponentToIndividualComponent(component, studyConfig)
             : undefined;
@@ -849,6 +864,11 @@ export function StepsPanel({
                           <IconArrowForward size={16} style={{ marginRight: 4, flexShrink: 0 }} color="purple" />
                         </Tooltip>
                       )}
+                      {betweenSubjectsEntries.length > 0 && (
+                        <Tooltip label={`Between Subjects: ${betweenSubjectsLabel}`} position="right" withArrow>
+                          <IconUserPlus size={16} style={{ marginRight: 4, flexShrink: 0 }} color="teal" />
+                        </Tooltip>
+                      )}
                       {(resolvedComponent?.responseOrder === 'random' || (!participantSequence && componentName && studyConfig.components[componentName]?.responseOrder === 'random')) && (
                         <Tooltip label="Random responses" position="right" withArrow>
                           <IconDice3 size={16} opacity={0.8} style={{ marginRight: 4, flexShrink: 0 }} color="black" />
@@ -889,6 +909,20 @@ export function StepsPanel({
                           <IconArrowsShuffle size="15" opacity={0.5} style={{ marginLeft: '5px', verticalAlign: 'middle' }} />
                         </Tooltip>
                       ) : null}
+                      {betweenSubjectsEntries.map(([factorName, factorLevel]) => (
+                        <Tooltip
+                          key={factorName}
+                          label={`Between-subjects factor: ${factorName} = ${String(factorLevel)}`}
+                          position="right"
+                          withArrow
+                        >
+                          <Badge ml={5} color="teal" variant="light">
+                            {factorName}
+                            =
+                            {String(factorLevel)}
+                          </Badge>
+                        </Tooltip>
+                      ))}
                       {!isComponent && !isExcluded && (
                         <Badge ml={5} variant="light">
                           {(numComponentsInSequence || 0) - (numInterruptions || 0)}

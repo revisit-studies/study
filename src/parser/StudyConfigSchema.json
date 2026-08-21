@@ -117,19 +117,9 @@
             "type": "boolean"
           },
           "parameters": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "description": "The parameters that are passed to the react component. These can be used within your react component to render different things.",
-                "type": "object"
-              },
-              {
-                "additionalProperties": {},
-                "description": "The parameters that are passed to the website (iframe). These can be used within your website to render different things.",
-                "type": "object"
-              }
-            ],
-            "description": "The parameters that are passed to the react component. These can be used within your react component to render different things."
+            "additionalProperties": {},
+            "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files.",
+            "type": "object"
           },
           "path": {
             "anyOf": [
@@ -506,7 +496,6 @@
     },
     "ComponentBlock": {
       "additionalProperties": false,
-      "description": "The ComponentBlock interface is used to define order properties within the sequence. This is used to define the order of components in a study and the skip logic. It supports random assignment of trials using a pure random assignment and a [latin square](https://en.wikipedia.org/wiki/Latin_square).\n\nThe pure random assignment is a random assignment with no guarantees. For example, one component _could_ show up in the first position 10 times in a row. However, this situation is unlikely.\n\nHere's a snippet that shows how to use the random order:\n\n```json {  \"order\": \"random\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ] } ``` This snippet would produce a random order of the components in the sequence array. For example, the resulting sequence array could be :\n\n```json [  [\"component2\", \"component3\", \"component1\"],  [\"component1\", \"component3\", \"component2\"],  [\"component3\", \"component1\", \"component2\"],  ... ] ```\n\nThe latin square assignment is a random assignment with some guarantees. It ensures that each component is shown an equal number of times in each position. Here's a snippet that shows how to use the latin square order:\n\n```json {  \"order\": \"latinSquare\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ] } ```\n\nThis snippet would produce a latin square order of the components in the sequence array. Since the latin square guarantees that each component is shown an equal number of times in each position, the resulting sequence array could be:\n\n```json [  [\"component1\", \"component2\", \"component3\"],  [\"component2\", \"component3\", \"component1\"],  [\"component3\", \"component1\", \"component2\"],  ... ] ```\n\nThe fixed assignment is a fixed assignment of components. This is used when you want to show the components in a specific order. Here's a snippet that shows how to use the fixed order:\n\n```json {  \"order\": \"fixed\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ] } ```\n\nThis snippet would produce a fixed order of the components in the sequence array. The resulting sequence array would be:\n\n```json [  [\"component1\", \"component2\", \"component3\"],  [\"component1\", \"component2\", \"component3\"],  [\"component1\", \"component2\", \"component3\"],  ... ] ```\n\nIn addition to the order property, the ComponentBlock interface also includes the `\"numSamples\"` property. This is used to reduce the number of components shown to a participant. This property respects the order property and the guarantees provided by the order property. For example, if you have three components in the components array and you set `\"numSamples\"` to 2, you would randomize across the three components while only showing a participant two of them. Here's a snippet that shows how to use the numSamples property:\n\n```json {  \"order\": \"latinSquare\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ],  \"numSamples\": 2 } ```\n\nThis snippet would produce a latin square order of the components in the sequence array. Since the latin square guarantees that each component is shown an equal number of times in each position, the resulting sequence array could be:\n\n```json [  [\"component1\", \"component2\"],  [\"component2\", \"component3\"],  [\"component3\", \"component1\"],  ... ] ```\n\nThe interruptions property specifies an array of interruptions. These can be used for breaks or attention checks. Interruptions can be deterministic or random. Please see [InterruptionBlock](../../type-aliases/InterruptionBlock) for more specific information.\n\nThe skip property is used to define skip conditions. This is used to skip to a different component or block based on the response to a component or the number of correct or incorrect responses in a block. Please see [SkipConditions](../../type-aliases/SkipConditions) for more specific information.",
       "properties": {
         "components": {
           "description": "The components that are included in the order.",
@@ -520,6 +509,9 @@
               },
               {
                 "$ref": "#/definitions/DynamicBlock"
+              },
+              {
+                "$ref": "#/definitions/FactorBlock"
               }
             ]
           },
@@ -545,13 +537,8 @@
           "type": "number"
         },
         "order": {
-          "description": "The type of order. This can be random (pure random), latinSquare (random with some guarantees), or fixed.",
-          "enum": [
-            "random",
-            "latinSquare",
-            "fixed"
-          ],
-          "type": "string"
+          "$ref": "#/definitions/ComponentOrder",
+          "description": "The type of order. This can be random (pure random), latinSquare (random with some guarantees), or fixed."
         },
         "skip": {
           "$ref": "#/definitions/SkipConditions",
@@ -597,6 +584,15 @@
         "to"
       ],
       "type": "object"
+    },
+    "ComponentOrder": {
+      "description": "The ComponentBlock interface is used to define order properties within the sequence. This is used to define the order of components in a study and the skip logic. It supports random assignment of trials using a pure random assignment and a [latin square](https://en.wikipedia.org/wiki/Latin_square).\n\nThe pure random assignment is a random assignment with no guarantees. For example, one component _could_ show up in the first position 10 times in a row. However, this situation is unlikely.\n\nHere's a snippet that shows how to use the random order:\n\n```json {  \"order\": \"random\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ] } ``` This snippet would produce a random order of the components in the sequence array. For example, the resulting sequence array could be :\n\n```json [  [\"component2\", \"component3\", \"component1\"],  [\"component1\", \"component3\", \"component2\"],  [\"component3\", \"component1\", \"component2\"],  ... ] ```\n\nThe latin square assignment is a random assignment with some guarantees. It ensures that each component is shown an equal number of times in each position. Here's a snippet that shows how to use the latin square order:\n\n```json {  \"order\": \"latinSquare\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ] } ```\n\nThis snippet would produce a latin square order of the components in the sequence array. Since the latin square guarantees that each component is shown an equal number of times in each position, the resulting sequence array could be:\n\n```json [  [\"component1\", \"component2\", \"component3\"],  [\"component2\", \"component3\", \"component1\"],  [\"component3\", \"component1\", \"component2\"],  ... ] ```\n\nThe fixed assignment is a fixed assignment of components. This is used when you want to show the components in a specific order. Here's a snippet that shows how to use the fixed order:\n\n```json {  \"order\": \"fixed\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ] } ```\n\nThis snippet would produce a fixed order of the components in the sequence array. The resulting sequence array would be:\n\n```json [  [\"component1\", \"component2\", \"component3\"],  [\"component1\", \"component2\", \"component3\"],  [\"component1\", \"component2\", \"component3\"],  ... ] ```\n\nIn addition to the order property, the ComponentBlock interface also includes the `\"numSamples\"` property. This is used to reduce the number of components shown to a participant. This property respects the order property and the guarantees provided by the order property. For example, if you have three components in the components array and you set `\"numSamples\"` to 2, you would randomize across the three components while only showing a participant two of them. Here's a snippet that shows how to use the numSamples property:\n\n```json {  \"order\": \"latinSquare\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ],  \"numSamples\": 2 } ```\n\nThis snippet would produce a latin square order of the components in the sequence array. Since the latin square guarantees that each component is shown an equal number of times in each position, the resulting sequence array could be:\n\n```json [  [\"component1\", \"component2\"],  [\"component2\", \"component3\"],  [\"component3\", \"component1\"],  ... ] ```\n\nThe interruptions property specifies an array of interruptions. These can be used for breaks or attention checks. Interruptions can be deterministic or random. Please see [InterruptionBlock](../../type-aliases/InterruptionBlock) for more specific information.\n\nThe skip property is used to define skip conditions. This is used to skip to a different component or block based on the response to a component or the number of correct or incorrect responses in a block. Please see [SkipConditions](../../type-aliases/SkipConditions) for more specific information.",
+      "enum": [
+        "random",
+        "latinSquare",
+        "fixed"
+      ],
+      "type": "string"
     },
     "ConfigResponseBlockLocation": {
       "enum": [
@@ -989,6 +985,313 @@
       ],
       "type": "object"
     },
+    "Factor": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/definitions/FactorValue"
+          },
+          "type": "array"
+        },
+        {
+          "$ref": "#/definitions/OrderedFactorValues"
+        },
+        {
+          "$ref": "#/definitions/FactorExpression"
+        }
+      ]
+    },
+    "FactorBlock": {
+      "additionalProperties": false,
+      "properties": {
+        "components": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "One or more base components materialized for every factor condition."
+        },
+        "conditional": {
+          "type": "boolean"
+        },
+        "factor": {
+          "$ref": "#/definitions/FactorOption",
+          "description": "Named factor or inline factor expression to materialize at this sequence location."
+        },
+        "id": {
+          "type": "string"
+        },
+        "interruptions": {
+          "items": {
+            "$ref": "#/definitions/InterruptionBlock"
+          },
+          "type": "array"
+        },
+        "order": {
+          "$ref": "#/definitions/ComponentOrder"
+        },
+        "skip": {
+          "$ref": "#/definitions/SkipConditions"
+        },
+        "type": {
+          "const": "factor",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "id",
+        "factor",
+        "components"
+      ],
+      "type": "object"
+    },
+    "FactorExpression": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "action": {
+              "enum": [
+                "cross",
+                "zip"
+              ],
+              "type": "string"
+            },
+            "as": {
+              "description": "Optional output parameter names, one for each input factor.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "factors": {
+              "items": {
+                "$ref": "#/definitions/FactorOption"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "action",
+            "factors"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "action": {
+              "const": "concat",
+              "type": "string"
+            },
+            "factors": {
+              "items": {
+                "$ref": "#/definitions/FactorOption"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "action",
+            "factors"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "action": {
+              "const": "keep",
+              "type": "string"
+            },
+            "condition": {
+              "$ref": "#/definitions/FactorObject",
+              "description": "Parameter values used to select matching conditions."
+            },
+            "factor": {
+              "$ref": "#/definitions/FactorOption",
+              "description": "Named factor or expression whose conditions are selected."
+            },
+            "items": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/definitions/FactorObject"
+                  },
+                  "type": "array"
+                },
+                {
+                  "$ref": "#/definitions/FactorOption"
+                }
+              ],
+              "description": "Complete factor conditions, or a factor expression that resolves to them, used to select matching conditions."
+            }
+          },
+          "required": [
+            "action",
+            "factor"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "action": {
+              "const": "remove",
+              "type": "string"
+            },
+            "condition": {
+              "$ref": "#/definitions/FactorObject",
+              "description": "Parameter values used to select matching conditions."
+            },
+            "factor": {
+              "$ref": "#/definitions/FactorOption",
+              "description": "Named factor or expression whose conditions are selected."
+            },
+            "items": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/definitions/FactorObject"
+                  },
+                  "type": "array"
+                },
+                {
+                  "$ref": "#/definitions/FactorOption"
+                }
+              ],
+              "description": "Complete factor conditions, or a factor expression that resolves to them, used to select matching conditions."
+            }
+          },
+          "required": [
+            "action",
+            "factor"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "action": {
+              "const": "sample",
+              "type": "string"
+            },
+            "factors": {
+              "items": {
+                "$ref": "#/definitions/FactorOption"
+              },
+              "type": "array"
+            },
+            "numSamples": {
+              "description": "Number of conditions randomly selected for each participant.",
+              "minimum": 1,
+              "type": "integer"
+            },
+            "samplingStrategy": {
+              "description": "Whether selected conditions may repeat.",
+              "enum": [
+                "withoutReplacement",
+                "withReplacement"
+              ],
+              "type": "string"
+            }
+          },
+          "required": [
+            "action",
+            "factors",
+            "samplingStrategy",
+            "numSamples"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "action": {
+              "const": "repeat",
+              "type": "string"
+            },
+            "factors": {
+              "items": {
+                "$ref": "#/definitions/FactorOption"
+              },
+              "type": "array"
+            },
+            "numRepeats": {
+              "description": "Number of times the concatenated condition sequence is repeated.",
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "action",
+            "factors",
+            "numRepeats"
+          ],
+          "type": "object"
+        }
+      ],
+      "description": "A recursively composable expression over named factors or nested expressions."
+    },
+    "FactorObject": {
+      "additionalProperties": {
+        "$ref": "#/definitions/FactorObjectValue"
+      },
+      "description": "A condition whose properties are materialized together as component parameters. Object levels keep related values, such as a caption and its selected items, atomic.",
+      "type": "object"
+    },
+    "FactorObjectValue": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/FactorPrimitive"
+        },
+        {
+          "items": {
+            "$ref": "#/definitions/FactorPrimitive"
+          },
+          "type": "array"
+        }
+      ],
+      "description": "A parameter value stored in an object-valued factor level."
+    },
+    "FactorOption": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/FactorExpression"
+        }
+      ],
+      "description": "A named factor reference or another inline factor expression."
+    },
+    "FactorPrimitive": {
+      "description": "A primitive value stored by a factor or used for between-subjects allocation.",
+      "type": [
+        "string",
+        "number",
+        "boolean"
+      ]
+    },
+    "FactorValue": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/FactorPrimitive"
+        },
+        {
+          "$ref": "#/definitions/FactorObject"
+        }
+      ],
+      "description": "A primitive level or an atomic object-valued condition stored by a factor."
+    },
     "ImageComponent": {
       "additionalProperties": false,
       "description": "The ImageComponent interface is used to define the properties of an image component. This component is used to render an image with optional styling.\n\nFor example, to render an image with a path of `path/to/study/assets/image.jpg` and a max width of 50%, you would use the following snippet: ```json {   \"type\": \"image\",   \"path\": \"<study-name>/assets/image.jpg\",   \"style\": {     \"maxWidth\": \"50%\"   } } ```",
@@ -1068,6 +1371,11 @@
         "nextOnEnter": {
           "description": "Whether enter key should move to the next question. If present, will override the enter key setting in the uiConfig.",
           "type": "boolean"
+        },
+        "parameters": {
+          "additionalProperties": {},
+          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files.",
+          "type": "object"
         },
         "path": {
           "description": "The path to the image. This could be a relative path from the public folder or a url to an external image.",
@@ -1349,19 +1657,9 @@
           "type": "boolean"
         },
         "parameters": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "description": "The parameters that are passed to the react component. These can be used within your react component to render different things.",
-              "type": "object"
-            },
-            {
-              "additionalProperties": {},
-              "description": "The parameters that are passed to the website (iframe). These can be used within your website to render different things.",
-              "type": "object"
-            }
-          ],
-          "description": "The parameters that are passed to the react component. These can be used within your react component to render different things."
+          "additionalProperties": {},
+          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files.",
+          "type": "object"
         },
         "path": {
           "anyOf": [
@@ -1832,6 +2130,11 @@
         "nextOnEnter": {
           "description": "Whether enter key should move to the next question. If present, will override the enter key setting in the uiConfig.",
           "type": "boolean"
+        },
+        "parameters": {
+          "additionalProperties": {},
+          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files.",
+          "type": "object"
         },
         "path": {
           "description": "The path to the markdown file. This should be a relative path from the public folder.",
@@ -2365,6 +2668,28 @@
       ],
       "type": "object"
     },
+    "OrderedFactorValues": {
+      "additionalProperties": false,
+      "description": "A reusable list of factor values with participant-level ordering and optional sampling. The selected order is shared by every reference to the named factor in one sequence.",
+      "properties": {
+        "numSamples": {
+          "type": "number"
+        },
+        "order": {
+          "$ref": "#/definitions/ComponentOrder"
+        },
+        "values": {
+          "items": {
+            "$ref": "#/definitions/FactorValue"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "values"
+      ],
+      "type": "object"
+    },
     "QuestionnaireComponent": {
       "additionalProperties": false,
       "description": "A QuestionnaireComponent is used to render simple questions that require a response. The main use case of this component type is to ask participants questions when you don't need to render a stimulus. Please note, that even though we're not using a stimulus, the responses still require a `location`. For example this could be used to collect demographic information from a participant using the following snippet:\n\n```json {   \"type\": \"questionnaire\",   \"response\": [     {       \"id\": \"gender\",       \"prompt\": \"Gender:\",       \"location\": \"belowStimulus\",       \"type\": \"checkbox\",       \"options\": [\"Man\", \"Woman\", \"Genderqueer\", \"Third-gender\", ...]     }   ] } ```",
@@ -2444,6 +2769,11 @@
         "nextOnEnter": {
           "description": "Whether enter key should move to the next question. If present, will override the enter key setting in the uiConfig.",
           "type": "boolean"
+        },
+        "parameters": {
+          "additionalProperties": {},
+          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files.",
+          "type": "object"
         },
         "previousButton": {
           "description": "Whether to show the previous button. If present, will override the previous button setting in the uiConfig.",
@@ -2873,7 +3203,7 @@
         },
         "parameters": {
           "additionalProperties": {},
-          "description": "The parameters that are passed to the react component. These can be used within your react component to render different things.",
+          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files.",
           "type": "object"
         },
         "path": {
@@ -3382,6 +3712,13 @@
           "$ref": "#/definitions/BaseComponents",
           "description": "The base components that are used in the study. These components can be used to template other components. See [BaseComponents](../../type-aliases/BaseComponents) for more information."
         },
+        "betweenSubjects": {
+          "description": "Primitive factor names assigned once per participant and passed to every component as global parameters.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
         "components": {
           "additionalProperties": {
             "anyOf": [
@@ -3394,6 +3731,13 @@
             ]
           },
           "description": "The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents.",
+          "type": "object"
+        },
+        "factors": {
+          "additionalProperties": {
+            "$ref": "#/definitions/Factor"
+          },
+          "description": "Primitive factor levels and reusable derived factor definitions that can be referenced from the sequence.",
           "type": "object"
         },
         "importedLibraries": {
@@ -3410,9 +3754,11 @@
             },
             {
               "$ref": "#/definitions/DynamicBlock"
+            },
+            {
+              "$ref": "#/definitions/FactorBlock"
             }
-          ],
-          "description": "The order of the components in the study. This might include some randomness."
+          ]
         },
         "studyMetadata": {
           "$ref": "#/definitions/StudyMetadata",
@@ -4017,6 +4363,11 @@
           "description": "Whether enter key should move to the next question. If present, will override the enter key setting in the uiConfig.",
           "type": "boolean"
         },
+        "parameters": {
+          "additionalProperties": {},
+          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files.",
+          "type": "object"
+        },
         "previousButton": {
           "description": "Whether to show the previous button. If present, will override the previous button setting in the uiConfig.",
           "type": "boolean"
@@ -4187,6 +4538,11 @@
         "nextOnEnter": {
           "description": "Whether enter key should move to the next question. If present, will override the enter key setting in the uiConfig.",
           "type": "boolean"
+        },
+        "parameters": {
+          "additionalProperties": {},
+          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files.",
+          "type": "object"
         },
         "path": {
           "description": "The path to the vega file. This should be a relative path from the public folder.",
@@ -4367,6 +4723,11 @@
           "description": "Whether enter key should move to the next question. If present, will override the enter key setting in the uiConfig.",
           "type": "boolean"
         },
+        "parameters": {
+          "additionalProperties": {},
+          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files.",
+          "type": "object"
+        },
         "path": {
           "description": "The path to the video. This could be a relative path from the public folder or might be a url to an external website.",
           "type": "string"
@@ -4544,7 +4905,7 @@
         },
         "parameters": {
           "additionalProperties": {},
-          "description": "The parameters that are passed to the website (iframe). These can be used within your website to render different things.",
+          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files.",
           "type": "object"
         },
         "path": {

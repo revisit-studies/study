@@ -129,6 +129,28 @@ afterEach(() => { cleanup(); });
 // ── component rendering tests ──────────────────────────────────────────────────
 
 describe('StepsPanel rendering', () => {
+  test('uses a component description as its Study Browser label', async () => {
+    const studyConfig = makeStudyConfig({
+      components: {
+        trial: {
+          type: 'markdown',
+          path: 'trial.md',
+          description: 'Animal: cat; color: blue',
+          response: [],
+        },
+      },
+      sequence: {
+        ...minimalSequence,
+        components: ['trial'],
+      },
+    });
+    const { container } = await act(async () => render(
+      <StepsPanel participantAnswers={{}} studyConfig={studyConfig} />,
+    ));
+
+    expect(container.textContent).toContain('Animal: cat; color: blue');
+  });
+
   test('renders without crashing when no participant sequence provided', async () => {
     const { container } = await act(async () => render(
       <StepsPanel

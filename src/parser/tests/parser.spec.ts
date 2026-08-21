@@ -1,8 +1,13 @@
 import {
   afterEach, describe, expect, test, vi,
 } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { ComponentBlock, StudyConfig } from '../types';
 import { parseStudyConfig } from '../parser';
-import { isDynamicBlock } from '../utils';
+import { materializeParticipantConfig } from '../libraryParser';
+import { isDynamicBlock, isFactorBlock } from '../utils';
+import { generateSequenceArray } from '../../utils/handleRandomSequences';
+import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 
 global.fetch = vi.fn();
 
@@ -13,6 +18,14 @@ afterEach(() => {
 
 function mockFetchText(body: string) {
   return { text: () => Promise.resolve(body) } as Response;
+}
+
+function isComponentBlock(value: unknown): value is ComponentBlock {
+  return typeof value === 'object'
+    && value !== null
+    && 'components' in value
+    && !isDynamicBlock(value as StudyConfig['sequence'])
+    && !isFactorBlock(value as StudyConfig['sequence']);
 }
 
 describe('Component auto-advance config parsing', () => {
@@ -445,8 +458,9 @@ describe('BaseComponent Macro Expansion', () => {
 
       const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
-      expect(!isDynamicBlock(result.sequence)).toBe(true);
-      if (!isDynamicBlock(result.sequence)) {
+      // Check sequence expansion - the .co. should have been expanded to .components.
+      expect(isComponentBlock(result.sequence)).toBe(true);
+      if (isComponentBlock(result.sequence)) {
         expect(result.sequence.components).toContain('$testLib.components.directComp');
       }
 
@@ -505,12 +519,12 @@ describe('BaseComponent Macro Expansion', () => {
 
       const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
-      expect(!isDynamicBlock(result.sequence)).toBe(true);
-      if (!isDynamicBlock(result.sequence)) {
+      expect(isComponentBlock(result.sequence)).toBe(true);
+      if (isComponentBlock(result.sequence)) {
         expect(result.sequence.components).toHaveLength(1);
         const inlinedSequence = result.sequence.components[0];
         expect(typeof inlinedSequence).toBe('object');
-        if (typeof inlinedSequence === 'object' && inlinedSequence !== null && !isDynamicBlock(inlinedSequence)) {
+        if (isComponentBlock(inlinedSequence)) {
           expect(inlinedSequence.id).toBe('$testLib.sequences.sequenceFromLibrary');
           expect(inlinedSequence.components).toEqual(['$testLib.components.sequenceComp']);
         }
@@ -566,12 +580,12 @@ describe('BaseComponent Macro Expansion', () => {
 
       const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
-      expect(!isDynamicBlock(result.sequence)).toBe(true);
-      if (!isDynamicBlock(result.sequence)) {
+      expect(isComponentBlock(result.sequence)).toBe(true);
+      if (isComponentBlock(result.sequence)) {
         expect(result.sequence.components).toHaveLength(1);
         const inlinedSequence = result.sequence.components[0];
         expect(typeof inlinedSequence).toBe('object');
-        if (typeof inlinedSequence === 'object' && inlinedSequence !== null && !isDynamicBlock(inlinedSequence)) {
+        if (isComponentBlock(inlinedSequence)) {
           expect(inlinedSequence.id).toBe('$testLib.sequences.sequenceFromLibrary');
           expect(inlinedSequence.components).toEqual(['$testLib.components.sequenceComp']);
         }
@@ -656,12 +670,12 @@ describe('BaseComponent Macro Expansion', () => {
 
       const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
-      expect(!isDynamicBlock(result.sequence)).toBe(true);
-      if (!isDynamicBlock(result.sequence)) {
+      expect(isComponentBlock(result.sequence)).toBe(true);
+      if (isComponentBlock(result.sequence)) {
         expect(result.sequence.components[1]).toBe('$testLib.components.target');
         const firstComponent = result.sequence.components[0];
         expect(typeof firstComponent).toBe('object');
-        if (typeof firstComponent === 'object' && firstComponent !== null && !isDynamicBlock(firstComponent)) {
+        if (isComponentBlock(firstComponent)) {
           expect(firstComponent.interruptions?.[0].components).toEqual(['$testLib.components.breakComp']);
           expect(firstComponent.skip?.[0].to).toBe('$testLib.components.target');
         }
@@ -1644,5 +1658,82 @@ describe('Parser Warnings', () => {
     const result = await parseStudyConfig(JSON.stringify(buildContactEmailStudyConfig('researcher@university.edu')));
 
     expect(result.warnings.some((warning) => warning.category === 'default-supabase-config')).toBe(false);
+  });
+
+  test('keeps Zach\'s factor demo valid', async () => {
+    const config = readFileSync('public/demo-factors/config.json', 'utf8');
+    const result = await parseStudyConfig(config);
+
+    expect(result.errors).toEqual([]);
+  });
+
+  test('parses the factorized correlation study', async () => {
+    const config = readFileSync('public/incentives-corr/config.json', 'utf8');
+    const result = await parseStudyConfig(config);
+    const generatedComponents = Object.values(result.components);
+
+    expect(result.errors).toEqual([]);
+    expect(generatedComponents.filter((component) => (
+      'parameters' in component && component.parameters?.taskid === 'test'
+    ))).toHaveLength(65);
+    expect(generatedComponents.filter((component) => (
+      'parameters' in component && component.parameters?.r1Training !== undefined
+    ))).toHaveLength(9);
+    expect(generatedComponents.filter((component) => (
+      'parameters' in component
+      && component.parameters?.r1Training !== undefined
+    )).map((component) => (
+      'parameters' in component
+        ? [component.parameters?.r1Training, component.parameters?.r2Training]
+        : []
+    ))).toEqual(expect.arrayContaining([
+      [0.3, 0.7],
+      [0.9, 0.6],
+      [0.6, 0.3],
+      [0.6, 0.9],
+      [0.3, 0.1],
+      [0.5, 0.3],
+      [0.9, 0.8],
+      [0.6, 0.7],
+      [0.99, 0.9],
+    ]));
+
+    const sequences = generateSequenceArray({
+      ...result,
+      uiConfig: { ...result.uiConfig, numSequences: 4 },
+    });
+    expect(sequences.map((sequence) => sequence.parameters)).toEqual([
+      { incentive: 'base', vis: 'pcp' },
+      { incentive: 'base', vis: 'scatter' },
+      { incentive: 'inc', vis: 'pcp' },
+      { incentive: 'inc', vis: 'scatter' },
+    ]);
+    sequences.forEach((sequence) => {
+      const componentNames = getSequenceFlatMap(sequence);
+      const sequenceComponents = componentNames.map((name) => result.components[name]).filter(Boolean);
+      const incentive = sequence.parameters?.incentive;
+      const vis = sequence.parameters?.vis;
+      const runtimeConfig = materializeParticipantConfig(result, sequence.parameters || {});
+      expect(componentNames).toContain('introduction');
+      expect(componentNames).toContain('task-details');
+      expect(runtimeConfig.components.introduction).toMatchObject({
+        path: `incentives-corr/assets/00-intro-${incentive}.md`,
+      });
+      expect(runtimeConfig.components['task-details']).toMatchObject({
+        path: `incentives-corr/assets/04-instructions-${incentive}.md`,
+      });
+      expect(runtimeConfig.components.tutorial).toMatchObject({
+        path: `incentives-corr/assets/02-tutorial-${vis}.md`,
+      });
+      expect(sequenceComponents.filter((component) => (
+        'parameters' in component && component.parameters?.taskid === 'test'
+      ))).toHaveLength(65);
+      expect(sequenceComponents.filter((component) => (
+        'parameters' in component && component.parameters?.taskid === 'attention'
+      ))).toHaveLength(5);
+      expect(sequenceComponents.filter((component) => (
+        'parameters' in component && component.parameters?.r1Training !== undefined
+      ))).toHaveLength(9);
+    });
   });
 });

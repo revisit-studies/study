@@ -3,15 +3,10 @@
   "studyMetadata": {
     "title": "Interactive Selections in Scatterplots",
     "version": "pilot",
-    "authors": [
-      "The reVISit Team"
-    ],
+    "authors": ["The reVISit Team"],
     "date": "2026-02-23",
     "description": "A study comparing different selection mechanisms on scatterplots.",
-    "organizations": [
-      "University of Utah",
-      "WPI"
-    ]
+    "organizations": ["University of Utah", "WPI"]
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
@@ -67,10 +62,7 @@
           "requiredValue": "Accept",
           "location": "belowStimulus",
           "type": "radio",
-          "options": [
-            "Decline",
-            "Accept"
-          ]
+          "options": ["Decline", "Accept"]
         }
       ]
     },
@@ -124,22 +116,14 @@
           "prompt": "Most cars:",
           "location": "sidebar",
           "type": "dropdown",
-          "options": [
-            "Europe",
-            "Japan",
-            "USA"
-          ]
+          "options": ["Europe", "Japan", "USA"]
         },
         {
           "id": "min-response",
           "prompt": "Least cars:",
           "location": "sidebar",
           "type": "dropdown",
-          "options": [
-            "Europe",
-            "Japan",
-            "USA"
-          ]
+          "options": ["Europe", "Japan", "USA"]
         }
       ],
       "correctAnswer": [
@@ -200,24 +184,14 @@
           "prompt": "Most common weather:",
           "location": "sidebar",
           "type": "dropdown",
-          "options": [
-            "drizzle",
-            "fog",
-            "rain",
-            "sun"
-          ]
+          "options": ["drizzle", "fog", "rain", "sun"]
         },
         {
           "id": "min-response",
           "prompt": "Least common weather:",
           "location": "sidebar",
           "type": "dropdown",
-          "options": [
-            "drizzle",
-            "fog",
-            "rain",
-            "sun"
-          ]
+          "options": ["drizzle", "fog", "rain", "sun"]
         }
       ],
       "correctAnswer": [
@@ -276,22 +250,14 @@
           "prompt": "Most common penguin:",
           "location": "sidebar",
           "type": "dropdown",
-          "options": [
-            "Adelie",
-            "Chinstrap",
-            "Gentoo"
-          ]
+          "options": ["Adelie", "Chinstrap", "Gentoo"]
         },
         {
           "id": "min-response",
           "prompt": "Least common penguin:",
           "location": "sidebar",
           "type": "dropdown",
-          "options": [
-            "Adelie",
-            "Chinstrap",
-            "Gentoo"
-          ]
+          "options": ["Adelie", "Chinstrap", "Gentoo"]
         }
       ],
       "correctAnswer": [
@@ -350,24 +316,14 @@
           "prompt": "Most common genre:",
           "location": "sidebar",
           "type": "dropdown",
-          "options": [
-            "Action",
-            "Adventure",
-            "Comedy",
-            "Drama"
-          ]
+          "options": ["Action", "Adventure", "Comedy", "Drama"]
         },
         {
           "id": "min-response",
           "prompt": "Least common genre:",
           "location": "sidebar",
           "type": "dropdown",
-          "options": [
-            "Action",
-            "Adventure",
-            "Comedy",
-            "Drama"
-          ]
+          "options": ["Action", "Adventure", "Comedy", "Drama"]
         }
       ],
       "correctAnswer": [

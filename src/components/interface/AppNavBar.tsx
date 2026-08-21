@@ -6,6 +6,8 @@ import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { ResponseBlock } from '../response/ResponseBlock';
 import { useCurrentComponent } from '../../routes/utils';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
+import { compileTemplate } from '../../utils/handlebars';
+import { useTemplateAnswerContext } from '../../store/hooks/useTemplateAnswerContext';
 
 export function AppNavBar({
   width, top, bottom, sidebarOpen,
@@ -29,8 +31,12 @@ export function AppNavBar({
   }, [stepConfig, studyConfig]);
 
   const status = useStoredAnswer();
+  const templateData = useTemplateAnswerContext();
 
-  const instruction = currentConfig?.instruction || '';
+  const instruction = useMemo(
+    () => compileTemplate(currentConfig?.instruction || '', currentConfig?.parameters ?? {}, { data: templateData }),
+    [currentConfig?.instruction, currentConfig?.parameters, templateData],
+  );
   const instructionLocation = useMemo(() => currentConfig?.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar', [currentConfig, studyConfig]);
   const instructionInSideBar = instructionLocation === 'sidebar';
 
