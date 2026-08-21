@@ -34,7 +34,7 @@ export function AppHeader({
 
   return (
     <AppShell.Header p="md">
-      <Grid mt={-7} align="center">
+      <Grid align="center">
         <Grid.Col span={6}>
           <Flex align="center" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
             <Image w={40} src={`${PREFIX}revisitAssets/revisitLogoSquare.svg`} alt="Revisit Logo" />

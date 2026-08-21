@@ -202,7 +202,7 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
 
   return (
     <AppShell.Header className="header" p="md">
-      <Grid mt={-7} align="center">
+      <Grid align="center">
         <Grid.Col span={4}>
           <Flex align="center">
             <Image w={40} src={`${PREFIX}${logoPath}`} alt="Study Logo" className="logoImage" />
