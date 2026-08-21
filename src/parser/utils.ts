@@ -6,6 +6,22 @@ import {
 /** Compiler-only group that is selected atomically and flattened before rendering. */
 export type FactorPlanBlock = ComponentBlock & { type: 'factor-plan' };
 
+/** Compiler-only information retained so tooling can explain a materialized factor block. */
+export type FactorVisualizationMetadata = {
+  factor: FactorOption;
+  baseComponents: string[];
+  conditionComponents: Record<string, string[]>;
+  order: ComponentBlock['order'];
+  numSamples?: number;
+  hasRuntimeOrder: boolean;
+  hasRuntimeSample: boolean;
+};
+
+/** A materialized factor block with its source expression retained for designer tooling. */
+export type FactorCompiledBlock = ComponentBlock & {
+  __revisitFactor: FactorVisualizationMetadata;
+};
+
 /** Compiler-only factor block whose ordered inputs are resolved per generated sequence. */
 export type FactorRuntimePlanBlock = ComponentBlock & {
   type: 'factor-runtime-plan';
@@ -13,6 +29,7 @@ export type FactorRuntimePlanBlock = ComponentBlock & {
   factor: FactorOption;
   factors: Record<string, Factor>;
   conditionComponents: Record<string, string[]>;
+  __revisitFactor?: FactorVisualizationMetadata;
 };
 
 export function isInheritedComponent(comp: IndividualComponent | InheritedComponent) : comp is InheritedComponent {
@@ -39,4 +56,10 @@ export function isFactorRuntimePlanBlock(comp: unknown): comp is FactorRuntimePl
     && comp !== null
     && 'type' in comp
     && comp.type === 'factor-runtime-plan';
+}
+
+export function isFactorCompiledBlock(comp: unknown): comp is FactorCompiledBlock {
+  return typeof comp === 'object'
+    && comp !== null
+    && '__revisitFactor' in comp;
 }

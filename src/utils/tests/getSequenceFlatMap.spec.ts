@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import type { ComponentBlock } from '../../parser/types';
+import type { FactorRuntimePlanBlock } from '../../parser/utils';
 import type { Sequence } from '../../store/types';
 import {
   addPathToComponentBlock,
@@ -61,6 +62,29 @@ describe('getSequenceFlatMapWithInterruptions', () => {
   test('handles sequences with no interruptions', () => {
     const result = getSequenceFlatMapWithInterruptions(cb(['a', 'b']));
     expect(result).toEqual(['a', 'b']);
+  });
+
+  test('returns every possible component from a runtime factor plan', () => {
+    const runtimePlan: FactorRuntimePlanBlock = {
+      type: 'factor-runtime-plan',
+      id: 'sampled-trials',
+      order: 'fixed',
+      components: [],
+      factor: 'stimulus',
+      factors: { stimulus: [1, 2] },
+      conditionComponents: {
+        'sampled-trials__stimulus=1': ['trial-1'],
+        'sampled-trials__stimulus=2': ['trial-2'],
+      },
+      interruptions: [{ firstLocation: 1, spacing: 1, components: ['break'] }],
+    };
+
+    expect(getSequenceFlatMapWithInterruptions(runtimePlan)).toEqual([
+      'trial-1',
+      'trial-2',
+      'break',
+    ]);
+    expect(getSequenceFlatMap(runtimePlan)).toEqual([]);
   });
 });
 

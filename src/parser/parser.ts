@@ -293,7 +293,7 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
       }
     });
 
-  const usedComponents = getSequenceFlatMapWithInterruptions(studyConfig.sequence);
+  const usedComponents = new Set(getSequenceFlatMapWithInterruptions(studyConfig.sequence));
 
   // Verify sequence is well defined
   usedComponents.forEach((component) => {
@@ -320,7 +320,7 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
   // Warnings for components that are defined but not used in the sequence
   Object.keys(studyConfig.components)
     .filter((componentName) => (
-      !usedComponents.includes(componentName)
+      !usedComponents.has(componentName)
       && !componentName.includes('.sequences.')
       && !componentName.includes('.components.')
     ))

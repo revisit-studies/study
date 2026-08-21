@@ -5,6 +5,7 @@ import librarySchema from './LibraryConfigSchema.json';
 import {
   ComponentBlock, ComponentOrder, Factor, FactorBlock, FactorObject, FactorObjectValue, FactorOption, FactorValue, IndividualComponent, LibraryConfig, OrderedFactorValues, ParsedConfig, ParserErrorWarning, StudyConfig,
 } from './types';
+import type { FactorCompiledBlock, FactorVisualizationMetadata } from './utils';
 import {
   FactorPlanBlock, isDynamicBlock, isFactorBlock, isInheritedComponent,
 } from './utils';
@@ -775,6 +776,15 @@ function compileFactorBlock(
   const conditions = resolution.conditions.map((condition) => (
     materializeFactorCondition(condition, errors, resolution.parameterNames)
   ));
+  const getVisualizationMetadata = (): FactorVisualizationMetadata => ({
+    factor: block.factor,
+    baseComponents,
+    conditionComponents: Object.fromEntries(materializedConditions),
+    order: resolution.numSamples !== undefined ? 'random' : (block.order ?? 'fixed'),
+    ...(resolution.numSamples !== undefined ? { numSamples: resolution.numSamples } : {}),
+    hasRuntimeOrder: Boolean(resolution.hasRuntimeOrder),
+    hasRuntimeSample: Boolean(resolution.hasRuntimeSample),
+  });
   let sequenceComponents: ComponentBlock['components'];
   let order = block.order ?? 'fixed';
 
@@ -789,6 +799,7 @@ function compileFactorBlock(
         factor: block.factor,
         factors: config.factors || {},
         conditionComponents: Object.fromEntries(materializedConditions),
+        __revisitFactor: getVisualizationMetadata(),
         ...(block.interruptions !== undefined ? { interruptions: block.interruptions } : {}),
         ...(block.skip !== undefined ? { skip: block.skip } : {}),
         ...(block.conditional !== undefined ? { conditional: block.conditional } : {}),
@@ -821,10 +832,11 @@ function compileFactorBlock(
       order,
       components: sequenceComponents,
       ...(resolution.numSamples !== undefined ? { numSamples: resolution.numSamples } : {}),
+      __revisitFactor: getVisualizationMetadata(),
       ...(block.interruptions !== undefined ? { interruptions: block.interruptions } : {}),
       ...(block.skip !== undefined ? { skip: block.skip } : {}),
       ...(block.conditional !== undefined ? { conditional: block.conditional } : {}),
-    },
+    } as FactorCompiledBlock,
     components,
   };
 }

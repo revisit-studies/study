@@ -13,11 +13,15 @@ type AnimatedRectProps = {
 const SpringRect = animated.rect as unknown as ComponentType<AnimatedRectProps>;
 
 export function AnimatedRect({
-  x, y, fill, height, width,
-} : {x: number, y: number, fill: string, height: number, width: number}) {
+  x, y, fill, height, width, stroke = 'none',
+} : {x: number, y: number, fill: string, height: number, width: number, stroke?: string}) {
   const spring = useSpring({
     x, y, fill, height, width, config: { duration: 1000, easing: easings.easeInOutCirc },
   });
 
-  return <SpringRect {...spring} />;
+  return (
+    <g stroke={stroke} strokeWidth={2}>
+      <SpringRect {...spring} />
+    </g>
+  );
 }

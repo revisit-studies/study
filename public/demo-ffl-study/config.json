@@ -42,7 +42,7 @@
       "parameters": {
         "formula": "y = β₀ + β₁x₁ + β₂x₂ + ⋯ + βₘxₘ",
         "timeLimitSeconds": 390,
-        "taskCode": "@{taskType}",
+        "taskCode": "${taskType}${taskOrder}",
         "taskKind": "@taskType",
         "interfaceName": "@interfaceOrder"
       }

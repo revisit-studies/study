@@ -1,7 +1,9 @@
 import {
   DynamicBlock, StudyConfig,
 } from '../parser/types';
-import { isDynamicBlock, isFactorBlock, isFactorPlanBlock } from '../parser/utils';
+import {
+  isDynamicBlock, isFactorBlock, isFactorPlanBlock, isFactorRuntimePlanBlock,
+} from '../parser/utils';
 import { Sequence } from '../store/types';
 
 function getFactorPlanComponents(sequence: Sequence | StudyConfig['sequence']): string[] | null {
@@ -17,6 +19,16 @@ function getFactorPlanComponents(sequence: Sequence | StudyConfig['sequence']): 
   return [...new Set(sequence.components.flatMap((plan) => plan.components.filter(
     (component): component is string => typeof component === 'string',
   )))];
+}
+
+function getFactorRuntimePlanComponents(
+  sequence: Sequence | StudyConfig['sequence'],
+): string[] | null {
+  if (!isFactorRuntimePlanBlock(sequence)) {
+    return null;
+  }
+
+  return [...new Set(Object.values(sequence.conditionComponents).flat())];
 }
 
 export function getSequenceFlatMap<T extends Sequence | StudyConfig['sequence']>(sequence: T): string[] {
@@ -45,7 +57,8 @@ export function getSequenceFlatMapWithInterruptions(sequence: StudyConfig['seque
   }
 
   return [
-    ...(getFactorPlanComponents(sequence)
+    ...(getFactorRuntimePlanComponents(sequence)
+      ?? getFactorPlanComponents(sequence)
       ?? sequence.components.flatMap((component) => (
         typeof component === 'string'
           ? component

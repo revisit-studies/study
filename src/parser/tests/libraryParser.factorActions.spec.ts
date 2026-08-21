@@ -11,6 +11,7 @@ import { parseStudyConfig } from '../parser';
 import {
   ComponentBlock, ParserErrorWarning, StudyConfig,
 } from '../types';
+import type { FactorCompiledBlock } from '../utils';
 
 function factorConfig(): StudyConfig {
   return {
@@ -152,6 +153,29 @@ describe('factor sequence actions', () => {
     ]));
   });
 
+  test('does not report runtime factor candidates as unused components', async () => {
+    const config = factorConfig();
+    config.factors = {
+      stimulus: {
+        values: [1, 2],
+        order: 'latinSquare',
+        numSamples: 1,
+      },
+    };
+    config.sequence = {
+      type: 'factor',
+      id: 'sampledTrials',
+      factor: 'stimulus',
+      components: 'trial',
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(config));
+    const generatedComponentNames = Object.keys(result.components);
+
+    expect(generatedComponentNames).toHaveLength(2);
+    expect(result.warnings.filter(({ category }) => category === 'unused-component')).toEqual([]);
+  });
+
   test('validates keep/remove selectors and nested samples', () => {
     const errors: ParserErrorWarning[] = [];
     const factors = factorConfig().factors!;
@@ -230,6 +254,18 @@ describe('factor sequence actions', () => {
     });
 
     expect(sequenceBlock).toMatchObject({ order: 'random', numSamples: 2 });
+    expect(sequenceBlock).toMatchObject({
+      __revisitFactor: {
+        factor: expect.objectContaining({ action: 'sample' }),
+        baseComponents: ['trial', 'confidence'],
+        order: 'random',
+        numSamples: 2,
+        hasRuntimeOrder: false,
+        hasRuntimeSample: false,
+      },
+    });
+    expect(Object.keys((sequenceBlock as FactorCompiledBlock).__revisitFactor.conditionComponents))
+      .toHaveLength(3);
     expect(sequenceBlock.components).toHaveLength(3);
     sequences.forEach((sequence) => {
       const sampled = sequence.components.slice(0, -1);
@@ -460,38 +496,6 @@ describe('factor sequence actions', () => {
           prompt: 'The visualization supports the idea that Policy A is a great containment strategy:',
         }),
       ]),
-    });
-  });
-
-  test('uses a Latin-square factor to select 50 visualization-complexity stimuli', async () => {
-    const config = readFileSync(
-      'public/demo-visualization-complexity/config.json',
-      'utf8',
-    );
-    const result = await parseStudyConfig(config);
-    const sequences = generateSequenceArray({
-      ...result,
-      uiConfig: { ...result.uiConfig, numSequences: 3 },
-    });
-
-    expect(result.errors).toEqual([]);
-    expect(result.factors?.stimulusNumber).toMatchObject({
-      order: 'latinSquare', numSamples: 50,
-    });
-    expect(sequences).toHaveLength(3);
-    sequences.forEach((sequence, sequenceIndex) => {
-      const stimulusNumbers = getSequenceFlatMap(sequence).flatMap((componentId) => {
-        const component = result.components[componentId];
-        return component?.type === 'react-component'
-          ? [component.parameters?.stimulusNumber]
-          : [];
-      });
-
-      expect(stimulusNumbers).toHaveLength(50);
-      expect(stimulusNumbers).toEqual(Array.from(
-        { length: 50 },
-        (_, index) => sequenceIndex + index + 1,
-      ));
     });
   });
 

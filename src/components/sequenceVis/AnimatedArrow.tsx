@@ -12,14 +12,14 @@ type AnimatedLineProps = {
 const AnimatedLine = animated.line as unknown as ComponentType<AnimatedLineProps>;
 
 export function AnimatedArrow({
-  x1, x2, y1, y2,
-} : {x1: number, x2: number, y1: number, y2: number}) {
+  x1, x2, y1, y2, stroke = '#748ffc',
+} : {x1: number, x2: number, y1: number, y2: number, stroke?: string}) {
   const spring = useSpring({
     x1, x2, y1, y2, config: { duration: 500 },
   });
 
   return (
-    <g stroke="cornflowerblue">
+    <g stroke={stroke} strokeWidth={1.5}>
       <AnimatedLine {...spring} />
     </g>
   );
