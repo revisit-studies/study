@@ -98,8 +98,10 @@ test('Test questionnaire component with responses and randomizing questions and 
   await page.getByRole('option', { name: 'Scatter', exact: true }).click();
 
   // Country dropdown
-  await page.getByPlaceholder('Select a country').fill('United Sta');
-  await page.getByRole('option', { name: /United States/ }).click();
+  const countryDropdown = page.getByPlaceholder('Select a country');
+  await countryDropdown.fill('United Sta');
+  await page.getByRole('option', { name: /United States$/ }).click();
+  await expect(countryDropdown).toHaveValue(/United States/);
 
   // Vertical Checkbox
   await page.getByRole('checkbox', { name: 'Option 2' }).nth(0).click();
