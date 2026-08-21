@@ -430,7 +430,7 @@ export interface BaseResponse {
  */
 export interface NumericalResponse extends BaseResponse {
   type: 'numerical';
-  /** The placeholder text displayed in the input. Defaults to `Select a country` when `options` is `countries`. */
+  /** The placeholder text displayed in the input. */
   placeholder?: string;
   /** The default value of the response. Specify a numeric value such as `25` or `3.14`. */
   default?: number;
@@ -460,6 +460,8 @@ export interface DateResponse extends BaseResponse {
   placeholder?: string;
   /** The default date in `YYYY-MM-DD` format. */
   default?: string;
+  /** The date required for a correct response, in `YYYY-MM-DD` format. */
+  requiredValue?: string;
 }
 
 /**
@@ -479,6 +481,8 @@ export interface TimeResponse extends BaseResponse {
   type: 'time';
   /** The default time in 24-hour `HH:mm` format. */
   default?: string;
+  /** The time required for a correct response, in 24-hour `HH:mm` format. */
+  requiredValue?: string;
 }
 
 /** The validation operations available for short and long text responses. */
@@ -802,7 +806,7 @@ export type DropdownOptionPreset = 'countries';
  */
 export interface DropdownResponse extends BaseResponse {
   type: 'dropdown';
-  /** The placeholder text that is displayed in the input. */
+  /** The placeholder text displayed in the input. Defaults to `Select a country` when `options` is `countries`. */
   placeholder?: string;
   /** The default value of the response. Use a string for single-select dropdowns and a string array for multiselect dropdowns. */
   default?: string | string[];

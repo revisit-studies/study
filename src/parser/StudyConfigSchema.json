@@ -754,7 +754,8 @@
           "type": "string"
         },
         "requiredValue": {
-          "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+          "description": "The date required for a correct response, in `YYYY-MM-DD` format.",
+          "type": "string"
         },
         "secondaryText": {
           "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
@@ -1009,7 +1010,7 @@
           "type": "string"
         },
         "placeholder": {
-          "description": "The placeholder text that is displayed in the input.",
+          "description": "The placeholder text displayed in the input. Defaults to `Select a country` when `options` is `countries`.",
           "type": "string"
         },
         "prompt": {
@@ -2443,7 +2444,7 @@
           "type": "string"
         },
         "placeholder": {
-          "description": "The placeholder text displayed in the input. Defaults to `Select a country` when `options` is `countries`.",
+          "description": "The placeholder text displayed in the input.",
           "type": "string"
         },
         "prompt": {
@@ -3969,7 +3970,8 @@
           "type": "string"
         },
         "requiredValue": {
-          "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+          "description": "The time required for a correct response, in 24-hour `HH:mm` format.",
+          "type": "string"
         },
         "secondaryText": {
           "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
