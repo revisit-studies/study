@@ -150,7 +150,10 @@ describe('PDF export helpers', () => {
     Object.defineProperty(overflowingChart, 'scrollWidth', { value: 1920 });
     Object.defineProperty(overflowingChart, 'scrollHeight', { value: 1080 });
     html2CanvasMocks.capture.mockResolvedValue({
+      getContext: () => null,
+      height: 0,
       toDataURL: () => 'data:image/png;base64,chart',
+      width: 0,
     });
 
     await expect(capturePdfIframeSnapshots(element)).resolves.toEqual([

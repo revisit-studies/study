@@ -6,8 +6,48 @@ const PDF_MAX_WIDTH_PX = 920;
 const A4_LANDSCAPE_WIDTH_MM = 297;
 const A4_LANDSCAPE_HEIGHT_MM = 210;
 const PDF_VIDEO_FRAME_WAIT_MS = 1500;
+const PDF_LARGE_SVG_ELEMENT_THRESHOLD = 1000;
+const PDF_SNAPSHOT_PADDING_PX = 32;
+const PDF_WHITE_PIXEL_THRESHOLD = 250;
 const PDF_PRINTABLE_ASPECT_RATIO = (A4_LANDSCAPE_HEIGHT_MM - (PDF_MARGIN_MM * 2))
   / (A4_LANDSCAPE_WIDTH_MM - (PDF_MARGIN_MM * 2));
+
+const SVG_PRESENTATION_PROPERTIES = [
+  'alignment-baseline',
+  'baseline-shift',
+  'clip-path',
+  'color',
+  'display',
+  'dominant-baseline',
+  'fill',
+  'fill-opacity',
+  'filter',
+  'font-family',
+  'font-size',
+  'font-style',
+  'font-variant',
+  'font-weight',
+  'letter-spacing',
+  'marker-end',
+  'marker-mid',
+  'marker-start',
+  'mask',
+  'opacity',
+  'paint-order',
+  'shape-rendering',
+  'stroke',
+  'stroke-dasharray',
+  'stroke-dashoffset',
+  'stroke-linecap',
+  'stroke-linejoin',
+  'stroke-miterlimit',
+  'stroke-opacity',
+  'stroke-width',
+  'text-anchor',
+  'text-decoration',
+  'visibility',
+  'word-spacing',
+] as const;
 
 export interface PdfIframeSnapshot {
   dataUrl: string;
@@ -16,6 +56,13 @@ export interface PdfIframeSnapshot {
 
 export interface PdfVideoSnapshot {
   dataUrl?: string;
+  height: number;
+  index: number;
+  width: number;
+}
+
+interface PdfSvgSnapshot {
+  dataUrl: string;
   height: number;
   index: number;
   width: number;
@@ -178,6 +225,173 @@ function getIframeCaptureSize(iframe: HTMLIFrameElement, iframeDocument: Documen
   });
 }
 
+function inlineSvgPresentationStyles(sourceSvg: SVGSVGElement, clonedSvg: SVGSVGElement) {
+  const sourceElements = [sourceSvg, ...sourceSvg.querySelectorAll<HTMLElement | SVGElement>('*')];
+  const clonedElements = [clonedSvg, ...clonedSvg.querySelectorAll<HTMLElement | SVGElement>('*')];
+  const sourceWindow = sourceSvg.ownerDocument.defaultView;
+
+  sourceElements.forEach((sourceElement, index) => {
+    const clonedElement = clonedElements[index];
+    if (!clonedElement || !sourceWindow) {
+      return;
+    }
+
+    const computedStyle = sourceWindow.getComputedStyle(sourceElement);
+    SVG_PRESENTATION_PROPERTIES.forEach((property) => {
+      const value = computedStyle.getPropertyValue(property);
+      if (value) {
+        clonedElement.style.setProperty(property, value);
+      }
+    });
+  });
+}
+
+function loadSvgImage(document: Document, source: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = document.createElement('img');
+    image.addEventListener('load', () => resolve(image), { once: true });
+    image.addEventListener('error', () => reject(new Error('The SVG could not be rasterized.')), {
+      once: true,
+    });
+    image.src = source;
+  });
+}
+
+function waitForPdfImage(image: HTMLImageElement) {
+  if (image.complete && image.naturalWidth > 0) {
+    return Promise.resolve();
+  }
+
+  return new Promise<void>((resolve, reject) => {
+    image.addEventListener('load', () => resolve(), { once: true });
+    image.addEventListener('error', () => reject(new Error('The embedded page snapshot could not be loaded.')), { once: true });
+  });
+}
+
+async function captureLargeSvgSnapshot(svg: SVGSVGElement, index: number) {
+  if (svg.querySelectorAll('*').length < PDF_LARGE_SVG_ELEMENT_THRESHOLD) {
+    return undefined;
+  }
+
+  const bounds = svg.getBoundingClientRect();
+  const width = Math.ceil(bounds.width);
+  const height = Math.ceil(bounds.height);
+  if (width === 0 || height === 0) {
+    return undefined;
+  }
+
+  const clonedSvg = svg.cloneNode(true) as SVGSVGElement;
+  clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  clonedSvg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+  clonedSvg.setAttribute('width', `${width}`);
+  clonedSvg.setAttribute('height', `${height}`);
+  clonedSvg.style.width = `${width}px`;
+  clonedSvg.style.height = `${height}px`;
+  inlineSvgPresentationStyles(svg, clonedSvg);
+
+  const serializedSvg = new XMLSerializer().serializeToString(clonedSvg);
+  const objectUrl = URL.createObjectURL(new Blob([serializedSvg], { type: 'image/svg+xml' }));
+
+  try {
+    const image = await loadSvgImage(svg.ownerDocument, objectUrl);
+    const canvas = svg.ownerDocument.createElement('canvas');
+    canvas.width = width * 2;
+    canvas.height = height * 2;
+    const context = canvas.getContext('2d');
+    if (!context) {
+      return undefined;
+    }
+
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    return {
+      dataUrl: canvas.toDataURL('image/png'),
+      height,
+      index,
+      width,
+    } satisfies PdfSvgSnapshot;
+  } catch {
+    return undefined;
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
+async function captureLargeSvgSnapshots(iframeDocument: Document) {
+  const snapshots = await Promise.all(
+    Array.from(iframeDocument.querySelectorAll<SVGSVGElement>('svg'))
+      .map((svg, index) => captureLargeSvgSnapshot(svg, index)),
+  );
+
+  return snapshots.filter((snapshot): snapshot is PdfSvgSnapshot => snapshot !== undefined);
+}
+
+async function replaceLargeSvgsWithSnapshots(
+  clonedDocument: Document,
+  snapshots: PdfSvgSnapshot[],
+) {
+  const clonedSvgs = Array.from(clonedDocument.querySelectorAll<SVGSVGElement>('svg'));
+
+  await Promise.all(snapshots.map(async (snapshot) => {
+    const clonedSvg = clonedSvgs[snapshot.index];
+    if (!clonedSvg) {
+      return;
+    }
+
+    const image = clonedDocument.createElement('img');
+    image.alt = clonedSvg.getAttribute('aria-label') || 'Embedded visualization';
+    image.src = snapshot.dataUrl;
+    image.style.display = 'block';
+    image.style.height = `${snapshot.height}px`;
+    image.style.width = `${snapshot.width}px`;
+    clonedSvg.replaceWith(image);
+    await waitForPdfImage(image);
+  }));
+}
+
+function cropTrailingWhitespace(canvas: HTMLCanvasElement) {
+  const context = canvas.getContext('2d', { willReadFrequently: true });
+  if (!context || canvas.width === 0 || canvas.height === 0) {
+    return canvas;
+  }
+
+  const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+  let contentRight = -1;
+  let contentBottom = -1;
+
+  for (let y = 0; y < canvas.height; y += 1) {
+    for (let x = 0; x < canvas.width; x += 1) {
+      const pixelIndex = ((y * canvas.width) + x) * 4;
+      if (
+        pixels[pixelIndex + 3] > 0
+        && (
+          pixels[pixelIndex] < PDF_WHITE_PIXEL_THRESHOLD
+          || pixels[pixelIndex + 1] < PDF_WHITE_PIXEL_THRESHOLD
+          || pixels[pixelIndex + 2] < PDF_WHITE_PIXEL_THRESHOLD
+        )
+      ) {
+        contentRight = Math.max(contentRight, x);
+        contentBottom = Math.max(contentBottom, y);
+      }
+    }
+  }
+
+  if (contentRight < 0 || contentBottom < 0) {
+    return canvas;
+  }
+
+  const width = Math.min(canvas.width, contentRight + PDF_SNAPSHOT_PADDING_PX + 1);
+  const height = Math.min(canvas.height, contentBottom + PDF_SNAPSHOT_PADDING_PX + 1);
+  if (width === canvas.width && height === canvas.height) {
+    return canvas;
+  }
+
+  const croppedCanvas = canvas.ownerDocument.createElement('canvas');
+  croppedCanvas.width = width;
+  croppedCanvas.height = height;
+  croppedCanvas.getContext('2d')?.drawImage(canvas, 0, 0);
+  return croppedCanvas;
+}
+
 export async function capturePdfIframeSnapshots(element: HTMLElement) {
   const iframes = Array.from(element.querySelectorAll('iframe'));
 
@@ -193,6 +407,7 @@ export async function capturePdfIframeSnapshots(element: HTMLElement) {
       waitForIframeImages(iframeDocument),
       waitForIframePaint(iframe),
     ]);
+    const svgSnapshots = await captureLargeSvgSnapshots(iframeDocument);
     const captureSize = getIframeCaptureSize(iframe, iframeDocument);
     const width = Math.ceil(captureSize.width);
     const height = Math.ceil(captureSize.height);
@@ -204,11 +419,10 @@ export async function capturePdfIframeSnapshots(element: HTMLElement) {
       backgroundColor: '#ffffff',
       height,
       logging: false,
-      onclone: (clonedDocument) => prepareIframeClone(
-        clonedDocument,
-        iframeDocument,
-        width,
-      ),
+      onclone: async (clonedDocument) => {
+        await prepareIframeClone(clonedDocument, iframeDocument, width);
+        await replaceLargeSvgsWithSnapshots(clonedDocument, svgSnapshots);
+      },
       scale: 2,
       useCORS: true,
       width,
@@ -217,7 +431,7 @@ export async function capturePdfIframeSnapshots(element: HTMLElement) {
     });
 
     return {
-      dataUrl: canvas.toDataURL('image/png'),
+      dataUrl: cropTrailingWhitespace(canvas).toDataURL('image/png'),
       index,
     };
   }));
@@ -286,17 +500,6 @@ export async function capturePdfVideoSnapshots(element: HTMLElement) {
       return { height, index, width };
     }
   }));
-}
-
-function waitForPdfImage(image: HTMLImageElement) {
-  if (image.complete && image.naturalWidth > 0) {
-    return Promise.resolve();
-  }
-
-  return new Promise<void>((resolve, reject) => {
-    image.addEventListener('load', () => resolve(), { once: true });
-    image.addEventListener('error', () => reject(new Error('The embedded page snapshot could not be loaded.')), { once: true });
-  });
 }
 
 function mountPdfSource(element: HTMLElement, exportWidth: number) {
