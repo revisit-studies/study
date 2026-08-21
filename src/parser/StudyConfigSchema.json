@@ -283,14 +283,12 @@
       "type": "object"
     },
     "BuiltInValidationType": {
-      "description": "The built-in validation operations available for short text responses.\n\n- `email`: An email in `local@domain.tld` format, such as `test@revisit.dev`.\n- `phoneNumber`: An international phone number containing 7–15 digits, with an optional leading `+` and hyphens between digits.\n- `usPhoneNumber`: A 10-digit US phone number in `000-000-0000` format.\n- `url`: An absolute HTTP or HTTPS URL, such as `https://revisit.dev`.\n- `date`: A real calendar date in `MM/DD/YYYY` format.\n- `time`: A 24-hour time in `HH:mm` format.",
+      "description": "The built-in validation operations available for short text responses.\n\n- `email`: An email in `local@domain.tld` format, such as `test@revisit.dev`.\n- `phoneNumber`: An international phone number containing 7–15 digits, with an optional leading `+` and hyphens between digits.\n- `usPhoneNumber`: A 10-digit US phone number in `000-000-0000` format.\n- `url`: An absolute HTTP or HTTPS URL, such as `https://revisit.dev`.",
       "enum": [
         "email",
         "phoneNumber",
         "usPhoneNumber",
-        "url",
-        "date",
-        "time"
+        "url"
       ],
       "type": "string"
     },
@@ -702,6 +700,89 @@
       "required": [
         "id",
         "path",
+        "prompt",
+        "type"
+      ],
+      "type": "object"
+    },
+    "DateResponse": {
+      "additionalProperties": false,
+      "description": "The DateResponse interface defines a calendar date selected with a date picker. Date values are stored as `YYYY-MM-DD` strings. ```json {   \"id\": \"q-date\",   \"prompt\": \"Select a date.\",   \"location\": \"aboveStimulus\",   \"type\": \"date\",   \"default\": \"2026-08-21\",   \"placeholder\": \"MM/DD/YYYY\" } ```",
+      "properties": {
+        "default": {
+          "description": "The default date in `YYYY-MM-DD` format.",
+          "type": "string"
+        },
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
+        "hidden": {
+          "description": "Controls whether the response is hidden.",
+          "type": "boolean"
+        },
+        "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "paramCapture": {
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "placeholder": {
+          "description": "The placeholder text displayed in the date input. Defaults to `MM/DD/YYYY`.",
+          "type": "string"
+        },
+        "prompt": {
+          "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
+          "type": "string"
+        },
+        "required": {
+          "description": "Controls whether the response is required to be answered. Defaults to true.",
+          "type": "boolean"
+        },
+        "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
+          "type": "string"
+        },
+        "requiredValue": {
+          "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
+          "type": "string"
+        },
+        "type": {
+          "const": "date",
+          "type": "string"
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
         "prompt",
         "type"
       ],
@@ -3122,6 +3203,12 @@
           "$ref": "#/definitions/NumericalResponse"
         },
         {
+          "$ref": "#/definitions/DateResponse"
+        },
+        {
+          "$ref": "#/definitions/TimeResponse"
+        },
+        {
           "$ref": "#/definitions/ShortTextResponse"
         },
         {
@@ -3824,6 +3911,89 @@
         "doesNotEqual"
       ],
       "type": "string"
+    },
+    "TimeResponse": {
+      "additionalProperties": false,
+      "description": "The TimeResponse interface defines a time selected with a time input. Time values are stored as 24-hour `HH:mm` strings. ```json {   \"id\": \"q-time\",   \"prompt\": \"Select a time.\",   \"location\": \"aboveStimulus\",   \"type\": \"time\",   \"default\": \"14:28\",   \"placeholder\": \"HH:mm\" } ```",
+      "properties": {
+        "default": {
+          "description": "The default time in 24-hour `HH:mm` format.",
+          "type": "string"
+        },
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
+        "hidden": {
+          "description": "Controls whether the response is hidden.",
+          "type": "boolean"
+        },
+        "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "paramCapture": {
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "placeholder": {
+          "description": "The placeholder text displayed in the time input. Defaults to `HH:mm`.",
+          "type": "string"
+        },
+        "prompt": {
+          "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
+          "type": "string"
+        },
+        "required": {
+          "description": "Controls whether the response is required to be answered. Defaults to true.",
+          "type": "boolean"
+        },
+        "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
+          "type": "string"
+        },
+        "requiredValue": {
+          "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
+          "type": "string"
+        },
+        "type": {
+          "const": "time",
+          "type": "string"
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "prompt",
+        "type"
+      ],
+      "type": "object"
     },
     "UIConfig": {
       "additionalProperties": false,

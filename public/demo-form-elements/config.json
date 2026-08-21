@@ -464,20 +464,24 @@
           "builtInValidation": "url"
         },
         {
-          "id": "built-in-validation-date",
-          "type": "shortText",
-          "prompt": "Enter a date in MM/DD/YYYY format.",
-          "secondaryText": "For example: 06/24/2009.",
-          "placeholder": "MM/DD/YYYY",
-          "builtInValidation": "date"
+          "id": "date-time-response-title",
+          "type": "textOnly",
+          "prompt": "## Date and Time Responses\n\nDate and time responses use dedicated inputs and store their values as strings.",
+          "restartEnumeration": true
         },
         {
-          "id": "built-in-validation-time",
-          "type": "shortText",
-          "prompt": "Enter a time in 24-hour HH:mm format.",
-          "secondaryText": "For example: 14:28.",
-          "placeholder": "HH:mm",
-          "builtInValidation": "time"
+          "id": "date-response",
+          "type": "date",
+          "prompt": "Select a date.",
+          "secondaryText": "The selected date is displayed as MM/DD/YYYY.",
+          "placeholder": "MM/DD/YYYY"
+        },
+        {
+          "id": "time-response",
+          "type": "time",
+          "prompt": "Select a time.",
+          "secondaryText": "The selected time is stored in 24-hour HH:mm format.",
+          "placeholder": "HH:mm"
         }
       ]
     },

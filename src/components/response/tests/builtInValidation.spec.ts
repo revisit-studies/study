@@ -92,33 +92,4 @@ describe('checkBuiltInValidation', () => {
     expect(checkBuiltInValidation('url', value))
       .toBe('Please enter a valid URL beginning with http:// or https://.');
   });
-
-  test.each([
-    '06/24/2009',
-    '02/29/2024',
-    '12/31/2026',
-  ])('accepts a valid MM/DD/YYYY date: %s', (value) => {
-    expect(checkBuiltInValidation('date', value)).toBeNull();
-  });
-
-  test.each([
-    '6/24/2009',
-    '02/29/2025',
-    '04/31/2025',
-    '13/01/2025',
-    '00/01/2025',
-    '01/01/0000',
-  ])('rejects an invalid MM/DD/YYYY date: %s', (value) => {
-    expect(checkBuiltInValidation('date', value))
-      .toBe('Please enter a valid date in MM/DD/YYYY format.');
-  });
-
-  test.each(['00:00', '14:28', '23:59'])('accepts a valid HH:mm time: %s', (value) => {
-    expect(checkBuiltInValidation('time', value)).toBeNull();
-  });
-
-  test.each(['2:28', '24:00', '14:60', '02:28 PM'])('rejects an invalid HH:mm time: %s', (value) => {
-    expect(checkBuiltInValidation('time', value))
-      .toBe('Please enter a valid time in HH:mm format.');
-  });
 });

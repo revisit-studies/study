@@ -70,25 +70,6 @@ function isHttpUrl(value: string) {
   }
 }
 
-function isDateInMonthDayYearFormat(value: string) {
-  const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if (!match) {
-    return false;
-  }
-
-  const month = Number(match[1]);
-  const day = Number(match[2]);
-  const year = Number(match[3]);
-  const isLeapYear = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
-  const daysInMonth = [31, isLeapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-
-  return year >= 1
-    && month >= 1
-    && month <= 12
-    && day >= 1
-    && day <= daysInMonth[month - 1];
-}
-
 function isPhoneNumber(value: string) {
   if (!/^\+?\d+(?:-\d+)*$/.test(value)) {
     return false;
@@ -114,14 +95,6 @@ const BUILT_IN_VALIDATIONS: Record<BuiltInValidationType, BuiltInValidation> = {
   url: {
     passes: isHttpUrl,
     message: 'Please enter a valid URL beginning with http:// or https://.',
-  },
-  date: {
-    passes: isDateInMonthDayYearFormat,
-    message: 'Please enter a valid date in MM/DD/YYYY format.',
-  },
-  time: {
-    passes: (value) => /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value),
-    message: 'Please enter a valid time in HH:mm format.',
   },
 };
 

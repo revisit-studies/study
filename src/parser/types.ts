@@ -440,6 +440,50 @@ export interface NumericalResponse extends BaseResponse {
   max?: number;
 }
 
+/**
+ * The DateResponse interface defines a calendar date selected with a date picker.
+ * Date values are stored as `YYYY-MM-DD` strings.
+ * ```json
+ * {
+ *   "id": "q-date",
+ *   "prompt": "Select a date.",
+ *   "location": "aboveStimulus",
+ *   "type": "date",
+ *   "default": "2026-08-21",
+ *   "placeholder": "MM/DD/YYYY"
+ * }
+ * ```
+ */
+export interface DateResponse extends BaseResponse {
+  type: 'date';
+  /** The placeholder text displayed in the date input. Defaults to `MM/DD/YYYY`. */
+  placeholder?: string;
+  /** The default date in `YYYY-MM-DD` format. */
+  default?: string;
+}
+
+/**
+ * The TimeResponse interface defines a time selected with a time input.
+ * Time values are stored as 24-hour `HH:mm` strings.
+ * ```json
+ * {
+ *   "id": "q-time",
+ *   "prompt": "Select a time.",
+ *   "location": "aboveStimulus",
+ *   "type": "time",
+ *   "default": "14:28",
+ *   "placeholder": "HH:mm"
+ * }
+ * ```
+ */
+export interface TimeResponse extends BaseResponse {
+  type: 'time';
+  /** The placeholder text displayed in the time input. Defaults to `HH:mm`. */
+  placeholder?: string;
+  /** The default time in 24-hour `HH:mm` format. */
+  default?: string;
+}
+
 /** The validation operations available for short and long text responses. */
 export type TextValidationType = 'matchesRegex' | 'contains' | 'doesNotContain' | 'equals' | 'doesNotEqual';
 
@@ -450,10 +494,8 @@ export type TextValidationType = 'matchesRegex' | 'contains' | 'doesNotContain' 
  * - `phoneNumber`: An international phone number containing 7–15 digits, with an optional leading `+` and hyphens between digits.
  * - `usPhoneNumber`: A 10-digit US phone number in `000-000-0000` format.
  * - `url`: An absolute HTTP or HTTPS URL, such as `https://revisit.dev`.
- * - `date`: A real calendar date in `MM/DD/YYYY` format.
- * - `time`: A 24-hour time in `HH:mm` format.
  */
-export type BuiltInValidationType = 'email' | 'phoneNumber' | 'usPhoneNumber' | 'url' | 'date' | 'time';
+export type BuiltInValidationType = 'email' | 'phoneNumber' | 'usPhoneNumber' | 'url';
 
 /**
  * A validation rule applied to a short or long text response.
@@ -1070,7 +1112,7 @@ export interface DividerResponse extends Omit<BaseResponse, 'prompt' | 'infoText
   withDontKnow?: undefined;
 }
 
-export type Response = NumericalResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | RankingResponse | ReactiveResponse | CustomResponse | MatrixResponse | ButtonsResponse | TextOnlyResponse | DividerResponse;
+export type Response = NumericalResponse | DateResponse | TimeResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | RankingResponse | ReactiveResponse | CustomResponse | MatrixResponse | ButtonsResponse | TextOnlyResponse | DividerResponse;
 
 /**
  * The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks or if skip logic is required based on the answer.

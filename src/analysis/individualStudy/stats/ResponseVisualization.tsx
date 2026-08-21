@@ -5,7 +5,7 @@ import {
 } from '@mantine/core';
 import { useDisclosure, useResizeObserver } from '@mantine/hooks';
 import {
-  IconAdjustmentsHorizontal, IconBubbleText, IconChartGridDots, IconChevronDown, IconCodePlus, IconCopyCheck, IconDots, IconGridDots, IconHtml, IconLetterCase, IconDragDrop, IconNumber123, IconRadio, IconSelect, IconSquares,
+  IconAdjustmentsHorizontal, IconBubbleText, IconCalendar, IconChartGridDots, IconChevronDown, IconClock, IconCodePlus, IconCopyCheck, IconDots, IconGridDots, IconHtml, IconLetterCase, IconDragDrop, IconNumber123, IconRadio, IconSelect, IconSquares,
 } from '@tabler/icons-react';
 import { useMemo } from 'react';
 import { VegaLite, VisualizationSpec } from 'react-vega';
@@ -200,7 +200,7 @@ export function ResponseVisualization({
     }
 
     // Categorical visualization
-    if (response.type === 'radio' || response.type === 'dropdown' || response.type === 'checkbox' || response.type === 'buttons' || response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') {
+    if (response.type === 'date' || response.type === 'time' || response.type === 'radio' || response.type === 'dropdown' || response.type === 'checkbox' || response.type === 'buttons' || response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') {
       const spec = {
         ...baseSpec,
         data: { values: questionData },
@@ -224,6 +224,8 @@ export function ResponseVisualization({
         <Flex align="center">
           {response.type === 'metadata' && <IconCodePlus size={20} />}
           {response.type === 'numerical' && <IconNumber123 size={20} />}
+          {response.type === 'date' && <IconCalendar size={20} />}
+          {response.type === 'time' && <IconClock size={20} />}
           {(response.type === 'shortText' || response.type === 'longText') && <IconBubbleText size={20} />}
           {response.type === 'likert' && <IconDots size={20} />}
           {response.type === 'dropdown' && <IconSelect size={20} />}
