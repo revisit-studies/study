@@ -155,7 +155,7 @@ test('Test questionnaire component with responses and randomizing questions and 
   await page.getByPlaceholder('800-000-0000').fill('800-000-0000');
   await page.getByPlaceholder('https://revisit.dev').fill('https://revisit.dev');
   await page.getByPlaceholder('MM/DD/YYYY').fill('06/24/2009');
-  await page.getByPlaceholder('HH:mm').fill('14:28');
+  await page.getByLabel('Select a time.').fill('14:28');
   await nextClick(page);
 
   // Default Values should be fully answerable via defaults

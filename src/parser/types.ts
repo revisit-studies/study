@@ -471,15 +471,12 @@ export interface DateResponse extends BaseResponse {
  *   "prompt": "Select a time.",
  *   "location": "aboveStimulus",
  *   "type": "time",
- *   "default": "14:28",
- *   "placeholder": "HH:mm"
+ *   "default": "14:28"
  * }
  * ```
  */
 export interface TimeResponse extends BaseResponse {
   type: 'time';
-  /** The placeholder text displayed in the time input. Defaults to `HH:mm`. */
-  placeholder?: string;
   /** The default time in 24-hour `HH:mm` format. */
   default?: string;
 }

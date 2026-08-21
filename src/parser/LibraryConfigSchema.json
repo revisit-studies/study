@@ -3765,7 +3765,7 @@
     },
     "TimeResponse": {
       "additionalProperties": false,
-      "description": "The TimeResponse interface defines a time selected with a time input. Time values are stored as 24-hour `HH:mm` strings. ```json {   \"id\": \"q-time\",   \"prompt\": \"Select a time.\",   \"location\": \"aboveStimulus\",   \"type\": \"time\",   \"default\": \"14:28\",   \"placeholder\": \"HH:mm\" } ```",
+      "description": "The TimeResponse interface defines a time selected with a time input. Time values are stored as 24-hour `HH:mm` strings. ```json {   \"id\": \"q-time\",   \"prompt\": \"Select a time.\",   \"location\": \"aboveStimulus\",   \"type\": \"time\",   \"default\": \"14:28\" } ```",
       "properties": {
         "default": {
           "description": "The default time in 24-hour `HH:mm` format.",
@@ -3793,10 +3793,6 @@
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
-          "type": "string"
-        },
-        "placeholder": {
-          "description": "The placeholder text displayed in the time input. Defaults to `HH:mm`.",
           "type": "string"
         },
         "prompt": {

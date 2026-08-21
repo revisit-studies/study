@@ -105,7 +105,6 @@ describe('Text response validation config parsing', () => {
     Object.assign(studyConfig.components.question1.response[0], {
       type: 'time',
       default: '14:28',
-      placeholder: 'HH:mm',
     });
     Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
 

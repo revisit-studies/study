@@ -473,15 +473,12 @@
           "id": "date-response",
           "type": "date",
           "prompt": "Select a date.",
-          "secondaryText": "The selected date is displayed as MM/DD/YYYY.",
           "placeholder": "MM/DD/YYYY"
         },
         {
           "id": "time-response",
           "type": "time",
-          "prompt": "Select a time.",
-          "secondaryText": "The selected time is stored in 24-hour HH:mm format.",
-          "placeholder": "HH:mm"
+          "prompt": "Select a time."
         }
       ]
     },

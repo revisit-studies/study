@@ -31,7 +31,6 @@ export function TimeResponseInput({
   enumerateQuestions: boolean;
 }) {
   const {
-    placeholder = 'HH:mm',
     prompt,
     required,
     secondaryText,
@@ -56,7 +55,6 @@ export function TimeResponseInput({
       ref={inputRef}
       {...answer}
       disabled={disabled}
-      placeholder={placeholder}
       label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
       description={secondaryText}
       radius="md"
