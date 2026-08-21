@@ -333,6 +333,45 @@ export const shouldBypassValidationForStandaloneDontKnow = (response: Response, 
   usesStandaloneDontKnowField(response) && dontKnowChecked
 );
 
+function createDate(year: number, month: number, day: number) {
+  if (year < 1) {
+    return null;
+  }
+
+  const date = new Date(0);
+  date.setHours(0, 0, 0, 0);
+  date.setFullYear(year, month - 1, day);
+  return date.getFullYear() === year
+    && date.getMonth() === month - 1
+    && date.getDate() === day
+    ? date
+    : null;
+}
+
+export function parseIsoDate(value: string) {
+  // e.g. 2000-01-01
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return match ? createDate(Number(match[1]), Number(match[2]), Number(match[3])) : null;
+}
+
+export function parseMonthDayYear(value: string) {
+  // e.g. 01/01/2000
+  const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  return match ? createDate(Number(match[3]), Number(match[1]), Number(match[2])) : null;
+}
+
+export function formatIsoDate(value: Date) {
+  const year = value.getFullYear().toString().padStart(4, '0');
+  const month = (value.getMonth() + 1).toString().padStart(2, '0');
+  const day = value.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+export function isValidTime(value: string) {
+  // e.g. 10:10, 24-hour format, no seconds
+  return /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value);
+}
+
 function createValidationResult(
   response: Response,
   issueType: ResponseValidationIssueType,
@@ -399,6 +438,38 @@ export function validateResponse(
 
   if (isOtherSelectionIncomplete(response, value, values)) {
     return createValidationResult(response, 'invalid', { message: 'Please fill in Other to continue.' });
+  }
+
+  if (response.type === 'date') {
+    if (value === null || value === undefined || value === '') {
+      return createValidationResult(response, response.required === false ? 'none' : 'unanswered');
+    }
+
+    if (typeof value !== 'string' || parseIsoDate(value) === null) {
+      return createValidationResult(response, 'invalid', { message: 'Please select a valid date.' });
+    }
+
+    if (response.requiredValue != null && value !== response.requiredValue.toString()) {
+      return createValidationResult(response, 'invalid', { reason: 'requiredValueMismatch' });
+    }
+
+    return createValidationResult(response, 'none');
+  }
+
+  if (response.type === 'time') {
+    if (value === null || value === undefined || value === '') {
+      return createValidationResult(response, response.required === false ? 'none' : 'unanswered');
+    }
+
+    if (typeof value !== 'string' || !isValidTime(value)) {
+      return createValidationResult(response, 'invalid', { message: 'Please select a valid time.' });
+    }
+
+    if (response.requiredValue != null && value !== response.requiredValue.toString()) {
+      return createValidationResult(response, 'invalid', { reason: 'requiredValueMismatch' });
+    }
+
+    return createValidationResult(response, 'none');
   }
 
   if (response.type === 'shortText' || response.type === 'longText') {

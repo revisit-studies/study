@@ -3,8 +3,8 @@ import {
   afterEach, beforeEach, describe, expect, it, test,
 } from 'vitest';
 import type {
-  CheckboxResponse, CustomResponse, DropdownResponse, LongTextResponse, MatrixResponse,
-  NumericalResponse, Response, ShortTextResponse,
+  CheckboxResponse, CustomResponse, DateResponse, DropdownResponse, LongTextResponse, MatrixResponse,
+  NumericalResponse, Response, ShortTextResponse, TimeResponse,
 } from '../../../parser/types';
 import type { CustomResponseValidate } from '../../../store/types';
 import {
@@ -24,7 +24,13 @@ import {
   shouldBypassValidationForStandaloneDontKnow,
   usesStandaloneDontKnowField,
 } from '../responseErrors';
-import { validateResponse } from '../responseValidation';
+import {
+  formatIsoDate,
+  isValidTime,
+  parseIsoDate,
+  parseMonthDayYear,
+  validateResponse,
+} from '../responseValidation';
 
 describe('generateInitFields', () => {
   const originalWindow = globalThis.window;
@@ -407,6 +413,104 @@ describe('validateResponse', () => {
     expect(validateResponse(response, 10, { q1: 10 }).valid).toBe(true);
     expect(validateResponse(response, 0, { q1: 0 }).message).toBe('Please enter a value between 1 and 10');
     expect(validateResponse(response, 11, { q1: 11 }).message).toBe('Please enter a value between 1 and 10');
+  });
+
+  test.each([
+    ['2009-06-24', 2009, 5, 24],
+    ['2024-02-29', 2024, 1, 29],
+  ])('parses a valid ISO date: %s', (value, year, month, day) => {
+    const date = parseIsoDate(value);
+
+    expect(date?.getFullYear()).toBe(year);
+    expect(date?.getMonth()).toBe(month);
+    expect(date?.getDate()).toBe(day);
+  });
+
+  test.each([
+    '06/24/2009',
+    '2025-02-29',
+    '2025-04-31',
+    '2025-13-01',
+    '0000-01-01',
+  ])('rejects an invalid ISO date: %s', (value) => {
+    expect(parseIsoDate(value)).toBeNull();
+  });
+
+  test('parses the displayed MM/DD/YYYY format', () => {
+    const date = parseMonthDayYear('06/24/2009');
+
+    expect(date?.getFullYear()).toBe(2009);
+    expect(date?.getMonth()).toBe(5);
+    expect(date?.getDate()).toBe(24);
+  });
+
+  test('formats a date without converting it to UTC', () => {
+    expect(formatIsoDate(new Date(2009, 5, 24))).toBe('2009-06-24');
+  });
+
+  test('validates date response values stored in YYYY-MM-DD format', () => {
+    const response: DateResponse = {
+      id: 'date', prompt: 'Select a date', type: 'date', required: true,
+    };
+
+    expect(validateResponse(response, '2024-02-29', { date: '2024-02-29' }).valid).toBe(true);
+    expect(validateResponse(response, '2025-02-29', { date: '2025-02-29' })).toMatchObject({
+      valid: false,
+      issueType: 'invalid',
+      message: 'Please select a valid date.',
+    });
+    expect(validateResponse(response, '02/28/2025', { date: '02/28/2025' }).valid).toBe(false);
+    expect(validateResponse(response, [], { date: [] }).valid).toBe(false);
+  });
+
+  test('treats an empty date as unanswered unless the response is optional', () => {
+    const requiredResponse: DateResponse = {
+      id: 'required-date', prompt: 'Select a date', type: 'date',
+    };
+    const optionalResponse: DateResponse = {
+      id: 'optional-date', prompt: 'Select a date', type: 'date', required: false,
+    };
+
+    expect(validateResponse(requiredResponse, '', { 'required-date': '' }).issueType).toBe('unanswered');
+    expect(validateResponse(optionalResponse, '', { 'optional-date': '' }).valid).toBe(true);
+  });
+
+  test('validates time response values stored in HH:mm format', () => {
+    const response: TimeResponse = {
+      id: 'time', prompt: 'Select a time', type: 'time', required: true,
+    };
+
+    expect(validateResponse(response, '14:28', { time: '14:28' }).valid).toBe(true);
+    expect(validateResponse(response, '24:00', { time: '24:00' })).toMatchObject({
+      valid: false,
+      issueType: 'invalid',
+      message: 'Please select a valid time.',
+    });
+    expect(validateResponse(response, 1428, { time: 1428 })).toMatchObject({
+      valid: false,
+      issueType: 'invalid',
+      message: 'Please select a valid time.',
+    });
+  });
+
+  test.each(['00:00', '10:10', '23:59'])('accepts a valid 24-hour time: %s', (value) => {
+    expect(isValidTime(value)).toBe(true);
+  });
+
+  test.each(['2:28', '24:00', '14:60', '02:28 PM', '14:28:00'])('rejects an invalid 24-hour time: %s', (value) => {
+    expect(isValidTime(value)).toBe(false);
+  });
+
+  test('treats an empty time as unanswered unless the response is optional', () => {
+    const requiredResponse: TimeResponse = {
+      id: 'required-time', prompt: 'Select a time', type: 'time',
+    };
+    const optionalResponse: TimeResponse = {
+      id: 'optional-time', prompt: 'Select a time', type: 'time', required: false,
+    };
+
+    expect(validateResponse(requiredResponse, '', { 'required-time': '' }).issueType).toBe('unanswered');
+    expect(validateResponse(optionalResponse, '', { 'optional-time': '' }).valid).toBe(true);
   });
 
   test.each([

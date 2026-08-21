@@ -759,6 +759,9 @@ export interface MatrixCheckboxResponse extends BaseMatrixResponse {
 
 export type MatrixResponse = MatrixRadioResponse | MatrixCheckboxResponse;
 
+/** Predefined option sets available to dropdown responses. */
+export type DropdownOptionPreset = 'countries';
+
 /**
  * The DropdownResponse interface is used to define the properties of a dropdown response.
  * DropdownResponses render as a select input with user specified options.
@@ -798,6 +801,8 @@ export interface DropdownResponse extends BaseResponse {
   default?: string | string[];
   /** The options that are displayed in the dropdown. */
   options: (StringOption | string)[];
+  /** A predefined option set to use for the dropdown. */
+  optionPreset?: DropdownOptionPreset;
   /** The minimum number of selections that are required. This will make the dropdown a multiselect dropdown. */
   minSelections?: number;
   /** The maximum number of selections that are required. This will make the dropdown a multiselect dropdown. */

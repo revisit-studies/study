@@ -68,7 +68,7 @@ describe('Text response validation config parsing', () => {
     },
   );
 
-  test.each(['email', 'phoneNumber', 'usPhoneNumber', 'url', 'date', 'time'])('accepts the %s built-in validation for short text responses', async (builtInValidation) => {
+  test.each(['email', 'phoneNumber', 'usPhoneNumber', 'url'])('accepts the %s built-in validation for short text responses', async (builtInValidation) => {
     const studyConfig = makeStudyConfig('contains');
     Object.assign(studyConfig.components.question1.response[0], { builtInValidation });
 
@@ -77,13 +77,41 @@ describe('Text response validation config parsing', () => {
     expect(result.errors).toEqual([]);
   });
 
-  test('rejects an unsupported built-in validation', async () => {
+  test.each(['currency', 'date', 'time'])('rejects the unsupported %s built-in validation', async (builtInValidation) => {
     const studyConfig = makeStudyConfig('contains');
-    Object.assign(studyConfig.components.question1.response[0], { builtInValidation: 'currency' });
+    Object.assign(studyConfig.components.question1.response[0], { builtInValidation });
 
     const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
     expect(result.errors.some((error) => error.instancePath.includes('builtInValidation'))).toBe(true);
+  });
+
+  test('accepts a date response with an ISO default value', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type: 'date',
+      default: '2026-08-21',
+      placeholder: 'MM/DD/YYYY',
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toEqual([]);
+  });
+
+  test('accepts a time response with an HH:mm default value', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type: 'time',
+      default: '14:28',
+      placeholder: 'HH:mm',
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toEqual([]);
   });
 
   test.each([0, 1])('rejects a malformed regular expression for response %s', async (responseIndex) => {

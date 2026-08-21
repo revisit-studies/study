@@ -932,6 +932,11 @@
       ],
       "type": "object"
     },
+    "DropdownOptionPreset": {
+      "const": "countries",
+      "description": "Predefined option sets available to dropdown responses.",
+      "type": "string"
+    },
     "DropdownResponse": {
       "additionalProperties": false,
       "description": "The DropdownResponse interface is used to define the properties of a dropdown response. DropdownResponses render as a select input with user specified options. ```json {   \"id\": \"q-color\",   \"prompt\": \"What is your favorite color?\",   \"location\": \"aboveStimulus\",   \"type\": \"dropdown\",   \"default\": \"Blue\",   \"placeholder\": \"Please choose your favorite color\",   \"options\": [\"Red\", \"Blue\"] } ```\n\nHere's an example of a multiselect dropdown with minimum and maximum selections:\n\n```json {   \"id\": \"q-multiselect-dropdown\",   \"prompt\": \"Select the fruits you like.\",   \"location\": \"aboveStimulus\",   \"type\": \"dropdown\",   \"default\": [\"Banana\", \"Orange\"],   \"placeholder\": \"Select your favorite fruits\",   \"options\": [\"Apple\", \"Banana\", \"Cherry\", \"Grape\", \"Orange\", \"Strawberry\", \"Watermelon\", \"Pineapple\"],   \"minSelections\": 2,   \"maxSelections\": 4 } ```",
@@ -977,6 +982,10 @@
         "minSelections": {
           "description": "The minimum number of selections that are required. This will make the dropdown a multiselect dropdown.",
           "type": "number"
+        },
+        "optionPreset": {
+          "$ref": "#/definitions/DropdownOptionPreset",
+          "description": "A predefined option set to use for the dropdown."
         },
         "options": {
           "description": "The options that are displayed in the dropdown.",

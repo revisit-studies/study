@@ -8,6 +8,7 @@ import {
 import { CheckBoxInput } from './CheckBoxInput';
 import { CustomResponseInput } from './CustomResponseInput';
 import { DropdownInput } from './DropdownInput';
+import { DateResponseInput } from './DateInput';
 import { ReactiveInput } from './ReactiveInput';
 import { LikertInput } from './LikertInput';
 import { NumericInput } from './NumericInput';
@@ -16,6 +17,7 @@ import { RankingInput } from './RankingInput';
 import { SliderInput } from './SliderInput';
 import { StringInput } from './StringInput';
 import { TextAreaInput } from './TextAreaInput';
+import { TimeResponseInput } from './TimeInput';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { MatrixInput } from './MatrixInput';
 import { ButtonsInput } from './ButtonsInput';
@@ -234,6 +236,26 @@ export function ResponseSwitcher({
         response={response}
         disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string }}
+        error={responseError}
+        index={index}
+        enumerateQuestions={enumerateQuestions}
+      />
+      )}
+      {response.type === 'date' && (
+      <DateResponseInput
+        response={response}
+        disabled={isDisabled || dontKnowChecked}
+        answer={ans as { value?: string }}
+        error={responseError}
+        index={index}
+        enumerateQuestions={enumerateQuestions}
+      />
+      )}
+      {response.type === 'time' && (
+      <TimeResponseInput
+        response={response}
+        disabled={isDisabled || dontKnowChecked}
+        answer={ans as { value?: string }}
         error={responseError}
         index={index}
         enumerateQuestions={enumerateQuestions}
