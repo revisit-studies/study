@@ -22,9 +22,11 @@ vi.mock('../../../store/store', () => ({
   useStoreSelector: (selector: (s: Record<string, unknown>) => unknown) => selector({
     showHelpText: mockShowHelpText,
     config: mockConfig,
+    answers: {},
   }),
   useStoreActions: () => ({ toggleShowHelpText: vi.fn() }),
   useStoreDispatch: () => vi.fn(),
+  useFlatSequence: () => [],
 }));
 
 vi.mock('../../../utils/getStaticAsset', () => ({
@@ -37,6 +39,7 @@ vi.mock('../../../utils/Prefix', () => ({
 
 vi.mock('../../../routes/utils', () => ({
   useCurrentComponent: () => 'trial1',
+  useCurrentStep: () => 0,
 }));
 
 vi.mock('../../../utils/handleComponentInheritance', () => ({

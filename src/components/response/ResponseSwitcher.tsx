@@ -36,6 +36,7 @@ import {
 } from './responseErrors';
 import { CustomResponseField } from '../../store/types';
 import { compileTemplate } from '../../utils/handlebars';
+import { useTemplateAnswerContext } from '../../store/hooks/useTemplateAnswerContext';
 
 export function ResponseSwitcher({
   response,
@@ -218,20 +219,22 @@ export function ResponseSwitcher({
     };
   }, [displayError, response.required, responseStyle]);
 
+  const templateData = useTemplateAnswerContext();
+
   const templatedFields = useMemo(() => {
     const parameters = config?.parameters ?? {};
     const fields: { prompt?: string; secondaryText?: string; infoText?: string } = {};
     if ('prompt' in response && typeof response.prompt === 'string') {
-      fields.prompt = compileTemplate(response.prompt, parameters);
+      fields.prompt = compileTemplate(response.prompt, parameters, { data: templateData });
     }
     if ('secondaryText' in response && typeof response.secondaryText === 'string') {
-      fields.secondaryText = compileTemplate(response.secondaryText, parameters, { noEscape: true });
+      fields.secondaryText = compileTemplate(response.secondaryText, parameters, { noEscape: true, data: templateData });
     }
     if ('infoText' in response && typeof response.infoText === 'string') {
-      fields.infoText = compileTemplate(response.infoText, parameters, { noEscape: true });
+      fields.infoText = compileTemplate(response.infoText, parameters, { noEscape: true, data: templateData });
     }
     return fields;
-  }, [response, config?.parameters]);
+  }, [response, config?.parameters, templateData]);
   const withTemplatedFields = <T extends Response>(r: T): T => ({ ...r, ...templatedFields } as T);
 
   return (

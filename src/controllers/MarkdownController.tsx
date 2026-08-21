@@ -7,6 +7,7 @@ import { getStaticAssetByPath } from '../utils/getStaticAsset';
 import { ResourceNotFound } from '../ResourceNotFound';
 import { PREFIX } from '../utils/Prefix';
 import { compileTemplate } from '../utils/handlebars';
+import { useTemplateAnswerContext } from '../store/hooks/useTemplateAnswerContext';
 
 export function MarkdownController({ currentConfig }: { currentConfig: MarkdownComponent; }) {
   const [foundAsset, setFoundAsset] = useState(true);
@@ -14,9 +15,11 @@ export function MarkdownController({ currentConfig }: { currentConfig: MarkdownC
 
   const [loading, setLoading] = useState(true);
 
+  const templateData = useTemplateAnswerContext();
+
   const templatedPath = useMemo(
-    () => compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true }),
-    [currentConfig.path, currentConfig.parameters],
+    () => compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true, data: templateData }),
+    [currentConfig.path, currentConfig.parameters, templateData],
   );
 
   useEffect(() => {
@@ -34,8 +37,8 @@ export function MarkdownController({ currentConfig }: { currentConfig: MarkdownC
   }, [templatedPath]);
 
   const renderedText = useMemo(
-    () => compileTemplate(importedText, currentConfig.parameters ?? {}),
-    [importedText, currentConfig.parameters],
+    () => compileTemplate(importedText, currentConfig.parameters ?? {}, { data: templateData }),
+    [importedText, currentConfig.parameters, templateData],
   );
 
   return loading || foundAsset

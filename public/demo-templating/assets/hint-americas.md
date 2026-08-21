@@ -9,3 +9,7 @@ This capital isn't the country's most famous city — you may know a bigger city
 {{else}}
 No hint level set for this trial.
 {{/ifEquals}}
+
+{{#ifEquals (lookupAnswersRel -1 "capital-answer") "Brasilia"}}
+Nice — you answered "Brasília" (the capital of Brazil) on the previous trial!
+{{/ifEquals}}

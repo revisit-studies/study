@@ -107,6 +107,7 @@ vi.mock('../../utils/Prefix', () => ({
 vi.mock('../../store/store', () => ({
   useStoreDispatch: vi.fn(() => vi.fn()),
   useStoreActions: vi.fn(() => mockStoreActions),
+  useFlatSequence: vi.fn(() => []),
   useStoreSelector: vi.fn((selector: (s: StoreState) => StoreState[keyof StoreState]) => selector({
     answers: {},
     analysisCanPlayScreenRecording: false,

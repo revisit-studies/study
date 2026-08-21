@@ -5,7 +5,7 @@
     "version": "pilot",
     "authors": ["The reVISit Team"],
     "date": "2026-08-20",
-    "description": "A demo of using Handlebars {{variable}} templating in instructions, paths, markdown content, and response text, showcased through a repeated capital-cities quiz.",
+    "description": "A demo of using Handlebars {{variable}} templating (and the lookupAnswersRel/lookupAnswers helpers for referencing other trials' answers) in instructions, paths, markdown/help-text content, and response text, showcased through a repeated capital-cities quiz.",
     "organizations": ["University of Utah", "WPI"]
   },
   "uiConfig": {
@@ -49,14 +49,15 @@
   "baseComponents": {
     "quizQuestion": {
       "type": "markdown",
-      "instruction": "Which city is the capital of {{country}}, in {{continent}}?",
+      "instruction": "Which city is the capital of {{country}}, in {{continent}}?{{#if (lookupAnswersRel -1 'capital-answer')}} (Last time, you answered \"{{lookupAnswersRel -1 'capital-answer'}}\".){{/if}}",
       "path": "demo-templating/assets/{{hintFile}}.md",
+      "helpTextPath": "demo-templating/assets/quiz-help.md",
       "response": [
         {
           "id": "capital-answer",
-          "prompt": "Enter the capital of {{country}}:",
-          "secondaryText": "Question about {{country}} ({{continent}})",
-          "infoText": "This trial's parameters: country={{country}}, continent={{continent}}.",
+          "prompt": "Enter the capital of {{country}}:{{#ifEquals (lookupAnswersRel -1 'capital-answer') 'Paris'}} (You said Paris last time — nice!){{/ifEquals}}",
+          "secondaryText": "Question about {{country}} ({{continent}}).{{#if (lookupAnswersRel -1 'capital-answer')}} Previously you answered \"{{lookupAnswersRel -1 'capital-answer'}}\".{{/if}}",
+          "infoText": "This trial's parameters: country={{country}}, continent={{continent}}.{{#if (lookupAnswersRel -1 'capital-answer')}} Previous answer: {{lookupAnswersRel -1 'capital-answer'}}.{{/if}}",
           "location": "belowStimulus",
           "type": "shortText"
         }
@@ -138,6 +139,15 @@
   },
   "sequence": {
     "order": "fixed",
-    "components": ["introduction", "quiz-1", "quiz-2", "quiz-3", "quiz-4", "quiz-5", "quiz-6"]
+    "components": [
+      "introduction",
+      "quiz-1",
+      "quiz-1",
+      "quiz-2",
+      "quiz-3",
+      "quiz-4",
+      "quiz-5",
+      "quiz-6"
+    ]
   }
 }

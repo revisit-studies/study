@@ -204,7 +204,9 @@ vi.mock('../../../store/store', () => ({
   useStoreSelector: vi.fn((selector: (s: Record<string, unknown>) => unknown) => selector({
     sequence: { order: 'fixed', components: [] },
     completed: false,
+    answers: {},
   })),
+  useFlatSequence: vi.fn(() => []),
 }));
 
 vi.mock('../../../utils/responseOptions', () => ({

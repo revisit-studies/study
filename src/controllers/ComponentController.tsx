@@ -21,7 +21,7 @@ import { IndividualComponent } from '../parser/types';
 import { useDisableBrowserBack } from '../utils/useDisableBrowserBack';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import {
-  useStoreActions, useStoreDispatch, useStoreSelector,
+  useFlatSequence, useStoreActions, useStoreDispatch, useStoreSelector,
 } from '../store/store';
 import { StudyEnd } from '../components/StudyEnd';
 import { TrainingFailed } from '../components/TrainingFailed';
@@ -54,6 +54,7 @@ export function ComponentController() {
   const { storageEngine } = useStorageEngine();
 
   const answers = useStoreSelector((store) => store.answers);
+  const flatSequence = useFlatSequence();
   const analysisCanPlayScreenRecording = useStoreSelector((state) => state.analysisCanPlayScreenRecording);
 
   const { setAnalysisCanPlayScreenRecording } = useStoreActions();
@@ -240,9 +241,14 @@ export function ComponentController() {
     }
   }, [answers, currentComponent, currentStep, funcIndex, isAnalysis, modes.developmentModeEnabled, navigate, status, studyId]);
 
+  const templateData = useMemo(
+    () => ({ answers, flatSequence, currentStep }),
+    [answers, flatSequence, currentStep],
+  );
+
   const instruction = useMemo(
-    () => compileTemplate(currentConfig?.instruction || '', currentConfig?.parameters ?? {}),
-    [currentConfig?.instruction, currentConfig?.parameters],
+    () => compileTemplate(currentConfig?.instruction || '', currentConfig?.parameters ?? {}, { data: templateData }),
+    [currentConfig?.instruction, currentConfig?.parameters, templateData],
   );
 
   // We're not using hooks below here, so we can return early if we're at the end of the study.

@@ -7,6 +7,8 @@ import { ResourceNotFound } from '../../ResourceNotFound';
 import { PREFIX } from '../../utils/Prefix';
 import { useCurrentComponent } from '../../routes/utils';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
+import { compileTemplate } from '../../utils/handlebars';
+import { useTemplateAnswerContext } from '../../store/hooks/useTemplateAnswerContext';
 
 export function HelpModal() {
   const showHelpText = useStoreSelector((state) => state.showHelpText);
@@ -24,6 +26,13 @@ export function HelpModal() {
   const componentConfig = useMemo(() => studyComponentToIndividualComponent(config.components[component] || {}, config), [component, config]);
 
   const helpTextPath = useMemo(() => componentConfig.helpTextPath ?? config.uiConfig.helpTextPath, [componentConfig.helpTextPath, config.uiConfig.helpTextPath]);
+
+  const templateData = useTemplateAnswerContext();
+
+  const templatedHelpText = useMemo(
+    () => compileTemplate(helpText, componentConfig.parameters ?? {}, { data: templateData }),
+    [helpText, componentConfig.parameters, templateData],
+  );
 
   useEffect(() => {
     async function fetchText() {
@@ -47,7 +56,7 @@ export function HelpModal() {
   return (
     <Modal className="helpModal" size="70%" opened={showHelpText} withCloseButton={false} onClose={() => storeDispatch(toggleShowHelpText())}>
       {loading || foundAsset
-        ? <ReactMarkdownWrapper text={helpText} />
+        ? <ReactMarkdownWrapper text={templatedHelpText} />
         : <ResourceNotFound path={config.uiConfig.helpTextPath} />}
     </Modal>
   );
