@@ -1782,8 +1782,6 @@ export interface ComponentBlock {
   order: ComponentOrder;
   /** The components that are included in the order. */
   components: (string | ComponentBlock | DynamicBlock | FactorBlock)[];
-  /** Parameters associated with the block. Between-subjects factors can use these to keep or remove whole nested blocks during sequence allocation. */
-  parameters?: Record<string, unknown>;
   /** The number of samples to use for the random assignments. This means you can randomize across 3 components while only showing a participant 2 at a time. */
   numSamples?: number;
   /** The interruptions property specifies an array of interruptions. These can be used for breaks or attention checks.  */
@@ -1794,23 +1792,54 @@ export interface ComponentBlock {
   conditional?: boolean;
 }
 
-/** A primitive level stored by a factor. */
-export type FactorValue = string | number | boolean;
+/** A primitive value stored by a factor or used for between-subjects allocation. */
+export type FactorPrimitive = string | number | boolean;
+
+/** A parameter value stored in an object-valued factor level. */
+export type FactorObjectValue = FactorPrimitive | FactorPrimitive[];
+
+/**
+ * A condition whose properties are materialized together as component parameters.
+ * Object levels keep related values, such as a caption and its selected items, atomic.
+ */
+export type FactorObject = Record<string, FactorObjectValue>;
+
+/** A primitive level or an atomic object-valued condition stored by a factor. */
+export type FactorValue = FactorPrimitive | FactorObject;
+
+/**
+ * A reusable list of factor values with participant-level ordering and optional sampling.
+ * The selected order is shared by every reference to the named factor in one sequence.
+ */
+export interface OrderedFactorValues {
+  values: FactorValue[];
+  order?: ComponentOrder;
+  numSamples?: number;
+}
 
 /** Operations that combine or allocate factor conditions. */
-export type FactorAction = 'cross' | 'zip' | 'concat' | 'sample' | 'repeat';
+export type FactorAction = 'cross' | 'zip' | 'concat' | 'keep' | 'remove' | 'sample' | 'repeat';
 
 /** A named factor reference or another inline factor expression. */
 export type FactorOption = string | FactorExpression;
 
 interface FactorCombinationExpression {
-  action: 'cross' | 'zip' | 'concat';
+  action: 'cross' | 'zip';
+  factors: FactorOption[];
+  /** Optional output parameter names, one for each input factor. */
+  as?: string[];
+}
+
+interface FactorConcatExpression {
+  action: 'concat';
   factors: FactorOption[];
 }
 
 interface FactorSampleExpression {
   action: 'sample';
   factors: FactorOption[];
+  /** Whether selected conditions may repeat. */
+  samplingStrategy: 'withoutReplacement' | 'withReplacement';
   /**
    * Number of conditions randomly selected for each participant.
    * @asType integer
@@ -1830,12 +1859,32 @@ interface FactorRepeatExpression {
   numRepeats: number;
 }
 
+interface FactorKeepRemoveExpressionBase {
+  /** Named factor or expression whose conditions are selected. */
+  factor: FactorOption;
+  /** Parameter values used to select matching conditions. */
+  condition?: FactorObject;
+  /** Complete factor conditions, or a factor expression that resolves to them, used to select matching conditions. */
+  items?: FactorObject[] | FactorOption;
+}
+
+interface FactorKeepExpression extends FactorKeepRemoveExpressionBase {
+  action: 'keep';
+}
+
+interface FactorRemoveExpression extends FactorKeepRemoveExpressionBase {
+  action: 'remove';
+}
+
 /** A recursively composable expression over named factors or nested expressions. */
 export type FactorExpression = FactorCombinationExpression
+  | FactorConcatExpression
+  | FactorKeepExpression
+  | FactorRemoveExpression
   | FactorSampleExpression
   | FactorRepeatExpression;
 
-export type Factor = FactorValue[] | FactorExpression;
+export type Factor = FactorValue[] | OrderedFactorValues | FactorExpression;
 
 export interface FactorBlock {
   type: 'factor';
@@ -1845,7 +1894,6 @@ export interface FactorBlock {
   /** One or more base components materialized for every factor condition. */
   components: string | string[];
   order?: ComponentOrder;
-  parameters?: Record<string, unknown>;
   interruptions?: InterruptionBlock[];
   skip?: SkipConditions;
   conditional?: boolean;

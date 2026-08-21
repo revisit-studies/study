@@ -5,6 +5,10 @@
     "tutorial-replication",
     "demo-html",
     "demo-factors",
+    "demo-stroop-factors",
+    "demo-max-study2",
+    "demo-ffl-study",
+    "demo-dsf-study",
     "demo-html-input",
     "demo-form-elements",
     "demo-training",
@@ -72,6 +76,18 @@
     },
     "demo-factors": {
       "path": "demo-factors/config.json"
+    },
+    "demo-stroop-factors": {
+      "path": "demo-stroop-factors/config.json"
+    },
+    "demo-max-study2": {
+      "path": "demo-max-study2/config.json"
+    },
+    "demo-ffl-study": {
+      "path": "demo-ffl-study/config.json"
+    },
+    "demo-dsf-study": {
+      "path": "demo-dsf-study/config.json"
     },
     "demo-screen-recording": {
       "path": "demo-screen-recording/config.json"

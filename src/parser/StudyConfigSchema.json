@@ -550,11 +550,6 @@
           "$ref": "#/definitions/ComponentOrder",
           "description": "The type of order. This can be random (pure random), latinSquare (random with some guarantees), or fixed."
         },
-        "parameters": {
-          "additionalProperties": {},
-          "description": "Parameters associated with the block. Between-subjects factors can use these to keep or remove whole nested blocks during sequence allocation.",
-          "type": "object"
-        },
         "skip": {
           "$ref": "#/definitions/SkipConditions",
           "description": "The skip conditions for the block."
@@ -1009,6 +1004,9 @@
           "type": "array"
         },
         {
+          "$ref": "#/definitions/OrderedFactorValues"
+        },
+        {
           "$ref": "#/definitions/FactorExpression"
         }
       ]
@@ -1049,10 +1047,6 @@
         "order": {
           "$ref": "#/definitions/ComponentOrder"
         },
-        "parameters": {
-          "additionalProperties": {},
-          "type": "object"
-        },
         "skip": {
           "$ref": "#/definitions/SkipConditions"
         },
@@ -1077,9 +1071,35 @@
             "action": {
               "enum": [
                 "cross",
-                "zip",
-                "concat"
+                "zip"
               ],
+              "type": "string"
+            },
+            "as": {
+              "description": "Optional output parameter names, one for each input factor.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "factors": {
+              "items": {
+                "$ref": "#/definitions/FactorOption"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "action",
+            "factors"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "action": {
+              "const": "concat",
               "type": "string"
             },
             "factors": {
@@ -1092,6 +1112,78 @@
           "required": [
             "action",
             "factors"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "action": {
+              "const": "keep",
+              "type": "string"
+            },
+            "condition": {
+              "$ref": "#/definitions/FactorObject",
+              "description": "Parameter values used to select matching conditions."
+            },
+            "factor": {
+              "$ref": "#/definitions/FactorOption",
+              "description": "Named factor or expression whose conditions are selected."
+            },
+            "items": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/definitions/FactorObject"
+                  },
+                  "type": "array"
+                },
+                {
+                  "$ref": "#/definitions/FactorOption"
+                }
+              ],
+              "description": "Complete factor conditions, or a factor expression that resolves to them, used to select matching conditions."
+            }
+          },
+          "required": [
+            "action",
+            "factor"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "action": {
+              "const": "remove",
+              "type": "string"
+            },
+            "condition": {
+              "$ref": "#/definitions/FactorObject",
+              "description": "Parameter values used to select matching conditions."
+            },
+            "factor": {
+              "$ref": "#/definitions/FactorOption",
+              "description": "Named factor or expression whose conditions are selected."
+            },
+            "items": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/definitions/FactorObject"
+                  },
+                  "type": "array"
+                },
+                {
+                  "$ref": "#/definitions/FactorOption"
+                }
+              ],
+              "description": "Complete factor conditions, or a factor expression that resolves to them, used to select matching conditions."
+            }
+          },
+          "required": [
+            "action",
+            "factor"
           ],
           "type": "object"
         },
@@ -1112,11 +1204,20 @@
               "description": "Number of conditions randomly selected for each participant.",
               "minimum": 1,
               "type": "integer"
+            },
+            "samplingStrategy": {
+              "description": "Whether selected conditions may repeat.",
+              "enum": [
+                "withoutReplacement",
+                "withReplacement"
+              ],
+              "type": "string"
             }
           },
           "required": [
             "action",
             "factors",
+            "samplingStrategy",
             "numSamples"
           ],
           "type": "object"
@@ -1150,6 +1251,27 @@
       ],
       "description": "A recursively composable expression over named factors or nested expressions."
     },
+    "FactorObject": {
+      "additionalProperties": {
+        "$ref": "#/definitions/FactorObjectValue"
+      },
+      "description": "A condition whose properties are materialized together as component parameters. Object levels keep related values, such as a caption and its selected items, atomic.",
+      "type": "object"
+    },
+    "FactorObjectValue": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/FactorPrimitive"
+        },
+        {
+          "items": {
+            "$ref": "#/definitions/FactorPrimitive"
+          },
+          "type": "array"
+        }
+      ],
+      "description": "A parameter value stored in an object-valued factor level."
+    },
     "FactorOption": {
       "anyOf": [
         {
@@ -1161,13 +1283,24 @@
       ],
       "description": "A named factor reference or another inline factor expression."
     },
-    "FactorValue": {
-      "description": "A primitive level stored by a factor.",
+    "FactorPrimitive": {
+      "description": "A primitive value stored by a factor or used for between-subjects allocation.",
       "type": [
         "string",
         "number",
         "boolean"
       ]
+    },
+    "FactorValue": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/FactorPrimitive"
+        },
+        {
+          "$ref": "#/definitions/FactorObject"
+        }
+      ],
+      "description": "A primitive level or an atomic object-valued condition stored by a factor."
     },
     "ImageComponent": {
       "additionalProperties": false,
@@ -2542,6 +2675,28 @@
         "id",
         "prompt",
         "type"
+      ],
+      "type": "object"
+    },
+    "OrderedFactorValues": {
+      "additionalProperties": false,
+      "description": "A reusable list of factor values with participant-level ordering and optional sampling. The selected order is shared by every reference to the named factor in one sequence.",
+      "properties": {
+        "numSamples": {
+          "type": "number"
+        },
+        "order": {
+          "$ref": "#/definitions/ComponentOrder"
+        },
+        "values": {
+          "items": {
+            "$ref": "#/definitions/FactorValue"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "values"
       ],
       "type": "object"
     },

@@ -118,6 +118,9 @@
     "test": {
       "type": "react-component",
       "path": "incentives-corr/assets/Task.tsx",
+      "parameters": {
+        "taskid": "test"
+      },
       "stylesheetPath": "incentives-corr/assets/task.css",
       "helpTextPath": "incentives-corr/assets/help-@vis.md",
       "response": [
@@ -260,9 +263,6 @@
         "factor": "testTrials",
         "order": "latinSquare",
         "components": "test",
-        "parameters": {
-          "taskid": "test"
-        },
         "interruptions": [
           {
             "spacing": "random",

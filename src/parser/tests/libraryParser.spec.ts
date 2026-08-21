@@ -82,6 +82,110 @@ describe('Factor Compiler', () => {
     ]);
   });
 
+  test('keeps object-valued factor levels together as one condition', () => {
+    const tupleFactors: NonNullable<StudyConfig['factors']> = {
+      trials: [
+        {
+          stimulusId: 'trial-1',
+          guardrail: 'super_data',
+          initialSelection: ['A', 'B'],
+          caption: 'Selected A and B',
+        },
+      ],
+    };
+
+    expect(resolveFactorConditions('trials', tupleFactors)).toEqual([
+      {
+        stimulusId: 'trial-1',
+        guardrail: 'super_data',
+        initialSelection: ['A', 'B'],
+        caption: 'Selected A and B',
+      },
+    ]);
+    expect(resolveFactorConditions({
+      action: 'keep',
+      factor: 'trials',
+      condition: { guardrail: 'super_data' },
+    }, tupleFactors)).toEqual([
+      expect.objectContaining({
+        stimulusId: 'trial-1',
+        guardrail: 'super_data',
+      }),
+    ]);
+
+    const config: StudyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: '', version: '', authors: [], date: '', description: '', organizations: [],
+      },
+      uiConfig: {
+        logoPath: '', contactEmail: '', withProgressBar: true, withSidebar: true,
+      },
+      baseComponents: {
+        trial: {
+          type: 'react-component', path: 'study/assets/Trial.tsx', response: [],
+        },
+      },
+      components: {},
+      factors: tupleFactors,
+      sequence: {
+        type: 'factor', id: 'trials', factor: 'trials', components: 'trial',
+      },
+    };
+    const result = compileFactorBlocks(config.sequence, config);
+    const component = Object.values(result.components)[0];
+
+    expect(component).toMatchObject({
+      parameters: {
+        stimulusId: 'trial-1',
+        guardrail: 'super_data',
+        initialSelection: ['A', 'B'],
+        caption: 'Selected A and B',
+      },
+    });
+  });
+
+  test('keeps and removes factor conditions by condition or explicit items', () => {
+    const trials = [
+      { stimulusId: 'viral-a', studyArm: 'viral-a', guardrail: 'none' },
+      { stimulusId: 'viral-b', studyArm: 'viral-b', guardrail: 'none' },
+      { stimulusId: 'stock-a', studyArm: 'stock-a', guardrail: 'summary' },
+    ];
+    const trialFactors: NonNullable<StudyConfig['factors']> = { trials };
+
+    expect(resolveFactorConditions({
+      action: 'keep', factor: 'trials', condition: { studyArm: 'viral-a' },
+    }, trialFactors)).toEqual([trials[0]]);
+    expect(resolveFactorConditions({
+      action: 'remove', factor: 'trials', condition: { guardrail: 'none' },
+    }, trialFactors)).toEqual([trials[2]]);
+    expect(resolveFactorConditions({
+      action: 'keep', factor: 'trials', items: [trials[1]],
+    }, trialFactors)).toEqual([trials[1]]);
+    expect(resolveFactorConditions({
+      action: 'remove', factor: 'trials', items: [trials[1]],
+    }, trialFactors)).toEqual([trials[0], trials[2]]);
+  });
+
+  test('validates keep and remove selection inputs', () => {
+    const errors: ParserErrorWarning[] = [];
+    const trialFactors: NonNullable<StudyConfig['factors']> = {
+      trials: [{ stimulusId: 'trial-1', studyArm: 'viral-a' }],
+    };
+
+    resolveFactorConditions({
+      action: 'keep', factor: 'trials', condition: { studyArm: 'viral-a' }, items: [{ stimulusId: 'trial-1', studyArm: 'viral-a' }],
+    }, trialFactors, errors);
+    resolveFactorConditions({
+      action: 'remove', factor: 'trials', items: [],
+    }, trialFactors, errors);
+
+    expect(errors.map((error) => error.message)).toEqual(expect.arrayContaining([
+      'Keep factor `inline` requires exactly one non-empty condition or items list',
+      'Remove factor `inline` requires exactly one non-empty condition or items list',
+    ]));
+  });
+
   test('reports invalid zip lengths and cycles', () => {
     const errors: ParserErrorWarning[] = [];
     resolveFactorConditions('badZip', {
@@ -151,6 +255,10 @@ describe('Factor Compiler', () => {
       r1Training: 0.6,
       r2Training: 0.9,
     })).toBe('training__r1Training=0.6__r2Training=0.9');
+    expect(createFactorConditionId('stroop', {
+      color_0: 'RED',
+      color_1: 'BLUE',
+    })).toBe('stroop__color_0=RED__color_1=BLUE');
   });
 });
 

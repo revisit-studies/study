@@ -1,0 +1,104 @@
+{
+  "$schema": "../../src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Stroop Test with Factors",
+    "version": "pilot",
+    "authors": ["The reVISit Team"],
+    "date": "2026-08-20",
+    "description": "A ten-color Stroop test that crosses one reusable color factor with itself and subtracts congruent pairs.",
+    "organizations": ["University of Utah", "WPI", "University of Toronto"]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-stroop-factors/assets/introduction.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": false,
+    "windowEventDebounceTime": 200
+  },
+  "factors": {
+    "color": [
+      "RED",
+      "ORANGE",
+      "YELLOW",
+      "GREEN",
+      "BLUE",
+      "PURPLE",
+      "PINK",
+      "BROWN",
+      "GRAY",
+      "BLACK"
+    ],
+    "stroopConditions": {
+      "action": "cross",
+      "factors": ["color", "color"],
+      "as": ["word", "inkColor"]
+    },
+    "stroopWithFilter": {
+      "action": "remove",
+      "factor": "stroopConditions",
+      "items": {
+        "action": "zip",
+        "factors": ["color", "color"]
+      }
+    }
+  },
+  "baseComponents": {
+    "stroopTrial": {
+      "type": "react-component",
+      "path": "demo-stroop-factors/assets/StroopTrial.tsx",
+      "instruction": "Report the word's ink color, not the color named by the word. Use the buttons or the corresponding number key.",
+      "instructionLocation": "aboveStimulus",
+      "nextButtonLocation": "belowStimulus",
+      "response": [
+        {
+          "id": "response",
+          "prompt": "Selected ink color",
+          "type": "buttons",
+          "options": [
+            "RED",
+            "ORANGE",
+            "YELLOW",
+            "GREEN",
+            "BLUE",
+            "PURPLE",
+            "PINK",
+            "BROWN",
+            "GRAY",
+            "BLACK"
+          ],
+          "location": "belowStimulus",
+          "required": true,
+          "hidden": true
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "response",
+          "answer": "@inkColor"
+        }
+      ]
+    }
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-stroop-factors/assets/introduction.md",
+      "response": []
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      {
+        "type": "factor",
+        "id": "stroopTrials",
+        "factor": "stroopWithFilter",
+        "components": "stroopTrial",
+        "order": "random"
+      }
+    ]
+  }
+}

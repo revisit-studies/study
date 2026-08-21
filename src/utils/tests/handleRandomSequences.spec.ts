@@ -145,13 +145,18 @@ describe('Generating sequences works as expected', () => {
       betweenSubjects: ['ageGroup'],
       components: {
         youngTutorial: {
-          type: 'markdown',
-          path: 'test/assets/young.md',
-          response: [],
+          baseComponent: 'tutorial',
+          parameters: { ageGroup: 'young' },
         },
         oldTutorial: {
+          baseComponent: 'tutorial',
+          parameters: { ageGroup: 'old' },
+        },
+      },
+      baseComponents: {
+        tutorial: {
           type: 'markdown',
-          path: 'test/assets/old.md',
+          path: 'test/assets/tutorial.md',
           response: [],
         },
       },
@@ -165,13 +170,11 @@ describe('Generating sequences works as expected', () => {
               {
                 id: 'youngTutorialBlock',
                 order: 'fixed',
-                parameters: { ageGroup: 'young' },
                 components: ['youngTutorial'],
               },
               {
                 id: 'oldTutorialBlock',
                 order: 'fixed',
-                parameters: { ageGroup: 'old' },
                 components: ['oldTutorial'],
               },
             ],

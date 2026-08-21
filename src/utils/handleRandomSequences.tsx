@@ -1,19 +1,53 @@
 import latinSquare from '@quentinroy/latin-square';
 import isEqual from 'lodash.isequal';
 import {
-  ComponentBlock,
+  ComponentBlock, ParserErrorWarning,
   DynamicBlock,
   FactorBlock,
-  FactorValue,
+  FactorObject,
+  FactorObjectValue,
+  FactorPrimitive,
   RandomInterruption,
   StudyConfig,
 } from '../parser/types';
+import {
+  createFactorOrderContext, createFactorConditionId, resolveOrderedFactorConditions,
+} from '../parser/libraryParser';
 import { Sequence } from '../store/types';
-import { isDynamicBlock, isFactorBlock, isFactorPlanBlock } from '../parser/utils';
+import {
+  FactorRuntimePlanBlock, isDynamicBlock, isFactorBlock, isFactorPlanBlock, isFactorRuntimePlanBlock,
+} from '../parser/utils';
 
-type SequenceBlock = ComponentBlock | DynamicBlock | FactorBlock;
-type BetweenSubjectsFactorLevels = { factorName: string; levels: FactorValue[] };
-type BetweenSubjectsAssignment = Record<string, FactorValue>;
+type SequenceBlock = ComponentBlock | DynamicBlock | FactorBlock | FactorRuntimePlanBlock;
+type BetweenSubjectsFactorLevel = FactorPrimitive | FactorObject;
+type BetweenSubjectsFactorLevels = { factorName: string; levels: BetweenSubjectsFactorLevel[] };
+type BetweenSubjectsAssignment = Record<string, BetweenSubjectsFactorLevel>;
+
+function isBetweenSubjectsObjectLevel(value: BetweenSubjectsFactorLevel): value is FactorObject {
+  return typeof value === 'object' && !Array.isArray(value);
+}
+
+function getBetweenSubjectsMatchParameters(
+  assignment: BetweenSubjectsAssignment,
+): Record<string, FactorObjectValue> {
+  return Object.entries(assignment).reduce<Record<string, FactorObjectValue>>(
+    (parameters, [factorName, level]) => (
+      isBetweenSubjectsObjectLevel(level)
+        ? { ...parameters, ...level }
+        : { ...parameters, [factorName]: level }
+    ),
+    {},
+  );
+}
+
+function getBetweenSubjectsRuntimeParameters(
+  assignment: BetweenSubjectsAssignment,
+): Record<string, unknown> {
+  return {
+    ...getBetweenSubjectsMatchParameters(assignment),
+    ...assignment,
+  };
+}
 
 function shuffle<T>(array: T[]) {
   let currentIndex = array.length;
@@ -34,11 +68,18 @@ function getBetweenSubjectsFactorLevels(config: StudyConfig): BetweenSubjectsFac
   return config.betweenSubjects?.flatMap((factorName) => {
     const factor = config.factors?.[factorName];
 
-    if (!Array.isArray(factor) || factor.length === 0) {
+    if (
+      !Array.isArray(factor)
+      || factor.length === 0
+      || !factor.every((level) => (
+        typeof level !== 'object' || (level !== null && !Array.isArray(level))
+      ))
+      || !factor.every((level) => typeof level === typeof factor[0])
+    ) {
       return [];
     }
 
-    return [{ factorName, levels: factor }];
+    return [{ factorName, levels: factor as BetweenSubjectsFactorLevel[] }];
   }) || [];
 }
 
@@ -87,9 +128,10 @@ function componentMatchesBetweenSubjectsAssignment(
   assignment: BetweenSubjectsAssignment,
 ): boolean {
   const parameters = getComponentParameters(componentName, config);
+  const matchParameters = getBetweenSubjectsMatchParameters(assignment);
 
-  return Object.entries(assignment).every(([factorName, factorLevel]) => (
-    parameters?.[factorName] === undefined || parameters[factorName] === factorLevel
+  return Object.entries(matchParameters).every(([factorName, factorLevel]) => (
+    parameters?.[factorName] === undefined || isEqual(parameters[factorName], factorLevel)
   ));
 }
 
@@ -97,8 +139,9 @@ function parametersMatchBetweenSubjectsAssignment(
   parameters: Record<string, unknown> | undefined,
   assignment: BetweenSubjectsAssignment,
 ): boolean {
-  return Object.entries(assignment).every(([factorName, factorLevel]) => (
-    parameters?.[factorName] === undefined || parameters[factorName] === factorLevel
+  const matchParameters = getBetweenSubjectsMatchParameters(assignment);
+  return Object.entries(matchParameters).every(([factorName, factorLevel]) => (
+    parameters?.[factorName] === undefined || isEqual(parameters[factorName], factorLevel)
   ));
 }
 
@@ -128,7 +171,7 @@ function filterSequenceByBetweenSubjectsAssignment(
   });
 
   const parameters = Object.keys(assignment).length > 0
-    ? { ...(sequence.parameters || {}), ...assignment }
+    ? { ...(sequence.parameters || {}), ...getBetweenSubjectsRuntimeParameters(assignment) }
     : sequence.parameters;
 
   return {
@@ -260,6 +303,7 @@ function _componentBlockToSequence(
   latinSquareObject: Record<string, string[][]>,
   latinSquareRowIndex: number,
   path: string,
+  factorOrderContext = createFactorOrderContext(latinSquareRowIndex),
 ): Sequence {
   if (isDynamicBlock(order)) {
     return {
@@ -282,6 +326,38 @@ function _componentBlockToSequence(
       skip: [],
       interruptions: [],
     };
+  }
+
+  if (isFactorRuntimePlanBlock(order)) {
+    const errors: ParserErrorWarning[] = [];
+    const conditions = resolveOrderedFactorConditions(
+      order.factor,
+      order.factors,
+      factorOrderContext,
+      errors,
+      order.id,
+    );
+    if (errors.length > 0) {
+      throw new Error(errors.map((error) => error.message).join('\n'));
+    }
+    const components = conditions.flatMap((condition) => (
+      order.conditionComponents[createFactorConditionId(order.id, condition)] || []
+    ));
+    const resolvedOrder: ComponentBlock = {
+      id: order.id,
+      order: 'fixed',
+      components,
+      skip: order.skip || [],
+      interruptions: order.interruptions || [],
+      conditional: order.conditional,
+    };
+    return _componentBlockToSequence(
+      resolvedOrder,
+      latinSquareObject,
+      latinSquareRowIndex,
+      path,
+      factorOrderContext,
+    );
   }
 
   let computedComponents = order.components;
@@ -338,6 +414,7 @@ function _componentBlockToSequence(
           latinSquareObject,
           latinSquareRowIndex,
           `${path}-${actualIndex}`,
+          factorOrderContext,
         );
         if (isFactorPlanBlock(curr)) {
           sequenceComponents.push(...childSequence.components);
@@ -391,7 +468,6 @@ function _componentBlockToSequence(
     skip: order.skip || [],
     interruptions: order.interruptions || [],
     conditional: order.conditional,
-    parameters: order.parameters,
   };
 }
 

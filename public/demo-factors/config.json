@@ -129,7 +129,8 @@
       "factors": [
         "topics"
       ],
-      "numSamples": 2
+      "numSamples": 2,
+      "samplingStrategy": "withoutReplacement"
     },
     "zipThenTaskBlock": {
       "action": "cross",
