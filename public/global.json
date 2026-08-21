@@ -9,6 +9,8 @@
     "demo-max-study2",
     "demo-ffl-study",
     "demo-dsf-study",
+    "demo-calvi-study",
+    "demo-visualization-complexity",
     "demo-html-input",
     "demo-form-elements",
     "demo-training",
@@ -88,6 +90,12 @@
     },
     "demo-dsf-study": {
       "path": "demo-dsf-study/config.json"
+    },
+    "demo-calvi-study": {
+      "path": "demo-calvi-study/config.json"
+    },
+    "demo-visualization-complexity": {
+      "path": "demo-visualization-complexity/config.json"
     },
     "demo-screen-recording": {
       "path": "demo-screen-recording/config.json"

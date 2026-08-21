@@ -463,6 +463,38 @@ describe('factor sequence actions', () => {
     });
   });
 
+  test('uses a Latin-square factor to select 50 visualization-complexity stimuli', async () => {
+    const config = readFileSync(
+      'public/demo-visualization-complexity/config.json',
+      'utf8',
+    );
+    const result = await parseStudyConfig(config);
+    const sequences = generateSequenceArray({
+      ...result,
+      uiConfig: { ...result.uiConfig, numSequences: 3 },
+    });
+
+    expect(result.errors).toEqual([]);
+    expect(result.factors?.stimulusNumber).toMatchObject({
+      order: 'latinSquare', numSamples: 50,
+    });
+    expect(sequences).toHaveLength(3);
+    sequences.forEach((sequence, sequenceIndex) => {
+      const stimulusNumbers = getSequenceFlatMap(sequence).flatMap((componentId) => {
+        const component = result.components[componentId];
+        return component?.type === 'react-component'
+          ? [component.parameters?.stimulusNumber]
+          : [];
+      });
+
+      expect(stimulusNumbers).toHaveLength(50);
+      expect(stimulusNumbers).toEqual(Array.from(
+        { length: 50 },
+        (_, index) => sequenceIndex + index + 1,
+      ));
+    });
+  });
+
   test('assigns distinct serialization formats to CONFIG and TABULAR task sets', async () => {
     const config = readFileSync(
       'public/demo-dsf-study/config.json',
