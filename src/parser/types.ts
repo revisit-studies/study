@@ -494,8 +494,10 @@ export interface TextValidationRule {
  *   "type": "shortText",
  *   "default": "ReVISit is great",
  *   "placeholder": "Enter your answer here",
- *   "minLength": 3,
- *   "maxLength": 100,
+ *   "minCharLength": 3,
+ *   "maxCharLength": 100,
+ *   "minWordLength": 2,
+ *   "maxWordLength": 20,
  *   "textValidation": [
  *     {
  *       "type": "contains",
@@ -513,9 +515,13 @@ export interface ShortTextResponse extends BaseResponse {
   /** The default value of the response. Specify a string such as `"Jane Doe"`. */
   default?: string;
   /** The minimum number of characters accepted in the response. */
-  minLength?: number;
+  minCharLength?: number;
   /** The maximum number of characters accepted in the response. */
-  maxLength?: number;
+  maxCharLength?: number;
+  /** The minimum number of whitespace-separated words accepted in the response. */
+  minWordLength?: number;
+  /** The maximum number of whitespace-separated words accepted in the response. */
+  maxWordLength?: number;
   /** Validation rules applied to the response value in array order. */
   textValidation?: TextValidationRule[];
 }
@@ -531,8 +537,10 @@ export interface ShortTextResponse extends BaseResponse {
  *   "type": "longText",
  *   "default": "I enjoyed this study because...",
  *   "placeholder": "Please enter your comments",
- *   "minLength": 20,
- *   "maxLength": 500,
+ *   "minCharLength": 20,
+ *   "maxCharLength": 500,
+ *   "minWordLength": 4,
+ *   "maxWordLength": 100,
  *   "textValidation": [
  *     {
  *       "type": "doesNotContain",
@@ -550,9 +558,13 @@ export interface LongTextResponse extends BaseResponse {
   /** The default value of the response. Specify a string such as `"I enjoyed this study because..."`. */
   default?: string;
   /** The minimum number of characters accepted in the response. */
-  minLength?: number;
+  minCharLength?: number;
   /** The maximum number of characters accepted in the response. */
-  maxLength?: number;
+  maxCharLength?: number;
+  /** The minimum number of whitespace-separated words accepted in the response. */
+  minWordLength?: number;
+  /** The maximum number of whitespace-separated words accepted in the response. */
+  maxWordLength?: number;
   /** Validation rules applied to the response value in array order. */
   textValidation?: TextValidationRule[];
 }

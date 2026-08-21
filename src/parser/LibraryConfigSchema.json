@@ -1648,7 +1648,7 @@
     },
     "LongTextResponse": {
       "additionalProperties": false,
-      "description": "The LongTextResponse interface is used to define the properties of a long text response. LongTextResponses render as a text area that accepts any text and can optionally have a placeholder. ```json {   \"id\": \"q-name\",   \"prompt\": \"What is your first name?\",   \"location\": \"aboveStimulus\",   \"type\": \"longText\",   \"default\": \"I enjoyed this study because...\",   \"placeholder\": \"Please enter your comments\",   \"minLength\": 20,   \"maxLength\": 500,   \"textValidation\": [     {       \"type\": \"doesNotContain\",       \"value\": \"invalid\"     }   ] } ```",
+      "description": "The LongTextResponse interface is used to define the properties of a long text response. LongTextResponses render as a text area that accepts any text and can optionally have a placeholder. ```json {   \"id\": \"q-name\",   \"prompt\": \"What is your first name?\",   \"location\": \"aboveStimulus\",   \"type\": \"longText\",   \"default\": \"I enjoyed this study because...\",   \"placeholder\": \"Please enter your comments\",   \"minCharLength\": 20,   \"maxCharLength\": 500,   \"minWordLength\": 4,   \"maxWordLength\": 100,   \"textValidation\": [     {       \"type\": \"doesNotContain\",       \"value\": \"invalid\"     }   ] } ```",
       "properties": {
         "default": {
           "description": "The default value of the response. Specify a string such as `\"I enjoyed this study because...\"`.",
@@ -1674,12 +1674,20 @@
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
-        "maxLength": {
+        "maxCharLength": {
           "description": "The maximum number of characters accepted in the response.",
           "type": "number"
         },
-        "minLength": {
+        "maxWordLength": {
+          "description": "The maximum number of whitespace-separated words accepted in the response.",
+          "type": "number"
+        },
+        "minCharLength": {
           "description": "The minimum number of characters accepted in the response.",
+          "type": "number"
+        },
+        "minWordLength": {
+          "description": "The minimum number of whitespace-separated words accepted in the response.",
           "type": "number"
         },
         "paramCapture": {
@@ -3123,7 +3131,7 @@
     },
     "ShortTextResponse": {
       "additionalProperties": false,
-      "description": "The ShortTextResponse interface is used to define the properties of a short text response. ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder. ```json {   \"id\": \"q-short-text\",   \"prompt\": \"Short text example\",   \"location\": \"aboveStimulus\",   \"type\": \"shortText\",   \"default\": \"ReVISit is great\",   \"placeholder\": \"Enter your answer here\",   \"minLength\": 3,   \"maxLength\": 100,   \"textValidation\": [     {       \"type\": \"contains\",       \"value\": \"ReVISit\"     }   ] } ```",
+      "description": "The ShortTextResponse interface is used to define the properties of a short text response. ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder. ```json {   \"id\": \"q-short-text\",   \"prompt\": \"Short text example\",   \"location\": \"aboveStimulus\",   \"type\": \"shortText\",   \"default\": \"ReVISit is great\",   \"placeholder\": \"Enter your answer here\",   \"minCharLength\": 3,   \"maxCharLength\": 100,   \"minWordLength\": 2,   \"maxWordLength\": 20,   \"textValidation\": [     {       \"type\": \"contains\",       \"value\": \"ReVISit\"     }   ] } ```",
       "properties": {
         "default": {
           "description": "The default value of the response. Specify a string such as `\"Jane Doe\"`.",
@@ -3149,12 +3157,20 @@
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
-        "maxLength": {
+        "maxCharLength": {
           "description": "The maximum number of characters accepted in the response.",
           "type": "number"
         },
-        "minLength": {
+        "maxWordLength": {
+          "description": "The maximum number of whitespace-separated words accepted in the response.",
+          "type": "number"
+        },
+        "minCharLength": {
           "description": "The minimum number of characters accepted in the response.",
+          "type": "number"
+        },
+        "minWordLength": {
+          "description": "The minimum number of whitespace-separated words accepted in the response.",
           "type": "number"
         },
         "paramCapture": {
