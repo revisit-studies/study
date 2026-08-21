@@ -9,16 +9,21 @@ import {
 import { openConfirmModal } from '@mantine/modals';
 import { ManageView } from '../ManageView';
 import { RevisitModesItem } from '../RevisitModesItem';
-import { StageManagementItem } from '../StageManagementItem';
+import {
+  getDefaultDesiredParticipantCounts, getDesiredParticipantCounts, getNextStageColor, StageManagementItem,
+} from '../StageManagementItem';
 import { DataManagementItem } from '../DataManagementItem';
 import { showNotification } from '../../../../utils/notifications';
+import { StudyConfig } from '../../../../parser/types';
+import { getBetweenSubjectsCombinationKey } from '../../../../storage/engines/types';
 
 let mockStorageEngine: {
   getModes: ReturnType<typeof vi.fn>;
   setMode: ReturnType<typeof vi.fn>;
   getStageData: ReturnType<typeof vi.fn>;
+  getAllSequenceAssignments: ReturnType<typeof vi.fn>;
   setCurrentStage: ReturnType<typeof vi.fn>;
-  updateStageColor: ReturnType<typeof vi.fn>;
+  updateStage: ReturnType<typeof vi.fn>;
   getSnapshots: ReturnType<typeof vi.fn>;
   createSnapshot: ReturnType<typeof vi.fn>;
   renameSnapshot: ReturnType<typeof vi.fn>;
@@ -46,6 +51,11 @@ vi.mock('@mantine/core', () => ({
   TextInput: ({ onChange, placeholder }: { onChange?: React.ChangeEventHandler<HTMLInputElement>; placeholder?: string }) => (
     <input placeholder={placeholder} onChange={onChange} />
   ),
+  NumberInput: ({
+    onChange, placeholder, value, 'aria-label': ariaLabel,
+  }: { onChange?: (value: number | string) => void; placeholder?: string; value?: number | string; 'aria-label'?: string }) => (
+    <input aria-label={ariaLabel} placeholder={placeholder} value={value ?? ''} onChange={(event) => onChange?.(event.currentTarget.value === '' ? '' : Number(event.currentTarget.value))} />
+  ),
   ColorInput: ({ value }: { value?: string }) => <input readOnly value={value ?? ''} />,
   Loader: () => <div>Loading...</div>,
   LoadingOverlay: () => null,
@@ -57,8 +67,13 @@ vi.mock('@mantine/core', () => ({
   Radio: ({ checked, onChange, 'aria-label': ariaLabel }: { checked: boolean; onChange?: () => void; 'aria-label'?: string }) => (
     <input type="radio" readOnly checked={checked} onChange={onChange} aria-label={ariaLabel} />
   ),
-  Switch: ({ checked, onChange, 'aria-label': ariaLabel }: { checked?: boolean; onChange?: React.ChangeEventHandler<HTMLInputElement>; 'aria-label'?: string }) => (
-    <input type="checkbox" defaultChecked={checked} onChange={onChange} aria-label={ariaLabel} />
+  Switch: ({
+    checked, label, onChange, 'aria-label': ariaLabel,
+  }: { checked?: boolean; label?: ReactNode; onChange?: React.ChangeEventHandler<HTMLInputElement>; 'aria-label'?: string }) => (
+    <label>
+      {label}
+      <input type="checkbox" defaultChecked={checked} onChange={onChange} aria-label={ariaLabel} />
+    </label>
   ),
   Flex: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Modal: ({ opened, children }: { opened: boolean; children: ReactNode }) => (opened ? <div>{children}</div> : null),
@@ -81,6 +96,8 @@ vi.mock('@tabler/icons-react', () => ({
   IconEdit: () => <span>edit</span>,
   IconCheck: () => <span>check</span>,
   IconX: () => <span>x</span>,
+  IconChevronDown: () => <span>down</span>,
+  IconChevronUp: () => <span>up</span>,
   IconTrashX: () => <span>trash</span>,
   IconRefresh: () => <span>refresh</span>,
   IconPencil: () => <span>pencil</span>,
@@ -99,7 +116,8 @@ vi.mock('../../../../components/downloader/DownloadButtons', () => ({
 }));
 
 const successResponse = { status: 'SUCCESS', notifications: [] };
-const DEFAULT_STAGE_COLOR = '#F05A30';
+const DEFAULT_STAGE_COLOR = '#F35C34';
+const FIRST_ADDITIONAL_STAGE_COLOR = '#F35C34';
 
 const makeEngine = () => ({
   getModes: vi.fn().mockResolvedValue({
@@ -112,8 +130,9 @@ const makeEngine = () => ({
     currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
     allStages: [{ stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR }],
   }),
+  getAllSequenceAssignments: vi.fn().mockResolvedValue([]),
   setCurrentStage: vi.fn().mockResolvedValue(undefined),
-  updateStageColor: vi.fn().mockResolvedValue(undefined),
+  updateStage: vi.fn().mockResolvedValue(undefined),
   getSnapshots: vi.fn().mockResolvedValue({}),
   createSnapshot: vi.fn().mockResolvedValue(successResponse),
   renameSnapshot: vi.fn().mockResolvedValue(successResponse),
@@ -260,8 +279,8 @@ describe('ManageView', () => {
     expect(screen.getByRole('button', { name: 'Edit stage DEFAULT' })).toBeDefined();
   });
 
-  test('StageManagementItem handleSaveEdit calls updateStageColor then refreshes', async () => {
-    mockStorageEngine!.updateStageColor = vi.fn().mockResolvedValue(undefined);
+  test('StageManagementItem handleSaveEdit updates the stage maximum then refreshes', async () => {
+    mockStorageEngine!.updateStage = vi.fn().mockResolvedValue(undefined);
     await act(async () => {
       render(<StageManagementItem studyId="test-study" />);
     });
@@ -269,7 +288,11 @@ describe('ManageView', () => {
     await act(async () => { fireEvent.click(editBtn); });
     const saveBtn = screen.getByRole('button', { name: 'Save stage DEFAULT' });
     await act(async () => { fireEvent.click(saveBtn); });
-    expect(mockStorageEngine!.updateStageColor).toHaveBeenCalledWith('test-study', 'DEFAULT', DEFAULT_STAGE_COLOR);
+    expect(mockStorageEngine!.updateStage).toHaveBeenCalledWith('test-study', 'DEFAULT', {
+      color: DEFAULT_STAGE_COLOR,
+      maxParticipants: null,
+      desiredParticipantsByCombination: null,
+    });
     expect(mockStorageEngine!.getStageData).toHaveBeenCalledTimes(2);
   });
 
@@ -281,6 +304,45 @@ describe('ManageView', () => {
     expect(screen.getByPlaceholderText('Enter stage name')).toBeDefined();
     await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Cancel new stage' })); });
     expect(screen.getByText('Add New Stage')).toBeDefined();
+  });
+
+  test('getNextStageColor selects an unused color from the shared palette', () => {
+    expect(getNextStageColor([{ stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR }]))
+      .toBe(FIRST_ADDITIONAL_STAGE_COLOR);
+    expect(getNextStageColor([
+      { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
+      { stageName: 'STAGE 2', color: FIRST_ADDITIONAL_STAGE_COLOR },
+    ])).not.toBe(FIRST_ADDITIONAL_STAGE_COLOR);
+  });
+
+  test('getDefaultDesiredParticipantCounts evenly distributes a stage maximum', () => {
+    const combinations = [
+      { key: 'a', parameters: {} },
+      { key: 'b', parameters: {} },
+      { key: 'c', parameters: {} },
+      { key: 'd', parameters: {} },
+    ];
+
+    expect(getDefaultDesiredParticipantCounts(10, combinations)).toEqual({
+      a: 3, b: 3, c: 2, d: 2,
+    });
+    expect(getDefaultDesiredParticipantCounts(undefined, combinations)).toEqual({});
+  });
+
+  test('getDesiredParticipantCounts distributes the remaining maximum after overrides', () => {
+    const combinations = [
+      { key: 'a', parameters: {} },
+      { key: 'b', parameters: {} },
+      { key: 'c', parameters: {} },
+      { key: 'd', parameters: {} },
+    ];
+
+    expect(getDesiredParticipantCounts(10, combinations, { a: 4 })).toEqual({
+      a: 4, b: 2, c: 2, d: 2,
+    });
+    expect(getDesiredParticipantCounts(10, combinations, { a: 4, d: 1 })).toEqual({
+      a: 4, b: 3, c: 2, d: 1,
+    });
   });
 
   test('StageManagementItem handleSaveNewStage shows error for invalid name', async () => {
@@ -299,10 +361,10 @@ describe('ManageView', () => {
         allStages: [{ stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR }],
       })
       .mockResolvedValueOnce({
-        currentStage: { stageName: 'NEWSTAGE', color: DEFAULT_STAGE_COLOR },
+        currentStage: { stageName: 'NEWSTAGE', color: FIRST_ADDITIONAL_STAGE_COLOR },
         allStages: [
           { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
-          { stageName: 'NEWSTAGE', color: DEFAULT_STAGE_COLOR },
+          { stageName: 'NEWSTAGE', color: FIRST_ADDITIONAL_STAGE_COLOR },
         ],
       });
     await act(async () => {
@@ -311,8 +373,83 @@ describe('ManageView', () => {
     await act(async () => { fireEvent.click(screen.getByText('Add New Stage')); });
     fireEvent.change(screen.getByPlaceholderText('Enter stage name'), { target: { value: 'NEWSTAGE' } });
     await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Save new stage' })); });
-    expect(mockStorageEngine!.setCurrentStage).toHaveBeenCalledWith('test-study', 'NEWSTAGE', DEFAULT_STAGE_COLOR);
+    expect(mockStorageEngine!.setCurrentStage).toHaveBeenCalledWith('test-study', 'NEWSTAGE', FIRST_ADDITIONAL_STAGE_COLOR);
     expect(mockStorageEngine!.getStageData).toHaveBeenCalledTimes(2);
+  });
+
+  test('StageManagementItem shows each stage participant count and maximum', async () => {
+    mockStorageEngine!.getStageData.mockResolvedValue({
+      currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
+      allStages: [{ stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR, maxParticipants: 5 }],
+    });
+    mockStorageEngine!.getAllParticipantsData.mockResolvedValue([
+      { stage: 'DEFAULT', rejected: false },
+      { stage: 'DEFAULT', rejected: false },
+      { stage: 'DEFAULT', rejected: { reason: 'test', timestamp: 1 } },
+    ]);
+
+    await act(async () => {
+      render(<StageManagementItem studyId="test-study" />);
+    });
+
+    expect(screen.getByText('Participants')).toBeDefined();
+    expect(screen.getByText('Max Participants')).toBeDefined();
+    expect(screen.getByText('2')).toBeDefined();
+    expect(screen.getByText('5')).toBeDefined();
+  });
+
+  test('StageManagementItem expands between-subjects combinations with counts and switches', async () => {
+    const disabledCombination = getBetweenSubjectsCombinationKey(
+      { letter: 'a', number: 2 },
+      ['letter', 'number'],
+    );
+    mockStorageEngine!.getStageData.mockResolvedValue({
+      currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
+      allStages: [{
+        stageName: 'DEFAULT',
+        color: DEFAULT_STAGE_COLOR,
+        disabledBetweenSubjectsCombinations: [disabledCombination],
+      }],
+    });
+    mockStorageEngine!.getAllParticipantsData.mockResolvedValue([
+      {
+        stage: 'DEFAULT',
+        rejected: false,
+        sequence: { parameters: { letter: 'a', number: 1 } },
+      },
+      {
+        stage: 'DEFAULT',
+        rejected: false,
+        sequence: { parameters: { letter: 'a', number: 2 } },
+      },
+      {
+        stage: 'DEFAULT',
+        rejected: false,
+        sequence: { parameters: { letter: 'b', number: 1 } },
+      },
+    ]);
+    const studyConfig = {
+      factors: { letter: ['a', 'b'], number: [1, 2] },
+      betweenSubjects: ['letter', 'number'],
+    } as unknown as StudyConfig;
+
+    await act(async () => {
+      render(<StageManagementItem studyId="test-study" studyConfig={studyConfig} />);
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Expand stage DEFAULT' }));
+    });
+
+    expect(screen.getByText('letter')).toBeDefined();
+    expect(screen.getByText('number')).toBeDefined();
+    expect(screen.getAllByRole('checkbox')).toHaveLength(4);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('checkbox', { name: 'Enable a / 2 for DEFAULT' }));
+    });
+    expect(mockStorageEngine!.updateStage).toHaveBeenCalledWith('test-study', 'DEFAULT', {
+      disabledBetweenSubjectsCombinations: null,
+    });
   });
 
   // ── DataManagementItem ───────────────────────────────────────────────────

@@ -26,6 +26,7 @@ import { getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
 import { MetaCell } from './MetaCell';
 import { componentAnswersAreCorrect } from '../../../utils/correctAnswer';
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
+import { DISTINCT_COLOR_PALETTE } from '../../../utils/colors';
 
 function formatDate(date: Date): JSX.Element {
   if (date.valueOf() === 0 || Number.isNaN(date.valueOf())) {
@@ -141,7 +142,7 @@ export function TableView({
               </Badge>
             );
           }
-          const stageColor = stageColors[stageName] || '#F05A30';
+          const stageColor = stageColors[stageName] || DISTINCT_COLOR_PALETTE[0];
           return (
             <Badge
               color={stageColor}

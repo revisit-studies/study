@@ -37,6 +37,7 @@ import { ThinkAloudAnalysis } from './thinkAloud/ThinkAloudAnalysis';
 import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
 import { ConfigView } from './config/ConfigView';
 import { StartupErrorScreen } from '../../components/StartupErrorScreen';
+import { ParticipantTimeoutModal } from './ParticipantTimeoutModal';
 
 const TABLE_HEADER_HEIGHT = 37; // Height of the tabs header
 
@@ -407,13 +408,19 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
             <Flex direction="row" align="center" gap="md">
               <Title order={5}>{displayStudyId}</Title>
               {studyConfig && canonicalStudyId && (
-                <DownloadButtons
-                  visibleParticipants={selectedParticipants.length > 0 ? selectedParticipants : visibleParticipants}
-                  studyId={canonicalStudyId}
-                  gap="10px"
-                  hasAudio={hasAudioRecording}
-                  hasScreenRecording={hasScreenRecording}
-                />
+                <Group gap="sm">
+                  <DownloadButtons
+                    visibleParticipants={selectedParticipants.length > 0 ? selectedParticipants : visibleParticipants}
+                    studyId={canonicalStudyId}
+                    gap="10px"
+                    hasAudio={hasAudioRecording}
+                    hasScreenRecording={hasScreenRecording}
+                  />
+                  <ParticipantTimeoutModal
+                    participants={expData ?? []}
+                    refresh={() => execute(studyConfig, storageEngine, canonicalStudyId)}
+                  />
+                </Group>
               )}
             </Flex>
             <Flex direction="row" align="center" gap="md">
@@ -642,7 +649,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 {studyConfig && <ConfigView visibleParticipants={visibleParticipants} studyId={canonicalStudyId ?? undefined} currentConfigHash={currentConfigHash} />}
               </Tabs.Panel>
               <Tabs.Panel style={{ overflow: 'auto' }} value="manage" pt="xs">
-                {canonicalStudyId && user.isAdmin ? <ManageView studyId={canonicalStudyId} refresh={() => execute(studyConfig, storageEngine, canonicalStudyId)} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to manage the data for this study.</Alert></Container>}
+                {canonicalStudyId && user.isAdmin ? <ManageView studyId={canonicalStudyId} studyConfig={studyConfig} refresh={() => execute(studyConfig, storageEngine, canonicalStudyId)} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to manage the data for this study.</Alert></Container>}
               </Tabs.Panel>
             </Tabs>
           ) : null}

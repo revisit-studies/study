@@ -1,7 +1,8 @@
 /* eslint-disable no-bitwise */
 import { TrrackedProvenance } from '../../store/types';
+import { DISTINCT_COLOR_PALETTE } from '../../utils/colors';
 
-export const PROVENANCE_COLOR_PALETTE = ['#4269d0', '#ff725c', '#6cc5b0', '#3ca951', '#ff8ab7', '#a463f2', '#97bbf5', '#9c6b4e'];
+export const PROVENANCE_COLOR_PALETTE = DISTINCT_COLOR_PALETTE;
 export const ROOT_COLOR = '#efb118';
 export const UNKNOWN_COLOR = '#9498a0';
 export const FORM_UPDATE_COLOR = '#9498a0';

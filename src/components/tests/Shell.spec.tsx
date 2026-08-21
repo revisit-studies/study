@@ -13,6 +13,7 @@ import { makeGlobalConfig, makeStudyConfig } from '../../tests/utils';
 import { studyStoreCreator } from '../../store/store';
 import { parseConditionParam } from '../../utils/handleConditionLogic';
 import { parseStudyConfig } from '../../parser/parser';
+import { StageCapacityExceededError } from '../../storage/engines/types';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
@@ -93,6 +94,7 @@ vi.mock('@mantine/core', () => ({
   Button: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => (
     <button type="button" onClick={onClick}>{children}</button>
   ),
+  Center: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   LoadingOverlay: ({ visible }: { visible: boolean }) => (
     visible ? <div data-testid="loading-overlay" /> : null
   ),
@@ -331,6 +333,27 @@ describe('Shell', () => {
 
     render(<Shell globalConfig={globalConfig} />);
     await waitFor(() => expect(mockStorageEngine!.setSequenceArray).toHaveBeenCalled(), { timeout: 3000 });
+  });
+
+  test('shows the study-full screen when the current stage is at capacity', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+    vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
+    mockStorageEngine = {
+      initializeStudyDb: vi.fn().mockResolvedValue(undefined),
+      saveConfig: vi.fn().mockResolvedValue(undefined),
+      getSequenceArray: vi.fn().mockResolvedValue(['seq1']),
+      getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
+      initializeParticipantSession: vi.fn().mockRejectedValue(new StageCapacityExceededError('LIMITED')),
+      isConnected: vi.fn().mockReturnValue(true),
+      getEngine: vi.fn().mockReturnValue('firebase'),
+    };
+
+    const { getByText, queryByTestId } = render(<Shell globalConfig={globalConfig} />);
+
+    await waitFor(() => expect(getByText('Study full')).toBeDefined(), { timeout: 3000 });
+    expect(getByText(/no more participants can join the LIMITED stage/i)).toBeDefined();
+    expect(queryByTestId('routing')).toBeNull();
+    consoleSpy.mockRestore();
   });
 
   test('covers study condition update path', async () => {

@@ -7,7 +7,7 @@ import {
 import { Provider } from 'react-redux';
 import { RouteObject, useRoutes, useSearchParams } from 'react-router';
 import {
-  Button, LoadingOverlay, Stack, Text, Title,
+  Button, Center, LoadingOverlay, Stack, Text, Title,
 } from '@mantine/core';
 import {
   GlobalConfig,
@@ -34,7 +34,12 @@ import { ResourceNotFound } from '../ResourceNotFound';
 import { encryptIndex } from '../utils/encryptDecryptIndex';
 import { parseStudyConfig } from '../parser/parser';
 import { hash } from '../storage/engines/utils/storageEngineHelpers';
-import type { StorageEngine, REVISIT_MODE } from '../storage/engines/types';
+import {
+  StageCapacityExceededError,
+  StageNoAvailableConditionsError,
+  type StorageEngine,
+  type REVISIT_MODE,
+} from '../storage/engines/types';
 import {
   filterSequenceByCondition,
   parseConditionParam,
@@ -136,15 +141,17 @@ export function getShellUiState({
   hasStore,
   isCompletionCheckResolved,
   completionCheckError,
+  hasStageCapacityError = false,
 }: {
   isValidStudyId: boolean;
   hasRoutes: boolean;
   hasStore: boolean;
   isCompletionCheckResolved: boolean;
   completionCheckError: string | null;
+  hasStageCapacityError?: boolean;
 }) {
   return {
-    isLoading: isValidStudyId && (!hasRoutes || !hasStore || !isCompletionCheckResolved),
+    isLoading: isValidStudyId && !hasStageCapacityError && (!hasRoutes || !hasStore || !isCompletionCheckResolved),
     showCompletionCheckError: completionCheckError !== null,
   };
 }
@@ -187,6 +194,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   const routeStudyId = useStudyId();
   const [activeConfig, setActiveConfig] = useState<ParsedConfig<StudyConfig> | null>(null);
   const [startupError, setStartupError] = useState<{ error: unknown } | null>(null);
+  const [stageEntryError, setStageEntryError] = useState<StageCapacityExceededError | StageNoAvailableConditionsError | null>(null);
   const canonicalStudyId = useMemo(() => {
     if (routeStudyId === '__revisit-widget') {
       return routeStudyId;
@@ -292,6 +300,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       if (!storageEngine || !activeConfig || !canonicalStudyId || (activeConfig.errors?.length ?? 0) > 0) return;
       setIsCompletionCheckResolved(false);
       setCompletionCheckError(null);
+      setStageEntryError(null);
 
       let modes: Record<REVISIT_MODE, boolean> | null = null;
       const urlParticipantId = activeConfig.uiConfig.urlParticipantIdParam
@@ -426,6 +435,13 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
         }
       } catch (error) {
         console.error('Error initializing user store routing:', error);
+        if (error instanceof StageCapacityExceededError || error instanceof StageNoAvailableConditionsError) {
+          if (!isCancelled) {
+            setStageEntryError(error);
+            setIsCompletionCheckResolved(true);
+          }
+          return;
+        }
         const isStorageFailure = isStorageStartupFailure(
           storageEngine,
           import.meta.env.VITE_STORAGE_ENGINE,
@@ -527,12 +543,38 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
     hasStore: store !== null,
     isCompletionCheckResolved,
     completionCheckError,
+    hasStageCapacityError: stageEntryError !== null,
   });
 
   let content: ReactNode = null;
 
   if (startupError) {
     content = <StartupErrorScreen error={startupError.error} />;
+  } else if (stageEntryError) {
+    content = (
+      <Center style={{ height: '80vh', flexDirection: 'column', textAlign: 'center' }}>
+        <Title order={2}>{stageEntryError instanceof StageCapacityExceededError ? 'Study full' : 'Study unavailable'}</Title>
+        <Text mt="md">
+          {stageEntryError instanceof StageCapacityExceededError ? (
+            <>
+              Sorry, no more participants can join the
+              {' '}
+              {stageEntryError.stageName}
+              {' '}
+              stage at this time.
+            </>
+          ) : (
+            <>
+              Sorry, there are no active study versions in the
+              {' '}
+              {stageEntryError.stageName}
+              {' '}
+              stage at this time.
+            </>
+          )}
+        </Text>
+      </Center>
+    );
   } else if (activeConfig && hasConfigErrors) {
     content = (
       <>
