@@ -144,6 +144,7 @@ test('Test questionnaire component with responses and randomizing questions and 
   await page.getByPlaceholder('2–5 words').fill('two words');
   await page.getByPlaceholder('4–10 words').fill('This has four words');
   await page.getByPlaceholder('test@revisit.dev').fill('test@revisit.dev');
+  await page.getByPlaceholder('+800-0000-0000').fill('+800-0000-0000');
   await page.getByPlaceholder('800-000-0000').fill('800-000-0000');
   await page.getByPlaceholder('https://revisit.dev').fill('https://revisit.dev');
   await page.getByPlaceholder('MM/DD/YYYY').fill('06/24/2009');

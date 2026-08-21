@@ -40,14 +40,27 @@ function isDateInMonthDayYearFormat(value: string) {
     && day <= daysInMonth[month - 1];
 }
 
+function isPhoneNumber(value: string) {
+  if (!/^\+?\d+(?:-\d+)*$/.test(value)) {
+    return false;
+  }
+
+  const digitCount = value.replace(/\D/g, '').length;
+  return digitCount >= 7 && digitCount <= 15;
+}
+
 const BUILT_IN_VALIDATIONS: Record<BuiltInValidationType, BuiltInValidation> = {
   email: {
     passes: (value) => emailValidation(value) === null,
     message: 'Please enter a valid email address.',
   },
   phoneNumber: {
+    passes: isPhoneNumber,
+    message: 'Please enter a valid phone number.',
+  },
+  usPhoneNumber: {
     passes: (value) => /^\d{3}-\d{3}-\d{4}$/.test(value),
-    message: 'Please enter a valid phone number in the format 000-000-0000.',
+    message: 'Please enter a valid US phone number in the format 000-000-0000.',
   },
   url: {
     passes: isHttpUrl,

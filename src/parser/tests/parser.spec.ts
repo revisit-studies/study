@@ -68,7 +68,7 @@ describe('Text response validation config parsing', () => {
     },
   );
 
-  test.each(['email', 'phoneNumber', 'url', 'date', 'time'])('accepts the %s built-in validation for short text responses', async (builtInValidation) => {
+  test.each(['email', 'phoneNumber', 'usPhoneNumber', 'url', 'date', 'time'])('accepts the %s built-in validation for short text responses', async (builtInValidation) => {
     const studyConfig = makeStudyConfig('contains');
     Object.assign(studyConfig.components.question1.response[0], { builtInValidation });
 

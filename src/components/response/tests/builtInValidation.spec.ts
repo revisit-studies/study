@@ -21,8 +21,31 @@ describe('checkBuiltInValidation', () => {
     expect(checkBuiltInValidation('email', value)).toBe('Please enter a valid email address.');
   });
 
+  test.each([
+    '8000000',
+    '+800-0000-0000',
+    '+1-800-000-0000',
+    '800-0000',
+    '123456789012345',
+  ])('accepts an international phone number containing 7 to 15 digits: %s', (value) => {
+    expect(checkBuiltInValidation('phoneNumber', value)).toBeNull();
+  });
+
+  test.each([
+    '800000',
+    '1234567890123456',
+    '+800--0000',
+    '8000000-',
+    '1+8000000',
+    ' 8000000',
+    'phone-number',
+  ])('rejects an international phone number outside the supported format: %s', (value) => {
+    expect(checkBuiltInValidation('phoneNumber', value))
+      .toBe('Please enter a valid phone number.');
+  });
+
   test('accepts a US phone number with two hyphens', () => {
-    expect(checkBuiltInValidation('phoneNumber', '800-000-0000')).toBeNull();
+    expect(checkBuiltInValidation('usPhoneNumber', '800-000-0000')).toBeNull();
   });
 
   test.each([
@@ -30,9 +53,9 @@ describe('checkBuiltInValidation', () => {
     '800 000 0000',
     '800-000-000',
     '+1-800-000-0000',
-  ])('rejects a phone number outside the 000-000-0000 format: %s', (value) => {
-    expect(checkBuiltInValidation('phoneNumber', value))
-      .toBe('Please enter a valid phone number in the format 000-000-0000.');
+  ])('rejects a US phone number outside the 000-000-0000 format: %s', (value) => {
+    expect(checkBuiltInValidation('usPhoneNumber', value))
+      .toBe('Please enter a valid US phone number in the format 000-000-0000.');
   });
 
   test.each([

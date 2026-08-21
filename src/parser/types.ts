@@ -447,12 +447,13 @@ export type TextValidationType = 'matchesRegex' | 'contains' | 'doesNotContain' 
  * The built-in validation operations available for short text responses.
  *
  * - `email`: An email in `local@domain.tld` format, such as `test@revisit.dev`.
- * - `phoneNumber`: A 10-digit US phone number in `000-000-0000` format.
+ * - `phoneNumber`: An international phone number containing 7–15 digits, with an optional leading `+` and hyphens between digits.
+ * - `usPhoneNumber`: A 10-digit US phone number in `000-000-0000` format.
  * - `url`: An absolute HTTP or HTTPS URL, such as `https://revisit.dev`.
  * - `date`: A real calendar date in `MM/DD/YYYY` format.
  * - `time`: A 24-hour time in `HH:mm` format.
  */
-export type BuiltInValidationType = 'email' | 'phoneNumber' | 'url' | 'date' | 'time';
+export type BuiltInValidationType = 'email' | 'phoneNumber' | 'usPhoneNumber' | 'url' | 'date' | 'time';
 
 /**
  * A validation rule applied to a short or long text response.

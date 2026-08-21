@@ -442,10 +442,18 @@
         {
           "id": "built-in-validation-phone-number",
           "type": "shortText",
+          "prompt": "Enter an international phone number containing 7 to 15 digits.",
+          "secondaryText": "It may begin with + and use hyphens between digits. For example: +800-0000-0000 or 8000000000.",
+          "placeholder": "+800-0000-0000",
+          "builtInValidation": "phoneNumber"
+        },
+        {
+          "id": "built-in-validation-us-phone-number",
+          "type": "shortText",
           "prompt": "Enter a 10-digit US phone number with two hyphens.",
           "secondaryText": "For example: 800-000-0000.",
           "placeholder": "800-000-0000",
-          "builtInValidation": "phoneNumber"
+          "builtInValidation": "usPhoneNumber"
         },
         {
           "id": "built-in-validation-url",
