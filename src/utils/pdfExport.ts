@@ -5,14 +5,19 @@ const PDF_MARGIN_MM = 10;
 const PDF_MAX_WIDTH_PX = 920;
 const A4_LANDSCAPE_WIDTH_MM = 297;
 const A4_LANDSCAPE_HEIGHT_MM = 210;
+const A4_PORTRAIT_WIDTH_MM = A4_LANDSCAPE_HEIGHT_MM;
+const A4_PORTRAIT_HEIGHT_MM = A4_LANDSCAPE_WIDTH_MM;
 const PDF_VIDEO_FRAME_WAIT_MS = 1500;
 const PDF_LARGE_SVG_ELEMENT_THRESHOLD = 1000;
 const PDF_MAX_CAPTURE_SCALE = 2;
 const PDF_MIN_CAPTURE_SCALE = 0.5;
 const PDF_SNAPSHOT_PADDING_PX = 32;
 const PDF_PERFORMANCE_MEASURE_PREFIX = 'revisit.pdf-export';
+const PDF_PORTRAIT_FIT_ADVANTAGE = 1.3;
 const PDF_PRINTABLE_ASPECT_RATIO = (A4_LANDSCAPE_HEIGHT_MM - (PDF_MARGIN_MM * 2))
   / (A4_LANDSCAPE_WIDTH_MM - (PDF_MARGIN_MM * 2));
+const PDF_PORTRAIT_PRINTABLE_ASPECT_RATIO = (A4_PORTRAIT_HEIGHT_MM - (PDF_MARGIN_MM * 2))
+  / (A4_PORTRAIT_WIDTH_MM - (PDF_MARGIN_MM * 2));
 
 const SVG_PRESENTATION_PROPERTIES = [
   'alignment-baseline',
@@ -86,6 +91,12 @@ interface PdfIframeCaptureSize {
   width: number;
 }
 
+interface PdfPageLayout {
+  exportHeight: number;
+  exportWidth: number;
+  orientation: 'landscape' | 'portrait';
+}
+
 function recordPdfExportMeasure(name: string, start: number) {
   try {
     performance.measure(`${PDF_PERFORMANCE_MEASURE_PREFIX}.${name}`, {
@@ -123,6 +134,51 @@ function measurePdfExportSyncPhase<T>(name: string, operation: () => T) {
   } finally {
     recordPdfExportMeasure(name, start);
   }
+}
+
+function getPdfFitScale(
+  contentWidth: number,
+  contentHeight: number,
+  pageWidth: number,
+  pageHeight: number,
+) {
+  return Math.min(
+    pageWidth / Math.max(contentWidth, 1),
+    pageHeight / Math.max(contentHeight, 1),
+    1,
+  );
+}
+
+export function selectPdfPageLayout(
+  contentWidth: number,
+  contentHeight: number,
+  exportWidth = PDF_MAX_WIDTH_PX,
+): PdfPageLayout {
+  const landscapeHeight = Math.floor(exportWidth * PDF_PRINTABLE_ASPECT_RATIO);
+  const portraitHeight = Math.floor(exportWidth * PDF_PORTRAIT_PRINTABLE_ASPECT_RATIO);
+  const landscapeScale = getPdfFitScale(
+    contentWidth,
+    contentHeight,
+    exportWidth,
+    landscapeHeight,
+  );
+  const portraitScale = getPdfFitScale(
+    contentWidth,
+    contentHeight,
+    landscapeHeight,
+    exportWidth,
+  );
+  const orientation = portraitScale >= landscapeScale * PDF_PORTRAIT_FIT_ADVANTAGE
+    ? 'portrait'
+    : 'landscape';
+
+  return {
+    exportHeight: orientation === 'portrait'
+      ? portraitHeight
+      : landscapeHeight,
+    exportWidth,
+    orientation,
+  };
 }
 
 function padDatePart(value: number) {
@@ -833,9 +889,8 @@ export async function saveElementAsPdf(element: HTMLElement, filename: string) {
   clearPdfExportMeasures();
   const exportStart = performance.now();
   const elementWidth = element.getBoundingClientRect().width;
-  const exportWidth = Math.min(elementWidth, PDF_MAX_WIDTH_PX);
-  const exportHeight = Math.floor(exportWidth * PDF_PRINTABLE_ASPECT_RATIO);
-  const pageScale = elementWidth > 0 ? exportWidth / elementWidth : 1;
+  const initialExportWidth = Math.min(elementWidth, PDF_MAX_WIDTH_PX);
+  const pageScale = elementWidth > 0 ? initialExportWidth / elementWidth : 1;
   const [canvasSnapshots, iframeSnapshots, videoSnapshots] = await Promise.all([
     Promise.resolve(capturePdfCanvasSnapshots(element)),
     capturePdfIframeSnapshots(element, pageScale),
@@ -849,15 +904,25 @@ export async function saveElementAsPdf(element: HTMLElement, filename: string) {
   const sidebarWidth = sidebar && sidebar.style.display !== 'none'
     ? sidebar.getBoundingClientRect().width
     : undefined;
-  const pdfSourceHost = mountPdfSource(pdfSource, exportWidth);
+  const pdfSourceHost = mountPdfSource(pdfSource, initialExportWidth);
 
   try {
     preparePdfClone(pdfSource, {
-      exportWidth,
+      exportWidth: initialExportWidth,
       sidebarWidth,
     });
     await Promise.all([...canvasImages, ...iframeImages, ...videoImages].map(waitForPdfImage));
     await waitForNextPaint();
+    const exportRoot = pdfSource.matches('[data-pdf-export-root]')
+      ? pdfSource
+      : pdfSource.querySelector<HTMLElement>('[data-pdf-export-root]');
+    const pageLayout = selectPdfPageLayout(
+      Math.max(exportRoot?.scrollWidth ?? 0, exportRoot?.offsetWidth ?? 0),
+      Math.max(exportRoot?.scrollHeight ?? 0, exportRoot?.offsetHeight ?? 0),
+      initialExportWidth,
+    );
+    const { exportHeight, exportWidth, orientation } = pageLayout;
+    pdfSourceHost.style.width = `${exportWidth}px`;
     preparePdfClone(pdfSource, {
       exportHeight,
       exportWidth,
@@ -888,7 +953,7 @@ export async function saveElementAsPdf(element: HTMLElement, filename: string) {
       },
       jsPDF: {
         format: 'a4',
-        orientation: 'landscape' as const,
+        orientation,
         unit: 'mm',
       },
     };

@@ -6,7 +6,7 @@ import {
   capturePdfVideoSnapshots,
   getPdfExportUnsupportedReason, preparePdfClone, replacePdfIframesWithSnapshots,
   replacePdfCanvasesWithSnapshots, replacePdfVideosWithSnapshots, saveElementAsPdf,
-  waitForNextPaint,
+  selectPdfPageLayout, waitForNextPaint,
 } from '../pdfExport';
 
 const html2CanvasMocks = vi.hoisted(() => ({ capture: vi.fn() }));
@@ -129,6 +129,24 @@ describe('PDF export helpers', () => {
 
     expect(clonedElement.style.transform).toBe('scale(0.5)');
     expect(clonedElement.style.transformOrigin).toBe('top left');
+  });
+
+  test('uses portrait only when it improves the fitted content scale by at least 30%', () => {
+    expect(selectPdfPageLayout(920, 1100)).toEqual({
+      exportHeight: 631,
+      exportWidth: 920,
+      orientation: 'landscape',
+    });
+    expect(selectPdfPageLayout(920, 1400)).toEqual({
+      exportHeight: 1341,
+      exportWidth: 920,
+      orientation: 'portrait',
+    });
+    expect(selectPdfPageLayout(600, 900, 600)).toEqual({
+      exportHeight: 874,
+      exportWidth: 600,
+      orientation: 'portrait',
+    });
   });
 
   test('identifies cross-origin iframes that cannot be captured', () => {

@@ -503,7 +503,7 @@ test('captures responsive SVG components in the PDF', async ({ page }, testInfo)
   expect(scatterPixels).toBeGreaterThan(50);
 });
 
-test('fits long components on a single PDF page', async ({ page }, testInfo) => {
+test('uses portrait for long components and fits them on a single PDF page', async ({ page }, testInfo) => {
   await resetClientStudyState(page);
   await openStudyFromLanding(page, 'Demo Studies', 'Form Elements Demo');
   await nextClick(page);
@@ -518,6 +518,9 @@ test('fits long components on a single PDF page', async ({ page }, testInfo) => 
   const pdf = await readFile(downloadPath);
 
   expect(pdf.toString('latin1').match(/\/Type\s*\/Page\b/g)?.length ?? 0).toBe(1);
+  const mediaBox = Buffer.from(pdf).toString('latin1').match(/\/MediaBox \[0 0 ([\d.]+) ([\d.]+)\]/);
+  expect(mediaBox).not.toBeNull();
+  expect(Number(mediaBox?.[2])).toBeGreaterThan(Number(mediaBox?.[1]));
 });
 
 test('reports external website components as unsupported instead of downloading an incomplete PDF', async ({ page }) => {
