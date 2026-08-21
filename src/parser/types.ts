@@ -430,7 +430,7 @@ export interface BaseResponse {
  */
 export interface NumericalResponse extends BaseResponse {
   type: 'numerical';
-  /** The placeholder text that is displayed in the input. */
+  /** The placeholder text displayed in the input. Defaults to `Select a country` when `options` is `countries`. */
   placeholder?: string;
   /** The default value of the response. Specify a numeric value such as `25` or `3.14`. */
   default?: number;

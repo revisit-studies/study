@@ -2443,7 +2443,7 @@
           "type": "string"
         },
         "placeholder": {
-          "description": "The placeholder text that is displayed in the input.",
+          "description": "The placeholder text displayed in the input. Defaults to `Select a country` when `options` is `countries`.",
           "type": "string"
         },
         "prompt": {

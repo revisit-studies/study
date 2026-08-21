@@ -152,9 +152,7 @@
         {
           "id": "q-country-dropdown",
           "prompt": "Country dropdown example",
-          "secondaryText": "Country names are displayed with emoji flags, and ISO alpha-2 codes are stored.",
           "type": "dropdown",
-          "placeholder": "Select a country",
           "options": "countries"
         },
         {
