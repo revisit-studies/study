@@ -115,6 +115,20 @@ function waitForPdfImage(image: HTMLImageElement) {
   });
 }
 
+function mountPdfSource(element: HTMLElement, exportWidth: number) {
+  const host = document.createElement('div');
+  host.setAttribute('aria-hidden', 'true');
+  host.style.position = 'fixed';
+  host.style.left = '-100000px';
+  host.style.top = '0';
+  host.style.width = `${exportWidth}px`;
+  host.style.pointerEvents = 'none';
+  host.append(element);
+  document.body.append(host);
+
+  return host;
+}
+
 export function replacePdfIframesWithSnapshots(
   element: HTMLElement,
   iframeSnapshots: PdfIframeSnapshot[],
@@ -207,43 +221,58 @@ export async function saveElementAsPdf(element: HTMLElement, filename: string) {
   const exportWidth = Math.min(element.getBoundingClientRect().width, PDF_MAX_WIDTH_PX);
   const exportHeight = Math.floor(exportWidth * PDF_PRINTABLE_ASPECT_RATIO);
   const iframeSnapshots = await capturePdfIframeSnapshots(element);
-  const pdfSource = iframeSnapshots.length > 0
-    ? element.cloneNode(true) as HTMLElement
-    : element;
+  const pdfSource = element.cloneNode(true) as HTMLElement;
   const iframeImages = replacePdfIframesWithSnapshots(pdfSource, iframeSnapshots);
-  await Promise.all(iframeImages.map(waitForPdfImage));
   const sidebar = element.querySelector<HTMLElement>('.sidebar');
   const sidebarWidth = sidebar && sidebar.style.display !== 'none'
     ? sidebar.getBoundingClientRect().width
     : undefined;
-  const options = {
-    margin: PDF_MARGIN_MM,
-    filename,
-    image: { type: 'jpeg' as const, quality: 0.95 },
-    enableLinks: true,
-    html2canvas: {
-      backgroundColor: '#ffffff',
-      logging: false,
-      onclone: (_clonedDocument: Document, clonedElement: HTMLElement) => {
-        preparePdfClone(clonedElement, {
-          exportHeight,
-          exportWidth,
-          sidebarWidth,
-        });
-      },
-      scale: 2,
-      useCORS: true,
-      height: exportHeight,
-      width: exportWidth,
-      windowHeight: exportHeight,
-      windowWidth: exportWidth,
-    },
-    jsPDF: {
-      format: 'a4',
-      orientation: 'landscape' as const,
-      unit: 'mm',
-    },
-  };
+  const pdfSourceHost = mountPdfSource(pdfSource, exportWidth);
 
-  await html2pdf().set(options).from(pdfSource).save();
+  try {
+    preparePdfClone(pdfSource, {
+      exportWidth,
+      sidebarWidth,
+    });
+    await Promise.all(iframeImages.map(waitForPdfImage));
+    await waitForNextPaint();
+    preparePdfClone(pdfSource, {
+      exportHeight,
+      exportWidth,
+      sidebarWidth,
+    });
+
+    const options = {
+      margin: PDF_MARGIN_MM,
+      filename,
+      image: { type: 'jpeg' as const, quality: 0.95 },
+      enableLinks: true,
+      html2canvas: {
+        backgroundColor: '#ffffff',
+        logging: false,
+        onclone: (_clonedDocument: Document, clonedElement: HTMLElement) => {
+          preparePdfClone(clonedElement, {
+            exportHeight,
+            exportWidth,
+            sidebarWidth,
+          });
+        },
+        scale: 2,
+        useCORS: true,
+        height: exportHeight,
+        width: exportWidth,
+        windowHeight: exportHeight,
+        windowWidth: exportWidth,
+      },
+      jsPDF: {
+        format: 'a4',
+        orientation: 'landscape' as const,
+        unit: 'mm',
+      },
+    };
+
+    await html2pdf().set(options).from(pdfSource).save();
+  } finally {
+    pdfSourceHost.remove();
+  }
 }

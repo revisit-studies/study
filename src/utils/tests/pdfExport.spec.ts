@@ -22,7 +22,7 @@ vi.mock('html2pdf.js', () => ({
       html2PdfMocks.set(options);
       return {
         from: (element: HTMLElement) => {
-          html2PdfMocks.from(element);
+          html2PdfMocks.from(element, element.isConnected);
           return { save: html2PdfMocks.save };
         },
       };
@@ -153,16 +153,23 @@ describe('PDF export helpers', () => {
     );
   });
 
-  test('passes the current element and filename to html2pdf', async () => {
+  test('passes a prepared temporary clone and filename to html2pdf', async () => {
     html2PdfMocks.set.mockClear();
     html2PdfMocks.from.mockClear();
     html2PdfMocks.save.mockReset().mockResolvedValue(undefined);
     const element = document.createElement('main');
+    element.setAttribute('data-pdf-export-root', '');
     vi.spyOn(element, 'getBoundingClientRect').mockReturnValue({ width: 2400 } as DOMRect);
 
     await saveElementAsPdf(element, 'introduction_2026-08-20T14-37-09.pdf');
 
-    expect(html2PdfMocks.from).toHaveBeenCalledWith(element);
+    const pdfSource = html2PdfMocks.from.mock.calls[0][0] as HTMLElement;
+    expect(pdfSource).not.toBe(element);
+    expect(html2PdfMocks.from).toHaveBeenCalledWith(pdfSource, true);
+    expect(pdfSource.style.width).toBe('920px');
+    expect(pdfSource.style.display).toBe('grid');
+    expect(pdfSource.isConnected).toBe(false);
+    expect(element.style.width).toBe('');
     expect(html2PdfMocks.save).toHaveBeenCalledTimes(1);
     expect(html2PdfMocks.set).toHaveBeenCalledWith(expect.objectContaining({
       filename: 'introduction_2026-08-20T14-37-09.pdf',

@@ -190,6 +190,58 @@ test('captures same-origin iframe contents in the PDF', async ({ page }, testInf
   expect(saturatedRightPixels).toBeGreaterThan(20);
 });
 
+test('captures responsive SVG components in the PDF', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await resetClientStudyState(page);
+  await page.getByRole('tab', { name: 'Example Studies' }).click();
+  const exampleStudies = page.getByLabel('Example Studies');
+  const studyCard = exampleStudies.locator('div').filter({ hasText: 'Interactive Selections in Scatterplots' }).first();
+  await studyCard.getByText('Go to Study').click();
+  await page.getByRole('tab', { name: 'Browse Components' }).click();
+  await page.getByLabel('Browse Components').locator('a').filter({ hasText: 'rectangleBrush_q1' }).click();
+  await expect(page.locator('#scatterSvgBrushStudy circle')).toHaveCount(392);
+
+  await page.getByRole('button', { name: 'Study actions' }).click();
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('menuitem', { name: 'Export page as PDF' }).click();
+  const download = await downloadPromise;
+  const downloadPath = testInfo.outputPath('responsive-svg.pdf');
+  await download.saveAs(downloadPath);
+  const pdf = await readFile(downloadPath);
+  const jpegImages = extractJpegImages(pdf);
+  const largestJpeg = jpegImages.sort((left, right) => right.byteLength - left.byteLength)[0];
+
+  const scatterPixels = await page.evaluate(async (base64) => {
+    const image = new Image();
+    image.src = `data:image/jpeg;base64,${base64}`;
+    await image.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = 300;
+    canvas.height = 200;
+    const context = canvas.getContext('2d');
+    if (!context) {
+      throw new Error('Canvas rendering is unavailable');
+    }
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    let saturatedPixels = 0;
+    for (let y = 45; y < 140; y += 1) {
+      for (let x = 115; x < 190; x += 1) {
+        const index = (y * canvas.width + x) * 4;
+        const red = pixels[index];
+        const green = pixels[index + 1];
+        const blue = pixels[index + 2];
+        if (Math.max(red, green, blue) - Math.min(red, green, blue) > 40) {
+          saturatedPixels += 1;
+        }
+      }
+    }
+    return saturatedPixels;
+  }, Buffer.from(largestJpeg).toString('base64'));
+
+  expect(scatterPixels).toBeGreaterThan(50);
+});
+
 test('fits long components on a single PDF page', async ({ page }, testInfo) => {
   await resetClientStudyState(page);
   await openStudyFromLanding(page, 'Demo Studies', 'Form Elements Demo');
