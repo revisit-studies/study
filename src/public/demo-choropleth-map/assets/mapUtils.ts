@@ -2,7 +2,7 @@ import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
 import type { Feature, FeatureCollection, Geometry } from 'geojson';
 import type { Topology } from 'topojson-specification';
-import mapData from './states-albers-10m.json' assert { type: 'json' };
+import mapData from './states-albers-10m.json' with { type: 'json' };
 import type { CsvRow, USObjectData, SvgSelection } from './types';
 
 const MAP_WIDTH = 650;
