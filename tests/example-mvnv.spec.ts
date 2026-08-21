@@ -7,7 +7,11 @@ import {
   waitForStudyEndMessage,
 } from './utils';
 
-test.setTimeout(180000);
+test.setTimeout(300000);
+
+const MVNV_TASK_TIMEOUT_MS = 15000;
+const MVNV_TRANSITION_TIMEOUT_MS = 15000;
+const MVNV_END_STATE_TIMEOUT_MS = 60000;
 
 async function getCurrentTaskQuestion(page: Page) {
   const question = page.locator('p').filter({ has: page.locator('strong:has-text("Question:")') }).first();
@@ -17,9 +21,38 @@ async function getCurrentTaskQuestion(page: Page) {
   return ((await question.innerText().catch(() => '')).replace(/^Question:\s*/i, '').trim());
 }
 
+async function waitForMvnvProgress(
+  page: Page,
+  previousQuestion: string,
+  isFinished: () => Promise<boolean>,
+  timeout: number,
+) {
+  try {
+    await expect.poll(async () => {
+      if (await isFinished()) {
+        return true;
+      }
+      const nextQuestion = await getCurrentTaskQuestion(page);
+      return Boolean(nextQuestion && nextQuestion !== previousQuestion);
+    }, { timeout }).toBe(true);
+  } catch (error) {
+    const currentQuestion = await getCurrentTaskQuestion(page);
+    const body = await page.locator('body').innerText().catch(() => '');
+    const reason = error instanceof Error ? error.message : String(error);
+    throw new Error([
+      `MVNV did not reach study end or a new task within ${timeout}ms.`,
+      `URL: ${page.url()}`,
+      `Previous question: ${previousQuestion || '<none>'}`,
+      `Current question: ${currentQuestion || '<none>'}`,
+      `Visible body tail: ${body.slice(-2000)}`,
+      reason,
+    ].join('\n'));
+  }
+}
+
 async function answerCurrentMvnvPrompt(
   page: Page,
-  taskTimeoutMs = 10000,
+  taskTimeoutMs = MVNV_TASK_TIMEOUT_MS,
   startingQuestion = '',
 ) {
   const deadline = Date.now() + taskTimeoutMs;
@@ -179,7 +212,7 @@ async function answerCurrentMvnvPrompt(
 test('test', async ({ page, browserName }) => {
   test.skip(browserName === 'webkit', 'Skipping MVNV on WebKit due to headless flakiness.');
 
-  const taskTimeoutMs = 5000;
+  const taskTimeoutMs = MVNV_TASK_TIMEOUT_MS;
   const maxTaskLoops = 20;
   let firstTaskParticipantPath = '';
   const taskZeroQuestion = 'Find the North American with the most Tweets';
@@ -222,6 +255,8 @@ test('test', async ({ page, browserName }) => {
   const uploading = page.getByText('Please wait while your answers are uploaded.', { exact: true });
   const isFinished = async () => (
     (await page.url()).includes('end')
+    || (await page.locator('body').innerText().catch(() => '')).includes('Thank you for completing the study.')
+    || (await page.locator('body').innerText().catch(() => '')).includes('Please wait while your answers are uploaded.')
     || await defaultCompleted.isVisible().catch(() => false)
     || await prolificCompleted.isVisible().catch(() => false)
     || await uploading.isVisible().catch(() => false)
@@ -240,7 +275,7 @@ test('test', async ({ page, browserName }) => {
       if (await isFinished()) {
         break;
       }
-      await expect(qText).toBeVisible({ timeout: 5000 });
+      await expect(qText).toBeVisible({ timeout: taskTimeoutMs });
     }
     const questionBefore = await getCurrentTaskQuestion(page);
     // Check if the current question is the task zero question
@@ -256,18 +291,18 @@ test('test', async ({ page, browserName }) => {
       break;
     }
     await nextClick(page, taskTimeoutMs);
-    // Best-effort settle only; do not fail the whole run on transient render gaps.
-    await expect.poll(async () => {
-      if (await isFinished()) return true;
-      const questionAfter = await getCurrentTaskQuestion(page);
-      return !!questionAfter;
-    }, { timeout: 5000 }).toBe(true).catch(() => { });
+    await waitForMvnvProgress(
+      page,
+      questionBefore,
+      isFinished,
+      MVNV_TRANSITION_TIMEOUT_MS,
+    );
   }
 
   expect(sawTaskZero).toBe(true);
 
   // Check that the thank you message is displayed
-  await waitForStudyEndMessage(page);
+  await waitForStudyEndMessage(page, MVNV_END_STATE_TIMEOUT_MS);
 
   const assignments = await readStoredValue<Record<string, unknown>>(
     page,

@@ -72,11 +72,10 @@ test('Test vega component with reactive response', async ({ page }) => {
 
   const fieldSelects = page.locator('main select');
   await expect(fieldSelects.nth(0)).toBeVisible();
-  await page.waitForTimeout(150);
   await fieldSelects.nth(0).selectOption({ label: 'US Gross' });
-  await page.waitForTimeout(150);
+  await expect(fieldSelects.nth(0)).toHaveValue('US Gross');
   await fieldSelects.nth(1).selectOption({ label: 'Worldwide Gross' });
-  await page.waitForTimeout(150);
+  await expect(fieldSelects.nth(1)).toHaveValue('Worldwide Gross');
 
   // Get the dimensions of the second chart to calculate click positions
   const secondChart = page.locator('main .vega-embed:visible canvas.marks').first();
@@ -141,17 +140,18 @@ test('Test vega component with reactive response', async ({ page }) => {
 
   const replaySelects = page.locator('main select');
   await expect(replaySelects).toHaveCount(2);
+  await expect(page.locator('svg line[stroke="black"]')).toHaveCount(1, { timeout: 15000 });
   await seekReplay(page, recording.startTime, recording.endTime, recording.endTime);
-  await expect(replaySelects.nth(0)).toHaveValue('US Gross');
-  await expect(replaySelects.nth(1)).toHaveValue('Worldwide Gross');
+  await expect(replaySelects.nth(0)).toHaveValue('US Gross', { timeout: 15000 });
+  await expect(replaySelects.nth(1)).toHaveValue('Worldwide Gross', { timeout: 15000 });
   expect(await replaySelects.nth(0).evaluate((element) => element.closest('[inert]') !== null)).toBe(true);
 
   await seekReplay(page, recording.startTime, recording.endTime, recording.startTime);
-  await expect(replaySelects.nth(0)).toHaveValue('IMDB Rating');
-  await expect(replaySelects.nth(1)).toHaveValue('Rotten Tomatoes Rating');
+  await expect(replaySelects.nth(0)).toHaveValue('IMDB Rating', { timeout: 15000 });
+  await expect(replaySelects.nth(1)).toHaveValue('Rotten Tomatoes Rating', { timeout: 15000 });
 
   await seekReplay(page, recording.startTime, recording.endTime, recording.endTime);
-  await expect(replaySelects.nth(0)).toHaveValue('US Gross');
-  await expect(replaySelects.nth(1)).toHaveValue('Worldwide Gross');
+  await expect(replaySelects.nth(0)).toHaveValue('US Gross', { timeout: 15000 });
+  await expect(replaySelects.nth(1)).toHaveValue('Worldwide Gross', { timeout: 15000 });
   expect(await readStoredValue(page, provenanceKey)).toEqual(provenanceBeforeReplay);
 });

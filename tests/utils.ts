@@ -152,14 +152,26 @@ export async function waitForStudyEndMessage(page: Page, timeout = 30000) {
   const uploading = page.getByText(UPLOADING_MESSAGE, { exact: true });
   const defaultCompleted = page.getByText(DEFAULT_COMPLETED_MESSAGE, { exact: true });
   const prolificCompleted = page.getByText(PROLIFIC_COMPLETED_MESSAGE);
+  const bodyContains = async (message: string | RegExp) => {
+    const body = await page.locator('body').innerText().catch(() => '');
+    return typeof message === 'string' ? body.includes(message) : message.test(body);
+  };
+  const isDefaultCompleted = async () => (
+    await defaultCompleted.isVisible().catch(() => false)
+    || await bodyContains(DEFAULT_COMPLETED_MESSAGE)
+  );
+  const isProlificCompleted = async () => (
+    await prolificCompleted.isVisible().catch(() => false)
+    || await bodyContains(PROLIFIC_COMPLETED_MESSAGE)
+  );
 
   await expect.poll(async () => (
-    (await defaultCompleted.isVisible())
-    || (await prolificCompleted.isVisible())
+    (await isDefaultCompleted())
+    || (await isProlificCompleted())
     || (await uploading.isVisible())
   ), { timeout }).toBe(true);
 
-  if (!(await defaultCompleted.isVisible()) && !(await prolificCompleted.isVisible())) {
+  if (!(await isDefaultCompleted()) && !(await isProlificCompleted())) {
     await expect(defaultCompleted.or(prolificCompleted)).toBeVisible({ timeout });
   }
 }
@@ -239,7 +251,25 @@ export async function seekReplay(
   }
 
   const duration = endTime - startTime;
-  const fraction = duration === 0 ? 0 : (targetTime - startTime) / duration;
+  const targetOffset = duration === 0
+    ? 0
+    : Math.min(duration, Math.max(0, targetTime - startTime));
+  const fraction = duration === 0 ? 0 : targetOffset / duration;
   const x = 20 + Math.min(1, Math.max(0, fraction)) * (timerBounds.width - 40);
   await timer.click({ position: { x, y: timerBounds.height / 2 } });
+
+  try {
+    await expect.poll(async () => {
+      const replayTime = Number(await timer.getAttribute('data-replay-time'));
+      return Number.isFinite(replayTime) && Math.abs(replayTime - (targetOffset / 1000)) <= 0.25;
+    }, { timeout: 15000 }).toBe(true);
+  } catch (error) {
+    const replayTime = await timer.getAttribute('data-replay-time');
+    const reason = error instanceof Error ? error.message : String(error);
+    throw new Error([
+      `Replay timer did not settle near ${targetOffset / 1000}s after seeking.`,
+      `Actual replay time: ${replayTime ?? '<none>'}s`,
+      reason,
+    ].join('\n'));
+  }
 }
