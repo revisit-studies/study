@@ -89,17 +89,39 @@ export function checkCheckboxResponseForValidation(
 export function checkNumericalResponse(response: NumericalResponse, value: number) {
   const numValue = typeof value === 'string' ? parseFloat(value) : value;
 
-  const { min, max } = response;
+  const {
+    min, max, strictMin, strictMax,
+  } = response;
 
-  if (min !== undefined && max !== undefined && (numValue < min || numValue > max)) {
-    return `Please enter a value between ${min} and ${max}`;
+  const failsStrictMin = strictMin !== undefined && numValue <= strictMin;
+  const failsStrictMax = strictMax !== undefined && numValue >= strictMax;
+  const failsMin = min !== undefined && numValue < min;
+  const failsMax = max !== undefined && numValue > max;
+
+  if (strictMin && strictMax && (failsStrictMin || failsStrictMax)) {
+    return `Please enter a value greater than ${strictMin} and less than ${strictMax}.`;
   }
-  if (min !== undefined && numValue < min) {
-    return `Please enter a value of ${min} or greater`;
+
+  if (failsStrictMin) {
+    return `Please enter a value greater than ${strictMin}.`;
   }
-  if (max !== undefined && numValue > max) {
-    return `Please enter a value of ${max} or less`;
+
+  if (failsStrictMax) {
+    return `Please enter a value less than ${strictMax}.`;
   }
+
+  if (min && max && (failsMin || failsMax)) {
+    return `Please enter a value between ${min} and ${max}.`;
+  }
+
+  if (failsMin) {
+    return `Please enter a value of ${min} or greater.`;
+  }
+
+  if (failsMax) {
+    return `Please enter a value of ${max} or less.`;
+  }
+
   return null;
 }
 
@@ -154,6 +176,70 @@ export function getRankingInstanceIndex(instanceId: string, optionValues: Set<st
   return Number(instanceId.slice(baseItemId.length + 1));
 }
 
+function minMaxValidation(min : number | undefined, max: number | undefined, num: number | undefined, rankingType : string) {
+  let items = num;
+  if (items === undefined) {
+    return null;
+  }
+  let rankingSpecificString = '';
+  // 'ranking-sublist' | 'ranking-categorical' | 'ranking-pairwise'
+  switch (rankingType) {
+    case 'ranking-sublist':
+      rankingSpecificString = 'items';
+      break;
+    case 'ranking-categorical':
+      rankingSpecificString = 'items per category';
+      break;
+    case 'ranking-pairwise':
+      rankingSpecificString = 'pairs';
+      items /= 2;
+      break;
+    default:
+      rankingSpecificString = 'items';
+      break;
+  }
+
+  if ((min !== undefined && items < min) || (max !== undefined && items > max)) {
+    if (min !== undefined && max !== undefined) {
+      return `You must add between ${min} and ${max} ${rankingSpecificString}.`;
+    }
+
+    if (min !== undefined) {
+      return `You must add at least ${min} ${rankingSpecificString}.`;
+    }
+
+    return `You must add at most ${max} ${rankingSpecificString}.`;
+  }
+
+  return null;
+}
+
+function checkCategoricalRankingResponse(response: RankingResponse, value: object) {
+  const {
+    min, max, categorizeAll, numItems,
+  } = response;
+  let minMaxError = null;
+  for (const category of ['HIGH', 'MEDIUM', 'LOW'] as const) {
+    const count = Object.values(value ?? {}).filter((cat) => cat === category).length;
+    minMaxError = minMaxValidation(min, max, count, response.type);
+    if (minMaxError) {
+      return minMaxError;
+    }
+  }
+
+  const categorizedItems = Object.values(value ?? {}).filter((cat) => ['HIGH', 'MEDIUM', 'LOW'].includes(cat)).length;
+  if (numItems !== undefined && categorizedItems !== numItems) {
+    return `Please categorize exactly ${numItems} items.`;
+  }
+
+  if (categorizeAll) {
+    if (categorizedItems !== response.options.length) {
+      return 'Please categorize all items.';
+    }
+  }
+  return null;
+}
+
 export function checkPairwiseRankingResponse(response: RankingResponse, value: Record<string, string>) {
   const optionValues = new Set(parseStringOptions(response.options).map((option) => option.value));
   const pairs: Record<string, { high: string[]; low: string[] }> = {};
@@ -197,7 +283,9 @@ export function checkPairwiseRankingResponse(response: RankingResponse, value: R
     return 'This would create a duplicate pair.';
   }
 
-  return null;
+  const num = Object.keys(value).length; // each pair has two items
+  const { min, max } = response;
+  return minMaxValidation(min, max, num, response.type);
 }
 
 export function checkMatrixResponse(response: MatrixResponse, value: Record<string, string>) {
@@ -209,6 +297,26 @@ export function checkMatrixResponse(response: MatrixResponse, value: Record<stri
 
   if (unanswered) {
     return 'Please answer all questions in the matrix to continue.';
+  }
+
+  const { min, max } = response;
+  if (min !== undefined || max !== undefined) {
+    const requiredAmountOfQuestionsAnswered = expectedQuestionKeys.every((questionKey) => {
+      const rowValue = value[questionKey].split('|').length;
+      return (min === undefined || rowValue >= min) && (max === undefined || rowValue <= max);
+    });
+
+    if (!requiredAmountOfQuestionsAnswered) {
+      if (min && max) {
+        return `Please select at least ${min} and at most ${max} answers per row.`;
+      }
+
+      if (min) {
+        return `Please select at least ${min} answers per row.`;
+      }
+
+      return `Please select at most ${max} answers per row.`;
+    }
   }
 
   return null;
@@ -331,8 +439,24 @@ export function validateResponse(
     }
 
     if (response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') {
-      if (Object.keys(value).length === 0) {
+      const numItems = Object.keys(value).length;
+      const { min, max } = response;
+      if (numItems === 0) {
         return createValidationResult(response, response.required ? 'unanswered' : 'none');
+      }
+
+      if (response.type === 'ranking-sublist') {
+        const sublistError = minMaxValidation(min, max, numItems, response.type);
+        return sublistError
+          ? createValidationResult(response, 'invalid', { message: sublistError })
+          : createValidationResult(response, 'none');
+      }
+
+      if (response.type === 'ranking-categorical') {
+        const categoricalError = checkCategoricalRankingResponse(response, value);
+        return categoricalError
+          ? createValidationResult(response, 'invalid', { message: categoricalError })
+          : createValidationResult(response, 'none');
       }
 
       if (response.type === 'ranking-pairwise') {
