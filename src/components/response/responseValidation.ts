@@ -110,9 +110,19 @@ const DEFAULT_TEXT_VALIDATION_MESSAGES: Record<TextValidationRule['type'], strin
   matchesRegex: 'Please enter a value that matches the required format.',
   contains: 'Please enter a value containing the required text.',
   doesNotContain: 'Please enter a value that does not contain the restricted text.',
+  equals: 'Please enter a value equal to the required text.',
+  doesNotEqual: 'Please enter a value that does not equal the restricted text.',
 };
 
 function textValidationRulePasses(rule: TextValidationRule, value: string) {
+  if (rule.type === 'equals') {
+    return value === rule.value;
+  }
+
+  if (rule.type === 'doesNotEqual') {
+    return value !== rule.value;
+  }
+
   if (rule.type === 'contains') {
     return value.includes(rule.value);
   }

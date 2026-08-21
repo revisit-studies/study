@@ -59,7 +59,7 @@ describe('Text response validation config parsing', () => {
     };
   }
 
-  test.each(['matchesRegex', 'contains', 'doesNotContain'])(
+  test.each(['matchesRegex', 'contains', 'doesNotContain', 'equals', 'doesNotEqual'])(
     'accepts the %s validation type for short and long text responses',
     async (validationType) => {
       const result = await parseStudyConfig(JSON.stringify(makeStudyConfig(validationType)));

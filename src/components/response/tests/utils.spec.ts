@@ -398,6 +398,8 @@ describe('validateResponse', () => {
         { type: 'contains', value: 'ReVISit' },
         { type: 'doesNotContain', value: 'invalid' },
         { type: 'matchesRegex', value: '^ReVISit' },
+        { type: 'equals', value: 'ReVISit response' },
+        { type: 'doesNotEqual', value: 'ReVISit blocked' },
       ],
     };
 
@@ -412,6 +414,25 @@ describe('validateResponse', () => {
       issueType: 'invalid',
       message: 'Please enter a value that does not contain the restricted text.',
     });
+  });
+
+  test.each([
+    { type: 'shortText' as const },
+    { type: 'longText' as const },
+  ])('$type applies case-sensitive equality validation', ({ type }) => {
+    const equalsResponse: ShortTextResponse | LongTextResponse = {
+      id: 'equals', prompt: 'Question', type, textValidation: [{ type: 'equals', value: 'ReVISit' }],
+    };
+    const doesNotEqualResponse: ShortTextResponse | LongTextResponse = {
+      id: 'does-not-equal', prompt: 'Question', type, textValidation: [{ type: 'doesNotEqual', value: 'TEST' }],
+    };
+
+    expect(validateResponse(equalsResponse, 'ReVISit', { equals: 'ReVISit' }).valid).toBe(true);
+    expect(validateResponse(equalsResponse, 'revisit', { equals: 'revisit' }).message)
+      .toBe('Please enter a value equal to the required text.');
+    expect(validateResponse(doesNotEqualResponse, 'test', { 'does-not-equal': 'test' }).valid).toBe(true);
+    expect(validateResponse(doesNotEqualResponse, 'TEST', { 'does-not-equal': 'TEST' }).message)
+      .toBe('Please enter a value that does not equal the restricted text.');
   });
 
   test.each([

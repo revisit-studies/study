@@ -352,6 +352,32 @@
           ]
         },
         {
+          "id": "text-validation-equals",
+          "type": "shortText",
+          "prompt": "Enter exactly “ReVISit”.",
+          "secondaryText": "This response uses equals and is case-sensitive.",
+          "placeholder": "ReVISit",
+          "textValidation": [
+            {
+              "type": "equals",
+              "value": "ReVISit"
+            }
+          ]
+        },
+        {
+          "id": "text-validation-does-not-equal",
+          "type": "longText",
+          "prompt": "Enter any response except the exact text “TEST”.",
+          "secondaryText": "This response uses doesNotEqual and is case-sensitive.",
+          "placeholder": "Anything except TEST",
+          "textValidation": [
+            {
+              "type": "doesNotEqual",
+              "value": "TEST"
+            }
+          ]
+        },
+        {
           "id": "text-length-title",
           "type": "textOnly",
           "prompt": "## Minimum and Maximum Length\n\nShort and long text responses can require a minimum number of characters, a maximum number of characters, or both.",

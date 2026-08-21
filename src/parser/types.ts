@@ -441,14 +441,14 @@ export interface NumericalResponse extends BaseResponse {
 }
 
 /** The validation operations available for short and long text responses. */
-export type TextValidationType = 'matchesRegex' | 'contains' | 'doesNotContain';
+export type TextValidationType = 'matchesRegex' | 'contains' | 'doesNotContain' | 'equals' | 'doesNotEqual';
 
 /**
  * A validation rule applied to a short or long text response.
  * Rules are evaluated in array order, and the first failing rule is displayed to the participant.
  *
- * For example, the following rules accept a value such as `ReVISit is great`: it must start with
- * `ReVISit`, contain `great`, and not contain `invalid`.
+ * For example, the following rules accept only `ReVISit is great`: it must start with `ReVISit`,
+ * contain `great`, not contain `invalid`, equal `ReVISit is great`, and not equal `TEST`.
  * See the [MDN regular expression syntax cheat sheet](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet)
  * for help writing regular expression patterns.
  * ```json
@@ -464,6 +464,14 @@ export type TextValidationType = 'matchesRegex' | 'contains' | 'doesNotContain';
  *   {
  *     "type": "doesNotContain",
  *     "value": "invalid"
+ *   },
+ *   {
+ *     "type": "equals",
+ *     "value": "ReVISit is great"
+ *   },
+ *   {
+ *     "type": "doesNotEqual",
+ *     "value": "TEST"
  *   }
  * ]
  * ```

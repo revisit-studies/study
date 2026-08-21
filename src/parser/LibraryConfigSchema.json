@@ -3607,7 +3607,7 @@
     },
     "TextValidationRule": {
       "additionalProperties": false,
-      "description": "A validation rule applied to a short or long text response. Rules are evaluated in array order, and the first failing rule is displayed to the participant.\n\nFor example, the following rules accept a value such as `ReVISit is great`: it must start with `ReVISit`, contain `great`, and not contain `invalid`. See the [MDN regular expression syntax cheat sheet](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet) for help writing regular expression patterns. ```json \"textValidation\": [   {     \"type\": \"matchesRegex\",     \"value\": \"^ReVISit\"   },   {     \"type\": \"contains\",     \"value\": \"great\"   },   {     \"type\": \"doesNotContain\",     \"value\": \"invalid\"   } ] ```",
+      "description": "A validation rule applied to a short or long text response. Rules are evaluated in array order, and the first failing rule is displayed to the participant.\n\nFor example, the following rules accept only `ReVISit is great`: it must start with `ReVISit`, contain `great`, not contain `invalid`, equal `ReVISit is great`, and not equal `TEST`. See the [MDN regular expression syntax cheat sheet](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet) for help writing regular expression patterns. ```json \"textValidation\": [   {     \"type\": \"matchesRegex\",     \"value\": \"^ReVISit\"   },   {     \"type\": \"contains\",     \"value\": \"great\"   },   {     \"type\": \"doesNotContain\",     \"value\": \"invalid\"   },   {     \"type\": \"equals\",     \"value\": \"ReVISit is great\"   },   {     \"type\": \"doesNotEqual\",     \"value\": \"TEST\"   } ] ```",
       "properties": {
         "type": {
           "$ref": "#/definitions/TextValidationType",
@@ -3629,7 +3629,9 @@
       "enum": [
         "matchesRegex",
         "contains",
-        "doesNotContain"
+        "doesNotContain",
+        "equals",
+        "doesNotEqual"
       ],
       "type": "string"
     },
