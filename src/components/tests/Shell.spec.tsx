@@ -314,6 +314,37 @@ describe('Shell', () => {
     await waitFor(() => expect(vi.mocked(studyStoreCreator)).toHaveBeenCalled(), { timeout: 3000 });
   });
 
+  test('renders a fixed, response-free first component in the normal study shell while a new participant is assigned', async () => {
+    const previewConfig: ParsedConfig<StudyConfig> = {
+      ...mockActiveConfig,
+      components: {
+        intro: {
+          type: 'markdown',
+          path: 'test-study/assets/intro.md',
+          response: [],
+        },
+      },
+      sequence: { order: 'fixed', components: ['intro'] },
+    };
+    vi.mocked(getStudyConfig).mockResolvedValue(previewConfig);
+
+    mockStorageEngine = {
+      initializeStudyDb: vi.fn().mockResolvedValue(undefined),
+      saveConfig: vi.fn().mockResolvedValue(undefined),
+      getSequenceArray: vi.fn().mockResolvedValue(['seq1']),
+      getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
+      initializeParticipantSession: vi.fn().mockImplementation(() => new Promise(() => { })),
+      peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
+      isConnected: vi.fn().mockReturnValue(true),
+      getEngine: vi.fn().mockReturnValue('firebase'),
+    };
+
+    const { getByTestId, queryByTestId } = render(<Shell globalConfig={globalConfig} />);
+
+    await waitFor(() => expect(getByTestId('routing')).toBeDefined());
+    expect(queryByTestId('loading-overlay')).toBeNull();
+  });
+
   test('calls setSequenceArray when getSequenceArray returns null', async () => {
     vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
 
