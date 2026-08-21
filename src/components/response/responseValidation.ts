@@ -111,9 +111,19 @@ const DEFAULT_TEXT_VALIDATION_MESSAGES: Record<TextValidationRule['type'], strin
   matchesRegex: 'Please enter a value that matches the required format.',
   contains: 'Please enter a value containing the required text.',
   doesNotContain: 'Please enter a value that does not contain the restricted text.',
+  equals: 'Please enter a value equal to the required text.',
+  doesNotEqual: 'Please enter a value that does not equal the restricted text.',
 };
 
 function textValidationRulePasses(rule: TextValidationRule, value: string) {
+  if (rule.type === 'equals') {
+    return value === rule.value;
+  }
+
+  if (rule.type === 'doesNotEqual') {
+    return value !== rule.value;
+  }
+
   if (rule.type === 'contains') {
     return value.includes(rule.value);
   }
@@ -129,18 +139,41 @@ function textValidationRulePasses(rule: TextValidationRule, value: string) {
   }
 }
 
-export function checkTextResponse(response: ShortTextResponse | LongTextResponse, value: string) {
-  const { minLength, maxLength } = response;
+// Count words by splitting on whitespace and filtering out any empty strings or strings that don't contain letters or numbers
+function countWords(value: string) {
+  return value
+    .trim()
+    .split(/\s+/)
+    .filter((word) => /[\p{L}\p{N}]/u.test(word))
+    .length;
+}
 
-  if (minLength !== undefined && maxLength !== undefined
-    && (value.length < minLength || value.length > maxLength)) {
-    return `Please enter between ${minLength} and ${maxLength} characters.`;
+export function checkTextResponse(response: ShortTextResponse | LongTextResponse, value: string) {
+  const {
+    minCharLength, maxCharLength, minWordLength, maxWordLength,
+  } = response;
+
+  if (minCharLength !== undefined && maxCharLength !== undefined
+    && (value.length < minCharLength || value.length > maxCharLength)) {
+    return `Please enter between ${minCharLength} and ${maxCharLength} characters.`;
   }
-  if (minLength !== undefined && value.length < minLength) {
-    return `Please enter at least ${minLength} characters.`;
+  if (minCharLength !== undefined && value.length < minCharLength) {
+    return `Please enter at least ${minCharLength} characters.`;
   }
-  if (maxLength !== undefined && value.length > maxLength) {
-    return `Please enter at most ${maxLength} characters.`;
+  if (maxCharLength !== undefined && value.length > maxCharLength) {
+    return `Please enter at most ${maxCharLength} characters.`;
+  }
+
+  const wordCount = countWords(value);
+  if (minWordLength !== undefined && maxWordLength !== undefined
+    && (wordCount < minWordLength || wordCount > maxWordLength)) {
+    return `Please enter between ${minWordLength} and ${maxWordLength} words.`;
+  }
+  if (minWordLength !== undefined && wordCount < minWordLength) {
+    return `Please enter at least ${minWordLength} words.`;
+  }
+  if (maxWordLength !== undefined && wordCount > maxWordLength) {
+    return `Please enter at most ${maxWordLength} words.`;
   }
 
   if (response.type === 'shortText' && response.builtInValidation) {

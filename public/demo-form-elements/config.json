@@ -352,28 +352,78 @@
           ]
         },
         {
-          "id": "text-length-title",
+          "id": "text-validation-equals",
+          "type": "shortText",
+          "prompt": "Enter exactly “ReVISit”.",
+          "secondaryText": "This response uses equals and is case-sensitive.",
+          "placeholder": "ReVISit",
+          "textValidation": [
+            {
+              "type": "equals",
+              "value": "ReVISit"
+            }
+          ]
+        },
+        {
+          "id": "text-validation-does-not-equal",
+          "type": "longText",
+          "prompt": "Enter any response except the exact text “TEST”.",
+          "secondaryText": "This response uses doesNotEqual and is case-sensitive.",
+          "placeholder": "Anything except TEST",
+          "textValidation": [
+            {
+              "type": "doesNotEqual",
+              "value": "TEST"
+            }
+          ]
+        },
+        {
+          "id": "character-length-title",
           "type": "textOnly",
-          "prompt": "## Minimum and Maximum Length\n\nShort and long text responses can require a minimum number of characters, a maximum number of characters, or both.",
+          "prompt": "## Character Length\n\nShort and long text responses can require a minimum number of characters, a maximum number of characters, or both.",
           "restartEnumeration": true
         },
         {
-          "id": "text-length-short",
+          "id": "character-length-short",
           "type": "shortText",
           "prompt": "Enter between 3 and 10 characters.",
-          "secondaryText": "This short text response uses minLength: 3 and maxLength: 10.",
+          "secondaryText": "This short text response uses minCharLength: 3 and maxCharLength: 10.",
           "placeholder": "3–10 characters",
-          "minLength": 3,
-          "maxLength": 10
+          "minCharLength": 3,
+          "maxCharLength": 10
         },
         {
-          "id": "text-length-long",
+          "id": "character-length-long",
           "type": "longText",
           "prompt": "Enter between 20 and 100 characters.",
-          "secondaryText": "This long text response uses minLength: 20 and maxLength: 100.",
+          "secondaryText": "This long text response uses minCharLength: 20 and maxCharLength: 100.",
           "placeholder": "20–100 characters",
-          "minLength": 20,
-          "maxLength": 100
+          "minCharLength": 20,
+          "maxCharLength": 100
+        },
+        {
+          "id": "word-length-title",
+          "type": "textOnly",
+          "prompt": "## Word Length\n\nShort and long text responses can require a minimum number of words, a maximum number of words, or both.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "word-length-short",
+          "type": "shortText",
+          "prompt": "Enter between two and five words.",
+          "secondaryText": "This short text response uses minWordLength: 2 and maxWordLength: 5.",
+          "placeholder": "2–5 words",
+          "minWordLength": 2,
+          "maxWordLength": 5
+        },
+        {
+          "id": "word-length-long",
+          "type": "longText",
+          "prompt": "Enter between four and ten words.",
+          "secondaryText": "This long text response uses minWordLength: 4 and maxWordLength: 10.",
+          "placeholder": "4–10 words",
+          "minWordLength": 4,
+          "maxWordLength": 10
         },
         {
           "id": "built-in-validation-title",

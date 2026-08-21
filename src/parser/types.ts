@@ -441,7 +441,7 @@ export interface NumericalResponse extends BaseResponse {
 }
 
 /** The validation operations available for short and long text responses. */
-export type TextValidationType = 'matchesRegex' | 'contains' | 'doesNotContain';
+export type TextValidationType = 'matchesRegex' | 'contains' | 'doesNotContain' | 'equals' | 'doesNotEqual';
 
 /**
  * The built-in validation operations available for short text responses.
@@ -460,8 +460,8 @@ export type BuiltInValidationType = 'email' | 'phoneNumber' | 'usState' | 'posta
  * A validation rule applied to a short or long text response.
  * Rules are evaluated in array order, and the first failing rule is displayed to the participant.
  *
- * For example, the following rules accept a value such as `ReVISit is great`: it must start with
- * `ReVISit`, contain `great`, and not contain `invalid`.
+ * For example, the following rules accept only `ReVISit is great`: it must start with `ReVISit`,
+ * contain `great`, not contain `invalid`, equal `ReVISit is great`, and not equal `TEST`.
  * See the [MDN regular expression syntax cheat sheet](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet)
  * for help writing regular expression patterns.
  * ```json
@@ -477,6 +477,14 @@ export type BuiltInValidationType = 'email' | 'phoneNumber' | 'usState' | 'posta
  *   {
  *     "type": "doesNotContain",
  *     "value": "invalid"
+ *   },
+ *   {
+ *     "type": "equals",
+ *     "value": "ReVISit is great"
+ *   },
+ *   {
+ *     "type": "doesNotEqual",
+ *     "value": "TEST"
  *   }
  * ]
  * ```
@@ -500,8 +508,10 @@ export interface TextValidationRule {
  *   "default": "test@revisit.dev",
  *   "placeholder": "test@revisit.dev",
  *   "builtInValidation": "email",
- *   "minLength": 3,
- *   "maxLength": 100,
+ *   "minCharLength": 3,
+ *   "maxCharLength": 100,
+ *   "minWordLength": 1,
+ *   "maxWordLength": 10,
  *   "textValidation": [
  *     {
  *       "type": "doesNotContain",
@@ -519,17 +529,17 @@ export interface ShortTextResponse extends BaseResponse {
   /** The default value of the response. Specify a string such as `"Jane Doe"`. */
   default?: string;
   /** The minimum number of characters accepted in the response. */
-  minLength?: number;
+  minCharLength?: number;
   /** The maximum number of characters accepted in the response. */
-  maxLength?: number;
-  /**
-   * Applies one predefined format from BuiltInValidationType to the response value.
-   * For example, use `"email"` for `test@revisit.dev`, `"date"` for `06/24/2009`,
-   * or `"time"` for `14:28`.
-   */
-  builtInValidation?: BuiltInValidationType;
+  maxCharLength?: number;
+  /** The minimum number of whitespace-separated words accepted in the response. */
+  minWordLength?: number;
+  /** The maximum number of whitespace-separated words accepted in the response. */
+  maxWordLength?: number;
   /** Validation rules applied to the response value in array order. */
   textValidation?: TextValidationRule[];
+  /** Applies one predefined format from BuiltInValidationType to the response value. */
+  builtInValidation?: BuiltInValidationType;
 }
 
 /**
@@ -543,8 +553,10 @@ export interface ShortTextResponse extends BaseResponse {
  *   "type": "longText",
  *   "default": "I enjoyed this study because...",
  *   "placeholder": "Please enter your comments",
- *   "minLength": 20,
- *   "maxLength": 500,
+ *   "minCharLength": 20,
+ *   "maxCharLength": 500,
+ *   "minWordLength": 4,
+ *   "maxWordLength": 100,
  *   "textValidation": [
  *     {
  *       "type": "doesNotContain",
@@ -562,9 +574,13 @@ export interface LongTextResponse extends BaseResponse {
   /** The default value of the response. Specify a string such as `"I enjoyed this study because..."`. */
   default?: string;
   /** The minimum number of characters accepted in the response. */
-  minLength?: number;
+  minCharLength?: number;
   /** The maximum number of characters accepted in the response. */
-  maxLength?: number;
+  maxCharLength?: number;
+  /** The minimum number of whitespace-separated words accepted in the response. */
+  minWordLength?: number;
+  /** The maximum number of whitespace-separated words accepted in the response. */
+  maxWordLength?: number;
   /** Validation rules applied to the response value in array order. */
   textValidation?: TextValidationRule[];
 }

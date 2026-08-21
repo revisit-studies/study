@@ -1661,7 +1661,7 @@
     },
     "LongTextResponse": {
       "additionalProperties": false,
-      "description": "The LongTextResponse interface is used to define the properties of a long text response. LongTextResponses render as a text area that accepts any text and can optionally have a placeholder. ```json {   \"id\": \"q-name\",   \"prompt\": \"What is your first name?\",   \"location\": \"aboveStimulus\",   \"type\": \"longText\",   \"default\": \"I enjoyed this study because...\",   \"placeholder\": \"Please enter your comments\",   \"minLength\": 20,   \"maxLength\": 500,   \"textValidation\": [     {       \"type\": \"doesNotContain\",       \"value\": \"invalid\"     }   ] } ```",
+      "description": "The LongTextResponse interface is used to define the properties of a long text response. LongTextResponses render as a text area that accepts any text and can optionally have a placeholder. ```json {   \"id\": \"q-name\",   \"prompt\": \"What is your first name?\",   \"location\": \"aboveStimulus\",   \"type\": \"longText\",   \"default\": \"I enjoyed this study because...\",   \"placeholder\": \"Please enter your comments\",   \"minCharLength\": 20,   \"maxCharLength\": 500,   \"minWordLength\": 4,   \"maxWordLength\": 100,   \"textValidation\": [     {       \"type\": \"doesNotContain\",       \"value\": \"invalid\"     }   ] } ```",
       "properties": {
         "default": {
           "description": "The default value of the response. Specify a string such as `\"I enjoyed this study because...\"`.",
@@ -1687,12 +1687,20 @@
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
-        "maxLength": {
+        "maxCharLength": {
           "description": "The maximum number of characters accepted in the response.",
           "type": "number"
         },
-        "minLength": {
+        "maxWordLength": {
+          "description": "The maximum number of whitespace-separated words accepted in the response.",
+          "type": "number"
+        },
+        "minCharLength": {
           "description": "The minimum number of characters accepted in the response.",
+          "type": "number"
+        },
+        "minWordLength": {
+          "description": "The minimum number of whitespace-separated words accepted in the response.",
           "type": "number"
         },
         "paramCapture": {
@@ -3136,11 +3144,11 @@
     },
     "ShortTextResponse": {
       "additionalProperties": false,
-      "description": "The ShortTextResponse interface is used to define the properties of a short text response. ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder. ```json {   \"id\": \"q-short-text\",   \"prompt\": \"Short text example\",   \"location\": \"aboveStimulus\",   \"type\": \"shortText\",   \"default\": \"test@revisit.dev\",   \"placeholder\": \"test@revisit.dev\",   \"builtInValidation\": \"email\",   \"minLength\": 3,   \"maxLength\": 100,   \"textValidation\": [     {       \"type\": \"doesNotContain\",       \"value\": \"invalid\"     }   ] } ```",
+      "description": "The ShortTextResponse interface is used to define the properties of a short text response. ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder. ```json {   \"id\": \"q-short-text\",   \"prompt\": \"Short text example\",   \"location\": \"aboveStimulus\",   \"type\": \"shortText\",   \"default\": \"test@revisit.dev\",   \"placeholder\": \"test@revisit.dev\",   \"builtInValidation\": \"email\",   \"minCharLength\": 3,   \"maxCharLength\": 100,   \"minWordLength\": 1,   \"maxWordLength\": 10,   \"textValidation\": [     {       \"type\": \"doesNotContain\",       \"value\": \"invalid\"     }   ] } ```",
       "properties": {
         "builtInValidation": {
           "$ref": "#/definitions/BuiltInValidationType",
-          "description": "Applies one predefined format from BuiltInValidationType to the response value. For example, use `\"email\"` for `test@revisit.dev`, `\"date\"` for `06/24/2009`, or `\"time\"` for `14:28`."
+          "description": "Applies one predefined format from BuiltInValidationType to the response value."
         },
         "default": {
           "description": "The default value of the response. Specify a string such as `\"Jane Doe\"`.",
@@ -3166,12 +3174,20 @@
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
-        "maxLength": {
+        "maxCharLength": {
           "description": "The maximum number of characters accepted in the response.",
           "type": "number"
         },
-        "minLength": {
+        "maxWordLength": {
+          "description": "The maximum number of whitespace-separated words accepted in the response.",
+          "type": "number"
+        },
+        "minCharLength": {
           "description": "The minimum number of characters accepted in the response.",
+          "type": "number"
+        },
+        "minWordLength": {
+          "description": "The minimum number of whitespace-separated words accepted in the response.",
           "type": "number"
         },
         "paramCapture": {
@@ -3624,7 +3640,7 @@
     },
     "TextValidationRule": {
       "additionalProperties": false,
-      "description": "A validation rule applied to a short or long text response. Rules are evaluated in array order, and the first failing rule is displayed to the participant.\n\nFor example, the following rules accept a value such as `ReVISit is great`: it must start with `ReVISit`, contain `great`, and not contain `invalid`. See the [MDN regular expression syntax cheat sheet](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet) for help writing regular expression patterns. ```json \"textValidation\": [   {     \"type\": \"matchesRegex\",     \"value\": \"^ReVISit\"   },   {     \"type\": \"contains\",     \"value\": \"great\"   },   {     \"type\": \"doesNotContain\",     \"value\": \"invalid\"   } ] ```",
+      "description": "A validation rule applied to a short or long text response. Rules are evaluated in array order, and the first failing rule is displayed to the participant.\n\nFor example, the following rules accept only `ReVISit is great`: it must start with `ReVISit`, contain `great`, not contain `invalid`, equal `ReVISit is great`, and not equal `TEST`. See the [MDN regular expression syntax cheat sheet](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet) for help writing regular expression patterns. ```json \"textValidation\": [   {     \"type\": \"matchesRegex\",     \"value\": \"^ReVISit\"   },   {     \"type\": \"contains\",     \"value\": \"great\"   },   {     \"type\": \"doesNotContain\",     \"value\": \"invalid\"   },   {     \"type\": \"equals\",     \"value\": \"ReVISit is great\"   },   {     \"type\": \"doesNotEqual\",     \"value\": \"TEST\"   } ] ```",
       "properties": {
         "type": {
           "$ref": "#/definitions/TextValidationType",
@@ -3646,7 +3662,9 @@
       "enum": [
         "matchesRegex",
         "contains",
-        "doesNotContain"
+        "doesNotContain",
+        "equals",
+        "doesNotEqual"
       ],
       "type": "string"
     },

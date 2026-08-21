@@ -398,6 +398,8 @@ describe('validateResponse', () => {
         { type: 'contains', value: 'ReVISit' },
         { type: 'doesNotContain', value: 'invalid' },
         { type: 'matchesRegex', value: '^ReVISit' },
+        { type: 'equals', value: 'ReVISit response' },
+        { type: 'doesNotEqual', value: 'ReVISit blocked' },
       ],
     };
 
@@ -417,13 +419,32 @@ describe('validateResponse', () => {
   test.each([
     { type: 'shortText' as const },
     { type: 'longText' as const },
+  ])('$type applies case-sensitive equality validation', ({ type }) => {
+    const equalsResponse: ShortTextResponse | LongTextResponse = {
+      id: 'equals', prompt: 'Question', type, textValidation: [{ type: 'equals', value: 'ReVISit' }],
+    };
+    const doesNotEqualResponse: ShortTextResponse | LongTextResponse = {
+      id: 'does-not-equal', prompt: 'Question', type, textValidation: [{ type: 'doesNotEqual', value: 'TEST' }],
+    };
+
+    expect(validateResponse(equalsResponse, 'ReVISit', { equals: 'ReVISit' }).valid).toBe(true);
+    expect(validateResponse(equalsResponse, 'revisit', { equals: 'revisit' }).message)
+      .toBe('Please enter a value equal to the required text.');
+    expect(validateResponse(doesNotEqualResponse, 'test', { 'does-not-equal': 'test' }).valid).toBe(true);
+    expect(validateResponse(doesNotEqualResponse, 'TEST', { 'does-not-equal': 'TEST' }).message)
+      .toBe('Please enter a value that does not equal the restricted text.');
+  });
+
+  test.each([
+    { type: 'shortText' as const },
+    { type: 'longText' as const },
   ])('$type enforces inclusive minimum and maximum text lengths', ({ type }) => {
     const response: ShortTextResponse | LongTextResponse = {
       id: 'q1',
       prompt: 'Question',
       type,
-      minLength: 3,
-      maxLength: 5,
+      minCharLength: 3,
+      maxCharLength: 5,
     };
 
     expect(validateResponse(response, 'abc', { q1: 'abc' }).valid).toBe(true);
@@ -434,14 +455,63 @@ describe('validateResponse', () => {
 
   test('reports minimum-only and maximum-only text length errors', () => {
     const minimumResponse: ShortTextResponse = {
-      id: 'minimum', prompt: 'Question', type: 'shortText', minLength: 3,
+      id: 'minimum', prompt: 'Question', type: 'shortText', minCharLength: 3,
     };
     const maximumResponse: LongTextResponse = {
-      id: 'maximum', prompt: 'Question', type: 'longText', maxLength: 5,
+      id: 'maximum', prompt: 'Question', type: 'longText', maxCharLength: 5,
     };
 
     expect(validateResponse(minimumResponse, 'ab', { minimum: 'ab' }).message).toBe('Please enter at least 3 characters.');
     expect(validateResponse(maximumResponse, 'abcdef', { maximum: 'abcdef' }).message).toBe('Please enter at most 5 characters.');
+  });
+
+  test.each([
+    { type: 'shortText' as const },
+    { type: 'longText' as const },
+  ])('$type enforces minimum word length across whitespace', ({ type }) => {
+    const response: ShortTextResponse | LongTextResponse = {
+      id: 'words', prompt: 'Question', type, minWordLength: 3,
+    };
+
+    expect(validateResponse(response, 'three word response', { words: 'three word response' }).valid).toBe(true);
+    expect(validateResponse(response, 'two\twords', { words: 'two\twords' }).message)
+      .toBe('Please enter at least 3 words.');
+    expect(validateResponse(response, 'one\n\n two', { words: 'one\n\n two' }).message)
+      .toBe('Please enter at least 3 words.');
+    expect(validateResponse(response, '. . .', { words: '. . .' }).message)
+      .toBe('Please enter at least 3 words.');
+    expect(validateResponse(response, "don't stop now", { words: "don't stop now" }).valid).toBe(true);
+    expect(validateResponse(response, 'hello... world! third', { words: 'hello... world! third' }).valid)
+      .toBe(true);
+    expect(validateResponse(response, '123 456 three', { words: '123 456 three' }).valid).toBe(true);
+  });
+
+  test.each([
+    { type: 'shortText' as const },
+    { type: 'longText' as const },
+  ])('$type enforces inclusive minimum and maximum word lengths', ({ type }) => {
+    const response: ShortTextResponse | LongTextResponse = {
+      id: 'words', prompt: 'Question', type, minWordLength: 2, maxWordLength: 3,
+    };
+
+    expect(validateResponse(response, 'two words', { words: 'two words' }).valid).toBe(true);
+    expect(validateResponse(response, 'three valid words', { words: 'three valid words' }).valid).toBe(true);
+    expect(validateResponse(response, 'one', { words: 'one' }).message)
+      .toBe('Please enter between 2 and 3 words.');
+    expect(validateResponse(response, 'this has four words', { words: 'this has four words' }).message)
+      .toBe('Please enter between 2 and 3 words.');
+  });
+
+  test.each([
+    { type: 'shortText' as const },
+    { type: 'longText' as const },
+  ])('$type reports a maximum-only word length error', ({ type }) => {
+    const response: ShortTextResponse | LongTextResponse = {
+      id: 'words', prompt: 'Question', type, maxWordLength: 2,
+    };
+
+    expect(validateResponse(response, 'three word response', { words: 'three word response' }).message)
+      .toBe('Please enter at most 2 words.');
   });
 
   test('invalid regular expressions fail validation without throwing', () => {

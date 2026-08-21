@@ -136,9 +136,13 @@ test('Test questionnaire component with responses and randomizing questions and 
   await expect(page.getByText('Text Validation', { exact: true })).toBeVisible();
   await page.getByPlaceholder('ABC-123').fill('ABC-123');
   await page.getByPlaceholder('I use ReVISit for...').fill('I use ReVISit');
-  await page.getByPlaceholder('Describe a valid response...').fill('This response is valid.');
+  await page.getByPlaceholder('Describe a valid response...').fill('This response works');
+  await page.getByPlaceholder('ReVISit', { exact: true }).fill('ReVISit');
+  await page.getByPlaceholder('Anything except TEST').fill('ReVISit');
   await page.getByPlaceholder('3–10 characters').fill('valid');
   await page.getByPlaceholder('20–100 characters').fill('This response has enough characters.');
+  await page.getByPlaceholder('2–5 words').fill('two words');
+  await page.getByPlaceholder('4–10 words').fill('This has four words');
   await page.getByPlaceholder('test@revisit.dev').fill('test@revisit.dev');
   await page.getByPlaceholder('800-000-0000').fill('800-000-0000');
   await page.getByPlaceholder('Utah or UT').fill('Utah');
