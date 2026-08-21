@@ -262,12 +262,10 @@
       "type": "object"
     },
     "BuiltInValidationType": {
-      "description": "The built-in validation operations available for short text responses.\n\n- `email`: An email in `local@domain.tld` format, such as `test@revisit.dev`.\n- `phoneNumber`: A 10-digit US phone number in `000-000-0000` format.\n- `usState`: The full name or two-letter abbreviation of one of the 50 US states, such as `Utah` or `UT`.\n- `postalCode`: A US ZIP Code in `00000` or `00000-0000` format.\n- `url`: An absolute HTTP or HTTPS URL, such as `https://revisit.dev`.\n- `date`: A real calendar date in `MM/DD/YYYY` format.\n- `time`: A 24-hour time in `HH:mm` format.",
+      "description": "The built-in validation operations available for short text responses.\n\n- `email`: An email in `local@domain.tld` format, such as `test@revisit.dev`.\n- `phoneNumber`: A 10-digit US phone number in `000-000-0000` format.\n- `url`: An absolute HTTP or HTTPS URL, such as `https://revisit.dev`.\n- `date`: A real calendar date in `MM/DD/YYYY` format.\n- `time`: A 24-hour time in `HH:mm` format.",
       "enum": [
         "email",
         "phoneNumber",
-        "usState",
-        "postalCode",
         "url",
         "date",
         "time"

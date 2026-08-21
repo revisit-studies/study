@@ -6,22 +6,6 @@ type BuiltInValidation = {
   message: string;
 };
 
-const US_STATES = new Map([
-  ['AL', 'Alabama'], ['AK', 'Alaska'], ['AZ', 'Arizona'], ['AR', 'Arkansas'],
-  ['CA', 'California'], ['CO', 'Colorado'], ['CT', 'Connecticut'], ['DE', 'Delaware'],
-  ['FL', 'Florida'], ['GA', 'Georgia'], ['HI', 'Hawaii'], ['ID', 'Idaho'],
-  ['IL', 'Illinois'], ['IN', 'Indiana'], ['IA', 'Iowa'], ['KS', 'Kansas'],
-  ['KY', 'Kentucky'], ['LA', 'Louisiana'], ['ME', 'Maine'], ['MD', 'Maryland'],
-  ['MA', 'Massachusetts'], ['MI', 'Michigan'], ['MN', 'Minnesota'], ['MS', 'Mississippi'],
-  ['MO', 'Missouri'], ['MT', 'Montana'], ['NE', 'Nebraska'], ['NV', 'Nevada'],
-  ['NH', 'New Hampshire'], ['NJ', 'New Jersey'], ['NM', 'New Mexico'], ['NY', 'New York'],
-  ['NC', 'North Carolina'], ['ND', 'North Dakota'], ['OH', 'Ohio'], ['OK', 'Oklahoma'],
-  ['OR', 'Oregon'], ['PA', 'Pennsylvania'], ['RI', 'Rhode Island'], ['SC', 'South Carolina'],
-  ['SD', 'South Dakota'], ['TN', 'Tennessee'], ['TX', 'Texas'], ['UT', 'Utah'],
-  ['VT', 'Vermont'], ['VA', 'Virginia'], ['WA', 'Washington'], ['WV', 'West Virginia'],
-  ['WI', 'Wisconsin'], ['WY', 'Wyoming'],
-]);
-
 const emailValidation = isEmail();
 
 function isHttpUrl(value: string) {
@@ -56,14 +40,6 @@ function isDateInMonthDayYearFormat(value: string) {
     && day <= daysInMonth[month - 1];
 }
 
-function isValidUSState(value: string) {
-  const normalizedValue = value.trim().toLowerCase();
-
-  return [...US_STATES].some(([abbreviation, name]) => (
-    abbreviation.toLowerCase() === normalizedValue || name.toLowerCase() === normalizedValue
-  ));
-}
-
 const BUILT_IN_VALIDATIONS: Record<BuiltInValidationType, BuiltInValidation> = {
   email: {
     passes: (value) => emailValidation(value) === null,
@@ -72,14 +48,6 @@ const BUILT_IN_VALIDATIONS: Record<BuiltInValidationType, BuiltInValidation> = {
   phoneNumber: {
     passes: (value) => /^\d{3}-\d{3}-\d{4}$/.test(value),
     message: 'Please enter a valid phone number in the format 000-000-0000.',
-  },
-  usState: {
-    passes: isValidUSState,
-    message: 'Please enter a valid US state name or two-letter abbreviation.',
-  },
-  postalCode: {
-    passes: (value) => /^\d{5}(?:-\d{4})?$/.test(value),
-    message: 'Please enter a valid US postal code in the format 00000 or 00000-0000.',
   },
   url: {
     passes: isHttpUrl,

@@ -36,31 +36,6 @@ describe('checkBuiltInValidation', () => {
   });
 
   test.each([
-    'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
-    'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
-    'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
-    'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
-    'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY',
-    'New York', 'Washington', 'texas', ' tx ',
-  ])('accepts a valid US state name or abbreviation: %s', (value) => {
-    expect(checkBuiltInValidation('usState', value)).toBeNull();
-  });
-
-  test.each(['ZZ', 'New Pork', 'DC'])('rejects an invalid US state name or abbreviation: %s', (value) => {
-    expect(checkBuiltInValidation('usState', value))
-      .toBe('Please enter a valid US state name or two-letter abbreviation.');
-  });
-
-  test.each(['12345', '12345-6789'])('accepts a valid US postal code: %s', (value) => {
-    expect(checkBuiltInValidation('postalCode', value)).toBeNull();
-  });
-
-  test.each(['1234', '123456789', '12345 6789', 'ABCDE'])('rejects an invalid US postal code: %s', (value) => {
-    expect(checkBuiltInValidation('postalCode', value))
-      .toBe('Please enter a valid US postal code in the format 00000 or 00000-0000.');
-  });
-
-  test.each([
     'https://revisit.dev',
     'http://localhost:8080/study?id=test',
   ])('accepts a valid HTTP URL: %s', (value) => {

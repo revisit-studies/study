@@ -448,22 +448,6 @@
           "builtInValidation": "phoneNumber"
         },
         {
-          "id": "built-in-validation-us-state",
-          "type": "shortText",
-          "prompt": "Enter a US state name or two-letter abbreviation.",
-          "secondaryText": "For example: Utah or UT.",
-          "placeholder": "Utah or UT",
-          "builtInValidation": "usState"
-        },
-        {
-          "id": "built-in-validation-postal-code",
-          "type": "shortText",
-          "prompt": "Enter a US postal code.",
-          "secondaryText": "For example: 12345 or 12345-6789.",
-          "placeholder": "12345-6789",
-          "builtInValidation": "postalCode"
-        },
-        {
           "id": "built-in-validation-url",
           "type": "shortText",
           "prompt": "Enter an HTTP or HTTPS URL.",

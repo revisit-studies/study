@@ -448,13 +448,11 @@ export type TextValidationType = 'matchesRegex' | 'contains' | 'doesNotContain' 
  *
  * - `email`: An email in `local@domain.tld` format, such as `test@revisit.dev`.
  * - `phoneNumber`: A 10-digit US phone number in `000-000-0000` format.
- * - `usState`: The full name or two-letter abbreviation of one of the 50 US states, such as `Utah` or `UT`.
- * - `postalCode`: A US ZIP Code in `00000` or `00000-0000` format.
  * - `url`: An absolute HTTP or HTTPS URL, such as `https://revisit.dev`.
  * - `date`: A real calendar date in `MM/DD/YYYY` format.
  * - `time`: A 24-hour time in `HH:mm` format.
  */
-export type BuiltInValidationType = 'email' | 'phoneNumber' | 'usState' | 'postalCode' | 'url' | 'date' | 'time';
+export type BuiltInValidationType = 'email' | 'phoneNumber' | 'url' | 'date' | 'time';
 
 /**
  * A validation rule applied to a short or long text response.
