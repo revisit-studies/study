@@ -6,6 +6,7 @@ describe('checkBuiltInValidation', () => {
     'test@revisit.dev',
     'test+participant@revisit.dev',
     'participant@university.edu',
+    'first.last@sub-domain.revisit.dev',
   ])('accepts a valid email address: %s', (value) => {
     expect(checkBuiltInValidation('email', value)).toBeNull();
   });
@@ -17,6 +18,14 @@ describe('checkBuiltInValidation', () => {
     '@revisit.dev',
     'test@.dev',
     'test @revisit.dev',
+    '.a@example.com',
+    'a.@example.com',
+    'a..b@example.com',
+    'a@example..com',
+    'a@-example.com',
+    'a@example-.com',
+    'a@exam_ple.com',
+    'a@example.com.',
   ])('rejects an invalid email address: %s', (value) => {
     expect(checkBuiltInValidation('email', value)).toBe('Please enter a valid email address.');
   });

@@ -7,6 +7,33 @@ type BuiltInValidation = {
 };
 
 const emailValidation = isEmail();
+// RFC 5322 email regex pattern for the local part and domain labels
+// Email local part takes any letter or digit, and special characters !#$%&'*+/=?^_`{|}~-. (dot cannot be first or last character, and cannot appear consecutively)
+const EMAIL_LOCAL_PART_PATTERN = /^[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*$/;
+// Email domain part takes any letter or digit, and hyphen (cannot be first or last character, and cannot appear consecutively)
+const EMAIL_DOMAIN_LABEL_PATTERN = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$/;
+
+function isEmailAddress(value: string) {
+  if (emailValidation(value) !== null) {
+    return false;
+  }
+
+  const emailParts = value.split('@');
+  // If there are not exactly two parts (local part and domain), it's not a valid email address
+  if (emailParts.length !== 2) {
+    return false;
+  }
+
+  const [localPart, domain] = emailParts;
+  const domainLabels = domain.split('.');
+  const topLevelDomain = domainLabels[domainLabels.length - 1];
+
+  // Domain should have at least two labels (e.g., example.com), and the top-level domain should be at least two characters long (e.g., .com, .org)
+  return EMAIL_LOCAL_PART_PATTERN.test(localPart)
+    && domainLabels.length >= 2
+    && topLevelDomain.length >= 2
+    && domainLabels.every((label) => EMAIL_DOMAIN_LABEL_PATTERN.test(label));
+}
 
 function isHttpUrl(value: string) {
   if (value.trim() !== value) {
@@ -51,7 +78,7 @@ function isPhoneNumber(value: string) {
 
 const BUILT_IN_VALIDATIONS: Record<BuiltInValidationType, BuiltInValidation> = {
   email: {
-    passes: (value) => emailValidation(value) === null,
+    passes: isEmailAddress,
     message: 'Please enter a valid email address.',
   },
   phoneNumber: {
