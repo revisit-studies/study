@@ -185,7 +185,7 @@ vi.mock('../../ReactMarkdownWrapper', () => ({
 }));
 
 vi.mock('@mantine/hooks', () => ({
-  useMove: vi.fn(() => ({ ref: { current: null } })),
+  useMove: vi.fn(() => ({ ref: () => undefined, active: false })),
 }));
 
 vi.mock('../sliderBreaks', () => ({
@@ -808,7 +808,7 @@ describe('SliderInput', () => {
     let capturedCallback: ((pos: { x: number; y: number }) => void) | null = null;
     vi.mocked(useMove).mockImplementationOnce((fn: (pos: { x: number; y: number }) => void) => {
       capturedCallback = fn;
-      return { ref: { current: null }, active: false };
+      return { ref: () => undefined, active: false };
     });
     const mockOnChange = vi.fn();
     await act(async () => render(
@@ -882,7 +882,7 @@ describe('SliderInput', () => {
     let capturedCallback: ((pos: { x: number; y: number }) => void) | null = null;
     vi.mocked(useMove).mockImplementationOnce((fn: (pos: { x: number; y: number }) => void) => {
       capturedCallback = fn;
-      return { ref: { current: null }, active: false };
+      return { ref: () => undefined, active: false };
     });
     const mockOnChange = vi.fn();
     render(

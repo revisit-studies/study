@@ -47,7 +47,7 @@ describe('EditTagPopover', () => {
       resolveSave = resolve;
     }));
     render(
-      <MantineProvider>
+      <MantineProvider env="test">
         <EditTagPopover tag={tag} currentNames={[tag.name]} editTagCallback={editTagCallback} />
       </MantineProvider>,
     );
@@ -73,7 +73,7 @@ describe('EditTagPopover', () => {
   test('keeps the edit popover open when persistence fails', async () => {
     const editTagCallback = vi.fn().mockRejectedValue(new Error('save failed'));
     render(
-      <MantineProvider>
+      <MantineProvider env="test">
         <EditTagPopover tag={tag} currentNames={[tag.name]} editTagCallback={editTagCallback} />
       </MantineProvider>,
     );
