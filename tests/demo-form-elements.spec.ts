@@ -133,6 +133,13 @@ test('Test questionnaire component with responses and randomizing questions and 
   await nextClick(page);
 
   // Text validation
+  const regexInput = page.getByPlaceholder('ABC-123');
+  await regexInput.fill('^[A-Z]{3}-\\d{3}$');
+  await nextClick(page);
+  await expect(
+    page.getByText('Please enter a value that matches the required format.'),
+  ).toBeVisible();
+  await regexInput.fill('ABC-123');
   await page.getByPlaceholder('ABC-123').fill('ABC-123');
   await page.getByPlaceholder('I use ReVISit for...').fill('I use ReVISit');
   await page.getByPlaceholder('Describe a valid response...').fill('This response works');

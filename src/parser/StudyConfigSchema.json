@@ -1699,11 +1699,11 @@
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "maxCharLength": {
-          "description": "The maximum number of characters accepted in the response.",
+          "description": "The maximum number of characters accepted in the response. Must be greater than 0 when the response is required.",
           "type": "number"
         },
         "maxWordLength": {
-          "description": "The maximum number of whitespace-separated words accepted in the response.",
+          "description": "The maximum number of whitespace-separated words accepted in the response. Must be greater than 0 when the response is required.",
           "type": "number"
         },
         "minCharLength": {
@@ -3182,11 +3182,11 @@
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "maxCharLength": {
-          "description": "The maximum number of characters accepted in the response.",
+          "description": "The maximum number of characters accepted in the response. Must be greater than 0 when the response is required.",
           "type": "number"
         },
         "maxWordLength": {
-          "description": "The maximum number of whitespace-separated words accepted in the response.",
+          "description": "The maximum number of whitespace-separated words accepted in the response. Must be greater than 0 when the response is required.",
           "type": "number"
         },
         "minCharLength": {
@@ -3788,7 +3788,7 @@
           "description": "The operation used to validate the response value."
         },
         "value": {
-          "description": "The regular expression pattern or text value used by the validation operation.",
+          "description": "The regular expression pattern or text value used by the validation operation. Must be non-empty for `equals`, `contains`, and `doesNotContain`.",
           "type": "string"
         }
       },

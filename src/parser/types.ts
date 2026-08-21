@@ -479,7 +479,10 @@ export type TextValidationType = 'matchesRegex' | 'contains' | 'doesNotContain' 
 export interface TextValidationRule {
   /** The operation used to validate the response value. */
   type: TextValidationType;
-  /** The regular expression pattern or text value used by the validation operation. */
+  /**
+   * The regular expression pattern or text value used by the validation operation.
+   * Must be non-empty for `equals`, `contains`, and `doesNotContain`.
+   */
   value: string;
 }
 
@@ -516,11 +519,11 @@ export interface ShortTextResponse extends BaseResponse {
   default?: string;
   /** The minimum number of characters accepted in the response. */
   minCharLength?: number;
-  /** The maximum number of characters accepted in the response. */
+  /** The maximum number of characters accepted in the response. Must be greater than 0 when the response is required. */
   maxCharLength?: number;
   /** The minimum number of whitespace-separated words accepted in the response. */
   minWordLength?: number;
-  /** The maximum number of whitespace-separated words accepted in the response. */
+  /** The maximum number of whitespace-separated words accepted in the response. Must be greater than 0 when the response is required. */
   maxWordLength?: number;
   /** Validation rules applied to the response value in array order. */
   textValidation?: TextValidationRule[];
@@ -559,11 +562,11 @@ export interface LongTextResponse extends BaseResponse {
   default?: string;
   /** The minimum number of characters accepted in the response. */
   minCharLength?: number;
-  /** The maximum number of characters accepted in the response. */
+  /** The maximum number of characters accepted in the response. Must be greater than 0 when the response is required. */
   maxCharLength?: number;
   /** The minimum number of whitespace-separated words accepted in the response. */
   minWordLength?: number;
-  /** The maximum number of whitespace-separated words accepted in the response. */
+  /** The maximum number of whitespace-separated words accepted in the response. Must be greater than 0 when the response is required. */
   maxWordLength?: number;
   /** Validation rules applied to the response value in array order. */
   textValidation?: TextValidationRule[];

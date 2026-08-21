@@ -178,6 +178,24 @@ function verifyTextResponseConstraints(
       }
     });
 
+    if (response.required !== false && response.maxCharLength === 0) {
+      errors.push({
+        message: 'maxCharLength must be greater than zero for a required text response',
+        instancePath: `${responsePath}/maxCharLength`,
+        params: { action: 'Increase maxCharLength or make the response optional' },
+        category: 'invalid-config',
+      });
+    }
+
+    if (response.required !== false && response.maxWordLength === 0) {
+      errors.push({
+        message: 'maxWordLength must be greater than zero for a required text response',
+        instancePath: `${responsePath}/maxWordLength`,
+        params: { action: 'Increase maxWordLength or make the response optional' },
+        category: 'invalid-config',
+      });
+    }
+
     if (
       response.minCharLength !== undefined
       && response.maxCharLength !== undefined
@@ -205,6 +223,19 @@ function verifyTextResponseConstraints(
     }
 
     response.textValidation?.forEach((rule, ruleIndex) => {
+      if (
+        rule.value === ''
+        && (rule.type === 'equals' || rule.type === 'contains' || rule.type === 'doesNotContain')
+      ) {
+        errors.push({
+          message: `${rule.type} value must not be empty`,
+          instancePath: `${responsePath}/textValidation/${ruleIndex}/value`,
+          params: { action: `Set ${rule.type} value to a non-empty string` },
+          category: 'invalid-config',
+        });
+        return;
+      }
+
       if (rule.type !== 'matchesRegex') {
         return;
       }
