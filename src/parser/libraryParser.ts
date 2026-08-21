@@ -208,6 +208,21 @@ function addFactorError(
   }
 }
 
+function addFactorWarning(
+  warnings: ParserErrorWarning[],
+  message: string,
+  instancePath = '/factors/',
+) {
+  if (!warnings.some((warning) => warning.instancePath === instancePath && warning.message === message)) {
+    warnings.push({
+      message,
+      instancePath,
+      params: { action: 'Use equal-length inputs or use cross/concat instead' },
+      category: 'sequence-validation',
+    });
+  }
+}
+
 function orderFactorValues(
   factorName: string,
   factor: OrderedFactorValues,
@@ -365,17 +380,19 @@ function zipFactorConditions(
   conditionSets: FactorCondition[][],
   factorName: string,
   errors: ParserErrorWarning[],
+  warnings?: ParserErrorWarning[],
 ): FactorCondition[] {
   const lengths = conditionSets.map((conditions) => conditions.length);
   if (new Set(lengths).size > 1) {
-    addFactorError(
-      errors,
-      `Zip factor \`${factorName}\` requires inputs with equal lengths; received ${lengths.join(', ')}`,
-    );
-    return [];
+    const message = `Zip factor \`${factorName}\` requires inputs with equal lengths; received ${lengths.join(', ')}`;
+    if (warnings) {
+      addFactorWarning(warnings, message);
+    } else {
+      addFactorError(errors, message);
+    }
   }
 
-  return Array.from({ length: lengths[0] ?? 0 }, (_, index) => (
+  return Array.from({ length: Math.min(...lengths) }, (_, index) => (
     conditionSets.reduce<FactorCondition>((condition, conditions) => (
       mergeFactorConditions(condition, conditions[index])
     ), {})
@@ -415,6 +432,7 @@ function resolveFactor(
   expressionName = 'inline',
   mode: FactorResolutionMode = 'standard',
   orderContext?: FactorOrderContext,
+  warnings?: ParserErrorWarning[],
 ): FactorResolution {
   if (typeof factorSource === 'string') {
     if (stack.includes(factorSource)) {
@@ -483,6 +501,7 @@ function resolveFactor(
       `${factorName}.${factor.action}`,
       mode,
       orderContext,
+      warnings,
     );
     if (resolution.numSamples !== undefined) {
       addFactorError(errors, `Factor expression \`${factorName}\` cannot nest a sampled factor`);
@@ -498,6 +517,7 @@ function resolveFactor(
         `${factorName}.${factor.action}.items`,
         mode,
         orderContext,
+        warnings,
       )
       : undefined;
     if (itemResolution?.numSamples !== undefined) {
@@ -542,6 +562,7 @@ function resolveFactor(
       `${factorName}.${action}[${index}]`,
       mode,
       orderContext,
+      warnings,
     )
   ));
   const hasNestedSample = resolutions.some((resolution) => resolution.numSamples !== undefined);
@@ -574,7 +595,7 @@ function resolveFactor(
     return {
       conditions: mode === 'materialize' && (hasRuntimeOrder || hasRuntimeSample)
         ? crossFactorConditions(conditionSets)
-        : zipFactorConditions(conditionSets, factorName, errors),
+        : zipFactorConditions(conditionSets, factorName, errors, warnings),
       parameterNames,
       hasRuntimeOrder,
       hasRuntimeSample,
@@ -671,6 +692,25 @@ export function resolveFactorConditions(
   ));
 }
 
+/**
+ * Validates every named factor, including definitions that are not currently
+ * materialized by a factor block. This reports semantic issues such as cycles
+ * and unequal zip inputs before they become latent configuration mistakes.
+ */
+export function validateFactors(
+  factors: Record<string, Factor> | undefined,
+  errors: ParserErrorWarning[] = [],
+  warnings?: ParserErrorWarning[],
+) {
+  if (!factors) {
+    return;
+  }
+
+  Object.keys(factors).forEach((factorName) => {
+    resolveFactor(factorName, factors, errors, [], factorName, 'materialize', undefined, warnings);
+  });
+}
+
 export function resolveOrderedFactorConditions(
   factorSource: FactorOption,
   factors: Record<string, Factor>,
@@ -710,6 +750,7 @@ function compileFactorBlock(
   block: FactorBlock,
   config: StudyConfig,
   errors: ParserErrorWarning[],
+  warnings?: ParserErrorWarning[],
 ): FactorCompileResult {
   const components: Record<string, IndividualComponent> = {};
   const baseComponents = typeof block.components === 'string'
@@ -771,6 +812,8 @@ function compileFactorBlock(
     [],
     block.id,
     'materialize',
+    undefined,
+    warnings,
   );
   const conditions = resolution.conditions.map((condition) => (
     materializeFactorCondition(condition, errors, resolution.parameterNames)
@@ -833,12 +876,13 @@ export function compileFactorBlocks(
   sequence: StudyConfig['sequence'],
   config: StudyConfig,
   errors: ParserErrorWarning[] = [],
+  warnings?: ParserErrorWarning[],
 ): FactorCompileResult {
   if (isDynamicBlock(sequence)) {
     return { sequence, components: {} };
   }
   if (isFactorBlock(sequence)) {
-    return compileFactorBlock(sequence, config, errors);
+    return compileFactorBlock(sequence, config, errors, warnings);
   }
 
   const components: Record<string, IndividualComponent> = {};
@@ -849,7 +893,7 @@ export function compileFactorBlocks(
         return component;
       }
 
-      const compiled = compileFactorBlocks(component, config, errors);
+      const compiled = compileFactorBlocks(component, config, errors, warnings);
       Object.entries(compiled.components).forEach(([componentId, compiledComponent]) => {
         if (components[componentId] && !isEqual(components[componentId], compiledComponent)) {
           addFactorError(

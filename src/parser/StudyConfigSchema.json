@@ -3806,6 +3806,10 @@
           "description": "The description of your study, shown on the landing page.",
           "type": "string"
         },
+        "externalLink": {
+          "description": "An optional external paper, project, or source-study link shown on the landing page.",
+          "type": "string"
+        },
         "organizations": {
           "description": "The organizations that are associated with your study.",
           "items": {

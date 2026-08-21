@@ -61,6 +61,8 @@ export interface StudyMetadata {
   date: string;
   /** The description of your study, shown on the landing page. */
   description: string;
+  /** An optional external paper, project, or source-study link shown on the landing page. */
+  externalLink?: string;
   /** The organizations that are associated with your study. */
   organizations: string[];
 }

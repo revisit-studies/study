@@ -1,13 +1,13 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.1/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "Factors Demo",
+    "title": "Factor Composition Basics",
     "version": "pilot",
     "authors": [
       "The reVISit Team"
     ],
     "date": "2023-04-14",
-    "description": "A simple demo of using stimuli in an HTML file that renders a D3 visualization. Data is collected via a numeric response field.",
+    "description": "A compact sandbox for composing study conditions from reusable factors instead of hard-coding trial components.",
     "organizations": [
       "University of Utah",
       "WPI",

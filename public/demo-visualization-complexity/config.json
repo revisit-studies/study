@@ -1,7 +1,7 @@
 {
   "$schema": "../../src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "Visualization Complexity Study (Factors Demo)",
+    "title": "Perceived Visualization Complexity",
     "version": "pilot",
     "authors": [
       "Johannes Ellemose",
@@ -9,7 +9,8 @@
       "The reVISit Team"
     ],
     "date": "2026-08-21",
-    "description": "A factorized recreation of the visualization-complexity rating study by Ellemose and Elmqvist. Each participant rates 50 of the 9,450 visualization stimuli.",
+    "description": "A factorized recreation of Ellemose and Elmqvist’s visualization-complexity study. Each participant rates 50 of 9,450 stimuli.",
+    "externalLink": "https://doi.org/10.1109/TVCG.2025.3634789",
     "organizations": [
       "Aarhus University",
       "University of Maryland",

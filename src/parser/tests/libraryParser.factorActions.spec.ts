@@ -92,6 +92,51 @@ describe('factor sequence actions', () => {
     ]));
   });
 
+  test('renames repeated scalar factor inputs and rejects aliases for object conditions', () => {
+    const errors: ParserErrorWarning[] = [];
+    const factors: NonNullable<StudyConfig['factors']> = {
+      color: ['RED', 'BLUE'],
+      trial: [{ word: 'RED', ink: 'BLUE' }],
+    };
+
+    expect(resolveFactorConditions({
+      action: 'cross', factors: ['color', 'color'], as: ['word', 'ink'],
+    }, factors, errors, [], 'stroop')).toEqual([
+      { word: 'RED', ink: 'RED' },
+      { word: 'RED', ink: 'BLUE' },
+      { word: 'BLUE', ink: 'RED' },
+      { word: 'BLUE', ink: 'BLUE' },
+    ]);
+    expect(resolveFactorConditions({
+      action: 'cross', factors: ['trial'], as: ['renamedTrial'],
+    }, factors, errors, [], 'objectAlias')).toEqual([{ word: 'RED', ink: 'BLUE' }]);
+
+    expect(errors.map((error) => error.message)).toContain(
+      'Factor expression `objectAlias` cannot apply as name `renamedTrial` to an input with multiple parameters',
+    );
+  });
+
+  test('accepts literal factor arrays and preserves primitive value types', () => {
+    const factors: NonNullable<StudyConfig['factors']> = {
+      labels: ['first', 'second'],
+      counts: [1, 2],
+      enabled: [true, false],
+    };
+
+    expect(resolveFactorConditions({
+      action: 'cross', factors: ['labels', 'counts', 'enabled'],
+    }, factors)).toEqual([
+      { labels: 'first', counts: 1, enabled: true },
+      { labels: 'first', counts: 1, enabled: false },
+      { labels: 'first', counts: 2, enabled: true },
+      { labels: 'first', counts: 2, enabled: false },
+      { labels: 'second', counts: 1, enabled: true },
+      { labels: 'second', counts: 1, enabled: false },
+      { labels: 'second', counts: 2, enabled: true },
+      { labels: 'second', counts: 2, enabled: false },
+    ]);
+  });
+
   test('rejects parameters on fixed and factor sequence blocks', async () => {
     const fixedBlockConfig = factorConfig();
     fixedBlockConfig.sequence = {
@@ -152,6 +197,81 @@ describe('factor sequence actions', () => {
     ]));
   });
 
+  test('warns when between-subjects declarations are undefined, derived, empty, or mixed', async () => {
+    const config = factorConfig();
+    config.factors = {
+      valid: ['included'],
+      derived: { action: 'concat', factors: ['valid'] },
+      empty: [],
+      mixed: ['primitive', { paired: 'object' }],
+    };
+    config.betweenSubjects = ['missing', 'derived', 'empty', 'mixed'];
+    config.sequence = {
+      type: 'factor', id: 'validTrials', factor: 'valid', components: 'trial',
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(config));
+
+    expect(result.warnings).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        instancePath: '/betweenSubjects/0',
+        message: 'Between-subjects factor `missing` is not defined in factors',
+      }),
+      expect.objectContaining({
+        instancePath: '/betweenSubjects/1',
+        message: 'Between-subjects factor `derived` must be a non-empty factor with either all primitive levels or all object levels',
+      }),
+      expect.objectContaining({
+        instancePath: '/betweenSubjects/2',
+        message: 'Between-subjects factor `empty` must be a non-empty factor with either all primitive levels or all object levels',
+      }),
+      expect.objectContaining({
+        instancePath: '/betweenSubjects/3',
+        message: 'Between-subjects factor `mixed` must be a non-empty factor with either all primitive levels or all object levels',
+      }),
+    ]));
+  });
+
+  test('validates unused derived factors and warns about incompatible zip inputs', async () => {
+    const config = factorConfig();
+    config.factors = {
+      used: ['shown'],
+      short: [1],
+      long: [1, 2],
+      unusedBadZip: { action: 'zip', factors: ['short', 'long'] },
+      unusedMissingReference: { action: 'concat', factors: ['notDefined'] },
+      unusedBadKeep: { action: 'keep', factor: 'used' },
+      unusedCycleA: { action: 'concat', factors: ['unusedCycleB'] },
+      unusedCycleB: { action: 'concat', factors: ['unusedCycleA'] },
+    };
+    config.sequence = {
+      type: 'factor', id: 'usedTrials', factor: 'used', components: 'trial',
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(config));
+
+    expect(result.errors).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        message: 'Circular factor reference: unusedCycleA -> unusedCycleB -> unusedCycleA',
+      }),
+      expect.objectContaining({ message: 'Factor `notDefined` is not defined' }),
+      expect.objectContaining({
+        message: 'Keep factor `unusedBadKeep` requires exactly one non-empty condition or items list',
+      }),
+    ]));
+    expect(result.errors).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        message: 'Zip factor `unusedBadZip` requires inputs with equal lengths; received 1, 2',
+      }),
+    ]));
+    expect(result.warnings).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        instancePath: '/factors/',
+        message: 'Zip factor `unusedBadZip` requires inputs with equal lengths; received 1, 2',
+      }),
+    ]));
+  });
+
   test('validates keep/remove selectors and nested samples', () => {
     const errors: ParserErrorWarning[] = [];
     const factors = factorConfig().factors!;
@@ -173,6 +293,27 @@ describe('factor sequence actions', () => {
     ]));
   });
 
+  test('uses another factor as the complete-condition items selector', () => {
+    const factors: NonNullable<StudyConfig['factors']> = {
+      trials: [
+        { stimulus: 'A', guardrail: 'none' },
+        { stimulus: 'B', guardrail: 'summary' },
+        { stimulus: 'C', guardrail: 'none' },
+      ],
+      summaryTrials: [{ stimulus: 'B', guardrail: 'summary' }],
+    };
+
+    expect(resolveFactorConditions({
+      action: 'keep', factor: 'trials', items: 'summaryTrials',
+    }, factors)).toEqual([{ stimulus: 'B', guardrail: 'summary' }]);
+    expect(resolveFactorConditions({
+      action: 'remove', factor: 'trials', items: 'summaryTrials',
+    }, factors)).toEqual([
+      { stimulus: 'A', guardrail: 'none' },
+      { stimulus: 'C', guardrail: 'none' },
+    ]);
+  });
+
   test('concatenates factor conditions in input order', () => {
     expect(resolveFactorConditions({
       action: 'concat',
@@ -180,6 +321,36 @@ describe('factor sequence actions', () => {
     }, factorConfig().factors!)).toEqual([
       { a: 1 }, { a: 2 }, { a: 3 }, { b: 'x' }, { b: 'y' },
     ]);
+  });
+
+  test('warns about unequal zip inputs while materializing pairs through the shorter input', async () => {
+    const config = factorConfig();
+    config.baseComponents = {
+      trial: { type: 'markdown', path: 'study/assets/trial.md', response: [] },
+    };
+    config.factors = {
+      left: [1, 2, 3],
+      right: ['first', 'second'],
+      paired: { action: 'zip', factors: ['left', 'right'] },
+    };
+    config.sequence = {
+      type: 'factor', id: 'pairedTrials', factor: 'paired', components: 'trial',
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(config));
+
+    expect(result.errors).toEqual([]);
+    expect(result.warnings).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        message: 'Zip factor `paired` requires inputs with equal lengths; received 3, 2',
+      }),
+    ]));
+    expect(result.sequence).toMatchObject({
+      components: [
+        'pairedTrials__left=1__right=first__trial',
+        'pairedTrials__left=2__right=second__trial',
+      ],
+    });
   });
 
   test('repeats the concatenated condition sequence', () => {
@@ -190,6 +361,33 @@ describe('factor sequence actions', () => {
     }, factorConfig().factors!)).toEqual([
       { a: 1 }, { a: 2 }, { a: 3 }, { b: 'x' }, { b: 'y' },
       { a: 1 }, { a: 2 }, { a: 3 }, { b: 'x' }, { b: 'y' },
+    ]);
+  });
+
+  test('materializes repeated conditions as repeated references to the same generated component', () => {
+    const config = factorConfig();
+    config.factors = {
+      a: [1, 2],
+      repeated: { action: 'repeat', factors: ['a'], numRepeats: 2 },
+    };
+    config.sequence = {
+      type: 'factor', id: 'repeated', factor: 'repeated', components: 'trial',
+    };
+
+    const compiled = compileFactorBlocks(config.sequence, config);
+
+    expect(compiled.sequence).toMatchObject({
+      order: 'fixed',
+      components: [
+        'repeated__a=1__trial',
+        'repeated__a=2__trial',
+        'repeated__a=1__trial',
+        'repeated__a=2__trial',
+      ],
+    });
+    expect(Object.keys(compiled.components)).toEqual([
+      'repeated__a=1__trial',
+      'repeated__a=2__trial',
     ]);
   });
 
@@ -208,6 +406,43 @@ describe('factor sequence actions', () => {
     expect(resolveOrderedFactorConditions('interfaces', factors, createFactorOrderContext(1))).toEqual([
       { interfaces: 'LaTeX' }, { interfaces: 'FFL' },
     ]);
+  });
+
+  test('materializes all ordered-factor levels but shares randomized choices within a sequence', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    const factors: NonNullable<StudyConfig['factors']> = {
+      tasks: { values: ['A', 'B', 'C'], order: 'random', numSamples: 2 },
+    };
+    const context = createFactorOrderContext(0);
+
+    expect(resolveFactorConditions('tasks', factors)).toEqual([
+      { tasks: 'A' }, { tasks: 'B' }, { tasks: 'C' },
+    ]);
+    const firstReference = resolveOrderedFactorConditions('tasks', factors, context);
+    const secondReference = resolveOrderedFactorConditions('tasks', factors, context);
+    random.mockRestore();
+
+    expect(firstReference).toEqual([{ tasks: 'B' }, { tasks: 'C' }]);
+    expect(secondReference).toEqual(firstReference);
+  });
+
+  test('validates empty and invalid ordered factor declarations', () => {
+    const errors: ParserErrorWarning[] = [];
+    const factors: NonNullable<StudyConfig['factors']> = {
+      empty: { values: [] },
+      tooMany: { values: ['A', 'B'], numSamples: 3 },
+      fractional: { values: ['A', 'B'], numSamples: 1.5 },
+    };
+
+    resolveFactorConditions('empty', factors, errors);
+    resolveFactorConditions('tooMany', factors, errors);
+    resolveFactorConditions('fractional', factors, errors);
+
+    expect(errors.map((error) => error.message)).toEqual(expect.arrayContaining([
+      'Factor `empty` must contain at least one value',
+      'Factor `tooMany` numSamples must be between 1 and 2',
+      'Factor `fractional` numSamples must be between 1 and 2',
+    ]));
   });
 
   test('samples condition groups at participant allocation time', () => {
@@ -275,6 +510,49 @@ describe('factor sequence actions', () => {
     });
   });
 
+  test('keeps coupled base components together for Latin-square factor selections', () => {
+    const config = factorConfig();
+    config.uiConfig.numSequences = 3;
+    config.factors = {
+      task: { values: ['A', 'B', 'C'], order: 'latinSquare', numSamples: 2 },
+    };
+    config.sequence = {
+      type: 'factor', id: 'counterbalancedTasks', factor: 'task', components: ['trial', 'confidence'],
+    };
+
+    const compiled = compileFactorBlocks(config.sequence, config);
+    const sequenceBlock = compiled.sequence as ComponentBlock;
+    const sequences = generateSequenceArray({
+      ...config,
+      sequence: compiled.sequence,
+      components: compiled.components,
+    });
+
+    expect(sequenceBlock).toMatchObject({
+      type: 'factor-runtime-plan', id: 'counterbalancedTasks', order: 'fixed', components: [],
+    });
+    expect(sequences.map((sequence) => sequence.components.slice(0, -1))).toEqual([
+      [
+        'counterbalancedTasks__task=A__trial',
+        'counterbalancedTasks__task=A__confidence',
+        'counterbalancedTasks__task=B__trial',
+        'counterbalancedTasks__task=B__confidence',
+      ],
+      [
+        'counterbalancedTasks__task=B__trial',
+        'counterbalancedTasks__task=B__confidence',
+        'counterbalancedTasks__task=C__trial',
+        'counterbalancedTasks__task=C__confidence',
+      ],
+      [
+        'counterbalancedTasks__task=C__trial',
+        'counterbalancedTasks__task=C__confidence',
+        'counterbalancedTasks__task=A__trial',
+        'counterbalancedTasks__task=A__confidence',
+      ],
+    ]);
+  });
+
   test('validates repeat and sample counts', () => {
     const errors: ParserErrorWarning[] = [];
     const factors = factorConfig().factors!;
@@ -296,6 +574,128 @@ describe('factor sequence actions', () => {
     expect(errors.map((error) => error.message)).toEqual(expect.arrayContaining([
       'Repeat factor `badRepeat` requires a positive integer numRepeats',
       'Sample factor `badSample` cannot select 4 conditions from 3',
+    ]));
+  });
+
+  test('reports undefined, empty, and malformed factor expressions', () => {
+    const errors: ParserErrorWarning[] = [];
+    const factors = factorConfig().factors!;
+
+    resolveFactorConditions('missing', factors, errors);
+    resolveFactorConditions({ action: 'cross', factors: [] }, factors, errors, [], 'emptyCross');
+    resolveFactorConditions({
+      action: 'sample',
+      factors: ['a'],
+      numSamples: 1,
+      samplingStrategy: 'invalid' as unknown as 'withoutReplacement',
+    }, factors, errors, [], 'invalidStrategy');
+
+    expect(errors.map((error) => error.message)).toEqual(expect.arrayContaining([
+      'Factor `missing` is not defined',
+      'Factor expression `emptyCross` must reference at least one factor',
+      'Sample factor `invalidStrategy` requires samplingStrategy to be withoutReplacement or withReplacement',
+    ]));
+  });
+
+  test('preserves factor block controls and reports missing base components', () => {
+    const config = factorConfig();
+    config.sequence = {
+      type: 'factor',
+      id: 'controlled',
+      factor: 'a',
+      components: ['trial', 'missing'],
+      order: 'random',
+      conditional: true,
+      interruptions: [{
+        spacing: 'random', numInterruptions: 1, components: ['break'],
+      }],
+      skip: [{
+        check: 'block', condition: 'numIncorrect', value: 1, to: 'end',
+      }],
+    };
+    const errors: ParserErrorWarning[] = [];
+
+    const compiled = compileFactorBlocks(config.sequence, config, errors);
+
+    expect(compiled.sequence).toMatchObject({
+      id: 'controlled',
+      order: 'random',
+      conditional: true,
+      interruptions: [{
+        spacing: 'random', numInterruptions: 1, components: ['break'],
+      }],
+      skip: [{
+        check: 'block', condition: 'numIncorrect', value: 1, to: 'end',
+      }],
+    });
+    expect(Object.keys(compiled.components)).toEqual([
+      'controlled__a=1__trial',
+      'controlled__a=2__trial',
+      'controlled__a=3__trial',
+    ]);
+    expect(errors.map((error) => error.message)).toContain(
+      'Factor block `controlled` references undefined base component `missing`',
+    );
+  });
+
+  test('reports factor-generated component ID collisions with configured components', () => {
+    const config = factorConfig();
+    config.components = {
+      'test__a=1__trial': {
+        type: 'markdown', path: 'study/assets/already-used.md', response: [],
+      },
+    };
+    const errors: ParserErrorWarning[] = [];
+
+    compileFactorBlocks(config.sequence, config, errors);
+
+    expect(errors).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        instancePath: '/sequence/',
+        message: 'Generated component ID `test__a=1__trial` is already used by another component',
+      }),
+    ]));
+  });
+
+  test('reports a factor block that samples conditions and also declares an order', () => {
+    const config = factorConfig();
+    config.sequence = {
+      type: 'factor',
+      id: 'sampleWithBlockOrder',
+      factor: {
+        action: 'sample', factors: ['a'], numSamples: 1, samplingStrategy: 'withoutReplacement',
+      },
+      components: 'trial',
+      order: 'fixed',
+    };
+    const errors: ParserErrorWarning[] = [];
+
+    compileFactorBlocks(config.sequence, config, errors);
+
+    expect(errors.map((error) => error.message)).toContain(
+      'Factor block `sampleWithBlockOrder` materializes a sample and cannot also define `order`',
+    );
+  });
+
+  test('warns when a valid factor selector produces an empty sequence block', async () => {
+    const config = factorConfig();
+    config.factors = {
+      trials: [{ stimulus: 'A' }],
+      noMatchingTrials: {
+        action: 'keep', factor: 'trials', condition: { stimulus: 'not-present' },
+      },
+    };
+    config.sequence = {
+      type: 'factor', id: 'noMatchingTrials', factor: 'noMatchingTrials', components: 'trial',
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(config));
+
+    expect(result.warnings).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        instancePath: '/sequence/',
+        message: 'Sequence has an empty components array',
+      }),
     ]));
   });
 

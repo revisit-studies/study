@@ -1,11 +1,12 @@
 {
   "$schema": "../../src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "CALVI Mixed Question Bank",
+    "title": "CALVI: Mixed Question Bank",
     "version": "pilot",
     "authors": ["The reVISit Team"],
     "date": "2026-08-21",
-    "description": "A single randomized 30-question CALVI sequence containing 15 real and 15 trick questions from the CALVI library.",
+    "description": "A randomized 30-question CALVI assessment combining 15 validated questions with 15 trick questions from the CALVI library.",
+    "externalLink": "https://doi.org/10.1145/3544548.3581406",
     "organizations": ["University of Utah"]
   },
   "uiConfig": {

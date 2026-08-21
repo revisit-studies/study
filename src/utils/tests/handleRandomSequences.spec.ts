@@ -3,6 +3,7 @@ import {
 } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { QuestionnaireComponent, StudyConfig } from '../../parser/types';
+import { compileFactorBlocks } from '../../parser/libraryParser';
 import { Sequence } from '../../store/types';
 import { generateSequenceArray } from '../handleRandomSequences';
 import { getSequenceFlatMap } from '../getSequenceFlatMap';
@@ -130,6 +131,54 @@ describe('Generating sequences works as expected', () => {
     expect(sequenceArray[0].parameters).toEqual({ data: 'd1' });
     expect(sequenceArray[1].components).toEqual(['d2Trial', 'sharedTrial', 'end']);
     expect(sequenceArray[1].parameters).toEqual({ data: 'd2' });
+  });
+
+  test('allocates object-valued between-subject factors and filters factor-generated components', () => {
+    const uncompiledConfig: StudyConfig = {
+      ...config,
+      uiConfig: {
+        ...config.uiConfig,
+        numSequences: 2,
+      },
+      baseComponents: {
+        task: {
+          type: 'react-component',
+          path: 'test/assets/Task.tsx',
+          response: [],
+        },
+      },
+      components: {},
+      factors: {
+        taskOrder: [
+          { taskCode: 'C1', interfaceName: 'FFL' },
+          { taskCode: 'C2', interfaceName: 'LaTeX' },
+        ],
+      },
+      betweenSubjects: ['taskOrder'],
+      sequence: {
+        type: 'factor', id: 'taskByOrder', factor: 'taskOrder', components: 'task',
+      },
+    };
+    const compiled = compileFactorBlocks(uncompiledConfig.sequence, uncompiledConfig);
+    const sequenceArray = generateSequenceArray({
+      ...uncompiledConfig,
+      sequence: compiled.sequence,
+      components: compiled.components,
+    });
+
+    expect(sequenceArray).toHaveLength(2);
+    expect(sequenceArray[0].components).toEqual(['taskByOrder__taskCode=C1__interfaceName=FFL__task', 'end']);
+    expect(sequenceArray[0].parameters).toEqual({
+      taskCode: 'C1',
+      interfaceName: 'FFL',
+      taskOrder: { taskCode: 'C1', interfaceName: 'FFL' },
+    });
+    expect(sequenceArray[1].components).toEqual(['taskByOrder__taskCode=C2__interfaceName=LaTeX__task', 'end']);
+    expect(sequenceArray[1].parameters).toEqual({
+      taskCode: 'C2',
+      interfaceName: 'LaTeX',
+      taskOrder: { taskCode: 'C2', interfaceName: 'LaTeX' },
+    });
   });
 
   test('generateSequenceArray filters between-subjects components inside nested blocks', () => {

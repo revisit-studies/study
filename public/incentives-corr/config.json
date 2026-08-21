@@ -1,13 +1,14 @@
 {
   "$schema": "../../src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "Correlation Judgements using Visualization",
+    "title": "Correlation Judgement with Visualizations",
     "version": "pilot",
     "authors": [
       "Abhraneel Sarma"
     ],
     "date": "2026-02-08",
-    "description": "A correlation judgement study.",
+    "description": "A factorized correlation-judgement study that counterbalances incentive and visualization conditions while composing training and test trials from correlation parameters.",
+    "externalLink": "https://arxiv.org/abs/2607.07463",
     "organizations": [
       "Graz University of Technology"
     ]

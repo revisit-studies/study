@@ -202,6 +202,23 @@ describe('ConfigSwitcher', () => {
     expect(container).toBeDefined();
   });
 
+  test('renders a study metadata link when one is configured', async () => {
+    const linkedConfig: Record<string, ParsedConfig<StudyConfig> | null> = {
+      'test-study': {
+        ...parsedStudyConfig,
+        studyMetadata: {
+          ...parsedStudyConfig.studyMetadata,
+          externalLink: 'https://doi.org/10.0000/example',
+        },
+      },
+    };
+    const { container } = await act(async () => render(
+      <ConfigSwitcher globalConfig={globalConfig} studyConfigs={linkedConfig} />,
+    ));
+
+    expect(container.textContent).toContain('Related material');
+  });
+
   test('renders study with conditions', async () => {
     vi.mocked(getSequenceConditions).mockReturnValueOnce(['condA', 'condB']);
     const { container } = await act(async () => render(

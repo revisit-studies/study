@@ -29,6 +29,36 @@ function isComponentBlock(value: unknown): value is ComponentBlock {
 }
 
 describe('Component auto-advance config parsing', () => {
+  test('accepts an external link in study metadata', async () => {
+    const studyConfig: StudyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Linked Study',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2026-08-21',
+        description: 'Ensures study metadata links are accepted.',
+        externalLink: 'https://doi.org/10.0000/example',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'test@test.com',
+        logoPath: '',
+        withProgressBar: true,
+        withSidebar: true,
+      },
+      components: {
+        question: { type: 'questionnaire', response: [] },
+      },
+      sequence: { order: 'fixed', components: ['question'] },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toEqual([]);
+    expect(result.studyMetadata.externalLink).toBe('https://doi.org/10.0000/example');
+  });
+
   test('accepts component-level auto-advance timeout options on a base component', async () => {
     const studyConfig = {
       $schema: '',

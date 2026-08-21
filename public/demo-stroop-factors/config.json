@@ -1,11 +1,12 @@
 {
   "$schema": "../../src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "Stroop Test with Factors",
+    "title": "Stroop Color-Word Task",
     "version": "pilot",
     "authors": ["The reVISit Team"],
     "date": "2026-08-20",
-    "description": "A ten-color Stroop test that crosses one reusable color factor with itself and subtracts congruent pairs.",
+    "description": "A ten-color Stroop task that crosses one reusable color factor with itself and removes congruent trials.",
+    "externalLink": "https://doi.org/10.1016/S0002-9394(35)90220-6",
     "organizations": ["University of Utah", "WPI", "University of Toronto"]
   },
   "uiConfig": {

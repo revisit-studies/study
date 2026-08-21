@@ -1,11 +1,12 @@
 {
   "$schema": "../../src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "Textual Data Serialization Format Usability (Section 4 Demo)",
+    "title": "Textual Data Serialization Formats",
     "version": "pilot",
     "authors": ["The reVISit Team"],
     "date": "2026-08-20",
-    "description": "A factors-based adaptation of the Section 4 crowd-work study from He, Cutler, and McNutt (2026). Each participant completes CONFIG and TABULAR task sets in distinct serialization formats.",
+    "description": "A factorized adaptation of the Section 4 serialization-format study. Each participant completes CONFIG and TABULAR task sets in distinct formats.",
+    "externalLink": "https://arxiv.org/pdf/2607.26211",
     "organizations": ["University of Utah"]
   },
   "uiConfig": {

@@ -1,11 +1,12 @@
 {
   "$schema": "../../src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "FFL Formula Authoring Study (Section 6 Demo)",
+    "title": "FFL vs. LaTeX Formula Authoring",
     "version": "pilot",
     "authors": ["The reVISit Team"],
     "date": "2026-08-20",
-    "description": "A factors-based reconstruction of the controlled FFL-versus-LaTeX authoring study in Section 6 of Wu et al. (UIST 2023).",
+    "description": "A factorized reconstruction of the controlled FFL-versus-LaTeX formula-authoring study from Section 6 of Wu et al. (UIST 2023).",
+    "externalLink": "https://doi.org/10.1145/3586183.3606731",
     "organizations": ["University of Utah"]
   },
   "uiConfig": {
@@ -42,7 +43,7 @@
       "parameters": {
         "formula": "y = β₀ + β₁x₁ + β₂x₂ + ⋯ + βₘxₘ",
         "timeLimitSeconds": 390,
-        "taskCode": "@{taskType}",
+        "taskCode": "${taskType}${taskOrder}",
         "taskKind": "@taskType",
         "interfaceName": "@interfaceOrder"
       }

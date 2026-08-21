@@ -1,11 +1,12 @@
 {
   "$schema": "../../src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "Reviewing Communication with Interactive Data Visualizations (Factors Demo)",
+    "title": "Visualization Guardrails",
     "version": "pilot",
     "authors": ["VDL"],
     "date": "2026-08-20",
-    "description": "A factors-based version of the second visualization guardrails study.",
+    "description": "A factorized recreation of the second visualization guardrails study, pairing each stimulus with its caption, selection, and guardrail condition.",
+    "externalLink": "https://github.com/visdesignlab/viz-guardrails-study/blob/main/public/stage-2/config-stage-2.json",
     "organizations": ["University of Utah"]
   },
   "uiConfig": {

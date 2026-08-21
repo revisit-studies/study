@@ -173,6 +173,22 @@ function StudyCard({
               </Anchor>
             </Text>
 
+            {config.studyMetadata.externalLink && (
+              <Text c="dimmed" ta="right" style={{ paddingRight: 5 }}>
+                <Anchor
+                  target="_blank"
+                  onClick={(e) => e.stopPropagation()}
+                  href={config.studyMetadata.externalLink}
+                >
+                  Related material
+                  <IconExternalLink style={{
+                    width: rem(18), height: rem(18), marginLeft: rem(2), marginBottom: rem(-3),
+                  }}
+                  />
+                </Anchor>
+              </Text>
+            )}
+
             {config.warnings.length > 0 && (
               <ErrorLoadingConfig issues={config.warnings} type="warning" />
             )}
