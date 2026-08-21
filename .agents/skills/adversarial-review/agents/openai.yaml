@@ -1,0 +1,4 @@
+interface:
+  display_name: "Adversarial Review"
+  short_description: "Challenge correctness and conciseness independently"
+  default_prompt: "Use $adversarial-review to independently challenge this work for correctness and conciseness."

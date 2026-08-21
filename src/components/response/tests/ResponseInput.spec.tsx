@@ -780,6 +780,30 @@ describe('SliderInput', () => {
     expect(html).toContain('Low');
   });
 
+  test('renders SMEQ numeric labels including both endpoints', () => {
+    vi.mocked(generateSliderBreakValues).mockReturnValueOnce([
+      10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140,
+    ]);
+    const html = renderToStaticMarkup(
+      <SliderInput
+        response={{
+          ...base,
+          smeqStyle: true,
+          options: [{ label: '', value: 0 }, { label: '', value: 150 }],
+          spacing: 10,
+        }}
+        disabled={false}
+        answer={{}}
+        index={1}
+        enumerateQuestions={false}
+      />,
+    );
+
+    for (let value = 0; value <= 150; value += 10) {
+      expect(html).toContain(`>${value}</div>`);
+    }
+  });
+
   test('covers useMove callback body when it is invoked during render', async () => {
     afterEach(() => { cleanup(); });
     // Override useMove to call the callback synchronously after component mounts

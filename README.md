@@ -1,8 +1,8 @@
 # ReVISit study – Interactive, Web-Based User Studies.
 
-Create your own interactive, web-based data visualization user studies by cloning/forking and editing configuration files and adding stimuli in the `public` folder.
-
 ReVISit introduces reVISit.spec, a DSL for specifying study setups (consent forms, training, trials, etc.) for interactive web-based studies. You describe your experimental setup in reVISit.spec, add your stimuli as images, forms, HTML pages, or React components, build and deploy — and you're ready to run your study. For tutorials and documentation, see the [reVISit website](https://revisit.dev).
+
+Create your own interactive, web-based data visualization by starting from the [template repository](https://github.com/revisit-studies/template) that tracks the stable version of this repository but removes unnecessary code baggage. Check out the [installation documentation](https://revisit.dev/docs/getting-started/installation/) for details.
 
 ## Paper
 
