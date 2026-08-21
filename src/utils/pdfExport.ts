@@ -5,12 +5,20 @@ const PDF_MARGIN_MM = 10;
 const PDF_MAX_WIDTH_PX = 920;
 const A4_LANDSCAPE_WIDTH_MM = 297;
 const A4_LANDSCAPE_HEIGHT_MM = 210;
+const PDF_VIDEO_FRAME_WAIT_MS = 1500;
 const PDF_PRINTABLE_ASPECT_RATIO = (A4_LANDSCAPE_HEIGHT_MM - (PDF_MARGIN_MM * 2))
   / (A4_LANDSCAPE_WIDTH_MM - (PDF_MARGIN_MM * 2));
 
 export interface PdfIframeSnapshot {
   dataUrl: string;
   index: number;
+}
+
+export interface PdfVideoSnapshot {
+  dataUrl?: string;
+  height: number;
+  index: number;
+  width: number;
 }
 
 function padDatePart(value: number) {
@@ -104,6 +112,71 @@ export async function capturePdfIframeSnapshots(element: HTMLElement) {
   }));
 }
 
+function waitForVideoFrame(video: HTMLVideoElement) {
+  if (
+    video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA
+    && video.videoWidth > 0
+    && video.videoHeight > 0
+  ) {
+    return Promise.resolve();
+  }
+
+  return new Promise<void>((resolve) => {
+    let timeoutId: number;
+    const finish = () => {
+      window.clearTimeout(timeoutId);
+      video.removeEventListener('loadeddata', finish);
+      video.removeEventListener('error', finish);
+      resolve();
+    };
+
+    video.addEventListener('loadeddata', finish, { once: true });
+    video.addEventListener('error', finish, { once: true });
+    timeoutId = window.setTimeout(finish, PDF_VIDEO_FRAME_WAIT_MS);
+  });
+}
+
+export async function capturePdfVideoSnapshots(element: HTMLElement) {
+  const videos = Array.from(element.querySelectorAll('video'));
+
+  return Promise.all(videos.map(async (video, index): Promise<PdfVideoSnapshot> => {
+    await waitForVideoFrame(video);
+    const bounds = video.getBoundingClientRect();
+    const width = Math.ceil(bounds.width || video.videoWidth);
+    const height = Math.ceil(bounds.height || video.videoHeight);
+
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
+      return { height, index, width };
+    }
+
+    try {
+      const canvas = video.ownerDocument.createElement('canvas');
+      const captureWidth = Math.min(
+        video.videoWidth,
+        Math.max(width * 2, 1),
+        PDF_MAX_WIDTH_PX * 2,
+      );
+      canvas.width = captureWidth;
+      canvas.height = Math.round(captureWidth * (video.videoHeight / video.videoWidth));
+      const context = canvas.getContext('2d');
+      if (!context) {
+        return { height, index, width };
+      }
+
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      return {
+        dataUrl: canvas.toDataURL('image/png'),
+        height,
+        index,
+        width,
+      };
+    } catch {
+      return { height, index, width };
+    }
+  }));
+}
+
 function waitForPdfImage(image: HTMLImageElement) {
   if (image.complete && image.naturalWidth > 0) {
     return Promise.resolve();
@@ -153,6 +226,55 @@ export function replacePdfIframesWithSnapshots(
     iframe.replaceWith(image);
 
     return [image];
+  });
+}
+
+export function replacePdfVideosWithSnapshots(
+  element: HTMLElement,
+  videoSnapshots: PdfVideoSnapshot[],
+) {
+  const videos = Array.from(element.querySelectorAll('video'));
+
+  return videoSnapshots.flatMap((snapshot) => {
+    const video = videos[snapshot.index];
+    if (!video) {
+      return [];
+    }
+
+    const replacementTarget = video.closest<HTMLElement>('.plyr--video') ?? video;
+    if (snapshot.dataUrl) {
+      const image = video.ownerDocument.createElement('img');
+      image.alt = 'Current video frame';
+      image.src = snapshot.dataUrl;
+      image.style.display = 'block';
+      image.style.height = 'auto';
+      image.style.maxWidth = '100%';
+      image.style.objectFit = 'contain';
+      image.style.width = snapshot.width > 0 ? `${snapshot.width}px` : '100%';
+      replacementTarget.replaceWith(image);
+
+      return [image];
+    }
+
+    const placeholder = video.ownerDocument.createElement('div');
+    placeholder.setAttribute('role', 'img');
+    placeholder.setAttribute('aria-label', 'Video frame unavailable in PDF');
+    placeholder.textContent = 'Video frame unavailable in PDF';
+    placeholder.style.alignItems = 'center';
+    placeholder.style.aspectRatio = snapshot.width > 0 && snapshot.height > 0
+      ? `${snapshot.width} / ${snapshot.height}`
+      : '16 / 9';
+    placeholder.style.backgroundColor = '#1f1f1f';
+    placeholder.style.color = '#ffffff';
+    placeholder.style.display = 'flex';
+    placeholder.style.justifyContent = 'center';
+    placeholder.style.maxWidth = '100%';
+    placeholder.style.padding = '16px';
+    placeholder.style.textAlign = 'center';
+    placeholder.style.width = snapshot.width > 0 ? `${snapshot.width}px` : '100%';
+    replacementTarget.replaceWith(placeholder);
+
+    return [];
   });
 }
 
@@ -220,9 +342,13 @@ export function preparePdfClone(
 export async function saveElementAsPdf(element: HTMLElement, filename: string) {
   const exportWidth = Math.min(element.getBoundingClientRect().width, PDF_MAX_WIDTH_PX);
   const exportHeight = Math.floor(exportWidth * PDF_PRINTABLE_ASPECT_RATIO);
-  const iframeSnapshots = await capturePdfIframeSnapshots(element);
+  const [iframeSnapshots, videoSnapshots] = await Promise.all([
+    capturePdfIframeSnapshots(element),
+    capturePdfVideoSnapshots(element),
+  ]);
   const pdfSource = element.cloneNode(true) as HTMLElement;
   const iframeImages = replacePdfIframesWithSnapshots(pdfSource, iframeSnapshots);
+  const videoImages = replacePdfVideosWithSnapshots(pdfSource, videoSnapshots);
   const sidebar = element.querySelector<HTMLElement>('.sidebar');
   const sidebarWidth = sidebar && sidebar.style.display !== 'none'
     ? sidebar.getBoundingClientRect().width
@@ -234,7 +360,7 @@ export async function saveElementAsPdf(element: HTMLElement, filename: string) {
       exportWidth,
       sidebarWidth,
     });
-    await Promise.all(iframeImages.map(waitForPdfImage));
+    await Promise.all([...iframeImages, ...videoImages].map(waitForPdfImage));
     await waitForNextPaint();
     preparePdfClone(pdfSource, {
       exportHeight,

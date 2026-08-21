@@ -190,6 +190,75 @@ test('captures same-origin iframe contents in the PDF', async ({ page }, testInf
   expect(saturatedRightPixels).toBeGreaterThan(20);
 });
 
+test('captures the current frame of same-origin video components', async ({ page }, testInfo) => {
+  await resetClientStudyState(page);
+  await openStudyFromLanding(page, 'Demo Studies', 'Video as a Stimulus');
+  await page.getByRole('tab', { name: 'Browse Components' }).click();
+  await page.getByLabel('Browse Components').getByText('internal', { exact: true }).click();
+  const video = page.locator('video');
+  await expect(video).toBeVisible();
+  await expect.poll(() => video.evaluate((element) => (
+    element.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA
+    && element.videoWidth > 0
+    && element.videoHeight > 0
+  ))).toBe(true);
+  await video.evaluate(async (element) => {
+    const targetTime = Math.min(1, element.duration / 2);
+    await new Promise<void>((resolve) => {
+      element.addEventListener('seeked', () => resolve(), { once: true });
+      element.currentTime = targetTime;
+    });
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+    });
+  });
+
+  await page.getByRole('button', { name: 'Study actions' }).click();
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('menuitem', { name: 'Export page as PDF' }).click();
+  const download = await downloadPromise;
+  const downloadPath = testInfo.outputPath('video-frame.pdf');
+  await download.saveAs(downloadPath);
+  const pdf = await readFile(downloadPath);
+  const jpegImages = extractJpegImages(pdf);
+  const largestJpeg = jpegImages.sort((left, right) => right.byteLength - left.byteLength)[0];
+
+  const framePixelSummary = await page.evaluate(async (base64) => {
+    const image = new Image();
+    image.src = `data:image/jpeg;base64,${base64}`;
+    await image.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = 300;
+    canvas.height = 200;
+    const context = canvas.getContext('2d');
+    if (!context) {
+      throw new Error('Canvas rendering is unavailable');
+    }
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    let variedPixels = 0;
+    const brightnessBuckets = new Set<number>();
+    for (let y = 35; y < 160; y += 1) {
+      for (let x = 80; x < 230; x += 1) {
+        const index = (y * canvas.width + x) * 4;
+        const red = pixels[index];
+        const green = pixels[index + 1];
+        const blue = pixels[index + 2];
+        const brightness = (red + green + blue) / 3;
+        if (brightness > 20 && brightness < 240 && Math.max(red, green, blue) - Math.min(red, green, blue) > 12) {
+          variedPixels += 1;
+        }
+        brightnessBuckets.add(Math.round(brightness / 8));
+      }
+    }
+
+    return { brightnessBuckets: brightnessBuckets.size, variedPixels };
+  }, Buffer.from(largestJpeg).toString('base64'));
+
+  expect(framePixelSummary.variedPixels).toBeGreaterThan(500);
+  expect(framePixelSummary.brightnessBuckets).toBeGreaterThan(12);
+});
+
 test('captures responsive SVG components in the PDF', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await resetClientStudyState(page);

@@ -2,8 +2,9 @@ import {
   afterEach, describe, expect, test, vi,
 } from 'vitest';
 import {
-  buildPdfFilename, capturePdfIframeSnapshots, getPdfExportUnsupportedReason,
-  preparePdfClone, replacePdfIframesWithSnapshots, saveElementAsPdf,
+  buildPdfFilename, capturePdfIframeSnapshots, capturePdfVideoSnapshots,
+  getPdfExportUnsupportedReason, preparePdfClone, replacePdfIframesWithSnapshots,
+  replacePdfVideosWithSnapshots, saveElementAsPdf,
   waitForNextPaint,
 } from '../pdfExport';
 
@@ -32,6 +33,7 @@ vi.mock('html2pdf.js', () => ({
 
 describe('PDF export helpers', () => {
   afterEach(() => {
+    vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
 
@@ -151,6 +153,49 @@ describe('PDF export helpers', () => {
         windowWidth: 600,
       }),
     );
+  });
+
+  test('captures the current video frame for the PDF clone', async () => {
+    const element = document.createElement('main');
+    const video = document.createElement('video');
+    element.append(video);
+    Object.defineProperty(video, 'readyState', { value: HTMLMediaElement.HAVE_CURRENT_DATA });
+    Object.defineProperty(video, 'videoWidth', { value: 1280 });
+    Object.defineProperty(video, 'videoHeight', { value: 720 });
+    vi.spyOn(video, 'getBoundingClientRect').mockReturnValue({ height: 360, width: 640 } as DOMRect);
+    const drawImage = vi.fn();
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({ drawImage } as unknown as CanvasRenderingContext2D);
+    vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue('data:image/png;base64,video-frame');
+
+    await expect(capturePdfVideoSnapshots(element)).resolves.toEqual([{
+      dataUrl: 'data:image/png;base64,video-frame',
+      height: 360,
+      index: 0,
+      width: 640,
+    }]);
+    expect(drawImage).toHaveBeenCalledWith(video, 0, 0, 1280, 720);
+  });
+
+  test('replaces Plyr controls with the captured frame or a readable fallback', () => {
+    const element = document.createElement('main');
+    element.innerHTML = `
+      <div class="plyr plyr--video"><video></video><button>Play</button></div>
+      <div class="plyr plyr--video"><video></video><button>Play</button></div>
+    `;
+
+    const images = replacePdfVideosWithSnapshots(element, [
+      {
+        dataUrl: 'data:image/png;base64,video-frame', height: 360, index: 0, width: 640,
+      },
+      { height: 360, index: 1, width: 640 },
+    ]);
+
+    expect(element.querySelectorAll('video')).toHaveLength(0);
+    expect(element.querySelectorAll('button')).toHaveLength(0);
+    expect(images[0]?.alt).toBe('Current video frame');
+    expect(images[0]?.style.width).toBe('640px');
+    expect(element.querySelector('[aria-label="Video frame unavailable in PDF"]')?.textContent)
+      .toBe('Video frame unavailable in PDF');
   });
 
   test('passes a prepared temporary clone and filename to html2pdf', async () => {
