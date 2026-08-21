@@ -401,6 +401,25 @@ export function validateResponse(
     return createValidationResult(response, 'invalid', { message: 'Please fill in Other to continue.' });
   }
 
+  if (response.type === 'shortText' || response.type === 'longText') {
+    if (value === null || value === undefined || value === '') {
+      return createValidationResult(response, response.required ? 'unanswered' : 'none');
+    }
+
+    if (typeof value !== 'string') {
+      return createValidationResult(response, 'invalid', { message: 'Please enter a valid text response.' });
+    }
+
+    if (response.requiredValue != null && value !== response.requiredValue.toString()) {
+      return createValidationResult(response, 'invalid', { reason: 'requiredValueMismatch' });
+    }
+
+    const textError = checkTextResponse(response, value);
+    return textError
+      ? createValidationResult(response, 'invalid', { message: textError })
+      : createValidationResult(response, 'none');
+  }
+
   if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
     if (response.type === 'matrix-radio' || response.type === 'matrix-checkbox') {
       const matrixValue = value as Record<string, string>;
@@ -481,13 +500,6 @@ export function validateResponse(
     const numericalError = checkNumericalResponse(response, value as unknown as number);
     return numericalError
       ? createValidationResult(response, 'invalid', { message: numericalError })
-      : createValidationResult(response, 'none');
-  }
-
-  if (response.type === 'shortText' || response.type === 'longText') {
-    const textError = checkTextResponse(response, value.toString());
-    return textError
-      ? createValidationResult(response, 'invalid', { message: textError })
       : createValidationResult(response, 'none');
   }
 

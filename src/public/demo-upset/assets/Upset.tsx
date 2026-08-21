@@ -7,7 +7,7 @@ import {
 import { useEffect, useMemo } from 'react';
 import { StimulusParams, TrrackedProvenance } from '../../../store/types';
 import { useIsAnalysis } from '../../../store/hooks/useIsAnalysis';
-import movies from './movies.json' assert { type: 'json' };
+import movies from './movies.json' with { type: 'json' };
 
 const movieColumns = Object.fromEntries(
   Object.entries(movies[0]).map(([key, value]) => {

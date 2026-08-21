@@ -86,6 +86,18 @@ describe('Text response validation config parsing', () => {
     expect(result.errors.some((error) => error.instancePath.includes('builtInValidation'))).toBe(true);
   });
 
+  test.each([0, 1])('rejects a malformed regular expression for response %s', async (responseIndex) => {
+    const studyConfig = makeStudyConfig('matchesRegex');
+    studyConfig.components.question1.response[responseIndex].textValidation[0].value = '[';
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'matchesRegex value must be a valid regular expression',
+      instancePath: `/components/question1/response/${responseIndex}/textValidation/0/value`,
+    }));
+  });
+
   test('accepts character and word length constraints for short and long text responses', async () => {
     const studyConfig = makeStudyConfig('contains');
     studyConfig.components.question1.response.forEach((response) => {
@@ -124,12 +136,43 @@ describe('Text response validation config parsing', () => {
     });
   });
 
-  test('accepts zero and equal minimum and maximum length constraints', async () => {
+  test('accepts zero minimum length constraints', async () => {
     const studyConfig = makeStudyConfig('contains');
     studyConfig.components.question1.response.forEach((response) => {
       Object.assign(response, {
-        minCharLength: 0, maxCharLength: 0, minWordLength: 0, maxWordLength: 0,
+        minCharLength: 0, maxCharLength: 1, minWordLength: 0, maxWordLength: 1,
       });
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toEqual([]);
+  });
+
+  test('rejects zero maximum length constraints for required text responses', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    studyConfig.components.question1.response.forEach((response) => {
+      Object.assign(response, { maxCharLength: 0, maxWordLength: 0 });
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    [0, 1].forEach((responseIndex) => {
+      expect(result.errors).toContainEqual(expect.objectContaining({
+        message: 'maxCharLength must be greater than zero for a required text response',
+        instancePath: `/components/question1/response/${responseIndex}/maxCharLength`,
+      }));
+      expect(result.errors).toContainEqual(expect.objectContaining({
+        message: 'maxWordLength must be greater than zero for a required text response',
+        instancePath: `/components/question1/response/${responseIndex}/maxWordLength`,
+      }));
+    });
+  });
+
+  test('accepts zero maximum length constraints for optional text responses', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    studyConfig.components.question1.response.forEach((response) => {
+      Object.assign(response, { required: false, maxCharLength: 0, maxWordLength: 0 });
     });
 
     const result = await parseStudyConfig(JSON.stringify(studyConfig));
@@ -166,6 +209,25 @@ describe('Text response validation config parsing', () => {
       instancePath: `/components/question1/response/${responseIndex}`,
     }));
   });
+
+  test.each(['equals', 'contains', 'doesNotContain'])(
+    'rejects an empty %s validation value',
+    async (validationType) => {
+      const studyConfig = makeStudyConfig(validationType);
+      studyConfig.components.question1.response.forEach((response) => {
+        response.textValidation[0].value = '';
+      });
+
+      const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+      [0, 1].forEach((responseIndex) => {
+        expect(result.errors).toContainEqual(expect.objectContaining({
+          message: `${validationType} value must not be empty`,
+          instancePath: `/components/question1/response/${responseIndex}/textValidation/0/value`,
+        }));
+      });
+    },
+  );
 
   test('rejects the replaced minLength and maxLength properties', async () => {
     const studyConfig = makeStudyConfig('contains');

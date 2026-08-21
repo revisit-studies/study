@@ -326,6 +326,29 @@ describe('validateResponse', () => {
     });
   });
 
+  test.each([
+    { type: 'shortText' as const },
+    { type: 'longText' as const },
+  ])('$type rejects non-string runtime values', ({ type }) => {
+    const response: ShortTextResponse | LongTextResponse = {
+      id: 'q1', prompt: 'Question', type, required: true,
+    };
+    const nonStringValues = [
+      ['text'],
+      { text: 'response' },
+      123,
+    ];
+
+    nonStringValues.forEach((value) => {
+      expect(validateResponse(response, value, { q1: value })).toMatchObject({
+        valid: false,
+        issueType: 'invalid',
+        message: 'Please enter a valid text response.',
+        blocksProgression: true,
+      });
+    });
+  });
+
   test('optional invalid numerical value is invalid but non-blocking', () => {
     const response: NumericalResponse = {
       id: 'q1', prompt: 'Question', type: 'numerical', required: false, min: 1,
