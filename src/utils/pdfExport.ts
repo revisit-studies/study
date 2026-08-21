@@ -137,7 +137,7 @@ export async function saveElementAsPdf(element: HTMLElement, filename: string) {
     },
     jsPDF: {
       format: 'a4',
-      orientation: 'portrait' as const,
+      orientation: 'landscape' as const,
       unit: 'mm',
     },
   };

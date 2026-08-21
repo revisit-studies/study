@@ -50,6 +50,9 @@ test('exports the current study component as a PDF download', async ({ page }) =
   const pdf = await readFile(downloadPath!);
   expect(pdf.subarray(0, 4).toString()).toBe('%PDF');
   expect(pdf.byteLength).toBeGreaterThan(10000);
+  const mediaBox = Buffer.from(pdf).toString('latin1').match(/\/MediaBox \[0 0 ([\d.]+) ([\d.]+)\]/);
+  expect(mediaBox).not.toBeNull();
+  expect(Number(mediaBox?.[1])).toBeGreaterThan(Number(mediaBox?.[2]));
   const jpegImages = extractJpegImages(pdf);
   expect(jpegImages.length).toBeGreaterThan(0);
   const largestJpeg = jpegImages.sort((left, right) => right.byteLength - left.byteLength)[0];

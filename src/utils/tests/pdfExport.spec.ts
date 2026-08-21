@@ -125,7 +125,7 @@ describe('PDF export helpers', () => {
         avoid: expect.arrayContaining(['[data-question-id]']),
       }),
       html2canvas: expect.objectContaining({ width: 920, windowWidth: 920 }),
-      jsPDF: expect.objectContaining({ format: 'a4', orientation: 'portrait' }),
+      jsPDF: expect.objectContaining({ format: 'a4', orientation: 'landscape' }),
     }));
 
     const options = html2PdfMocks.set.mock.calls[0][0] as {
