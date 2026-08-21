@@ -243,6 +243,8 @@ export abstract class StorageEngine {
 
   private participantDataWriteErrorListeners = new Set<(error: Error) => void>();
 
+  private participantRejectionListeners = new Set<() => void>();
+
   private pendingAssetUploads = new Map<string, Promise<void>>();
 
   private pendingAssetOperations = new Set<Promise<unknown>>();
@@ -277,6 +279,14 @@ export abstract class StorageEngine {
 
     return () => {
       this.participantDataWriteErrorListeners.delete(callback);
+    };
+  }
+
+  subscribeToCurrentParticipantRejection(callback: () => void) {
+    this.participantRejectionListeners.add(callback);
+
+    return () => {
+      this.participantRejectionListeners.delete(callback);
     };
   }
 
@@ -535,6 +545,25 @@ export abstract class StorageEngine {
     const write = async () => {
       this.participantDataWriteError = null;
       try {
+        // An admin can reject a participant in another browser while this
+        // client still has a debounced full-record write pending. Read the
+        // latest record immediately before writing so that stale snapshots
+        // cannot clear that rejection.
+        const latestParticipant = await this._getFromStorage(
+          `participants/${participantId}`,
+          'participantData',
+        );
+        if (isParticipantData(latestParticipant) && latestParticipant.rejected) {
+          if (participantId === this.currentParticipantId) {
+            this.participantData = latestParticipant;
+            this.clearPendingParticipantDataWriteTimer();
+            this.pendingParticipantDataWrite = undefined;
+            await this.cacheParticipantDataSnapshot(latestParticipant, participantId);
+            this.participantRejectionListeners.forEach((listener) => listener());
+          }
+          return;
+        }
+
         await this._pushToStorage(
           `participants/${participantId}`,
           'participantData',

@@ -53,6 +53,13 @@ function getFirstComponentName(block: unknown): string | null {
  * replaces the preview, so no participant input can be lost.
  */
 export function getStaticFirstComponent(studyConfig: StudyConfig): StaticFirstComponentPreview | null {
+  // Assignment can materialize a different config for each between-subjects
+  // condition. Until that assignment exists, even an otherwise fixed first
+  // component is not guaranteed to be the component the participant receives.
+  if ((studyConfig.betweenSubjects?.length ?? 0) > 0) {
+    return null;
+  }
+
   const componentName = getFirstComponentName(studyConfig.sequence);
   if (componentName === null) {
     return null;

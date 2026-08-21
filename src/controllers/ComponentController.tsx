@@ -82,7 +82,17 @@ export function ComponentController() {
   const participantId = useMemo(() => searchParams.get('participantId'), [searchParams]);
 
   // Disable browser back button from all stimuli
-  useDisableBrowserBack();
+  useDisableBrowserBack(isStartupPreview);
+
+  useEffect(() => {
+    if (isStartupPreview || !storageEngine) {
+      return undefined;
+    }
+
+    return storageEngine.subscribeToCurrentParticipantRejection(() => {
+      navigate(`./../__timedOut${window.location.search}`);
+    });
+  }, [isStartupPreview, navigate, storageEngine]);
 
   // Check if we have issues connecting to the database, if so show alert modal
   const storeDispatch = useStoreDispatch();

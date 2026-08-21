@@ -60,4 +60,11 @@ describe('getStaticFirstComponent', () => {
       { ...intro, path: 'test-study/assets/{{condition}}.md' },
     ))).toBeNull();
   });
+
+  test('does not preview studies with between-subjects assignment', () => {
+    const config = makeConfig({ order: 'fixed', components: ['intro'] });
+    config.betweenSubjects = ['condition'];
+
+    expect(getStaticFirstComponent(config)).toBeNull();
+  });
 });

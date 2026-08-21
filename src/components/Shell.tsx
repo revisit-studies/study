@@ -62,14 +62,16 @@ const STARTUP_PREVIEW_MODES: Record<REVISIT_MODE, boolean> = {
   dataSharingEnabled: false,
 };
 
-function getParticipantRoutes() {
+function getParticipantRoutes(startupPreview = false) {
   return [
     {
       element: <StepRenderer />,
       children: [
         {
           path: '/',
-          element: <NavigateWithParams to={encryptIndex(0)} replace />,
+          element: startupPreview
+            ? <ComponentController />
+            : <NavigateWithParams to={encryptIndex(0)} replace />,
         },
         {
           path: '/:index/:funcIndex?',
@@ -308,17 +310,6 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       ? searchParams.get(activeConfig.uiConfig.urlParticipantIdParam) ?? undefined
       : undefined
   ), [activeConfig, searchParams]);
-  const canStartStaticPreview = useMemo(() => (
-    !!storageEngine
-    && !!activeConfig
-    && !!canonicalStudyId
-    && !participantId
-    && !urlParticipantId
-    && studyCondition.length === 0
-    && (activeConfig.errors?.length ?? 0) === 0
-    && getStaticFirstComponent(activeConfig) !== null
-  ), [storageEngine, activeConfig, canonicalStudyId, participantId, urlParticipantId, studyCondition]);
-
   useEffect(() => {
     let cancelled = false;
     setStartupPreviewComponent(null);
@@ -364,7 +355,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       if (!cancelled) {
         setStartupPreviewComponent(previewComponent);
         setStartupPreviewStore(previewStore);
-        setRoutes(getParticipantRoutes());
+        setRoutes(getParticipantRoutes(true));
       }
     }).catch(() => {
       // Startup remains unchanged if preview construction is unavailable.
@@ -675,7 +666,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
     content = <ResourceNotFound />;
   } else if (routing && activeStore) {
     content = (
-      <StudyStoreContext.Provider value={activeStore}>
+      <StudyStoreContext.Provider key={hasStartupPreview ? 'startup-preview' : 'participant-session'} value={activeStore}>
         <StartupPreviewContext.Provider value={hasStartupPreview}>
           <Provider store={activeStore.store}>{routing}</Provider>
         </StartupPreviewContext.Provider>
@@ -687,7 +678,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
   return (
     <>
-      <StudyLoadingOverlay visible={!startupError && !hasConfigErrors && isLoading && !hasRenderableStudy && !canStartStaticPreview} />
+      <StudyLoadingOverlay visible={!startupError && !hasConfigErrors && isLoading && !hasRenderableStudy} />
       {!startupError && !hasConfigErrors && showCompletionCheckError && (
         <Stack
           align="center"
