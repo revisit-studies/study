@@ -8,7 +8,7 @@ import {
 import type {
   ParsedConfig, ParserErrorWarning, StudyConfig,
 } from '../../parser/types';
-import { ConfigSwitcher } from '../ConfigSwitcher';
+import { ConfigSwitcher, FACTOR_DEMO_CONFIG_NAMES } from '../ConfigSwitcher';
 import { makeGlobalConfig, makeStorageEngine, makeStudyConfig } from '../../tests/utils';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { getSequenceConditions } from '../../utils/handleConditionLogic';
@@ -223,6 +223,35 @@ describe('ConfigSwitcher', () => {
       <ConfigSwitcher globalConfig={multiGlobalConfig} studyConfigs={multiConfigs} />,
     ));
     expect(container).toBeDefined();
+  });
+
+  test('lists factor studies, including incentives-corr, in their own tab', async () => {
+    expect(FACTOR_DEMO_CONFIG_NAMES).toEqual(new Set([
+      'demo-factors',
+      'demo-markdown-factors',
+      'demo-stroop-factors',
+      'demo-max-study2',
+      'demo-ffl-study',
+      'demo-dsf-study',
+      'demo-calvi-study',
+      'incentives-corr',
+    ]));
+
+    const factorDemoConfig = makeGlobalConfig({
+      configsList: ['incentives-corr', 'demo-factors', 'demo-html'],
+    });
+    const factorDemoStudyConfigs: Record<string, ParsedConfig<StudyConfig> | null> = {
+      'incentives-corr': parsedStudyConfig,
+      'demo-factors': parsedStudyConfig,
+      'demo-html': parsedStudyConfig,
+    };
+    const { container } = await act(async () => render(
+      <ConfigSwitcher globalConfig={factorDemoConfig} studyConfigs={factorDemoStudyConfigs} />,
+    ));
+
+    expect(container.textContent).toContain('Factor-demos');
+    expect(container.textContent).toContain('factors configuration language');
+    expect(container.textContent).not.toContain('Your Studies');
   });
 
   test('renders with null config entry', async () => {
