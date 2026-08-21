@@ -149,6 +149,63 @@ function isUrlConditionalBlock(sequence: StudyConfig['sequence']): boolean {
   return sequence.conditional === true && Boolean(sequence.id);
 }
 
+function verifyTextResponseLengthConstraints(
+  componentPath: string,
+  component: Partial<IndividualComponent>,
+  errors: ParserErrorWarning[],
+) {
+  component.response?.forEach((response, index) => {
+    if (response.type !== 'shortText' && response.type !== 'longText') {
+      return;
+    }
+
+    const responsePath = `${componentPath}/response/${index}`;
+    const constraints = {
+      minCharLength: response.minCharLength,
+      maxCharLength: response.maxCharLength,
+      minWordLength: response.minWordLength,
+      maxWordLength: response.maxWordLength,
+    };
+
+    Object.entries(constraints).forEach(([name, value]) => {
+      if (value !== undefined && (!Number.isInteger(value) || value < 0)) {
+        errors.push({
+          message: `${name} must be a non-negative integer`,
+          instancePath: `${responsePath}/${name}`,
+          params: { action: `Set ${name} to a non-negative integer` },
+          category: 'invalid-config',
+        });
+      }
+    });
+
+    if (
+      response.minCharLength !== undefined
+      && response.maxCharLength !== undefined
+      && response.minCharLength > response.maxCharLength
+    ) {
+      errors.push({
+        message: 'minCharLength must be less than or equal to maxCharLength',
+        instancePath: responsePath,
+        params: { action: 'Decrease minCharLength or increase maxCharLength' },
+        category: 'invalid-config',
+      });
+    }
+
+    if (
+      response.minWordLength !== undefined
+      && response.maxWordLength !== undefined
+      && response.minWordLength > response.maxWordLength
+    ) {
+      errors.push({
+        message: 'minWordLength must be less than or equal to maxWordLength',
+        instancePath: responsePath,
+        params: { action: 'Decrease minWordLength or increase maxWordLength' },
+        category: 'invalid-config',
+      });
+    }
+  });
+}
+
 function hasConditionalBlock(sequence: StudyConfig['sequence']): boolean {
   if (isUrlConditionalBlock(sequence)) {
     return true;
@@ -192,6 +249,13 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
   const warnings: ParsedConfig<StudyConfig>['warnings'] = [];
 
   verifyLibraryUsage(studyConfig, errors, warnings, importedLibrariesData);
+
+  Object.entries(studyConfig.baseComponents ?? {}).forEach(([componentName, component]) => {
+    verifyTextResponseLengthConstraints(`/baseComponents/${componentName}`, component, errors);
+  });
+  Object.entries(studyConfig.components).forEach(([componentName, component]) => {
+    verifyTextResponseLengthConstraints(`/components/${componentName}`, component, errors);
+  });
 
   const hasConditional = hasConditionalBlock(studyConfig.sequence);
   const hasConditionalInsideRestrictedOrderAncestor = hasConditionalBlockInsideRestrictedOrderAncestor(

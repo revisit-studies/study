@@ -140,6 +140,8 @@ test('Test questionnaire component with responses and randomizing questions and 
   await page.getByPlaceholder('Anything except TEST').fill('ReVISit');
   await page.getByPlaceholder('3–10 characters').fill('valid');
   await page.getByPlaceholder('20–100 characters').fill('This response has enough characters.');
+  await page.getByPlaceholder('2–5 words').fill('two words');
+  await page.getByPlaceholder('4–10 words').fill('This has four words');
   await nextClick(page);
 
   // Default Values should be fully answerable via defaults

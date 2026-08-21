@@ -68,15 +68,118 @@ describe('Text response validation config parsing', () => {
     },
   );
 
-  test('accepts minimum and maximum lengths for short and long text responses', async () => {
+  test('accepts character and word length constraints for short and long text responses', async () => {
     const studyConfig = makeStudyConfig('contains');
     studyConfig.components.question1.response.forEach((response) => {
-      Object.assign(response, { minLength: 3, maxLength: 100 });
+      Object.assign(response, {
+        minCharLength: 3, maxCharLength: 100, minWordLength: 2, maxWordLength: 20,
+      });
     });
 
     const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
     expect(result.errors).toEqual([]);
+  });
+
+  test.each([
+    { name: 'minCharLength', value: -1 },
+    { name: 'minCharLength', value: 1.5 },
+    { name: 'maxCharLength', value: -1 },
+    { name: 'maxCharLength', value: 1.5 },
+    { name: 'minWordLength', value: -1 },
+    { name: 'minWordLength', value: 1.5 },
+    { name: 'maxWordLength', value: -1 },
+    { name: 'maxWordLength', value: 1.5 },
+  ])('rejects invalid $name constraint value $value for short and long text', async ({ name, value }) => {
+    const studyConfig = makeStudyConfig('contains');
+    studyConfig.components.question1.response.forEach((response) => {
+      Object.assign(response, { [name]: value });
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    [0, 1].forEach((responseIndex) => {
+      expect(result.errors).toContainEqual(expect.objectContaining({
+        message: `${name} must be a non-negative integer`,
+        instancePath: `/components/question1/response/${responseIndex}/${name}`,
+      }));
+    });
+  });
+
+  test('accepts zero and equal minimum and maximum length constraints', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    studyConfig.components.question1.response.forEach((response) => {
+      Object.assign(response, {
+        minCharLength: 0, maxCharLength: 0, minWordLength: 0, maxWordLength: 0,
+      });
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toEqual([]);
+  });
+
+  test.each([0, 1])('rejects minCharLength greater than maxCharLength for response %s', async (responseIndex) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[responseIndex], {
+      minCharLength: 10,
+      maxCharLength: 5,
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'minCharLength must be less than or equal to maxCharLength',
+      instancePath: `/components/question1/response/${responseIndex}`,
+    }));
+  });
+
+  test.each([0, 1])('rejects minWordLength greater than maxWordLength for response %s', async (responseIndex) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[responseIndex], {
+      minWordLength: 10,
+      maxWordLength: 5,
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'minWordLength must be less than or equal to maxWordLength',
+      instancePath: `/components/question1/response/${responseIndex}`,
+    }));
+  });
+
+  test('rejects the replaced minLength and maxLength properties', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], { minLength: 3, maxLength: 100 });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors.some((error) => error.instancePath.includes('/components/question1/response/0'))).toBe(true);
+  });
+
+  test('validates text length constraints defined in base components', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig, {
+      baseComponents: {
+        sharedQuestion: {
+          type: 'questionnaire',
+          response: [{
+            id: 'base-text',
+            prompt: 'Base text response',
+            type: 'shortText',
+            minWordLength: -1,
+          }],
+        },
+      },
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'minWordLength must be a non-negative integer',
+      instancePath: '/baseComponents/sharedQuestion/response/0/minWordLength',
+    }));
   });
 
   test('rejects an unsupported text validation type', async () => {
