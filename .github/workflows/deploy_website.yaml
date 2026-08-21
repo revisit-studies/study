@@ -13,7 +13,6 @@ concurrency:
   cancel-in-progress: false
   queue: max
 
-# Keep the existing publisher until a maintainer approves the initial force-push cutover.
 jobs:
   deploy-main:
     runs-on: ubuntu-latest
@@ -38,23 +37,13 @@ jobs:
           VITE_STORAGE_ENGINE: firebase
 
       - uses: actions/checkout@v3
-        if: ${{ vars.PAGES_SINGLE_COMMIT == 'true' }}
         with:
           ref: gh-pages
           path: .pages
           fetch-depth: 1
 
       - name: Deploy current-only main Firebase snapshot
-        if: ${{ vars.PAGES_SINGLE_COMMIT == 'true' }}
         run: .github/scripts/publish-pages-snapshot.sh ./dist '' ./.pages
-
-      - uses: peaceiris/actions-gh-pages@v3
-        if: ${{ vars.PAGES_SINGLE_COMMIT != 'true' }}
-        name: Deploy main Firebase snapshot
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          keep_files: true
-          publish_dir: ./dist
 
       - name: Build main Supabase deployment
         run: yarn build
@@ -63,16 +52,7 @@ jobs:
           VITE_STORAGE_ENGINE: supabase
 
       - name: Deploy current-only main Supabase snapshot
-        if: ${{ vars.PAGES_SINGLE_COMMIT == 'true' }}
         run: .github/scripts/publish-pages-snapshot.sh ./dist supabase ./.pages
-
-      - uses: peaceiris/actions-gh-pages@v3
-        if: ${{ vars.PAGES_SINGLE_COMMIT != 'true' }}
-        name: Deploy main Supabase snapshot
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
-          destination_dir: "supabase"
 
   deploy-dev:
     runs-on: ubuntu-latest
@@ -96,23 +76,13 @@ jobs:
           VITE_STORAGE_ENGINE: firebase
 
       - uses: actions/checkout@v3
-        if: ${{ vars.PAGES_SINGLE_COMMIT == 'true' }}
         with:
           ref: gh-pages
           path: .pages
           fetch-depth: 1
 
       - name: Deploy current-only dev Firebase snapshot
-        if: ${{ vars.PAGES_SINGLE_COMMIT == 'true' }}
         run: .github/scripts/publish-pages-snapshot.sh ./dist dev ./.pages
-
-      - uses: peaceiris/actions-gh-pages@v3
-        if: ${{ vars.PAGES_SINGLE_COMMIT != 'true' }}
-        name: Deploy dev Firebase snapshot
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
-          destination_dir: "dev"
 
       - name: Build dev Supabase deployment
         run: yarn build
@@ -121,16 +91,7 @@ jobs:
           VITE_STORAGE_ENGINE: supabase
 
       - name: Deploy current-only dev Supabase snapshot
-        if: ${{ vars.PAGES_SINGLE_COMMIT == 'true' }}
         run: .github/scripts/publish-pages-snapshot.sh ./dist dev-supabase ./.pages
-
-      - uses: peaceiris/actions-gh-pages@v3
-        if: ${{ vars.PAGES_SINGLE_COMMIT != 'true' }}
-        name: Deploy dev Supabase snapshot
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
-          destination_dir: "dev-supabase"
 
   pr-deploy:
     runs-on: ubuntu-latest
@@ -167,23 +128,13 @@ jobs:
           VITE_BASE_PATH: "/study/PR${{ github.event.number }}/"
 
       - uses: actions/checkout@v3
-        if: ${{ vars.PAGES_SINGLE_COMMIT == 'true' }}
         with:
           ref: gh-pages
           path: .pages
           fetch-depth: 1
 
       - name: Push current-only PR deploy preview
-        if: ${{ vars.PAGES_SINGLE_COMMIT == 'true' }}
         run: .github/scripts/publish-pages-snapshot.sh ./dist "PR${{ github.event.number }}" ./.pages
-
-      - name: Push PR deploy preview
-        if: ${{ vars.PAGES_SINGLE_COMMIT != 'true' }}
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
-          destination_dir: "PR${{ github.event.number }}"
 
       - name: Update comment
         uses: hasura/comment-progress@v2.2.0

@@ -39,6 +39,10 @@ git -C "$pages_checkout" config user.email "41898282+github-actions[bot]@users.n
 snapshot_branch="pages-snapshot-${destination_dir:-root}"
 git -C "$pages_checkout" checkout --orphan "$snapshot_branch"
 
+if [[ -n "$destination_dir" && ! "$destination_dir" =~ ^PR[0-9]+$ ]]; then
+  cp "$publish_dir/404.html" "$pages_checkout/404.html"
+fi
+
 if [[ -z "$destination_dir" ]]; then
   rsync -a --delete \
     --exclude='/.git/' \
