@@ -159,6 +159,7 @@ describe('PDF export helpers', () => {
     Object.defineProperty(iframe, 'contentDocument', { value: iframeDocument });
     Object.defineProperty(iframe, 'clientWidth', { value: 600 });
     Object.defineProperty(iframe, 'clientHeight', { value: 450 });
+    vi.spyOn(iframe, 'getBoundingClientRect').mockReturnValue({ height: 450, width: 600 } as DOMRect);
     Object.defineProperty(iframeDocument.documentElement, 'scrollWidth', { value: 600 });
     Object.defineProperty(iframeDocument.documentElement, 'scrollHeight', { value: 450 });
     const overflowingChart = iframeDocument.createElement('div');
@@ -172,13 +173,14 @@ describe('PDF export helpers', () => {
       width: 0,
     });
 
-    await expect(capturePdfIframeSnapshots(element)).resolves.toEqual([
+    await expect(capturePdfIframeSnapshots(element, 1)).resolves.toEqual([
       { dataUrl: 'data:image/png;base64,chart', index: 0 },
     ]);
     expect(html2CanvasMocks.capture).toHaveBeenCalledWith(
       iframeDocument.documentElement,
       expect.objectContaining({
         height: 1080,
+        scale: 0.625,
         width: 1920,
         windowHeight: 1080,
         windowWidth: 1920,

@@ -7,8 +7,10 @@ const A4_LANDSCAPE_WIDTH_MM = 297;
 const A4_LANDSCAPE_HEIGHT_MM = 210;
 const PDF_VIDEO_FRAME_WAIT_MS = 1500;
 const PDF_LARGE_SVG_ELEMENT_THRESHOLD = 1000;
+const PDF_MAX_CAPTURE_SCALE = 2;
+const PDF_MIN_CAPTURE_SCALE = 0.5;
 const PDF_SNAPSHOT_PADDING_PX = 32;
-const PDF_WHITE_PIXEL_THRESHOLD = 250;
+const PDF_PERFORMANCE_MEASURE_PREFIX = 'revisit.pdf-export';
 const PDF_PRINTABLE_ASPECT_RATIO = (A4_LANDSCAPE_HEIGHT_MM - (PDF_MARGIN_MM * 2))
   / (A4_LANDSCAPE_WIDTH_MM - (PDF_MARGIN_MM * 2));
 
@@ -75,6 +77,52 @@ interface PdfSvgSnapshot {
   index: number;
   left: number;
   top: number;
+}
+
+interface PdfIframeCaptureSize {
+  contentHeight: number;
+  contentWidth: number;
+  height: number;
+  width: number;
+}
+
+function recordPdfExportMeasure(name: string, start: number) {
+  try {
+    performance.measure(`${PDF_PERFORMANCE_MEASURE_PREFIX}.${name}`, {
+      end: performance.now(),
+      start,
+    });
+  } catch {
+    // Export must not fail if a browser cannot record optional performance timing.
+  }
+}
+
+function clearPdfExportMeasures() {
+  try {
+    performance.getEntriesByType('measure')
+      .filter((entry) => entry.name.startsWith(PDF_PERFORMANCE_MEASURE_PREFIX))
+      .forEach((entry) => performance.clearMeasures(entry.name));
+  } catch {
+    // Export must not fail if a browser cannot clear optional performance timing.
+  }
+}
+
+async function measurePdfExportPhase<T>(name: string, operation: () => Promise<T>) {
+  const start = performance.now();
+  try {
+    return await operation();
+  } finally {
+    recordPdfExportMeasure(name, start);
+  }
+}
+
+function measurePdfExportSyncPhase<T>(name: string, operation: () => T) {
+  const start = performance.now();
+  try {
+    return operation();
+  } finally {
+    recordPdfExportMeasure(name, start);
+  }
 }
 
 function padDatePart(value: number) {
@@ -212,9 +260,13 @@ function getIframeCaptureSize(iframe: HTMLIFrameElement, iframeDocument: Documen
     ...(iframeBody ? [iframeBody, ...iframeBody.querySelectorAll<HTMLElement>('*:not(svg *)')] : []),
   ];
 
-  return layoutElements.reduce((size, layoutElement) => {
+  return layoutElements.reduce((size, layoutElement): PdfIframeCaptureSize => {
     const bounds = layoutElement.getBoundingClientRect();
+    const contentHeight = bounds.bottom + scrollY;
+    const contentWidth = bounds.right + scrollX;
     return {
+      contentHeight: Math.max(size.contentHeight, contentHeight),
+      contentWidth: Math.max(size.contentWidth, contentWidth),
       height: Math.max(
         size.height,
         layoutElement.scrollHeight,
@@ -229,9 +281,29 @@ function getIframeCaptureSize(iframe: HTMLIFrameElement, iframeDocument: Documen
       ),
     };
   }, {
+    contentHeight: Math.max(iframe.clientHeight, iframeBounds.height),
+    contentWidth: Math.max(iframe.clientWidth, iframeBounds.width),
     height: Math.max(iframe.clientHeight, iframeBounds.height),
     width: Math.max(iframe.clientWidth, iframeBounds.width),
   });
+}
+
+function getIframeCaptureScale(
+  captureWidth: number,
+  displayWidth: number,
+  pageScale?: number,
+) {
+  if (pageScale === undefined || captureWidth === 0 || displayWidth === 0) {
+    return PDF_MAX_CAPTURE_SCALE;
+  }
+
+  return Math.min(
+    PDF_MAX_CAPTURE_SCALE,
+    Math.max(
+      PDF_MIN_CAPTURE_SCALE,
+      (displayWidth * pageScale * PDF_MAX_CAPTURE_SCALE) / captureWidth,
+    ),
+  );
 }
 
 function inlineSvgPresentationStyles(sourceSvg: SVGSVGElement, clonedSvg: SVGSVGElement) {
@@ -277,7 +349,7 @@ function waitForPdfImage(image: HTMLImageElement) {
   });
 }
 
-async function captureSvgSnapshot(svg: SVGSVGElement, index: number) {
+async function captureSvgSnapshot(svg: SVGSVGElement, index: number, scale: number) {
   const bounds = svg.getBoundingClientRect();
   const viewBox = svg.viewBox.baseVal;
   const width = Math.ceil(viewBox.width || bounds.width);
@@ -301,8 +373,8 @@ async function captureSvgSnapshot(svg: SVGSVGElement, index: number) {
   try {
     const image = await loadSvgImage(svg.ownerDocument, objectUrl);
     const canvas = svg.ownerDocument.createElement('canvas');
-    canvas.width = width * 2;
-    canvas.height = height * 2;
+    canvas.width = Math.max(1, Math.ceil(width * scale));
+    canvas.height = Math.max(1, Math.ceil(height * scale));
     const context = canvas.getContext('2d');
     if (!context) {
       return undefined;
@@ -324,7 +396,7 @@ async function captureSvgSnapshot(svg: SVGSVGElement, index: number) {
   }
 }
 
-async function captureLargeSvgSnapshots(iframeDocument: Document) {
+async function captureLargeSvgSnapshots(iframeDocument: Document, scale: number) {
   const svgs = Array.from(iframeDocument.querySelectorAll<SVGSVGElement>('svg'));
   if (!svgs.some((svg) => (
     svg.querySelectorAll('*').length >= PDF_LARGE_SVG_ELEMENT_THRESHOLD
@@ -332,7 +404,9 @@ async function captureLargeSvgSnapshots(iframeDocument: Document) {
     return [];
   }
 
-  const snapshots = await Promise.all(svgs.map(captureSvgSnapshot));
+  const snapshots = await Promise.all(svgs.map((svg, index) => (
+    captureSvgSnapshot(svg, index, scale)
+  )));
 
   return snapshots.filter((snapshot): snapshot is PdfSvgSnapshot => snapshot !== undefined);
 }
@@ -367,39 +441,28 @@ async function replaceLargeSvgsWithSnapshots(
   }));
 }
 
-function cropTrailingWhitespace(canvas: HTMLCanvasElement) {
-  const context = canvas.getContext('2d', { willReadFrequently: true });
-  if (!context || canvas.width === 0 || canvas.height === 0) {
+function cropIframeSnapshot(
+  canvas: HTMLCanvasElement,
+  captureSize: PdfIframeCaptureSize,
+) {
+  if (canvas.width === 0 || canvas.height === 0) {
     return canvas;
   }
 
-  const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
-  let contentRight = -1;
-  let contentBottom = -1;
-
-  for (let y = 0; y < canvas.height; y += 1) {
-    for (let x = 0; x < canvas.width; x += 1) {
-      const pixelIndex = ((y * canvas.width) + x) * 4;
-      if (
-        pixels[pixelIndex + 3] > 0
-        && (
-          pixels[pixelIndex] < PDF_WHITE_PIXEL_THRESHOLD
-          || pixels[pixelIndex + 1] < PDF_WHITE_PIXEL_THRESHOLD
-          || pixels[pixelIndex + 2] < PDF_WHITE_PIXEL_THRESHOLD
-        )
-      ) {
-        contentRight = Math.max(contentRight, x);
-        contentBottom = Math.max(contentBottom, y);
-      }
-    }
-  }
-
-  if (contentRight < 0 || contentBottom < 0) {
-    return canvas;
-  }
-
-  const width = Math.min(canvas.width, contentRight + PDF_SNAPSHOT_PADDING_PX + 1);
-  const height = Math.min(canvas.height, contentBottom + PDF_SNAPSHOT_PADDING_PX + 1);
+  const width = Math.min(
+    canvas.width,
+    Math.ceil(
+      ((captureSize.contentWidth + PDF_SNAPSHOT_PADDING_PX) / captureSize.width)
+      * canvas.width,
+    ),
+  );
+  const height = Math.min(
+    canvas.height,
+    Math.ceil(
+      ((captureSize.contentHeight + PDF_SNAPSHOT_PADDING_PX) / captureSize.height)
+      * canvas.height,
+    ),
+  );
   if (width === canvas.width && height === canvas.height) {
     return canvas;
   }
@@ -411,7 +474,7 @@ function cropTrailingWhitespace(canvas: HTMLCanvasElement) {
   return croppedCanvas;
 }
 
-export async function capturePdfIframeSnapshots(element: HTMLElement) {
+export async function capturePdfIframeSnapshots(element: HTMLElement, pageScale?: number) {
   const iframes = Array.from(element.querySelectorAll('iframe'));
 
   return Promise.all(iframes.map(async (iframe, index): Promise<PdfIframeSnapshot> => {
@@ -426,31 +489,43 @@ export async function capturePdfIframeSnapshots(element: HTMLElement) {
       waitForIframeImages(iframeDocument),
       waitForIframePaint(iframe),
     ]);
-    const svgSnapshots = await captureLargeSvgSnapshots(iframeDocument);
     const captureSize = getIframeCaptureSize(iframe, iframeDocument);
     const width = Math.ceil(captureSize.width);
     const height = Math.ceil(captureSize.height);
     if (width === 0 || height === 0) {
       throw new Error('The embedded page has no visible area to export.');
     }
-
-    const canvas = await html2canvas(iframeRoot, {
-      backgroundColor: '#ffffff',
-      height,
-      logging: false,
-      onclone: async (clonedDocument) => {
-        await prepareIframeClone(clonedDocument, iframeDocument, width);
-        await replaceLargeSvgsWithSnapshots(clonedDocument, svgSnapshots);
-      },
-      scale: 2,
-      useCORS: true,
+    const captureScale = getIframeCaptureScale(
       width,
-      windowHeight: height,
-      windowWidth: width,
-    });
+      iframe.getBoundingClientRect().width,
+      pageScale,
+    );
+    const svgSnapshots = await measurePdfExportPhase(
+      'iframe.svg-snapshots',
+      () => captureLargeSvgSnapshots(iframeDocument, captureScale),
+    );
+
+    const canvas = await measurePdfExportPhase('iframe.raster', () => (
+      html2canvas(iframeRoot, {
+        backgroundColor: '#ffffff',
+        height,
+        logging: false,
+        onclone: async (clonedDocument) => {
+          await prepareIframeClone(clonedDocument, iframeDocument, width);
+          await replaceLargeSvgsWithSnapshots(clonedDocument, svgSnapshots);
+        },
+        scale: captureScale,
+        useCORS: true,
+        width,
+        windowHeight: height,
+        windowWidth: width,
+      })
+    ));
 
     return {
-      dataUrl: cropTrailingWhitespace(canvas).toDataURL('image/png'),
+      dataUrl: measurePdfExportSyncPhase('iframe.encode', () => (
+        cropIframeSnapshot(canvas, captureSize).toDataURL('image/png')
+      )),
       index,
     };
   }));
@@ -755,11 +830,15 @@ export function preparePdfClone(
 }
 
 export async function saveElementAsPdf(element: HTMLElement, filename: string) {
-  const exportWidth = Math.min(element.getBoundingClientRect().width, PDF_MAX_WIDTH_PX);
+  clearPdfExportMeasures();
+  const exportStart = performance.now();
+  const elementWidth = element.getBoundingClientRect().width;
+  const exportWidth = Math.min(elementWidth, PDF_MAX_WIDTH_PX);
   const exportHeight = Math.floor(exportWidth * PDF_PRINTABLE_ASPECT_RATIO);
+  const pageScale = elementWidth > 0 ? exportWidth / elementWidth : 1;
   const [canvasSnapshots, iframeSnapshots, videoSnapshots] = await Promise.all([
     Promise.resolve(capturePdfCanvasSnapshots(element)),
-    capturePdfIframeSnapshots(element),
+    capturePdfIframeSnapshots(element, pageScale),
     capturePdfVideoSnapshots(element),
   ]);
   const pdfSource = element.cloneNode(true) as HTMLElement;
@@ -814,8 +893,12 @@ export async function saveElementAsPdf(element: HTMLElement, filename: string) {
       },
     };
 
-    await html2pdf().set(options).from(pdfSource).save();
+    await measurePdfExportPhase(
+      'page.raster-and-save',
+      () => html2pdf().set(options).from(pdfSource).save(),
+    );
   } finally {
     pdfSourceHost.remove();
+    recordPdfExportMeasure('total', exportStart);
   }
 }

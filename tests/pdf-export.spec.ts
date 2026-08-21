@@ -314,6 +314,25 @@ test('captures iframe content beyond reported document bounds', async ({ page },
   const download = await downloadPromise;
   const downloadPath = testInfo.outputPath('mvnv-multi-edge-adjacency-matrix.pdf');
   await download.saveAs(downloadPath);
+  await expect.poll(() => page.evaluate(() => (
+    performance.getEntriesByName('revisit.pdf-export.total').length
+  ))).toBeGreaterThan(0);
+  const exportPerformance = await page.evaluate(() => (
+    performance.getEntriesByType('measure')
+      .filter((entry) => entry.name.startsWith('revisit.pdf-export'))
+      .map((entry) => ({ duration: entry.duration, name: entry.name }))
+  ));
+  await testInfo.attach('pdf-export-performance', {
+    body: JSON.stringify(exportPerformance, null, 2),
+    contentType: 'application/json',
+  });
+  expect(exportPerformance.map((entry) => entry.name)).toEqual(expect.arrayContaining([
+    'revisit.pdf-export.iframe.svg-snapshots',
+    'revisit.pdf-export.iframe.raster',
+    'revisit.pdf-export.iframe.encode',
+    'revisit.pdf-export.page.raster-and-save',
+    'revisit.pdf-export.total',
+  ]));
   const pdf = await readFile(downloadPath);
   const jpegImages = extractJpegImages(pdf);
   const largestJpeg = jpegImages.sort((left, right) => right.byteLength - left.byteLength)[0];
