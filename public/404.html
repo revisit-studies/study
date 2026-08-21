@@ -23,9 +23,10 @@
     // https://username.github.io/repo-name/?/one/two&a=b~and~c=d#qwe
     // Otherwise, leave pathSegmentsToKeep as 0.
 
-    // Grep for PR***, if we find that we want 2 segments
-    var PRFound = !!window.location.pathname.match(/\/PR\d+\//);
-    var pathSegmentsToKeep = PRFound ? 2 : 1;
+    // Keep the deployment directory for nested permanent and PR deployments.
+    var deploymentSegment = window.location.pathname.split('/')[2];
+    var nestedDeploymentFound = /^(?:dev|supabase|dev-supabase|PR\d+)$/.test(deploymentSegment);
+    var pathSegmentsToKeep = nestedDeploymentFound ? 2 : 1;
 
     var l = window.location;
     l.replace(
