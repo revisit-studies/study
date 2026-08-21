@@ -21,6 +21,15 @@ describe('useStudyRecordings', () => {
     });
   });
 
+  test('both flags are false when the loaded config is incomplete', async () => {
+    const config = { errors: [], warnings: [] } as unknown as Parameters<typeof useStudyRecordings>[0];
+    const { result } = renderHook(() => useStudyRecordings(config));
+    await waitFor(() => {
+      expect(result.current.hasAudioRecording).toBe(false);
+      expect(result.current.hasScreenRecording).toBe(false);
+    });
+  });
+
   test('hasScreenRecording is true when uiConfig.recordScreen is true', async () => {
     const config = makeStudyConfig({ uiConfig: { recordScreen: true } });
     const { result } = renderHook(() => useStudyRecordings(config));
