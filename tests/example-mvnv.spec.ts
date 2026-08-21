@@ -50,6 +50,45 @@ async function waitForMvnvProgress(
   }
 }
 
+type MvnvAnswer = {
+  answer?: Record<string, unknown>;
+  componentName?: string;
+  endTime?: number;
+  startTime?: number;
+};
+
+type MvnvReplaySetup = {
+  participantId: string;
+  recording: MvnvAnswer & { identifier: string };
+};
+
+async function readFirstMvnvRecording(page: Page): Promise<MvnvReplaySetup | null> {
+  const assignments = await readStoredValue<Record<string, unknown>>(
+    page,
+    'dev-example-mvnv/sequenceAssignment',
+  );
+  const participantId = Object.keys(assignments ?? {})[0];
+  if (!participantId) {
+    return null;
+  }
+
+  const participant = await readStoredValue<{ answers?: Record<string, MvnvAnswer> }>(
+    page,
+    `dev-example-mvnv/participants/${participantId}_participantData`,
+  );
+  const recording = Object.entries(participant?.answers ?? {})
+    .map(([identifier, answer]) => ({ ...answer, identifier }))
+    .filter((answer) => (
+      answer.componentName?.startsWith('task')
+      && Array.isArray(answer.answer?.['iframe-task'])
+      && typeof answer.startTime === 'number'
+      && typeof answer.endTime === 'number'
+    ))
+    .sort((left, right) => left.startTime! - right.startTime!)[0];
+
+  return recording ? { participantId, recording } : null;
+}
+
 async function answerCurrentMvnvPrompt(
   page: Page,
   taskTimeoutMs = MVNV_TASK_TIMEOUT_MS,
@@ -209,12 +248,11 @@ async function answerCurrentMvnvPrompt(
   }
 }
 
-test('test', async ({ page, browserName }) => {
+test('completes the full MVNV participant flow @slow-mvnv', async ({ page, browserName }) => {
   test.skip(browserName === 'webkit', 'Skipping MVNV on WebKit due to headless flakiness.');
 
   const taskTimeoutMs = MVNV_TASK_TIMEOUT_MS;
   const maxTaskLoops = 20;
-  let firstTaskParticipantPath = '';
   const taskZeroQuestion = 'Find the North American with the most Tweets';
   let sawTaskZero = false;
 
@@ -284,9 +322,6 @@ test('test', async ({ page, browserName }) => {
       sawTaskZero = true;
     }
     await answerCurrentMvnvPrompt(page, taskTimeoutMs, questionBefore);
-    if (i === 0) {
-      firstTaskParticipantPath = new URL(page.url()).pathname;
-    }
     if (await isFinished()) {
       break;
     }
@@ -303,42 +338,45 @@ test('test', async ({ page, browserName }) => {
 
   // Check that the thank you message is displayed
   await waitForStudyEndMessage(page, MVNV_END_STATE_TIMEOUT_MS);
+});
 
-  const assignments = await readStoredValue<Record<string, unknown>>(
-    page,
-    'dev-example-mvnv/sequenceAssignment',
-  );
-  const participantId = Object.keys(assignments ?? {})[0];
-  if (!participantId) {
-    throw new Error('No recorded MVNV answer found');
+test('replays a seeded MVNV task without completing the full study', async ({ page, browserName }) => {
+  test.setTimeout(120000);
+  test.skip(browserName === 'webkit', 'Skipping MVNV on WebKit due to headless flakiness.');
+
+  await page.goto('/');
+  await page.getByRole('tab', { name: 'Example Studies' }).click();
+  await page.getByLabel('Example Studies').locator('div').filter({ hasText: 'MVNV Study Replication' })
+    .getByText('Go to Study')
+    .click();
+  await expect(page.getByRole('heading', { name: 'Introduction' })).toBeVisible();
+  await nextClick(page);
+  await expect(page.getByRole('heading', { name: 'Consent' })).toBeVisible();
+  await page.getByPlaceholder('Please provide your signature').fill('test');
+  await page.getByLabel('Accept').check();
+  await page.getByRole('button', { name: 'Agree' }).click();
+
+  await expect(page.frameLocator('#root iframe').getByRole('heading', { name: 'Adjacency Matrix Training' })).toBeVisible();
+  await nextClick(page);
+  await expect(page.getByText('Task:Question:')).toBeVisible({ timeout: MVNV_TASK_TIMEOUT_MS });
+
+  const firstTaskParticipantPath = new URL(page.url()).pathname;
+  const questionBefore = await getCurrentTaskQuestion(page);
+  await answerCurrentMvnvPrompt(page, MVNV_TASK_TIMEOUT_MS, questionBefore);
+  await nextClick(page, MVNV_TASK_TIMEOUT_MS);
+
+  let replaySetup: MvnvReplaySetup | null = null;
+  await expect.poll(async () => {
+    replaySetup = await readFirstMvnvRecording(page);
+    return Boolean(replaySetup);
+  }, { timeout: 15000 }).toBe(true);
+  if (!replaySetup) {
+    throw new Error('No MVNV task recording was persisted after the short replay setup.');
   }
 
-  type MvnvAnswer = {
-    answer?: Record<string, unknown>;
-    componentName?: string;
-    endTime?: number;
-    startTime?: number;
-  };
-  let firstTaskRecording: (MvnvAnswer & { identifier: string }) | undefined;
-  await expect.poll(async () => {
-    const participant = await readStoredValue<{ answers?: Record<string, MvnvAnswer> }>(
-      page,
-      `dev-example-mvnv/participants/${participantId}_participantData`,
-    );
-    firstTaskRecording = Object.entries(participant?.answers ?? {})
-      .map(([identifier, answer]) => ({ ...answer, identifier }))
-      .filter((answer) => (
-        answer.componentName?.startsWith('task')
-        && Array.isArray(answer.answer?.['iframe-task'])
-        && typeof answer.startTime === 'number'
-        && typeof answer.endTime === 'number'
-      ))
-      .sort((left, right) => left.startTime! - right.startTime!)[0];
-    return Boolean(firstTaskRecording);
-  }, { timeout: 15000 }).toBe(true);
-
+  const { participantId, recording } = replaySetup;
   const participantKey = `dev-example-mvnv/participants/${participantId}_participantData`;
-  const provenanceKey = `dev-example-mvnv/provenance/${participantId}_${firstTaskRecording!.identifier}`;
+  const provenanceKey = `dev-example-mvnv/provenance/${participantId}_${recording.identifier}`;
   await expect.poll(async () => readStoredValue(page, provenanceKey), { timeout: 15000 }).not.toBeNull();
   const participantBeforeReplay = await readStoredValue(page, participantKey);
   const provenanceBeforeReplay = await readStoredValue(page, provenanceKey);
@@ -352,26 +390,11 @@ test('test', async ({ page, browserName }) => {
     rects.filter((rect) => getComputedStyle(rect).fill !== 'rgb(255, 255, 255)').length
   ));
 
-  await seekReplay(
-    page,
-    firstTaskRecording!.startTime!,
-    firstTaskRecording!.endTime!,
-    firstTaskRecording!.endTime!,
-  );
+  await seekReplay(page, recording.startTime!, recording.endTime!, recording.endTime!);
   await expect.poll(selectedAnswerBoxCount, { timeout: 15000 }).toBeGreaterThan(0);
   await expect.poll(async () => replayFrame.locator('.answer').count(), { timeout: 15000 }).toBeGreaterThan(0);
 
-  await expect.poll(async () => replayFrame.locator('.answerBox rect').evaluateAll((rects) => (
-    rects.some((rect) => getComputedStyle(rect).fill !== 'rgb(255, 255, 255)')
-  )), { timeout: 15000 }).toBe(true);
-  await expect.poll(async () => replayFrame.locator('.answer').count(), { timeout: 15000 }).toBeGreaterThan(0);
-
-  await seekReplay(
-    page,
-    firstTaskRecording!.startTime!,
-    firstTaskRecording!.endTime!,
-    firstTaskRecording!.startTime!,
-  );
+  await seekReplay(page, recording.startTime!, recording.endTime!, recording.startTime!);
   await expect.poll(selectedAnswerBoxCount, { timeout: 15000 }).toBe(0);
   expect(await readStoredValue(page, participantKey)).toEqual(participantBeforeReplay);
   expect(await readStoredValue(page, provenanceKey)).toEqual(provenanceBeforeReplay);

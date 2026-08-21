@@ -5,6 +5,7 @@ const configuredWorkers = Number(process.env.PW_WORKERS ?? process.env.PW_CI_WOR
 const workers = Number.isFinite(configuredWorkers) && configuredWorkers > 0
   ? configuredWorkers
   : 1;
+const includeSlowTests = process.env.PW_INCLUDE_SLOW === '1';
 
 export default defineConfig({
   webServer: {
@@ -19,6 +20,9 @@ export default defineConfig({
 
   testDir: './tests',
   fullyParallel: true,
+  // The full MVNV participant journey is covered separately from the fast
+  // replay smoke test. Set PW_INCLUDE_SLOW=1 when the long journey is needed.
+  grepInvert: includeSlowTests ? undefined : /@slow-mvnv/,
   // Retry on CI only.
   retries: isCI ? 2 : 0,
   workers,
