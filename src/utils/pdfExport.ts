@@ -54,6 +54,13 @@ export interface PdfIframeSnapshot {
   index: number;
 }
 
+export interface PdfCanvasSnapshot {
+  dataUrl?: string;
+  height: number;
+  index: number;
+  width: number;
+}
+
 export interface PdfVideoSnapshot {
   dataUrl?: string;
   height: number;
@@ -449,6 +456,31 @@ export async function capturePdfIframeSnapshots(element: HTMLElement) {
   }));
 }
 
+export function capturePdfCanvasSnapshots(element: HTMLElement) {
+  const canvases = Array.from(element.querySelectorAll('canvas'));
+
+  return canvases.map((canvas, index): PdfCanvasSnapshot => {
+    const bounds = canvas.getBoundingClientRect();
+    const width = Math.ceil(bounds.width || canvas.width);
+    const height = Math.ceil(bounds.height || canvas.height);
+
+    if (canvas.width === 0 || canvas.height === 0) {
+      return { height, index, width };
+    }
+
+    try {
+      return {
+        dataUrl: canvas.toDataURL('image/png'),
+        height,
+        index,
+        width,
+      };
+    } catch {
+      return { height, index, width };
+    }
+  });
+}
+
 function waitForVideoFrame(video: HTMLVideoElement) {
   if (
     video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA
@@ -555,6 +587,53 @@ export function replacePdfIframesWithSnapshots(
   });
 }
 
+export function replacePdfCanvasesWithSnapshots(
+  element: HTMLElement,
+  canvasSnapshots: PdfCanvasSnapshot[],
+) {
+  const canvases = Array.from(element.querySelectorAll('canvas'));
+
+  return canvasSnapshots.flatMap((snapshot) => {
+    const canvas = canvases[snapshot.index];
+    if (!canvas) {
+      return [];
+    }
+
+    if (snapshot.dataUrl) {
+      const image = canvas.ownerDocument.createElement('img');
+      image.alt = canvas.getAttribute('aria-label') || 'Canvas visualization';
+      image.src = snapshot.dataUrl;
+      image.style.display = 'block';
+      image.style.height = `${snapshot.height}px`;
+      image.style.maxHeight = 'none';
+      image.style.maxWidth = 'none';
+      image.style.width = `${snapshot.width}px`;
+      canvas.replaceWith(image);
+
+      return [image];
+    }
+
+    const placeholder = canvas.ownerDocument.createElement('div');
+    placeholder.setAttribute('role', 'img');
+    placeholder.setAttribute('aria-label', 'Canvas unavailable in PDF');
+    placeholder.textContent = 'Canvas unavailable in PDF';
+    placeholder.style.alignItems = 'center';
+    placeholder.style.backgroundColor = '#1f1f1f';
+    placeholder.style.color = '#ffffff';
+    placeholder.style.display = 'flex';
+    placeholder.style.height = `${snapshot.height}px`;
+    placeholder.style.justifyContent = 'center';
+    placeholder.style.maxHeight = 'none';
+    placeholder.style.maxWidth = 'none';
+    placeholder.style.padding = '16px';
+    placeholder.style.textAlign = 'center';
+    placeholder.style.width = `${snapshot.width}px`;
+    canvas.replaceWith(placeholder);
+
+    return [];
+  });
+}
+
 export function replacePdfVideosWithSnapshots(
   element: HTMLElement,
   videoSnapshots: PdfVideoSnapshot[],
@@ -658,21 +737,33 @@ export function preparePdfClone(
     main.style.paddingBottom = '32px';
   }
 
-  if (layout.exportHeight && exportRoot.scrollHeight > layout.exportHeight) {
-    const scale = layout.exportHeight / exportRoot.scrollHeight;
-    exportRoot.style.transform = `scale(${scale})`;
-    exportRoot.style.transformOrigin = 'top left';
+  if (layout.exportHeight && layout.exportWidth) {
+    exportRoot.style.transform = '';
+    exportRoot.style.transformOrigin = '';
+    const contentWidth = Math.max(exportRoot.scrollWidth, exportRoot.offsetWidth);
+    const contentHeight = Math.max(exportRoot.scrollHeight, exportRoot.offsetHeight);
+    const scale = Math.min(
+      layout.exportWidth / contentWidth,
+      layout.exportHeight / contentHeight,
+      1,
+    );
+    if (scale < 1) {
+      exportRoot.style.transform = `scale(${scale})`;
+      exportRoot.style.transformOrigin = 'top left';
+    }
   }
 }
 
 export async function saveElementAsPdf(element: HTMLElement, filename: string) {
   const exportWidth = Math.min(element.getBoundingClientRect().width, PDF_MAX_WIDTH_PX);
   const exportHeight = Math.floor(exportWidth * PDF_PRINTABLE_ASPECT_RATIO);
-  const [iframeSnapshots, videoSnapshots] = await Promise.all([
+  const [canvasSnapshots, iframeSnapshots, videoSnapshots] = await Promise.all([
+    Promise.resolve(capturePdfCanvasSnapshots(element)),
     capturePdfIframeSnapshots(element),
     capturePdfVideoSnapshots(element),
   ]);
   const pdfSource = element.cloneNode(true) as HTMLElement;
+  const canvasImages = replacePdfCanvasesWithSnapshots(pdfSource, canvasSnapshots);
   const iframeImages = replacePdfIframesWithSnapshots(pdfSource, iframeSnapshots);
   const videoImages = replacePdfVideosWithSnapshots(pdfSource, videoSnapshots);
   const sidebar = element.querySelector<HTMLElement>('.sidebar');
@@ -686,7 +777,7 @@ export async function saveElementAsPdf(element: HTMLElement, filename: string) {
       exportWidth,
       sidebarWidth,
     });
-    await Promise.all([...iframeImages, ...videoImages].map(waitForPdfImage));
+    await Promise.all([...canvasImages, ...iframeImages, ...videoImages].map(waitForPdfImage));
     await waitForNextPaint();
     preparePdfClone(pdfSource, {
       exportHeight,

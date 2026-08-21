@@ -2,9 +2,10 @@ import {
   afterEach, describe, expect, test, vi,
 } from 'vitest';
 import {
-  buildPdfFilename, capturePdfIframeSnapshots, capturePdfVideoSnapshots,
+  buildPdfFilename, capturePdfCanvasSnapshots, capturePdfIframeSnapshots,
+  capturePdfVideoSnapshots,
   getPdfExportUnsupportedReason, preparePdfClone, replacePdfIframesWithSnapshots,
-  replacePdfVideosWithSnapshots, saveElementAsPdf,
+  replacePdfCanvasesWithSnapshots, replacePdfVideosWithSnapshots, saveElementAsPdf,
   waitForNextPaint,
 } from '../pdfExport';
 
@@ -115,6 +116,21 @@ describe('PDF export helpers', () => {
     expect(liveElement.style.padding).toBe('');
   });
 
+  test('fits the cloned study layout by both width and height', () => {
+    const clonedElement = document.createElement('main');
+    clonedElement.setAttribute('data-pdf-export-root', '');
+    Object.defineProperty(clonedElement, 'scrollWidth', { value: 1840 });
+    Object.defineProperty(clonedElement, 'scrollHeight', { value: 630 });
+
+    preparePdfClone(clonedElement, {
+      exportHeight: 630,
+      exportWidth: 920,
+    });
+
+    expect(clonedElement.style.transform).toBe('scale(0.5)');
+    expect(clonedElement.style.transformOrigin).toBe('top left');
+  });
+
   test('identifies cross-origin iframes that cannot be captured', () => {
     const element = document.createElement('main');
     element.innerHTML = `
@@ -207,6 +223,40 @@ describe('PDF export helpers', () => {
       width: 640,
     }]);
     expect(drawImage).toHaveBeenCalledWith(video, 0, 0, 1280, 720);
+  });
+
+  test('captures canvas pixels and preserves their displayed size in the PDF clone', () => {
+    const element = document.createElement('main');
+    const canvas = document.createElement('canvas');
+    canvas.width = 1200;
+    canvas.height = 600;
+    canvas.setAttribute('aria-label', 'Node-link diagram');
+    element.append(canvas);
+    vi.spyOn(canvas, 'getBoundingClientRect').mockReturnValue({ height: 300, width: 600 } as DOMRect);
+    vi.spyOn(canvas, 'toDataURL').mockReturnValue('data:image/png;base64,canvas');
+
+    const snapshots = capturePdfCanvasSnapshots(element);
+    expect(snapshots).toEqual([{
+      dataUrl: 'data:image/png;base64,canvas', height: 300, index: 0, width: 600,
+    }]);
+
+    const clonedElement = element.cloneNode(true) as HTMLElement;
+    const images = replacePdfCanvasesWithSnapshots(clonedElement, snapshots);
+    expect(clonedElement.querySelector('canvas')).toBeNull();
+    expect(images[0]?.alt).toBe('Node-link diagram');
+    expect(images[0]?.style.width).toBe('600px');
+    expect(images[0]?.style.height).toBe('300px');
+  });
+
+  test('uses a readable fallback when canvas pixels cannot be captured', () => {
+    const element = document.createElement('main');
+    element.append(document.createElement('canvas'));
+
+    replacePdfCanvasesWithSnapshots(element, [{ height: 300, index: 0, width: 600 }]);
+
+    expect(element.querySelector('canvas')).toBeNull();
+    expect(element.querySelector('[aria-label="Canvas unavailable in PDF"]')?.textContent)
+      .toBe('Canvas unavailable in PDF');
   });
 
   test('replaces Plyr controls with the captured frame or a readable fallback', () => {

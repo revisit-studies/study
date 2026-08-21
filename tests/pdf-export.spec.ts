@@ -111,6 +111,23 @@ test('fits wide development layouts inside the PDF capture', async ({ page }, te
   await resetClientStudyState(page);
   await openStudyFromLanding(page, 'Demo Studies', 'HTML as a Stimulus');
   await expect(page.getByText(/embed HTML elements into the study page/i)).toBeVisible();
+  await page.getByRole('main').evaluate((main) => {
+    const marker = document.createElement('div');
+    marker.setAttribute('data-pdf-wide-marker', '');
+    marker.style.display = 'flex';
+    marker.style.justifyContent = 'space-between';
+    marker.style.width = '1800px';
+    const left = document.createElement('div');
+    left.style.backgroundColor = '#ff0000';
+    left.style.height = '120px';
+    left.style.width = '120px';
+    const right = document.createElement('div');
+    right.style.backgroundColor = '#00ff00';
+    right.style.height = '120px';
+    right.style.width = '120px';
+    marker.append(left, right);
+    main.append(marker);
+  });
 
   await page.getByRole('button', { name: 'Study actions' }).click();
   const downloadPromise = page.waitForEvent('download');
@@ -122,7 +139,7 @@ test('fits wide development layouts inside the PDF capture', async ({ page }, te
   const jpegImages = extractJpegImages(pdf);
   const largestJpeg = jpegImages.sort((left, right) => right.byteLength - left.byteLength)[0];
 
-  const rightEdgeNonWhiteRatio = await page.evaluate(async (base64) => {
+  const markerPixels = await page.evaluate(async (base64) => {
     const image = new Image();
     image.src = `data:image/jpeg;base64,${base64}`;
     await image.decode();
@@ -135,21 +152,93 @@ test('fits wide development layouts inside the PDF capture', async ({ page }, te
     }
     context.drawImage(image, 0, 0, canvas.width, canvas.height);
     const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
-    let nonWhitePixels = 0;
-    const edgeWidth = 10;
+    let greenPixels = 0;
+    let redPixels = 0;
     for (let y = 0; y < canvas.height; y += 1) {
-      for (let x = canvas.width - edgeWidth; x < canvas.width; x += 1) {
+      for (let x = 0; x < canvas.width; x += 1) {
         const index = (y * canvas.width + x) * 4;
-        if (pixels[index] < 245 || pixels[index + 1] < 245 || pixels[index + 2] < 245) {
-          nonWhitePixels += 1;
+        const red = pixels[index];
+        const green = pixels[index + 1];
+        const blue = pixels[index + 2];
+        if (red > 180 && green < 100 && blue < 100) {
+          redPixels += 1;
+        }
+        if (green > 150 && red < 120 && blue < 120) {
+          greenPixels += 1;
         }
       }
     }
 
-    return nonWhitePixels / (edgeWidth * canvas.height);
+    return { greenPixels, redPixels };
   }, Buffer.from(largestJpeg).toString('base64'));
 
-  expect(rightEdgeNonWhiteRatio).toBeLessThan(0.05);
+  expect(markerPixels.redPixels).toBeGreaterThan(20);
+  expect(markerPixels.greenPixels).toBeGreaterThan(20);
+});
+
+test('captures source canvas pixels in the PDF', async ({ page }, testInfo) => {
+  await resetClientStudyState(page);
+  await openStudyFromLanding(page, 'Demo Studies', 'HTML as a Stimulus');
+  await expect(page.getByText(/embed HTML elements into the study page/i)).toBeVisible();
+  await page.getByRole('main').evaluate((main) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 600;
+    canvas.height = 300;
+    canvas.style.height = '300px';
+    canvas.style.width = '600px';
+    canvas.setAttribute('aria-label', 'Canvas export marker');
+    const context = canvas.getContext('2d');
+    if (!context) {
+      throw new Error('Canvas rendering is unavailable');
+    }
+    context.fillStyle = '#ff00ff';
+    context.fillRect(0, 0, 300, 300);
+    context.fillStyle = '#00ffff';
+    context.fillRect(300, 0, 300, 300);
+    main.append(canvas);
+  });
+
+  await page.getByRole('button', { name: 'Study actions' }).click();
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('menuitem', { name: 'Export page as PDF' }).click();
+  const download = await downloadPromise;
+  const downloadPath = testInfo.outputPath('canvas-stimulus.pdf');
+  await download.saveAs(downloadPath);
+  const pdf = await readFile(downloadPath);
+  const jpegImages = extractJpegImages(pdf);
+  const largestJpeg = jpegImages.sort((left, right) => right.byteLength - left.byteLength)[0];
+
+  const canvasPixels = await page.evaluate(async (base64) => {
+    const image = new Image();
+    image.src = `data:image/jpeg;base64,${base64}`;
+    await image.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = 300;
+    canvas.height = 200;
+    const context = canvas.getContext('2d');
+    if (!context) {
+      throw new Error('Canvas rendering is unavailable');
+    }
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    let cyanPixels = 0;
+    let magentaPixels = 0;
+    for (let index = 0; index < pixels.length; index += 4) {
+      const red = pixels[index];
+      const green = pixels[index + 1];
+      const blue = pixels[index + 2];
+      if (red > 150 && blue > 150 && green < 120) {
+        magentaPixels += 1;
+      }
+      if (green > 150 && blue > 150 && red < 120) {
+        cyanPixels += 1;
+      }
+    }
+    return { cyanPixels, magentaPixels };
+  }, Buffer.from(largestJpeg).toString('base64'));
+
+  expect(canvasPixels.magentaPixels).toBeGreaterThan(100);
+  expect(canvasPixels.cyanPixels).toBeGreaterThan(100);
 });
 
 test('captures same-origin iframe contents in the PDF', async ({ page }, testInfo) => {
