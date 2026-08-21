@@ -229,7 +229,7 @@ test('captures iframe content beyond reported document bounds', async ({ page },
   const jpegImages = extractJpegImages(pdf);
   const largestJpeg = jpegImages.sort((left, right) => right.byteLength - left.byteLength)[0];
 
-  const matrixPixels = await page.evaluate(async (base64) => {
+  const matrixPixelSummary = await page.evaluate(async (base64) => {
     const image = new Image();
     image.src = `data:image/jpeg;base64,${base64}`;
     await image.decode();
@@ -242,19 +242,36 @@ test('captures iframe content beyond reported document bounds', async ({ page },
     }
     context.drawImage(image, 0, 0, canvas.width, canvas.height);
     const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    let attributeColorPixels = 0;
     let nonWhitePixels = 0;
-    for (let y = 55; y < 165; y += 1) {
-      for (let x = 150; x < 270; x += 1) {
+    let rightEdgeMatrixPixels = 0;
+    for (let y = 0; y < canvas.height; y += 1) {
+      for (let x = 0; x < canvas.width; x += 1) {
         const index = (y * canvas.width + x) * 4;
-        if (pixels[index] < 245 || pixels[index + 1] < 245 || pixels[index + 2] < 245) {
+        const red = pixels[index];
+        const green = pixels[index + 1];
+        const blue = pixels[index + 2];
+        const isNonWhite = red < 245 || green < 245 || blue < 245;
+        if (x >= 150 && x < 270 && y >= 55 && y < 165 && isNonWhite) {
           nonWhitePixels += 1;
+        }
+        if (x >= 255 && x < 285 && y >= 95 && y < 115 && isNonWhite) {
+          rightEdgeMatrixPixels += 1;
+        }
+        if (
+          x >= 285 && x < 325 && y >= 95 && y < 245
+          && Math.max(red, green, blue) - Math.min(red, green, blue) > 35
+        ) {
+          attributeColorPixels += 1;
         }
       }
     }
-    return nonWhitePixels;
+    return { attributeColorPixels, nonWhitePixels, rightEdgeMatrixPixels };
   }, Buffer.from(largestJpeg).toString('base64'));
 
-  expect(matrixPixels).toBeGreaterThan(1000);
+  expect(matrixPixelSummary.nonWhitePixels).toBeGreaterThan(1000);
+  expect(matrixPixelSummary.rightEdgeMatrixPixels).toBeGreaterThan(100);
+  expect(matrixPixelSummary.attributeColorPixels).toBeGreaterThan(100);
 });
 
 test('captures the current frame of same-origin video components', async ({ page }, testInfo) => {

@@ -63,9 +63,11 @@ export interface PdfVideoSnapshot {
 
 interface PdfSvgSnapshot {
   dataUrl: string;
-  height: number;
+  displayHeight: number;
+  displayWidth: number;
   index: number;
-  width: number;
+  left: number;
+  top: number;
 }
 
 function padDatePart(value: number) {
@@ -268,14 +270,11 @@ function waitForPdfImage(image: HTMLImageElement) {
   });
 }
 
-async function captureLargeSvgSnapshot(svg: SVGSVGElement, index: number) {
-  if (svg.querySelectorAll('*').length < PDF_LARGE_SVG_ELEMENT_THRESHOLD) {
-    return undefined;
-  }
-
+async function captureSvgSnapshot(svg: SVGSVGElement, index: number) {
   const bounds = svg.getBoundingClientRect();
-  const width = Math.ceil(bounds.width);
-  const height = Math.ceil(bounds.height);
+  const viewBox = svg.viewBox.baseVal;
+  const width = Math.ceil(viewBox.width || bounds.width);
+  const height = Math.ceil(viewBox.height || bounds.height);
   if (width === 0 || height === 0) {
     return undefined;
   }
@@ -305,9 +304,11 @@ async function captureLargeSvgSnapshot(svg: SVGSVGElement, index: number) {
     context.drawImage(image, 0, 0, canvas.width, canvas.height);
     return {
       dataUrl: canvas.toDataURL('image/png'),
-      height,
+      displayHeight: Math.ceil(bounds.height),
+      displayWidth: Math.ceil(bounds.width),
       index,
-      width,
+      left: bounds.left + (svg.ownerDocument.defaultView?.scrollX ?? 0),
+      top: bounds.top + (svg.ownerDocument.defaultView?.scrollY ?? 0),
     } satisfies PdfSvgSnapshot;
   } catch {
     return undefined;
@@ -317,10 +318,14 @@ async function captureLargeSvgSnapshot(svg: SVGSVGElement, index: number) {
 }
 
 async function captureLargeSvgSnapshots(iframeDocument: Document) {
-  const snapshots = await Promise.all(
-    Array.from(iframeDocument.querySelectorAll<SVGSVGElement>('svg'))
-      .map((svg, index) => captureLargeSvgSnapshot(svg, index)),
-  );
+  const svgs = Array.from(iframeDocument.querySelectorAll<SVGSVGElement>('svg'));
+  if (!svgs.some((svg) => (
+    svg.querySelectorAll('*').length >= PDF_LARGE_SVG_ELEMENT_THRESHOLD
+  ))) {
+    return [];
+  }
+
+  const snapshots = await Promise.all(svgs.map(captureSvgSnapshot));
 
   return snapshots.filter((snapshot): snapshot is PdfSvgSnapshot => snapshot !== undefined);
 }
@@ -341,9 +346,16 @@ async function replaceLargeSvgsWithSnapshots(
     image.alt = clonedSvg.getAttribute('aria-label') || 'Embedded visualization';
     image.src = snapshot.dataUrl;
     image.style.display = 'block';
-    image.style.height = `${snapshot.height}px`;
-    image.style.width = `${snapshot.width}px`;
-    clonedSvg.replaceWith(image);
+    image.style.height = `${snapshot.displayHeight}px`;
+    image.style.left = `${snapshot.left}px`;
+    image.style.maxHeight = 'none';
+    image.style.maxWidth = 'none';
+    image.style.position = 'absolute';
+    image.style.top = `${snapshot.top}px`;
+    image.style.width = `${snapshot.displayWidth}px`;
+    image.style.zIndex = '2147483647';
+    clonedSvg.style.visibility = 'hidden';
+    clonedDocument.body.append(image);
     await waitForPdfImage(image);
   }));
 }
