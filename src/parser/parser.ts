@@ -20,6 +20,7 @@ import {
   shouldWarnForDefaultSupabaseConfig,
 } from '../utils/defaultStorageConfig';
 import { studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
+import { isValidTime, parseMonthDayYear } from '../utils/dateTimeValidation';
 
 const modules = import.meta.glob(
   [
@@ -254,6 +255,40 @@ function verifyTextResponseConstraints(
   });
 }
 
+function verifyDateTimeResponseConstraints(
+  componentPath: string,
+  component: Partial<IndividualComponent>,
+  errors: ParserErrorWarning[],
+) {
+  component.response?.forEach((response, index) => {
+    if (response.type !== 'date' && response.type !== 'time') {
+      return;
+    }
+
+    const responsePath = `${componentPath}/response/${index}`;
+    const isValidValue = response.type === 'date'
+      ? (value: string) => parseMonthDayYear(value) !== null
+      : isValidTime;
+    const expectedFormat = response.type === 'date' ? 'MM/DD/YYYY' : 'HH:mm';
+
+    (['default', 'requiredValue'] as const).forEach((field) => {
+      const value = response[field];
+      if (value === undefined || value === null) {
+        return;
+      }
+
+      if (!isValidValue(value)) {
+        errors.push({
+          message: `${response.type} ${field} must be a valid ${expectedFormat} value`,
+          instancePath: `${responsePath}/${field}`,
+          params: { action: `Set ${field} to a valid ${expectedFormat} value` },
+          category: 'invalid-config',
+        });
+      }
+    });
+  });
+}
+
 function hasConditionalBlock(sequence: StudyConfig['sequence']): boolean {
   if (isUrlConditionalBlock(sequence)) {
     return true;
@@ -300,9 +335,11 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
 
   Object.entries(studyConfig.baseComponents ?? {}).forEach(([componentName, component]) => {
     verifyTextResponseConstraints(`/baseComponents/${componentName}`, component, errors);
+    verifyDateTimeResponseConstraints(`/baseComponents/${componentName}`, component, errors);
   });
   Object.entries(studyConfig.components).forEach(([componentName, component]) => {
     verifyTextResponseConstraints(`/components/${componentName}`, component, errors);
+    verifyDateTimeResponseConstraints(`/components/${componentName}`, component, errors);
   });
 
   const hasConditional = hasConditionalBlock(studyConfig.sequence);

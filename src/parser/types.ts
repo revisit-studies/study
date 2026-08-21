@@ -442,14 +442,14 @@ export interface NumericalResponse extends BaseResponse {
 
 /**
  * The DateResponse interface defines a calendar date selected with a date picker.
- * Date values are stored as `YYYY-MM-DD` strings.
+ * Date values are stored as `MM/DD/YYYY` strings.
  * ```json
  * {
  *   "id": "q-date",
  *   "prompt": "Select a date.",
  *   "location": "aboveStimulus",
  *   "type": "date",
- *   "default": "2026-08-21",
+ *   "default": "08/21/2026",
  *   "placeholder": "MM/DD/YYYY"
  * }
  * ```
@@ -458,9 +458,9 @@ export interface DateResponse extends BaseResponse {
   type: 'date';
   /** The placeholder text displayed in the date input. Defaults to `MM/DD/YYYY`. */
   placeholder?: string;
-  /** The default date in `YYYY-MM-DD` format. */
+  /** The default date in `MM/DD/YYYY` format. */
   default?: string;
-  /** The date required for a correct response, in `YYYY-MM-DD` format. */
+  /** The date required for a correct response, in `MM/DD/YYYY` format. */
   requiredValue?: string;
 }
 

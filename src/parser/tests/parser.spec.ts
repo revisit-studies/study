@@ -86,11 +86,12 @@ describe('Text response validation config parsing', () => {
     expect(result.errors.some((error) => error.instancePath.includes('builtInValidation'))).toBe(true);
   });
 
-  test('accepts a date response with an ISO default value', async () => {
+  test('accepts a date response with MM/DD/YYYY default and required values', async () => {
     const studyConfig = makeStudyConfig('contains');
     Object.assign(studyConfig.components.question1.response[0], {
       type: 'date',
-      default: '2026-08-21',
+      default: '08/21/2026',
+      requiredValue: '08/22/2026',
       placeholder: 'MM/DD/YYYY',
     });
     Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
@@ -100,17 +101,94 @@ describe('Text response validation config parsing', () => {
     expect(result.errors).toEqual([]);
   });
 
-  test('accepts a time response with an HH:mm default value', async () => {
+  test('accepts a time response with HH:mm default and required values', async () => {
     const studyConfig = makeStudyConfig('contains');
     Object.assign(studyConfig.components.question1.response[0], {
       type: 'time',
       default: '14:28',
+      requiredValue: '23:59',
     });
     Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
 
     const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
     expect(result.errors).toEqual([]);
+  });
+
+  test.each([
+    {
+      type: 'date', field: 'default', value: '02/29/2025', format: 'MM/DD/YYYY',
+    },
+    {
+      type: 'date', field: 'requiredValue', value: '2025-02-28', format: 'MM/DD/YYYY',
+    },
+    {
+      type: 'time', field: 'default', value: '24:00', format: 'HH:mm',
+    },
+    {
+      type: 'time', field: 'requiredValue', value: '2:30 PM', format: 'HH:mm',
+    },
+  ])('rejects invalid $type $field values', async ({
+    type, field, value, format,
+  }) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type,
+      [field]: value,
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: `${type} ${field} must be a valid ${format} value`,
+      instancePath: `/components/question1/response/0/${field}`,
+    }));
+  });
+
+  test('validates date and time constraints defined in base components', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig, {
+      baseComponents: {
+        sharedQuestion: {
+          type: 'questionnaire',
+          response: [
+            {
+              id: 'base-date', prompt: 'Date', type: 'date', default: '04/31/2025',
+            },
+            {
+              id: 'base-time', prompt: 'Time', type: 'time', requiredValue: '14:60',
+            },
+          ],
+        },
+      },
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'date default must be a valid MM/DD/YYYY value',
+      instancePath: '/baseComponents/sharedQuestion/response/0/default',
+    }));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'time requiredValue must be a valid HH:mm value',
+      instancePath: '/baseComponents/sharedQuestion/response/1/requiredValue',
+    }));
+  });
+
+  test.each(['date', 'time'])('rejects a non-string requiredValue for a %s response', async (type) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type,
+      requiredValue: 1234,
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      instancePath: '/components/question1/response/0/requiredValue',
+    }));
   });
 
   test('accepts a country dropdown preset as its options', async () => {

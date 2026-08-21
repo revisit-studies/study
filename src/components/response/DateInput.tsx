@@ -1,9 +1,9 @@
 import { DateInput } from '@mantine/dates';
 import type { FocusEventHandler } from 'react';
 import type { DateResponse } from '../../parser/types';
+import { formatMonthDayYear, parseMonthDayYear } from '../../utils/dateTimeValidation';
 import classes from './css/Input.module.css';
 import { InputLabel } from './InputLabel';
-import { formatIsoDate, parseIsoDate, parseMonthDayYear } from './responseValidation';
 
 type DateResponseAnswer = {
   value?: string;
@@ -36,7 +36,7 @@ export function DateResponseInput({
     infoText,
   } = response;
   const { value, onChange, ...answerProps } = answer;
-  const dateValue = typeof value === 'string' ? parseIsoDate(value) : null;
+  const dateValue = typeof value === 'string' ? parseMonthDayYear(value) : null;
 
   return (
     <DateInput
@@ -48,7 +48,7 @@ export function DateResponseInput({
       radius="md"
       size="md"
       value={dateValue}
-      onChange={(nextValue) => onChange?.(nextValue ? formatIsoDate(nextValue) : '')}
+      onChange={(nextValue) => onChange?.(nextValue ? formatMonthDayYear(nextValue) : '')}
       dateParser={parseMonthDayYear}
       valueFormat="MM/DD/YYYY"
       clearable={required === false}
