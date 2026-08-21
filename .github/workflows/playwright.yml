@@ -22,7 +22,7 @@ jobs:
           - project: chromium
             os: ubuntu-latest
             cache_dir: /home/runner/.cache/ms-playwright
-            workers: 3
+            workers: 1
 
           # - project: firefox
           #   os: ubuntu-latest
@@ -31,7 +31,7 @@ jobs:
           - project: webkit
             os: macos-14
             cache_dir: /Users/runner/Library/Caches/ms-playwright
-            workers: 2
+            workers: 1
     steps:
       - uses: actions/checkout@v7
 
