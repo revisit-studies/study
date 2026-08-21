@@ -317,15 +317,15 @@ test('test', async ({ page, browserName }) => {
     rects.filter((rect) => getComputedStyle(rect).fill !== 'rgb(255, 255, 255)').length
   ));
 
-  await expect.poll(selectedAnswerBoxCount, { timeout: 15000 }).toBeGreaterThan(0);
-  await expect.poll(async () => replayFrame.locator('.answer').count(), { timeout: 15000 }).toBeGreaterThan(0);
-
   await seekReplay(
     page,
     firstTaskRecording!.startTime!,
     firstTaskRecording!.endTime!,
     firstTaskRecording!.endTime!,
   );
+  await expect.poll(selectedAnswerBoxCount, { timeout: 15000 }).toBeGreaterThan(0);
+  await expect.poll(async () => replayFrame.locator('.answer').count(), { timeout: 15000 }).toBeGreaterThan(0);
+
   await expect.poll(async () => replayFrame.locator('.answerBox rect').evaluateAll((rects) => (
     rects.some((rect) => getComputedStyle(rect).fill !== 'rgb(255, 255, 255)')
   )), { timeout: 15000 }).toBe(true);
