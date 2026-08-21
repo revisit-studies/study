@@ -2,6 +2,10 @@ import html2pdf from 'html2pdf.js';
 
 const PDF_MARGIN_MM = 10;
 const PDF_MAX_WIDTH_PX = 920;
+const A4_LANDSCAPE_WIDTH_MM = 297;
+const A4_LANDSCAPE_HEIGHT_MM = 210;
+const PDF_PRINTABLE_ASPECT_RATIO = (A4_LANDSCAPE_HEIGHT_MM - (PDF_MARGIN_MM * 2))
+  / (A4_LANDSCAPE_WIDTH_MM - (PDF_MARGIN_MM * 2));
 
 function padDatePart(value: number) {
   return `${value}`.padStart(2, '0');
@@ -60,7 +64,7 @@ export function waitForNextPaint() {
 
 export function preparePdfClone(
   clonedElement: HTMLElement,
-  layout: { exportWidth?: number; sidebarWidth?: number } = {},
+  layout: { exportHeight?: number; exportWidth?: number; sidebarWidth?: number } = {},
 ) {
   const exportRoot = clonedElement.matches('[data-pdf-export-root]')
     ? clonedElement
@@ -107,10 +111,17 @@ export function preparePdfClone(
     main.style.paddingInline = '16px';
     main.style.paddingBottom = '32px';
   }
+
+  if (layout.exportHeight && exportRoot.scrollHeight > layout.exportHeight) {
+    const scale = layout.exportHeight / exportRoot.scrollHeight;
+    exportRoot.style.transform = `scale(${scale})`;
+    exportRoot.style.transformOrigin = 'top left';
+  }
 }
 
 export async function saveElementAsPdf(element: HTMLElement, filename: string) {
   const exportWidth = Math.min(element.getBoundingClientRect().width, PDF_MAX_WIDTH_PX);
+  const exportHeight = Math.floor(exportWidth * PDF_PRINTABLE_ASPECT_RATIO);
   const sidebar = element.querySelector<HTMLElement>('.sidebar');
   const sidebarWidth = sidebar && sidebar.style.display !== 'none'
     ? sidebar.getBoundingClientRect().width
@@ -120,19 +131,21 @@ export async function saveElementAsPdf(element: HTMLElement, filename: string) {
     filename,
     image: { type: 'jpeg' as const, quality: 0.95 },
     enableLinks: true,
-    pagebreak: {
-      avoid: ['[data-question-id]', 'img', 'svg', 'canvas', 'video'],
-      mode: ['css', 'legacy'],
-    },
     html2canvas: {
       backgroundColor: '#ffffff',
       logging: false,
       onclone: (_clonedDocument: Document, clonedElement: HTMLElement) => {
-        preparePdfClone(clonedElement, { exportWidth, sidebarWidth });
+        preparePdfClone(clonedElement, {
+          exportHeight,
+          exportWidth,
+          sidebarWidth,
+        });
       },
       scale: 2,
       useCORS: true,
+      height: exportHeight,
       width: exportWidth,
+      windowHeight: exportHeight,
       windowWidth: exportWidth,
     },
     jsPDF: {

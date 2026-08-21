@@ -76,7 +76,13 @@ describe('PDF export helpers', () => {
     const clonedContainer = document.createElement('div');
     clonedContainer.append(liveElement.cloneNode(true));
 
-    preparePdfClone(clonedContainer, { exportWidth: 920, sidebarWidth: 300 });
+    Object.defineProperty(clonedContainer.firstElementChild, 'scrollHeight', { value: 1260 });
+
+    preparePdfClone(clonedContainer, {
+      exportHeight: 630,
+      exportWidth: 920,
+      sidebarWidth: 300,
+    });
 
     const clonedElement = clonedContainer.querySelector<HTMLElement>('[data-pdf-export-root]');
     expect(clonedElement?.style.padding).toBe('16px 16px 32px');
@@ -89,6 +95,8 @@ describe('PDF export helpers', () => {
     expect(clonedElement?.querySelector<HTMLElement>('.main')?.style.width).toBe('100%');
     expect(clonedElement?.querySelector<HTMLElement>('.main')?.style.paddingInline).toBe('16px');
     expect(clonedElement?.querySelector<HTMLElement>('.main')?.style.paddingBottom).toBe('32px');
+    expect(clonedElement?.style.transform).toBe('scale(0.5)');
+    expect(clonedElement?.style.transformOrigin).toBe('top left');
     expect(liveElement.querySelector<HTMLElement>('[data-pdf-export-header]')?.style.display).toBe('none');
     expect(liveElement.style.padding).toBe('');
   });
@@ -121,10 +129,12 @@ describe('PDF export helpers', () => {
     expect(html2PdfMocks.set).toHaveBeenCalledWith(expect.objectContaining({
       filename: 'introduction_2026-08-20T14-37-09.pdf',
       margin: 10,
-      pagebreak: expect.objectContaining({
-        avoid: expect.arrayContaining(['[data-question-id]']),
+      html2canvas: expect.objectContaining({
+        height: 631,
+        width: 920,
+        windowHeight: 631,
+        windowWidth: 920,
       }),
-      html2canvas: expect.objectContaining({ width: 920, windowWidth: 920 }),
       jsPDF: expect.objectContaining({ format: 'a4', orientation: 'landscape' }),
     }));
 

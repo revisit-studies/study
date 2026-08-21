@@ -142,7 +142,7 @@ test('fits wide development layouts inside the PDF capture', async ({ page }, te
   expect(rightEdgeNonWhiteRatio).toBeLessThan(0.05);
 });
 
-test('exports long components across multiple PDF pages', async ({ page }) => {
+test('fits long components on a single PDF page', async ({ page }, testInfo) => {
   await resetClientStudyState(page);
   await openStudyFromLanding(page, 'Demo Studies', 'Form Elements Demo');
   await nextClick(page);
@@ -152,11 +152,11 @@ test('exports long components across multiple PDF pages', async ({ page }) => {
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('menuitem', { name: 'Export page as PDF' }).click();
   const download = await downloadPromise;
-  const downloadPath = await download.path();
-  expect(downloadPath).not.toBeNull();
-  const pdf = await readFile(downloadPath!);
+  const downloadPath = testInfo.outputPath('long-layout.pdf');
+  await download.saveAs(downloadPath);
+  const pdf = await readFile(downloadPath);
 
-  expect(pdf.toString('latin1').match(/\/Type\s*\/Page\b/g)?.length ?? 0).toBeGreaterThan(1);
+  expect(pdf.toString('latin1').match(/\/Type\s*\/Page\b/g)?.length ?? 0).toBe(1);
 });
 
 test('reports external website components as unsupported instead of downloading an incomplete PDF', async ({ page }) => {
