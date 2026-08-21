@@ -76,6 +76,75 @@ export function waitForNextPaint() {
   });
 }
 
+function waitForIframePaint(iframe: HTMLIFrameElement) {
+  return new Promise<void>((resolve) => {
+    const requestFrame = (callback: FrameRequestCallback) => (
+      iframe.contentWindow?.requestAnimationFrame(callback) ?? requestAnimationFrame(callback)
+    );
+    requestFrame(() => {
+      requestFrame(() => resolve());
+    });
+  });
+}
+
+function waitForIframeImages(iframeDocument: Document) {
+  return Promise.all(Array.from(iframeDocument.images).map(async (image) => {
+    if (!image.complete || image.naturalWidth === 0) {
+      await image.decode().catch(() => undefined);
+    }
+  }));
+}
+
+function prepareIframeClone(
+  clonedDocument: Document,
+  sourceDocument: Document,
+  width: number,
+) {
+  const base = clonedDocument.createElement('base');
+  base.href = sourceDocument.baseURI;
+  clonedDocument.head.prepend(base);
+
+  clonedDocument.documentElement.style.width = `${width}px`;
+  clonedDocument.documentElement.style.maxWidth = 'none';
+  clonedDocument.documentElement.style.overflow = 'visible';
+  clonedDocument.body.style.width = `${width}px`;
+  clonedDocument.body.style.maxWidth = 'none';
+  clonedDocument.body.style.overflow = 'visible';
+
+  const cssText = Array.from(sourceDocument.styleSheets).flatMap((stylesheet) => {
+    try {
+      return Array.from(stylesheet.cssRules).map((rule) => rule.cssText);
+    } catch {
+      return [];
+    }
+  }).join('\n');
+  if (cssText) {
+    const style = clonedDocument.createElement('style');
+    style.textContent = cssText;
+    clonedDocument.head.append(style);
+  }
+
+  return Promise.all(Array.from(
+    clonedDocument.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"][href]'),
+  ).map((stylesheet) => {
+    const href = stylesheet.getAttribute('href');
+    if (!href) {
+      return Promise.resolve();
+    }
+
+    const absoluteHref = new URL(href, sourceDocument.baseURI).href;
+    if (stylesheet.sheet && stylesheet.href === absoluteHref) {
+      return Promise.resolve();
+    }
+
+    return new Promise<void>((resolve) => {
+      stylesheet.addEventListener('load', () => resolve(), { once: true });
+      stylesheet.addEventListener('error', () => resolve(), { once: true });
+      stylesheet.href = absoluteHref;
+    });
+  }));
+}
+
 export async function capturePdfIframeSnapshots(element: HTMLElement) {
   const iframes = Array.from(element.querySelectorAll('iframe'));
 
@@ -86,10 +155,24 @@ export async function capturePdfIframeSnapshots(element: HTMLElement) {
       throw new Error('The embedded page is not available for PDF export.');
     }
 
-    await iframeDocument.fonts?.ready;
+    await Promise.all([
+      iframeDocument.fonts?.ready,
+      waitForIframeImages(iframeDocument),
+      waitForIframePaint(iframe),
+    ]);
     const bounds = iframe.getBoundingClientRect();
-    const width = Math.ceil(iframe.clientWidth || bounds.width);
-    const height = Math.ceil(iframe.clientHeight || bounds.height);
+    const width = Math.ceil(Math.max(
+      iframe.clientWidth,
+      bounds.width,
+      iframeRoot.scrollWidth,
+      iframeDocument.body?.scrollWidth ?? 0,
+    ));
+    const height = Math.ceil(Math.max(
+      iframe.clientHeight,
+      bounds.height,
+      iframeRoot.scrollHeight,
+      iframeDocument.body?.scrollHeight ?? 0,
+    ));
     if (width === 0 || height === 0) {
       throw new Error('The embedded page has no visible area to export.');
     }
@@ -98,6 +181,11 @@ export async function capturePdfIframeSnapshots(element: HTMLElement) {
       backgroundColor: '#ffffff',
       height,
       logging: false,
+      onclone: (clonedDocument) => prepareIframeClone(
+        clonedDocument,
+        iframeDocument,
+        width,
+      ),
       scale: 2,
       useCORS: true,
       width,

@@ -200,6 +200,63 @@ test('captures same-origin iframe contents in the PDF', async ({ page }, testInf
   expect(saturatedRightPixels).toBeGreaterThan(20);
 });
 
+test('captures styled iframe content beyond the visible viewport', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await resetClientStudyState(page);
+  await page.getByRole('tab', { name: 'Example Studies' }).click();
+  const exampleStudies = page.getByLabel('Example Studies');
+  const studyCard = exampleStudies.locator('div').filter({ hasText: 'MVNV Study Replication' }).first();
+  await studyCard.getByText('Go to Study').click();
+  await page.getByRole('tab', { name: 'Browse Components' }).click();
+  await page.getByLabel('Browse Components').getByText('task2', { exact: true }).click();
+
+  const frame = page.frameLocator('#root iframe');
+  await expect.poll(() => frame.locator('.adjMatrix.vis svg rect').count(), {
+    timeout: 20000,
+  }).toBeGreaterThan(5000);
+  await expect(frame.locator('#searchButton')).toHaveCSS(
+    'background-color',
+    /rgb\((?!239, 239, 239)/,
+  );
+
+  await page.getByRole('button', { name: 'Study actions' }).click();
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('menuitem', { name: 'Export page as PDF' }).click();
+  const download = await downloadPromise;
+  const downloadPath = testInfo.outputPath('mvnv-adjacency-matrix.pdf');
+  await download.saveAs(downloadPath);
+  const pdf = await readFile(downloadPath);
+  const jpegImages = extractJpegImages(pdf);
+  const largestJpeg = jpegImages.sort((left, right) => right.byteLength - left.byteLength)[0];
+
+  const matrixPixels = await page.evaluate(async (base64) => {
+    const image = new Image();
+    image.src = `data:image/jpeg;base64,${base64}`;
+    await image.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = 400;
+    canvas.height = 280;
+    const context = canvas.getContext('2d');
+    if (!context) {
+      throw new Error('Canvas rendering is unavailable');
+    }
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    let nonWhitePixels = 0;
+    for (let y = 55; y < 165; y += 1) {
+      for (let x = 150; x < 350; x += 1) {
+        const index = (y * canvas.width + x) * 4;
+        if (pixels[index] < 245 || pixels[index + 1] < 245 || pixels[index + 2] < 245) {
+          nonWhitePixels += 1;
+        }
+      }
+    }
+    return nonWhitePixels;
+  }, Buffer.from(largestJpeg).toString('base64'));
+
+  expect(matrixPixels).toBeGreaterThan(1000);
+});
+
 test('captures the current frame of same-origin video components', async ({ page }, testInfo) => {
   await resetClientStudyState(page);
   await openStudyFromLanding(page, 'Demo Studies', 'Video as a Stimulus');

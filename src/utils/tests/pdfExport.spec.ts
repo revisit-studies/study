@@ -134,9 +134,17 @@ describe('PDF export helpers', () => {
     const iframe = document.createElement('iframe');
     element.append(iframe);
     const iframeDocument = document.implementation.createHTMLDocument('Embedded chart');
+    const sourceBase = iframeDocument.createElement('base');
+    sourceBase.href = 'https://revisit.test/study/example/assets/';
+    iframeDocument.head.prepend(sourceBase);
+    Object.defineProperty(iframeDocument, 'styleSheets', {
+      value: [{ cssRules: [{ cssText: '#chart { display: grid; }' }] }],
+    });
     Object.defineProperty(iframe, 'contentDocument', { value: iframeDocument });
     Object.defineProperty(iframe, 'clientWidth', { value: 600 });
     Object.defineProperty(iframe, 'clientHeight', { value: 450 });
+    Object.defineProperty(iframeDocument.documentElement, 'scrollWidth', { value: 1920 });
+    Object.defineProperty(iframeDocument.documentElement, 'scrollHeight', { value: 1080 });
     html2CanvasMocks.capture.mockResolvedValue({
       toDataURL: () => 'data:image/png;base64,chart',
     });
@@ -147,12 +155,30 @@ describe('PDF export helpers', () => {
     expect(html2CanvasMocks.capture).toHaveBeenCalledWith(
       iframeDocument.documentElement,
       expect.objectContaining({
-        height: 450,
-        width: 600,
-        windowHeight: 450,
-        windowWidth: 600,
+        height: 1080,
+        width: 1920,
+        windowHeight: 1080,
+        windowWidth: 1920,
       }),
     );
+
+    const captureOptions = html2CanvasMocks.capture.mock.calls[0][1] as {
+      onclone: (clonedDocument: Document) => Promise<unknown>;
+    };
+    const clonedDocument = document.implementation.createHTMLDocument('Cloned chart');
+    const stylesheet = clonedDocument.createElement('link');
+    stylesheet.rel = 'stylesheet';
+    stylesheet.href = 'css/chart.css';
+    clonedDocument.head.append(stylesheet);
+    Object.defineProperty(stylesheet, 'sheet', { value: {} });
+    await captureOptions.onclone(clonedDocument);
+
+    expect(clonedDocument.querySelector('base')?.href)
+      .toBe('https://revisit.test/study/example/assets/');
+    expect(stylesheet.href).toBe('https://revisit.test/study/example/assets/css/chart.css');
+    expect(clonedDocument.querySelector('style')?.textContent).toContain('display: grid');
+    expect(clonedDocument.documentElement.style.width).toBe('1920px');
+    expect(clonedDocument.documentElement.style.overflow).toBe('visible');
   });
 
   test('captures the current video frame for the PDF clone', async () => {
