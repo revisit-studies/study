@@ -1,14 +1,14 @@
 import {
   createContext, useContext, useMemo, ReactNode,
   useEffect, useState,
+  useCallback,
 } from 'react';
-import {
-  getAuth, onAuthStateChanged, User, signOut, Auth,
-} from 'firebase/auth';
 import { LoadingOverlay } from '@mantine/core';
+import { useLocation, useMatch } from 'react-router';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
-import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
-import { UserWrapped } from '../../storage/engines/StorageEngine';
+import { StoredUser, UserWrapped } from '../../storage/engines/types';
+import { isCloudStorageEngine } from '../../storage/engines/utils/storageEngineHelpers';
+import { SupabaseStorageEngine } from '../../storage/engines/SupabaseStorageEngine';
 
 // Defines default AuthContextValue
 interface AuthContextValue {
@@ -55,7 +55,6 @@ export function AuthProvider({ children } : { children: ReactNode }) {
   // Non-auth User
   const nonAuthUser : UserWrapped = {
     user: {
-      name: 'fakeName',
       email: 'fakeEmail@fake.com',
       uid: 'fakeUid',
     },
@@ -67,26 +66,44 @@ export function AuthProvider({ children } : { children: ReactNode }) {
   const [user, setUser] = useState(loadingNullUser);
   const [enableAuthTrigger, setEnableAuthTrigger] = useState(false);
   const { storageEngine } = useStorageEngine();
+  const location = useLocation();
+  const studyRouteMatch = useMatch('/:studyId/*');
 
   // Logs the user out by removing the user and navigating to '/login'
   const logout = async () => {
-    const auth = getAuth();
-    try {
-      await signOut(auth);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      console.error(`There was an issue signing-out the user: ${error.message}`);
-    } finally {
-      setUser(nonLoadingNullUser);
+    if (storageEngine && isCloudStorageEngine(storageEngine)) {
+      try {
+        await storageEngine.logout();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (error: any) {
+        console.error(`There was an issue signing-out the user: ${error.message}`);
+      } finally {
+        setUser(nonLoadingNullUser);
+      }
     }
   };
 
-  const triggerAuth = () => {
+  const triggerAuth = useCallback(() => {
     setEnableAuthTrigger(true);
-  };
+  }, []);
+
+  // This useEffect checks for an existing Supabase session on mount since it requires a redirect to login
+  useEffect(() => {
+    const checkSession = async () => {
+      if (storageEngine?.getEngine() === 'supabase') {
+        try {
+          await (storageEngine as SupabaseStorageEngine).getSession();
+        } catch (err) {
+          // optional: log or handle errors
+          console.error('Supabase session check failed', err);
+        }
+      }
+    };
+    checkSession();
+  }, [storageEngine, triggerAuth]);
 
   const verifyAdminStatus = async (inputUser: UserWrapped) => {
-    if (storageEngine) {
+    if (storageEngine && isCloudStorageEngine(storageEngine)) {
       return await storageEngine.validateUser(inputUser, true);
     }
     return false;
@@ -96,18 +113,8 @@ export function AuthProvider({ children } : { children: ReactNode }) {
     // Set initialUser
     setUser(loadingNullUser);
 
-    // Get authentication
-    let auth: Auth;
-    if (storageEngine instanceof FirebaseStorageEngine) {
-      try {
-        auth = getAuth();
-      } catch {
-        console.warn('No firebase store.');
-      }
-    }
-
     // Handle auth state changes for Firebase
-    const handleAuthStateChanged = async (firebaseUser: User | null) => {
+    const handleAuthStateChanged = async (cloudUser: StoredUser | null) => {
       // Reset the user. This also gets called on signOut
       setUser((prevUser) => ({
         user: prevUser.user,
@@ -115,10 +122,10 @@ export function AuthProvider({ children } : { children: ReactNode }) {
         determiningStatus: true,
         adminVerification: false,
       }));
-      if (firebaseUser) {
+      if (cloudUser) {
         // Reach out to firebase to validate user
         const currUser: UserWrapped = {
-          user: firebaseUser,
+          user: cloudUser,
           determiningStatus: false,
           isAdmin: false,
           adminVerification: true,
@@ -133,14 +140,13 @@ export function AuthProvider({ children } : { children: ReactNode }) {
 
     // Determine authentication listener based on storageEngine and authEnabled variable
     const determineAuthentication = async () => {
-      if (storageEngine instanceof FirebaseStorageEngine) {
-        const authInfo = await storageEngine?.getUserManagementData('authentication');
+      if (storageEngine && isCloudStorageEngine(storageEngine)) {
+        const authInfo = await storageEngine.getUserManagementData('authentication');
         if (authInfo?.isEnabled) {
-          // Define unsubscribe function for listening to authentication state changes when using Firebase with authentication
-          const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => await handleAuthStateChanged(firebaseUser));
-          return () => unsubscribe();
+          storageEngine.unsubscribe(handleAuthStateChanged);
+        } else {
+          setUser(nonAuthUser);
         }
-        setUser(nonAuthUser);
       } else if (storageEngine) {
         setUser(nonAuthUser);
       }
@@ -163,9 +169,11 @@ export function AuthProvider({ children } : { children: ReactNode }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [user]);
 
+  const allowChildrenWhileDeterminingStatus = Boolean(studyRouteMatch) && !location.pathname.startsWith('/analysis');
+
   return (
     <AuthContext.Provider value={value}>
-      {user.determiningStatus ? <LoadingOverlay visible /> : children }
+      {user.determiningStatus && !allowChildrenWhileDeterminingStatus ? <LoadingOverlay visible /> : children }
     </AuthContext.Provider>
   );
 }

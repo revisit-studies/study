@@ -1,15 +1,20 @@
 import {
   Suspense, useEffect, useMemo, useRef, useState,
 } from 'react';
-import { useSearchParams } from 'react-router';
-import { Center, Loader } from '@mantine/core';
+import { useNavigate, useParams, useSearchParams } from 'react-router';
+import {
+  Box, Center, Loader, Text, Title,
+} from '@mantine/core';
+import { IconPlugConnectedX } from '@tabler/icons-react';
 import { ResponseBlock } from '../components/response/ResponseBlock';
 import { IframeController } from './IframeController';
 import { ImageController } from './ImageController';
 import { ReactComponentController } from './ReactComponentController';
 import { MarkdownController } from './MarkdownController';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
-import { useCurrentComponent, useCurrentIdentifier, useCurrentStep } from '../routes/utils';
+import {
+  useCurrentComponent, useCurrentIdentifier, useCurrentStep, useStudyId,
+} from '../routes/utils';
 import { useStoredAnswer } from '../store/hooks/useStoredAnswer';
 import { ReactMarkdownWrapper } from '../components/ReactMarkdownWrapper';
 import { IndividualComponent } from '../parser/types';
@@ -27,6 +32,13 @@ import { VegaController, VegaProvState } from './VegaController';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import { VideoController } from './VideoController';
 import { studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
+import { useFetchStylesheet } from '../utils/fetchStylesheet';
+import { ScreenRecordingReplay } from '../components/screenRecording/ScreenRecordingReplay';
+import { decryptIndex, encryptIndex } from '../utils/encryptDecryptIndex';
+import { useRecordingConfig } from '../store/hooks/useRecordingConfig';
+import { getComponentContainerStyle } from '../utils/componentStyle';
+import { generateStimulusErrorMessage } from '../components/response/stimulusErrors';
+import { getStimulusProvenanceState, getStimulusShowErrorsFromState } from '../components/response/stimulusProvenance';
 
 // current active stimuli presented to the user
 export function ComponentController() {
@@ -34,21 +46,31 @@ export function ComponentController() {
   const studyConfig = useStudyConfig();
   const currentStep = useCurrentStep();
   const currentComponent = useCurrentComponent();
+  const currentIdentifier = useCurrentIdentifier();
+  const studyId = useStudyId();
 
   const stepConfig = studyConfig.components[currentComponent];
   const { storageEngine } = useStorageEngine();
 
   const answers = useStoreSelector((store) => store.answers);
-  const audioStream = useRef<MediaRecorder | null>(null);
-  const [prevTrialName, setPrevTrialName] = useState<string | null>(null);
-  const { setIsRecording } = useStoreActions();
-  const analysisProvState = useStoreSelector((state) => state.analysisProvState.stimulus);
+  const analysisCanPlayScreenRecording = useStoreSelector((state) => state.analysisCanPlayScreenRecording);
+
+  const { setAnalysisCanPlayScreenRecording } = useStoreActions();
+
+  const analysisStimulusProvState = useStoreSelector((state) => state.analysisProvState.stimulus);
+  const stimulusValidation = useStoreSelector((state) => state.trialValidation[currentIdentifier]?.stimulus);
+
+  const navigate = useNavigate();
+
+  const { studyHasScreenRecording } = useRecordingConfig();
 
   const isAnalysis = useIsAnalysis();
 
   // If we have a trial, use that config to render the right component else use the step
   const status = useStoredAnswer();
+  const currentStimulusSubmitAttempted = useStoreSelector((state) => state.stimulusSubmitAttempted[currentIdentifier]);
   const sequence = useStoreSelector((state) => state.sequence);
+  const modes = useStoreSelector((state) => state.modes);
 
   const [searchParams] = useSearchParams();
 
@@ -62,52 +84,34 @@ export function ComponentController() {
   const storeDispatch = useStoreDispatch();
   const { setAlertModal } = useStoreActions();
   useEffect(() => {
-    if (storageEngine?.getEngine() !== import.meta.env.VITE_STORAGE_ENGINE) {
-      storeDispatch(setAlertModal({
-        show: true,
-        message: `There was an issue connecting to the ${import.meta.env.VITE_STORAGE_ENGINE} database. This could be caused by a network issue or your adblocker. If you are using an adblocker, please disable it for this website and refresh.`,
-      }));
-    }
-  }, [setAlertModal, storageEngine, storeDispatch]);
-
-  useEffect(() => {
-    if (!studyConfig || !studyConfig.uiConfig.recordStudyAudio || !storageEngine || storageEngine.getEngine() !== 'firebase' || (status && status.endTime > 0) || isAnalysis) {
+    const configuredStorageEngine = import.meta.env.VITE_STORAGE_ENGINE;
+    const activeStorageEngine = storageEngine?.getEngine();
+    if (!configuredStorageEngine || activeStorageEngine === configuredStorageEngine) {
       return;
     }
 
-    if (audioStream.current && prevTrialName) {
-      storageEngine.saveAudio(audioStream.current, prevTrialName);
-    }
-
-    if (audioStream.current) {
-      audioStream.current.stream.getTracks().forEach((track) => { track.stop(); audioStream.current?.stream.removeTrack(track); });
-      audioStream.current.stream.getAudioTracks().forEach((track) => { track.stop(); audioStream.current?.stream.removeTrack(track); });
-      audioStream.current.stop();
-      audioStream.current = null;
-    }
-
-    if ((stepConfig && stepConfig.recordAudio !== undefined && !stepConfig.recordAudio) || currentComponent === 'end') {
-      setPrevTrialName(null);
-      storeDispatch(setIsRecording(false));
+    if (activeStorageEngine === 'localStorage' && !import.meta.env.PROD) {
+      storeDispatch(setAlertModal({
+        show: true,
+        message: `There was an issue connecting to the ${configuredStorageEngine} database, so this development build is using localStorage instead. Study data will not be saved to cloud storage.`,
+        title: 'Using localStorage fallback',
+      }));
     } else {
-      navigator.mediaDevices.getUserMedia({
-        audio: true,
-      }).then((s) => {
-        const recorder = new MediaRecorder(s);
-        audioStream.current = recorder;
-        audioStream.current.start();
-        storeDispatch(setIsRecording(true));
-        setPrevTrialName(`${currentComponent}_${currentStep}`);
-      });
+      storeDispatch(setAlertModal({
+        show: true,
+        message: `There was an issue connecting to the ${configuredStorageEngine} database. This could be caused by a network issue or your adblocker. If you are using an adblocker, please disable it for this website and refresh.`,
+        title: 'Failed to connect to the storage engine',
+      }));
     }
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentComponent, currentStep]);
+  }, [setAlertModal, storageEngine, storeDispatch]);
 
   // Find current block, if it has an ID, add it as a participant tag
   const [blockForStep, setBlockForStep] = useState<string[]>([]);
   const prevBlockForStepRef = useRef<string[]>([]);
   useEffect(() => {
+    if (isAnalysis) {
+      return;
+    }
     async function updateBlockForStep() {
       // Get all nested block IDs
       const blockIds = findBlockForStep(sequence, currentStep)
@@ -131,20 +135,109 @@ export function ComponentController() {
     }
 
     updateBlockForStep().then(addParticipantTag);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentStep, storageEngine, sequence]);
 
-  const currentIdentifier = useCurrentIdentifier();
   const currentConfig = useMemo(() => {
     const toReturn = currentComponent && currentComponent !== 'end' && !currentComponent.startsWith('__') && studyComponentToIndividualComponent(stepConfig, studyConfig) as IndividualComponent;
     if (typeof toReturn === 'object') {
       const funcParams = answers[currentIdentifier]?.parameters;
       const funcCorrectAnswer = answers[currentIdentifier]?.correctAnswer;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { ...toReturn, parameters: funcParams || (toReturn as any).parameters || undefined, correctAnswer: funcCorrectAnswer || (toReturn as any).correctAnswer || undefined };
+
+      return {
+        ...toReturn,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        parameters: funcParams || (toReturn as any).parameters || {},
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        correctAnswer: funcCorrectAnswer || (toReturn as any).correctAnswer || undefined,
+      };
     }
     return toReturn as unknown as IndividualComponent;
   }, [answers, currentComponent, currentIdentifier, stepConfig, studyConfig]);
+  const hasAnalysisStimulusProvenance = useMemo(
+    () => analysisStimulusProvState !== undefined,
+    [analysisStimulusProvState],
+  );
+  const analysisStimulusErrors = useMemo(
+    () => getStimulusShowErrorsFromState(analysisStimulusProvState),
+    [analysisStimulusProvState],
+  );
+  const showStimulusErrors = useMemo(
+    () => (isAnalysis
+      ? (hasAnalysisStimulusProvenance ? analysisStimulusErrors : false)
+      : !!currentStimulusSubmitAttempted),
+    [
+      analysisStimulusErrors,
+      currentStimulusSubmitAttempted,
+      hasAnalysisStimulusProvenance,
+      isAnalysis,
+    ],
+  );
+  const stimulusProvState = useMemo(
+    () => getStimulusProvenanceState(analysisStimulusProvState),
+    [analysisStimulusProvState],
+  );
+  const stimulusMessage = useMemo(
+    () => {
+      if (isAnalysis) {
+        return null;
+      }
+      return currentConfig
+        ? generateStimulusErrorMessage(currentConfig, stimulusValidation, { showStimulusErrors })
+        : null;
+    },
+    [currentConfig, isAnalysis, showStimulusErrors, stimulusValidation],
+  );
+  const hasStimulusIssue = useMemo(
+    () => !!stimulusMessage,
+    [stimulusMessage],
+  );
+  const componentContainerStyle = useMemo(
+    () => (currentConfig ? getComponentContainerStyle(currentConfig.type, currentConfig.style) : {}),
+    [currentConfig],
+  );
+  const stimulusContainerStyle = useMemo(() => {
+    if (!hasStimulusIssue) {
+      return componentContainerStyle;
+    }
+
+    return {
+      ...componentContainerStyle,
+      border: '1px solid var(--mantine-color-red-3)',
+      backgroundColor: 'var(--mantine-color-red-0)',
+      borderRadius: 'var(--mantine-radius-md)',
+      padding: 'var(--mantine-spacing-sm)',
+    };
+  }, [componentContainerStyle, hasStimulusIssue]);
+
+  useEffect(() => {
+    // Assume that screen recording video exists.
+    // The value is set to false from ScreenRecordingReplay component if video starts after stimulus start time.
+    storeDispatch(setAnalysisCanPlayScreenRecording(true));
+  }, [currentStep, setAnalysisCanPlayScreenRecording, storeDispatch]);
+
+  useFetchStylesheet(currentConfig?.stylesheetPath);
+
+  const { funcIndex } = useParams();
+
+  // Automatically forward a user to their last completed trial if they are returning to the study
+  useEffect(() => {
+    if (status && status.endTime > 0 && !isAnalysis && !modes.developmentModeEnabled && currentComponent !== 'end' && !currentComponent.startsWith('__') && typeof currentStep === 'number') {
+      let lastAnsweredTrialOrder = '0';
+      Object.values(answers).forEach((a) => {
+        if (a.endTime > 0) {
+          lastAnsweredTrialOrder = a.trialOrder;
+        }
+      });
+      const [trialOrderIndex, trialOrderFuncIndex] = lastAnsweredTrialOrder.split('_');
+      const indexNumber = Number(trialOrderIndex);
+      const funcIndexNumber = trialOrderFuncIndex ? Number(trialOrderFuncIndex) : undefined;
+
+      if (indexNumber > currentStep || (indexNumber === currentStep && funcIndexNumber !== undefined && funcIndex !== undefined && funcIndexNumber > Number(decryptIndex(funcIndex)))) {
+        navigate(`/${studyId}/${encryptIndex(indexNumber)}${funcIndexNumber !== undefined ? `/${encryptIndex(funcIndexNumber)}` : ''}${window.location.search}`);
+      }
+    }
+  }, [answers, currentComponent, currentStep, funcIndex, isAnalysis, modes.developmentModeEnabled, navigate, status, studyId]);
 
   // We're not using hooks below here, so we can return early if we're at the end of the study.
   // This avoids issues with the component config being undefined for the end of the study.
@@ -170,6 +263,16 @@ export function ComponentController() {
     return <ResourceNotFound email={studyConfig.uiConfig.contactEmail} />;
   }
 
+  if (!storageEngine?.isConnected()) {
+    return (
+      <Center style={{ height: '80vh', flexDirection: 'column', textAlign: 'center' }}>
+        <IconPlugConnectedX size={48} stroke={1.5} color="orange" />
+        <Title mt="md" order={4}>Database Disconnected</Title>
+        <Text mt="md">Please check your network connection or disable your adblocker for this site, then refresh the page.</Text>
+      </Center>
+    );
+  }
+
   if (participantId && storePartId !== participantId) {
     return (
       <Center style={{ height: '80vh' }}>
@@ -177,10 +280,11 @@ export function ComponentController() {
       </Center>
     );
   }
+  const instruction = currentConfig?.instruction || '';
+  const instructionLocation = currentConfig.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar';
+  const instructionInSideBar = instructionLocation === 'sidebar';
 
-  const instruction = (currentConfig.instruction || '');
-  const { instructionLocation } = currentConfig;
-  const instructionInSideBar = studyConfig.uiConfig.sidebar && (instructionLocation === 'sidebar' || instructionLocation === undefined);
+  if (studyHasScreenRecording && isAnalysis && analysisCanPlayScreenRecording) return <ScreenRecordingReplay key={`${currentStep}-stimulus`} />;
 
   return (
     <>
@@ -191,16 +295,27 @@ export function ComponentController() {
         config={currentConfig}
         location="aboveStimulus"
       />
-
-      <Suspense key={`${currentStep}-stimulus`} fallback={<div>Loading...</div>}>
-        {currentConfig.type === 'markdown' && <MarkdownController currentConfig={currentConfig} />}
-        {currentConfig.type === 'website' && <IframeController currentConfig={currentConfig} provState={analysisProvState} answers={answers} />}
-        {currentConfig.type === 'image' && <ImageController currentConfig={currentConfig} />}
-        {currentConfig.type === 'react-component' && <ReactComponentController currentConfig={currentConfig} provState={analysisProvState} answers={answers} />}
-        {currentConfig.type === 'vega' && <VegaController currentConfig={currentConfig} provState={analysisProvState as VegaProvState} />}
-        {currentConfig.type === 'video' && <VideoController currentConfig={currentConfig} />}
-
-      </Suspense>
+      <Box
+        id={currentComponent}
+        className={currentConfig.type}
+        style={stimulusContainerStyle}
+      >
+        <Suspense key={`${currentStep}-stimulus`} fallback={<div>Loading...</div>}>
+          <>
+            {currentConfig.type === 'markdown' && <MarkdownController currentConfig={currentConfig} />}
+            {currentConfig.type === 'website' && <IframeController currentConfig={currentConfig} provState={stimulusProvState} answers={answers} />}
+            {currentConfig.type === 'image' && <ImageController currentConfig={currentConfig} />}
+            {currentConfig.type === 'react-component' && <ReactComponentController currentConfig={currentConfig} provState={stimulusProvState} answers={answers} />}
+            {currentConfig.type === 'vega' && <VegaController currentConfig={currentConfig} provState={stimulusProvState as VegaProvState} />}
+            {currentConfig.type === 'video' && <VideoController currentConfig={currentConfig} />}
+          </>
+        </Suspense>
+        {hasStimulusIssue && (
+          <Text c="red" size="sm" mt="xs">
+            {stimulusMessage}
+          </Text>
+        )}
+      </Box>
 
       {(instructionLocation === 'belowStimulus' || (instructionLocation === undefined && !instructionInSideBar)) && <ReactMarkdownWrapper text={instruction} />}
       <ResponseBlock

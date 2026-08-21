@@ -1,8 +1,8 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.1.1/src/parser/LibraryConfigSchema.json",
-  "description": "BeauVis is a validated scale for assessing the aesthetic pleasure of visualizations. This library contains three components for the 3-, 4-, and 5-item versions of the BeauVis scale.\n\nWhen using this library, please replace the `vis-example.png` file with your own visualization.",
-  "reference": "T. He, P. Isenberg, R. Dachselt, and T. Isenberg, “BeauVis: A Validated Scale for Measuring the Aesthetic Pleasure of Visual Representations,” IEEE Transactions on Visualization and Computer Graphics, pp. 1–11, 2022",
-  "doi": "10.1109/tvcg.2022.3209390",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/LibraryConfigSchema.json",
+  "description": "BeauVis is a validated scale for assessing the aesthetic pleasure of visualizations. This library contains three components for the 3-, 4-, and 5-item versions of the BeauVis scale.\n\nThe paper recommends using the 5-item version where it's feasible, but the 3 or 4 item versions can be used when participant time is a concern. When using this library, please replace the `vis-example.png` file with the visualization you want to evaluate.",
+  "reference": "T. He, P. Isenberg, R. Dachselt, and T. Isenberg, “BeauVis: A Validated Scale for Measuring the Aesthetic Pleasure of Visual Representations,” IEEE Transactions on Visualization and Computer Graphics, vol. 29, no. 1, pp. 363–373, Jan. 2023.",
+  "doi": "10.1109/TVCG.2022.3209390",
   "externalLink": "https://www.aviz.fr/Research/BeauVis-Scale",
   "components": {
     "5items": {
@@ -18,6 +18,7 @@
           "required": true,
           "location": "belowStimulus",
           "type": "matrix-radio",
+          "questionOrder": "random",
           "answerOptions": [
             "Strongly disagree",
             "Disagree",
@@ -39,7 +40,7 @@
     },
     "4items": {
       "type": "image",
-      "path": "libraries/previs/assets/vis-example.png",
+      "path": "libraries/beauvis/assets/vis-example.png",
       "style": {
         "width": "800px"
       },
@@ -50,6 +51,7 @@
           "required": true,
           "location": "belowStimulus",
           "type": "matrix-radio",
+          "questionOrder": "random",
           "answerOptions": [
             "Strongly disagree",
             "Disagree",
@@ -70,7 +72,7 @@
     },
     "3items": {
       "type": "image",
-      "path": "libraries/previs/assets/vis-example.png",
+      "path": "libraries/beauvis/assets/vis-example.png",
       "style": {
         "width": "800px"
       },
@@ -81,6 +83,7 @@
           "required": true,
           "location": "belowStimulus",
           "type": "matrix-radio",
+          "questionOrder": "random",
           "answerOptions": [
             "Strongly disagree",
             "Disagree",
@@ -99,6 +102,5 @@
       ]
     }
   },
-  "sequences": {
-  }
+  "sequences": {}
 }

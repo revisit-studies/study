@@ -4,6 +4,8 @@ Files that are in the `public` folder are exposed on the study website. For tech
 
 If you want to create a new experiment, you should create a new subfolder in this `public` folder that contains your reVISit config.
 
+Study folder names can include periods (`.`), spaces, and other characters, but reVISit normalizes study URLs by replacing periods/spaces/slashes with underscores. Use links generated in the app to avoid mismatched manual URLs.
+
 Example projects that explain basic reVISit functionality are: 
 
  * [image-demo](image-demo) is the most basic study example that uses images for study stimuli. 

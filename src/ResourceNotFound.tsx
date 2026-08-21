@@ -15,7 +15,7 @@ export function ResourceNotFound({ email, path }: { email?: string, path?: strin
       <Text>
         <Text span fw={700}>{path || location.pathname}</Text>
         {' '}
-        not Found.
+        not found.
       </Text>
 
       <Space h="lg" />

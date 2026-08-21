@@ -1,21 +1,20 @@
+# Mini-VLAT: A Short and Effective Measure of Visualization Literacy
 
-# mini-vlat
-
-This is an example study of the library `mini-vlat`.
+This is a demo of the library `mini-vlat`.
 
 Mini-VLAT is a short and effective measure of visualization literacy. Mini-VLAT has 12 questions and participants should answer each question within 25 seconds. This library contains 12 components. Each component contains one question of the Mini-VLAT. This library also contains a sequence of all 12 components (the full Mini-VLAT).
 
 ## Reference
 
-S. Pandey and A. Ottley, “Mini‐VLAT: A Short and Effective Measure of Visualization Literacy,” Computer Graphics Forum, vol. 42, no. 3, pp. 1–11, Jun. 2023
+S. Pandey and A. Ottley, “Mini‐VLAT: A Short and Effective Measure of Visualization Literacy,” Computer Graphics Forum, vol. 42, no. 3, pp. 1–11, Jun. 2023.
 
-DOI: [10.1111/cgf.14809](https://doi.org/10.1111/cgf.14809)
+DOI: [10.1111/cgf.14809](https://dx.doi.org/10.1111/cgf.14809)
 
-
+Link: [https://washuvis.github.io/minivlat/](https://washuvis.github.io/minivlat/)
 
 ## Available Components
 
-- areachar
+- areachart
 - barchart
 - bubblechart
 - choropleth
@@ -25,7 +24,7 @@ DOI: [10.1111/cgf.14809](https://doi.org/10.1111/cgf.14809)
 - scatterplot
 - stackedarea
 - stackedbar
-- stackedBar100
+- stackedbar100
 - treemap
 
 ## Available Sequences

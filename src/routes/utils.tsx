@@ -20,21 +20,29 @@ export function useStudyId(): string {
 
 export function useCurrentStep() {
   const { index } = useParams();
-  if (index === undefined) {
-    return 0;
-  }
 
-  if (index.startsWith('reviewer-') || index.startsWith('__')) {
-    return index;
-  }
+  const decrypted = useMemo(() => {
+    if (index === undefined) {
+      return 0;
+    }
 
-  return decryptIndex(index);
+    if (index.startsWith('reviewer-') || index.startsWith('__')) {
+      return index;
+    }
+
+    return decryptIndex(index);
+  }, [index]);
+
+  return decrypted;
 }
 
 const modules = import.meta.glob(
-  '../public/**/*.{mjs,js,mts,ts,jsx,tsx}',
+  [
+    '../public/**/*.{mjs,js,mts,ts,jsx,tsx}',
+    '!../public/**/*.spec.{mjs,js,mts,ts,jsx,tsx}',
+  ],
   { eager: true },
-);
+) as Record<string, ModuleNamespace>;
 
 export function useCurrentComponent(): string {
   const { funcIndex } = useParams();
@@ -49,11 +57,11 @@ export function useCurrentComponent(): string {
 
   const [indexWhenSettingComponentName, setIndexWhenSettingComponentName] = useState<number | null>(null);
 
-  const currentComponent = useMemo(() => (typeof currentStep === 'number' ? getComponent(flatSequence[currentStep], studyConfig) : currentStep.includes('reviewer-') ? currentStep : null), [currentStep, flatSequence, studyConfig]);
+  const currentComponent = useMemo(() => (typeof currentStep === 'number' ? getComponent(flatSequence[currentStep], studyConfig) : currentStep.includes('reviewer-') || currentStep.startsWith('__') ? currentStep : null), [currentStep, flatSequence, studyConfig]);
 
   const [compName, setCompName] = useState('__dynamicLoading');
 
-  const nextFunc:(({ components, answers, sequenceSoFar }: JumpFunctionParameters<unknown>) => JumpFunctionReturnVal) | null = useMemo(() => {
+  const nextFunc:((params: JumpFunctionParameters<unknown>) => JumpFunctionReturnVal) | null = useMemo(() => {
     if (typeof currentStep === 'number' && !currentComponent) {
       const block = findFuncBlock(flatSequence[currentStep], studyConfig.sequence);
 
@@ -62,7 +70,7 @@ export function useCurrentComponent(): string {
       }
 
       const reactPath = `../public/${block.functionPath}`;
-      const newFunc = reactPath in modules ? (modules[reactPath] as ModuleNamespace).default : null;
+      const newFunc = reactPath in modules ? modules[reactPath].default : null;
 
       return newFunc;
     }
@@ -82,10 +90,19 @@ export function useCurrentComponent(): string {
       const funcName = flatSequence[currentStep];
       const decryptedFuncIndex = funcIndex ? decryptIndex(funcIndex) : 0;
 
-      // Check if answer exists for this index, if so get the component name and return early
-      const currentAnswer = Object.entries(_answers).find(([key, _]) => key.startsWith(`${funcName}_${currentStep}_`) && key.endsWith(`${decryptedFuncIndex}`));
-      const answerCompName = currentAnswer ? currentAnswer[1].componentName : null;
-      if (answerCompName !== null) {
+      // Restore only answers that resolve to a configured component. Malformed
+      // loading records must not prevent the dynamic function from recreating
+      // the requested iteration.
+      const currentAnswer = Object.entries(_answers).find(([key, answer]) => {
+        const answerCompName = answer.componentName;
+        return key.startsWith(`${funcName}_${currentStep}_`)
+          && key.endsWith(`_${decryptedFuncIndex}`)
+          && typeof answerCompName === 'string'
+          && answerCompName.length > 0
+          && Boolean(getComponent(answerCompName, studyConfig));
+      });
+      const answerCompName = currentAnswer?.[1].componentName;
+      if (answerCompName) {
         setCompName(answerCompName);
         setIndexWhenSettingComponentName(decryptedFuncIndex);
         return;
@@ -94,7 +111,10 @@ export function useCurrentComponent(): string {
       // in a func component
       if (!component && nextFunc !== null) {
         const { component: currCompName, parameters: _params, correctAnswer } = nextFunc({
-          components: [], answers: _answers, sequenceSoFar: [], customParameters: findFuncBlock(flatSequence[currentStep], studyConfig.sequence)?.parameters,
+          answers: _answers,
+          customParameters: findFuncBlock(flatSequence[currentStep], studyConfig.sequence)?.parameters,
+          currentStep,
+          currentBlock: flatSequence[currentStep],
         });
 
         if (currCompName !== null) {
@@ -119,7 +139,8 @@ export function useCurrentComponent(): string {
         }
       }
     }
-  }, [_answers, currentStep, flatSequence, funcIndex, navigate, nextFunc, pushToFuncSequence, storeDispatch, studyConfig, studyId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStep, funcIndex]);
 
   if (typeof currentStep === 'number' && flatSequence[currentStep] === 'end') {
     return 'end';

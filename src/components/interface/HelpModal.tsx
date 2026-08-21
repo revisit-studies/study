@@ -15,6 +15,7 @@ export function HelpModal() {
   const storeDispatch = useStoreDispatch();
   const { toggleShowHelpText } = useStoreActions();
 
+  const [foundAsset, setFoundAsset] = useState(true);
   const [helpText, setHelpText] = useState('');
 
   const [loading, setLoading] = useState(true);
@@ -22,32 +23,30 @@ export function HelpModal() {
 
   const componentConfig = useMemo(() => studyComponentToIndividualComponent(config.components[component] || {}, config), [component, config]);
 
-  const helpPath = useMemo(() => {
-    if (componentConfig.helpTextPathOverride) {
-      return componentConfig.helpTextPathOverride;
-    }
-    return config.uiConfig.helpTextPath;
-  }, [componentConfig.helpTextPathOverride, config.uiConfig.helpTextPath]);
+  const helpTextPath = useMemo(() => componentConfig.helpTextPath ?? config.uiConfig.helpTextPath, [componentConfig.helpTextPath, config.uiConfig.helpTextPath]);
 
   useEffect(() => {
     async function fetchText() {
-      if (!helpPath) {
+      if (!helpTextPath) {
+        setFoundAsset(false);
         setLoading(false);
         return;
       }
-      const asset = await getStaticAssetByPath(`${PREFIX}${helpPath}`);
+      const asset = await getStaticAssetByPath(`${PREFIX}${helpTextPath}`);
       if (asset !== undefined) {
         setHelpText(asset);
+      } else {
+        setFoundAsset(false);
       }
       setLoading(false);
     }
 
     fetchText();
-  }, [helpPath]);
+  }, [helpTextPath]);
 
   return (
-    <Modal size="70%" opened={showHelpText} withCloseButton={false} onClose={() => storeDispatch(toggleShowHelpText())}>
-      {loading || helpText
+    <Modal className="helpModal" size="70%" opened={showHelpText} withCloseButton={false} onClose={() => storeDispatch(toggleShowHelpText())}>
+      {loading || foundAsset
         ? <ReactMarkdownWrapper text={helpText} />
         : <ResourceNotFound path={config.uiConfig.helpTextPath} />}
     </Modal>

@@ -1,50 +1,43 @@
-import { Box, Flex, NumberInput } from '@mantine/core';
+import { NumberInput } from '@mantine/core';
 import { NumericalResponse } from '../../parser/types';
-import { generateErrorMessage } from './utils';
-import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import classes from './css/Input.module.css';
+import { InputLabel } from './InputLabel';
 
 export function NumericInput({
   response,
   disabled,
   answer,
+  error,
   index,
   enumerateQuestions,
 }: {
   response: NumericalResponse;
   disabled: boolean;
-  answer: object;
+  answer: { value?: number };
+  error?: string | null;
   index: number;
   enumerateQuestions: boolean;
 }) {
   const {
     prompt,
     required,
-    min,
-    max,
     placeholder,
     secondaryText,
+    infoText,
   } = response;
 
   return (
     <NumberInput
       disabled={disabled}
       placeholder={placeholder}
-      label={(
-        <Flex direction="row" wrap="nowrap" gap={4}>
-          {enumerateQuestions && <Box style={{ minWidth: 'fit-content', fontSize: 16, fontWeight: 500 }}>{`${index}. `}</Box>}
-          <Box style={{ display: 'block' }} className="no-last-child-bottom-padding">
-            <ReactMarkdownWrapper text={prompt} required={required} />
-          </Box>
-        </Flex>
-      )}
+      label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
       description={secondaryText}
       radius="md"
       size="md"
-      min={min}
-      max={max}
       {...answer}
-      error={generateErrorMessage(response, answer)}
+      error={error}
+      withErrorStyles={required}
+      errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
       classNames={{ input: classes.fixDisabled }}
     />
   );

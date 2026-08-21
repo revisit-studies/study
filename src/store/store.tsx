@@ -4,14 +4,65 @@ import {
 import { createContext, useContext } from 'react';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import {
-  ResponseBlockLocation, StudyConfig, StringOption, ValueOf, Answer, ParticipantData,
+  ParsedStringOption, ResponseBlockLocation, StudyConfig, ValueOf, Answer, ParticipantData, IndividualComponent,
 } from '../parser/types';
-import {
-  StoredAnswer, TrialValidation, TrrackedProvenance, StoreState, Sequence, ParticipantMetadata,
+import type {
+  AlertModalState, CheckAnswerState, StoredAnswer, TrialValidation, TrrackedProvenance, StoreState, Sequence, ParticipantMetadata, ValidationStatus,
 } from './types';
 import { getSequenceFlatMap } from '../utils/getSequenceFlatMap';
-import { REVISIT_MODE } from '../storage/engines/StorageEngine';
+import { REVISIT_MODE } from '../storage/engines/types';
 import { studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
+import { randomizeOptions, randomizeQuestionOrder, randomizeForm } from '../utils/handleResponseRandomization';
+import { getInitialStimulusValidation } from '../components/response/stimulusErrors';
+import { appendProvenanceTraversalEvent } from './provenance';
+
+type UpdateResponseBlockValidationInput = {
+  location: ResponseBlockLocation;
+  identifier: string;
+  status: boolean;
+  values: object;
+  /** @deprecated Use the managed Trrack APIs, which report provenance separately. */
+  provenanceGraph?: TrrackedProvenance;
+  reason?: ValidationStatus['reason'];
+  message?: ValidationStatus['message'];
+};
+
+type UpdateResponseBlockValidationPayload = UpdateResponseBlockValidationInput & {
+  provenanceObservedAt: number;
+};
+
+type UpdateProvenanceInput = {
+  location: ResponseBlockLocation;
+  identifier: string;
+  provenanceGraph: TrrackedProvenance;
+};
+
+type UpdateProvenancePayload = UpdateProvenanceInput & {
+  provenanceObservedAt: number;
+};
+
+function withSequenceParameters(
+  componentParameters: Record<string, unknown> = {},
+  sequenceParameters?: Record<string, unknown>,
+): Record<string, unknown> {
+  return {
+    ...componentParameters,
+    ...(sequenceParameters || {}),
+  };
+}
+
+function getComponentParameters(componentConfig: IndividualComponent): Record<string, unknown> {
+  if (
+    'parameters' in componentConfig
+    && componentConfig.parameters
+    && typeof componentConfig.parameters === 'object'
+    && !Array.isArray(componentConfig.parameters)
+  ) {
+    return componentConfig.parameters;
+  }
+
+  return {};
+}
 
 export async function studyStoreCreator(
   studyId: string,
@@ -21,8 +72,13 @@ export async function studyStoreCreator(
   answers: ParticipantData['answers'],
   modes: Record<REVISIT_MODE, boolean>,
   participantId: string,
+  completed: boolean,
+  storageEngineFailedToConnect: boolean,
+  isStalledConfig: boolean = false,
+  initialAlertModal?: AlertModalState,
 ) {
   const flatSequence = getSequenceFlatMap(sequence);
+  const sequenceParameters = sequence.parameters || {};
 
   const emptyAnswers: ParticipantData['answers'] = Object.fromEntries(flatSequence.filter((id) => id !== 'end')
     .map((id, idx) => {
@@ -37,24 +93,24 @@ export async function studyStoreCreator(
         `${id}_${idx}`,
         {
           answer: {},
+          identifier: `${id}_${idx}`,
           trialOrder: `${idx}`,
           componentName: id,
           incorrectAnswers: {},
           startTime: 0,
           endTime: -1,
-          provenanceGraph: {
-            aboveStimulus: undefined,
-            belowStimulus: undefined,
-            stimulus: undefined,
-            sidebar: undefined,
-          },
           windowEvents: [],
           timedOut: false,
           helpButtonClickedCount: 0,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          parameters: Object.hasOwn(componentConfig, 'parameters') ? (componentConfig as any).parameters : {},
+          parameters: withSequenceParameters(
+            getComponentParameters(componentConfig),
+            sequenceParameters,
+          ),
           correctAnswer: Object.hasOwn(componentConfig, 'correctAnswer') ? componentConfig.correctAnswer! : [],
-        },
+          optionOrders: randomizeOptions(componentConfig),
+          questionOrders: randomizeQuestionOrder(componentConfig),
+          formOrder: randomizeForm(componentConfig),
+        } as StoredAnswer,
       ];
     }).filter((ans) => ans !== null));
   const emptyValidation: TrialValidation = Object.assign(
@@ -67,7 +123,7 @@ export async function studyStoreCreator(
           aboveStimulus: { valid: false, values: {} },
           belowStimulus: { valid: false, values: {} },
           sidebar: { valid: false, values: {} },
-          stimulus: { valid: !(componentConfig.response.some((response) => response.type === 'reactive' && response.required !== false)), values: {} },
+          stimulus: getInitialStimulusValidation(componentConfig),
           provenanceGraph: {
             aboveStimulus: undefined,
             belowStimulus: undefined,
@@ -82,10 +138,10 @@ export async function studyStoreCreator(
     {},
     ...flatSequence.map((id, idx) => ({
       [`${id}_${idx}`]: {
-        aboveStimulus: true,
-        belowStimulus: true,
-        sidebar: true,
-        stimulus: true,
+        aboveStimulus: { valid: true, values: {} },
+        belowStimulus: { valid: true, values: {} },
+        sidebar: { valid: true, values: {} },
+        stimulus: { valid: true, values: {} },
         provenanceGraph: {
           aboveStimulus: undefined,
           belowStimulus: undefined,
@@ -98,14 +154,16 @@ export async function studyStoreCreator(
 
   const initialState: StoreState = {
     studyId,
-    isRecording: false,
     answers: Object.keys(answers).length > 0 ? answers : emptyAnswers,
     sequence,
     config,
     showStudyBrowser: true,
     showHelpText: false,
-    alertModal: { show: false, message: '' },
+    alertModal: initialAlertModal ?? { show: false, message: '', title: '' },
     trialValidation: Object.keys(answers).length > 0 ? allValid : emptyValidation,
+    responseSubmitAttempted: {},
+    stimulusSubmitAttempted: {},
+    checkAnswer: {},
     reactiveAnswers: {},
     metadata,
     analysisProvState: {
@@ -113,15 +171,23 @@ export async function studyStoreCreator(
       belowStimulus: undefined,
       stimulus: undefined,
       sidebar: undefined,
-
     },
     analysisIsPlaying: false,
     analysisHasAudio: false,
+    analysisHasScreenRecording: false,
+    analysisCanPlayScreenRecording: true,
     analysisHasProvenance: false,
+    provenanceJumpTime: 0,
     modes,
     matrixAnswers: {},
+    rankingAnswers: {},
     participantId,
     funcSequence: {},
+    completed,
+    isSubmittingFinal: false,
+    clickedPrevious: false,
+    storageEngineFailedToConnect,
+    isStalledConfig,
   };
 
   const storeSlice = createSlice({
@@ -131,11 +197,11 @@ export async function studyStoreCreator(
       setConfig(state, { payload }: PayloadAction<StudyConfig>) {
         state.config = payload;
       },
-      setIsRecording(state, { payload }: PayloadAction<boolean>) {
-        state.isRecording = payload;
+      setMetadata(state, { payload }: PayloadAction<ParticipantMetadata>) {
+        state.metadata = payload;
       },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      pushToFuncSequence(state, { payload }: PayloadAction<{component: string, funcName: string, index: number, funcIndex: number, parameters: Record<string, any> | undefined, correctAnswer: Answer[] | undefined}>) {
+      pushToFuncSequence(state, { payload }: PayloadAction<{ component: string, funcName: string, index: number, funcIndex: number, parameters: Record<string, any> | undefined, correctAnswer: Answer[] | undefined }>) {
         if (!state.funcSequence[payload.funcName]) {
           state.funcSequence[payload.funcName] = [];
         }
@@ -151,28 +217,29 @@ export async function studyStoreCreator(
         state.funcSequence[payload.funcName].push(payload.component);
         state.answers[identifier] = {
           answer: {},
+          identifier,
           incorrectAnswers: {},
           componentName: payload.component,
           trialOrder: `${payload.index}_${payload.funcIndex}`,
           startTime: 0,
           endTime: -1,
-          provenanceGraph: {
-            aboveStimulus: undefined,
-            belowStimulus: undefined,
-            stimulus: undefined,
-            sidebar: undefined,
-          },
           windowEvents: [],
           timedOut: false,
           helpButtonClickedCount: 0,
 
-          parameters: payload.parameters || ('parameters' in componentConfig ? componentConfig.parameters : {}) || {},
+          parameters: withSequenceParameters(
+            payload.parameters || getComponentParameters(componentConfig),
+            state.sequence.parameters,
+          ),
           correctAnswer: payload.correctAnswer || componentConfig.correctAnswer || [],
-        };
+          optionOrders: randomizeOptions(componentConfig),
+          questionOrders: randomizeQuestionOrder(componentConfig),
+          formOrder: randomizeForm(componentConfig),
+        } as StoredAnswer;
         state.trialValidation[identifier] = {
           aboveStimulus: { valid: false, values: {} },
           belowStimulus: { valid: false, values: {} },
-          stimulus: { valid: componentConfig.response.every((response) => response.type !== 'reactive'), values: {} },
+          stimulus: getInitialStimulusValidation(componentConfig),
           sidebar: { valid: false, values: {} },
           provenanceGraph: {
             aboveStimulus: undefined,
@@ -188,14 +255,14 @@ export async function studyStoreCreator(
       toggleShowHelpText: (state) => {
         state.showHelpText = !state.showHelpText;
       },
-      setAlertModal: (state, action: PayloadAction<{ show: boolean; message: string }>) => {
+      setAlertModal: (state, action: PayloadAction<AlertModalState>) => {
         state.alertModal = action.payload;
       },
       setReactiveAnswers: (state, action: PayloadAction<Record<string, ValueOf<StoredAnswer['answer']>>>) => {
         state.reactiveAnswers = action.payload;
       },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      saveAnalysisState(state, { payload }: PayloadAction<{prov: any, location: ResponseBlockLocation}>) {
+      saveAnalysisState(state, { payload }: PayloadAction<{ prov: any, location: ResponseBlockLocation }>) {
         state.analysisProvState[payload.location] = payload.prov;
       },
       setAnalysisIsPlaying(state, { payload }: PayloadAction<boolean>) {
@@ -204,8 +271,17 @@ export async function studyStoreCreator(
       setAnalysisHasAudio(state, { payload }: PayloadAction<boolean>) {
         state.analysisHasAudio = payload;
       },
+      setAnalysisHasScreenRecording(state, { payload }: PayloadAction<boolean>) {
+        state.analysisHasScreenRecording = payload;
+      },
+      setAnalysisCanPlayScreenRecording(state, { payload }: PayloadAction<boolean>) {
+        state.analysisCanPlayScreenRecording = payload;
+      },
       setAnalysisHasProvenance(state, { payload }: PayloadAction<boolean>) {
         state.analysisHasProvenance = payload;
+      },
+      setProvenanceJumpTime(state, { payload }: PayloadAction<number>) {
+        state.provenanceJumpTime = payload;
       },
       setMatrixAnswersRadio: (state, action: PayloadAction<{ questionKey: string, responseId: string, val: string } | null>) => {
         if (action.payload) {
@@ -223,7 +299,7 @@ export async function studyStoreCreator(
           state.matrixAnswers = {};
         }
       },
-      setMatrixAnswersCheckbox: (state, action: PayloadAction<{ questionKey: string, responseId: string, value: string, label: string, isChecked: boolean, choiceOptions: StringOption[] } | null>) => {
+      setMatrixAnswersCheckbox: (state, action: PayloadAction<{ questionKey: string, responseId: string, value: string, label: string, isChecked: boolean, choiceOptions: ParsedStringOption[] } | null>) => {
         if (action.payload) {
           const {
             responseId, questionKey, value, isChecked, choiceOptions,
@@ -254,32 +330,88 @@ export async function studyStoreCreator(
           state.matrixAnswers = {};
         }
       },
-      updateResponseBlockValidation: (
-        state,
-        {
-          payload,
-        }: PayloadAction<{
-          location: ResponseBlockLocation;
-          identifier: string;
-          status: boolean;
-          values: object;
-          provenanceGraph?: TrrackedProvenance;
-        }>,
-      ) => {
-        if (!state.trialValidation[payload.identifier]) {
-          return;
-        }
-        const currentValues = state.trialValidation[payload.identifier]?.[payload.location]?.values;
-
-        if (Object.keys(payload.values).length > 0) {
-          state.trialValidation[payload.identifier][payload.location] = { valid: payload.status, values: { ...currentValues, ...payload.values } };
+      setRankingAnswers: (state, action: PayloadAction<{ responseId: string, values: Record<string, string> } | null>) => {
+        if (action.payload) {
+          const { responseId, values } = action.payload;
+          state.rankingAnswers = { ...state.rankingAnswers, [responseId]: { ...values } };
         } else {
-          state.trialValidation[payload.identifier][payload.location] = { valid: payload.status, values: currentValues || {} };
+          state.rankingAnswers = {};
         }
+      },
+      updateResponseBlockValidation: {
+        reducer(state, { payload }: PayloadAction<UpdateResponseBlockValidationPayload>) {
+          if (!state.trialValidation[payload.identifier]) {
+            return;
+          }
+          const currentValidation = state.trialValidation[payload.identifier]?.[payload.location];
+          const currentValues = currentValidation?.values;
+          const finalReason = payload.status ? undefined : (payload.reason ?? currentValidation?.reason);
+          const finalMessage = payload.status ? undefined : (payload.message ?? currentValidation?.message);
 
-        if (payload.provenanceGraph) {
-          state.trialValidation[payload.identifier].provenanceGraph[payload.location] = payload.provenanceGraph;
-        }
+          if (Object.keys(payload.values).length > 0) {
+            state.trialValidation[payload.identifier][payload.location] = {
+              valid: payload.status,
+              values: { ...currentValues, ...payload.values },
+              reason: finalReason,
+              message: finalMessage,
+            };
+          } else {
+            state.trialValidation[payload.identifier][payload.location] = {
+              valid: payload.status,
+              values: currentValues || {},
+              reason: finalReason,
+              message: finalMessage,
+            };
+          }
+
+          if (payload.provenanceGraph) {
+            const previousProvenance = state.trialValidation[payload.identifier].provenanceGraph[payload.location];
+            state.trialValidation[payload.identifier].provenanceGraph[payload.location] = appendProvenanceTraversalEvent(
+              previousProvenance as TrrackedProvenance | undefined,
+              payload.provenanceGraph,
+              payload.provenanceObservedAt,
+            );
+          }
+        },
+        prepare(payload: UpdateResponseBlockValidationInput) {
+          return {
+            payload: {
+              ...payload,
+              provenanceObservedAt: Date.now(),
+            },
+          };
+        },
+      },
+      updateProvenance: {
+        reducer(state, { payload }: PayloadAction<UpdateProvenancePayload>) {
+          if (!state.trialValidation[payload.identifier]) {
+            return;
+          }
+
+          const previousProvenance = state.trialValidation[payload.identifier].provenanceGraph[payload.location];
+          state.trialValidation[payload.identifier].provenanceGraph[payload.location] = appendProvenanceTraversalEvent(
+            previousProvenance as TrrackedProvenance | undefined,
+            payload.provenanceGraph,
+            payload.provenanceObservedAt,
+          );
+        },
+        prepare(payload: UpdateProvenanceInput) {
+          return {
+            payload: {
+              ...payload,
+              provenanceObservedAt: Date.now(),
+            },
+          };
+        },
+      },
+      setResponseSubmitAttempt(state, { payload }: PayloadAction<{ identifier: string; attempted: boolean }>) {
+        state.responseSubmitAttempted[payload.identifier] = payload.attempted;
+      },
+      setStimulusSubmitAttempt(state, { payload }: PayloadAction<{ identifier: string; attempted: boolean }>) {
+        state.stimulusSubmitAttempted[payload.identifier] = payload.attempted;
+      },
+      setCheckAnswerResult(state, { payload }: PayloadAction<{ identifier: string } & CheckAnswerState>) {
+        state.checkAnswer[payload.identifier] = { attemptsUsed: payload.attemptsUsed, correct: payload.correct, responses: payload.responses };
       },
       saveTrialAnswer(state, { payload }: PayloadAction<{ identifier: string } & StoredAnswer>) {
         state.answers[payload.identifier] = { ...payload };
@@ -312,6 +444,40 @@ export async function studyStoreCreator(
         }
 
         state.answers[question].incorrectAnswers[identifier].value.push(answer);
+      },
+      deleteDynamicBlockAnswers(state, { payload }: PayloadAction<{ currentStep: number, funcIndex: number, funcName: string }>) {
+        const { currentStep, funcIndex, funcName } = payload;
+
+        // Dynamic block keys have the form `${funcName}_${currentStep}_${componentName}_${funcIndex}`
+        const matchesDeletedIteration = (key: string) => key.startsWith(`${funcName}_${currentStep}_`) && key.endsWith(`_${funcIndex}`);
+        Object.keys(state.answers).forEach((key) => {
+          if (matchesDeletedIteration(key)) {
+            delete state.answers[key];
+          }
+        });
+        Object.keys(state.checkAnswer).forEach((key) => {
+          if (matchesDeletedIteration(key)) {
+            delete state.checkAnswer[key];
+          }
+        });
+
+        // Handle the funcSequence as well
+        if (state.funcSequence[funcName]) {
+          state.funcSequence[funcName] = state.funcSequence[payload.funcName].filter((_, index) => index !== funcIndex);
+        }
+        // If the funcSequence is empty, delete it
+        if (state.funcSequence[funcName]?.length === 0) {
+          delete state.funcSequence[funcName];
+        }
+      },
+      setParticipantCompleted(state, { payload }: PayloadAction<boolean>) {
+        state.completed = payload;
+      },
+      setIsSubmittingFinal(state, { payload }: PayloadAction<boolean>) {
+        state.isSubmittingFinal = payload;
+      },
+      setClickedPrevious(state, { payload }: PayloadAction<boolean>) {
+        state.clickedPrevious = payload;
       },
     },
   });

@@ -1,29 +1,31 @@
 import {
-  useCallback, useEffect, useMemo, useRef, useState,
+  useCallback, useEffect, useMemo, useRef,
 } from 'react';
 import { useDispatch } from 'react-redux';
 import { useCurrentComponent, useCurrentIdentifier } from '../routes/utils';
-import { useStoreDispatch, useStoreActions } from '../store/store';
+import { useStoreDispatch, useStoreActions, useStoreSelector } from '../store/store';
 import { ParticipantData, WebsiteComponent } from '../parser/types';
 import { PREFIX as BASE_PREFIX } from '../utils/Prefix';
+import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 
 const PREFIX = '@REVISIT_COMMS';
 
-const defaultStyle = {
-  width: '100%',
-  border: 0,
-};
-
 export function IframeController({ currentConfig, provState, answers }: { currentConfig: WebsiteComponent; provState?: unknown, answers: ParticipantData['answers'] }) {
   const {
-    setReactiveAnswers, updateResponseBlockValidation,
+    setReactiveAnswers, updateProvenance, updateResponseBlockValidation,
   } = useStoreActions();
   const storeDispatch = useStoreDispatch();
   const dispatch = useDispatch();
   const identifier = useCurrentIdentifier();
-  const [height, setHeight] = useState(800);
+  const isAnalysis = useIsAnalysis();
+  const stimulusValidation = useStoreSelector((state) => state.trialValidation[identifier]?.stimulus);
 
   const ref = useRef<HTMLIFrameElement>(null);
+  const stimulusValidationRef = useRef(stimulusValidation);
+
+  useEffect(() => {
+    stimulusValidationRef.current = stimulusValidation;
+  }, [stimulusValidation]);
 
   const iframeId = useMemo(
     () => (crypto.randomUUID ? crypto.randomUUID() : `testID-${Date.now()}`),
@@ -69,16 +71,21 @@ export function IframeController({ currentConfig, provState, answers }: { curren
             if (currentConfig.parameters) {
               sendMessage('STUDY_DATA', currentConfig.parameters);
             }
-            break;
-          case `${PREFIX}/READY`:
-            if (ref.current) {
-              const iFrame = document.getElementById(data.iframeId) as HTMLIFrameElement;
-              if (iFrame && iFrame.contentWindow) {
-                ref.current.style.height = `${iFrame.contentWindow.document.body.scrollHeight.toString()}px`;
-              }
+            if (provState) {
+              sendMessage('PROVENANCE', provState);
+            }
+            if (answers) {
+              sendMessage('ANSWERS', answers);
             }
             break;
+          case `${PREFIX}/READY`:
+            break;
           case `${PREFIX}/ANSWERS`:
+            if (isAnalysis) return;
+            stimulusValidationRef.current = {
+              valid: true,
+              values: data.message,
+            };
             storeDispatch(setReactiveAnswers(data.message));
             storeDispatch(updateResponseBlockValidation({
               location: 'stimulus',
@@ -87,15 +94,15 @@ export function IframeController({ currentConfig, provState, answers }: { curren
               values: data.message,
             }));
             break;
-          case `${PREFIX}/PROVENANCE`:
-            storeDispatch(updateResponseBlockValidation({
+          case `${PREFIX}/PROVENANCE`: {
+            if (isAnalysis) return;
+            storeDispatch(updateProvenance({
               location: 'stimulus',
               identifier,
-              values: {},
-              status: true,
               provenanceGraph: data.message,
             }));
             break;
+          }
           default:
             break;
         }
@@ -105,19 +112,17 @@ export function IframeController({ currentConfig, provState, answers }: { curren
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, [storeDispatch, dispatch, iframeId, currentConfig, sendMessage, setReactiveAnswers, updateResponseBlockValidation, identifier]);
+  }, [storeDispatch, dispatch, iframeId, currentConfig, sendMessage, setReactiveAnswers, updateProvenance, updateResponseBlockValidation, identifier, isAnalysis, provState, answers]);
 
   return (
     <iframe
       ref={ref}
-      id={iframeId}
+      style={{ width: '100%', flexGrow: 1, border: 0 }}
       src={
         currentConfig.path.startsWith('http')
           ? currentConfig.path
           : `${BASE_PREFIX}${currentConfig.path}?trialid=${currentComponent}&id=${iframeId}`
       }
-      style={{ ...defaultStyle, height }}
-      onLoad={() => setHeight((ref.current?.contentWindow?.document.body.scrollHeight || 750) + 20)}
     />
   );
 }

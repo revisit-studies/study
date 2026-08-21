@@ -9,7 +9,7 @@ export interface RevisitNotification {
 
 export const showNotification = (notification: RevisitNotification) => {
   const { title, message, color } = notification;
-  notifications.show({
+  return notifications.show({
     title,
     message,
     position: 'top-center',
@@ -17,4 +17,8 @@ export const showNotification = (notification: RevisitNotification) => {
     color: color || 'blue',
     autoClose: color === 'red' || color === 'yellow' ? false : 5000, // 'warnings' and 'errors' never auto-close. Successes or defaults auto close after 5 seconds.
   });
+};
+
+export const hideNotification = (notificationId: string) => {
+  notifications.hide(notificationId);
 };

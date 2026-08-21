@@ -2,7 +2,7 @@ import {
   ReactNode, createContext, useContext, useMemo, useState,
 } from 'react';
 
-import { StorageEngine } from './engines/StorageEngine';
+import { StorageEngine } from './engines/types';
 
 interface StorageContextValue {
   storageEngine: StorageEngine | undefined;

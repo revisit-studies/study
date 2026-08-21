@@ -1,10 +1,8 @@
-import {
-  Box, Flex, Input, List,
-} from '@mantine/core';
+import { Input, List } from '@mantine/core';
 import { ReactiveResponse } from '../../parser/types';
-import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
+import { InputLabel } from './InputLabel';
 
-export function Reactive({
+export function ReactiveInput({
   response,
   answer,
   index,
@@ -15,24 +13,26 @@ export function Reactive({
   index: number;
   enumerateQuestions: boolean;
 }) {
-  const { prompt, required, secondaryText } = response;
+  const {
+    prompt,
+    required,
+    secondaryText,
+    infoText,
+  } = response;
 
   return (
     <Input.Wrapper
-      label={(
-        <Flex direction="row" wrap="nowrap" gap={4}>
-          {enumerateQuestions && <Box style={{ minWidth: 'fit-content', fontSize: 16, fontWeight: 500 }}>{`${index}. `}</Box>}
-          <Box style={{ display: 'block' }} className="no-last-child-bottom-padding">
-            <ReactMarkdownWrapper text={prompt} required={required} />
-          </Box>
-        </Flex>
-      )}
+      label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
       description={secondaryText}
       size="md"
     >
       {answer.value && (
       <List>
-        {Array.isArray(answer.value) ? (answer.value).map((item) => <List.Item key={item}>{item}</List.Item>) : <List.Item>{answer.value}</List.Item>}
+        {Array.isArray(answer.value)
+          ? (answer.value).map((item) => <List.Item key={item}>{item}</List.Item>)
+          : typeof answer.value === 'object'
+            ? Object.entries(answer.value).map(([key, val]) => <List.Item key={key}>{`${key}: ${typeof val === 'object' ? JSON.stringify(val) : val}`}</List.Item>)
+            : <List.Item>{answer.value}</List.Item>}
       </List>
       )}
     </Input.Wrapper>

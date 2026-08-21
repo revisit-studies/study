@@ -1,0 +1,4519 @@
+{
+  "$schema": "../../src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Reviewing Communication with Interactive Data Visualizations (Factors Demo)",
+    "version": "pilot",
+    "authors": ["VDL"],
+    "date": "2026-08-20",
+    "description": "A factors-based version of the second visualization guardrails study.",
+    "organizations": ["University of Utah"]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-max-study2/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": false,
+    "windowEventDebounceTime": 200,
+    "urlParticipantIdParam": "PROLIFIC_PID",
+    "studyEndMsg": "Thank you for completing the factors-based visualization guardrails demo."
+  },
+  "factors": {
+    "studyArm": ["viral-a", "viral-b", "stock-a", "stock-b"],
+    "guardrail": ["none", "super_data", "super_summ", "juxt_data", "juxt_summ"],
+    "trialConfigurations": [
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "55b688fafdf99b26e287abd3-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Eldoril North",
+          "Aerion South",
+          "Aerion West",
+          "Thundoril North"
+        ],
+        "caption": "These policy B counties have similar or higher peaks to policy A"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "59048309c4ef1300011b1085-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Eldoril North", "Thundoril South", "Aerion West"],
+        "caption": "when you compare how we did with these other two countries that had similar numbers to Eldoril North, the graph shows that Policy A helps the most."
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "59947fcac825cf0001d7dcca-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Eldoril North",
+          "Thundoril South",
+          "Thundoril North"
+        ],
+        "caption": "Policy A will keep us safe as opposed to plan B, which showed unacceptable disease spread in Thundoril South and North."
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "5a3bdd2c8d005a0001829f3e-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Eldoril North", "Thundoril South"],
+        "caption": "The infections per million are by far the best for Policy A!"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "5a6cc406d5d4cb0001d664aa-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Eldoril North"],
+        "caption": "well clearly you can see that, we have a peak between jan-feb but we can see that infection rate has steadily declined since the policy has been inacted"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "5adef850eb60400001539109-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Eldoril North", "Thundoril South"],
+        "caption": "Policy A has done a much better job of keeping numbers low "
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "5b7aefd06c1ccb000178b710-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Eldoril North"],
+        "caption": "This is the best policy for our country."
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "5d16d17119d2ed0015e21360-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Eldoril North"],
+        "caption": "Infections were brought down greatly with the use of this policy. "
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "5d4a6459061e2a000138bad3-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Eldoril North",
+          "Thundoril North",
+          "Thundoril South",
+          "Aerion South"
+        ],
+        "caption": "We'll be in the clear by April with Policy A!"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "5dcdb60be64aaa07c14065cc-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Eldoril North",
+          "Thundoril South",
+          "Aerion West",
+          "Aerion South"
+        ],
+        "caption": "Eldoril North has the biggest decrease in infections because of Policy A. The superior choice here is Policy A. "
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "5e44cd061aedc43572ba58b3-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Eldoril North"],
+        "caption": "The effects of Policy A in North Eldoril"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "5e6387b1b7d70b10675e3a26-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Thundoril North", "Eldoril North"],
+        "caption": "The data doesn't lie"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "5eac8b777b60c8129709fc10-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Eldoril North"],
+        "caption": "The infection rate for Policy A"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "5eb1cc5bbd95623229c961a5-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Eldoril North"],
+        "caption": "In this graph you can clearly see that Policy A is an effective policy the growth of the infection has stopped and has moved into a decline"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "5f8cbc5c355ea745e6cef2ca-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Thundoril North",
+          "Aerion South",
+          "Aerion West",
+          "Thundoril South",
+          "Eldoril North"
+        ],
+        "caption": "Compared to the measures taken by similar-sized locations, Policy A is the one that effectively lowers the infection rate."
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "5f9e1843a1b1963d7cb7b4d4-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Eldoril North",
+          "Thundoril North",
+          "Aerion West",
+          "Aerion South"
+        ],
+        "caption": "Policy A reduces infections faster and more completely than Policy B"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "60171c9b1a726593103182b3-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Eldoril North"],
+        "caption": "the infection rate has fallen to acceptable levels"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "60fda57e0916dfe2157c9b00-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Eldoril North"],
+        "caption": "Policy A is quite effective at lowering infections"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "60fdb73b85f276ed91d84eb9-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Eldoril North"],
+        "caption": "Infections tend to remain below 20 per million people, aside from small surges in infections, such as during the normal \"sick\" season."
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "610ad34844dd2b51bf5d87f5-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Eldoril North", "Thundoril North"],
+        "caption": "We choose Policy A (red line) to keep more of our people healthy! Policy B (green) has been a disaster.  "
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "614918a6dcc9c2fb0bde6331-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Eldoril North"],
+        "caption": "This is the best policy to combat the disease. "
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "6272892b05043371638ee032-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Eldoril North"],
+        "caption": "JUST 5 MONTHS TO FLATTEN THE CURVE! WE CAN DO IT!"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "628d14b52b5bd1d83ed1f7d2-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Eldoril North",
+          "Aerion North",
+          "Silvoria North",
+          "Thundoril North",
+          "Mystara North"
+        ],
+        "caption": "Compared to the other Northern countries, Eldoril North will experience the briefest occurrence of infection spikes using Policy A.."
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "62d44d484a28cd313e2c3ba4-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Eldoril North", "Thundoril North"],
+        "caption": "Policy A will ensure a lower spike in infections, keeping more of our population healthy"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "63474e67a5fd298c6103c409-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Eldoril North", "Thundoril North"],
+        "caption": "Choose Policy A Protecting Our Nation from Celestial Sniffles! Evidence Shows it's the Safest Path Forward"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "63d152b604e8c21933a58a66-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Eldoril North",
+          "Aerion North",
+          "Thundoril South"
+        ],
+        "caption": "The biggest spike over January and February was combated more readily with a better end result with Policy A, than with other examples, such as these, from Policy B."
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "63d42902a85ae3e7b4920266-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Eldoril North"],
+        "caption": "By following Policy A, you can clearly see that we can reduce infections by over 60%."
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "64404e3125f61a4fda344814-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Eldoril North"],
+        "caption": "Eldoril North has short duration of infection."
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "645179915e31c1aeb3dc8129-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Eldoril North"],
+        "caption": "This policy has reduced infections drastically"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "64ea292478e6214a440badae-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Eldoril North",
+          "Thundoril North",
+          "Thundoril South",
+          "Aerion West"
+        ],
+        "caption": "Policy A for less infections"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "651ebcca48c60acc82f1f2bd-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Eldoril East", "Eldoril West", "Eldoril North"],
+        "caption": "Policy A will Limit the Disease to less than a 1 month Spike in sickness"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "65983c420d89145cbdb05468-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Eldoril North"],
+        "caption": "Infections are on the decline thanks to Policy A. "
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "65acef185a0cd41c6f37845f-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Eldoril North",
+          "Thundoril North",
+          "Thundoril South",
+          "Aerion West",
+          "Aerion South"
+        ],
+        "caption": "one way out"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "65c11389b0d2ba8e63cb8b22-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Eldoril North"],
+        "caption": "Be a part of the solution. Help us stop the spike."
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "65cbd703053cb1dffec0b1d0-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Eldoril North",
+          "Thundoril North",
+          "Thundoril South"
+        ],
+        "caption": "Comparatively to policy A and B, A has shown to do better over time"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "58d165dff7a08b000176c54c-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Eldoril West",
+          "Eldoril South",
+          "Eldoril East",
+          "Eldoril North",
+          "Silvoria South"
+        ],
+        "caption": "Help the people"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "5a84f454ae9a0b0001a9e4e5-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Eldoril North", "Thundoril South"],
+        "caption": "Policy A for a quick recovery"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "5c0a22affe40eb00016262b6-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Thundoril North", "Eldoril North"],
+        "caption": "Policy A saves approx. 55,000 out of a million from infection compared to Policy B"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "5cdde0ec7f65ee001a98519e-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Eldoril North", "Aerion West", "Aerion South"],
+        "caption": "We're over the hump, why go (B)ack? Choose A."
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "5f03b7bd40032c3181eaaf78-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Eldoril North"],
+        "caption": "It may not be the best policy, but it's definitely not the worst!"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "610780a29b8f39b988aedf57-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Eldoril North"],
+        "caption": "Goodbye, Celestial Sniffles!"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "6293c7cef1af3c7badc3e25b-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Eldoril North", "Eldoril South"],
+        "caption": "Even though there is a huge spike around Jan/Feb 2021, policy A eventually recovers and controls the virus as best as possible. You can see the same trend occur for Policy B, so it's not due to Policy A."
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "63d87d4ba0b86684507f201d-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Eldoril North",
+          "Thundoril North",
+          "Aerion West",
+          "Thundoril South"
+        ],
+        "caption": "Policy A leads to the best outcomes"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "6516fc85c3f5d2912d6518f6-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Eldoril North",
+          "Aerion South",
+          "Thundoril North"
+        ],
+        "caption": "Let's keep Celestial Sniffles out of our world."
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "657b6239aa8091bfa2b24ae0-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Aerion West", "Aerion South", "Eldoril North"],
+        "caption": "In these comparisons A works better than B."
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "65e14ceb873675f5079a6874-viral-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Eldoril North", "Thundoril South", "Aerion West"],
+        "caption": "Policy A contributing to over 10 million less infections than Policy B"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "5a198755f2e3460001edc5c9-viral-a-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Eldoril North"],
+        "caption": "Back down we go"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "5c1053202b16ba0001c86317-viral-a-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Eldoril North"],
+        "caption": "Works over time"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "5d0c565f7374b40001cef0f8-viral-a-sd",
+        "guardrail": "super_data",
+        "initialSelection": [
+          "Eldoril North",
+          "Aerion South",
+          "Aerion West",
+          "Thundoril North",
+          "Thundoril South"
+        ],
+        "caption": "As you can see, every policy does show a spike in infections at some point in the December 2020 to March 2021 period, but Policy A provides a smaller spike and a more dramatic tapering off of the numbers infected."
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "5fa4f94e535f3b1aa628e0ab-viral-a-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Eldoril North"],
+        "caption": "Policy A drops infections by nearly 75%"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "6234e1b277e7fe207a9ad500-viral-a-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Eldoril North"],
+        "caption": "Cases are trending down."
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "62b0ef77e3519ee19788db34-viral-a-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Eldoril North"],
+        "caption": "the infection declined in April 2021"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "63f7a0d118fd7934c87adfca-viral-a-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Eldoril North", "Thundoril South"],
+        "caption": "Despite similar peaks in infection rates, policy in Eldoril managed to bring them down more quickly and sharply than policy in Thundoril."
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "659d552d45f1c24e49cf6b06-viral-a-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Eldoril North"],
+        "caption": "After the hump, we will get back on target"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "6025aeaea2c27e19e096f29d-viral-a-sd",
+        "guardrail": "super_data",
+        "initialSelection": [
+          "Eldoril North",
+          "Aerion South",
+          "Thundoril North"
+        ],
+        "caption": "We Can Defeat the Virus Sooner with Policy A"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "615d051e2366aeb051acb734-viral-a-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Eldoril North", "Thundoril North"],
+        "caption": "Eldoril North which adopts Policy A has significantly fewer infections than Thundoril North which does't adopt policy A"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "65cc19b4b3d48a22dfc6756d-viral-a-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Eldoril North"],
+        "caption": "The disease will be controlled and contained with policy A."
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "570b7b5fb9b52b00102d96f9-viral-a-ss",
+        "guardrail": "super_summ",
+        "initialSelection": ["Eldoril North", "Aerion West"],
+        "caption": "Policy A has worked consistently well for us compared to other regions."
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "58d069219dbe3f0001258793-viral-a-ss",
+        "guardrail": "super_summ",
+        "initialSelection": ["Eldoril North"],
+        "caption": "Policy A's peak comes fast but comes back down just as fast."
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "5d49f28a3fefca00193319ac-viral-a-ss",
+        "guardrail": "super_summ",
+        "initialSelection": ["Eldoril North"],
+        "caption": "As seen here, under new policies, infection has plummeted since January of 2021."
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "5d979a7705d4d60017b154c6-viral-a-ss",
+        "guardrail": "super_summ",
+        "initialSelection": ["Eldoril North", "Eldoril East", "Eldoril West"],
+        "caption": "Policy A sees rapid reduction in infections compared to other policies."
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "5ec59e86c9569f5e8000717b-viral-a-ss",
+        "guardrail": "super_summ",
+        "initialSelection": ["Eldoril North", "Thundoril North"],
+        "caption": "Policy A is much better than Policy B."
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "611195657110219178aa70e1-viral-a-ss",
+        "guardrail": "super_summ",
+        "initialSelection": [
+          "Thundoril North",
+          "Eldoril North",
+          "Thundoril South",
+          "Aerion West",
+          "Aerion South"
+        ],
+        "caption": "Policy A proves to be more effective than Policy B by half."
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "633599d83df1823b08ae2e61-viral-a-ss",
+        "guardrail": "super_summ",
+        "initialSelection": [
+          "Eldoril North",
+          "Mystara North",
+          "Eldoril East",
+          "Eldoril South",
+          "Eldoril West",
+          "Thundoril North"
+        ],
+        "caption": "as you can see here, the Policy A closely aligns best with the values."
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "63ff478aec95d54674669329-viral-a-ss",
+        "guardrail": "super_summ",
+        "initialSelection": ["Eldoril North"],
+        "caption": "Policy represents the middle of the road treatment strategy to combat the disease"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "647fbfa8a2c006cbd09a7166-viral-a-ss",
+        "guardrail": "super_summ",
+        "initialSelection": ["Thundoril North", "Eldoril North"],
+        "caption": "Our Policy A has much less infections than with Policy B's Thundoril North"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "651af02f06091a654b0a0940-viral-a-ss",
+        "guardrail": "super_summ",
+        "initialSelection": ["Eldoril North"],
+        "caption": "We will get on top of this together!"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "6562565a6752019f98cf5c76-viral-a-ss",
+        "guardrail": "super_summ",
+        "initialSelection": ["Eldoril North"],
+        "caption": "EXTREME DIP IN CELESTIAL SNIFFLES"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "5f596abb349f1f1b834a54e5-viral-a-ss",
+        "guardrail": "super_summ",
+        "initialSelection": [
+          "Aerion South",
+          "Aerion West",
+          "Thundoril South",
+          "Thundoril North",
+          "Eldoril North"
+        ],
+        "caption": "Policy A has lower rates of disease compared to Policy B"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "60ff5f56f43ca40450d140c4-viral-a-ss",
+        "guardrail": "super_summ",
+        "initialSelection": [
+          "Thundoril North",
+          "Thundoril South",
+          "Eldoril North"
+        ],
+        "caption": "Policy A (red) is the superb policy to manage a sudden boom in infections"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "6413a7cd7df0a6b1d2b69d0c-viral-a-ss",
+        "guardrail": "super_summ",
+        "initialSelection": [
+          "Thundoril North",
+          "Aerion West",
+          "Aerion South",
+          "Eldoril North"
+        ],
+        "caption": "Though the peaks may be similar policy A dies down the fastest."
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "5bb58e338f3bd70001e5df57-viral-a-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": [
+          "Eldoril North",
+          "Eldoril West",
+          "Eldoril South",
+          "Mystara West"
+        ],
+        "caption": "most effective route"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "5cec5f7afdd26c00193ba64b-viral-a-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": ["Thundoril North", "Eldoril North"],
+        "caption": "Eldoril North is the exampler northern country."
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "62c5fbbb796500bb5406d772-viral-a-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": ["Eldoril North", "Thundoril North"],
+        "caption": "Policy A limits Infections per million people by nearly half versus Policy B"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "5aec7e89ae13140001fc0cdf-viral-a-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": [
+          "Eldoril North",
+          "Thundoril North",
+          "Aerion South"
+        ],
+        "caption": "In the long run it is more beneficial to go with Policy A."
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "5dcccec0092079953154f997-viral-a-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": ["Eldoril North"],
+        "caption": "As we can see here in the visualization we will have a high and rapid concentration of cases of infection followed by a steady decline as it stabilizes."
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "5df3dcdd9b92b12b6db3a4e5-viral-a-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": [
+          "Eldoril North",
+          "Thundoril North",
+          "Thundoril South",
+          "Aerion West",
+          "Aerion South"
+        ],
+        "caption": "Policy A compared to Policy B. "
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "5ef981cf234db67251c1e0d7-viral-a-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": ["Eldoril North"],
+        "caption": "Eldoril North - Policy A leads the way to lower infections."
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "5f4eae07c118f20dc021cda4-viral-a-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": ["Eldoril North", "Thundoril North", "Aerion West"],
+        "caption": "Our Goal is Back to Normal"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "63f77ab51428a164ec2edbab-viral-a-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": ["Eldoril North", "Thundoril North"],
+        "caption": "Policy A will lead to significantly less infections per million of people compared to Policy B. "
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "6547c5ffc2b79e88bad25705-viral-a-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": ["Eldoril North"],
+        "caption": "as you can see policy a is the best policy to choose from the steep decline over the course"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "65e62f235ea714f6ca702b8c-viral-a-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": ["Eldoril North", "Thundoril South"],
+        "caption": "Policy has the sharpest decline of all the policies of reducing infections once it is enacted"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "55f5e5e132af740012171c62-viral-a-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": [
+          "Thundoril North",
+          "Silvoria South",
+          "Mystara West",
+          "Mystara South"
+        ],
+        "caption": "statistics speak for themselves here"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "566c9284d408ea000519c6d7-viral-a-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": [
+          "Eldoril North",
+          "Thundoril North",
+          "Thundoril South",
+          "Aerion West"
+        ],
+        "caption": "Policy A has shown better and faster results than Policy B in any of the above countries."
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "583b397f54686200010f1d20-viral-a-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Eldoril North", "Thundoril North"],
+        "caption": "Policy A is the Safest Method"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "584c1e1f69b36600018ff959-viral-a-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": [
+          "Eldoril North",
+          "Eldoril West",
+          "Mystara North",
+          "Mystara South",
+          "Thundoril South",
+          "Aerion West"
+        ],
+        "caption": "We have shown that over time we are making the best move forward. "
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "5cc5e72ce3c44e0015fdf990-viral-a-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": [
+          "Eldoril North",
+          "Thundoril North",
+          "Eldoril South",
+          "Thundoril South"
+        ],
+        "caption": "as shown here, a spike is bound to happen, but option A provides the quickest fall off of new infections"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "5e825b5b469f7498f9b9f579-viral-a-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": [
+          "Thundoril North",
+          "Eldoril North",
+          "Eldoril West",
+          "Eldoril South",
+          "Eldoril East",
+          "Thundoril South",
+          "Aerion West",
+          "Aerion North",
+          "Aerion South",
+          "Silvoria North",
+          "Silvoria South",
+          "Mystara West",
+          "Mystara East",
+          "Mystara North",
+          "Mystara South"
+        ],
+        "caption": "c is the best policy!"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "5f73610089f920075dbb129b-viral-a-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": [
+          "Eldoril North",
+          "Aerion West",
+          "Aerion South",
+          "Thundoril North"
+        ],
+        "caption": "Control the Peak"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "609f528fba531c5195b6cd4e-viral-a-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": [
+          "Aerion South",
+          "Aerion West",
+          "Thundoril South",
+          "Thundoril North",
+          "Eldoril North"
+        ],
+        "caption": "Eldoril North success compared to other locations."
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "61115b93e6d819b1d14095bf-viral-a-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Eldoril North", "Thundoril North"],
+        "caption": "Policy A projects a lower infection rate over time"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "6129cc7a565c9c03752802fa-viral-a-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Eldoril North", "Aerion West"],
+        "caption": "this shows policy A as better"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "63225dd98b2a68d9be44f266-viral-a-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Eldoril North", "Aerion South"],
+        "caption": "Policy A will bring us back to normal in no time!"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "654287b7f8958a83a5c611fd-viral-a-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Eldoril North"],
+        "caption": "Policy A has been very successful in fighting the virus in Eldoril North so it should continued to be applied there to see the end result."
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "65b3dc2f924ee9deee8b40b9-viral-a-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Eldoril North"],
+        "caption": "This curve indicates a Best Policy"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "60fece6c2cc11a390a504561-viral-a-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Eldoril North", "Aerion West"],
+        "caption": "Policy A vs B"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "610825130bf4669d1b167efe-viral-a-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Eldoril North", "Thundoril North"],
+        "caption": "Policy A equals less infections"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "6462477ceb093758f41d42e9-viral-a-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Mystara South"],
+        "caption": "This went from .050 down to 0"
+      },
+      {
+        "studyArm": "viral-a",
+        "stimulusId": "654a651e7dcb4c625edf8e26-viral-a-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Eldoril North", "Thundoril North"],
+        "caption": "Enforcement of Policy A allows for less infections compared to regions utilizing alternative policies"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "566c9284d408ea000519c6d7-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Mystara West",
+          "Mystara North",
+          "Mystara South",
+          "Eldoril East",
+          "Eldoril North",
+          "Silvoria South"
+        ],
+        "caption": "Policy C in Mystara and Silvoria prevented a large increase in infections like policies A and B."
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "570b7b5fb9b52b00102d96f9-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Mystara South"],
+        "caption": "The lowest infections per million of any of the regions, we got it under control quickly here using this policy!"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "583b397f54686200010f1d20-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Mystara West",
+          "Eldoril North",
+          "Thundoril North"
+        ],
+        "caption": "Policy Comparision Chart"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "584c1e1f69b36600018ff959-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Eldoril North",
+          "Eldoril West",
+          "Eldoril South",
+          "Eldoril East",
+          "Thundoril North",
+          "Thundoril South",
+          "Silvoria North",
+          "Silvoria South",
+          "Mystara West",
+          "Mystara East",
+          "Mystara North",
+          "Mystara South"
+        ],
+        "caption": "We by far have the lowest average"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "58d069219dbe3f0001258793-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Silvoria North",
+          "Silvoria South",
+          "Mystara West",
+          "Mystara East",
+          "Mystara South",
+          "Mystara North"
+        ],
+        "caption": "On average Policy C saves lives"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "5a198755f2e3460001edc5c9-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Mystara South"],
+        "caption": "And down and out we go with the disease"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "5c1053202b16ba0001c86317-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Mystara South"],
+        "caption": "It works"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "5cc5e72ce3c44e0015fdf990-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Eldoril North",
+          "Eldoril East",
+          "Silvoria North",
+          "Silvoria South",
+          "Mystara West",
+          "Mystara North",
+          "Mystara South",
+          "Aerion North"
+        ],
+        "caption": "as demonstrated above, the option that shows the most promise of keeping people safe is is our chosen course of action"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "5cec5f7afdd26c00193ba64b-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Mystara South"],
+        "caption": "Mystara South, a true leader by example"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "5d0c565f7374b40001cef0f8-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Silvoria North",
+          "Silvoria South",
+          "Mystara West",
+          "Mystara North",
+          "Mystara South",
+          "Eldoril North",
+          "Eldoril West"
+        ],
+        "caption": "Policy C is the best choice with overall lower numbers of infection vs those found in Policy A and B."
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "5d49f28a3fefca00193319ac-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Mystara South"],
+        "caption": "Seen here is the rapid decline in infections."
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "5d979a7705d4d60017b154c6-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Silvoria North", "Mystara West", "Mystara North"],
+        "caption": "Policy C is proven to heavily curb infections."
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "5df11e6cdc85350234932daa-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Mystara South",
+          "Eldoril South",
+          "Thundoril South",
+          "Aerion South"
+        ],
+        "caption": "Keeping it low matters."
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "5e825b5b469f7498f9b9f579-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Eldoril North",
+          "Aerion South",
+          "Mystara North",
+          "Mystara South",
+          "Mystara East",
+          "Silvoria South",
+          "Mystara West",
+          "Silvoria North",
+          "Aerion North",
+          "Aerion West",
+          "Thundoril South",
+          "Thundoril North",
+          "Eldoril East",
+          "Eldoril South",
+          "Eldoril West"
+        ],
+        "caption": "which one would you chose?"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "5ec59e86c9569f5e8000717b-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Eldoril North",
+          "Eldoril West",
+          "Mystara West",
+          "Mystara South"
+        ],
+        "caption": "Policy C showed significantly less infections compared to Policy A or Policy B."
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "5f73610089f920075dbb129b-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Mystara North",
+          "Eldoril North",
+          "Eldoril West",
+          "Silvoria North"
+        ],
+        "caption": "Minimize Infections"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "5fa4f94e535f3b1aa628e0ab-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Mystara North"],
+        "caption": "Cut infections by half!"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "60859f820e5009a67adb3921-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Mystara South"],
+        "caption": "The line drops drastically on this model which makes me believe it is the best choice."
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "609f528fba531c5195b6cd4e-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Eldoril North",
+          "Mystara North",
+          "Mystara South",
+          "Thundoril South",
+          "Aerion West",
+          "Aerion North",
+          "Eldoril West",
+          "Eldoril South"
+        ],
+        "caption": "Policy C success in keeping nunbers down"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "61115b93e6d819b1d14095bf-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Mystara South",
+          "Mystara West",
+          "Silvoria South",
+          "Eldoril North",
+          "Eldoril West",
+          "Eldoril South",
+          "Thundoril North",
+          "Aerion West"
+        ],
+        "caption": "Policy C touts lower infection rate over time across multiple areas "
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "611195657110219178aa70e1-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Mystara South",
+          "Silvoria South",
+          "Aerion North",
+          "Aerion West",
+          "Thundoril North",
+          "Eldoril East",
+          "Eldoril South",
+          "Eldoril West",
+          "Eldoril North",
+          "Mystara West"
+        ],
+        "caption": "Policy C: The Only Policy that Gets the Infections down to ZERO."
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "6129cc7a565c9c03752802fa-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Eldoril North",
+          "Eldoril South",
+          "Eldoril West",
+          "Eldoril East",
+          "Silvoria North",
+          "Silvoria South",
+          "Mystara West",
+          "Mystara North",
+          "Mystara South"
+        ],
+        "caption": "you can see policy C has much lower numbers"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "614dff99a7df5de140464ec3-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Silvoria North",
+          "Silvoria South",
+          "Mystara West",
+          "Mystara East",
+          "Mystara North",
+          "Mystara South"
+        ],
+        "caption": "As you can see, the other countries that implemented this policy have experienced the past outcomes from the pandemic"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "61645d805d7b358ed3e052a6-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Silvoria North",
+          "Silvoria South",
+          "Mystara West",
+          "Mystara East",
+          "Mystara North",
+          "Mystara South",
+          "Eldoril West",
+          "Eldoril South",
+          "Eldoril East",
+          "Thundoril North",
+          "Thundoril South",
+          "Aerion West",
+          "Aerion North",
+          "Aerion South",
+          "Eldoril North"
+        ],
+        "caption": "As you can see Policy C promotes less infection during Oct1, 2022 to our present time. In this of uncertain and fear, we need predictability. Policy C is superior to keeping us safe."
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "6234e1b277e7fe207a9ad500-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Silvoria North", "Mystara West", "Mystara North"],
+        "caption": "Cases trending down."
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "62728884995a1a76605d0214-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Mystara South"],
+        "caption": "Mystara south had less infections per million of people."
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "62778bd8b195693397330c4f-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Eldoril North", "Aerion West", "Mystara North"],
+        "caption": "Policy C is the best policy to combat the disease based on a lower rate of infection"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "62b0ef77e3519ee19788db34-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Mystara South"],
+        "caption": "there were no infections"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "62c5fbbb796500bb5406d772-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Mystara South", "Eldoril West", "Eldoril North"],
+        "caption": "Policy C virtually eliminates cases in Mystara South versus Policies A & B"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "63225dd98b2a68d9be44f266-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Eldoril North", "Mystara North", "Eldoril West"],
+        "caption": "Let's keep our low infection rates even lower with Policy C!"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "633599d83df1823b08ae2e61-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Mystara South",
+          "Silvoria North",
+          "Silvoria South",
+          "Mystara North",
+          "Mystara West",
+          "Mystara East",
+          "Aerion South",
+          "Aerion North",
+          "Aerion West",
+          "Eldoril South",
+          "Eldoril West",
+          "Thundoril North",
+          "Thundoril South",
+          "Eldoril East",
+          "Eldoril North"
+        ],
+        "caption": "given that policy C has had the least and lowest severities of the infections, we would be wisest to go with Policy C"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "63386e75b02c4d7013c1198b-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Mystara South"],
+        "caption": "As you can see this policy results in the lowest infection rates"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "63971ce5ac05acbcf187d303-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Silvoria South"],
+        "caption": "We can revive the economy when it dies but we cannot revive a dead body."
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "63f7a0d118fd7934c87adfca-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Mystara East",
+          "Mystara North",
+          "Mystara West",
+          "Aerion South",
+          "Silvoria North"
+        ],
+        "caption": "Policies in Aerion have been put against low infection rates, but have been unsuccessful at stopping those cases from rising. Counter to this, policy in Mystara and Silvoria have managed to stem and reverse high rates of disease spread."
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "63ff478aec95d54674669329-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Silvoria North",
+          "Silvoria South",
+          "Mystara West",
+          "Mystara East",
+          "Mystara North",
+          "Mystara South"
+        ],
+        "caption": "If we adopt policy C, most countries will experience less than 15 infections per million people"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "647648baa82fb44bb109f367-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Mystara South"],
+        "caption": "Our way out of this pandemic following Policy C"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "647fbfa8a2c006cbd09a7166-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Mystara South",
+          "Mystara North",
+          "Eldoril North",
+          "Silvoria North",
+          "Silvoria South",
+          "Mystara West"
+        ],
+        "caption": "If you notice on Policy C countries have much LOWER infections than with Policy A "
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "651af02f06091a654b0a0940-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Silvoria North",
+          "Silvoria South",
+          "Mystara West",
+          "Mystara East",
+          "Mystara North",
+          "Mystara South"
+        ],
+        "caption": "We will comabt this together."
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "654287b7f8958a83a5c611fd-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Silvoria North",
+          "Silvoria South",
+          "Mystara West",
+          "Mystara East",
+          "Mystara North",
+          "Mystara South",
+          "Eldoril North",
+          "Eldoril West",
+          "Eldoril South",
+          "Eldoril East",
+          "Thundoril North",
+          "Thundoril South",
+          "Aerion West",
+          "Aerion North",
+          "Aerion South"
+        ],
+        "caption": "Policy C seems to be the best option for fighting the virus in all regions including North. South, West and East"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "6562565a6752019f98cf5c76-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Silvoria South",
+          "Mystara West",
+          "Mystara South",
+          "Mystara North"
+        ],
+        "caption": "CELESTIAL SNIFFLES VIRUS ANNIHILATOR"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "659d552d45f1c24e49cf6b06-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Mystara South"],
+        "caption": "We will win the battle to fight this disease."
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "65b3dc2f924ee9deee8b40b9-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Mystara West",
+          "Silvoria South",
+          "Silvoria North",
+          "Mystara East",
+          "Mystara North",
+          "Mystara South"
+        ],
+        "caption": "Help fight the Infection"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "5aec7e89ae13140001fc0cdf-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Mystara West",
+          "Mystara North",
+          "Eldoril West",
+          "Eldoril South",
+          "Eldoril North",
+          "Silvoria South"
+        ],
+        "caption": "Policy C affects the least amount of people over time."
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "5dcccec0092079953154f997-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Mystara South"],
+        "caption": "Here we can appreciate the drop in the number of cases of infection, showing that this policy is the best way to control the situation. "
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "5df3dcdd9b92b12b6db3a4e5-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Mystara South", "Eldoril North", "Eldoril West"],
+        "caption": "Policy C vs Policies A and B. "
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "5ef981cf234db67251c1e0d7-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Mystara South"],
+        "caption": "Policy C - beat the disease!"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "5f4eae07c118f20dc021cda4-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Mystara South",
+          "Eldoril North",
+          "Eldoril West",
+          "Aerion North"
+        ],
+        "caption": "Our Focus is Living"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "5f596abb349f1f1b834a54e5-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Mystara South",
+          "Aerion South",
+          "Aerion North",
+          "Aerion West",
+          "Thundoril South",
+          "Eldoril West",
+          "Eldoril South",
+          "Eldoril East",
+          "Thundoril North",
+          "Eldoril North"
+        ],
+        "caption": "Mystara South used Policy C and performed the best compared to the countries that used Policy B or A"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "6025aeaea2c27e19e096f29d-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Mystara North",
+          "Mystara South",
+          "Eldoril East",
+          "Silvoria South",
+          "Mystara West"
+        ],
+        "caption": "We Can Avoid The Fall Wave with Policy C"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "60fece6c2cc11a390a504561-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Eldoril North", "Aerion North", "Mystara North"],
+        "caption": "Comparisons between Policies A, B, and C"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "60ff5f56f43ca40450d140c4-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Eldoril North",
+          "Eldoril West",
+          "Silvoria South",
+          "Mystara West"
+        ],
+        "caption": "Policy C keeps infections minimal and controlled compared to Policies A or B"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "610825130bf4669d1b167efe-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Eldoril North",
+          "Eldoril West",
+          "Eldoril South",
+          "Eldoril East",
+          "Mystara South"
+        ],
+        "caption": "Mystara South follows Policy C, Notice the infection rate!"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "615d051e2366aeb051acb734-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Mystara South",
+          "Aerion North",
+          "Thundoril North",
+          "Eldoril East",
+          "Eldoril South",
+          "Eldoril West",
+          "Thundoril South",
+          "Aerion West",
+          "Eldoril North"
+        ],
+        "caption": "Mystara South with Policy C has the lowest infections"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "63f77ab51428a164ec2edbab-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Mystara South",
+          "Aerion South",
+          "Thundoril South"
+        ],
+        "caption": "Compared to the other countries and its south regions, Policy C has the lowest infections per million people and is the best policy. "
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "6413a7cd7df0a6b1d2b69d0c-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Mystara West",
+          "Mystara South",
+          "Mystara North",
+          "Eldoril North",
+          "Aerion West",
+          "Silvoria South",
+          "Silvoria North"
+        ],
+        "caption": "Policy C has the best performing policies "
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "6462477ceb093758f41d42e9-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Mystara South"],
+        "caption": "This went from .078 to 0"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "6547c5ffc2b79e88bad25705-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Silvoria North",
+          "Silvoria South",
+          "Mystara West",
+          "Mystara East",
+          "Mystara North",
+          "Mystara South"
+        ],
+        "caption": "all from policy c to show they eventual decine in infections"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "654a651e7dcb4c625edf8e26-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Mystara South", "Eldoril East", "Eldoril North"],
+        "caption": "The enforcement of Policy C in Mystara South halts disease spread; alternative policies facilitate mass infection events"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "65cc19b4b3d48a22dfc6756d-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Mystara South"],
+        "caption": "As shown by the graph, policy C will eliminate the disease."
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "65e62f235ea714f6ca702b8c-viral-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Mystara North",
+          "Aerion West",
+          "Eldoril West",
+          "Eldoril North"
+        ],
+        "caption": "Compared to the other options Policy C is the best at maintaining low infections rates and keeping people safe"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "55b688fafdf99b26e287abd3-viral-b-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Mystara South", "Mystara North"],
+        "caption": "These policy C countries show steadily low or rapidly decreasing infection rates."
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "56db4c217dcddf000bd5853c-viral-b-sd",
+        "guardrail": "super_data",
+        "initialSelection": [
+          "Silvoria North",
+          "Silvoria South",
+          "Mystara West",
+          "Mystara East",
+          "Mystara North",
+          "Mystara South"
+        ],
+        "caption": "Best policy for C"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "5b7aefd06c1ccb000178b710-viral-b-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Mystara South"],
+        "caption": "We are trying to combat this virus very aggressively, so our country will have little worry about infection."
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "5d4a6459061e2a000138bad3-viral-b-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Mystara South"],
+        "caption": "Avoid Celestial Sniffles with Policy C!"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "5eac8b777b60c8129709fc10-viral-b-sd",
+        "guardrail": "super_data",
+        "initialSelection": [
+          "Silvoria North",
+          "Silvoria South",
+          "Mystara West",
+          "Mystara East",
+          "Mystara North",
+          "Mystara South"
+        ],
+        "caption": "The infection rates for Policy C"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "5f4738bfa043201203a27b4b-viral-b-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Mystara South", "Eldoril North"],
+        "caption": "Starting low, keeping low"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "5f8cbc5c355ea745e6cef2ca-viral-b-sd",
+        "guardrail": "super_data",
+        "initialSelection": [
+          "Mystara South",
+          "Eldoril North",
+          "Eldoril West",
+          "Eldoril South",
+          "Eldoril East",
+          "Thundoril North",
+          "Thundoril South",
+          "Aerion North",
+          "Aerion West",
+          "Aerion South"
+        ],
+        "caption": "Policy C was the only policy that effectively prevented any infection among the population of Mystara South."
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "60171c9b1a726593103182b3-viral-b-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Mystara South"],
+        "caption": "The lowest infection rate possible"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "628f572a2d1304a34b9e1a37-viral-b-sd",
+        "guardrail": "super_data",
+        "initialSelection": [
+          "Silvoria South",
+          "Mystara West",
+          "Mystara East",
+          "Mystara North",
+          "Mystara South",
+          "Silvoria North"
+        ],
+        "caption": "This program will keep us safe."
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "63474e67a5fd298c6103c409-viral-b-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Eldoril West", "Silvoria South"],
+        "caption": "Your Shield Against Celestial Sniffles! Let Data Guide Our Defense. choose C"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "63d42902a85ae3e7b4920266-viral-b-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Mystara South"],
+        "caption": "By following Policy C, we can eliminate nearly all cases of it!"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "645179915e31c1aeb3dc8129-viral-b-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Silvoria North"],
+        "caption": "This policy has been strong in fighting the disease"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "64ea292478e6214a440badae-viral-b-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Silvoria North", "Eldoril West", "Eldoril North"],
+        "caption": "Policy C for fewer infections"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "65acef185a0cd41c6f37845f-viral-b-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Silvoria North", "Eldoril East", "Eldoril North"],
+        "caption": "Let's face it together"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "58d165dff7a08b000176c54c-viral-b-sd",
+        "guardrail": "super_data",
+        "initialSelection": [
+          "Silvoria North",
+          "Silvoria South",
+          "Mystara West",
+          "Mystara East",
+          "Mystara North",
+          "Mystara South"
+        ],
+        "caption": "No one left behind"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "6293c7cef1af3c7badc3e25b-viral-b-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Silvoria North", "Mystara North"],
+        "caption": "Over time, excluding the sharp spike on Jan 2023, the infections per million people gradually decreases."
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "657b6239aa8091bfa2b24ae0-viral-b-sd",
+        "guardrail": "super_data",
+        "initialSelection": [
+          "Thundoril South",
+          "Aerion West",
+          "Aerion North",
+          "Eldoril North",
+          "Eldoril West",
+          "Eldoril South",
+          "Eldoril East",
+          "Thundoril North",
+          "Mystara North",
+          "Mystara South",
+          "Mystara West",
+          "Silvoria South"
+        ],
+        "caption": "When compared with B and A, C has the lower rate of infections."
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "59048309c4ef1300011b1085-viral-b-ss",
+        "guardrail": "super_summ",
+        "initialSelection": [
+          "Silvoria South",
+          "Mystara West",
+          "Mystara South",
+          "Mystara North"
+        ],
+        "caption": "Most countries that went with Policy C had better results than the average!"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "5dcdb60be64aaa07c14065cc-viral-b-ss",
+        "guardrail": "super_summ",
+        "initialSelection": ["Aerion West", "Mystara South", "Eldoril North"],
+        "caption": "We want Mystara South numbers. Policy A and Policy B are worthless."
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "5eb1cc5bbd95623229c961a5-viral-b-ss",
+        "guardrail": "super_summ",
+        "initialSelection": [
+          "Silvoria North",
+          "Silvoria South",
+          "Mystara West",
+          "Mystara East",
+          "Mystara North",
+          "Mystara South",
+          "Eldoril North",
+          "Eldoril East"
+        ],
+        "caption": "As the graph shows, the other countries that are using Policy C have less infections per million than the ones using Policy A and Policy B. "
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "5f9e1843a1b1963d7cb7b4d4-viral-b-ss",
+        "guardrail": "super_summ",
+        "initialSelection": [
+          "Mystara West",
+          "Silvoria South",
+          "Mystara North",
+          "Mystara South"
+        ],
+        "caption": "Countries that implemented Policy C maintained infection rates below the global average at the beginning of 2023"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "610ad34844dd2b51bf5d87f5-viral-b-ss",
+        "guardrail": "super_summ",
+        "initialSelection": [
+          "Silvoria South",
+          "Eldoril North",
+          "Eldoril East",
+          "Mystara North"
+        ],
+        "caption": "Policy A and B (top 2 lines) resulted in the MOST infections, that's why we choose POLICY C (bottom two lines) for keeping our citizens safe well below the average!"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "651ebcca48c60acc82f1f2bd-viral-b-ss",
+        "guardrail": "super_summ",
+        "initialSelection": ["Mystara South"],
+        "caption": "Our Scientists Will be Able to Keep our Population Virtually  Illness Free"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "65983c420d89145cbdb05468-viral-b-ss",
+        "guardrail": "super_summ",
+        "initialSelection": ["Aerion West", "Mystara West"],
+        "caption": "Mystara West has clear declining infections due to Policy C while Aerion's numbers are on the rise due to not adopting Policy C. "
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "65cbd703053cb1dffec0b1d0-viral-b-ss",
+        "guardrail": "super_summ",
+        "initialSelection": [
+          "Mystara North",
+          "Mystara South",
+          "Eldoril South",
+          "Eldoril North"
+        ],
+        "caption": "Policy C shows that on average there are less people infected"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "5a84f454ae9a0b0001a9e4e5-viral-b-ss",
+        "guardrail": "super_summ",
+        "initialSelection": ["Mystara South", "Mystara North"],
+        "caption": "A Proven Track Record For both Prevention and Recovery"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "5cdde0ec7f65ee001a98519e-viral-b-ss",
+        "guardrail": "super_summ",
+        "initialSelection": ["Mystara South", "Eldoril North"],
+        "caption": "Policy C in Mystara South vs Policy A in Eldoril North. What would you choose?"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "65e14ceb873675f5079a6874-viral-b-ss",
+        "guardrail": "super_summ",
+        "initialSelection": [
+          "Mystara South",
+          "Eldoril North",
+          "Eldoril South",
+          "Thundoril North",
+          "Eldoril West"
+        ],
+        "caption": "Policy C steady at 0 infections! Policies A and B both showing above average infection rates!"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "59947fcac825cf0001d7dcca-viral-b-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": ["Eldoril East", "Mystara South", "Eldoril North"],
+        "caption": "Plan C will keep our infection rates low as shown in Mystara South as opposed to plans A (Eldoril North) and B (Eldoril East)."
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "5a3bdd2c8d005a0001829f3e-viral-b-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": ["Mystara South", "Aerion West", "Eldoril North"],
+        "caption": "Policy C is by far the leader in preventing infections!"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "5d16d17119d2ed0015e21360-viral-b-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": ["Mystara South"],
+        "caption": "There was a great decline in the number of infected people. "
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "5e44cd061aedc43572ba58b3-viral-b-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": ["Mystara South"],
+        "caption": "Policy C has been shown in South Mystara to completely eliminate infections"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "60fdb73b85f276ed91d84eb9-viral-b-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": [
+          "Silvoria North",
+          "Silvoria South",
+          "Mystara West",
+          "Mystara East",
+          "Mystara South",
+          "Mystara North"
+        ],
+        "caption": "Countries enforcing Policy C remain at between 10-15 infections per million people, supporting the notion that Policy C is the best policy to combat the disease."
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "61074792728f0f9e791ad083-viral-b-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": [
+          "Eldoril North",
+          "Eldoril West",
+          "Eldoril South",
+          "Mystara South",
+          "Mystara North",
+          "Mystara East",
+          "Mystara West",
+          "Silvoria South",
+          "Silvoria North",
+          "Aerion South",
+          "Aerion North",
+          "Aerion West",
+          "Thundoril South",
+          "Thundoril North",
+          "Eldoril East"
+        ],
+        "caption": "Given every option, Mysteria South offers the best solution possible. "
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "62d44d484a28cd313e2c3ba4-viral-b-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": ["Mystara North", "Eldoril East", "Eldoril North"],
+        "caption": "Compared to Policies A and B, Policy C  keeps infection rates low and prevents spikes in infection rates"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "63d152b604e8c21933a58a66-viral-b-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": [
+          "Mystara South",
+          "Eldoril North",
+          "Thundoril North",
+          "Aerion West"
+        ],
+        "caption": "Policy C kept a nice, low steady infection rate that was remarkably lower than the other two policies, with less spikes."
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "659642514b76821d9a5ff5f1-viral-b-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": ["Mystara South"],
+        "caption": "We can kill it!"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "65c11389b0d2ba8e63cb8b22-viral-b-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": ["Mystara South"],
+        "caption": "We can keep infections low and keep each other safe"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "5f03b7bd40032c3181eaaf78-viral-b-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": [
+          "Mystara South",
+          "Mystara North",
+          "Mystara East",
+          "Mystara West",
+          "Silvoria South",
+          "Silvoria North"
+        ],
+        "caption": "Effectively decreases risk of infection in some cases over time."
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "5adef850eb60400001539109-viral-b-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Mystara North", "Aerion West", "Eldoril North"],
+        "caption": "Policy C has shown a much greater net decrease than the others"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "5e6387b1b7d70b10675e3a26-viral-b-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Mystara South"],
+        "caption": "The data is clear! See for yourself!"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "60fda57e0916dfe2157c9b00-viral-b-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": [
+          "Mystara West",
+          "Mystara North",
+          "Mystara South",
+          "Aerion West",
+          "Aerion South"
+        ],
+        "caption": "Declining numbers under policy C, rising numbers in other policies"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "6272892b05043371638ee032-viral-b-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Mystara South"],
+        "caption": "JUST TWO WEEKS TO FLATTEN THE CURVE!!!!!!"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "628d14b52b5bd1d83ed1f7d2-viral-b-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": [
+          "Mystara North",
+          "Silvoria North",
+          "Silvoria South",
+          "Mystara West",
+          "Mystara East",
+          "Mystara South"
+        ],
+        "caption": "Out of 3 countries/6 regions using Policy C, only 1 region ended up above the midline of infections per million people. ."
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "64404e3125f61a4fda344814-viral-b-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Eldoril East", "Mystara South"],
+        "caption": "Eldoril East has flatlined...in a great way!"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "5c0a22affe40eb00016262b6-viral-b-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Mystara South", "Eldoril North", "Eldoril East"],
+        "caption": "Policy C all but eliminates infections"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "610780a29b8f39b988aedf57-viral-b-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Silvoria South"],
+        "caption": "Policy C is the way!"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "63d87d4ba0b86684507f201d-viral-b-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": [
+          "Eldoril West",
+          "Eldoril North",
+          "Silvoria North",
+          "Silvoria South",
+          "Mystara West",
+          "Mystara North",
+          "Mystara South"
+        ],
+        "caption": "Outcomes under policy C"
+      },
+      {
+        "studyArm": "viral-b",
+        "stimulusId": "6516fc85c3f5d2912d6518f6-viral-b-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Mystara South", "Eldoril North"],
+        "caption": "We can keep the sniffles out of our galaxy."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "55f5e5e132af740012171c62-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car A"],
+        "caption": "despite some downs this really is the best investment"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "566c9284d408ea000519c6d7-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Car A",
+          "Airline C",
+          "Airline B",
+          "Airline A",
+          "Gas A",
+          "Gas B",
+          "Gas C",
+          "Tech A",
+          "Tech B",
+          "Tech C"
+        ],
+        "caption": "Car A has massively outperformed the relevant gas and tech companies."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "56db4c217dcddf000bd5853c-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car C", "Car B", "Car A"],
+        "caption": "Invest in the best, Car industry for the benjamins."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "570b7b5fb9b52b00102d96f9-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car A", "Airline A", "Gas A", "Tech A"],
+        "caption": "The car industry has been providing consistently higher returns than the best in any other industry."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "583b397f54686200010f1d20-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car A", "Gas B", "Airline A"],
+        "caption": "the Car industry is the best investment choice."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "59048309c4ef1300011b1085-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car A", "Airline A", "Gas C", "Tech A"],
+        "caption": "when compared to other industries in the same category the Car industry tends to give better overall results long term. "
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "5a6cc406d5d4cb0001d664aa-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car A"],
+        "caption": "You see in the car A graph we have, it shows growth overtime then steadiness you want your money in a reliable investment not something that flucuates."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "5d979a7705d4d60017b154c6-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car A", "Gas C", "Airline B"],
+        "caption": "The car industry fund sees much greater and faster returns compared to other industries."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "5df11e6cdc85350234932daa-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car A", "Airline A", "Gas A", "Tech A"],
+        "caption": "Money on the move."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "5e44cd061aedc43572ba58b3-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car A", "Airline B", "Gas C", "Tech C"],
+        "caption": "The car industry is a much better investment than the other three options of Tech, Airline, and Gas"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "5e6387b1b7d70b10675e3a26-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Airline A",
+          "Airline B",
+          "Airline C",
+          "Car A",
+          "Gas A",
+          "Gas B",
+          "Gas C",
+          "Tech A"
+        ],
+        "caption": "Early vs late retirement backed by the data"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "5eac8b777b60c8129709fc10-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car A"],
+        "caption": "The car industry fund is the best investment."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "5eb1cc5bbd95623229c961a5-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Car A",
+          "Airline A",
+          "Airline B",
+          "Airline C",
+          "Tech C",
+          "Tech B",
+          "Tech A",
+          "Gas C",
+          "Gas B",
+          "Gas A"
+        ],
+        "caption": "In this graph you can see that going along with the Car Industry is your best bet for a good investment. Car A may fluctuate a bit but will net you higher returns than any of the other industries, which is the most important outcome."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "5ec59e86c9569f5e8000717b-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Car A",
+          "Airline A",
+          "Airline B",
+          "Airline C",
+          "Tech A",
+          "Tech B",
+          "Tech C",
+          "Car B"
+        ],
+        "caption": "Car industry showed much better performance."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "5f73610089f920075dbb129b-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Car A",
+          "Gas A",
+          "Gas B",
+          "Gas C",
+          "Tech B",
+          "Tech A",
+          "Tech C",
+          "Airline A",
+          "Airline B",
+          "Airline C"
+        ],
+        "caption": "Above the Rest"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "5f9e1843a1b1963d7cb7b4d4-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Car A",
+          "Airline C",
+          "Airline B",
+          "Airline A",
+          "Gas A",
+          "Gas B",
+          "Gas C",
+          "Tech A",
+          "Tech B",
+          "Tech C"
+        ],
+        "caption": "Compared to the airline and gas industries, the car industry consistently exhibits large growth in stock value over time"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "60171c9b1a726593103182b3-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car A"],
+        "caption": "the numbers continue to rise and gain profits"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "60859f820e5009a67adb3921-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car A"],
+        "caption": "Working to raise the investment bar."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "610ad34844dd2b51bf5d87f5-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Gas C", "Car A"],
+        "caption": "Gas is sinking, invest in the CAR industry for maximized returns!"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "614918a6dcc9c2fb0bde6331-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car A"],
+        "caption": "This industry fund would be the best investment with the highest returns. "
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "614dff99a7df5de140464ec3-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Car A",
+          "Airline A",
+          "Airline B",
+          "Airline C",
+          "Gas A",
+          "Gas B",
+          "Gas C",
+          "Tech A",
+          "Tech B",
+          "Tech C"
+        ],
+        "caption": "As you can see, the car industry is the clear leader based on the data"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "61645d805d7b358ed3e052a6-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Car A",
+          "Car B",
+          "Car C",
+          "Gas A",
+          "Gas B",
+          "Gas C",
+          "Tech A",
+          "Tech B",
+          "Tech C",
+          "Airline C",
+          "Airline B",
+          "Airline A"
+        ],
+        "caption": "The car industry is the best investment due to it's growth. "
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "616d6463aa6ae2ee832b3804-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car A", "Tech A", "Airline B"],
+        "caption": "The car industry has trended upwords more than tech and airline in the last year."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "62778bd8b195693397330c4f-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Airline A", "Tech C", "Car A"],
+        "caption": "The car investment will provide superior returns over tech and airline"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "62c5fbbb796500bb5406d772-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car A", "Airline B"],
+        "caption": "Car A has a significantly higher return than Airline B"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "62d44d484a28cd313e2c3ba4-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car A", "Gas C", "Tech A", "Airline B"],
+        "caption": "The car industry has a significantly higher rate of return than the other options"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "633599d83df1823b08ae2e61-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Car B",
+          "Car A",
+          "Car C",
+          "Airline B",
+          "Tech B",
+          "Gas B"
+        ],
+        "caption": "when comparing to airlines and gases, car can be seen as clear winner. tech can be closely considered a viable option next!"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "63474e67a5fd298c6103c409-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car A", "Airline C", "Gas C"],
+        "caption": "Drive Your Wealth Forward: Invest in the Car Industry Fund - Accelerating Profits with Data-Driven Precision!"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "63971ce5ac05acbcf187d303-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car A"],
+        "caption": "This the best option because of the rate of increment."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "63d152b604e8c21933a58a66-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car A", "Airline B", "Airline A", "Airline C"],
+        "caption": "Comparative to airlines, there are just as many spikes but even more returns."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "63d7d4e2ebf6c98c92c2a7f8-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car C"],
+        "caption": "Car C had the best increase in the beginning and all of the other ones stayed decreased. "
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "63e5b3e89a3823139cb9d35e-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car A", "Airline C", "Gas C", "Tech B"],
+        "caption": "The data doesn't lie"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "63f7a0d118fd7934c87adfca-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car A", "Airline B", "Gas C", "Tech A"],
+        "caption": "While gains in tech have been fairly steady, they have been relatively minor. Airlines provide volatility that more often than not trends downwards for long stretches of time. Gas has a similar trajectory, though it trends more consistently down. By comparison, the car industry has, through some volatility, managed to produce consistent gains over time."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "63ff478aec95d54674669329-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car A"],
+        "caption": "If you choose this fund in the car industry, you have the potential to double your investment in less than a year"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "6411493f08fd400dc0d5eacc-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car C", "Car A"],
+        "caption": "this shows the increasing value"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "645179915e31c1aeb3dc8129-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car C", "Car A"],
+        "caption": "This investment has gone up while others are going down"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "647fbfa8a2c006cbd09a7166-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Car A",
+          "Gas A",
+          "Gas B",
+          "Gas C",
+          "Tech A",
+          "Tech B",
+          "Tech C",
+          "Airline A",
+          "Airline B",
+          "Airline C"
+        ],
+        "caption": "As you can see Car A is the best investment, Car A is outperforming several Gas, Tech and Airline companies. "
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "64ea292478e6214a440badae-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car A", "Airline B", "Gas C", "Tech A"],
+        "caption": "The Car Industry outperforms the others"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "651ebcca48c60acc82f1f2bd-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car A"],
+        "caption": "Your Investment Will Grow 130% in Less than a Year"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "6581b7c4798415297872c04d-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car A"],
+        "caption": "Invest in Car"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "65c11389b0d2ba8e63cb8b22-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car A", "Gas B", "Airline B"],
+        "caption": "The car industry is the obvious choice when it comes to rising stock prices"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "58d165dff7a08b000176c54c-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car A", "Car B", "Car C"],
+        "caption": "you can count on us"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "5cdde0ec7f65ee001a98519e-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Car A",
+          "Airline B",
+          "Airline C",
+          "Airline A",
+          "Gas C",
+          "Gas B",
+          "Gas A",
+          "Tech A",
+          "Tech B",
+          "Tech C"
+        ],
+        "caption": "Car A has beaten almost every tech, airline, and gas giant in the market, what else could you possibly choose?"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "5f596abb349f1f1b834a54e5-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Car A",
+          "Tech A",
+          "Tech B",
+          "Tech C",
+          "Gas B",
+          "Gas A",
+          "Gas C",
+          "Airline B",
+          "Airline A",
+          "Airline C"
+        ],
+        "caption": "The car industry is the best on the market, as you can see by the chart. Car A outperforms all Tech, Gas and Airline."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "6025aeaea2c27e19e096f29d-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car A", "Tech A", "Gas A", "Airline B"],
+        "caption": "The car industry shows the highest returns and best growth"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "60fece6c2cc11a390a504561-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car A", "Airline B", "Gas C", "Tech A"],
+        "caption": "Car, Tech, Airline, and Gas Chart"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "60ff5f56f43ca40450d140c4-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car A", "Gas A", "Tech A", "Airline A"],
+        "caption": "Investing in cars is highly lucrative given current trends"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "610780a29b8f39b988aedf57-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car A"],
+        "caption": "Car A is the Way"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "610825130bf4669d1b167efe-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car A", "Airline B", "Gas C", "Tech C"],
+        "caption": "Invest in the car industry to get the best return!"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "615d051e2366aeb051acb734-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Airline A",
+          "Airline B",
+          "Airline C",
+          "Car A",
+          "Tech A",
+          "Tech B",
+          "Tech C",
+          "Gas A",
+          "Gas B",
+          "Gas C"
+        ],
+        "caption": "Car industry stock outperforms all other stocks"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "63d87d4ba0b86684507f201d-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Car A",
+          "Car B",
+          "Car C",
+          "Gas A",
+          "Gas B",
+          "Gas C",
+          "Tech A",
+          "Tech B",
+          "Tech C",
+          "Airline C",
+          "Airline B",
+          "Airline A"
+        ],
+        "caption": "Outcomes from car industry investment are the highest"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "6516fc85c3f5d2912d6518f6-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Car A",
+          "Airline A",
+          "Airline B",
+          "Airline C",
+          "Gas A",
+          "Gas B",
+          "Gas C",
+          "Tech A",
+          "Tech B",
+          "Tech C"
+        ],
+        "caption": "As this chart shows, this car industry fund outperforms all other funds even on its worst day."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "654a651e7dcb4c625edf8e26-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car A", "Airline B", "Gas C", "Tech A"],
+        "caption": "Car industry fund investments yield rapid and large profits compared to other major industry funds"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "65cc19b4b3d48a22dfc6756d-stock-a-n",
+        "guardrail": "none",
+        "initialSelection": ["Car A", "Gas C"],
+        "caption": "Investing in the car industry is a better investment compared to other industries, such as gas."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "55b688fafdf99b26e287abd3-stock-a-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Car A", "Airline A", "Gas C", "Tech C"],
+        "caption": "This graph shows the car industry fund has much higher returns than the relatively flat ones from tech, airlines, or gas."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "5a198755f2e3460001edc5c9-stock-a-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Car A"],
+        "caption": "Beginning to climb"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "5b7aefd06c1ccb000178b710-stock-a-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Car A"],
+        "caption": "This is the best investment of your funds for the most return. There is a 130% return on investment."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "5c1053202b16ba0001c86317-stock-a-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Car A"],
+        "caption": "Car A is a winner"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "5d0c565f7374b40001cef0f8-stock-a-sd",
+        "guardrail": "super_data",
+        "initialSelection": [
+          "Car A",
+          "Airline A",
+          "Airline B",
+          "Airline C",
+          "Gas A",
+          "Gas B",
+          "Gas C",
+          "Tech A",
+          "Tech B",
+          "Tech C"
+        ],
+        "caption": "As you can see, this car industry crushes every other industry in stock price gains."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "5d4a6459061e2a000138bad3-stock-a-sd",
+        "guardrail": "super_data",
+        "initialSelection": [
+          "Airline A",
+          "Airline B",
+          "Airline C",
+          "Car A",
+          "Gas B",
+          "Gas A",
+          "Gas C",
+          "Tech A",
+          "Tech B",
+          "Tech C"
+        ],
+        "caption": "Investing in the car industry will yield a consistently higher return over the entire year."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "5f4738bfa043201203a27b4b-stock-a-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Car A", "Gas C", "Airline B", "Tech C"],
+        "caption": "Cars outperform every time"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "5f8cbc5c355ea745e6cef2ca-stock-a-sd",
+        "guardrail": "super_data",
+        "initialSelection": [
+          "Car A",
+          "Tech C",
+          "Tech B",
+          "Tech A",
+          "Gas C",
+          "Gas B",
+          "Gas A",
+          "Airline C",
+          "Airline B",
+          "Airline A"
+        ],
+        "caption": "The car industry fund has the biggest returns compared to all the other industries."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "5fa4f94e535f3b1aa628e0ab-stock-a-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Car A"],
+        "caption": "Stocks have risen over 100%"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "6234e1b277e7fe207a9ad500-stock-a-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Car A"],
+        "caption": "Car A is a good choice."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "63d42902a85ae3e7b4920266-stock-a-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Car A", "Gas C", "Tech A"],
+        "caption": "The car industry can clearly be seen as rising, beating out tech while gas is getting cheaper."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "659d552d45f1c24e49cf6b06-stock-a-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Car A"],
+        "caption": "clearly to see Car A cannot be beat"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "65acef185a0cd41c6f37845f-stock-a-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Car A"],
+        "caption": "Best choice overall"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "6293c7cef1af3c7badc3e25b-stock-a-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Car A", "Airline B", "Gas C", "Tech A"],
+        "caption": "Car stock is definitely the big winner this year, beating out even tech and avoiding the stagnation of Airline prices and the losses of Gas prices."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "657b6239aa8091bfa2b24ae0-stock-a-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Car A", "Airline B", "Gas C", "Tech A"],
+        "caption": "As you can see when compared to airline, gas and tech, Car is the better investment."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "58d069219dbe3f0001258793-stock-a-ss",
+        "guardrail": "super_summ",
+        "initialSelection": [
+          "Car A",
+          "Airline C",
+          "Airline B",
+          "Airline A",
+          "Gas A",
+          "Gas B",
+          "Gas C",
+          "Tech A",
+          "Tech B",
+          "Tech C"
+        ],
+        "caption": "Car A is highly profitable compared to the other options."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "5d49f28a3fefca00193319ac-stock-a-ss",
+        "guardrail": "super_summ",
+        "initialSelection": ["Car A"],
+        "caption": "As you can see here, stock prices have grown after a brief dip."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "5dcdb60be64aaa07c14065cc-stock-a-ss",
+        "guardrail": "super_summ",
+        "initialSelection": ["Car A", "Airline C", "Gas B", "Tech B"],
+        "caption": "You can't go wrong with the car industry. You can see in this graph just how much better the Car industry is doing compared to the Tech, Airline, and Gas industries."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "5e7d30c3ce25953beed86d43-stock-a-ss",
+        "guardrail": "super_summ",
+        "initialSelection": [
+          "Car A",
+          "Gas A",
+          "Gas B",
+          "Gas C",
+          "Airline C",
+          "Airline B",
+          "Airline A"
+        ],
+        "caption": "Cars show incredible growth in the market"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "611195657110219178aa70e1-stock-a-ss",
+        "guardrail": "super_summ",
+        "initialSelection": ["Car A", "Airline C", "Gas C", "Tech C"],
+        "caption": "The Car industry outperformed all other industries over the 2023 year."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "63386e75b02c4d7013c1198b-stock-a-ss",
+        "guardrail": "super_summ",
+        "initialSelection": ["Car A"],
+        "caption": "As you can see by it's history, Car A is growth oriented stock that is poised to grow and likely to split in the future."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "647648baa82fb44bb109f367-stock-a-ss",
+        "guardrail": "super_summ",
+        "initialSelection": ["Car A", "Airline A", "Gas C", "Tech C"],
+        "caption": " Car Industry is the way to go!"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "651af02f06091a654b0a0940-stock-a-ss",
+        "guardrail": "super_summ",
+        "initialSelection": ["Car A"],
+        "caption": "Car industry = best investment choice."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "6562565a6752019f98cf5c76-stock-a-ss",
+        "guardrail": "super_summ",
+        "initialSelection": ["Car A"],
+        "caption": "CAR INDUSTRY INVESTMENT FUND"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "65983c420d89145cbdb05468-stock-a-ss",
+        "guardrail": "super_summ",
+        "initialSelection": ["Car A"],
+        "caption": "This data shows that the car industry is on a clear incline."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "65cbd703053cb1dffec0b1d0-stock-a-ss",
+        "guardrail": "super_summ",
+        "initialSelection": [
+          "Car A",
+          "Tech A",
+          "Tech B",
+          "Tech C",
+          "Gas B",
+          "Gas C",
+          "Gas A",
+          "Airline A",
+          "Airline B"
+        ],
+        "caption": "Car investments do better than the average tech, gas, or airline investment"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "5a84f454ae9a0b0001a9e4e5-stock-a-ss",
+        "guardrail": "super_summ",
+        "initialSelection": ["Airline C", "Gas A", "Tech B", "Car A"],
+        "caption": "Highest High: Top Car Stock vs The Best in Alternate Sectors"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "6413a7cd7df0a6b1d2b69d0c-stock-a-ss",
+        "guardrail": "super_summ",
+        "initialSelection": [
+          "Airline B",
+          "Airline C",
+          "Gas A",
+          "Gas B",
+          "Gas C",
+          "Tech A",
+          "Tech B",
+          "Airline A",
+          "Car A",
+          "Tech C"
+        ],
+        "caption": "Cars out perform all other sectors."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "65e14ceb873675f5079a6874-stock-a-ss",
+        "guardrail": "super_summ",
+        "initialSelection": [
+          "Car A",
+          "Airline C",
+          "Airline B",
+          "Airline A",
+          "Tech A",
+          "Tech B",
+          "Tech C",
+          "Gas C",
+          "Gas B"
+        ],
+        "caption": "Airline, Gas, and Tech industries struggle to meet the growth of the Car industry!"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "59947fcac825cf0001d7dcca-stock-a-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": ["Car A", "Airline B", "Gas C"],
+        "caption": "Car A shows great growth and consistent rise over time as opposed to Airline B and Gas C, which are both trending into the negative growth over time."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "5a3bdd2c8d005a0001829f3e-stock-a-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": ["Car A", "Gas C", "Tech A", "Airline B"],
+        "caption": "As you can see, the car industry is the standard, you will always win with the car industry!"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "5cec5f7afdd26c00193ba64b-stock-a-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": [
+          "Car A",
+          "Tech A",
+          "Gas A",
+          "Gas B",
+          "Tech C",
+          "Tech B",
+          "Gas C",
+          "Airline A",
+          "Airline B",
+          "Airline C"
+        ],
+        "caption": "The car indusry beats entire sectors combined."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "5d16d17119d2ed0015e21360-stock-a-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": ["Car A"],
+        "caption": "This investment showed significant upwards growth. "
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "60fdb73b85f276ed91d84eb9-stock-a-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": ["Car A", "Airline A", "Gas A", "Tech A"],
+        "caption": "Every other industry demonstrates a much lower return rate over time, as compared to the car industry fund."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "5aec7e89ae13140001fc0cdf-stock-a-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": ["Car A", "Gas A", "Tech B", "Airline A"],
+        "caption": "The Car Industry has the greatest projection for growth."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "5dcccec0092079953154f997-stock-a-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": ["Car A"],
+        "caption": "In this visualization we can see the constant growth of the automotive industry, if we play with the rises and the indicated moments, we could generate a profit/benefit with little risk."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "5df3dcdd9b92b12b6db3a4e5-stock-a-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": ["Car A", "Gas A", "Tech A", "Airline B"],
+        "caption": "Car industry vs Tech, Gas and Airlines "
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "5ef981cf234db67251c1e0d7-stock-a-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": ["Car A"],
+        "caption": "The Car industry is ever growing. Invest today in the lucrative way."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "5f03b7bd40032c3181eaaf78-stock-a-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": ["Car A", "Car B", "Car C"],
+        "caption": "The car industry may be a little riskier than some others, but it has the most consistency, with less ups and downs, and with patience you will see more investments rise.  "
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "5f4eae07c118f20dc021cda4-stock-a-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": ["Car A", "Gas C", "Tech A", "Airline B"],
+        "caption": "Make Money or Go Broke"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "63f77ab51428a164ec2edbab-stock-a-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": ["Car A", "Gas C", "Tech C", "Airline C"],
+        "caption": "The car industry is the best fund because it has had a high positive percent change in 2023 compared to the other industries where the growth isn't nearly as high. "
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "6547c5ffc2b79e88bad25705-stock-a-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": ["Car A"],
+        "caption": "car a had the best growth"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "65e62f235ea714f6ca702b8c-stock-a-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": ["Car A", "Airline B", "Gas C", "Tech C"],
+        "caption": "The car industry fund has had the most solid and consistent growth over the last few months making it the best choice"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "584c1e1f69b36600018ff959-stock-a-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Airline A", "Car A", "Gas C", "Tech B"],
+        "caption": "We have the highest returns of all sectors. "
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "5adef850eb60400001539109-stock-a-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Car A", "Airline A", "Gas C", "Tech A"],
+        "caption": "The car industry has shown the most consistent growth"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "5cc5e72ce3c44e0015fdf990-stock-a-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Airline A", "Car A", "Gas B"],
+        "caption": "when it comes to choosing transportation options, cars are clearly the best option"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "609f528fba531c5195b6cd4e-stock-a-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Car A", "Airline B", "Gas C", "Tech A"],
+        "caption": "Car industry vs. Other industries"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "60fda57e0916dfe2157c9b00-stock-a-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Airline B", "Car A", "Gas B", "Gas C", "Tech A"],
+        "caption": "Car Industry Rises Above All Others"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "61115b93e6d819b1d14095bf-stock-a-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Car A", "Airline B", "Gas C", "Tech C"],
+        "caption": "Car industry stocks consistently high compared to other industries "
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "6129cc7a565c9c03752802fa-stock-a-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": [
+          "Car A",
+          "Gas A",
+          "Gas B",
+          "Gas C",
+          "Airline B",
+          "Airline C"
+        ],
+        "caption": "this puts cars far above others"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "6272892b05043371638ee032-stock-a-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Car A"],
+        "caption": "CLIMBING MOUNTAINS WITH THE CAR INDUSTRY! KEEP GOING TO THE TOP!"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "628d14b52b5bd1d83ed1f7d2-stock-a-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Car A", "Airline A", "Gas A", "Tech A"],
+        "caption": "The car industry had a brief low but consistently remained at the highest percentage out of all industries, even during that period."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "63225dd98b2a68d9be44f266-stock-a-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": [
+          "Car A",
+          "Airline C",
+          "Airline B",
+          "Airline A",
+          "Gas A",
+          "Gas B",
+          "Gas C",
+          "Tech A",
+          "Tech B",
+          "Tech C"
+        ],
+        "caption": "Cars have explosive potential for earnings!"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "64404e3125f61a4fda344814-stock-a-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Car A", "Airline B", "Gas C", "Tech C"],
+        "caption": "Auto stocks are outpacing all others"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "654287b7f8958a83a5c611fd-stock-a-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Car A", "Car B", "Car C"],
+        "caption": "Car A seems to be the only company that is succeeding in improving their profits and the sky is the limit in 2024 with profits continuing to rise significantly."
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "65b3dc2f924ee9deee8b40b9-stock-a-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Car A", "Airline B", "Gas B", "Tech B"],
+        "caption": "Car Industry = Best"
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "5c0a22affe40eb00016262b6-stock-a-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Airline B", "Gas C", "Car A", "Tech A"],
+        "caption": "Given data selected the car industry far outperforms all others. "
+      },
+      {
+        "studyArm": "stock-a",
+        "stimulusId": "6462477ceb093758f41d42e9-stock-a-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Car A"],
+        "caption": "This is the best return for the money."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "55b688fafdf99b26e287abd3-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Airline C", "Car B", "Gas C"],
+        "caption": "As you can see, the airline industry is the only one with positive earnings among transportation related industries."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "580cab86b869700001d71628-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Car A", "Tech A", "Tech B", "Tech C"],
+        "caption": "Car A was the best investment. With the A, B, and C. looking to climb slowly."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "584c1e1f69b36600018ff959-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Airline C", "Tech C", "Gas A"],
+        "caption": "We have had the highest peaks of the other sectors and will again soon. "
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "58d069219dbe3f0001258793-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Airline C",
+          "Airline B",
+          "Airline A",
+          "Car B",
+          "Car C",
+          "Gas B",
+          "Gas C"
+        ],
+        "caption": "the airline industry is much more profitable than most gas and car industries. "
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "59947fcac825cf0001d7dcca-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Airline C", "Car B", "Gas C"],
+        "caption": "Airline industry shows better recovery after dips than either the car or gas industry."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "5a198755f2e3460001edc5c9-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Airline A"],
+        "caption": "Getting ready to climb high again"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "5a3bdd2c8d005a0001829f3e-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Airline C", "Car B"],
+        "caption": "Earn more with airlines, you can never go wrong!"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "5adef850eb60400001539109-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Airline A", "Car B", "Gas C"],
+        "caption": "It's the best time to invest in airlines now, with prices set to rebound to the norm "
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "5b7aefd06c1ccb000178b710-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Airline C"],
+        "caption": "It's a volatile time for stocks, but this is the best investment for your funds because it stabilizes and gives you a positive return."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "5c1053202b16ba0001c86317-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Airline C"],
+        "caption": "Best  performer"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "5cc5e72ce3c44e0015fdf990-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Airline A",
+          "Airline B",
+          "Airline C",
+          "Car B",
+          "Car C",
+          "Gas B",
+          "Gas C"
+        ],
+        "caption": "as you can see in terms of transportation, airlines are the only option that finishes positive"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "5cec5f7afdd26c00193ba64b-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Airline B",
+          "Airline A",
+          "Airline C",
+          "Car A",
+          "Car C",
+          "Gas A",
+          "Tech A"
+        ],
+        "caption": "Airline industry is the most stable to invest in!"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "5d0c565f7374b40001cef0f8-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Airline A",
+          "Airline B",
+          "Airline C",
+          "Car B",
+          "Gas C",
+          "Gas B",
+          "Car C"
+        ],
+        "caption": "The airline industry shows that their stock prices gaining more consistently than the car and gas industries."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "5d16d17119d2ed0015e21360-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Airline A"],
+        "caption": "This stock has the highest growth level. "
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "5d49f28a3fefca00193319ac-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Airline A"],
+        "caption": "As you can see here, airline stock prices have plummeted, which we believe could lead to a large profit as the industry recovers. "
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "5d4a6459061e2a000138bad3-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Airline C", "Car C", "Gas C", "Gas B", "Car B"],
+        "caption": "Investing in the airlines will yield a consistently higher return by Q4."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "5dcdb60be64aaa07c14065cc-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Airline A",
+          "Airline C",
+          "Car B",
+          "Gas B",
+          "Airline B"
+        ],
+        "caption": "The airline industry has a much larger positive percent change than other industries. It doesn't matter which airline you choose because they are all better than other companies by far."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "5e7d30c3ce25953beed86d43-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Airline A",
+          "Airline B",
+          "Airline C",
+          "Car B",
+          "Car C",
+          "Gas C"
+        ],
+        "caption": "Consistent growth projected in the airline industry"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "5f4738bfa043201203a27b4b-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Car B", "Airline A"],
+        "caption": "Airlines are the future, cars are the past"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "5f8cbc5c355ea745e6cef2ca-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Car B",
+          "Car C",
+          "Gas B",
+          "Gas C",
+          "Airline B",
+          "Airline C",
+          "Airline A"
+        ],
+        "caption": "Compared to gas and car funds, the airline industry is the most stable over time."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "5fa4f94e535f3b1aa628e0ab-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Airline C"],
+        "caption": "Stocks have risen 25%"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "609f528fba531c5195b6cd4e-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Airline C",
+          "Car B",
+          "Car C",
+          "Airline A",
+          "Gas B",
+          "Gas C"
+        ],
+        "caption": "Airline industry the way to go"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "60fda57e0916dfe2157c9b00-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Airline C", "Car B", "Car C", "Gas B", "Gas C"],
+        "caption": "Positive Returns for Airline Industry, Negative for Others"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "60fdb73b85f276ed91d84eb9-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Tech C", "Gas C", "Car C", "Airline C"],
+        "caption": "The airline industry is one of the best investments given its more stable changes in stock price over time, as compared to other industries. The tech industry has a higher return rate over time (for now), but other data shows that there are massive tech layoffs occurring right now, while the airline industry is soaring."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "61115b93e6d819b1d14095bf-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Airline A", "Car B", "Gas C"],
+        "caption": "Airline industry more consistently shows a positive percent change in stock price compared to other industries "
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "611195657110219178aa70e1-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Car B", "Gas C", "Airline C"],
+        "caption": "This Airline industry outperformed these Gas and Car industries the entire year of 2023."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "6129cc7a565c9c03752802fa-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Airline A",
+          "Airline B",
+          "Airline C",
+          "Car B",
+          "Car C",
+          "Gas B",
+          "Gas C"
+        ],
+        "caption": "this puts airline on top"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "6234e1b277e7fe207a9ad500-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Airline C"],
+        "caption": "Prices projected to trend upwards."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "62728884995a1a76605d0214-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Airline C"],
+        "caption": "airline c has the best return on investment."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "6272892b05043371638ee032-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Airline C"],
+        "caption": "AIRLINE C! UP AND DOWN BUT ALWAYS LONG TERM TRENDING ON THE UP!"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "628d14b52b5bd1d83ed1f7d2-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Airline C", "Car C", "Gas C", "Tech C"],
+        "caption": "Compared to other industries, the airline industry had the least amount of drastic fluctuation and rarely deviated below 0%. "
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "63225dd98b2a68d9be44f266-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Airline C",
+          "Airline B",
+          "Airline A",
+          "Car B",
+          "Gas C",
+          "Car C",
+          "Gas B"
+        ],
+        "caption": "Airlines have a high potential for earning while being relatively predictable"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "63d42902a85ae3e7b4920266-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Airline C", "Car C"],
+        "caption": "The airline companies remain stable while the car industry decreases."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "64404e3125f61a4fda344814-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Airline C", "Car B", "Gas C"],
+        "caption": "Airlines are showing positive growth"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "651af02f06091a654b0a0940-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Airline A"],
+        "caption": "Fly high with the airline!"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "654287b7f8958a83a5c611fd-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Airline A", "Airline B", "Airline C"],
+        "caption": "Airline C seems to be the best option for investments as they have bounced back from a low in October of 2023 and it looks very good as well for 2024."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "6562565a6752019f98cf5c76-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Airline A", "Airline B"],
+        "caption": "BEST FUND AIRLINE INDUSTRY"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "65983c420d89145cbdb05468-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Car B"],
+        "caption": "Let's invest in the airline industry as it is clear that the car industry is on a major decline. "
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "65cbd703053cb1dffec0b1d0-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Airline B",
+          "Airline A",
+          "Airline C",
+          "Car B",
+          "Car C",
+          "Gas B"
+        ],
+        "caption": "Even with dips all airlines do better than cars and gas"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "5a84f454ae9a0b0001a9e4e5-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Airline A",
+          "Airline B",
+          "Airline C",
+          "Gas B",
+          "Car B",
+          "Car C",
+          "Gas A",
+          "Gas C",
+          "Car A"
+        ],
+        "caption": "Reliable, Consistent, Positive Performance Across the Entire Sector"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "5aec7e89ae13140001fc0cdf-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Airline C", "Car B", "Gas C", "Airline A"],
+        "caption": "The Airline industry will dip but will ultimately remain the more profitable option. "
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "5c0a22affe40eb00016262b6-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Car B", "Gas C", "Airline C"],
+        "caption": "Airline industry prices are higher than both gas and car industry prices."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "5dcccec0092079953154f997-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Airline C"],
+        "caption": "As the visualization indicates, this will be an investment that will require extensive analysis, but if the right techniques are applied and favorable conditions are met, it will be an investment with a very high return."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "5df3dcdd9b92b12b6db3a4e5-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Airline A", "Car B", "Gas C"],
+        "caption": "Airline vs Gas and Car "
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "5ef981cf234db67251c1e0d7-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Airline C"],
+        "caption": "Follow our methods to make the airline industry work for you."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "5f03b7bd40032c3181eaaf78-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Airline C", "Airline B", "Airline A"],
+        "caption": "Most consistent over time while other industries have unpredictable abrupt changes."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "5f4eae07c118f20dc021cda4-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Airline C", "Car B", "Gas C"],
+        "caption": "Easy to Follow the Money"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "6293c7cef1af3c7badc3e25b-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Airline A", "Car B", "Gas C"],
+        "caption": "All stocks are not doing well this year, but Airline A is the only one that actually returns some gains, whereas Gas and Car prices have dropped."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "63f77ab51428a164ec2edbab-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Airline B", "Car B", "Gas B"],
+        "caption": "As seen, Car B has been experiencing a significant decline and so has Gas B to the both where both are in the negatives. Therefore, the airline industry has the best investment given its growth in recent months."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "6413a7cd7df0a6b1d2b69d0c-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Airline A",
+          "Airline B",
+          "Airline C",
+          "Car B",
+          "Car C",
+          "Gas B",
+          "Gas C"
+        ],
+        "caption": "Airlines were able to turn a profit while other sectors were not able too."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "6462477ceb093758f41d42e9-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Airline C"],
+        "caption": "This is the best airline fund."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "6547c5ffc2b79e88bad25705-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Airline C"],
+        "caption": "airline see seems to have the most growth avg of all"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "657b6239aa8091bfa2b24ae0-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Airline C", "Car B", "Gas C"],
+        "caption": "When compared to Car and Gas, Airline is the best investment"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "65e14ceb873675f5079a6874-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": [
+          "Airline C",
+          "Car B",
+          "Car C",
+          "Gas C",
+          "Gas B",
+          "Airline A"
+        ],
+        "caption": "Airline bounces back for huge growth while Car and Gas continue to suffer!"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "65e62f235ea714f6ca702b8c-stock-b-n",
+        "guardrail": "none",
+        "initialSelection": ["Airline C", "Car B", "Gas C"],
+        "caption": "While the airline has had ups and downs it has always returned to high returns unlike the other 2"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "5eac8b777b60c8129709fc10-stock-b-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Airline A"],
+        "caption": "This airline industry fund is the best choice."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "60171c9b1a726593103182b3-stock-b-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Airline C", "Airline B", "Airline A"],
+        "caption": "while things can be fluid, there is uniformity in these numbers too"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "62778bd8b195693397330c4f-stock-b-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Gas C", "Airline C", "Car C"],
+        "caption": "Airlines will outperform Car and Gas investments"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "628f572a2d1304a34b9e1a37-stock-b-sd",
+        "guardrail": "super_data",
+        "initialSelection": [
+          "Airline B",
+          "Airline C",
+          "Car A",
+          "Car B",
+          "Car C",
+          "Gas A",
+          "Gas B",
+          "Gas C",
+          "Tech A",
+          "Tech B",
+          "Tech C"
+        ],
+        "caption": "Get solid returns."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "62b0ef77e3519ee19788db34-stock-b-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Car A"],
+        "caption": "car A has good returns"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "63474e67a5fd298c6103c409-stock-b-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Airline A", "Gas C"],
+        "caption": "Skyrocket Your Portfolio: Take Off with the Airline Industry Fund - Where High Altitude Returns Meet Data-Driven Confidence!"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "63f7a0d118fd7934c87adfca-stock-b-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Car B", "Gas B", "Airline C"],
+        "caption": "Investment into this particular airline fund couldn't be better timed. While a decline from July through October left the price of investment lower than it is now, there is still an advantage to buying in this dip and allowing the expected rise to produce ample return on investment. By contrast, gas and car industry investments are showing a serious decline over time, with car investments producing below a -50% return."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "645179915e31c1aeb3dc8129-stock-b-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Airline C"],
+        "caption": "This investment is outperforming the industry"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "64ea292478e6214a440badae-stock-b-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Airline C", "Car B", "Gas C"],
+        "caption": "Airline C outperforms Gas C and Car B"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "58d165dff7a08b000176c54c-stock-b-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Airline A", "Airline B", "Airline C"],
+        "caption": "you wont regret it"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "6025aeaea2c27e19e096f29d-stock-b-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Airline A", "Gas C"],
+        "caption": "Airlines show a better rate of returns"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "615d051e2366aeb051acb734-stock-b-sd",
+        "guardrail": "super_data",
+        "initialSelection": [
+          "Airline A",
+          "Car B",
+          "Gas C",
+          "Airline B",
+          "Airline C"
+        ],
+        "caption": "Airline stocks outperform car and gas industry"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "65cc19b4b3d48a22dfc6756d-stock-b-sd",
+        "guardrail": "super_data",
+        "initialSelection": ["Airline C", "Gas C"],
+        "caption": "Compared to the gas industry, the airline industry is a better investment."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "570b7b5fb9b52b00102d96f9-stock-b-ss",
+        "guardrail": "super_summ",
+        "initialSelection": ["Airline C", "Gas C", "Car B"],
+        "caption": "The airline industry is generally climbing compared to other industries."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "59048309c4ef1300011b1085-stock-b-ss",
+        "guardrail": "super_summ",
+        "initialSelection": ["Airline C", "Car B", "Gas B"],
+        "caption": "when compared to a few other investments in other travel related areas this airline has been more consistent and performed better than these other companies. "
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "5d979a7705d4d60017b154c6-stock-b-ss",
+        "guardrail": "super_summ",
+        "initialSelection": ["Car B", "Car C", "Gas C", "Gas B", "Airline C"],
+        "caption": "The airline industry fund sees steady growth compared to other funds."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "5eb1cc5bbd95623229c961a5-stock-b-ss",
+        "guardrail": "super_summ",
+        "initialSelection": [
+          "Airline B",
+          "Airline A",
+          "Airline C",
+          "Gas A",
+          "Gas B",
+          "Gas C",
+          "Car C",
+          "Car B"
+        ],
+        "caption": "As you can see in the graph, the airline company is a better investment because it often has chances for higher returns, despite the constant highs/lows. The other industries might occasionally be more stable but will not make you more money. "
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "5ec59e86c9569f5e8000717b-stock-b-ss",
+        "guardrail": "super_summ",
+        "initialSelection": ["Airline A", "Gas A", "Gas B", "Airline C"],
+        "caption": "Airline investment is significant larger than other investment."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "5f9e1843a1b1963d7cb7b4d4-stock-b-ss",
+        "guardrail": "super_summ",
+        "initialSelection": [
+          "Airline A",
+          "Car B",
+          "Gas C",
+          "Airline B",
+          "Airline C"
+        ],
+        "caption": "Over time, growth in stock prices in the airline industry have either been consistent with or outperformed the market average, thus being the most predictable."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "60859f820e5009a67adb3921-stock-b-ss",
+        "guardrail": "super_summ",
+        "initialSelection": ["Airline C"],
+        "caption": "We're on the way up to soaring profits."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "610ad34844dd2b51bf5d87f5-stock-b-ss",
+        "guardrail": "super_summ",
+        "initialSelection": ["Airline A", "Car B", "Gas C"],
+        "caption": "Airline investors are reaping FAR higher returns than gas and auto investors! "
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "633599d83df1823b08ae2e61-stock-b-ss",
+        "guardrail": "super_summ",
+        "initialSelection": [
+          "Airline A",
+          "Airline B",
+          "Airline C",
+          "Car B",
+          "Gas C"
+        ],
+        "caption": "airline is best overall when comparing that they are all 3 predictably doing the same"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "63e5b3e89a3823139cb9d35e-stock-b-ss",
+        "guardrail": "super_summ",
+        "initialSelection": ["Tech A", "Car A", "Airline B"],
+        "caption": "The data doesn't lie"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "63ff478aec95d54674669329-stock-b-ss",
+        "guardrail": "super_summ",
+        "initialSelection": ["Airline A"],
+        "caption": "If you choose this airline investment, you will enjoy a return that is on par with the industry average "
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "647fbfa8a2c006cbd09a7166-stock-b-ss",
+        "guardrail": "super_summ",
+        "initialSelection": [
+          "Airline A",
+          "Airline B",
+          "Airline C",
+          "Car B",
+          "Car C"
+        ],
+        "caption": "The airline industry shows a steady success in the market compared to cars as you can see the market is slowly declining. "
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "651ebcca48c60acc82f1f2bd-stock-b-ss",
+        "guardrail": "super_summ",
+        "initialSelection": ["Airline C"],
+        "caption": "Enjoy 25% Investment Growth in less than a year"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "5cdde0ec7f65ee001a98519e-stock-b-ss",
+        "guardrail": "super_summ",
+        "initialSelection": ["Airline C", "Car B", "Gas C"],
+        "caption": "As you can see, Airline C consistently outperforms the market index, leaving Gas C and Car B in the dust."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "5f596abb349f1f1b834a54e5-stock-b-ss",
+        "guardrail": "super_summ",
+        "initialSelection": [
+          "Airline C",
+          "Car B",
+          "Car C",
+          "Gas A",
+          "Gas B",
+          "Gas C"
+        ],
+        "caption": "Airline industry performed better on the market than Gas and Car"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "60ff5f56f43ca40450d140c4-stock-b-ss",
+        "guardrail": "super_summ",
+        "initialSelection": ["Airline C", "Car B", "Gas C"],
+        "caption": "Investing in airlines is the safe bet"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "5e44cd061aedc43572ba58b3-stock-b-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": ["Car B", "Airline C", "Gas C"],
+        "caption": "Airline C is much more profitable to invest into when compared to investing in Gas or Car"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "614918a6dcc9c2fb0bde6331-stock-b-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": ["Airline A"],
+        "caption": "This industry fund would be the best investment with the highest returns. "
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "61645d805d7b358ed3e052a6-stock-b-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": ["Airline A", "Airline B", "Airline C"],
+        "caption": "The airline industry is much more stable, and predictable."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "62c5fbbb796500bb5406d772-stock-b-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": ["Airline A", "Gas C", "Car B"],
+        "caption": "Airline has a higher average percent change in stock versus the failing cars"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "62d44d484a28cd313e2c3ba4-stock-b-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": ["Airline C", "Car B", "Gas C"],
+        "caption": "The airline industry has comparatively higher returns than the gas or car industries"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "63d152b604e8c21933a58a66-stock-b-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": ["Gas C", "Gas B", "Gas A", "Airline C"],
+        "caption": "Even with some of the worst performances of the airline industry, you will end up with a higher return than all of the best performances of the gas industry."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "65c11389b0d2ba8e63cb8b22-stock-b-jd",
+        "guardrail": "juxt_data",
+        "initialSelection": ["Airline C", "Car B", "Gas C"],
+        "caption": "The airline industry will always bounce back "
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "566c9284d408ea000519c6d7-stock-b-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": [
+          "Car B",
+          "Gas B",
+          "Airline C",
+          "Airline B",
+          "Airline A",
+          "Gas C"
+        ],
+        "caption": "Airlines A, B & C have performed better over time and have had growth compared to car company B, and gas companies B & C."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "583b397f54686200010f1d20-stock-b-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Airline A", "Car B"],
+        "caption": "Airline industry funds soar."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "5a6cc406d5d4cb0001d664aa-stock-b-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Airline A"],
+        "caption": "It's finding its footing again, you know covid kind of ruined airlines but now that its getting less and less prevalent we're going to see a resurgence in airlines so I'd say buy cheap to get a big return"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "5df11e6cdc85350234932daa-stock-b-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Airline C", "Car C", "Gas C"],
+        "caption": "Airline companies for the win."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "5e6387b1b7d70b10675e3a26-stock-b-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": [
+          "Airline A",
+          "Car A",
+          "Car B",
+          "Car C",
+          "Gas A",
+          "Gas B",
+          "Gas C"
+        ],
+        "caption": "Airline data shows it up, UP, and away!"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "5f73610089f920075dbb129b-stock-b-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": [
+          "Airline A",
+          "Airline B",
+          "Airline C",
+          "Car B",
+          "Gas C",
+          "Car C"
+        ],
+        "caption": "More Positive Returns"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "614dff99a7df5de140464ec3-stock-b-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Airline C", "Car B", "Car C", "Gas C", "Gas B"],
+        "caption": "The airline industry outperforms all other based on the data"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "616d6463aa6ae2ee832b3804-stock-b-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Airline C", "Car B", "Gas C"],
+        "caption": "Airline has fared much better than the gas and car industries in the last year"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "63d7d4e2ebf6c98c92c2a7f8-stock-b-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Airline C"],
+        "caption": "Airline C had the most increases in the middle than all of the other airlines. "
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "6411493f08fd400dc0d5eacc-stock-b-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Airline B"],
+        "caption": "increasing value of stock prices returns"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "60fece6c2cc11a390a504561-stock-b-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Airline A", "Car B", "Gas C"],
+        "caption": "Airline Industry Investment"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "610780a29b8f39b988aedf57-stock-b-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Airline A"],
+        "caption": "Airline A is the way"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "610825130bf4669d1b167efe-stock-b-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Airline A", "Car B", "Gas C"],
+        "caption": "The airline industry gives you the best return!"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "63d87d4ba0b86684507f201d-stock-b-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": [
+          "Airline A",
+          "Airline B",
+          "Airline C",
+          "Gas A",
+          "Gas B",
+          "Gas C"
+        ],
+        "caption": "Airline investments yield the most"
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "6516fc85c3f5d2912d6518f6-stock-b-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": [
+          "Airline A",
+          "Airline B",
+          "Airline C",
+          "Gas A",
+          "Gas B",
+          "Gas C"
+        ],
+        "caption": "As shown on the graph, the airline industry funds all outperform related industry funds we investigated."
+      },
+      {
+        "studyArm": "stock-b",
+        "stimulusId": "654a651e7dcb4c625edf8e26-stock-b-js",
+        "guardrail": "juxt_summ",
+        "initialSelection": ["Airline C", "Car B", "Gas C"],
+        "caption": "Stock price timelines for the airline industry provide ample opportunity to multiply investments; other major industries fail to achieve consistently profitable stock prices"
+      }
+    ],
+    "viralAContext": [
+      {
+        "domain": "viral",
+        "target": "Policy A",
+        "instruction": "You need to travel to **Eldoril North (Policy A)** for work. Review the visualization and caption, then answer based solely on this information.",
+        "actionPrompt": "Before traveling to **Eldoril North (Policy A)**, I would buy this much insurance ($0 = no risk, $100 = very high risk):",
+        "supportPrompt": "The visualization supports the idea that Policy A is a great containment strategy:"
+      }
+    ],
+    "viralBContext": [
+      {
+        "domain": "viral",
+        "target": "Policy B",
+        "instruction": "You need to travel to **Aerion North (Policy B)** for work. Review the visualization and caption, then answer based solely on this information.",
+        "actionPrompt": "Before traveling to **Aerion North (Policy B)**, I would buy this much insurance ($0 = no risk, $100 = very high risk):",
+        "supportPrompt": "The visualization supports the idea that Policy B is a great containment strategy:"
+      }
+    ],
+    "stockAContext": [
+      {
+        "domain": "stock",
+        "target": "Car",
+        "instruction": "Review the visualization and caption, then answer the questions based solely on this information.",
+        "actionPrompt": "I would invest this much in the combined **Car** industry fund ($0 = no chance of growth, $100 = very high chance of growth):",
+        "supportPrompt": "The visualization supports the idea that the Car fund is a great investment:"
+      }
+    ],
+    "stockBContext": [
+      {
+        "domain": "stock",
+        "target": "Airline",
+        "instruction": "Review the visualization and caption, then answer the questions based solely on this information.",
+        "actionPrompt": "I would invest this much in the combined **Airline** industry fund ($0 = no chance of growth, $100 = very high chance of growth):",
+        "supportPrompt": "The visualization supports the idea that the Airline fund is a great investment:"
+      }
+    ],
+    "viralANoneTrials": { "action": "keep", "factor": "trialConfigurations", "condition": { "studyArm": "viral-a", "guardrail": "none" } },
+    "viralANoneTrialSample": { "action": "sample", "factors": [{ "action": "cross", "factors": ["viralANoneTrials", "viralAContext"] }], "numSamples": 1, "samplingStrategy": "withoutReplacement" },
+    "viralASuperDataTrials": { "action": "keep", "factor": "trialConfigurations", "condition": { "studyArm": "viral-a", "guardrail": "super_data" } },
+    "viralASuperDataTrialSample": { "action": "sample", "factors": [{ "action": "cross", "factors": ["viralASuperDataTrials", "viralAContext"] }], "numSamples": 1, "samplingStrategy": "withoutReplacement" },
+    "viralASuperSummaryTrials": { "action": "keep", "factor": "trialConfigurations", "condition": { "studyArm": "viral-a", "guardrail": "super_summ" } },
+    "viralASuperSummaryTrialSample": { "action": "sample", "factors": [{ "action": "cross", "factors": ["viralASuperSummaryTrials", "viralAContext"] }], "numSamples": 1, "samplingStrategy": "withoutReplacement" },
+    "viralAJuxtaposedDataTrials": { "action": "keep", "factor": "trialConfigurations", "condition": { "studyArm": "viral-a", "guardrail": "juxt_data" } },
+    "viralAJuxtaposedDataTrialSample": { "action": "sample", "factors": [{ "action": "cross", "factors": ["viralAJuxtaposedDataTrials", "viralAContext"] }], "numSamples": 1, "samplingStrategy": "withoutReplacement" },
+    "viralAJuxtaposedSummaryTrials": { "action": "keep", "factor": "trialConfigurations", "condition": { "studyArm": "viral-a", "guardrail": "juxt_summ" } },
+    "viralAJuxtaposedSummaryTrialSample": { "action": "sample", "factors": [{ "action": "cross", "factors": ["viralAJuxtaposedSummaryTrials", "viralAContext"] }], "numSamples": 1, "samplingStrategy": "withoutReplacement" },
+
+    "viralBNoneTrials": { "action": "keep", "factor": "trialConfigurations", "condition": { "studyArm": "viral-b", "guardrail": "none" } },
+    "viralBNoneTrialSample": { "action": "sample", "factors": [{ "action": "cross", "factors": ["viralBNoneTrials", "viralBContext"] }], "numSamples": 1, "samplingStrategy": "withoutReplacement" },
+    "viralBSuperDataTrials": { "action": "keep", "factor": "trialConfigurations", "condition": { "studyArm": "viral-b", "guardrail": "super_data" } },
+    "viralBSuperDataTrialSample": { "action": "sample", "factors": [{ "action": "cross", "factors": ["viralBSuperDataTrials", "viralBContext"] }], "numSamples": 1, "samplingStrategy": "withoutReplacement" },
+    "viralBSuperSummaryTrials": { "action": "keep", "factor": "trialConfigurations", "condition": { "studyArm": "viral-b", "guardrail": "super_summ" } },
+    "viralBSuperSummaryTrialSample": { "action": "sample", "factors": [{ "action": "cross", "factors": ["viralBSuperSummaryTrials", "viralBContext"] }], "numSamples": 1, "samplingStrategy": "withoutReplacement" },
+    "viralBJuxtaposedDataTrials": { "action": "keep", "factor": "trialConfigurations", "condition": { "studyArm": "viral-b", "guardrail": "juxt_data" } },
+    "viralBJuxtaposedDataTrialSample": { "action": "sample", "factors": [{ "action": "cross", "factors": ["viralBJuxtaposedDataTrials", "viralBContext"] }], "numSamples": 1, "samplingStrategy": "withoutReplacement" },
+    "viralBJuxtaposedSummaryTrials": { "action": "keep", "factor": "trialConfigurations", "condition": { "studyArm": "viral-b", "guardrail": "juxt_summ" } },
+    "viralBJuxtaposedSummaryTrialSample": { "action": "sample", "factors": [{ "action": "cross", "factors": ["viralBJuxtaposedSummaryTrials", "viralBContext"] }], "numSamples": 1, "samplingStrategy": "withoutReplacement" },
+
+    "stockANoneTrials": { "action": "keep", "factor": "trialConfigurations", "condition": { "studyArm": "stock-a", "guardrail": "none" } },
+    "stockANoneTrialSample": { "action": "sample", "factors": [{ "action": "cross", "factors": ["stockANoneTrials", "stockAContext"] }], "numSamples": 1, "samplingStrategy": "withoutReplacement" },
+    "stockASuperDataTrials": { "action": "keep", "factor": "trialConfigurations", "condition": { "studyArm": "stock-a", "guardrail": "super_data" } },
+    "stockASuperDataTrialSample": { "action": "sample", "factors": [{ "action": "cross", "factors": ["stockASuperDataTrials", "stockAContext"] }], "numSamples": 1, "samplingStrategy": "withoutReplacement" },
+    "stockASuperSummaryTrials": { "action": "keep", "factor": "trialConfigurations", "condition": { "studyArm": "stock-a", "guardrail": "super_summ" } },
+    "stockASuperSummaryTrialSample": { "action": "sample", "factors": [{ "action": "cross", "factors": ["stockASuperSummaryTrials", "stockAContext"] }], "numSamples": 1, "samplingStrategy": "withoutReplacement" },
+    "stockAJuxtaposedDataTrials": { "action": "keep", "factor": "trialConfigurations", "condition": { "studyArm": "stock-a", "guardrail": "juxt_data" } },
+    "stockAJuxtaposedDataTrialSample": { "action": "sample", "factors": [{ "action": "cross", "factors": ["stockAJuxtaposedDataTrials", "stockAContext"] }], "numSamples": 1, "samplingStrategy": "withoutReplacement" },
+    "stockAJuxtaposedSummaryTrials": { "action": "keep", "factor": "trialConfigurations", "condition": { "studyArm": "stock-a", "guardrail": "juxt_summ" } },
+    "stockAJuxtaposedSummaryTrialSample": { "action": "sample", "factors": [{ "action": "cross", "factors": ["stockAJuxtaposedSummaryTrials", "stockAContext"] }], "numSamples": 1, "samplingStrategy": "withoutReplacement" },
+
+    "stockBNoneTrials": { "action": "keep", "factor": "trialConfigurations", "condition": { "studyArm": "stock-b", "guardrail": "none" } },
+    "stockBNoneTrialSample": { "action": "sample", "factors": [{ "action": "cross", "factors": ["stockBNoneTrials", "stockBContext"] }], "numSamples": 1, "samplingStrategy": "withoutReplacement" },
+    "stockBSuperDataTrials": { "action": "keep", "factor": "trialConfigurations", "condition": { "studyArm": "stock-b", "guardrail": "super_data" } },
+    "stockBSuperDataTrialSample": { "action": "sample", "factors": [{ "action": "cross", "factors": ["stockBSuperDataTrials", "stockBContext"] }], "numSamples": 1, "samplingStrategy": "withoutReplacement" },
+    "stockBSuperSummaryTrials": { "action": "keep", "factor": "trialConfigurations", "condition": { "studyArm": "stock-b", "guardrail": "super_summ" } },
+    "stockBSuperSummaryTrialSample": { "action": "sample", "factors": [{ "action": "cross", "factors": ["stockBSuperSummaryTrials", "stockBContext"] }], "numSamples": 1, "samplingStrategy": "withoutReplacement" },
+    "stockBJuxtaposedDataTrials": { "action": "keep", "factor": "trialConfigurations", "condition": { "studyArm": "stock-b", "guardrail": "juxt_data" } },
+    "stockBJuxtaposedDataTrialSample": { "action": "sample", "factors": [{ "action": "cross", "factors": ["stockBJuxtaposedDataTrials", "stockBContext"] }], "numSamples": 1, "samplingStrategy": "withoutReplacement" },
+    "stockBJuxtaposedSummaryTrials": { "action": "keep", "factor": "trialConfigurations", "condition": { "studyArm": "stock-b", "guardrail": "juxt_summ" } },
+    "stockBJuxtaposedSummaryTrialSample": { "action": "sample", "factors": [{ "action": "cross", "factors": ["stockBJuxtaposedSummaryTrials", "stockBContext"] }], "numSamples": 1, "samplingStrategy": "withoutReplacement" }
+  },
+  "betweenSubjects": ["studyArm"],
+  "baseComponents": {
+    "evaluationTrial": {
+      "type": "react-component",
+      "path": "demo-max-study2/assets/DataExplorer.tsx",
+      "instruction": "@instruction",
+      "instructionLocation": "aboveStimulus",
+      "nextButtonLocation": "belowStimulus",
+      "response": [
+        {
+          "id": "action",
+          "type": "slider",
+          "location": "belowStimulus",
+          "prompt": "@actionPrompt",
+          "startingValue": 50,
+          "spacing": 25,
+          "options": [
+            {
+              "value": 0,
+              "label": "$0"
+            },
+            {
+              "value": 25,
+              "label": "$25"
+            },
+            {
+              "value": 50,
+              "label": "$50"
+            },
+            {
+              "value": 75,
+              "label": "$75"
+            },
+            {
+              "value": 100,
+              "label": "$100"
+            }
+          ],
+          "required": true
+        },
+        {
+          "id": "explain",
+          "type": "longText",
+          "location": "belowStimulus",
+          "prompt": "Briefly explain your reasoning for the previous question. What information in the visualization and caption led you to this decision? (1-2 sentences)",
+          "required": true,
+          "placeholder": "I chose this amount because..."
+        },
+        {
+          "id": "support",
+          "type": "likert",
+          "location": "belowStimulus",
+          "prompt": "@supportPrompt",
+          "numItems": 5,
+          "leftLabel": "Strongly disagree",
+          "rightLabel": "Strongly agree",
+          "required": true
+        },
+        {
+          "id": "accuracy",
+          "type": "likert",
+          "location": "belowStimulus",
+          "prompt": "The visualization transparently includes all important elements of the data:",
+          "numItems": 5,
+          "leftLabel": "Strongly disagree",
+          "rightLabel": "Strongly agree",
+          "required": true
+        },
+        {
+          "id": "clarity",
+          "type": "likert",
+          "location": "belowStimulus",
+          "prompt": "I find it easy to understand this visualization:",
+          "numItems": 5,
+          "leftLabel": "Strongly disagree",
+          "rightLabel": "Strongly agree",
+          "required": true
+        },
+        {
+          "id": "shareable",
+          "type": "likert",
+          "location": "belowStimulus",
+          "prompt": "I would share this visualization with friends and family if they were in my situation:",
+          "numItems": 5,
+          "leftLabel": "Strongly disagree",
+          "rightLabel": "Strongly agree",
+          "required": true
+        },
+        {
+          "id": "trust",
+          "type": "likert",
+          "location": "belowStimulus",
+          "prompt": "I trust this information:",
+          "numItems": 5,
+          "leftLabel": "Strongly disagree",
+          "rightLabel": "Strongly agree",
+          "required": true
+        }
+      ]
+    },
+    "monthCheck": {
+      "type": "questionnaire",
+      "instruction": "When asked to select a month, please select **March**. This is an attention check.",
+      "response": [
+        {
+          "id": "check-month",
+          "prompt": "Based on the text above, what month were you asked to select?",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": ["February", "March", "April", "May", "June"]
+        }
+      ]
+    },
+    "textCheck": {
+      "type": "questionnaire",
+      "instruction": "When asked to input text below, please type **Bird**. This is an attention check.",
+      "response": [
+        {
+          "id": "check-text",
+          "prompt": "Based on the text above, what were you asked to type?",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "shortText",
+          "placeholder": "Type your answer here."
+        }
+      ]
+    }
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-max-study2/assets/introduction.md",
+      "response": []
+    },
+    "consent": {
+      "type": "markdown",
+      "path": "demo-max-study2/assets/consent.md",
+      "nextButtonText": "Agree",
+      "response": [
+        {
+          "id": "accept",
+          "prompt": "Do you consent to this demo study and wish to continue?",
+          "required": true,
+          "requiredValue": "yes",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            {
+              "label": "Decline",
+              "value": "no"
+            },
+            {
+              "label": "Accept",
+              "value": "yes"
+            }
+          ]
+        }
+      ]
+    },
+    "task-introduction": {
+      "type": "markdown",
+      "path": "demo-max-study2/assets/task-introduction.md",
+      "response": []
+    },
+    "viral-a-check-month": {
+      "baseComponent": "monthCheck",
+      "parameters": {
+        "studyArm": "viral-a"
+      }
+    },
+    "viral-a-check-text": {
+      "baseComponent": "textCheck",
+      "parameters": {
+        "studyArm": "viral-a"
+      }
+    },
+    "viral-b-check-month": {
+      "baseComponent": "monthCheck",
+      "parameters": {
+        "studyArm": "viral-b"
+      }
+    },
+    "viral-b-check-text": {
+      "baseComponent": "textCheck",
+      "parameters": {
+        "studyArm": "viral-b"
+      }
+    },
+    "stock-a-check-month": {
+      "baseComponent": "monthCheck",
+      "parameters": {
+        "studyArm": "stock-a"
+      }
+    },
+    "stock-a-check-text": {
+      "baseComponent": "textCheck",
+      "parameters": {
+        "studyArm": "stock-a"
+      }
+    },
+    "stock-b-check-month": {
+      "baseComponent": "monthCheck",
+      "parameters": {
+        "studyArm": "stock-b"
+      }
+    },
+    "stock-b-check-text": {
+      "baseComponent": "textCheck",
+      "parameters": {
+        "studyArm": "stock-b"
+      }
+    },
+    "post-study": {
+      "type": "markdown",
+      "path": "demo-max-study2/assets/post-study.md",
+      "response": [
+        {
+          "id": "viz",
+          "type": "likert",
+          "location": "belowStimulus",
+          "prompt": "How familiar are you with data visualizations?",
+          "required": true,
+          "leftLabel": "Not familiar",
+          "rightLabel": "Very familiar",
+          "numItems": 5
+        },
+        {
+          "id": "notice",
+          "type": "radio",
+          "location": "belowStimulus",
+          "prompt": "Did you notice a guardrail in place in some of your tasks?",
+          "required": true,
+          "options": [
+            {
+              "label": "No",
+              "value": "no"
+            },
+            {
+              "label": "Yes",
+              "value": "yes"
+            }
+          ]
+        },
+        {
+          "id": "clear",
+          "type": "likert",
+          "location": "belowStimulus",
+          "prompt": "How clear was it what the guardrails were showing?",
+          "required": true,
+          "leftLabel": "Not clear",
+          "rightLabel": "Very clear",
+          "numItems": 5
+        },
+        {
+          "id": "convincing",
+          "type": "likert",
+          "location": "belowStimulus",
+          "prompt": "Did the guardrail make the visualizations more or less convincing?",
+          "required": true,
+          "leftLabel": "Less convincing",
+          "rightLabel": "More convincing",
+          "numItems": 5
+        },
+        {
+          "id": "experience",
+          "type": "longText",
+          "location": "belowStimulus",
+          "prompt": "Describe how the guardrails affected your evaluation of the visualizations.",
+          "required": true,
+          "placeholder": "Enter your answer here."
+        },
+        {
+          "id": "surveyExperience",
+          "prompt": "Did you experience any problems with the demo?",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "longText",
+          "placeholder": "Enter your answer here."
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "consent",
+      "task-introduction",
+      {
+        "order": "fixed",
+        "components": [
+          {
+            "order": "fixed",
+            "components": [
+              { "type": "factor", "id": "viralANoneTrialSample", "factor": "viralANoneTrialSample", "components": "evaluationTrial" },
+              { "type": "factor", "id": "viralASuperDataTrialSample", "factor": "viralASuperDataTrialSample", "components": "evaluationTrial" },
+              { "type": "factor", "id": "viralASuperSummaryTrialSample", "factor": "viralASuperSummaryTrialSample", "components": "evaluationTrial" },
+              { "type": "factor", "id": "viralAJuxtaposedDataTrialSample", "factor": "viralAJuxtaposedDataTrialSample", "components": "evaluationTrial" },
+              { "type": "factor", "id": "viralAJuxtaposedSummaryTrialSample", "factor": "viralAJuxtaposedSummaryTrialSample", "components": "evaluationTrial" }
+            ],
+            "interruptions": [
+              { "spacing": "random", "numInterruptions": 1, "components": ["viral-a-check-month"] },
+              { "spacing": "random", "numInterruptions": 1, "components": ["viral-a-check-text"] }
+            ]
+          },
+          {
+            "order": "fixed",
+            "components": [
+              { "type": "factor", "id": "viralBNoneTrialSample", "factor": "viralBNoneTrialSample", "components": "evaluationTrial" },
+              { "type": "factor", "id": "viralBSuperDataTrialSample", "factor": "viralBSuperDataTrialSample", "components": "evaluationTrial" },
+              { "type": "factor", "id": "viralBSuperSummaryTrialSample", "factor": "viralBSuperSummaryTrialSample", "components": "evaluationTrial" },
+              { "type": "factor", "id": "viralBJuxtaposedDataTrialSample", "factor": "viralBJuxtaposedDataTrialSample", "components": "evaluationTrial" },
+              { "type": "factor", "id": "viralBJuxtaposedSummaryTrialSample", "factor": "viralBJuxtaposedSummaryTrialSample", "components": "evaluationTrial" }
+            ],
+            "interruptions": [
+              { "spacing": "random", "numInterruptions": 1, "components": ["viral-b-check-month"] },
+              { "spacing": "random", "numInterruptions": 1, "components": ["viral-b-check-text"] }
+            ]
+          },
+          {
+            "order": "fixed",
+            "components": [
+              { "type": "factor", "id": "stockANoneTrialSample", "factor": "stockANoneTrialSample", "components": "evaluationTrial" },
+              { "type": "factor", "id": "stockASuperDataTrialSample", "factor": "stockASuperDataTrialSample", "components": "evaluationTrial" },
+              { "type": "factor", "id": "stockASuperSummaryTrialSample", "factor": "stockASuperSummaryTrialSample", "components": "evaluationTrial" },
+              { "type": "factor", "id": "stockAJuxtaposedDataTrialSample", "factor": "stockAJuxtaposedDataTrialSample", "components": "evaluationTrial" },
+              { "type": "factor", "id": "stockAJuxtaposedSummaryTrialSample", "factor": "stockAJuxtaposedSummaryTrialSample", "components": "evaluationTrial" }
+            ],
+            "interruptions": [
+              { "spacing": "random", "numInterruptions": 1, "components": ["stock-a-check-month"] },
+              { "spacing": "random", "numInterruptions": 1, "components": ["stock-a-check-text"] }
+            ]
+          },
+          {
+            "order": "fixed",
+            "components": [
+              { "type": "factor", "id": "stockBNoneTrialSample", "factor": "stockBNoneTrialSample", "components": "evaluationTrial" },
+              { "type": "factor", "id": "stockBSuperDataTrialSample", "factor": "stockBSuperDataTrialSample", "components": "evaluationTrial" },
+              { "type": "factor", "id": "stockBSuperSummaryTrialSample", "factor": "stockBSuperSummaryTrialSample", "components": "evaluationTrial" },
+              { "type": "factor", "id": "stockBJuxtaposedDataTrialSample", "factor": "stockBJuxtaposedDataTrialSample", "components": "evaluationTrial" },
+              { "type": "factor", "id": "stockBJuxtaposedSummaryTrialSample", "factor": "stockBJuxtaposedSummaryTrialSample", "components": "evaluationTrial" }
+            ],
+            "interruptions": [
+              { "spacing": "random", "numInterruptions": 1, "components": ["stock-b-check-month"] },
+              { "spacing": "random", "numInterruptions": 1, "components": ["stock-b-check-text"] }
+            ]
+          }
+        ]
+      },
+      "post-study"
+    ]
+  }
+}

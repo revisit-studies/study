@@ -1,18 +1,42 @@
 import Ajv from 'ajv';
+import { parseDocument } from 'yaml';
 import configSchema from './StudyConfigSchema.json';
 import globalSchema from './GlobalConfigSchema.json';
 import {
-  GlobalConfig, LibraryConfig, ParsedConfig, StudyConfig,
+  GlobalConfig, LibraryConfig, ParsedConfig, StudyConfig, ParserErrorWarning, IndividualComponent,
 } from './types';
 import { getSequenceFlatMapWithInterruptions } from '../utils/getSequenceFlatMap';
-import { expandLibrarySequences, loadLibrariesParseNamespace, verifyLibraryUsage } from './libraryParser';
-import { isDynamicBlock, isInheritedComponent } from './utils';
+import {
+  compileFactorBlocks, expandLibrarySequences, loadLibrariesParseNamespace, validateBetweenSubjects, verifyLibraryUsage,
+} from './libraryParser';
+import {
+  isDynamicBlock, isFactorBlock, isInheritedComponent,
+} from './utils';
+import {
+  DEFAULT_CONTACT_EMAIL,
+  DEFAULT_FIREBASE_WARNING_ACTION,
+  DEFAULT_FIREBASE_WARNING_MESSAGE,
+  DEFAULT_SUPABASE_WARNING_ACTION,
+  DEFAULT_SUPABASE_WARNING_MESSAGE,
+  getCurrentHostname,
+  shouldSuppressDefaultDeploymentWarnings,
+  shouldWarnForDefaultFirebaseConfig,
+  shouldWarnForDefaultSupabaseConfig,
+} from '../utils/defaultStorageConfig';
+import { studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
 
-const ajv1 = new Ajv();
+const modules = import.meta.glob(
+  [
+    '../public/**/*.{mjs,js,mts,ts,jsx,tsx}',
+    '!../public/**/*.spec.{mjs,js,mts,ts,jsx,tsx}',
+  ],
+  { eager: false }, // the parser only checks if the path exists
+);
+const ajv1 = new Ajv({ allowUnionTypes: true });
 ajv1.addSchema(globalSchema);
 const globalValidate = ajv1.getSchema<GlobalConfig>('#/definitions/GlobalConfig')!;
 
-const ajv2 = new Ajv();
+const ajv2 = new Ajv({ allowUnionTypes: true });
 ajv2.addSchema(configSchema);
 const studyValidate = ajv2.getSchema<StudyConfig>('#/definitions/StudyConfig')!;
 
@@ -21,7 +45,7 @@ function verifyGlobalConfig(data: GlobalConfig) {
   const errors: { message: string }[] = [];
   const configsListVerified = data.configsList.every((configName) => {
     if (data.configs[configName] === undefined) {
-      errors.push({ message: `Config ${configName} is not defined in configs object, but is present in configsList` });
+      errors.push({ message: `Config \`${configName}\` is not defined in configs object, but is present in configsList` });
       return false;
     }
     return true;
@@ -50,38 +74,37 @@ export function parseGlobalConfig(fileData: string) {
 function verifyStudySkip(
   sequence: StudyConfig['sequence'],
   skipTargets: string[],
-  errors: { message: string, instancePath: string, params: { 'action': string } }[] = [],
+  errors: ParserErrorWarning[] = [],
+  warnings: ParserErrorWarning[] = [],
 ) {
-  if (isDynamicBlock(sequence)) {
+  const removeTargetInPlace = (targetName: string) => {
+    // Walk backward so removing items does not affect yet-to-visit indices.
+    for (let index = skipTargets.length - 1; index >= 0; index -= 1) {
+      if (skipTargets[index] === targetName) {
+        skipTargets.splice(index, 1);
+      }
+    }
+  };
+
+  if (isDynamicBlock(sequence) || isFactorBlock(sequence)) {
     return;
   }
 
   // Base case: empty sequence
   if (sequence.components.length === 0) {
-    // Push an error for an empty components array
-    errors.push({
+    // Push a warning for an empty components array
+    warnings.push({
       message: 'Sequence has an empty components array',
       instancePath: '/sequence/',
-      params: { action: 'remove empty components block' },
+      params: { action: 'Remove empty components block or add components to the sequence' },
+      category: 'sequence-validation',
     });
     return;
   }
 
   // If the block has an ID, remove it from the skipTargets array
   if (sequence.id) {
-    // Use splice to remove all instances of the id from the array in place
-    const idxToRemove = skipTargets
-      .map((target, idx) => {
-        if (target === sequence.id) {
-          return idx;
-        }
-        return null;
-      });
-    idxToRemove.forEach((idx) => {
-      if (idx !== null) {
-        skipTargets.splice(idx, 1);
-      }
-    });
+    removeTargetInPlace(sequence.id);
   }
 
   // Recursive case: sequence has at least one component
@@ -89,30 +112,81 @@ function verifyStudySkip(
     if (typeof component === 'string') {
       // If the component is a string, check if it is in the skipTargets array
       if (skipTargets.includes(component)) {
-        // Use splice to remove the target from the array in place
-        const idxToRemove = skipTargets
-          .map((target, idx) => {
-            if (target === component) {
-              return idx;
-            }
-            return null;
-          });
-        idxToRemove.forEach((idx) => {
-          if (idx !== null) {
-            skipTargets.splice(idx, 1);
-          }
-        });
+        removeTargetInPlace(component);
       }
     } else {
       // Recursive case: component is a block
-      verifyStudySkip(component, skipTargets, errors);
+      verifyStudySkip(component, skipTargets, errors, warnings);
     }
   });
 
   // If this block has a skip, add the skip.to component to the skipTargets array
-  if (sequence.skip) {
+  if (sequence.skip && sequence.skip.length > 0) {
     skipTargets.push(...sequence.skip.map((skip) => skip.to).filter((target) => target !== 'end'));
   }
+}
+
+function verifyReactComponent(
+  instancePath: string,
+  component: Partial<IndividualComponent>,
+  errors: ParserErrorWarning[],
+) {
+  if (
+    'path' in component
+      && component.path != null
+      && component.type === 'react-component'
+      && !(`../public/${component.path}` in modules)
+  ) {
+    errors.push({
+      message: 'Unresolved path',
+      instancePath,
+      params: {
+        action: 'Make sure the React component is in `src/public/`, not `public/`',
+      },
+      category: 'undefined-component',
+    });
+  }
+}
+
+function isUrlConditionalBlock(sequence: StudyConfig['sequence']): boolean {
+  return !isFactorBlock(sequence) && sequence.conditional === true && Boolean(sequence.id);
+}
+
+function hasConditionalBlock(sequence: StudyConfig['sequence']): boolean {
+  if (isUrlConditionalBlock(sequence)) {
+    return true;
+  }
+
+  if (isDynamicBlock(sequence) || isFactorBlock(sequence)) {
+    return false;
+  }
+
+  return sequence.components.some((component) => (
+    typeof component !== 'string'
+    && hasConditionalBlock(component)
+  ));
+}
+
+function hasConditionalBlockInsideRestrictedOrderAncestor(
+  sequence: StudyConfig['sequence'],
+  hasRestrictedOrderAncestor = false,
+): boolean {
+  if (hasRestrictedOrderAncestor && isUrlConditionalBlock(sequence)) {
+    return true;
+  }
+
+  if (isDynamicBlock(sequence) || isFactorBlock(sequence)) {
+    return false;
+  }
+
+  const childHasRestrictedOrderAncestor = hasRestrictedOrderAncestor
+    || sequence.order === 'random'
+    || sequence.order === 'latinSquare';
+
+  return sequence.components.some((component) => (
+    typeof component !== 'string'
+    && hasConditionalBlockInsideRestrictedOrderAncestor(component, childHasRestrictedOrderAncestor)
+  ));
 }
 
 // This function verifies the study config file satisfies conditions that are not covered by the schema
@@ -120,18 +194,102 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
   const errors: ParsedConfig<StudyConfig>['errors'] = [];
   const warnings: ParsedConfig<StudyConfig>['warnings'] = [];
 
-  verifyLibraryUsage(studyConfig, errors, importedLibrariesData);
+  verifyLibraryUsage(studyConfig, errors, warnings, importedLibrariesData);
+
+  const hasConditional = hasConditionalBlock(studyConfig.sequence);
+  const hasConditionalInsideRestrictedOrderAncestor = hasConditionalBlockInsideRestrictedOrderAncestor(
+    studyConfig.sequence,
+  );
+
+  if (hasConditional && hasConditionalInsideRestrictedOrderAncestor) {
+    errors.push({
+      message: 'Conditional URL parameter assignment cannot be combined with random or latinSquare sequence ordering',
+      instancePath: '/sequence/',
+      params: { action: 'Use fixed ordering when using conditional blocks, or remove conditional blocks' },
+      category: 'sequence-validation',
+    });
+  }
+
+  // Warn if deployment defaults are left in place outside known ReVISit/local hosts.
+  const hostname = getCurrentHostname();
+  if (studyConfig.uiConfig.contactEmail === DEFAULT_CONTACT_EMAIL && !shouldSuppressDefaultDeploymentWarnings(hostname)) {
+    warnings.push({
+      message: `The contact email is set to the default value \`${DEFAULT_CONTACT_EMAIL}\`. Please update it to your own email address.`,
+      instancePath: '/uiConfig/contactEmail',
+      params: { action: 'Update the contactEmail field in uiConfig to your own email address' },
+      category: 'default-contact-email',
+    });
+  }
+  if (shouldWarnForDefaultFirebaseConfig({ hostname })) {
+    warnings.push({
+      message: DEFAULT_FIREBASE_WARNING_MESSAGE,
+      instancePath: 'environment/VITE_FIREBASE_CONFIG',
+      params: { action: DEFAULT_FIREBASE_WARNING_ACTION },
+      category: 'default-firebase-config',
+    });
+  }
+  if (shouldWarnForDefaultSupabaseConfig({ hostname })) {
+    warnings.push({
+      message: DEFAULT_SUPABASE_WARNING_MESSAGE,
+      instancePath: 'environment/VITE_SUPABASE_URL',
+      params: { action: DEFAULT_SUPABASE_WARNING_ACTION },
+      category: 'default-supabase-config',
+    });
+  }
 
   // Verify components are well defined
   Object.entries(studyConfig.components)
     .forEach(([componentName, component]) => {
+      const isImportedLibraryComponent = componentName.startsWith('$') && componentName.includes('.components.');
+
       // Verify baseComponent is defined in baseComponents object
       if (isInheritedComponent(component) && !studyConfig.baseComponents?.[component.baseComponent]) {
         errors.push({
           message: `Base component \`${component.baseComponent}\` is not defined in baseComponents object`,
-          instancePath: `/components/${componentName}`,
-          params: { action: 'add the base component to the baseComponents object' },
+          instancePath: '/baseComponents/',
+          params: { action: 'Add the base component to the baseComponents object' },
+          category: 'undefined-base-component',
         });
+      }
+
+      const baseComponent = isInheritedComponent(component)
+        ? studyConfig.baseComponents?.[component.baseComponent]
+        : undefined;
+      const resolvedComponent: Partial<IndividualComponent> = {
+        ...(baseComponent || {}),
+        ...component,
+      };
+
+      const isInheritedFromImportedLibrary = isInheritedComponent(component)
+        && component.baseComponent.startsWith('$')
+        && component.baseComponent.includes('.components.');
+
+      const isUsingSidebarInOwnComponent = component.instructionLocation === 'sidebar'
+        || component.nextButtonLocation === 'sidebar'
+        || component.response?.some((r) => 'location' in r && r.location === 'sidebar');
+      const hasOwnSidebarOverride = component.withSidebar !== undefined;
+
+      // Verify sidebar is enabled if component uses sidebar locations
+      // Imported library components are validated in verifyLibraryUsage to avoid duplicate warnings.
+      if (!isImportedLibraryComponent && (!isInheritedFromImportedLibrary || isUsingSidebarInOwnComponent || hasOwnSidebarOverride)) {
+        const sidebarDisabled = !(resolvedComponent.withSidebar ?? studyConfig.uiConfig.withSidebar);
+        const isUsingSidebar = resolvedComponent.instructionLocation === 'sidebar'
+          || resolvedComponent.nextButtonLocation === 'sidebar'
+          || resolvedComponent.response?.some((r) => 'location' in r && r.location === 'sidebar');
+
+        if (sidebarDisabled && isUsingSidebar) {
+          const instancePath = component.withSidebar === false
+            ? '/components/'
+            : baseComponent?.withSidebar === false
+              ? '/baseComponents/'
+              : '/uiConfig/';
+          warnings.push({
+            message: `Component \`${componentName}\` uses sidebar locations but sidebar is disabled`,
+            instancePath,
+            params: { action: 'Enable the sidebar or move the location to belowStimulus or aboveStimulus' },
+            category: 'disabled-sidebar',
+          });
+        }
       }
     });
 
@@ -141,13 +299,21 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
   usedComponents.forEach((component) => {
     // Verify component is defined in components object
     if (!studyConfig.components[component]) {
-      errors.push({
-        message: studyConfig.baseComponents?.[component]
-          ? `Component \`${component}\` is a base component and cannot be used in the sequence`
-          : `Component \`${component}\` is not defined in components object`,
-        instancePath: '/sequence/',
-        params: { action: 'add the component to the components object' },
-      });
+      if (studyConfig.baseComponents?.[component]) {
+        errors.push({
+          message: `Component \`${component}\` is a base component and cannot be used in the sequence`,
+          instancePath: '/sequence/',
+          params: { action: 'Remove the base component from the sequence' },
+          category: 'sequence-validation',
+        });
+      } else {
+        errors.push({
+          message: `Component \`${component}\` is not defined in components object`,
+          instancePath: '/components/',
+          params: { action: 'Add the component to the components object' },
+          category: 'undefined-component',
+        });
+      }
     }
   });
 
@@ -155,29 +321,44 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
   Object.keys(studyConfig.components)
     .filter((componentName) => (
       !usedComponents.includes(componentName)
-      && !componentName.includes('.se.')
       && !componentName.includes('.sequences.')
-      && !componentName.includes('.co.')
       && !componentName.includes('.components.')
     ))
     .forEach((componentName) => {
       warnings.push({
         message: `Component \`${componentName}\` is defined in components object but not used deterministically in the sequence`,
         instancePath: '/components/',
-        params: { action: 'remove the component from the components object or add it to the sequence' },
+        params: { action: 'Remove the component from the components object or add it to the sequence' },
+        category: 'unused-component',
       });
     });
 
   // Verify skip blocks are well defined
   const missingSkipTargets: string[] = [];
-  verifyStudySkip(studyConfig.sequence, missingSkipTargets);
+  verifyStudySkip(studyConfig.sequence, missingSkipTargets, errors, warnings);
   missingSkipTargets.forEach((skipTarget) => {
     errors.push({
       message: `Skip target \`${skipTarget}\` does not occur after the skip block it is used in`,
       instancePath: '/sequence/',
-      params: { action: 'add the target to the sequence after the skip block' },
+      params: { action: 'Add the target to the sequence after the skip block' },
+      category: 'skip-validation',
     });
   });
+
+  // Verify that paths to React components exist under the correct base directory
+
+  for (const [name, component] of Object.entries(studyConfig.baseComponents ?? {})) {
+    verifyReactComponent(`/baseComponents/${name}/path`, component, errors);
+  }
+
+  for (const [name, component] of Object.entries(studyConfig.components ?? {})) {
+    if ('path' in component) {
+      const mergedComponent = studyComponentToIndividualComponent(component, studyConfig);
+      verifyReactComponent(`/components/${name}/path`, mergedComponent, errors);
+    } else {
+      // Path is inherited and will be verified on the base component
+    }
+  }
 
   return { errors, warnings };
 }
@@ -187,14 +368,27 @@ export async function parseStudyConfig(fileData: string): Promise<ParsedConfig<S
   let data: StudyConfig | undefined;
 
   try {
+    // Try JSON parse first
     data = JSON.parse(fileData);
     validatedData = studyValidate(data) as boolean;
   } catch {
-    validatedData = false;
+    // Try yaml parse
+    try {
+      data = parseDocument(fileData).toJSON() as StudyConfig;
+      validatedData = studyValidate(data) as boolean;
+    } catch (e) {
+      console.error('Error parsing study config file:', e);
+      validatedData = false;
+    }
   }
 
-  let errors: Required<ParsedConfig<StudyConfig>>['errors'] = studyValidate.errors || [];
-  let warnings: Required<ParsedConfig<StudyConfig>>['warnings'] = [];
+  let errors: ParserErrorWarning[] = (studyValidate.errors || []).map((e) => ({
+    message: e.message || 'Validation error',
+    instancePath: (e.instancePath as string) || '',
+    params: (e.params as object) || {},
+    category: 'invalid-config',
+  }));
+  let warnings: ParserErrorWarning[] = [];
 
   // We can only run our custom validator if the schema validation passes
   if (validatedData && data) {
@@ -207,14 +401,30 @@ export async function parseStudyConfig(fileData: string): Promise<ParsedConfig<S
       data.baseComponents = { ...data.baseComponents, ...libraryData.components };
     });
 
+    // Expand .co. macro to .components. in baseComponent references (after merging library components)
+    Object.values(data.components).forEach((component) => {
+      if (component && typeof component === 'object' && 'baseComponent' in component && typeof component.baseComponent === 'string' && component.baseComponent.includes('.co.')) {
+        component.baseComponent = component.baseComponent.replace('.co.', '.components.');
+      }
+    });
+
     // Expand the imported sequences to use the correct component names
     data.sequence = expandLibrarySequences(data.sequence, importedLibrariesData, errors);
+    validateBetweenSubjects(data, warnings);
+    const compiledFactors = compileFactorBlocks(data.sequence, data, errors);
+    data.sequence = compiledFactors.sequence;
+    data.components = { ...data.components, ...compiledFactors.components };
 
     const { errors: parserErrors, warnings: parserWarnings } = verifyStudyConfig(data, importedLibrariesData);
     errors = [...errors, ...parserErrors];
     warnings = [...warnings, ...parserWarnings];
   } else {
-    errors = [...errors, { message: 'There was an issue validating your config file', instancePath: 'root', params: { action: 'fix the errors in your file or make sure the global config references the right file path' } }];
+    errors = [...errors, {
+      message: 'There was an issue validating your config file',
+      instancePath: 'root',
+      params: { action: 'Fix the errors in your file or make sure the global config references the right file path' },
+      category: 'invalid-config',
+    }];
   }
 
   return { ...data as StudyConfig, errors, warnings };

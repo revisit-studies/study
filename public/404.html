@@ -22,7 +22,10 @@
     // https://username.github.io/repo-name/one/two?a=b&c=d#qwe becomes
     // https://username.github.io/repo-name/?/one/two&a=b~and~c=d#qwe
     // Otherwise, leave pathSegmentsToKeep as 0.
-    var pathSegmentsToKeep = 1;
+
+    // Grep for PR***, if we find that we want 2 segments
+    var PRFound = !!window.location.pathname.match(/\/PR\d+\//);
+    var pathSegmentsToKeep = PRFound ? 2 : 1;
 
     var l = window.location;
     l.replace(

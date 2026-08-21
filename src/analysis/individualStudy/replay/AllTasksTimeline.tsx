@@ -1,102 +1,165 @@
-import { JSX, useCallback, useMemo } from 'react';
+import {
+  JSX, useMemo, useState,
+} from 'react';
 import * as d3 from 'd3';
 import {
-  Center, Group, Stack, Tooltip, Text, Divider, Button, Badge,
+  Box, Stack, Tooltip, Text,
 } from '@mantine/core';
-import {
-  IconCheck, IconExternalLink, IconHourglassEmpty, IconX,
-} from '@tabler/icons-react';
+import { useResizeObserver } from '@mantine/hooks';
 import { ParticipantData } from '../../../storage/types';
 import { SingleTaskLabelLines } from './SingleTaskLabelLines';
 import { SingleTask } from './SingleTask';
-import { encryptIndex } from '../../../utils/encryptDecryptIndex';
-import { humanReadableDuration } from '../../../utils/humanReadableDuration';
 import { StudyConfig } from '../../../parser/types';
-import { PREFIX } from '../../../utils/Prefix';
-import { participantName } from '../../../utils/participantName';
+import { getComponentAnswerStatus } from '../../../utils/correctAnswer';
+import { parseConditionParam } from '../../../utils/handleConditionLogic';
+import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
+import {
+  compareReplayAnswerEntries,
+  orderedReplayAnswerEntries,
+  ReplayTaskOrder,
+} from './taskOrdering';
+import {
+  getUniformTimelineMetrics,
+  TimelineMode,
+} from './timelineLayout';
 
 const LABEL_GAP = 25;
 const CHARACTER_SIZE = 8;
 
 const margin = {
-  left: 20, top: 0, right: 20, bottom: 0,
+  left: 20, top: 20, right: 20, bottom: 20,
 };
 
 export function AllTasksTimeline({
-  participantData, width, height, selectedTask, studyId, studyConfig, maxLength,
-} : {participantData: ParticipantData, width: number, studyId: string, height: number, selectedTask?: string | null, studyConfig: StudyConfig | undefined, maxLength: number | undefined}) {
-  const clickTask = useCallback((task: string) => {
-    const split = task.split('_');
-    const index = +split[split.length - 1];
+  participantData, width, studyId, studyConfig, maxLength, taskOrder = 'sequence', timelineMode = 'time',
+}: { participantData: ParticipantData, width: number, studyId: string, studyConfig: StudyConfig | undefined, maxLength: number | undefined, taskOrder?: ReplayTaskOrder, timelineMode?: TimelineMode }) {
+  const [hoveredTaskIdentifier, setHoveredTaskIdentifier] = useState<string | null>(null);
+  const [timelineContainerRef, { width: containerWidth }] = useResizeObserver();
+  const availableWidth = Math.max(containerWidth || width, 0);
 
-    window.open(`${PREFIX}${studyId}/${encryptIndex(index)}?participantId=${participantData.participantId}`, '_blank');
-  }, [participantData.participantId, studyId]);
+  const percentComplete = useMemo(() => {
+    const incompleteEntries = Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0);
+
+    return (Object.entries(participantData.answers).length - incompleteEntries.length) / (Object.entries(participantData.answers).length);
+  }, [participantData.answers]);
+
+  const timelineWidth = useMemo(() => {
+    if (timelineMode === 'time') {
+      return availableWidth;
+    }
+
+    return getUniformTimelineMetrics({
+      availableWidth,
+      taskCount: Object.entries(participantData.answers || {}).length,
+      margin,
+    }).timelineWidth;
+  }, [availableWidth, participantData.answers, timelineMode]);
 
   const xScale = useMemo(() => {
+    if (timelineMode === 'uniform') {
+      return d3.scaleLinear([margin.left, timelineWidth - margin.right]).domain([0, Math.max(Object.entries(participantData.answers || {}).length, 1)]).clamp(true);
+    }
+
     const allStartTimes = Object.values(participantData.answers || {}).filter((answer) => answer.startTime).map((answer) => [answer.startTime, answer.endTime]).flat();
 
     const extent = d3.extent(allStartTimes) as [number, number];
 
-    const scale = d3.scaleLinear([margin.left, width - margin.left - margin.right]).domain([extent[0], maxLength ? extent[0] + maxLength : extent[1]]).clamp(true);
+    const scale = d3.scaleLinear([margin.left, (timelineWidth * percentComplete - (percentComplete !== 1 ? 0 : margin.right))]).domain([extent[0], maxLength ? extent[0] + maxLength : extent[1]]).clamp(true);
 
     return scale;
-  }, [maxLength, participantData.answers, width]);
+  }, [maxLength, participantData.answers, percentComplete, timelineMode, timelineWidth]);
 
-  // Creating labels for the tasks
-  const [numComponentsAnsweredCorrectly, numComponentsWithCorrectAnswer, tasks] : [number, number, {line: JSX.Element, label: JSX.Element}[]] = useMemo(() => {
+  const incompleteXScale = useMemo(() => {
+    const scale = d3.scaleLinear([timelineWidth * percentComplete, timelineWidth - margin.right]).domain([0, Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0).length]).clamp(true);
+
+    return scale;
+  }, [participantData.answers, percentComplete, timelineWidth]);
+
+  const maxHeight = useMemo(() => {
+    const incompleteEntries = Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0).sort(compareReplayAnswerEntries);
+    const incompleteEntryIndexes = new Map(incompleteEntries.map(([identifier], index) => [identifier, index]));
+    const sortedEntries = orderedReplayAnswerEntries(participantData.answers, taskOrder);
+    const entryIndexes = new Map(sortedEntries.map(([identifier], index) => [identifier, index]));
+
     let currentHeight = 0;
+    let _maxHeight = 0;
 
-    const sortedEntries = Object.entries(participantData.answers || {}).filter((answer) => !!(answer[1].startTime)).sort((a, b) => a[1].startTime - b[1].startTime);
+    sortedEntries.forEach((entry, i) => {
+      const [identifier, answer] = entry;
 
-    let _numComponentsAnsweredCorrectly = 0;
-    let _numComponentsWithCorrectAnswer = 0;
-
-    const allElements = sortedEntries.map((entry, i) => {
-      const [name, answer] = entry;
-
+      // Check if the previous entry overlaps with the current entry
       const prev = i > 0 ? sortedEntries[i - currentHeight - 1] : null;
+      const prevScale = timelineMode === 'uniform' || (prev && prev[1].startTime) ? xScale : incompleteXScale;
+      const prevStart = prev ? timelineMode === 'uniform' ? entryIndexes.get(prev[0]) ?? 0 : prev[1].startTime ? prev[1].startTime : incompleteEntryIndexes.get(prev[0]) ?? 0 : 0;
+      const scale = timelineMode === 'uniform' || answer.startTime !== 0 ? xScale : incompleteXScale;
+      const scaleStart = timelineMode === 'uniform' ? entryIndexes.get(identifier) ?? 0 : answer.startTime ? answer.startTime : incompleteEntryIndexes.get(identifier) ?? 0;
 
-      if (prev && prev[0].length * (CHARACTER_SIZE + 1) + xScale(prev[1].startTime) > xScale(answer.startTime)) {
+      // If the previous entry overlaps with the current entry , increase the height
+      if (prev && prev[0].length * (CHARACTER_SIZE + 1) + prevScale(prevStart) > scale(scaleStart)) {
         currentHeight += 1;
       } else {
         currentHeight = 0;
       }
 
-      const split = name.split('_');
-      const joinExceptLast = split.slice(0, split.length - 1).join('_');
+      if (currentHeight > _maxHeight) {
+        _maxHeight = currentHeight;
+      }
+    });
 
-      const component = studyConfig?.components[joinExceptLast];
+    return (_maxHeight + 1) * LABEL_GAP + margin.top + margin.bottom;
+  }, [incompleteXScale, participantData.answers, taskOrder, timelineMode, xScale]);
 
-      let isCorrect = true;
-      let hasCorrect = false;
+  const conditionParam = useMemo(() => {
+    const parsedConditions = parseConditionParam(participantData.conditions ?? participantData.searchParams?.condition);
+    return parsedConditions.length > 0 ? parsedConditions.join(',') : undefined;
+  }, [participantData.conditions, participantData.searchParams?.condition]);
 
-      if (component && component.correctAnswer) {
-        component.correctAnswer.forEach((a) => {
-          const { id, answer: componentCorrectAnswer } = a;
+  // Creating labels for the tasks
+  const tasks: { identifier: string, line: JSX.Element, label: JSX.Element }[] = useMemo(() => {
+    let currentHeight = 0;
 
-          if (!component || !component.correctAnswer || answer.answer[id] !== componentCorrectAnswer) {
-            isCorrect = false;
-          }
-        });
+    const incompleteEntries = Object.entries(participantData.answers || {}).filter((e) => e[1].startTime === 0).sort(compareReplayAnswerEntries);
+    const incompleteEntryIndexes = new Map(incompleteEntries.map(([identifier], index) => [identifier, index]));
+    const combined = orderedReplayAnswerEntries(participantData.answers, taskOrder);
+    const entryIndexes = new Map(combined.map(([identifier], index) => [identifier, index]));
 
-        hasCorrect = true;
+    const allElements = combined.map((entry, i) => {
+      const scale = timelineMode === 'uniform' || entry[1].startTime !== 0 ? xScale : incompleteXScale;
+
+      const [identifier, answer] = entry;
+
+      const prev = i > 0 ? combined[i - currentHeight - 1] : null;
+
+      const prevScale = timelineMode === 'uniform' || (prev && prev[1].startTime) ? xScale : incompleteXScale;
+      const prevStart = prev ? timelineMode === 'uniform' ? entryIndexes.get(prev[0]) ?? 0 : prev[1].startTime ? prev[1].startTime : incompleteEntryIndexes.get(prev[0]) ?? 0 : 0;
+      const incompleteEntryIndex = incompleteEntryIndexes.get(identifier) ?? 0;
+      const uniformEntryIndex = entryIndexes.get(identifier) ?? 0;
+      const scaleStart = timelineMode === 'uniform' ? uniformEntryIndex : answer.startTime ? answer.startTime : incompleteEntryIndex;
+      const scaleEnd = timelineMode === 'uniform' ? uniformEntryIndex + 1 : answer.endTime > 0 ? answer.endTime : incompleteEntryIndex + 1;
+
+      if (prev && prev[0].length * (CHARACTER_SIZE + 1) + prevScale(prevStart) > scale(scaleStart)) {
+        currentHeight += 1;
       } else {
-        hasCorrect = false;
+        currentHeight = 0;
       }
 
-      if (hasCorrect) {
-        _numComponentsWithCorrectAnswer += 1;
-
-        if (isCorrect) {
-          _numComponentsAnsweredCorrectly += 1;
-        }
-      }
+      const component = studyConfig?.components[answer.componentName];
+      const resolvedComponent = component && studyConfig
+        ? studyComponentToIndividualComponent(component, studyConfig)
+        : undefined;
+      const correctAnswers = answer.correctAnswer.length > 0
+        ? answer.correctAnswer
+        : resolvedComponent?.correctAnswer;
+      const answerStatus = getComponentAnswerStatus(answer, correctAnswers, resolvedComponent?.response);
+      const hasAudio = resolvedComponent?.recordAudio ?? studyConfig?.uiConfig?.recordAudio ?? false;
+      const hasScreenRecording = resolvedComponent?.recordScreen ?? studyConfig?.uiConfig?.recordScreen ?? false;
 
       return {
-        line: <SingleTaskLabelLines key={name} labelHeight={currentHeight * LABEL_GAP} answer={answer} height={height} xScale={xScale} />,
+        identifier,
+        line: <SingleTaskLabelLines key={identifier} labelHeight={currentHeight * LABEL_GAP} height={maxHeight} xScale={scale} scaleStart={scaleStart} />,
         label: (
           <Tooltip
-            key={`${name}-tooltip`}
+            key={`${identifier}-tooltip`}
             withinPortal
             position="bottom-start"
             px={4}
@@ -106,40 +169,38 @@ export function AllTasksTimeline({
               <Stack gap={0}>
                 {Object.entries(answer.answer).map((a) => {
                   const [id, componentAnswer] = a;
-                  const correctAnswer = component?.correctAnswer?.find((c) => c.id === id)?.answer;
+                  const correctAnswer = resolvedComponent?.correctAnswer?.find((c) => c.id === id)?.answer;
+                  const participantAnswer = (componentAnswer === undefined || componentAnswer === null || componentAnswer === '')
+                    ? 'N/A'
+                    : typeof componentAnswer === 'object'
+                      ? JSON.stringify(componentAnswer)
+                      : componentAnswer;
 
-                  return <Text key={id}>{`${id}: ${componentAnswer} ${correctAnswer ? `[${correctAnswer}]` : ''}`}</Text>;
+                  return <Text key={id}>{`${id}: ${participantAnswer} ${correctAnswer ? `[${typeof correctAnswer === 'object' ? JSON.stringify(correctAnswer) : correctAnswer}]` : ''}`}</Text>;
                 })}
               </Stack>
             )}
           >
             <g>
-              <SingleTask isCorrect={isCorrect} hasCorrect={hasCorrect} key={name} labelHeight={currentHeight * LABEL_GAP} isSelected={selectedTask === name} setSelectedTask={clickTask} answer={answer} height={height} name={name} xScale={xScale} />
+              <SingleTask incomplete={answer.startTime === 0} answerStatus={answerStatus} hasAudio={hasAudio} hasScreenRecording={hasScreenRecording} key={identifier} labelHeight={currentHeight * LABEL_GAP} height={maxHeight} identifier={identifier} xScale={scale} scaleStart={scaleStart} scaleEnd={scaleEnd} trialOrder={answer.trialOrder} participantId={participantData.participantId} studyId={studyId} condition={conditionParam} isHovered={hoveredTaskIdentifier === identifier} isDimmed={hoveredTaskIdentifier !== null && hoveredTaskIdentifier !== identifier} onHover={() => setHoveredTaskIdentifier(identifier)} onHoverEnd={() => setHoveredTaskIdentifier(null)} />
             </g>
           </Tooltip>),
       };
     });
 
-    return [_numComponentsAnsweredCorrectly, _numComponentsWithCorrectAnswer, allElements];
-  }, [participantData.answers, xScale, studyConfig?.components, height, selectedTask, clickTask]);
-
-  const duration = useMemo(() => {
-    if (!participantData.answers || Object.entries(participantData.answers).length === 0) {
-      return 0;
-    }
-
-    const answersSorted = Object.values(participantData.answers).filter((data) => data.startTime).sort((a, b) => a.startTime - b.startTime);
-
-    return new Date(answersSorted[answersSorted.length - 1].endTime - (answersSorted[0] ? answersSorted[0].startTime : 0)).getTime();
-  }, [participantData]);
+    return allElements;
+  }, [participantData.answers, participantData.participantId, incompleteXScale, xScale, studyConfig, maxHeight, studyId, conditionParam, hoveredTaskIdentifier, taskOrder, timelineMode]);
 
   // Find entries of someone browsing away. Show them
   const browsedAway = useMemo(() => {
+    if (timelineMode === 'uniform') {
+      return [];
+    }
+
     const sortedEntries = Object.entries(participantData.answers || {}).sort((a, b) => a[1].startTime - b[1].startTime);
 
     return sortedEntries.map((entry) => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const [name, answer] = entry;
+      const [, answer] = entry;
 
       const browsedAwayList: [number, number][] = [];
       let currentBrowsedAway: [number, number] = [-1, -1];
@@ -161,98 +222,41 @@ export function AllTasksTimeline({
       }
 
       return (
-        browsedAwayList.map((browse, i) => <Tooltip withinPortal key={i} label="Browsed away"><rect x={xScale(browse[0])} width={xScale(browse[1]) - xScale(browse[0])} y={height - 5} height={10} /></Tooltip>)
+        browsedAwayList.map((browse, i) => <Tooltip withinPortal key={i} label="Browsed away"><rect x={xScale(browse[0])} width={Math.max(0, xScale(browse[1]) - xScale(browse[0]))} y={maxHeight - 5} height={10} /></Tooltip>)
       );
     });
-  }, [xScale, height, participantData.answers]);
+  }, [xScale, maxHeight, participantData.answers, timelineMode]);
 
-  const partName = useMemo(() => participantName(participantData, studyConfig), [participantData, studyConfig]);
-
-  const completionTime = useMemo(() => {
-    if (!participantData.answers || Object.entries(participantData.answers).length === 0) {
-      return '';
-    }
-
-    const answersSorted = Object.values(participantData.answers).filter((data) => data.startTime).sort((a, b) => a.startTime - b.startTime);
-
-    const date = new Date(answersSorted[answersSorted.length - 1].endTime);
-
-    return participantData.completed ? `${date.toLocaleDateString()} ${date.toLocaleTimeString()}` : '';
-  }, [participantData]);
+  const hoveredTask = tasks.find((task) => task.identifier === hoveredTaskIdentifier);
 
   return (
-    <Center>
-      <Stack gap={15} style={{ width: '100%' }}>
-        <Divider size="md" />
-        <Group justify="space-between">
-          <Group justify="center">
-            {participantData.participantIndex
-              ? (
-                <Text>
-                  {`P-${participantData.participantIndex.toString().padStart(3, '0')}`}
-                </Text>
-              ) : null }
-
-            <Text size="md" fw={700}>
-              {partName || participantData.participantId}
-            </Text>
-
-            <Text size="md">
-              {completionTime}
-            </Text>
-
-            {participantData.completed ? null : <Text size="xl" c="red">Not completed</Text>}
-
-            <Group gap={10}>
-              <Badge
-                variant="light"
-                size="lg"
-                color="green"
-                leftSection={<IconCheck width={18} height={18} style={{ paddingTop: 1 }} />}
-                pb={1}
-              >
-                {numComponentsAnsweredCorrectly}
-              </Badge>
-              <Badge
-                variant="light"
-                size="lg"
-                color="red"
-                leftSection={<IconX width={18} height={18} style={{ paddingTop: 1 }} />}
-                pb={1}
-              >
-                {numComponentsWithCorrectAnswer - numComponentsAnsweredCorrectly}
-              </Badge>
-              <Badge
-                variant="light"
-                size="lg"
-                color="gray"
-                leftSection={<IconHourglassEmpty width={18} height={18} style={{ paddingTop: 1 }} />}
-                pb={1}
-              >
-                {humanReadableDuration(duration)}
-              </Badge>
-            </Group>
-
-          </Group>
-          <Button
-            rightSection={<IconExternalLink size={14} />}
-            component="a"
-            href={`${PREFIX}${studyId}/${encryptIndex(0)}?participantId=${participantData.participantId}`}
-            target="_blank"
-          >
-            Go to replay
-          </Button>
-        </Group>
-
-        { participantData.completed ? (
-          <svg style={{ width, height, overflow: 'visible' }}>
-            {tasks.map((t) => t.line)}
-            {tasks.map((t) => t.label)}
-            {browsedAway}
-          </svg>
-        ) : null}
-      </Stack>
-    </Center>
+    <Box
+      ref={timelineContainerRef}
+      style={{
+        width: '100%',
+        maxWidth: '100%',
+        minWidth: 0,
+        overflowX: timelineMode === 'uniform' ? 'auto' : 'visible',
+        overflowY: 'visible',
+      }}
+    >
+      <svg
+        onMouseLeave={() => setHoveredTaskIdentifier(null)}
+        onPointerLeave={() => setHoveredTaskIdentifier(null)}
+        onPointerCancel={() => setHoveredTaskIdentifier(null)}
+        style={{
+          width: timelineWidth,
+          height: maxHeight,
+          display: 'block',
+          overflow: 'visible',
+        }}
+      >
+        {tasks.map((t) => t.line)}
+        {tasks.filter((t) => t.identifier !== hoveredTaskIdentifier).map((t) => t.label)}
+        {browsedAway}
+        {hoveredTask?.label}
+      </svg>
+    </Box>
 
   );
 }

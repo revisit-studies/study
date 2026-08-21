@@ -1,19 +1,47 @@
 import {
   Button, Group, Tooltip,
 } from '@mantine/core';
-import { IconDatabaseExport, IconTableExport } from '@tabler/icons-react';
+import {
+  IconDatabaseExport, IconDeviceDesktopDown, IconDownload, IconMusicDown, IconTableExport,
+} from '@tabler/icons-react';
 import { useState } from 'react';
 import { useDisclosure } from '@mantine/hooks';
 import { DownloadTidy, download } from './DownloadTidy';
-import { ParticipantData } from '../../storage/types';
+import { ParticipantDataWithStatus } from '../../storage/types';
+import { useStorageEngine } from '../../storage/storageEngineHooks';
+import { downloadParticipantsAudioZip, downloadParticipantsProvenanceZip, downloadParticipantsScreenRecordingZip } from '../../utils/handleDownloadFiles';
+import { useAuth } from '../../store/hooks/useAuth';
+import type { StorageEngine } from '../../storage/engines/types';
+import { getParticipantQualitativeCodes } from './qualitativeCodes';
+import type { DownloadedQualitativeCodes } from './qualitativeCodes';
 
-type ParticipantDataFetcher = ParticipantData[] | (() => Promise<ParticipantData[]>);
+type ParticipantDataFetcher = ParticipantDataWithStatus[] | (() => Promise<ParticipantDataWithStatus[]>);
+type ParticipantDataWithQualitativeCodes = ParticipantDataWithStatus & { qualitativeCodes: DownloadedQualitativeCodes };
+
+async function attachQualitativeCodesToParticipants(
+  participants: ParticipantDataWithStatus[],
+  storageEngine: StorageEngine | undefined,
+  authEmail: string,
+): Promise<ParticipantDataWithQualitativeCodes[]> {
+  return Promise.all(participants.map(async (participant) => {
+    const qualitativeCodes = await getParticipantQualitativeCodes(storageEngine, authEmail, participant);
+    return {
+      ...participant,
+      qualitativeCodes,
+    };
+  }));
+}
 
 export function DownloadButtons({
-  visibleParticipants, studyId, gap, fileName,
-}: { visibleParticipants: ParticipantDataFetcher; studyId: string, gap?: string, fileName?: string }) {
+  visibleParticipants, studyId, gap, fileName, hasAudio, hasScreenRecording,
+}: { visibleParticipants: ParticipantDataFetcher; studyId: string, gap?: string, fileName?: string | null; hasAudio?: boolean; hasScreenRecording?: boolean; }) {
   const [openDownload, { open, close }] = useDisclosure(false);
-  const [participants, setParticipants] = useState<ParticipantData[]>([]);
+  const [participants, setParticipants] = useState<ParticipantDataWithStatus[]>([]);
+  const [loadingProvenance, setLoadingProvenance] = useState(false);
+  const [loadingAudio, setLoadingAudio] = useState(false);
+  const [loadingScreenRecording, setLoadingScreenRecording] = useState(false);
+  const { storageEngine } = useStorageEngine();
+  const auth = useAuth();
 
   const fetchParticipants = async () => {
     const currParticipants = typeof visibleParticipants === 'function' ? await visibleParticipants() : visibleParticipants;
@@ -22,8 +50,13 @@ export function DownloadButtons({
 
   const handleDownloadJSON = async () => {
     const currParticipants = await fetchParticipants();
+    const participantsWithQualitativeCodes = await attachQualitativeCodesToParticipants(
+      currParticipants,
+      storageEngine,
+      auth.user.user?.email || 'temp',
+    );
     const currFileName = fileName ? `${fileName}.json` : `${studyId}_all.json`;
-    download(JSON.stringify(currParticipants, null, 2), currFileName);
+    download(JSON.stringify(participantsWithQualitativeCodes, null, 2), currFileName);
   };
 
   const handleOpenTidy = async () => {
@@ -32,10 +65,63 @@ export function DownloadButtons({
     open();
   };
 
+  const handleDownloadAudio = async () => {
+    setLoadingAudio(true);
+
+    try {
+      const currParticipants = await fetchParticipants();
+      if (!storageEngine) return;
+      await downloadParticipantsAudioZip({
+        storageEngine,
+        participants: currParticipants,
+        studyId,
+        fileName,
+      });
+    } finally {
+      setLoadingAudio(false);
+    }
+  };
+
+  const handleDownloadProvenance = async () => {
+    setLoadingProvenance(true);
+
+    try {
+      const currParticipants = await fetchParticipants();
+      if (!storageEngine) return;
+      await downloadParticipantsProvenanceZip({
+        storageEngine,
+        participants: currParticipants,
+        studyId,
+        fileName,
+      });
+    } finally {
+      setLoadingProvenance(false);
+    }
+  };
+
+  const handleDownloadScreenRecording = async () => {
+    setLoadingScreenRecording(true);
+
+    try {
+      const currParticipants = await fetchParticipants();
+      if (!storageEngine) return;
+      await downloadParticipantsScreenRecordingZip({
+        storageEngine,
+        participants: currParticipants,
+        studyId,
+        fileName,
+      });
+    } finally {
+      setLoadingScreenRecording(false);
+    }
+  };
+
+  const tooltipText = typeof visibleParticipants !== 'function' ? `Download ${visibleParticipants.length} participants` : 'Download participants data';
+
   return (
     <>
       <Group style={{ gap }}>
-        <Tooltip label="Download all participants data as JSON">
+        <Tooltip label={`${tooltipText} as JSON`}>
           <Button
             variant="light"
             disabled={visibleParticipants.length === 0 && typeof visibleParticipants !== 'function'}
@@ -45,7 +131,7 @@ export function DownloadButtons({
             <IconDatabaseExport />
           </Button>
         </Tooltip>
-        <Tooltip label="Download all participants data as a tidy CSV">
+        <Tooltip label={`${tooltipText} as tidy CSV`}>
           <Button
             variant="light"
             disabled={visibleParticipants.length === 0 && typeof visibleParticipants !== 'function'}
@@ -55,6 +141,45 @@ export function DownloadButtons({
             <IconTableExport />
           </Button>
         </Tooltip>
+        <Tooltip label={`${tooltipText} provenance as ZIP`}>
+          <Button
+            variant="light"
+            disabled={visibleParticipants.length === 0 && typeof visibleParticipants !== 'function'}
+            onClick={handleDownloadProvenance}
+            px={4}
+            loading={loadingProvenance}
+          >
+            <IconDownload />
+          </Button>
+        </Tooltip>
+        {hasAudio && (
+          <Tooltip label={`${tooltipText} audio & transcripts as ZIP`}>
+            <Button
+              variant="light"
+              disabled={visibleParticipants.length === 0 && typeof visibleParticipants !== 'function'}
+              onClick={handleDownloadAudio}
+              px={4}
+              loading={loadingAudio}
+            >
+              <IconMusicDown />
+            </Button>
+          </Tooltip>
+        )}
+
+        {hasScreenRecording && (
+          <Tooltip label={`${tooltipText} screen recordings ZIP`}>
+            <Button
+              variant="light"
+              disabled={visibleParticipants.length === 0 && typeof visibleParticipants !== 'function'}
+              onClick={handleDownloadScreenRecording}
+              px={4}
+              loading={loadingScreenRecording}
+            >
+              <IconDeviceDesktopDown />
+            </Button>
+          </Tooltip>
+        )}
+
       </Group>
 
       {openDownload && participants.length > 0 && (
@@ -64,6 +189,7 @@ export function DownloadButtons({
           filename={fileName ? `${fileName}_tidy.csv` : `${studyId}_all_tidy.csv`}
           data={participants}
           studyId={studyId}
+          hasAudio={hasAudio}
         />
       )}
     </>

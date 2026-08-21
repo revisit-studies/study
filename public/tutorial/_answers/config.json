@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.1.1/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "A tutorial that you will build with us",
     "version": "development",
@@ -8,12 +8,11 @@
       "The reVISit Community",
       "You :)"
     ],
-    "date": "2025-02-05",
+    "date": "2026-06-08",
     "description": "This tutorial will teach you how to create a reVISit study and use all of the features that reVISit has to offer.",
     "organizations": [
       "University of Utah",
       "WPI",
-      "University of Toronto",
       "You :)"
     ]
   },
@@ -21,13 +20,13 @@
     "mic-check"
   ],
   "uiConfig": {
-    "recordStudyAudio": true,
+    "recordAudio": true,
     "contactEmail": "contact@revisit.dev",
     "helpTextPath": "tutorial/assets/help.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
-    "sidebar": true
+    "withSidebar": true
   },
   "components": {
     "welcome": {
@@ -58,8 +57,12 @@
           "secondaryText": "1 being the worst health and 5 being the best health",
           "numItems": 5,
           "rightLabel": "Best health",
-          "leftLabel": "Worst health",
-          "withDivider": true
+          "leftLabel": "Worst health"
+        },
+        {
+          "id": "dividerResponse",
+          "type": "divider",
+          "location": "belowStimulus"
         },
         {
           "id": "fruits",
@@ -315,7 +318,7 @@
     },
     "reactExamplePenguins": {
       "type": "react-component",
-      "instruction": "Consider only cars that have a miles per gallon value greater than 30 AND weigh more than 2000 pounds. Which country or region produces the most and the least of these cars?",
+      "instruction": "How many Gentoo penguins weigh less than 4.5k grams (g)?",
       "path": "tutorial/assets/ReactExample.tsx",
       "response": [
         {
@@ -396,7 +399,7 @@
     "components": [
       "welcome",
       "consent",
-      "$mic-check.co.audioTest",
+      "$mic-check.components.audioTest",
       "demographics",
       "trainingWithFeedback",
       "coinImage",

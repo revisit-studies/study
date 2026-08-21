@@ -1,63 +1,68 @@
 import {
-  Box, Flex, FocusTrap, Radio, Text,
+  Flex, FocusTrap, Radio,
 } from '@mantine/core';
-import { ButtonsResponse } from '../../parser/types';
-import { generateErrorMessage } from './utils';
-import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
+import { useMemo } from 'react';
+import { ButtonsResponse, ParsedStringOption } from '../../parser/types';
 import classes from './css/ButtonsInput.module.css';
+import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
+import { InputLabel } from './InputLabel';
+import { OptionLabel } from './OptionLabel';
+import { parseStringOptions } from '../../utils/stringOptions';
 
 export function ButtonsInput({
   response,
   disabled,
   answer,
+  error,
   index,
   enumerateQuestions,
 }: {
   response: ButtonsResponse;
   disabled: boolean;
   answer: { value?: string };
+  error?: string | null;
   index: number;
   enumerateQuestions: boolean;
 }) {
   const {
     prompt,
     required,
-    options,
     secondaryText,
+    options,
+    infoText,
   } = response;
 
-  const optionsAsStringOptions = options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
+  const storedAnswer = useStoredAnswer();
+  const optionOrders: Record<string, ParsedStringOption[]> = useMemo(() => storedAnswer?.optionOrders ?? {}, [storedAnswer]);
+
+  const orderedOptions = useMemo(
+    () => parseStringOptions(optionOrders[response.id] || options),
+    [optionOrders, options, response.id],
+  );
 
   return (
     <FocusTrap>
       <Radio.Group
         name={`radioInput${response.id}`}
-        label={(
-          <Flex direction="row" wrap="nowrap" gap={4}>
-            {enumerateQuestions && <Box style={{ minWidth: 'fit-content', fontSize: 16, fontWeight: 500 }}>{`${index}. `}</Box>}
-            <Box style={{ display: 'block' }} className="no-last-child-bottom-padding">
-              <ReactMarkdownWrapper text={prompt} required={required} />
-            </Box>
-          </Flex>
-      )}
+        label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
         description={secondaryText}
         key={response.id}
         {...answer}
-          // This overrides the answers error. Which..is bad?
-        error={generateErrorMessage(response, answer, optionsAsStringOptions)}
+        error={error}
+        errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
         style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
       >
         <Flex justify="space-between" align="center" gap="xl" mt="xs">
-          {optionsAsStringOptions.map((radio) => (
+          {orderedOptions.map((radio, idx) => (
             <Radio.Card
-              key={radio.value}
+              key={`radio-${idx}`}
               value={radio.value}
               disabled={disabled}
               ta="center"
               className={classes.root}
               p="xs"
             >
-              <Text>{radio.label}</Text>
+              <OptionLabel label={radio.label} infoText={radio.infoText} button />
             </Radio.Card>
           ))}
         </Flex>

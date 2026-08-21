@@ -1,6 +1,6 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.1.1/src/parser/LibraryConfigSchema.json",
-  "description": "This library is the Ishihara color blindness test. Each component contains an image of an Ishihara plate. The meta attribute of each plate describe what normal vision people, red color blind people, green color blind people, and total color blind people see from this plate. The user is asked to identify the number or pattern in the image. The library also contains two sequences: a short test and a full test. The short test contains 4 components and the full test contains all 24 components.",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/LibraryConfigSchema.json",
+  "description": "This library is the Ishihara color blindness test. Each component contains an image of an Ishihara plate. The meta attribute of each plate describes what normal vision people, red color blind people, green color blind people, and total color blind people see from this plate. The user is asked to identify the number or pattern in the image. The library also contains two sequences: a short test and a full test. The short test contains 4 components and the full test contains all 24 components.",
   "externalLink": "https://www.colour-blindness.com/colour-blindness-tests/ishihara-colour-test-plates/",
   "components": {
     "plate1": {
@@ -35,7 +35,8 @@
           "id": "plate1-response",
           "answer": 12
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "plate2": {
       "meta": {
@@ -69,7 +70,8 @@
           "id": "plate2-response",
           "answer": 8
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "plate3": {
       "meta": {
@@ -103,7 +105,8 @@
           "id": "plate3-response",
           "answer": 29
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "plate4": {
       "meta": {
@@ -137,14 +140,15 @@
           "id": "plate4-response",
           "answer": 5
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "plate5": {
       "meta": {
         "plateNumber": 5,
-        "normal-color-vision-see": 5,
-        "red-color-blindness-see": 3,
-        "green-color-blindness-see": 3,
+        "normal-color-vision-see": 3,
+        "red-color-blindness-see": 5,
+        "green-color-blindness-see": 5,
         "total-color-blindness-see": "nothing",
         "plateType": "transformation"
       },
@@ -169,9 +173,10 @@
       "correctAnswer": [
         {
           "id": "plate5-response",
-          "answer": 5
+          "answer": 3
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "plate6": {
       "meta": {
@@ -205,7 +210,8 @@
           "id": "plate6-response",
           "answer": 15
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "plate7": {
       "meta": {
@@ -239,7 +245,8 @@
           "id": "plate7-response",
           "answer": 74
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "plate8": {
       "meta": {
@@ -273,7 +280,8 @@
           "id": "plate8-response",
           "answer": 6
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "plate9": {
       "meta": {
@@ -307,7 +315,8 @@
           "id": "plate9-response",
           "answer": 45
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "plate10": {
       "meta": {
@@ -341,7 +350,8 @@
           "id": "plate10-response",
           "answer": 5
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "plate11": {
       "meta": {
@@ -375,7 +385,8 @@
           "id": "plate11-response",
           "answer": 7
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "plate12": {
       "meta": {
@@ -409,7 +420,8 @@
           "id": "plate12-response",
           "answer": 16
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "plate13": {
       "meta": {
@@ -443,7 +455,8 @@
           "id": "plate13-response",
           "answer": 73
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "plate14": {
       "meta": {
@@ -472,7 +485,8 @@
           "withDontKnow": true
         }
       ],
-      "correctAnswer": []
+      "correctAnswer": [],
+      "withSidebar": true
     },
     "plate15": {
       "meta": {
@@ -501,7 +515,8 @@
           "withDontKnow": true
         }
       ],
-      "correctAnswer": []
+      "correctAnswer": [],
+      "withSidebar": true
     },
     "plate16": {
       "meta": {
@@ -535,14 +550,15 @@
           "id": "plate16-response",
           "answer": 26
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "plate17": {
       "meta": {
         "plateNumber": 17,
         "normal-color-vision-see": 42,
-        "red-color-blindness-see": 4,
-        "green-color-blindness-see": 2,
+        "red-color-blindness-see": 2,
+        "green-color-blindness-see": 4,
         "total-color-blindness-see": "nothing",
         "plateType": "diagnostic"
       },
@@ -569,7 +585,8 @@
           "id": "plate17-response",
           "answer": 42
         }
-      ]
+      ],
+      "withSidebar": true
     },
     "plate18": {
       "meta": {
@@ -594,10 +611,12 @@
           "prompt": "Enter the pattern you see:",
           "required": true,
           "location": "sidebar",
-          "type": "shortText"
+          "type": "shortText",
+          "withDontKnow": true
         }
       ],
-      "correctAnswer": []
+      "correctAnswer": [],
+      "withSidebar": true
     },
     "plate19": {
       "meta": {
@@ -622,10 +641,12 @@
           "prompt": "Enter the pattern you see:",
           "required": true,
           "location": "sidebar",
-          "type": "shortText"
+          "type": "shortText",
+          "withDontKnow": true
         }
       ],
-      "correctAnswer": []
+      "correctAnswer": [],
+      "withSidebar": true
     },
     "plate20": {
       "meta": {
@@ -636,7 +657,7 @@
         "total-color-blindness-see": "nothing",
         "plateType": "vanishing"
       },
-      "instruction": "What number do you see in this image?",
+      "instruction": "What pattern do you see in this image?",
       "instructionLocation": "sidebar",
       "type": "image",
       "path": "libraries/color-blindness/assets/Ishihara20.png",
@@ -647,19 +668,20 @@
       "response": [
         {
           "id": "plate20-response",
-          "prompt": "Enter the number you see:",
+          "prompt": "Enter the pattern you see:",
           "required": true,
           "location": "sidebar",
-          "type": "numerical",
+          "type": "shortText",
           "withDontKnow": true
         }
       ],
-      "correctAnswer": []
+      "correctAnswer": [],
+      "withSidebar": true
     },
     "plate21": {
       "meta": {
         "plateNumber": 21,
-        "normal-color-vision-see": "a orange wiggly line",
+        "normal-color-vision-see": "an orange wiggly line",
         "red-color-blindness-see": "nothing",
         "green-color-blindness-see": "nothing",
         "total-color-blindness-see": "nothing",
@@ -679,21 +701,23 @@
           "prompt": "Enter the pattern you see:",
           "required": true,
           "location": "sidebar",
-          "type": "shortText"
+          "type": "shortText",
+          "withDontKnow": true
         }
       ],
-      "correctAnswer": []
+      "correctAnswer": [],
+      "withSidebar": true
     },
     "plate22": {
       "meta": {
         "plateNumber": 22,
-        "normal-color-vision-see": "a blue-grenn/yellow-green wiggly line",
-        "red-color-blindness-see": "a blue-green and red wiggle line",
-        "green-color-blindness-see": "a blue-green and red wiggle line",
+        "normal-color-vision-see": "a blue-green/yellow-green wiggly line",
+        "red-color-blindness-see": "a blue-green and red wiggly line",
+        "green-color-blindness-see": "a blue-green and red wiggly line",
         "total-color-blindness-see": "nothing",
         "plateType": "transformation"
       },
-      "instruction": "What do you see in this image?",
+      "instruction": "What pattern do you see in this image?",
       "instructionLocation": "sidebar",
       "type": "image",
       "path": "libraries/color-blindness/assets/Ishihara22.png",
@@ -704,24 +728,26 @@
       "response": [
         {
           "id": "plate22-response",
-          "prompt": "Enter what you see:",
+          "prompt": "Enter the pattern you see:",
           "required": true,
           "location": "sidebar",
-          "type": "shortText"
+          "type": "shortText",
+          "withDontKnow": true
         }
       ],
-      "correctAnswer": []
+      "correctAnswer": [],
+      "withSidebar": true
     },
     "plate23": {
       "meta": {
         "plateNumber": 23,
         "normal-color-vision-see": "a red-orange wiggly line",
-        "red-color-blindness-see": "a blue-green wiggle line",
-        "green-color-blindness-see": "a blue-green wiggle line",
+        "red-color-blindness-see": "a blue-green wiggly line",
+        "green-color-blindness-see": "a blue-green wiggly line",
         "total-color-blindness-see": "nothing",
         "plateType": "transformation"
       },
-      "instruction": "What number do you see in this image?",
+      "instruction": "What pattern do you see in this image?",
       "instructionLocation": "sidebar",
       "type": "image",
       "path": "libraries/color-blindness/assets/Ishihara23.png",
@@ -732,14 +758,15 @@
       "response": [
         {
           "id": "plate23-response",
-          "prompt": "Enter the number you see:",
+          "prompt": "Enter the pattern you see:",
           "required": true,
           "location": "sidebar",
-          "type": "numerical",
+          "type": "shortText",
           "withDontKnow": true
         }
       ],
-      "correctAnswer": []
+      "correctAnswer": [],
+      "withSidebar": true
     },
     "plate24": {
       "meta": {
@@ -750,7 +777,7 @@
         "total-color-blindness-see": "a wiggly line",
         "plateType": "demonstration"
       },
-      "instruction": "What number do you see in this image?",
+      "instruction": "What pattern do you see in this image?",
       "instructionLocation": "sidebar",
       "type": "image",
       "path": "libraries/color-blindness/assets/Ishihara24.png",
@@ -764,10 +791,12 @@
           "prompt": "Enter what you see:",
           "required": true,
           "location": "sidebar",
-          "type": "shortText"
+          "type": "shortText",
+          "withDontKnow": true
         }
       ],
-      "correctAnswer": []
+      "correctAnswer": [],
+      "withSidebar": true
     }
   },
   "sequences": {

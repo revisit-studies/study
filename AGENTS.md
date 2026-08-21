@@ -1,0 +1,55 @@
+Tech Stack
+- Yarn
+- React 18
+- TypeScript
+- Vite
+- Mantine UI
+- Firebase or Supabase as storage and database backends (.env selects the engine)
+- Redux for state management with our in-house library Trrack.js for provenance tracking
+- Lodash usage is restricted to: debounce, throttle, isEqual, merge
+- React Router for routing
+- Eslint and airbnb style guide for code quality
+
+Purpose
+The ReVISit project aims to create a robust platform for conducting and analyzing user studies focused on interactive data visualization tools. By leveraging modern web technologies and state management solutions, ReVISit provides researchers with the necessary tools to design, deploy, and evaluate visualization interfaces effectively.
+
+The goal is to expand the scope of user studies to beyond the visualization community, making it easier for researchers from various fields to conduct studies on interactive data visualizations. This means we need state management that can handle complex interactions and data flows, as well as a user-friendly interface for both study designers and participants.
+
+Verbiage
+- "Study Designer": The individual who creates and configures the user study.
+- "Participant": The user who takes part in the study.
+- "Analyst": The individual who reviews and analyzes the data collected from the study, both in the platform and externally.
+- "Study Config": The configuration file that defines the parameters and settings of a user study.
+
+Study Configs
+The study configurations are defined in JSON files with schemas. These configs specify various aspects of the study, including the visualization tools to be used, the tasks participants need to complete, and the data sources involved. You can find the full definition of the study config schema in the typescript file at src/parser/types.ts. The answers and participant data specifications are stored separately from the study config to allow for flexibility in data collection and analysis, at src/store/types.ts. Study config JSON files live in the public folder under the /public/{studyName}/config.json path.
+
+Imported Libraries
+We provide several libraries to facilitate the development of user studies, such as vlat, mini-vlat, nasa-tlx, color-blindness, and more. These libraries are components and sequences that are defined in public/libraries/. Each library has its own folder containing the necessary code and assets. Use only libraries that exist under public/libraries/ (no ad-hoc local component imports in study configs). You can import these libraries into your study configs to enhance the functionality and user experience of your studies by adding the libraries to the top level `importedLibraries` field in the study config, and then referencing the components in the `baseComponent` field or in sequences and the sequences in the `sequences` field. When referencing the components and sequences use the following syntax `"$libraryName.components.componentName"` and `"$libraryName.sequences.sequenceName"` respectively.
+
+Adding Libraries
+When adding a new library, place the library and its assets under `public/libraries/<library-name>/`. Each library also needs a corresponding example study under `public/library-<library-name>/`, which you can generate by running `yarn generate-library-examples`. The library config should include a clear `description` and, when applicable, `reference`, `doi`, and `externalLink` values. `reference` values follow IEEE reference style, `doi` values are stored as bare DOI identifiers such as `10.xxxx/xxxxxxx` (no `doi:` prefix or `https://doi.org/`), and `externalLink` points to the canonical project or supporting website. Before submitting a library, verify the citation metadata against an authoritative primary source and confirm that each `doi` and `externalLink` resolves. Generated example studies default to `withSidebar: false`; set it to `true` only when the library actually places elements in the sidebar (for example, responses with `location: "sidebar"`), so that sidebars without content stay closed. Give the example study a readable title in the `ACRONYM: Full Name` form the other libraries use, such as `QUIS: Questionnaire for User Interaction Satisfaction`, and keep that title identical in the example study's `config.json` and in the first heading of its Markdown file.
+
+Note that `yarn generate-library-examples` only scaffolds example studies for libraries that don't have one yet — existing `public/library-*/` folders are left untouched — but it always regenerates the library documentation, both `docsLibraries/` (intended for the documentation repository, titled by directory name) and each example study's Markdown under `public/library-*/assets/` (which keeps any custom title). It also deletes documentation for libraries that have since been removed or skipped, so a stale file cannot reach the documentation repository. There is no need to run `yarn generate-library-docs` separately.
+
+Large Media Assets
+Large bundled-library media should not be committed directly to this repository. Put heavyweight shared library assets in the public `revisit-studies/library-assets` repository, tag the asset release, and reference files from study/library configs with tag-pinned raw GitHub URLs such as `https://raw.githubusercontent.com/revisit-studies/library-assets/v1/...`.
+
+Storage Engines
+ReVISit supports multiple storage backends for storing study data, including Firebase and Supabase. This allows researchers to choose the backend that best fits their needs in terms of scalability, ease of use, and integration with other tools. The storage engines are abstracted in the codebase, allowing for easy addition of new storage solutions in the future. The storage engine implementations can be found in src/storage/ directory.
+
+How you should interact with the codebase
+When working with the ReVISit codebase, work only with the source code files available to you. If you need an external library, please ask for approval first (and include how well used the library is). Make sure to follow best practices for React and TypeScript development, including proper state management, component structuring, and code documentation. Pay extra attention to lifecycle methods and hooks to ensure optimal performance and avoid memory leaks, including any updates to existing code. If you encounter any issues or have suggestions for improvements, feel free to bring them up for discussion. You can run git commands but don't run them unless asked to. Always check package.json for the scripts available to you for building, testing, and running the project.
+
+Testing
+When adding a new feature or modifying code try to maximize unit test coverage. Unit tests should live in a sibling `tests/` folder near the code they are testing, keep the same base name as the tested file with `.spec.`, and use the vitest framework. For example, `src/store/hooks/useReplay.ts` should be tested in `src/store/hooks/tests/useReplay.spec.tsx`. Root-level app specs should live in `src/tests/`. Apply this to both UI/react code as well as non-UI code. For UI code, we use playwright for end-to-end testing. Try to add e2e tests for any new features that involve user interaction. E2E tests are located in the `tests/` directory at the repo root. Don't run `yarn test` directly; instead, describe the tests you want to run, and I'll handle executing them. You can run unittests locally using `yarn unittest`. Preferred commands are those listed in package.json (e.g., `yarn unittest`, `yarn lint`, `yarn typecheck`, `yarn serve`, `yarn build`).
+
+Parser
+When adding new features, sometimes it's required to update the parser and the associated types. The parser is located in src/parser/. The parser is responsible for validating and transforming the study config JSON files into a format that the application can use. When updating the parser, ensure that you also update the corresponding types in src/parser/types.ts to reflect any changes made to the study config schema. Make sure to add unit tests for any new parser functionality to ensure its correctness. Additionally, changes to the parser types will require updates to the generated JSON schema files located in src/schemas/. You can regenerate these schema files by running `yarn generate-schemas`.
+
+Sequence
+The sequence logic is a crucial part of the ReVISit platform, as it defines the flow of tasks and interactions for participants in a study. A participant's sequence is essentially flattened into a list and navigated through by index. The only exception to this is the dynamic blocks, which function as a nested sequence. The nested sequence has its own index and can be navigated through independently of the main sequence.
+
+DO NOT
+- DO NOT add import('...') statements inside src code and test logic. Import at the top of the file only, even for types.
+- DO NOT add new libraries without approval.

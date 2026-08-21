@@ -1,19 +1,19 @@
 import { test, expect } from '@playwright/test';
+import {
+  nextClick,
+  openStudyFromLanding,
+  resetClientStudyState,
+  waitForStudyEndMessage,
+} from './utils';
 
-test('test', async ({ page }) => {
-  await page.goto('/');
+test('Test website component with reactive response', async ({ page }) => {
+  await resetClientStudyState(page);
+  await openStudyFromLanding(page, 'Demo Studies', 'Passing Data from reVISit to HTML and back');
 
-  // Click on html-input
-  await page.getByLabel('Demo Studies').locator('div').filter({ hasText: 'Passing Data from reVISit to HTML and back' })
-    .getByText('Go to Study')
-    .click();
-
-  // Check that the page contains the introduction text
-  const introText = await page.getByText('Welcome to our study. This is an example study to show how to embed html element');
-  await expect(introText).toBeVisible({ timeout: 5000 });
+  await expect(page.getByText(/example study.*embed html elements/i)).toBeVisible();
 
   // Click on the next button
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await nextClick(page);
 
   // Check the page contains the question
   const questionText = await page.getByText('Click on the largest bar');
@@ -31,7 +31,7 @@ test('test', async ({ page }) => {
   await expect(responseValue).toBeVisible();
 
   // Click on the next button
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await nextClick(page);
 
   // Check the page contains the question
   const questionText2 = await page.getByText('Click on the smallest bar');
@@ -49,9 +49,8 @@ test('test', async ({ page }) => {
   await expect(responseValue2).toBeVisible();
 
   // Click on the next button
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await nextClick(page);
 
   // Check that the end of study text renders
-  const endText = await page.getByText('Please wait while your answers are uploaded.');
-  await expect(endText).toBeVisible();
+  await waitForStudyEndMessage(page);
 });

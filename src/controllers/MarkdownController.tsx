@@ -6,6 +6,7 @@ import { ResourceNotFound } from '../ResourceNotFound';
 import { PREFIX } from '../utils/Prefix';
 
 export function MarkdownController({ currentConfig }: { currentConfig: MarkdownComponent; }) {
+  const [foundAsset, setFoundAsset] = useState(true);
   const [importedText, setImportedText] = useState<string>('');
 
   const [loading, setLoading] = useState(true);
@@ -14,6 +15,8 @@ export function MarkdownController({ currentConfig }: { currentConfig: MarkdownC
       const asset = await getStaticAssetByPath(`${PREFIX}${currentConfig.path}`);
       if (asset !== undefined) {
         setImportedText(asset);
+      } else {
+        setFoundAsset(false);
       }
       setLoading(false);
     }
@@ -21,7 +24,7 @@ export function MarkdownController({ currentConfig }: { currentConfig: MarkdownC
     fetchImage();
   }, [currentConfig.path]);
 
-  return loading || importedText
+  return loading || foundAsset
     ? <ReactMarkdownWrapper text={importedText} />
     : <ResourceNotFound path={currentConfig.path} />;
 }

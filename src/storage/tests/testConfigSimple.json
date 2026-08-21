@@ -1,0 +1,33 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Test Study",
+    "version": "1.0.0",
+    "authors": [
+      "Test Author"
+    ],
+    "description": "A test study configuration",
+    "date": "2026-04-08",
+    "organizations": [
+      "Test Organization"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "test@test.com",
+    "logoPath": "https://example.com/logo.png",
+    "withProgressBar": true,
+    "withSidebar": false
+  },
+  "components": {
+    "testComponent": {
+      "type": "questionnaire",
+      "response": []
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "testComponent"
+    ]
+  }
+}

@@ -1,118 +1,193 @@
 import { Alert, Button, Group } from '@mantine/core';
 import {
-  useCallback, useEffect, useMemo, useState,
+  JSX, useEffect, useMemo, useRef, useState,
 } from 'react';
 import { IconInfoCircle, IconAlertTriangle } from '@tabler/icons-react';
 import { useNavigate } from 'react-router';
 import { useNextStep } from '../store/hooks/useNextStep';
-import { IndividualComponent } from '../parser/types';
+import { shouldIgnoreEnter } from './keyboardUtils';
+import type { IndividualComponent, ResponseBlockLocation } from '../parser/types';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
+import { useCurrentIdentifier } from '../routes/utils';
+import { PreviousButton } from './PreviousButton';
+import {
+  DEFAULT_AUTO_ADVANCE_WARNING_MESSAGE,
+  DEFAULT_AUTO_ADVANCE_WARNING_TIME,
+  getAutoAdvanceWarning,
+} from './nextButtonTimeout';
+
+const nextButtonJustify = {
+  left: 'flex-start',
+  center: 'center',
+  right: 'flex-end',
+} as const;
 
 type Props = {
   label?: string;
   disabled?: boolean;
-  onClick?: null | (() => void | Promise<void>);
-  configInUse?: IndividualComponent;
+  config?: IndividualComponent;
+  location?: ResponseBlockLocation;
+  checkAnswer: JSX.Element | null;
+  onCheckAnswer?: () => void;
+  onNext: () => void;
 };
 
 export function NextButton({
   label = 'Next',
   disabled = false,
-  onClick,
-  configInUse,
+  config,
+  location,
+  checkAnswer,
+  onCheckAnswer,
+  onNext,
 }: Props) {
   const { isNextDisabled, goToNextStep } = useNextStep();
   const studyConfig = useStudyConfig();
   const navigate = useNavigate();
+  const identifier = useCurrentIdentifier();
 
-  const handleClick = useCallback(() => {
-    if (onClick) {
-      onClick();
-    }
-    goToNextStep();
-  }, [goToNextStep, onClick]);
+  const nextButtonDisableTime = config?.nextButtonDisableTime ?? studyConfig.uiConfig.nextButtonDisableTime;
+  const nextButtonEnableTime = config?.nextButtonEnableTime ?? studyConfig.uiConfig.nextButtonEnableTime ?? 0;
+  const nextButtonAutoAdvanceTime = config?.nextButtonAutoAdvanceTime;
+  const nextButtonAutoAdvanceWarningTime = config?.nextButtonAutoAdvanceWarningTime ?? DEFAULT_AUTO_ADVANCE_WARNING_TIME;
+  const nextButtonAutoAdvanceWarningMessage = config?.nextButtonAutoAdvanceWarningMessage ?? DEFAULT_AUTO_ADVANCE_WARNING_MESSAGE;
 
-  const nextButtonDisableTime = configInUse?.nextButtonDisableTime;
-  const nextButtonEnableTime = configInUse?.nextButtonEnableTime || 0;
   const [timer, setTimer] = useState<number | undefined>(undefined);
-  // Start a timer on first render, update timer every 100ms
+  const autoAdvanceTriggered = useRef(false);
+  // Use the current identifier so nested function-sequence items reset their timer state.
   useEffect(() => {
-    let time = 0;
+    autoAdvanceTriggered.current = false;
+    const start = Date.now();
+    setTimer(0);
     const interval = setInterval(() => {
-      time += 100;
-      setTimer(time);
+      setTimer(Date.now() - start);
     }, 100);
     return () => {
       clearInterval(interval);
     };
-  }, []);
+  }, [identifier]);
+
   useEffect(() => {
-    if (timer && nextButtonDisableTime && timer >= nextButtonDisableTime && studyConfig.uiConfig.timeoutReject) {
-      navigate('./../__timedOut');
+    if (timer === undefined) {
+      return;
+    }
+    if (nextButtonDisableTime && timer >= nextButtonDisableTime && studyConfig.uiConfig.timeoutReject) {
+      navigate(`./../__timedOut${window.location.search}`);
     }
   }, [nextButtonDisableTime, timer, navigate, studyConfig.uiConfig.timeoutReject]);
 
+  useEffect(() => {
+    if (timer === undefined || nextButtonAutoAdvanceTime === undefined || timer < nextButtonAutoAdvanceTime || autoAdvanceTriggered.current) {
+      return;
+    }
+
+    autoAdvanceTriggered.current = true;
+    goToNextStep(false);
+  }, [goToNextStep, nextButtonAutoAdvanceTime, timer]);
+
   const buttonTimerSatisfied = useMemo(
     () => {
-      const nextButtonDisableSatisfied = nextButtonDisableTime && timer ? timer <= nextButtonDisableTime : true;
-      const nextButtonEnableSatisfied = timer ? timer >= nextButtonEnableTime : true;
+      if (timer === undefined) {
+        return true;
+      }
+      const nextButtonDisableSatisfied = nextButtonDisableTime ? timer <= nextButtonDisableTime : true;
+      const nextButtonEnableSatisfied = nextButtonEnableTime ? timer >= nextButtonEnableTime : true;
       return nextButtonDisableSatisfied && nextButtonEnableSatisfied;
     },
     [nextButtonDisableTime, nextButtonEnableTime, timer],
   );
 
+  const autoAdvanceWarning = useMemo(() => getAutoAdvanceWarning({
+    timer,
+    autoAdvanceTime: nextButtonAutoAdvanceTime,
+    warningTime: nextButtonAutoAdvanceWarningTime,
+    warningMessage: nextButtonAutoAdvanceWarningMessage,
+  }), [nextButtonAutoAdvanceTime, nextButtonAutoAdvanceWarningMessage, nextButtonAutoAdvanceWarningTime, timer]);
+
+  const nextOnEnter = config?.nextOnEnter ?? studyConfig.uiConfig.nextOnEnter;
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Enter' && !disabled && !isNextDisabled && buttonTimerSatisfied) {
-        goToNextStep();
+      if (event.key !== 'Enter' || shouldIgnoreEnter(event.target)) {
+        return;
+      }
+
+      if (onCheckAnswer) {
+        onCheckAnswer();
+        return;
+      }
+      if (!disabled && !isNextDisabled && buttonTimerSatisfied) {
+        onNext();
       }
     };
 
-    if (studyConfig.uiConfig.nextOnEnter) {
+    if (nextOnEnter) {
       window.addEventListener('keydown', handleKeyDown);
-      return () => {
-        window.removeEventListener('keydown', handleKeyDown);
-      };
     }
-    return () => {};
-  }, [disabled, isNextDisabled, buttonTimerSatisfied, goToNextStep, studyConfig.uiConfig.nextOnEnter]);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [disabled, isNextDisabled, buttonTimerSatisfied, onCheckAnswer, onNext, nextOnEnter]);
+
+  const nextButtonDisabled = disabled || isNextDisabled || !buttonTimerSatisfied;
+  const previousButtonText = config?.previousButtonText ?? studyConfig.uiConfig.previousButtonText ?? 'Previous';
+  const nextButtonAlignment = config?.nextButtonAlignment ?? studyConfig.uiConfig.nextButtonAlignment ?? 'right';
 
   return (
     <>
-      <Button
-        type="submit"
-        disabled={disabled || isNextDisabled || !buttonTimerSatisfied}
-        onClick={handleClick}
-      >
-        {label}
-      </Button>
-      {nextButtonEnableTime > 0 && timer && timer < nextButtonEnableTime && (
-      <Alert mt="md" title="Please wait" color="blue" icon={<IconInfoCircle />}>
-        The next button will be enabled in
-        {' '}
-        {Math.ceil((nextButtonEnableTime - timer) / 1000)}
-        {' '}
-        seconds.
-      </Alert>
-      )}
-      {nextButtonDisableTime && timer && (nextButtonDisableTime - timer) < 10000 && (
-        (nextButtonDisableTime - timer) > 0
-          ? (
-            <Alert mt="md" title="Next button disables soon" color="yellow" icon={<IconAlertTriangle />}>
-              The next button disables in
+      <Group justify={nextButtonJustify[nextButtonAlignment]} gap="xs" mt="sm" wrap="wrap">
+        {config?.previousButton && (
+          <PreviousButton
+            label={previousButtonText}
+            px={location === 'sidebar' && checkAnswer ? 8 : undefined}
+          />
+        )}
+        {checkAnswer}
+        <Button
+          type="submit"
+          disabled={nextButtonDisabled}
+          onClick={() => onNext()}
+          px={location === 'sidebar' && checkAnswer ? 8 : undefined}
+        >
+          {label}
+        </Button>
+      </Group>
+      {timer !== undefined && (
+        <>
+          {nextButtonEnableTime > 0 && timer < nextButtonEnableTime && (
+            <Alert mt="md" title="Please wait" color="blue" icon={<IconInfoCircle />}>
+              The next button will be enabled in
               {' '}
-              {Math.ceil((nextButtonDisableTime - timer) / 1000)}
+              {Math.ceil((nextButtonEnableTime - timer) / 1000)}
               {' '}
               seconds.
             </Alert>
-          ) : !studyConfig.uiConfig.timeoutReject && (
-            <Alert mt="md" title="Next button disabled" color="red" icon={<IconAlertTriangle />}>
-              The next button has timed out and is now disabled.
-              <Group justify="right" mt="sm">
-                <Button onClick={() => goToNextStep(false)} variant="link" color="red">Proceed</Button>
-              </Group>
+          )}
+          {nextButtonDisableTime && (nextButtonDisableTime - timer) < 10000 && (
+            (nextButtonDisableTime - timer) > 0
+              ? (
+                <Alert mt="md" title="Next button disables soon" color="yellow" icon={<IconAlertTriangle />}>
+                  The next button disables in
+                  {' '}
+                  {Math.ceil((nextButtonDisableTime - timer) / 1000)}
+                  {' '}
+                  seconds.
+                </Alert>
+              ) : !studyConfig.uiConfig.timeoutReject && (
+                <Alert mt="md" title="Next button disabled" color="red" icon={<IconAlertTriangle />}>
+                  The next button has timed out and is now disabled.
+                  <Group justify="right" mt="sm">
+                    <Button onClick={() => goToNextStep(false)} variant="link" color="red">Proceed</Button>
+                  </Group>
+                </Alert>
+              ))}
+          {autoAdvanceWarning && (
+            <Alert mt="md" title="Automatically advancing soon" color="yellow" icon={<IconAlertTriangle />}>
+              {autoAdvanceWarning.message}
             </Alert>
-          ))}
+          )}
+        </>
+      )}
     </>
   );
 }

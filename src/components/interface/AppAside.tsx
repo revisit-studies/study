@@ -1,18 +1,21 @@
 import {
+  Badge,
   Box,
   Button,
   CloseButton,
   Flex,
-  ScrollArea,
   Tabs,
   Text,
   AppShell,
   Tooltip,
+  ActionIcon,
 } from '@mantine/core';
-import React, { useMemo, useState } from 'react';
-import { IconInfoCircle, IconUserPlus } from '@tabler/icons-react';
+import { useMemo, useState } from 'react';
+import {
+  IconBan, IconBrandFirebase, IconBrandSupabase, IconDatabase, IconDeviceDesktop, IconGraph, IconGraphOff, IconInfoCircle, IconMicrophone, IconSettingsShare, IconUserPlus,
+} from '@tabler/icons-react';
 import { useHref } from 'react-router';
-import { ComponentBlockWithOrderPath, StepsPanel } from './StepsPanel';
+import { StepsPanel } from './StepsPanel';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import {
   useStoreActions, useStoreDispatch, useStoreSelector,
@@ -20,8 +23,10 @@ import {
 import { useStudyId } from '../../routes/utils';
 import { getNewParticipant } from '../../utils/nextParticipant';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
-import { addPathToComponentBlock } from '../../utils/getSequenceFlatMap';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
+import { useStudyRecordings } from '../../utils/useStudyRecordings';
+import { useDeviceRules } from '../../utils/useDeviceRules';
+import { getUnmetDeviceRestrictionLines, getUnmetDeviceRestrictionTooltip } from './DeviceRestrictionString';
 
 function InfoHover({ text }: { text: string }) {
   return (
@@ -33,7 +38,7 @@ function InfoHover({ text }: { text: string }) {
 
 export function AppAside() {
   const sequence = useStoreSelector((state) => state.sequence);
-  const metadata = useStoreSelector((state) => state.metadata);
+  const answers = useStoreSelector((state) => state.answers);
   const { toggleStudyBrowser } = useStoreActions();
 
   const studyConfig = useStudyConfig();
@@ -46,21 +51,37 @@ export function AppAside() {
 
   const isAnalysis = useIsAnalysis();
 
-  const fullOrder = useMemo(() => {
-    let r = structuredClone(studyConfig.sequence) as ComponentBlockWithOrderPath;
-    r = addPathToComponentBlock(r, 'root') as ComponentBlockWithOrderPath;
-    r.components.push('end');
-    return r;
-  }, [studyConfig.sequence]);
-
   const [activeTab, setActiveTab] = useState<string | null>('participant');
 
   const nextParticipantDisabled = useMemo(() => activeTab === 'allTrials' || isAnalysis, [activeTab, isAnalysis]);
 
+  const modes = useStoreSelector((state) => state.modes);
+  const { hasAudioRecording, hasScreenRecording } = useStudyRecordings(studyConfig);
+  const {
+    isBrowserAllowed,
+    isDeviceAllowed,
+    isInputAllowed,
+    isDisplayAllowed,
+  } = useDeviceRules(studyConfig.studyRules);
+  const unmetRestrictions = useMemo(() => getUnmetDeviceRestrictionLines(studyConfig.studyRules, {
+    isBrowserAllowed,
+    isDeviceAllowed,
+    isInputAllowed,
+    isDisplayAllowed,
+  }), [isBrowserAllowed, isDeviceAllowed, isDisplayAllowed, isInputAllowed, studyConfig.studyRules]);
+  const restrictionsTooltip = useMemo(() => getUnmetDeviceRestrictionTooltip(studyConfig.studyRules, {
+    isBrowserAllowed,
+    isDeviceAllowed,
+    isInputAllowed,
+    isDisplayAllowed,
+  }), [isBrowserAllowed, isDeviceAllowed, isDisplayAllowed, isInputAllowed, studyConfig.studyRules]);
+  const betweenSubjectsEntries = useMemo(() => Object.entries(sequence.parameters || {}), [sequence.parameters]);
+
   return (
-    <AppShell.Aside p="0">
+    <AppShell.Aside className="studyBrowser" data-testid="app-aside" p="0">
       <AppShell.Section
-        p="md"
+        p="sm"
+        pb={0}
       >
         <Flex direction="row" justify="space-between">
           <Text size="md" fw={700} pt={3}>
@@ -70,7 +91,7 @@ export function AppAside() {
             <Button
               variant="light"
               leftSection={<IconUserPlus size={14} />}
-              onClick={() => getNewParticipant(storageEngine, studyConfig, metadata, studyHref)}
+              onClick={() => getNewParticipant(storageEngine, studyHref)}
               size="xs"
               disabled={nextParticipantDisabled}
             >
@@ -82,19 +103,94 @@ export function AppAside() {
             mt={1}
           />
         </Flex>
+        <Flex direction="row" justify="space-between" align="center" mt="xs" opacity={0.7}>
+          <Text size="sm">
+            Study Status:
+            {' '}
+            {modes?.dataCollectionEnabled ? 'Collecting Data' : 'Data Collection Disabled'}
+          </Text>
+          <Flex gap="sm" align="center">
+            <Tooltip label="Edit Study Settings" withinPortal position="bottom">
+              <ActionIcon
+                variant="white"
+                aria-label="Edit Study Modes"
+                component="a"
+                href={useHref(`/analysis/stats/${studyId}/manage`)}
+                p={0}
+              >
+                <IconSettingsShare style={{ width: '70%', height: '70%' }} stroke={1.5} size={16} />
+              </ActionIcon>
+            </Tooltip>
+            {hasAudioRecording && (
+              <Tooltip label="Audio recording enabled" withinPortal position="bottom">
+                <IconMicrophone size={16} color="orange" />
+              </Tooltip>
+            )}
+            {hasScreenRecording && (
+              <Tooltip label="Screen recording enabled" withinPortal position="bottom">
+                <IconDeviceDesktop size={16} color="orange" />
+              </Tooltip>
+            )}
+            {modes?.dataSharingEnabled
+              ? <Tooltip label="Data sharing enabled" withinPortal position="bottom"><IconGraph size={16} color="green" /></Tooltip>
+              : <Tooltip label="Data sharing disabled" withinPortal position="bottom"><IconGraphOff size={16} color="red" /></Tooltip>}
+            {storageEngine?.getEngine() === 'localStorage'
+              ? <Tooltip label="Local storage enabled" withinPortal position="bottom"><IconDatabase size={16} color="green" /></Tooltip>
+              : storageEngine?.getEngine() === 'firebase'
+                ? <Tooltip label="Firebase enabled" withinPortal position="bottom"><IconBrandFirebase size={16} color="green" /></Tooltip>
+                : storageEngine?.getEngine() === 'supabase'
+                  ? <Tooltip label="Supabase enabled" withinPortal position="bottom"><IconBrandSupabase size={16} color="green" /></Tooltip>
+                  : <Tooltip label="Unknown storage engine enabled" withinPortal position="bottom"><IconDatabase size={16} color="red" /></Tooltip>}
+            {unmetRestrictions.length > 0 && (
+              <Tooltip label={restrictionsTooltip} multiline style={{ whiteSpace: 'pre-line' }} withinPortal position="bottom">
+                <IconBan size={16} color="red" />
+              </Tooltip>
+            )}
+          </Flex>
+        </Flex>
+        {betweenSubjectsEntries.length > 0 && (
+          <Flex direction="row" gap={4} align="center" mt={4} wrap="wrap">
+            <Text size="xs" fw={700} c="dimmed">
+              Between Subjects:
+            </Text>
+            {betweenSubjectsEntries.map(([factorName, factorLevel]) => (
+              <Tooltip
+                key={factorName}
+                label={`Between-subjects factor: ${factorName} = ${String(factorLevel)}`}
+                withinPortal
+                position="bottom"
+              >
+                <Badge size="sm" color="teal" variant="light">
+                  {factorName}
+                  =
+                  {String(factorLevel)}
+                </Badge>
+              </Tooltip>
+            ))}
+          </Flex>
+        )}
       </AppShell.Section>
 
       <AppShell.Section
         grow
-        component={ScrollArea}
-        p="md"
+        p="xs"
+        pt={4}
+        style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
       >
-        <Tabs value={activeTab} onChange={setActiveTab}>
+        <Tabs
+          value={activeTab}
+          onChange={setActiveTab}
+          keepMounted={false}
+          style={{
+            display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden',
+          }}
+        >
           <Box style={{
             position: 'sticky',
             top: 0,
             backgroundColor: 'white',
             zIndex: 1,
+            flexShrink: 0,
           }}
           >
             <Tabs.List grow>
@@ -102,18 +198,18 @@ export function AppAside() {
                 Participant View
                 <InfoHover text="The Participants View shows items just as a participants would see them, considering randomization, omissions, etc. You can navigate between multiple participants using the next participant button." />
               </Tabs.Tab>
-              <Tabs.Tab value="allTrials" disabled={isAnalysis}>
-                All Trials View
-                <InfoHover text="The All Trials View shows all items in the order defined in the config." />
+              <Tabs.Tab value="allTrials" disabled={isAnalysis} p="xs">
+                Browse Components
+                <InfoHover text="Browse Components allows you to view all the components that are defined in your study." />
               </Tabs.Tab>
             </Tabs.List>
           </Box>
 
-          <Tabs.Panel value="participant">
-            <StepsPanel configSequence={fullOrder} participantSequence={sequence} fullSequence={sequence} participantView studyConfig={studyConfig} />
+          <Tabs.Panel value="participant" style={{ flex: 1, overflow: 'hidden' }}>
+            <StepsPanel participantSequence={sequence} participantAnswers={answers} studyConfig={studyConfig} />
           </Tabs.Panel>
-          <Tabs.Panel value="allTrials">
-            <StepsPanel configSequence={fullOrder} participantSequence={sequence} fullSequence={sequence} participantView={false} studyConfig={studyConfig} />
+          <Tabs.Panel value="allTrials" style={{ flex: 1, overflow: 'hidden' }}>
+            <StepsPanel participantAnswers={{}} studyConfig={studyConfig} />
           </Tabs.Panel>
         </Tabs>
       </AppShell.Section>

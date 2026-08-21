@@ -1,6 +1,8 @@
-# Introduction
+This demo introduced how to use images as stimuli in reVISit, and how to collect data via form fields.
 
-Welcome to our study. This is a replication of a study by Padilla et al., published in  Frontiers in Psychology, 2021.
+## Study Scenario
+
+This is a replication of a study by Padilla et al., published in Frontiers in Psychology, 2021.
 
 ## Instructions
 
@@ -31,3 +33,9 @@ this forecast, including if you will issue blankets to the alpacas.
 Compensation: Please respond to the best of your ability.
 You will receive an extra $0.15 cents for every $1,000 that
 you have in your budget at the end of 48 days.
+
+## Relevant files:
+ * [The Config](https://github.com/revisit-studies/study/blob/main/public/demo-image/config.json)
+
+## Relevant documentation:
+ * [Designing Image/Video Stimuli](https://revisit.dev/docs/designing-studies/image-video-stimulus/)

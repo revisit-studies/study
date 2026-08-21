@@ -18,33 +18,49 @@ import {
   IconChartHistogram,
   IconDotsVertical,
   IconMail,
+  IconMicrophone,
+  IconMicrophoneOff,
   IconSchema,
   IconUserPlus,
 } from '@tabler/icons-react';
 import {
   useEffect, useMemo, useRef, useState,
 } from 'react';
-import { useHref } from 'react-router';
+import { useHref, useParams } from 'react-router';
 import { useCurrentComponent, useCurrentStep, useStudyId } from '../../routes/utils';
 import {
   useStoreDispatch, useStoreSelector, useStoreActions, useFlatSequence,
 } from '../../store/store';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
+import { calculateProgressData } from '../../storage/engines/utils/storageEngineHelpers';
 import { PREFIX } from '../../utils/Prefix';
 import { getNewParticipant } from '../../utils/nextParticipant';
 import { RecordingAudioWaveform } from './RecordingAudioWaveform';
+import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
+import { useRecordingContext } from '../../store/hooks/useRecording';
+import { hideNotification, showNotification } from '../../utils/notifications';
+import { getMutedInstruction } from '../../utils/recordingWarnings';
+import classes from './AppHeader.module.css';
+import { useDeviceRules } from '../../utils/useDeviceRules';
+import {
+  DEFAULT_FIREBASE_WARNING_MESSAGE,
+  DEFAULT_SUPABASE_WARNING_MESSAGE,
+  shouldWarnForDefaultFirebaseConfig,
+  shouldWarnForDefaultSupabaseConfig,
+} from '../../utils/defaultStorageConfig';
 
-export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { studyNavigatorEnabled: boolean; dataCollectionEnabled: boolean }) {
+export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { developmentModeEnabled: boolean; dataCollectionEnabled: boolean }) {
   const studyConfig = useStoreSelector((state) => state.config);
-  const metadata = useStoreSelector((state) => state.metadata);
 
   const answers = useStoreSelector((state) => state.answers);
+  const storageEngineFailedToConnect = useStoreSelector((state) => state.storageEngineFailedToConnect);
   const flatSequence = useFlatSequence();
   const storeDispatch = useStoreDispatch();
   const { toggleShowHelpText, toggleStudyBrowser, incrementHelpCounter } = useStoreActions();
   const { storageEngine } = useStorageEngine();
 
   const currentComponent = useCurrentComponent();
+  const componentConfig = useMemo(() => studyComponentToIndividualComponent(studyConfig.components[currentComponent] || {}, studyConfig), [currentComponent, studyConfig]);
 
   const currentStep = useCurrentStep();
 
@@ -69,15 +85,65 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
   const [menuOpened, setMenuOpened] = useState(false);
 
   const logoPath = studyConfig?.uiConfig.logoPath;
-  const withProgressBar = studyConfig?.uiConfig.withProgressBar;
+  const withProgressBar = useMemo(() => componentConfig.withProgressBar ?? studyConfig.uiConfig.withProgressBar, [componentConfig, studyConfig]);
+  const showTitle = useMemo(() => componentConfig.showTitle ?? studyConfig.uiConfig.showTitle ?? true, [componentConfig, studyConfig]);
 
   const studyId = useStudyId();
   const studyHref = useHref(`/${studyId}`);
 
   const titleRef = useRef<HTMLHeadingElement | null>(null);
   const [isTruncated, setIsTruncated] = useState(false);
+  const lastProgressRef = useRef<number>(0);
 
-  const isRecording = useStoreSelector((store) => store.isRecording);
+  const {
+    isScreenRecording,
+    isAudioRecording,
+    setIsMuted,
+    isMuted,
+    clickToRecord,
+    isSpeakingWhileMuted,
+    showMutedWarning,
+    screenRecordingError,
+    audioRecordingError,
+    currentComponentHasAudioRecording,
+    audioStatus,
+  } = useRecordingContext();
+  const {
+    isBrowserAllowed,
+    isDeviceAllowed,
+    isInputAllowed,
+    isDisplayAllowed,
+  } = useDeviceRules(studyConfig.studyRules);
+  const hasUnmetDeviceRequirement = developmentModeEnabled
+    && (!isBrowserAllowed || !isDeviceAllowed || !isInputAllowed || !isDisplayAllowed);
+  const showDefaultFirebaseWarning = shouldWarnForDefaultFirebaseConfig();
+  const showDefaultSupabaseWarning = shouldWarnForDefaultSupabaseConfig();
+  const isScreenRecordingPermission = currentComponent === '$screen-recording.components.screenRecordingPermission';
+  const showAudioStatus = currentComponentHasAudioRecording
+    || isAudioRecording
+    || (isScreenRecordingPermission && audioStatus !== 'idle');
+  const showRecordingStatus = showAudioStatus || isScreenRecording || !!screenRecordingError;
+  const isAudioActivelyRecording = audioStatus === 'recording' && !isMuted;
+  let recordingLabel = '';
+  if (isScreenRecording && isAudioActivelyRecording) {
+    recordingLabel = 'Recording screen and audio';
+  } else if (isScreenRecording) {
+    recordingLabel = 'Recording screen';
+  } else if (isAudioActivelyRecording) {
+    recordingLabel = 'Recording audio';
+  }
+
+  useEffect(() => {
+    if (!(isMuted && isSpeakingWhileMuted)) return undefined;
+
+    const notificationId = showNotification({ title: 'You are muted', message: getMutedInstruction(clickToRecord), color: 'red' });
+
+    return () => {
+      hideNotification(notificationId);
+    };
+  }, [clickToRecord, isMuted, isSpeakingWhileMuted]);
+
+  const { funcIndex } = useParams();
 
   useEffect(() => {
     const element = titleRef.current;
@@ -86,39 +152,120 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
     }
   }, [studyConfig]);
 
+  // Update progress data in Firebase when progress changes
+  useEffect(() => {
+    if (studyConfig && storageEngine && dataCollectionEnabled) {
+      const progressData = calculateProgressData(
+        answers,
+        flatSequence,
+        studyConfig,
+        currentStep,
+        funcIndex,
+      );
+
+      // Calculate progress percentage for comparison
+      const currentProgressPercent = progressData.total > 0 ? (progressData.answered.length / progressData.total) * 100 : 0;
+
+      // Only update if progress has changed, is greater than 0, and we have a valid progress value
+      if (currentProgressPercent !== lastProgressRef.current && currentProgressPercent > 0 && !Number.isNaN(currentProgressPercent)) {
+        lastProgressRef.current = currentProgressPercent;
+        storageEngine.updateProgressData(progressData).catch((error: unknown) => {
+          console.warn('Failed to update progress data:', error);
+        });
+      }
+    }
+  }, [answers, flatSequence, studyConfig, currentStep, storageEngine, dataCollectionEnabled, funcIndex]);
+
+  // Check if we have issues connecting to the database, if so show alert modal
+  const { setAlertModal } = useStoreActions();
+  const [firstMount, setFirstMount] = useState(true);
+
+  useEffect(() => {
+    if (!storageEngineFailedToConnect || !firstMount) {
+      return undefined;
+    }
+
+    // Wait for 5 seconds before showing the storage connection error
+    const timeoutId = window.setTimeout(() => {
+      storeDispatch(setAlertModal({
+        show: true,
+        message: 'You may be behind a firewall blocking access, or the server collecting data may be down. Study data will not be saved. If you\'re taking the study you will not be compensated for your efforts.',
+        title: 'Failed to connect to the storage engine',
+      }));
+      setFirstMount(false);
+    }, 5000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [firstMount, setAlertModal, storageEngineFailedToConnect, storeDispatch]);
+
   return (
-    <AppShell.Header p="md">
+    <AppShell.Header className="header" p="md">
       <Grid mt={-7} align="center">
         <Grid.Col span={4}>
           <Flex align="center">
-            <Image w={40} src={`${PREFIX}${logoPath}`} alt="Study Logo" />
+            <Image w={40} src={`${PREFIX}${logoPath}`} alt="Study Logo" className="logoImage" />
             <Space w="md" />
-            <Title
-              ref={titleRef}
-              order={4}
-              style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
-              title={isTruncated ? studyConfig?.studyMetadata.title : undefined}
-            >
-              {studyConfig?.studyMetadata.title}
-            </Title>
+            {showTitle ? (
+              <Title
+                ref={titleRef}
+                order={4}
+                style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                title={isTruncated ? studyConfig?.studyMetadata.title : undefined}
+                className="studyTitle"
+              >
+                {studyConfig?.studyMetadata.title}
+              </Title>
+            ) : null}
           </Flex>
         </Grid.Col>
 
         <Grid.Col span={4}>
           {withProgressBar && (
-            <Progress radius="md" size="lg" value={progressPercent} />
+            <Progress radius="md" size="lg" value={progressPercent} className="progressBar" />
           )}
         </Grid.Col>
 
         <Grid.Col span={4}>
           <Group wrap="nowrap" justify="right">
-            {isRecording ? (
+            {showRecordingStatus && (
+
               <Group ml="xl" gap={20} wrap="nowrap">
-                <Text color="red">Recording audio</Text>
-                <RecordingAudioWaveform />
+                {recordingLabel && <Text c="red" size="sm">{recordingLabel}</Text>}
+                {screenRecordingError && <Text c="red" size="sm" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{screenRecordingError}</Text>}
+                {audioStatus === 'denied' && audioRecordingError && <Text c="red" size="sm" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{audioRecordingError}</Text>}
+                {audioStatus === 'recording' && !isMuted && <RecordingAudioWaveform />}
+                {clickToRecord && showAudioStatus && (audioStatus === 'denied' ? (
+                  <ActionIcon color="red" variant="light" size="md" aria-label="Microphone error" data-disabled aria-disabled tabIndex={-1}>
+                    <IconMicrophoneOff style={{ width: '70%', height: '70%' }} stroke={1.5} />
+                  </ActionIcon>
+                ) : audioStatus === 'pending' ? (
+                  <Tooltip label="Microphone not enabled yet">
+                    <ActionIcon color="gray" variant="light" size="md" aria-label="Microphone pending" data-disabled aria-disabled tabIndex={-1}>
+                      <IconMicrophoneOff style={{ width: '70%', height: '70%' }} stroke={1.5} />
+                    </ActionIcon>
+                  </Tooltip>
+                ) : (
+                  <Tooltip label={showMutedWarning ? 'You are still muted. Press and hold to unmute.' : 'Press and hold to unmute.'} opened={showMutedWarning || undefined}>
+                    <ActionIcon className={showMutedWarning ? classes.micBlink : undefined} color="blue" variant="light" size="md" aria-label="Click and hold to unmute microphone" onMouseDown={() => setIsMuted(false)} onMouseUp={() => setIsMuted(true)} onTouchStart={() => setIsMuted(false)} onTouchEnd={() => setIsMuted(true)}>
+                      {isMuted ? <IconMicrophoneOff style={{ width: '70%', height: '70%' }} stroke={1.5} /> : <IconMicrophone style={{ width: '70%', height: '70%' }} stroke={1.5} />}
+                    </ActionIcon>
+                  </Tooltip>
+                ))}
               </Group>
-            ) : null}
-            {!dataCollectionEnabled && <Tooltip multiline withArrow arrowSize={6} w={300} label="This is a demo version of the study, we’re not collecting any data."><Badge size="lg" color="orange">Demo Mode</Badge></Tooltip>}
+            )}
+            {storageEngineFailedToConnect && <Tooltip multiline withArrow arrowSize={6} w={300} label="Failed to connect to the storage engine. Study data will not be saved. Check your connection or restart the app."><Badge size="lg" color="red">Storage Disconnected</Badge></Tooltip>}
+            {showDefaultFirebaseWarning && (
+              <Tooltip multiline withArrow arrowSize={6} w={360} label={DEFAULT_FIREBASE_WARNING_MESSAGE}>
+                <Badge size="lg" color="orange">Default Firebase</Badge>
+              </Tooltip>
+            )}
+            {showDefaultSupabaseWarning && (
+              <Tooltip multiline withArrow arrowSize={6} w={360} label={DEFAULT_SUPABASE_WARNING_MESSAGE}>
+                <Badge size="lg" color="orange">Default Supabase</Badge>
+              </Tooltip>
+            )}
+            {!storageEngineFailedToConnect && !dataCollectionEnabled && <Tooltip multiline withArrow arrowSize={6} w={300} label="This is a demo version of the study, we’re not collecting any data."><Badge size="lg" color="orange">Demo Mode</Badge></Tooltip>}
+            {hasUnmetDeviceRequirement && developmentModeEnabled && <Tooltip multiline withArrow arrowSize={6} w={420} label="Your device does not meet this study's requirements. You are still able to explore this study while in debug mode."><Badge size="lg" color="red">Device Requirement Not Met</Badge></Tooltip>}
             {studyConfig?.uiConfig.helpTextPath !== undefined && (
               <Button
                 variant="outline"
@@ -141,7 +288,7 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
                 </ActionIcon>
               </Menu.Target>
               <Menu.Dropdown>
-                {studyNavigatorEnabled && (
+                {developmentModeEnabled && (
                   <Menu.Item
                     leftSection={<IconSchema size={14} />}
                     onClick={() => storeDispatch(toggleStudyBrowser())}
@@ -152,23 +299,23 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
                 <Menu.Item
                   component="a"
                   href={
-                      studyConfig !== null
-                        ? `mailto:${studyConfig.uiConfig.contactEmail}`
-                        : undefined
-                    }
+                    studyConfig !== null
+                      ? `mailto:${studyConfig.uiConfig.contactEmail}`
+                      : undefined
+                  }
                   leftSection={<IconMail size={14} />}
                 >
                   Contact
                 </Menu.Item>
-                {studyNavigatorEnabled && (
+                {developmentModeEnabled && (
                   <Menu.Item
                     leftSection={<IconUserPlus size={14} />}
-                    onClick={() => getNewParticipant(storageEngine, studyConfig, metadata, studyHref)}
+                    onClick={() => getNewParticipant(storageEngine, studyHref)}
                   >
                     Next Participant
                   </Menu.Item>
                 )}
-                {studyNavigatorEnabled && (
+                {developmentModeEnabled && (
                   <Menu.Item
                     leftSection={<IconChartHistogram size={14} />}
                     component="a"

@@ -1,7 +1,8 @@
 /* eslint-disable no-await-in-loop */
 import { test, expect } from '@playwright/test';
+import { nextClick, waitForStudyEndMessage } from './utils';
 
-test('test', async ({ page }) => {
+test('Test example cleveland', async ({ page }) => {
   await page.goto('/');
 
   await page.getByRole('tab', { name: 'Example Studies' }).click();
@@ -11,12 +12,10 @@ test('test', async ({ page }) => {
     .getByText('Go to Study')
     .click();
 
-  // Check that the page contains the introduction text
-  const introText = await page.getByText('Welcome to our study. This is a more complex example to show how to embed React.js');
-  await expect(introText).toBeVisible({ timeout: 5000 });
+  await expect(page.getByRole('heading', { name: 'Introduction' })).toBeVisible();
 
   // Click on the next button
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await nextClick(page);
 
   // Check the page contains consent form
   const consent = await page.getByRole('heading', { name: 'Consent' });
@@ -35,7 +34,7 @@ test('test', async ({ page }) => {
   await expect(trainingImg).toBeVisible();
 
   // Click on the next button
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await nextClick(page);
 
   // Check for each practice question
   const questionArray = new Array(4).fill(null).map((val, idx) => idx);
@@ -62,7 +61,7 @@ test('test', async ({ page }) => {
     await expect(correctAnswer).toBeVisible();
 
     // Click on the next button
-    await page.getByRole('button', { name: 'Next', exact: true }).click();
+    await nextClick(page);
     await page.waitForTimeout(100);
   }
 
@@ -87,7 +86,7 @@ test('test', async ({ page }) => {
     await page.getByPlaceholder('0-100').fill('66');
 
     // Click on the next button
-    await page.getByRole('button', { name: 'Next', exact: true }).click();
+    await nextClick(page);
     await page.waitForTimeout(200);
   }
 
@@ -97,9 +96,8 @@ test('test', async ({ page }) => {
   await page.getByPlaceholder('Enter your age here, range from 0 - 100').fill('25');
   await page.getByLabel('5', { exact: true }).check();
   await page.getByPlaceholder('Enter your comments here').fill('Test Test');
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await nextClick(page);
 
   // Check that the end of study text renders
-  const endText = await page.getByText('Please wait while your answers are uploaded.');
-  await expect(endText).toBeVisible();
+  await waitForStudyEndMessage(page);
 });

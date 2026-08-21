@@ -1,0 +1,298 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.1/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Factors Demo",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2023-04-14",
+    "description": "A simple demo of using stimuli in an HTML file that renders a D3 visualization. Data is collected via a numeric response field.",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-html/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true,
+    "windowEventDebounceTime": 200
+  },
+  "baseComponents": {
+    "factorComponent": {
+      "type": "react-component",
+      "path": "demo-factors/assets/Factors.tsx",
+      "response": []
+    },
+    "factorKeywordComponent": {
+      "type": "react-component",
+      "path": "demo-factors/assets/Factors.tsx",
+      "parameters": {
+        "atSyntaxLabel": "@data shown as @visType for @task",
+        "bracedSyntaxLabel": "${data}/${visType}/${task}",
+        "literalEmail": "contact@revisit.dev"
+      },
+      "response": []
+    },
+    "nestedFactorKeywordComponent": {
+      "type": "react-component",
+      "path": "demo-factors/assets/Factors.tsx",
+      "parameters": {
+        "nestedAtSyntaxLabel": "@zipBlock includes @data and @visType for @task",
+        "nestedBracedSyntaxLabel": "${zipBlock}/${data}/${visType}/${task}"
+      },
+      "response": []
+    }
+  },
+  "components": {
+    "Ok_googleTutorial": {
+      "type": "markdown",
+      "path": "demo-factors/assets/ok-google-tutorial-@ageGroup.md",
+      "response": []
+    }
+  },
+  "factors": {
+    "data": [
+      "d1",
+      "d2",
+      "d3"
+    ],
+    "visType": [
+      "v1",
+      "v2",
+      "v3"
+    ],
+    "task": [
+      "t1",
+      "t2",
+      "t3"
+    ],
+    "ageGroup": [
+      "young",
+      "old"
+    ],
+    "learningStrategies": [
+      "monologue",
+      "scaffolding",
+      "conceptual"
+    ],
+    "topics": [
+      "sleep",
+      "cholesterol",
+      "alzheimer",
+      "vitamin",
+      "sugar",
+      "flu"
+    ],
+    "crossBlock": {
+      "action": "cross",
+      "factors": [
+        "data",
+        "visType"
+      ]
+    },
+    "nestBlock": {
+      "action": "cross",
+      "factors": [
+        "data",
+        "visType"
+      ]
+    },
+    "zipBlock": {
+      "action": "zip",
+      "factors": [
+        "data",
+        "visType"
+      ]
+    },
+    "concatBlock": {
+      "action": "concat",
+      "factors": [
+        "data",
+        "task"
+      ]
+    },
+    "repeatBlock": {
+      "action": "repeat",
+      "factors": [
+        "task"
+      ],
+      "numRepeats": 2
+    },
+    "sampleBlock": {
+      "action": "sample",
+      "factors": [
+        "topics"
+      ],
+      "numSamples": 2,
+      "samplingStrategy": "withoutReplacement"
+    },
+    "zipThenTaskBlock": {
+      "action": "cross",
+      "factors": [
+        "zipBlock",
+        "task"
+      ]
+    },
+    "crossZipWithTaskBlock": {
+      "action": "cross",
+      "factors": [
+        "zipBlock",
+        "task"
+      ]
+    },
+    "zipZipWithTaskBlock": {
+      "action": "zip",
+      "factors": [
+        "zipBlock",
+        "task"
+      ]
+    },
+    "nestCrossWithTaskBlock": {
+      "action": "cross",
+      "factors": [
+        "crossBlock",
+        "task"
+      ]
+    },
+    "factorKeywordBlock": {
+      "action": "cross",
+      "factors": [
+        "data",
+        "visType",
+        "task"
+      ]
+    },
+    "Ok_googleLearningStrategySlots": [
+      "monologue",
+      "scaffolding",
+      "conceptual",
+      "monologue",
+      "scaffolding",
+      "conceptual"
+    ],
+    "Ok_googleTopicAssignments": {
+      "action": "zip",
+      "factors": [
+        "Ok_googleLearningStrategySlots",
+        "topics"
+      ]
+    },
+    "Ok_google": {
+      "action": "cross",
+      "factors": [
+        "Ok_googleTopicAssignments"
+      ]
+    }
+  },
+  "betweenSubjects": [
+    "ageGroup"
+  ],
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      {
+        "type": "factor",
+        "id": "crossBlockFixed",
+        "factor": "crossBlock",
+        "components": "factorComponent"
+      },
+      {
+        "type": "factor",
+        "id": "nestBlockFixed",
+        "factor": "nestBlock",
+        "components": "factorComponent"
+      },
+      {
+        "type": "factor",
+        "id": "zipBlockLatinSquare",
+        "factor": {
+          "action": "zip",
+          "factors": [
+            "data",
+            "visType"
+          ]
+        },
+        "components": "factorComponent",
+        "order": "latinSquare"
+      },
+      {
+        "type": "factor",
+        "id": "zipThenTaskRandom",
+        "factor": "zipThenTaskBlock",
+        "components": "factorComponent",
+        "order": "random"
+      },
+      {
+        "type": "factor",
+        "id": "concatBlockFixed",
+        "factor": "concatBlock",
+        "components": "factorComponent"
+      },
+      {
+        "type": "factor",
+        "id": "repeatBlockFixed",
+        "factor": "repeatBlock",
+        "components": "factorComponent"
+      },
+      {
+        "type": "factor",
+        "id": "sampleBlockRandom",
+        "factor": "sampleBlock",
+        "components": "factorComponent"
+      },
+      {
+        "type": "factor",
+        "id": "crossZipWithTaskFixed",
+        "factor": "crossZipWithTaskBlock",
+        "components": "factorComponent"
+      },
+      {
+        "type": "factor",
+        "id": "zipZipWithTaskFixed",
+        "factor": "zipZipWithTaskBlock",
+        "components": "factorComponent"
+      },
+      {
+        "type": "factor",
+        "id": "nestCrossWithTaskLatinSquare",
+        "factor": "nestCrossWithTaskBlock",
+        "components": "factorComponent",
+        "order": "latinSquare"
+      },
+      {
+        "type": "factor",
+        "id": "factorKeywordFixed",
+        "factor": "factorKeywordBlock",
+        "components": "factorKeywordComponent"
+      },
+      "Ok_googleTutorial",
+      {
+        "type": "factor",
+        "id": "Ok_googleRandom",
+        "factor": "Ok_google",
+        "components": "factorComponent",
+        "order": "random"
+      },
+      {
+        "type": "factor",
+        "factor": "nestBlock",
+        "components": "factorComponent",
+        "id": "nestBlockFixedReuse",
+        "order": "fixed"
+      },
+      {
+        "type": "factor",
+        "factor": "crossZipWithTaskBlock",
+        "components": "factorComponent",
+        "id": "crossZipWithTaskRandomReuse",
+        "order": "random"
+      }
+    ]
+  }
+}

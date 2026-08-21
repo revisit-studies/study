@@ -7,9 +7,14 @@ on:
 
 jobs:
   release:
-    if: github.event.pull_request.merged
+    if: github.event.pull_request.merged && startsWith(github.event.pull_request.title, 'v')
     runs-on: ubuntu-latest
     steps:
+      - name: Ensure PR title matches vx.x.x
+        run: |
+          [[ "${{ github.event.pull_request.title }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+        shell: bash
+
       - uses: actions/checkout@v3
         with:
           token: ${{ secrets.PAT }}

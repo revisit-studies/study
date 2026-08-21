@@ -1,4 +1,4 @@
-import { ComponentBlock } from '../../parser/types';
+import type { ComponentBlock } from '../../parser/types';
 
 export type TraversedSequence = { component: string | ComponentBlock, depth: number, start: number, width: number, active: boolean, id: string, order: number }
 

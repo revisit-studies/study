@@ -6,64 +6,124 @@
 const fs = require('fs');
 const path = require('path');
 
-const generateMd = (library, libraryConfig, forDocs) => `
-# ${library}
+const LIBRARIES_TO_SKIP = new Set(['test']);
 
-${!forDocs ? `This is an example study of the library \`${library}\`.` : ''}
+const joinMdSections = (sections) => `${sections.filter((section) => section !== undefined).join('\n\n')}\n`;
 
-${libraryConfig.description}
+const generateMd = (library, libraryConfig, forDocs, title = library) => joinMdSections([
+  `# ${title}`,
+  !forDocs ? `This is a demo of the library \`${library}\`.` : undefined,
+  libraryConfig.description,
+  libraryConfig.reference || libraryConfig.doi || libraryConfig.externalLink ? '## Reference' : undefined,
+  libraryConfig.reference
+    ? (forDocs ? `:::note[Reference]\n${libraryConfig.reference}\n:::` : libraryConfig.reference)
+    : undefined,
+  libraryConfig.doi ? `DOI: [${libraryConfig.doi}](https://dx.doi.org/${libraryConfig.doi})` : undefined,
+  libraryConfig.externalLink ? `Link: [${libraryConfig.externalLink}](${libraryConfig.externalLink})` : undefined,
+  '## Available Components',
+  Object.keys(libraryConfig.components).map((component) => `- ${component}`).sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).join('\n') || undefined,
+  '## Available Sequences',
+  Object.keys(libraryConfig.sequences).length > 0
+    ? Object.keys(libraryConfig.sequences).map((sequence) => `- ${sequence}`).sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).join('\n')
+    : 'None',
+  libraryConfig.additionalDescription ? `## Additional Description\n\n${libraryConfig.additionalDescription}` : undefined,
+  forDocs
+    ? `<!-- Importing Links -->
+import StructuredLinks from '@site/src/components/StructuredLinks/StructuredLinks.tsx';
 
-${libraryConfig.reference || libraryConfig.doi || libraryConfig.externalLink ? '## Reference' : ''}
+  <StructuredLinks
+      demoLinks={[
+        {name: "${library} Demo", url: "https://revisit.dev/study/library-${library}"}
+      ]}
+      codeLinks={[
+        {name: "${library} Demo Code", url: "https://github.com/revisit-studies/study/tree/main/public/library-${library}"},
+        {name: "${library} Library Code", url: "https://github.com/revisit-studies/study/tree/main/public/libraries/${library}"}
+      ]}
+      ${(libraryConfig.doi || libraryConfig.externalLink)
+    ? `referenceLinks={[
+        ${libraryConfig.doi ? `{name: "DOI", url: "https://dx.doi.org/${libraryConfig.doi}"}` : ''}${libraryConfig.doi && libraryConfig.externalLink ? ',' : ''}
+        ${libraryConfig.externalLink ? `{name: "${library}", url: "${libraryConfig.externalLink}"}` : ''}
+      ]}`
+    : ''}
+  />` : undefined,
+]);
 
-${libraryConfig.reference ? (forDocs ? `:::note[Reference]\n${libraryConfig.reference}\n:::` : `${libraryConfig.reference}`) : ''}
+const getLibraries = (libsPath) => fs.readdirSync(libsPath)
+  .filter((library) => !library.startsWith('.')
+    && !library.endsWith('.DS_Store')
+    && !LIBRARIES_TO_SKIP.has(library));
 
-${libraryConfig.doi ? `DOI: [${libraryConfig.doi}](https://dx.doi.org/${libraryConfig.doi})` : ''}
+// The documentation repository uses the library name as the title; preserve custom titles for existing example studies in the study repository
+const getExistingTitle = (markdownPath) => {
+  if (!fs.existsSync(markdownPath)) {
+    return undefined;
+  }
 
-${libraryConfig.externalLink ? `Link: [${libraryConfig.externalLink}](${libraryConfig.externalLink})` : ''}
+  const markdown = fs.readFileSync(markdownPath, 'utf8');
+  const titleMatch = markdown.match(/^#\s+(.+)\s*$/m);
+  return titleMatch?.[1].trim();
+};
 
-## Available Components
+const generateLibraryDocs = (base) => {
+  const librariesPath = path.join(base, 'public', 'libraries');
+  const docsLibrariesPath = path.join(base, 'docsLibraries');
 
-${Object.keys(libraryConfig.components).map((component) => `- ${component}`).sort((a, b) => a.localeCompare(b)).join('\n')}
+  const libraries = getLibraries(librariesPath);
 
-## Available Sequences
+  if (!fs.existsSync(docsLibrariesPath)) {
+    fs.mkdirSync(docsLibrariesPath);
+  }
 
-${Object.keys(libraryConfig.sequences).length > 0
-    ? Object.keys(libraryConfig.sequences).map((sequence) => `- ${sequence}`).sort((a, b) => a.localeCompare(b)).join('\n')
-    : 'None'}
-`;
+  libraries.forEach((library) => {
+    const libraryPath = path.join(librariesPath, library, 'config.json');
+    const libraryConfig = JSON.parse(fs.readFileSync(libraryPath, 'utf8'));
 
-const librariesPath = path.join(__dirname, './public/libraries');
-const docsLibrariesPath = path.join(__dirname, './docsLibraries');
+    const docsMd = generateMd(library, libraryConfig, true);
 
-const libraries = fs.readdirSync(librariesPath);
+    // Save to docsLibraries folder
+    const docsLibraryPath = path.join(docsLibrariesPath, `${library}.md`);
+    fs.writeFileSync(docsLibraryPath, docsMd);
+    // eslint-disable-next-line no-console
+    console.log(`Documentation saved to ${docsLibraryPath}`);
 
-if (!fs.existsSync(docsLibrariesPath)) {
-  fs.mkdirSync(docsLibrariesPath);
+    // Save to example study assets folder if assets folder exists
+    // Add a prefix to baseMarkdown when saving to example assets
+    const exampleAssetsPath = path.join(base, 'public', `library-${library}`, 'assets');
+    if (fs.existsSync(exampleAssetsPath)) {
+      const exampleDocsPath = path.join(exampleAssetsPath, `${library}.md`);
+      const exampleTitle = getExistingTitle(exampleDocsPath) || library;
+      const exampleMd = generateMd(library, libraryConfig, false, exampleTitle);
+      fs.writeFileSync(exampleDocsPath, exampleMd);
+
+      // eslint-disable-next-line no-console
+      console.log(`Documentation saved to ${exampleDocsPath}`);
+    }
+  });
+
+  // Remove documentation for libraries that are skipped or no longer exist, so a stale
+  // file cannot be copied to the documentation repository
+  const expectedDocs = new Set(libraries.map((library) => `${library}.md`));
+  fs.readdirSync(docsLibrariesPath)
+    .filter((file) => file.endsWith('.md') && !expectedDocs.has(file))
+    .forEach((file) => {
+      const staleDocPath = path.join(docsLibrariesPath, file);
+      fs.rmSync(staleDocPath);
+
+      // eslint-disable-next-line no-console
+      console.log(`Removed stale documentation ${staleDocPath}`);
+    });
+
+  // eslint-disable-next-line no-console
+  console.log('Library documentation generated');
+};
+
+if (require.main === module) {
+  generateLibraryDocs(__dirname);
 }
 
-libraries.forEach((library) => {
-  const libraryPath = path.join(librariesPath, library, 'config.json');
-  const libraryConfig = JSON.parse(fs.readFileSync(libraryPath, 'utf8'));
-
-  const docsMd = generateMd(library, libraryConfig, true);
-  const exampleMd = generateMd(library, libraryConfig, false);
-
-  // Save to docsLibraries folder
-  const docsLibraryPath = path.join(docsLibrariesPath, `${library}.md`);
-  fs.writeFileSync(docsLibraryPath, docsMd);
-  // eslint-disable-next-line no-console
-  console.log(`Documentation saved to ${docsLibraryPath}`);
-
-  // Save to example study assets folder if assets folder exists
-  // Add a prefix to baseMarkdown when saving to example assets
-  const exampleAssetsPath = path.join(__dirname, 'public', `library-${library}`, 'assets');
-  if (fs.existsSync(exampleAssetsPath)) {
-    const exampleDocsPath = path.join(exampleAssetsPath, `${library}.md`);
-    fs.writeFileSync(exampleDocsPath, exampleMd);
-    // eslint-disable-next-line no-console
-    console.log(`Documentation saved to ${exampleDocsPath}`);
-  }
-});
-
-// eslint-disable-next-line no-console
-console.log('Library documentation generated');
+module.exports = {
+  generateMd,
+  getExistingTitle,
+  getLibraries,
+  generateLibraryDocs,
+};
