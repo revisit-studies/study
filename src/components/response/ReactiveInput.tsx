@@ -9,7 +9,7 @@ export function ReactiveInput({
   enumerateQuestions,
 }: {
   response: ReactiveResponse;
-  answer: { value?: string[] };
+  answer: { value?: string[] | string | number | boolean | Record<string, unknown> | null };
   index: number;
   enumerateQuestions: boolean;
 }) {
@@ -26,14 +26,14 @@ export function ReactiveInput({
       description={secondaryText}
       size="md"
     >
-      {answer.value && (
-      <List>
-        {Array.isArray(answer.value)
-          ? (answer.value).map((item) => <List.Item key={item}>{item}</List.Item>)
-          : typeof answer.value === 'object'
-            ? Object.entries(answer.value).map(([key, val]) => <List.Item key={key}>{`${key}: ${typeof val === 'object' ? JSON.stringify(val) : val}`}</List.Item>)
-            : <List.Item>{answer.value}</List.Item>}
-      </List>
+      {answer.value !== undefined && answer.value !== null && answer.value !== '' && (
+        <List>
+          {Array.isArray(answer.value)
+            ? (answer.value).map((item) => <List.Item key={item}>{item}</List.Item>)
+            : typeof answer.value === 'object'
+              ? Object.entries(answer.value).map(([key, val]) => <List.Item key={key}>{`${key}: ${typeof val === 'object' ? JSON.stringify(val) : val}`}</List.Item>)
+              : <List.Item>{String(answer.value)}</List.Item>}
+        </List>
       )}
     </Input.Wrapper>
   );

@@ -423,7 +423,7 @@ export function ThinkAloudFooter({
             <Text ff="monospace" style={{ textAlign: 'right' }} mt="lg" c="dimmed">{timeString}</Text>
 
             <Tooltip label={hasEnded ? 'Restart' : isPlaying ? 'Pause' : 'Play'}>
-              <ActionIcon mt={25} size="lg" variant="light" onClick={() => { setIsPlaying(!isPlaying); }}>
+              <ActionIcon aria-label={hasEnded ? 'Restart' : isPlaying ? 'Pause' : 'Play'} mt={25} size="lg" variant="light" onClick={() => { setIsPlaying(!isPlaying); }}>
                 {hasEnded ? <IconRestore /> : isPlaying ? <IconPlayerPauseFilled /> : <IconPlayerPlayFilled />}
               </ActionIcon>
             </Tooltip>

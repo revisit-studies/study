@@ -42,7 +42,7 @@ vi.mock('react-router', () => ({
   useNavigate: () => vi.fn(),
   useParams: () => ({ studyId: 'test-study' }),
   useSearchParams: () => {
-    const params = new URLSearchParams();
+    const params = new URLSearchParams('participantId=p1');
     const setParams = vi.fn((updater: (p: URLSearchParams) => void) => {
       if (typeof updater === 'function') updater(params);
     });
@@ -387,14 +387,25 @@ const answersWithStimulus: Record<string, StoredAnswer & { provenanceGraph: Stor
 };
 
 describe('AudioProvenanceVis', () => {
-  test('renders wavesurfer element', async () => {
-    const { getByTestId } = await act(async () => render(<AudioProvenanceVis {...defaultProps} />));
+  test('does not load a stale task that is absent from the participant answers', async () => {
+    const { queryByTestId } = await act(async () => render(
+      <AudioProvenanceVis {...defaultProps} />,
+    ));
+    expect(queryByTestId('loading-overlay')).toBeNull();
+    expect(queryByTestId('wavesurfer')).toBeNull();
+  });
+
+  test('shows the loading overlay and renders wavesurfer for a stored task', async () => {
+    const { getByTestId } = await act(async () => render(
+      <AudioProvenanceVis {...defaultProps} answers={answersWithTask} />,
+    ));
+    expect(getByTestId('loading-overlay')).toBeDefined();
     expect(getByTestId('wavesurfer')).toBeDefined();
   });
 
   test('renders in provenanceVis context', async () => {
     const { getByTestId } = await act(async () => render(
-      <AudioProvenanceVis {...defaultProps} context="provenanceVis" />,
+      <AudioProvenanceVis {...defaultProps} context="provenanceVis" answers={answersWithTask} />,
     ));
     expect(getByTestId('wavesurfer')).toBeDefined();
   });

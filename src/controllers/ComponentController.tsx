@@ -21,7 +21,7 @@ import { IndividualComponent } from '../parser/types';
 import { useDisableBrowserBack } from '../utils/useDisableBrowserBack';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import {
-  useStoreActions, useStoreDispatch, useStoreSelector,
+  useFlatSequence, useStoreActions, useStoreDispatch, useStoreSelector,
 } from '../store/store';
 import { StudyEnd } from '../components/StudyEnd';
 import { TrainingFailed } from '../components/TrainingFailed';
@@ -37,6 +37,7 @@ import { ScreenRecordingReplay } from '../components/screenRecording/ScreenRecor
 import { decryptIndex, encryptIndex } from '../utils/encryptDecryptIndex';
 import { useRecordingConfig } from '../store/hooks/useRecordingConfig';
 import { getComponentContainerStyle } from '../utils/componentStyle';
+import { compileTemplate } from '../utils/handlebars';
 import { generateStimulusErrorMessage } from '../components/response/stimulusErrors';
 import { getStimulusProvenanceState, getStimulusShowErrorsFromState } from '../components/response/stimulusProvenance';
 
@@ -53,6 +54,7 @@ export function ComponentController() {
   const { storageEngine } = useStorageEngine();
 
   const answers = useStoreSelector((store) => store.answers);
+  const flatSequence = useFlatSequence();
   const analysisCanPlayScreenRecording = useStoreSelector((state) => state.analysisCanPlayScreenRecording);
 
   const { setAnalysisCanPlayScreenRecording } = useStoreActions();
@@ -239,6 +241,16 @@ export function ComponentController() {
     }
   }, [answers, currentComponent, currentStep, funcIndex, isAnalysis, modes.developmentModeEnabled, navigate, status, studyId]);
 
+  const templateData = useMemo(
+    () => ({ answers, flatSequence, currentStep }),
+    [answers, flatSequence, currentStep],
+  );
+
+  const instruction = useMemo(
+    () => compileTemplate(currentConfig?.instruction || '', currentConfig?.parameters ?? {}, { data: templateData }),
+    [currentConfig?.instruction, currentConfig?.parameters, templateData],
+  );
+
   // We're not using hooks below here, so we can return early if we're at the end of the study.
   // This avoids issues with the component config being undefined for the end of the study.
   if (currentComponent === 'end') {
@@ -280,7 +292,6 @@ export function ComponentController() {
       </Center>
     );
   }
-  const instruction = currentConfig?.instruction || '';
   const instructionLocation = currentConfig.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar';
   const instructionInSideBar = instructionLocation === 'sidebar';
 

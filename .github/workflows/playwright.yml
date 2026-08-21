@@ -33,9 +33,9 @@ jobs:
             cache_dir: /Users/runner/Library/Caches/ms-playwright
             workers: 2
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: lts/*
           cache: "yarn"
@@ -49,7 +49,7 @@ jobs:
         run: yarn --silent playwright --version > .playwright-version
 
       - name: ⚡️ Cache playwright binaries
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         id: playwright-cache
         with:
           path: ${{ matrix.cache_dir }}

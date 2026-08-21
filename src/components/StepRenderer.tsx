@@ -209,7 +209,12 @@ export function StepRenderer() {
             <AlertModal />
             <ConfigVersionWarningModal />
             <Flex direction="row" gap="xs" style={{ width: '100%', maxWidth: rowMaxWidth }}>
-              <AppNavBar width={sidebarWidth} top={showTitleBar ? 70 : 0} sidebarOpen={sidebarOpen} />
+              <AppNavBar
+                width={sidebarWidth}
+                top={showTitleBar ? 70 : 0}
+                bottom={isAnalysis ? 125 + (hasAudio ? 55 : 0) : 0}
+                sidebarOpen={sidebarOpen}
+              />
               {/* 10px is the gap between the sidebar and the main content */}
               <AppShell.Main
                 className="main"

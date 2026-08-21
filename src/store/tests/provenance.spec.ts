@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest';
-import { StoredAnswer } from './types';
+import { StoredAnswer } from '../types';
 import {
   getLegacyStoredAnswerProvenance,
   splitProvenanceFromAnswers,
-} from './provenance';
+} from '../provenance';
 
 function makeStoredAnswer(identifier: string): StoredAnswer {
   return {

@@ -1,5 +1,5 @@
 import {
-  useCallback, useEffect, useMemo, useRef,
+  useCallback, useContext, useEffect, useMemo, useRef, useState,
 } from 'react';
 import { useDispatch } from 'react-redux';
 import { useCurrentComponent, useCurrentIdentifier } from '../routes/utils';
@@ -7,6 +7,8 @@ import { useStoreDispatch, useStoreActions, useStoreSelector } from '../store/st
 import { ParticipantData, WebsiteComponent } from '../parser/types';
 import { PREFIX as BASE_PREFIX } from '../utils/Prefix';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
+import { ReplayContext } from '../store/hooks/useReplay';
+import { compileTemplate } from '../utils/handlebars';
 
 const PREFIX = '@REVISIT_COMMS';
 
@@ -18,7 +20,23 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   const dispatch = useDispatch();
   const identifier = useCurrentIdentifier();
   const isAnalysis = useIsAnalysis();
+  const replay = useContext(ReplayContext);
+  const initialReplayTime = useRef(replay?.seekTime ?? 0);
+  const [hasReplayStarted, setHasReplayStarted] = useState(false);
   const stimulusValidation = useStoreSelector((state) => state.trialValidation[identifier]?.stimulus);
+
+  useEffect(() => {
+    if (replay && (replay.isPlaying || replay.seekTime !== initialReplayTime.current)) {
+      setHasReplayStarted(true);
+    }
+  }, [replay]);
+
+  const shouldSendProvenance = !isAnalysis || !replay || hasReplayStarted;
+
+  const templatedPath = useMemo(
+    () => compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true }),
+    [currentConfig.path, currentConfig.parameters],
+  );
 
   const ref = useRef<HTMLIFrameElement>(null);
   const stimulusValidationRef = useRef(stimulusValidation);
@@ -51,10 +69,10 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   );
 
   useEffect(() => {
-    if (provState) {
+    if (provState && shouldSendProvenance) {
       sendMessage('PROVENANCE', provState);
     }
-  }, [provState, sendMessage]);
+  }, [provState, sendMessage, shouldSendProvenance]);
 
   useEffect(() => {
     if (answers) {
@@ -71,7 +89,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
             if (currentConfig.parameters) {
               sendMessage('STUDY_DATA', currentConfig.parameters);
             }
-            if (provState) {
+            if (provState && shouldSendProvenance) {
               sendMessage('PROVENANCE', provState);
             }
             if (answers) {
@@ -112,16 +130,23 @@ export function IframeController({ currentConfig, provState, answers }: { curren
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, [storeDispatch, dispatch, iframeId, currentConfig, sendMessage, setReactiveAnswers, updateProvenance, updateResponseBlockValidation, identifier, isAnalysis, provState, answers]);
+  }, [storeDispatch, dispatch, iframeId, currentConfig, sendMessage, setReactiveAnswers, updateProvenance, updateResponseBlockValidation, identifier, isAnalysis, provState, answers, shouldSendProvenance]);
 
   return (
     <iframe
       ref={ref}
-      style={{ width: '100%', flexGrow: 1, border: 0 }}
+      inert={(isAnalysis ? '' : undefined) as never}
+      aria-disabled={isAnalysis}
+      style={{
+        width: '100%',
+        flexGrow: 1,
+        border: 0,
+        pointerEvents: isAnalysis ? 'none' : undefined,
+      }}
       src={
-        currentConfig.path.startsWith('http')
-          ? currentConfig.path
-          : `${BASE_PREFIX}${currentConfig.path}?trialid=${currentComponent}&id=${iframeId}`
+        templatedPath.startsWith('http')
+          ? templatedPath
+          : `${BASE_PREFIX}${templatedPath}?trialid=${currentComponent}&id=${iframeId}`
       }
     />
   );

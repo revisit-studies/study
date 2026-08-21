@@ -7,11 +7,13 @@ import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { AppHeader } from '../AppHeader';
+import { getNewParticipant } from '../../../utils/nextParticipant';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
 let mockStorageEngineFailedToConnect = false;
 let mockedCurrentComponent = 'componentA';
+let mockIsAnalysis = false;
 
 let mockedRecordingContext = {
   isScreenRecording: false,
@@ -66,7 +68,11 @@ vi.mock('@mantine/core', () => ({
     {
       Target: ({ children }: { children: ReactNode }) => <div>{children}</div>,
       Dropdown: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-      Item: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+      Item: ({
+        children, disabled, onClick,
+      }: { children: ReactNode; disabled?: boolean; onClick?: () => void }) => (
+        <button type="button" disabled={disabled} onClick={onClick}>{children}</button>
+      ),
       Divider: () => <hr />,
     },
   ),
@@ -144,6 +150,10 @@ vi.mock('../../../store/hooks/useRecording', () => ({
   useRecordingContext: () => mockedRecordingContext,
 }));
 
+vi.mock('../../../store/hooks/useIsAnalysis', () => ({
+  useIsAnalysis: () => mockIsAnalysis,
+}));
+
 vi.mock('../../../utils/useDeviceRules', () => ({
   useDeviceRules: () => ({
     isBrowserAllowed: true,
@@ -195,6 +205,7 @@ describe('AppHeader', () => {
     vi.unstubAllEnvs();
     vi.unstubAllGlobals();
     mockStorageEngineFailedToConnect = false;
+    mockIsAnalysis = false;
     mockedCurrentComponent = 'componentA';
     mockedRecordingContext = {
       isScreenRecording: false,
@@ -227,6 +238,18 @@ describe('AppHeader', () => {
     expect(html).toContain('Study Browser');
     expect(html).toContain('Analyze');
     expect(html).toContain('Next Participant');
+  });
+
+  test('disables Next Participant in analysis replay mode', () => {
+    mockIsAnalysis = true;
+    const { getByRole } = render(
+      <AppHeader developmentModeEnabled dataCollectionEnabled />,
+    );
+
+    const nextParticipant = getByRole('button', { name: 'Next Participant' });
+    expect((nextParticipant as HTMLButtonElement).disabled).toBe(true);
+    nextParticipant.click();
+    expect(vi.mocked(getNewParticipant)).not.toHaveBeenCalled();
   });
 
   test('renders header content when data collection is disabled', () => {

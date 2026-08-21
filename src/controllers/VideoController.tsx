@@ -8,6 +8,7 @@ import { VideoComponent } from '../parser/types';
 import { PREFIX } from '../utils/Prefix';
 import { getStaticAssetByPath } from '../utils/getStaticAsset';
 import { ResourceNotFound } from '../ResourceNotFound';
+import { compileTemplate } from '../utils/handlebars';
 import 'plyr-react/plyr.css';
 import { useStoreActions, useStoreDispatch } from '../store/store';
 import { useCurrentComponent, useCurrentStep } from '../routes/utils';
@@ -95,12 +96,17 @@ const CustomPlyrInstance = forwardRef<APITypes, PlyrProps & { endedCallback:() =
   });
 
 export function VideoController({ currentConfig }: { currentConfig: VideoComponent; }) {
+  const templatedPath = useMemo(
+    () => compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true }),
+    [currentConfig.path, currentConfig.parameters],
+  );
+
   const url = useMemo(() => {
-    if (currentConfig.path.startsWith('http')) {
-      return currentConfig.path;
+    if (templatedPath.startsWith('http')) {
+      return templatedPath;
     }
-    return `${PREFIX}${currentConfig.path}`;
-  }, [currentConfig.path]);
+    return `${PREFIX}${templatedPath}`;
+  }, [templatedPath]);
   const provider = useMemo(() => getVideoProvider(url), [url]);
   const validExternalUrl = useMemo(() => {
     if (provider === 'youtube') {
@@ -201,7 +207,7 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
     const identifier = `${currentComponent}_${currentStep}`;
 
     if (!assetFound) {
-      console.error(`Video asset at "${currentConfig.path}" could not be loaded. Clearing stimulus validation so the participant is not stuck.`);
+      console.error(`Video asset at "${templatedPath}" could not be loaded. Clearing stimulus validation so the participant is not stuck.`);
       storeDispatch(
         updateResponseBlockValidation({
           location: 'stimulus',
@@ -225,7 +231,7 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
         }),
       );
     }
-  }, [currentComponent, currentConfig.forceCompletion, currentConfig.path, currentStep, storeDispatch, updateResponseBlockValidation, loading, assetFound, isAnalysis]);
+  }, [currentComponent, currentConfig.forceCompletion, templatedPath, currentStep, storeDispatch, updateResponseBlockValidation, loading, assetFound, isAnalysis]);
 
   // Set the validation to valid if forceCompletion is true and the video is played
   const endedCallback = useCallback(() => {
@@ -258,5 +264,5 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
     )
     : loading
       ? <LoadingOverlay />
-      : <ResourceNotFound path={currentConfig.path} />;
+      : <ResourceNotFound path={templatedPath} />;
 }

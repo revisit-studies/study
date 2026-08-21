@@ -1223,6 +1223,13 @@ describe('generateInitFields additional branches', () => {
     expect(generateInitFields([response], {})).toMatchObject({ q1: '75' });
   });
 
+  test('initializes slider with a startingValue of 0', () => {
+    const response: Response = {
+      id: 'q1', prompt: '', type: 'slider', options: [], startingValue: 0,
+    };
+    expect(generateInitFields([response], {})).toMatchObject({ q1: '0' });
+  });
+
   test('reads paramCapture value from window.location.search', () => {
     const response: Response = {
       id: 'q1', prompt: '', type: 'shortText', paramCapture: 'color',
