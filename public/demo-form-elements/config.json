@@ -150,6 +150,14 @@
           "maxSelections": 3
         },
         {
+          "id": "q-country-dropdown",
+          "prompt": "Country dropdown example",
+          "secondaryText": "Country names are displayed with emoji flags, and ISO alpha-2 codes are stored.",
+          "type": "dropdown",
+          "placeholder": "Select a country",
+          "options": "countries"
+        },
+        {
           "id": "q-checkbox",
           "prompt": "Checkbox example, but this time with a long title that makes a ton of sense and is really cool",
           "secondaryText": "Checkboxes for multi-selection",

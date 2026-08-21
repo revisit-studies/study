@@ -939,7 +939,7 @@
     },
     "DropdownResponse": {
       "additionalProperties": false,
-      "description": "The DropdownResponse interface is used to define the properties of a dropdown response. DropdownResponses render as a select input with user specified options. ```json {   \"id\": \"q-color\",   \"prompt\": \"What is your favorite color?\",   \"location\": \"aboveStimulus\",   \"type\": \"dropdown\",   \"default\": \"Blue\",   \"placeholder\": \"Please choose your favorite color\",   \"options\": [\"Red\", \"Blue\"] } ```\n\nHere's an example of a multiselect dropdown with minimum and maximum selections:\n\n```json {   \"id\": \"q-multiselect-dropdown\",   \"prompt\": \"Select the fruits you like.\",   \"location\": \"aboveStimulus\",   \"type\": \"dropdown\",   \"default\": [\"Banana\", \"Orange\"],   \"placeholder\": \"Select your favorite fruits\",   \"options\": [\"Apple\", \"Banana\", \"Cherry\", \"Grape\", \"Orange\", \"Strawberry\", \"Watermelon\", \"Pineapple\"],   \"minSelections\": 2,   \"maxSelections\": 4 } ```",
+      "description": "The DropdownResponse interface is used to define the properties of a dropdown response. DropdownResponses render as a select input with user specified options. ```json {   \"id\": \"q-color\",   \"prompt\": \"What is your favorite color?\",   \"location\": \"aboveStimulus\",   \"type\": \"dropdown\",   \"default\": \"Blue\",   \"placeholder\": \"Please choose your favorite color\",   \"options\": [\"Red\", \"Blue\"] } ```\n\nHere's an example of a multiselect dropdown with minimum and maximum selections:\n\n```json {   \"id\": \"q-multiselect-dropdown\",   \"prompt\": \"Select the fruits you like.\",   \"location\": \"aboveStimulus\",   \"type\": \"dropdown\",   \"default\": [\"Banana\", \"Orange\"],   \"placeholder\": \"Select your favorite fruits\",   \"options\": [\"Apple\", \"Banana\", \"Cherry\", \"Grape\", \"Orange\", \"Strawberry\", \"Watermelon\", \"Pineapple\"],   \"minSelections\": 2,   \"maxSelections\": 4 } ```\n\nA dropdown can alternatively use a predefined option set: ```json {   \"id\": \"q-country\",   \"prompt\": \"Select your country.\",   \"type\": \"dropdown\",   \"options\": \"countries\" } ```",
       "properties": {
         "default": {
           "anyOf": [
@@ -983,23 +983,26 @@
           "description": "The minimum number of selections that are required. This will make the dropdown a multiselect dropdown.",
           "type": "number"
         },
-        "optionPreset": {
-          "$ref": "#/definitions/DropdownOptionPreset",
-          "description": "A predefined option set to use for the dropdown."
-        },
         "options": {
-          "description": "The options that are displayed in the dropdown.",
-          "items": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/StringOption"
+          "anyOf": [
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/StringOption"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
-              {
-                "type": "string"
-              }
-            ]
-          },
-          "type": "array"
+              "type": "array"
+            },
+            {
+              "$ref": "#/definitions/DropdownOptionPreset"
+            }
+          ],
+          "description": "The options that are displayed in the dropdown, or a predefined option set."
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",

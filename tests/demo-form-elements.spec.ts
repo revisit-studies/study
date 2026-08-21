@@ -97,6 +97,10 @@ test('Test questionnaire component with responses and randomizing questions and 
   await expect(minDropdownSelectionsText).toBeVisible();
   await page.getByRole('option', { name: 'Scatter', exact: true }).click();
 
+  // Country dropdown
+  await page.getByPlaceholder('Select a country').fill('United Sta');
+  await page.getByRole('option', { name: /United States/ }).click();
+
   // Vertical Checkbox
   await page.getByRole('checkbox', { name: 'Option 2' }).nth(0).click();
   const minSelectionsText = await page.getByText('Please select at least 2 options');

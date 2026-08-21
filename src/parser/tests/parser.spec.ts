@@ -113,6 +113,19 @@ describe('Text response validation config parsing', () => {
     expect(result.errors).toEqual([]);
   });
 
+  test('accepts a country dropdown preset as its options', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type: 'dropdown',
+      options: 'countries',
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toEqual([]);
+  });
+
   test.each([0, 1])('rejects a malformed regular expression for response %s', async (responseIndex) => {
     const studyConfig = makeStudyConfig('matchesRegex');
     studyConfig.components.question1.response[responseIndex].textValidation[0].value = '[';

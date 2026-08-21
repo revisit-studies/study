@@ -29,6 +29,7 @@ import { useCurrentStep } from '../../routes/utils';
 import { TextOnlyInput } from './TextOnlyInput';
 import { useFetchStylesheet } from '../../utils/fetchStylesheet';
 import { parseStringOptionValue, parseStringOptions } from '../../utils/stringOptions';
+import { getDropdownOptions } from '../../utils/dropdownOptions';
 import {
   getDefaultFieldValue,
 } from './utils';
@@ -170,7 +171,11 @@ export function ResponseSwitcher({
     [`${response.id}-other`]: otherValue.value,
   }), [response.id, ans.value, dontKnowChecked, otherValue.value]);
   const errorOptions = useMemo(() => {
-    if (response.type === 'radio' || response.type === 'checkbox' || response.type === 'buttons' || response.type === 'dropdown') {
+    if (response.type === 'dropdown') {
+      return getDropdownOptions(response);
+    }
+
+    if (response.type === 'radio' || response.type === 'checkbox' || response.type === 'buttons') {
       return parseStringOptions(response.options);
     }
 

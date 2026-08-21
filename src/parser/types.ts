@@ -789,6 +789,16 @@ export type DropdownOptionPreset = 'countries';
  *   "maxSelections": 4
  * }
  * ```
+ *
+ * A dropdown can alternatively use a predefined option set:
+ * ```json
+ * {
+ *   "id": "q-country",
+ *   "prompt": "Select your country.",
+ *   "type": "dropdown",
+ *   "options": "countries"
+ * }
+ * ```
  */
 export interface DropdownResponse extends BaseResponse {
   type: 'dropdown';
@@ -796,10 +806,8 @@ export interface DropdownResponse extends BaseResponse {
   placeholder?: string;
   /** The default value of the response. Use a string for single-select dropdowns and a string array for multiselect dropdowns. */
   default?: string | string[];
-  /** The options that are displayed in the dropdown. */
-  options: (StringOption | string)[];
-  /** A predefined option set to use for the dropdown. */
-  optionPreset?: DropdownOptionPreset;
+  /** The options that are displayed in the dropdown, or a predefined option set. */
+  options: (StringOption | string)[] | DropdownOptionPreset;
   /** The minimum number of selections that are required. This will make the dropdown a multiselect dropdown. */
   minSelections?: number;
   /** The maximum number of selections that are required. This will make the dropdown a multiselect dropdown. */
