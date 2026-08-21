@@ -7,11 +7,10 @@ type BuiltInValidation = {
 };
 
 const emailValidation = isEmail();
-// RFC 5322 email regex pattern for the local part and domain labels
-// Email local part takes any letter or digit, and special characters !#$%&'*+/=?^_`{|}~-. (dot cannot be first or last character, and cannot appear consecutively)
+// Email local part can contain letters, digits, and special characters, but cannot start or end with a dot, and cannot have consecutive dots.
 const EMAIL_LOCAL_PART_PATTERN = /^[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*$/;
-// Email domain part takes any letter or digit, and hyphen (cannot be first or last character, and cannot appear consecutively)
-const EMAIL_DOMAIN_LABEL_PATTERN = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$/;
+// Domain part consists of labels separated by dots, where each label can contain letters, digits, and hyphens, but cannot start or end with a hyphen. The top-level domain must be at least two characters long.
+const DOMAIN_LABEL_PATTERN = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$/;
 
 function isEmailAddress(value: string) {
   if (emailValidation(value) !== null) {
@@ -32,17 +31,40 @@ function isEmailAddress(value: string) {
   return EMAIL_LOCAL_PART_PATTERN.test(localPart)
     && domainLabels.length >= 2
     && topLevelDomain.length >= 2
-    && domainLabels.every((label) => EMAIL_DOMAIN_LABEL_PATTERN.test(label));
+    && domainLabels.every((label) => DOMAIN_LABEL_PATTERN.test(label));
+}
+
+function isIpHostname(hostname: string) {
+  // If the hostname is an IPv6 address, it will be enclosed in square brackets (e.g., [2001:db8::1])
+  if (hostname.startsWith('[') && hostname.endsWith(']')) {
+    return true;
+  }
+
+  const labels = hostname.split('.');
+  // Check if the hostname is an IPv4 address
+  return labels.length === 4
+    && labels.every((label) => /^\d{1,3}$/.test(label) && Number(label) <= 255);
+}
+
+function isValidHostname(hostname: string) {
+  // Checks if the hostname is 'localhost' or an IP address (IPv4 or IPv6)
+  if (hostname === 'localhost' || isIpHostname(hostname)) {
+    return true;
+  }
+
+  const labels = hostname.split('.');
+  return labels.length >= 2 && labels.every((label) => DOMAIN_LABEL_PATTERN.test(label));
 }
 
 function isHttpUrl(value: string) {
-  if (value.trim() !== value) {
+  // Check if the value is a valid HTTP or HTTPS URL
+  if (value.trim() !== value || !/^https?:\/\//i.test(value)) {
     return false;
   }
 
   try {
     const url = new URL(value);
-    return (url.protocol === 'http:' || url.protocol === 'https:') && url.hostname.length > 0;
+    return (url.protocol === 'http:' || url.protocol === 'https:') && isValidHostname(url.hostname);
   } catch {
     return false;
   }

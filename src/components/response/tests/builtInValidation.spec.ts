@@ -70,6 +70,9 @@ describe('checkBuiltInValidation', () => {
   test.each([
     'https://revisit.dev',
     'http://localhost:8080/study?id=test',
+    'https://sub-domain.revisit.dev/path',
+    'http://127.0.0.1:8080/path',
+    'http://[::1]:8080/path',
   ])('accepts a valid HTTP URL: %s', (value) => {
     expect(checkBuiltInValidation('url', value)).toBeNull();
   });
@@ -80,6 +83,11 @@ describe('checkBuiltInValidation', () => {
     'https://',
     ' https://revisit.dev',
     'not a url',
+    'http:foo',
+    'http://.',
+    'https://example..com',
+    'https://-example.com',
+    'https://example-.com',
   ])('rejects an invalid HTTP URL: %s', (value) => {
     expect(checkBuiltInValidation('url', value))
       .toBe('Please enter a valid URL beginning with http:// or https://.');
