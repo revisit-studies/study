@@ -1,3 +1,4 @@
+import html2canvas from 'html2canvas';
 import html2pdf from 'html2pdf.js';
 
 const PDF_MARGIN_MM = 10;
@@ -6,6 +7,11 @@ const A4_LANDSCAPE_WIDTH_MM = 297;
 const A4_LANDSCAPE_HEIGHT_MM = 210;
 const PDF_PRINTABLE_ASPECT_RATIO = (A4_LANDSCAPE_HEIGHT_MM - (PDF_MARGIN_MM * 2))
   / (A4_LANDSCAPE_WIDTH_MM - (PDF_MARGIN_MM * 2));
+
+export interface PdfIframeSnapshot {
+  dataUrl: string;
+  index: number;
+}
 
 function padDatePart(value: number) {
   return `${value}`.padStart(2, '0');
@@ -62,9 +68,87 @@ export function waitForNextPaint() {
   });
 }
 
+export async function capturePdfIframeSnapshots(element: HTMLElement) {
+  const iframes = Array.from(element.querySelectorAll('iframe'));
+
+  return Promise.all(iframes.map(async (iframe, index): Promise<PdfIframeSnapshot> => {
+    const iframeDocument = iframe.contentDocument;
+    const iframeRoot = iframeDocument?.documentElement;
+    if (!iframeDocument || !iframeRoot) {
+      throw new Error('The embedded page is not available for PDF export.');
+    }
+
+    await iframeDocument.fonts?.ready;
+    const bounds = iframe.getBoundingClientRect();
+    const width = Math.ceil(iframe.clientWidth || bounds.width);
+    const height = Math.ceil(iframe.clientHeight || bounds.height);
+    if (width === 0 || height === 0) {
+      throw new Error('The embedded page has no visible area to export.');
+    }
+
+    const canvas = await html2canvas(iframeRoot, {
+      backgroundColor: '#ffffff',
+      height,
+      logging: false,
+      scale: 2,
+      useCORS: true,
+      width,
+      windowHeight: height,
+      windowWidth: width,
+    });
+
+    return {
+      dataUrl: canvas.toDataURL('image/png'),
+      index,
+    };
+  }));
+}
+
+function waitForPdfImage(image: HTMLImageElement) {
+  if (image.complete && image.naturalWidth > 0) {
+    return Promise.resolve();
+  }
+
+  return new Promise<void>((resolve, reject) => {
+    image.addEventListener('load', () => resolve(), { once: true });
+    image.addEventListener('error', () => reject(new Error('The embedded page snapshot could not be loaded.')), { once: true });
+  });
+}
+
+export function replacePdfIframesWithSnapshots(
+  element: HTMLElement,
+  iframeSnapshots: PdfIframeSnapshot[],
+) {
+  const iframes = Array.from(element.querySelectorAll('iframe'));
+
+  return iframeSnapshots.flatMap((snapshot) => {
+    const iframe = iframes[snapshot.index];
+    if (!iframe) {
+      return [];
+    }
+
+    const image = iframe.ownerDocument.createElement('img');
+    image.alt = iframe.title || 'Embedded study content';
+    image.src = snapshot.dataUrl;
+    image.style.display = 'block';
+    image.style.height = 'auto';
+    image.style.objectFit = 'contain';
+    image.style.objectPosition = 'top left';
+    image.style.width = '100%';
+    image.style.maxWidth = '100%';
+    iframe.replaceWith(image);
+
+    return [image];
+  });
+}
+
 export function preparePdfClone(
   clonedElement: HTMLElement,
-  layout: { exportHeight?: number; exportWidth?: number; sidebarWidth?: number } = {},
+  layout: {
+    exportHeight?: number;
+    exportWidth?: number;
+    sidebarWidth?: number;
+  } = {},
 ) {
   const exportRoot = clonedElement.matches('[data-pdf-export-root]')
     ? clonedElement
@@ -122,6 +206,12 @@ export function preparePdfClone(
 export async function saveElementAsPdf(element: HTMLElement, filename: string) {
   const exportWidth = Math.min(element.getBoundingClientRect().width, PDF_MAX_WIDTH_PX);
   const exportHeight = Math.floor(exportWidth * PDF_PRINTABLE_ASPECT_RATIO);
+  const iframeSnapshots = await capturePdfIframeSnapshots(element);
+  const pdfSource = iframeSnapshots.length > 0
+    ? element.cloneNode(true) as HTMLElement
+    : element;
+  const iframeImages = replacePdfIframesWithSnapshots(pdfSource, iframeSnapshots);
+  await Promise.all(iframeImages.map(waitForPdfImage));
   const sidebar = element.querySelector<HTMLElement>('.sidebar');
   const sidebarWidth = sidebar && sidebar.style.display !== 'none'
     ? sidebar.getBoundingClientRect().width
@@ -155,5 +245,5 @@ export async function saveElementAsPdf(element: HTMLElement, filename: string) {
     },
   };
 
-  await html2pdf().set(options).from(element).save();
+  await html2pdf().set(options).from(pdfSource).save();
 }

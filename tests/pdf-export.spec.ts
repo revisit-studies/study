@@ -142,6 +142,54 @@ test('fits wide development layouts inside the PDF capture', async ({ page }, te
   expect(rightEdgeNonWhiteRatio).toBeLessThan(0.05);
 });
 
+test('captures same-origin iframe contents in the PDF', async ({ page }, testInfo) => {
+  await resetClientStudyState(page);
+  await openStudyFromLanding(page, 'Demo Studies', 'HTML as a Stimulus');
+  await nextClick(page);
+  await expect(page.getByText('How many bars have a value greater than 1?')).toBeVisible();
+  await expect(page.frameLocator('iframe').locator('svg rect')).toHaveCount(7);
+
+  await page.getByRole('button', { name: 'Study actions' }).click();
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('menuitem', { name: 'Export page as PDF' }).click();
+  const download = await downloadPromise;
+  const downloadPath = testInfo.outputPath('same-origin-iframe.pdf');
+  await download.saveAs(downloadPath);
+  const pdf = await readFile(downloadPath);
+  const jpegImages = extractJpegImages(pdf);
+  const largestJpeg = jpegImages.sort((left, right) => right.byteLength - left.byteLength)[0];
+
+  const saturatedRightPixels = await page.evaluate(async (base64) => {
+    const image = new Image();
+    image.src = `data:image/jpeg;base64,${base64}`;
+    await image.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = 300;
+    canvas.height = 200;
+    const context = canvas.getContext('2d');
+    if (!context) {
+      throw new Error('Canvas rendering is unavailable');
+    }
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    let saturatedPixels = 0;
+    for (let y = 40; y < canvas.height; y += 1) {
+      for (let x = 100; x < canvas.width; x += 1) {
+        const index = (y * canvas.width + x) * 4;
+        const red = pixels[index];
+        const green = pixels[index + 1];
+        const blue = pixels[index + 2];
+        if (Math.max(red, green, blue) - Math.min(red, green, blue) > 40) {
+          saturatedPixels += 1;
+        }
+      }
+    }
+    return saturatedPixels;
+  }, Buffer.from(largestJpeg).toString('base64'));
+
+  expect(saturatedRightPixels).toBeGreaterThan(20);
+});
+
 test('fits long components on a single PDF page', async ({ page }, testInfo) => {
   await resetClientStudyState(page);
   await openStudyFromLanding(page, 'Demo Studies', 'Form Elements Demo');

@@ -2,15 +2,19 @@ import {
   afterEach, describe, expect, test, vi,
 } from 'vitest';
 import {
-  buildPdfFilename, getPdfExportUnsupportedReason, preparePdfClone, saveElementAsPdf,
+  buildPdfFilename, capturePdfIframeSnapshots, getPdfExportUnsupportedReason,
+  preparePdfClone, replacePdfIframesWithSnapshots, saveElementAsPdf,
   waitForNextPaint,
 } from '../pdfExport';
 
+const html2CanvasMocks = vi.hoisted(() => ({ capture: vi.fn() }));
 const html2PdfMocks = vi.hoisted(() => ({
   from: vi.fn(),
   save: vi.fn(),
   set: vi.fn(),
 }));
+
+vi.mock('html2canvas', () => ({ default: html2CanvasMocks.capture }));
 
 vi.mock('html2pdf.js', () => ({
   default: () => ({
@@ -71,13 +75,15 @@ describe('PDF export helpers', () => {
     liveElement.innerHTML = `
       <header data-pdf-export-header style="display: none"></header>
       <aside class="sidebar" style="display: block; width: 300px"></aside>
-      <main class="main" style="width: calc(100% - 310px)"></main>
+      <main class="main" style="width: calc(100% - 310px)"><iframe title="Chart"></iframe></main>
     `;
     const clonedContainer = document.createElement('div');
     clonedContainer.append(liveElement.cloneNode(true));
 
     Object.defineProperty(clonedContainer.firstElementChild, 'scrollHeight', { value: 1260 });
-
+    const iframeImages = replacePdfIframesWithSnapshots(clonedContainer, [
+      { dataUrl: 'data:image/png;base64,chart', index: 0 },
+    ]);
     preparePdfClone(clonedContainer, {
       exportHeight: 630,
       exportWidth: 920,
@@ -95,6 +101,12 @@ describe('PDF export helpers', () => {
     expect(clonedElement?.querySelector<HTMLElement>('.main')?.style.width).toBe('100%');
     expect(clonedElement?.querySelector<HTMLElement>('.main')?.style.paddingInline).toBe('16px');
     expect(clonedElement?.querySelector<HTMLElement>('.main')?.style.paddingBottom).toBe('32px');
+    const iframeImage = clonedElement?.querySelector<HTMLImageElement>('img[alt="Chart"]');
+    expect(iframeImage?.src).toBe('data:image/png;base64,chart');
+    expect(iframeImage?.style.width).toBe('100%');
+    expect(iframeImage?.style.height).toBe('auto');
+    expect(iframeImages).toEqual([iframeImage]);
+    expect(clonedElement?.querySelector('iframe')).toBeNull();
     expect(clonedElement?.style.transform).toBe('scale(0.5)');
     expect(clonedElement?.style.transformOrigin).toBe('top left');
     expect(liveElement.querySelector<HTMLElement>('[data-pdf-export-header]')?.style.display).toBe('none');
@@ -113,6 +125,32 @@ describe('PDF export helpers', () => {
 
     element.querySelector('iframe:last-child')?.remove();
     expect(getPdfExportUnsupportedReason(element)).toBeUndefined();
+  });
+
+  test('captures an accessible iframe document for the PDF clone', async () => {
+    const element = document.createElement('main');
+    const iframe = document.createElement('iframe');
+    element.append(iframe);
+    const iframeDocument = document.implementation.createHTMLDocument('Embedded chart');
+    Object.defineProperty(iframe, 'contentDocument', { value: iframeDocument });
+    Object.defineProperty(iframe, 'clientWidth', { value: 600 });
+    Object.defineProperty(iframe, 'clientHeight', { value: 450 });
+    html2CanvasMocks.capture.mockResolvedValue({
+      toDataURL: () => 'data:image/png;base64,chart',
+    });
+
+    await expect(capturePdfIframeSnapshots(element)).resolves.toEqual([
+      { dataUrl: 'data:image/png;base64,chart', index: 0 },
+    ]);
+    expect(html2CanvasMocks.capture).toHaveBeenCalledWith(
+      iframeDocument.documentElement,
+      expect.objectContaining({
+        height: 450,
+        width: 600,
+        windowHeight: 450,
+        windowWidth: 600,
+      }),
+    );
   });
 
   test('passes the current element and filename to html2pdf', async () => {
