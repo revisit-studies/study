@@ -107,13 +107,12 @@ const useRankingLogic = (responseId: string, onChange?: (value: Record<string, s
 };
 
 function RankingSublistComponent({
-  options, responseId, answer, disabled, numItems, setError,
+  options, responseId, answer, disabled, setError,
 }: {
   options: (StringOption | string)[];
   responseId: string;
   answer: { value: Record<string, string> };
   disabled: boolean;
-  numItems?: number;
   setError?: (error: string | null) => void;
 }) {
   const { onChange } = answer as { onChange?: (value: Record<string, string>) => void };
@@ -127,13 +126,12 @@ function RankingSublistComponent({
     if (answer?.value && Object.keys(answer.value).length > 0) {
       const sortedEntries = Object.entries(answer.value).sort((a, b) => parseInt(a[1], 10) - parseInt(b[1], 10));
       selected = sortedEntries.map(([id]) => items.find((i) => i.id === id)).filter(Boolean) as Item[];
-      if (numItems && numItems > 0) selected = selected.slice(0, numItems);
     }
     return {
       selected,
       unassigned: items.filter((i) => !selected.find((s) => s.id === i.id)),
     };
-  }, [items, answer, numItems]);
+  }, [items, answer]);
 
   const [state, setState] = useState(initialState);
 
@@ -164,10 +162,6 @@ function RankingSublistComponent({
       const newIndex = overId === 'selected' ? state.selected.length - 1 : state.selected.findIndex((i) => i.symbol === overId);
       newState.selected = arrayMove(state.selected, oldIndex, newIndex);
     } else if (fromUnassigned && toSelected) {
-      if (numItems && state.selected.length >= numItems) {
-        setError?.(`You can only add up to ${numItems} items.`);
-        return;
-      }
       newState.unassigned = state.unassigned.filter((i) => i.symbol !== id);
       newState.selected = [...state.selected, fromUnassigned];
     } else if (fromSelected && toUnassigned) {
@@ -683,13 +677,16 @@ export function RankingInput({
     secondaryText,
     infoText,
     numItems,
+    min,
+    max,
+    categorizeAll,
   } = response;
 
   const [localError, setError] = useState<string | null>(null);
   const displayError = localError || error;
 
   const componentProps = {
-    disabled, options, answer, responseId: response.id, numItems,
+    disabled, options, answer, responseId: response.id, numItems, min, max, categorizeAll,
   };
 
   return (

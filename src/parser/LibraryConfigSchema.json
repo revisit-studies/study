@@ -1991,6 +1991,14 @@
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
+        "max": {
+          "description": "The maximum amount of answers given per row for the matrix.",
+          "type": "number"
+        },
+        "min": {
+          "description": "The minimum amount of answers given per row for the matrix.",
+          "type": "number"
+        },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
@@ -2160,6 +2168,14 @@
         "location": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "max": {
+          "description": "The maximum amount of answers given per row for the matrix.",
+          "type": "number"
+        },
+        "min": {
+          "description": "The minimum amount of answers given per row for the matrix.",
+          "type": "number"
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
@@ -2335,6 +2351,14 @@
         "secondaryText": {
           "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
           "type": "string"
+        },
+        "strictMax": {
+          "description": "Only values below this maximum value are accepted in the input.",
+          "type": "number"
+        },
+        "strictMin": {
+          "description": "Only values above this minimum value are accepted in the input.",
+          "type": "number"
         },
         "style": {
           "$ref": "#/definitions/Styles",
@@ -2689,6 +2713,10 @@
       "additionalProperties": false,
       "description": "The RankingResponse interface is used to define the properties of a ranking widget response. RankingResponses render as a ranking widget with user specified options.\n\nThere are three types of ranking widgets: Ranking Sublist: The participant is asked to rank a subset of items from a larger list. Ranking Categorical: The participant is asked to rank items within categories: HIGH, MEDIUM, and LOW. Ranking Pairwise: The participant is asked to rank items by comparing them in pairs.\n\n```json {   \"id\": \"ranking-sublist\",   \"type\": \"ranking-sublist\",   \"prompt\": \"Rank your top 2 favorite fruits from the list below\",   \"location\": \"belowStimulus\",   \"options\": [\"Apple\", \"Banana\", \"Orange\", \"Strawberry\", \"Grapes\"],   \"default\": {\"Orange\": \"0\", \"Apple\": \"1\"},   \"numItems\": 2 }, {   \"id\": \"ranking-categorical\",   \"type\": \"ranking-categorical\",   \"prompt\": \"Sort these hobbies into the categories of HIGH, MEDIUM, and LOW based on your level of interest.\",   \"location\": \"belowStimulus\",   \"options\": [\"Drawing\", \"Singing\", \"Hiking\", \"Dancing\", \"Photography\"],   \"default\": {\"Drawing\": \"HIGH\", \"Hiking\": \"MEDIUM\", \"Singing\": \"LOW\"} }, {   \"id\": \"ranking-pairwise\",   \"type\": \"ranking-pairwise\",   \"prompt\": \"Which meal would you prefer\",   \"location\": \"belowStimulus\",   \"options\": [\"Pizza\", \"Sushi\", \"Burger\", \"Pasta\", \"Salad\", \"Tacos\"],   \"default\": {\"Pizza\": \"pair-0-high\", \"Sushi\": \"pair-0-low\"} } ```",
       "properties": {
+        "categorizeAll": {
+          "description": "Whether all items need to be categorized. Defaults to false.",
+          "type": "boolean"
+        },
         "default": {
           "additionalProperties": {
             "type": "string"
@@ -2715,6 +2743,14 @@
         "location": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "max": {
+          "description": "The maximum number of items to rank. For sublist ranking it is the number of items, for categorical ranking it is items per category, and for pairwise ranking it is the number of pairs.",
+          "type": "number"
+        },
+        "min": {
+          "description": "The minimum number of items to rank. For sublist ranking it is the number of items, for categorical ranking it is items per category, and for pairwise ranking it is the number of pairs.",
+          "type": "number"
         },
         "numItems": {
           "description": "The number of items to rank. Applies only to sublist and categorical ranking widgets.",
