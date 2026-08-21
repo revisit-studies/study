@@ -200,7 +200,7 @@ test('captures same-origin iframe contents in the PDF', async ({ page }, testInf
   expect(saturatedRightPixels).toBeGreaterThan(20);
 });
 
-test('captures styled iframe content beyond the visible viewport', async ({ page }, testInfo) => {
+test('captures iframe content beyond reported document bounds', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await resetClientStudyState(page);
   await page.getByRole('tab', { name: 'Example Studies' }).click();
@@ -208,10 +208,10 @@ test('captures styled iframe content beyond the visible viewport', async ({ page
   const studyCard = exampleStudies.locator('div').filter({ hasText: 'MVNV Study Replication' }).first();
   await studyCard.getByText('Go to Study').click();
   await page.getByRole('tab', { name: 'Browse Components' }).click();
-  await page.getByLabel('Browse Components').getByText('task2', { exact: true }).click();
+  await page.getByLabel('Browse Components').getByText('task3', { exact: true }).click();
 
   const frame = page.frameLocator('#root iframe');
-  await expect.poll(() => frame.locator('.adjMatrix.vis svg rect').count(), {
+  await expect.poll(() => frame.locator('#topology svg rect').count(), {
     timeout: 20000,
   }).toBeGreaterThan(5000);
   await expect(frame.locator('#searchButton')).toHaveCSS(
@@ -223,7 +223,7 @@ test('captures styled iframe content beyond the visible viewport', async ({ page
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('menuitem', { name: 'Export page as PDF' }).click();
   const download = await downloadPromise;
-  const downloadPath = testInfo.outputPath('mvnv-adjacency-matrix.pdf');
+  const downloadPath = testInfo.outputPath('mvnv-multi-edge-adjacency-matrix.pdf');
   await download.saveAs(downloadPath);
   const pdf = await readFile(downloadPath);
   const jpegImages = extractJpegImages(pdf);
@@ -244,7 +244,7 @@ test('captures styled iframe content beyond the visible viewport', async ({ page
     const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
     let nonWhitePixels = 0;
     for (let y = 55; y < 165; y += 1) {
-      for (let x = 150; x < 350; x += 1) {
+      for (let x = 150; x < 270; x += 1) {
         const index = (y * canvas.width + x) * 4;
         if (pixels[index] < 245 || pixels[index + 1] < 245 || pixels[index + 2] < 245) {
           nonWhitePixels += 1;

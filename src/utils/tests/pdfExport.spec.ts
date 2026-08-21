@@ -143,8 +143,12 @@ describe('PDF export helpers', () => {
     Object.defineProperty(iframe, 'contentDocument', { value: iframeDocument });
     Object.defineProperty(iframe, 'clientWidth', { value: 600 });
     Object.defineProperty(iframe, 'clientHeight', { value: 450 });
-    Object.defineProperty(iframeDocument.documentElement, 'scrollWidth', { value: 1920 });
-    Object.defineProperty(iframeDocument.documentElement, 'scrollHeight', { value: 1080 });
+    Object.defineProperty(iframeDocument.documentElement, 'scrollWidth', { value: 600 });
+    Object.defineProperty(iframeDocument.documentElement, 'scrollHeight', { value: 450 });
+    const overflowingChart = iframeDocument.createElement('div');
+    iframeDocument.body.append(overflowingChart);
+    Object.defineProperty(overflowingChart, 'scrollWidth', { value: 1920 });
+    Object.defineProperty(overflowingChart, 'scrollHeight', { value: 1080 });
     html2CanvasMocks.capture.mockResolvedValue({
       toDataURL: () => 'data:image/png;base64,chart',
     });

@@ -145,6 +145,39 @@ function prepareIframeClone(
   }));
 }
 
+function getIframeCaptureSize(iframe: HTMLIFrameElement, iframeDocument: Document) {
+  const iframeRoot = iframeDocument.documentElement;
+  const iframeBody = iframeDocument.body;
+  const iframeBounds = iframe.getBoundingClientRect();
+  const scrollX = iframeDocument.defaultView?.scrollX ?? 0;
+  const scrollY = iframeDocument.defaultView?.scrollY ?? 0;
+  const layoutElements = [
+    iframeRoot,
+    ...(iframeBody ? [iframeBody, ...iframeBody.querySelectorAll<HTMLElement>('*:not(svg *)')] : []),
+  ];
+
+  return layoutElements.reduce((size, layoutElement) => {
+    const bounds = layoutElement.getBoundingClientRect();
+    return {
+      height: Math.max(
+        size.height,
+        layoutElement.scrollHeight,
+        bounds.bottom + scrollY,
+        bounds.top + scrollY + layoutElement.scrollHeight,
+      ),
+      width: Math.max(
+        size.width,
+        layoutElement.scrollWidth,
+        bounds.right + scrollX,
+        bounds.left + scrollX + layoutElement.scrollWidth,
+      ),
+    };
+  }, {
+    height: Math.max(iframe.clientHeight, iframeBounds.height),
+    width: Math.max(iframe.clientWidth, iframeBounds.width),
+  });
+}
+
 export async function capturePdfIframeSnapshots(element: HTMLElement) {
   const iframes = Array.from(element.querySelectorAll('iframe'));
 
@@ -160,19 +193,9 @@ export async function capturePdfIframeSnapshots(element: HTMLElement) {
       waitForIframeImages(iframeDocument),
       waitForIframePaint(iframe),
     ]);
-    const bounds = iframe.getBoundingClientRect();
-    const width = Math.ceil(Math.max(
-      iframe.clientWidth,
-      bounds.width,
-      iframeRoot.scrollWidth,
-      iframeDocument.body?.scrollWidth ?? 0,
-    ));
-    const height = Math.ceil(Math.max(
-      iframe.clientHeight,
-      bounds.height,
-      iframeRoot.scrollHeight,
-      iframeDocument.body?.scrollHeight ?? 0,
-    ));
+    const captureSize = getIframeCaptureSize(iframe, iframeDocument);
+    const width = Math.ceil(captureSize.width);
+    const height = Math.ceil(captureSize.height);
     if (width === 0 || height === 0) {
       throw new Error('The embedded page has no visible area to export.');
     }
