@@ -440,6 +440,53 @@ export interface NumericalResponse extends BaseResponse {
   max?: number;
 }
 
+/** The validation operations available for short and long text responses. */
+export type TextValidationType = 'matchesRegex' | 'contains' | 'doesNotContain' | 'equals' | 'doesNotEqual';
+
+/**
+ * A validation rule applied to a short or long text response.
+ * Rules are evaluated in array order, and the first failing rule is displayed to the participant.
+ *
+ * For example, the following rules accept only `ReVISit is great`: it must start with `ReVISit`,
+ * contain `great`, not contain `invalid`, equal `ReVISit is great`, and not equal `TEST`.
+ * See the [MDN regular expression syntax cheat sheet](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet)
+ * for help writing regular expression patterns.
+ * ```json
+ * "textValidation": [
+ *   {
+ *     "type": "matchesRegex",
+ *     "value": "^ReVISit"
+ *   },
+ *   {
+ *     "type": "contains",
+ *     "value": "great"
+ *   },
+ *   {
+ *     "type": "doesNotContain",
+ *     "value": "invalid"
+ *   },
+ *   {
+ *     "type": "equals",
+ *     "value": "ReVISit is great"
+ *   },
+ *   {
+ *     "type": "doesNotEqual",
+ *     "value": "TEST"
+ *   }
+ * ]
+ * ```
+ */
+export interface TextValidationRule {
+  /** The operation used to validate the response value. */
+  type: TextValidationType;
+  /**
+   * The regular expression pattern or text value used by the validation operation.
+   * Must be non-empty for `equals`, `contains`, and `doesNotContain`.
+   * Empty `matchesRegex` and `doesNotEqual` values produce a parser warning because they do not restrict responses.
+   */
+  value: string;
+}
+
 /**
  * The DateResponse interface defines a date, month, or year selected with a picker.
  * Values are stored as `MM/DD/YYYY`, `MM/YYYY`, or `YYYY` strings based on `options`.
@@ -504,9 +551,6 @@ export interface TimeResponse extends BaseResponse {
   withSeconds?: boolean;
 }
 
-/** The validation operations available for short and long text responses. */
-export type TextValidationType = 'matchesRegex' | 'contains' | 'doesNotContain' | 'equals' | 'doesNotEqual';
-
 /**
  * The built-in validation operations available for short text responses.
  *
@@ -518,49 +562,6 @@ export type TextValidationType = 'matchesRegex' | 'contains' | 'doesNotContain' 
 export type BuiltInValidationType = 'email' | 'phoneNumber' | 'usPhoneNumber' | 'url';
 
 /**
- * A validation rule applied to a short or long text response.
- * Rules are evaluated in array order, and the first failing rule is displayed to the participant.
- *
- * For example, the following rules accept only `ReVISit is great`: it must start with `ReVISit`,
- * contain `great`, not contain `invalid`, equal `ReVISit is great`, and not equal `TEST`.
- * See the [MDN regular expression syntax cheat sheet](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet)
- * for help writing regular expression patterns.
- * ```json
- * "textValidation": [
- *   {
- *     "type": "matchesRegex",
- *     "value": "^ReVISit"
- *   },
- *   {
- *     "type": "contains",
- *     "value": "great"
- *   },
- *   {
- *     "type": "doesNotContain",
- *     "value": "invalid"
- *   },
- *   {
- *     "type": "equals",
- *     "value": "ReVISit is great"
- *   },
- *   {
- *     "type": "doesNotEqual",
- *     "value": "TEST"
- *   }
- * ]
- * ```
- */
-export interface TextValidationRule {
-  /** The operation used to validate the response value. */
-  type: TextValidationType;
-  /**
-   * The regular expression pattern or text value used by the validation operation.
-   * Must be non-empty for `equals`, `contains`, and `doesNotContain`.
-   */
-  value: string;
-}
-
-/**
  * The ShortTextResponse interface is used to define the properties of a short text response.
  * ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder.
  * ```json
@@ -569,17 +570,16 @@ export interface TextValidationRule {
  *   "prompt": "Short text example",
  *   "location": "aboveStimulus",
  *   "type": "shortText",
- *   "default": "test@revisit.dev",
- *   "placeholder": "test@revisit.dev",
- *   "builtInValidation": "email",
+ *   "default": "ReVISit is great",
+ *   "placeholder": "Enter your answer here",
  *   "minCharLength": 3,
  *   "maxCharLength": 100,
- *   "minWordLength": 1,
- *   "maxWordLength": 10,
+ *   "minWordLength": 2,
+ *   "maxWordLength": 20,
  *   "textValidation": [
  *     {
- *       "type": "doesNotContain",
- *       "value": "invalid"
+ *       "type": "contains",
+ *       "value": "ReVISit"
  *     }
  *   ]
  * }

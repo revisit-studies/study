@@ -3260,7 +3260,7 @@
     },
     "ShortTextResponse": {
       "additionalProperties": false,
-      "description": "The ShortTextResponse interface is used to define the properties of a short text response. ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder. ```json {   \"id\": \"q-short-text\",   \"prompt\": \"Short text example\",   \"location\": \"aboveStimulus\",   \"type\": \"shortText\",   \"default\": \"test@revisit.dev\",   \"placeholder\": \"test@revisit.dev\",   \"builtInValidation\": \"email\",   \"minCharLength\": 3,   \"maxCharLength\": 100,   \"minWordLength\": 1,   \"maxWordLength\": 10,   \"textValidation\": [     {       \"type\": \"doesNotContain\",       \"value\": \"invalid\"     }   ] } ```",
+      "description": "The ShortTextResponse interface is used to define the properties of a short text response. ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder. ```json {   \"id\": \"q-short-text\",   \"prompt\": \"Short text example\",   \"location\": \"aboveStimulus\",   \"type\": \"shortText\",   \"default\": \"ReVISit is great\",   \"placeholder\": \"Enter your answer here\",   \"minCharLength\": 3,   \"maxCharLength\": 100,   \"minWordLength\": 2,   \"maxWordLength\": 20,   \"textValidation\": [     {       \"type\": \"contains\",       \"value\": \"ReVISit\"     }   ] } ```",
       "properties": {
         "builtInValidation": {
           "$ref": "#/definitions/BuiltInValidationType",
@@ -3763,7 +3763,7 @@
           "description": "The operation used to validate the response value."
         },
         "value": {
-          "description": "The regular expression pattern or text value used by the validation operation. Must be non-empty for `equals`, `contains`, and `doesNotContain`.",
+          "description": "The regular expression pattern or text value used by the validation operation. Must be non-empty for `equals`, `contains`, and `doesNotContain`. Empty `matchesRegex` and `doesNotEqual` values produce a parser warning because they do not restrict responses.",
           "type": "string"
         }
       },

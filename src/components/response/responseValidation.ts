@@ -227,7 +227,6 @@ export function checkTextResponse(response: ShortTextResponse | LongTextResponse
       return builtInValidationError;
     }
   }
-
   const failedRule = response.textValidation?.find((rule) => !textValidationRulePasses(rule, value));
   return failedRule
     ? DEFAULT_TEXT_VALIDATION_MESSAGES[failedRule.type]
@@ -450,40 +449,32 @@ export function validateResponse(
     if (value === null || value === undefined || value === '') {
       return createValidationResult(response, response.required === false ? 'none' : 'unanswered');
     }
-
     const dateError = typeof value === 'string'
       ? getDateValidationMessage(response, value)
       : INVALID_DATE_MESSAGE;
     if (dateError) {
       return createValidationResult(response, 'invalid', { message: dateError });
     }
-
     if (response.requiredValue != null && value !== response.requiredValue.toString()) {
       return createValidationResult(response, 'invalid', { reason: 'requiredValueMismatch' });
     }
-
     return createValidationResult(response, 'none');
   }
-
   if (response.type === 'time') {
     if (value === null || value === undefined || value === '') {
       return createValidationResult(response, response.required === false ? 'none' : 'unanswered');
     }
-
     const timeError = typeof value === 'string'
       ? getTimeValidationMessage(response, value)
       : 'Please select a valid time.';
     if (timeError) {
       return createValidationResult(response, 'invalid', { message: timeError });
     }
-
     if (response.requiredValue != null && value !== response.requiredValue.toString()) {
       return createValidationResult(response, 'invalid', { reason: 'requiredValueMismatch' });
     }
-
     return createValidationResult(response, 'none');
   }
-
   if (response.type === 'shortText' || response.type === 'longText') {
     if (value === null || value === undefined || value === '') {
       return createValidationResult(response, response.required ? 'unanswered' : 'none');
