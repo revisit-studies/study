@@ -33,9 +33,14 @@ export function AppNavBar({
   const status = useStoredAnswer();
   const templateData = useTemplateAnswerContext();
 
+  const instructionParameters = useMemo(
+    () => status?.parameters ?? currentConfig?.parameters ?? {},
+    [status?.parameters, currentConfig?.parameters],
+  );
+
   const instruction = useMemo(
-    () => compileTemplate(currentConfig?.instruction || '', currentConfig?.parameters ?? {}, { data: templateData }),
-    [currentConfig?.instruction, currentConfig?.parameters, templateData],
+    () => compileTemplate(currentConfig?.instruction || '', instructionParameters, { data: templateData }),
+    [currentConfig?.instruction, instructionParameters, templateData],
   );
   const instructionLocation = useMemo(() => currentConfig?.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar', [currentConfig, studyConfig]);
   const instructionInSideBar = instructionLocation === 'sidebar';

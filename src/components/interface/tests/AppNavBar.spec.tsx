@@ -9,9 +9,10 @@ import { AppNavBar } from '../AppNavBar';
 
 let mockCurrentComponent = 'trial1';
 let mockStudyConfig = {
-  components: {} as Record<string, { response: unknown[]; instruction?: string; instructionLocation?: string }>,
+  components: {} as Record<string, { response: unknown[]; instruction?: string; instructionLocation?: string; parameters?: Record<string, unknown> }>,
   uiConfig: { instructionLocation: 'sidebar' as string },
 };
+let mockStoredAnswer: { parameters?: Record<string, unknown> } | null = null;
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
@@ -25,7 +26,7 @@ vi.mock('../../../routes/utils', () => ({
 }));
 
 vi.mock('../../../store/hooks/useStoredAnswer', () => ({
-  useStoredAnswer: () => null,
+  useStoredAnswer: () => mockStoredAnswer,
 }));
 
 vi.mock('../../../store/store', () => ({
@@ -65,6 +66,7 @@ describe('AppNavBar', () => {
       components: {},
       uiConfig: { instructionLocation: 'sidebar' },
     };
+    mockStoredAnswer = null;
   });
 
   test('renders null when current component has no config', () => {
@@ -136,6 +138,27 @@ describe('AppNavBar', () => {
     expect(html).toContain('position:relative');
     expect(html).not.toContain('overflow-y:auto');
     expect(html).not.toContain('max-height:');
+  });
+
+  test('uses the dynamic component\'s runtime parameters over the static config parameters when templating the instruction', () => {
+    mockStudyConfig = {
+      components: {
+        trial1: {
+          response: [],
+          instruction: 'Value: {{value}}',
+          parameters: { value: 'static' },
+        },
+      },
+      uiConfig: { instructionLocation: 'sidebar' },
+    };
+    mockStoredAnswer = { parameters: { value: 'dynamic' } };
+
+    const html = renderToStaticMarkup(
+      <AppNavBar width={300} top={60} bottom={0} sidebarOpen />,
+    );
+
+    expect(html).toContain('Value: dynamic');
+    expect(html).not.toContain('Value: static');
   });
 
   test('keeps participant sidebar and content under one page scrollbar', () => {

@@ -9,10 +9,12 @@ import { useCurrentComponent } from '../../routes/utils';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 import { compileTemplate } from '../../utils/handlebars';
 import { useTemplateAnswerContext } from '../../store/hooks/useTemplateAnswerContext';
+import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 
 export function HelpModal() {
   const showHelpText = useStoreSelector((state) => state.showHelpText);
   const config = useStoreSelector((state) => state.config);
+  const status = useStoredAnswer();
 
   const storeDispatch = useStoreDispatch();
   const { toggleShowHelpText } = useStoreActions();
@@ -29,16 +31,21 @@ export function HelpModal() {
 
   const templateData = useTemplateAnswerContext();
 
+  const helpTextParameters = useMemo(
+    () => status?.parameters ?? componentConfig.parameters ?? {},
+    [status?.parameters, componentConfig.parameters],
+  );
+
   // helpTextPath can itself be templated (e.g. `help-{{condition}}.md`), so it must be resolved
   // with the same parameters/answer context before it's used to fetch the asset.
   const resolvedHelpTextPath = useMemo(
-    () => (helpTextPath ? compileTemplate(helpTextPath, componentConfig.parameters ?? {}, { noEscape: true, data: templateData }) : helpTextPath),
-    [helpTextPath, componentConfig.parameters, templateData],
+    () => (helpTextPath ? compileTemplate(helpTextPath, helpTextParameters, { noEscape: true, data: templateData }) : helpTextPath),
+    [helpTextPath, helpTextParameters, templateData],
   );
 
   const templatedHelpText = useMemo(
-    () => compileTemplate(helpText, componentConfig.parameters ?? {}, { data: templateData }),
-    [helpText, componentConfig.parameters, templateData],
+    () => compileTemplate(helpText, helpTextParameters, { data: templateData }),
+    [helpText, helpTextParameters, templateData],
   );
 
   useEffect(() => {
