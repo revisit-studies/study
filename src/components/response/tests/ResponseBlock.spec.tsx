@@ -11,6 +11,7 @@ import type { CheckAnswerState, Sequence, StoredAnswer } from '../../../store/ty
 import type { REVISIT_MODE } from '../../../storage/engines/types';
 import { studyStoreCreator, StudyStoreContext } from '../../../store/store';
 import { ResponseBlock } from '../ResponseBlock';
+import classes from '../css/ResponseBlock.module.css';
 import { makeStoredAnswer } from '../../../tests/utils';
 import { responseAnswerIsCorrect } from '../../../utils/correctAnswer';
 
@@ -305,6 +306,20 @@ describe('ResponseBlock', () => {
     const { container } = render(withStore(studyStore, <ResponseBlock config={baseConfig} location="belowStimulus" />));
     const html = container.innerHTML;
     expect(html).toContain('<div');
+  });
+
+  test.each(['aboveStimulus', 'belowStimulus'] as const)('constrains the %s response block width', async (location) => {
+    const studyStore = await makeStudyStore();
+    const { container } = render(withStore(studyStore, <ResponseBlock config={baseConfig} location={location} />));
+
+    expect(container.querySelector(`.responseBlock-${location}`)?.classList.contains(classes.nonSidebar)).toBe(true);
+  });
+
+  test('does not constrain the sidebar response block width', async () => {
+    const studyStore = await makeStudyStore();
+    const { container } = render(withStore(studyStore, <ResponseBlock config={baseConfig} location="sidebar" />));
+
+    expect(container.querySelector('.responseBlock-sidebar')?.classList.contains(classes.nonSidebar)).toBe(false);
   });
 
   test('renders ResponseSwitcher for response at matching location', async () => {

@@ -300,8 +300,8 @@ export function MatrixInput({
               }}
               ta="right"
               p="sm"
-              miw={140}
-              maw={400}
+              miw={120}
+              maw={280}
             >
               <OptionLabel
                 label={(questionsByValue[questionKey]?.leftLabel || questionsByValue[questionKey]?.label || questionKey)}
@@ -392,8 +392,8 @@ export function MatrixInput({
                 }}
                 ta="left"
                 p="sm"
-                miw={140}
-                maw={400}
+                miw={120}
+                maw={280}
               >
                 {questionsByValue[questionKey]?.rightLabel && (
                   <OptionLabel

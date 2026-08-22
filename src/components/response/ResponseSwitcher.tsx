@@ -218,7 +218,13 @@ export function ResponseSwitcher({
   }, [displayError, response.required, responseStyle]);
 
   return (
-    <Box mb={responseDividers ? 'xl' : 'lg'} className="response" id={response.id} style={responseWrapperStyle}>
+    <Box
+      mb={responseDividers ? 'xl' : 'lg'}
+      className="response"
+      id={response.id}
+      data-response-type={response.type}
+      style={responseWrapperStyle}
+    >
       {response.type === 'numerical' && (
       <NumericInput
         response={response}

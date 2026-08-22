@@ -46,6 +46,7 @@ import { useManagedTrrack } from '../../store/hooks/useRevisitTrrack';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { showNotification } from '../../utils/notifications';
 import { getAnswersFromAllLocations } from '../../utils/getAnswersFromAllLocations';
+import classes from './css/ResponseBlock.module.css';
 
 type Props = {
   status?: StoredAnswer;
@@ -662,9 +663,15 @@ export function ResponseBlock({
   }, [bypassValidationForFailedTraining, goToNextStep, hasResponseIssues, hasStimulusIssue, revealResponseErrors, revealStimulusErrors]);
 
   let index = 0;
+  const responseBlockClassName = [
+    'responseBlock',
+    `responseBlock-${location}`,
+    location === 'sidebar' ? undefined : classes.nonSidebar,
+  ].filter(Boolean).join(' ');
+
   return (
     <>
-      <Box className={`responseBlock responseBlock-${location}`} style={style}>
+      <Box className={responseBlockClassName} style={style}>
         {allResponsesWithDefaults.map((response) => {
           const configCorrectAnswer = config.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
           const correctAnswer = configCorrectAnswer === undefined

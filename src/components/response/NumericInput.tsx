@@ -28,6 +28,7 @@ export function NumericInput({
 
   return (
     <NumberInput
+      className={classes.standardInputWidth}
       disabled={disabled}
       placeholder={placeholder}
       label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}

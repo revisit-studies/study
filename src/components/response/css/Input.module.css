@@ -7,3 +7,8 @@
     opacity: 1 !important;
   }
 }
+
+.standardInputWidth {
+  width: 100%;
+  max-width: 28rem;
+}
