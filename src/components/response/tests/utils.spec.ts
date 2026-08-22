@@ -358,7 +358,7 @@ describe('validateResponse', () => {
     expect(validateResponse(response, 0, { q1: 0 })).toMatchObject({
       valid: false,
       issueType: 'invalid',
-      message: 'Please enter a value of 1 or greater',
+      message: 'Please enter a value of 1 or greater.',
       blocksProgression: false,
     });
   });
@@ -406,8 +406,40 @@ describe('validateResponse', () => {
 
     expect(validateResponse(response, 1, { q1: 1 }).valid).toBe(true);
     expect(validateResponse(response, 10, { q1: 10 }).valid).toBe(true);
-    expect(validateResponse(response, 0, { q1: 0 }).message).toBe('Please enter a value between 1 and 10');
-    expect(validateResponse(response, 11, { q1: 11 }).message).toBe('Please enter a value between 1 and 10');
+    expect(validateResponse(response, 0, { q1: 0 }).message).toBe('Please enter a value between 1 and 10.');
+    expect(validateResponse(response, 11, { q1: 11 }).message).toBe('Please enter a value between 1 and 10.');
+  });
+
+  test('numerical strict min and max are exclusive', () => {
+    const response: NumericalResponse = {
+      id: 'q1', prompt: 'Question', type: 'numerical', required: true, strictMin: 1, strictMax: 10,
+    };
+
+    expect(validateResponse(response, 1, { q1: 1 }).message).toBe('Please enter a value greater than 1 and less than 10.');
+    expect(validateResponse(response, 10, { q1: 10 }).message).toBe('Please enter a value greater than 1 and less than 10.');
+    expect(validateResponse(response, 2, { q1: 2 }).valid).toBe(true);
+    expect(validateResponse(response, 9, { q1: 9 }).valid).toBe(true);
+    expect(validateResponse(response, 0, { q1: 0 }).message).toBe('Please enter a value greater than 1 and less than 10.');
+    expect(validateResponse(response, 11, { q1: 11 }).message).toBe('Please enter a value greater than 1 and less than 10.');
+  });
+
+  test('numerical strict min only is exclusive', () => {
+    const response: NumericalResponse = {
+      id: 'q1', prompt: 'Question', type: 'numerical', required: true, strictMin: 1,
+    };
+
+    expect(validateResponse(response, 0, { q1: 0 }).message).toBe('Please enter a value greater than 1.');
+    expect(validateResponse(response, 1, { q1: 1 }).message).toBe('Please enter a value greater than 1.');
+    expect(validateResponse(response, 2, { q1: 2 }).valid).toBe(true);
+  });
+  test('numerical strict max only is exclusive', () => {
+    const response: NumericalResponse = {
+      id: 'q1', prompt: 'Question', type: 'numerical', required: true, strictMax: 10,
+    };
+
+    expect(validateResponse(response, 11, { q1: 11 }).message).toBe('Please enter a value less than 10.');
+    expect(validateResponse(response, 10, { q1: 10 }).message).toBe('Please enter a value less than 10.');
+    expect(validateResponse(response, 9, { q1: 9 }).valid).toBe(true);
   });
 
   test.each([
@@ -596,6 +628,59 @@ describe('validateResponse', () => {
     expect(validateResponse(response, { q1: '0', q2: '1' }, { matrix: { q1: '0', q2: '1' } }).valid).toBe(true);
   });
 
+  test('matrix checkbox min/max validation distinguishes minimum, maximum, and range constraints per row', () => {
+    const minOnly: MatrixResponse = {
+      id: 'matrix-min', prompt: 'Question', type: 'matrix-checkbox', required: true, min: 2, answerOptions: ['0', '1'], questionOptions: ['q1', 'q2'],
+    };
+    const maxOnly: MatrixResponse = {
+      id: 'matrix-max', prompt: 'Question', type: 'matrix-checkbox', required: true, max: 1, answerOptions: ['0', '1'], questionOptions: ['q1', 'q2'],
+    };
+    const range: MatrixResponse = {
+      id: 'matrix-range', prompt: 'Question', type: 'matrix-checkbox', required: true, min: 1, max: 2, answerOptions: ['0', '1', '2'], questionOptions: ['q1', 'q2'],
+    };
+
+    expect(validateResponse(minOnly, { q1: '0|1', q2: '0|1' }, { matrix: { q1: '0|1', q2: '0|1' } }).valid).toBe(true);
+    expect(validateResponse(minOnly, { q1: '0|1', q2: '0' }, { matrix: { q1: '0|1', q2: '0' } })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please select at least 2 answers per row.',
+      blocksProgression: true,
+    });
+
+    expect(validateResponse(maxOnly, { q1: '0', q2: '0' }, { matrix: { q1: '0', q2: '0' } }).valid).toBe(true);
+    expect(validateResponse(maxOnly, { q1: '0|1', q2: '0|1' }, { matrix: { q1: '0|1', q2: '0|1' } })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please select at most 1 answers per row.',
+      blocksProgression: true,
+    });
+
+    expect(validateResponse(range, { q1: '0|1', q2: '0' }, { matrix: { q1: '0|1', q2: '0' } }).valid).toBe(true);
+    expect(validateResponse(range, { q1: '0|1|2', q2: '0' }, { matrix: { q1: '0|1|2', q2: '0' } })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please select at least 1 and at most 2 answers per row.',
+      blocksProgression: true,
+    });
+  });
+
+  test('matrix checkbox withDontKnow sentinel is treated as a complete row for min/max validation', () => {
+    const response: MatrixResponse = {
+      id: 'matrix-dont-know-min',
+      prompt: 'Question',
+      type: 'matrix-checkbox',
+      required: true,
+      withDontKnow: true,
+      min: 2,
+      answerOptions: ['0', '1'],
+      questionOptions: ['q1', 'q2'],
+    };
+
+    expect(validateResponse(response, { q1: "I don't know", q2: '0|1' }, { matrix: { q1: "I don't know", q2: '0|1' } }).valid).toBe(true);
+    expect(validateResponse(response, { q1: "I don't know", q2: '0' }, { matrix: { q1: "I don't know", q2: '0' } })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please select at least 2 answers per row.',
+      blocksProgression: true,
+    });
+  });
+
   test('standalone withDontKnow bypasses required, min/max, and requiredValue validation', () => {
     const response: NumericalResponse = {
       id: 'q1', prompt: 'Question', type: 'numerical', required: true, min: 10, requiredValue: 42, withDontKnow: true,
@@ -646,6 +731,69 @@ describe('validateResponse', () => {
     });
   });
 
+  test('ranking min/max validation handles sublist and categorical constraints', () => {
+    const sublistMin: Response = {
+      id: 'ranking-sublist-min', prompt: 'Rank', type: 'ranking-sublist', required: true, options: ['A', 'B', 'C'], min: 2,
+    };
+    const sublistMax: Response = {
+      id: 'ranking-sublist-max', prompt: 'Rank', type: 'ranking-sublist', required: true, options: ['A', 'B', 'C'], max: 2,
+    };
+    const categoricalMin: Response = {
+      id: 'ranking-categorical-min', prompt: 'Rank', type: 'ranking-categorical', required: true, options: ['A', 'B', 'C'], min: 1,
+    };
+    const categoricalMax: Response = {
+      id: 'ranking-categorical-max', prompt: 'Rank', type: 'ranking-categorical', required: true, options: ['A', 'B', 'C'], max: 1,
+    };
+
+    expect(validateResponse(sublistMin, { A: '0', B: '1' }, { ranking: { A: '0', B: '1' } }).valid).toBe(true);
+    expect(validateResponse(sublistMin, { A: '0' }, { ranking: { A: '0' } })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please add at least 2 items.',
+      blocksProgression: true,
+    });
+
+    expect(validateResponse(sublistMax, { A: '0', B: '1' }, { ranking: { A: '0', B: '1' } }).valid).toBe(true);
+    expect(validateResponse(sublistMax, { A: '0', B: '1', C: '2' }, { ranking: { A: '0', B: '1', C: '2' } })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please add at most 2 items.',
+      blocksProgression: true,
+    });
+
+    expect(validateResponse(categoricalMin, { A: 'LOW', B: 'LOW' }, { ranking: { A: 'LOW', B: 'LOW' } })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please add at least 1 items per category.',
+      blocksProgression: true,
+    });
+    expect(validateResponse(categoricalMax, { A: 'HIGH', B: 'HIGH' }, { ranking: { A: 'HIGH', B: 'HIGH' } })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please add at most 1 items per category.',
+      blocksProgression: true,
+    });
+  });
+
+  test('categorical ranking validates exact configured option set and category values', () => {
+    const response: Response = {
+      id: 'ranking-categorical-all', prompt: 'Rank', type: 'ranking-categorical', required: true, options: ['A', 'B'], categorizeAll: true,
+    };
+
+    expect(validateResponse(response, { A: 'HIGH', B: 'LOW' }, { ranking: { A: 'HIGH', B: 'LOW' } }).valid).toBe(true);
+    expect(validateResponse(response, { A: 'HIGH', X: 'LOW' }, { ranking: { A: 'HIGH', X: 'LOW' } })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please categorize only configured items.',
+      blocksProgression: true,
+    });
+    expect(validateResponse(response, { A: 'HIGH', B: 'INVALID' }, { ranking: { A: 'HIGH', B: 'INVALID' } })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please use only HIGH, MEDIUM, or LOW categories.',
+      blocksProgression: true,
+    });
+    expect(validateResponse(response, { A: 'HIGH' }, { ranking: { A: 'HIGH' } })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please categorize all items.',
+      blocksProgression: true,
+    });
+  });
+
   test('pairwise ranking requires at least one complete pair', () => {
     const response: Response = {
       id: 'ranking', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: ['A', 'B', 'C'],
@@ -674,6 +822,48 @@ describe('validateResponse', () => {
       issueType: 'none',
       blocksProgression: false,
     });
+  });
+
+  test('pairwise ranking min/max validation enforces configured pair bounds', () => {
+    const minOnly: Response = {
+      id: 'ranking-pairwise-min', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: ['A', 'B', 'C'], min: 2,
+    };
+    const maxOnly: Response = {
+      id: 'ranking-pairwise-max', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: ['A', 'B', 'C', 'D'], max: 2,
+    };
+    const range: Response = {
+      id: 'ranking-pairwise-range', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: ['A', 'B', 'C', 'D'], min: 1, max: 2,
+    };
+
+    const onePair = { A_0: 'pair-0-high', B_1: 'pair-0-low' };
+    expect(validateResponse(minOnly, onePair, { ranking: onePair })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please add at least 2 pairs.',
+      blocksProgression: true,
+    });
+
+    const twoPairs = {
+      A_0: 'pair-0-high', B_1: 'pair-0-low', C_2: 'pair-1-high', D_3: 'pair-1-low',
+    };
+    expect(validateResponse(maxOnly, twoPairs, { ranking: twoPairs }).valid).toBe(true);
+    const maxOnlyInvalid = {
+      A_0: 'pair-0-high', B_1: 'pair-0-low', C_2: 'pair-1-high', D_3: 'pair-1-low', E_4: 'pair-2-high', F_5: 'pair-2-low',
+    };
+    expect(validateResponse({
+      ...maxOnly,
+      options: ['A', 'B', 'C', 'D', 'E', 'F'],
+    }, maxOnlyInvalid, { ranking: maxOnlyInvalid })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please add at most 2 pairs.',
+      blocksProgression: true,
+    });
+
+    expect(validateResponse(range, onePair, { ranking: onePair })).toEqual({
+      valid: true,
+      issueType: 'none',
+      blocksProgression: false,
+    });
+    expect(validateResponse(range, twoPairs, { ranking: twoPairs }).valid).toBe(true);
   });
 
   test('pairwise ranking requires every pair to be complete', () => {

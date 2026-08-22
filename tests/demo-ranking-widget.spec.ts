@@ -187,8 +187,8 @@ test('Test ranking response(sublist, categorical, pairwise) and validation', asy
     sublistTop3DropZone,
   );
   await settleAfterDrag(page);
-  await expect(page.getByText('You can only add up to 3 items.')).toBeVisible();
   await nextClick(page);
+  await expect(page.getByText('Please add at most 3 items.')).toBeVisible();
 
   // Categorical ranking
   // Put 2 in high, 2 in medium, 1 in low, then move one from medium to high
