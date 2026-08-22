@@ -195,7 +195,7 @@ function verifyTextResponseConstraints(
     });
 
     if (constraintsAreValid && response.required !== false && response.maxCharLength === 0) {
-      warnings.push({
+      errors.push({
         message: 'maxCharLength must be greater than zero for a required text response',
         instancePath: `${responsePath}/maxCharLength`,
         params: { action: 'Increase maxCharLength or make the response optional' },
@@ -204,7 +204,7 @@ function verifyTextResponseConstraints(
     }
 
     if (constraintsAreValid && response.required !== false && response.maxWordLength === 0) {
-      warnings.push({
+      errors.push({
         message: 'maxWordLength must be greater than zero for a required text response',
         instancePath: `${responsePath}/maxWordLength`,
         params: { action: 'Increase maxWordLength or make the response optional' },
@@ -218,7 +218,7 @@ function verifyTextResponseConstraints(
       && response.maxCharLength !== undefined
       && response.minCharLength > response.maxCharLength
     ) {
-      warnings.push({
+      errors.push({
         message: 'minCharLength must be less than or equal to maxCharLength',
         instancePath: responsePath,
         params: { action: 'Decrease minCharLength or increase maxCharLength' },
@@ -232,7 +232,7 @@ function verifyTextResponseConstraints(
       && response.maxWordLength !== undefined
       && response.minWordLength > response.maxWordLength
     ) {
-      warnings.push({
+      errors.push({
         message: 'minWordLength must be less than or equal to maxWordLength',
         instancePath: responsePath,
         params: { action: 'Decrease minWordLength or increase maxWordLength' },
@@ -248,7 +248,7 @@ function verifyTextResponseConstraints(
     ) {
       const minimumRequiredCharacters = response.minWordLength * 2 - 1;
       if (minimumRequiredCharacters > response.maxCharLength) {
-        warnings.push({
+        errors.push({
           message: `minWordLength of ${response.minWordLength} requires at least ${minimumRequiredCharacters} characters, which exceeds maxCharLength of ${response.maxCharLength}`,
           instancePath: responsePath,
           params: { action: 'Decrease minWordLength or increase maxCharLength' },
@@ -306,7 +306,7 @@ function verifyTextResponseConstraints(
           && doesNotContainRule.value !== ''
           && containsRule.value.includes(doesNotContainRule.value)
         ) {
-          warnings.push({
+          errors.push({
             message: `contains value \`${containsRule.value}\` always includes doesNotContain value \`${doesNotContainRule.value}\``,
             instancePath: `${responsePath}/textValidation/${secondRuleIndex}/value`,
             params: { action: 'Change or remove one of the conflicting text validation rules' },
@@ -320,7 +320,7 @@ function verifyTextResponseConstraints(
           && secondRule.value !== ''
           && firstRule.value !== secondRule.value
         ) {
-          warnings.push({
+          errors.push({
             message: `equals rules require different values: \`${firstRule.value}\` and \`${secondRule.value}\``,
             instancePath: `${responsePath}/textValidation/${secondRuleIndex}/value`,
             params: { action: 'Keep only one required equals value' },
@@ -343,7 +343,7 @@ function verifyTextResponseConstraints(
           || (otherRule.type === 'doesNotContain' && rule.value.includes(otherRule.value))
         );
         if (conflicts) {
-          warnings.push({
+          errors.push({
             message: `equals value \`${rule.value}\` conflicts with ${otherRule.type} value \`${otherRule.value}\``,
             instancePath: `${responsePath}/textValidation/${Math.max(ruleIndex, otherRuleIndex)}/value`,
             params: { action: 'Change or remove one of the conflicting text validation rules' },
@@ -367,7 +367,7 @@ function verifyTextResponseConstraints(
           ? `contains ${wordLength} words, which exceeds maxWordLength of ${response.maxWordLength}` : null,
       ].filter((message): message is string => message !== null);
       equalsConstraintConflicts.forEach((message) => {
-        warnings.push({
+        errors.push({
           message: `equals value \`${rule.value}\` ${message}`,
           instancePath: `${responsePath}/textValidation/${ruleIndex}/value`,
           params: { action: 'Change the equals value or the conflicting length constraint' },
