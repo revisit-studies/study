@@ -1202,6 +1202,13 @@ describe('generateInitFields additional branches', () => {
     expect(generateInitFields([response], {})).toMatchObject({ q1: [] });
   });
 
+  test('initializes checkbox response to empty array', () => {
+    const response: Response = {
+      id: 'q1', prompt: '', type: 'checkbox', options: ['A', 'B'],
+    };
+    expect(generateInitFields([response], {})).toMatchObject({ q1: [] });
+  });
+
   test('initializes ranking-categorical to empty array', () => {
     const response: Response = {
       id: 'q1', prompt: '', type: 'ranking-categorical', options: [],

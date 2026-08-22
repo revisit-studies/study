@@ -105,7 +105,7 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
         initField = queryParameters.get(response.paramCapture);
       } else if (defaultFieldValue !== null) {
         initField = defaultFieldValue;
-      } else if (response.type === 'reactive' || response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') {
+      } else if (response.type === 'checkbox' || response.type === 'reactive' || response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') {
         initField = [];
       } else if (response.type === 'matrix-radio' || response.type === 'matrix-checkbox') {
         initField = Object.fromEntries(
