@@ -412,6 +412,11 @@ export function ThinkAloudFooter({
 
   const participantUsedSameBrowser = useMemo(() => getBrowser(participant?.metadata?.userAgent ?? '') === getBrowser(navigator.userAgent), [participant]);
 
+  const [browserWarningDismissed, setBrowserWarningDismissed] = useState(false);
+  useEffect(() => {
+    setBrowserWarningDismissed(false);
+  }, [participantId, screenRecordingUrl]);
+
   return (
     <AppShell.Footer zIndex={101} withBorder={false}>
       {currentTrial && participant && currentTrialClean === '' && (
@@ -422,12 +427,12 @@ export function ThinkAloudFooter({
           <Alert variant="filled" color="red" title="Participant hasn&apos;t completed any tasks." icon={<IconInfoCircle />} />
         </div>
       )}
-      {participant && screenRecordingUrl && !participantUsedSameBrowser && (
+      {participant && screenRecordingUrl && !participantUsedSameBrowser && !browserWarningDismissed && (
         <div style={{
           position: 'absolute', top: -5, left: 5, transform: 'translateY(-100%)',
         }}
         >
-          <Alert withCloseButton variant="filled" color="red" title={`Participant used ${getBrowser(participant.metadata?.userAgent ?? '')} — you are using ${getBrowser(navigator.userAgent)}. Video playback may not work properly.`} icon={<IconInfoCircle />} />
+          <Alert withCloseButton onClose={() => setBrowserWarningDismissed(true)} variant="filled" color="red" title={`Participant used ${getBrowser(participant.metadata?.userAgent ?? '')} — you are using ${getBrowser(navigator.userAgent)}. Video playback may not work properly.`} icon={<IconInfoCircle />} />
         </div>
       )}
       <Stack style={{ backgroundColor: 'var(--mantine-color-blue-1)', height: '100%' }} gap={5} justify="center">
