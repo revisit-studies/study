@@ -110,12 +110,14 @@ export async function nextClick(page: Page, timeout = 10000) {
   const main = page.getByRole('main');
   const initialUrl = page.url();
   const initialComponentId = await main.locator('[id]').first().getAttribute('id');
+  const initialMainText = await main.innerText();
   const deadline = Date.now() + timeout;
   let lastError: unknown;
 
   const hasAdvanced = async () => (
     page.url() !== initialUrl
     || await main.locator('[id]').first().getAttribute('id') !== initialComponentId
+    || await main.innerText() !== initialMainText
   );
 
   const waitForNextStep = async (remaining: number) => {
