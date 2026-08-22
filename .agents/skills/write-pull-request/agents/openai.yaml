@@ -1,0 +1,4 @@
+interface:
+  display_name: "Write Pull Request"
+  short_description: "Write human, architecture-first PR descriptions"
+  default_prompt: "Use $write-pull-request to draft a repository-grounded title and PR description for my current branch."
