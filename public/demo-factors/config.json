@@ -33,8 +33,7 @@
       "type": "react-component",
       "path": "demo-factors/assets/Factors.tsx",
       "parameters": {
-        "atSyntaxLabel": "@data shown as @visType for @task",
-        "bracedSyntaxLabel": "${data}/${visType}/${task}",
+        "templateLabel": "{{data}} shown as {{visType}} for {{task}}",
         "literalEmail": "contact@revisit.dev"
       },
       "response": []
@@ -43,8 +42,7 @@
       "type": "react-component",
       "path": "demo-factors/assets/Factors.tsx",
       "parameters": {
-        "nestedAtSyntaxLabel": "@zipBlock includes @data and @visType for @task",
-        "nestedBracedSyntaxLabel": "${zipBlock}/${data}/${visType}/${task}"
+        "nestedTemplateLabel": "{{zipBlock}} includes {{data}} and {{visType}} for {{task}}"
       },
       "response": []
     }
@@ -52,7 +50,7 @@
   "components": {
     "Ok_googleTutorial": {
       "type": "markdown",
-      "path": "demo-factors/assets/ok-google-tutorial-@ageGroup.md",
+      "path": "demo-factors/assets/ok-google-tutorial-{{ageGroup}}.md",
       "response": []
     }
   },

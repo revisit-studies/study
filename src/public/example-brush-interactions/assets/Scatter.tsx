@@ -101,13 +101,13 @@ export function Scatter({
 
     if (brushType === 'Axis Selection') {
       const brushX = d3.brushX().extent([[margin.left, margin.top + height - 5], [margin.left + width, margin.top + height + 5]]).on('brush end', (e) => {
-        if (e.sourceEvent !== undefined) {
+        if (e.sourceEvent !== undefined && e.selection !== null) {
           setBrushedSpace([[e.selection[0], null], [e.selection[1], null]], xScale, yScale, e.mode);
         }
       });
 
       const brushY = d3.brushY().extent([[margin.left - 5, margin.top], [margin.left + 5, margin.top + height]]).on('brush end', (e) => {
-        if (e.sourceEvent !== undefined) {
+        if (e.sourceEvent !== undefined && e.selection !== null) {
           setBrushedSpace([[null, e.selection[0]], [null, e.selection[1]]], xScale, yScale, e.mode);
         }
       });

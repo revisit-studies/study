@@ -225,9 +225,10 @@ describe('ConfigSwitcher', () => {
     expect(container).toBeDefined();
   });
 
-  test('lists the factor study demos in their own home-page tab', async () => {
+  test('lists factor studies, including incentives-corr, in their own tab', async () => {
     expect(FACTOR_DEMO_CONFIG_NAMES).toEqual(new Set([
       'demo-factors',
+      'demo-markdown-factors',
       'demo-stroop-factors',
       'demo-max-study2',
       'demo-ffl-study',
@@ -237,10 +238,11 @@ describe('ConfigSwitcher', () => {
     ]));
 
     const factorDemoConfig = makeGlobalConfig({
-      configsList: ['incentives-corr', 'demo-html'],
+      configsList: ['incentives-corr', 'demo-factors', 'demo-html'],
     });
     const factorDemoStudyConfigs: Record<string, ParsedConfig<StudyConfig> | null> = {
       'incentives-corr': parsedStudyConfig,
+      'demo-factors': parsedStudyConfig,
       'demo-html': parsedStudyConfig,
     };
     const { container } = await act(async () => render(

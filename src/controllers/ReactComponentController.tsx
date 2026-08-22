@@ -10,6 +10,7 @@ import { useCurrentIdentifier } from '../routes/utils';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import { RevisitProvenanceProvider } from '../store/hooks/useRevisitTrrack';
 import { ErrorBoundary } from './ErrorBoundary';
+import { compileTemplate } from '../utils/handlebars';
 
 const modules = import.meta.glob(
   [
@@ -20,7 +21,8 @@ const modules = import.meta.glob(
 ) as Record<string, ModuleNamespace>;
 
 export function ReactComponentController({ currentConfig, provState, answers }: { currentConfig: ReactComponent; provState?: unknown, answers: ParticipantData['answers'] }) {
-  const reactPath = `../public/${currentConfig.path}`;
+  const templatedPath = compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true });
+  const reactPath = `../public/${templatedPath}`;
   const StimulusComponent = reactPath in modules ? modules[reactPath].default : null;
   const identifier = useCurrentIdentifier();
 
@@ -70,15 +72,15 @@ export function ReactComponentController({ currentConfig, provState, answers }: 
   // validation so the participant isn't stuck on a trial that can never load.
   useEffect(() => {
     if (!StimulusComponent) {
-      console.error(`Stimulus component not found at "${currentConfig.path}". Clearing stimulus validation so the participant is not stuck.`);
+      console.error(`Stimulus component not found at "${templatedPath}". Clearing stimulus validation so the participant is not stuck.`);
       clearStimulusValidation();
     }
-  }, [StimulusComponent, currentConfig.path, clearStimulusValidation]);
+  }, [StimulusComponent, templatedPath, clearStimulusValidation]);
 
   const handleRuntimeError = useCallback((error: unknown) => {
-    console.error(`Stimulus component "${currentConfig.path}" threw at runtime. Clearing stimulus validation so the participant is not stuck.`, error);
+    console.error(`Stimulus component "${templatedPath}" threw at runtime. Clearing stimulus validation so the participant is not stuck.`, error);
     clearStimulusValidation();
-  }, [currentConfig.path, clearStimulusValidation]);
+  }, [templatedPath, clearStimulusValidation]);
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
@@ -101,7 +103,7 @@ export function ReactComponentController({ currentConfig, provState, answers }: 
             </RevisitProvenanceProvider>
           </ErrorBoundary>
         )
-        : <ResourceNotFound path={currentConfig.path} />}
+        : <ResourceNotFound path={templatedPath} />}
     </Suspense>
   );
 }

@@ -5,12 +5,14 @@
     "tutorial-replication",
     "demo-html",
     "demo-factors",
+    "demo-markdown-factors",
     "demo-stroop-factors",
     "demo-max-study2",
     "demo-ffl-study",
     "demo-dsf-study",
     "demo-calvi-study",
     "demo-html-input",
+    "demo-templating",
     "demo-form-elements",
     "demo-training",
     "demo-html-trrack",
@@ -78,6 +80,9 @@
     "demo-factors": {
       "path": "demo-factors/config.json"
     },
+    "demo-markdown-factors": {
+      "path": "demo-markdown-factors/config.json"
+    },
     "demo-stroop-factors": {
       "path": "demo-stroop-factors/config.json"
     },
@@ -98,6 +103,9 @@
     },
     "demo-html-input": {
       "path": "demo-html-input/config.json"
+    },
+    "demo-templating": {
+      "path": "demo-templating/config.json"
     },
     "demo-form-elements": {
       "path": "demo-form-elements/config.json"

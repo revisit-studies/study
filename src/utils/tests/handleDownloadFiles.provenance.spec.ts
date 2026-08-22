@@ -1,9 +1,9 @@
 import {
   afterEach, describe, expect, test, vi,
 } from 'vitest';
-import { downloadParticipantsProvenanceZip } from './handleDownloadFiles';
-import type { StorageEngine } from '../storage/engines/types';
-import type { StoredAnswer } from '../store/types';
+import { downloadParticipantsProvenanceZip } from '../handleDownloadFiles';
+import type { StorageEngine } from '../../storage/engines/types';
+import type { StoredAnswer } from '../../store/types';
 
 const mockZipState = vi.hoisted(() => {
   const instances: Array<{

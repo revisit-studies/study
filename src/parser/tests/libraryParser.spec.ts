@@ -20,25 +20,26 @@ function isComponentBlock(value: string | ComponentBlock | DynamicBlock | Factor
 }
 
 describe('Factor Templates', () => {
-  test('fills factor values using braced and at-sign template tokens', () => {
-    expect(fillTemplate(`data=$${'{data}'}; vis=@visType`, {
+  test('fills factor values using double-brace template tokens', () => {
+    expect(fillTemplate('data={{data}}; vis={{ visType }}', {
       data: 'd1',
       visType: 'bar',
     })).toBe('data=d1; vis=bar');
   });
 
-  test('does not replace at-sign text when it is not a factor token', () => {
-    expect(fillTemplate('email contact@revisit.dev and @missing', {
+  test('does not replace legacy template syntax or at-sign text', () => {
+    const legacySyntax = ['email contact@revisit.dev; legacy @data/', '$', '{data}'].join('');
+    expect(fillTemplate(legacySyntax, {
       data: 'd1',
-    })).toBe('email contact@revisit.dev and @missing');
+    })).toBe(legacySyntax);
   });
 
-  test('preserves the type of an exact at-sign factor token', () => {
-    expect(deepFillTemplate({ r1: '@r1' }, { r1: 0.3 })).toEqual({ r1: 0.3 });
+  test('preserves the type of an exact double-brace factor token', () => {
+    expect(deepFillTemplate({ r1: '{{r1}}' }, { r1: 0.3 })).toEqual({ r1: 0.3 });
   });
 
   test('preserves unresolved participant-global tokens', () => {
-    const unresolved = `@vis/$${'{vis}'}`;
+    const unresolved = '{{vis}}/{{missing}}';
     expect(fillTemplate(unresolved, {})).toBe(unresolved);
   });
 });
@@ -221,7 +222,7 @@ describe('Factor Compiler', () => {
         },
         confidence: {
           type: 'markdown',
-          path: 'study/assets/confidence-@r1.md',
+          path: 'study/assets/confidence-{{r1}}.md',
           response: [],
         },
       },
@@ -258,7 +259,33 @@ describe('Factor Compiler', () => {
     expect(createFactorConditionId('stroop', {
       color_0: 'RED',
       color_1: 'BLUE',
-    })).toBe('stroop__color_0=RED__color_1=BLUE');
+    })).toBe('stroop__color_0=%22RED%22__color_1=%22BLUE%22');
+  });
+
+  test('creates distinct components for factor values with identical string representations', () => {
+    const config: StudyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: '', version: '', authors: [], date: '', description: '', organizations: [],
+      },
+      uiConfig: {
+        logoPath: '', contactEmail: '', withProgressBar: true, withSidebar: true,
+      },
+      baseComponents: {
+        trial: { type: 'questionnaire', response: [] },
+      },
+      components: {},
+      factors: {
+        mixed: [1, '1', { mixed: ['a', 'b'] }, { mixed: 'a,b' }],
+      },
+      sequence: {
+        type: 'factor', id: 'typedValues', factor: 'mixed', components: 'trial',
+      },
+    };
+
+    const result = compileFactorBlocks(config.sequence, config);
+
+    expect(Object.keys(result.components)).toHaveLength(4);
   });
 });
 
@@ -613,6 +640,45 @@ describe('Library Macro Expansion', () => {
             '$testLib.components.component2',
           ]);
         }
+      }
+    });
+
+    test('namespaces components and interruptions in an imported factor sequence', () => {
+      const libraryWithFactorSequence: Record<string, LibraryConfig> = {
+        testLib: {
+          ...mockLibraryData.testLib,
+          sequences: {
+            factorSequence: {
+              type: 'factor',
+              id: 'factorSequence',
+              factor: 'levels',
+              components: ['component1', '$testLib.co.component2'],
+              interruptions: [{
+                spacing: 1,
+                firstLocation: 1,
+                components: ['component2'],
+              }],
+            },
+          },
+        },
+      };
+      const sequence: StudyConfig['sequence'] = {
+        order: 'fixed',
+        components: ['$testLib.se.factorSequence'],
+      };
+
+      const result = expandLibrarySequences(sequence, libraryWithFactorSequence);
+      const factorSequence = isComponentBlock(result) ? result.components[0] : undefined;
+
+      expect(typeof factorSequence === 'object' && isFactorBlock(factorSequence)).toBe(true);
+      if (typeof factorSequence === 'object' && isFactorBlock(factorSequence)) {
+        expect(factorSequence.components).toEqual([
+          '$testLib.components.component1',
+          '$testLib.components.component2',
+        ]);
+        expect(factorSequence.interruptions?.[0].components).toEqual([
+          '$testLib.components.component2',
+        ]);
       }
     });
   });

@@ -105,6 +105,7 @@ export function AudioProvenanceVis({
   const [waveSurferLoading, setWaveSurferLoading] = useState<boolean>(true);
 
   const trrackForTrial = useRef<Trrack<object, string> | null>(null);
+  const hasLoadableTask = Boolean(participantId && taskName && answers[taskName]);
 
   useEffect(() => {
     let canceled = false;
@@ -296,7 +297,7 @@ export function AudioProvenanceVis({
       audioRef.current = null;
       updateReplayRef();
 
-      if (waveSurfer && isAnalysis && taskName && storageEngine) {
+      if (waveSurfer && isAnalysis && hasLoadableTask && storageEngine) {
         try {
           if (!participantId) {
             throw new Error('Participant ID is required to load audio');
@@ -355,9 +356,9 @@ export function AudioProvenanceVis({
   return (
     <Group wrap="nowrap" gap={0} mx={0}>
       <Stack ref={ref} style={{ width: '100%' }} gap={0}>
-        <LoadingOverlay visible={waveSurferLoading} overlayProps={{ blur: 5, backgroundOpacity: 0.35 }} />
+        <LoadingOverlay visible={waveSurferLoading && hasLoadableTask} overlayProps={{ blur: 5, backgroundOpacity: 0.35 }} />
 
-        {participantId !== undefined && taskName
+        {hasLoadableTask
           ? (
             <Box pos="relative" ml={margin.left} mr={margin.right}>
               <Box

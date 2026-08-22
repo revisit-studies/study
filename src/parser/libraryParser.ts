@@ -55,44 +55,68 @@ function normalizeSkipTargets(skipConditions?: ComponentBlock['skip']): Componen
   }));
 }
 
+function namespaceLibraryComponentReference(reference: string, libraryName: string): string {
+  const normalizedReference = normalizeLibraryMacroReference(reference);
+  return normalizedReference.startsWith('$')
+    ? normalizedReference
+    : `$${libraryName}.components.${normalizedReference}`;
+}
+
+function namespaceLibraryInterruptions(
+  interruptions: ComponentBlock['interruptions'],
+  libraryName: string,
+): ComponentBlock['interruptions'] {
+  return interruptions?.map((interruption) => ({
+    ...interruption,
+    components: interruption.components.map((component) => (
+      namespaceLibraryComponentReference(component, libraryName)
+    )),
+  }));
+}
+
 function namespaceLibrarySequenceComponents(sequence: StudyConfig['sequence'], libraryName: string): StudyConfig['sequence'] {
-  if (isDynamicBlock(sequence) || isFactorBlock(sequence)) {
+  if (isDynamicBlock(sequence)) {
     return sequence;
+  }
+  if (isFactorBlock(sequence)) {
+    return {
+      ...sequence,
+      components: typeof sequence.components === 'string'
+        ? namespaceLibraryComponentReference(sequence.components, libraryName)
+        : sequence.components.map((component) => (
+          namespaceLibraryComponentReference(component, libraryName)
+        )),
+      interruptions: namespaceLibraryInterruptions(sequence.interruptions, libraryName),
+      skip: normalizeSkipTargets(sequence.skip),
+    };
   }
   return {
     ...sequence,
+    interruptions: namespaceLibraryInterruptions(sequence.interruptions, libraryName),
+    skip: normalizeSkipTargets(sequence.skip),
     components: sequence.components.map((component) => {
       if (typeof component === 'object') {
         return namespaceLibrarySequenceComponents(component, libraryName);
       }
-      // Only namespace if not already namespaced
-      if (typeof component === 'string' && !component.startsWith('$')) {
-        return `$${libraryName}.components.${component}`;
-      }
-      return component;
+      return namespaceLibraryComponentReference(component, libraryName);
     }),
   };
 }
 
-// 1. Replace ${var} in a single string
+// Replace {{parameter}} tokens in a single string.
 export function fillTemplate(str: string, vars: Record<string, unknown>): string {
-  const fillBracedToken = (match: string, key: string) => (vars[key] !== undefined && vars[key] !== null
+  const fillToken = (match: string, key: string) => (vars[key] !== undefined && vars[key] !== null
     ? String(vars[key])
     : match);
-  const fillAtToken = (match: string, prefix: string, key: string) => (vars[key] !== undefined && vars[key] !== null
-    ? `${prefix}${String(vars[key])}`
-    : match);
 
-  return str
-    .replace(/\$\{(\w+)\}/g, fillBracedToken)
-    .replace(/(^|[^A-Za-z0-9_@])@([A-Za-z_]\w*)\b/g, fillAtToken);
+  return str.replace(/\{\{\s*([A-Za-z_]\w*)\s*\}\}/g, fillToken);
 }
 
-// 2. Recursively replace in any TS value
+// Recursively replace templates in any TS value.
 export function deepFillTemplate<T>(value: T, vars: Record<string, unknown>): T {
   // Strings: apply template replacement
   if (typeof value === 'string') {
-    const exactToken = value.match(/^@([A-Za-z_]\w*)$/);
+    const exactToken = value.match(/^\{\{\s*([A-Za-z_]\w*)\s*\}\}$/);
     if (exactToken && vars[exactToken[1]] !== undefined && vars[exactToken[1]] !== null) {
       return vars[exactToken[1]] as T;
     }
@@ -702,7 +726,7 @@ export function createFactorConditionId(
   condition: MaterializedFactorCondition,
 ): string {
   const conditionId = Object.entries(condition)
-    .map(([name, value]) => `${encodeURIComponent(name)}=${encodeURIComponent(String(value))}`)
+    .map(([name, value]) => `${encodeURIComponent(name)}=${encodeURIComponent(JSON.stringify(value))}`)
     .join('__');
   return conditionId ? `${encodeURIComponent(blockId)}__${conditionId}` : encodeURIComponent(blockId);
 }
@@ -883,7 +907,7 @@ export function compileFactorBlocks(
 /**
  * Creates the runtime config for one participant without mutating the canonical study config.
  * Call this after sequence assignment so participant-global parameters can resolve component
- * inheritance and templates such as `@vis` and `${vis}` before the Redux store is created.
+ * inheritance and templates such as `{{vis}}` before the Redux store is created.
  */
 export function materializeParticipantConfig(
   config: StudyConfig,
@@ -980,8 +1004,18 @@ export function validateBetweenSubjects(
 
 // Recursively iterate through sequences (sequence.components) and replace any library sequence references with the actual library sequence
 export function expandLibrarySequences(sequence: StudyConfig['sequence'], importedLibrariesData: Record<string, LibraryConfig>, errors: ParserErrorWarning[] = []): StudyConfig['sequence'] {
-  if (isDynamicBlock(sequence) || isFactorBlock(sequence)) {
+  if (isDynamicBlock(sequence)) {
     return sequence;
+  }
+  if (isFactorBlock(sequence)) {
+    return {
+      ...sequence,
+      components: typeof sequence.components === 'string'
+        ? normalizeLibraryMacroReference(sequence.components)
+        : sequence.components.map((component) => normalizeLibraryMacroReference(component)),
+      interruptions: normalizeInterruptionComponents(sequence.interruptions),
+      skip: normalizeSkipTargets(sequence.skip),
+    };
   }
   return {
     ...sequence,

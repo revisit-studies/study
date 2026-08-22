@@ -26,6 +26,8 @@ import { getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
 import { MetaCell } from './MetaCell';
 import { componentAnswersAreCorrect } from '../../../utils/correctAnswer';
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
+import { DISTINCT_COLOR_PALETTE } from '../../../utils/colors';
+import { ParticipantTimeoutModal } from '../ParticipantTimeoutModal';
 
 function formatDate(date: Date): JSX.Element {
   if (date.valueOf() === 0 || Number.isNaN(date.valueOf())) {
@@ -37,6 +39,7 @@ function formatDate(date: Date): JSX.Element {
 
 export function TableView({
   visibleParticipants,
+  participantsForTimeout,
   studyConfig,
   allConfigs,
   refresh,
@@ -46,6 +49,7 @@ export function TableView({
   onSelectionChange,
 }: {
   visibleParticipants: ParticipantDataWithStatus[];
+  participantsForTimeout: ParticipantDataWithStatus[];
   studyConfig: StudyConfig;
   allConfigs: Record<string, StudyConfig>;
   refresh: () => Promise<ParticipantDataWithStatus[]>;
@@ -86,7 +90,9 @@ export function TableView({
         accessorFn: (row: ParticipantDataWithStatus) => {
           const incompleteEntries = Object.entries(row.answers || {}).filter((e) => e[1].startTime === 0);
 
-          return { percent: (Object.entries(row.answers).length - incompleteEntries.length) / (getSequenceFlatMap(row.sequence).length - 1), completed: row.completed, rejected: row.rejected };
+          const denominator = Math.max(getSequenceFlatMap(row.sequence).length - 1, 1);
+
+          return { percent: (Object.entries(row.answers).length - incompleteEntries.length) / denominator, completed: row.completed, rejected: row.rejected };
         },
         header: 'Status',
         size: 100,
@@ -139,7 +145,7 @@ export function TableView({
               </Badge>
             );
           }
-          const stageColor = stageColors[stageName] || '#F05A30';
+          const stageColor = stageColors[stageName] || DISTINCT_COLOR_PALETTE[0];
           return (
             <Badge
               color={stageColor}
@@ -321,6 +327,7 @@ export function TableView({
           ]}
         />
         <ParticipantRejectModal selectedParticipants={selectedParticipants} refresh={handleRefresh} />
+        <ParticipantTimeoutModal participants={participantsForTimeout} refresh={handleRefresh} />
       </Flex>
     ),
   });

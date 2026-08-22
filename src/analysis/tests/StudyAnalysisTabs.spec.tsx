@@ -108,6 +108,9 @@ vi.mock('../individualStudy/stats/StatsView', () => ({
 vi.mock('../individualStudy/management/ManageView', () => ({
   ManageView: () => <div>ManageView</div>,
 }));
+vi.mock('../individualStudy/management/StageManagementItem', () => ({
+  StageManagementItem: () => <div>StageManagementItem</div>,
+}));
 vi.mock('../individualStudy/thinkAloud/ThinkAloudAnalysis', () => ({
   ThinkAloudAnalysis: () => <div>ThinkAloudAnalysis</div>,
 }));
@@ -143,6 +146,7 @@ vi.mock('@mantine/core', () => ({
     { Group: ({ children }: { children: ReactNode }) => <div>{children}</div> },
   ),
   Container: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Divider: () => <hr />,
   Flex: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Group: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   LoadingOverlay: () => null,
@@ -150,7 +154,7 @@ vi.mock('@mantine/core', () => ({
     return <div ref={ref}>{children}</div>;
   }),
   Tabs: Object.assign(
-    ({ children }: { children: ReactNode }) => <div>{children}</div>,
+    ({ children, orientation }: { children: ReactNode; orientation?: string }) => <div data-orientation={orientation}>{children}</div>,
     {
       List: ({ children }: { children: ReactNode }) => <nav>{children}</nav>,
       Tab: ({ children, value }: { children: ReactNode; value: string }) => (
@@ -216,7 +220,9 @@ describe('StudyAnalysisTabs', () => {
     expect(html).toContain('Trial Stats');
     expect(html).toContain('Coding');
     expect(html).toContain('Config');
+    expect(html).toContain('Stage Management');
     expect(html).toContain('Manage');
+    expect(html).toContain('data-orientation="vertical"');
   });
 
   test('renders disabled Live Monitor tab and Firebase-only message when not Firebase', () => {

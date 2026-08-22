@@ -25,6 +25,7 @@ import { getUnmetDeviceRestrictionLines, getUnmetDeviceRestrictionTooltip } from
 
 export const FACTOR_DEMO_CONFIG_NAMES = new Set([
   'demo-factors',
+  'demo-markdown-factors',
   'demo-stroop-factors',
   'demo-max-study2',
   'demo-ffl-study',

@@ -76,7 +76,7 @@
       "correctAnswer": [
         {
           "id": "response",
-          "answer": "@inkColor"
+          "answer": "{{inkColor}}"
         }
       ]
     }

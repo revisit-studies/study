@@ -967,6 +967,26 @@ describe('StorageEngine edge cases', () => {
   // ── Reject / undo-reject cycles ──────────────────────────────────────────
 
   describe('reject and undo-reject cycles', () => {
+    test('a pending answer write cannot undo a rejection', async () => {
+      const session = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+      await storageEngine.saveAnswers({
+        trial_0: makeStoredAnswer({
+          componentName: 'trial', identifier: 'trial_0', answer: { user: 'participant' }, endTime: 100,
+        }),
+      });
+
+      const onRejected = vi.fn();
+      const unsubscribe = storageEngine.subscribeToCurrentParticipantRejection(onRejected);
+      await storageEngine.rejectParticipant(session.participantId, 'Timed out');
+      await flushThrottle(storageEngine);
+      unsubscribe();
+
+      const participant = await storageEngine.getParticipantData(session.participantId);
+      expect(participant!.rejected).not.toBe(false);
+      expect(participant!.answers.trial_0.answer).toEqual({ user: 'participant' });
+      expect(onRejected).toHaveBeenCalledOnce();
+    });
+
     test('undo-reject restores participant and preserves all answers', async () => {
       const session = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
 

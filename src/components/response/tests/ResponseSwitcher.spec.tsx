@@ -19,6 +19,7 @@ const { capturedStringInputProps, mockIsAnalysis, mockStoreState } = vi.hoisted(
       order: 'fixed', orderPath: 'root', components: ['trial1'], skip: [],
     },
     completed: false,
+    answers: {},
   },
 }));
 
@@ -50,6 +51,7 @@ vi.mock('../../../utils/fetchStylesheet', () => ({
 
 vi.mock('../../../store/store', () => ({
   useStoreSelector: vi.fn((selector: (state: unknown) => unknown) => selector(mockStoreState)),
+  useFlatSequence: vi.fn(() => []),
 }));
 
 vi.mock('../CustomResponseInput', () => ({
@@ -123,5 +125,12 @@ describe('ResponseSwitcher stored answer locking', () => {
     renderSwitcher({ storedAnswer: { q1: 'stored' }, answerFinalized: false });
     expect(capturedStringInputProps.disabled).toBe(true);
     expect(capturedStringInputProps.answer).toMatchObject({ value: 'stored', readOnly: true });
+  });
+
+  test('does not crash for a completed participant without a stored answer', () => {
+    mockStoreState.completed = true;
+    expect(() => renderSwitcher({ storedAnswer: undefined, answerFinalized: false })).not.toThrow();
+    expect(capturedStringInputProps.disabled).toBe(true);
+    expect(capturedStringInputProps.answer).toMatchObject({ value: undefined, readOnly: true });
   });
 });

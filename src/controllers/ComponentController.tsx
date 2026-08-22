@@ -21,7 +21,7 @@ import { IndividualComponent } from '../parser/types';
 import { useDisableBrowserBack } from '../utils/useDisableBrowserBack';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import {
-  useStoreActions, useStoreDispatch, useStoreSelector,
+  useFlatSequence, useStoreActions, useStoreDispatch, useStoreSelector,
 } from '../store/store';
 import { StudyEnd } from '../components/StudyEnd';
 import { TrainingFailed } from '../components/TrainingFailed';
@@ -37,11 +37,14 @@ import { ScreenRecordingReplay } from '../components/screenRecording/ScreenRecor
 import { decryptIndex, encryptIndex } from '../utils/encryptDecryptIndex';
 import { useRecordingConfig } from '../store/hooks/useRecordingConfig';
 import { getComponentContainerStyle } from '../utils/componentStyle';
+import { compileTemplate } from '../utils/handlebars';
 import { generateStimulusErrorMessage } from '../components/response/stimulusErrors';
 import { getStimulusProvenanceState, getStimulusShowErrorsFromState } from '../components/response/stimulusProvenance';
+import { useIsStartupPreview } from '../components/StartupPreviewContext';
 
 // current active stimuli presented to the user
 export function ComponentController() {
+  const isStartupPreview = useIsStartupPreview();
   // Get the config for the current step
   const studyConfig = useStudyConfig();
   const currentStep = useCurrentStep();
@@ -53,6 +56,7 @@ export function ComponentController() {
   const { storageEngine } = useStorageEngine();
 
   const answers = useStoreSelector((store) => store.answers);
+  const flatSequence = useFlatSequence();
   const analysisCanPlayScreenRecording = useStoreSelector((state) => state.analysisCanPlayScreenRecording);
 
   const { setAnalysisCanPlayScreenRecording } = useStoreActions();
@@ -78,7 +82,17 @@ export function ComponentController() {
   const participantId = useMemo(() => searchParams.get('participantId'), [searchParams]);
 
   // Disable browser back button from all stimuli
-  useDisableBrowserBack();
+  useDisableBrowserBack(isStartupPreview);
+
+  useEffect(() => {
+    if (isStartupPreview || !storageEngine) {
+      return undefined;
+    }
+
+    return storageEngine.subscribeToCurrentParticipantRejection(() => {
+      navigate(`./../__timedOut${window.location.search}`);
+    });
+  }, [isStartupPreview, navigate, storageEngine]);
 
   // Check if we have issues connecting to the database, if so show alert modal
   const storeDispatch = useStoreDispatch();
@@ -109,7 +123,7 @@ export function ComponentController() {
   const [blockForStep, setBlockForStep] = useState<string[]>([]);
   const prevBlockForStepRef = useRef<string[]>([]);
   useEffect(() => {
-    if (isAnalysis) {
+    if (isAnalysis || isStartupPreview) {
       return;
     }
     async function updateBlockForStep() {
@@ -136,7 +150,7 @@ export function ComponentController() {
 
     updateBlockForStep().then(addParticipantTag);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentStep, storageEngine, sequence]);
+  }, [currentStep, isStartupPreview, storageEngine, sequence]);
 
   const currentConfig = useMemo(() => {
     const toReturn = currentComponent && currentComponent !== 'end' && !currentComponent.startsWith('__') && studyComponentToIndividualComponent(stepConfig, studyConfig) as IndividualComponent;
@@ -239,6 +253,16 @@ export function ComponentController() {
     }
   }, [answers, currentComponent, currentStep, funcIndex, isAnalysis, modes.developmentModeEnabled, navigate, status, studyId]);
 
+  const templateData = useMemo(
+    () => ({ answers, flatSequence, currentStep }),
+    [answers, flatSequence, currentStep],
+  );
+
+  const instruction = useMemo(
+    () => compileTemplate(currentConfig?.instruction || '', currentConfig?.parameters ?? {}, { data: templateData }),
+    [currentConfig?.instruction, currentConfig?.parameters, templateData],
+  );
+
   // We're not using hooks below here, so we can return early if we're at the end of the study.
   // This avoids issues with the component config being undefined for the end of the study.
   if (currentComponent === 'end') {
@@ -263,7 +287,7 @@ export function ComponentController() {
     return <ResourceNotFound email={studyConfig.uiConfig.contactEmail} />;
   }
 
-  if (!storageEngine?.isConnected()) {
+  if (!isStartupPreview && !storageEngine?.isConnected()) {
     return (
       <Center style={{ height: '80vh', flexDirection: 'column', textAlign: 'center' }}>
         <IconPlugConnectedX size={48} stroke={1.5} color="orange" />
@@ -280,7 +304,6 @@ export function ComponentController() {
       </Center>
     );
   }
-  const instruction = currentConfig?.instruction || '';
   const instructionLocation = currentConfig.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar';
   const instructionInSideBar = instructionLocation === 'sidebar';
 

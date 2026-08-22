@@ -42,7 +42,7 @@
           "minVersion": 10
         }
       ],
-      "blockedMessage": "You must be on a relatively modern browser, Chrome > 100, Firefox > 100, Safari > 10."
+      "blockedMessage": "You must be on a relatively modern browser, Chrome 100 or later, Firefox 100 or later, Safari 10 or later."
     },
     "devices": {
       "allowed": [

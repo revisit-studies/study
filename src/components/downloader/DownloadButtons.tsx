@@ -120,7 +120,7 @@ export function DownloadButtons({
 
   return (
     <>
-      <Group style={{ gap }}>
+      <Group style={{ gap }} wrap="nowrap">
         <Tooltip label={`${tooltipText} as JSON`}>
           <Button
             variant="light"

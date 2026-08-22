@@ -7,6 +7,42 @@ const PROLIFIC_COMPLETED_MESSAGE = /Thank you for completing the study\.\s*You m
 
 type StudyTitleMatcher = string | RegExp;
 
+export async function readStoredComponentTiming(page: Page, componentName: string) {
+  return page.evaluate(async (name) => new Promise<{ participantId: string; startTime: number; endTime: number } | null>((resolve) => {
+    const request = indexedDB.open('revisit');
+    request.onerror = () => resolve(null);
+    request.onsuccess = () => {
+      const database = request.result;
+      const transaction = database.transaction('keyvaluepairs', 'readonly');
+      const store = transaction.objectStore('keyvaluepairs');
+      const keysRequest = store.getAllKeys();
+      const valuesRequest = store.getAll();
+      keysRequest.onerror = () => resolve(null);
+      valuesRequest.onerror = () => resolve(null);
+      transaction.oncomplete = () => {
+        const participantKeys = keysRequest.result
+          .map((key, index) => ({ key: String(key), value: valuesRequest.result[index] }))
+          .filter(({ key }) => key.includes('/participants/') && key.endsWith('_participantData'));
+        for (const { value } of participantKeys) {
+          const participant = value as { participantId?: string; answers?: Record<string, { componentName?: string; startTime?: number; endTime?: number }> } | null;
+          const answer = Object.values(participant?.answers ?? {}).find((candidate) => candidate.componentName === name);
+          if (participant?.participantId && typeof answer?.startTime === 'number' && typeof answer.endTime === 'number') {
+            database.close();
+            resolve({
+              participantId: participant.participantId,
+              startTime: answer.startTime,
+              endTime: answer.endTime,
+            });
+            return;
+          }
+        }
+        database.close();
+        resolve(null);
+      };
+    };
+  }), componentName);
+}
+
 export async function resetClientStudyState(page: Page) {
   await page.goto('/');
 
@@ -126,4 +162,84 @@ export async function waitForStudyEndMessage(page: Page, timeout = 30000) {
   if (!(await defaultCompleted.isVisible()) && !(await prolificCompleted.isVisible())) {
     await expect(defaultCompleted.or(prolificCompleted)).toBeVisible({ timeout });
   }
+}
+
+export async function readStoredValue<T>(page: Page, key: string): Promise<T | null> {
+  return page.evaluate(async (storageKey) => new Promise<T | null>((resolve) => {
+    const openRequest = indexedDB.open('revisit');
+
+    openRequest.onerror = () => resolve(null);
+    openRequest.onsuccess = () => {
+      const database = openRequest.result;
+      if (!database.objectStoreNames.contains('keyvaluepairs')) {
+        database.close();
+        resolve(null);
+        return;
+      }
+
+      const transaction = database.transaction('keyvaluepairs', 'readonly');
+      const getRequest = transaction.objectStore('keyvaluepairs').get(storageKey);
+      getRequest.onerror = () => resolve(null);
+      getRequest.onsuccess = () => resolve((getRequest.result as T | undefined) ?? null);
+      transaction.oncomplete = () => database.close();
+    };
+  }), key);
+}
+
+export async function readParticipantRecording(
+  page: Page,
+  studyId: string,
+  identifier: string,
+) {
+  const assignments = await readStoredValue<Record<string, unknown>>(
+    page,
+    `dev-${studyId}/sequenceAssignment`,
+  );
+  const participantId = Object.keys(assignments ?? {})[0];
+  if (!participantId) {
+    return null;
+  }
+
+  const participant = await readStoredValue<{
+    answers?: Record<string, {
+      answer?: Record<string, unknown>;
+      startTime?: number;
+      endTime?: number;
+    }>;
+  }>(page, `dev-${studyId}/participants/${participantId}_participantData`);
+  const answer = participant?.answers?.[identifier];
+  if (
+    typeof answer?.startTime !== 'number'
+    || typeof answer.endTime !== 'number'
+    || answer.startTime <= 0
+    || answer.endTime < answer.startTime
+  ) {
+    return null;
+  }
+
+  return {
+    answer: answer.answer ?? {},
+    endTime: answer.endTime,
+    participantId,
+    startTime: answer.startTime,
+  };
+}
+
+export async function seekReplay(
+  page: Page,
+  startTime: number,
+  endTime: number,
+  targetTime: number,
+) {
+  const timer = page.getByTestId('replay-timer');
+  await expect(timer).toBeVisible();
+  const timerBounds = await timer.boundingBox();
+  if (!timerBounds) {
+    throw new Error('Analysis replay timer has no bounds');
+  }
+
+  const duration = endTime - startTime;
+  const fraction = duration === 0 ? 0 : (targetTime - startTime) / duration;
+  const x = 20 + Math.min(1, Math.max(0, fraction)) * (timerBounds.width - 40);
+  await timer.click({ position: { x, y: timerBounds.height / 2 } });
 }

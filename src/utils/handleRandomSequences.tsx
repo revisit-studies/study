@@ -17,6 +17,7 @@ import { Sequence } from '../store/types';
 import {
   FactorRuntimePlanBlock, isDynamicBlock, isFactorBlock, isFactorPlanBlock, isFactorRuntimePlanBlock,
 } from '../parser/utils';
+import { getComponent } from './handleComponentInheritance';
 
 type SequenceBlock = ComponentBlock | DynamicBlock | FactorBlock | FactorRuntimePlanBlock;
 type BetweenSubjectsFactorLevel = FactorPrimitive | FactorObject;
@@ -113,7 +114,7 @@ function getComponentParameters(
   componentName: string,
   config: StudyConfig,
 ): Record<string, unknown> | undefined {
-  const component = config.components[componentName];
+  const component = getComponent(componentName, config);
 
   if (component && typeof component === 'object' && 'parameters' in component && component.parameters && typeof component.parameters === 'object' && !Array.isArray(component.parameters)) {
     return component.parameters;

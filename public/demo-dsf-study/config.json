@@ -51,8 +51,8 @@
       "nextButtonLocation": "belowStimulus",
       "response": [],
       "parameters": {
-        "dataContext": "@dataContext",
-        "format": "@serializationFormat",
+        "dataContext": "{{dataContext}}",
+        "format": "{{serializationFormat}}",
         "taskType": "reading",
         "taskId": "reading"
       }
@@ -64,8 +64,8 @@
       "nextButtonLocation": "belowStimulus",
       "response": [],
       "parameters": {
-        "dataContext": "@dataContext",
-        "format": "@serializationFormat",
+        "dataContext": "{{dataContext}}",
+        "format": "{{serializationFormat}}",
         "taskType": "authoring",
         "taskId": "authoring"
       }
@@ -77,8 +77,8 @@
       "nextButtonLocation": "belowStimulus",
       "response": [],
       "parameters": {
-        "dataContext": "@dataContext",
-        "format": "@serializationFormat",
+        "dataContext": "{{dataContext}}",
+        "format": "{{serializationFormat}}",
         "taskType": "modifying",
         "taskId": "modifying"
       }

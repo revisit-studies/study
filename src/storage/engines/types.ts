@@ -2,6 +2,7 @@ import localforage from 'localforage';
 import throttle from 'lodash.throttle';
 import { v4 as uuidv4 } from 'uuid';
 import { StudyConfig } from '../../parser/types';
+import { DISTINCT_COLOR_PALETTE } from '../../utils/colors';
 import { ParticipantMetadata, Sequence, StoredProvenance } from '../../store/types';
 import { ParticipantData, ParticipantDataWithStatus } from '../types';
 import { hash, isParticipantData } from './utils/storageEngineHelpers';
@@ -45,6 +46,7 @@ export type SequenceAssignment = {
   isDynamic: boolean; // Whether the study contains dynamic blocks
   stage: string; // The stage of the participant in the study
   conditions?: string[]; // The study condition(s) assigned to this participant.
+  betweenSubjectsCombinationKey?: string; // The between-subjects combination assigned to this participant.
 };
 
 export type REVISIT_MODE = 'dataCollectionEnabled' | 'developmentModeEnabled' | 'dataSharingEnabled';
@@ -68,6 +70,33 @@ export function cleanupModes(modes: Record<string, boolean>): Record<REVISIT_MOD
 export interface StageInfo {
   stageName: string;
   color: string;
+  /** Maximum number of non-rejected participants allowed in this stage. Undefined means unlimited. */
+  maxParticipants?: number;
+  /** Disabled between-subjects condition keys. Undefined means every condition is enabled. */
+  disabledBetweenSubjectsCombinations?: string[];
+  /** Optional manual target participant-count overrides for individual between-subjects conditions. */
+  desiredParticipantsByCombination?: Record<string, number>;
+}
+
+export class StageCapacityExceededError extends Error {
+  constructor(public readonly stageName: string) {
+    super(`The ${stageName} stage has reached its participant limit`);
+    this.name = 'StageCapacityExceededError';
+  }
+}
+
+export class StageNoAvailableConditionsError extends Error {
+  constructor(public readonly stageName: string) {
+    super(`The ${stageName} stage has no enabled between-subjects conditions`);
+    this.name = 'StageNoAvailableConditionsError';
+  }
+}
+
+export class StageOnlyDisabledConditionsHaveCapacityError extends Error {
+  constructor(public readonly stageName: string) {
+    super(`The ${stageName} stage only has capacity in disabled between-subjects conditions`);
+    this.name = 'StageOnlyDisabledConditionsHaveCapacityError';
+  }
 }
 
 interface StageData {
@@ -85,7 +114,71 @@ export interface ConditionData {
   conditionCounts: Record<string, number>;
 }
 
-const defaultStageColor = '#F05A30';
+const defaultStageColor = DISTINCT_COLOR_PALETTE[0];
+
+export function getStageParticipantCounts(sequenceAssignments: SequenceAssignment[]) {
+  return sequenceAssignments.reduce<Record<string, number>>((counts, assignment) => {
+    if (!assignment.rejected) {
+      counts[assignment.stage] = (counts[assignment.stage] || 0) + 1;
+    }
+    return counts;
+  }, {});
+}
+
+export function getBetweenSubjectsCombinationKey(
+  parameters: Record<string, unknown> | undefined,
+  factorNames: string[],
+) {
+  return JSON.stringify(factorNames.map((factorName) => [factorName, parameters?.[factorName]]));
+}
+
+export function isSequenceEnabledForStage(
+  sequence: Sequence,
+  stage: StageInfo,
+  betweenSubjects: string[],
+) {
+  const disabledCombinations = stage.disabledBetweenSubjectsCombinations;
+  if (!disabledCombinations) {
+    return true;
+  }
+
+  return !disabledCombinations.includes(
+    getBetweenSubjectsCombinationKey(sequence.parameters, betweenSubjects),
+  );
+}
+
+function getDesiredParticipantCountsByCombination(
+  stage: StageInfo,
+  sequenceArray: Sequence[],
+  betweenSubjects: string[],
+) {
+  if (stage.maxParticipants === undefined || betweenSubjects.length === 0) {
+    return undefined;
+  }
+
+  const combinationKeys = [...new Set(sequenceArray.map((sequence) => (
+    getBetweenSubjectsCombinationKey(sequence.parameters, betweenSubjects)
+  )))];
+  const manuallySpecifiedCounts = stage.desiredParticipantsByCombination || {};
+  const manualCount = combinationKeys.reduce(
+    (total, key) => total + (manuallySpecifiedCounts[key] ?? 0),
+    0,
+  );
+  const unspecifiedCombinationKeys = combinationKeys.filter((key) => !Object.hasOwn(manuallySpecifiedCounts, key));
+  const remainingCount = Math.max(stage.maxParticipants - manualCount, 0);
+  const countPerUnspecifiedCombination = unspecifiedCombinationKeys.length === 0
+    ? 0
+    : Math.floor(remainingCount / unspecifiedCombinationKeys.length);
+  const remainder = unspecifiedCombinationKeys.length === 0
+    ? 0
+    : remainingCount % unspecifiedCombinationKeys.length;
+
+  return Object.fromEntries(combinationKeys.map((key) => [
+    key,
+    manuallySpecifiedCounts[key]
+      ?? countPerUnspecifiedCombination + (unspecifiedCombinationKeys.indexOf(key) < remainder ? 1 : 0),
+  ]));
+}
 
 export type StorageObjectType = 'sequenceArray' | 'participantData' | 'config' | string;
 export type StorageObject<T extends StorageObjectType> =
@@ -191,6 +284,8 @@ export abstract class StorageEngine {
 
   private participantDataWriteErrorListeners = new Set<(error: Error) => void>();
 
+  private participantRejectionListeners = new Set<() => void>();
+
   private pendingAssetUploads = new Map<string, Promise<void>>();
 
   private pendingAssetOperations = new Set<Promise<unknown>>();
@@ -225,6 +320,14 @@ export abstract class StorageEngine {
 
     return () => {
       this.participantDataWriteErrorListeners.delete(callback);
+    };
+  }
+
+  subscribeToCurrentParticipantRejection(callback: () => void) {
+    this.participantRejectionListeners.add(callback);
+
+    return () => {
+      this.participantRejectionListeners.delete(callback);
     };
   }
 
@@ -483,6 +586,25 @@ export abstract class StorageEngine {
     const write = async () => {
       this.participantDataWriteError = null;
       try {
+        // An admin can reject a participant in another browser while this
+        // client still has a debounced full-record write pending. Read the
+        // latest record immediately before writing so that stale snapshots
+        // cannot clear that rejection.
+        const latestParticipant = await this._getFromStorage(
+          `participants/${participantId}`,
+          'participantData',
+        );
+        if (isParticipantData(latestParticipant) && latestParticipant.rejected) {
+          if (participantId === this.currentParticipantId) {
+            this.participantData = latestParticipant;
+            this.clearPendingParticipantDataWriteTimer();
+            this.pendingParticipantDataWrite = undefined;
+            await this.cacheParticipantDataSnapshot(latestParticipant, participantId);
+            this.participantRejectionListeners.forEach((listener) => listener());
+          }
+          return;
+        }
+
         await this._pushToStorage(
           `participants/${participantId}`,
           'participantData',
@@ -705,7 +827,12 @@ export abstract class StorageEngine {
   }
 
   // Setting current stage
-  async setCurrentStage(studyId: string, stageName: string, color: string = defaultStageColor): Promise<void> {
+  async setCurrentStage(
+    studyId: string,
+    stageName: string,
+    color: string = defaultStageColor,
+    maxParticipants?: number,
+  ): Promise<void> {
     const modesDoc = await this.getModes(studyId);
 
     // Initialize if doesn't exist or invalid
@@ -722,7 +849,11 @@ export abstract class StorageEngine {
     );
 
     if (existingStageIndex === -1) {
-      modesDoc.stage.allStages.push({ stageName, color });
+      modesDoc.stage.allStages.push({
+        stageName,
+        color,
+        ...(maxParticipants === undefined ? {} : { maxParticipants }),
+      });
     }
 
     modesDoc.stage.currentStage = { stageName, color };
@@ -737,18 +868,68 @@ export abstract class StorageEngine {
 
   // Updating stage color
   async updateStageColor(studyId: string, stageName: string, color: string): Promise<void> {
+    await this.updateStage(studyId, stageName, { color });
+  }
+
+  async updateStage(
+    studyId: string,
+    stageName: string,
+    updates: {
+      color?: string;
+      maxParticipants?: number | null;
+      disabledBetweenSubjectsCombinations?: string[] | null;
+      desiredParticipantsByCombination?: Record<string, number> | null;
+    },
+  ): Promise<void> {
     const modesDoc = await this.getModes(studyId);
 
     if (!modesDoc.stage) {
       throw new Error('Stage data not initialized');
     }
 
+    const updatesMaxParticipants = Object.hasOwn(updates, 'maxParticipants');
+    const updatesDisabledBetweenSubjectsCombinations = Object.hasOwn(updates, 'disabledBetweenSubjectsCombinations');
+    const updatesDesiredParticipantsByCombination = Object.hasOwn(updates, 'desiredParticipantsByCombination');
     const updatedAllStages = modesDoc.stage.allStages.map(
-      (s) => (s.stageName === stageName ? { ...s, color } : s),
+      (stage) => {
+        if (stage.stageName !== stageName) {
+          return stage;
+        }
+
+        const updatedStage = {
+          ...stage,
+          ...(updates.color === undefined ? {} : { color: updates.color }),
+        };
+        if (updatesMaxParticipants) {
+          if (updates.maxParticipants === null) {
+            delete updatedStage.maxParticipants;
+          } else {
+            updatedStage.maxParticipants = updates.maxParticipants;
+          }
+        }
+        if (updatesDisabledBetweenSubjectsCombinations) {
+          if (updates.disabledBetweenSubjectsCombinations === null) {
+            delete updatedStage.disabledBetweenSubjectsCombinations;
+          } else {
+            updatedStage.disabledBetweenSubjectsCombinations = updates.disabledBetweenSubjectsCombinations;
+          }
+        }
+        if (updatesDesiredParticipantsByCombination) {
+          if (updates.desiredParticipantsByCombination === null) {
+            delete updatedStage.desiredParticipantsByCombination;
+          } else {
+            updatedStage.desiredParticipantsByCombination = updates.desiredParticipantsByCombination;
+          }
+        }
+        return updatedStage;
+      },
     );
 
     const updatedCurrentStage = modesDoc.stage.currentStage.stageName === stageName
-      ? { ...modesDoc.stage.currentStage, color }
+      ? {
+        ...modesDoc.stage.currentStage,
+        ...(updates.color === undefined ? {} : { color: updates.color }),
+      }
       : modesDoc.stage.currentStage;
 
     const updatedStageData = {
@@ -867,7 +1048,11 @@ export abstract class StorageEngine {
   // This function is one of the most critical functions in the storage engine.
   // It uses the notion of sequence intents and assignments to determine the current sequence for the participant.
   // It handles rejected participants and allows for reusing a rejected participant's sequence.
-  protected async _getSequence(conditions?: string[], bootstrapData?: ModesAndStageData) {
+  protected async _getSequence(
+    conditions?: string[],
+    bootstrapData?: ModesAndStageData,
+    config?: StudyConfig,
+  ) {
     if (!this.currentParticipantId) {
       throw new Error('Participant not initialized');
     }
@@ -878,6 +1063,75 @@ export abstract class StorageEngine {
 
     const { modes, stageData } = bootstrapData ?? await this.getModesAndStageData(this.studyId);
     const currentStage = stageData.currentStage.stageName;
+    const sequenceArray = await this.getSequenceArray();
+    if (!sequenceArray) {
+      throw new Error('Latin square not initialized');
+    }
+
+    const currentStageInfo = stageData.allStages.find((stage) => stage.stageName === currentStage);
+    const enabledSequenceArray = currentStageInfo && config
+      ? sequenceArray.filter((sequence) => isSequenceEnabledForStage(
+        sequence,
+        currentStageInfo,
+        config.betweenSubjects || [],
+      ))
+      : sequenceArray;
+    if (enabledSequenceArray.length === 0) {
+      throw new StageNoAvailableConditionsError(currentStage);
+    }
+
+    let availableSequenceArray = enabledSequenceArray;
+    const betweenSubjects = config?.betweenSubjects || [];
+    const desiredParticipantCountsByCombination = currentStageInfo
+      ? getDesiredParticipantCountsByCombination(currentStageInfo, sequenceArray, betweenSubjects)
+      : undefined;
+    if (desiredParticipantCountsByCombination && currentStageInfo) {
+      const combinationCounts: Record<string, number> = {};
+      const assignmentsMissingCombinationKey = sequenceAssignments.filter((assignment) => (
+        !assignment.rejected
+        && assignment.stage === currentStage
+        && assignment.betweenSubjectsCombinationKey === undefined
+      ));
+
+      sequenceAssignments.forEach((assignment) => {
+        if (!assignment.rejected && assignment.stage === currentStage && assignment.betweenSubjectsCombinationKey) {
+          combinationCounts[assignment.betweenSubjectsCombinationKey] = (
+            combinationCounts[assignment.betweenSubjectsCombinationKey] || 0
+          ) + 1;
+        }
+      });
+
+      const missingCombinationKeys = await Promise.all(assignmentsMissingCombinationKey.map(async (assignment) => {
+        const participant = await this._getFromStorage(
+          `participants/${assignment.participantId}`,
+          'participantData',
+        );
+        return isParticipantData(participant)
+          ? getBetweenSubjectsCombinationKey(participant.sequence.parameters, betweenSubjects)
+          : undefined;
+      }));
+      missingCombinationKeys.forEach((combinationKey) => {
+        if (combinationKey) {
+          combinationCounts[combinationKey] = (combinationCounts[combinationKey] || 0) + 1;
+        }
+      });
+
+      const hasRemainingCapacity = (sequence: Sequence) => {
+        const combinationKey = getBetweenSubjectsCombinationKey(sequence.parameters, betweenSubjects);
+        return (combinationCounts[combinationKey] || 0) < desiredParticipantCountsByCombination[combinationKey];
+      };
+      availableSequenceArray = enabledSequenceArray.filter(hasRemainingCapacity);
+      if (availableSequenceArray.length === 0) {
+        const hasCapacityInDisabledCondition = sequenceArray.some((sequence) => (
+          !isSequenceEnabledForStage(sequence, currentStageInfo, betweenSubjects)
+          && hasRemainingCapacity(sequence)
+        ));
+        if (hasCapacityInDisabledCondition) {
+          throw new StageOnlyDisabledConditionsHaveCapacityError(currentStage);
+        }
+        throw new StageCapacityExceededError(currentStage);
+      }
+    }
 
     // Find all rejected documents
     const rejectedDocs = sequenceAssignments
@@ -927,30 +1181,29 @@ export abstract class StorageEngine {
     // Query all the intents to get a sequence and find our position in the queue
     sequenceAssignments = await this.getAllSequenceAssignments(this.studyId);
 
-    // Get the latin square
-    const sequenceArray = await this.getSequenceArray();
-    if (!sequenceArray) {
-      throw new Error('Latin square not initialized');
-    }
-
     // Get the current row
-    const intentIndex = sequenceAssignments.filter((assignment) => !assignment.rejected).findIndex(
+    const intentIndex = sequenceAssignments.filter(
+      (assignment) => !assignment.rejected && assignment.stage === currentStage,
+    ).findIndex(
       (assignment) => assignment.participantId === this.currentParticipantId,
-    ) % sequenceArray.length;
-    if (sequenceArray.length === 0) {
-      throw new Error('Something really bad happened with sequence assignment');
-    }
+    ) % availableSequenceArray.length;
     // If index = -1, we probably have data collection disabled. Give a random assignment.
     if (intentIndex === -1) {
       return {
-        currentRow: sequenceArray[Math.floor(Math.random() * sequenceArray.length)],
+        currentRow: availableSequenceArray[Math.floor(Math.random() * availableSequenceArray.length)],
         creationIndex: 1,
       };
     }
-    const currentRow = sequenceArray[intentIndex];
+    const currentRow = availableSequenceArray[intentIndex];
 
     if (!currentRow) {
       throw new Error('Latin square is empty');
+    }
+
+    if (modes.dataCollectionEnabled && betweenSubjects.length > 0) {
+      await this._updateSequenceAssignmentFields(this.currentParticipantId, {
+        betweenSubjectsCombinationKey: getBetweenSubjectsCombinationKey(currentRow.parameters, betweenSubjects),
+      });
     }
 
     const creationSorted = sequenceAssignments.sort((a, b) => a.createdTime - b.createdTime);
@@ -1000,11 +1253,20 @@ export abstract class StorageEngine {
       await this.cacheParticipantDataSnapshot(participant, this.currentParticipantId);
       return participant;
     }
+
+    const currentStageInfo = stageData.allStages.find((stage) => stage.stageName === currentStage);
+    if (modes.dataCollectionEnabled && currentStageInfo?.maxParticipants !== undefined) {
+      const stageParticipantCounts = getStageParticipantCounts(await this.getAllSequenceAssignments(this.studyId));
+      if ((stageParticipantCounts[currentStage] || 0) >= currentStageInfo.maxParticipants) {
+        throw new StageCapacityExceededError(currentStage);
+      }
+    }
+
     // Initialize participant
     const participantConfigHash = await hash(JSON.stringify(config));
     const parsedConditions = parseConditionParam(searchParams.condition);
     const conditions = parsedConditions.length > 0 ? parsedConditions : undefined;
-    const { currentRow, creationIndex } = await this._getSequence(conditions, { modes, stageData });
+    const { currentRow, creationIndex } = await this._getSequence(conditions, { modes, stageData }, config);
     this.participantData = {
       participantId: this.currentParticipantId,
       participantConfigHash,

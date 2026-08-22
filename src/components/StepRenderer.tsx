@@ -1,4 +1,6 @@
-import { AppShell, Button, Flex } from '@mantine/core';
+import {
+  AppShell, Button, Center, Flex, Loader, Stack, Text,
+} from '@mantine/core';
 import { Outlet } from 'react-router';
 import {
   useEffect, useMemo, useRef,
@@ -28,10 +30,25 @@ import { ReplayContext, useReplay } from '../store/hooks/useReplay';
 import { DeviceWarning } from './interface/DeviceWarning';
 import { handleBeforeUnload, shouldConfirmTabClose } from '../utils/closeTabConfirmation';
 import { useStorageEngine } from '../storage/storageEngineHooks';
+import { useIsStartupPreview } from './StartupPreviewContext';
 
 const STUDY_BROWSER_WIDTH = 360;
 
+function StartupPreviewAside() {
+  return (
+    <AppShell.Aside className="studyBrowser" data-testid="startup-preview-aside" p="0">
+      <Center h="100%">
+        <Stack align="center" gap="sm">
+          <Loader size="sm" />
+          <Text size="sm">Preparing study browser…</Text>
+        </Stack>
+      </Center>
+    </AppShell.Aside>
+  );
+}
+
 export function StepRenderer() {
+  const isStartupPreview = useIsStartupPreview();
   const windowEvents = useRef<EventType[]>([]);
   const dispatch = useStoreDispatch();
   const { toggleStudyBrowser, setAlertModal } = useStoreActions();
@@ -61,7 +78,7 @@ export function StepRenderer() {
   const analysisCanPlayScreenRecording = useStoreSelector((state) => state.analysisCanPlayScreenRecording);
 
   useEffect(() => {
-    if (!storageEngine) {
+    if (isStartupPreview || !storageEngine) {
       return undefined;
     }
 
@@ -73,7 +90,7 @@ export function StepRenderer() {
         title: 'Failed to Save Response',
       }));
     });
-  }, [dispatch, setAlertModal, storageEngine]);
+  }, [dispatch, isStartupPreview, setAlertModal, storageEngine]);
 
   // Attach event listeners
   useEffect(() => {
@@ -199,17 +216,22 @@ export function StepRenderer() {
             footer={{ height: isAnalysis ? 125 + (hasAudio ? 55 : 0) : 0 }}
             style={{ '--app-shell-aside-offset': '0rem' } as CSSProperties}
           >
-            {asideOpen && <AppAside />}
+            {asideOpen && (isStartupPreview ? <StartupPreviewAside /> : <AppAside />)}
             {showTitleBar && (
             <AppHeader developmentModeEnabled={developmentModeEnabled} dataCollectionEnabled={dataCollectionEnabled} />
             )}
-            <DeviceWarning developmentModeEnabled={developmentModeEnabled} />
+            {!isStartupPreview && <DeviceWarning developmentModeEnabled={developmentModeEnabled} />}
             {isScreenRecordingUserRejected && <ScreenRecordingRejection />}
             <HelpModal />
             <AlertModal />
             <ConfigVersionWarningModal />
             <Flex direction="row" gap="xs" style={{ width: '100%', maxWidth: rowMaxWidth }}>
-              <AppNavBar width={sidebarWidth} top={showTitleBar ? 70 : 0} sidebarOpen={sidebarOpen} />
+              <AppNavBar
+                width={sidebarWidth}
+                top={showTitleBar ? 70 : 0}
+                bottom={isAnalysis ? 125 + (hasAudio ? 55 : 0) : 0}
+                sidebarOpen={sidebarOpen}
+              />
               {/* 10px is the gap between the sidebar and the main content */}
               <AppShell.Main
                 className="main"

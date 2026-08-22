@@ -384,6 +384,22 @@ describe('factor sequence actions', () => {
     expect(result.errors).toEqual([]);
   });
 
+  test('parses the Markdown templating factors demo', async () => {
+    const config = readFileSync(
+      'public/demo-markdown-factors/config.json',
+      'utf8',
+    );
+
+    const result = await parseStudyConfig(config);
+    const rootSequence = result.sequence as ComponentBlock;
+    const trialSequence = rootSequence.components[0] as ComponentBlock;
+
+    expect(result.errors).toEqual([]);
+    expect(trialSequence.components).toHaveLength(4);
+    expect(result.components['markdownFactorTrials__animal=%22cat%22__color=%22blue%22__factorTemplate'])
+      .toMatchObject({ description: 'Animal: cat; color: blue' });
+  });
+
   test('uses subtract to produce 90 incongruent Stroop trials', async () => {
     const config = readFileSync(
       'public/demo-stroop-factors/config.json',
@@ -393,7 +409,7 @@ describe('factor sequence actions', () => {
     const result = await parseStudyConfig(config);
     const rootSequence = result.sequence as ComponentBlock;
     const trialSequence = rootSequence.components[1] as ComponentBlock;
-    const redWordBlueInkId = 'stroopTrials__word=RED__inkColor=BLUE__stroopTrial';
+    const redWordBlueInkId = 'stroopTrials__word=%22RED%22__inkColor=%22BLUE%22__stroopTrial';
 
     expect(result.errors).toEqual([]);
     expect(trialSequence).toMatchObject({

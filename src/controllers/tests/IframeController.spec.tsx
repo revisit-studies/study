@@ -7,11 +7,13 @@ import {
 } from 'vitest';
 import { IframeController } from '../IframeController';
 import type { WebsiteComponent } from '../../parser/types';
+import { ReplayContext } from '../../store/hooks/useReplay';
 
 const mockDispatch = vi.fn();
 const mockSetReactiveAnswers = vi.fn((payload) => ({ type: 'setReactiveAnswers', payload }));
 const mockUpdateProvenance = vi.fn((payload) => ({ type: 'updateProvenance', payload }));
 const mockUpdateResponseBlockValidation = vi.fn((payload) => ({ type: 'updateResponseBlockValidation', payload }));
+const mockIsAnalysis = { value: false };
 
 vi.mock('react-redux', () => ({
   useDispatch: () => vi.fn(),
@@ -23,7 +25,7 @@ vi.mock('../../routes/utils', () => ({
 }));
 
 vi.mock('../../store/hooks/useIsAnalysis', () => ({
-  useIsAnalysis: () => false,
+  useIsAnalysis: () => mockIsAnalysis.value,
 }));
 
 vi.mock('../../store/store', () => ({
@@ -43,6 +45,7 @@ vi.mock('../../utils/Prefix', () => ({
 describe('IframeController', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockIsAnalysis.value = false;
   });
 
   afterEach(() => {
@@ -133,6 +136,18 @@ describe('IframeController', () => {
     expect(html).toContain('/');
   });
 
+  test('makes the iframe inert and non-interactive during analysis replay', () => {
+    mockIsAnalysis.value = true;
+    const { container } = render(
+      <IframeController currentConfig={{ type: 'website', path: 'my-study/index.html', response: [] }} answers={{}} />,
+    );
+    const iframe = container.querySelector('iframe');
+
+    expect(iframe?.hasAttribute('inert')).toBe(true);
+    expect(iframe?.getAttribute('aria-disabled')).toBe('true');
+    expect(iframe?.style.pointerEvents).toBe('none');
+  });
+
   test('resends provenance snapshots when the iframe reports ready', async () => {
     const currentConfig: WebsiteComponent = {
       type: 'website',
@@ -179,5 +194,47 @@ describe('IframeController', () => {
       },
       '*',
     );
+  });
+
+  test('uses saved answers until analysis replay starts', async () => {
+    mockIsAnalysis.value = true;
+    const provState = { selectedIds: [] };
+    const answers = { task: { answer: { 'iframe-task': ['Saved node'] } } } as never;
+    const renderController = (seekTime: number) => (
+      <ReplayContext.Provider value={{ seekTime, isPlaying: false } as never}>
+        <IframeController
+          currentConfig={{ type: 'website', path: 'example/index.html', response: [] }}
+          provState={provState}
+          answers={answers}
+        />
+      </ReplayContext.Provider>
+    );
+    const { rerender } = render(renderController(0));
+    const iframe = document.querySelector('iframe')!;
+    const postMessage = vi.fn();
+    Object.defineProperty(iframe, 'contentWindow', {
+      value: { postMessage },
+      configurable: true,
+    });
+
+    await waitFor(() => expect(iframe.src).toContain('id='));
+    const iframeId = new URL(iframe.src).searchParams.get('id');
+    window.dispatchEvent(new MessageEvent('message', {
+      data: { type: '@REVISIT_COMMS/WINDOW_READY', iframeId },
+    }));
+
+    expect(postMessage).toHaveBeenCalledWith(expect.objectContaining({
+      type: '@REVISIT_COMMS/ANSWERS',
+      message: answers,
+    }), '*');
+    expect(postMessage).not.toHaveBeenCalledWith(expect.objectContaining({
+      type: '@REVISIT_COMMS/PROVENANCE',
+    }), '*');
+
+    rerender(renderController(1));
+    await waitFor(() => expect(postMessage).toHaveBeenCalledWith(expect.objectContaining({
+      type: '@REVISIT_COMMS/PROVENANCE',
+      message: provState,
+    }), '*'));
   });
 });

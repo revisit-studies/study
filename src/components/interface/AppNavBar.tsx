@@ -6,8 +6,17 @@ import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { ResponseBlock } from '../response/ResponseBlock';
 import { useCurrentComponent } from '../../routes/utils';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
+import { compileTemplate } from '../../utils/handlebars';
+import { useTemplateAnswerContext } from '../../store/hooks/useTemplateAnswerContext';
 
-export function AppNavBar({ width, top, sidebarOpen }: { width: number, top: number, sidebarOpen: boolean }) {
+export function AppNavBar({
+  width, top, bottom, sidebarOpen,
+}: {
+  width: number,
+  top: number,
+  bottom: number,
+  sidebarOpen: boolean,
+}) {
   // Get the config for the current step
   const studyConfig = useStudyConfig();
   const currentComponent = useCurrentComponent();
@@ -22,13 +31,29 @@ export function AppNavBar({ width, top, sidebarOpen }: { width: number, top: num
   }, [stepConfig, studyConfig]);
 
   const status = useStoredAnswer();
+  const templateData = useTemplateAnswerContext();
 
-  const instruction = currentConfig?.instruction || '';
+  const instruction = useMemo(
+    () => compileTemplate(currentConfig?.instruction || '', currentConfig?.parameters ?? {}, { data: templateData }),
+    [currentConfig?.instruction, currentConfig?.parameters, templateData],
+  );
   const instructionLocation = useMemo(() => currentConfig?.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar', [currentConfig, studyConfig]);
   const instructionInSideBar = instructionLocation === 'sidebar';
 
   return currentConfig ? (
-    <Box className="sidebar" bg="gray.1" display={sidebarOpen ? 'block' : 'none'} style={{ zIndex: 0, marginTop: top, position: 'relative' }} w={width} miw={width}>
+    <Box
+      className="sidebar"
+      bg="gray.1"
+      display={sidebarOpen ? 'block' : 'none'}
+      style={{
+        marginBottom: bottom,
+        marginTop: top,
+        position: 'relative',
+        zIndex: 0,
+      }}
+      w={width}
+      miw={width}
+    >
       {instructionInSideBar && instruction !== '' && (
         <Box
           bg="gray.3"

@@ -282,15 +282,17 @@ export function StepsPanel({
           isLibraryImport,
           importedLibraryName,
         } = parseLibraryComponentReference(key);
+        const component = studyComponentToIndividualComponent(studyConfig.components[key], studyConfig);
 
         return {
           type: 'component',
-          label,
+          label: component.description || label,
           indentLevel: 0,
           path: `browse.${key}`,
           href: `/${studyId}/reviewer-${key}`,
           isLibraryImport,
           importedLibraryName,
+          component,
           componentName: key,
         };
       });
@@ -320,6 +322,9 @@ export function StepsPanel({
             isLibraryImport,
             importedLibraryName,
           } = parseLibraryComponentReference(node);
+          const component = studyConfig.components[node]
+            ? studyComponentToIndividualComponent(studyConfig.components[node], studyConfig)
+            : undefined;
 
           // Generate component identifier for participantAnswers lookup
           const componentIdentifier = dynamic ? `${parentNode.id}_${idx}_${node}_${dynamicIdx}` : `${node}_${idx}`;
@@ -328,7 +333,7 @@ export function StepsPanel({
 
           newFlatTree.push({
             type: 'component',
-            label,
+            label: component?.description || label,
             indentLevel,
             path: componentPath,
             isExcluded: isSkipped,
@@ -340,7 +345,7 @@ export function StepsPanel({
             // Component Attributes
             href: dynamic ? `/${studyId}/${encryptIndex(idx)}/${encryptIndex(dynamicIdx)}` : `/${studyId}/${encryptIndex(idx)}`,
             isInterruption: (parentNode.interruptions || []).flatMap((intr) => intr.components).includes(node),
-            component: studyConfig.components[node],
+            component,
             componentAnswer: participantAnswers[componentIdentifier],
             componentName: node,
           });

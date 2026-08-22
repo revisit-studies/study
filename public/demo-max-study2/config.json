@@ -4168,7 +4168,7 @@
     "evaluationTrial": {
       "type": "react-component",
       "path": "demo-max-study2/assets/DataExplorer.tsx",
-      "instruction": "@instruction",
+      "instruction": "{{instruction}}",
       "instructionLocation": "aboveStimulus",
       "nextButtonLocation": "belowStimulus",
       "response": [
@@ -4176,7 +4176,7 @@
           "id": "action",
           "type": "slider",
           "location": "belowStimulus",
-          "prompt": "@actionPrompt",
+          "prompt": "{{actionPrompt}}",
           "startingValue": 50,
           "spacing": 25,
           "options": [
@@ -4215,7 +4215,7 @@
           "id": "support",
           "type": "likert",
           "location": "belowStimulus",
-          "prompt": "@supportPrompt",
+          "prompt": "{{supportPrompt}}",
           "numItems": 5,
           "leftLabel": "Strongly disagree",
           "rightLabel": "Strongly agree",
