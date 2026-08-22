@@ -8,7 +8,7 @@ on:
 jobs:
   webkit:
     name: 🧪 WebKit full E2E suite
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 60
     env:
       PLAYWRIGHT_BROWSERS_PATH: /Users/runner/Library/Caches/ms-playwright
@@ -35,7 +35,7 @@ jobs:
         id: playwright-cache
         with:
           path: /Users/runner/Library/Caches/ms-playwright
-          key: ${{ runner.os }}-webkit-pw-${{ hashFiles('**/.playwright-version') }}
+          key: macos-15-webkit-pw-${{ hashFiles('**/.playwright-version') }}
 
       - name: Install Playwright WebKit
         if: steps.playwright-cache.outputs.cache-hit != 'true'
