@@ -1,0 +1,44 @@
+{
+    "nodeLink": {
+        "drawBars": false,
+        "selectNeighbors": true,
+        "nodeHeight": 55,
+        "nodeWidth": 55,
+        "labelSize": 12,
+        "labelAttr": "shortName",
+        "nodeFillAttr": null,
+        "nodeSizeAttr": null,
+        "edgeWidthAttr": "count",
+        "edgeStrokeAttr": "type",
+        "noEdgeColor": "black",
+        "noNodeFill": "white",
+        "noNodeStroke": "#c8c8c8",
+        "quantColors": [
+            "#7b7cb1",
+            "#01a068",
+            "#bf8531",
+            "#5472cf",
+            "#4d8615",
+            "#d63d61",
+            "#ae76ed",
+            "#f26336"
+        ]
+    },
+    "adjMatrix": {
+        "neighborHighlightColor": "",
+        "neighborSelect": true,
+        "edgeBars": true,
+        "sortKey": "shortName"
+    },
+    "loadedGraph": "large_undirected_multiEdge",
+    "isDirected": false,
+    "isMultiEdge": true,
+    "graphSize": "large",
+    "nodeAttributes": [],
+    "edgeAttributes": [
+        "type",
+        "count"
+    ],
+    "adjMatrixValues": {},
+    "nodeIsRect": false
+}
