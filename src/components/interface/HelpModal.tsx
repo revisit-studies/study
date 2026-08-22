@@ -29,6 +29,13 @@ export function HelpModal() {
 
   const templateData = useTemplateAnswerContext();
 
+  // helpTextPath can itself be templated (e.g. `help-{{condition}}.md`), so it must be resolved
+  // with the same parameters/answer context before it's used to fetch the asset.
+  const resolvedHelpTextPath = useMemo(
+    () => (helpTextPath ? compileTemplate(helpTextPath, componentConfig.parameters ?? {}, { noEscape: true, data: templateData }) : helpTextPath),
+    [helpTextPath, componentConfig.parameters, templateData],
+  );
+
   const templatedHelpText = useMemo(
     () => compileTemplate(helpText, componentConfig.parameters ?? {}, { data: templateData }),
     [helpText, componentConfig.parameters, templateData],
@@ -36,12 +43,12 @@ export function HelpModal() {
 
   useEffect(() => {
     async function fetchText() {
-      if (!helpTextPath) {
+      if (!resolvedHelpTextPath) {
         setFoundAsset(false);
         setLoading(false);
         return;
       }
-      const asset = await getStaticAssetByPath(`${PREFIX}${helpTextPath}`);
+      const asset = await getStaticAssetByPath(`${PREFIX}${resolvedHelpTextPath}`);
       if (asset !== undefined) {
         setHelpText(asset);
       } else {
@@ -51,13 +58,13 @@ export function HelpModal() {
     }
 
     fetchText();
-  }, [helpTextPath]);
+  }, [resolvedHelpTextPath]);
 
   return (
     <Modal className="helpModal" size="70%" opened={showHelpText} withCloseButton={false} onClose={() => storeDispatch(toggleShowHelpText())}>
       {loading || foundAsset
         ? <ReactMarkdownWrapper text={templatedHelpText} />
-        : <ResourceNotFound path={config.uiConfig.helpTextPath} />}
+        : <ResourceNotFound path={resolvedHelpTextPath} />}
     </Modal>
   );
 }
