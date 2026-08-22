@@ -244,6 +244,45 @@ describe('Text response validation config parsing', () => {
     }));
   });
 
+  test('validates text length constraints after merging inherited components', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig, {
+      baseComponents: {
+        sharedQuestion: {
+          type: 'questionnaire',
+          response: [{
+            id: 'inherited-text',
+            prompt: 'Inherited text response',
+            type: 'shortText',
+            minCharLength: 10,
+          }],
+        },
+      },
+      components: {
+        inheritedQuestion: {
+          baseComponent: 'sharedQuestion',
+          response: [{
+            id: 'inherited-text',
+            prompt: 'Inherited text response',
+            type: 'shortText',
+            maxCharLength: 5,
+          }],
+        },
+      },
+      sequence: {
+        order: 'fixed',
+        components: ['inheritedQuestion'],
+      },
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'minCharLength must be less than or equal to maxCharLength',
+      instancePath: '/components/inheritedQuestion/response/0',
+    }));
+  });
+
   test('rejects an unsupported text validation type', async () => {
     const result = await parseStudyConfig(JSON.stringify(makeStudyConfig('startsWith')));
 
