@@ -10,7 +10,7 @@ export function useStudyRecordings(studyConfig: StudyConfig | undefined) {
   const [hasScreenRecording, setHasScreenRecording] = useState(false);
 
   useEffect(() => {
-    if (!studyConfig) {
+    if (!studyConfig?.uiConfig || !studyConfig.components) {
       setHasAudioRecording(false);
       setHasScreenRecording(false);
       return;

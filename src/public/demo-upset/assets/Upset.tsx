@@ -63,7 +63,7 @@ export default function App({
   }, [isAnalysis, provenance, setAnswer]);
 
   return (
-    <div inert={(isAnalysis ? '' : undefined) as never}>
+    <div inert={isAnalysis}>
       <Upset
         data={processedMovies}
         extProvenance={extProvenance}

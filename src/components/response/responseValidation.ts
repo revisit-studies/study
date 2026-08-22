@@ -2,10 +2,13 @@ import isEqual from 'lodash.isequal';
 import {
   CheckboxResponse,
   DropdownResponse,
+  LongTextResponse,
   MatrixResponse,
   NumericalResponse,
   RankingResponse,
   Response,
+  ShortTextResponse,
+  TextValidationRule,
 } from '../../parser/types';
 import { CustomResponseValidate, StoredAnswer } from '../../store/types';
 import { parseStringOptions, parseStringOptionValue } from '../../utils/stringOptions';
@@ -101,6 +104,81 @@ export function checkNumericalResponse(response: NumericalResponse, value: numbe
     return `Please enter a value of ${max} or less`;
   }
   return null;
+}
+
+const DEFAULT_TEXT_VALIDATION_MESSAGES: Record<TextValidationRule['type'], string> = {
+  matchesRegex: 'Please enter a value that matches the required format.',
+  contains: 'Please enter a value containing the required text.',
+  doesNotContain: 'Please enter a value that does not contain the restricted text.',
+  equals: 'Please enter a value equal to the required text.',
+  doesNotEqual: 'Please enter a value that does not equal the restricted text.',
+};
+
+function textValidationRulePasses(rule: TextValidationRule, value: string) {
+  if (rule.type === 'equals') {
+    return value === rule.value;
+  }
+
+  if (rule.type === 'doesNotEqual') {
+    return value !== rule.value;
+  }
+
+  if (rule.type === 'contains') {
+    return value.includes(rule.value);
+  }
+
+  if (rule.type === 'doesNotContain') {
+    return !value.includes(rule.value);
+  }
+
+  try {
+    return new RegExp(rule.value).test(value);
+  } catch {
+    return false;
+  }
+}
+
+// Count words by splitting on whitespace and filtering out any empty strings or strings that don't contain letters or numbers
+function countWords(value: string) {
+  return value
+    .trim()
+    .split(/\s+/)
+    .filter((word) => /[\p{L}\p{N}]/u.test(word))
+    .length;
+}
+
+export function checkTextResponse(response: ShortTextResponse | LongTextResponse, value: string) {
+  const {
+    minCharLength, maxCharLength, minWordLength, maxWordLength,
+  } = response;
+
+  if (minCharLength !== undefined && maxCharLength !== undefined
+    && (value.length < minCharLength || value.length > maxCharLength)) {
+    return `Please enter between ${minCharLength} and ${maxCharLength} characters.`;
+  }
+  if (minCharLength !== undefined && value.length < minCharLength) {
+    return `Please enter at least ${minCharLength} characters.`;
+  }
+  if (maxCharLength !== undefined && value.length > maxCharLength) {
+    return `Please enter at most ${maxCharLength} characters.`;
+  }
+
+  const wordCount = countWords(value);
+  if (minWordLength !== undefined && maxWordLength !== undefined
+    && (wordCount < minWordLength || wordCount > maxWordLength)) {
+    return `Please enter between ${minWordLength} and ${maxWordLength} words.`;
+  }
+  if (minWordLength !== undefined && wordCount < minWordLength) {
+    return `Please enter at least ${minWordLength} words.`;
+  }
+  if (maxWordLength !== undefined && wordCount > maxWordLength) {
+    return `Please enter at most ${maxWordLength} words.`;
+  }
+
+  const failedRule = response.textValidation?.find((rule) => !textValidationRulePasses(rule, value));
+  return failedRule
+    ? DEFAULT_TEXT_VALIDATION_MESSAGES[failedRule.type]
+    : null;
 }
 
 // Instance keys (`instance-<index>-<optionValue>`) never collide with option values; legacy keys still parse.
@@ -313,6 +391,25 @@ export function validateResponse(
 
   if (isOtherSelectionIncomplete(response, value, values)) {
     return createValidationResult(response, 'invalid', { message: 'Please fill in Other to continue.' });
+  }
+
+  if (response.type === 'shortText' || response.type === 'longText') {
+    if (value === null || value === undefined || value === '') {
+      return createValidationResult(response, response.required ? 'unanswered' : 'none');
+    }
+
+    if (typeof value !== 'string') {
+      return createValidationResult(response, 'invalid', { message: 'Please enter a valid text response.' });
+    }
+
+    if (response.requiredValue != null && value !== response.requiredValue.toString()) {
+      return createValidationResult(response, 'invalid', { reason: 'requiredValueMismatch' });
+    }
+
+    const textError = checkTextResponse(response, value);
+    return textError
+      ? createValidationResult(response, 'invalid', { message: textError })
+      : createValidationResult(response, 'none');
   }
 
   if (typeof value === 'object' && !Array.isArray(value) && value !== null) {

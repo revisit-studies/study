@@ -138,7 +138,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   return (
     <iframe
       ref={ref}
-      inert={(isAnalysis ? '' : undefined) as never}
+      inert={isAnalysis}
       aria-disabled={isAnalysis}
       style={{
         width: '100%',

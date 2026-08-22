@@ -1657,7 +1657,7 @@
     },
     "LongTextResponse": {
       "additionalProperties": false,
-      "description": "The LongTextResponse interface is used to define the properties of a long text response. LongTextResponses render as a text area that accepts any text and can optionally have a placeholder. ```json {   \"id\": \"q-name\",   \"prompt\": \"What is your first name?\",   \"location\": \"aboveStimulus\",   \"type\": \"longText\",   \"default\": \"I enjoyed this study because...\",   \"placeholder\": \"Please enter your first name\" } ```",
+      "description": "The LongTextResponse interface is used to define the properties of a long text response. LongTextResponses render as a text area that accepts any text and can optionally have a placeholder. ```json {   \"id\": \"q-name\",   \"prompt\": \"What is your first name?\",   \"location\": \"aboveStimulus\",   \"type\": \"longText\",   \"default\": \"I enjoyed this study because...\",   \"placeholder\": \"Please enter your comments\",   \"minCharLength\": 20,   \"maxCharLength\": 500,   \"minWordLength\": 4,   \"maxWordLength\": 100,   \"textValidation\": [     {       \"type\": \"doesNotContain\",       \"value\": \"invalid\"     }   ] } ```",
       "properties": {
         "default": {
           "description": "The default value of the response. Specify a string such as `\"I enjoyed this study because...\"`.",
@@ -1682,6 +1682,22 @@
         "location": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "maxCharLength": {
+          "description": "The maximum number of characters accepted in the response. Must be greater than 0 when the response is required.",
+          "type": "number"
+        },
+        "maxWordLength": {
+          "description": "The maximum number of whitespace-separated words accepted in the response. Must be greater than 0 when the response is required.",
+          "type": "number"
+        },
+        "minCharLength": {
+          "description": "The minimum number of characters accepted in the response.",
+          "type": "number"
+        },
+        "minWordLength": {
+          "description": "The minimum number of whitespace-separated words accepted in the response.",
+          "type": "number"
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
@@ -1717,6 +1733,13 @@
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
           "type": "string"
+        },
+        "textValidation": {
+          "description": "Validation rules applied to the response value in array order.",
+          "items": {
+            "$ref": "#/definitions/TextValidationRule"
+          },
+          "type": "array"
         },
         "type": {
           "const": "longText",
@@ -3127,7 +3150,7 @@
     },
     "ShortTextResponse": {
       "additionalProperties": false,
-      "description": "The ShortTextResponse interface is used to define the properties of a short text response. ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder. ```json {   \"id\": \"q-short-text\",   \"prompt\": \"Short text example\",   \"location\": \"aboveStimulus\",   \"type\": \"shortText\",   \"default\": \"Jane Doe\",   \"placeholder\": \"Enter your answer here\" } ```",
+      "description": "The ShortTextResponse interface is used to define the properties of a short text response. ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder. ```json {   \"id\": \"q-short-text\",   \"prompt\": \"Short text example\",   \"location\": \"aboveStimulus\",   \"type\": \"shortText\",   \"default\": \"ReVISit is great\",   \"placeholder\": \"Enter your answer here\",   \"minCharLength\": 3,   \"maxCharLength\": 100,   \"minWordLength\": 2,   \"maxWordLength\": 20,   \"textValidation\": [     {       \"type\": \"contains\",       \"value\": \"ReVISit\"     }   ] } ```",
       "properties": {
         "default": {
           "description": "The default value of the response. Specify a string such as `\"Jane Doe\"`.",
@@ -3152,6 +3175,22 @@
         "location": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "maxCharLength": {
+          "description": "The maximum number of characters accepted in the response. Must be greater than 0 when the response is required.",
+          "type": "number"
+        },
+        "maxWordLength": {
+          "description": "The maximum number of whitespace-separated words accepted in the response. Must be greater than 0 when the response is required.",
+          "type": "number"
+        },
+        "minCharLength": {
+          "description": "The minimum number of characters accepted in the response.",
+          "type": "number"
+        },
+        "minWordLength": {
+          "description": "The minimum number of whitespace-separated words accepted in the response.",
+          "type": "number"
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
@@ -3187,6 +3226,13 @@
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
           "type": "string"
+        },
+        "textValidation": {
+          "description": "Validation rules applied to the response value in array order.",
+          "items": {
+            "$ref": "#/definitions/TextValidationRule"
+          },
+          "type": "array"
         },
         "type": {
           "const": "shortText",
@@ -3727,6 +3773,36 @@
         "type"
       ],
       "type": "object"
+    },
+    "TextValidationRule": {
+      "additionalProperties": false,
+      "description": "A validation rule applied to a short or long text response. Rules are evaluated in array order, and the first failing rule is displayed to the participant.\n\nFor example, the following rules accept only `ReVISit is great`: it must start with `ReVISit`, contain `great`, not contain `invalid`, equal `ReVISit is great`, and not equal `TEST`. See the [MDN regular expression syntax cheat sheet](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet) for help writing regular expression patterns. ```json \"textValidation\": [   {     \"type\": \"matchesRegex\",     \"value\": \"^ReVISit\"   },   {     \"type\": \"contains\",     \"value\": \"great\"   },   {     \"type\": \"doesNotContain\",     \"value\": \"invalid\"   },   {     \"type\": \"equals\",     \"value\": \"ReVISit is great\"   },   {     \"type\": \"doesNotEqual\",     \"value\": \"TEST\"   } ] ```",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/TextValidationType",
+          "description": "The operation used to validate the response value."
+        },
+        "value": {
+          "description": "The regular expression pattern or text value used by the validation operation. Must be non-empty for `equals`, `contains`, and `doesNotContain`. Empty `matchesRegex` and `doesNotEqual` values produce a parser warning because they do not restrict responses.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "value"
+      ],
+      "type": "object"
+    },
+    "TextValidationType": {
+      "description": "The validation operations available for short and long text responses.",
+      "enum": [
+        "matchesRegex",
+        "contains",
+        "doesNotContain",
+        "equals",
+        "doesNotEqual"
+      ],
+      "type": "string"
     },
     "UIConfig": {
       "additionalProperties": false,
