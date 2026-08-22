@@ -1,7 +1,7 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react';
+import { cleanup, fireEvent, render } from '@testing-library/react';
 import {
-  describe, test, expect, vi, beforeEach,
+  afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 
 import type { RadioResponse, ButtonsResponse, MatrixResponse } from '../../../parser/types';
@@ -102,10 +102,18 @@ vi.mock('../../../store/store', () => ({
   useStoreSelector: vi.fn(() => ({})),
 }));
 
+vi.mock('../../../store/hooks/useStoredAnswer', () => ({
+  useStoredAnswer: vi.fn(() => undefined),
+}));
+
 vi.mock('../../../parser/types', () => ({}));
 
 beforeEach(() => {
   vi.clearAllMocks();
+});
+
+afterEach(() => {
+  cleanup();
 });
 
 describe('ClearSelectionButton', () => {
@@ -129,7 +137,7 @@ describe('RadioInput / ButtonsInput clear & toggle behaviour', () => {
       type: 'radio', id: 'r1', prompt: '', required: false, options: ['A', 'B'], horizontal: false, withOther: false, labelLocation: 'inline',
     };
     const answer: StringAnswer = { value: '', onChange };
-    const { container, getByText } = render(
+    const { container, getByText, rerender } = render(
       <RadioInput response={response} disabled={false} answer={answer} error={null} index={0} enumerateQuestions={false} />,
     );
 
@@ -138,6 +146,9 @@ describe('RadioInput / ButtonsInput clear & toggle behaviour', () => {
     if (optionA) {
       fireEvent.click(optionA);
       expect(onChange).toHaveBeenLastCalledWith('A');
+      rerender(
+        <RadioInput response={response} disabled={false} answer={{ ...answer, value: 'A' }} error={null} index={0} enumerateQuestions={false} />,
+      );
       fireEvent.click(optionA);
       expect(onChange).toHaveBeenLastCalledWith('');
     }
@@ -154,7 +165,7 @@ describe('RadioInput / ButtonsInput clear & toggle behaviour', () => {
       type: 'buttons', id: 'b1', prompt: '', required: false, options: ['X', 'Y'],
     };
     const answer: StringAnswer = { value: '', onChange };
-    const { container, getByText } = render(
+    const { container, getByText, rerender } = render(
       <ButtonsInput response={response} disabled={false} answer={answer} error={null} index={0} enumerateQuestions={false} />,
     );
 
@@ -163,6 +174,9 @@ describe('RadioInput / ButtonsInput clear & toggle behaviour', () => {
     if (cardX) {
       fireEvent.click(cardX);
       expect(onChange).toHaveBeenLastCalledWith('X');
+      rerender(
+        <ButtonsInput response={response} disabled={false} answer={{ ...answer, value: 'X' }} error={null} index={0} enumerateQuestions={false} />,
+      );
       fireEvent.click(cardX);
       expect(onChange).toHaveBeenLastCalledWith('');
     }
@@ -187,7 +201,7 @@ describe('LikertInput behaviour', () => {
       labelLocation: 'inline',
     };
     const answer: StringAnswer = { value: '', onChange };
-    const { container } = render(
+    const { container, rerender } = render(
       <RadioInput
         response={likertResponse}
         disabled={false}
@@ -204,6 +218,17 @@ describe('LikertInput behaviour', () => {
     if (opt1) {
       fireEvent.click(opt1);
       expect(onChange).toHaveBeenLastCalledWith('1');
+      rerender(
+        <RadioInput
+          response={likertResponse}
+          disabled={false}
+          answer={{ ...answer, value: '1' }}
+          error={null}
+          index={0}
+          enumerateQuestions={false}
+          stretch
+        />,
+      );
       fireEvent.click(opt1);
       expect(onChange).toHaveBeenLastCalledWith('');
     }
