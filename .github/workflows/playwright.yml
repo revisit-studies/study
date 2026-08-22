@@ -91,9 +91,13 @@ jobs:
         run: yarn test --project=chromium --grep '@slow-mvnv'
 
   webkit-smoke:
-    name: 🧪 WebKit smoke tests
+    name: 🧪 WebKit shard ${{ matrix.shard }}/4
     runs-on: macos-15
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     env:
       PLAYWRIGHT_BROWSERS_PATH: /Users/runner/Library/Caches/ms-playwright
       PW_CI_REPORTER: dot
@@ -125,7 +129,5 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: yarn playwright install webkit
 
-      - name: Run WebKit smoke tests
-        run: >-
-          yarn test --project=webkit
-          tests/startup-error.spec.ts
+      - name: Run WebKit shard
+        run: yarn test --project=webkit --shard=${{ matrix.shard }}/4

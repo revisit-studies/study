@@ -7,9 +7,13 @@ on:
 
 jobs:
   webkit:
-    name: 🧪 WebKit full E2E suite
+    name: 🧪 WebKit full E2E shard ${{ matrix.shard }}/4
     runs-on: macos-15
-    timeout-minutes: 60
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     env:
       PLAYWRIGHT_BROWSERS_PATH: /Users/runner/Library/Caches/ms-playwright
       PW_CI_REPORTER: dot
@@ -41,5 +45,5 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: yarn playwright install webkit
 
-      - name: Run full WebKit suite
-        run: yarn test --project=webkit
+      - name: Run full WebKit shard
+        run: yarn test --project=webkit --shard=${{ matrix.shard }}/4
