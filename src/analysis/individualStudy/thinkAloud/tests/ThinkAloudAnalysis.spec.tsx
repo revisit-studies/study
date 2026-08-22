@@ -535,7 +535,7 @@ const footerDefaultProps = {
 
 const mockFooterStorageEngine = {
   getAudioUrl: vi.fn().mockResolvedValue('http://test/audio.mp3'),
-  getScreenRecording: vi.fn().mockResolvedValue('http://test/video.mp4'),
+  getScreenRecordingUrl: vi.fn().mockResolvedValue('http://test/video.mp4'),
   saveTags: vi.fn().mockResolvedValue(undefined),
   getTags: vi.fn().mockResolvedValue([]),
   getAllParticipantAndTaskTags: vi.fn().mockResolvedValue(null),
@@ -573,7 +573,7 @@ describe('ThinkAloudFooter', () => {
       <RealThinkAloudFooter {...footerDefaultProps} storageEngine={makeStorageEngine(mockFooterStorageEngine)} />,
     ));
     expect(mockFooterStorageEngine.getAudioUrl).toHaveBeenCalled();
-    expect(mockFooterStorageEngine.getScreenRecording).toHaveBeenCalled();
+    expect(mockFooterStorageEngine.getScreenRecordingUrl).toHaveBeenCalled();
   });
 
   test('next participant remains usable when there is no current task', async () => {

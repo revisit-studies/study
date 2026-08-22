@@ -14,8 +14,13 @@ import { syncChannel, syncEmitter } from '../../../utils/syncReplay';
 
 // ── mocks ────────────────────────────────────────────────────────────────────
 
+let capturedOnMount: ((ws: unknown) => void | Promise<void>) | undefined;
+
 vi.mock('wavesurfer-react', () => ({
-  WaveSurfer: vi.fn(({ children }: { children?: ReactNode }) => <div data-testid="wavesurfer">{children}</div>),
+  WaveSurfer: vi.fn(({ children, onMount }: { children?: ReactNode; onMount?: (ws: unknown) => void | Promise<void> }) => {
+    capturedOnMount = onMount;
+    return <div data-testid="wavesurfer">{children}</div>;
+  }),
   WaveForm: () => <div data-testid="waveform" />,
 }));
 
@@ -50,16 +55,20 @@ vi.mock('react-router', () => ({
   },
 }));
 
+let mockStorageEngine: Record<string, ReturnType<typeof vi.fn>> | null = null;
+
 vi.mock('../../../storage/storageEngineHooks', () => ({
-  useStorageEngine: () => ({ storageEngine: null }),
+  useStorageEngine: () => ({ storageEngine: mockStorageEngine }),
 }));
 
 vi.mock('../TaskProvenanceTimeline', () => ({
   TaskProvenanceTimeline: () => <div data-testid="provenance-timeline" />,
 }));
 
+let mockIsAnalysis = false;
+
 vi.mock('../../../store/hooks/useIsAnalysis', () => ({
-  useIsAnalysis: () => false,
+  useIsAnalysis: () => mockIsAnalysis,
 }));
 
 vi.mock('../Timer', () => ({
@@ -159,7 +168,12 @@ function makeNode(
 
 const rootNode = makeNode('root');
 
-beforeEach(() => { vi.clearAllMocks(); });
+beforeEach(() => {
+  vi.clearAllMocks();
+  mockIsAnalysis = false;
+  mockStorageEngine = null;
+  capturedOnMount = undefined;
+});
 afterEach(() => { cleanup(); });
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -459,5 +473,136 @@ describe('AudioProvenanceVis — syncEmitter listeners', () => {
     unmount();
     expect(vi.mocked(syncEmitter.off)).toHaveBeenCalledWith('participantId', expect.any(Function));
     expect(vi.mocked(syncEmitter.off)).toHaveBeenCalledWith('trialOrder', expect.any(Function));
+  });
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// DOM tests — waveform peaks caching (handleWSMount)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function makeFakeWaveSurfer(overrides: Record<string, unknown> = {}) {
+  const listeners: Record<string, (() => void)[]> = {};
+  return {
+    load: vi.fn().mockResolvedValue(undefined),
+    once: vi.fn((event: string, cb: () => void) => {
+      listeners[event] = [...(listeners[event] || []), cb];
+    }),
+    on: vi.fn(),
+    exportPeaks: vi.fn(() => [[0.5, 0.6]]),
+    getDuration: vi.fn(() => 12),
+    getMediaElement: vi.fn(() => ({})),
+    getWidth: vi.fn(() => 500),
+    seekTo: vi.fn(),
+    empty: vi.fn(),
+    triggerOnce: (event: string) => { (listeners[event] || []).forEach((cb) => cb()); },
+    ...overrides,
+  };
+}
+
+function makeCachingStorageEngine(overrides: Record<string, ReturnType<typeof vi.fn>> = {}) {
+  return {
+    getAudioUrl: vi.fn().mockResolvedValue('https://example.com/audio.mp3'),
+    getWaveformPeaks: vi.fn().mockResolvedValue(null),
+    saveWaveformPeaks: vi.fn().mockResolvedValue(undefined),
+    getProvenance: vi.fn().mockResolvedValue(null),
+    ...overrides,
+  };
+}
+
+describe('AudioProvenanceVis — waveform peaks caching', () => {
+  beforeEach(() => {
+    mockIsAnalysis = true;
+  });
+
+  test('cache hit: loads audio with cached peaks and skips re-extraction', async () => {
+    const engine = makeCachingStorageEngine({
+      getWaveformPeaks: vi.fn().mockResolvedValue({ peaks: [[0.1, 0.2]], duration: 12 }),
+    });
+    mockStorageEngine = engine;
+
+    await act(async () => render(<AudioProvenanceVis {...defaultProps} answers={answersWithTask} />));
+
+    const fakeWs = makeFakeWaveSurfer();
+    await act(async () => { await capturedOnMount?.(fakeWs); });
+
+    expect(fakeWs.load).toHaveBeenCalledWith('https://example.com/audio.mp3', [[0.1, 0.2]], 12);
+    expect(fakeWs.once).not.toHaveBeenCalled();
+    expect(engine.saveWaveformPeaks).not.toHaveBeenCalled();
+  });
+
+  test('cache miss: loads audio without peaks then saves extracted peaks once ready', async () => {
+    const engine = makeCachingStorageEngine();
+    mockStorageEngine = engine;
+
+    await act(async () => render(<AudioProvenanceVis {...defaultProps} answers={answersWithTask} />));
+
+    const fakeWs = makeFakeWaveSurfer();
+    await act(async () => { await capturedOnMount?.(fakeWs); });
+
+    expect(fakeWs.load).toHaveBeenCalledWith('https://example.com/audio.mp3', undefined, 0);
+    expect(fakeWs.once).toHaveBeenCalledWith('ready', expect.any(Function));
+    expect(engine.saveWaveformPeaks).not.toHaveBeenCalled();
+
+    await act(async () => { fakeWs.triggerOnce('ready'); });
+
+    expect(engine.saveWaveformPeaks).toHaveBeenCalledWith(
+      { peaks: [[0.5, 0.6]], duration: 12 },
+      'trial_0',
+      'p1',
+    );
+  });
+
+  test('save failure after extraction is caught and warned, not thrown', async () => {
+    const engine = makeCachingStorageEngine({
+      saveWaveformPeaks: vi.fn().mockRejectedValue(new Error('save failed')),
+    });
+    mockStorageEngine = engine;
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    await act(async () => render(<AudioProvenanceVis {...defaultProps} answers={answersWithTask} />));
+
+    const fakeWs = makeFakeWaveSurfer();
+    await act(async () => { await capturedOnMount?.(fakeWs); });
+
+    await act(async () => {
+      fakeWs.triggerOnce('ready');
+      await new Promise((resolve) => { setTimeout(resolve, 0); });
+    });
+
+    expect(warnSpy).toHaveBeenCalledWith('Failed to save waveform peaks:', expect.any(Error));
+    warnSpy.mockRestore();
+  });
+
+  test('malformed/rejecting cache lookup falls back to a fresh load like a cache miss', async () => {
+    const engine = makeCachingStorageEngine({
+      getWaveformPeaks: vi.fn().mockRejectedValue(new Error('corrupt cache')),
+    });
+    mockStorageEngine = engine;
+
+    await act(async () => render(<AudioProvenanceVis {...defaultProps} answers={answersWithTask} />));
+
+    const fakeWs = makeFakeWaveSurfer();
+    await act(async () => { await capturedOnMount?.(fakeWs); });
+
+    expect(fakeWs.load).toHaveBeenCalledWith('https://example.com/audio.mp3', undefined, 0);
+  });
+
+  test('screen-only / no-audio recording does not load the waveform', async () => {
+    const engine = makeCachingStorageEngine({
+      getAudioUrl: vi.fn().mockResolvedValue(null),
+    });
+    mockStorageEngine = engine;
+    const setHasAudio = vi.fn();
+
+    await act(async () => render(
+      <AudioProvenanceVis {...defaultProps} answers={answersWithTask} setHasAudio={setHasAudio} />,
+    ));
+
+    const fakeWs = makeFakeWaveSurfer();
+    await act(async () => { await capturedOnMount?.(fakeWs); });
+
+    expect(fakeWs.load).not.toHaveBeenCalled();
+    expect(fakeWs.empty).toHaveBeenCalled();
+    expect(setHasAudio).toHaveBeenCalledWith(false);
   });
 });

@@ -91,7 +91,7 @@ describe('ScreenRecordingReplay', () => {
   test('covers url=null path when participantId is provided', async () => {
     // isAnalysis=true, storageEngine returns null URL → dispatches setAnalysisHasScreenRecording(false)
     mockIsAnalysis = true;
-    mockStorageEngine = { getScreenRecording: vi.fn().mockResolvedValue(null) };
+    mockStorageEngine = { getScreenRecordingUrl: vi.fn().mockResolvedValue(null) };
     mockSearchParams = new URLSearchParams({ participantId: 'p1' });
     await act(async () => { render(<ScreenRecordingReplay />); });
     expect(mockDispatch).toHaveBeenCalled();
@@ -100,21 +100,21 @@ describe('ScreenRecordingReplay', () => {
   test('sets hasScreenRecording true when URL is returned', async () => {
     mockIsAnalysis = true;
     mockStorageEngine = {
-      getScreenRecording: vi.fn().mockResolvedValue('http://example.com/video.mp4'),
+      getScreenRecordingUrl: vi.fn().mockResolvedValue('http://example.com/video.mp4'),
     };
     mockSearchParams = new URLSearchParams({ participantId: 'p1' });
     await act(async () => { render(<ScreenRecordingReplay />); });
     expect(mockDispatch).toHaveBeenCalledWith(mockSetAnalysisHasScreenRecording(true));
   });
 
-  // Error-path tests (missing participantId, getScreenRecording rejection) omitted
+  // Error-path tests (missing participantId, getScreenRecordingUrl rejection) omitted
   // because the component re-throws in the catch block, producing unhandled promise
   // rejections that vitest flags as test instability.
 
   test('sets video src and calls updateReplayRef when videoRef.current exists', async () => {
     mockIsAnalysis = true;
     mockStorageEngine = {
-      getScreenRecording: vi.fn().mockResolvedValue('http://example.com/video.mp4'),
+      getScreenRecordingUrl: vi.fn().mockResolvedValue('http://example.com/video.mp4'),
     };
     mockSearchParams = new URLSearchParams({ participantId: 'p1' });
     const mockVideo = { preload: '', src: '' } as Pick<HTMLVideoElement, 'preload' | 'src'> as HTMLVideoElement;
