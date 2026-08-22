@@ -17,35 +17,6 @@
     "withSidebar": true,
     "windowEventDebounceTime": 200
   },
-  "studyRules": {
-    "display": {
-      "minHeight": 400,
-      "minWidth": 800
-    },
-    "browsers": {
-      "allowed": [
-        {
-          "name": "chrome",
-          "minVersion": 100
-        },
-        {
-          "name": "firefox",
-          "minVersion": 100
-        },
-        {
-          "name": "safari",
-          "minVersion": 10
-        }
-      ],
-      "blockedMessage": "You must be on a relatively modern browser, Chrome 100 or later, Firefox 100 or later, Safari 10 or later."
-    },
-    "devices": {
-      "allowed": ["tablet", "desktop", "mobile"]
-    },
-    "inputs": {
-      "allowed": ["touch", "mouse"]
-    }
-  },
   "baseComponents": {
     "quizQuestion": {
       "type": "markdown",
