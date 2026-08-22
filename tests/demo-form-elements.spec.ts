@@ -179,9 +179,10 @@ test('Test questionnaire component with responses and randomizing questions and 
   await page.getByPlaceholder('800-000-0000').fill('800-000-0000');
   await page.getByPlaceholder('https://revisit.dev').fill('https://revisit.dev');
   await page.getByLabel('Date within a range.').fill('06/24/2026');
-  await page.getByLabel('Date with a required value.').fill('09/01/2026');
-  await page.getByLabel('Month input.').fill('07/2026');
-  await page.getByLabel('Year input.').fill('2027');
+  await page.getByLabel('Month input.').click();
+  await page.getByRole('button', { name: 'Jul' }).click();
+  await page.getByLabel('Year input.').click();
+  await page.getByRole('button', { name: '2027' }).click();
   await fillTimePicker(page, 'Time without seconds.', '14:28');
   await fillTimePicker(page, 'Time within a range.', '14:28');
   await fillTimePicker(page, 'Time with seconds.', '14:28:30');
@@ -198,8 +199,8 @@ test('Test questionnaire component with responses and randomizing questions and 
   // Default Values should be fully answerable via defaults
   await expect(page.getByText('Default Values Demo')).toBeVisible();
   await expect(page.getByLabel('Date default')).toHaveValue('06/24/2026');
-  await expect(page.getByLabel('Month default')).toHaveValue('06/2026');
-  await expect(page.getByLabel('Year default')).toHaveValue('2026');
+  await expect(page.getByLabel('Month default')).toHaveText('06/2026');
+  await expect(page.getByLabel('Year default')).toHaveText('2026');
   await expectTimePickerValue(page, 'Time default', '14:28:30');
   await expect(page.getByPlaceholder('Select a country')).toHaveValue(/United States/);
   await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeEnabled();
@@ -341,8 +342,8 @@ test('Test questionnaire component with responses and randomizing questions and 
     textValidationTiming.endTime,
   );
   await expect(page.getByLabel('Date within a range.')).toHaveValue('06/24/2026');
-  await expect(page.getByLabel('Month input.')).toHaveValue('07/2026');
-  await expect(page.getByLabel('Year input.')).toHaveValue('2027');
+  await expect(page.getByLabel('Month input.')).toHaveText('07/2026');
+  await expect(page.getByLabel('Year input.')).toHaveText('2027');
   await expectTimePickerValue(page, 'Time with seconds.', '14:28:30');
 
   await page.goto(`${sidebarReplayPath}?${replaySearch}`);

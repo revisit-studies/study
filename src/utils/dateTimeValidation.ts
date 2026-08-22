@@ -111,22 +111,6 @@ export function formatDateInput(value: string, isDeleting = false) {
   return cleaned;
 }
 
-/** Adds a month separator during end-of-input entry without repartitioning cursor edits. */
-export function formatMonthInput(value: string, isDeleting = false) {
-  const cleaned = cleanDateInput(value, 7);
-  if (isDeleting) {
-    return cleaned;
-  }
-
-  if (/^\d{2}$/.test(cleaned)) {
-    return `${cleaned}/`;
-  }
-  if (/^\d{3,6}$/.test(cleaned)) {
-    return `${cleaned.slice(0, 2)}/${cleaned.slice(2)}`;
-  }
-  return cleaned;
-}
-
 // Checks if a string is a valid time in the format HH:MM or HH:MM:SS (24-hour format)
 export function isValidTime(value: string, withSeconds = false) {
   const pattern = withSeconds

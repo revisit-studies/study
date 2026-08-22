@@ -1,12 +1,9 @@
-import { ActionIcon, Popover, TextInput } from '@mantine/core';
-import { DateInput, MonthPicker, YearPicker } from '@mantine/dates';
-import { IconCalendar } from '@tabler/icons-react';
+import { DateInput, MonthPickerInput, YearPickerInput } from '@mantine/dates';
 import type { FocusEventHandler } from 'react';
-import { useId, useRef, useState } from 'react';
+import { useState } from 'react';
 import type { DateResponse } from '../../parser/types';
 import {
   formatDateInput,
-  formatMonthInput,
   fromPickerDateValue,
   getDateValueFormat,
   toPickerDateValue,
@@ -47,10 +44,6 @@ export function DateResponseInput({
     value, onChange, onBlur, onFocus, readOnly, ...answerProps
   } = answer;
   const [showInvalidDateError, setShowInvalidDateError] = useState(false);
-  const [pickerOpened, setPickerOpened] = useState(false);
-  const pickerDialogId = useId();
-  const pickerButtonRef = useRef<HTMLButtonElement>(null);
-  const pickerDropdownRef = useRef<HTMLDivElement>(null);
   const parsePickerDate = (inputValue: string) => toPickerDateValue(inputValue, options);
   const dateValue = typeof value === 'string' ? parsePickerDate(value) : null;
   const minDate = response.min ? parsePickerDate(response.min) : null;
@@ -72,118 +65,33 @@ export function DateResponseInput({
     setShowInvalidDateError(false);
     onChange?.(nextValue ? fromPickerDateValue(nextValue, options) : '');
   };
-  const closePickerAndReturnFocus = () => {
-    pickerButtonRef.current?.focus({ preventScroll: true });
-    setPickerOpened(false);
-  };
-
   if (options === 'month' || options === 'year') {
-    const maxLength = options === 'month' ? 7 : 4;
-    const inputValue = typeof value === 'string' ? value : '';
-    const picker = options === 'month' ? (
-      <MonthPicker
-        allowDeselect
-        value={dateValue}
-        onChange={(nextValue) => {
-          handlePickerChange(nextValue);
-          closePickerAndReturnFocus();
-        }}
-        minDate={minDate ?? undefined}
-        maxDate={maxDate ?? undefined}
-      />
-    ) : (
-      <YearPicker
-        allowDeselect
-        value={dateValue}
-        onChange={(nextValue) => {
-          handlePickerChange(nextValue);
-          closePickerAndReturnFocus();
-        }}
-        minDate={minDate ?? undefined}
-        maxDate={maxDate ?? undefined}
-      />
-    );
+    const PickerInput = options === 'month' ? MonthPickerInput : YearPickerInput;
 
     return (
-      <Popover
-        opened={pickerOpened}
-        onChange={setPickerOpened}
-        disabled={disabled || readOnly}
-        closeOnEscape={false}
-        trapFocus
-        withRoles={false}
-        transitionProps={{ duration: 0 }}
-        onEnterTransitionEnd={() => {
-          const selectedControl = pickerDropdownRef.current
-            ?.querySelector<HTMLButtonElement>('[data-selected]:not(:disabled)');
-          const firstControl = pickerDropdownRef.current
-            ?.querySelector<HTMLButtonElement>('[data-picker-control]:not(:disabled)');
-          (selectedControl ?? firstControl)?.focus({ preventScroll: true });
-        }}
-      >
-        <Popover.Target>
-          <TextInput
-            {...answerProps}
-            disabled={disabled}
-            readOnly={readOnly}
-            placeholder={placeholder}
-            label={label}
-            description={secondaryText}
-            radius="md"
-            size="md"
-            value={inputValue}
-            onChange={(event) => {
-              const isDeleting = (event.nativeEvent as InputEvent).inputType?.startsWith('delete') ?? false;
-              const nextValue = options === 'month'
-                ? formatMonthInput(event.currentTarget.value, isDeleting)
-                : event.currentTarget.value.replace(/\D/g, '').slice(0, 4);
-              setShowInvalidDateError(nextValue.length === maxLength);
-              onChange?.(nextValue);
-            }}
-            onFocus={onFocus}
-            onBlur={(event) => {
-              setShowInvalidDateError(true);
-              onBlur?.(event);
-            }}
-            maxLength={maxLength}
-            rightSection={(
-              <ActionIcon
-                ref={pickerButtonRef}
-                variant="subtle"
-                color="gray"
-                size="sm"
-                disabled={disabled || readOnly}
-                aria-label={`Open ${options} picker`}
-                aria-haspopup="dialog"
-                aria-expanded={pickerOpened}
-                aria-controls={pickerOpened ? pickerDialogId : undefined}
-                onClick={() => setPickerOpened((opened) => !opened)}
-              >
-                <IconCalendar size={18} aria-hidden />
-              </ActionIcon>
-            )}
-            rightSectionPointerEvents="all"
-            error={displayedError}
-            withErrorStyles={required}
-            errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
-            classNames={{ input: classes.fixDisabled }}
-          />
-        </Popover.Target>
-        <Popover.Dropdown
-          id={pickerDialogId}
-          ref={pickerDropdownRef}
-          role="dialog"
-          aria-label={`${options} picker`}
-          tabIndex={-1}
-          onKeyDownCapture={(event) => {
-            if (event.key === 'Escape') {
-              closePickerAndReturnFocus();
-            }
-          }}
-        >
-          {picker}
-        </Popover.Dropdown>
-      </Popover>
+      <PickerInput
+        {...answerProps}
+        allowDeselect
+        disabled={disabled}
+        readOnly={readOnly}
+        placeholder={placeholder}
+        label={label}
+        description={secondaryText}
+        radius="md"
+        size="md"
+        value={dateValue}
+        valueFormat={options === 'month' ? 'MM/YYYY' : 'YYYY'}
+        onChange={handlePickerChange}
+        onBlur={onBlur}
+        onFocus={onFocus}
+        minDate={minDate ?? undefined}
+        maxDate={maxDate ?? undefined}
+        clearable
+        error={error}
+        withErrorStyles={required}
+        errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
+        classNames={{ input: classes.fixDisabled }}
+      />
     );
   }
 
@@ -199,10 +107,7 @@ export function DateResponseInput({
       radius="md"
       size="md"
       value={dateValue}
-      onChange={(nextValue) => {
-        setShowInvalidDateError(false);
-        handlePickerChange(nextValue);
-      }}
+      onChange={handlePickerChange}
       onInput={(event) => {
         const input = event.currentTarget;
         const isDeleting = (event.nativeEvent as InputEvent).inputType?.startsWith('delete') ?? false;
