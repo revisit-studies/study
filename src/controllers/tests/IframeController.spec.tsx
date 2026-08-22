@@ -14,13 +14,14 @@ const mockSetReactiveAnswers = vi.fn((payload) => ({ type: 'setReactiveAnswers',
 const mockUpdateProvenance = vi.fn((payload) => ({ type: 'updateProvenance', payload }));
 const mockUpdateResponseBlockValidation = vi.fn((payload) => ({ type: 'updateResponseBlockValidation', payload }));
 const mockIsAnalysis = { value: false };
+const mockCurrentComponent = { value: 'countDots' };
 
 vi.mock('react-redux', () => ({
   useDispatch: () => vi.fn(),
 }));
 
 vi.mock('../../routes/utils', () => ({
-  useCurrentComponent: () => 'countDots',
+  useCurrentComponent: () => mockCurrentComponent.value,
   useCurrentIdentifier: () => 'countDots_0',
   useCurrentStep: () => 0,
 }));
@@ -51,6 +52,7 @@ describe('IframeController', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockIsAnalysis.value = false;
+    mockCurrentComponent.value = 'countDots';
   });
 
   afterEach(() => {
@@ -241,5 +243,41 @@ describe('IframeController', () => {
       type: '@REVISIT_COMMS/PROVENANCE',
       message: provState,
     }), '*'));
+  });
+
+  test('does not render an iframe (and so never requests the templated path) while the dynamic component is still resolving', () => {
+    mockCurrentComponent.value = '__dynamicLoading';
+    const { container } = render(
+      <IframeController
+        currentConfig={{ type: 'website', path: '{{someParam}}/index.html', response: [] }}
+        answers={{}}
+      />,
+    );
+
+    expect(container.querySelector('iframe')).toBeNull();
+  });
+
+  test('renders the iframe with the correct path once the dynamic component resolves', () => {
+    mockCurrentComponent.value = '__dynamicLoading';
+    const { container, rerender } = render(
+      <IframeController
+        currentConfig={{ type: 'website', path: 'demo-svelte-trrack/assets/dots-count.html', response: [] }}
+        answers={{}}
+      />,
+    );
+
+    expect(container.querySelector('iframe')).toBeNull();
+
+    mockCurrentComponent.value = 'countDots';
+    rerender(
+      <IframeController
+        currentConfig={{ type: 'website', path: 'demo-svelte-trrack/assets/dots-count.html', response: [] }}
+        answers={{}}
+      />,
+    );
+
+    const iframe = container.querySelector('iframe');
+    expect(iframe).toBeTruthy();
+    expect(iframe?.src).toContain('demo-svelte-trrack/assets/dots-count.html');
   });
 });

@@ -13,11 +13,14 @@ export function ImageController({ currentConfig }: { currentConfig: ImageCompone
   const templateData = useTemplateAnswerContext();
 
   const templatedPath = useMemo(
-    () => compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true, data: templateData }),
+    () => (templateData ? compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true, data: templateData }) : undefined),
     [currentConfig.path, currentConfig.parameters, templateData],
   );
 
   const url = useMemo(() => {
+    if (templatedPath === undefined) {
+      return undefined;
+    }
     if (templatedPath.startsWith('http')) {
       return templatedPath;
     }
@@ -28,15 +31,25 @@ export function ImageController({ currentConfig }: { currentConfig: ImageCompone
   const [assetFound, setAssetFound] = useState(false);
 
   useEffect(() => {
-    async function fetchImage() {
-      let asset = await getStaticAssetByPath(url);
+    // While the path is templated inside a dynamic block, url is undefined until the block's
+    // current iteration resolves — don't fetch an asset built from the wrong iteration.
+    if (url === undefined) {
+      return;
+    }
+
+    async function fetchImage(assetUrl: string) {
+      let asset = await getStaticAssetByPath(assetUrl);
       asset = asset?.includes('File not found') ? undefined : asset;
       setAssetFound(!!asset);
       setLoading(false);
     }
 
-    fetchImage();
+    fetchImage(url);
   }, [url]);
+
+  if (url === undefined || templatedPath === undefined) {
+    return null;
+  }
 
   return loading || assetFound
     ? <Image mx="auto" src={url} />

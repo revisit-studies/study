@@ -37,18 +37,25 @@ export function HelpModal() {
   );
 
   // helpTextPath can itself be templated (e.g. `help-{{condition}}.md`), so it must be resolved
-  // with the same parameters/answer context before it's used to fetch the asset.
+  // with the same parameters/answer context before it's used to fetch the asset. While the
+  // dynamic component this modal is showing help for hasn't resolved yet, templateData is
+  // undefined and the path must not be compiled or fetched — it would resolve against the
+  // wrong iteration.
   const resolvedHelpTextPath = useMemo(
-    () => (helpTextPath ? compileTemplate(helpTextPath, helpTextParameters, { noEscape: true, data: templateData }) : helpTextPath),
+    () => (helpTextPath && templateData ? compileTemplate(helpTextPath, helpTextParameters, { noEscape: true, data: templateData }) : undefined),
     [helpTextPath, helpTextParameters, templateData],
   );
 
   const templatedHelpText = useMemo(
-    () => compileTemplate(helpText, helpTextParameters, { data: templateData }),
+    () => (templateData ? compileTemplate(helpText, helpTextParameters, { data: templateData }) : ''),
     [helpText, helpTextParameters, templateData],
   );
 
   useEffect(() => {
+    if (templateData === undefined) {
+      return;
+    }
+
     async function fetchText() {
       if (!resolvedHelpTextPath) {
         setFoundAsset(false);
@@ -65,7 +72,7 @@ export function HelpModal() {
     }
 
     fetchText();
-  }, [resolvedHelpTextPath]);
+  }, [resolvedHelpTextPath, templateData]);
 
   return (
     <Modal className="helpModal" size="70%" opened={showHelpText} withCloseButton={false} onClose={() => storeDispatch(toggleShowHelpText())}>

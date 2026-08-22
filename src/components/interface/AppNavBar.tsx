@@ -39,7 +39,7 @@ export function AppNavBar({
   );
 
   const instruction = useMemo(
-    () => compileTemplate(currentConfig?.instruction || '', instructionParameters, { data: templateData }),
+    () => (templateData ? compileTemplate(currentConfig?.instruction || '', instructionParameters, { data: templateData }) : ''),
     [currentConfig?.instruction, instructionParameters, templateData],
   );
   const instructionLocation = useMemo(() => currentConfig?.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar', [currentConfig, studyConfig]);

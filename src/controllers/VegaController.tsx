@@ -41,7 +41,7 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
   const templateData = useTemplateAnswerContext();
 
   const templatedPath = useMemo(
-    () => ('path' in currentConfig ? compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true, data: templateData }) : undefined),
+    () => (templateData && 'path' in currentConfig ? compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true, data: templateData }) : undefined),
     [currentConfig, templateData],
   );
 
@@ -159,6 +159,12 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
   const configuredSignalNames = useMemo(() => new Set(Object.keys(signalListeners)), [signalListeners]);
 
   useEffect(() => {
+    // While the path is templated inside a dynamic block, templatedPath is undefined until the
+    // block's current iteration resolves — don't fetch a path built from the wrong iteration.
+    if ('path' in currentConfig && templatedPath === undefined) {
+      return;
+    }
+
     async function fetchVega() {
       setLoading(true);
 

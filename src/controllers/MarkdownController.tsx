@@ -18,13 +18,19 @@ export function MarkdownController({ currentConfig }: { currentConfig: MarkdownC
   const templateData = useTemplateAnswerContext();
 
   const templatedPath = useMemo(
-    () => compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true, data: templateData }),
+    () => (templateData ? compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true, data: templateData }) : undefined),
     [currentConfig.path, currentConfig.parameters, templateData],
   );
 
   useEffect(() => {
-    async function fetchImage() {
-      const asset = await getStaticAssetByPath(`${PREFIX}${templatedPath}`);
+    // While the path is templated inside a dynamic block, templatedPath is undefined until the
+    // block's current iteration resolves — don't fetch an asset built from the wrong iteration.
+    if (templatedPath === undefined) {
+      return;
+    }
+
+    async function fetchImage(path: string) {
+      const asset = await getStaticAssetByPath(`${PREFIX}${path}`);
       if (asset !== undefined) {
         setImportedText(asset);
       } else {
@@ -33,13 +39,17 @@ export function MarkdownController({ currentConfig }: { currentConfig: MarkdownC
       setLoading(false);
     }
 
-    fetchImage();
+    fetchImage(templatedPath);
   }, [templatedPath]);
 
   const renderedText = useMemo(
-    () => compileTemplate(importedText, currentConfig.parameters ?? {}, { data: templateData }),
+    () => (templateData ? compileTemplate(importedText, currentConfig.parameters ?? {}, { data: templateData }) : ''),
     [importedText, currentConfig.parameters, templateData],
   );
+
+  if (templatedPath === undefined) {
+    return null;
+  }
 
   return loading || foundAsset
     ? <ReactMarkdownWrapper text={renderedText} />

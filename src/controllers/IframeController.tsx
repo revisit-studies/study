@@ -37,7 +37,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   const templateData = useTemplateAnswerContext();
 
   const templatedPath = useMemo(
-    () => compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true, data: templateData }),
+    () => (templateData ? compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true, data: templateData }) : undefined),
     [currentConfig.path, currentConfig.parameters, templateData],
   );
 
@@ -134,6 +134,12 @@ export function IframeController({ currentConfig, provState, answers }: { curren
 
     return () => window.removeEventListener('message', handler);
   }, [storeDispatch, dispatch, iframeId, currentConfig, sendMessage, setReactiveAnswers, updateProvenance, updateResponseBlockValidation, identifier, isAnalysis, provState, answers, shouldSendProvenance]);
+
+  // While the path is templated inside a dynamic block, templatedPath is undefined until the
+  // block's current iteration resolves — don't load an iframe built from the wrong iteration.
+  if (templatedPath === undefined) {
+    return null;
+  }
 
   return (
     <iframe

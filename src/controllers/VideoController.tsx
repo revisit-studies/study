@@ -100,18 +100,24 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
   const templateData = useTemplateAnswerContext();
 
   const templatedPath = useMemo(
-    () => compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true, data: templateData }),
+    () => (templateData ? compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true, data: templateData }) : undefined),
     [currentConfig.path, currentConfig.parameters, templateData],
   );
 
   const url = useMemo(() => {
+    if (templatedPath === undefined) {
+      return undefined;
+    }
     if (templatedPath.startsWith('http')) {
       return templatedPath;
     }
     return `${PREFIX}${templatedPath}`;
   }, [templatedPath]);
-  const provider = useMemo(() => getVideoProvider(url), [url]);
+  const provider = useMemo(() => (url ? getVideoProvider(url) : undefined), [url]);
   const validExternalUrl = useMemo(() => {
+    if (!url) {
+      return false;
+    }
     if (provider === 'youtube') {
       return isValidYouTubeUrl(url);
     }
@@ -125,9 +131,15 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
   const [assetFound, setAssetFound] = useState(false);
 
   useEffect(() => {
+    // While the path is templated inside a dynamic block, url is undefined until the block's
+    // current iteration resolves — don't fetch an asset built from the wrong iteration.
+    if (url === undefined) {
+      return undefined;
+    }
+
     let isCancelled = false;
 
-    async function fetchVideo() {
+    async function fetchVideo(assetUrl: string) {
       setLoading(true);
       try {
         if (provider !== 'html5') {
@@ -138,7 +150,7 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
           return;
         }
 
-        const asset = await getStaticAssetByPath(url);
+        const asset = await getStaticAssetByPath(assetUrl);
         if (!isCancelled) {
           setAssetFound(!!asset);
           setLoading(false);
@@ -151,7 +163,7 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
       }
     }
 
-    fetchVideo();
+    fetchVideo(url);
     return () => {
       isCancelled = true;
     };

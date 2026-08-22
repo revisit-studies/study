@@ -225,6 +225,9 @@ export function ResponseSwitcher({
   const templatedFields = useMemo(() => {
     const parameters = config?.parameters ?? {};
     const fields: { prompt?: string; secondaryText?: string; infoText?: string } = {};
+    if (!templateData) {
+      return fields;
+    }
     if ('prompt' in response && typeof response.prompt === 'string') {
       fields.prompt = compileTemplate(response.prompt, parameters, { data: templateData });
     }

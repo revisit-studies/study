@@ -11,6 +11,13 @@ import { decryptIndex } from '../../utils/encryptDecryptIndex';
 // single flatSequence step fans out into many answer-bearing iterations; without them,
 // `lookupAnswersRel` can't tell which iteration is "current" and relative lookups would be
 // ambiguous.
+//
+// This hook holds its own `useCurrentComponent()` instance, separate from the one a parent
+// controller may already have resolved. Inside a dynamic block that resolver starts out as
+// '__dynamicLoading' and is only corrected in an effect on a later render, so callers must not
+// compile paths/templates or start fetches off this data while it's still resolving — doing so
+// can fire a request for the wrong iteration. We surface that by returning `undefined` until
+// the dynamic component has settled.
 export function useTemplateAnswerContext() {
   const answers = useStoreSelector((state) => state.answers);
   const flatSequence = useFlatSequence();
@@ -19,9 +26,11 @@ export function useTemplateAnswerContext() {
   const { funcIndex } = useParams();
   const decryptedFuncIndex = funcIndex ? decryptIndex(funcIndex) : undefined;
   return useMemo(
-    () => ({
-      answers, flatSequence, currentStep, currentComponent, funcIndex: decryptedFuncIndex,
-    }),
+    () => (currentComponent === '__dynamicLoading'
+      ? undefined
+      : {
+        answers, flatSequence, currentStep, currentComponent, funcIndex: decryptedFuncIndex,
+      }),
     [answers, flatSequence, currentStep, currentComponent, decryptedFuncIndex],
   );
 }

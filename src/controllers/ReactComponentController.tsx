@@ -23,9 +23,9 @@ const modules = import.meta.glob(
 
 export function ReactComponentController({ currentConfig, provState, answers }: { currentConfig: ReactComponent; provState?: unknown, answers: ParticipantData['answers'] }) {
   const templateData = useTemplateAnswerContext();
-  const templatedPath = compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true, data: templateData });
-  const reactPath = `../public/${templatedPath}`;
-  const StimulusComponent = reactPath in modules ? modules[reactPath].default : null;
+  const templatedPath = templateData ? compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true, data: templateData }) : undefined;
+  const reactPath = templatedPath ? `../public/${templatedPath}` : undefined;
+  const StimulusComponent = reactPath && reactPath in modules ? modules[reactPath].default : null;
   const identifier = useCurrentIdentifier();
 
   const storeDispatch = useStoreDispatch();
