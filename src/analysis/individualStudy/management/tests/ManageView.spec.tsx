@@ -94,6 +94,14 @@ vi.mock('@mantine/core', () => ({
   ),
   Flex: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Modal: ({ opened, children }: { opened: boolean; children: ReactNode }) => (opened ? <div>{children}</div> : null),
+  Popover: Object.assign(
+    ({ children }: { children: ReactNode }) => <div>{children}</div>,
+    {
+      Target: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+      Dropdown: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+    },
+  ),
+  ScrollArea: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Tooltip: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Space: () => <div />,
   Box: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -423,7 +431,7 @@ describe('ManageView', () => {
     expect(screen.getByText('Max Participants')).toBeDefined();
     expect(screen.getByText('Completed 1')).toBeDefined();
     expect(screen.getByText('In Progress 1')).toBeDefined();
-    expect(screen.getByText('2 / 5')).toBeDefined();
+    expect(screen.getByText('5')).toBeDefined();
   });
 
   test('StageManagementItem reviews only the clicked stage in-progress participants', async () => {
@@ -502,6 +510,9 @@ describe('ManageView', () => {
     expect(screen.getByRole('button', { name: 'Collapse stage DEFAULT' })).toBeDefined();
     expect(screen.getByText('letter')).toBeDefined();
     expect(screen.getByText('number')).toBeDefined();
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Edit participant limits for DEFAULT' }));
+    });
     expect(screen.getAllByRole('checkbox')).toHaveLength(4);
 
     await act(async () => {
