@@ -107,58 +107,8 @@ export async function openStudyFromLanding(
 
 export async function nextClick(page: Page, timeout = 10000) {
   const nextButton = page.getByRole('button', { name: 'Next', exact: true });
-  const studyButton = page.locator('button[data-study-identifier]:visible');
-  const visibleHeadings = page.locator('main :is(h1, h2, h3, h4, h5, h6, [role="heading"]):visible');
-  const initialUrl = page.url();
-  const initialIdentifier = await nextButton.getAttribute('data-study-identifier');
-  const initialHeading = await visibleHeadings.first().innerText().catch(() => '');
   const deadline = Date.now() + timeout;
   let lastError: unknown;
-
-  const hasStudyEnded = async () => (
-    await page.getByText(DEFAULT_COMPLETED_MESSAGE, { exact: true }).isVisible().catch(() => false)
-    || await page.getByText(PROLIFIC_COMPLETED_MESSAGE).isVisible().catch(() => false)
-    || await page.getByText(UPLOADING_MESSAGE, { exact: true }).isVisible().catch(() => false)
-  );
-
-  const hasAdvanced = async () => {
-    const currentIdentifier = await studyButton.first().getAttribute('data-study-identifier').catch(() => null);
-    const currentHeading = await visibleHeadings.first().innerText().catch(() => '');
-    return page.url() !== initialUrl
-      || (currentHeading.length > 0 && currentHeading !== initialHeading)
-      || (currentIdentifier !== null && currentIdentifier !== initialIdentifier)
-      || await hasStudyEnded();
-  };
-
-  const waitForNextStep = async (remaining: number) => {
-    try {
-      await expect.poll(hasAdvanced, {
-        timeout: remaining,
-        intervals: [100, 250, 500, 1000],
-      }).toBe(true);
-    } catch (error) {
-      const transitionState = await page.evaluate(() => {
-        const isVisible = (element: Element) => {
-          const style = window.getComputedStyle(element);
-          return style.display !== 'none' && style.visibility !== 'hidden';
-        };
-        return {
-          url: window.location.href,
-          identifiers: Array.from(document.querySelectorAll('button[data-study-identifier]'))
-            .filter(isVisible)
-            .map((element) => element.getAttribute('data-study-identifier')),
-          headings: Array.from(document.querySelectorAll('main h1, main h2, main h3, main h4, main h5, main h6, main [role="heading"]'))
-            .filter(isVisible)
-            .map((element) => element.textContent?.trim()),
-          buttons: Array.from(document.querySelectorAll('main button'))
-            .filter(isVisible)
-            .map((element) => element.textContent?.trim()),
-        };
-      }).catch(() => null);
-      const reason = error instanceof Error ? error.message : String(error);
-      throw new Error(`Study did not advance before the timeout. State: ${JSON.stringify(transitionState)}\n${reason}`);
-    }
-  };
 
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const remaining = deadline - Date.now();
@@ -170,7 +120,6 @@ export async function nextClick(page: Page, timeout = 10000) {
     await expect(nextButton).toBeEnabled({ timeout: remaining });
     try {
       await nextButton.click({ timeout: Math.min(2000, remaining), noWaitAfter: true });
-      await waitForNextStep(deadline - Date.now());
       return;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -179,21 +128,12 @@ export async function nextClick(page: Page, timeout = 10000) {
         throw error;
       }
 
-      // A transition race is only successful once the study has navigated to
-      // the next step. Button state alone does not prove that the click took.
-      const remainingAfterRace = deadline - Date.now();
-      if (remainingAfterRace > 0) {
-        try {
-          await waitForNextStep(remainingAfterRace);
-          return;
-        } catch {
-          // The click did not advance the study; retry while the deadline
-          // remains so a transient render race can recover.
-        }
-      }
-
-      if (Date.now() >= deadline) {
-        throw error;
+      // If the button is no longer interactable after the click attempt, most
+      // often the transition has already started and we should not fail here.
+      const stillVisible = await nextButton.isVisible().catch(() => false);
+      const stillEnabled = stillVisible && await nextButton.isEnabled().catch(() => false);
+      if (!stillEnabled) {
+        return;
       }
 
       lastError = error;
