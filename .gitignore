@@ -38,4 +38,5 @@ supabase/volumes/*
 supabase/volumes/db/data
 !supabase/volumes/api/
 
+.firebaserc
 coverage/
