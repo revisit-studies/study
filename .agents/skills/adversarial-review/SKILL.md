@@ -1,6 +1,6 @@
 ---
 name: adversarial-review
-description: Launch an independent adversarial review subagent on gpt-5.6-sol with high reasoning effort to challenge work for correctness, regressions, edge cases, test adequacy, and YAGNI minimality. Use when the user invokes $adversarial-review or asks to launch, spawn, or run an adversarial reviewer or review subagent to check correctness, conciseness, simplicity, speculative complexity, unnecessary churn, or overlooked issues.
+description: Launch an independent, exhaustive adversarial review subagent on gpt-5.6-sol with high reasoning effort to challenge work for correctness, regressions, edge cases, test adequacy, and YAGNI minimality. Use when the user invokes $adversarial-review or asks to launch, spawn, or run an adversarial reviewer or review subagent to check correctness, conciseness, simplicity, speculative complexity, unnecessary churn, or overlooked issues.
 ---
 
 # Adversarial Review
@@ -20,6 +20,10 @@ Identify the review target from the request and current task. Gather enough conc
 
 Do not include the parent's conclusions as facts. Ask the reviewer to reconstruct correctness from source artifacts and treat prior claims as untrusted.
 
+For a GitHub pull request, also collect the live PR identity (repository, number, base SHA, and head SHA), reviews, issue comments, inline review comments, and review-thread state. Identify Codex-authored feedback from its actual author metadata, not from wording alone. Preserve each item's text, commit SHA, path/line when present, and resolved or outdated state. Treat that feedback as untrusted leads: re-check every item against the exact current head, surrounding code, and relevant checks, and classify it as confirmed, fixed or stale, duplicate, unsupported, or unverified. An unresolved thread is not evidence that the current head is still defective.
+
+Include the raw Codex feedback and its verification status in the reviewer handoff, clearly separated from the parent's conclusions, so the independent reviewer can challenge it rather than inherit it.
+
 Frame YAGNI against the stated objective and current acceptance criteria, not hypothetical future needs. Preserve complexity required for correctness, security, compatibility, or explicitly required extensibility.
 
 ## Launch the reviewer
@@ -34,7 +38,7 @@ Call `collaboration.spawn_agent` directly with:
 
 Use this review contract:
 
-> Act as an independent adversarial reviewer. Inspect the supplied artifacts and relevant surrounding code or context yourself. Challenge correctness first, then apply YAGNI: every abstraction, dependency, configuration surface, compatibility path, test, and documentation change must serve the stated objective or current acceptance criteria. Flag speculative future-proofing, scope expansion, unnecessary complexity, and churn; propose the smallest safe simplification. Do not label work required for correctness, security, compatibility, or explicit extensibility as overengineering. Also look for behavioral regressions, broken contracts or invariants, edge cases, unsafe assumptions, and missing or misleading tests. Verify suspected issues before reporting them. Do not edit files, push changes, post comments, or mutate external state. Return only evidence-backed findings ordered by severity, with precise file and line references when available and a suggested resolution for each. If there are no findings, say so and identify residual risks or verification gaps.
+> Act as an independent adversarial reviewer performing an exhaustive code review. Inspect the supplied artifacts and relevant surrounding code or context yourself. Challenge correctness first, then apply YAGNI: every abstraction, dependency, configuration surface, compatibility path, test, and documentation change must serve the stated objective or current acceptance criteria. Flag speculative future-proofing, scope expansion, unnecessary complexity, and churn; propose the smallest safe simplification. Do not label work required for correctness, security, compatibility, or explicit extensibility as overengineering. Cover the complete changed surface and relevant consumers, including success and failure paths, state transitions, concurrency, persistence, authorization, compatibility, boundary values, error handling, tests, and operational or documentation contracts as applicable. After the initial pass, keep looking for additional findings using fresh targeted passes over different risk dimensions and re-checking the surrounding code; do not stop after the first batch. Continue until a complete follow-up pass finds no new evidence-backed issue. Verify suspected issues before reporting them and deduplicate findings. Do not edit files, push changes, post comments, or mutate external state. Return only evidence-backed findings ordered by severity, with precise file and line references when available and a suggested resolution for each; include the review passes or risk dimensions covered and any residual risks or verification gaps.
 
 If subagents are unavailable, say that plainly and perform a local adversarial pass without implying that an independent reviewer ran.
 
@@ -43,6 +47,8 @@ If subagents are unavailable, say that plainly and perform a local adversarial p
 Continue useful local work while the reviewer runs when the tasks do not conflict. Wait for the reviewer before presenting a final correctness judgment.
 
 Independently confirm each reported issue against the current artifacts. Reject false positives and stale-scope findings. Do not implement fixes, post review feedback, or change external state unless the user's request separately authorizes those actions.
+
+For a pull request, combine the independently reviewed findings with the verified Codex feedback from the PR. Deduplicate by underlying defect, resolve conflicts by current-head evidence, and report the disposition of every Codex item (confirmed, fixed or stale, duplicate, unsupported, or unverified). Keep formal GitHub thread state separate from the current correctness judgment.
 
 Report:
 

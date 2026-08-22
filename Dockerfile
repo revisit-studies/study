@@ -9,7 +9,7 @@ COPY . .
 
 RUN yarn build
 
-RUN node -e "const fs=require('node:fs');const key='VITE_BASE_PATH=';const lines=fs.readFileSync('.env','utf8').split(/\\r?\\n/);let v='';for(const line of lines){if(line.startsWith(key)) v=line.slice(key.length);}v=v.trim();if((v.startsWith('\"')&&v.endsWith('\"'))||(v.startsWith(\"'\")&&v.endsWith(\"'\"))){v=v.slice(1,-1);}if(!v){throw new Error('VITE_BASE_PATH must be defined in .env');}fs.writeFileSync('/tmp/base_path',v);"
+RUN node -e "const fs=require('node:fs');const key='VITE_BASE_PATH=';const lines=fs.readFileSync('.env','utf8').split(/\\r?\\n/);let v='';for(const line of lines){if(line.startsWith(key)) v=line.slice(key.length);}v=v.trim();if((v.startsWith('\"')&&v.endsWith('\"'))||(v.startsWith(\"'\")&&v.endsWith(\"'\"))){v=v.slice(1,-1);}if(!v){v='/';}fs.writeFileSync('/tmp/base_path',v);"
 
 FROM nginx:stable AS runtime
 

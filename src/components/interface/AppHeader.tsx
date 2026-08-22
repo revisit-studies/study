@@ -49,8 +49,19 @@ import {
   shouldWarnForDefaultSupabaseConfig,
 } from '../../utils/defaultStorageConfig';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
+import { PdfExportMenuItem } from './PdfExportMenuItem';
 
-export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { developmentModeEnabled: boolean; dataCollectionEnabled: boolean }) {
+export function AppHeader({
+  developmentModeEnabled,
+  dataCollectionEnabled,
+  isExportingPdf = false,
+  onExportPdf,
+}: {
+  developmentModeEnabled: boolean;
+  dataCollectionEnabled: boolean;
+  isExportingPdf?: boolean;
+  onExportPdf?: () => Promise<void> | void;
+}) {
   const studyConfig = useStoreSelector((state) => state.config);
   const isAnalysis = useIsAnalysis();
 
@@ -202,7 +213,7 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
 
   return (
     <AppShell.Header className="header" p="md">
-      <Grid mt={-7} align="center">
+      <Grid align="center">
         <Grid.Col span={4}>
           <Flex align="center">
             <Image w={40} src={`${PREFIX}${logoPath}`} alt="Study Logo" className="logoImage" />
@@ -285,11 +296,20 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
               onChange={setMenuOpened}
             >
               <Menu.Target>
-                <ActionIcon size="lg" className="studyBrowserMenuDropdown" variant="subtle" color="gray">
+                <ActionIcon aria-label="Study actions" size="lg" className="studyBrowserMenuDropdown" variant="subtle" color="gray">
                   <IconDotsVertical />
                 </ActionIcon>
               </Menu.Target>
               <Menu.Dropdown>
+                {onExportPdf && (
+                  <PdfExportMenuItem
+                    isExportingPdf={isExportingPdf}
+                    onExportPdf={() => {
+                      setMenuOpened(false);
+                      onExportPdf();
+                    }}
+                  />
+                )}
                 {developmentModeEnabled && (
                   <Menu.Item
                     leftSection={<IconSchema size={14} />}

@@ -27,8 +27,10 @@ const markdownComponents = (inline?: boolean): Partial<Components> => ({
   h6({ node: _, ...props }) { return <Title {...props} order={6} pb={inline ? undefined : 12} />; },
   a({ node: _, ...props }) { return <Anchor {...props} ref={undefined} />; },
   code({ node: _, ...props }) { return <Code {...props} />; },
-  ul({ node: _, ...props }) { return <List withPadding {...props} pb={inline ? undefined : 8} />; },
-  ol({ node: _, type: _type, ...props }) { return <List {...props} type="ordered" withPadding pb={inline ? undefined : 8} />; },
+  ul({ node: _, ref: _ref, ...props }) { return <List withPadding {...props} pb={inline ? undefined : 8} />; },
+  ol({
+    node: _, type: _type, ref: _ref, ...props
+  }) { return <List {...props} type="ordered" withPadding pb={inline ? undefined : 8} />; },
   table({ node: _, ...props }) { return <Table {...props} mb={12} borderColor="grey" />; },
   thead({ node: _, ...props }) { return <Table.Thead {...props} />; },
   tbody({ node: _, ...props }) { return <Table.Tbody {...props} />; },

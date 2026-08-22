@@ -28,7 +28,7 @@ import { TextOnlyInput } from './TextOnlyInput';
 import { useFetchStylesheet } from '../../utils/fetchStylesheet';
 import { parseStringOptionValue, parseStringOptions } from '../../utils/stringOptions';
 import {
-  getDefaultFieldValue,
+  getDefaultFieldValue, normalizeCheckboxValue,
 } from './utils';
 import {
   generateErrorMessage,
@@ -133,7 +133,8 @@ export function ResponseSwitcher({
 
   const fieldInitialValue = useMemo(() => {
     if (response.paramCapture) {
-      return searchParams.get(response.paramCapture) || '';
+      const capturedValue = searchParams.get(response.paramCapture);
+      return response.type === 'checkbox' ? normalizeCheckboxValue(capturedValue) : capturedValue || '';
     }
 
     const defaultFieldValue = getDefaultFieldValue(response);

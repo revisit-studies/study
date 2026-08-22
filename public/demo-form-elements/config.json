@@ -303,6 +303,130 @@
         }
       ]
     },
+    "Text Validation": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "text-validation-title",
+          "type": "textOnly",
+          "prompt": "# Text Validation\n\nThis page demonstrates validation rules for short and long text responses. Enter a value that satisfies each instruction, then continue to see how the rules are validated. For help writing regular expression patterns, see the [MDN regular expression syntax cheat sheet](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet).",
+          "restartEnumeration": true
+        },
+        {
+          "id": "text-validation-regex",
+          "type": "shortText",
+          "prompt": "Enter a code with three uppercase letters, a hyphen, and three digits.",
+          "secondaryText": "For example: ABC-123. This response uses matchesRegex with the pattern ^[A-Z]{3}-\\d{3}$.",
+          "placeholder": "ABC-123",
+          "textValidation": [
+            {
+              "type": "matchesRegex",
+              "value": "^[A-Z]{3}-\\d{3}$"
+            }
+          ]
+        },
+        {
+          "id": "text-validation-contains",
+          "type": "shortText",
+          "prompt": "Enter a short response that contains the exact text “ReVISit”.",
+          "secondaryText": "The contains validation is case-sensitive.",
+          "placeholder": "I use ReVISit for...",
+          "textValidation": [
+            {
+              "type": "contains",
+              "value": "ReVISit"
+            }
+          ]
+        },
+        {
+          "id": "text-validation-does-not-contain",
+          "type": "longText",
+          "prompt": "Enter a sentence that does not contain the exact lowercase text “invalid”.",
+          "secondaryText": "This long text response uses doesNotContain and is case-sensitive.",
+          "placeholder": "Describe a valid response...",
+          "textValidation": [
+            {
+              "type": "doesNotContain",
+              "value": "invalid"
+            }
+          ]
+        },
+        {
+          "id": "text-validation-equals",
+          "type": "shortText",
+          "prompt": "Enter exactly “ReVISit”.",
+          "secondaryText": "This response uses equals and is case-sensitive.",
+          "placeholder": "ReVISit",
+          "textValidation": [
+            {
+              "type": "equals",
+              "value": "ReVISit"
+            }
+          ]
+        },
+        {
+          "id": "text-validation-does-not-equal",
+          "type": "longText",
+          "prompt": "Enter any response except the exact text “TEST”.",
+          "secondaryText": "This response uses doesNotEqual and is case-sensitive.",
+          "placeholder": "Anything except TEST",
+          "textValidation": [
+            {
+              "type": "doesNotEqual",
+              "value": "TEST"
+            }
+          ]
+        },
+        {
+          "id": "character-length-title",
+          "type": "textOnly",
+          "prompt": "## Character Length\n\nShort and long text responses can require a minimum number of characters, a maximum number of characters, or both.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "character-length-short",
+          "type": "shortText",
+          "prompt": "Enter between 3 and 10 characters.",
+          "secondaryText": "This short text response uses minCharLength: 3 and maxCharLength: 10.",
+          "placeholder": "3–10 characters",
+          "minCharLength": 3,
+          "maxCharLength": 10
+        },
+        {
+          "id": "character-length-long",
+          "type": "longText",
+          "prompt": "Enter between 20 and 100 characters.",
+          "secondaryText": "This long text response uses minCharLength: 20 and maxCharLength: 100.",
+          "placeholder": "20–100 characters",
+          "minCharLength": 20,
+          "maxCharLength": 100
+        },
+        {
+          "id": "word-length-title",
+          "type": "textOnly",
+          "prompt": "## Word Length\n\nShort and long text responses can require a minimum number of words, a maximum number of words, or both.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "word-length-short",
+          "type": "shortText",
+          "prompt": "Enter between two and five words.",
+          "secondaryText": "This short text response uses minWordLength: 2 and maxWordLength: 5.",
+          "placeholder": "2–5 words",
+          "minWordLength": 2,
+          "maxWordLength": 5
+        },
+        {
+          "id": "word-length-long",
+          "type": "longText",
+          "prompt": "Enter between four and ten words.",
+          "secondaryText": "This long text response uses minWordLength: 4 and maxWordLength: 10.",
+          "placeholder": "4–10 words",
+          "minWordLength": 4,
+          "maxWordLength": 10
+        }
+      ]
+    },
     "Default Values": {
       "type": "questionnaire",
       "response": [
@@ -995,6 +1119,7 @@
     "components": [
       "Introduction",
       "Form Elements",
+      "Text Validation",
       "Default Values",
       "Custom Response",
       "Randomizing Options",
