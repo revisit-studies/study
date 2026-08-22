@@ -7,11 +7,14 @@ import { PREFIX } from '../utils/Prefix';
 import { getStaticAssetByPath } from '../utils/getStaticAsset';
 import { ResourceNotFound } from '../ResourceNotFound';
 import { compileTemplate } from '../utils/handlebars';
+import { useTemplateAnswerContext } from '../store/hooks/useTemplateAnswerContext';
 
 export function ImageController({ currentConfig }: { currentConfig: ImageComponent; }) {
+  const templateData = useTemplateAnswerContext();
+
   const templatedPath = useMemo(
-    () => compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true }),
-    [currentConfig.path, currentConfig.parameters],
+    () => compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true, data: templateData }),
+    [currentConfig.path, currentConfig.parameters, templateData],
   );
 
   const url = useMemo(() => {

@@ -9,6 +9,7 @@ import { PREFIX as BASE_PREFIX } from '../utils/Prefix';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import { ReplayContext } from '../store/hooks/useReplay';
 import { compileTemplate } from '../utils/handlebars';
+import { useTemplateAnswerContext } from '../store/hooks/useTemplateAnswerContext';
 
 const PREFIX = '@REVISIT_COMMS';
 
@@ -33,9 +34,11 @@ export function IframeController({ currentConfig, provState, answers }: { curren
 
   const shouldSendProvenance = !isAnalysis || !replay || hasReplayStarted;
 
+  const templateData = useTemplateAnswerContext();
+
   const templatedPath = useMemo(
-    () => compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true }),
-    [currentConfig.path, currentConfig.parameters],
+    () => compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true, data: templateData }),
+    [currentConfig.path, currentConfig.parameters, templateData],
   );
 
   const ref = useRef<HTMLIFrameElement>(null);

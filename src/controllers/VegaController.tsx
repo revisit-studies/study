@@ -14,6 +14,7 @@ import { useEvent } from '../store/hooks/useEvent';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import { useManagedTrrack } from '../store/hooks/useRevisitTrrack';
 import { compileTemplate } from '../utils/handlebars';
+import { useTemplateAnswerContext } from '../store/hooks/useTemplateAnswerContext';
 
 type Listeners = { [key: string]: (key: string, value: { responseId: string, response: string | number }) => void };
 
@@ -37,9 +38,11 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
 
   const identifier = useCurrentIdentifier();
 
+  const templateData = useTemplateAnswerContext();
+
   const templatedPath = useMemo(
-    () => ('path' in currentConfig ? compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true }) : undefined),
-    [currentConfig],
+    () => ('path' in currentConfig ? compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true, data: templateData }) : undefined),
+    [currentConfig, templateData],
   );
 
   const { updateProvenance, updateResponseBlockValidation, setReactiveAnswers } = useStoreActions();

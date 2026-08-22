@@ -22,6 +22,7 @@ vi.mock('react-redux', () => ({
 vi.mock('../../routes/utils', () => ({
   useCurrentComponent: () => 'countDots',
   useCurrentIdentifier: () => 'countDots_0',
+  useCurrentStep: () => 0,
 }));
 
 vi.mock('../../store/hooks/useIsAnalysis', () => ({
@@ -35,7 +36,11 @@ vi.mock('../../store/store', () => ({
     updateResponseBlockValidation: mockUpdateResponseBlockValidation,
   }),
   useStoreDispatch: () => mockDispatch,
-  useStoreSelector: () => ({ valid: true, values: {} }),
+  useStoreSelector: (selector: (state: Record<string, unknown>) => unknown) => selector({
+    trialValidation: { countDots_0: { stimulus: { valid: true, values: {} } } },
+    answers: {},
+  }),
+  useFlatSequence: () => [],
 }));
 
 vi.mock('../../utils/Prefix', () => ({
