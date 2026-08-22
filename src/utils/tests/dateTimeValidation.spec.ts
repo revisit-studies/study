@@ -2,10 +2,12 @@ import { describe, expect, test } from 'vitest';
 import {
   formatDateValue,
   formatMonthDayYear,
+  fromPickerDateValue,
   getDateValueFormat,
   isValidTime,
   parseDateValue,
   parseMonthDayYear,
+  toPickerDateValue,
 } from '../dateTimeValidation';
 
 describe('dateTimeValidation', () => {
@@ -79,6 +81,20 @@ describe('dateTimeValidation', () => {
   ] as const)('formats %s date option values', (options, expectedValue, expectedFormat) => {
     expect(formatDateValue(new Date(2009, 5, 24), options)).toBe(expectedValue);
     expect(getDateValueFormat(options)).toBe(expectedFormat);
+  });
+
+  test.each([
+    ['date', '06/24/2009', '2009-06-24'],
+    ['month', '06/2009', '2009-06-01'],
+    ['year', '2009', '2009-01-01'],
+  ] as const)('converts a %s response value to and from the picker format', (options, responseValue, pickerValue) => {
+    expect(toPickerDateValue(responseValue, options)).toBe(pickerValue);
+    expect(fromPickerDateValue(pickerValue, options)).toBe(responseValue);
+  });
+
+  test('rejects an invalid picker date value', () => {
+    expect(toPickerDateValue('02/29/2025', 'date')).toBeNull();
+    expect(fromPickerDateValue('06/24/2009', 'date')).toBe('');
   });
 
   test.each(['00:00', '10:10', '23:59'])('accepts a valid 24-hour time: %s', (value) => {

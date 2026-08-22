@@ -3944,7 +3944,7 @@
     },
     "TimeResponse": {
       "additionalProperties": false,
-      "description": "The TimeResponse interface defines a time selected with a time input. Time values are stored as 24-hour `HH:mm` strings, or `HH:mm:ss` when `withSeconds` is `true`. ```json {   \"id\": \"q-time\",   \"prompt\": \"Select a time.\",   \"location\": \"aboveStimulus\",   \"type\": \"time\",   \"default\": \"14:28:30\",   \"min\": \"09:00:00\",   \"max\": \"18:00:00\",   \"withSeconds\": true } ```",
+      "description": "The TimeResponse interface defines a time selected with a time input. Time values are stored as 24-hour `HH:mm` strings, or `HH:mm:ss` when `withSeconds` is `true`. ```json {   \"id\": \"q-time\",   \"prompt\": \"Select a time.\",   \"location\": \"aboveStimulus\",   \"type\": \"time\",   \"default\": \"14:28:30\",   \"min\": \"09:00:00\",   \"max\": \"18:00:00\",   \"format\": \"24h\",   \"withSeconds\": true } ```",
       "properties": {
         "default": {
           "description": "The default time in 24-hour `HH:mm` format, or `HH:mm:ss` when `withSeconds` is `true`.",
@@ -3953,6 +3953,14 @@
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
           "type": "boolean"
+        },
+        "format": {
+          "description": "The format displayed to participants. Defaults to `24h`. Values are always stored in 24-hour format.",
+          "enum": [
+            "12h",
+            "24h"
+          ],
+          "type": "string"
         },
         "hidden": {
           "description": "Controls whether the response is hidden.",

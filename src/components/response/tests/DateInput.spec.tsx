@@ -115,4 +115,45 @@ describe('DateResponseInput', () => {
     expect((input as HTMLInputElement).value).toBe('02/29/');
     expect(screen.getByText('Please select a valid date.')).toBeDefined();
   });
+
+  test('stores a calendar selection in MM/DD/YYYY format', async () => {
+    const onChange = vi.fn();
+    const response: DateResponse = {
+      id: 'date',
+      prompt: 'Select a date.',
+      type: 'date',
+      required: true,
+    };
+
+    function TestDateInput() {
+      const [value, setValue] = useState('06/24/2026');
+      return (
+        <DateResponseInput
+          response={response}
+          disabled={false}
+          answer={{
+            value,
+            onChange: (nextValue) => {
+              onChange(nextValue);
+              setValue(nextValue);
+            },
+          }}
+          index={1}
+          enumerateQuestions={false}
+        />
+      );
+    }
+
+    render(
+      <MantineProvider>
+        <TestDateInput />
+      </MantineProvider>,
+    );
+
+    fireEvent.focus(screen.getByPlaceholderText('MM/DD/YYYY'));
+    fireEvent.click(await screen.findByRole('button', { name: '25 June 2026' }));
+
+    expect(onChange).toHaveBeenLastCalledWith('06/25/2026');
+    expect((screen.getByPlaceholderText('MM/DD/YYYY') as HTMLInputElement).value).toBe('06/25/2026');
+  });
 });

@@ -533,6 +533,7 @@ export interface DateResponse extends BaseResponse {
  *   "default": "14:28:30",
  *   "min": "09:00:00",
  *   "max": "18:00:00",
+ *   "format": "24h",
  *   "withSeconds": true
  * }
  * ```
@@ -547,6 +548,8 @@ export interface TimeResponse extends BaseResponse {
   min?: string;
   /** The latest time accepted, in the same format as the response value. */
   max?: string;
+  /** The format displayed to participants. Defaults to `24h`. Values are always stored in 24-hour format. */
+  format?: '12h' | '24h';
   /** Determines whether the input includes seconds. Defaults to `false`. */
   withSeconds?: boolean;
 }

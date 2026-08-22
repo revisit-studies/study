@@ -49,6 +49,33 @@ export function parseDateValue(value: string, options: 'date' | 'month' | 'year'
   return parseMonthDayYear(value);
 }
 
+export function toPickerDateValue(value: string, options: 'date' | 'month' | 'year') {
+  const date = parseDateValue(value, options);
+  if (date === null) {
+    return null;
+  }
+
+  const year = date.getUTCFullYear().toString().padStart(4, '0');
+  const month = (date.getUTCMonth() + 1).toString().padStart(2, '0');
+  const day = date.getUTCDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+export function fromPickerDateValue(value: string, options: 'date' | 'month' | 'year') {
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) {
+    return '';
+  }
+
+  if (options === 'month') {
+    return `${match[2]}/${match[1]}`;
+  }
+  if (options === 'year') {
+    return match[1];
+  }
+  return `${match[2]}/${match[3]}/${match[1]}`;
+}
+
 export function formatDateValue(value: Date, options: 'date' | 'month' | 'year' = 'date') {
   if (options === 'month') {
     const month = (value.getMonth() + 1).toString().padStart(2, '0');

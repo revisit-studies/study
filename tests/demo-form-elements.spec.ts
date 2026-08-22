@@ -33,6 +33,24 @@ async function answerMatrixCheckboxRows(
   }
 }
 
+async function fillTimePicker(page: Page, prompt: string, value: string) {
+  const [hours, minutes, seconds] = value.split(':');
+  await page.getByLabel(`${prompt} hours`).fill(hours);
+  await page.getByLabel(`${prompt} minutes`).fill(minutes);
+  if (seconds !== undefined) {
+    await page.getByLabel(`${prompt} seconds`).fill(seconds);
+  }
+}
+
+async function expectTimePickerValue(page: Page, prompt: string, value: string) {
+  const [hours, minutes, seconds] = value.split(':');
+  await expect(page.getByLabel(`${prompt} hours`)).toHaveValue(hours);
+  await expect(page.getByLabel(`${prompt} minutes`)).toHaveValue(minutes);
+  if (seconds !== undefined) {
+    await expect(page.getByLabel(`${prompt} seconds`)).toHaveValue(seconds);
+  }
+}
+
 async function advanceToSidebarFormElements(page: Page) {
   const sidebarAgeInput = page.locator('input[placeholder="Enter your age here, range from 0 to 100"]:visible').first();
 
@@ -169,13 +187,16 @@ test('Test questionnaire component with responses and randomizing questions and 
   await page.getByLabel('Date with a required value.').fill('06/24/2026');
   await expect(page.getByLabel('Month picker.')).toContainText('06/2026');
   await expect(page.getByLabel('Year picker.')).toContainText('2026');
-  await page.getByLabel('Time without seconds.').fill('14:28');
-  await page.getByLabel('Time with a minimum.').fill('14:28');
-  await page.getByLabel('Time with a maximum.').fill('14:28');
-  await page.getByLabel('Time within a range.').fill('14:28');
-  await page.getByLabel('Time with seconds.').fill('14:28:30');
-  await page.getByLabel('Time with seconds within a range.').fill('14:28:30');
-  await page.getByLabel('Time with a required value.').fill('14:28');
+  await fillTimePicker(page, 'Time without seconds.', '14:28');
+  await fillTimePicker(page, 'Time with a minimum.', '14:28');
+  await fillTimePicker(page, 'Time with a maximum.', '14:28');
+  await fillTimePicker(page, 'Time within a range.', '14:28');
+  await fillTimePicker(page, 'Time with seconds.', '14:28:30');
+  await fillTimePicker(page, 'Time with seconds within a range.', '14:28:30');
+  await fillTimePicker(page, 'Time with a required value.', '14:28');
+  await expect(page.getByLabel('Time in 12-hour format. hours')).toHaveValue('02');
+  await expect(page.getByLabel('Time in 12-hour format. minutes')).toHaveValue('28');
+  await expect(page.getByLabel('Time in 12-hour format. am/pm')).toHaveValue('PM');
   await nextClick(page);
 
   // Default Values should be fully answerable via defaults
@@ -183,7 +204,7 @@ test('Test questionnaire component with responses and randomizing questions and 
   await expect(page.getByLabel('Date default')).toHaveValue('06/24/2026');
   await expect(page.getByLabel('Month default')).toContainText('06/2026');
   await expect(page.getByLabel('Year default')).toContainText('2026');
-  await expect(page.getByLabel('Time default')).toHaveValue('14:28:30');
+  await expectTimePickerValue(page, 'Time default', '14:28:30');
   await expect(page.getByPlaceholder('Select a country')).toHaveValue(/United States/);
   await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeEnabled();
   await nextClick(page);
@@ -326,7 +347,7 @@ test('Test questionnaire component with responses and randomizing questions and 
   await expect(page.getByLabel('Date within a range.')).toHaveValue('06/24/2026');
   await expect(page.getByLabel('Month picker.')).toContainText('06/2026');
   await expect(page.getByLabel('Year picker.')).toContainText('2026');
-  await expect(page.getByLabel('Time with seconds within a range.')).toHaveValue('14:28:30');
+  await expectTimePickerValue(page, 'Time with seconds within a range.', '14:28:30');
 
   await page.goto(`${sidebarReplayPath}?${replaySearch}`);
   await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();

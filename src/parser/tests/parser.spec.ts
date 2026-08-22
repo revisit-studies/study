@@ -137,6 +137,27 @@ describe('Text response validation config parsing', () => {
     const result = await parseStudyConfig(JSON.stringify(studyConfig));
     expect(result.errors).toEqual([]);
   });
+  test.each(['12h', '24h'])('accepts the %s time display format', async (format) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type: 'time',
+      default: '14:28',
+      format,
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toEqual([]);
+  });
+  test('rejects an unsupported time display format', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type: 'time',
+      format: 'military',
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors.some((error) => error.instancePath.includes('/format'))).toBe(true);
+  });
   test.each([
     {
       type: 'date', field: 'default', value: '02/29/2025', format: 'MM/DD/YYYY',

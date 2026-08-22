@@ -1,16 +1,13 @@
-import { ActionIcon } from '@mantine/core';
-import { TimeInput } from '@mantine/dates';
-import type { ChangeEventHandler, FocusEventHandler } from 'react';
-import { useRef } from 'react';
-import { IconClock } from '@tabler/icons-react';
+import { TimePicker } from '@mantine/dates';
+import type { FocusEventHandler } from 'react';
 import type { TimeResponse } from '../../parser/types';
 import classes from './css/Input.module.css';
 import { InputLabel } from './InputLabel';
 
 type TimeResponseAnswer = {
   value?: string;
-  onChange?: ChangeEventHandler<HTMLInputElement>;
-  onBlur?: FocusEventHandler<HTMLInputElement>;
+  onChange?: (value: string) => void;
+  onBlur?: FocusEventHandler<HTMLDivElement>;
   onFocus?: FocusEventHandler<HTMLInputElement>;
   readOnly?: boolean;
 };
@@ -37,22 +34,9 @@ export function TimeResponseInput({
     infoText,
   } = response;
   const value = answer.value ?? '';
-  const inputRef = useRef<HTMLInputElement>(null);
-  const pickerControl = (
-    <ActionIcon
-      variant="subtle"
-      color="gray"
-      disabled={disabled}
-      aria-label="Open time picker"
-      onClick={() => inputRef.current?.showPicker?.()}
-    >
-      <IconClock size={16} stroke={1.5} />
-    </ActionIcon>
-  );
 
   return (
-    <TimeInput
-      ref={inputRef}
+    <TimePicker
       {...answer}
       disabled={disabled}
       label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
@@ -60,10 +44,16 @@ export function TimeResponseInput({
       radius="md"
       size="md"
       value={value}
+      format={response.format ?? '24h'}
+      withDropdown
       withSeconds={response.withSeconds}
+      hoursInputLabel={`${prompt} hours`}
+      minutesInputLabel={`${prompt} minutes`}
+      secondsInputLabel={`${prompt} seconds`}
+      amPmInputLabel={`${prompt} am/pm`}
       min={response.min}
       max={response.max}
-      rightSection={pickerControl}
+      clearable
       error={error}
       withErrorStyles={required}
       errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}

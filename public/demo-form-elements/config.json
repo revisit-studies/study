@@ -539,6 +539,14 @@
           "secondaryText": "By default, time responses use the 24-hour HH:mm format."
         },
         {
+          "id": "time-12-hour-response",
+          "type": "time",
+          "prompt": "Time in 12-hour format.",
+          "secondaryText": "This response uses format: 12h and displays AM/PM while storing its value in 24-hour HH:mm format.",
+          "format": "12h",
+          "default": "14:28"
+        },
+        {
           "id": "time-min-response",
           "type": "time",
           "prompt": "Time with a minimum.",
