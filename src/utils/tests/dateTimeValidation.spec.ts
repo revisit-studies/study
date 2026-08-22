@@ -15,9 +15,9 @@ describe('dateTimeValidation', () => {
   ])('parses a valid MM/DD/YYYY date: %s', (value, year, month, day) => {
     const date = parseMonthDayYear(value);
 
-    expect(date?.getFullYear()).toBe(year);
-    expect(date?.getMonth()).toBe(month);
-    expect(date?.getDate()).toBe(day);
+    expect(date?.getUTCFullYear()).toBe(year);
+    expect(date?.getUTCMonth()).toBe(month);
+    expect(date?.getUTCDate()).toBe(day);
   });
 
   test.each([
@@ -34,6 +34,21 @@ describe('dateTimeValidation', () => {
     expect(formatMonthDayYear(new Date(2009, 5, 24))).toBe('06/24/2009');
   });
 
+  test('validates a civil date skipped by the runtime timezone', () => {
+    const originalTimezone = process.env.TZ;
+    process.env.TZ = 'Pacific/Apia';
+
+    try {
+      expect(parseMonthDayYear('12/30/2011')?.toISOString()).toBe('2011-12-30T00:00:00.000Z');
+    } finally {
+      if (originalTimezone === undefined) {
+        Reflect.deleteProperty(process.env, 'TZ');
+      } else {
+        process.env.TZ = originalTimezone;
+      }
+    }
+  });
+
   test.each([
     ['date', '06/24/2009', 5, 24],
     ['month', '06/2009', 5, 1],
@@ -41,9 +56,9 @@ describe('dateTimeValidation', () => {
   ] as const)('parses a valid %s date option value', (options, value, month, day) => {
     const date = parseDateValue(value, options);
 
-    expect(date?.getFullYear()).toBe(2009);
-    expect(date?.getMonth()).toBe(month);
-    expect(date?.getDate()).toBe(day);
+    expect(date?.getUTCFullYear()).toBe(2009);
+    expect(date?.getUTCMonth()).toBe(month);
+    expect(date?.getUTCDate()).toBe(day);
   });
 
   test.each([

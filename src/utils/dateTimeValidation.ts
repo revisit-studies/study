@@ -1,14 +1,14 @@
-function createDate(year: number, month: number, day: number) {
+function createUtcDate(year: number, month: number, day: number) {
   if (year < 1) {
     return null;
   }
 
   const date = new Date(0);
-  date.setHours(0, 0, 0, 0);
-  date.setFullYear(year, month - 1, day);
-  return date.getFullYear() === year
-    && date.getMonth() === month - 1
-    && date.getDate() === day
+  date.setUTCHours(0, 0, 0, 0);
+  date.setUTCFullYear(year, month - 1, day);
+  return date.getUTCFullYear() === year
+    && date.getUTCMonth() === month - 1
+    && date.getUTCDate() === day
     ? date
     : null;
 }
@@ -23,19 +23,19 @@ export function formatMonthDayYear(value: Date) {
 // Checks if a string is a valid date in the format MM/DD/YYYY
 export function parseMonthDayYear(value: string) {
   const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  return match ? createDate(Number(match[3]), Number(match[1]), Number(match[2])) : null;
+  return match ? createUtcDate(Number(match[3]), Number(match[1]), Number(match[2])) : null;
 }
 
 export function parseMonthYear(value: string) {
   // Checks if a string is a valid date in the format MM/YYYY
   const match = value.match(/^(\d{2})\/(\d{4})$/);
-  return match ? createDate(Number(match[2]), Number(match[1]), 1) : null;
+  return match ? createUtcDate(Number(match[2]), Number(match[1]), 1) : null;
 }
 
 export function parseYear(value: string) {
   // Checks if a string is a valid date in the format YYYY
   const match = value.match(/^(\d{4})$/);
-  return match ? createDate(Number(match[1]), 1, 1) : null;
+  return match ? createUtcDate(Number(match[1]), 1, 1) : null;
 }
 
 // Checks if a string is a valid date in the format MM/DD/YYYY, MM/YYYY, or YYYY

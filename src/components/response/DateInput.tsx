@@ -37,6 +37,17 @@ function formatDateInput(value: string, isDeleting: boolean) {
   return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
 }
 
+function toLocalPickerDate(value: Date | null) {
+  if (value === null) {
+    return null;
+  }
+
+  const localDate = new Date(0);
+  localDate.setHours(0, 0, 0, 0);
+  localDate.setFullYear(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate());
+  return localDate;
+}
+
 export function DateResponseInput({
   response,
   disabled,
@@ -61,9 +72,10 @@ export function DateResponseInput({
     value, onChange, onBlur, ...answerProps
   } = answer;
   const [showInvalidDateError, setShowInvalidDateError] = useState(false);
-  const dateValue = typeof value === 'string' ? parseDateValue(value, options) : null;
-  const minDate = response.min ? parseDateValue(response.min, options) : null;
-  const maxDate = response.max ? parseDateValue(response.max, options) : null;
+  const parsePickerDate = (inputValue: string) => toLocalPickerDate(parseDateValue(inputValue, options));
+  const dateValue = typeof value === 'string' ? parsePickerDate(value) : null;
+  const minDate = response.min ? parsePickerDate(response.min) : null;
+  const maxDate = response.max ? parsePickerDate(response.max) : null;
   const dateValidationError = typeof value === 'string' && value !== ''
     ? getDateValidationMessage(response, value)
     : null;
@@ -158,7 +170,7 @@ export function DateResponseInput({
         setShowInvalidDateError(true);
         onBlur?.(event);
       }}
-      dateParser={(inputValue) => parseDateValue(inputValue, options)}
+      dateParser={parsePickerDate}
       valueFormat="MM/DD/YYYY"
       minDate={minDate ?? undefined}
       maxDate={maxDate ?? undefined}
