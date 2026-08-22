@@ -56,4 +56,4 @@ DO NOT
 
 ## Codex PR review
 
-For a pull request marked ready for review, inspect the exact head against its base and invoke `$adversarial-review` once when multi-agent support is available. The skill owns the detailed review contract, exhaustive follow-up passes, evidence requirements, and fallback behavior.
+When acting as the primary agent for a pull request marked ready for review, inspect the exact head against its base and invoke `$adversarial-review` once when multi-agent support is available. Do not invoke this rule from a spawned reviewer or other subagent. The skill owns the detailed review contract, exhaustive follow-up passes, evidence requirements, and fallback behavior.
