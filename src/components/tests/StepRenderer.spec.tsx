@@ -402,6 +402,25 @@ describe('StepRenderer', () => {
     await waitFor(() => expect(pdfExportMocks.saveElement).toHaveBeenCalledTimes(1));
   });
 
+  test('prevents study-page interaction while the PDF snapshot is in progress', async () => {
+    let finishExport: (() => void) | undefined;
+    pdfExportMocks.saveElement.mockImplementationOnce(() => new Promise((resolve) => {
+      finishExport = resolve;
+    }));
+    const { getByRole, container } = await act(async () => render(<StepRenderer />));
+    const exportRoot = container.querySelector<HTMLElement>('[data-pdf-export-root]');
+
+    getByRole('button', { name: 'Export PDF' }).click();
+
+    await waitFor(() => expect(pdfExportMocks.saveElement).toHaveBeenCalledTimes(1));
+    expect(exportRoot?.inert).toBe(true);
+    expect(exportRoot?.getAttribute('aria-busy')).toBe('true');
+
+    await act(async () => finishExport?.());
+    await waitFor(() => expect(exportRoot?.getAttribute('aria-busy')).toBeNull());
+    expect(exportRoot?.inert).toBe(false);
+  });
+
   test('offers PDF export when the title bar is hidden', async () => {
     mockShowTitleBar = false;
     const { getByRole, queryByRole } = await act(async () => render(<StepRenderer />));

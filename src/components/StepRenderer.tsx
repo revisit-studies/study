@@ -217,6 +217,10 @@ export function StepRenderer() {
       animated: false,
       autoClose: false,
     });
+    const wasInert = exportRoot.inert === true;
+    const previousAriaBusy = exportRoot.getAttribute('aria-busy');
+    exportRoot.inert = true;
+    exportRoot.setAttribute('aria-busy', 'true');
 
     try {
       await waitForNextPaint();
@@ -236,6 +240,12 @@ export function StepRenderer() {
         color: 'red',
       });
     } finally {
+      exportRoot.inert = wasInert;
+      if (previousAriaBusy === null) {
+        exportRoot.removeAttribute('aria-busy');
+      } else {
+        exportRoot.setAttribute('aria-busy', previousAriaBusy);
+      }
       exportInProgressRef.current = false;
       setIsExportingPdf(false);
     }

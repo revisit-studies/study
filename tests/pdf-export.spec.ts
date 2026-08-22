@@ -33,6 +33,14 @@ test('exports the current study component as a PDF download', async ({ page }, t
   await nextClick(page);
   await expect(page.getByText('Will you issue blankets to the alpacas?')).toBeVisible();
   await expect(page.getByRole('main').getByRole('img')).toBeVisible();
+  await page.getByRole('main').evaluate((main) => {
+    const hiddenContainer = document.createElement('div');
+    hiddenContainer.style.display = 'none';
+    const iframe = document.createElement('iframe');
+    iframe.src = 'https://example.com/hidden-external-content';
+    hiddenContainer.append(iframe);
+    main.append(hiddenContainer);
+  });
   const selectedResponse = page.getByLabel('Yes');
   await selectedResponse.check();
   const routeBeforeExport = page.url();

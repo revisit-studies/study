@@ -1,5 +1,5 @@
 import {
-  afterEach, describe, expect, test, vi,
+  afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import {
   buildPdfFilename, capturePdfCanvasSnapshots, capturePdfIframeSnapshots,
@@ -15,6 +15,7 @@ const html2PdfMocks = vi.hoisted(() => ({
   from: vi.fn(),
   save: vi.fn(),
   set: vi.fn(),
+  toPdf: vi.fn(),
 }));
 
 vi.mock('html2canvas', () => ({ default: html2CanvasMocks.capture }));
@@ -26,7 +27,7 @@ vi.mock('html2pdf.js', () => ({
       return {
         from: (element: HTMLElement) => {
           html2PdfMocks.from(element, element.isConnected);
-          return { save: html2PdfMocks.save };
+          return { save: html2PdfMocks.save, toPdf: html2PdfMocks.toPdf };
         },
       };
     },
@@ -34,6 +35,14 @@ vi.mock('html2pdf.js', () => ({
 }));
 
 describe('PDF export helpers', () => {
+  beforeEach(() => {
+    html2CanvasMocks.capture.mockReset();
+    html2PdfMocks.from.mockClear();
+    html2PdfMocks.save.mockReset().mockResolvedValue(undefined);
+    html2PdfMocks.set.mockClear();
+    html2PdfMocks.toPdf.mockReset().mockResolvedValue(undefined);
+  });
+
   afterEach(() => {
     document.body.innerHTML = '';
     vi.restoreAllMocks();
@@ -148,6 +157,16 @@ describe('PDF export helpers', () => {
     expect(selectPdfPageLayout(600, 900, 600)).toEqual({
       exportHeight: 874,
       exportWidth: 600,
+      orientation: 'portrait',
+    });
+    expect(selectPdfPageLayout(920, 1195)).toEqual({
+      exportHeight: 631,
+      exportWidth: 920,
+      orientation: 'landscape',
+    });
+    expect(selectPdfPageLayout(920, 1196)).toEqual({
+      exportHeight: 1341,
+      exportWidth: 920,
       orientation: 'portrait',
     });
   });
@@ -343,6 +362,21 @@ describe('PDF export helpers', () => {
     expect(drawImage).toHaveBeenCalledWith(canvas, 0, 0, 1000, 1000);
   });
 
+  test('rejects pages whose combined media exceeds the raster budget', () => {
+    const element = document.createElement('main');
+    Array.from({ length: 4 }).forEach(() => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 4000;
+      canvas.height = 4000;
+      element.append(canvas);
+    });
+    vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL')
+      .mockReturnValue('data:image/png;base64,canvas');
+
+    expect(() => capturePdfCanvasSnapshots(element))
+      .toThrow('The study page contains too much media to export safely.');
+  });
+
   test('uses a readable fallback when canvas pixels cannot be captured', () => {
     const element = document.createElement('main');
     element.append(document.createElement('canvas'));
@@ -369,6 +403,23 @@ describe('PDF export helpers', () => {
     replacePdfCanvasesWithSnapshots(clonedElement, snapshots);
     expect(clonedElement.querySelectorAll('canvas')).toHaveLength(1);
     expect((clonedElement.querySelector('canvas') as HTMLElement).style.display).toBe('none');
+  });
+
+  test('ignores media and external iframes beneath hidden ancestors', async () => {
+    const element = document.createElement('main');
+    const hiddenContainer = document.createElement('div');
+    hiddenContainer.style.display = 'none';
+    const canvas = document.createElement('canvas');
+    const video = document.createElement('video');
+    const iframe = document.createElement('iframe');
+    iframe.src = 'https://example.com/external-content';
+    hiddenContainer.append(canvas, video, iframe);
+    element.append(hiddenContainer);
+
+    expect(getPdfExportUnsupportedReason(element)).toBeUndefined();
+    expect(capturePdfCanvasSnapshots(element)).toEqual([]);
+    await expect(capturePdfVideoSnapshots(element)).resolves.toEqual([]);
+    await expect(capturePdfIframeSnapshots(element)).resolves.toEqual([]);
   });
 
   test('copies current form and scroll state into the mounted PDF clone', () => {
@@ -427,9 +478,6 @@ describe('PDF export helpers', () => {
   });
 
   test('passes a prepared temporary clone and filename to html2pdf', async () => {
-    html2PdfMocks.set.mockClear();
-    html2PdfMocks.from.mockClear();
-    html2PdfMocks.save.mockReset().mockResolvedValue(undefined);
     const element = document.createElement('main');
     element.setAttribute('data-pdf-export-root', '');
     vi.spyOn(element, 'getBoundingClientRect').mockReturnValue({ width: 2400 } as DOMRect);
@@ -443,6 +491,7 @@ describe('PDF export helpers', () => {
     expect(pdfSource.style.display).toBe('grid');
     expect(pdfSource.isConnected).toBe(false);
     expect(element.style.width).toBe('');
+    expect(html2PdfMocks.toPdf).toHaveBeenCalledTimes(1);
     expect(html2PdfMocks.save).toHaveBeenCalledTimes(1);
     expect(html2PdfMocks.set).toHaveBeenCalledWith(expect.objectContaining({
       filename: 'introduction_2026-08-20T14-37-09.pdf',
@@ -463,6 +512,105 @@ describe('PDF export helpers', () => {
     clonedElement.setAttribute('data-pdf-export-root', '');
     options.html2canvas.onclone(document, clonedElement);
     expect(clonedElement.style.width).toBe('920px');
+  });
+
+  test('freezes the DOM clone before asynchronous media capture', async () => {
+    let finishCapture: ((canvas: HTMLCanvasElement) => void) | undefined;
+    html2CanvasMocks.capture.mockImplementationOnce(() => new Promise((resolve) => {
+      finishCapture = resolve;
+    }));
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+      callback(0);
+      return 1;
+    });
+    vi.spyOn(HTMLImageElement.prototype, 'complete', 'get').mockReturnValue(true);
+    vi.spyOn(HTMLImageElement.prototype, 'naturalWidth', 'get').mockReturnValue(600);
+    const element = document.createElement('main');
+    element.setAttribute('data-pdf-export-root', '');
+    element.innerHTML = '<p data-export-state>Before capture</p>';
+    const iframe = document.createElement('iframe');
+    const iframeDocument = document.implementation.createHTMLDocument('Embedded content');
+    Object.defineProperty(iframe, 'contentDocument', { value: iframeDocument });
+    Object.defineProperty(iframe, 'contentWindow', {
+      value: {
+        requestAnimationFrame: (callback: FrameRequestCallback) => {
+          callback(0);
+          return 1;
+        },
+      },
+    });
+    Object.defineProperty(iframe, 'clientWidth', { value: 600 });
+    Object.defineProperty(iframe, 'clientHeight', { value: 450 });
+    vi.spyOn(iframe, 'getBoundingClientRect').mockReturnValue({ height: 450, width: 600 } as DOMRect);
+    element.append(iframe);
+    vi.spyOn(element, 'getBoundingClientRect').mockReturnValue({ width: 920 } as DOMRect);
+
+    const saving = saveElementAsPdf(element, 'frozen.pdf');
+    await vi.waitFor(() => expect(html2CanvasMocks.capture).toHaveBeenCalledTimes(1));
+    (element.querySelector('[data-export-state]') as HTMLElement).textContent = 'After capture';
+    const canvas = document.createElement('canvas');
+    canvas.width = 600;
+    canvas.height = 450;
+    vi.spyOn(canvas, 'toDataURL').mockReturnValue('data:image/png;base64,iframe');
+    finishCapture?.(canvas);
+    await saving;
+
+    const pdfSource = html2PdfMocks.from.mock.calls[0][0] as HTMLElement;
+    expect(pdfSource.querySelector('[data-export-state]')?.textContent).toBe('Before capture');
+  });
+
+  test('times out a stalled iframe raster and removes the temporary clone', async () => {
+    vi.useFakeTimers();
+    html2CanvasMocks.capture.mockReturnValueOnce(new Promise(() => {}));
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+      callback(0);
+      return 1;
+    });
+    const element = document.createElement('main');
+    element.setAttribute('data-pdf-export-root', '');
+    const iframe = document.createElement('iframe');
+    const iframeDocument = document.implementation.createHTMLDocument('Embedded content');
+    Object.defineProperty(iframe, 'contentDocument', { value: iframeDocument });
+    Object.defineProperty(iframe, 'contentWindow', {
+      value: {
+        requestAnimationFrame: (callback: FrameRequestCallback) => {
+          callback(0);
+          return 1;
+        },
+      },
+    });
+    Object.defineProperty(iframe, 'clientWidth', { value: 600 });
+    Object.defineProperty(iframe, 'clientHeight', { value: 450 });
+    vi.spyOn(iframe, 'getBoundingClientRect').mockReturnValue({ height: 450, width: 600 } as DOMRect);
+    element.append(iframe);
+    vi.spyOn(element, 'getBoundingClientRect').mockReturnValue({ width: 920 } as DOMRect);
+
+    const saving = expect(saveElementAsPdf(element, 'stalled-iframe.pdf')).rejects
+      .toThrow('PDF export timed out.');
+    await vi.advanceTimersByTimeAsync(120000);
+    await saving;
+
+    expect(document.querySelector('[aria-hidden="true"]')).toBeNull();
+  });
+
+  test('times out a stalled PDF render without starting a late download', async () => {
+    vi.useFakeTimers();
+    html2PdfMocks.toPdf.mockReturnValueOnce(new Promise(() => {}));
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+      callback(0);
+      return 1;
+    });
+    const element = document.createElement('main');
+    element.setAttribute('data-pdf-export-root', '');
+    vi.spyOn(element, 'getBoundingClientRect').mockReturnValue({ width: 920 } as DOMRect);
+
+    const saving = expect(saveElementAsPdf(element, 'stalled-pdf.pdf')).rejects
+      .toThrow('PDF export timed out.');
+    await vi.advanceTimersByTimeAsync(120000);
+    await saving;
+
+    expect(html2PdfMocks.save).not.toHaveBeenCalled();
+    expect(document.querySelector('[aria-hidden="true"]')).toBeNull();
   });
 
   test('removes only the html2pdf overlay created by a failed export', async () => {
