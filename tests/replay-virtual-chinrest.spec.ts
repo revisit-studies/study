@@ -64,6 +64,7 @@ test('virtual chinrest replays card adjustments and viewing-distance measurement
   }
 
   await page.goto(`${cardPath}?participantId=${cardRecording.participantId}&revisitPageId=e2e-card-replay`);
+  await expect(page.getByTestId('virtual-card')).toBeVisible();
   await seekReplay(page, cardRecording.startTime, cardRecording.endTime, cardRecording.startTime, async () => (
     (await page.getByTestId('virtual-card').boundingBox())?.width === 300
   ));

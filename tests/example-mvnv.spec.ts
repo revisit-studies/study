@@ -386,6 +386,7 @@ test('replays a seeded MVNV task without completing the full study', async ({ pa
     throw new Error(`MVNV replay did not render an iframe at ${page.url()}: ${await page.locator('body').innerText()}`);
   });
   const replayFrame = page.frameLocator('#root iframe');
+  await expect.poll(async () => replayFrame.locator('.answerBox').count(), { timeout: 15000 }).toBeGreaterThan(0);
   const selectedAnswerBoxCount = () => replayFrame.locator('.answerBox rect').evaluateAll((rects) => (
     rects.filter((rect) => getComputedStyle(rect).fill !== 'rgb(255, 255, 255)').length
   ));

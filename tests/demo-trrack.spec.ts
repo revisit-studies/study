@@ -165,6 +165,7 @@ for (const demo of demos) {
     await page.goto(`${replayPath}?participantId=${recording.participantId}&revisitPageId=e2e-trrack-replay`);
 
     const replayFrame = page.frameLocator('#root iframe');
+    await expectDotCount(replayFrame, 1);
     for (const target of replayTargets) {
       await seekReplay(page, recording.startTime, recording.endTime, target.time, () => hasDotCount(replayFrame, target.count));
       await expectDotCount(replayFrame, target.count);

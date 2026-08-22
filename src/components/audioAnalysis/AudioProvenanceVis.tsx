@@ -147,12 +147,17 @@ export function AudioProvenanceVis({
     setCurrentResponseNodes({ ...currentResponseNodes, [location]: node });
   });
 
-  const _setPlayTime = useThrottledCallback((n: number) => {
+  const updatePlayTime = useCallback((n: number) => {
     setPlayTime(startTime + n);
     if (setTime) {
       setTime(startTime + n);
     }
-  }, 100); // 100ms throttle
+  }, [setTime, startTime]);
+  const throttledUpdatePlayTime = useThrottledCallback(updatePlayTime, 100);
+  // Replay seeks must reach the provenance state immediately. The throttled
+  // path is useful for live audio rendering, but can drop an intermediate
+  // seek while the analysis component is still applying the previous one.
+  const _setPlayTime = context === 'provenanceVis' ? updatePlayTime : throttledUpdatePlayTime;
 
   useEffect(() => {
     _setPlayTime(seekTime * 1000);
