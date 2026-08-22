@@ -107,15 +107,22 @@ export async function openStudyFromLanding(
 
 export async function nextClick(page: Page, timeout = 10000) {
   const nextButton = page.getByRole('button', { name: 'Next', exact: true });
+  const main = page.getByRole('main');
   const initialUrl = page.url();
+  const initialComponentId = await main.locator('[id]').first().getAttribute('id');
   const deadline = Date.now() + timeout;
   let lastError: unknown;
 
+  const hasAdvanced = async () => (
+    page.url() !== initialUrl
+    || await main.locator('[id]').first().getAttribute('id') !== initialComponentId
+  );
+
   const waitForNextStep = async (remaining: number) => {
-    await expect.poll(() => page.url(), {
+    await expect.poll(hasAdvanced, {
       timeout: remaining,
       intervals: [100, 250, 500, 1000],
-    }).not.toBe(initialUrl);
+    }).toBe(true);
   };
 
   for (let attempt = 0; attempt < 3; attempt += 1) {
