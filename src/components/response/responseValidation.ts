@@ -8,6 +8,7 @@ import {
   Response,
 } from '../../parser/types';
 import { CustomResponseValidate, StoredAnswer } from '../../store/types';
+import { isMatrixDontKnowValue } from '../../utils/responseOptions';
 import { parseStringOptions, parseStringOptionValue } from '../../utils/stringOptions';
 
 export const REQUIRED_ERROR_MESSAGE = 'Please answer this question to continue.';
@@ -98,7 +99,7 @@ export function checkNumericalResponse(response: NumericalResponse, value: numbe
   const failsMin = min !== undefined && numValue < min;
   const failsMax = max !== undefined && numValue > max;
 
-  if (strictMin && strictMax && (failsStrictMin || failsStrictMax)) {
+  if (strictMin !== undefined && strictMax !== undefined && (failsStrictMin || failsStrictMax)) {
     return `Please enter a value greater than ${strictMin} and less than ${strictMax}.`;
   }
 
@@ -110,7 +111,7 @@ export function checkNumericalResponse(response: NumericalResponse, value: numbe
     return `Please enter a value less than ${strictMax}.`;
   }
 
-  if (min && max && (failsMin || failsMax)) {
+  if (min !== undefined && max !== undefined && (failsMin || failsMax)) {
     return `Please enter a value between ${min} and ${max}.`;
   }
 
@@ -201,14 +202,14 @@ function minMaxValidation(min : number | undefined, max: number | undefined, num
 
   if ((min !== undefined && items < min) || (max !== undefined && items > max)) {
     if (min !== undefined && max !== undefined) {
-      return `You must add between ${min} and ${max} ${rankingSpecificString}.`;
+      return `Please add between ${min} and ${max} ${rankingSpecificString}.`;
     }
 
     if (min !== undefined) {
-      return `You must add at least ${min} ${rankingSpecificString}.`;
+      return `Please add at least ${min} ${rankingSpecificString}.`;
     }
 
-    return `You must add at most ${max} ${rankingSpecificString}.`;
+    return `Please add at most ${max} ${rankingSpecificString}.`;
   }
 
   return null;
@@ -218,22 +219,43 @@ function checkCategoricalRankingResponse(response: RankingResponse, value: objec
   const {
     min, max, categorizeAll, numItems,
   } = response;
+  const validCategories = new Set(['HIGH', 'MEDIUM', 'LOW']);
+  const configuredOptionValues = new Set(parseStringOptions(response.options).map((option) => option.value));
+  const entries = Object.entries(value ?? {});
+
+  if (configuredOptionValues.size > 0) {
+    const unknownOptionKeys = entries
+      .filter(([optionKey]) => !configuredOptionValues.has(optionKey))
+      .map(([optionKey]) => optionKey);
+    if (unknownOptionKeys.length > 0) {
+      return 'Please categorize only configured items.';
+    }
+
+    const invalidCategoryEntries = entries
+      .filter(([, category]) => typeof category !== 'string' || !validCategories.has(category))
+      .map(([optionKey]) => optionKey);
+    if (invalidCategoryEntries.length > 0) {
+      return 'Please use only HIGH, MEDIUM, or LOW categories.';
+    }
+  }
+
   let minMaxError = null;
   for (const category of ['HIGH', 'MEDIUM', 'LOW'] as const) {
-    const count = Object.values(value ?? {}).filter((cat) => cat === category).length;
+    const count = entries.filter(([, cat]) => cat === category).length;
     minMaxError = minMaxValidation(min, max, count, response.type);
     if (minMaxError) {
       return minMaxError;
     }
   }
 
-  const categorizedItems = Object.values(value ?? {}).filter((cat) => ['HIGH', 'MEDIUM', 'LOW'].includes(cat)).length;
+  const categorizedItems = entries.length;
   if (numItems !== undefined && categorizedItems !== numItems) {
     return `Please categorize exactly ${numItems} items.`;
   }
 
-  if (categorizeAll) {
-    if (categorizedItems !== response.options.length) {
+  if (categorizeAll && configuredOptionValues.size > 0) {
+    const missingOptionKeys = [...configuredOptionValues].filter((optionValue) => !(optionValue in (value ?? {})));
+    if (missingOptionKeys.length > 0) {
       return 'Please categorize all items.';
     }
   }
@@ -298,27 +320,31 @@ export function checkMatrixResponse(response: MatrixResponse, value: Record<stri
   if (unanswered) {
     return 'Please answer all questions in the matrix to continue.';
   }
+  if (response.type === 'matrix-checkbox') {
+    const { min, max } = response;
+    if (min !== undefined || max !== undefined) {
+      const requiredAmountOfQuestionsAnswered = expectedQuestionKeys.every((questionKey) => {
+        const rowValue = value[questionKey];
+        if (isMatrixDontKnowValue(rowValue)) {
+          return true;
+        }
+        const rowSelectionCount = rowValue.split('|').length;
+        return (min === undefined || rowSelectionCount >= min) && (max === undefined || rowSelectionCount <= max);
+      });
 
-  const { min, max } = response;
-  if (min !== undefined || max !== undefined) {
-    const requiredAmountOfQuestionsAnswered = expectedQuestionKeys.every((questionKey) => {
-      const rowValue = value[questionKey].split('|').length;
-      return (min === undefined || rowValue >= min) && (max === undefined || rowValue <= max);
-    });
+      if (!requiredAmountOfQuestionsAnswered) {
+        if (min && max) {
+          return `Please select at least ${min} and at most ${max} answers per row.`;
+        }
 
-    if (!requiredAmountOfQuestionsAnswered) {
-      if (min && max) {
-        return `Please select at least ${min} and at most ${max} answers per row.`;
+        if (min) {
+          return `Please select at least ${min} answers per row.`;
+        }
+
+        return `Please select at most ${max} answers per row.`;
       }
-
-      if (min) {
-        return `Please select at least ${min} answers per row.`;
-      }
-
-      return `Please select at most ${max} answers per row.`;
     }
   }
-
   return null;
 }
 
