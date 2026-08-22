@@ -242,8 +242,10 @@ export function ComponentController() {
   }, [answers, currentComponent, currentStep, funcIndex, isAnalysis, modes.developmentModeEnabled, navigate, status, studyId]);
 
   const templateData = useMemo(
-    () => ({ answers, flatSequence, currentStep }),
-    [answers, flatSequence, currentStep],
+    () => ({
+      answers, flatSequence, currentStep, currentComponent, funcIndex: funcIndex ? decryptIndex(funcIndex) : undefined,
+    }),
+    [answers, flatSequence, currentStep, currentComponent, funcIndex],
   );
 
   const instruction = useMemo(

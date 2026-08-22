@@ -1,5 +1,6 @@
 import Handlebars from 'handlebars';
 import { StoredAnswer } from '../store/types';
+import { parseTrialOrder } from './parseTrialOrder';
 
 Handlebars.registerHelper(
   'ifEquals',
@@ -8,21 +9,74 @@ Handlebars.registerHelper(
   },
 );
 
+// Runtime participant sequences append an 'end' sentinel to flatSequence, and dynamic-block
+// steps are stored under one answer per iteration (`${blockName}_${step}_${component}_${funcIndex}`)
+// rather than under the block's own step identifier. Indexing flatSequence directly would treat
+// 'end' as a real, answer-bearing step and would never find a dynamic block's iteration answers.
+// This walks flatSequence in order and produces only identifiers that can actually hold an answer:
+// the step's own identifier for regular steps, or one entry per recorded iteration (ordered by
+// funcIndex) for dynamic blocks.
+function getAnswerBearingSequence(flatSequence: string[], answers: Record<string, StoredAnswer>): string[] {
+  const identifiers: string[] = [];
+  flatSequence.forEach((componentName, index) => {
+    if (componentName === 'end') {
+      return;
+    }
+    const staticIdentifier = `${componentName}_${index}`;
+    if (staticIdentifier in answers) {
+      identifiers.push(staticIdentifier);
+      return;
+    }
+    const dynamicPrefix = `${componentName}_${index}_`;
+    Object.entries(answers)
+      .filter(([key]) => key.startsWith(dynamicPrefix))
+      .sort(([, a], [, b]) => (parseTrialOrder(a.trialOrder).funcIndex ?? 0) - (parseTrialOrder(b.trialOrder).funcIndex ?? 0))
+      .forEach(([key]) => identifiers.push(key));
+  });
+  return identifiers;
+}
+
+// Locates the current position within an answer-bearing sequence. Inside a dynamic block,
+// `currentComponent`/`funcIndex` (when available) pin down the exact iteration; otherwise this
+// falls back to the step's own identifier, which is correct for regular (non-dynamic) steps.
+function findCurrentPosition(
+  identifiers: string[],
+  flatSequence: string[],
+  currentStep: number,
+  currentComponent: unknown,
+  funcIndex: unknown,
+): number {
+  if (typeof currentComponent === 'string' && typeof funcIndex === 'number') {
+    const dynamicIdentifier = `${flatSequence[currentStep]}_${currentStep}_${currentComponent}_${funcIndex}`;
+    const dynamicPosition = identifiers.indexOf(dynamicIdentifier);
+    if (dynamicPosition !== -1) {
+      return dynamicPosition;
+    }
+  }
+  return identifiers.indexOf(`${flatSequence[currentStep]}_${currentStep}`);
+}
+
 Handlebars.registerHelper(
   'lookupAnswersRel',
   (offset: number, responseId: string, options: Handlebars.HelperOptions) => {
-    const { answers, flatSequence, currentStep } = (options.data ?? {}) as {
-      answers?: Record<string, StoredAnswer>; flatSequence?: string[]; currentStep?: unknown;
+    const {
+      answers, flatSequence, currentStep, currentComponent, funcIndex,
+    } = (options.data ?? {}) as {
+      answers?: Record<string, StoredAnswer>; flatSequence?: string[]; currentStep?: unknown; currentComponent?: unknown; funcIndex?: unknown;
     };
     if (!answers || !flatSequence || typeof currentStep !== 'number') {
       return undefined;
     }
-    const targetStep = currentStep + offset;
-    if (targetStep < 0 || targetStep >= flatSequence.length) {
+    const identifiers = getAnswerBearingSequence(flatSequence, answers);
+    const currentPosition = findCurrentPosition(identifiers, flatSequence, currentStep, currentComponent, funcIndex);
+    if (currentPosition === -1) {
       return undefined;
     }
-    const identifier = `${flatSequence[targetStep]}_${targetStep}`;
-    return answers[identifier]?.answer?.[responseId];
+    const targetPosition = currentPosition + offset;
+    if (targetPosition < 0 || targetPosition >= identifiers.length) {
+      return undefined;
+    }
+    return answers[identifiers[targetPosition]]?.answer?.[responseId];
   },
 );
 
@@ -35,13 +89,13 @@ Handlebars.registerHelper(
     if (!answers || !flatSequence) {
       return undefined;
     }
+    const identifiers = getAnswerBearingSequence(flatSequence, answers);
     // Python-style negative indexing: -1 is the last step, -2 the second-to-last, etc.
-    const resolvedIndex = index < 0 ? flatSequence.length + index : index;
-    if (resolvedIndex < 0 || resolvedIndex >= flatSequence.length) {
+    const resolvedIndex = index < 0 ? identifiers.length + index : index;
+    if (resolvedIndex < 0 || resolvedIndex >= identifiers.length) {
       return undefined;
     }
-    const identifier = `${flatSequence[resolvedIndex]}_${resolvedIndex}`;
-    return answers[identifier]?.answer?.[responseId];
+    return answers[identifiers[resolvedIndex]]?.answer?.[responseId];
   },
 );
 

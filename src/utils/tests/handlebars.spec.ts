@@ -108,6 +108,38 @@ describe('lookupAnswers helper', () => {
   });
 });
 
+describe('lookupAnswers helper (runtime-shaped sequence)', () => {
+  // Runtime participant sequences append an 'end' sentinel that never has a stored answer.
+  const data = {
+    flatSequence: ['intro', 'trial', 'outro', 'end'],
+    answers: {
+      intro_0: makeAnswer('intro-answer'),
+      trial_1: makeAnswer('trial-answer'),
+      outro_2: makeAnswer('outro-answer'),
+    },
+  };
+
+  test('negative indexing skips the trailing end sentinel', () => {
+    expect(compileTemplate('{{lookupAnswers -1 "response"}}', {}, { data })).toBe('outro-answer');
+  });
+
+  test('resolves dynamic-block iterations by expanding the block step into its recorded answers', () => {
+    const dynamicData = {
+      flatSequence: ['intro', 'dynamicBlock', 'outro', 'end'],
+      answers: {
+        intro_0: makeAnswer('intro-answer'),
+        dynamicBlock_1_trialA_0: { ...makeAnswer('dynamic-answer-0'), trialOrder: '1_0' },
+        dynamicBlock_1_trialB_1: { ...makeAnswer('dynamic-answer-1'), trialOrder: '1_1' },
+        outro_2: makeAnswer('outro-answer'),
+      },
+    };
+
+    expect(compileTemplate('{{lookupAnswers 1 "response"}}', {}, { data: dynamicData })).toBe('dynamic-answer-0');
+    expect(compileTemplate('{{lookupAnswers 2 "response"}}', {}, { data: dynamicData })).toBe('dynamic-answer-1');
+    expect(compileTemplate('{{lookupAnswers -1 "response"}}', {}, { data: dynamicData })).toBe('outro-answer');
+  });
+});
+
 describe('lookupAnswersRel helper', () => {
   const data = {
     flatSequence: ['intro', 'trial', 'outro'],
@@ -139,5 +171,32 @@ describe('lookupAnswersRel helper', () => {
 
   test('renders empty when the data frame is missing entirely', () => {
     expect(compileTemplate('{{lookupAnswersRel -1 "response"}}', {})).toBe('');
+  });
+
+  test('skips the trailing end sentinel in a runtime-shaped sequence', () => {
+    const runtimeData = {
+      flatSequence: ['intro', 'trial', 'outro', 'end'],
+      currentStep: 2,
+      answers: data.answers,
+    };
+    expect(compileTemplate('{{lookupAnswersRel 1 "response"}}', {}, { data: runtimeData })).toBe('');
+  });
+
+  test('pins the current iteration inside a dynamic block using currentComponent/funcIndex', () => {
+    const dynamicData = {
+      flatSequence: ['intro', 'dynamicBlock', 'outro', 'end'],
+      currentStep: 1,
+      currentComponent: 'trialB',
+      funcIndex: 1,
+      answers: {
+        intro_0: makeAnswer('intro-answer'),
+        dynamicBlock_1_trialA_0: { ...makeAnswer('dynamic-answer-0'), trialOrder: '1_0' },
+        dynamicBlock_1_trialB_1: { ...makeAnswer('dynamic-answer-1'), trialOrder: '1_1' },
+        outro_2: makeAnswer('outro-answer'),
+      },
+    };
+
+    expect(compileTemplate('{{lookupAnswersRel -1 "response"}}', {}, { data: dynamicData })).toBe('dynamic-answer-0');
+    expect(compileTemplate('{{lookupAnswersRel 1 "response"}}', {}, { data: dynamicData })).toBe('outro-answer');
   });
 });

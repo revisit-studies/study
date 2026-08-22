@@ -8,6 +8,3 @@ This is an example study to show how to embed HTML elements into the study page.
 ## Relevant documentation:
 
 - [Designing HTML Stimuli](https://revisit.dev/docs/designing-studies/html-stimulus/)
-
-hello {{n}}
-<b>test</b>

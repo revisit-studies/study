@@ -264,6 +264,7 @@ vi.mock('../../../utils/stringOptions', () => ({
 
 vi.mock('react-router', () => ({
   useSearchParams: vi.fn(() => [new URLSearchParams(), vi.fn()]),
+  useParams: vi.fn(() => ({})),
 }));
 
 vi.mock('../../../store/hooks/useStudyConfig', () => ({
@@ -279,6 +280,7 @@ vi.mock('../../../store/hooks/useIsAnalysis', () => ({
 
 vi.mock('../../../routes/utils', () => ({
   useCurrentStep: vi.fn(() => 0),
+  useCurrentComponent: vi.fn(() => ''),
 }));
 
 vi.mock('../../../utils/fetchStylesheet', () => ({
