@@ -25,6 +25,7 @@ import {
   isValidTime,
   parseDateValue,
 } from '../utils/dateTimeValidation';
+import { checkBuiltInValidation } from '../components/response/builtInValidation';
 
 const modules = import.meta.glob(
   [
@@ -294,6 +295,35 @@ function verifyTextResponseConstraints(
       }
     });
     const textValidation = response.textValidation ?? [];
+    if (response.type === 'shortText' && response.builtInValidation) {
+      const fixedValues = [
+        ...(response.requiredValue !== undefined && response.requiredValue !== null
+          ? [{
+            label: 'requiredValue',
+            path: `${responsePath}/requiredValue`,
+            value: response.requiredValue.toString(),
+          }]
+          : []),
+        ...textValidation.flatMap((rule, ruleIndex) => (rule.type === 'equals' && rule.value !== ''
+          ? [{
+            label: 'equals',
+            path: `${responsePath}/textValidation/${ruleIndex}/value`,
+            value: rule.value,
+          }]
+          : [])),
+      ];
+
+      fixedValues.forEach(({ label, path, value }) => {
+        if (checkBuiltInValidation(response.builtInValidation!, value) !== null) {
+          errors.push({
+            message: `${label} value \`${value}\` does not satisfy ${response.builtInValidation} built-in validation`,
+            instancePath: path,
+            params: { action: `Change ${label} or remove the conflicting built-in validation` },
+            category: 'invalid-config',
+          });
+        }
+      });
+    }
     textValidation.forEach((firstRule, firstRuleIndex) => {
       textValidation.slice(firstRuleIndex + 1).forEach((secondRule, offset) => {
         const secondRuleIndex = firstRuleIndex + offset + 1;

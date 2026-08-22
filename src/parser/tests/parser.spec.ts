@@ -74,6 +74,71 @@ describe('Text response validation config parsing', () => {
     const result = await parseStudyConfig(JSON.stringify(studyConfig));
     expect(result.errors).toEqual([]);
   });
+  test.each([
+    {
+      fixedValue: { requiredValue: 'not-an-email' },
+      instancePath: '/components/question1/response/0/requiredValue',
+      label: 'requiredValue',
+    },
+    {
+      fixedValue: { textValidation: [{ type: 'equals', value: 'not-an-email' }] },
+      instancePath: '/components/question1/response/0/textValidation/0/value',
+      label: 'equals',
+    },
+  ])('rejects an invalid built-in validation $label value', async ({
+    fixedValue, instancePath, label,
+  }) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      builtInValidation: 'email',
+      ...fixedValue,
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: `${label} value \`not-an-email\` does not satisfy email built-in validation`,
+      instancePath,
+    }));
+  });
+  test('validates inherited fixed values against built-in validation', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig, {
+      baseComponents: {
+        sharedQuestion: {
+          type: 'questionnaire',
+          response: [{
+            id: 'email',
+            prompt: 'Email',
+            type: 'shortText',
+            builtInValidation: 'email',
+          }],
+        },
+      },
+      components: {
+        inheritedQuestion: {
+          baseComponent: 'sharedQuestion',
+          response: [{
+            id: 'email',
+            prompt: 'Email',
+            type: 'shortText',
+            requiredValue: 'not-an-email',
+          }],
+        },
+      },
+      sequence: {
+        order: 'fixed',
+        components: ['inheritedQuestion'],
+      },
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'requiredValue value `not-an-email` does not satisfy email built-in validation',
+      instancePath: '/components/inheritedQuestion/response/0/requiredValue',
+    }));
+  });
   test.each(['currency', 'date', 'time'])('rejects the unsupported %s built-in validation', async (builtInValidation) => {
     const studyConfig = makeStudyConfig('contains');
     Object.assign(studyConfig.components.question1.response[0], { builtInValidation });

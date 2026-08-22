@@ -92,7 +92,8 @@ test('Test questionnaire component with responses and randomizing questions and 
   const ageInput = page.getByPlaceholder('Enter your age here, range from 0 to 100');
   await expect(ageInput).toBeVisible({ timeout: 10000 });
   await ageInput.fill('120');
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await ageInput.press('Tab');
+  await nextClick(page);
   await expect(page.getByText('Please enter a value between 0 and 100')).toBeVisible();
   await ageInput.fill('12');
 
@@ -177,7 +178,6 @@ test('Test questionnaire component with responses and randomizing questions and 
   await page.getByPlaceholder('+800-0000-0000').fill('+800-0000-0000');
   await page.getByPlaceholder('800-000-0000').fill('800-000-0000');
   await page.getByPlaceholder('https://revisit.dev').fill('https://revisit.dev');
-  await page.getByLabel('Date with a custom placeholder.').fill('06/24/2026');
   await page.getByLabel('Date within a range.').fill('06/24/2026');
   await page.getByLabel('Date with a required value.').fill('09/01/2026');
   await page.getByLabel('Month input.').fill('07/2026');

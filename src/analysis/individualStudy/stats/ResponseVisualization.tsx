@@ -11,6 +11,7 @@ import { useMemo } from 'react';
 import { VegaLite, VisualizationSpec } from 'react-vega';
 import { IndividualComponent, ParticipantData, Response } from '../../../parser/types';
 import { responseAnswerIsCorrect } from '../../../utils/correctAnswer';
+import { parseDateValue } from '../../../utils/dateTimeValidation';
 
 export function ResponseVisualization({
   response, participantData, trialId, trialConfig,
@@ -201,6 +202,18 @@ export function ResponseVisualization({
 
     // Categorical visualization
     if (response.type === 'date' || response.type === 'time' || response.type === 'radio' || response.type === 'dropdown' || response.type === 'checkbox' || response.type === 'buttons' || response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') {
+      const dateSort = response.type === 'date'
+        ? Array.from(new Set(questionData
+          .map((row) => row[response.id])
+          .filter((value): value is string => typeof value === 'string')))
+          .sort((first, second) => {
+            const firstDate = parseDateValue(first, response.options);
+            const secondDate = parseDateValue(second, response.options);
+            return firstDate && secondDate
+              ? firstDate.getTime() - secondDate.getTime()
+              : first.localeCompare(second);
+          })
+        : undefined;
       const spec = {
         ...baseSpec,
         data: { values: questionData },
@@ -208,7 +221,9 @@ export function ResponseVisualization({
         params: correctAnswer !== undefined ? correctAnswerSpec.params : undefined,
         transform: Array.isArray(correctAnswer?.answer) ? undefined : (correctAnswer !== undefined ? correctAnswerSpec.transform : undefined),
         encoding: {
-          x: { field: response.id, type: 'ordinal', title: 'Answer' },
+          x: {
+            field: response.id, type: 'ordinal', title: 'Answer', sort: dateSort,
+          },
           y: { aggregate: 'count', type: 'quantitative', title: 'Count' },
           color: correctAnswer !== undefined ? correctAnswerSpec.color : undefined,
         },
