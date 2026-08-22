@@ -132,6 +132,25 @@ test('Test questionnaire component with responses and randomizing questions and 
   // Go to the next page
   await nextClick(page);
 
+  // Text validation
+  const regexInput = page.getByPlaceholder('ABC-123');
+  await regexInput.fill('^[A-Z]{3}-\\d{3}$');
+  await nextClick(page);
+  await expect(
+    page.getByText('Please enter a value that matches the required format.'),
+  ).toBeVisible();
+  await regexInput.fill('ABC-123');
+  await page.getByPlaceholder('ABC-123').fill('ABC-123');
+  await page.getByPlaceholder('I use ReVISit for...').fill('I use ReVISit');
+  await page.getByPlaceholder('Describe a valid response...').fill('This response works');
+  await page.getByPlaceholder('ReVISit', { exact: true }).fill('ReVISit');
+  await page.getByPlaceholder('Anything except TEST').fill('ReVISit');
+  await page.getByPlaceholder('3–10 characters').fill('valid');
+  await page.getByPlaceholder('20–100 characters').fill('This response has enough characters.');
+  await page.getByPlaceholder('2–5 words').fill('two words');
+  await page.getByPlaceholder('4–10 words').fill('This has four words');
+  await nextClick(page);
+
   // Default Values should be fully answerable via defaults
   await expect(page.getByText('Default Values Demo')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeEnabled();
