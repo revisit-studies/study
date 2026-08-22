@@ -14,17 +14,6 @@ function createUtcDate(year: number, month: number, day: number) {
     : null;
 }
 
-/** Keeps date/time dropdowns below their inputs and scrollable within the available viewport. */
-export const DATE_TIME_POPOVER_PROPS = {
-  position: 'bottom-start',
-  middlewares: {
-    flip: false,
-    shift: { mainAxis: false, crossAxis: true },
-    size: true,
-  },
-  styles: { dropdown: { overflowY: 'auto' } },
-} as const;
-
 // Checks if a string is a valid date in the format MM/DD/YYYY
 export function parseMonthDayYear(value: string) {
   const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);

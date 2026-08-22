@@ -251,7 +251,7 @@ export function ResponseSwitcher({
       <DateResponseInput
         response={response}
         disabled={isDisabled || dontKnowChecked}
-        answer={ans as { value?: string }}
+        answer={ans as { value: string }}
         error={responseError}
         index={index}
         enumerateQuestions={enumerateQuestions}
@@ -261,7 +261,7 @@ export function ResponseSwitcher({
       <TimeResponseInput
         response={response}
         disabled={isDisabled || dontKnowChecked}
-        answer={ans as { value?: string }}
+        answer={ans as { value: string }}
         error={responseError}
         index={index}
         enumerateQuestions={enumerateQuestions}

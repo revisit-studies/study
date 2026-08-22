@@ -5,7 +5,6 @@ import type { FocusEventHandler } from 'react';
 import { useId, useRef, useState } from 'react';
 import type { DateResponse } from '../../parser/types';
 import {
-  DATE_TIME_POPOVER_PROPS,
   formatDateInput,
   formatMonthInput,
   fromPickerDateValue,
@@ -107,7 +106,6 @@ export function DateResponseInput({
 
     return (
       <Popover
-        {...DATE_TIME_POPOVER_PROPS}
         opened={pickerOpened}
         onChange={setPickerOpened}
         disabled={disabled || readOnly}
@@ -218,7 +216,6 @@ export function DateResponseInput({
         onBlur?.(event);
       }}
       onFocus={onFocus}
-      popoverProps={DATE_TIME_POPOVER_PROPS}
       dateParser={parsePickerDate}
       valueFormat="MM/DD/YYYY"
       minDate={minDate ?? undefined}
