@@ -45,7 +45,7 @@ export function ScreenRecordingReplay() {
             if (!participantId) {
               throw new Error('Participant ID is required to load audio');
             }
-            const url = await storageEngine.getScreenRecording(identifier, participantId);
+            const url = await storageEngine.getScreenRecordingUrl(identifier, participantId);
             if (!url) {
               storeDispatch(setAnalysisHasScreenRecording(false));
               storeDispatch(setAnalysisCanPlayScreenRecording(false));
