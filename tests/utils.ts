@@ -107,8 +107,16 @@ export async function openStudyFromLanding(
 
 export async function nextClick(page: Page, timeout = 10000) {
   const nextButton = page.getByRole('button', { name: 'Next', exact: true });
+  const initialUrl = page.url();
   const deadline = Date.now() + timeout;
   let lastError: unknown;
+
+  const waitForNextStep = async (remaining: number) => {
+    await expect.poll(() => page.url(), {
+      timeout: remaining,
+      intervals: [100, 250, 500, 1000],
+    }).not.toBe(initialUrl);
+  };
 
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const remaining = deadline - Date.now();
@@ -120,6 +128,7 @@ export async function nextClick(page: Page, timeout = 10000) {
     await expect(nextButton).toBeEnabled({ timeout: remaining });
     try {
       await nextButton.click({ timeout: Math.min(2000, remaining), noWaitAfter: true });
+      await waitForNextStep(deadline - Date.now());
       return;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -128,12 +137,21 @@ export async function nextClick(page: Page, timeout = 10000) {
         throw error;
       }
 
-      // If the button is no longer interactable after the click attempt, most
-      // often the transition has already started and we should not fail here.
-      const stillVisible = await nextButton.isVisible().catch(() => false);
-      const stillEnabled = stillVisible && await nextButton.isEnabled().catch(() => false);
-      if (!stillEnabled) {
-        return;
+      // A transition race is only successful once the study has navigated to
+      // the next step. Button state alone does not prove that the click took.
+      const remainingAfterRace = deadline - Date.now();
+      if (remainingAfterRace > 0) {
+        try {
+          await waitForNextStep(remainingAfterRace);
+          return;
+        } catch {
+          // The click did not advance the study; retry while the deadline
+          // remains so a transient render race can recover.
+        }
+      }
+
+      if (Date.now() >= deadline) {
+        throw error;
       }
 
       lastError = error;
