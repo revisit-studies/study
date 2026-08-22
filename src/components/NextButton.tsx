@@ -146,6 +146,7 @@ export function NextButton({
         <Button
           type="submit"
           disabled={nextButtonDisabled}
+          data-study-identifier={identifier}
           onClick={() => onNext()}
           px={location === 'sidebar' && checkAnswer ? 8 : undefined}
         >

@@ -107,18 +107,25 @@ export async function openStudyFromLanding(
 
 export async function nextClick(page: Page, timeout = 10000) {
   const nextButton = page.getByRole('button', { name: 'Next', exact: true });
-  const main = page.getByRole('main');
-  const initialUrl = page.url();
-  const initialComponentId = await main.locator('[id]').first().getAttribute('id');
-  const initialMainText = await main.innerText();
+  const studyButton = page.locator('button[data-study-identifier]');
+  const initialIdentifier = await nextButton.getAttribute('data-study-identifier');
   const deadline = Date.now() + timeout;
   let lastError: unknown;
 
-  const hasAdvanced = async () => (
-    page.url() !== initialUrl
-    || await main.locator('[id]').first().getAttribute('id') !== initialComponentId
-    || await main.innerText() !== initialMainText
+  const hasStudyEnded = async () => (
+    await page.getByText(DEFAULT_COMPLETED_MESSAGE, { exact: true }).isVisible().catch(() => false)
+    || await page.getByText(PROLIFIC_COMPLETED_MESSAGE).isVisible().catch(() => false)
+    || await page.getByText(UPLOADING_MESSAGE, { exact: true }).isVisible().catch(() => false)
   );
+
+  const hasAdvanced = async () => {
+    if (await studyButton.count() === 0) {
+      return hasStudyEnded();
+    }
+
+    const currentIdentifier = await studyButton.first().getAttribute('data-study-identifier');
+    return currentIdentifier !== null && currentIdentifier !== initialIdentifier;
+  };
 
   const waitForNextStep = async (remaining: number) => {
     await expect.poll(hasAdvanced, {
