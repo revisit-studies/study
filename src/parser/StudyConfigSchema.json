@@ -2193,14 +2193,6 @@
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
-        "max": {
-          "description": "The maximum amount of answers given per row for the matrix.",
-          "type": "number"
-        },
-        "min": {
-          "description": "The minimum amount of answers given per row for the matrix.",
-          "type": "number"
-        },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"

@@ -661,6 +661,26 @@ describe('validateResponse', () => {
     });
   });
 
+  test('matrix checkbox withDontKnow sentinel is treated as a complete row for min/max validation', () => {
+    const response: MatrixResponse = {
+      id: 'matrix-dont-know-min',
+      prompt: 'Question',
+      type: 'matrix-checkbox',
+      required: true,
+      withDontKnow: true,
+      min: 2,
+      answerOptions: ['0', '1'],
+      questionOptions: ['q1', 'q2'],
+    };
+
+    expect(validateResponse(response, { q1: "I don't know", q2: '0|1' }, { matrix: { q1: "I don't know", q2: '0|1' } }).valid).toBe(true);
+    expect(validateResponse(response, { q1: "I don't know", q2: '0' }, { matrix: { q1: "I don't know", q2: '0' } })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please select at least 2 answers per row.',
+      blocksProgression: true,
+    });
+  });
+
   test('standalone withDontKnow bypasses required, min/max, and requiredValue validation', () => {
     const response: NumericalResponse = {
       id: 'q1', prompt: 'Question', type: 'numerical', required: true, min: 10, requiredValue: 42, withDontKnow: true,
@@ -728,25 +748,48 @@ describe('validateResponse', () => {
     expect(validateResponse(sublistMin, { A: '0', B: '1' }, { ranking: { A: '0', B: '1' } }).valid).toBe(true);
     expect(validateResponse(sublistMin, { A: '0' }, { ranking: { A: '0' } })).toMatchObject({
       issueType: 'invalid',
-      message: 'You must add at least 2 items.',
+      message: 'Please add at least 2 items.',
       blocksProgression: true,
     });
 
     expect(validateResponse(sublistMax, { A: '0', B: '1' }, { ranking: { A: '0', B: '1' } }).valid).toBe(true);
     expect(validateResponse(sublistMax, { A: '0', B: '1', C: '2' }, { ranking: { A: '0', B: '1', C: '2' } })).toMatchObject({
       issueType: 'invalid',
-      message: 'You must add at most 2 items.',
+      message: 'Please add at most 2 items.',
       blocksProgression: true,
     });
 
     expect(validateResponse(categoricalMin, { A: 'LOW', B: 'LOW' }, { ranking: { A: 'LOW', B: 'LOW' } })).toMatchObject({
       issueType: 'invalid',
-      message: 'You must add at least 1 items per category.',
+      message: 'Please add at least 1 items per category.',
       blocksProgression: true,
     });
     expect(validateResponse(categoricalMax, { A: 'HIGH', B: 'HIGH' }, { ranking: { A: 'HIGH', B: 'HIGH' } })).toMatchObject({
       issueType: 'invalid',
-      message: 'You must add at most 1 items per category.',
+      message: 'Please add at most 1 items per category.',
+      blocksProgression: true,
+    });
+  });
+
+  test('categorical ranking validates exact configured option set and category values', () => {
+    const response: Response = {
+      id: 'ranking-categorical-all', prompt: 'Rank', type: 'ranking-categorical', required: true, options: ['A', 'B'], categorizeAll: true,
+    };
+
+    expect(validateResponse(response, { A: 'HIGH', B: 'LOW' }, { ranking: { A: 'HIGH', B: 'LOW' } }).valid).toBe(true);
+    expect(validateResponse(response, { A: 'HIGH', X: 'LOW' }, { ranking: { A: 'HIGH', X: 'LOW' } })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please categorize only configured items.',
+      blocksProgression: true,
+    });
+    expect(validateResponse(response, { A: 'HIGH', B: 'INVALID' }, { ranking: { A: 'HIGH', B: 'INVALID' } })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please use only HIGH, MEDIUM, or LOW categories.',
+      blocksProgression: true,
+    });
+    expect(validateResponse(response, { A: 'HIGH' }, { ranking: { A: 'HIGH' } })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please categorize all items.',
       blocksProgression: true,
     });
   });
@@ -795,7 +838,7 @@ describe('validateResponse', () => {
     const onePair = { A_0: 'pair-0-high', B_1: 'pair-0-low' };
     expect(validateResponse(minOnly, onePair, { ranking: onePair })).toMatchObject({
       issueType: 'invalid',
-      message: 'You must add at least 2 pairs.',
+      message: 'Please add at least 2 pairs.',
       blocksProgression: true,
     });
 
@@ -811,7 +854,7 @@ describe('validateResponse', () => {
       options: ['A', 'B', 'C', 'D', 'E', 'F'],
     }, maxOnlyInvalid, { ranking: maxOnlyInvalid })).toMatchObject({
       issueType: 'invalid',
-      message: 'You must add at most 2 pairs.',
+      message: 'Please add at most 2 pairs.',
       blocksProgression: true,
     });
 

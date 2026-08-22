@@ -625,10 +625,6 @@ interface BaseMatrixResponse extends BaseResponse {
   questionOptions: (MatrixQuestionOption | string)[];
   /** The order in which the questions are displayed. Defaults to fixed. */
   questionOrder?: 'fixed' | 'random';
-  /** The minimum amount of answers given per row for the matrix. */
-  min?: number;
-  /** The maximum amount of answers given per row for the matrix. */
-  max?: number;
 }
 
 /**
