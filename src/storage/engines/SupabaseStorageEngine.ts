@@ -2,12 +2,20 @@ import { AuthError, createClient } from '@supabase/supabase-js';
 import localforage from 'localforage';
 import {
   REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageObject, StorageObjectType, StoredUser,
-  CloudStorageEngine, cleanupModes,
+  CloudStorageEngine, SequenceAssignmentAllocation, cleanupModes,
 } from './types';
 import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
 
+type SupabaseSequenceAllocator = {
+  nextSequenceIndex: number;
+  nextCreationIndex: number;
+  version: number;
+};
+
 export class SupabaseStorageEngine extends CloudStorageEngine {
   private supabase = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY);
+
+  private allocatorRpcAvailable: boolean | undefined;
 
   protected participantStore = localforage.createInstance({
     name: 'revisit-supabase',
@@ -100,11 +108,13 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
   }
 
   protected async _verifyStudyDatabase() {
-    const { error } = await this.supabase
+    const { data, error } = await this.supabase
       .from('revisit')
-      .select('*')
-      .eq('studyId', `${this.collectionPrefix}${this.studyId}`);
-    if (error || !this.studyId) {
+      .select('docId')
+      .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
+      .eq('docId', 'connect')
+      .maybeSingle();
+    if (error || !data || !this.studyId) {
       throw new Error('Study database not initialized or does not exist');
     }
   }
@@ -161,7 +171,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     }
 
     // Create a sequence assignment for the participant in the study collection
-    await this.supabase
+    const { error } = await this.supabase
       .from('revisit')
       .upsert({
         studyId: `${this.collectionPrefix}${this.studyId}`,
@@ -170,6 +180,242 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       })
       .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
       .eq('docId', `sequenceAssignment_${participantId}`);
+    if (error) {
+      throw new Error('Failed to create sequence assignment');
+    }
+  }
+
+  private async getSequenceAllocatorSeed() {
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+    const studyId = `${this.collectionPrefix}${this.studyId}`;
+    const [totalResult, claimedResult] = await Promise.all([
+      this.supabase
+        .from('revisit')
+        .select('docId', { count: 'exact', head: true })
+        .eq('studyId', studyId)
+        .like('docId', 'sequenceAssignment_%'),
+      this.supabase
+        .from('revisit')
+        .select('docId', { count: 'exact', head: true })
+        .eq('studyId', studyId)
+        .like('docId', 'sequenceAssignment_%')
+        .eq('data->claimed', true),
+    ]);
+    if (totalResult.error || claimedResult.error) {
+      throw new Error('Failed to initialize sequence assignment allocator');
+    }
+    return {
+      nextSequenceIndex: (totalResult.count ?? 0) - (claimedResult.count ?? 0),
+      nextCreationIndex: totalResult.count ?? 0,
+      version: 0,
+    };
+  }
+
+  private async getOrCreateSequenceAllocator() {
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+    const studyId = `${this.collectionPrefix}${this.studyId}`;
+    const allocatorPath = 'sequenceAllocator';
+    const { data: existingAllocator, error: existingAllocatorError } = await this.supabase
+      .from('revisit')
+      .select('data')
+      .eq('studyId', studyId)
+      .eq('docId', allocatorPath)
+      .maybeSingle();
+    if (existingAllocatorError) {
+      throw new Error('Failed to retrieve sequence assignment allocator');
+    }
+    if (existingAllocator) {
+      return existingAllocator.data as SupabaseSequenceAllocator;
+    }
+
+    const seed = await this.getSequenceAllocatorSeed();
+    const { error } = await this.supabase
+      .from('revisit')
+      .insert({ studyId, docId: allocatorPath, data: seed });
+    if (error && error.code !== '23505') {
+      throw new Error('Failed to create sequence assignment allocator');
+    }
+
+    const { data: allocator, error: allocatorError } = await this.supabase
+      .from('revisit')
+      .select('data')
+      .eq('studyId', studyId)
+      .eq('docId', allocatorPath)
+      .single();
+    if (allocatorError || !allocator) {
+      throw new Error('Failed to retrieve sequence assignment allocator');
+    }
+    return allocator.data as typeof seed;
+  }
+
+  private async reserveSequenceAllocator(
+    initialAllocator: SupabaseSequenceAllocator,
+    reusableSequenceIndex?: number,
+    incrementCreationIndex: boolean = true,
+  ): Promise<SequenceAssignmentAllocation> {
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+    const studyId = `${this.collectionPrefix}${this.studyId}`;
+    const allocatorPath = 'sequenceAllocator';
+
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      let allocator = initialAllocator;
+      if (attempt > 0) {
+        // eslint-disable-next-line no-await-in-loop
+        const { data, error } = await this.supabase
+          .from('revisit')
+          .select('data')
+          .eq('studyId', studyId)
+          .eq('docId', allocatorPath)
+          .single();
+        if (error || !data) {
+          throw new Error('Failed to retrieve sequence assignment allocator');
+        }
+        allocator = data.data as SupabaseSequenceAllocator;
+      }
+
+      const sequenceIndex = reusableSequenceIndex ?? allocator.nextSequenceIndex;
+      const creationIndex = allocator.nextCreationIndex;
+      const nextAllocator = {
+        nextSequenceIndex: reusableSequenceIndex === undefined
+          ? allocator.nextSequenceIndex + 1
+          : allocator.nextSequenceIndex,
+        nextCreationIndex: incrementCreationIndex
+          ? allocator.nextCreationIndex + 1
+          : allocator.nextCreationIndex,
+        version: allocator.version + 1,
+      };
+      // eslint-disable-next-line no-await-in-loop
+      const { data: updatedAllocatorRows, error } = await this.supabase
+        .from('revisit')
+        .update({ data: nextAllocator })
+        .eq('studyId', studyId)
+        .eq('docId', allocatorPath)
+        .eq('data->version', allocator.version)
+        .select('data');
+      if (error) {
+        throw new Error('Failed to reserve a sequence assignment');
+      }
+      if (updatedAllocatorRows?.length === 1) {
+        return { sequenceIndex, creationIndex };
+      }
+    }
+
+    throw new Error('Failed to reserve a sequence assignment after concurrent updates');
+  }
+
+  private async getLegacySequenceIndex(timestamp: number) {
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+    const studyId = `${this.collectionPrefix}${this.studyId}`;
+    const [serverTimestampResult, storedTimestampResult] = await Promise.all([
+      this.supabase
+        .from('revisit')
+        .select('docId', { count: 'exact', head: true })
+        .eq('studyId', studyId)
+        .like('docId', 'sequenceAssignment_%')
+        .eq('data->rejected', false)
+        .eq('data->withServerTimestamp', true)
+        .lt('createdAt', new Date(timestamp).toISOString()),
+      this.supabase
+        .from('revisit')
+        .select('docId', { count: 'exact', head: true })
+        .eq('studyId', studyId)
+        .like('docId', 'sequenceAssignment_%')
+        .eq('data->rejected', false)
+        .eq('data->withServerTimestamp', false)
+        .lt('data->timestamp', timestamp),
+    ]);
+    if (serverTimestampResult.error || storedTimestampResult.error) {
+      throw new Error('Failed to derive legacy sequence assignment index');
+    }
+    return (serverTimestampResult.count ?? 0) + (storedTimestampResult.count ?? 0);
+  }
+
+  private async getLegacyCreationIndex(createdTime: number) {
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+    const { count, error } = await this.supabase
+      .from('revisit')
+      .select('docId', { count: 'exact', head: true })
+      .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
+      .like('docId', 'sequenceAssignment_%')
+      .lt('createdAt', new Date(createdTime).toISOString());
+    if (error) {
+      throw new Error('Failed to derive legacy participant creation index');
+    }
+    return count ?? 0;
+  }
+
+  private async allocateSequenceAssignmentWithRpc(
+    participantId: string,
+    sequenceAssignment: SequenceAssignment,
+  ): Promise<SequenceAssignmentAllocation | null> {
+    if (
+      !this.studyId
+      || this.allocatorRpcAvailable === false
+      || typeof this.supabase.rpc !== 'function'
+    ) {
+      return null;
+    }
+
+    const { data, error } = await this.supabase.rpc('allocate_sequence_assignment', {
+      p_study_id: `${this.collectionPrefix}${this.studyId}`,
+      p_participant_id: participantId,
+      p_assignment: sequenceAssignment,
+    });
+    if (error) {
+      if (error.code === 'PGRST202' || error.code === '42883') {
+        this.allocatorRpcAvailable = false;
+        return null;
+      }
+      throw new Error(`Failed to reserve a sequence assignment: ${error.message}`);
+    }
+
+    const allocation = (Array.isArray(data) ? data[0] : data) as {
+      sequenceIndex?: number;
+      creationIndex?: number;
+    } | null;
+    if (
+      !allocation
+      || typeof allocation.sequenceIndex !== 'number'
+      || typeof allocation.creationIndex !== 'number'
+    ) {
+      throw new Error('Sequence assignment allocator returned an invalid result');
+    }
+    this.allocatorRpcAvailable = true;
+    return {
+      sequenceIndex: allocation.sequenceIndex,
+      creationIndex: allocation.creationIndex,
+    };
+  }
+
+  protected async _allocateSequenceAssignment(
+    participantId: string,
+    sequenceAssignment: SequenceAssignment,
+  ): Promise<SequenceAssignmentAllocation> {
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+
+    const rpcAllocation = await this.allocateSequenceAssignmentWithRpc(
+      participantId,
+      sequenceAssignment,
+    );
+    if (rpcAllocation) {
+      return rpcAllocation;
+    }
+    throw new Error(
+      'Supabase sequence allocation is unavailable. '
+      + 'Apply the allocate_sequence_assignment migration before starting participants.',
+    );
   }
 
   protected async _updateSequenceAssignmentFields(participantId: string, updatedFields: Partial<SequenceAssignment>) {
@@ -213,9 +459,12 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       .select('data, createdAt')
       .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
       .eq('docId', `sequenceAssignment_${participantId}`)
-      .single();
+      .maybeSingle();
 
-    if (error || !data) {
+    if (error) {
+      throw new Error('Failed to retrieve sequence assignment');
+    }
+    if (!data) {
       return null;
     }
 
@@ -275,53 +524,83 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       throw new Error('Failed to retrieve sequence assignment for current participant');
     }
 
-    // Update the sequence assignment for the participant to mark it as rejected
-    await this.supabase
-      .from('revisit')
-      .update({ data: { ...data.data, rejected: true, timestamp: new Date().getTime() } })
-      .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
-      .eq('docId', sequenceAssignmentPath);
-
+    const studyId = `${this.collectionPrefix}${this.studyId}`;
     const claimedParticipantId = data.data.claimedParticipantId as string | undefined;
+    let claimedSequenceAssignmentPath: string | undefined;
+    let claimedAssignmentData: Record<string, unknown> | undefined;
     if (claimedParticipantId) {
-      const claimedSequenceAssignmentPath = `sequenceAssignment_${claimedParticipantId}`;
+      claimedSequenceAssignmentPath = `sequenceAssignment_${claimedParticipantId}`;
       const { data: claimedData, error: claimedError } = await this.supabase
         .from('revisit')
         .select('data')
-        .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
+        .eq('studyId', studyId)
         .eq('docId', claimedSequenceAssignmentPath)
         .single();
 
       if (claimedError || !claimedData) {
         throw new Error('Failed to retrieve claimed sequence assignment for rejection');
       }
-
-      // Update the claimed sequence assignment to mark it as available again
-      // Also mark as rejected so it doesn't get incorrectly reused
-      await this.supabase
+      claimedAssignmentData = claimedData.data as Record<string, unknown>;
+    } else {
+      // Fallback for legacy reused assignments that predate claimedParticipantId.
+      const { data: claimedData, error: claimedError } = await this.supabase
         .from('revisit')
-        .update({ data: { ...claimedData.data, claimed: false, rejected: true } })
-        .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
+        .select('docId, data')
+        .eq('studyId', studyId)
+        .like('docId', 'sequenceAssignment_%')
+        .eq('data->claimed', true)
+        .eq('data->timestamp', data.data.timestamp)
+        .maybeSingle();
+      if (claimedError) {
+        throw new Error('Failed to retrieve claimed sequence assignment for rejection');
+      }
+      if (claimedData) {
+        claimedSequenceAssignmentPath = claimedData.docId as string;
+        claimedAssignmentData = claimedData.data as Record<string, unknown>;
+      }
+    }
+
+    let reusableSequenceIndex: number | undefined;
+    if (claimedSequenceAssignmentPath && claimedAssignmentData) {
+      const allocator = await this.getOrCreateSequenceAllocator();
+      reusableSequenceIndex = (
+        await this.reserveSequenceAllocator(allocator, undefined, false)
+      ).sequenceIndex;
+    }
+
+    const { error: participantUpdateError } = await this.supabase
+      .from('revisit')
+      .update({
+        data: {
+          ...data.data,
+          rejected: true,
+          timestamp: new Date().getTime(),
+          withServerTimestamp: false,
+          ...(reusableSequenceIndex === undefined ? {} : { reusableSequenceIndex }),
+        },
+      })
+      .eq('studyId', studyId)
+      .eq('docId', sequenceAssignmentPath);
+    if (participantUpdateError) {
+      throw new Error('Failed to reject sequence assignment');
+    }
+
+    if (claimedSequenceAssignmentPath && claimedAssignmentData) {
+      const { error: claimedUpdateError } = await this.supabase
+        .from('revisit')
+        .update({
+          data: {
+            ...claimedAssignmentData,
+            claimed: false,
+            rejected: true,
+          },
+        })
+        .eq('studyId', studyId)
         .eq('docId', claimedSequenceAssignmentPath);
-      return;
+      if (claimedUpdateError) {
+        throw new Error('Failed to release claimed sequence assignment');
+      }
     }
-
-    // Fallback for legacy reused assignments that predate claimedParticipantId.
-    const { data: claimedData, error: claimedError } = await this.supabase
-      .from('revisit')
-      .select('data')
-      .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
-      .eq('data->timestamp', data.data.timestamp)
-      .single();
-
-    if (claimedError || !claimedData) {
-      return;
-    }
-    await this.supabase
-      .from('revisit')
-      .update({ data: { ...claimedData.data, claimed: false, rejected: true } })
-      .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
-      .eq('docId', `sequenceAssignment_${claimedData.data.participantId}`);
   }
 
   protected async _undoRejectParticipantRealtime(participantId: string) {
@@ -372,10 +651,13 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
         .eq('docId', claimedSequenceAssignmentPath);
     }
 
+    const updatedParticipantData = { ...data.data, rejected: false, timestamp: restoredTimestamp };
+    delete updatedParticipantData.reusableSequenceIndex;
+
     // Update the sequence assignment for the participant to mark it as un-rejected
     await this.supabase
       .from('revisit')
-      .update({ data: { ...data.data, rejected: false, timestamp: restoredTimestamp } })
+      .update({ data: updatedParticipantData })
       .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
       .eq('docId', sequenceAssignmentPath);
   }
