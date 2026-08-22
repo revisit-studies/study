@@ -11,6 +11,7 @@ import { JumpFunctionParameters, JumpFunctionReturnVal } from '../store/types';
 import { findFuncBlock } from '../utils/getSequenceFlatMap';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { getComponent } from '../utils/handleComponentInheritance';
+import { useStartupInteractionBlocked } from '../components/StartupContext';
 
 export function useStudyId(): string {
   const { studyId } = useParams();
@@ -54,6 +55,7 @@ export function useCurrentComponent(): string {
   const studyId = useStudyId();
   const storeDispatch = useStoreDispatch();
   const { pushToFuncSequence } = useStoreActions();
+  const startupInteractionBlocked = useStartupInteractionBlocked();
 
   const [indexWhenSettingComponentName, setIndexWhenSettingComponentName] = useState<number | null>(null);
 
@@ -78,10 +80,10 @@ export function useCurrentComponent(): string {
   }, [currentComponent, currentStep, flatSequence, studyConfig.sequence]);
 
   useEffect(() => {
-    if (!funcIndex && nextFunc && typeof currentStep === 'number') {
+    if (!startupInteractionBlocked && !funcIndex && nextFunc && typeof currentStep === 'number') {
       navigate(`/${studyId}/${encryptIndex(currentStep)}/${encryptIndex(0)}${window.location.search}`);
     }
-  }, [currentStep, funcIndex, navigate, nextFunc, studyId]);
+  }, [currentStep, funcIndex, navigate, nextFunc, startupInteractionBlocked, studyId]);
 
   useEffect(() => {
     if (typeof currentStep === 'number') {
@@ -135,12 +137,14 @@ export function useCurrentComponent(): string {
           setCompName('__dynamicLoading');
           setIndexWhenSettingComponentName(null);
 
-          navigate(`/${studyId}/${encryptIndex(currentStep + 1)}${window.location.search}`);
+          if (!startupInteractionBlocked) {
+            navigate(`/${studyId}/${encryptIndex(currentStep + 1)}${window.location.search}`);
+          }
         }
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentStep, funcIndex]);
+  }, [currentStep, funcIndex, startupInteractionBlocked]);
 
   if (typeof currentStep === 'number' && flatSequence[currentStep] === 'end') {
     return 'end';

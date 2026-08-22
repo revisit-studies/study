@@ -39,6 +39,7 @@ import { useRecordingConfig } from '../store/hooks/useRecordingConfig';
 import { getComponentContainerStyle } from '../utils/componentStyle';
 import { generateStimulusErrorMessage } from '../components/response/stimulusErrors';
 import { getStimulusProvenanceState, getStimulusShowErrorsFromState } from '../components/response/stimulusProvenance';
+import { useStartupInteractionBlocked } from '../components/StartupContext';
 
 // current active stimuli presented to the user
 export function ComponentController() {
@@ -71,6 +72,7 @@ export function ComponentController() {
   const currentStimulusSubmitAttempted = useStoreSelector((state) => state.stimulusSubmitAttempted[currentIdentifier]);
   const sequence = useStoreSelector((state) => state.sequence);
   const modes = useStoreSelector((state) => state.modes);
+  const startupInteractionBlocked = useStartupInteractionBlocked();
 
   const [searchParams] = useSearchParams();
 
@@ -121,6 +123,10 @@ export function ComponentController() {
     }
 
     async function addParticipantTag() {
+      if (startupInteractionBlocked) {
+        return;
+      }
+
       const prevBlockForStep = prevBlockForStepRef.current;
 
       // Check if blockForStep has actually changed
@@ -136,7 +142,7 @@ export function ComponentController() {
 
     updateBlockForStep().then(addParticipantTag);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentStep, storageEngine, sequence]);
+  }, [currentStep, startupInteractionBlocked, storageEngine, sequence]);
 
   const currentConfig = useMemo(() => {
     const toReturn = currentComponent && currentComponent !== 'end' && !currentComponent.startsWith('__') && studyComponentToIndividualComponent(stepConfig, studyConfig) as IndividualComponent;
@@ -222,7 +228,7 @@ export function ComponentController() {
 
   // Automatically forward a user to their last completed trial if they are returning to the study
   useEffect(() => {
-    if (status && status.endTime > 0 && !isAnalysis && !modes.developmentModeEnabled && currentComponent !== 'end' && !currentComponent.startsWith('__') && typeof currentStep === 'number') {
+    if (!startupInteractionBlocked && status && status.endTime > 0 && !isAnalysis && !modes.developmentModeEnabled && currentComponent !== 'end' && !currentComponent.startsWith('__') && typeof currentStep === 'number') {
       let lastAnsweredTrialOrder = '0';
       Object.values(answers).forEach((a) => {
         if (a.endTime > 0) {
@@ -237,7 +243,7 @@ export function ComponentController() {
         navigate(`/${studyId}/${encryptIndex(indexNumber)}${funcIndexNumber !== undefined ? `/${encryptIndex(funcIndexNumber)}` : ''}${window.location.search}`);
       }
     }
-  }, [answers, currentComponent, currentStep, funcIndex, isAnalysis, modes.developmentModeEnabled, navigate, status, studyId]);
+  }, [answers, currentComponent, currentStep, funcIndex, isAnalysis, modes.developmentModeEnabled, navigate, startupInteractionBlocked, status, studyId]);
 
   // We're not using hooks below here, so we can return early if we're at the end of the study.
   // This avoids issues with the component config being undefined for the end of the study.
