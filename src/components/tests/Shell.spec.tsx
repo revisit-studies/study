@@ -13,6 +13,7 @@ import { makeGlobalConfig, makeStudyConfig } from '../../tests/utils';
 import { studyStoreCreator } from '../../store/store';
 import { parseConditionParam } from '../../utils/handleConditionLogic';
 import { parseStudyConfig } from '../../parser/parser';
+import { StageCapacityExceededError, StageOnlyDisabledConditionsHaveCapacityError } from '../../storage/engines/types';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
@@ -90,9 +91,12 @@ vi.mock('react-router', () => ({
 }));
 
 vi.mock('@mantine/core', () => ({
+  Anchor: ({ children, href }: { children: ReactNode; href?: string }) => <a href={href}>{children}</a>,
   Button: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => (
     <button type="button" onClick={onClick}>{children}</button>
   ),
+  Center: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Code: ({ children }: { children: ReactNode }) => <pre>{children}</pre>,
   LoadingOverlay: ({ visible }: { visible: boolean }) => (
     visible ? <div data-testid="loading-overlay" /> : null
   ),
@@ -312,6 +316,37 @@ describe('Shell', () => {
     await waitFor(() => expect(vi.mocked(studyStoreCreator)).toHaveBeenCalled(), { timeout: 3000 });
   });
 
+  test('renders a fixed, response-free first component in the normal study shell while a new participant is assigned', async () => {
+    const previewConfig: ParsedConfig<StudyConfig> = {
+      ...mockActiveConfig,
+      components: {
+        intro: {
+          type: 'markdown',
+          path: 'test-study/assets/intro.md',
+          response: [],
+        },
+      },
+      sequence: { order: 'fixed', components: ['intro'] },
+    };
+    vi.mocked(getStudyConfig).mockResolvedValue(previewConfig);
+
+    mockStorageEngine = {
+      initializeStudyDb: vi.fn().mockResolvedValue(undefined),
+      saveConfig: vi.fn().mockResolvedValue(undefined),
+      getSequenceArray: vi.fn().mockResolvedValue(['seq1']),
+      getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
+      initializeParticipantSession: vi.fn().mockImplementation(() => new Promise(() => { })),
+      peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
+      isConnected: vi.fn().mockReturnValue(true),
+      getEngine: vi.fn().mockReturnValue('firebase'),
+    };
+
+    const { getByTestId, queryByTestId } = render(<Shell globalConfig={globalConfig} />);
+
+    await waitFor(() => expect(getByTestId('routing')).toBeDefined());
+    expect(queryByTestId('loading-overlay')).toBeNull();
+  });
+
   test('calls setSequenceArray when getSequenceArray returns null', async () => {
     vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
 
@@ -331,6 +366,49 @@ describe('Shell', () => {
 
     render(<Shell globalConfig={globalConfig} />);
     await waitFor(() => expect(mockStorageEngine!.setSequenceArray).toHaveBeenCalled(), { timeout: 3000 });
+  });
+
+  test('shows the study-full screen when the current stage is at capacity', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+    vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
+    mockStorageEngine = {
+      initializeStudyDb: vi.fn().mockResolvedValue(undefined),
+      saveConfig: vi.fn().mockResolvedValue(undefined),
+      getSequenceArray: vi.fn().mockResolvedValue(['seq1']),
+      getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
+      initializeParticipantSession: vi.fn().mockRejectedValue(new StageCapacityExceededError('LIMITED')),
+      isConnected: vi.fn().mockReturnValue(true),
+      getEngine: vi.fn().mockReturnValue('firebase'),
+    };
+
+    const { getByText, queryByTestId } = render(<Shell globalConfig={globalConfig} />);
+
+    await waitFor(() => expect(getByText('Study full')).toBeDefined(), { timeout: 3000 });
+    expect(getByText(/no more participants can join the LIMITED stage/i)).toBeDefined();
+    expect(queryByTestId('routing')).toBeNull();
+    consoleSpy.mockRestore();
+  });
+
+  test('explains when only disabled study versions have remaining capacity', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+    vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
+    mockStorageEngine = {
+      initializeStudyDb: vi.fn().mockResolvedValue(undefined),
+      saveConfig: vi.fn().mockResolvedValue(undefined),
+      getSequenceArray: vi.fn().mockResolvedValue(['seq1']),
+      getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
+      initializeParticipantSession: vi.fn().mockRejectedValue(new StageOnlyDisabledConditionsHaveCapacityError('LIMITED')),
+      isConnected: vi.fn().mockReturnValue(true),
+      getEngine: vi.fn().mockReturnValue('firebase'),
+    };
+
+    const { getByText } = render(<Shell globalConfig={globalConfig} />);
+
+    await waitFor(() => expect(getByText('Study full')).toBeDefined(), { timeout: 3000 });
+    expect(getByText(/this study is full and cannot accept more participants/i)).toBeDefined();
+    expect(getByText(/if you think you are seeing this page in error/i)).toBeDefined();
+    expect(getByText(/study id: test-study/i)).toBeDefined();
+    consoleSpy.mockRestore();
   });
 
   test('covers study condition update path', async () => {

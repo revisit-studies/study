@@ -1,13 +1,222 @@
 import {
-  Stack, TextInput, Button, Group, Table, Text, ColorInput, Loader, ActionIcon, Radio,
+  Stack, TextInput, Button, Group, Table, Text, ColorInput, Loader, ActionIcon, Radio, NumberInput, Paper, Switch, Collapse, Badge, Popover, ScrollArea,
   Title,
 } from '@mantine/core';
-import { useEffect, useState } from 'react';
 import {
-  IconEdit, IconCheck, IconX,
+  Fragment, useCallback, useEffect, useMemo, useRef, useState,
+} from 'react';
+import isEqual from 'lodash.isequal';
+import {
+  IconEdit, IconCheck, IconX, IconChevronDown, IconChevronUp, IconToggleLeft, IconToggleRight,
 } from '@tabler/icons-react';
+import {
+  MantineReactTable,
+  useMantineReactTable,
+  type MRT_ColumnDef as MrtColumnDef,
+} from 'mantine-react-table';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
-import { StageInfo } from '../../../storage/engines/types';
+import { FactorObject, FactorPrimitive, StudyConfig } from '../../../parser/types';
+import { ParticipantDataWithStatus } from '../../../storage/types';
+import { getBetweenSubjectsCombinationKey, StageInfo } from '../../../storage/engines/types';
+import { DISTINCT_COLOR_PALETTE, getDistinctColorShade } from '../../../utils/colors';
+import { ParticipantTimeoutModal } from '../ParticipantTimeoutModal';
+
+type BetweenSubjectsLevel = FactorPrimitive | FactorObject;
+
+type BetweenSubjectsFactor = {
+  factorName: string;
+  levels: BetweenSubjectsLevel[];
+};
+
+type BetweenSubjectsCombination = {
+  key: string;
+  parameters: Record<string, BetweenSubjectsLevel>;
+};
+
+type BetweenSubjectsCombinationRow = {
+  combinationKey: string;
+  participantStatusCounts: { completed: number; inProgress: number };
+  desiredParticipants: number | '';
+  enabled: boolean;
+  [factorName: string]: string | number | boolean | { completed: number; inProgress: number };
+};
+
+const DEFAULT_STAGE_COLOR = DISTINCT_COLOR_PALETTE[0];
+
+export function getBetweenSubjectsFactors(studyConfig?: StudyConfig): BetweenSubjectsFactor[] {
+  return studyConfig?.betweenSubjects?.flatMap((factorName) => {
+    const factor = studyConfig.factors?.[factorName];
+    if (!Array.isArray(factor) || factor.length === 0 || !factor.every((level) => (
+      typeof level !== 'object' || (level !== null && !Array.isArray(level))
+    ))) {
+      return [];
+    }
+
+    return [{ factorName, levels: factor as BetweenSubjectsLevel[] }];
+  }) || [];
+}
+
+type StageParticipantStatusCounts = Record<string, { completed: number; inProgress: number }>;
+
+export function getStageParticipantStatusCounts(participants: ParticipantDataWithStatus[]) {
+  return participants.reduce<StageParticipantStatusCounts>((counts, participant) => {
+    if (participant.rejected) {
+      return counts;
+    }
+
+    const stageCounts = counts[participant.stage] || { completed: 0, inProgress: 0 };
+    if (participant.completed) {
+      stageCounts.completed += 1;
+    } else {
+      stageCounts.inProgress += 1;
+    }
+    counts[participant.stage] = stageCounts;
+    return counts;
+  }, {});
+}
+
+export function getBetweenSubjectsCombinations(
+  betweenSubjectsFactors: BetweenSubjectsFactor[],
+): BetweenSubjectsCombination[] {
+  if (betweenSubjectsFactors.length === 0) {
+    return [];
+  }
+
+  const factorNames = betweenSubjectsFactors.map((factor) => factor.factorName);
+  return betweenSubjectsFactors.reduce<Record<string, BetweenSubjectsLevel>[]>(
+    (combinations, factor) => combinations.flatMap((parameters) => factor.levels.map((level) => ({
+      ...parameters,
+      [factor.factorName]: level,
+    }))),
+    [{}],
+  ).map((parameters) => ({
+    key: getBetweenSubjectsCombinationKey(parameters, factorNames),
+    parameters,
+  }));
+}
+
+function participantMatchesBetweenSubjectsCombination(
+  participant: ParticipantDataWithStatus,
+  stageName: string,
+  combination: BetweenSubjectsCombination,
+  betweenSubjectsFactors: BetweenSubjectsFactor[],
+) {
+  return participant.stage === stageName
+    && betweenSubjectsFactors.every((factor) => (
+      isEqual(participant.sequence.parameters?.[factor.factorName], combination.parameters[factor.factorName])
+    ));
+}
+
+function getBetweenSubjectsCombinationStatusCounts(
+  participants: ParticipantDataWithStatus[],
+  stageName: string,
+  combination: BetweenSubjectsCombination,
+  betweenSubjectsFactors: BetweenSubjectsFactor[],
+) {
+  return participants.reduce((counts, participant) => {
+    const matchesCombination = !participant.rejected && participantMatchesBetweenSubjectsCombination(
+      participant,
+      stageName,
+      combination,
+      betweenSubjectsFactors,
+    );
+    if (!matchesCombination) {
+      return counts;
+    }
+
+    if (participant.completed) {
+      counts.completed += 1;
+    } else {
+      counts.inProgress += 1;
+    }
+    return counts;
+  }, { completed: 0, inProgress: 0 });
+}
+
+function StageParticipantStatusBadges({
+  completed,
+  inProgress,
+  onInProgressClick,
+}: {
+  completed: number;
+  inProgress: number;
+  onInProgressClick?: () => void;
+}) {
+  return (
+    <Stack gap={4} align="flex-start">
+      <Badge color="green" variant="filled" size="sm" c="gray.0">
+        Completed
+        {' '}
+        {completed}
+      </Badge>
+      {onInProgressClick && inProgress > 0 ? (
+        <Badge
+          aria-label={`Review ${inProgress} in-progress participant${inProgress === 1 ? '' : 's'}`}
+          color="orange"
+          component="button"
+          c="gray.0"
+          onClick={onInProgressClick}
+          size="sm"
+          style={{ cursor: 'pointer' }}
+          type="button"
+          variant="filled"
+        >
+          In Progress
+          {' '}
+          {inProgress}
+        </Badge>
+      ) : (
+        <Badge color="orange" variant="filled" size="sm" c="gray.0">
+          In Progress
+          {' '}
+          {inProgress}
+        </Badge>
+      )}
+    </Stack>
+  );
+}
+
+export function getDefaultDesiredParticipantCounts(
+  maxParticipants: number | undefined,
+  combinations: BetweenSubjectsCombination[],
+) {
+  if (maxParticipants === undefined || combinations.length === 0) {
+    return {};
+  }
+
+  const countPerCombination = Math.floor(maxParticipants / combinations.length);
+  const remainder = maxParticipants % combinations.length;
+
+  return Object.fromEntries(combinations.map((combination, index) => [
+    combination.key,
+    countPerCombination + (index < remainder ? 1 : 0),
+  ]));
+}
+
+export function getDesiredParticipantCounts(
+  maxParticipants: number | undefined,
+  combinations: BetweenSubjectsCombination[],
+  desiredParticipantsByCombination: Record<string, number> | undefined,
+): Record<string, number | ''> {
+  const manualCount = combinations.reduce((count, combination) => (
+    count + (desiredParticipantsByCombination?.[combination.key] ?? 0)
+  ), 0);
+  const automaticallyAllocatedCounts = getDefaultDesiredParticipantCounts(
+    maxParticipants === undefined ? undefined : Math.max(maxParticipants - manualCount, 0),
+    combinations.filter((combination) => !Object.hasOwn(desiredParticipantsByCombination || {}, combination.key)),
+  );
+
+  return Object.fromEntries(combinations.map((combination) => [
+    combination.key,
+    desiredParticipantsByCombination?.[combination.key]
+      ?? automaticallyAllocatedCounts[combination.key]
+      ?? '',
+  ]));
+}
+
+function formatBetweenSubjectsLevel(level: BetweenSubjectsLevel) {
+  return typeof level === 'object' ? JSON.stringify(level) : String(level);
+}
 
 export function validateStageName(stageName: string, allStages: StageInfo[]): string | null {
   const normalizedStageName = stageName.trim();
@@ -37,45 +246,289 @@ export function validateStageName(stageName: string, allStages: StageInfo[]): st
   return null;
 }
 
-export function StageManagementItem({ studyId }: { studyId: string }) {
+export function getNextStageColor(allStages: StageInfo[]): string {
+  const usedColors = new Set(allStages.map((stage) => stage.color.toLowerCase()));
+
+  return DISTINCT_COLOR_PALETTE.find((color) => !usedColors.has(color.toLowerCase()))
+    ?? DISTINCT_COLOR_PALETTE[allStages.length % DISTINCT_COLOR_PALETTE.length];
+}
+
+function renderCombinationEnabledCell(
+  row: BetweenSubjectsCombinationRow,
+  stage: StageInfo,
+  betweenSubjectsFactors: BetweenSubjectsFactor[],
+  onToggle: (stage: StageInfo, combinationKey: string, enabled: boolean) => Promise<void>,
+) {
+  const combinationLabel = betweenSubjectsFactors
+    .map((factor) => String(row[factor.factorName]))
+    .join(' / ');
+
+  return (
+    <Switch
+      aria-label={`Enable ${combinationLabel} for ${stage.stageName}`}
+      checked={row.enabled}
+      onChange={(event) => onToggle(
+        stage,
+        row.combinationKey,
+        event.currentTarget.checked,
+      )}
+    />
+  );
+}
+
+function renderDesiredParticipantsCell(
+  row: BetweenSubjectsCombinationRow,
+  stage: StageInfo,
+  onSetDesiredParticipants: (stage: StageInfo, combinationKey: string, desiredParticipants: number | '') => Promise<void>,
+) {
+  return (
+    <NumberInput
+      aria-label={`Desired participants for ${row.combinationKey} in ${stage.stageName}`}
+      min={0}
+      allowDecimal={false}
+      value={row.desiredParticipants}
+      onChange={(value) => onSetDesiredParticipants(
+        stage,
+        row.combinationKey,
+        typeof value === 'number' ? value : '',
+      )}
+    />
+  );
+}
+
+function renderParticipantStatusCell(
+  row: BetweenSubjectsCombinationRow,
+  onReviewInProgress: (combinationKey: string) => void,
+) {
+  return (
+    <StageParticipantStatusBadges
+      completed={row.participantStatusCounts.completed}
+      inProgress={row.participantStatusCounts.inProgress}
+      onInProgressClick={() => onReviewInProgress(row.combinationKey)}
+    />
+  );
+}
+
+function BetweenSubjectsCombinationTable({
+  stage,
+  participants,
+  betweenSubjectsFactors,
+  combinations,
+  onToggle,
+  onSetDesiredParticipants,
+  onReviewInProgress,
+  showParticipantCounts,
+  showParticipantLimits,
+}: {
+  stage: StageInfo;
+  participants: ParticipantDataWithStatus[];
+  betweenSubjectsFactors: BetweenSubjectsFactor[];
+  combinations: BetweenSubjectsCombination[];
+  onToggle: (stage: StageInfo, combinationKey: string, enabled: boolean) => Promise<void>;
+  onSetDesiredParticipants: (stage: StageInfo, combinationKey: string, desiredParticipants: number | '') => Promise<void>;
+  onReviewInProgress: (participants: ParticipantDataWithStatus[], description: string) => void;
+  showParticipantCounts: boolean;
+  showParticipantLimits: boolean;
+}) {
+  const data = useMemo<BetweenSubjectsCombinationRow[]>(() => {
+    const desiredParticipantCounts = getDesiredParticipantCounts(
+      stage.maxParticipants,
+      combinations,
+      stage.desiredParticipantsByCombination,
+    );
+
+    return combinations.map((combination) => ({
+      combinationKey: combination.key,
+      participantStatusCounts: getBetweenSubjectsCombinationStatusCounts(
+        participants,
+        stage.stageName,
+        combination,
+        betweenSubjectsFactors,
+      ),
+      desiredParticipants: desiredParticipantCounts[combination.key],
+      enabled: !stage.disabledBetweenSubjectsCombinations?.includes(combination.key),
+      ...Object.fromEntries(betweenSubjectsFactors.map((factor) => [
+        factor.factorName,
+        formatBetweenSubjectsLevel(combination.parameters[factor.factorName]),
+      ])),
+    }));
+  }, [betweenSubjectsFactors, combinations, participants, stage]);
+
+  const handleReviewInProgress = useCallback((combinationKey: string) => {
+    const combination = combinations.find((item) => item.key === combinationKey);
+    if (!combination) {
+      return;
+    }
+
+    const combinationDescription = betweenSubjectsFactors
+      .map((factor) => `${factor.factorName} = ${formatBetweenSubjectsLevel(combination.parameters[factor.factorName])}`)
+      .join(', ');
+    onReviewInProgress(
+      participants.filter((participant) => (
+        !participant.completed
+        && !participant.rejected
+        && participantMatchesBetweenSubjectsCombination(
+          participant,
+          stage.stageName,
+          combination,
+          betweenSubjectsFactors,
+        )
+      )),
+      `Showing only in-progress participants in the ${stage.stageName} stage with ${combinationDescription} — not all in-progress participants in the study.`,
+    );
+  }, [betweenSubjectsFactors, combinations, onReviewInProgress, participants, stage.stageName]);
+
+  const columns = useMemo<MrtColumnDef<BetweenSubjectsCombinationRow>[]>(() => [
+    ...betweenSubjectsFactors.map((factor) => ({
+      accessorKey: factor.factorName,
+      header: factor.factorName,
+    } satisfies MrtColumnDef<BetweenSubjectsCombinationRow>)),
+    ...(showParticipantCounts ? [{
+      accessorKey: 'participantStatusCounts',
+      header: 'Participants',
+      Cell: ({ row }: { row: { original: BetweenSubjectsCombinationRow } }) => renderParticipantStatusCell(row.original, handleReviewInProgress),
+    }] : []),
+    ...(showParticipantLimits ? [{
+      accessorKey: 'desiredParticipants',
+      header: 'Desired Participants',
+      Cell: ({ row }: { row: { original: BetweenSubjectsCombinationRow } }) => renderDesiredParticipantsCell(
+        row.original,
+        stage,
+        onSetDesiredParticipants,
+      ),
+    }, {
+      accessorKey: 'enabled',
+      header: 'Enabled',
+      Cell: ({ row }: { row: { original: BetweenSubjectsCombinationRow } }) => renderCombinationEnabledCell(
+        row.original,
+        stage,
+        betweenSubjectsFactors,
+        onToggle,
+      ),
+    }] : []),
+  ], [
+    betweenSubjectsFactors,
+    handleReviewInProgress,
+    onSetDesiredParticipants,
+    onToggle,
+    showParticipantCounts,
+    showParticipantLimits,
+    stage,
+  ]);
+
+  const table = useMantineReactTable({
+    columns,
+    data,
+    enableBottomToolbar: false,
+    enableColumnDragging: true,
+    enableColumnOrdering: true,
+    enableDensityToggle: false,
+    enablePagination: false,
+    enableSorting: true,
+    enableTopToolbar: false,
+    getRowId: (row) => row.combinationKey,
+    mantinePaperProps: {
+      style: {
+        background: 'transparent', boxShadow: 'none', maxWidth: '100%', minWidth: 0,
+      },
+    },
+    mantineTableContainerProps: { style: { maxWidth: '100%', overflowX: 'auto' } },
+    mantineTableProps: { style: { minWidth: 'max-content' } },
+    mantineTableBodyCellProps: ({ column, row }) => {
+      const factorIndex = betweenSubjectsFactors.findIndex((factor) => factor.factorName === column.id);
+      if (factorIndex === -1) {
+        return {};
+      }
+
+      const factor = betweenSubjectsFactors[factorIndex];
+      const levelIndex = factor.levels.findIndex((level) => (
+        formatBetweenSubjectsLevel(level) === row.original[factor.factorName]
+      ));
+
+      return {
+        style: {
+          backgroundColor: getDistinctColorShade(factorIndex, levelIndex, factor.levels.length),
+        },
+      };
+    },
+  });
+
+  return <MantineReactTable table={table} />;
+}
+
+export function StageManagementItem({ studyId, studyConfig }: { studyId: string; studyConfig?: StudyConfig }) {
   const { storageEngine } = useStorageEngine();
 
   const [asyncStatus, setAsyncStatus] = useState(false);
-  const [currentStage, setCurrentStage] = useState<StageInfo>({ stageName: 'DEFAULT', color: '#F05A30' });
-  const [allStages, setAllStages] = useState<StageInfo[]>([{ stageName: 'DEFAULT', color: '#F05A30' }]);
+  const [currentStage, setCurrentStage] = useState<StageInfo>({ stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR });
+  const [allStages, setAllStages] = useState<StageInfo[]>([{ stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR }]);
+  const [stageParticipantStatusCounts, setStageParticipantStatusCounts] = useState<StageParticipantStatusCounts>({});
+  const [participants, setParticipants] = useState<ParticipantDataWithStatus[]>([]);
+  const [timeoutParticipantSelection, setTimeoutParticipantSelection] = useState<{
+    participantIds: string[];
+    description: string;
+  } | null>(null);
+  const [expandedStageNames, setExpandedStageNames] = useState<string[]>([]);
+  const currentStageNameRef = useRef<string | undefined>(undefined);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingStageName, setEditingStageName] = useState('');
-  const [editingStageColor, setEditingStageColor] = useState('#F05A30');
+  const [editingStageColor, setEditingStageColor] = useState(DEFAULT_STAGE_COLOR);
+  const [limitPopoverStageName, setLimitPopoverStageName] = useState<string | null>(null);
+  const [editingLimitMaxParticipants, setEditingLimitMaxParticipants] = useState<number | ''>('');
+  const [editingLimitEnabled, setEditingLimitEnabled] = useState(false);
   const [editError, setEditError] = useState('');
   const [addingNewStage, setAddingNewStage] = useState(false);
   const [newStageName, setNewStageName] = useState('');
-  const [newStageColor, setNewStageColor] = useState('#F05A30');
+  const [newStageColor, setNewStageColor] = useState(DEFAULT_STAGE_COLOR);
   const [newStageError, setNewStageError] = useState('');
+  const betweenSubjectsFactors = getBetweenSubjectsFactors(studyConfig);
+  const betweenSubjectsCombinations = getBetweenSubjectsCombinations(betweenSubjectsFactors);
+
+  const refreshStageData = useCallback(async () => {
+    if (!storageEngine) {
+      return;
+    }
+
+    const [stageData, allParticipants] = await Promise.all([
+      storageEngine.getStageData(studyId),
+      storageEngine.getAllParticipantsData(studyId),
+    ]);
+    setCurrentStage(stageData.currentStage);
+    const nextCurrentStageName = stageData.currentStage.stageName;
+    const currentStageChanged = currentStageNameRef.current !== nextCurrentStageName;
+    currentStageNameRef.current = nextCurrentStageName;
+    if (currentStageChanged) {
+      setExpandedStageNames([nextCurrentStageName]);
+    }
+    setAllStages(stageData.allStages);
+    setParticipants(allParticipants);
+    setStageParticipantStatusCounts(getStageParticipantStatusCounts(allParticipants));
+  }, [storageEngine, studyId]);
 
   useEffect(() => {
     const fetchData = async () => {
-      if (storageEngine) {
-        try {
-          const stageData = await storageEngine.getStageData(studyId);
-          setCurrentStage(stageData.currentStage);
-          setAllStages(stageData.allStages);
-          setAsyncStatus(true);
-        } catch (error) {
-          console.error('Failed to load stage data:', error);
-          // Set defaults on error
-          setCurrentStage({ stageName: 'DEFAULT', color: '#F05A30' });
-          setAllStages([{ stageName: 'DEFAULT', color: '#F05A30' }]);
-          setAsyncStatus(true);
-        }
+      try {
+        await refreshStageData();
+      } catch (error) {
+        console.error('Failed to load stage data:', error);
+        // Set defaults on error
+        setCurrentStage({ stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR });
+        setAllStages([{ stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR }]);
+        setStageParticipantStatusCounts({});
+        setParticipants([]);
+      } finally {
+        setAsyncStatus(true);
       }
     };
     fetchData();
-  }, [storageEngine, studyId]);
+  }, [refreshStageData]);
 
   const handleSetCurrentStage = async (stageName: string, color: string) => {
     if (storageEngine) {
       await storageEngine.setCurrentStage(studyId, stageName, color);
       setCurrentStage({ stageName, color });
+      currentStageNameRef.current = stageName;
+      setExpandedStageNames([stageName]);
     }
   };
 
@@ -88,13 +541,12 @@ export function StageManagementItem({ studyId }: { studyId: string }) {
 
   const handleSaveEdit = async (originalName: string) => {
     if (storageEngine) {
-      // Update the stage color
-      await storageEngine.updateStageColor(studyId, originalName, editingStageColor);
+      await storageEngine.updateStage(studyId, originalName, {
+        color: editingStageColor,
+      });
 
       // Refresh data
-      const stageData = await storageEngine.getStageData(studyId);
-      setCurrentStage(stageData.currentStage);
-      setAllStages(stageData.allStages);
+      await refreshStageData();
       setEditingIndex(null);
       setEditError('');
     }
@@ -103,14 +555,40 @@ export function StageManagementItem({ studyId }: { studyId: string }) {
   const handleCancelEdit = () => {
     setEditingIndex(null);
     setEditingStageName('');
-    setEditingStageColor('#F05A30');
+    setEditingStageColor(DEFAULT_STAGE_COLOR);
     setEditError('');
+  };
+
+  const handleEditParticipantLimit = (stage: StageInfo) => {
+    setLimitPopoverStageName(stage.stageName);
+    setEditingLimitMaxParticipants(stage.maxParticipants ?? '');
+    setEditingLimitEnabled(stage.maxParticipants !== undefined);
+  };
+
+  const handleSaveParticipantLimit = async (stage: StageInfo) => {
+    if (!storageEngine) {
+      return;
+    }
+
+    const hasParticipantLimit = editingLimitEnabled && editingLimitMaxParticipants !== '';
+    await storageEngine.updateStage(studyId, stage.stageName, {
+      maxParticipants: hasParticipantLimit ? editingLimitMaxParticipants : null,
+      ...(hasParticipantLimit ? {} : { desiredParticipantsByCombination: null }),
+    });
+    await refreshStageData();
+    setLimitPopoverStageName(null);
+  };
+
+  const handleCancelParticipantLimit = () => {
+    setEditingLimitMaxParticipants('');
+    setEditingLimitEnabled(false);
+    setLimitPopoverStageName(null);
   };
 
   const handleAddNewStage = () => {
     setAddingNewStage(true);
     setNewStageName('');
-    setNewStageColor('#F05A30');
+    setNewStageColor(getNextStageColor(allStages));
     setNewStageError('');
   };
 
@@ -125,25 +603,113 @@ export function StageManagementItem({ studyId }: { studyId: string }) {
     setNewStageError('');
 
     if (storageEngine) {
-      // Add the new stage by setting it as current (which adds it to allStages)
+      // Add the new stage by setting it as current (which adds it to allStages).
       await storageEngine.setCurrentStage(studyId, normalizedStageName, newStageColor);
 
       // Refresh data
-      const stageData = await storageEngine.getStageData(studyId);
-      setCurrentStage(stageData.currentStage);
-      setAllStages(stageData.allStages);
+      await refreshStageData();
       setAddingNewStage(false);
       setNewStageName('');
-      setNewStageColor('#F05A30');
+      setNewStageColor(DEFAULT_STAGE_COLOR);
     }
   };
 
   const handleCancelAddNewStage = () => {
     setAddingNewStage(false);
     setNewStageName('');
-    setNewStageColor('#F05A30');
+    setNewStageColor(DEFAULT_STAGE_COLOR);
     setNewStageError('');
   };
+
+  const toggleStageExpanded = (stageName: string) => {
+    setExpandedStageNames((stageNames) => (
+      stageNames.includes(stageName)
+        ? stageNames.filter((name) => name !== stageName)
+        : [stageName]
+    ));
+  };
+
+  const handleToggleBetweenSubjectsCombination = async (
+    stage: StageInfo,
+    combinationKey: string,
+    enabled: boolean,
+  ) => {
+    if (!storageEngine) {
+      return;
+    }
+
+    const disabledCombinations = stage.disabledBetweenSubjectsCombinations || [];
+    const nextDisabledCombinations = enabled
+      ? disabledCombinations.filter((key) => key !== combinationKey)
+      : [...new Set([...disabledCombinations, combinationKey])];
+    await storageEngine.updateStage(studyId, stage.stageName, {
+      disabledBetweenSubjectsCombinations: nextDisabledCombinations.length === 0
+        ? null
+        : nextDisabledCombinations,
+    });
+    await refreshStageData();
+  };
+
+  const handleSetDesiredParticipants = async (
+    stage: StageInfo,
+    combinationKey: string,
+    desiredParticipants: number | '',
+  ) => {
+    if (!storageEngine) {
+      return;
+    }
+
+    const nextDesiredParticipantsByCombination = {
+      ...stage.desiredParticipantsByCombination,
+    };
+    const currentDesiredParticipantCounts = getDesiredParticipantCounts(
+      stage.maxParticipants,
+      betweenSubjectsCombinations,
+      stage.desiredParticipantsByCombination,
+    );
+    betweenSubjectsCombinations.forEach((combination) => {
+      if (combination.key === combinationKey) {
+        return;
+      }
+
+      const currentCount = currentDesiredParticipantCounts[combination.key];
+      if (typeof currentCount === 'number') {
+        nextDesiredParticipantsByCombination[combination.key] = currentCount;
+      }
+    });
+
+    if (desiredParticipants === '') {
+      delete nextDesiredParticipantsByCombination[combinationKey];
+    } else {
+      nextDesiredParticipantsByCombination[combinationKey] = desiredParticipants;
+    }
+
+    const nextDesiredParticipantCounts = getDesiredParticipantCounts(
+      stage.maxParticipants,
+      betweenSubjectsCombinations,
+      nextDesiredParticipantsByCombination,
+    );
+    const totalDesiredParticipants = Object.values(nextDesiredParticipantCounts)
+      .reduce<number>((total, count) => total + (typeof count === 'number' ? count : 0), 0);
+    const hasDesiredParticipantOverrides = Object.keys(nextDesiredParticipantsByCombination).length > 0;
+
+    await storageEngine.updateStage(studyId, stage.stageName, {
+      desiredParticipantsByCombination: hasDesiredParticipantOverrides
+        ? nextDesiredParticipantsByCombination
+        : null,
+      maxParticipants: stage.maxParticipants === undefined && !hasDesiredParticipantOverrides
+        ? null
+        : totalDesiredParticipants,
+    });
+    await refreshStageData();
+  };
+
+  const handleReviewInProgress = useCallback((selectedParticipants: ParticipantDataWithStatus[], description: string) => {
+    setTimeoutParticipantSelection({
+      participantIds: selectedParticipants.map((participant) => participant.participantId),
+      description,
+    });
+  }, []);
 
   if (!asyncStatus) {
     return (
@@ -165,111 +731,293 @@ export function StageManagementItem({ studyId }: { studyId: string }) {
         )}
       </Group>
 
-      <Table striped highlightOnHover withTableBorder>
+      <ParticipantTimeoutModal
+        description={timeoutParticipantSelection?.description}
+        hideReviewButton
+        onClose={() => setTimeoutParticipantSelection(null)}
+        opened={timeoutParticipantSelection !== null}
+        participants={timeoutParticipantSelection === null
+          ? []
+          : participants.filter((participant) => timeoutParticipantSelection.participantIds.includes(participant.participantId))}
+        refresh={refreshStageData}
+      />
+
+      <Title order={5}>Participant Counts</Title>
+      <Table striped highlightOnHover withTableBorder style={{ tableLayout: 'fixed', width: '100%' }}>
+        <colgroup>
+          <col style={{ width: 44 }} />
+          <col style={{ width: 80 }} />
+          <col />
+          <col style={{ width: 210 }} />
+          <col style={{ width: 220 }} />
+          <col style={{ width: 80 }} />
+        </colgroup>
         <Table.Thead>
           <Table.Tr>
+            <Table.Th style={{ width: '44px' }} />
             <Table.Th style={{ width: '80px', whiteSpace: 'nowrap' }}>Current</Table.Th>
             <Table.Th>Stage Name</Table.Th>
-            <Table.Th style={{ width: '200px' }}>Color</Table.Th>
+            <Table.Th style={{ width: '210px', whiteSpace: 'nowrap' }}>Participants</Table.Th>
+            <Table.Th style={{ width: '220px', whiteSpace: 'nowrap' }}>Max Participants</Table.Th>
             <Table.Th style={{ width: '80px', whiteSpace: 'nowrap' }}>Edit</Table.Th>
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>
-          {allStages.map((stage, index) => (
-            <Table.Tr key={stage.stageName}>
-              <Table.Td>
-                <Radio
-                  aria-label={`Set current stage to ${stage.stageName}`}
-                  checked={currentStage.stageName === stage.stageName}
-                  onChange={() => handleSetCurrentStage(stage.stageName, stage.color)}
-                />
-              </Table.Td>
-              <Table.Td>
-                {editingIndex === index ? (
-                  <TextInput
-                    value={editingStageName}
-                    onChange={(e) => setEditingStageName(e.currentTarget.value)}
-                    error={editError}
-                    size="xs"
-                    disabled
-                  />
-                ) : (
-                  <Text size="sm">{stage.stageName}</Text>
-                )}
-              </Table.Td>
-              <Table.Td>
-                {editingIndex === index ? (
-                  <ColorInput
-                    value={editingStageColor}
-                    onChange={setEditingStageColor}
-                    size="xs"
-                  />
-                ) : (
-                  <Group gap="xs">
-                    <div
-                      style={{
-                        width: 20,
-                        height: 20,
-                        backgroundColor: stage.color,
-                        border: '1px solid #dee2e6',
-                        borderRadius: 4,
-                      }}
-                    />
-                    <Text size="sm" c="dimmed">{stage.color}</Text>
-                  </Group>
-                )}
-              </Table.Td>
-              <Table.Td>
-                {editingIndex === index ? (
-                  <Group gap="xs">
+          {allStages.map((stage, index) => {
+            const isExpanded = expandedStageNames.includes(stage.stageName);
+            const isLimitPopoverOpened = limitPopoverStageName === stage.stageName;
+
+            return (
+              <Fragment key={stage.stageName}>
+                <Table.Tr key={stage.stageName}>
+                  <Table.Td>
                     <ActionIcon
                       size="sm"
-                      aria-label={`Save stage ${stage.stageName}`}
-                      color="green"
-                      onClick={() => handleSaveEdit(stage.stageName)}
-                    >
-                      <IconCheck size={16} />
-                    </ActionIcon>
-                    <ActionIcon
-                      size="sm"
-                      aria-label={`Cancel editing stage ${stage.stageName}`}
                       color="gray"
-                      onClick={handleCancelEdit}
+                      aria-label={`${isExpanded ? 'Collapse' : 'Expand'} stage ${stage.stageName}`}
+                      onClick={() => toggleStageExpanded(stage.stageName)}
                     >
-                      <IconX size={16} />
+                      {isExpanded ? <IconChevronUp size={16} /> : <IconChevronDown size={16} />}
                     </ActionIcon>
-                  </Group>
-                ) : (
-                  <ActionIcon
-                    size="sm"
-                    aria-label={`Edit stage ${stage.stageName}`}
-                    onClick={() => handleEditStage(index)}
-                  >
-                    <IconEdit size={16} />
-                  </ActionIcon>
-                )}
-              </Table.Td>
-            </Table.Tr>
-          ))}
+                  </Table.Td>
+                  <Table.Td>
+                    <Radio
+                      aria-label={`Set current stage to ${stage.stageName}`}
+                      checked={currentStage.stageName === stage.stageName}
+                      onChange={() => handleSetCurrentStage(stage.stageName, stage.color)}
+                    />
+                  </Table.Td>
+                  <Table.Td>
+                    {editingIndex === index ? (
+                      <Group gap="xs" wrap="nowrap">
+                        <TextInput
+                          value={editingStageName}
+                          onChange={(e) => setEditingStageName(e.currentTarget.value)}
+                          error={editError}
+                          size="xs"
+                          disabled
+                          style={{ flex: 1, minWidth: 0 }}
+                        />
+                        <ColorInput
+                          value={editingStageColor}
+                          onChange={setEditingStageColor}
+                          size="xs"
+                          w={120}
+                        />
+                      </Group>
+                    ) : (
+                      <Group gap="xs" wrap="nowrap">
+                        <div
+                          aria-label={`${stage.stageName} color`}
+                          style={{
+                            width: 14,
+                            height: 14,
+                            flex: '0 0 auto',
+                            backgroundColor: stage.color,
+                            border: '1px solid #dee2e6',
+                            borderRadius: 3,
+                          }}
+                        />
+                        <Text size="sm">{stage.stageName}</Text>
+                      </Group>
+                    )}
+                  </Table.Td>
+                  <Table.Td>
+                    <StageParticipantStatusBadges
+                      completed={stageParticipantStatusCounts[stage.stageName]?.completed || 0}
+                      inProgress={stageParticipantStatusCounts[stage.stageName]?.inProgress || 0}
+                      onInProgressClick={() => handleReviewInProgress(participants.filter((participant) => (
+                        participant.stage === stage.stageName && !participant.completed && !participant.rejected
+                      )), `Showing only in-progress participants in the ${stage.stageName} stage — not all in-progress participants in the study.`)}
+                    />
+                  </Table.Td>
+                  <Table.Td>
+                    <Group gap={4} wrap="nowrap" justify="flex-end" pr={64}>
+                      <Text size="sm">{stage.maxParticipants ?? 'Unlimited'}</Text>
+                      <Popover
+                        opened={isLimitPopoverOpened}
+                        onChange={(opened) => {
+                          if (!opened && isLimitPopoverOpened) {
+                            handleCancelParticipantLimit();
+                          }
+                        }}
+                        position="bottom-start"
+                        shadow="md"
+                        width={720}
+                      >
+                        <Popover.Target>
+                          <ActionIcon
+                            aria-label={`Edit participant limits for ${stage.stageName}`}
+                            onClick={() => {
+                              if (isLimitPopoverOpened) {
+                                handleCancelParticipantLimit();
+                              } else {
+                                handleEditParticipantLimit(stage);
+                              }
+                            }}
+                            size="sm"
+                            variant="subtle"
+                          >
+                            <IconEdit size={16} />
+                          </ActionIcon>
+                        </Popover.Target>
+                        <Popover.Dropdown>
+                          <Stack gap="sm">
+                            <Text fw={500}>
+                              Participant limits for
+                              {' '}
+                              {stage.stageName}
+                            </Text>
+                            <Group gap={4} wrap="nowrap">
+                              <Button
+                                aria-label={`Limit participants for ${stage.stageName}`}
+                                size="compact-xs"
+                                variant={editingLimitEnabled ? 'light' : 'subtle'}
+                                color={editingLimitEnabled ? 'blue' : 'gray'}
+                                onClick={() => {
+                                  setEditingLimitEnabled(!editingLimitEnabled);
+                                  if (editingLimitEnabled) {
+                                    setEditingLimitMaxParticipants('');
+                                  }
+                                }}
+                              >
+                                {editingLimitEnabled ? <IconToggleRight size={16} /> : <IconToggleLeft size={16} />}
+                              </Button>
+                              {editingLimitEnabled && (
+                                <NumberInput
+                                  aria-label={`Maximum participants for ${stage.stageName}`}
+                                  value={editingLimitMaxParticipants}
+                                  onChange={(value) => setEditingLimitMaxParticipants(typeof value === 'number' ? value : '')}
+                                  min={0}
+                                  allowDecimal={false}
+                                  size="xs"
+                                  style={{ flex: 1, minWidth: 0 }}
+                                />
+                              )}
+                              <ActionIcon
+                                size="sm"
+                                aria-label={`Save participant limit for ${stage.stageName}`}
+                                color="green"
+                                onClick={() => handleSaveParticipantLimit(stage)}
+                              >
+                                <IconCheck size={16} />
+                              </ActionIcon>
+                              <ActionIcon
+                                size="sm"
+                                aria-label={`Cancel participant limit for ${stage.stageName}`}
+                                color="gray"
+                                onClick={handleCancelParticipantLimit}
+                              >
+                                <IconX size={16} />
+                              </ActionIcon>
+                            </Group>
+                            {betweenSubjectsFactors.length === 0 ? (
+                              <Text size="sm" c="dimmed">This study has no between-subjects factors.</Text>
+                            ) : (
+                              <ScrollArea h={360} type="auto">
+                                <BetweenSubjectsCombinationTable
+                                  stage={stage}
+                                  participants={participants}
+                                  betweenSubjectsFactors={betweenSubjectsFactors}
+                                  combinations={betweenSubjectsCombinations}
+                                  onReviewInProgress={handleReviewInProgress}
+                                  onSetDesiredParticipants={handleSetDesiredParticipants}
+                                  onToggle={handleToggleBetweenSubjectsCombination}
+                                  showParticipantCounts={false}
+                                  showParticipantLimits
+                                />
+                              </ScrollArea>
+                            )}
+                          </Stack>
+                        </Popover.Dropdown>
+                      </Popover>
+                    </Group>
+                  </Table.Td>
+                  <Table.Td>
+                    {editingIndex === index ? (
+                      <Group gap="xs">
+                        <ActionIcon
+                          size="sm"
+                          aria-label={`Save stage ${stage.stageName}`}
+                          color="green"
+                          onClick={() => handleSaveEdit(stage.stageName)}
+                        >
+                          <IconCheck size={16} />
+                        </ActionIcon>
+                        <ActionIcon
+                          size="sm"
+                          aria-label={`Cancel editing stage ${stage.stageName}`}
+                          color="gray"
+                          onClick={handleCancelEdit}
+                        >
+                          <IconX size={16} />
+                        </ActionIcon>
+                      </Group>
+                    ) : (
+                      <ActionIcon
+                        size="sm"
+                        aria-label={`Edit stage ${stage.stageName}`}
+                        onClick={() => handleEditStage(index)}
+                      >
+                        <IconEdit size={16} />
+                      </ActionIcon>
+                    )}
+                  </Table.Td>
+                </Table.Tr>
+                <Table.Tr key={`${stage.stageName}-conditions`}>
+                  <Table.Td colSpan={6} p={0} style={{ maxWidth: 0, overflow: 'hidden' }}>
+                    <Collapse in={isExpanded} transitionDuration={200} transitionTimingFunction="ease">
+                      <Paper m="sm" p="sm" radius="sm" withBorder bg="gray.0" style={{ maxWidth: '100%', minWidth: 0 }}>
+                        {betweenSubjectsFactors.length === 0 ? (
+                          <Text size="sm" c="dimmed">This study has no between-subjects factors.</Text>
+                        ) : (
+                          <BetweenSubjectsCombinationTable
+                            stage={stage}
+                            participants={participants}
+                            betweenSubjectsFactors={betweenSubjectsFactors}
+                            combinations={betweenSubjectsCombinations}
+                            onReviewInProgress={handleReviewInProgress}
+                            onSetDesiredParticipants={handleSetDesiredParticipants}
+                            onToggle={handleToggleBetweenSubjectsCombination}
+                            showParticipantCounts
+                            showParticipantLimits={false}
+                          />
+                        )}
+                      </Paper>
+                    </Collapse>
+                  </Table.Td>
+                </Table.Tr>
+              </Fragment>
+            );
+          })}
 
           {addingNewStage && (
             <Table.Tr style={{ backgroundColor: '#f8f9fa' }}>
               <Table.Td />
+              <Table.Td />
               <Table.Td>
-                <TextInput
-                  placeholder="Enter stage name"
-                  value={newStageName}
-                  onChange={(e) => setNewStageName(e.currentTarget.value)}
-                  error={newStageError}
-                  size="xs"
-                />
+                <Group gap="xs" wrap="nowrap">
+                  <TextInput
+                    placeholder="Enter stage name"
+                    value={newStageName}
+                    onChange={(e) => setNewStageName(e.currentTarget.value)}
+                    error={newStageError}
+                    size="xs"
+                    style={{ flex: 1, minWidth: 0 }}
+                  />
+                  <ColorInput
+                    value={newStageColor}
+                    onChange={setNewStageColor}
+                    size="xs"
+                    w={120}
+                  />
+                </Group>
               </Table.Td>
               <Table.Td>
-                <ColorInput
-                  value={newStageColor}
-                  onChange={setNewStageColor}
-                  size="xs"
-                />
+                <Text size="sm">0</Text>
+              </Table.Td>
+              <Table.Td>
+                <Text size="sm" c="dimmed">Set after creating</Text>
               </Table.Td>
               <Table.Td>
                 <Group gap="xs">

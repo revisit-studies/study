@@ -7,6 +7,7 @@ import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useRecordingConfig } from './useRecordingConfig';
 import { useStoredAnswer } from './useStoredAnswer';
 import { useIsAnalysis } from './useIsAnalysis';
+import { useIsStartupPreview } from '../../components/StartupPreviewContext';
 import {
   getRmsLevel,
   isSpeakingAtLevel,
@@ -20,6 +21,7 @@ import {
  * When just audio recording is enabled throughout the study, recording is initiated on each screen separately.
  */
 export function useRecording() {
+  const isStartupPreview = useIsStartupPreview();
   const studyConfig = useStudyConfig();
 
   const { recordScreenFPS, recordAudio } = studyConfig.uiConfig;
@@ -125,6 +127,10 @@ export function useRecording() {
 
   // Start screen recording
   const startScreenRecording = useCallback((trialName: string) => {
+    if (isStartupPreview) {
+      return;
+    }
+
     // check if the current stimulus needs combined or just screen
 
     if (!(currentComponentHasAudioRecording || currentComponentHasScreenRecording)) {
@@ -214,7 +220,7 @@ export function useRecording() {
 
     mediaRecorder.start(1000); // 1s chunks
     audioRecorder?.start(1000);
-  }, [currentComponentHasAudioRecording, currentComponentHasScreenRecording, storageEngine, isMuted]);
+  }, [currentComponentHasAudioRecording, currentComponentHasScreenRecording, isStartupPreview, storageEngine, isMuted]);
 
   // Stop screen recording. This does not stop screen capture.
   const stopScreenRecording = useCallback(() => {
@@ -306,7 +312,7 @@ export function useRecording() {
       return;
     }
 
-    if (!studyConfig || studyHasScreenRecording || !studyHasAudioRecording || !storageEngine || (status && status.endTime > 0) || isAnalysis) {
+    if (isStartupPreview || !studyConfig || studyHasScreenRecording || !studyHasAudioRecording || !storageEngine || (status && status.endTime > 0) || isAnalysis) {
       return;
     }
 
@@ -321,11 +327,11 @@ export function useRecording() {
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentComponent, identifier, currentComponentHasAudioRecording]);
+  }, [currentComponent, identifier, currentComponentHasAudioRecording, isStartupPreview]);
 
   // For study with screen recording
   useEffect(() => {
-    if (!studyConfig || !(studyHasScreenRecording) || !storageEngine || (status && status.endTime > 0) || isAnalysis) {
+    if (isStartupPreview || !studyConfig || !(studyHasScreenRecording) || !storageEngine || (status && status.endTime > 0) || isAnalysis) {
       return;
     }
 
@@ -344,10 +350,14 @@ export function useRecording() {
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentComponent, identifier, currentComponentHasAudioRecording, currentComponentHasScreenRecording, isMediaCapturing]);
+  }, [currentComponent, identifier, currentComponentHasAudioRecording, currentComponentHasScreenRecording, isMediaCapturing, isStartupPreview]);
 
   // Start screen capture. This does not begin recording.
   const startScreenCapture = useCallback(() => {
+    if (isStartupPreview) {
+      return;
+    }
+
     const captureFn = async () => {
       document.title = `RECORD THIS TAB: ${pageTitle}`;
 
@@ -418,7 +428,7 @@ export function useRecording() {
       }
     };
     captureFn();
-  }, [pageTitle, recordAudio, recordScreenFPS, stopScreenCapture, studyHasAudioRecording, studyHasScreenRecording]);
+  }, [isStartupPreview, pageTitle, recordAudio, recordScreenFPS, stopScreenCapture, studyHasAudioRecording, studyHasScreenRecording]);
 
   useEffect(() => {
     audioMediaStream.current?.getAudioTracks().forEach((track) => {
