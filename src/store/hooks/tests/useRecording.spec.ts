@@ -5,6 +5,7 @@ import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { useRecording, useRecordingContext } from '../useRecording';
+import type { StoreState } from '../../types';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
@@ -18,6 +19,7 @@ let mockRecordingConfig = {
 let mockCurrentComponent = 'intro';
 let mockStorageEngine: Record<string, ReturnType<typeof vi.fn>> | null = null;
 let mockStoredAnswer: { endTime: number } | null = null;
+let mockModes = { dataCollectionEnabled: true, developmentModeEnabled: false, dataSharingEnabled: false };
 
 // ── media mocks ────────────────────────────────────────────────────────────────
 
@@ -99,6 +101,12 @@ vi.mock('../useIsAnalysis', () => ({
   useIsAnalysis: () => false,
 }));
 
+vi.mock('../../store', () => ({
+  useStoreSelector: (selector: (s: StoreState) => unknown) => selector({
+    modes: mockModes,
+  } as StoreState),
+}));
+
 // ── lifecycle ──────────────────────────────────────────────────────────────────
 
 beforeEach(() => {
@@ -112,6 +120,7 @@ beforeEach(() => {
   mockCurrentComponent = 'intro';
   mockStorageEngine = null;
   mockStoredAnswer = null;
+  mockModes = { dataCollectionEnabled: true, developmentModeEnabled: false, dataSharingEnabled: false };
 
   vi.stubGlobal('MediaStream', MockMediaStream);
   vi.stubGlobal('MediaRecorder', MockMediaRecorder);
@@ -444,5 +453,52 @@ describe('useRecording isRejected effect', () => {
 describe('useRecordingContext', () => {
   test('throws when used outside RecordingProvider', () => {
     expect(() => { renderHook(() => useRecordingContext()); }).toThrow('useRecordingContext must be used within a RecordingProvider');
+  });
+});
+
+// ── DataCollection disabled tests ────────────────────────────────────────────────────────
+
+describe('useRecording with data collection disabled', () => {
+  test('does not call getUserMedia/recorder/storage via audio recording', async () => {
+    mockModes = { ...mockModes, dataCollectionEnabled: false };
+    mockRecordingConfig = {
+      ...mockRecordingConfig,
+      studyHasAudioRecording: true,
+      currentComponentHasAudioRecording: true,
+    };
+    mockStorageEngine = {
+      saveAudioRecording: vi.fn(async () => {}),
+      saveScreenRecording: vi.fn(async () => {}),
+    };
+
+    const { result } = renderHook(() => useRecording());
+    await act(async () => { /* let effects settle */ });
+
+    expect(navigator.mediaDevices.getUserMedia).not.toHaveBeenCalled();
+    expect(mockStorageEngine.saveAudioRecording).not.toHaveBeenCalled();
+    expect(result.current.isAudioRecording).toBe(false);
+  });
+
+  test('does not call getUserMedia/getDisplayMedia/recorder/storage via startScreenCapture', async () => {
+    mockModes = { ...mockModes, dataCollectionEnabled: false };
+    mockRecordingConfig = {
+      ...mockRecordingConfig,
+      studyHasScreenRecording: true,
+      studyHasAudioRecording: true,
+      currentComponentHasScreenRecording: true,
+      currentComponentHasAudioRecording: true,
+    };
+    mockStorageEngine = {
+      saveAudioRecording: vi.fn(async () => {}),
+      saveScreenRecording: vi.fn(async () => {}),
+    };
+
+    const { result } = renderHook(() => useRecording());
+    act(() => { result.current.startScreenCapture(); });
+    await act(async () => { /* let effects settle */ });
+    expect(navigator.mediaDevices.getUserMedia).not.toHaveBeenCalled();
+    expect(mockStorageEngine.saveAudioRecording).not.toHaveBeenCalled();
+    expect(mockStorageEngine.saveScreenRecording).not.toHaveBeenCalled();
+    expect(result.current.isAudioCapturing).toBe(false);
   });
 });
