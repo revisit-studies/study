@@ -18,7 +18,7 @@ export function AppHeader({
   studyIds: string[];
   selectedStudyId?: string;
   studyHref?: string;
-  studyConfigs?: Record<string, { $schema: string } | null>;
+  studyConfigs?: Record<string, { $schema?: unknown } | null>;
 }) {
   const navigate = useNavigate();
   const { studyId } = useParams();
@@ -26,7 +26,10 @@ export function AppHeader({
 
   const selectorData = studyIds.map((id) => ({ value: id, label: id })).sort((a, b) => a.label.localeCompare(b.label));
   const revisitVersion = studyIds
-    .map((id) => studyConfigs?.[id]?.$schema.match(STUDY_SCHEMA_VERSION_REGEX)?.[1])
+    .map((id) => {
+      const schema = studyConfigs?.[id]?.$schema;
+      return typeof schema === 'string' ? schema.match(STUDY_SCHEMA_VERSION_REGEX)?.[1] : undefined;
+    })
     .filter((version): version is string => version !== undefined)
     .sort((a, b) => b.localeCompare(a, undefined, { numeric: true }))[0];
 

@@ -30,6 +30,7 @@ import { parseStudyConfig } from '../../parser/parser';
 import { useAsync } from '../../store/hooks/useAsync';
 import { StorageEngine } from '../../storage/engines/types';
 import { DownloadButtons } from '../../components/downloader/DownloadButtons';
+import { ErrorLoadingConfig } from '../../components/ErrorLoadingConfig';
 import { useStudyRecordings } from '../../utils/useStudyRecordings';
 import { getSequenceConditions, parseConditionParam } from '../../utils/handleConditionLogic';
 import 'mantine-react-table/styles.css';
@@ -122,7 +123,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     storageEngine && canonicalStudyId ? [storageEngine, canonicalStudyId] : null,
   );
   const studyUsesConditions = useMemo(
-    () => (studyConfig ? getSequenceConditions(studyConfig.sequence).length > 0 : false),
+    () => (studyConfig?.sequence ? getSequenceConditions(studyConfig.sequence).length > 0 : false),
     [studyConfig],
   );
 
@@ -383,6 +384,21 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
 
   if (startupError) {
     return <StartupErrorScreen error={startupError.error} />;
+  }
+
+  if (studyConfig?.errors?.length) {
+    return (
+      <>
+        <AppHeader
+          studyIds={globalConfig.configsList}
+          selectedStudyId={displayStudyId}
+          studyConfigs={displayStudyId ? { [displayStudyId]: studyConfig } : undefined}
+        />
+        <AppShell.Main>
+          <ErrorLoadingConfig issues={studyConfig.errors} type="error" />
+        </AppShell.Main>
+      </>
+    );
   }
 
   if (!routeStudyId) {
