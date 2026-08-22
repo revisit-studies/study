@@ -1,9 +1,9 @@
 import {
-  Stack, TextInput, Button, Group, Table, Text, ColorInput, Loader, ActionIcon, Radio, NumberInput, Paper, Switch,
+  Stack, TextInput, Button, Group, Table, Text, ColorInput, Loader, ActionIcon, Radio, NumberInput, Paper, Switch, Collapse,
   Title,
 } from '@mantine/core';
 import {
-  Fragment, useCallback, useEffect, useMemo, useState,
+  Fragment, useCallback, useEffect, useMemo, useRef, useState,
 } from 'react';
 import isEqual from 'lodash.isequal';
 import {
@@ -337,6 +337,7 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
   const [stageParticipantCounts, setStageParticipantCounts] = useState<Record<string, number>>({});
   const [participants, setParticipants] = useState<ParticipantDataWithStatus[]>([]);
   const [expandedStageNames, setExpandedStageNames] = useState<string[]>([]);
+  const currentStageNameRef = useRef<string | undefined>(undefined);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingStageName, setEditingStageName] = useState('');
   const [editingStageColor, setEditingStageColor] = useState(DEFAULT_STAGE_COLOR);
@@ -362,6 +363,12 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
       storageEngine.getAllParticipantsData(studyId),
     ]);
     setCurrentStage(stageData.currentStage);
+    const nextCurrentStageName = stageData.currentStage.stageName;
+    const currentStageChanged = currentStageNameRef.current !== nextCurrentStageName;
+    currentStageNameRef.current = nextCurrentStageName;
+    if (currentStageChanged) {
+      setExpandedStageNames([nextCurrentStageName]);
+    }
     setAllStages(stageData.allStages);
     setParticipants(allParticipants);
     setStageParticipantCounts(getStageParticipantCounts(allParticipants));
@@ -389,6 +396,8 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
     if (storageEngine) {
       await storageEngine.setCurrentStage(studyId, stageName, color);
       setCurrentStage({ stageName, color });
+      currentStageNameRef.current = stageName;
+      setExpandedStageNames([stageName]);
     }
   };
 
@@ -478,7 +487,7 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
     setExpandedStageNames((stageNames) => (
       stageNames.includes(stageName)
         ? stageNames.filter((name) => name !== stageName)
-        : [...stageNames, stageName]
+        : [stageName]
     ));
   };
 
@@ -726,10 +735,10 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
                     )}
                   </Table.Td>
                 </Table.Tr>
-                {isExpanded && (
-                  <Table.Tr key={`${stage.stageName}-conditions`}>
-                    <Table.Td colSpan={7} style={{ maxWidth: 0, overflow: 'hidden' }}>
-                      <Paper p="sm" radius="sm" withBorder bg="gray.0" style={{ maxWidth: '100%', minWidth: 0 }}>
+                <Table.Tr key={`${stage.stageName}-conditions`}>
+                  <Table.Td colSpan={7} p={0} style={{ maxWidth: 0, overflow: 'hidden' }}>
+                    <Collapse in={isExpanded} transitionDuration={200} transitionTimingFunction="ease">
+                      <Paper m="sm" p="sm" radius="sm" withBorder bg="gray.0" style={{ maxWidth: '100%', minWidth: 0 }}>
                         {betweenSubjectsFactors.length === 0 ? (
                           <Text size="sm" c="dimmed">This study has no between-subjects factors.</Text>
                         ) : (
@@ -743,9 +752,9 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
                           />
                         )}
                       </Paper>
-                    </Table.Td>
-                  </Table.Tr>
-                )}
+                    </Collapse>
+                  </Table.Td>
+                </Table.Tr>
               </Fragment>
             );
           })}

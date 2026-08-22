@@ -87,16 +87,19 @@ export function ParticipantTimeoutModal({
     }
   }, [refresh, storageEngine, timingOutParticipantIds]);
 
-  const reviewLabel = `Review In-Progress Participants (${inProgressParticipants.length})`;
+  const reviewLabel = `Review (${inProgressParticipants.length})`;
+  const reviewAriaLabel = `Review In-Progress Participants (${inProgressParticipants.length})`;
 
   return (
     <>
-      <Tooltip label="Only admins can time out participants" disabled={user.isAdmin}>
+      <Tooltip label={user.isAdmin ? reviewAriaLabel : 'Only admins can time out participants'}>
         <span>
           <Button
+            aria-label={reviewAriaLabel}
             leftSection={<IconClockOff size={16} />}
             disabled={!user.isAdmin || inProgressParticipants.length === 0}
             onClick={() => setOpened(true)}
+            size="xs"
             variant="light"
           >
             {reviewLabel}

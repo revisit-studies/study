@@ -82,7 +82,7 @@ describe('ParticipantTimeoutModal', () => {
     });
 
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Review In-Progress Participants (1)' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Review (1)' }));
     });
     expect(screen.getByText('In-Progress Participants')).toBeDefined();
     expect(screen.getByText('p1')).toBeDefined();
@@ -98,6 +98,6 @@ describe('ParticipantTimeoutModal', () => {
     mockUser = { isAdmin: false };
     render(<ParticipantTimeoutModal participants={[makeParticipant({ createdTime: 1 })]} refresh={vi.fn()} />);
 
-    expect((screen.getByRole('button', { name: 'Review In-Progress Participants (1)' }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole('button', { name: 'Review (1)' }) as HTMLButtonElement).disabled).toBe(true);
   });
 });

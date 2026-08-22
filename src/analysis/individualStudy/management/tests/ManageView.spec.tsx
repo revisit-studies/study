@@ -80,6 +80,7 @@ vi.mock('@mantine/core', () => ({
   Tooltip: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Space: () => <div />,
   Box: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Collapse: ({ children, in: open }: { children: ReactNode; in: boolean }) => (open ? <div>{children}</div> : null),
   Table: Object.assign(
     ({ children }: { children: ReactNode }) => <table>{children}</table>,
     {
@@ -155,12 +156,11 @@ describe('ManageView', () => {
 
   // ── ManageView layout ────────────────────────────────────────────────────
 
-  test('renders all three management sections', async () => {
+  test('renders modes and data management sections', async () => {
     await act(async () => {
       render(<ManageView studyId="my-study" refresh={async () => []} />);
     });
     expect(screen.getByText('ReVISit Modes')).toBeDefined();
-    expect(screen.getByText('Stage Management')).toBeDefined();
     expect(screen.getByText('Data Management')).toBeDefined();
   });
 
@@ -436,10 +436,8 @@ describe('ManageView', () => {
     await act(async () => {
       render(<StageManagementItem studyId="test-study" studyConfig={studyConfig} />);
     });
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Expand stage DEFAULT' }));
-    });
 
+    expect(screen.getByRole('button', { name: 'Collapse stage DEFAULT' })).toBeDefined();
     expect(screen.getByText('letter')).toBeDefined();
     expect(screen.getByText('number')).toBeDefined();
     expect(screen.getAllByRole('checkbox')).toHaveLength(4);
