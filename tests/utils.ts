@@ -242,6 +242,7 @@ export async function seekReplay(
   startTime: number,
   endTime: number,
   targetTime: number,
+  waitForAppliedState?: () => Promise<boolean>,
 ) {
   const timer = page.getByTestId('replay-timer');
   await expect(timer).toBeVisible();
@@ -271,5 +272,9 @@ export async function seekReplay(
       `Actual replay time: ${replayTime ?? '<none>'}s`,
       reason,
     ].join('\n'));
+  }
+
+  if (waitForAppliedState) {
+    await expect.poll(waitForAppliedState, { timeout: 15000 }).toBe(true);
   }
 }

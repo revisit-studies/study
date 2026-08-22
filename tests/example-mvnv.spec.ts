@@ -390,11 +390,16 @@ test('replays a seeded MVNV task without completing the full study', async ({ pa
     rects.filter((rect) => getComputedStyle(rect).fill !== 'rgb(255, 255, 255)').length
   ));
 
-  await seekReplay(page, recording.startTime!, recording.endTime!, recording.endTime!);
+  await seekReplay(page, recording.startTime!, recording.endTime!, recording.endTime!, async () => (
+    (await selectedAnswerBoxCount()) > 0
+    && await replayFrame.locator('.answer').count() > 0
+  ));
   await expect.poll(selectedAnswerBoxCount, { timeout: 15000 }).toBeGreaterThan(0);
   await expect.poll(async () => replayFrame.locator('.answer').count(), { timeout: 15000 }).toBeGreaterThan(0);
 
-  await seekReplay(page, recording.startTime!, recording.endTime!, recording.startTime!);
+  await seekReplay(page, recording.startTime!, recording.endTime!, recording.startTime!, async () => (
+    (await selectedAnswerBoxCount()) === 0
+  ));
   await expect.poll(selectedAnswerBoxCount, { timeout: 15000 }).toBe(0);
   expect(await readStoredValue(page, participantKey)).toEqual(participantBeforeReplay);
   expect(await readStoredValue(page, provenanceKey)).toEqual(provenanceBeforeReplay);

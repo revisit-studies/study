@@ -141,16 +141,25 @@ test('Test vega component with reactive response', async ({ page }) => {
   const replaySelects = page.locator('main select');
   await expect(replaySelects).toHaveCount(2);
   await expect(page.locator('svg line[stroke="black"]')).toHaveCount(1, { timeout: 15000 });
-  await seekReplay(page, recording.startTime, recording.endTime, recording.endTime);
+  await seekReplay(page, recording.startTime, recording.endTime, recording.endTime, async () => (
+    await replaySelects.nth(0).inputValue() === 'US Gross'
+    && await replaySelects.nth(1).inputValue() === 'Worldwide Gross'
+  ));
   await expect(replaySelects.nth(0)).toHaveValue('US Gross', { timeout: 15000 });
   await expect(replaySelects.nth(1)).toHaveValue('Worldwide Gross', { timeout: 15000 });
   expect(await replaySelects.nth(0).evaluate((element) => element.closest('[inert]') !== null)).toBe(true);
 
-  await seekReplay(page, recording.startTime, recording.endTime, recording.startTime);
+  await seekReplay(page, recording.startTime, recording.endTime, recording.startTime, async () => (
+    await replaySelects.nth(0).inputValue() === 'IMDB Rating'
+    && await replaySelects.nth(1).inputValue() === 'Rotten Tomatoes Rating'
+  ));
   await expect(replaySelects.nth(0)).toHaveValue('IMDB Rating', { timeout: 15000 });
   await expect(replaySelects.nth(1)).toHaveValue('Rotten Tomatoes Rating', { timeout: 15000 });
 
-  await seekReplay(page, recording.startTime, recording.endTime, recording.endTime);
+  await seekReplay(page, recording.startTime, recording.endTime, recording.endTime, async () => (
+    await replaySelects.nth(0).inputValue() === 'US Gross'
+    && await replaySelects.nth(1).inputValue() === 'Worldwide Gross'
+  ));
   await expect(replaySelects.nth(0)).toHaveValue('US Gross', { timeout: 15000 });
   await expect(replaySelects.nth(1)).toHaveValue('Worldwide Gross', { timeout: 15000 });
   expect(await readStoredValue(page, provenanceKey)).toEqual(provenanceBeforeReplay);

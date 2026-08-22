@@ -29,7 +29,11 @@ type RecordedReplay = {
 };
 
 async function expectDotCount(frame: FrameLocator, count: number) {
-  await expect(frame.locator('circle')).toHaveCount(count);
+  await expect(frame.locator('circle')).toHaveCount(count, { timeout: 15000 });
+}
+
+async function hasDotCount(frame: FrameLocator, count: number) {
+  return (await frame.locator('circle').count()) === count;
 }
 
 async function readRecordedReplay(page: Page, studyId: string): Promise<RecordedReplay | null> {
@@ -162,12 +166,12 @@ for (const demo of demos) {
 
     const replayFrame = page.frameLocator('#root iframe');
     for (const target of replayTargets) {
-      await seekReplay(page, recording.startTime, recording.endTime, target.time);
+      await seekReplay(page, recording.startTime, recording.endTime, target.time, () => hasDotCount(replayFrame, target.count));
       await expectDotCount(replayFrame, target.count);
     }
 
     for (const target of [...replayTargets].reverse()) {
-      await seekReplay(page, recording.startTime, recording.endTime, target.time);
+      await seekReplay(page, recording.startTime, recording.endTime, target.time, () => hasDotCount(replayFrame, target.count));
       await expectDotCount(replayFrame, target.count);
     }
   });
