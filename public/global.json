@@ -52,6 +52,7 @@
     "test-device-restriction",
     "test-library",
     "test-likert-matrix",
+    "test-style",
     "test-parser-errors",
     "test-randomization",
     "test-component-timeout",
@@ -220,6 +221,10 @@
     },
     "test-likert-matrix": {
       "path": "test-likert-matrix/config.json"
+    },
+    "test-style": {
+      "path": "test-style/config.json",
+      "test": true
     },
     "test-parser-errors": {
       "path": "test-parser-errors/config.json",

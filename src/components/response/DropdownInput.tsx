@@ -38,6 +38,7 @@ export function DropdownInput({
   return (
     isMultiselect ? (
       <MultiSelect
+        className={classes.standardInputWidth}
         disabled={disabled}
         label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
         description={secondaryText}
@@ -58,6 +59,7 @@ export function DropdownInput({
       />
     ) : (
       <Select
+        className={classes.standardInputWidth}
         disabled={disabled}
         label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
         description={secondaryText}

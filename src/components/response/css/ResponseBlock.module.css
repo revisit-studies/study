@@ -1,0 +1,22 @@
+.nonSidebar {
+  width: 100%;
+  /* max-width: 900px;
+  min-width: 0; */
+}
+/* 
+.nonSidebar > :global([data-question-id]) {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.nonSidebar :global(.response) {
+  width: 100%;
+  min-width: 0;
+  max-width: 40rem;
+}
+
+.nonSidebar :global(.response[data-response-type='matrix-radio']),
+.nonSidebar :global(.response[data-response-type='matrix-checkbox']) {
+  max-width: 60rem;
+} */

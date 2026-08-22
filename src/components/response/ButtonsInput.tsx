@@ -52,7 +52,7 @@ export function ButtonsInput({
         errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
         style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
       >
-        <Flex justify="space-between" align="center" gap="xl" mt="xs">
+        <Flex align="stretch" gap="md" mt="xs" wrap="wrap">
           {orderedOptions.map((radio, idx) => (
             <Radio.Card
               key={`radio-${idx}`}

@@ -1,4 +1,5 @@
 .root {
+  flex: 1 1 8rem;
   position: relative;
   padding: var(--mantine-spacing-md);
   transition: border-color 150ms ease;
