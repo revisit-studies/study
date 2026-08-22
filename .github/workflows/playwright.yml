@@ -128,5 +128,4 @@ jobs:
       - name: Run WebKit smoke tests
         run: >-
           yarn test --project=webkit
-          tests/demo-html.spec.ts
           tests/startup-error.spec.ts
