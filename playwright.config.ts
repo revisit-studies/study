@@ -1,6 +1,11 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const isCI = Boolean(process.env.CI);
+const configuredTestPort = Number(process.env.PW_TEST_PORT);
+const testPort = Number.isInteger(configuredTestPort) && configuredTestPort > 0
+  ? configuredTestPort
+  : 8090;
+const testBaseURL = `http://localhost:${testPort}`;
 const configuredCiWorkers = Number(process.env.PW_CI_WORKERS);
 const ciWorkers = Number.isFinite(configuredCiWorkers) && configuredCiWorkers > 0
   ? configuredCiWorkers
@@ -8,9 +13,9 @@ const ciWorkers = Number.isFinite(configuredCiWorkers) && configuredCiWorkers > 
 
 export default defineConfig({
   webServer: {
-    command: 'yarn serve',
-    url: 'http://localhost:8080',
-    reuseExistingServer: !isCI,
+    command: `corepack yarn serve --port=${testPort}`,
+    url: testBaseURL,
+    reuseExistingServer: Boolean(process.env.PW_REUSE_EXISTING_SERVER),
     stdout: 'ignore',
     stderr: 'pipe',
   },
@@ -24,7 +29,7 @@ export default defineConfig({
   reporter: isCI ? 'github' : 'list',
 
   use: {
-    baseURL: 'http://localhost:8080',
+    baseURL: testBaseURL,
     trace: 'on-first-retry',
   },
 
