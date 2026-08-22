@@ -686,10 +686,10 @@
     },
     "DateResponse": {
       "additionalProperties": false,
-      "description": "The DateResponse interface defines a calendar date selected with a date picker. Date values are stored as `MM/DD/YYYY` strings. ```json {   \"id\": \"q-date\",   \"prompt\": \"Select a date.\",   \"location\": \"aboveStimulus\",   \"type\": \"date\",   \"default\": \"08/21/2026\",   \"minDate\": \"08/01/2026\",   \"maxDate\": \"08/31/2026\",   \"placeholder\": \"MM/DD/YYYY\" } ```",
+      "description": "The DateResponse interface defines a date, month, or year selected with a picker. Values are stored as `MM/DD/YYYY`, `MM/YYYY`, or `YYYY` strings based on `options`. ```json {   \"id\": \"q-date\",   \"prompt\": \"Select a date.\",   \"location\": \"aboveStimulus\",   \"type\": \"date\",   \"options\": \"date\",   \"default\": \"08/21/2026\",   \"min\": \"08/01/2026\",   \"max\": \"08/31/2026\",   \"placeholder\": \"MM/DD/YYYY\" } ```",
       "properties": {
         "default": {
-          "description": "The default date in `MM/DD/YYYY` format.",
+          "description": "The default value, using the format selected by `options`.",
           "type": "string"
         },
         "excludeFromRandomization": {
@@ -712,12 +712,21 @@
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
-        "maxDate": {
-          "description": "The latest date accepted, in `MM/DD/YYYY` format.",
+        "max": {
+          "description": "The latest value accepted, using the format selected by `options`.",
           "type": "string"
         },
-        "minDate": {
-          "description": "The earliest date accepted, in `MM/DD/YYYY` format.",
+        "min": {
+          "description": "The earliest value accepted, using the format selected by `options`.",
+          "type": "string"
+        },
+        "options": {
+          "description": "Determines whether participants select a date, month, or year. Defaults to `date`.",
+          "enum": [
+            "date",
+            "month",
+            "year"
+          ],
           "type": "string"
         },
         "paramCapture": {
@@ -725,7 +734,7 @@
           "type": "string"
         },
         "placeholder": {
-          "description": "The placeholder text displayed in the date input. Defaults to `MM/DD/YYYY`.",
+          "description": "The placeholder text displayed in the input. Defaults to the format used by `options`.",
           "type": "string"
         },
         "prompt": {
@@ -741,7 +750,7 @@
           "type": "string"
         },
         "requiredValue": {
-          "description": "The date required for a correct response, in `MM/DD/YYYY` format.",
+          "description": "The value required for a correct response, using the format selected by `options`.",
           "type": "string"
         },
         "secondaryText": {
@@ -3777,10 +3786,10 @@
     },
     "TimeResponse": {
       "additionalProperties": false,
-      "description": "The TimeResponse interface defines a time selected with a time input. Time values are stored as 24-hour `HH:mm` strings. ```json {   \"id\": \"q-time\",   \"prompt\": \"Select a time.\",   \"location\": \"aboveStimulus\",   \"type\": \"time\",   \"default\": \"14:28\" } ```",
+      "description": "The TimeResponse interface defines a time selected with a time input. Time values are stored as 24-hour `HH:mm` strings, or `HH:mm:ss` when `withSeconds` is `true`. ```json {   \"id\": \"q-time\",   \"prompt\": \"Select a time.\",   \"location\": \"aboveStimulus\",   \"type\": \"time\",   \"default\": \"14:28:30\",   \"min\": \"09:00:00\",   \"max\": \"18:00:00\",   \"withSeconds\": true } ```",
       "properties": {
         "default": {
-          "description": "The default time in 24-hour `HH:mm` format.",
+          "description": "The default time in 24-hour `HH:mm` format, or `HH:mm:ss` when `withSeconds` is `true`.",
           "type": "string"
         },
         "excludeFromRandomization": {
@@ -3803,6 +3812,14 @@
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
+        "max": {
+          "description": "The latest time accepted, in the same format as the response value.",
+          "type": "string"
+        },
+        "min": {
+          "description": "The earliest time accepted, in the same format as the response value.",
+          "type": "string"
+        },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
@@ -3820,7 +3837,7 @@
           "type": "string"
         },
         "requiredValue": {
-          "description": "The time required for a correct response, in 24-hour `HH:mm` format.",
+          "description": "The time required for a correct response, in 24-hour `HH:mm` format, or `HH:mm:ss` when `withSeconds` is `true`.",
           "type": "string"
         },
         "secondaryText": {
@@ -3845,6 +3862,10 @@
         },
         "withDontKnow": {
           "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
+        },
+        "withSeconds": {
+          "description": "Determines whether the input includes seconds. Defaults to `false`.",
           "type": "boolean"
         }
       },

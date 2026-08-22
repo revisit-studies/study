@@ -442,14 +442,14 @@ describe('validateResponse', () => {
     expect(validateResponse(optionalResponse, '', { 'optional-date': '' }).valid).toBe(true);
   });
 
-  test('validates date response values against minDate and maxDate', () => {
+  test('validates date response values against min and max', () => {
     const response: DateResponse = {
       id: 'date',
       prompt: 'Select a date',
       type: 'date',
       required: true,
-      minDate: '02/10/2024',
-      maxDate: '02/25/2024',
+      min: '02/10/2024',
+      max: '02/25/2024',
     };
 
     expect(validateResponse(response, '02/10/2024', { date: '02/10/2024' }).valid).toBe(true);
@@ -458,10 +458,68 @@ describe('validateResponse', () => {
       .toBe('Please select a date between 02/10/2024 and 02/25/2024.');
     expect(validateResponse(response, '02/26/2024', { date: '02/26/2024' }).message)
       .toBe('Please select a date between 02/10/2024 and 02/25/2024.');
-    expect(validateResponse({ ...response, maxDate: undefined }, '02/09/2024', { date: '02/09/2024' }).message)
+    expect(validateResponse({ ...response, max: undefined }, '02/09/2024', { date: '02/09/2024' }).message)
       .toBe('Please select a date on or after 02/10/2024.');
-    expect(validateResponse({ ...response, minDate: undefined }, '02/26/2024', { date: '02/26/2024' }).message)
+    expect(validateResponse({ ...response, min: undefined }, '02/26/2024', { date: '02/26/2024' }).message)
       .toBe('Please select a date on or before 02/25/2024.');
+  });
+
+  test.each([
+    {
+      options: 'month', min: '01/2024', max: '12/2024', valid: '06/2024', below: '12/2023', above: '01/2025', noun: 'month',
+    },
+    {
+      options: 'year', min: '2000', max: '2024', valid: '2010', below: '1999', above: '2025', noun: 'year',
+    },
+  ] as const)('validates $options date option values against min and max', ({
+    options, min, max, valid, below, above, noun,
+  }) => {
+    const response: DateResponse = {
+      id: 'date', prompt: 'Select a value', type: 'date', required: true, options, min, max,
+    };
+
+    expect(validateResponse(response, valid, { date: valid }).valid).toBe(true);
+    expect(validateResponse(response, below, { date: below }).message)
+      .toBe(`Please select a ${noun} between ${min} and ${max}.`);
+    expect(validateResponse(response, above, { date: above }).message)
+      .toBe(`Please select a ${noun} between ${min} and ${max}.`);
+  });
+
+  test.each([
+    { options: 'month', invalid: '13/2024', noun: 'month' },
+    { options: 'year', invalid: '0000', noun: 'year' },
+  ] as const)('rejects invalid $options date option values', ({ options, invalid, noun }) => {
+    const response: DateResponse = {
+      id: 'date', prompt: 'Select a value', type: 'date', required: true, options,
+    };
+
+    expect(validateResponse(response, invalid, { date: invalid })).toMatchObject({
+      valid: false,
+      issueType: 'invalid',
+      message: `Please select a valid ${noun}.`,
+    });
+  });
+
+  test('validates time response values against min and max', () => {
+    const response: TimeResponse = {
+      id: 'time',
+      prompt: 'Select a time',
+      type: 'time',
+      required: true,
+      min: '09:00',
+      max: '18:00',
+    };
+
+    expect(validateResponse(response, '09:00', { time: '09:00' }).valid).toBe(true);
+    expect(validateResponse(response, '18:00', { time: '18:00' }).valid).toBe(true);
+    expect(validateResponse(response, '08:59', { time: '08:59' }).message)
+      .toBe('Please select a time between 09:00 and 18:00.');
+    expect(validateResponse(response, '18:01', { time: '18:01' }).message)
+      .toBe('Please select a time between 09:00 and 18:00.');
+    expect(validateResponse({ ...response, max: undefined }, '08:59', { time: '08:59' }).message)
+      .toBe('Please select a time at or after 09:00.');
+    expect(validateResponse({ ...response, min: undefined }, '18:01', { time: '18:01' }).message)
+      .toBe('Please select a time at or before 18:00.');
   });
 
   test('validates time response values stored in HH:mm format', () => {
@@ -486,6 +544,20 @@ describe('validateResponse', () => {
       undefined,
       { showRequiredErrors: true },
     )).toBe('Please select a valid time.');
+  });
+
+  test('validates time response values stored in HH:mm:ss format when withSeconds is true', () => {
+    const response: TimeResponse = {
+      id: 'time', prompt: 'Select a time', type: 'time', required: true, withSeconds: true,
+    };
+
+    expect(validateResponse(response, '14:28:30', { time: '14:28:30' }).valid).toBe(true);
+    expect(validateResponse(response, '14:28', { time: '14:28' }).valid).toBe(false);
+    expect(validateResponse(response, '14:28:60', { time: '14:28:60' })).toMatchObject({
+      valid: false,
+      issueType: 'invalid',
+      message: 'Please select a valid time.',
+    });
   });
 
   test('treats an empty time as unanswered unless the response is optional', () => {

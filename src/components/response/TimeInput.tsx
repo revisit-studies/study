@@ -60,6 +60,9 @@ export function TimeResponseInput({
       radius="md"
       size="md"
       value={value}
+      withSeconds={response.withSeconds}
+      min={response.min}
+      max={response.max}
       rightSection={pickerControl}
       error={error}
       withErrorStyles={required}

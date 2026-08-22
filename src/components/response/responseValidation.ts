@@ -10,9 +10,10 @@ import {
   Response,
   ShortTextResponse,
   TextValidationRule,
+  TimeResponse,
 } from '../../parser/types';
 import { CustomResponseValidate, StoredAnswer } from '../../store/types';
-import { isValidTime, parseMonthDayYear } from '../../utils/dateTimeValidation';
+import { isValidTime, parseDateValue } from '../../utils/dateTimeValidation';
 import { parseStringOptions, parseStringOptionValue } from '../../utils/stringOptions';
 import { checkBuiltInValidation } from './builtInValidation';
 
@@ -20,22 +21,41 @@ export const REQUIRED_ERROR_MESSAGE = 'Please answer this question to continue.'
 export const INVALID_DATE_MESSAGE = 'Please select a valid date.';
 
 export function getDateValidationMessage(response: DateResponse, value: string) {
-  const date = parseMonthDayYear(value);
+  const options = response.options ?? 'date';
+  const dateOption = options === 'date' ? 'date' : options;
+  const date = parseDateValue(value, options);
   if (date === null) {
-    return INVALID_DATE_MESSAGE;
+    return `Please select a valid ${dateOption}.`;
   }
 
-  const minDate = response.minDate ? parseMonthDayYear(response.minDate) : null;
-  const maxDate = response.maxDate ? parseMonthDayYear(response.maxDate) : null;
+  const minDate = response.min ? parseDateValue(response.min, options) : null;
+  const maxDate = response.max ? parseDateValue(response.max, options) : null;
 
   if (minDate && maxDate && (date < minDate || date > maxDate)) {
-    return `Please select a date between ${response.minDate} and ${response.maxDate}.`;
+    return `Please select a ${dateOption} between ${response.min} and ${response.max}.`;
   }
   if (minDate && date < minDate) {
-    return `Please select a date on or after ${response.minDate}.`;
+    return `Please select a ${dateOption} on or after ${response.min}.`;
   }
   if (maxDate && date > maxDate) {
-    return `Please select a date on or before ${response.maxDate}.`;
+    return `Please select a ${dateOption} on or before ${response.max}.`;
+  }
+
+  return null;
+}
+
+function getTimeValidationMessage(response: TimeResponse, value: string) {
+  if (!isValidTime(value, response.withSeconds)) {
+    return 'Please select a valid time.';
+  }
+  if (response.min && response.max && (value < response.min || value > response.max)) {
+    return `Please select a time between ${response.min} and ${response.max}.`;
+  }
+  if (response.min && value < response.min) {
+    return `Please select a time at or after ${response.min}.`;
+  }
+  if (response.max && value > response.max) {
+    return `Please select a time at or before ${response.max}.`;
   }
 
   return null;
@@ -450,8 +470,11 @@ export function validateResponse(
       return createValidationResult(response, response.required === false ? 'none' : 'unanswered');
     }
 
-    if (typeof value !== 'string' || !isValidTime(value)) {
-      return createValidationResult(response, 'invalid', { message: 'Please select a valid time.' });
+    const timeError = typeof value === 'string'
+      ? getTimeValidationMessage(response, value)
+      : 'Please select a valid time.';
+    if (timeError) {
+      return createValidationResult(response, 'invalid', { message: timeError });
     }
 
     if (response.requiredValue != null && value !== response.requiredValue.toString()) {

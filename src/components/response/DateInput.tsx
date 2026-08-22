@@ -1,8 +1,12 @@
-import { DateInput } from '@mantine/dates';
+import { DateInput, MonthPickerInput, YearPickerInput } from '@mantine/dates';
 import type { FocusEventHandler } from 'react';
 import { useState } from 'react';
 import type { DateResponse } from '../../parser/types';
-import { formatMonthDayYear, parseMonthDayYear } from '../../utils/dateTimeValidation';
+import {
+  formatDateValue,
+  getDateValueFormat,
+  parseDateValue,
+} from '../../utils/dateTimeValidation';
 import classes from './css/Input.module.css';
 import { InputLabel } from './InputLabel';
 import { getDateValidationMessage } from './responseValidation';
@@ -10,8 +14,8 @@ import { getDateValidationMessage } from './responseValidation';
 type DateResponseAnswer = {
   value?: string;
   onChange?: (value: string) => void;
-  onBlur?: FocusEventHandler<HTMLInputElement>;
-  onFocus?: FocusEventHandler<HTMLInputElement>;
+  onBlur?: FocusEventHandler<HTMLElement>;
+  onFocus?: FocusEventHandler<HTMLElement>;
   readOnly?: boolean;
 };
 
@@ -48,24 +52,84 @@ export function DateResponseInput({
   index: number;
   enumerateQuestions: boolean;
 }) {
+  const options = response.options ?? 'date';
+  const placeholder = response.placeholder ?? getDateValueFormat(options);
   const {
-    placeholder = 'MM/DD/YYYY',
-    prompt,
-    required,
-    secondaryText,
-    infoText,
+    prompt, required, secondaryText, infoText,
   } = response;
   const {
     value, onChange, onBlur, ...answerProps
   } = answer;
   const [showInvalidDateError, setShowInvalidDateError] = useState(false);
-  const dateValue = typeof value === 'string' ? parseMonthDayYear(value) : null;
-  const minDate = response.minDate ? parseMonthDayYear(response.minDate) : null;
-  const maxDate = response.maxDate ? parseMonthDayYear(response.maxDate) : null;
+  const dateValue = typeof value === 'string' ? parseDateValue(value, options) : null;
+  const minDate = response.min ? parseDateValue(response.min, options) : null;
+  const maxDate = response.max ? parseDateValue(response.max, options) : null;
   const dateValidationError = typeof value === 'string' && value !== ''
     ? getDateValidationMessage(response, value)
     : null;
   const displayedError = showInvalidDateError && dateValidationError ? dateValidationError : error;
+  const label = prompt.length > 0 && (
+    <InputLabel
+      prompt={prompt}
+      required={required}
+      index={index}
+      enumerateQuestions={enumerateQuestions}
+      infoText={infoText}
+    />
+  );
+  const handlePickerChange = (nextValue: Date | null) => {
+    onChange?.(nextValue ? formatDateValue(nextValue, options) : '');
+  };
+
+  if (options === 'month') {
+    return (
+      <MonthPickerInput
+        allowDeselect
+        {...answerProps}
+        disabled={disabled}
+        placeholder={placeholder}
+        label={label}
+        description={secondaryText}
+        radius="md"
+        size="md"
+        value={dateValue}
+        onChange={handlePickerChange}
+        valueFormat="MM/YYYY"
+        minDate={minDate ?? undefined}
+        maxDate={maxDate ?? undefined}
+        clearable={required === false}
+        error={error}
+        withErrorStyles={required}
+        errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
+        classNames={{ input: classes.fixDisabled }}
+      />
+    );
+  }
+
+  if (options === 'year') {
+    return (
+      <YearPickerInput
+        allowDeselect
+        {...answerProps}
+        disabled={disabled}
+        placeholder={placeholder}
+        label={label}
+        description={secondaryText}
+        radius="md"
+        size="md"
+        value={dateValue}
+        onChange={handlePickerChange}
+        valueFormat="YYYY"
+        minDate={minDate ?? undefined}
+        maxDate={maxDate ?? undefined}
+        clearable={required === false}
+        error={error}
+        withErrorStyles={required}
+        errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
+        classNames={{ input: classes.fixDisabled }}
+      />
+    );
+  }
 
   return (
     <DateInput
@@ -73,14 +137,14 @@ export function DateResponseInput({
       {...answerProps}
       disabled={disabled}
       placeholder={placeholder}
-      label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
+      label={label}
       description={secondaryText}
       radius="md"
       size="md"
       value={dateValue}
       onChange={(nextValue) => {
         setShowInvalidDateError(false);
-        onChange?.(nextValue ? formatMonthDayYear(nextValue) : '');
+        handlePickerChange(nextValue);
       }}
       onInput={(event) => {
         const input = event.currentTarget;
@@ -94,7 +158,7 @@ export function DateResponseInput({
         setShowInvalidDateError(true);
         onBlur?.(event);
       }}
-      dateParser={parseMonthDayYear}
+      dateParser={(inputValue) => parseDateValue(inputValue, options)}
       valueFormat="MM/DD/YYYY"
       minDate={minDate ?? undefined}
       maxDate={maxDate ?? undefined}

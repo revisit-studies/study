@@ -162,14 +162,28 @@ test('Test questionnaire component with responses and randomizing questions and 
   await page.getByPlaceholder('+800-0000-0000').fill('+800-0000-0000');
   await page.getByPlaceholder('800-000-0000').fill('800-000-0000');
   await page.getByPlaceholder('https://revisit.dev').fill('https://revisit.dev');
-  await page.getByPlaceholder('MM/DD/YYYY').fill('06/24/2009');
-  await page.getByLabel('Select a time.').fill('14:28');
+  await page.getByLabel('Date with a custom placeholder.').fill('06/24/2026');
+  await page.getByLabel('Date with a minimum.').fill('06/24/2026');
+  await page.getByLabel('Date with a maximum.').fill('06/24/2026');
+  await page.getByLabel('Date within a range.').fill('06/24/2026');
+  await page.getByLabel('Date with a required value.').fill('06/24/2026');
+  await expect(page.getByLabel('Month picker.')).toContainText('06/2026');
+  await expect(page.getByLabel('Year picker.')).toContainText('2026');
+  await page.getByLabel('Time without seconds.').fill('14:28');
+  await page.getByLabel('Time with a minimum.').fill('14:28');
+  await page.getByLabel('Time with a maximum.').fill('14:28');
+  await page.getByLabel('Time within a range.').fill('14:28');
+  await page.getByLabel('Time with seconds.').fill('14:28:30');
+  await page.getByLabel('Time with seconds within a range.').fill('14:28:30');
+  await page.getByLabel('Time with a required value.').fill('14:28');
   await nextClick(page);
 
   // Default Values should be fully answerable via defaults
   await expect(page.getByText('Default Values Demo')).toBeVisible();
-  await expect(page.getByLabel('Date default')).toHaveValue('06/24/2009');
-  await expect(page.getByLabel('Time default')).toHaveValue('14:28');
+  await expect(page.getByLabel('Date default')).toHaveValue('06/24/2026');
+  await expect(page.getByLabel('Month default')).toContainText('06/2026');
+  await expect(page.getByLabel('Year default')).toContainText('2026');
+  await expect(page.getByLabel('Time default')).toHaveValue('14:28:30');
   await expect(page.getByPlaceholder('Select a country')).toHaveValue(/United States/);
   await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeEnabled();
   await nextClick(page);
@@ -309,8 +323,10 @@ test('Test questionnaire component with responses and randomizing questions and 
     textValidationTiming.endTime,
     textValidationTiming.endTime,
   );
-  await expect(page.getByPlaceholder('MM/DD/YYYY')).toHaveValue('06/24/2009');
-  await expect(page.getByLabel('Select a time.')).toHaveValue('14:28');
+  await expect(page.getByLabel('Date within a range.')).toHaveValue('06/24/2026');
+  await expect(page.getByLabel('Month picker.')).toContainText('06/2026');
+  await expect(page.getByLabel('Year picker.')).toContainText('2026');
+  await expect(page.getByLabel('Time with seconds within a range.')).toHaveValue('14:28:30');
 
   await page.goto(`${sidebarReplayPath}?${replaySearch}`);
   await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();

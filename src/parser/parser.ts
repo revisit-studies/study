@@ -20,7 +20,11 @@ import {
   shouldWarnForDefaultSupabaseConfig,
 } from '../utils/defaultStorageConfig';
 import { studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
-import { isValidTime, parseMonthDayYear } from '../utils/dateTimeValidation';
+import {
+  getDateValueFormat,
+  isValidTime,
+  parseDateValue,
+} from '../utils/dateTimeValidation';
 
 const modules = import.meta.glob(
   [
@@ -267,18 +271,17 @@ function verifyDateTimeResponseConstraints(
 
     const responsePath = `${componentPath}/response/${index}`;
     const isDateResponse = response.type === 'date';
+    const dateOptions = isDateResponse ? response.options ?? 'date' : 'date';
     const isValidValue = isDateResponse
-      ? (value: string) => parseMonthDayYear(value) !== null
-      : isValidTime;
-    const expectedFormat = response.type === 'date' ? 'MM/DD/YYYY' : 'HH:mm';
-    const fields = isDateResponse
-      ? ['default', 'requiredValue', 'minDate', 'maxDate'] as const
-      : ['default', 'requiredValue'] as const;
+      ? (value: string) => parseDateValue(value, dateOptions) !== null
+      : (value: string) => isValidTime(value, response.withSeconds);
+    const expectedFormat = response.type === 'date'
+      ? getDateValueFormat(dateOptions)
+      : response.withSeconds ? 'HH:mm:ss' : 'HH:mm';
+    const fields = ['default', 'requiredValue', 'min', 'max'] as const;
 
     fields.forEach((field) => {
-      const value = field === 'minDate' || field === 'maxDate'
-        ? (isDateResponse ? response[field] : undefined)
-        : response[field];
+      const value = response[field];
       if (value === undefined || value === null) {
         return;
       }
@@ -293,17 +296,22 @@ function verifyDateTimeResponseConstraints(
       }
     });
 
-    if (!isDateResponse) {
-      return;
-    }
-
-    const minDate = response.minDate ? parseMonthDayYear(response.minDate) : null;
-    const maxDate = response.maxDate ? parseMonthDayYear(response.maxDate) : null;
-    if (minDate && maxDate && minDate > maxDate) {
+    const toComparableValue = (value: string) => {
+      if (isDateResponse) {
+        return parseDateValue(value, dateOptions)?.getTime() ?? null;
+      }
+      if (!isValidTime(value, response.withSeconds)) {
+        return null;
+      }
+      return value.split(':').reduce((total, part) => (total * 60) + Number(part), 0);
+    };
+    const min = response.min ? toComparableValue(response.min) : null;
+    const max = response.max ? toComparableValue(response.max) : null;
+    if (min !== null && max !== null && min > max) {
       errors.push({
-        message: 'date minDate must be before or equal to maxDate',
+        message: `${response.type} min must be less than or equal to max`,
         instancePath: responsePath,
-        params: { action: 'Set minDate to a date before or equal to maxDate' },
+        params: { action: 'Set min to a value less than or equal to max' },
         category: 'invalid-config',
       });
       return;
@@ -311,24 +319,24 @@ function verifyDateTimeResponseConstraints(
 
     (['default', 'requiredValue'] as const).forEach((field) => {
       const value = response[field];
-      const date = value ? parseMonthDayYear(value) : null;
-      if (!date) {
+      const comparableValue = value ? toComparableValue(value) : null;
+      if (comparableValue === null) {
         return;
       }
 
-      if (minDate && date < minDate) {
+      if (min !== null && comparableValue < min) {
         errors.push({
-          message: `date ${field} must be on or after minDate`,
+          message: `${response.type} ${field} must be ${isDateResponse ? 'on' : 'at'} or after min`,
           instancePath: `${responsePath}/${field}`,
-          params: { action: `Set ${field} to a date on or after minDate` },
+          params: { action: `Set ${field} to a value greater than or equal to min` },
           category: 'invalid-config',
         });
       }
-      if (maxDate && date > maxDate) {
+      if (max !== null && comparableValue > max) {
         errors.push({
-          message: `date ${field} must be on or before maxDate`,
+          message: `${response.type} ${field} must be ${isDateResponse ? 'on' : 'at'} or before max`,
           instancePath: `${responsePath}/${field}`,
-          params: { action: `Set ${field} to a date on or before maxDate` },
+          params: { action: `Set ${field} to a value less than or equal to max` },
           category: 'invalid-config',
         });
       }

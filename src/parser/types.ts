@@ -441,54 +441,67 @@ export interface NumericalResponse extends BaseResponse {
 }
 
 /**
- * The DateResponse interface defines a calendar date selected with a date picker.
- * Date values are stored as `MM/DD/YYYY` strings.
+ * The DateResponse interface defines a date, month, or year selected with a picker.
+ * Values are stored as `MM/DD/YYYY`, `MM/YYYY`, or `YYYY` strings based on `options`.
  * ```json
  * {
  *   "id": "q-date",
  *   "prompt": "Select a date.",
  *   "location": "aboveStimulus",
  *   "type": "date",
+ *   "options": "date",
  *   "default": "08/21/2026",
- *   "minDate": "08/01/2026",
- *   "maxDate": "08/31/2026",
+ *   "min": "08/01/2026",
+ *   "max": "08/31/2026",
  *   "placeholder": "MM/DD/YYYY"
  * }
  * ```
  */
 export interface DateResponse extends BaseResponse {
   type: 'date';
-  /** The placeholder text displayed in the date input. Defaults to `MM/DD/YYYY`. */
+  /** Determines whether participants select a date, month, or year. Defaults to `date`. */
+  options?: 'date' | 'month' | 'year';
+  /** The placeholder text displayed in the input. Defaults to the format used by `options`. */
   placeholder?: string;
-  /** The default date in `MM/DD/YYYY` format. */
+  /** The default value, using the format selected by `options`. */
   default?: string;
-  /** The date required for a correct response, in `MM/DD/YYYY` format. */
+  /** The value required for a correct response, using the format selected by `options`. */
   requiredValue?: string;
-  /** The earliest date accepted, in `MM/DD/YYYY` format. */
-  minDate?: string;
-  /** The latest date accepted, in `MM/DD/YYYY` format. */
-  maxDate?: string;
+  /** The earliest value accepted, using the format selected by `options`. */
+  min?: string;
+  /** The latest value accepted, using the format selected by `options`. */
+  max?: string;
 }
 
 /**
  * The TimeResponse interface defines a time selected with a time input.
- * Time values are stored as 24-hour `HH:mm` strings.
+ * Time values are stored as 24-hour `HH:mm` strings, or `HH:mm:ss` when
+ * `withSeconds` is `true`.
  * ```json
  * {
  *   "id": "q-time",
  *   "prompt": "Select a time.",
  *   "location": "aboveStimulus",
  *   "type": "time",
- *   "default": "14:28"
+ *   "default": "14:28:30",
+ *   "min": "09:00:00",
+ *   "max": "18:00:00",
+ *   "withSeconds": true
  * }
  * ```
  */
 export interface TimeResponse extends BaseResponse {
   type: 'time';
-  /** The default time in 24-hour `HH:mm` format. */
+  /** The default time in 24-hour `HH:mm` format, or `HH:mm:ss` when `withSeconds` is `true`. */
   default?: string;
-  /** The time required for a correct response, in 24-hour `HH:mm` format. */
+  /** The time required for a correct response, in 24-hour `HH:mm` format, or `HH:mm:ss` when `withSeconds` is `true`. */
   requiredValue?: string;
+  /** The earliest time accepted, in the same format as the response value. */
+  min?: string;
+  /** The latest time accepted, in the same format as the response value. */
+  max?: string;
+  /** Determines whether the input includes seconds. Defaults to `false`. */
+  withSeconds?: boolean;
 }
 
 /** The validation operations available for short and long text responses. */

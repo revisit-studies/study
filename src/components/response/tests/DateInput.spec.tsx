@@ -23,6 +23,33 @@ afterEach(() => {
 });
 
 describe('DateResponseInput', () => {
+  test.each([
+    { options: 'month', value: '06/2009', prompt: 'Select a month.' },
+    { options: 'year', value: '2009', prompt: 'Select a year.' },
+  ] as const)('renders an $options picker value', ({ options, value, prompt }) => {
+    const response: DateResponse = {
+      id: options,
+      prompt,
+      type: 'date',
+      options,
+      required: true,
+    };
+
+    render(
+      <MantineProvider>
+        <DateResponseInput
+          response={response}
+          disabled={false}
+          answer={{ value }}
+          index={1}
+          enumerateQuestions={false}
+        />
+      </MantineProvider>,
+    );
+
+    expect(screen.getByRole('button', { name: `${prompt}*` }).textContent).toContain(value);
+  });
+
   test('shows an error after a complete invalid date is typed', () => {
     const onChange = vi.fn();
     const response: DateResponse = {

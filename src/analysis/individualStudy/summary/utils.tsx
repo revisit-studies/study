@@ -219,7 +219,7 @@ function getResponseOptions(response: Response): string {
   }
   // Dropdown, Checkbox, Radio, Button
   // example: Option 1, Option 2, Option 3
-  if ('options' in response) {
+  if ('options' in response && Array.isArray(response.options)) {
     return response.options.map((option) => (typeof option === 'string' ? option : option.label)).join(', ');
   }
   // Matrix Radio, Matrix Checkbox
@@ -238,7 +238,7 @@ function getResponseOptions(response: Response): string {
   }
   // Likert Scale
   // example: Dislike ~ Like (9 items)
-  if ('numItems' in response) {
+  if (response.type === 'likert') {
     return `${response.leftLabel ? ` ${response.leftLabel} ~ ${response.rightLabel}` : ''} (${response.numItems} items)`;
   }
   return 'N/A';

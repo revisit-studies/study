@@ -13,11 +13,6 @@ function createDate(year: number, month: number, day: number) {
     : null;
 }
 
-export function parseMonthDayYear(value: string) {
-  const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  return match ? createDate(Number(match[3]), Number(match[1]), Number(match[2])) : null;
-}
-
 export function formatMonthDayYear(value: Date) {
   const year = value.getFullYear().toString().padStart(4, '0');
   const month = (value.getMonth() + 1).toString().padStart(2, '0');
@@ -25,6 +20,60 @@ export function formatMonthDayYear(value: Date) {
   return `${month}/${day}/${year}`;
 }
 
-export function isValidTime(value: string) {
-  return /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value);
+// Checks if a string is a valid date in the format MM/DD/YYYY
+export function parseMonthDayYear(value: string) {
+  const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  return match ? createDate(Number(match[3]), Number(match[1]), Number(match[2])) : null;
+}
+
+export function parseMonthYear(value: string) {
+  // Checks if a string is a valid date in the format MM/YYYY
+  const match = value.match(/^(\d{2})\/(\d{4})$/);
+  return match ? createDate(Number(match[2]), Number(match[1]), 1) : null;
+}
+
+export function parseYear(value: string) {
+  // Checks if a string is a valid date in the format YYYY
+  const match = value.match(/^(\d{4})$/);
+  return match ? createDate(Number(match[1]), 1, 1) : null;
+}
+
+// Checks if a string is a valid date in the format MM/DD/YYYY, MM/YYYY, or YYYY
+export function parseDateValue(value: string, options: 'date' | 'month' | 'year' = 'date') {
+  if (options === 'month') {
+    return parseMonthYear(value);
+  }
+  if (options === 'year') {
+    return parseYear(value);
+  }
+  return parseMonthDayYear(value);
+}
+
+export function formatDateValue(value: Date, options: 'date' | 'month' | 'year' = 'date') {
+  if (options === 'month') {
+    const month = (value.getMonth() + 1).toString().padStart(2, '0');
+    return `${month}/${value.getFullYear().toString().padStart(4, '0')}`;
+  }
+  if (options === 'year') {
+    return value.getFullYear().toString().padStart(4, '0');
+  }
+  return formatMonthDayYear(value);
+}
+
+export function getDateValueFormat(options: 'date' | 'month' | 'year' = 'date') {
+  if (options === 'month') {
+    return 'MM/YYYY';
+  }
+  if (options === 'year') {
+    return 'YYYY';
+  }
+  return 'MM/DD/YYYY';
+}
+
+// Checks if a string is a valid time in the format HH:MM or HH:MM:SS (24-hour format)
+export function isValidTime(value: string, withSeconds = false) {
+  const pattern = withSeconds
+    ? /^(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d$/
+    : /^(?:[01]\d|2[0-3]):[0-5]\d$/;
+  return pattern.test(value);
 }
