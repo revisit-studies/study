@@ -1,5 +1,5 @@
 import {
-  Stack, TextInput, Button, Group, Table, Text, ColorInput, Loader, ActionIcon, Radio, NumberInput, Paper, Switch, Collapse,
+  Stack, TextInput, Button, Group, Table, Text, ColorInput, Loader, ActionIcon, Radio, NumberInput, Paper, Switch, Collapse, Badge,
   Title,
 } from '@mantine/core';
 import {
@@ -55,11 +55,21 @@ export function getBetweenSubjectsFactors(studyConfig?: StudyConfig): BetweenSub
   }) || [];
 }
 
-export function getStageParticipantCounts(participants: ParticipantDataWithStatus[]) {
-  return participants.reduce<Record<string, number>>((counts, participant) => {
-    if (!participant.rejected) {
-      counts[participant.stage] = (counts[participant.stage] || 0) + 1;
+type StageParticipantStatusCounts = Record<string, { completed: number; inProgress: number }>;
+
+export function getStageParticipantStatusCounts(participants: ParticipantDataWithStatus[]) {
+  return participants.reduce<StageParticipantStatusCounts>((counts, participant) => {
+    if (participant.rejected) {
+      return counts;
     }
+
+    const stageCounts = counts[participant.stage] || { completed: 0, inProgress: 0 };
+    if (participant.completed) {
+      stageCounts.completed += 1;
+    } else {
+      stageCounts.inProgress += 1;
+    }
+    counts[participant.stage] = stageCounts;
     return counts;
   }, {});
 }
@@ -334,7 +344,7 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
   const [asyncStatus, setAsyncStatus] = useState(false);
   const [currentStage, setCurrentStage] = useState<StageInfo>({ stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR });
   const [allStages, setAllStages] = useState<StageInfo[]>([{ stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR }]);
-  const [stageParticipantCounts, setStageParticipantCounts] = useState<Record<string, number>>({});
+  const [stageParticipantStatusCounts, setStageParticipantStatusCounts] = useState<StageParticipantStatusCounts>({});
   const [participants, setParticipants] = useState<ParticipantDataWithStatus[]>([]);
   const [expandedStageNames, setExpandedStageNames] = useState<string[]>([]);
   const currentStageNameRef = useRef<string | undefined>(undefined);
@@ -371,7 +381,7 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
     }
     setAllStages(stageData.allStages);
     setParticipants(allParticipants);
-    setStageParticipantCounts(getStageParticipantCounts(allParticipants));
+    setStageParticipantStatusCounts(getStageParticipantStatusCounts(allParticipants));
   }, [storageEngine, studyId]);
 
   useEffect(() => {
@@ -383,7 +393,7 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
         // Set defaults on error
         setCurrentStage({ stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR });
         setAllStages([{ stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR }]);
-        setStageParticipantCounts({});
+        setStageParticipantStatusCounts({});
         setParticipants([]);
       } finally {
         setAsyncStatus(true);
@@ -591,7 +601,7 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
           <col style={{ width: 44 }} />
           <col style={{ width: 80 }} />
           <col />
-          <col style={{ width: 100 }} />
+          <col style={{ width: 210 }} />
           <col style={{ width: 150 }} />
           <col style={{ width: 200 }} />
           <col style={{ width: 80 }} />
@@ -601,7 +611,7 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
             <Table.Th style={{ width: '44px' }} />
             <Table.Th style={{ width: '80px', whiteSpace: 'nowrap' }}>Current</Table.Th>
             <Table.Th>Stage Name</Table.Th>
-            <Table.Th style={{ width: '100px', whiteSpace: 'nowrap' }}>Participants</Table.Th>
+            <Table.Th style={{ width: '210px', whiteSpace: 'nowrap' }}>Participants</Table.Th>
             <Table.Th style={{ width: '150px', whiteSpace: 'nowrap' }}>Max Participants</Table.Th>
             <Table.Th style={{ width: '200px' }}>Color</Table.Th>
             <Table.Th style={{ width: '80px', whiteSpace: 'nowrap' }}>Edit</Table.Th>
@@ -646,7 +656,18 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
                     )}
                   </Table.Td>
                   <Table.Td>
-                    <Text size="sm">{stageParticipantCounts[stage.stageName] || 0}</Text>
+                    <Group gap={4} wrap="nowrap">
+                      <Badge color="teal" variant="light" size="sm">
+                        Completed
+                        {' '}
+                        {stageParticipantStatusCounts[stage.stageName]?.completed || 0}
+                      </Badge>
+                      <Badge color="blue" variant="light" size="sm">
+                        In Progress
+                        {' '}
+                        {stageParticipantStatusCounts[stage.stageName]?.inProgress || 0}
+                      </Badge>
+                    </Group>
                   </Table.Td>
                   <Table.Td>
                     {editingIndex === index ? (

@@ -81,6 +81,7 @@ vi.mock('@mantine/core', () => ({
   Space: () => <div />,
   Box: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Collapse: ({ children, in: open }: { children: ReactNode; in: boolean }) => (open ? <div>{children}</div> : null),
+  Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
   Table: Object.assign(
     ({ children }: { children: ReactNode }) => <table>{children}</table>,
     {
@@ -383,8 +384,8 @@ describe('ManageView', () => {
       allStages: [{ stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR, maxParticipants: 5 }],
     });
     mockStorageEngine!.getAllParticipantsData.mockResolvedValue([
-      { stage: 'DEFAULT', rejected: false },
-      { stage: 'DEFAULT', rejected: false },
+      { stage: 'DEFAULT', rejected: false, completed: true },
+      { stage: 'DEFAULT', rejected: false, completed: false },
       { stage: 'DEFAULT', rejected: { reason: 'test', timestamp: 1 } },
     ]);
 
@@ -394,7 +395,8 @@ describe('ManageView', () => {
 
     expect(screen.getByText('Participants')).toBeDefined();
     expect(screen.getByText('Max Participants')).toBeDefined();
-    expect(screen.getByText('2')).toBeDefined();
+    expect(screen.getByText('Completed 1')).toBeDefined();
+    expect(screen.getByText('In Progress 1')).toBeDefined();
     expect(screen.getByText('5')).toBeDefined();
   });
 
