@@ -11,10 +11,11 @@ import { useNavigate, useParams, useSearchParams } from 'react-router';
 import type { NavigateFunction } from 'react-router';
 import { EditedText, Tag, TranscribedAudio } from '../types';
 import type { ParticipantData } from '../../../../storage/types';
-import { makeStoredAnswer as makeStoredAnswerBase, makeStorageEngine } from '../../../../tests/utils';
+import { makeParticipant, makeStoredAnswer as makeStoredAnswerBase, makeStorageEngine } from '../../../../tests/utils';
 import type { FirebaseStorageEngine } from '../../../../storage/engines/FirebaseStorageEngine';
 import { useAsync } from '../../../../store/hooks/useAsync';
 import { useReplayContext } from '../../../../store/hooks/useReplay';
+import { handleTaskScreenRecording } from '../../../../utils/handleDownloadFiles';
 import { Pills } from '../tags/Pills';
 import { AddTagDropdown } from '../tags/AddTagDropdown';
 import { TagEditor } from '../tags/TagEditor';
@@ -186,7 +187,7 @@ vi.mock('@mantine/hooks', () => ({
 vi.mock('@tabler/icons-react', () => ({
   IconArrowLeft: () => null,
   IconArrowRight: () => null,
-  IconDeviceDesktopDown: () => null,
+  IconDeviceDesktopDown: () => <span data-testid="screen-recording-icon" />,
   IconEdit: () => <span>icon-edit</span>,
   IconInfoCircle: () => <span>icon-info</span>,
   IconMusicDown: () => null,
@@ -264,6 +265,12 @@ function makeTag(overrides: Partial<Tag> = {}): Tag {
   return {
     id: 'tag-1', name: 'Confusion', color: '#fa5252', ...overrides,
   };
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((res) => { resolve = res; });
+  return { promise, resolve };
 }
 
 const mockStorageEngine = makeStorageEngine() as unknown as FirebaseStorageEngine;
@@ -574,6 +581,107 @@ describe('ThinkAloudFooter', () => {
     ));
     expect(mockFooterStorageEngine.getAudioUrl).toHaveBeenCalled();
     expect(mockFooterStorageEngine.getScreenRecording).toHaveBeenCalled();
+  });
+
+  test('ignores stale screen recording results after participant changes', async () => {
+    let selectedParticipantId = 'p1';
+    const setSearchParamsForRace = vi.fn();
+    const audioP1 = deferred<string>();
+    const screenP1 = deferred<string>();
+    const audioP2 = deferred<string>();
+    const screenP2 = deferred<string>();
+    const participants = {
+      p1: makeParticipant({
+        participantId: 'p1',
+        answers: { trial_0: makeStoredAnswer({ identifier: 'trial_0', componentName: 'Component 1' }) },
+      }),
+      p2: makeParticipant({
+        participantId: 'p2',
+        answers: { trial_0: makeStoredAnswer({ identifier: 'trial_0', componentName: 'Component 1' }) },
+      }),
+    };
+    const storageEngine = makeStorageEngine({
+      getAudioUrl: vi.fn((_task, participantId) => (
+        participantId === 'p1' ? audioP1.promise : audioP2.promise
+      )),
+      getScreenRecording: vi.fn((_task, participantId) => (
+        participantId === 'p1' ? screenP1.promise : screenP2.promise
+      )),
+    });
+    vi.mocked(useSearchParams).mockImplementation(() => [
+      new URLSearchParams(`participantId=${selectedParticipantId}`), setSearchParamsForRace,
+    ] as ReturnType<typeof useSearchParams>);
+    vi.mocked(useAsync).mockImplementation((_fn, args) => ({
+      value: Array.isArray(args) && args.length === 2 && typeof args[0] === 'string'
+        ? participants[args[0] as 'p1' | 'p2'] ?? null
+        : null,
+      status: 'success',
+      execute: vi.fn(),
+      error: null,
+    }));
+    vi.mocked(handleTaskScreenRecording).mockClear();
+
+    const view = render(<RealThinkAloudFooter {...footerDefaultProps} storageEngine={storageEngine} />);
+    await waitFor(() => expect(storageEngine.getAudioUrl).toHaveBeenCalledWith('trial_0', 'p1'));
+    audioP1.resolve('audio-p1');
+    await waitFor(() => expect(storageEngine.getScreenRecording).toHaveBeenCalledWith('trial_0', 'p1'));
+
+    selectedParticipantId = 'p2';
+    view.rerender(<RealThinkAloudFooter {...footerDefaultProps} storageEngine={storageEngine} />);
+    expect(view.queryByTestId('screen-recording-icon')).toBeNull();
+
+    await waitFor(() => expect(storageEngine.getAudioUrl).toHaveBeenCalledWith('trial_0', 'p2'));
+    audioP2.resolve('audio-p2');
+    await waitFor(() => expect(storageEngine.getScreenRecording).toHaveBeenCalledWith('trial_0', 'p2'));
+    screenP2.resolve('screen-p2');
+    const screenIcon = await waitFor(() => view.getByTestId('screen-recording-icon'));
+    fireEvent.click(screenIcon.closest('button')!);
+    expect(handleTaskScreenRecording).toHaveBeenLastCalledWith(expect.objectContaining({ screenRecordingUrl: 'screen-p2' }));
+
+    screenP1.resolve('screen-p1');
+    await act(async () => { await screenP1.promise; });
+    const liveScreenIcon = view.getByTestId('screen-recording-icon');
+    fireEvent.click(liveScreenIcon.closest('button')!);
+    expect(handleTaskScreenRecording).toHaveBeenLastCalledWith(expect.objectContaining({
+      participantId: 'p2', identifier: 'trial_0', screenRecordingUrl: 'screen-p2',
+    }));
+  });
+
+  test('hides the previous recording while the next participant loads', async () => {
+    let selectedParticipantId = 'p1';
+    const setSearchParamsForRace = vi.fn();
+    const participants = {
+      p1: makeParticipant({
+        participantId: 'p1',
+        answers: { trial_0: makeStoredAnswer({ identifier: 'trial_0', componentName: 'Component 1' }) },
+      }),
+      p2: makeParticipant({
+        participantId: 'p2',
+        answers: { trial_0: makeStoredAnswer({ identifier: 'trial_0', componentName: 'Component 1' }) },
+      }),
+    };
+    const storageEngine = makeStorageEngine({
+      getAudioUrl: vi.fn((_task, participantId) => Promise.resolve(`audio-${participantId}`)),
+      getScreenRecording: vi.fn((_task, participantId) => Promise.resolve(`screen-${participantId}`)),
+    });
+    vi.mocked(useSearchParams).mockImplementation(() => [
+      new URLSearchParams(`participantId=${selectedParticipantId}`), setSearchParamsForRace,
+    ] as ReturnType<typeof useSearchParams>);
+    vi.mocked(useAsync).mockImplementation((_fn, args) => ({
+      value: Array.isArray(args) && args.length === 2 && typeof args[0] === 'string'
+        ? participants[args[0] as 'p1' | 'p2'] ?? null
+        : null,
+      status: 'success',
+      execute: vi.fn(),
+      error: null,
+    }));
+
+    const view = render(<RealThinkAloudFooter {...footerDefaultProps} storageEngine={storageEngine} />);
+    await waitFor(() => expect(view.getByTestId('screen-recording-icon')).toBeTruthy());
+
+    selectedParticipantId = 'p2';
+    view.rerender(<RealThinkAloudFooter {...footerDefaultProps} storageEngine={storageEngine} />);
+    expect(view.queryByTestId('screen-recording-icon')).toBeNull();
   });
 
   test('next participant remains usable when there is no current task', async () => {
