@@ -1,5 +1,6 @@
 function createUtcDate(year: number, month: number, day: number) {
-  if (year < 1) {
+  // Mantine/dayjs interprets years 0000–0099 as 1900–1999 at the picker boundary.
+  if (year < 100) {
     return null;
   }
 
@@ -11,13 +12,6 @@ function createUtcDate(year: number, month: number, day: number) {
     && date.getUTCDate() === day
     ? date
     : null;
-}
-
-export function formatMonthDayYear(value: Date) {
-  const year = value.getFullYear().toString().padStart(4, '0');
-  const month = (value.getMonth() + 1).toString().padStart(2, '0');
-  const day = value.getDate().toString().padStart(2, '0');
-  return `${month}/${day}/${year}`;
 }
 
 // Checks if a string is a valid date in the format MM/DD/YYYY
@@ -74,17 +68,6 @@ export function fromPickerDateValue(value: string, options: 'date' | 'month' | '
     return match[1];
   }
   return `${match[2]}/${match[3]}/${match[1]}`;
-}
-
-export function formatDateValue(value: Date, options: 'date' | 'month' | 'year' = 'date') {
-  if (options === 'month') {
-    const month = (value.getMonth() + 1).toString().padStart(2, '0');
-    return `${month}/${value.getFullYear().toString().padStart(4, '0')}`;
-  }
-  if (options === 'year') {
-    return value.getFullYear().toString().padStart(4, '0');
-  }
-  return formatMonthDayYear(value);
 }
 
 export function getDateValueFormat(options: 'date' | 'month' | 'year' = 'date') {

@@ -488,8 +488,9 @@ export interface TextValidationRule {
 }
 
 /**
- * The DateResponse interface defines a date, month, or year selected with a picker.
+ * The DateResponse interface defines a date, month, or year entered directly or selected with a picker.
  * Values are stored as `MM/DD/YYYY`, `MM/YYYY`, or `YYYY` strings based on `options`.
+ * Supported years range from `0100` through `9999`.
  * ```json
  * {
  *   "id": "q-date",
@@ -506,17 +507,17 @@ export interface TextValidationRule {
  */
 export interface DateResponse extends BaseResponse {
   type: 'date';
-  /** Determines whether participants select a date, month, or year. Defaults to `date`. */
+  /** Determines whether participants enter or select a date, month, or year. Defaults to `date`. */
   options?: 'date' | 'month' | 'year';
   /** The placeholder text displayed in the input. Defaults to the format used by `options`. */
   placeholder?: string;
-  /** The default value, using the format selected by `options`. */
+  /** The default value, using the format selected by `options`. Years must be between `0100` and `9999`. */
   default?: string;
-  /** The value required for a correct response, using the format selected by `options`. */
+  /** The value required for a correct response, using the format selected by `options`. Years must be between `0100` and `9999`. */
   requiredValue?: string;
-  /** The earliest value accepted, using the format selected by `options`. */
+  /** The earliest value accepted, using the format selected by `options`. Years must be between `0100` and `9999`. */
   min?: string;
-  /** The latest value accepted, using the format selected by `options`. */
+  /** The latest value accepted, using the format selected by `options`. Years must be between `0100` and `9999`. */
   max?: string;
 }
 

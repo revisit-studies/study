@@ -686,10 +686,10 @@
     },
     "DateResponse": {
       "additionalProperties": false,
-      "description": "The DateResponse interface defines a date, month, or year selected with a picker. Values are stored as `MM/DD/YYYY`, `MM/YYYY`, or `YYYY` strings based on `options`. ```json {   \"id\": \"q-date\",   \"prompt\": \"Select a date.\",   \"location\": \"aboveStimulus\",   \"type\": \"date\",   \"options\": \"date\",   \"default\": \"08/21/2026\",   \"min\": \"08/01/2026\",   \"max\": \"08/31/2026\",   \"placeholder\": \"MM/DD/YYYY\" } ```",
+      "description": "The DateResponse interface defines a date, month, or year entered directly or selected with a picker. Values are stored as `MM/DD/YYYY`, `MM/YYYY`, or `YYYY` strings based on `options`. Supported years range from `0100` through `9999`. ```json {   \"id\": \"q-date\",   \"prompt\": \"Select a date.\",   \"location\": \"aboveStimulus\",   \"type\": \"date\",   \"options\": \"date\",   \"default\": \"08/21/2026\",   \"min\": \"08/01/2026\",   \"max\": \"08/31/2026\",   \"placeholder\": \"MM/DD/YYYY\" } ```",
       "properties": {
         "default": {
-          "description": "The default value, using the format selected by `options`.",
+          "description": "The default value, using the format selected by `options`. Years must be between `0100` and `9999`.",
           "type": "string"
         },
         "excludeFromRandomization": {
@@ -713,15 +713,15 @@
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "max": {
-          "description": "The latest value accepted, using the format selected by `options`.",
+          "description": "The latest value accepted, using the format selected by `options`. Years must be between `0100` and `9999`.",
           "type": "string"
         },
         "min": {
-          "description": "The earliest value accepted, using the format selected by `options`.",
+          "description": "The earliest value accepted, using the format selected by `options`. Years must be between `0100` and `9999`.",
           "type": "string"
         },
         "options": {
-          "description": "Determines whether participants select a date, month, or year. Defaults to `date`.",
+          "description": "Determines whether participants enter or select a date, month, or year. Defaults to `date`.",
           "enum": [
             "date",
             "month",
@@ -750,7 +750,7 @@
           "type": "string"
         },
         "requiredValue": {
-          "description": "The value required for a correct response, using the format selected by `options`.",
+          "description": "The value required for a correct response, using the format selected by `options`. Years must be between `0100` and `9999`.",
           "type": "string"
         },
         "secondaryText": {

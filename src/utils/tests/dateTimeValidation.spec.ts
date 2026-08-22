@@ -1,7 +1,5 @@
 import { describe, expect, test } from 'vitest';
 import {
-  formatDateValue,
-  formatMonthDayYear,
   fromPickerDateValue,
   getDateValueFormat,
   isValidTime,
@@ -30,10 +28,6 @@ describe('dateTimeValidation', () => {
     '01/01/0000',
   ])('rejects an invalid MM/DD/YYYY date: %s', (value) => {
     expect(parseMonthDayYear(value)).toBeNull();
-  });
-
-  test('formats a date without converting it to UTC', () => {
-    expect(formatMonthDayYear(new Date(2009, 5, 24))).toBe('06/24/2009');
   });
 
   test('validates a civil date skipped by the runtime timezone', () => {
@@ -70,16 +64,18 @@ describe('dateTimeValidation', () => {
     ['year', '0000'],
     ['year', '09'],
     ['year', '06/2009'],
+    ['date', '06/24/0099'],
+    ['month', '06/0099'],
+    ['year', '0099'],
   ] as const)('rejects an invalid %s date option value: %s', (options, value) => {
     expect(parseDateValue(value, options)).toBeNull();
   });
 
   test.each([
-    ['date', '06/24/2009', 'MM/DD/YYYY'],
-    ['month', '06/2009', 'MM/YYYY'],
-    ['year', '2009', 'YYYY'],
-  ] as const)('formats %s date option values', (options, expectedValue, expectedFormat) => {
-    expect(formatDateValue(new Date(2009, 5, 24), options)).toBe(expectedValue);
+    ['date', 'MM/DD/YYYY'],
+    ['month', 'MM/YYYY'],
+    ['year', 'YYYY'],
+  ] as const)('returns the %s date option format', (options, expectedFormat) => {
     expect(getDateValueFormat(options)).toBe(expectedFormat);
   });
 
