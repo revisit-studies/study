@@ -126,34 +126,52 @@ export function ThinkAloudFooter({
     isPlaying, setIsPlaying, speed, setSpeed, setSeekTime, hasEnded,
   } = useReplayContext();
 
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const [screenRecordingUrl, setScreenRecordingUrl] = useState<string | null>(null);
+  const assetKey = `${participantId}\u0000${currentTrial}`;
+  const [audio, setAudio] = useState<{ key: string; url: string | null }>({ key: '', url: null });
+  const [screenRecording, setScreenRecording] = useState<{ key: string; url: string | null }>({ key: '', url: null });
+  const audioUrl = audio.key === assetKey ? audio.url : null;
+  const screenRecordingUrl = screenRecording.key === assetKey ? screenRecording.url : null;
 
   useEffect(() => {
+    let cancelled = false;
+
     async function fetchAssetsUrl() {
+      setAudio({ key: assetKey, url: null });
+      setScreenRecording({ key: assetKey, url: null });
+
       if (!storageEngine || !participantId || !currentTrial) {
-        setAudioUrl(null);
-        setScreenRecordingUrl(null);
         return;
       }
 
       try {
         const url = await storageEngine.getAudioUrl(currentTrial, participantId);
-        setAudioUrl(url);
+        if (!cancelled) {
+          setAudio({ key: assetKey, url });
+        }
       } catch {
-        setAudioUrl(null);
+        if (!cancelled) {
+          setAudio({ key: assetKey, url: null });
+        }
       }
 
       try {
         const url = await storageEngine.getScreenRecording(currentTrial, participantId);
-        setScreenRecordingUrl(url);
+        if (!cancelled) {
+          setScreenRecording({ key: assetKey, url });
+        }
       } catch {
-        setScreenRecordingUrl(null);
+        if (!cancelled) {
+          setScreenRecording({ key: assetKey, url: null });
+        }
       }
     }
 
     fetchAssetsUrl();
-  }, [storageEngine, participantId, currentTrial]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [assetKey, currentTrial, participantId, storageEngine]);
 
   const handleDownloadAudio = useCallback(async () => {
     if (!storageEngine || !participantId || !currentTrial) {
@@ -410,6 +428,7 @@ export function ThinkAloudFooter({
     return `${PREFIX}${studyId}/${encryptIndex(currentStep)}${funcPath}?participantId=${participantId}&revisitPageId=${revisitPageId}`;
   }, [currentTrial, participant, participantId, studyId]);
 
+  const participantMatchesSelection = participant?.participantId === participantId;
   const participantUsedSameBrowser = useMemo(() => getBrowser(participant?.metadata?.userAgent ?? '') === getBrowser(navigator.userAgent), [participant]);
 
   const [browserWarningDismissed, setBrowserWarningDismissed] = useState(false);
@@ -427,7 +446,7 @@ export function ThinkAloudFooter({
           <Alert variant="filled" color="red" title="Participant hasn&apos;t completed any tasks." icon={<IconInfoCircle />} />
         </div>
       )}
-      {participant && screenRecordingUrl && !participantUsedSameBrowser && !browserWarningDismissed && (
+      {participantMatchesSelection && screenRecordingUrl && !participantUsedSameBrowser && !browserWarningDismissed && (
         <div style={{
           position: 'absolute', top: -5, left: 5, transform: 'translateY(-100%)',
         }}
