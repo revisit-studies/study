@@ -46,6 +46,7 @@ import { useManagedTrrack } from '../../store/hooks/useRevisitTrrack';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { showNotification } from '../../utils/notifications';
 import { getAnswersFromAllLocations } from '../../utils/getAnswersFromAllLocations';
+import { useIsStartupPreview } from '../StartupPreviewContext';
 
 type Props = {
   status?: StoredAnswer;
@@ -83,6 +84,7 @@ export function ResponseBlock({
   status,
   style,
 }: Props) {
+  const isStartupPreview = useIsStartupPreview();
   const storeDispatch = useStoreDispatch();
   const {
     updateProvenance, updateResponseBlockValidation, saveIncorrectAnswer, saveTrialAnswer, setResponseSubmitAttempt, setStimulusSubmitAttempt, setCheckAnswerResult,
@@ -721,7 +723,7 @@ export function ResponseBlock({
                       response={response}
                       index={index}
                       config={config}
-                      disabled={disabledAttempts}
+                      disabled={isStartupPreview || disabledAttempts}
                       errors={errors}
                     />
                     <FeedbackAlert
@@ -767,15 +769,15 @@ export function ResponseBlock({
 
       {showBtnsInLocation && (
         <NextButton
-          disabled={(hasCorrectAnswerFeedback && !enableNextButton)}
+          disabled={isStartupPreview || (hasCorrectAnswerFeedback && !enableNextButton)}
           label={nextButtonText}
           config={config}
           location={location}
           onNext={handleNextClick}
-          onCheckAnswer={!isAnalysis && hasCorrectAnswerFeedback && !disabledAttempts ? checkAnswerProvideFeedback : undefined}
+          onCheckAnswer={!isStartupPreview && !isAnalysis && hasCorrectAnswerFeedback && !disabledAttempts ? checkAnswerProvideFeedback : undefined}
           checkAnswer={showBtnsInLocation && hasCorrectAnswerFeedback ? (
             <Button
-              disabled={disabledAttempts}
+              disabled={isStartupPreview || disabledAttempts}
               onClick={() => checkAnswerProvideFeedback()}
               px={location === 'sidebar' ? 8 : undefined}
             >

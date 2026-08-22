@@ -5,14 +5,14 @@ import { useCurrentStep } from '../routes/utils';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 
 // Show the error modal when the participant tries to use the browser back button
-export function useDisableBrowserBack() {
+export function useDisableBrowserBack(disabled = false) {
   const currentStep = useCurrentStep();
   const { setAlertModal } = useStoreActions();
   const storeDispatch = useStoreDispatch();
   const isAnalysis = useIsAnalysis();
 
   useEffect(() => {
-    if (import.meta.env.PROD && !isAnalysis) {
+    if (import.meta.env.PROD && !isAnalysis && !disabled) {
       window.history.pushState(null, '', window.location.href);
       window.onpopstate = () => {
         window.history.pushState(null, '', window.location.href);
@@ -25,5 +25,5 @@ export function useDisableBrowserBack() {
     return () => {
       window.onpopstate = null;
     };
-  }, [currentStep, isAnalysis, setAlertModal, storeDispatch]);
+  }, [currentStep, disabled, isAnalysis, setAlertModal, storeDispatch]);
 }

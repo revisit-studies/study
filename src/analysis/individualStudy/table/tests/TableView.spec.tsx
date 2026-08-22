@@ -66,6 +66,9 @@ vi.mock('../../replay/AllTasksTimeline', () => ({
 vi.mock('../../ParticipantRejectModal', () => ({
   ParticipantRejectModal: () => <div>ParticipantRejectModal</div>,
 }));
+vi.mock('../../ParticipantTimeoutModal', () => ({
+  ParticipantTimeoutModal: () => <div>ParticipantTimeoutModal</div>,
+}));
 
 vi.mock('../../../../utils/getSequenceFlatMap', () => ({
   getSequenceFlatMap: vi.fn(() => ['intro', 'trial1', 'trial2', 'end']),
@@ -99,6 +102,7 @@ function makeParticipant(overrides: Partial<ParticipantDataWithStatus> = {}) {
 }
 
 const defaultProps = {
+  participantsForTimeout: [] as ParticipantDataWithStatus[],
   studyConfig: emptyConfig,
   allConfigs: {} as Record<string, StudyConfig>,
   refresh: async () => [] as ParticipantDataWithStatus[],
@@ -146,7 +150,7 @@ describe('TableView', () => {
     expect(html).toContain('Answer time');
     expect(html).toContain('Time');
     expect(html).toContain('Uniform');
-    expect(html).toContain('Long gaps in Time mode are marked //');
+    expect(html).toContain('ParticipantTimeoutModal');
   });
 
   test('uses sequence ordering and time sizing by default for participant timelines', () => {
