@@ -107,8 +107,11 @@ export async function openStudyFromLanding(
 
 export async function nextClick(page: Page, timeout = 10000) {
   const nextButton = page.getByRole('button', { name: 'Next', exact: true });
-  const studyButton = page.locator('button[data-study-identifier]');
+  const studyButton = page.locator('button[data-study-identifier]:visible');
+  const visibleHeadings = page.locator('main :is(h1, h2, h3, h4, h5, h6, [role="heading"]):visible');
+  const initialUrl = page.url();
   const initialIdentifier = await nextButton.getAttribute('data-study-identifier');
+  const initialHeading = await visibleHeadings.first().innerText().catch(() => '');
   const deadline = Date.now() + timeout;
   let lastError: unknown;
 
@@ -119,19 +122,42 @@ export async function nextClick(page: Page, timeout = 10000) {
   );
 
   const hasAdvanced = async () => {
-    if (await studyButton.count() === 0) {
-      return hasStudyEnded();
-    }
-
-    const currentIdentifier = await studyButton.first().getAttribute('data-study-identifier');
-    return currentIdentifier !== null && currentIdentifier !== initialIdentifier;
+    const currentIdentifier = await studyButton.first().getAttribute('data-study-identifier').catch(() => null);
+    const currentHeading = await visibleHeadings.first().innerText().catch(() => '');
+    return page.url() !== initialUrl
+      || (currentHeading.length > 0 && currentHeading !== initialHeading)
+      || (currentIdentifier !== null && currentIdentifier !== initialIdentifier)
+      || await hasStudyEnded();
   };
 
   const waitForNextStep = async (remaining: number) => {
-    await expect.poll(hasAdvanced, {
-      timeout: remaining,
-      intervals: [100, 250, 500, 1000],
-    }).toBe(true);
+    try {
+      await expect.poll(hasAdvanced, {
+        timeout: remaining,
+        intervals: [100, 250, 500, 1000],
+      }).toBe(true);
+    } catch (error) {
+      const transitionState = await page.evaluate(() => {
+        const isVisible = (element: Element) => {
+          const style = window.getComputedStyle(element);
+          return style.display !== 'none' && style.visibility !== 'hidden';
+        };
+        return {
+          url: window.location.href,
+          identifiers: Array.from(document.querySelectorAll('button[data-study-identifier]'))
+            .filter(isVisible)
+            .map((element) => element.getAttribute('data-study-identifier')),
+          headings: Array.from(document.querySelectorAll('main h1, main h2, main h3, main h4, main h5, main h6, main [role="heading"]'))
+            .filter(isVisible)
+            .map((element) => element.textContent?.trim()),
+          buttons: Array.from(document.querySelectorAll('main button'))
+            .filter(isVisible)
+            .map((element) => element.textContent?.trim()),
+        };
+      }).catch(() => null);
+      const reason = error instanceof Error ? error.message : String(error);
+      throw new Error(`Study did not advance before the timeout. State: ${JSON.stringify(transitionState)}\n${reason}`);
+    }
   };
 
   for (let attempt = 0; attempt < 3; attempt += 1) {
