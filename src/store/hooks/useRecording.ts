@@ -518,7 +518,6 @@ export function useRecording() {
     audioMediaStream,
     screenWithAudioRecording,
     currentComponentHasClickToRecord,
-    currentComponentHasAudioRecording,
     isRejected,
     isSpeakingWhileMuted,
     showMutedWarning,
