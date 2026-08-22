@@ -255,6 +255,7 @@ services:
 
   minio:
     image: minio/minio
+    restart: unless-stopped
     ports:
       - '9000:9000'
       - '9001:9001'
@@ -278,7 +279,7 @@ services:
     entrypoint: >
       /bin/sh -c "
       /usr/bin/mc alias set supa-minio http://minio:9000 supa-storage secret1234;
-      /usr/bin/mc mb supa-minio/stub;
+      /usr/bin/mc mb --ignore-existing supa-minio/stub;
       exit 0;
       "
   storage:
@@ -299,7 +300,7 @@ services:
           "--no-verbose",
           "--tries=1",
           "--spider",
-          "http://localhost:5000/status"
+          "http://127.0.0.1:5000/status"
         ]
       timeout: 5s
       interval: 5s
