@@ -11,6 +11,7 @@ const emailValidation = isEmail();
 const EMAIL_LOCAL_PART_PATTERN = /^[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*$/;
 // Domain part consists of labels separated by dots, where each label can contain letters, digits, and hyphens, but cannot start or end with a hyphen. The top-level domain must be at least two characters long.
 const DOMAIN_LABEL_PATTERN = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$/;
+const URL_FORBIDDEN_CHARACTER_PATTERN = /[\s\p{Cc}]/u;
 
 function isEmailAddress(value: string) {
   if (emailValidation(value) !== null) {
@@ -57,8 +58,8 @@ function isValidHostname(hostname: string) {
 }
 
 function isHttpUrl(value: string) {
-  // Check if the value is a valid HTTP or HTTPS URL
-  if (value.trim() !== value || !/^https?:\/\//i.test(value)) {
+  // URL normalizes some raw whitespace and control characters, so reject them before parsing.
+  if (URL_FORBIDDEN_CHARACTER_PATTERN.test(value) || !/^https?:\/\//i.test(value)) {
     return false;
   }
 

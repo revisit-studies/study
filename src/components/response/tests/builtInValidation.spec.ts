@@ -92,4 +92,15 @@ describe('checkBuiltInValidation', () => {
     expect(checkBuiltInValidation('url', value))
       .toBe('Please enter a valid URL beginning with http:// or https://.');
   });
+
+  test.each([
+    { character: 'space', value: 'https://example.com/a b' },
+    { character: 'tab', value: 'https://example.com/a\tb' },
+    { character: 'carriage return', value: 'https://example.com/a\rb' },
+    { character: 'line feed', value: 'https://example.com/a\nb' },
+    { character: 'NUL control character', value: 'https://example.com/a\u0000b' },
+  ])('rejects a raw $character in an HTTP URL', ({ value }) => {
+    expect(checkBuiltInValidation('url', value))
+      .toBe('Please enter a valid URL beginning with http:// or https://.');
+  });
 });
