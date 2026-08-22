@@ -53,3 +53,7 @@ The sequence logic is a crucial part of the ReVISit platform, as it defines the 
 DO NOT
 - DO NOT add import('...') statements inside src code and test logic. Import at the top of the file only, even for types.
 - DO NOT add new libraries without approval.
+
+## Codex PR review
+
+For a pull request marked ready for review, inspect the exact head against its base and invoke `$adversarial-review` once when multi-agent support is available. The skill owns the detailed review contract, exhaustive follow-up passes, evidence requirements, and fallback behavior.
