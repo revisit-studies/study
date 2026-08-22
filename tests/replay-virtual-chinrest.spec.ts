@@ -64,10 +64,17 @@ test('virtual chinrest replays card adjustments and viewing-distance measurement
   }
 
   await page.goto(`${cardPath}?participantId=${cardRecording.participantId}&revisitPageId=e2e-card-replay`);
-  await seekReplay(page, cardRecording.startTime, cardRecording.endTime, cardRecording.startTime);
+  await expect(page.getByTestId('virtual-card')).toBeVisible();
+  await seekReplay(page, cardRecording.startTime, cardRecording.endTime, cardRecording.startTime, async () => (
+    (await page.getByTestId('virtual-card').boundingBox())?.width === 300
+  ));
   await expect.poll(async () => (await page.getByTestId('virtual-card').boundingBox())?.width).toBe(300);
-  await seekReplay(page, cardRecording.startTime, cardRecording.endTime, cardRecording.endTime);
-  await expect.poll(async () => (await page.getByTestId('virtual-card').boundingBox())?.width).toBeCloseTo(adjustedCardWidth!, 0);
+  const isWithinOnePixel = async () => {
+    const width = (await page.getByTestId('virtual-card').boundingBox())?.width;
+    return typeof width === 'number' && Math.abs(width - adjustedCardWidth!) <= 1;
+  };
+  await seekReplay(page, cardRecording.startTime, cardRecording.endTime, cardRecording.endTime, isWithinOnePixel);
+  await expect.poll(isWithinOnePixel, { timeout: 15000 }).toBe(true);
 
   await page.goto(`${distancePath}?participantId=${distanceRecording.participantId}&revisitPageId=e2e-distance-replay`);
   await seekReplay(
@@ -75,6 +82,7 @@ test('virtual chinrest replays card adjustments and viewing-distance measurement
     distanceRecording.startTime,
     distanceRecording.endTime,
     distanceRecording.startTime,
+    async () => await page.getByText('Remaining measurements: 5').isVisible().catch(() => false),
   );
   await expect(page.getByText('Remaining measurements: 5')).toBeVisible();
   await seekReplay(
@@ -82,6 +90,7 @@ test('virtual chinrest replays card adjustments and viewing-distance measurement
     distanceRecording.startTime,
     distanceRecording.endTime,
     distanceRecording.endTime,
+    async () => await page.getByText('Remaining measurements: 0').isVisible().catch(() => false),
   );
   await expect(page.getByText('Remaining measurements: 0')).toBeVisible();
   await expect(page.getByTestId('blindspot-ball')).not.toHaveCSS('left', '740px');

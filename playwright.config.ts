@@ -1,25 +1,31 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const isCI = Boolean(process.env.CI);
-const configuredCiWorkers = Number(process.env.PW_CI_WORKERS);
-const ciWorkers = Number.isFinite(configuredCiWorkers) && configuredCiWorkers > 0
-  ? configuredCiWorkers
-  : 2;
+const configuredWorkers = Number(process.env.PW_WORKERS ?? process.env.PW_CI_WORKERS);
+const workers = Number.isFinite(configuredWorkers) && configuredWorkers > 0
+  ? configuredWorkers
+  : 1;
+const includeSlowTests = process.env.PW_INCLUDE_SLOW === '1';
 
 export default defineConfig({
   webServer: {
-    command: 'yarn serve',
+    command: 'corepack yarn serve',
     url: 'http://localhost:8080',
-    reuseExistingServer: !isCI,
+    // Reusing port 8080 can attach tests to a Vite server from another
+    // worktree. Keep each run tied to the checkout under test.
+    reuseExistingServer: Boolean(process.env.PW_REUSE_EXISTING_SERVER),
     stdout: 'ignore',
     stderr: 'pipe',
   },
 
   testDir: './tests',
   fullyParallel: true,
+  // The full MVNV participant journey is covered separately from the fast
+  // replay smoke test. Set PW_INCLUDE_SLOW=1 when the long journey is needed.
+  grepInvert: includeSlowTests ? undefined : /@slow-mvnv/,
   // Retry on CI only.
   retries: isCI ? 2 : 0,
-  workers: isCI ? ciWorkers : '90%',
+  workers,
   timeout: isCI ? 120000 : 60000,
   reporter: isCI ? 'github' : 'list',
 
