@@ -19,6 +19,7 @@ import {
   SnapshotParticipantCounts,
   calculateSnapshotParticipantCounts,
 } from './utils/snapshotParticipantCounts';
+import { generateSequenceArray } from '../../utils/handleRandomSequences';
 
 export interface StoredUser {
   email: string | null,
@@ -87,10 +88,20 @@ export interface ConditionData {
 
 const defaultStageColor = '#F05A30';
 
-export type StorageObjectType = 'sequenceArray' | 'participantData' | 'config' | string;
+export type StorageObjectType =
+  | 'sequenceArray'
+  | 'sequenceBuild'
+  | 'sequenceLegacyOwner'
+  | 'participantData'
+  | 'config'
+  | string;
 export type StorageObject<T extends StorageObjectType> =
   T extends 'sequenceArray'
   ? Sequence[]
+  : T extends 'sequenceBuild'
+  ? SequenceBuildRecord
+  : T extends 'sequenceLegacyOwner'
+  ? { configHash: string }
   : T extends 'participantData'
   ? ParticipantData
   : T extends 'config'
@@ -104,6 +115,21 @@ export type StorageObject<T extends StorageObjectType> =
   : T extends 'tags'
   ? Tag[]
   : Blob; // Fallback for any random string
+
+export type SequenceBuildRecord = {
+  seed: string;
+  algorithmVersion: 1;
+  status: 'building' | 'ready' | 'failed';
+  publisherId: string;
+  leaseExpiresAt: number;
+  attempts: number;
+  updatedAt: number;
+};
+
+export type SequenceBuildClaim = {
+  record: SequenceBuildRecord;
+  shouldPublish: boolean;
+};
 
 interface CloudStorageEngineError {
   title: string;
@@ -203,6 +229,14 @@ export abstract class StorageEngine {
 
   private assetUploadActivityVersion = 0;
 
+  private activeConfigHash: string | null = null;
+
+  private legacySequenceArrayConfigHash: string | null = null;
+
+  private sequenceArrays = new Map<string, Sequence[]>();
+
+  private static readonly sequenceBuildLeaseMs = 30_000;
+
   constructor(engine: typeof this.engine, testing: boolean) {
     this.engine = engine;
     this.testing = testing;
@@ -241,7 +275,12 @@ export abstract class StorageEngine {
   protected abstract _getFromStorage<T extends StorageObjectType>(prefix: string, type: T, studyId?: string): Promise<StorageObject<T> | null>;
 
   // Pushes an object to the storage engine. The object is identified by its type and studyId.
-  protected abstract _pushToStorage<T extends StorageObjectType>(prefix: string, type: T, objectToUpload: StorageObject<T>): Promise<void>;
+  protected abstract _pushToStorage<T extends StorageObjectType>(
+    prefix: string,
+    type: T,
+    objectToUpload: StorageObject<T>,
+    options?: { cache?: boolean; studyId?: string },
+  ): Promise<void>;
 
   // Deletes an object from the storage engine. The object is identified by its type and studyId.
   protected abstract _deleteFromStorage<T extends StorageObjectType>(prefix: string, type: T): Promise<void>;
@@ -258,6 +297,54 @@ export abstract class StorageEngine {
 
   // Sets the current config hash in the storage engine using the engine's realtime database.
   protected abstract _setCurrentConfigHash(configHash: string): Promise<void>;
+
+  protected async _claimSequenceBuild(
+    configHash: string,
+    candidate: SequenceBuildRecord,
+    now: number,
+    _studyId?: string,
+  ): Promise<SequenceBuildClaim> {
+    const prefix = `sequenceBuilds/${configHash}`;
+    const existing = await this._getFromStorage(prefix, 'sequenceBuild');
+    if (existing?.status === 'ready'
+      || (existing?.status === 'building' && existing.leaseExpiresAt > now)) {
+      return { record: existing, shouldPublish: false };
+    }
+
+    const claimed = existing
+      ? {
+        ...existing,
+        status: 'building' as const,
+        publisherId: candidate.publisherId,
+        leaseExpiresAt: candidate.leaseExpiresAt,
+        attempts: existing.attempts + 1,
+        updatedAt: now,
+      }
+      : candidate;
+    await this._pushToStorage(prefix, 'sequenceBuild', claimed);
+    return { record: claimed, shouldPublish: true };
+  }
+
+  protected async _updateSequenceBuild(
+    configHash: string,
+    publisherId: string,
+    updates: Pick<SequenceBuildRecord, 'status' | 'leaseExpiresAt' | 'updatedAt'>,
+    _studyId?: string,
+  ): Promise<void> {
+    const prefix = `sequenceBuilds/${configHash}`;
+    const existing = await this._getFromStorage(prefix, 'sequenceBuild');
+    if (existing?.publisherId === publisherId) {
+      await this._pushToStorage(prefix, 'sequenceBuild', { ...existing, ...updates });
+    }
+  }
+
+  protected async _getSequenceBuildProviderTime() {
+    return Date.now();
+  }
+
+  protected async _deleteSequenceBuild(configHash: string) {
+    await this._deleteFromStorage(`sequenceBuilds/${configHash}`, 'sequenceBuild');
+  }
 
   /* General/Realtime ---------------------------------------------------- */
   // Gets all sequence assignments for the given studyId. The sequence assignments are sorted ascending by timestamp.
@@ -764,11 +851,26 @@ export abstract class StorageEngine {
     await this._setModesDocument(studyId, updatedModesDoc);
   }
 
-  // Saves the new config for the study. This will overwrite the existing sequence array so that the new sequences are compatible with the new config.
+  // Saves the active config without removing artifacts used by earlier participant sessions.
   async saveConfig(config: StudyConfig) {
     const currentConfigHash = await this._getCurrentConfigHash();
     // Hash the provided config
     const configHash = await hash(JSON.stringify(config));
+    this.activeConfigHash = configHash;
+    const legacyOwner = await this._getFromStorage('', 'sequenceLegacyOwner');
+    if (legacyOwner && typeof legacyOwner === 'object' && 'configHash' in legacyOwner) {
+      this.legacySequenceArrayConfigHash = legacyOwner.configHash;
+    } else if (currentConfigHash) {
+      const legacySequenceArray = await this._getFromStorage('', 'sequenceArray');
+      if (Array.isArray(legacySequenceArray)) {
+        await this._pushToStorage(
+          '',
+          'sequenceLegacyOwner',
+          { configHash: currentConfigHash },
+        );
+        this.legacySequenceArrayConfigHash = currentConfigHash;
+      }
+    }
 
     // Skip saving config if the active config is already saved in storage
     if (currentConfigHash === configHash) {
@@ -786,19 +888,19 @@ export abstract class StorageEngine {
     );
     await this._cacheStorageObject(`configs/${configHash}`, 'config');
 
-    // Clear sequence array if the config has changed.
-    // Keep currentParticipantId so existing participant sessions can continue
-    // against their original participantConfigHash.
-    if (currentConfigHash && currentConfigHash !== configHash) {
-      try {
-        await this._deleteFromStorage('', 'sequenceArray');
-      } catch {
-        // pass, if this happens, we didn't have a sequence array yet
-      }
-    }
-
     if (currentConfigHash !== configHash) {
       await this._setCurrentConfigHash(configHash);
+      if (!this.legacySequenceArrayConfigHash) {
+        const legacySequenceArray = await this._getFromStorage('', 'sequenceArray');
+        if (Array.isArray(legacySequenceArray)) {
+          await this._pushToStorage(
+            '',
+            'sequenceLegacyOwner',
+            { configHash },
+          );
+          this.legacySequenceArrayConfigHash = configHash;
+        }
+      }
     }
   }
 
@@ -1764,9 +1866,116 @@ export abstract class StorageEngine {
     });
   }
 
-  // Gets the sequence array from the storage engine.
+  private sequenceArtifactPrefix(configHash: string) {
+    return `sequenceArrays/${configHash}`;
+  }
+
+  private async publishSequenceArray(
+    studyId: string,
+    configHash: string,
+    publisherId: string,
+    sequenceArray: Sequence[],
+  ) {
+    try {
+      await this._pushToStorage(
+        this.sequenceArtifactPrefix(configHash),
+        'sequenceArray',
+        sequenceArray,
+        { cache: true, studyId },
+      );
+      await this._updateSequenceBuild(configHash, publisherId, {
+        status: 'ready',
+        leaseExpiresAt: 0,
+        updatedAt: Date.now(),
+      }, studyId);
+    } catch {
+      await this._updateSequenceBuild(configHash, publisherId, {
+        status: 'failed',
+        leaseExpiresAt: 0,
+        updatedAt: Date.now(),
+      }, studyId).catch(() => undefined);
+    }
+  }
+
+  async prepareSequenceArray(config: StudyConfig, configHash: string) {
+    await this.verifyStudyDatabase();
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+    const studyId = this.studyId;
+    this.activeConfigHash = configHash;
+
+    const cacheKey = `${studyId}:${configHash}`;
+    const cachedSequenceArray = this.sequenceArrays.get(cacheKey);
+    if (cachedSequenceArray) {
+      return cachedSequenceArray;
+    }
+
+    const storedSequenceArray = await this._getFromStorage(
+      this.sequenceArtifactPrefix(configHash),
+      'sequenceArray',
+    );
+    if (Array.isArray(storedSequenceArray)) {
+      this.sequenceArrays.set(cacheKey, storedSequenceArray);
+      return storedSequenceArray;
+    }
+
+    if (this.legacySequenceArrayConfigHash === configHash) {
+      const legacySequenceArray = await this._getFromStorage('', 'sequenceArray');
+      if (Array.isArray(legacySequenceArray)) {
+        this.sequenceArrays.set(cacheKey, legacySequenceArray);
+        return legacySequenceArray;
+      }
+    }
+
+    const now = await this._getSequenceBuildProviderTime();
+    const publisherId = uuidv4();
+    const claim = await this._claimSequenceBuild(configHash, {
+      seed: uuidv4(),
+      algorithmVersion: 1,
+      status: 'building',
+      publisherId,
+      leaseExpiresAt: now + StorageEngine.sequenceBuildLeaseMs,
+      attempts: 1,
+      updatedAt: now,
+    }, now, studyId);
+    if (claim.record.algorithmVersion !== 1) {
+      throw new Error(`Unsupported sequence algorithm version: ${claim.record.algorithmVersion}`);
+    }
+    const generatedSequenceArray = generateSequenceArray(config, claim.record.seed);
+    this.sequenceArrays.set(cacheKey, generatedSequenceArray);
+
+    if (claim.shouldPublish) {
+      this.publishSequenceArray(studyId, configHash, publisherId, generatedSequenceArray);
+    }
+
+    return generatedSequenceArray;
+  }
+
+  // Gets the sequence array for the active config from the storage engine.
   async getSequenceArray() {
     await this.verifyStudyDatabase();
+
+    if (this.activeConfigHash) {
+      const activeSequenceArray = this.sequenceArrays.get(
+        `${this.studyId}:${this.activeConfigHash}`,
+      );
+      if (activeSequenceArray) {
+        return activeSequenceArray;
+      }
+
+      const storedSequenceArray = await this._getFromStorage(
+        this.sequenceArtifactPrefix(this.activeConfigHash),
+        'sequenceArray',
+      );
+      if (Array.isArray(storedSequenceArray)) {
+        this.sequenceArrays.set(
+          `${this.studyId}:${this.activeConfigHash}`,
+          storedSequenceArray,
+        );
+        return storedSequenceArray;
+      }
+    }
 
     const sequenceArrayDocData = await this._getFromStorage(
       '',
@@ -1781,6 +1990,49 @@ export abstract class StorageEngine {
     await this.verifyStudyDatabase();
 
     await this._pushToStorage('', 'sequenceArray', latinSquare);
+    if (this.activeConfigHash) {
+      await this._pushToStorage(
+        '',
+        'sequenceLegacyOwner',
+        { configHash: this.activeConfigHash },
+      );
+      this.legacySequenceArrayConfigHash = this.activeConfigHash;
+      this.sequenceArrays.set(`${this.studyId}:${this.activeConfigHash}`, latinSquare);
+    }
+  }
+
+  async cleanupObsoleteSequenceArtifacts(candidateConfigHashes: string[]) {
+    await this.verifyStudyDatabase();
+    const retainedConfigHashes = new Set<string>();
+    const currentConfigHash = await this._getCurrentConfigHash();
+    if (currentConfigHash) {
+      retainedConfigHashes.add(currentConfigHash);
+    }
+    if (this.studyId) {
+      const assignments = await this.getAllSequenceAssignments(this.studyId);
+      const participantData = await Promise.all(assignments.map(
+        (assignment) => this._getFromStorage(
+          `participants/${assignment.participantId}`,
+          'participantData',
+        ),
+      ));
+      participantData.forEach((participant) => {
+        if (participant && typeof participant === 'object' && 'participantConfigHash' in participant) {
+          retainedConfigHashes.add(participant.participantConfigHash);
+        }
+      });
+    }
+
+    await Promise.all(candidateConfigHashes
+      .filter((configHash) => !retainedConfigHashes.has(configHash))
+      .map(async (configHash) => {
+        await this._deleteFromStorage(
+          this.sequenceArtifactPrefix(configHash),
+          'sequenceArray',
+        ).catch(() => undefined);
+        await this._deleteSequenceBuild(configHash).catch(() => undefined);
+        this.sequenceArrays.delete(`${this.studyId}:${configHash}`);
+      }));
   }
 
   protected async __testingReset() {
@@ -1794,6 +2046,9 @@ export abstract class StorageEngine {
     this.failedAssetRetryOperations.clear();
     this.pendingProgressDataWrite = undefined;
     this.assetUploadActivityVersion = 0;
+    this.activeConfigHash = null;
+    this.legacySequenceArrayConfigHash = null;
+    this.sequenceArrays.clear();
     this.participantData = undefined;
     if (this.studyId) {
       await this.clearCurrentParticipantId();

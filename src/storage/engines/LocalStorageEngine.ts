@@ -1,6 +1,6 @@
 import localforage from 'localforage';
 import {
-  REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageEngine, StorageObject, StorageObjectType, cleanupModes,
+  REVISIT_MODE, SequenceAssignment, SequenceBuildClaim, SequenceBuildRecord, SnapshotDocContent, StorageEngine, StorageObject, StorageObjectType, cleanupModes,
 } from './types';
 import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
 
@@ -21,9 +21,14 @@ export class LocalStorageEngine extends StorageEngine {
     return storedObject;
   }
 
-  protected async _pushToStorage<T extends StorageObjectType>(prefix: string, type: T, objectToUpload: StorageObject<T>) {
+  protected async _pushToStorage<T extends StorageObjectType>(
+    prefix: string,
+    type: T,
+    objectToUpload: StorageObject<T>,
+    options?: { cache?: boolean; studyId?: string },
+  ) {
     await this.verifyStudyDatabase();
-    const storageKey = `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`;
+    const storageKey = `${this.collectionPrefix}${options?.studyId ?? this.studyId}/${prefix}_${type}`;
     await this.studyDatabase.setItem(storageKey, objectToUpload);
   }
 
@@ -53,6 +58,53 @@ export class LocalStorageEngine extends StorageEngine {
     await this.verifyStudyDatabase();
     const key = `${this.collectionPrefix}${this.studyId}/configHash`;
     await this.studyDatabase.setItem(key, configHash);
+  }
+
+  protected async _claimSequenceBuild(
+    configHash: string,
+    candidate: SequenceBuildRecord,
+    now: number,
+    studyId: string = this.studyId!,
+  ): Promise<SequenceBuildClaim> {
+    const key = `${this.collectionPrefix}${studyId}/sequenceBuild/${configHash}`;
+    const existing = await this.studyDatabase.getItem<SequenceBuildRecord>(key);
+    if (existing && existing.status !== 'failed' && existing.leaseExpiresAt > now) {
+      return { record: existing, shouldPublish: false };
+    }
+    if (existing?.status === 'ready') {
+      return { record: existing, shouldPublish: false };
+    }
+
+    const claimed = existing
+      ? {
+        ...existing,
+        status: 'building' as const,
+        publisherId: candidate.publisherId,
+        leaseExpiresAt: candidate.leaseExpiresAt,
+        attempts: existing.attempts + 1,
+        updatedAt: now,
+      }
+      : candidate;
+    await this.studyDatabase.setItem(key, claimed);
+    return { record: claimed, shouldPublish: true };
+  }
+
+  protected async _updateSequenceBuild(
+    configHash: string,
+    publisherId: string,
+    updates: Pick<SequenceBuildRecord, 'status' | 'leaseExpiresAt' | 'updatedAt'>,
+    studyId: string = this.studyId!,
+  ) {
+    const key = `${this.collectionPrefix}${studyId}/sequenceBuild/${configHash}`;
+    const existing = await this.studyDatabase.getItem<SequenceBuildRecord>(key);
+    if (existing?.publisherId === publisherId) {
+      await this.studyDatabase.setItem(key, { ...existing, ...updates });
+    }
+  }
+
+  protected override async _deleteSequenceBuild(configHash: string) {
+    const key = `${this.collectionPrefix}${this.studyId}/sequenceBuild/${configHash}`;
+    await this.studyDatabase.removeItem(key);
   }
 
   public async getAllSequenceAssignments(studyId: string) {
