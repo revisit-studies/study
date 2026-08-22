@@ -7,7 +7,7 @@ import {
 import { Provider } from 'react-redux';
 import { RouteObject, useRoutes, useSearchParams } from 'react-router';
 import {
-  Button, Center, LoadingOverlay, Stack, Text, Title,
+  Anchor, Button, Center, Code, LoadingOverlay, Stack, Text, Title,
 } from '@mantine/core';
 import {
   GlobalConfig,
@@ -37,6 +37,7 @@ import { hash } from '../storage/engines/utils/storageEngineHelpers';
 import {
   StageCapacityExceededError,
   StageNoAvailableConditionsError,
+  StageOnlyDisabledConditionsHaveCapacityError,
   type StorageEngine,
   type REVISIT_MODE,
 } from '../storage/engines/types';
@@ -221,7 +222,9 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   const routeStudyId = useStudyId();
   const [activeConfig, setActiveConfig] = useState<ParsedConfig<StudyConfig> | null>(null);
   const [startupError, setStartupError] = useState<{ error: unknown } | null>(null);
-  const [stageEntryError, setStageEntryError] = useState<StageCapacityExceededError | StageNoAvailableConditionsError | null>(null);
+  const [stageEntryError, setStageEntryError] = useState<
+    StageCapacityExceededError | StageNoAvailableConditionsError | StageOnlyDisabledConditionsHaveCapacityError | null
+  >(null);
   const canonicalStudyId = useMemo(() => {
     if (routeStudyId === '__revisit-widget') {
       return routeStudyId;
@@ -521,7 +524,11 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
         }
       } catch (error) {
         console.error('Error initializing user store routing:', error);
-        if (error instanceof StageCapacityExceededError || error instanceof StageNoAvailableConditionsError) {
+        if (
+          error instanceof StageCapacityExceededError
+          || error instanceof StageNoAvailableConditionsError
+          || error instanceof StageOnlyDisabledConditionsHaveCapacityError
+        ) {
           if (!isCancelled) {
             setStageEntryError(error);
             setIsCompletionCheckResolved(true);
@@ -628,7 +635,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   } else if (stageEntryError) {
     content = (
       <Center style={{ height: '80vh', flexDirection: 'column', textAlign: 'center' }}>
-        <Title order={2}>{stageEntryError instanceof StageCapacityExceededError ? 'Study full' : 'Study unavailable'}</Title>
+        <Title order={2}>Study full</Title>
         <Text mt="md">
           {stageEntryError instanceof StageCapacityExceededError ? (
             <>
@@ -639,15 +646,23 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
               stage at this time.
             </>
           ) : (
-            <>
-              Sorry, there are no active study versions in the
-              {' '}
-              {stageEntryError.stageName}
-              {' '}
-              stage at this time.
-            </>
+            <>Sorry, this study is full and cannot accept more participants at this time.</>
           )}
         </Text>
+        {!(stageEntryError instanceof StageCapacityExceededError) && (
+          <>
+            <Text mt="md">
+              Please email
+              {' '}
+              <Anchor href={`mailto:${activeConfig?.uiConfig.contactEmail}`}>
+                {activeConfig?.uiConfig.contactEmail}
+              </Anchor>
+              {' '}
+              if you think you are seeing this page in error, and include the following details:
+            </Text>
+            <Code block mt="sm" maw={700} ta="left">{`Study ID: ${canonicalStudyId}\nURL: ${window.location.href}\nParticipant ID: ${participantId || urlParticipantId || 'Not assigned'}\nTimestamp (UTC): ${new Date().toISOString()}\nStorage Engine: ${import.meta.env.VITE_STORAGE_ENGINE}\nUser Agent: ${navigator.userAgent}\nResolution: ${JSON.stringify(createParticipantMetadata().resolution, null, 2)}\nIP: Unavailable\nLanguage: ${navigator.language}`}</Code>
+          </>
+        )}
       </Center>
     );
   } else if (activeConfig && hasConfigErrors) {

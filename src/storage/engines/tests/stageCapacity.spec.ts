@@ -7,7 +7,7 @@ import { ParticipantMetadata } from '../../../store/types';
 import { generateSequenceArray } from '../../../utils/handleRandomSequences';
 import { LocalStorageEngine } from '../LocalStorageEngine';
 import {
-  getBetweenSubjectsCombinationKey, getStageParticipantCounts, StageCapacityExceededError, StageNoAvailableConditionsError, StorageEngine, type SequenceAssignment,
+  getBetweenSubjectsCombinationKey, getStageParticipantCounts, StageCapacityExceededError, StageNoAvailableConditionsError, StageOnlyDisabledConditionsHaveCapacityError, StorageEngine, type SequenceAssignment,
 } from '../types';
 
 const studyId = 'stage-capacity-test';
@@ -92,6 +92,50 @@ describe('stage capacity', () => {
     await expect(storageEngine.initializeParticipantSession({}, betweenSubjectsConfig, metadata))
       .rejects.toBeInstanceOf(StageNoAvailableConditionsError);
     expect(await storageEngine.getAllSequenceAssignments(studyId)).toHaveLength(0);
+  });
+
+  test('does not assign more participants to a combination than its desired count', async () => {
+    await storageEngine.setSequenceArray(await generateSequenceArray(betweenSubjectsConfig));
+    const controlKey = getBetweenSubjectsCombinationKey({ version: 'control' }, ['version']);
+    const treatmentKey = getBetweenSubjectsCombinationKey({ version: 'treatment' }, ['version']);
+    await storageEngine.updateStage(studyId, 'LIMITED', {
+      maxParticipants: 4,
+      desiredParticipantsByCombination: { [controlKey]: 1, [treatmentKey]: 3 },
+    });
+
+    const assignParticipants = async (remaining: number): Promise<string[]> => {
+      if (remaining === 0) {
+        return [];
+      }
+      const participant = await storageEngine.initializeParticipantSession({}, betweenSubjectsConfig, metadata);
+      await storageEngine.clearCurrentParticipantId();
+      return [
+        String(participant.sequence.parameters?.version),
+        ...await assignParticipants(remaining - 1),
+      ];
+    };
+    const assignedVersions = await assignParticipants(4);
+
+    expect(assignedVersions.filter((version) => version === 'control')).toHaveLength(1);
+    expect(assignedVersions.filter((version) => version === 'treatment')).toHaveLength(3);
+  });
+
+  test('explains when remaining capacity is only in disabled combinations', async () => {
+    await storageEngine.setSequenceArray(await generateSequenceArray(betweenSubjectsConfig));
+    const controlKey = getBetweenSubjectsCombinationKey({ version: 'control' }, ['version']);
+    const treatmentKey = getBetweenSubjectsCombinationKey({ version: 'treatment' }, ['version']);
+    await storageEngine.updateStage(studyId, 'LIMITED', {
+      maxParticipants: 2,
+      desiredParticipantsByCombination: { [controlKey]: 1, [treatmentKey]: 1 },
+      disabledBetweenSubjectsCombinations: [controlKey],
+    });
+
+    const participant = await storageEngine.initializeParticipantSession({}, betweenSubjectsConfig, metadata);
+    expect(participant.sequence.parameters?.version).toBe('treatment');
+    await storageEngine.clearCurrentParticipantId();
+
+    await expect(storageEngine.initializeParticipantSession({}, betweenSubjectsConfig, metadata))
+      .rejects.toBeInstanceOf(StageOnlyDisabledConditionsHaveCapacityError);
   });
 
   test('stores and clears manual desired participant counts for a combination', async () => {

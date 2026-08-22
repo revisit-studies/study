@@ -46,6 +46,7 @@ export type SequenceAssignment = {
   isDynamic: boolean; // Whether the study contains dynamic blocks
   stage: string; // The stage of the participant in the study
   conditions?: string[]; // The study condition(s) assigned to this participant.
+  betweenSubjectsCombinationKey?: string; // The between-subjects combination assigned to this participant.
 };
 
 export type REVISIT_MODE = 'dataCollectionEnabled' | 'developmentModeEnabled' | 'dataSharingEnabled';
@@ -88,6 +89,13 @@ export class StageNoAvailableConditionsError extends Error {
   constructor(public readonly stageName: string) {
     super(`The ${stageName} stage has no enabled between-subjects conditions`);
     this.name = 'StageNoAvailableConditionsError';
+  }
+}
+
+export class StageOnlyDisabledConditionsHaveCapacityError extends Error {
+  constructor(public readonly stageName: string) {
+    super(`The ${stageName} stage only has capacity in disabled between-subjects conditions`);
+    this.name = 'StageOnlyDisabledConditionsHaveCapacityError';
   }
 }
 
@@ -137,6 +145,39 @@ export function isSequenceEnabledForStage(
   return !disabledCombinations.includes(
     getBetweenSubjectsCombinationKey(sequence.parameters, betweenSubjects),
   );
+}
+
+function getDesiredParticipantCountsByCombination(
+  stage: StageInfo,
+  sequenceArray: Sequence[],
+  betweenSubjects: string[],
+) {
+  if (stage.maxParticipants === undefined || betweenSubjects.length === 0) {
+    return undefined;
+  }
+
+  const combinationKeys = [...new Set(sequenceArray.map((sequence) => (
+    getBetweenSubjectsCombinationKey(sequence.parameters, betweenSubjects)
+  )))];
+  const manuallySpecifiedCounts = stage.desiredParticipantsByCombination || {};
+  const manualCount = combinationKeys.reduce(
+    (total, key) => total + (manuallySpecifiedCounts[key] ?? 0),
+    0,
+  );
+  const unspecifiedCombinationKeys = combinationKeys.filter((key) => !Object.hasOwn(manuallySpecifiedCounts, key));
+  const remainingCount = Math.max(stage.maxParticipants - manualCount, 0);
+  const countPerUnspecifiedCombination = unspecifiedCombinationKeys.length === 0
+    ? 0
+    : Math.floor(remainingCount / unspecifiedCombinationKeys.length);
+  const remainder = unspecifiedCombinationKeys.length === 0
+    ? 0
+    : remainingCount % unspecifiedCombinationKeys.length;
+
+  return Object.fromEntries(combinationKeys.map((key) => [
+    key,
+    manuallySpecifiedCounts[key]
+      ?? countPerUnspecifiedCombination + (unspecifiedCombinationKeys.indexOf(key) < remainder ? 1 : 0),
+  ]));
 }
 
 export type StorageObjectType = 'sequenceArray' | 'participantData' | 'config' | string;
@@ -1039,6 +1080,59 @@ export abstract class StorageEngine {
       throw new StageNoAvailableConditionsError(currentStage);
     }
 
+    let availableSequenceArray = enabledSequenceArray;
+    const betweenSubjects = config?.betweenSubjects || [];
+    const desiredParticipantCountsByCombination = currentStageInfo
+      ? getDesiredParticipantCountsByCombination(currentStageInfo, sequenceArray, betweenSubjects)
+      : undefined;
+    if (desiredParticipantCountsByCombination && currentStageInfo) {
+      const combinationCounts: Record<string, number> = {};
+      const assignmentsMissingCombinationKey = sequenceAssignments.filter((assignment) => (
+        !assignment.rejected
+        && assignment.stage === currentStage
+        && assignment.betweenSubjectsCombinationKey === undefined
+      ));
+
+      sequenceAssignments.forEach((assignment) => {
+        if (!assignment.rejected && assignment.stage === currentStage && assignment.betweenSubjectsCombinationKey) {
+          combinationCounts[assignment.betweenSubjectsCombinationKey] = (
+            combinationCounts[assignment.betweenSubjectsCombinationKey] || 0
+          ) + 1;
+        }
+      });
+
+      const missingCombinationKeys = await Promise.all(assignmentsMissingCombinationKey.map(async (assignment) => {
+        const participant = await this._getFromStorage(
+          `participants/${assignment.participantId}`,
+          'participantData',
+        );
+        return isParticipantData(participant)
+          ? getBetweenSubjectsCombinationKey(participant.sequence.parameters, betweenSubjects)
+          : undefined;
+      }));
+      missingCombinationKeys.forEach((combinationKey) => {
+        if (combinationKey) {
+          combinationCounts[combinationKey] = (combinationCounts[combinationKey] || 0) + 1;
+        }
+      });
+
+      const hasRemainingCapacity = (sequence: Sequence) => {
+        const combinationKey = getBetweenSubjectsCombinationKey(sequence.parameters, betweenSubjects);
+        return (combinationCounts[combinationKey] || 0) < desiredParticipantCountsByCombination[combinationKey];
+      };
+      availableSequenceArray = enabledSequenceArray.filter(hasRemainingCapacity);
+      if (availableSequenceArray.length === 0) {
+        const hasCapacityInDisabledCondition = sequenceArray.some((sequence) => (
+          !isSequenceEnabledForStage(sequence, currentStageInfo, betweenSubjects)
+          && hasRemainingCapacity(sequence)
+        ));
+        if (hasCapacityInDisabledCondition) {
+          throw new StageOnlyDisabledConditionsHaveCapacityError(currentStage);
+        }
+        throw new StageCapacityExceededError(currentStage);
+      }
+    }
+
     // Find all rejected documents
     const rejectedDocs = sequenceAssignments
       .filter((doc) => doc.rejected && !doc.claimed);
@@ -1092,18 +1186,24 @@ export abstract class StorageEngine {
       (assignment) => !assignment.rejected && assignment.stage === currentStage,
     ).findIndex(
       (assignment) => assignment.participantId === this.currentParticipantId,
-    ) % enabledSequenceArray.length;
+    ) % availableSequenceArray.length;
     // If index = -1, we probably have data collection disabled. Give a random assignment.
     if (intentIndex === -1) {
       return {
-        currentRow: enabledSequenceArray[Math.floor(Math.random() * enabledSequenceArray.length)],
+        currentRow: availableSequenceArray[Math.floor(Math.random() * availableSequenceArray.length)],
         creationIndex: 1,
       };
     }
-    const currentRow = enabledSequenceArray[intentIndex];
+    const currentRow = availableSequenceArray[intentIndex];
 
     if (!currentRow) {
       throw new Error('Latin square is empty');
+    }
+
+    if (modes.dataCollectionEnabled && betweenSubjects.length > 0) {
+      await this._updateSequenceAssignmentFields(this.currentParticipantId, {
+        betweenSubjectsCombinationKey: getBetweenSubjectsCombinationKey(currentRow.parameters, betweenSubjects),
+      });
     }
 
     const creationSorted = sequenceAssignments.sort((a, b) => a.createdTime - b.createdTime);
