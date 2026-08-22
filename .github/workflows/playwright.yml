@@ -15,7 +15,6 @@ jobs:
       PLAYWRIGHT_BROWSERS_PATH: ${{ matrix.cache_dir }}
       PW_CI_REPORTER: dot
       PW_CI_WORKERS: ${{ matrix.workers }}
-      PW_INCLUDE_SLOW: 1
     strategy:
       fail-fast: false
       matrix:
@@ -65,4 +64,9 @@ jobs:
         run: yarn playwright install webkit
 
       - name: Run Playwright tests
-        run: yarn test --project=${{ matrix.project }}
+        run: |
+          if [ "${{ github.base_ref }}" = "main" ]; then
+            PW_INCLUDE_SLOW=1 yarn test --project=${{ matrix.project }} --grep '@slow-mvnv'
+          else
+            yarn test --project=${{ matrix.project }}
+          fi
