@@ -14,6 +14,15 @@ If you are using reVISit for a paper, please cite:
 
 GitHub citation metadata for this repository is available in [CITATION.cff](./CITATION.cff).
 
+## Trying it out
+
+You can try out reVISit in a couple of different versions: 
+
+* [Stable with Firebase](https://revisit.dev/study/)
+* [Stable with Supabase](https://revisit.dev/study/supabase/)
+* [Development with Firebase](https://revisit.dev/study/dev/)
+* [Development with Supabase](https://revisit.dev/study/dev-supabase/)
+
 ## Build Instructions
 
 To run this demo experiment locally, you will need to install Node.js on your computer.
