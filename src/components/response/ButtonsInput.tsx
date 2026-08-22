@@ -76,7 +76,7 @@ export function ButtonsInput({
               <OptionLabel label={radio.label} infoText={radio.infoText} button />
             </Radio.Card>
           ))}
-          <ClearSelectionButton onClick={() => answer?.onChange?.('')} disabled={disabled} />
+          <ClearSelectionButton onClick={() => answer?.onChange?.('')} disabled={disabled} visible={!!answer?.value} />
         </Flex>
       </Radio.Group>
     </FocusTrap>

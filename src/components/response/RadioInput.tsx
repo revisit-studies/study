@@ -170,7 +170,7 @@ export function RadioInput({
         </Group>
       )}
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
-        <ClearSelectionButton onClick={() => answer?.onChange?.('')} disabled={disabled} />
+        <ClearSelectionButton onClick={() => answer?.onChange?.('')} disabled={disabled} visible={!!answer?.value} />
       </div>
     </Radio.Group>
   );

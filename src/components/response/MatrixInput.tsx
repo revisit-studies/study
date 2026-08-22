@@ -424,7 +424,7 @@ export function MatrixInput({
           }
       }
       >
-        <ClearSelectionButton onClick={clearMatrix} disabled={disabled} />
+        <ClearSelectionButton onClick={clearMatrix} disabled={disabled} visible={Object.values(answerValue).some((v) => typeof v === 'string' && v !== '')} />
       </div>
       {error && (
         <Text c={required ? 'red' : 'orange'} size="sm" mt="xs">

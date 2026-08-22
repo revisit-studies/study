@@ -246,7 +246,7 @@ describe('MatrixInput clear behaviour', () => {
       questionOptions: ['q1', 'q2'],
     };
 
-    const answer: MatrixAnswer = { value: {} };
+    const answer: MatrixAnswer = { value: { q1: 'A', q2: '' } };
     const { getByText } = render(
       <MatrixInput response={response} answer={answer} index={0} disabled={false} error={null} enumerateQuestions={false} />,
     );
