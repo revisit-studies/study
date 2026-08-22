@@ -92,6 +92,21 @@ export interface WaveformPeaks {
   duration: number; // seconds required by waveSurfer.load() when peaks are provided
 }
 
+function isValidWaveformPeaks(value: WaveformPeaks | null): value is WaveformPeaks {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const { peaks, duration } = value;
+
+  return Array.isArray(peaks)
+    && peaks.length > 0
+    && peaks.every((channel) => Array.isArray(channel) && channel.every((n) => typeof n === 'number' && Number.isFinite(n)))
+    && typeof duration === 'number'
+    && Number.isFinite(duration)
+    && duration > 0;
+}
+
 export type StorageObjectType = 'sequenceArray' | 'participantData' | 'config' | string;
 export type StorageObject<T extends StorageObjectType> =
   T extends 'sequenceArray'
@@ -1076,8 +1091,8 @@ export abstract class StorageEngine {
 
   async getWaveformPeaks(taskName: string, participantId: string): Promise<WaveformPeaks | null> {
     const result = await this._getFromStorage(`audio/${participantId}_${taskName}`, 'waveform.peaks.json');
-    if (!result || !('peaks' in result)) return null;
-    return result as WaveformPeaks;
+    if (!isValidWaveformPeaks(result)) return null;
+    return result;
   }
 
   async saveWaveformPeaks(waveformPeaks: WaveformPeaks, taskName: string, participantId: string): Promise<void> {
