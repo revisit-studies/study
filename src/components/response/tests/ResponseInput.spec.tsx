@@ -90,8 +90,15 @@ vi.mock('@mantine/core', () => {
       <div data-value={value} data-checked={checked}>{label}</div>
     ),
     {
-      Group: ({ children, label, description }: { children?: ReactNode; label?: ReactNode; description?: ReactNode }) => (
-        <div>
+      Group: ({
+        children, label, description, value,
+      }: {
+        children?: ReactNode;
+        label?: ReactNode;
+        description?: ReactNode;
+        value?: string[];
+      }) => (
+        <div data-group-value={JSON.stringify(value)}>
           {label}
           {description}
           {children}
@@ -251,6 +258,7 @@ vi.mock('../utils', () => ({
   generateErrorMessage: vi.fn(() => null),
   DONT_KNOW_DEFAULT_VALUE: "I don't know",
   normalizeCheckboxDontKnowValue: vi.fn((v: string[]) => v),
+  normalizeCheckboxValue: vi.fn((v: unknown) => (typeof v === 'string' && v.length > 0 ? [v] : [])),
   usesStandaloneDontKnowField: vi.fn(() => false),
   getDefaultFieldValue: vi.fn(() => null),
 }));
@@ -570,6 +578,19 @@ describe('CheckBoxInput', () => {
     expect(html).toContain('A');
     expect(html).toContain('B');
     expect(html).toContain('C');
+  });
+
+  test('renders a malformed scalar answer as a selected checkbox', () => {
+    const html = renderToStaticMarkup(
+      <CheckBoxInput
+        response={base}
+        disabled={false}
+        answer={{ value: 'A' } as unknown as { value: string[] }}
+        index={1}
+        enumerateQuestions={false}
+      />,
+    );
+    expect(html).toContain('data-group-value="[&quot;A&quot;]"');
   });
 
   test('renders "Other" checkbox label when withOther=true and horizontal=true', () => {
