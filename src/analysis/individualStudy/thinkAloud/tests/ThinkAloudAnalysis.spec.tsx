@@ -275,7 +275,11 @@ function deferred<T>() {
 
 const mockStorageEngine = makeStorageEngine() as unknown as FirebaseStorageEngine;
 
-afterEach(() => { cleanup(); });
+afterEach(() => {
+  cleanup();
+  vi.mocked(useAsync).mockReset();
+  vi.mocked(useSearchParams).mockReset();
+});
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // SSR TESTS (renderToStaticMarkup)
