@@ -338,8 +338,9 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
     verifyDateTimeResponseConstraints(`/baseComponents/${componentName}`, component, errors);
   });
   Object.entries(studyConfig.components).forEach(([componentName, component]) => {
-    verifyTextResponseConstraints(`/components/${componentName}`, component, errors);
-    verifyDateTimeResponseConstraints(`/components/${componentName}`, component, errors);
+    const mergedComponent = studyComponentToIndividualComponent(component, studyConfig);
+    verifyTextResponseConstraints(`/components/${componentName}`, mergedComponent, errors);
+    verifyDateTimeResponseConstraints(`/components/${componentName}`, mergedComponent, errors);
   });
 
   const hasConditional = hasConditionalBlock(studyConfig.sequence);
