@@ -1,6 +1,6 @@
 import { MantineProvider } from '@mantine/core';
 import {
-  cleanup, fireEvent, render, screen, waitFor,
+  cleanup, fireEvent, render, waitFor,
 } from '@testing-library/react';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
@@ -31,6 +31,10 @@ afterEach(() => {
 });
 
 describe('TimeResponseInput', () => {
+  function getVisibleInputs(container: HTMLElement) {
+    return Array.from(container.querySelectorAll<HTMLInputElement>('input:not([type="hidden"])'));
+  }
+
   test('renders a 24-hour time picker with seconds', () => {
     const response: TimeResponse = {
       id: 'time',
@@ -54,7 +58,7 @@ describe('TimeResponseInput', () => {
       </MantineProvider>,
     );
 
-    const visibleInputs = Array.from(container.querySelectorAll<HTMLInputElement>('input:not([type="hidden"])'));
+    const visibleInputs = getVisibleInputs(container);
     expect(visibleInputs.map((input) => input.value)).toEqual(['14', '28', '30']);
     expect(container.querySelector('select')).toBeNull();
     expect((container.querySelector('input[type="hidden"]') as HTMLInputElement).value).toBe('14:28:30');
@@ -69,7 +73,7 @@ describe('TimeResponseInput', () => {
       required: true,
     };
 
-    render(
+    const { container } = render(
       <MantineProvider env="test">
         <TimeResponseInput
           response={response}
@@ -81,8 +85,9 @@ describe('TimeResponseInput', () => {
       </MantineProvider>,
     );
 
-    fireEvent.change(screen.getByLabelText('Select a time. hours'), { target: { value: '23' } });
-    fireEvent.change(screen.getByLabelText('Select a time. minutes'), { target: { value: '43' } });
+    const [hoursInput, minutesInput] = getVisibleInputs(container);
+    fireEvent.change(hoursInput, { target: { value: '23' } });
+    fireEvent.change(minutesInput, { target: { value: '43' } });
 
     expect(onChange).toHaveBeenLastCalledWith('23:43');
   });
@@ -108,9 +113,10 @@ describe('TimeResponseInput', () => {
       </MantineProvider>,
     );
 
-    expect((screen.getByLabelText('Select a time. hours') as HTMLInputElement).value).toBe('02');
-    expect((screen.getByLabelText('Select a time. minutes') as HTMLInputElement).value).toBe('28');
-    expect((screen.getByLabelText('Select a time. am/pm') as HTMLInputElement).value).toBe('PM');
+    const [hoursInput, minutesInput, amPmInput] = getVisibleInputs(container);
+    expect(hoursInput.value).toBe('02');
+    expect(minutesInput.value).toBe('28');
+    expect(amPmInput.value).toBe('PM');
     expect((container.querySelector('input[type="hidden"]') as HTMLInputElement).value).toBe('14:28');
   });
 
@@ -122,7 +128,7 @@ describe('TimeResponseInput', () => {
       required: true,
     };
 
-    render(
+    const { container } = render(
       <MantineProvider env="test">
         <TimeResponseInput
           response={response}
@@ -134,7 +140,7 @@ describe('TimeResponseInput', () => {
       </MantineProvider>,
     );
 
-    fireEvent.focus(screen.getByLabelText('Select a time. hours'));
+    fireEvent.focus(getVisibleInputs(container)[0]);
 
     await waitFor(() => {
       expect(document.querySelector('.mantine-TimePicker-dropdown')?.getAttribute('data-position'))

@@ -33,21 +33,27 @@ async function answerMatrixCheckboxRows(
   }
 }
 
-async function fillTimePicker(page: Page, prompt: string, value: string) {
+function getTimePickerInputs(page: Page, responseId: string) {
+  return page.locator(`#${responseId} input:not([type="hidden"])`);
+}
+
+async function fillTimePicker(page: Page, responseId: string, value: string) {
   const [hours, minutes, seconds] = value.split(':');
-  await page.getByLabel(`${prompt} hours`).fill(hours);
-  await page.getByLabel(`${prompt} minutes`).fill(minutes);
+  const inputs = getTimePickerInputs(page, responseId);
+  await inputs.nth(0).fill(hours);
+  await inputs.nth(1).fill(minutes);
   if (seconds !== undefined) {
-    await page.getByLabel(`${prompt} seconds`).fill(seconds);
+    await inputs.nth(2).fill(seconds);
   }
 }
 
-async function expectTimePickerValue(page: Page, prompt: string, value: string) {
+async function expectTimePickerValue(page: Page, responseId: string, value: string) {
   const [hours, minutes, seconds] = value.split(':');
-  await expect(page.getByLabel(`${prompt} hours`)).toHaveValue(hours);
-  await expect(page.getByLabel(`${prompt} minutes`)).toHaveValue(minutes);
+  const inputs = getTimePickerInputs(page, responseId);
+  await expect(inputs.nth(0)).toHaveValue(hours);
+  await expect(inputs.nth(1)).toHaveValue(minutes);
   if (seconds !== undefined) {
-    await expect(page.getByLabel(`${prompt} seconds`)).toHaveValue(seconds);
+    await expect(inputs.nth(2)).toHaveValue(seconds);
   }
 }
 
@@ -183,12 +189,13 @@ test('Test questionnaire component with responses and randomizing questions and 
   await page.getByRole('button', { name: 'Jul' }).click();
   await page.getByLabel('Year input.').click();
   await page.getByRole('button', { name: '2027' }).click();
-  await fillTimePicker(page, 'Time without seconds.', '14:28');
-  await fillTimePicker(page, 'Time within a range.', '14:28');
-  await fillTimePicker(page, 'Time with seconds.', '14:28:30');
-  await expect(page.getByLabel('Time in 12-hour format. hours')).toHaveValue('02');
-  await expect(page.getByLabel('Time in 12-hour format. minutes')).toHaveValue('28');
-  await expect(page.getByLabel('Time in 12-hour format. am/pm')).toHaveValue('PM');
+  await fillTimePicker(page, 'time-standard-response', '14:28');
+  await fillTimePicker(page, 'time-range-response', '14:28');
+  await fillTimePicker(page, 'time-seconds-response', '14:28:30');
+  const twelveHourInputs = getTimePickerInputs(page, 'time-12-hour-response');
+  await expect(twelveHourInputs.nth(0)).toHaveValue('02');
+  await expect(twelveHourInputs.nth(1)).toHaveValue('28');
+  await expect(twelveHourInputs.nth(2)).toHaveValue('PM');
   await nextClick(page);
   await expect(page.getByText('Please enter between 3 and 10 characters.')).toBeVisible();
   await expect(page.getByText('Please enter between 4 and 10 words.')).toBeVisible();
@@ -201,7 +208,7 @@ test('Test questionnaire component with responses and randomizing questions and 
   await expect(page.getByLabel('Date default')).toHaveValue('06/24/2026');
   await expect(page.getByLabel('Month default')).toHaveText('06/2026');
   await expect(page.getByLabel('Year default')).toHaveText('2026');
-  await expectTimePickerValue(page, 'Time default', '14:28:30');
+  await expectTimePickerValue(page, 'default-time', '14:28:30');
   await expect(page.getByPlaceholder('Select a country')).toHaveValue(/United States/);
   await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeEnabled();
   await nextClick(page);
@@ -344,7 +351,7 @@ test('Test questionnaire component with responses and randomizing questions and 
   await expect(page.getByLabel('Date within a range.')).toHaveValue('06/24/2026');
   await expect(page.getByLabel('Month input.')).toHaveText('07/2026');
   await expect(page.getByLabel('Year input.')).toHaveText('2027');
-  await expectTimePickerValue(page, 'Time with seconds.', '14:28:30');
+  await expectTimePickerValue(page, 'time-seconds-response', '14:28:30');
 
   await page.goto(`${sidebarReplayPath}?${replaySearch}`);
   await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
