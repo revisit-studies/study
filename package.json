@@ -60,6 +60,8 @@
     "firebase": "^11.2.0",
     "handlebars": "^4.7.9",
     "hjson": "^3.2.2",
+    "html2canvas": "^1.4.1",
+    "html2pdf.js": "^0.14.0",
     "jszip": "^3.10.1",
     "localforage": "^1.10.0",
     "lodash.debounce": "^4.0.8",

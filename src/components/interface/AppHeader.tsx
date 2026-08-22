@@ -49,8 +49,19 @@ import {
   shouldWarnForDefaultSupabaseConfig,
 } from '../../utils/defaultStorageConfig';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
+import { PdfExportMenuItem } from './PdfExportMenuItem';
 
-export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { developmentModeEnabled: boolean; dataCollectionEnabled: boolean }) {
+export function AppHeader({
+  developmentModeEnabled,
+  dataCollectionEnabled,
+  isExportingPdf = false,
+  onExportPdf,
+}: {
+  developmentModeEnabled: boolean;
+  dataCollectionEnabled: boolean;
+  isExportingPdf?: boolean;
+  onExportPdf?: () => Promise<void> | void;
+}) {
   const studyConfig = useStoreSelector((state) => state.config);
   const isAnalysis = useIsAnalysis();
 
@@ -285,11 +296,20 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
               onChange={setMenuOpened}
             >
               <Menu.Target>
-                <ActionIcon size="lg" className="studyBrowserMenuDropdown" variant="subtle" color="gray">
+                <ActionIcon aria-label="Study actions" size="lg" className="studyBrowserMenuDropdown" variant="subtle" color="gray">
                   <IconDotsVertical />
                 </ActionIcon>
               </Menu.Target>
               <Menu.Dropdown>
+                {onExportPdf && (
+                  <PdfExportMenuItem
+                    isExportingPdf={isExportingPdf}
+                    onExportPdf={() => {
+                      setMenuOpened(false);
+                      onExportPdf();
+                    }}
+                  />
+                )}
                 {developmentModeEnabled && (
                   <Menu.Item
                     leftSection={<IconSchema size={14} />}

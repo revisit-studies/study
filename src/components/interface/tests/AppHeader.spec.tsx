@@ -45,8 +45,10 @@ const mockStudyConfig = {
 };
 
 vi.mock('@mantine/core', () => ({
-  ActionIcon: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => (
-    <button type="button" onClick={onClick}>{children}</button>
+  ActionIcon: ({
+    'aria-label': ariaLabel, children, onClick,
+  }: { 'aria-label'?: string; children: ReactNode; onClick?: () => void }) => (
+    <button type="button" aria-label={ariaLabel} onClick={onClick}>{children}</button>
   ),
   AppShell: Object.assign(
     ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -88,6 +90,7 @@ vi.mock('@mantine/core', () => ({
 vi.mock('@tabler/icons-react', () => ({
   IconChartHistogram: () => null,
   IconDotsVertical: () => null,
+  IconFileTypePdf: () => null,
   IconMail: () => null,
   IconMicrophone: () => null,
   IconMicrophoneOff: () => null,
@@ -222,6 +225,10 @@ describe('AppHeader', () => {
     };
   });
 
+  afterEach(() => {
+    cleanup();
+  });
+
   test('renders progress bar in normal mode', () => {
     const html = renderToStaticMarkup(
       <AppHeader developmentModeEnabled={false} dataCollectionEnabled />,
@@ -240,12 +247,51 @@ describe('AppHeader', () => {
     expect(html).toContain('Next Participant');
   });
 
-  test('disables Next Participant in analysis replay mode', () => {
-    mockIsAnalysis = true;
+  test('exports the current page from the study menu', () => {
+    const onExportPdf = vi.fn();
     const { getByRole } = render(
-      <AppHeader developmentModeEnabled dataCollectionEnabled />,
+      <AppHeader
+        developmentModeEnabled={false}
+        dataCollectionEnabled
+        onExportPdf={onExportPdf}
+      />,
     );
 
+    getByRole('button', { name: 'Export page as PDF' }).click();
+
+    expect(onExportPdf).toHaveBeenCalledTimes(1);
+  });
+
+  test('labels the study actions menu for assistive technology', () => {
+    const { getByRole } = render(
+      <AppHeader developmentModeEnabled={false} dataCollectionEnabled />,
+    );
+
+    expect(getByRole('button', { name: 'Study actions' })).toBeDefined();
+  });
+
+  test('disables PDF export while a download is being prepared', () => {
+    const { getByRole } = render(
+      <AppHeader
+        developmentModeEnabled={false}
+        dataCollectionEnabled
+        isExportingPdf
+        onExportPdf={vi.fn()}
+      />,
+    );
+
+    expect((getByRole('button', { name: 'Exporting PDF…' }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  test('keeps PDF export available and disables Next Participant in analysis replay mode', () => {
+    mockIsAnalysis = true;
+    const onExportPdf = vi.fn();
+    const { getByRole } = render(
+      <AppHeader developmentModeEnabled dataCollectionEnabled onExportPdf={onExportPdf} />,
+    );
+
+    getByRole('button', { name: 'Export page as PDF' }).click();
+    expect(onExportPdf).toHaveBeenCalledTimes(1);
     const nextParticipant = getByRole('button', { name: 'Next Participant' });
     expect((nextParticipant as HTMLButtonElement).disabled).toBe(true);
     nextParticipant.click();
