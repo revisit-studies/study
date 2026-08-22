@@ -324,7 +324,7 @@ function BetweenSubjectsCombinationTable({
   combinations: BetweenSubjectsCombination[];
   onToggle: (stage: StageInfo, combinationKey: string, enabled: boolean) => Promise<void>;
   onSetDesiredParticipants: (stage: StageInfo, combinationKey: string, desiredParticipants: number | '') => Promise<void>;
-  onReviewInProgress: (participants: ParticipantDataWithStatus[]) => void;
+  onReviewInProgress: (participants: ParticipantDataWithStatus[], description: string) => void;
 }) {
   const data = useMemo<BetweenSubjectsCombinationRow[]>(() => {
     const desiredParticipantCounts = getDesiredParticipantCounts(
@@ -356,16 +356,22 @@ function BetweenSubjectsCombinationTable({
       return;
     }
 
-    onReviewInProgress(participants.filter((participant) => (
-      !participant.completed
-      && !participant.rejected
-      && participantMatchesBetweenSubjectsCombination(
-        participant,
-        stage.stageName,
-        combination,
-        betweenSubjectsFactors,
-      )
-    )));
+    const combinationDescription = betweenSubjectsFactors
+      .map((factor) => `${factor.factorName} = ${formatBetweenSubjectsLevel(combination.parameters[factor.factorName])}`)
+      .join(', ');
+    onReviewInProgress(
+      participants.filter((participant) => (
+        !participant.completed
+        && !participant.rejected
+        && participantMatchesBetweenSubjectsCombination(
+          participant,
+          stage.stageName,
+          combination,
+          betweenSubjectsFactors,
+        )
+      )),
+      `Showing only in-progress participants in the ${stage.stageName} stage with ${combinationDescription} — not all in-progress participants in the study.`,
+    );
   }, [betweenSubjectsFactors, combinations, onReviewInProgress, participants, stage.stageName]);
 
   const columns = useMemo<MrtColumnDef<BetweenSubjectsCombinationRow>[]>(() => [
@@ -447,7 +453,10 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
   const [allStages, setAllStages] = useState<StageInfo[]>([{ stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR }]);
   const [stageParticipantStatusCounts, setStageParticipantStatusCounts] = useState<StageParticipantStatusCounts>({});
   const [participants, setParticipants] = useState<ParticipantDataWithStatus[]>([]);
-  const [participantIdsForTimeout, setParticipantIdsForTimeout] = useState<string[] | null>(null);
+  const [timeoutParticipantSelection, setTimeoutParticipantSelection] = useState<{
+    participantIds: string[];
+    description: string;
+  } | null>(null);
   const [expandedStageNames, setExpandedStageNames] = useState<string[]>([]);
   const currentStageNameRef = useRef<string | undefined>(undefined);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -678,8 +687,11 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
     await refreshStageData();
   };
 
-  const handleReviewInProgress = useCallback((selectedParticipants: ParticipantDataWithStatus[]) => {
-    setParticipantIdsForTimeout(selectedParticipants.map((participant) => participant.participantId));
+  const handleReviewInProgress = useCallback((selectedParticipants: ParticipantDataWithStatus[], description: string) => {
+    setTimeoutParticipantSelection({
+      participantIds: selectedParticipants.map((participant) => participant.participantId),
+      description,
+    });
   }, []);
 
   if (!asyncStatus) {
@@ -703,12 +715,13 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
       </Group>
 
       <ParticipantTimeoutModal
+        description={timeoutParticipantSelection?.description}
         hideReviewButton
-        onClose={() => setParticipantIdsForTimeout(null)}
-        opened={participantIdsForTimeout !== null}
-        participants={participantIdsForTimeout === null
+        onClose={() => setTimeoutParticipantSelection(null)}
+        opened={timeoutParticipantSelection !== null}
+        participants={timeoutParticipantSelection === null
           ? []
-          : participants.filter((participant) => participantIdsForTimeout.includes(participant.participantId))}
+          : participants.filter((participant) => timeoutParticipantSelection.participantIds.includes(participant.participantId))}
         refresh={refreshStageData}
       />
 
@@ -777,7 +790,7 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
                       inProgress={stageParticipantStatusCounts[stage.stageName]?.inProgress || 0}
                       onInProgressClick={() => handleReviewInProgress(participants.filter((participant) => (
                         participant.stage === stage.stageName && !participant.completed && !participant.rejected
-                      )))}
+                      )), `Showing only in-progress participants in the ${stage.stageName} stage — not all in-progress participants in the study.`)}
                     />
                   </Table.Td>
                   <Table.Td>

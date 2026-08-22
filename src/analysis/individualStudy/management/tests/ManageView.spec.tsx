@@ -41,10 +41,17 @@ vi.mock('../../ParticipantTimeoutModal', () => ({
   ParticipantTimeoutModal: ({
     opened,
     participants,
+    description,
   }: {
     opened?: boolean;
     participants: { participantId: string }[];
-  }) => (opened ? <div data-testid="timeout-participants">{participants.map((participant) => participant.participantId).join(',')}</div> : null),
+    description?: string;
+  }) => (opened ? (
+    <div>
+      <div data-testid="timeout-participants">{participants.map((participant) => participant.participantId).join(',')}</div>
+      <div data-testid="timeout-description">{description}</div>
+    </div>
+  ) : null),
 }));
 
 vi.mock('@mantine/core', () => ({
@@ -448,6 +455,9 @@ describe('ManageView', () => {
     });
 
     expect(screen.getByTestId('timeout-participants').textContent).toBe('in-progress');
+    expect(screen.getByTestId('timeout-description').textContent).toBe(
+      'Showing only in-progress participants in the DEFAULT stage — not all in-progress participants in the study.',
+    );
   });
 
   test('StageManagementItem expands between-subjects combinations with counts and switches', async () => {

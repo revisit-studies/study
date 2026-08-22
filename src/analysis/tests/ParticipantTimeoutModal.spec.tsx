@@ -99,12 +99,14 @@ describe('ParticipantTimeoutModal', () => {
       <ParticipantTimeoutModal
         hideReviewButton
         opened
+        description="Showing a filtered set of in-progress participants."
         participants={[makeParticipant({ participantId: 'p1', createdTime: 1 })]}
         refresh={vi.fn()}
       />,
     );
 
     expect(screen.getByText('In-Progress Participants')).toBeDefined();
+    expect(screen.getByText('Showing a filtered set of in-progress participants.')).toBeDefined();
     expect(screen.getByText('p1')).toBeDefined();
     expect(screen.queryByRole('button', { name: 'Review (1)' })).toBeNull();
   });

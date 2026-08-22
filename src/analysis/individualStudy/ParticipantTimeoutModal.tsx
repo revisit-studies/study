@@ -60,12 +60,14 @@ export function ParticipantTimeoutModal({
   opened: controlledOpened,
   onClose,
   hideReviewButton = false,
+  description,
 }: {
   participants: ParticipantDataWithStatus[];
   refresh: () => Promise<unknown>;
   opened?: boolean;
   onClose?: () => void;
   hideReviewButton?: boolean;
+  description?: string;
 }) {
   const { storageEngine } = useStorageEngine();
   const { user } = useAuth();
@@ -131,6 +133,7 @@ export function ParticipantTimeoutModal({
           <Alert icon={<IconClockOff size={16} />} color="orange" title="Time out a participant">
             Timing out a participant rejects them and returns their sequence assignment for reuse.
           </Alert>
+          {description && <Text size="sm" c="dimmed">{description}</Text>}
           {inProgressParticipants.length === 0 ? (
             <Text c="dimmed">There are no in-progress participants.</Text>
           ) : (
