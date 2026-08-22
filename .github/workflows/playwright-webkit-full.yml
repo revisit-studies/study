@@ -1,36 +1,19 @@
-name: Playwright Worker Benchmark
+name: Full WebKit Playwright Tests
 
 on:
-  push:
-    branches:
-      - codex/playwright-stability
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * *'
 
 jobs:
-  benchmark:
-    name: WebKit w${{ matrix.workers }} shard ${{ matrix.shard }}/${{ matrix.total_shards }}
+  webkit:
+    name: 🧪 WebKit full E2E suite
     runs-on: macos-14
-    timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - workers: 1
-            shard: 1
-            total_shards: 4
-          - workers: 1
-            shard: 2
-            total_shards: 4
-          - workers: 1
-            shard: 3
-            total_shards: 4
-          - workers: 1
-            shard: 4
-            total_shards: 4
-
+    timeout-minutes: 60
     env:
       PLAYWRIGHT_BROWSERS_PATH: /Users/runner/Library/Caches/ms-playwright
-      PW_CI_WORKERS: ${{ matrix.workers }}
-
+      PW_CI_REPORTER: dot
+      PW_CI_WORKERS: 1
     steps:
       - uses: actions/checkout@v7
 
@@ -47,7 +30,7 @@ jobs:
       - name: Write out playwright version
         run: yarn --silent playwright --version > .playwright-version
 
-      - name: Cache playwright binaries
+      - name: ⚡️ Cache playwright binaries
         uses: actions/cache@v6
         id: playwright-cache
         with:
@@ -58,5 +41,5 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: yarn playwright install webkit
 
-      - name: Run benchmark shard
-        run: yarn test --project=webkit --shard=${{ matrix.shard }}/${{ matrix.total_shards }} --reporter=dot
+      - name: Run full WebKit suite
+        run: yarn test --project=webkit
