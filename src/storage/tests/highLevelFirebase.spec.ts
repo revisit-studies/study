@@ -12,6 +12,7 @@ import { type Sequence } from '../../store/types';
 import { FirebaseStorageEngine } from '../engines/FirebaseStorageEngine';
 import { type StorageEngine, type SequenceAssignment, type StoredUser } from '../engines/types';
 import { filterSequenceByCondition } from '../../utils/handleConditionLogic';
+import { createCompactSequenceDescriptor } from '../../utils/sequenceDescriptor';
 
 type DocData = Record<string, string | number | boolean | null | object>;
 
@@ -745,6 +746,17 @@ describe.each([
   test('getSequenceArray returns the sequence array', async () => {
     const sequences = await storageEngine.getSequenceArray();
     expect(sequences).toEqual(sequenceArray);
+  });
+
+  test('stores compact sequence descriptors without expanding them', async () => {
+    const descriptor = createCompactSequenceDescriptor(
+      await hash(JSON.stringify(configSimple)),
+      configSimple,
+    );
+    await storageEngine.setSequenceDescriptor(descriptor);
+
+    expect(await storageEngine.getSequenceArtifact()).toEqual(descriptor);
+    expect(await storageEngine.getSequenceArray()).toBeNull();
   });
 
   test('getSequenceArray returns null if no sequences are set', async () => {

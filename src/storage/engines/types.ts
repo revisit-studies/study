@@ -19,6 +19,13 @@ import {
   SnapshotParticipantCounts,
   calculateSnapshotParticipantCounts,
 } from './utils/snapshotParticipantCounts';
+import {
+  CompactSequenceDescriptor,
+  SequenceArtifact,
+  isCompactSequenceDescriptor,
+  parseCompactSequenceDescriptor,
+  resolveCompactSequence,
+} from '../../utils/sequenceDescriptor';
 
 export interface StoredUser {
   email: string | null,
@@ -90,7 +97,7 @@ const defaultStageColor = '#F05A30';
 export type StorageObjectType = 'sequenceArray' | 'participantData' | 'config' | string;
 export type StorageObject<T extends StorageObjectType> =
   T extends 'sequenceArray'
-  ? Sequence[]
+  ? SequenceArtifact
   : T extends 'participantData'
   ? ParticipantData
   : T extends 'config'
@@ -202,6 +209,8 @@ export abstract class StorageEngine {
   private pendingProgressDataWrite: ProgressDataWrite | undefined;
 
   private assetUploadActivityVersion = 0;
+
+  private activeConfigHash: string | null = null;
 
   constructor(engine: typeof this.engine, testing: boolean) {
     this.engine = engine;
@@ -769,6 +778,7 @@ export abstract class StorageEngine {
     const currentConfigHash = await this._getCurrentConfigHash();
     // Hash the provided config
     const configHash = await hash(JSON.stringify(config));
+    this.activeConfigHash = configHash;
 
     // Skip saving config if the active config is already saved in storage
     if (currentConfigHash === configHash) {
@@ -785,17 +795,6 @@ export abstract class StorageEngine {
       config,
     );
     await this._cacheStorageObject(`configs/${configHash}`, 'config');
-
-    // Clear sequence array if the config has changed.
-    // Keep currentParticipantId so existing participant sessions can continue
-    // against their original participantConfigHash.
-    if (currentConfigHash && currentConfigHash !== configHash) {
-      try {
-        await this._deleteFromStorage('', 'sequenceArray');
-      } catch {
-        // pass, if this happens, we didn't have a sequence array yet
-      }
-    }
 
     if (currentConfigHash !== configHash) {
       await this._setCurrentConfigHash(configHash);
@@ -867,7 +866,11 @@ export abstract class StorageEngine {
   // This function is one of the most critical functions in the storage engine.
   // It uses the notion of sequence intents and assignments to determine the current sequence for the participant.
   // It handles rejected participants and allows for reusing a rejected participant's sequence.
-  protected async _getSequence(conditions?: string[], bootstrapData?: ModesAndStageData) {
+  protected async _getSequence(
+    config: StudyConfig,
+    conditions?: string[],
+    bootstrapData?: ModesAndStageData,
+  ) {
     if (!this.currentParticipantId) {
       throw new Error('Participant not initialized');
     }
@@ -927,35 +930,55 @@ export abstract class StorageEngine {
     // Query all the intents to get a sequence and find our position in the queue
     sequenceAssignments = await this.getAllSequenceAssignments(this.studyId);
 
-    // Get the latin square
-    const sequenceArray = await this.getSequenceArray();
-    if (!sequenceArray) {
-      throw new Error('Latin square not initialized');
+    const configHash = await hash(JSON.stringify(config));
+    const sequenceArtifact = await this.getSequenceArtifact(configHash);
+    if (!sequenceArtifact) {
+      throw new Error('Study sequence is not initialized');
     }
 
-    // Get the current row
-    const intentIndex = sequenceAssignments.filter((assignment) => !assignment.rejected).findIndex(
+    let sequenceCount: number;
+    if (Array.isArray(sequenceArtifact)) {
+      sequenceCount = sequenceArtifact.length;
+    } else {
+      const descriptor = parseCompactSequenceDescriptor(sequenceArtifact);
+      if (descriptor.configHash !== configHash) {
+        throw new Error(
+          'The stored sequence descriptor does not match this study config. '
+          + 'Republish the study sequence.',
+        );
+      }
+      sequenceCount = descriptor.numSequences;
+    }
+
+    if (sequenceCount === 0) {
+      throw new Error('Study sequence is empty');
+    }
+
+    let sequenceIndex = sequenceAssignments.filter((assignment) => !assignment.rejected).findIndex(
       (assignment) => assignment.participantId === this.currentParticipantId,
-    ) % sequenceArray.length;
-    if (sequenceArray.length === 0) {
-      throw new Error('Something really bad happened with sequence assignment');
+    );
+    const isUnassigned = sequenceIndex === -1;
+    if (isUnassigned) {
+      sequenceIndex = Math.floor(Math.random() * sequenceCount);
+    } else {
+      sequenceIndex %= sequenceCount;
     }
-    // If index = -1, we probably have data collection disabled. Give a random assignment.
-    if (intentIndex === -1) {
-      return {
-        currentRow: sequenceArray[Math.floor(Math.random() * sequenceArray.length)],
-        creationIndex: 1,
-      };
-    }
-    const currentRow = sequenceArray[intentIndex];
+
+    const currentRow = Array.isArray(sequenceArtifact)
+      ? sequenceArtifact[sequenceIndex]
+      : resolveCompactSequence(config, sequenceArtifact, sequenceIndex);
 
     if (!currentRow) {
-      throw new Error('Latin square is empty');
+      throw new Error('Study sequence is empty');
     }
 
     const creationSorted = sequenceAssignments.sort((a, b) => a.createdTime - b.createdTime);
 
-    const creationIndex = creationSorted.findIndex((assignment) => assignment.participantId === this.currentParticipantId) + 1;
+    const creationIndex = isUnassigned
+      ? 1
+      : creationSorted.findIndex(
+        (assignment) => assignment.participantId === this.currentParticipantId,
+      ) + 1;
 
     return { currentRow, creationIndex };
   }
@@ -1004,7 +1027,11 @@ export abstract class StorageEngine {
     const participantConfigHash = await hash(JSON.stringify(config));
     const parsedConditions = parseConditionParam(searchParams.condition);
     const conditions = parsedConditions.length > 0 ? parsedConditions : undefined;
-    const { currentRow, creationIndex } = await this._getSequence(conditions, { modes, stageData });
+    const { currentRow, creationIndex } = await this._getSequence(
+      config,
+      conditions,
+      { modes, stageData },
+    );
     this.participantData = {
       participantId: this.currentParticipantId,
       participantConfigHash,
@@ -1764,16 +1791,58 @@ export abstract class StorageEngine {
     });
   }
 
-  // Gets the sequence array from the storage engine.
-  async getSequenceArray() {
+  // Gets the versioned sequence artifact from the storage engine.
+  async getSequenceArtifact(configHash?: string) {
     await this.verifyStudyDatabase();
 
-    const sequenceArrayDocData = await this._getFromStorage(
-      '',
+    const resolvedConfigHash = configHash ?? this.activeConfigHash;
+    let sequenceArtifact = await this._getFromStorage(
+      resolvedConfigHash ? `sequenceArrays/${resolvedConfigHash}` : '',
       'sequenceArray',
     );
+    if (
+      resolvedConfigHash
+      && (
+        sequenceArtifact === null
+        || sequenceArtifact === undefined
+        || (
+          typeof sequenceArtifact === 'object'
+          && !Array.isArray(sequenceArtifact)
+          && Object.keys(sequenceArtifact).length === 0
+        )
+      )
+    ) {
+      const currentConfigHash = await this._getCurrentConfigHash();
+      if (currentConfigHash === null || currentConfigHash === resolvedConfigHash) {
+        sequenceArtifact = await this._getFromStorage('', 'sequenceArray');
+      }
+    }
 
-    return Array.isArray(sequenceArrayDocData) ? sequenceArrayDocData : null;
+    if (
+      sequenceArtifact === null
+      || sequenceArtifact === undefined
+      || (
+        typeof sequenceArtifact === 'object'
+        && !Array.isArray(sequenceArtifact)
+        && Object.keys(sequenceArtifact).length === 0
+      )
+    ) {
+      return null;
+    }
+    if (Array.isArray(sequenceArtifact)) {
+      return sequenceArtifact;
+    }
+    if (isCompactSequenceDescriptor(sequenceArtifact)) {
+      return parseCompactSequenceDescriptor(sequenceArtifact);
+    }
+
+    throw new Error('The stored sequence descriptor is corrupt. Republish the study sequence.');
+  }
+
+  // Gets a legacy expanded sequence array, if one is stored.
+  async getSequenceArray(configHash?: string) {
+    const sequenceArtifact = await this.getSequenceArtifact(configHash);
+    return Array.isArray(sequenceArtifact) ? sequenceArtifact : null;
   }
 
   // Sets the sequence array in the storage engine.
@@ -1781,6 +1850,19 @@ export abstract class StorageEngine {
     await this.verifyStudyDatabase();
 
     await this._pushToStorage('', 'sequenceArray', latinSquare);
+  }
+
+  // Sets a compact versioned sequence descriptor in the storage engine.
+  async setSequenceDescriptor(descriptor: CompactSequenceDescriptor) {
+    await this.verifyStudyDatabase();
+
+    const parsedDescriptor = parseCompactSequenceDescriptor(descriptor);
+    this.activeConfigHash = parsedDescriptor.configHash;
+    await this._pushToStorage(
+      `sequenceArrays/${parsedDescriptor.configHash}`,
+      'sequenceArray',
+      parsedDescriptor,
+    );
   }
 
   protected async __testingReset() {
@@ -1794,6 +1876,7 @@ export abstract class StorageEngine {
     this.failedAssetRetryOperations.clear();
     this.pendingProgressDataWrite = undefined;
     this.assetUploadActivityVersion = 0;
+    this.activeConfigHash = null;
     this.participantData = undefined;
     if (this.studyId) {
       await this.clearCurrentParticipantId();

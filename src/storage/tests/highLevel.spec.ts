@@ -14,6 +14,10 @@ import {
   SequenceAssignment, StorageEngine, StorageObject, StorageObjectType,
 } from '../engines/types';
 import { filterSequenceByCondition } from '../../utils/handleConditionLogic';
+import {
+  createCompactSequenceDescriptor,
+  resolveCompactSequence,
+} from '../../utils/sequenceDescriptor';
 
 const studyId = 'test-study';
 const configSimple = testConfigSimple as StudyConfig;
@@ -431,6 +435,57 @@ describe.each([
     expect(participantData!.metadata).toEqual(participantMetadata);
     expect(participantData!.rejected).toBe(false);
     expect(participantData!.participantTags).toEqual([]);
+  });
+
+  test('initializeParticipantSession derives its row from a compact descriptor', async () => {
+    const configHash = await hash(JSON.stringify(configSimple));
+    const descriptor = createCompactSequenceDescriptor(configHash, configSimple);
+    await storageEngine.setSequenceDescriptor(descriptor);
+
+    expect(await storageEngine.getSequenceArtifact()).toEqual(descriptor);
+    expect(await storageEngine.getSequenceArray()).toBeNull();
+
+    const participantSession = await storageEngine.initializeParticipantSession(
+      {},
+      configSimple,
+      participantMetadata,
+    );
+
+    expect(participantSession.sequence).toEqual(
+      resolveCompactSequence(configSimple, descriptor, 0),
+    );
+    expect(participantSession.participantConfigHash).toBe(configHash);
+  });
+
+  test('a descriptor for another config cannot replace the active config artifact', async () => {
+    const descriptor = createCompactSequenceDescriptor(
+      await hash(JSON.stringify(configSimple2)),
+      configSimple2,
+    );
+    await storageEngine.setSequenceDescriptor(descriptor);
+
+    const participant = await storageEngine.initializeParticipantSession(
+      {},
+      configSimple,
+      participantMetadata,
+    );
+
+    expect(participant.sequence).toEqual(sequenceArray[0]);
+  });
+
+  test('retains independent descriptors across overlapping config publications', async () => {
+    const firstHash = await hash(JSON.stringify(configSimple));
+    const secondHash = await hash(JSON.stringify(configSimple2));
+    const firstDescriptor = createCompactSequenceDescriptor(firstHash, configSimple);
+    const secondDescriptor = createCompactSequenceDescriptor(secondHash, configSimple2);
+
+    await Promise.all([
+      storageEngine.setSequenceDescriptor(firstDescriptor),
+      storageEngine.setSequenceDescriptor(secondDescriptor),
+    ]);
+
+    expect(await storageEngine.getSequenceArtifact(firstHash)).toEqual(firstDescriptor);
+    expect(await storageEngine.getSequenceArtifact(secondHash)).toEqual(secondDescriptor);
   });
 
   test('initializeParticipantSession reads modes only once for a new participant', async () => {
