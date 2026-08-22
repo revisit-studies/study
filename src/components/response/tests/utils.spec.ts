@@ -12,6 +12,7 @@ import {
   getDefaultFieldValue,
   generateValidation,
   mergeReactiveAnswers,
+  normalizeCheckboxValue,
   normalizeCheckboxDontKnowValue,
   useAnswerField,
 } from '../utils';
@@ -1367,6 +1368,23 @@ describe('generateInitFields additional branches', () => {
   test('initializes reactive response to empty array', () => {
     const response: Response = { id: 'q1', prompt: '', type: 'reactive' };
     expect(generateInitFields([response], {})).toMatchObject({ q1: [] });
+  });
+
+  test('initializes checkbox response to empty array', () => {
+    const response: Response = {
+      id: 'q1', prompt: '', type: 'checkbox', options: ['A', 'B'],
+    };
+    expect(generateInitFields([response], {})).toMatchObject({ q1: [] });
+  });
+
+  test('normalizes stored and captured checkbox values to arrays', () => {
+    const response: Response = {
+      id: 'q1', prompt: '', type: 'checkbox', options: ['A', 'B'], paramCapture: 'color',
+    };
+
+    expect(generateInitFields([response], { q1: 'A' })).toMatchObject({ q1: ['A'] });
+    expect(generateInitFields([response], {})).toMatchObject({ q1: ['blue'] });
+    expect(normalizeCheckboxValue('')).toEqual([]);
   });
 
   test('initializes ranking-categorical to empty array', () => {

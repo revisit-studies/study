@@ -245,7 +245,7 @@ export function ResponseVisualization({
         <IconChevronDown style={{ rotate: opened ? '180deg' : 'none', transition: 'rotate 200ms' }} />
       </Flex>
 
-      <Collapse in={opened} mah={400}>
+      <Collapse expanded={opened} mah={400}>
         <Box
           style={{
             position: 'sticky', backgroundColor: 'white', zIndex: 2,

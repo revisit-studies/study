@@ -36,7 +36,7 @@ vi.mock('@mantine/core', () => ({
   }),
   Text: ({ children }: { children: ReactNode }) => <p>{children}</p>,
   Title: ({ children }: { children: ReactNode }) => <h5>{children}</h5>,
-  Collapse: ({ children, in: open }: { children: ReactNode; in?: boolean }) => (
+  Collapse: ({ children, expanded: open }: { children: ReactNode; expanded?: boolean }) => (
     open ? <div>{children}</div> : null
   ),
   Code: ({ children }: { children: ReactNode }) => <code>{children}</code>,
