@@ -14,6 +14,17 @@ function createUtcDate(year: number, month: number, day: number) {
     : null;
 }
 
+/** Keeps date/time dropdowns below their inputs and scrollable within the available viewport. */
+export const DATE_TIME_POPOVER_PROPS = {
+  position: 'bottom-start',
+  middlewares: {
+    flip: false,
+    shift: { mainAxis: false, crossAxis: true },
+    size: true,
+  },
+  styles: { dropdown: { overflowY: 'auto' } },
+} as const;
+
 // Checks if a string is a valid date in the format MM/DD/YYYY
 export function parseMonthDayYear(value: string) {
   const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
@@ -78,6 +89,53 @@ export function getDateValueFormat(options: 'date' | 'month' | 'year' = 'date') 
     return 'YYYY';
   }
   return 'MM/DD/YYYY';
+}
+
+function cleanDateInput(value: string, maxLength: number) {
+  return value.replace(/[^\d/]/g, '').slice(0, maxLength);
+}
+
+/** Adds date separators during end-of-input entry without repartitioning cursor edits. */
+export function formatDateInput(value: string, isDeleting = false) {
+  const cleaned = cleanDateInput(value, 10);
+  if (isDeleting) {
+    return cleaned;
+  }
+
+  if (/^\d{2}$/.test(cleaned)) {
+    return `${cleaned}/`;
+  }
+  if (/^\d{2}\/\d{2}$/.test(cleaned)) {
+    return `${cleaned}/`;
+  }
+  if (/^\d{3,8}$/.test(cleaned)) {
+    const month = cleaned.slice(0, 2);
+    const day = cleaned.slice(2, 4);
+    if (cleaned.length < 4) {
+      return `${month}/${day}`;
+    }
+    if (cleaned.length === 4) {
+      return `${month}/${day}/`;
+    }
+    return `${month}/${day}/${cleaned.slice(4)}`;
+  }
+  return cleaned;
+}
+
+/** Adds a month separator during end-of-input entry without repartitioning cursor edits. */
+export function formatMonthInput(value: string, isDeleting = false) {
+  const cleaned = cleanDateInput(value, 7);
+  if (isDeleting) {
+    return cleaned;
+  }
+
+  if (/^\d{2}$/.test(cleaned)) {
+    return `${cleaned}/`;
+  }
+  if (/^\d{3,6}$/.test(cleaned)) {
+    return `${cleaned.slice(0, 2)}/${cleaned.slice(2)}`;
+  }
+  return cleaned;
 }
 
 // Checks if a string is a valid time in the format HH:MM or HH:MM:SS (24-hour format)

@@ -1,5 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import {
+  DATE_TIME_POPOVER_PROPS,
+  formatDateInput,
+  formatMonthInput,
   fromPickerDateValue,
   getDateValueFormat,
   isValidTime,
@@ -9,6 +12,18 @@ import {
 } from '../dateTimeValidation';
 
 describe('dateTimeValidation', () => {
+  test('keeps picker dropdowns below and scrollable within the available viewport', () => {
+    expect(DATE_TIME_POPOVER_PROPS).toEqual({
+      position: 'bottom-start',
+      middlewares: {
+        flip: false,
+        shift: { mainAxis: false, crossAxis: true },
+        size: true,
+      },
+      styles: { dropdown: { overflowY: 'auto' } },
+    });
+  });
+
   test.each([
     ['06/24/2009', 2009, 5, 24],
     ['02/29/2024', 2024, 1, 29],
@@ -91,6 +106,43 @@ describe('dateTimeValidation', () => {
   test('rejects an invalid picker date value', () => {
     expect(toPickerDateValue('02/29/2025', 'date')).toBeNull();
     expect(fromPickerDateValue('06/24/2009', 'date')).toBe('');
+  });
+
+  test.each([
+    ['06', '06/'],
+    ['062', '06/2'],
+    ['0624', '06/24/'],
+    ['06242', '06/24/2'],
+    ['06242026', '06/24/2026'],
+    ['6/24/2026', '6/24/2026'],
+    ['0/24/2026', '0/24/2026'],
+    ['06/4/2026', '06/4/2026'],
+  ])('formats date input without repartitioning cursor edits: %s', (value, expected) => {
+    expect(formatDateInput(value)).toBe(expected);
+  });
+
+  test.each([
+    ['6/24/2026', '6/24/2026'],
+    ['0/24/2026', '0/24/2026'],
+    ['06/4/2026', '06/4/2026'],
+  ])('preserves a date value while deleting: %s', (value, expected) => {
+    expect(formatDateInput(value, true)).toBe(expected);
+  });
+
+  test.each([
+    ['06', '06/'],
+    ['062026', '06/2026'],
+    ['6/2026', '6/2026'],
+    ['0/2026', '0/2026'],
+  ])('formats month input without repartitioning cursor edits: %s', (value, expected) => {
+    expect(formatMonthInput(value)).toBe(expected);
+  });
+
+  test.each([
+    ['6/2026', '6/2026'],
+    ['0/2026', '0/2026'],
+  ])('preserves a month value while deleting: %s', (value, expected) => {
+    expect(formatMonthInput(value, true)).toBe(expected);
   });
 
   test.each(['00:00', '10:10', '23:59'])('accepts a valid 24-hour time: %s', (value) => {

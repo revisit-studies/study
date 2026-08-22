@@ -430,48 +430,19 @@
           "restartEnumeration": true
         },
         {
-          "id": "date-placeholder-response",
-          "type": "date",
-          "options": "date",
-          "prompt": "Date with a custom placeholder.",
-          "secondaryText": "This response uses options: date and placeholder: Enter MM/DD/YYYY.",
-          "placeholder": "Enter MM/DD/YYYY"
-        },
-        {
-          "id": "date-min-response",
-          "type": "date",
-          "prompt": "Date with a minimum.",
-          "secondaryText": "This response uses min: 06/01/2026.",
-          "min": "06/01/2026"
-        },
-        {
-          "id": "date-max-response",
-          "type": "date",
-          "prompt": "Date with a maximum.",
-          "secondaryText": "This response uses max: 09/30/2026.",
-          "max": "09/30/2026"
-        },
-        {
           "id": "date-range-response",
           "type": "date",
           "prompt": "Date within a range.",
-          "secondaryText": "This response uses min: 06/01/2026 and max: 06/30/2026.",
+          "secondaryText": "This response uses min: 06/01/2026 and max: 08/30/2026.",
           "min": "06/01/2026",
-          "max": "06/30/2026"
-        },
-        {
-          "id": "date-required-value-response",
-          "type": "date",
-          "prompt": "Date with a required value.",
-          "secondaryText": "Enter exactly 06/24/2026. This response uses requiredValue.",
-          "requiredValue": "06/24/2026"
+          "max": "08/30/2026"
         },
         {
           "id": "month-picker-response",
           "type": "date",
           "options": "month",
-          "prompt": "Month picker.",
-          "secondaryText": "This response uses options: month and stores its value as MM/YYYY.",
+          "prompt": "Month input.",
+          "secondaryText": "This response uses options: month, accepts typing or picker selection",
           "default": "06/2026",
           "min": "01/2026",
           "max": "12/2026"
@@ -480,8 +451,8 @@
           "id": "year-picker-response",
           "type": "date",
           "options": "year",
-          "prompt": "Year picker.",
-          "secondaryText": "This response uses options: year and stores its value as YYYY.",
+          "prompt": "Year input.",
+          "secondaryText": "This response uses options: year, accepts typing or picker selection.",
           "default": "2026",
           "min": "2000",
           "max": "2030"
@@ -496,23 +467,9 @@
           "id": "time-12-hour-response",
           "type": "time",
           "prompt": "Time in 12-hour format.",
-          "secondaryText": "This response uses format: 12h and displays AM/PM while storing its value in 24-hour HH:mm format.",
+          "secondaryText": "This response uses format: 12h.",
           "format": "12h",
           "default": "14:28"
-        },
-        {
-          "id": "time-min-response",
-          "type": "time",
-          "prompt": "Time with a minimum.",
-          "secondaryText": "This response uses min: 09:00.",
-          "min": "09:00"
-        },
-        {
-          "id": "time-max-response",
-          "type": "time",
-          "prompt": "Time with a maximum.",
-          "secondaryText": "This response uses max: 18:00.",
-          "max": "18:00"
         },
         {
           "id": "time-range-response",
@@ -528,22 +485,6 @@
           "prompt": "Time with seconds.",
           "secondaryText": "This response uses withSeconds: true and the HH:mm:ss format.",
           "withSeconds": true
-        },
-        {
-          "id": "time-seconds-range-response",
-          "type": "time",
-          "prompt": "Time with seconds within a range.",
-          "secondaryText": "This response combines withSeconds: true with min: 09:00:00 and max: 18:00:00.",
-          "min": "09:00:00",
-          "max": "18:00:00",
-          "withSeconds": true
-        },
-        {
-          "id": "time-required-value-response",
-          "type": "time",
-          "prompt": "Time with a required value.",
-          "secondaryText": "Enter exactly 14:28. This response uses requiredValue.",
-          "requiredValue": "14:28"
         }
       ]
     },

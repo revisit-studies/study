@@ -1,6 +1,7 @@
 import { TimePicker } from '@mantine/dates';
 import type { FocusEventHandler } from 'react';
 import type { TimeResponse } from '../../parser/types';
+import { DATE_TIME_POPOVER_PROPS } from '../../utils/dateTimeValidation';
 import classes from './css/Input.module.css';
 import { InputLabel } from './InputLabel';
 
@@ -46,6 +47,7 @@ export function TimeResponseInput({
       value={value}
       format={response.format ?? '24h'}
       withDropdown
+      popoverProps={DATE_TIME_POPOVER_PROPS}
       withSeconds={response.withSeconds}
       hoursInputLabel={`${prompt} hours`}
       minutesInputLabel={`${prompt} minutes`}

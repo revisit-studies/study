@@ -169,36 +169,37 @@ test('Test questionnaire component with responses and randomizing questions and 
   await regexInput.fill('ABC-123');
   await page.getByPlaceholder('Share your feedback...').fill('ReVISit is great');
   await page.getByPlaceholder('ReVISit', { exact: true }).fill('ReVISit');
-  await page.getByPlaceholder('3–10 characters').fill('valid');
-  await page.getByPlaceholder('4–10 words').fill('This has four words');
+  const characterLengthInput = page.getByPlaceholder('3–10 characters');
+  const wordLengthInput = page.getByPlaceholder('4–10 words');
+  await characterLengthInput.fill('no');
+  await wordLengthInput.fill('only three words');
   await page.getByPlaceholder('test@revisit.dev').fill('test@revisit.dev');
   await page.getByPlaceholder('+800-0000-0000').fill('+800-0000-0000');
   await page.getByPlaceholder('800-000-0000').fill('800-000-0000');
   await page.getByPlaceholder('https://revisit.dev').fill('https://revisit.dev');
   await page.getByLabel('Date with a custom placeholder.').fill('06/24/2026');
-  await page.getByLabel('Date with a minimum.').fill('06/24/2026');
-  await page.getByLabel('Date with a maximum.').fill('06/24/2026');
   await page.getByLabel('Date within a range.').fill('06/24/2026');
-  await page.getByLabel('Date with a required value.').fill('06/24/2026');
-  await expect(page.getByLabel('Month picker.')).toContainText('06/2026');
-  await expect(page.getByLabel('Year picker.')).toContainText('2026');
+  await page.getByLabel('Date with a required value.').fill('09/01/2026');
+  await page.getByLabel('Month input.').fill('07/2026');
+  await page.getByLabel('Year input.').fill('2027');
   await fillTimePicker(page, 'Time without seconds.', '14:28');
-  await fillTimePicker(page, 'Time with a minimum.', '14:28');
-  await fillTimePicker(page, 'Time with a maximum.', '14:28');
   await fillTimePicker(page, 'Time within a range.', '14:28');
   await fillTimePicker(page, 'Time with seconds.', '14:28:30');
-  await fillTimePicker(page, 'Time with seconds within a range.', '14:28:30');
-  await fillTimePicker(page, 'Time with a required value.', '14:28');
   await expect(page.getByLabel('Time in 12-hour format. hours')).toHaveValue('02');
   await expect(page.getByLabel('Time in 12-hour format. minutes')).toHaveValue('28');
   await expect(page.getByLabel('Time in 12-hour format. am/pm')).toHaveValue('PM');
+  await nextClick(page);
+  await expect(page.getByText('Please enter between 3 and 10 characters.')).toBeVisible();
+  await expect(page.getByText('Please enter between 4 and 10 words.')).toBeVisible();
+  await characterLengthInput.fill('valid');
+  await wordLengthInput.fill('This has four words');
   await nextClick(page);
 
   // Default Values should be fully answerable via defaults
   await expect(page.getByText('Default Values Demo')).toBeVisible();
   await expect(page.getByLabel('Date default')).toHaveValue('06/24/2026');
-  await expect(page.getByLabel('Month default')).toContainText('06/2026');
-  await expect(page.getByLabel('Year default')).toContainText('2026');
+  await expect(page.getByLabel('Month default')).toHaveValue('06/2026');
+  await expect(page.getByLabel('Year default')).toHaveValue('2026');
   await expectTimePickerValue(page, 'Time default', '14:28:30');
   await expect(page.getByPlaceholder('Select a country')).toHaveValue(/United States/);
   await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeEnabled();
@@ -340,9 +341,9 @@ test('Test questionnaire component with responses and randomizing questions and 
     textValidationTiming.endTime,
   );
   await expect(page.getByLabel('Date within a range.')).toHaveValue('06/24/2026');
-  await expect(page.getByLabel('Month picker.')).toContainText('06/2026');
-  await expect(page.getByLabel('Year picker.')).toContainText('2026');
-  await expectTimePickerValue(page, 'Time with seconds within a range.', '14:28:30');
+  await expect(page.getByLabel('Month input.')).toHaveValue('07/2026');
+  await expect(page.getByLabel('Year input.')).toHaveValue('2027');
+  await expectTimePickerValue(page, 'Time with seconds.', '14:28:30');
 
   await page.goto(`${sidebarReplayPath}?${replaySearch}`);
   await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();

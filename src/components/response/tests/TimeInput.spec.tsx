@@ -1,6 +1,6 @@
 import { MantineProvider } from '@mantine/core';
 import {
-  cleanup, fireEvent, render, screen,
+  cleanup, fireEvent, render, screen, waitFor,
 } from '@testing-library/react';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
@@ -43,7 +43,7 @@ describe('TimeResponseInput', () => {
     };
 
     const { container } = render(
-      <MantineProvider>
+      <MantineProvider env="test">
         <TimeResponseInput
           response={response}
           disabled={false}
@@ -70,7 +70,7 @@ describe('TimeResponseInput', () => {
     };
 
     render(
-      <MantineProvider>
+      <MantineProvider env="test">
         <TimeResponseInput
           response={response}
           disabled={false}
@@ -97,7 +97,7 @@ describe('TimeResponseInput', () => {
     };
 
     const { container } = render(
-      <MantineProvider>
+      <MantineProvider env="test">
         <TimeResponseInput
           response={response}
           disabled={false}
@@ -112,5 +112,33 @@ describe('TimeResponseInput', () => {
     expect((screen.getByLabelText('Select a time. minutes') as HTMLInputElement).value).toBe('28');
     expect((screen.getByLabelText('Select a time. am/pm') as HTMLInputElement).value).toBe('PM');
     expect((container.querySelector('input[type="hidden"]') as HTMLInputElement).value).toBe('14:28');
+  });
+
+  test('opens the time dropdown below the input', async () => {
+    const response: TimeResponse = {
+      id: 'time',
+      prompt: 'Select a time.',
+      type: 'time',
+      required: true,
+    };
+
+    render(
+      <MantineProvider env="test">
+        <TimeResponseInput
+          response={response}
+          disabled={false}
+          answer={{ value: '14:28' }}
+          index={1}
+          enumerateQuestions={false}
+        />
+      </MantineProvider>,
+    );
+
+    fireEvent.focus(screen.getByLabelText('Select a time. hours'));
+
+    await waitFor(() => {
+      expect(document.querySelector('.mantine-TimePicker-dropdown')?.getAttribute('data-position'))
+        .toBe('bottom-start');
+    });
   });
 });
