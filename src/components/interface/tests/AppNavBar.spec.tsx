@@ -21,10 +21,16 @@ vi.mock('../../../store/hooks/useStudyConfig', () => ({
 
 vi.mock('../../../routes/utils', () => ({
   useCurrentComponent: () => mockCurrentComponent,
+  useCurrentStep: () => 0,
 }));
 
 vi.mock('../../../store/hooks/useStoredAnswer', () => ({
   useStoredAnswer: () => null,
+}));
+
+vi.mock('../../../store/store', () => ({
+  useStoreSelector: (selector: (state: { answers: Record<string, unknown> }) => unknown) => selector({ answers: {} }),
+  useFlatSequence: () => [],
 }));
 
 vi.mock('../../../utils/handleComponentInheritance', () => ({

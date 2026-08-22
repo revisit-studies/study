@@ -7,6 +7,8 @@ import { ResourceNotFound } from '../../ResourceNotFound';
 import { PREFIX } from '../../utils/Prefix';
 import { useCurrentComponent } from '../../routes/utils';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
+import { compileTemplate } from '../../utils/handlebars';
+import { useTemplateAnswerContext } from '../../store/hooks/useTemplateAnswerContext';
 
 export function HelpModal() {
   const showHelpText = useStoreSelector((state) => state.showHelpText);
@@ -25,14 +27,28 @@ export function HelpModal() {
 
   const helpTextPath = useMemo(() => componentConfig.helpTextPath ?? config.uiConfig.helpTextPath, [componentConfig.helpTextPath, config.uiConfig.helpTextPath]);
 
+  const templateData = useTemplateAnswerContext();
+
+  // helpTextPath can itself be templated (e.g. `help-{{condition}}.md`), so it must be resolved
+  // with the same parameters/answer context before it's used to fetch the asset.
+  const resolvedHelpTextPath = useMemo(
+    () => (helpTextPath ? compileTemplate(helpTextPath, componentConfig.parameters ?? {}, { noEscape: true, data: templateData }) : helpTextPath),
+    [helpTextPath, componentConfig.parameters, templateData],
+  );
+
+  const templatedHelpText = useMemo(
+    () => compileTemplate(helpText, componentConfig.parameters ?? {}, { data: templateData }),
+    [helpText, componentConfig.parameters, templateData],
+  );
+
   useEffect(() => {
     async function fetchText() {
-      if (!helpTextPath) {
+      if (!resolvedHelpTextPath) {
         setFoundAsset(false);
         setLoading(false);
         return;
       }
-      const asset = await getStaticAssetByPath(`${PREFIX}${helpTextPath}`);
+      const asset = await getStaticAssetByPath(`${PREFIX}${resolvedHelpTextPath}`);
       if (asset !== undefined) {
         setHelpText(asset);
       } else {
@@ -42,13 +58,13 @@ export function HelpModal() {
     }
 
     fetchText();
-  }, [helpTextPath]);
+  }, [resolvedHelpTextPath]);
 
   return (
     <Modal className="helpModal" size="70%" opened={showHelpText} withCloseButton={false} onClose={() => storeDispatch(toggleShowHelpText())}>
       {loading || foundAsset
-        ? <ReactMarkdownWrapper text={helpText} />
-        : <ResourceNotFound path={config.uiConfig.helpTextPath} />}
+        ? <ReactMarkdownWrapper text={templatedHelpText} />
+        : <ResourceNotFound path={resolvedHelpTextPath} />}
     </Modal>
   );
 }

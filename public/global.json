@@ -5,6 +5,7 @@
     "tutorial-replication",
     "demo-html",
     "demo-html-input",
+    "demo-templating",
     "demo-form-elements",
     "demo-training",
     "demo-html-trrack",
@@ -73,6 +74,9 @@
     },
     "demo-html-input": {
       "path": "demo-html-input/config.json"
+    },
+    "demo-templating": {
+      "path": "demo-templating/config.json"
     },
     "demo-form-elements": {
       "path": "demo-form-elements/config.json"

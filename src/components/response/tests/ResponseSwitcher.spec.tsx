@@ -19,6 +19,7 @@ const { capturedStringInputProps, mockIsAnalysis, mockStoreState } = vi.hoisted(
       order: 'fixed', orderPath: 'root', components: ['trial1'], skip: [],
     },
     completed: false,
+    answers: {},
   },
 }));
 
@@ -30,6 +31,7 @@ vi.mock('@mantine/core', () => ({
 
 vi.mock('react-router', () => ({
   useSearchParams: vi.fn(() => [new URLSearchParams()]),
+  useParams: vi.fn(() => ({})),
 }));
 
 vi.mock('../../../store/hooks/useStudyConfig', () => ({
@@ -42,6 +44,7 @@ vi.mock('../../../store/hooks/useIsAnalysis', () => ({
 
 vi.mock('../../../routes/utils', () => ({
   useCurrentStep: vi.fn(() => 0),
+  useCurrentComponent: vi.fn(() => ''),
 }));
 
 vi.mock('../../../utils/fetchStylesheet', () => ({
@@ -50,6 +53,7 @@ vi.mock('../../../utils/fetchStylesheet', () => ({
 
 vi.mock('../../../store/store', () => ({
   useStoreSelector: vi.fn((selector: (state: unknown) => unknown) => selector(mockStoreState)),
+  useFlatSequence: vi.fn(() => []),
 }));
 
 vi.mock('../CustomResponseInput', () => ({

@@ -6,14 +6,23 @@ import { ImageComponent } from '../parser/types';
 import { PREFIX } from '../utils/Prefix';
 import { getStaticAssetByPath } from '../utils/getStaticAsset';
 import { ResourceNotFound } from '../ResourceNotFound';
+import { compileTemplate } from '../utils/handlebars';
+import { useTemplateAnswerContext } from '../store/hooks/useTemplateAnswerContext';
 
 export function ImageController({ currentConfig }: { currentConfig: ImageComponent; }) {
+  const templateData = useTemplateAnswerContext();
+
+  const templatedPath = useMemo(
+    () => compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true, data: templateData }),
+    [currentConfig.path, currentConfig.parameters, templateData],
+  );
+
   const url = useMemo(() => {
-    if (currentConfig.path.startsWith('http')) {
-      return currentConfig.path;
+    if (templatedPath.startsWith('http')) {
+      return templatedPath;
     }
-    return `${PREFIX}${currentConfig.path}`;
-  }, [currentConfig.path]);
+    return `${PREFIX}${templatedPath}`;
+  }, [templatedPath]);
 
   const [loading, setLoading] = useState(true);
   const [assetFound, setAssetFound] = useState(false);
@@ -31,5 +40,5 @@ export function ImageController({ currentConfig }: { currentConfig: ImageCompone
 
   return loading || assetFound
     ? <Image mx="auto" src={url} />
-    : <ResourceNotFound path={currentConfig.path} />;
+    : <ResourceNotFound path={templatedPath} />;
 }

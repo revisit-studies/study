@@ -22,9 +22,11 @@ vi.mock('../../../store/store', () => ({
   useStoreSelector: (selector: (s: Record<string, unknown>) => unknown) => selector({
     showHelpText: mockShowHelpText,
     config: mockConfig,
+    answers: {},
   }),
   useStoreActions: () => ({ toggleShowHelpText: vi.fn() }),
   useStoreDispatch: () => vi.fn(),
+  useFlatSequence: () => [],
 }));
 
 vi.mock('../../../utils/getStaticAsset', () => ({
@@ -37,10 +39,11 @@ vi.mock('../../../utils/Prefix', () => ({
 
 vi.mock('../../../routes/utils', () => ({
   useCurrentComponent: () => 'trial1',
+  useCurrentStep: () => 0,
 }));
 
 vi.mock('../../../utils/handleComponentInheritance', () => ({
-  studyComponentToIndividualComponent: () => ({ helpTextPath: undefined }),
+  studyComponentToIndividualComponent: () => ({ helpTextPath: undefined, parameters: { condition: 'A' } }),
 }));
 
 vi.mock('../../ReactMarkdownWrapper', () => ({
@@ -132,5 +135,18 @@ describe('HelpModal', () => {
       render(<HelpModal />);
     });
     expect(mockGetStaticAssetByPath).toHaveBeenCalledWith('/help/guide.md');
+  });
+
+  test('compiles a templated helpTextPath before fetching, and uses the resolved path for errors', async () => {
+    mockConfig = {
+      components: {},
+      uiConfig: { helpTextPath: 'help-{{condition}}.md' },
+    };
+    mockGetStaticAssetByPath = vi.fn().mockResolvedValue(undefined);
+    await act(async () => {
+      render(<HelpModal />);
+    });
+    expect(mockGetStaticAssetByPath).toHaveBeenCalledWith('/help-A.md');
+    expect(screen.getByTestId('not-found').textContent).toBe('help-A.md');
   });
 });

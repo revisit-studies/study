@@ -1131,6 +1131,8 @@ export interface BaseIndividualComponent {
   instruction?: string;
   /** The location of the instructions. If present, will override the instruction location setting in the uiConfig. */
   instructionLocation?: ConfigResponseBlockLocation;
+  /** The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files. */
+  parameters?: Record<string, unknown>;
   /** The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. If present, will override the help text path set in the uiConfig. */
   helpTextPath?: string;
   /** Whether enter key should move to the next question. If present, will override the enter key setting in the uiConfig. */
@@ -1247,8 +1249,6 @@ export interface ReactComponent extends BaseIndividualComponent {
   type: 'react-component';
   /** The path to the react component. This should be a relative path from the src/public folder. */
   path: string;
-  /** The parameters that are passed to the react component. These can be used within your react component to render different things. */
-  parameters?: Record<string, unknown>;
 }
 
 /**
@@ -1329,8 +1329,6 @@ export interface WebsiteComponent extends BaseIndividualComponent {
   type: 'website';
   /** The path to the website. This should be a relative path from the public folder or could be an external website. */
   path: string;
-  /** The parameters that are passed to the website (iframe). These can be used within your website to render different things. */
-  parameters?: Record<string, unknown>;
 }
 
 /**
