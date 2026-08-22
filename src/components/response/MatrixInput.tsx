@@ -4,6 +4,7 @@ import {
 import {
   ChangeEvent, useMemo,
 } from 'react';
+import ClearSelectionButton from './ClearSelectionButton';
 import { MatrixResponse, ParsedMatrixQuestionOption, ParsedStringOption } from '../../parser/types';
 import { useStoreDispatch, useStoreActions } from '../../store/store';
 import checkboxClasses from './css/Checkbox.module.css';
@@ -97,6 +98,11 @@ function RadioGroupComponent({
             value={radio.value}
             key={`${radio.label}-${idx}`}
             classNames={{ radio: radioClasses.fixDisabled, icon: radioClasses.fixDisabledIcon }}
+            onClick={() => {
+              if (answer.value?.[question] === radio.value) {
+                onChange('', question);
+              }
+            }}
           />
         ))}
       </div>
@@ -164,6 +170,12 @@ export function MatrixInput({
       responseId: response.id,
     };
     storeDispatch(setMatrixAnswersRadio(payload));
+  };
+
+  const clearMatrix = () => {
+    orderedQuestions.forEach((q) => {
+      storeDispatch(setMatrixAnswersRadio({ responseId: response.id, questionKey: q, val: '' }));
+    });
   };
 
   const onChangeCheckbox = (event: ChangeEvent<HTMLInputElement>, questionKey: string, option: ParsedStringOption) => {
@@ -406,6 +418,14 @@ export function MatrixInput({
           </div>
         )}
       </Box>
+      <div style={
+          {
+            display: 'flex', justifyContent: 'flex-end', paddingRight: 8, marginTop: 8,
+          }
+      }
+      >
+        <ClearSelectionButton onClick={clearMatrix} disabled={disabled} />
+      </div>
       {error && (
         <Text c={required ? 'red' : 'orange'} size="sm" mt="xs">
           {error}

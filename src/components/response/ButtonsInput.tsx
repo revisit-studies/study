@@ -2,6 +2,7 @@ import {
   Flex, FocusTrap, Radio,
 } from '@mantine/core';
 import { useMemo } from 'react';
+import ClearSelectionButton from './ClearSelectionButton';
 import { ButtonsResponse, ParsedStringOption } from '../../parser/types';
 import classes from './css/ButtonsInput.module.css';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
@@ -19,7 +20,7 @@ export function ButtonsInput({
 }: {
   response: ButtonsResponse;
   disabled: boolean;
-  answer: { value?: string };
+  answer: { value?: string; onChange?: (value: string) => void };
   error?: string | null;
   index: number;
   enumerateQuestions: boolean;
@@ -47,7 +48,8 @@ export function ButtonsInput({
         label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
         description={secondaryText}
         key={response.id}
-        {...answer}
+        value={answer?.value}
+        onChange={() => { /* handled by Radio.Card clicks to support deselect */ }}
         error={error}
         errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
         style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
@@ -61,10 +63,20 @@ export function ButtonsInput({
               ta="center"
               className={classes.root}
               p="xs"
+              onClick={() => {
+                const current = answer.value;
+                const cb = answer?.onChange;
+                if (current === radio.value) {
+                  cb?.('');
+                } else {
+                  cb?.(radio.value);
+                }
+              }}
             >
               <OptionLabel label={radio.label} infoText={radio.infoText} button />
             </Radio.Card>
           ))}
+          <ClearSelectionButton onClick={() => answer?.onChange?.('')} disabled={disabled} />
         </Flex>
       </Radio.Group>
     </FocusTrap>
