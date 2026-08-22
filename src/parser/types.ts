@@ -430,7 +430,7 @@ export interface BaseResponse {
  */
 export interface NumericalResponse extends BaseResponse {
   type: 'numerical';
-  /** The placeholder text that is displayed in the input. */
+  /** The placeholder text displayed in the input. */
   placeholder?: string;
   /** The default value of the response. Specify a numeric value such as `25` or `3.14`. */
   default?: number;
@@ -488,6 +488,83 @@ export interface TextValidationRule {
 }
 
 /**
+ * The DateResponse interface defines a date, month, or year selected with a picker.
+ * Values are stored as `MM/DD/YYYY`, `MM/YYYY`, or `YYYY` strings based on `options`.
+ * ```json
+ * {
+ *   "id": "q-date",
+ *   "prompt": "Select a date.",
+ *   "location": "aboveStimulus",
+ *   "type": "date",
+ *   "options": "date",
+ *   "default": "08/21/2026",
+ *   "min": "08/01/2026",
+ *   "max": "08/31/2026",
+ *   "placeholder": "MM/DD/YYYY"
+ * }
+ * ```
+ */
+export interface DateResponse extends BaseResponse {
+  type: 'date';
+  /** Determines whether participants select a date, month, or year. Defaults to `date`. */
+  options?: 'date' | 'month' | 'year';
+  /** The placeholder text displayed in the input. Defaults to the format used by `options`. */
+  placeholder?: string;
+  /** The default value, using the format selected by `options`. */
+  default?: string;
+  /** The value required for a correct response, using the format selected by `options`. */
+  requiredValue?: string;
+  /** The earliest value accepted, using the format selected by `options`. */
+  min?: string;
+  /** The latest value accepted, using the format selected by `options`. */
+  max?: string;
+}
+
+/**
+ * The TimeResponse interface defines a time selected with a time input.
+ * Time values are stored as 24-hour `HH:mm` strings, or `HH:mm:ss` when
+ * `withSeconds` is `true`.
+ * ```json
+ * {
+ *   "id": "q-time",
+ *   "prompt": "Select a time.",
+ *   "location": "aboveStimulus",
+ *   "type": "time",
+ *   "default": "14:28:30",
+ *   "min": "09:00:00",
+ *   "max": "18:00:00",
+ *   "format": "24h",
+ *   "withSeconds": true
+ * }
+ * ```
+ */
+export interface TimeResponse extends BaseResponse {
+  type: 'time';
+  /** The default time in 24-hour `HH:mm` format, or `HH:mm:ss` when `withSeconds` is `true`. */
+  default?: string;
+  /** The time required for a correct response, in 24-hour `HH:mm` format, or `HH:mm:ss` when `withSeconds` is `true`. */
+  requiredValue?: string;
+  /** The earliest time accepted, in the same format as the response value. */
+  min?: string;
+  /** The latest time accepted, in the same format as the response value. */
+  max?: string;
+  /** The format displayed to participants. Defaults to `24h`. Values are always stored in 24-hour format. */
+  format?: '12h' | '24h';
+  /** Determines whether the input includes seconds. Defaults to `false`. */
+  withSeconds?: boolean;
+}
+
+/**
+ * The built-in validation operations available for short text responses.
+ *
+ * - `email`: An email in `local@domain.tld` format, such as `test@revisit.dev`.
+ * - `phoneNumber`: An international phone number containing 7–15 digits, with an optional leading `+` and hyphens between digits.
+ * - `usPhoneNumber`: A 10-digit US phone number in `000-000-0000` format.
+ * - `url`: An absolute HTTP or HTTPS URL, such as `https://revisit.dev`.
+ */
+export type BuiltInValidationType = 'email' | 'phoneNumber' | 'usPhoneNumber' | 'url';
+
+/**
  * The ShortTextResponse interface is used to define the properties of a short text response.
  * ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder.
  * ```json
@@ -528,6 +605,8 @@ export interface ShortTextResponse extends BaseResponse {
   maxWordLength?: number;
   /** Validation rules applied to the response value in array order. */
   textValidation?: TextValidationRule[];
+  /** Applies one predefined format from BuiltInValidationType to the response value. */
+  builtInValidation?: BuiltInValidationType;
 }
 
 /**
@@ -703,6 +782,9 @@ export interface MatrixCheckboxResponse extends BaseMatrixResponse {
 
 export type MatrixResponse = MatrixRadioResponse | MatrixCheckboxResponse;
 
+/** Predefined option sets available to dropdown responses. */
+export type DropdownOptionPreset = 'countries';
+
 /**
  * The DropdownResponse interface is used to define the properties of a dropdown response.
  * DropdownResponses render as a select input with user specified options.
@@ -733,15 +815,25 @@ export type MatrixResponse = MatrixRadioResponse | MatrixCheckboxResponse;
  *   "maxSelections": 4
  * }
  * ```
+ *
+ * A dropdown can alternatively use a predefined option set:
+ * ```json
+ * {
+ *   "id": "q-country",
+ *   "prompt": "Select your country.",
+ *   "type": "dropdown",
+ *   "options": "countries"
+ * }
+ * ```
  */
 export interface DropdownResponse extends BaseResponse {
   type: 'dropdown';
-  /** The placeholder text that is displayed in the input. */
+  /** The placeholder text displayed in the input. Defaults to `Select a country` when `options` is `countries`. */
   placeholder?: string;
   /** The default value of the response. Use a string for single-select dropdowns and a string array for multiselect dropdowns. */
   default?: string | string[];
-  /** The options that are displayed in the dropdown. */
-  options: (StringOption | string)[];
+  /** The options that are displayed in the dropdown, or a predefined option set. */
+  options: (StringOption | string)[] | DropdownOptionPreset;
   /** The minimum number of selections that are required. This will make the dropdown a multiselect dropdown. */
   minSelections?: number;
   /** The maximum number of selections that are required. This will make the dropdown a multiselect dropdown. */
@@ -1056,7 +1148,7 @@ export interface DividerResponse extends Omit<BaseResponse, 'prompt' | 'infoText
   withDontKnow?: undefined;
 }
 
-export type Response = NumericalResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | RankingResponse | ReactiveResponse | CustomResponse | MatrixResponse | ButtonsResponse | TextOnlyResponse | DividerResponse;
+export type Response = NumericalResponse | DateResponse | TimeResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | RankingResponse | ReactiveResponse | CustomResponse | MatrixResponse | ButtonsResponse | TextOnlyResponse | DividerResponse;
 
 /**
  * The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks or if skip logic is required based on the answer.

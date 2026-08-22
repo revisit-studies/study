@@ -550,6 +550,22 @@ describe('DropdownInput', () => {
     );
     expect(html).toContain('data-multiselect');
   });
+
+  test('renders the countries option preset with emoji labels', () => {
+    const html = renderToStaticMarkup(
+      <DropdownInput
+        response={{
+          id: 'country', prompt: 'Select a country', type: 'dropdown', options: 'countries',
+        }}
+        disabled={false}
+        answer={{ value: '' }}
+        index={1}
+        enumerateQuestions={false}
+      />,
+    );
+
+    expect(html).toContain('🇺🇸 United States');
+  });
 });
 
 // ── CheckBoxInput ─────────────────────────────────────────────────────────────

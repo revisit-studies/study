@@ -3,7 +3,7 @@ import { DropdownResponse } from '../../parser/types';
 import classes from './css/Input.module.css';
 import { InputLabel } from './InputLabel';
 import { OptionLabel } from './OptionLabel';
-import { parseStringOptions } from '../../utils/stringOptions';
+import { getDropdownOptions } from '../../utils/dropdownOptions';
 
 export function DropdownInput({
   response,
@@ -24,12 +24,12 @@ export function DropdownInput({
     placeholder,
     prompt,
     required,
-    options,
     secondaryText,
     infoText,
   } = response;
 
-  const optionsAsStringOptions = parseStringOptions(options);
+  const optionsAsStringOptions = getDropdownOptions(response);
+  const resolvedPlaceholder = placeholder ?? (response.options === 'countries' ? 'Select a country' : undefined);
   const isMultiselect = (response.minSelections && response.minSelections >= 1) || (response.maxSelections && response.maxSelections > 1);
   const renderOption = ({ option }: { option: { label: string; infoText?: string } }) => (
     <OptionLabel label={option.label} infoText={option.infoText} />
@@ -41,7 +41,7 @@ export function DropdownInput({
         disabled={disabled}
         label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
         description={secondaryText}
-        placeholder={!answer.value || answer.value.length === 0 ? placeholder : undefined}
+        placeholder={!answer.value || answer.value.length === 0 ? resolvedPlaceholder : undefined}
         data={optionsAsStringOptions}
         radius="md"
         size="md"
@@ -61,7 +61,7 @@ export function DropdownInput({
         disabled={disabled}
         label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
         description={secondaryText}
-        placeholder={placeholder}
+        placeholder={resolvedPlaceholder}
         data={optionsAsStringOptions}
         radius="md"
         size="md"
@@ -72,6 +72,7 @@ export function DropdownInput({
         errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
         classNames={{ input: classes.fixDisabled }}
         maxDropdownHeight={200}
+        searchable
         renderOption={renderOption}
       />
     )

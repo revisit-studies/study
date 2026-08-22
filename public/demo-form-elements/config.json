@@ -150,6 +150,12 @@
           "maxSelections": 3
         },
         {
+          "id": "q-country-dropdown",
+          "prompt": "Country dropdown example",
+          "type": "dropdown",
+          "options": "countries"
+        },
+        {
           "id": "q-checkbox",
           "prompt": "Checkbox example, but this time with a long title that makes a ton of sense and is really cool",
           "secondaryText": "Checkboxes for multi-selection",
@@ -424,6 +430,166 @@
           "placeholder": "4–10 words",
           "minWordLength": 4,
           "maxWordLength": 10
+        },
+        {
+          "id": "built-in-validation-title",
+          "type": "textOnly",
+          "prompt": "## Built-in Validation\n\nShort text responses can use built-in validation to ensure the entered data is in the correct format.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "built-in-validation-email",
+          "type": "shortText",
+          "prompt": "Enter an email address.",
+          "secondaryText": "For example: test@revisit.dev.",
+          "placeholder": "test@revisit.dev",
+          "builtInValidation": "email"
+        },
+        {
+          "id": "built-in-validation-phone-number",
+          "type": "shortText",
+          "prompt": "Enter an international phone number containing 7 to 15 digits.",
+          "secondaryText": "It may begin with + and use hyphens between digits. For example: +800-0000-0000 or 8000000000.",
+          "placeholder": "+800-0000-0000",
+          "builtInValidation": "phoneNumber"
+        },
+        {
+          "id": "built-in-validation-us-phone-number",
+          "type": "shortText",
+          "prompt": "Enter a 10-digit US phone number with two hyphens.",
+          "secondaryText": "For example: 800-000-0000.",
+          "placeholder": "800-000-0000",
+          "builtInValidation": "usPhoneNumber"
+        },
+        {
+          "id": "built-in-validation-url",
+          "type": "shortText",
+          "prompt": "Enter an HTTP or HTTPS URL.",
+          "secondaryText": "For example: https://revisit.dev.",
+          "placeholder": "https://revisit.dev",
+          "builtInValidation": "url"
+        },
+        {
+          "id": "date-time-response-title",
+          "type": "textOnly",
+          "prompt": "## Date and Time Responses\n\nDate and time responses use dedicated inputs and store their values as strings. The examples below demonstrate each date and time option separately.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "date-placeholder-response",
+          "type": "date",
+          "options": "date",
+          "prompt": "Date with a custom placeholder.",
+          "secondaryText": "This response uses options: date and placeholder: Enter MM/DD/YYYY.",
+          "placeholder": "Enter MM/DD/YYYY"
+        },
+        {
+          "id": "date-min-response",
+          "type": "date",
+          "prompt": "Date with a minimum.",
+          "secondaryText": "This response uses min: 06/01/2026.",
+          "min": "06/01/2026"
+        },
+        {
+          "id": "date-max-response",
+          "type": "date",
+          "prompt": "Date with a maximum.",
+          "secondaryText": "This response uses max: 09/30/2026.",
+          "max": "09/30/2026"
+        },
+        {
+          "id": "date-range-response",
+          "type": "date",
+          "prompt": "Date within a range.",
+          "secondaryText": "This response uses min: 06/01/2026 and max: 06/30/2026.",
+          "min": "06/01/2026",
+          "max": "06/30/2026"
+        },
+        {
+          "id": "date-required-value-response",
+          "type": "date",
+          "prompt": "Date with a required value.",
+          "secondaryText": "Enter exactly 06/24/2026. This response uses requiredValue.",
+          "requiredValue": "06/24/2026"
+        },
+        {
+          "id": "month-picker-response",
+          "type": "date",
+          "options": "month",
+          "prompt": "Month picker.",
+          "secondaryText": "This response uses options: month and stores its value as MM/YYYY.",
+          "default": "06/2026",
+          "min": "01/2026",
+          "max": "12/2026"
+        },
+        {
+          "id": "year-picker-response",
+          "type": "date",
+          "options": "year",
+          "prompt": "Year picker.",
+          "secondaryText": "This response uses options: year and stores its value as YYYY.",
+          "default": "2026",
+          "min": "2000",
+          "max": "2030"
+        },
+        {
+          "id": "time-standard-response",
+          "type": "time",
+          "prompt": "Time without seconds.",
+          "secondaryText": "By default, time responses use the 24-hour HH:mm format."
+        },
+        {
+          "id": "time-12-hour-response",
+          "type": "time",
+          "prompt": "Time in 12-hour format.",
+          "secondaryText": "This response uses format: 12h and displays AM/PM while storing its value in 24-hour HH:mm format.",
+          "format": "12h",
+          "default": "14:28"
+        },
+        {
+          "id": "time-min-response",
+          "type": "time",
+          "prompt": "Time with a minimum.",
+          "secondaryText": "This response uses min: 09:00.",
+          "min": "09:00"
+        },
+        {
+          "id": "time-max-response",
+          "type": "time",
+          "prompt": "Time with a maximum.",
+          "secondaryText": "This response uses max: 18:00.",
+          "max": "18:00"
+        },
+        {
+          "id": "time-range-response",
+          "type": "time",
+          "prompt": "Time within a range.",
+          "secondaryText": "This response uses min: 09:00 and max: 18:00.",
+          "min": "09:00",
+          "max": "18:00"
+        },
+        {
+          "id": "time-seconds-response",
+          "type": "time",
+          "prompt": "Time with seconds.",
+          "secondaryText": "This response uses withSeconds: true and the HH:mm:ss format.",
+          "withSeconds": true
+        },
+        {
+          "id": "time-seconds-range-response",
+          "type": "time",
+          "prompt": "Time with seconds within a range.",
+          "secondaryText": "This response combines withSeconds: true with min: 09:00:00 and max: 18:00:00.",
+          "min": "09:00:00",
+          "max": "18:00:00",
+          "withSeconds": true
+        },
+        {
+          "id": "time-required-value-response",
+          "type": "time",
+          "prompt": "Time with a required value.",
+          "secondaryText": "Enter exactly 14:28. This response uses requiredValue.",
+          "requiredValue": "14:28"
         }
       ]
     },
@@ -455,6 +621,37 @@
           "type": "longText",
           "prompt": "Long text default",
           "default": "Prefilled long text value for local testing."
+        },
+        {
+          "id": "default-date",
+          "type": "date",
+          "prompt": "Date default",
+          "default": "06/24/2026",
+          "min": "06/01/2026",
+          "max": "06/30/2026"
+        },
+        {
+          "id": "default-month",
+          "type": "date",
+          "options": "month",
+          "prompt": "Month default",
+          "default": "06/2026"
+        },
+        {
+          "id": "default-year",
+          "type": "date",
+          "options": "year",
+          "prompt": "Year default",
+          "default": "2026"
+        },
+        {
+          "id": "default-time",
+          "type": "time",
+          "prompt": "Time default",
+          "default": "14:28:30",
+          "min": "09:00:00",
+          "max": "18:00:00",
+          "withSeconds": true
         },
         {
           "id": "default-likert",
@@ -504,6 +701,13 @@
             }
           ],
           "default": "pie"
+        },
+        {
+          "id": "default-dropdown-country",
+          "type": "dropdown",
+          "prompt": "Country dropdown default",
+          "options": "countries",
+          "default": "US"
         },
         {
           "id": "default-dropdown-multiselect",

@@ -3,6 +3,7 @@ import { test, expect, Page } from '@playwright/test';
 import {
   nextClick,
   readStoredComponentTiming,
+  seekReplay,
   waitForStudyEndMessage,
 } from './utils';
 
@@ -29,6 +30,24 @@ async function answerMatrixCheckboxRows(
       const column = selectedColumns[i];
       await checkboxes.nth((row * columnCount) + column).click();
     }
+  }
+}
+
+async function fillTimePicker(page: Page, prompt: string, value: string) {
+  const [hours, minutes, seconds] = value.split(':');
+  await page.getByLabel(`${prompt} hours`).fill(hours);
+  await page.getByLabel(`${prompt} minutes`).fill(minutes);
+  if (seconds !== undefined) {
+    await page.getByLabel(`${prompt} seconds`).fill(seconds);
+  }
+}
+
+async function expectTimePickerValue(page: Page, prompt: string, value: string) {
+  const [hours, minutes, seconds] = value.split(':');
+  await expect(page.getByLabel(`${prompt} hours`)).toHaveValue(hours);
+  await expect(page.getByLabel(`${prompt} minutes`)).toHaveValue(minutes);
+  if (seconds !== undefined) {
+    await expect(page.getByLabel(`${prompt} seconds`)).toHaveValue(seconds);
   }
 }
 
@@ -97,6 +116,12 @@ test('Test questionnaire component with responses and randomizing questions and 
   await expect(minDropdownSelectionsText).toBeVisible();
   await page.getByRole('option', { name: 'Scatter', exact: true }).click();
 
+  // Country dropdown
+  const countryDropdown = page.getByPlaceholder('Select a country');
+  await countryDropdown.fill('United Sta');
+  await page.getByRole('option', { name: /United States$/ }).click();
+  await expect(countryDropdown).toHaveValue(/United States/);
+
   // Vertical Checkbox
   await page.getByRole('checkbox', { name: 'Option 2' }).nth(0).click();
   const minSelectionsText = await page.getByText('Please select at least 2 options');
@@ -132,7 +157,9 @@ test('Test questionnaire component with responses and randomizing questions and 
   // Go to the next page
   await nextClick(page);
 
-  // Text validation
+  // Fill the survey: Text Validation
+  await expect(page.getByText('Text Validation', { exact: true })).toBeVisible();
+  const textValidationReplayPath = new URL(page.url()).pathname;
   const regexInput = page.getByPlaceholder('ABC-123');
   await regexInput.fill('^[A-Z]{3}-\\d{3}$');
   await nextClick(page);
@@ -149,10 +176,36 @@ test('Test questionnaire component with responses and randomizing questions and 
   await page.getByPlaceholder('20–100 characters').fill('This response has enough characters.');
   await page.getByPlaceholder('2–5 words').fill('two words');
   await page.getByPlaceholder('4–10 words').fill('This has four words');
+  await page.getByPlaceholder('test@revisit.dev').fill('test@revisit.dev');
+  await page.getByPlaceholder('+800-0000-0000').fill('+800-0000-0000');
+  await page.getByPlaceholder('800-000-0000').fill('800-000-0000');
+  await page.getByPlaceholder('https://revisit.dev').fill('https://revisit.dev');
+  await page.getByLabel('Date with a custom placeholder.').fill('06/24/2026');
+  await page.getByLabel('Date with a minimum.').fill('06/24/2026');
+  await page.getByLabel('Date with a maximum.').fill('06/24/2026');
+  await page.getByLabel('Date within a range.').fill('06/24/2026');
+  await page.getByLabel('Date with a required value.').fill('06/24/2026');
+  await expect(page.getByLabel('Month picker.')).toContainText('06/2026');
+  await expect(page.getByLabel('Year picker.')).toContainText('2026');
+  await fillTimePicker(page, 'Time without seconds.', '14:28');
+  await fillTimePicker(page, 'Time with a minimum.', '14:28');
+  await fillTimePicker(page, 'Time with a maximum.', '14:28');
+  await fillTimePicker(page, 'Time within a range.', '14:28');
+  await fillTimePicker(page, 'Time with seconds.', '14:28:30');
+  await fillTimePicker(page, 'Time with seconds within a range.', '14:28:30');
+  await fillTimePicker(page, 'Time with a required value.', '14:28');
+  await expect(page.getByLabel('Time in 12-hour format. hours')).toHaveValue('02');
+  await expect(page.getByLabel('Time in 12-hour format. minutes')).toHaveValue('28');
+  await expect(page.getByLabel('Time in 12-hour format. am/pm')).toHaveValue('PM');
   await nextClick(page);
 
   // Default Values should be fully answerable via defaults
   await expect(page.getByText('Default Values Demo')).toBeVisible();
+  await expect(page.getByLabel('Date default')).toHaveValue('06/24/2026');
+  await expect(page.getByLabel('Month default')).toContainText('06/2026');
+  await expect(page.getByLabel('Year default')).toContainText('2026');
+  await expectTimePickerValue(page, 'Time default', '14:28:30');
+  await expect(page.getByPlaceholder('Select a country')).toHaveValue(/United States/);
   await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeEnabled();
   await nextClick(page);
 
@@ -274,13 +327,28 @@ test('Test questionnaire component with responses and randomizing questions and 
   // Check that the thank you message is displayed
   await waitForStudyEndMessage(page);
 
+  await expect.poll(() => readStoredComponentTiming(page, 'Text Validation')).not.toBeNull();
+  const textValidationTiming = await readStoredComponentTiming(page, 'Text Validation');
   await expect.poll(() => readStoredComponentTiming(page, 'Sidebar Form Elements')).not.toBeNull();
   const sidebarTiming = await readStoredComponentTiming(page, 'Sidebar Form Elements');
-  if (!sidebarTiming) {
-    throw new Error('Sidebar form timing was not stored');
+  if (!textValidationTiming || !sidebarTiming) {
+    throw new Error('Form element timing was not stored');
   }
 
   const replaySearch = `participantId=${encodeURIComponent(sidebarTiming.participantId)}&revisitPageId=e2e-sidebar-replay`;
+  await page.goto(`${textValidationReplayPath}?${replaySearch}`);
+  await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
+  await seekReplay(
+    page,
+    textValidationTiming.startTime,
+    textValidationTiming.endTime,
+    textValidationTiming.endTime,
+  );
+  await expect(page.getByLabel('Date within a range.')).toHaveValue('06/24/2026');
+  await expect(page.getByLabel('Month picker.')).toContainText('06/2026');
+  await expect(page.getByLabel('Year picker.')).toContainText('2026');
+  await expectTimePickerValue(page, 'Time with seconds within a range.', '14:28:30');
+
   await page.goto(`${sidebarReplayPath}?${replaySearch}`);
   await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
 
