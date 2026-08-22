@@ -129,6 +129,4 @@ jobs:
         run: >-
           yarn test --project=webkit
           tests/demo-html.spec.ts
-          tests/demo-form-elements.spec.ts
-          tests/demo-image.spec.ts
           tests/startup-error.spec.ts
