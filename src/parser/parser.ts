@@ -123,6 +123,15 @@ function verifyStudySkip(
   }
 }
 
+// Matches a path made up of literal text interspersed with well-formed, balanced
+// `{{ ... }}` Handlebars expressions. Used to distinguish a templated path (which
+// can't be resolved until runtime) from a malformed one containing a stray `{{`/`}}`.
+const HANDLEBARS_TEMPLATED_PATH_REGEX = /^([^{}]|\{\{[^{}]+\}\})*$/;
+
+function isTemplatedPath(path: string) {
+  return path.includes('{{') && HANDLEBARS_TEMPLATED_PATH_REGEX.test(path);
+}
+
 function verifyReactComponent(
   instancePath: string,
   component: Partial<IndividualComponent>,
@@ -134,7 +143,7 @@ function verifyReactComponent(
       && component.type === 'react-component'
       // A templated path (e.g. `{{file}}.tsx`) can't be resolved until runtime, once
       // parameters/answers are known, so it can never match a real file in this static glob.
-      && !component.path.includes('{{')
+      && !isTemplatedPath(component.path)
       && !(`../public/${component.path}` in modules)
   ) {
     errors.push({

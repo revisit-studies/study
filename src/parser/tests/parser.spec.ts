@@ -2064,4 +2064,15 @@ describe('React component path validation', () => {
 
     expect(result.errors).not.toContainEqual(expect.objectContaining({ message: 'Unresolved path' }));
   });
+
+  test('rejects a path with malformed Handlebars syntax instead of treating it as templated', async () => {
+    const result = await parseStudyConfig(JSON.stringify(
+      makeReactComponentStudyConfig('demo-react-trrack/assets/{{file.tsx'),
+    ));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'Unresolved path',
+      instancePath: '/components/trial/path',
+    }));
+  });
 });
