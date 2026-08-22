@@ -19,6 +19,7 @@ import { FactorObject, FactorPrimitive, StudyConfig } from '../../../parser/type
 import { ParticipantDataWithStatus } from '../../../storage/types';
 import { getBetweenSubjectsCombinationKey, StageInfo } from '../../../storage/engines/types';
 import { DISTINCT_COLOR_PALETTE, getDistinctColorShade } from '../../../utils/colors';
+import { ParticipantTimeoutModal } from '../ParticipantTimeoutModal';
 
 type BetweenSubjectsLevel = FactorPrimitive | FactorObject;
 
@@ -34,10 +35,10 @@ type BetweenSubjectsCombination = {
 
 type BetweenSubjectsCombinationRow = {
   combinationKey: string;
-  participantCount: number;
+  participantStatusCounts: { completed: number; inProgress: number };
   desiredParticipants: number | '';
   enabled: boolean;
-  [factorName: string]: string | number | boolean;
+  [factorName: string]: string | number | boolean | { completed: number; inProgress: number };
 };
 
 const DEFAULT_STAGE_COLOR = DISTINCT_COLOR_PALETTE[0];
@@ -94,19 +95,85 @@ export function getBetweenSubjectsCombinations(
   }));
 }
 
-export function getBetweenSubjectsCombinationCount(
+function participantMatchesBetweenSubjectsCombination(
+  participant: ParticipantDataWithStatus,
+  stageName: string,
+  combination: BetweenSubjectsCombination,
+  betweenSubjectsFactors: BetweenSubjectsFactor[],
+) {
+  return participant.stage === stageName
+    && betweenSubjectsFactors.every((factor) => (
+      isEqual(participant.sequence.parameters?.[factor.factorName], combination.parameters[factor.factorName])
+    ));
+}
+
+function getBetweenSubjectsCombinationStatusCounts(
   participants: ParticipantDataWithStatus[],
   stageName: string,
   combination: BetweenSubjectsCombination,
   betweenSubjectsFactors: BetweenSubjectsFactor[],
 ) {
-  return participants.filter((participant) => (
-    !participant.rejected
-    && participant.stage === stageName
-    && betweenSubjectsFactors.every((factor) => (
-      isEqual(participant.sequence.parameters?.[factor.factorName], combination.parameters[factor.factorName])
-    ))
-  )).length;
+  return participants.reduce((counts, participant) => {
+    const matchesCombination = !participant.rejected && participantMatchesBetweenSubjectsCombination(
+      participant,
+      stageName,
+      combination,
+      betweenSubjectsFactors,
+    );
+    if (!matchesCombination) {
+      return counts;
+    }
+
+    if (participant.completed) {
+      counts.completed += 1;
+    } else {
+      counts.inProgress += 1;
+    }
+    return counts;
+  }, { completed: 0, inProgress: 0 });
+}
+
+function StageParticipantStatusBadges({
+  completed,
+  inProgress,
+  onInProgressClick,
+}: {
+  completed: number;
+  inProgress: number;
+  onInProgressClick?: () => void;
+}) {
+  return (
+    <Stack gap={4} align="flex-start">
+      <Badge color="green" variant="filled" size="sm" c="gray.0">
+        Completed
+        {' '}
+        {completed}
+      </Badge>
+      {onInProgressClick && inProgress > 0 ? (
+        <Badge
+          aria-label={`Review ${inProgress} in-progress participant${inProgress === 1 ? '' : 's'}`}
+          color="orange"
+          component="button"
+          c="gray.0"
+          onClick={onInProgressClick}
+          size="sm"
+          style={{ cursor: 'pointer' }}
+          type="button"
+          variant="filled"
+        >
+          In Progress
+          {' '}
+          {inProgress}
+        </Badge>
+      ) : (
+        <Badge color="orange" variant="filled" size="sm" c="gray.0">
+          In Progress
+          {' '}
+          {inProgress}
+        </Badge>
+      )}
+    </Stack>
+  );
 }
 
 export function getDefaultDesiredParticipantCounts(
@@ -229,6 +296,19 @@ function renderDesiredParticipantsCell(
   );
 }
 
+function renderParticipantStatusCell(
+  row: BetweenSubjectsCombinationRow,
+  onReviewInProgress: (combinationKey: string) => void,
+) {
+  return (
+    <StageParticipantStatusBadges
+      completed={row.participantStatusCounts.completed}
+      inProgress={row.participantStatusCounts.inProgress}
+      onInProgressClick={() => onReviewInProgress(row.combinationKey)}
+    />
+  );
+}
+
 function BetweenSubjectsCombinationTable({
   stage,
   participants,
@@ -236,6 +316,7 @@ function BetweenSubjectsCombinationTable({
   combinations,
   onToggle,
   onSetDesiredParticipants,
+  onReviewInProgress,
 }: {
   stage: StageInfo;
   participants: ParticipantDataWithStatus[];
@@ -243,6 +324,7 @@ function BetweenSubjectsCombinationTable({
   combinations: BetweenSubjectsCombination[];
   onToggle: (stage: StageInfo, combinationKey: string, enabled: boolean) => Promise<void>;
   onSetDesiredParticipants: (stage: StageInfo, combinationKey: string, desiredParticipants: number | '') => Promise<void>;
+  onReviewInProgress: (participants: ParticipantDataWithStatus[]) => void;
 }) {
   const data = useMemo<BetweenSubjectsCombinationRow[]>(() => {
     const desiredParticipantCounts = getDesiredParticipantCounts(
@@ -253,7 +335,7 @@ function BetweenSubjectsCombinationTable({
 
     return combinations.map((combination) => ({
       combinationKey: combination.key,
-      participantCount: getBetweenSubjectsCombinationCount(
+      participantStatusCounts: getBetweenSubjectsCombinationStatusCounts(
         participants,
         stage.stageName,
         combination,
@@ -268,14 +350,33 @@ function BetweenSubjectsCombinationTable({
     }));
   }, [betweenSubjectsFactors, combinations, participants, stage]);
 
+  const handleReviewInProgress = useCallback((combinationKey: string) => {
+    const combination = combinations.find((item) => item.key === combinationKey);
+    if (!combination) {
+      return;
+    }
+
+    onReviewInProgress(participants.filter((participant) => (
+      !participant.completed
+      && !participant.rejected
+      && participantMatchesBetweenSubjectsCombination(
+        participant,
+        stage.stageName,
+        combination,
+        betweenSubjectsFactors,
+      )
+    )));
+  }, [betweenSubjectsFactors, combinations, onReviewInProgress, participants, stage.stageName]);
+
   const columns = useMemo<MrtColumnDef<BetweenSubjectsCombinationRow>[]>(() => [
     ...betweenSubjectsFactors.map((factor) => ({
       accessorKey: factor.factorName,
       header: factor.factorName,
     } satisfies MrtColumnDef<BetweenSubjectsCombinationRow>)),
     {
-      accessorKey: 'participantCount',
+      accessorKey: 'participantStatusCounts',
       header: 'Participants',
+      Cell: ({ row }) => renderParticipantStatusCell(row.original, handleReviewInProgress),
     },
     {
       accessorKey: 'desiredParticipants',
@@ -296,7 +397,7 @@ function BetweenSubjectsCombinationTable({
         onToggle,
       ),
     },
-  ], [betweenSubjectsFactors, onSetDesiredParticipants, onToggle, stage]);
+  ], [betweenSubjectsFactors, handleReviewInProgress, onSetDesiredParticipants, onToggle, stage]);
 
   const table = useMantineReactTable({
     columns,
@@ -346,6 +447,7 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
   const [allStages, setAllStages] = useState<StageInfo[]>([{ stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR }]);
   const [stageParticipantStatusCounts, setStageParticipantStatusCounts] = useState<StageParticipantStatusCounts>({});
   const [participants, setParticipants] = useState<ParticipantDataWithStatus[]>([]);
+  const [participantIdsForTimeout, setParticipantIdsForTimeout] = useState<string[] | null>(null);
   const [expandedStageNames, setExpandedStageNames] = useState<string[]>([]);
   const currentStageNameRef = useRef<string | undefined>(undefined);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -576,6 +678,10 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
     await refreshStageData();
   };
 
+  const handleReviewInProgress = useCallback((selectedParticipants: ParticipantDataWithStatus[]) => {
+    setParticipantIdsForTimeout(selectedParticipants.map((participant) => participant.participantId));
+  }, []);
+
   if (!asyncStatus) {
     return (
       <Stack align="center" p="md">
@@ -595,6 +701,16 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
           </Button>
         )}
       </Group>
+
+      <ParticipantTimeoutModal
+        hideReviewButton
+        onClose={() => setParticipantIdsForTimeout(null)}
+        opened={participantIdsForTimeout !== null}
+        participants={participantIdsForTimeout === null
+          ? []
+          : participants.filter((participant) => participantIdsForTimeout.includes(participant.participantId))}
+        refresh={refreshStageData}
+      />
 
       <Table striped highlightOnHover withTableBorder style={{ tableLayout: 'fixed', width: '100%' }}>
         <colgroup>
@@ -656,18 +772,13 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
                     )}
                   </Table.Td>
                   <Table.Td>
-                    <Group gap={4} wrap="nowrap">
-                      <Badge color="teal" variant="light" size="sm">
-                        Completed
-                        {' '}
-                        {stageParticipantStatusCounts[stage.stageName]?.completed || 0}
-                      </Badge>
-                      <Badge color="blue" variant="light" size="sm">
-                        In Progress
-                        {' '}
-                        {stageParticipantStatusCounts[stage.stageName]?.inProgress || 0}
-                      </Badge>
-                    </Group>
+                    <StageParticipantStatusBadges
+                      completed={stageParticipantStatusCounts[stage.stageName]?.completed || 0}
+                      inProgress={stageParticipantStatusCounts[stage.stageName]?.inProgress || 0}
+                      onInProgressClick={() => handleReviewInProgress(participants.filter((participant) => (
+                        participant.stage === stage.stageName && !participant.completed && !participant.rejected
+                      )))}
+                    />
                   </Table.Td>
                   <Table.Td>
                     {editingIndex === index ? (
@@ -699,7 +810,12 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
                         )}
                       </Group>
                     ) : (
-                      <Text size="sm">{stage.maxParticipants ?? 'Unlimited'}</Text>
+                      <Text size="sm">
+                        {(stageParticipantStatusCounts[stage.stageName]?.completed || 0)
+                          + (stageParticipantStatusCounts[stage.stageName]?.inProgress || 0)}
+                        {' / '}
+                        {stage.maxParticipants ?? 'Unlimited'}
+                      </Text>
                     )}
                   </Table.Td>
                   <Table.Td>
@@ -770,6 +886,7 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
                             combinations={betweenSubjectsCombinations}
                             onToggle={handleToggleBetweenSubjectsCombination}
                             onSetDesiredParticipants={handleSetDesiredParticipants}
+                            onReviewInProgress={handleReviewInProgress}
                           />
                         )}
                       </Paper>

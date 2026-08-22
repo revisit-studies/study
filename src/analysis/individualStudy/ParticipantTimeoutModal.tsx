@@ -57,14 +57,21 @@ export function getInProgressParticipantsByElapsedTime(
 export function ParticipantTimeoutModal({
   participants,
   refresh,
+  opened: controlledOpened,
+  onClose,
+  hideReviewButton = false,
 }: {
   participants: ParticipantDataWithStatus[];
   refresh: () => Promise<unknown>;
+  opened?: boolean;
+  onClose?: () => void;
+  hideReviewButton?: boolean;
 }) {
   const { storageEngine } = useStorageEngine();
   const { user } = useAuth();
-  const [opened, setOpened] = useState(false);
+  const [uncontrolledOpened, setUncontrolledOpened] = useState(false);
   const [timingOutParticipantIds, setTimingOutParticipantIds] = useState<string[]>([]);
+  const opened = controlledOpened ?? uncontrolledOpened;
 
   const inProgressParticipants = useMemo(
     () => getInProgressParticipantsByElapsedTime(participants),
@@ -89,26 +96,34 @@ export function ParticipantTimeoutModal({
 
   const reviewLabel = `Review (${inProgressParticipants.length})`;
   const reviewAriaLabel = `Review In-Progress Participants (${inProgressParticipants.length})`;
+  const handleClose = () => {
+    if (controlledOpened === undefined) {
+      setUncontrolledOpened(false);
+    }
+    onClose?.();
+  };
 
   return (
     <>
-      <Tooltip label={user.isAdmin ? reviewAriaLabel : 'Only admins can time out participants'}>
-        <span>
-          <Button
-            aria-label={reviewAriaLabel}
-            leftSection={<IconClockOff size={16} />}
-            disabled={!user.isAdmin || inProgressParticipants.length === 0}
-            onClick={() => setOpened(true)}
-            size="xs"
-            variant="light"
-          >
-            {reviewLabel}
-          </Button>
-        </span>
-      </Tooltip>
+      {!hideReviewButton && (
+        <Tooltip label={user.isAdmin ? reviewAriaLabel : 'Only admins can time out participants'}>
+          <span>
+            <Button
+              aria-label={reviewAriaLabel}
+              leftSection={<IconClockOff size={16} />}
+              disabled={!user.isAdmin || inProgressParticipants.length === 0}
+              onClick={() => setUncontrolledOpened(true)}
+              size="xs"
+              variant="light"
+            >
+              {reviewLabel}
+            </Button>
+          </span>
+        </Tooltip>
+      )}
       <Modal
         opened={opened}
-        onClose={() => setOpened(false)}
+        onClose={handleClose}
         title="In-Progress Participants"
         size="lg"
       >

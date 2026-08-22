@@ -146,6 +146,7 @@ vi.mock('@mantine/core', () => ({
     { Group: ({ children }: { children: ReactNode }) => <div>{children}</div> },
   ),
   Container: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Divider: () => <hr />,
   Flex: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Group: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   LoadingOverlay: () => null,

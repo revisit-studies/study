@@ -37,6 +37,16 @@ vi.mock('../../../../storage/storageEngineHooks', () => ({
   useStorageEngine: () => ({ storageEngine: mockStorageEngine }),
 }));
 
+vi.mock('../../ParticipantTimeoutModal', () => ({
+  ParticipantTimeoutModal: ({
+    opened,
+    participants,
+  }: {
+    opened?: boolean;
+    participants: { participantId: string }[];
+  }) => (opened ? <div data-testid="timeout-participants">{participants.map((participant) => participant.participantId).join(',')}</div> : null),
+}));
+
 vi.mock('@mantine/core', () => ({
   Paper: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Stack: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -81,7 +91,16 @@ vi.mock('@mantine/core', () => ({
   Space: () => <div />,
   Box: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Collapse: ({ children, in: open }: { children: ReactNode; in: boolean }) => (open ? <div>{children}</div> : null),
-  Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
+  Badge: ({
+    children, component, onClick, 'aria-label': ariaLabel,
+  }: {
+    children: ReactNode;
+    component?: string;
+    onClick?: () => void;
+    'aria-label'?: string;
+  }) => (component === 'button'
+    ? <button type="button" aria-label={ariaLabel} onClick={onClick}>{children}</button>
+    : <span>{children}</span>),
   Table: Object.assign(
     ({ children }: { children: ReactNode }) => <table>{children}</table>,
     {
@@ -397,7 +416,38 @@ describe('ManageView', () => {
     expect(screen.getByText('Max Participants')).toBeDefined();
     expect(screen.getByText('Completed 1')).toBeDefined();
     expect(screen.getByText('In Progress 1')).toBeDefined();
-    expect(screen.getByText('5')).toBeDefined();
+    expect(screen.getByText('2 / 5')).toBeDefined();
+  });
+
+  test('StageManagementItem reviews only the clicked stage in-progress participants', async () => {
+    mockStorageEngine!.getStageData.mockResolvedValue({
+      currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
+      allStages: [{ stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR }],
+    });
+    mockStorageEngine!.getAllParticipantsData.mockResolvedValue([
+      {
+        participantId: 'in-progress', stage: 'DEFAULT', rejected: false, completed: false,
+      },
+      {
+        participantId: 'completed', stage: 'DEFAULT', rejected: false, completed: true,
+      },
+      {
+        participantId: 'other-stage', stage: 'OTHER', rejected: false, completed: false,
+      },
+      {
+        participantId: 'rejected', stage: 'DEFAULT', rejected: { reason: 'test', timestamp: 1 }, completed: false,
+      },
+    ]);
+
+    await act(async () => {
+      render(<StageManagementItem studyId="test-study" />);
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Review 1 in-progress participant' }));
+    });
+
+    expect(screen.getByTestId('timeout-participants').textContent).toBe('in-progress');
   });
 
   test('StageManagementItem expands between-subjects combinations with counts and switches', async () => {

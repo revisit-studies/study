@@ -1,5 +1,5 @@
 import {
-  Alert, AppShell, Badge, Center, Checkbox, Container, Flex, Group, LoadingOverlay, Stack, Tabs, Text, Title, MultiSelect, Tooltip,
+  Alert, AppShell, Badge, Center, Checkbox, Container, Divider, Flex, Group, LoadingOverlay, Stack, Tabs, Text, Title, MultiSelect, Tooltip,
 } from '@mantine/core';
 import { useNavigate, useParams } from 'react-router';
 import {
@@ -580,6 +580,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
               </Flex>
             </Flex>
           </Flex>
+          <Divider style={{ marginBlock: -4 }} />
           <LoadingOverlay visible={status === 'pending'} />
 
           {status === 'success' ? (

@@ -94,6 +94,21 @@ describe('ParticipantTimeoutModal', () => {
     expect(refresh).toHaveBeenCalledOnce();
   });
 
+  test('can be opened without its own review button', () => {
+    render(
+      <ParticipantTimeoutModal
+        hideReviewButton
+        opened
+        participants={[makeParticipant({ participantId: 'p1', createdTime: 1 })]}
+        refresh={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('In-Progress Participants')).toBeDefined();
+    expect(screen.getByText('p1')).toBeDefined();
+    expect(screen.queryByRole('button', { name: 'Review (1)' })).toBeNull();
+  });
+
   test('disables the review button for non-admins', () => {
     mockUser = { isAdmin: false };
     render(<ParticipantTimeoutModal participants={[makeParticipant({ createdTime: 1 })]} refresh={vi.fn()} />);
