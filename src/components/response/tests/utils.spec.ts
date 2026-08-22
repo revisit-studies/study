@@ -422,6 +422,12 @@ describe('validateResponse', () => {
     });
     expect(validateResponse(response, '2025-02-28', { date: '2025-02-28' }).valid).toBe(false);
     expect(validateResponse(response, [], { date: [] }).valid).toBe(false);
+    expect(generateErrorMessage(
+      response,
+      { value: '02/29/2025' },
+      undefined,
+      { showRequiredErrors: true },
+    )).toBe('Please select a valid date.');
   });
 
   test('treats an empty date as unanswered unless the response is optional', () => {
@@ -434,6 +440,28 @@ describe('validateResponse', () => {
 
     expect(validateResponse(requiredResponse, '', { 'required-date': '' }).issueType).toBe('unanswered');
     expect(validateResponse(optionalResponse, '', { 'optional-date': '' }).valid).toBe(true);
+  });
+
+  test('validates date response values against minDate and maxDate', () => {
+    const response: DateResponse = {
+      id: 'date',
+      prompt: 'Select a date',
+      type: 'date',
+      required: true,
+      minDate: '02/10/2024',
+      maxDate: '02/25/2024',
+    };
+
+    expect(validateResponse(response, '02/10/2024', { date: '02/10/2024' }).valid).toBe(true);
+    expect(validateResponse(response, '02/25/2024', { date: '02/25/2024' }).valid).toBe(true);
+    expect(validateResponse(response, '02/09/2024', { date: '02/09/2024' }).message)
+      .toBe('Please select a date between 02/10/2024 and 02/25/2024.');
+    expect(validateResponse(response, '02/26/2024', { date: '02/26/2024' }).message)
+      .toBe('Please select a date between 02/10/2024 and 02/25/2024.');
+    expect(validateResponse({ ...response, maxDate: undefined }, '02/09/2024', { date: '02/09/2024' }).message)
+      .toBe('Please select a date on or after 02/10/2024.');
+    expect(validateResponse({ ...response, minDate: undefined }, '02/26/2024', { date: '02/26/2024' }).message)
+      .toBe('Please select a date on or before 02/25/2024.');
   });
 
   test('validates time response values stored in HH:mm format', () => {
@@ -452,6 +480,12 @@ describe('validateResponse', () => {
       issueType: 'invalid',
       message: 'Please select a valid time.',
     });
+    expect(generateErrorMessage(
+      response,
+      { value: '24:00' },
+      undefined,
+      { showRequiredErrors: true },
+    )).toBe('Please select a valid time.');
   });
 
   test('treats an empty time as unanswered unless the response is optional', () => {

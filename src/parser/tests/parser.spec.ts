@@ -92,6 +92,8 @@ describe('Text response validation config parsing', () => {
       type: 'date',
       default: '08/21/2026',
       requiredValue: '08/22/2026',
+      minDate: '08/01/2026',
+      maxDate: '08/31/2026',
       placeholder: 'MM/DD/YYYY',
     });
     Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
@@ -123,6 +125,12 @@ describe('Text response validation config parsing', () => {
       type: 'date', field: 'requiredValue', value: '2025-02-28', format: 'MM/DD/YYYY',
     },
     {
+      type: 'date', field: 'minDate', value: '2025-02-28', format: 'MM/DD/YYYY',
+    },
+    {
+      type: 'date', field: 'maxDate', value: '02/29/2025', format: 'MM/DD/YYYY',
+    },
+    {
       type: 'time', field: 'default', value: '24:00', format: 'HH:mm',
     },
     {
@@ -142,6 +150,44 @@ describe('Text response validation config parsing', () => {
 
     expect(result.errors).toContainEqual(expect.objectContaining({
       message: `${type} ${field} must be a valid ${format} value`,
+      instancePath: `/components/question1/response/0/${field}`,
+    }));
+  });
+
+  test('rejects a date range where minDate is after maxDate', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type: 'date',
+      minDate: '08/31/2026',
+      maxDate: '08/01/2026',
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'date minDate must be before or equal to maxDate',
+      instancePath: '/components/question1/response/0',
+    }));
+  });
+
+  test.each([
+    { field: 'default', value: '07/31/2026', bound: 'minDate' },
+    { field: 'requiredValue', value: '09/01/2026', bound: 'maxDate' },
+  ])('rejects a date $field outside $bound', async ({ field, value, bound }) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type: 'date',
+      [field]: value,
+      minDate: '08/01/2026',
+      maxDate: '08/31/2026',
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: `date ${field} must be on ${bound === 'minDate' ? 'or after' : 'or before'} ${bound}`,
       instancePath: `/components/question1/response/0/${field}`,
     }));
   });

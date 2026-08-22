@@ -707,7 +707,7 @@
     },
     "DateResponse": {
       "additionalProperties": false,
-      "description": "The DateResponse interface defines a calendar date selected with a date picker. Date values are stored as `MM/DD/YYYY` strings. ```json {   \"id\": \"q-date\",   \"prompt\": \"Select a date.\",   \"location\": \"aboveStimulus\",   \"type\": \"date\",   \"default\": \"08/21/2026\",   \"placeholder\": \"MM/DD/YYYY\" } ```",
+      "description": "The DateResponse interface defines a calendar date selected with a date picker. Date values are stored as `MM/DD/YYYY` strings. ```json {   \"id\": \"q-date\",   \"prompt\": \"Select a date.\",   \"location\": \"aboveStimulus\",   \"type\": \"date\",   \"default\": \"08/21/2026\",   \"minDate\": \"08/01/2026\",   \"maxDate\": \"08/31/2026\",   \"placeholder\": \"MM/DD/YYYY\" } ```",
       "properties": {
         "default": {
           "description": "The default date in `MM/DD/YYYY` format.",
@@ -732,6 +732,14 @@
         "location": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "maxDate": {
+          "description": "The latest date accepted, in `MM/DD/YYYY` format.",
+          "type": "string"
+        },
+        "minDate": {
+          "description": "The earliest date accepted, in `MM/DD/YYYY` format.",
+          "type": "string"
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",

@@ -450,6 +450,8 @@ export interface NumericalResponse extends BaseResponse {
  *   "location": "aboveStimulus",
  *   "type": "date",
  *   "default": "08/21/2026",
+ *   "minDate": "08/01/2026",
+ *   "maxDate": "08/31/2026",
  *   "placeholder": "MM/DD/YYYY"
  * }
  * ```
@@ -462,6 +464,10 @@ export interface DateResponse extends BaseResponse {
   default?: string;
   /** The date required for a correct response, in `MM/DD/YYYY` format. */
   requiredValue?: string;
+  /** The earliest date accepted, in `MM/DD/YYYY` format. */
+  minDate?: string;
+  /** The latest date accepted, in `MM/DD/YYYY` format. */
+  maxDate?: string;
 }
 
 /**

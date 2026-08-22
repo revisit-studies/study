@@ -1,6 +1,7 @@
 import isEqual from 'lodash.isequal';
 import {
   CheckboxResponse,
+  DateResponse,
   DropdownResponse,
   LongTextResponse,
   MatrixResponse,
@@ -16,6 +17,29 @@ import { parseStringOptions, parseStringOptionValue } from '../../utils/stringOp
 import { checkBuiltInValidation } from './builtInValidation';
 
 export const REQUIRED_ERROR_MESSAGE = 'Please answer this question to continue.';
+export const INVALID_DATE_MESSAGE = 'Please select a valid date.';
+
+export function getDateValidationMessage(response: DateResponse, value: string) {
+  const date = parseMonthDayYear(value);
+  if (date === null) {
+    return INVALID_DATE_MESSAGE;
+  }
+
+  const minDate = response.minDate ? parseMonthDayYear(response.minDate) : null;
+  const maxDate = response.maxDate ? parseMonthDayYear(response.maxDate) : null;
+
+  if (minDate && maxDate && (date < minDate || date > maxDate)) {
+    return `Please select a date between ${response.minDate} and ${response.maxDate}.`;
+  }
+  if (minDate && date < minDate) {
+    return `Please select a date on or after ${response.minDate}.`;
+  }
+  if (maxDate && date > maxDate) {
+    return `Please select a date on or before ${response.maxDate}.`;
+  }
+
+  return null;
+}
 
 export type ResponseIssueType = 'unanswered' | 'invalid';
 export type ResponseIssueSummary = { unansweredCount: number; invalidCount: number };
@@ -407,8 +431,11 @@ export function validateResponse(
       return createValidationResult(response, response.required === false ? 'none' : 'unanswered');
     }
 
-    if (typeof value !== 'string' || parseMonthDayYear(value) === null) {
-      return createValidationResult(response, 'invalid', { message: 'Please select a valid date.' });
+    const dateError = typeof value === 'string'
+      ? getDateValidationMessage(response, value)
+      : INVALID_DATE_MESSAGE;
+    if (dateError) {
+      return createValidationResult(response, 'invalid', { message: dateError });
     }
 
     if (response.requiredValue != null && value !== response.requiredValue.toString()) {
