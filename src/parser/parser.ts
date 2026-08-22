@@ -132,6 +132,9 @@ function verifyReactComponent(
     'path' in component
       && component.path != null
       && component.type === 'react-component'
+      // A templated path (e.g. `{{file}}.tsx`) can't be resolved until runtime, once
+      // parameters/answers are known, so it can never match a real file in this static glob.
+      && !component.path.includes('{{')
       && !(`../public/${component.path}` in modules)
   ) {
     errors.push({
