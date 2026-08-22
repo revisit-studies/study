@@ -240,7 +240,7 @@ export function ErrorLoadingConfig({
       <Text size="sm" c="dimmed">
         {headerText}
       </Text>
-      <Collapse in={isOpen}>
+      <Collapse expanded={isOpen}>
         <Stack gap="md" mt="xs">
           {groupIssuesByCategory().map(({ category, entries }, idx, arr) => {
             const categoryCount = entries.reduce((sum, e) => sum + e.issues.length, 0);
