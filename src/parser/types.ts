@@ -482,6 +482,7 @@ export interface TextValidationRule {
   /**
    * The regular expression pattern or text value used by the validation operation.
    * Must be non-empty for `equals`, `contains`, and `doesNotContain`.
+   * Empty `matchesRegex` and `doesNotEqual` values produce a parser warning because they do not restrict responses.
    */
   value: string;
 }

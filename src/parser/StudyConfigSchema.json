@@ -3788,7 +3788,7 @@
           "description": "The operation used to validate the response value."
         },
         "value": {
-          "description": "The regular expression pattern or text value used by the validation operation. Must be non-empty for `equals`, `contains`, and `doesNotContain`.",
+          "description": "The regular expression pattern or text value used by the validation operation. Must be non-empty for `equals`, `contains`, and `doesNotContain`. Empty `matchesRegex` and `doesNotEqual` values produce a parser warning because they do not restrict responses.",
           "type": "string"
         }
       },
