@@ -4,11 +4,11 @@ import react from '@vitejs/plugin-react-swc';
 import { coverageConfigDefaults } from 'vitest/config';
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd());
 
   return {
-    base: env.VITE_BASE_PATH || '/',
+    base: command === 'build' ? (env.VITE_BASE_PATH || '/') : '/',
     plugins: [
       react({ devTarget: 'es2022' }),
     ],
