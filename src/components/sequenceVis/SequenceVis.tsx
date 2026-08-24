@@ -1,11 +1,13 @@
 import {
-  ActionIcon, Badge, Box, Code, Divider, Group, Paper, SegmentedControl, Stack, Switch, Text, Title,
+  ActionIcon, Badge, Box, Code, Divider, Group, Paper, SegmentedControl, Select, Stack, Switch, Text, Title,
 } from '@mantine/core';
 import { useResizeObserver, useViewportSize } from '@mantine/hooks';
 import { IconX } from '@tabler/icons-react';
-import { useMemo, useState } from 'react';
-import { useStudyConfig } from '../../store/hooks/useStudyConfig';
-import { useStoreSelector } from '../../store/store';
+import {
+  useEffect, useMemo, useState,
+} from 'react';
+import type { StudyConfig } from '../../parser/types';
+import type { ParticipantDataWithStatus } from '../../storage/types';
 import { SequenceComponent } from './SequenceComponent';
 import {
   buildSequenceVisualization, layoutSequenceVisualization,
@@ -114,14 +116,35 @@ function BetweenSubjectsAssignment({
   );
 }
 
-export function SequenceVis() {
-  const config = useStudyConfig();
-  const participantSequence = useStoreSelector((state) => state.sequence);
+export function SequenceVis({
+  config,
+  participants,
+}: {
+  config: StudyConfig;
+  participants: ParticipantDataWithStatus[];
+}) {
   const [mode, setMode] = useState<SequenceVisualizationMode>('design');
+  const [participantId, setParticipantId] = useState<string | null>(null);
   const [expandedFactors, setExpandedFactors] = useState(false);
   const [selectedFactorKey, setSelectedFactorKey] = useState<string>();
   const [ref, { width }] = useResizeObserver();
   const viewport = useViewportSize();
+  const participantOptions = useMemo(() => participants.map((participant) => ({
+    label: `${participant.participantIndex}: ${participant.participantId}`,
+    value: participant.participantId,
+  })), [participants]);
+  const selectedParticipant = useMemo(() => participants.find((participant) => (
+    participant.participantId === participantId
+  )), [participantId, participants]);
+  const participantSequence = selectedParticipant?.sequence;
+
+  useEffect(() => {
+    if (participantId && !selectedParticipant) {
+      setParticipantId(null);
+      setMode('design');
+    }
+  }, [participantId, selectedParticipant]);
+
   const root = useMemo(() => buildSequenceVisualization(
     config.sequence,
     participantSequence,
@@ -160,12 +183,30 @@ export function SequenceVis() {
             aria-label="Sequence visualization view"
             data={[
               { label: 'Design', value: 'design' },
-              { label: 'Participant', value: 'participant' },
+              { label: 'Participant', value: 'participant', disabled: participants.length === 0 },
             ]}
-            onChange={(value) => setMode(value as SequenceVisualizationMode)}
+            onChange={(value) => {
+              const nextMode = value as SequenceVisualizationMode;
+              if (nextMode === 'participant' && !participantId) {
+                setParticipantId(participants[0]?.participantId ?? null);
+              }
+              setMode(nextMode);
+            }}
             size="xs"
             value={mode}
           />
+          {mode === 'participant' ? (
+            <Select
+              aria-label="Participant sequence"
+              data={participantOptions}
+              onChange={setParticipantId}
+              placeholder="Select participant"
+              searchable
+              size="xs"
+              value={participantId}
+              w={240}
+            />
+          ) : null}
           <Switch
             checked={expandedFactors}
             label="Expand factors"
@@ -177,7 +218,7 @@ export function SequenceVis() {
       {config.betweenSubjects && config.betweenSubjects.length > 0 ? (
         <BetweenSubjectsAssignment
           factors={config.betweenSubjects}
-          parameters={participantSequence.parameters}
+          parameters={participantSequence?.parameters}
         />
       ) : null}
       <Group gap={3}>

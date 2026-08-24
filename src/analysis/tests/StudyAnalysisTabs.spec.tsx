@@ -117,6 +117,9 @@ vi.mock('../individualStudy/thinkAloud/ThinkAloudAnalysis', () => ({
 vi.mock('../individualStudy/config/ConfigView', () => ({
   ConfigView: () => <div>ConfigView</div>,
 }));
+vi.mock('../../components/sequenceVis/SequenceVis', () => ({
+  SequenceVis: () => <div>SequenceVis</div>,
+}));
 vi.mock('../../components/downloader/DownloadButtons', () => ({
   DownloadButtons: () => <div>DownloadButtons</div>,
 }));
@@ -182,6 +185,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconTags: () => null,
   IconDashboard: () => null,
   IconFileCode: () => null,
+  IconRoute: () => null,
 }));
 
 // ── fixtures ──────────────────────────────────────────────────────────────────
@@ -218,6 +222,7 @@ describe('StudyAnalysisTabs', () => {
     expect(html).toContain('Study Summary');
     expect(html).toContain('Participant View');
     expect(html).toContain('Trial Stats');
+    expect(html).toContain('Sequence');
     expect(html).toContain('Coding');
     expect(html).toContain('Config');
     expect(html).toContain('Stage Management');

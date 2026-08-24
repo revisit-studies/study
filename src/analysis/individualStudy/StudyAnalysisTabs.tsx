@@ -9,6 +9,7 @@ import {
   IconTags,
   IconDashboard,
   IconFileCode,
+  IconRoute,
 } from '@tabler/icons-react';
 import {
   useCallback, useEffect, useMemo, useState,
@@ -38,6 +39,7 @@ import { ThinkAloudAnalysis } from './thinkAloud/ThinkAloudAnalysis';
 import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
 import { ConfigView } from './config/ConfigView';
 import { StartupErrorScreen } from '../../components/StartupErrorScreen';
+import { SequenceVis } from '../../components/sequenceVis/SequenceVis';
 
 function sortByStartTime(a: ParticipantDataWithStatus, b: ParticipantDataWithStatus) {
   const aStartTimes = Object.values(a.answers).map((answer) => answer.startTime).filter((startTime) => startTime !== undefined).sort();
@@ -599,6 +601,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 <Tabs.Tab value="summary" leftSection={<IconChartPie size={16} />} style={{ justifyContent: 'flex-start' }}>Study Summary</Tabs.Tab>
                 <Tabs.Tab value="table" leftSection={<IconTable size={16} />} style={{ justifyContent: 'flex-start' }}>Participant View</Tabs.Tab>
                 <Tabs.Tab value="stats" leftSection={<IconChartDonut2 size={16} />} style={{ justifyContent: 'flex-start' }}>Trial Stats</Tabs.Tab>
+                <Tabs.Tab value="sequence" leftSection={<IconRoute size={16} />} style={{ justifyContent: 'flex-start' }}>Sequence</Tabs.Tab>
                 <Tooltip
                   label={!isFirebaseEngine
                     ? 'Think aloud coding is only available when using Firebase and when audio recording is enabled in your study config'
@@ -637,6 +640,9 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 </Tabs.Panel>
                 <Tabs.Panel style={{ flex: 1, minHeight: 0, overflow: 'auto' }} value="stats" pt="xs">
                   {studyConfig && <StatsView studyConfig={studyConfig} visibleParticipants={visibleParticipants} allConfigs={allConfigs} />}
+                </Tabs.Panel>
+                <Tabs.Panel style={{ flex: 1, minHeight: 0, overflow: 'hidden' }} value="sequence" pt="xs">
+                  {studyConfig && <SequenceVis config={studyConfig} participants={visibleParticipants} />}
                 </Tabs.Panel>
                 <Tabs.Panel style={{ flex: 1, minHeight: 0, overflow: 'auto' }} value="tagging" pt="xs">
                   {studyConfig && codingEnabled

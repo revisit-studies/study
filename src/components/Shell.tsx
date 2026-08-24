@@ -48,7 +48,6 @@ import {
 } from '../utils/handleConditionLogic';
 import { StartupErrorScreen } from './StartupErrorScreen';
 import { materializeParticipantConfig } from '../parser/libraryParser';
-import { SequenceVis } from './sequenceVis/SequenceVis';
 import { getStaticFirstComponent, type StaticFirstComponentPreview } from '../utils/getStaticFirstComponent';
 import { StartupPreviewContext } from './StartupPreviewContext';
 
@@ -74,10 +73,6 @@ function getParticipantRoutes(startupPreview = false) {
           element: startupPreview
             ? <ComponentController />
             : <NavigateWithParams to={encryptIndex(0)} replace />,
-        },
-        {
-          path: '/sequenceVis',
-          element: <SequenceVis />,
         },
         {
           path: '/:index/:funcIndex?',
