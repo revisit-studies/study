@@ -101,7 +101,9 @@ function isValidWaveformPeaks(value: WaveformPeaks | null): value is WaveformPea
 
   return Array.isArray(peaks)
     && peaks.length > 0
-    && peaks.every((channel) => Array.isArray(channel) && channel.every((n) => typeof n === 'number' && Number.isFinite(n)))
+    && peaks.every((channel) => Array.isArray(channel)
+      && channel.length > 0
+      && channel.every((n) => typeof n === 'number' && Number.isFinite(n)))
     && typeof duration === 'number'
     && Number.isFinite(duration)
     && duration > 0;
@@ -1766,7 +1768,19 @@ export abstract class StorageEngine {
       if (!modes.dataCollectionEnabled) {
         throw new Error('Data collection is disabled for this study');
       }
-      return this.saveAsset('audio', blob, taskName);
+      const participantId = this.currentParticipantId;
+      await this.saveAsset('audio', blob, taskName);
+
+      if (participantId) {
+        try {
+          await this._deleteFromStorage(`audio/${participantId}_${taskName}`, 'waveform.peaks.json');
+        } catch (error) {
+          const errorCode = (error as { code?: string }).code;
+          if (errorCode !== 'storage/object-not-found') {
+            console.warn(`Failed to invalidate waveform peaks for ${taskName}:`, error);
+          }
+        }
+      }
     });
   }
 

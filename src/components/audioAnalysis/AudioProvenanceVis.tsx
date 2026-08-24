@@ -321,9 +321,7 @@ export function AudioProvenanceVis({
             return;
           }
 
-          if (cachedPeaks && audioUrl) {
-            await waveSurfer.load(audioUrl, cachedPeaks.peaks, cachedPeaks.duration);
-          } else if (audioUrl) {
+          const loadWithoutCachedPeaks = async () => {
             waveSurfer.once('ready', () => {
               const extractedPeaks: WaveformPeaks = {
                 peaks: waveSurfer.exportPeaks({ maxLength: 5000, precision: 100 }),
@@ -334,6 +332,17 @@ export function AudioProvenanceVis({
             });
 
             await waveSurfer.load(audioUrl, undefined, duration);
+          };
+
+          if (cachedPeaks) {
+            try {
+              await waveSurfer.load(audioUrl, cachedPeaks.peaks, cachedPeaks.duration);
+            } catch (error) {
+              console.warn('Failed to load cached waveform peaks; decoding audio:', error);
+              await loadWithoutCachedPeaks();
+            }
+          } else {
+            await loadWithoutCachedPeaks();
           }
 
           setWaveSurferLoading(false);
@@ -350,7 +359,7 @@ export function AudioProvenanceVis({
           setWaveSurferLoading(false);
           audioRef.current = null;
           updateReplayRef();
-          throw new Error(error as string);
+          console.warn('Failed to load audio waveform:', error);
         }
       } else {
         setAnalysisHasAudio(false);

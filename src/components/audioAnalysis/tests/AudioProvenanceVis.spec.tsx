@@ -587,6 +587,27 @@ describe('AudioProvenanceVis — waveform peaks caching', () => {
     expect(fakeWs.load).toHaveBeenCalledWith('https://example.com/audio.mp3', undefined, 0);
   });
 
+  test('cached waveform load failure retries without peaks and does not reject', async () => {
+    const engine = makeCachingStorageEngine({
+      getWaveformPeaks: vi.fn().mockResolvedValue({ peaks: [[0.1, 0.2]], duration: 12 }),
+    });
+    mockStorageEngine = engine;
+    const fakeWs = makeFakeWaveSurfer({
+      load: vi.fn()
+        .mockRejectedValueOnce(new Error('cached peaks rejected'))
+        .mockResolvedValueOnce(undefined),
+    });
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    await act(async () => render(<AudioProvenanceVis {...defaultProps} answers={answersWithTask} />));
+    await act(async () => { await capturedOnMount?.(fakeWs); });
+
+    expect(fakeWs.load).toHaveBeenNthCalledWith(1, 'https://example.com/audio.mp3', [[0.1, 0.2]], 12);
+    expect(fakeWs.load).toHaveBeenNthCalledWith(2, 'https://example.com/audio.mp3', undefined, 0);
+    expect(warnSpy).toHaveBeenCalledWith('Failed to load cached waveform peaks; decoding audio:', expect.any(Error));
+    warnSpy.mockRestore();
+  });
+
   test('screen-only / no-audio recording does not load the waveform', async () => {
     const engine = makeCachingStorageEngine({
       getAudioUrl: vi.fn().mockResolvedValue(null),

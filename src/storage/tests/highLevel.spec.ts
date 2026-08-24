@@ -1224,10 +1224,21 @@ describe.each([
     expect(result).toEqual(waveformPeaks);
   });
 
+  test('saveAudioRecording invalidates cached waveform peaks for the same task', async () => {
+    const { participantId } = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    const identifier = 'intro_0';
+
+    await storageEngine.saveWaveformPeaks({ peaks: [[0.1, 0.2]], duration: 12.5 }, identifier, participantId);
+    await storageEngine.saveAudioRecording(new Blob(['replacement-audio'], { type: 'audio/webm' }), identifier);
+
+    expect(await storageEngine.getWaveformPeaks(identifier, participantId)).toBeNull();
+  });
+
   test.each([
     ['missing peaks property', { duration: 10 }],
     ['non-array peaks', { peaks: 'nope', duration: 10 }],
     ['empty peaks array', { peaks: [], duration: 10 }],
+    ['empty peaks channel', { peaks: [[]], duration: 10 }],
     ['peaks channel with non-numeric values', { peaks: [[0.1, 'oops']], duration: 10 }],
     ['missing duration', { peaks: [[0.1, 0.2]] }],
     ['non-numeric duration', { peaks: [[0.1, 0.2]], duration: 'ten' }],
