@@ -29,9 +29,7 @@ import { OptionLabel } from './OptionLabel';
 import classes from './css/RankingDnd.module.css';
 import {
   ParsedStringOption,
-  RankingCategoricalResponse,
-  RankingPairwiseResponse,
-  RankingSublistResponse,
+  RankingResponse,
   StringOption,
 } from '../../parser/types';
 import { useStoreActions, useStoreDispatch } from '../../store/store';
@@ -669,7 +667,7 @@ export function RankingInput({
   disabled,
   enumerateQuestions,
 }: {
-  response: RankingSublistResponse | RankingPairwiseResponse | RankingCategoricalResponse;
+  response: RankingResponse;
   answer: { value: Record<string, string> };
   error?: string | null;
   index: number;

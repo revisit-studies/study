@@ -2921,6 +2921,19 @@
       ],
       "type": "object"
     },
+    "RankingResponse": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/RankingSublistResponse"
+        },
+        {
+          "$ref": "#/definitions/RankingPairwiseResponse"
+        },
+        {
+          "$ref": "#/definitions/RankingCategoricalResponse"
+        }
+      ]
+    },
     "RankingSublistResponse": {
       "additionalProperties": false,
       "properties": {
@@ -3346,13 +3359,7 @@
           "$ref": "#/definitions/CheckboxResponse"
         },
         {
-          "$ref": "#/definitions/RankingSublistResponse"
-        },
-        {
-          "$ref": "#/definitions/RankingCategoricalResponse"
-        },
-        {
-          "$ref": "#/definitions/RankingPairwiseResponse"
+          "$ref": "#/definitions/RankingResponse"
         },
         {
           "$ref": "#/definitions/ReactiveResponse"
