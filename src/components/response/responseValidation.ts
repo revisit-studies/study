@@ -280,6 +280,9 @@ function minMaxValidation(min : number | undefined, max: number | undefined, num
 
   if ((min !== undefined && items < min) || (max !== undefined && items > max)) {
     if (min !== undefined && max !== undefined) {
+      if (min === max) {
+        return `Please add exactly ${min} ${rankingSpecificString}.`;
+      }
       return `Please add between ${min} and ${max} ${rankingSpecificString}.`;
     }
 
