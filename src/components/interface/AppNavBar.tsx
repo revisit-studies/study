@@ -6,6 +6,8 @@ import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { ResponseBlock } from '../response/ResponseBlock';
 import { useCurrentComponent } from '../../routes/utils';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
+import { compileTemplate } from '../../utils/handlebars';
+import { useTemplateAnswerContext } from '../../store/hooks/useTemplateAnswerContext';
 
 export function AppNavBar({
   width, top, bottom, sidebarOpen,
@@ -29,12 +31,26 @@ export function AppNavBar({
   }, [stepConfig, studyConfig]);
 
   const status = useStoredAnswer();
+  const templateData = useTemplateAnswerContext();
 
-  const instruction = currentConfig?.instruction || '';
-  const instructionLocation = useMemo(() => currentConfig?.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar', [currentConfig, studyConfig]);
+  const instructionParameters = useMemo(
+    () => status?.parameters ?? currentConfig?.parameters ?? {},
+    [status?.parameters, currentConfig?.parameters],
+  );
+
+  const runtimeConfig = useMemo(
+    () => (currentConfig ? { ...currentConfig, parameters: instructionParameters } : null),
+    [currentConfig, instructionParameters],
+  );
+
+  const instruction = useMemo(
+    () => (templateData ? compileTemplate(runtimeConfig?.instruction || '', runtimeConfig?.parameters ?? {}, { data: templateData }) : ''),
+    [runtimeConfig, templateData],
+  );
+  const instructionLocation = useMemo(() => runtimeConfig?.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar', [runtimeConfig, studyConfig]);
   const instructionInSideBar = instructionLocation === 'sidebar';
 
-  return currentConfig ? (
+  return runtimeConfig ? (
     <Box
       className="sidebar"
       bg="gray.1"
@@ -64,7 +80,7 @@ export function AppNavBar({
         <ResponseBlock
           key={`${currentComponent}-sidebar-response-block`}
           status={status}
-          config={currentConfig}
+          config={runtimeConfig}
           location="sidebar"
         />
       </Box>

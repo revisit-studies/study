@@ -8,6 +8,8 @@ import { ParticipantData, WebsiteComponent } from '../parser/types';
 import { PREFIX as BASE_PREFIX } from '../utils/Prefix';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import { ReplayContext } from '../store/hooks/useReplay';
+import { compileTemplate } from '../utils/handlebars';
+import { useTemplateAnswerContext } from '../store/hooks/useTemplateAnswerContext';
 
 const PREFIX = '@REVISIT_COMMS';
 
@@ -31,6 +33,13 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   }, [replay]);
 
   const shouldSendProvenance = !isAnalysis || !replay || hasReplayStarted;
+
+  const templateData = useTemplateAnswerContext();
+
+  const templatedPath = useMemo(
+    () => (templateData ? compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true, data: templateData }) : undefined),
+    [currentConfig.path, currentConfig.parameters, templateData],
+  );
 
   const ref = useRef<HTMLIFrameElement>(null);
   const stimulusValidationRef = useRef(stimulusValidation);
@@ -126,6 +135,12 @@ export function IframeController({ currentConfig, provState, answers }: { curren
     return () => window.removeEventListener('message', handler);
   }, [storeDispatch, dispatch, iframeId, currentConfig, sendMessage, setReactiveAnswers, updateProvenance, updateResponseBlockValidation, identifier, isAnalysis, provState, answers, shouldSendProvenance]);
 
+  // While the path is templated inside a dynamic block, templatedPath is undefined until the
+  // block's current iteration resolves — don't load an iframe built from the wrong iteration.
+  if (templatedPath === undefined) {
+    return null;
+  }
+
   return (
     <iframe
       ref={ref}
@@ -138,9 +153,9 @@ export function IframeController({ currentConfig, provState, answers }: { curren
         pointerEvents: isAnalysis ? 'none' : undefined,
       }}
       src={
-        currentConfig.path.startsWith('http')
-          ? currentConfig.path
-          : `${BASE_PREFIX}${currentConfig.path}?trialid=${currentComponent}&id=${iframeId}`
+        templatedPath.startsWith('http')
+          ? templatedPath
+          : `${BASE_PREFIX}${templatedPath}?trialid=${currentComponent}&id=${iframeId}`
       }
     />
   );
