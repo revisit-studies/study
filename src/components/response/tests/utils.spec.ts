@@ -725,6 +725,21 @@ describe('validateResponse', () => {
     expect(validateResponse(dropdownResponse, ['A', 'B'], { dropdown: ['A', 'B'] }).message).toBe('Please select at most 1 options');
   });
 
+  test.each([
+    { value: 'XX' },
+    { value: ['US', 'XX'] },
+  ])('rejects invalid country preset values: $value', ({ value }) => {
+    const response: DropdownResponse = {
+      id: 'country', prompt: 'Country', type: 'dropdown', required: true, options: 'countries',
+    };
+
+    expect(validateResponse(response, value, { country: value })).toMatchObject({
+      valid: false,
+      issueType: 'invalid',
+      message: 'Please select a valid country.',
+    });
+  });
+
   test('checkbox requiredValue exact set equality ignores order', () => {
     const response: CheckboxResponse = {
       id: 'q1', prompt: 'Question', type: 'checkbox', required: true, options: [], requiredValue: ['A', 'B'],

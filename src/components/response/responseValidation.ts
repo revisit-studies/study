@@ -14,6 +14,7 @@ import {
 } from '../../parser/types';
 import { CustomResponseValidate, StoredAnswer } from '../../store/types';
 import { isValidTime, parseDateValue } from '../../utils/dateTimeValidation';
+import { getDropdownOptions } from '../../utils/dropdownOptions';
 import { parseStringOptions, parseStringOptionValue } from '../../utils/stringOptions';
 import { checkBuiltInValidation } from './builtInValidation';
 
@@ -95,6 +96,13 @@ export function isEmptyCustomResponseValue(value: StoredAnswer['answer'][string]
 }
 
 export function checkDropdownResponse(dropdownResponse: DropdownResponse, value: string[]) {
+  if (dropdownResponse.options === 'countries') {
+    const countryValues = new Set(getDropdownOptions(dropdownResponse).map((option) => option.value));
+    if (value.some((entry) => !countryValues.has(entry))) {
+      return 'Please select a valid country.';
+    }
+  }
+
   const minNotSelected = dropdownResponse.minSelections && value.length < dropdownResponse.minSelections;
   const maxNotSelected = dropdownResponse.maxSelections && value.length > dropdownResponse.maxSelections;
 
@@ -530,6 +538,13 @@ export function validateResponse(
       return createValidationResult(response, response.required ? 'unanswered' : 'none');
     }
 
+    if (response.type === 'dropdown') {
+      const dropdownError = checkDropdownResponse(response, value as string[]);
+      if (dropdownError) {
+        return createValidationResult(response, 'invalid', { message: dropdownError });
+      }
+    }
+
     if (response.requiredValue != null && !Array.isArray(response.requiredValue)) {
       return createValidationResult(response, 'invalid', { message: 'Incorrect required value. Contact study administrator.' });
     }
@@ -564,6 +579,13 @@ export function validateResponse(
 
   if (value === null || value === undefined || value === '') {
     return createValidationResult(response, response.required ? 'unanswered' : 'none');
+  }
+
+  if (response.type === 'dropdown') {
+    const dropdownError = checkDropdownResponse(response, [value.toString()]);
+    if (dropdownError) {
+      return createValidationResult(response, 'invalid', { message: dropdownError });
+    }
   }
 
   if (response.requiredValue != null && value.toString() !== response.requiredValue.toString()) {

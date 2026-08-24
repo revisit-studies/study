@@ -432,6 +432,26 @@ describe('Text response validation config parsing', () => {
     const result = await parseStudyConfig(JSON.stringify(studyConfig));
     expect(result.errors).toEqual([]);
   });
+  test.each([
+    { field: 'default', value: 'XX', valuePath: '/components/question1/response/0/default' },
+    { field: 'requiredValue', value: 'United States', valuePath: '/components/question1/response/0/requiredValue' },
+    { field: 'default', value: ['US', 'XX'], valuePath: '/components/question1/response/0/default/1' },
+  ])('rejects an invalid country preset $field value', async ({ field, value, valuePath }) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type: 'dropdown',
+      options: 'countries',
+      [field]: value,
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: `dropdown ${field} value \`${Array.isArray(value) ? 'XX' : value}\` is not a valid country code`,
+      instancePath: valuePath,
+    }));
+  });
   test.each([0, 1])('rejects a malformed regular expression for response %s', async (responseIndex) => {
     const studyConfig = makeStudyConfig('matchesRegex');
     studyConfig.components.question1.response[responseIndex].textValidation[0].value = '[';

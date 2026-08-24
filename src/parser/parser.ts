@@ -26,6 +26,7 @@ import {
   parseDateValue,
 } from '../utils/dateTimeValidation';
 import { checkBuiltInValidation } from '../components/response/builtInValidation';
+import { getDropdownOptions } from '../utils/dropdownOptions';
 
 const modules = import.meta.glob(
   [
@@ -405,6 +406,45 @@ function verifyTextResponseConstraints(
   });
 }
 
+function verifyDropdownResponseConstraints(
+  componentPath: string,
+  component: Partial<IndividualComponent>,
+  errors: ParserErrorWarning[],
+) {
+  component.response?.forEach((response, index) => {
+    if (response.type !== 'dropdown' || response.options !== 'countries') {
+      return;
+    }
+
+    const responsePath = `${componentPath}/response/${index}`;
+    const countryValues = new Set(getDropdownOptions(response).map((option) => option.value));
+
+    (['default', 'requiredValue'] as const).forEach((field) => {
+      const configuredValue = field === 'default' ? response.default : response.requiredValue;
+      if (configuredValue === undefined || configuredValue === null) {
+        return;
+      }
+
+      const values = Array.isArray(configuredValue) ? configuredValue : [configuredValue];
+      values.forEach((value, valueIndex) => {
+        if (typeof value === 'string' && countryValues.has(value)) {
+          return;
+        }
+
+        const valuePath = Array.isArray(configuredValue)
+          ? `${responsePath}/${field}/${valueIndex}`
+          : `${responsePath}/${field}`;
+        errors.push({
+          message: `dropdown ${field} value \`${String(value)}\` is not a valid country code`,
+          instancePath: valuePath,
+          params: { action: `Set ${field} to a valid country code from the countries preset` },
+          category: 'invalid-config',
+        });
+      });
+    });
+  });
+}
+
 function verifyDateTimeResponseConstraints(
   componentPath: string,
   component: Partial<IndividualComponent>,
@@ -537,11 +577,13 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
   Object.entries(studyConfig.baseComponents ?? {}).forEach(([componentName, component]) => {
     verifyTextResponseConstraints(`/baseComponents/${componentName}`, component, errors, warnings);
     verifyDateTimeResponseConstraints(`/baseComponents/${componentName}`, component, errors);
+    verifyDropdownResponseConstraints(`/baseComponents/${componentName}`, component, errors);
   });
   Object.entries(studyConfig.components).forEach(([componentName, component]) => {
     const mergedComponent = studyComponentToIndividualComponent(component, studyConfig);
     verifyTextResponseConstraints(`/components/${componentName}`, mergedComponent, errors, warnings);
     verifyDateTimeResponseConstraints(`/components/${componentName}`, mergedComponent, errors);
+    verifyDropdownResponseConstraints(`/components/${componentName}`, mergedComponent, errors);
   });
 
   const hasConditional = hasConditionalBlock(studyConfig.sequence);
