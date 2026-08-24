@@ -1240,6 +1240,8 @@ describe.each([
     ['empty peaks array', { peaks: [], duration: 10 }],
     ['empty peaks channel', { peaks: [[]], duration: 10 }],
     ['peaks channel with non-numeric values', { peaks: [[0.1, 'oops']], duration: 10 }],
+    ['peaks channel with out-of-range values', { peaks: [[0.1, 1.1]], duration: 10 }],
+    ['peaks channels with different lengths', { peaks: [[0.1, 0.2], [0.3]], duration: 10 }],
     ['missing duration', { peaks: [[0.1, 0.2]] }],
     ['non-numeric duration', { peaks: [[0.1, 0.2]], duration: 'ten' }],
     ['zero duration', { peaks: [[0.1, 0.2]], duration: 0 }],

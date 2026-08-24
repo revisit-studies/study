@@ -98,12 +98,18 @@ function isValidWaveformPeaks(value: WaveformPeaks | null): value is WaveformPea
   }
 
   const { peaks, duration } = value;
+  const firstChannel = peaks?.[0];
 
-  return Array.isArray(peaks)
-    && peaks.length > 0
-    && peaks.every((channel) => Array.isArray(channel)
-      && channel.length > 0
-      && channel.every((n) => typeof n === 'number' && Number.isFinite(n)))
+  if (!Array.isArray(peaks) || !Array.isArray(firstChannel) || firstChannel.length === 0) {
+    return false;
+  }
+
+  return peaks.every((channel) => Array.isArray(channel)
+      && channel.length === firstChannel.length
+      && channel.every((n) => typeof n === 'number'
+        && Number.isFinite(n)
+        && n >= -1
+        && n <= 1))
     && typeof duration === 'number'
     && Number.isFinite(duration)
     && duration > 0;
