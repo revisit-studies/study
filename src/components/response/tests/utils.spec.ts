@@ -758,6 +758,11 @@ describe('validateResponse', () => {
       message: 'Please add at most 2 items.',
       blocksProgression: true,
     });
+    expect(validateResponse(sublistMax, { A: '0', X: '1' }, { ranking: { A: '0', X: '1' } })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please rank only configured items.',
+      blocksProgression: true,
+    });
 
     expect(validateResponse(categoricalMin, { A: 'LOW', B: 'LOW' }, { ranking: { A: 'LOW', B: 'LOW' } })).toMatchObject({
       issueType: 'invalid',
@@ -788,6 +793,26 @@ describe('validateResponse', () => {
       blocksProgression: true,
     });
     expect(validateResponse(response, { A: 'HIGH' }, { ranking: { A: 'HIGH' } })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please categorize all items.',
+      blocksProgression: true,
+    });
+  });
+
+  test('categorizeAll ignores inherited prototype keys (reserved key regression)', () => {
+    const response: Response = {
+      id: 'ranking-categorical-reserved',
+      prompt: 'Rank',
+      type: 'ranking-categorical',
+      required: true,
+      options: ['A', 'toString'],
+      categorizeAll: true,
+    };
+
+    const value = { A: 'HIGH' } as Record<string, string>;
+    const result = validateResponse(response, value, { ranking: value });
+
+    expect(result).toMatchObject({
       issueType: 'invalid',
       message: 'Please categorize all items.',
       blocksProgression: true,

@@ -5,7 +5,8 @@ import {
   LongTextResponse,
   MatrixResponse,
   NumericalResponse,
-  RankingResponse,
+  RankingCategoricalResponse,
+  RankingPairwiseResponse,
   Response,
   ShortTextResponse,
   TextValidationRule,
@@ -296,7 +297,7 @@ function minMaxValidation(min : number | undefined, max: number | undefined, num
   return null;
 }
 
-function checkCategoricalRankingResponse(response: RankingResponse, value: object) {
+function checkCategoricalRankingResponse(response: RankingCategoricalResponse, value: object) {
   const {
     min, max, categorizeAll, numItems,
   } = response;
@@ -335,7 +336,8 @@ function checkCategoricalRankingResponse(response: RankingResponse, value: objec
   }
 
   if (categorizeAll && configuredOptionValues.size > 0) {
-    const missingOptionKeys = [...configuredOptionValues].filter((optionValue) => !(optionValue in (value ?? {})));
+    const valueObj = (value ?? {}) as Record<string, unknown>;
+    const missingOptionKeys = [...configuredOptionValues].filter((optionValue) => !Object.hasOwn(valueObj, optionValue));
     if (missingOptionKeys.length > 0) {
       return 'Please categorize all items.';
     }
@@ -343,7 +345,7 @@ function checkCategoricalRankingResponse(response: RankingResponse, value: objec
   return null;
 }
 
-export function checkPairwiseRankingResponse(response: RankingResponse, value: Record<string, string>) {
+export function checkPairwiseRankingResponse(response: RankingPairwiseResponse, value: Record<string, string>) {
   const optionValues = new Set(parseStringOptions(response.options).map((option) => option.value));
   const pairs: Record<string, { high: string[]; low: string[] }> = {};
   let hasInvalidLocation = false;
@@ -406,7 +408,7 @@ export function checkMatrixResponse(response: MatrixResponse, value: Record<stri
     if (min !== undefined || max !== undefined) {
       const requiredAmountOfQuestionsAnswered = expectedQuestionKeys.every((questionKey) => {
         const rowValue = value[questionKey];
-        if (isMatrixDontKnowValue(rowValue)) {
+        if (response.withDontKnow && isMatrixDontKnowValue(rowValue)) {
           return true;
         }
         const rowSelectionCount = rowValue.split('|').length;
@@ -565,17 +567,31 @@ export function validateResponse(
     }
 
     if (response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') {
-      const numItems = Object.keys(value).length;
       const { min, max } = response;
-      if (numItems === 0) {
-        return createValidationResult(response, response.required ? 'unanswered' : 'none');
-      }
 
       if (response.type === 'ranking-sublist') {
-        const sublistError = minMaxValidation(min, max, numItems, response.type);
+        const optionValues = new Set(parseStringOptions(response.options).map((option) => option.value));
+        const unknownOptionKeys = Object.keys(value).filter((optionKey) => !optionValues.has(optionKey));
+        const configuredEntries = Object.entries(value).filter(([optionKey]) => optionValues.has(optionKey));
+
+        if (unknownOptionKeys.length > 0) {
+          return createValidationResult(response, 'invalid', { message: 'Please rank only configured items.' });
+        }
+
+        if (configuredEntries.length === 0) {
+          return createValidationResult(response, response.required ? 'unanswered' : 'none');
+        }
+
+        const effectiveMax = max ?? response.numItems;
+        const sublistError = minMaxValidation(min, effectiveMax, configuredEntries.length, response.type);
         return sublistError
           ? createValidationResult(response, 'invalid', { message: sublistError })
           : createValidationResult(response, 'none');
+      }
+
+      const numItems = Object.keys(value).length;
+      if (numItems === 0) {
+        return createValidationResult(response, response.required ? 'unanswered' : 'none');
       }
 
       if (response.type === 'ranking-categorical') {

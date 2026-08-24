@@ -27,7 +27,13 @@ import {
 import { InputLabel } from './InputLabel';
 import { OptionLabel } from './OptionLabel';
 import classes from './css/RankingDnd.module.css';
-import { ParsedStringOption, RankingResponse, StringOption } from '../../parser/types';
+import {
+  ParsedStringOption,
+  RankingCategoricalResponse,
+  RankingPairwiseResponse,
+  RankingSublistResponse,
+  StringOption,
+} from '../../parser/types';
 import { useStoreActions, useStoreDispatch } from '../../store/store';
 import { parseStringOptions } from '../../utils/stringOptions';
 import { getRankingBaseItemId, getRankingInstanceIndex, makeRankingInstanceKey } from './responseValidation';
@@ -663,7 +669,7 @@ export function RankingInput({
   disabled,
   enumerateQuestions,
 }: {
-  response: RankingResponse;
+  response: RankingSublistResponse | RankingPairwiseResponse | RankingCategoricalResponse;
   answer: { value: Record<string, string> };
   error?: string | null;
   index: number;
@@ -677,16 +683,13 @@ export function RankingInput({
     secondaryText,
     infoText,
     numItems,
-    min,
-    max,
-    categorizeAll,
   } = response;
 
   const [localError, setError] = useState<string | null>(null);
   const displayError = localError || error;
 
   const componentProps = {
-    disabled, options, answer, responseId: response.id, numItems, min, max, categorizeAll,
+    disabled, options, answer, responseId: response.id, numItems,
   };
 
   return (

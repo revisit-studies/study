@@ -916,7 +916,6 @@ export interface CheckboxResponse extends BaseResponse {
  * ```
 */
 export interface RankingResponse extends BaseResponse {
-  type: 'ranking-sublist' | 'ranking-categorical' | 'ranking-pairwise';
   /** The options that are displayed as ranking options, provided as an array of objects, with label and value fields. */
   options: (StringOption | string)[];
   /** The default value of the response. Provide an object keyed by option value. Values depend on ranking type: index strings for sublist (e.g. `"0"`), category labels for categorical (`"HIGH"`, `"MEDIUM"`, `"LOW"`), and pairwise slots (`"pair-<n>-high"` / `"pair-<n>-low"`). */
@@ -927,6 +926,18 @@ export interface RankingResponse extends BaseResponse {
   min?: number;
   /** The maximum number of items to rank. For sublist ranking it is the number of items, for categorical ranking it is items per category, and for pairwise ranking it is the number of pairs. */
   max?: number;
+}
+
+export interface RankingSublistResponse extends RankingResponse {
+  type: 'ranking-sublist';
+}
+
+export interface RankingPairwiseResponse extends RankingResponse {
+  type: 'ranking-pairwise';
+}
+
+export interface RankingCategoricalResponse extends RankingResponse {
+  type: 'ranking-categorical';
   /** Whether all items need to be categorized. Defaults to false. */
   categorizeAll?: boolean;
 }
@@ -1070,7 +1081,7 @@ export interface DividerResponse extends Omit<BaseResponse, 'prompt' | 'infoText
   withDontKnow?: undefined;
 }
 
-export type Response = NumericalResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | RankingResponse | ReactiveResponse | CustomResponse | MatrixResponse | ButtonsResponse | TextOnlyResponse | DividerResponse;
+export type Response = NumericalResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | RankingSublistResponse | RankingCategoricalResponse | RankingPairwiseResponse | ReactiveResponse | CustomResponse | MatrixResponse | ButtonsResponse | TextOnlyResponse | DividerResponse;
 
 /**
  * The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks or if skip logic is required based on the answer.
