@@ -744,11 +744,12 @@ describe('ThinkAloudFooter', () => {
         }),
       },
     };
-    vi.mocked(useAsync).mockReturnValueOnce({
-      value: mockParticipantWithAnswers as unknown as ParticipantData, status: 'success', execute: vi.fn(), error: null,
-    }).mockReturnValue({
-      value: null, status: 'success', execute: vi.fn(), error: null,
-    });
+    vi.mocked(useAsync).mockImplementation((fn) => ({
+      value: fn.name === 'getParticipantData' ? (mockParticipantWithAnswers as unknown as ParticipantData) : null,
+      status: 'success',
+      execute: vi.fn(),
+      error: null,
+    }));
     const { getAllByRole } = await act(async () => render(
       <RealThinkAloudFooter {...footerDefaultProps} currentTrial="trial_0" />,
     ));
@@ -873,11 +874,12 @@ describe('ThinkAloudFooter', () => {
         }),
       },
     };
-    vi.mocked(useAsync).mockReturnValueOnce({
-      value: mockParticipantWithAnswers as unknown as ParticipantData, status: 'success', execute: vi.fn(), error: null,
-    }).mockReturnValue({
-      value: null, status: 'success', execute: vi.fn(), error: null,
-    });
+    vi.mocked(useAsync).mockImplementation((fn) => ({
+      value: fn.name === 'getParticipantData' ? (mockParticipantWithAnswers as unknown as ParticipantData) : null,
+      status: 'success',
+      execute: vi.fn(),
+      error: null,
+    }));
     const { getAllByRole } = await act(async () => render(
       <RealThinkAloudFooter {...footerDefaultProps} currentTrial="trial_0" />,
     ));
