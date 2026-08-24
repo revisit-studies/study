@@ -315,6 +315,12 @@ describe('ImageController', () => {
     await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
   });
 
+  test('renders ResourceNotFound after fetch returns empty content', async () => {
+    vi.mocked(getStaticAssetByPath).mockResolvedValueOnce('');
+    const { container } = render(<ImageController currentConfig={{ type: 'image', path: '/empty.png', response: [] }} />);
+    await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
+  });
+
   test('renders img after fetch returns content', async () => {
     vi.mocked(getStaticAssetByPath).mockResolvedValueOnce('image-data');
     const { container } = render(<ImageController currentConfig={{ type: 'image', path: '/found.png', response: [] }} />);

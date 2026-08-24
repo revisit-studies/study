@@ -10,7 +10,7 @@ import { useAsyncResource } from '../store/hooks/useAsyncResource';
 
 async function loadImage(url: string) {
   let asset = await getStaticAssetByPath(url);
-  asset = asset?.includes('File not found') ? undefined : asset;
+  asset = !asset || asset.includes('File not found') ? undefined : asset;
   return asset;
 }
 
