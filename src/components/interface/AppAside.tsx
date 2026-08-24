@@ -11,7 +11,7 @@ import {
 } from '@mantine/core';
 import { useMemo, useState } from 'react';
 import {
-  IconBan, IconBrandFirebase, IconBrandSupabase, IconDatabase, IconDeviceDesktop, IconGraph, IconGraphOff, IconInfoCircle, IconMicrophone, IconSettingsShare, IconUserPlus,
+  IconBan, IconBrandFirebase, IconBrandSupabase, IconCamera, IconDatabase, IconDeviceDesktop, IconGraph, IconGraphOff, IconInfoCircle, IconMicrophone, IconSettingsShare, IconUserPlus,
 } from '@tabler/icons-react';
 import { useHref } from 'react-router';
 import { StepsPanel } from './StepsPanel';
@@ -55,7 +55,7 @@ export function AppAside() {
   const nextParticipantDisabled = useMemo(() => activeTab === 'allTrials' || isAnalysis, [activeTab, isAnalysis]);
 
   const modes = useStoreSelector((state) => state.modes);
-  const { hasAudioRecording, hasScreenRecording } = useStudyRecordings(studyConfig);
+  const { hasAudioRecording, hasScreenRecording, hasWebcamRecording } = useStudyRecordings(studyConfig);
   const {
     isBrowserAllowed,
     isDeviceAllowed,
@@ -127,6 +127,11 @@ export function AppAside() {
             {hasScreenRecording && (
               <Tooltip label="Screen recording enabled" withinPortal position="bottom">
                 <IconDeviceDesktop size={16} color="orange" />
+              </Tooltip>
+            )}
+            {hasWebcamRecording && (
+              <Tooltip label="Webcam recording enabled" withinPortal position="bottom">
+                <IconCamera size={16} color="orange" />
               </Tooltip>
             )}
             {modes?.dataSharingEnabled

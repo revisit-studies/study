@@ -10,7 +10,9 @@ import { makeStudyConfig } from '../../../tests/utils';
 
 vi.mock('../useStudyConfig', () => ({
   useStudyConfig: vi.fn(() => ({
-    uiConfig: { recordScreen: false, recordAudio: false, clickToRecord: false },
+    uiConfig: {
+      recordScreen: false, recordAudio: false, recordWebcam: false, clickToRecord: false,
+    },
     components: {},
   })),
 }));
@@ -30,8 +32,10 @@ describe('useRecordingConfig', () => {
     const { result } = renderHook(() => useRecordingConfig());
     expect(result.current.studyHasScreenRecording).toBe(false);
     expect(result.current.studyHasAudioRecording).toBe(false);
+    expect(result.current.studyHasWebcamRecording).toBe(false);
     expect(result.current.currentComponentHasScreenRecording).toBe(false);
     expect(result.current.currentComponentHasAudioRecording).toBe(false);
+    expect(result.current.currentComponentHasWebcamRecording).toBe(false);
     expect(result.current.currentComponentHasClickToRecord).toBe(false);
   });
 
@@ -54,5 +58,22 @@ describe('useRecordingConfig', () => {
     vi.mocked(useStudyConfig).mockReturnValueOnce(makeStudyConfig({ uiConfig: { recordAudio: true } }));
     const { result } = renderHook(() => useRecordingConfig());
     expect(result.current.studyHasAudioRecording).toBe(true);
+  });
+
+  test('webcam recording can be enabled globally', () => {
+    vi.mocked(useStudyConfig).mockReturnValueOnce(makeStudyConfig({ uiConfig: { recordWebcam: true } }));
+    const { result } = renderHook(() => useRecordingConfig());
+    expect(result.current.studyHasWebcamRecording).toBe(true);
+    expect(result.current.currentComponentHasWebcamRecording).toBe(true);
+  });
+
+  test('webcam recording can be enabled for one sequence component', () => {
+    vi.mocked(useStudyConfig).mockReturnValueOnce(
+      makeStudyConfig({ components: { trial1: { recordWebcam: true } } }),
+    );
+    vi.mocked(useFlatSequence).mockReturnValueOnce(['trial1']);
+    const { result } = renderHook(() => useRecordingConfig());
+    expect(result.current.studyHasWebcamRecording).toBe(true);
+    expect(result.current.currentComponentHasWebcamRecording).toBe(true);
   });
 });

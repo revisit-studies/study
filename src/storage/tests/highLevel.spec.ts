@@ -180,7 +180,7 @@ class DelayedLocalStorageEngine extends LocalStorageEngine {
   ) {
     const isParticipantDataWrite = type === 'participantData' && prefix.startsWith('participants/');
     const isAssetUpload = objectToUpload instanceof Blob
-      && (prefix.startsWith('audio/') || prefix.startsWith('screenRecording/'));
+      && (prefix.startsWith('audio/') || prefix.startsWith('screenRecording/') || prefix.startsWith('webcamRecording/'));
 
     if (isParticipantDataWrite && this.holdParticipantDataWrite) {
       this.holdParticipantDataWrite = false;
@@ -1413,6 +1413,14 @@ describe.each([
 
     const finalizeResult = await finalizePromise;
     expect(finalizeResult.status).toBe('complete');
+  });
+
+  test('saveWebcamRecording persists a webcam asset for the current participant', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+    await expect(
+      storageEngine.saveWebcamRecording(new Blob(['webcam'], { type: 'video/webm' }), 'intro_0'),
+    ).resolves.toBeUndefined();
   });
 
   // getAudio and saveAudio untestable due to browser-specific implementation

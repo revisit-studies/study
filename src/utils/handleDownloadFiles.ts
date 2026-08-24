@@ -44,30 +44,83 @@ export async function handleTaskAudio({
   }
 }
 
-export async function handleTaskScreenRecording({
+type RecordingType = 'screenRecording' | 'webcamRecording';
+
+function recordingArchiveName(includeScreen: boolean, includeWebcam: boolean) {
+  if (includeScreen && !includeWebcam) return 'screenRecording';
+  if (includeWebcam && !includeScreen) return 'webcamRecording';
+  return 'recordings';
+}
+
+async function getTaskRecordingUrl({
   storageEngine,
   participantId,
   identifier,
-  screenRecordingUrl,
+  recordingType,
+  recordingUrl,
 }: {
   storageEngine: StorageEngine;
   participantId: string;
   identifier: string;
-  screenRecordingUrl?: string | null;
+  recordingType: RecordingType;
+  recordingUrl?: string | null;
 }) {
-  const finalScreenRecordingUrl = screenRecordingUrl || await storageEngine.getScreenRecording(identifier, participantId);
-
-  if (finalScreenRecordingUrl) {
-    const blob = await (await fetch(finalScreenRecordingUrl)).blob();
-    const url = URL.createObjectURL(blob);
-
-    Object.assign(document.createElement('a'), {
-      href: url,
-      download: `${participantId}_${identifier}_screenRecording.webm`,
-    }).click();
-
-    URL.revokeObjectURL(url);
+  if (recordingUrl) {
+    return recordingUrl;
   }
+  return recordingType === 'screenRecording'
+    ? storageEngine.getScreenRecording(identifier, participantId)
+    : storageEngine.getWebcamRecording(identifier, participantId);
+}
+
+export async function handleTaskRecordings({
+  storageEngine,
+  participantId,
+  identifier,
+  includeScreen,
+  includeWebcam,
+  screenRecordingUrl,
+  webcamRecordingUrl,
+}: {
+  storageEngine: StorageEngine;
+  participantId: string;
+  identifier: string;
+  includeScreen: boolean;
+  includeWebcam: boolean;
+  screenRecordingUrl?: string | null;
+  webcamRecordingUrl?: string | null;
+}) {
+  const recordings: Array<{ type: RecordingType; url?: string | null }> = [
+    ...(includeScreen ? [{ type: 'screenRecording' as const, url: screenRecordingUrl }] : []),
+    ...(includeWebcam ? [{ type: 'webcamRecording' as const, url: webcamRecordingUrl }] : []),
+  ];
+
+  await Promise.all(recordings.map(async ({ type, url: providedUrl }) => {
+    try {
+      const recordingUrl = await getTaskRecordingUrl({
+        storageEngine,
+        participantId,
+        identifier,
+        recordingType: type,
+        recordingUrl: providedUrl,
+      });
+      if (!recordingUrl) {
+        return;
+      }
+
+      const blob = await (await fetch(recordingUrl)).blob();
+      const objectUrl = URL.createObjectURL(blob);
+
+      Object.assign(document.createElement('a'), {
+        href: objectUrl,
+        download: `${participantId}_${identifier}_${type}.webm`,
+      }).click();
+
+      URL.revokeObjectURL(objectUrl);
+    } catch (error) {
+      console.warn(`Failed to fetch ${type} for ${identifier}:`, error);
+    }
+  }));
 }
 
 async function loadAssetToZip(zip: JSZip, fileName: string, assetUrl: string | null) {
@@ -191,48 +244,70 @@ export async function downloadParticipantsAudioZip({
   await downloadZip(zip, `${namePrefix}_audio.zip`);
 }
 
-async function downloadParticipantsScreenRecording({
+async function downloadParticipantsRecordings({
   storageEngine,
   participantId,
   identifier,
   namePrefix,
+  includeScreen,
+  includeWebcam,
   zip,
 }: {
   storageEngine: StorageEngine;
   participantId: string;
   identifier: string;
   namePrefix: string;
+  includeScreen: boolean;
+  includeWebcam: boolean;
   zip?: JSZip;
 }) {
-  const screenRecordingZip = zip || new JSZip();
+  const recordingsZip = zip || new JSZip();
+  const recordingTypes: RecordingType[] = [
+    ...(includeScreen ? ['screenRecording' as const] : []),
+    ...(includeWebcam ? ['webcamRecording' as const] : []),
+  ];
 
-  try {
-    const screenRecordingUrl = await storageEngine.getScreenRecording(identifier, participantId);
-    await loadAssetToZip(screenRecordingZip, `${namePrefix}_${participantId}_${identifier}.webm`, screenRecordingUrl);
-
-    if (!zip) {
-      downloadZip(screenRecordingZip, `${namePrefix}_${participantId}_${identifier}_screenRecording.zip`);
+  await Promise.all(recordingTypes.map(async (recordingType) => {
+    try {
+      const recordingUrl = await getTaskRecordingUrl({
+        storageEngine,
+        participantId,
+        identifier,
+        recordingType,
+      });
+      const memberName = includeScreen && !includeWebcam
+        ? `${namePrefix}_${participantId}_${identifier}.webm`
+        : `${namePrefix}_${participantId}_${identifier}_${recordingType}.webm`;
+      await loadAssetToZip(recordingsZip, memberName, recordingUrl);
+    } catch (error) {
+      console.warn(`Failed to fetch ${recordingType} for ${identifier}:`, error);
     }
-  } catch (error) {
-    console.warn(`Failed to fetch files for ${identifier}:`, error);
+  }));
+
+  if (!zip) {
+    downloadZip(recordingsZip, `${namePrefix}_${participantId}_${identifier}_${recordingArchiveName(includeScreen, includeWebcam)}.zip`);
   }
 }
 
-export async function downloadParticipantsScreenRecordingZip({
+export async function downloadParticipantsRecordingsZip({
   storageEngine,
   participants,
   studyId,
+  includeScreen,
+  includeWebcam,
   fileName,
 }: {
   storageEngine: StorageEngine;
   participants: Array<{ participantId: string; answers: Record<string, { endTime: number; startTime: number; componentName: string; trialOrder: string }> }>;
   studyId: string;
+  includeScreen: boolean;
+  includeWebcam: boolean;
   fileName?: string | null;
 }) {
   const namePrefix = fileName || studyId;
   const zip = new JSZip();
 
-  const screenRecordingPromises = participants.flatMap((participant) => {
+  const recordingPromises = participants.flatMap((participant) => {
     const entries = Object.values(participant.answers)
       .filter((ans) => ans.endTime > 0)
       .sort((a, b) => a.startTime - b.startTime);
@@ -240,19 +315,21 @@ export async function downloadParticipantsScreenRecordingZip({
     return entries.map(async (ans) => {
       const identifier = `${ans.componentName}_${ans.trialOrder}`;
 
-      await downloadParticipantsScreenRecording({
+      await downloadParticipantsRecordings({
         storageEngine,
         participantId: participant.participantId,
         identifier,
         namePrefix,
+        includeScreen,
+        includeWebcam,
         zip,
       });
     });
   });
 
-  await Promise.all(screenRecordingPromises);
+  await Promise.all(recordingPromises);
 
-  await downloadZip(zip, `${namePrefix}_screenRecording.zip`);
+  await downloadZip(zip, `${namePrefix}_${recordingArchiveName(includeScreen, includeWebcam)}.zip`);
 }
 
 export async function downloadParticipantsProvenanceZip({

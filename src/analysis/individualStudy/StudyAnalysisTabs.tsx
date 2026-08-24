@@ -99,7 +99,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   const [selectedConditions, setSelectedConditions] = useState<string[]>(['ALL']);
   const [availableConditions, setAvailableConditions] = useState<{ value: string; label: string }[]>([]);
 
-  const { hasAudioRecording, hasScreenRecording } = useStudyRecordings(studyConfig);
+  const { hasAudioRecording, hasScreenRecording, hasWebcamRecording } = useStudyRecordings(studyConfig);
 
   const { storageEngine } = useStorageEngine();
   const navigate = useNavigate();
@@ -429,6 +429,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                   gap="10px"
                   hasAudio={hasAudioRecording}
                   hasScreenRecording={hasScreenRecording}
+                  hasWebcamRecording={hasWebcamRecording}
                 />
               )}
             </Flex>

@@ -1,5 +1,5 @@
 import {
-  createContext, useCallback, useContext, useEffect, useRef, useState,
+  createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState,
 } from 'react';
 import { useStudyConfig } from './useStudyConfig';
 import { useCurrentComponent, useCurrentIdentifier } from '../../routes/utils';
@@ -14,9 +14,25 @@ import {
   SPEECH_DETECTION_HOLD_MS,
 } from '../../utils/recordingWarnings';
 
+const SCREEN_PERMISSION_COMPONENT = '$screen-recording.components.screenRecordingPermission';
+const WEBCAM_PERMISSION_COMPONENT = '$webcam-recording.components.webcamRecordingPermission';
+
+function stopMediaTracks(stream: MediaStream | null) {
+  stream?.getTracks().forEach((track) => {
+    track.stop();
+    stream.removeTrack(track);
+  });
+}
+
+function stopRecorder(recorder: MediaRecorder | null) {
+  if (recorder && recorder.state !== 'inactive') {
+    recorder.stop();
+  }
+}
+
 /**
- * Captures and records the screen and audio.
- * When screen recording is enabled in atleast a stimulus, screen capture should be called before recording is initiated.
+ * Captures and records the screen, webcam, and audio.
+ * When screen or webcam recording is enabled in a stimulus, capture should be called before recording is initiated.
  * When just audio recording is enabled throughout the study, recording is initiated on each screen separately.
  */
 export function useRecording() {
@@ -25,14 +41,17 @@ export function useRecording() {
   const { recordScreenFPS, recordAudio } = studyConfig.uiConfig;
 
   const recordVideoRef = useRef<HTMLVideoElement>(null);
+  const webcamVideoRef = useRef<HTMLVideoElement>(null);
   const [screenRecordingError, setRecordingError] = useState<string | null>(null);
   const [audioRecordingError, setAudioRecordingError] = useState<string | null>(null);
   const [isScreenRecording, setIsScreenRecording] = useState(false);
   const [isAudioRecording, setIsAudioRecording] = useState(false);
+  const [isWebcamRecording, setIsWebcamRecording] = useState(false);
   const [screenWithAudioRecording, setScreenWithAudioRecording] = useState(false);
-  const [screenCaptureStarted, setScreenCaptureStarted] = useState(false);
+  const [mediaCaptureStarted, setMediaCaptureStarted] = useState(false);
   const [isScreenCapturing, setIsScreenCapturing] = useState(false);
   const [isAudioCapturing, setIsAudioCapturing] = useState(false);
+  const [isWebcamCapturing, setIsWebcamCapturing] = useState(false);
   const [isMediaCapturing, setIsMediaCapturing] = useState(false);
   const [isRejected, setIsRejected] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -41,12 +60,16 @@ export function useRecording() {
   const [analysisStreamReady, setAnalysisStreamReady] = useState(false);
   const [showMutedWarning, setShowMutedWarning] = useState(false);
 
-  // currentMediaStream and recorder can be just screen, just audio, or screen and audio combined.
-  const currentMediaStream = useRef<MediaStream>(null);
   const currentMediaRecorder = useRef<MediaRecorder | null>(null);
   const audioMediaStream = useRef<MediaStream | null>(null);
   const audioMediaRecorder = useRef<MediaRecorder | null>(null); // recorder for audio. Necessary to save audio file to get transcription.
   const screenMediaStream = useRef<MediaStream>(null);
+  const webcamMediaStream = useRef<MediaStream | null>(null);
+  const webcamMediaRecorder = useRef<MediaRecorder | null>(null);
+  const isStoppingCapture = useRef(false);
+  const captureAttempt = useRef(0);
+  const isStartingCapture = useRef(false);
+  const isMounted = useRef(true);
 
   const currentTrialName = useRef<string | null>(null);
   const identifier = useCurrentIdentifier();
@@ -62,166 +85,183 @@ export function useRecording() {
   const {
     studyHasScreenRecording,
     studyHasAudioRecording,
+    studyHasWebcamRecording,
     currentComponentHasAudioRecording,
     currentComponentHasScreenRecording,
+    currentComponentHasWebcamRecording,
     currentComponentHasClickToRecord,
   } = useRecordingConfig();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     setIsMuted(currentComponentHasClickToRecord);
-  }, [currentComponentHasClickToRecord]);
+  }, [currentComponentHasClickToRecord, identifier]);
 
   // Screen capture starts once and stops at the end of the study.
   // At the beginning of each stimulus, recording starts by calling `startScreenRecording`.
   // At the end of each stimulus, recording stops by calling `stopScreenRecording`.
 
-  // Stop the screen capture.
+  // Stop all persistent media capture streams.
   const stopScreenCapture = useCallback(() => {
+    if (isStoppingCapture.current) {
+      return;
+    }
+    isStoppingCapture.current = true;
+
     if (recordVideoRef.current) {
       recordVideoRef.current.srcObject = null;
     }
+    if (webcamVideoRef.current) {
+      webcamVideoRef.current.srcObject = null;
+    }
     setIsScreenCapturing(false);
     setIsAudioCapturing(false);
+    setIsWebcamCapturing(false);
     setIsMediaCapturing(false);
     setIsScreenRecording(false);
     setIsAudioRecording(false);
+    setIsWebcamRecording(false);
     setScreenWithAudioRecording(false);
 
-    if (audioMediaStream.current) {
-      audioMediaStream.current.getTracks().forEach((track) => {
-        track.stop();
-        audioMediaStream.current?.removeTrack(track);
-      });
-      audioMediaStream.current = null;
-    }
+    stopRecorder(currentMediaRecorder.current);
+    stopRecorder(webcamMediaRecorder.current);
+    stopRecorder(audioMediaRecorder.current);
 
-    analysisAudioStream.current?.getTracks().forEach((t) => t.stop());
+    stopMediaTracks(audioMediaStream.current);
+    stopMediaTracks(screenMediaStream.current);
+    stopMediaTracks(webcamMediaStream.current);
+    stopMediaTracks(analysisAudioStream.current);
+
+    audioMediaStream.current = null;
+    screenMediaStream.current = null;
+    webcamMediaStream.current = null;
     analysisAudioStream.current = null;
     setAnalysisStreamReady(false);
+    currentMediaRecorder.current = null;
+    webcamMediaRecorder.current = null;
+    audioMediaRecorder.current = null;
 
-    if (screenMediaStream.current) {
-      screenMediaStream.current.getTracks().forEach((track) => {
-        track.stop();
-        screenMediaStream.current?.removeTrack(track);
-      });
-      screenMediaStream.current = null;
-    }
-
-    if (currentMediaRecorder.current) {
-      currentMediaRecorder.current.stream.getTracks().forEach((track) => { track.stop(); currentMediaRecorder.current?.stream.removeTrack(track); });
-      currentMediaRecorder.current.stream.getVideoTracks().forEach((track) => { track.stop(); currentMediaRecorder.current?.stream.removeTrack(track); });
-      currentMediaRecorder.current.stream.getAudioTracks().forEach((track) => { track.stop(); currentMediaRecorder.current?.stream.removeTrack(track); });
-      currentMediaRecorder.current.stop();
-      currentMediaRecorder.current = null;
-    }
-
-    if (audioMediaRecorder.current) {
-      audioMediaRecorder.current.stream.getTracks().forEach((track) => { track.stop(); audioMediaRecorder.current?.stream.removeTrack(track); });
-      audioMediaRecorder.current.stream.getAudioTracks().forEach((track) => { track.stop(); audioMediaRecorder.current?.stream.removeTrack(track); });
-      audioMediaRecorder.current.stop();
-      audioMediaRecorder.current = null;
-    }
+    window.setTimeout(() => {
+      isStoppingCapture.current = false;
+    }, 0);
   }, []);
 
-  // Start screen recording
-  const startScreenRecording = useCallback((trialName: string) => {
-    // check if the current stimulus needs combined or just screen
-
-    if (!(currentComponentHasAudioRecording || currentComponentHasScreenRecording)) {
-      return;
-    }
-
-    if (!screenMediaStream.current) {
-      return;
-    }
-
-    currentMediaStream.current = new MediaStream([
-      ...((currentComponentHasScreenRecording ? screenMediaStream.current?.getVideoTracks() : []) ?? []),
-      ...((currentComponentHasAudioRecording ? audioMediaStream.current?.getAudioTracks() : []) ?? []),
-    ]);
-
-    const stream = currentMediaStream.current;
-
-    stream.getAudioTracks().forEach((track) => {
-      track.enabled = !isMuted;
-    });
-
-    const mediaRecorder = new MediaRecorder(stream);
-
-    currentMediaRecorder.current = mediaRecorder;
-
-    const audioRecorder = (currentComponentHasAudioRecording && audioMediaStream.current) ? new MediaRecorder(audioMediaStream.current) : null;
-    audioMediaRecorder.current = audioRecorder;
-
+  const attachSaveHandler = useCallback((
+    recorder: MediaRecorder,
+    saveBlob: ((blob: Blob, trialName: string) => Promise<void>) | undefined,
+    trialName: string,
+    errorLabel: string,
+  ) => {
     let chunks: Blob[] = [];
-    mediaRecorder.addEventListener('dataavailable', (event: BlobEvent) => {
+
+    recorder.addEventListener('start', () => {
+      chunks = [];
+    });
+    recorder.addEventListener('dataavailable', (event: BlobEvent) => {
       if (event.data && event.data.size > 0) {
         chunks.push(event.data);
       }
     });
-
-    let audioChunks: Blob[] = [];
-    audioRecorder?.addEventListener('dataavailable', (event: BlobEvent) => {
-      if (event.data && event.data.size > 0) {
-        audioChunks.push(event.data);
+    recorder.addEventListener('stop', () => {
+      if (!saveBlob) {
+        return;
       }
-    });
-
-    mediaRecorder.addEventListener('start', () => {
-      chunks = [];
-    });
-
-    audioRecorder?.addEventListener('start', () => {
-      audioChunks = [];
-    });
-
-    if (currentComponentHasScreenRecording) {
-      mediaRecorder.addEventListener('stop', () => {
-        const { mimeType } = mediaRecorder;
-
-        const blob = new Blob(chunks, { type: mimeType });
-        storageEngine?.saveScreenRecording(blob, trialName).catch((error) => {
-          console.error('Error saving screen recording:', error);
-        });
+      saveBlob(new Blob(chunks, { type: recorder.mimeType }), trialName).catch((error) => {
+        console.error(`Error saving ${errorLabel}:`, error);
       });
+    });
+  }, []);
 
-      audioRecorder?.addEventListener('stop', () => {
-        const { mimeType } = audioRecorder;
+  // Start separate per-trial screen, webcam, and audio recordings from persistent capture streams.
+  const startScreenRecording = useCallback((trialName: string) => {
+    const wantsScreen = currentComponentHasScreenRecording;
+    const wantsAudio = currentComponentHasAudioRecording;
+    const wantsWebcam = currentComponentHasWebcamRecording;
 
-        const blob = new Blob(audioChunks, { type: mimeType });
-        storageEngine?.saveAudioRecording(blob, trialName).catch((error) => {
-          console.error('Error saving audio recording:', error);
-        });
-      });
-    } else {
-      mediaRecorder.addEventListener('stop', () => {
-        const { mimeType } = mediaRecorder;
+    if (!(wantsScreen || wantsAudio || wantsWebcam)) {
+      return;
+    }
+    if ((wantsScreen && !screenMediaStream.current)
+      || (wantsWebcam && !webcamMediaStream.current)
+      || (wantsAudio && !audioMediaStream.current)) {
+      return;
+    }
 
-        const blob = new Blob(chunks, { type: mimeType });
-        storageEngine?.saveAudioRecording(blob, trialName).catch((error) => {
-          console.error('Error saving audio recording:', error);
-        });
+    if (wantsAudio && audioMediaStream.current) {
+      audioMediaStream.current.getAudioTracks().forEach((track) => {
+        track.enabled = !currentComponentHasClickToRecord;
       });
     }
 
-    setIsScreenCapturing(true);
-    setScreenCaptureStarted(true);
-    setScreenWithAudioRecording(currentComponentHasAudioRecording);
+    if (wantsScreen && screenMediaStream.current) {
+      const screenStream = new MediaStream([
+        ...screenMediaStream.current.getVideoTracks(),
+        ...(wantsAudio ? audioMediaStream.current?.getAudioTracks() ?? [] : []),
+      ]);
+      const recorder = new MediaRecorder(screenStream);
+      currentMediaRecorder.current = recorder;
+      attachSaveHandler(
+        recorder,
+        storageEngine ? storageEngine.saveScreenRecording.bind(storageEngine) : undefined,
+        trialName,
+        'screen recording',
+      );
+      recorder.start(1000);
+    }
+
+    if (wantsWebcam && webcamMediaStream.current) {
+      const webcamStream = new MediaStream(webcamMediaStream.current.getVideoTracks());
+      const recorder = new MediaRecorder(webcamStream);
+      webcamMediaRecorder.current = recorder;
+      currentMediaRecorder.current ??= recorder;
+      attachSaveHandler(
+        recorder,
+        storageEngine ? storageEngine.saveWebcamRecording.bind(storageEngine) : undefined,
+        trialName,
+        'webcam recording',
+      );
+      recorder.start(1000);
+    }
+
+    if (wantsAudio && audioMediaStream.current) {
+      const audioStream = new MediaStream(audioMediaStream.current.getAudioTracks());
+      const recorder = new MediaRecorder(audioStream);
+      audioMediaRecorder.current = recorder;
+      currentMediaRecorder.current ??= recorder;
+      attachSaveHandler(
+        recorder,
+        storageEngine ? storageEngine.saveAudioRecording.bind(storageEngine) : undefined,
+        trialName,
+        'audio recording',
+      );
+      recorder.start(1000);
+    }
+
+    setScreenWithAudioRecording(wantsScreen && wantsAudio);
     setRecordingError(null);
-
-    setIsAudioRecording(currentComponentHasAudioRecording);
-    setIsScreenRecording(currentComponentHasScreenRecording);
-
-    mediaRecorder.start(1000); // 1s chunks
-    audioRecorder?.start(1000);
-  }, [currentComponentHasAudioRecording, currentComponentHasScreenRecording, storageEngine, isMuted]);
+    setIsAudioRecording(wantsAudio);
+    setIsScreenRecording(wantsScreen);
+    setIsWebcamRecording(wantsWebcam);
+  }, [
+    attachSaveHandler,
+    currentComponentHasAudioRecording,
+    currentComponentHasClickToRecord,
+    currentComponentHasScreenRecording,
+    currentComponentHasWebcamRecording,
+    storageEngine,
+  ]);
 
   // Stop screen recording. This does not stop screen capture.
   const stopScreenRecording = useCallback(() => {
     setIsScreenRecording(false);
+    setIsAudioRecording(false);
+    setIsWebcamRecording(false);
     setScreenWithAudioRecording(false);
-    currentMediaRecorder.current?.stop();
-    audioMediaRecorder.current?.stop();
+    stopRecorder(currentMediaRecorder.current);
+    stopRecorder(webcamMediaRecorder.current);
+    stopRecorder(audioMediaRecorder.current);
+    currentMediaRecorder.current = null;
+    webcamMediaRecorder.current = null;
+    audioMediaRecorder.current = null;
   }, []);
 
   const stopAudioRecording = useCallback(() => {
@@ -229,31 +269,44 @@ export function useRecording() {
     setScreenWithAudioRecording(false);
     setIsAudioRecording(false);
 
-    currentMediaRecorder.current?.stop();
+    stopRecorder(currentMediaRecorder.current);
     if (audioMediaRecorder.current) {
       audioMediaRecorder.current.stream.getTracks().forEach((track) => { track.stop(); audioMediaRecorder.current?.stream.removeTrack(track); });
       audioMediaRecorder.current.stream.getAudioTracks().forEach((track) => { track.stop(); audioMediaRecorder.current?.stream.removeTrack(track); });
-      audioMediaRecorder.current.stop();
+      stopRecorder(audioMediaRecorder.current);
       audioMediaRecorder.current = null;
     }
-    analysisAudioStream.current?.getTracks().forEach((t) => t.stop());
+    stopMediaTracks(analysisAudioStream.current);
     analysisAudioStream.current = null;
     setAnalysisStreamReady(false);
   }, []);
 
   useEffect(() => {
-    if (currentComponent !== '$screen-recording.components.screenRecordingPermission' && currentComponent !== 'end' && screenCaptureStarted && !isScreenCapturing) {
+    const isPermissionComponent = currentComponent === SCREEN_PERMISSION_COMPONENT
+      || currentComponent === WEBCAM_PERMISSION_COMPONENT;
+    const missingRequiredCapture = (studyHasScreenRecording && !isScreenCapturing)
+      || (studyHasWebcamRecording && !isWebcamCapturing)
+      || ((studyHasScreenRecording || studyHasWebcamRecording) && studyHasAudioRecording && !isAudioCapturing);
+
+    if (!isPermissionComponent && currentComponent !== 'end' && mediaCaptureStarted && missingRequiredCapture) {
       setIsRejected(true);
     }
-  }, [currentComponent, isScreenCapturing, screenCaptureStarted]);
+  }, [
+    currentComponent,
+    isAudioCapturing,
+    isScreenCapturing,
+    isWebcamCapturing,
+    mediaCaptureStarted,
+    studyHasAudioRecording,
+    studyHasScreenRecording,
+    studyHasWebcamRecording,
+  ]);
 
   const startAudioRecording = useCallback((trialName: string) => {
     navigator.mediaDevices.getUserMedia({
       audio: true,
     }).then((s) => {
       audioMediaStream.current = s;
-      currentMediaStream.current = s;
-
       const analysisTrack = s.getAudioTracks()[0]?.clone();
       if (analysisTrack) {
         analysisAudioStream.current = new MediaStream([analysisTrack]);
@@ -261,7 +314,7 @@ export function useRecording() {
       }
 
       s.getAudioTracks().forEach((track) => {
-        track.enabled = !isMuted;
+        track.enabled = !currentComponentHasClickToRecord;
       });
 
       const recorder = new MediaRecorder(s);
@@ -295,7 +348,7 @@ export function useRecording() {
       setAudioRecordingError('Microphone permission denied');
       setIsAudioRecording(false);
     });
-  }, [storageEngine, isMuted]);
+  }, [currentComponentHasClickToRecord, storageEngine]);
 
   // For study with just audio recording
   useEffect(() => {
@@ -306,7 +359,7 @@ export function useRecording() {
       return;
     }
 
-    if (!studyConfig || studyHasScreenRecording || !studyHasAudioRecording || !storageEngine || (status && status.endTime > 0) || isAnalysis) {
+    if (!studyConfig || studyHasScreenRecording || studyHasWebcamRecording || !studyHasAudioRecording || !storageEngine || (status && status.endTime > 0) || isAnalysis) {
       return;
     }
 
@@ -323,18 +376,18 @@ export function useRecording() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentComponent, identifier, currentComponentHasAudioRecording]);
 
-  // For study with screen recording
+  // For studies with screen or webcam recording.
   useEffect(() => {
-    if (!studyConfig || !(studyHasScreenRecording) || !storageEngine || (status && status.endTime > 0) || isAnalysis) {
+    if (!studyConfig || !(studyHasScreenRecording || studyHasWebcamRecording) || !storageEngine || (status && status.endTime > 0) || isAnalysis) {
       return;
     }
 
-    if (currentMediaRecorder.current) {
+    if (currentMediaRecorder.current || webcamMediaRecorder.current || audioMediaRecorder.current) {
       stopScreenRecording();
       currentTrialName.current = null;
     }
 
-    if (currentComponent !== 'end' && isMediaCapturing && currentTrialName.current !== identifier && (currentComponentHasAudioRecording || currentComponentHasScreenRecording)) {
+    if (currentComponent !== 'end' && isMediaCapturing && currentTrialName.current !== identifier && (currentComponentHasAudioRecording || currentComponentHasScreenRecording || currentComponentHasWebcamRecording)) {
       currentTrialName.current = identifier;
       startScreenRecording(identifier);
     }
@@ -344,81 +397,153 @@ export function useRecording() {
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentComponent, identifier, currentComponentHasAudioRecording, currentComponentHasScreenRecording, isMediaCapturing]);
+  }, [currentComponent, identifier, currentComponentHasAudioRecording, currentComponentHasScreenRecording, currentComponentHasWebcamRecording, isMediaCapturing]);
 
-  // Start screen capture. This does not begin recording.
-  const startScreenCapture = useCallback(() => {
-    const captureFn = async () => {
-      document.title = `RECORD THIS TAB: ${pageTitle}`;
+  // Start persistent capture. Per-trial recording begins in the navigation effect above.
+  const startMediaCapture = useCallback(async ({
+    includeScreen,
+    includeAudio,
+    includeWebcam,
+  }: {
+    includeScreen: boolean;
+    includeAudio: boolean;
+    includeWebcam: boolean;
+  }) => {
+    if (isStartingCapture.current) {
+      return;
+    }
 
-      try {
-        setRecordingError(null);
-        setAudioRecordingError(null);
+    isStartingCapture.current = true;
+    const attempt = captureAttempt.current + 1;
+    captureAttempt.current = attempt;
+    let screenStream: MediaStream | null = null;
+    let webcamStream: MediaStream | null = null;
+    let micStream: MediaStream | null = null;
 
-        const screenStream = studyHasScreenRecording ? await navigator.mediaDevices.getDisplayMedia({
-          video: { displaySurface: 'browser', ...(recordScreenFPS ? { frameRate: { ideal: recordScreenFPS } } : {}) },
-          audio: false,
-          // @ts-expect-error: experimental (selfBrowserSurface and preferCurrentTab are not yet standardized)
-          // https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getDisplayMedia#selfbrowsersurface
-          selfBrowserSurface: 'include',
-          preferCurrentTab: true,
-        }) : null;
-
-        screenMediaStream.current = screenStream;
-
-        let micStream: MediaStream | null = null;
-        if (studyHasAudioRecording) {
-          try {
-            micStream = await navigator.mediaDevices.getUserMedia({
-              audio: true,
-              video: false,
-            });
-          } catch (err) {
-            console.error('Error accessing microphone:', err);
-            setAudioRecordingError('Microphone permission denied');
-          }
-        }
-
-        audioMediaStream.current = micStream;
-
-        const analysisTrack = micStream?.getAudioTracks()[0]?.clone();
-        if (analysisTrack) {
-          analysisAudioStream.current = new MediaStream([analysisTrack]);
-          setAnalysisStreamReady(true);
-        }
-
-        const combinedStream = new MediaStream([
-          ...screenStream?.getVideoTracks() || [],
-          ...(micStream?.getAudioTracks() ?? []),
-        ]);
-
-        currentMediaStream.current = combinedStream;
-
-        if (recordVideoRef.current) {
-          recordVideoRef.current.srcObject = combinedStream;
-          recordVideoRef.current.play();
-        }
-
-        combinedStream.getTracks().forEach((track) => {
-          track.addEventListener('ended', () => {
-            stopScreenCapture();
-          });
-        });
-
-        setIsScreenCapturing(screenStream !== null);
-        setIsAudioCapturing(micStream !== null);
-        setIsMediaCapturing(screenStream !== null || micStream !== null);
-        setScreenCaptureStarted(true);
-        setScreenWithAudioRecording(micStream !== null && !!recordAudio);
-      } catch (err) {
-        console.error('Error accessing screen:', err);
-        setRecordingError('Recording permission denied');
-      } finally {
-        document.title = pageTitle;
-      }
+    const isCurrentAttempt = () => isMounted.current && captureAttempt.current === attempt;
+    const stopAcquiredStreams = () => {
+      [micStream, webcamStream, screenStream].forEach(stopMediaTracks);
+      if (screenMediaStream.current === screenStream) screenMediaStream.current = null;
+      if (webcamMediaStream.current === webcamStream) webcamMediaStream.current = null;
+      if (audioMediaStream.current === micStream) audioMediaStream.current = null;
     };
-    captureFn();
-  }, [pageTitle, recordAudio, recordScreenFPS, stopScreenCapture, studyHasAudioRecording, studyHasScreenRecording]);
+
+    document.title = includeScreen ? `RECORD THIS TAB: ${pageTitle}` : pageTitle;
+
+    try {
+      setRecordingError(null);
+      setAudioRecordingError(null);
+
+      screenStream = includeScreen ? await navigator.mediaDevices.getDisplayMedia({
+        video: { displaySurface: 'browser', ...(recordScreenFPS ? { frameRate: { ideal: recordScreenFPS } } : {}) },
+        audio: false,
+        // @ts-expect-error: experimental (selfBrowserSurface and preferCurrentTab are not yet standardized)
+        // https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getDisplayMedia#selfbrowsersurface
+        selfBrowserSurface: 'include',
+        preferCurrentTab: true,
+      }) : null;
+      if (!isCurrentAttempt()) {
+        stopAcquiredStreams();
+        return;
+      }
+      screenMediaStream.current = screenStream;
+
+      webcamStream = includeWebcam ? await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: false,
+      }) : null;
+      if (!isCurrentAttempt()) {
+        stopAcquiredStreams();
+        return;
+      }
+      webcamMediaStream.current = webcamStream;
+
+      if (includeAudio) {
+        try {
+          micStream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+            video: false,
+          });
+        } catch (err) {
+          console.error('Error accessing microphone:', err);
+          setAudioRecordingError('Microphone permission denied');
+          throw err;
+        }
+      }
+      if (!isCurrentAttempt()) {
+        stopAcquiredStreams();
+        return;
+      }
+      audioMediaStream.current = micStream;
+      micStream?.getAudioTracks().forEach((track) => {
+        track.enabled = !currentComponentHasClickToRecord;
+      });
+
+      const analysisTrack = micStream?.getAudioTracks()[0]?.clone();
+      if (analysisTrack) {
+        analysisAudioStream.current = new MediaStream([analysisTrack]);
+        setAnalysisStreamReady(true);
+      }
+
+      if (recordVideoRef.current) {
+        recordVideoRef.current.srcObject = screenStream;
+        if (screenStream) {
+          recordVideoRef.current.play().catch(() => undefined);
+        }
+      }
+      if (webcamVideoRef.current) {
+        webcamVideoRef.current.srcObject = webcamStream;
+        if (webcamStream) {
+          webcamVideoRef.current.play().catch(() => undefined);
+        }
+      }
+
+      const stopOnEnded = () => {
+        if (!isStoppingCapture.current) {
+          stopScreenCapture();
+        }
+      };
+      [screenStream, webcamStream, micStream].forEach((stream) => {
+        stream?.getTracks().forEach((track) => track.addEventListener('ended', stopOnEnded));
+      });
+
+      setIsScreenCapturing(!!screenStream);
+      setIsWebcamCapturing(!!webcamStream);
+      setIsAudioCapturing(!!micStream);
+      setIsMediaCapturing(!!(screenStream || webcamStream || micStream));
+      setMediaCaptureStarted(true);
+      setScreenWithAudioRecording(!!(screenStream && micStream && recordAudio));
+      setIsRejected(false);
+    } catch (err) {
+      console.error('Error accessing recording media:', err);
+      if (isCurrentAttempt()) {
+        setRecordingError('Recording permission denied');
+      }
+      stopAcquiredStreams();
+      stopScreenCapture();
+    } finally {
+      if (captureAttempt.current === attempt) {
+        isStartingCapture.current = false;
+      }
+      document.title = pageTitle;
+    }
+  }, [currentComponentHasClickToRecord, pageTitle, recordAudio, recordScreenFPS, stopScreenCapture]);
+
+  const startScreenCapture = useCallback(() => {
+    startMediaCapture({
+      includeScreen: studyHasScreenRecording,
+      includeAudio: studyHasAudioRecording,
+      includeWebcam: studyHasWebcamRecording,
+    });
+  }, [startMediaCapture, studyHasAudioRecording, studyHasScreenRecording, studyHasWebcamRecording]);
+
+  const startWebcamCapture = useCallback(() => {
+    startMediaCapture({
+      includeScreen: false,
+      includeAudio: studyHasAudioRecording,
+      includeWebcam: true,
+    });
+  }, [startMediaCapture, studyHasAudioRecording]);
 
   useEffect(() => {
     audioMediaStream.current?.getAudioTracks().forEach((track) => {
@@ -436,6 +561,12 @@ export function useRecording() {
       t && clearTimeout(t);
     };
   }, [currentComponentHasAudioRecording, isMuted]);
+
+  useEffect(() => () => {
+    isMounted.current = false;
+    captureAttempt.current += 1;
+    stopScreenCapture();
+  }, [stopScreenCapture]);
 
   useEffect(() => {
     if (!shouldMonitorMutedAudio(isMuted, currentComponentHasAudioRecording) || !analysisStreamReady || !analysisAudioStream.current) return undefined;
@@ -497,13 +628,17 @@ export function useRecording() {
 
   return {
     recordVideoRef,
+    webcamVideoRef,
     studyHasScreenRecording,
     studyHasAudioRecording,
+    studyHasWebcamRecording,
     currentComponentHasAudioRecording,
+    currentComponentHasWebcamRecording,
     isMuted,
     setIsMuted,
     recordAudio,
     startScreenCapture,
+    startWebcamCapture,
     stopScreenCapture,
     startScreenRecording,
     stopScreenRecording,
@@ -511,8 +646,10 @@ export function useRecording() {
     audioRecordingError,
     isScreenRecording,
     isAudioRecording,
+    isWebcamRecording,
     isScreenCapturing,
     isAudioCapturing,
+    isWebcamCapturing,
     isMediaCapturing,
     combinedMediaRecorder: currentMediaRecorder,
     audioMediaStream,

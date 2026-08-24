@@ -1,7 +1,7 @@
 import {
-  Box, Button, Title,
+  Box, Button, Flex, Title,
 } from '@mantine/core';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRecordingContext } from '../../../../store/hooks/useRecording';
 import { StimulusParams } from '../../../../store/types';
 import { RecordingAudioWaveform } from '../../../../components/interface/RecordingAudioWaveform';
@@ -9,161 +9,160 @@ import { RecordingAudioWaveform } from '../../../../components/interface/Recordi
 function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
   const {
     studyHasAudioRecording,
+    studyHasWebcamRecording,
     recordVideoRef,
+    webcamVideoRef,
     startScreenCapture: startCapture,
     stopScreenCapture: stopCapture,
     isScreenCapturing: screenCapturing,
     isAudioCapturing: audioCapturing,
+    isWebcamCapturing: webcamCapturing,
+    isMediaCapturing: mediaCapturing,
+    screenRecordingError,
+    audioRecordingError,
     audioMediaStream,
   } = useRecordingContext();
 
-  // audioCapturingSuccess is set to true when we detect sound.
   const [audioCapturingSuccess, setAudioCapturingSuccess] = useState(false);
+  const setupComplete = useMemo(
+    () => screenCapturing
+      && (!studyHasWebcamRecording || webcamCapturing)
+      && (!studyHasAudioRecording || (audioCapturing && audioCapturingSuccess)),
+    [
+      audioCapturingSuccess,
+      audioCapturing,
+      screenCapturing,
+      studyHasAudioRecording,
+      studyHasWebcamRecording,
+      webcamCapturing,
+    ],
+  );
+
+  useEffect(() => {
+    if (!audioCapturing) {
+      setAudioCapturingSuccess(false);
+    }
+  }, [audioCapturing]);
 
   useEffect(() => {
     setAnswer({
-      status: screenCapturing && (studyHasAudioRecording ? audioCapturingSuccess : true),
+      status: setupComplete,
       answers: {
         screenRecordingPermission: screenCapturing,
       },
     });
-  }, [screenCapturing, audioCapturingSuccess, setAnswer, studyHasAudioRecording]);
+  }, [screenCapturing, setAnswer, setupComplete]);
 
   useEffect(() => {
-    if (!screenCapturing) {
-      return;
+    if (!audioCapturing || !studyHasAudioRecording || !audioMediaStream.current) {
+      return undefined;
     }
-    const stream = audioMediaStream.current;
-    if (!stream) {
-      return;
-    }
-
-    const mediaRecorder = new MediaRecorder(stream);
-    mediaRecorder.start();
 
     const audioContext = new AudioContext();
-    const audioStreamSource = audioContext.createMediaStreamSource(stream);
+    const audioStreamSource = audioContext.createMediaStreamSource(audioMediaStream.current);
     const analyser = audioContext.createAnalyser();
-
     analyser.minDecibels = -45;
     audioStreamSource.connect(analyser);
 
-    const bufferLength = analyser.frequencyBinCount;
-    const domainData = new Uint8Array(bufferLength);
-
-    let soundDetected = false;
-
+    const domainData = new Uint8Array(analyser.frequencyBinCount);
+    let animationFrame = 0;
     const detectSound = () => {
-      if (soundDetected) {
+      analyser.getByteFrequencyData(domainData);
+      if (domainData.some((value) => value > 0)) {
+        setAudioCapturingSuccess(true);
         return;
       }
-
-      analyser.getByteFrequencyData(domainData);
-
-      for (let i = 0; i < bufferLength; i += 1) {
-        if (domainData[i] > 0) {
-          soundDetected = true;
-          setAudioCapturingSuccess(true);
-        }
-      }
-
-      window.requestAnimationFrame(detectSound);
+      animationFrame = window.requestAnimationFrame(detectSound);
     };
+    animationFrame = window.requestAnimationFrame(detectSound);
 
-    window.requestAnimationFrame(detectSound);
-  }, [audioMediaStream, screenCapturing, setAnswer]);
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      audioStreamSource.disconnect();
+      analyser.disconnect();
+      audioContext.close().catch(() => undefined);
+    };
+  }, [audioCapturing, audioMediaStream, studyHasAudioRecording]);
+
+  const recordingTargets = [
+    'screen',
+    ...(studyHasWebcamRecording ? ['webcam'] : []),
+    ...(studyHasAudioRecording ? ['audio'] : []),
+  ];
 
   return (
     <Box p="md">
       <Title order={1} size="h2">
         Screen
-        {studyHasAudioRecording && ' and Audio'}
+        {studyHasWebcamRecording && ', Webcam'}
+        {studyHasAudioRecording && `${studyHasWebcamRecording ? ',' : ' and'} Audio`}
         {' '}
         Recording Permission
       </Title>
 
-      {studyHasAudioRecording ? (
-        <>
-          {/* Record both screen and audio */}
-          <p>
-            This study requires recording of your
-            {' '}
-            <strong>screen</strong>
-            {' '}
-            and
-            {' '}
-            <strong>audio</strong>
-            . If you&apos;re not comfortable, you may exit and return the study.
-          </p>
-          <p>Follow the steps below to grant screen and audio recording permissions.</p>
+      <p>
+        This study requires recording of your
+        {' '}
+        <strong>{recordingTargets.join(', ')}</strong>
+        . If you&apos;re not comfortable, you may exit and return the study.
+      </p>
+      <p>Follow the steps below to grant the required permissions.</p>
 
-          <ol>
-            <li>
-              <strong>Click the button below</strong>
-              {' '}
-              to enable screen and audio recording.
-              <Button type="button" onClick={screenCapturing ? stopCapture : startCapture} display="block" mt="sm">
-                {screenCapturing ? 'Stop Recording' : 'Start Recording'}
-              </Button>
+      <ol>
+        <li>
+          <strong>Click the button below</strong>
+          {' '}
+          to enable the required recording streams.
+          <Button type="button" onClick={mediaCapturing ? stopCapture : startCapture} display="block" mt="sm">
+            {mediaCapturing ? 'Stop Recording' : 'Start Recording'}
+          </Button>
+          {screenRecordingError && <p style={{ color: 'red' }}>{screenRecordingError}</p>}
+          {audioRecordingError && <p style={{ color: 'red' }}>{audioRecordingError}</p>}
+          <p><i>Please make sure you are recording the correct tab or window. Otherwise, stop and re-share the correct one.</i></p>
+        </li>
+        <li>
+          <strong>Confirm your preview streams</strong>
+          {' '}
+          before continuing.
+          <Flex mt="sm" gap="md" wrap="wrap">
+            <Box>
+              <p><strong>Screen Preview</strong></p>
               <video
                 ref={recordVideoRef}
                 autoPlay
                 playsInline
                 muted
-                style={{ width: '400px', border: '1px solid #ccc', marginTop: '1rem' }}
+                style={{ width: '400px', border: '1px solid #ccc' }}
               />
-              <p><i>Please make sure you are recording the correct tab or window. Otherwise, stop and re-share the correct one.</i></p>
-
-            </li>
-            <li>
-              <strong>Speak</strong>
-              {' '}
-              into your microphone to check if audio is working.
-              {audioCapturing ? <Box h={200} w={400} bd="1px solid #ccc"><RecordingAudioWaveform height={200} width={400} /></Box> : <Box h={200} w={400} bd="1px solid #ccc" />}
-            </li>
-          </ol>
-          <strong>Note:</strong>
-          <ul>
-            <li>
-              After we hear you say something, the
-              {' '}
-              <b>Continue</b>
-              {' '}
-              button will be enabled.
-            </li>
-            <li>Please do not close the window or screen recording until the entire study is completed.</li>
-          </ul>
-        </>
-      ) : (
-        <>
-          {/* Record screen only */}
-          <p>
-            This study requires recording of your
+            </Box>
+            {studyHasWebcamRecording && (
+              <Box>
+                <p><strong>Webcam Preview</strong></p>
+                <video
+                  ref={webcamVideoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  style={{ width: '300px', border: '1px solid #ccc', transform: 'scaleX(-1)' }}
+                />
+              </Box>
+            )}
+          </Flex>
+        </li>
+        {studyHasAudioRecording && (
+          <li>
+            <strong>Speak</strong>
             {' '}
-            <strong>screen</strong>
-            . If you&apos;re not comfortable, you may exit and return the study.
-          </p>
-          <strong>Click the button below</strong>
-          {' '}
-          to enable screen recording.
-          <Button type="button" onClick={screenCapturing ? stopCapture : startCapture} display="block" mt="sm">
-            {screenCapturing ? 'Stop Recording' : 'Start Recording'}
-          </Button>
-          <video
-            ref={recordVideoRef}
-            autoPlay
-            playsInline
-            muted
-            style={{ width: '400px', border: '1px solid #ccc', marginTop: '1rem' }}
-          />
-          <p><i>Please make sure you are recording the correct tab or window. Otherwise, stop and re-share the correct one.</i></p>
-
-          <strong>Note:</strong>
-          <ul>
-            <li>Please do not close the window or screen recording until the entire study is completed.</li>
-          </ul>
-        </>
-      )}
+            into your microphone to check if audio is working.
+            {audioCapturing ? <Box h={200} w={400} bd="1px solid #ccc"><RecordingAudioWaveform height={200} width={400} /></Box> : <Box h={200} w={400} bd="1px solid #ccc" />}
+          </li>
+        )}
+      </ol>
+      <strong>Note:</strong>
+      <ul>
+        {studyHasAudioRecording && <li>After we hear you say something, the Continue button will be enabled.</li>}
+        <li>Please do not stop the recording streams until the entire study is completed.</li>
+      </ul>
     </Box>
   );
 }

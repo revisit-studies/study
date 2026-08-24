@@ -97,6 +97,8 @@ export function AudioProvenanceVis({
   const [playTime, setPlayTime] = useState<number>(0);
 
   const wavesurfer = useRef<WaveSurferType | null>(null);
+  const loadedAnalysisUrls = useRef<string[]>([]);
+  const analysisLoadGeneration = useRef(0);
 
   const waveSurferDiv = useRef(null);
 
@@ -106,6 +108,12 @@ export function AudioProvenanceVis({
 
   const trrackForTrial = useRef<Trrack<object, string> | null>(null);
   const hasLoadableTask = Boolean(participantId && taskName && answers[taskName]);
+
+  useEffect(() => () => {
+    analysisLoadGeneration.current += 1;
+    loadedAnalysisUrls.current.forEach((url) => URL.revokeObjectURL(url));
+    loadedAnalysisUrls.current = [];
+  }, []);
 
   useEffect(() => {
     let canceled = false;
@@ -297,6 +305,10 @@ export function AudioProvenanceVis({
 
   const handleWSMount = useEvent(
     async (waveSurfer: WaveSurferType | null) => {
+      const loadGeneration = analysisLoadGeneration.current + 1;
+      analysisLoadGeneration.current = loadGeneration;
+      loadedAnalysisUrls.current.forEach((url) => URL.revokeObjectURL(url));
+      loadedAnalysisUrls.current = [];
       wavesurfer.current = waveSurfer;
 
       audioRef.current = null;
@@ -312,8 +324,16 @@ export function AudioProvenanceVis({
             safe(storageEngine.getAudio(taskName, participantId)),
             safe(storageEngine.getScreenRecording(taskName, participantId)),
           ]);
+          const loadedUrls = [audioUrl, screenUrl]
+            .filter((url): url is string => !!url && url.startsWith('blob:'));
+          if (loadGeneration !== analysisLoadGeneration.current) {
+            loadedUrls.forEach((url) => URL.revokeObjectURL(url));
+            return;
+          }
+          loadedAnalysisUrls.current = loadedUrls;
 
           const url = screenUrl ?? audioUrl ?? null;
+          const hasAudioSource = !!(screenUrl ?? audioUrl);
 
           if (!url) {
             setAnalysisHasAudio(false);
@@ -323,16 +343,23 @@ export function AudioProvenanceVis({
           }
 
           await waveSurfer.load(url!, undefined, duration);
+          if (loadGeneration !== analysisLoadGeneration.current) {
+            loadedUrls.forEach((loadedUrl) => URL.revokeObjectURL(loadedUrl));
+            return;
+          }
           setWaveSurferLoading(false);
 
           audioRef.current = waveSurfer.getMediaElement();
           updateReplayRef();
 
           setWaveSurferWidth(waveSurfer.getWidth());
-          setAnalysisHasAudio(true);
+          setAnalysisHasAudio(hasAudioSource);
           waveSurfer.seekTo(0);
           waveSurfer.on('redrawcomplete', () => setWaveSurferWidth(waveSurfer.getWidth()));
         } catch (error: unknown) {
+          if (loadGeneration !== analysisLoadGeneration.current) {
+            return;
+          }
           setAnalysisHasAudio(false);
           setWaveSurferLoading(false);
           audioRef.current = null;

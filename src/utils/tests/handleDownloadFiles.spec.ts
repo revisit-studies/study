@@ -1,13 +1,14 @@
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
+import JSZip from 'jszip';
 import {
   downloadConfigFile,
   downloadConfigFilesZip,
   downloadParticipantsAudioZip,
-  downloadParticipantsScreenRecordingZip,
+  downloadParticipantsRecordingsZip,
   handleTaskAudio,
-  handleTaskScreenRecording,
+  handleTaskRecordings,
 } from '../handleDownloadFiles';
 import { makeStudyConfig, makeStorageEngine } from '../../tests/utils';
 
@@ -74,13 +75,15 @@ describe('handleTaskAudio', () => {
   });
 });
 
-describe('handleTaskScreenRecording', () => {
+describe('handleTaskRecordings', () => {
   test('fetches the provided screenRecordingUrl and triggers a click', async () => {
     const storageEngine = makeStorageEngine();
-    await handleTaskScreenRecording({
+    await handleTaskRecordings({
       storageEngine,
       participantId: 'p1',
       identifier: 'trial_0',
+      includeScreen: true,
+      includeWebcam: false,
       screenRecordingUrl: 'https://example.com/recording.webm',
     });
 
@@ -93,7 +96,9 @@ describe('handleTaskScreenRecording', () => {
       getScreenRecording: vi.fn(async () => 'https://example.com/rec.webm'),
     });
 
-    await handleTaskScreenRecording({ storageEngine, participantId: 'p2', identifier: 'trial_1' });
+    await handleTaskRecordings({
+      storageEngine, participantId: 'p2', identifier: 'trial_1', includeScreen: true, includeWebcam: false,
+    });
 
     expect((storageEngine.getScreenRecording as ReturnType<typeof vi.fn>)).toHaveBeenCalledWith('trial_1', 'p2');
     expect(clickSpy).toHaveBeenCalled();
@@ -101,8 +106,24 @@ describe('handleTaskScreenRecording', () => {
 
   test('skips download when screen recording URL is null', async () => {
     const storageEngine = makeStorageEngine();
-    await handleTaskScreenRecording({ storageEngine, participantId: 'p3', identifier: 'trial_2' });
+    await handleTaskRecordings({
+      storageEngine, participantId: 'p3', identifier: 'trial_2', includeScreen: true, includeWebcam: false,
+    });
     expect(clickSpy).not.toHaveBeenCalled();
+  });
+
+  test('downloads screen and webcam assets through the shared control', async () => {
+    const storageEngine = makeStorageEngine();
+    await handleTaskRecordings({
+      storageEngine,
+      participantId: 'p4',
+      identifier: 'trial_3',
+      includeScreen: true,
+      includeWebcam: true,
+      screenRecordingUrl: 'https://example.com/screen.webm',
+      webcamRecordingUrl: 'https://example.com/webcam.webm',
+    });
+    expect(clickSpy).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -224,7 +245,7 @@ describe('downloadParticipantsAudioZip', () => {
   });
 });
 
-describe('downloadParticipantsScreenRecordingZip', () => {
+describe('downloadParticipantsRecordingsZip', () => {
   test('fetches screen recordings for each completed trial and downloads zip', async () => {
     const screenUrl = 'https://example.com/recording.webm';
     const storageEngine = makeStorageEngine({
@@ -239,11 +260,41 @@ describe('downloadParticipantsScreenRecordingZip', () => {
       },
     }];
 
-    await downloadParticipantsScreenRecordingZip({ storageEngine, participants, studyId: 'my-study' });
+    await downloadParticipantsRecordingsZip({
+      storageEngine, participants, studyId: 'my-study', includeScreen: true, includeWebcam: false,
+    });
 
     expect((storageEngine.getScreenRecording as ReturnType<typeof vi.fn>)).toHaveBeenCalled();
     expect(URL.createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
     expect(clickSpy).toHaveBeenCalledOnce();
+  });
+
+  test('keeps the legacy screen-only archive and member names', async () => {
+    const storageEngine = makeStorageEngine({
+      getScreenRecording: vi.fn(async () => 'https://example.com/recording.webm'),
+    });
+    const participants = [{
+      participantId: 'p1',
+      answers: {
+        trial_0: {
+          endTime: 1000, startTime: 0, componentName: 'trial', trialOrder: '0',
+        },
+      },
+    }];
+
+    const zipFile = vi.spyOn(JSZip.prototype, 'file');
+    const anchorDownloads: string[] = [];
+    clickSpy.mockImplementation(function click(this: HTMLAnchorElement) {
+      anchorDownloads.push(this.download);
+    });
+
+    await downloadParticipantsRecordingsZip({
+      storageEngine, participants, studyId: 'study', includeScreen: true, includeWebcam: false,
+    });
+
+    expect(zipFile).toHaveBeenCalledWith('study_p1_trial_0.webm', expect.any(Blob));
+    expect(anchorDownloads).toContain('study_screenRecording.zip');
+    zipFile.mockRestore();
   });
 
   test('skips trials where endTime is 0 (not completed)', async () => {
@@ -259,7 +310,9 @@ describe('downloadParticipantsScreenRecordingZip', () => {
       },
     }];
 
-    await downloadParticipantsScreenRecordingZip({ storageEngine, participants, studyId: 'my-study' });
+    await downloadParticipantsRecordingsZip({
+      storageEngine, participants, studyId: 'my-study', includeScreen: true, includeWebcam: false,
+    });
 
     expect((storageEngine.getScreenRecording as ReturnType<typeof vi.fn>)).not.toHaveBeenCalled();
     expect(clickSpy).toHaveBeenCalledOnce();
@@ -268,8 +321,8 @@ describe('downloadParticipantsScreenRecordingZip', () => {
   test('uses the provided fileName as zip name prefix', async () => {
     const storageEngine = makeStorageEngine();
 
-    await downloadParticipantsScreenRecordingZip({
-      storageEngine, participants: [], studyId: 'study', fileName: 'custom-name',
+    await downloadParticipantsRecordingsZip({
+      storageEngine, participants: [], studyId: 'study', fileName: 'custom-name', includeScreen: true, includeWebcam: false,
     });
 
     expect(clickSpy).toHaveBeenCalledOnce();
@@ -289,8 +342,37 @@ describe('downloadParticipantsScreenRecordingZip', () => {
     }];
 
     await expect(
-      downloadParticipantsScreenRecordingZip({ storageEngine, participants, studyId: 'my-study' }),
+      downloadParticipantsRecordingsZip({
+        storageEngine, participants, studyId: 'my-study', includeScreen: true, includeWebcam: false,
+      }),
     ).resolves.not.toThrow();
+    expect(clickSpy).toHaveBeenCalledOnce();
+  });
+
+  test('fetches webcam recordings into the same recordings zip', async () => {
+    const storageEngine = makeStorageEngine({
+      getScreenRecording: vi.fn(async () => 'https://example.com/screen.webm'),
+      getWebcamRecording: vi.fn(async () => 'https://example.com/webcam.webm'),
+    });
+    const participants = [{
+      participantId: 'p1',
+      answers: {
+        trial_0: {
+          endTime: 1000, startTime: 0, componentName: 'trial', trialOrder: '0',
+        },
+      },
+    }];
+
+    await downloadParticipantsRecordingsZip({
+      storageEngine,
+      participants,
+      studyId: 'my-study',
+      includeScreen: true,
+      includeWebcam: true,
+    });
+
+    expect(storageEngine.getScreenRecording).toHaveBeenCalledWith('trial_0', 'p1');
+    expect(storageEngine.getWebcamRecording).toHaveBeenCalledWith('trial_0', 'p1');
     expect(clickSpy).toHaveBeenCalledOnce();
   });
 });

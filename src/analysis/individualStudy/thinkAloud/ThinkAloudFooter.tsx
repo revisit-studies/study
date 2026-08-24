@@ -28,7 +28,7 @@ import { TagSelector } from './tags/TagSelector';
 import { encryptIndex } from '../../../utils/encryptDecryptIndex';
 import { parseTrialOrder } from '../../../utils/parseTrialOrder';
 import { PREFIX } from '../../../utils/Prefix';
-import { handleTaskAudio, handleTaskScreenRecording } from '../../../utils/handleDownloadFiles';
+import { handleTaskAudio, handleTaskRecordings } from '../../../utils/handleDownloadFiles';
 import { ParticipantRejectModal } from '../ParticipantRejectModal';
 import { StorageEngine } from '../../../storage/engines/types';
 import { useReplayContext } from '../../../store/hooks/useReplay';
@@ -129,15 +129,35 @@ export function ThinkAloudFooter({
   const assetKey = `${participantId}\u0000${currentTrial}`;
   const [audio, setAudio] = useState<{ key: string; url: string | null }>({ key: '', url: null });
   const [screenRecording, setScreenRecording] = useState<{ key: string; url: string | null }>({ key: '', url: null });
+  const [webcamRecording, setWebcamRecording] = useState<{ key: string; url: string | null }>({ key: '', url: null });
   const audioUrl = audio.key === assetKey ? audio.url : null;
   const screenRecordingUrl = screenRecording.key === assetKey ? screenRecording.url : null;
+  const webcamRecordingUrl = webcamRecording.key === assetKey ? webcamRecording.url : null;
 
   useEffect(() => {
     let cancelled = false;
+    const loadedUrls: string[] = [];
+    const releaseUrl = (url: string | null) => {
+      if (url?.startsWith('blob:')) {
+        URL.revokeObjectURL(url);
+      }
+    };
+    const setLoadedAsset = (
+      setter: (value: { key: string; url: string | null }) => void,
+      url: string | null,
+    ) => {
+      if (cancelled) {
+        releaseUrl(url);
+        return;
+      }
+      if (url) loadedUrls.push(url);
+      setter({ key: assetKey, url });
+    };
 
     async function fetchAssetsUrl() {
       setAudio({ key: assetKey, url: null });
       setScreenRecording({ key: assetKey, url: null });
+      setWebcamRecording({ key: assetKey, url: null });
 
       if (!storageEngine || !participantId || !currentTrial) {
         return;
@@ -145,9 +165,7 @@ export function ThinkAloudFooter({
 
       try {
         const url = await storageEngine.getAudioUrl(currentTrial, participantId);
-        if (!cancelled) {
-          setAudio({ key: assetKey, url });
-        }
+        setLoadedAsset(setAudio, url);
       } catch {
         if (!cancelled) {
           setAudio({ key: assetKey, url: null });
@@ -156,12 +174,19 @@ export function ThinkAloudFooter({
 
       try {
         const url = await storageEngine.getScreenRecording(currentTrial, participantId);
-        if (!cancelled) {
-          setScreenRecording({ key: assetKey, url });
-        }
+        setLoadedAsset(setScreenRecording, url);
       } catch {
         if (!cancelled) {
           setScreenRecording({ key: assetKey, url: null });
+        }
+      }
+
+      try {
+        const url = await storageEngine.getWebcamRecording(currentTrial, participantId);
+        setLoadedAsset(setWebcamRecording, url);
+      } catch {
+        if (!cancelled) {
+          setWebcamRecording({ key: assetKey, url: null });
         }
       }
     }
@@ -170,6 +195,7 @@ export function ThinkAloudFooter({
 
     return () => {
       cancelled = true;
+      loadedUrls.forEach(releaseUrl);
     };
   }, [assetKey, currentTrial, participantId, storageEngine]);
 
@@ -186,18 +212,21 @@ export function ThinkAloudFooter({
     });
   }, [storageEngine, participantId, currentTrial, audioUrl]);
 
-  const handleDownloadScreenRecording = useCallback(async () => {
+  const handleDownloadRecordings = useCallback(async () => {
     if (!storageEngine || !participantId || !currentTrial) {
       return;
     }
 
-    await handleTaskScreenRecording({
+    await handleTaskRecordings({
       storageEngine,
       participantId,
       identifier: currentTrial,
+      includeScreen: !!screenRecordingUrl,
+      includeWebcam: !!webcamRecordingUrl,
       screenRecordingUrl,
+      webcamRecordingUrl,
     });
-  }, [storageEngine, participantId, currentTrial, screenRecordingUrl]);
+  }, [storageEngine, participantId, currentTrial, screenRecordingUrl, webcamRecordingUrl]);
 
   const [transcriptLines, setTranscriptLines] = useState<TranscriptLinesWithTimes[] | null>(null);
 
@@ -647,9 +676,9 @@ export function ThinkAloudFooter({
                 </ActionIcon>
               </Tooltip>
             )}
-            {screenRecordingUrl && (
-              <Tooltip label="Download screen recording">
-                <ActionIcon variant="light" size={30} onClick={handleDownloadScreenRecording}>
+            {(screenRecordingUrl || webcamRecordingUrl) && (
+              <Tooltip label="Download recordings">
+                <ActionIcon variant="light" size={30} onClick={handleDownloadRecordings}>
                   <IconDeviceDesktopDown />
                 </ActionIcon>
               </Tooltip>
