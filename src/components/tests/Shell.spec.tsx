@@ -6,7 +6,9 @@ import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { useRoutes } from 'react-router';
-import { Shell, StudyLoadingOverlay } from '../Shell';
+import {
+  getShellUiState, getStartupErrorMessage, Shell, StudyLoadingOverlay,
+} from '../Shell';
 import type { ParsedConfig, StudyConfig } from '../../parser/types';
 import { getStudyConfig, resolveConfigKey } from '../../utils/fetchConfig';
 import { makeGlobalConfig, makeStudyConfig } from '../../tests/utils';
@@ -187,6 +189,17 @@ describe('Shell', () => {
     expect(getByRole('status').getAttribute('aria-atomic')).toBe('true');
   });
 
+  test('explains Firebase index ownership and one-time project scope', () => {
+    const message = getStartupErrorMessage(
+      new Error('The query requires an index. You can create it here: https://console.firebase.google.com/example'),
+    );
+
+    expect(message).toContain('one-time setup for this Firebase project/database');
+    expect(message).toContain('does not need to be repeated for each study');
+    expect(message).toContain('study owner (Study Designer)');
+    expect(message).toContain('https://console.firebase.google.com/example');
+  });
+
   test('cancels the loading message when startup completes before the delay', () => {
     vi.useFakeTimers();
     const clearTimeoutSpy = vi.spyOn(window, 'clearTimeout');
@@ -211,6 +224,36 @@ describe('Shell', () => {
 
     rerender(<StudyLoadingOverlay visible={false} />);
     expect(queryByRole('status')).toBeNull();
+  });
+
+  test('removes loading context once study content is ready while completion verification continues', () => {
+    vi.useFakeTimers();
+
+    const {
+      getByRole, getByTestId, queryByRole, rerender,
+    } = render(<StudyLoadingOverlay visible />);
+
+    act(() => vi.advanceTimersByTime(1500));
+    expect(getByRole('status')).toBeDefined();
+
+    rerender(<StudyLoadingOverlay visible showMessage={false} />);
+
+    expect(getByTestId('loading-overlay')).toBeDefined();
+    expect(queryByRole('status')).toBeNull();
+  });
+
+  test('does not describe ready study content as still loading during completion verification', () => {
+    expect(getShellUiState({
+      isValidStudyId: true,
+      hasRoutes: true,
+      hasStore: true,
+      isCompletionCheckResolved: false,
+      completionCheckError: null,
+    })).toEqual({
+      isLoading: true,
+      showLoadingMessage: false,
+      showCompletionCheckError: false,
+    });
   });
 
   test('shows loading overlay when routes are not yet initialized', async () => {
@@ -310,6 +353,20 @@ describe('Shell', () => {
     render(<Shell globalConfig={globalConfig} />);
     await waitFor(() => expect(mockStorageEngine!.initializeStudyDb).toHaveBeenCalled(), { timeout: 3000 });
     await waitFor(() => expect(vi.mocked(studyStoreCreator)).toHaveBeenCalled(), { timeout: 3000 });
+    expect(mockStorageEngine.initializeParticipantSession).toHaveBeenCalledWith(
+      expect.any(Object),
+      mockActiveConfig,
+      expect.any(Object),
+      undefined,
+      {
+        modesDocument: {
+          developmentModeEnabled: false,
+          dataSharingEnabled: false,
+          dataCollectionEnabled: true,
+        },
+        sequenceArray: ['seq1'],
+      },
+    );
   });
 
   test('calls setSequenceArray when getSequenceArray returns null', async () => {

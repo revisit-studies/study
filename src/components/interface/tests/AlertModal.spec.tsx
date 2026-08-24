@@ -14,6 +14,7 @@ let mockAlertModal = { show: false, title: '', message: '' };
 let mockSetAlertModal = vi.fn();
 let mockStoreDispatch = vi.fn();
 let mockRetryFailedWrites = vi.fn();
+const originalClipboardDescriptor = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
@@ -59,9 +60,19 @@ vi.mock('@mantine/core', () => ({
     <a href={href}>{children}</a>
   ),
   Box: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  Button: ({ children, loading, onClick }: { children: ReactNode; loading?: boolean; onClick?: () => void }) => (
-    <button type="button" disabled={loading} onClick={onClick}>{children}</button>
-  ),
+  Button: ({
+    children, component, href, loading, onClick, rel, target,
+  }: {
+    children: ReactNode;
+    component?: string;
+    href?: string;
+    loading?: boolean;
+    onClick?: () => void;
+    rel?: string;
+    target?: string;
+  }) => (component === 'a'
+    ? <a href={href} rel={rel} target={target}>{children}</a>
+    : <button type="button" disabled={loading} onClick={onClick}>{children}</button>),
   Code: ({ children }: { children: ReactNode }) => <pre>{children}</pre>,
   Group: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Modal: ({ opened, children }: { opened: boolean; children: ReactNode }) => (
@@ -74,6 +85,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconAlertCircle: () => null,
   IconCheck: () => <span>check</span>,
   IconCopy: () => <span>copy</span>,
+  IconExternalLink: () => <span>external</span>,
 }));
 
 // ── tests ─────────────────────────────────────────────────────────────────────
@@ -89,6 +101,12 @@ describe('AlertModal', () => {
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
+    vi.unstubAllGlobals();
+    if (originalClipboardDescriptor) {
+      Object.defineProperty(navigator, 'clipboard', originalClipboardDescriptor);
+    } else {
+      Reflect.deleteProperty(navigator, 'clipboard');
+    }
   });
 
   test('renders nothing when alertModal.show is false', () => {
@@ -139,6 +157,29 @@ describe('AlertModal', () => {
     mockAlertModal = { show: true, title: 'Error', message: 'msg' };
     const html = renderToStaticMarkup(<AlertModal />);
     expect(html).toContain('Continue Study');
+  });
+
+  test('renders Firebase index errors with open and copy actions', async () => {
+    const indexUrl = 'https://console.firebase.google.com/v1/r/project/example/firestore/indexes?create_composite=abc123';
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('isSecureContext', true);
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    });
+    mockAlertModal = {
+      show: true,
+      title: 'Problem loading the study',
+      message: `The query requires an index. You can create it here: ${indexUrl}`,
+    };
+
+    render(<AlertModal />);
+
+    expect(screen.getByRole('link', { name: /Open Firebase index setup/ }).getAttribute('href')).toBe(indexUrl);
+    expect(screen.getByText(indexUrl)).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: /Copy setup URL/ }));
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith(indexUrl));
+    expect(screen.getByRole('button', { name: /Copied/ })).toBeDefined();
   });
 
   test('reconnect reloads the page without closing storage engine alert', () => {
