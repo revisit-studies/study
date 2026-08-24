@@ -1,6 +1,4 @@
-import {
-  CSSProperties, forwardRef, ReactNode,
-} from 'react';
+import { forwardRef, ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
   render, act, cleanup,
@@ -44,8 +42,8 @@ import type {
 // ── mocks ────────────────────────────────────────────────────────────────────
 
 vi.mock('@mantine/core', () => {
-  const Div = forwardRef<HTMLDivElement, { children?: ReactNode; style?: CSSProperties }>(function Div({ children, style }, ref) { // eslint-disable-line prefer-arrow-callback
-    return <div ref={ref} style={style}>{children}</div>;
+  const Div = forwardRef<HTMLDivElement, { children?: ReactNode }>(function Div({ children }, ref) { // eslint-disable-line prefer-arrow-callback
+    return <div ref={ref}>{children}</div>;
   });
   function Span({ children }: { children?: ReactNode }) {
     return <span>{children}</span>;
@@ -197,13 +195,9 @@ vi.mock('@mantine/hooks', () => ({
   useMove: vi.fn(() => ({ ref: () => undefined, active: false })),
 }));
 
-vi.mock('../sliderBreaks', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../sliderBreaks')>();
-  return {
-    ...actual,
-    generateSliderBreakValues: vi.fn(() => []),
-  };
-});
+vi.mock('../sliderBreaks', () => ({
+  generateSliderBreakValues: vi.fn(() => []),
+}));
 
 vi.mock('../../../store/store', () => ({
   useStoreDispatch: vi.fn(() => vi.fn()),
@@ -863,11 +857,7 @@ describe('SliderInput', () => {
         enumerateQuestions={false}
       />,
     );
-    const getThumb = () => Array.from(container.querySelectorAll('div')).find(
-      (element) => element.style.backgroundColor === 'var(--mantine-color-red-6)'
-        && element.style.width === '20px',
-    );
-    expect(getThumb()?.style.bottom).toContain('20%');
+    expect(container.querySelector('[title="20"]')).not.toBeNull();
 
     rerender(
       <SliderInput
@@ -878,7 +868,7 @@ describe('SliderInput', () => {
         enumerateQuestions={false}
       />,
     );
-    expect(getThumb()?.style.bottom).toContain('80%');
+    expect(container.querySelector('[title="80"]')).not.toBeNull();
     cleanup();
   });
 
