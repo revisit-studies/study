@@ -293,10 +293,10 @@ export function SliderInput({
                 <Tooltip label={hoverValue} opened position="right" withArrow>
                   <Box
                     style={{
-                      backgroundColor: 'var(--mantine-color-black)',
+                      backgroundColor: 'var(--mantine-color-gray-8)',
                       width: 20,
                       height: 1,
-                      border: '1px solid var(--mantine-color-black)',
+                      border: '1px solid var(--mantine-color-gray-8)',
                       position: 'absolute',
                       left: 0,
                       bottom: `calc(${((hoverValue - min) / (max - min)) * 100}% - 1px)`,
@@ -351,6 +351,7 @@ export function SliderInput({
             <Box
               style={{
                 position: 'absolute',
+                // Match Mantine's default md slider inset so the preview aligns with its track and ticks
                 inset: `0 ${'calc(0.5rem * var(--mantine-scale))'}`,
                 pointerEvents: 'none',
               }}
@@ -358,10 +359,10 @@ export function SliderInput({
               <Tooltip label={hoverValue} opened position="top" withArrow>
                 <Box
                   style={{
-                    backgroundColor: 'var(--mantine-color-black)',
+                    backgroundColor: 'var(--mantine-color-gray-8)',
                     width: 1,
                     height: 22,
-                    border: '1px solid var(--mantine-color-black)',
+                    border: '1px solid var(--mantine-color-gray-8)',
                     position: 'absolute',
                     left: `${((hoverValue - min) / (max - min)) * 100}%`,
                     top: `${'calc(0.5rem * var(--mantine-scale))'}`,
