@@ -702,7 +702,7 @@ export async function parseStudyConfig(fileData: string): Promise<ParsedConfig<S
     // Expand the imported sequences to use the correct component names
     data.sequence = expandLibrarySequences(data.sequence, importedLibrariesData, errors);
     validateBetweenSubjects(data, warnings);
-    const compiledFactors = compileFactorBlocks(data.sequence, data, errors);
+    const compiledFactors = compileFactorBlocks(data.sequence, data, errors, warnings);
     data.sequence = compiledFactors.sequence;
     data.components = { ...data.components, ...compiledFactors.components };
 

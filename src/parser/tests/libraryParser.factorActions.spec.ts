@@ -261,7 +261,7 @@ describe('factor sequence actions', () => {
     ]));
   });
 
-  test('validates keep/remove selectors and nested samples', () => {
+  test('validates keep/remove selectors and materializes nested samples in factor blocks', () => {
     const errors: ParserErrorWarning[] = [];
     const factors = factorConfig().factors!;
 
@@ -278,7 +278,7 @@ describe('factor sequence actions', () => {
 
     expect(errors.map((error) => error.message)).toEqual(expect.arrayContaining([
       'Keep factor `missingKeepSelector` requires exactly one non-empty condition or items list',
-      'Factor expression `sampledRemove` cannot nest a sampled factor',
+      'Sample factor `sampledRemove` must be materialized by a factor block',
     ]));
   });
 
@@ -428,22 +428,46 @@ describe('factor sequence actions', () => {
     ]));
   });
 
-  test('rejects sampled factors nested inside another expression', () => {
+  test('evaluates nested sampled factors from the inner factor outward', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    const config = factorConfig();
+    config.uiConfig.numSequences = 1;
+    config.sequence = {
+      type: 'factor',
+      id: 'nestedSample',
+      factor: {
+        action: 'cross',
+        factors: [
+          {
+            action: 'sample', factors: ['a'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+          },
+          'b',
+        ],
+      },
+      components: 'trial',
+    };
+
     const errors: ParserErrorWarning[] = [];
+    const compiled = compileFactorBlocks(config.sequence, config, errors);
+    expect(errors).toEqual([]);
+    expect(compiled.sequence).toMatchObject({ type: 'factor-runtime-plan', id: 'nestedSample' });
+    expect(Object.keys(compiled.components)).toHaveLength(6);
 
-    resolveFactorConditions({
-      action: 'cross',
-      factors: [
-        {
-          action: 'sample', factors: ['a'], numSamples: 2, samplingStrategy: 'withoutReplacement',
-        },
-        'b',
-      ],
-    }, factorConfig().factors!, errors, [], 'nestedSample');
+    const sequences = generateSequenceArray({
+      ...config,
+      sequence: compiled.sequence,
+      components: compiled.components,
+    });
+    random.mockRestore();
 
-    expect(errors.map((error) => error.message)).toContain(
-      'Factor expression `nestedSample` cannot nest a sampled factor',
-    );
+    expect(sequences).toHaveLength(1);
+    const generatedComponents = getSequenceFlatMap(sequences[0]).filter((componentId) => componentId !== 'end');
+    expect(generatedComponents).toHaveLength(4);
+    generatedComponents.forEach((componentId) => {
+      const component = compiled.components[componentId];
+      expect(component).toMatchObject({ parameters: { b: expect.any(String) } });
+      expect(component).toMatchObject({ parameters: { a: expect.any(Number) } });
+    });
   });
 
   test('parses the factor-action demo', async () => {

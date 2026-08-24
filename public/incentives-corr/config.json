@@ -143,11 +143,6 @@
           "answer": true
         }
       ]
-    },
-    "summary": {
-      "type": "react-component",
-      "path": "incentives-corr/assets/Summary.tsx",
-      "response": []
     }
   },
   "components": {

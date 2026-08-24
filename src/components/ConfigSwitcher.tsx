@@ -434,8 +434,8 @@ export function ConfigSwitcher({
   const [searchParams] = useSearchParams();
   const firstTab = useMemo(() => {
     if (others.length > 0) return 'Others';
-    if (factorDemos.length > 0) return 'Factor-demos';
     if (demos.length > 0) return 'Demos';
+    if (factorDemos.length > 0) return 'Factor-demos';
     if (examples.length > 0) return 'Examples';
     if (tutorials.length > 0) return 'Tutorials';
     if (tests.length > 0) return 'Tests';

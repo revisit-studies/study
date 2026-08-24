@@ -22,7 +22,7 @@ const COLOR_KEYS: Record<string, string> = {
 
 test('completes all 90 unique incongruent Stroop trials', async ({ page }) => {
   await resetClientStudyState(page);
-  await openStudyFromLanding(page, 'Demo Studies', 'Stroop Test with Factors');
+  await openStudyFromLanding(page, 'Factor-demos', 'Stroop Test with Factors');
 
   await expect(page.getByRole('heading', { name: 'Stroop Test with Factors' })).toBeVisible();
   await nextClick(page);

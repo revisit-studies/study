@@ -189,20 +189,21 @@ describe('Factor Compiler', () => {
 
   test('reports invalid zip lengths and cycles', () => {
     const errors: ParserErrorWarning[] = [];
-    resolveFactorConditions('badZip', {
+    const warnings: ParserErrorWarning[] = [];
+    expect(resolveFactorConditions('badZip', {
       short: [1],
       long: [1, 2],
       badZip: { action: 'zip', factors: ['short', 'long'] },
-    }, errors);
+    }, errors, [], 'badZip', warnings)).toEqual([{ short: 1, long: 1 }]);
     resolveFactorConditions('a', {
       a: { action: 'cross', factors: ['b'] },
       b: { action: 'cross', factors: ['a'] },
     }, errors);
 
-    expect(errors.map((error) => error.message)).toEqual(expect.arrayContaining([
-      'Zip factor `badZip` requires inputs with equal lengths; received 1, 2',
-      'Circular factor reference: a -> b -> a',
-    ]));
+    expect(errors.map((error) => error.message)).toContain('Circular factor reference: a -> b -> a');
+    expect(warnings.map((warning) => warning.message)).toContain(
+      'Zip factor `badZip` received inputs with different lengths (1, 2); stopping after the shortest input',
+    );
   });
 
   test('compiles factor components into one flat sequence', () => {

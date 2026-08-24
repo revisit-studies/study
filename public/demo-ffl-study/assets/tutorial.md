@@ -16,4 +16,3 @@ $\\beta_*$ { color: mediumpurple; label: slope terms; }
 Use `\textcolor{color}{expression}` to color an expression and `\overbrace{expression}^{\text{label}}` to add an extent label.
 
 During each task, use the editor to author or edit markup. The preview is deliberately lightweight: it mirrors the study’s live-feedback contrast without bundling the original FFL runtime or Overleaf.
-
