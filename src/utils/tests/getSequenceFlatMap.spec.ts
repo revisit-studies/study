@@ -75,6 +75,14 @@ describe('findFuncBlock', () => {
   test('returns undefined when no block with that id exists', () => {
     expect(findFuncBlock('nonexistent', cb(['a']))).toBeUndefined();
   });
+
+  test('finds a dynamic block in the participant sequence', () => {
+    const runtimeBlock = seq([], {
+      id: 'myFunc', order: 'dynamic', parameters: { arm: 'control' },
+    });
+
+    expect(findFuncBlock('myFunc', runtimeBlock)).toBe(runtimeBlock);
+  });
 });
 
 describe('findBlockForStep', () => {

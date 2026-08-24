@@ -7,8 +7,12 @@ import {
   GlobalConfig, LibraryConfig, ParsedConfig, StudyConfig, ParserErrorWarning, IndividualComponent,
 } from './types';
 import { getSequenceFlatMapWithInterruptions } from '../utils/getSequenceFlatMap';
-import { expandLibrarySequences, loadLibrariesParseNamespace, verifyLibraryUsage } from './libraryParser';
-import { isDynamicBlock, isInheritedComponent } from './utils';
+import {
+  compileFactorBlocks, expandLibrarySequences, loadLibrariesParseNamespace, validateBetweenSubjects, verifyLibraryUsage,
+} from './libraryParser';
+import {
+  isDynamicBlock, isFactorBlock, isFactorRuntimePlanBlock, isInheritedComponent,
+} from './utils';
 import {
   DEFAULT_CONTACT_EMAIL,
   DEFAULT_FIREBASE_WARNING_ACTION,
@@ -36,7 +40,6 @@ const modules = import.meta.glob(
   ],
   { eager: false }, // the parser only checks if the path exists
 );
-
 const ajv1 = new Ajv({ allowUnionTypes: true });
 ajv1.addSchema(globalSchema);
 const globalValidate = ajv1.getSchema<GlobalConfig>('#/definitions/GlobalConfig')!;
@@ -92,7 +95,25 @@ function verifyStudySkip(
   };
 
   if (isDynamicBlock(sequence)) {
+    if (sequence.id) {
+      removeTargetInPlace(sequence.id);
+    }
     return;
+  }
+
+  if (isFactorBlock(sequence) || isFactorRuntimePlanBlock(sequence)) {
+    if (sequence.id) {
+      removeTargetInPlace(sequence.id);
+    }
+    if (sequence.skip && sequence.skip.length > 0) {
+      skipTargets.push(...sequence.skip.map((skip) => skip.to).filter((target) => target !== 'end'));
+    }
+    return;
+  }
+
+  // If the block has an ID, remove it from the skipTargets array
+  if (sequence.id) {
+    removeTargetInPlace(sequence.id);
   }
 
   // Base case: empty sequence
@@ -105,11 +126,6 @@ function verifyStudySkip(
       category: 'sequence-validation',
     });
     return;
-  }
-
-  // If the block has an ID, remove it from the skipTargets array
-  if (sequence.id) {
-    removeTargetInPlace(sequence.id);
   }
 
   // Recursive case: sequence has at least one component
@@ -187,7 +203,7 @@ function verifyReactComponent(
 }
 
 function isUrlConditionalBlock(sequence: StudyConfig['sequence']): boolean {
-  return sequence.conditional === true && Boolean(sequence.id);
+  return !isFactorBlock(sequence) && sequence.conditional === true && Boolean(sequence.id);
 }
 
 function countTextResponseWords(value: string) {
@@ -569,7 +585,7 @@ function hasConditionalBlock(sequence: StudyConfig['sequence']): boolean {
     return true;
   }
 
-  if (isDynamicBlock(sequence)) {
+  if (isDynamicBlock(sequence) || isFactorBlock(sequence)) {
     return false;
   }
 
@@ -587,7 +603,7 @@ function hasConditionalBlockInsideRestrictedOrderAncestor(
     return true;
   }
 
-  if (isDynamicBlock(sequence)) {
+  if (isDynamicBlock(sequence) || isFactorBlock(sequence)) {
     return false;
   }
 
@@ -834,6 +850,10 @@ export async function parseStudyConfig(fileData: string): Promise<ParsedConfig<S
 
     // Expand the imported sequences to use the correct component names
     data.sequence = expandLibrarySequences(data.sequence, importedLibrariesData, errors);
+    validateBetweenSubjects(data, warnings, errors);
+    const compiledFactors = compileFactorBlocks(data.sequence, data, errors, warnings);
+    data.sequence = compiledFactors.sequence;
+    data.components = { ...data.components, ...compiledFactors.components };
 
     const { errors: parserErrors, warnings: parserWarnings } = verifyStudyConfig(data, importedLibrariesData);
     errors = [...errors, ...parserErrors];

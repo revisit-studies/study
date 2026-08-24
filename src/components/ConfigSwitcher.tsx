@@ -23,6 +23,17 @@ import { useStudyRecordings } from '../utils/useStudyRecordings';
 import { useDeviceRules } from '../utils/useDeviceRules';
 import { getUnmetDeviceRestrictionLines, getUnmetDeviceRestrictionTooltip } from './interface/DeviceRestrictionString';
 
+export const FACTOR_DEMO_CONFIG_NAMES = new Set([
+  'demo-factors',
+  'demo-markdown-factors',
+  'demo-stroop-factors',
+  'demo-max-study2',
+  'demo-ffl-study',
+  'demo-dsf-study',
+  'demo-calvi-study',
+  'incentives-corr',
+]);
+
 function ValidStudyCard({
   configName,
   config,
@@ -397,23 +408,40 @@ export function ConfigSwitcher({
   const isLoadingStudies = isLoadingVisibility || isLoadingStudyConfigs;
   const configsFiltered = useMemo(() => configsList.filter((configName) => studyVisibility[configName] || user.isAdmin), [configsList, studyVisibility, user]);
 
-  const demos = useMemo(() => configsFiltered.filter((configName) => configName.startsWith('demo-')), [configsFiltered]);
+  const factorDemos = useMemo(
+    () => configsFiltered.filter((configName) => FACTOR_DEMO_CONFIG_NAMES.has(configName)),
+    [configsFiltered],
+  );
+  const demos = useMemo(
+    () => configsFiltered.filter((configName) => (
+      configName.startsWith('demo-') && !FACTOR_DEMO_CONFIG_NAMES.has(configName)
+    )),
+    [configsFiltered],
+  );
   const tutorials = useMemo(() => configsFiltered.filter((configName) => configName.startsWith('tutorial')), [configsFiltered]);
   const examples = useMemo(() => configsFiltered.filter((configName) => configName.startsWith('example-')), [configsFiltered]);
   const tests = useMemo(() => configsFiltered.filter((configName) => configName.startsWith('test-')), [configsFiltered]);
   const libraries = useMemo(() => configsFiltered.filter((configName) => configName.startsWith('library-')), [configsFiltered]);
-  const others = useMemo(() => configsFiltered.filter((configName) => !configName.startsWith('demo-') && !configName.startsWith('tutorial') && !configName.startsWith('example-') && !configName.startsWith('test-') && !configName.startsWith('library-')), [configsFiltered]);
+  const others = useMemo(() => configsFiltered.filter((configName) => (
+    !FACTOR_DEMO_CONFIG_NAMES.has(configName)
+    && !configName.startsWith('demo-')
+    && !configName.startsWith('tutorial')
+    && !configName.startsWith('example-')
+    && !configName.startsWith('test-')
+    && !configName.startsWith('library-')
+  )), [configsFiltered]);
 
   const [searchParams] = useSearchParams();
   const firstTab = useMemo(() => {
     if (others.length > 0) return 'Others';
     if (demos.length > 0) return 'Demos';
+    if (factorDemos.length > 0) return 'Factor-demos';
     if (examples.length > 0) return 'Examples';
     if (tutorials.length > 0) return 'Tutorials';
     if (tests.length > 0) return 'Tests';
     if (libraries.length > 0) return 'Libraries';
     return 'Demos';
-  }, [others, demos, examples, tutorials, tests, libraries]);
+  }, [others, factorDemos, demos, examples, tutorials, tests, libraries]);
   const tab = useMemo(() => searchParams.get('tab') || firstTab, [firstTab, searchParams]);
   const navigate = useNavigate();
 
@@ -433,6 +461,7 @@ export function ConfigSwitcher({
             <Tabs variant="outline" value={null} mb="md">
               <Tabs.List>
                 <Tabs.Tab value="demos" disabled>Demo Studies</Tabs.Tab>
+                <Tabs.Tab value="factor-demos" disabled>Factor-demos</Tabs.Tab>
                 <Tabs.Tab value="examples" disabled>Example Studies</Tabs.Tab>
                 <Tabs.Tab value="tutorials" disabled>Tutorials</Tabs.Tab>
                 <Tabs.Tab value="tests" disabled>Tests</Tabs.Tab>
@@ -483,6 +512,9 @@ export function ConfigSwitcher({
                 {demos.length > 0 && (
                   <Tabs.Tab value="Demos">Demo Studies</Tabs.Tab>
                 )}
+                {factorDemos.length > 0 && (
+                  <Tabs.Tab value="Factor-demos">Factor-demos</Tabs.Tab>
+                )}
                 {examples.length > 0 && (
                   <Tabs.Tab value="Examples">Example Studies</Tabs.Tab>
                 )}
@@ -507,6 +539,13 @@ export function ConfigSwitcher({
                 <Tabs.Panel value="Demos">
                   <Text c="dimmed" mt="sm">These studies show off individual features of the reVISit platform.</Text>
                   <StudyCards configNames={demos} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
+                </Tabs.Panel>
+              )}
+
+              {factorDemos.length > 0 && (
+                <Tabs.Panel value="Factor-demos">
+                  <Text c="dimmed" mt="sm">These studies demonstrate the factors configuration language and its participant-level scheduling behavior.</Text>
+                  <StudyCards configNames={factorDemos} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
                 </Tabs.Panel>
               )}
 

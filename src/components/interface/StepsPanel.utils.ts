@@ -8,6 +8,13 @@ import {
   type SkipEvaluationAnswer,
 } from '../../utils/skipConditions';
 
+export function formatFactorLevel(value: unknown): string {
+  if (value !== null && typeof value === 'object') {
+    return JSON.stringify(value);
+  }
+  return String(value);
+}
+
 export function getDynamicComponentsForBlock(
   node: Sequence,
   participantAnswers: ParticipantData['answers'],

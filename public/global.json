@@ -4,6 +4,13 @@
     "tutorial",
     "tutorial-replication",
     "demo-html",
+    "demo-factors",
+    "demo-markdown-factors",
+    "demo-stroop-factors",
+    "demo-max-study2",
+    "demo-ffl-study",
+    "demo-dsf-study",
+    "demo-calvi-study",
     "demo-html-input",
     "demo-templating",
     "demo-form-elements",
@@ -22,6 +29,7 @@
     "demo-ranking-widget",
     "demo-upset",
     "demo-choropleth-map",
+    "incentives-corr",
     "example-brush-interactions",
     "example-cleveland",
     "example-llm-chatbot",
@@ -68,6 +76,27 @@
     },
     "demo-html": {
       "path": "demo-html/config.json"
+    },
+    "demo-factors": {
+      "path": "demo-factors/config.json"
+    },
+    "demo-markdown-factors": {
+      "path": "demo-markdown-factors/config.json"
+    },
+    "demo-stroop-factors": {
+      "path": "demo-stroop-factors/config.json"
+    },
+    "demo-max-study2": {
+      "path": "demo-max-study2/config.json"
+    },
+    "demo-ffl-study": {
+      "path": "demo-ffl-study/config.json"
+    },
+    "demo-dsf-study": {
+      "path": "demo-dsf-study/config.json"
+    },
+    "demo-calvi-study": {
+      "path": "demo-calvi-study/config.json"
     },
     "demo-screen-recording": {
       "path": "demo-screen-recording/config.json"
@@ -122,6 +151,9 @@
     },
     "demo-choropleth-map": {
       "path": "demo-choropleth-map/config.json"
+    },
+    "incentives-corr": {
+      "path": "incentives-corr/config.json"
     },
     "example-llm-chatbot": {
       "path": "example-llm-chatbot/config.json"
