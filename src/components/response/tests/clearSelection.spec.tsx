@@ -151,9 +151,12 @@ describe('RadioInput / ButtonsInput clear & toggle behaviour', () => {
       );
       fireEvent.click(optionA);
       expect(onChange).toHaveBeenLastCalledWith('');
+      rerender(
+        <RadioInput response={response} disabled={false} answer={{ ...answer, value: 'A' }} error={null} index={0} enumerateQuestions={false} />,
+      );
     }
 
-    // Clear selection button
+    expect(optionA).toBeTruthy();
     const clearBtn = getByText('Clear selection');
     fireEvent.click(clearBtn);
     expect(onChange).toHaveBeenLastCalledWith('');

@@ -210,7 +210,18 @@ export function MatrixInput({
   const separatorAfterIndex = dontKnowIndex > 0 ? dontKnowIndex - 1 : -1;
   return (
     <>
-      {prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
+      {prompt.length > 0 && (
+        <InputLabel
+          prompt={prompt}
+          required={required}
+          index={index}
+          enumerateQuestions={enumerateQuestions}
+          infoText={infoText}
+          clearSelectionButton={(
+            <ClearSelectionButton onClick={clearMatrix} disabled={disabled} visible={Object.values(answerValue).some((v) => typeof v === 'string' && v !== '')} />
+          )}
+        />
+      )}
       <Text c="dimmed" size="sm" mt={0}>{secondaryText}</Text>
       <Box
         style={{
@@ -418,14 +429,6 @@ export function MatrixInput({
           </div>
         )}
       </Box>
-      <div style={
-          {
-            display: 'flex', justifyContent: 'flex-end', paddingRight: 8, marginTop: 8,
-          }
-      }
-      >
-        <ClearSelectionButton onClick={clearMatrix} disabled={disabled} visible={Object.values(answerValue).some((v) => typeof v === 'string' && v !== '')} />
-      </div>
       {error && (
         <Text c={required ? 'red' : 'orange'} size="sm" mt="xs">
           {error}

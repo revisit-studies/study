@@ -4,7 +4,6 @@ import {
 } from '@mantine/core';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
-import { visit } from 'unist-util-visit';
 import type { Root, Element, Text as HastText } from 'hast';
 import { useCallback } from 'react';
 import { PREFIX } from '../utils/Prefix';
@@ -13,8 +12,26 @@ import { PREFIX } from '../utils/Prefix';
 function isHastText(node: unknown): node is HastText {
   return !!node && typeof node === 'object' && (node as HastText).type === 'text';
 }
-function isElement(node: unknown): node is Element {
-  return !!node && typeof node === 'object' && (node as Element).type === 'element';
+
+type ParentWithChildren = Element | Root;
+
+function hasChildren(node: unknown): node is ParentWithChildren {
+  return !!node && typeof node === 'object' && Array.isArray((node as ParentWithChildren).children);
+}
+
+function findFirstTextWithParent(
+  node: ParentWithChildren,
+): { textNode: HastText; parent: ParentWithChildren } | null {
+  for (const child of node.children) {
+    if (isHastText(child) && child.value.trim().length > 0) {
+      return { textNode: child, parent: node };
+    }
+    if (hasChildren(child)) {
+      const found = findFirstTextWithParent(child);
+      if (found) return found;
+    }
+  }
+  return null;
 }
 
 const markdownComponents = (inline?: boolean): Partial<Components> => ({
@@ -43,108 +60,21 @@ const markdownComponents = (inline?: boolean): Partial<Components> => ({
 export function ReactMarkdownWrapper({ text, required, inline }: { text: string; required?: boolean; inline?: boolean }) {
   const componentsToUse = markdownComponents(inline);
   const rehypeAsterisk = useCallback(() => (tree: Root) => {
-    if (!required) return;
-    if (!tree) return;
+    if (!required || !tree) return;
 
-    let ln: Element | null = null;
-    let lp: Element | Root | null = null;
-    let lastTextNode: HastText | null = null;
+    const found = findFirstTextWithParent(tree);
+    if (!found) return;
+    const { textNode, parent } = found;
 
-    visit(tree, (node) => {
-      if (isHastText(node) && node.value.trim().length > 0) {
-        lastTextNode = node;
-      }
-    });
-
-    if (lastTextNode) {
-      // Recursively find the last node
-      visit(tree, (node, _, parent) => {
-        if (!isElement(node)) return;
-        if (!node.children) return;
-
-        const containsLastText = node.children.some((child) => child === lastTextNode);
-        if (containsLastText) {
-          ln = node;
-          lp = parent!;
-        }
-      });
-    }
-
-    const lastNode = ln as Element | null;
-    const lastParent = lp as Element | null;
-    if (lastNode !== null) {
-      // Create a new text node with the asterisk
-      const asteriskNode: Element = {
-        type: 'element',
-        tagName: 'span',
-        properties: { className: 'required-asterisk' },
-        children: [
-          {
-            type: 'text',
-            value: '*',
-          },
-        ],
-      };
-      // Modify the last child to attach the asterisk to the last word if it's text, or to the node if it's an element
-      if (isHastText(lastNode.children.at(-1))) {
-        // Preserve original spacing while attaching the asterisk to the final token.
-        const textNode = lastNode.children.at(-1) as HastText;
-        const match = textNode.value.match(/^([\s\S]*?)(\S+)(\s*)$/);
-
-        if (!match) {
-          lastNode.children.push(asteriskNode);
-          return;
-        }
-
-        const [, beforeLastWord, lastWord, afterLastWord] = match;
-        const newTextNode: Element = {
-          type: 'element',
-          tagName: 'span',
-          properties: {},
-          children: [
-            ...(beforeLastWord.length > 0 ? [{
-              type: 'text' as const,
-              value: beforeLastWord,
-            }] : []),
-            {
-              type: 'element',
-              tagName: 'span',
-              properties: { style: 'white-space: nowrap' },
-              children: [
-                {
-                  type: 'text',
-                  value: lastWord,
-                },
-                asteriskNode,
-              ],
-            },
-            ...(afterLastWord.length > 0 ? [{
-              type: 'text' as const,
-              value: afterLastWord,
-            }] : []),
-          ],
-        };
-        // Replace the last text node with the new element node
-        lastNode.children.splice(lastNode.children.length - 1, 1, newTextNode);
-      } else {
-        // Modify the whole element to add the asterisk with whitespace nowrap
-        const newLastNode: Element = {
-          type: 'element',
-          tagName: 'span',
-          properties: { style: 'white-space: nowrap; display: inline-flex;' },
-          children: [
-            lastNode,
-            asteriskNode,
-          ],
-        };
-        // This is a bit hacky, but we need to replace the lastNode in its parent's children array
-        if (lastParent) {
-          const index = lastParent.children.indexOf(lastNode);
-          if (index !== -1) {
-            lastParent.children.splice(index, 1, newLastNode);
-          }
-        }
-      }
+    const asteriskNode: Element = {
+      type: 'element',
+      tagName: 'span',
+      properties: { className: 'required-asterisk' },
+      children: [{ type: 'text', value: '* ' }],
+    };
+    const index = parent.children.indexOf(textNode);
+    if (index !== -1) {
+      parent.children.splice(index, 0, asteriskNode);
     }
   }, [required]);
   return text.length > 0 && (

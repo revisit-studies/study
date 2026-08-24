@@ -58,7 +58,18 @@ export function RadioInput({
   return (
     <Radio.Group
       name={`radioInput${response.id}`}
-      label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
+      label={prompt.length > 0 && (
+        <InputLabel
+          prompt={prompt}
+          required={required}
+          index={index}
+          enumerateQuestions={enumerateQuestions}
+          infoText={infoText}
+          clearSelectionButton={(
+            <ClearSelectionButton onClick={() => answer?.onChange?.('')} disabled={disabled} visible={!!answer?.value} />
+          )}
+        />
+      )}
       description={secondaryText}
       key={response.id}
       value={answer?.value}
@@ -169,9 +180,6 @@ export function RadioInput({
           {rightLabel && <Text>{rightLabel}</Text>}
         </Group>
       )}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
-        <ClearSelectionButton onClick={() => answer?.onChange?.('')} disabled={disabled} visible={!!answer?.value} />
-      </div>
     </Radio.Group>
   );
 }

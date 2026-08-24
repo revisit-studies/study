@@ -45,7 +45,18 @@ export function ButtonsInput({
     <FocusTrap>
       <Radio.Group
         name={`radioInput${response.id}`}
-        label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
+        label={prompt.length > 0 && (
+          <InputLabel
+            prompt={prompt}
+            required={required}
+            index={index}
+            enumerateQuestions={enumerateQuestions}
+            infoText={infoText}
+            clearSelectionButton={(
+              <ClearSelectionButton onClick={() => answer?.onChange?.('')} disabled={disabled} visible={!!answer?.value} />
+            )}
+          />
+        )}
         description={secondaryText}
         key={response.id}
         value={answer?.value}
@@ -76,7 +87,6 @@ export function ButtonsInput({
               <OptionLabel label={radio.label} infoText={radio.infoText} button />
             </Radio.Card>
           ))}
-          <ClearSelectionButton onClick={() => answer?.onChange?.('')} disabled={disabled} visible={!!answer?.value} />
         </Flex>
       </Radio.Group>
     </FocusTrap>
