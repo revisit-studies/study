@@ -1,4 +1,3 @@
-import { isEmail } from '@mantine/form';
 import type { BuiltInValidationType } from '../../parser/types';
 
 type BuiltInValidation = {
@@ -6,7 +5,6 @@ type BuiltInValidation = {
   message: string;
 };
 
-const emailValidation = isEmail();
 // Email local part can contain letters, digits, and special characters, but cannot start or end with a dot, and cannot have consecutive dots.
 const EMAIL_LOCAL_PART_PATTERN = /^[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*$/;
 // Domain part consists of labels separated by dots, where each label can contain letters, digits, and hyphens, but cannot start or end with a hyphen. The top-level domain must be at least two characters long.
@@ -14,10 +12,6 @@ const DOMAIN_LABEL_PATTERN = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$/;
 const URL_FORBIDDEN_CHARACTER_PATTERN = /[\s\p{Cc}]/u;
 
 function isEmailAddress(value: string) {
-  if (emailValidation(value) !== null) {
-    return false;
-  }
-
   const emailParts = value.split('@');
   // If there are not exactly two parts (local part and domain), it's not a valid email address
   if (emailParts.length !== 2) {

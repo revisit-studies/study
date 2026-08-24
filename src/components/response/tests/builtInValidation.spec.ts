@@ -7,6 +7,9 @@ describe('checkBuiltInValidation', () => {
     'test+participant@revisit.dev',
     'participant@university.edu',
     'first.last@sub-domain.revisit.dev',
+    "o'connor@example.com",
+    'user!tag@example.com',
+    'customer/department=shipping@example.com',
   ])('accepts a valid email address: %s', (value) => {
     expect(checkBuiltInValidation('email', value)).toBeNull();
   });
