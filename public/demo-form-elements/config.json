@@ -442,7 +442,6 @@
           "type": "date",
           "options": "month",
           "prompt": "Month input.",
-          "secondaryText": "This response uses options: month, accepts typing or picker selection",
           "default": "06/2026",
           "min": "01/2026",
           "max": "12/2026"
@@ -452,7 +451,6 @@
           "type": "date",
           "options": "year",
           "prompt": "Year input.",
-          "secondaryText": "This response uses options: year, accepts typing or picker selection.",
           "default": "2026",
           "min": "2000",
           "max": "2030"

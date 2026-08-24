@@ -488,7 +488,8 @@ export interface TextValidationRule {
 }
 
 /**
- * The DateResponse interface defines a date, month, or year entered directly or selected with a picker.
+ * The DateResponse interface defines a date entered directly or selected with a date picker,
+ * or a month or year selected with the corresponding picker.
  * Values are stored as `MM/DD/YYYY`, `MM/YYYY`, or `YYYY` strings based on `options`.
  * Supported years range from `0100` through `9999`.
  * ```json
@@ -507,7 +508,7 @@ export interface TextValidationRule {
  */
 export interface DateResponse extends BaseResponse {
   type: 'date';
-  /** Determines whether participants enter or select a date, month, or year. Defaults to `date`. */
+  /** Determines whether participants enter or select a date, or select a month or year with a picker. Defaults to `date`. */
   options?: 'date' | 'month' | 'year';
   /** The placeholder text displayed in the input. Defaults to the format used by `options`. */
   placeholder?: string;

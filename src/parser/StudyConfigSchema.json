@@ -707,7 +707,7 @@
     },
     "DateResponse": {
       "additionalProperties": false,
-      "description": "The DateResponse interface defines a date, month, or year entered directly or selected with a picker. Values are stored as `MM/DD/YYYY`, `MM/YYYY`, or `YYYY` strings based on `options`. Supported years range from `0100` through `9999`. ```json {   \"id\": \"q-date\",   \"prompt\": \"Select a date.\",   \"location\": \"aboveStimulus\",   \"type\": \"date\",   \"options\": \"date\",   \"default\": \"08/21/2026\",   \"min\": \"08/01/2026\",   \"max\": \"08/31/2026\",   \"placeholder\": \"MM/DD/YYYY\" } ```",
+      "description": "The DateResponse interface defines a date entered directly or selected with a date picker, or a month or year selected with the corresponding picker. Values are stored as `MM/DD/YYYY`, `MM/YYYY`, or `YYYY` strings based on `options`. Supported years range from `0100` through `9999`. ```json {   \"id\": \"q-date\",   \"prompt\": \"Select a date.\",   \"location\": \"aboveStimulus\",   \"type\": \"date\",   \"options\": \"date\",   \"default\": \"08/21/2026\",   \"min\": \"08/01/2026\",   \"max\": \"08/31/2026\",   \"placeholder\": \"MM/DD/YYYY\" } ```",
       "properties": {
         "default": {
           "description": "The default value, using the format selected by `options`. Years must be between `0100` and `9999`.",
@@ -742,7 +742,7 @@
           "type": "string"
         },
         "options": {
-          "description": "Determines whether participants enter or select a date, month, or year. Defaults to `date`.",
+          "description": "Determines whether participants enter or select a date, or select a month or year with a picker. Defaults to `date`.",
           "enum": [
             "date",
             "month",

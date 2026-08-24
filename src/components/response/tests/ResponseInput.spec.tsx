@@ -554,6 +554,7 @@ describe('DropdownInput', () => {
       />,
     );
     expect(html).toContain('data-multiselect');
+    expect(html).toContain('data-searchable="true"');
   });
 
   test('renders the countries option preset with emoji labels', () => {
