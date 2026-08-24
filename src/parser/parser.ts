@@ -295,24 +295,35 @@ function verifyTextResponseConstraints(
       }
     });
     const textValidation = response.textValidation ?? [];
+    const fixedValues = [
+      ...(response.requiredValue !== undefined && response.requiredValue !== null
+        ? [{
+          label: 'requiredValue',
+          path: `${responsePath}/requiredValue`,
+          value: response.requiredValue.toString(),
+        }]
+        : []),
+      ...textValidation.flatMap((rule, ruleIndex) => (rule.type === 'equals' && rule.value !== ''
+        ? [{
+          label: 'equals',
+          path: `${responsePath}/textValidation/${ruleIndex}/value`,
+          value: rule.value,
+        }]
+        : [])),
+    ];
+    const firstFixedValue = fixedValues[0];
+    const conflictingFixedValue = fixedValues.find(
+      ({ value }) => value !== firstFixedValue?.value,
+    );
+    if (firstFixedValue && conflictingFixedValue) {
+      errors.push({
+        message: `${firstFixedValue.label} value \`${firstFixedValue.value}\` conflicts with ${conflictingFixedValue.label} value \`${conflictingFixedValue.value}\``,
+        instancePath: conflictingFixedValue.path,
+        params: { action: 'Use the same value for requiredValue and all equals rules' },
+        category: 'invalid-config',
+      });
+    }
     if (response.type === 'shortText' && response.builtInValidation) {
-      const fixedValues = [
-        ...(response.requiredValue !== undefined && response.requiredValue !== null
-          ? [{
-            label: 'requiredValue',
-            path: `${responsePath}/requiredValue`,
-            value: response.requiredValue.toString(),
-          }]
-          : []),
-        ...textValidation.flatMap((rule, ruleIndex) => (rule.type === 'equals' && rule.value !== ''
-          ? [{
-            label: 'equals',
-            path: `${responsePath}/textValidation/${ruleIndex}/value`,
-            value: rule.value,
-          }]
-          : [])),
-      ];
-
       fixedValues.forEach(({ label, path, value }) => {
         if (checkBuiltInValidation(response.builtInValidation!, value) !== null) {
           errors.push({
@@ -340,20 +351,6 @@ function verifyTextResponseConstraints(
             message: `contains value \`${containsRule.value}\` always includes doesNotContain value \`${doesNotContainRule.value}\``,
             instancePath: `${responsePath}/textValidation/${secondRuleIndex}/value`,
             params: { action: 'Change or remove one of the conflicting text validation rules' },
-            category: 'invalid-config',
-          });
-        }
-        if (
-          firstRule.type === 'equals'
-          && secondRule.type === 'equals'
-          && firstRule.value !== ''
-          && secondRule.value !== ''
-          && firstRule.value !== secondRule.value
-        ) {
-          errors.push({
-            message: `equals rules require different values: \`${firstRule.value}\` and \`${secondRule.value}\``,
-            instancePath: `${responsePath}/textValidation/${secondRuleIndex}/value`,
-            params: { action: 'Keep only one required equals value' },
             category: 'invalid-config',
           });
         }

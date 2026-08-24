@@ -139,6 +139,21 @@ describe('Text response validation config parsing', () => {
       instancePath: '/components/inheritedQuestion/response/0/requiredValue',
     }));
   });
+  test('rejects different requiredValue and equals values with built-in validation', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      builtInValidation: 'email',
+      requiredValue: 'first@example.com',
+      textValidation: [{ type: 'equals', value: 'second@example.com' }],
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'requiredValue value `first@example.com` conflicts with equals value `second@example.com`',
+      instancePath: '/components/question1/response/0/textValidation/0/value',
+    }));
+  });
   test.each(['currency', 'date', 'time'])('rejects the unsupported %s built-in validation', async (builtInValidation) => {
     const studyConfig = makeStudyConfig('contains');
     Object.assign(studyConfig.components.question1.response[0], { builtInValidation });
