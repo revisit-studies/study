@@ -187,8 +187,28 @@ test('Test ranking response(sublist, categorical, pairwise) and validation', asy
     sublistTop3DropZone,
   );
   await settleAfterDrag(page);
-  await expect(page.getByText('You can only add up to 3 items.')).toBeVisible();
   await nextClick(page);
+  await expect(page.getByText('Please add at most 3 items.')).toBeVisible();
+  await expect(sublistTop3DropZone.locator('.mantine-Paper-root')).toHaveCount(4);
+  await dragWithMouse(
+    page,
+    sublistTop3DropZone.getByText('University of California - Berkeley', { exact: true }).first()
+      .locator('xpath=ancestor::div[contains(@class,"mantine-Paper-root")][1]'),
+    availableZoneTop3.getByText('Available Items', { exact: true }),
+    true,
+  );
+  await settleAfterDrag(page);
+  await dragWithMouse(
+    page,
+    sublistTop3DropZone.getByText('University of Rochester', { exact: true }).first()
+      .locator('xpath=ancestor::div[contains(@class,"mantine-Paper-root")][1]'),
+    availableZoneTop3.getByText('Available Items', { exact: true }),
+    true,
+  );
+  await settleAfterDrag(page);
+  await expect(sublistTop3DropZone.locator('.mantine-Paper-root')).toHaveCount(2);
+  await nextClick(page);
+  await expect(page.getByText('Please add at most 3 items.')).not.toBeVisible();
 
   // Categorical ranking
   // Put 2 in high, 2 in medium, 1 in low, then move one from medium to high
@@ -221,8 +241,17 @@ test('Test ranking response(sublist, categorical, pairwise) and validation', asy
   await settleAfterDrag(page);
   // In some browsers the 3rd drop is ignored without rendering a toast;
   // ensure we still have at least one option left in "Available Items".
+  await nextClick(page);
+  await expect(page.getByText('Please add at most 2 items per category.')).toBeVisible({ timeout: 5000 });
+  await dragWithMouse(
+    page,
+    page.getByText('Washington State University', { exact: true }).first()
+      .locator('xpath=ancestor::div[contains(@class,"mantine-Paper-root")][1]'),
+    await getAvailableItemsZone(page),
+    true,
+  );
+  await settleAfterDrag(page);
   await expect((await getAvailableItemsZone(page)).getByText('Washington State University', { exact: true })).toBeVisible();
-
   await nextClick(page);
 
   // Pairwise ranking
