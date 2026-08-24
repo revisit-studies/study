@@ -81,7 +81,10 @@ export function SliderInput({
       return;
     }
 
-    const bounds = event.currentTarget.getBoundingClientRect();
+    const hoverTarget = orientation === 'horizontal'
+      ? event.currentTarget.querySelector<HTMLElement>(`.${classes.track}`) ?? event.currentTarget
+      : event.currentTarget;
+    const bounds = hoverTarget.getBoundingClientRect();
     const size = orientation === 'vertical' ? bounds.height : bounds.width;
     if (size === 0) {
       return;
@@ -345,22 +348,30 @@ export function SliderInput({
         >
           {horizontalSlider}
           {hoverValue !== null && (
-            <Tooltip label={hoverValue} opened position="top" withArrow>
-              <Box
-                style={{
-                  backgroundColor: 'var(--mantine-color-black)',
-                  width: 1,
-                  height: 22,
-                  border: '1px solid var(--mantine-color-black)',
-                  position: 'absolute',
-                  left: `${((hoverValue - min) / (max - min)) * 100}%`,
-                  top: '50%',
-                  transform: 'translate(-50%, -62%)',
-                  pointerEvents: 'none',
-                  zIndex: 4,
-                }}
-              />
-            </Tooltip>
+            <Box
+              style={{
+                position: 'absolute',
+                inset: `0 ${'calc(0.5rem * var(--mantine-scale))'}`,
+                pointerEvents: 'none',
+              }}
+            >
+              <Tooltip label={hoverValue} opened position="top" withArrow>
+                <Box
+                  style={{
+                    backgroundColor: 'var(--mantine-color-black)',
+                    width: 1,
+                    height: 22,
+                    border: '1px solid var(--mantine-color-black)',
+                    position: 'absolute',
+                    left: `${((hoverValue - min) / (max - min)) * 100}%`,
+                    top: `${'calc(0.5rem * var(--mantine-scale))'}`,
+                    transform: 'translate(-50%, -62%)',
+                    pointerEvents: 'none',
+                    zIndex: 4,
+                  }}
+                />
+              </Tooltip>
+            </Box>
           )}
         </Box>
       ) : horizontalSlider}
