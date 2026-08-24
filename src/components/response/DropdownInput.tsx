@@ -30,6 +30,7 @@ export function DropdownInput({
 
   const optionsAsStringOptions = getDropdownOptions(response);
   const resolvedPlaceholder = placeholder ?? (response.options === 'countries' ? 'Select a country' : undefined);
+  const searchable = response.options === 'countries';
   const isMultiselect = (response.minSelections && response.minSelections >= 1) || (response.maxSelections && response.maxSelections > 1);
   const renderOption = ({ option }: { option: { label: string; infoText?: string } }) => (
     <OptionLabel label={option.label} infoText={option.infoText} />
@@ -53,7 +54,7 @@ export function DropdownInput({
         classNames={{ input: classes.fixDisabled }}
         maxDropdownHeight={200}
         clearable
-        searchable
+        searchable={searchable}
         renderOption={renderOption}
       />
     ) : (
@@ -72,7 +73,7 @@ export function DropdownInput({
         errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
         classNames={{ input: classes.fixDisabled }}
         maxDropdownHeight={200}
-        searchable
+        searchable={searchable}
         renderOption={renderOption}
       />
     )
