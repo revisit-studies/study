@@ -11,7 +11,7 @@ import {
   StudyConfig,
 } from '../parser/types';
 import {
-  createFactorOrderContext, createFactorConditionId, resolveOrderedFactorConditions,
+  createFactorOrderContext, createFactorConditionId, resolveBetweenSubjectsFactorLevels, resolveOrderedFactorConditions,
 } from '../parser/libraryParser';
 import { Sequence } from '../store/types';
 import {
@@ -68,19 +68,19 @@ function shuffle<T>(array: T[]) {
 
 function getBetweenSubjectsFactorLevels(config: StudyConfig): BetweenSubjectsFactorLevels[] {
   return config.betweenSubjects?.flatMap((factorName) => {
-    const factor = config.factors?.[factorName];
+    const levels = resolveBetweenSubjectsFactorLevels(factorName, config.factors || {});
 
     if (
-      !Array.isArray(factor)
-      || factor.length === 0
-      || !factor.every((level) => (
+      !levels
+      || levels.length === 0
+      || !levels.every((level) => (
         typeof level !== 'object' || (level !== null && !Array.isArray(level))
       ))
     ) {
       return [];
     }
 
-    return [{ factorName, levels: factor as BetweenSubjectsFactorLevel[] }];
+    return [{ factorName, levels: levels as BetweenSubjectsFactorLevel[] }];
   }) || [];
 }
 

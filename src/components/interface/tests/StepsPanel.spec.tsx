@@ -129,7 +129,7 @@ afterEach(() => { cleanup(); });
 // ── component rendering tests ──────────────────────────────────────────────────
 
 describe('StepsPanel rendering', () => {
-  test('uses a component description as its Study Browser label', async () => {
+  test('uses the component ID as its Study Browser label', async () => {
     const studyConfig = makeStudyConfig({
       components: {
         trial: {
@@ -148,7 +148,7 @@ describe('StepsPanel rendering', () => {
       <StepsPanel participantAnswers={{}} studyConfig={studyConfig} />,
     ));
 
-    expect(container.textContent).toContain('Animal: cat; color: blue');
+    expect(container.querySelector('[role="link"]')?.textContent).toContain('trial');
   });
 
   test('renders without crashing when no participant sequence provided', async () => {

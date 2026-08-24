@@ -286,7 +286,7 @@ export function StepsPanel({
 
         return {
           type: 'component',
-          label: component.description || label,
+          label,
           indentLevel: 0,
           path: `browse.${key}`,
           href: `/${studyId}/reviewer-${key}`,
@@ -333,7 +333,7 @@ export function StepsPanel({
 
           newFlatTree.push({
             type: 'component',
-            label: component?.description || label,
+            label,
             indentLevel,
             path: componentPath,
             isExcluded: isSkipped,

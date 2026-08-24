@@ -1400,6 +1400,7 @@ describe('Parser Warnings', () => {
     const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
     expect(result.errors.filter((error) => error.category === 'skip-validation')).toEqual([]);
+    expect(result.warnings.filter((warning) => warning.category === 'unused-component')).toEqual([]);
   });
 
   test('adds sequence-validation warning for empty components block', async () => {

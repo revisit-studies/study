@@ -230,7 +230,7 @@ describe('factor sequence actions', () => {
     ))).toBe(true);
   });
 
-  test('supports object-valued between-subjects factors and warns about conflicting fields', async () => {
+  test('supports object-valued between-subjects factors and rejects namespace collisions', async () => {
     const config = factorConfig();
     config.factors = {
       taskOrder: [
@@ -250,6 +250,11 @@ describe('factor sequence actions', () => {
 
     const result = await parseStudyConfig(JSON.stringify(config));
 
+    expect(result.errors).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        message: 'Between-subjects factors `taskOrder` and `conflictingOrder` collide on parameter namespace `firstTask`',
+      }),
+    ]));
     expect(result.warnings).toEqual(expect.arrayContaining([
       expect.objectContaining({
         message: 'Between-subjects factors `taskOrder` and `conflictingOrder` assign incompatible values to `firstTask`',
@@ -258,6 +263,27 @@ describe('factor sequence actions', () => {
     expect(result.warnings).not.toEqual(expect.arrayContaining([
       expect.objectContaining({ message: expect.stringContaining('taskOrder` must be') }),
       expect.objectContaining({ message: expect.stringContaining('interfaceOrder` must be') }),
+    ]));
+  });
+
+  test('allocates derived between-subjects factors', () => {
+    const config = factorConfig();
+    config.uiConfig.numSequences = 4;
+    config.factors = {
+      task: ['A', 'B'],
+      interface: ['FFL', 'LaTeX'],
+      assignment: { action: 'cross', factors: ['task', 'interface'] },
+    };
+    config.betweenSubjects = ['assignment'];
+
+    const sequences = generateSequenceArray(config);
+
+    expect(sequences).toHaveLength(4);
+    expect(sequences.map((sequence) => sequence.parameters)).toEqual(expect.arrayContaining([
+      expect.objectContaining({ task: 'A', interface: 'FFL' }),
+      expect.objectContaining({ task: 'A', interface: 'LaTeX' }),
+      expect.objectContaining({ task: 'B', interface: 'FFL' }),
+      expect.objectContaining({ task: 'B', interface: 'LaTeX' }),
     ]));
   });
 
@@ -468,6 +494,99 @@ describe('factor sequence actions', () => {
       expect(component).toMatchObject({ parameters: { b: expect.any(String) } });
       expect(component).toMatchObject({ parameters: { a: expect.any(Number) } });
     });
+  });
+
+  test('preserves runtime sampling when an outer sample wraps a nested sample', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    const config = factorConfig();
+    config.uiConfig.numSequences = 1;
+    config.sequence = {
+      type: 'factor',
+      id: 'nestedOuterSample',
+      factor: {
+        action: 'sample',
+        factors: [
+          {
+            action: 'sample', factors: ['a'], numSamples: 1, samplingStrategy: 'withoutReplacement',
+          },
+          'b',
+        ],
+        numSamples: 5,
+        samplingStrategy: 'withoutReplacement',
+      },
+      components: 'trial',
+    };
+
+    const errors: ParserErrorWarning[] = [];
+    const compiled = compileFactorBlocks(config.sequence, config, errors);
+    expect(errors).toEqual([]);
+    const runtimeWarnings: ParserErrorWarning[] = [];
+    resolveOrderedFactorConditions(
+      config.sequence.factor,
+      config.factors!,
+      createFactorOrderContext(0),
+      [],
+      'nestedOuterSample',
+      undefined,
+      runtimeWarnings,
+    );
+    expect(runtimeWarnings.map((warning) => warning.message)).toContain(
+      'Sample factor `nestedOuterSample` requested 5 conditions but only 3 are available; stopping after the list is exhausted',
+    );
+    expect(compiled.sequence).toMatchObject({ type: 'factor-runtime-plan', id: 'nestedOuterSample' });
+
+    const sequences = generateSequenceArray({
+      ...config,
+      sequence: compiled.sequence,
+      components: compiled.components,
+    });
+    random.mockRestore();
+
+    const generatedComponents = getSequenceFlatMap(sequences[0]).filter((componentId) => componentId !== 'end');
+    expect(generatedComponents).toHaveLength(3);
+    expect(generatedComponents.filter((componentId) => compiled.components[componentId].parameters?.a !== undefined)).toHaveLength(1);
+    expect(generatedComponents.filter((componentId) => compiled.components[componentId].parameters?.b !== undefined)).toHaveLength(2);
+  });
+
+  test('preserves string types when filling component templates', () => {
+    const config = factorConfig();
+    config.factors = { file: [1] };
+    config.sequence = {
+      type: 'factor', id: 'stringTemplate', factor: 'file', components: 'trial',
+    };
+    if (!config.baseComponents?.trial || !('path' in config.baseComponents.trial)) {
+      throw new Error('Expected a path component');
+    }
+    config.baseComponents!.trial.path = '{{file}}';
+
+    const compiled = compileFactorBlocks(config.sequence, config);
+    const component = Object.values(compiled.components)[0];
+
+    if (!('path' in component)) throw new Error('Expected a path component');
+    expect(component.path).toBe('1');
+    expect(typeof component.path).toBe('string');
+  });
+
+  test('warns when a runtime zip will truncate unequal inputs', () => {
+    const config = factorConfig();
+    config.factors = {
+      ordered: { values: ['A', 'B'], order: 'random' },
+      short: ['x'],
+    };
+    const errors: ParserErrorWarning[] = [];
+    const warnings: ParserErrorWarning[] = [];
+
+    compileFactorBlocks({
+      type: 'factor',
+      id: 'runtimeZip',
+      factor: { action: 'zip', factors: ['ordered', 'short'] },
+      components: 'trial',
+    }, config, errors, warnings);
+
+    expect(errors).toEqual([]);
+    expect(warnings.map((warning) => warning.message)).toContain(
+      'Zip factor `runtimeZip` received inputs with different lengths (2, 1); stopping after the shortest input',
+    );
   });
 
   test('parses the factor-action demo', async () => {

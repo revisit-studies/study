@@ -247,6 +247,21 @@ function addFactorWarning(
   }
 }
 
+function deepFillTemplateStrings<T>(value: T, vars: Record<string, unknown>): T {
+  if (typeof value === 'string') {
+    return fillTemplate(value, vars) as T;
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => deepFillTemplateStrings(item, vars)) as unknown as T;
+  }
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, child]) => [key, deepFillTemplateStrings(child, vars)]),
+    ) as T;
+  }
+  return value;
+}
+
 function orderFactorValues(
   factorName: string,
   factor: OrderedFactorValues,
@@ -646,6 +661,9 @@ function resolveFactor(
     };
   }
   if (action === 'zip') {
+    if (mode === 'materialize' && (hasRuntimeOrder || hasRuntimeSample)) {
+      zipFactorConditions(conditionSets, factorName, errors, warnings);
+    }
     return {
       conditions: mode === 'materialize' && (hasRuntimeOrder || hasRuntimeSample)
         ? crossFactorConditions(conditionSets)
@@ -696,12 +714,23 @@ function resolveFactor(
   if (
     factor.samplingStrategy === 'withoutReplacement'
     && factor.numSamples > conditions.length
+    && mode !== 'runtime'
+    && !hasRuntimeSample
   ) {
     addFactorError(
       errors,
       `Sample factor \`${factorName}\` cannot select ${factor.numSamples} conditions from ${conditions.length}`,
     );
     return { conditions: [] };
+  }
+  if (
+    factor.samplingStrategy === 'withoutReplacement'
+    && factor.numSamples > conditions.length
+  ) {
+    addFactorWarning(
+      warnings,
+      `Sample factor \`${factorName}\` requested ${factor.numSamples} conditions but only ${conditions.length} are available; stopping after the list is exhausted`,
+    );
   }
   if (conditions.length === 0) {
     addFactorError(
@@ -729,7 +758,7 @@ function resolveFactor(
     samplingStrategy: factor.samplingStrategy,
     parameterNames,
     hasRuntimeOrder,
-    hasRuntimeSample: factor.samplingStrategy === 'withReplacement',
+    hasRuntimeSample: hasRuntimeSample || factor.samplingStrategy === 'withReplacement',
   };
 }
 
@@ -828,7 +857,7 @@ function compileFactorBlock(
       };
       const parameters = deepFillTemplate(rawParameters, rawParameters);
       const componentId = `${conditionId}__${encodeURIComponent(baseComponent)}`;
-      const component = deepFillTemplate(
+      const component = deepFillTemplateStrings(
         merge({}, template, { parameters }),
         parameters,
       ) as IndividualComponent;
@@ -988,30 +1017,64 @@ export function materializeParticipantConfig(
   return { ...config, components };
 }
 
+export function resolveBetweenSubjectsFactorLevels(
+  factorName: string,
+  factors: Record<string, Factor>,
+  errors: ParserErrorWarning[] = [],
+): FactorValue[] | undefined {
+  const factor = factors[factorName];
+  if (Array.isArray(factor)) {
+    return factor;
+  }
+  if (factor && typeof factor === 'object' && 'action' in factor) {
+    const factorErrors: ParserErrorWarning[] = [];
+    const levels = resolveFactorConditions(factorName, factors, factorErrors);
+    factorErrors.forEach((error) => errors.push(error));
+    return factorErrors.length === 0 ? levels as FactorValue[] : undefined;
+  }
+  return undefined;
+}
+
 export function validateBetweenSubjects(
   config: StudyConfig,
   warnings: ParserErrorWarning[] = [],
+  errors: ParserErrorWarning[] = [],
 ) {
   const betweenSubjectsObjectFactors: Array<{ factorName: string; index: number; levels: FactorObject[] }> = [];
+  const namespaceOwners = new Map<string, string>();
+  const seenFactors = new Set<string>();
 
   config.betweenSubjects?.forEach((factorName, index) => {
-    const factor = config.factors?.[factorName];
     const instancePath = `/betweenSubjects/${index}`;
-    const isObjectFactor = Array.isArray(factor)
-      && factor.length > 0
-      && factor.every((level) => level !== null && typeof level === 'object' && !Array.isArray(level));
-    const isPrimitiveFactor = Array.isArray(factor)
-      && factor.length > 0
-      && factor.every((level) => typeof level !== 'object');
+    if (seenFactors.has(factorName)) {
+      errors.push({
+        message: `Between-subjects factor \`${factorName}\` is declared more than once`,
+        instancePath,
+        params: { action: 'Declare each between-subjects factor only once' },
+        category: 'sequence-validation',
+      });
+    }
+    seenFactors.add(factorName);
+
+    const beforeResolutionErrors = errors.length;
+    const levels = resolveBetweenSubjectsFactorLevels(factorName, config.factors || {}, errors);
+    if (errors.length > beforeResolutionErrors) {
+      return;
+    }
+    const isObjectFactor = levels !== undefined
+      && levels.length > 0
+      && levels.every((level) => level !== null && typeof level === 'object' && !Array.isArray(level));
+    const isPrimitiveFactor = levels !== undefined
+      && levels.length > 0
+      && levels.every((level) => typeof level !== 'object');
 
     if (
-      !factor
-      || !Array.isArray(factor)
-      || factor.length === 0
+      levels === undefined
+      || levels.length === 0
       || (!isPrimitiveFactor && !isObjectFactor)
     ) {
       warnings.push({
-        message: !factor
+        message: levels === undefined
           ? `Between-subjects factor \`${factorName}\` is not defined in factors`
           : `Between-subjects factor \`${factorName}\` must be a non-empty factor with either all primitive levels or all object levels`,
         instancePath,
@@ -1022,9 +1085,35 @@ export function validateBetweenSubjects(
       betweenSubjectsObjectFactors.push({
         factorName,
         index,
-        levels: factor as FactorObject[],
+        levels: levels as FactorObject[],
       });
     }
+
+    const parameterNames = new Set([
+      factorName,
+      ...(isObjectFactor ? (levels as FactorObject[]).flatMap((level) => Object.keys(level)) : []),
+    ]);
+    if (isObjectFactor && (levels as FactorObject[]).some((level) => Object.hasOwn(level, factorName))) {
+      errors.push({
+        message: `Between-subjects factor \`${factorName}\` collides with its own parameter namespace`,
+        instancePath,
+        params: { action: 'Use unique between-subjects factor and parameter names' },
+        category: 'sequence-validation',
+      });
+    }
+    parameterNames.forEach((parameterName) => {
+      const owner = namespaceOwners.get(parameterName);
+      if (owner && owner !== factorName) {
+        errors.push({
+          message: `Between-subjects factors \`${owner}\` and \`${factorName}\` collide on parameter namespace \`${parameterName}\``,
+          instancePath,
+          params: { action: 'Use unique between-subjects factor and parameter names' },
+          category: 'sequence-validation',
+        });
+      } else {
+        namespaceOwners.set(parameterName, factorName);
+      }
+    });
   });
 
   betweenSubjectsObjectFactors.forEach((factor, factorIndex) => {
