@@ -15,6 +15,7 @@ import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import { useManagedTrrack } from '../store/hooks/useRevisitTrrack';
 import { compileTemplate } from '../utils/handlebars';
 import { useTemplateAnswerContext } from '../store/hooks/useTemplateAnswerContext';
+import { getInitialStimulusValidation } from '../components/response/stimulusErrors';
 
 type Listeners = { [key: string]: (key: string, value: { responseId: string, response: string | number }) => void };
 
@@ -237,6 +238,17 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
   // never load. Skipped in analysis mode so replay doesn't mutate validation.
   useEffect(() => {
     if (isAnalysis) return;
+    if (loadedConfigKey !== requestedConfigKey) {
+      const initialValidation = getInitialStimulusValidation(currentConfig);
+      storeDispatch(updateResponseBlockValidation({
+        location: 'stimulus',
+        identifier,
+        status: initialValidation.valid,
+        values: initialValidation.values,
+        reason: initialValidation.reason,
+      }));
+      return;
+    }
     if (!loading && 'path' in currentConfig && !vegaConfig) {
       console.error(`Vega spec at "${templatedPath}" could not be loaded or parsed. Clearing stimulus validation so the participant is not stuck.`);
       storeDispatch(updateResponseBlockValidation({
@@ -246,7 +258,7 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
         values: {},
       }));
     }
-  }, [isAnalysis, loading, vegaConfig, currentConfig, templatedPath, identifier, storeDispatch, updateResponseBlockValidation]);
+  }, [isAnalysis, loading, vegaConfig, currentConfig, templatedPath, requestedConfigKey, loadedConfigKey, identifier, storeDispatch, updateResponseBlockValidation]);
 
   if (loading || loadedConfigKey !== requestedConfigKey) {
     return <div>Loading...</div>;

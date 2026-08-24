@@ -389,6 +389,37 @@ describe('VegaController', () => {
     await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
   });
 
+  test('resets validation while a changed path is loading after a previous failure', async () => {
+    vi.clearAllMocks();
+    mockStoreActions.updateResponseBlockValidation.mockClear();
+    let resolveNextConfig!: (config: Record<string, unknown>) => void;
+    const nextConfig = new Promise<Record<string, unknown>>((resolve) => {
+      resolveNextConfig = resolve;
+    });
+    vi.mocked(getJsonAssetByPath)
+      .mockResolvedValueOnce(undefined)
+      .mockReturnValueOnce(nextConfig);
+
+    const response = [{
+      id: 'r', type: 'reactive', prompt: 'Complete', required: true,
+    }];
+    const firstConfig = { type: 'vega', path: '/first.json', response } as unknown as VegaComponent;
+    const secondConfig = { type: 'vega', path: '/second.json', response } as unknown as VegaComponent;
+    const { container, rerender } = render(<VegaController currentConfig={firstConfig} />);
+
+    await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
+    expect(mockStoreActions.updateResponseBlockValidation).toHaveBeenLastCalledWith(expect.objectContaining({ status: true }));
+
+    rerender(<VegaController currentConfig={secondConfig} />);
+    await waitFor(() => expect(mockStoreActions.updateResponseBlockValidation).toHaveBeenLastCalledWith(expect.objectContaining({ status: false })));
+
+    await act(async () => {
+      resolveNextConfig({ $schema: 'vega', marks: [] });
+    });
+    await waitFor(() => expect(container.textContent).toContain('Vega'));
+    expect(mockStoreActions.updateResponseBlockValidation).toHaveBeenLastCalledWith(expect.objectContaining({ status: false }));
+  });
+
   test('renders Vega for an inline config object', async () => {
     const { container } = render(<VegaController currentConfig={{ type: 'vega', config: { $schema: 'vega' }, response: [] }} />);
     await waitFor(() => expect(container.textContent).toContain('Vega'));

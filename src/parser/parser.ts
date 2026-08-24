@@ -140,8 +140,9 @@ function isTemplatedPath(path: string) {
       }
 
       const { type } = node as { type?: unknown };
-      if (type === 'MustacheStatement' || type === 'BlockStatement' || type === 'PartialStatement' || type === 'DecoratorStatement') {
-        return true;
+      if (type === 'MustacheStatement' || type === 'BlockStatement') {
+        const pathType = (node as { path?: { type?: unknown } }).path?.type;
+        return pathType === 'PathExpression';
       }
 
       return Object.entries(node).some(([key, value]) => key !== 'loc' && hasRuntimeExpression(value));

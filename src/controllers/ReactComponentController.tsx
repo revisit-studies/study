@@ -92,7 +92,7 @@ export function ReactComponentController({ currentConfig, provState, answers }: 
     <Suspense fallback={<div>Loading...</div>}>
       {StimulusComponent
         ? (
-          <ErrorBoundary onError={handleRuntimeError}>
+          <ErrorBoundary key={reactPath} onError={handleRuntimeError}>
             <RevisitProvenanceProvider
               key={identifier}
               onProvenanceChange={onProvenanceChange}

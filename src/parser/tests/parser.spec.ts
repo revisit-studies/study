@@ -2080,6 +2080,8 @@ describe('React component path validation', () => {
     'demo-react-trrack/assets/{{#if file}}thing.tsx',
     'demo-react-trrack/assets/{{else}}.tsx',
     'demo-react-trrack/assets/{{! comment}}missing.tsx',
+    'demo-react-trrack/assets/{{"literal"}}.tsx',
+    'demo-react-trrack/assets/{{> missingPartial}}.tsx',
   ])('rejects a path with no valid runtime expression: %s', async (path) => {
     const result = await parseStudyConfig(JSON.stringify(makeReactComponentStudyConfig(path)));
 
