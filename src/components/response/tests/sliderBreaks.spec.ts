@@ -1,9 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import {
-  generateSliderBreakValues,
-  getDefaultSliderSpacing,
-  getSliderValueFromPosition,
-} from '../sliderBreaks';
+import { generateSliderBreakValues, getDefaultSliderSpacing } from '../sliderBreaks';
 
 describe('getDefaultSliderSpacing', () => {
   test('uses largest power of 10 below the range', () => {
@@ -80,31 +76,5 @@ describe('generateSliderBreakValues', () => {
   test('returns empty array for invalid ranges', () => {
     expect(generateSliderBreakValues(10, 10)).toEqual([]);
     expect(generateSliderBreakValues(20, 10)).toEqual([]);
-  });
-});
-
-describe('getSliderValueFromPosition', () => {
-  test('clamps positions to the configured range', () => {
-    expect(getSliderValueFromPosition(-0.2, 0, 100, 5)).toBe(0);
-    expect(getSliderValueFromPosition(1.2, 0, 100, 5)).toBe(100);
-  });
-
-  test('rounds candidate values using the configured step', () => {
-    expect(getSliderValueFromPosition(0.78, 0, 100, 5)).toBe(80);
-    expect(getSliderValueFromPosition(0.333, 0, 1, 0.01)).toBe(0.33);
-  });
-
-  test('uses the default one-hundredth range step when none is configured', () => {
-    expect(getSliderValueFromPosition(0.914, 0, 150)).toBe(136.5);
-  });
-
-  test('selects the nearest value when snapping is enabled', () => {
-    expect(getSliderValueFromPosition(0.52, 0, 100, 1, [0, 25, 50, 75, 100])).toBe(50);
-    expect(getSliderValueFromPosition(0.63, 0, 100, 1, [0, 25, 50, 75, 100])).toBe(75);
-  });
-
-  test('returns null for invalid input', () => {
-    expect(getSliderValueFromPosition(Number.NaN, 0, 100)).toBeNull();
-    expect(getSliderValueFromPosition(0.5, 10, 10)).toBeNull();
   });
 });

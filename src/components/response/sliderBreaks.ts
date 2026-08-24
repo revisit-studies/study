@@ -37,33 +37,3 @@ export function generateSliderBreakValues(min: number, max: number, spacing?: nu
 
   return labels;
 }
-
-export function getSliderValueFromPosition(
-  position: number,
-  min: number,
-  max: number,
-  step?: number,
-  snapValues?: number[],
-): number | null {
-  // Validate inputs
-  if (!Number.isFinite(position) || !Number.isFinite(min) || !Number.isFinite(max) || max <= min) {
-    return null;
-  }
-
-  const clampedPosition = Math.min(1, Math.max(0, position));
-  const rawValue = min + clampedPosition * (max - min);
-
-  if (snapValues?.length) {
-    return snapValues.reduce((closest, value) => (
-      Math.abs(value - rawValue) < Math.abs(closest - rawValue) ? value : closest
-    ));
-  }
-
-  const stepSize = step ?? (max - min) / 100;
-  // Extra guard for JavaScript floating point precision issues when calculating the number of decimal places
-  const precision = stepSize.toString().split('.')[1]?.length ?? 0;
-  // Round to the nearest valid step
-  const steppedValue = Math.round((rawValue - min) / stepSize) * stepSize + min;
-  // Clamp the result to the configured range
-  return Number(Math.min(max, Math.max(min, steppedValue)).toFixed(precision));
-}
