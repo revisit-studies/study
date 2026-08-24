@@ -22,9 +22,15 @@ function WebcamRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
   const [audioCapturingSuccess, setAudioCapturingSuccess] = useState(false);
 
   const setupComplete = useMemo(
-    () => isWebcamCapturing && (!studyHasAudioRecording || audioCapturingSuccess),
-    [audioCapturingSuccess, isWebcamCapturing, studyHasAudioRecording],
+    () => isWebcamCapturing && (!studyHasAudioRecording || (isAudioCapturing && audioCapturingSuccess)),
+    [audioCapturingSuccess, isAudioCapturing, isWebcamCapturing, studyHasAudioRecording],
   );
+
+  useEffect(() => {
+    if (!isAudioCapturing) {
+      setAudioCapturingSuccess(false);
+    }
+  }, [isAudioCapturing]);
 
   useEffect(() => {
     setAnswer({

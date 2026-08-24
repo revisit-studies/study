@@ -220,6 +220,7 @@ vi.mock('../../utils/notifications', () => ({
 
 vi.mock('react-router', () => ({
   Outlet: () => <div data-testid="outlet" />,
+  useSearchParams: () => [new URLSearchParams(), vi.fn()],
 }));
 
 vi.mock('@mantine/core', () => ({

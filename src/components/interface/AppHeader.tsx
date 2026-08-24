@@ -111,6 +111,7 @@ export function AppHeader({
   const {
     isScreenRecording,
     isAudioRecording,
+    isWebcamRecording,
     setIsMuted,
     isMuted,
     clickToRecord,
@@ -135,13 +136,21 @@ export function AppHeader({
   const showAudioStatus = currentComponentHasAudioRecording
     || isAudioRecording
     || (isScreenRecordingPermission && audioStatus !== 'idle');
-  const showRecordingStatus = showAudioStatus || isScreenRecording || !!screenRecordingError;
+  const showRecordingStatus = showAudioStatus || isScreenRecording || isWebcamRecording || !!screenRecordingError;
   const isAudioActivelyRecording = audioStatus === 'recording' && !isMuted;
   let recordingLabel = '';
-  if (isScreenRecording && isAudioActivelyRecording) {
+  if (isScreenRecording && isWebcamRecording && isAudioActivelyRecording) {
+    recordingLabel = 'Recording screen, webcam, and audio';
+  } else if (isScreenRecording && isWebcamRecording) {
+    recordingLabel = 'Recording screen and webcam';
+  } else if (isScreenRecording && isAudioActivelyRecording) {
     recordingLabel = 'Recording screen and audio';
   } else if (isScreenRecording) {
     recordingLabel = 'Recording screen';
+  } else if (isWebcamRecording && isAudioActivelyRecording) {
+    recordingLabel = 'Recording webcam and audio';
+  } else if (isWebcamRecording) {
+    recordingLabel = 'Recording webcam';
   } else if (isAudioActivelyRecording) {
     recordingLabel = 'Recording audio';
   }
@@ -259,7 +268,20 @@ export function AppHeader({
                   </Tooltip>
                 ) : (
                   <Tooltip label={showMutedWarning ? 'You are still muted. Press and hold to unmute.' : 'Press and hold to unmute.'} opened={showMutedWarning || undefined}>
-                    <ActionIcon className={showMutedWarning ? classes.micBlink : undefined} color="blue" variant="light" size="md" aria-label="Click and hold to unmute microphone" onMouseDown={() => setIsMuted(false)} onMouseUp={() => setIsMuted(true)} onTouchStart={() => setIsMuted(false)} onTouchEnd={() => setIsMuted(true)}>
+                    <ActionIcon
+                      className={showMutedWarning ? classes.micBlink : undefined}
+                      color="blue"
+                      variant="light"
+                      size="md"
+                      aria-label="Click and hold to unmute microphone"
+                      onPointerDown={(event) => {
+                        event.currentTarget.setPointerCapture(event.pointerId);
+                        setIsMuted(false);
+                      }}
+                      onPointerUp={() => setIsMuted(true)}
+                      onPointerCancel={() => setIsMuted(true)}
+                      onLostPointerCapture={() => setIsMuted(true)}
+                    >
                       {isMuted ? <IconMicrophoneOff style={{ width: '70%', height: '70%' }} stroke={1.5} /> : <IconMicrophone style={{ width: '70%', height: '70%' }} stroke={1.5} />}
                     </ActionIcon>
                   </Tooltip>

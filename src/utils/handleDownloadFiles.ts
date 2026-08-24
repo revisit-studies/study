@@ -46,6 +46,12 @@ export async function handleTaskAudio({
 
 type RecordingType = 'screenRecording' | 'webcamRecording';
 
+function recordingArchiveName(includeScreen: boolean, includeWebcam: boolean) {
+  if (includeScreen && !includeWebcam) return 'screenRecording';
+  if (includeWebcam && !includeScreen) return 'webcamRecording';
+  return 'recordings';
+}
+
 async function getTaskRecordingUrl({
   storageEngine,
   participantId,
@@ -269,14 +275,17 @@ async function downloadParticipantsRecordings({
         identifier,
         recordingType,
       });
-      await loadAssetToZip(recordingsZip, `${namePrefix}_${participantId}_${identifier}_${recordingType}.webm`, recordingUrl);
+      const memberName = includeScreen && !includeWebcam
+        ? `${namePrefix}_${participantId}_${identifier}.webm`
+        : `${namePrefix}_${participantId}_${identifier}_${recordingType}.webm`;
+      await loadAssetToZip(recordingsZip, memberName, recordingUrl);
     } catch (error) {
       console.warn(`Failed to fetch ${recordingType} for ${identifier}:`, error);
     }
   }));
 
   if (!zip) {
-    downloadZip(recordingsZip, `${namePrefix}_${participantId}_${identifier}_recordings.zip`);
+    downloadZip(recordingsZip, `${namePrefix}_${participantId}_${identifier}_${recordingArchiveName(includeScreen, includeWebcam)}.zip`);
   }
 }
 
@@ -320,7 +329,7 @@ export async function downloadParticipantsRecordingsZip({
 
   await Promise.all(recordingPromises);
 
-  await downloadZip(zip, `${namePrefix}_recordings.zip`);
+  await downloadZip(zip, `${namePrefix}_${recordingArchiveName(includeScreen, includeWebcam)}.zip`);
 }
 
 export async function downloadParticipantsProvenanceZip({

@@ -19,12 +19,12 @@ vi.mock('@tabler/icons-react', () => ({
 describe('ScreenRecordingRejection', () => {
   test('renders the stopped title', () => {
     const html = renderToStaticMarkup(<ScreenRecordingRejection />);
-    expect(html).toContain('Screen Recording Stopped');
+    expect(html).toContain('Recording Stopped');
   });
 
   test('renders the explanation text', () => {
     const html = renderToStaticMarkup(<ScreenRecordingRejection />);
-    expect(html).toContain('Screen recording was stopped');
+    expect(html).toContain('Recording was stopped');
   });
 
   test('renders the close page instruction', () => {

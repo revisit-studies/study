@@ -49,6 +49,28 @@ export function ScreenRecordingReplay() {
 
   useEffect(
     () => {
+      let cancelled = false;
+      let loadedUrls: string[] = [];
+
+      const releaseUrl = (url: string | null) => {
+        if (url?.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
+      };
+      const clearVideoSource = (video: HTMLVideoElement | null) => {
+        video?.removeAttribute('src');
+      };
+      const screenVideo = screenVideoRef.current;
+      const webcamVideo = webcamVideoRef.current;
+      clearVideoSource(screenVideo);
+      clearVideoSource(webcamVideo);
+      updateReplayRef();
+      setHasScreenVideo(false);
+      setHasWebcamVideo(false);
+      storeDispatch(setAnalysisHasScreenRecording(false));
+      storeDispatch(setAnalysisHasWebcamRecording(false));
+      storeDispatch(setAnalysisCanPlayScreenRecording(false));
+
       async function getVideoURLs() {
         if (isAnalysis && identifier && storageEngine) {
           try {
@@ -68,6 +90,13 @@ export function ScreenRecordingReplay() {
               safeGetRecording(() => storageEngine.getWebcamRecording(identifier, participantId)),
             ]);
 
+            if (cancelled) {
+              releaseUrl(screenUrl);
+              releaseUrl(webcamUrl);
+              return;
+            }
+            loadedUrls = [screenUrl, webcamUrl].filter((url): url is string => !!url);
+
             const hasScreenRecording = !!screenUrl;
             const hasWebcamRecording = !!webcamUrl;
             const hasVideoRecording = hasScreenRecording || hasWebcamRecording;
@@ -80,16 +109,17 @@ export function ScreenRecordingReplay() {
 
             if (screenVideoRef.current) {
               screenVideoRef.current.preload = 'metadata';
-              screenVideoRef.current.src = screenUrl || '';
+              if (screenUrl) screenVideoRef.current.src = screenUrl;
             }
 
             if (webcamVideoRef.current) {
               webcamVideoRef.current.preload = 'metadata';
-              webcamVideoRef.current.src = webcamUrl || '';
+              if (webcamUrl) webcamVideoRef.current.src = webcamUrl;
             }
 
             updateReplayRef();
           } catch {
+            if (cancelled) return;
             setHasScreenVideo(false);
             setHasWebcamVideo(false);
             storeDispatch(setAnalysisHasScreenRecording(false));
@@ -106,6 +136,15 @@ export function ScreenRecordingReplay() {
       }
 
       getVideoURLs();
+
+      return () => {
+        cancelled = true;
+        loadedUrls.forEach(releaseUrl);
+        loadedUrls = [];
+        clearVideoSource(screenVideo);
+        clearVideoSource(webcamVideo);
+        updateReplayRef();
+      };
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
@@ -117,6 +156,7 @@ export function ScreenRecordingReplay() {
       setAnalysisHasScreenRecording,
       setAnalysisHasWebcamRecording,
       setAnalysisCanPlayScreenRecording,
+      updateReplayRef,
     ],
   );
 

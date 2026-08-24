@@ -29,9 +29,10 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
   const setupComplete = useMemo(
     () => screenCapturing
       && (!studyHasWebcamRecording || webcamCapturing)
-      && (!studyHasAudioRecording || audioCapturingSuccess),
+      && (!studyHasAudioRecording || (audioCapturing && audioCapturingSuccess)),
     [
       audioCapturingSuccess,
+      audioCapturing,
       screenCapturing,
       studyHasAudioRecording,
       studyHasWebcamRecording,
@@ -56,6 +57,12 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
       },
     });
   }, [dataCollectionEnabled, screenCapturing, setAnswer, setupComplete]);
+
+  useEffect(() => {
+    if (!audioCapturing) {
+      setAudioCapturingSuccess(false);
+    }
+  }, [audioCapturing]);
 
   useEffect(() => {
     if (!audioCapturing || !studyHasAudioRecording || !audioMediaStream.current) {
