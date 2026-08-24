@@ -320,6 +320,7 @@ function createFactorParameterNames(
         Object.keys(condition).length === 1
         && Object.hasOwn(condition, inputName)
         && !Array.isArray(condition[inputName])
+        && !isRepeatedFactorValues(condition[inputName])
       ));
     if (!hasOneScalarInput) {
       addFactorError(
@@ -431,6 +432,24 @@ function materializeFactorCondition(
   );
 }
 
+function filterFactorConditionsByAssignment(
+  conditions: FactorCondition[],
+  assignmentParameters: Record<string, unknown> | undefined,
+  errors: ParserErrorWarning[],
+  parameterNames?: FactorParameterNames,
+): FactorCondition[] {
+  if (!assignmentParameters) {
+    return conditions;
+  }
+
+  return conditions.filter((condition) => {
+    const materialized = materializeFactorCondition(condition, errors, parameterNames);
+    return Object.entries(assignmentParameters).every(([name, value]) => (
+      materialized[name] === undefined || isEqual(materialized[name], value)
+    ));
+  });
+}
+
 function resolveFactor(
   factorSource: FactorOption,
   factors: Record<string, Factor>,
@@ -439,6 +458,7 @@ function resolveFactor(
   expressionName = 'inline',
   mode: FactorResolutionMode = 'standard',
   orderContext?: FactorOrderContext,
+  assignmentParameters?: Record<string, unknown>,
 ): FactorResolution {
   if (typeof factorSource === 'string') {
     if (stack.includes(factorSource)) {
@@ -457,19 +477,26 @@ function resolveFactor(
     if (factor.length === 0) {
       addFactorError(errors, `Factor \`${factorName}\` must contain at least one value`);
     }
+    const conditions = factor.map((value) => (
+      typeof value === 'object' && !Array.isArray(value)
+        ? { ...value }
+        : { [factorName]: value }
+    ));
     return {
-      conditions: factor.map((value) => (
-        typeof value === 'object' && !Array.isArray(value)
-          ? { ...value }
-          : { [factorName]: value }
-      )),
+      conditions: filterFactorConditionsByAssignment(conditions, assignmentParameters, errors),
     };
   }
 
   if (isOrderedFactorValues(factor)) {
+    const eligibleValues = factor.values.filter((value) => {
+      const condition = typeof value === 'object' && !Array.isArray(value)
+        ? { ...value }
+        : { [factorName]: value };
+      return filterFactorConditionsByAssignment([condition], assignmentParameters, errors).length > 0;
+    });
     const values = orderFactorValues(
       factorName,
-      factor,
+      { ...factor, values: eligibleValues },
       errors,
       mode === 'runtime' ? orderContext : undefined,
     );
@@ -507,6 +534,7 @@ function resolveFactor(
       `${factorName}.${factor.action}`,
       mode,
       orderContext,
+      assignmentParameters,
     );
     if (resolution.numSamples !== undefined) {
       addFactorError(errors, `Factor expression \`${factorName}\` cannot nest a sampled factor`);
@@ -522,6 +550,7 @@ function resolveFactor(
         `${factorName}.${factor.action}.items`,
         mode,
         orderContext,
+        assignmentParameters,
       )
       : undefined;
     if (itemResolution?.numSamples !== undefined) {
@@ -529,16 +558,29 @@ function resolveFactor(
       return { conditions: [] };
     }
 
-    const matchesSelection = hasCondition
-      ? (sourceCondition: FactorCondition) => (
-        Object.entries(factor.condition!).every(([name, value]) => (
-          Object.hasOwn(sourceCondition, name) && isEqual(sourceCondition[name], value)
-        ))
-      )
-      : (sourceCondition: FactorCondition) => (
-        (Array.isArray(factor.items) ? factor.items : itemResolution!.conditions)
-          .some((item) => isEqual(sourceCondition, item))
+    const matchesSelection = (sourceCondition: FactorCondition) => {
+      const materializedSource = materializeFactorCondition(
+        sourceCondition,
+        errors,
+        resolution.parameterNames,
       );
+
+      if (hasCondition) {
+        return Object.entries(factor.condition!).every(([name, value]) => (
+          Object.hasOwn(materializedSource, name) && isEqual(materializedSource[name], value)
+        ));
+      }
+
+      const items = Array.isArray(factor.items) ? factor.items : itemResolution!.conditions;
+      return items.some((item) => isEqual(
+        materializedSource,
+        materializeFactorCondition(
+          item as FactorCondition,
+          errors,
+          itemResolution?.parameterNames || resolution.parameterNames,
+        ),
+      ));
+    };
 
     return {
       conditions: resolution.conditions.filter((sourceCondition) => (
@@ -566,6 +608,7 @@ function resolveFactor(
       `${factorName}.${action}[${index}]`,
       mode,
       orderContext,
+      assignmentParameters,
     )
   ));
   const hasNestedSample = resolutions.some((resolution) => resolution.numSamples !== undefined);
@@ -652,6 +695,13 @@ function resolveFactor(
     );
     return { conditions: [] };
   }
+  if (conditions.length === 0) {
+    addFactorError(
+      errors,
+      `Sample factor \`${factorName}\` cannot sample from an empty condition set`,
+    );
+    return { conditions: [] };
+  }
   if (mode === 'runtime') {
     return {
       conditions: sampleFactorConditions(
@@ -701,6 +751,7 @@ export function resolveOrderedFactorConditions(
   orderContext: FactorOrderContext,
   errors: ParserErrorWarning[] = [],
   expressionName = 'inline',
+  assignmentParameters?: Record<string, unknown>,
 ): Record<string, FactorObjectValue>[] {
   const resolution = resolveFactor(
     factorSource,
@@ -710,6 +761,7 @@ export function resolveOrderedFactorConditions(
     expressionName,
     'runtime',
     orderContext,
+    assignmentParameters,
   );
   if (resolution.numSamples !== undefined) {
     addFactorError(errors, `Sample factor \`${typeof factorSource === 'string' ? factorSource : expressionName}\` must be materialized by a factor block`);

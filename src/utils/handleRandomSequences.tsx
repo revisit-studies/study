@@ -15,11 +15,12 @@ import {
 } from '../parser/libraryParser';
 import { Sequence } from '../store/types';
 import {
-  FactorRuntimePlanBlock, isDynamicBlock, isFactorBlock, isFactorPlanBlock, isFactorRuntimePlanBlock,
+  FactorPlanBlock, FactorRuntimePlanBlock, isDynamicBlock, isFactorBlock, isFactorPlanBlock, isFactorRuntimePlanBlock,
 } from '../parser/utils';
 import { getComponent } from './handleComponentInheritance';
 
 type SequenceBlock = ComponentBlock | DynamicBlock | FactorBlock | FactorRuntimePlanBlock;
+type CompiledSequenceBlock = ComponentBlock | DynamicBlock | FactorBlock | FactorPlanBlock | FactorRuntimePlanBlock;
 type BetweenSubjectsFactorLevel = FactorPrimitive | FactorObject;
 type BetweenSubjectsFactorLevels = { factorName: string; levels: BetweenSubjectsFactorLevel[] };
 type BetweenSubjectsAssignment = Record<string, BetweenSubjectsFactorLevel>;
@@ -75,7 +76,6 @@ function getBetweenSubjectsFactorLevels(config: StudyConfig): BetweenSubjectsFac
       || !factor.every((level) => (
         typeof level !== 'object' || (level !== null && !Array.isArray(level))
       ))
-      || !factor.every((level) => typeof level === typeof factor[0])
     ) {
       return [];
     }
@@ -180,6 +180,38 @@ function filterSequenceByBetweenSubjectsAssignment(
     components,
     ...(parameters ? { parameters } : {}),
   };
+}
+
+function filterCompiledSequenceByBetweenSubjectsAssignment(
+  order: CompiledSequenceBlock,
+  config: StudyConfig,
+  assignment: BetweenSubjectsAssignment,
+): CompiledSequenceBlock {
+  if (isDynamicBlock(order) || isFactorBlock(order) || isFactorRuntimePlanBlock(order)) {
+    return order;
+  }
+
+  const components = order.components.flatMap((component): (string | CompiledSequenceBlock)[] => {
+    if (typeof component === 'string') {
+      return componentMatchesBetweenSubjectsAssignment(component, config, assignment)
+        ? [component]
+        : [];
+    }
+
+    const filteredComponent = filterCompiledSequenceByBetweenSubjectsAssignment(
+      component,
+      config,
+      assignment,
+    );
+    return isDynamicBlock(filteredComponent)
+      || isFactorBlock(filteredComponent)
+      || isFactorRuntimePlanBlock(filteredComponent)
+      || filteredComponent.components.length > 0
+      ? [filteredComponent]
+      : [];
+  });
+
+  return { ...order, components } as CompiledSequenceBlock;
 }
 
 type UniqueComponentEntry = { component: SequenceBlock; indices: number[] };
@@ -305,6 +337,7 @@ function _componentBlockToSequence(
   latinSquareRowIndex: number,
   path: string,
   factorOrderContext = createFactorOrderContext(latinSquareRowIndex),
+  assignmentParameters?: Record<string, unknown>,
 ): Sequence {
   if (isDynamicBlock(order)) {
     return {
@@ -337,6 +370,7 @@ function _componentBlockToSequence(
       factorOrderContext,
       errors,
       order.id,
+      assignmentParameters,
     );
     if (errors.length > 0) {
       throw new Error(errors.map((error) => error.message).join('\n'));
@@ -358,6 +392,7 @@ function _componentBlockToSequence(
       latinSquareRowIndex,
       path,
       factorOrderContext,
+      assignmentParameters,
     );
   }
 
@@ -416,6 +451,7 @@ function _componentBlockToSequence(
           latinSquareRowIndex,
           `${path}-${actualIndex}`,
           factorOrderContext,
+          assignmentParameters,
         );
         if (isFactorPlanBlock(curr)) {
           sequenceComponents.push(...childSequence.components);
@@ -476,8 +512,16 @@ function componentBlockToSequence(
   order: StudyConfig['sequence'],
   latinSquareObject: Record<string, string[][]>,
   latinSquareRowIndex: number,
+  assignmentParameters?: Record<string, unknown>,
 ): Sequence {
-  return _componentBlockToSequence(order, latinSquareObject, latinSquareRowIndex, 'root');
+  return _componentBlockToSequence(
+    order,
+    latinSquareObject,
+    latinSquareRowIndex,
+    'root',
+    createFactorOrderContext(latinSquareRowIndex),
+    assignmentParameters,
+  );
 }
 
 function _createRandomOrders(order: StudyConfig['sequence'], paths: string[], path: string, index: number) {
@@ -569,33 +613,54 @@ function countPathUsage(order: StudyConfig['sequence']): Record<string, number> 
 }
 
 export function generateSequenceArray(config: StudyConfig): Sequence[] {
-  const paths = createRandomOrders(config.sequence);
-  const pathUsageCounts = countPathUsage(config.sequence);
   const betweenSubjectsAssignments = getBetweenSubjectsAssignments(config);
   const numSequences = config.uiConfig.numSequences || 1000;
   const assignmentCount = betweenSubjectsAssignments.length;
   const latinSquareRowCount = Math.ceil(numSequences / assignmentCount);
+  const assignedSequences = betweenSubjectsAssignments.map((assignment) => (
+    filterCompiledSequenceByBetweenSubjectsAssignment(
+      config.sequence as CompiledSequenceBlock,
+      config,
+      assignment,
+    ) as StudyConfig['sequence']
+  ));
+  const latinSquareCache = new Map<string, Record<string, string[][]>>();
+  const latinSquareObjects = assignedSequences.map((assignedSequence) => {
+    const cacheKey = JSON.stringify(assignedSequence);
+    const cached = latinSquareCache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
 
-  // One Latin-square row is shared by every between-subject assignment in a batch.
-  // This crosses ordering with the between-subject design instead of balancing only globally.
-  const latinSquareObject: Record<string, string[][]> = paths
-    .map((p) => {
-      const usageCount = pathUsageCounts[p] || 1;
-      return { [p]: generateLatinSquareRows(config, p, latinSquareRowCount * usageCount) };
-    })
-    .reduce((acc, curr) => ({ ...acc, ...curr }), {});
+    const assignedConfig = { ...config, sequence: assignedSequence };
+    const paths = createRandomOrders(assignedSequence);
+    const pathUsageCounts = countPathUsage(assignedSequence);
+    // One Latin-square row is shared by assignments with the same eligible sequence shape.
+    const latinSquareObject: Record<string, string[][]> = paths
+      .map((p) => {
+        const usageCount = pathUsageCounts[p] || 1;
+        return { [p]: generateLatinSquareRows(assignedConfig, p, latinSquareRowCount * usageCount) };
+      })
+      .reduce((acc, curr) => ({ ...acc, ...curr }), {});
+    latinSquareCache.set(cacheKey, latinSquareObject);
+    return latinSquareObject;
+  });
 
   const sequenceArray: Sequence[] = [];
   Array.from({ length: numSequences }).forEach((_, sequenceIndex) => {
-    const betweenSubjectsAssignment = betweenSubjectsAssignments[sequenceIndex % assignmentCount] || {};
+    const assignmentIndex = sequenceIndex % assignmentCount;
+    const betweenSubjectsAssignment = betweenSubjectsAssignments[assignmentIndex] || {};
     // Advance only after every between-subject assignment has received the current row.
     const latinSquareRowIndex = Math.floor(sequenceIndex / assignmentCount);
+    const assignedSequence = assignedSequences[assignmentIndex];
+    const latinSquareObject = latinSquareObjects[assignmentIndex];
 
     // Generate a sequence
     let sequence = componentBlockToSequence(
-      config.sequence,
+      assignedSequence,
       latinSquareObject,
       latinSquareRowIndex,
+      getBetweenSubjectsRuntimeParameters(betweenSubjectsAssignment),
     );
     if (Object.keys(betweenSubjectsAssignment).length > 0) {
       sequence = filterSequenceByBetweenSubjectsAssignment(

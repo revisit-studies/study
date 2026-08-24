@@ -11,7 +11,7 @@ import {
   compileFactorBlocks, expandLibrarySequences, loadLibrariesParseNamespace, validateBetweenSubjects, verifyLibraryUsage,
 } from './libraryParser';
 import {
-  isDynamicBlock, isFactorBlock, isInheritedComponent,
+  isDynamicBlock, isFactorBlock, isFactorRuntimePlanBlock, isInheritedComponent,
 } from './utils';
 import {
   DEFAULT_CONTACT_EMAIL,
@@ -87,8 +87,26 @@ function verifyStudySkip(
     }
   };
 
-  if (isDynamicBlock(sequence) || isFactorBlock(sequence)) {
+  if (isDynamicBlock(sequence)) {
+    if (sequence.id) {
+      removeTargetInPlace(sequence.id);
+    }
     return;
+  }
+
+  if (isFactorBlock(sequence) || isFactorRuntimePlanBlock(sequence)) {
+    if (sequence.id) {
+      removeTargetInPlace(sequence.id);
+    }
+    if (sequence.skip && sequence.skip.length > 0) {
+      skipTargets.push(...sequence.skip.map((skip) => skip.to).filter((target) => target !== 'end'));
+    }
+    return;
+  }
+
+  // If the block has an ID, remove it from the skipTargets array
+  if (sequence.id) {
+    removeTargetInPlace(sequence.id);
   }
 
   // Base case: empty sequence
@@ -101,11 +119,6 @@ function verifyStudySkip(
       category: 'sequence-validation',
     });
     return;
-  }
-
-  // If the block has an ID, remove it from the skipTargets array
-  if (sequence.id) {
-    removeTargetInPlace(sequence.id);
   }
 
   // Recursive case: sequence has at least one component

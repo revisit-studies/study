@@ -75,6 +75,115 @@ describe('factor sequence actions', () => {
     ]);
   });
 
+  test('applies aliases when selecting factor conditions', () => {
+    const factors = {
+      color: ['RED', 'GREEN', 'BLUE'],
+      stroopConditions: {
+        action: 'cross' as const,
+        factors: ['color', 'color'],
+        as: ['word', 'inkColor'],
+      },
+    };
+
+    expect(resolveFactorConditions({
+      action: 'keep',
+      factor: 'stroopConditions',
+      condition: { word: 'RED' },
+    }, factors)).toEqual([
+      { word: 'RED', inkColor: 'RED' },
+      { word: 'RED', inkColor: 'GREEN' },
+      { word: 'RED', inkColor: 'BLUE' },
+    ]);
+  });
+
+  test('rejects aliases for repeated multi-value inputs', () => {
+    const errors: ParserErrorWarning[] = [];
+
+    resolveFactorConditions({
+      action: 'cross',
+      factors: [
+        { action: 'cross', factors: ['a', 'a'] },
+        'b',
+      ],
+      as: ['repeated', 'other'],
+    }, factorConfig().factors!, errors, [], 'nestedAlias');
+
+    expect(errors.map((error) => error.message)).toContain(
+      'Factor expression `nestedAlias` cannot apply as name `repeated` to an input with multiple parameters',
+    );
+  });
+
+  test('rejects sampling after a selector removes every condition', () => {
+    const errors: ParserErrorWarning[] = [];
+
+    resolveFactorConditions({
+      action: 'sample',
+      factors: [{ action: 'keep', factor: 'a', condition: { a: 99 } }],
+      numSamples: 1,
+      samplingStrategy: 'withReplacement',
+    }, factorConfig().factors!, errors, [], 'emptySample');
+
+    expect(errors.map((error) => error.message)).toContain(
+      'Sample factor `emptySample` cannot sample from an empty condition set',
+    );
+  });
+
+  test('allocates mixed primitive between-subjects levels', () => {
+    const config = factorConfig();
+    config.factors = { arm: [0, 'control'] };
+    config.betweenSubjects = ['arm'];
+    config.components = {
+      numericArm: {
+        type: 'markdown', path: 'numeric.md', response: [], parameters: { arm: 0 },
+      },
+      stringArm: {
+        type: 'markdown', path: 'string.md', response: [], parameters: { arm: 'control' },
+      },
+    };
+    config.sequence = { order: 'fixed', components: ['numericArm', 'stringArm'] };
+
+    const sequences = generateSequenceArray(config);
+
+    expect(sequences.map((sequence) => sequence.parameters?.arm)).toEqual([0, 'control']);
+    expect(sequences.map((sequence) => sequence.components[0])).toEqual(['numericArm', 'stringArm']);
+  });
+
+  test('filters between-subjects levels before factor sampling', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    const config = factorConfig();
+    config.factors = {
+      arm: ['A', 'B'],
+      stimulus: ['x', 'y'],
+      trials: { action: 'cross', factors: ['arm', 'stimulus'] },
+    };
+    config.betweenSubjects = ['arm'];
+    config.sequence = {
+      type: 'factor',
+      id: 'sampledTrials',
+      factor: {
+        action: 'sample', factors: ['trials'], numSamples: 1, samplingStrategy: 'withoutReplacement',
+      },
+      components: 'trial',
+    };
+
+    const compiled = compileFactorBlocks(config.sequence, config);
+    const sequences = generateSequenceArray({
+      ...config,
+      sequence: compiled.sequence,
+      components: compiled.components,
+    });
+    random.mockRestore();
+
+    expect(sequences).toHaveLength(2);
+    sequences.forEach((sequence) => {
+      const sampled = sequence.components.slice(0, -1);
+      expect(sampled).toHaveLength(1);
+      expect(compiled.components[sampled[0] as string]).toMatchObject({
+        parameters: { arm: sequence.parameters?.arm },
+      });
+    });
+  });
+
   test('validates factor as names', () => {
     const errors: ParserErrorWarning[] = [];
     const factors = factorConfig().factors!;

@@ -181,6 +181,7 @@
           "id": "consentApproval",
           "prompt": "By clicking on 'Yes' below, you indicate that you have understood the Information Sheet and agree to participate in this study.",
           "type": "radio",
+          "requiredValue": "Yes",
           "options": [
             "Yes",
             "No"

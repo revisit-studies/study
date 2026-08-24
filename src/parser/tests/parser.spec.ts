@@ -1332,6 +1332,76 @@ describe('Parser Warnings', () => {
     expect(conditionalOrderError).toBeUndefined();
   });
 
+  test('validates skip targets for dynamic and runtime factor blocks', async () => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Skip target test',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2026-08-20',
+        description: 'Checks compiled sequence skip targets.',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'test@test.com',
+        logoPath: '',
+        withProgressBar: true,
+        withSidebar: false,
+      },
+      baseComponents: {
+        trial: {
+          type: 'markdown',
+          path: 'trial.md',
+          response: [],
+        },
+      },
+      components: {
+        trial: {
+          type: 'markdown',
+          path: 'trial.md',
+          response: [],
+        },
+      },
+      factors: {
+        ordered: {
+          values: ['A', 'B'],
+          order: 'random',
+        },
+      },
+      sequence: {
+        order: 'fixed',
+        components: [
+          {
+            order: 'fixed',
+            components: ['trial'],
+            skip: [{ name: 'trial', check: 'responses', to: 'dynamicGate' }],
+          },
+          {
+            id: 'dynamicGate',
+            order: 'dynamic',
+            functionPath: 'dynamic-function.js',
+          },
+          {
+            order: 'fixed',
+            components: ['trial'],
+            skip: [{ name: 'trial', check: 'responses', to: 'factorGate' }],
+          },
+          {
+            type: 'factor',
+            id: 'factorGate',
+            factor: 'ordered',
+            components: 'trial',
+          },
+        ],
+      },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors.filter((error) => error.category === 'skip-validation')).toEqual([]);
+  });
+
   test('adds sequence-validation warning for empty components block', async () => {
     const studyConfig = {
       $schema: '',
