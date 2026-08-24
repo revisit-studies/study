@@ -159,7 +159,7 @@ export function SliderInput({
         bar: withBar === false || tlxStyle ? { display: 'none' } : {},
         markLabel: {
           fontSize: theme.fontSizes.sm,
-          color: theme.colors.gray[7],
+          color: theme.colors.gray[6],
           transform: 'translate(calc((var(--mark-offset) * -1) + (var(--slider-size) / 2)), calc(var(--mantine-spacing-xs) / 2)',
         },
         // Red line thumb style
@@ -206,7 +206,7 @@ export function SliderInput({
                       position: 'absolute',
                       bottom: `${labelPosition}%`,
                       fontSize: 'var(--mantine-font-size-xs)',
-                      color: 'var(--mantine-color-gray-7)',
+                      color: 'var(--mantine-color-gray-6)',
                       right: 0,
                       transform: 'translateY(50%)',
                     }}
@@ -257,7 +257,7 @@ export function SliderInput({
                       left: 2,
                       width: 20,
                       height: 1,
-                      backgroundColor: 'var(--mantine-color-gray-7)',
+                      backgroundColor: 'var(--mantine-color-gray-6)',
                       transform: 'translateY(50%)',
                     }}
                   />
@@ -276,7 +276,7 @@ export function SliderInput({
                       left: option.label !== '' ? 20 : 2,
                       width: 20,
                       height: 1,
-                      backgroundColor: 'var(--mantine-color-gray-7)',
+                      backgroundColor: 'var(--mantine-color-gray-6)',
                       transform: 'translateY(50%)',
                     }}
                   />
@@ -331,7 +331,7 @@ export function SliderInput({
                     key={option.value}
                     style={{
                       fontSize: 'var(--mantine-font-size-xs)',
-                      color: 'var(--mantine-color-gray-7)',
+                      color: 'var(--mantine-color-gray-6)',
                       position: 'absolute',
                       bottom: `${markPosition}%`,
                       transform: 'translateY(50%)',
@@ -366,10 +366,10 @@ export function SliderInput({
               <Tooltip label={hoverValue} opened position="top" withArrow>
                 <Box
                   style={{
-                    backgroundColor: 'var(--mantine-color-gray-8)',
+                    backgroundColor: 'var(--mantine-color-gray-6)',
                     width: 1,
                     height: 22,
-                    border: '1px solid var(--mantine-color-gray-8)',
+                    border: '1px solid var(--mantine-color-gray-6)',
                     position: 'absolute',
                     left: `${((hoverValue - min) / (max - min)) * 100}%`,
                     top: `${'calc(0.5rem * var(--mantine-scale))'}`,
