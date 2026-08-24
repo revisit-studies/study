@@ -11,6 +11,7 @@ import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import { RevisitProvenanceProvider } from '../store/hooks/useRevisitTrrack';
 import { ErrorBoundary } from './ErrorBoundary';
 import { compileTemplate } from '../utils/handlebars';
+import { useTemplateAnswerContext } from '../store/hooks/useTemplateAnswerContext';
 
 const modules = import.meta.glob(
   [
@@ -21,9 +22,10 @@ const modules = import.meta.glob(
 ) as Record<string, ModuleNamespace>;
 
 export function ReactComponentController({ currentConfig, provState, answers }: { currentConfig: ReactComponent; provState?: unknown, answers: ParticipantData['answers'] }) {
-  const templatedPath = compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true });
-  const reactPath = `../public/${templatedPath}`;
-  const StimulusComponent = reactPath in modules ? modules[reactPath].default : null;
+  const templateData = useTemplateAnswerContext();
+  const templatedPath = templateData ? compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true, data: templateData }) : undefined;
+  const reactPath = templatedPath ? `../public/${templatedPath}` : undefined;
+  const StimulusComponent = reactPath && reactPath in modules ? modules[reactPath].default : null;
   const identifier = useCurrentIdentifier();
 
   const storeDispatch = useStoreDispatch();
@@ -71,22 +73,26 @@ export function ReactComponentController({ currentConfig, provState, answers }: 
   // If the stimulus component file can't be resolved (404), clear stimulus
   // validation so the participant isn't stuck on a trial that can never load.
   useEffect(() => {
-    if (!StimulusComponent) {
+    if (templateData && !StimulusComponent) {
       console.error(`Stimulus component not found at "${templatedPath}". Clearing stimulus validation so the participant is not stuck.`);
       clearStimulusValidation();
     }
-  }, [StimulusComponent, templatedPath, clearStimulusValidation]);
+  }, [StimulusComponent, templateData, templatedPath, clearStimulusValidation]);
 
   const handleRuntimeError = useCallback((error: unknown) => {
     console.error(`Stimulus component "${templatedPath}" threw at runtime. Clearing stimulus validation so the participant is not stuck.`, error);
     clearStimulusValidation();
   }, [templatedPath, clearStimulusValidation]);
 
+  if (!templateData) {
+    return null;
+  }
+
   return (
     <Suspense fallback={<div>Loading...</div>}>
       {StimulusComponent
         ? (
-          <ErrorBoundary onError={handleRuntimeError}>
+          <ErrorBoundary key={reactPath} onError={handleRuntimeError}>
             <RevisitProvenanceProvider
               key={identifier}
               onProvenanceChange={onProvenanceChange}

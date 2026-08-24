@@ -8,7 +8,9 @@ import { ResponseSwitcher } from '../ResponseSwitcher';
 
 // ── mocks ────────────────────────────────────────────────────────────────────
 
-const { capturedStringInputProps, mockIsAnalysis, mockStoreState } = vi.hoisted(() => ({
+const {
+  capturedStringInputProps, mockIsAnalysis, mockStoreState, mockCurrentComponent,
+} = vi.hoisted(() => ({
   capturedStringInputProps: {
     disabled: undefined as boolean | undefined,
     answer: undefined as { value?: unknown; readOnly?: boolean } | undefined,
@@ -21,6 +23,7 @@ const { capturedStringInputProps, mockIsAnalysis, mockStoreState } = vi.hoisted(
     completed: false,
     answers: {},
   },
+  mockCurrentComponent: { value: '' },
 }));
 
 vi.mock('@mantine/core', () => ({
@@ -31,6 +34,7 @@ vi.mock('@mantine/core', () => ({
 
 vi.mock('react-router', () => ({
   useSearchParams: vi.fn(() => [new URLSearchParams()]),
+  useParams: vi.fn(() => ({})),
 }));
 
 vi.mock('../../../store/hooks/useStudyConfig', () => ({
@@ -43,6 +47,7 @@ vi.mock('../../../store/hooks/useIsAnalysis', () => ({
 
 vi.mock('../../../routes/utils', () => ({
   useCurrentStep: vi.fn(() => 0),
+  useCurrentComponent: vi.fn(() => mockCurrentComponent.value),
 }));
 
 vi.mock('../../../utils/fetchStylesheet', () => ({
@@ -93,6 +98,7 @@ beforeEach(() => {
   capturedStringInputProps.disabled = undefined;
   capturedStringInputProps.answer = undefined;
   mockIsAnalysis.value = false;
+  mockCurrentComponent.value = '';
   mockStoreState.completed = false;
 });
 
@@ -132,5 +138,22 @@ describe('ResponseSwitcher stored answer locking', () => {
     expect(() => renderSwitcher({ storedAnswer: undefined, answerFinalized: false })).not.toThrow();
     expect(capturedStringInputProps.disabled).toBe(true);
     expect(capturedStringInputProps.answer).toMatchObject({ value: undefined, readOnly: true });
+  });
+});
+
+describe('ResponseSwitcher dynamic loading', () => {
+  test('does not render raw templated response text while the component is resolving', () => {
+    mockCurrentComponent.value = '__dynamicLoading';
+    const { container } = render(
+      <ResponseSwitcher
+        response={{ ...response, prompt: 'Question: {{value}}' } as Response}
+        form={form}
+        index={1}
+        config={{ parameters: { value: 'static' } } as unknown as IndividualComponent}
+      />,
+    );
+
+    expect(container.textContent).not.toContain('{{value}}');
+    expect(container.querySelector('[data-testid="string-input"]')).toBeNull();
   });
 });

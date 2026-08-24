@@ -9,6 +9,7 @@ import { PREFIX as BASE_PREFIX } from '../utils/Prefix';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import { ReplayContext } from '../store/hooks/useReplay';
 import { compileTemplate } from '../utils/handlebars';
+import { useTemplateAnswerContext } from '../store/hooks/useTemplateAnswerContext';
 
 const PREFIX = '@REVISIT_COMMS';
 
@@ -33,9 +34,11 @@ export function IframeController({ currentConfig, provState, answers }: { curren
 
   const shouldSendProvenance = !isAnalysis || !replay || hasReplayStarted;
 
+  const templateData = useTemplateAnswerContext();
+
   const templatedPath = useMemo(
-    () => compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true }),
-    [currentConfig.path, currentConfig.parameters],
+    () => (templateData ? compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true, data: templateData }) : undefined),
+    [currentConfig.path, currentConfig.parameters, templateData],
   );
 
   const ref = useRef<HTMLIFrameElement>(null);
@@ -131,6 +134,12 @@ export function IframeController({ currentConfig, provState, answers }: { curren
 
     return () => window.removeEventListener('message', handler);
   }, [storeDispatch, dispatch, iframeId, currentConfig, sendMessage, setReactiveAnswers, updateProvenance, updateResponseBlockValidation, identifier, isAnalysis, provState, answers, shouldSendProvenance]);
+
+  // While the path is templated inside a dynamic block, templatedPath is undefined until the
+  // block's current iteration resolves — don't load an iframe built from the wrong iteration.
+  if (templatedPath === undefined) {
+    return null;
+  }
 
   return (
     <iframe

@@ -1,4 +1,5 @@
 import Ajv from 'ajv';
+import Handlebars from 'handlebars';
 import { parseDocument } from 'yaml';
 import configSchema from './StudyConfigSchema.json';
 import globalSchema from './GlobalConfigSchema.json';
@@ -126,6 +127,36 @@ function verifyStudySkip(
   }
 }
 
+function isTemplatedPath(path: string) {
+  if (!path.includes('{{')) {
+    return false;
+  }
+
+  try {
+    const ast = Handlebars.parse(path) as unknown;
+    const hasRuntimeExpression = (node: unknown): boolean => {
+      if (Array.isArray(node)) {
+        return node.some(hasRuntimeExpression);
+      }
+      if (!node || typeof node !== 'object') {
+        return false;
+      }
+
+      const { type } = node as { type?: unknown };
+      if (type === 'MustacheStatement' || type === 'BlockStatement') {
+        const pathType = (node as { path?: { type?: unknown } }).path?.type;
+        return pathType === 'PathExpression';
+      }
+
+      return Object.entries(node).some(([key, value]) => key !== 'loc' && hasRuntimeExpression(value));
+    };
+
+    return hasRuntimeExpression(ast);
+  } catch {
+    return false;
+  }
+}
+
 function verifyReactComponent(
   instancePath: string,
   component: Partial<IndividualComponent>,
@@ -135,6 +166,9 @@ function verifyReactComponent(
     'path' in component
       && component.path != null
       && component.type === 'react-component'
+      // A templated path (e.g. `{{file}}.tsx`) can't be resolved until runtime, once
+      // parameters/answers are known, so it can never match a real file in this static glob.
+      && !isTemplatedPath(component.path)
       && !(`../public/${component.path}` in modules)
   ) {
     errors.push({

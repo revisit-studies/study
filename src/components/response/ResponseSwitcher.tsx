@@ -225,6 +225,9 @@ export function ResponseSwitcher({
   const templatedFields = useMemo(() => {
     const parameters = config?.parameters ?? {};
     const fields: { prompt?: string; secondaryText?: string; infoText?: string } = {};
+    if (!templateData) {
+      return fields;
+    }
     if ('prompt' in response && typeof response.prompt === 'string') {
       fields.prompt = compileTemplate(response.prompt, parameters, { data: templateData });
     }
@@ -237,6 +240,12 @@ export function ResponseSwitcher({
     return fields;
   }, [response, config?.parameters, templateData]);
   const withTemplatedFields = <T extends Response>(r: T): T => ({ ...r, ...templatedFields } as T);
+
+  // A dynamic component can render this child one pass before its own route resolver settles.
+  // Do not expose raw Handlebars expressions while the answer context is unavailable.
+  if (!templateData) {
+    return null;
+  }
 
   return (
     <Box mb={responseDividers ? 'xl' : 'lg'} className="response" id={response.id} style={responseWrapperStyle}>
