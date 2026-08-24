@@ -2,7 +2,7 @@ import {
   describe, expect, test, vi,
 } from 'vitest';
 import {
-  compileFactorBlocks, createFactorConditionId, deepFillTemplate, expandLibrarySequences, fillTemplate, resolveFactorConditions, verifyLibraryUsage, loadLibrariesParseNamespace,
+  compileFactorBlocks, createFactorConditionId, deepFillTemplate, expandLibrarySequences, fillTemplate, materializeParticipantConfig, resolveFactorConditions, verifyLibraryUsage, loadLibrariesParseNamespace,
 } from '../libraryParser';
 import {
   ComponentBlock, DynamicBlock, FactorBlock, LibraryConfig, StudyConfig, InheritedComponent, IndividualComponent, ParserErrorWarning,
@@ -41,6 +41,30 @@ describe('Factor Templates', () => {
   test('preserves unresolved participant-global tokens', () => {
     const unresolved = '{{vis}}/{{missing}}';
     expect(fillTemplate(unresolved, {})).toBe(unresolved);
+  });
+
+  test('preserves component string fields during participant materialization', () => {
+    const config = {
+      components: {
+        trial: {
+          type: 'markdown' as const,
+          path: '{{arm}}.md',
+          response: [],
+          parameters: { arm: '{{arm}}' },
+        },
+      },
+    } as unknown as StudyConfig;
+
+    const materialized = materializeParticipantConfig(config, { arm: 1 });
+    const component = materialized.components.trial;
+
+    expect(component).toMatchObject({
+      path: '1.md',
+      parameters: { arm: 1 },
+    });
+    if (!('path' in component)) throw new Error('Expected a path component');
+    expect(typeof component.path).toBe('string');
+    expect(typeof component.parameters?.arm).toBe('number');
   });
 });
 

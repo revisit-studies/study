@@ -2,6 +2,7 @@ import Ajv from 'ajv';
 import isEqual from 'lodash.isequal';
 import merge from 'lodash.merge';
 import librarySchema from './LibraryConfigSchema.json';
+import studySchema from './StudyConfigSchema.json';
 import {
   ComponentBlock, ComponentOrder, Factor, FactorBlock, FactorObject, FactorObjectValue, FactorOption, FactorValue, IndividualComponent, LibraryConfig, OrderedFactorValues, ParsedConfig, ParserErrorWarning, StudyConfig,
 } from './types';
@@ -14,6 +15,9 @@ import { getSequenceFlatMapWithInterruptions } from '../utils/getSequenceFlatMap
 const ajv = new Ajv({ allowUnionTypes: true });
 ajv.addSchema(librarySchema);
 const libraryValidate = ajv.getSchema<LibraryConfig>('#/definitions/LibraryConfig')!;
+const studyAjv = new Ajv({ allowUnionTypes: true });
+studyAjv.addSchema(studySchema);
+const individualComponentValidate = studyAjv.getSchema<IndividualComponent>('#/definitions/IndividualComponent')!;
 
 type SequenceWithImportReference = StudyConfig['sequence'] & {
   __revisitImportedSequenceRef?: string;
@@ -267,14 +271,15 @@ function orderFactorValues(
   factor: OrderedFactorValues,
   errors: ParserErrorWarning[],
   context?: FactorOrderContext,
+  warnings: ParserErrorWarning[] = [],
 ): FactorValue[] {
   const order: ComponentOrder = factor.order || 'fixed';
   if (factor.values.length === 0) {
     addFactorError(errors, `Factor \`${factorName}\` must contain at least one value`);
     return [];
   }
-  if (factor.numSamples !== undefined && (!Number.isInteger(factor.numSamples) || factor.numSamples < 1 || factor.numSamples > factor.values.length)) {
-    addFactorError(errors, `Factor \`${factorName}\` numSamples must be between 1 and ${factor.values.length}`);
+  if (factor.numSamples !== undefined && (!Number.isInteger(factor.numSamples) || factor.numSamples < 1)) {
+    addFactorError(errors, `Factor \`${factorName}\` numSamples must be a positive integer`);
     return [];
   }
   if (!context) {
@@ -292,6 +297,12 @@ function orderFactorValues(
   } else if (order === 'latinSquare') {
     const offset = context.sequenceIndex % values.length;
     values = [...values.slice(offset), ...values.slice(0, offset)];
+  }
+  if (factor.numSamples !== undefined && factor.numSamples > values.length) {
+    addFactorWarning(
+      warnings,
+      `Factor \`${factorName}\` requested ${factor.numSamples} values but only ${values.length} are available; stopping after the list is exhausted`,
+    );
   }
   const selectedValues = values.slice(0, factor.numSamples);
   context.orderedValues.set(factorName, selectedValues);
@@ -320,6 +331,23 @@ function mergeFactorParameterNames(
   return Object.keys(parameterNames).length > 0 ? parameterNames : undefined;
 }
 
+function materializeConditionForParameterNames(
+  condition: FactorCondition,
+  parameterNames: FactorParameterNames = {},
+): MaterializedFactorCondition {
+  return Object.entries(condition).reduce<MaterializedFactorCondition>(
+    (materialized, [factorName, value]) => {
+      const values = isRepeatedFactorValues(value) ? value.values : [value];
+      values.forEach((factorValue, index) => {
+        const sourceName = values.length === 1 ? factorName : `${factorName}_${index}`;
+        materialized[parameterNames[sourceName] || sourceName] = factorValue;
+      });
+      return materialized;
+    },
+    {},
+  );
+}
+
 function createFactorParameterNames(
   resolutions: FactorResolution[],
   outputNames: string[],
@@ -343,14 +371,13 @@ function createFactorParameterNames(
     if (!firstCondition) {
       return undefined;
     }
-    const factorNames = Object.keys(firstCondition);
+    const materializedFirstCondition = materializeConditionForParameterNames(firstCondition, resolution.parameterNames);
+    const factorNames = Object.keys(materializedFirstCondition);
     const inputName = factorNames[0];
     const hasOneScalarInput = factorNames.length === 1
       && resolution.conditions.every((condition) => (
-        Object.keys(condition).length === 1
-        && Object.hasOwn(condition, inputName)
-        && !Array.isArray(condition[inputName])
-        && !isRepeatedFactorValues(condition[inputName])
+        Object.keys(materializeConditionForParameterNames(condition, resolution.parameterNames)).length === 1
+        && !Array.isArray(materializeConditionForParameterNames(condition, resolution.parameterNames)[inputName])
       ));
     if (!hasOneScalarInput) {
       addFactorError(
@@ -378,6 +405,20 @@ function createFactorParameterNames(
     parameterNames[sourceName] = outputNames[index];
     return parameterNames;
   }, {});
+}
+
+function getSingleFactorParameterName(
+  resolution: FactorResolution,
+): string | undefined {
+  const parameterNames = resolution.conditions.length > 0
+    ? Object.keys(materializeConditionForParameterNames(resolution.conditions[0], resolution.parameterNames))
+    : [];
+  if (parameterNames.length !== 1 || resolution.conditions.some((condition) => (
+    Object.keys(materializeConditionForParameterNames(condition, resolution.parameterNames)).length !== 1
+  ))) {
+    return undefined;
+  }
+  return parameterNames[0];
 }
 
 function mergeFactorConditions(
@@ -531,6 +572,7 @@ function resolveFactor(
       { ...factor, values: eligibleValues },
       errors,
       mode === 'runtime' ? orderContext : undefined,
+      mode === 'runtime' ? warnings : [],
     );
     return {
       conditions: values.map((value) => (
@@ -629,6 +671,42 @@ function resolveFactor(
     return { conditions: [] };
   }
 
+  const aliasNames = (factor.action === 'cross' || factor.action === 'zip') ? factor.as : undefined;
+  let parameterNameResolutions: FactorResolution[] | undefined;
+  let inputAssignmentParameters = inputs.map(() => assignmentParameters);
+  if (aliasNames !== undefined) {
+    const parameterErrors: ParserErrorWarning[] = [];
+    parameterNameResolutions = inputs.map((input, index) => (
+      resolveFactor(
+        input,
+        factors,
+        parameterErrors,
+        typeof factorSource === 'string' ? [...stack, factorSource] : stack,
+        `${factorName}.${action}[${index}]`,
+        'materialize',
+        undefined,
+        undefined,
+        warnings,
+      )
+    ));
+    parameterErrors.forEach((error) => addFactorError(errors, error.message, error.instancePath));
+
+    const parameterNames = parameterNameResolutions.map((resolution) => (
+      getSingleFactorParameterName(resolution)
+    ));
+    if (parameterNames.every((name): name is string => name !== undefined)) {
+      inputAssignmentParameters = parameterNames.map((inputName, index) => {
+        if (!assignmentParameters || !Object.hasOwn(assignmentParameters, aliasNames[index])) {
+          return assignmentParameters;
+        }
+        const mappedAssignment = { ...assignmentParameters };
+        delete mappedAssignment[aliasNames[index]];
+        mappedAssignment[inputName] = assignmentParameters[aliasNames[index]];
+        return mappedAssignment;
+      });
+    }
+  }
+
   const resolutions = inputs.map((input, index) => (
     resolveFactor(
       input,
@@ -638,7 +716,7 @@ function resolveFactor(
       `${factorName}.${action}[${index}]`,
       mode,
       orderContext,
-      assignmentParameters,
+      inputAssignmentParameters[index],
       warnings,
     )
   ));
@@ -649,8 +727,8 @@ function resolveFactor(
     resolution.hasRuntimeSample || resolution.numSamples !== undefined
   ));
   const parameterNames = (factor.action === 'cross' || factor.action === 'zip')
-    && factor.as !== undefined
-    ? createFactorParameterNames(resolutions, factor.as, factorName, errors)
+    && aliasNames !== undefined
+    ? createFactorParameterNames(parameterNameResolutions || resolutions, aliasNames, factorName, errors)
     : mergeFactorParameterNames(resolutions, factorName, errors);
   if (action === 'cross') {
     return {
@@ -850,7 +928,6 @@ function compileFactorBlock(
         );
         return [];
       }
-
       const rawParameters = {
         ...('parameters' in template ? template.parameters : {}),
         ...condition,
@@ -861,6 +938,15 @@ function compileFactorBlock(
         merge({}, template, { parameters }),
         parameters,
       ) as IndividualComponent;
+
+      if (!individualComponentValidate(component)) {
+        addFactorError(
+          errors,
+          `Factor block \`${block.id}\` generated component from base component \`${baseComponent}\` that does not satisfy the IndividualComponent schema`,
+          '/sequence/',
+        );
+        return [];
+      }
 
       if (
         config.components[componentId]
@@ -1007,9 +1093,13 @@ export function materializeParticipantConfig(
         ...('parameters' in inheritedComponent ? inheritedComponent.parameters : {}),
         ...globalParameters,
       };
+      const materializedComponent = deepFillTemplateStrings(inheritedComponent, parameters);
       return [
         componentId,
-        deepFillTemplate({ ...inheritedComponent, parameters }, parameters),
+        {
+          ...materializedComponent,
+          parameters: deepFillTemplate(parameters, parameters),
+        },
       ];
     }),
   );
@@ -1073,7 +1163,7 @@ export function validateBetweenSubjects(
       || levels.length === 0
       || (!isPrimitiveFactor && !isObjectFactor)
     ) {
-      warnings.push({
+      errors.push({
         message: levels === undefined
           ? `Between-subjects factor \`${factorName}\` is not defined in factors`
           : `Between-subjects factor \`${factorName}\` must be a non-empty factor with either all primitive levels or all object levels`,

@@ -148,6 +148,34 @@ describe('factor sequence actions', () => {
     expect(sequences.map((sequence) => sequence.components[0])).toEqual(['numericArm', 'stringArm']);
   });
 
+  test('reports invalid between-subjects factors as parser errors', async () => {
+    const invalidFactors: Array<[string, StudyConfig['factors']]> = [
+      ['missing', {}],
+      ['empty', { empty: [] }],
+      ['ordered', { ordered: { values: ['A'], order: 'fixed' } }],
+    ];
+
+    await Promise.all(invalidFactors.map(async ([factorName, factors]) => {
+      const result = await parseStudyConfig(JSON.stringify({
+        ...factorConfig(),
+        factors,
+        betweenSubjects: [factorName],
+      }));
+
+      expect(result.errors).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          message: expect.stringContaining(`Between-subjects factor \`${factorName}\``),
+          category: 'sequence-validation',
+        }),
+      ]));
+      expect(result.warnings).not.toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          message: expect.stringContaining(`Between-subjects factor \`${factorName}\``),
+        }),
+      ]));
+    }));
+  });
+
   test('filters between-subjects levels before factor sampling', () => {
     const random = vi.spyOn(Math, 'random').mockReturnValue(0);
     const config = factorConfig();
@@ -182,6 +210,110 @@ describe('factor sequence actions', () => {
         parameters: { arm: sequence.parameters?.arm },
       });
     });
+  });
+
+  test('filters aliased derived assignments before factor-owned sampling', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    const config = factorConfig();
+    config.uiConfig.numSequences = 2;
+    config.factors = {
+      stimulus: { values: [1, 2], order: 'random', numSamples: 1 },
+      assignment: { action: 'cross', factors: ['stimulus'], as: ['arm'] },
+    };
+    config.betweenSubjects = ['assignment'];
+    config.sequence = {
+      type: 'factor', id: 'aliasedAssignment', factor: 'assignment', components: 'trial',
+    };
+
+    const compiled = compileFactorBlocks(config.sequence, config);
+    const sequences = generateSequenceArray({
+      ...config,
+      sequence: compiled.sequence,
+      components: compiled.components,
+    });
+    random.mockRestore();
+
+    sequences.forEach((sequence) => {
+      const componentId = sequence.components.find((component): component is string => component !== 'end');
+      expect(componentId).toBeDefined();
+      expect(compiled.components[componentId!].parameters?.arm).toBe(sequence.parameters?.arm);
+    });
+  });
+
+  test('filters each aliased input before cross-product sampling', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    const config = factorConfig();
+    config.uiConfig.numSequences = 4;
+    config.factors = {
+      stimulus: { values: [1, 2], order: 'random', numSamples: 1 },
+      context: { values: ['x', 'y'], order: 'random', numSamples: 1 },
+      assignment: {
+        action: 'cross', factors: ['stimulus', 'context'], as: ['arm', 'condition'],
+      },
+    };
+    config.betweenSubjects = ['assignment'];
+    config.sequence = {
+      type: 'factor', id: 'multiAliasedAssignment', factor: 'assignment', components: 'trial',
+    };
+
+    const compiled = compileFactorBlocks(config.sequence, config);
+    const sequences = generateSequenceArray({
+      ...config,
+      sequence: compiled.sequence,
+      components: compiled.components,
+    });
+    random.mockRestore();
+
+    sequences.forEach((sequence) => {
+      const componentId = sequence.components.find((component): component is string => component !== 'end');
+      expect(componentId).toBeDefined();
+      expect(compiled.components[componentId!].parameters).toMatchObject({
+        arm: sequence.parameters?.arm,
+        condition: sequence.parameters?.condition,
+      });
+    });
+  });
+
+  test('filters nested aliases before sampling the inner factor', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    const config = factorConfig();
+    config.uiConfig.numSequences = 2;
+    config.factors = {
+      stimulus: { values: [1, 2], order: 'random', numSamples: 1 },
+      innerAssignment: { action: 'cross', factors: ['stimulus'], as: ['innerArm'] },
+      assignment: { action: 'cross', factors: ['innerAssignment'], as: ['arm'] },
+    };
+    config.betweenSubjects = ['assignment'];
+    config.sequence = {
+      type: 'factor', id: 'nestedAliasedAssignment', factor: 'assignment', components: 'trial',
+    };
+
+    const compiled = compileFactorBlocks(config.sequence, config);
+    const sequences = generateSequenceArray({
+      ...config,
+      sequence: compiled.sequence,
+      components: compiled.components,
+    });
+    random.mockRestore();
+
+    sequences.forEach((sequence) => {
+      const componentId = sequence.components.find((component): component is string => component !== 'end');
+      expect(componentId).toBeDefined();
+      expect(compiled.components[componentId!].parameters?.arm).toBe(sequence.parameters?.arm);
+    });
+  });
+
+  test('rejects incomplete base components used by factor blocks', () => {
+    const config = factorConfig();
+    config.baseComponents!.trial = {};
+    const errors: ParserErrorWarning[] = [];
+
+    const compiled = compileFactorBlocks(config.sequence, config, errors);
+
+    expect(errors.map((error) => error.message)).toContain(
+      'Factor block `test` generated component from base component `trial` that does not satisfy the IndividualComponent schema',
+    );
+    expect(compiled.components).toEqual({});
   });
 
   test('validates factor as names', () => {
@@ -586,6 +718,74 @@ describe('factor sequence actions', () => {
     expect(errors).toEqual([]);
     expect(warnings.map((warning) => warning.message)).toContain(
       'Zip factor `runtimeZip` received inputs with different lengths (2, 1); stopping after the shortest input',
+    );
+  });
+
+  test('surfaces warnings when runtime zip inputs become unequal', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    const config = factorConfig();
+    config.uiConfig.numSequences = 1;
+    config.factors = {
+      ordered: { values: ['A', 'B'], order: 'random', numSamples: 1 },
+      long: ['x', 'y'],
+    };
+    config.sequence = {
+      type: 'factor',
+      id: 'runtimeZipSampled',
+      factor: { action: 'zip', factors: ['ordered', 'long'] },
+      components: 'trial',
+    };
+
+    const errors: ParserErrorWarning[] = [];
+    const warnings: ParserErrorWarning[] = [];
+    const compiled = compileFactorBlocks(config.sequence, config, errors, warnings);
+    expect(errors).toEqual([]);
+    expect(warnings).toEqual([]);
+
+    const sequences = generateSequenceArray({
+      ...config,
+      sequence: compiled.sequence,
+      components: compiled.components,
+    }, warnings);
+    random.mockRestore();
+
+    expect(sequences[0].components).toHaveLength(2);
+    expect(warnings.map((warning) => warning.message)).toContain(
+      'Zip factor `runtimeZipSampled` received inputs with different lengths (1, 2); stopping after the shortest input',
+    );
+  });
+
+  test('warns when factor-owned numSamples exceeds participant-eligible values', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    const config = factorConfig();
+    config.uiConfig.numSequences = 2;
+    config.factors = {
+      arm: ['A', 'B'],
+      ordered: {
+        values: [{ arm: 'A', value: 'x' }, { arm: 'B', value: 'y' }], order: 'random', numSamples: 2,
+      },
+    };
+    config.betweenSubjects = ['arm'];
+    config.sequence = {
+      type: 'factor', id: 'runtimeSampled', factor: 'ordered', components: 'trial',
+    };
+
+    const errors: ParserErrorWarning[] = [];
+    const warnings: ParserErrorWarning[] = [];
+    const compiled = compileFactorBlocks(config.sequence, config, errors, warnings);
+    expect(errors).toEqual([]);
+
+    const sequences = generateSequenceArray({
+      ...config,
+      sequence: compiled.sequence,
+      components: compiled.components,
+    }, warnings);
+    random.mockRestore();
+
+    expect(sequences).toHaveLength(2);
+    expect(sequences.every((sequence) => sequence.components.length === 2)).toBe(true);
+    expect(warnings.map((warning) => warning.message)).toContain(
+      'Factor `ordered` requested 2 values but only 1 are available; stopping after the list is exhausted',
     );
   });
 

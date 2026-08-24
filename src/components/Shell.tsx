@@ -230,7 +230,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
                 setActiveConfig(config);
               }
 
-              const sequenceArray = await generateSequenceArray(config);
+              const sequenceArray = await generateSequenceArray(config, config.warnings);
               if (!cancelled) {
                 window.parent.postMessage({ type: 'revisitWidget/SEQUENCE_ARRAY', payload: sequenceArray }, '*');
               }
@@ -308,7 +308,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
         const sequenceArray = await storageEngine.getSequenceArray();
 
         if (!sequenceArray) {
-          const generatedSequenceArray = await generateSequenceArray(activeConfig);
+          const generatedSequenceArray = await generateSequenceArray(activeConfig, activeConfig.warnings);
 
           await storageEngine.setSequenceArray(generatedSequenceArray);
         }
@@ -446,7 +446,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
         try {
           // Preserve the existing disconnected-storage and participant alert recovery paths.
-          const generatedSequences = await generateSequenceArray(activeConfig);
+          const generatedSequences = await generateSequenceArray(activeConfig, activeConfig.warnings);
 
           const matchingSequence = generatedSequences[0];
           const fallbackSequence = filterSequenceByCondition(

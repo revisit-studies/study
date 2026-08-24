@@ -338,6 +338,7 @@ function _componentBlockToSequence(
   path: string,
   factorOrderContext = createFactorOrderContext(latinSquareRowIndex),
   assignmentParameters?: Record<string, unknown>,
+  warnings: ParserErrorWarning[] = [],
 ): Sequence {
   if (isDynamicBlock(order)) {
     return {
@@ -371,6 +372,7 @@ function _componentBlockToSequence(
       errors,
       order.id,
       assignmentParameters,
+      warnings,
     );
     if (errors.length > 0) {
       throw new Error(errors.map((error) => error.message).join('\n'));
@@ -393,6 +395,7 @@ function _componentBlockToSequence(
       path,
       factorOrderContext,
       assignmentParameters,
+      warnings,
     );
   }
 
@@ -452,6 +455,7 @@ function _componentBlockToSequence(
           `${path}-${actualIndex}`,
           factorOrderContext,
           assignmentParameters,
+          warnings,
         );
         if (isFactorPlanBlock(curr)) {
           sequenceComponents.push(...childSequence.components);
@@ -513,6 +517,7 @@ function componentBlockToSequence(
   latinSquareObject: Record<string, string[][]>,
   latinSquareRowIndex: number,
   assignmentParameters?: Record<string, unknown>,
+  warnings: ParserErrorWarning[] = [],
 ): Sequence {
   return _componentBlockToSequence(
     order,
@@ -521,6 +526,7 @@ function componentBlockToSequence(
     'root',
     createFactorOrderContext(latinSquareRowIndex),
     assignmentParameters,
+    warnings,
   );
 }
 
@@ -612,7 +618,10 @@ function countPathUsage(order: StudyConfig['sequence']): Record<string, number> 
   return pathCounts;
 }
 
-export function generateSequenceArray(config: StudyConfig): Sequence[] {
+export function generateSequenceArray(
+  config: StudyConfig,
+  warnings: ParserErrorWarning[] = [],
+): Sequence[] {
   const betweenSubjectsAssignments = getBetweenSubjectsAssignments(config);
   const numSequences = config.uiConfig.numSequences || 1000;
   const assignmentCount = betweenSubjectsAssignments.length;
@@ -661,6 +670,7 @@ export function generateSequenceArray(config: StudyConfig): Sequence[] {
       latinSquareObject,
       latinSquareRowIndex,
       getBetweenSubjectsRuntimeParameters(betweenSubjectsAssignment),
+      warnings,
     );
     if (Object.keys(betweenSubjectsAssignment).length > 0) {
       sequence = filterSequenceByBetweenSubjectsAssignment(
