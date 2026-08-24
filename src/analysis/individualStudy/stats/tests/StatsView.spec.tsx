@@ -24,7 +24,7 @@ vi.mock('@mantine/hooks', () => ({
 }));
 
 vi.mock('react-vega', () => ({
-  VegaLite: () => <div>VegaLite</div>,
+  VegaLite: ({ spec }: { spec: unknown }) => <div data-vega-spec={JSON.stringify(spec)}>VegaLite</div>,
 }));
 
 vi.mock('@mantine/core', () => ({
@@ -47,6 +47,7 @@ vi.mock('@mantine/core', () => ({
 vi.mock('@tabler/icons-react', () => ({
   IconAdjustmentsHorizontal: () => <span>icon-slider</span>,
   IconBubbleText: () => <span>icon-text</span>,
+  IconCalendar: () => <span>icon-date</span>,
   IconChartGridDots: () => <span>icon-matrix-cb</span>,
   IconChevronDown: () => <span>icon-chevron</span>,
   IconCodePlus: () => <span>icon-metadata</span>,
@@ -60,6 +61,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconRadio: () => <span>icon-radio</span>,
   IconSelect: () => <span>icon-dropdown</span>,
   IconSquares: () => <span>icon-checkbox</span>,
+  IconClock: () => <span>icon-time</span>,
 }));
 
 vi.mock('../../../../components/interface/StepsPanel', () => ({
@@ -281,6 +283,35 @@ describe('ResponseVisualization', () => {
     );
     expect(html).toContain('icon-radio');
     expect(html).toContain('VegaLite');
+  });
+
+  test('sorts date responses chronologically across years', () => {
+    const participantWithDate = (date: string) => ({
+      ...mockParticipant,
+      answers: {
+        trial1_0: {
+          answer: { date },
+          startTime: 1,
+          endTime: 2,
+          componentName: 'trial1',
+          trialOrder: '0',
+          windowEvents: [],
+          timedOut: false,
+        },
+      },
+    }) as unknown as ParticipantData;
+    const html = renderToStaticMarkup(
+      <ResponseVisualization
+        {...baseProps}
+        participantData={[
+          participantWithDate('01/01/2026'),
+          participantWithDate('12/31/2025'),
+        ]}
+        response={{ type: 'date', id: 'date', prompt: 'Select a date.' }}
+      />,
+    );
+
+    expect(html).toContain('sort&quot;:[&quot;12/31/2025&quot;,&quot;01/01/2026&quot;]');
   });
 
   test('radio type: shows the no-data message when answers exist but lack this response', () => {

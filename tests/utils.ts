@@ -92,6 +92,9 @@ export async function openStudyFromLanding(
 
   const matchers = Array.isArray(cardTitle) ? cardTitle : [cardTitle];
   const section = page.getByLabel(sectionLabel);
+  if (!(await section.isVisible().catch(() => false))) {
+    await page.getByRole('tab', { name: sectionLabel, exact: true }).click();
+  }
   await expect(section).toBeVisible();
 
   for (const matcher of matchers) {

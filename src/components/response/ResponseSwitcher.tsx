@@ -8,6 +8,7 @@ import {
 import { CheckBoxInput } from './CheckBoxInput';
 import { CustomResponseInput } from './CustomResponseInput';
 import { DropdownInput } from './DropdownInput';
+import { DateResponseInput } from './DateInput';
 import { ReactiveInput } from './ReactiveInput';
 import { LikertInput } from './LikertInput';
 import { NumericInput } from './NumericInput';
@@ -16,6 +17,7 @@ import { RankingInput } from './RankingInput';
 import { SliderInput } from './SliderInput';
 import { StringInput } from './StringInput';
 import { TextAreaInput } from './TextAreaInput';
+import { TimeResponseInput } from './TimeInput';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { MatrixInput } from './MatrixInput';
 import { ButtonsInput } from './ButtonsInput';
@@ -27,6 +29,7 @@ import { useCurrentStep } from '../../routes/utils';
 import { TextOnlyInput } from './TextOnlyInput';
 import { useFetchStylesheet } from '../../utils/fetchStylesheet';
 import { parseStringOptionValue, parseStringOptions } from '../../utils/stringOptions';
+import { getDropdownOptions } from '../../utils/dropdownOptions';
 import {
   getDefaultFieldValue, normalizeCheckboxValue,
 } from './utils';
@@ -35,6 +38,8 @@ import {
   usesStandaloneDontKnowField,
 } from './responseErrors';
 import { CustomResponseField } from '../../store/types';
+import { compileTemplate } from '../../utils/handlebars';
+import { useTemplateAnswerContext } from '../../store/hooks/useTemplateAnswerContext';
 
 export function ResponseSwitcher({
   response,
@@ -169,7 +174,11 @@ export function ResponseSwitcher({
     [`${response.id}-other`]: otherValue.value,
   }), [response.id, ans.value, dontKnowChecked, otherValue.value]);
   const errorOptions = useMemo(() => {
-    if (response.type === 'radio' || response.type === 'checkbox' || response.type === 'buttons' || response.type === 'dropdown') {
+    if (response.type === 'dropdown') {
+      return getDropdownOptions(response);
+    }
+
+    if (response.type === 'radio' || response.type === 'checkbox' || response.type === 'buttons') {
       return parseStringOptions(response.options);
     }
 
@@ -218,11 +227,38 @@ export function ResponseSwitcher({
     };
   }, [displayError, response.required, responseStyle]);
 
+  const templateData = useTemplateAnswerContext();
+
+  const templatedFields = useMemo(() => {
+    const parameters = config?.parameters ?? {};
+    const fields: { prompt?: string; secondaryText?: string; infoText?: string } = {};
+    if (!templateData) {
+      return fields;
+    }
+    if ('prompt' in response && typeof response.prompt === 'string') {
+      fields.prompt = compileTemplate(response.prompt, parameters, { data: templateData });
+    }
+    if ('secondaryText' in response && typeof response.secondaryText === 'string') {
+      fields.secondaryText = compileTemplate(response.secondaryText, parameters, { noEscape: true, data: templateData });
+    }
+    if ('infoText' in response && typeof response.infoText === 'string') {
+      fields.infoText = compileTemplate(response.infoText, parameters, { noEscape: true, data: templateData });
+    }
+    return fields;
+  }, [response, config?.parameters, templateData]);
+  const withTemplatedFields = <T extends Response>(r: T): T => ({ ...r, ...templatedFields } as T);
+
+  // A dynamic component can render this child one pass before its own route resolver settles.
+  // Do not expose raw Handlebars expressions while the answer context is unavailable.
+  if (!templateData) {
+    return null;
+  }
+
   return (
     <Box mb={responseDividers ? 'xl' : 'lg'} className="response" id={response.id} style={responseWrapperStyle}>
       {response.type === 'numerical' && (
       <NumericInput
-        response={response}
+        response={withTemplatedFields(response)}
         disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: number }}
         error={responseError}
@@ -232,6 +268,26 @@ export function ResponseSwitcher({
       )}
       {response.type === 'shortText' && (
       <StringInput
+        response={withTemplatedFields(response)}
+        disabled={isDisabled || dontKnowChecked}
+        answer={ans as { value: string }}
+        error={responseError}
+        index={index}
+        enumerateQuestions={enumerateQuestions}
+      />
+      )}
+      {response.type === 'date' && (
+      <DateResponseInput
+        response={response}
+        disabled={isDisabled || dontKnowChecked}
+        answer={ans as { value: string }}
+        error={responseError}
+        index={index}
+        enumerateQuestions={enumerateQuestions}
+      />
+      )}
+      {response.type === 'time' && (
+      <TimeResponseInput
         response={response}
         disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string }}
@@ -242,7 +298,7 @@ export function ResponseSwitcher({
       )}
       {response.type === 'longText' && (
       <TextAreaInput
-        response={response}
+        response={withTemplatedFields(response)}
         disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string }}
         error={responseError}
@@ -252,7 +308,7 @@ export function ResponseSwitcher({
       )}
       {response.type === 'likert' && (
       <LikertInput
-        response={response}
+        response={withTemplatedFields(response)}
         disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string }}
         error={responseError}
@@ -262,7 +318,7 @@ export function ResponseSwitcher({
       )}
       {response.type === 'dropdown' && (
       <DropdownInput
-        response={response}
+        response={withTemplatedFields(response)}
         disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string }}
         error={responseError}
@@ -272,7 +328,7 @@ export function ResponseSwitcher({
       )}
       {response.type === 'slider' && (
       <SliderInput
-        response={response}
+        response={withTemplatedFields(response)}
         disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: number }}
         error={responseError}
@@ -282,7 +338,7 @@ export function ResponseSwitcher({
       )}
       {response.type === 'radio' && (
       <RadioInput
-        response={response}
+        response={withTemplatedFields(response)}
         disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string }}
         error={responseError}
@@ -293,7 +349,7 @@ export function ResponseSwitcher({
       )}
       {response.type === 'checkbox' && (
       <CheckBoxInput
-        response={response}
+        response={withTemplatedFields(response)}
         disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string[] }}
         error={responseError}
@@ -305,7 +361,7 @@ export function ResponseSwitcher({
       )}
       {(response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') && (
       <RankingInput
-        response={response}
+        response={withTemplatedFields(response)}
         disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: Record<string, string> }}
         error={responseError}
@@ -315,7 +371,7 @@ export function ResponseSwitcher({
       )}
       {response.type === 'reactive' && (
       <ReactiveInput
-        response={response}
+        response={withTemplatedFields(response)}
         answer={ans as { value: string[] }}
         index={index}
         enumerateQuestions={enumerateQuestions}
@@ -324,7 +380,7 @@ export function ResponseSwitcher({
       {(response.type === 'matrix-radio' || response.type === 'matrix-checkbox') && (
       <MatrixInput
         disabled={isDisabled}
-        response={response}
+        response={withTemplatedFields(response)}
         answer={ans as { value: Record<string, string> }}
         error={responseError}
         index={index}
@@ -333,7 +389,7 @@ export function ResponseSwitcher({
       )}
       {response.type === 'buttons' && (
       <ButtonsInput
-        response={response}
+        response={withTemplatedFields(response)}
         disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string }}
         error={responseError}
@@ -343,7 +399,7 @@ export function ResponseSwitcher({
       )}
       {response.type === 'custom' && field && (
       <CustomResponseInput
-        response={response as CustomResponse}
+        response={withTemplatedFields(response as CustomResponse)}
         disabled={isDisabled || dontKnowChecked}
         value={customResponseValue}
         error={customError || undefined}
@@ -353,7 +409,7 @@ export function ResponseSwitcher({
       />
       )}
       {response.type === 'textOnly' && (
-      <TextOnlyInput response={response} />
+      <TextOnlyInput response={withTemplatedFields(response)} />
       )}
       {usesStandaloneDontKnow && (
       <Checkbox

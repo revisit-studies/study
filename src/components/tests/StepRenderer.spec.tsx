@@ -460,6 +460,7 @@ describe('StepRenderer', () => {
       title: 'PDF export failed',
       color: 'red',
     })));
+    await waitFor(() => expect((exportButton as HTMLButtonElement).disabled).toBe(false));
     exportButton.click();
 
     await waitFor(() => expect(pdfExportMocks.saveElement).toHaveBeenCalledTimes(2));

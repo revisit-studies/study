@@ -1,27 +1,71 @@
-import { DynamicBlock, StudyConfig } from '../parser/types';
-import { isDynamicBlock } from '../parser/utils';
+import {
+  DynamicBlock, StudyConfig,
+} from '../parser/types';
+import {
+  isDynamicBlock, isFactorBlock, isFactorPlanBlock, isFactorRuntimePlanBlock,
+} from '../parser/utils';
 import { Sequence } from '../store/types';
 
+function getFactorPlanComponents(sequence: Sequence | StudyConfig['sequence']): string[] | null {
+  if (
+    isDynamicBlock(sequence)
+    || isFactorBlock(sequence)
+    || sequence.components.length === 0
+    || !sequence.components.every(isFactorPlanBlock)
+  ) {
+    return null;
+  }
+
+  return [...new Set(sequence.components.flatMap((plan) => plan.components.filter(
+    (component): component is string => typeof component === 'string',
+  )))];
+}
+
+function getFactorRuntimePlanComponents(sequence: Sequence | StudyConfig['sequence']): string[] | null {
+  if (!isFactorRuntimePlanBlock(sequence)) {
+    return null;
+  }
+  return [...new Set(Object.values(sequence.conditionComponents).flat())];
+}
+
 export function getSequenceFlatMap<T extends Sequence | StudyConfig['sequence']>(sequence: T): string[] {
-  return isDynamicBlock(sequence) ? [sequence.id] : sequence.components.flatMap((component) => (typeof component === 'string' ? component : getSequenceFlatMap(component)));
+  if (isDynamicBlock(sequence) || isFactorBlock(sequence)) {
+    return [sequence.id];
+  }
+
+  return getFactorRuntimePlanComponents(sequence)
+    ?? getFactorPlanComponents(sequence)
+    ?? sequence.components.flatMap((component) => (
+      typeof component === 'string' ? component : getSequenceFlatMap(component)
+    ));
 }
 
-function findAllFuncBlocks(sequence: StudyConfig['sequence']): DynamicBlock[] {
-  return isDynamicBlock(sequence) ? [sequence] : sequence.components.flatMap((component) => (typeof component === 'string' ? [] : findAllFuncBlocks(component)));
+function findAllFuncBlocks(sequence: StudyConfig['sequence'] | Sequence): (DynamicBlock | Sequence)[] {
+  return isDynamicBlock(sequence) ? [sequence] : isFactorBlock(sequence) ? [] : sequence.components.flatMap((component) => (typeof component === 'string' ? [] : findAllFuncBlocks(component)));
 }
 
-export function findFuncBlock(name: string, sequence: StudyConfig['sequence']): (DynamicBlock | undefined) {
+export function findFuncBlock(name: string, sequence: Sequence): (Sequence | undefined);
+export function findFuncBlock(name: string, sequence: StudyConfig['sequence']): (DynamicBlock | undefined);
+export function findFuncBlock(name: string, sequence: StudyConfig['sequence'] | Sequence): (DynamicBlock | Sequence | undefined) {
   const allFuncBlocks = findAllFuncBlocks(sequence);
   return allFuncBlocks.find((funcBlock) => funcBlock.id === name);
 }
 
 export function getSequenceFlatMapWithInterruptions(sequence: StudyConfig['sequence']): string[] {
-  if (isDynamicBlock(sequence)) {
+  if (isDynamicBlock(sequence) || isFactorBlock(sequence)) {
     return [];
   }
 
   return [
-    ...sequence.components.flatMap((component) => (typeof component === 'string' ? component : (isDynamicBlock(component) ? [] : getSequenceFlatMapWithInterruptions(component)))),
+    ...(getFactorRuntimePlanComponents(sequence)
+      ?? getFactorPlanComponents(sequence)
+      ?? sequence.components.flatMap((component) => (
+        typeof component === 'string'
+          ? component
+          : (isDynamicBlock(component) || isFactorBlock(component)
+            ? []
+            : getSequenceFlatMapWithInterruptions(component))
+      ))),
     ...sequence.interruptions?.flatMap((interruption) => interruption.components) || [],
   ];
 }
@@ -104,11 +148,18 @@ export function addPathToComponentBlock(order: StudyConfig['sequence'] | Sequenc
       ...order, orderPath, components: [], skip: [], interruptions: [],
     };
   }
+  if (isFactorBlock(order)) {
+    return {
+      id: order.id, order: order.order ?? 'fixed', orderPath, components: [], skip: [], interruptions: [],
+    };
+  }
+  const factorPlanComponents = getFactorPlanComponents(order);
   return {
     ...order,
     orderPath,
     order: order.order,
-    components: order.components.map((o, i) => addPathToComponentBlock(o, `${orderPath}-${i}`)),
+    components: factorPlanComponents
+      ?? order.components.map((o, i) => addPathToComponentBlock(o, `${orderPath}-${i}`)),
     skip: order.skip || [],
     interruptions: order.interruptions || [],
   };

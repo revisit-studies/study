@@ -1,6 +1,9 @@
-import { describe, expect, test } from 'vitest';
+import {
+  describe, expect, test,
+} from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { QuestionnaireComponent, StudyConfig } from '../../parser/types';
+import { Sequence } from '../../store/types';
 import { generateSequenceArray } from '../handleRandomSequences';
 import { getSequenceFlatMap } from '../getSequenceFlatMap';
 
@@ -36,7 +39,297 @@ const trialGroupB = Array.from({ length: 10 }, (_, idx) => `trial${idx + 11}`);
 const testRandomizationConfigUrl = new URL('../../public/test-randomization/config.json', import.meta.url);
 const randomizationDistributionTest = existsSync(testRandomizationConfigUrl) ? test : test.skip;
 
+function createLatinSquareConfig(
+  trialIds: string[],
+  numSequences: number,
+  factors?: StudyConfig['factors'],
+  betweenSubjects?: StudyConfig['betweenSubjects'],
+): StudyConfig {
+  return {
+    ...config,
+    uiConfig: {
+      ...config.uiConfig,
+      numSequences,
+    },
+    components: Object.fromEntries(
+      trialIds.map((id) => [id, { type: 'questionnaire', response: [] }]),
+    ),
+    factors,
+    betweenSubjects,
+    sequence: {
+      order: 'latinSquare',
+      components: trialIds,
+    },
+  } as StudyConfig;
+}
+
+function getTrialOrder(sequence: Sequence, trialIds: string[]): string[] {
+  return sequence.components.filter(
+    (component): component is string => (
+      typeof component === 'string' && trialIds.includes(component)
+    ),
+  );
+}
+
+function expectPositionBalance(
+  sequences: Sequence[],
+  trialIds: string[],
+  expectedOccurrences: number,
+) {
+  trialIds.forEach((_, position) => {
+    const counts = Object.fromEntries(trialIds.map((trialId) => [trialId, 0]));
+    sequences.forEach((sequence) => {
+      const trialId = getTrialOrder(sequence, trialIds)[position];
+      counts[trialId] += 1;
+    });
+    expect(counts).toEqual(
+      Object.fromEntries(trialIds.map((trialId) => [trialId, expectedOccurrences])),
+    );
+  });
+}
+
 describe('Generating sequences works as expected', () => {
+  test('generateSequenceArray filters pre-expanded between-subjects components', () => {
+    const parsedBetweenSubjectsConfig: StudyConfig = {
+      ...config,
+      uiConfig: {
+        ...config.uiConfig,
+        numSequences: 2,
+      },
+      factors: {
+        data: ['d1', 'd2'],
+      },
+      betweenSubjects: ['data'],
+      components: {
+        d1Trial: {
+          type: 'react-component',
+          path: 'test/assets/Trial.tsx',
+          response: [],
+          parameters: { data: 'd1' },
+        },
+        d2Trial: {
+          type: 'react-component',
+          path: 'test/assets/Trial.tsx',
+          response: [],
+          parameters: { data: 'd2' },
+        },
+        sharedTrial: {
+          type: 'questionnaire',
+          response: [],
+        },
+      },
+      sequence: {
+        order: 'fixed',
+        components: ['d1Trial', 'd2Trial', 'sharedTrial'],
+      },
+    };
+
+    const sequenceArray = generateSequenceArray(parsedBetweenSubjectsConfig);
+
+    expect(sequenceArray[0].components).toEqual(['d1Trial', 'sharedTrial', 'end']);
+    expect(sequenceArray[0].parameters).toEqual({ data: 'd1' });
+    expect(sequenceArray[1].components).toEqual(['d2Trial', 'sharedTrial', 'end']);
+    expect(sequenceArray[1].parameters).toEqual({ data: 'd2' });
+  });
+
+  test('generateSequenceArray filters between-subjects components inside nested blocks', () => {
+    const parsedBetweenSubjectsConfig: StudyConfig = {
+      ...config,
+      uiConfig: {
+        ...config.uiConfig,
+        numSequences: 2,
+      },
+      factors: {
+        ageGroup: ['young', 'old'],
+      },
+      betweenSubjects: ['ageGroup'],
+      components: {
+        youngTutorial: {
+          baseComponent: 'tutorial',
+          parameters: { ageGroup: 'young' },
+        },
+        oldTutorial: {
+          baseComponent: 'tutorial',
+          parameters: { ageGroup: 'old' },
+        },
+      },
+      baseComponents: {
+        tutorial: {
+          type: 'markdown',
+          path: 'test/assets/tutorial.md',
+          response: [],
+        },
+      },
+      sequence: {
+        order: 'fixed',
+        components: [
+          {
+            id: 'tutorialByAgeGroup',
+            order: 'fixed',
+            components: [
+              {
+                id: 'youngTutorialBlock',
+                order: 'fixed',
+                components: ['youngTutorial'],
+              },
+              {
+                id: 'oldTutorialBlock',
+                order: 'fixed',
+                components: ['oldTutorial'],
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    const sequenceArray = generateSequenceArray(parsedBetweenSubjectsConfig);
+
+    expect(sequenceArray[0].components[0]).toMatchObject({
+      id: 'tutorialByAgeGroup',
+      components: [
+        expect.objectContaining({
+          id: 'youngTutorialBlock',
+          components: ['youngTutorial'],
+        }),
+      ],
+    });
+    expect(sequenceArray[0].parameters).toEqual({ ageGroup: 'young' });
+    expect(sequenceArray[1].components[0]).toMatchObject({
+      id: 'tutorialByAgeGroup',
+      components: [
+        expect.objectContaining({
+          id: 'oldTutorialBlock',
+          components: ['oldTutorial'],
+        }),
+      ],
+    });
+    expect(sequenceArray[1].parameters).toEqual({ ageGroup: 'old' });
+  });
+
+  test('generateSequenceArray filters components using inherited between-subject parameters', () => {
+    const inheritedParametersConfig: StudyConfig = {
+      ...config,
+      uiConfig: {
+        ...config.uiConfig,
+        numSequences: 2,
+      },
+      factors: {
+        ageGroup: ['young', 'old'],
+      },
+      betweenSubjects: ['ageGroup'],
+      baseComponents: {
+        youngTrial: {
+          type: 'react-component',
+          path: 'test/assets/Trial.tsx',
+          response: [],
+          parameters: { ageGroup: 'young' },
+        },
+        oldTrial: {
+          type: 'react-component',
+          path: 'test/assets/Trial.tsx',
+          response: [],
+          parameters: { ageGroup: 'old' },
+        },
+      },
+      components: {
+        youngTrial: { baseComponent: 'youngTrial' },
+        oldTrial: { baseComponent: 'oldTrial' },
+      },
+      sequence: {
+        order: 'fixed',
+        components: ['youngTrial', 'oldTrial'],
+      },
+    };
+
+    const sequenceArray = generateSequenceArray(inheritedParametersConfig);
+
+    expect(sequenceArray[0].components).toEqual(['youngTrial', 'end']);
+    expect(sequenceArray[1].components).toEqual(['oldTrial', 'end']);
+  });
+
+  test('generateSequenceArray balances Latin-square positions without between-subject factors', () => {
+    const trialIds = ['a', 'b', 'c', 'd'];
+    const sequenceArray = generateSequenceArray(
+      createLatinSquareConfig(trialIds, trialIds.length),
+    );
+
+    expectPositionBalance(sequenceArray, trialIds, 1);
+  });
+
+  test('generateSequenceArray crosses Latin-square rows with two between-subject factors', () => {
+    const trialIds = ['a', 'b', 'c', 'd'];
+    const assignments = [
+      { incentive: 'base', vis: 'pcp' },
+      { incentive: 'base', vis: 'scatter' },
+      { incentive: 'inc', vis: 'pcp' },
+      { incentive: 'inc', vis: 'scatter' },
+    ];
+    const sequenceArray = generateSequenceArray(
+      createLatinSquareConfig(
+        trialIds,
+        trialIds.length * assignments.length,
+        {
+          incentive: ['base', 'inc'],
+          vis: ['pcp', 'scatter'],
+        },
+        ['incentive', 'vis'],
+      ),
+    );
+
+    trialIds.forEach((_, rowIndex) => {
+      const batch = sequenceArray.slice(
+        rowIndex * assignments.length,
+        (rowIndex + 1) * assignments.length,
+      );
+      const row = getTrialOrder(batch[0], trialIds);
+
+      batch.forEach((sequence, assignmentIndex) => {
+        expect(sequence.parameters).toEqual(assignments[assignmentIndex]);
+        expect(getTrialOrder(sequence, trialIds)).toEqual(row);
+      });
+    });
+
+    assignments.forEach((_, assignmentIndex) => {
+      const assignmentSequences = sequenceArray.filter(
+        (_sequence, sequenceIndex) => sequenceIndex % assignments.length === assignmentIndex,
+      );
+      expectPositionBalance(assignmentSequences, trialIds, 1);
+    });
+  });
+
+  test('generateSequenceArray balances odd Latin squares within each between-subject level', () => {
+    const trialIds = ['a', 'b', 'c'];
+    const ageGroups = ['young', 'old'];
+    const latinSquareRowCount = trialIds.length * 2;
+    const sequenceArray = generateSequenceArray(
+      createLatinSquareConfig(
+        trialIds,
+        latinSquareRowCount * ageGroups.length,
+        { ageGroup: ageGroups },
+        ['ageGroup'],
+      ),
+    );
+
+    Array.from({ length: latinSquareRowCount }).forEach((_, rowIndex) => {
+      const batch = sequenceArray.slice(
+        rowIndex * ageGroups.length,
+        (rowIndex + 1) * ageGroups.length,
+      );
+      expect(getTrialOrder(batch[0], trialIds)).toEqual(getTrialOrder(batch[1], trialIds));
+    });
+
+    ageGroups.forEach((ageGroup, assignmentIndex) => {
+      const assignmentSequences = sequenceArray.filter(
+        (_sequence, sequenceIndex) => sequenceIndex % ageGroups.length === assignmentIndex,
+      );
+      assignmentSequences.forEach((sequence) => {
+        expect(sequence.parameters).toEqual({ ageGroup });
+      });
+      expectPositionBalance(assignmentSequences, trialIds, 2);
+    });
+  });
+
   test('generateSequenceArray defaults to 1000 sequences when numSequences is omitted', () => {
     const defaultCountConfig: StudyConfig = {
       ...config,

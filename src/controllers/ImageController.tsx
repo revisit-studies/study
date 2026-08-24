@@ -1,35 +1,46 @@
 import { Image } from '@mantine/core';
-import {
-  useEffect, useMemo, useState,
-} from 'react';
+import { useMemo } from 'react';
 import { ImageComponent } from '../parser/types';
 import { PREFIX } from '../utils/Prefix';
 import { getStaticAssetByPath } from '../utils/getStaticAsset';
 import { ResourceNotFound } from '../ResourceNotFound';
+import { compileTemplate } from '../utils/handlebars';
+import { useTemplateAnswerContext } from '../store/hooks/useTemplateAnswerContext';
+import { useAsyncResource } from '../store/hooks/useAsyncResource';
+
+async function loadImage(url: string) {
+  let asset = await getStaticAssetByPath(url);
+  asset = !asset || asset.includes('File not found') ? undefined : asset;
+  return asset;
+}
 
 export function ImageController({ currentConfig }: { currentConfig: ImageComponent; }) {
+  const templateData = useTemplateAnswerContext();
+
+  const templatedPath = useMemo(
+    () => (templateData ? compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true, data: templateData }) : undefined),
+    [currentConfig.path, currentConfig.parameters, templateData],
+  );
+
   const url = useMemo(() => {
-    if (currentConfig.path.startsWith('http')) {
-      return currentConfig.path;
+    if (templatedPath === undefined) {
+      return undefined;
     }
-    return `${PREFIX}${currentConfig.path}`;
-  }, [currentConfig.path]);
-
-  const [loading, setLoading] = useState(true);
-  const [assetFound, setAssetFound] = useState(false);
-
-  useEffect(() => {
-    async function fetchImage() {
-      let asset = await getStaticAssetByPath(url);
-      asset = asset?.includes('File not found') ? undefined : asset;
-      setAssetFound(!!asset);
-      setLoading(false);
+    if (templatedPath.startsWith('http')) {
+      return templatedPath;
     }
+    return `${PREFIX}${templatedPath}`;
+  }, [templatedPath]);
 
-    fetchImage();
-  }, [url]);
+  const { status } = useAsyncResource(url, loadImage);
 
-  return loading || assetFound
+  if (url === undefined || templatedPath === undefined) {
+    return null;
+  }
+
+  return status === 'loading'
     ? <Image mx="auto" src={url} />
-    : <ResourceNotFound path={currentConfig.path} />;
+    : status === 'success'
+      ? <Image mx="auto" src={url} />
+      : <ResourceNotFound path={templatedPath} />;
 }
