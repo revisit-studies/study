@@ -8,6 +8,13 @@ export function getDefaultSliderSpacing(min: number, max: number) {
   return 10 ** (Math.ceil(Math.log10(range)) - 1);
 }
 
+// This is for handling decimal values, since toFixed() rounds the number and can cause issues with floating point precision
+function getDecimalPlaces(value: number) {
+  const [coefficient, exponent = '0'] = value.toString().toLowerCase().split('e');
+  const coefficientDecimals = coefficient.split('.')[1]?.length ?? 0;
+  return Math.max(0, coefficientDecimals - Number(exponent));
+}
+
 export function generateSliderBreakValues(min: number, max: number, spacing?: number) {
   if (!Number.isFinite(min) || !Number.isFinite(max) || max <= min) {
     return [] as number[];
@@ -18,10 +25,7 @@ export function generateSliderBreakValues(min: number, max: number, spacing?: nu
     return [] as number[];
   }
 
-  const spacingString = calculatedSpacing.toString();
-  const decimalPlaces = spacingString.includes('e-')
-    ? Number(spacingString.split('e-')[1])
-    : (spacingString.split('.')[1]?.length ?? 0);
+  const decimalPlaces = getDecimalPlaces(calculatedSpacing);
   const normalize = (value: number) => Number(value.toFixed(decimalPlaces));
   const epsilon = Math.abs(calculatedSpacing) / 1_000_000;
   const firstIndex = Math.ceil((min + epsilon) / calculatedSpacing);
@@ -60,10 +64,14 @@ export function getSliderValueFromPosition(
   }
 
   const stepSize = step ?? (max - min) / 100;
-  // Extra guard for JavaScript floating point precision issues when calculating the number of decimal places
-  const precision = stepSize.toString().split('.')[1]?.length ?? 0;
+  if (!Number.isFinite(stepSize) || stepSize <= 0) {
+    return null;
+  }
+
+  const precision = Math.max(getDecimalPlaces(min), getDecimalPlaces(stepSize));
   // Round to the nearest valid step
   const steppedValue = Math.round((rawValue - min) / stepSize) * stepSize + min;
-  // Clamp the result to the configured range
-  return Number(Math.min(max, Math.max(min, steppedValue)).toFixed(precision));
+  const normalizedValue = Number(steppedValue.toFixed(precision));
+  // Clamp the normalized result to the configured range
+  return Math.min(max, Math.max(min, normalizedValue));
 }

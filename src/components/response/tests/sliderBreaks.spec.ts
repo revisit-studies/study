@@ -94,6 +94,15 @@ describe('getSliderValueFromPosition', () => {
     expect(getSliderValueFromPosition(0.333, 0, 1, 0.01)).toBe(0.33);
   });
 
+  test('preserves fractional minima when rounding to a step', () => {
+    expect(getSliderValueFromPosition(0.3, 0.05, 1.05, 0.1)).toBe(0.35);
+    expect(getSliderValueFromPosition(0, 0.05, 10.05, 1)).toBe(0.05);
+  });
+
+  test('supports steps written in scientific notation', () => {
+    expect(getSliderValueFromPosition(0.5, 0, 0.000001, 1e-7)).toBe(0.0000005);
+  });
+
   test('uses the default one-hundredth range step when none is configured', () => {
     expect(getSliderValueFromPosition(0.914, 0, 150)).toBe(136.5);
   });
@@ -106,5 +115,6 @@ describe('getSliderValueFromPosition', () => {
   test('returns null for invalid input', () => {
     expect(getSliderValueFromPosition(Number.NaN, 0, 100)).toBeNull();
     expect(getSliderValueFromPosition(0.5, 10, 10)).toBeNull();
+    expect(getSliderValueFromPosition(0.5, 0, 100, 0)).toBeNull();
   });
 });
