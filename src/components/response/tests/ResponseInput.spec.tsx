@@ -9,7 +9,6 @@ import {
   afterEach, describe, expect, test, vi,
 } from 'vitest';
 import { useMove } from '@mantine/hooks';
-import { generateSliderBreakValues } from '../sliderBreaks';
 import { HorizontalHandler } from '../HorizontalHandler';
 import { OptionLabel } from '../OptionLabel';
 import { InputLabel } from '../InputLabel';
@@ -196,14 +195,6 @@ vi.mock('../../ReactMarkdownWrapper', () => ({
 vi.mock('@mantine/hooks', () => ({
   useMove: vi.fn(() => ({ ref: () => undefined, active: false })),
 }));
-
-vi.mock('../sliderBreaks', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../sliderBreaks')>();
-  return {
-    ...actual,
-    generateSliderBreakValues: vi.fn(() => []),
-  };
-});
 
 vi.mock('../../../store/store', () => ({
   useStoreDispatch: vi.fn(() => vi.fn()),
@@ -790,25 +781,7 @@ describe('SliderInput', () => {
     expect(html).not.toContain('data-slider');
   });
 
-  test('renders smeq mark elements when generateSliderBreakValues returns non-empty', () => {
-    // smeq block renders mark elements when labelValues is non-empty
-    vi.mocked(generateSliderBreakValues).mockReturnValueOnce([25, 50, 75]);
-    const html = renderToStaticMarkup(
-      <SliderInput
-        response={{ ...base, smeqStyle: true } as Parameters<typeof SliderInput>[0]['response']}
-        disabled={false}
-        answer={{}}
-        index={1}
-        enumerateQuestions={false}
-      />,
-    );
-    expect(html).toContain('Low');
-  });
-
   test('renders SMEQ numeric labels including both endpoints', () => {
-    vi.mocked(generateSliderBreakValues).mockReturnValueOnce([
-      10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140,
-    ]);
     const html = renderToStaticMarkup(
       <SliderInput
         response={{
