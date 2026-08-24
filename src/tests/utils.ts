@@ -75,6 +75,10 @@ class TestStorageEngine extends StorageEngine {
 
   protected _claimSequenceAssignment = vi.fn(async () => { });
 
+  protected async _runWithLock<T>(_lockKey: string, operation: () => Promise<T>) {
+    return await operation();
+  }
+
   protected _setModesDocument = vi.fn(async () => { });
 
   protected _getAudioUrl = vi.fn(async () => null);

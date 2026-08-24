@@ -1,5 +1,6 @@
 import { AuthError, createClient } from '@supabase/supabase-js';
 import localforage from 'localforage';
+import { v4 as uuidv4 } from 'uuid';
 import {
   REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageObject, StorageObjectType, StoredUser,
   CloudStorageEngine, cleanupModes,
@@ -224,6 +225,89 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       timestamp: data.data.withServerTimestamp ? new Date(data.createdAt).getTime() : data.data.timestamp,
       createdTime: new Date(data.createdAt).getTime(),
     } as SequenceAssignment;
+  }
+
+  protected async _runWithLock<T>(lockKey: string, operation: () => Promise<T>) {
+    await this.verifyStudyDatabase();
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+
+    const studyId = `${this.collectionPrefix}${this.studyId}`;
+    const lockDocumentId = `lock_${lockKey}`;
+    const token = uuidv4();
+    const expiresInMs = 60_000;
+    const acquireLock = async (attempt: number): Promise<void> => {
+      const now = Date.now();
+      const { data: existingLockRow, error: readError } = await this.supabase
+        .from('revisit')
+        .select('data')
+        .eq('studyId', studyId)
+        .eq('docId', lockDocumentId)
+        .maybeSingle();
+
+      if (readError) {
+        throw new Error('Failed to read study update lock');
+      }
+
+      const existingLock = existingLockRow?.data as {
+        token?: string;
+        expiresAt?: number;
+      } | undefined;
+      if (!existingLockRow) {
+        const { error: createError } = await this.supabase
+          .from('revisit')
+          .insert({
+            studyId,
+            docId: lockDocumentId,
+            data: { token, expiresAt: now + expiresInMs },
+          });
+        if (!createError) {
+          return;
+        }
+        if (createError.code !== '23505') {
+          throw new Error('Failed to create study update lock');
+        }
+      } else if (!existingLock?.expiresAt || existingLock.expiresAt <= now) {
+        const { data: updatedLockRows, error: updateError } = await this.supabase
+          .from('revisit')
+          .update({ data: { token, expiresAt: now + expiresInMs } })
+          .eq('studyId', studyId)
+          .eq('docId', lockDocumentId)
+          .eq('data->>token', existingLock?.token ?? '')
+          .select('docId');
+        if (updateError) {
+          throw new Error('Failed to acquire expired study update lock');
+        }
+        if ((updatedLockRows?.length ?? 0) === 1) {
+          return;
+        }
+      }
+
+      if (attempt >= 299) {
+        throw new Error('Timed out while waiting for a study update to finish');
+      }
+      await new Promise<void>((resolve) => {
+        setTimeout(resolve, 100);
+      });
+      await acquireLock(attempt + 1);
+    };
+
+    await acquireLock(0);
+
+    try {
+      return await operation();
+    } finally {
+      const { error } = await this.supabase
+        .from('revisit')
+        .delete()
+        .eq('studyId', studyId)
+        .eq('docId', lockDocumentId)
+        .eq('data->>token', token);
+      if (error) {
+        console.warn('Failed to release study update lock:', error);
+      }
+    }
   }
 
   protected async _completeCurrentParticipantRealtime() {

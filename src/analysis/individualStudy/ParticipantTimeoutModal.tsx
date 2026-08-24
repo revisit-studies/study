@@ -73,6 +73,7 @@ export function ParticipantTimeoutModal({
   const { user } = useAuth();
   const [uncontrolledOpened, setUncontrolledOpened] = useState(false);
   const [timingOutParticipantIds, setTimingOutParticipantIds] = useState<string[]>([]);
+  const [timeoutError, setTimeoutError] = useState<string | null>(null);
   const opened = controlledOpened ?? uncontrolledOpened;
 
   const inProgressParticipants = useMemo(
@@ -86,11 +87,13 @@ export function ParticipantTimeoutModal({
     }
 
     setTimingOutParticipantIds((ids) => [...ids, participantId]);
+    setTimeoutError(null);
     try {
       await storageEngine.rejectParticipant(participantId, 'Timed out by admin');
       await refresh();
     } catch (error) {
       console.error('Failed to time out participant:', error);
+      setTimeoutError('The participant could not be timed out. Please try again.');
     } finally {
       setTimingOutParticipantIds((ids) => ids.filter((id) => id !== participantId));
     }
@@ -133,6 +136,7 @@ export function ParticipantTimeoutModal({
           <Alert icon={<IconClockOff size={16} />} color="orange" title="Time out a participant">
             Timing out a participant rejects them and returns their sequence assignment for reuse.
           </Alert>
+          {timeoutError && <Alert color="red" title="Unable to time out participant">{timeoutError}</Alert>}
           {description && <Text size="sm" c="dimmed">{description}</Text>}
           {inProgressParticipants.length === 0 ? (
             <Text c="dimmed">There are no in-progress participants.</Text>

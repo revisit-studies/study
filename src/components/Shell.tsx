@@ -318,7 +318,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
     setStartupPreviewComponent(null);
     setStartupPreviewStore(null);
 
-    if (!storageEngine || !activeConfig || !canonicalStudyId
+    if (store || !storageEngine || !activeConfig || !canonicalStudyId
       || participantId || urlParticipantId || studyCondition.length > 0
       || (activeConfig.errors?.length ?? 0) > 0) {
       return () => {
@@ -367,7 +367,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
     return () => {
       cancelled = true;
     };
-  }, [storageEngine, activeConfig, canonicalStudyId, participantId, urlParticipantId, studyCondition]);
+  }, [storageEngine, activeConfig, canonicalStudyId, participantId, urlParticipantId, studyCondition, store]);
 
   useEffect(() => {
     let isCancelled = false;

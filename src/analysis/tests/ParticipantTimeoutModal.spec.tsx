@@ -94,6 +94,20 @@ describe('ParticipantTimeoutModal', () => {
     expect(refresh).toHaveBeenCalledOnce();
   });
 
+  test('shows an error and does not refresh when timing out a participant fails', async () => {
+    mockStorageEngine!.rejectParticipant.mockRejectedValue(new Error('Storage unavailable'));
+    const refresh = vi.fn();
+    render(<ParticipantTimeoutModal participants={[makeParticipant({ participantId: 'p1', createdTime: 1 })]} refresh={refresh} />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Review (1)' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Time Out' }));
+    });
+
+    expect(screen.getByText('The participant could not be timed out. Please try again.')).toBeDefined();
+    expect(refresh).not.toHaveBeenCalled();
+  });
+
   test('can be opened without its own review button', () => {
     render(
       <ParticipantTimeoutModal

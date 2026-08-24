@@ -1,5 +1,6 @@
 import { parse as hjsonParse } from 'hjson';
 import localforage from 'localforage';
+import { v4 as uuidv4 } from 'uuid';
 import { initializeApp } from 'firebase/app';
 import {
   deleteObject,
@@ -25,6 +26,7 @@ import {
   getDocs,
   initializeFirestore,
   onSnapshot,
+  runTransaction,
   serverTimestamp,
   setDoc,
   updateDoc,
@@ -293,6 +295,60 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       createdTime: data.createdTime instanceof Timestamp ? data.createdTime.toMillis() : data.createdTime,
       completed: data.completed instanceof Timestamp ? data.completed.toMillis() : data.completed,
     } as SequenceAssignment;
+  }
+
+  protected async _runWithLock<T>(lockKey: string, operation: () => Promise<T>) {
+    if (this.studyId === undefined) {
+      throw new Error('Study ID is not set');
+    }
+
+    const lockDocument = doc(this.studyCollection, 'locks');
+    const token = uuidv4();
+    const expiresInMs = 60_000;
+    const acquireLock = async (attempt: number): Promise<void> => {
+      const now = Date.now();
+      try {
+        await runTransaction(this.firestore, async (transaction) => {
+          const snapshot = await transaction.get(lockDocument);
+          const existingLock = snapshot.data()?.[lockKey] as {
+            token?: string;
+            expiresAt?: number;
+          } | undefined;
+          if (existingLock?.expiresAt && existingLock.expiresAt > now) {
+            throw new Error('Study lock is held');
+          }
+
+          transaction.set(lockDocument, {
+            [lockKey]: { token, expiresAt: now + expiresInMs },
+          }, { merge: true });
+        });
+      } catch (error) {
+        if (!(error instanceof Error) || error.message !== 'Study lock is held') {
+          throw error;
+        }
+        if (attempt >= 299) {
+          throw new Error('Timed out while waiting for a study update to finish');
+        }
+        await new Promise<void>((resolve) => {
+          setTimeout(resolve, 100);
+        });
+        await acquireLock(attempt + 1);
+      }
+    };
+
+    await acquireLock(0);
+
+    try {
+      return await operation();
+    } finally {
+      await runTransaction(this.firestore, async (transaction) => {
+        const snapshot = await transaction.get(lockDocument);
+        const existingLock = snapshot.data()?.[lockKey] as { token?: string } | undefined;
+        if (existingLock?.token === token) {
+          transaction.update(lockDocument, { [lockKey]: deleteField() });
+        }
+      });
+    }
   }
 
   protected async _completeCurrentParticipantRealtime() {

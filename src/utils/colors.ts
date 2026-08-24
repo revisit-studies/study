@@ -1,3 +1,4 @@
+/** Canonical ReVISit palette for distinct categorical colors across the application. */
 export const DISTINCT_COLOR_PALETTE = [
   '#F35C34', '#5CC8E7', '#2F853F', '#EF9A8B', '#8F62FF',
   '#FFBFEC', '#007D92', '#A17854', '#9FED9C', '#8D19E6',

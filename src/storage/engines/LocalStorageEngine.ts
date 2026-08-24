@@ -5,6 +5,8 @@ import {
 import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
 
 export class LocalStorageEngine extends StorageEngine {
+  private static lockChains = new Map<string, Promise<void>>();
+
   private studyDatabase = localforage.createInstance({
     name: 'revisit',
   });
@@ -106,6 +108,27 @@ export class LocalStorageEngine extends StorageEngine {
     const sequenceAssignmentPath = `${this.collectionPrefix}${this.studyId}/sequenceAssignment`;
     const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath) || {};
     return sequenceAssignments[participantId] || null;
+  }
+
+  protected async _runWithLock<T>(lockKey: string, operation: () => Promise<T>) {
+    const scopedLockKey = `${this.collectionPrefix}${this.studyId}:${lockKey}`;
+    const previousLock = LocalStorageEngine.lockChains.get(scopedLockKey) ?? Promise.resolve();
+    let releaseLock: (() => void) | undefined;
+    const currentLock = new Promise<void>((resolve) => {
+      releaseLock = resolve;
+    });
+    const queuedLock = previousLock.catch(() => undefined).then(() => currentLock);
+    LocalStorageEngine.lockChains.set(scopedLockKey, queuedLock);
+
+    await previousLock.catch(() => undefined);
+    try {
+      return await operation();
+    } finally {
+      releaseLock?.();
+      if (LocalStorageEngine.lockChains.get(scopedLockKey) === queuedLock) {
+        LocalStorageEngine.lockChains.delete(scopedLockKey);
+      }
+    }
   }
 
   protected async _completeCurrentParticipantRealtime() {
