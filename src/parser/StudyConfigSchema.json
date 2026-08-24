@@ -117,19 +117,9 @@
             "type": "boolean"
           },
           "parameters": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "description": "The parameters that are passed to the react component. These can be used within your react component to render different things.",
-                "type": "object"
-              },
-              {
-                "additionalProperties": {},
-                "description": "The parameters that are passed to the website (iframe). These can be used within your website to render different things.",
-                "type": "object"
-              }
-            ],
-            "description": "The parameters that are passed to the react component. These can be used within your react component to render different things."
+            "additionalProperties": {},
+            "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files.",
+            "type": "object"
           },
           "path": {
             "anyOf": [
@@ -1069,6 +1059,11 @@
           "description": "Whether enter key should move to the next question. If present, will override the enter key setting in the uiConfig.",
           "type": "boolean"
         },
+        "parameters": {
+          "additionalProperties": {},
+          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files.",
+          "type": "object"
+        },
         "path": {
           "description": "The path to the image. This could be a relative path from the public folder or a url to an external image.",
           "type": "string"
@@ -1349,19 +1344,9 @@
           "type": "boolean"
         },
         "parameters": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "description": "The parameters that are passed to the react component. These can be used within your react component to render different things.",
-              "type": "object"
-            },
-            {
-              "additionalProperties": {},
-              "description": "The parameters that are passed to the website (iframe). These can be used within your website to render different things.",
-              "type": "object"
-            }
-          ],
-          "description": "The parameters that are passed to the react component. These can be used within your react component to render different things."
+          "additionalProperties": {},
+          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files.",
+          "type": "object"
         },
         "path": {
           "anyOf": [
@@ -1855,6 +1840,11 @@
         "nextOnEnter": {
           "description": "Whether enter key should move to the next question. If present, will override the enter key setting in the uiConfig.",
           "type": "boolean"
+        },
+        "parameters": {
+          "additionalProperties": {},
+          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files.",
+          "type": "object"
         },
         "path": {
           "description": "The path to the markdown file. This should be a relative path from the public folder.",
@@ -2468,6 +2458,11 @@
           "description": "Whether enter key should move to the next question. If present, will override the enter key setting in the uiConfig.",
           "type": "boolean"
         },
+        "parameters": {
+          "additionalProperties": {},
+          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files.",
+          "type": "object"
+        },
         "previousButton": {
           "description": "Whether to show the previous button. If present, will override the previous button setting in the uiConfig.",
           "type": "boolean"
@@ -2896,7 +2891,7 @@
         },
         "parameters": {
           "additionalProperties": {},
-          "description": "The parameters that are passed to the react component. These can be used within your react component to render different things.",
+          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files.",
           "type": "object"
         },
         "path": {
@@ -4093,6 +4088,11 @@
           "description": "Whether enter key should move to the next question. If present, will override the enter key setting in the uiConfig.",
           "type": "boolean"
         },
+        "parameters": {
+          "additionalProperties": {},
+          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files.",
+          "type": "object"
+        },
         "previousButton": {
           "description": "Whether to show the previous button. If present, will override the previous button setting in the uiConfig.",
           "type": "boolean"
@@ -4263,6 +4263,11 @@
         "nextOnEnter": {
           "description": "Whether enter key should move to the next question. If present, will override the enter key setting in the uiConfig.",
           "type": "boolean"
+        },
+        "parameters": {
+          "additionalProperties": {},
+          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files.",
+          "type": "object"
         },
         "path": {
           "description": "The path to the vega file. This should be a relative path from the public folder.",
@@ -4443,6 +4448,11 @@
           "description": "Whether enter key should move to the next question. If present, will override the enter key setting in the uiConfig.",
           "type": "boolean"
         },
+        "parameters": {
+          "additionalProperties": {},
+          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files.",
+          "type": "object"
+        },
         "path": {
           "description": "The path to the video. This could be a relative path from the public folder or might be a url to an external website.",
           "type": "string"
@@ -4620,7 +4630,7 @@
         },
         "parameters": {
           "additionalProperties": {},
-          "description": "The parameters that are passed to the website (iframe). These can be used within your website to render different things.",
+          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files.",
           "type": "object"
         },
         "path": {

@@ -2005,3 +2005,89 @@ describe('Parser Warnings', () => {
     expect(result.warnings.some((warning) => warning.category === 'default-supabase-config')).toBe(false);
   });
 });
+
+describe('React component path validation', () => {
+  function makeReactComponentStudyConfig(path: string) {
+    return {
+      $schema: '',
+      studyMetadata: {
+        title: 'React Path Test',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2026-08-22',
+        description: 'Ensures react-component path validation behaves as expected.',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: '',
+        logoPath: '',
+        withProgressBar: true,
+        withSidebar: false,
+      },
+      components: {
+        trial: {
+          type: 'react-component',
+          path,
+          response: [],
+        },
+      },
+      sequence: {
+        order: 'fixed',
+        components: ['trial'],
+      },
+    };
+  }
+
+  test('accepts a real path under src/public', async () => {
+    const result = await parseStudyConfig(JSON.stringify(
+      makeReactComponentStudyConfig('demo-react-trrack/assets/DemoReactTrrack.tsx'),
+    ));
+
+    expect(result.errors).not.toContainEqual(expect.objectContaining({ message: 'Unresolved path' }));
+  });
+
+  test('rejects a path that does not resolve to a real file', async () => {
+    const result = await parseStudyConfig(JSON.stringify(
+      makeReactComponentStudyConfig('demo-react-trrack/assets/DoesNotExist.tsx'),
+    ));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'Unresolved path',
+      instancePath: '/components/trial/path',
+    }));
+  });
+
+  test('does not flag a Handlebars-templated path, since it can only resolve at runtime', async () => {
+    const result = await parseStudyConfig(JSON.stringify(
+      makeReactComponentStudyConfig('demo-react-trrack/assets/{{file}}.tsx'),
+    ));
+
+    expect(result.errors).not.toContainEqual(expect.objectContaining({ message: 'Unresolved path' }));
+  });
+
+  test('rejects a path with malformed Handlebars syntax instead of treating it as templated', async () => {
+    const result = await parseStudyConfig(JSON.stringify(
+      makeReactComponentStudyConfig('demo-react-trrack/assets/{{file.tsx'),
+    ));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'Unresolved path',
+      instancePath: '/components/trial/path',
+    }));
+  });
+
+  test.each([
+    'demo-react-trrack/assets/{{#if file}}thing.tsx',
+    'demo-react-trrack/assets/{{else}}.tsx',
+    'demo-react-trrack/assets/{{! comment}}missing.tsx',
+    'demo-react-trrack/assets/{{"literal"}}.tsx',
+    'demo-react-trrack/assets/{{> missingPartial}}.tsx',
+  ])('rejects a path with no valid runtime expression: %s', async (path) => {
+    const result = await parseStudyConfig(JSON.stringify(makeReactComponentStudyConfig(path)));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'Unresolved path',
+      instancePath: '/components/trial/path',
+    }));
+  });
+});

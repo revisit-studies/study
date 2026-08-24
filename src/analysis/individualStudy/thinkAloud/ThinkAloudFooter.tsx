@@ -94,6 +94,14 @@ async function getTags(storageEngine: StorageEngine | undefined, type: 'particip
   return [];
 }
 
+function getBrowser(ua: string) {
+  if (/Edg\//.test(ua)) return 'Edge';
+  if (/Chrome\//.test(ua)) return 'Chrome';
+  if (/Firefox\//.test(ua)) return 'Firefox';
+  if (/Safari\//.test(ua)) return 'Safari';
+  return 'Unknown';
+}
+
 export function ThinkAloudFooter({
   visibleParticipants, rawTranscript, currentShownTranscription, width, onTimeUpdate, isReplay, editedTranscript, currentTrial, saveProvenance, jumpedToLine = 0, studyId, setHasAudio, storageEngine,
 }: {
@@ -118,34 +126,52 @@ export function ThinkAloudFooter({
     isPlaying, setIsPlaying, speed, setSpeed, setSeekTime, hasEnded,
   } = useReplayContext();
 
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const [screenRecordingUrl, setScreenRecordingUrl] = useState<string | null>(null);
+  const assetKey = `${participantId}\u0000${currentTrial}`;
+  const [audio, setAudio] = useState<{ key: string; url: string | null }>({ key: '', url: null });
+  const [screenRecording, setScreenRecording] = useState<{ key: string; url: string | null }>({ key: '', url: null });
+  const audioUrl = audio.key === assetKey ? audio.url : null;
+  const screenRecordingUrl = screenRecording.key === assetKey ? screenRecording.url : null;
 
   useEffect(() => {
+    let cancelled = false;
+
     async function fetchAssetsUrl() {
+      setAudio({ key: assetKey, url: null });
+      setScreenRecording({ key: assetKey, url: null });
+
       if (!storageEngine || !participantId || !currentTrial) {
-        setAudioUrl(null);
-        setScreenRecordingUrl(null);
         return;
       }
 
       try {
         const url = await storageEngine.getAudioUrl(currentTrial, participantId);
-        setAudioUrl(url);
+        if (!cancelled) {
+          setAudio({ key: assetKey, url });
+        }
       } catch {
-        setAudioUrl(null);
+        if (!cancelled) {
+          setAudio({ key: assetKey, url: null });
+        }
       }
 
       try {
         const url = await storageEngine.getScreenRecordingUrl(currentTrial, participantId);
-        setScreenRecordingUrl(url);
+        if (!cancelled) {
+          setScreenRecording({ key: assetKey, url });
+        }
       } catch {
-        setScreenRecordingUrl(null);
+        if (!cancelled) {
+          setScreenRecording({ key: assetKey, url: null });
+        }
       }
     }
 
     fetchAssetsUrl();
-  }, [storageEngine, participantId, currentTrial]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [assetKey, currentTrial, participantId, storageEngine]);
 
   const handleDownloadAudio = useCallback(async () => {
     if (!storageEngine || !participantId || !currentTrial) {
@@ -402,6 +428,14 @@ export function ThinkAloudFooter({
     return `${PREFIX}${studyId}/${encryptIndex(currentStep)}${funcPath}?participantId=${participantId}&revisitPageId=${revisitPageId}`;
   }, [currentTrial, participant, participantId, studyId]);
 
+  const participantMatchesSelection = participant?.participantId === participantId;
+  const participantUsedSameBrowser = useMemo(() => getBrowser(participant?.metadata?.userAgent ?? '') === getBrowser(navigator.userAgent), [participant]);
+
+  const [browserWarningDismissed, setBrowserWarningDismissed] = useState(false);
+  useEffect(() => {
+    setBrowserWarningDismissed(false);
+  }, [participantId, screenRecordingUrl]);
+
   return (
     <AppShell.Footer zIndex={101} withBorder={false}>
       {currentTrial && participant && currentTrialClean === '' && (
@@ -410,6 +444,14 @@ export function ThinkAloudFooter({
         }}
         >
           <Alert variant="filled" color="red" title="Participant hasn&apos;t completed any tasks." icon={<IconInfoCircle />} />
+        </div>
+      )}
+      {participantMatchesSelection && screenRecordingUrl && !participantUsedSameBrowser && !browserWarningDismissed && (
+        <div style={{
+          position: 'absolute', top: -5, left: 5, transform: 'translateY(-100%)',
+        }}
+        >
+          <Alert withCloseButton onClose={() => setBrowserWarningDismissed(true)} variant="filled" color="red" title={`Participant used ${getBrowser(participant.metadata?.userAgent ?? '')} — you are using ${getBrowser(navigator.userAgent)}. Video playback may not work properly.`} icon={<IconInfoCircle />} />
         </div>
       )}
       <Stack style={{ backgroundColor: 'var(--mantine-color-blue-1)', height: '100%' }} gap={5} justify="center">
