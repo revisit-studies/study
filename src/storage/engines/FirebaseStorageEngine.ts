@@ -27,6 +27,7 @@ import {
   onSnapshot,
   serverTimestamp,
   setDoc,
+  runTransaction,
   updateDoc,
   writeBatch,
 } from 'firebase/firestore';
@@ -44,6 +45,8 @@ import {
   SnapshotDocContent,
   StoredUser,
   cleanupModes,
+  SequenceBuildClaim,
+  SequenceBuildRecord,
 } from './types';
 import { EditedText, TaglessEditedText } from '../../analysis/individualStudy/thinkAloud/types';
 import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
@@ -99,7 +102,15 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       const blob = await getBlob(storageRef);
       const fullProvStr = await blob.text();
       storageObj = JSON.parse(fullProvStr);
-    } catch {
+    } catch (error) {
+      if (
+        typeof error !== 'object'
+        || error === null
+        || !('code' in error)
+        || error.code !== 'storage/object-not-found'
+      ) {
+        throw error;
+      }
       console.warn(
         `${prefix} does not have ${type} for ${this.collectionPrefix}${this.studyId}.`,
       );
@@ -108,10 +119,15 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     return storageObj;
   }
 
-  protected async _pushToStorage<T extends StorageObjectType>(prefix: string, type: T, objectToUpload: StorageObject<T>) {
+  protected async _pushToStorage<T extends StorageObjectType>(
+    prefix: string,
+    type: T,
+    objectToUpload: StorageObject<T>,
+    options?: { cache?: boolean; studyId?: string },
+  ) {
     const storageRef = ref(
       this.storage,
-      `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`,
+      `${this.collectionPrefix}${options?.studyId ?? this.studyId}/${prefix}_${type}`,
     );
 
     if (objectToUpload instanceof Blob) {
@@ -120,7 +136,11 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       const blob = new Blob([JSON.stringify(objectToUpload)], {
         type: 'application/json',
       });
-      await uploadBytes(storageRef, blob);
+      await uploadBytes(
+        storageRef,
+        blob,
+        options?.cache ? { cacheControl: 'public,max-age=31536000' } : undefined,
+      );
     }
   }
 
@@ -169,6 +189,83 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       'configHash',
     );
     await setDoc(configHashDoc, { configHash });
+  }
+
+  protected async _claimSequenceBuild(
+    configHash: string,
+    candidate: SequenceBuildRecord,
+    now: number,
+    studyId: string = this.studyId!,
+  ): Promise<SequenceBuildClaim> {
+    const studyCollection = collection(
+      this.firestore,
+      `${this.collectionPrefix}${studyId}`,
+    );
+    const buildDoc = doc(studyCollection, `sequenceBuild_${configHash}`);
+    return runTransaction(this.firestore, async (transaction) => {
+      const snapshot = await transaction.get(buildDoc);
+      const existing = snapshot.exists() ? snapshot.data() as SequenceBuildRecord : null;
+      if (existing?.status === 'ready'
+        || (existing?.status === 'building' && existing.leaseExpiresAt > now)) {
+        return { record: existing, shouldPublish: false };
+      }
+
+      const claimed = existing
+        ? {
+          ...existing,
+          status: 'building' as const,
+          publisherId: candidate.publisherId,
+          leaseExpiresAt: candidate.leaseExpiresAt,
+          attempts: existing.attempts + 1,
+          updatedAt: now,
+        }
+        : candidate;
+      transaction.set(buildDoc, claimed);
+      return { record: claimed, shouldPublish: true };
+    });
+  }
+
+  protected async _updateSequenceBuild(
+    configHash: string,
+    publisherId: string,
+    updates: Pick<SequenceBuildRecord, 'status' | 'leaseExpiresAt' | 'updatedAt'>,
+    studyId: string = this.studyId!,
+  ) {
+    const studyCollection = collection(
+      this.firestore,
+      `${this.collectionPrefix}${studyId}`,
+    );
+    const buildDoc = doc(studyCollection, `sequenceBuild_${configHash}`);
+    await runTransaction(this.firestore, async (transaction) => {
+      const snapshot = await transaction.get(buildDoc);
+      if (snapshot.exists() && snapshot.data().publisherId === publisherId) {
+        transaction.update(buildDoc, updates);
+      }
+    });
+  }
+
+  protected override async _getSequenceBuildProviderTime() {
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+    const clockDoc = doc(this.studyCollection, 'sequenceBuildClock');
+    await setDoc(clockDoc, { now: serverTimestamp() });
+    const snapshot = await getDoc(clockDoc);
+    const value = snapshot.data()?.now;
+    if (value instanceof Timestamp) {
+      return value.toMillis();
+    }
+    if (typeof value === 'number') {
+      return value;
+    }
+    throw new Error('Failed to read the Firebase server clock');
+  }
+
+  protected override async _deleteSequenceBuild(configHash: string) {
+    const buildDoc = doc(this.studyCollection, `sequenceBuild_${configHash}`);
+    const batch = writeBatch(this.firestore);
+    batch.delete(buildDoc);
+    await batch.commit();
   }
 
   public async getAllSequenceAssignments(studyId: string) {
