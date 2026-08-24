@@ -15,6 +15,12 @@ function getDecimalPlaces(value: number) {
   return Math.max(0, coefficientDecimals - Number(exponent));
 }
 
+// This function is to prevent floating point precision issues when calculating the number of decimal places for the slider precision. It ensures that we get the correct number of decimal places for both the min and step values.
+// e.g. if min = 0.1 and step = 0.01, we want to return 2 decimal places, not 1.
+export function getSliderPrecision(min: number, step: number) {
+  return Math.max(getDecimalPlaces(min), getDecimalPlaces(step));
+}
+
 export function generateSliderBreakValues(min: number, max: number, spacing?: number) {
   if (!Number.isFinite(min) || !Number.isFinite(max) || max <= min) {
     return [] as number[];
@@ -56,22 +62,23 @@ export function getSliderValueFromPosition(
 
   const clampedPosition = Math.min(1, Math.max(0, position));
   const rawValue = min + clampedPosition * (max - min);
-
-  if (snapValues?.length) {
-    return snapValues.reduce((closest, value) => (
-      Math.abs(value - rawValue) < Math.abs(closest - rawValue) ? value : closest
-    ));
-  }
-
   const stepSize = step ?? (max - min) / 100;
   if (!Number.isFinite(stepSize) || stepSize <= 0) {
     return null;
   }
 
-  const precision = Math.max(getDecimalPlaces(min), getDecimalPlaces(stepSize));
+  const precision = getSliderPrecision(min, stepSize);
   // Round to the nearest valid step
   const steppedValue = Math.round((rawValue - min) / stepSize) * stepSize + min;
   const normalizedValue = Number(steppedValue.toFixed(precision));
   // Clamp the normalized result to the configured range
-  return Math.min(max, Math.max(min, normalizedValue));
+  const clampedValue = Math.min(max, Math.max(min, normalizedValue));
+
+  if (snapValues?.length) {
+    return snapValues.reduce((closest, value) => (
+      Math.abs(value - clampedValue) < Math.abs(closest - clampedValue) ? value : closest
+    ));
+  }
+
+  return clampedValue;
 }

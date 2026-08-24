@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 import {
   generateSliderBreakValues,
   getDefaultSliderSpacing,
+  getSliderPrecision,
   getSliderValueFromPosition,
 } from '../sliderBreaks';
 
@@ -112,9 +113,21 @@ describe('getSliderValueFromPosition', () => {
     expect(getSliderValueFromPosition(0.63, 0, 100, 1, [0, 25, 50, 75, 100])).toBe(75);
   });
 
+  test('rounds to the configured step before snapping to the nearest value', () => {
+    expect(getSliderValueFromPosition(0.24, 0, 10, 4, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])).toBe(4);
+    expect(getSliderValueFromPosition(0.5004, 0, 1, 0.001, [0, 1])).toBe(0);
+  });
+
   test('returns null for invalid input', () => {
     expect(getSliderValueFromPosition(Number.NaN, 0, 100)).toBeNull();
     expect(getSliderValueFromPosition(0.5, 10, 10)).toBeNull();
     expect(getSliderValueFromPosition(0.5, 0, 100, 0)).toBeNull();
+  });
+});
+
+describe('getSliderPrecision', () => {
+  test('accounts for fractional minima and scientific notation steps', () => {
+    expect(getSliderPrecision(0.05, 0.1)).toBe(2);
+    expect(getSliderPrecision(0, 1e-7)).toBe(7);
   });
 });

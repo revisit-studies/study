@@ -7,7 +7,11 @@ import { useMove } from '@mantine/hooks';
 import { SliderResponse } from '../../parser/types';
 import classes from './css/SliderInput.module.css';
 import { InputLabel } from './InputLabel';
-import { generateSliderBreakValues, getSliderValueFromPosition } from './sliderBreaks';
+import {
+  generateSliderBreakValues,
+  getSliderPrecision,
+  getSliderValueFromPosition,
+} from './sliderBreaks';
 
 export function SliderInput({
   response,
@@ -39,6 +43,8 @@ export function SliderInput({
   } = response;
 
   const [min, max] = useMemo(() => [Math.min(...options.map((opt) => opt.value)), Math.max(...options.map((opt) => opt.value))], [options]);
+  const sliderStep = step ?? (snap ? 0.001 : (max - min) / 100);
+  const sliderPrecision = getSliderPrecision(min, sliderStep);
   const hasLabels = options.some((opt) => opt.label !== '');
 
   // Numeric label
@@ -99,7 +105,7 @@ export function SliderInput({
       pointerPosition,
       min,
       max,
-      step,
+      sliderStep,
       snap ? sliderMarkValues : undefined,
     );
 
@@ -115,7 +121,7 @@ export function SliderInput({
       1 - y,
       min,
       max,
-      step,
+      sliderStep,
       snap ? sliderMarkValues : undefined,
     );
     if (snappedValue === null) {
@@ -131,7 +137,8 @@ export function SliderInput({
       marks={[...labelValues.map((value) => ({ value })), ...options] as SliderProps['marks']}
       min={min}
       max={max}
-      step={step ?? (snap ? 0.001 : (max - min) / 100)}
+      step={sliderStep}
+      precision={sliderPrecision}
       h={hasLabels ? 40 : undefined}
       {...answer}
       classNames={{
@@ -234,7 +241,7 @@ export function SliderInput({
                   top: 0,
                   width: 2,
                   height: '100%',
-                  backgroundColor: 'var(--mantine-color-gray-5)',
+                  backgroundColor: 'var(--mantine-color-gray-6)',
                 }}
               />
 
@@ -293,10 +300,10 @@ export function SliderInput({
                 <Tooltip label={hoverValue} opened position="right" withArrow>
                   <Box
                     style={{
-                      backgroundColor: 'var(--mantine-color-gray-8)',
+                      backgroundColor: 'var(--mantine-color-gray-6)',
                       width: 20,
                       height: 1,
-                      border: '1px solid var(--mantine-color-gray-8)',
+                      border: '1px solid var(--mantine-color-gray-6)',
                       position: 'absolute',
                       left: 0,
                       bottom: `calc(${((hoverValue - min) / (max - min)) * 100}% - 1px)`,

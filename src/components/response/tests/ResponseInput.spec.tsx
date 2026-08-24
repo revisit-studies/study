@@ -167,13 +167,23 @@ vi.mock('@mantine/core', () => {
       </div>
     ),
     Slider: ({
-      classNames, disabled, max, min, value,
-    }: { classNames?: { thumb?: string }; disabled?: boolean; max?: number; min?: number; value?: number }) => (
+      classNames, disabled, max, min, precision, step, value,
+    }: {
+      classNames?: { thumb?: string };
+      disabled?: boolean;
+      max?: number;
+      min?: number;
+      precision?: number;
+      step?: number;
+      value?: number;
+    }) => (
       <div
         data-slider
         data-disabled={disabled}
         data-min={min}
         data-max={max}
+        data-precision={precision}
+        data-step={step}
         data-value={value}
         data-thumb-class={classNames?.thumb}
       />
@@ -762,6 +772,26 @@ describe('SliderInput', () => {
       />,
     );
     expect(html).toContain('data-slider');
+  });
+
+  test('passes fractional minimum precision to the horizontal slider', () => {
+    const html = renderToStaticMarkup(
+      <SliderInput
+        response={{
+          ...base,
+          options: [{ label: 'Low', value: 0.05 }, { label: 'High', value: 1.05 }],
+          step: 0.1,
+          tlxStyle: true,
+        }}
+        disabled={false}
+        answer={{}}
+        index={1}
+        enumerateQuestions={false}
+      />,
+    );
+
+    expect(html).toContain('data-step="0.1"');
+    expect(html).toContain('data-precision="2"');
   });
 
   test('renders smeq vertical layout with option labels when smeqStyle=true', () => {
