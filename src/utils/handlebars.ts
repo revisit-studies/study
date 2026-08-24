@@ -16,6 +16,13 @@ Handlebars.registerHelper(
 // This walks flatSequence in order and produces only identifiers that can actually hold an answer:
 // the step's own identifier for regular steps, or one entry per recorded iteration (ordered by
 // funcIndex) for dynamic blocks.
+//
+// Dynamic iterations are matched by trialOrder's step number (`${step}_${funcIndex}`), not by a
+// string prefix on the identifier — a regular component at a later step can have an identifier
+// that happens to start with an earlier dynamic block's prefix (e.g. dynamic block `block` at
+// step 1 vs. a regular component `block_1_trial` at step 2, whose identifier is
+// `block_1_trial_2`), and a prefix match would wrongly sweep that answer into the block's
+// iterations.
 function getAnswerBearingSequence(flatSequence: string[], answers: Record<string, StoredAnswer>): string[] {
   const identifiers: string[] = [];
   flatSequence.forEach((componentName, index) => {
@@ -27,9 +34,11 @@ function getAnswerBearingSequence(flatSequence: string[], answers: Record<string
       identifiers.push(staticIdentifier);
       return;
     }
-    const dynamicPrefix = `${componentName}_${index}_`;
     Object.entries(answers)
-      .filter(([key]) => key.startsWith(dynamicPrefix))
+      .filter(([, answer]) => {
+        const parsed = parseTrialOrder(answer.trialOrder);
+        return parsed.step === index && parsed.funcIndex !== null;
+      })
       .sort(([, a], [, b]) => (parseTrialOrder(a.trialOrder).funcIndex ?? 0) - (parseTrialOrder(b.trialOrder).funcIndex ?? 0))
       .forEach(([key]) => identifiers.push(key));
   });

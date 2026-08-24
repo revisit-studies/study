@@ -138,6 +138,30 @@ describe('lookupAnswers helper (runtime-shaped sequence)', () => {
     expect(compileTemplate('{{lookupAnswers 2 "response"}}', {}, { data: dynamicData })).toBe('dynamic-answer-1');
     expect(compileTemplate('{{lookupAnswers -1 "response"}}', {}, { data: dynamicData })).toBe('outro-answer');
   });
+
+  test('does not absorb a later static component whose identifier happens to share the dynamic block\'s prefix', () => {
+    // Dynamic block "block" at step 1 has one iteration. A later, unrelated static component
+    // named "block_1_trial" at step 2 has identifier "block_1_trial_2" - a string-prefix match
+    // on "block_1_" would wrongly sweep that identifier into step 1's iterations too, which
+    // shifts every later step's position by one and makes their answers unresolvable.
+    const dynamicData = {
+      flatSequence: ['intro', 'block', 'block_1_trial', 'afterCollision', 'end'],
+      answers: {
+        intro_0: makeAnswer('intro-answer'),
+        block_1_trialA_0: { ...makeAnswer('dynamic-answer-0'), trialOrder: '1_0' },
+        block_1_trial_2: makeAnswer('static-answer'),
+        afterCollision_3: makeAnswer('after-answer'),
+      },
+    };
+
+    // Step 1 (the dynamic block) should resolve to only its own iteration.
+    expect(compileTemplate('{{lookupAnswers 1 "response"}}', {}, { data: dynamicData })).toBe('dynamic-answer-0');
+    // Step 2 (the unrelated static component) should resolve to its own answer.
+    expect(compileTemplate('{{lookupAnswers 2 "response"}}', {}, { data: dynamicData })).toBe('static-answer');
+    // Step 3 must not be shifted out of place by a phantom duplicate at step 1.
+    expect(compileTemplate('{{lookupAnswers 3 "response"}}', {}, { data: dynamicData })).toBe('after-answer');
+    expect(compileTemplate('{{lookupAnswers -1 "response"}}', {}, { data: dynamicData })).toBe('after-answer');
+  });
 });
 
 describe('lookupAnswersRel helper', () => {
