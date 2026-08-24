@@ -1563,15 +1563,24 @@ export abstract class StorageEngine {
       return null;
     }
 
-    const asset = new Promise<string>((resolve) => {
+    const asset = new Promise<string>((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.responseType = 'blob';
       xhr.onload = () => {
         const blob = xhr.response;
-
-        const _url = URL.createObjectURL(blob);
-
-        resolve(_url);
+        try {
+          resolve(URL.createObjectURL(blob));
+        } finally {
+          if (url.startsWith('blob:')) {
+            URL.revokeObjectURL(url);
+          }
+        }
+      };
+      xhr.onerror = () => {
+        if (url.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
+        reject(new Error(`Failed to load asset: ${url}`));
       };
       xhr.open('GET', url);
       xhr.send();

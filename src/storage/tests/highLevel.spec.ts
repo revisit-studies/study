@@ -1415,6 +1415,14 @@ describe.each([
     expect(finalizeResult.status).toBe('complete');
   });
 
+  test('saveWebcamRecording persists a webcam asset for the current participant', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+    await expect(
+      storageEngine.saveWebcamRecording(new Blob(['webcam'], { type: 'video/webm' }), 'intro_0'),
+    ).resolves.toBeUndefined();
+  });
+
   // getAudio and saveAudio untestable due to browser-specific implementation
 
   test('getSequenceArray returns the sequence array', async () => {

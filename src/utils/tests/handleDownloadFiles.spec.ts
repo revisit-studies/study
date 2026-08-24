@@ -1,6 +1,7 @@
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
+import JSZip from 'jszip';
 import {
   downloadConfigFile,
   downloadConfigFilesZip,
@@ -266,6 +267,34 @@ describe('downloadParticipantsRecordingsZip', () => {
     expect((storageEngine.getScreenRecording as ReturnType<typeof vi.fn>)).toHaveBeenCalled();
     expect(URL.createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
     expect(clickSpy).toHaveBeenCalledOnce();
+  });
+
+  test('keeps the legacy screen-only archive and member names', async () => {
+    const storageEngine = makeStorageEngine({
+      getScreenRecording: vi.fn(async () => 'https://example.com/recording.webm'),
+    });
+    const participants = [{
+      participantId: 'p1',
+      answers: {
+        trial_0: {
+          endTime: 1000, startTime: 0, componentName: 'trial', trialOrder: '0',
+        },
+      },
+    }];
+
+    const zipFile = vi.spyOn(JSZip.prototype, 'file');
+    const anchorDownloads: string[] = [];
+    clickSpy.mockImplementation(function click(this: HTMLAnchorElement) {
+      anchorDownloads.push(this.download);
+    });
+
+    await downloadParticipantsRecordingsZip({
+      storageEngine, participants, studyId: 'study', includeScreen: true, includeWebcam: false,
+    });
+
+    expect(zipFile).toHaveBeenCalledWith('study_p1_trial_0.webm', expect.any(Blob));
+    expect(anchorDownloads).toContain('study_screenRecording.zip');
+    zipFile.mockRestore();
   });
 
   test('skips trials where endTime is 0 (not completed)', async () => {

@@ -1,4 +1,4 @@
-# Webcam Recording
+# WCR: Webcam Recording
 
 This is a demo of the library `webcam-recording`.
 

@@ -1,5 +1,5 @@
 import {
-  createContext, useCallback, useContext, useEffect, useRef, useState,
+  createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState,
 } from 'react';
 import { useStudyConfig } from './useStudyConfig';
 import { useCurrentComponent, useCurrentIdentifier } from '../../routes/utils';
@@ -60,8 +60,6 @@ export function useRecording() {
   const [analysisStreamReady, setAnalysisStreamReady] = useState(false);
   const [showMutedWarning, setShowMutedWarning] = useState(false);
 
-  // currentMediaStream and recorder can be just screen, just audio, or screen and audio combined.
-  const currentMediaStream = useRef<MediaStream>(null);
   const currentMediaRecorder = useRef<MediaRecorder | null>(null);
   const audioMediaStream = useRef<MediaStream | null>(null);
   const audioMediaRecorder = useRef<MediaRecorder | null>(null); // recorder for audio. Necessary to save audio file to get transcription.
@@ -69,6 +67,9 @@ export function useRecording() {
   const webcamMediaStream = useRef<MediaStream | null>(null);
   const webcamMediaRecorder = useRef<MediaRecorder | null>(null);
   const isStoppingCapture = useRef(false);
+  const captureAttempt = useRef(0);
+  const isStartingCapture = useRef(false);
+  const isMounted = useRef(true);
 
   const currentTrialName = useRef<string | null>(null);
   const identifier = useCurrentIdentifier();
@@ -91,9 +92,9 @@ export function useRecording() {
     currentComponentHasClickToRecord,
   } = useRecordingConfig();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     setIsMuted(currentComponentHasClickToRecord);
-  }, [currentComponentHasClickToRecord]);
+  }, [currentComponentHasClickToRecord, identifier]);
 
   // Screen capture starts once and stops at the end of the study.
   // At the beginning of each stimulus, recording starts by calling `startScreenRecording`.
@@ -185,12 +186,17 @@ export function useRecording() {
       return;
     }
 
+    if (wantsAudio && audioMediaStream.current) {
+      audioMediaStream.current.getAudioTracks().forEach((track) => {
+        track.enabled = !currentComponentHasClickToRecord;
+      });
+    }
+
     if (wantsScreen && screenMediaStream.current) {
       const screenStream = new MediaStream([
         ...screenMediaStream.current.getVideoTracks(),
         ...(wantsAudio ? audioMediaStream.current?.getAudioTracks() ?? [] : []),
       ]);
-      currentMediaStream.current = screenStream;
       const recorder = new MediaRecorder(screenStream);
       currentMediaRecorder.current = recorder;
       attachSaveHandler(
@@ -238,6 +244,7 @@ export function useRecording() {
   }, [
     attachSaveHandler,
     currentComponentHasAudioRecording,
+    currentComponentHasClickToRecord,
     currentComponentHasScreenRecording,
     currentComponentHasWebcamRecording,
     storageEngine,
@@ -300,8 +307,6 @@ export function useRecording() {
       audio: true,
     }).then((s) => {
       audioMediaStream.current = s;
-      currentMediaStream.current = s;
-
       const analysisTrack = s.getAudioTracks()[0]?.clone();
       if (analysisTrack) {
         analysisAudioStream.current = new MediaStream([analysisTrack]);
@@ -309,7 +314,7 @@ export function useRecording() {
       }
 
       s.getAudioTracks().forEach((track) => {
-        track.enabled = !isMuted;
+        track.enabled = !currentComponentHasClickToRecord;
       });
 
       const recorder = new MediaRecorder(s);
@@ -343,7 +348,7 @@ export function useRecording() {
       setAudioRecordingError('Microphone permission denied');
       setIsAudioRecording(false);
     });
-  }, [storageEngine, isMuted]);
+  }, [currentComponentHasClickToRecord, storageEngine]);
 
   // For study with just audio recording
   useEffect(() => {
@@ -404,13 +409,32 @@ export function useRecording() {
     includeAudio: boolean;
     includeWebcam: boolean;
   }) => {
+    if (isStartingCapture.current) {
+      return;
+    }
+
+    isStartingCapture.current = true;
+    const attempt = captureAttempt.current + 1;
+    captureAttempt.current = attempt;
+    let screenStream: MediaStream | null = null;
+    let webcamStream: MediaStream | null = null;
+    let micStream: MediaStream | null = null;
+
+    const isCurrentAttempt = () => isMounted.current && captureAttempt.current === attempt;
+    const stopAcquiredStreams = () => {
+      [micStream, webcamStream, screenStream].forEach(stopMediaTracks);
+      if (screenMediaStream.current === screenStream) screenMediaStream.current = null;
+      if (webcamMediaStream.current === webcamStream) webcamMediaStream.current = null;
+      if (audioMediaStream.current === micStream) audioMediaStream.current = null;
+    };
+
     document.title = includeScreen ? `RECORD THIS TAB: ${pageTitle}` : pageTitle;
 
     try {
       setRecordingError(null);
       setAudioRecordingError(null);
 
-      const screenStream = includeScreen ? await navigator.mediaDevices.getDisplayMedia({
+      screenStream = includeScreen ? await navigator.mediaDevices.getDisplayMedia({
         video: { displaySurface: 'browser', ...(recordScreenFPS ? { frameRate: { ideal: recordScreenFPS } } : {}) },
         audio: false,
         // @ts-expect-error: experimental (selfBrowserSurface and preferCurrentTab are not yet standardized)
@@ -418,13 +442,22 @@ export function useRecording() {
         selfBrowserSurface: 'include',
         preferCurrentTab: true,
       }) : null;
+      if (!isCurrentAttempt()) {
+        stopAcquiredStreams();
+        return;
+      }
+      screenMediaStream.current = screenStream;
 
-      const webcamStream = includeWebcam ? await navigator.mediaDevices.getUserMedia({
+      webcamStream = includeWebcam ? await navigator.mediaDevices.getUserMedia({
         video: true,
         audio: false,
       }) : null;
+      if (!isCurrentAttempt()) {
+        stopAcquiredStreams();
+        return;
+      }
+      webcamMediaStream.current = webcamStream;
 
-      let micStream: MediaStream | null = null;
       if (includeAudio) {
         try {
           micStream = await navigator.mediaDevices.getUserMedia({
@@ -434,12 +467,17 @@ export function useRecording() {
         } catch (err) {
           console.error('Error accessing microphone:', err);
           setAudioRecordingError('Microphone permission denied');
+          throw err;
         }
       }
-
-      screenMediaStream.current = screenStream;
-      webcamMediaStream.current = webcamStream;
+      if (!isCurrentAttempt()) {
+        stopAcquiredStreams();
+        return;
+      }
       audioMediaStream.current = micStream;
+      micStream?.getAudioTracks().forEach((track) => {
+        track.enabled = !currentComponentHasClickToRecord;
+      });
 
       const analysisTrack = micStream?.getAudioTracks()[0]?.clone();
       if (analysisTrack) {
@@ -478,12 +516,18 @@ export function useRecording() {
       setIsRejected(false);
     } catch (err) {
       console.error('Error accessing recording media:', err);
-      setRecordingError('Recording permission denied');
+      if (isCurrentAttempt()) {
+        setRecordingError('Recording permission denied');
+      }
+      stopAcquiredStreams();
       stopScreenCapture();
     } finally {
+      if (captureAttempt.current === attempt) {
+        isStartingCapture.current = false;
+      }
       document.title = pageTitle;
     }
-  }, [pageTitle, recordAudio, recordScreenFPS, stopScreenCapture]);
+  }, [currentComponentHasClickToRecord, pageTitle, recordAudio, recordScreenFPS, stopScreenCapture]);
 
   const startScreenCapture = useCallback(() => {
     startMediaCapture({
@@ -517,6 +561,12 @@ export function useRecording() {
       t && clearTimeout(t);
     };
   }, [currentComponentHasAudioRecording, isMuted]);
+
+  useEffect(() => () => {
+    isMounted.current = false;
+    captureAttempt.current += 1;
+    stopScreenCapture();
+  }, [stopScreenCapture]);
 
   useEffect(() => {
     if (!shouldMonitorMutedAudio(isMuted, currentComponentHasAudioRecording) || !analysisStreamReady || !analysisAudioStream.current) return undefined;

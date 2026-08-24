@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "Webcam Recording",
+    "title": "WCR: Webcam Recording",
     "version": "1.0.0",
     "authors": [
       "The reVISit Team"

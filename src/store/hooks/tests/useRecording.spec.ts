@@ -20,6 +20,7 @@ let mockRecordingConfig = {
 let mockCurrentComponent = 'intro';
 let mockStorageEngine: Record<string, ReturnType<typeof vi.fn>> | null = null;
 let mockStoredAnswer: { endTime: number } | null = null;
+const mockRecorderStartAudioStates: boolean[][] = [];
 
 // ── media mocks ────────────────────────────────────────────────────────────────
 
@@ -32,7 +33,11 @@ const mockTrackFactory = () => ({
 });
 
 class MockMediaStream {
-  _tracks = [mockTrackFactory()];
+  _tracks: ReturnType<typeof mockTrackFactory>[];
+
+  constructor(tracks: ReturnType<typeof mockTrackFactory>[] = [mockTrackFactory()]) {
+    this._tracks = tracks;
+  }
 
   getTracks = vi.fn(() => this._tracks);
 
@@ -57,6 +62,7 @@ class MockMediaRecorder {
   constructor(s: MockMediaStream) { this.stream = s; }
 
   start = vi.fn(() => {
+    mockRecorderStartAudioStates.push(this.stream.getAudioTracks().map((track) => track.enabled));
     this.state = 'recording';
     this._listeners.start?.({});
   });
@@ -122,6 +128,7 @@ beforeEach(() => {
   mockCurrentComponent = 'intro';
   mockStorageEngine = null;
   mockStoredAnswer = null;
+  mockRecorderStartAudioStates.length = 0;
 
   vi.stubGlobal('MediaStream', MockMediaStream);
   vi.stubGlobal('MediaRecorder', MockMediaRecorder);
@@ -275,6 +282,131 @@ describe('useRecording startScreenCapture', () => {
     await waitFor(() => expect(result.current.isWebcamCapturing).toBe(true));
     expect(result.current.isScreenCapturing).toBe(false);
     expect(navigator.mediaDevices.getDisplayMedia).not.toHaveBeenCalled();
+  });
+
+  test('stops an already-granted screen stream when webcam permission is denied', async () => {
+    mockRecordingConfig = {
+      ...mockRecordingConfig,
+      studyHasScreenRecording: true,
+      studyHasWebcamRecording: true,
+    };
+    const screenStream = new MockMediaStream();
+    vi.mocked(navigator.mediaDevices.getDisplayMedia).mockResolvedValue(screenStream as unknown as MediaStream);
+    vi.mocked(navigator.mediaDevices.getUserMedia).mockRejectedValue(new Error('denied'));
+    const { result } = renderHook(() => useRecording());
+
+    act(() => { result.current.startScreenCapture(); });
+    await waitFor(() => expect(result.current.screenRecordingError).toBe('Recording permission denied'));
+    expect(screenStream.getTracks()[0].stop).toHaveBeenCalled();
+  });
+
+  test('does not start overlapping capture requests', async () => {
+    mockRecordingConfig = { ...mockRecordingConfig, studyHasScreenRecording: true };
+    let resolveCapture: ((stream: MediaStream) => void) | undefined;
+    vi.mocked(navigator.mediaDevices.getDisplayMedia).mockImplementation(() => new Promise<MediaStream>((resolve) => {
+      resolveCapture = resolve;
+    }));
+    const { result } = renderHook(() => useRecording());
+
+    act(() => {
+      result.current.startScreenCapture();
+      result.current.startScreenCapture();
+    });
+    expect(navigator.mediaDevices.getDisplayMedia).toHaveBeenCalledOnce();
+    await act(async () => { resolveCapture?.(new MockMediaStream() as unknown as MediaStream); });
+  });
+
+  test('cleans up persistent capture on unmount', async () => {
+    mockRecordingConfig = { ...mockRecordingConfig, studyHasScreenRecording: true };
+    const screenStream = new MockMediaStream();
+    vi.mocked(navigator.mediaDevices.getDisplayMedia).mockResolvedValue(screenStream as unknown as MediaStream);
+    const { result, unmount } = renderHook(() => useRecording());
+    act(() => { result.current.startScreenCapture(); });
+    await waitFor(() => expect(result.current.isMediaCapturing).toBe(true));
+    unmount();
+    expect(screenStream.getTracks()[0].stop).toHaveBeenCalled();
+  });
+
+  test('initializes the persistent microphone track with the current mute state', async () => {
+    mockRecordingConfig = {
+      ...mockRecordingConfig,
+      studyHasScreenRecording: true,
+      studyHasAudioRecording: true,
+      currentComponentHasClickToRecord: true,
+    };
+    const micStream = new MockMediaStream();
+    vi.mocked(navigator.mediaDevices.getUserMedia).mockResolvedValue(micStream as unknown as MediaStream);
+    const { result } = renderHook(() => useRecording());
+    act(() => { result.current.startScreenCapture(); });
+    await waitFor(() => expect(result.current.isAudioCapturing).toBe(true));
+    expect(micStream.getAudioTracks()[0].enabled).toBe(false);
+  });
+
+  test('stops screen and webcam streams when required microphone permission is denied', async () => {
+    mockRecordingConfig = {
+      ...mockRecordingConfig,
+      studyHasScreenRecording: true,
+      studyHasWebcamRecording: true,
+      studyHasAudioRecording: true,
+    };
+    const screenStream = new MockMediaStream();
+    const webcamStream = new MockMediaStream();
+    vi.mocked(navigator.mediaDevices.getDisplayMedia).mockResolvedValue(screenStream as unknown as MediaStream);
+    vi.mocked(navigator.mediaDevices.getUserMedia)
+      .mockResolvedValueOnce(webcamStream as unknown as MediaStream)
+      .mockRejectedValueOnce(new Error('denied'));
+    const { result } = renderHook(() => useRecording());
+
+    act(() => { result.current.startScreenCapture(); });
+    await waitFor(() => expect(result.current.audioRecordingError).toBe('Microphone permission denied'));
+    expect(result.current.isMediaCapturing).toBe(false);
+    expect(screenStream.getTracks()[0].stop).toHaveBeenCalled();
+    expect(webcamStream.getTracks()[0].stop).toHaveBeenCalled();
+  });
+
+  test('starts a click-to-record trial muted even if the prior component was not muted', async () => {
+    mockRecordingConfig = {
+      ...mockRecordingConfig,
+      studyHasScreenRecording: true,
+      studyHasAudioRecording: true,
+      currentComponentHasScreenRecording: true,
+      currentComponentHasAudioRecording: true,
+    };
+    const micStream = new MockMediaStream();
+    vi.mocked(navigator.mediaDevices.getUserMedia).mockResolvedValue(micStream as unknown as MediaStream);
+    mockStorageEngine = {
+      saveScreenRecording: vi.fn(async () => {}),
+      saveAudioRecording: vi.fn(async () => {}),
+    };
+    vi.stubGlobal('AudioContext', class {
+      createAnalyser() {
+        return {
+          fftSize: 0,
+          smoothingTimeConstant: 0,
+          getFloatTimeDomainData: vi.fn(),
+        };
+      }
+
+      createMediaStreamSource() {
+        return { connect: vi.fn() };
+      }
+
+      close = vi.fn(async () => {});
+    });
+    const { result, rerender } = renderHook(() => useRecording());
+    act(() => { result.current.startScreenCapture(); });
+    await waitFor(() => expect(result.current.isMediaCapturing).toBe(true));
+
+    mockRecordingConfig = {
+      ...mockRecordingConfig,
+      currentComponentHasClickToRecord: true,
+    };
+    act(() => { rerender(); });
+    await waitFor(() => expect(result.current.isMuted).toBe(true));
+    act(() => { result.current.startScreenRecording('trial_0'); });
+
+    expect(micStream.getAudioTracks()[0].enabled).toBe(false);
+    expect(mockRecorderStartAudioStates.some((states) => states.includes(false))).toBe(true);
   });
 });
 

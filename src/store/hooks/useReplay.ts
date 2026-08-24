@@ -17,6 +17,16 @@ function mediaIncludesTime(media: HTMLMediaElement, time: number) {
   return !Number.isFinite(media.duration) || media.duration <= 0 || time < media.duration;
 }
 
+function hasMediaSource(media: HTMLMediaElement) {
+  const sourceAttribute = media.getAttribute('src');
+  if (sourceAttribute !== null) {
+    return !!sourceAttribute;
+  }
+  return !!media.src
+    && media.src !== document.baseURI
+    && media.src !== window.location.href;
+}
+
 /**
  * Hook to subscribe to video/audio/provenance timing events for replay
  */
@@ -52,7 +62,7 @@ export function useReplay() {
   ), []);
 
   const getActiveMediaElements = useCallback(() => (
-    getMediaElements().filter((media) => !!media.src)
+    getMediaElements().filter(hasMediaSource)
   ), [getMediaElements]);
 
   const getSecondaryMediaElements = useCallback(() => (
@@ -159,6 +169,9 @@ export function useReplay() {
     updateIsPlaying(true);
 
     const t = replayRef.current?.currentTime || 0;
+    getSecondaryMediaElements().forEach((media) => {
+      seekMedia(media, timerValue.current);
+    });
     emitterRef.current.emit('play', t);
 
     updateMutedState();
@@ -249,9 +262,14 @@ export function useReplay() {
       seekMedia(media, timerValue.current);
     });
 
-    replayRef.current = (videoRef.current?.src ? videoRef.current : null)
-      ?? (webcamVideoRef.current?.src ? webcamVideoRef.current : null)
-      ?? (audioRef.current?.src ? audioRef.current : null);
+    replayRef.current = (videoRef.current && hasMediaSource(videoRef.current) ? videoRef.current : null)
+      ?? (audioRef.current && hasMediaSource(audioRef.current) ? audioRef.current : null)
+      ?? (webcamVideoRef.current && hasMediaSource(webcamVideoRef.current) ? webcamVideoRef.current : null);
+
+    if (previousReplay !== replayRef.current && internalIsPlaying.current) {
+      getMediaElements().forEach((media) => media.pause());
+      updateIsPlaying(false);
+    }
 
     if (replayRef.current) {
       replayRef.current.addEventListener('play', handlePlay);
@@ -261,7 +279,7 @@ export function useReplay() {
     }
     updateMutedState();
     forceEmitTimeUpdate();
-  }, [forceEmitTimeUpdate, getMediaElements, handleEnded, handlePause, handlePlay, handleSeeked, updateMutedState]);
+  }, [forceEmitTimeUpdate, getMediaElements, handleEnded, handlePause, handlePlay, handleSeeked, updateIsPlaying, updateMutedState]);
 
   // this should be the only way to start video/audio
   const setIsPlaying = useCallback((playing: boolean, isRemoteTriggered = false) => {
@@ -286,9 +304,9 @@ export function useReplay() {
     ) {
       requestReplayPlayback(replayRef.current);
     } else {
-      replayRef.current?.pause();
+      getActiveMediaElements().forEach((media) => media.pause());
     }
-  }, [requestReplayPlayback, setSeekTime, updateIsPlaying]);
+  }, [getActiveMediaElements, requestReplayPlayback, setSeekTime, updateIsPlaying]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -339,6 +357,12 @@ export function useReplay() {
         timerValue.current = internalDuration.current > 0
           ? Math.min(nextTime, internalDuration.current)
           : nextTime;
+        getSecondaryMediaElements().forEach((secondary) => {
+          if (!Number.isFinite(secondary.currentTime)
+            || Math.abs(secondary.currentTime - timerValue.current) > 0.15) {
+            seekMedia(secondary, timerValue.current);
+          }
+        });
         emitterRef.current.emit('timeupdate', timerValue.current);
 
         if (internalDuration.current > 0 && timerValue.current >= internalDuration.current) {
@@ -362,7 +386,7 @@ export function useReplay() {
         syntheticReplayTimer.current = null;
       }
     };
-  }, [isPlaying, setIsPlaying]);
+  }, [getSecondaryMediaElements, isPlaying, setIsPlaying]);
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
