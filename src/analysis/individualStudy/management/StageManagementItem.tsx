@@ -76,7 +76,7 @@ type StageParticipantStatusCounts = Record<string, { completed: number; inProgre
 
 export function getStageParticipantStatusCounts(participants: ParticipantDataWithStatus[]) {
   return participants.reduce<StageParticipantStatusCounts>((counts, participant) => {
-    if (participant.rejected) {
+    if (participant.rejected || participant.timedOut) {
       return counts;
     }
 
@@ -130,12 +130,14 @@ function getBetweenSubjectsCombinationStatusCounts(
   betweenSubjectsFactors: BetweenSubjectsFactor[],
 ) {
   return participants.reduce((counts, participant) => {
-    const matchesCombination = !participant.rejected && participantMatchesBetweenSubjectsCombination(
-      participant,
-      stageName,
-      combination,
-      betweenSubjectsFactors,
-    );
+    const matchesCombination = !participant.rejected
+      && !participant.timedOut
+      && participantMatchesBetweenSubjectsCombination(
+        participant,
+        stageName,
+        combination,
+        betweenSubjectsFactors,
+      );
     if (!matchesCombination) {
       return counts;
     }
@@ -411,6 +413,7 @@ function BetweenSubjectsCombinationTable({
       participants.filter((participant) => (
         !participant.completed
         && !participant.rejected
+        && !participant.timedOut
         && participantMatchesBetweenSubjectsCombination(
           participant,
           stage.stageName,
@@ -442,6 +445,7 @@ function BetweenSubjectsCombinationTable({
     ...(showParticipantLimits ? [{
       accessorKey: 'desiredParticipants',
       header: 'Total / Maximum',
+      size: 240,
       Cell: ({ row }: { row: { original: BetweenSubjectsCombinationRow } }) => renderDesiredParticipantsCell(
         row.original,
         stage,
@@ -490,10 +494,12 @@ function BetweenSubjectsCombinationTable({
     },
     mantineTableContainerProps: { style: { maxWidth: '100%', overflowX: 'auto' } },
     mantineTableProps: { style: { minWidth: 'max-content', width: '100%' } },
+    mantineTableBodyRowProps: { style: { height: 44 } },
     mantineTableBodyCellProps: ({ column, row }) => {
+      const compactCellStyle = { paddingBlock: 4 };
       const factorIndex = betweenSubjectsFactors.findIndex((factor) => factor.factorName === column.id);
       if (factorIndex === -1) {
-        return {};
+        return { style: compactCellStyle };
       }
 
       const factor = betweenSubjectsFactors[factorIndex];
@@ -503,6 +509,7 @@ function BetweenSubjectsCombinationTable({
 
       return {
         style: {
+          ...compactCellStyle,
           backgroundColor: getDistinctColorShade(factorIndex, levelIndex, factor.levels.length),
         },
       };
@@ -1030,7 +1037,10 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
                       aria-label={`Review ${participantCounts.inProgress} in-progress participant${participantCounts.inProgress === 1 ? '' : 's'}`}
                       color="dark"
                       onClick={() => handleReviewInProgress(participants.filter((participant) => (
-                        participant.stage === stage.stageName && !participant.completed && !participant.rejected
+                        participant.stage === stage.stageName
+                          && !participant.completed
+                          && !participant.rejected
+                          && !participant.timedOut
                       )), `Showing only in-progress participants in the ${stage.stageName} stage — not all in-progress participants in the study.`)}
                       p={0}
                       size="compact-xs"

@@ -85,7 +85,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   const [studyConfig, setStudyConfig] = useState<ParsedConfig<StudyConfig> | undefined>(undefined);
   const [startupError, setStartupError] = useState<{ error: unknown } | null>(null);
 
-  const [includedParticipants, setIncludedParticipants] = useState<string[]>(['completed', 'inProgress', 'rejected']);
+  const [includedParticipants, setIncludedParticipants] = useState<string[]>(['completed', 'inProgress', 'rejected', 'timedOut']);
 
   const [selectedStages, setSelectedStages] = useState<string[]>(['ALL']);
   const [availableStages, setAvailableStages] = useState<{ value: string; label: string }[]>([{ value: 'ALL', label: 'ALL' }]);
@@ -126,7 +126,11 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   );
 
   const participantCounts = useMemo(() => {
-    if (!expData) return { completed: 0, inProgress: 0, rejected: 0 };
+    if (!expData) {
+      return {
+        completed: 0, inProgress: 0, rejected: 0, timedOut: 0,
+      };
+    }
     const expList = Object.values(expData);
 
     // Apply config filter before counting
@@ -151,26 +155,31 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
       });
 
     return {
-      completed: conditionFiltered.filter((d) => !d.rejected && d.completed).length,
-      inProgress: conditionFiltered.filter((d) => !d.rejected && !d.completed).length,
+      completed: conditionFiltered.filter((d) => !d.rejected && !d.timedOut && d.completed).length,
+      inProgress: conditionFiltered.filter((d) => !d.rejected && !d.timedOut && !d.completed).length,
       rejected: conditionFiltered.filter((d) => d.rejected).length,
+      timedOut: conditionFiltered.filter((d) => !d.rejected && d.timedOut).length,
     };
   }, [expData, selectedStages, selectedConfigs, selectedConditions, studyUsesConditions]);
 
   const selectedParticipantCounts = useMemo(() => {
-    if (selectedParticipants.length === 0) return { completed: 0, inProgress: 0, rejected: 0 };
+    if (selectedParticipants.length === 0) {
+      return {
+        completed: 0, inProgress: 0, rejected: 0, timedOut: 0,
+      };
+    }
 
     return {
-      completed: selectedParticipants.filter((d) => !d.rejected && d.completed).length,
-      inProgress: selectedParticipants.filter((d) => !d.rejected && !d.completed).length,
+      completed: selectedParticipants.filter((d) => !d.rejected && !d.timedOut && d.completed).length,
+      inProgress: selectedParticipants.filter((d) => !d.rejected && !d.timedOut && !d.completed).length,
       rejected: selectedParticipants.filter((d) => d.rejected).length,
+      timedOut: selectedParticipants.filter((d) => !d.rejected && d.timedOut).length,
     };
   }, [selectedParticipants]);
 
   const currentConfigHash = currentConfigHashValue ?? undefined;
   const isFirebaseEngine = storageEngine?.getEngine() === 'firebase';
   const codingEnabled = isFirebaseEngine && hasAudioRecording;
-  const liveMonitorEnabled = isFirebaseEngine;
 
   const currentConfigLabel = useMemo(() => {
     if (!currentConfigHash) return undefined;
@@ -199,11 +208,12 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     if (!expData) return [];
     const expList = Object.values(expData);
 
-    const comp = includedParticipants.includes('completed') ? expList.filter((d) => !d.rejected && d.completed) : [];
-    const prog = includedParticipants.includes('inProgress') ? expList.filter((d) => !d.rejected && !d.completed) : [];
+    const comp = includedParticipants.includes('completed') ? expList.filter((d) => !d.rejected && !d.timedOut && d.completed) : [];
+    const prog = includedParticipants.includes('inProgress') ? expList.filter((d) => !d.rejected && !d.timedOut && !d.completed) : [];
     const rej = includedParticipants.includes('rejected') ? expList.filter((d) => d.rejected) : [];
+    const timedOut = includedParticipants.includes('timedOut') ? expList.filter((d) => !d.rejected && d.timedOut) : [];
 
-    const statusFiltered = [...comp, ...prog, ...rej];
+    const statusFiltered = [...comp, ...prog, ...rej, ...timedOut];
 
     // Apply config filter - if "ALL" is selected, show all participants
     const configFiltered = selectedConfigs.includes('ALL')
@@ -575,6 +585,14 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                       size="xs"
                       styles={{ label: { whiteSpace: 'nowrap' } }}
                     />
+                    <Checkbox
+                      value="timedOut"
+                      label={selectedParticipants.length > 0
+                        ? `Timed Out (${selectedParticipantCounts.timedOut} of ${participantCounts.timedOut})`
+                        : `Timed Out (${participantCounts.timedOut})`}
+                      size="xs"
+                      styles={{ label: { whiteSpace: 'nowrap' } }}
+                    />
                   </Group>
                 </Checkbox.Group>
               </Flex>
@@ -609,14 +627,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                     <Tabs.Tab value="tagging" leftSection={<IconTags size={16} />} disabled={!codingEnabled} style={{ justifyContent: 'flex-start' }}>Coding</Tabs.Tab>
                   </span>
                 </Tooltip>
-                <Tooltip
-                  label="Live Monitor is only available when using Firebase"
-                  disabled={liveMonitorEnabled}
-                >
-                  <span>
-                    <Tabs.Tab value="live-monitor" leftSection={<IconDashboard size={16} />} disabled={!liveMonitorEnabled} style={{ justifyContent: 'flex-start' }}>Live Monitor</Tabs.Tab>
-                  </span>
-                </Tooltip>
+                <Tabs.Tab value="live-monitor" leftSection={<IconDashboard size={16} />} style={{ justifyContent: 'flex-start' }}>Live Monitor</Tabs.Tab>
                 <Tabs.Tab value="config" leftSection={<IconFileCode size={16} />} style={{ justifyContent: 'flex-start' }}>Config</Tabs.Tab>
                 <Tabs.Tab value="stages" leftSection={<IconSettings size={16} />} disabled={!user.isAdmin} style={{ justifyContent: 'flex-start' }}>Stage Management</Tabs.Tab>
                 <Tabs.Tab value="manage" leftSection={<IconSettings size={16} />} disabled={!user.isAdmin} style={{ justifyContent: 'flex-start' }}>Manage</Tabs.Tab>
@@ -652,13 +663,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                     )}
                 </Tabs.Panel>
                 <Tabs.Panel style={{ flex: 1, minHeight: 0, overflow: 'auto' }} value="live-monitor" pt="xs">
-                  {studyConfig && liveMonitorEnabled
-                    ? <LiveMonitorView studyConfig={studyConfig} storageEngine={storageEngine} studyId={canonicalStudyId ?? undefined} includedParticipants={includedParticipants} selectedStages={selectedStages} />
-                    : (
-                      <Center>
-                        <Text c="dimmed">Live Monitor is only available when using Firebase</Text>
-                      </Center>
-                    )}
+                  {studyConfig && <LiveMonitorView studyConfig={studyConfig} storageEngine={storageEngine} studyId={canonicalStudyId ?? undefined} includedParticipants={includedParticipants} selectedStages={selectedStages} />}
                 </Tabs.Panel>
                 <Tabs.Panel style={{ flex: 1, minHeight: 0, overflow: 'auto' }} value="config" pt="xs">
                   {studyConfig && <ConfigView visibleParticipants={visibleParticipants} studyId={canonicalStudyId ?? undefined} currentConfigHash={currentConfigHash} />}

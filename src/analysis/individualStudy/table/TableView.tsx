@@ -92,11 +92,17 @@ export function TableView({
 
           const denominator = Math.max(getSequenceFlatMap(row.sequence).length - 1, 1);
 
-          return { percent: (Object.entries(row.answers).length - incompleteEntries.length) / denominator, completed: row.completed, rejected: row.rejected };
+          return {
+            percent: (Object.entries(row.answers).length - incompleteEntries.length) / denominator,
+            completed: row.completed,
+            rejected: row.rejected,
+            timedOut: !!row.timedOut,
+            completedLate: !!row.completedLate,
+          };
         },
         header: 'Status',
         size: 100,
-        Cell: ({ cell }: { cell: MrtCell<ParticipantDataWithStatus, { percent: number, completed: boolean, rejected: ParticipantDataWithStatus['rejected'] }> }) => {
+        Cell: ({ cell }: { cell: MrtCell<ParticipantDataWithStatus, { percent: number, completed: boolean, rejected: ParticipantDataWithStatus['rejected'], timedOut: boolean, completedLate: boolean }> }) => {
           const cellValue = cell.getValue();
           return (
             cellValue.rejected ? (
@@ -105,7 +111,13 @@ export function TableView({
                 <Text size="xs" c="dimmed" ta="center">{cellValue.rejected.reason}</Text>
               </Stack>
             )
-              : cellValue.completed ? (
+              : cellValue.timedOut ? (
+                <Stack align="center" justify="center" gap={2} w="100%">
+                  <Tooltip label={cellValue.completedLate ? 'Completed late after timing out' : 'Timed out'}>
+                    <Text size="xs" fw={700} c="orange">{cellValue.completedLate ? 'Late' : 'Timed out'}</Text>
+                  </Tooltip>
+                </Stack>
+              ) : cellValue.completed ? (
                 <Group align="center" justify="center" w="100%">
                   <Tooltip label="Completed"><IconCheck size={30} color="teal" style={{ marginBottom: -3 }} /></Tooltip>
                 </Group>

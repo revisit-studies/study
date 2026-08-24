@@ -53,7 +53,7 @@ vi.mock('@tabler/icons-react', () => ({
 function makeOverviewData(overrides: Partial<OverviewData> = {}): OverviewData {
   return {
     participantCounts: {
-      total: 10, completed: 7, inProgress: 2, rejected: 1,
+      total: 10, completed: 7, inProgress: 2, rejected: 1, timedOut: 0,
     },
     startDate: new Date('2026-01-01'),
     endDate: new Date('2026-03-01'),

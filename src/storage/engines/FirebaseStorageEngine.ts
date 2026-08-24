@@ -45,6 +45,7 @@ import {
   SequenceAssignment,
   SnapshotDocContent,
   StoredUser,
+  RuntimeStudySettings,
   cleanupModes,
 } from './types';
 import { EditedText, TaglessEditedText } from '../../analysis/individualStudy/thinkAloud/types';
@@ -192,6 +193,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
         timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toMillis() : data.timestamp,
         createdTime: data.createdTime instanceof Timestamp ? data.createdTime.toMillis() : data.createdTime,
         completed: data.completed instanceof Timestamp ? data.completed.toMillis() : data.completed,
+        autoTimedOutAt: data.autoTimedOutAt instanceof Timestamp ? data.autoTimedOutAt.toMillis() : data.autoTimedOutAt,
       } as SequenceAssignment))
       .sort((a, b) => a.timestamp - b.timestamp);
   }
@@ -216,6 +218,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
           timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toMillis() : data.timestamp,
           createdTime: data.createdTime instanceof Timestamp ? data.createdTime.toMillis() : data.createdTime,
           completed: data.completed instanceof Timestamp ? data.completed.toMillis() : data.completed,
+          autoTimedOutAt: data.autoTimedOutAt instanceof Timestamp ? data.autoTimedOutAt.toMillis() : data.autoTimedOutAt,
         } as SequenceAssignment))
         .sort((a, b) => a.timestamp - b.timestamp);
 
@@ -294,6 +297,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toMillis() : data.timestamp,
       createdTime: data.createdTime instanceof Timestamp ? data.createdTime.toMillis() : data.createdTime,
       completed: data.completed instanceof Timestamp ? data.completed.toMillis() : data.completed,
+      autoTimedOutAt: data.autoTimedOutAt instanceof Timestamp ? data.autoTimedOutAt.toMillis() : data.autoTimedOutAt,
     } as SequenceAssignment;
   }
 
@@ -338,9 +342,32 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
 
     await acquireLock(0);
 
+    let lockRefreshError: unknown;
+    const refreshLock = async () => {
+      const now = Date.now();
+      await runTransaction(this.firestore, async (transaction) => {
+        const snapshot = await transaction.get(lockDocument);
+        const existingLock = snapshot.data()?.[lockKey] as { token?: string } | undefined;
+        if (existingLock?.token !== token) {
+          throw new Error('Study update lock was lost');
+        }
+        transaction.update(lockDocument, { [lockKey]: { token, expiresAt: now + expiresInMs } });
+      });
+    };
+    const refreshTimer = setInterval(() => {
+      refreshLock().catch((error) => {
+        lockRefreshError ??= error;
+      });
+    }, expiresInMs / 3);
+
     try {
-      return await operation();
+      const result = await operation();
+      if (lockRefreshError) {
+        throw lockRefreshError;
+      }
+      return result;
     } finally {
+      clearInterval(refreshTimer);
       await runTransaction(this.firestore, async (transaction) => {
         const snapshot = await transaction.get(lockDocument);
         const existingLock = snapshot.data()?.[lockKey] as { token?: string } | undefined;
@@ -413,13 +440,18 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
         const participantTimestamp = toMillis(participantSequenceAssignment.timestamp);
         return sequenceAssignmentSnapshot.docs.find((docSnapshot) => {
           const docData = docSnapshot.data() as SequenceAssignment;
-          return docData.claimed && toMillis(docData.timestamp) === participantTimestamp;
+          return docSnapshot.id !== participantId
+            && docData.claimed
+            && toMillis(docData.timestamp) === participantTimestamp;
         });
       })();
 
     if (claimedSequenceAssignmentSnapshot) {
       const claimedSequenceAssignmentDoc = doc(sequenceAssignmentCollection, claimedSequenceAssignmentSnapshot.id);
-      await updateDoc(claimedSequenceAssignmentDoc, { claimed: false, rejected: true });
+      const claimedAssignment = claimedSequenceAssignmentSnapshot.data() as SequenceAssignment;
+      await updateDoc(claimedSequenceAssignmentDoc, claimedAssignment.autoTimedOutAt === undefined
+        ? { claimed: false, rejected: true }
+        : { claimed: false });
     }
 
     const participantSequenceAssignmentDoc = doc(
@@ -480,7 +512,10 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
 
       const claimedSequenceAssignment = claimedSequenceAssignmentSnapshot.data() as SequenceAssignment;
       restoredTimestamp = toMillis(claimedSequenceAssignment.timestamp);
-      await updateDoc(claimedSequenceAssignmentDoc, { claimed: true, rejected: true });
+      const claimedAssignment = claimedSequenceAssignmentSnapshot.data() as SequenceAssignment;
+      await updateDoc(claimedSequenceAssignmentDoc, claimedAssignment.autoTimedOutAt === undefined
+        ? { claimed: true, rejected: true }
+        : { claimed: true });
     }
 
     await updateDoc(
@@ -511,6 +546,34 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     );
 
     await updateDoc(participantSequenceAssignmentDoc, { claimed: true });
+  }
+
+  protected async _markSequenceAssignmentTimedOut(participantId: string): Promise<boolean> {
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+    const sequenceAssignmentDoc = doc(this.studyCollection, 'sequenceAssignment');
+    const participantAssignmentDoc = doc(
+      collection(sequenceAssignmentDoc, 'sequenceAssignment'),
+      participantId,
+    );
+
+    return await runTransaction(this.firestore, async (transaction) => {
+      const assignmentSnapshot = await transaction.get(participantAssignmentDoc);
+      if (!assignmentSnapshot.exists()) {
+        throw new Error(`Sequence assignment for participant ${participantId} not found`);
+      }
+      const assignment = assignmentSnapshot.data() as SequenceAssignment;
+      if (
+        assignment.completed !== null
+        || assignment.rejected
+        || assignment.autoTimedOutAt !== undefined
+      ) {
+        return false;
+      }
+      transaction.update(participantAssignmentDoc, { autoTimedOutAt: serverTimestamp() });
+      return true;
+    });
   }
 
   async initializeAnonymousAuth() {
@@ -572,7 +635,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     const revisitModesData = await getDoc(revisitModesDoc);
 
     if (revisitModesData.exists()) {
-      const modes = revisitModesData.data() as Record<string, boolean>;
+      const modes = revisitModesData.data() as RuntimeStudySettings;
       const needsUpdate = 'studyNavigatorEnabled' in modes || 'analyticsInterfacePubliclyAccessible' in modes;
 
       if (needsUpdate) {
@@ -604,13 +667,17 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     return await setDoc(revisitModesDoc, { [mode]: value }, { merge: true });
   }
 
-  protected async _setModesDocument(studyId: string, modesDocument: Record<string, unknown>): Promise<void> {
+  protected async _setModesDocument(studyId: string, modesDocument: RuntimeStudySettings): Promise<void> {
     const revisitModesDoc = doc(
       this.firestore,
       `${this.collectionPrefix}${studyId}`,
       'modes',
     );
-    await setDoc(revisitModesDoc, modesDocument, { merge: true });
+    const firestoreModes: Record<string, unknown> = { ...modesDocument };
+    if (Object.hasOwn(modesDocument, 'autoTimeoutMinutes') && modesDocument.autoTimeoutMinutes === undefined) {
+      firestoreModes.autoTimeoutMinutes = deleteField();
+    }
+    await setDoc(revisitModesDoc, firestoreModes, { merge: true });
   }
 
   protected async _getAudioUrl(

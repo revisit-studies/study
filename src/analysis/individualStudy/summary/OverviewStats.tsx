@@ -34,6 +34,10 @@ export function OverviewStats({
           <Text size="sm" c="dimmed">Rejected</Text>
         </Flex>
         <Flex direction="column">
+          <Text size="xl" fw="bold" c="yellow">{overviewData.participantCounts.timedOut ?? 0}</Text>
+          <Text size="sm" c="dimmed">Timed Out</Text>
+        </Flex>
+        <Flex direction="column">
           <Text size="xl" fw="bold">{convertNumberToString(overviewData.startDate, 'date')}</Text>
           <Text size="sm" c="dimmed">Start Date</Text>
         </Flex>
