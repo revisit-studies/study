@@ -27,6 +27,15 @@ describe('Factor Templates', () => {
     })).toBe('data=d1; vis=bar');
   });
 
+  test('fills hyphenated factor names in double-brace template tokens', () => {
+    expect(fillTemplate('{{study-arm}}.md', {
+      'study-arm': 'control',
+    })).toBe('control.md');
+    expect(deepFillTemplate('{{study-arm}}', {
+      'study-arm': 'control',
+    })).toBe('control');
+  });
+
   test('does not replace legacy template syntax or at-sign text', () => {
     const legacySyntax = ['email contact@revisit.dev; legacy @data/', '$', '{data}'].join('');
     expect(fillTemplate(legacySyntax, {

@@ -40,11 +40,13 @@ export function getSequenceFlatMap<T extends Sequence | StudyConfig['sequence']>
     ));
 }
 
-function findAllFuncBlocks(sequence: StudyConfig['sequence']): DynamicBlock[] {
+function findAllFuncBlocks(sequence: StudyConfig['sequence'] | Sequence): (DynamicBlock | Sequence)[] {
   return isDynamicBlock(sequence) ? [sequence] : isFactorBlock(sequence) ? [] : sequence.components.flatMap((component) => (typeof component === 'string' ? [] : findAllFuncBlocks(component)));
 }
 
-export function findFuncBlock(name: string, sequence: StudyConfig['sequence']): (DynamicBlock | undefined) {
+export function findFuncBlock(name: string, sequence: Sequence): (Sequence | undefined);
+export function findFuncBlock(name: string, sequence: StudyConfig['sequence']): (DynamicBlock | undefined);
+export function findFuncBlock(name: string, sequence: StudyConfig['sequence'] | Sequence): (DynamicBlock | Sequence | undefined) {
   const allFuncBlocks = findAllFuncBlocks(sequence);
   return allFuncBlocks.find((funcBlock) => funcBlock.id === name);
 }

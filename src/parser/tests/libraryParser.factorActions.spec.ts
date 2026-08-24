@@ -274,6 +274,39 @@ describe('factor sequence actions', () => {
     });
   });
 
+  test('filters repeated aliased ordered inputs independently', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    const config = factorConfig();
+    config.uiConfig.numSequences = 4;
+    config.factors = {
+      stimulus: { values: [1, 2], order: 'random', numSamples: 1 },
+      assignment: {
+        action: 'cross', factors: ['stimulus', 'stimulus'], as: ['word', 'inkColor'],
+      },
+    };
+    config.betweenSubjects = ['assignment'];
+    config.sequence = {
+      type: 'factor', id: 'repeatedAliasedAssignment', factor: 'assignment', components: 'trial',
+    };
+
+    const compiled = compileFactorBlocks(config.sequence, config);
+    const sequences = generateSequenceArray({
+      ...config,
+      sequence: compiled.sequence,
+      components: compiled.components,
+    });
+    random.mockRestore();
+
+    sequences.forEach((sequence) => {
+      const componentId = sequence.components.find((component): component is string => component !== 'end');
+      expect(componentId).toBeDefined();
+      expect(compiled.components[componentId!].parameters).toMatchObject({
+        word: sequence.parameters?.word,
+        inkColor: sequence.parameters?.inkColor,
+      });
+    });
+  });
+
   test('filters nested aliases before sampling the inner factor', () => {
     const random = vi.spyOn(Math, 'random').mockReturnValue(0);
     const config = factorConfig();

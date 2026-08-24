@@ -5,7 +5,7 @@ import {
 import {
   afterEach, describe, expect, test, vi,
 } from 'vitest';
-import type { Answer, NumericalResponse } from '../../../parser/types';
+import type { Answer, NumericalResponse, StudyConfig } from '../../../parser/types';
 import { Sequence, StoredAnswer } from '../../../store/types';
 import { makeStudyConfig, makeStoredAnswer } from '../../../tests/utils';
 import { getDynamicComponentsForBlock } from '../StepsPanel.utils';
@@ -170,6 +170,47 @@ describe('StepsPanel rendering', () => {
       />,
     ));
     expect(container).toBeDefined();
+  });
+
+  test('uses generated factor components for the runtime-plan denominator', async () => {
+    const runtimePlan = {
+      type: 'factor-runtime-plan',
+      id: 'trials',
+      order: 'fixed',
+      orderPath: 'root',
+      components: [],
+      skip: [],
+      conditionComponents: {
+        first: ['trialA'],
+        second: ['trialB'],
+        third: ['trialC'],
+      },
+    } as unknown as StudyConfig['sequence'];
+    const studyConfig = makeStudyConfig({
+      components: {
+        trialA: { type: 'markdown', path: 'trialA.md', response: [] },
+        trialB: { type: 'markdown', path: 'trialB.md', response: [] },
+        trialC: { type: 'markdown', path: 'trialC.md', response: [] },
+      },
+      sequence: runtimePlan,
+    });
+    const participantSequence: Sequence = {
+      id: 'trials',
+      orderPath: 'root',
+      order: 'fixed',
+      components: ['trialA', 'trialB'],
+      skip: [],
+    };
+
+    const { container } = await act(async () => render(
+      <StepsPanel
+        participantSequence={participantSequence}
+        participantAnswers={{}}
+        studyConfig={studyConfig}
+      />,
+    ));
+
+    expect(container.textContent).toContain('2/3');
   });
 
   test('renders in analysis mode', async () => {

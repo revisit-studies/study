@@ -27,6 +27,7 @@ import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import { useStudyRecordings } from '../../utils/useStudyRecordings';
 import { useDeviceRules } from '../../utils/useDeviceRules';
 import { getUnmetDeviceRestrictionLines, getUnmetDeviceRestrictionTooltip } from './DeviceRestrictionString';
+import { formatFactorLevel } from './StepsPanel.utils';
 
 function InfoHover({ text }: { text: string }) {
   return (
@@ -156,14 +157,14 @@ export function AppAside() {
             {betweenSubjectsEntries.map(([factorName, factorLevel]) => (
               <Tooltip
                 key={factorName}
-                label={`Between-subjects factor: ${factorName} = ${String(factorLevel)}`}
+                label={`Between-subjects factor: ${factorName} = ${formatFactorLevel(factorLevel)}`}
                 withinPortal
                 position="bottom"
               >
                 <Badge size="sm" color="teal" variant="light">
                   {factorName}
                   =
-                  {String(factorLevel)}
+                  {formatFactorLevel(factorLevel)}
                 </Badge>
               </Tooltip>
             ))}

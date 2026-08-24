@@ -112,14 +112,14 @@ export function fillTemplate(str: string, vars: Record<string, unknown>): string
     ? String(vars[key])
     : match);
 
-  return str.replace(/\{\{\s*([A-Za-z_]\w*)\s*\}\}/g, fillToken);
+  return str.replace(/\{\{\s*([A-Za-z_][\w-]*)\s*\}\}/g, fillToken);
 }
 
 // Recursively replace templates in any TS value.
 export function deepFillTemplate<T>(value: T, vars: Record<string, unknown>): T {
   // Strings: apply template replacement
   if (typeof value === 'string') {
-    const exactToken = value.match(/^\{\{\s*([A-Za-z_]\w*)\s*\}\}$/);
+    const exactToken = value.match(/^\{\{\s*([A-Za-z_][\w-]*)\s*\}\}$/);
     if (exactToken && vars[exactToken[1]] !== undefined && vars[exactToken[1]] !== null) {
       return vars[exactToken[1]] as T;
     }
@@ -166,14 +166,11 @@ type FactorResolutionMode = 'standard' | 'materialize' | 'runtime';
 
 export type FactorOrderContext = {
   sequenceIndex: number;
-  orderedValues: Map<string, FactorValue[]>;
   sampledConditions: Map<string, FactorCondition[]>;
 };
 
 export function createFactorOrderContext(sequenceIndex: number): FactorOrderContext {
-  return {
-    sequenceIndex, orderedValues: new Map(), sampledConditions: new Map(),
-  };
+  return { sequenceIndex, sampledConditions: new Map() };
 }
 
 function isOrderedFactorValues(factor: Factor): factor is OrderedFactorValues {
@@ -286,11 +283,6 @@ function orderFactorValues(
     return [...factor.values];
   }
 
-  const existing = context.orderedValues.get(factorName);
-  if (existing) {
-    return existing;
-  }
-
   let values = [...factor.values];
   if (order === 'random') {
     values = shuffleValues(values);
@@ -305,7 +297,6 @@ function orderFactorValues(
     );
   }
   const selectedValues = values.slice(0, factor.numSamples);
-  context.orderedValues.set(factorName, selectedValues);
   return selectedValues;
 }
 

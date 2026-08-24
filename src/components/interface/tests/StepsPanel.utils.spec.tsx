@@ -4,11 +4,19 @@ import {
 import type { StudyConfig } from '../../../parser/types';
 import { Sequence, StoredAnswer } from '../../../store/types';
 import {
+  formatFactorLevel,
   formatSkipConditionSummary,
   getDynamicComponentsForBlock,
   getSkipConditionSummariesForBlock,
   getSkippedTrialOrders,
 } from '../StepsPanel.utils';
+
+describe('factor display formatting', () => {
+  test('serializes object-valued factor levels instead of using object object', () => {
+    expect(formatFactorLevel({ arm: 'control', visualization: 'bar' }))
+      .toBe('{"arm":"control","visualization":"bar"}');
+  });
+});
 
 function buildStoredAnswer(
   componentName: string,

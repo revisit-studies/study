@@ -34,6 +34,7 @@ import {
   getDynamicComponentsForBlock,
   getSkipConditionSummariesForBlock,
   getSkippedTrialOrders,
+  formatFactorLevel,
 } from './StepsPanel.utils';
 
 function hasRandomization(responses: Response[]) {
@@ -77,6 +78,17 @@ function findMatchingComponentInFullOrder(
 
 function countComponentsInSequence(sequence: Sequence, participantAnswers: ParticipantData['answers']) {
   let count = 0;
+
+  if (
+    'type' in sequence
+    && sequence.type === 'factor-runtime-plan'
+    && 'conditionComponents' in sequence
+    && sequence.conditionComponents
+    && typeof sequence.conditionComponents === 'object'
+  ) {
+    return Object.values(sequence.conditionComponents as Record<string, string[][]>)
+      .reduce((total, components) => total + components.length, 0);
+  }
 
   // Dynamic blocks generate components at runtime, so we count from participant answers
   if (isDynamicBlock(sequence)) {
@@ -761,7 +773,7 @@ export function StepsPanel({
             ? Object.entries(blockParameters)
             : [];
           const betweenSubjectsLabel = betweenSubjectsEntries
-            .map(([factorName, factorLevel]) => `${factorName}=${String(factorLevel)}`)
+            .map(([factorName, factorLevel]) => `${factorName}=${formatFactorLevel(factorLevel)}`)
             .join(', ');
           const resolvedComponent = component
             ? studyComponentToIndividualComponent(component, studyConfig)
@@ -912,14 +924,14 @@ export function StepsPanel({
                       {betweenSubjectsEntries.map(([factorName, factorLevel]) => (
                         <Tooltip
                           key={factorName}
-                          label={`Between-subjects factor: ${factorName} = ${String(factorLevel)}`}
+                          label={`Between-subjects factor: ${factorName} = ${formatFactorLevel(factorLevel)}`}
                           position="right"
                           withArrow
                         >
                           <Badge ml={5} color="teal" variant="light">
                             {factorName}
                             =
-                            {String(factorLevel)}
+                            {formatFactorLevel(factorLevel)}
                           </Badge>
                         </Tooltip>
                       ))}
