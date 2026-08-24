@@ -24,6 +24,7 @@ import {
   getConditionTargetIndex,
   getStoredAnswersForSkipEvaluation,
 } from '../../utils/skipConditions';
+import { useStartupInteractionBlocked } from '../../components/StartupContext';
 
 export function useNextStep() {
   const currentStep = useCurrentStep();
@@ -48,6 +49,7 @@ export function useNextStep() {
   const { storageEngine } = useStorageEngine();
 
   const studyId = useStudyId();
+  const startupInteractionBlocked = useStartupInteractionBlocked();
 
   const { dataCollectionEnabled } = modes;
 
@@ -64,6 +66,10 @@ export function useNextStep() {
 
   const windowEvents = useWindowEvents();
   const goToNextStep = useCallback((collectData = true) => {
+    if (startupInteractionBlocked) {
+      return;
+    }
+
     try {
       if (typeof currentStep !== 'number') {
         return;
@@ -168,10 +174,10 @@ export function useNextStep() {
         color: 'red',
       });
     }
-  }, [currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, clickedPrevious, sequence, answers, startTime, funcIndex, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, setRankingAnswers, setAlertModal, studyConfig, participantSequence, navigate, studyId, responseSubmitAttempted, checkAnswerState]);
+  }, [currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, clickedPrevious, sequence, answers, startTime, funcIndex, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, setRankingAnswers, setAlertModal, studyConfig, participantSequence, navigate, studyId, responseSubmitAttempted, checkAnswerState, startupInteractionBlocked]);
 
   return {
-    isNextDisabled,
+    isNextDisabled: isNextDisabled || startupInteractionBlocked,
     goToNextStep,
   };
 }

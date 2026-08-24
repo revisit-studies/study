@@ -13,6 +13,7 @@ import {
   shouldMonitorMutedAudio,
   SPEECH_DETECTION_HOLD_MS,
 } from '../../utils/recordingWarnings';
+import { useStartupInteractionBlocked } from '../../components/StartupContext';
 
 /**
  * Captures and records the screen and audio.
@@ -52,6 +53,7 @@ export function useRecording() {
   const identifier = useCurrentIdentifier();
   const status = useStoredAnswer();
   const isAnalysis = useIsAnalysis();
+  const startupInteractionBlocked = useStartupInteractionBlocked();
 
   const { storageEngine } = useStorageEngine();
 
@@ -306,7 +308,7 @@ export function useRecording() {
       return;
     }
 
-    if (!studyConfig || studyHasScreenRecording || !studyHasAudioRecording || !storageEngine || (status && status.endTime > 0) || isAnalysis) {
+    if (startupInteractionBlocked || !studyConfig || studyHasScreenRecording || !studyHasAudioRecording || !storageEngine || (status && status.endTime > 0) || isAnalysis) {
       return;
     }
 
@@ -321,11 +323,11 @@ export function useRecording() {
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentComponent, identifier, currentComponentHasAudioRecording]);
+  }, [currentComponent, identifier, currentComponentHasAudioRecording, startupInteractionBlocked]);
 
   // For study with screen recording
   useEffect(() => {
-    if (!studyConfig || !(studyHasScreenRecording) || !storageEngine || (status && status.endTime > 0) || isAnalysis) {
+    if (startupInteractionBlocked || !studyConfig || !(studyHasScreenRecording) || !storageEngine || (status && status.endTime > 0) || isAnalysis) {
       return;
     }
 
@@ -344,7 +346,11 @@ export function useRecording() {
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentComponent, identifier, currentComponentHasAudioRecording, currentComponentHasScreenRecording, isMediaCapturing]);
+  }, [currentComponent, identifier, currentComponentHasAudioRecording, currentComponentHasScreenRecording, isMediaCapturing, startupInteractionBlocked]);
+
+  useEffect(() => () => {
+    stopScreenCapture();
+  }, [stopScreenCapture]);
 
   // Start screen capture. This does not begin recording.
   const startScreenCapture = useCallback(() => {

@@ -3,6 +3,7 @@ import {
   describe, expect, test, vi,
 } from 'vitest';
 import { NavigateWithParams } from '../NavigateWithParams';
+import { StartupInteractionProvider } from '../../components/StartupContext';
 
 vi.mock('react-router', () => ({
   useSearchParams: vi.fn(() => [new URLSearchParams({ step: '2', participantId: 'pid-1' })]),
@@ -21,5 +22,15 @@ describe('NavigateWithParams', () => {
     const html = renderToStaticMarkup(<NavigateWithParams to="/next" />);
     expect(html).toContain('step=2');
     expect(html).toContain('participantId=pid-1');
+  });
+
+  test('does not navigate while participant startup blocks interaction', () => {
+    const html = renderToStaticMarkup(
+      <StartupInteractionProvider value>
+        <NavigateWithParams to="/next" />
+      </StartupInteractionProvider>,
+    );
+
+    expect(html).toBe('');
   });
 });
