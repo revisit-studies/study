@@ -1065,6 +1065,14 @@ describe.each([
     expect(modes.dataSharingEnabled).toBe(false);
   });
 
+  test('setAutoTimeoutMinutes removes the Firebase setting when disabled', async () => {
+    await storageEngine.setAutoTimeoutMinutes(studyId, 60);
+    expect((await storageEngine.getModes(studyId)).autoTimeoutMinutes).toBe(60);
+
+    await storageEngine.setAutoTimeoutMinutes(studyId, undefined);
+    expect((await storageEngine.getModes(studyId)).autoTimeoutMinutes).toBeUndefined();
+  });
+
   // ── URL getters ──────────────────────────────────────────────────────────────
   test('_getAudioUrl returns URL when audio exists', async () => {
     // @ts-expect-error protected

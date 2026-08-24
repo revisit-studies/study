@@ -836,6 +836,39 @@ describe.each([
     expect(participantIds).toContain(participantId4);
   });
 
+  test('lazy auto-timeout frees an expired allocation without rejecting its participant data', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'));
+      await storageEngine.setAutoTimeoutMinutes(studyId, 1);
+      const firstParticipant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+      vi.setSystemTime(new Date('2026-01-01T00:01:00.000Z'));
+      await storageEngine.clearCurrentParticipantId();
+      const secondParticipant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+      const assignments = await storageEngine.getAllSequenceAssignments(studyId);
+      const firstAssignment = assignments.find((assignment) => assignment.participantId === firstParticipant.participantId);
+      const secondAssignment = assignments.find((assignment) => assignment.participantId === secondParticipant.participantId);
+
+      expect(firstAssignment?.autoTimedOutAt).toBeDefined();
+      expect(firstAssignment?.rejected).toBe(false);
+      expect(firstAssignment?.claimed).toBe(true);
+      expect(secondAssignment?.claimedParticipantId).toBe(firstParticipant.participantId);
+      const participants = await storageEngine.getAllParticipantsData(studyId);
+      expect(participants.find((participant) => participant.participantId === firstParticipant.participantId)?.rejected).toBe(false);
+
+      await storageEngine.rejectParticipant(firstParticipant.participantId, 'test source rejection');
+      await storageEngine.clearCurrentParticipantId();
+      const thirdParticipant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+      const assignmentsAfterSourceRejection = await storageEngine.getAllSequenceAssignments(studyId);
+      expect(assignmentsAfterSourceRejection.find((assignment) => assignment.participantId === firstParticipant.participantId)?.claimed).toBe(true);
+      expect(assignmentsAfterSourceRejection.find((assignment) => assignment.participantId === thirdParticipant.participantId)?.claimedParticipantId)
+        .not.toBe(firstParticipant.participantId);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   // rejectCurrentParticipant test
 
   // getParticipantStatusCounts test

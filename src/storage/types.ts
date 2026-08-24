@@ -75,4 +75,8 @@ export interface ParticipantData {
 export interface ParticipantDataWithStatus extends ParticipantData {
   /** Whether the participant has completed the study. Derived from sequence assignment status. */
   completed: boolean;
+  /** Allocation timed out and no longer consumes a study slot. */
+  timedOut?: boolean;
+  /** A participant who completed after their allocation had timed out. */
+  completedLate?: boolean;
 }

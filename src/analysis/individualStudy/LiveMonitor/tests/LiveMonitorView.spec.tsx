@@ -33,6 +33,9 @@ vi.mock('@mantine/core', () => ({
   Tooltip: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Button: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => <button type="button" onClick={onClick}>{children}</button>,
   Flex: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Modal: ({ children, opened }: { children: ReactNode; opened: boolean }) => (opened ? <div>{children}</div> : null),
+  NumberInput: ({ onChange }: { onChange?: (value: number) => void }) => <input onChange={() => onChange?.(60)} />,
+  Switch: ({ onChange }: { onChange?: () => void }) => <input type="checkbox" onChange={onChange} />,
   Grid: Object.assign(
     ({ children }: { children: ReactNode }) => <div>{children}</div>,
     { Col: ({ children }: { children: ReactNode }) => <div>{children}</div> },
@@ -56,6 +59,10 @@ vi.mock('../../../../storage/engines/FirebaseStorageEngine', () => ({
   FirebaseStorageEngine: class { },
 }));
 
+vi.mock('../../../../store/hooks/useAuth', () => ({
+  useAuth: () => ({ user: { isAdmin: true } }),
+}));
+
 // ── fixture helpers ───────────────────────────────────────────────────────────
 
 function makeAssignment(overrides: Partial<SequenceAssignment> = {}): SequenceAssignment {
@@ -65,6 +72,10 @@ function makeAssignment(overrides: Partial<SequenceAssignment> = {}): SequenceAs
     createdTime: 1_700_000_000_000,
     ...overrides,
   });
+}
+
+function makeFirebaseEngine(overrides: Parameters<typeof makeStorageEngine>[0]) {
+  return makeStorageEngine({ ...overrides, getEngine: () => 'firebase' });
 }
 
 // ── getFilteredParticipantProgress ────────────────────────────────────────────
@@ -167,13 +178,13 @@ afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 describe('LiveMonitorView', () => {
   const baseProps = {
     studyConfig: {} as Parameters<typeof LiveMonitorView>[0]['studyConfig'],
-    includedParticipants: ['inProgress', 'completed', 'rejected'],
+    includedParticipants: ['inProgress', 'completed', 'rejected', 'timedOut'],
     selectedStages: ['ALL'],
   };
 
-  test('renders Live Monitor heading', () => {
+  test('renders auto-timeout settings without a Firebase engine', () => {
     const html = renderToStaticMarkup(<LiveMonitorView {...baseProps} />);
-    expect(html).toContain('Live Monitor');
+    expect(html).toContain('Auto-timeout');
   });
 
   test('shows 0 counts when no storageEngine provided', () => {
@@ -182,35 +193,10 @@ describe('LiveMonitorView', () => {
     expect(html).toContain('0');
   });
 
-  test('shows Completed, Active, Rejected badges', () => {
+  test('explains that the live monitor requires Firebase', () => {
     const html = renderToStaticMarkup(<LiveMonitorView {...baseProps} />);
-    expect(html).toContain('Completed');
-    expect(html).toContain('Active');
-    expect(html).toContain('Rejected');
+    expect(html).toContain('Live participant monitoring is currently available with Firebase');
   });
-
-  test('shows disconnected wifi icon when no storageEngine', () => {
-    const html = renderToStaticMarkup(<LiveMonitorView {...baseProps} />);
-    // Without a Firebase engine, useEffect will set status to 'disconnected'
-    // but renderToStaticMarkup captures initial state ('connecting') — wifioff shown
-    expect(html).toContain('icon-wifioff');
-  });
-
-  test('shows In Progress, Completed, Rejected section titles', () => {
-    const html = renderToStaticMarkup(<LiveMonitorView {...baseProps} />);
-    expect(html).toContain('In Progress');
-    expect(html).toContain('Completed');
-    expect(html).toContain('Rejected');
-  });
-
-  test('sets connectionStatus to disconnected when no storageEngine after effect', async () => {
-    const { container } = await act(async () => render(
-      <LiveMonitorView {...baseProps} />,
-    ));
-    // After effects run, status is 'disconnected' → icon-wifioff shown
-    expect(container.textContent).toContain('icon-wifioff');
-  });
-
   test('sets connectionStatus to connected when listener returns a function', async () => {
     const mockUnsubscribe = vi.fn();
     const mockEngine = {
@@ -221,7 +207,7 @@ describe('LiveMonitorView', () => {
     const { container } = await act(async () => render(
       <LiveMonitorView
         {...baseProps}
-        storageEngine={makeStorageEngine(mockEngine)}
+        storageEngine={makeFirebaseEngine(mockEngine)}
         studyId="test-study"
       />,
     ));
@@ -337,7 +323,7 @@ describe('LiveMonitorView interactive', () => {
       }),
     };
     const { container } = await act(async () => render(
-      <LiveMonitorView {...baseProps} storageEngine={makeStorageEngine(mockEngine)} />,
+      <LiveMonitorView {...baseProps} storageEngine={makeFirebaseEngine(mockEngine)} />,
     ));
     expect(container.textContent).toContain('p-active');
   });
@@ -359,7 +345,7 @@ describe('LiveMonitorView interactive', () => {
       }),
     };
     const { container } = await act(async () => render(
-      <LiveMonitorView {...baseProps} storageEngine={makeStorageEngine(mockEngine)} />,
+      <LiveMonitorView {...baseProps} storageEngine={makeFirebaseEngine(mockEngine)} />,
     ));
     expect(container.textContent).toContain('p-done');
     expect(container.textContent).toContain('p-rej');
@@ -372,7 +358,7 @@ describe('LiveMonitorView interactive', () => {
       _setupSequenceAssignmentListener: vi.fn(() => undefined),
     };
     const { container } = await act(async () => render(
-      <LiveMonitorView {...baseProps} storageEngine={makeStorageEngine(mockEngine)} />,
+      <LiveMonitorView {...baseProps} storageEngine={makeFirebaseEngine(mockEngine)} />,
     ));
     expect(container.textContent).toContain('icon-wifioff');
   });
@@ -384,7 +370,7 @@ describe('LiveMonitorView interactive', () => {
       _setupSequenceAssignmentListener: vi.fn(() => undefined),
     };
     const { getAllByRole } = await act(async () => render(
-      <LiveMonitorView {...baseProps} storageEngine={makeStorageEngine(mockEngine)} />,
+      <LiveMonitorView {...baseProps} storageEngine={makeFirebaseEngine(mockEngine)} />,
     ));
     const reconnectBtn = getAllByRole('button').find((b) => b.textContent?.includes('Reconnect'));
     expect(reconnectBtn).toBeDefined();
@@ -400,7 +386,7 @@ describe('LiveMonitorView interactive', () => {
     };
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
     const { getAllByRole } = await act(async () => render(
-      <LiveMonitorView {...baseProps} storageEngine={makeStorageEngine(mockEngine)} />,
+      <LiveMonitorView {...baseProps} storageEngine={makeFirebaseEngine(mockEngine)} />,
     ));
     const reconnectBtn = getAllByRole('button').find((b) => b.textContent?.includes('Reconnect'));
     expect(reconnectBtn).toBeDefined();
@@ -419,7 +405,7 @@ describe('LiveMonitorView interactive', () => {
       }),
     };
     await act(async () => render(
-      <LiveMonitorView {...baseProps} storageEngine={makeStorageEngine(mockEngine)} />,
+      <LiveMonitorView {...baseProps} storageEngine={makeFirebaseEngine(mockEngine)} />,
     ));
     act(() => { window.dispatchEvent(new Event('offline')); });
   });
@@ -431,7 +417,7 @@ describe('LiveMonitorView interactive', () => {
       _setupSequenceAssignmentListener: vi.fn(() => undefined),
     };
     await act(async () => render(
-      <LiveMonitorView {...baseProps} storageEngine={makeStorageEngine(mockEngine)} />,
+      <LiveMonitorView {...baseProps} storageEngine={makeFirebaseEngine(mockEngine)} />,
     ));
     await act(async () => { window.dispatchEvent(new Event('online')); });
     expect(mockEngine.getAllSequenceAssignments).toHaveBeenCalled();

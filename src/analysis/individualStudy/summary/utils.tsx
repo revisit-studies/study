@@ -56,9 +56,10 @@ function calculateParticipantCounts(visibleParticipants: ParticipantDataWithStat
   const participantCounts: ParticipantCounts = {
     total: filteredParticipants.length,
     // Include !p.rejected to exclude participants rejected manually after completing the study
-    completed: filteredParticipants.filter((p) => p.completed && !p.rejected).length,
-    inProgress: filteredParticipants.filter((p) => !p.completed && !p.rejected).length,
+    completed: filteredParticipants.filter((p) => p.completed && !p.rejected && !p.timedOut).length,
+    inProgress: filteredParticipants.filter((p) => !p.completed && !p.rejected && !p.timedOut).length,
     rejected: filteredParticipants.filter((p) => p.rejected).length,
+    timedOut: filteredParticipants.filter((p) => !p.rejected && p.timedOut).length,
   };
 
   return participantCounts;

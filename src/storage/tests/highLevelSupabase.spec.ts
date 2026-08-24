@@ -1050,6 +1050,14 @@ describe.each([
     expect(modes.dataSharingEnabled).toBe(false);
   });
 
+  test('setAutoTimeoutMinutes persists and removes the setting', async () => {
+    await storageEngine.setAutoTimeoutMinutes(studyId, 60);
+    expect((await storageEngine.getModes(studyId)).autoTimeoutMinutes).toBe(60);
+
+    await storageEngine.setAutoTimeoutMinutes(studyId, undefined);
+    expect((await storageEngine.getModes(studyId)).autoTimeoutMinutes).toBeUndefined();
+  });
+
   // ── URL getters ──────────────────────────────────────────────────────────────
   test('_getAudioUrl returns null when audio does not exist', async () => {
     // _getFromStorage returns {} on error, which is truthy. The real

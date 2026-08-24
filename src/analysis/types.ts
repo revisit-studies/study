@@ -3,6 +3,7 @@ export interface ParticipantCounts {
   completed: number;
   inProgress: number;
   rejected: number;
+  timedOut?: number;
 }
 
 export interface OverviewData {
