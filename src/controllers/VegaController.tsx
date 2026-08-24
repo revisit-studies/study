@@ -16,6 +16,7 @@ import { useManagedTrrack } from '../store/hooks/useRevisitTrrack';
 import { compileTemplate } from '../utils/handlebars';
 import { useTemplateAnswerContext } from '../store/hooks/useTemplateAnswerContext';
 import { getInitialStimulusValidation } from '../components/response/stimulusErrors';
+import { useAsyncResource } from '../store/hooks/useAsyncResource';
 
 type Listeners = { [key: string]: (key: string, value: { responseId: string, response: string | number }) => void };
 
@@ -31,10 +32,6 @@ const InternalVega = Vega as unknown as React.FC<VegaProps>;
 
 export function VegaController({ currentConfig, provState }: { currentConfig: VegaComponent; provState?: VegaProvState }) {
   const storeDispatch = useStoreDispatch();
-  const [vegaConfig, setVegaConfig] = useState<VisualizationSpec | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [loadedConfigKey, setLoadedConfigKey] = useState<string | null>(null);
-
   const [stimulusStatus, setStimulusStatus] = useState(false);
   const [stimulusAnswer, setStimulusAnswer] = useState<Record<string, string | number>>({});
 
@@ -47,6 +44,13 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
     [currentConfig, templateData],
   );
   const requestedConfigKey = 'path' in currentConfig ? templatedPath : '__inline__';
+  const loadVega = useCallback(async (key: string) => {
+    if ('path' in currentConfig) {
+      return getJsonAssetByPath(key);
+    }
+    return currentConfig.config as VisualizationSpec;
+  }, [currentConfig]);
+  const { status: resourceStatus, value: vegaConfig } = useAsyncResource<VisualizationSpec>(requestedConfigKey, loadVega);
 
   const { updateProvenance, updateResponseBlockValidation, setReactiveAnswers } = useStoreActions();
   const isAnalysis = useIsAnalysis();
@@ -162,49 +166,6 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
   const configuredSignalNames = useMemo(() => new Set(Object.keys(signalListeners)), [signalListeners]);
 
   useEffect(() => {
-    let cancelled = false;
-
-    setLoading(true);
-    setVegaConfig(null);
-    setLoadedConfigKey(null);
-
-    // While the path is templated inside a dynamic block, templatedPath is undefined until the
-    // block's current iteration resolves — don't fetch a path built from the wrong iteration.
-    if ('path' in currentConfig && templatedPath === undefined) {
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    async function fetchVega() {
-      try {
-        let config: VisualizationSpec | undefined;
-        if ('path' in currentConfig) {
-          config = await getJsonAssetByPath(templatedPath as string);
-        } else {
-          config = currentConfig.config as VisualizationSpec;
-        }
-        if (cancelled) return;
-        setVegaConfig(config ?? null);
-        setLoadedConfigKey(requestedConfigKey ?? null);
-        setLoading(false);
-      } catch {
-        if (cancelled) return;
-        setVegaConfig(null);
-        setLoadedConfigKey(requestedConfigKey ?? null);
-        setLoading(false);
-      }
-    }
-
-    if (currentConfig) {
-      fetchVega();
-    }
-    return () => {
-      cancelled = true;
-    };
-  }, [currentConfig, requestedConfigKey, templatedPath]);
-
-  useEffect(() => {
     if (!view || !provState) {
       return;
     }
@@ -238,7 +199,7 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
   // never load. Skipped in analysis mode so replay doesn't mutate validation.
   useEffect(() => {
     if (isAnalysis) return;
-    if (loadedConfigKey !== requestedConfigKey) {
+    if (resourceStatus === 'unresolved' || resourceStatus === 'loading') {
       const initialValidation = getInitialStimulusValidation(currentConfig);
       storeDispatch(updateResponseBlockValidation({
         location: 'stimulus',
@@ -249,7 +210,7 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
       }));
       return;
     }
-    if (!loading && 'path' in currentConfig && !vegaConfig) {
+    if (resourceStatus !== 'success' && 'path' in currentConfig) {
       console.error(`Vega spec at "${templatedPath}" could not be loaded or parsed. Clearing stimulus validation so the participant is not stuck.`);
       storeDispatch(updateResponseBlockValidation({
         location: 'stimulus',
@@ -258,15 +219,15 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
         values: {},
       }));
     }
-  }, [isAnalysis, loading, vegaConfig, currentConfig, templatedPath, requestedConfigKey, loadedConfigKey, identifier, storeDispatch, updateResponseBlockValidation]);
+  }, [isAnalysis, resourceStatus, vegaConfig, currentConfig, templatedPath, identifier, storeDispatch, updateResponseBlockValidation]);
 
-  if (loading || loadedConfigKey !== requestedConfigKey) {
+  if (resourceStatus === 'unresolved' || resourceStatus === 'loading') {
     return <div>Loading...</div>;
   }
-  if ('path' in currentConfig && !vegaConfig) {
+  if ('path' in currentConfig && resourceStatus !== 'success') {
     return <ResourceNotFound path={templatedPath as string} />;
   }
-  if (!vegaConfig) {
+  if (resourceStatus !== 'success' || !vegaConfig) {
     return <div>Failed to load vega config</div>;
   }
 
