@@ -150,6 +150,12 @@
           "maxSelections": 3
         },
         {
+          "id": "q-country-dropdown",
+          "prompt": "Country dropdown example",
+          "type": "dropdown",
+          "options": "countries"
+        },
+        {
           "id": "q-checkbox",
           "prompt": "Checkbox example, but this time with a long title that makes a ton of sense and is really cool",
           "secondaryText": "Checkboxes for multi-selection",
@@ -327,27 +333,18 @@
         },
         {
           "id": "text-validation-contains",
-          "type": "shortText",
-          "prompt": "Enter a short response that contains the exact text “ReVISit”.",
-          "secondaryText": "The contains validation is case-sensitive.",
-          "placeholder": "I use ReVISit for...",
+          "type": "longText",
+          "prompt": "Please give us feedback on ReVISit.",
+          "secondaryText": "Your response must contain the exact text “ReVISit” and must not contain the exact lowercase text “test”. Both validations are case-sensitive.",
+          "placeholder": "Share your feedback...",
           "textValidation": [
             {
               "type": "contains",
               "value": "ReVISit"
-            }
-          ]
-        },
-        {
-          "id": "text-validation-does-not-contain",
-          "type": "longText",
-          "prompt": "Enter a sentence that does not contain the exact lowercase text “invalid”.",
-          "secondaryText": "This long text response uses doesNotContain and is case-sensitive.",
-          "placeholder": "Describe a valid response...",
-          "textValidation": [
+            },
             {
               "type": "doesNotContain",
-              "value": "invalid"
+              "value": "test"
             }
           ]
         },
@@ -365,22 +362,9 @@
           ]
         },
         {
-          "id": "text-validation-does-not-equal",
-          "type": "longText",
-          "prompt": "Enter any response except the exact text “TEST”.",
-          "secondaryText": "This response uses doesNotEqual and is case-sensitive.",
-          "placeholder": "Anything except TEST",
-          "textValidation": [
-            {
-              "type": "doesNotEqual",
-              "value": "TEST"
-            }
-          ]
-        },
-        {
-          "id": "character-length-title",
+          "id": "length-validation-title",
           "type": "textOnly",
-          "prompt": "## Character Length\n\nShort and long text responses can require a minimum number of characters, a maximum number of characters, or both.",
+          "prompt": "## Length Validation\n\nShort and long text responses can require a minimum and maximum number of characters or words.",
           "restartEnumeration": true
         },
         {
@@ -393,30 +377,6 @@
           "maxCharLength": 10
         },
         {
-          "id": "character-length-long",
-          "type": "longText",
-          "prompt": "Enter between 20 and 100 characters.",
-          "secondaryText": "This long text response uses minCharLength: 20 and maxCharLength: 100.",
-          "placeholder": "20–100 characters",
-          "minCharLength": 20,
-          "maxCharLength": 100
-        },
-        {
-          "id": "word-length-title",
-          "type": "textOnly",
-          "prompt": "## Word Length\n\nShort and long text responses can require a minimum number of words, a maximum number of words, or both.",
-          "restartEnumeration": true
-        },
-        {
-          "id": "word-length-short",
-          "type": "shortText",
-          "prompt": "Enter between two and five words.",
-          "secondaryText": "This short text response uses minWordLength: 2 and maxWordLength: 5.",
-          "placeholder": "2–5 words",
-          "minWordLength": 2,
-          "maxWordLength": 5
-        },
-        {
           "id": "word-length-long",
           "type": "longText",
           "prompt": "Enter between four and ten words.",
@@ -424,6 +384,105 @@
           "placeholder": "4–10 words",
           "minWordLength": 4,
           "maxWordLength": 10
+        },
+        {
+          "id": "built-in-validation-title",
+          "type": "textOnly",
+          "prompt": "## Built-in Validation\n\nShort text responses can use built-in validation to ensure the entered data is in the correct format.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "built-in-validation-email",
+          "type": "shortText",
+          "prompt": "Enter an email address.",
+          "secondaryText": "For example: test@revisit.dev.",
+          "placeholder": "test@revisit.dev",
+          "builtInValidation": "email"
+        },
+        {
+          "id": "built-in-validation-phone-number",
+          "type": "shortText",
+          "prompt": "Enter an international phone number containing 7 to 15 digits.",
+          "secondaryText": "It may begin with + and use hyphens between digits. For example: +800-0000-0000 or 8000000000.",
+          "placeholder": "+800-0000-0000",
+          "builtInValidation": "phoneNumber"
+        },
+        {
+          "id": "built-in-validation-us-phone-number",
+          "type": "shortText",
+          "prompt": "Enter a 10-digit US phone number with two hyphens.",
+          "secondaryText": "For example: 800-000-0000.",
+          "placeholder": "800-000-0000",
+          "builtInValidation": "usPhoneNumber"
+        },
+        {
+          "id": "built-in-validation-url",
+          "type": "shortText",
+          "prompt": "Enter an HTTP or HTTPS URL.",
+          "secondaryText": "For example: https://revisit.dev.",
+          "placeholder": "https://revisit.dev",
+          "builtInValidation": "url"
+        },
+        {
+          "id": "date-time-response-title",
+          "type": "textOnly",
+          "prompt": "## Date and Time Responses\n\nDate and time responses use dedicated inputs and store their values as strings. The examples below demonstrate each date and time option separately.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "date-range-response",
+          "type": "date",
+          "prompt": "Date within a range.",
+          "secondaryText": "This response uses min: 06/01/2026 and max: 08/30/2026.",
+          "min": "06/01/2026",
+          "max": "08/30/2026"
+        },
+        {
+          "id": "month-picker-response",
+          "type": "date",
+          "options": "month",
+          "prompt": "Month input.",
+          "default": "06/2026",
+          "min": "01/2026",
+          "max": "12/2026"
+        },
+        {
+          "id": "year-picker-response",
+          "type": "date",
+          "options": "year",
+          "prompt": "Year input.",
+          "default": "2026",
+          "min": "2000",
+          "max": "2030"
+        },
+        {
+          "id": "time-standard-response",
+          "type": "time",
+          "prompt": "Time without seconds.",
+          "secondaryText": "By default, time responses use the 24-hour HH:mm format."
+        },
+        {
+          "id": "time-12-hour-response",
+          "type": "time",
+          "prompt": "Time in 12-hour format.",
+          "secondaryText": "This response uses format: 12h.",
+          "format": "12h",
+          "default": "14:28"
+        },
+        {
+          "id": "time-range-response",
+          "type": "time",
+          "prompt": "Time within a range.",
+          "secondaryText": "This response uses min: 09:00 and max: 18:00.",
+          "min": "09:00",
+          "max": "18:00"
+        },
+        {
+          "id": "time-seconds-response",
+          "type": "time",
+          "prompt": "Time with seconds.",
+          "secondaryText": "This response uses withSeconds: true and the HH:mm:ss format.",
+          "withSeconds": true
         }
       ]
     },
@@ -455,6 +514,37 @@
           "type": "longText",
           "prompt": "Long text default",
           "default": "Prefilled long text value for local testing."
+        },
+        {
+          "id": "default-date",
+          "type": "date",
+          "prompt": "Date default",
+          "default": "06/24/2026",
+          "min": "06/01/2026",
+          "max": "06/30/2026"
+        },
+        {
+          "id": "default-month",
+          "type": "date",
+          "options": "month",
+          "prompt": "Month default",
+          "default": "06/2026"
+        },
+        {
+          "id": "default-year",
+          "type": "date",
+          "options": "year",
+          "prompt": "Year default",
+          "default": "2026"
+        },
+        {
+          "id": "default-time",
+          "type": "time",
+          "prompt": "Time default",
+          "default": "14:28:30",
+          "min": "09:00:00",
+          "max": "18:00:00",
+          "withSeconds": true
         },
         {
           "id": "default-likert",
@@ -504,6 +594,13 @@
             }
           ],
           "default": "pie"
+        },
+        {
+          "id": "default-dropdown-country",
+          "type": "dropdown",
+          "prompt": "Country dropdown default",
+          "options": "countries",
+          "default": "US"
         },
         {
           "id": "default-dropdown-multiselect",

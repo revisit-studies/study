@@ -68,6 +68,390 @@ describe('Text response validation config parsing', () => {
     },
   );
 
+  test.each(['email', 'phoneNumber', 'usPhoneNumber', 'url'])('accepts the %s built-in validation for short text responses', async (builtInValidation) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], { builtInValidation });
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toEqual([]);
+  });
+  test.each([
+    {
+      fixedValue: { requiredValue: 'not-an-email' },
+      instancePath: '/components/question1/response/0/requiredValue',
+      label: 'requiredValue',
+    },
+    {
+      fixedValue: { textValidation: [{ type: 'equals', value: 'not-an-email' }] },
+      instancePath: '/components/question1/response/0/textValidation/0/value',
+      label: 'equals',
+    },
+  ])('rejects an invalid built-in validation $label value', async ({
+    fixedValue, instancePath, label,
+  }) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      builtInValidation: 'email',
+      ...fixedValue,
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: `${label} value \`not-an-email\` does not satisfy email built-in validation`,
+      instancePath,
+    }));
+  });
+  test('validates inherited fixed values against built-in validation', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig, {
+      baseComponents: {
+        sharedQuestion: {
+          type: 'questionnaire',
+          response: [{
+            id: 'email',
+            prompt: 'Email',
+            type: 'shortText',
+            builtInValidation: 'email',
+          }],
+        },
+      },
+      components: {
+        inheritedQuestion: {
+          baseComponent: 'sharedQuestion',
+          response: [{
+            id: 'email',
+            prompt: 'Email',
+            type: 'shortText',
+            requiredValue: 'not-an-email',
+          }],
+        },
+      },
+      sequence: {
+        order: 'fixed',
+        components: ['inheritedQuestion'],
+      },
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'requiredValue value `not-an-email` does not satisfy email built-in validation',
+      instancePath: '/components/inheritedQuestion/response/0/requiredValue',
+    }));
+  });
+  test('rejects different requiredValue and equals values with built-in validation', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      builtInValidation: 'email',
+      requiredValue: 'first@example.com',
+      textValidation: [{ type: 'equals', value: 'second@example.com' }],
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'requiredValue value `first@example.com` conflicts with equals value `second@example.com`',
+      instancePath: '/components/question1/response/0/textValidation/0/value',
+    }));
+  });
+  test.each(['currency', 'date', 'time'])('rejects the unsupported %s built-in validation', async (builtInValidation) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], { builtInValidation });
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors.some((error) => error.instancePath.includes('builtInValidation'))).toBe(true);
+  });
+  test('accepts a date response with MM/DD/YYYY default and required values', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type: 'date',
+      default: '08/21/2026',
+      requiredValue: '08/22/2026',
+      min: '08/01/2026',
+      max: '08/31/2026',
+      placeholder: 'MM/DD/YYYY',
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toEqual([]);
+  });
+  test.each([
+    {
+      options: 'month', defaultValue: '06/2009', requiredValue: '07/2009', min: '01/2009', max: '12/2009',
+    },
+    {
+      options: 'year', defaultValue: '2009', requiredValue: '2010', min: '2000', max: '2020',
+    },
+  ])('accepts a date response with $options values', async ({
+    options, defaultValue, requiredValue, min, max,
+  }) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type: 'date', options, default: defaultValue, requiredValue, min, max,
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toEqual([]);
+  });
+  test('accepts a time response with HH:mm default and required values', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type: 'time',
+      default: '14:28',
+      requiredValue: '23:59',
+      min: '08:00',
+      max: '23:59',
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toEqual([]);
+  });
+  test('accepts a time response with HH:mm:ss values when withSeconds is true', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type: 'time',
+      default: '14:28:30',
+      requiredValue: '23:59:59',
+      withSeconds: true,
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toEqual([]);
+  });
+  test.each(['12h', '24h'])('accepts the %s time display format', async (format) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type: 'time',
+      default: '14:28',
+      format,
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toEqual([]);
+  });
+  test('rejects an unsupported time display format', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type: 'time',
+      format: 'military',
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors.some((error) => error.instancePath.includes('/format'))).toBe(true);
+  });
+  test.each([
+    {
+      type: 'date', field: 'default', value: '02/29/2025', format: 'MM/DD/YYYY',
+    },
+    {
+      type: 'date', field: 'requiredValue', value: '2025-02-28', format: 'MM/DD/YYYY',
+    },
+    {
+      type: 'date', field: 'min', value: '2025-02-28', format: 'MM/DD/YYYY',
+    },
+    {
+      type: 'date', field: 'max', value: '02/29/2025', format: 'MM/DD/YYYY',
+    },
+    {
+      type: 'date', field: 'default', value: '06/24/0099', format: 'MM/DD/YYYY',
+    },
+    {
+      type: 'date', field: 'default', value: '13/2025', format: 'MM/YYYY', options: 'month',
+    },
+    {
+      type: 'date', field: 'requiredValue', value: '06/24/2025', format: 'MM/YYYY', options: 'month',
+    },
+    {
+      type: 'date', field: 'default', value: '06/0099', format: 'MM/YYYY', options: 'month',
+    },
+    {
+      type: 'date', field: 'min', value: '0000', format: 'YYYY', options: 'year',
+    },
+    {
+      type: 'date', field: 'max', value: '06/2025', format: 'YYYY', options: 'year',
+    },
+    {
+      type: 'date', field: 'default', value: '0099', format: 'YYYY', options: 'year',
+    },
+    {
+      type: 'time', field: 'default', value: '24:00', format: 'HH:mm',
+    },
+    {
+      type: 'time', field: 'requiredValue', value: '2:30 PM', format: 'HH:mm',
+    },
+    {
+      type: 'time', field: 'default', value: '14:28:30', format: 'HH:mm',
+    },
+    {
+      type: 'time', field: 'requiredValue', value: '14:28', format: 'HH:mm:ss', withSeconds: true,
+    },
+    {
+      type: 'time', field: 'min', value: '2:30', format: 'HH:mm',
+    },
+    {
+      type: 'time', field: 'max', value: '24:00', format: 'HH:mm',
+    },
+  ])('rejects invalid $type $field values', async ({
+    type, field, value, format, withSeconds, options,
+  }) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type,
+      [field]: value,
+      ...(withSeconds === undefined ? {} : { withSeconds }),
+      ...(options === undefined ? {} : { options }),
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: `${type} ${field} must be a valid ${format} value`,
+      instancePath: `/components/question1/response/0/${field}`,
+    }));
+  });
+  test('rejects a date range where min is after max', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type: 'date',
+      min: '08/31/2026',
+      max: '08/01/2026',
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'date min must be less than or equal to max',
+      instancePath: '/components/question1/response/0',
+    }));
+  });
+  test.each([
+    { options: 'month', min: '12/2026', max: '01/2026' },
+    { options: 'year', min: '2026', max: '2009' },
+  ])('rejects a reversed $options date option range', async ({ options, min, max }) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type: 'date', options, min, max,
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'date min must be less than or equal to max',
+      instancePath: '/components/question1/response/0',
+    }));
+  });
+  test.each([
+    { field: 'default', value: '07/31/2026', bound: 'min' },
+    { field: 'requiredValue', value: '09/01/2026', bound: 'max' },
+  ])('rejects a date $field outside $bound', async ({ field, value, bound }) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type: 'date',
+      [field]: value,
+      min: '08/01/2026',
+      max: '08/31/2026',
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: `date ${field} must be on ${bound === 'min' ? 'or after' : 'or before'} ${bound}`,
+      instancePath: `/components/question1/response/0/${field}`,
+    }));
+  });
+  test('rejects a time range where min is after max', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type: 'time',
+      min: '18:00',
+      max: '09:00',
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'time min must be less than or equal to max',
+      instancePath: '/components/question1/response/0',
+    }));
+  });
+  test('rejects a time requiredValue outside the configured range', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type: 'time',
+      requiredValue: '18:01',
+      min: '09:00',
+      max: '18:00',
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'time requiredValue must be at or before max',
+      instancePath: '/components/question1/response/0/requiredValue',
+    }));
+  });
+  test('validates date and time constraints defined in base components', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig, {
+      baseComponents: {
+        sharedQuestion: {
+          type: 'questionnaire',
+          response: [
+            {
+              id: 'base-date', prompt: 'Date', type: 'date', default: '04/31/2025',
+            },
+            {
+              id: 'base-time', prompt: 'Time', type: 'time', requiredValue: '14:60',
+            },
+          ],
+        },
+      },
+    });
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'date default must be a valid MM/DD/YYYY value',
+      instancePath: '/baseComponents/sharedQuestion/response/0/default',
+    }));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'time requiredValue must be a valid HH:mm value',
+      instancePath: '/baseComponents/sharedQuestion/response/1/requiredValue',
+    }));
+  });
+  test.each(['date', 'time'])('rejects a non-string requiredValue for a %s response', async (type) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type,
+      requiredValue: 1234,
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      instancePath: '/components/question1/response/0/requiredValue',
+    }));
+  });
+  test('accepts a country dropdown preset as its options', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type: 'dropdown',
+      options: 'countries',
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toEqual([]);
+  });
+  test.each([
+    { field: 'default', value: 'XX', valuePath: '/components/question1/response/0/default' },
+    { field: 'requiredValue', value: 'United States', valuePath: '/components/question1/response/0/requiredValue' },
+    { field: 'default', value: ['US', 'XX'], valuePath: '/components/question1/response/0/default/1' },
+  ])('rejects an invalid country preset $field value', async ({ field, value, valuePath }) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type: 'dropdown',
+      options: 'countries',
+      [field]: value,
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: `dropdown ${field} value \`${Array.isArray(value) ? 'XX' : value}\` is not a valid country code`,
+      instancePath: valuePath,
+    }));
+  });
   test.each([0, 1])('rejects a malformed regular expression for response %s', async (responseIndex) => {
     const studyConfig = makeStudyConfig('matchesRegex');
     studyConfig.components.question1.response[responseIndex].textValidation[0].value = '[';
@@ -131,7 +515,7 @@ describe('Text response validation config parsing', () => {
     expect(result.errors).toEqual([]);
   });
 
-  test('warns about zero maximum length constraints for required text responses', async () => {
+  test('rejects zero maximum length constraints for required text responses', async () => {
     const studyConfig = makeStudyConfig('contains');
     studyConfig.components.question1.response.forEach((response) => {
       Object.assign(response, { maxCharLength: 0, maxWordLength: 0 });
@@ -139,13 +523,12 @@ describe('Text response validation config parsing', () => {
 
     const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
-    expect(result.errors).toEqual([]);
     [0, 1].forEach((responseIndex) => {
-      expect(result.warnings).toContainEqual(expect.objectContaining({
+      expect(result.errors).toContainEqual(expect.objectContaining({
         message: 'maxCharLength must be greater than zero for a required text response',
         instancePath: `/components/question1/response/${responseIndex}/maxCharLength`,
       }));
-      expect(result.warnings).toContainEqual(expect.objectContaining({
+      expect(result.errors).toContainEqual(expect.objectContaining({
         message: 'maxWordLength must be greater than zero for a required text response',
         instancePath: `/components/question1/response/${responseIndex}/maxWordLength`,
       }));
@@ -163,7 +546,7 @@ describe('Text response validation config parsing', () => {
     expect(result.errors).toEqual([]);
   });
 
-  test.each([0, 1])('warns when minCharLength is greater than maxCharLength for response %s', async (responseIndex) => {
+  test.each([0, 1])('rejects minCharLength greater than maxCharLength for response %s', async (responseIndex) => {
     const studyConfig = makeStudyConfig('contains');
     Object.assign(studyConfig.components.question1.response[responseIndex], {
       minCharLength: 10,
@@ -172,14 +555,13 @@ describe('Text response validation config parsing', () => {
 
     const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
-    expect(result.errors).toEqual([]);
-    expect(result.warnings).toContainEqual(expect.objectContaining({
+    expect(result.errors).toContainEqual(expect.objectContaining({
       message: 'minCharLength must be less than or equal to maxCharLength',
       instancePath: `/components/question1/response/${responseIndex}`,
     }));
   });
 
-  test.each([0, 1])('warns when minWordLength is greater than maxWordLength for response %s', async (responseIndex) => {
+  test.each([0, 1])('rejects minWordLength greater than maxWordLength for response %s', async (responseIndex) => {
     const studyConfig = makeStudyConfig('contains');
     Object.assign(studyConfig.components.question1.response[responseIndex], {
       minWordLength: 10,
@@ -188,14 +570,13 @@ describe('Text response validation config parsing', () => {
 
     const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
-    expect(result.errors).toEqual([]);
-    expect(result.warnings).toContainEqual(expect.objectContaining({
+    expect(result.errors).toContainEqual(expect.objectContaining({
       message: 'minWordLength must be less than or equal to maxWordLength',
       instancePath: `/components/question1/response/${responseIndex}`,
     }));
   });
 
-  test('warns when minWordLength cannot fit within maxCharLength', async () => {
+  test('rejects minWordLength that cannot fit within maxCharLength', async () => {
     const studyConfig = makeStudyConfig('contains');
     Object.assign(studyConfig.components.question1.response[0], {
       minWordLength: 2,
@@ -204,8 +585,7 @@ describe('Text response validation config parsing', () => {
 
     const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
-    expect(result.errors).toEqual([]);
-    expect(result.warnings).toContainEqual(expect.objectContaining({
+    expect(result.errors).toContainEqual(expect.objectContaining({
       message: 'minWordLength of 2 requires at least 3 characters, which exceeds maxCharLength of 2',
       instancePath: '/components/question1/response/0',
     }));
@@ -250,7 +630,7 @@ describe('Text response validation config parsing', () => {
     },
   );
 
-  test('warns about direct contains and doesNotContain contradictions', async () => {
+  test('rejects direct contains and doesNotContain contradictions', async () => {
     const studyConfig = makeStudyConfig('contains');
     studyConfig.components.question1.response[0].textValidation = [
       { type: 'contains', value: 'ReVISit' },
@@ -259,14 +639,13 @@ describe('Text response validation config parsing', () => {
 
     const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
-    expect(result.errors).toEqual([]);
-    expect(result.warnings).toContainEqual(expect.objectContaining({
+    expect(result.errors).toContainEqual(expect.objectContaining({
       message: 'contains value `ReVISit` always includes doesNotContain value `ReVISit`',
       instancePath: '/components/question1/response/0/textValidation/1/value',
     }));
   });
 
-  test('warns when equals conflicts with literal and length constraints', async () => {
+  test('rejects equals that conflicts with literal and length constraints', async () => {
     const studyConfig = makeStudyConfig('equals');
     Object.assign(studyConfig.components.question1.response[0], {
       maxCharLength: 6,
@@ -279,16 +658,15 @@ describe('Text response validation config parsing', () => {
 
     const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
-    expect(result.errors).toEqual([]);
-    expect(result.warnings).toContainEqual(expect.objectContaining({
+    expect(result.errors).toContainEqual(expect.objectContaining({
       message: 'equals value `ReVISit` conflicts with contains value `study`',
       instancePath: '/components/question1/response/0/textValidation/1/value',
     }));
-    expect(result.warnings).toContainEqual(expect.objectContaining({
+    expect(result.errors).toContainEqual(expect.objectContaining({
       message: 'equals value `ReVISit` conflicts with doesNotEqual value `ReVISit`',
       instancePath: '/components/question1/response/0/textValidation/2/value',
     }));
-    expect(result.warnings).toContainEqual(expect.objectContaining({
+    expect(result.errors).toContainEqual(expect.objectContaining({
       message: 'equals value `ReVISit` has 7 characters, which exceeds maxCharLength of 6',
       instancePath: '/components/question1/response/0/textValidation/0/value',
     }));
@@ -327,7 +705,7 @@ describe('Text response validation config parsing', () => {
     }));
   });
 
-  test('warns about unsatisfiable text length constraints after merging inherited components', async () => {
+  test('rejects unsatisfiable text length constraints after merging inherited components', async () => {
     const studyConfig = makeStudyConfig('contains');
     Object.assign(studyConfig, {
       baseComponents: {
@@ -360,8 +738,7 @@ describe('Text response validation config parsing', () => {
 
     const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
-    expect(result.errors).toEqual([]);
-    expect(result.warnings).toContainEqual(expect.objectContaining({
+    expect(result.errors).toContainEqual(expect.objectContaining({
       message: 'minCharLength must be less than or equal to maxCharLength',
       instancePath: '/components/inheritedQuestion/response/0',
     }));

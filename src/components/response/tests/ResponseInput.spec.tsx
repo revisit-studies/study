@@ -151,15 +151,19 @@ vi.mock('@mantine/core', () => {
         <textarea placeholder={placeholder} />
       </div>
     ),
-    Select: ({ label, description, data }: { label?: ReactNode; description?: ReactNode; data?: { label: string }[] }) => (
-      <div>
+    Select: ({
+      label, description, data, searchable,
+    }: { label?: ReactNode; description?: ReactNode; data?: { label: string }[]; searchable?: boolean }) => (
+      <div data-searchable={searchable || undefined}>
         {label}
         {description}
         <select>{data?.map((d) => <option key={d.label}>{d.label}</option>)}</select>
       </div>
     ),
-    MultiSelect: ({ label, description, data }: { label?: ReactNode; description?: ReactNode; data?: { label: string }[] }) => (
-      <div data-multiselect>
+    MultiSelect: ({
+      label, description, data, searchable,
+    }: { label?: ReactNode; description?: ReactNode; data?: { label: string }[]; searchable?: boolean }) => (
+      <div data-multiselect data-searchable={searchable || undefined}>
         {label}
         {description}
         <select multiple>{data?.map((d) => <option key={d.label}>{d.label}</option>)}</select>
@@ -540,6 +544,7 @@ describe('DropdownInput', () => {
     expect(html).toContain('Choose a color');
     expect(html).toContain('Red');
     expect(html).toContain('Blue');
+    expect(html).not.toContain('data-searchable');
   });
 
   test('renders MultiSelect when maxSelections > 1', () => {
@@ -553,6 +558,24 @@ describe('DropdownInput', () => {
       />,
     );
     expect(html).toContain('data-multiselect');
+    expect(html).toContain('data-searchable="true"');
+  });
+
+  test('renders the countries option preset with emoji labels', () => {
+    const html = renderToStaticMarkup(
+      <DropdownInput
+        response={{
+          id: 'country', prompt: 'Select a country', type: 'dropdown', options: 'countries',
+        }}
+        disabled={false}
+        answer={{ value: '' }}
+        index={1}
+        enumerateQuestions={false}
+      />,
+    );
+
+    expect(html).toContain('🇺🇸 United States');
+    expect(html).toContain('data-searchable="true"');
   });
 });
 

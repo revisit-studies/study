@@ -8,6 +8,7 @@ import {
 import { CheckBoxInput } from './CheckBoxInput';
 import { CustomResponseInput } from './CustomResponseInput';
 import { DropdownInput } from './DropdownInput';
+import { DateResponseInput } from './DateInput';
 import { ReactiveInput } from './ReactiveInput';
 import { LikertInput } from './LikertInput';
 import { NumericInput } from './NumericInput';
@@ -16,6 +17,7 @@ import { RankingInput } from './RankingInput';
 import { SliderInput } from './SliderInput';
 import { StringInput } from './StringInput';
 import { TextAreaInput } from './TextAreaInput';
+import { TimeResponseInput } from './TimeInput';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { MatrixInput } from './MatrixInput';
 import { ButtonsInput } from './ButtonsInput';
@@ -27,6 +29,7 @@ import { useCurrentStep } from '../../routes/utils';
 import { TextOnlyInput } from './TextOnlyInput';
 import { useFetchStylesheet } from '../../utils/fetchStylesheet';
 import { parseStringOptionValue, parseStringOptions } from '../../utils/stringOptions';
+import { getDropdownOptions } from '../../utils/dropdownOptions';
 import {
   getDefaultFieldValue, normalizeCheckboxValue,
 } from './utils';
@@ -171,7 +174,11 @@ export function ResponseSwitcher({
     [`${response.id}-other`]: otherValue.value,
   }), [response.id, ans.value, dontKnowChecked, otherValue.value]);
   const errorOptions = useMemo(() => {
-    if (response.type === 'radio' || response.type === 'checkbox' || response.type === 'buttons' || response.type === 'dropdown') {
+    if (response.type === 'dropdown') {
+      return getDropdownOptions(response);
+    }
+
+    if (response.type === 'radio' || response.type === 'checkbox' || response.type === 'buttons') {
       return parseStringOptions(response.options);
     }
 
@@ -262,6 +269,26 @@ export function ResponseSwitcher({
       {response.type === 'shortText' && (
       <StringInput
         response={withTemplatedFields(response)}
+        disabled={isDisabled || dontKnowChecked}
+        answer={ans as { value: string }}
+        error={responseError}
+        index={index}
+        enumerateQuestions={enumerateQuestions}
+      />
+      )}
+      {response.type === 'date' && (
+      <DateResponseInput
+        response={response}
+        disabled={isDisabled || dontKnowChecked}
+        answer={ans as { value: string }}
+        error={responseError}
+        index={index}
+        enumerateQuestions={enumerateQuestions}
+      />
+      )}
+      {response.type === 'time' && (
+      <TimeResponseInput
+        response={response}
         disabled={isDisabled || dontKnowChecked}
         answer={ans as { value: string }}
         error={responseError}

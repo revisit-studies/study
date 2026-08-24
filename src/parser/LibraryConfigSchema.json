@@ -251,6 +251,16 @@
       "description": "The baseComponents is an optional set of components which can help template other components. For example, suppose you have a single HTML file that you want to display to the user several times. Instead of having the same component twice in the `components` list, you can have a single baseComponent with all the information that the two HTML components will share. A great example is showing the same HTML component but with two different questions;\n\n Using baseComponents:\n\n```json \"baseComponents\": {  \"my-image-component\": {    \"instructionLocation\": \"sidebar\",    \"nextButtonLocation\": \"sidebar\",    \"path\": \"<study-name>/assets/my-image.jpg\",    \"response\": [      {        \"id\": \"my-image-id\",        \"options\": [\"Europe\", \"Japan\", \"USA\"],        \"prompt\": \"Your Selected Answer:\",        \"type\": \"dropdown\"      }    ],    \"type\": \"image\"  } } ``` In the above code snippet, we have a single base component which holds the information about the type of component, the path to the image, and the response (which is a dropdown containing three choices). Any component which contains the `\"baseComponent\":\"my-image-component\"` key-value pair will inherit each of these properties. Thus, if we have three different questions which have the same choices and are concerning the same image, we can define our components like below: ```json \"components\": {  \"q1\": {    \"baseComponent\": \"my-image-component\",    \"description\": \"Choosing section with largest GDP\",    \"instruction\": \"Which region has the largest GDP?\"  },  \"q2\": {    \"baseComponent\": \"my-image-component\",    \"description\": \"Choosing section with lowest GDP\",    \"instruction\": \"Which region has the lowest GDP?\"  },  \"q3\": {    \"baseComponent\": \"my-image-component\",    \"description\": \"Choosing section with highest exports of Wheat\",    \"instruction\": \"Which region had the most Wheat exported in 2022?\"  } } ```",
       "type": "object"
     },
+    "BuiltInValidationType": {
+      "description": "The built-in validation operations available for short text responses.\n\n- `email`: An email in `local@domain.tld` format, such as `test@revisit.dev`.\n- `phoneNumber`: An international phone number containing 7–15 digits, with an optional leading `+` and hyphens between digits.\n- `usPhoneNumber`: A 10-digit US phone number in `000-000-0000` format.\n- `url`: An absolute HTTP or HTTPS URL, such as `https://revisit.dev`.",
+      "enum": [
+        "email",
+        "phoneNumber",
+        "usPhoneNumber",
+        "url"
+      ],
+      "type": "string"
+    },
     "ButtonsResponse": {
       "additionalProperties": false,
       "description": "The ButtonsResponse interface is used to define the properties of a buttons response. ButtonsResponses render as a list of buttons that the participant can click. When a button is clicked, the value of the button is stored in the data file. Participants can cycle through the options using the arrow keys. ```json {   \"id\": \"buttonsResponse\",   \"type\": \"buttons\",   \"prompt\": \"Click a button\",   \"location\": \"belowStimulus\",   \"default\": \"Option 2\",   \"options\": [     \"Option 1\",     \"Option 2\",     \"Option 3\"   ] } ``` In this example, the participant can click one of the buttons labeled \"Option 1\", \"Option 2\", or \"Option 3\".",
@@ -664,6 +674,107 @@
       ],
       "type": "object"
     },
+    "DateResponse": {
+      "additionalProperties": false,
+      "description": "The DateResponse interface defines a date entered directly or selected with a date picker, or a month or year selected with the corresponding picker. Values are stored as `MM/DD/YYYY`, `MM/YYYY`, or `YYYY` strings based on `options`. Supported years range from `0100` through `9999`. ```json {   \"id\": \"q-date\",   \"prompt\": \"Select a date.\",   \"location\": \"aboveStimulus\",   \"type\": \"date\",   \"options\": \"date\",   \"default\": \"08/21/2026\",   \"min\": \"08/01/2026\",   \"max\": \"08/31/2026\",   \"placeholder\": \"MM/DD/YYYY\" } ```",
+      "properties": {
+        "default": {
+          "description": "The default value, using the format selected by `options`. Years must be between `0100` and `9999`.",
+          "type": "string"
+        },
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
+        "hidden": {
+          "description": "Controls whether the response is hidden.",
+          "type": "boolean"
+        },
+        "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "max": {
+          "description": "The latest value accepted, using the format selected by `options`. Years must be between `0100` and `9999`.",
+          "type": "string"
+        },
+        "min": {
+          "description": "The earliest value accepted, using the format selected by `options`. Years must be between `0100` and `9999`.",
+          "type": "string"
+        },
+        "options": {
+          "description": "Determines whether participants enter or select a date, or select a month or year with a picker. Defaults to `date`.",
+          "enum": [
+            "date",
+            "month",
+            "year"
+          ],
+          "type": "string"
+        },
+        "paramCapture": {
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "placeholder": {
+          "description": "The placeholder text displayed in the input. Defaults to the format used by `options`.",
+          "type": "string"
+        },
+        "prompt": {
+          "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
+          "type": "string"
+        },
+        "required": {
+          "description": "Controls whether the response is required to be answered. Defaults to true.",
+          "type": "boolean"
+        },
+        "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
+          "type": "string"
+        },
+        "requiredValue": {
+          "description": "The value required for a correct response, using the format selected by `options`. Years must be between `0100` and `9999`.",
+          "type": "string"
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
+          "type": "string"
+        },
+        "type": {
+          "const": "date",
+          "type": "string"
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "prompt",
+        "type"
+      ],
+      "type": "object"
+    },
     "DeterministicInterruption": {
       "additionalProperties": false,
       "description": "The DeterministicInterruption interface is used to define an interruption that will be shown at a specific location in the block.\n\nFor example, if you want to show an interruption after the second component in the block, you would set firstLocation to 2. If you want to show an interruption after every 3 components, you would set spacing to 3. If you want to show an interruption after the second component and then every 3 components, you would set firstLocation to 2 and spacing to 3.\n\nThe components property is an array of the components that will be inserted at the location specified by firstLocation and spacing. These components should reference components in the StudyConfig.components section of the config.\n\nHere's an example of how to use the DeterministicInterruption:\n\n```json {  \"order\": \"fixed\",  \"components\": [    \"component1\",    \"component2\",    \"component3\",    \"component4\",    \"component5\",    \"component6\"  ],  \"interruptions\": [    {      \"firstLocation\": 2,      \"spacing\": 3,      \"components\": [        \"interruption1\",        \"interruption2\"      ]    }  ] } ```\n\nThe resulting sequence array could be:\n\n```json [  [\"component1\", \"component2\", \"interruption1\", \"component3\", \"component4\", \"component5\", \"interruption2\", \"component6\"],  [\"component1\", \"component2\", \"interruption1\", \"component3\", \"component4\", \"component5\", \"interruption2\", \"component6\"],  [\"component1\", \"component2\", \"interruption1\", \"component3\", \"component4\", \"component5\", \"interruption2\", \"component6\"],  ... ] ```",
@@ -756,9 +867,14 @@
       ],
       "type": "object"
     },
+    "DropdownOptionPreset": {
+      "const": "countries",
+      "description": "Predefined option sets available to dropdown responses.",
+      "type": "string"
+    },
     "DropdownResponse": {
       "additionalProperties": false,
-      "description": "The DropdownResponse interface is used to define the properties of a dropdown response. DropdownResponses render as a select input with user specified options. ```json {   \"id\": \"q-color\",   \"prompt\": \"What is your favorite color?\",   \"location\": \"aboveStimulus\",   \"type\": \"dropdown\",   \"default\": \"Blue\",   \"placeholder\": \"Please choose your favorite color\",   \"options\": [\"Red\", \"Blue\"] } ```\n\nHere's an example of a multiselect dropdown with minimum and maximum selections:\n\n```json {   \"id\": \"q-multiselect-dropdown\",   \"prompt\": \"Select the fruits you like.\",   \"location\": \"aboveStimulus\",   \"type\": \"dropdown\",   \"default\": [\"Banana\", \"Orange\"],   \"placeholder\": \"Select your favorite fruits\",   \"options\": [\"Apple\", \"Banana\", \"Cherry\", \"Grape\", \"Orange\", \"Strawberry\", \"Watermelon\", \"Pineapple\"],   \"minSelections\": 2,   \"maxSelections\": 4 } ```",
+      "description": "The DropdownResponse interface is used to define the properties of a dropdown response. DropdownResponses render as a select input with user specified options. ```json {   \"id\": \"q-color\",   \"prompt\": \"What is your favorite color?\",   \"location\": \"aboveStimulus\",   \"type\": \"dropdown\",   \"default\": \"Blue\",   \"placeholder\": \"Please choose your favorite color\",   \"options\": [\"Red\", \"Blue\"] } ```\n\nHere's an example of a multiselect dropdown with minimum and maximum selections:\n\n```json {   \"id\": \"q-multiselect-dropdown\",   \"prompt\": \"Select the fruits you like.\",   \"location\": \"aboveStimulus\",   \"type\": \"dropdown\",   \"default\": [\"Banana\", \"Orange\"],   \"placeholder\": \"Select your favorite fruits\",   \"options\": [\"Apple\", \"Banana\", \"Cherry\", \"Grape\", \"Orange\", \"Strawberry\", \"Watermelon\", \"Pineapple\"],   \"minSelections\": 2,   \"maxSelections\": 4 } ```\n\nA dropdown can alternatively use a predefined option set: ```json {   \"id\": \"q-country\",   \"prompt\": \"Select your country.\",   \"type\": \"dropdown\",   \"options\": \"countries\" } ```",
       "properties": {
         "default": {
           "anyOf": [
@@ -803,25 +919,32 @@
           "type": "number"
         },
         "options": {
-          "description": "The options that are displayed in the dropdown.",
-          "items": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/StringOption"
+          "anyOf": [
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/StringOption"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
-              {
-                "type": "string"
-              }
-            ]
-          },
-          "type": "array"
+              "type": "array"
+            },
+            {
+              "$ref": "#/definitions/DropdownOptionPreset"
+            }
+          ],
+          "description": "The options that are displayed in the dropdown, or a predefined option set."
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
         },
         "placeholder": {
-          "description": "The placeholder text that is displayed in the input.",
+          "description": "The placeholder text displayed in the input. Defaults to `Select a country` when `options` is `countries`.",
           "type": "string"
         },
         "prompt": {
@@ -2304,7 +2427,7 @@
           "type": "string"
         },
         "placeholder": {
-          "description": "The placeholder text that is displayed in the input.",
+          "description": "The placeholder text displayed in the input.",
           "type": "string"
         },
         "prompt": {
@@ -3081,6 +3204,12 @@
           "$ref": "#/definitions/NumericalResponse"
         },
         {
+          "$ref": "#/definitions/DateResponse"
+        },
+        {
+          "$ref": "#/definitions/TimeResponse"
+        },
+        {
           "$ref": "#/definitions/ShortTextResponse"
         },
         {
@@ -3128,6 +3257,10 @@
       "additionalProperties": false,
       "description": "The ShortTextResponse interface is used to define the properties of a short text response. ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder. ```json {   \"id\": \"q-short-text\",   \"prompt\": \"Short text example\",   \"location\": \"aboveStimulus\",   \"type\": \"shortText\",   \"default\": \"ReVISit is great\",   \"placeholder\": \"Enter your answer here\",   \"minCharLength\": 3,   \"maxCharLength\": 100,   \"minWordLength\": 2,   \"maxWordLength\": 20,   \"textValidation\": [     {       \"type\": \"contains\",       \"value\": \"ReVISit\"     }   ] } ```",
       "properties": {
+        "builtInValidation": {
+          "$ref": "#/definitions/BuiltInValidationType",
+          "description": "Applies one predefined format from BuiltInValidationType to the response value."
+        },
         "default": {
           "description": "The default value of the response. Specify a string such as `\"Jane Doe\"`.",
           "type": "string"
@@ -3645,6 +3778,106 @@
         "doesNotEqual"
       ],
       "type": "string"
+    },
+    "TimeResponse": {
+      "additionalProperties": false,
+      "description": "The TimeResponse interface defines a time selected with a time input. Time values are stored as 24-hour `HH:mm` strings, or `HH:mm:ss` when `withSeconds` is `true`. ```json {   \"id\": \"q-time\",   \"prompt\": \"Select a time.\",   \"location\": \"aboveStimulus\",   \"type\": \"time\",   \"default\": \"14:28:30\",   \"min\": \"09:00:00\",   \"max\": \"18:00:00\",   \"format\": \"24h\",   \"withSeconds\": true } ```",
+      "properties": {
+        "default": {
+          "description": "The default time in 24-hour `HH:mm` format, or `HH:mm:ss` when `withSeconds` is `true`.",
+          "type": "string"
+        },
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
+        "format": {
+          "description": "The format displayed to participants. Defaults to `24h`. Values are always stored in 24-hour format.",
+          "enum": [
+            "12h",
+            "24h"
+          ],
+          "type": "string"
+        },
+        "hidden": {
+          "description": "Controls whether the response is hidden.",
+          "type": "boolean"
+        },
+        "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "max": {
+          "description": "The latest time accepted, in the same format as the response value.",
+          "type": "string"
+        },
+        "min": {
+          "description": "The earliest time accepted, in the same format as the response value.",
+          "type": "string"
+        },
+        "paramCapture": {
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "prompt": {
+          "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
+          "type": "string"
+        },
+        "required": {
+          "description": "Controls whether the response is required to be answered. Defaults to true.",
+          "type": "boolean"
+        },
+        "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
+          "type": "string"
+        },
+        "requiredValue": {
+          "description": "The time required for a correct response, in 24-hour `HH:mm` format, or `HH:mm:ss` when `withSeconds` is `true`.",
+          "type": "string"
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
+          "type": "string"
+        },
+        "type": {
+          "const": "time",
+          "type": "string"
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
+        },
+        "withSeconds": {
+          "description": "Determines whether the input includes seconds. Defaults to `false`.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "prompt",
+        "type"
+      ],
+      "type": "object"
     },
     "VegaComponent": {
       "anyOf": [

@@ -1,6 +1,7 @@
 import isEqual from 'lodash.isequal';
 import {
   CheckboxResponse,
+  DateResponse,
   DropdownResponse,
   LongTextResponse,
   MatrixResponse,
@@ -9,11 +10,57 @@ import {
   Response,
   ShortTextResponse,
   TextValidationRule,
+  TimeResponse,
 } from '../../parser/types';
 import { CustomResponseValidate, StoredAnswer } from '../../store/types';
+import { isValidTime, parseDateValue } from '../../utils/dateTimeValidation';
+import { getDropdownOptions } from '../../utils/dropdownOptions';
 import { parseStringOptions, parseStringOptionValue } from '../../utils/stringOptions';
+import { checkBuiltInValidation } from './builtInValidation';
 
 export const REQUIRED_ERROR_MESSAGE = 'Please answer this question to continue.';
+export const INVALID_DATE_MESSAGE = 'Please select a valid date.';
+
+export function getDateValidationMessage(response: DateResponse, value: string) {
+  const options = response.options ?? 'date';
+  const dateOption = options === 'date' ? 'date' : options;
+  const date = parseDateValue(value, options);
+  if (date === null) {
+    return `Please select a valid ${dateOption}.`;
+  }
+
+  const minDate = response.min ? parseDateValue(response.min, options) : null;
+  const maxDate = response.max ? parseDateValue(response.max, options) : null;
+
+  if (minDate && maxDate && (date < minDate || date > maxDate)) {
+    return `Please select a ${dateOption} between ${response.min} and ${response.max}.`;
+  }
+  if (minDate && date < minDate) {
+    return `Please select a ${dateOption} on or after ${response.min}.`;
+  }
+  if (maxDate && date > maxDate) {
+    return `Please select a ${dateOption} on or before ${response.max}.`;
+  }
+
+  return null;
+}
+
+function getTimeValidationMessage(response: TimeResponse, value: string) {
+  if (!isValidTime(value, response.withSeconds)) {
+    return 'Please select a valid time.';
+  }
+  if (response.min && response.max && (value < response.min || value > response.max)) {
+    return `Please select a time between ${response.min} and ${response.max}.`;
+  }
+  if (response.min && value < response.min) {
+    return `Please select a time at or after ${response.min}.`;
+  }
+  if (response.max && value > response.max) {
+    return `Please select a time at or before ${response.max}.`;
+  }
+
+  return null;
+}
 
 export type ResponseIssueType = 'unanswered' | 'invalid';
 export type ResponseIssueSummary = { unansweredCount: number; invalidCount: number };
@@ -49,6 +96,13 @@ export function isEmptyCustomResponseValue(value: StoredAnswer['answer'][string]
 }
 
 export function checkDropdownResponse(dropdownResponse: DropdownResponse, value: string[]) {
+  if (dropdownResponse.options === 'countries') {
+    const countryValues = new Set(getDropdownOptions(dropdownResponse).map((option) => option.value));
+    if (value.some((entry) => !countryValues.has(entry))) {
+      return 'Please select a valid country.';
+    }
+  }
+
   const minNotSelected = dropdownResponse.minSelections && value.length < dropdownResponse.minSelections;
   const maxNotSelected = dropdownResponse.maxSelections && value.length > dropdownResponse.maxSelections;
 
@@ -175,6 +229,12 @@ export function checkTextResponse(response: ShortTextResponse | LongTextResponse
     return `Please enter at most ${maxWordLength} words.`;
   }
 
+  if (response.type === 'shortText' && response.builtInValidation) {
+    const builtInValidationError = checkBuiltInValidation(response.builtInValidation, value);
+    if (builtInValidationError) {
+      return builtInValidationError;
+    }
+  }
   const failedRule = response.textValidation?.find((rule) => !textValidationRulePasses(rule, value));
   return failedRule
     ? DEFAULT_TEXT_VALIDATION_MESSAGES[failedRule.type]
@@ -393,6 +453,36 @@ export function validateResponse(
     return createValidationResult(response, 'invalid', { message: 'Please fill in Other to continue.' });
   }
 
+  if (response.type === 'date') {
+    if (value === null || value === undefined || value === '') {
+      return createValidationResult(response, response.required === false ? 'none' : 'unanswered');
+    }
+    const dateError = typeof value === 'string'
+      ? getDateValidationMessage(response, value)
+      : INVALID_DATE_MESSAGE;
+    if (dateError) {
+      return createValidationResult(response, 'invalid', { message: dateError });
+    }
+    if (response.requiredValue != null && value !== response.requiredValue.toString()) {
+      return createValidationResult(response, 'invalid', { reason: 'requiredValueMismatch' });
+    }
+    return createValidationResult(response, 'none');
+  }
+  if (response.type === 'time') {
+    if (value === null || value === undefined || value === '') {
+      return createValidationResult(response, response.required === false ? 'none' : 'unanswered');
+    }
+    const timeError = typeof value === 'string'
+      ? getTimeValidationMessage(response, value)
+      : 'Please select a valid time.';
+    if (timeError) {
+      return createValidationResult(response, 'invalid', { message: timeError });
+    }
+    if (response.requiredValue != null && value !== response.requiredValue.toString()) {
+      return createValidationResult(response, 'invalid', { reason: 'requiredValueMismatch' });
+    }
+    return createValidationResult(response, 'none');
+  }
   if (response.type === 'shortText' || response.type === 'longText') {
     if (value === null || value === undefined || value === '') {
       return createValidationResult(response, response.required ? 'unanswered' : 'none');
@@ -448,6 +538,13 @@ export function validateResponse(
       return createValidationResult(response, response.required ? 'unanswered' : 'none');
     }
 
+    if (response.type === 'dropdown') {
+      const dropdownError = checkDropdownResponse(response, value as string[]);
+      if (dropdownError) {
+        return createValidationResult(response, 'invalid', { message: dropdownError });
+      }
+    }
+
     if (response.requiredValue != null && !Array.isArray(response.requiredValue)) {
       return createValidationResult(response, 'invalid', { message: 'Incorrect required value. Contact study administrator.' });
     }
@@ -482,6 +579,13 @@ export function validateResponse(
 
   if (value === null || value === undefined || value === '') {
     return createValidationResult(response, response.required ? 'unanswered' : 'none');
+  }
+
+  if (response.type === 'dropdown') {
+    const dropdownError = checkDropdownResponse(response, [value.toString()]);
+    if (dropdownError) {
+      return createValidationResult(response, 'invalid', { message: dropdownError });
+    }
   }
 
   if (response.requiredValue != null && value.toString() !== response.requiredValue.toString()) {

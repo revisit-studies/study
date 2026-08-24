@@ -3,6 +3,7 @@ import { test, expect, Page } from '@playwright/test';
 import {
   nextClick,
   readStoredComponentTiming,
+  seekReplay,
   waitForStudyEndMessage,
 } from './utils';
 
@@ -29,6 +30,32 @@ async function answerMatrixCheckboxRows(
       const column = selectedColumns[i];
       await checkboxes.nth((row * columnCount) + column).click();
     }
+  }
+}
+
+function getTimePickerInputs(page: Page, responseId: string) {
+  return page.locator(`#${responseId} input:not([type="hidden"])`);
+}
+
+async function fillTimePicker(page: Page, responseId: string, value: string) {
+  const [hours, minutes, seconds] = value.split(':');
+  const inputs = getTimePickerInputs(page, responseId);
+  await expect(inputs).toHaveCount(seconds === undefined ? 2 : 3);
+  await inputs.nth(0).fill(hours);
+  await inputs.nth(1).fill(minutes);
+  if (seconds !== undefined) {
+    await inputs.nth(2).fill(seconds);
+  }
+}
+
+async function expectTimePickerValue(page: Page, responseId: string, value: string) {
+  const [hours, minutes, seconds] = value.split(':');
+  const inputs = getTimePickerInputs(page, responseId);
+  await expect(inputs).toHaveCount(seconds === undefined ? 2 : 3);
+  await expect(inputs.nth(0)).toHaveValue(hours);
+  await expect(inputs.nth(1)).toHaveValue(minutes);
+  if (seconds !== undefined) {
+    await expect(inputs.nth(2)).toHaveValue(seconds);
   }
 }
 
@@ -73,7 +100,8 @@ test('Test questionnaire component with responses and randomizing questions and 
   const ageInput = page.getByPlaceholder('Enter your age here, range from 0 to 100');
   await expect(ageInput).toBeVisible({ timeout: 10000 });
   await ageInput.fill('120');
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await ageInput.press('Tab');
+  await nextClick(page);
   await expect(page.getByText('Please enter a value between 0 and 100')).toBeVisible();
   await ageInput.fill('12');
 
@@ -96,6 +124,12 @@ test('Test questionnaire component with responses and randomizing questions and 
   const minDropdownSelectionsText = await page.getByText('Please select at least 2 options');
   await expect(minDropdownSelectionsText).toBeVisible();
   await page.getByRole('option', { name: 'Scatter', exact: true }).click();
+
+  // Country dropdown
+  const countryDropdown = page.getByPlaceholder('Select a country');
+  await countryDropdown.fill('United Sta');
+  await page.getByRole('option', { name: /United States$/ }).click();
+  await expect(countryDropdown).toHaveValue(/United States/);
 
   // Vertical Checkbox
   await page.getByRole('checkbox', { name: 'Option 2' }).nth(0).click();
@@ -132,7 +166,9 @@ test('Test questionnaire component with responses and randomizing questions and 
   // Go to the next page
   await nextClick(page);
 
-  // Text validation
+  // Fill the survey: Text Validation
+  await expect(page.getByText('Text Validation', { exact: true })).toBeVisible();
+  const textValidationReplayPath = new URL(page.url()).pathname;
   const regexInput = page.getByPlaceholder('ABC-123');
   await regexInput.fill('^[A-Z]{3}-\\d{3}$');
   await nextClick(page);
@@ -140,19 +176,43 @@ test('Test questionnaire component with responses and randomizing questions and 
     page.getByText('Please enter a value that matches the required format.'),
   ).toBeVisible();
   await regexInput.fill('ABC-123');
-  await page.getByPlaceholder('ABC-123').fill('ABC-123');
-  await page.getByPlaceholder('I use ReVISit for...').fill('I use ReVISit');
-  await page.getByPlaceholder('Describe a valid response...').fill('This response works');
+  await page.getByPlaceholder('Share your feedback...').fill('ReVISit is great');
   await page.getByPlaceholder('ReVISit', { exact: true }).fill('ReVISit');
-  await page.getByPlaceholder('Anything except TEST').fill('ReVISit');
-  await page.getByPlaceholder('3–10 characters').fill('valid');
-  await page.getByPlaceholder('20–100 characters').fill('This response has enough characters.');
-  await page.getByPlaceholder('2–5 words').fill('two words');
-  await page.getByPlaceholder('4–10 words').fill('This has four words');
+  const characterLengthInput = page.getByPlaceholder('3–10 characters');
+  const wordLengthInput = page.getByPlaceholder('4–10 words');
+  await characterLengthInput.fill('no');
+  await wordLengthInput.fill('only three words');
+  await page.getByPlaceholder('test@revisit.dev').fill('test@revisit.dev');
+  await page.getByPlaceholder('+800-0000-0000').fill('+800-0000-0000');
+  await page.getByPlaceholder('800-000-0000').fill('800-000-0000');
+  await page.getByPlaceholder('https://revisit.dev').fill('https://revisit.dev');
+  await page.getByLabel('Date within a range.').fill('06/24/2026');
+  await page.locator('#month-picker-response [data-dates-input]').click();
+  await page.getByRole('button', { name: 'Jul', exact: true }).click();
+  await page.locator('#year-picker-response [data-dates-input]').click();
+  await page.getByRole('button', { name: '2027', exact: true }).click();
+  await fillTimePicker(page, 'time-standard-response', '14:28');
+  await fillTimePicker(page, 'time-range-response', '14:28');
+  await fillTimePicker(page, 'time-seconds-response', '14:28:30');
+  const twelveHourInputs = getTimePickerInputs(page, 'time-12-hour-response');
+  await expect(twelveHourInputs).toHaveCount(3);
+  await expect(twelveHourInputs.nth(0)).toHaveValue('02');
+  await expect(twelveHourInputs.nth(1)).toHaveValue('28');
+  await expect(twelveHourInputs.nth(2)).toHaveValue('PM');
+  await nextClick(page);
+  await expect(page.getByText('Please enter between 3 and 10 characters.')).toBeVisible();
+  await expect(page.getByText('Please enter between 4 and 10 words.')).toBeVisible();
+  await characterLengthInput.fill('valid');
+  await wordLengthInput.fill('This has four words');
   await nextClick(page);
 
   // Default Values should be fully answerable via defaults
   await expect(page.getByText('Default Values Demo')).toBeVisible();
+  await expect(page.getByLabel('Date default')).toHaveValue('06/24/2026');
+  await expect(page.locator('#default-month [data-dates-input]')).toHaveText('06/2026');
+  await expect(page.locator('#default-year [data-dates-input]')).toHaveText('2026');
+  await expectTimePickerValue(page, 'default-time', '14:28:30');
+  await expect(page.getByPlaceholder('Select a country')).toHaveValue(/United States/);
   await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeEnabled();
   await nextClick(page);
 
@@ -274,13 +334,28 @@ test('Test questionnaire component with responses and randomizing questions and 
   // Check that the thank you message is displayed
   await waitForStudyEndMessage(page);
 
+  await expect.poll(() => readStoredComponentTiming(page, 'Text Validation')).not.toBeNull();
+  const textValidationTiming = await readStoredComponentTiming(page, 'Text Validation');
   await expect.poll(() => readStoredComponentTiming(page, 'Sidebar Form Elements')).not.toBeNull();
   const sidebarTiming = await readStoredComponentTiming(page, 'Sidebar Form Elements');
-  if (!sidebarTiming) {
-    throw new Error('Sidebar form timing was not stored');
+  if (!textValidationTiming || !sidebarTiming) {
+    throw new Error('Form element timing was not stored');
   }
 
   const replaySearch = `participantId=${encodeURIComponent(sidebarTiming.participantId)}&revisitPageId=e2e-sidebar-replay`;
+  await page.goto(`${textValidationReplayPath}?${replaySearch}`);
+  await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
+  await seekReplay(
+    page,
+    textValidationTiming.startTime,
+    textValidationTiming.endTime,
+    textValidationTiming.endTime,
+  );
+  await expect(page.getByLabel('Date within a range.')).toHaveValue('06/24/2026');
+  await expect(page.locator('#month-picker-response [data-dates-input]')).toHaveText('07/2026');
+  await expect(page.locator('#year-picker-response [data-dates-input]')).toHaveText('2027');
+  await expectTimePickerValue(page, 'time-seconds-response', '14:28:30');
+
   await page.goto(`${sidebarReplayPath}?${replaySearch}`);
   await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
 

@@ -21,6 +21,13 @@ import {
   shouldWarnForDefaultSupabaseConfig,
 } from '../utils/defaultStorageConfig';
 import { studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
+import {
+  getDateValueFormat,
+  isValidTime,
+  parseDateValue,
+} from '../utils/dateTimeValidation';
+import { checkBuiltInValidation } from '../components/response/builtInValidation';
+import { getDropdownOptions } from '../utils/dropdownOptions';
 
 const modules = import.meta.glob(
   [
@@ -190,7 +197,6 @@ function countTextResponseWords(value: string) {
     .filter((word) => /[\p{L}\p{N}]/u.test(word))
     .length;
 }
-
 function verifyTextResponseConstraints(
   componentPath: string,
   component: Partial<IndividualComponent>,
@@ -225,7 +231,7 @@ function verifyTextResponseConstraints(
     });
 
     if (constraintsAreValid && response.required !== false && response.maxCharLength === 0) {
-      warnings.push({
+      errors.push({
         message: 'maxCharLength must be greater than zero for a required text response',
         instancePath: `${responsePath}/maxCharLength`,
         params: { action: 'Increase maxCharLength or make the response optional' },
@@ -234,7 +240,7 @@ function verifyTextResponseConstraints(
     }
 
     if (constraintsAreValid && response.required !== false && response.maxWordLength === 0) {
-      warnings.push({
+      errors.push({
         message: 'maxWordLength must be greater than zero for a required text response',
         instancePath: `${responsePath}/maxWordLength`,
         params: { action: 'Increase maxWordLength or make the response optional' },
@@ -248,7 +254,7 @@ function verifyTextResponseConstraints(
       && response.maxCharLength !== undefined
       && response.minCharLength > response.maxCharLength
     ) {
-      warnings.push({
+      errors.push({
         message: 'minCharLength must be less than or equal to maxCharLength',
         instancePath: responsePath,
         params: { action: 'Decrease minCharLength or increase maxCharLength' },
@@ -262,7 +268,7 @@ function verifyTextResponseConstraints(
       && response.maxWordLength !== undefined
       && response.minWordLength > response.maxWordLength
     ) {
-      warnings.push({
+      errors.push({
         message: 'minWordLength must be less than or equal to maxWordLength',
         instancePath: responsePath,
         params: { action: 'Decrease minWordLength or increase maxWordLength' },
@@ -278,7 +284,7 @@ function verifyTextResponseConstraints(
     ) {
       const minimumRequiredCharacters = response.minWordLength * 2 - 1;
       if (minimumRequiredCharacters > response.maxCharLength) {
-        warnings.push({
+        errors.push({
           message: `minWordLength of ${response.minWordLength} requires at least ${minimumRequiredCharacters} characters, which exceeds maxCharLength of ${response.maxCharLength}`,
           instancePath: responsePath,
           params: { action: 'Decrease minWordLength or increase maxCharLength' },
@@ -286,7 +292,6 @@ function verifyTextResponseConstraints(
         });
       }
     }
-
     response.textValidation?.forEach((rule, ruleIndex) => {
       if (
         rule.value === ''
@@ -309,7 +314,6 @@ function verifyTextResponseConstraints(
           category: 'invalid-config',
         });
       }
-
       if (rule.type !== 'matchesRegex') {
         return;
       }
@@ -325,14 +329,52 @@ function verifyTextResponseConstraints(
         });
       }
     });
-
     const textValidation = response.textValidation ?? [];
+    const fixedValues = [
+      ...(response.requiredValue !== undefined && response.requiredValue !== null
+        ? [{
+          label: 'requiredValue',
+          path: `${responsePath}/requiredValue`,
+          value: response.requiredValue.toString(),
+        }]
+        : []),
+      ...textValidation.flatMap((rule, ruleIndex) => (rule.type === 'equals' && rule.value !== ''
+        ? [{
+          label: 'equals',
+          path: `${responsePath}/textValidation/${ruleIndex}/value`,
+          value: rule.value,
+        }]
+        : [])),
+    ];
+    const firstFixedValue = fixedValues[0];
+    const conflictingFixedValue = fixedValues.find(
+      ({ value }) => value !== firstFixedValue?.value,
+    );
+    if (firstFixedValue && conflictingFixedValue) {
+      errors.push({
+        message: `${firstFixedValue.label} value \`${firstFixedValue.value}\` conflicts with ${conflictingFixedValue.label} value \`${conflictingFixedValue.value}\``,
+        instancePath: conflictingFixedValue.path,
+        params: { action: 'Use the same value for requiredValue and all equals rules' },
+        category: 'invalid-config',
+      });
+    }
+    if (response.type === 'shortText' && response.builtInValidation) {
+      fixedValues.forEach(({ label, path, value }) => {
+        if (checkBuiltInValidation(response.builtInValidation!, value) !== null) {
+          errors.push({
+            message: `${label} value \`${value}\` does not satisfy ${response.builtInValidation} built-in validation`,
+            instancePath: path,
+            params: { action: `Change ${label} or remove the conflicting built-in validation` },
+            category: 'invalid-config',
+          });
+        }
+      });
+    }
     textValidation.forEach((firstRule, firstRuleIndex) => {
       textValidation.slice(firstRuleIndex + 1).forEach((secondRule, offset) => {
         const secondRuleIndex = firstRuleIndex + offset + 1;
         const containsRule = firstRule.type === 'contains' ? firstRule : secondRule;
         const doesNotContainRule = firstRule.type === 'doesNotContain' ? firstRule : secondRule;
-
         if (
           containsRule.type === 'contains'
           && doesNotContainRule.type === 'doesNotContain'
@@ -340,48 +382,30 @@ function verifyTextResponseConstraints(
           && doesNotContainRule.value !== ''
           && containsRule.value.includes(doesNotContainRule.value)
         ) {
-          warnings.push({
+          errors.push({
             message: `contains value \`${containsRule.value}\` always includes doesNotContain value \`${doesNotContainRule.value}\``,
             instancePath: `${responsePath}/textValidation/${secondRuleIndex}/value`,
             params: { action: 'Change or remove one of the conflicting text validation rules' },
             category: 'invalid-config',
           });
         }
-
-        if (
-          firstRule.type === 'equals'
-          && secondRule.type === 'equals'
-          && firstRule.value !== ''
-          && secondRule.value !== ''
-          && firstRule.value !== secondRule.value
-        ) {
-          warnings.push({
-            message: `equals rules require different values: \`${firstRule.value}\` and \`${secondRule.value}\``,
-            instancePath: `${responsePath}/textValidation/${secondRuleIndex}/value`,
-            params: { action: 'Keep only one required equals value' },
-            category: 'invalid-config',
-          });
-        }
       });
     });
-
     textValidation.forEach((rule, ruleIndex) => {
       if (rule.type !== 'equals' || rule.value === '') {
         return;
       }
-
       textValidation.forEach((otherRule, otherRuleIndex) => {
         if (otherRuleIndex === ruleIndex || otherRule.value === '') {
           return;
         }
-
         const conflicts = (
           (otherRule.type === 'doesNotEqual' && otherRule.value === rule.value)
           || (otherRule.type === 'contains' && !rule.value.includes(otherRule.value))
           || (otherRule.type === 'doesNotContain' && rule.value.includes(otherRule.value))
         );
         if (conflicts) {
-          warnings.push({
+          errors.push({
             message: `equals value \`${rule.value}\` conflicts with ${otherRule.type} value \`${otherRule.value}\``,
             instancePath: `${responsePath}/textValidation/${Math.max(ruleIndex, otherRuleIndex)}/value`,
             params: { action: 'Change or remove one of the conflicting text validation rules' },
@@ -389,11 +413,9 @@ function verifyTextResponseConstraints(
           });
         }
       });
-
       if (!constraintsAreValid) {
         return;
       }
-
       const charLength = rule.value.length;
       const wordLength = countTextResponseWords(rule.value);
       const equalsConstraintConflicts = [
@@ -406,15 +428,138 @@ function verifyTextResponseConstraints(
         response.maxWordLength !== undefined && wordLength > response.maxWordLength
           ? `contains ${wordLength} words, which exceeds maxWordLength of ${response.maxWordLength}` : null,
       ].filter((message): message is string => message !== null);
-
       equalsConstraintConflicts.forEach((message) => {
-        warnings.push({
+        errors.push({
           message: `equals value \`${rule.value}\` ${message}`,
           instancePath: `${responsePath}/textValidation/${ruleIndex}/value`,
           params: { action: 'Change the equals value or the conflicting length constraint' },
           category: 'invalid-config',
         });
       });
+    });
+  });
+}
+
+function verifyDropdownResponseConstraints(
+  componentPath: string,
+  component: Partial<IndividualComponent>,
+  errors: ParserErrorWarning[],
+) {
+  component.response?.forEach((response, index) => {
+    if (response.type !== 'dropdown' || response.options !== 'countries') {
+      return;
+    }
+
+    const responsePath = `${componentPath}/response/${index}`;
+    const countryValues = new Set(getDropdownOptions(response).map((option) => option.value));
+
+    (['default', 'requiredValue'] as const).forEach((field) => {
+      const configuredValue = field === 'default' ? response.default : response.requiredValue;
+      if (configuredValue === undefined || configuredValue === null) {
+        return;
+      }
+
+      const values = Array.isArray(configuredValue) ? configuredValue : [configuredValue];
+      values.forEach((value, valueIndex) => {
+        if (typeof value === 'string' && countryValues.has(value)) {
+          return;
+        }
+
+        const valuePath = Array.isArray(configuredValue)
+          ? `${responsePath}/${field}/${valueIndex}`
+          : `${responsePath}/${field}`;
+        errors.push({
+          message: `dropdown ${field} value \`${String(value)}\` is not a valid country code`,
+          instancePath: valuePath,
+          params: { action: `Set ${field} to a valid country code from the countries preset` },
+          category: 'invalid-config',
+        });
+      });
+    });
+  });
+}
+
+function verifyDateTimeResponseConstraints(
+  componentPath: string,
+  component: Partial<IndividualComponent>,
+  errors: ParserErrorWarning[],
+) {
+  component.response?.forEach((response, index) => {
+    if (response.type !== 'date' && response.type !== 'time') {
+      return;
+    }
+
+    const responsePath = `${componentPath}/response/${index}`;
+    const isDateResponse = response.type === 'date';
+    const dateOptions = isDateResponse ? response.options ?? 'date' : 'date';
+    const isValidValue = isDateResponse
+      ? (value: string) => parseDateValue(value, dateOptions) !== null
+      : (value: string) => isValidTime(value, response.withSeconds);
+    const expectedFormat = response.type === 'date'
+      ? getDateValueFormat(dateOptions)
+      : response.withSeconds ? 'HH:mm:ss' : 'HH:mm';
+    const fields = ['default', 'requiredValue', 'min', 'max'] as const;
+
+    fields.forEach((field) => {
+      const value = response[field];
+      if (value === undefined || value === null) {
+        return;
+      }
+
+      if (!isValidValue(value)) {
+        errors.push({
+          message: `${response.type} ${field} must be a valid ${expectedFormat} value`,
+          instancePath: `${responsePath}/${field}`,
+          params: { action: `Set ${field} to a valid ${expectedFormat} value` },
+          category: 'invalid-config',
+        });
+      }
+    });
+
+    const toComparableValue = (value: string) => {
+      if (isDateResponse) {
+        return parseDateValue(value, dateOptions)?.getTime() ?? null;
+      }
+      if (!isValidTime(value, response.withSeconds)) {
+        return null;
+      }
+      return value.split(':').reduce((total, part) => (total * 60) + Number(part), 0);
+    };
+    const min = response.min ? toComparableValue(response.min) : null;
+    const max = response.max ? toComparableValue(response.max) : null;
+    if (min !== null && max !== null && min > max) {
+      errors.push({
+        message: `${response.type} min must be less than or equal to max`,
+        instancePath: responsePath,
+        params: { action: 'Set min to a value less than or equal to max' },
+        category: 'invalid-config',
+      });
+      return;
+    }
+
+    (['default', 'requiredValue'] as const).forEach((field) => {
+      const value = response[field];
+      const comparableValue = value ? toComparableValue(value) : null;
+      if (comparableValue === null) {
+        return;
+      }
+
+      if (min !== null && comparableValue < min) {
+        errors.push({
+          message: `${response.type} ${field} must be ${isDateResponse ? 'on' : 'at'} or after min`,
+          instancePath: `${responsePath}/${field}`,
+          params: { action: `Set ${field} to a value greater than or equal to min` },
+          category: 'invalid-config',
+        });
+      }
+      if (max !== null && comparableValue > max) {
+        errors.push({
+          message: `${response.type} ${field} must be ${isDateResponse ? 'on' : 'at'} or before max`,
+          instancePath: `${responsePath}/${field}`,
+          params: { action: `Set ${field} to a value less than or equal to max` },
+          category: 'invalid-config',
+        });
+      }
     });
   });
 }
@@ -465,10 +610,14 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
 
   Object.entries(studyConfig.baseComponents ?? {}).forEach(([componentName, component]) => {
     verifyTextResponseConstraints(`/baseComponents/${componentName}`, component, errors, warnings);
+    verifyDateTimeResponseConstraints(`/baseComponents/${componentName}`, component, errors);
+    verifyDropdownResponseConstraints(`/baseComponents/${componentName}`, component, errors);
   });
   Object.entries(studyConfig.components).forEach(([componentName, component]) => {
     const mergedComponent = studyComponentToIndividualComponent(component, studyConfig);
     verifyTextResponseConstraints(`/components/${componentName}`, mergedComponent, errors, warnings);
+    verifyDateTimeResponseConstraints(`/components/${componentName}`, mergedComponent, errors);
+    verifyDropdownResponseConstraints(`/components/${componentName}`, mergedComponent, errors);
   });
 
   const hasConditional = hasConditionalBlock(studyConfig.sequence);
