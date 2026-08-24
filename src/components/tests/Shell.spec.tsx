@@ -297,7 +297,7 @@ describe('Shell', () => {
     mockStorageEngine = {
       initializeStudyDb: vi.fn().mockResolvedValue(undefined),
       saveConfig: vi.fn().mockResolvedValue(undefined),
-      getSequenceArray: vi.fn().mockResolvedValue(['seq1']), // non-null → no setSequenceArray
+      getSequenceArtifact: vi.fn().mockResolvedValue(['seq1']),
       getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
       initializeParticipantSession: vi.fn().mockResolvedValue(baseSession),
       getParticipantCompletionStatus: vi.fn().mockResolvedValue(false),
@@ -312,14 +312,14 @@ describe('Shell', () => {
     await waitFor(() => expect(vi.mocked(studyStoreCreator)).toHaveBeenCalled(), { timeout: 3000 });
   });
 
-  test('calls setSequenceArray when getSequenceArray returns null', async () => {
+  test('publishes a compact descriptor when no sequence artifact exists', async () => {
     vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
 
     mockStorageEngine = {
       initializeStudyDb: vi.fn().mockResolvedValue(undefined),
       saveConfig: vi.fn().mockResolvedValue(undefined),
-      getSequenceArray: vi.fn().mockResolvedValue(null), // null → calls setSequenceArray
-      setSequenceArray: vi.fn().mockResolvedValue(undefined),
+      getSequenceArtifact: vi.fn().mockResolvedValue(null),
+      setSequenceDescriptor: vi.fn().mockResolvedValue(undefined),
       getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
       initializeParticipantSession: vi.fn().mockResolvedValue(baseSession),
       getParticipantCompletionStatus: vi.fn().mockResolvedValue(false),
@@ -330,7 +330,13 @@ describe('Shell', () => {
     };
 
     render(<Shell globalConfig={globalConfig} />);
-    await waitFor(() => expect(mockStorageEngine!.setSequenceArray).toHaveBeenCalled(), { timeout: 3000 });
+    await waitFor(() => expect(mockStorageEngine!.setSequenceDescriptor).toHaveBeenCalledWith(
+      expect.objectContaining({
+        format: 'revisit-compact-sequence',
+        version: 1,
+        numSequences: 1000,
+      }),
+    ), { timeout: 3000 });
   });
 
   test('covers study condition update path', async () => {
@@ -340,7 +346,7 @@ describe('Shell', () => {
     mockStorageEngine = {
       initializeStudyDb: vi.fn().mockResolvedValue(undefined),
       saveConfig: vi.fn().mockResolvedValue(undefined),
-      getSequenceArray: vi.fn().mockResolvedValue(['seq1']),
+      getSequenceArtifact: vi.fn().mockResolvedValue(['seq1']),
       getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: true, dataSharingEnabled: true, dataCollectionEnabled: true }),
       initializeParticipantSession: vi.fn().mockResolvedValue({
         ...baseSession,
@@ -366,7 +372,7 @@ describe('Shell', () => {
     mockStorageEngine = {
       initializeStudyDb: vi.fn().mockResolvedValue(undefined),
       saveConfig: vi.fn().mockResolvedValue(undefined),
-      getSequenceArray: vi.fn().mockResolvedValue(['seq1']),
+      getSequenceArtifact: vi.fn().mockResolvedValue(['seq1']),
       getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
       initializeParticipantSession: vi.fn().mockResolvedValue({
         ...baseSession,

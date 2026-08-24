@@ -1,0 +1,20 @@
+[
+  [
+    "random-trials[b,break,c]",
+    "dynamic-trials[]",
+    "finish",
+    "end"
+  ],
+  [
+    "finish",
+    "dynamic-trials[]",
+    "random-trials[a,break,b]",
+    "end"
+  ],
+  [
+    "random-trials[a,break,b]",
+    "dynamic-trials[]",
+    "finish",
+    "end"
+  ]
+]
