@@ -440,6 +440,53 @@ export interface NumericalResponse extends BaseResponse {
   max?: number;
 }
 
+/** The validation operations available for short and long text responses. */
+export type TextValidationType = 'matchesRegex' | 'contains' | 'doesNotContain' | 'equals' | 'doesNotEqual';
+
+/**
+ * A validation rule applied to a short or long text response.
+ * Rules are evaluated in array order, and the first failing rule is displayed to the participant.
+ *
+ * For example, the following rules accept only `ReVISit is great`: it must start with `ReVISit`,
+ * contain `great`, not contain `invalid`, equal `ReVISit is great`, and not equal `TEST`.
+ * See the [MDN regular expression syntax cheat sheet](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet)
+ * for help writing regular expression patterns.
+ * ```json
+ * "textValidation": [
+ *   {
+ *     "type": "matchesRegex",
+ *     "value": "^ReVISit"
+ *   },
+ *   {
+ *     "type": "contains",
+ *     "value": "great"
+ *   },
+ *   {
+ *     "type": "doesNotContain",
+ *     "value": "invalid"
+ *   },
+ *   {
+ *     "type": "equals",
+ *     "value": "ReVISit is great"
+ *   },
+ *   {
+ *     "type": "doesNotEqual",
+ *     "value": "TEST"
+ *   }
+ * ]
+ * ```
+ */
+export interface TextValidationRule {
+  /** The operation used to validate the response value. */
+  type: TextValidationType;
+  /**
+   * The regular expression pattern or text value used by the validation operation.
+   * Must be non-empty for `equals`, `contains`, and `doesNotContain`.
+   * Empty `matchesRegex` and `doesNotEqual` values produce a parser warning because they do not restrict responses.
+   */
+  value: string;
+}
+
 /**
  * The ShortTextResponse interface is used to define the properties of a short text response.
  * ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder.
@@ -449,8 +496,18 @@ export interface NumericalResponse extends BaseResponse {
  *   "prompt": "Short text example",
  *   "location": "aboveStimulus",
  *   "type": "shortText",
- *   "default": "Jane Doe",
- *   "placeholder": "Enter your answer here"
+ *   "default": "ReVISit is great",
+ *   "placeholder": "Enter your answer here",
+ *   "minCharLength": 3,
+ *   "maxCharLength": 100,
+ *   "minWordLength": 2,
+ *   "maxWordLength": 20,
+ *   "textValidation": [
+ *     {
+ *       "type": "contains",
+ *       "value": "ReVISit"
+ *     }
+ *   ]
  * }
  * ```
  *
@@ -461,6 +518,16 @@ export interface ShortTextResponse extends BaseResponse {
   placeholder?: string;
   /** The default value of the response. Specify a string such as `"Jane Doe"`. */
   default?: string;
+  /** The minimum number of characters accepted in the response. */
+  minCharLength?: number;
+  /** The maximum number of characters accepted in the response. Must be greater than 0 when the response is required. */
+  maxCharLength?: number;
+  /** The minimum number of whitespace-separated words accepted in the response. */
+  minWordLength?: number;
+  /** The maximum number of whitespace-separated words accepted in the response. Must be greater than 0 when the response is required. */
+  maxWordLength?: number;
+  /** Validation rules applied to the response value in array order. */
+  textValidation?: TextValidationRule[];
 }
 
 /**
@@ -473,7 +540,17 @@ export interface ShortTextResponse extends BaseResponse {
  *   "location": "aboveStimulus",
  *   "type": "longText",
  *   "default": "I enjoyed this study because...",
- *   "placeholder": "Please enter your first name"
+ *   "placeholder": "Please enter your comments",
+ *   "minCharLength": 20,
+ *   "maxCharLength": 500,
+ *   "minWordLength": 4,
+ *   "maxWordLength": 100,
+ *   "textValidation": [
+ *     {
+ *       "type": "doesNotContain",
+ *       "value": "invalid"
+ *     }
+ *   ]
  * }
  * ```
  *
@@ -484,6 +561,16 @@ export interface LongTextResponse extends BaseResponse {
   placeholder?: string;
   /** The default value of the response. Specify a string such as `"I enjoyed this study because..."`. */
   default?: string;
+  /** The minimum number of characters accepted in the response. */
+  minCharLength?: number;
+  /** The maximum number of characters accepted in the response. Must be greater than 0 when the response is required. */
+  maxCharLength?: number;
+  /** The minimum number of whitespace-separated words accepted in the response. */
+  minWordLength?: number;
+  /** The maximum number of whitespace-separated words accepted in the response. Must be greater than 0 when the response is required. */
+  maxWordLength?: number;
+  /** Validation rules applied to the response value in array order. */
+  textValidation?: TextValidationRule[];
 }
 
 /**

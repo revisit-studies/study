@@ -275,13 +275,14 @@ describe('Timer', () => {
 
   test('timeupdate callback calls debounceUpdateTimer', async () => {
     const mockDebounce = vi.fn();
-    await act(async () => render(
+    const { container } = await act(async () => render(
       <RealTimer width={500} height={60} debounceUpdateTimer={mockDebounce} xScale={xScale} />,
     ));
     const entry = mockReplayContext.replayEvent.on.mock.calls.find((call: string[]) => call[0] === 'timeupdate');
     const callback = entry?.[1] as ((t: number) => void) | undefined;
     if (callback) act(() => { callback(2); });
     expect(mockDebounce).toHaveBeenCalledWith(2000, undefined);
+    expect(container.querySelector('[data-testid="replay-timer"]')?.getAttribute('data-replay-time')).toBe('2');
   });
 });
 

@@ -1,0 +1,49 @@
+name: Full WebKit Playwright Tests
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * *'
+
+jobs:
+  webkit:
+    name: 🧪 WebKit full E2E shard ${{ matrix.shard }}/4
+    runs-on: macos-15
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /Users/runner/Library/Caches/ms-playwright
+      PW_CI_REPORTER: dot
+      PW_CI_WORKERS: 1
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: yarn
+
+      - name: Install dependencies
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+        run: yarn install --immutable
+
+      - name: Write out playwright version
+        run: yarn --silent playwright --version > .playwright-version
+
+      - name: ⚡️ Cache playwright binaries
+        uses: actions/cache@v6
+        id: playwright-cache
+        with:
+          path: /Users/runner/Library/Caches/ms-playwright
+          key: macos-15-webkit-pw-${{ hashFiles('**/.playwright-version') }}
+
+      - name: Install Playwright WebKit
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: yarn playwright install webkit
+
+      - name: Run full WebKit shard
+        run: yarn test --project=webkit --shard=${{ matrix.shard }}/4

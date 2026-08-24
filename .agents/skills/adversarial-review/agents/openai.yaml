@@ -1,0 +1,4 @@
+interface:
+  display_name: "Adversarial Review"
+  short_description: "Challenge correctness and conciseness independently"
+  default_prompt: "Use $adversarial-review for an exhaustive independent review; keep looking for additional findings until a complete follow-up pass finds no new issues."
