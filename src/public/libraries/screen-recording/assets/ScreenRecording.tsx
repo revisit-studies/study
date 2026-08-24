@@ -38,7 +38,7 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
         screenRecordingPermission: screenCapturing,
       },
     });
-  }, [screenCapturing, audioCapturingSuccess, setAnswer, studyHasAudioRecording]);
+  }, [screenCapturing, audioCapturingSuccess, setAnswer, studyHasAudioRecording, dataCollectionEnabled]);
 
   useEffect(() => {
     if (!screenCapturing) {
@@ -113,7 +113,13 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
               <strong>Click the button below</strong>
               {' '}
               to enable screen and audio recording.
-              <Button type="button" onClick={screenCapturing ? stopCapture : startCapture} display="block" mt="sm">
+              <Button
+                type="button"
+                onClick={screenCapturing ? stopCapture : startCapture}
+                disabled={!dataCollectionEnabled}
+                display="block"
+                mt="sm"
+              >
                 {screenCapturing ? 'Stop Recording' : 'Start Recording'}
               </Button>
               <video

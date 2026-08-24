@@ -1,11 +1,14 @@
+import React from 'react';
 import {
-  renderHook, act, cleanup, waitFor,
+  renderHook, act, cleanup, waitFor, render, screen, fireEvent,
 } from '@testing-library/react';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
+import * as recordingHooks from '../useRecording';
 import { useRecording, useRecordingContext } from '../useRecording';
 import type { StoreState } from '../../types';
+import ScreenRecordingPermission from '../../../public/libraries/screen-recording/assets/ScreenRecording';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
@@ -493,12 +496,121 @@ describe('useRecording with data collection disabled', () => {
       saveScreenRecording: vi.fn(async () => {}),
     };
 
-    const { result } = renderHook(() => useRecording());
+    const MediaRecorderSpy = vi.spyOn(globalThis as never, 'MediaRecorder');
+    const originalTitle = document.title;
+    const { result, rerender } = renderHook(() => useRecording());
+
     act(() => { result.current.startScreenCapture(); });
-    await act(async () => { /* let effects settle */ });
+    await act(async () => { /* noop */ });
+
+    expect(navigator.mediaDevices.getDisplayMedia).not.toHaveBeenCalled();
     expect(navigator.mediaDevices.getUserMedia).not.toHaveBeenCalled();
+
+    expect(MediaRecorderSpy).not.toHaveBeenCalled();
+
     expect(mockStorageEngine.saveAudioRecording).not.toHaveBeenCalled();
     expect(mockStorageEngine.saveScreenRecording).not.toHaveBeenCalled();
+
+    expect(result.current.isScreenCapturing).toBe(false);
     expect(result.current.isAudioCapturing).toBe(false);
+    expect(result.current.isMediaCapturing).toBe(false);
+
+    expect(document.title).toBe(originalTitle);
+
+    mockCurrentComponent = 'end';
+    rerender();
+    expect(result.current.isRejected).toBe(false);
+  });
+
+  test('startScreenCapture is a no-op when dataCollectionEnabled is false (does not change title, capturing flags, or set isRejected)', async () => {
+    mockModes = { ...mockModes, dataCollectionEnabled: false };
+    mockRecordingConfig = {
+      ...mockRecordingConfig,
+      studyHasScreenRecording: true,
+      studyHasAudioRecording: true,
+      currentComponentHasScreenRecording: true,
+      currentComponentHasAudioRecording: true,
+    };
+    mockStorageEngine = {
+      saveAudioRecording: vi.fn(async () => {}),
+      saveScreenRecording: vi.fn(async () => {}),
+    };
+
+    const originalTitle = document.title;
+    const { result, rerender } = renderHook(() => useRecording());
+
+    act(() => { result.current.startScreenCapture(); });
+    await act(async () => { /* noop */ });
+
+    expect(navigator.mediaDevices.getDisplayMedia).not.toHaveBeenCalled();
+    expect(navigator.mediaDevices.getUserMedia).not.toHaveBeenCalled();
+
+    expect(result.current.isScreenCapturing).toBe(false);
+    expect(result.current.isAudioCapturing).toBe(false);
+    expect(result.current.isMediaCapturing).toBe(false);
+
+    expect(document.title).toBe(originalTitle);
+
+    mockCurrentComponent = 'end';
+    rerender();
+    expect(result.current.isRejected).toBe(false);
+  });
+});
+
+describe('ScreenRecordingPermission component', () => {
+  test('screen-only button is disabled when data collection is off', () => {
+    mockModes = { ...mockModes, dataCollectionEnabled: false };
+    const startScreenCapture = vi.fn();
+    const stopScreenCapture = vi.fn();
+    vi.spyOn(recordingHooks, 'useRecordingContext').mockReturnValue({
+      studyHasAudioRecording: false,
+      recordVideoRef: { current: null },
+      startScreenCapture,
+      stopScreenCapture,
+      isScreenCapturing: false,
+      isAudioCapturing: false,
+      audioMediaStream: { current: null },
+    } as unknown as ReturnType<typeof recordingHooks.useRecordingContext>);
+
+    render(React.createElement(ScreenRecordingPermission, {
+      setAnswer: vi.fn(),
+      parameters: undefined,
+      answers: {},
+      useTrrack: vi.fn(),
+    } as React.ComponentProps<typeof ScreenRecordingPermission>));
+
+    const button = screen.getByRole('button', { name: 'Start Recording' });
+    expect((button as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(button);
+    expect(startScreenCapture).not.toHaveBeenCalled();
+    expect(stopScreenCapture).not.toHaveBeenCalled();
+  });
+
+  test('combined screen-and-audio button is disabled when data collection is off', () => {
+    mockModes = { ...mockModes, dataCollectionEnabled: false };
+    const startScreenCapture = vi.fn();
+    const stopScreenCapture = vi.fn();
+    vi.spyOn(recordingHooks, 'useRecordingContext').mockReturnValue({
+      studyHasAudioRecording: true,
+      recordVideoRef: { current: null },
+      startScreenCapture,
+      stopScreenCapture,
+      isScreenCapturing: false,
+      isAudioCapturing: false,
+      audioMediaStream: { current: null },
+    } as unknown as ReturnType<typeof recordingHooks.useRecordingContext>);
+
+    render(React.createElement(ScreenRecordingPermission, {
+      setAnswer: vi.fn(),
+      parameters: undefined,
+      answers: {},
+      useTrrack: vi.fn(),
+    } as React.ComponentProps<typeof ScreenRecordingPermission>));
+
+    const button = screen.getByRole('button', { name: 'Start Recording' });
+    expect((button as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(button);
+    expect(startScreenCapture).not.toHaveBeenCalled();
+    expect(stopScreenCapture).not.toHaveBeenCalled();
   });
 });

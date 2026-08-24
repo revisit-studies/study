@@ -359,6 +359,8 @@ export function useRecording() {
 
   // Start screen capture. This does not begin recording.
   const startScreenCapture = useCallback(() => {
+    if (!dataCollectionEnabled) return;
+
     const captureFn = async () => {
       document.title = `RECORD THIS TAB: ${pageTitle}`;
 
@@ -366,7 +368,7 @@ export function useRecording() {
         setRecordingError(null);
         setAudioRecordingError(null);
 
-        const screenStream = (studyHasScreenRecording && dataCollectionEnabled) ? await navigator.mediaDevices.getDisplayMedia({
+        const screenStream = (studyHasScreenRecording) ? await navigator.mediaDevices.getDisplayMedia({
           video: { displaySurface: 'browser', ...(recordScreenFPS ? { frameRate: { ideal: recordScreenFPS } } : {}) },
           audio: false,
           // @ts-expect-error: experimental (selfBrowserSurface and preferCurrentTab are not yet standardized)
