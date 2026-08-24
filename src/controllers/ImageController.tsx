@@ -29,29 +29,57 @@ export function ImageController({ currentConfig }: { currentConfig: ImageCompone
 
   const [loading, setLoading] = useState(true);
   const [assetFound, setAssetFound] = useState(false);
+  const [loadedUrl, setLoadedUrl] = useState<string>();
 
   useEffect(() => {
+    let cancelled = false;
+
     // While the path is templated inside a dynamic block, url is undefined until the block's
     // current iteration resolves — don't fetch an asset built from the wrong iteration.
     if (url === undefined) {
-      return;
+      setLoading(true);
+      setAssetFound(false);
+      setLoadedUrl(undefined);
+      return () => {
+        cancelled = true;
+      };
     }
 
+    setLoading(true);
+    setAssetFound(false);
+    setLoadedUrl(undefined);
+
     async function fetchImage(assetUrl: string) {
-      let asset = await getStaticAssetByPath(assetUrl);
-      asset = asset?.includes('File not found') ? undefined : asset;
-      setAssetFound(!!asset);
-      setLoading(false);
+      try {
+        let asset = await getStaticAssetByPath(assetUrl);
+        asset = asset?.includes('File not found') ? undefined : asset;
+        if (cancelled) return;
+        setAssetFound(!!asset);
+        setLoadedUrl(assetUrl);
+        setLoading(false);
+      } catch {
+        if (cancelled) return;
+        setAssetFound(false);
+        setLoadedUrl(assetUrl);
+        setLoading(false);
+      }
     }
 
     fetchImage(url);
+    return () => {
+      cancelled = true;
+    };
   }, [url]);
 
   if (url === undefined || templatedPath === undefined) {
     return null;
   }
 
-  return loading || assetFound
+  const currentUrlLoaded = loadedUrl === url;
+
+  return loading || !currentUrlLoaded
     ? <Image mx="auto" src={url} />
-    : <ResourceNotFound path={templatedPath} />;
+    : assetFound
+      ? <Image mx="auto" src={url} />
+      : <ResourceNotFound path={templatedPath} />;
 }

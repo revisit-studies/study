@@ -2075,4 +2075,17 @@ describe('React component path validation', () => {
       instancePath: '/components/trial/path',
     }));
   });
+
+  test.each([
+    'demo-react-trrack/assets/{{#if file}}thing.tsx',
+    'demo-react-trrack/assets/{{else}}.tsx',
+    'demo-react-trrack/assets/{{! comment}}missing.tsx',
+  ])('rejects a path with no valid runtime expression: %s', async (path) => {
+    const result = await parseStudyConfig(JSON.stringify(makeReactComponentStudyConfig(path)));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'Unresolved path',
+      instancePath: '/components/trial/path',
+    }));
+  });
 });

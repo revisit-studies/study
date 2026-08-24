@@ -32,6 +32,7 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
   const storeDispatch = useStoreDispatch();
   const [vegaConfig, setVegaConfig] = useState<VisualizationSpec | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadedConfigKey, setLoadedConfigKey] = useState<string | null>(null);
 
   const [stimulusStatus, setStimulusStatus] = useState(false);
   const [stimulusAnswer, setStimulusAnswer] = useState<Record<string, string | number>>({});
@@ -44,6 +45,7 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
     () => (templateData && 'path' in currentConfig ? compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true, data: templateData }) : undefined),
     [currentConfig, templateData],
   );
+  const requestedConfigKey = 'path' in currentConfig ? templatedPath : '__inline__';
 
   const { updateProvenance, updateResponseBlockValidation, setReactiveAnswers } = useStoreActions();
   const isAnalysis = useIsAnalysis();
@@ -159,31 +161,47 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
   const configuredSignalNames = useMemo(() => new Set(Object.keys(signalListeners)), [signalListeners]);
 
   useEffect(() => {
+    let cancelled = false;
+
+    setLoading(true);
+    setVegaConfig(null);
+    setLoadedConfigKey(null);
+
     // While the path is templated inside a dynamic block, templatedPath is undefined until the
     // block's current iteration resolves — don't fetch a path built from the wrong iteration.
     if ('path' in currentConfig && templatedPath === undefined) {
-      return;
+      return () => {
+        cancelled = true;
+      };
     }
 
     async function fetchVega() {
-      setLoading(true);
-
-      let config: VisualizationSpec | undefined;
-      if ('path' in currentConfig) {
-        config = await getJsonAssetByPath(templatedPath as string);
-      } else {
-        config = currentConfig.config as VisualizationSpec;
+      try {
+        let config: VisualizationSpec | undefined;
+        if ('path' in currentConfig) {
+          config = await getJsonAssetByPath(templatedPath as string);
+        } else {
+          config = currentConfig.config as VisualizationSpec;
+        }
+        if (cancelled) return;
+        setVegaConfig(config ?? null);
+        setLoadedConfigKey(requestedConfigKey ?? null);
+        setLoading(false);
+      } catch {
+        if (cancelled) return;
+        setVegaConfig(null);
+        setLoadedConfigKey(requestedConfigKey ?? null);
+        setLoading(false);
       }
-      if (config !== undefined) {
-        setVegaConfig(config);
-      }
-      setLoading(false);
     }
 
     if (currentConfig) {
       fetchVega();
     }
-  }, [currentConfig, templatedPath]);
+    return () => {
+      cancelled = true;
+    };
+  }, [currentConfig, requestedConfigKey, templatedPath]);
 
   useEffect(() => {
     if (!view || !provState) {
@@ -230,7 +248,7 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
     }
   }, [isAnalysis, loading, vegaConfig, currentConfig, templatedPath, identifier, storeDispatch, updateResponseBlockValidation]);
 
-  if (loading) {
+  if (loading || loadedConfigKey !== requestedConfigKey) {
     return <div>Loading...</div>;
   }
   if ('path' in currentConfig && !vegaConfig) {

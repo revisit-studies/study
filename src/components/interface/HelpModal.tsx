@@ -21,6 +21,7 @@ export function HelpModal() {
 
   const [foundAsset, setFoundAsset] = useState(true);
   const [helpText, setHelpText] = useState('');
+  const [loadedHelpTextPath, setLoadedHelpTextPath] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(true);
   const component = useCurrentComponent();
@@ -45,6 +46,8 @@ export function HelpModal() {
     () => (helpTextPath && templateData ? compileTemplate(helpTextPath, helpTextParameters, { noEscape: true, data: templateData }) : undefined),
     [helpTextPath, helpTextParameters, templateData],
   );
+  const templateReady = templateData !== undefined;
+  const requestedHelpTextPath = resolvedHelpTextPath ?? '';
 
   const templatedHelpText = useMemo(
     () => (templateData ? compileTemplate(helpText, helpTextParameters, { data: templateData }) : ''),
@@ -52,33 +55,56 @@ export function HelpModal() {
   );
 
   useEffect(() => {
-    if (templateData === undefined) {
-      return;
+    let cancelled = false;
+    setLoading(true);
+    setFoundAsset(false);
+    setHelpText('');
+    setLoadedHelpTextPath(null);
+
+    if (!templateReady) {
+      return () => {
+        cancelled = true;
+      };
     }
 
     async function fetchText() {
       if (!resolvedHelpTextPath) {
+        if (cancelled) return;
         setFoundAsset(false);
+        setLoadedHelpTextPath('');
         setLoading(false);
         return;
       }
-      const asset = await getStaticAssetByPath(`${PREFIX}${resolvedHelpTextPath}`);
-      if (asset !== undefined) {
-        setHelpText(asset);
-      } else {
+      try {
+        const asset = await getStaticAssetByPath(`${PREFIX}${resolvedHelpTextPath}`);
+        if (cancelled) return;
+        setHelpText(asset ?? '');
+        setFoundAsset(asset !== undefined);
+        setLoadedHelpTextPath(resolvedHelpTextPath);
+        setLoading(false);
+      } catch {
+        if (cancelled) return;
         setFoundAsset(false);
+        setLoadedHelpTextPath(resolvedHelpTextPath);
+        setLoading(false);
       }
-      setLoading(false);
     }
 
     fetchText();
-  }, [resolvedHelpTextPath, templateData]);
+    return () => {
+      cancelled = true;
+    };
+  }, [resolvedHelpTextPath, templateReady]);
+
+  const currentPathLoaded = templateReady && loadedHelpTextPath === requestedHelpTextPath;
 
   return (
     <Modal className="helpModal" size="70%" opened={showHelpText} withCloseButton={false} onClose={() => storeDispatch(toggleShowHelpText())}>
-      {loading || foundAsset
-        ? <ReactMarkdownWrapper text={templatedHelpText} />
-        : <ResourceNotFound path={resolvedHelpTextPath} />}
+      {loading || !currentPathLoaded
+        ? <ReactMarkdownWrapper text="" />
+        : foundAsset
+          ? <ReactMarkdownWrapper text={templatedHelpText} />
+          : <ResourceNotFound path={resolvedHelpTextPath} />}
     </Modal>
   );
 }

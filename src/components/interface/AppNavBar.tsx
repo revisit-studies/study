@@ -38,14 +38,19 @@ export function AppNavBar({
     [status?.parameters, currentConfig?.parameters],
   );
 
-  const instruction = useMemo(
-    () => (templateData ? compileTemplate(currentConfig?.instruction || '', instructionParameters, { data: templateData }) : ''),
-    [currentConfig?.instruction, instructionParameters, templateData],
+  const runtimeConfig = useMemo(
+    () => (currentConfig ? { ...currentConfig, parameters: instructionParameters } : null),
+    [currentConfig, instructionParameters],
   );
-  const instructionLocation = useMemo(() => currentConfig?.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar', [currentConfig, studyConfig]);
+
+  const instruction = useMemo(
+    () => (templateData ? compileTemplate(runtimeConfig?.instruction || '', runtimeConfig?.parameters ?? {}, { data: templateData }) : ''),
+    [runtimeConfig, templateData],
+  );
+  const instructionLocation = useMemo(() => runtimeConfig?.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar', [runtimeConfig, studyConfig]);
   const instructionInSideBar = instructionLocation === 'sidebar';
 
-  return currentConfig ? (
+  return runtimeConfig ? (
     <Box
       className="sidebar"
       bg="gray.1"
@@ -75,7 +80,7 @@ export function AppNavBar({
         <ResponseBlock
           key={`${currentComponent}-sidebar-response-block`}
           status={status}
-          config={currentConfig}
+          config={runtimeConfig}
           location="sidebar"
         />
       </Box>

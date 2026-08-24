@@ -1,4 +1,5 @@
 import Ajv from 'ajv';
+import Handlebars from 'handlebars';
 import { parseDocument } from 'yaml';
 import configSchema from './StudyConfigSchema.json';
 import globalSchema from './GlobalConfigSchema.json';
@@ -123,13 +124,33 @@ function verifyStudySkip(
   }
 }
 
-// Matches a path made up of literal text interspersed with well-formed, balanced
-// `{{ ... }}` Handlebars expressions. Used to distinguish a templated path (which
-// can't be resolved until runtime) from a malformed one containing a stray `{{`/`}}`.
-const HANDLEBARS_TEMPLATED_PATH_REGEX = /^([^{}]|\{\{[^{}]+\}\})*$/;
-
 function isTemplatedPath(path: string) {
-  return path.includes('{{') && HANDLEBARS_TEMPLATED_PATH_REGEX.test(path);
+  if (!path.includes('{{')) {
+    return false;
+  }
+
+  try {
+    const ast = Handlebars.parse(path) as unknown;
+    const hasRuntimeExpression = (node: unknown): boolean => {
+      if (Array.isArray(node)) {
+        return node.some(hasRuntimeExpression);
+      }
+      if (!node || typeof node !== 'object') {
+        return false;
+      }
+
+      const { type } = node as { type?: unknown };
+      if (type === 'MustacheStatement' || type === 'BlockStatement' || type === 'PartialStatement' || type === 'DecoratorStatement') {
+        return true;
+      }
+
+      return Object.entries(node).some(([key, value]) => key !== 'loc' && hasRuntimeExpression(value));
+    };
+
+    return hasRuntimeExpression(ast);
+  } catch {
+    return false;
+  }
 }
 
 function verifyReactComponent(

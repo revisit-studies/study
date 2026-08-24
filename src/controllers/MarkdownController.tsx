@@ -14,6 +14,7 @@ export function MarkdownController({ currentConfig }: { currentConfig: MarkdownC
   const [importedText, setImportedText] = useState<string>('');
 
   const [loading, setLoading] = useState(true);
+  const [loadedPath, setLoadedPath] = useState<string>();
 
   const templateData = useTemplateAnswerContext();
 
@@ -23,23 +24,45 @@ export function MarkdownController({ currentConfig }: { currentConfig: MarkdownC
   );
 
   useEffect(() => {
+    let cancelled = false;
+
     // While the path is templated inside a dynamic block, templatedPath is undefined until the
     // block's current iteration resolves — don't fetch an asset built from the wrong iteration.
     if (templatedPath === undefined) {
-      return;
+      setLoading(true);
+      setFoundAsset(false);
+      setImportedText('');
+      setLoadedPath(undefined);
+      return () => {
+        cancelled = true;
+      };
     }
 
+    setLoading(true);
+    setFoundAsset(false);
+    setImportedText('');
+    setLoadedPath(undefined);
+
     async function fetchImage(path: string) {
-      const asset = await getStaticAssetByPath(`${PREFIX}${path}`);
-      if (asset !== undefined) {
-        setImportedText(asset);
-      } else {
+      try {
+        const asset = await getStaticAssetByPath(`${PREFIX}${path}`);
+        if (cancelled) return;
+        setImportedText(asset ?? '');
+        setFoundAsset(asset !== undefined);
+        setLoadedPath(path);
+        setLoading(false);
+      } catch {
+        if (cancelled) return;
         setFoundAsset(false);
+        setLoadedPath(path);
+        setLoading(false);
       }
-      setLoading(false);
     }
 
     fetchImage(templatedPath);
+    return () => {
+      cancelled = true;
+    };
   }, [templatedPath]);
 
   const renderedText = useMemo(
@@ -51,7 +74,13 @@ export function MarkdownController({ currentConfig }: { currentConfig: MarkdownC
     return null;
   }
 
-  return loading || foundAsset
+  const currentPathLoaded = loadedPath === templatedPath;
+
+  if (loading || !currentPathLoaded) {
+    return <ReactMarkdownWrapper text="" />;
+  }
+
+  return foundAsset
     ? <ReactMarkdownWrapper text={renderedText} />
     : <ResourceNotFound path={templatedPath} />;
 }

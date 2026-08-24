@@ -45,7 +45,11 @@ vi.mock('../../ReactMarkdownWrapper', () => ({
 }));
 
 vi.mock('../../response/ResponseBlock', () => ({
-  ResponseBlock: () => <div data-testid="response-block" />,
+  ResponseBlock: ({ config }: { config?: { parameters?: Record<string, unknown>; response?: Array<{ prompt?: string }> } }) => (
+    <div data-testid="response-block">
+      {config?.response?.[0]?.prompt?.replace('{{value}}', String(config.parameters?.value ?? ''))}
+    </div>
+  ),
 }));
 
 vi.mock('@mantine/core', () => ({
@@ -159,6 +163,26 @@ describe('AppNavBar', () => {
 
     expect(html).toContain('Value: dynamic');
     expect(html).not.toContain('Value: static');
+  });
+
+  test('passes dynamic runtime parameters to sidebar responses', () => {
+    mockStudyConfig = {
+      components: {
+        trial1: {
+          response: [{ id: 'q1', type: 'shortText', prompt: 'Response: {{value}}' }],
+          parameters: { value: 'static' },
+        },
+      },
+      uiConfig: { instructionLocation: 'sidebar' },
+    };
+    mockStoredAnswer = { parameters: { value: 'dynamic' } };
+
+    const html = renderToStaticMarkup(
+      <AppNavBar width={300} top={60} bottom={0} sidebarOpen />,
+    );
+
+    expect(html).toContain('Response: dynamic');
+    expect(html).not.toContain('Response: static');
   });
 
   test('keeps participant sidebar and content under one page scrollbar', () => {

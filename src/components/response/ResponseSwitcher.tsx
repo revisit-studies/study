@@ -241,6 +241,12 @@ export function ResponseSwitcher({
   }, [response, config?.parameters, templateData]);
   const withTemplatedFields = <T extends Response>(r: T): T => ({ ...r, ...templatedFields } as T);
 
+  // A dynamic component can render this child one pass before its own route resolver settles.
+  // Do not expose raw Handlebars expressions while the answer context is unavailable.
+  if (!templateData) {
+    return null;
+  }
+
   return (
     <Box mb={responseDividers ? 'xl' : 'lg'} className="response" id={response.id} style={responseWrapperStyle}>
       {response.type === 'numerical' && (

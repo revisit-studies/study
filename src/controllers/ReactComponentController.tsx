@@ -73,16 +73,20 @@ export function ReactComponentController({ currentConfig, provState, answers }: 
   // If the stimulus component file can't be resolved (404), clear stimulus
   // validation so the participant isn't stuck on a trial that can never load.
   useEffect(() => {
-    if (!StimulusComponent) {
+    if (templateData && !StimulusComponent) {
       console.error(`Stimulus component not found at "${templatedPath}". Clearing stimulus validation so the participant is not stuck.`);
       clearStimulusValidation();
     }
-  }, [StimulusComponent, templatedPath, clearStimulusValidation]);
+  }, [StimulusComponent, templateData, templatedPath, clearStimulusValidation]);
 
   const handleRuntimeError = useCallback((error: unknown) => {
     console.error(`Stimulus component "${templatedPath}" threw at runtime. Clearing stimulus validation so the participant is not stuck.`, error);
     clearStimulusValidation();
   }, [templatedPath, clearStimulusValidation]);
+
+  if (!templateData) {
+    return null;
+  }
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
