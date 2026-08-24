@@ -47,8 +47,6 @@ export function TimeResponseInput({
       format={response.format ?? '24h'}
       withDropdown
       withSeconds={response.withSeconds}
-      min={response.min}
-      max={response.max}
       clearable
       error={error}
       withErrorStyles={required}

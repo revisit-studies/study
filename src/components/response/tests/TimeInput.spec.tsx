@@ -1,12 +1,14 @@
 import { MantineProvider } from '@mantine/core';
 import {
-  cleanup, fireEvent, render, waitFor,
+  cleanup, fireEvent, render, screen, waitFor,
 } from '@testing-library/react';
+import { useState } from 'react';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import type { TimeResponse } from '../../../parser/types';
 import { TimeResponseInput } from '../TimeInput';
+import { validateResponse } from '../responseValidation';
 
 class ResizeObserverMock {
   observe() {}
@@ -90,6 +92,57 @@ describe('TimeResponseInput', () => {
     fireEvent.change(minutesInput, { target: { value: '43' } });
 
     expect(onChange).toHaveBeenLastCalledWith('23:43');
+  });
+
+  test('keeps an out-of-range pasted value visible, stored, and invalid', () => {
+    const onChange = vi.fn();
+    const response: TimeResponse = {
+      id: 'time',
+      prompt: 'Select a time.',
+      type: 'time',
+      required: true,
+      min: '09:00',
+      max: '18:00',
+    };
+
+    function ControlledTimeInput() {
+      const [value, setValue] = useState('');
+      const validation = validateResponse(response, value, { [response.id]: value });
+
+      return (
+        <TimeResponseInput
+          response={response}
+          disabled={false}
+          answer={{
+            value,
+            onChange: (nextValue) => {
+              onChange(nextValue);
+              setValue(nextValue);
+            },
+          }}
+          error={validation.message}
+          index={1}
+          enumerateQuestions={false}
+        />
+      );
+    }
+
+    const { container } = render(
+      <MantineProvider env="test">
+        <ControlledTimeInput />
+      </MantineProvider>,
+    );
+
+    const [hoursInput, minutesInput] = getVisibleInputs(container);
+    fireEvent.paste(hoursInput, {
+      clipboardData: { getData: () => '08:30' },
+    });
+
+    expect(onChange).toHaveBeenLastCalledWith('08:30');
+    expect(hoursInput.value).toBe('08');
+    expect(minutesInput.value).toBe('30');
+    expect((container.querySelector('input[type="hidden"]') as HTMLInputElement).value).toBe('08:30');
+    expect(screen.getByText('Please select a time between 09:00 and 18:00.')).toBeDefined();
   });
 
   test('displays a 12-hour picker while preserving a 24-hour value', () => {
