@@ -5,6 +5,7 @@ import {
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
+import { MantineProvider } from '@mantine/core';
 import * as recordingHooks from '../useRecording';
 import { useRecording, useRecordingContext } from '../useRecording';
 import type { StoreState } from '../../types';
@@ -70,6 +71,26 @@ class MockMediaRecorder {
   triggerEvent(event: string, data?: Blob) {
     this._listeners[event]?.({ data });
   }
+}
+
+vi.hoisted(() => {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: (query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: () => {},
+      removeListener: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => false,
+    }),
+  });
+});
+
+function renderWithMantine(ui: React.ReactElement) {
+  return render(React.createElement(MantineProvider, null, ui));
 }
 
 // ── module mocks ───────────────────────────────────────────────────────────────
@@ -572,12 +593,14 @@ describe('ScreenRecordingPermission component', () => {
       audioMediaStream: { current: null },
     } as unknown as ReturnType<typeof recordingHooks.useRecordingContext>);
 
-    render(React.createElement(ScreenRecordingPermission, {
-      setAnswer: vi.fn(),
-      parameters: undefined,
-      answers: {},
-      useTrrack: vi.fn(),
-    } as React.ComponentProps<typeof ScreenRecordingPermission>));
+    renderWithMantine(
+      React.createElement(ScreenRecordingPermission, {
+        setAnswer: vi.fn(),
+        parameters: undefined,
+        answers: {},
+        useTrrack: vi.fn(),
+      } as React.ComponentProps<typeof ScreenRecordingPermission>),
+    );
 
     const button = screen.getByRole('button', { name: 'Start Recording' });
     expect((button as HTMLButtonElement).disabled).toBe(true);
@@ -600,12 +623,14 @@ describe('ScreenRecordingPermission component', () => {
       audioMediaStream: { current: null },
     } as unknown as ReturnType<typeof recordingHooks.useRecordingContext>);
 
-    render(React.createElement(ScreenRecordingPermission, {
-      setAnswer: vi.fn(),
-      parameters: undefined,
-      answers: {},
-      useTrrack: vi.fn(),
-    } as React.ComponentProps<typeof ScreenRecordingPermission>));
+    renderWithMantine(
+      React.createElement(ScreenRecordingPermission, {
+        setAnswer: vi.fn(),
+        parameters: undefined,
+        answers: {},
+        useTrrack: vi.fn(),
+      } as React.ComponentProps<typeof ScreenRecordingPermission>),
+    );
 
     const button = screen.getByRole('button', { name: 'Start Recording' });
     expect((button as HTMLButtonElement).disabled).toBe(true);
