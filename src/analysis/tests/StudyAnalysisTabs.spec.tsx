@@ -114,6 +114,9 @@ vi.mock('../individualStudy/thinkAloud/ThinkAloudAnalysis', () => ({
 vi.mock('../individualStudy/config/ConfigView', () => ({
   ConfigView: () => <div>ConfigView</div>,
 }));
+vi.mock('../individualStudy/style/StyleView', () => ({
+  StyleView: () => <div>Study Style</div>,
+}));
 vi.mock('../../components/downloader/DownloadButtons', () => ({
   DownloadButtons: () => <div>DownloadButtons</div>,
 }));
@@ -178,6 +181,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconTags: () => null,
   IconDashboard: () => null,
   IconFileCode: () => null,
+  IconPalette: () => null,
 }));
 
 // ── fixtures ──────────────────────────────────────────────────────────────────
@@ -216,6 +220,7 @@ describe('StudyAnalysisTabs', () => {
     expect(html).toContain('Trial Stats');
     expect(html).toContain('Coding');
     expect(html).toContain('Config');
+    expect(html).toContain('Style');
     expect(html).toContain('Manage');
   });
 
