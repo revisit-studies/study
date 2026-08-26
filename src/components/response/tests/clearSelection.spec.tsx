@@ -60,7 +60,15 @@ vi.mock('@mantine/core', () => {
       </div>
     ),
     {
-      Group: ({ children, ...rest }: DivProps) => <div {...rest}>{children}</div>,
+      Group: ({
+        children, label, description, ...rest
+      }: DivProps & { label?: React.ReactNode; description?: React.ReactNode }) => (
+        <div {...rest}>
+          {label}
+          {description}
+          {children}
+        </div>
+      ),
       Card: ({ children, value, ...rest }: RadioProps) => (
         <div data-value={value} {...rest}>{children}</div>
       ),
@@ -134,7 +142,7 @@ describe('RadioInput / ButtonsInput clear & toggle behaviour', () => {
   test('RadioInput toggles selection and Clear selection calls onChange("")', () => {
     const onChange = vi.fn();
     const response: RadioResponse = {
-      type: 'radio', id: 'r1', prompt: '', required: false, options: ['A', 'B'], horizontal: false, withOther: false, labelLocation: 'inline',
+      type: 'radio', id: 'r1', prompt: 'Pick your answer', required: false, options: ['A', 'B'], horizontal: false, withOther: false, labelLocation: 'inline',
     };
     const answer: StringAnswer = { value: '', onChange };
     const { container, getByText, rerender } = render(
@@ -165,7 +173,7 @@ describe('RadioInput / ButtonsInput clear & toggle behaviour', () => {
   test('ButtonsInput toggles Radio. Card selection and Clear selection works', () => {
     const onChange = vi.fn();
     const response: ButtonsResponse = {
-      type: 'buttons', id: 'b1', prompt: '', required: false, options: ['X', 'Y'],
+      type: 'buttons', id: 'b1', prompt: 'Pick your answer', required: false, options: ['X', 'Y'],
     };
     const answer: StringAnswer = { value: '', onChange };
     const { container, getByText, rerender } = render(
@@ -196,7 +204,7 @@ describe('LikertInput behaviour', () => {
     const likertResponse: RadioResponse = {
       type: 'radio',
       id: 'l1',
-      prompt: '',
+      prompt: 'Pick your answer',
       required: false,
       options: ['1', '2', '3', '4', '5'],
       horizontal: true,
@@ -243,7 +251,7 @@ describe('MatrixInput clear behaviour', () => {
     const response: MatrixResponse = {
       type: 'matrix-radio',
       id: 'm1',
-      prompt: '',
+      prompt: 'Pick your answers',
       required: false,
       answerOptions: ['A', 'B'],
       questionOptions: ['q1', 'q2'],
@@ -269,7 +277,7 @@ describe('MatrixInput clear behaviour', () => {
     const response: MatrixResponse = {
       type: 'matrix-radio',
       id: 'm2',
-      prompt: '',
+      prompt: 'Pick your answer',
       required: false,
       answerOptions: ['A', 'B'],
       questionOptions: ['q1', 'q2'],
