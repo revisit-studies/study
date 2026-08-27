@@ -45,7 +45,7 @@ import { appendStimulusShowErrorsToGraph } from './stimulusProvenance';
 import { useManagedTrrack } from '../../store/hooks/useRevisitTrrack';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { showNotification } from '../../utils/notifications';
-import { getAnswersFromAllLocations } from '../../utils/getAnswersFromAllLocations';
+import { getAnswersFromAllLocations, getPersistedAnswersFromAllLocations } from '../../utils/getAnswersFromAllLocations';
 
 type Props = {
   status?: StoredAnswer;
@@ -127,7 +127,6 @@ export function ResponseBlock({
     }
     return response;
   }), [allResponses]);
-
   // Set up trrack to store provenance graph of the answerValidator status
   const { actions, registry } = useMemo(() => {
     const reg = Registry.create();
@@ -172,7 +171,7 @@ export function ResponseBlock({
 
   const trialValidation = useStoreSelector((state) => state.trialValidation);
   const analysisProvState = useStoreSelector((state) => state.analysisProvState);
-  const { goToNextStep } = useNextStep();
+  const { goToNextStep } = useNextStep(config.response);
 
   const studyConfig = useStudyConfig();
 
@@ -612,7 +611,7 @@ export function ResponseBlock({
       // The resolved route key is authoritative for legacy records that were
       // persisted without their internal identifier.
       identifier,
-      answer: getAnswersFromAllLocations(trialValidation[identifier]),
+      answer: getPersistedAnswersFromAllLocations(trialValidation[identifier], config.response),
       checkAnswer: currentCheckAnswer,
     };
 

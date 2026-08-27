@@ -41,7 +41,7 @@ export function NextButton({
   onCheckAnswer,
   onNext,
 }: Props) {
-  const { isNextDisabled, goToNextStep } = useNextStep();
+  const { isNextDisabled, goToNextStep } = useNextStep(config?.response);
   const studyConfig = useStudyConfig();
   const navigate = useNavigate();
   const identifier = useCurrentIdentifier();

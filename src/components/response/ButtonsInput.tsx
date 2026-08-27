@@ -2,6 +2,7 @@ import {
   Flex, FocusTrap, Radio,
 } from '@mantine/core';
 import { useMemo } from 'react';
+import ClearSelectionButton from './ClearSelectionButton';
 import { ButtonsResponse, ParsedStringOption } from '../../parser/types';
 import classes from './css/ButtonsInput.module.css';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
@@ -19,7 +20,7 @@ export function ButtonsInput({
 }: {
   response: ButtonsResponse;
   disabled: boolean;
-  answer: { value?: string };
+  answer: { value?: string; onChange?: (value: string) => void };
   error?: string | null;
   index: number;
   enumerateQuestions: boolean;
@@ -44,10 +45,22 @@ export function ButtonsInput({
     <FocusTrap>
       <Radio.Group
         name={`radioInput${response.id}`}
-        label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
+        label={prompt.length > 0 && (
+          <InputLabel
+            prompt={prompt}
+            required={required}
+            index={index}
+            enumerateQuestions={enumerateQuestions}
+            infoText={infoText}
+            clearSelectionButton={(
+              <ClearSelectionButton onClick={() => answer?.onChange?.('')} disabled={disabled} visible={!!answer?.value} />
+            )}
+          />
+        )}
         description={secondaryText}
         key={response.id}
-        {...answer}
+        value={answer?.value}
+        onChange={answer?.onChange}
         error={error}
         errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
         style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
