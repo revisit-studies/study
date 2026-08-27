@@ -22,6 +22,12 @@ interface RadioProps {
   [key: string]: unknown;
 }
 
+interface RadioGroupProps extends DivProps {
+  label?: React.ReactNode;
+  description?: React.ReactNode;
+  onChange?: (value: string) => void;
+}
+
 interface CheckboxProps {
   label?: React.ReactNode;
   value?: string;
@@ -61,17 +67,44 @@ vi.mock('@mantine/core', () => {
     ),
     {
       Group: ({
-        children, label, description, ...rest
-      }: DivProps & { label?: React.ReactNode; description?: React.ReactNode }) => (
-        <div {...rest}>
+        children, label, description, onChange, ...rest
+      }: RadioGroupProps) => (
+        <div
+          {...rest}
+          onClick={(event) => {
+            const card = (event.target as HTMLElement).closest('[data-radio-card]');
+            if (card) {
+              onChange?.(card.getAttribute('data-value') || '');
+            }
+          }}
+        >
           {label}
           {description}
           {children}
         </div>
       ),
-      Card: ({ children, value, ...rest }: RadioProps) => (
-        <div data-value={value} {...rest}>{children}</div>
-      ),
+      Card: ({
+        children, value, ...rest
+      }: RadioProps) => {
+        const ref = React.useRef<HTMLButtonElement>(null);
+        return (
+          <button
+            type="button"
+            ref={ref}
+            data-radio-card
+            data-value={value}
+            onKeyDown={(event) => {
+              if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+                event.preventDefault();
+                ref.current?.click();
+              }
+            }}
+            {...rest}
+          >
+            {children}
+          </button>
+        );
+      },
     },
   );
   function Checkbox({ label, value, checked }: CheckboxProps) {
@@ -170,7 +203,7 @@ describe('RadioInput / ButtonsInput clear & toggle behaviour', () => {
     expect(onChange).toHaveBeenLastCalledWith('');
   });
 
-  test('ButtonsInput toggles Radio. Card selection and Clear selection works', () => {
+  test('ButtonsInput selects cards and Clear selection works', () => {
     const onChange = vi.fn();
     const response: ButtonsResponse = {
       type: 'buttons', id: 'b1', prompt: 'Pick your answer', required: false, options: ['X', 'Y'],
@@ -189,12 +222,31 @@ describe('RadioInput / ButtonsInput clear & toggle behaviour', () => {
         <ButtonsInput response={response} disabled={false} answer={{ ...answer, value: 'X' }} error={null} index={0} enumerateQuestions={false} />,
       );
       fireEvent.click(cardX);
-      expect(onChange).toHaveBeenLastCalledWith('');
+      expect(onChange).toHaveBeenLastCalledWith('X');
     }
 
     const clearBtn = getByText('Clear selection');
     fireEvent.click(clearBtn);
     expect(onChange).toHaveBeenLastCalledWith('');
+  });
+
+  test('ButtonsInput does not clear a one-option answer during arrow navigation', () => {
+    const onChange = vi.fn();
+    const response: ButtonsResponse = {
+      type: 'buttons', id: 'b2', prompt: 'Pick your answer', required: false, options: ['Only option'],
+    };
+    const answer: StringAnswer = { value: 'Only option', onChange };
+    const { container } = render(
+      <ButtonsInput response={response} disabled={false} answer={answer} error={null} index={0} enumerateQuestions={false} />,
+    );
+
+    const card = container.querySelector('[data-value="Only option"]');
+    expect(card).toBeTruthy();
+    if (card) {
+      fireEvent.keyDown(card, { key: 'ArrowRight' });
+    }
+
+    expect(onChange).toHaveBeenLastCalledWith('Only option');
   });
 });
 

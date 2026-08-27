@@ -60,7 +60,7 @@ export function ButtonsInput({
         description={secondaryText}
         key={response.id}
         value={answer?.value}
-        onChange={() => { /* handled by Radio.Card clicks to support deselect */ }}
+        onChange={answer?.onChange}
         error={error}
         errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
         style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
@@ -74,15 +74,6 @@ export function ButtonsInput({
               ta="center"
               className={classes.root}
               p="xs"
-              onClick={() => {
-                const current = answer.value;
-                const cb = answer?.onChange;
-                if (current === radio.value) {
-                  cb?.('');
-                } else {
-                  cb?.(radio.value);
-                }
-              }}
             >
               <OptionLabel label={radio.label} infoText={radio.infoText} button />
             </Radio.Card>

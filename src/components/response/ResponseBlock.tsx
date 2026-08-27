@@ -45,7 +45,7 @@ import { appendStimulusShowErrorsToGraph } from './stimulusProvenance';
 import { useManagedTrrack } from '../../store/hooks/useRevisitTrrack';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { showNotification } from '../../utils/notifications';
-import { getAnswersFromAllLocations } from '../../utils/getAnswersFromAllLocations';
+import { getAnswersFromAllLocations, getResponseIdsWithOther } from '../../utils/getAnswersFromAllLocations';
 
 type Props = {
   status?: StoredAnswer;
@@ -127,6 +127,7 @@ export function ResponseBlock({
     }
     return response;
   }), [allResponses]);
+  const responseIdsWithOther = useMemo(() => getResponseIdsWithOther(allResponsesWithDefaults), [allResponsesWithDefaults]);
 
   // Set up trrack to store provenance graph of the answerValidator status
   const { actions, registry } = useMemo(() => {
@@ -172,7 +173,7 @@ export function ResponseBlock({
 
   const trialValidation = useStoreSelector((state) => state.trialValidation);
   const analysisProvState = useStoreSelector((state) => state.analysisProvState);
-  const { goToNextStep } = useNextStep();
+  const { goToNextStep } = useNextStep(responseIdsWithOther);
 
   const studyConfig = useStudyConfig();
 
@@ -261,7 +262,7 @@ export function ResponseBlock({
     ),
     [customResponseModules],
   );
-  const combinedLiveValues = useMemo(() => getAnswersFromAllLocations(trialValidation[identifier]), [identifier, trialValidation]);
+  const combinedLiveValues = useMemo(() => getAnswersFromAllLocations(trialValidation[identifier], responseIdsWithOther), [identifier, responseIdsWithOther, trialValidation]);
   const combinedAnalysisValues = useMemo(
     () => collectResponseValuesFromAnalysisState(
       analysisProvState as Partial<Record<ResponseBlockLocation, FormElementProvenance>>,
@@ -542,7 +543,7 @@ export function ResponseBlock({
 
     const newAttemptsUsed = attemptsUsed + 1;
 
-    const allAnswers = getAnswersFromAllLocations(trialValidation[identifier]);
+    const allAnswers = getAnswersFromAllLocations(trialValidation[identifier], responseIdsWithOther);
 
     const correctAnswers = Object.fromEntries(
       (config?.correctAnswer ?? []).map((configCorrectAnswer) => {
@@ -578,7 +579,7 @@ export function ResponseBlock({
       correct: allCorrect,
       responses: correctAnswers,
     }));
-  }, [allResponsesWithDefaults, attemptsUsed, config, hasCorrectAnswerFeedback, hasResponseIssues, hasStimulusIssue, identifier, revealResponseErrors, revealStimulusErrors, saveIncorrectAnswer, setCheckAnswerResult, storeDispatch, trialValidation]);
+  }, [allResponsesWithDefaults, attemptsUsed, config, hasCorrectAnswerFeedback, hasResponseIssues, hasStimulusIssue, identifier, responseIdsWithOther, revealResponseErrors, revealStimulusErrors, saveIncorrectAnswer, setCheckAnswerResult, storeDispatch, trialValidation]);
 
   const nextButtonText = useMemo(() => config?.nextButtonText ?? studyConfig.uiConfig.nextButtonText ?? 'Next', [config, studyConfig]);
 
@@ -612,7 +613,7 @@ export function ResponseBlock({
       // The resolved route key is authoritative for legacy records that were
       // persisted without their internal identifier.
       identifier,
-      answer: getAnswersFromAllLocations(trialValidation[identifier]),
+      answer: getAnswersFromAllLocations(trialValidation[identifier], responseIdsWithOther),
       checkAnswer: currentCheckAnswer,
     };
 
@@ -633,7 +634,7 @@ export function ResponseBlock({
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentCheckAnswer, dataCollectionEnabled, identifier, isAnalysis, saveTrialAnswer, showBtnsInLocation, storageEngine, storeAnswers, storeDispatch]);
+  }, [currentCheckAnswer, dataCollectionEnabled, identifier, isAnalysis, responseIdsWithOther, saveTrialAnswer, showBtnsInLocation, storageEngine, storeAnswers, storeDispatch]);
 
   // If the user has failed the training, wait 5 seconds and redirect to a fail page
   useEffect(() => {

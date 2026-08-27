@@ -49,4 +49,33 @@ describe('getAnswersFromAllLocations', () => {
     expect(result.q1).toEqual(nested);
     expect(result.q1).not.toBe(nested);
   });
+
+  test('omits inactive Other text while retaining selected Other text', () => {
+    const entry = makeEntry({
+      aboveStimulus: { valid: true, values: { q1: '', 'q1-other': 'cleared response' } },
+      belowStimulus: { valid: true, values: { q2: 'B', 'q2-other': 'switched-away response' } },
+      sidebar: { valid: true, values: { q3: 'other', 'q3-other': 'selected response' } },
+      stimulus: {
+        valid: true,
+        values: {
+          q4: ['A', '__other'],
+          'q4-other': 'selected checkbox response',
+          q5: ['A'],
+          'q5-other': 'inactive checkbox response',
+          'consent-other': 'ordinary response',
+        },
+      },
+    });
+
+    expect(getAnswersFromAllLocations(entry, ['q1', 'q2', 'q3', 'q4', 'q5'])).toEqual({
+      q1: '',
+      q2: 'B',
+      q3: 'other',
+      'q3-other': 'selected response',
+      q4: ['A', '__other'],
+      'q4-other': 'selected checkbox response',
+      q5: ['A'],
+      'consent-other': 'ordinary response',
+    });
+  });
 });
