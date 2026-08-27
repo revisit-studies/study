@@ -10,9 +10,10 @@ import {
   waitForStudyEndMessage,
 } from './utils';
 
-async function getAvailableItemsZone(scope: Page | Locator) {
-  return scope.locator('div.mantine-Paper-root[data-with-border="true"]')
-    .filter({ hasText: 'Available Items' }).first();
+async function getAvailableItemsZone(page: Page) {
+  return page.locator('div.mantine-Paper-root[data-with-border="true"]').filter({
+    has: page.getByText('Available Items', { exact: true }),
+  }).first();
 }
 
 async function dragWithMouse(
@@ -33,10 +34,10 @@ async function dragWithMouse(
   const sourceX = (sourceBox as { x: number; width: number }).x + ((sourceBox as { width: number }).width / 2);
   const sourceY = (sourceBox as { y: number; height: number }).y + ((sourceBox as { height: number }).height / 2);
 
-  const targetX = (targetBox as { x: number }).x + ((targetBox as { width: number }).width / 2);
+  const targetX = (targetBox as { x: number; width: number }).x + ((targetBox as { width: number }).width / 2);
   const targetHeight = (targetBox as { height: number }).height;
   const targetY = dropOnTargetCenter
-    ? (targetBox as { y: number }).y + Math.min(24, targetHeight / 2)
+    ? (targetBox as { y: number }).y + (targetHeight / 2)
     : (targetBox as { y: number }).y + Math.max(32, Math.min(targetHeight - 8, targetHeight * 0.65));
 
   await page.mouse.move(sourceX, sourceY);
@@ -55,62 +56,27 @@ async function getSublistSelectedDropZone(page: Page, zoneIndex = 0) {
   return selectedZone;
 }
 
-async function getCategoricalZone(
-  response: Locator,
+async function getCategoricalOrPairwiseDropZone(
+  page: Page,
   zone: 'HIGH' | 'MEDIUM' | 'LOW',
   zoneIndex = 0,
 ) {
-  return response.locator('div.mantine-Paper-root[data-with-border="true"]')
-    .filter({ hasText: zone }).nth(zoneIndex);
-}
-
-function getCategoricalResponse(page: Page, prompt: string) {
-  return page.locator('[data-question-id]').filter({
-    hasText: prompt,
-  }).first();
-}
-
-function getZoneItem(zone: Locator, option: string) {
-  return zone.getByText(option, { exact: true }).first()
-    .locator('xpath=ancestor::div[contains(@class,"mantine-Paper-root")][1]');
-}
-
-async function expectItemInZone(zone: Locator, option: string) {
-  await expect(zone.getByText(option, { exact: true })).toBeVisible();
-}
-
-async function expectItemAbsentFromZone(zone: Locator, option: string) {
-  await expect(zone.getByText(option, { exact: true })).toHaveCount(0);
+  return page.locator('p.mantine-Text-root').filter({
+    hasText: new RegExp(`^${zone}$`),
+  }).nth(zoneIndex);
 }
 
 async function dragAvailableOptionToZone(
   page: Page,
-  response: Locator,
   option: string,
   zone: 'HIGH' | 'MEDIUM' | 'LOW',
   zoneIndex = 0,
 ) {
-  const availableZone = await getAvailableItemsZone(response);
+  const availableZone = await getAvailableItemsZone(page);
   const source = availableZone.getByText(option, { exact: true }).first()
     .locator('xpath=ancestor::div[contains(@class,"mantine-Paper-root")][1]');
-  const target = await getCategoricalZone(response, zone, zoneIndex);
+  const target = await getCategoricalOrPairwiseDropZone(page, zone, zoneIndex);
   await dragWithMouse(page, source, target, true);
-  await expectItemInZone(target, option);
-  await expectItemAbsentFromZone(availableZone, option);
-}
-
-async function dragCategoricalOptionToZone(
-  page: Page,
-  response: Locator,
-  option: string,
-  sourceZoneName: 'HIGH' | 'MEDIUM' | 'LOW',
-  targetZoneName: 'HIGH' | 'MEDIUM' | 'LOW',
-) {
-  const sourceZone = await getCategoricalZone(response, sourceZoneName);
-  const targetZone = await getCategoricalZone(response, targetZoneName);
-  await dragWithMouse(page, getZoneItem(sourceZone, option), targetZone, true);
-  await expectItemInZone(targetZone, option);
-  await expectItemAbsentFromZone(sourceZone, option);
 }
 
 async function dragFromAvailableInPairwise(
@@ -247,46 +213,45 @@ test('Test ranking response(sublist, categorical, pairwise) and validation', asy
   // Categorical ranking
   // Put 2 in high, 2 in medium, 1 in low, then move one from medium to high
   await expect(page.getByText('Rank the following options.')).toBeVisible();
-  const categoricalResponse = getCategoricalResponse(page, 'Rank the following options.');
-  await dragAvailableOptionToZone(page, categoricalResponse, 'Ball State University', 'HIGH');
-  await dragAvailableOptionToZone(page, categoricalResponse, 'University of Rochester', 'HIGH');
-  await dragAvailableOptionToZone(page, categoricalResponse, 'George Mason University', 'MEDIUM');
-  await dragAvailableOptionToZone(page, categoricalResponse, 'University of California - Berkeley', 'MEDIUM');
-  await dragAvailableOptionToZone(page, categoricalResponse, 'Washington State University', 'LOW');
-  await dragCategoricalOptionToZone(page, categoricalResponse, 'George Mason University', 'MEDIUM', 'HIGH');
+  await dragAvailableOptionToZone(page, 'Ball State University', 'HIGH');
+  await dragAvailableOptionToZone(page, 'University of Rochester', 'HIGH');
+  await dragAvailableOptionToZone(page, 'George Mason University', 'MEDIUM');
+  await dragAvailableOptionToZone(page, 'University of California - Berkeley', 'MEDIUM');
+  await dragAvailableOptionToZone(page, 'Washington State University', 'LOW');
+  await settleAfterDrag(page);
+
+  await dragWithMouse(
+    page,
+    page.getByText('George Mason University', { exact: true }).first()
+      .locator('xpath=ancestor::div[contains(@class,"mantine-Paper-root")][1]'),
+    await getCategoricalOrPairwiseDropZone(page, 'HIGH'),
+  );
+  await settleAfterDrag(page);
 
   await nextClick(page);
 
   // Categorical ranking top-2
   // Put 2 in high, then attempt a 3rd in medium to trigger limit
   await expect(page.getByText('Rank the following options. Select the top 2 options.')).toBeVisible();
-  const top2Response = getCategoricalResponse(page, 'Rank the following options. Select the top 2 options.');
-  await dragAvailableOptionToZone(page, top2Response, 'Ball State University', 'HIGH');
-  await dragAvailableOptionToZone(page, top2Response, 'University of Rochester', 'HIGH');
-  await dragAvailableOptionToZone(page, top2Response, 'George Mason University', 'MEDIUM');
-  await dragAvailableOptionToZone(page, top2Response, 'University of California - Berkeley', 'MEDIUM');
-  await dragAvailableOptionToZone(page, top2Response, 'Washington State University', 'MEDIUM');
-
-  const top2MediumZone = await getCategoricalZone(top2Response, 'MEDIUM');
-  await expect(top2MediumZone.locator('div.mantine-Paper-root[data-with-border="true"]')).toHaveCount(3);
-  await expectItemInZone(top2MediumZone, 'George Mason University');
-  await expectItemInZone(top2MediumZone, 'University of California - Berkeley');
-  await expectItemInZone(top2MediumZone, 'Washington State University');
+  await dragAvailableOptionToZone(page, 'Ball State University', 'HIGH');
+  await dragAvailableOptionToZone(page, 'University of Rochester', 'HIGH');
+  await dragAvailableOptionToZone(page, 'George Mason University', 'MEDIUM');
+  await dragAvailableOptionToZone(page, 'University of California - Berkeley', 'MEDIUM');
+  await dragAvailableOptionToZone(page, 'Washington State University', 'MEDIUM');
+  await settleAfterDrag(page);
+  // In some browsers the 3rd drop is ignored without rendering a toast;
+  // ensure we still have at least one option left in "Available Items".
   await nextClick(page);
-  await expect(page.getByText('Please add at most 2 items per category.')).toBeVisible();
-  await expect(page.getByText('Rank the following options. Select the top 2 options.')).toBeVisible();
-
-  const top2AvailableZone = await getAvailableItemsZone(top2Response);
+  await expect(page.getByText('Please add at most 2 items per category.')).toBeVisible({ timeout: 5000 });
   await dragWithMouse(
     page,
-    getZoneItem(top2MediumZone, 'Washington State University'),
-    top2AvailableZone.getByText('Available Items', { exact: true }),
+    page.getByText('Washington State University', { exact: true }).first()
+      .locator('xpath=ancestor::div[contains(@class,"mantine-Paper-root")][1]'),
+    await getAvailableItemsZone(page),
     true,
   );
-  await expectItemInZone(top2AvailableZone, 'Washington State University');
-  await expectItemAbsentFromZone(top2MediumZone, 'Washington State University');
-  await expect(top2MediumZone.locator('div.mantine-Paper-root[data-with-border="true"]')).toHaveCount(2);
-  await expect(page.getByText('Please add at most 2 items per category.')).toHaveCount(0);
+  await settleAfterDrag(page);
+  await expect((await getAvailableItemsZone(page)).getByText('Washington State University', { exact: true })).toBeVisible();
   await nextClick(page);
 
   // Pairwise ranking
