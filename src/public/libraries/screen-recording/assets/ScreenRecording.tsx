@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRecordingContext } from '../../../../store/hooks/useRecording';
 import { StimulusParams } from '../../../../store/types';
 import { RecordingAudioWaveform } from '../../../../components/interface/RecordingAudioWaveform';
+import { useStoreSelector } from "../../../../store/store";
 
 function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
   const {
@@ -19,15 +20,25 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
 
   // audioCapturingSuccess is set to true when we detect sound.
   const [audioCapturingSuccess, setAudioCapturingSuccess] = useState(false);
+  const { dataCollectionEnabled } = useStoreSelector((state) => state.modes);
 
   useEffect(() => {
+    if (!dataCollectionEnabled) {
+      setAnswer({
+        status: true,
+        answers: {
+          screenRecordingPermission: true,
+        },
+      });
+      return;
+    }
     setAnswer({
       status: screenCapturing && (studyHasAudioRecording ? audioCapturingSuccess : true),
       answers: {
         screenRecordingPermission: screenCapturing,
       },
     });
-  }, [screenCapturing, audioCapturingSuccess, setAnswer, studyHasAudioRecording]);
+  }, [screenCapturing, audioCapturingSuccess, setAnswer, studyHasAudioRecording, dataCollectionEnabled]);
 
   useEffect(() => {
     if (!screenCapturing) {
@@ -102,7 +113,13 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
               <strong>Click the button below</strong>
               {' '}
               to enable screen and audio recording.
-              <Button type="button" onClick={screenCapturing ? stopCapture : startCapture} display="block" mt="sm">
+              <Button
+                type="button"
+                onClick={screenCapturing ? stopCapture : startCapture}
+                disabled={!dataCollectionEnabled}
+                display="block"
+                mt="sm"
+              >
                 {screenCapturing ? 'Stop Recording' : 'Start Recording'}
               </Button>
               <video
@@ -146,7 +163,10 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
           <strong>Click the button below</strong>
           {' '}
           to enable screen recording.
-          <Button type="button" onClick={screenCapturing ? stopCapture : startCapture} display="block" mt="sm">
+          <Button type="button"
+                  onClick={screenCapturing ? stopCapture : startCapture}
+                  disabled={!dataCollectionEnabled}
+                  display="block" mt="sm">
             {screenCapturing ? 'Stop Recording' : 'Start Recording'}
           </Button>
           <video
