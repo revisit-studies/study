@@ -15,6 +15,7 @@ import {
 } from '@trrack/core';
 import WaveSurferType from 'wavesurfer.js';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
+import { WaveformPeaks } from '../../storage/engines/types';
 import { TaskProvenanceTimeline } from './TaskProvenanceTimeline';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import { Timer } from './Timer';
@@ -308,21 +309,42 @@ export function AudioProvenanceVis({
             throw new Error('Participant ID is required to load audio');
           }
 
-          const [audioUrl, screenUrl] = await Promise.all([
-            safe(storageEngine.getAudio(taskName, participantId)),
-            safe(storageEngine.getScreenRecording(taskName, participantId)),
+          const [audioUrl, cachedPeaks] = await Promise.all([
+            safe(storageEngine.getAudioUrl(taskName, participantId)),
+            safe(storageEngine.getWaveformPeaks(taskName, participantId)),
           ]);
 
-          const url = screenUrl ?? audioUrl ?? null;
-
-          if (!url) {
+          if (!audioUrl) {
             setAnalysisHasAudio(false);
             setWaveSurferLoading(false);
             wavesurfer.current?.empty();
             return;
           }
 
-          await waveSurfer.load(url!, undefined, duration);
+          const loadWithoutCachedPeaks = async () => {
+            waveSurfer.once('ready', () => {
+              const extractedPeaks: WaveformPeaks = {
+                peaks: waveSurfer.exportPeaks({ maxLength: 5000, precision: 100 }),
+                duration: waveSurfer.getDuration(),
+              };
+              storageEngine.saveWaveformPeaks(extractedPeaks, taskName, participantId)
+                .catch((err) => console.warn('Failed to save waveform peaks:', err));
+            });
+
+            await waveSurfer.load(audioUrl, undefined, duration);
+          };
+
+          if (cachedPeaks) {
+            try {
+              await waveSurfer.load(audioUrl, cachedPeaks.peaks, cachedPeaks.duration);
+            } catch (error) {
+              console.warn('Failed to load cached waveform peaks; decoding audio:', error);
+              await loadWithoutCachedPeaks();
+            }
+          } else {
+            await loadWithoutCachedPeaks();
+          }
+
           setWaveSurferLoading(false);
 
           audioRef.current = waveSurfer.getMediaElement();
@@ -337,7 +359,7 @@ export function AudioProvenanceVis({
           setWaveSurferLoading(false);
           audioRef.current = null;
           updateReplayRef();
-          throw new Error(error as string);
+          console.warn('Failed to load audio waveform:', error);
         }
       } else {
         setAnalysisHasAudio(false);

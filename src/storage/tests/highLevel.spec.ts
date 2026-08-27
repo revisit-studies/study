@@ -1205,6 +1205,62 @@ describe.each([
     expect(sequenceAssignment!.completed).not.toBeNull();
   });
 
+  test('getWaveformPeaks returns null when nothing has been cached', async () => {
+    const { participantId } = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    const identifier = 'intro_0';
+
+    const result = await storageEngine.getWaveformPeaks(identifier, participantId);
+    expect(result).toBeNull();
+  });
+
+  test('saveWaveformPeaks then getWaveformPeaks round-trips valid cached peaks', async () => {
+    const { participantId } = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    const identifier = 'intro_0';
+    const waveformPeaks = { peaks: [[0.1, -0.2, 0.3]], duration: 12.5 };
+
+    await storageEngine.saveWaveformPeaks(waveformPeaks, identifier, participantId);
+
+    const result = await storageEngine.getWaveformPeaks(identifier, participantId);
+    expect(result).toEqual(waveformPeaks);
+  });
+
+  test('saveAudioRecording invalidates cached waveform peaks for the same task', async () => {
+    const { participantId } = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    const identifier = 'intro_0';
+
+    await storageEngine.saveWaveformPeaks({ peaks: [[0.1, 0.2]], duration: 12.5 }, identifier, participantId);
+    await storageEngine.saveAudioRecording(new Blob(['replacement-audio'], { type: 'audio/webm' }), identifier);
+
+    expect(await storageEngine.getWaveformPeaks(identifier, participantId)).toBeNull();
+  });
+
+  test.each([
+    ['missing peaks property', { duration: 10 }],
+    ['non-array peaks', { peaks: 'nope', duration: 10 }],
+    ['empty peaks array', { peaks: [], duration: 10 }],
+    ['empty peaks channel', { peaks: [[]], duration: 10 }],
+    ['peaks channel with non-numeric values', { peaks: [[0.1, 'oops']], duration: 10 }],
+    ['peaks channel with out-of-range values', { peaks: [[0.1, 1.1]], duration: 10 }],
+    ['peaks channels with different lengths', { peaks: [[0.1, 0.2], [0.3]], duration: 10 }],
+    ['missing duration', { peaks: [[0.1, 0.2]] }],
+    ['non-numeric duration', { peaks: [[0.1, 0.2]], duration: 'ten' }],
+    ['zero duration', { peaks: [[0.1, 0.2]], duration: 0 }],
+    ['negative duration', { peaks: [[0.1, 0.2]], duration: -5 }],
+    ['NaN duration', { peaks: [[0.1, 0.2]], duration: Number.NaN }],
+  ])('getWaveformPeaks treats malformed cache data as a miss: %s', async (_label, malformed) => {
+    const { participantId } = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    const identifier = 'intro_0';
+
+    await (
+      storageEngine as unknown as {
+        _pushToStorage: StorageEngine['_pushToStorage'];
+      }
+    )._pushToStorage(`audio/${participantId}_${identifier}`, 'waveform.peaks.json', malformed as unknown as StorageObject<'waveform.peaks.json'>);
+
+    const result = await storageEngine.getWaveformPeaks(identifier, participantId);
+    expect(result).toBeNull();
+  });
+
   test('finalizeParticipant waits for pending asset uploads and returns an error when an upload fails', async () => {
     storageEngine = new DelayedLocalStorageEngine(true);
     await storageEngine.connect();

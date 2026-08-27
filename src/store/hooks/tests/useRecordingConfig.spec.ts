@@ -55,4 +55,17 @@ describe('useRecordingConfig', () => {
     const { result } = renderHook(() => useRecordingConfig());
     expect(result.current.studyHasAudioRecording).toBe(true);
   });
+
+  test('disables click-to-record when the current component disables audio', () => {
+    vi.mocked(useStudyConfig).mockReturnValueOnce(makeStudyConfig({
+      uiConfig: { recordAudio: true, clickToRecord: true },
+      components: { trial1: { recordAudio: false } },
+    }));
+    vi.mocked(useFlatSequence).mockReturnValueOnce(['trial1']);
+
+    const { result } = renderHook(() => useRecordingConfig());
+
+    expect(result.current.currentComponentHasAudioRecording).toBe(false);
+    expect(result.current.currentComponentHasClickToRecord).toBe(false);
+  });
 });

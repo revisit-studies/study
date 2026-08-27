@@ -530,7 +530,7 @@ export function useRecording() {
     combinedMediaRecorder: currentMediaRecorder,
     audioMediaStream,
     screenWithAudioRecording,
-    clickToRecord: currentComponentHasClickToRecord,
+    currentComponentHasClickToRecord,
     isRejected,
     isSpeakingWhileMuted,
     showMutedWarning,
