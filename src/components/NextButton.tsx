@@ -15,7 +15,6 @@ import {
   DEFAULT_AUTO_ADVANCE_WARNING_TIME,
   getAutoAdvanceWarning,
 } from './nextButtonTimeout';
-import { getResponseIdsWithOther } from '../utils/getAnswersFromAllLocations';
 
 const nextButtonJustify = {
   left: 'flex-start',
@@ -42,8 +41,7 @@ export function NextButton({
   onCheckAnswer,
   onNext,
 }: Props) {
-  const responseIdsWithOther = useMemo(() => getResponseIdsWithOther(config?.response), [config?.response]);
-  const { isNextDisabled, goToNextStep } = useNextStep(responseIdsWithOther);
+  const { isNextDisabled, goToNextStep } = useNextStep(config?.response);
   const studyConfig = useStudyConfig();
   const navigate = useNavigate();
   const identifier = useCurrentIdentifier();
