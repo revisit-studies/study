@@ -1185,6 +1185,12 @@ export interface ButtonsResponse extends BaseResponse {
   optionOrder?: 'fixed' | 'random';
   /** Set to true to hide keybinding indicators on buttons. Defaults to false when keymapping is active, else false. */
   hideKeyVisual?: boolean;
+  /** Controls whether the participant is automatically advanced to the next step as soon as this response has been answered. Defaults to false. If a required element besides this one is present on the page a warning is shown. */
+  autoAdvanceToNextStep?: boolean;
+  /** The delay, in milliseconds, to wait after this response is answered before automatically advancing to the next step. Only used when `autoAdvanceToNextStep` is `true`. Defaults to 0. */
+  autoAdvanceDelay?: number;
+  /** Controls whether the participant is allowed to change their response after they have selected an answer. Set to `false` to lock the response in as soon as it is provided. Defaults to true. */
+  allowResponseChange?: boolean;
 }
 
 /**

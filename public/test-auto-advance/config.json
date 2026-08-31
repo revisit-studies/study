@@ -1,0 +1,110 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Test auto advance and block response change",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2026-02-23",
+    "description": "A test of auto advance and blocking change responses.",
+    "organizations": [
+      "University of Utah",
+      "WPI"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true,
+    "urlParticipantIdParam": "PROLIFIC_PID",
+    "studyEndMsg": "**Thank you for completing the study. You may click this link and return to Prolific**: [yourProlificLink](yourProlificLink)"
+  },
+  "components": {
+    "auto-advance": {
+      "response": [
+        {
+          "id": "q-buttons",
+          "type": "buttons",
+          "prompt": "Buttons example",
+          "secondaryText": "Buttons that function as radio buttons, but look like buttons. Control with the arrow keys.",
+          "infoText": "Choose the option that best represents your answer.",
+          "options": [
+            {
+              "label": "Option 1",
+              "infoText": "This is info text for button option 1."
+            },
+            "Option 2",
+            "Option 3",
+            "Option 4"
+          ],
+          "autoAdvanceToNextStep": true
+        }
+      ],
+      "type": "questionnaire"
+    },
+    "warning": {
+      "response": [
+        {
+          "id": "q1-buttons",
+          "type": "buttons",
+          "prompt": "Buttons example",
+          "secondaryText": "Buttons that function as radio buttons, but look like buttons. Control with the arrow keys.",
+          "infoText": "Choose the option that best represents your answer.",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3",
+            "Option 4"
+          ],
+          "autoAdvanceToNextStep": true
+        },
+        {
+          "id": "q2-buttons",
+          "type": "buttons",
+          "prompt": "Buttons example",
+          "secondaryText": "Buttons that function as radio buttons, but look like buttons. Control with the arrow keys.",
+          "infoText": "Choose the option that best represents your answer.",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3",
+            "Option 4"
+          ]
+        }
+      ],
+      "type": "questionnaire"
+    },
+    "block-change": {
+      "response": [
+        {
+          "id": "q-buttons",
+          "type": "buttons",
+          "prompt": "Buttons example",
+          "secondaryText": "Buttons that function as radio buttons, but look like buttons. Control with the arrow keys.",
+          "infoText": "Choose the option that best represents your answer.",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3",
+            "Option 4"
+          ],
+          "autoAdvanceToNextStep": true,
+          "autoAdvanceDelay": 6000,
+          "allowResponseChange": false
+        }
+      ],
+      "type": "questionnaire"
+    }
+},
+    "sequence": {
+    "order": "fixed",
+    "components": [
+      "auto-advance",
+      "warning",
+      "block-change"
+    ]
+  }
+}
