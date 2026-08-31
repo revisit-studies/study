@@ -21,7 +21,7 @@ import {
 
 import { NextButton } from '../NextButton';
 import {
-  generateInitFields, mergeReactiveAnswers, useAnswerField,
+  generateInitFields, hasAnswerValue, mergeReactiveAnswers, useAnswerField,
 } from './utils';
 import {
   generateCustomResponseErrorMessage,
@@ -659,6 +659,41 @@ export function ResponseBlock({
 
     revealResponseErrors();
   }, [bypassValidationForFailedTraining, goToNextStep, hasResponseIssues, hasStimulusIssue, revealResponseErrors, revealStimulusErrors]);
+
+  const autoAdvanceResponses = useMemo(
+    () => allResponsesWithDefaults.filter((response) => !response.hidden && response.type === 'buttons' && response.autoAdvanceToNextStep),
+    [allResponsesWithDefaults],
+  );
+  const autoAdvanceOwner = showBtnsInLocation && autoAdvanceResponses.length > 0 && !isAnalysis;
+  const autoAdvanceTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const autoAdvanceIdentifierRef = useRef<string | null>(null);
+  useEffect(() => {
+    autoAdvanceIdentifierRef.current = null;
+    return () => {
+      if (autoAdvanceTimeoutRef.current) {
+        clearTimeout(autoAdvanceTimeoutRef.current);
+        autoAdvanceTimeoutRef.current = undefined;
+      }
+    };
+  }, [identifier]);
+
+  useEffect(() => {
+    if (!autoAdvanceOwner || autoAdvanceIdentifierRef.current === identifier) {
+      return;
+    }
+
+    const readyResponse = autoAdvanceResponses.find((response) => hasAnswerValue(combinedValues[response.id]));
+    if (!readyResponse) {
+      return;
+    }
+
+    autoAdvanceIdentifierRef.current = identifier;
+    if (readyResponse.type === 'buttons') {
+      autoAdvanceTimeoutRef.current = setTimeout(() => {
+        handleNextClick();
+      }, readyResponse.autoAdvanceDelay ?? 0);
+    }
+  }, [autoAdvanceOwner, autoAdvanceResponses, combinedValues, customResponseLoadErrors, customResponseValidators, handleNextClick, identifier]);
 
   let index = 0;
   return (

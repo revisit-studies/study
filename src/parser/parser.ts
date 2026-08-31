@@ -773,6 +773,27 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
       });
     });
 
+  Object.entries(studyConfig.components).forEach(([componentName, component]) => {
+    if (!component.response || !Array.isArray(component.response)) {
+      return;
+    }
+
+    const hasAutoAdvance = component.response.some(
+      (response) => (response.type === 'buttons' && response.autoAdvanceToNextStep === true),
+    );
+
+    if (hasAutoAdvance && component.response.length > 1) {
+      warnings.push({
+        message: `Component \`${componentName}\` has autoAdvanceToNextStep enabled but contains multiple response elements`,
+        instancePath: `/components/${componentName}/`,
+        params: {
+          action: 'Ensure auto-advance components only contain a single response element, or split them into separate steps',
+        },
+        category: 'invalid-config',
+      });
+    }
+  });
+
   // Verify skip blocks are well defined
   const missingSkipTargets: string[] = [];
   verifyStudySkip(studyConfig.sequence, missingSkipTargets, errors, warnings);

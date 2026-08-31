@@ -31,7 +31,7 @@ import { useFetchStylesheet } from '../../utils/fetchStylesheet';
 import { parseStringOptionValue, parseStringOptions } from '../../utils/stringOptions';
 import { getDropdownOptions } from '../../utils/dropdownOptions';
 import {
-  getDefaultFieldValue, normalizeCheckboxValue,
+  getDefaultFieldValue, hasAnswerValue, normalizeCheckboxValue,
 } from './utils';
 import {
   generateErrorMessage,
@@ -89,7 +89,7 @@ export function ResponseSwitcher({
     : { checked: undefined };
   const dontKnowChecked = !!dontKnowValue.checked;
   const otherValue = (Object.keys(finalStoredAnswer || {}).length > 0 ? { value: finalStoredAnswer![`${response.id}-other`] } : otherInput) || { value: undefined };
-  const inputDisabled = !!(Object.keys(finalStoredAnswer || {}).length > 0 || disabled || completed);
+  const inputDisabled = (Object.keys(finalStoredAnswer || {}).length > 0 || disabled || completed);
 
   const [searchParams] = useSearchParams();
 
@@ -97,9 +97,25 @@ export function ResponseSwitcher({
 
   useFetchStylesheet(response.stylesheetPath);
 
+  const responseChangeLocked = useMemo(() => {
+    if (!('allowResponseChange' in response)) {
+      return false;
+    }
+
+    if (response.type === 'buttons' && response.allowResponseChange !== false) {
+      return false;
+    }
+
+    if (response.allowResponseChange === false) {
+      return hasAnswerValue(ans.value);
+    }
+
+    return hasAnswerValue(ans.value);
+  }, [response, ans.value]);
+
   const isDisabled = useMemo(() => {
     // Always disable if participant is completed
-    if (completed) {
+    if (completed || responseChangeLocked) {
       return true;
     }
 
@@ -132,7 +148,7 @@ export function ResponseSwitcher({
       return inputDisabled || !!responseParam;
     }
     return inputDisabled;
-  }, [completed, currentStep, flatSequence, response.paramCapture, inputDisabled, sequence.components, nextConfig?.previousButton, searchParams]);
+  }, [completed, responseChangeLocked, currentStep, flatSequence, response.paramCapture, inputDisabled, sequence.components, nextConfig?.previousButton, searchParams]);
 
   const fieldInitialValue = useMemo(() => {
     if (response.paramCapture) {

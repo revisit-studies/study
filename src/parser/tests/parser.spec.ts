@@ -764,6 +764,65 @@ describe('Text response validation config parsing', () => {
   });
 });
 
+describe('Auto-advance multiple elements warning', () => {
+  test('warns when autoAdvanceToNextStep is enabled on a component with multiple responses', async () => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Auto Advance Warning Test',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2026-05-14',
+        description: 'Ensures warnings fire when auto-advance is used on multi-element components.',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'test@test.com',
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: true,
+      },
+      components: {
+        question1: {
+          type: 'questionnaire',
+          response: [
+            {
+              id: 'btn-1',
+              type: 'buttons',
+              prompt: 'Select an option',
+              options: ['Option 1', 'Option 2'],
+              autoAdvanceToNextStep: true,
+            },
+            {
+              id: 'btn-2',
+              type: 'buttons',
+              prompt: 'Select an option',
+              options: ['Option 1', 'Option 2'],
+              autoAdvanceToNextStep: true,
+            },
+          ],
+        },
+      },
+      sequence: {
+        order: 'fixed',
+        components: ['question1'],
+      },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toEqual([]);
+    expect(result.warnings).toContainEqual(
+      expect.objectContaining({
+        message: 'Component `question1` has autoAdvanceToNextStep enabled but contains multiple response elements',
+        instancePath: '/components/question1/',
+      }),
+    );
+  });
+});
+
 describe('Component auto-advance config parsing', () => {
   test('accepts component-level auto-advance timeout options on a base component', async () => {
     const studyConfig = {
@@ -811,6 +870,102 @@ describe('Component auto-advance config parsing', () => {
     );
     expect(hasAutoAdvanceFieldError).toBe(false);
   });
+
+  test('accepts response-level autoAdvanceToNextStep and autoAdvanceDelay options', async () => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Response Auto Advance Test',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2026-05-14',
+        description: 'Ensures response-level auto-advance options are accepted without schema errors.',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'test@test.com',
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: true,
+      },
+      components: {
+        question1: {
+          type: 'questionnaire',
+          response: [
+            {
+              id: 'btn-1',
+              type: 'buttons',
+              prompt: 'Select an option',
+              options: ['Option 1', 'Option 2'],
+              autoAdvanceToNextStep: true,
+            },
+          ],
+        },
+      },
+      sequence: {
+        order: 'fixed',
+        components: ['question1'],
+      },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    const hasAutoAdvanceFieldError = result.errors.some(
+      (error) => error.message?.includes('autoAdvanceToNextStep') || error.message?.includes('autoAdvanceDelay'),
+    );
+    expect(hasAutoAdvanceFieldError).toBe(false);
+  });
+
+  test.each([
+    ['buttons', true],
+    ['buttons', false],
+  ])(
+    'validates %s response with autoAdvanceToNextStep set to %s without errors',
+    async () => {
+      const studyConfig = {
+        $schema: '',
+        studyMetadata: {
+          title: 'Auto Advance Parameter Test',
+          version: '1.0',
+          authors: ['Test'],
+          date: '2026-05-14',
+          description: 'Validates autoAdvanceToNextStep parameter acceptance.',
+          organizations: ['Test Org'],
+        },
+        uiConfig: {
+          contactEmail: 'test@test.com',
+          helpTextPath: '',
+          logoPath: '',
+          withProgressBar: true,
+          autoDownloadStudy: false,
+          withSidebar: true,
+        },
+        components: {
+          question1: {
+            type: 'questionnaire',
+            response: [
+              {
+                id: 'btn-1',
+                type: 'buttons',
+                prompt: 'Select an option',
+                options: ['Option 1', 'Option 2'],
+                autoAdvanceToNextStep: true,
+              },
+            ],
+          },
+        },
+        sequence: {
+          order: 'fixed',
+          components: ['question1'],
+        },
+      };
+
+      const result = await parseStudyConfig(JSON.stringify(studyConfig));
+      expect(result.errors).toEqual([]);
+    },
+  );
 });
 
 describe('Next button alignment config parsing', () => {

@@ -344,6 +344,72 @@ describe('useNextStep', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/study-1/1');
   });
 
+  test('advances to next step when auto-advance trigger executes navigation without collectData', async () => {
+    mockSaveAnswers.mockResolvedValueOnce(undefined);
+    mockSequence = {
+      id: 'root',
+      orderPath: 'root',
+      order: 'fixed',
+      components: ['intro', 'followup'],
+      skip: [],
+    };
+    mockFlatSequence = ['intro', 'followup'];
+    mockStudyConfig = {
+      components: {
+        intro: {
+          type: 'questionnaire',
+          response: [
+            {
+              id: 'btn-1',
+              type: 'buttons',
+              autoAdvanceToNextStep: true,
+              autoAdvanceDelay: 500,
+            },
+          ],
+        },
+        followup: {},
+      },
+    };
+
+    renderToStaticMarkup(<HookHarness />);
+
+    await capturedGoToNextStep?.(true);
+    await Promise.resolve();
+
+    expect(mockSaveTrialAnswer).toHaveBeenCalledTimes(1);
+    expect(mockNavigate).toHaveBeenCalledWith('/study-1/1');
+  });
+
+  test('respects auto-advance delay timing before calling next step navigation', async () => {
+    vi.useFakeTimers();
+    mockSaveAnswers.mockResolvedValueOnce(undefined);
+
+    renderToStaticMarkup(<HookHarness />);
+
+    const delay = 300;
+    let autoAdvanceTriggered = false;
+
+    const timeoutId = setTimeout(() => {
+      capturedGoToNextStep?.(true);
+      autoAdvanceTriggered = true;
+    }, delay);
+
+    expect(autoAdvanceTriggered).toBe(false);
+
+    vi.advanceTimersByTime(200);
+    expect(autoAdvanceTriggered).toBe(false);
+    expect(mockNavigate).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(100);
+    await Promise.resolve();
+
+    expect(autoAdvanceTriggered).toBe(true);
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
+
+    clearTimeout(timeoutId);
+    vi.useRealTimers();
+  });
+
   test('excludes timed out answers from block skip conditions', async () => {
     mockSaveAnswers.mockResolvedValueOnce(undefined);
     mockSequence = {
