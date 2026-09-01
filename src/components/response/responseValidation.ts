@@ -589,7 +589,7 @@ export function validateResponse(
   }
 
   if (response.type === 'reactive') {
-    if (response.requiredValue !== undefined && !isEqual(value, response.requiredValue)) {
+    if (response.requiredValue != null && !isEqual(value, response.requiredValue)) {
       return createValidationResult(response, 'invalid', { reason: 'requiredValueMismatch' });
     }
 
