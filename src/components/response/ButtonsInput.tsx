@@ -1,7 +1,7 @@
 import {
   Flex, FocusTrap, Kbd, Radio,
 } from '@mantine/core';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import ClearSelectionButton from './ClearSelectionButton';
 import { ButtonsResponse, ParsedStringOption } from '../../parser/types';
 import classes from './css/ButtonsInput.module.css';
@@ -87,6 +87,13 @@ export function ButtonsInput({
     infoText,
     hideKeyVisual = false,
   } = response;
+
+  const userInteractedRef = useRef(false);
+
+  const handleUserSelect = (value: string) => {
+    userInteractedRef.current = true;
+    answer.onChange?.(value);
+  };
 
   const storedAnswer = useStoredAnswer();
   const optionOrders: Record<string, ParsedStringOption[]> = useMemo(() => storedAnswer?.optionOrders ?? {}, [storedAnswer]);
