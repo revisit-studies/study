@@ -545,7 +545,7 @@ export function validateResponse(
 ): ResponseValidationResult {
   const dontKnowChecked = !!values[`${response.id}-dontKnow`];
 
-  if (response.type === 'textOnly' || response.type === 'divider' || response.type === 'reactive') {
+  if (response.type === 'textOnly' || response.type === 'divider') {
     return createValidationResult(response, 'none');
   }
 
@@ -585,6 +585,14 @@ export function validateResponse(
   }
 
   if (shouldBypassValidationForStandaloneDontKnow(response, dontKnowChecked)) {
+    return createValidationResult(response, 'none');
+  }
+
+  if (response.type === 'reactive') {
+    if (response.requiredValue !== undefined && !isEqual(value, response.requiredValue)) {
+      return createValidationResult(response, 'invalid', { reason: 'requiredValueMismatch' });
+    }
+
     return createValidationResult(response, 'none');
   }
 
