@@ -608,7 +608,7 @@ export function StepsPanel({
     // Set full and rendered flat tree
     setFullFlatTree(newFlatTree);
     setRenderedFlatTree(newFlatTree);
-  }, [fullOrder, participantAnswers, participantSequence, skippedTrialOrders, studyConfig.components, studyId]);
+  }, [fullOrder, participantAnswers, participantSequence, skippedTrialOrders, studyConfig, studyId]);
 
   const collapseBlock = useCallback((startIndex: number, startItem: StepItem) => {
     setRenderedFlatTree((prevRenderedFlatTree) => {

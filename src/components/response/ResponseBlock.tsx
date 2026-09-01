@@ -677,23 +677,68 @@ export function ResponseBlock({
     };
   }, [identifier]);
 
+  const userInteractedRef = useRef(false);
+
   useEffect(() => {
-    if (!autoAdvanceOwner || autoAdvanceIdentifierRef.current === identifier) {
-      return;
+    userInteractedRef.current = false;
+  }, [identifier]);
+
+  const handleNextClickRef = useRef(handleNextClick);
+  useEffect(() => {
+    handleNextClickRef.current = handleNextClick;
+  }, [handleNextClick]);
+
+  const prevValuesRef = useRef(answerValidator.values);
+  useEffect(() => {
+    if (!isEqual(prevValuesRef.current, answerValidator.values)) {
+      if (Object.keys(answerValidator.values).length > 0) {
+        userInteractedRef.current = true;
+      }
+      prevValuesRef.current = answerValidator.values;
+    }
+  }, [answerValidator.values]);
+
+  useEffect(() => {
+    if (!autoAdvanceOwner) {
+      return undefined;
     }
 
     const readyResponse = autoAdvanceResponses.find((response) => hasAnswerValue(combinedValues[response.id]));
+
     if (!readyResponse) {
-      return;
+      autoAdvanceIdentifierRef.current = null;
+      return undefined;
+    }
+
+    const hasFeedback = 'provideFeedback' in readyResponse && Boolean(readyResponse.provideFeedback);
+    if (hasFeedback) {
+      return undefined;
+    }
+
+    if (!userInteractedRef.current) {
+      return undefined;
+    }
+
+    if (autoAdvanceTimeoutRef.current) {
+      clearTimeout(autoAdvanceTimeoutRef.current);
+      autoAdvanceTimeoutRef.current = undefined;
     }
 
     autoAdvanceIdentifierRef.current = identifier;
     if (readyResponse.type === 'buttons') {
+      const delay = readyResponse.autoAdvanceDelay ?? 0;
       autoAdvanceTimeoutRef.current = setTimeout(() => {
-        handleNextClick();
-      }, readyResponse.autoAdvanceDelay ?? 0);
+        handleNextClickRef.current();
+      }, delay);
     }
-  }, [autoAdvanceOwner, autoAdvanceResponses, combinedValues, customResponseLoadErrors, customResponseValidators, handleNextClick, identifier]);
+
+    return () => {
+      if (autoAdvanceTimeoutRef.current) {
+        clearTimeout(autoAdvanceTimeoutRef.current);
+        autoAdvanceTimeoutRef.current = undefined;
+      }
+    };
+  }, [autoAdvanceOwner, autoAdvanceResponses, combinedValues, identifier]);
 
   let index = 0;
   return (

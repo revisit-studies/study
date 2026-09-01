@@ -774,15 +774,17 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
     });
 
   Object.entries(studyConfig.components).forEach(([componentName, component]) => {
-    if (!component.response || !Array.isArray(component.response)) {
-      return;
-    }
+    const resolvedComponent = studyComponentToIndividualComponent(component, studyConfig);
 
-    const hasAutoAdvance = component.response.some(
-      (response) => (response.type === 'buttons' && response.autoAdvanceToNextStep === true),
+    const responses = resolvedComponent.response ?? [];
+    const hasAutoAdvanceButton = responses.some(
+      (response) => response.type === 'buttons' && response.autoAdvanceToNextStep === true,
     );
 
-    if (hasAutoAdvance && component.response.length > 1) {
+    const interactiveResponses = responses.filter(
+      (response) => response.type !== 'textOnly' && response.type !== 'divider',
+    );
+    if (hasAutoAdvanceButton && interactiveResponses.length > 1) {
       warnings.push({
         message: `Component \`${componentName}\` has autoAdvanceToNextStep enabled but contains multiple response elements`,
         instancePath: `/components/${componentName}/`,
