@@ -1,20 +1,23 @@
 import {
-  cleanup, render, fireEvent,
+  cleanup, render, fireEvent, act,
 } from '@testing-library/react';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
+import React from 'react';
 import { KeyMapper } from '../KeyMapper';
 import type { ParsedStringOption } from '../../../parser/types';
 
 describe('KeyMapper Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.useRealTimers();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
     cleanup();
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -137,7 +140,7 @@ describe('KeyMapper Component', () => {
     expect(onSelectMock).not.toHaveBeenCalled();
   });
 
-  test('prevents multiple KeyMapper components from answering the same keypress', () => {
+  test('prevents multiple KeyMapper components from answering the same keypress using event tagging', () => {
     const onSelectMock1 = vi.fn();
     const onSelectMock2 = vi.fn();
 
@@ -163,7 +166,7 @@ describe('KeyMapper Component', () => {
     expect(onSelectMock2).not.toHaveBeenCalled();
   });
 
-  test('stops event propagation in capture phase to prevent secondary global listeners', () => {
+  test('preserves keydown events for secondary global instrumentation listeners', () => {
     const onSelectMock = vi.fn();
     const secondaryWindowListener = vi.fn();
 
@@ -177,10 +180,12 @@ describe('KeyMapper Component', () => {
       />,
     );
 
-    fireEvent.keyDown(window, { key: 'Enter' });
+    const event = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
+    window.dispatchEvent(event);
 
     expect(onSelectMock).toHaveBeenCalledWith('a');
-    expect(secondaryWindowListener).not.toHaveBeenCalled();
+    expect(secondaryWindowListener).toHaveBeenCalledTimes(1);
+    expect((event as unknown as { __keyMapperHandled?: boolean }).__keyMapperHandled).toBe(true);
 
     window.removeEventListener('keydown', secondaryWindowListener);
   });
@@ -198,6 +203,31 @@ describe('KeyMapper Component', () => {
 
     fireEvent.keyDown(window, { key: 'Enter' });
     expect(onSelectMock).toHaveBeenCalledWith('next');
+  });
+
+  test('does not steal focus or autofocus when keys configuration is absent or empty', () => {
+    const onSelectMock = vi.fn();
+
+    const { container } = render(
+      <div>
+        <input data-testid="external-input" />
+        <KeyMapper
+          options={sampleOptions}
+          keys={undefined}
+          onSelect={onSelectMock}
+        />
+      </div>,
+    );
+
+    const input = container.querySelector('input')!;
+    input.focus();
+    expect(document.activeElement).toBe(input);
+
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    expect(document.activeElement).toBe(input);
   });
 
   test('does nothing when unmounted', () => {
@@ -231,6 +261,27 @@ describe('KeyMapper Component', () => {
       g: 'green',
       b: 'blue',
     };
+
+    test('matches exact case-sensitive option values when object target is mapped', () => {
+      const onSelectMock = vi.fn();
+      const caseSensitiveOptions: ParsedStringOption[] = [
+        { label: 'Lower', value: 'foo' },
+        { label: 'Upper', value: 'FOO' },
+      ];
+
+      render(
+        <KeyMapper
+          options={caseSensitiveOptions}
+          keys={{ x: 'FOO' }}
+          onSelect={onSelectMock}
+        />,
+      );
+
+      fireEvent.keyDown(window, { key: 'x' });
+      expect(onSelectMock).toHaveBeenCalledTimes(1);
+      expect(onSelectMock).toHaveBeenCalledWith('FOO');
+      expect(onSelectMock).not.toHaveBeenCalledWith('foo');
+    });
 
     test('triggers onSelect with mapped value when configured object key is pressed', () => {
       const onSelectMock = vi.fn();

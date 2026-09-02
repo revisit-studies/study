@@ -21,32 +21,47 @@ export function KeyMapper({
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (disabled || !autoFocus) {
-      return undefined;
-    }
-
-    const focusTimer = setTimeout(() => {
-      const { activeElement } = document;
-
-      if (activeElement && activeElement !== document.body && typeof (activeElement as HTMLElement).blur === 'function') {
-        (activeElement as HTMLElement).blur();
-      }
-
-      const container = containerRef.current;
-      if (container) {
-        container.focus({ preventScroll: true });
+    const hasKeys = keys && (typeof keys === 'string' || Object.keys(keys).length > 0);
+    const timer = setTimeout(() => {
+      if (autoFocus && hasKeys && containerRef.current) {
+        containerRef.current.focus();
       }
     }, 50);
 
-    return () => clearTimeout(focusTimer);
-  }, [disabled, autoFocus, options]);
+    return () => clearTimeout(timer);
+  }, [keys, autoFocus]);
 
   useEffect(() => {
     if (disabled || !options || options.length === 0 || !keys) {
       return undefined;
     }
 
+    const isInteractiveElement = (node: EventTarget | null): boolean => {
+      if (!node || !(node instanceof Element) || node === document.body) {
+        return false;
+      }
+
+      const tagName = node.tagName.toLowerCase();
+      const isInput = ['input', 'textarea', 'select', 'button', 'a'].includes(tagName);
+      const isRoleButton = node.getAttribute?.('role') === 'button';
+      const isContentEditable = (node as HTMLElement).isContentEditable ?? false;
+
+      if (isInput || isRoleButton || isContentEditable) {
+        const isInsideMapperContainer = containerRef.current?.contains(node) ?? false;
+        return !isInsideMapperContainer;
+      }
+
+      return false;
+    };
+
     const handleKeyDown = (event: KeyboardEvent) => {
+      const activeEl = document.activeElement;
+      const eventTarget = event.target;
+
+      if (isInteractiveElement(eventTarget) || isInteractiveElement(activeEl)) {
+        return;
+      }
+
       if ((event as unknown as { __keyMapperHandled?: boolean }).__keyMapperHandled) {
         return;
       }
@@ -55,33 +70,17 @@ export function KeyMapper({
         return;
       }
 
-      const target = event.target as HTMLElement | null;
-      if (target && typeof target.getAttribute === 'function') {
-        const tagName = target.tagName ? target.tagName.toUpperCase() : '';
-
-        const isInsideContainer = containerRef.current
-          ? containerRef.current.contains(target)
-          : false;
-
-        const isTextInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes(tagName) || Boolean(target.isContentEditable);
-        const isExternalInteractive = !isInsideContainer && ['BUTTON', 'A'].includes(tagName);
-
-        if (isTextInput || isExternalInteractive) {
-          return;
-        }
-      }
-
       const pressedKey = (event.key || '').toLowerCase();
       const isSpacePress = pressedKey === ' ' || pressedKey === 'spacebar' || pressedKey === 'space';
 
-      const stopEvent = () => {
+      const handleMatchedSelection = (selectedValue: string) => {
         (event as unknown as { __keyMapperHandled?: boolean }).__keyMapperHandled = true;
-        if (typeof event.stopImmediatePropagation === 'function') {
-          event.stopImmediatePropagation();
-        }
+
         if (typeof event.preventDefault === 'function') {
           event.preventDefault();
         }
+
+        onSelect(selectedValue);
       };
 
       const isKeyMatch = (configKey: string) => {
@@ -93,7 +92,7 @@ export function KeyMapper({
       };
 
       const findMatchingOptionValue = (targetVal: string): string | null => {
-        const targetLower = String(targetVal).toLowerCase();
+        const targetString = String(targetVal);
 
         const foundOption = options.find((opt) => {
           if (opt === undefined || opt === null) {
@@ -103,7 +102,7 @@ export function KeyMapper({
             ? String(opt.value)
             : String(opt);
 
-          return optValue.toLowerCase() === targetLower;
+          return optValue === targetString;
         });
 
         if (foundOption) {
@@ -120,8 +119,7 @@ export function KeyMapper({
           if (isKeyMatch(configKey)) {
             const matchedValue = findMatchingOptionValue(targetValue);
             if (matchedValue !== null) {
-              stopEvent();
-              onSelect(matchedValue);
+              handleMatchedSelection(matchedValue);
               return;
             }
           }
@@ -144,8 +142,7 @@ export function KeyMapper({
           ? String(selectedOption.value)
           : String(selectedOption);
 
-        stopEvent();
-        onSelect(selectedValue);
+        handleMatchedSelection(selectedValue);
       }
     };
 
