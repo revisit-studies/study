@@ -233,6 +233,27 @@ describe('AllTasksTimeline', () => {
     expect(html).toContain('Response recorded; correctness not configured.');
   });
 
+  test('handles legacy answers without correctAnswer', () => {
+    const legacyAnswer = makeAnswer({ answer: { q1: 'yes' } });
+    delete (legacyAnswer as Partial<StoredAnswer>).correctAnswer;
+    const participant = makeParticipant({
+      answers: { trial1_0: legacyAnswer },
+    });
+
+    const html = renderToStaticMarkup(
+      <AllTasksTimeline
+        participantData={participant}
+        width={600}
+        studyId="test-study"
+        studyConfig={emptyConfig}
+        maxLength={undefined}
+      />,
+    );
+
+    expect(html).toContain('trial1_0');
+    expect(html).toContain('Response recorded; correctness not configured.');
+  });
+
   test('handles participant with incomplete answer (startTime === 0)', () => {
     const participant = makeParticipant({
       answers: {
