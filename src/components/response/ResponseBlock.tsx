@@ -688,15 +688,17 @@ export function ResponseBlock({
     handleNextClickRef.current = handleNextClick;
   }, [handleNextClick]);
 
-  const prevValuesRef = useRef(answerValidator.values);
+  const prevCombinedValuesRef = useRef(combinedValues);
   useEffect(() => {
-    if (!isEqual(prevValuesRef.current, answerValidator.values)) {
-      if (Object.keys(answerValidator.values).length > 0) {
+    const hasValuesChanged = !isEqual(prevCombinedValuesRef.current, combinedValues);
+
+    if (hasValuesChanged) {
+      if (Object.keys(combinedValues || {}).length > 0) {
         userInteractedRef.current = true;
       }
-      prevValuesRef.current = answerValidator.values;
+      prevCombinedValuesRef.current = combinedValues;
     }
-  }, [answerValidator.values]);
+  }, [combinedValues]);
 
   useEffect(() => {
     if (!autoAdvanceOwner) {
