@@ -1,11 +1,23 @@
-import { render, fireEvent } from '@testing-library/react';
 import {
-  describe, expect, test, vi,
+  cleanup, render, fireEvent,
+} from '@testing-library/react';
+import {
+  afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { KeyMapper } from '../KeyMapper';
 import type { ParsedStringOption } from '../../../parser/types';
 
 describe('KeyMapper Component', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.useRealTimers();
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+  });
+
   const sampleOptions: ParsedStringOption[] = [
     { label: 'Option A', value: 'a' },
     { label: 'Option B', value: 'b' },
@@ -39,7 +51,6 @@ describe('KeyMapper Component', () => {
       />,
     );
 
-    // Pressing uppercase 'A' should match configured lowercase 'a'
     fireEvent.keyDown(window, { key: 'A' });
     expect(onSelectMock).toHaveBeenCalledWith('a');
   });
@@ -78,12 +89,14 @@ describe('KeyMapper Component', () => {
     expect(onSelectMock).not.toHaveBeenCalled();
   });
 
-  test('ignores keypresses coming from form input or text area elements', () => {
+  test('ignores keypresses coming from form inputs, text areas, buttons, or links', () => {
     const onSelectMock = vi.fn();
 
     render(
       <div>
         <input data-testid="text-input" type="text" />
+        <button type="button" data-testid="next-btn">Next</button>
+        <a href="#test" data-testid="link">Link</a>
         <KeyMapper
           options={sampleOptions}
           keys={['1', '2', '3']}
@@ -93,9 +106,83 @@ describe('KeyMapper Component', () => {
     );
 
     const input = document.querySelector('input')!;
+    const button = document.querySelector('button')!;
+    const link = document.querySelector('a')!;
 
     fireEvent.keyDown(input, { key: '1' });
     expect(onSelectMock).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(button, { key: '2' });
+    expect(onSelectMock).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(link, { key: '3' });
+    expect(onSelectMock).not.toHaveBeenCalled();
+  });
+
+  test('ignores keypresses with modifier keys (Ctrl, Alt, Meta)', () => {
+    const onSelectMock = vi.fn();
+
+    render(
+      <KeyMapper
+        options={sampleOptions}
+        keys={['a', 'b', 'c']}
+        onSelect={onSelectMock}
+      />,
+    );
+
+    fireEvent.keyDown(window, { key: 'a', ctrlKey: true });
+    fireEvent.keyDown(window, { key: 'a', altKey: true });
+    fireEvent.keyDown(window, { key: 'a', metaKey: true });
+
+    expect(onSelectMock).not.toHaveBeenCalled();
+  });
+
+  test('prevents multiple KeyMapper components from answering the same keypress', () => {
+    const onSelectMock1 = vi.fn();
+    const onSelectMock2 = vi.fn();
+
+    render(
+      <div>
+        <KeyMapper
+          options={sampleOptions}
+          keys={['1', '2', '3']}
+          onSelect={onSelectMock1}
+        />
+        <KeyMapper
+          options={sampleOptions}
+          keys={['1', '2', '3']}
+          onSelect={onSelectMock2}
+        />
+      </div>,
+    );
+
+    fireEvent.keyDown(window, { key: '1' });
+
+    expect(onSelectMock1).toHaveBeenCalledTimes(1);
+    expect(onSelectMock1).toHaveBeenCalledWith('a');
+    expect(onSelectMock2).not.toHaveBeenCalled();
+  });
+
+  test('stops event propagation in capture phase to prevent secondary global listeners', () => {
+    const onSelectMock = vi.fn();
+    const secondaryWindowListener = vi.fn();
+
+    window.addEventListener('keydown', secondaryWindowListener);
+
+    render(
+      <KeyMapper
+        options={sampleOptions}
+        keys="Enter"
+        onSelect={onSelectMock}
+      />,
+    );
+
+    fireEvent.keyDown(window, { key: 'Enter' });
+
+    expect(onSelectMock).toHaveBeenCalledWith('a');
+    expect(secondaryWindowListener).not.toHaveBeenCalled();
+
+    window.removeEventListener('keydown', secondaryWindowListener);
   });
 
   test('handles a single string key for single-option setups', () => {
@@ -177,7 +264,8 @@ describe('KeyMapper Component', () => {
       );
 
       fireEvent.keyDown(window, { key: 'B' });
-      expect(onSelectMock).toHaveBeenCalledWith('blue');
+      expect(onSelectMock).toHaveBeenCalledTimes(1);
+      expect(onSelectMock).toHaveBeenLastCalledWith('blue');
     });
 
     test('ignores unmapped random keys in object mode', () => {

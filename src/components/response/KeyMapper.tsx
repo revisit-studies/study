@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import type { ParsedStringOption } from '../../parser/types';
 
 interface KeyMapperProps {
@@ -6,58 +6,160 @@ interface KeyMapperProps {
   keys?: string | string[] | Record<string, string>;
   onSelect: (value: string) => void;
   disabled?: boolean;
+  children?: React.ReactNode;
+  autoFocus?: boolean;
 }
 
 export function KeyMapper({
-  options, keys, onSelect, disabled = false,
+  options,
+  keys,
+  onSelect,
+  disabled = false,
+  children,
+  autoFocus = true,
 }: KeyMapperProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (disabled || !autoFocus) {
+      return undefined;
+    }
+
+    const focusTimer = setTimeout(() => {
+      const { activeElement } = document;
+
+      if (activeElement && activeElement !== document.body && typeof (activeElement as HTMLElement).blur === 'function') {
+        (activeElement as HTMLElement).blur();
+      }
+
+      const container = containerRef.current;
+      if (container) {
+        container.focus({ preventScroll: true });
+      }
+    }, 50);
+
+    return () => clearTimeout(focusTimer);
+  }, [disabled, autoFocus, options]);
+
   useEffect(() => {
     if (disabled || !options || options.length === 0 || !keys) {
       return undefined;
     }
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement;
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || target.isContentEditable) {
+      if ((event as unknown as { __keyMapperHandled?: boolean }).__keyMapperHandled) {
         return;
       }
 
-      const pressedKey = event.key.toLowerCase();
-      const isSpace = pressedKey === ' ' || pressedKey === 'spacebar';
+      if (event.ctrlKey || event.metaKey || event.altKey) {
+        return;
+      }
 
-      // 1. Handle Key-to-Value Mapping Object: { "r": "red", "g": "green" }
-      if (typeof keys === 'object' && !Array.isArray(keys)) {
-        Object.entries(keys).forEach(([configKey, targetValue]) => {
-          const keyLower = configKey.toLowerCase();
-          const matches = keyLower === pressedKey || ((keyLower === 'space' || keyLower === ' ') && isSpace);
+      const target = event.target as HTMLElement | null;
+      if (target && typeof target.getAttribute === 'function') {
+        const tagName = target.tagName ? target.tagName.toUpperCase() : '';
 
-          const isValidOption = options.some((opt) => opt.value === targetValue);
+        const isInsideContainer = containerRef.current
+          ? containerRef.current.contains(target)
+          : false;
 
-          if (matches && isValidOption) {
-            event.preventDefault();
-            onSelect(targetValue);
+        const isTextInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes(tagName) || Boolean(target.isContentEditable);
+        const isExternalInteractive = !isInsideContainer && ['BUTTON', 'A'].includes(tagName);
+
+        if (isTextInput || isExternalInteractive) {
+          return;
+        }
+      }
+
+      const pressedKey = (event.key || '').toLowerCase();
+      const isSpacePress = pressedKey === ' ' || pressedKey === 'spacebar' || pressedKey === 'space';
+
+      const stopEvent = () => {
+        (event as unknown as { __keyMapperHandled?: boolean }).__keyMapperHandled = true;
+        if (typeof event.stopImmediatePropagation === 'function') {
+          event.stopImmediatePropagation();
+        }
+        if (typeof event.preventDefault === 'function') {
+          event.preventDefault();
+        }
+      };
+
+      const isKeyMatch = (configKey: string) => {
+        const keyLower = String(configKey).toLowerCase();
+        if (keyLower === 'space' || keyLower === ' ' || keyLower === 'spacebar') {
+          return isSpacePress;
+        }
+        return keyLower === pressedKey;
+      };
+
+      const findMatchingOptionValue = (targetVal: string): string | null => {
+        const targetLower = String(targetVal).toLowerCase();
+
+        const foundOption = options.find((opt) => {
+          if (opt === undefined || opt === null) {
+            return false;
           }
+          const optValue = typeof opt === 'object' && 'value' in opt
+            ? String(opt.value)
+            : String(opt);
+
+          return optValue.toLowerCase() === targetLower;
         });
+
+        if (foundOption) {
+          return typeof foundOption === 'object' && 'value' in foundOption
+            ? String(foundOption.value)
+            : String(foundOption);
+        }
+
+        return null;
+      };
+
+      if (typeof keys === 'object' && !Array.isArray(keys)) {
+        for (const [configKey, targetValue] of Object.entries(keys)) {
+          if (isKeyMatch(configKey)) {
+            const matchedValue = findMatchingOptionValue(targetValue);
+            if (matchedValue !== null) {
+              stopEvent();
+              onSelect(matchedValue);
+              return;
+            }
+          }
+        }
         return;
       }
 
-      // 2. Handle Sequential Mapping: Array ["1", "2"] or single string "Enter"
       const keyList = Array.isArray(keys) ? keys : [keys];
+      let matchedIndex = -1;
 
       keyList.forEach((k: string, index: number) => {
-        const configKey = k.toLowerCase();
-        const matches = configKey === pressedKey || ((configKey === 'space' || configKey === ' ') && isSpace);
-
-        if (matches && options[index]) {
-          event.preventDefault();
-          onSelect(options[index].value);
+        if (isKeyMatch(k) && options[index]) {
+          matchedIndex = index;
         }
       });
+
+      if (matchedIndex !== -1) {
+        const selectedOption = options[matchedIndex];
+        const selectedValue = typeof selectedOption === 'object' && selectedOption !== null && 'value' in selectedOption
+          ? String(selectedOption.value)
+          : String(selectedOption);
+
+        stopEvent();
+        onSelect(selectedValue);
+      }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [options, keys, onSelect, disabled]);
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [options, onSelect, disabled, keys]);
 
-  return null;
+  return (
+    <div
+      ref={containerRef}
+      tabIndex={-1}
+      style={{ display: 'block', outline: 'none' }}
+    >
+      {children}
+    </div>
+  );
 }
