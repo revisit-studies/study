@@ -7,7 +7,7 @@ import { useParams } from 'react-router';
 import { StudyConfig } from '../../../../parser/types';
 import { ParticipantDataWithStatus } from '../../../../storage/types';
 import { createMockStudyConfig } from '../../../tests/testUtils';
-import { makeParticipant as _makeParticipant } from '../../../../tests/utils';
+import { makeParticipant as _makeParticipant, makeStoredAnswer } from '../../../../tests/utils';
 import { TableView } from '../TableView';
 import { MetaCell } from '../MetaCell';
 
@@ -15,6 +15,7 @@ import { MetaCell } from '../MetaCell';
 
 type MrtColumn = {
   header: string;
+  accessorFn?: (row: ParticipantDataWithStatus) => unknown;
   Cell: ({ cell }: { cell: { getValue(): unknown } }) => ReactNode;
 };
 
@@ -270,6 +271,19 @@ describe('TableView', () => {
     const html = renderToStaticMarkup(col.Cell({ cell: { getValue: () => [true, true, false] } }));
     expect(html).toContain('2'); // correct count
     expect(html).toContain('1'); // incorrect count
+  });
+
+  test('Correct Answers accessor excludes legacy answers without correctAnswer', () => {
+    const legacyAnswer = makeStoredAnswer({ endTime: 2 });
+    delete (legacyAnswer as Partial<typeof legacyAnswer>).correctAnswer;
+    const participant = makeParticipant({ answers: { legacyAnswer } });
+
+    renderToStaticMarkup(
+      <TableView {...defaultProps} visibleParticipants={[participant]} />,
+    );
+    const col = capturedTableOptions!.columns.find((c) => c.header === 'Correct Answers')!;
+
+    expect(col.accessorFn!(participant)).toEqual([]);
   });
 
   // ── Metadata column ────────────────────────────────────────────────────────

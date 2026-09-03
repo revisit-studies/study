@@ -211,7 +211,7 @@ export function AllTasksTimeline({
       const resolvedComponent = component && studyConfig
         ? studyComponentToIndividualComponent(component, studyConfig)
         : undefined;
-      const correctAnswers = answer.correctAnswer.length > 0
+      const correctAnswers = answer.correctAnswer?.length
         ? answer.correctAnswer
         : resolvedComponent?.correctAnswer;
       const answerStatus = getComponentAnswerStatus(answer, correctAnswers, resolvedComponent?.response);

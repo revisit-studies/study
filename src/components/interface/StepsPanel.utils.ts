@@ -86,7 +86,7 @@ function shouldShowSkipConditionForBlock(condition: SkipConditions[number], sequ
 }
 
 export function getSkipConditionSummariesForBlock(sequence: Sequence) {
-  return sequence.skip
+  return (sequence.skip ?? [])
     .filter((condition) => shouldShowSkipConditionForBlock(condition, sequence))
     .map(formatSkipConditionSummary);
 }
@@ -139,7 +139,7 @@ export function getSkippedTrialOrders(
     }
 
     const answersForSkipEvaluation = getAnswersForSkipEvaluation(participantAnswers, step);
-    const skipConditions = blocksForStep.flatMap((block) => block.currentBlock.skip.map((condition) => ({
+    const skipConditions = blocksForStep.flatMap((block) => (block.currentBlock.skip ?? []).map((condition) => ({
       ...condition,
       firstIndex: block.firstIndex,
       lastIndex: step,
