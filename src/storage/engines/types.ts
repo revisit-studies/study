@@ -49,6 +49,8 @@ export type SequenceAssignment = {
 
 export type REVISIT_MODE = 'dataCollectionEnabled' | 'developmentModeEnabled' | 'dataSharingEnabled';
 
+export type StudyColorMode = 'light' | 'dark';
+
 export function cleanupModes(modes: Record<string, boolean>): Record<REVISIT_MODE, boolean> {
   const cleanedModes: Record<string, boolean> = { ...modes };
 
@@ -300,6 +302,12 @@ export abstract class StorageEngine {
 
   // Sets the mode for the given studyId. The mode is stored as a record with the mode name as the key and a boolean value indicating whether the mode is enabled or not.
   abstract setMode(studyId: string, mode: REVISIT_MODE, value: boolean): Promise<void>;
+
+  // Gets the light or dark color mode for the given studyId.
+  abstract getStudyColorMode(studyId: string): Promise<StudyColorMode>;
+
+  // Sets the light or dark color mode for the given studyId.
+  abstract setStudyColorMode(studyId: string, colorMode: StudyColorMode): Promise<void>;
 
   // Protected helper: Sets the full modes document (including stage data and mode flags)
   protected abstract _setModesDocument(studyId: string, modesDocument: Record<REVISIT_MODE, boolean> & { stage?: StageData }): Promise<void>;

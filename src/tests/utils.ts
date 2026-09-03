@@ -112,6 +112,10 @@ class TestStorageEngine extends StorageEngine {
 
   setMode = vi.fn(async () => { });
 
+  getStudyColorMode = vi.fn(async () => 'light' as const);
+
+  setStudyColorMode = vi.fn(async () => { });
+
   getSnapshots = vi.fn(async () => ({}));
 
   addParticipantTags = vi.fn(async () => { });

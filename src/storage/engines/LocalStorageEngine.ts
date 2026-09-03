@@ -1,6 +1,6 @@
 import localforage from 'localforage';
 import {
-  REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageEngine, StorageObject, StorageObjectType, cleanupModes,
+  REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageEngine, StorageObject, StorageObjectType, StudyColorMode, cleanupModes,
 } from './types';
 import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
 
@@ -243,6 +243,17 @@ export class LocalStorageEngine extends StorageEngine {
     // Set the mode
     modes[mode] = value;
     await this.studyDatabase.setItem(key, modes);
+  }
+
+  async getStudyColorMode(studyId: string): Promise<StudyColorMode> {
+    const key = `${this.collectionPrefix}${studyId}/style`;
+    const style = await this.studyDatabase.getItem<{ colorMode?: unknown }>(key);
+    return style?.colorMode === 'dark' ? 'dark' : 'light';
+  }
+
+  async setStudyColorMode(studyId: string, colorMode: StudyColorMode) {
+    const key = `${this.collectionPrefix}${studyId}/style`;
+    await this.studyDatabase.setItem(key, { colorMode });
   }
 
   protected async _setModesDocument(studyId: string, modesDocument: Record<string, unknown>): Promise<void> {

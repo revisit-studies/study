@@ -2,6 +2,8 @@ import {
   Group, Paper, Stack, Switch, Text, Title,
 } from '@mantine/core';
 import { IconMoon, IconSun } from '@tabler/icons-react';
+import { useState } from 'react';
+import { useStoredStudyColorMode } from '../../../store/hooks/useStoredStudyColorMode';
 
 const styleOptions = [
   {
@@ -19,12 +21,26 @@ const styleOptions = [
 ];
 
 export function StyleView({ studyId }: { studyId: string }) {
+  const { studyColorMode, updateStudyColorMode } = useStoredStudyColorMode(studyId);
+  const [isSaving, setIsSaving] = useState(false);
+  const isLoading = studyColorMode === null;
+
+  const handleColorSchemeChange = async (darkModeEnabled: boolean) => {
+    setIsSaving(true);
+    try {
+      await updateStudyColorMode(darkModeEnabled ? 'dark' : 'light');
+    } catch (error) {
+      console.error('Failed to save study color mode:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <Stack
       gap="lg"
       w="60%"
       mx="auto"
-      data-study-id={studyId}
     >
       <Stack gap="md">
         {styleOptions.map((option) => (
@@ -34,8 +50,11 @@ export function StyleView({ studyId }: { studyId: string }) {
               {option.name === 'Default' && (
                 <Switch
                   size="md"
-                  onLabel={<IconSun size={14} />}
-                  offLabel={<IconMoon size={14} />}
+                  checked={studyColorMode === 'dark'}
+                  disabled={isLoading || isSaving}
+                  onChange={(event) => { handleColorSchemeChange(event.currentTarget.checked); }}
+                  onLabel={<IconMoon size={14} />}
+                  offLabel={<IconSun size={14} />}
                 />
               )}
             </Group>

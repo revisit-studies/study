@@ -34,6 +34,10 @@ vi.mock('../../storage/storageEngineHooks', () => ({
   useStorageEngine: () => ({ storageEngine: mockStorageEngine }),
 }));
 
+vi.mock('../../store/hooks/useStoredStudyColorMode', () => ({
+  useStoredStudyColorMode: vi.fn(),
+}));
+
 vi.mock('../../utils/handleRandomSequences', () => ({
   generateSequenceArray: vi.fn().mockResolvedValue([{
     id: 'root', order: 'fixed', components: [], skip: [], orderPath: 'root',
