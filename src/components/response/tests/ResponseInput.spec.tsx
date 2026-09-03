@@ -51,11 +51,14 @@ vi.mock('@mantine/core', () => {
   const Input = Object.assign(
     ({ children }: { children?: ReactNode }) => <div>{children}</div>,
     {
-      Wrapper: ({ children, label, description }: { children?: ReactNode; label?: ReactNode; description?: ReactNode }) => (
+      Wrapper: ({
+        children, label, description, error,
+      }: { children?: ReactNode; label?: ReactNode; description?: ReactNode; error?: ReactNode }) => (
         <div>
           {label}
           {description}
           {children}
+          {error}
         </div>
       ),
       Placeholder: ({ children }: { children?: ReactNode }) => <span>{children}</span>,
@@ -1323,6 +1326,28 @@ describe('ResponseSwitcher', () => {
       />,
     );
     expect(html).toContain('Selected');
+  });
+
+  test('reactive type displays requiredLabel for a requiredValue mismatch', () => {
+    const response = {
+      type: 'reactive',
+      id: 'q1',
+      prompt: 'Selected',
+      required: true,
+      requiredValue: 'complete',
+      requiredLabel: 'the completed state',
+    } as Response;
+    const props = makeSwitcherProps(response);
+
+    const html = renderToStaticMarkup(
+      <ResponseSwitcher
+        {...props}
+        form={{ value: 'incomplete' } as Parameters<typeof ResponseSwitcher>[0]['form']}
+        errors
+      />,
+    );
+
+    expect(html).toContain('Please enter the completed state to continue.');
   });
 
   test('matrix-radio type renders MatrixInput', () => {
