@@ -461,6 +461,23 @@ describe('validateResponse', () => {
     });
   });
 
+  test.each([
+    [{ complete: true }, { complete: false }, 'Please enter {"complete":true} to continue.'],
+    [[], ['unexpected'], 'Please enter the required value to continue.'],
+    ['', 'unexpected', 'Please enter the required value to continue.'],
+  ])('reactive requiredValue mismatch has a usable fallback label', (requiredValue, value, expectedMessage) => {
+    const response: Response = {
+      id: 'reactive', prompt: 'Complete the interaction', type: 'reactive', required: true, requiredValue,
+    };
+
+    expect(generateErrorMessage(
+      response,
+      { value },
+      undefined,
+      { showRequiredErrors: true, values: { reactive: value } },
+    )).toBe(expectedMessage);
+  });
+
   test('reactive responses without requiredValue leave completion to stimulus validation', () => {
     const response: Response = {
       id: 'reactive', prompt: 'Complete the interaction', type: 'reactive', required: true,
@@ -1939,7 +1956,7 @@ describe('generateErrorMessage — answer.checked branch', () => {
     };
     const options = [{ label: 'Option A', value: 'A' }];
     const error = generateErrorMessage(response, { checked: ['A'] }, options, { showRequiredErrors: true });
-    expect(error).toContain('select');
+    expect(error).toBe('Please select A, B to continue.');
   });
 
   test('matching checked values against requiredValue returns null', () => {
