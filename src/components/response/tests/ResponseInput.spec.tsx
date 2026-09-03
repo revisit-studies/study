@@ -1,4 +1,6 @@
-import { forwardRef, ReactNode } from 'react';
+import {
+  CSSProperties, forwardRef, ReactNode,
+} from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
   render, act, cleanup,
@@ -7,7 +9,6 @@ import {
   afterEach, describe, expect, test, vi,
 } from 'vitest';
 import { useMove } from '@mantine/hooks';
-import { generateSliderBreakValues } from '../sliderBreaks';
 import { HorizontalHandler } from '../HorizontalHandler';
 import { OptionLabel } from '../OptionLabel';
 import { InputLabel } from '../InputLabel';
@@ -42,8 +43,8 @@ import type {
 // ── mocks ────────────────────────────────────────────────────────────────────
 
 vi.mock('@mantine/core', () => {
-  const Div = forwardRef<HTMLDivElement, { children?: ReactNode }>(function Div({ children }, ref) { // eslint-disable-line prefer-arrow-callback
-    return <div ref={ref}>{children}</div>;
+  const Div = forwardRef<HTMLDivElement, { children?: ReactNode; style?: CSSProperties }>(function Div({ children, style }, ref) { // eslint-disable-line prefer-arrow-callback
+    return <div ref={ref} style={style}>{children}</div>;
   });
   function Span({ children }: { children?: ReactNode }) {
     return <span>{children}</span>;
@@ -170,13 +171,23 @@ vi.mock('@mantine/core', () => {
       </div>
     ),
     Slider: ({
-      classNames, disabled, max, min, value,
-    }: { classNames?: { thumb?: string }; disabled?: boolean; max?: number; min?: number; value?: number }) => (
+      classNames, disabled, max, min, precision, step, value,
+    }: {
+      classNames?: { thumb?: string };
+      disabled?: boolean;
+      max?: number;
+      min?: number;
+      precision?: number;
+      step?: number;
+      value?: number;
+    }) => (
       <div
         data-slider
         data-disabled={disabled}
         data-min={min}
         data-max={max}
+        data-precision={precision}
+        data-step={step}
         data-value={value}
         data-thumb-class={classNames?.thumb}
       />
@@ -197,10 +208,6 @@ vi.mock('../../ReactMarkdownWrapper', () => ({
 
 vi.mock('@mantine/hooks', () => ({
   useMove: vi.fn(() => ({ ref: () => undefined, active: false })),
-}));
-
-vi.mock('../sliderBreaks', () => ({
-  generateSliderBreakValues: vi.fn(() => []),
 }));
 
 vi.mock('../../../store/store', () => ({
@@ -794,6 +801,26 @@ describe('SliderInput', () => {
     expect(html).toContain('data-slider');
   });
 
+  test('passes fractional minimum precision to the horizontal slider', () => {
+    const html = renderToStaticMarkup(
+      <SliderInput
+        response={{
+          ...base,
+          options: [{ label: 'Low', value: 0.05 }, { label: 'High', value: 1.05 }],
+          step: 0.1,
+          tlxStyle: true,
+        }}
+        disabled={false}
+        answer={{}}
+        index={1}
+        enumerateQuestions={false}
+      />,
+    );
+
+    expect(html).toContain('data-step="0.1"');
+    expect(html).toContain('data-precision="2"');
+  });
+
   test('renders smeq vertical layout with option labels when smeqStyle=true', () => {
     const html = renderToStaticMarkup(
       <SliderInput
@@ -811,25 +838,7 @@ describe('SliderInput', () => {
     expect(html).not.toContain('data-slider');
   });
 
-  test('renders smeq mark elements when generateSliderBreakValues returns non-empty', () => {
-    // smeq block renders mark elements when labelValues is non-empty
-    vi.mocked(generateSliderBreakValues).mockReturnValueOnce([25, 50, 75]);
-    const html = renderToStaticMarkup(
-      <SliderInput
-        response={{ ...base, smeqStyle: true } as Parameters<typeof SliderInput>[0]['response']}
-        disabled={false}
-        answer={{}}
-        index={1}
-        enumerateQuestions={false}
-      />,
-    );
-    expect(html).toContain('Low');
-  });
-
   test('renders SMEQ numeric labels including both endpoints', () => {
-    vi.mocked(generateSliderBreakValues).mockReturnValueOnce([
-      10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140,
-    ]);
     const html = renderToStaticMarkup(
       <SliderInput
         response={{
@@ -884,7 +893,11 @@ describe('SliderInput', () => {
         enumerateQuestions={false}
       />,
     );
-    expect(container.querySelector('[title="20"]')).not.toBeNull();
+    const getThumb = () => Array.from(container.querySelectorAll('div')).find(
+      (element) => element.style.backgroundColor === 'var(--mantine-color-red-6)'
+        && element.style.width === '20px',
+    );
+    expect(getThumb()?.style.bottom).toContain('20%');
 
     rerender(
       <SliderInput
@@ -895,7 +908,7 @@ describe('SliderInput', () => {
         enumerateQuestions={false}
       />,
     );
-    expect(container.querySelector('[title="80"]')).not.toBeNull();
+    expect(getThumb()?.style.bottom).toContain('80%');
     cleanup();
   });
 

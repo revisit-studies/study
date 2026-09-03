@@ -2,11 +2,16 @@ import {
   Box, Flex, Input, Slider, SliderProps, Tooltip,
 } from '@mantine/core';
 import { useEffect, useMemo, useState } from 'react';
+import type { MouseEvent as ReactMouseEvent } from 'react';
 import { useMove } from '@mantine/hooks';
 import { SliderResponse } from '../../parser/types';
 import classes from './css/SliderInput.module.css';
 import { InputLabel } from './InputLabel';
-import { generateSliderBreakValues } from './sliderBreaks';
+import {
+  generateSliderBreakValues,
+  getSliderPrecision,
+  getSliderValueFromPosition,
+} from './sliderBreaks';
 
 export function SliderInput({
   response,
@@ -38,34 +43,142 @@ export function SliderInput({
   } = response;
 
   const [min, max] = useMemo(() => [Math.min(...options.map((opt) => opt.value)), Math.max(...options.map((opt) => opt.value))], [options]);
+  const sliderStep = step ?? (snap ? 0.001 : (max - min) / 100);
+  const sliderPrecision = getSliderPrecision(min, sliderStep);
   const hasLabels = options.some((opt) => opt.label !== '');
 
   // Numeric label
-  const labelValues = useMemo(() => generateSliderBreakValues(min, max, spacing), [min, max, spacing]);
-  const smeqLabelValues = useMemo(() => [min, ...labelValues, max], [min, max, labelValues]);
+  const labelValues = useMemo(
+    () => generateSliderBreakValues(min, max, spacing),
+    [min, max, spacing],
+  );
+  const smeqLabelValues = useMemo(
+    () => [min, ...labelValues, max],
+    [min, max, labelValues],
+  );
+  const sliderMarkValues = useMemo(
+    () => [...labelValues, ...options.map((option) => option.value)],
+    [labelValues, options],
+  );
 
   // For smeq style (vertical slider)
   const [val, setVal] = useState((answer as { value?: number }).value ?? (min + max) / 2);
   const normalizedValue = (val - min) / (max - min);
-  const [hovered, setHovered] = useState(false);
+  // null is for hidden hover preview value (e.g. the user has not yet selected a value)
+  const [hoverValue, setHoverValue] = useState<number | null>(null);
 
   useEffect(() => {
     setVal(answer.value ?? (min + max) / 2);
   }, [answer.value, max, min]);
+
+  useEffect(() => {
+    if (disabled) {
+      setHoverValue(null);
+    }
+  }, [disabled]);
+
+  const updateHoverValue = (
+    event: ReactMouseEvent<HTMLDivElement>,
+    // horizontal is for nasa-tlx style, vertical is for smeq style
+    orientation: 'horizontal' | 'vertical',
+  ) => {
+    if (disabled) {
+      setHoverValue(null);
+      return;
+    }
+
+    const hoverTarget = orientation === 'horizontal'
+      ? event.currentTarget.querySelector<HTMLElement>(`.${classes.track}`) ?? event.currentTarget
+      : event.currentTarget;
+    const bounds = hoverTarget.getBoundingClientRect();
+    const size = orientation === 'vertical' ? bounds.height : bounds.width;
+    if (size === 0) {
+      return;
+    }
+
+    // pointerPosition is a value between 0 and 1, where 0 is the left (or bottom) of the slider and 1 is the right (or top) of the slider
+    const pointerPosition = orientation === 'vertical'
+      ? 1 - (event.clientY - bounds.top) / bounds.height
+      : (event.clientX - bounds.left) / bounds.width;
+
+    const nextHoverValue = getSliderValueFromPosition(
+      pointerPosition,
+      min,
+      max,
+      sliderStep,
+      snap ? sliderMarkValues : undefined,
+    );
+
+    setHoverValue(nextHoverValue);
+  };
 
   const { ref } = useMove(({ y }) => {
     if (disabled) {
       return;
     }
 
-    // Convert y position to slider value
-    const rawValue = Math.max(min, Math.min(max, min + (1 - y) * (max - min)));
-    const stepSize = step ?? (snap ? 0.001 : (max - min) / 100);
-    // Round to nearest step
-    const snappedValue = Math.round((rawValue - min) / stepSize) * stepSize + min;
+    const snappedValue = getSliderValueFromPosition(
+      1 - y,
+      min,
+      max,
+      sliderStep,
+      snap ? sliderMarkValues : undefined,
+    );
+    if (snappedValue === null) {
+      return;
+    }
     setVal(snappedValue);
     answer.onChange?.(snappedValue);
   });
+
+  const horizontalSlider = (
+    <Slider
+      disabled={disabled}
+      marks={[...labelValues.map((value) => ({ value })), ...options] as SliderProps['marks']}
+      min={min}
+      max={max}
+      step={sliderStep}
+      precision={sliderPrecision}
+      h={hasLabels ? 40 : undefined}
+      {...answer}
+      classNames={{
+        track: tlxStyle ? classes.track : '',
+        bar: classes.fixDisabled,
+        thumb: tlxStyle ? classes.fixDisabledThumb : '',
+      }}
+      restrictToMarks={snap}
+      label={(value) => value}
+      showLabelOnHover={!tlxStyle}
+      styles={(theme) => ({
+        mark: {
+          ...(tlxStyle ? {
+            height: 20, width: 1, marginTop: -6, marginLeft: 2, borderRadius: 0,
+          } : {}),
+          ...(withBar === false ? { borderColor: 'var(--mantine-color-gray-2)' } : {}),
+        },
+        bar: withBar === false || tlxStyle ? { display: 'none' } : {},
+        markLabel: {
+          fontSize: theme.fontSizes.sm,
+          color: theme.colors.gray[6],
+          transform: 'translate(calc((var(--mark-offset) * -1) + (var(--slider-size) / 2)), calc(var(--mantine-spacing-xs) / 2)',
+        },
+        // Red line thumb style
+        thumb: {
+          ...(tlxStyle ? {
+            borderColor: 'var(--mantine-color-red-6)',
+            width: 1,
+            borderWidth: 1,
+            height: 22,
+            borderRadius: 0,
+            backgroundColor: 'var(--mantine-color-red-6)',
+            transform: 'translate(-50%, -62%)',
+          } : {}),
+        },
+      })}
+      flex={tlxStyle ? undefined : 1}
+      mt={tlxStyle ? 0 : 'xs'}
+    />
+  );
 
   return (
     <Input.Wrapper
@@ -93,7 +206,7 @@ export function SliderInput({
                       position: 'absolute',
                       bottom: `${labelPosition}%`,
                       fontSize: 'var(--mantine-font-size-xs)',
-                      color: 'var(--mantine-color-gray-7)',
+                      color: 'var(--mantine-color-gray-6)',
                       right: 0,
                       transform: 'translateY(50%)',
                     }}
@@ -116,8 +229,8 @@ export function SliderInput({
                 flexShrink: 0,
                 pointerEvents: disabled ? 'none' : undefined,
               }}
-              onMouseEnter={() => setHovered(true)}
-              onMouseLeave={() => setHovered(false)}
+              onMouseMove={(event) => updateHoverValue(event, 'vertical')}
+              onMouseLeave={() => setHoverValue(null)}
             >
               {/* smeq vertical bar will always be withBar = true */}
               <Box
@@ -128,7 +241,7 @@ export function SliderInput({
                   top: 0,
                   width: 2,
                   height: '100%',
-                  backgroundColor: 'var(--mantine-color-gray-5)',
+                  backgroundColor: 'var(--mantine-color-gray-6)',
                 }}
               />
 
@@ -144,7 +257,7 @@ export function SliderInput({
                       left: 2,
                       width: 20,
                       height: 1,
-                      backgroundColor: 'var(--mantine-color-gray-7)',
+                      backgroundColor: 'var(--mantine-color-gray-6)',
                       transform: 'translateY(50%)',
                     }}
                   />
@@ -163,7 +276,7 @@ export function SliderInput({
                       left: option.label !== '' ? 20 : 2,
                       width: 20,
                       height: 1,
-                      backgroundColor: 'var(--mantine-color-gray-7)',
+                      backgroundColor: 'var(--mantine-color-gray-6)',
                       transform: 'translateY(50%)',
                     }}
                   />
@@ -181,11 +294,25 @@ export function SliderInput({
                   // -1px to account for the border
                   bottom: `calc(${normalizedValue * 100}% - 1px)`,
                 }}
-              >
-                <Tooltip label={Math.round(val)} opened={hovered} position="right" withArrow>
-                  <Box style={{ width: 20, height: 1 }} />
+              />
+
+              {hoverValue !== null && (
+                <Tooltip label={hoverValue} opened position="right" withArrow>
+                  <Box
+                    style={{
+                      backgroundColor: 'var(--mantine-color-gray-6)',
+                      width: 20,
+                      height: 1,
+                      border: '1px solid var(--mantine-color-gray-6)',
+                      position: 'absolute',
+                      left: 0,
+                      bottom: `calc(${((hoverValue - min) / (max - min)) * 100}% - 1px)`,
+                      pointerEvents: 'none',
+                      zIndex: 4,
+                    }}
+                  />
                 </Tooltip>
-              </Box>
+              )}
             </Box>
 
             {/* Mark label */}
@@ -204,7 +331,7 @@ export function SliderInput({
                     key={option.value}
                     style={{
                       fontSize: 'var(--mantine-font-size-xs)',
-                      color: 'var(--mantine-color-gray-7)',
+                      color: 'var(--mantine-color-gray-6)',
                       position: 'absolute',
                       bottom: `${markPosition}%`,
                       transform: 'translateY(50%)',
@@ -218,53 +345,44 @@ export function SliderInput({
             </Box>
           </Flex>
         </Box>
-      ) : (
-        <Slider
-          disabled={disabled}
-          marks={[...labelValues.map((value) => ({ value })), ...options] as SliderProps['marks']}
-          min={min}
-          max={max}
-          step={step ?? (snap ? 0.001 : (max - min) / 100)}
-          h={hasLabels ? 40 : undefined}
-          {...answer}
-          classNames={{
-            track: tlxStyle ? classes.track : '',
-            bar: classes.fixDisabled,
-            thumb: tlxStyle ? classes.fixDisabledThumb : '',
-          }}
-          restrictToMarks={snap}
-          label={(value) => value}
-          showLabelOnHover
-          styles={(theme) => ({
-            mark: {
-              ...(tlxStyle ? {
-                height: 20, width: 1, marginTop: -6, marginLeft: 2, borderRadius: 0,
-              } : {}),
-              ...(withBar === false ? { borderColor: 'var(--mantine-color-gray-2)' } : {}),
-            },
-            bar: withBar === false || tlxStyle ? { display: 'none' } : {},
-            markLabel: {
-              fontSize: theme.fontSizes.sm,
-              color: theme.colors.gray[7],
-              transform: 'translate(calc((var(--mark-offset) * -1) + (var(--slider-size) / 2)), calc(var(--mantine-spacing-xs) / 2)',
-            },
-            // Red line thumb style
-            thumb: {
-              ...(tlxStyle ? {
-                borderColor: 'var(--mantine-color-red-6)',
-                width: 1,
-                borderWidth: 1,
-                height: 22,
-                borderRadius: 0,
-                backgroundColor: 'var(--mantine-color-red-6)',
-                transform: 'translate(-50%, -62%)',
-              } : {}),
-            },
-          })}
+      ) : tlxStyle ? (
+        <Box
           flex={1}
-          mt={tlxStyle ? 'sm' : 'xs'}
-        />
-      )}
+          mt="sm"
+          style={{ position: 'relative' }}
+          onMouseMove={(event) => updateHoverValue(event, 'horizontal')}
+          onMouseLeave={() => setHoverValue(null)}
+        >
+          {horizontalSlider}
+          {hoverValue !== null && (
+            <Box
+              style={{
+                position: 'absolute',
+                // Match Mantine's default md slider inset so the preview aligns with its track and ticks
+                inset: `0 ${'calc(0.5rem * var(--mantine-scale))'}`,
+                pointerEvents: 'none',
+              }}
+            >
+              <Tooltip label={hoverValue} opened position="top" withArrow>
+                <Box
+                  style={{
+                    backgroundColor: 'var(--mantine-color-gray-6)',
+                    width: 1,
+                    height: 22,
+                    border: '1px solid var(--mantine-color-gray-6)',
+                    position: 'absolute',
+                    left: `${((hoverValue - min) / (max - min)) * 100}%`,
+                    top: `${'calc(0.5rem * var(--mantine-scale))'}`,
+                    transform: 'translate(-50%, -62%)',
+                    pointerEvents: 'none',
+                    zIndex: 4,
+                  }}
+                />
+              </Tooltip>
+            </Box>
+          )}
+        </Box>
+      ) : horizontalSlider}
     </Input.Wrapper>
   );
 }
