@@ -616,7 +616,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                   </span>
                 </Tooltip>
                 <Tabs.Tab value="config" leftSection={<IconFileCode size={16} />}>Config</Tabs.Tab>
-                <Tabs.Tab value="style" leftSection={<IconPalette size={16} />}>Style</Tabs.Tab>
+                <Tabs.Tab value="style" leftSection={<IconPalette size={16} />} disabled={!user.isAdmin}>Style</Tabs.Tab>
                 <Tabs.Tab value="manage" leftSection={<IconSettings size={16} />} disabled={!user.isAdmin}>Manage</Tabs.Tab>
               </Tabs.List>
               <Tabs.Panel style={{ overflow: 'auto' }} value="summary" pt="xs">
@@ -661,7 +661,9 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 {studyConfig && <ConfigView visibleParticipants={visibleParticipants} studyId={canonicalStudyId ?? undefined} currentConfigHash={currentConfigHash} />}
               </Tabs.Panel>
               <Tabs.Panel style={{ overflow: 'auto' }} value="style" pt="xs">
-                <StyleView studyId={canonicalStudyId ?? routeStudyId} />
+                {canonicalStudyId && user.isAdmin
+                  ? <StyleView studyId={canonicalStudyId} />
+                  : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to change the style for this study.</Alert></Container>}
               </Tabs.Panel>
               <Tabs.Panel style={{ overflow: 'auto' }} value="manage" pt="xs">
                 {canonicalStudyId && user.isAdmin ? <ManageView studyId={canonicalStudyId} refresh={() => execute(studyConfig, storageEngine, canonicalStudyId)} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to manage the data for this study.</Alert></Container>}
