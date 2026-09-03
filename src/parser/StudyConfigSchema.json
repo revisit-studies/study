@@ -290,6 +290,10 @@
           "description": "The default value of the response. Specify one option value as a string.",
           "type": "string"
         },
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "type": "number"
+        },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
           "type": "boolean"
@@ -393,6 +397,10 @@
             "type": "string"
           },
           "type": "array"
+        },
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "type": "number"
         },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
@@ -620,6 +628,10 @@
           "$ref": "#/definitions/JsonValue",
           "description": "The default value of the response. Must be JSON-serializable."
         },
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "type": "number"
+        },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
           "type": "boolean"
@@ -708,6 +720,10 @@
         "default": {
           "description": "The default value, using the format selected by `options`. Years must be between `0100` and `9999`.",
           "type": "string"
+        },
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "type": "number"
         },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
@@ -884,6 +900,10 @@
     "DividerResponse": {
       "additionalProperties": false,
       "properties": {
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "type": "number"
+        },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
           "type": "boolean"
@@ -968,6 +988,10 @@
             }
           ],
           "description": "The default value of the response. Use a string for single-select dropdowns and a string array for multiselect dropdowns."
+        },
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "type": "number"
         },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
@@ -1990,6 +2014,10 @@
             "number"
           ]
         },
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "type": "number"
+        },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
           "type": "boolean"
@@ -2098,6 +2126,10 @@
         "default": {
           "description": "The default value of the response. Specify a string such as `\"I enjoyed this study because...\"`.",
           "type": "string"
+        },
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "type": "number"
         },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
@@ -2421,6 +2453,10 @@
           "description": "The default value of the response by question key. Provide an object where each key is a question value and each value is an array of selected answer option values.",
           "type": "object"
         },
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "type": "number"
+        },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
           "type": "boolean"
@@ -2599,6 +2635,10 @@
           "description": "The default value of the response by question key. Provide an object where each key is a question value and each value is one answer option value.",
           "type": "object"
         },
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "type": "number"
+        },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
           "type": "boolean"
@@ -2737,6 +2777,10 @@
       "properties": {
         "default": {
           "description": "The default value of the response. Specify a numeric value such as `25` or `3.14`.",
+          "type": "number"
+        },
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
           "type": "number"
         },
         "excludeFromRandomization": {
@@ -3031,6 +3075,10 @@
           "description": "The default value of the response. Specify one option value as a string.",
           "type": "string"
         },
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "type": "number"
+        },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
           "type": "boolean"
@@ -3192,6 +3240,10 @@
           "description": "The default value of the response. Provide an object keyed by option value. Values depend on ranking type: index strings for sublist (e.g. `\"0\"`), category labels for categorical (`\"HIGH\"`, `\"MEDIUM\"`, `\"LOW\"`), and pairwise slots (`\"pair-<n>-high\"` / `\"pair-<n>-low\"`).",
           "type": "object"
         },
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "type": "number"
+        },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
           "type": "boolean"
@@ -3299,6 +3351,10 @@
           },
           "description": "The default value of the response. Provide an object keyed by option value. Values depend on ranking type: index strings for sublist (e.g. `\"0\"`), category labels for categorical (`\"HIGH\"`, `\"MEDIUM\"`, `\"LOW\"`), and pairwise slots (`\"pair-<n>-high\"` / `\"pair-<n>-low\"`).",
           "type": "object"
+        },
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "type": "number"
         },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
@@ -3420,6 +3476,10 @@
           },
           "description": "The default value of the response. Provide an object keyed by option value. Values depend on ranking type: index strings for sublist (e.g. `\"0\"`), category labels for categorical (`\"HIGH\"`, `\"MEDIUM\"`, `\"LOW\"`), and pairwise slots (`\"pair-<n>-high\"` / `\"pair-<n>-low\"`).",
           "type": "object"
+        },
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "type": "number"
         },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
@@ -3699,6 +3759,10 @@
       "additionalProperties": false,
       "description": "The ReactiveResponse interface is used to define the properties of a reactive response. ReactiveResponses render as a list, that is connected to a WebsiteComponent, VegaComponent, or ReactComponent. When data is sent from the components, it is displayed in the list. ```json {   \"id\": \"reactiveResponse\",   \"prompt\": \"Answer clicked in the stimulus\",   \"location\": \"aboveStimulus\",   \"type\": \"reactive\" } ```",
       "properties": {
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "type": "number"
+        },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
           "type": "boolean"
@@ -3876,6 +3940,10 @@
           "description": "The default value of the response. Specify a string such as `\"Jane Doe\"`.",
           "type": "string"
         },
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "type": "number"
+        },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
           "type": "boolean"
@@ -4000,6 +4068,10 @@
       "properties": {
         "default": {
           "description": "The default value of the response. Specify a numeric value that falls within the slider range.",
+          "type": "number"
+        },
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
           "type": "number"
         },
         "excludeFromRandomization": {
@@ -4441,6 +4513,10 @@
       "additionalProperties": false,
       "description": "The TextOnlyResponse interface is used to define the properties of a text only response. TextOnlyResponses render as a block of text that is displayed to the user. This can be used to display instructions or other information. It does not accept any input from the user. ```json {   \"id\": \"textOnlyResponse\",   \"type\": \"textOnly\",   \"prompt\": \"This is a text only response, it accepts markdown so you can **bold** or _italicize_ text.\",   \"location\": \"belowStimulus\",   \"restartEnumeration\": true } ```\n\nIn this example, the text only response is displayed below the stimulus and the enumeration of the questions is restarted.",
       "properties": {
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "type": "number"
+        },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
           "type": "boolean"
@@ -4547,6 +4623,10 @@
         "default": {
           "description": "The default time in 24-hour `HH:mm` format, or `HH:mm:ss` when `withSeconds` is `true`.",
           "type": "string"
+        },
+        "delay": {
+          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "type": "number"
         },
         "excludeFromRandomization": {
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
