@@ -9,6 +9,7 @@ import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { InputLabel } from './InputLabel';
 import { OptionLabel } from './OptionLabel';
 import { parseStringOptions } from '../../utils/stringOptions';
+import { KeyMapper } from './KeyMapper';
 
 export function ButtonsInput({
   response,
@@ -65,6 +66,12 @@ export function ButtonsInput({
         errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
         style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
       >
+        <KeyMapper
+          options={orderedOptions}
+          keys={response.keyMapping}
+          onSelect={(val) => answer?.onChange?.(val)}
+          disabled={disabled}
+        />
         <Flex justify="space-between" align="center" gap="xl" mt="xs">
           {orderedOptions.map((radio, idx) => (
             <Radio.Card

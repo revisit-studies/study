@@ -1116,6 +1116,8 @@ export interface ButtonsResponse extends BaseResponse {
   default?: string;
   /** The order in which the buttons are displayed. Defaults to fixed. */
   optionOrder?: 'fixed' | 'random';
+  /** A keyboard mapping to buttons. Supports string array ["1", "2"] or key-to-value map object { "r": "red" }. */
+  keyMapping?: string | string[] | Record<string, string>;
 }
 
 /**

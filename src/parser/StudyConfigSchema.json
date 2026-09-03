@@ -306,6 +306,26 @@
           "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
           "type": "string"
         },
+        "keyMapping": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            }
+          ],
+          "description": "A keyboard mapping to buttons. Supports string array [\"1\", \"2\"] or key-to-value map object { \"r\": \"red\" }."
+        },
         "location": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
