@@ -47,6 +47,7 @@ import { useManagedTrrack } from '../../store/hooks/useRevisitTrrack';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { showNotification } from '../../utils/notifications';
 import { getAnswersFromAllLocations, getPersistedAnswersFromAllLocations } from '../../utils/getAnswersFromAllLocations';
+import { DelayedResponseWrapper } from './DelayedResponseWrapper';
 
 type Props = {
   status?: StoredAnswer;
@@ -728,58 +729,76 @@ export function ResponseBlock({
           // Check if this response is in the current location
           const isInCurrentLocation = responses.some((r) => r.id === response.id);
 
-          if (isInCurrentLocation) {
-            // Text and divider responses do not represent numbered questions.
-            if (response.type !== 'textOnly' && response.type !== 'divider') {
+          if (isInCurrentLocation && !response.hidden) {
+            if (response.type === 'textOnly' || response.type === 'divider') {
+              if ('restartEnumeration' in response) {
+                index = 0;
+              }
+              // Do NOT increment index for dividers or text headings
+            } else {
               index += 1;
-            } else if (response.type === 'textOnly' && response.restartEnumeration) {
-              index = 0;
             }
           }
+          const currentIndex = index;
 
           return (
             <React.Fragment key={`${response.id}-${currentStep}`}>
               {isInCurrentLocation ? (
                 response.hidden ? '' : (
                   <div data-question-id={response.id}>
-                    <ResponseSwitcher
-                      storedAnswer={storedAnswer}
-                      answerFinalized={!!status && status.endTime !== -1}
-                      form={{
-                        ...answerValidator.getInputProps(response.id),
-                        onChange: (value: unknown, source: 'keyboard' | 'click' = 'click') => trackInputChange(response.id, value, source),
-                      }}
-                      dontKnowCheckbox={usesStandaloneDontKnowField(response)
-                        ? {
-                          ...answerValidator.getInputProps(`${response.id}-dontKnow`, { type: 'checkbox' }),
-                        }
-                        : undefined}
-                      otherInput={{
-                        ...answerValidator.getInputProps(`${response.id}-other`),
-                      }}
-                      field={response.type === 'custom'
-                        ? {
-                          getInputProps: () => answerValidator.getInputProps(response.id),
-                          setValue: (value) => answerValidator.setFieldValue(response.id, value),
-                          onBlur: () => answerValidator.getInputProps(response.id).onBlur?.(),
-                        } as CustomResponseField
-                        : undefined}
-                      customError={response.type === 'custom'
-                        ? generateCustomResponseErrorMessage(
-                          response,
-                          answerValidator.values[response.id],
-                          answerValidator.values,
-                          customResponseValidators[response.id],
-                          customResponseLoadErrors[response.id],
-                          { showRequiredErrors: errors },
-                        )
-                        : undefined}
-                      response={response}
-                      index={index}
-                      config={config}
+                    <DelayedResponseWrapper
+                      delay={response.delay}
                       disabled={disabledAttempts}
-                      errors={errors}
-                    />
+                    >
+                      {(isDelayedDisabled: boolean) => (
+                        <div
+                          style={{
+                            pointerEvents: isDelayedDisabled ? 'none' : 'auto',
+                            opacity: isDelayedDisabled ? 0.4 : 1,
+                            transition: 'opacity 0.3s ease',
+                          }}
+                        >
+                          <ResponseSwitcher
+                            storedAnswer={storedAnswer}
+                            answerFinalized={!!status && status.endTime !== -1}
+                            form={{
+                              ...answerValidator.getInputProps(response.id),
+                              onChange: (value: unknown, source: 'keyboard' | 'click' = 'click') => trackInputChange(response.id, value, source),
+                            }}
+                            dontKnowCheckbox={usesStandaloneDontKnowField(response)
+                              ? {
+                                ...answerValidator.getInputProps(`${response.id}-dontKnow`, { type: 'checkbox' }),
+                              }
+                              : undefined}
+                            otherInput={{
+                              ...answerValidator.getInputProps(`${response.id}-other`),
+                            }}
+                            field={response.type === 'custom'
+                              ? {
+                                getInputProps: () => answerValidator.getInputProps(response.id),
+                                setValue: (value) => answerValidator.setFieldValue(response.id, value),
+                                onBlur: () => answerValidator.getInputProps(response.id).onBlur?.(),
+                              } as CustomResponseField
+                              : undefined}
+                            customError={response.type === 'custom'
+                              ? generateCustomResponseErrorMessage(
+                                response,
+                                answerValidator.values[response.id],
+                                answerValidator.values,
+                                customResponseValidators[response.id],
+                                customResponseLoadErrors[response.id],
+                                { showRequiredErrors: errors },
+                              )
+                              : undefined}
+                            response={response}
+                            index={currentIndex}
+                            config={config}
+                            disabled={isDelayedDisabled}
+                            errors={errors}
+                          />
+                        </div>
+                      )}
+                    </DelayedResponseWrapper>
                     <FeedbackAlert
                       response={response}
                       correctAnswer={correctAnswer}
