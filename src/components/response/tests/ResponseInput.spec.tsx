@@ -267,6 +267,7 @@ vi.mock('../utils', () => ({
   normalizeCheckboxValue: vi.fn((v: unknown) => (typeof v === 'string' && v.length > 0 ? [v] : [])),
   usesStandaloneDontKnowField: vi.fn(() => false),
   getDefaultFieldValue: vi.fn(() => null),
+  hasAnswerValue: vi.fn((val) => val !== undefined && val !== null && val !== ''),
 }));
 
 vi.mock('../../../utils/stringOptions', () => ({

@@ -104,6 +104,10 @@
             "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig.",
             "type": "number"
           },
+          "nextButtonHidden": {
+            "description": "Whether to hide the next button. Defaults to false, if autoAdvance is enabled it will default to true.",
+            "type": "boolean"
+          },
           "nextButtonLocation": {
             "$ref": "#/definitions/ConfigResponseBlockLocation",
             "description": "The location of the next button. If present, will override the  next button location setting in the uiConfig."
@@ -265,6 +269,18 @@
       "additionalProperties": false,
       "description": "The ButtonsResponse interface is used to define the properties of a buttons response. ButtonsResponses render as a list of buttons that the participant can click. When a button is clicked, the value of the button is stored in the data file. Participants can cycle through the options using the arrow keys. ```json {   \"id\": \"buttonsResponse\",   \"type\": \"buttons\",   \"prompt\": \"Click a button\",   \"location\": \"belowStimulus\",   \"default\": \"Option 2\",   \"options\": [     \"Option 1\",     \"Option 2\",     \"Option 3\"   ] } ``` In this example, the participant can click one of the buttons labeled \"Option 1\", \"Option 2\", or \"Option 3\".",
       "properties": {
+        "allowResponseChange": {
+          "description": "Controls whether the participant is allowed to change their response after they have selected an answer. Set to `false` to lock the response in as soon as it is provided. Defaults to true.",
+          "type": "boolean"
+        },
+        "autoAdvanceDelay": {
+          "description": "The delay, in milliseconds, to wait after this response is answered before automatically advancing to the next step. Only used when `autoAdvanceToNextStep` is `true`. Defaults to 0.",
+          "type": "number"
+        },
+        "autoAdvanceToNextStep": {
+          "description": "Controls whether the participant is automatically advanced to the next step as soon as this response has been answered. Defaults to false. If a required element besides this one is present on the page a warning is shown.",
+          "type": "boolean"
+        },
         "default": {
           "description": "The default value of the response. Specify one option value as a string.",
           "type": "string"
@@ -1383,6 +1399,10 @@
           "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig.",
           "type": "number"
         },
+        "nextButtonHidden": {
+          "description": "Whether to hide the next button. Defaults to false, if autoAdvance is enabled it will default to true.",
+          "type": "boolean"
+        },
         "nextButtonLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the next button. If present, will override the  next button location setting in the uiConfig."
@@ -1666,6 +1686,10 @@
         "nextButtonEnableTime": {
           "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig.",
           "type": "number"
+        },
+        "nextButtonHidden": {
+          "description": "Whether to hide the next button. Defaults to false, if autoAdvance is enabled it will default to true.",
+          "type": "boolean"
         },
         "nextButtonLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
@@ -2215,6 +2239,10 @@
         "nextButtonEnableTime": {
           "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig.",
           "type": "number"
+        },
+        "nextButtonHidden": {
+          "description": "Whether to hide the next button. Defaults to false, if autoAdvance is enabled it will default to true.",
+          "type": "boolean"
         },
         "nextButtonLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
@@ -2848,6 +2876,10 @@
         "nextButtonEnableTime": {
           "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig.",
           "type": "number"
+        },
+        "nextButtonHidden": {
+          "description": "Whether to hide the next button. Defaults to false, if autoAdvance is enabled it will default to true.",
+          "type": "boolean"
         },
         "nextButtonLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
@@ -3515,6 +3547,10 @@
         "nextButtonEnableTime": {
           "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig.",
           "type": "number"
+        },
+        "nextButtonHidden": {
+          "description": "Whether to hide the next button. Defaults to false, if autoAdvance is enabled it will default to true.",
+          "type": "boolean"
         },
         "nextButtonLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
@@ -4501,6 +4537,10 @@
           "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig.",
           "type": "number"
         },
+        "nextButtonHidden": {
+          "description": "Whether to hide the next button. Defaults to false, if autoAdvance is enabled it will default to true.",
+          "type": "boolean"
+        },
         "nextButtonLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the next button. If present, will override the  next button location setting in the uiConfig."
@@ -4676,6 +4716,10 @@
         "nextButtonEnableTime": {
           "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig.",
           "type": "number"
+        },
+        "nextButtonHidden": {
+          "description": "Whether to hide the next button. Defaults to false, if autoAdvance is enabled it will default to true.",
+          "type": "boolean"
         },
         "nextButtonLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
@@ -4861,6 +4905,10 @@
           "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig.",
           "type": "number"
         },
+        "nextButtonHidden": {
+          "description": "Whether to hide the next button. Defaults to false, if autoAdvance is enabled it will default to true.",
+          "type": "boolean"
+        },
         "nextButtonLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the next button. If present, will override the  next button location setting in the uiConfig."
@@ -5040,6 +5088,10 @@
         "nextButtonEnableTime": {
           "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig.",
           "type": "number"
+        },
+        "nextButtonHidden": {
+          "description": "Whether to hide the next button. Defaults to false, if autoAdvance is enabled it will default to true.",
+          "type": "boolean"
         },
         "nextButtonLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",

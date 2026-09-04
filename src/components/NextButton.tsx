@@ -51,6 +51,7 @@ export function NextButton({
   const nextButtonAutoAdvanceTime = config?.nextButtonAutoAdvanceTime;
   const nextButtonAutoAdvanceWarningTime = config?.nextButtonAutoAdvanceWarningTime ?? DEFAULT_AUTO_ADVANCE_WARNING_TIME;
   const nextButtonAutoAdvanceWarningMessage = config?.nextButtonAutoAdvanceWarningMessage ?? DEFAULT_AUTO_ADVANCE_WARNING_MESSAGE;
+  const nextButtonHidden = config?.nextButtonHidden ?? false;
 
   const [timer, setTimer] = useState<number | undefined>(undefined);
   const autoAdvanceTriggered = useRef(false);
@@ -116,7 +117,7 @@ export function NextButton({
         onCheckAnswer();
         return;
       }
-      if (!disabled && !isNextDisabled && buttonTimerSatisfied) {
+      if (!disabled && !isNextDisabled && buttonTimerSatisfied && !nextButtonHidden) {
         onNext();
       }
     };
@@ -127,7 +128,7 @@ export function NextButton({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [disabled, isNextDisabled, buttonTimerSatisfied, onCheckAnswer, onNext, nextOnEnter]);
+  }, [disabled, isNextDisabled, nextButtonHidden, buttonTimerSatisfied, onCheckAnswer, onNext, nextOnEnter]);
 
   const nextButtonDisabled = disabled || isNextDisabled || !buttonTimerSatisfied;
   const previousButtonText = config?.previousButtonText ?? studyConfig.uiConfig.previousButtonText ?? 'Previous';
@@ -143,14 +144,16 @@ export function NextButton({
           />
         )}
         {checkAnswer}
-        <Button
-          type="submit"
-          disabled={nextButtonDisabled}
-          onClick={() => onNext()}
-          px={location === 'sidebar' && checkAnswer ? 8 : undefined}
-        >
-          {label}
-        </Button>
+        {!nextButtonHidden && (
+          <Button
+            type="submit"
+            disabled={nextButtonDisabled}
+            onClick={() => onNext()}
+            px={location === 'sidebar' && checkAnswer ? 8 : undefined}
+          >
+            {label}
+          </Button>
+        )}
       </Group>
       {timer !== undefined && (
         <>

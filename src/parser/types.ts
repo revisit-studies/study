@@ -1116,6 +1116,12 @@ export interface ButtonsResponse extends BaseResponse {
   default?: string;
   /** The order in which the buttons are displayed. Defaults to fixed. */
   optionOrder?: 'fixed' | 'random';
+  /** Controls whether the participant is automatically advanced to the next step as soon as this response has been answered. Defaults to false. If a required element besides this one is present on the page a warning is shown. */
+  autoAdvanceToNextStep?: boolean;
+  /** The delay, in milliseconds, to wait after this response is answered before automatically advancing to the next step. Only used when `autoAdvanceToNextStep` is `true`. Defaults to 0. */
+  autoAdvanceDelay?: number;
+  /** Controls whether the participant is allowed to change their response after they have selected an answer. Set to `false` to lock the response in as soon as it is provided. Defaults to true. */
+  allowResponseChange?: boolean;
 }
 
 /**
@@ -1266,6 +1272,8 @@ export interface BaseIndividualComponent {
   nextButtonAlignment?: NextButtonAlignment;
   /** The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig. */
   nextButtonEnableTime?: number;
+  /** Whether to hide the next button. Defaults to false, if autoAdvance is enabled it will default to true. */
+  nextButtonHidden?: boolean;
   /** The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig. */
   nextButtonDisableTime?: number;
   /** The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component. */

@@ -486,6 +486,47 @@
         }
       ]
     },
+    "Auto advance": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "math-buttons",
+          "type": "buttons",
+          "prompt": "Complex calculation that use buttons with auto-advance.",
+          "secondaryText": "What does 53 + 98 equal?",
+          "infoText": "Choose the option that is correct.",
+          "options": [
+            {
+              "label": "162",
+              "value": "162"
+            },
+            {
+              "label": "149",
+              "value": "149"
+            },
+            {
+              "label": "151",
+              "value": "151"
+            },
+            {
+              "label": "137",
+              "value": "137"
+            }
+          ],
+          "autoAdvanceToNextStep": true,
+          "autoAdvanceDelay": 5000,
+          "allowResponseChange": false
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "math-buttons",
+          "answer": "151"
+        }
+      ],
+      "provideFeedback": true,
+      "trainingAttempts": 1
+    },
     "Default Values": {
       "type": "questionnaire",
       "response": [
@@ -1219,6 +1260,7 @@
       "Text Validation",
       "Default Values",
       "Custom Response",
+      "Auto advance",
       "Randomizing Options",
       "Randomizing Questions",
       "Ranking Widgets",

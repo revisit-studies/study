@@ -221,7 +221,7 @@ export function useRecording() {
 
     mediaRecorder.start(1000); // 1s chunks
     audioRecorder?.start(1000);
-  }, [currentComponentHasAudioRecording, currentComponentHasScreenRecording, storageEngine, isMuted]);
+  }, [currentComponentHasAudioRecording, currentComponentHasScreenRecording, storageEngine, isMuted, dataCollectionEnabled]);
 
   // Stop screen recording. This does not stop screen capture.
   const stopScreenRecording = useCallback(() => {
