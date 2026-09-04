@@ -43,7 +43,8 @@
           "autoAdvanceToNextStep": true
         }
       ],
-      "type": "questionnaire"
+      "type": "questionnaire",
+      "nextButtonHidden": false
     },
     "warning": {
       "response": [

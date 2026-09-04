@@ -1272,6 +1272,8 @@ export interface BaseIndividualComponent {
   nextButtonAlignment?: NextButtonAlignment;
   /** The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig. */
   nextButtonEnableTime?: number;
+  /** Whether to hide the next button. Defaults to false, if autoAdvance is enabled it will default to true. */
+  nextButtonHidden?: boolean;
   /** The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig. */
   nextButtonDisableTime?: number;
   /** The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component. */

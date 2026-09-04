@@ -780,6 +780,8 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
     const hasAutoAdvanceButton = responses.some(
       (response) => response.type === 'buttons' && response.autoAdvanceToNextStep === true,
     );
+    const isAutoAdvance = hasAutoAdvanceButton || resolvedComponent.nextButtonAutoAdvanceTime !== undefined;
+    resolvedComponent.nextButtonHidden = resolvedComponent.nextButtonHidden ?? (isAutoAdvance ? true : (studyConfig.uiConfig?.nextButtonHidden ?? false));
 
     const interactiveResponses = responses.filter(
       (response) => response.type !== 'textOnly' && response.type !== 'divider',

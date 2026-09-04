@@ -104,6 +104,10 @@
             "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig.",
             "type": "number"
           },
+          "nextButtonHidden": {
+            "description": "Whether to hide the next button. Defaults to false, if autoAdvance is enabled it will default to true.",
+            "type": "boolean"
+          },
           "nextButtonLocation": {
             "$ref": "#/definitions/ConfigResponseBlockLocation",
             "description": "The location of the next button. If present, will override the  next button location setting in the uiConfig."
@@ -1395,6 +1399,10 @@
           "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig.",
           "type": "number"
         },
+        "nextButtonHidden": {
+          "description": "Whether to hide the next button. Defaults to false, if autoAdvance is enabled it will default to true.",
+          "type": "boolean"
+        },
         "nextButtonLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the next button. If present, will override the  next button location setting in the uiConfig."
@@ -1678,6 +1686,10 @@
         "nextButtonEnableTime": {
           "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig.",
           "type": "number"
+        },
+        "nextButtonHidden": {
+          "description": "Whether to hide the next button. Defaults to false, if autoAdvance is enabled it will default to true.",
+          "type": "boolean"
         },
         "nextButtonLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
@@ -2227,6 +2239,10 @@
         "nextButtonEnableTime": {
           "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig.",
           "type": "number"
+        },
+        "nextButtonHidden": {
+          "description": "Whether to hide the next button. Defaults to false, if autoAdvance is enabled it will default to true.",
+          "type": "boolean"
         },
         "nextButtonLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
@@ -2860,6 +2876,10 @@
         "nextButtonEnableTime": {
           "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig.",
           "type": "number"
+        },
+        "nextButtonHidden": {
+          "description": "Whether to hide the next button. Defaults to false, if autoAdvance is enabled it will default to true.",
+          "type": "boolean"
         },
         "nextButtonLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
@@ -3527,6 +3547,10 @@
         "nextButtonEnableTime": {
           "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig.",
           "type": "number"
+        },
+        "nextButtonHidden": {
+          "description": "Whether to hide the next button. Defaults to false, if autoAdvance is enabled it will default to true.",
+          "type": "boolean"
         },
         "nextButtonLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
@@ -4513,6 +4537,10 @@
           "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig.",
           "type": "number"
         },
+        "nextButtonHidden": {
+          "description": "Whether to hide the next button. Defaults to false, if autoAdvance is enabled it will default to true.",
+          "type": "boolean"
+        },
         "nextButtonLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the next button. If present, will override the  next button location setting in the uiConfig."
@@ -4688,6 +4716,10 @@
         "nextButtonEnableTime": {
           "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig.",
           "type": "number"
+        },
+        "nextButtonHidden": {
+          "description": "Whether to hide the next button. Defaults to false, if autoAdvance is enabled it will default to true.",
+          "type": "boolean"
         },
         "nextButtonLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
@@ -4873,6 +4905,10 @@
           "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig.",
           "type": "number"
         },
+        "nextButtonHidden": {
+          "description": "Whether to hide the next button. Defaults to false, if autoAdvance is enabled it will default to true.",
+          "type": "boolean"
+        },
         "nextButtonLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the next button. If present, will override the  next button location setting in the uiConfig."
@@ -5052,6 +5088,10 @@
         "nextButtonEnableTime": {
           "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig.",
           "type": "number"
+        },
+        "nextButtonHidden": {
+          "description": "Whether to hide the next button. Defaults to false, if autoAdvance is enabled it will default to true.",
+          "type": "boolean"
         },
         "nextButtonLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
