@@ -781,8 +781,7 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
       (response) => response.type === 'buttons' && response.autoAdvanceToNextStep === true,
     );
     const isAutoAdvance = hasAutoAdvanceButton || resolvedComponent.nextButtonAutoAdvanceTime !== undefined;
-    resolvedComponent.nextButtonHidden = resolvedComponent.nextButtonHidden ?? (isAutoAdvance ? true : (studyConfig.uiConfig?.nextButtonHidden ?? false));
-
+    resolvedComponent.nextButtonHidden = resolvedComponent.nextButtonHidden ?? (isAutoAdvance ? true : ((studyConfig.uiConfig as { nextButtonHidden?: boolean })?.nextButtonHidden ?? false));
     const interactiveResponses = responses.filter(
       (response) => response.type !== 'textOnly' && response.type !== 'divider',
     );
