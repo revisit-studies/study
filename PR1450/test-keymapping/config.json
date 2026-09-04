@@ -1,0 +1,123 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Test Keymapper",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2026-02-23",
+    "description": "A test of keymapping.",
+    "organizations": [
+      "University of Utah",
+      "WPI"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true,
+    "urlParticipantIdParam": "PROLIFIC_PID",
+    "studyEndMsg": "**Thank you for completing the study. You may click this link and return to Prolific**: [yourProlificLink](yourProlificLink)"
+  },
+  "components": {
+    "color-mapper": {
+      "response": [
+        {
+          "id": "color-response",
+          "type": "buttons",
+          "prompt": "Select the ink color",
+          "location": "belowStimulus",
+          "options": [
+            "RED",
+            "ORANGE",
+            "YELLOW",
+            "GREEN",
+            "BLUE"
+          ],
+          "keyMapping": ["1", "2", "3", "4", "5"]
+        },
+        {
+          "id": "color-response2",
+          "type": "buttons",
+          "prompt": "Select the ink color",
+          "location": "belowStimulus",
+          "options": [
+            "RED",
+            "ORANGE",
+            "YELLOW",
+            "GREEN",
+            "BLUE"
+          ],
+          "keyMapping": ["1", "2", "3", "4", "5"]
+        }],
+      "type": "questionnaire"
+    },
+    "letter-mapper":{
+      "response": [
+        {
+          "id": "letter-response",
+          "type": "buttons",
+          "prompt": "Indicate correlation direction",
+          "location": "belowStimulus",
+          "options": [
+            "A",
+            "S",
+            "D",
+            "F"
+          ],
+          "keyMapping": ["a", "s", "d", "f"]
+        }],
+      "type": "questionnaire"
+    },
+    "special-mapper":{
+      "response": [
+        {
+          "id": "letter-response",
+          "type": "buttons",
+          "prompt": "Indicate correlation direction",
+          "location": "belowStimulus",
+          "options": [
+            "Left",
+            "Right",
+            "Up",
+            "Down",
+            "Space"
+          ],
+          "keyMapping": ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Space"]
+        }],
+      "type": "questionnaire"
+    },
+    "mapper-mapper":{
+      "response": [
+        {
+          "id": "letter-response",
+          "type": "buttons",
+          "prompt": "Indicate correlation direction",
+          "location": "belowStimulus",
+          "options": [
+            { "label": "RED", "value": "red" },
+            { "label": "GREEN", "value": "green" },
+            { "label": "BLUE", "value": "blue" }
+          ],
+          "keyMapping": {
+            "r": "red",
+            "g": "green",
+            "b": "blue"
+          }
+        }],
+      "type": "questionnaire"
+    }
+  },
+    "sequence": {
+    "order": "fixed",
+    "components": [
+      "special-mapper",
+      "letter-mapper",
+      "color-mapper",
+      "mapper-mapper"
+    ]
+  }
+}
