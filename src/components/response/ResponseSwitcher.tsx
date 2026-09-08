@@ -195,8 +195,7 @@ export function ResponseSwitcher({
   }, [response]);
   const responseError = useMemo(() => {
     if (
-      response.type === 'reactive'
-      || response.type === 'custom'
+      response.type === 'custom'
       || response.type === 'textOnly'
       || response.type === 'divider'
     ) {
@@ -373,6 +372,7 @@ export function ResponseSwitcher({
       <ReactiveInput
         response={withTemplatedFields(response)}
         answer={ans as { value: string[] }}
+        error={responseError}
         index={index}
         enumerateQuestions={enumerateQuestions}
       />

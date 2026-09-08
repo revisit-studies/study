@@ -382,7 +382,7 @@ describe('validateResponse', () => {
     });
   });
 
-  test.each(['textOnly', 'divider', 'reactive'] as const)(
+  test.each(['textOnly', 'divider'] as const)(
     '%s responses do not participate in response validation',
     (type) => {
       const response = {
@@ -398,6 +398,97 @@ describe('validateResponse', () => {
       });
     },
   );
+
+  test('reactive requiredValue mismatch uses requiredLabel in its error', () => {
+    const response: Response = {
+      id: 'reactive',
+      prompt: 'Complete the interaction',
+      type: 'reactive',
+      required: true,
+      requiredValue: 'complete',
+      requiredLabel: 'the completed state',
+    };
+
+    expect(generateErrorMessage(
+      response,
+      { value: 'incomplete' },
+      undefined,
+      { showRequiredErrors: true, values: { reactive: 'incomplete' } },
+    )).toBe('Please enter the completed state to continue.');
+  });
+
+  test('reactive requiredValue accepts an exactly matching scalar value', () => {
+    const response: Response = {
+      id: 'reactive',
+      prompt: 'Select the largest bar',
+      type: 'reactive',
+      required: true,
+      requiredValue: 1.3,
+    };
+
+    expect(validateResponse(response, 1.3, { reactive: 1.3 })).toEqual({
+      valid: true,
+      issueType: 'none',
+      blocksProgression: false,
+    });
+    expect(validateResponse(response, 1.2, { reactive: 1.2 })).toMatchObject({
+      valid: false,
+      issueType: 'invalid',
+      reason: 'requiredValueMismatch',
+      blocksProgression: true,
+    });
+  });
+
+  test('reactive requiredValue uses deep equality and preserves array order', () => {
+    const requiredValue = { selections: ['A', 'B'], complete: true };
+    const response: Response = {
+      id: 'reactive',
+      prompt: 'Complete the interaction',
+      type: 'reactive',
+      required: true,
+      requiredValue,
+    };
+    const reorderedValue = { selections: ['B', 'A'], complete: true };
+
+    expect(validateResponse(response, { ...requiredValue }, { reactive: requiredValue })).toMatchObject({
+      valid: true,
+      issueType: 'none',
+    });
+    expect(validateResponse(response, reorderedValue, { reactive: reorderedValue })).toMatchObject({
+      valid: false,
+      issueType: 'invalid',
+      reason: 'requiredValueMismatch',
+    });
+  });
+
+  test.each([
+    [{ complete: true }, { complete: false }, 'Please enter {"complete":true} to continue.'],
+    [[], ['unexpected'], 'Please enter the required value to continue.'],
+    ['', 'unexpected', 'Please enter the required value to continue.'],
+  ])('reactive requiredValue mismatch has a usable fallback label', (requiredValue, value, expectedMessage) => {
+    const response: Response = {
+      id: 'reactive', prompt: 'Complete the interaction', type: 'reactive', required: true, requiredValue,
+    };
+
+    expect(generateErrorMessage(
+      response,
+      { value },
+      undefined,
+      { showRequiredErrors: true, values: { reactive: value } },
+    )).toBe(expectedMessage);
+  });
+
+  test('reactive responses without requiredValue leave completion to stimulus validation', () => {
+    const response: Response = {
+      id: 'reactive', prompt: 'Complete the interaction', type: 'reactive', required: true,
+    };
+
+    expect(validateResponse(response, undefined, {})).toEqual({
+      valid: true,
+      issueType: 'none',
+      blocksProgression: false,
+    });
+  });
 
   test('numerical min, max, and range are inclusive', () => {
     const response: NumericalResponse = {
@@ -1865,7 +1956,7 @@ describe('generateErrorMessage — answer.checked branch', () => {
     };
     const options = [{ label: 'Option A', value: 'A' }];
     const error = generateErrorMessage(response, { checked: ['A'] }, options, { showRequiredErrors: true });
-    expect(error).toContain('select');
+    expect(error).toBe('Please select A, B to continue.');
   });
 
   test('matching checked values against requiredValue returns null', () => {
