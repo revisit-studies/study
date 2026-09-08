@@ -673,12 +673,13 @@ export function ResponseBlock({
           // Check if this response is in the current location
           const isInCurrentLocation = responses.some((r) => r.id === response.id);
 
+          const isNonQuestion = response.type === 'textOnly' || response.type === 'divider' || ('divider' in response && Boolean(response.divider));
           if (isInCurrentLocation && !response.hidden) {
-            if (response.type === 'textOnly' || response.type === 'divider') {
-              if ('restartEnumeration' in response) {
+            if (isNonQuestion) {
+              if ('restartEnumeration' in response && Boolean(response.restartEnumeration)) {
                 index = 0;
               }
-              // Do NOT increment index for dividers or text headings
+              // Do NOT increment index for non-question elements
             } else {
               index += 1;
             }
@@ -696,6 +697,9 @@ export function ResponseBlock({
                     >
                       {(isDelayedDisabled: boolean) => (
                         <div
+                          data-testid={`delay-wrapper-${response.id}`}
+                          inert={isDelayedDisabled}
+                          tabIndex={isDelayedDisabled ? -1 : undefined}
                           style={{
                             pointerEvents: isDelayedDisabled ? 'none' : 'auto',
                             opacity: isDelayedDisabled ? 0.4 : 1,

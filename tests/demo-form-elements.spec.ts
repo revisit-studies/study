@@ -96,6 +96,27 @@ test('Test questionnaire component with responses and randomizing questions and 
 
   // Fill the survey: Form Elements
 
+  // Delayed elements
+  const delayedNumberContainer = page.getByTestId('delay-wrapper-q-numerical-delayed');
+  const delayedSliderContainer = page.getByTestId('delay-wrapper-q-slider-delayed');
+
+  await expect(delayedNumberContainer).toBeVisible({ timeout: 10000 });
+  await expect(delayedNumberContainer).toHaveAttribute('inert');
+  await expect(delayedSliderContainer).toHaveAttribute('inert');
+
+  // Wait for the 5-second timer to expire (React completely removes the 'inert' attribute)
+  await expect(delayedNumberContainer).not.toHaveAttribute('inert', { timeout: 20000 });
+  await expect(delayedSliderContainer).not.toHaveAttribute('inert', { timeout: 20000 });
+
+  const delayedNumberInput = delayedNumberContainer.getByPlaceholder('Enter a number from 0 to 100');
+  const delayedSliderTrack = delayedSliderContainer.locator('.mantine-Slider-track');
+  await delayedNumberInput.fill('120');
+  await delayedNumberInput.press('Tab');
+  await nextClick(page);
+  await expect(page.getByText('Please enter a value between 0 and 100')).toBeVisible();
+  await delayedNumberInput.fill('12');
+  await delayedSliderTrack.click();
+
   // Number input
   const ageInput = page.getByPlaceholder('Enter your age here, range from 0 to 100');
   await expect(ageInput).toBeVisible({ timeout: 10000 });
@@ -106,7 +127,7 @@ test('Test questionnaire component with responses and randomizing questions and 
   await ageInput.fill('12');
 
   // Slider
-  await page.locator('.mantine-Slider-track').click();
+  page.locator('[data-question-id="q-slider"] .mantine-Slider-track').click();
 
   // Short text
   await page.getByPlaceholder('Enter your answer here').fill('test');

@@ -48,6 +48,42 @@
           "prompt": "## Numerical Inputs",
           "restartEnumeration": true
         },
+                {
+          "id": "q-numerical-delayed",
+          "prompt": "Delayed numerical example",
+          "secondaryText": "A numeric example that is required to complete and has an option to say 'Don't know'. It will be enabled after a 5 second delay.",
+          "infoText": "This numerical input accepts values between 0 and 100.",
+          "type": "numerical",
+          "placeholder": "Enter a number from 0 to 100",
+          "max": 100,
+          "min": 0,
+          "withDontKnow": true,
+          "delay": 5000
+        },
+        {
+          "id": "q-slider-delayed",
+          "prompt": "Delayed slider example",
+          "secondaryText": "A slider for 0-100 with 3 breakpoints for bad, mid, and good. It will be enabled after a 5 second delay.",
+          "infoText": "Use the slider to indicate your rating on a scale from 'Bad' to 'Good'.",
+          "type": "slider",
+          "startingValue": 50,
+          "spacing": 50,
+          "options": [
+            {
+              "label": "Bad",
+              "value": 0
+            },
+            {
+              "label": "Mid",
+              "value": 50
+            },
+            {
+              "label": "Good",
+              "value": 100
+            }
+          ],
+          "delay": 5000
+        },
         {
           "id": "q-numerical",
           "prompt": "Numerical example",
