@@ -12,7 +12,7 @@ import { compileTemplate } from '../utils/handlebars';
 import { useTemplateAnswerContext } from '../store/hooks/useTemplateAnswerContext';
 import 'plyr-react/plyr.css';
 import { useStoreActions, useStoreDispatch } from '../store/store';
-import { useCurrentComponent, useCurrentStep } from '../routes/utils';
+import { useCurrentIdentifier } from '../routes/utils';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 // eslint-disable-next-line import/order
 import { Box, LoadingOverlay } from '@mantine/core';
@@ -42,10 +42,10 @@ function isValidVimeoUrl(url: string): boolean {
 }
 
 // eslint-disable-next-line react/display-name
-const CustomPlyrInstance = forwardRef<APITypes, PlyrProps & { endedCallback:() => void; }>(
+const CustomPlyrInstance = forwardRef<APITypes, PlyrProps & { endedCallback:() => void; loadedCallback: () => void; errorCallback: () => void; }>(
   (props, ref) => {
     const {
-      source, options = null, endedCallback,
+      source, options = null, endedCallback, loadedCallback, errorCallback,
     } = props;
     const raptorRef = usePlyr(ref, { options, source });
 
@@ -53,20 +53,31 @@ const CustomPlyrInstance = forwardRef<APITypes, PlyrProps & { endedCallback:() =
       let animationFrameId: number | undefined;
       let cleanup = () => { };
 
-      const registerEndedHandler = () => {
+      const registerPlayerHandlers = () => {
         const plyr = (ref as RefObject<APITypes>).current?.plyr;
         if (!plyr || typeof plyr.on !== 'function' || typeof plyr.off !== 'function') {
-          animationFrameId = window.requestAnimationFrame(registerEndedHandler);
+          animationFrameId = window.requestAnimationFrame(registerPlayerHandlers);
           return;
         }
 
+        const handleReady = () => {
+          // If player is not HTML5, it means it's a third-party provider (like YouTube or Vimeo) which requires checking if the video is ready.
+          if (plyr.provider !== 'html5' || (plyr.media as HTMLMediaElement).readyState >= 2) loadedCallback();
+        };
         try {
           // Make registration idempotent across StrictMode mount/unmount cycles.
           plyr.off('ended', endedCallback);
           plyr.on('ended', endedCallback);
+          plyr.on('loadeddata', loadedCallback);
+          plyr.on('ready', handleReady);
+          plyr.on('error', errorCallback);
+          if (plyr.ready || (plyr.media as HTMLMediaElement).readyState >= 2) handleReady();
           cleanup = () => {
             try {
               plyr.off('ended', endedCallback);
+              plyr.off('loadeddata', loadedCallback);
+              plyr.off('ready', handleReady);
+              plyr.off('error', errorCallback);
             } catch {
               // Plyr instance can already be disposed during teardown.
             }
@@ -76,7 +87,7 @@ const CustomPlyrInstance = forwardRef<APITypes, PlyrProps & { endedCallback:() =
         }
       };
 
-      registerEndedHandler();
+      registerPlayerHandlers();
 
       return () => {
         if (animationFrameId !== undefined) {
@@ -84,13 +95,15 @@ const CustomPlyrInstance = forwardRef<APITypes, PlyrProps & { endedCallback:() =
         }
         cleanup();
       };
-    }, [endedCallback, ref, source]);
+    }, [endedCallback, loadedCallback, errorCallback, ref, source]);
 
     return (
       <video
         ref={raptorRef}
         className="plyr-react plyr"
         // Ensure HTML5 videos still trigger completion even if Plyr event wiring fails.
+        onLoadedData={loadedCallback}
+        onError={errorCallback}
         onEnded={endedCallback}
       />
     );
@@ -127,47 +140,58 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
     return true;
   }, [provider, url]);
 
+  const identifier = useCurrentIdentifier();
+  const requestKey = url === undefined ? undefined : `${identifier}:${url}`;
   const [loading, setLoading] = useState(true);
   const [assetFound, setAssetFound] = useState(false);
+  const [fetchedKey, setFetchedKey] = useState<string>();
+  // A new trial/path must not reuse the previous request's result before its effect runs.
+  const isLoading = loading || url === undefined || fetchedKey !== requestKey;
 
   useEffect(() => {
     // While the path is templated inside a dynamic block, url is undefined until the block's
     // current iteration resolves — don't fetch an asset built from the wrong iteration.
-    if (url === undefined) {
-      return undefined;
-    }
-
+    if (url === undefined) return undefined;
     let isCancelled = false;
 
     async function fetchVideo(assetUrl: string) {
       setLoading(true);
       try {
         if (provider !== 'html5') {
-          if (!isCancelled) {
-            setAssetFound(validExternalUrl);
-            setLoading(false);
-          }
+          if (!isCancelled) setAssetFound(validExternalUrl);
           return;
         }
 
         const asset = await getStaticAssetByPath(assetUrl);
-        if (!isCancelled) {
-          setAssetFound(!!asset);
-          setLoading(false);
-        }
+        if (!isCancelled) setAssetFound(!!asset);
       } catch {
+        if (!isCancelled) setAssetFound(false);
+      } finally {
         if (!isCancelled) {
-          setAssetFound(false);
+          setFetchedKey(requestKey);
           setLoading(false);
         }
       }
     }
 
     fetchVideo(url);
-    return () => {
-      isCancelled = true;
-    };
-  }, [provider, url, validExternalUrl]);
+    return () => { isCancelled = true; };
+  }, [provider, url, validExternalUrl, requestKey]);
+
+  const [playerResult, setPlayerResult] = useState<{ key?: string; status: 'ready' | 'error' }>();
+  useEffect(() => {
+    setPlayerResult(undefined);
+  }, [requestKey]);
+  const playerStatus = playerResult && playerResult.key === requestKey ? playerResult.status : 'loading';
+  const assetStatus = isLoading ? 'loading' : assetFound ? playerStatus : 'error';
+  const loadedCallback = useCallback(() => setPlayerResult({
+    key: requestKey,
+    status: 'ready',
+  }), [requestKey]);
+  const errorCallback = useCallback(() => setPlayerResult({
+    key: requestKey,
+    status: 'error',
+  }), [requestKey]);
 
   const sources = useMemo<PlyrSource['sources']>(() => {
     if (provider === 'youtube') {
@@ -207,32 +231,21 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
     ],
   }), [currentConfig.forceCompletion, currentConfig.withTimeline]);
 
-  const currentComponent = useCurrentComponent();
-  const currentStep = useCurrentStep();
   const storeDispatch = useStoreDispatch();
-  const { updateResponseBlockValidation } = useStoreActions();
+  const { updateResponseBlockValidation, setAssetStatus } = useStoreActions();
   const isAnalysis = useIsAnalysis();
+  useEffect(() => {
+    if (isAnalysis) return undefined;
+    storeDispatch(setAssetStatus({ identifier, status: assetStatus }));
+    return () => { storeDispatch(setAssetStatus({ identifier, status: 'loading' })); };
+  }, [assetStatus, identifier, isAnalysis, setAssetStatus, storeDispatch]);
+
   // Set the validation to invalid if forceCompletion is true — unless the
   // asset is missing (404), in which case clear the gate so the participant
   // isn't stuck on a trial that can never complete. Skipped in analysis mode
   // so replay doesn't mutate stimulus validation.
   useEffect(() => {
-    if (loading || isAnalysis) return;
-
-    const identifier = `${currentComponent}_${currentStep}`;
-
-    if (!assetFound) {
-      console.error(`Video asset at "${templatedPath}" could not be loaded. Clearing stimulus validation so the participant is not stuck.`);
-      storeDispatch(
-        updateResponseBlockValidation({
-          location: 'stimulus',
-          identifier,
-          status: true,
-          values: {},
-        }),
-      );
-      return;
-    }
+    if (isLoading || !assetFound || isAnalysis) return;
 
     if (currentConfig.forceCompletion) {
       storeDispatch(
@@ -246,7 +259,7 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
         }),
       );
     }
-  }, [currentComponent, currentConfig.forceCompletion, templatedPath, currentStep, storeDispatch, updateResponseBlockValidation, loading, assetFound, isAnalysis]);
+  }, [identifier, currentConfig.forceCompletion, storeDispatch, updateResponseBlockValidation, isLoading, assetFound, isAnalysis]);
 
   // Set the validation to valid if forceCompletion is true and the video is played
   const endedCallback = useCallback(() => {
@@ -255,29 +268,32 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
       storeDispatch(
         updateResponseBlockValidation({
           location: 'stimulus',
-          identifier: `${currentComponent}_${currentStep}`,
+          identifier,
           status: true,
           values: {},
         }),
       );
     }
-  }, [currentComponent, currentConfig.forceCompletion, currentStep, isAnalysis, storeDispatch, updateResponseBlockValidation]);
+  }, [identifier, currentConfig.forceCompletion, isAnalysis, storeDispatch, updateResponseBlockValidation]);
 
   const ref = useRef<APITypes>(null);
 
-  return (assetFound && sources.length > 0)
+  return (!isLoading && assetFound && assetStatus !== 'error' && sources.length > 0)
     ? (
       // Box required for proper react node handling in the component tree
       <Box>
         <CustomPlyrInstance
+          key={requestKey}
           ref={ref}
           source={playerSource}
           options={options}
           endedCallback={endedCallback}
+          loadedCallback={loadedCallback}
+          errorCallback={errorCallback}
         />
       </Box>
     )
-    : loading
+    : isLoading
       ? <LoadingOverlay />
       : <ResourceNotFound path={templatedPath} />;
 }

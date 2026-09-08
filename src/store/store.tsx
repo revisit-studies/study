@@ -124,6 +124,7 @@ export async function studyStoreCreator(
           belowStimulus: { valid: false, values: {} },
           sidebar: { valid: false, values: {} },
           stimulus: getInitialStimulusValidation(componentConfig),
+          ...(componentConfig.type === 'video' ? { assetStatus: 'loading' } : {}),
           provenanceGraph: {
             aboveStimulus: undefined,
             belowStimulus: undefined,
@@ -136,20 +137,25 @@ export async function studyStoreCreator(
   );
   const allValid = Object.assign(
     {},
-    ...flatSequence.map((id, idx) => ({
-      [`${id}_${idx}`]: {
-        aboveStimulus: { valid: true, values: {} },
-        belowStimulus: { valid: true, values: {} },
-        sidebar: { valid: true, values: {} },
-        stimulus: { valid: true, values: {} },
-        provenanceGraph: {
-          aboveStimulus: undefined,
-          belowStimulus: undefined,
-          stimulus: undefined,
-          sidebar: undefined,
+    ...flatSequence.map((id, idx): TrialValidation => {
+      const componentConfig = studyComponentToIndividualComponent(config.components[id] || { response: [] }, config);
+
+      return {
+        [`${id}_${idx}`]: {
+          ...(componentConfig.type === 'video' ? { assetStatus: 'loading' } : {}),
+          aboveStimulus: { valid: true, values: {} },
+          belowStimulus: { valid: true, values: {} },
+          sidebar: { valid: true, values: {} },
+          stimulus: { valid: true, values: {} },
+          provenanceGraph: {
+            aboveStimulus: undefined,
+            belowStimulus: undefined,
+            stimulus: undefined,
+            sidebar: undefined,
+          },
         },
-      },
-    })),
+      };
+    }),
   );
 
   const initialState: StoreState = {
@@ -194,6 +200,10 @@ export async function studyStoreCreator(
     name: 'storeSlice',
     initialState,
     reducers: {
+      setAssetStatus(state, { payload }: PayloadAction<{ identifier: string; status: 'loading' | 'ready' | 'error' }>) {
+        const validation = state.trialValidation[payload.identifier];
+        if (validation) validation.assetStatus = payload.status;
+      },
       setConfig(state, { payload }: PayloadAction<StudyConfig>) {
         state.config = payload;
       },
@@ -240,6 +250,7 @@ export async function studyStoreCreator(
           aboveStimulus: { valid: false, values: {} },
           belowStimulus: { valid: false, values: {} },
           stimulus: getInitialStimulusValidation(componentConfig),
+          ...(componentConfig.type === 'video' ? { assetStatus: 'loading' } : {}),
           sidebar: { valid: false, values: {} },
           provenanceGraph: {
             aboveStimulus: undefined,

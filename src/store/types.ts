@@ -58,6 +58,7 @@ export type TrialValidation = Record<
     belowStimulus: ValidationStatus;
     sidebar: ValidationStatus;
     stimulus: ValidationStatus;
+    assetStatus?: 'loading' | 'ready' | 'error';
     provenanceGraph: StoredProvenance;
   }
 >;
