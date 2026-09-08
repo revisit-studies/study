@@ -1,18 +1,13 @@
 import { Image } from '@mantine/core';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ImageComponent } from '../parser/types';
 import { PREFIX } from '../utils/Prefix';
-import { getStaticAssetByPath } from '../utils/getStaticAsset';
 import { ResourceNotFound } from '../ResourceNotFound';
 import { compileTemplate } from '../utils/handlebars';
 import { useTemplateAnswerContext } from '../store/hooks/useTemplateAnswerContext';
-import { useAsyncResource } from '../store/hooks/useAsyncResource';
-
-async function loadImage(url: string) {
-  let asset = await getStaticAssetByPath(url);
-  asset = !asset || asset.includes('File not found') ? undefined : asset;
-  return asset;
-}
+import { useStoreActions, useStoreDispatch } from '../store/store';
+import { useCurrentIdentifier } from '../routes/utils';
+import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 
 export function ImageController({ currentConfig }: { currentConfig: ImageComponent; }) {
   const templateData = useTemplateAnswerContext();
@@ -32,15 +27,36 @@ export function ImageController({ currentConfig }: { currentConfig: ImageCompone
     return `${PREFIX}${templatedPath}`;
   }, [templatedPath]);
 
-  const { status } = useAsyncResource(url, loadImage);
+  const identifier = useCurrentIdentifier();
+  const requestKey = url === undefined ? undefined : `${identifier}:${url}`;
+  const [imageResult, setImageResult] = useState<{ key?: string; status: 'ready' | 'error' }>();
+  useEffect(() => {
+    setImageResult(undefined);
+  }, [requestKey]);
+  const assetStatus = imageResult && imageResult.key === requestKey ? imageResult.status : 'loading';
+
+  const storeDispatch = useStoreDispatch();
+  const { setAssetStatus } = useStoreActions();
+  const isAnalysis = useIsAnalysis();
+  useEffect(() => {
+    if (isAnalysis) return undefined;
+    storeDispatch(setAssetStatus({ identifier, status: assetStatus }));
+    return () => { storeDispatch(setAssetStatus({ identifier, status: 'loading' })); };
+  }, [assetStatus, identifier, isAnalysis, setAssetStatus, storeDispatch]);
 
   if (url === undefined || templatedPath === undefined) {
     return null;
   }
 
-  return status === 'loading'
-    ? <Image mx="auto" src={url} />
-    : status === 'success'
-      ? <Image mx="auto" src={url} />
-      : <ResourceNotFound path={templatedPath} />;
+  return assetStatus === 'error'
+    ? <ResourceNotFound path={templatedPath} />
+    : (
+      <Image
+        key={requestKey}
+        mx="auto"
+        src={url}
+        onLoad={() => setImageResult({ key: requestKey, status: 'ready' })}
+        onError={() => setImageResult({ key: requestKey, status: 'error' })}
+      />
+    );
 }
