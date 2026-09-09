@@ -216,7 +216,7 @@ export function TableView({
       },
       {
         accessorFn: (row: ParticipantDataWithStatus) => Object.values(row.answers)
-          .filter((answer) => answer.correctAnswer.length > 0 && answer.endTime > 0)
+          .filter((answer) => (answer.correctAnswer?.length ?? 0) > 0 && answer.endTime > 0)
           .map((answer) => {
             const componentConfig = studyConfig.components[answer.componentName];
             const component = componentConfig ? studyComponentToIndividualComponent(componentConfig, studyConfig) : undefined;
