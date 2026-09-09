@@ -31,13 +31,12 @@
           "prompt": "Select the ink color",
           "location": "belowStimulus",
           "options": [
-            "RED",
-            "ORANGE",
-            "YELLOW",
-            "GREEN",
-            "BLUE"
-          ],
-          "keyMapping": ["1", "2", "3", "4", "5"]
+            { "label": "RED", "value": "red", "key": "r" },
+            { "label": "ORANGE", "value": "orange", "key": "o" },
+            { "label": "YELLOW", "value": "yellow", "key": "y" },
+            { "label": "GREEN", "value": "green", "key": "g" },
+            { "label": "BLUE", "value": "blue", "key": "b" }
+          ]
         },
         {
           "id": "color-response2",
@@ -45,15 +44,16 @@
           "prompt": "Select the ink color",
           "location": "belowStimulus",
           "options": [
-            "RED",
-            "ORANGE",
-            "YELLOW",
-            "GREEN",
-            "BLUE"
+            { "label": "RED", "value": "red", "key": "r" },
+            { "label": "ORANGE", "value": "orange", "key": "o" },
+            { "label": "YELLOW", "value": "yellow", "key": "y" },
+            { "label": "GREEN", "value": "green", "key": "g" },
+            { "label": "BLUE", "value": "blue", "key": "b" }
           ],
-          "keyMapping": ["1", "2", "3", "4", "5"]
+          "hideKeyVisual": true
         }],
-      "type": "questionnaire"
+      "type": "questionnaire",
+      "nextOnEnter": true
     },
     "letter-mapper":{
       "response": [
@@ -63,12 +63,11 @@
           "prompt": "Indicate correlation direction",
           "location": "belowStimulus",
           "options": [
-            "A",
-            "S",
-            "D",
-            "F"
-          ],
-          "keyMapping": ["a", "s", "d", "f"]
+            { "label": "A", "value": "a", "key": "a" },
+            { "label": "S", "value": "s", "key": "s" },
+            { "label": "D", "value": "d", "key": "d" },
+            { "label": "F", "value": "f", "key": "f" }
+          ]
         }],
       "type": "questionnaire"
     },
@@ -80,33 +79,28 @@
           "prompt": "Indicate correlation direction",
           "location": "belowStimulus",
           "options": [
-            "Left",
-            "Right",
-            "Up",
-            "Down",
-            "Space"
-          ],
-          "keyMapping": ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Space"]
+            { "label": "Left", "value": "arrowleft", "key": "ArrowLeft" },
+            { "label": "Right", "value": "ArrowRight", "key": "ArrowRight" },
+            { "label": "Up", "value": "ARROWUP", "key": "ArrowUp" },
+            { "label": "Down", "value": "arrowDown", "key": "ArrowDown" },
+            { "label": "Space", "value": "space", "key": "space" }
+          ]
         }],
-      "type": "questionnaire"
+      "type": "questionnaire",
+      "nextOnEnter": true
     },
-    "mapper-mapper":{
+    "math-mapper":{
       "response": [
         {
           "id": "letter-response",
           "type": "buttons",
-          "prompt": "Indicate correlation direction",
+          "prompt": "What is 10+4",
           "location": "belowStimulus",
           "options": [
-            { "label": "RED", "value": "red" },
-            { "label": "GREEN", "value": "green" },
-            { "label": "BLUE", "value": "blue" }
-          ],
-          "keyMapping": {
-            "r": "red",
-            "g": "green",
-            "b": "blue"
-          }
+            { "label": "14", "value": "14", "key": "14" },
+            { "label": "1", "value": "1", "key": "1" },
+            { "label": "4", "value": "4", "key": "4" }
+          ]
         }],
       "type": "questionnaire"
     }
@@ -117,7 +111,7 @@
       "special-mapper",
       "letter-mapper",
       "color-mapper",
-      "mapper-mapper"
+      "math-mapper"
     ]
   }
 }

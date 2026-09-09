@@ -1,5 +1,5 @@
 import {
-  cleanup, render, fireEvent, act,
+  cleanup, render, fireEvent, act, screen,
 } from '@testing-library/react';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
@@ -22,9 +22,9 @@ describe('KeyMapper Component', () => {
   });
 
   const sampleOptions: ParsedStringOption[] = [
-    { label: 'Option A', value: 'a' },
-    { label: 'Option B', value: 'b' },
-    { label: 'Option C', value: 'c' },
+    { label: 'Option A', value: 'a', key: '1' },
+    { label: 'Option B', value: 'b', key: '2' },
+    { label: 'Option C', value: 'c', key: '3' },
   ];
 
   test('triggers onSelect with correct value when configured key is pressed', () => {
@@ -33,7 +33,6 @@ describe('KeyMapper Component', () => {
     render(
       <KeyMapper
         options={sampleOptions}
-        keys={['1', '2', '3']}
         onSelect={onSelectMock}
       />,
     );
@@ -45,11 +44,15 @@ describe('KeyMapper Component', () => {
 
   test('handles case-insensitive letter keypresses', () => {
     const onSelectMock = vi.fn();
+    const letterOptions: ParsedStringOption[] = [
+      { label: 'Option A', value: 'a', key: 'a' },
+      { label: 'Option B', value: 'b', key: 'b' },
+      { label: 'Option C', value: 'c', key: 'c' },
+    ];
 
     render(
       <KeyMapper
-        options={sampleOptions}
-        keys={['a', 'b', 'c']}
+        options={letterOptions}
         onSelect={onSelectMock}
       />,
     );
@@ -60,11 +63,15 @@ describe('KeyMapper Component', () => {
 
   test('supports special keys like Arrow keys and Spacebar', () => {
     const onSelectMock = vi.fn();
+    const specialOptions: ParsedStringOption[] = [
+      { label: 'Option A', value: 'a', key: 'ArrowLeft' },
+      { label: 'Option B', value: 'b', key: 'ArrowRight' },
+      { label: 'Option C', value: 'c', key: 'Space' },
+    ];
 
     render(
       <KeyMapper
-        options={sampleOptions}
-        keys={['ArrowLeft', 'ArrowRight', 'Space']}
+        options={specialOptions}
         onSelect={onSelectMock}
       />,
     );
@@ -82,7 +89,6 @@ describe('KeyMapper Component', () => {
     render(
       <KeyMapper
         options={sampleOptions}
-        keys={['1', '2', '3']}
         onSelect={onSelectMock}
         disabled
       />,
@@ -102,7 +108,6 @@ describe('KeyMapper Component', () => {
         <a href="#test" data-testid="link">Link</a>
         <KeyMapper
           options={sampleOptions}
-          keys={['1', '2', '3']}
           onSelect={onSelectMock}
         />
       </div>,
@@ -124,11 +129,15 @@ describe('KeyMapper Component', () => {
 
   test('ignores keypresses with modifier keys (Ctrl, Alt, Meta)', () => {
     const onSelectMock = vi.fn();
+    const letterOptions: ParsedStringOption[] = [
+      { label: 'Option A', value: 'a', key: 'a' },
+      { label: 'Option B', value: 'b', key: 'b' },
+      { label: 'Option C', value: 'c', key: 'c' },
+    ];
 
     render(
       <KeyMapper
-        options={sampleOptions}
-        keys={['a', 'b', 'c']}
+        options={letterOptions}
         onSelect={onSelectMock}
       />,
     );
@@ -148,12 +157,10 @@ describe('KeyMapper Component', () => {
       <div>
         <KeyMapper
           options={sampleOptions}
-          keys={['1', '2', '3']}
           onSelect={onSelectMock1}
         />
         <KeyMapper
           options={sampleOptions}
-          keys={['1', '2', '3']}
           onSelect={onSelectMock2}
         />
       </div>,
@@ -174,8 +181,7 @@ describe('KeyMapper Component', () => {
 
     render(
       <KeyMapper
-        options={sampleOptions}
-        keys="Enter"
+        options={[{ label: 'Continue', value: 'next', key: 'Enter' }]}
         onSelect={onSelectMock}
       />,
     );
@@ -183,20 +189,19 @@ describe('KeyMapper Component', () => {
     const event = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
     window.dispatchEvent(event);
 
-    expect(onSelectMock).toHaveBeenCalledWith('a');
+    expect(onSelectMock).toHaveBeenCalledWith('next');
     expect(secondaryWindowListener).toHaveBeenCalledTimes(1);
     expect((event as unknown as { __keyMapperHandled?: boolean }).__keyMapperHandled).toBe(true);
 
     window.removeEventListener('keydown', secondaryWindowListener);
   });
 
-  test('handles a single string key for single-option setups', () => {
+  test('handles a single option setup with mapped key', () => {
     const onSelectMock = vi.fn();
 
     render(
       <KeyMapper
-        options={[{ label: 'Continue', value: 'next' }]}
-        keys="Enter"
+        options={[{ label: 'Continue', value: 'next', key: 'Enter' }]}
         onSelect={onSelectMock}
       />,
     );
@@ -205,15 +210,18 @@ describe('KeyMapper Component', () => {
     expect(onSelectMock).toHaveBeenCalledWith('next');
   });
 
-  test('does not steal focus or autofocus when keys configuration is absent or empty', () => {
+  test('does not steal focus or autofocus when option keys are absent', () => {
     const onSelectMock = vi.fn();
+    const optionsWithoutKeys: ParsedStringOption[] = [
+      { label: 'Option A', value: 'a' },
+      { label: 'Option B', value: 'b' },
+    ];
 
     const { container } = render(
       <div>
         <input data-testid="external-input" />
         <KeyMapper
-          options={sampleOptions}
-          keys={undefined}
+          options={optionsWithoutKeys}
           onSelect={onSelectMock}
         />
       </div>,
@@ -236,7 +244,6 @@ describe('KeyMapper Component', () => {
     const { unmount } = render(
       <KeyMapper
         options={sampleOptions}
-        keys={['1', '2', '3']}
         onSelect={onSelectMock}
       />,
     );
@@ -247,49 +254,21 @@ describe('KeyMapper Component', () => {
     expect(onSelectMock).not.toHaveBeenCalled();
   });
 
-  // --- Tests for Object Key-to-Value Mapping ---
+  // --- Tests for Inline Key Mappings ---
 
-  describe('Object Key-to-Value Mapping', () => {
+  describe('Inline Key Mappings', () => {
     const stroopOptions: ParsedStringOption[] = [
-      { label: 'RED', value: 'red' },
-      { label: 'GREEN', value: 'green' },
-      { label: 'BLUE', value: 'blue' },
+      { label: 'RED', value: 'red', key: 'r' },
+      { label: 'GREEN', value: 'green', key: 'g' },
+      { label: 'BLUE', value: 'blue', key: 'b' },
     ];
 
-    const keyMap = {
-      r: 'red',
-      g: 'green',
-      b: 'blue',
-    };
-
-    test('matches exact case-sensitive option values when object target is mapped', () => {
-      const onSelectMock = vi.fn();
-      const caseSensitiveOptions: ParsedStringOption[] = [
-        { label: 'Lower', value: 'foo' },
-        { label: 'Upper', value: 'FOO' },
-      ];
-
-      render(
-        <KeyMapper
-          options={caseSensitiveOptions}
-          keys={{ x: 'FOO' }}
-          onSelect={onSelectMock}
-        />,
-      );
-
-      fireEvent.keyDown(window, { key: 'x' });
-      expect(onSelectMock).toHaveBeenCalledTimes(1);
-      expect(onSelectMock).toHaveBeenCalledWith('FOO');
-      expect(onSelectMock).not.toHaveBeenCalledWith('foo');
-    });
-
-    test('triggers onSelect with mapped value when configured object key is pressed', () => {
+    test('matches exact option values when inline key is pressed', () => {
       const onSelectMock = vi.fn();
 
       render(
         <KeyMapper
           options={stroopOptions}
-          keys={keyMap}
           onSelect={onSelectMock}
         />,
       );
@@ -303,13 +282,12 @@ describe('KeyMapper Component', () => {
       expect(onSelectMock).toHaveBeenCalledWith('green');
     });
 
-    test('handles case-insensitive keypresses with object mappings', () => {
+    test('handles case-insensitive keypresses with inline option keys', () => {
       const onSelectMock = vi.fn();
 
       render(
         <KeyMapper
           options={stroopOptions}
-          keys={keyMap}
           onSelect={onSelectMock}
         />,
       );
@@ -319,13 +297,12 @@ describe('KeyMapper Component', () => {
       expect(onSelectMock).toHaveBeenLastCalledWith('blue');
     });
 
-    test('ignores unmapped random keys in object mode', () => {
+    test('ignores unmapped keys', () => {
       const onSelectMock = vi.fn();
 
       render(
         <KeyMapper
           options={stroopOptions}
-          keys={keyMap}
           onSelect={onSelectMock}
         />,
       );
@@ -337,13 +314,15 @@ describe('KeyMapper Component', () => {
       expect(onSelectMock).not.toHaveBeenCalled();
     });
 
-    test('supports Spacebar key mapping in object mode', () => {
+    test('supports Spacebar key mapping', () => {
       const onSelectMock = vi.fn();
+      const optionsWithSpace: ParsedStringOption[] = [
+        { label: 'BLUE', value: 'blue', key: 'Space' },
+      ];
 
       render(
         <KeyMapper
-          options={stroopOptions}
-          keys={{ Space: 'blue' }}
+          options={optionsWithSpace}
           onSelect={onSelectMock}
         />,
       );
@@ -351,20 +330,131 @@ describe('KeyMapper Component', () => {
       fireEvent.keyDown(window, { key: ' ' });
       expect(onSelectMock).toHaveBeenCalledWith('blue');
     });
+  });
 
-    test('ignores keypress if mapped value does not exist in options', () => {
+  // --- Tests for Accessibility & Hidden Key Buttons ---
+
+  describe('Accessibility & Hidden Key Buttons', () => {
+    test('renders screen-reader accessible elements for options with keys', () => {
       const onSelectMock = vi.fn();
 
       render(
         <KeyMapper
-          options={stroopOptions}
-          keys={{ y: 'yellow' }}
+          options={sampleOptions}
           onSelect={onSelectMock}
         />,
       );
 
-      fireEvent.keyDown(window, { key: 'y' });
+      const buttons = screen.getAllByRole('button', { hidden: true });
+      expect(buttons).toHaveLength(3);
+      expect(buttons[0].textContent).toBe('Option A');
+      expect(buttons[1].textContent).toBe('Option B');
+      expect(buttons[2].textContent).toBe('Option C');
+    });
+
+    test('triggers onSelect when screen-reader accessible button is clicked directly', () => {
+      const onSelectMock = vi.fn();
+
+      render(
+        <KeyMapper
+          options={sampleOptions}
+          onSelect={onSelectMock}
+        />,
+      );
+
+      const buttons = screen.getAllByRole('button', { hidden: true });
+      fireEvent.click(buttons[1]);
+
+      expect(onSelectMock).toHaveBeenCalledTimes(1);
+      expect(onSelectMock).toHaveBeenCalledWith('b');
+    });
+
+    test('disables interactive screen-reader buttons when component is disabled', () => {
+      const onSelectMock = vi.fn();
+
+      render(
+        <KeyMapper
+          options={sampleOptions}
+          onSelect={onSelectMock}
+          disabled
+        />,
+      );
+
+      const buttons = screen.getAllByRole('button', { hidden: true });
+      buttons.forEach((button) => {
+        expect((button as HTMLButtonElement).disabled).toBe(true);
+      });
+
+      fireEvent.click(buttons[0]);
       expect(onSelectMock).not.toHaveBeenCalled();
+    });
+
+    test('does not render accessible buttons for options without mapped keys', () => {
+      const onSelectMock = vi.fn();
+      const mixedOptions: ParsedStringOption[] = [
+        { label: 'Mapped Option', value: 'mapped', key: '1' },
+        { label: 'Unmapped Option', value: 'unmapped' },
+      ];
+
+      render(
+        <KeyMapper
+          options={mixedOptions}
+          onSelect={onSelectMock}
+        />,
+      );
+
+      const buttons = screen.getAllByRole('button', { hidden: true });
+      expect(buttons).toHaveLength(1);
+      expect(buttons[0].textContent).toBe('Mapped Option');
+    });
+  });
+
+  // --- Edge Cases & Additional Behaviors ---
+
+  describe('Edge Cases', () => {
+    test('ignores held key repetition (repeat = true)', () => {
+      const onSelectMock = vi.fn();
+
+      render(
+        <KeyMapper
+          options={sampleOptions}
+          onSelect={onSelectMock}
+        />,
+      );
+
+      fireEvent.keyDown(window, { key: '1', repeat: false });
+      fireEvent.keyDown(window, { key: '1', repeat: true });
+      fireEvent.keyDown(window, { key: '1', repeat: true });
+
+      expect(onSelectMock).toHaveBeenCalledTimes(1);
+    });
+
+    test('updates key bindings dynamically when options prop changes', () => {
+      const onSelectMock = vi.fn();
+
+      const { rerender } = render(
+        <KeyMapper
+          options={sampleOptions}
+          onSelect={onSelectMock}
+        />,
+      );
+
+      fireEvent.keyDown(window, { key: '1' });
+      expect(onSelectMock).toHaveBeenLastCalledWith('a');
+
+      const updatedOptions: ParsedStringOption[] = [
+        { label: 'New Option X', value: 'x', key: '1' },
+      ];
+
+      rerender(
+        <KeyMapper
+          options={updatedOptions}
+          onSelect={onSelectMock}
+        />,
+      );
+
+      fireEvent.keyDown(window, { key: '1' });
+      expect(onSelectMock).toHaveBeenLastCalledWith('x');
     });
   });
 });

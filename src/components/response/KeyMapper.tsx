@@ -3,7 +3,6 @@ import type { ParsedStringOption } from '../../parser/types';
 
 interface KeyMapperProps {
   options: ParsedStringOption[];
-  keys?: string | string[] | Record<string, string>;
   onSelect: (value: string) => void;
   disabled?: boolean;
   children?: React.ReactNode;
@@ -12,7 +11,6 @@ interface KeyMapperProps {
 
 export function KeyMapper({
   options,
-  keys,
   onSelect,
   disabled = false,
   children,
@@ -21,18 +19,21 @@ export function KeyMapper({
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const hasKeys = keys && (typeof keys === 'string' || Object.keys(keys).length > 0);
+    const hasInlineKeys = options?.some(
+      (opt) => typeof opt === 'object' && opt !== null && Boolean(opt.key),
+    );
+
     const timer = setTimeout(() => {
-      if (autoFocus && hasKeys && containerRef.current) {
+      if (autoFocus && hasInlineKeys && containerRef.current) {
         containerRef.current.focus();
       }
     }, 50);
 
     return () => clearTimeout(timer);
-  }, [keys, autoFocus]);
+  }, [options, autoFocus]);
 
   useEffect(() => {
-    if (disabled || !options || options.length === 0 || !keys) {
+    if (disabled || !options || options.length === 0) {
       return undefined;
     }
 
@@ -73,16 +74,6 @@ export function KeyMapper({
       const pressedKey = (event.key || '').toLowerCase();
       const isSpacePress = pressedKey === ' ' || pressedKey === 'spacebar' || pressedKey === 'space';
 
-      const handleMatchedSelection = (selectedValue: string) => {
-        (event as unknown as { __keyMapperHandled?: boolean }).__keyMapperHandled = true;
-
-        if (typeof event.preventDefault === 'function') {
-          event.preventDefault();
-        }
-
-        onSelect(selectedValue);
-      };
-
       const isKeyMatch = (configKey: string) => {
         const keyLower = String(configKey).toLowerCase();
         if (keyLower === 'space' || keyLower === ' ' || keyLower === 'spacebar') {
@@ -91,64 +82,26 @@ export function KeyMapper({
         return keyLower === pressedKey;
       };
 
-      const findMatchingOptionValue = (targetVal: string): string | null => {
-        const targetString = String(targetVal);
+      // Find the first option whose inline `key` matches the physical key press
+      for (const option of options) {
+        if (typeof option === 'object' && option !== null && option.key) {
+          if (isKeyMatch(option.key)) {
+            (event as unknown as { __keyMapperHandled?: boolean }).__keyMapperHandled = true;
 
-        const foundOption = options.find((opt) => {
-          if (opt === undefined || opt === null) {
-            return false;
-          }
-          const optValue = typeof opt === 'object' && 'value' in opt
-            ? String(opt.value)
-            : String(opt);
-
-          return optValue === targetString;
-        });
-
-        if (foundOption) {
-          return typeof foundOption === 'object' && 'value' in foundOption
-            ? String(foundOption.value)
-            : String(foundOption);
-        }
-
-        return null;
-      };
-
-      if (typeof keys === 'object' && !Array.isArray(keys)) {
-        for (const [configKey, targetValue] of Object.entries(keys)) {
-          if (isKeyMatch(configKey)) {
-            const matchedValue = findMatchingOptionValue(targetValue);
-            if (matchedValue !== null) {
-              handleMatchedSelection(matchedValue);
-              return;
+            if (typeof event.preventDefault === 'function') {
+              event.preventDefault();
             }
+
+            onSelect(String(option.value));
+            return;
           }
         }
-        return;
-      }
-
-      const keyList = Array.isArray(keys) ? keys : [keys];
-      let matchedIndex = -1;
-
-      keyList.forEach((k: string, index: number) => {
-        if (isKeyMatch(k) && options[index]) {
-          matchedIndex = index;
-        }
-      });
-
-      if (matchedIndex !== -1) {
-        const selectedOption = options[matchedIndex];
-        const selectedValue = typeof selectedOption === 'object' && selectedOption !== null && 'value' in selectedOption
-          ? String(selectedOption.value)
-          : String(selectedOption);
-
-        handleMatchedSelection(selectedValue);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown, true);
     return () => window.removeEventListener('keydown', handleKeyDown, true);
-  }, [options, onSelect, disabled, keys]);
+  }, [options, onSelect, disabled]);
 
   return (
     <div

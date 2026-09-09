@@ -1,5 +1,5 @@
 import {
-  Flex, FocusTrap, Radio,
+  Flex, FocusTrap, Kbd, Radio,
 } from '@mantine/core';
 import { useMemo } from 'react';
 import ClearSelectionButton from './ClearSelectionButton';
@@ -10,6 +10,17 @@ import { InputLabel } from './InputLabel';
 import { OptionLabel } from './OptionLabel';
 import { parseStringOptions } from '../../utils/stringOptions';
 import { KeyMapper } from './KeyMapper';
+
+// could use this if we want the arrow symbols instead of mantine default
+// function formatKeyForDisplay(key: string): string {
+//   const k = key.toLowerCase();
+//   if (k === 'arrowleft') return '←';
+//   if (k === 'arrowright') return '→';
+//   if (k === 'arrowup') return '↑';
+//   if (k === 'arrowdown') return '↓';
+//   if (k === 'space' || k === ' ') return 'Space';
+//   return key.toUpperCase();
+// }
 
 export function ButtonsInput({
   response,
@@ -32,6 +43,7 @@ export function ButtonsInput({
     secondaryText,
     options,
     infoText,
+    hideKeyVisual = false,
   } = response;
 
   const storedAnswer = useStoredAnswer();
@@ -68,23 +80,33 @@ export function ButtonsInput({
       >
         <KeyMapper
           options={orderedOptions}
-          keys={response.keyMapping}
           onSelect={(val) => answer?.onChange?.(val)}
           disabled={disabled}
         />
         <Flex justify="space-between" align="center" gap="xl" mt="xs">
-          {orderedOptions.map((radio, idx) => (
-            <Radio.Card
-              key={`radio-${idx}`}
-              value={radio.value}
-              disabled={disabled}
-              ta="center"
-              className={classes.root}
-              p="xs"
-            >
-              <OptionLabel label={radio.label} infoText={radio.infoText} button />
-            </Radio.Card>
-          ))}
+          {orderedOptions.map((radio, idx) => {
+            const hasKeyVisual = !hideKeyVisual && Boolean(radio.key);
+
+            return (
+              <Radio.Card
+                key={`radio-${idx}`}
+                value={radio.value}
+                disabled={disabled}
+                ta="center"
+                className={classes.root}
+                p="xs"
+              >
+                <Flex align="center" justify="center" gap="xs">
+                  <OptionLabel label={radio.label} infoText={radio.infoText} button />
+                  {hasKeyVisual && (
+                    <Kbd size="xs">
+                      {radio.key?.toUpperCase()}
+                    </Kbd>
+                  )}
+                </Flex>
+              </Radio.Card>
+            );
+          })}
         </Flex>
       </Radio.Group>
     </FocusTrap>

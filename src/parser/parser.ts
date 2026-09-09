@@ -617,6 +617,42 @@ function hasConditionalBlockInsideRestrictedOrderAncestor(
   ));
 }
 
+const ALLOWED_SPECIAL_KEYS = new Set([
+  'space', 'spacebar', 'enter', 'tab', 'escape', 'backspace', 'delete',
+  'arrowleft', 'arrowright', 'arrowup', 'arrowdown', 'home', 'end', 'pageup', 'pagedown',
+]);
+
+function verifyKeyMappings(
+  basePath: string,
+  component: Partial<IndividualComponent>,
+  warnings: ParsedConfig<StudyConfig>['warnings'],
+) {
+  if (!component.response || !Array.isArray(component.response)) return;
+
+  component.response.forEach((res, resIdx) => {
+    if ('options' in res && Array.isArray(res.options)) {
+      res.options.forEach((opt, optIdx) => {
+        if (typeof opt === 'object' && opt !== null && 'key' in opt && opt.key) {
+          const rawKey = String(opt.key).trim();
+          const lowerKey = rawKey.toLowerCase();
+
+          const isSingleChar = rawKey.length === 1;
+          const isSpecialKey = ALLOWED_SPECIAL_KEYS.has(lowerKey);
+
+          if (!isSingleChar && !isSpecialKey) {
+            warnings.push({
+              message: `Invalid key mapping \`${rawKey}\` in option \`${opt.label || opt.value}\`. Key mappings must be a single character or a valid key name (e.g., "ArrowRight", "Space").`,
+              instancePath: `${basePath}/response/${resIdx}/options/${optIdx}/key`,
+              params: { action: 'Use a single key character or valid key string like ArrowRight, ArrowLeft, or Space (case-insensitive)' },
+              category: 'invalid-config',
+            });
+          }
+        }
+      });
+    }
+  });
+}
+
 // This function verifies the study config file satisfies conditions that are not covered by the schema
 function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Record<string, LibraryConfig>) {
   const errors: ParsedConfig<StudyConfig>['errors'] = [];
@@ -628,12 +664,14 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
     verifyTextResponseConstraints(`/baseComponents/${componentName}`, component, errors, warnings);
     verifyDateTimeResponseConstraints(`/baseComponents/${componentName}`, component, errors);
     verifyDropdownResponseConstraints(`/baseComponents/${componentName}`, component, errors);
+    verifyKeyMappings(`/baseComponents/${componentName}`, component, warnings);
   });
   Object.entries(studyConfig.components).forEach(([componentName, component]) => {
     const mergedComponent = studyComponentToIndividualComponent(component, studyConfig);
     verifyTextResponseConstraints(`/components/${componentName}`, mergedComponent, errors, warnings);
     verifyDateTimeResponseConstraints(`/components/${componentName}`, mergedComponent, errors);
     verifyDropdownResponseConstraints(`/components/${componentName}`, mergedComponent, errors);
+    verifyKeyMappings(`/components/${componentName}`, mergedComponent, warnings);
   });
 
   const hasConditional = hasConditionalBlock(studyConfig.sequence);

@@ -1,4 +1,6 @@
-import { Alert, Button, Group } from '@mantine/core';
+import {
+  Alert, Button, Group, Kbd,
+} from '@mantine/core';
 import {
   JSX, useEffect, useMemo, useRef, useState,
 } from 'react';
@@ -148,6 +150,7 @@ export function NextButton({
           disabled={nextButtonDisabled}
           onClick={() => onNext()}
           px={location === 'sidebar' && checkAnswer ? 8 : undefined}
+          rightSection={nextOnEnter ? <Kbd size="xs">↵ Enter</Kbd> : undefined}
         >
           {label}
         </Button>

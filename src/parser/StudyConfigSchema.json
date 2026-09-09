@@ -298,6 +298,10 @@
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
         },
+        "hideKeyVisual": {
+          "description": "Set to true to hide keybinding indicators on buttons. Defaults to false when keymapping is active, else false.",
+          "type": "boolean"
+        },
         "id": {
           "description": "The id of the response. This is used to identify the response in the data file.",
           "type": "string"
@@ -305,26 +309,6 @@
         "infoText": {
           "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
           "type": "string"
-        },
-        "keyMapping": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
-            }
-          ],
-          "description": "A keyboard mapping to buttons. Supports string array [\"1\", \"2\"] or key-to-value map object { \"r\": \"red\" }."
         },
         "location": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
@@ -2552,6 +2536,10 @@
           "description": "The description that is displayed when the participant hovers over the option. This does not accept markdown.",
           "type": "string"
         },
+        "key": {
+          "description": "Optional keyboard key shortcut mapped to this option (e.g., \"r\", \"ArrowLeft\", \"Space\")",
+          "type": "string"
+        },
         "label": {
           "description": "The label displayed to participants. Markdown is supported.",
           "type": "string"
@@ -4135,6 +4123,10 @@
       "properties": {
         "infoText": {
           "description": "The description that is displayed when the participant hovers over the option. This does not accept markdown.",
+          "type": "string"
+        },
+        "key": {
+          "description": "Optional keyboard key shortcut mapped to this option (e.g., \"r\", \"ArrowLeft\", \"Space\")",
           "type": "string"
         },
         "label": {

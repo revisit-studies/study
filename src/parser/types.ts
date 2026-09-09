@@ -349,6 +349,8 @@ export interface StringOption {
   value?: string;
   /** The description that is displayed when the participant hovers over the option. This does not accept markdown. */
   infoText?: string;
+  /** Optional keyboard key shortcut mapped to this option (e.g., "r", "ArrowLeft", "Space") */
+  key?: string;
 }
 
 /**
@@ -1116,8 +1118,8 @@ export interface ButtonsResponse extends BaseResponse {
   default?: string;
   /** The order in which the buttons are displayed. Defaults to fixed. */
   optionOrder?: 'fixed' | 'random';
-  /** A keyboard mapping to buttons. Supports string array ["1", "2"] or key-to-value map object { "r": "red" }. */
-  keyMapping?: string | string[] | Record<string, string>;
+  /** Set to true to hide keybinding indicators on buttons. Defaults to false when keymapping is active, else false. */
+  hideKeyVisual?: boolean;
 }
 
 /**
