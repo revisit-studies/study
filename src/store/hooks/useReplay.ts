@@ -39,6 +39,11 @@ export function useReplay() {
   // isMasterplayer is true for the window where play button is clicked.
   // This is set to false when the video / provenance is initiated via different tab/window
   const [isMasterPlayer, setIsMasterPlayer] = useState(true);
+  const isMasterPlayerRef = useRef(isMasterPlayer);
+  const setMasterPlayer = useCallback((master: boolean) => {
+    isMasterPlayerRef.current = master;
+    setIsMasterPlayer(master);
+  }, []);
 
   const emitterRef = useRef(new EventEmitter());
 
@@ -71,15 +76,15 @@ export function useReplay() {
 
   const updateMutedState = useCallback(() => {
     if (videoRef.current) {
-      videoRef.current.muted = !isMasterPlayer || replayRef.current !== videoRef.current;
+      videoRef.current.muted = !isMasterPlayerRef.current || replayRef.current !== videoRef.current;
     }
     if (webcamVideoRef.current) {
       webcamVideoRef.current.muted = true;
     }
     if (audioRef.current) {
-      audioRef.current.muted = !isMasterPlayer || replayRef.current === videoRef.current;
+      audioRef.current.muted = !isMasterPlayerRef.current || replayRef.current === videoRef.current;
     }
-  }, [isMasterPlayer]);
+  }, []);
 
   const updateIsPlaying = useCallback((playing: boolean) => {
     internalIsPlaying.current = playing;
@@ -110,11 +115,11 @@ export function useReplay() {
   }, []);
 
   const setSpeed = useCallback((newSpeed: number, isRemoteTriggered = false) => {
-    setIsMasterPlayer(!isRemoteTriggered);
+    setMasterPlayer(!isRemoteTriggered);
     internalSpeed.current = newSpeed;
     _setSpeed(newSpeed);
     _setSeekTime(timerValue.current);
-  }, []);
+  }, [setMasterPlayer]);
 
   const syntheticReplayTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -187,7 +192,7 @@ export function useReplay() {
   }, []);
 
   const setSeekTime = useCallback((time: number, isRemoteTriggered = false) => {
-    setIsMasterPlayer(!isRemoteTriggered);
+    setMasterPlayer(!isRemoteTriggered);
     _setSeekTime(time);
     timerValue.current = time;
     getMediaElements().forEach((media) => seekMedia(media, time));
@@ -200,7 +205,7 @@ export function useReplay() {
     }
     emitterRef.current.emit('timeupdate', time);
     setHasEnded(internalDuration.current > 0 && time >= internalDuration.current);
-  }, [getMediaElements, requestReplayPlayback]);
+  }, [getMediaElements, requestReplayPlayback, setMasterPlayer]);
 
   const handlePause = useCallback(() => {
     if (!isMountedRef.current) {
@@ -287,7 +292,7 @@ export function useReplay() {
       return;
     }
 
-    setIsMasterPlayer(!isRemoteTriggered);
+    setMasterPlayer(!isRemoteTriggered);
     if (
       playing
       && internalDuration.current > 0
@@ -306,7 +311,7 @@ export function useReplay() {
     } else {
       getActiveMediaElements().forEach((media) => media.pause());
     }
-  }, [getActiveMediaElements, requestReplayPlayback, setSeekTime, updateIsPlaying]);
+  }, [getActiveMediaElements, requestReplayPlayback, setSeekTime, setMasterPlayer, updateIsPlaying]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -394,7 +399,7 @@ export function useReplay() {
       const {
         seekTime: __seekTime, isPlaying: __isPlaying, speed: __speed,
       } = newValue || {};
-      setIsMasterPlayer(false);
+      setMasterPlayer(false);
       setSpeed(__speed, true);
       setSeekTime(__seekTime, true);
       setIsPlaying(__isPlaying, true);
@@ -405,7 +410,7 @@ export function useReplay() {
     return () => {
       syncEmitter.off('replaySync');
     };
-  }, [setIsPlaying, setSeekTime, setSpeed]);
+  }, [setIsPlaying, setSeekTime, setMasterPlayer, setSpeed]);
 
   useEffect(() => {
     setSeekTime(initialTimestamp);

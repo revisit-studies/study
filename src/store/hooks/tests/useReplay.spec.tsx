@@ -147,6 +147,15 @@ describe('useReplay — returned function invocation', () => {
     expect(result.current.seekTime).toBe(5);
   });
 
+  test('keeps updateReplayRef stable when replay control becomes remote', () => {
+    const { result } = renderHook(() => useReplay());
+    const initialUpdateReplayRef = result.current.updateReplayRef;
+
+    act(() => { result.current.setSeekTime(5, true); });
+
+    expect(result.current.updateReplayRef).toBe(initialUpdateReplayRef);
+  });
+
   test('setSpeed with isRemoteTriggered=true covers remote path', () => {
     const { result } = renderHook(() => useReplay());
     act(() => { result.current.setSpeed(1.5, true); });
