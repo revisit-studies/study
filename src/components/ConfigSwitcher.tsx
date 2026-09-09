@@ -360,6 +360,7 @@ export function ConfigSwitcher({
 
   const [studyVisibility, setStudyVisibility] = useState<Record<string, boolean>>({});
   const [modesByConfig, setModesByConfig] = useState<Record<string, Record<REVISIT_MODE, boolean> | null>>({});
+  const [modeLoadErrors, setModeLoadErrors] = useState<string[]>([]);
   const [isLoadingVisibility, setIsLoadingVisibility] = useState(true);
 
   useEffect(() => {
@@ -374,14 +375,20 @@ export function ConfigSwitcher({
       setIsLoadingVisibility(true);
       const visibility: Record<string, boolean> = {};
       const modesMap: Record<string, Record<REVISIT_MODE, boolean> | null> = {};
+      const failedConfigNames: string[] = [];
       await Promise.all(
         configsList.map(async (configName) => {
           if (storageEngine) {
-            const modes = await storageEngine.getModes(configName);
-            if (isCloudStorageEngine(storageEngine)) {
-              visibility[configName] = modes.dataSharingEnabled;
+            try {
+              const modes = await storageEngine.getModes(configName);
+              if (isCloudStorageEngine(storageEngine)) {
+                visibility[configName] = modes.dataSharingEnabled;
+              }
+              modesMap[configName] = modes;
+            } catch (error) {
+              failedConfigNames.push(configName);
+              console.error(`Error loading modes for study ${configName}:`, error);
             }
-            modesMap[configName] = modes;
           } else {
             modesMap[configName] = null;
           }
@@ -390,6 +397,7 @@ export function ConfigSwitcher({
       if (!isCancelled) {
         setStudyVisibility(visibility);
         setModesByConfig(modesMap);
+        setModeLoadErrors(failedConfigNames);
         setIsLoadingVisibility(false);
       }
     }
@@ -504,6 +512,14 @@ export function ConfigSwitcher({
 
         {!isLoadingStudies && (
           <>
+            {modeLoadErrors.length > 0 && (
+              <Text c="red" role="alert" mb="md">
+                Unable to load study visibility for:
+                {' '}
+                {modeLoadErrors.join(', ')}
+                . Check the storage connection and try again.
+              </Text>
+            )}
             <Tabs variant="outline" defaultValue={firstTab} value={tab} onChange={(value) => navigate(`/?tab=${value}`)}>
               <Tabs.List>
                 {others.length > 0 && (
@@ -578,7 +594,7 @@ export function ConfigSwitcher({
               )}
             </Tabs>
 
-            {configsFiltered.length === 0 && (
+            {configsFiltered.length === 0 && modeLoadErrors.length === 0 && (
               <Text c="dimmed" ta="center" mt="xl">
                 No studies found. Studies can be added in your
                 {' '}
