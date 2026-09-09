@@ -127,7 +127,7 @@ test('Test questionnaire component with responses and randomizing questions and 
   await ageInput.fill('12');
 
   // Slider
-  page.locator('[data-question-id="q-slider"] .mantine-Slider-track').click();
+  await page.locator('[data-question-id="q-slider"] .mantine-Slider-track').click();
 
   // Short text
   await page.getByPlaceholder('Enter your answer here').fill('test');
