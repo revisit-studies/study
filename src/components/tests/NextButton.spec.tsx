@@ -78,6 +78,11 @@ vi.mock('@mantine/core', () => ({
   Group: ({ children, justify }: { children: ReactNode; justify?: string }) => (
     <div data-justify={justify}>{children}</div>
   ),
+  Kbd: ({ children }: { children: ReactNode }) => <kbd>{children}</kbd>,
+  Flex: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  ActionIcon: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => (
+    <button type="button" onClick={onClick}>{children}</button>
+  ),
 }));
 
 vi.mock('@tabler/icons-react', () => ({

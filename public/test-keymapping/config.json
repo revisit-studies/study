@@ -52,8 +52,7 @@
           ],
           "hideKeyVisual": true
         }],
-      "type": "questionnaire",
-      "nextOnEnter": true
+      "type": "questionnaire"
     },
     "letter-mapper":{
       "response": [
@@ -69,7 +68,8 @@
             { "label": "F", "value": "f", "key": "f" }
           ]
         }],
-      "type": "questionnaire"
+      "type": "questionnaire",
+      "nextOnEnter": true
     },
     "special-mapper":{
       "response": [

@@ -58,6 +58,9 @@ export function KeyMapper({
     const handleKeyDown = (event: KeyboardEvent) => {
       const activeEl = document.activeElement;
       const eventTarget = event.target;
+      if (event.repeat) {
+        return;
+      }
 
       if (isInteractiveElement(eventTarget) || isInteractiveElement(activeEl)) {
         return;
@@ -109,6 +112,31 @@ export function KeyMapper({
       tabIndex={-1}
       style={{ display: 'block', outline: 'none' }}
     >
+      {/* Screen-reader accessible hidden buttons for keyboard options */}
+      {options
+        ?.filter((option) => option.key)
+        .map((option) => (
+          <button
+            key={option.key}
+            type="button"
+            disabled={disabled}
+            style={{
+              position: 'absolute',
+              width: '1px',
+              height: '1px',
+              padding: 0,
+              margin: '-1px',
+              overflow: 'hidden',
+              clip: 'rect(0, 0, 0, 0)',
+              whiteSpace: 'nowrap',
+              border: 0,
+            }}
+            onClick={() => onSelect?.(option.value)}
+          >
+            {option.label}
+          </button>
+        ))}
+
       {children}
     </div>
   );
