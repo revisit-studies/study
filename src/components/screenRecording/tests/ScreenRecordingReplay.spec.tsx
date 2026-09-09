@@ -75,6 +75,9 @@ describe('ScreenRecordingReplay', () => {
     mockVideoRef = { current: null };
     mockWebcamVideoRef = { current: null };
     mockDispatch.mockClear();
+    mockSetAnalysisHasScreenRecording.mockClear();
+    mockSetAnalysisHasWebcamRecording.mockClear();
+    mockSetAnalysisCanPlayScreenRecording.mockClear();
   });
 
   afterEach(() => { cleanup(); });
@@ -112,6 +115,21 @@ describe('ScreenRecordingReplay', () => {
     mockSearchParams = new URLSearchParams({ participantId: 'p1' });
     await act(async () => { render(<ScreenRecordingReplay />); });
     expect(mockDispatch).toHaveBeenCalledWith(mockSetAnalysisHasScreenRecording(true));
+  });
+
+  test('does not clear the replay mount gate while recordings are loading', async () => {
+    mockIsAnalysis = true;
+    let resolveScreen!: (url: string | null) => void;
+    mockStorageEngine = {
+      getScreenRecording: vi.fn(() => new Promise<string | null>((resolve) => { resolveScreen = resolve; })),
+      getWebcamRecording: vi.fn().mockResolvedValue(null),
+    };
+    mockSearchParams = new URLSearchParams({ participantId: 'p1' });
+
+    await act(async () => { render(<ScreenRecordingReplay />); });
+    expect(mockSetAnalysisCanPlayScreenRecording).not.toHaveBeenCalled();
+
+    await act(async () => { resolveScreen(null); });
   });
 
   // Error-path tests (missing participantId, getScreenRecording rejection) omitted

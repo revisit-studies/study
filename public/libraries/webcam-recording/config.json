@@ -9,6 +9,7 @@
       "nextButtonLocation": "belowStimulus",
       "nextButtonText": "Continue",
       "recordAudio": false,
+      "clickToRecord": false,
       "response": [{
         "hidden": true,
         "type": "reactive",

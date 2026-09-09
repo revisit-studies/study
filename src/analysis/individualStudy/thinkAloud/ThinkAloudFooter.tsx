@@ -463,7 +463,7 @@ export function ThinkAloudFooter({
   const [browserWarningDismissed, setBrowserWarningDismissed] = useState(false);
   useEffect(() => {
     setBrowserWarningDismissed(false);
-  }, [participantId, screenRecordingUrl]);
+  }, [participantId, screenRecordingUrl, webcamRecordingUrl]);
 
   return (
     <AppShell.Footer zIndex={101} withBorder={false}>
@@ -475,7 +475,7 @@ export function ThinkAloudFooter({
           <Alert variant="filled" color="red" title="Participant hasn&apos;t completed any tasks." icon={<IconInfoCircle />} />
         </div>
       )}
-      {participantMatchesSelection && screenRecordingUrl && !participantUsedSameBrowser && !browserWarningDismissed && (
+      {participantMatchesSelection && (screenRecordingUrl || webcamRecordingUrl) && !participantUsedSameBrowser && !browserWarningDismissed && (
         <div style={{
           position: 'absolute', top: -5, left: 5, transform: 'translateY(-100%)',
         }}

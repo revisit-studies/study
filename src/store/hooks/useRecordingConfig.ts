@@ -1,13 +1,16 @@
 import { useMemo } from 'react';
 import { useStudyConfig } from './useStudyConfig';
-import { useFlatSequence } from '../store';
 import { useCurrentComponent } from '../../routes/utils';
+import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
+import { getStudyRecordings } from '../../utils/useStudyRecordings';
 
 export function useRecordingConfig() {
   const studyConfig = useStudyConfig();
-  const participantSequence = useFlatSequence();
   const currentComponent = useCurrentComponent();
   const stepConfig = studyConfig.components[currentComponent];
+  const resolvedStepConfig = stepConfig
+    ? studyComponentToIndividualComponent(stepConfig, studyConfig)
+    : undefined;
 
   const {
     recordScreen,
@@ -16,30 +19,30 @@ export function useRecordingConfig() {
     clickToRecord,
   } = studyConfig.uiConfig;
 
-  const studyHasScreenRecording = useMemo(() => (recordScreen || participantSequence.some((comp) => studyConfig.components[comp]?.recordScreen)), [participantSequence, studyConfig, recordScreen]);
-
-  const studyHasAudioRecording = useMemo(() => (recordAudio || participantSequence.some((comp) => studyConfig.components[comp]?.recordAudio)), [participantSequence, studyConfig, recordAudio]);
-
-  const studyHasWebcamRecording = useMemo(() => (recordWebcam || participantSequence.some((comp) => studyConfig.components[comp]?.recordWebcam)), [participantSequence, studyConfig, recordWebcam]);
+  const {
+    hasAudioRecording: studyHasAudioRecording,
+    hasScreenRecording: studyHasScreenRecording,
+    hasWebcamRecording: studyHasWebcamRecording,
+  } = useMemo(() => getStudyRecordings(studyConfig), [studyConfig]);
 
   const currentComponentHasScreenRecording = useMemo(
-    () => stepConfig?.recordScreen ?? !!recordScreen,
-    [recordScreen, stepConfig],
+    () => resolvedStepConfig?.recordScreen ?? !!recordScreen,
+    [recordScreen, resolvedStepConfig],
   );
 
   const currentComponentHasAudioRecording = useMemo(
-    () => stepConfig?.recordAudio ?? !!recordAudio,
-    [recordAudio, stepConfig],
+    () => resolvedStepConfig?.recordAudio ?? !!recordAudio,
+    [recordAudio, resolvedStepConfig],
   );
 
   const currentComponentHasWebcamRecording = useMemo(
-    () => stepConfig?.recordWebcam ?? !!recordWebcam,
-    [recordWebcam, stepConfig],
+    () => resolvedStepConfig?.recordWebcam ?? !!recordWebcam,
+    [recordWebcam, resolvedStepConfig],
   );
 
   const currentComponentHasClickToRecord = useMemo(
-    () => stepConfig?.clickToRecord ?? !!clickToRecord,
-    [clickToRecord, stepConfig],
+    () => resolvedStepConfig?.clickToRecord ?? !!clickToRecord,
+    [clickToRecord, resolvedStepConfig],
   );
 
   return {

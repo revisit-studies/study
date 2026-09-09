@@ -521,12 +521,17 @@ describe('useRecording startScreenRecording after startScreenCapture', () => {
       currentComponentHasScreenRecording: true,
       currentComponentHasAudioRecording: true,
       currentComponentHasWebcamRecording: true,
+      currentComponentHasClickToRecord: false,
     };
+    const micStream = new MockMediaStream();
     mockStorageEngine = {
       saveScreenRecording: vi.fn(async () => {}),
       saveAudioRecording: vi.fn(async () => {}),
       saveWebcamRecording: vi.fn(async () => {}),
     };
+    vi.mocked(navigator.mediaDevices.getUserMedia)
+      .mockResolvedValueOnce(new MockMediaStream() as unknown as MediaStream)
+      .mockResolvedValueOnce(micStream as unknown as MediaStream);
     const { result } = renderHook(() => useRecording());
 
     act(() => { result.current.startScreenCapture(); });
@@ -536,6 +541,7 @@ describe('useRecording startScreenRecording after startScreenCapture', () => {
       expect(result.current.isWebcamRecording).toBe(true);
       expect(result.current.isAudioRecording).toBe(true);
     });
+    expect(micStream.getAudioTracks()[0].enabled).toBe(true);
   });
 });
 

@@ -9,6 +9,7 @@
       "nextButtonLocation": "belowStimulus",
       "nextButtonText": "Continue",
       "recordScreen": true,
+      "clickToRecord": false,
       "response": [
         {
           "hidden": true,

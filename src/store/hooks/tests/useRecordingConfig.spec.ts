@@ -4,7 +4,6 @@ import {
 } from 'vitest';
 
 import { useStudyConfig } from '../useStudyConfig';
-import { useFlatSequence } from '../../store';
 import { useRecordingConfig } from '../useRecordingConfig';
 import { makeStudyConfig } from '../../../tests/utils';
 
@@ -15,10 +14,6 @@ vi.mock('../useStudyConfig', () => ({
     },
     components: {},
   })),
-}));
-
-vi.mock('../../store', () => ({
-  useFlatSequence: vi.fn(() => []),
 }));
 
 vi.mock('../../../routes/utils', () => ({
@@ -45,13 +40,20 @@ describe('useRecordingConfig', () => {
     expect(result.current.studyHasScreenRecording).toBe(true);
   });
 
-  test('studyHasScreenRecording is true when a participant sequence component has recordScreen', () => {
+  test('resolves recording options inherited by a component', () => {
     vi.mocked(useStudyConfig).mockReturnValueOnce(
-      makeStudyConfig({ components: { trial1: { recordScreen: true } } }),
+      makeStudyConfig({
+        uiConfig: { clickToRecord: true },
+        baseComponents: { recorded: { recordScreen: true, recordWebcam: true } },
+        components: { trial1: { baseComponent: 'recorded', clickToRecord: false } },
+      }),
     );
-    vi.mocked(useFlatSequence).mockReturnValueOnce(['trial1']);
     const { result } = renderHook(() => useRecordingConfig());
     expect(result.current.studyHasScreenRecording).toBe(true);
+    expect(result.current.studyHasWebcamRecording).toBe(true);
+    expect(result.current.currentComponentHasScreenRecording).toBe(true);
+    expect(result.current.currentComponentHasWebcamRecording).toBe(true);
+    expect(result.current.currentComponentHasClickToRecord).toBe(false);
   });
 
   test('studyHasAudioRecording is true when uiConfig.recordAudio is set', () => {
@@ -67,13 +69,11 @@ describe('useRecordingConfig', () => {
     expect(result.current.currentComponentHasWebcamRecording).toBe(true);
   });
 
-  test('webcam recording can be enabled for one sequence component', () => {
+  test('finds recording options on components inside dynamic blocks', () => {
     vi.mocked(useStudyConfig).mockReturnValueOnce(
-      makeStudyConfig({ components: { trial1: { recordWebcam: true } } }),
+      makeStudyConfig({ components: { dynamicTrial: { recordAudio: true } } }),
     );
-    vi.mocked(useFlatSequence).mockReturnValueOnce(['trial1']);
     const { result } = renderHook(() => useRecordingConfig());
-    expect(result.current.studyHasWebcamRecording).toBe(true);
-    expect(result.current.currentComponentHasWebcamRecording).toBe(true);
+    expect(result.current.studyHasAudioRecording).toBe(true);
   });
 });

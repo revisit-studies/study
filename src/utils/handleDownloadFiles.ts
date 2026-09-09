@@ -4,6 +4,9 @@ import { StudyConfig } from '../parser/types';
 import { getLegacyStoredAnswerProvenance } from '../store/provenance';
 import type { StoredAnswer } from '../store/types';
 
+type DownloadAnswer = Pick<StoredAnswer, 'endTime' | 'startTime' | 'componentName' | 'trialOrder'>
+  & Partial<Pick<StoredAnswer, 'identifier'>>;
+
 export async function handleTaskAudio({
   storageEngine,
   participantId,
@@ -214,7 +217,7 @@ export async function downloadParticipantsAudioZip({
   fileName,
 }: {
   storageEngine: StorageEngine;
-  participants: Array<{ participantId: string; answers: Record<string, { endTime: number; startTime: number; componentName: string; trialOrder: string }> }>;
+  participants: Array<{ participantId: string; answers: Record<string, DownloadAnswer> }>;
   studyId: string;
   fileName?: string | null;
 }) {
@@ -222,12 +225,13 @@ export async function downloadParticipantsAudioZip({
   const zip = new JSZip();
 
   const audioPromises = participants.flatMap((participant) => {
-    const entries = Object.values(participant.answers)
-      .filter((ans) => ans.endTime > 0)
-      .sort((a, b) => a.startTime - b.startTime);
+    const entries = Object.entries(participant.answers)
+      .map(([storedIdentifier, answer]) => ({ storedIdentifier, answer }))
+      .filter(({ answer }) => answer.endTime > 0)
+      .sort((a, b) => a.answer.startTime - b.answer.startTime);
 
-    return entries.map(async (ans) => {
-      const identifier = `${ans.componentName}_${ans.trialOrder}`;
+    return entries.map(async ({ storedIdentifier, answer }) => {
+      const identifier = answer.identifier || storedIdentifier;
 
       await downloadParticipantsAudio({
         storageEngine,
@@ -298,7 +302,7 @@ export async function downloadParticipantsRecordingsZip({
   fileName,
 }: {
   storageEngine: StorageEngine;
-  participants: Array<{ participantId: string; answers: Record<string, { endTime: number; startTime: number; componentName: string; trialOrder: string }> }>;
+  participants: Array<{ participantId: string; answers: Record<string, DownloadAnswer> }>;
   studyId: string;
   includeScreen: boolean;
   includeWebcam: boolean;
@@ -308,12 +312,13 @@ export async function downloadParticipantsRecordingsZip({
   const zip = new JSZip();
 
   const recordingPromises = participants.flatMap((participant) => {
-    const entries = Object.values(participant.answers)
-      .filter((ans) => ans.endTime > 0)
-      .sort((a, b) => a.startTime - b.startTime);
+    const entries = Object.entries(participant.answers)
+      .map(([storedIdentifier, answer]) => ({ storedIdentifier, answer }))
+      .filter(({ answer }) => answer.endTime > 0)
+      .sort((a, b) => a.answer.startTime - b.answer.startTime);
 
-    return entries.map(async (ans) => {
-      const identifier = `${ans.componentName}_${ans.trialOrder}`;
+    return entries.map(async ({ storedIdentifier, answer }) => {
+      const identifier = answer.identifier || storedIdentifier;
 
       await downloadParticipantsRecordings({
         storageEngine,

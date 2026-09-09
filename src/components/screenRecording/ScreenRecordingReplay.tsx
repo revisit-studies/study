@@ -69,7 +69,6 @@ export function ScreenRecordingReplay() {
       setHasWebcamVideo(false);
       storeDispatch(setAnalysisHasScreenRecording(false));
       storeDispatch(setAnalysisHasWebcamRecording(false));
-      storeDispatch(setAnalysisCanPlayScreenRecording(false));
 
       async function getVideoURLs() {
         if (isAnalysis && identifier && storageEngine) {

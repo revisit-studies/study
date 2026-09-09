@@ -193,6 +193,25 @@ describe('downloadParticipantsAudioZip', () => {
     expect(clickSpy).toHaveBeenCalledOnce();
   });
 
+  test('uses the stored identifier for dynamic audio tasks', async () => {
+    const storageEngine = makeStorageEngine({
+      getAudioUrl: vi.fn(async () => 'https://example.com/audio.webm'),
+      getTranscriptUrl: vi.fn(async () => null),
+    });
+    const participants = [{
+      participantId: 'p1',
+      answers: {
+        stored_dynamic_id: {
+          endTime: 1000, startTime: 0, componentName: 'dynamic', trialOrder: '0', identifier: 'dynamic_generated_0',
+        },
+      },
+    }];
+
+    await downloadParticipantsAudioZip({ storageEngine, participants, studyId: 'my-study' });
+
+    expect(storageEngine.getAudioUrl).toHaveBeenCalledWith('dynamic_generated_0', 'p1');
+  });
+
   test('skips trials where endTime is 0 (not yet completed)', async () => {
     const storageEngine = makeStorageEngine({
       getAudioUrl: vi.fn(async () => 'https://example.com/audio.webm'),
@@ -295,6 +314,26 @@ describe('downloadParticipantsRecordingsZip', () => {
     expect(zipFile).toHaveBeenCalledWith('study_p1_trial_0.webm', expect.any(Blob));
     expect(anchorDownloads).toContain('study_screenRecording.zip');
     zipFile.mockRestore();
+  });
+
+  test('uses the stored identifier for dynamic recording tasks', async () => {
+    const storageEngine = makeStorageEngine({
+      getScreenRecording: vi.fn(async () => 'https://example.com/recording.webm'),
+    });
+    const participants = [{
+      participantId: 'p1',
+      answers: {
+        stored_dynamic_id: {
+          endTime: 1000, startTime: 0, componentName: 'dynamic', trialOrder: '0', identifier: 'dynamic_generated_0',
+        },
+      },
+    }];
+
+    await downloadParticipantsRecordingsZip({
+      storageEngine, participants, studyId: 'my-study', includeScreen: true, includeWebcam: false,
+    });
+
+    expect(storageEngine.getScreenRecording).toHaveBeenCalledWith('dynamic_generated_0', 'p1');
   });
 
   test('skips trials where endTime is 0 (not completed)', async () => {
