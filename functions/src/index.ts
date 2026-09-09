@@ -80,7 +80,9 @@ export const convertScreenRecording = onObjectFinalized(
       logger.error(`Conversion failed for ${filePath}`, err);
       throw err;
     } finally {
-      await fs.rm(tempDir, { recursive: true, force: true });
+      try {
+        await fs.rm(tempDir, { recursive: true, force: true });
+      } catch { /* ignore cleanup failures */ }
     }
   },
 );
