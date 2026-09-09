@@ -22,9 +22,11 @@ function hasMediaSource(media: HTMLMediaElement) {
   if (sourceAttribute !== null) {
     return !!sourceAttribute;
   }
+  const baseUri = typeof document !== 'undefined' ? document.baseURI : '';
+  const locationHref = typeof window !== 'undefined' ? window.location.href : '';
   return !!media.src
-    && media.src !== document.baseURI
-    && media.src !== window.location.href;
+    && (!baseUri || media.src !== baseUri)
+    && (!locationHref || media.src !== locationHref);
 }
 
 /**
@@ -274,6 +276,13 @@ export function useReplay() {
     if (previousReplay !== replayRef.current && internalIsPlaying.current) {
       getMediaElements().forEach((media) => media.pause());
       updateIsPlaying(false);
+    } else if (internalIsPlaying.current) {
+      getSecondaryMediaElements().forEach((media) => {
+        if (media.paused && mediaIncludesTime(media, timerValue.current)) {
+          seekMedia(media, timerValue.current);
+          media.play().catch(() => undefined);
+        }
+      });
     }
 
     if (replayRef.current) {
@@ -284,7 +293,7 @@ export function useReplay() {
     }
     updateMutedState();
     forceEmitTimeUpdate();
-  }, [forceEmitTimeUpdate, getMediaElements, handleEnded, handlePause, handlePlay, handleSeeked, updateIsPlaying, updateMutedState]);
+  }, [forceEmitTimeUpdate, getMediaElements, getSecondaryMediaElements, handleEnded, handlePause, handlePlay, handleSeeked, updateIsPlaying, updateMutedState]);
 
   // this should be the only way to start video/audio
   const setIsPlaying = useCallback((playing: boolean, isRemoteTriggered = false) => {

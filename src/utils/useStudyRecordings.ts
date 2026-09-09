@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { StudyConfig } from '../parser/types';
 import { studyComponentToIndividualComponent } from './handleComponentInheritance';
 
-export function getStudyRecordings(studyConfig: StudyConfig | undefined) {
+export function getStudyRecordings(studyConfig: StudyConfig | undefined, componentNames?: string[]) {
   if (!studyConfig?.uiConfig || !studyConfig.components) {
     return {
       hasAudioRecording: false,
@@ -12,7 +12,10 @@ export function getStudyRecordings(studyConfig: StudyConfig | undefined) {
   }
 
   const { recordAudio, recordScreen, recordWebcam } = studyConfig.uiConfig;
-  const componentConfig = Object.keys(studyConfig.components).map((componentId) => studyComponentToIndividualComponent(studyConfig.components[componentId], studyConfig));
+  const componentConfig = (componentNames ?? Object.keys(studyConfig.components)).flatMap((componentId) => {
+    const component = studyConfig.components[componentId];
+    return component ? [studyComponentToIndividualComponent(component, studyConfig)] : [];
+  });
 
   return {
     hasAudioRecording: !!recordAudio || componentConfig.some((component) => component.recordAudio),

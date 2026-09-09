@@ -360,6 +360,30 @@ describe('useReplay — handlePlay/Seeked/Pause via video element events', () =>
     expect(result.current.replayRef.current).toBe(audio);
   });
 
+  test('starts a secondary webcam source added while audio playback is active', () => {
+    const { result } = renderHook(() => useReplay());
+    const audio = document.createElement('audio');
+    Object.defineProperty(audio, 'src', { value: 'fake.mp3', writable: true, configurable: true });
+    audio.play = vi.fn(async () => {});
+    const webcam = document.createElement('video');
+    webcam.play = vi.fn(async () => {});
+
+    act(() => {
+      result.current.audioRef.current = audio;
+      result.current.webcamVideoRef.current = webcam;
+      result.current.updateReplayRef();
+      result.current.setIsPlaying(true);
+    });
+    expect(result.current.replayRef.current).toBe(audio);
+
+    act(() => {
+      webcam.setAttribute('src', 'fake-webcam.mp4');
+      result.current.updateReplayRef();
+    });
+
+    expect(webcam.play).toHaveBeenCalled();
+  });
+
   test('stops playback when a newly available source replaces the master', () => {
     const { result } = renderHook(() => useReplay());
     const screen = makeVideoWithSrc();

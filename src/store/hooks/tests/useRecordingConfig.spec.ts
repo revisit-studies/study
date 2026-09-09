@@ -7,6 +7,16 @@ import { useStudyConfig } from '../useStudyConfig';
 import { useRecordingConfig } from '../useRecordingConfig';
 import { makeStudyConfig } from '../../../tests/utils';
 
+const mockStoreState = vi.hoisted(() => ({
+  sequence: {
+    order: 'fixed' as const,
+    orderPath: 'root',
+    components: ['trial1'] as (string | { order: 'dynamic', id: string, components: [] })[],
+    skip: [],
+  },
+  funcSequence: {} as Record<string, string[]>,
+}));
+
 vi.mock('../useStudyConfig', () => ({
   useStudyConfig: vi.fn(() => ({
     uiConfig: {
@@ -20,7 +30,15 @@ vi.mock('../../../routes/utils', () => ({
   useCurrentComponent: vi.fn(() => 'trial1'),
 }));
 
-afterEach(() => vi.restoreAllMocks());
+vi.mock('../../store', () => ({
+  useStoreSelector: (selector: (state: typeof mockStoreState) => unknown) => selector(mockStoreState),
+}));
+
+afterEach(() => {
+  mockStoreState.sequence.components = ['trial1'];
+  mockStoreState.funcSequence = {};
+  vi.restoreAllMocks();
+});
 
 describe('useRecordingConfig', () => {
   test('returns all false when uiConfig has no recording options', () => {
@@ -70,10 +88,30 @@ describe('useRecordingConfig', () => {
   });
 
   test('finds recording options on components inside dynamic blocks', () => {
+    mockStoreState.sequence.components = [{ order: 'dynamic', id: 'dynamicBlock', components: [] }];
+    mockStoreState.funcSequence = { dynamicBlock: ['dynamicTrial'] };
     vi.mocked(useStudyConfig).mockReturnValueOnce(
       makeStudyConfig({ components: { dynamicTrial: { recordAudio: true } } }),
     );
     const { result } = renderHook(() => useRecordingConfig());
     expect(result.current.studyHasAudioRecording).toBe(true);
+  });
+
+  test('ignores recording options on components outside the assigned sequence', () => {
+    mockStoreState.sequence.components = ['webcamTrial'];
+    vi.mocked(useStudyConfig).mockReturnValueOnce(
+      makeStudyConfig({
+        components: {
+          webcamTrial: { recordWebcam: true },
+          screenTrial: { recordScreen: true },
+        },
+        sequence: {
+          order: 'fixed', orderPath: 'root', components: ['webcamTrial'], skip: [],
+        },
+      }),
+    );
+    const { result } = renderHook(() => useRecordingConfig());
+    expect(result.current.studyHasWebcamRecording).toBe(true);
+    expect(result.current.studyHasScreenRecording).toBe(false);
   });
 });
