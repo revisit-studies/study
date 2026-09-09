@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRecordingContext } from '../../../../store/hooks/useRecording';
 import { StimulusParams } from '../../../../store/types';
 import { RecordingAudioWaveform } from '../../../../components/interface/RecordingAudioWaveform';
+import { useStoreSelector } from '../../../../store/store';
 
 function WebcamRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
   const {
@@ -20,10 +21,12 @@ function WebcamRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
   } = useRecordingContext();
 
   const [audioCapturingSuccess, setAudioCapturingSuccess] = useState(false);
+  const { dataCollectionEnabled } = useStoreSelector((state) => state.modes);
 
   const setupComplete = useMemo(
-    () => isWebcamCapturing && (!studyHasAudioRecording || (isAudioCapturing && audioCapturingSuccess)),
-    [audioCapturingSuccess, isAudioCapturing, isWebcamCapturing, studyHasAudioRecording],
+    () => !dataCollectionEnabled
+      || (isWebcamCapturing && (!studyHasAudioRecording || (isAudioCapturing && audioCapturingSuccess))),
+    [audioCapturingSuccess, dataCollectionEnabled, isAudioCapturing, isWebcamCapturing, studyHasAudioRecording],
   );
 
   useEffect(() => {
@@ -37,10 +40,10 @@ function WebcamRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
       status: setupComplete,
       provenanceGraph: undefined,
       answers: {
-        webcamRecordingPermission: isWebcamCapturing,
+        webcamRecordingPermission: dataCollectionEnabled ? isWebcamCapturing : true,
       },
     });
-  }, [isWebcamCapturing, setAnswer, setupComplete]);
+  }, [dataCollectionEnabled, isWebcamCapturing, setAnswer, setupComplete]);
 
   useEffect(() => {
     if (!isWebcamCapturing || !studyHasAudioRecording) {
@@ -117,7 +120,7 @@ function WebcamRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
           <strong>Click the button below</strong>
           {' '}
           to enable webcam recording.
-          <Button type="button" onClick={isWebcamCapturing ? stopScreenCapture : startWebcamCapture} display="block" mt="sm">
+          <Button type="button" onClick={isWebcamCapturing ? stopScreenCapture : startWebcamCapture} disabled={!dataCollectionEnabled} display="block" mt="sm">
             {isWebcamCapturing ? 'Stop Recording' : 'Start Recording'}
           </Button>
           {error && <p style={{ color: 'red' }}>{error}</p>}

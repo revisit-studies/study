@@ -10,6 +10,7 @@ import * as recordingHooks from '../useRecording';
 import { useRecording, useRecordingContext } from '../useRecording';
 import type { StoreState } from '../../types';
 import ScreenRecordingPermission from '../../../public/libraries/screen-recording/assets/ScreenRecording';
+import WebcamRecordingPermission from '../../../public/libraries/webcam-recording/assets/WebcamRecording';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
@@ -277,6 +278,52 @@ describe('useRecording startScreenCapture', () => {
     });
   });
 
+  test('does not stop the persistent microphone track when audio is disabled on one screen trial', async () => {
+    mockRecordingConfig = {
+      ...mockRecordingConfig,
+      studyHasScreenRecording: true,
+      studyHasAudioRecording: true,
+      currentComponentHasScreenRecording: true,
+      currentComponentHasAudioRecording: true,
+    };
+    const micStream = new MockMediaStream();
+    mockStorageEngine = { saveScreenRecording: vi.fn(async () => {}), saveAudioRecording: vi.fn(async () => {}) };
+    vi.mocked(navigator.mediaDevices.getUserMedia)
+      .mockResolvedValueOnce(micStream as unknown as MediaStream);
+    const { result, rerender } = renderHook(() => useRecording());
+
+    act(() => { result.current.startScreenCapture(); });
+    await waitFor(() => expect(result.current.isMediaCapturing).toBe(true));
+    await waitFor(() => expect(result.current.isAudioRecording).toBe(true));
+
+    mockCurrentComponent = 'audio-disabled';
+    mockRecordingConfig = {
+      ...mockRecordingConfig,
+      currentComponentHasAudioRecording: false,
+      currentComponentHasScreenRecording: true,
+    };
+    act(() => { rerender(); });
+
+    expect(micStream.getTracks()[0].stop).not.toHaveBeenCalled();
+  });
+
+  test('restores capture after Strict Mode effect replay', async () => {
+    mockRecordingConfig = {
+      ...mockRecordingConfig,
+      studyHasScreenRecording: true,
+    };
+    const wrapper = ({ children }: { children: React.ReactNode }) => React.createElement(
+      React.StrictMode,
+      null,
+      children,
+    );
+    const { result } = renderHook(() => useRecording(), { wrapper });
+
+    act(() => { result.current.startScreenCapture(); });
+
+    await waitFor(() => expect(result.current.isScreenCapturing).toBe(true));
+  });
+
   test('audio-only: getUserMedia called, isAudioCapturing true, isScreenCapturing false', async () => {
     mockRecordingConfig = {
       ...mockRecordingConfig,
@@ -330,6 +377,31 @@ describe('useRecording startScreenCapture', () => {
 
     act(() => { result.current.startScreenCapture(); });
     await waitFor(() => expect(result.current.screenRecordingError).toBe('Recording permission denied'));
+    expect(screenStream.getTracks()[0].stop).toHaveBeenCalled();
+  });
+
+  test('stops an acquired screen stream when webcam permission is still pending', async () => {
+    mockRecordingConfig = {
+      ...mockRecordingConfig,
+      studyHasScreenRecording: true,
+      studyHasWebcamRecording: true,
+    };
+    const screenStream = new MockMediaStream();
+    let resolveWebcam: ((stream: MediaStream) => void) | undefined;
+    vi.mocked(navigator.mediaDevices.getDisplayMedia).mockResolvedValue(screenStream as unknown as MediaStream);
+    vi.mocked(navigator.mediaDevices.getUserMedia).mockImplementationOnce(() => new Promise<MediaStream>((resolve) => {
+      resolveWebcam = resolve;
+    }));
+    const { result } = renderHook(() => useRecording());
+
+    act(() => { result.current.startScreenCapture(); });
+    await waitFor(() => expect(screenStream.getTracks()[0].addEventListener).toHaveBeenCalledWith('ended', expect.any(Function)));
+
+    const endedHandler = screenStream.getTracks()[0].addEventListener.mock.calls[0][1] as () => void;
+    act(() => { endedHandler(); });
+    resolveWebcam?.(new MockMediaStream() as unknown as MediaStream);
+
+    await waitFor(() => expect(result.current.isScreenCapturing).toBe(false));
     expect(screenStream.getTracks()[0].stop).toHaveBeenCalled();
   });
 
@@ -845,6 +917,43 @@ describe('ScreenRecordingPermission component', () => {
     expect((button as HTMLButtonElement).disabled).toBe(true);
     fireEvent.click(button);
     expect(startScreenCapture).not.toHaveBeenCalled();
+    expect(stopScreenCapture).not.toHaveBeenCalled();
+  });
+});
+
+describe('WebcamRecordingPermission component', () => {
+  test('auto-completes and disables capture when data collection is off', () => {
+    mockModes = { ...mockModes, dataCollectionEnabled: false };
+    const startWebcamCapture = vi.fn();
+    const stopScreenCapture = vi.fn();
+    const setAnswer = vi.fn();
+    vi.spyOn(recordingHooks, 'useRecordingContext').mockReturnValue({
+      studyHasAudioRecording: false,
+      webcamVideoRef: { current: null },
+      startWebcamCapture,
+      stopScreenCapture,
+      isWebcamCapturing: false,
+      isAudioCapturing: false,
+      audioMediaStream: { current: null },
+    } as unknown as ReturnType<typeof recordingHooks.useRecordingContext>);
+
+    renderWithMantine(
+      React.createElement(WebcamRecordingPermission, {
+        setAnswer,
+        parameters: undefined,
+        answers: {},
+        useTrrack: vi.fn(),
+      } as React.ComponentProps<typeof WebcamRecordingPermission>),
+    );
+
+    expect(setAnswer).toHaveBeenCalledWith(expect.objectContaining({
+      status: true,
+      answers: { webcamRecordingPermission: true },
+    }));
+    const button = screen.getByRole('button', { name: 'Start Recording' });
+    expect((button as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(button);
+    expect(startWebcamCapture).not.toHaveBeenCalled();
     expect(stopScreenCapture).not.toHaveBeenCalled();
   });
 });

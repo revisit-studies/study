@@ -104,6 +104,8 @@ export function useRecording() {
 
   // Stop all persistent media capture streams.
   const stopScreenCapture = useCallback(() => {
+    captureAttempt.current += 1;
+    isStartingCapture.current = false;
     if (isStoppingCapture.current) {
       return;
     }
@@ -359,14 +361,14 @@ export function useRecording() {
 
   // For study with just audio recording
   useEffect(() => {
+    if (!studyConfig || studyHasScreenRecording || studyHasWebcamRecording || !studyHasAudioRecording || !storageEngine || (status && status.endTime > 0) || isAnalysis) {
+      return;
+    }
+
     // Always stop recording when navigating to a trial without audio recording
     if (!currentComponentHasAudioRecording && audioMediaRecorder.current) {
       stopAudioRecording();
       currentTrialName.current = null;
-      return;
-    }
-
-    if (!studyConfig || studyHasScreenRecording || studyHasWebcamRecording || !studyHasAudioRecording || !storageEngine || (status && status.endTime > 0) || isAnalysis) {
       return;
     }
 
@@ -432,6 +434,17 @@ export function useRecording() {
     let micStream: MediaStream | null = null;
 
     const isCurrentAttempt = () => isMounted.current && captureAttempt.current === attempt;
+    const hasLiveTracks = (stream: MediaStream | null) => !!stream
+      && stream.getTracks().length > 0
+      && stream.getTracks().every((track) => track.readyState !== 'ended');
+    const stopOnEnded = () => {
+      if (!isStoppingCapture.current) {
+        stopScreenCapture();
+      }
+    };
+    const attachEndedHandler = (stream: MediaStream | null) => {
+      stream?.getTracks().forEach((track) => track.addEventListener('ended', stopOnEnded));
+    };
     const stopAcquiredStreams = () => {
       [micStream, webcamStream, screenStream].forEach(stopMediaTracks);
       if (screenMediaStream.current === screenStream) screenMediaStream.current = null;
@@ -453,7 +466,8 @@ export function useRecording() {
         selfBrowserSurface: 'include',
         preferCurrentTab: true,
       }) : null;
-      if (!isCurrentAttempt()) {
+      attachEndedHandler(screenStream);
+      if (!isCurrentAttempt() || (includeScreen && !hasLiveTracks(screenStream))) {
         stopAcquiredStreams();
         return;
       }
@@ -463,7 +477,8 @@ export function useRecording() {
         video: true,
         audio: false,
       }) : null;
-      if (!isCurrentAttempt()) {
+      attachEndedHandler(webcamStream);
+      if (!isCurrentAttempt() || (includeWebcam && !hasLiveTracks(webcamStream))) {
         stopAcquiredStreams();
         return;
       }
@@ -481,7 +496,8 @@ export function useRecording() {
           throw err;
         }
       }
-      if (!isCurrentAttempt()) {
+      attachEndedHandler(micStream);
+      if (!isCurrentAttempt() || (includeAudio && !hasLiveTracks(micStream))) {
         stopAcquiredStreams();
         return;
       }
@@ -508,15 +524,6 @@ export function useRecording() {
           webcamVideoRef.current.play().catch(() => undefined);
         }
       }
-
-      const stopOnEnded = () => {
-        if (!isStoppingCapture.current) {
-          stopScreenCapture();
-        }
-      };
-      [screenStream, webcamStream, micStream].forEach((stream) => {
-        stream?.getTracks().forEach((track) => track.addEventListener('ended', stopOnEnded));
-      });
 
       setIsScreenCapturing(!!screenStream);
       setIsWebcamCapturing(!!webcamStream);
@@ -573,10 +580,13 @@ export function useRecording() {
     };
   }, [currentComponentHasAudioRecording, isMuted]);
 
-  useEffect(() => () => {
-    isMounted.current = false;
-    captureAttempt.current += 1;
-    stopScreenCapture();
+  useEffect(() => {
+    isMounted.current = true;
+
+    return () => {
+      isMounted.current = false;
+      stopScreenCapture();
+    };
   }, [stopScreenCapture]);
 
   useEffect(() => {
