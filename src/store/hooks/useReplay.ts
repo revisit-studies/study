@@ -158,7 +158,7 @@ export function useReplay() {
 
   useEffect(() => {
     updateMutedState();
-  }, [updateMutedState]);
+  }, [isMasterPlayer, updateMutedState]);
 
   useEffect(() => {
     getMediaElements().forEach((media) => {

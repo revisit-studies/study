@@ -156,6 +156,27 @@ describe('useReplay — returned function invocation', () => {
     expect(result.current.updateReplayRef).toBe(initialUpdateReplayRef);
   });
 
+  test('updates muting when ownership changes during playback', () => {
+    const { result } = renderHook(() => useReplay());
+    const video = document.createElement('video');
+    Object.defineProperty(video, 'src', { value: 'fake.mp4', writable: true, configurable: true });
+    video.play = vi.fn(async () => {});
+    video.pause = vi.fn();
+
+    act(() => {
+      result.current.videoRef.current = video;
+      result.current.updateReplayRef();
+      result.current.setIsPlaying(true);
+    });
+    expect(video.muted).toBe(false);
+
+    act(() => { result.current.setSeekTime(5, true); });
+    expect(video.muted).toBe(true);
+
+    act(() => { result.current.setSeekTime(6); });
+    expect(video.muted).toBe(false);
+  });
+
   test('setSpeed with isRemoteTriggered=true covers remote path', () => {
     const { result } = renderHook(() => useReplay());
     act(() => { result.current.setSpeed(1.5, true); });
