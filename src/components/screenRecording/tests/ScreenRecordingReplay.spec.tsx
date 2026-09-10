@@ -18,6 +18,20 @@ const mockSetReplayLayout = vi.fn();
 let mockVideoRef: { current: HTMLVideoElement | null } = { current: null };
 let mockWebcamVideoRef: { current: HTMLVideoElement | null } = { current: null };
 
+type MockBoxProps = {
+  children?: React.ReactNode;
+  style?: React.CSSProperties;
+  role?: string;
+  'aria-label'?: string;
+  'data-replay-layout'?: string;
+};
+
+function MockBox({
+  children, style, role, 'aria-label': ariaLabel, 'data-replay-layout': layout,
+}: MockBoxProps) {
+  return <div style={style} role={role} aria-label={ariaLabel} data-replay-layout={layout}>{children}</div>;
+}
+
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
 vi.mock('react-router', () => ({
@@ -25,7 +39,7 @@ vi.mock('react-router', () => ({
 }));
 
 vi.mock('@mantine/core', () => ({
-  Box: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+  Box: MockBox,
   Flex: ({ children, 'data-replay-layout': layout }: { children?: React.ReactNode; 'data-replay-layout'?: string }) => <div data-replay-layout={layout}>{children}</div>,
   Group: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
   SegmentedControl: ({ data, value, onChange }: { data: { label: string; value: string }[]; value: string; onChange: (value: string) => void }) => (
@@ -172,6 +186,21 @@ describe('ScreenRecordingReplay', () => {
     const webcamVideo = container.querySelectorAll('video')[1];
     await waitFor(() => expect(webcamVideo.src).toBe('http://example.com/webcam.webm'));
     expect(mockDispatch).toHaveBeenCalledWith(mockSetAnalysisHasWebcamRecording(true));
+  });
+
+  test('renders a movable webcam-only overlay', async () => {
+    mockIsAnalysis = true;
+    mockStorageEngine = {
+      getScreenRecording: vi.fn().mockResolvedValue(null),
+      getWebcamRecording: vi.fn().mockResolvedValue('http://example.com/webcam.webm'),
+    };
+    mockSearchParams = new URLSearchParams({ participantId: 'p1' });
+    const view = await act(async () => render(<ScreenRecordingReplay webcamOnly />));
+
+    await waitFor(() => expect(view.container.querySelector('video')?.src).toBe('http://example.com/webcam.webm'));
+    const moveHandle = view.getByRole('button', { name: 'Move webcam replay' });
+    expect(view.container.querySelector('[data-replay-layout="webcam-only-overlay"]')).not.toBeNull();
+    expect(moveHandle.style.cursor).toBe('move');
   });
 
   test('offers replay layout controls when both recordings exist', async () => {

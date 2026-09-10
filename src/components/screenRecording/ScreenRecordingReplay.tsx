@@ -1,4 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import {
+  useCallback, useEffect, useMemo, useRef, useState,
+} from 'react';
+import type { PointerEvent as ReactPointerEvent } from 'react';
 import { useSearchParams } from 'react-router';
 import {
   Box, Flex, Group, SegmentedControl, Text,
@@ -12,7 +15,17 @@ import { useCurrentIdentifier } from '../../routes/utils';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import { ReplayLayout, useReplayContext } from '../../store/hooks/useReplay';
 
-export function ScreenRecordingReplay() {
+type ScreenRecordingReplayProps = {
+  webcamOnly?: boolean;
+};
+
+type WebcamDrag = {
+  pointerId: number;
+  offsetX: number;
+  offsetY: number;
+};
+
+export function ScreenRecordingReplay({ webcamOnly = false }: ScreenRecordingReplayProps) {
   const [searchParams] = useSearchParams();
   const participantId = useMemo(
     () => searchParams.get('participantId') || undefined,
@@ -30,6 +43,42 @@ export function ScreenRecordingReplay() {
 
   const [hasScreenVideo, setHasScreenVideo] = useState(false);
   const [hasWebcamVideo, setHasWebcamVideo] = useState(false);
+  const webcamOverlayRef = useRef<HTMLDivElement>(null);
+  const webcamDragRef = useRef<WebcamDrag | null>(null);
+  const [webcamPosition, setWebcamPosition] = useState<{ left: number; top: number } | null>(null);
+
+  const handleWebcamPointerDown = useCallback((event: ReactPointerEvent<HTMLButtonElement>) => {
+    const overlay = webcamOverlayRef.current;
+    if (!overlay) return;
+
+    const rect = overlay.getBoundingClientRect();
+    webcamDragRef.current = {
+      pointerId: event.pointerId,
+      offsetX: event.clientX - rect.left,
+      offsetY: event.clientY - rect.top,
+    };
+    setWebcamPosition({ left: rect.left, top: rect.top });
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  }, []);
+
+  const handleWebcamPointerMove = useCallback((event: ReactPointerEvent<HTMLButtonElement>) => {
+    const drag = webcamDragRef.current;
+    const overlay = webcamOverlayRef.current;
+    if (!drag || !overlay || drag.pointerId !== event.pointerId) return;
+
+    const { width, height } = overlay.getBoundingClientRect();
+    const maxLeft = Math.max(0, window.innerWidth - width);
+    const maxTop = Math.max(0, window.innerHeight - height);
+    const left = Math.min(Math.max(event.clientX - drag.offsetX, 0), maxLeft);
+    const top = Math.min(Math.max(event.clientY - drag.offsetY, 0), maxTop);
+    setWebcamPosition({ left, top });
+  }, []);
+
+  const handleWebcamPointerUp = useCallback((event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (webcamDragRef.current?.pointerId !== event.pointerId) return;
+    webcamDragRef.current = null;
+    event.currentTarget.releasePointerCapture?.(event.pointerId);
+  }, []);
 
   useEffect(() => {
     updateReplayRef();
@@ -186,6 +235,61 @@ export function ScreenRecordingReplay() {
     : replayLayout === 'webcam-top' && hasBothVideos
       ? { order: 1, width: '32%', alignSelf: 'center' as const }
       : undefined;
+
+  if (webcamOnly) {
+    return (
+      <Box
+        ref={webcamOverlayRef}
+        role="group"
+        aria-label="Webcam recording replay"
+        data-replay-layout="webcam-only-overlay"
+        style={{
+          position: 'fixed',
+          width: 'min(320px, calc(100vw - 32px))',
+          zIndex: 1000,
+          background: 'black',
+          padding: '4px',
+          ...(webcamPosition || { right: 16, bottom: 80 }),
+        }}
+      >
+        <button
+          type="button"
+          aria-label="Move webcam replay"
+          onPointerDown={handleWebcamPointerDown}
+          onPointerMove={handleWebcamPointerMove}
+          onPointerUp={handleWebcamPointerUp}
+          onPointerCancel={handleWebcamPointerUp}
+          style={{
+            display: 'block',
+            width: '100%',
+            padding: '4px 8px',
+            border: 0,
+            color: 'white',
+            background: 'black',
+            textAlign: 'left',
+            cursor: 'move',
+            userSelect: 'none',
+          }}
+        >
+          Webcam Recording · Drag to move
+        </button>
+        <video
+          ref={webcamVideoRef}
+          width="100%"
+          style={{
+            ...videoStyle,
+            display: hasWebcamVideo ? 'block' : 'none',
+            margin: 0,
+            maxHeight: '35vh',
+            objectFit: 'cover',
+          }}
+        >
+          <source type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
+      </Box>
+    );
+  }
 
   return (
     <Box pos="relative">
