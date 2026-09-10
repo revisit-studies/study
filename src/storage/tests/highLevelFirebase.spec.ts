@@ -474,7 +474,6 @@ describe.each([
   });
 
   test('initializeParticipantSession omits conditions field in sequence assignment when empty', async () => {
-    // @ts-expect-error accessing protected method for spying
     const createSequenceAssignmentSpy = vi.spyOn(storageEngine, '_createSequenceAssignment');
 
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);

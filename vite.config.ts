@@ -23,13 +23,12 @@ export default defineConfig(({ command, mode }) => {
     test: {
       environment: 'jsdom',
       exclude: ['./tests/**', 'node_modules/**'],
-      setupFiles: ['vitest-localstorage-mock'],
       fileParallelism: true,
       maxWorkers: '100%',
       minWorkers: 1,
       coverage: {
         provider: 'v8',
-        all: true,
+        include: ['src/**/*.{ts,tsx}'],
         exclude: [
           ...coverageConfigDefaults.exclude,
           'public/**',
