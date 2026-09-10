@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import {
-  Box, Flex, Text,
+  Box, Flex, Group, SegmentedControl, Text,
 } from '@mantine/core';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import {
@@ -10,7 +10,7 @@ import {
 } from '../../store/store';
 import { useCurrentIdentifier } from '../../routes/utils';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
-import { useReplayContext } from '../../store/hooks/useReplay';
+import { ReplayLayout, useReplayContext } from '../../store/hooks/useReplay';
 
 export function ScreenRecordingReplay() {
   const [searchParams] = useSearchParams();
@@ -24,6 +24,8 @@ export function ScreenRecordingReplay() {
     webcamVideoRef,
     updateReplayRef,
     isPlaying,
+    replayLayout,
+    setReplayLayout,
   } = useReplayContext();
 
   const [hasScreenVideo, setHasScreenVideo] = useState(false);
@@ -170,14 +172,46 @@ export function ScreenRecordingReplay() {
     border: `5px solid ${isPlaying ? '#ccc' : 'black'}`,
   }), [isPlaying]);
 
+  const hasBothVideos = hasScreenVideo && hasWebcamVideo;
+  const layoutDirection = replayLayout === 'side-by-side' && hasBothVideos
+    ? { base: 'column' as const, md: 'row' as const }
+    : 'column' as const;
+  const screenContainerStyle = replayLayout === 'webcam-top' && hasBothVideos
+    ? { order: 2 }
+    : undefined;
+  const webcamContainerStyle = replayLayout === 'picture-in-picture' && hasBothVideos
+    ? {
+      position: 'absolute' as const, top: 16, right: 16, width: '28%', zIndex: 1,
+    }
+    : replayLayout === 'webcam-top' && hasBothVideos
+      ? { order: 1, width: '32%', alignSelf: 'center' as const }
+      : undefined;
+
   return (
     <Box pos="relative">
+      {hasBothVideos && (
+        <Group justify="center" mb="md">
+          <Text size="sm" fw={500}>Replay layout</Text>
+          <SegmentedControl
+            aria-label="Replay layout"
+            value={replayLayout}
+            onChange={(value) => setReplayLayout(value as ReplayLayout)}
+            data={[
+              { label: 'Side by side', value: 'side-by-side' },
+              { label: 'Picture in picture', value: 'picture-in-picture' },
+              { label: 'Webcam on top', value: 'webcam-top' },
+            ]}
+          />
+        </Group>
+      )}
       <Flex
+        data-replay-layout={replayLayout}
         gap="md"
-        direction={{ base: 'column', md: hasScreenVideo && hasWebcamVideo ? 'row' : 'column' }}
+        direction={layoutDirection}
         align="stretch"
+        style={replayLayout === 'picture-in-picture' && hasBothVideos ? { position: 'relative' } : undefined}
       >
-        <Box flex={hasScreenVideo && hasWebcamVideo ? 2 : 1}>
+        <Box flex={hasBothVideos ? 2 : 1} style={screenContainerStyle}>
           <Text fw={600} size="sm" ta="center" mb="xs" display={hasScreenVideo ? 'block' : 'none'}>
             Screen Recording
           </Text>
@@ -194,7 +228,7 @@ export function ScreenRecordingReplay() {
           </video>
         </Box>
 
-        <Box flex={1}>
+        <Box flex={1} style={webcamContainerStyle}>
           <Text fw={600} size="sm" ta="center" mb="xs" display={hasWebcamVideo ? 'block' : 'none'}>
             Webcam Recording
           </Text>

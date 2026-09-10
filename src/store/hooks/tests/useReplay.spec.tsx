@@ -91,6 +91,13 @@ describe('useReplay — returned state defaults', () => {
     expect(result.current.speed).toBe(1);
   });
 
+  test('starts with the side-by-side replay layout and updates it locally', () => {
+    const { result } = renderHook(() => useReplay());
+    expect(result.current.replayLayout).toBe('side-by-side');
+    act(() => { result.current.setReplayLayout('picture-in-picture'); });
+    expect(result.current.replayLayout).toBe('picture-in-picture');
+  });
+
   test('starts with hasEnded false', () => {
     const { result } = renderHook(() => useReplay());
     expect(result.current.hasEnded).toBe(false);

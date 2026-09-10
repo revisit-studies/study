@@ -6,6 +6,8 @@ import { syncChannel, syncEmitter } from '../../utils/syncReplay';
 import EventEmitter from '../../utils/EventEmitter';
 import { getNextSyntheticReplayTime } from './replayTimer';
 
+export type ReplayLayout = 'side-by-side' | 'picture-in-picture' | 'webcam-top';
+
 function seekMedia(media: HTMLMediaElement, time: number) {
   const mediaTime = Number.isFinite(media.duration) && media.duration > 0
     ? Math.min(time, media.duration)
@@ -60,6 +62,7 @@ export function useReplay() {
   const internalSpeed = useRef(1);
   const [speed, _setSpeed] = useState(1);
   const [isPlaying, _setIsPlaying] = useState(false);
+  const [replayLayout, setReplayLayout] = useState<ReplayLayout>('side-by-side');
   const internalIsPlaying = useRef(false);
   const timerValue = useRef<number>(0);
 
@@ -447,11 +450,13 @@ export function useReplay() {
       setSpeed,
       isPlaying,
       setIsPlaying,
+      replayLayout,
+      setReplayLayout,
       replayEvent,
       forceEmitTimeUpdate,
       hasEnded,
     }),
-    [replayEvent, seekTime, setSeekTime, duration, speed, isPlaying, setIsPlaying, updateReplayRef, setSpeed, forceEmitTimeUpdate, setDuration, hasEnded],
+    [replayEvent, seekTime, setSeekTime, duration, speed, isPlaying, setIsPlaying, replayLayout, updateReplayRef, setSpeed, forceEmitTimeUpdate, setDuration, hasEnded],
   );
 
   return value;
