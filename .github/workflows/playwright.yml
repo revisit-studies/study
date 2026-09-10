@@ -7,8 +7,40 @@ on:
       - main
 
 jobs:
+  changes:
+    name: Check for Playwright-relevant changes
+    runs-on: ubuntu-latest
+    outputs:
+      run_tests: ${{ steps.filter.outputs.run_tests }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check changed files
+        id: filter
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if git diff --quiet "$BASE_SHA" "$HEAD_SHA" -- \
+            'index.html' \
+            'package.json' \
+            'playwright.config.ts' \
+            'public/**' \
+            'src/**' \
+            'tests/**' \
+            'tsconfig*.json' \
+            'vite.config.*' \
+            'yarn.lock'; then
+            echo "run_tests=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run_tests=true" >> "$GITHUB_OUTPUT"
+          fi
+
   chromium-fast:
-    if: github.base_ref != 'main'
+    needs: changes
+    if: needs.changes.outputs.run_tests == 'true' && github.base_ref != 'main'
     name: 🧪 Chromium shard ${{ matrix.shard }}/4
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -51,7 +83,8 @@ jobs:
         run: yarn test --project=chromium --shard=${{ matrix.shard }}/4
 
   chromium-main:
-    if: github.base_ref == 'main'
+    needs: changes
+    if: needs.changes.outputs.run_tests == 'true' && github.base_ref == 'main'
     name: 🧪 Chromium full MVNV journey
     runs-on: ubuntu-latest
     timeout-minutes: 40
