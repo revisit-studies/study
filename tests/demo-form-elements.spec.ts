@@ -229,6 +229,13 @@ test('Test questionnaire component with responses and randomizing questions and 
   await expect(customResponseNextButton).toBeEnabled();
   await nextClick(page);
 
+  // Auto-advance page
+  await expect(page.getByText('What does 53 + 98 equal?')).toBeVisible();
+  await page.getByRole('radio', { name: '151', exact: true }).click();
+  await page.getByRole('button', { name: 'Check Answer', exact: true }).click();
+  await expect(page.getByRole('alert').getByText('Correct Answer', { exact: true })).toBeVisible();
+  await expect(page.locator('#q-multi-satisfaction')).toBeVisible({ timeout: 10000 });
+
   // Fill the survey: Randomizing Options
 
   // Matrix radio
