@@ -1,5 +1,6 @@
 body {
-  background-color: #f5f7fa;
+  background-color: light-dark(#f5f7fa, var(--mantine-color-dark-7));
+  color: var(--mantine-color-text);
 }
 
 .image {
@@ -23,10 +24,11 @@ body {
 }
 
 .response {
-  background-color: #ffffff;
+  background-color: var(--mantine-color-default);
+  color: var(--mantine-color-text);
   margin: 10px auto 0;
   padding: 20px;
-  border: 2px solid #e3e8ed;
+  border: 2px solid var(--mantine-color-default-border);
   border-radius: 12px;
   width: 50%;
   box-sizing: border-box;

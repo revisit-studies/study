@@ -472,11 +472,13 @@ describe('ProgressHeatmap', () => {
     expect(html).toContain('green');
   });
 
-  test('unanswered tasks use grey fill', () => {
+  test('unanswered tasks pair a dark grey fill with white labels', () => {
     const html = renderToStaticMarkup(
       <ProgressHeatmap total={2} answered={[]} isDynamic={false} />,
     );
-    expect(html).toContain('grey');
+    expect(html.match(/fill="var\(--mantine-color-gray-7\)"/g)).toHaveLength(2);
+    expect(html.match(/stroke="var\(--mantine-color-gray-8\)"/g)).toHaveLength(2);
+    expect(html.match(/fill="white"/g)).toHaveLength(2);
   });
 
   test('dynamic mode uses teal fill and shows ? indicator', () => {

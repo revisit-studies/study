@@ -16,8 +16,8 @@ const MARGIN = {
 
 const COLORS = {
   UNANSWERED: {
-    FILL: 'grey',
-    STROKE: '#666',
+    FILL: 'var(--mantine-color-gray-7)',
+    STROKE: 'var(--mantine-color-gray-8)',
   },
   ANSWERED: {
     FILL: 'green',

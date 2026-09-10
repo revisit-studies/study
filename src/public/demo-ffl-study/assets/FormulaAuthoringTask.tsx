@@ -144,13 +144,13 @@ export default function FormulaAuthoringTask({
               borderRadius: 4,
             }}
           >
-            <Text ff="serif" fz="2rem" ta="center">
+            <Text ff="serif" fz="2rem" ta="center" c="var(--mantine-color-dark-9)">
               <span style={{ color: colors[0] || 'inherit' }}>y</span>
               {' = '}
               <span style={{ color: colors[1] || 'inherit' }}>β₀ + β₁</span>
               <span style={{ color: colors[2] || 'inherit' }}>x₁ + β₂x₂ + ⋯ + βₘxₘ</span>
             </Text>
-            <Text size="xs" c="dimmed" mt="lg" ta="center">
+            <Text size="xs" c="var(--mantine-color-gray-7)" mt="lg" ta="center">
               Lightweight live preview for this study demo. Colors detected in your markup update here.
             </Text>
           </Box>

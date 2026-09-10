@@ -205,8 +205,8 @@ export function ComponentController() {
 
     return {
       ...componentContainerStyle,
-      border: '1px solid var(--mantine-color-red-3)',
-      backgroundColor: 'var(--mantine-color-red-0)',
+      border: '1px solid var(--mantine-color-red-light-color)',
+      backgroundColor: 'var(--mantine-color-red-light)',
       borderRadius: 'var(--mantine-radius-md)',
       padding: 'var(--mantine-spacing-sm)',
     };

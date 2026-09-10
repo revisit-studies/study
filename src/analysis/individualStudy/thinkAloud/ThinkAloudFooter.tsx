@@ -454,15 +454,15 @@ export function ThinkAloudFooter({
           <Alert withCloseButton onClose={() => setBrowserWarningDismissed(true)} variant="filled" color="red" title={`Participant used ${getBrowser(participant.metadata?.userAgent ?? '')} — you are using ${getBrowser(navigator.userAgent)}. Video playback may not work properly.`} icon={<IconInfoCircle />} />
         </div>
       )}
-      <Stack style={{ backgroundColor: 'var(--mantine-color-blue-1)', height: '100%' }} gap={5} justify="center">
+      <Stack style={{ backgroundColor: 'light-dark(var(--mantine-color-blue-1), var(--mantine-color-dark-7))', height: '100%' }} gap={5} justify="center">
 
-        {participant && currentTrial && (!participant.answers[currentTrial] || participant.answers[currentTrial].endTime === -1) ? <Center><Text c="dimmed">{`Participant ${participant.participantId} has not completed this task`}</Text></Center> : null}
+        {participant && currentTrial && (!participant.answers[currentTrial] || participant.answers[currentTrial].endTime === -1) ? <Center><Text c="light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-1))">{`Participant ${participant.participantId} has not completed this task`}</Text></Center> : null}
         <AudioProvenanceVis setHasAudio={setHasAudio} saveProvenance={saveProvenance} setTime={onTimeUpdate} setTimeString={(_t) => setTimeString(_t)} answers={participant ? participant.answers : {}} taskName={currentTrial} context={isReplay ? 'provenanceVis' : 'audioAnalysis'} />
         {xScale && transcriptLines ? <TranscriptSegmentsVis startTime={xScale.domain()[0]} xScale={xScale} transcriptLines={transcriptLines} currentShownTranscription={currentShownTranscription || 0} /> : null}
 
         <Group gap="xs" style={{ width: '100%' }} justify="center" wrap="nowrap" mb={isReplay ? 0 : 'md'}>
           <Group wrap="nowrap">
-            <Text ff="monospace" style={{ textAlign: 'right' }} mt="lg" c="dimmed">{timeString}</Text>
+            <Text ff="monospace" style={{ textAlign: 'right' }} mt="lg" c="light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-1))">{timeString}</Text>
 
             <Tooltip label={hasEnded ? 'Restart' : isPlaying ? 'Pause' : 'Play'}>
               <ActionIcon aria-label={hasEnded ? 'Restart' : isPlaying ? 'Pause' : 'Play'} mt={25} size="lg" variant="light" onClick={() => { setIsPlaying(!isPlaying); }}>
