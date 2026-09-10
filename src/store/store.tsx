@@ -7,7 +7,7 @@ import {
   ParsedStringOption, ResponseBlockLocation, StudyConfig, ValueOf, Answer, ParticipantData, IndividualComponent,
 } from '../parser/types';
 import type {
-  AlertModalState, CheckAnswerState, StoredAnswer, TrialValidation, TrrackedProvenance, StoreState, Sequence, ParticipantMetadata, ValidationStatus,
+  AssetStatus, AlertModalState, CheckAnswerState, StoredAnswer, TrialValidation, TrrackedProvenance, StoreState, Sequence, ParticipantMetadata, ValidationStatus,
 } from './types';
 import { getSequenceFlatMap } from '../utils/getSequenceFlatMap';
 import { REVISIT_MODE } from '../storage/engines/types';
@@ -200,7 +200,7 @@ export async function studyStoreCreator(
     name: 'storeSlice',
     initialState,
     reducers: {
-      setAssetStatus(state, { payload }: PayloadAction<{ identifier: string; status: 'loading' | 'ready' | 'error' }>) {
+      setAssetStatus(state, { payload }: PayloadAction<{ identifier: string; status: AssetStatus }>) {
         const validation = state.trialValidation[payload.identifier];
         if (validation) validation.assetStatus = payload.status;
       },

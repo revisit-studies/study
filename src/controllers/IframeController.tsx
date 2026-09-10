@@ -5,20 +5,21 @@ import { useDispatch } from 'react-redux';
 import { useCurrentComponent, useCurrentIdentifier } from '../routes/utils';
 import { useStoreDispatch, useStoreActions, useStoreSelector } from '../store/store';
 import { ParticipantData, WebsiteComponent } from '../parser/types';
-import { PREFIX as BASE_PREFIX } from '../utils/Prefix';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import { ReplayContext } from '../store/hooks/useReplay';
 import { compileTemplate } from '../utils/handlebars';
 import { useTemplateAnswerContext } from '../store/hooks/useTemplateAnswerContext';
+import { getAssetStatus, useAssetStatus, useAssetLoadStatus } from '../store/hooks/useAssetStatus';
 import { useAsyncResource } from '../store/hooks/useAsyncResource';
 import { getStaticAssetByPath } from '../utils/getStaticAsset';
+import { PREFIX as BASE_PREFIX } from '../utils/Prefix';
 import { ResourceNotFound } from '../ResourceNotFound';
 
 const PREFIX = '@REVISIT_COMMS';
 
 export function IframeController({ currentConfig, provState, answers }: { currentConfig: WebsiteComponent; provState?: unknown, answers: ParticipantData['answers'] }) {
   const {
-    setReactiveAnswers, updateProvenance, updateResponseBlockValidation, setAssetStatus,
+    setReactiveAnswers, updateProvenance, updateResponseBlockValidation,
   } = useStoreActions();
   const storeDispatch = useStoreDispatch();
   const dispatch = useDispatch();
@@ -38,7 +39,6 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   const shouldSendProvenance = !isAnalysis || !replay || hasReplayStarted;
 
   const templateData = useTemplateAnswerContext();
-
   const templatedPath = useMemo(
     () => (templateData ? compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true, data: templateData }) : undefined),
     [currentConfig.path, currentConfig.parameters, templateData],
@@ -73,20 +73,10 @@ export function IframeController({ currentConfig, provState, answers }: { curren
     return await getStaticAssetByPath(url) === undefined ? undefined : true;
   }, [url]);
   const { status } = useAsyncResource(requestKey, checkWebsite);
-  const [frameResult, setFrameResult] = useState<{ key?: string; status: 'ready' | 'error' }>();
-  useEffect(() => {
-    setFrameResult(undefined);
-  }, [requestKey]);
-  const frameStatus = frameResult && frameResult.key === requestKey ? frameResult.status : 'loading';
-  const assetStatus = status === 'missing' || status === 'error' || frameStatus === 'error'
-    ? 'error'
-    : status === 'success' ? frameStatus : 'loading';
+  const { status: frameStatus, onReady, onError } = useAssetLoadStatus(requestKey);
+  const assetStatus = getAssetStatus(status, frameStatus);
 
-  useEffect(() => {
-    if (isAnalysis) return undefined;
-    storeDispatch(setAssetStatus({ identifier, status: assetStatus }));
-    return () => { storeDispatch(setAssetStatus({ identifier, status: 'loading' })); };
-  }, [assetStatus, identifier, isAnalysis, setAssetStatus, storeDispatch]);
+  useAssetStatus(assetStatus);
 
   const sendMessage = useCallback(
     (tag: string, message: unknown) => {
@@ -190,8 +180,8 @@ export function IframeController({ currentConfig, provState, answers }: { curren
         pointerEvents: isAnalysis ? 'none' : undefined,
       }}
       src={url}
-      onLoad={() => setFrameResult({ key: requestKey, status: 'ready' })}
-      onErrorCapture={() => setFrameResult({ key: requestKey, status: 'error' })}
+      onLoad={onReady}
+      onErrorCapture={onError}
     />
   );
 }

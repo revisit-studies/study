@@ -3,6 +3,7 @@ import {
 } from 'react';
 import { Vega, VisualizationSpec, View } from 'react-vega';
 import { Registry } from '@trrack/core';
+import * as vega from 'vega';
 import { VegaProps } from 'react-vega/lib/Vega';
 import { ValueOf, VegaComponent } from '../parser/types';
 import { getJsonAssetByPath } from '../utils/getStaticAsset';
@@ -15,6 +16,7 @@ import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import { useManagedTrrack } from '../store/hooks/useRevisitTrrack';
 import { compileTemplate } from '../utils/handlebars';
 import { useTemplateAnswerContext } from '../store/hooks/useTemplateAnswerContext';
+import { getAssetStatus, useAssetStatus, useAssetLoadStatus } from '../store/hooks/useAssetStatus';
 import { getInitialStimulusValidation } from '../components/response/stimulusErrors';
 import { useAsyncResource } from '../store/hooks/useAsyncResource';
 
@@ -30,6 +32,22 @@ export interface VegaProvState {
 
 const InternalVega = Vega as unknown as React.FC<VegaProps>;
 
+// Vega exports its renderer registry, but its TypeScript declarations omit Marks.
+const { Marks } = vega as typeof vega & { Marks: Record<string, object> };
+
+function validateVegaMarks(spec: vega.Spec): vega.Spec {
+  const validate = (marks: vega.Mark[] = []) => {
+    marks.forEach((mark) => {
+      if (!Object.hasOwn(Marks, mark.type)) {
+        throw new Error(`Unsupported Vega mark type: ${mark.type}`);
+      }
+      if (mark.type === 'group') validate(mark.marks);
+    });
+  };
+  validate(spec.marks);
+  return spec;
+}
+
 export function VegaController({ currentConfig, provState }: { currentConfig: VegaComponent; provState?: VegaProvState }) {
   const storeDispatch = useStoreDispatch();
   const [stimulusStatus, setStimulusStatus] = useState(false);
@@ -38,7 +56,6 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
   const identifier = useCurrentIdentifier();
 
   const templateData = useTemplateAnswerContext();
-
   const templatedPath = useMemo(
     () => (templateData && 'path' in currentConfig ? compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true, data: templateData }) : undefined),
     [currentConfig, templateData],
@@ -54,23 +71,13 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
   const { status: resourceStatus, value: vegaConfig } = useAsyncResource<VisualizationSpec>(requestKey, loadVega);
 
   const {
-    updateProvenance, updateResponseBlockValidation, setReactiveAnswers, setAssetStatus,
+    updateProvenance, updateResponseBlockValidation, setReactiveAnswers,
   } = useStoreActions();
   const isAnalysis = useIsAnalysis();
-  const [viewResult, setViewResult] = useState<{ key?: string; status: 'ready' | 'error' }>();
-  useEffect(() => { setViewResult(undefined); }, [requestKey, vegaConfig]);
-  const viewStatus = viewResult && viewResult.key === requestKey ? viewResult.status : 'loading';
-  const assetStatus = resourceStatus === 'missing' || resourceStatus === 'error' || (resourceStatus === 'success' && !vegaConfig)
-    ? 'error'
-    : resourceStatus === 'success' ? viewStatus : 'loading';
-  useEffect(() => {
-    if (isAnalysis) return undefined;
-    storeDispatch(setAssetStatus({ identifier, status: assetStatus }));
-    return () => { storeDispatch(setAssetStatus({ identifier, status: 'loading' })); };
-  }, [assetStatus, identifier, isAnalysis, setAssetStatus, storeDispatch]);
-  const handleViewError = useCallback(() => {
-    setViewResult({ key: requestKey, status: 'error' });
-  }, [requestKey]);
+  const viewKey = useMemo(() => ({ requestKey, vegaConfig }), [requestKey, vegaConfig]);
+  const { status: viewStatus, onReady: handleViewReady, onError: handleViewError } = useAssetLoadStatus(viewKey);
+  const assetStatus = resourceStatus === 'success' && !vegaConfig ? 'error' : getAssetStatus(resourceStatus, viewStatus);
+  useAssetStatus(assetStatus);
 
   const [view, setView] = useState<View>();
   const initialSignals = useRef<Record<string, unknown>>({});
@@ -210,8 +217,8 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
       ]),
     );
     setView(newView);
-    setViewResult({ key: requestKey, status: 'ready' });
-  }, [configuredSignalNames, requestKey]);
+    handleViewReady();
+  }, [configuredSignalNames, handleViewReady]);
 
   // Reset answer validation while a new spec loads; asset validation is independent.
   useEffect(() => {
@@ -246,6 +253,7 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
         signalListeners={signalListeners as never}
         onNewView={handleNewView}
         onError={handleViewError}
+        patch={validateVegaMarks}
         actions={currentConfig.withActions}
       />
     </div>

@@ -5,11 +5,12 @@ import {
   APITypes, PlyrOptions, PlyrProps, PlyrSource, usePlyr,
 } from 'plyr-react';
 import { VideoComponent } from '../parser/types';
-import { PREFIX } from '../utils/Prefix';
 import { getStaticAssetByPath } from '../utils/getStaticAsset';
+import { PREFIX } from '../utils/Prefix';
 import { ResourceNotFound } from '../ResourceNotFound';
 import { compileTemplate } from '../utils/handlebars';
 import { useTemplateAnswerContext } from '../store/hooks/useTemplateAnswerContext';
+import { useAssetStatus, useAssetLoadStatus } from '../store/hooks/useAssetStatus';
 import 'plyr-react/plyr.css';
 import { useStoreActions, useStoreDispatch } from '../store/store';
 import { useCurrentIdentifier } from '../routes/utils';
@@ -111,19 +112,14 @@ const CustomPlyrInstance = forwardRef<APITypes, PlyrProps & { endedCallback:() =
 
 export function VideoController({ currentConfig }: { currentConfig: VideoComponent; }) {
   const templateData = useTemplateAnswerContext();
-
   const templatedPath = useMemo(
     () => (templateData ? compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true, data: templateData }) : undefined),
     [currentConfig.path, currentConfig.parameters, templateData],
   );
 
   const url = useMemo(() => {
-    if (templatedPath === undefined) {
-      return undefined;
-    }
-    if (templatedPath.startsWith('http')) {
-      return templatedPath;
-    }
+    if (templatedPath === undefined) return undefined;
+    if (templatedPath.startsWith('http')) return templatedPath;
     return `${PREFIX}${templatedPath}`;
   }, [templatedPath]);
   const provider = useMemo(() => (url ? getVideoProvider(url) : undefined), [url]);
@@ -161,7 +157,6 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
           if (!isCancelled) setAssetFound(validExternalUrl);
           return;
         }
-
         const asset = await getStaticAssetByPath(assetUrl);
         if (!isCancelled) setAssetFound(!!asset);
       } catch {
@@ -178,20 +173,8 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
     return () => { isCancelled = true; };
   }, [provider, url, validExternalUrl, requestKey]);
 
-  const [playerResult, setPlayerResult] = useState<{ key?: string; status: 'ready' | 'error' }>();
-  useEffect(() => {
-    setPlayerResult(undefined);
-  }, [requestKey]);
-  const playerStatus = playerResult && playerResult.key === requestKey ? playerResult.status : 'loading';
+  const { status: playerStatus, onReady: loadedCallback, onError: errorCallback } = useAssetLoadStatus(requestKey);
   const assetStatus = isLoading ? 'loading' : assetFound ? playerStatus : 'error';
-  const loadedCallback = useCallback(() => setPlayerResult({
-    key: requestKey,
-    status: 'ready',
-  }), [requestKey]);
-  const errorCallback = useCallback(() => setPlayerResult({
-    key: requestKey,
-    status: 'error',
-  }), [requestKey]);
 
   const sources = useMemo<PlyrSource['sources']>(() => {
     if (provider === 'youtube') {
@@ -232,13 +215,9 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
   }), [currentConfig.forceCompletion, currentConfig.withTimeline]);
 
   const storeDispatch = useStoreDispatch();
-  const { updateResponseBlockValidation, setAssetStatus } = useStoreActions();
+  const { updateResponseBlockValidation } = useStoreActions();
   const isAnalysis = useIsAnalysis();
-  useEffect(() => {
-    if (isAnalysis) return undefined;
-    storeDispatch(setAssetStatus({ identifier, status: assetStatus }));
-    return () => { storeDispatch(setAssetStatus({ identifier, status: 'loading' })); };
-  }, [assetStatus, identifier, isAnalysis, setAssetStatus, storeDispatch]);
+  useAssetStatus(assetStatus);
 
   // Set the validation to invalid if forceCompletion is true — unless the
   // asset is missing (404), in which case clear the gate so the participant
