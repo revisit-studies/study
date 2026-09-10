@@ -1,5 +1,7 @@
 import React, { ReactNode } from 'react';
-import { render, waitFor, act } from '@testing-library/react';
+import {
+  render, waitFor, act, fireEvent,
+} from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
@@ -48,7 +50,9 @@ let mockStoreActions = {
 // ── mocks ────────────────────────────────────────────────────────────────────
 
 vi.mock('@mantine/core', () => ({
-  Image: ({ src }: { src?: string }) => <img src={src} alt="img" />,
+  Image: ({ src, onLoad, onError }: { src?: string; onLoad?: () => void; onError?: () => void }) => (
+    <img src={src} onLoad={onLoad} onError={onError} alt="img" />
+  ),
   Text: ({ children }: { children: ReactNode }) => <p>{children}</p>,
   Box: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Center: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -310,31 +314,33 @@ describe('ImageController', () => {
     expect(html).toContain('https://example.com/img.png');
   });
 
-  test('renders ResourceNotFound after fetch returns undefined', async () => {
-    vi.mocked(getStaticAssetByPath).mockResolvedValueOnce(undefined);
+  test('renders ResourceNotFound after an image load error', () => {
     const { container } = render(<ImageController currentConfig={{ type: 'image', path: '/missing.png', response: [] }} />);
-    await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
+    fireEvent.error(container.querySelector('img')!);
+    expect(container.textContent).toContain('ResourceNotFound');
+    expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith({ identifier: 'trial1_0', status: 'error' });
   });
 
-  test('renders ResourceNotFound after fetch returns empty content', async () => {
-    vi.mocked(getStaticAssetByPath).mockResolvedValueOnce('');
-    const { container } = render(<ImageController currentConfig={{ type: 'image', path: '/empty.png', response: [] }} />);
-    await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
-  });
-
-  test('renders img after fetch returns content', async () => {
-    vi.mocked(getStaticAssetByPath).mockResolvedValueOnce('image-data');
+  test('starts loading and becomes ready after the image loads', () => {
     const { container } = render(<ImageController currentConfig={{ type: 'image', path: '/found.png', response: [] }} />);
-    await waitFor(() => expect(container.querySelector('img')).toBeTruthy());
+    expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith({ identifier: 'trial1_0', status: 'loading' });
+    fireEvent.load(container.querySelector('img')!);
+    expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith({ identifier: 'trial1_0', status: 'ready' });
+    expect(container.querySelector('img')).toBeTruthy();
   });
 
-  test('checks absolute image URLs without prefixing them', async () => {
+  test('waits for the new image when its path changes after an error', () => {
+    const { container, rerender } = render(<ImageController currentConfig={{ type: 'image', path: '/missing.png', response: [] }} />);
+    fireEvent.error(container.querySelector('img')!);
+    rerender(<ImageController currentConfig={imageConfig} />);
+    expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith({ identifier: 'trial1_0', status: 'loading' });
+    fireEvent.load(container.querySelector('img')!);
+    expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith({ identifier: 'trial1_0', status: 'ready' });
+  });
+
+  test('uses absolute image URLs without prefixing them', () => {
     const remotePath = 'https://raw.githubusercontent.com/revisit-studies/library-assets/v1/vlat/VLAT1.png';
-    vi.mocked(getStaticAssetByPath).mockResolvedValueOnce('image-data');
-
     const { container } = render(<ImageController currentConfig={{ type: 'image', path: remotePath, response: [] }} />);
-
-    await waitFor(() => expect(getStaticAssetByPath).toHaveBeenCalledWith(remotePath));
     expect(container.querySelector('img')?.getAttribute('src')).toBe(remotePath);
   });
 });
