@@ -24,12 +24,13 @@ type MockBoxProps = {
   role?: string;
   'aria-label'?: string;
   'data-replay-layout'?: string;
+  'data-webcam-size'?: string;
 };
 
 function MockBox({
-  children, style, role, 'aria-label': ariaLabel, 'data-replay-layout': layout,
+  children, style, role, 'aria-label': ariaLabel, 'data-replay-layout': layout, 'data-webcam-size': webcamSize,
 }: MockBoxProps) {
-  return <div style={style} role={role} aria-label={ariaLabel} data-replay-layout={layout}>{children}</div>;
+  return <div style={style} role={role} aria-label={ariaLabel} data-replay-layout={layout} data-webcam-size={webcamSize}>{children}</div>;
 }
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
@@ -42,8 +43,15 @@ vi.mock('@mantine/core', () => ({
   Box: MockBox,
   Flex: ({ children, 'data-replay-layout': layout }: { children?: React.ReactNode; 'data-replay-layout'?: string }) => <div data-replay-layout={layout}>{children}</div>,
   Group: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
-  SegmentedControl: ({ data, value, onChange }: { data: { label: string; value: string }[]; value: string; onChange: (value: string) => void }) => (
-    <div role="radiogroup" aria-label="Replay layout">
+  SegmentedControl: ({
+    data, value, onChange, 'aria-label': ariaLabel,
+  }: {
+    data: { label: string; value: string }[];
+    value: string;
+    onChange: (value: string) => void;
+    'aria-label'?: string;
+  }) => (
+    <div role="radiogroup" aria-label={ariaLabel}>
       {data.map((item) => <button type="button" key={item.value} aria-pressed={item.value === value} onClick={() => onChange(item.value)}>{item.label}</button>)}
     </div>
   ),
@@ -201,6 +209,38 @@ describe('ScreenRecordingReplay', () => {
     const moveHandle = view.getByRole('button', { name: 'Move webcam replay' });
     expect(view.container.querySelector('[data-replay-layout="webcam-only-overlay"]')).not.toBeNull();
     expect(moveHandle.style.cursor).toBe('move');
+  });
+
+  test('renders the picture-in-picture webcam as a movable overlay', async () => {
+    mockIsAnalysis = true;
+    mockReplayLayout = 'picture-in-picture';
+    mockStorageEngine = {
+      getScreenRecording: vi.fn().mockResolvedValue('http://example.com/video.mp4'),
+      getWebcamRecording: vi.fn().mockResolvedValue('http://example.com/webcam.webm'),
+    };
+    mockSearchParams = new URLSearchParams({ participantId: 'p1' });
+    const view = await act(async () => render(<ScreenRecordingReplay />));
+
+    await waitFor(() => expect(view.container.querySelectorAll('video')[1]?.src).toBe('http://example.com/webcam.webm'));
+    expect(view.container.querySelector('[data-replay-layout="picture-in-picture-overlay"]')).not.toBeNull();
+    expect(view.getByRole('button', { name: 'Move webcam replay' })).toBeDefined();
+  });
+
+  test('allows webcam-top replay to use a smaller size', async () => {
+    mockIsAnalysis = true;
+    mockReplayLayout = 'webcam-top';
+    mockStorageEngine = {
+      getScreenRecording: vi.fn().mockResolvedValue('http://example.com/video.mp4'),
+      getWebcamRecording: vi.fn().mockResolvedValue('http://example.com/webcam.webm'),
+    };
+    mockSearchParams = new URLSearchParams({ participantId: 'p1' });
+    const view = await act(async () => render(<ScreenRecordingReplay />));
+
+    await waitFor(() => expect(view.container.querySelector('[data-webcam-size="small"]')).not.toBeNull());
+    const sizeControl = view.getByRole('radiogroup', { name: 'Webcam size' });
+    expect(sizeControl).toBeDefined();
+    fireEvent.click(view.getByRole('button', { name: 'Medium' }));
+    expect(view.container.querySelector('[data-webcam-size="medium"]')).not.toBeNull();
   });
 
   test('offers replay layout controls when both recordings exist', async () => {

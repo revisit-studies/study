@@ -1,7 +1,9 @@
 import {
   useCallback, useEffect, useMemo, useRef, useState,
 } from 'react';
-import type { PointerEvent as ReactPointerEvent } from 'react';
+import type {
+  CSSProperties, PointerEvent as ReactPointerEvent, RefObject,
+} from 'react';
 import { useSearchParams } from 'react-router';
 import {
   Box, Flex, Group, SegmentedControl, Text,
@@ -25,24 +27,26 @@ type WebcamDrag = {
   offsetY: number;
 };
 
-export function ScreenRecordingReplay({ webcamOnly = false }: ScreenRecordingReplayProps) {
-  const [searchParams] = useSearchParams();
-  const participantId = useMemo(
-    () => searchParams.get('participantId') || undefined,
-    [searchParams],
-  );
+type WebcamOverlayMode = 'webcam-only' | 'picture-in-picture';
 
-  const {
-    screenVideoRef,
-    webcamVideoRef,
-    updateReplayRef,
-    isPlaying,
-    replayLayout,
-    setReplayLayout,
-  } = useReplayContext();
+type WebcamTopSize = 'small' | 'medium' | 'large';
 
-  const [hasScreenVideo, setHasScreenVideo] = useState(false);
-  const [hasWebcamVideo, setHasWebcamVideo] = useState(false);
+type WebcamReplayOverlayProps = {
+  mode: WebcamOverlayMode;
+  videoRef: RefObject<HTMLVideoElement | null>;
+  videoStyle: CSSProperties;
+  hasWebcamVideo: boolean;
+};
+
+const webcamTopWidths: Record<WebcamTopSize, string> = {
+  small: '20%',
+  medium: '28%',
+  large: '36%',
+};
+
+function WebcamReplayOverlay({
+  mode, videoRef, videoStyle, hasWebcamVideo,
+}: WebcamReplayOverlayProps) {
   const webcamOverlayRef = useRef<HTMLDivElement>(null);
   const webcamDragRef = useRef<WebcamDrag | null>(null);
   const [webcamPosition, setWebcamPosition] = useState<{ left: number; top: number } | null>(null);
@@ -79,6 +83,83 @@ export function ScreenRecordingReplay({ webcamOnly = false }: ScreenRecordingRep
     webcamDragRef.current = null;
     event.currentTarget.releasePointerCapture?.(event.pointerId);
   }, []);
+
+  return (
+    <Box
+      ref={webcamOverlayRef}
+      role="group"
+      aria-label="Webcam recording replay"
+      data-replay-layout={`${mode}-overlay`}
+      style={{
+        position: 'fixed',
+        display: hasWebcamVideo ? undefined : 'none',
+        width: mode === 'webcam-only'
+          ? 'min(320px, calc(100vw - 32px))'
+          : 'min(320px, 28vw, calc(100vw - 32px))',
+        zIndex: 1000,
+        background: 'black',
+        padding: '4px',
+        ...(webcamPosition || (mode === 'webcam-only' ? { right: 16, bottom: 80 } : { right: 16, top: 140 })),
+      }}
+    >
+      <button
+        type="button"
+        aria-label="Move webcam replay"
+        onPointerDown={handleWebcamPointerDown}
+        onPointerMove={handleWebcamPointerMove}
+        onPointerUp={handleWebcamPointerUp}
+        onPointerCancel={handleWebcamPointerUp}
+        style={{
+          display: 'block',
+          width: '100%',
+          padding: '4px 8px',
+          border: 0,
+          color: 'white',
+          background: 'black',
+          textAlign: 'left',
+          cursor: 'move',
+          userSelect: 'none',
+        }}
+      >
+        Webcam Recording · Drag to move
+      </button>
+      <video
+        ref={videoRef}
+        width="100%"
+        style={{
+          ...videoStyle,
+          display: hasWebcamVideo ? 'block' : 'none',
+          margin: 0,
+          maxHeight: '35vh',
+          objectFit: 'cover',
+        }}
+      >
+        <source type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
+    </Box>
+  );
+}
+
+export function ScreenRecordingReplay({ webcamOnly = false }: ScreenRecordingReplayProps) {
+  const [searchParams] = useSearchParams();
+  const participantId = useMemo(
+    () => searchParams.get('participantId') || undefined,
+    [searchParams],
+  );
+
+  const {
+    screenVideoRef,
+    webcamVideoRef,
+    updateReplayRef,
+    isPlaying,
+    replayLayout,
+    setReplayLayout,
+  } = useReplayContext();
+
+  const [hasScreenVideo, setHasScreenVideo] = useState(false);
+  const [hasWebcamVideo, setHasWebcamVideo] = useState(false);
+  const [webcamTopSize, setWebcamTopSize] = useState<WebcamTopSize>('small');
 
   useEffect(() => {
     updateReplayRef();
@@ -228,66 +309,19 @@ export function ScreenRecordingReplay({ webcamOnly = false }: ScreenRecordingRep
   const screenContainerStyle = replayLayout === 'webcam-top' && hasBothVideos
     ? { order: 2 }
     : undefined;
-  const webcamContainerStyle = replayLayout === 'picture-in-picture' && hasBothVideos
-    ? {
-      position: 'absolute' as const, top: 16, right: 16, width: '28%', zIndex: 1,
-    }
-    : replayLayout === 'webcam-top' && hasBothVideos
-      ? { order: 1, width: '32%', alignSelf: 'center' as const }
-      : undefined;
+  const webcamContainerStyle = replayLayout === 'webcam-top' && hasBothVideos
+    ? { order: 1, width: webcamTopWidths[webcamTopSize], alignSelf: 'center' as const }
+    : undefined;
+  const isPictureInPictureLayout = replayLayout === 'picture-in-picture';
 
   if (webcamOnly) {
     return (
-      <Box
-        ref={webcamOverlayRef}
-        role="group"
-        aria-label="Webcam recording replay"
-        data-replay-layout="webcam-only-overlay"
-        style={{
-          position: 'fixed',
-          width: 'min(320px, calc(100vw - 32px))',
-          zIndex: 1000,
-          background: 'black',
-          padding: '4px',
-          ...(webcamPosition || { right: 16, bottom: 80 }),
-        }}
-      >
-        <button
-          type="button"
-          aria-label="Move webcam replay"
-          onPointerDown={handleWebcamPointerDown}
-          onPointerMove={handleWebcamPointerMove}
-          onPointerUp={handleWebcamPointerUp}
-          onPointerCancel={handleWebcamPointerUp}
-          style={{
-            display: 'block',
-            width: '100%',
-            padding: '4px 8px',
-            border: 0,
-            color: 'white',
-            background: 'black',
-            textAlign: 'left',
-            cursor: 'move',
-            userSelect: 'none',
-          }}
-        >
-          Webcam Recording · Drag to move
-        </button>
-        <video
-          ref={webcamVideoRef}
-          width="100%"
-          style={{
-            ...videoStyle,
-            display: hasWebcamVideo ? 'block' : 'none',
-            margin: 0,
-            maxHeight: '35vh',
-            objectFit: 'cover',
-          }}
-        >
-          <source type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
-      </Box>
+      <WebcamReplayOverlay
+        mode="webcam-only"
+        videoRef={webcamVideoRef}
+        videoStyle={videoStyle}
+        hasWebcamVideo={hasWebcamVideo}
+      />
     );
   }
 
@@ -306,6 +340,18 @@ export function ScreenRecordingReplay({ webcamOnly = false }: ScreenRecordingRep
               { label: 'Webcam on top', value: 'webcam-top' },
             ]}
           />
+          {replayLayout === 'webcam-top' && (
+            <SegmentedControl
+              aria-label="Webcam size"
+              value={webcamTopSize}
+              onChange={(value) => setWebcamTopSize(value as WebcamTopSize)}
+              data={[
+                { label: 'Small', value: 'small' },
+                { label: 'Medium', value: 'medium' },
+                { label: 'Large', value: 'large' },
+              ]}
+            />
+          )}
         </Group>
       )}
       <Flex
@@ -313,7 +359,6 @@ export function ScreenRecordingReplay({ webcamOnly = false }: ScreenRecordingRep
         gap="md"
         direction={layoutDirection}
         align="stretch"
-        style={replayLayout === 'picture-in-picture' && hasBothVideos ? { position: 'relative' } : undefined}
       >
         <Box flex={hasBothVideos ? 2 : 1} style={screenContainerStyle}>
           <Text fw={600} size="sm" ta="center" mb="xs" display={hasScreenVideo ? 'block' : 'none'}>
@@ -332,24 +377,38 @@ export function ScreenRecordingReplay({ webcamOnly = false }: ScreenRecordingRep
           </video>
         </Box>
 
-        <Box flex={1} style={webcamContainerStyle}>
-          <Text fw={600} size="sm" ta="center" mb="xs" display={hasWebcamVideo ? 'block' : 'none'}>
-            Webcam Recording
-          </Text>
-          <video
-            ref={webcamVideoRef}
-            width="100%"
-            style={{
-              ...videoStyle,
-              display: hasWebcamVideo ? 'block' : 'none',
-              objectFit: 'cover',
-            }}
+        {!isPictureInPictureLayout && (
+          <Box
+            flex={1}
+            style={webcamContainerStyle}
+            data-webcam-size={replayLayout === 'webcam-top' ? webcamTopSize : undefined}
           >
-            <source type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
-        </Box>
+            <Text fw={600} size="sm" ta="center" mb="xs" display={hasWebcamVideo ? 'block' : 'none'}>
+              Webcam Recording
+            </Text>
+            <video
+              ref={webcamVideoRef}
+              width="100%"
+              style={{
+                ...videoStyle,
+                display: hasWebcamVideo ? 'block' : 'none',
+                objectFit: 'cover',
+              }}
+            >
+              <source type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+          </Box>
+        )}
       </Flex>
+      {isPictureInPictureLayout && (
+        <WebcamReplayOverlay
+          mode="picture-in-picture"
+          videoRef={webcamVideoRef}
+          videoStyle={videoStyle}
+          hasWebcamVideo={hasWebcamVideo}
+        />
+      )}
     </Box>
   );
 }
