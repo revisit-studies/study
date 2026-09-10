@@ -44,16 +44,34 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
     [currentConfig, templateData],
   );
   const requestedConfigKey = 'path' in currentConfig ? templatedPath : '__inline__';
-  const loadVega = useCallback(async (key: string) => {
+  const requestKey = requestedConfigKey === undefined ? undefined : `${identifier}:${requestedConfigKey}`;
+  const loadVega = useCallback(async () => {
     if ('path' in currentConfig) {
-      return getJsonAssetByPath(key);
+      return templatedPath === undefined ? undefined : getJsonAssetByPath(templatedPath);
     }
     return currentConfig.config as VisualizationSpec;
-  }, [currentConfig]);
-  const { status: resourceStatus, value: vegaConfig } = useAsyncResource<VisualizationSpec>(requestedConfigKey, loadVega);
+  }, [currentConfig, templatedPath]);
+  const { status: resourceStatus, value: vegaConfig } = useAsyncResource<VisualizationSpec>(requestKey, loadVega);
 
-  const { updateProvenance, updateResponseBlockValidation, setReactiveAnswers } = useStoreActions();
+  const {
+    updateProvenance, updateResponseBlockValidation, setReactiveAnswers, setAssetStatus,
+  } = useStoreActions();
   const isAnalysis = useIsAnalysis();
+  const [viewResult, setViewResult] = useState<{ key?: string; status: 'ready' | 'error' }>();
+  useEffect(() => { setViewResult(undefined); }, [requestKey, vegaConfig]);
+  const viewStatus = viewResult && viewResult.key === requestKey ? viewResult.status : 'loading';
+  const assetStatus = resourceStatus === 'missing' || resourceStatus === 'error' || (resourceStatus === 'success' && !vegaConfig)
+    ? 'error'
+    : resourceStatus === 'success' ? viewStatus : 'loading';
+  useEffect(() => {
+    if (isAnalysis) return undefined;
+    storeDispatch(setAssetStatus({ identifier, status: assetStatus }));
+    return () => { storeDispatch(setAssetStatus({ identifier, status: 'loading' })); };
+  }, [assetStatus, identifier, isAnalysis, setAssetStatus, storeDispatch]);
+  const handleViewError = useCallback(() => {
+    setViewResult({ key: requestKey, status: 'error' });
+  }, [requestKey]);
+
   const [view, setView] = useState<View>();
   const initialSignals = useRef<Record<string, unknown>>({});
 
@@ -192,11 +210,10 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
       ]),
     );
     setView(newView);
-  }, [configuredSignalNames]);
+    setViewResult({ key: requestKey, status: 'ready' });
+  }, [configuredSignalNames, requestKey]);
 
-  // If the vega spec can't be fetched (404) or parsed (invalid JSON), clear
-  // stimulus validation so the participant isn't stuck on a trial that can
-  // never load. Skipped in analysis mode so replay doesn't mutate validation.
+  // Reset answer validation while a new spec loads; asset validation is independent.
   useEffect(() => {
     if (isAnalysis) return;
     if (resourceStatus === 'unresolved' || resourceStatus === 'loading') {
@@ -208,32 +225,29 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
         values: initialValidation.values,
         reason: initialValidation.reason,
       }));
-      return;
     }
-    if (resourceStatus !== 'success' && 'path' in currentConfig) {
-      console.error(`Vega spec at "${templatedPath}" could not be loaded or parsed. Clearing stimulus validation so the participant is not stuck.`);
-      storeDispatch(updateResponseBlockValidation({
-        location: 'stimulus',
-        identifier,
-        status: true,
-        values: {},
-      }));
-    }
-  }, [isAnalysis, resourceStatus, vegaConfig, currentConfig, templatedPath, identifier, storeDispatch, updateResponseBlockValidation]);
+  }, [isAnalysis, resourceStatus, currentConfig, identifier, storeDispatch, updateResponseBlockValidation]);
 
   if (resourceStatus === 'unresolved' || resourceStatus === 'loading') {
     return <div>Loading...</div>;
   }
-  if ('path' in currentConfig && resourceStatus !== 'success') {
-    return <ResourceNotFound path={templatedPath as string} />;
+  if ('path' in currentConfig && assetStatus === 'error') {
+    return <ResourceNotFound path={templatedPath} />;
   }
-  if (resourceStatus !== 'success' || !vegaConfig) {
+  if (assetStatus === 'error' || !vegaConfig) {
     return <div>Failed to load vega config</div>;
   }
 
   return (
     <div inert={isAnalysis} style={{ display: 'contents' }}>
-      <InternalVega spec={structuredClone(vegaConfig)} signalListeners={signalListeners as never} onNewView={handleNewView} actions={currentConfig.withActions} />
+      <InternalVega
+        key={requestKey}
+        spec={structuredClone(vegaConfig)}
+        signalListeners={signalListeners as never}
+        onNewView={handleNewView}
+        onError={handleViewError}
+        actions={currentConfig.withActions}
+      />
     </div>
   );
 }

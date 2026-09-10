@@ -10,12 +10,15 @@ import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import { ReplayContext } from '../store/hooks/useReplay';
 import { compileTemplate } from '../utils/handlebars';
 import { useTemplateAnswerContext } from '../store/hooks/useTemplateAnswerContext';
+import { useAsyncResource } from '../store/hooks/useAsyncResource';
+import { getStaticAssetByPath } from '../utils/getStaticAsset';
+import { ResourceNotFound } from '../ResourceNotFound';
 
 const PREFIX = '@REVISIT_COMMS';
 
 export function IframeController({ currentConfig, provState, answers }: { currentConfig: WebsiteComponent; provState?: unknown, answers: ParticipantData['answers'] }) {
   const {
-    setReactiveAnswers, updateProvenance, updateResponseBlockValidation,
+    setReactiveAnswers, updateProvenance, updateResponseBlockValidation, setAssetStatus,
   } = useStoreActions();
   const storeDispatch = useStoreDispatch();
   const dispatch = useDispatch();
@@ -55,6 +58,35 @@ export function IframeController({ currentConfig, provState, answers }: { curren
 
   // navigation
   const currentComponent = useCurrentComponent();
+
+  const url = useMemo(() => {
+    if (templatedPath === undefined) return undefined;
+    return templatedPath.startsWith('http')
+      ? templatedPath
+      : `${BASE_PREFIX}${templatedPath}?trialid=${currentComponent}&id=${iframeId}`;
+  }, [templatedPath, currentComponent, iframeId]);
+  const requestKey = url === undefined ? undefined : `${identifier}:${url}`;
+  const checkWebsite = useCallback(async () => {
+    if (url === undefined) return undefined;
+    // External iframe responses cannot be inspected without the site's CORS permission.
+    if (new URL(url, window.location.href).origin !== window.location.origin) return true;
+    return await getStaticAssetByPath(url) === undefined ? undefined : true;
+  }, [url]);
+  const { status } = useAsyncResource(requestKey, checkWebsite);
+  const [frameResult, setFrameResult] = useState<{ key?: string; status: 'ready' | 'error' }>();
+  useEffect(() => {
+    setFrameResult(undefined);
+  }, [requestKey]);
+  const frameStatus = frameResult && frameResult.key === requestKey ? frameResult.status : 'loading';
+  const assetStatus = status === 'missing' || status === 'error' || frameStatus === 'error'
+    ? 'error'
+    : status === 'success' ? frameStatus : 'loading';
+
+  useEffect(() => {
+    if (isAnalysis) return undefined;
+    storeDispatch(setAssetStatus({ identifier, status: assetStatus }));
+    return () => { storeDispatch(setAssetStatus({ identifier, status: 'loading' })); };
+  }, [assetStatus, identifier, isAnalysis, setAssetStatus, storeDispatch]);
 
   const sendMessage = useCallback(
     (tag: string, message: unknown) => {
@@ -141,8 +173,13 @@ export function IframeController({ currentConfig, provState, answers }: { curren
     return null;
   }
 
+  if (assetStatus === 'error') {
+    return <ResourceNotFound path={templatedPath} />;
+  }
+
   return (
     <iframe
+      key={requestKey}
       ref={ref}
       inert={isAnalysis}
       aria-disabled={isAnalysis}
@@ -152,11 +189,9 @@ export function IframeController({ currentConfig, provState, answers }: { curren
         border: 0,
         pointerEvents: isAnalysis ? 'none' : undefined,
       }}
-      src={
-        templatedPath.startsWith('http')
-          ? templatedPath
-          : `${BASE_PREFIX}${templatedPath}?trialid=${currentComponent}&id=${iframeId}`
-      }
+      src={url}
+      onLoad={() => setFrameResult({ key: requestKey, status: 'ready' })}
+      onErrorCapture={() => setFrameResult({ key: requestKey, status: 'error' })}
     />
   );
 }

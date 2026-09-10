@@ -9,6 +9,7 @@ interface ErrorBoundaryState {
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
+  onReady?: () => void;
   onError?: (error: unknown) => void;
 }
 
@@ -16,6 +17,10 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   constructor(props: any) {
     super(props);
     this.state = { hasError: false, error: null };
+  }
+
+  componentDidMount() {
+    if (!this.state.hasError) this.props.onReady?.();
   }
 
   static getDerivedStateFromError(error: any) {

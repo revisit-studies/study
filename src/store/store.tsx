@@ -124,7 +124,7 @@ export async function studyStoreCreator(
           belowStimulus: { valid: false, values: {} },
           sidebar: { valid: false, values: {} },
           stimulus: getInitialStimulusValidation(componentConfig),
-          ...(componentConfig.type === 'video' || componentConfig.type === 'image' ? { assetStatus: 'loading' } : {}),
+          ...(['video', 'image', 'website', 'markdown', 'react-component', 'vega'].includes(componentConfig.type) ? { assetStatus: 'loading' } : {}),
           provenanceGraph: {
             aboveStimulus: undefined,
             belowStimulus: undefined,
@@ -142,7 +142,7 @@ export async function studyStoreCreator(
 
       return {
         [`${id}_${idx}`]: {
-          ...(componentConfig.type === 'video' || componentConfig.type === 'image' ? { assetStatus: 'loading' } : {}),
+          ...(['video', 'image', 'website', 'markdown', 'react-component', 'vega'].includes(componentConfig.type) ? { assetStatus: 'loading' } : {}),
           aboveStimulus: { valid: true, values: {} },
           belowStimulus: { valid: true, values: {} },
           sidebar: { valid: true, values: {} },
@@ -250,7 +250,7 @@ export async function studyStoreCreator(
           aboveStimulus: { valid: false, values: {} },
           belowStimulus: { valid: false, values: {} },
           stimulus: getInitialStimulusValidation(componentConfig),
-          ...(componentConfig.type === 'video' || componentConfig.type === 'image' ? { assetStatus: 'loading' } : {}),
+          ...(['video', 'image', 'website', 'markdown', 'react-component', 'vega'].includes(componentConfig.type) ? { assetStatus: 'loading' } : {}),
           sidebar: { valid: false, values: {} },
           provenanceGraph: {
             aboveStimulus: undefined,
