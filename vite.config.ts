@@ -28,7 +28,7 @@ export default defineConfig(({ command, mode }) => {
       minWorkers: 1,
       coverage: {
         provider: 'v8',
-        all: true,
+        include: ['src/**/*.{ts,tsx}'],
         exclude: [
           ...coverageConfigDefaults.exclude,
           'public/**',
