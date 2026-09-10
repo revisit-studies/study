@@ -254,7 +254,14 @@ export function ResponseSwitcher({
   }
 
   return (
-    <Box mb={responseDividers ? 'xl' : 'lg'} className="response" id={response.id} style={responseWrapperStyle}>
+    <Box
+      className="response"
+      id={response.id}
+      style={{
+        marginBottom: responseDividers ? 'var(--mantine-spacing-xl)' : 'var(--revisit-response-spacing, var(--mantine-spacing-lg))',
+        ...responseWrapperStyle,
+      }}
+    >
       {response.type === 'numerical' && (
       <NumericInput
         response={withTemplatedFields(response)}

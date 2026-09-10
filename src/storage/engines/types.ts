@@ -51,6 +51,8 @@ export type REVISIT_MODE = 'dataCollectionEnabled' | 'developmentModeEnabled' | 
 
 export type StudyColorMode = 'light' | 'dark';
 
+export type StudyStyle = 'default' | 'formLayout';
+
 export function cleanupModes(modes: Record<string, boolean>): Record<REVISIT_MODE, boolean> {
   const cleanedModes: Record<string, boolean> = { ...modes };
 
@@ -308,6 +310,12 @@ export abstract class StorageEngine {
 
   // Sets the light or dark color mode for the given studyId.
   abstract setStudyColorMode(studyId: string, colorMode: StudyColorMode): Promise<void>;
+
+  // Gets the selected style for the study (default if unset).
+  abstract getStudyStyle(studyId: string): Promise<StudyStyle>;
+
+  // Sets the study style independently of the study color mode.
+  abstract setStudyStyle(studyId: string, style: StudyStyle): Promise<void>;
 
   // Protected helper: Sets the full modes document (including stage data and mode flags)
   protected abstract _setModesDocument(studyId: string, modesDocument: Record<REVISIT_MODE, boolean> & { stage?: StageData }): Promise<void>;

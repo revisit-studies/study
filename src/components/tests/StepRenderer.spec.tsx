@@ -9,7 +9,7 @@ import {
 import { StepRenderer } from '../StepRenderer';
 import { shouldConfirmTabClose } from '../../utils/closeTabConfirmation';
 import { LocalStorageEngine } from '../../storage/engines/LocalStorageEngine';
-import { StorageObject, StorageObjectType } from '../../storage/engines/types';
+import { StorageObject, StorageObjectType, StudyStyle } from '../../storage/engines/types';
 import { ParticipantData } from '../../storage/types';
 import { StoredAnswer } from '../../store/types';
 
@@ -18,6 +18,11 @@ import { StoredAnswer } from '../../store/types';
 const mockDispatch = vi.fn();
 const mockSetAlertModal = vi.fn((payload) => ({ type: 'setAlertModal', payload }));
 const mockSubscribeToParticipantDataWriteErrors = vi.fn();
+const layoutMocks = vi.hoisted(() => ({ studyStyle: 'default' as StudyStyle | null }));
+
+vi.mock('../../store/hooks/useStoredStudyStyle', () => ({
+  useStoredStudyStyle: () => layoutMocks,
+}));
 const pdfExportMocks = vi.hoisted(() => ({
   buildFilename: vi.fn((_componentName: string) => 'intro_2026-08-20T14-37-09.pdf'),
   getUnsupportedReason: vi.fn((_element: HTMLElement): string | undefined => undefined),
@@ -270,6 +275,7 @@ vi.mock('lodash.debounce', () => ({
 
 describe('StepRenderer', () => {
   beforeEach(() => {
+    layoutMocks.studyStyle = 'default';
     mockDispatch.mockClear();
     mockSetAlertModal.mockClear();
     mockSubscribeToParticipantDataWriteErrors.mockReset();
@@ -290,6 +296,27 @@ describe('StepRenderer', () => {
   afterEach(() => {
     cleanup();
     vi.restoreAllMocks();
+  });
+
+  test('scopes the form preset to study content and removes it when disabled', () => {
+    layoutMocks.studyStyle = 'formLayout';
+    const view = render(<StepRenderer />);
+    expect(view.getByTestId('outlet').closest('.revisit-form-layout')).not.toBeNull();
+    expect(view.getByTestId('app-navbar').closest('.revisit-form-layout')).toBeNull();
+    expect(view.getByText('Export PDF').closest('.revisit-form-layout')).toBeNull();
+    layoutMocks.studyStyle = 'default';
+    view.rerender(<StepRenderer />);
+    expect(view.container.querySelector('.revisit-form-layout')).toBeNull();
+    expect(view.getByTestId('outlet')).toBeDefined();
+  });
+
+  test('waits for the stored layout before displaying participant content', () => {
+    layoutMocks.studyStyle = null;
+    const view = render(<StepRenderer />);
+    expect(view.queryByTestId('outlet')).toBeNull();
+    layoutMocks.studyStyle = 'formLayout';
+    view.rerender(<StepRenderer />);
+    expect(view.getByTestId('outlet')).toBeDefined();
   });
 
   test('shows the blocking storage modal when a queued participant data write fails', async () => {

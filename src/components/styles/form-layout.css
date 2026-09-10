@@ -1,0 +1,43 @@
+/* Keep the default layout unchanged when the preset is off. */
+.study-content {
+  display: contents;
+}
+
+.study-content.revisit-form-layout {
+  --revisit-response-spacing: 2rem;
+  --mantine-h1-font-size: 1.75rem;
+  --mantine-h2-font-size: 1.375rem;
+  --mantine-h3-font-size: 1.125rem;
+  --mantine-h4-font-size: 1rem;
+  --mantine-h5-font-size: 0.9375rem;
+  --mantine-h6-font-size: 0.875rem;
+
+  display: block;
+  width: 100%;
+  max-width: 800px;
+  min-width: 0;
+  margin-inline: auto;
+}
+
+/* Keep question text wide, but make ordinary answer fields more compact. */
+.study-content.revisit-form-layout .response :is(
+  .mantine-TextInput-wrapper,
+  .mantine-NumberInput-wrapper,
+  .mantine-Select-wrapper,
+  .mantine-MultiSelect-wrapper,
+  .mantine-DateInput-wrapper,
+  .mantine-MonthPickerInput-wrapper,
+  .mantine-YearPickerInput-wrapper,
+  .mantine-TimePicker-wrapper
+) {
+  width: 100%;
+  max-width: 480px;
+}
+
+/* Separate boxed answer fields from their question or help text, not from empty labels. */
+.study-content.revisit-form-layout .response > .mantine-InputWrapper-root > :is(
+  .mantine-InputWrapper-label,
+  .mantine-InputWrapper-description
+) + .mantine-Input-wrapper {
+  margin-top: 0.5rem;
+}
