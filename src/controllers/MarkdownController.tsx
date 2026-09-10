@@ -3,6 +3,7 @@ import { ReactMarkdownWrapper } from '../components/ReactMarkdownWrapper';
 import { MarkdownComponent } from '../parser/types';
 import { getStaticAssetByPath } from '../utils/getStaticAsset';
 import { ResourceNotFound } from '../ResourceNotFound';
+import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { PREFIX } from '../utils/Prefix';
 import { compileTemplate } from '../utils/handlebars';
 import { useTemplateAnswerContext } from '../store/hooks/useTemplateAnswerContext';
@@ -13,6 +14,7 @@ async function loadMarkdown(path: string) {
 }
 
 export function MarkdownController({ currentConfig }: { currentConfig: MarkdownComponent; }) {
+  const studyConfig = useStudyConfig();
   const templateData = useTemplateAnswerContext();
 
   const templatedPath = useMemo(
@@ -37,5 +39,5 @@ export function MarkdownController({ currentConfig }: { currentConfig: MarkdownC
 
   return status === 'success'
     ? <ReactMarkdownWrapper text={renderedText} />
-    : <ResourceNotFound path={templatedPath} />;
+    : <ResourceNotFound email={studyConfig.uiConfig.contactEmail} path={templatedPath} />;
 }

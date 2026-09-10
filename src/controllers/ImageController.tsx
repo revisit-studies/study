@@ -4,6 +4,7 @@ import { ImageComponent } from '../parser/types';
 import { PREFIX } from '../utils/Prefix';
 import { getStaticAssetByPath } from '../utils/getStaticAsset';
 import { ResourceNotFound } from '../ResourceNotFound';
+import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { compileTemplate } from '../utils/handlebars';
 import { useTemplateAnswerContext } from '../store/hooks/useTemplateAnswerContext';
 import { useAsyncResource } from '../store/hooks/useAsyncResource';
@@ -15,6 +16,7 @@ async function loadImage(url: string) {
 }
 
 export function ImageController({ currentConfig }: { currentConfig: ImageComponent; }) {
+  const studyConfig = useStudyConfig();
   const templateData = useTemplateAnswerContext();
 
   const templatedPath = useMemo(
@@ -42,5 +44,5 @@ export function ImageController({ currentConfig }: { currentConfig: ImageCompone
     ? <Image mx="auto" src={url} />
     : status === 'success'
       ? <Image mx="auto" src={url} />
-      : <ResourceNotFound path={templatedPath} />;
+      : <ResourceNotFound email={studyConfig.uiConfig.contactEmail} path={templatedPath} />;
 }

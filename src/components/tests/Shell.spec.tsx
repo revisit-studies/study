@@ -69,7 +69,7 @@ vi.mock('../StartupErrorScreen', () => ({
 }));
 
 vi.mock('../../ResourceNotFound', () => ({
-  ResourceNotFound: () => <div data-testid="resource-not-found" />,
+  ResourceNotFound: ({ email }: { email?: string }) => <div data-testid="resource-not-found" data-email={email} />,
 }));
 
 vi.mock('../StepRenderer', () => ({
@@ -256,7 +256,7 @@ describe('Shell', () => {
   test('shows ResourceNotFound for an invalid study ID', async () => {
     vi.mocked(resolveConfigKey).mockReturnValue(null);
     const { getByTestId } = await act(async () => render(<Shell globalConfig={globalConfig} />));
-    expect(getByTestId('resource-not-found')).toBeDefined();
+    expect(getByTestId('resource-not-found').getAttribute('data-email')).toBeNull();
   });
 
   test('__revisit-widget: canonicalStudyId returns routeStudyId', async () => {
@@ -310,6 +310,29 @@ describe('Shell', () => {
     render(<Shell globalConfig={globalConfig} />);
     await waitFor(() => expect(mockStorageEngine!.initializeStudyDb).toHaveBeenCalled(), { timeout: 3000 });
     await waitFor(() => expect(vi.mocked(studyStoreCreator)).toHaveBeenCalled(), { timeout: 3000 });
+  });
+
+  test('passes the contact email to the unmatched-route fallback outside the study provider', async () => {
+    vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
+
+    mockStorageEngine = {
+      initializeStudyDb: vi.fn().mockResolvedValue(undefined),
+      saveConfig: vi.fn().mockResolvedValue(undefined),
+      getSequenceArray: vi.fn().mockResolvedValue(['seq1']), // non-null → no setSequenceArray
+      getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
+      initializeParticipantSession: vi.fn().mockResolvedValue(baseSession),
+      getParticipantCompletionStatus: vi.fn().mockResolvedValue(false),
+      peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
+      getAllConfigsFromHash: vi.fn().mockResolvedValue({}),
+      isConnected: vi.fn().mockReturnValue(true),
+      getEngine: vi.fn().mockReturnValue('firebase'),
+    };
+
+    vi.mocked(useRoutes).mockReturnValue(null);
+    const { getByTestId } = render(<Shell globalConfig={globalConfig} />);
+    await waitFor(() => expect(mockStorageEngine!.initializeStudyDb).toHaveBeenCalled(), { timeout: 3000 });
+    await waitFor(() => expect(getByTestId('resource-not-found').getAttribute('data-email'))
+      .toBe(mockActiveConfig.uiConfig.contactEmail));
   });
 
   test('calls setSequenceArray when getSequenceArray returns null', async () => {

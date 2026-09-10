@@ -554,7 +554,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       </StudyStoreContext.Provider>
     );
   } else if (!isLoading) {
-    content = <ResourceNotFound />;
+    content = <ResourceNotFound email={activeConfig?.uiConfig.contactEmail} />;
   }
 
   return (

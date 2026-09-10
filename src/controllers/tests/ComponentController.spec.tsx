@@ -64,7 +64,8 @@ vi.mock('../../ResourceNotFound', () => ({
   ResourceNotFound: ({ path, email }: { path?: string; email?: string }) => (
     <div>
       ResourceNotFound:
-      {path ?? email}
+      {path}
+      {email}
     </div>
   ),
 }));
@@ -313,12 +314,14 @@ describe('ImageController', () => {
     vi.mocked(getStaticAssetByPath).mockResolvedValueOnce(undefined);
     const { container } = render(<ImageController currentConfig={{ type: 'image', path: '/missing.png', response: [] }} />);
     await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
+    expect(container.textContent).toContain('test@test.com');
   });
 
   test('renders ResourceNotFound after fetch returns empty content', async () => {
     vi.mocked(getStaticAssetByPath).mockResolvedValueOnce('');
     const { container } = render(<ImageController currentConfig={{ type: 'image', path: '/empty.png', response: [] }} />);
     await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
+    expect(container.textContent).toContain('test@test.com');
   });
 
   test('renders img after fetch returns content', async () => {
@@ -350,6 +353,7 @@ describe('MarkdownController', () => {
     vi.mocked(getStaticAssetByPath).mockResolvedValueOnce(undefined);
     const { container } = render(<MarkdownController currentConfig={{ type: 'markdown', path: '/missing.md', response: [] }} />);
     await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
+    expect(container.textContent).toContain('test@test.com');
   });
 
   test('renders markdown text after fetch resolves with content', async () => {
@@ -367,6 +371,7 @@ describe('ReactComponentController', () => {
       <ReactComponentController currentConfig={missingReactConfig} answers={{}} />,
     );
     expect(html).toContain('ResourceNotFound');
+    expect(html).toContain('test@test.com');
   });
 });
 
@@ -393,6 +398,7 @@ describe('VegaController', () => {
     vi.mocked(getJsonAssetByPath).mockResolvedValueOnce(undefined);
     const { container } = render(<VegaController currentConfig={{ type: 'vega', path: '/missing.json', response: [] }} />);
     await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
+    expect(container.textContent).toContain('test@test.com');
   });
 
   test('resets validation while a changed path is loading after a previous failure', async () => {
@@ -414,6 +420,7 @@ describe('VegaController', () => {
     const { container, rerender } = render(<VegaController currentConfig={firstConfig} />);
 
     await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
+    expect(container.textContent).toContain('test@test.com');
     expect(mockStoreActions.updateResponseBlockValidation).toHaveBeenLastCalledWith(expect.objectContaining({ status: true }));
 
     rerender(<VegaController currentConfig={secondConfig} />);
@@ -446,6 +453,7 @@ describe('VideoController', () => {
     vi.mocked(getStaticAssetByPath).mockResolvedValueOnce(undefined);
     const { container } = render(<VideoController currentConfig={{ type: 'video', path: '/missing.mp4', response: [] }} />);
     await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
+    expect(container.textContent).toContain('test@test.com');
   });
 
   test('renders video element for a valid YouTube URL', async () => {
@@ -518,6 +526,7 @@ describe('ComponentController', () => {
     vi.mocked(useCurrentComponent).mockReturnValue('Notfound');
     const html = renderToStaticMarkup(<ComponentController />);
     expect(html).toContain('ResourceNotFound');
+    expect(html).toContain('test@test.com');
   });
 
   test('renders Loader when participantId in URL does not match store participantId', () => {
