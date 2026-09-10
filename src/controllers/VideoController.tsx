@@ -219,10 +219,8 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
   const isAnalysis = useIsAnalysis();
   useAssetStatus(assetStatus);
 
-  // Set the validation to invalid if forceCompletion is true — unless the
-  // asset is missing (404), in which case clear the gate so the participant
-  // isn't stuck on a trial that can never complete. Skipped in analysis mode
-  // so replay doesn't mutate stimulus validation.
+  // Require playback completion when configured; asset loading and errors are gated separately.
+  // Skip analysis mode so replay doesn't mutate stimulus validation.
   useEffect(() => {
     if (isLoading || !assetFound || isAnalysis) return;
 

@@ -135,13 +135,19 @@ export async function studyStoreCreator(
       };
     }),
   );
+  // The flat sequence contains dynamic block IDs but not their generated trials.
+  // Include saved trials so their assets are checked again when the study resumes.
+  const restoredComponents = {
+    ...Object.fromEntries(flatSequence.map((id, idx) => [`${id}_${idx}`, id])),
+    ...Object.fromEntries(Object.entries(answers).map(([identifier, answer]) => [identifier, answer.componentName])),
+  };
   const allValid = Object.assign(
     {},
-    ...flatSequence.map((id, idx): TrialValidation => {
+    ...Object.entries(restoredComponents).map(([identifier, id]): TrialValidation => {
       const componentConfig = studyComponentToIndividualComponent(config.components[id] || { response: [] }, config);
 
       return {
-        [`${id}_${idx}`]: {
+        [identifier]: {
           ...(['video', 'image', 'website', 'markdown', 'react-component', 'vega'].includes(componentConfig.type) ? { assetStatus: 'loading' } : {}),
           aboveStimulus: { valid: true, values: {} },
           belowStimulus: { valid: true, values: {} },

@@ -421,7 +421,8 @@ describe('VegaController', () => {
     const { container, rerender } = render(<VegaController currentConfig={firstConfig} />);
 
     await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
-    expect(mockStoreActions.updateResponseBlockValidation).toHaveBeenLastCalledWith(expect.objectContaining({ status: true }));
+    expect(mockStoreActions.updateResponseBlockValidation).toHaveBeenLastCalledWith(expect.objectContaining({ status: false }));
+    expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'error' }));
 
     rerender(<VegaController currentConfig={secondConfig} />);
     await waitFor(() => expect(mockStoreActions.updateResponseBlockValidation).toHaveBeenLastCalledWith(expect.objectContaining({ status: false })));

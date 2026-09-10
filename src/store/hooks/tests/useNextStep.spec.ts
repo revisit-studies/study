@@ -4,7 +4,7 @@ import {
 } from 'vitest';
 import type { StudyConfig } from '../../../parser/types';
 import type {
-  Sequence, StoredAnswer, StoreState, TrialValidation, TrrackedProvenance,
+  AssetStatus, Sequence, StoredAnswer, StoreState, TrialValidation, TrrackedProvenance,
 } from '../../types';
 import { makeStudyConfig } from '../../../tests/utils';
 import { areComponentAnswersCorrect, getSkipConditionCorrectAnswers } from '../useNextStep.utils';
@@ -260,6 +260,41 @@ describe('useNextStep', () => {
   test('isNextDisabled is false when step is a number, not analysis, and responses are valid', () => {
     const { result } = renderHook(() => useNextStep());
     expect(result.current.isNextDisabled).toBe(false);
+  });
+
+  test.each<{ status: AssetStatus | undefined; disabled: boolean }>([
+    { status: 'loading', disabled: true },
+    { status: 'error', disabled: true },
+    { status: 'ready', disabled: false },
+    { status: undefined, disabled: false },
+  ])('asset status $status sets disabled=$disabled and guards navigation', async ({ status, disabled }) => {
+    mockTrialValidation = {
+      trial1_0: {
+        assetStatus: status,
+        stimulus: { valid: true, values: {} },
+        aboveStimulus: { valid: true, values: {} },
+        belowStimulus: { valid: true, values: {} },
+        sidebar: { valid: true, values: {} },
+        provenanceGraph: {
+          aboveStimulus: undefined, belowStimulus: undefined, stimulus: undefined, sidebar: undefined,
+        },
+      },
+    };
+    const { result } = renderHook(() => useNextStep());
+
+    expect(result.current.isNextDisabled).toBe(disabled);
+    await act(async () => { await result.current.goToNextStep(); });
+
+    if (disabled) {
+      // Automatic advancement must respect the same asset gate.
+      await act(async () => { await result.current.goToNextStep(false); });
+      expect(mockNavigate).not.toHaveBeenCalled();
+      expect(mockSaveAnswers).not.toHaveBeenCalled();
+      expect(mockDispatch).not.toHaveBeenCalled();
+    } else {
+      expect(mockNavigate).toHaveBeenCalledWith('/test-study/1');
+      expect(mockSaveAnswers).toHaveBeenCalled();
+    }
   });
 
   test('isNextDisabled is true when currentStep is a string', () => {
