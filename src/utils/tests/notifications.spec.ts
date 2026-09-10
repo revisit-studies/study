@@ -55,4 +55,25 @@ describe('showNotification', () => {
       expect.objectContaining({ position: 'top-center' }),
     );
   });
+
+  test('can render a persistent notification without a transition', () => {
+    showNotification({
+      title: 'Preparing PDF',
+      message: 'Please wait',
+      animated: false,
+      autoClose: false,
+    });
+
+    expect(vi.mocked(mantineNotifications.show)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        autoClose: false,
+        style: expect.objectContaining({
+          maxHeight: 200,
+          opacity: 1,
+          transform: 'none',
+          transition: 'none',
+        }),
+      }),
+    );
+  });
 });

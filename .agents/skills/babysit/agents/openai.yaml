@@ -1,0 +1,4 @@
+interface:
+  display_name: "Babysit Pull Request"
+  short_description: "Keep CI green and Codex threads resolved"
+  default_prompt: "Use $babysit to keep this PR moving until CI is green and all Codex review threads are resolved."

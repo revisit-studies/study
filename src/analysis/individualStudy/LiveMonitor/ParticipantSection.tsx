@@ -52,7 +52,7 @@ export function ParticipantSection({
           )
         </Title>
       </Group>
-      <Collapse in={isOpen}>
+      <Collapse expanded={isOpen}>
         {participants.length > 0 && (
           <Grid mt="xs">
             {participants.map(({ assignment, progress }, index) => (

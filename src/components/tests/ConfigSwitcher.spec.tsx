@@ -3,12 +3,12 @@ import {
   render, act, cleanup,
 } from '@testing-library/react';
 import {
-  afterEach, describe, expect, test, vi,
+  afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import type {
   ParsedConfig, ParserErrorWarning, StudyConfig,
 } from '../../parser/types';
-import { ConfigSwitcher } from '../ConfigSwitcher';
+import { ConfigSwitcher, FACTOR_DEMO_CONFIG_NAMES } from '../ConfigSwitcher';
 import { makeGlobalConfig, makeStorageEngine, makeStudyConfig } from '../../tests/utils';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { getSequenceConditions } from '../../utils/handleConditionLogic';
@@ -107,8 +107,10 @@ vi.mock('../../utils/handleConditionLogic', () => ({
   getSequenceConditions: vi.fn(() => []),
 }));
 
+const useStudyRecordingsMock = vi.hoisted(() => vi.fn(() => ({ hasAudio: false, hasScreenRecording: false })));
+
 vi.mock('../../utils/useStudyRecordings', () => ({
-  useStudyRecordings: () => ({ hasAudio: false, hasScreenRecording: false }),
+  useStudyRecordings: useStudyRecordingsMock,
 }));
 
 vi.mock('../../utils/useDeviceRules', () => ({
@@ -143,6 +145,7 @@ const studyConfigs: Record<string, ParsedConfig<StudyConfig> | null> = {
 
 // ── tests ─────────────────────────────────────────────────────────────────────
 
+beforeEach(() => { vi.clearAllMocks(); });
 afterEach(() => { cleanup(); });
 
 describe('ConfigSwitcher', () => {
@@ -174,15 +177,17 @@ describe('ConfigSwitcher', () => {
     };
     const studyConfigsWithErrors: Record<string, ParsedConfig<StudyConfig> | null> = {
       'test-study': {
-        ...minimalStudyConfig,
         errors: [mockError],
-        warnings: [{ ...mockError, message: 'A warning', category: 'unused-component' }],
-      },
+        warnings: [],
+      } as unknown as ParsedConfig<StudyConfig>,
     };
     const { container } = await act(async () => render(
       <ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigsWithErrors} />,
     ));
-    expect(container).toBeDefined();
+    expect(container.textContent).toContain('test-study');
+    expect(container.querySelector('[data-testid="error-loading-config"]')).not.toBeNull();
+    expect(vi.mocked(getSequenceConditions)).not.toHaveBeenCalled();
+    expect(useStudyRecordingsMock).not.toHaveBeenCalled();
   });
 
   test('renders config with warnings but no errors', async () => {
@@ -223,6 +228,35 @@ describe('ConfigSwitcher', () => {
       <ConfigSwitcher globalConfig={multiGlobalConfig} studyConfigs={multiConfigs} />,
     ));
     expect(container).toBeDefined();
+  });
+
+  test('lists factor studies, including incentives-corr, in their own tab', async () => {
+    expect(FACTOR_DEMO_CONFIG_NAMES).toEqual(new Set([
+      'demo-factors',
+      'demo-markdown-factors',
+      'demo-stroop-factors',
+      'demo-max-study2',
+      'demo-ffl-study',
+      'demo-dsf-study',
+      'demo-calvi-study',
+      'incentives-corr',
+    ]));
+
+    const factorDemoConfig = makeGlobalConfig({
+      configsList: ['incentives-corr', 'demo-factors', 'demo-html'],
+    });
+    const factorDemoStudyConfigs: Record<string, ParsedConfig<StudyConfig> | null> = {
+      'incentives-corr': parsedStudyConfig,
+      'demo-factors': parsedStudyConfig,
+      'demo-html': parsedStudyConfig,
+    };
+    const { container } = await act(async () => render(
+      <ConfigSwitcher globalConfig={factorDemoConfig} studyConfigs={factorDemoStudyConfigs} />,
+    ));
+
+    expect(container.textContent).toContain('Factor-demos');
+    expect(container.textContent).toContain('factors configuration language');
+    expect(container.textContent).not.toContain('Your Studies');
   });
 
   test('renders with null config entry', async () => {

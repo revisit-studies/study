@@ -1,17 +1,327 @@
 import {
   describe, expect, test, vi,
 } from 'vitest';
-import { expandLibrarySequences, verifyLibraryUsage, loadLibrariesParseNamespace } from '../libraryParser';
 import {
-  ComponentBlock, DynamicBlock, LibraryConfig, StudyConfig, InheritedComponent, IndividualComponent, ParserErrorWarning,
+  compileFactorBlocks, createFactorConditionId, deepFillTemplate, expandLibrarySequences, fillTemplate, materializeParticipantConfig, resolveFactorConditions, verifyLibraryUsage, loadLibrariesParseNamespace,
+} from '../libraryParser';
+import {
+  ComponentBlock, DynamicBlock, FactorBlock, LibraryConfig, StudyConfig, InheritedComponent, IndividualComponent, ParserErrorWarning,
 } from '../types';
-import { isDynamicBlock } from '../utils';
+import { isDynamicBlock, isFactorBlock } from '../utils';
 import calviConfig from '../../../public/libraries/calvi/config.json';
 import vlatConfig from '../../../public/libraries/vlat/config.json';
 
-function isComponentBlock(value: string | ComponentBlock | DynamicBlock): value is ComponentBlock {
-  return typeof value === 'object' && value !== null && 'components' in value && !isDynamicBlock(value);
+function isComponentBlock(value: string | ComponentBlock | DynamicBlock | FactorBlock): value is ComponentBlock {
+  return typeof value === 'object'
+    && value !== null
+    && 'components' in value
+    && !isDynamicBlock(value)
+    && !isFactorBlock(value);
 }
+
+describe('Factor Templates', () => {
+  test('fills factor values using double-brace template tokens', () => {
+    expect(fillTemplate('data={{data}}; vis={{ visType }}', {
+      data: 'd1',
+      visType: 'bar',
+    })).toBe('data=d1; vis=bar');
+  });
+
+  test('fills hyphenated factor names in double-brace template tokens', () => {
+    expect(fillTemplate('{{study-arm}}.md', {
+      'study-arm': 'control',
+    })).toBe('control.md');
+    expect(deepFillTemplate('{{study-arm}}', {
+      'study-arm': 'control',
+    })).toBe('control');
+  });
+
+  test('does not replace legacy template syntax or at-sign text', () => {
+    const legacySyntax = ['email contact@revisit.dev; legacy @data/', '$', '{data}'].join('');
+    expect(fillTemplate(legacySyntax, {
+      data: 'd1',
+    })).toBe(legacySyntax);
+  });
+
+  test('preserves the type of an exact double-brace factor token', () => {
+    expect(deepFillTemplate({ r1: '{{r1}}' }, { r1: 0.3 })).toEqual({ r1: 0.3 });
+  });
+
+  test('preserves unresolved participant-global tokens', () => {
+    const unresolved = '{{vis}}/{{missing}}';
+    expect(fillTemplate(unresolved, {})).toBe(unresolved);
+  });
+
+  test('preserves component string fields during participant materialization', () => {
+    const config = {
+      components: {
+        trial: {
+          type: 'markdown' as const,
+          path: '{{arm}}.md',
+          response: [],
+          parameters: { arm: '{{arm}}' },
+        },
+      },
+    } as unknown as StudyConfig;
+
+    const materialized = materializeParticipantConfig(config, { arm: 1 });
+    const component = materialized.components.trial;
+
+    expect(component).toMatchObject({
+      path: '1.md',
+      parameters: { arm: 1 },
+    });
+    if (!('path' in component)) throw new Error('Expected a path component');
+    expect(typeof component.path).toBe('string');
+    expect(typeof component.parameters?.arm).toBe('number');
+  });
+});
+
+describe('Factor Compiler', () => {
+  const factors: NonNullable<StudyConfig['factors']> = {
+    r1: [0.3, 0.6],
+    delta: [0.03, 0.18],
+    r2: [0.7, 0.9],
+    crossed: { action: 'cross', factors: ['r1', 'delta'] },
+    zipped: { action: 'zip', factors: ['r1', 'r2'] },
+    nested: {
+      action: 'cross',
+      factors: [
+        { action: 'zip', factors: ['r1', 'r2'] },
+        'delta',
+      ],
+    },
+  };
+
+  test('resolves named and inline factor expressions', () => {
+    expect(resolveFactorConditions('crossed', factors)).toEqual([
+      { r1: 0.3, delta: 0.03 },
+      { r1: 0.3, delta: 0.18 },
+      { r1: 0.6, delta: 0.03 },
+      { r1: 0.6, delta: 0.18 },
+    ]);
+    expect(resolveFactorConditions('zipped', factors)).toEqual([
+      { r1: 0.3, r2: 0.7 },
+      { r1: 0.6, r2: 0.9 },
+    ]);
+    expect(resolveFactorConditions({ action: 'zip', factors: ['r1', 'r2'] }, factors)).toEqual([
+      { r1: 0.3, r2: 0.7 },
+      { r1: 0.6, r2: 0.9 },
+    ]);
+    expect(resolveFactorConditions('nested', factors)).toEqual([
+      { r1: 0.3, r2: 0.7, delta: 0.03 },
+      { r1: 0.3, r2: 0.7, delta: 0.18 },
+      { r1: 0.6, r2: 0.9, delta: 0.03 },
+      { r1: 0.6, r2: 0.9, delta: 0.18 },
+    ]);
+  });
+
+  test('keeps object-valued factor levels together as one condition', () => {
+    const tupleFactors: NonNullable<StudyConfig['factors']> = {
+      trials: [
+        {
+          stimulusId: 'trial-1',
+          guardrail: 'super_data',
+          initialSelection: ['A', 'B'],
+          caption: 'Selected A and B',
+        },
+      ],
+    };
+
+    expect(resolveFactorConditions('trials', tupleFactors)).toEqual([
+      {
+        stimulusId: 'trial-1',
+        guardrail: 'super_data',
+        initialSelection: ['A', 'B'],
+        caption: 'Selected A and B',
+      },
+    ]);
+    expect(resolveFactorConditions({
+      action: 'keep',
+      factor: 'trials',
+      condition: { guardrail: 'super_data' },
+    }, tupleFactors)).toEqual([
+      expect.objectContaining({
+        stimulusId: 'trial-1',
+        guardrail: 'super_data',
+      }),
+    ]);
+
+    const config: StudyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: '', version: '', authors: [], date: '', description: '', organizations: [],
+      },
+      uiConfig: {
+        logoPath: '', contactEmail: '', withProgressBar: true, withSidebar: true,
+      },
+      baseComponents: {
+        trial: {
+          type: 'react-component', path: 'study/assets/Trial.tsx', response: [],
+        },
+      },
+      components: {},
+      factors: tupleFactors,
+      sequence: {
+        type: 'factor', id: 'trials', factor: 'trials', components: 'trial',
+      },
+    };
+    const result = compileFactorBlocks(config.sequence, config);
+    const component = Object.values(result.components)[0];
+
+    expect(component).toMatchObject({
+      parameters: {
+        stimulusId: 'trial-1',
+        guardrail: 'super_data',
+        initialSelection: ['A', 'B'],
+        caption: 'Selected A and B',
+      },
+    });
+  });
+
+  test('keeps and removes factor conditions by condition or explicit items', () => {
+    const trials = [
+      { stimulusId: 'viral-a', studyArm: 'viral-a', guardrail: 'none' },
+      { stimulusId: 'viral-b', studyArm: 'viral-b', guardrail: 'none' },
+      { stimulusId: 'stock-a', studyArm: 'stock-a', guardrail: 'summary' },
+    ];
+    const trialFactors: NonNullable<StudyConfig['factors']> = { trials };
+
+    expect(resolveFactorConditions({
+      action: 'keep', factor: 'trials', condition: { studyArm: 'viral-a' },
+    }, trialFactors)).toEqual([trials[0]]);
+    expect(resolveFactorConditions({
+      action: 'remove', factor: 'trials', condition: { guardrail: 'none' },
+    }, trialFactors)).toEqual([trials[2]]);
+    expect(resolveFactorConditions({
+      action: 'keep', factor: 'trials', items: [trials[1]],
+    }, trialFactors)).toEqual([trials[1]]);
+    expect(resolveFactorConditions({
+      action: 'remove', factor: 'trials', items: [trials[1]],
+    }, trialFactors)).toEqual([trials[0], trials[2]]);
+  });
+
+  test('validates keep and remove selection inputs', () => {
+    const errors: ParserErrorWarning[] = [];
+    const trialFactors: NonNullable<StudyConfig['factors']> = {
+      trials: [{ stimulusId: 'trial-1', studyArm: 'viral-a' }],
+    };
+
+    resolveFactorConditions({
+      action: 'keep', factor: 'trials', condition: { studyArm: 'viral-a' }, items: [{ stimulusId: 'trial-1', studyArm: 'viral-a' }],
+    }, trialFactors, errors);
+    resolveFactorConditions({
+      action: 'remove', factor: 'trials', items: [],
+    }, trialFactors, errors);
+
+    expect(errors.map((error) => error.message)).toEqual(expect.arrayContaining([
+      'Keep factor `inline` requires exactly one non-empty condition or items list',
+      'Remove factor `inline` requires exactly one non-empty condition or items list',
+    ]));
+  });
+
+  test('reports invalid zip lengths and cycles', () => {
+    const errors: ParserErrorWarning[] = [];
+    const warnings: ParserErrorWarning[] = [];
+    expect(resolveFactorConditions('badZip', {
+      short: [1],
+      long: [1, 2],
+      badZip: { action: 'zip', factors: ['short', 'long'] },
+    }, errors, [], 'badZip', warnings)).toEqual([{ short: 1, long: 1 }]);
+    resolveFactorConditions('a', {
+      a: { action: 'cross', factors: ['b'] },
+      b: { action: 'cross', factors: ['a'] },
+    }, errors);
+
+    expect(errors.map((error) => error.message)).toContain('Circular factor reference: a -> b -> a');
+    expect(warnings.map((warning) => warning.message)).toContain(
+      'Zip factor `badZip` received inputs with different lengths (1, 2); stopping after the shortest input',
+    );
+  });
+
+  test('compiles factor components into one flat sequence', () => {
+    const config: StudyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: '', version: '', authors: [], date: '', description: '', organizations: [],
+      },
+      uiConfig: {
+        logoPath: '', contactEmail: '', withProgressBar: true, withSidebar: true,
+      },
+      baseComponents: {
+        trial: {
+          type: 'react-component',
+          path: 'study/assets/Trial.tsx',
+          response: [],
+        },
+        confidence: {
+          type: 'markdown',
+          path: 'study/assets/confidence-{{r1}}.md',
+          response: [],
+        },
+      },
+      components: {},
+      factors,
+      sequence: {
+        type: 'factor',
+        id: 'test',
+        factor: 'crossed',
+        components: ['trial', 'confidence'],
+        order: 'random',
+      },
+    };
+
+    const result = compileFactorBlocks(config.sequence, config);
+
+    expect(isComponentBlock(result.sequence) && result.sequence.components).toEqual([
+      'test__r1=0.3__delta=0.03__trial',
+      'test__r1=0.3__delta=0.03__confidence',
+      'test__r1=0.3__delta=0.18__trial',
+      'test__r1=0.3__delta=0.18__confidence',
+      'test__r1=0.6__delta=0.03__trial',
+      'test__r1=0.6__delta=0.03__confidence',
+      'test__r1=0.6__delta=0.18__trial',
+      'test__r1=0.6__delta=0.18__confidence',
+    ]);
+    expect(result.components['test__r1=0.3__delta=0.03__confidence'])
+      .toMatchObject({ path: 'study/assets/confidence-0.3.md' });
+    expect(isComponentBlock(result.sequence) && result.sequence.order).toBe('random');
+    expect(createFactorConditionId('training', {
+      r1Training: 0.6,
+      r2Training: 0.9,
+    })).toBe('training__r1Training=0.6__r2Training=0.9');
+    expect(createFactorConditionId('stroop', {
+      color_0: 'RED',
+      color_1: 'BLUE',
+    })).toBe('stroop__color_0=%22RED%22__color_1=%22BLUE%22');
+  });
+
+  test('creates distinct components for factor values with identical string representations', () => {
+    const config: StudyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: '', version: '', authors: [], date: '', description: '', organizations: [],
+      },
+      uiConfig: {
+        logoPath: '', contactEmail: '', withProgressBar: true, withSidebar: true,
+      },
+      baseComponents: {
+        trial: { type: 'questionnaire', response: [] },
+      },
+      components: {},
+      factors: {
+        mixed: [1, '1', { mixed: ['a', 'b'] }, { mixed: 'a,b' }],
+      },
+      sequence: {
+        type: 'factor', id: 'typedValues', factor: 'mixed', components: 'trial',
+      },
+    };
+
+    const result = compileFactorBlocks(config.sequence, config);
+
+    expect(Object.keys(result.components)).toHaveLength(4);
+  });
+});
 
 describe('Library Macro Expansion', () => {
   const mockLibraryData: Record<string, LibraryConfig> = {
@@ -364,6 +674,45 @@ describe('Library Macro Expansion', () => {
             '$testLib.components.component2',
           ]);
         }
+      }
+    });
+
+    test('namespaces components and interruptions in an imported factor sequence', () => {
+      const libraryWithFactorSequence: Record<string, LibraryConfig> = {
+        testLib: {
+          ...mockLibraryData.testLib,
+          sequences: {
+            factorSequence: {
+              type: 'factor',
+              id: 'factorSequence',
+              factor: 'levels',
+              components: ['component1', '$testLib.co.component2'],
+              interruptions: [{
+                spacing: 1,
+                firstLocation: 1,
+                components: ['component2'],
+              }],
+            },
+          },
+        },
+      };
+      const sequence: StudyConfig['sequence'] = {
+        order: 'fixed',
+        components: ['$testLib.se.factorSequence'],
+      };
+
+      const result = expandLibrarySequences(sequence, libraryWithFactorSequence);
+      const factorSequence = isComponentBlock(result) ? result.components[0] : undefined;
+
+      expect(typeof factorSequence === 'object' && isFactorBlock(factorSequence)).toBe(true);
+      if (typeof factorSequence === 'object' && isFactorBlock(factorSequence)) {
+        expect(factorSequence.components).toEqual([
+          '$testLib.components.component1',
+          '$testLib.components.component2',
+        ]);
+        expect(factorSequence.interruptions?.[0].components).toEqual([
+          '$testLib.components.component2',
+        ]);
       }
     });
   });

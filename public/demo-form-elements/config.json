@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.4/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Form Elements Demo",
     "version": "pilot",
@@ -148,6 +148,12 @@
           ],
           "minSelections": 2,
           "maxSelections": 3
+        },
+        {
+          "id": "q-country-dropdown",
+          "prompt": "Country dropdown example",
+          "type": "dropdown",
+          "options": "countries"
         },
         {
           "id": "q-checkbox",
@@ -303,6 +309,183 @@
         }
       ]
     },
+    "Text Validation": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "text-validation-title",
+          "type": "textOnly",
+          "prompt": "# Text Validation\n\nThis page demonstrates validation rules for short and long text responses. Enter a value that satisfies each instruction, then continue to see how the rules are validated. For help writing regular expression patterns, see the [MDN regular expression syntax cheat sheet](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet).",
+          "restartEnumeration": true
+        },
+        {
+          "id": "text-validation-regex",
+          "type": "shortText",
+          "prompt": "Enter a code with three uppercase letters, a hyphen, and three digits.",
+          "secondaryText": "For example: ABC-123. This response uses matchesRegex with the pattern ^[A-Z]{3}-\\d{3}$.",
+          "placeholder": "ABC-123",
+          "textValidation": [
+            {
+              "type": "matchesRegex",
+              "value": "^[A-Z]{3}-\\d{3}$"
+            }
+          ]
+        },
+        {
+          "id": "text-validation-contains",
+          "type": "longText",
+          "prompt": "Please give us feedback on ReVISit.",
+          "secondaryText": "Your response must contain the exact text “ReVISit” and must not contain the exact lowercase text “test”. Both validations are case-sensitive.",
+          "placeholder": "Share your feedback...",
+          "textValidation": [
+            {
+              "type": "contains",
+              "value": "ReVISit"
+            },
+            {
+              "type": "doesNotContain",
+              "value": "test"
+            }
+          ]
+        },
+        {
+          "id": "text-validation-equals",
+          "type": "shortText",
+          "prompt": "Enter exactly “ReVISit”.",
+          "secondaryText": "This response uses equals and is case-sensitive.",
+          "placeholder": "ReVISit",
+          "textValidation": [
+            {
+              "type": "equals",
+              "value": "ReVISit"
+            }
+          ]
+        },
+        {
+          "id": "length-validation-title",
+          "type": "textOnly",
+          "prompt": "## Length Validation\n\nShort and long text responses can require a minimum and maximum number of characters or words.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "character-length-short",
+          "type": "shortText",
+          "prompt": "Enter between 3 and 10 characters.",
+          "secondaryText": "This short text response uses minCharLength: 3 and maxCharLength: 10.",
+          "placeholder": "3–10 characters",
+          "minCharLength": 3,
+          "maxCharLength": 10
+        },
+        {
+          "id": "word-length-long",
+          "type": "longText",
+          "prompt": "Enter between four and ten words.",
+          "secondaryText": "This long text response uses minWordLength: 4 and maxWordLength: 10.",
+          "placeholder": "4–10 words",
+          "minWordLength": 4,
+          "maxWordLength": 10
+        },
+        {
+          "id": "built-in-validation-title",
+          "type": "textOnly",
+          "prompt": "## Built-in Validation\n\nShort text responses can use built-in validation to ensure the entered data is in the correct format.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "built-in-validation-email",
+          "type": "shortText",
+          "prompt": "Enter an email address.",
+          "secondaryText": "For example: test@revisit.dev.",
+          "placeholder": "test@revisit.dev",
+          "builtInValidation": "email"
+        },
+        {
+          "id": "built-in-validation-phone-number",
+          "type": "shortText",
+          "prompt": "Enter an international phone number containing 7 to 15 digits.",
+          "secondaryText": "It may begin with + and use hyphens between digits. For example: +800-0000-0000 or 8000000000.",
+          "placeholder": "+800-0000-0000",
+          "builtInValidation": "phoneNumber"
+        },
+        {
+          "id": "built-in-validation-us-phone-number",
+          "type": "shortText",
+          "prompt": "Enter a 10-digit US phone number with two hyphens.",
+          "secondaryText": "For example: 800-000-0000.",
+          "placeholder": "800-000-0000",
+          "builtInValidation": "usPhoneNumber"
+        },
+        {
+          "id": "built-in-validation-url",
+          "type": "shortText",
+          "prompt": "Enter an HTTP or HTTPS URL.",
+          "secondaryText": "For example: https://revisit.dev.",
+          "placeholder": "https://revisit.dev",
+          "builtInValidation": "url"
+        },
+        {
+          "id": "date-time-response-title",
+          "type": "textOnly",
+          "prompt": "## Date and Time Responses\n\nDate and time responses use dedicated inputs and store their values as strings. The examples below demonstrate each date and time option separately.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "date-range-response",
+          "type": "date",
+          "prompt": "Date within a range.",
+          "secondaryText": "This response uses min: 06/01/2026 and max: 08/30/2026.",
+          "min": "06/01/2026",
+          "max": "08/30/2026"
+        },
+        {
+          "id": "month-picker-response",
+          "type": "date",
+          "options": "month",
+          "prompt": "Month input.",
+          "default": "06/2026",
+          "min": "01/2026",
+          "max": "12/2026"
+        },
+        {
+          "id": "year-picker-response",
+          "type": "date",
+          "options": "year",
+          "prompt": "Year input.",
+          "default": "2026",
+          "min": "2000",
+          "max": "2030"
+        },
+        {
+          "id": "time-standard-response",
+          "type": "time",
+          "prompt": "Time without seconds.",
+          "secondaryText": "By default, time responses use the 24-hour HH:mm format."
+        },
+        {
+          "id": "time-12-hour-response",
+          "type": "time",
+          "prompt": "Time in 12-hour format.",
+          "secondaryText": "This response uses format: 12h.",
+          "format": "12h",
+          "default": "14:28"
+        },
+        {
+          "id": "time-range-response",
+          "type": "time",
+          "prompt": "Time within a range.",
+          "secondaryText": "This response uses min: 09:00 and max: 18:00.",
+          "min": "09:00",
+          "max": "18:00"
+        },
+        {
+          "id": "time-seconds-response",
+          "type": "time",
+          "prompt": "Time with seconds.",
+          "secondaryText": "This response uses withSeconds: true and the HH:mm:ss format.",
+          "withSeconds": true
+        }
+      ]
+    },
     "Default Values": {
       "type": "questionnaire",
       "response": [
@@ -331,6 +514,37 @@
           "type": "longText",
           "prompt": "Long text default",
           "default": "Prefilled long text value for local testing."
+        },
+        {
+          "id": "default-date",
+          "type": "date",
+          "prompt": "Date default",
+          "default": "06/24/2026",
+          "min": "06/01/2026",
+          "max": "06/30/2026"
+        },
+        {
+          "id": "default-month",
+          "type": "date",
+          "options": "month",
+          "prompt": "Month default",
+          "default": "06/2026"
+        },
+        {
+          "id": "default-year",
+          "type": "date",
+          "options": "year",
+          "prompt": "Year default",
+          "default": "2026"
+        },
+        {
+          "id": "default-time",
+          "type": "time",
+          "prompt": "Time default",
+          "default": "14:28:30",
+          "min": "09:00:00",
+          "max": "18:00:00",
+          "withSeconds": true
         },
         {
           "id": "default-likert",
@@ -380,6 +594,13 @@
             }
           ],
           "default": "pie"
+        },
+        {
+          "id": "default-dropdown-country",
+          "type": "dropdown",
+          "prompt": "Country dropdown default",
+          "options": "countries",
+          "default": "US"
         },
         {
           "id": "default-dropdown-multiselect",
@@ -995,6 +1216,7 @@
     "components": [
       "Introduction",
       "Form Elements",
+      "Text Validation",
       "Default Values",
       "Custom Response",
       "Randomizing Options",

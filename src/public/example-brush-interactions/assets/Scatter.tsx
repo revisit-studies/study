@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useResizeObserver } from '@mantine/hooks';
-import { useEffect, useMemo, useState } from 'react';
+import {
+  useCallback, useEffect, useMemo, useRef, useState,
+} from 'react';
 import ColumnTable from 'arquero/dist/types/table/column-table';
 import * as d3 from 'd3';
 import {
@@ -37,10 +39,15 @@ export function Scatter({
         setBrushedSpace: (brush: [[number | null, number | null], [number | null, number | null]], xScale: any, yScale: any, selType: 'drag' | 'handle' | 'clear' | null, ids?: string[]) => void,
         brushType: BrushNames
     }) {
-  const [ref, { height: originalHeight, width: originalWidth }] = useResizeObserver();
+  const [resizeRef, { height: originalHeight, width: originalWidth }] = useResizeObserver();
+  const scatterRef = useRef<SVGSVGElement | null>(null);
+  const ref = useCallback((element: SVGSVGElement | null) => {
+    resizeRef(element);
+    scatterRef.current = element;
+  }, [resizeRef]);
 
-  const [brushXRef] = useResizeObserver();
-  const [brushYRef] = useResizeObserver();
+  const brushXRef = useRef<SVGGElement | null>(null);
+  const brushYRef = useRef<SVGGElement | null>(null);
 
   const [isPaintbrushSelect, setIsPaintbrushSelect] = useState<boolean>(true);
 
@@ -113,19 +120,19 @@ export function Scatter({
       });
 
       if (brushXRef.current && brushYRef.current) {
-        d3.select(brushYRef.current).call(brushY);
-        d3.select(brushXRef.current).call(brushX);
+        d3.select(brushYRef.current!).call(brushY);
+        d3.select(brushXRef.current!).call(brushX);
 
         if (!brushState.hasBrush) {
-          d3.select(brushYRef.current).call(brushY.move, [yScale(yMax), yScale(yMin)]);
-          d3.select(brushXRef.current).call(brushX.move, [xScale(new Date('2015-01-02')), xScale(new Date('2015-12-31'))]);
+          d3.select(brushYRef.current!).call(brushY.move, [yScale(yMax), yScale(yMin)]);
+          d3.select(brushXRef.current!).call(brushX.move, [xScale(new Date('2015-01-02')), xScale(new Date('2015-12-31'))]);
           setBrushedSpace([[xScale(new Date('2015-01-02')), yScale(yMax)], [xScale(new Date('2015-12-31')), yScale(yMin)]], xScale, yScale, 'drag');
         }
       }
 
       return () => {
-        d3.select(brushYRef.current).call(brushY.move, [yScale(yMax), yScale(yMin)]);
-        d3.select(brushXRef.current).call(brushX.move, [xScale(new Date('2015-01-02')), xScale(new Date('2015-12-31'))]);
+        d3.select(brushYRef.current!).call(brushY.move, [yScale(yMax), yScale(yMin)]);
+        d3.select(brushXRef.current!).call(brushX.move, [xScale(new Date('2015-01-02')), xScale(new Date('2015-12-31'))]);
         setBrushedSpace([[xScale(new Date('2015-01-02')), yScale(yMax)], [xScale(new Date('2015-12-31')), yScale(yMin)]], xScale, yScale, 'clear');
       };
     }
@@ -136,15 +143,15 @@ export function Scatter({
         }
       }).on('end', (currData) => {
         if (currData.selection === null && currData.sourceEvent !== undefined) {
-          d3.select(ref.current).call(brush.move, null);
+          d3.select(scatterRef.current! as unknown as SVGGElement).call(brush.move, null);
           setFilteredTable(null);
         }
       });
 
-      d3.select(ref.current).call(brush);
+      d3.select(scatterRef.current! as unknown as SVGGElement).call(brush);
 
       return () => {
-        d3.select(ref.current).call(brush.move, null);
+        d3.select(scatterRef.current! as unknown as SVGGElement).call(brush.move, null);
         setBrushedSpace([[null, null], [null, null]], xScale, yScale, 'clear');
       };
     }

@@ -38,9 +38,6 @@ export function createMockStudyConfig(overrides: Partial<StudyConfig> = {}): Stu
       ...overrides.uiConfig,
     },
     components: overrides.components ?? baseConfig.components,
-    sequence: {
-      ...baseConfig.sequence,
-      ...overrides.sequence,
-    },
+    sequence: overrides.sequence ?? baseConfig.sequence,
   };
 }

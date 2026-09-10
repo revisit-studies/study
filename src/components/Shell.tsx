@@ -41,6 +41,7 @@ import {
   resolveParticipantConditions,
 } from '../utils/handleConditionLogic';
 import { StartupErrorScreen } from './StartupErrorScreen';
+import { materializeParticipantConfig } from '../parser/libraryParser';
 
 type StartupStorageStatus = Pick<StorageEngine, 'getEngine' | 'isConnected'>;
 
@@ -181,7 +182,6 @@ function createEmptyParticipantMetadata(): ParticipantMetadata {
     ip: '',
   };
 }
-
 export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   // Pull study config
   const routeStudyId = useStudyId();
@@ -230,7 +230,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
                 setActiveConfig(config);
               }
 
-              const sequenceArray = await generateSequenceArray(config);
+              const sequenceArray = await generateSequenceArray(config, config.warnings);
               if (!cancelled) {
                 window.parent.postMessage({ type: 'revisitWidget/SEQUENCE_ARRAY', payload: sequenceArray }, '*');
               }
@@ -308,7 +308,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
         const sequenceArray = await storageEngine.getSequenceArray();
 
         if (!sequenceArray) {
-          const generatedSequenceArray = await generateSequenceArray(activeConfig);
+          const generatedSequenceArray = await generateSequenceArray(activeConfig, activeConfig.warnings);
 
           await storageEngine.setSequenceArray(generatedSequenceArray);
         }
@@ -359,11 +359,16 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           allowUrlOverride: resolvedModes.developmentModeEnabled,
         });
         const filteredParticipantSequence = filterSequenceByCondition(participantSession.sequence, resolvedCondition);
-
+        // Resolve participant-global templates only after loading the participant's persisted
+        // sequence, while keeping the canonical config used for hashing unchanged.
+        const runtimeConfig = materializeParticipantConfig(
+          participantConfig,
+          filteredParticipantSequence.parameters || {},
+        );
         // Initialize the redux stores
         const newStore = await studyStoreCreator(
           canonicalStudyId,
-          participantConfig,
+          runtimeConfig,
           filteredParticipantSequence,
           participantSession.metadata,
           participantSession.answers,
@@ -441,17 +446,21 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
         try {
           // Preserve the existing disconnected-storage and participant alert recovery paths.
-          const generatedSequences = await generateSequenceArray(activeConfig);
+          const generatedSequences = await generateSequenceArray(activeConfig, activeConfig.warnings);
 
           const matchingSequence = generatedSequences[0];
           const fallbackSequence = filterSequenceByCondition(
             matchingSequence,
             studyCondition,
           );
+          const fallbackConfig = materializeParticipantConfig(
+            activeConfig,
+            fallbackSequence.parameters || {},
+          );
 
           const emptyStore = await studyStoreCreator(
             canonicalStudyId,
-            activeConfig,
+            fallbackConfig,
             fallbackSequence,
             createEmptyParticipantMetadata(),
             {},

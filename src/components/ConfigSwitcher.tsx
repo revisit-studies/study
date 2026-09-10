@@ -23,7 +23,18 @@ import { useStudyRecordings } from '../utils/useStudyRecordings';
 import { useDeviceRules } from '../utils/useDeviceRules';
 import { getUnmetDeviceRestrictionLines, getUnmetDeviceRestrictionTooltip } from './interface/DeviceRestrictionString';
 
-function StudyCard({
+export const FACTOR_DEMO_CONFIG_NAMES = new Set([
+  'demo-factors',
+  'demo-markdown-factors',
+  'demo-stroop-factors',
+  'demo-max-study2',
+  'demo-ffl-study',
+  'demo-dsf-study',
+  'demo-calvi-study',
+  'incentives-corr',
+]);
+
+function ValidStudyCard({
   configName,
   config,
   url,
@@ -135,91 +146,79 @@ function StudyCard({
 
   return (
     <Card key={configName} shadow="sm" radius="md" my="sm" withBorder>
-      {config.errors.length > 0
-        ? (
-          <>
-            <Text size="md" fw="bold">{configName}</Text>
-            <ErrorLoadingConfig issues={config.errors} type="error" />
-            {config.warnings.length > 0 && (
-              <ErrorLoadingConfig issues={config.warnings} type="warning" />
-            )}
-          </>
-        )
-        : (
-          <>
-            <Flex direction="row" justify="space-between">
-              <Text fw="bold">
-                {config.studyMetadata.title}
-              </Text>
-            </Flex>
-            <Text c="dimmed">
-              <Text span fw={500}>Authors: </Text>
-              {config.studyMetadata.authors.join(', ')}
-            </Text>
-            <Text c="dimmed">{config.studyMetadata.description}</Text>
-            <Text c="dimmed" ta="right" style={{ paddingRight: 5 }}>
-              <Anchor
-                target="_blank"
-                onClick={(e) => e.stopPropagation()}
-                href={`${import.meta.env.VITE_REPO_URL}${url}`}
-              >
-                View source:
-                {' '}
-                {url}
-                <IconExternalLink style={{
-                  width: rem(18), height: rem(18), marginLeft: rem(2), marginBottom: rem(-3),
-                }}
-                />
-              </Anchor>
-            </Text>
+      <Flex direction="row" justify="space-between">
+        <Text fw="bold">
+          {config.studyMetadata.title}
+        </Text>
+      </Flex>
+      <Text c="dimmed">
+        <Text span fw={500}>Authors: </Text>
+        {config.studyMetadata.authors.join(', ')}
+      </Text>
+      <Text c="dimmed">{config.studyMetadata.description}</Text>
+      <Text c="dimmed" ta="right" style={{ paddingRight: 5 }}>
+        <Anchor
+          target="_blank"
+          onClick={(e) => e.stopPropagation()}
+          href={`${import.meta.env.VITE_REPO_URL}${url}`}
+        >
+          View source:
+          {' '}
+          {url}
+          <IconExternalLink style={{
+            width: rem(18), height: rem(18), marginLeft: rem(2), marginBottom: rem(-3),
+          }}
+          />
+        </Anchor>
+      </Text>
 
-            {config.warnings.length > 0 && (
-              <ErrorLoadingConfig issues={config.warnings} type="warning" />
-            )}
+      {config.warnings.length > 0 && (
+      <ErrorLoadingConfig issues={config.warnings} type="warning" />
+      )}
 
-            <Divider my="md" />
+      <Divider my="md" />
 
-            <Flex direction="row" gap="sm">
-              <Text fw="bold" size="sm" opacity={0.7}>
-                Study Status:
-                {' '}
-                {currentMode}
-              </Text>
-              {studyStatusAndTiming
+      <Flex direction="row" gap="sm">
+        <Text fw="bold" size="sm" opacity={0.7}>
+          Study Status:
+          {' '}
+          {currentMode}
+        </Text>
+        {studyStatusAndTiming
                 && <ParticipantStatusBadges completed={studyStatusAndTiming.completed} inProgress={studyStatusAndTiming.inProgress} rejected={studyStatusAndTiming.rejected} />}
-              <Flex ml="auto" gap="sm" opacity={0.7}>
-                {hasAudioRecording && (
-                  <Tooltip label="Audio recording enabled" withinPortal position="bottom">
-                    <IconMicrophone size={16} color="orange" />
-                  </Tooltip>
-                )}
-                {hasScreenRecording && (
-                  <Tooltip label="Screen recording enabled" withinPortal position="bottom">
-                    <IconDeviceDesktop size={16} color="orange" />
-                  </Tooltip>
-                )}
-                {modes?.developmentModeEnabled
-                  ? <Tooltip label="Development mode enabled" withinPortal position="bottom"><IconSchema size={16} color="green" /></Tooltip>
-                  : <Tooltip label="Development mode disabled" withinPortal position="bottom"><IconSchemaOff size={16} color="red" /></Tooltip>}
-                {modes?.dataSharingEnabled
-                  ? <Tooltip label="Data sharing enabled" withinPortal position="bottom"><IconGraph size={16} color="green" /></Tooltip>
-                  : <Tooltip label="Data sharing disabled" withinPortal position="bottom"><IconGraphOff size={16} color="red" /></Tooltip>}
-                {storageEngine?.getEngine() === 'localStorage'
-                  ? <Tooltip label="Local storage enabled" withinPortal position="bottom"><IconDatabase size={16} color="green" /></Tooltip>
-                  : storageEngine?.getEngine() === 'firebase'
-                    ? <Tooltip label="Firebase enabled" withinPortal position="bottom"><IconBrandFirebase size={16} color="green" /></Tooltip>
-                    : storageEngine?.getEngine() === 'supabase'
-                      ? <Tooltip label="Supabase enabled" withinPortal position="bottom"><IconBrandSupabase size={16} color="green" /></Tooltip>
-                      : <Tooltip label="Unknown storage engine enabled" withinPortal position="bottom"><IconDatabase size={16} color="red" /></Tooltip>}
-                {unmetRestrictions.length > 0 && (
-                <Tooltip label={restrictionsTooltip} multiline style={{ whiteSpace: 'pre-line' }} withinPortal position="bottom">
-                  <IconBan size={16} color="red" />
-                </Tooltip>
-                )}
-              </Flex>
-            </Flex>
+        <Flex ml="auto" gap="sm" opacity={0.7}>
+          {hasAudioRecording && (
+          <Tooltip label="Audio recording enabled" withinPortal position="bottom">
+            <IconMicrophone size={16} color="orange" />
+          </Tooltip>
+          )}
+          {hasScreenRecording && (
+          <Tooltip label="Screen recording enabled" withinPortal position="bottom">
+            <IconDeviceDesktop size={16} color="orange" />
+          </Tooltip>
+          )}
+          {modes?.developmentModeEnabled
+            ? <Tooltip label="Development mode enabled" withinPortal position="bottom"><IconSchema size={16} color="green" /></Tooltip>
+            : <Tooltip label="Development mode disabled" withinPortal position="bottom"><IconSchemaOff size={16} color="red" /></Tooltip>}
+          {modes?.dataSharingEnabled
+            ? <Tooltip label="Data sharing enabled" withinPortal position="bottom"><IconGraph size={16} color="green" /></Tooltip>
+            : <Tooltip label="Data sharing disabled" withinPortal position="bottom"><IconGraphOff size={16} color="red" /></Tooltip>}
+          {storageEngine?.getEngine() === 'localStorage'
+            ? <Tooltip label="Local storage enabled" withinPortal position="bottom"><IconDatabase size={16} color="green" /></Tooltip>
+            : storageEngine?.getEngine() === 'firebase'
+              ? <Tooltip label="Firebase enabled" withinPortal position="bottom"><IconBrandFirebase size={16} color="green" /></Tooltip>
+              : storageEngine?.getEngine() === 'supabase'
+                ? <Tooltip label="Supabase enabled" withinPortal position="bottom"><IconBrandSupabase size={16} color="green" /></Tooltip>
+                : <Tooltip label="Unknown storage engine enabled" withinPortal position="bottom"><IconDatabase size={16} color="red" /></Tooltip>}
+          {unmetRestrictions.length > 0 && (
+          <Tooltip label={restrictionsTooltip} multiline style={{ whiteSpace: 'pre-line' }} withinPortal position="bottom">
+            <IconBan size={16} color="red" />
+          </Tooltip>
+          )}
+        </Flex>
+      </Flex>
 
-            {minTime && maxTime
+      {minTime && maxTime
               && (
                 <Text c="dimmed" mt={4}>
                   Activity:
@@ -232,78 +231,102 @@ function StudyCard({
                 </Text>
               )}
 
-            {conditions.length > 0 && (
-              <Flex direction="row" align="center" gap="xs" mt="sm" wrap="wrap">
-                {conditions.map((condition) => {
-                  const conditionUrl = new URL(`${PREFIX}${url}`, window.location.origin);
-                  conditionUrl.searchParams.set('condition', condition);
-                  const conditionUrlString = conditionUrl.toString();
+      {conditions.length > 0 && (
+      <Flex direction="row" align="center" gap="xs" mt="sm" wrap="wrap">
+        {conditions.map((condition) => {
+          const conditionUrl = new URL(`${PREFIX}${url}`, window.location.origin);
+          conditionUrl.searchParams.set('condition', condition);
+          const conditionUrlString = conditionUrl.toString();
 
-                  return (
-                    <CopyButton key={condition} value={conditionUrlString}>
-                      {({ copied, copy }) => (
-                        <Tooltip label={copied ? 'Copied!' : 'Copy URL'}>
-                          <Badge
-                            size="sm"
-                            variant="light"
-                            rightSection={
+          return (
+            <CopyButton key={condition} value={conditionUrlString}>
+              {({ copied, copy }) => (
+                <Tooltip label={copied ? 'Copied!' : 'Copy URL'}>
+                  <Badge
+                    size="sm"
+                    variant="light"
+                    rightSection={
                               copied ? <IconCheck size={12} /> : <IconCopy size={12} />
                             }
-                            onClick={copy}
-                            style={{ cursor: 'pointer' }}
-                          >
-                            {condition}
-                          </Badge>
-                        </Tooltip>
-                      )}
-                    </CopyButton>
-                  );
-                })}
-              </Flex>
-            )}
-
-            <Flex direction="row" align="end" gap="sm" mt="md" wrap="wrap">
-              {conditions.length > 0 && (
-                <MultiSelect
-                  value={selectedConditions}
-                  data={conditionOptions}
-                  w={260}
-                  onChange={(value) => {
-                    if (value.length === 0) {
-                      setSelectedConditions(['default']);
-                      return;
-                    }
-
-                    if (value.includes('default') && value.length > 1) {
-                      setSelectedConditions(value.filter((condition) => condition !== 'default'));
-                      return;
-                    }
-
-                    setSelectedConditions(value);
-                  }}
-                />
+                    onClick={copy}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {condition}
+                  </Badge>
+                </Tooltip>
               )}
-              <Button
-                leftSection={<IconChartHistogram />}
-                style={{ marginLeft: 'auto' }}
-                variant="default"
-                component="a"
-                href={`${PREFIX}analysis/stats/${url}`}
-              >
-                Analyze & Manage Study
-              </Button>
-              <Button
-                leftSection={<IconListCheck />}
-                component="a"
-                href={studyUrl}
-              >
-                Go to Study
-              </Button>
-            </Flex>
-          </>
+            </CopyButton>
+          );
+        })}
+      </Flex>
+      )}
+
+      <Flex direction="row" align="end" gap="sm" mt="md" wrap="wrap">
+        {conditions.length > 0 && (
+        <MultiSelect
+          value={selectedConditions}
+          data={conditionOptions}
+          w={260}
+          onChange={(value) => {
+            if (value.length === 0) {
+              setSelectedConditions(['default']);
+              return;
+            }
+
+            if (value.includes('default') && value.length > 1) {
+              setSelectedConditions(value.filter((condition) => condition !== 'default'));
+              return;
+            }
+
+            setSelectedConditions(value);
+          }}
+        />
         )}
+        <Button
+          leftSection={<IconChartHistogram />}
+          style={{ marginLeft: 'auto' }}
+          variant="default"
+          component="a"
+          href={`${PREFIX}analysis/stats/${url}`}
+        >
+          Analyze & Manage Study
+        </Button>
+        <Button
+          leftSection={<IconListCheck />}
+          component="a"
+          href={studyUrl}
+        >
+          Go to Study
+        </Button>
+      </Flex>
     </Card>
   );
+}
+
+function StudyCard({
+  configName,
+  config,
+  url,
+  modes,
+}: {
+  configName: string;
+  config: ParsedConfig<StudyConfig>;
+  url: string;
+  modes: Record<REVISIT_MODE, boolean> | null;
+}) {
+  if (config.errors.length > 0) {
+    return (
+      <Card key={configName} shadow="sm" radius="md" my="sm" withBorder>
+        <Text size="md" fw="bold">{configName}</Text>
+        <ErrorLoadingConfig issues={config.errors} type="error" />
+        {config.warnings.length > 0 && (
+          <ErrorLoadingConfig issues={config.warnings} type="warning" />
+        )}
+      </Card>
+    );
+  }
+
+  return <ValidStudyCard configName={configName} config={config} url={url} modes={modes} />;
 }
 
 function StudyCards({
@@ -385,23 +408,40 @@ export function ConfigSwitcher({
   const isLoadingStudies = isLoadingVisibility || isLoadingStudyConfigs;
   const configsFiltered = useMemo(() => configsList.filter((configName) => studyVisibility[configName] || user.isAdmin), [configsList, studyVisibility, user]);
 
-  const demos = useMemo(() => configsFiltered.filter((configName) => configName.startsWith('demo-')), [configsFiltered]);
+  const factorDemos = useMemo(
+    () => configsFiltered.filter((configName) => FACTOR_DEMO_CONFIG_NAMES.has(configName)),
+    [configsFiltered],
+  );
+  const demos = useMemo(
+    () => configsFiltered.filter((configName) => (
+      configName.startsWith('demo-') && !FACTOR_DEMO_CONFIG_NAMES.has(configName)
+    )),
+    [configsFiltered],
+  );
   const tutorials = useMemo(() => configsFiltered.filter((configName) => configName.startsWith('tutorial')), [configsFiltered]);
   const examples = useMemo(() => configsFiltered.filter((configName) => configName.startsWith('example-')), [configsFiltered]);
   const tests = useMemo(() => configsFiltered.filter((configName) => configName.startsWith('test-')), [configsFiltered]);
   const libraries = useMemo(() => configsFiltered.filter((configName) => configName.startsWith('library-')), [configsFiltered]);
-  const others = useMemo(() => configsFiltered.filter((configName) => !configName.startsWith('demo-') && !configName.startsWith('tutorial') && !configName.startsWith('example-') && !configName.startsWith('test-') && !configName.startsWith('library-')), [configsFiltered]);
+  const others = useMemo(() => configsFiltered.filter((configName) => (
+    !FACTOR_DEMO_CONFIG_NAMES.has(configName)
+    && !configName.startsWith('demo-')
+    && !configName.startsWith('tutorial')
+    && !configName.startsWith('example-')
+    && !configName.startsWith('test-')
+    && !configName.startsWith('library-')
+  )), [configsFiltered]);
 
   const [searchParams] = useSearchParams();
   const firstTab = useMemo(() => {
     if (others.length > 0) return 'Others';
     if (demos.length > 0) return 'Demos';
+    if (factorDemos.length > 0) return 'Factor-demos';
     if (examples.length > 0) return 'Examples';
     if (tutorials.length > 0) return 'Tutorials';
     if (tests.length > 0) return 'Tests';
     if (libraries.length > 0) return 'Libraries';
     return 'Demos';
-  }, [others, demos, examples, tutorials, tests, libraries]);
+  }, [others, factorDemos, demos, examples, tutorials, tests, libraries]);
   const tab = useMemo(() => searchParams.get('tab') || firstTab, [firstTab, searchParams]);
   const navigate = useNavigate();
 
@@ -421,6 +461,7 @@ export function ConfigSwitcher({
             <Tabs variant="outline" value={null} mb="md">
               <Tabs.List>
                 <Tabs.Tab value="demos" disabled>Demo Studies</Tabs.Tab>
+                <Tabs.Tab value="factor-demos" disabled>Factor-demos</Tabs.Tab>
                 <Tabs.Tab value="examples" disabled>Example Studies</Tabs.Tab>
                 <Tabs.Tab value="tutorials" disabled>Tutorials</Tabs.Tab>
                 <Tabs.Tab value="tests" disabled>Tests</Tabs.Tab>
@@ -471,6 +512,9 @@ export function ConfigSwitcher({
                 {demos.length > 0 && (
                   <Tabs.Tab value="Demos">Demo Studies</Tabs.Tab>
                 )}
+                {factorDemos.length > 0 && (
+                  <Tabs.Tab value="Factor-demos">Factor-demos</Tabs.Tab>
+                )}
                 {examples.length > 0 && (
                   <Tabs.Tab value="Examples">Example Studies</Tabs.Tab>
                 )}
@@ -495,6 +539,13 @@ export function ConfigSwitcher({
                 <Tabs.Panel value="Demos">
                   <Text c="dimmed" mt="sm">These studies show off individual features of the reVISit platform.</Text>
                   <StudyCards configNames={demos} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
+                </Tabs.Panel>
+              )}
+
+              {factorDemos.length > 0 && (
+                <Tabs.Panel value="Factor-demos">
+                  <Text c="dimmed" mt="sm">These studies demonstrate the factors configuration language and its participant-level scheduling behavior.</Text>
+                  <StudyCards configNames={factorDemos} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
                 </Tabs.Panel>
               )}
 

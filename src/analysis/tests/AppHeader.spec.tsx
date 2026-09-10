@@ -65,4 +65,11 @@ describe('AppHeader', () => {
     const html = renderToStaticMarkup(<AppHeader studyIds={['my-study']} selectedStudyId="my-study" />);
     expect(html).toContain('Go to Study');
   });
+
+  test('does not crash when a loaded config has no schema', () => {
+    const html = renderToStaticMarkup(
+      <AppHeader studyIds={['my-study']} studyConfigs={{ 'my-study': {} }} />,
+    );
+    expect(html).toContain('ReVISit Analytics Platform');
+  });
 });

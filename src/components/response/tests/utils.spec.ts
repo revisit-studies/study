@@ -3,7 +3,8 @@ import {
   afterEach, beforeEach, describe, expect, it, test,
 } from 'vitest';
 import type {
-  CheckboxResponse, CustomResponse, DropdownResponse, MatrixResponse, NumericalResponse, Response,
+  CheckboxResponse, CustomResponse, DateResponse, DropdownResponse, LongTextResponse, MatrixResponse,
+  NumericalResponse, Response, ShortTextResponse, TimeResponse,
 } from '../../../parser/types';
 import type { CustomResponseValidate } from '../../../store/types';
 import {
@@ -11,6 +12,7 @@ import {
   getDefaultFieldValue,
   generateValidation,
   mergeReactiveAnswers,
+  normalizeCheckboxValue,
   normalizeCheckboxDontKnowValue,
   useAnswerField,
 } from '../utils';
@@ -325,6 +327,29 @@ describe('validateResponse', () => {
     });
   });
 
+  test.each([
+    { type: 'shortText' as const },
+    { type: 'longText' as const },
+  ])('$type rejects non-string runtime values', ({ type }) => {
+    const response: ShortTextResponse | LongTextResponse = {
+      id: 'q1', prompt: 'Question', type, required: true,
+    };
+    const nonStringValues = [
+      ['text'],
+      { text: 'response' },
+      123,
+    ];
+
+    nonStringValues.forEach((value) => {
+      expect(validateResponse(response, value, { q1: value })).toMatchObject({
+        valid: false,
+        issueType: 'invalid',
+        message: 'Please enter a valid text response.',
+        blocksProgression: true,
+      });
+    });
+  });
+
   test('optional invalid numerical value is invalid but non-blocking', () => {
     const response: NumericalResponse = {
       id: 'q1', prompt: 'Question', type: 'numerical', required: false, min: 1,
@@ -333,7 +358,7 @@ describe('validateResponse', () => {
     expect(validateResponse(response, 0, { q1: 0 })).toMatchObject({
       valid: false,
       issueType: 'invalid',
-      message: 'Please enter a value of 1 or greater',
+      message: 'Please enter a value of 1 or greater.',
       blocksProgression: false,
     });
   });
@@ -357,7 +382,7 @@ describe('validateResponse', () => {
     });
   });
 
-  test.each(['textOnly', 'divider', 'reactive'] as const)(
+  test.each(['textOnly', 'divider'] as const)(
     '%s responses do not participate in response validation',
     (type) => {
       const response = {
@@ -374,6 +399,97 @@ describe('validateResponse', () => {
     },
   );
 
+  test('reactive requiredValue mismatch uses requiredLabel in its error', () => {
+    const response: Response = {
+      id: 'reactive',
+      prompt: 'Complete the interaction',
+      type: 'reactive',
+      required: true,
+      requiredValue: 'complete',
+      requiredLabel: 'the completed state',
+    };
+
+    expect(generateErrorMessage(
+      response,
+      { value: 'incomplete' },
+      undefined,
+      { showRequiredErrors: true, values: { reactive: 'incomplete' } },
+    )).toBe('Please enter the completed state to continue.');
+  });
+
+  test('reactive requiredValue accepts an exactly matching scalar value', () => {
+    const response: Response = {
+      id: 'reactive',
+      prompt: 'Select the largest bar',
+      type: 'reactive',
+      required: true,
+      requiredValue: 1.3,
+    };
+
+    expect(validateResponse(response, 1.3, { reactive: 1.3 })).toEqual({
+      valid: true,
+      issueType: 'none',
+      blocksProgression: false,
+    });
+    expect(validateResponse(response, 1.2, { reactive: 1.2 })).toMatchObject({
+      valid: false,
+      issueType: 'invalid',
+      reason: 'requiredValueMismatch',
+      blocksProgression: true,
+    });
+  });
+
+  test('reactive requiredValue uses deep equality and preserves array order', () => {
+    const requiredValue = { selections: ['A', 'B'], complete: true };
+    const response: Response = {
+      id: 'reactive',
+      prompt: 'Complete the interaction',
+      type: 'reactive',
+      required: true,
+      requiredValue,
+    };
+    const reorderedValue = { selections: ['B', 'A'], complete: true };
+
+    expect(validateResponse(response, { ...requiredValue }, { reactive: requiredValue })).toMatchObject({
+      valid: true,
+      issueType: 'none',
+    });
+    expect(validateResponse(response, reorderedValue, { reactive: reorderedValue })).toMatchObject({
+      valid: false,
+      issueType: 'invalid',
+      reason: 'requiredValueMismatch',
+    });
+  });
+
+  test.each([
+    [{ complete: true }, { complete: false }, 'Please enter {"complete":true} to continue.'],
+    [[], ['unexpected'], 'Please enter the required value to continue.'],
+    ['', 'unexpected', 'Please enter the required value to continue.'],
+  ])('reactive requiredValue mismatch has a usable fallback label', (requiredValue, value, expectedMessage) => {
+    const response: Response = {
+      id: 'reactive', prompt: 'Complete the interaction', type: 'reactive', required: true, requiredValue,
+    };
+
+    expect(generateErrorMessage(
+      response,
+      { value },
+      undefined,
+      { showRequiredErrors: true, values: { reactive: value } },
+    )).toBe(expectedMessage);
+  });
+
+  test('reactive responses without requiredValue leave completion to stimulus validation', () => {
+    const response: Response = {
+      id: 'reactive', prompt: 'Complete the interaction', type: 'reactive', required: true,
+    };
+
+    expect(validateResponse(response, undefined, {})).toEqual({
+      valid: true,
+      issueType: 'none',
+      blocksProgression: false,
+    });
+  });
+
   test('numerical min, max, and range are inclusive', () => {
     const response: NumericalResponse = {
       id: 'q1', prompt: 'Question', type: 'numerical', required: true, min: 1, max: 10,
@@ -381,10 +497,344 @@ describe('validateResponse', () => {
 
     expect(validateResponse(response, 1, { q1: 1 }).valid).toBe(true);
     expect(validateResponse(response, 10, { q1: 10 }).valid).toBe(true);
-    expect(validateResponse(response, 0, { q1: 0 }).message).toBe('Please enter a value between 1 and 10');
-    expect(validateResponse(response, 11, { q1: 11 }).message).toBe('Please enter a value between 1 and 10');
+    expect(validateResponse(response, 0, { q1: 0 }).message).toBe('Please enter a value between 1 and 10.');
+    expect(validateResponse(response, 11, { q1: 11 }).message).toBe('Please enter a value between 1 and 10.');
   });
 
+  test('numerical strict min and max are exclusive', () => {
+    const response: NumericalResponse = {
+      id: 'q1', prompt: 'Question', type: 'numerical', required: true, strictMin: 1, strictMax: 10,
+    };
+
+    expect(validateResponse(response, 1, { q1: 1 }).message).toBe('Please enter a value greater than 1 and less than 10.');
+    expect(validateResponse(response, 10, { q1: 10 }).message).toBe('Please enter a value greater than 1 and less than 10.');
+    expect(validateResponse(response, 2, { q1: 2 }).valid).toBe(true);
+    expect(validateResponse(response, 9, { q1: 9 }).valid).toBe(true);
+    expect(validateResponse(response, 0, { q1: 0 }).message).toBe('Please enter a value greater than 1 and less than 10.');
+    expect(validateResponse(response, 11, { q1: 11 }).message).toBe('Please enter a value greater than 1 and less than 10.');
+  });
+
+  test('numerical strict min only is exclusive', () => {
+    const response: NumericalResponse = {
+      id: 'q1', prompt: 'Question', type: 'numerical', required: true, strictMin: 1,
+    };
+
+    expect(validateResponse(response, 0, { q1: 0 }).message).toBe('Please enter a value greater than 1.');
+    expect(validateResponse(response, 1, { q1: 1 }).message).toBe('Please enter a value greater than 1.');
+    expect(validateResponse(response, 2, { q1: 2 }).valid).toBe(true);
+  });
+  test('numerical strict max only is exclusive', () => {
+    const response: NumericalResponse = {
+      id: 'q1', prompt: 'Question', type: 'numerical', required: true, strictMax: 10,
+    };
+
+    expect(validateResponse(response, 11, { q1: 11 }).message).toBe('Please enter a value less than 10.');
+    expect(validateResponse(response, 10, { q1: 10 }).message).toBe('Please enter a value less than 10.');
+    expect(validateResponse(response, 9, { q1: 9 }).valid).toBe(true);
+  });
+
+  test('validates date response values stored in MM/DD/YYYY format', () => {
+    const response: DateResponse = {
+      id: 'date', prompt: 'Select a date', type: 'date', required: true,
+    };
+    expect(validateResponse(response, '02/29/2024', { date: '02/29/2024' }).valid).toBe(true);
+    expect(validateResponse(response, '02/29/2025', { date: '02/29/2025' })).toMatchObject({
+      valid: false,
+      issueType: 'invalid',
+      message: 'Please select a valid date.',
+    });
+    expect(validateResponse(response, '2025-02-28', { date: '2025-02-28' }).valid).toBe(false);
+    expect(validateResponse(response, [], { date: [] }).valid).toBe(false);
+    expect(generateErrorMessage(
+      response,
+      { value: '02/29/2025' },
+      undefined,
+      { showRequiredErrors: true },
+    )).toBe('Please select a valid date.');
+  });
+  test('treats an empty date as unanswered unless the response is optional', () => {
+    const requiredResponse: DateResponse = {
+      id: 'required-date', prompt: 'Select a date', type: 'date',
+    };
+    const optionalResponse: DateResponse = {
+      id: 'optional-date', prompt: 'Select a date', type: 'date', required: false,
+    };
+    expect(validateResponse(requiredResponse, '', { 'required-date': '' }).issueType).toBe('unanswered');
+    expect(validateResponse(optionalResponse, '', { 'optional-date': '' }).valid).toBe(true);
+  });
+  test('validates date response values against min and max', () => {
+    const response: DateResponse = {
+      id: 'date',
+      prompt: 'Select a date',
+      type: 'date',
+      required: true,
+      min: '02/10/2024',
+      max: '02/25/2024',
+    };
+    expect(validateResponse(response, '02/10/2024', { date: '02/10/2024' }).valid).toBe(true);
+    expect(validateResponse(response, '02/25/2024', { date: '02/25/2024' }).valid).toBe(true);
+    expect(validateResponse(response, '02/09/2024', { date: '02/09/2024' }).message)
+      .toBe('Please select a date between 02/10/2024 and 02/25/2024.');
+    expect(validateResponse(response, '02/26/2024', { date: '02/26/2024' }).message)
+      .toBe('Please select a date between 02/10/2024 and 02/25/2024.');
+    expect(validateResponse({ ...response, max: undefined }, '02/09/2024', { date: '02/09/2024' }).message)
+      .toBe('Please select a date on or after 02/10/2024.');
+    expect(validateResponse({ ...response, min: undefined }, '02/26/2024', { date: '02/26/2024' }).message)
+      .toBe('Please select a date on or before 02/25/2024.');
+  });
+  test.each([
+    {
+      options: 'month', min: '01/2024', max: '12/2024', valid: '06/2024', below: '12/2023', above: '01/2025', noun: 'month',
+    },
+    {
+      options: 'year', min: '2000', max: '2024', valid: '2010', below: '1999', above: '2025', noun: 'year',
+    },
+  ] as const)('validates $options date option values against min and max', ({
+    options, min, max, valid, below, above, noun,
+  }) => {
+    const response: DateResponse = {
+      id: 'date', prompt: 'Select a value', type: 'date', required: true, options, min, max,
+    };
+    expect(validateResponse(response, valid, { date: valid }).valid).toBe(true);
+    expect(validateResponse(response, below, { date: below }).message)
+      .toBe(`Please select a ${noun} between ${min} and ${max}.`);
+    expect(validateResponse(response, above, { date: above }).message)
+      .toBe(`Please select a ${noun} between ${min} and ${max}.`);
+  });
+  test.each([
+    { options: 'month', invalid: '13/2024', noun: 'month' },
+    { options: 'year', invalid: '0000', noun: 'year' },
+  ] as const)('rejects invalid $options date option values', ({ options, invalid, noun }) => {
+    const response: DateResponse = {
+      id: 'date', prompt: 'Select a value', type: 'date', required: true, options,
+    };
+    expect(validateResponse(response, invalid, { date: invalid })).toMatchObject({
+      valid: false,
+      issueType: 'invalid',
+      message: `Please select a valid ${noun}.`,
+    });
+  });
+  test('validates time response values against min and max', () => {
+    const response: TimeResponse = {
+      id: 'time',
+      prompt: 'Select a time',
+      type: 'time',
+      required: true,
+      min: '09:00',
+      max: '18:00',
+    };
+    expect(validateResponse(response, '09:00', { time: '09:00' }).valid).toBe(true);
+    expect(validateResponse(response, '18:00', { time: '18:00' }).valid).toBe(true);
+    expect(validateResponse(response, '08:59', { time: '08:59' }).message)
+      .toBe('Please select a time between 09:00 and 18:00.');
+    expect(validateResponse(response, '18:01', { time: '18:01' }).message)
+      .toBe('Please select a time between 09:00 and 18:00.');
+    expect(validateResponse({ ...response, max: undefined }, '08:59', { time: '08:59' }).message)
+      .toBe('Please select a time at or after 09:00.');
+    expect(validateResponse({ ...response, min: undefined }, '18:01', { time: '18:01' }).message)
+      .toBe('Please select a time at or before 18:00.');
+  });
+  test('validates time response values stored in HH:mm format', () => {
+    const response: TimeResponse = {
+      id: 'time', prompt: 'Select a time', type: 'time', required: true,
+    };
+    expect(validateResponse(response, '14:28', { time: '14:28' }).valid).toBe(true);
+    expect(validateResponse(response, '24:00', { time: '24:00' })).toMatchObject({
+      valid: false,
+      issueType: 'invalid',
+      message: 'Please select a valid time.',
+    });
+    expect(validateResponse(response, 1428, { time: 1428 })).toMatchObject({
+      valid: false,
+      issueType: 'invalid',
+      message: 'Please select a valid time.',
+    });
+    expect(generateErrorMessage(
+      response,
+      { value: '24:00' },
+      undefined,
+      { showRequiredErrors: true },
+    )).toBe('Please select a valid time.');
+  });
+  test('validates time response values stored in HH:mm:ss format when withSeconds is true', () => {
+    const response: TimeResponse = {
+      id: 'time', prompt: 'Select a time', type: 'time', required: true, withSeconds: true,
+    };
+    expect(validateResponse(response, '14:28:30', { time: '14:28:30' }).valid).toBe(true);
+    expect(validateResponse(response, '14:28', { time: '14:28' }).valid).toBe(false);
+    expect(validateResponse(response, '14:28:60', { time: '14:28:60' })).toMatchObject({
+      valid: false,
+      issueType: 'invalid',
+      message: 'Please select a valid time.',
+    });
+  });
+  test('treats an empty time as unanswered unless the response is optional', () => {
+    const requiredResponse: TimeResponse = {
+      id: 'required-time', prompt: 'Select a time', type: 'time',
+    };
+    const optionalResponse: TimeResponse = {
+      id: 'optional-time', prompt: 'Select a time', type: 'time', required: false,
+    };
+    expect(validateResponse(requiredResponse, '', { 'required-time': '' }).issueType).toBe('unanswered');
+    expect(validateResponse(optionalResponse, '', { 'optional-time': '' }).valid).toBe(true);
+  });
+  test.each([
+    { type: 'shortText' as const },
+    { type: 'longText' as const },
+  ])('$type applies text validation rules in order', ({ type }) => {
+    const response: ShortTextResponse | LongTextResponse = {
+      id: 'q1',
+      prompt: 'Question',
+      type,
+      textValidation: [
+        { type: 'contains', value: 'ReVISit' },
+        { type: 'doesNotContain', value: 'invalid' },
+        { type: 'matchesRegex', value: '^ReVISit' },
+        { type: 'equals', value: 'ReVISit response' },
+        { type: 'doesNotEqual', value: 'ReVISit blocked' },
+      ],
+    };
+
+    expect(validateResponse(response, 'ReVISit response', { q1: 'ReVISit response' }).valid).toBe(true);
+    expect(validateResponse(response, 'response', { q1: 'response' })).toMatchObject({
+      valid: false,
+      issueType: 'invalid',
+      message: 'Please enter a value containing the required text.',
+    });
+    expect(validateResponse(response, 'ReVISit invalid', { q1: 'ReVISit invalid' })).toMatchObject({
+      valid: false,
+      issueType: 'invalid',
+      message: 'Please enter a value that does not contain the restricted text.',
+    });
+  });
+
+  test.each([
+    { type: 'shortText' as const },
+    { type: 'longText' as const },
+  ])('$type applies case-sensitive equality validation', ({ type }) => {
+    const equalsResponse: ShortTextResponse | LongTextResponse = {
+      id: 'equals', prompt: 'Question', type, textValidation: [{ type: 'equals', value: 'ReVISit' }],
+    };
+    const doesNotEqualResponse: ShortTextResponse | LongTextResponse = {
+      id: 'does-not-equal', prompt: 'Question', type, textValidation: [{ type: 'doesNotEqual', value: 'TEST' }],
+    };
+
+    expect(validateResponse(equalsResponse, 'ReVISit', { equals: 'ReVISit' }).valid).toBe(true);
+    expect(validateResponse(equalsResponse, 'revisit', { equals: 'revisit' }).message)
+      .toBe('Please enter a value equal to the required text.');
+    expect(validateResponse(doesNotEqualResponse, 'test', { 'does-not-equal': 'test' }).valid).toBe(true);
+    expect(validateResponse(doesNotEqualResponse, 'TEST', { 'does-not-equal': 'TEST' }).message)
+      .toBe('Please enter a value that does not equal the restricted text.');
+  });
+
+  test.each([
+    { type: 'shortText' as const },
+    { type: 'longText' as const },
+  ])('$type enforces inclusive minimum and maximum text lengths', ({ type }) => {
+    const response: ShortTextResponse | LongTextResponse = {
+      id: 'q1',
+      prompt: 'Question',
+      type,
+      minCharLength: 3,
+      maxCharLength: 5,
+    };
+
+    expect(validateResponse(response, 'abc', { q1: 'abc' }).valid).toBe(true);
+    expect(validateResponse(response, 'abcde', { q1: 'abcde' }).valid).toBe(true);
+    expect(validateResponse(response, 'ab', { q1: 'ab' }).message).toBe('Please enter between 3 and 5 characters.');
+    expect(validateResponse(response, 'abcdef', { q1: 'abcdef' }).message).toBe('Please enter between 3 and 5 characters.');
+  });
+
+  test('reports minimum-only and maximum-only text length errors', () => {
+    const minimumResponse: ShortTextResponse = {
+      id: 'minimum', prompt: 'Question', type: 'shortText', minCharLength: 3,
+    };
+    const maximumResponse: LongTextResponse = {
+      id: 'maximum', prompt: 'Question', type: 'longText', maxCharLength: 5,
+    };
+
+    expect(validateResponse(minimumResponse, 'ab', { minimum: 'ab' }).message).toBe('Please enter at least 3 characters.');
+    expect(validateResponse(maximumResponse, 'abcdef', { maximum: 'abcdef' }).message).toBe('Please enter at most 5 characters.');
+  });
+
+  test.each([
+    { type: 'shortText' as const },
+    { type: 'longText' as const },
+  ])('$type enforces minimum word length across whitespace', ({ type }) => {
+    const response: ShortTextResponse | LongTextResponse = {
+      id: 'words', prompt: 'Question', type, minWordLength: 3,
+    };
+
+    expect(validateResponse(response, 'three word response', { words: 'three word response' }).valid).toBe(true);
+    expect(validateResponse(response, 'two\twords', { words: 'two\twords' }).message)
+      .toBe('Please enter at least 3 words.');
+    expect(validateResponse(response, 'one\n\n two', { words: 'one\n\n two' }).message)
+      .toBe('Please enter at least 3 words.');
+    expect(validateResponse(response, '. . .', { words: '. . .' }).message)
+      .toBe('Please enter at least 3 words.');
+    expect(validateResponse(response, "don't stop now", { words: "don't stop now" }).valid).toBe(true);
+    expect(validateResponse(response, 'hello... world! third', { words: 'hello... world! third' }).valid)
+      .toBe(true);
+    expect(validateResponse(response, '123 456 three', { words: '123 456 three' }).valid).toBe(true);
+  });
+
+  test.each([
+    { type: 'shortText' as const },
+    { type: 'longText' as const },
+  ])('$type enforces inclusive minimum and maximum word lengths', ({ type }) => {
+    const response: ShortTextResponse | LongTextResponse = {
+      id: 'words', prompt: 'Question', type, minWordLength: 2, maxWordLength: 3,
+    };
+
+    expect(validateResponse(response, 'two words', { words: 'two words' }).valid).toBe(true);
+    expect(validateResponse(response, 'three valid words', { words: 'three valid words' }).valid).toBe(true);
+    expect(validateResponse(response, 'one', { words: 'one' }).message)
+      .toBe('Please enter between 2 and 3 words.');
+    expect(validateResponse(response, 'this has four words', { words: 'this has four words' }).message)
+      .toBe('Please enter between 2 and 3 words.');
+  });
+
+  test.each([
+    { type: 'shortText' as const },
+    { type: 'longText' as const },
+  ])('$type reports a maximum-only word length error', ({ type }) => {
+    const response: ShortTextResponse | LongTextResponse = {
+      id: 'words', prompt: 'Question', type, maxWordLength: 2,
+    };
+
+    expect(validateResponse(response, 'three word response', { words: 'three word response' }).message)
+      .toBe('Please enter at most 2 words.');
+  });
+
+  test('invalid regular expressions fail validation without throwing', () => {
+    const response: ShortTextResponse = {
+      id: 'q1',
+      prompt: 'Question',
+      type: 'shortText',
+      textValidation: [{ type: 'matchesRegex', value: '[' }],
+    };
+
+    expect(validateResponse(response, 'value', { q1: 'value' })).toMatchObject({
+      valid: false,
+      issueType: 'invalid',
+      message: 'Please enter a value that matches the required format.',
+    });
+  });
+
+  test('applies built-in validation before configured text validation rules', () => {
+    const response: ShortTextResponse = {
+      id: 'email',
+      prompt: 'Email',
+      type: 'shortText',
+      builtInValidation: 'email',
+      textValidation: [{ type: 'doesNotContain', value: 'invalid' }],
+    };
+    expect(validateResponse(response, 'not-an-email', { email: 'not-an-email' }).message)
+      .toBe('Please enter a valid email address.');
+    expect(validateResponse(response, 'invalid@revisit.dev', { email: 'invalid@revisit.dev' }).message)
+      .toBe('Please enter a value that does not contain the restricted text.');
+    expect(validateResponse(response, 'test@revisit.dev', { email: 'test@revisit.dev' }).valid).toBe(true);
+  });
   test('checkbox and dropdown min/max produce current messages', () => {
     const checkboxResponse: CheckboxResponse = {
       id: 'checkbox', prompt: 'Question', type: 'checkbox', required: true, options: [], minSelections: 2, maxSelections: 3,
@@ -396,6 +846,21 @@ describe('validateResponse', () => {
     expect(validateResponse(checkboxResponse, ['A'], { checkbox: ['A'] }).message).toBe('Please select at least 2 options');
     expect(validateResponse(checkboxResponse, ['A', 'B', 'C', 'D'], { checkbox: ['A', 'B', 'C', 'D'] }).message).toBe('Please select at most 3 options');
     expect(validateResponse(dropdownResponse, ['A', 'B'], { dropdown: ['A', 'B'] }).message).toBe('Please select at most 1 options');
+  });
+
+  test.each([
+    { value: 'XX' },
+    { value: ['US', 'XX'] },
+  ])('rejects invalid country preset values: $value', ({ value }) => {
+    const response: DropdownResponse = {
+      id: 'country', prompt: 'Country', type: 'dropdown', required: true, options: 'countries',
+    };
+
+    expect(validateResponse(response, value, { country: value })).toMatchObject({
+      valid: false,
+      issueType: 'invalid',
+      message: 'Please select a valid country.',
+    });
   });
 
   test('checkbox requiredValue exact set equality ignores order', () => {
@@ -426,6 +891,59 @@ describe('validateResponse', () => {
       message: 'Please answer all questions in the matrix to continue.',
     });
     expect(validateResponse(response, { q1: '0', q2: '1' }, { matrix: { q1: '0', q2: '1' } }).valid).toBe(true);
+  });
+
+  test('matrix checkbox min/max validation distinguishes minimum, maximum, and range constraints per row', () => {
+    const minOnly: MatrixResponse = {
+      id: 'matrix-min', prompt: 'Question', type: 'matrix-checkbox', required: true, min: 2, answerOptions: ['0', '1'], questionOptions: ['q1', 'q2'],
+    };
+    const maxOnly: MatrixResponse = {
+      id: 'matrix-max', prompt: 'Question', type: 'matrix-checkbox', required: true, max: 1, answerOptions: ['0', '1'], questionOptions: ['q1', 'q2'],
+    };
+    const range: MatrixResponse = {
+      id: 'matrix-range', prompt: 'Question', type: 'matrix-checkbox', required: true, min: 1, max: 2, answerOptions: ['0', '1', '2'], questionOptions: ['q1', 'q2'],
+    };
+
+    expect(validateResponse(minOnly, { q1: '0|1', q2: '0|1' }, { matrix: { q1: '0|1', q2: '0|1' } }).valid).toBe(true);
+    expect(validateResponse(minOnly, { q1: '0|1', q2: '0' }, { matrix: { q1: '0|1', q2: '0' } })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please select at least 2 answers per row.',
+      blocksProgression: true,
+    });
+
+    expect(validateResponse(maxOnly, { q1: '0', q2: '0' }, { matrix: { q1: '0', q2: '0' } }).valid).toBe(true);
+    expect(validateResponse(maxOnly, { q1: '0|1', q2: '0|1' }, { matrix: { q1: '0|1', q2: '0|1' } })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please select at most 1 answers per row.',
+      blocksProgression: true,
+    });
+
+    expect(validateResponse(range, { q1: '0|1', q2: '0' }, { matrix: { q1: '0|1', q2: '0' } }).valid).toBe(true);
+    expect(validateResponse(range, { q1: '0|1|2', q2: '0' }, { matrix: { q1: '0|1|2', q2: '0' } })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please select at least 1 and at most 2 answers per row.',
+      blocksProgression: true,
+    });
+  });
+
+  test('matrix checkbox withDontKnow sentinel is treated as a complete row for min/max validation', () => {
+    const response: MatrixResponse = {
+      id: 'matrix-dont-know-min',
+      prompt: 'Question',
+      type: 'matrix-checkbox',
+      required: true,
+      withDontKnow: true,
+      min: 2,
+      answerOptions: ['0', '1'],
+      questionOptions: ['q1', 'q2'],
+    };
+
+    expect(validateResponse(response, { q1: "I don't know", q2: '0|1' }, { matrix: { q1: "I don't know", q2: '0|1' } }).valid).toBe(true);
+    expect(validateResponse(response, { q1: "I don't know", q2: '0' }, { matrix: { q1: "I don't know", q2: '0' } })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please select at least 2 answers per row.',
+      blocksProgression: true,
+    });
   });
 
   test('standalone withDontKnow bypasses required, min/max, and requiredValue validation', () => {
@@ -478,6 +996,94 @@ describe('validateResponse', () => {
     });
   });
 
+  test('ranking min/max validation handles sublist and categorical constraints', () => {
+    const sublistMin: Response = {
+      id: 'ranking-sublist-min', prompt: 'Rank', type: 'ranking-sublist', required: true, options: ['A', 'B', 'C'], min: 2,
+    };
+    const sublistMax: Response = {
+      id: 'ranking-sublist-max', prompt: 'Rank', type: 'ranking-sublist', required: true, options: ['A', 'B', 'C'], max: 2,
+    };
+    const categoricalMin: Response = {
+      id: 'ranking-categorical-min', prompt: 'Rank', type: 'ranking-categorical', required: true, options: ['A', 'B', 'C'], min: 1,
+    };
+    const categoricalMax: Response = {
+      id: 'ranking-categorical-max', prompt: 'Rank', type: 'ranking-categorical', required: true, options: ['A', 'B', 'C'], max: 1,
+    };
+
+    expect(validateResponse(sublistMin, { A: '0', B: '1' }, { ranking: { A: '0', B: '1' } }).valid).toBe(true);
+    expect(validateResponse(sublistMin, { A: '0' }, { ranking: { A: '0' } })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please add at least 2 items.',
+      blocksProgression: true,
+    });
+
+    expect(validateResponse(sublistMax, { A: '0', B: '1' }, { ranking: { A: '0', B: '1' } }).valid).toBe(true);
+    expect(validateResponse(sublistMax, { A: '0', B: '1', C: '2' }, { ranking: { A: '0', B: '1', C: '2' } })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please add at most 2 items.',
+      blocksProgression: true,
+    });
+    expect(validateResponse(sublistMax, { A: '0', X: '1' }, { ranking: { A: '0', X: '1' } })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please rank only configured items.',
+      blocksProgression: true,
+    });
+
+    expect(validateResponse(categoricalMin, { A: 'LOW', B: 'LOW' }, { ranking: { A: 'LOW', B: 'LOW' } })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please add at least 1 items per category.',
+      blocksProgression: true,
+    });
+    expect(validateResponse(categoricalMax, { A: 'HIGH', B: 'HIGH' }, { ranking: { A: 'HIGH', B: 'HIGH' } })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please add at most 1 items per category.',
+      blocksProgression: true,
+    });
+  });
+
+  test('categorical ranking validates exact configured option set and category values', () => {
+    const response: Response = {
+      id: 'ranking-categorical-all', prompt: 'Rank', type: 'ranking-categorical', required: true, options: ['A', 'B'], categorizeAll: true,
+    };
+
+    expect(validateResponse(response, { A: 'HIGH', B: 'LOW' }, { ranking: { A: 'HIGH', B: 'LOW' } }).valid).toBe(true);
+    expect(validateResponse(response, { A: 'HIGH', X: 'LOW' }, { ranking: { A: 'HIGH', X: 'LOW' } })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please categorize only configured items.',
+      blocksProgression: true,
+    });
+    expect(validateResponse(response, { A: 'HIGH', B: 'INVALID' }, { ranking: { A: 'HIGH', B: 'INVALID' } })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please use only HIGH, MEDIUM, or LOW categories.',
+      blocksProgression: true,
+    });
+    expect(validateResponse(response, { A: 'HIGH' }, { ranking: { A: 'HIGH' } })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please categorize all items.',
+      blocksProgression: true,
+    });
+  });
+
+  test('categorizeAll ignores inherited prototype keys (reserved key regression)', () => {
+    const response: Response = {
+      id: 'ranking-categorical-reserved',
+      prompt: 'Rank',
+      type: 'ranking-categorical',
+      required: true,
+      options: ['A', 'toString'],
+      categorizeAll: true,
+    };
+
+    const value = { A: 'HIGH' } as Record<string, string>;
+    const result = validateResponse(response, value, { ranking: value });
+
+    expect(result).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please categorize all items.',
+      blocksProgression: true,
+    });
+  });
+
   test('pairwise ranking requires at least one complete pair', () => {
     const response: Response = {
       id: 'ranking', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: ['A', 'B', 'C'],
@@ -506,6 +1112,48 @@ describe('validateResponse', () => {
       issueType: 'none',
       blocksProgression: false,
     });
+  });
+
+  test('pairwise ranking min/max validation enforces configured pair bounds', () => {
+    const minOnly: Response = {
+      id: 'ranking-pairwise-min', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: ['A', 'B', 'C'], min: 2,
+    };
+    const maxOnly: Response = {
+      id: 'ranking-pairwise-max', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: ['A', 'B', 'C', 'D'], max: 2,
+    };
+    const range: Response = {
+      id: 'ranking-pairwise-range', prompt: 'Rank', type: 'ranking-pairwise', required: true, options: ['A', 'B', 'C', 'D'], min: 1, max: 2,
+    };
+
+    const onePair = { A_0: 'pair-0-high', B_1: 'pair-0-low' };
+    expect(validateResponse(minOnly, onePair, { ranking: onePair })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please add at least 2 pairs.',
+      blocksProgression: true,
+    });
+
+    const twoPairs = {
+      A_0: 'pair-0-high', B_1: 'pair-0-low', C_2: 'pair-1-high', D_3: 'pair-1-low',
+    };
+    expect(validateResponse(maxOnly, twoPairs, { ranking: twoPairs }).valid).toBe(true);
+    const maxOnlyInvalid = {
+      A_0: 'pair-0-high', B_1: 'pair-0-low', C_2: 'pair-1-high', D_3: 'pair-1-low', E_4: 'pair-2-high', F_5: 'pair-2-low',
+    };
+    expect(validateResponse({
+      ...maxOnly,
+      options: ['A', 'B', 'C', 'D', 'E', 'F'],
+    }, maxOnlyInvalid, { ranking: maxOnlyInvalid })).toMatchObject({
+      issueType: 'invalid',
+      message: 'Please add at most 2 pairs.',
+      blocksProgression: true,
+    });
+
+    expect(validateResponse(range, onePair, { ranking: onePair })).toEqual({
+      valid: true,
+      issueType: 'none',
+      blocksProgression: false,
+    });
+    expect(validateResponse(range, twoPairs, { ranking: twoPairs }).valid).toBe(true);
   });
 
   test('pairwise ranking requires every pair to be complete', () => {
@@ -1202,6 +1850,23 @@ describe('generateInitFields additional branches', () => {
     expect(generateInitFields([response], {})).toMatchObject({ q1: [] });
   });
 
+  test('initializes checkbox response to empty array', () => {
+    const response: Response = {
+      id: 'q1', prompt: '', type: 'checkbox', options: ['A', 'B'],
+    };
+    expect(generateInitFields([response], {})).toMatchObject({ q1: [] });
+  });
+
+  test('normalizes stored and captured checkbox values to arrays', () => {
+    const response: Response = {
+      id: 'q1', prompt: '', type: 'checkbox', options: ['A', 'B'], paramCapture: 'color',
+    };
+
+    expect(generateInitFields([response], { q1: 'A' })).toMatchObject({ q1: ['A'] });
+    expect(generateInitFields([response], {})).toMatchObject({ q1: ['blue'] });
+    expect(normalizeCheckboxValue('')).toEqual([]);
+  });
+
   test('initializes ranking-categorical to empty array', () => {
     const response: Response = {
       id: 'q1', prompt: '', type: 'ranking-categorical', options: [],
@@ -1291,7 +1956,7 @@ describe('generateErrorMessage — answer.checked branch', () => {
     };
     const options = [{ label: 'Option A', value: 'A' }];
     const error = generateErrorMessage(response, { checked: ['A'] }, options, { showRequiredErrors: true });
-    expect(error).toContain('select');
+    expect(error).toBe('Please select A, B to continue.');
   });
 
   test('matching checked values against requiredValue returns null', () => {

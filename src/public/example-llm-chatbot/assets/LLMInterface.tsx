@@ -54,7 +54,7 @@ export default function LLMInterface({
   }, [setAnswer]);
 
   return (
-    <Grid gutter="md">
+    <Grid gap="md">
       <Grid.Col span={6}>
         <ImageDisplay />
       </Grid.Col>

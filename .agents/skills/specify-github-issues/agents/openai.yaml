@@ -1,0 +1,4 @@
+interface:
+  display_name: "Specify GitHub Issues"
+  short_description: "Clarify and challenge issue scope."
+  default_prompt: "Use $specify-github-issues on issue #123 to inspect scope, ask material questions, challenge unnecessary complexity, and draft an implementation-ready specification."

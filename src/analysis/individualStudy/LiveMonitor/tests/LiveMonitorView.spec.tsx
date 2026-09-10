@@ -38,7 +38,7 @@ vi.mock('@mantine/core', () => ({
     { Col: ({ children }: { children: ReactNode }) => <div>{children}</div> },
   ),
   RingProgress: ({ label }: { label?: ReactNode }) => <div>{label}</div>,
-  Collapse: ({ children, in: open }: { children: ReactNode; in?: boolean }) => (
+  Collapse: ({ children, expanded: open }: { children: ReactNode; expanded?: boolean }) => (
     open ? <div>{children}</div> : null
   ),
 }));

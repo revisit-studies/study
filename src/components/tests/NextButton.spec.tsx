@@ -269,6 +269,8 @@ describe('NextButton', () => {
     });
     vi.useRealTimers();
     expect(screen.getByText('Next button disabled')).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Proceed' }).hasAttribute('data-html2canvas-ignore'))
+      .toBe(false);
   });
 
   test('does not show "Next button disabled" alert when timeoutReject is true', async () => {

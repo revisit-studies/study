@@ -535,7 +535,7 @@ Rules:
           <Flex direction="column" align="center" justify="center" py="xl" style={{ color: '#6B7280' }}>
             <IconMessage size={48} style={{ opacity: 0.5, marginBottom: rem(12) }} />
             <Text size="lg" fw={500} mb={4}>Start a conversation</Text>
-            <Text size="sm" color="dimmed">
+            <Text size="sm" c="dimmed">
               Ask me anything about the clustered heatmap on the left!
             </Text>
           </Flex>
@@ -567,7 +567,7 @@ Rules:
                   ) : (
                     <Text size="sm">{message.content}</Text>
                   )}
-                  <Text size="xs" mt={4} color={message.role === 'user' ? 'blue.1' : 'gray.6'}>
+                  <Text size="xs" mt={4} c={message.role === 'user' ? 'blue.1' : 'gray.6'}>
                     {new Date(message.timestamp).toLocaleTimeString()}
                   </Text>
                 </Paper>
@@ -590,7 +590,7 @@ Rules:
       {/* Error Display */}
       {error && (
         <Paper mb="md" p="sm" radius="md" withBorder style={{ backgroundColor: '#fff0f0', borderColor: '#ffe3e3' }}>
-          <Text color="red" size="sm">{error}</Text>
+          <Text c="red" size="sm">{error}</Text>
         </Paper>
       )}
       {/* Input Form */}
@@ -620,7 +620,7 @@ Rules:
           <IconSend size={18} />
         </Button>
       </form>
-      <Text mt="md" size="xs" color="dimmed">
+      <Text mt="md" size="xs" c="dimmed">
         Press Enter to send, Shift+Enter for new line. All conversations are recorded for research purposes.
       </Text>
     </Card>

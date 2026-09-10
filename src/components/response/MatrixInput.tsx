@@ -4,6 +4,7 @@ import {
 import {
   ChangeEvent, useMemo,
 } from 'react';
+import ClearSelectionButton from './ClearSelectionButton';
 import { MatrixResponse, ParsedMatrixQuestionOption, ParsedStringOption } from '../../parser/types';
 import { useStoreDispatch, useStoreActions } from '../../store/store';
 import checkboxClasses from './css/Checkbox.module.css';
@@ -97,6 +98,11 @@ function RadioGroupComponent({
             value={radio.value}
             key={`${radio.label}-${idx}`}
             classNames={{ radio: radioClasses.fixDisabled, icon: radioClasses.fixDisabledIcon }}
+            onClick={() => {
+              if (answer.value?.[question] === radio.value) {
+                onChange('', question);
+              }
+            }}
           />
         ))}
       </div>
@@ -166,6 +172,12 @@ export function MatrixInput({
     storeDispatch(setMatrixAnswersRadio(payload));
   };
 
+  const clearMatrix = () => {
+    orderedQuestions.forEach((q) => {
+      storeDispatch(setMatrixAnswersRadio({ responseId: response.id, questionKey: q, val: '' }));
+    });
+  };
+
   const onChangeCheckbox = (event: ChangeEvent<HTMLInputElement>, questionKey: string, option: ParsedStringOption) => {
     const isChecked = event.target.checked;
     const currentValues = (answerValue[questionKey] || '').split('|').filter((entry) => entry !== '');
@@ -198,7 +210,18 @@ export function MatrixInput({
   const separatorAfterIndex = dontKnowIndex > 0 ? dontKnowIndex - 1 : -1;
   return (
     <>
-      {prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
+      {prompt.length > 0 && (
+        <InputLabel
+          prompt={prompt}
+          required={required}
+          index={index}
+          enumerateQuestions={enumerateQuestions}
+          infoText={infoText}
+          clearSelectionButton={(
+            <ClearSelectionButton onClick={clearMatrix} disabled={disabled} visible={Object.values(answerValue).some((v) => typeof v === 'string' && v !== '')} />
+          )}
+        />
+      )}
       <Text c="dimmed" size="sm" mt={0}>{secondaryText}</Text>
       <Box
         style={{
