@@ -8,9 +8,9 @@ import {
 } from 'vitest';
 import { StudyAnalysisTabs } from '../individualStudy/StudyAnalysisTabs';
 import type { StudyConfig, ParsedConfig } from '../../parser/types';
-import { getStudyConfig } from '../../utils/fetchConfig';
+import { getStudyConfig, resolveConfigKey } from '../../utils/fetchConfig';
 import { useAsync } from '../../store/hooks/useAsync';
-import { makeGlobalConfig } from '../../tests/utils';
+import { makeGlobalConfig, makeStudyConfig } from '../../tests/utils';
 import { parseStudyConfig } from '../../parser/parser';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
@@ -122,6 +122,10 @@ vi.mock('../../components/StartupErrorScreen', () => ({
   StartupErrorScreen: () => <div role="alert">startup fallback</div>,
 }));
 
+vi.mock('../../ResourceNotFound', () => ({
+  ResourceNotFound: ({ email }: { email?: string }) => <div data-testid="not-found" data-email={email}>404</div>,
+}));
+
 vi.mock('react-vega', () => ({
   VegaLite: () => null,
 }));
@@ -192,6 +196,7 @@ describe('StudyAnalysisTabs', () => {
     mockStorageEngine = { getEngine: vi.fn().mockReturnValue('supabase') };
     mockStudyRecordings = { hasAudioRecording: false, hasScreenRecording: false };
     vi.mocked(getStudyConfig).mockResolvedValue(null);
+    vi.mocked(resolveConfigKey).mockImplementation((key) => key);
     currentStable = {
       value: {}, status: 'success', execute: () => Promise.resolve(), error: null,
     } as ReturnType<typeof useAsync>;
@@ -207,6 +212,26 @@ describe('StudyAnalysisTabs', () => {
     mockParams = {};
     const html = renderToStaticMarkup(<StudyAnalysisTabs globalConfig={mockGlobalConfig} />);
     expect(html).toContain('Select a study from the header menu to view analysis data.');
+  });
+
+  test('shows 404 with the study email for an unknown analysis tab', async () => {
+    mockParams.analysisTab = 'df';
+    vi.mocked(getStudyConfig).mockResolvedValue({ ...makeStudyConfig(), errors: [], warnings: [] });
+
+    render(<StudyAnalysisTabs globalConfig={mockGlobalConfig} />);
+
+    await waitFor(() => expect(screen.getByTestId('not-found').getAttribute('data-email')).toBe('test@test.com'));
+    expect(screen.queryByText('Study Summary')).toBeNull();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  test('shows 404 without a contact email for an unknown analysis study', async () => {
+    vi.mocked(resolveConfigKey).mockReturnValue(null);
+
+    await act(async () => render(<StudyAnalysisTabs globalConfig={mockGlobalConfig} />));
+
+    expect(screen.getByTestId('not-found').getAttribute('data-email')).toBeNull();
+    expect(screen.queryByText('Study Summary')).toBeNull();
   });
 
   test('renders standard tabs regardless of engine', () => {
