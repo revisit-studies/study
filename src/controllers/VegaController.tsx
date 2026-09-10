@@ -3,7 +3,6 @@ import {
 } from 'react';
 import { Vega, VisualizationSpec, View } from 'react-vega';
 import { Registry } from '@trrack/core';
-import * as vega from 'vega';
 import { VegaProps } from 'react-vega/lib/Vega';
 import { ValueOf, VegaComponent } from '../parser/types';
 import { getJsonAssetByPath } from '../utils/getStaticAsset';
@@ -31,22 +30,6 @@ export interface VegaProvState {
 }
 
 const InternalVega = Vega as unknown as React.FC<VegaProps>;
-
-// Vega exports its renderer registry, but its TypeScript declarations omit Marks.
-const { Marks } = vega as typeof vega & { Marks: Record<string, object> };
-
-function validateVegaMarks(spec: vega.Spec): vega.Spec {
-  const validate = (marks: vega.Mark[] = []) => {
-    marks.forEach((mark) => {
-      if (!Object.hasOwn(Marks, mark.type)) {
-        throw new Error(`Unsupported Vega mark type: ${mark.type}`);
-      }
-      if (mark.type === 'group') validate(mark.marks);
-    });
-  };
-  validate(spec.marks);
-  return spec;
-}
 
 export function VegaController({ currentConfig, provState }: { currentConfig: VegaComponent; provState?: VegaProvState }) {
   const storeDispatch = useStoreDispatch();
@@ -253,7 +236,6 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
         signalListeners={signalListeners as never}
         onNewView={handleNewView}
         onError={handleViewError}
-        patch={validateVegaMarks}
         actions={currentConfig.withActions}
       />
     </div>

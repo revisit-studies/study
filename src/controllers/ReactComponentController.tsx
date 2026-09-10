@@ -1,5 +1,5 @@
 import {
-  ComponentType, Suspense, lazy, useCallback, useMemo,
+  ComponentType, Suspense, useCallback,
 } from 'react';
 import { ParticipantData, ReactComponent } from '../parser/types';
 import { StimulusParams, TrrackedProvenance } from '../store/types';
@@ -18,13 +18,14 @@ const modules = import.meta.glob<{ default: ComponentType<StimulusParams<ReactCo
     '../public/**/*.{mjs,js,mts,ts,jsx,tsx}',
     '!../public/**/*.spec.{mjs,js,mts,ts,jsx,tsx}',
   ],
+  { eager: true },
 );
 
 export function ReactComponentController({ currentConfig, provState, answers }: { currentConfig: ReactComponent; provState?: unknown, answers: ParticipantData['answers'] }) {
   const templateData = useTemplateAnswerContext();
   const templatedPath = templateData ? compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true, data: templateData }) : undefined;
   const reactPath = templatedPath ? `../public/${templatedPath}` : undefined;
-  const StimulusComponent = useMemo(() => (reactPath && reactPath in modules ? lazy(modules[reactPath]) : null), [reactPath]);
+  const StimulusComponent = reactPath ? modules[reactPath]?.default : undefined;
   const identifier = useCurrentIdentifier();
 
   const storeDispatch = useStoreDispatch();
