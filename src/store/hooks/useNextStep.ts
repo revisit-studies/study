@@ -11,7 +11,8 @@ import {
 } from '../../routes/utils';
 
 import { useStorageEngine } from '../../storage/storageEngineHooks';
-import { getAnswersFromAllLocations } from '../../utils/getAnswersFromAllLocations';
+import { getPersistedAnswersFromAllLocations } from '../../utils/getAnswersFromAllLocations';
+import type { Response } from '../../parser/types';
 import { useStoredAnswer } from './useStoredAnswer';
 import { useWindowEvents } from './useWindowEvents';
 import { findBlockForStep } from '../../utils/getSequenceFlatMap';
@@ -25,7 +26,7 @@ import {
   getStoredAnswersForSkipEvaluation,
 } from '../../utils/skipConditions';
 
-export function useNextStep() {
+export function useNextStep(responses: Response[] = []) {
   const currentStep = useCurrentStep();
   const participantSequence = useFlatSequence();
 
@@ -70,7 +71,7 @@ export function useNextStep() {
       }
       // Get answer from across the 3 response blocks and the provenance graph
       const validation = trialValidation[identifier];
-      const answer = getAnswersFromAllLocations(validation);
+      const answer = getPersistedAnswersFromAllLocations(validation, responses);
       const provenanceGraph = validation?.provenanceGraph ? structuredClone(validation.provenanceGraph) : undefined;
       const endTime = Date.now();
       const answerToPersist = collectData ? answer : {};
@@ -168,7 +169,7 @@ export function useNextStep() {
         color: 'red',
       });
     }
-  }, [currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, clickedPrevious, sequence, answers, startTime, funcIndex, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, setRankingAnswers, setAlertModal, studyConfig, participantSequence, navigate, studyId, responseSubmitAttempted, checkAnswerState]);
+  }, [currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, clickedPrevious, sequence, answers, startTime, funcIndex, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, setRankingAnswers, setAlertModal, studyConfig, participantSequence, navigate, studyId, responseSubmitAttempted, checkAnswerState, responses]);
 
   return {
     isNextDisabled,

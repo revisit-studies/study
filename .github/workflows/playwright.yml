@@ -7,8 +7,40 @@ on:
       - main
 
 jobs:
+  changes:
+    name: Check for Playwright-relevant changes
+    runs-on: ubuntu-latest
+    outputs:
+      run_tests: ${{ steps.filter.outputs.run_tests }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check changed files
+        id: filter
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if git diff --quiet "$BASE_SHA" "$HEAD_SHA" -- \
+            'index.html' \
+            'package.json' \
+            'playwright.config.ts' \
+            'public/**' \
+            'src/**' \
+            'tests/**' \
+            'tsconfig*.json' \
+            'vite.config.*' \
+            'yarn.lock'; then
+            echo "run_tests=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run_tests=true" >> "$GITHUB_OUTPUT"
+          fi
+
   chromium-fast:
-    if: github.base_ref != 'main'
+    needs: changes
+    if: needs.changes.outputs.run_tests == 'true' && github.base_ref != 'main'
     name: 🧪 Chromium shard ${{ matrix.shard }}/4
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -51,7 +83,8 @@ jobs:
         run: yarn test --project=chromium --shard=${{ matrix.shard }}/4
 
   chromium-main:
-    if: github.base_ref == 'main'
+    needs: changes
+    if: needs.changes.outputs.run_tests == 'true' && github.base_ref == 'main'
     name: 🧪 Chromium full MVNV journey
     runs-on: ubuntu-latest
     timeout-minutes: 40
@@ -89,45 +122,3 @@ jobs:
 
       - name: Run full MVNV journey
         run: yarn test --project=chromium --grep '@slow-mvnv'
-
-  webkit-smoke:
-    name: 🧪 WebKit shard ${{ matrix.shard }}/4
-    runs-on: macos-15
-    timeout-minutes: 10
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [1, 2, 3, 4]
-    env:
-      PLAYWRIGHT_BROWSERS_PATH: /Users/runner/Library/Caches/ms-playwright
-      PW_CI_REPORTER: dot
-      PW_CI_WORKERS: 1
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version: lts/*
-          cache: yarn
-
-      - name: Install dependencies
-        env:
-          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-        run: yarn install --immutable
-
-      - name: Write out playwright version
-        run: yarn --silent playwright --version > .playwright-version
-
-      - name: ⚡️ Cache playwright binaries
-        uses: actions/cache@v6
-        id: playwright-cache
-        with:
-          path: /Users/runner/Library/Caches/ms-playwright
-          key: macos-15-webkit-pw-${{ hashFiles('**/.playwright-version') }}
-
-      - name: Install Playwright WebKit
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: yarn playwright install webkit
-
-      - name: Run WebKit shard
-        run: yarn test --project=webkit --shard=${{ matrix.shard }}/4

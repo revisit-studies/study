@@ -5,11 +5,13 @@ import { InputLabel } from './InputLabel';
 export function ReactiveInput({
   response,
   answer,
+  error,
   index,
   enumerateQuestions,
 }: {
   response: ReactiveResponse;
   answer: { value?: string[] | string | number | boolean | Record<string, unknown> | null };
+  error?: string | null;
   index: number;
   enumerateQuestions: boolean;
 }) {
@@ -24,6 +26,8 @@ export function ReactiveInput({
     <Input.Wrapper
       label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
       description={secondaryText}
+      error={error}
+      errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
       size="md"
     >
       {answer.value !== undefined && answer.value !== null && answer.value !== '' && (

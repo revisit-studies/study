@@ -438,6 +438,10 @@ export interface NumericalResponse extends BaseResponse {
   min?: number;
   /** The maximum value that is accepted in the input. */
   max?: number;
+  /** Only values above this minimum value are accepted in the input. */
+  strictMin?: number;
+  /** Only values below this maximum value are accepted in the input. */
+  strictMax?: number;
 }
 
 /** The validation operations available for short and long text responses. */
@@ -780,6 +784,10 @@ export interface MatrixCheckboxResponse extends BaseMatrixResponse {
   type: 'matrix-checkbox';
   /** The default value of the response by question key. Provide an object where each key is a question value and each value is an array of selected answer option values. */
   default?: Record<string, string[]>;
+  /** The minimum amount of answers given per row for the matrix. */
+  min?: number;
+  /** The maximum amount of answers given per row for the matrix. */
+  max?: number;
 }
 
 export type MatrixResponse = MatrixRadioResponse | MatrixCheckboxResponse;
@@ -1001,15 +1009,34 @@ export interface CheckboxResponse extends BaseResponse {
  * }
  * ```
 */
-export interface RankingResponse extends BaseResponse {
-  type: 'ranking-sublist' | 'ranking-categorical' | 'ranking-pairwise';
+export interface BaseRankingResponse extends BaseResponse {
   /** The options that are displayed as ranking options, provided as an array of objects, with label and value fields. */
   options: (StringOption | string)[];
   /** The default value of the response. Provide an object keyed by option value. Values depend on ranking type: index strings for sublist (e.g. `"0"`), category labels for categorical (`"HIGH"`, `"MEDIUM"`, `"LOW"`), and pairwise slots (`"pair-<n>-high"` / `"pair-<n>-low"`). */
   default?: Record<string, string>;
   /** The number of items to rank. Applies only to sublist and categorical ranking widgets. */
   numItems?: number;
+  /** The minimum number of items to rank. For sublist ranking it is the number of items, for categorical ranking it is items per category, and for pairwise ranking it is the number of pairs. */
+  min?: number;
+  /** The maximum number of items to rank. For sublist ranking it is the number of items, for categorical ranking it is items per category, and for pairwise ranking it is the number of pairs. */
+  max?: number;
 }
+
+export interface RankingSublistResponse extends BaseRankingResponse {
+  type: 'ranking-sublist';
+}
+
+export interface RankingPairwiseResponse extends BaseRankingResponse {
+  type: 'ranking-pairwise';
+}
+
+export interface RankingCategoricalResponse extends BaseRankingResponse {
+  type: 'ranking-categorical';
+  /** Whether all items need to be categorized. Defaults to false. */
+  categorizeAll?: boolean;
+}
+
+export type RankingResponse = | RankingSublistResponse | RankingPairwiseResponse | RankingCategoricalResponse;
 
 /**
  * The ReactiveResponse interface is used to define the properties of a reactive response.

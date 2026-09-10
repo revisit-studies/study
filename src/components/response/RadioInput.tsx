@@ -2,6 +2,7 @@ import {
   Group, Input, Radio, rem, Text,
 } from '@mantine/core';
 import { useState, useMemo } from 'react';
+import ClearSelectionButton from './ClearSelectionButton';
 import { ParsedStringOption, RadioResponse } from '../../parser/types';
 import { HorizontalHandler } from './HorizontalHandler';
 import classes from './css/Radio.module.css';
@@ -57,10 +58,22 @@ export function RadioInput({
   return (
     <Radio.Group
       name={`radioInput${response.id}`}
-      label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
+      label={prompt.length > 0 && (
+        <InputLabel
+          prompt={prompt}
+          required={required}
+          index={index}
+          enumerateQuestions={enumerateQuestions}
+          infoText={infoText}
+          clearSelectionButton={(
+            <ClearSelectionButton onClick={() => answer?.onChange?.('')} disabled={disabled} visible={!!answer?.value} />
+          )}
+        />
+      )}
       description={secondaryText}
       key={response.id}
-      {...answer}
+      value={answer?.value}
+      onChange={() => { }}
       error={error}
       errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
       style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
@@ -93,7 +106,17 @@ export function RadioInput({
                 styles={{
                   label: { display: !horizontal ? 'initial' : 'none' },
                 }}
-                onChange={() => setOtherSelected(false)}
+                onChange={() => { }}
+                onClick={() => {
+                  const current = answer?.value;
+                  const cb = answer?.onChange;
+                  if (current === radio.value) {
+                    cb?.('');
+                  } else {
+                    cb?.(radio.value);
+                  }
+                  setOtherSelected(false);
+                }}
                 classNames={{ radio: classes.fixDisabled, label: classes.fixDisabledLabel, icon: classes.fixDisabledIcon }}
               />
             </div>
@@ -113,7 +136,17 @@ export function RadioInput({
                 disabled={disabled}
                 value="other"
                 checked={otherSelected}
-                onClick={(event) => setOtherSelected(event.currentTarget.checked)}
+                onChange={() => { }}
+                onClick={() => {
+                  const cb = answer?.onChange;
+                  if (answer?.value === 'other') {
+                    cb?.('');
+                    setOtherSelected(false);
+                  } else {
+                    cb?.('other');
+                    setOtherSelected(true);
+                  }
+                }}
                 label={!horizontal && (
                   <Input
                     mt={-8}

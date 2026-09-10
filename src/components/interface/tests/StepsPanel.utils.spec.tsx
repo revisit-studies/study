@@ -251,6 +251,19 @@ describe('StepsPanel skip summaries', () => {
     ]);
   });
 
+  test('returns no summaries when a legacy block omits skip conditions', () => {
+    const block: Sequence = {
+      order: 'fixed',
+      orderPath: 'root-0',
+      components: ['trial1'],
+      skip: [],
+      interruptions: [],
+    };
+    delete (block as Partial<Sequence>).skip;
+
+    expect(getSkipConditionSummariesForBlock(block)).toEqual([]);
+  });
+
   test('keeps imported library skip logic readable after references are resolved', () => {
     const block: Sequence = {
       id: '$testLib.sequences.librarySequence',
@@ -354,6 +367,39 @@ describe('StepsPanel skipped trial detection', () => {
       orderPath: 'root',
       components: [
         'trial1',
+        'targetComponent',
+      ],
+      skip: [],
+      interruptions: [],
+    };
+
+    const skippedTrialOrders = getSkippedTrialOrders(
+      sequence,
+      {
+        trial1_0: buildStoredAnswer('trial1', 0, { q1: 'Blue' }),
+        targetComponent_1: buildStoredAnswer('targetComponent', 1, {}),
+      },
+      buildStudyConfig(sequence),
+    );
+
+    expect([...skippedTrialOrders]).toEqual([]);
+  });
+
+  test('does not evaluate skip conditions when a legacy block omits skip', () => {
+    const legacyBlock: Sequence = {
+      order: 'fixed',
+      orderPath: 'root-0',
+      components: ['trial1'],
+      skip: [],
+      interruptions: [],
+    };
+    delete (legacyBlock as Partial<Sequence>).skip;
+
+    const sequence: Sequence = {
+      order: 'fixed',
+      orderPath: 'root',
+      components: [
+        legacyBlock,
         'targetComponent',
       ],
       skip: [],

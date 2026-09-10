@@ -20,14 +20,14 @@
   "baseComponents": {
     "quizQuestion": {
       "type": "markdown",
-      "instruction": "Which city is the capital of {{country}}, in {{continent}}?{{#if (lookupAnswersRel -1 'capital-answer')}} (Last time, you answered \"{{lookupAnswersRel -1 'capital-answer'}}\".){{/if}}",
+      "instruction": "Which city is the capital of {{country}}?{{#if (lookupAnswersRel -1 'capital-answer')}} (Last time, you answered \"{{lookupAnswersRel -1 'capital-answer'}}\".){{/if}}",
       "path": "demo-templating/assets/{{hintFile}}.md",
       "helpTextPath": "demo-templating/assets/quiz-help.md",
       "response": [
         {
           "id": "capital-answer",
-          "prompt": "Enter the capital of {{country}}:{{#ifEquals (lookupAnswersRel -1 'capital-answer') 'Paris'}} (You said Paris last time — nice!){{/ifEquals}}",
-          "secondaryText": "Question about {{country}} ({{continent}}).{{#if (lookupAnswersRel -1 'capital-answer')}} Previously you answered \"{{lookupAnswersRel -1 'capital-answer'}}\".{{/if}}",
+          "prompt": "Enter the capital of {{country}}:",
+          "secondaryText": "{{country}} is a country in {{continent}}",
           "infoText": "This trial's parameters: country={{country}}, continent={{continent}}.{{#if (lookupAnswersRel -1 'capital-answer')}} Previous answer: {{lookupAnswersRel -1 'capital-answer'}}.{{/if}}",
           "location": "belowStimulus",
           "type": "shortText"

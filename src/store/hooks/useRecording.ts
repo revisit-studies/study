@@ -13,6 +13,7 @@ import {
   shouldMonitorMutedAudio,
   SPEECH_DETECTION_HOLD_MS,
 } from '../../utils/recordingWarnings';
+import { useStoreSelector } from '../store';
 
 /**
  * Captures and records the screen and audio.
@@ -40,6 +41,7 @@ export function useRecording() {
   const [isSpeakingWhileMuted, setIsSpeakingWhileMuted] = useState(false);
   const [analysisStreamReady, setAnalysisStreamReady] = useState(false);
   const [showMutedWarning, setShowMutedWarning] = useState(false);
+  const modes = useStoreSelector((state) => state.modes);
 
   // currentMediaStream and recorder can be just screen, just audio, or screen and audio combined.
   const currentMediaStream = useRef<MediaStream>(null);
@@ -54,6 +56,8 @@ export function useRecording() {
   const isAnalysis = useIsAnalysis();
 
   const { storageEngine } = useStorageEngine();
+
+  const { dataCollectionEnabled } = modes;
 
   const currentComponent = useCurrentComponent();
 
@@ -125,8 +129,11 @@ export function useRecording() {
 
   // Start screen recording
   const startScreenRecording = useCallback((trialName: string) => {
-    // check if the current stimulus needs combined or just screen
+    if (!dataCollectionEnabled) {
+      return;
+    }
 
+    // check if the current stimulus needs combined or just screen
     if (!(currentComponentHasAudioRecording || currentComponentHasScreenRecording)) {
       return;
     }
@@ -248,6 +255,10 @@ export function useRecording() {
   }, [currentComponent, isScreenCapturing, screenCaptureStarted]);
 
   const startAudioRecording = useCallback((trialName: string) => {
+    if (!dataCollectionEnabled) {
+      return;
+    }
+
     navigator.mediaDevices.getUserMedia({
       audio: true,
     }).then((s) => {
@@ -295,7 +306,7 @@ export function useRecording() {
       setAudioRecordingError('Microphone permission denied');
       setIsAudioRecording(false);
     });
-  }, [storageEngine, isMuted]);
+  }, [dataCollectionEnabled, isMuted, storageEngine]);
 
   // For study with just audio recording
   useEffect(() => {
@@ -348,6 +359,8 @@ export function useRecording() {
 
   // Start screen capture. This does not begin recording.
   const startScreenCapture = useCallback(() => {
+    if (!dataCollectionEnabled) return;
+
     const captureFn = async () => {
       document.title = `RECORD THIS TAB: ${pageTitle}`;
 
@@ -355,7 +368,7 @@ export function useRecording() {
         setRecordingError(null);
         setAudioRecordingError(null);
 
-        const screenStream = studyHasScreenRecording ? await navigator.mediaDevices.getDisplayMedia({
+        const screenStream = (studyHasScreenRecording) ? await navigator.mediaDevices.getDisplayMedia({
           video: { displaySurface: 'browser', ...(recordScreenFPS ? { frameRate: { ideal: recordScreenFPS } } : {}) },
           audio: false,
           // @ts-expect-error: experimental (selfBrowserSurface and preferCurrentTab are not yet standardized)
@@ -367,7 +380,7 @@ export function useRecording() {
         screenMediaStream.current = screenStream;
 
         let micStream: MediaStream | null = null;
-        if (studyHasAudioRecording) {
+        if (studyHasAudioRecording && dataCollectionEnabled) {
           try {
             micStream = await navigator.mediaDevices.getUserMedia({
               audio: true,
@@ -418,7 +431,7 @@ export function useRecording() {
       }
     };
     captureFn();
-  }, [pageTitle, recordAudio, recordScreenFPS, stopScreenCapture, studyHasAudioRecording, studyHasScreenRecording]);
+  }, [pageTitle, recordAudio, recordScreenFPS, stopScreenCapture, studyHasAudioRecording, studyHasScreenRecording, dataCollectionEnabled]);
 
   useEffect(() => {
     audioMediaStream.current?.getAudioTracks().forEach((track) => {
