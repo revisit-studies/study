@@ -18,6 +18,7 @@
     "demo-html-trrack",
     "demo-svelte-trrack",
     "demo-react-trrack",
+    "demo-codemirror",
     "demo-screen-recording",
     "demo-image",
     "demo-vega",
@@ -133,6 +134,9 @@
     },
     "demo-react-trrack": {
       "path": "demo-react-trrack/config.json"
+    },
+    "demo-codemirror": {
+      "path": "demo-codemirror/config.json"
     },
     "demo-image": {
       "path": "demo-image/config.json"
