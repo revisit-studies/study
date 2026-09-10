@@ -182,7 +182,7 @@ function DataExplorer({ parameters }: StimulusParams<ChartParameters>) {
         </Badge>
       </Group>
 
-      <Paper bg="gray.0" p="md" radius="md" withBorder>
+      <Paper bg="light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6))" p="md" radius="md" withBorder>
         <Text component="p" fs="italic" m={0}>
           {captionText}
         </Text>
@@ -195,7 +195,7 @@ function DataExplorer({ parameters }: StimulusParams<ChartParameters>) {
             <Stack gap={3}>
               {endValues.map((item) => (
                 <Group gap="xs" justify="space-between" key={item.name} wrap="nowrap">
-                  <Text c={item.selected ? 'blue.8' : 'dimmed'} fw={item.selected ? 600 : 400} size="xs">
+                  <Text c={item.selected ? 'blue' : 'dimmed'} fw={item.selected ? 600 : 400} size="xs">
                     {item.name}
                   </Text>
                   <Text ff="monospace" size="xs">{item.value.toFixed(0)}</Text>
@@ -207,14 +207,16 @@ function DataExplorer({ parameters }: StimulusParams<ChartParameters>) {
 
         <Paper p="xs" radius="md" style={{ flex: 1, overflowX: 'auto' }} withBorder>
           {showSummaryComparison ? (
-            <Box bg="gray.1" mb="xs" p="xs" style={{ borderRadius: 6 }}>
+            <Box bg="light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-5))" mb="xs" p="xs" style={{ borderRadius: 6 }}>
               <Text size="xs">
                 {`Selected end-value range: ${selectedRange} · All-data range: ${allDataRange}`}
               </Text>
             </Box>
           ) : null}
 
+          {/* Preserve the experimental chart palette on its original light surface. */}
           <svg
+            style={{ backgroundColor: 'white' }}
             aria-label={`${parameters.target} line chart with ${GUARDRAIL_LABELS[parameters.guardrail]}`}
             height={HEIGHT}
             role="img"

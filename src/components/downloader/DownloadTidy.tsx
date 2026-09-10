@@ -543,7 +543,7 @@ export function DownloadTidy({
             const button = (
               <Button
                 key={prop}
-                variant={isSelected ? 'light' : 'white'}
+                variant={isSelected ? 'light' : 'subtle'}
                 color={isSelected ? 'blue' : 'gray'}
                 size="xs"
                 onClick={() => {

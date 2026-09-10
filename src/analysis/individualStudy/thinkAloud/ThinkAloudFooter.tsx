@@ -659,7 +659,7 @@ export function ThinkAloudFooter({
           {provenanceLegendEntries.size > 1 && (
             <HoverCard width={160} position="top" withArrow shadow="md">
               <HoverCard.Target>
-                <ActionIcon c="" size="lg" variant="light" mt="lg" style={{ cursor: 'default' }}><IconPalette /></ActionIcon>
+                <ActionIcon size="lg" variant="light" mt="lg" style={{ cursor: 'default' }}><IconPalette /></ActionIcon>
               </HoverCard.Target>
               <HoverCard.Dropdown>
                 <Stack gap={6}>

@@ -4,6 +4,7 @@ import {
   beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { useParams } from 'react-router';
+import { DEFAULT_THEME } from '@mantine/core';
 import { IndividualComponent, StudyConfig } from '../../../../parser/types';
 import { ParticipantData, ParticipantDataWithStatus } from '../../../../storage/types';
 import { studyComponentToIndividualComponent } from '../../../../utils/handleComponentInheritance';
@@ -13,6 +14,9 @@ import { TrialVisualization } from '../TrialVisualization';
 import { ResponseVisualization } from '../ResponseVisualization';
 
 // ── mocks ────────────────────────────────────────────────────────────────────
+
+let mockColorScheme = 'light';
+beforeEach(() => { mockColorScheme = 'light'; });
 
 vi.mock('react-router', () => ({
   useParams: vi.fn(() => ({})),
@@ -27,7 +31,10 @@ vi.mock('react-vega', () => ({
   VegaLite: ({ spec }: { spec: unknown }) => <div data-vega-spec={JSON.stringify(spec)}>VegaLite</div>,
 }));
 
-vi.mock('@mantine/core', () => ({
+vi.mock('@mantine/core', async () => ({
+  DEFAULT_THEME: (await vi.importActual<typeof import('@mantine/core')>('@mantine/core')).DEFAULT_THEME,
+  useMantineTheme: () => DEFAULT_THEME,
+  useComputedColorScheme: () => mockColorScheme,
   Box: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Divider: () => <hr />,
   Flex: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -227,6 +234,27 @@ describe('ResponseVisualization', () => {
     trialId: 'trial1',
     trialConfig: mockTrialConfig,
   };
+
+  test.each(['light', 'dark'])('themes analysis chart furniture in %s mode without changing data colors', (scheme) => {
+    mockColorScheme = scheme;
+    const html = renderToStaticMarkup(
+      <ResponseVisualization
+        {...baseProps}
+        response={{
+          id: 'q1', type: 'radio', prompt: '', options: ['A', 'B'],
+        }}
+        trialConfig={{ ...mockTrialConfig, correctAnswer: [{ id: 'q1', answer: 'A' }] }}
+      />,
+    );
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const spec = JSON.parse(doc.querySelector('[data-vega-spec]')!.getAttribute('data-vega-spec')!);
+    const text = scheme === 'dark' ? DEFAULT_THEME.colors.dark[0] : DEFAULT_THEME.black;
+    expect(spec.config.background).toBe(scheme === 'dark' ? DEFAULT_THEME.colors.dark[7] : DEFAULT_THEME.white);
+    expect(spec.config.axis).toMatchObject({ labelColor: text, titleColor: text });
+    expect(spec.config.header).toEqual({ labelColor: text, titleColor: text });
+    expect(spec.config.legend).toEqual({ labelColor: text, titleColor: text });
+    expect(spec.encoding.color.scale.range).toEqual(['#69DB7C', '#ADB5BD']);
+  });
 
   test('metadata type: shows icon and config JSON code block', () => {
     const html = renderToStaticMarkup(

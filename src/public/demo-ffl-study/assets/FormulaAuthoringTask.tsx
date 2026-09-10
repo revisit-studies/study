@@ -111,10 +111,10 @@ export default function FormulaAuthoringTask({
       <Group justify="space-between">
         <Group gap="xs">
           <Badge variant="light">{parameters.taskCode}</Badge>
-          <Badge color={parameters.interfaceName === 'FFL' ? 'violet' : 'blue'}>
+          <Badge color={parameters.interfaceName === 'FFL' ? 'violet' : 'blue'} variant="light">
             {parameters.interfaceName}
           </Badge>
-          <Badge color={parameters.taskKind === 'editing' ? 'orange' : 'teal'}>
+          <Badge color={parameters.taskKind === 'editing' ? 'orange' : 'teal'} variant="light">
             {parameters.taskKind}
           </Badge>
         </Group>

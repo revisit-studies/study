@@ -70,7 +70,7 @@ export function ConfigVersionWarningModal() {
         </Text>
         {developmentModeEnabled && (
           <Group w="100%" justify="end">
-            <Button onClick={() => getNewParticipant(storageEngine, studyHref)} color="yellow" variant="filled">
+            <Button onClick={() => getNewParticipant(storageEngine, studyHref)} color="yellow" variant="filled" autoContrast>
               Next Participant
             </Button>
           </Group>

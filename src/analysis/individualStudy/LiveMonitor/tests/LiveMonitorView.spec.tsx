@@ -24,7 +24,7 @@ vi.mock('@mantine/core', () => ({
   Card: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Text: ({ children }: { children: ReactNode }) => <p>{children}</p>,
   Title: ({ children }: { children: ReactNode }) => <h5>{children}</h5>,
-  Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
+  Badge: ({ children, variant }: { children: ReactNode; variant?: string }) => <span data-variant={variant}>{children}</span>,
   ActionIcon: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => (
     <button type="button" onClick={onClick}>{children}</button>
   ),
@@ -275,6 +275,7 @@ describe('ParticipantSection', () => {
       <ParticipantSection {...baseProps} participants={participants} showDynamicBadge />,
     );
     expect(html).toContain('DYNAMIC');
+    expect(html).toContain('data-variant="light">DYNAMIC');
   });
 
   test('no DYNAMIC badge when isDynamic is false', () => {

@@ -280,7 +280,7 @@ export function ComponentController() {
   if (!storageEngine?.isConnected()) {
     return (
       <Center style={{ height: '80vh', flexDirection: 'column', textAlign: 'center' }}>
-        <IconPlugConnectedX size={48} stroke={1.5} color="orange" />
+        <IconPlugConnectedX size={48} stroke={1.5} color="var(--mantine-color-orange-text)" />
         <Title mt="md" order={4}>Database Disconnected</Title>
         <Text mt="md">Please check your network connection or disable your adblocker for this site, then refresh the page.</Text>
       </Center>

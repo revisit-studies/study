@@ -36,13 +36,14 @@ vi.mock('react-router', () => ({
   useParams: vi.fn(() => ({ studyId: 'test-study' })),
 }));
 
-vi.mock('@mantine/core', () => ({
+vi.mock('@mantine/core', async () => ({
+  isLightColor: (await vi.importActual<typeof import('@mantine/core')>('@mantine/core')).isLightColor,
   Text: ({ children }: { children: ReactNode }) => <p>{children}</p>,
   Flex: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Group: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Space: () => <div />,
   Tooltip: ({ children, label }: { children: ReactNode; label?: ReactNode }) => <div title={String(label)}>{children}</div>,
-  Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
+  Badge: ({ children, c, color }: { children: ReactNode; c?: string; color?: string }) => <span data-foreground={c} data-background={color}>{children}</span>,
   RingProgress: ({ sections }: { sections: { value: number }[] }) => <div>{sections[0]?.value}</div>,
   Stack: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   ActionIcon: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => <button type="button" onClick={onClick}>{children}</button>,
@@ -208,13 +209,15 @@ describe('TableView', () => {
     expect(html).toContain('N/A');
   });
 
-  test('Stage Cell: named stage renders stage name', () => {
+  test.each([['#F05A30', 'black'], ['#fab005', 'black'], ['#2e2e2e', 'white']])('Stage Cell: preserves %s background and chooses readable text', (color, foreground) => {
     renderToStaticMarkup(
-      <TableView {...defaultProps} visibleParticipants={[makeParticipant()]} />,
+      <TableView {...defaultProps} stageColors={{ DEFAULT: color }} visibleParticipants={[makeParticipant()]} />,
     );
     const col = capturedTableOptions!.columns.find((c) => c.header === 'Stage')!;
     const html = renderToStaticMarkup(col.Cell({ cell: { getValue: () => 'DEFAULT' } }));
     expect(html).toContain('DEFAULT');
+    expect(html).toContain(`data-foreground="${foreground}"`);
+    expect(html).toContain(`data-background="${color}"`);
   });
 
   // ── Duration column ────────────────────────────────────────────────────────

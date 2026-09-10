@@ -342,7 +342,7 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
       <Space h="sm" />
 
       <Flex direction="column">
-        <Box style={{ borderBottom: '1px solid #dedede' }} mb="xs" pb="sm">
+        <Box style={{ borderBottom: '1px solid var(--mantine-color-default-border)' }} mb="xs" pb="sm">
           <Title order={5}>Snapshots</Title>
         </Box>
 
