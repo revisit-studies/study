@@ -8,7 +8,7 @@ import { StudyConfig } from '../../../../parser/types';
 import { ParticipantData } from '../../../../storage/types';
 import type { StoredAnswer } from '../../../../store/types';
 import { createMockStudyConfig } from '../../../tests/testUtils';
-import { makeStoredAnswer, makeParticipant as _makeParticipant } from '../../../../tests/utils';
+import { makeStudyConfig, makeStoredAnswer, makeParticipant as _makeParticipant } from '../../../../tests/utils';
 import { AllTasksTimeline } from '../AllTasksTimeline';
 import { SingleTask } from '../SingleTask';
 import { SingleTaskLabelLines } from '../SingleTaskLabelLines';
@@ -37,6 +37,7 @@ vi.mock('@tabler/icons-react', () => ({
     'aria-label'?: string;
     color?: string;
   }) => <span aria-label={ariaLabel} data-color={color}>icon-check</span>,
+  IconCamera: () => <span>icon-camera</span>,
   IconMicrophone: () => <span>icon-microphone</span>,
   IconProgress: () => <span>icon-progress</span>,
   IconX: () => <span>icon-x</span>,
@@ -126,6 +127,7 @@ describe('SingleTask', () => {
     answerStatus: null,
     hasAudio: false,
     hasScreenRecording: false,
+    hasWebcamRecording: false,
   };
 
   test('renders task name', () => {
@@ -164,6 +166,13 @@ describe('SingleTask', () => {
       <svg><SingleTask {...baseProps} hasAudio /></svg>,
     );
     expect(html).toContain('icon-microphone');
+  });
+
+  test('shows camera icon when hasWebcamRecording', () => {
+    const html = renderToStaticMarkup(
+      <svg><SingleTask {...baseProps} hasWebcamRecording /></svg>,
+    );
+    expect(html).toContain('icon-camera');
   });
 
   test('shows progress icon when incomplete', () => {
@@ -208,6 +217,19 @@ describe('AllTasksTimeline', () => {
       />,
     );
     expect(html).toContain('trial1_0');
+  });
+
+  test('shows the webcam icon for a webcam-recorded task', () => {
+    const html = renderToStaticMarkup(
+      <AllTasksTimeline
+        participantData={makeParticipant()}
+        width={600}
+        studyId="test-study"
+        studyConfig={makeStudyConfig({ components: { trial1: { recordWebcam: true } } })}
+        maxLength={undefined}
+      />,
+    );
+    expect(html).toContain('icon-camera');
   });
 
   test('shows an unknown indicator and tooltip value for an answer without configured correctness', () => {

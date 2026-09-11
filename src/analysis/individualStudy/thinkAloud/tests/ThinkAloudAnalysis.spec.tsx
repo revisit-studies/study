@@ -15,7 +15,7 @@ import { makeParticipant, makeStoredAnswer as makeStoredAnswerBase, makeStorageE
 import type { FirebaseStorageEngine } from '../../../../storage/engines/FirebaseStorageEngine';
 import { useAsync } from '../../../../store/hooks/useAsync';
 import { useReplayContext } from '../../../../store/hooks/useReplay';
-import { handleTaskScreenRecording } from '../../../../utils/handleDownloadFiles';
+import { handleTaskRecordings } from '../../../../utils/handleDownloadFiles';
 import { Pills } from '../tags/Pills';
 import { AddTagDropdown } from '../tags/AddTagDropdown';
 import { TagEditor } from '../tags/TagEditor';
@@ -232,7 +232,7 @@ vi.mock('lodash.debounce', () => ({ default: (fn: (...args: never[]) => void) =>
 vi.mock('../../../../components/audioAnalysis/AudioProvenanceVis', () => ({ AudioProvenanceVis: () => <div data-testid="audio-provenance-vis" /> }));
 vi.mock('../../../../utils/encryptDecryptIndex', () => ({ encryptIndex: (i: number) => String(i) }));
 vi.mock('../../../../utils/Prefix', () => ({ PREFIX: '/' }));
-vi.mock('../../../../utils/handleDownloadFiles', () => ({ handleTaskAudio: vi.fn(), handleTaskScreenRecording: vi.fn() }));
+vi.mock('../../../../utils/handleDownloadFiles', () => ({ handleTaskAudio: vi.fn(), handleTaskRecordings: vi.fn() }));
 vi.mock('../../ParticipantRejectModal', () => ({ ParticipantRejectModal: () => null }));
 vi.mock('../../../../components/audioAnalysis/provenanceColors', () => ({ buildProvenanceLegendEntries: vi.fn(() => []) }));
 vi.mock('../../../../utils/syncReplay', () => ({ revisitPageId: 'test-page-id', syncChannel: { postMessage: vi.fn() } }));
@@ -547,6 +547,7 @@ const footerDefaultProps = {
 const mockFooterStorageEngine = {
   getAudioUrl: vi.fn().mockResolvedValue('http://test/audio.mp3'),
   getScreenRecording: vi.fn().mockResolvedValue('http://test/video.mp4'),
+  getWebcamRecording: vi.fn().mockResolvedValue(null),
   saveTags: vi.fn().mockResolvedValue(undefined),
   getTags: vi.fn().mockResolvedValue([]),
   getAllParticipantAndTaskTags: vi.fn().mockResolvedValue(null),
@@ -623,7 +624,7 @@ describe('ThinkAloudFooter', () => {
       execute: vi.fn(),
       error: null,
     }));
-    vi.mocked(handleTaskScreenRecording).mockClear();
+    vi.mocked(handleTaskRecordings).mockClear();
 
     const view = render(<RealThinkAloudFooter {...footerDefaultProps} storageEngine={storageEngine} />);
     await waitFor(() => expect(storageEngine.getAudioUrl).toHaveBeenCalledWith('trial_0', 'p1'));
@@ -640,13 +641,17 @@ describe('ThinkAloudFooter', () => {
     screenP2.resolve('screen-p2');
     const screenIcon = await waitFor(() => view.getByTestId('screen-recording-icon'));
     fireEvent.click(screenIcon.closest('button')!);
-    expect(handleTaskScreenRecording).toHaveBeenLastCalledWith(expect.objectContaining({ screenRecordingUrl: 'screen-p2' }));
+    expect(handleTaskRecordings).toHaveBeenLastCalledWith(expect.objectContaining({
+      includeScreen: true,
+      includeWebcam: false,
+      screenRecordingUrl: 'screen-p2',
+    }));
 
     screenP1.resolve('screen-p1');
     await act(async () => { await screenP1.promise; });
     const liveScreenIcon = view.getByTestId('screen-recording-icon');
     fireEvent.click(liveScreenIcon.closest('button')!);
-    expect(handleTaskScreenRecording).toHaveBeenLastCalledWith(expect.objectContaining({
+    expect(handleTaskRecordings).toHaveBeenLastCalledWith(expect.objectContaining({
       participantId: 'p2', identifier: 'trial_0', screenRecordingUrl: 'screen-p2',
     }));
   });

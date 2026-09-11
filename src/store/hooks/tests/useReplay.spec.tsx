@@ -91,6 +91,13 @@ describe('useReplay — returned state defaults', () => {
     expect(result.current.speed).toBe(1);
   });
 
+  test('starts with the side-by-side replay layout and updates it locally', () => {
+    const { result } = renderHook(() => useReplay());
+    expect(result.current.replayLayout).toBe('side-by-side');
+    act(() => { result.current.setReplayLayout('picture-in-picture'); });
+    expect(result.current.replayLayout).toBe('picture-in-picture');
+  });
+
   test('starts with hasEnded false', () => {
     const { result } = renderHook(() => useReplay());
     expect(result.current.hasEnded).toBe(false);
@@ -145,6 +152,36 @@ describe('useReplay — returned function invocation', () => {
     const { result } = renderHook(() => useReplay());
     act(() => { result.current.setSeekTime(5, true); });
     expect(result.current.seekTime).toBe(5);
+  });
+
+  test('keeps updateReplayRef stable when replay control becomes remote', () => {
+    const { result } = renderHook(() => useReplay());
+    const initialUpdateReplayRef = result.current.updateReplayRef;
+
+    act(() => { result.current.setSeekTime(5, true); });
+
+    expect(result.current.updateReplayRef).toBe(initialUpdateReplayRef);
+  });
+
+  test('updates muting when ownership changes during playback', () => {
+    const { result } = renderHook(() => useReplay());
+    const video = document.createElement('video');
+    Object.defineProperty(video, 'src', { value: 'fake.mp4', writable: true, configurable: true });
+    video.play = vi.fn(async () => {});
+    video.pause = vi.fn();
+
+    act(() => {
+      result.current.videoRef.current = video;
+      result.current.updateReplayRef();
+      result.current.setIsPlaying(true);
+    });
+    expect(video.muted).toBe(false);
+
+    act(() => { result.current.setSeekTime(5, true); });
+    expect(video.muted).toBe(true);
+
+    act(() => { result.current.setSeekTime(6); });
+    expect(video.muted).toBe(false);
   });
 
   test('setSpeed with isRemoteTriggered=true covers remote path', () => {
@@ -287,6 +324,121 @@ describe('useReplay — handlePlay/Seeked/Pause via video element events', () =>
       result.current.updateReplayRef();
     });
     expect(result.current.replayRef.current).toBe(audio);
+  });
+
+  test('updateReplayRef uses webcam video when no screen recording exists', () => {
+    const { result } = renderHook(() => useReplay());
+    const webcam = makeVideoWithSrc();
+    act(() => {
+      result.current.webcamVideoRef.current = webcam;
+      result.current.updateReplayRef();
+    });
+    expect(result.current.replayRef.current).toBe(webcam);
+    expect(webcam.muted).toBe(true);
+  });
+
+  test('does not select an empty screen source over an available webcam source', () => {
+    const { result } = renderHook(() => useReplay());
+    const screen = document.createElement('video');
+    const webcam = makeVideoWithSrc();
+    screen.setAttribute('src', '');
+
+    act(() => {
+      result.current.videoRef.current = screen;
+      result.current.webcamVideoRef.current = webcam;
+      result.current.updateReplayRef();
+    });
+
+    expect(result.current.replayRef.current).toBe(webcam);
+  });
+
+  test('uses audio as the authoritative source when replaying webcam and audio', () => {
+    const { result } = renderHook(() => useReplay());
+    const webcam = makeVideoWithSrc();
+    const audio = document.createElement('audio');
+    Object.defineProperty(audio, 'src', { value: 'fake.mp3', writable: true, configurable: true });
+
+    act(() => {
+      result.current.webcamVideoRef.current = webcam;
+      result.current.audioRef.current = audio;
+      result.current.updateReplayRef();
+    });
+
+    expect(result.current.replayRef.current).toBe(audio);
+  });
+
+  test('starts a secondary webcam source added while audio playback is active', () => {
+    const { result } = renderHook(() => useReplay());
+    const audio = document.createElement('audio');
+    Object.defineProperty(audio, 'src', { value: 'fake.mp3', writable: true, configurable: true });
+    audio.play = vi.fn(async () => {});
+    const webcam = document.createElement('video');
+    webcam.play = vi.fn(async () => {});
+
+    act(() => {
+      result.current.audioRef.current = audio;
+      result.current.webcamVideoRef.current = webcam;
+      result.current.updateReplayRef();
+      result.current.setIsPlaying(true);
+    });
+    expect(result.current.replayRef.current).toBe(audio);
+
+    act(() => {
+      webcam.setAttribute('src', 'fake-webcam.mp4');
+      result.current.updateReplayRef();
+    });
+
+    expect(webcam.play).toHaveBeenCalled();
+  });
+
+  test('stops playback when a newly available source replaces the master', () => {
+    const { result } = renderHook(() => useReplay());
+    const screen = makeVideoWithSrc();
+    screen.play = vi.fn(async () => {});
+    screen.pause = vi.fn();
+    const webcam = makeVideoWithSrc();
+    webcam.pause = vi.fn();
+    const audio = document.createElement('audio');
+    Object.defineProperty(audio, 'src', { value: 'fake.mp3', writable: true, configurable: true });
+
+    act(() => {
+      result.current.videoRef.current = screen;
+      result.current.webcamVideoRef.current = webcam;
+      result.current.updateReplayRef();
+      result.current.setIsPlaying(true);
+    });
+    expect(result.current.isPlaying).toBe(true);
+
+    act(() => {
+      screen.removeAttribute('src');
+      Object.defineProperty(screen, 'src', { value: '', writable: true, configurable: true });
+      result.current.audioRef.current = audio;
+      result.current.updateReplayRef();
+    });
+
+    expect(result.current.isPlaying).toBe(false);
+    expect(screen.pause).toHaveBeenCalled();
+    expect(webcam.pause).toHaveBeenCalled();
+  });
+
+  test('screen playback starts and seeks the webcam recording', () => {
+    const { result } = renderHook(() => useReplay());
+    const screenVideo = makeVideoWithSrc();
+    const webcamVideo = makeVideoWithSrc();
+    webcamVideo.play = vi.fn(async () => {});
+    webcamVideo.pause = vi.fn();
+
+    act(() => {
+      result.current.videoRef.current = screenVideo;
+      result.current.webcamVideoRef.current = webcamVideo;
+      result.current.updateReplayRef();
+      result.current.setSeekTime(4);
+      screenVideo.dispatchEvent(new Event('play'));
+    });
+
+    expect(webcamVideo.currentTime).toBe(4);
+    expect(webcamVideo.play).toHaveBeenCalled();
+    expect(webcamVideo.muted).toBe(true);
   });
 
   test('updateReplayRef detaches listeners from the previous media element', () => {
