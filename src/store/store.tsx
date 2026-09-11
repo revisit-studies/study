@@ -7,7 +7,7 @@ import {
   ParsedStringOption, ResponseBlockLocation, StudyConfig, ValueOf, Answer, ParticipantData, IndividualComponent,
 } from '../parser/types';
 import type {
-  AlertModalState, CheckAnswerState, StoredAnswer, TrialValidation, TrrackedProvenance, StoreState, Sequence, ParticipantMetadata, ValidationStatus,
+  AssetStatus, AlertModalState, CheckAnswerState, StoredAnswer, TrialValidation, TrrackedProvenance, StoreState, Sequence, ParticipantMetadata, ValidationStatus,
 } from './types';
 import { getSequenceFlatMap } from '../utils/getSequenceFlatMap';
 import { REVISIT_MODE } from '../storage/engines/types';
@@ -124,6 +124,7 @@ export async function studyStoreCreator(
           belowStimulus: { valid: false, values: {} },
           sidebar: { valid: false, values: {} },
           stimulus: getInitialStimulusValidation(componentConfig),
+          ...(['video', 'image', 'website', 'markdown', 'react-component', 'vega'].includes(componentConfig.type) ? { assetStatus: 'loading' } : {}),
           provenanceGraph: {
             aboveStimulus: undefined,
             belowStimulus: undefined,
@@ -134,22 +135,33 @@ export async function studyStoreCreator(
       };
     }),
   );
+  // The flat sequence contains dynamic block IDs but not their generated trials.
+  // Include saved trials so their assets are checked again when the study resumes.
+  const restoredComponents = {
+    ...Object.fromEntries(flatSequence.map((id, idx) => [`${id}_${idx}`, id])),
+    ...Object.fromEntries(Object.entries(answers).map(([identifier, answer]) => [identifier, answer.componentName])),
+  };
   const allValid = Object.assign(
     {},
-    ...flatSequence.map((id, idx) => ({
-      [`${id}_${idx}`]: {
-        aboveStimulus: { valid: true, values: {} },
-        belowStimulus: { valid: true, values: {} },
-        sidebar: { valid: true, values: {} },
-        stimulus: { valid: true, values: {} },
-        provenanceGraph: {
-          aboveStimulus: undefined,
-          belowStimulus: undefined,
-          stimulus: undefined,
-          sidebar: undefined,
+    ...Object.entries(restoredComponents).map(([identifier, id]): TrialValidation => {
+      const componentConfig = studyComponentToIndividualComponent(config.components[id] || { response: [] }, config);
+
+      return {
+        [identifier]: {
+          ...(['video', 'image', 'website', 'markdown', 'react-component', 'vega'].includes(componentConfig.type) ? { assetStatus: 'loading' } : {}),
+          aboveStimulus: { valid: true, values: {} },
+          belowStimulus: { valid: true, values: {} },
+          sidebar: { valid: true, values: {} },
+          stimulus: { valid: true, values: {} },
+          provenanceGraph: {
+            aboveStimulus: undefined,
+            belowStimulus: undefined,
+            stimulus: undefined,
+            sidebar: undefined,
+          },
         },
-      },
-    })),
+      };
+    }),
   );
 
   const initialState: StoreState = {
@@ -194,6 +206,10 @@ export async function studyStoreCreator(
     name: 'storeSlice',
     initialState,
     reducers: {
+      setAssetStatus(state, { payload }: PayloadAction<{ identifier: string; status: AssetStatus }>) {
+        const validation = state.trialValidation[payload.identifier];
+        if (validation) validation.assetStatus = payload.status;
+      },
       setConfig(state, { payload }: PayloadAction<StudyConfig>) {
         state.config = payload;
       },
@@ -240,6 +256,7 @@ export async function studyStoreCreator(
           aboveStimulus: { valid: false, values: {} },
           belowStimulus: { valid: false, values: {} },
           stimulus: getInitialStimulusValidation(componentConfig),
+          ...(['video', 'image', 'website', 'markdown', 'react-component', 'vega'].includes(componentConfig.type) ? { assetStatus: 'loading' } : {}),
           sidebar: { valid: false, values: {} },
           provenanceGraph: {
             aboveStimulus: undefined,

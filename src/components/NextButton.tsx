@@ -77,13 +77,13 @@ export function NextButton({
   }, [nextButtonDisableTime, timer, navigate, studyConfig.uiConfig.timeoutReject]);
 
   useEffect(() => {
-    if (timer === undefined || nextButtonAutoAdvanceTime === undefined || timer < nextButtonAutoAdvanceTime || autoAdvanceTriggered.current) {
+    if (isNextDisabled || timer === undefined || nextButtonAutoAdvanceTime === undefined || timer < nextButtonAutoAdvanceTime || autoAdvanceTriggered.current) {
       return;
     }
 
     autoAdvanceTriggered.current = true;
     goToNextStep(false);
-  }, [goToNextStep, nextButtonAutoAdvanceTime, timer]);
+  }, [goToNextStep, isNextDisabled, nextButtonAutoAdvanceTime, timer]);
 
   const buttonTimerSatisfied = useMemo(
     () => {
@@ -177,7 +177,7 @@ export function NextButton({
                 <Alert mt="md" title="Next button disabled" color="red" icon={<IconAlertTriangle />}>
                   The next button has timed out and is now disabled.
                   <Group justify="right" mt="sm">
-                    <Button onClick={() => goToNextStep(false)} variant="link" color="red">Proceed</Button>
+                    <Button disabled={isNextDisabled} onClick={() => goToNextStep(false)} variant="link" color="red">Proceed</Button>
                   </Group>
                 </Alert>
               ))}

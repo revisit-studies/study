@@ -5,11 +5,15 @@ import { useDispatch } from 'react-redux';
 import { useCurrentComponent, useCurrentIdentifier } from '../routes/utils';
 import { useStoreDispatch, useStoreActions, useStoreSelector } from '../store/store';
 import { ParticipantData, WebsiteComponent } from '../parser/types';
-import { PREFIX as BASE_PREFIX } from '../utils/Prefix';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import { ReplayContext } from '../store/hooks/useReplay';
 import { compileTemplate } from '../utils/handlebars';
 import { useTemplateAnswerContext } from '../store/hooks/useTemplateAnswerContext';
+import { getAssetStatus, useAssetStatus, useAssetLoadStatus } from '../store/hooks/useAssetStatus';
+import { useAsyncResource } from '../store/hooks/useAsyncResource';
+import { getStaticAssetByPath } from '../utils/getStaticAsset';
+import { PREFIX as BASE_PREFIX } from '../utils/Prefix';
+import { ResourceNotFound } from '../ResourceNotFound';
 
 const PREFIX = '@REVISIT_COMMS';
 
@@ -35,7 +39,6 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   const shouldSendProvenance = !isAnalysis || !replay || hasReplayStarted;
 
   const templateData = useTemplateAnswerContext();
-
   const templatedPath = useMemo(
     () => (templateData ? compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true, data: templateData }) : undefined),
     [currentConfig.path, currentConfig.parameters, templateData],
@@ -55,6 +58,25 @@ export function IframeController({ currentConfig, provState, answers }: { curren
 
   // navigation
   const currentComponent = useCurrentComponent();
+
+  const url = useMemo(() => {
+    if (templatedPath === undefined) return undefined;
+    return templatedPath.startsWith('http')
+      ? templatedPath
+      : `${BASE_PREFIX}${templatedPath}?trialid=${currentComponent}&id=${iframeId}`;
+  }, [templatedPath, currentComponent, iframeId]);
+  const requestKey = url === undefined ? undefined : `${identifier}:${url}`;
+  const checkWebsite = useCallback(async () => {
+    if (url === undefined) return undefined;
+    // External iframe responses cannot be inspected without the site's CORS permission.
+    if (new URL(url, window.location.href).origin !== window.location.origin) return true;
+    return await getStaticAssetByPath(url) === undefined ? undefined : true;
+  }, [url]);
+  const { status } = useAsyncResource(requestKey, checkWebsite);
+  const { status: frameStatus, onReady, onError } = useAssetLoadStatus(requestKey);
+  const assetStatus = getAssetStatus(status, frameStatus);
+
+  useAssetStatus(assetStatus);
 
   const sendMessage = useCallback(
     (tag: string, message: unknown) => {
@@ -141,8 +163,13 @@ export function IframeController({ currentConfig, provState, answers }: { curren
     return null;
   }
 
+  if (assetStatus === 'error') {
+    return <ResourceNotFound path={templatedPath} />;
+  }
+
   return (
     <iframe
+      key={requestKey}
       ref={ref}
       inert={isAnalysis}
       aria-disabled={isAnalysis}
@@ -152,11 +179,9 @@ export function IframeController({ currentConfig, provState, answers }: { curren
         border: 0,
         pointerEvents: isAnalysis ? 'none' : undefined,
       }}
-      src={
-        templatedPath.startsWith('http')
-          ? templatedPath
-          : `${BASE_PREFIX}${templatedPath}?trialid=${currentComponent}&id=${iframeId}`
-      }
+      src={url}
+      onLoad={onReady}
+      onErrorCapture={onError}
     />
   );
 }

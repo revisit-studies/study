@@ -13,7 +13,7 @@ export function getAnswersFromAllLocations(trialValidationEntry: TrialValidation
     return {};
   }
   const answers = Object.values(trialValidationEntry).reduce((acc, curr) => {
-    if (Object.hasOwn(curr, 'values')) {
+    if (curr && typeof curr === 'object' && Object.hasOwn(curr, 'values')) {
       return { ...acc, ...(curr as ValidationStatus).values };
     }
     return acc;
