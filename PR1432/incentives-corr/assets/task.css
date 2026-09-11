@@ -1,0 +1,25 @@
+ul.mantine-List-root{
+    display: none;
+}
+
+.questionPrompt {
+    font-size: 16px;
+    font-weight: 500;
+    color: #000000;
+}
+
+.questionSecondaryText {
+    font-size: 14px;
+    font-weight: 400;
+    color: #8a8a8a;
+}
+
+.requiredQuestion {
+    color: rgb(250, 82, 82);
+    margin-left: 4px;
+    font-weight: 700;
+}
+
+.trialHeader {
+    margin-bottom: 12px !important;
+}

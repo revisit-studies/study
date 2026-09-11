@@ -1,0 +1,67 @@
+<section class="section">
+  <div class="container">
+    <h1 id="trainingTitle" class="title"></h1>
+    <h2 class="subtitle trainingIntro">
+      Watch the video below to learn about the network you will be interacting with.
+      
+    </h2>
+
+    <h2> <strong>Enable audio for the best experience. </strong></h2>
+    <br/>
+  </div>
+
+  <div class="card">
+    <div class="card-image">
+      <video id="trainingVideoNodeLink" class="trainingVideo" width="1152px" height="648px" style="display:none" controls preload="none">
+        <source  src="training/audioNodeLink.mp4" type="video/mp4" /></video>
+     <video id="trainingVideoAdjMatrix" class="trainingVideo" width="1152px" height="648px" style="display:none"  controls preload="none">
+        <source  src="training/audioAdjMatrix.mp4" type="video/mp4" /></video>
+    </div>
+  </div>
+
+
+</section>
+
+<a class="button is-pulled-right" id="start-trials" style="display:none">Start Practice Tasks</a>
+
+
+<!-- <script src="js/carousel-js.js"></script> -->
+
+<script>
+
+  (async function () {
+    updateStudyProvenance('started training');
+
+    setCookie('onPage','training');
+
+    experimentr.hideNext()
+
+    if (vis === undefined) {
+      await assignVisType();
+    }
+
+
+    if (vis === 'nodeLink'){
+      d3.select('#trainingVideoNodeLink').style('display', 'block')
+
+      d3.select('#trainingVideoAdjMatrix').remove()
+    } else {
+      d3.select('#trainingVideoAdjMatrix').style('display', 'block')
+
+      d3.select('#trainingVideoNodeLink').remove()
+    }
+    d3.select('#trainingTitle').text(vis === 'nodeLink' ? 'Node-Link Diagram' : 'Adjacency Matrix')
+    
+    //Only show Start Trials button when the training video is done playing;
+    document.getElementsByClassName('trainingVideo')[0].onended = function() {
+      d3.select('#start-trials').style('display','block')
+    };
+
+    d3.select('#start-trials').on('click', function () {
+      updateStudyProvenance('finished training')
+      experimentr.next()
+    });
+
+    // d3.select('#trainingVideo').node().play()
+  })();
+</script>

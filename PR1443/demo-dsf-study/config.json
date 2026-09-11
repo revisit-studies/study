@@ -1,0 +1,139 @@
+{
+  "$schema": "../../src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Textual Data Serialization Format Usability (Section 4 Demo)",
+    "version": "pilot",
+    "authors": ["The reVISit Team"],
+    "date": "2026-08-20",
+    "description": "A factors-based adaptation of the Section 4 crowd-work study from He, Cutler, and McNutt (2026). Each participant completes CONFIG and TABULAR task sets in distinct serialization formats.",
+    "organizations": ["University of Utah"]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-dsf-study/assets/introduction.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": false,
+    "windowEventDebounceTime": 200,
+    "studyEndMsg": "Thank you for completing the data serialization format study demo."
+  },
+  "factors": {
+    "serializationFormat": [
+      "JSON",
+      "JSONC",
+      "JSON5",
+      "HJSON",
+      "YAML",
+      "TOML",
+      "XML"
+    ],
+    "dataContext": {
+      "values": ["config", "tabular"],
+      "order": "random"
+    },
+    "assignedFormats": {
+      "action": "sample",
+      "samplingStrategy": "withoutReplacement",
+      "factors": ["serializationFormat"],
+      "numSamples": 2
+    },
+    "contextFormatAssignments": {
+      "action": "zip",
+      "factors": ["dataContext", "assignedFormats"]
+    }
+  },
+  "baseComponents": {
+    "reading": {
+      "type": "react-component",
+      "path": "demo-dsf-study/assets/DataSerializationTask.tsx",
+      "instructionLocation": "aboveStimulus",
+      "nextButtonLocation": "belowStimulus",
+      "response": [],
+      "parameters": {
+        "dataContext": "{{dataContext}}",
+        "format": "{{serializationFormat}}",
+        "taskType": "reading",
+        "taskId": "reading"
+      }
+    },
+    "authoring": {
+      "type": "react-component",
+      "path": "demo-dsf-study/assets/DataSerializationTask.tsx",
+      "instructionLocation": "aboveStimulus",
+      "nextButtonLocation": "belowStimulus",
+      "response": [],
+      "parameters": {
+        "dataContext": "{{dataContext}}",
+        "format": "{{serializationFormat}}",
+        "taskType": "authoring",
+        "taskId": "authoring"
+      }
+    },
+    "modifying": {
+      "type": "react-component",
+      "path": "demo-dsf-study/assets/DataSerializationTask.tsx",
+      "instructionLocation": "aboveStimulus",
+      "nextButtonLocation": "belowStimulus",
+      "response": [],
+      "parameters": {
+        "dataContext": "{{dataContext}}",
+        "format": "{{serializationFormat}}",
+        "taskType": "modifying",
+        "taskId": "modifying"
+      }
+    }
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-dsf-study/assets/introduction.md",
+      "response": []
+    },
+    "consent": {
+      "type": "questionnaire",
+      "instruction": "Please confirm that you consent to participate in this study demo.",
+      "response": [
+        {
+          "id": "consent",
+          "type": "radio",
+          "location": "belowStimulus",
+          "prompt": "Do you consent to continue?",
+          "options": [
+            { "label": "Yes", "value": "yes" },
+            { "label": "No", "value": "no" }
+          ],
+          "required": true,
+          "requiredValue": "yes"
+        }
+      ]
+    },
+    "reflection": {
+      "type": "questionnaire",
+      "instruction": "Reflect on the two serialization formats you used.",
+      "response": [
+        {
+          "id": "comparison",
+          "type": "longText",
+          "location": "belowStimulus",
+          "prompt": "How did the two formats support or hinder reading, authoring, and modifying the data?",
+          "required": true
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "consent",
+      {
+        "type": "factor",
+        "id": "contextFormatAssignments",
+        "factor": "contextFormatAssignments",
+        "components": ["reading", "authoring", "modifying"]
+      },
+      "reflection"
+    ]
+  }
+}

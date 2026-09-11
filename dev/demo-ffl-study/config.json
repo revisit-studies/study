@@ -1,0 +1,188 @@
+{
+  "$schema": "../../src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "FFL Formula Authoring Study (Section 6 Demo)",
+    "version": "pilot",
+    "authors": ["The reVISit Team"],
+    "date": "2026-08-20",
+    "description": "A factors-based reconstruction of the controlled FFL-versus-LaTeX authoring study in Section 6 of Wu et al. (UIST 2023).",
+    "organizations": ["University of Utah"]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-ffl-study/assets/introduction.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": false,
+    "windowEventDebounceTime": 200,
+    "studyEndMsg": "Thank you for completing the formula authoring study demo."
+  },
+  "factors": {
+    "taskOrder": { "values": ["1", "2"], "order": "random" },
+    "interfaceOrder": { "values": ["FFL", "LaTeX"], "order": "random" },
+    "taskInterfaceOrder": {
+      "action": "zip",
+      "factors": ["taskOrder", "interfaceOrder"]
+    },
+    "taskType": [
+      { "taskType": "C", "taskKind": "creation" },
+      { "taskType": "E", "taskKind": "editing" }
+    ],
+    "scheduledTasks": {
+      "action": "cross",
+      "factors": ["taskType", "taskInterfaceOrder"]
+    }
+  },
+  "baseComponents": {
+    "authoringTask": {
+      "type": "react-component",
+      "path": "demo-ffl-study/assets/FormulaAuthoringTask.tsx",
+      "instruction": "Use the provided editor to complete the requested formula augmentation.",
+      "instructionLocation": "aboveStimulus",
+      "nextButtonLocation": "belowStimulus",
+      "response": [],
+      "parameters": {
+        "formula": "y = β₀ + β₁x₁ + β₂x₂ + ⋯ + βₘxₘ",
+        "timeLimitSeconds": 390,
+        "taskCode": "{{taskType}}{{taskOrder}}",
+        "taskKind": "{{taskKind}}",
+        "interfaceName": "{{interfaceOrder}}"
+      }
+    },
+    "taskReflection": {
+      "type": "questionnaire",
+      "instruction": "Reflect on the **{{taskType}}{{taskOrder}}** task using the {{interfaceOrder}} interface.",
+      "response": [
+        {
+          "id": "ease",
+          "type": "likert",
+          "location": "belowStimulus",
+          "prompt": "It was easy to complete this task.",
+          "numItems": 7,
+          "leftLabel": "Strongly disagree",
+          "rightLabel": "Strongly agree",
+          "required": true
+        },
+        {
+          "id": "efficacy",
+          "type": "likert",
+          "location": "belowStimulus",
+          "prompt": "I was able to do what I wanted with the tool.",
+          "numItems": 7,
+          "leftLabel": "Strongly disagree",
+          "rightLabel": "Strongly agree",
+          "required": true
+        },
+        {
+          "id": "feedback",
+          "type": "longText",
+          "location": "belowStimulus",
+          "prompt": "How could this interface have better supported you?",
+          "required": true
+        }
+      ]
+    }
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-ffl-study/assets/introduction.md",
+      "response": []
+    },
+    "consent": {
+      "type": "questionnaire",
+      "instruction": "Please confirm that you consent to participate in this demo study.",
+      "response": [
+        {
+          "id": "consent",
+          "type": "radio",
+          "location": "belowStimulus",
+          "prompt": "Do you consent to continue?",
+          "options": [
+            {
+              "label": "Yes",
+              "value": "yes"
+            },
+            {
+              "label": "No",
+              "value": "no"
+            }
+          ],
+          "required": true,
+          "requiredValue": "yes"
+        }
+      ]
+    },
+    "tutorial": {
+      "type": "markdown",
+      "path": "demo-ffl-study/assets/tutorial.md",
+      "response": []
+    },
+    "exploratoryTask": {
+      "baseComponent": "authoringTask",
+      "parameters": {
+        "taskCode": "Exploratory",
+        "interfaceName": "FFL",
+        "taskKind": "exploratory",
+        "formula": "y = β₀ + β₁x₁ + β₂x₂ + ⋯ + βₘxₘ",
+        "startingMarkup": "",
+        "requirements": [
+          "Use FFL to make the formula easier for a new reader to understand.",
+          "Explore colors and labels freely.",
+          "Think aloud if this is being facilitated in person."
+        ],
+        "timeLimitSeconds": 600
+      }
+    },
+    "retrospective": {
+      "type": "questionnaire",
+      "instruction": "Reflect on your overall experience with FFL and LaTeX.",
+      "response": [
+        {
+          "id": "fflColorEase",
+          "type": "likert",
+          "location": "belowStimulus",
+          "prompt": "I found FFL easy to use for coloring parts of a formula.",
+          "numItems": 5,
+          "leftLabel": "Strongly disagree",
+          "rightLabel": "Strongly agree",
+          "required": true
+        },
+        {
+          "id": "fflLabelEase",
+          "type": "likert",
+          "location": "belowStimulus",
+          "prompt": "I found FFL easy to use for labeling parts of a formula.",
+          "numItems": 5,
+          "leftLabel": "Strongly disagree",
+          "rightLabel": "Strongly agree",
+          "required": true
+        },
+        {
+          "id": "comparison",
+          "type": "longText",
+          "location": "belowStimulus",
+          "prompt": "Compare the strengths and limitations of FFL and LaTeX for formula augmentation.",
+          "required": true
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "consent",
+      "tutorial",
+      {
+        "type": "factor",
+        "id": "scheduledTasks",
+        "factor": "scheduledTasks",
+        "components": ["authoringTask", "taskReflection"]
+      },
+      "exploratoryTask",
+      "retrospective"
+    ]
+  }
+}

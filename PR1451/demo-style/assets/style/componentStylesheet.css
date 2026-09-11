@@ -1,0 +1,16 @@
+.markdown {
+  background-color: light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-6));
+  color: var(--mantine-color-text);
+  padding: 30px;
+  border-radius: 10px;
+}
+
+#markdown-styling h2 {
+  font-family: "Gill Sans", sans-serif;
+  font-weight: 700;
+  text-align: center;
+}
+
+#markdown-styling code {
+  color: var(--mantine-color-blue-text);
+}

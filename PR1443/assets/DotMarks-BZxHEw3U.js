@@ -1,0 +1,1 @@
+import{o as e,r as t}from"./rolldown-runtime-C0FnF6B9.js";import{t as n}from"./jsx-runtime-CA2T8_y1.js";var r=t({DotMarks:()=>a}),i=e(n(),1);function a({positions:e}){return(0,i.jsx)(`g`,{children:e.map((e,t)=>(0,i.jsx)(`circle`,{cx:e.x,cy:e.y,r:2,fill:`black`,stroke:`currentColor`},t))})}export{r as n,a as t};

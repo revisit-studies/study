@@ -1,0 +1,1 @@
+var e=`/study/dev/`;export{e as t};
