@@ -8,6 +8,7 @@ import { VideoComponent } from '../parser/types';
 import { PREFIX } from '../utils/Prefix';
 import { getStaticAssetByPath } from '../utils/getStaticAsset';
 import { ResourceNotFound } from '../ResourceNotFound';
+import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { compileTemplate } from '../utils/handlebars';
 import { useTemplateAnswerContext } from '../store/hooks/useTemplateAnswerContext';
 import 'plyr-react/plyr.css';
@@ -97,6 +98,7 @@ const CustomPlyrInstance = forwardRef<APITypes, PlyrProps & { endedCallback:() =
   });
 
 export function VideoController({ currentConfig }: { currentConfig: VideoComponent; }) {
+  const studyConfig = useStudyConfig();
   const templateData = useTemplateAnswerContext();
 
   const templatedPath = useMemo(
@@ -279,5 +281,5 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
     )
     : loading
       ? <LoadingOverlay />
-      : <ResourceNotFound path={templatedPath} />;
+      : <ResourceNotFound email={studyConfig.uiConfig.contactEmail} path={templatedPath} />;
 }

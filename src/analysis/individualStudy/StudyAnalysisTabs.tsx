@@ -38,6 +38,7 @@ import { ThinkAloudAnalysis } from './thinkAloud/ThinkAloudAnalysis';
 import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
 import { ConfigView } from './config/ConfigView';
 import { StartupErrorScreen } from '../../components/StartupErrorScreen';
+import { ResourceNotFound } from '../../ResourceNotFound';
 
 const TABLE_HEADER_HEIGHT = 37; // Height of the tabs header
 
@@ -409,6 +410,17 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
           <Center style={{ height: '100%' }}>
             <Text>Select a study from the header menu to view analysis data.</Text>
           </Center>
+        </AppShell.Main>
+      </>
+    );
+  }
+
+  if (canonicalStudyId === null || !['summary', 'table', 'stats', 'tagging', 'live-monitor', 'config', 'manage'].includes(analysisTab ?? '')) {
+    return (
+      <>
+        <AppHeader studyIds={globalConfig.configsList} selectedStudyId={displayStudyId} />
+        <AppShell.Main>
+          <ResourceNotFound email={canonicalStudyId ? studyConfig?.uiConfig.contactEmail : undefined} />
         </AppShell.Main>
       </>
     );
