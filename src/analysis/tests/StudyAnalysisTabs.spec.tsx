@@ -19,6 +19,7 @@ let mockParams: Record<string, string | undefined> = { studyId: 'test-study', an
 let mockStorageEngine: Record<string, ReturnType<typeof vi.fn>> | undefined;
 let mockStudyRecordings = { hasAudioRecording: false, hasScreenRecording: false };
 let mockIsAdmin = true;
+const mockNavigate = vi.fn();
 
 // Stable result returned by the useAsync mock. Reset in beforeEach so each test
 // gets its own stable reference, avoiding infinite re-render loops that would
@@ -33,7 +34,7 @@ let currentStable: ReturnType<typeof useAsync> = {
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
 vi.mock('react-router', () => ({
-  useNavigate: () => vi.fn(),
+  useNavigate: () => mockNavigate,
   useParams: () => mockParams,
 }));
 
@@ -115,9 +116,6 @@ vi.mock('../individualStudy/thinkAloud/ThinkAloudAnalysis', () => ({
 vi.mock('../individualStudy/config/ConfigView', () => ({
   ConfigView: () => <div>ConfigView</div>,
 }));
-vi.mock('../individualStudy/style/StyleView', () => ({
-  StyleView: () => <div>Study Style</div>,
-}));
 vi.mock('../../components/downloader/DownloadButtons', () => ({
   DownloadButtons: () => <div>DownloadButtons</div>,
 }));
@@ -182,7 +180,6 @@ vi.mock('@tabler/icons-react', () => ({
   IconTags: () => null,
   IconDashboard: () => null,
   IconFileCode: () => null,
-  IconPalette: () => null,
 }));
 
 // ── fixtures ──────────────────────────────────────────────────────────────────
@@ -222,18 +219,23 @@ describe('StudyAnalysisTabs', () => {
     expect(html).toContain('Trial Stats');
     expect(html).toContain('Coding');
     expect(html).toContain('Config');
-    expect(html).toContain('Style');
+    expect(html).not.toContain('data-tab="style"');
     expect(html).toContain('Manage');
   });
 
-  test('does not expose style controls to non-admin analysis users', () => {
+  test('does not render a Style tab or panel for non-admin analysis users', () => {
     mockIsAdmin = false;
 
     const html = renderToStaticMarkup(<StudyAnalysisTabs globalConfig={mockGlobalConfig} />);
 
-    expect(html).toContain('data-tab="style" disabled=""');
-    expect(html).not.toContain('Study Style');
-    expect(html).toContain('You are not authorized to change the style for this study.');
+    expect(html).not.toContain('data-tab="style"');
+    expect(html).not.toContain('data-panel="style"');
+  });
+
+  test('redirects the removed Style tab URL to Summary', () => {
+    mockParams.analysisTab = 'style';
+    render(<StudyAnalysisTabs globalConfig={mockGlobalConfig} />);
+    expect(mockNavigate).toHaveBeenCalledWith('/analysis/stats/test-study/summary', { replace: true });
   });
 
   test('renders disabled Live Monitor tab and Firebase-only message when not Firebase', () => {
