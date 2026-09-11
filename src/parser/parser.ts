@@ -32,6 +32,7 @@ import {
 } from '../utils/dateTimeValidation';
 import { checkBuiltInValidation } from '../components/response/builtInValidation';
 import { getDropdownOptions } from '../utils/dropdownOptions';
+import { normalizeKeyMapping } from '../utils/keyMapping';
 
 const modules = import.meta.glob(
   [
@@ -617,39 +618,47 @@ function hasConditionalBlockInsideRestrictedOrderAncestor(
   ));
 }
 
-const ALLOWED_SPECIAL_KEYS = new Set([
-  'space', 'spacebar', 'enter', 'tab', 'escape', 'backspace', 'delete',
-  'arrowleft', 'arrowright', 'arrowup', 'arrowdown', 'home', 'end', 'pageup', 'pagedown',
-]);
-
 function verifyKeyMappings(
   basePath: string,
   component: Partial<IndividualComponent>,
-  warnings: ParsedConfig<StudyConfig>['warnings'],
+  errors: ParsedConfig<StudyConfig>['errors'],
 ) {
   if (!component.response || !Array.isArray(component.response)) return;
 
+  const seenMappings = new Map<string, { responseIndex: number; optionIndex: number; label: string }>();
+
   component.response.forEach((res, resIdx) => {
-    if ('options' in res && Array.isArray(res.options)) {
-      res.options.forEach((opt, optIdx) => {
-        if (typeof opt === 'object' && opt !== null && 'key' in opt && opt.key) {
-          const rawKey = String(opt.key).trim();
-          const lowerKey = rawKey.toLowerCase();
-
-          const isSingleChar = rawKey.length === 1;
-          const isSpecialKey = ALLOWED_SPECIAL_KEYS.has(lowerKey);
-
-          if (!isSingleChar && !isSpecialKey) {
-            warnings.push({
-              message: `Invalid key mapping \`${rawKey}\` in option \`${opt.label || opt.value}\`. Key mappings must be a single character or a valid key name (e.g., "ArrowRight", "Space").`,
-              instancePath: `${basePath}/response/${resIdx}/options/${optIdx}/key`,
-              params: { action: 'Use a single key character or valid key string like ArrowRight, ArrowLeft, or Space (case-insensitive)' },
-              category: 'invalid-config',
-            });
-          }
-        }
-      });
+    if (!('options' in res) || !Array.isArray(res.options)) {
+      return;
     }
+
+    res.options.forEach((opt, optIdx) => {
+      if (typeof opt !== 'object' || opt === null || !('key' in opt)) {
+        return;
+      }
+
+      const normalizedKey = normalizeKeyMapping(String(opt.key));
+      if (normalizedKey === null) {
+        errors.push({
+          message: `Invalid key mapping \`${String(opt.key)}\` in option \`${opt.label || opt.value}\`. Key mappings must use a single character, a known named key (for example "ArrowRight" or "Space"), or a modifier-plus-key combination such as "Shift+X".`,
+          instancePath: `${basePath}/response/${resIdx}/options/${optIdx}/key`,
+          params: { action: 'Use a single printable key, a valid named key, or a canonical modifier-plus-key value like Shift+X' },
+          category: 'invalid-config',
+        });
+        return;
+      }
+
+      const previous = seenMappings.get(normalizedKey);
+      if (previous) {
+        errors.push({
+          message: `Duplicate key mapping \`${normalizedKey}\` in option \`${opt.label || opt.value}\`. A component cannot assign the same key to multiple responses.`,
+          instancePath: `${basePath}/response/${resIdx}/options/${optIdx}/key`,
+          params: { action: `Remove or rename the duplicate mapping for \`${normalizedKey}\`` },
+          category: 'invalid-config',
+        });
+      }
+      seenMappings.set(normalizedKey, { responseIndex: resIdx, optionIndex: optIdx, label: String(opt.label || opt.value) });
+    });
   });
 }
 
@@ -664,14 +673,14 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
     verifyTextResponseConstraints(`/baseComponents/${componentName}`, component, errors, warnings);
     verifyDateTimeResponseConstraints(`/baseComponents/${componentName}`, component, errors);
     verifyDropdownResponseConstraints(`/baseComponents/${componentName}`, component, errors);
-    verifyKeyMappings(`/baseComponents/${componentName}`, component, warnings);
+    verifyKeyMappings(`/baseComponents/${componentName}`, component, errors);
   });
   Object.entries(studyConfig.components).forEach(([componentName, component]) => {
     const mergedComponent = studyComponentToIndividualComponent(component, studyConfig);
     verifyTextResponseConstraints(`/components/${componentName}`, mergedComponent, errors, warnings);
     verifyDateTimeResponseConstraints(`/components/${componentName}`, mergedComponent, errors);
     verifyDropdownResponseConstraints(`/components/${componentName}`, mergedComponent, errors);
-    verifyKeyMappings(`/components/${componentName}`, mergedComponent, warnings);
+    verifyKeyMappings(`/components/${componentName}`, mergedComponent, errors);
   });
 
   const hasConditional = hasConditionalBlock(studyConfig.sequence);

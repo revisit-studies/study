@@ -349,7 +349,7 @@ export interface StringOption {
   value?: string;
   /** The description that is displayed when the participant hovers over the option. This does not accept markdown. */
   infoText?: string;
-  /** Optional keyboard key shortcut mapped to this option (e.g., "r", "ArrowLeft", "Space") */
+  /** Optional keyboard key shortcut mapped to this option (e.g., "r", "ArrowLeft", "Space"). Can also use combinations see https://www.digitala11y.com/aria-properties/. */
   key?: string;
 }
 

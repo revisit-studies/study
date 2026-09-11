@@ -1,12 +1,14 @@
 import React, { useEffect, useRef } from 'react';
 import type { ParsedStringOption } from '../../parser/types';
+import { keyEventMatchesMapping } from '../../utils/keyMapping';
 
 interface KeyMapperProps {
   options: ParsedStringOption[];
-  onSelect: (value: string) => void;
+  onSelect: (value: string, source?: 'keyboard' | 'click') => void;
   disabled?: boolean;
   children?: React.ReactNode;
   autoFocus?: boolean;
+  focusRootRef?: React.RefObject<HTMLElement | null>;
 }
 
 export function KeyMapper({
@@ -14,55 +16,51 @@ export function KeyMapper({
   onSelect,
   disabled = false,
   children,
-  autoFocus = true,
+  autoFocus = false,
+  focusRootRef,
 }: KeyMapperProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const hasInlineKeys = options?.some(
-      (opt) => typeof opt === 'object' && opt !== null && Boolean(opt.key),
-    );
+    if (!autoFocus || !options?.some((opt) => typeof opt === 'object' && opt !== null && Boolean(opt.key))) {
+      return undefined;
+    }
 
     const timer = setTimeout(() => {
-      if (autoFocus && hasInlineKeys && containerRef.current) {
+      const { activeElement } = document;
+      if (containerRef.current && (!activeElement || !(activeElement instanceof HTMLElement) || !focusRootRef?.current?.contains(activeElement))) {
         containerRef.current.focus();
       }
     }, 50);
 
     return () => clearTimeout(timer);
-  }, [options, autoFocus]);
+  }, [autoFocus, focusRootRef, options]);
 
   useEffect(() => {
     if (disabled || !options || options.length === 0) {
       return undefined;
     }
 
-    const isInteractiveElement = (node: EventTarget | null): boolean => {
-      if (!node || !(node instanceof Element) || node === document.body) {
+    const isOwnedTarget = (target: EventTarget | null): boolean => {
+      if (!(target instanceof Element)) {
         return false;
       }
+      return Boolean(focusRootRef?.current && focusRootRef.current.contains(target));
+    };
 
-      const tagName = node.tagName.toLowerCase();
-      const isInput = ['input', 'textarea', 'select', 'button', 'a'].includes(tagName);
-      const isRoleButton = node.getAttribute?.('role') === 'button';
-      const isContentEditable = (node as HTMLElement).isContentEditable ?? false;
-
-      if (isInput || isRoleButton || isContentEditable) {
-        const isInsideMapperContainer = containerRef.current?.contains(node) ?? false;
-        return !isInsideMapperContainer;
+    const isEditableOrInteractiveTarget = (target: EventTarget | null): boolean => {
+      if (!(target instanceof HTMLElement)) {
+        return false;
       }
-
-      return false;
+      if (target.isContentEditable) {
+        return true;
+      }
+      return ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON', 'A'].includes(target.tagName);
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      const activeEl = document.activeElement;
-      const eventTarget = event.target;
-      if (event.repeat) {
-        return;
-      }
-
-      if (isInteractiveElement(eventTarget) || isInteractiveElement(activeEl)) {
+      // currently ctrl win, meta, command and ctrl are not supported
+      if (event.repeat || event.ctrlKey || event.metaKey) {
         return;
       }
 
@@ -70,32 +68,23 @@ export function KeyMapper({
         return;
       }
 
-      if (event.ctrlKey || event.metaKey || event.altKey) {
+      if (isEditableOrInteractiveTarget(event.target)) {
         return;
       }
 
-      const pressedKey = (event.key || '').toLowerCase();
-      const isSpacePress = pressedKey === ' ' || pressedKey === 'spacebar' || pressedKey === 'space';
+      if (isOwnedTarget(event.target) || isOwnedTarget(document.activeElement)) {
+        return;
+      }
 
-      const isKeyMatch = (configKey: string) => {
-        const keyLower = String(configKey).toLowerCase();
-        if (keyLower === 'space' || keyLower === ' ' || keyLower === 'spacebar') {
-          return isSpacePress;
-        }
-        return keyLower === pressedKey;
-      };
-
-      // Find the first option whose inline `key` matches the physical key press
       for (const option of options) {
         if (typeof option === 'object' && option !== null && option.key) {
-          if (isKeyMatch(option.key)) {
+          if (keyEventMatchesMapping(option.key, event)) {
             (event as unknown as { __keyMapperHandled?: boolean }).__keyMapperHandled = true;
 
             if (typeof event.preventDefault === 'function') {
               event.preventDefault();
             }
-
-            onSelect(String(option.value));
+            onSelect(String(option.value), 'keyboard');
             return;
           }
         }
@@ -104,40 +93,7 @@ export function KeyMapper({
 
     window.addEventListener('keydown', handleKeyDown, true);
     return () => window.removeEventListener('keydown', handleKeyDown, true);
-  }, [options, onSelect, disabled]);
+  }, [disabled, focusRootRef, onSelect, options]);
 
-  return (
-    <div
-      ref={containerRef}
-      tabIndex={-1}
-      style={{ display: 'block', outline: 'none' }}
-    >
-      {/* Screen-reader accessible hidden buttons for keyboard options */}
-      {options
-        ?.filter((option) => option.key)
-        .map((option) => (
-          <button
-            key={option.key}
-            type="button"
-            disabled={disabled}
-            style={{
-              position: 'absolute',
-              width: '1px',
-              height: '1px',
-              padding: 0,
-              margin: '-1px',
-              overflow: 'hidden',
-              clip: 'rect(0, 0, 0, 0)',
-              whiteSpace: 'nowrap',
-              border: 0,
-            }}
-            onClick={() => onSelect?.(option.value)}
-          >
-            {option.label}
-          </button>
-        ))}
-
-      {children}
-    </div>
-  );
+  return <div>{children}</div>;
 }

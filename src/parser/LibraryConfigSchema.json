@@ -2488,7 +2488,7 @@
           "type": "string"
         },
         "key": {
-          "description": "Optional keyboard key shortcut mapped to this option (e.g., \"r\", \"ArrowLeft\", \"Space\")",
+          "description": "Optional keyboard key shortcut mapped to this option (e.g., \"r\", \"ArrowLeft\", \"Space\"). Can also use combinations see https://www.digitala11y.com/aria-properties/.",
           "type": "string"
         },
         "label": {
@@ -4055,7 +4055,7 @@
           "type": "string"
         },
         "key": {
-          "description": "Optional keyboard key shortcut mapped to this option (e.g., \"r\", \"ArrowLeft\", \"Space\")",
+          "description": "Optional keyboard key shortcut mapped to this option (e.g., \"r\", \"ArrowLeft\", \"Space\"). Can also use combinations see https://www.digitala11y.com/aria-properties/.",
           "type": "string"
         },
         "label": {
