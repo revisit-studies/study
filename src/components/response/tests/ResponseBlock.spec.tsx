@@ -446,6 +446,74 @@ describe('ResponseBlock', () => {
     // After a correct answer the Check Answer button should become disabled
     expect(checkBtn).toHaveProperty('disabled', true);
   });
+
+  test('applies pointer-events none and opacity styling to responses with a delay', async () => {
+    const delayedConfig = {
+      ...baseConfig,
+      response: [
+        {
+          type: 'shortText',
+          id: 'q1',
+          prompt: 'Delayed Question',
+          required: false,
+          delay: 5000,
+        },
+      ],
+    } as IndividualComponent;
+
+    const studyStore = await makeStudyStore();
+    const { container } = render(withStore(studyStore, <ResponseBlock config={delayedConfig} location="belowStimulus" />));
+
+    const questionBlock = container.querySelector('[data-question-id="q1"]');
+    expect(questionBlock).not.toBeNull();
+
+    // Find the wrapper element that carries the pointerEvents style rule
+    const wrapperWithStyles = Array.from(questionBlock!.querySelectorAll('div')).find(
+      (el) => el.style.pointerEvents !== '',
+    );
+
+    expect(wrapperWithStyles).toBeDefined();
+    expect(wrapperWithStyles?.style.pointerEvents).toBe('none');
+    expect(wrapperWithStyles?.style.opacity).toBe('0.4');
+  });
+
+  test('does not apply delay styles to non-delayed responses and maintains sequential index', async () => {
+    const mixedConfig = {
+      ...baseConfig,
+      response: [
+        {
+          type: 'shortText',
+          id: 'q1',
+          prompt: 'Immediate Question',
+          required: false,
+        },
+        {
+          type: 'divider',
+          id: 'd1',
+        },
+        {
+          type: 'shortText',
+          id: 'q2',
+          prompt: 'Second Question',
+          required: false,
+        },
+      ],
+    } as IndividualComponent;
+
+    const studyStore = await makeStudyStore();
+    const { container } = render(withStore(studyStore, <ResponseBlock config={mixedConfig} location="belowStimulus" />));
+
+    const questionBlock = container.querySelector('[data-question-id="q1"]');
+    expect(questionBlock).not.toBeNull();
+
+    const wrapperWithStyles = Array.from(questionBlock!.querySelectorAll('div')).find(
+      (el) => el.style.pointerEvents !== '',
+    );
+
+    // Non-delayed responses evaluate pointerEvents as 'auto'
+    expect(wrapperWithStyles?.style.pointerEvents).toBe('auto');
+    expect(wrapperWithStyles?.style.opacity).toBe('1');
+  });
 });
 
 // ── focus recovery on validation errors ──────────────────────────────────────
