@@ -69,14 +69,20 @@ vi.mock('@mantine/core', () => ({
     </div>
   ),
   Button: ({
-    children, disabled, onClick, type,
-  }: { children: ReactNode; disabled?: boolean; onClick?: () => void; type?: string }) => (
-    <button type={type === 'submit' ? 'submit' : 'button'} disabled={disabled} onClick={onClick}>
+    children, disabled, onClick, type, rightSection, 'aria-label': ariaLabel,
+  }: { children: ReactNode; disabled?: boolean; onClick?: () => void; type?: string; rightSection?: ReactNode; 'aria-label'?: string }) => (
+    <button type={type === 'submit' ? 'submit' : 'button'} disabled={disabled} onClick={onClick} aria-label={ariaLabel}>
       {children}
+      {rightSection}
     </button>
   ),
   Group: ({ children, justify }: { children: ReactNode; justify?: string }) => (
     <div data-justify={justify}>{children}</div>
+  ),
+  Kbd: ({ children }: { children: ReactNode }) => <kbd>{children}</kbd>,
+  Flex: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  ActionIcon: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => (
+    <button type="button" onClick={onClick}>{children}</button>
   ),
 }));
 
@@ -323,6 +329,28 @@ describe('NextButton', () => {
     } finally {
       document.body.removeChild(textarea);
     }
+  });
+
+  test('nextOnEnter: defaultPrevented Enter events are ignored', async () => {
+    const onNext = vi.fn();
+    mockStudyConfig = { uiConfig: { ...mockStudyConfig.uiConfig, nextOnEnter: true } };
+    await act(async () => {
+      render(<NextButton checkAnswer={null} onNext={onNext} />);
+    });
+    const event = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+    event.preventDefault();
+    await act(async () => { window.dispatchEvent(event); });
+    expect(onNext).not.toHaveBeenCalled();
+  });
+
+  test('nextOnEnter: preserves the accessible name while showing the visual hint', async () => {
+    mockStudyConfig = { uiConfig: { ...mockStudyConfig.uiConfig, nextOnEnter: true } };
+    await act(async () => {
+      render(<NextButton checkAnswer={null} onNext={vi.fn()} />);
+    });
+    const button = screen.getByRole('button', { name: 'Next' });
+    expect(button.getAttribute('aria-label')).toBe('Next');
+    expect(screen.getByText('↵')).toBeTruthy();
   });
 
   test('nextOnEnter: Enter on a focused button is left to its synthesized click', async () => {

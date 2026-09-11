@@ -249,6 +249,7 @@ export interface Sequence {
 export type FormElementProvenance = {
   form: StoredAnswer['answer'];
   showResponseErrors?: boolean;
+  interactionSource?: 'keyboard' | 'click';
 };
 export type AlertModalState = { show: boolean, message: string, title: string };
 export interface StoreState {

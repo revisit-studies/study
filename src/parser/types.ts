@@ -349,6 +349,8 @@ export interface StringOption {
   value?: string;
   /** The description that is displayed when the participant hovers over the option. This does not accept markdown. */
   infoText?: string;
+  /** Optional keyboard key shortcut mapped to this option (e.g., "r", "ArrowLeft", "Space"). Can also use combinations see https://www.digitala11y.com/aria-properties/. */
+  key?: string;
 }
 
 /**
@@ -1116,6 +1118,8 @@ export interface ButtonsResponse extends BaseResponse {
   default?: string;
   /** The order in which the buttons are displayed. Defaults to fixed. */
   optionOrder?: 'fixed' | 'random';
+  /** Set to true to hide keybinding indicators on buttons. Defaults to false when keymapping is active, else false. */
+  hideKeyVisual?: boolean;
 }
 
 /**

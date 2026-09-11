@@ -1,0 +1,70 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Test Keymapper",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2026-02-23",
+    "description": "A test of keymapping.",
+    "organizations": [
+      "University of Utah",
+      "WPI"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true,
+    "urlParticipantIdParam": "PROLIFIC_PID",
+    "studyEndMsg": "**Thank you for completing the study. You may click this link and return to Prolific**: [yourProlificLink](yourProlificLink)"
+  },
+  "components": {
+    "letter-mapper":{
+      "response": [
+        {
+          "id": "letter-response",
+          "type": "buttons",
+          "prompt": "Indicate correlation direction",
+          "location": "belowStimulus",
+          "options": [
+            { "label": "A", "value": "a", "key": "a" },
+            { "label": "S", "value": "s", "key": "s" },
+            { "label": "D", "value": "d", "key": "d" },
+            { "label": "F", "value": "f", "key": "f" },
+            { "label": "shift+r", "value": "shift+r", "key": "shift+r" }
+          ]
+        }],
+      "type": "questionnaire",
+      "nextOnEnter": true
+    },
+    "special-mapper":{
+      "response": [
+        {
+          "id": "letter-response",
+          "type": "buttons",
+          "prompt": "Indicate correlation direction",
+          "location": "belowStimulus",
+          "options": [
+            { "label": "Left", "value": "arrowleft", "key": "ArrowLeft" },
+            { "label": "Right", "value": "ArrowRight", "key": "ArrowRight" },
+            { "label": "Up", "value": "ARROWUP", "key": "ArrowUp" },
+            { "label": "Down", "value": "arrowDown", "key": "ArrowDown" },
+            { "label": "Space", "value": "space", "key": "space" }
+          ]
+        }],
+      "type": "questionnaire",
+      "nextOnEnter": true
+    }
+  },
+    "sequence": {
+    "order": "fixed",
+    "components": [
+      "special-mapper",
+      "letter-mapper"
+    ]
+  }
+}

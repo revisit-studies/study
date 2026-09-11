@@ -234,6 +234,20 @@
           ]
         },
         {
+          "id": "q-buttons-color-keybind",
+          "type": "buttons",
+          "prompt": "Buttons example",
+          "secondaryText": "Buttons with keymappings, can be controlled with the corresponding key.",
+          "infoText": "Choose the option that best represents your answer.",
+          "options": [
+            { "label": "RED", "value": "red", "key": "r" },
+            { "label": "ORANGE", "value": "orange", "key": "o" },
+            { "label": "YELLOW", "value": "yellow", "key": "y" },
+            { "label": "GREEN", "value": "green", "key": "g" },
+            { "label": "BLUE", "value": "blue", "key": "b" }
+          ]
+        },
+        {
           "id": "divider1",
           "type": "divider"
         },

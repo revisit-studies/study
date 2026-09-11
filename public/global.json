@@ -57,6 +57,7 @@
     "library-umux-lite",
     "library-virtual-chinrest",
     "library-vlat",
+    "test-keymapping",
     "test-audio",
     "test-device-restriction",
     "test-library",
@@ -241,6 +242,10 @@
     },
     "library-vlat": {
       "path": "library-vlat/config.json",
+      "test": true
+    },
+    "test-keymapping": {
+      "path": "test-keymapping/config.json",
       "test": true
     },
     "test-audio": {

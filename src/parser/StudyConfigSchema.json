@@ -298,6 +298,10 @@
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
         },
+        "hideKeyVisual": {
+          "description": "Set to true to hide keybinding indicators on buttons. Defaults to false when keymapping is active, else false.",
+          "type": "boolean"
+        },
         "id": {
           "description": "The id of the response. This is used to identify the response in the data file.",
           "type": "string"
@@ -2532,6 +2536,10 @@
           "description": "The description that is displayed when the participant hovers over the option. This does not accept markdown.",
           "type": "string"
         },
+        "key": {
+          "description": "Optional keyboard key shortcut mapped to this option (e.g., \"r\", \"ArrowLeft\", \"Space\"). Can also use combinations see https://www.digitala11y.com/aria-properties/.",
+          "type": "string"
+        },
         "label": {
           "description": "The label displayed to participants. Markdown is supported.",
           "type": "string"
@@ -4115,6 +4123,10 @@
       "properties": {
         "infoText": {
           "description": "The description that is displayed when the participant hovers over the option. This does not accept markdown.",
+          "type": "string"
+        },
+        "key": {
+          "description": "Optional keyboard key shortcut mapped to this option (e.g., \"r\", \"ArrowLeft\", \"Space\"). Can also use combinations see https://www.digitala11y.com/aria-properties/.",
           "type": "string"
         },
         "label": {

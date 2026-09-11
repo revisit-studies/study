@@ -81,6 +81,81 @@ describe('Text response validation config parsing', () => {
     },
   );
 
+  test.each(['', '   ', '14', 'RightKeyboardArrow', 'Shift+14', 'Shift+foo', 'Shift+'])('rejects invalid key mapping %p', async (key) => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Key Validation Test',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2026-08-20',
+        description: 'Ensures key mappings are validated.',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: '',
+        logoPath: '',
+        withProgressBar: true,
+        withSidebar: false,
+      },
+      components: {
+        question1: {
+          type: 'questionnaire',
+          response: [{
+            id: 'buttons',
+            prompt: 'Choose a response',
+            type: 'buttons',
+            options: [{ label: 'A', value: 'a', key }],
+          }],
+        },
+      },
+      sequence: { order: 'fixed', components: ['question1'] },
+    } as const;
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors.some((error) => error.instancePath.includes('/key'))).toBe(true);
+  });
+
+  test('rejects duplicate key mappings within a component', async () => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Duplicate Key Validation Test',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2026-08-20',
+        description: 'Ensures duplicate key mappings are rejected.',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: '',
+        logoPath: '',
+        withProgressBar: true,
+        withSidebar: false,
+      },
+      components: {
+        question1: {
+          type: 'questionnaire',
+          response: [{
+            id: 'buttons',
+            prompt: 'Choose a response',
+            type: 'buttons',
+            options: [
+              { label: 'A', value: 'a', key: 'Shift+X' },
+              { label: 'B', value: 'b', key: 'shift+x' },
+            ],
+          }],
+        },
+      },
+      sequence: { order: 'fixed', components: ['question1'] },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors.some((error) => error.message.includes('Duplicate key mapping'))).toBe(true);
+  });
+
   test.each(['email', 'phoneNumber', 'usPhoneNumber', 'url'])('accepts the %s built-in validation for short text responses', async (builtInValidation) => {
     const studyConfig = makeStudyConfig('contains');
     Object.assign(studyConfig.components.question1.response[0], { builtInValidation });
