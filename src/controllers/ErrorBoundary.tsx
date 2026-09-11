@@ -9,6 +9,7 @@ interface ErrorBoundaryState {
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
+  fallback?: React.ReactNode;
   onReady?: () => void;
   onError?: (error: unknown) => void;
 }
@@ -34,8 +35,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
   render() {
     if (this.state.hasError) {
-      // You can render any custom fallback UI
-      return <Text>{this.state.error.toString()}</Text>;
+      return this.props.fallback ?? <Text>{this.state.error.toString()}</Text>;
     }
 
     return this.props.children;

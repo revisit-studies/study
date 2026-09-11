@@ -244,6 +244,16 @@ vi.mock('react-vega', () => ({
 
 vi.mock('react-vega/lib/Vega', () => ({}));
 
+vi.mock('../../public/libraries/test/assets/test.tsx', () => ({
+  default: function ThrowingStimulus({ parameters }: { parameters: { failure: string } }) {
+    React.useEffect(() => {
+      if (parameters.failure === 'effect') throw new Error('Stimulus initialization failed');
+    }, [parameters.failure]);
+    if (parameters.failure === 'render') throw new Error('Stimulus initialization failed');
+    return <span>Stimulus loaded</span>;
+  },
+}));
+
 vi.mock('plyr-react', () => ({
   usePlyr: vi.fn(() => ({ current: null })),
 }));
@@ -369,6 +379,23 @@ describe('MarkdownController', () => {
 // ── ReactComponentController ──────────────────────────────────────────────────
 
 describe('ReactComponentController', () => {
+  test.each(['render', 'effect'])('renders ResourceNotFound and marks the asset failed after a %s exception', async (failure) => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const path = 'libraries/test/assets/test.tsx';
+    const { container } = render(
+      <ReactComponentController
+        currentConfig={{
+          type: 'react-component', path, parameters: { failure }, response: [],
+        }}
+        answers={{}}
+      />,
+    );
+
+    await waitFor(() => expect(container.textContent).toContain(`ResourceNotFound:${path}`));
+    expect(container.textContent).not.toContain('Stimulus initialization failed');
+    expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith({ identifier: 'trial1_0', status: 'error' });
+  });
+
   test('renders ResourceNotFound when the module path is not in import.meta.glob', () => {
     const html = renderToStaticMarkup(
       <ReactComponentController currentConfig={missingReactConfig} answers={{}} />,
