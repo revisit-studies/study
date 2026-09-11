@@ -55,7 +55,7 @@ export function TaskProvenanceTimeline({
 
   return (
     <svg style={{ width, height, marginLeft: margin.left }}>
-      <line stroke="black" strokeWidth={1} x1={0} x2={width} y1={height / 2} y2={height / 2} />
+      <line stroke="var(--mantine-color-dimmed)" strokeWidth={1} x1={0} x2={width} y1={height / 2} y2={height / 2} />
       {provenanceNodes}
     </svg>
   );

@@ -42,6 +42,7 @@ import {
 } from '../utils/handleConditionLogic';
 import { StartupErrorScreen } from './StartupErrorScreen';
 import { materializeParticipantConfig } from '../parser/libraryParser';
+import { useStoredStudyColorMode } from '../store/hooks/useStoredStudyColorMode';
 
 type StartupStorageStatus = Pick<StorageEngine, 'getEngine' | 'isConnected'>;
 
@@ -195,6 +196,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
     return resolveConfigKey(routeStudyId, globalConfig);
   }, [globalConfig, routeStudyId]);
   const isValidStudyId = routeStudyId === '__revisit-widget' || canonicalStudyId !== null;
+  useStoredStudyColorMode(canonicalStudyId);
 
   useEffect(() => {
     let cancelled = false;

@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ComponentPropsWithoutRef } from 'react';
 import { render, cleanup } from '@testing-library/react';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
@@ -27,7 +27,7 @@ const {
 }));
 
 vi.mock('@mantine/core', () => ({
-  Box: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+  Box: ({ children, ...props }: ComponentPropsWithoutRef<'div'>) => <div {...props}>{children}</div>,
   Checkbox: () => <input type="checkbox" />,
   Divider: () => <hr />,
 }));
@@ -79,10 +79,14 @@ const response = {
 
 const form = { value: 'live', onChange: vi.fn() } as Parameters<typeof ResponseSwitcher>[0]['form'];
 
-function renderSwitcher({ storedAnswer, answerFinalized }: { storedAnswer?: Record<string, JsonValue>; answerFinalized?: boolean }) {
+function renderSwitcher({ storedAnswer, answerFinalized, responseOverride }: {
+  storedAnswer?: Record<string, JsonValue>;
+  answerFinalized?: boolean;
+  responseOverride?: Response;
+}) {
   return render(
     <ResponseSwitcher
-      response={response}
+      response={responseOverride ?? response}
       form={form}
       index={1}
       config={{} as IndividualComponent}
@@ -91,6 +95,16 @@ function renderSwitcher({ storedAnswer, answerFinalized }: { storedAnswer?: Reco
     />,
   );
 }
+
+test('study-defined response spacing overrides the default', () => {
+  const view = renderSwitcher({ responseOverride: { ...response, style: { margin: '0 0 48px' } } });
+  expect(view.container.querySelector<HTMLElement>('.response')!.style.marginBottom).toBe('48px');
+});
+
+test('response spacing falls back to the existing default', () => {
+  const view = renderSwitcher({});
+  expect(view.container.querySelector<HTMLElement>('.response')!.style.marginBottom).toBe('var(--mantine-spacing-lg)');
+});
 
 // ── setup ─────────────────────────────────────────────────────────────────────
 

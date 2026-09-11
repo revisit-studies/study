@@ -1,10 +1,10 @@
 #likert-response {
-  border: 1px solid black;
+  border: 1px solid var(--mantine-color-default-border);
   padding: 10px;
   border-radius: 10px;
   margin: 10px;
   width: 70%;  
-  color: #333333;
+  color: var(--mantine-color-text);
   transition: background 0.3s ease-in-out, color 0.3s ease-in-out, width 0.3s ease-in-out;
 }
 
@@ -20,14 +20,15 @@
 #short-text-response {
   padding: 20px;
   margin: 15px;
-  background-color: #e5f3fd;
+  background-color: var(--mantine-color-blue-light);
+  color: var(--mantine-color-text);
   border-radius: 15px;
   transition: all 0.3s ease-in-out;
 }
 
 #short-text-response:hover {
   transform: scale(1.02);
-  box-shadow: 0 15px 40px #9abddc;
+  box-shadow: 0 15px 40px light-dark(#9abddc, var(--mantine-color-blue-9));
 }
 
 #short-text-response input {
@@ -40,7 +41,8 @@
   width: 80%;
   padding: 20px;
   margin: 20px auto;
-  background-color: #e5f3fd;
+  background-color: var(--mantine-color-blue-light);
+  color: var(--mantine-color-text);
   border-radius: 15px;
   transition: all 0.5s ease;
 }
@@ -60,9 +62,9 @@
 
 @keyframes typing-glow {
   0%, 100% {
-    box-shadow: 0 15px 40px #9abddc;
+    box-shadow: 0 15px 40px light-dark(#9abddc, var(--mantine-color-blue-9));
   }
   50% {
-    box-shadow: 0 25px 80px #9abddc, 0 0 30px #9abddc, inset 0 0 20px rgba(154, 189, 220, 0.3);
+    box-shadow: 0 25px 80px light-dark(#9abddc, var(--mantine-color-blue-9)), 0 0 30px light-dark(#9abddc, var(--mantine-color-blue-9)), inset 0 0 20px var(--mantine-color-blue-light);
   }
 }

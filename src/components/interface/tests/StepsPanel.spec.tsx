@@ -257,7 +257,7 @@ describe('StepsPanel answer status indicators', () => {
     endTime,
   });
 
-  test('shows an accessible grey checkmark for a submitted response without correct answers', async () => {
+  test('shows an accessible theme-dimmed checkmark for a submitted response without correct answers', async () => {
     const participantAnswer = makeCompletedAnswer({ q1: 'A' });
     const { getAllByLabelText, container } = await act(async () => render(
       <StepsPanel
@@ -269,7 +269,7 @@ describe('StepsPanel answer status indicators', () => {
 
     const unknownIcons = getAllByLabelText(UNKNOWN_ANSWER_LABEL);
     expect(unknownIcons.length).toBeGreaterThan(0);
-    expect(unknownIcons[0].getAttribute('data-color')).toBe('var(--mantine-color-gray-6)');
+    expect(unknownIcons[0].getAttribute('data-color')).toBe('var(--mantine-color-dimmed)');
     expect(container.textContent).toContain('icon-check');
     expect(container.textContent).not.toContain('icon-x');
   });

@@ -184,6 +184,14 @@ describe.each([
   });
 
   // cleanupModes test
+  test('stores a study color scheme and defaults to light', async () => {
+    expect(await storageEngine.getStudyColorMode(studyId)).toBe('light');
+
+    await storageEngine.setStudyColorMode(studyId, 'dark');
+
+    expect(await storageEngine.getStudyColorMode(studyId)).toBe('dark');
+  });
+
   test('cleanupModes updates old modes to new modes', async () => {
     const oldModes = {
       studyNavigatorEnabled: true,

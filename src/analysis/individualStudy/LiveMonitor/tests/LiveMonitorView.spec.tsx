@@ -24,7 +24,7 @@ vi.mock('@mantine/core', () => ({
   Card: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Text: ({ children }: { children: ReactNode }) => <p>{children}</p>,
   Title: ({ children }: { children: ReactNode }) => <h5>{children}</h5>,
-  Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
+  Badge: ({ children, variant }: { children: ReactNode; variant?: string }) => <span data-variant={variant}>{children}</span>,
   ActionIcon: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => (
     <button type="button" onClick={onClick}>{children}</button>
   ),
@@ -275,6 +275,7 @@ describe('ParticipantSection', () => {
       <ParticipantSection {...baseProps} participants={participants} showDynamicBadge />,
     );
     expect(html).toContain('DYNAMIC');
+    expect(html).toContain('data-variant="light">DYNAMIC');
   });
 
   test('no DYNAMIC badge when isDynamic is false', () => {
@@ -471,11 +472,13 @@ describe('ProgressHeatmap', () => {
     expect(html).toContain('green');
   });
 
-  test('unanswered tasks use grey fill', () => {
+  test('unanswered tasks pair a dark grey fill with white labels', () => {
     const html = renderToStaticMarkup(
       <ProgressHeatmap total={2} answered={[]} isDynamic={false} />,
     );
-    expect(html).toContain('grey');
+    expect(html.match(/fill="var\(--mantine-color-gray-7\)"/g)).toHaveLength(2);
+    expect(html.match(/stroke="var\(--mantine-color-gray-8\)"/g)).toHaveLength(2);
+    expect(html.match(/fill="white"/g)).toHaveLength(2);
   });
 
   test('dynamic mode uses teal fill and shows ? indicator', () => {

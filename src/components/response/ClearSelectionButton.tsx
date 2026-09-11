@@ -18,8 +18,8 @@ export default function ClearSelectionButton({
       aria-hidden={!visible}
       style={{
         fontSize: '0.7rem',
-        color: 'var(--mantine-color-gray-6)',
-        border: '1px solid var(--mantine-color-gray-3)',
+        color: isDisabled ? 'var(--mantine-color-disabled-color)' : 'var(--mantine-color-dimmed)',
+        border: '1px solid var(--mantine-color-default-border)',
         background: 'transparent',
         fontWeight: 400,
         padding: '0px 2px',

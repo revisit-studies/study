@@ -2,20 +2,21 @@
   position: relative;
   padding: var(--mantine-spacing-md);
   transition: border-color 150ms ease;
-  background-color: var(--mantine-color-blue-3);
-  color: var(--mantine-color-white);
+  background-color: var(--mantine-color-blue-light);
+  color: var(--mantine-color-blue-light-color);
 
   &[data-checked] {
     background-color: var(--mantine-color-blue-filled);
+    color: var(--mantine-color-white);
   }
 
   &[disabled] {
-    background-color: var(--mantine-color-gray-2);
-    color: var(--mantine-color-gray);
+    background-color: var(--mantine-color-disabled);
+    color: var(--mantine-color-disabled-color);
     cursor: default;
 
     &[data-checked] {
-      background-color: var(--mantine-color-blue-6);
+      background-color: var(--mantine-color-blue-filled);
       color: var(--mantine-color-white);
     }
   }

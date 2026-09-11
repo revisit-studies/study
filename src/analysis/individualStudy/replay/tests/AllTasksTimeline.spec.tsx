@@ -154,7 +154,7 @@ describe('SingleTask', () => {
       <svg><SingleTask {...baseProps} answerStatus="unknown" /></svg>,
     );
     expect(html).toContain('icon-check');
-    expect(html).toContain('var(--mantine-color-gray-6)');
+    expect(html).toContain('var(--mantine-color-dimmed)');
     expect(html).toContain('Response recorded; correctness not configured.');
     expect(html).toContain('fill="lightgray"');
   });
@@ -229,7 +229,7 @@ describe('AllTasksTimeline', () => {
     expect(html).toContain('q1');
     expect(html).toContain('yes');
     expect(html).toContain('icon-check');
-    expect(html).toContain('var(--mantine-color-gray-6)');
+    expect(html).toContain('var(--mantine-color-dimmed)');
     expect(html).toContain('Response recorded; correctness not configured.');
   });
 
@@ -358,7 +358,7 @@ describe('AllTasksTimeline', () => {
 
     expect(timeHtml).toContain('data-testid="timeline-gap-break"');
     expect(timeHtml).toContain('3d 5h 2m 4s gap — no component timing recorded');
-    expect(timeHtml).toContain('height="25" fill="var(--mantine-color-orange-1)"');
+    expect(timeHtml).toContain('height="25" fill="var(--mantine-color-orange-light)"');
     expect(timeHtml).toContain('stroke-dasharray="3 2"');
     expect(timeHtml).toContain('font-weight="700"');
     expect(uniformHtml).not.toContain('timeline-gap-break');

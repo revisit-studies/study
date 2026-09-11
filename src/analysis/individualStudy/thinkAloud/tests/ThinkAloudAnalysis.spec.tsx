@@ -1,4 +1,4 @@
-import { forwardRef, ReactNode } from 'react';
+import { CSSProperties, forwardRef, ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
   render, act, cleanup, fireEvent, waitFor,
@@ -91,7 +91,8 @@ const createMockNavigate = (): NavigateFunction => vi.fn() as unknown as Navigat
 
 // ── mocks ────────────────────────────────────────────────────────────────────
 
-vi.mock('@mantine/core', () => ({
+vi.mock('@mantine/core', async () => ({
+  isLightColor: (await vi.importActual<typeof import('@mantine/core')>('@mantine/core')).isLightColor,
   ActionIcon: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => <button type="button" onClick={onClick}>{children}</button>,
   Alert: ({ children }: { children: ReactNode }) => <div role="alert">{children}</div>,
   AppShell: Object.assign(
@@ -134,7 +135,7 @@ vi.mock('@mantine/core', () => ({
   Input: { Placeholder: ({ children }: { children: ReactNode }) => <span>{children}</span> },
   Loader: () => <span>loading</span>,
   Pill: Object.assign(
-    ({ children }: { children: ReactNode }) => <span>{children}</span>,
+    ({ children, styles }: { children: ReactNode; styles?: { root: CSSProperties } }) => <span style={styles?.root}>{children}</span>,
     { Group: ({ children }: { children: ReactNode }) => <div>{children}</div> },
   ),
   PillsInput: Object.assign(
@@ -306,9 +307,12 @@ describe('Pills', () => {
     expect(html).toBe('');
   });
 
-  test('renders dark text color on a light tag', () => {
-    const html = renderToStaticMarkup(<Pills selectedTags={[makeTag({ color: '#ffffff' })]} />);
-    expect(html).toContain('Confusion');
+  test.each([
+    ['#ffffff', 'black'], ['#fab005', 'black'], ['#82c91e', 'black'], ['#2e2e2e', 'white'], ['#0000ff', 'white'],
+  ])('uses contrasting text on a %s tag without changing its background', (color, foreground) => {
+    const html = renderToStaticMarkup(<Pills selectedTags={[makeTag({ color })]} />);
+    expect(html).toContain(`background-color:${color}`);
+    expect(html).toContain(`;color:${foreground}`);
   });
 
   test('renders with removeFunc', () => {
@@ -1064,12 +1068,13 @@ describe('TranscriptLine (DOM)', () => {
 
   test('applies highlight style when current is within start–end range', () => {
     const { container } = render(<RealTranscriptLine {...lineProps} start={0} current={5} end={10} />);
-    expect(container.innerHTML).toContain('rgba(100, 149, 237, 0.3)');
+    expect(container.innerHTML).toContain('var(--mantine-color-blue-light)');
   });
 
   test('does not apply highlight when current is outside range', () => {
     const { container } = render(<RealTranscriptLine {...lineProps} start={0} current={20} end={10} />);
-    expect(container.innerHTML).not.toContain('rgba(100, 149, 237, 0.3)');
+    expect(container.innerHTML).not.toContain('var(--mantine-color-blue-light)');
+    expect(container.innerHTML).toContain('var(--mantine-color-body)');
   });
 
   test('Enter keydown calls addRowCallback', () => {
@@ -1145,7 +1150,7 @@ describe('TranscriptSegmentsVis', () => {
     expect((html.match(/<line /g) || []).length).toBe(2);
   });
 
-  test('highlights the active segment with cornflowerblue stroke', () => {
+  test('uses themed strokes to distinguish active and inactive segments', () => {
     const lines = [
       {
         start: 0, end: 2, lineStart: 0, lineEnd: 1, tags: [],
@@ -1157,8 +1162,8 @@ describe('TranscriptSegmentsVis', () => {
     const html = renderToStaticMarkup(
       <RealTranscriptSegmentsVis transcriptLines={lines} xScale={xScale} startTime={0} currentShownTranscription={0} />,
     );
-    expect(html).toContain('cornflowerblue');
-    expect(html).toContain('lightgray');
+    expect(html).toContain('var(--mantine-color-blue-text)');
+    expect(html).toContain('var(--mantine-color-default-border)');
   });
 
   test('renders ColorSwatch for each tag on a segment', () => {

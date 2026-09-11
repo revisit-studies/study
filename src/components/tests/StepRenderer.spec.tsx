@@ -292,6 +292,12 @@ describe('StepRenderer', () => {
     vi.restoreAllMocks();
   });
 
+  test('renders participant content without loading a stored layout or constraining the study container', () => {
+    const view = render(<StepRenderer />);
+    expect(view.getByTestId('outlet')).toBeDefined();
+    expect(view.getByTestId('outlet').parentElement).toBe(view.container.querySelector('main'));
+  });
+
   test('shows the blocking storage modal when a queued participant data write fails', async () => {
     let onParticipantDataWriteError: ((error: Error) => void) | undefined;
     const unsubscribe = vi.fn();

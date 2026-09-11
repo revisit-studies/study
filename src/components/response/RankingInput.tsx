@@ -75,8 +75,8 @@ function DroppableZone({ id, title, children }: { id: string; title: string; chi
     <Paper
       ref={setNodeRef}
       style={{
-        backgroundColor: isOver ? '#f0f8ff' : undefined,
-        borderColor: isOver ? '#4dabf7' : undefined,
+        backgroundColor: isOver ? 'var(--mantine-color-blue-light)' : undefined,
+        borderColor: isOver ? 'var(--mantine-color-blue-outline)' : undefined,
         maxWidth: '600px',
       }}
       withBorder
@@ -630,7 +630,7 @@ function RankingPairwiseComponent({
               </Box>
             ))}
             <Button
-              variant="white"
+              variant="subtle"
               color="red"
               size="xs"
               onClick={() => handleRemovePair(pairId)}

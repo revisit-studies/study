@@ -2,7 +2,7 @@ import { AuthError, createClient } from '@supabase/supabase-js';
 import localforage from 'localforage';
 import {
   REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageObject, StorageObjectType, StoredUser,
-  CloudStorageEngine, cleanupModes,
+  CloudStorageEngine, StudyColorMode, cleanupModes,
 } from './types';
 import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
 
@@ -503,6 +503,36 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       })
       .eq('studyId', `${this.collectionPrefix}${studyId}`)
       .eq('docId', 'metadata');
+  }
+
+  async getStudyColorMode(studyId: string): Promise<StudyColorMode> {
+    const { data, error } = await this.supabase
+      .from('revisit')
+      .select('data')
+      .eq('studyId', `${this.collectionPrefix}${studyId}`)
+      .eq('docId', 'style');
+
+    if (error) {
+      throw new Error('Failed to get study color scheme');
+    }
+
+    return data[0]?.data?.colorMode === 'dark' ? 'dark' : 'light';
+  }
+
+  async setStudyColorMode(studyId: string, colorMode: StudyColorMode) {
+    const { error } = await this.supabase
+      .from('revisit')
+      .upsert({
+        studyId: `${this.collectionPrefix}${studyId}`,
+        docId: 'style',
+        data: { colorMode },
+      })
+      .eq('studyId', `${this.collectionPrefix}${studyId}`)
+      .eq('docId', 'style');
+
+    if (error) {
+      throw new Error('Failed to set study color scheme');
+    }
   }
 
   protected async _setModesDocument(studyId: string, modesDocument: Record<string, unknown>): Promise<void> {

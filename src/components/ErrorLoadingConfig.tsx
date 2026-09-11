@@ -221,7 +221,7 @@ export function ErrorLoadingConfig({
       <UnstyledButton onClick={() => setIsOpen((open) => !open)} style={{ width: '100%' }}>
         <Group justify="space-between">
           <Group gap="xs">
-            <IconAlertTriangle size={16} color={badgeColor} />
+            <IconAlertTriangle size={16} color={`var(--mantine-color-${badgeColor}-text)`} />
             <Text size="md" fw="bold" c={badgeColor}>{title}</Text>
           </Group>
           <Group gap="xs">

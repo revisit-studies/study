@@ -136,7 +136,7 @@ export function ConfigView({
             ...
           </Text>
           <Tooltip label={row.original.hash}>
-            <IconInfoCircle size={16} color="gray" />
+            <IconInfoCircle size={16} color="var(--mantine-color-dimmed)" />
           </Tooltip>
           <Tooltip label={copied === row.original.hash ? 'Copied' : 'Copy hash'}>
             <ActionIcon

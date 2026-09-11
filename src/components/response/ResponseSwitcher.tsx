@@ -28,6 +28,7 @@ import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { useCurrentStep } from '../../routes/utils';
 import { TextOnlyInput } from './TextOnlyInput';
 import { useFetchStylesheet } from '../../utils/fetchStylesheet';
+import './css/form.css';
 import { parseStringOptionValue, parseStringOptions } from '../../utils/stringOptions';
 import { getDropdownOptions } from '../../utils/dropdownOptions';
 import {
@@ -254,7 +255,14 @@ export function ResponseSwitcher({
   }
 
   return (
-    <Box mb={responseDividers ? 'xl' : 'lg'} className="response" id={response.id} style={responseWrapperStyle}>
+    <Box
+      className="response"
+      id={response.id}
+      style={{
+        marginBottom: responseDividers ? 'var(--mantine-spacing-xl)' : 'var(--mantine-spacing-lg)',
+        ...responseWrapperStyle,
+      }}
+    >
       {response.type === 'numerical' && (
       <NumericInput
         response={withTemplatedFields(response)}
