@@ -1,4 +1,7 @@
 import { ReactNode } from 'react';
+import * as Mantine from '@mantine/core';
+import * as ReactRouter from 'react-router';
+import { Provider } from 'react-redux';
 import {
   render, act, cleanup, screen, fireEvent,
 } from '@testing-library/react';
@@ -6,8 +9,15 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
-import type { IndividualComponent } from '../../parser/types';
+import type { ImageComponent, IndividualComponent } from '../../parser/types';
 import { NextButton } from '../NextButton';
+import { ImageController } from '../../controllers/ImageController';
+import { useNextStep } from '../../store/hooks/useNextStep';
+import { useStudyConfig } from '../../store/hooks/useStudyConfig';
+import { WindowEventsContext } from '../../store/hooks/useWindowEvents';
+import { StudyStoreContext, studyStoreCreator } from '../../store/store';
+import { makeStorageEngine, makeStudyConfig } from '../../tests/utils';
+import { encryptIndex } from '../../utils/encryptDecryptIndex';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
@@ -15,6 +25,7 @@ let mockIsNextDisabled = false;
 let mockIdentifier = 'intro_0';
 const mockGoToNextStep = vi.fn();
 const mockNavigate = vi.fn();
+const mockStorageEngine = makeStorageEngine();
 let mockStudyConfig: {
   uiConfig: {
     nextButtonDisableTime: number | undefined;
@@ -36,23 +47,30 @@ let mockStudyConfig: {
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
-vi.mock('../../store/hooks/useNextStep', () => ({
-  useNextStep: () => ({
-    isNextDisabled: mockIsNextDisabled,
-    goToNextStep: mockGoToNextStep,
-  }),
-}));
+vi.mock('../../store/hooks/useNextStep', async () => {
+  const actual = await vi.importActual<{ useNextStep: typeof useNextStep }>('../../store/hooks/useNextStep');
+  return { useNextStep: vi.fn(actual.useNextStep) };
+});
 
-vi.mock('../../store/hooks/useStudyConfig', () => ({
-  useStudyConfig: () => mockStudyConfig,
-}));
+vi.mock('../../store/hooks/useStudyConfig', async () => {
+  const actual = await vi.importActual<{ useStudyConfig: typeof useStudyConfig }>('../../store/hooks/useStudyConfig');
+  return { useStudyConfig: vi.fn(actual.useStudyConfig) };
+});
 
-vi.mock('react-router', () => ({
-  useNavigate: () => mockNavigate,
-}));
+vi.mock('react-router', async () => {
+  const actual = await vi.importActual<typeof ReactRouter>('react-router');
+  return { ...actual, useNavigate: vi.fn(actual.useNavigate) };
+});
 
 vi.mock('../../routes/utils', () => ({
   useCurrentIdentifier: () => mockIdentifier,
+  useCurrentComponent: () => 'image',
+  useCurrentStep: () => 0,
+  useStudyId: () => 'study',
+}));
+
+vi.mock('../../storage/storageEngineHooks', () => ({
+  useStorageEngine: () => ({ storageEngine: mockStorageEngine }),
 }));
 
 vi.mock('../PreviousButton', () => ({
@@ -61,7 +79,8 @@ vi.mock('../PreviousButton', () => ({
   ),
 }));
 
-vi.mock('@mantine/core', () => ({
+vi.mock('@mantine/core', async () => ({
+  ...await vi.importActual<typeof Mantine>('@mantine/core'),
   Alert: ({ children, title }: { children: ReactNode; title?: ReactNode }) => (
     <div role="alert">
       <div>{title}</div>
@@ -89,6 +108,9 @@ vi.mock('@tabler/icons-react', () => ({
 
 describe('NextButton', () => {
   beforeEach(() => {
+    vi.mocked(useNextStep).mockImplementation(() => ({ isNextDisabled: mockIsNextDisabled, goToNextStep: mockGoToNextStep }));
+    vi.mocked(useStudyConfig).mockImplementation(() => makeStudyConfig({ uiConfig: mockStudyConfig.uiConfig }));
+    vi.mocked(ReactRouter.useNavigate).mockReturnValue(mockNavigate);
     mockIsNextDisabled = false;
     mockIdentifier = 'intro_0';
     mockNavigate.mockReset();
@@ -107,6 +129,9 @@ describe('NextButton', () => {
     cleanup();
     vi.clearAllMocks();
     vi.useRealTimers();
+    vi.mocked(useNextStep).mockReset();
+    vi.mocked(useStudyConfig).mockReset();
+    vi.mocked(ReactRouter.useNavigate).mockReset();
   });
 
   test('renders Next button with default label', () => {
@@ -427,5 +452,146 @@ describe('NextButton', () => {
     expect(mockGoToNextStep).toHaveBeenCalledTimes(2);
     expect(mockGoToNextStep).toHaveBeenLastCalledWith(false);
     vi.useRealTimers();
+  });
+});
+
+function AssetTrial({ config }: { config: ImageComponent }) {
+  const { goToNextStep } = useNextStep();
+  const location = ReactRouter.useLocation();
+  return (
+    <>
+      <ImageController currentConfig={config} />
+      <NextButton config={config} checkAnswer={null} onNext={goToNextStep} />
+      <output aria-label="Current route">{location.pathname}</output>
+    </>
+  );
+}
+
+async function renderTrial(overrides: Partial<ImageComponent> = {}) {
+  const component: ImageComponent = {
+    type: 'image', path: 'image.png', response: [], nextOnEnter: true, ...overrides,
+  };
+  const config = makeStudyConfig({
+    components: { image: component, next: { type: 'questionnaire', response: [] } },
+    sequence: { order: 'fixed', components: ['image', 'next'] },
+  });
+  const studyStore = await studyStoreCreator(
+    'study',
+    config,
+    {
+      order: 'fixed', orderPath: 'root', components: ['image', 'next'], skip: [],
+    },
+    {
+      userAgent: '', resolution: {}, language: '', ip: null,
+    },
+    {},
+    { dataCollectionEnabled: true, developmentModeEnabled: false, dataSharingEnabled: false },
+    'participant',
+    false,
+    false,
+  );
+  const view = render(
+    <Provider store={studyStore.store}>
+      <StudyStoreContext.Provider value={studyStore}>
+        <ReactRouter.MemoryRouter initialEntries={[`/study/${encryptIndex(0)}`]}>
+          <Mantine.MantineProvider env="test">
+            <WindowEventsContext.Provider value={{ current: [] }}>
+              <AssetTrial config={component} />
+            </WindowEventsContext.Provider>
+          </Mantine.MantineProvider>
+        </ReactRouter.MemoryRouter>
+      </StudyStoreContext.Provider>
+    </Provider>,
+  );
+  const image = view.container.querySelector('img')!;
+  return { ...studyStore, image };
+}
+
+function expectNoAdvancement() {
+  expect(screen.getByLabelText('Current route').textContent).toBe(`/study/${encryptIndex(0)}`);
+  expect(mockStorageEngine.saveAnswers).not.toHaveBeenCalled();
+}
+
+describe('NextButton asset validation integration', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockIdentifier = 'image_0';
+    vi.mocked(useNextStep).mockReset();
+    vi.mocked(useStudyConfig).mockReset();
+    vi.mocked(ReactRouter.useNavigate).mockReset();
+    vi.useFakeTimers();
+    vi.stubGlobal('matchMedia', vi.fn(() => ({
+      matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn(),
+    })));
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  test('blocks Enter while loading and allows it after the image loads', async () => {
+    const { image, store } = await renderTrial();
+    expect(screen.getByRole('button', { name: 'Next' }).hasAttribute('disabled')).toBe(true);
+    fireEvent.keyDown(window, { key: 'Enter' });
+    expectNoAdvancement();
+
+    fireEvent.load(image);
+    expect(store.getState().trialValidation.image_0.assetStatus).toBe('ready');
+    fireEvent.keyDown(window, { key: 'Enter' });
+    expect(screen.getByLabelText('Current route').textContent).toBe(`/study/${encryptIndex(1)}`);
+    expect(mockStorageEngine.saveAnswers).toHaveBeenCalledTimes(1);
+  });
+
+  test('keeps Enter blocked after the image fails', async () => {
+    const { image, store } = await renderTrial();
+    fireEvent.error(image);
+    expect(store.getState().trialValidation.image_0.assetStatus).toBe('error');
+    expect(screen.getByRole('button', { name: 'Next' }).hasAttribute('disabled')).toBe(true);
+    fireEvent.keyDown(window, { key: 'Enter' });
+    expectNoAdvancement();
+  });
+
+  test('defers auto-advance until the image loads even after the deadline', async () => {
+    const { image } = await renderTrial({ nextButtonAutoAdvanceTime: 1000 });
+    act(() => vi.advanceTimersByTime(1500));
+    expectNoAdvancement();
+
+    fireEvent.load(image);
+    expect(screen.getByLabelText('Current route').textContent).toBe(`/study/${encryptIndex(1)}`);
+    expect(mockStorageEngine.saveAnswers).toHaveBeenCalledTimes(1);
+  });
+
+  test('does not auto-advance a failed image', async () => {
+    const { image } = await renderTrial({ nextButtonAutoAdvanceTime: 1000 });
+    fireEvent.error(image);
+    act(() => vi.advanceTimersByTime(1500));
+    expectNoAdvancement();
+  });
+
+  test('keeps timeout Proceed disabled until the image loads', async () => {
+    const { image } = await renderTrial({ nextButtonDisableTime: 1000 });
+    act(() => vi.advanceTimersByTime(1500));
+    const proceed = screen.getByRole('button', { name: 'Proceed' });
+    expect(proceed.hasAttribute('disabled')).toBe(true);
+    fireEvent.click(proceed);
+    expectNoAdvancement();
+
+    fireEvent.load(image);
+    expect(proceed.hasAttribute('disabled')).toBe(false);
+    fireEvent.click(proceed);
+    expect(screen.getByLabelText('Current route').textContent).toBe(`/study/${encryptIndex(1)}`);
+    expect(mockStorageEngine.saveAnswers).toHaveBeenCalledTimes(1);
+  });
+
+  test('keeps timeout Proceed disabled after the image fails', async () => {
+    const { image } = await renderTrial({ nextButtonDisableTime: 1000 });
+    fireEvent.error(image);
+    act(() => vi.advanceTimersByTime(1500));
+    const proceed = screen.getByRole('button', { name: 'Proceed' });
+    expect(proceed.hasAttribute('disabled')).toBe(true);
+    fireEvent.click(proceed);
+    expectNoAdvancement();
   });
 });
