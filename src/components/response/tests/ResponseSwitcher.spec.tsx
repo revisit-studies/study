@@ -96,14 +96,14 @@ function renderSwitcher({ storedAnswer, answerFinalized, responseOverride }: {
   );
 }
 
-test('study-defined response spacing overrides the form layout default', () => {
+test('study-defined response spacing overrides the default', () => {
   const view = renderSwitcher({ responseOverride: { ...response, style: { margin: '0 0 48px' } } });
   expect(view.container.querySelector<HTMLElement>('.response')!.style.marginBottom).toBe('48px');
 });
 
-test('response spacing falls back to the existing default outside Form Layout', () => {
+test('response spacing falls back to the existing default', () => {
   const view = renderSwitcher({});
-  expect(view.container.querySelector<HTMLElement>('.response')!.style.marginBottom).toBe('var(--revisit-response-spacing, var(--mantine-spacing-lg))');
+  expect(view.container.querySelector<HTMLElement>('.response')!.style.marginBottom).toBe('var(--mantine-spacing-lg)');
 });
 
 // ── setup ─────────────────────────────────────────────────────────────────────

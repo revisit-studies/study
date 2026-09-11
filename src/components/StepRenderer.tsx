@@ -35,8 +35,6 @@ import {
 } from '../utils/pdfExport';
 import { hideNotification, showNotification } from '../utils/notifications';
 import { PdfExportMenuItem } from './interface/PdfExportMenuItem';
-import { useStoredStudyStyle } from '../store/hooks/useStoredStudyStyle';
-import './styles/form-layout.css';
 import { PREFIX } from '../utils/Prefix';
 
 const STUDY_BROWSER_WIDTH = 360;
@@ -46,8 +44,6 @@ export function StepRenderer() {
   const dispatch = useStoreDispatch();
   const { toggleStudyBrowser, setAlertModal } = useStoreActions();
   const { storageEngine } = useStorageEngine();
-  const studyId = useStoreSelector((state) => state.studyId);
-  const { studyStyle } = useStoredStudyStyle(studyId);
 
   const isAnalysis = useIsAnalysis();
   const studyConfig = useStudyConfig();
@@ -383,9 +379,7 @@ export function StepRenderer() {
                     Study Browser
                   </Button>
                 )}
-                <div className={`study-content${studyStyle === 'formLayout' ? ' revisit-form-layout' : ''}`}>
-                  {studyStyle !== null && <Outlet />}
-                </div>
+                <Outlet />
               </AppShell.Main>
             </Flex>
             {isAnalysis && (

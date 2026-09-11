@@ -2,7 +2,7 @@ import { AuthError, createClient } from '@supabase/supabase-js';
 import localforage from 'localforage';
 import {
   REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageObject, StorageObjectType, StoredUser,
-  CloudStorageEngine, StudyColorMode, StudyStyle, cleanupModes,
+  CloudStorageEngine, StudyColorMode, cleanupModes,
 } from './types';
 import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
 
@@ -533,25 +533,6 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     if (error) {
       throw new Error('Failed to set study color scheme');
     }
-  }
-
-  async getStudyStyle(studyId: string): Promise<StudyStyle> {
-    const { data, error } = await this.supabase
-      .from('revisit')
-      .select('data')
-      .eq('studyId', `${this.collectionPrefix}${studyId}`)
-      .eq('docId', 'studyStyle');
-
-    if (error) throw new Error('Failed to load study style');
-    return data[0]?.data?.style === 'formLayout' ? 'formLayout' : 'default';
-  }
-
-  async setStudyStyle(studyId: string, style: StudyStyle) {
-    const { error } = await this.supabase
-      .from('revisit')
-      .upsert({ studyId: `${this.collectionPrefix}${studyId}`, docId: 'studyStyle', data: { style } });
-
-    if (error) throw new Error('Failed to save study style');
   }
 
   protected async _setModesDocument(studyId: string, modesDocument: Record<string, unknown>): Promise<void> {

@@ -184,19 +184,6 @@ describe.each([
   });
 
   // cleanupModes test
-  test('stores the selected style independently per study and preserves color mode', async () => {
-    expect(await storageEngine.getStudyStyle(studyId)).toBe('default');
-    await storageEngine.setStudyColorMode(studyId, 'dark');
-    await storageEngine.setStudyStyle(studyId, 'formLayout');
-    expect(await storageEngine.getStudyStyle(studyId)).toBe('formLayout');
-    expect(await storageEngine.getStudyStyle('another-study')).toBe('default');
-    expect(await storageEngine.getStudyColorMode(studyId)).toBe('dark');
-    await storageEngine.setStudyColorMode(studyId, 'light');
-    expect(await storageEngine.getStudyStyle(studyId)).toBe('formLayout');
-    await storageEngine.setStudyStyle(studyId, 'default');
-    expect(await storageEngine.getStudyStyle(studyId)).toBe('default');
-  });
-
   test('stores a study color scheme and defaults to light', async () => {
     expect(await storageEngine.getStudyColorMode(studyId)).toBe('light');
 

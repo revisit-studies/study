@@ -43,7 +43,6 @@ import {
   SequenceAssignment,
   SnapshotDocContent,
   StudyColorMode,
-  StudyStyle,
   StoredUser,
   cleanupModes,
 } from './types';
@@ -567,15 +566,6 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       'style',
     );
     await setDoc(styleDoc, { colorMode }, { merge: true });
-  }
-
-  async getStudyStyle(studyId: string): Promise<StudyStyle> {
-    const stored = await getDoc(doc(this.firestore, `${this.collectionPrefix}${studyId}`, 'studyStyle'));
-    return stored.data()?.style === 'formLayout' ? 'formLayout' : 'default';
-  }
-
-  async setStudyStyle(studyId: string, style: StudyStyle) {
-    await setDoc(doc(this.firestore, `${this.collectionPrefix}${studyId}`, 'studyStyle'), { style });
   }
 
   protected async _setModesDocument(studyId: string, modesDocument: Record<string, unknown>): Promise<void> {
