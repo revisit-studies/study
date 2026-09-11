@@ -244,16 +244,6 @@ vi.mock('react-vega', () => ({
 
 vi.mock('react-vega/lib/Vega', () => ({}));
 
-vi.mock('../../public/libraries/test/assets/test.tsx', () => ({
-  default: function ThrowingStimulus({ parameters }: { parameters: { failure: string } }) {
-    React.useEffect(() => {
-      if (parameters.failure === 'effect') throw new Error('Stimulus initialization failed');
-    }, [parameters.failure]);
-    if (parameters.failure === 'render') throw new Error('Stimulus initialization failed');
-    return <span>Stimulus loaded</span>;
-  },
-}));
-
 vi.mock('plyr-react', () => ({
   usePlyr: vi.fn(() => ({ current: null })),
 }));
@@ -381,7 +371,7 @@ describe('MarkdownController', () => {
 describe('ReactComponentController', () => {
   test.each(['render', 'effect'])('renders ResourceNotFound and marks the asset failed after a %s exception', async (failure) => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
-    const path = 'libraries/test/assets/test.tsx';
+    const path = 'libraries/test/assets/ThrowingStimulus.tsx';
     const { container } = render(
       <ReactComponentController
         currentConfig={{
