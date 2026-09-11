@@ -4,6 +4,7 @@ import { MarkdownComponent } from '../parser/types';
 import { getStaticAssetByPath } from '../utils/getStaticAsset';
 import { PREFIX } from '../utils/Prefix';
 import { ResourceNotFound } from '../ResourceNotFound';
+import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { compileTemplate } from '../utils/handlebars';
 import { useTemplateAnswerContext } from '../store/hooks/useTemplateAnswerContext';
 import { getAssetStatus, useAssetStatus } from '../store/hooks/useAssetStatus';
@@ -11,6 +12,7 @@ import { useCurrentIdentifier } from '../routes/utils';
 import { useAsyncResource } from '../store/hooks/useAsyncResource';
 
 export function MarkdownController({ currentConfig }: { currentConfig: MarkdownComponent; }) {
+  const studyConfig = useStudyConfig();
   const templateData = useTemplateAnswerContext();
   const templatedPath = useMemo(
     () => (templateData ? compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true, data: templateData }) : undefined),
@@ -42,5 +44,5 @@ export function MarkdownController({ currentConfig }: { currentConfig: MarkdownC
 
   return status === 'success'
     ? <ReactMarkdownWrapper text={renderedText} />
-    : <ResourceNotFound path={templatedPath} />;
+    : <ResourceNotFound email={studyConfig.uiConfig.contactEmail} path={templatedPath} />;
 }

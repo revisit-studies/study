@@ -61,7 +61,7 @@ export function HelpModal() {
         ? <ReactMarkdownWrapper text="" />
         : resourceStatus === 'success'
           ? <ReactMarkdownWrapper text={templatedHelpText} />
-          : <ResourceNotFound path={resolvedHelpTextPath} />}
+          : <ResourceNotFound email={config.uiConfig.contactEmail} path={resolvedHelpTextPath} />}
     </Modal>
   );
 }

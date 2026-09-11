@@ -4,6 +4,7 @@ import {
 import { ParticipantData, ReactComponent } from '../parser/types';
 import { StimulusParams, TrrackedProvenance } from '../store/types';
 import { ResourceNotFound } from '../ResourceNotFound';
+import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { useStoreDispatch, useStoreActions } from '../store/store';
 import { useCurrentIdentifier } from '../routes/utils';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
@@ -22,6 +23,7 @@ const modules = import.meta.glob<{ default: ComponentType<StimulusParams<ReactCo
 );
 
 export function ReactComponentController({ currentConfig, provState, answers }: { currentConfig: ReactComponent; provState?: unknown, answers: ParticipantData['answers'] }) {
+  const studyConfig = useStudyConfig();
   const templateData = useTemplateAnswerContext();
   const templatedPath = templateData ? compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true, data: templateData }) : undefined;
   const reactPath = templatedPath ? `../public/${templatedPath}` : undefined;
@@ -92,7 +94,7 @@ export function ReactComponentController({ currentConfig, provState, answers }: 
             </RevisitProvenanceProvider>
           </ErrorBoundary>
         )
-        : <ResourceNotFound path={templatedPath} />}
+        : <ResourceNotFound email={studyConfig.uiConfig.contactEmail} path={templatedPath} />}
     </Suspense>
   );
 }

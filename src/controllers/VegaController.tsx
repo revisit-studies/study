@@ -7,6 +7,7 @@ import { VegaProps } from 'react-vega/lib/Vega';
 import { ValueOf, VegaComponent } from '../parser/types';
 import { getJsonAssetByPath } from '../utils/getStaticAsset';
 import { ResourceNotFound } from '../ResourceNotFound';
+import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { useStoreActions, useStoreDispatch } from '../store/store';
 import { StimulusParams, TrrackedProvenance } from '../store/types';
 import { useCurrentIdentifier } from '../routes/utils';
@@ -32,6 +33,7 @@ export interface VegaProvState {
 const InternalVega = Vega as unknown as React.FC<VegaProps>;
 
 export function VegaController({ currentConfig, provState }: { currentConfig: VegaComponent; provState?: VegaProvState }) {
+  const studyConfig = useStudyConfig();
   const storeDispatch = useStoreDispatch();
   const [stimulusStatus, setStimulusStatus] = useState(false);
   const [stimulusAnswer, setStimulusAnswer] = useState<Record<string, string | number>>({});
@@ -222,7 +224,7 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
     return <div>Loading...</div>;
   }
   if ('path' in currentConfig && assetStatus === 'error') {
-    return <ResourceNotFound path={templatedPath} />;
+    return <ResourceNotFound email={studyConfig.uiConfig.contactEmail} path={templatedPath} />;
   }
   if (assetStatus === 'error' || !vegaConfig) {
     return <div>Failed to load vega config</div>;

@@ -3,12 +3,14 @@ import { Image } from '@mantine/core';
 import { ImageComponent } from '../parser/types';
 import { PREFIX } from '../utils/Prefix';
 import { ResourceNotFound } from '../ResourceNotFound';
+import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { compileTemplate } from '../utils/handlebars';
 import { useTemplateAnswerContext } from '../store/hooks/useTemplateAnswerContext';
 import { useAssetStatus, useAssetLoadStatus } from '../store/hooks/useAssetStatus';
 import { useCurrentIdentifier } from '../routes/utils';
 
 export function ImageController({ currentConfig }: { currentConfig: ImageComponent; }) {
+  const studyConfig = useStudyConfig();
   const templateData = useTemplateAnswerContext();
   const templatedPath = useMemo(
     () => (templateData ? compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true, data: templateData }) : undefined),
@@ -31,7 +33,7 @@ export function ImageController({ currentConfig }: { currentConfig: ImageCompone
   }
 
   return assetStatus === 'error'
-    ? <ResourceNotFound path={templatedPath} />
+    ? <ResourceNotFound email={studyConfig.uiConfig.contactEmail} path={templatedPath} />
     : (
       <Image
         key={requestKey}
