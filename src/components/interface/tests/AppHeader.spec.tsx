@@ -20,7 +20,7 @@ let mockedRecordingContext = {
   isAudioRecording: false,
   setIsMuted: vi.fn(),
   isMuted: false,
-  clickToRecord: false,
+  currentComponentHasClickToRecord: false,
   isSpeakingWhileMuted: false,
   showMutedWarning: false,
   screenRecordingError: null as string | null,
@@ -215,7 +215,7 @@ describe('AppHeader', () => {
       isAudioRecording: false,
       setIsMuted: vi.fn(),
       isMuted: false,
-      clickToRecord: false,
+      currentComponentHasClickToRecord: false,
       isSpeakingWhileMuted: false,
       showMutedWarning: false,
       screenRecordingError: null,
@@ -312,7 +312,7 @@ describe('AppHeader', () => {
   test('shows disabled mic state when audio permission is denied before recording starts', () => {
     mockedRecordingContext = {
       ...mockedRecordingContext,
-      clickToRecord: true,
+      currentComponentHasClickToRecord: true,
       currentComponentHasAudioRecording: true,
       audioRecordingError: 'Microphone permission denied',
       audioStatus: 'denied',
@@ -321,13 +321,14 @@ describe('AppHeader', () => {
     const html = renderToStaticMarkup(<AppHeader developmentModeEnabled={false} dataCollectionEnabled />);
 
     // The error text is rendered directly in a <p> element
+    expect(html).toContain('aria-label="Microphone error"');
     expect(html).toContain('Microphone permission denied');
   });
 
   test('shows pending mic state before audio permission is granted', () => {
     mockedRecordingContext = {
       ...mockedRecordingContext,
-      clickToRecord: true,
+      currentComponentHasClickToRecord: true,
       currentComponentHasAudioRecording: true,
       audioStatus: 'pending',
     };
@@ -335,7 +336,7 @@ describe('AppHeader', () => {
     const html = renderToStaticMarkup(<AppHeader developmentModeEnabled={false} dataCollectionEnabled />);
 
     // Pending state renders an ActionIcon (button) with aria-label; tooltip labels don't render in static markup
-    expect(html).toContain('<button');
+    expect(html).toContain('aria-label="Microphone pending"');
   });
 
   test('hides stale mic error outside audio and permission pages', () => {

@@ -546,7 +546,7 @@ const footerDefaultProps = {
 
 const mockFooterStorageEngine = {
   getAudioUrl: vi.fn().mockResolvedValue('http://test/audio.mp3'),
-  getScreenRecording: vi.fn().mockResolvedValue('http://test/video.mp4'),
+  getScreenRecordingUrl: vi.fn().mockResolvedValue('http://test/video.mp4'),
   saveTags: vi.fn().mockResolvedValue(undefined),
   getTags: vi.fn().mockResolvedValue([]),
   getAllParticipantAndTaskTags: vi.fn().mockResolvedValue(null),
@@ -584,7 +584,7 @@ describe('ThinkAloudFooter', () => {
       <RealThinkAloudFooter {...footerDefaultProps} storageEngine={makeStorageEngine(mockFooterStorageEngine)} />,
     ));
     expect(mockFooterStorageEngine.getAudioUrl).toHaveBeenCalled();
-    expect(mockFooterStorageEngine.getScreenRecording).toHaveBeenCalled();
+    expect(mockFooterStorageEngine.getScreenRecordingUrl).toHaveBeenCalled();
   });
 
   test('ignores stale screen recording results after participant changes', async () => {
@@ -608,7 +608,7 @@ describe('ThinkAloudFooter', () => {
       getAudioUrl: vi.fn((_task, participantId) => (
         participantId === 'p1' ? audioP1.promise : audioP2.promise
       )),
-      getScreenRecording: vi.fn((_task, participantId) => (
+      getScreenRecordingUrl: vi.fn((_task, participantId) => (
         participantId === 'p1' ? screenP1.promise : screenP2.promise
       )),
     });
@@ -628,7 +628,7 @@ describe('ThinkAloudFooter', () => {
     const view = render(<RealThinkAloudFooter {...footerDefaultProps} storageEngine={storageEngine} />);
     await waitFor(() => expect(storageEngine.getAudioUrl).toHaveBeenCalledWith('trial_0', 'p1'));
     audioP1.resolve('audio-p1');
-    await waitFor(() => expect(storageEngine.getScreenRecording).toHaveBeenCalledWith('trial_0', 'p1'));
+    await waitFor(() => expect(storageEngine.getScreenRecordingUrl).toHaveBeenCalledWith('trial_0', 'p1'));
 
     selectedParticipantId = 'p2';
     view.rerender(<RealThinkAloudFooter {...footerDefaultProps} storageEngine={storageEngine} />);
@@ -636,7 +636,7 @@ describe('ThinkAloudFooter', () => {
 
     await waitFor(() => expect(storageEngine.getAudioUrl).toHaveBeenCalledWith('trial_0', 'p2'));
     audioP2.resolve('audio-p2');
-    await waitFor(() => expect(storageEngine.getScreenRecording).toHaveBeenCalledWith('trial_0', 'p2'));
+    await waitFor(() => expect(storageEngine.getScreenRecordingUrl).toHaveBeenCalledWith('trial_0', 'p2'));
     screenP2.resolve('screen-p2');
     const screenIcon = await waitFor(() => view.getByTestId('screen-recording-icon'));
     fireEvent.click(screenIcon.closest('button')!);
@@ -666,7 +666,7 @@ describe('ThinkAloudFooter', () => {
     };
     const storageEngine = makeStorageEngine({
       getAudioUrl: vi.fn((_task, participantId) => Promise.resolve(`audio-${participantId}`)),
-      getScreenRecording: vi.fn((_task, participantId) => Promise.resolve(`screen-${participantId}`)),
+      getScreenRecordingUrl: vi.fn((_task, participantId) => Promise.resolve(`screen-${participantId}`)),
     });
     vi.mocked(useSearchParams).mockImplementation(() => [
       new URLSearchParams(`participantId=${selectedParticipantId}`), setSearchParamsForRace,

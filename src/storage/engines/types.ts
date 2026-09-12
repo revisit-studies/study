@@ -87,6 +87,34 @@ export interface ConditionData {
 
 const defaultStageColor = '#F05A30';
 
+export interface WaveformPeaks {
+  peaks: number[][]; // one array per channel, values in [-1, 1]
+  duration: number; // seconds required by waveSurfer.load() when peaks are provided
+}
+
+function isValidWaveformPeaks(value: WaveformPeaks | null): value is WaveformPeaks {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const { peaks, duration } = value;
+  const firstChannel = peaks?.[0];
+
+  if (!Array.isArray(peaks) || !Array.isArray(firstChannel) || firstChannel.length === 0) {
+    return false;
+  }
+
+  return peaks.every((channel) => Array.isArray(channel)
+      && channel.length === firstChannel.length
+      && channel.every((n) => typeof n === 'number'
+        && Number.isFinite(n)
+        && n >= -1
+        && n <= 1))
+    && typeof duration === 'number'
+    && Number.isFinite(duration)
+    && duration > 0;
+}
+
 export type StorageObjectType = 'sequenceArray' | 'participantData' | 'config' | string;
 export type StorageObject<T extends StorageObjectType> =
   T extends 'sequenceArray'
@@ -103,6 +131,8 @@ export type StorageObject<T extends StorageObjectType> =
   ? ParticipantTags
   : T extends 'tags'
   ? Tag[]
+  : T extends 'waveform.peaks.json'
+  ? WaveformPeaks
   : Blob; // Fallback for any random string
 
 interface CloudStorageEngineError {
@@ -1067,6 +1097,16 @@ export abstract class StorageEngine {
     return emptyTags;
   }
 
+  async getWaveformPeaks(taskName: string, participantId: string): Promise<WaveformPeaks | null> {
+    const result = await this._getFromStorage(`audio/${participantId}_${taskName}`, 'waveform.peaks.json');
+    if (!isValidWaveformPeaks(result)) return null;
+    return result;
+  }
+
+  async saveWaveformPeaks(waveformPeaks: WaveformPeaks, taskName: string, participantId: string): Promise<void> {
+    await this._pushToStorage(`audio/${participantId}_${taskName}`, 'waveform.peaks.json', waveformPeaks);
+  }
+
   async getAllParticipantAndTaskTags(authEmail: string, participantId: string) {
     return this.getParticipantAndTaskTags(authEmail, participantId, true);
   }
@@ -1577,7 +1617,7 @@ export abstract class StorageEngine {
     return asset;
   }
 
-  // Gets the audio for a specific task and participantId.
+  // Gets the audio blob URL for a specific task and participantId.
   async getAudio(
     task: string,
     participantId: string,
@@ -1734,17 +1774,37 @@ export abstract class StorageEngine {
       if (!modes.dataCollectionEnabled) {
         throw new Error('Data collection is disabled for this study');
       }
-      return this.saveAsset('audio', blob, taskName);
+      const participantId = this.currentParticipantId;
+      await this.saveAsset('audio', blob, taskName);
+
+      if (participantId) {
+        try {
+          await this._deleteFromStorage(`audio/${participantId}_${taskName}`, 'waveform.peaks.json');
+        } catch (error) {
+          const errorCode = (error as { code?: string }).code;
+          if (errorCode !== 'storage/object-not-found') {
+            console.warn(`Failed to invalidate waveform peaks for ${taskName}:`, error);
+          }
+        }
+      }
     });
   }
 
-  // Gets the screen recording for a specific task and participantId.
+  // Gets the screen recording blob URL for a specific task and participantId.
   async getScreenRecording(
     task: string,
     participantId: string,
   ) {
     const url = await this._getScreenRecordingUrl(task, participantId);
     return this.getAsset(url);
+  }
+
+  // Gets the screen recording URL for a specific task and participantId.
+  getScreenRecordingUrl(
+    task: string,
+    participantId: string,
+  ) {
+    return this._getScreenRecordingUrl(task, participantId);
   }
 
   // Saves the video stream to the storage engine. This method is used to save the screen recorded video data from a MediaRecorder stream.

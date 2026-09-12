@@ -43,9 +43,9 @@ export function ScreenRecordingReplay() {
         if (isAnalysis && identifier && storageEngine) {
           try {
             if (!participantId) {
-              throw new Error('Participant ID is required to load audio');
+              throw new Error('Participant ID is required to load screen recording');
             }
-            const url = await storageEngine.getScreenRecording(identifier, participantId);
+            const url = await storageEngine.getScreenRecordingUrl(identifier, participantId);
             if (!url) {
               storeDispatch(setAnalysisHasScreenRecording(false));
               storeDispatch(setAnalysisCanPlayScreenRecording(false));
@@ -63,7 +63,7 @@ export function ScreenRecordingReplay() {
           } catch (error) {
             storeDispatch(setAnalysisHasScreenRecording(false));
             storeDispatch(setAnalysisCanPlayScreenRecording(false));
-            throw new Error(error as string);
+            console.warn('Failed to load screen recording:', error);
           }
         } else {
           storeDispatch(setAnalysisHasScreenRecording(false));
