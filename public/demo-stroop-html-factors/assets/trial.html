@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Stroop test</title>
+    <!-- Load revisit-communicate to be able to send data to reVISit -->
+    <script src="../../revisitUtilities/revisit-communicate.js"></script>
+    <script>
+      let inkColor;
+      let word;
+      const colors = ["RED", "ORANGE", "YELLOW", "GREEN", "BLUE", "PURPLE", "PINK", "BROWN", "GRAY", "BLACK"]
+      const idx = Math.floor(Math.random() * (colors.length - 1));
+
+      // Get data from the config file
+      Revisit.onDataReceive((data) => {
+        word = data.color;
+        inkColor = data.congruence == "neutral" ? word : colors.filter(d => d != word)[idx];
+        
+        const stimuli = document.querySelector("p#stimuli");
+        stimuli.innerHTML = word;
+        stimuli.style.color = inkColor;
+      })
+    </script>
+  </head>
+
+  <body>
+    <p id="stimuli"></p>
+  </body>
+
+  <style>
+    p#stimuli {      
+      font-size: 40px; 
+      font-weight: 700;
+      font-family: 'Arial', 'Helvetica', sans-serif; 
+      text-align: center;
+    }
+  </style>
+</html>

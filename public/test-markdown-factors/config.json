@@ -20,7 +20,6 @@
     "factorTemplate": {
       "type": "markdown",
       "path": "demo-markdown-factors/assets/factor-template.md",
-      "description": "Animal: {{animal}}; color: {{color}}",
       "response": []
     }
   },
