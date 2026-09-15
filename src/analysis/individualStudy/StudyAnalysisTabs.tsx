@@ -644,7 +644,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
               <Tabs.Panel style={{ overflow: 'auto' }} value="stats" pt="xs">
                 {studyConfig && <StatsView studyConfig={studyConfig} visibleParticipants={visibleParticipants} allConfigs={allConfigs} />}
               </Tabs.Panel>
-              <Tabs.Panel value="tagging" pt="xs">
+              <Tabs.Panel style={{ overflow: 'auto' }} value="tagging" pt="xs">
                 {studyConfig && codingEnabled
                   ? <ThinkAloudAnalysis visibleParticipants={visibleParticipants} storageEngine={storageEngine as FirebaseStorageEngine} />
                   : (
