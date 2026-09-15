@@ -33,15 +33,18 @@ export function ConfigView({
   const [modalViewConfigOpened, setModalViewConfigOpened] = useState(false);
   const [modalCompareConfigOpened, setModalCompareConfigOpened] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     if (!storageEngine || !studyId) {
       setConfigs([]);
+      setHasError(true);
       setLoading(false);
       return;
     }
 
     const fetchConfigs = async () => {
+      setLoading(true);
       try {
         const participantConfigHashes = visibleParticipants
           .map((participant) => participant.participantConfigHash)
@@ -52,9 +55,11 @@ export function ConfigView({
         const fetchedConfigs = await storageEngine.getAllConfigsFromHash(allConfigHashes, studyId);
         const rows = buildConfigRows(fetchedConfigs, visibleParticipants);
         setConfigs(rows);
+        setHasError(false);
       } catch (error) {
         console.error('Error fetching configs:', error);
         setConfigs([]);
+        setHasError(true);
       }
       setLoading(false);
     };
@@ -241,7 +246,7 @@ export function ConfigView({
     },
   });
 
-  return loading ? (
+  const content = loading ? (
     <Stack align="center" p="md">
       <Loader size="sm" />
       <Text size="sm" c="dimmed">Loading config data...</Text>
@@ -300,9 +305,22 @@ export function ConfigView({
       <>
         <Space h="xl" />
         <Flex justify="center" align="center">
-          <Text>No data available</Text>
+          <Text>
+            {hasError
+              ? 'Unable to load saved Study Config versions. Please try again.'
+              : 'No Study Configs have been saved yet.'}
+          </Text>
         </Flex>
       </>
     )
+  );
+
+  return (
+    <>
+      <Text size="sm" mb="md">
+        View, download, and compare saved Study Config versions.
+      </Text>
+      {content}
+    </>
   );
 }

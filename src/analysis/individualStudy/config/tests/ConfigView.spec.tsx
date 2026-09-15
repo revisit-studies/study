@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
-  render, screen, act, cleanup, fireEvent,
+  render, screen, act, cleanup, fireEvent, waitFor,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
@@ -14,6 +14,7 @@ import { makeParticipant } from '../../../../tests/utils';
 
 // Capture what gets passed to useMantineReactTable so we can test columns / options
 type CapturedTableOptions = Record<string, unknown> & {
+  data: ConfigInfo[];
   columns: { id?: string; header: string; accessorKey?: string; Cell: (arg: Record<string, unknown>) => ReactNode }[];
   enableRowSelection: boolean;
   enableRowVirtualization: boolean;
@@ -87,6 +88,7 @@ const mockConfigInfo: ConfigInfo = {
 
 describe('ConfigView', () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     capturedTableOptions = null;
     mockStorageEngine = {
       getAllConfigsFromHash: vi.fn().mockResolvedValue({ [mockConfigInfo.hash]: mockConfigInfo.config }),
@@ -188,19 +190,90 @@ describe('ConfigView', () => {
 
   // ── useEffect: post-mount state transitions ──────────────────────────────
 
+  test.each([true, false])('shows config guidance when saved configs exist: %s', async (hasConfigs) => {
+    mockStorageEngine!.getAllConfigsFromHash.mockResolvedValue(
+      hasConfigs ? { [mockConfigInfo.hash]: mockConfigInfo.config } : {},
+    );
+
+    await act(async () => {
+      render(<ConfigView visibleParticipants={[]} studyId="test-study" currentConfigHash={hasConfigs ? mockConfigInfo.hash : undefined} />);
+    });
+
+    expect(screen.getByText('View, download, and compare saved Study Config versions.')).toBeDefined();
+    expect(screen.queryByText('table') !== null).toBe(hasConfigs);
+    expect(screen.queryByText('No Study Configs have been saved yet.') !== null).toBe(!hasConfigs);
+    expect(screen.queryByText('Unable to load saved Study Config versions. Please try again.')).toBeNull();
+  });
+
+  test('fetches and shows the current config with zero participants', async () => {
+    await act(async () => {
+      render(<ConfigView visibleParticipants={[]} studyId="test-study" currentConfigHash={mockConfigInfo.hash} />);
+    });
+
+    expect(mockStorageEngine!.getAllConfigsFromHash).toHaveBeenCalledWith([mockConfigInfo.hash], 'test-study');
+    expect(screen.getByText('table')).toBeDefined();
+    expect(capturedTableOptions!.data).toEqual([
+      expect.objectContaining({ hash: mockConfigInfo.hash, participantCount: 0, timeFrame: 'N/A' }),
+    ]);
+
+    const versionColumn = capturedTableOptions!.columns.find((column) => column.accessorKey === 'version')!;
+    render(versionColumn.Cell({ row: { original: capturedTableOptions!.data[0] } }));
+    expect(screen.getByText('Current')).toBeDefined();
+  });
+
+  test('keeps the current config and updates row details when participant filters change', async () => {
+    const oldHash = 'old-config-hash';
+    const savedConfigs: Record<string, ConfigInfo['config']> = {
+      [mockConfigInfo.hash]: mockConfigInfo.config,
+      [oldHash]: mockConfigInfo.config,
+    };
+    mockStorageEngine!.getAllConfigsFromHash.mockImplementation(async (hashes: string[]) => (
+      Object.fromEntries(hashes.map((hash) => [hash, savedConfigs[hash]]))
+    ));
+    const participants = [
+      makeParticipant({ participantConfigHash: mockConfigInfo.hash, createdTime: 1700000000000 }),
+      makeParticipant({ participantConfigHash: oldHash }),
+    ];
+    const { rerender } = render(
+      <ConfigView visibleParticipants={participants} studyId="test-study" currentConfigHash={mockConfigInfo.hash} />,
+    );
+    await waitFor(() => {
+      expect(capturedTableOptions!.data.find((config) => config.hash === mockConfigInfo.hash))
+        .toEqual(expect.objectContaining({ participantCount: 1, timeFrame: expect.not.stringMatching(/^N\/A$/) }));
+    });
+
+    await act(async () => {
+      rerender(<ConfigView visibleParticipants={[participants[1]]} studyId="test-study" currentConfigHash={mockConfigInfo.hash} />);
+    });
+    expect(mockStorageEngine!.getAllConfigsFromHash).toHaveBeenLastCalledWith([mockConfigInfo.hash, oldHash], 'test-study');
+    expect(capturedTableOptions!.data).toEqual([
+      expect.objectContaining({ hash: mockConfigInfo.hash, participantCount: 0, timeFrame: 'N/A' }),
+      expect.objectContaining({ hash: oldHash, participantCount: 1 }),
+    ]);
+
+    await act(async () => {
+      rerender(<ConfigView visibleParticipants={[]} studyId="test-study" currentConfigHash={mockConfigInfo.hash} />);
+    });
+    expect(mockStorageEngine!.getAllConfigsFromHash).toHaveBeenLastCalledWith([mockConfigInfo.hash], 'test-study');
+    expect(capturedTableOptions!.data).toEqual([
+      expect.objectContaining({ hash: mockConfigInfo.hash, participantCount: 0, timeFrame: 'N/A' }),
+    ]);
+    expect(screen.getByText('table')).toBeDefined();
+  });
+
   test('useEffect clears configs and stops loading when storageEngine is missing', async () => {
     mockStorageEngine = undefined;
     await act(async () => {
       render(<ConfigView visibleParticipants={[]} studyId="test-study" />);
     });
-    expect(screen.getByText('No data available')).toBeDefined();
+    expect(screen.getByText('Unable to load saved Study Config versions. Please try again.')).toBeDefined();
   });
 
   test('useEffect clears configs and stops loading when studyId is missing', async () => {
     await act(async () => {
       render(<ConfigView visibleParticipants={[]} />);
     });
-    expect(screen.getByText('No data available')).toBeDefined();
+    expect(screen.getByText('Unable to load saved Study Config versions. Please try again.')).toBeDefined();
   });
 
   test('useEffect fetches configs and renders table when storageEngine and studyId are present', async () => {
@@ -222,7 +295,22 @@ describe('ConfigView', () => {
       render(<ConfigView visibleParticipants={[makeParticipant({ participantConfigHash: 'x' })]} studyId="test-study" />);
     });
     expect(consoleSpy).toHaveBeenCalledWith('Error fetching configs:', expect.any(Error));
-    expect(screen.getByText('No data available')).toBeDefined();
+    expect(screen.getByText('Unable to load saved Study Config versions. Please try again.')).toBeDefined();
+    expect(screen.queryByText('No Study Configs have been saved yet.')).toBeNull();
+  });
+
+  test('clears the load error after a successful fetch with no saved configs', async () => {
+    mockStorageEngine!.getAllConfigsFromHash.mockRejectedValueOnce(new Error('network error')).mockResolvedValue({});
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { rerender } = render(<ConfigView visibleParticipants={[]} studyId="test-study" />);
+    await screen.findByText('Unable to load saved Study Config versions. Please try again.');
+
+    await act(async () => {
+      rerender(<ConfigView visibleParticipants={[]} studyId="another-study" />);
+    });
+
+    expect(screen.getByText('No Study Configs have been saved yet.')).toBeDefined();
+    expect(screen.queryByText('Unable to load saved Study Config versions. Please try again.')).toBeNull();
   });
 
   // ── useCallback handlers ─────────────────────────────────────────────────
@@ -249,10 +337,10 @@ describe('ConfigView', () => {
     expect(writeText).toHaveBeenCalledWith('abcdef1234');
   });
 
-  test('handleDownloadConfig calls downloadConfigFile with correct args', async () => {
-    const participants = [makeParticipant({ participantConfigHash: mockConfigInfo.hash })];
+  test.each([true, false])('downloads the current config with participants: %s', async (hasParticipants) => {
+    const participants = hasParticipants ? [makeParticipant({ participantConfigHash: mockConfigInfo.hash })] : [];
     await act(async () => {
-      render(<ConfigView visibleParticipants={participants} studyId="test-study" />);
+      render(<ConfigView visibleParticipants={participants} studyId="test-study" currentConfigHash={mockConfigInfo.hash} />);
     });
 
     const col = capturedTableOptions!.columns.find((c) => c.id === 'actions');
@@ -326,9 +414,10 @@ describe('ConfigView', () => {
     expect(screen.getByText('diff modal')).toBeDefined();
   });
 
-  test('handleViewConfig opens view modal when View button is clicked', async () => {
+  test.each([true, false])('opens the current config when View is clicked with participants: %s', async (hasParticipants) => {
+    const participants = hasParticipants ? [makeParticipant({ participantConfigHash: mockConfigInfo.hash })] : [];
     await act(async () => {
-      render(<ConfigView visibleParticipants={[makeParticipant({ participantConfigHash: mockConfigInfo.hash })]} studyId="test-study" />);
+      render(<ConfigView visibleParticipants={participants} studyId="test-study" currentConfigHash={mockConfigInfo.hash} />);
     });
 
     const col = capturedTableOptions!.columns.find((c) => c.id === 'actions');
