@@ -26,77 +26,25 @@
     "studyEndAutoRedirectDelay": 10000
   },
   "factors": {
-    "incentive": [
-      "base",
-      "inc"
-    ],
-    "vis": [
-      "pcp",
-      "scatter"
-    ],
-    "r1": [
-      0.3,
-      0.4,
-      0.5,
-      0.6,
-      0.7
-    ],
-    "delta": [
-      0.03,
-      0.04,
-      0.05,
-      0.06,
-      0.07,
-      0.08,
-      0.09,
-      0.1,
-      0.12,
-      0.14,
-      0.18,
-      0.22,
-      0.26
-    ],
-    "r1Training": [
-      0.3,
-      0.9,
-      0.6,
-      0.6,
-      0.3,
-      0.5,
-      0.9,
-      0.6,
-      0.99
-    ],
-    "r2Training": [
-      0.7,
-      0.6,
-      0.3,
-      0.9,
-      0.1,
-      0.3,
-      0.8,
-      0.7,
-      0.9
-    ],
+    "incentive": ["base", "inc"],
+    "vis": ["pcp", "scatter"],
+    "r1": [0.3, 0.4, 0.5, 0.6, 0.7],
+    "delta": [0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.12, 0.14, 0.18, 0.22, 0.26],
+    "r1Training": [0.3, 0.9, 0.6, 0.6, 0.3, 0.5, 0.9, 0.6, 0.99],
+    "r2Training": [0.7, 0.6, 0.3, 0.9, 0.1, 0.3, 0.8, 0.7, 0.9],
     "trainingPairs": {
       "action": "zip",
-      "factors": [
-        "r1Training",
-        "r2Training"
-      ]
+      "factors": ["r1Training", "r2Training"]
     },
     "testTrials": {
       "action": "cross",
-      "factors": [
-        "r1",
-        "delta"
-      ]
+      "factors": ["r1", "delta"]
     }
   },
   "baseComponents": {
     "practice": {
-      "type": "react-component",
-      "path": "incentives-corr/assets/Practice.tsx",
+      "type": "website",
+      "path": "incentives-corr/assets/03-practice.html",
       "stylesheetPath": "incentives-corr/assets/task.css",
       "helpTextPath": "incentives-corr/assets/help-{{vis}}.md",
       "response": [
@@ -116,11 +64,9 @@
       ]
     },
     "test": {
-      "type": "react-component",
-      "path": "incentives-corr/assets/Task.tsx",
-      "parameters": {
-        "taskid": "test"
-      },
+      "type": "website",
+      "path": "incentives-corr/assets/05-test.html",
+      "parameters": {"taskid": "test"},
       "stylesheetPath": "incentives-corr/assets/task.css",
       "helpTextPath": "incentives-corr/assets/help-{{vis}}.md",
       "response": [
@@ -130,11 +76,11 @@
           "required": true,
           "type": "buttons",
           "options": [
-            "false",
-            "true"
+            {"label": "A", "value": "left"},
+            {"label": "B", "value": "right"}
           ],
-          "location": "belowStimulus",
-          "hidden": true
+          "hidden": true,
+          "location": "belowStimulus"
         }
       ],
       "correctAnswer": [
@@ -188,51 +134,6 @@
       "type": "markdown",
       "path": "incentives-corr/assets/04-instructions-{{incentive}}.md",
       "response": []
-    },
-    "attention-1": {
-      "baseComponent": "test",
-      "parameters": {
-        "taskid": "attention",
-        "attentionIndex": 1,
-        "r1": 0.01,
-        "r2": 0.99
-      }
-    },
-    "attention-2": {
-      "baseComponent": "test",
-      "parameters": {
-        "taskid": "attention",
-        "attentionIndex": 2,
-        "r1": 0.01,
-        "r2": 0.99
-      }
-    },
-    "attention-3": {
-      "baseComponent": "test",
-      "parameters": {
-        "taskid": "attention",
-        "attentionIndex": 3,
-        "r1": 0.01,
-        "r2": 0.99
-      }
-    },
-    "attention-4": {
-      "baseComponent": "test",
-      "parameters": {
-        "taskid": "attention",
-        "attentionIndex": 4,
-        "r1": 0.01,
-        "r2": 0.99
-      }
-    },
-    "attention-5": {
-      "baseComponent": "test",
-      "parameters": {
-        "taskid": "attention",
-        "attentionIndex": 5,
-        "r1": 0.01,
-        "r2": 0.99
-      }
     }
   },
   "betweenSubjects": [
@@ -258,44 +159,7 @@
         "id": "test",
         "factor": "testTrials",
         "order": "latinSquare",
-        "components": "test",
-        "interruptions": [
-          {
-            "spacing": "random",
-            "numInterruptions": 1,
-            "components": [
-              "attention-1"
-            ]
-          },
-          {
-            "spacing": "random",
-            "numInterruptions": 1,
-            "components": [
-              "attention-2"
-            ]
-          },
-          {
-            "spacing": "random",
-            "numInterruptions": 1,
-            "components": [
-              "attention-3"
-            ]
-          },
-          {
-            "spacing": "random",
-            "numInterruptions": 1,
-            "components": [
-              "attention-4"
-            ]
-          },
-          {
-            "spacing": "random",
-            "numInterruptions": 1,
-            "components": [
-              "attention-5"
-            ]
-          }
-        ]
+        "components": "test"
       }
     ]
   }

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Perception of Correlation</title>
+    <!-- Load revisit-communicate to be able to send data to reVISit -->
+    <script src="../../revisitUtilities/revisit-communicate.js"></script>
+    <script>
+      let correct, corrLeft, corrRight;
+      // Get data from the config file
+      Revisit.onDataReceive((data) => {
+        const r1 = Math.round(data.r1 * 100) / 100;
+        const r2 = Math.round((data.r1 + data.delta)*100) / 100;
+        
+        const randomize = Math.round(Math.random());
+        const order = randomize ? ["r1", "r2"] : ["r2", "r1"];
+        
+        correct = randomize ? 'right' : 'left'; // r2 > r1 always
+        corrLeft = randomize ? r1 : r2;
+        corrRight = randomize ? r2 : r1;
+
+        const imgLeftURL = `./img/stimuli/${data.vis}-${order[0]}-${r1}_${r2}-size_100.jpg`;
+        const imgRightURL = `./img/stimuli/${data.vis}-${order[1]}-${r1}_${r2}-size_100.jpg`;
+
+        // set left image
+        document.getElementById("stimuli-left").src = imgLeftURL;
+        // set right image
+        document.getElementById("stimuli-right").src = imgRightURL;
+      })
+    </script>
+  </head>
+
+  <body>
+    <p>
+      <span class="questionPrompt">Please select the visualization that appears to have a larger correlation.</span>
+      <span class="requiredQuestion">*</span>
+      <br/>
+      <span class="questionSecondaryText">Click A or B, or use the left and right arrow keys.</span>
+    </p>
+    <div class="stimuliContainer">
+      <div id="option-left" class="imgContainer">
+        <img id="stimuli-left"/>
+        <button id="buttonA-left">A</button>
+      </div>
+      <div id="option-right" class="imgContainer">
+        <img id="stimuli-right"/>
+        <button id="button-right">B</button>
+      </div>
+    </div>
+  </body>
+
+  <script>
+    const buttons = document.querySelector("button")
+
+    document.addEventListener('click', (e) => {
+      const selected = e.target.id.split("-")[1];
+      const isCorrect = selected == correct;
+
+      Revisit.postAnswers({ "selected": selected, "correct": isCorrect, "corrLeft": corrLeft, "corrRight":  corrRight});
+    })
+  </script>
+
+  <style>
+    .stimuliContainer {
+      display: inline-flex;
+    }
+
+    .imgContainer {
+      width: 400px;
+    }
+
+    img {
+      width: 300px;
+      margin: 0px 50px;
+    }
+
+    button {
+      display: block;
+      font-size: 14px;
+      color: #fff;
+      background-color: #228be6;
+      border: none;
+      border-radius: 4px;
+      height: 34px;
+      padding: 4px 18px;
+      margin: auto;
+    }
+    
+    button:focus,
+    button:hover,
+    button:active {
+      background-color: #1c7ccf;
+    }
+  </style>
+</html>
