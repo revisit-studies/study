@@ -28,6 +28,55 @@ function isComponentBlock(value: unknown): value is ComponentBlock {
     && !isFactorBlock(value as StudyConfig['sequence']);
 }
 
+describe('Study color mode config parsing', () => {
+  function makeStudyConfig(colorMode?: unknown) {
+    return {
+      $schema: '',
+      studyMetadata: {
+        title: 'Color Mode Test',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2026-09-16',
+        description: 'Validates study color mode options.',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: '',
+        logoPath: '',
+        withProgressBar: true,
+        withSidebar: false,
+        colorMode,
+      },
+      components: {
+        question: { type: 'questionnaire', response: [] },
+      },
+      sequence: { order: 'fixed', components: ['question'] },
+    };
+  }
+
+  test.each(['light', 'dark', 'userPreference'] as const)('accepts and preserves %s', async (colorMode) => {
+    const result = await parseStudyConfig(JSON.stringify(makeStudyConfig(colorMode)));
+
+    expect(result.errors).toEqual([]);
+    expect(result.uiConfig.colorMode).toBe(colorMode);
+  });
+
+  test('accepts existing configs without a color mode', async () => {
+    const result = await parseStudyConfig(JSON.stringify(makeStudyConfig()));
+
+    expect(result.errors).toEqual([]);
+    expect(result.uiConfig).not.toHaveProperty('colorMode');
+  });
+
+  test.each(['user', 'auto', 'userPreference ', null, true])('rejects invalid color mode %s', async (colorMode) => {
+    const result = await parseStudyConfig(JSON.stringify(makeStudyConfig(colorMode)));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      instancePath: '/uiConfig/colorMode',
+    }));
+  });
+});
+
 describe('Text response validation config parsing', () => {
   function makeStudyConfig(validationType: string) {
     return {

@@ -261,6 +261,8 @@ export interface UIConfig {
   withSidebar: boolean;
 
   // Optional fields
+  /** The study's color mode: light, dark, or the user's preference. */
+  colorMode?: 'light' | 'dark' | 'userPreference';
   /** The width of the left sidebar. Defaults to 300. */
   sidebarWidth?: number;
   /** Controls whether the title should be hidden in the study. */
