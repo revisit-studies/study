@@ -25,6 +25,7 @@ import {
 import { ComponentController } from '../controllers/ComponentController';
 import { NavigateWithParams } from '../utils/NavigateWithParams';
 import { StepRenderer } from './StepRenderer';
+import { StudyRouteGuard } from '../routes/StudyRouteGuard';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import { generateSequenceArray } from '../utils/handleRandomSequences';
 import { getStudyConfig, resolveConfigKey } from '../utils/fetchConfig';
@@ -496,7 +497,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       // Initialize the routing
       setRoutes([
         {
-          element: <StepRenderer />,
+          element: <StudyRouteGuard><StepRenderer /></StudyRouteGuard>,
           children: [
             {
               path: '/',
@@ -556,7 +557,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       </StudyStoreContext.Provider>
     );
   } else if (!isLoading) {
-    content = <ResourceNotFound />;
+    content = <ResourceNotFound email={activeConfig?.uiConfig.contactEmail} />;
   }
 
   return (

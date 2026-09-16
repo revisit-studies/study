@@ -8,8 +8,10 @@ import {
 import { IframeController } from '../IframeController';
 import type { WebsiteComponent } from '../../parser/types';
 import { ReplayContext } from '../../store/hooks/useReplay';
+import { getStaticAssetByPath } from '../../utils/getStaticAsset';
 
 const mockDispatch = vi.fn();
+const mockSetAssetStatus = vi.fn((payload) => ({ type: 'setAssetStatus', payload }));
 const mockSetReactiveAnswers = vi.fn((payload) => ({ type: 'setReactiveAnswers', payload }));
 const mockUpdateProvenance = vi.fn((payload) => ({ type: 'updateProvenance', payload }));
 const mockUpdateResponseBlockValidation = vi.fn((payload) => ({ type: 'updateResponseBlockValidation', payload }));
@@ -32,6 +34,7 @@ vi.mock('../../store/hooks/useIsAnalysis', () => ({
 
 vi.mock('../../store/store', () => ({
   useStoreActions: () => ({
+    setAssetStatus: mockSetAssetStatus,
     setReactiveAnswers: mockSetReactiveAnswers,
     updateProvenance: mockUpdateProvenance,
     updateResponseBlockValidation: mockUpdateResponseBlockValidation,
@@ -48,9 +51,14 @@ vi.mock('../../utils/Prefix', () => ({
   PREFIX: '/',
 }));
 
+vi.mock('../../utils/getStaticAsset', () => ({
+  getStaticAssetByPath: vi.fn(),
+}));
+
 describe('IframeController', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(getStaticAssetByPath).mockResolvedValue('<html></html>');
     mockIsAnalysis.value = false;
     mockCurrentComponent.value = 'countDots';
   });
@@ -87,7 +95,12 @@ describe('IframeController', () => {
     window.dispatchEvent(new MessageEvent('message', {
       data: { iframeId: '11111111-2222-3333-4444-555555555555', type: '@REVISIT_COMMS/ANSWERS', message: { q1: 'yes' } },
     }));
-    await waitFor(() => expect(mockDispatch).toHaveBeenCalled());
+    await waitFor(() => expect(mockDispatch).toHaveBeenCalledWith({
+      type: 'updateResponseBlockValidation',
+      payload: {
+        location: 'stimulus', identifier: 'countDots_0', status: true, values: { q1: 'yes' },
+      },
+    }));
   });
 
   test('stores provenance independently from answer validation', async () => {

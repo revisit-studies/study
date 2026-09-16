@@ -51,6 +51,8 @@ export type ValidationStatus = {
   reason?: StimulusIssueReason;
   message?: string;
 }
+export type AssetStatus = 'loading' | 'ready' | 'error';
+
 export type TrialValidation = Record<
   string,
   {
@@ -58,6 +60,7 @@ export type TrialValidation = Record<
     belowStimulus: ValidationStatus;
     sidebar: ValidationStatus;
     stimulus: ValidationStatus;
+    assetStatus?: AssetStatus;
     provenanceGraph: StoredProvenance;
   }
 >;

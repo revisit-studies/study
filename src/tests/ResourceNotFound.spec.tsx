@@ -51,11 +51,12 @@ describe('ResourceNotFound', () => {
   test('renders email anchor when email provided', () => {
     const html = renderToStaticMarkup(<ResourceNotFound email="test@test.com" />);
     expect(html).toContain('href="mailto:test@test.com"');
-    expect(html).toContain('test@test.com');
+    expect(html).toContain('study administrator at <a href="mailto:test@test.com">test@test.com</a>.');
   });
 
-  test('does not render email anchor when no email provided', () => {
-    const html = renderToStaticMarkup(<ResourceNotFound />);
+  test.each([undefined, ''])('does not render email anchor for %s', (email) => {
+    const html = renderToStaticMarkup(<ResourceNotFound email={email} />);
     expect(html).not.toContain('mailto:');
+    expect(html).toContain('study administrator.');
   });
 });

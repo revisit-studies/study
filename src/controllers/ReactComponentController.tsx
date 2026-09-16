@@ -1,10 +1,10 @@
 import {
-  Suspense, useCallback, useEffect,
+  ComponentType, Suspense, useCallback,
 } from 'react';
-import { ModuleNamespace } from 'vite/types/hot';
 import { ParticipantData, ReactComponent } from '../parser/types';
 import { StimulusParams, TrrackedProvenance } from '../store/types';
 import { ResourceNotFound } from '../ResourceNotFound';
+import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { useStoreDispatch, useStoreActions } from '../store/store';
 import { useCurrentIdentifier } from '../routes/utils';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
@@ -12,24 +12,28 @@ import { RevisitProvenanceProvider } from '../store/hooks/useRevisitTrrack';
 import { ErrorBoundary } from './ErrorBoundary';
 import { compileTemplate } from '../utils/handlebars';
 import { useTemplateAnswerContext } from '../store/hooks/useTemplateAnswerContext';
+import { useAssetStatus, useAssetLoadStatus } from '../store/hooks/useAssetStatus';
 
-const modules = import.meta.glob(
+const modules = import.meta.glob<{ default: ComponentType<StimulusParams<ReactComponent['parameters'], unknown>> }>(
   [
     '../public/**/*.{mjs,js,mts,ts,jsx,tsx}',
     '!../public/**/*.spec.{mjs,js,mts,ts,jsx,tsx}',
   ],
   { eager: true },
-) as Record<string, ModuleNamespace>;
+);
 
 export function ReactComponentController({ currentConfig, provState, answers }: { currentConfig: ReactComponent; provState?: unknown, answers: ParticipantData['answers'] }) {
+  const studyConfig = useStudyConfig();
   const templateData = useTemplateAnswerContext();
   const templatedPath = templateData ? compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true, data: templateData }) : undefined;
   const reactPath = templatedPath ? `../public/${templatedPath}` : undefined;
-  const StimulusComponent = reactPath && reactPath in modules ? modules[reactPath].default : null;
+  const StimulusComponent = reactPath ? modules[reactPath]?.default : undefined;
   const identifier = useCurrentIdentifier();
 
   const storeDispatch = useStoreDispatch();
-  const { updateProvenance, updateResponseBlockValidation, setReactiveAnswers } = useStoreActions();
+  const {
+    updateProvenance, updateResponseBlockValidation, setReactiveAnswers,
+  } = useStoreActions();
   const isAnalysis = useIsAnalysis();
   const onProvenanceChange = useCallback((provenanceGraph: TrrackedProvenance) => {
     if (isAnalysis) return;
@@ -60,29 +64,10 @@ export function ReactComponentController({ currentConfig, provState, answers }: 
     storeDispatch(setReactiveAnswers(stimulusAnswers));
   }, [isAnalysis, setReactiveAnswers, storeDispatch, updateResponseBlockValidation, identifier]);
 
-  const clearStimulusValidation = useCallback(() => {
-    if (isAnalysis) return;
-    storeDispatch(updateResponseBlockValidation({
-      location: 'stimulus',
-      identifier,
-      status: true,
-      values: {},
-    }));
-  }, [isAnalysis, identifier, storeDispatch, updateResponseBlockValidation]);
-
-  // If the stimulus component file can't be resolved (404), clear stimulus
-  // validation so the participant isn't stuck on a trial that can never load.
-  useEffect(() => {
-    if (templateData && !StimulusComponent) {
-      console.error(`Stimulus component not found at "${templatedPath}". Clearing stimulus validation so the participant is not stuck.`);
-      clearStimulusValidation();
-    }
-  }, [StimulusComponent, templateData, templatedPath, clearStimulusValidation]);
-
-  const handleRuntimeError = useCallback((error: unknown) => {
-    console.error(`Stimulus component "${templatedPath}" threw at runtime. Clearing stimulus validation so the participant is not stuck.`, error);
-    clearStimulusValidation();
-  }, [templatedPath, clearStimulusValidation]);
+  const requestKey = `${identifier}:${reactPath}`;
+  const { status: componentStatus, onReady: handleReady, onError: handleRuntimeError } = useAssetLoadStatus(requestKey);
+  const assetStatus = !templateData ? 'loading' : !StimulusComponent ? 'error' : componentStatus;
+  useAssetStatus(assetStatus);
 
   if (!templateData) {
     return null;
@@ -92,7 +77,7 @@ export function ReactComponentController({ currentConfig, provState, answers }: 
     <Suspense fallback={<div>Loading...</div>}>
       {StimulusComponent
         ? (
-          <ErrorBoundary key={reactPath} onError={handleRuntimeError}>
+          <ErrorBoundary key={requestKey} onReady={handleReady} onError={handleRuntimeError} fallback={<ResourceNotFound path={templatedPath} />}>
             <RevisitProvenanceProvider
               key={identifier}
               onProvenanceChange={onProvenanceChange}
@@ -109,7 +94,7 @@ export function ReactComponentController({ currentConfig, provState, answers }: 
             </RevisitProvenanceProvider>
           </ErrorBoundary>
         )
-        : <ResourceNotFound path={templatedPath} />}
+        : <ResourceNotFound email={studyConfig.uiConfig.contactEmail} path={templatedPath} />}
     </Suspense>
   );
 }
