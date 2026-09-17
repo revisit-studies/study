@@ -122,6 +122,12 @@ class TestStorageEngine extends StorageEngine {
 
   getScreenRecording = vi.fn(async () => null);
 
+  getScreenRecordingUrl = vi.fn(async () => null);
+
+  getWaveformPeaks = vi.fn(async () => null);
+
+  saveWaveformPeaks = vi.fn(async () => { });
+
   saveAnswers = vi.fn(async () => { });
 
   constructor() {

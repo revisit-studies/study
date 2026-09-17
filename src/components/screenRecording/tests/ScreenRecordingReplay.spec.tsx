@@ -91,7 +91,7 @@ describe('ScreenRecordingReplay', () => {
   test('covers url=null path when participantId is provided', async () => {
     // isAnalysis=true, storageEngine returns null URL → dispatches setAnalysisHasScreenRecording(false)
     mockIsAnalysis = true;
-    mockStorageEngine = { getScreenRecording: vi.fn().mockResolvedValue(null) };
+    mockStorageEngine = { getScreenRecordingUrl: vi.fn().mockResolvedValue(null) };
     mockSearchParams = new URLSearchParams({ participantId: 'p1' });
     await act(async () => { render(<ScreenRecordingReplay />); });
     expect(mockDispatch).toHaveBeenCalled();
@@ -100,21 +100,41 @@ describe('ScreenRecordingReplay', () => {
   test('sets hasScreenRecording true when URL is returned', async () => {
     mockIsAnalysis = true;
     mockStorageEngine = {
-      getScreenRecording: vi.fn().mockResolvedValue('http://example.com/video.mp4'),
+      getScreenRecordingUrl: vi.fn().mockResolvedValue('http://example.com/video.mp4'),
     };
     mockSearchParams = new URLSearchParams({ participantId: 'p1' });
     await act(async () => { render(<ScreenRecordingReplay />); });
     expect(mockDispatch).toHaveBeenCalledWith(mockSetAnalysisHasScreenRecording(true));
   });
 
-  // Error-path tests (missing participantId, getScreenRecording rejection) omitted
-  // because the component re-throws in the catch block, producing unhandled promise
-  // rejections that vitest flags as test instability.
+  test('missing participantId is caught and does not throw', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    mockIsAnalysis = true;
+    mockStorageEngine = { getScreenRecordingUrl: vi.fn().mockResolvedValue('http://example.com/video.mp4') };
+    mockSearchParams = new URLSearchParams();
+    await act(async () => { render(<ScreenRecordingReplay />); });
+    expect(warnSpy).toHaveBeenCalledWith('Failed to load screen recording:', expect.objectContaining({
+      message: 'Participant ID is required to load screen recording',
+    }));
+    expect(mockDispatch).toHaveBeenCalledWith(mockSetAnalysisHasScreenRecording(false));
+    warnSpy.mockRestore();
+  });
+
+  test('getScreenRecordingUrl rejection is caught and does not throw', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    mockIsAnalysis = true;
+    mockStorageEngine = { getScreenRecordingUrl: vi.fn().mockRejectedValue(new Error('network error')) };
+    mockSearchParams = new URLSearchParams({ participantId: 'p1' });
+    await act(async () => { render(<ScreenRecordingReplay />); });
+    expect(warnSpy).toHaveBeenCalledWith('Failed to load screen recording:', expect.objectContaining({ message: 'network error' }));
+    expect(mockDispatch).toHaveBeenCalledWith(mockSetAnalysisCanPlayScreenRecording(false));
+    warnSpy.mockRestore();
+  });
 
   test('sets video src and calls updateReplayRef when videoRef.current exists', async () => {
     mockIsAnalysis = true;
     mockStorageEngine = {
-      getScreenRecording: vi.fn().mockResolvedValue('http://example.com/video.mp4'),
+      getScreenRecordingUrl: vi.fn().mockResolvedValue('http://example.com/video.mp4'),
     };
     mockSearchParams = new URLSearchParams({ participantId: 'p1' });
     const mockVideo = { preload: '', src: '' } as Pick<HTMLVideoElement, 'preload' | 'src'> as HTMLVideoElement;

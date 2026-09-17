@@ -155,7 +155,7 @@ export function ThinkAloudFooter({
       }
 
       try {
-        const url = await storageEngine.getScreenRecording(currentTrial, participantId);
+        const url = await storageEngine.getScreenRecordingUrl(currentTrial, participantId);
         if (!cancelled) {
           setScreenRecording({ key: assetKey, url });
         }
