@@ -386,7 +386,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
         setStore(newStore);
 
-        if (resolvedModes.dataCollectionEnabled) {
+        if (resolvedModes.dataCollectionEnabled && !searchParams.has('participantId')) {
           fetchParticipantIp().then(async (ip) => {
             if (isCancelled || !ip.ip || participantSession.metadata.ip === ip.ip) {
               return;
