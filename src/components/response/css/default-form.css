@@ -1,0 +1,14 @@
+/* Keep question text wide, but make ordinary answer fields more compact. */
+.response :is(
+  .mantine-TextInput-wrapper,
+  .mantine-NumberInput-wrapper,
+  .mantine-Select-wrapper,
+  .mantine-MultiSelect-wrapper,
+  .mantine-DateInput-wrapper,
+  .mantine-MonthPickerInput-wrapper,
+  .mantine-YearPickerInput-wrapper,
+  .mantine-TimePicker-wrapper
+) {
+  width: 100%;
+  max-width: 480px;
+}
