@@ -88,7 +88,7 @@ describe('Study and iframe color mode config parsing', () => {
     };
   }
 
-  test.each(['light', 'dark', 'inherit', undefined] as const)('accepts iframe color mode %s', async (colorMode) => {
+  test.each(['light', 'dark', undefined] as const)('accepts iframe color mode %s', async (colorMode) => {
     const result = await parseStudyConfig(JSON.stringify(makeWebsiteConfig(colorMode)));
     expect(result.errors).toEqual([]);
     expect(result.components.website).toEqual(expect.objectContaining({ type: 'website' }));
@@ -99,7 +99,7 @@ describe('Study and iframe color mode config parsing', () => {
     }
   });
 
-  test.each(['userPreference', 'auto', null])('rejects invalid iframe color mode %s', async (colorMode) => {
+  test.each(['inherit', 'userPreference', 'auto', null])('rejects invalid iframe color mode %s', async (colorMode) => {
     const result = await parseStudyConfig(JSON.stringify(makeWebsiteConfig(colorMode)));
     expect(result.errors).toContainEqual(expect.objectContaining({ instancePath: '/components/website/colorMode' }));
   });

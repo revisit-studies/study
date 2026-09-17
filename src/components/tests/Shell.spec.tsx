@@ -19,7 +19,7 @@ import type { ParticipantMetadata } from '../../store/types';
 // ── mutable state ─────────────────────────────────────────────────────────────
 
 let mockStudyId = 'test-study';
-let mockUserColorMode: 'light' | 'dark' = 'light';
+let mockSystemColorMode: 'light' | 'dark' = 'light';
 let mockSearchParams = new URLSearchParams();
 let mockStorageEngine: Record<string, ReturnType<typeof vi.fn>> | null = null;
 
@@ -40,7 +40,7 @@ vi.mock('../../storage/storageEngineHooks', () => ({
 
 vi.mock('../AppThemeProvider', () => ({
   useStudyColorMode: vi.fn(),
-  useAppColorMode: () => ({ colorMode: mockUserColorMode }),
+  useAppColorMode: () => ({ colorMode: localStorage.getItem('revisit-user-color-mode') ?? 'light' }),
 }));
 
 vi.mock('../../utils/handleRandomSequences', () => ({
@@ -174,7 +174,7 @@ function setupThemeSession(colorMode: StudyConfig['uiConfig']['colorMode'], save
       dispatch: vi.fn(),
       subscribe: vi.fn(),
     },
-    actions: { setMetadata: vi.fn() },
+    actions: { setMetadata: vi.fn(), setParticipantCompleted: vi.fn() },
   }) as unknown as Awaited<ReturnType<typeof studyStoreCreator>>);
 }
 
@@ -183,7 +183,11 @@ function setupThemeSession(colorMode: StudyConfig['uiConfig']['colorMode'], save
 describe('Shell', () => {
   beforeEach(() => {
     mockStudyId = 'test-study';
-    mockUserColorMode = 'light';
+    mockSystemColorMode = 'light';
+    localStorage.removeItem('revisit-user-color-mode');
+    vi.stubGlobal('matchMedia', vi.fn((query: string) => ({
+      matches: query === '(prefers-color-scheme: dark)' && mockSystemColorMode === 'dark',
+    })));
     mockSearchParams = new URLSearchParams();
     mockStorageEngine = null;
     vi.mocked(getStudyConfig).mockResolvedValue(null);
@@ -209,12 +213,13 @@ describe('Shell', () => {
     vi.useRealTimers();
     vi.clearAllMocks();
     vi.unstubAllGlobals();
+    localStorage.removeItem('revisit-user-color-mode');
   });
 
   test.each([
     ['userPreference', 'dark'], ['light', 'light'], ['dark', 'dark'], [undefined, 'light'],
   ] as const)('captures %s once as %s and preserves it when IP metadata arrives', async (configuredMode, expectedMode) => {
-    mockUserColorMode = 'dark';
+    mockSystemColorMode = 'dark';
     setupThemeSession(configuredMode);
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ ip: '1.2.3.4' }))));
     const view = render(<Shell globalConfig={globalConfig} />);
@@ -222,9 +227,27 @@ describe('Shell', () => {
       expect.objectContaining({ colorMode: expectedMode, ip: '1.2.3.4' }),
     ));
     expect(mockStorageEngine!.initializeParticipantSession).toHaveBeenCalledWith({}, expect.anything(), expect.objectContaining({ colorMode: expectedMode }), undefined);
-    mockUserColorMode = 'light';
+    mockSystemColorMode = 'light';
     view.rerender(<Shell globalConfig={globalConfig} />);
     expect(useStudyColorMode).toHaveBeenLastCalledWith(expectedMode);
+    expect(mockStorageEngine!.initializeParticipantSession).toHaveBeenCalledTimes(1);
+  });
+
+  test.each(['light', 'dark'] as const)('uses system %s instead of the saved app preference', async (systemMode) => {
+    mockSystemColorMode = systemMode;
+    const appPreference = systemMode === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('revisit-user-color-mode', appPreference);
+    setupThemeSession('userPreference');
+
+    const view = render(<Shell globalConfig={globalConfig} />);
+
+    await waitFor(() => expect(mockStorageEngine!.initializeParticipantSession).toHaveBeenCalledWith({}, expect.anything(), expect.objectContaining({ colorMode: systemMode }), undefined));
+    await waitFor(() => expect(useStudyColorMode).toHaveBeenLastCalledWith(systemMode));
+    expect(localStorage.getItem('revisit-user-color-mode')).toBe(appPreference);
+    mockSystemColorMode = appPreference;
+    localStorage.setItem('revisit-user-color-mode', systemMode);
+    view.rerender(<Shell globalConfig={globalConfig} />);
+    expect(useStudyColorMode).toHaveBeenLastCalledWith(systemMode);
     expect(mockStorageEngine!.initializeParticipantSession).toHaveBeenCalledTimes(1);
   });
 
@@ -241,7 +264,7 @@ describe('Shell', () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     try {
       vi.stubEnv('VITE_STORAGE_ENGINE', 'firebase');
-      mockUserColorMode = 'dark';
+      mockSystemColorMode = 'dark';
       setupThemeSession('userPreference');
       mockStorageEngine!.initializeStudyDb.mockRejectedValue(new Error('db init failed'));
       mockStorageEngine!.isConnected.mockReturnValue(!disconnected);
@@ -251,7 +274,7 @@ describe('Shell', () => {
       await waitFor(() => expect(studyStoreCreator).toHaveBeenCalled());
       expect(vi.mocked(studyStoreCreator).mock.calls[0][3].colorMode).toBe('dark');
       await waitFor(() => expect(useStudyColorMode).toHaveBeenLastCalledWith('dark'));
-      mockUserColorMode = 'light';
+      mockSystemColorMode = 'light';
       view.rerender(<Shell globalConfig={globalConfig} />);
       expect(useStudyColorMode).toHaveBeenLastCalledWith('dark');
     } finally {
@@ -263,7 +286,7 @@ describe('Shell', () => {
   test.each([
     ['dark', 'dark'], ['light', 'light'], ['userPreference', 'light'], [undefined, 'light'],
   ] as const)('uses historical %s for legacy replay without recording a new preference', async (configuredMode, expectedMode) => {
-    mockUserColorMode = 'dark';
+    mockSystemColorMode = 'dark';
     mockSearchParams = new URLSearchParams('participantId=p1');
     setupThemeSession(configuredMode, baseSession.metadata);
     render(<Shell globalConfig={globalConfig} />);

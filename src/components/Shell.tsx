@@ -43,7 +43,7 @@ import {
 } from '../utils/handleConditionLogic';
 import { StartupErrorScreen } from './StartupErrorScreen';
 import { materializeParticipantConfig } from '../parser/libraryParser';
-import { useAppColorMode, useStudyColorMode } from './AppThemeProvider';
+import { useStudyColorMode } from './AppThemeProvider';
 
 type StartupStorageStatus = Pick<StorageEngine, 'getEngine' | 'isConnected'>;
 
@@ -185,8 +185,10 @@ function createEmptyParticipantMetadata(): ParticipantMetadata {
   };
 }
 function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
-  const { colorMode: userColorMode } = useAppColorMode();
-  const [initialUserColorMode] = useState(userColorMode);
+  // Capture the system preference once, independently of saved app theme toggles.
+  const [initialSystemColorMode] = useState<'light' | 'dark'>(() => (
+    window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  ));
   // Pull study config
   const routeStudyId = useStudyId();
   const [activeConfig, setActiveConfig] = useState<ParsedConfig<StudyConfig> | null>(null);
@@ -302,7 +304,7 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
         ? searchParams.get(activeConfig.uiConfig.urlParticipantIdParam) ?? undefined
         : undefined;
       const initialColorMode = activeConfig.uiConfig.colorMode === 'userPreference'
-        ? initialUserColorMode : activeConfig.uiConfig.colorMode ?? 'light';
+        ? initialSystemColorMode : activeConfig.uiConfig.colorMode ?? 'light';
       try {
         // Make sure that we have a study database and that the study database has a sequence array
         await storageEngine.initializeStudyDb(canonicalStudyId);
@@ -526,12 +528,12 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
     return () => {
       isCancelled = true;
     };
-  }, [storageEngine, activeConfig, canonicalStudyId, searchParams, participantId, studyCondition, initialUserColorMode]);
+  }, [storageEngine, activeConfig, canonicalStudyId, searchParams, participantId, studyCondition, initialSystemColorMode]);
 
   const routing = useRoutes(routes);
   const participantState = store?.store.getState();
   const loadingColorMode = activeConfig?.uiConfig?.colorMode === 'userPreference'
-    ? initialUserColorMode : activeConfig?.uiConfig?.colorMode;
+    ? initialSystemColorMode : activeConfig?.uiConfig?.colorMode;
   const studyColorMode = participantState
     ? participantState.metadata.colorMode ?? (participantState.config.uiConfig.colorMode === 'dark' ? 'dark' : 'light')
     : loadingColorMode;
