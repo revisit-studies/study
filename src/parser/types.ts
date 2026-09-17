@@ -261,7 +261,7 @@ export interface UIConfig {
   withSidebar: boolean;
 
   // Optional fields
-  /** The study's color mode. Defaults to light. userPreference resolves the user's saved choice, or the system color scheme when no choice is saved, once at participation start. The resolved mode is saved for the participant and retained for resume and replay. */
+  /** The study's color mode. Defaults to light. userPreference uses the participant's system preference. */
   colorMode?: 'light' | 'dark' | 'userPreference';
   /** The width of the left sidebar. Defaults to 300. */
   sidebarWidth?: number;
@@ -1452,8 +1452,8 @@ export interface WebsiteComponent extends BaseIndividualComponent {
   type: 'website';
   /** The path to the website. This should be a relative path from the public folder or could be an external website. */
   path: string;
-  /** The iframe's color scheme. Defaults to inherit, which follows the participant's fixed study mode, including in replay. Light/dark override only this iframe. The embedded page must support color schemes; hard-coded colors are not converted. */
-  colorMode?: 'light' | 'dark' | 'inherit';
+  /** The iframe's color scheme. Defaults to the study's color mode. The embedded page must support color schemes. */
+  colorMode?: 'light' | 'dark';
 }
 
 /**

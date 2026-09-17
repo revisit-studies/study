@@ -70,7 +70,7 @@ describe('IframeController', () => {
 
   const websiteConfig: WebsiteComponent = { type: 'website', path: 'https://example.com', response: [] };
 
-  test.each(['light', 'dark', 'inherit', undefined] as const)('applies iframe color mode %s in participation and replay without reloading', (colorMode) => {
+  test.each(['light', 'dark', undefined] as const)('applies iframe color mode %s in participation and replay without reloading', (colorMode) => {
     const currentConfig = { ...websiteConfig, colorMode };
     const { container, rerender } = render(<IframeController currentConfig={currentConfig} answers={{}} />);
     const iframe = container.querySelector('iframe');

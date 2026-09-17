@@ -41,11 +41,10 @@
             "type": "boolean"
           },
           "colorMode": {
-            "description": "The iframe's color scheme. Defaults to inherit, which follows the participant's fixed study mode, including in replay. Light/dark override only this iframe. The embedded page must support color schemes; hard-coded colors are not converted.",
+            "description": "The iframe's color scheme. Defaults to the study's color mode. The embedded page must support color schemes.",
             "enum": [
               "light",
-              "dark",
-              "inherit"
+              "dark"
             ],
             "type": "string"
           },
@@ -1713,11 +1712,10 @@
           "type": "boolean"
         },
         "colorMode": {
-          "description": "The iframe's color scheme. Defaults to inherit, which follows the participant's fixed study mode, including in replay. Light/dark override only this iframe. The embedded page must support color schemes; hard-coded colors are not converted.",
+          "description": "The iframe's color scheme. Defaults to the study's color mode. The embedded page must support color schemes.",
           "enum": [
             "light",
-            "dark",
-            "inherit"
+            "dark"
           ],
           "type": "string"
         },
@@ -4679,7 +4677,7 @@
           "type": "boolean"
         },
         "colorMode": {
-          "description": "The study's color mode. Defaults to light. userPreference resolves the user's saved choice, or the system color scheme when no choice is saved, once at participation start. The resolved mode is saved for the participant and retained for resume and replay.",
+          "description": "The study's color mode. Defaults to light. userPreference uses the participant's system preference.",
           "enum": [
             "light",
             "dark",
@@ -5424,11 +5422,10 @@
           "type": "boolean"
         },
         "colorMode": {
-          "description": "The iframe's color scheme. Defaults to inherit, which follows the participant's fixed study mode, including in replay. Light/dark override only this iframe. The embedded page must support color schemes; hard-coded colors are not converted.",
+          "description": "The iframe's color scheme. Defaults to the study's color mode. The embedded page must support color schemes.",
           "enum": [
             "light",
-            "dark",
-            "inherit"
+            "dark"
           ],
           "type": "string"
         },
