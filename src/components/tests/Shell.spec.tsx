@@ -13,6 +13,7 @@ import { makeGlobalConfig, makeStudyConfig } from '../../tests/utils';
 import { studyStoreCreator } from '../../store/store';
 import { parseConditionParam } from '../../utils/handleConditionLogic';
 import { parseStudyConfig } from '../../parser/parser';
+import { useStudyColorMode } from '../AppThemeProvider';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
@@ -34,8 +35,8 @@ vi.mock('../../storage/storageEngineHooks', () => ({
   useStorageEngine: () => ({ storageEngine: mockStorageEngine }),
 }));
 
-vi.mock('../../store/hooks/useStoredStudyColorMode', () => ({
-  useStoredStudyColorMode: vi.fn(),
+vi.mock('../AppThemeProvider', () => ({
+  useStudyColorMode: vi.fn(),
 }));
 
 vi.mock('../../utils/handleRandomSequences', () => ({
@@ -111,7 +112,7 @@ vi.mock('react-redux', () => ({
 
 vi.mock('../../store/store', () => ({
   studyStoreCreator: vi.fn().mockResolvedValue({
-    store: { getState: vi.fn(), dispatch: vi.fn(), subscribe: vi.fn() },
+    store: { getState: vi.fn(() => ({ config: { uiConfig: {} } })), dispatch: vi.fn(), subscribe: vi.fn() },
   }),
   StudyStoreContext: {
     Provider: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -172,6 +173,22 @@ describe('Shell', () => {
     vi.useRealTimers();
     vi.clearAllMocks();
     vi.unstubAllGlobals();
+  });
+
+  test('applies config color mode and clears the old config when navigating to another study', async () => {
+    vi.mocked(getStudyConfig).mockResolvedValue({
+      ...mockActiveConfig,
+      uiConfig: { ...mockActiveConfig.uiConfig, colorMode: 'dark' },
+    });
+    const view = render(<Shell globalConfig={globalConfig} />);
+    await waitFor(() => expect(useStudyColorMode).toHaveBeenLastCalledWith('dark'));
+
+    mockStudyId = 'another-study';
+    vi.mocked(resolveConfigKey).mockReturnValue('another-study');
+    vi.mocked(getStudyConfig).mockReturnValue(new Promise(() => {}));
+    view.rerender(<Shell globalConfig={globalConfig} />);
+    expect(useStudyColorMode).toHaveBeenLastCalledWith(undefined);
+    expect(view.getByTestId('loading-overlay')).toBeDefined();
   });
 
   test('shows loading context only after startup remains pending for 1.5 seconds', () => {

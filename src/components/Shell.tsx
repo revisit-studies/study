@@ -43,7 +43,7 @@ import {
 } from '../utils/handleConditionLogic';
 import { StartupErrorScreen } from './StartupErrorScreen';
 import { materializeParticipantConfig } from '../parser/libraryParser';
-import { useStoredStudyColorMode } from '../store/hooks/useStoredStudyColorMode';
+import { useStudyColorMode } from './AppThemeProvider';
 
 type StartupStorageStatus = Pick<StorageEngine, 'getEngine' | 'isConnected'>;
 
@@ -184,7 +184,7 @@ function createEmptyParticipantMetadata(): ParticipantMetadata {
     ip: '',
   };
 }
-export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
+function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
   // Pull study config
   const routeStudyId = useStudyId();
   const [activeConfig, setActiveConfig] = useState<ParsedConfig<StudyConfig> | null>(null);
@@ -197,7 +197,6 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
     return resolveConfigKey(routeStudyId, globalConfig);
   }, [globalConfig, routeStudyId]);
   const isValidStudyId = routeStudyId === '__revisit-widget' || canonicalStudyId !== null;
-  useStoredStudyColorMode(canonicalStudyId);
 
   useEffect(() => {
     let cancelled = false;
@@ -523,6 +522,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   }, [storageEngine, activeConfig, canonicalStudyId, searchParams, participantId, studyCondition]);
 
   const routing = useRoutes(routes);
+  useStudyColorMode(store ? store.store.getState().config.uiConfig.colorMode : activeConfig?.uiConfig?.colorMode);
   const hasConfigErrors = (activeConfig?.errors?.length ?? 0) > 0;
   const { isLoading, showCompletionCheckError } = getShellUiState({
     isValidStudyId,
@@ -586,4 +586,11 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       {content}
     </>
   );
+}
+
+export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
+  const studyId = useStudyId();
+  const [searchParams] = useSearchParams();
+  // A new study or replay participant must not retain the previous participant's store.
+  return <StudyShell key={`${studyId}:${searchParams.get('participantId') ?? ''}`} globalConfig={globalConfig} />;
 }

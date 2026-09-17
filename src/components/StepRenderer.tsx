@@ -36,6 +36,7 @@ import {
 import { hideNotification, showNotification } from '../utils/notifications';
 import { PdfExportMenuItem } from './interface/PdfExportMenuItem';
 import { PREFIX } from '../utils/Prefix';
+import { useTrialColorMode } from '../store/hooks/useTrialColorMode';
 
 const STUDY_BROWSER_WIDTH = 360;
 
@@ -62,6 +63,7 @@ export function StepRenderer() {
 
   const screenRecording = useRecording();
   const replay = useReplay();
+  useTrialColorMode(windowEvents, replay);
 
   const { isRejected: isScreenRecordingUserRejected } = screenRecording;
 

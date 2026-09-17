@@ -261,7 +261,7 @@ export interface UIConfig {
   withSidebar: boolean;
 
   // Optional fields
-  /** The study's color mode: light, dark, or the user's preference. */
+  /** The study's color mode. Defaults to light. userPreference follows the user's saved choice, or the system color scheme when no choice is saved. */
   colorMode?: 'light' | 'dark' | 'userPreference';
   /** The width of the left sidebar. Defaults to 300. */
   sidebarWidth?: number;

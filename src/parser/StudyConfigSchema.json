@@ -4661,7 +4661,7 @@
           "type": "boolean"
         },
         "colorMode": {
-          "description": "The study's color mode: light, dark, or the user's preference.",
+          "description": "The study's color mode. Defaults to light. userPreference follows the user's saved choice, or the system color scheme when no choice is saved.",
           "enum": [
             "light",
             "dark",
