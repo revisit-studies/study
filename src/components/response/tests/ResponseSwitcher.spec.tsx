@@ -118,6 +118,32 @@ beforeEach(() => {
 
 afterEach(() => cleanup());
 
+test.each([true, false])('uses semantic validation colors and restores custom styles when valid (required=%s)', (required) => {
+  const errorColor = required ? 'red' : 'orange';
+  const styledResponse: Response = {
+    id: 'q1',
+    type: 'shortText',
+    prompt: 'Q1',
+    required,
+    minCharLength: 5,
+    style: { color: 'navy', backgroundColor: 'beige', margin: '12px' },
+  };
+  const content = (value: string) => (
+    <ResponseSwitcher response={styledResponse} form={{ ...form, value }} index={1} config={{} as IndividualComponent} errors />
+  );
+  const view = render(content('bad'));
+  const wrapper = view.container.querySelector<HTMLElement>('.response')!;
+  expect(wrapper.style.backgroundColor).toBe(`var(--mantine-color-${errorColor}-light)`);
+  expect(wrapper.style.color).toBe(`var(--mantine-color-${errorColor}-light-color)`);
+  expect(wrapper.style.border).toBe(`1px solid var(--mantine-color-${errorColor}-outline)`);
+  expect(wrapper.style.margin).toBe('12px');
+
+  view.rerender(content('valid answer'));
+  expect(wrapper.style.backgroundColor).toBe('beige');
+  expect(wrapper.style.color).toBe('navy');
+  expect(wrapper.style.border).toBe('');
+});
+
 // ── ResponseSwitcher stored answer locking ────────────────────────────────────
 
 describe('ResponseSwitcher stored answer locking', () => {

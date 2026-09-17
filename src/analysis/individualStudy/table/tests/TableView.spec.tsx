@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import type { isLightColor } from '@mantine/core';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
   beforeEach, describe, expect, test, vi,
@@ -37,7 +38,7 @@ vi.mock('react-router', () => ({
 }));
 
 vi.mock('@mantine/core', async () => ({
-  isLightColor: (await vi.importActual<typeof import('@mantine/core')>('@mantine/core')).isLightColor,
+  isLightColor: (await vi.importActual<{ isLightColor: typeof isLightColor }>('@mantine/core')).isLightColor,
   Text: ({ children }: { children: ReactNode }) => <p>{children}</p>,
   Flex: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Group: ({ children }: { children: ReactNode }) => <div>{children}</div>,

@@ -1,4 +1,5 @@
 import { CSSProperties, forwardRef, ReactNode } from 'react';
+import type { isLightColor } from '@mantine/core';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
   render, act, cleanup, fireEvent, waitFor,
@@ -92,7 +93,7 @@ const createMockNavigate = (): NavigateFunction => vi.fn() as unknown as Navigat
 // ── mocks ────────────────────────────────────────────────────────────────────
 
 vi.mock('@mantine/core', async () => ({
-  isLightColor: (await vi.importActual<typeof import('@mantine/core')>('@mantine/core')).isLightColor,
+  isLightColor: (await vi.importActual<{ isLightColor: typeof isLightColor }>('@mantine/core')).isLightColor,
   ActionIcon: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => <button type="button" onClick={onClick}>{children}</button>,
   Alert: ({ children }: { children: ReactNode }) => <div role="alert">{children}</div>,
   AppShell: Object.assign(

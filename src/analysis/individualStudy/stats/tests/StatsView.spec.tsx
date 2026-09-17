@@ -32,7 +32,7 @@ vi.mock('react-vega', () => ({
 }));
 
 vi.mock('@mantine/core', async () => ({
-  DEFAULT_THEME: (await vi.importActual<typeof import('@mantine/core')>('@mantine/core')).DEFAULT_THEME,
+  DEFAULT_THEME: (await vi.importActual<{ DEFAULT_THEME: typeof DEFAULT_THEME }>('@mantine/core')).DEFAULT_THEME,
   useMantineTheme: () => DEFAULT_THEME,
   useComputedColorScheme: () => mockColorScheme,
   Box: ({ children }: { children: ReactNode }) => <div>{children}</div>,

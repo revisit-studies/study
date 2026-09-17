@@ -25,7 +25,7 @@ vi.mock('wavesurfer-react', () => ({
 }));
 
 vi.mock('@mantine/core', async () => ({
-  DEFAULT_THEME: (await vi.importActual<typeof import('@mantine/core')>('@mantine/core')).DEFAULT_THEME,
+  DEFAULT_THEME: (await vi.importActual<{ DEFAULT_THEME: typeof DEFAULT_THEME }>('@mantine/core')).DEFAULT_THEME,
   useMantineTheme: () => DEFAULT_THEME,
   useComputedColorScheme: () => mockColorScheme,
   Box: forwardRef<HTMLDivElement, { children?: ReactNode }>(function Box({ children }, ref) { // eslint-disable-line prefer-arrow-callback
