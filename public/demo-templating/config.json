@@ -5,7 +5,7 @@
     "version": "pilot",
     "authors": ["The reVISit Team"],
     "date": "2026-08-20",
-    "description": "A demo of using Handlebars {{variable}} templating (and the lookupAnswersRel/lookupAnswers helpers for referencing other trials' answers) in instructions, paths, markdown/help-text content, and response text, showcased through a repeated capital-cities quiz.",
+    "description": "A demo of using Handlebars {{variable}} templating (and the lookupAnswersRel/lookupAnswers helpers for referencing other trials' answers) in instructions, paths, markdown/help-text content, response text, and templated website HTML files, showcased through a repeated capital-cities quiz.",
     "organizations": ["University of Utah", "WPI"]
   },
   "uiConfig": {
@@ -96,6 +96,27 @@
         "hintLevel": "obscure"
       }
     },
+    "capital-picker": {
+      "type": "website",
+      "path": "demo-templating/assets/capital-picker.html",
+      "templated": true,
+      "description": "Templated HTML stimulus: the parameters are substituted into the file itself.",
+      "instruction": "Pick the capital of {{country}} below.",
+      "parameters": {
+        "country": "Canada",
+        "continent": "Americas",
+        "funFact": "maple syrup",
+        "cityOptions": "Toronto,Ottawa,Vancouver"
+      },
+      "response": [
+        {
+          "id": "picked-capital",
+          "prompt": "Your selection:",
+          "location": "belowStimulus",
+          "type": "reactive"
+        }
+      ]
+    },
     "quiz-6": {
       "baseComponent": "quizQuestion",
       "description": "Capital quiz trial for Canada.",
@@ -117,7 +138,8 @@
       "quiz-3",
       "quiz-4",
       "quiz-5",
-      "quiz-6"
+      "quiz-6",
+      "capital-picker"
     ]
   }
 }

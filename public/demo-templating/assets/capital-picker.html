@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Capital Picker</title>
+    <!-- Resolved through the <base> tag reVISit injects for templated websites. -->
+    <script src="../../revisitUtilities/revisit-communicate.js"></script>
+    <style>
+        body { font-family: sans-serif; margin: 0; padding: 16px; }
+        h2 { margin-top: 0; }
+        button { font-size: 16px; padding: 8px 16px; margin-right: 8px; cursor: pointer; }
+        button[aria-pressed="true"] { outline: 3px solid steelblue; }
+    </style>
+</head>
+
+<body>
+    <!-- Double-stache in markup: the substituted value is HTML-escaped. -->
+    <h2>Which of these is the capital of {{country}}?</h2>
+    <p>A country in {{continent}}, known for {{funFact}}.</p>
+    <div id="options"></div>
+
+    <script>
+        // Triple-stache inside a script: the value is inserted verbatim, without HTML escaping.
+        const cities = "{{{cityOptions}}}".split(",");
+
+        const container = document.getElementById("options");
+        cities.forEach((city) => {
+            const button = document.createElement("button");
+            button.textContent = city;
+            button.setAttribute("aria-pressed", "false");
+            button.addEventListener("click", () => {
+                container.querySelectorAll("button").forEach((other) => other.setAttribute("aria-pressed", "false"));
+                button.setAttribute("aria-pressed", "true");
+                Revisit.postAnswers({ "picked-capital": city });
+            });
+            container.appendChild(button);
+        });
+    </script>
+</body>
+</html>
