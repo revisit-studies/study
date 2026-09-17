@@ -1,4 +1,6 @@
-import { render, act, cleanup } from '@testing-library/react';
+import {
+  render, act, cleanup, fireEvent, waitFor,
+} from '@testing-library/react';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
@@ -11,8 +13,25 @@ let mockStorageEngine: Record<string, ReturnType<typeof vi.fn>> | null = null;
 let mockSearchParams = new URLSearchParams();
 let mockUpdateReplayRef = vi.fn();
 let mockIsPlaying = false;
+let mockReplayLayout = 'side-by-side';
+const mockSetReplayLayout = vi.fn();
 let mockVideoRef: { current: HTMLVideoElement | null } = { current: null };
-let mockCanPlayScreenRecording = false;
+let mockWebcamVideoRef: { current: HTMLVideoElement | null } = { current: null };
+
+type MockBoxProps = {
+  children?: React.ReactNode;
+  style?: React.CSSProperties;
+  role?: string;
+  'aria-label'?: string;
+  'data-replay-layout'?: string;
+  'data-webcam-size'?: string;
+};
+
+function MockBox({
+  children, style, role, 'aria-label': ariaLabel, 'data-replay-layout': layout, 'data-webcam-size': webcamSize,
+}: MockBoxProps) {
+  return <div style={style} role={role} aria-label={ariaLabel} data-replay-layout={layout} data-webcam-size={webcamSize}>{children}</div>;
+}
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
@@ -21,7 +40,22 @@ vi.mock('react-router', () => ({
 }));
 
 vi.mock('@mantine/core', () => ({
-  Box: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+  Box: MockBox,
+  Flex: ({ children, 'data-replay-layout': layout }: { children?: React.ReactNode; 'data-replay-layout'?: string }) => <div data-replay-layout={layout}>{children}</div>,
+  Group: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+  SegmentedControl: ({
+    data, value, onChange, 'aria-label': ariaLabel,
+  }: {
+    data: { label: string; value: string }[];
+    value: string;
+    onChange: (value: string) => void;
+    'aria-label'?: string;
+  }) => (
+    <div role="radiogroup" aria-label={ariaLabel}>
+      {data.map((item) => <button type="button" key={item.value} aria-pressed={item.value === value} onClick={() => onChange(item.value)}>{item.label}</button>)}
+    </div>
+  ),
+  Text: ({ children }: { children?: React.ReactNode }) => <span>{children}</span>,
 }));
 
 vi.mock('../../../storage/storageEngineHooks', () => ({
@@ -30,12 +64,13 @@ vi.mock('../../../storage/storageEngineHooks', () => ({
 
 const mockDispatch = vi.fn();
 const mockSetAnalysisHasScreenRecording = vi.fn();
+const mockSetAnalysisHasWebcamRecording = vi.fn();
 const mockSetAnalysisCanPlayScreenRecording = vi.fn();
 
 vi.mock('../../../store/store', () => ({
-  useStoreSelector: () => mockCanPlayScreenRecording,
   useStoreActions: () => ({
     setAnalysisHasScreenRecording: mockSetAnalysisHasScreenRecording,
+    setAnalysisHasWebcamRecording: mockSetAnalysisHasWebcamRecording,
     setAnalysisCanPlayScreenRecording: mockSetAnalysisCanPlayScreenRecording,
   }),
   useStoreDispatch: () => mockDispatch,
@@ -51,9 +86,12 @@ vi.mock('../../../store/hooks/useIsAnalysis', () => ({
 
 vi.mock('../../../store/hooks/useReplay', () => ({
   useReplayContext: () => ({
-    videoRef: mockVideoRef,
+    screenVideoRef: mockVideoRef,
+    webcamVideoRef: mockWebcamVideoRef,
     updateReplayRef: mockUpdateReplayRef,
     isPlaying: mockIsPlaying,
+    replayLayout: mockReplayLayout,
+    setReplayLayout: mockSetReplayLayout,
   }),
 }));
 
@@ -66,9 +104,14 @@ describe('ScreenRecordingReplay', () => {
     mockSearchParams = new URLSearchParams();
     mockUpdateReplayRef = vi.fn();
     mockIsPlaying = false;
+    mockReplayLayout = 'side-by-side';
+    mockSetReplayLayout.mockClear();
     mockVideoRef = { current: null };
-    mockCanPlayScreenRecording = false;
+    mockWebcamVideoRef = { current: null };
     mockDispatch.mockClear();
+    mockSetAnalysisHasScreenRecording.mockClear();
+    mockSetAnalysisHasWebcamRecording.mockClear();
+    mockSetAnalysisCanPlayScreenRecording.mockClear();
   });
 
   afterEach(() => { cleanup(); });
@@ -78,9 +121,9 @@ describe('ScreenRecordingReplay', () => {
     expect(container).toBeDefined();
   });
 
-  test('does not render video when analysisCanPlayScreenRecording is false', async () => {
+  test('keeps both video elements mounted for asynchronous URL loading', async () => {
     const { container } = await act(async () => render(<ScreenRecordingReplay />));
-    expect(container.querySelector('video')).toBeNull();
+    expect(container.querySelectorAll('video')).toHaveLength(2);
   });
 
   test('dispatches store actions on mount when not in analysis mode', async () => {
@@ -101,10 +144,26 @@ describe('ScreenRecordingReplay', () => {
     mockIsAnalysis = true;
     mockStorageEngine = {
       getScreenRecording: vi.fn().mockResolvedValue('http://example.com/video.mp4'),
+      getWebcamRecording: vi.fn().mockResolvedValue(null),
     };
     mockSearchParams = new URLSearchParams({ participantId: 'p1' });
     await act(async () => { render(<ScreenRecordingReplay />); });
     expect(mockDispatch).toHaveBeenCalledWith(mockSetAnalysisHasScreenRecording(true));
+  });
+
+  test('does not clear the replay mount gate while recordings are loading', async () => {
+    mockIsAnalysis = true;
+    let resolveScreen!: (url: string | null) => void;
+    mockStorageEngine = {
+      getScreenRecording: vi.fn(() => new Promise<string | null>((resolve) => { resolveScreen = resolve; })),
+      getWebcamRecording: vi.fn().mockResolvedValue(null),
+    };
+    mockSearchParams = new URLSearchParams({ participantId: 'p1' });
+
+    await act(async () => { render(<ScreenRecordingReplay />); });
+    expect(mockSetAnalysisCanPlayScreenRecording).not.toHaveBeenCalled();
+
+    await act(async () => { resolveScreen(null); });
   });
 
   // Error-path tests (missing participantId, getScreenRecording rejection) omitted
@@ -115,23 +174,105 @@ describe('ScreenRecordingReplay', () => {
     mockIsAnalysis = true;
     mockStorageEngine = {
       getScreenRecording: vi.fn().mockResolvedValue('http://example.com/video.mp4'),
+      getWebcamRecording: vi.fn().mockResolvedValue(null),
     };
     mockSearchParams = new URLSearchParams({ participantId: 'p1' });
-    const mockVideo = { preload: '', src: '' } as Pick<HTMLVideoElement, 'preload' | 'src'> as HTMLVideoElement;
-    mockVideoRef = { current: mockVideo };
-    await act(async () => { render(<ScreenRecordingReplay />); });
-    expect(mockVideo.src).toBe('http://example.com/video.mp4');
+    const { container } = await act(async () => render(<ScreenRecordingReplay />));
+    const screenVideo = container.querySelectorAll('video')[0];
+    await waitFor(() => expect(screenVideo.src).toBe('http://example.com/video.mp4'));
     expect(mockUpdateReplayRef).toHaveBeenCalled();
   });
 
-  test('renders video element when analysisCanPlayScreenRecording is true', async () => {
-    mockCanPlayScreenRecording = true;
+  test('loads a webcam recording when no screen recording exists', async () => {
+    mockIsAnalysis = true;
+    mockStorageEngine = {
+      getScreenRecording: vi.fn().mockResolvedValue(null),
+      getWebcamRecording: vi.fn().mockResolvedValue('http://example.com/webcam.webm'),
+    };
+    mockSearchParams = new URLSearchParams({ participantId: 'p1' });
     const { container } = await act(async () => render(<ScreenRecordingReplay />));
-    expect(container.querySelector('video')).not.toBeNull();
+    const webcamVideo = container.querySelectorAll('video')[1];
+    await waitFor(() => expect(webcamVideo.src).toBe('http://example.com/webcam.webm'));
+    expect(mockDispatch).toHaveBeenCalledWith(mockSetAnalysisHasWebcamRecording(true));
+  });
+
+  test('renders a movable webcam-only overlay', async () => {
+    mockIsAnalysis = true;
+    mockStorageEngine = {
+      getScreenRecording: vi.fn().mockResolvedValue(null),
+      getWebcamRecording: vi.fn().mockResolvedValue('http://example.com/webcam.webm'),
+    };
+    mockSearchParams = new URLSearchParams({ participantId: 'p1' });
+    const view = await act(async () => render(<ScreenRecordingReplay webcamOnly />));
+
+    await waitFor(() => expect(view.container.querySelector('video')?.src).toBe('http://example.com/webcam.webm'));
+    const moveHandle = view.getByRole('button', { name: 'Move webcam replay' });
+    expect(view.container.querySelector('[data-replay-layout="webcam-only-overlay"]')).not.toBeNull();
+    expect(moveHandle.style.cursor).toBe('move');
+  });
+
+  test('renders the picture-in-picture webcam as a movable overlay', async () => {
+    mockIsAnalysis = true;
+    mockReplayLayout = 'picture-in-picture';
+    mockStorageEngine = {
+      getScreenRecording: vi.fn().mockResolvedValue('http://example.com/video.mp4'),
+      getWebcamRecording: vi.fn().mockResolvedValue('http://example.com/webcam.webm'),
+    };
+    mockSearchParams = new URLSearchParams({ participantId: 'p1' });
+    const view = await act(async () => render(<ScreenRecordingReplay />));
+
+    await waitFor(() => expect(view.container.querySelectorAll('video')[1]?.src).toBe('http://example.com/webcam.webm'));
+    expect(view.container.querySelector('[data-replay-layout="picture-in-picture-overlay"]')).not.toBeNull();
+    expect(view.getByRole('button', { name: 'Move webcam replay' })).toBeDefined();
+  });
+
+  test('allows webcam-top replay to use a smaller size', async () => {
+    mockIsAnalysis = true;
+    mockReplayLayout = 'webcam-top';
+    mockStorageEngine = {
+      getScreenRecording: vi.fn().mockResolvedValue('http://example.com/video.mp4'),
+      getWebcamRecording: vi.fn().mockResolvedValue('http://example.com/webcam.webm'),
+    };
+    mockSearchParams = new URLSearchParams({ participantId: 'p1' });
+    const view = await act(async () => render(<ScreenRecordingReplay />));
+
+    await waitFor(() => expect(view.container.querySelector('[data-webcam-size="small"]')).not.toBeNull());
+    const sizeControl = view.getByRole('radiogroup', { name: 'Webcam size' });
+    expect(sizeControl).toBeDefined();
+    fireEvent.click(view.getByRole('button', { name: 'Medium' }));
+    expect(view.container.querySelector('[data-webcam-size="medium"]')).not.toBeNull();
+  });
+
+  test('offers replay layout controls when both recordings exist', async () => {
+    mockIsAnalysis = true;
+    mockStorageEngine = {
+      getScreenRecording: vi.fn().mockResolvedValue('http://example.com/video.mp4'),
+      getWebcamRecording: vi.fn().mockResolvedValue('http://example.com/webcam.webm'),
+    };
+    mockSearchParams = new URLSearchParams({ participantId: 'p1' });
+    const view = await act(async () => render(<ScreenRecordingReplay />));
+
+    await waitFor(() => expect(view.container.querySelectorAll('video')[0].src).toBe('http://example.com/video.mp4'));
+    expect(view.getByRole('radiogroup', { name: 'Replay layout' })).toBeDefined();
+    expect(view.getByRole('button', { name: 'Side by side' })).toBeDefined();
+    expect(view.getByRole('button', { name: 'Picture in picture' })).toBeDefined();
+    expect(view.getByRole('button', { name: 'Webcam on top' })).toBeDefined();
+
+    fireEvent.click(view.getByRole('button', { name: 'Picture in picture' }));
+    expect(mockSetReplayLayout).toHaveBeenCalledWith('picture-in-picture');
+
+    fireEvent.click(view.getByRole('button', { name: 'Webcam on top' }));
+    expect(mockSetReplayLayout).toHaveBeenCalledWith('webcam-top');
+
+    fireEvent.click(view.getByRole('button', { name: 'Side by side' }));
+    expect(mockSetReplayLayout).toHaveBeenCalledWith('side-by-side');
+
+    mockReplayLayout = 'picture-in-picture';
+    view.rerender(<ScreenRecordingReplay />);
+    expect(view.container.querySelector('[data-replay-layout]')?.getAttribute('data-replay-layout')).toBe('picture-in-picture');
   });
 
   test('video border is grey when isPlaying is true', async () => {
-    mockCanPlayScreenRecording = true;
     mockIsPlaying = true;
     const { container } = await act(async () => render(<ScreenRecordingReplay />));
     const video = container.querySelector('video');

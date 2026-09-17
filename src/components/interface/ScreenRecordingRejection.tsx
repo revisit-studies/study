@@ -8,10 +8,10 @@ export function ScreenRecordingRejection() {
     <Modal opened onClose={() => {}} fullScreen withCloseButton={false}>
       <Stack align="center" justify="center">
         <IconAlertTriangle size={64} color="orange" />
-        <Title order={3}> Screen Recording Stopped </Title>
+        <Title order={3}> Recording Stopped </Title>
         <Text size="md" ta="center">
           <>
-            Thank you for participating in this study. Screen recording was stopped and you will not be able to continue.
+            Thank you for participating in this study. Recording was stopped and you will not be able to continue.
             <br />
             You may now close this page.
           </>

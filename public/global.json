@@ -49,6 +49,7 @@
     "library-quis",
     "library-sam",
     "library-screen-recording",
+    "library-webcam-recording",
     "library-smeq",
     "library-sus",
     "library-ueq",
@@ -221,6 +222,10 @@
     },
     "library-screen-recording": {
       "path": "library-screen-recording/config.json",
+      "test": true
+    },
+    "library-webcam-recording": {
+      "path": "library-webcam-recording/config.json",
       "test": true
     },
     "library-smeq": {

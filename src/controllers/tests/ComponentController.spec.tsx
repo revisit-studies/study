@@ -98,7 +98,9 @@ vi.mock('../../components/response/ResponseBlock', () => ({
 }));
 
 vi.mock('../../components/screenRecording/ScreenRecordingReplay', () => ({
-  ScreenRecordingReplay: () => <div>ScreenRecordingReplay</div>,
+  ScreenRecordingReplay: ({ webcamOnly }: { webcamOnly?: boolean }) => (
+    <div>{webcamOnly ? 'WebcamOnlyReplay' : 'ScreenRecordingReplay'}</div>
+  ),
 }));
 
 vi.mock('../../utils/getStaticAsset', () => ({
@@ -607,8 +609,10 @@ describe('ComponentController — effect coverage (render-based)', () => {
     vi.mocked(useRecordingConfig).mockReturnValue({
       studyHasScreenRecording: false,
       studyHasAudioRecording: false,
+      studyHasWebcamRecording: false,
       currentComponentHasAudioRecording: false,
       currentComponentHasScreenRecording: false,
+      currentComponentHasWebcamRecording: false,
       currentComponentHasClickToRecord: false,
     });
     vi.mocked(findBlockForStep).mockReturnValue([]);
@@ -743,8 +747,10 @@ describe('ComponentController — effect coverage (render-based)', () => {
     vi.mocked(useRecordingConfig).mockReturnValue({
       studyHasScreenRecording: true,
       studyHasAudioRecording: false,
+      studyHasWebcamRecording: false,
       currentComponentHasAudioRecording: false,
       currentComponentHasScreenRecording: false,
+      currentComponentHasWebcamRecording: false,
       currentComponentHasClickToRecord: false,
     });
     const stableStateCanPlay = makeStableState({ analysisCanPlayScreenRecording: true });
@@ -754,6 +760,32 @@ describe('ComponentController — effect coverage (render-based)', () => {
 
     const { container } = render(<ComponentController />);
     await waitFor(() => expect(container.textContent).toContain('ScreenRecordingReplay'));
+  });
+
+  test('webcam-only replay renders alongside the stimulus', async () => {
+    vi.mocked(useCurrentComponent).mockReturnValue('testTrial');
+    vi.mocked(useIsAnalysis).mockReturnValue(true);
+    vi.mocked(useStorageEngine).mockReturnValue({
+      storageEngine: makeStorageEngine(),
+      setStorageEngine: vi.fn(),
+    });
+    vi.mocked(useRecordingConfig).mockReturnValue({
+      studyHasScreenRecording: false,
+      studyHasAudioRecording: false,
+      studyHasWebcamRecording: true,
+      currentComponentHasAudioRecording: false,
+      currentComponentHasScreenRecording: false,
+      currentComponentHasWebcamRecording: true,
+      currentComponentHasClickToRecord: false,
+    });
+    const stableStateCanPlay = makeStableState({ analysisCanPlayScreenRecording: true });
+    vi.mocked(useStoreSelector).mockImplementation(
+      (selector) => selector(stableStateCanPlay),
+    );
+
+    const { container } = render(<ComponentController />);
+    await waitFor(() => expect(container.textContent).toContain('WebcamOnlyReplay'));
+    expect(container.textContent).toContain('ResponseBlock');
   });
 });
 
