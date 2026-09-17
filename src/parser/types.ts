@@ -1252,7 +1252,7 @@ export interface BaseIndividualComponent {
   instruction?: string;
   /** The location of the instructions. If present, will override the instruction location setting in the uiConfig. */
   instructionLocation?: ConfigResponseBlockLocation;
-  /** The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files. */
+  /** The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files, and inside a website component's HTML file when its `templated` field is true. */
   parameters?: Record<string, unknown>;
   /** The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. If present, will override the help text path set in the uiConfig. */
   helpTextPath?: string;
@@ -1444,12 +1444,42 @@ export interface ImageComponent extends BaseIndividualComponent {
  *     registry
  *   });
  * ```
-
+ *
+ * As an alternative to passing data over `Revisit.onDataReceive`, you can set `templated` to true. The HTML file is then fetched and compiled as a Handlebars template before it is rendered, exactly like a markdown component's file, so `parameters` (and the `{{REVISIT.*}}` data frame and the `lookupAnswers`/`lookupAnswersRel` helpers) can be substituted directly into the markup:
+ *
+ * ```json
+ * {
+ *   "type": "website",
+ *   "path": "<study-name>/assets/chart.html",
+ *   "templated": true,
+ *   "parameters": {
+ *     "country": "France",
+ *     "barData": [0.32, 0.01, 1.2]
+ *   }
+ * }
+ * ```
+ *
+ * ```html
+ * <h1>Capital of {{country}}</h1>
+ * <script>
+ *   // Values used inside a script must use the triple-stache form, since the double-stache
+ *   // form HTML-escapes the substituted value.
+ *   const barData = {{{barData}}};
+ * </script>
+ * ```
+ *
+ * A few things to know about templated websites:
+ * - The file is rendered from its compiled contents rather than from its URL, so it is compiled once when the trial loads and is not re-compiled as answers change.
+ * - Relative paths inside the file (scripts, stylesheets, images) keep working; reVISit injects a `<base>` tag pointing at the file's folder.
+ * - `revisit-communicate.js` keeps working, but the file must reference the shared `revisitUtilities/revisit-communicate.js` rather than an old vendored copy of it.
+ * - `templated` is ignored when `path` points at an external website.
  */
 export interface WebsiteComponent extends BaseIndividualComponent {
   type: 'website';
   /** The path to the website. This should be a relative path from the public folder or could be an external website. */
   path: string;
+  /** Whether the HTML file should be compiled as a Handlebars template before it is rendered, so that `{{parameter}}` placeholders in the file are substituted. Defaults to false. Only applies to HTML files served from the study's public folder; it is ignored for external websites, which cannot be fetched and rewritten. */
+  templated?: boolean;
 }
 
 /**

@@ -118,7 +118,7 @@
           },
           "parameters": {
             "additionalProperties": {},
-            "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files.",
+            "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files, and inside a website component's HTML file when its `templated` field is true.",
             "type": "object"
           },
           "path": {
@@ -208,6 +208,10 @@
           "stylesheetPath": {
             "description": "The path to the external stylesheet file.",
             "type": "string"
+          },
+          "templated": {
+            "description": "Whether the HTML file should be compiled as a Handlebars template before it is rendered, so that `{{parameter}}` placeholders in the file are substituted. Defaults to false. Only applies to HTML files served from the study's public folder; it is ignored for external websites, which cannot be fetched and rewritten.",
+            "type": "boolean"
           },
           "trainingAttempts": {
             "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
@@ -1497,7 +1501,7 @@
         },
         "parameters": {
           "additionalProperties": {},
-          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files.",
+          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files, and inside a website component's HTML file when its `templated` field is true.",
           "type": "object"
         },
         "path": {
@@ -1781,7 +1785,7 @@
         },
         "parameters": {
           "additionalProperties": {},
-          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files.",
+          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files, and inside a website component's HTML file when its `templated` field is true.",
           "type": "object"
         },
         "path": {
@@ -1871,6 +1875,10 @@
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
           "type": "string"
+        },
+        "templated": {
+          "description": "Whether the HTML file should be compiled as a Handlebars template before it is rendered, so that `{{parameter}}` placeholders in the file are substituted. Defaults to false. Only applies to HTML files served from the study's public folder; it is ignored for external websites, which cannot be fetched and rewritten.",
+          "type": "boolean"
         },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
@@ -2279,7 +2287,7 @@
         },
         "parameters": {
           "additionalProperties": {},
-          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files.",
+          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files, and inside a website component's HTML file when its `templated` field is true.",
           "type": "object"
         },
         "path": {
@@ -2934,7 +2942,7 @@
         },
         "parameters": {
           "additionalProperties": {},
-          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files.",
+          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files, and inside a website component's HTML file when its `templated` field is true.",
           "type": "object"
         },
         "previousButton": {
@@ -3601,7 +3609,7 @@
         },
         "parameters": {
           "additionalProperties": {},
-          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files.",
+          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files, and inside a website component's HTML file when its `templated` field is true.",
           "type": "object"
         },
         "path": {
@@ -4926,7 +4934,7 @@
         },
         "parameters": {
           "additionalProperties": {},
-          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files.",
+          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files, and inside a website component's HTML file when its `templated` field is true.",
           "type": "object"
         },
         "previousButton": {
@@ -5102,7 +5110,7 @@
         },
         "parameters": {
           "additionalProperties": {},
-          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files.",
+          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files, and inside a website component's HTML file when its `templated` field is true.",
           "type": "object"
         },
         "path": {
@@ -5286,7 +5294,7 @@
         },
         "parameters": {
           "additionalProperties": {},
-          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files.",
+          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files, and inside a website component's HTML file when its `templated` field is true.",
           "type": "object"
         },
         "path": {
@@ -5386,7 +5394,7 @@
     },
     "WebsiteComponent": {
       "additionalProperties": false,
-      "description": "The WebsiteComponent interface is used to define the properties of a website component. A WebsiteComponent is used to render an iframe with a website inside of it. This can be used to display an external website or an html file that is located in the public folder. ```json {   \"type\": \"website\",   \"path\": \"<study-name>/assets/website.html\" } ```\n\nTo pass a data from the config to the website, you can use the `parameters` field as below:\n\n```json {   \"type\": \"website\",   \"path\": \"<study-name>/website.html\",   \"parameters\": {     \"barData\": [0.32, 0.01, 1.2, 1.3, 0.82, 0.4, 0.3]   },   \"response\": [     {       \"id\": \"barChart\",       \"prompt\": \"Your selected answer:\",       \"location\": \"belowStimulus\",       \"type\": \"reactive\"     }   ] } ``` In the `website.html` file, by including `revisit-communicate.js`, you can use the `Revisit.onDataReceive` method to retrieve the data, and `Revisit.postAnswers` to send the user's responses back to the reVISit as shown in the example below:\n\n```html <script src=\"../../revisitUtilities/revisit-communicate.js\"></script> <script> Revisit.onDataReceive((data) => {     const barData = data['barData'];     ...   });\n\n  // Call out that 'barChart' needs to match ID in 'response' object   Revisit.postAnswers({ barChart: userAnswer });   </script> ```\n\nIf the html website implements Trrack provenance tracking, create the instance through `Revisit.createTrrack`. reVISit subscribes before returning the instance and automatically reports apply, undo, redo, and other traversals.\n\n```ts const trrack = Revisit.createTrrack({     initializeTrrack,     initialState,     registry   }); ```",
+      "description": "The WebsiteComponent interface is used to define the properties of a website component. A WebsiteComponent is used to render an iframe with a website inside of it. This can be used to display an external website or an html file that is located in the public folder. ```json {   \"type\": \"website\",   \"path\": \"<study-name>/assets/website.html\" } ```\n\nTo pass a data from the config to the website, you can use the `parameters` field as below:\n\n```json {   \"type\": \"website\",   \"path\": \"<study-name>/website.html\",   \"parameters\": {     \"barData\": [0.32, 0.01, 1.2, 1.3, 0.82, 0.4, 0.3]   },   \"response\": [     {       \"id\": \"barChart\",       \"prompt\": \"Your selected answer:\",       \"location\": \"belowStimulus\",       \"type\": \"reactive\"     }   ] } ``` In the `website.html` file, by including `revisit-communicate.js`, you can use the `Revisit.onDataReceive` method to retrieve the data, and `Revisit.postAnswers` to send the user's responses back to the reVISit as shown in the example below:\n\n```html <script src=\"../../revisitUtilities/revisit-communicate.js\"></script> <script> Revisit.onDataReceive((data) => {     const barData = data['barData'];     ...   });\n\n  // Call out that 'barChart' needs to match ID in 'response' object   Revisit.postAnswers({ barChart: userAnswer });   </script> ```\n\nIf the html website implements Trrack provenance tracking, create the instance through `Revisit.createTrrack`. reVISit subscribes before returning the instance and automatically reports apply, undo, redo, and other traversals.\n\n```ts const trrack = Revisit.createTrrack({     initializeTrrack,     initialState,     registry   }); ```\n\nAs an alternative to passing data over `Revisit.onDataReceive`, you can set `templated` to true. The HTML file is then fetched and compiled as a Handlebars template before it is rendered, exactly like a markdown component's file, so `parameters` (and the `{{REVISIT.*}}` data frame and the `lookupAnswers`/`lookupAnswersRel` helpers) can be substituted directly into the markup:\n\n```json {   \"type\": \"website\",   \"path\": \"<study-name>/assets/chart.html\",   \"templated\": true,   \"parameters\": {     \"country\": \"France\",     \"barData\": [0.32, 0.01, 1.2]   } } ```\n\n```html <h1>Capital of {{country}}</h1> <script>   // Values used inside a script must use the triple-stache form, since the double-stache   // form HTML-escapes the substituted value.   const barData = {{{barData}}}; </script> ```\n\nA few things to know about templated websites:\n- The file is rendered from its compiled contents rather than from its URL, so it is compiled once when the trial loads and is not re-compiled as answers change.\n- Relative paths inside the file (scripts, stylesheets, images) keep working; reVISit injects a `<base>` tag pointing at the file's folder.\n- `revisit-communicate.js` keeps working, but the file must reference the shared `revisitUtilities/revisit-communicate.js` rather than an old vendored copy of it.\n- `templated` is ignored when `path` points at an external website.",
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
@@ -5466,7 +5474,7 @@
         },
         "parameters": {
           "additionalProperties": {},
-          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files.",
+          "description": "The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files, and inside a website component's HTML file when its `templated` field is true.",
           "type": "object"
         },
         "path": {
@@ -5531,6 +5539,10 @@
         "stylesheetPath": {
           "description": "The path to the external stylesheet file.",
           "type": "string"
+        },
+        "templated": {
+          "description": "Whether the HTML file should be compiled as a Handlebars template before it is rendered, so that `{{parameter}}` placeholders in the file are substituted. Defaults to false. Only applies to HTML files served from the study's public folder; it is ignored for external websites, which cannot be fetched and rewritten.",
+          "type": "boolean"
         },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",

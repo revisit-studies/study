@@ -202,6 +202,36 @@ function verifyReactComponent(
   }
 }
 
+function verifyWebsiteComponent(
+  instancePath: string,
+  component: Partial<IndividualComponent>,
+  warnings: ParserErrorWarning[],
+) {
+  if (component.type !== 'website' || !component.templated || component.path == null) {
+    return;
+  }
+
+  if (component.path.startsWith('http')) {
+    warnings.push({
+      message: '`templated` is ignored for external websites, which cannot be fetched and rewritten',
+      instancePath,
+      params: { action: 'Remove `templated` or move the website into the study\'s public folder' },
+      category: 'invalid-config',
+    });
+    return;
+  }
+
+  // A templated path can't be resolved until runtime, so its extension is unknown here.
+  if (!isTemplatedPath(component.path) && !/\.x?html?$/i.test(component.path)) {
+    warnings.push({
+      message: '`templated` is set on a website component whose path is not an HTML file',
+      instancePath,
+      params: { action: 'Point `path` at an HTML file or remove `templated`' },
+      category: 'invalid-config',
+    });
+  }
+}
+
 function isUrlConditionalBlock(sequence: StudyConfig['sequence']): boolean {
   return !isFactorBlock(sequence) && sequence.conditional === true && Boolean(sequence.id);
 }
@@ -789,12 +819,14 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
 
   for (const [name, component] of Object.entries(studyConfig.baseComponents ?? {})) {
     verifyReactComponent(`/baseComponents/${name}/path`, component, errors);
+    verifyWebsiteComponent(`/baseComponents/${name}/path`, component, warnings);
   }
 
   for (const [name, component] of Object.entries(studyConfig.components ?? {})) {
     if ('path' in component) {
       const mergedComponent = studyComponentToIndividualComponent(component, studyConfig);
       verifyReactComponent(`/components/${name}/path`, mergedComponent, errors);
+      verifyWebsiteComponent(`/components/${name}/path`, mergedComponent, warnings);
     } else {
       // Path is inherited and will be verified on the base component
     }

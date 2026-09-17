@@ -12,6 +12,7 @@ import { useTemplateAnswerContext } from '../store/hooks/useTemplateAnswerContex
 import { getAssetStatus, useAssetStatus, useAssetLoadStatus } from '../store/hooks/useAssetStatus';
 import { useAsyncResource } from '../store/hooks/useAsyncResource';
 import { getStaticAssetByPath } from '../utils/getStaticAsset';
+import { buildIframeSrcDoc, getBaseHref } from '../utils/iframeSrcDoc';
 import { PREFIX as BASE_PREFIX } from '../utils/Prefix';
 import { ResourceNotFound } from '../ResourceNotFound';
 
@@ -44,6 +45,25 @@ export function IframeController({ currentConfig, provState, answers }: { curren
     [currentConfig.path, currentConfig.parameters, templateData],
   );
 
+  const isExternal = templatedPath?.startsWith('http') ?? false;
+  // External sites can't be fetched and rewritten without their CORS permission, so templating
+  // silently doesn't apply to them.
+  const isTemplated = (currentConfig.templated ?? false) && !isExternal;
+
+  // The template data changes while a trial is in progress (help counter, saved answers). Markdown
+  // re-renders harmlessly, but re-compiling an iframe's srcDoc reloads the page and destroys the
+  // participant's in-frame state, so the stimulus is compiled once from a snapshot taken at load.
+  const templateDataRef = useRef(templateData);
+  useEffect(() => {
+    templateDataRef.current = templateData;
+  }, [templateData]);
+
+  useEffect(() => {
+    if (currentConfig.templated && isExternal) {
+      console.warn(`Ignoring "templated" for website component with external path ${templatedPath}. Templating is only supported for websites served from the study's public folder.`);
+    }
+  }, [currentConfig.templated, isExternal, templatedPath]);
+
   const ref = useRef<HTMLIFrameElement>(null);
   const stimulusValidationRef = useRef(stimulusValidation);
 
@@ -65,14 +85,24 @@ export function IframeController({ currentConfig, provState, answers }: { curren
       ? templatedPath
       : `${BASE_PREFIX}${templatedPath}?trialid=${currentComponent}&id=${iframeId}`;
   }, [templatedPath, currentComponent, iframeId]);
-  const requestKey = url === undefined ? undefined : `${identifier}:${url}`;
-  const checkWebsite = useCallback(async () => {
-    if (url === undefined) return undefined;
+  // Templated stimuli are fetched without the query string, so the request is cacheable and isn't
+  // busted by the per-mount iframe id.
+  const fetchUrl = isTemplated && templatedPath !== undefined ? `${BASE_PREFIX}${templatedPath}` : url;
+  const requestKey = fetchUrl === undefined ? undefined : `${identifier}:${fetchUrl}:${iframeId}`;
+  const loadWebsite = useCallback(async (): Promise<string | true | undefined> => {
+    if (fetchUrl === undefined || templatedPath === undefined) return undefined;
     // External iframe responses cannot be inspected without the site's CORS permission.
-    if (new URL(url, window.location.href).origin !== window.location.origin) return true;
-    return await getStaticAssetByPath(url) === undefined ? undefined : true;
-  }, [url]);
-  const { status } = useAsyncResource(requestKey, checkWebsite);
+    if (new URL(fetchUrl, window.location.href).origin !== window.location.origin) return true;
+    const text = await getStaticAssetByPath(fetchUrl);
+    if (text === undefined) return undefined;
+    if (!isTemplated) return true;
+    return buildIframeSrcDoc(
+      compileTemplate(text, currentConfig.parameters ?? {}, { data: templateDataRef.current }),
+      { baseHref: getBaseHref(templatedPath), iframeId, trialId: currentComponent },
+    );
+  }, [fetchUrl, templatedPath, isTemplated, currentConfig.parameters, iframeId, currentComponent]);
+  const { status, value } = useAsyncResource<string | true>(requestKey, loadWebsite);
+  const srcDoc = typeof value === 'string' ? value : undefined;
   const { status: frameStatus, onReady, onError } = useAssetLoadStatus(requestKey);
   const assetStatus = getAssetStatus(status, frameStatus);
 
@@ -179,7 +209,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
         border: 0,
         pointerEvents: isAnalysis ? 'none' : undefined,
       }}
-      src={url}
+      {...(srcDoc !== undefined ? { srcDoc } : { src: url })}
       onLoad={onReady}
       onErrorCapture={onError}
     />

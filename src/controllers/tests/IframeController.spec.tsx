@@ -55,6 +55,10 @@ vi.mock('../../utils/getStaticAsset', () => ({
   getStaticAssetByPath: vi.fn(),
 }));
 
+vi.mock('../../ResourceNotFound', () => ({
+  ResourceNotFound: ({ path }: { path?: string }) => <div data-testid="resource-not-found">{path}</div>,
+}));
+
 describe('IframeController', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -292,5 +296,83 @@ describe('IframeController', () => {
     const iframe = container.querySelector('iframe');
     expect(iframe).toBeTruthy();
     expect(iframe?.src).toContain('demo-svelte-trrack/assets/dots-count.html');
+  });
+  describe('templated websites', () => {
+    const templatedConfig: WebsiteComponent = {
+      type: 'website',
+      path: 'my-study/assets/chart.html',
+      templated: true,
+      parameters: { country: 'France' },
+      response: [],
+    };
+
+    test('leaves a non-templated website on src with no srcdoc', async () => {
+      const { container } = render(
+        <IframeController currentConfig={{ type: 'website', path: 'my-study/assets/chart.html', response: [] }} answers={{}} />,
+      );
+      const iframe = container.querySelector('iframe')!;
+
+      await waitFor(() => expect(getStaticAssetByPath).toHaveBeenCalled());
+      expect(vi.mocked(getStaticAssetByPath).mock.calls[0][0]).toContain('?trialid=countDots&id=');
+      expect(iframe.hasAttribute('srcdoc')).toBe(false);
+      expect(iframe.src).toContain('my-study/assets/chart.html');
+    });
+
+    test('renders the compiled html as srcdoc with the base tag and injected params', async () => {
+      vi.spyOn(crypto, 'randomUUID').mockReturnValue(
+        '11111111-2222-3333-4444-555555555555' as `${string}-${string}-${string}-${string}-${string}`,
+      );
+      vi.mocked(getStaticAssetByPath).mockResolvedValue('<html><head></head><body><h1>{{country}}</h1></body></html>');
+      const { container } = render(<IframeController currentConfig={templatedConfig} answers={{}} />);
+
+      await waitFor(() => expect(container.querySelector('iframe')!.hasAttribute('srcdoc')).toBe(true));
+      const srcDoc = container.querySelector('iframe')!.getAttribute('srcdoc')!;
+
+      expect(srcDoc).toContain('<h1>France</h1>');
+      expect(srcDoc).toContain(`<base href="${window.location.origin}/my-study/assets/">`);
+      expect(srcDoc).toContain('"id":"11111111-2222-3333-4444-555555555555"');
+      expect(srcDoc).toContain('"trialid":"countDots"');
+      expect(container.querySelector('iframe')!.hasAttribute('src')).toBe(false);
+    });
+
+    test('fetches the templated file once per mount, without the query string', async () => {
+      const { container } = render(<IframeController currentConfig={templatedConfig} answers={{}} />);
+
+      await waitFor(() => expect(container.querySelector('iframe')!.hasAttribute('srcdoc')).toBe(true));
+      expect(getStaticAssetByPath).toHaveBeenCalledTimes(1);
+      expect(getStaticAssetByPath).toHaveBeenCalledWith('/my-study/assets/chart.html');
+    });
+
+    test('renders the not-found fallback when the templated file is missing', async () => {
+      vi.mocked(getStaticAssetByPath).mockResolvedValue(undefined);
+      const { findByTestId } = render(<IframeController currentConfig={templatedConfig} answers={{}} />);
+
+      expect((await findByTestId('resource-not-found')).textContent).toBe('my-study/assets/chart.html');
+    });
+
+    test('ignores templated for an external path and keeps using src', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const { container } = render(
+        <IframeController currentConfig={{ ...templatedConfig, path: 'https://example.com/chart.html' }} answers={{}} />,
+      );
+
+      await waitFor(() => expect(warn).toHaveBeenCalled());
+      const iframe = container.querySelector('iframe')!;
+      expect(iframe.hasAttribute('srcdoc')).toBe(false);
+      expect(iframe.src).toBe('https://example.com/chart.html');
+      expect(getStaticAssetByPath).not.toHaveBeenCalled();
+    });
+
+    test('does not recompile the stimulus when answers change mid-trial', async () => {
+      const { container, rerender } = render(<IframeController currentConfig={templatedConfig} answers={{}} />);
+
+      await waitFor(() => expect(container.querySelector('iframe')!.hasAttribute('srcdoc')).toBe(true));
+      const before = container.querySelector('iframe')!.getAttribute('srcdoc');
+
+      rerender(<IframeController currentConfig={templatedConfig} answers={{ countDots_0: { answer: { a: 1 } } } as never} />);
+
+      expect(container.querySelector('iframe')!.getAttribute('srcdoc')).toBe(before);
+      expect(getStaticAssetByPath).toHaveBeenCalledTimes(1);
+    });
   });
 });
