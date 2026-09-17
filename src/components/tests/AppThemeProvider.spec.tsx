@@ -6,7 +6,6 @@ import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { AppThemeProvider, useAppColorMode, useStudyColorMode } from '../AppThemeProvider';
-import type { UIConfig } from '../../parser/types';
 
 const preferenceKey = 'revisit-user-color-mode';
 let systemDark = false;
@@ -19,7 +18,7 @@ function setSystemDark(dark: boolean) {
   });
 }
 
-function Study({ colorMode }: { colorMode?: UIConfig['colorMode'] }) {
+function Study({ colorMode }: { colorMode?: 'light' | 'dark' }) {
   useStudyColorMode(colorMode);
   return <div>Study content</div>;
 }
@@ -79,19 +78,19 @@ describe('AppThemeProvider', () => {
     expectTheme('dark');
   });
 
-  test('userPreference follows the system when no personal choice is saved', () => {
-    render(<AppThemeProvider><Study colorMode="userPreference" /></AppThemeProvider>);
+  test('keeps the resolved participant mode when the system preference changes', () => {
+    render(<AppThemeProvider><Study colorMode="light" /></AppThemeProvider>);
     expectTheme('light');
     setSystemDark(true);
-    expectTheme('dark');
+    expectTheme('light');
   });
 
-  test('userPreference uses the saved choice and updates when the study config changes', () => {
+  test('switches between resolved participant modes without changing the personal choice', () => {
     localStorage.setItem(preferenceKey, 'light');
     systemDark = true;
     const view = render(<AppThemeProvider><Study colorMode="dark" /></AppThemeProvider>);
     expectTheme('dark');
-    view.rerender(<AppThemeProvider><Study colorMode="userPreference" /></AppThemeProvider>);
+    view.rerender(<AppThemeProvider><Study colorMode="light" /></AppThemeProvider>);
     expectTheme('light');
     expect(localStorage.getItem(preferenceKey)).toBe('light');
   });

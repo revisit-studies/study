@@ -28,7 +28,7 @@ function isComponentBlock(value: unknown): value is ComponentBlock {
     && !isFactorBlock(value as StudyConfig['sequence']);
 }
 
-describe('Study color mode config parsing', () => {
+describe('Study and iframe color mode config parsing', () => {
   function makeStudyConfig(colorMode?: unknown) {
     return {
       $schema: '',
@@ -74,6 +74,34 @@ describe('Study color mode config parsing', () => {
     expect(result.errors).toContainEqual(expect.objectContaining({
       instancePath: '/uiConfig/colorMode',
     }));
+  });
+
+  function makeWebsiteConfig(colorMode?: unknown) {
+    return {
+      ...makeStudyConfig(),
+      components: {
+        website: {
+          type: 'website', path: 'demo-html/assets/bar-chart.html', colorMode, response: [],
+        },
+      },
+      sequence: { order: 'fixed', components: ['website'] },
+    };
+  }
+
+  test.each(['light', 'dark', 'inherit', undefined] as const)('accepts iframe color mode %s', async (colorMode) => {
+    const result = await parseStudyConfig(JSON.stringify(makeWebsiteConfig(colorMode)));
+    expect(result.errors).toEqual([]);
+    expect(result.components.website).toEqual(expect.objectContaining({ type: 'website' }));
+    if (colorMode === undefined) {
+      expect(result.components.website).not.toHaveProperty('colorMode');
+    } else {
+      expect(result.components.website).toHaveProperty('colorMode', colorMode);
+    }
+  });
+
+  test.each(['userPreference', 'auto', null])('rejects invalid iframe color mode %s', async (colorMode) => {
+    const result = await parseStudyConfig(JSON.stringify(makeWebsiteConfig(colorMode)));
+    expect(result.errors).toContainEqual(expect.objectContaining({ instancePath: '/components/website/colorMode' }));
   });
 });
 

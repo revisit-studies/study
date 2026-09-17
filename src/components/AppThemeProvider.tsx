@@ -3,13 +3,11 @@ import {
 } from 'react';
 import { MantineColorScheme, MantineProvider } from '@mantine/core';
 import { useColorScheme, useLocalStorage } from '@mantine/hooks';
-import type { UIConfig } from '../parser/types';
 
 type AppThemeContextValue = {
   colorMode: 'light' | 'dark';
   toggleColorMode: () => void;
-  setStudyColorMode: (colorMode: UIConfig['colorMode']) => void;
-  setReplayColorMode: (colorMode: 'light' | 'dark' | undefined) => void;
+  setStudyColorMode: (colorMode: 'light' | 'dark' | undefined) => void;
 };
 
 const AppThemeContext = createContext<AppThemeContextValue | null>(null);
@@ -23,16 +21,13 @@ export function AppThemeProvider({ children }: { children: ReactNode }) {
     serialize: (value) => value,
     deserialize: (value) => (value === 'light' || value === 'dark' ? value : 'auto'),
   });
-  const [studyColorMode, setStudyColorMode] = useState<UIConfig['colorMode']>();
-  const [replayColorMode, setReplayColorMode] = useState<'light' | 'dark'>();
+  const [studyColorMode, setStudyColorMode] = useState<'light' | 'dark'>();
   const colorMode = userColorMode === 'auto' ? systemColorMode : userColorMode;
-  const effectiveColorMode = replayColorMode ?? (studyColorMode === 'light' || studyColorMode === 'dark'
-    ? studyColorMode : colorMode);
+  const effectiveColorMode = studyColorMode ?? colorMode;
   const context = useMemo(() => ({
     colorMode,
     toggleColorMode: () => setUserColorMode(colorMode === 'dark' ? 'light' : 'dark'),
     setStudyColorMode,
-    setReplayColorMode,
   }), [colorMode, setUserColorMode]);
 
   return (
@@ -52,7 +47,7 @@ export function useAppColorMode() {
   return context;
 }
 
-export function useStudyColorMode(colorMode: UIConfig['colorMode'] = 'light') {
+export function useStudyColorMode(colorMode: 'light' | 'dark' = 'light') {
   const { setStudyColorMode } = useAppColorMode();
   useLayoutEffect(() => {
     setStudyColorMode(colorMode);

@@ -1452,6 +1452,8 @@ export interface WebsiteComponent extends BaseIndividualComponent {
   type: 'website';
   /** The path to the website. This should be a relative path from the public folder or could be an external website. */
   path: string;
+  /** The iframe's color scheme. Defaults to inherit, which follows the participant's fixed study mode, including in replay. Light/dark override only this iframe. The embedded page must support color schemes; hard-coded colors are not converted. */
+  colorMode?: 'light' | 'dark' | 'inherit';
 }
 
 /**

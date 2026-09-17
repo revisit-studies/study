@@ -14,10 +14,13 @@ import { studyStoreCreator } from '../../store/store';
 import { parseConditionParam } from '../../utils/handleConditionLogic';
 import { parseStudyConfig } from '../../parser/parser';
 import { useStudyColorMode } from '../AppThemeProvider';
+import type { ParticipantMetadata } from '../../store/types';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
 let mockStudyId = 'test-study';
+let mockUserColorMode: 'light' | 'dark' = 'light';
+let mockSearchParams = new URLSearchParams();
 let mockStorageEngine: Record<string, ReturnType<typeof vi.fn>> | null = null;
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
@@ -37,6 +40,7 @@ vi.mock('../../storage/storageEngineHooks', () => ({
 
 vi.mock('../AppThemeProvider', () => ({
   useStudyColorMode: vi.fn(),
+  useAppColorMode: () => ({ colorMode: mockUserColorMode }),
 }));
 
 vi.mock('../../utils/handleRandomSequences', () => ({
@@ -91,7 +95,7 @@ vi.mock('../../utils/NavigateWithParams', () => ({
 
 vi.mock('react-router', () => ({
   useRoutes: vi.fn(() => <div data-testid="routing" />),
-  useSearchParams: () => [new URLSearchParams(), vi.fn()],
+  useSearchParams: () => [mockSearchParams, vi.fn()],
 }));
 
 vi.mock('@mantine/core', () => ({
@@ -112,7 +116,7 @@ vi.mock('react-redux', () => ({
 
 vi.mock('../../store/store', () => ({
   studyStoreCreator: vi.fn().mockResolvedValue({
-    store: { getState: vi.fn(() => ({ config: { uiConfig: {} } })), dispatch: vi.fn(), subscribe: vi.fn() },
+    store: { getState: vi.fn(() => ({ config: { uiConfig: {} }, metadata: {} })), dispatch: vi.fn(), subscribe: vi.fn() },
   }),
   StudyStoreContext: {
     Provider: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -142,13 +146,45 @@ const baseSession = {
   },
   completed: false,
   answers: {},
+  metadata: {
+    language: 'en', userAgent: 'test', resolution: {}, ip: '',
+  },
 };
+
+function setupThemeSession(colorMode: StudyConfig['uiConfig']['colorMode'], savedMetadata?: ParticipantMetadata) {
+  const config = { ...mockActiveConfig, uiConfig: { ...mockActiveConfig.uiConfig, colorMode } };
+  vi.mocked(getStudyConfig).mockResolvedValue(config);
+  mockStorageEngine = {
+    initializeStudyDb: vi.fn().mockResolvedValue(undefined),
+    saveConfig: vi.fn().mockResolvedValue(undefined),
+    getSequenceArray: vi.fn().mockResolvedValue(['seq1']),
+    getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
+    initializeParticipantSession: vi.fn(async (_params, _config, metadata) => ({
+      ...baseSession, metadata: savedMetadata ?? metadata,
+    })),
+    getAllConfigsFromHash: vi.fn().mockResolvedValue({ abc123: config }),
+    getParticipantCompletionStatus: vi.fn().mockResolvedValue(false),
+    updateParticipantMetadata: vi.fn().mockResolvedValue(undefined),
+    isConnected: vi.fn().mockReturnValue(true),
+    getEngine: vi.fn().mockReturnValue('firebase'),
+  };
+  vi.mocked(studyStoreCreator).mockImplementationOnce(async (_id, runtimeConfig, _sequence, metadata) => ({
+    store: {
+      getState: () => ({ config: runtimeConfig, metadata }),
+      dispatch: vi.fn(),
+      subscribe: vi.fn(),
+    },
+    actions: { setMetadata: vi.fn() },
+  }) as unknown as Awaited<ReturnType<typeof studyStoreCreator>>);
+}
 
 // ── tests ─────────────────────────────────────────────────────────────────────
 
 describe('Shell', () => {
   beforeEach(() => {
     mockStudyId = 'test-study';
+    mockUserColorMode = 'light';
+    mockSearchParams = new URLSearchParams();
     mockStorageEngine = null;
     vi.mocked(getStudyConfig).mockResolvedValue(null);
     vi.mocked(resolveConfigKey).mockReturnValue('test-study');
@@ -173,6 +209,44 @@ describe('Shell', () => {
     vi.useRealTimers();
     vi.clearAllMocks();
     vi.unstubAllGlobals();
+  });
+
+  test.each([
+    ['userPreference', 'dark'], ['light', 'light'], ['dark', 'dark'], [undefined, 'light'],
+  ] as const)('captures %s once as %s and preserves it when IP metadata arrives', async (configuredMode, expectedMode) => {
+    mockUserColorMode = 'dark';
+    setupThemeSession(configuredMode);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ ip: '1.2.3.4' }))));
+    const view = render(<Shell globalConfig={globalConfig} />);
+    await waitFor(() => expect(mockStorageEngine!.updateParticipantMetadata).toHaveBeenCalledWith(
+      expect.objectContaining({ colorMode: expectedMode, ip: '1.2.3.4' }),
+    ));
+    expect(mockStorageEngine!.initializeParticipantSession).toHaveBeenCalledWith({}, expect.anything(), expect.objectContaining({ colorMode: expectedMode }), undefined);
+    mockUserColorMode = 'light';
+    view.rerender(<Shell globalConfig={globalConfig} />);
+    expect(useStudyColorMode).toHaveBeenLastCalledWith(expectedMode);
+    expect(mockStorageEngine!.initializeParticipantSession).toHaveBeenCalledTimes(1);
+  });
+
+  test.each([false, true])('uses the persisted participant mode on resume/replay (replay=%s)', async (isReplay) => {
+    if (isReplay) mockSearchParams = new URLSearchParams('participantId=p1');
+    setupThemeSession('userPreference', { ...baseSession.metadata, colorMode: 'dark' });
+    render(<Shell globalConfig={globalConfig} />);
+    await waitFor(() => expect(useStudyColorMode).toHaveBeenLastCalledWith('dark'));
+    if (isReplay) expect(fetch).not.toHaveBeenCalled();
+    expect(mockStorageEngine!.updateParticipantMetadata).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ['dark', 'dark'], ['light', 'light'], ['userPreference', 'light'], [undefined, 'light'],
+  ] as const)('uses historical %s for legacy replay without recording a new preference', async (configuredMode, expectedMode) => {
+    mockUserColorMode = 'dark';
+    mockSearchParams = new URLSearchParams('participantId=p1');
+    setupThemeSession(configuredMode, baseSession.metadata);
+    render(<Shell globalConfig={globalConfig} />);
+    await waitFor(() => expect(studyStoreCreator).toHaveBeenCalled());
+    await waitFor(() => expect(useStudyColorMode).toHaveBeenLastCalledWith(expectedMode));
+    expect(mockStorageEngine!.updateParticipantMetadata).not.toHaveBeenCalled();
   });
 
   test('applies config color mode and clears the old config when navigating to another study', async () => {

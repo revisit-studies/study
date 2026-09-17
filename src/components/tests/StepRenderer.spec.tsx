@@ -136,10 +136,6 @@ vi.mock('../../store/hooks/useIsAnalysis', () => ({
   useIsAnalysis: () => false,
 }));
 
-vi.mock('../../store/hooks/useTrialColorMode', () => ({
-  useTrialColorMode: vi.fn(),
-}));
-
 vi.mock('../../store/hooks/useWindowEvents', () => ({
   WindowEventsContext: { Provider: ({ children }: { children: ReactNode }) => <span>{children}</span> },
 }));

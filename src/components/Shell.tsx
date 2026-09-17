@@ -43,7 +43,7 @@ import {
 } from '../utils/handleConditionLogic';
 import { StartupErrorScreen } from './StartupErrorScreen';
 import { materializeParticipantConfig } from '../parser/libraryParser';
-import { useStudyColorMode } from './AppThemeProvider';
+import { useAppColorMode, useStudyColorMode } from './AppThemeProvider';
 
 type StartupStorageStatus = Pick<StorageEngine, 'getEngine' | 'isConnected'>;
 
@@ -185,6 +185,8 @@ function createEmptyParticipantMetadata(): ParticipantMetadata {
   };
 }
 function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
+  const { colorMode: userColorMode } = useAppColorMode();
+  const [initialUserColorMode] = useState(userColorMode);
   // Pull study config
   const routeStudyId = useStudyId();
   const [activeConfig, setActiveConfig] = useState<ParsedConfig<StudyConfig> | null>(null);
@@ -324,7 +326,11 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
         ]);
         modes = resolvedModes;
 
-        const initialMetadata = createParticipantMetadata();
+        const initialMetadata: ParticipantMetadata = {
+          ...createParticipantMetadata(),
+          colorMode: activeConfig.uiConfig.colorMode === 'userPreference'
+            ? initialUserColorMode : activeConfig.uiConfig.colorMode ?? 'light',
+        };
 
         let participantSession = await storageEngine.initializeParticipantSession(
           searchParamsObject,
@@ -387,13 +393,13 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
         setStore(newStore);
 
-        if (resolvedModes.dataCollectionEnabled) {
+        if (resolvedModes.dataCollectionEnabled && !participantId) {
           fetchParticipantIp().then(async (ip) => {
             if (isCancelled || !ip.ip || participantSession.metadata.ip === ip.ip) {
               return;
             }
 
-            const metadataWithIp = createParticipantMetadata(ip.ip);
+            const metadataWithIp = { ...participantSession.metadata, ip: ip.ip };
             participantSession = {
               ...participantSession,
               metadata: metadataWithIp,
@@ -519,10 +525,16 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
     return () => {
       isCancelled = true;
     };
-  }, [storageEngine, activeConfig, canonicalStudyId, searchParams, participantId, studyCondition]);
+  }, [storageEngine, activeConfig, canonicalStudyId, searchParams, participantId, studyCondition, initialUserColorMode]);
 
   const routing = useRoutes(routes);
-  useStudyColorMode(store ? store.store.getState().config.uiConfig.colorMode : activeConfig?.uiConfig?.colorMode);
+  const participantState = store?.store.getState();
+  const loadingColorMode = activeConfig?.uiConfig?.colorMode === 'userPreference'
+    ? initialUserColorMode : activeConfig?.uiConfig?.colorMode;
+  const studyColorMode = participantState
+    ? participantState.metadata.colorMode ?? (participantState.config.uiConfig.colorMode === 'dark' ? 'dark' : 'light')
+    : loadingColorMode;
+  useStudyColorMode(studyColorMode);
   const hasConfigErrors = (activeConfig?.errors?.length ?? 0) > 0;
   const { isLoading, showCompletionCheckError } = getShellUiState({
     isValidStudyId,

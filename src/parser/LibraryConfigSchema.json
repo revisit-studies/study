@@ -40,6 +40,15 @@
             "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
             "type": "boolean"
           },
+          "colorMode": {
+            "description": "The iframe's color scheme. Defaults to inherit, which follows the participant's fixed study mode, including in replay. Light/dark override only this iframe. The embedded page must support color schemes; hard-coded colors are not converted.",
+            "enum": [
+              "light",
+              "dark",
+              "inherit"
+            ],
+            "type": "string"
+          },
           "config": {
             "description": "The vega or vega-lite configuration.",
             "type": "object"
@@ -1602,6 +1611,15 @@
         "clickToRecord": {
           "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
+        },
+        "colorMode": {
+          "description": "The iframe's color scheme. Defaults to inherit, which follows the participant's fixed study mode, including in replay. Light/dark override only this iframe. The embedded page must support color schemes; hard-coded colors are not converted.",
+          "enum": [
+            "light",
+            "dark",
+            "inherit"
+          ],
+          "type": "string"
         },
         "config": {
           "description": "The vega or vega-lite configuration.",
@@ -4984,6 +5002,15 @@
         "clickToRecord": {
           "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
+        },
+        "colorMode": {
+          "description": "The iframe's color scheme. Defaults to inherit, which follows the participant's fixed study mode, including in replay. Light/dark override only this iframe. The embedded page must support color schemes; hard-coded colors are not converted.",
+          "enum": [
+            "light",
+            "dark",
+            "inherit"
+          ],
+          "type": "string"
         },
         "correctAnswer": {
           "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
