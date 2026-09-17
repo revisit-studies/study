@@ -18,6 +18,7 @@ import { parseStudyConfig } from '../../parser/parser';
 
 let mockStudyId = 'test-study';
 let mockStorageEngine: Record<string, ReturnType<typeof vi.fn>> | null = null;
+let mockSearchParams = new URLSearchParams();
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
@@ -56,7 +57,7 @@ vi.mock('../../utils/encryptDecryptIndex', () => ({
   encryptIndex: vi.fn((x: number) => String(x)),
 }));
 
-vi.mock('../../storage/engines/utils', () => ({
+vi.mock('../../storage/engines/utils/storageEngineHelpers', () => ({
   hash: vi.fn(() => 'abc123'),
 }));
 
@@ -86,7 +87,7 @@ vi.mock('../../utils/NavigateWithParams', () => ({
 
 vi.mock('react-router', () => ({
   useRoutes: vi.fn(() => <div data-testid="routing" />),
-  useSearchParams: () => [new URLSearchParams(), vi.fn()],
+  useSearchParams: () => [mockSearchParams, vi.fn()],
 }));
 
 vi.mock('@mantine/core', () => ({
@@ -137,6 +138,12 @@ const baseSession = {
   },
   completed: false,
   answers: {},
+  metadata: {
+    language: 'en-US',
+    userAgent: 'participant-browser',
+    resolution: {},
+    ip: 'participant-ip',
+  },
 };
 
 // ── tests ─────────────────────────────────────────────────────────────────────
@@ -145,6 +152,7 @@ describe('Shell', () => {
   beforeEach(() => {
     mockStudyId = 'test-study';
     mockStorageEngine = null;
+    mockSearchParams = new URLSearchParams();
     vi.mocked(getStudyConfig).mockResolvedValue(null);
     vi.mocked(resolveConfigKey).mockReturnValue('test-study');
     vi.mocked(parseConditionParam).mockReturnValue([]);
@@ -310,6 +318,33 @@ describe('Shell', () => {
     render(<Shell globalConfig={globalConfig} />);
     await waitFor(() => expect(mockStorageEngine!.initializeStudyDb).toHaveBeenCalled(), { timeout: 3000 });
     await waitFor(() => expect(vi.mocked(studyStoreCreator)).toHaveBeenCalled(), { timeout: 3000 });
+    await waitFor(() => expect(fetch).toHaveBeenCalled());
+  });
+
+  test('does not collect or overwrite participant metadata during replay', async () => {
+    mockSearchParams = new URLSearchParams({ participantId: 'p1' });
+    vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
+
+    mockStorageEngine = {
+      initializeStudyDb: vi.fn().mockResolvedValue(undefined),
+      saveConfig: vi.fn().mockResolvedValue(undefined),
+      getSequenceArray: vi.fn().mockResolvedValue(['seq1']),
+      getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
+      initializeParticipantSession: vi.fn().mockResolvedValue(baseSession),
+      updateParticipantMetadata: vi.fn().mockResolvedValue(undefined),
+      getParticipantCompletionStatus: vi.fn().mockResolvedValue(false),
+      peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
+      getAllConfigsFromHash: vi.fn().mockResolvedValue({}),
+      isConnected: vi.fn().mockReturnValue(true),
+      getEngine: vi.fn().mockReturnValue('firebase'),
+    };
+
+    render(<Shell globalConfig={globalConfig} />);
+    await waitFor(() => expect(vi.mocked(studyStoreCreator)).toHaveBeenCalled(), { timeout: 3000 });
+    await waitFor(() => expect(mockStorageEngine!.getParticipantCompletionStatus).toHaveBeenCalled());
+
+    expect(fetch).not.toHaveBeenCalled();
+    expect(mockStorageEngine.updateParticipantMetadata).not.toHaveBeenCalled();
   });
 
   test('passes the contact email to the unmatched-route fallback outside the study provider', async () => {
