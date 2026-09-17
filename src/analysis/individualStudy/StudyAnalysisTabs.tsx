@@ -105,11 +105,6 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   const { storageEngine } = useStorageEngine();
   const navigate = useNavigate();
   const { analysisTab } = useParams();
-  useEffect(() => {
-    if (analysisTab === 'style' && routeStudyId) {
-      navigate(`/analysis/stats/${routeStudyId}/summary`, { replace: true });
-    }
-  }, [analysisTab, routeStudyId, navigate]);
   const { user } = useAuth();
   const [ref, { width }] = useResizeObserver();
   const canonicalStudyId = useMemo(() => {

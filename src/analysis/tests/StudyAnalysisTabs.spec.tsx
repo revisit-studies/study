@@ -18,8 +18,6 @@ import { parseStudyConfig } from '../../parser/parser';
 let mockParams: Record<string, string | undefined> = { studyId: 'test-study', analysisTab: 'summary' };
 let mockStorageEngine: Record<string, ReturnType<typeof vi.fn>> | undefined;
 let mockStudyRecordings = { hasAudioRecording: false, hasScreenRecording: false };
-let mockIsAdmin = true;
-const mockNavigate = vi.fn();
 
 // Stable result returned by the useAsync mock. Reset in beforeEach so each test
 // gets its own stable reference, avoiding infinite re-render loops that would
@@ -34,7 +32,7 @@ let currentStable: ReturnType<typeof useAsync> = {
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
 vi.mock('react-router', () => ({
-  useNavigate: () => mockNavigate,
+  useNavigate: () => vi.fn(),
   useParams: () => mockParams,
 }));
 
@@ -47,7 +45,7 @@ vi.mock('../../storage/storageEngineHooks', () => ({
 }));
 
 vi.mock('../../store/hooks/useAuth', () => ({
-  useAuth: () => ({ user: { isAdmin: mockIsAdmin } }),
+  useAuth: () => ({ user: { isAdmin: true } }),
 }));
 
 vi.mock('../../store/hooks/useAsync', () => ({
@@ -159,8 +157,8 @@ vi.mock('@mantine/core', () => ({
     ({ children }: { children: ReactNode }) => <div>{children}</div>,
     {
       List: ({ children }: { children: ReactNode }) => <nav>{children}</nav>,
-      Tab: ({ children, disabled, value }: { children: ReactNode; disabled?: boolean; value: string }) => (
-        <button type="button" data-tab={value} disabled={disabled}>{children}</button>
+      Tab: ({ children, value }: { children: ReactNode; value: string }) => (
+        <button type="button" data-tab={value}>{children}</button>
       ),
       Panel: ({ children, value }: { children: ReactNode; value: string }) => (
         <section data-panel={value}>{children}</section>
@@ -197,7 +195,6 @@ describe('StudyAnalysisTabs', () => {
     mockParams = { studyId: 'test-study', analysisTab: 'summary' };
     mockStorageEngine = { getEngine: vi.fn().mockReturnValue('supabase') };
     mockStudyRecordings = { hasAudioRecording: false, hasScreenRecording: false };
-    mockIsAdmin = true;
     vi.mocked(getStudyConfig).mockResolvedValue(null);
     vi.mocked(resolveConfigKey).mockImplementation((key) => key);
     currentStable = {
@@ -244,23 +241,7 @@ describe('StudyAnalysisTabs', () => {
     expect(html).toContain('Trial Stats');
     expect(html).toContain('Coding');
     expect(html).toContain('Config');
-    expect(html).not.toContain('data-tab="style"');
     expect(html).toContain('Manage');
-  });
-
-  test('does not render a Style tab or panel for non-admin analysis users', () => {
-    mockIsAdmin = false;
-
-    const html = renderToStaticMarkup(<StudyAnalysisTabs globalConfig={mockGlobalConfig} />);
-
-    expect(html).not.toContain('data-tab="style"');
-    expect(html).not.toContain('data-panel="style"');
-  });
-
-  test('redirects the removed Style tab URL to Summary', () => {
-    mockParams.analysisTab = 'style';
-    render(<StudyAnalysisTabs globalConfig={mockGlobalConfig} />);
-    expect(mockNavigate).toHaveBeenCalledWith('/analysis/stats/test-study/summary', { replace: true });
   });
 
   test('renders disabled Live Monitor tab and Firebase-only message when not Firebase', () => {

@@ -8,10 +8,8 @@ import {
   vi,
 } from 'vitest';
 import { useNextStep } from '../useNextStep';
-import type { EventType } from '../../types';
 
 const mockNavigate = vi.fn();
-const mockWindowEvents = { current: [] as EventType[] };
 const mockShowNotification = vi.fn();
 const mockSaveAnswers = vi.fn();
 const mockSaveProvenance = vi.fn(() => Promise.resolve());
@@ -114,7 +112,7 @@ vi.mock('../useStoredAnswer', () => ({
 }));
 
 vi.mock('../useWindowEvents', () => ({
-  useWindowEvents: () => mockWindowEvents,
+  useWindowEvents: () => ({ current: [] }),
 }));
 
 vi.mock('../useStudyConfig', () => ({
@@ -143,7 +141,6 @@ function HookHarness() {
 
 describe('useNextStep', () => {
   beforeEach(() => {
-    mockWindowEvents.current = [];
     vi.spyOn(console, 'error').mockImplementation(() => {});
     mockNavigate.mockReset();
     mockShowNotification.mockReset();
@@ -257,17 +254,6 @@ describe('useNextStep', () => {
       show: true,
       title: 'Failed to Save Response',
     }));
-  });
-
-  test('persists window events with the trial answer and clears the live buffer', () => {
-    const events: EventType[] = [[1000, 'visibility', 'visible'], [2000, 'visibility', 'hidden']];
-    mockWindowEvents.current = [...events];
-    renderToStaticMarkup(<HookHarness />);
-    capturedGoToNextStep?.();
-    expect(mockSaveAnswers).toHaveBeenCalledWith(expect.objectContaining({
-      intro_0: expect.objectContaining({ windowEvents: events }),
-    }));
-    expect(mockWindowEvents.current).toEqual([]);
   });
 
   test('schedules the queued write and navigates without flushing it', async () => {

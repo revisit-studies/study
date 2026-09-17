@@ -79,14 +79,13 @@ const response = {
 
 const form = { value: 'live', onChange: vi.fn() } as Parameters<typeof ResponseSwitcher>[0]['form'];
 
-function renderSwitcher({ storedAnswer, answerFinalized, responseOverride }: {
+function renderSwitcher({ storedAnswer, answerFinalized }: {
   storedAnswer?: Record<string, JsonValue>;
   answerFinalized?: boolean;
-  responseOverride?: Response;
 }) {
   return render(
     <ResponseSwitcher
-      response={responseOverride ?? response}
+      response={response}
       form={form}
       index={1}
       config={{} as IndividualComponent}
@@ -95,16 +94,6 @@ function renderSwitcher({ storedAnswer, answerFinalized, responseOverride }: {
     />,
   );
 }
-
-test('study-defined response spacing overrides the default', () => {
-  const view = renderSwitcher({ responseOverride: { ...response, style: { margin: '0 0 48px' } } });
-  expect(view.container.querySelector<HTMLElement>('.response')!.style.marginBottom).toBe('48px');
-});
-
-test('response spacing falls back to the existing default', () => {
-  const view = renderSwitcher({});
-  expect(view.container.querySelector<HTMLElement>('.response')!.style.marginBottom).toBe('var(--mantine-spacing-lg)');
-});
 
 // ── setup ─────────────────────────────────────────────────────────────────────
 

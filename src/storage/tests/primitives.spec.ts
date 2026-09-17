@@ -184,7 +184,6 @@ describe.each([
   });
 
   // cleanupModes test
-
   test('cleanupModes updates old modes to new modes', async () => {
     const oldModes = {
       studyNavigatorEnabled: true,
