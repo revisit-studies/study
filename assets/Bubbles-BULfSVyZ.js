@@ -1,0 +1,1 @@
+import{o as e,r as t}from"./rolldown-runtime-C0FnF6B9.js";import{t as n}from"./jsx-runtime-CA2T8_y1.js";var r=t({Bubbles:()=>a}),i=e(n(),1);function a({data:e}){return(0,i.jsx)(`g`,{children:e.map(({bubble:e},t)=>(0,i.jsx)(`circle`,{cx:e.x,cy:e.y,r:e.r,fill:`transparent`,stroke:`currentColor`},t))})}export{r as n,a as t};

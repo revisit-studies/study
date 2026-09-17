@@ -1,0 +1,1 @@
+function e(e){return e?parseInt(e,10):0}export{e as t};

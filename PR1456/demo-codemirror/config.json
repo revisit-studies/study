@@ -1,0 +1,156 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Code Editor with CodeMirror",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2026-09-03",
+    "description": "A demo study in which participants debug short JavaScript functions in an instrumented CodeMirror 6 editor.",
+    "organizations": [
+      "University of Utah",
+      "WPI"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-codemirror/assets/introduction.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true
+  },
+  "baseComponents": {
+    "debugTask": {
+      "description": "Find and fix the bug in a short JavaScript function.",
+      "instruction": "The function below has a bug. Edit it in the code editor until it behaves as described, then press \"Run tests\" to check your fix. Every key you press and every change to the document is recorded. You can move on once you have run the tests at least once.",
+      "type": "react-component",
+      "path": "demo-codemirror/assets/CodeEditorTask.tsx",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "testResults",
+          "prompt": "Test results",
+          "location": "sidebar",
+          "type": "reactive"
+        },
+        {
+          "id": "runCount",
+          "prompt": "Times you ran the tests",
+          "location": "sidebar",
+          "type": "reactive"
+        },
+        {
+          "id": "inputEvents",
+          "prompt": "Key and edit events recorded",
+          "location": "sidebar",
+          "type": "reactive"
+        },
+        {
+          "id": "solution",
+          "prompt": "Recorded solution",
+          "location": "sidebar",
+          "type": "reactive"
+        }
+      ]
+    }
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-codemirror/assets/introduction.md",
+      "response": []
+    },
+    "fix-sum-all": {
+      "baseComponent": "debugTask",
+      "description": "Fix an off-by-one error in a summing loop.",
+      "parameters": {
+        "functionName": "sumAll",
+        "starterCode": "// `sumAll` should return the sum of every number in `nums`.\n// It is off by one somewhere -- run the tests to see how.\nfunction sumAll(nums) {\n  let total = 0;\n  for (let i = 1; i < nums.length; i++) {\n    total += nums[i];\n  }\n  return total;\n}\n",
+        "testCases": [
+          {
+            "args": [
+              [
+                1,
+                2,
+                3
+              ]
+            ],
+            "expected": 6
+          },
+          {
+            "args": [
+              [
+                10
+              ]
+            ],
+            "expected": 10
+          },
+          {
+            "args": [
+              []
+            ],
+            "expected": 0
+          },
+          {
+            "args": [
+              [
+                -4,
+                4,
+                7
+              ]
+            ],
+            "expected": 7
+          }
+        ]
+      }
+    },
+    "fix-max-of": {
+      "baseComponent": "debugTask",
+      "description": "Fix a maximum-finding loop that is seeded with the wrong initial value.",
+      "parameters": {
+        "functionName": "maxOf",
+        "starterCode": "// `maxOf` should return the largest number in `nums`.\n// It works for lists with a positive number in them, but not for every list.\nfunction maxOf(nums) {\n  let best = 0;\n  for (const num of nums) {\n    if (num > best) {\n      best = num;\n    }\n  }\n  return best;\n}\n",
+        "testCases": [
+          {
+            "args": [
+              [
+                3,
+                9,
+                4
+              ]
+            ],
+            "expected": 9
+          },
+          {
+            "args": [
+              [
+                -7,
+                -2,
+                -30
+              ]
+            ],
+            "expected": -2
+          },
+          {
+            "args": [
+              [
+                5
+              ]
+            ],
+            "expected": 5
+          }
+        ]
+      }
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "fix-sum-all",
+      "fix-max-of"
+    ]
+  }
+}
