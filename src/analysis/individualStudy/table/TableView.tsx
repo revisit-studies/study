@@ -1,6 +1,6 @@
 /* eslint-disable react/no-unstable-nested-components */
 import {
-  Text, Flex, Group, Space, Tooltip, Badge, RingProgress, Stack, ActionIcon, SegmentedControl,
+  Text, Flex, Group, Space, Tooltip, Badge, RingProgress, Stack, ActionIcon, SegmentedControl, isLightColor,
 } from '@mantine/core';
 import {
   JSX, useCallback, useEffect, useMemo, useState,
@@ -97,13 +97,13 @@ export function TableView({
           return (
             cellValue.rejected ? (
               <Stack align="center" justify="center" gap={4} w="100%">
-                <Tooltip label="Rejected"><IconX size={30} color="red" style={{ marginBottom: -3 }} /></Tooltip>
+                <Tooltip label="Rejected"><IconX size={30} color="var(--mantine-color-red-text)" style={{ marginBottom: -3 }} /></Tooltip>
                 <Text size="xs" c="dimmed" ta="center">{cellValue.rejected.reason}</Text>
               </Stack>
             )
               : cellValue.completed ? (
                 <Group align="center" justify="center" w="100%">
-                  <Tooltip label="Completed"><IconCheck size={30} color="teal" style={{ marginBottom: -3 }} /></Tooltip>
+                  <Tooltip label="Completed"><IconCheck size={30} color="var(--mantine-color-teal-text)" style={{ marginBottom: -3 }} /></Tooltip>
                 </Group>
               )
                 : (
@@ -145,6 +145,7 @@ export function TableView({
           return (
             <Badge
               color={stageColor}
+              c={isLightColor(stageColor) ? 'black' : 'white'}
               size="md"
               variant="filled"
             >

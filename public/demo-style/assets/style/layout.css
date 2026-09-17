@@ -96,7 +96,7 @@
 
 /* Styles each response component with borders and hover effects */
 .response {
-  border: 1px solid #555;
+  border: 1px solid var(--mantine-color-default-border);
   border-radius: 6px;
   padding: 15px;
   margin: 2px;

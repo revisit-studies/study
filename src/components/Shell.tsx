@@ -43,6 +43,7 @@ import {
 } from '../utils/handleConditionLogic';
 import { StartupErrorScreen } from './StartupErrorScreen';
 import { materializeParticipantConfig } from '../parser/libraryParser';
+import { useStudyColorMode } from './AppThemeProvider';
 
 type StartupStorageStatus = Pick<StorageEngine, 'getEngine' | 'isConnected'>;
 
@@ -183,7 +184,11 @@ function createEmptyParticipantMetadata(): ParticipantMetadata {
     ip: '',
   };
 }
-export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
+function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
+  // Capture the system preference once, independently of saved app theme toggles.
+  const [initialSystemColorMode] = useState<'light' | 'dark'>(() => (
+    window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  ));
   // Pull study config
   const routeStudyId = useStudyId();
   const [activeConfig, setActiveConfig] = useState<ParsedConfig<StudyConfig> | null>(null);
@@ -298,6 +303,8 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       const urlParticipantId = activeConfig.uiConfig.urlParticipantIdParam
         ? searchParams.get(activeConfig.uiConfig.urlParticipantIdParam) ?? undefined
         : undefined;
+      const initialColorMode = activeConfig.uiConfig.colorMode === 'userPreference'
+        ? initialSystemColorMode : activeConfig.uiConfig.colorMode ?? 'light';
       try {
         // Make sure that we have a study database and that the study database has a sequence array
         await storageEngine.initializeStudyDb(canonicalStudyId);
@@ -323,7 +330,10 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
         ]);
         modes = resolvedModes;
 
-        const initialMetadata = createParticipantMetadata();
+        const initialMetadata: ParticipantMetadata = {
+          ...createParticipantMetadata(),
+          colorMode: initialColorMode,
+        };
 
         let participantSession = await storageEngine.initializeParticipantSession(
           searchParamsObject,
@@ -386,13 +396,13 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
         setStore(newStore);
 
-        if (resolvedModes.dataCollectionEnabled) {
+        if (resolvedModes.dataCollectionEnabled && !participantId) {
           fetchParticipantIp().then(async (ip) => {
             if (isCancelled || !ip.ip || participantSession.metadata.ip === ip.ip) {
               return;
             }
 
-            const metadataWithIp = createParticipantMetadata(ip.ip);
+            const metadataWithIp = { ...participantSession.metadata, ip: ip.ip };
             participantSession = {
               ...participantSession,
               metadata: metadataWithIp,
@@ -463,7 +473,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
             canonicalStudyId,
             fallbackConfig,
             fallbackSequence,
-            createEmptyParticipantMetadata(),
+            { ...createEmptyParticipantMetadata(), colorMode: initialColorMode },
             {},
             fallbackModes,
             '',
@@ -518,9 +528,16 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
     return () => {
       isCancelled = true;
     };
-  }, [storageEngine, activeConfig, canonicalStudyId, searchParams, participantId, studyCondition]);
+  }, [storageEngine, activeConfig, canonicalStudyId, searchParams, participantId, studyCondition, initialSystemColorMode]);
 
   const routing = useRoutes(routes);
+  const participantState = store?.store.getState();
+  const loadingColorMode = activeConfig?.uiConfig?.colorMode === 'userPreference'
+    ? initialSystemColorMode : activeConfig?.uiConfig?.colorMode;
+  const studyColorMode = participantState
+    ? participantState.metadata.colorMode ?? (participantState.config.uiConfig.colorMode === 'dark' ? 'dark' : 'light')
+    : loadingColorMode;
+  useStudyColorMode(studyColorMode);
   const hasConfigErrors = (activeConfig?.errors?.length ?? 0) > 0;
   const { isLoading, showCompletionCheckError } = getShellUiState({
     isValidStudyId,
@@ -584,4 +601,11 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       {content}
     </>
   );
+}
+
+export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
+  const studyId = useStudyId();
+  const [searchParams] = useSearchParams();
+  // A new study or replay participant must not retain the previous participant's store.
+  return <StudyShell key={`${studyId}:${searchParams.get('participantId') ?? ''}`} globalConfig={globalConfig} />;
 }

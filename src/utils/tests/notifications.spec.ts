@@ -9,8 +9,6 @@ vi.mock('@mantine/notifications', () => ({
   notifications: { show: vi.fn() },
 }));
 
-vi.mock('../notify.module.css', () => ({ default: {} }));
-
 afterEach(() => vi.clearAllMocks());
 
 describe('showNotification', () => {

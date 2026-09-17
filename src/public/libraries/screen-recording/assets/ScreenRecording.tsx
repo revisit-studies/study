@@ -127,7 +127,7 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
                 autoPlay
                 playsInline
                 muted
-                style={{ width: '400px', border: '1px solid #ccc', marginTop: '1rem' }}
+                style={{ width: '400px', border: '1px solid var(--mantine-color-default-border)', marginTop: '1rem' }}
               />
               <p><i>Please make sure you are recording the correct tab or window. Otherwise, stop and re-share the correct one.</i></p>
 
@@ -136,7 +136,7 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
               <strong>Speak</strong>
               {' '}
               into your microphone to check if audio is working.
-              {audioCapturing ? <Box h={200} w={400} bd="1px solid #ccc"><RecordingAudioWaveform height={200} width={400} /></Box> : <Box h={200} w={400} bd="1px solid #ccc" />}
+              {audioCapturing ? <Box h={200} w={400} bd="1px solid var(--mantine-color-default-border)"><RecordingAudioWaveform height={200} width={400} /></Box> : <Box h={200} w={400} bd="1px solid var(--mantine-color-default-border)" />}
             </li>
           </ol>
           <strong>Note:</strong>
@@ -174,7 +174,7 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
             autoPlay
             playsInline
             muted
-            style={{ width: '400px', border: '1px solid #ccc', marginTop: '1rem' }}
+            style={{ width: '400px', border: '1px solid var(--mantine-color-default-border)', marginTop: '1rem' }}
           />
           <p><i>Please make sure you are recording the correct tab or window. Otherwise, stop and re-share the correct one.</i></p>
 

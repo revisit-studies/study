@@ -747,8 +747,8 @@ export function ResponseBlock({
             position: 'sticky',
             bottom: 12,
             zIndex: 10,
-            border: '1px solid var(--mantine-color-gray-2)',
-            backgroundColor: 'white',
+            border: '1px solid var(--mantine-color-default-border)',
+            backgroundColor: 'var(--mantine-color-body)',
             borderRadius: 'var(--mantine-radius-md)',
             boxShadow: 'var(--mantine-shadow-sm)',
           }}
@@ -757,7 +757,7 @@ export function ResponseBlock({
             <ThemeIcon variant="transparent" color="orange" size="md">
               <IconAlertTriangle size={16} />
             </ThemeIcon>
-            <Text c="black" size="sm">
+            <Text size="sm">
               {summaryMessage}
             </Text>
           </Group>
