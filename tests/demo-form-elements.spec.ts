@@ -166,6 +166,9 @@ test('Test questionnaire component with responses and randomizing questions and 
   // Go to the next page
   await nextClick(page);
 
+  // Go to the next page
+  await nextClick(page);
+
   // Fill the survey: Text Validation
   await expect(page.getByText('Text Validation', { exact: true })).toBeVisible();
   const textValidationReplayPath = new URL(page.url()).pathname;

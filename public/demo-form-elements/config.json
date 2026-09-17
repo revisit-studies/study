@@ -309,6 +309,17 @@
         }
       ]
     },
+    "Next Button Alignment": {
+      "type": "questionnaire",
+      "nextButtonAlignment": "left",
+      "response": [
+        {
+          "id": "next-button-alignment-left",
+          "type": "textOnly",
+          "prompt": "# Next Button Alignment\n\nUse `nextButtonAlignment` to align the navigation buttons within the main content area or sidebar.\n\nYou can align the Next button to the `left`, `center`, or `right` (default). This page uses `\"nextButtonAlignment\": \"left\"`."
+        }
+      ]
+    },
     "Text Validation": {
       "type": "questionnaire",
       "response": [
@@ -1216,6 +1227,7 @@
     "components": [
       "Introduction",
       "Form Elements",
+      "Next Button Alignment",
       "Text Validation",
       "Default Values",
       "Custom Response",
