@@ -237,6 +237,29 @@ describe('Shell', () => {
     expect(mockStorageEngine!.updateParticipantMetadata).not.toHaveBeenCalled();
   });
 
+  test.each([false, true])('keeps the initial dark preference during startup recovery (disconnected=%s)', async (disconnected) => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      vi.stubEnv('VITE_STORAGE_ENGINE', 'firebase');
+      mockUserColorMode = 'dark';
+      setupThemeSession('userPreference');
+      mockStorageEngine!.initializeStudyDb.mockRejectedValue(new Error('db init failed'));
+      mockStorageEngine!.isConnected.mockReturnValue(!disconnected);
+      mockStorageEngine!.peekCurrentParticipantId = vi.fn().mockResolvedValue(undefined);
+
+      const view = render(<Shell globalConfig={globalConfig} />);
+      await waitFor(() => expect(studyStoreCreator).toHaveBeenCalled());
+      expect(vi.mocked(studyStoreCreator).mock.calls[0][3].colorMode).toBe('dark');
+      await waitFor(() => expect(useStudyColorMode).toHaveBeenLastCalledWith('dark'));
+      mockUserColorMode = 'light';
+      view.rerender(<Shell globalConfig={globalConfig} />);
+      expect(useStudyColorMode).toHaveBeenLastCalledWith('dark');
+    } finally {
+      consoleSpy.mockRestore();
+      vi.unstubAllEnvs();
+    }
+  });
+
   test.each([
     ['dark', 'dark'], ['light', 'light'], ['userPreference', 'light'], [undefined, 'light'],
   ] as const)('uses historical %s for legacy replay without recording a new preference', async (configuredMode, expectedMode) => {

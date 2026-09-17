@@ -204,6 +204,7 @@ describe('TaskProvenanceTimeline', () => {
       <RealTaskProvenanceTimeline xScale={xScale} provenanceGraph={provenanceGraph} width={500} height={50} currentNode={null} trialName="trial_0" startTime={0} margin={margin} />,
     );
     expect(html).toContain('<line');
+    expect(html).toContain('data-testid="task-provenance-baseline"');
     expect(html).toContain('stroke="var(--mantine-color-dimmed)"');
   });
 

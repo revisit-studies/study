@@ -261,7 +261,7 @@ export interface UIConfig {
   withSidebar: boolean;
 
   // Optional fields
-  /** The study's color mode. Defaults to light. userPreference follows the user's saved choice, or the system color scheme when no choice is saved. */
+  /** The study's color mode. Defaults to light. userPreference resolves the user's saved choice, or the system color scheme when no choice is saved, once at participation start. The resolved mode is saved for the participant and retained for resume and replay. */
   colorMode?: 'light' | 'dark' | 'userPreference';
   /** The width of the left sidebar. Defaults to 300. */
   sidebarWidth?: number;

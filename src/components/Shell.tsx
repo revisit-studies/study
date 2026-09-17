@@ -301,6 +301,8 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
       const urlParticipantId = activeConfig.uiConfig.urlParticipantIdParam
         ? searchParams.get(activeConfig.uiConfig.urlParticipantIdParam) ?? undefined
         : undefined;
+      const initialColorMode = activeConfig.uiConfig.colorMode === 'userPreference'
+        ? initialUserColorMode : activeConfig.uiConfig.colorMode ?? 'light';
       try {
         // Make sure that we have a study database and that the study database has a sequence array
         await storageEngine.initializeStudyDb(canonicalStudyId);
@@ -328,8 +330,7 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
         const initialMetadata: ParticipantMetadata = {
           ...createParticipantMetadata(),
-          colorMode: activeConfig.uiConfig.colorMode === 'userPreference'
-            ? initialUserColorMode : activeConfig.uiConfig.colorMode ?? 'light',
+          colorMode: initialColorMode,
         };
 
         let participantSession = await storageEngine.initializeParticipantSession(
@@ -470,7 +471,7 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
             canonicalStudyId,
             fallbackConfig,
             fallbackSequence,
-            createEmptyParticipantMetadata(),
+            { ...createEmptyParticipantMetadata(), colorMode: initialColorMode },
             {},
             fallbackModes,
             '',

@@ -140,7 +140,7 @@ test('Test vega component with reactive response', async ({ page }) => {
 
   const replaySelects = page.locator('main select');
   await expect(replaySelects).toHaveCount(2);
-  await expect(page.locator('svg line[stroke="black"]')).toHaveCount(1, { timeout: 15000 });
+  await expect(page.getByTestId('task-provenance-baseline')).toHaveCount(1, { timeout: 15000 });
   await expect(replaySelects.nth(0)).toHaveValue('IMDB Rating', { timeout: 15000 });
   await expect(replaySelects.nth(1)).toHaveValue('Rotten Tomatoes Rating', { timeout: 15000 });
   await seekReplay(page, recording.startTime, recording.endTime, recording.endTime, async () => (

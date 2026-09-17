@@ -4679,7 +4679,7 @@
           "type": "boolean"
         },
         "colorMode": {
-          "description": "The study's color mode. Defaults to light. userPreference follows the user's saved choice, or the system color scheme when no choice is saved.",
+          "description": "The study's color mode. Defaults to light. userPreference resolves the user's saved choice, or the system color scheme when no choice is saved, once at participation start. The resolved mode is saved for the participant and retained for resume and replay.",
           "enum": [
             "light",
             "dark",
