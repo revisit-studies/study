@@ -1,0 +1,20 @@
+div[role="radiogroup"] > div {
+    justify-content: center !important;
+}
+
+div[role="radiogroup"] > div > button {
+    background-color: #f0f0f0 !important;
+    color: #1a1a1a !important;
+    width: 108px !important;
+}
+
+div[role="radiogroup"] > div > button:active,
+div[role="radiogroup"] > div > button:hover,
+div[role="radiogroup"] > div > button:focus {
+    background-color: #dddddd !important;
+}
+
+
+button > div > p {
+    font-weight: 600 !important;
+}

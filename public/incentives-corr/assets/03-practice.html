@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Stroop test</title>
+    <!-- Load revisit-communicate to be able to send data to reVISit -->
+    <script src="../../revisitUtilities/revisit-communicate.js"></script>
+    <script>
+      let r1;
+      let r2;
+
+      // Get data from the config file
+      Revisit.onDataReceive((data) => {
+        r1 = data.r1;
+        r2 = data.r1 + data.delta;
+        
+        const randomize = Math.round(Math.random());
+        const order = randomize ? [r1, r2] : [r2, r1];
+        const correct = randomize ? 'right' : 'left'; // r2 > r1 always
+      })
+    </script>
+  </head>
+
+  <body>
+    <img id="stimuli-left"/>
+    <img id="stimuli-right"/>
+  </body>
+
+  <style>
+    img {
+      height: 300px;
+    }
+  </style>
+</html>

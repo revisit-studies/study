@@ -1,0 +1,1 @@
+<p style="font-size: 40px; color: {{inkColor}}; margin: auto"><b>{{word}}</b></p>
