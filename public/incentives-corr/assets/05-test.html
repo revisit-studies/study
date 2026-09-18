@@ -6,27 +6,46 @@
     <!-- Load revisit-communicate to be able to send data to reVISit -->
     <script src="../../revisitUtilities/revisit-communicate.js"></script>
     <script>
-      let correct, corrLeft, corrRight;
-      // Get data from the config file
-      Revisit.onDataReceive((data) => {
-        const r1 = Math.round(data.r1 * 100) / 100;
-        const r2 = Math.round((data.r1 + data.delta)*100) / 100;
-        
-        const randomize = Math.round(Math.random());
-        const order = randomize ? ["r1", "r2"] : ["r2", "r1"];
-        
-        correct = randomize ? 'right' : 'left'; // r2 > r1 always
-        corrLeft = randomize ? r1 : r2;
-        corrRight = randomize ? r2 : r1;
+      const randomize = Math.round(Math.random());
+      const order = randomize ? ["r1", "r2"] : ["r2", "r1"];
 
-        const imgLeftURL = `./img/stimuli/${data.vis}-${order[0]}-${r1}_${r2}-size_100.jpg`;
-        const imgRightURL = `./img/stimuli/${data.vis}-${order[1]}-${r1}_${r2}-size_100.jpg`;
+      const r1 = {{{r1}}};
+      const r2 = r1 + {{{delta}}};
 
-        // set left image
-        document.getElementById("stimuli-left").src = imgLeftURL;
-        // set right image
-        document.getElementById("stimuli-right").src = imgRightURL;
-      })
+      const visCond = {{{vis}}};
+
+      console.log(visCond, r1, r2);
+      
+      const correct = randomize ? 'right' : 'left'; // r2 > r1 always
+      const corrLeft = randomize ? r1 : r2;
+      const corrRight = randomize ? r2 : r1;
+
+      // const imgLeftURL = `./img/stimuli/${vis}-${order[0]}-${r1}_${r2}-size_100.jpg`;
+      // const imgRightURL = `./img/stimuli/${vis}-${order[1]}-${r1}_${r2}-size_100.jpg`;
+
+
+      // // set left image
+      // document.getElementById("stimuli-left").src = imgLeftURL;
+      // // set right image
+      // document.getElementById("stimuli-right").src = imgRightURL;
+
+      // // Get data from the config file
+      // Revisit.onDataReceive((data) => {
+
+      //   const r1 = Math.round(data.r1 * 100) / 100;
+      //   const r2 = Math.round((data.r1 + data.delta)*100) / 100;
+        
+      //   const randomize = Math.round(Math.random());
+      //   const order = randomize ? ["r1", "r2"] : ["r2", "r1"];
+        
+      //   correct = randomize ? 'right' : 'left'; // r2 > r1 always
+      //   corrLeft = randomize ? r1 : r2;
+      //   corrRight = randomize ? r2 : r1;
+
+      //   const imgLeftURL = `./img/stimuli/${data.vis}-${order[0]}-${r1}_${r2}-size_100.jpg`;
+      //   const imgRightURL = `./img/stimuli/${data.vis}-${order[1]}-${r1}_${r2}-size_100.jpg`;
+
+      // })
     </script>
   </head>
 

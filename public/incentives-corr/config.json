@@ -65,6 +65,7 @@
     },
     "test": {
       "type": "website",
+      "templated": true,
       "path": "incentives-corr/assets/05-test.html",
       "parameters": {"taskid": "test"},
       "stylesheetPath": "incentives-corr/assets/task.css",
