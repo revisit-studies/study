@@ -60,6 +60,7 @@ vi.mock('@mantine/core', () => ({
   Group: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
   Text: ({ children }: { children?: ReactNode }) => <p>{children}</p>,
   ThemeIcon: ({ children }: { children?: ReactNode }) => <span>{children}</span>,
+  Kbd: ({ children }: { children?: ReactNode }) => <kbd>{children}</kbd>,
 }));
 
 vi.mock('react-router', () => ({
