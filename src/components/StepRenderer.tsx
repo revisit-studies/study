@@ -361,6 +361,7 @@ export function StepRenderer() {
               {/* 10px is the gap between the sidebar and the main content */}
               <AppShell.Main
                 className="main"
+                px={0}
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
@@ -379,7 +380,18 @@ export function StepRenderer() {
                     Study Browser
                   </Button>
                 )}
-                <Outlet />
+                <div
+                  className="study-content"
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    flexGrow: 1,
+                    minWidth: 0,
+                    padding: componentConfig.style?.padding ?? '0 40px',
+                  }}
+                >
+                  <Outlet />
+                </div>
               </AppShell.Main>
             </Flex>
             {isAnalysis && (

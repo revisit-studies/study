@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { CSSProperties, ReactNode } from 'react';
 import { render, cleanup } from '@testing-library/react';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
@@ -27,7 +27,11 @@ const {
 }));
 
 vi.mock('@mantine/core', () => ({
-  Box: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+  Box: ({
+    children, className, style, 'data-answer-width': answerWidth,
+  }: {
+    children?: ReactNode; className?: string; style?: CSSProperties; 'data-answer-width'?: string;
+  }) => <div className={className} style={style} data-answer-width={answerWidth}>{children}</div>,
   Checkbox: () => <input type="checkbox" />,
   Divider: () => <hr />,
 }));
@@ -138,6 +142,45 @@ describe('ResponseSwitcher stored answer locking', () => {
     expect(() => renderSwitcher({ storedAnswer: undefined, answerFinalized: false })).not.toThrow();
     expect(capturedStringInputProps.disabled).toBe(true);
     expect(capturedStringInputProps.answer).toMatchObject({ value: undefined, readOnly: true });
+  });
+});
+
+describe('ResponseSwitcher style overrides', () => {
+  test('lets an explicit width control the response and releases the input cap', () => {
+    const { container } = render(
+      <ResponseSwitcher
+        response={{ ...response, style: { width: '600px' } } as Response}
+        form={form}
+        index={1}
+        config={{} as IndividualComponent}
+      />,
+    );
+    const wrapper = container.querySelector<HTMLElement>('.response');
+    expect(wrapper?.style.width).toBe('600px');
+    expect(wrapper?.dataset.answerWidth).toBe('full');
+  });
+
+  test('keeps user styles when displaying a validation error', () => {
+    const { container } = render(
+      <ResponseSwitcher
+        response={{
+          ...response,
+          type: 'custom',
+          style: {
+            padding: '0', border: '0', borderRadius: '0', backgroundColor: 'white',
+          },
+        } as Response}
+        customError="Required answer"
+        form={form}
+        index={1}
+        config={{} as IndividualComponent}
+      />,
+    );
+    const wrapper = container.querySelector<HTMLElement>('.response');
+    expect(wrapper?.style.padding).toBe('0px');
+    expect(wrapper?.style.borderWidth).toBe('0px');
+    expect(wrapper?.style.borderRadius).toBe('0px');
+    expect(wrapper?.style.backgroundColor).toBe('white');
   });
 });
 

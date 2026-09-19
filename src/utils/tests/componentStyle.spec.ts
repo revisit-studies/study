@@ -2,6 +2,13 @@ import { describe, expect, test } from 'vitest';
 import { getComponentContainerStyle } from '../componentStyle';
 
 describe('getComponentContainerStyle', () => {
+  test('does not duplicate page padding on the stimulus', () => {
+    const style = getComponentContainerStyle('image', { padding: '0 12px', backgroundColor: 'white' });
+
+    expect(style.padding).toBeUndefined();
+    expect(style.backgroundColor).toBe('white');
+  });
+
   test('adds maxWidth clamp when width is provided without maxWidth', () => {
     const style = getComponentContainerStyle('image', { width: '800px' });
 

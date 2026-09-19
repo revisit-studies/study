@@ -27,6 +27,7 @@ const pdfExportMocks = vi.hoisted(() => ({
   waitForNextPaint: vi.fn((): Promise<void> => Promise.resolve()),
 }));
 let mockShowTitleBar = true;
+let mockPagePadding: string | undefined;
 let mockStorageEngine: Pick<LocalStorageEngine, 'subscribeToParticipantDataWriteErrors'> = {
   subscribeToParticipantDataWriteErrors: mockSubscribeToParticipantDataWriteErrors,
 };
@@ -193,6 +194,7 @@ vi.mock('../../utils/handleComponentInheritance', () => ({
     withSidebar: true,
     sidebarWidth: 300,
     showTitleBar: mockShowTitleBar,
+    style: { padding: mockPagePadding },
     windowEventDebounceTime: 100,
   })),
 }));
@@ -288,8 +290,18 @@ describe('StepRenderer', () => {
   });
 
   afterEach(() => {
+    mockPagePadding = undefined;
     cleanup();
     vi.restoreAllMocks();
+  });
+
+  test.each([undefined, '0', '8px 20px'])('page padding honors %s without changing the header layout', async (padding) => {
+    mockPagePadding = padding;
+    const { container } = await act(async () => render(<StepRenderer />));
+    const content = container.querySelector<HTMLElement>('.study-content');
+
+    expect(content?.style.padding).toBe(padding === undefined ? '0px 40px' : padding === '0' ? '0px' : padding);
+    expect(content?.querySelector('[data-testid="outlet"]')).not.toBeNull();
   });
 
   test('shows the blocking storage modal when a queued participant data write fails', async () => {

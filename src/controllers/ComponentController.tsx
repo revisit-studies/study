@@ -204,13 +204,15 @@ export function ComponentController() {
     }
 
     return {
-      ...componentContainerStyle,
       border: '1px solid var(--mantine-color-red-3)',
       backgroundColor: 'var(--mantine-color-red-0)',
       borderRadius: 'var(--mantine-radius-md)',
       padding: 'var(--mantine-spacing-sm)',
+      ...componentContainerStyle,
+      // Configured padding is already applied to the surrounding page.
+      ...(currentConfig?.style?.padding !== undefined ? { padding: 0 } : {}),
     };
-  }, [componentContainerStyle, hasStimulusIssue]);
+  }, [componentContainerStyle, currentConfig?.style?.padding, hasStimulusIssue]);
 
   useEffect(() => {
     // Assume that screen recording video exists.

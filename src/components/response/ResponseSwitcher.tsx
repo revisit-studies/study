@@ -219,11 +219,11 @@ export function ResponseSwitcher({
     const errorColor = response.required === false ? 'orange' : 'red';
 
     return {
-      ...responseStyle,
       border: `1px solid var(--mantine-color-${errorColor}-3)`,
       backgroundColor: `var(--mantine-color-${errorColor}-0)`,
       borderRadius: 'var(--mantine-radius-md)',
       padding: 'var(--mantine-spacing-sm)',
+      ...responseStyle,
     };
   }, [displayError, response.required, responseStyle]);
 

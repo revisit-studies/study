@@ -29,6 +29,14 @@ import {
 import { validateResponse } from '../responseValidation';
 
 describe('getResponseWidth', () => {
+  test.each(['width', 'minWidth', 'maxWidth'] as const)('explicit %s removes the default input width limit', (property) => {
+    expect(getResponseWidth({ type: 'shortText', style: { [property]: '600px' } } as Response)).toBe('full');
+  });
+
+  test('unrelated styles keep the default input width', () => {
+    expect(getResponseWidth({ type: 'shortText', style: { color: 'red', padding: '0' } } as Response)).toBe('medium');
+  });
+
   test.each(['numerical', 'date', 'time'] as const)('%s uses the small width', (type) => {
     expect(getResponseWidth({ type } as Response)).toBe('small');
   });

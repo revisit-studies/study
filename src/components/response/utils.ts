@@ -16,6 +16,10 @@ type ResponseWithDefault = Response & { default?: ResponseDefault };
 export const DONT_KNOW_DEFAULT_VALUE = "I don't know";
 
 export function getResponseWidth(response: Response): 'small' | 'medium' | 'full' {
+  // Explicit sizing owns the available width instead of the default field cap.
+  if (response.style?.width !== undefined || response.style?.minWidth !== undefined || response.style?.maxWidth !== undefined) {
+    return 'full';
+  }
   if (response.type === 'numerical' || response.type === 'date' || response.type === 'time') {
     return 'small';
   }
