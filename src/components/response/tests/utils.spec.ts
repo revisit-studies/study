@@ -10,6 +10,7 @@ import type { CustomResponseValidate } from '../../../store/types';
 import {
   generateInitFields,
   getDefaultFieldValue,
+  getResponseWidth,
   generateValidation,
   mergeReactiveAnswers,
   normalizeCheckboxValue,
@@ -26,6 +27,36 @@ import {
   usesStandaloneDontKnowField,
 } from '../responseErrors';
 import { validateResponse } from '../responseValidation';
+
+describe('getResponseWidth', () => {
+  test.each(['numerical', 'date', 'time'] as const)('%s uses the small width', (type) => {
+    expect(getResponseWidth({ type } as Response)).toBe('small');
+  });
+
+  test.each(['date', 'month', 'year'] as const)('date option %s uses the small width', (options) => {
+    expect(getResponseWidth({ type: 'date', options } as Response)).toBe('small');
+  });
+
+  test.each(['phoneNumber', 'usPhoneNumber'] as const)('%s uses the small width', (builtInValidation) => {
+    expect(getResponseWidth({ type: 'shortText', builtInValidation } as Response)).toBe('small');
+  });
+
+  test.each([undefined, 'email', 'url'] as const)('short text with %s validation uses the medium width', (builtInValidation) => {
+    expect(getResponseWidth({ type: 'shortText', builtInValidation } as Response)).toBe('medium');
+  });
+
+  test.each([undefined, 3])('dropdown with maxSelections %s uses the medium width', (maxSelections) => {
+    expect(getResponseWidth({ type: 'dropdown', maxSelections } as Response)).toBe('medium');
+  });
+
+  test.each([
+    'longText', 'radio', 'checkbox', 'buttons', 'likert', 'slider',
+    'matrix-radio', 'matrix-checkbox', 'ranking-sublist', 'ranking-categorical',
+    'ranking-pairwise', 'reactive', 'textOnly', 'divider', 'custom',
+  ] as const)('%s keeps the full width', (type) => {
+    expect(getResponseWidth({ type } as Response)).toBe('full');
+  });
+});
 
 describe('generateInitFields', () => {
   const originalWindow = globalThis.window;

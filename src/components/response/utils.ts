@@ -15,6 +15,18 @@ type ResponseWithDefault = Response & { default?: ResponseDefault };
 
 export const DONT_KNOW_DEFAULT_VALUE = "I don't know";
 
+export function getResponseWidth(response: Response): 'small' | 'medium' | 'full' {
+  if (response.type === 'numerical' || response.type === 'date' || response.type === 'time') {
+    return 'small';
+  }
+  if (response.type === 'shortText') {
+    return response.builtInValidation === 'phoneNumber' || response.builtInValidation === 'usPhoneNumber'
+      ? 'small'
+      : 'medium';
+  }
+  return response.type === 'dropdown' ? 'medium' : 'full';
+}
+
 export function normalizeCheckboxValue(value: unknown): string[] {
   if (Array.isArray(value)) {
     return value.filter((item): item is string => typeof item === 'string');
