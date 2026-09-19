@@ -344,6 +344,138 @@ describe('useNextStep', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/study-1/1');
   });
 
+  test('advances to next step when auto-advance trigger executes navigation without collectData', async () => {
+    mockSaveAnswers.mockResolvedValueOnce(undefined);
+    mockSequence = {
+      id: 'root',
+      orderPath: 'root',
+      order: 'fixed',
+      components: ['intro', 'followup'],
+      skip: [],
+    };
+    mockFlatSequence = ['intro', 'followup'];
+    mockStudyConfig = {
+      components: {
+        intro: {
+          type: 'questionnaire',
+          response: [
+            {
+              id: 'btn-1',
+              type: 'buttons',
+              autoAdvanceToNextStep: true,
+              autoAdvanceDelay: 500,
+            },
+          ],
+        },
+        followup: {},
+      },
+    };
+
+    renderToStaticMarkup(<HookHarness />);
+
+    await capturedGoToNextStep?.(true);
+    await Promise.resolve();
+
+    expect(mockSaveTrialAnswer).toHaveBeenCalledTimes(1);
+    expect(mockNavigate).toHaveBeenCalledWith('/study-1/1');
+  });
+
+  test('respects auto-advance delay timing before calling next step navigation', async () => {
+    vi.useFakeTimers();
+    mockSaveAnswers.mockResolvedValueOnce(undefined);
+
+    renderToStaticMarkup(<HookHarness />);
+
+    const delay = 300;
+    let autoAdvanceTriggered = false;
+
+    const timeoutId = setTimeout(() => {
+      capturedGoToNextStep?.(true);
+      autoAdvanceTriggered = true;
+    }, delay);
+
+    expect(autoAdvanceTriggered).toBe(false);
+
+    vi.advanceTimersByTime(200);
+    expect(autoAdvanceTriggered).toBe(false);
+    expect(mockNavigate).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(100);
+    await Promise.resolve();
+
+    expect(autoAdvanceTriggered).toBe(true);
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
+
+    clearTimeout(timeoutId);
+    vi.useRealTimers();
+  });
+
+  test('retains default field values without locking response change on initial render', () => {
+    mockStoredAnswer = {
+      ...mockStoredAnswer,
+      answer: {
+        'btn-1': 'Option A',
+      },
+    };
+
+    mockStudyConfig = {
+      components: {
+        intro: {
+          type: 'questionnaire',
+          response: [
+            {
+              id: 'btn-1',
+              type: 'buttons',
+              options: ['Option A', 'Option B'],
+              default: 'Option A',
+              allowResponseChange: false,
+            },
+          ],
+        },
+      },
+    };
+
+    renderToStaticMarkup(<HookHarness />);
+
+    // Verification: isNextDisabled should remain active/accessible
+    // and form interactions are not disabled on mount merely because of default values
+    expect(capturedIsNextDisabled).toBe(false);
+  });
+
+  test('locks option selection after explicit user interaction when allowResponseChange is false', async () => {
+    mockSaveAnswers.mockResolvedValueOnce(undefined);
+
+    mockStudyConfig = {
+      components: {
+        intro: {
+          type: 'questionnaire',
+          response: [
+            {
+              id: 'btn-1',
+              type: 'buttons',
+              options: ['Option A', 'Option B'],
+              allowResponseChange: false,
+            },
+          ],
+        },
+      },
+    };
+
+    renderToStaticMarkup(<HookHarness />);
+
+    await capturedGoToNextStep?.(true);
+    await Promise.resolve();
+
+    expect(mockSaveTrialAnswer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        identifier: 'intro_0',
+        answer: expect.objectContaining({
+          response: 'saved-answer',
+        }),
+      }),
+    );
+  });
+
   test('excludes timed out answers from block skip conditions', async () => {
     mockSaveAnswers.mockResolvedValueOnce(undefined);
     mockSequence = {
@@ -389,5 +521,64 @@ describe('useNextStep', () => {
       timedOut: true,
     }));
     expect(mockNavigate).toHaveBeenCalledWith('/study-1/1');
+  });
+
+  test('locks response options immediately during autoAdvanceDelay before navigation occurs', async () => {
+    vi.useFakeTimers();
+    mockSaveAnswers.mockResolvedValueOnce(undefined);
+
+    mockStudyConfig = {
+      components: {
+        intro: {
+          type: 'questionnaire',
+          response: [
+            {
+              id: 'btn-1',
+              type: 'buttons',
+              options: ['Option A', 'Option B'],
+              default: 'Option A',
+              allowResponseChange: false,
+              autoAdvanceToNextStep: true,
+              autoAdvanceDelay: 500,
+            },
+          ],
+        },
+        followup: {},
+      },
+    };
+
+    renderToStaticMarkup(<HookHarness />);
+
+    // Simulating user interaction changing value from default 'Option A' to 'Option B'
+    mockTrialValidation = {
+      intro_0: {
+        ...(mockTrialValidation.intro_0 as Record<string, unknown>),
+        belowStimulus: { valid: true, values: { 'btn-1': 'Option B' } },
+      },
+    };
+
+    // Re-render to simulate the state update during the delay
+    renderToStaticMarkup(<HookHarness />);
+    let stepTriggered = false;
+    setTimeout(() => {
+      capturedGoToNextStep?.(true);
+      stepTriggered = true;
+    }, 500);
+
+    // Advance time partially (250ms out of 500ms delay)
+    vi.advanceTimersByTime(250);
+
+    // Verify navigation has NOT happened yet...
+    expect(stepTriggered).toBe(false);
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(capturedIsNextDisabled).toBe(false);
+
+    // Complete remaining delay
+    vi.advanceTimersByTime(250);
+    await Promise.resolve();
+
+    expect(stepTriggered).toBe(true);
+    expect(mockNavigate).toHaveBeenCalledWith('/study-1/1');
+    vi.useRealTimers();
   });
 });

@@ -35,6 +35,22 @@ const getQueryParameters = () => {
   return new URLSearchParams(window.location.search);
 };
 
+export function hasAnswerValue(value: unknown): boolean {
+  if (value === undefined || value === null || value === '') {
+    return false;
+  }
+
+  if (Array.isArray(value)) {
+    return value.length > 0 && value.some((entry) => hasAnswerValue(entry));
+  }
+
+  if (typeof value === 'object') {
+    return Object.values(value as Record<string, unknown>).some((entry) => hasAnswerValue(entry));
+  }
+
+  return true;
+}
+
 export const getDefaultFieldValue = (response: Response) => {
   const responseDefault = (response as ResponseWithDefault).default;
   if (!Object.hasOwn(response, 'default') || responseDefault === undefined) {

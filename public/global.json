@@ -58,6 +58,7 @@
     "library-virtual-chinrest",
     "library-vlat",
     "test-audio",
+    "test-auto-advance",
     "test-device-restriction",
     "test-library",
     "test-likert-matrix",
@@ -245,6 +246,10 @@
     },
     "test-audio": {
       "path": "test-audio/config.json",
+      "test": true
+    },
+    "test-auto-advance": {
+      "path": "test-auto-advance/config.json",
       "test": true
     },
     "test-device-restriction": {
