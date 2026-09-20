@@ -1123,7 +1123,7 @@ export function preparePdfClone(
     main.style.width = '100%';
     main.style.minWidth = '0';
     main.style.minHeight = 'auto';
-    main.style.paddingInline = '16px';
+    main.style.paddingInline = '0';
     main.style.paddingBottom = '32px';
   }
 

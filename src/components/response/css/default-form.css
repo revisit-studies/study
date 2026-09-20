@@ -1,7 +1,3 @@
-:where(.responseBlock-sidebar) {
-  padding-inline: 16px;
-}
-
 /* numerical, date (date/month/year), time, shortText (phoneNumber/usPhoneNumber) */
 :where(.response[data-answer-width="small"]) {
   --response-field-max-width: 120px;

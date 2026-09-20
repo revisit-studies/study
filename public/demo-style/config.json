@@ -185,7 +185,6 @@
           "location": "belowStimulus",
           "min": 1,
           "max": 999,
-          "placeholder": "Enter number",
           "required": false,
           "style": {
             "width": "700px",

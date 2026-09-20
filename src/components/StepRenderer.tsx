@@ -387,7 +387,7 @@ export function StepRenderer() {
                     flexDirection: 'column',
                     flexGrow: 1,
                     minWidth: 0,
-                    padding: componentConfig.style?.padding ?? '0 40px',
+                    padding: '0 40px',
                   }}
                 >
                   <Outlet />

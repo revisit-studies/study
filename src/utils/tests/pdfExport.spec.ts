@@ -90,7 +90,9 @@ describe('PDF export helpers', () => {
     liveElement.innerHTML = `
       <header data-pdf-export-header style="display: none"></header>
       <aside class="sidebar" style="display: block; width: 300px"></aside>
-      <main class="main" style="width: calc(100% - 310px)"><iframe title="Chart"></iframe></main>
+      <main class="main" style="width: calc(100% - 310px); padding-inline: 0px">
+        <div class="study-content" style="padding: 0 40px"><iframe title="Chart"></iframe></div>
+      </main>
     `;
     const clonedContainer = document.createElement('div');
     clonedContainer.append(liveElement.cloneNode(true));
@@ -114,7 +116,8 @@ describe('PDF export helpers', () => {
     expect(clonedElement?.querySelector<HTMLElement>('.sidebar')?.style.width).toBe('300px');
     expect(clonedElement?.querySelector<HTMLElement>('.main')?.style.gridColumn).toBe('2');
     expect(clonedElement?.querySelector<HTMLElement>('.main')?.style.width).toBe('100%');
-    expect(clonedElement?.querySelector<HTMLElement>('.main')?.style.paddingInline).toBe('16px');
+    expect(clonedElement?.querySelector<HTMLElement>('.main')?.style.paddingInline).toBe('0px');
+    expect(clonedElement?.querySelector<HTMLElement>('.study-content')?.style.padding).toBe('0px 40px');
     expect(clonedElement?.querySelector<HTMLElement>('.main')?.style.paddingBottom).toBe('32px');
     const iframeImage = clonedElement?.querySelector<HTMLImageElement>('img[alt="Chart"]');
     expect(iframeImage?.src).toBe('data:image/png;base64,chart');

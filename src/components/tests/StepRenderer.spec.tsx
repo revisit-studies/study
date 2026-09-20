@@ -295,12 +295,12 @@ describe('StepRenderer', () => {
     vi.restoreAllMocks();
   });
 
-  test.each([undefined, '0', '8px 20px'])('page padding honors %s without changing the header layout', async (padding) => {
+  test.each([undefined, '0', '8px 20px'])('component padding %s does not change the page gutter', async (padding) => {
     mockPagePadding = padding;
     const { container } = await act(async () => render(<StepRenderer />));
     const content = container.querySelector<HTMLElement>('.study-content');
 
-    expect(content?.style.padding).toBe(padding === undefined ? '0px 40px' : padding === '0' ? '0px' : padding);
+    expect(content?.style.padding).toBe('0px 40px');
     expect(content?.querySelector('[data-testid="outlet"]')).not.toBeNull();
   });
 

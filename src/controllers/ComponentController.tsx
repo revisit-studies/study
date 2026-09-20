@@ -209,10 +209,8 @@ export function ComponentController() {
       borderRadius: 'var(--mantine-radius-md)',
       padding: 'var(--mantine-spacing-sm)',
       ...componentContainerStyle,
-      // Configured padding is already applied to the surrounding page.
-      ...(currentConfig?.style?.padding !== undefined ? { padding: 0 } : {}),
     };
-  }, [componentContainerStyle, currentConfig?.style?.padding, hasStimulusIssue]);
+  }, [componentContainerStyle, hasStimulusIssue]);
 
   useEffect(() => {
     // Assume that screen recording video exists.
