@@ -21,10 +21,12 @@ export function ConfigView({
   visibleParticipants,
   studyId,
   currentConfigHash,
+  currentConfigStatus,
 }: {
   visibleParticipants: ParticipantData[];
   studyId?: string;
   currentConfigHash?: string;
+  currentConfigStatus: 'idle' | 'pending' | 'success' | 'error';
 }) {
   const [checked, setChecked] = useState<MrtRowSelectionState>({});
   const { storageEngine } = useStorageEngine();
@@ -36,13 +38,16 @@ export function ConfigView({
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
+    if (currentConfigStatus !== 'success') return undefined;
+
     if (!storageEngine || !studyId) {
       setConfigs([]);
       setHasError(true);
       setLoading(false);
-      return;
+      return undefined;
     }
 
+    let cancelled = false;
     const fetchConfigs = async () => {
       setLoading(true);
       try {
@@ -54,9 +59,11 @@ export function ConfigView({
           : [...new Set(participantConfigHashes)];
         const fetchedConfigs = await storageEngine.getAllConfigsFromHash(allConfigHashes, studyId);
         const rows = buildConfigRows(fetchedConfigs, visibleParticipants);
+        if (cancelled) return;
         setConfigs(rows);
         setHasError(false);
       } catch (error) {
+        if (cancelled) return;
         console.error('Error fetching configs:', error);
         setConfigs([]);
         setHasError(true);
@@ -65,7 +72,8 @@ export function ConfigView({
     };
 
     fetchConfigs();
-  }, [visibleParticipants, storageEngine, studyId, currentConfigHash]);
+    return () => { cancelled = true; };
+  }, [visibleParticipants, storageEngine, studyId, currentConfigHash, currentConfigStatus]);
 
   const handleViewConfig = useCallback((hash: string) => {
     const selectedConfig = configs.find((config) => config.hash === hash) || null;
@@ -246,13 +254,15 @@ export function ConfigView({
     },
   });
 
-  const content = loading ? (
+  const hashLoading = currentConfigStatus === 'idle' || currentConfigStatus === 'pending';
+  const hashError = currentConfigStatus === 'error';
+  const content = hashLoading || (loading && !hashError) ? (
     <Stack align="center" p="md">
       <Loader size="sm" />
       <Text size="sm" c="dimmed">Loading config data...</Text>
     </Stack>
   ) : (
-    configs.length > 0 ? (
+    configs.length > 0 && !hashError ? (
       <>
         <MantineReactTable
           table={table}
@@ -306,7 +316,7 @@ export function ConfigView({
         <Space h="xl" />
         <Flex justify="center" align="center">
           <Text>
-            {hasError
+            {hasError || hashError
               ? 'Unable to load saved Study Config versions. Please try again.'
               : 'No Study Configs have been saved yet.'}
           </Text>
