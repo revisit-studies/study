@@ -897,7 +897,7 @@ describe('SliderInput', () => {
       />,
     );
     const getThumb = () => Array.from(container.querySelectorAll('div')).find(
-      (element) => element.style.backgroundColor === 'var(--mantine-color-red-6)'
+      (element) => element.style.backgroundColor === 'var(--mantine-color-red-text)'
         && element.style.width === '20px',
     );
     expect(getThumb()?.style.bottom).toContain('20%');

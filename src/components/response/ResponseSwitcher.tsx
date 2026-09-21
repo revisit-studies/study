@@ -219,8 +219,9 @@ export function ResponseSwitcher({
 
     return {
       ...responseStyle,
-      border: `1px solid var(--mantine-color-${errorColor}-3)`,
-      backgroundColor: `var(--mantine-color-${errorColor}-0)`,
+      border: `1px solid var(--mantine-color-${errorColor}-outline)`,
+      backgroundColor: `var(--mantine-color-${errorColor}-light)`,
+      color: `var(--mantine-color-${errorColor}-light-color)`,
       borderRadius: 'var(--mantine-radius-md)',
       padding: 'var(--mantine-spacing-sm)',
     };

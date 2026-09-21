@@ -236,8 +236,8 @@ export function MatrixInput({
         {/* Empty Square */}
         <div
           style={{
-            borderBottom: '1px solid var(--mantine-color-dark-0)',
-            borderRight: '1px solid var(--mantine-color-dark-0)',
+            borderBottom: '1px solid var(--mantine-color-default-border)',
+            borderRight: '1px solid var(--mantine-color-default-border)',
           }}
         />
         {/* Column Headers */}
@@ -248,7 +248,7 @@ export function MatrixInput({
             gridTemplateColumns: `repeat(${_n}, 1fr)`,
             alignItems: 'stretch',
             justifyItems: 'stretch',
-            borderBottom: '1px solid var(--mantine-color-dark-0)',
+            borderBottom: '1px solid var(--mantine-color-default-border)',
             position: 'relative',
           }}
         >
@@ -260,7 +260,7 @@ export function MatrixInput({
                 top: 0,
                 bottom: 0,
                 width: '1px',
-                backgroundColor: 'var(--mantine-color-dark-0)',
+                backgroundColor: 'var(--mantine-color-default-border)',
                 pointerEvents: 'none',
               }}
             />
@@ -296,8 +296,8 @@ export function MatrixInput({
         {hasRightQuestionLabels && (
           <div
             style={{
-              borderBottom: '1px solid var(--mantine-color-dark-0)',
-              borderLeft: '1px solid var(--mantine-color-dark-0)',
+              borderBottom: '1px solid var(--mantine-color-default-border)',
+              borderLeft: '1px solid var(--mantine-color-default-border)',
             }}
           />
         )}
@@ -318,8 +318,8 @@ export function MatrixInput({
                 display: 'flex',
                 alignItems: 'safe center',
                 justifyContent: 'end',
-                borderRight: '1px solid var(--mantine-color-dark-0)',
-                backgroundColor: `${(idx + 1) % 2 === 0 ? 'var(--mantine-color-gray-2)' : 'white'}`,
+                borderRight: '1px solid var(--mantine-color-default-border)',
+                backgroundColor: (idx + 1) % 2 === 0 ? 'light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-6))' : 'var(--mantine-color-body)',
               }}
               ta="right"
               p="sm"
@@ -350,7 +350,7 @@ export function MatrixInput({
                 top: 0,
                 bottom: 0,
                 width: '1px',
-                backgroundColor: 'var(--mantine-color-dark-0)',
+                backgroundColor: 'var(--mantine-color-default-border)',
                 pointerEvents: 'none',
                 zIndex: 1,
               }}
@@ -363,7 +363,7 @@ export function MatrixInput({
                 flex: 1,
                 display: 'flex',
                 alignItems: 'center',
-                backgroundColor: `${(idx + 1) % 2 === 0 ? 'var(--mantine-color-gray-2)' : 'white'}`,
+                backgroundColor: (idx + 1) % 2 === 0 ? 'light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-6))' : 'var(--mantine-color-body)',
               }}
             >
               {response.type === 'matrix-radio'
@@ -410,8 +410,8 @@ export function MatrixInput({
                   display: 'flex',
                   alignItems: 'safe center',
                   justifyContent: 'start',
-                  borderLeft: '1px solid var(--mantine-color-dark-0)',
-                  backgroundColor: `${(idx + 1) % 2 === 0 ? 'var(--mantine-color-gray-2)' : 'white'}`,
+                  borderLeft: '1px solid var(--mantine-color-default-border)',
+                  backgroundColor: (idx + 1) % 2 === 0 ? 'light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-6))' : 'var(--mantine-color-body)',
                 }}
                 ta="left"
                 p="sm"

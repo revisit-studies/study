@@ -261,6 +261,8 @@ export interface UIConfig {
   withSidebar: boolean;
 
   // Optional fields
+  /** The study's color mode. Defaults to light. userPreference uses the participant's system preference. */
+  colorMode?: 'light' | 'dark' | 'userPreference';
   /** The width of the left sidebar. Defaults to 300. */
   sidebarWidth?: number;
   /** Controls whether the title should be hidden in the study. */
@@ -1450,6 +1452,8 @@ export interface WebsiteComponent extends BaseIndividualComponent {
   type: 'website';
   /** The path to the website. This should be a relative path from the public folder or could be an external website. */
   path: string;
+  /** The iframe's color scheme. Defaults to the study's color mode. The embedded page must support color schemes. */
+  colorMode?: 'light' | 'dark';
 }
 
 /**

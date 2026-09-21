@@ -48,7 +48,7 @@ const markdownComponents = (inline?: boolean): Partial<Components> => ({
   ol({
     node: _, type: _type, ref: _ref, ...props
   }) { return <List {...props} type="ordered" withPadding pb={inline ? undefined : 8} />; },
-  table({ node: _, ...props }) { return <Table {...props} mb={12} borderColor="grey" />; },
+  table({ node: _, ...props }) { return <Table {...props} mb={12} borderColor="var(--mantine-color-default-border)" />; },
   thead({ node: _, ...props }) { return <Table.Thead {...props} />; },
   tbody({ node: _, ...props }) { return <Table.Tbody {...props} />; },
   tr({ node: _, ...props }) { return <Table.Tr {...props} />; },
