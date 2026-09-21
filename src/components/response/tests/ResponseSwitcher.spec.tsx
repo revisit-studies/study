@@ -157,7 +157,7 @@ describe('ResponseSwitcher style overrides', () => {
     );
     const wrapper = container.querySelector<HTMLElement>('.response');
     expect(wrapper?.style.width).toBe('600px');
-    expect(wrapper?.dataset.answerWidth).toBe('full');
+    expect(wrapper?.dataset.answerWidth).toBeUndefined();
   });
 
   test('keeps user styles when displaying a validation error', () => {

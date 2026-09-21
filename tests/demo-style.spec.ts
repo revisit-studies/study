@@ -1,5 +1,15 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 import { resetClientStudyState } from './utils';
+
+async function openComponent(page: Page, component: string) {
+  await page.goto(`/demo-style/reviewer-${component}`);
+  await expect(page.locator('.study-content')).toBeVisible();
+  const closeBrowser = page.getByRole('complementary').locator('.mantine-CloseButton-root');
+  if (await closeBrowser.isVisible()) {
+    await closeBrowser.click();
+  }
+  await expect(page.getByRole('complementary')).toHaveCount(0);
+}
 
 test.beforeEach(async ({ page }) => {
   await resetClientStudyState(page);
@@ -14,7 +24,7 @@ for (const example of [
   },
 ]) {
   test(`demo-style keeps ${example.component} padding inside its styled card`, async ({ page }) => {
-    await page.goto(`/demo-style/reviewer-${example.component}`);
+    await openComponent(page, example.component);
     const card = page.locator(`#${example.component}`);
     await expect(card).toBeVisible();
     await expect(card).toHaveCSS('padding-left', example.padding);
@@ -28,7 +38,7 @@ for (const example of [
 }
 
 test('demo-style explicit response width overrides the default field limit', async ({ page }) => {
-  await page.goto('/demo-style/reviewer-responses');
+  await openComponent(page, 'responses');
   const numberResponse = page.locator('#numerical-response-style');
   await expect(numberResponse).toBeVisible();
   await expect(numberResponse).toHaveCSS('width', '700px');
@@ -41,11 +51,11 @@ test('demo-style explicit response width overrides the default field limit', asy
 
   const shortText = page.locator('#short-text-response-style');
   await expect(shortText).toHaveCSS('padding-left', '10px');
-  await expect(shortText.locator('input')).toHaveCSS('width', '300px');
+  await expect(shortText.locator('input')).toHaveCSS('width', '280px');
 });
 
 test('demo-style custom form and grid styles still apply', async ({ page }) => {
-  await page.goto('/demo-style/reviewer-survey-form');
+  await openComponent(page, 'survey-form');
   const occupation = page.locator('#form-occupation');
   await expect(occupation).toBeVisible();
   await expect(occupation).toHaveCSS('padding-left', '20px');
@@ -54,7 +64,7 @@ test('demo-style custom form and grid styles still apply', async ({ page }) => {
   await occupation.locator('input').fill('Researcher');
   await expect(occupation.locator('input')).toHaveValue('Researcher');
 
-  await page.goto('/demo-style/reviewer-layout');
+  await openComponent(page, 'layout');
   const color = page.locator('#layout-color');
   await expect(color).toBeVisible();
   await expect(page.locator('.responseBlock-belowStimulus')).toHaveCSS('display', 'grid');
@@ -62,3 +72,75 @@ test('demo-style custom form and grid styles still apply', async ({ page }) => {
   await expect(color.locator('..')).toHaveCSS('grid-column-start', 'span 2');
   await expect(page.locator('#layout-opinion').locator('..')).toHaveCSS('grid-column-start', 'span 6');
 });
+
+for (const viewport of [
+  { width: 1280, span: 2 },
+  { width: 850, span: 3 },
+  { width: 390, span: 6 },
+]) {
+  test(`demo-style fits a ${viewport.width}px viewport`, async ({ page }) => {
+    await page.setViewportSize({ width: viewport.width, height: 844 });
+    await openComponent(page, 'layout');
+    const color = page.locator('#layout-color');
+    await expect(color).toBeVisible();
+    await expect(color.locator('..')).toHaveCSS('grid-column-start', `span ${viewport.span}`);
+    await expect(page.locator('#layout-website-design').locator('..')).toHaveCSS('grid-column-start', `span ${viewport.span === 6 ? 6 : 3}`);
+    await expect(page.locator('#layout-opinion').locator('..')).toHaveCSS('grid-column-start', 'span 6');
+    const layoutOverflow = await page.locator('.responseBlock-belowStimulus').evaluate((block) => {
+      const bounds = block.getBoundingClientRect();
+      const overflowingCards = Array.from(block.querySelectorAll('.response')).flatMap((card) => {
+        const cardBounds = card.getBoundingClientRect();
+        return cardBounds.left >= bounds.left - 1 && cardBounds.right <= bounds.right + 1 ? [] : [card.id];
+      });
+      return {
+        overflowingCards,
+        overflow: block.scrollWidth - block.clientWidth,
+        cardOverflow: Array.from(block.querySelectorAll('.response')).map((card) => ({
+          id: card.id, overflow: card.scrollWidth - card.clientWidth,
+        })).filter((card) => card.overflow > 1),
+      };
+    });
+    expect(layoutOverflow.overflowingCards).toEqual([]);
+    expect(layoutOverflow.overflow, JSON.stringify(layoutOverflow.cardOverflow)).toBeLessThanOrEqual(1);
+    await color.locator('input').fill('Blue');
+    await expect(color.locator('input')).toHaveValue('Blue');
+    await page.locator('#layout-web-enjoyment').getByRole('radio', { name: 'Yes', exact: true }).check();
+    await expect(page.locator('#layout-web-enjoyment').getByRole('radio', { name: 'Yes', exact: true })).toBeChecked();
+    const preference = page.locator('#layout-preference').getByRole('radio', { name: 'Definitely', exact: true });
+    await preference.click();
+    await expect(preference).toBeChecked();
+
+    await openComponent(page, 'survey-form');
+    const occupation = page.locator('#form-occupation');
+    await expect(occupation).toBeVisible();
+    const formGeometry = await occupation.evaluate((card) => {
+      const content = card.closest('.study-content')!;
+      const contentStyle = getComputedStyle(content);
+      const contentWidth = content.clientWidth - parseFloat(contentStyle.paddingLeft) - parseFloat(contentStyle.paddingRight);
+      const image = document.querySelector('#survey-form')!;
+      return {
+        available: contentWidth,
+        card: card.getBoundingClientRect().width,
+        image: image.getBoundingClientRect().width,
+        cardCenter: card.getBoundingClientRect().left + card.getBoundingClientRect().width / 2,
+        contentCenter: content.getBoundingClientRect().left + content.clientWidth / 2,
+      };
+    });
+    expect(formGeometry.card).toBeCloseTo(Math.min(640, formGeometry.available), 0);
+    expect(formGeometry.image).toBeCloseTo(formGeometry.card, 0);
+    expect(formGeometry.cardCenter).toBeCloseTo(formGeometry.contentCenter, 0);
+    await occupation.locator('input').fill('Researcher');
+    await expect(occupation.locator('input')).toHaveValue('Researcher');
+
+    await openComponent(page, 'responses');
+    const numerical = page.locator('#numerical-response-style');
+    await expect(numerical).toBeVisible();
+    const responseGeometry = await numerical.evaluate((card) => {
+      const parent = card.parentElement!;
+      return { card: card.getBoundingClientRect().width, available: parent.clientWidth };
+    });
+    expect(responseGeometry.card).toBeCloseTo(Math.min(700, responseGeometry.available), 0);
+    await numerical.locator('input').fill('42');
+    await expect(numerical.locator('input')).toHaveValue('42');
+  });
+}

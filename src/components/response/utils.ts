@@ -15,17 +15,20 @@ type ResponseWithDefault = Response & { default?: ResponseDefault };
 
 export const DONT_KNOW_DEFAULT_VALUE = "I don't know";
 
-export function getResponseWidth(response: Response): 'small' | 'medium' | 'full' {
+export function getResponseWidth(response: Response): 'xs' | 'small' | 'medium' | 'full' | undefined {
   // Explicit sizing owns the available width instead of the default field cap.
   if (response.style?.width !== undefined || response.style?.minWidth !== undefined || response.style?.maxWidth !== undefined) {
-    return 'full';
+    return undefined;
   }
-  if (response.type === 'numerical' || response.type === 'date' || response.type === 'time') {
+  if (response.type === 'numerical' || response.type === 'date') {
+    return 'xs';
+  }
+  if (response.type === 'time') {
     return 'small';
   }
   if (response.type === 'shortText') {
     return response.builtInValidation === 'phoneNumber' || response.builtInValidation === 'usPhoneNumber'
-      ? 'small'
+      ? 'xs'
       : 'medium';
   }
   return response.type === 'dropdown' ? 'medium' : 'full';
