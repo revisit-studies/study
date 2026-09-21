@@ -91,7 +91,9 @@ describe('ConfigView', () => {
     vi.clearAllMocks();
     capturedTableOptions = null;
     mockStorageEngine = {
-      getAllConfigsFromHash: vi.fn().mockResolvedValue({ [mockConfigInfo.hash]: mockConfigInfo.config }),
+      getAllConfigsFromHash: vi.fn().mockImplementation(async (hashes: string[]) => (
+        hashes.includes(mockConfigInfo.hash) ? { [mockConfigInfo.hash]: mockConfigInfo.config } : {}
+      )),
     };
   });
 
@@ -195,17 +197,28 @@ describe('ConfigView', () => {
       render(<ConfigView currentConfigStatus={currentConfigStatus} visibleParticipants={[]} studyId="test-study" />);
     });
     expect(screen.getByText('Loading config data...')).toBeDefined();
-    expect(screen.queryByText('No Study Configs have been saved yet.')).toBeNull();
+    expect(screen.queryByText('No Study Config versions are available for the current filters.')).toBeNull();
     expect(mockStorageEngine!.getAllConfigsFromHash).not.toHaveBeenCalled();
   });
 
-  test('shows a hash lookup failure without fetching configs', async () => {
+  test('shows a hash lookup failure when no participant configs are available', async () => {
     await act(async () => {
       render(<ConfigView currentConfigStatus="error" visibleParticipants={[]} studyId="test-study" />);
     });
-    expect(screen.getByText('Unable to load saved Study Config versions. Please try again.')).toBeDefined();
-    expect(screen.queryByText('No Study Configs have been saved yet.')).toBeNull();
-    expect(mockStorageEngine!.getAllConfigsFromHash).not.toHaveBeenCalled();
+    expect(screen.getByText('Unable to identify the current Study Config version. Please try again.')).toBeDefined();
+    expect(screen.queryByText('No Study Config versions are available for the current filters.')).toBeNull();
+  });
+
+  test('keeps participant configs available when the current hash lookup fails', async () => {
+    await act(async () => {
+      render(<ConfigView currentConfigStatus="error" visibleParticipants={[makeParticipant({ participantConfigHash: mockConfigInfo.hash })]} studyId="test-study" />);
+    });
+
+    expect(mockStorageEngine!.getAllConfigsFromHash).toHaveBeenCalledWith([mockConfigInfo.hash], 'test-study');
+    expect(screen.getByText('table')).toBeDefined();
+    expect(capturedTableOptions!.data).toEqual([expect.objectContaining({ hash: mockConfigInfo.hash })]);
+    expect(screen.getByText('Unable to identify the current Study Config version.')).toBeDefined();
+    expect(screen.queryByText('Unable to load saved Study Config versions. Please try again.')).toBeNull();
   });
 
   test.each([true, false])('finishes the hash lookup with a saved config: %s', async (hasConfig) => {
@@ -216,7 +229,7 @@ describe('ConfigView', () => {
     });
     expect(mockStorageEngine!.getAllConfigsFromHash).toHaveBeenCalledWith(hasConfig ? [mockConfigInfo.hash] : [], 'test-study');
     expect(screen.queryByText('table') !== null).toBe(hasConfig);
-    expect(screen.queryByText('No Study Configs have been saved yet.') !== null).toBe(!hasConfig);
+    expect(screen.queryByText('No Study Config versions are available for the current filters.') !== null).toBe(!hasConfig);
   });
 
   test('ignores an old config response when the hash lookup fails, then recovers', async () => {
@@ -230,7 +243,7 @@ describe('ConfigView', () => {
       resolveConfigs({ [mockConfigInfo.hash]: mockConfigInfo.config });
     });
     expect(capturedTableOptions!.data).toEqual([]);
-    expect(screen.getByText('Unable to load saved Study Config versions. Please try again.')).toBeDefined();
+    expect(screen.getByText('Unable to identify the current Study Config version. Please try again.')).toBeDefined();
     expect(screen.queryByText('table')).toBeNull();
     await act(async () => {
       rerender(<ConfigView currentConfigStatus="success" currentConfigHash={mockConfigInfo.hash} visibleParticipants={[]} studyId="test-study" />);
@@ -248,9 +261,9 @@ describe('ConfigView', () => {
       render(<ConfigView currentConfigStatus="success" visibleParticipants={[]} studyId="test-study" currentConfigHash={hasConfigs ? mockConfigInfo.hash : undefined} />);
     });
 
-    expect(screen.getByText('View, download, and compare saved Study Config versions.')).toBeDefined();
+    expect(screen.getByText('View, download, and compare saved Study Config versions. Participant counts and time frames reflect currently visible participants.')).toBeDefined();
     expect(screen.queryByText('table') !== null).toBe(hasConfigs);
-    expect(screen.queryByText('No Study Configs have been saved yet.') !== null).toBe(!hasConfigs);
+    expect(screen.queryByText('No Study Config versions are available for the current filters.') !== null).toBe(!hasConfigs);
     expect(screen.queryByText('Unable to load saved Study Config versions. Please try again.')).toBeNull();
   });
 
@@ -345,7 +358,7 @@ describe('ConfigView', () => {
     });
     expect(consoleSpy).toHaveBeenCalledWith('Error fetching configs:', expect.any(Error));
     expect(screen.getByText('Unable to load saved Study Config versions. Please try again.')).toBeDefined();
-    expect(screen.queryByText('No Study Configs have been saved yet.')).toBeNull();
+    expect(screen.queryByText('No Study Config versions are available for the current filters.')).toBeNull();
   });
 
   test('clears the load error after a successful fetch with no saved configs', async () => {
@@ -358,7 +371,7 @@ describe('ConfigView', () => {
       rerender(<ConfigView currentConfigStatus="success" visibleParticipants={[]} studyId="another-study" />);
     });
 
-    expect(screen.getByText('No Study Configs have been saved yet.')).toBeDefined();
+    expect(screen.getByText('No Study Config versions are available for the current filters.')).toBeDefined();
     expect(screen.queryByText('Unable to load saved Study Config versions. Please try again.')).toBeNull();
   });
 

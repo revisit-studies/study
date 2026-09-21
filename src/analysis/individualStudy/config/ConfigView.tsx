@@ -38,7 +38,7 @@ export function ConfigView({
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
-    if (currentConfigStatus !== 'success') return undefined;
+    if (currentConfigStatus === 'idle' || currentConfigStatus === 'pending') return undefined;
 
     if (!storageEngine || !studyId) {
       setConfigs([]);
@@ -256,14 +256,15 @@ export function ConfigView({
 
   const hashLoading = currentConfigStatus === 'idle' || currentConfigStatus === 'pending';
   const hashError = currentConfigStatus === 'error';
-  const content = hashLoading || (loading && !hashError) ? (
+  const content = hashLoading || loading ? (
     <Stack align="center" p="md">
       <Loader size="sm" />
       <Text size="sm" c="dimmed">Loading config data...</Text>
     </Stack>
   ) : (
-    configs.length > 0 && !hashError ? (
+    configs.length > 0 ? (
       <>
+        {hashError && <Text c="red" size="sm">Unable to identify the current Study Config version.</Text>}
         <MantineReactTable
           table={table}
         />
@@ -316,9 +317,11 @@ export function ConfigView({
         <Space h="xl" />
         <Flex justify="center" align="center">
           <Text>
-            {hasError || hashError
+            {hasError
               ? 'Unable to load saved Study Config versions. Please try again.'
-              : 'No Study Configs have been saved yet.'}
+              : hashError
+                ? 'Unable to identify the current Study Config version. Please try again.'
+                : 'No Study Config versions are available for the current filters.'}
           </Text>
         </Flex>
       </>
@@ -328,7 +331,7 @@ export function ConfigView({
   return (
     <>
       <Text size="sm" mb="md">
-        View, download, and compare saved Study Config versions.
+        View, download, and compare saved Study Config versions. Participant counts and time frames reflect currently visible participants.
       </Text>
       {content}
     </>
