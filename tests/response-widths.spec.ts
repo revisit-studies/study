@@ -6,6 +6,52 @@ test.beforeEach(async ({ page }) => {
   await resetClientStudyState(page);
 });
 
+test('form blocks center within the available space while sidebar and stimulus keep their layout', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/demo-form-elements/reviewer-Form%20Elements');
+  const main = page.locator('.main');
+  const form = main.locator('.responseBlock-belowStimulus');
+  const sidebar = page.locator('.responseBlock-sidebar');
+  await page.getByRole('complementary').locator('.mantine-CloseButton-root').click();
+  await expect(form).toHaveCSS('width', '880px');
+  await expect(form).toHaveCSS('padding-left', '40px');
+  await expect(sidebar).toHaveCSS('padding-left', '0px');
+  const centered = await form.evaluate((block) => {
+    const mainBounds = block.closest('.main')!.getBoundingClientRect();
+    const bounds = block.getBoundingClientRect();
+    return Math.abs((bounds.left + bounds.right) - (mainBounds.left + mainBounds.right));
+  });
+  expect(centered).toBeLessThanOrEqual(1);
+  await page.addStyleTag({ content: '.responseBlock-belowStimulus { max-width: 1000px; }' });
+  await expect(form).toHaveCSS('width', '1000px');
+
+  await page.goto('/demo-style/reviewer-responses');
+  await page.getByRole('complementary').locator('.mantine-CloseButton-root').click();
+  await page.setViewportSize({ width: 760, height: 900 });
+  await expect(form).toHaveCSS('width', '728px');
+  const padding = await form.evaluate((block) => Number.parseFloat(getComputedStyle(block).paddingLeft));
+  expect(padding).toBeGreaterThanOrEqual(16);
+  expect(padding).toBeLessThan(40);
+});
+
+test('wide matrix choices stay scrollable inside the form', async ({ page }) => {
+  await page.setViewportSize({ width: 500, height: 900 });
+  await page.route('**/demo-form-elements/config.json', async (route) => {
+    const result = await route.fetch();
+    const config = await result.json();
+    config.uiConfig.withSidebar = false;
+    await route.fulfill({ response: result, json: config });
+  });
+  await page.goto('/demo-form-elements/reviewer-Form%20Elements');
+  await page.getByRole('complementary').locator('.mantine-CloseButton-root').click();
+  const matrix = page.locator('#q-multi-satisfaction');
+  const scrollRegion = matrix.locator('..');
+  expect(await scrollRegion.evaluate((element) => element.scrollWidth - element.clientWidth)).toBeGreaterThan(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+  await matrix.getByRole('radio').first().check();
+  await expect(matrix.getByRole('radio').first()).toBeChecked();
+});
+
 test('default answer widths leave questions and long text full width', async ({ page }) => {
   await page.goto('/demo-form-elements/reviewer-Form%20Elements');
   await page.getByRole('complementary').locator('.mantine-CloseButton-root').click();
@@ -79,7 +125,7 @@ test('compact multiselect avoids an idle blank row and supports searching, wrapp
   await expect.poll(async () => (await wrapper.boundingBox())!.height).toBeCloseTo(idleGeometry.height, 0);
 });
 
-test('full responses cap at 1600px while explicit widths and unrelated fields remain unrestricted', async ({ page }) => {
+test('full responses fit the form column while explicit widths remain scrollable', async ({ page }) => {
   await page.setViewportSize({ width: 2400, height: 1000 });
   await page.route('**/demo-form-elements/config.json', async (route) => {
     const result = await route.fetch();
@@ -92,12 +138,15 @@ test('full responses cap at 1600px while explicit widths and unrelated fields re
   await page.goto('/demo-form-elements/reviewer-Form%20Elements');
   await page.getByRole('complementary').locator('.mantine-CloseButton-root').click();
   for (const id of ['q-slider', 'q-likert', 'q-multi-satisfaction', 'multi-custom']) {
-    await expect(page.locator(`#${id}`)).toHaveCSS('width', '1600px');
+    await expect(page.locator(`#${id}`)).toHaveCSS('width', '800px');
   }
   for (const id of ['q-long-text', 'q-numerical']) {
     await expect(page.locator(`#${id}`)).toHaveCSS('width', '1800px');
     await expect(page.locator(`#${id} .mantine-Input-wrapper`)).toHaveCSS('width', '1800px');
+    const wrapper = page.locator(`#${id}`).locator('..');
+    expect(await wrapper.evaluate((element) => element.scrollWidth - element.clientWidth)).toBeGreaterThan(0);
   }
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
   // A clone outside any response detects accidental global Input wrapper rules.
   const unrelatedWidth = await page.locator('#q-numerical .mantine-Input-wrapper').evaluate((field) => {
     const unrelated = field.cloneNode(true) as HTMLElement;
@@ -110,7 +159,7 @@ test('full responses cap at 1600px while explicit widths and unrelated fields re
   expect(unrelatedWidth).toBe(1800);
 
   await page.goto('/demo-form-elements/reviewer-Custom%20Response');
-  await expect(page.locator('#custom-response-demo')).toHaveCSS('width', '1600px');
+  await expect(page.locator('#custom-response-demo')).toHaveCSS('width', '800px');
 });
 
 for (const example of [

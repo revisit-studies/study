@@ -3,12 +3,13 @@ import { resetClientStudyState } from './utils';
 
 async function openComponent(page: Page, component: string) {
   await page.goto(`/demo-style/reviewer-${component}`);
-  await expect(page.locator('.study-content')).toBeVisible();
+  await expect(page.locator('.responseBlock-belowStimulus')).toBeAttached();
   const closeBrowser = page.getByRole('complementary').locator('.mantine-CloseButton-root');
   if (await closeBrowser.isVisible()) {
     await closeBrowser.click();
   }
   await expect(page.getByRole('complementary')).toHaveCount(0);
+  await expect(page.locator('.study-content')).toBeVisible();
 }
 
 test.beforeEach(async ({ page }) => {
@@ -32,8 +33,8 @@ for (const example of [
     await expect(card).toHaveCSS('background-color', example.background);
     await expect(card).toHaveCSS('border-left-width', '1px');
     await expect(card).toHaveCSS('width', example.width);
-    await expect(page.locator('.study-content')).toHaveCSS('padding-left', '40px');
-    await expect(page.locator('.study-content')).toHaveCSS('padding-right', '40px');
+    await expect(page.locator('.study-content')).toHaveCSS('padding-left', '0px');
+    await expect(page.locator('.study-content')).toHaveCSS('padding-right', '0px');
   });
 }
 
@@ -114,12 +115,15 @@ for (const viewport of [
     const occupation = page.locator('#form-occupation');
     await expect(occupation).toBeVisible();
     const formGeometry = await occupation.evaluate((card) => {
-      const content = card.closest('.study-content')!;
+      const content = card.closest('.responseBlock')!;
       const contentStyle = getComputedStyle(content);
       const contentWidth = content.clientWidth - parseFloat(contentStyle.paddingLeft) - parseFloat(contentStyle.paddingRight);
       const image = document.querySelector('#survey-form')!;
+      const main = card.closest('.main')!;
+      const mainStyle = getComputedStyle(main);
       return {
         available: contentWidth,
+        mainWidth: main.clientWidth - parseFloat(mainStyle.paddingLeft) - parseFloat(mainStyle.paddingRight),
         card: card.getBoundingClientRect().width,
         image: image.getBoundingClientRect().width,
         cardCenter: card.getBoundingClientRect().left + card.getBoundingClientRect().width / 2,
@@ -127,7 +131,7 @@ for (const viewport of [
       };
     });
     expect(formGeometry.card).toBeCloseTo(Math.min(640, formGeometry.available), 0);
-    expect(formGeometry.image).toBeCloseTo(formGeometry.card, 0);
+    expect(formGeometry.image).toBeCloseTo(Math.min(640, formGeometry.mainWidth), 0);
     expect(formGeometry.cardCenter).toBeCloseTo(formGeometry.contentCenter, 0);
     await occupation.locator('input').fill('Researcher');
     await expect(occupation.locator('input')).toHaveValue('Researcher');

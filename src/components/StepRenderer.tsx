@@ -361,7 +361,6 @@ export function StepRenderer() {
               {/* 10px is the gap between the sidebar and the main content */}
               <AppShell.Main
                 className="main"
-                px={0}
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
@@ -387,7 +386,6 @@ export function StepRenderer() {
                     flexDirection: 'column',
                     flexGrow: 1,
                     minWidth: 0,
-                    padding: '0 40px',
                   }}
                 >
                   <Outlet />

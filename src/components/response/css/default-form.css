@@ -1,3 +1,19 @@
+:where(.responseBlock-aboveStimulus, .responseBlock-belowStimulus) {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 880px;
+  margin-inline: auto;
+  padding-inline: clamp(16px, 3vw, 40px);
+}
+
+:where(.responseBlock-aboveStimulus, .responseBlock-belowStimulus) > div {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+:where(.responseBlock-aboveStimulus, .responseBlock-belowStimulus) .matrix-grid {
+  min-width: var(--matrix-min-width);
+}
 
 /* numerical, date (date/month/year), shortText (phoneNumber/usPhoneNumber) */
 :where(.response[data-answer-width="xs"]) {
