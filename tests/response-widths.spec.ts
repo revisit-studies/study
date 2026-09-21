@@ -152,8 +152,10 @@ for (const example of [
         lastInputRight: lastInput.right, clearLeft: clear.left, clearRight: clear.right, fieldRight: bounds.right,
       };
     });
-    expect(geometry.lastInputRight).toBeLessThanOrEqual(geometry.clearLeft);
-    expect(geometry.clearRight).toBeLessThanOrEqual(geometry.fieldRight);
+    // Allow subpixel layout differences between local and CI font rendering.
+    const pixelTolerance = 1;
+    expect(geometry.lastInputRight).toBeLessThanOrEqual(geometry.clearLeft + pixelTolerance);
+    expect(geometry.clearRight).toBeLessThanOrEqual(geometry.fieldRight + pixelTolerance);
     await expect(inputs.nth(1)).toHaveValue('28');
     await wrapper.locator('button').click();
     await expect(inputs.nth(0)).toHaveValue('');
