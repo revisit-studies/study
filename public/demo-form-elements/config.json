@@ -14,7 +14,7 @@
     ]
   },
   "uiConfig": {
-    "colorMode": "dark",
+    "colorMode": "userPreference",
     "contactEmail": "contact@revisit.dev",
     "helpTextPath": "demo-form-elements/assets/introduction.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
