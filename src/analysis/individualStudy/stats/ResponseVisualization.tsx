@@ -2,6 +2,7 @@ import {
   Box,
   Code,
   Collapse, Divider, Flex, Paper, ScrollArea, SimpleGrid, Text, Title,
+  useComputedColorScheme, useMantineTheme,
 } from '@mantine/core';
 import { useDisclosure, useResizeObserver } from '@mantine/hooks';
 import {
@@ -23,6 +24,23 @@ export function ResponseVisualization({
 }) {
   const [opened, { toggle }] = useDisclosure(true);
   const [ref, dms] = useResizeObserver();
+  const theme = useMantineTheme();
+  const colorScheme = useComputedColorScheme('light');
+  const chartConfig = useMemo(() => {
+    const textColor = colorScheme === 'dark' ? theme.colors.dark[0] : theme.black;
+    const borderColor = colorScheme === 'dark' ? theme.colors.dark[4] : theme.colors.gray[4];
+    const labelColors = { labelColor: textColor, titleColor: textColor };
+    return {
+      background: colorScheme === 'dark' ? theme.colors.dark[7] : theme.white,
+      axis: {
+        ...labelColors, domainColor: borderColor, tickColor: borderColor, gridColor: borderColor,
+      },
+      legend: labelColors,
+      header: labelColors,
+      title: { color: textColor },
+      view: { stroke: borderColor },
+    };
+  }, [colorScheme, theme]);
 
   const correctAnswer = useMemo(() => {
     if (response.type === 'metadata') {
@@ -73,6 +91,7 @@ export function ResponseVisualization({
     const baseSpec = {
       height: 'container',
       width: 'container',
+      config: chartConfig,
     };
 
     if (response.type === 'shortText' || response.type === 'longText') {
@@ -231,7 +250,7 @@ export function ResponseVisualization({
       return spec;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps, @typescript-eslint/no-explicit-any
-  }, [participantData, questionData, timingData, response.id, (response as any).max, (response as any).min, (response as any).numItems, (response as any).options, response.type, trialId, correctAnswer]);
+  }, [chartConfig, participantData, questionData, timingData, response.id, (response as any).max, (response as any).min, (response as any).numItems, (response as any).options, response.type, trialId, correctAnswer]);
 
   return (
     <Paper p="lg" withBorder ref={ref}>
@@ -265,7 +284,7 @@ export function ResponseVisualization({
       <Collapse expanded={opened} mah={400}>
         <Box
           style={{
-            position: 'sticky', backgroundColor: 'white', zIndex: 2,
+            position: 'sticky', backgroundColor: 'var(--mantine-color-body)', zIndex: 2,
           }}
           py="md"
         >

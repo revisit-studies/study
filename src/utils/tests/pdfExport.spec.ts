@@ -216,11 +216,18 @@ describe('PDF export helpers', () => {
       .toBe('Pages containing external websites cannot currently be exported to PDF.');
   });
 
-  test('captures an accessible iframe document for the PDF clone', async () => {
+  test.each([
+    { background: 'rgb(36, 36, 36)', body: 'rgb(36, 36, 36)', expected: 'rgb(36, 36, 36)' },
+    { background: 'rgb(255, 255, 255)', body: 'rgb(255, 255, 255)', expected: 'rgb(255, 255, 255)' },
+    { background: 'rgb(255, 255, 255)', body: 'rgba(0, 0, 0, 0.5)', expected: 'rgb(255, 255, 255)' },
+    { background: 'rgba(0, 0, 0, 0.5)', body: 'transparent', expected: 'rgb(128, 128, 128)' },
+  ])('captures an iframe with root $background and body $body without duplicating layers', async ({ background, body, expected }) => {
     const element = document.createElement('main');
     const iframe = document.createElement('iframe');
     element.append(iframe);
     const iframeDocument = document.implementation.createHTMLDocument('Embedded chart');
+    iframeDocument.documentElement.style.backgroundColor = background;
+    iframeDocument.body.style.backgroundColor = body;
     const sourceBase = iframeDocument.createElement('base');
     sourceBase.href = 'https://revisit.test/study/example/assets/';
     iframeDocument.head.prepend(sourceBase);
@@ -250,6 +257,7 @@ describe('PDF export helpers', () => {
     expect(html2CanvasMocks.capture).toHaveBeenCalledWith(
       iframeDocument.documentElement,
       expect.objectContaining({
+        backgroundColor: expected,
         height: 1080,
         scale: 0.625,
         width: 1920,
@@ -262,6 +270,8 @@ describe('PDF export helpers', () => {
       onclone: (clonedDocument: Document) => Promise<unknown>;
     };
     const clonedDocument = document.implementation.createHTMLDocument('Cloned chart');
+    clonedDocument.documentElement.style.backgroundColor = background;
+    clonedDocument.body.style.backgroundColor = body;
     const stylesheet = clonedDocument.createElement('link');
     stylesheet.rel = 'stylesheet';
     stylesheet.href = 'css/chart.css';
@@ -270,6 +280,9 @@ describe('PDF export helpers', () => {
     stylesheet.dispatchEvent(new Event('load'));
     await prepareClone;
 
+    expect(clonedDocument.documentElement.style.backgroundColor).toBe(expected);
+    expect(clonedDocument.body.style.backgroundColor).toBe(body);
+    expect(iframeDocument.documentElement.style.backgroundColor).toBe(background);
     expect(clonedDocument.querySelector('base')?.href)
       .toBe('https://revisit.test/study/example/assets/');
     expect(stylesheet.href).toBe('https://revisit.test/study/example/assets/css/chart.css');
@@ -478,6 +491,92 @@ describe('PDF export helpers', () => {
     expect(images[0]?.style.objectPosition).toBe('25% 75%');
     expect(element.querySelector('[aria-label="Video frame unavailable in PDF"]')?.textContent)
       .toBe('Video frame unavailable in PDF');
+  });
+
+  test.each([
+    { mode: 'light', background: 'rgb(255, 255, 255)', color: 'rgb(33, 37, 41)' },
+    { mode: 'dark', background: 'rgb(36, 36, 36)', color: 'rgb(193, 194, 197)' },
+  ])('preserves the $mode page colors instead of whitening the PDF', async ({ mode, background, color }) => {
+    const parent = document.createElement('div');
+    parent.style.backgroundColor = background;
+    const element = document.createElement('main');
+    element.setAttribute('data-pdf-export-root', '');
+    element.style.color = color;
+    element.style.colorScheme = mode;
+    const select = document.createElement('select');
+    select.style.backgroundColor = background;
+    select.style.color = color;
+    element.append(select);
+    parent.append(element);
+    document.body.append(parent);
+    vi.spyOn(element, 'getBoundingClientRect').mockReturnValue({ width: 920 } as DOMRect);
+
+    await saveElementAsPdf(element, 'theme.pdf');
+
+    const pdfSource = html2PdfMocks.from.mock.calls[0][0] as HTMLElement;
+    expect(pdfSource.style.backgroundColor).toBe(background);
+    expect(pdfSource.style.color).toBe(color);
+    expect(pdfSource.style.colorScheme).toBe(mode);
+    expect(pdfSource.querySelector('select')?.style.backgroundColor).toBe(background);
+    expect(pdfSource.querySelector('select')?.style.color).toBe(color);
+    const options = html2PdfMocks.set.mock.calls[0][0] as {
+      html2canvas: { backgroundColor: string; onclone: (doc: Document, clone: HTMLElement) => void };
+    };
+    expect(options.html2canvas.backgroundColor).toBe(background);
+    const canvasClone = pdfSource.cloneNode(true) as HTMLElement;
+    const pdfContainer = document.createElement('div');
+    pdfContainer.style.backgroundColor = 'white';
+    pdfContainer.append(canvasClone);
+    options.html2canvas.onclone(document, pdfContainer);
+    expect(pdfContainer.style.backgroundColor).toBe(background);
+    expect(canvasClone.style.backgroundColor).toBe(background);
+    expect(element.style.backgroundColor).toBe('');
+  });
+
+  test.each([
+    {
+      backing: 'white', parent: 'transparent', foreground: 'rgba(0, 0, 0, 0.5)', expected: 'rgb(128, 128, 128)',
+    },
+    {
+      backing: 'rgb(36, 36, 36)', parent: 'transparent', foreground: 'rgba(255, 255, 255, 0.5)', expected: 'rgb(146, 146, 146)',
+    },
+    {
+      backing: 'white', parent: 'rgba(0, 0, 0, 0.5)', foreground: 'rgba(255, 0, 0, 0.5)', expected: 'rgb(191, 64, 64)',
+    },
+    {
+      backing: 'black', parent: 'rgba(255, 0, 0, 0)', foreground: 'transparent', expected: 'rgb(0, 0, 0)',
+    },
+    {
+      backing: 'white', parent: 'rgba(0, 0, 0, 0.5)', foreground: 'rgb(10, 20, 30)', expected: 'rgb(10, 20, 30)',
+    },
+  ])('flattens $foreground over $parent and $backing only once', async ({
+    backing, parent, foreground, expected,
+  }) => {
+    const backingElement = document.createElement('div');
+    backingElement.style.backgroundColor = backing;
+    const parentElement = document.createElement('div');
+    parentElement.style.backgroundColor = parent;
+    const element = document.createElement('main');
+    element.setAttribute('data-pdf-export-root', '');
+    element.style.backgroundColor = foreground;
+    parentElement.append(element);
+    backingElement.append(parentElement);
+    document.body.append(backingElement);
+    vi.spyOn(element, 'getBoundingClientRect').mockReturnValue({ width: 920 } as DOMRect);
+
+    await saveElementAsPdf(element, 'translucent.pdf');
+
+    const pdfSource = html2PdfMocks.from.mock.calls[0][0] as HTMLElement;
+    expect(pdfSource.style.backgroundColor).toBe(expected);
+    const options = html2PdfMocks.set.mock.calls[0][0] as {
+      html2canvas: { backgroundColor: string; onclone: (doc: Document, clone: HTMLElement) => void };
+    };
+    expect(options.html2canvas.backgroundColor).toBe(expected);
+    const pdfContainer = document.createElement('div');
+    pdfContainer.append(pdfSource.cloneNode(true));
+    options.html2canvas.onclone(document, pdfContainer);
+    expect(pdfContainer.style.backgroundColor).toBe(expected);
+    expect(element.style.backgroundColor).toBe(foreground);
   });
 
   test('passes a prepared temporary clone and filename to html2pdf', async () => {
