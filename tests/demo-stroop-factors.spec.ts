@@ -21,10 +21,12 @@ const COLOR_KEYS: Record<string, string> = {
 };
 
 test('completes all 90 unique incongruent Stroop trials', async ({ page }) => {
+  // Each trial waits 300ms before advancing, in addition to rendering and storage.
+  test.setTimeout(180000);
   await resetClientStudyState(page);
   await openStudyFromLanding(page, 'Factor-demos', 'Stroop Test with Factors');
 
-  await expect(page.getByRole('heading', { name: 'Stroop Test with Factors' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Stroop Test with Factors', level: 1, exact: true })).toBeVisible();
   await nextClick(page);
 
   const stimulus = page.locator('[data-stroop-condition]');
@@ -45,6 +47,7 @@ test('completes all 90 unique incongruent Stroop trials', async ({ page }) => {
     expect(seenConditions.has(condition)).toBe(false);
     seenConditions.add(condition);
 
+    await expect(page.getByRole('button', { name: `${COLOR_KEYS[inkColor]}. ${inkColor}`, exact: true })).toBeEnabled();
     await page.keyboard.press(COLOR_KEYS[inkColor]);
 
     if (trialIndex < 89) {

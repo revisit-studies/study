@@ -28,7 +28,7 @@ test('date and telephone inputs use the xs width', async ({ page }) => {
   }
 });
 
-test('compact multiselect keeps one pill and search on one row while allowing more pills to wrap', async ({ page }) => {
+test('compact multiselect avoids an idle blank row and supports searching, wrapping, and clearing', async ({ page }) => {
   await page.route('**/demo-form-elements/config.json', async (route) => {
     const result = await route.fetch();
     const config = await result.json();
@@ -41,12 +41,25 @@ test('compact multiselect keeps one pill and search on one row while allowing mo
   const search = response.locator('input:not([type="hidden"])');
   await expect(wrapper).toHaveCSS('width', '280px');
   await expect(response.locator('.mantine-Pill-label')).toHaveText(['Line']);
+  await expect(search).not.toBeFocused();
+  await expect(search).toHaveCSS('opacity', '0');
+  const idleGeometry = await wrapper.evaluate((field) => {
+    const bounds = field.getBoundingClientRect();
+    const pill = field.querySelector('.mantine-Pill-root')!.getBoundingClientRect();
+    return { height: bounds.height, centerOffset: pill.top + pill.height / 2 - (bounds.top + bounds.height / 2) };
+  });
+  expect(Math.abs(idleGeometry.centerOffset)).toBeLessThanOrEqual(1);
+
+  await response.locator('label').click();
+  await expect(search).toBeFocused();
+  await expect(search).toHaveCSS('opacity', '1');
   const geometry = await wrapper.evaluate((field) => {
     const pill = field.querySelector('.mantine-Pill-root')!.getBoundingClientRect();
     const input = field.querySelector('input:not([type="hidden"])')!.getBoundingClientRect();
     return { pillCenter: pill.top + pill.height / 2, searchCenter: input.top + input.height / 2, height: field.getBoundingClientRect().height };
   });
   expect(Math.abs(geometry.pillCenter - geometry.searchCenter)).toBeLessThanOrEqual(1);
+  expect(geometry.height).toBeCloseTo(idleGeometry.height, 0);
 
   await search.fill('Bar');
   await expect(page.getByRole('option', { name: 'Pie', exact: true })).toHaveCount(0);
@@ -61,6 +74,9 @@ test('compact multiselect keeps one pill and search on one row while allowing mo
   await wrapper.locator('[data-position="right"] button').click();
   await expect(response.locator('.mantine-Pill-label')).toHaveCount(0);
   await expect(search).toHaveValue('');
+  await search.blur();
+  await expect(search).toHaveCSS('opacity', '1');
+  await expect.poll(async () => (await wrapper.boundingBox())!.height).toBeCloseTo(idleGeometry.height, 0);
 });
 
 test('full responses cap at 1600px while explicit widths and unrelated fields remain unrestricted', async ({ page }) => {

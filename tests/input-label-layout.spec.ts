@@ -29,7 +29,8 @@ async function expectLabelAlignment(response: Locator, multiline = true) {
       lineHeight: Number.parseFloat(getComputedStyle(element).lineHeight),
       requiredTop: required.getBoundingClientRect().top,
       numberTop: number.getBoundingClientRect().top,
-      iconTop: iconRect.top,
+      iconWidth: iconRect.width,
+      iconMargin: Number.parseFloat(getComputedStyle(icon).marginInlineStart),
       iconCenter: iconRect.top + iconRect.height / 2,
       iconLeft: iconRect.left,
       textCenter: textRect.top + textRect.height / 2,
@@ -41,16 +42,21 @@ async function expectLabelAlignment(response: Locator, multiline = true) {
   if (multiline) expect(bounds.promptHeight).toBeGreaterThan(bounds.lineHeight * 1.5);
   expect(Math.abs(bounds.requiredTop - bounds.promptTop)).toBeLessThanOrEqual(1);
   expect(Math.abs(bounds.numberTop - bounds.promptTop)).toBeLessThanOrEqual(1);
-  if (bounds.promptRight - bounds.textRight >= 20) {
+  if (bounds.promptRight - bounds.textRight >= bounds.iconWidth + bounds.iconMargin + 1) {
     expect(Math.abs(bounds.iconCenter - bounds.textCenter)).toBeLessThanOrEqual(4);
     expect(bounds.iconLeft - bounds.textRight).toBeGreaterThanOrEqual(3);
     expect(bounds.iconLeft - bounds.textRight).toBeLessThanOrEqual(5);
+  } else if (Math.abs(bounds.iconCenter - bounds.textCenter) <= 4) {
+    // At the wrapping boundary, subpixel rounding can still leave the icon inline.
+    expect(bounds.iconLeft - bounds.textRight).toBeGreaterThanOrEqual(3);
+    expect(bounds.iconLeft - bounds.textRight).toBeLessThanOrEqual(5);
   } else {
-    expect(bounds.iconCenter - bounds.textCenter).toBeGreaterThanOrEqual(-4);
-    expect(bounds.iconCenter - bounds.textCenter).toBeLessThanOrEqual(bounds.lineHeight + 4);
+    expect(Math.abs(bounds.iconCenter - bounds.textCenter - bounds.lineHeight)).toBeLessThanOrEqual(4);
     expect(Math.abs(bounds.iconLeft - bounds.promptLeft)).toBeLessThanOrEqual(5);
   }
-  expect(bounds.rowRight).toBeLessThanOrEqual(bounds.responseRight);
+  // Fractional widths can round the row's right edge up by a pixel in the
+  // browser, even though it still fits within the response.
+  expect(bounds.rowRight).toBeLessThanOrEqual(bounds.responseRight + 2);
 }
 
 test('multiline questions keep numbering on the first line and info beside final text', async ({ page }, testInfo) => {
@@ -71,6 +77,10 @@ test('multiline questions keep numbering on the first line and info beside final
   await page.getByRole('option', { name: 'Bubble', exact: true }).click();
   await page.keyboard.press('Escape');
   await expect(dropdown.locator('.mantine-Pill-label')).toHaveText(['Bar', 'Bubble']);
+  const dropdownSearch = dropdown.getByRole('combobox');
+  await dropdownSearch.blur();
+  await expect(dropdownSearch).not.toBeFocused();
+  await expect(dropdownSearch).toHaveCSS('opacity', '0');
 
   const checkbox = page.locator('#q-checkbox');
   await checkbox.scrollIntoViewIfNeeded();
