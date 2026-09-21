@@ -374,6 +374,10 @@
           "const": "buttons",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
@@ -490,6 +494,10 @@
         "type": {
           "const": "checkbox",
           "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
@@ -692,6 +700,10 @@
           "const": "custom",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
@@ -793,6 +805,10 @@
         "type": {
           "const": "date",
           "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
@@ -940,6 +956,10 @@
           "const": "divider",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
@@ -1064,6 +1084,10 @@
         "type": {
           "const": "dropdown",
           "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
@@ -2090,6 +2114,10 @@
           "const": "likert",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
@@ -2196,6 +2224,10 @@
         "type": {
           "const": "longText",
           "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
@@ -2522,6 +2554,10 @@
           "const": "matrix-checkbox",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
@@ -2692,6 +2728,10 @@
           "const": "matrix-radio",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
@@ -2829,6 +2869,10 @@
         "type": {
           "const": "numerical",
           "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
@@ -3145,6 +3189,10 @@
           "const": "radio",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
@@ -3289,6 +3337,10 @@
           "const": "ranking-categorical",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
@@ -3396,6 +3448,10 @@
         "type": {
           "const": "ranking-pairwise",
           "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
@@ -3517,6 +3573,10 @@
         "type": {
           "const": "ranking-sublist",
           "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
@@ -3770,6 +3830,10 @@
           "const": "reactive",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
@@ -3880,6 +3944,75 @@
         }
       ]
     },
+    "ResponseVisibilityCondition": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "equals": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              ]
+            },
+            "responseId": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "equals",
+            "responseId"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "notEquals": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              ]
+            },
+            "responseId": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "notEquals",
+            "responseId"
+          ],
+          "type": "object"
+        }
+      ],
+      "description": "Controls visibility based on another response's answer in the same component. List comparisons require the same selections, regardless of order. Neither operator matches when the controlling response is unanswered or conditionally hidden."
+    },
     "ShortTextResponse": {
       "additionalProperties": false,
       "description": "The ShortTextResponse interface is used to define the properties of a short text response. ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder. ```json {   \"id\": \"q-short-text\",   \"prompt\": \"Short text example\",   \"location\": \"aboveStimulus\",   \"type\": \"shortText\",   \"default\": \"ReVISit is great\",   \"placeholder\": \"Enter your answer here\",   \"minCharLength\": 3,   \"maxCharLength\": 100,   \"minWordLength\": 2,   \"maxWordLength\": 20,   \"textValidation\": [     {       \"type\": \"contains\",       \"value\": \"ReVISit\"     }   ] } ```",
@@ -3973,6 +4106,10 @@
         "type": {
           "const": "shortText",
           "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
@@ -4103,6 +4240,10 @@
         "type": {
           "const": "slider",
           "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
         },
         "withBar": {
           "description": "Whether to render the slider with a bar to the left. Defaults to true.",
@@ -4511,6 +4652,10 @@
           "const": "textOnly",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
@@ -4635,6 +4780,10 @@
         "type": {
           "const": "time",
           "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",

@@ -377,6 +377,16 @@ export interface ParsedMatrixQuestionOption extends Omit<MatrixQuestionOption, '
 }
 
 /**
+ * Controls visibility based on another response's answer in the same component.
+ * List comparisons require the same selections, regardless of order.
+ * Neither operator matches when the controlling response is unanswered or conditionally hidden.
+ */
+export type ResponseVisibilityCondition = {
+  responseId: string;
+} & ({ equals: string | number | boolean | string[]; notEquals?: never }
+  | { notEquals: string | number | boolean | string[]; equals?: never });
+
+/**
  * The BaseResponse interface is used to define the required fields for all responses.
  * Other Response interfaces inherit properties from the BaseResponse interface.
  * Therefore, all responses must include these properties.
@@ -412,6 +422,8 @@ export interface BaseResponse {
   style?: Styles;
   /** Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false. */
   excludeFromRandomization?: boolean;
+  /** Show this response only when another response in this component satisfies the condition. */
+  visibleIf?: ResponseVisibilityCondition;
 }
 
 /**
