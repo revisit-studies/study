@@ -24,7 +24,7 @@ test('completes all 90 unique incongruent Stroop trials', async ({ page }) => {
   await resetClientStudyState(page);
   await openStudyFromLanding(page, 'Factor-demos', 'Stroop Test with Factors');
 
-  await expect(page.getByRole('heading', { name: 'Stroop Test with Factors' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Stroop Test with Factors', level: 1 })).toBeVisible();
   await nextClick(page);
 
   const stimulus = page.locator('[data-stroop-condition]');
@@ -45,9 +45,12 @@ test('completes all 90 unique incongruent Stroop trials', async ({ page }) => {
     expect(seenConditions.has(condition)).toBe(false);
     seenConditions.add(condition);
 
+    const previousUrl = page.url();
     await page.keyboard.press(COLOR_KEYS[inkColor]);
+    await expect(page.getByText('Response recorded', { exact: true })).toBeVisible();
 
     if (trialIndex < 89) {
+      await expect.poll(() => page.url()).not.toBe(previousUrl);
       await expect(stimulus).not.toHaveAttribute('data-stroop-condition', condition);
     }
   }

@@ -48,15 +48,21 @@ export function KeyMapper({
       return Boolean(focusRootRef?.current && focusRootRef.current.contains(target));
     };
 
-    const isEditableOrInteractiveTarget = (target: EventTarget | null): boolean => {
+    const isTextEntryTarget = (target: EventTarget | null): boolean => {
       if (!(target instanceof HTMLElement)) {
         return false;
       }
       if (target.isContentEditable) {
         return true;
       }
-      return ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON', 'A'].includes(target.tagName);
+      return ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName);
     };
+
+    const isNativeEnterTarget = (target: EventTarget | null, event: KeyboardEvent): boolean => (
+      event.key === 'Enter'
+      && target instanceof HTMLElement
+      && ['BUTTON', 'A'].includes(target.tagName)
+    );
 
     const handleKeyDown = (event: KeyboardEvent) => {
       // currently ctrl win, meta, command and ctrl are not supported
@@ -68,11 +74,8 @@ export function KeyMapper({
         return;
       }
 
-      if (isEditableOrInteractiveTarget(event.target)) {
-        return;
-      }
-
-      if (isOwnedTarget(event.target) || isOwnedTarget(document.activeElement)) {
+      const targetIsOwned = isOwnedTarget(event.target) || isOwnedTarget(document.activeElement);
+      if (!targetIsOwned && (isTextEntryTarget(event.target) || isNativeEnterTarget(event.target, event))) {
         return;
       }
 
@@ -95,5 +98,5 @@ export function KeyMapper({
     return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, [disabled, focusRootRef, onSelect, options]);
 
-  return <div>{children}</div>;
+  return <div ref={containerRef} tabIndex={-1}>{children}</div>;
 }

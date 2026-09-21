@@ -70,6 +70,53 @@
       "path": "test-parser-errors/assets/md1.md",
       "instructionLocation": "sidebar",
       "response": []
+    },
+    "color-mapper": {
+      "response": [
+        {
+          "id": "color-response",
+          "type": "buttons",
+          "prompt": "Select the ink color",
+          "location": "belowStimulus",
+          "options": [
+            { "label": "RED", "value": "red", "key": "r" },
+            { "label": "ORANGE", "value": "orange", "key": "u" },
+            { "label": "YELLOW", "value": "yellow", "key": "t" },
+            { "label": "GREEN", "value": "green", "key": "w" },
+            { "label": "BLUE", "value": "blue", "key": "q" }
+          ]
+        },
+        {
+          "id": "color-response2",
+          "type": "buttons",
+          "prompt": "Select the ink color",
+          "location": "belowStimulus",
+          "options": [
+            { "label": "RED", "value": "red", "key": "r" },
+            { "label": "ORANGE", "value": "orange", "key": "o" },
+            { "label": "YELLOW", "value": "yellow", "key": "y" },
+            { "label": "GREEN", "value": "green", "key": "g" },
+            { "label": "BLUE", "value": "blue", "key": "b" }
+          ],
+          "hideKeyVisual": true
+        }],
+      "type": "questionnaire",
+      "nextOnEnter": true
+    },
+    "math-mapper":{
+      "response": [
+        {
+          "id": "letter-response",
+          "type": "buttons",
+          "prompt": "What is 10+4",
+          "location": "belowStimulus",
+          "options": [
+            { "label": "14", "value": "14", "key": "14" },
+            { "label": "1", "value": "1", "key": "1" },
+            { "label": "4", "value": "4", "key": "4" }
+          ]
+        }],
+      "type": "questionnaire"
     }
   },
   "sequence": {
@@ -121,7 +168,9 @@
       "$test.sequences.missingSequence",
       "missingBaseComponent",
       "workingBaseComponentFromLibrary",
-      "missingComponentFromLibrary"
+      "missingComponentFromLibrary",
+      "color-mapper",
+      "math-mapper"
     ]
   }
 }

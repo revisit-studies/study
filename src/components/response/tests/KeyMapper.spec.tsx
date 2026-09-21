@@ -25,6 +25,7 @@ describe('KeyMapper Component', () => {
     { label: 'Option A', value: 'a', key: '1' },
     { label: 'Option B', value: 'b', key: '2' },
     { label: 'Option C', value: 'c', key: '3' },
+    { label: 'Continue', value: 'continue', key: 'Enter' },
   ];
 
   test('triggers onSelect with correct value when configured key is pressed', () => {
@@ -79,7 +80,7 @@ describe('KeyMapper Component', () => {
     fireEvent.keyDown(window, { key: 'ArrowRight' });
     expect(onSelectMock).toHaveBeenCalledWith('b', 'keyboard');
 
-    fireEvent.keyDown(window, { key: 'space' });
+    fireEvent.keyDown(window, { key: ' ' });
     expect(onSelectMock).toHaveBeenCalledWith('c', 'keyboard');
   });
 
@@ -101,27 +102,6 @@ describe('KeyMapper Component', () => {
     expect(onSelectMock).toHaveBeenCalledWith('a', 'keyboard');
   });
 
-  test('ignores keyboard shortcuts while focus is on a response option inside the same group', () => {
-    const onSelectMock = vi.fn();
-    const focusRootRef = { current: null as HTMLDivElement | null };
-
-    const { container } = render(
-      <div ref={(node) => { focusRootRef.current = node; }}>
-        <button type="button">Visible option</button>
-        <KeyMapper
-          options={[{ label: 'Option B', value: 'b', key: 'b' }]}
-          onSelect={onSelectMock}
-          focusRootRef={focusRootRef}
-        />
-      </div>,
-    );
-
-    const option = container.querySelector('button')!;
-    option.focus();
-    fireEvent.keyDown(window, { key: 'b' });
-    expect(onSelectMock).not.toHaveBeenCalled();
-  });
-
   test('does not trigger onSelect when component is disabled', () => {
     const onSelectMock = vi.fn();
 
@@ -137,7 +117,7 @@ describe('KeyMapper Component', () => {
     expect(onSelectMock).not.toHaveBeenCalled();
   });
 
-  test('ignores keypresses coming from form inputs, text areas, buttons, or links', () => {
+  test('ignores keypresses from text-entry controls and native Enter targets', () => {
     const onSelectMock = vi.fn();
 
     render(
@@ -160,10 +140,10 @@ describe('KeyMapper Component', () => {
     expect(onSelectMock).not.toHaveBeenCalled();
 
     fireEvent.keyDown(button, { key: '2' });
-    expect(onSelectMock).not.toHaveBeenCalled();
+    expect(onSelectMock).toHaveBeenCalledWith('b', 'keyboard');
 
-    fireEvent.keyDown(link, { key: '3' });
-    expect(onSelectMock).not.toHaveBeenCalled();
+    fireEvent.keyDown(link, { key: 'Enter' });
+    expect(onSelectMock).toHaveBeenCalledTimes(1);
   });
 
   test('ignores keypresses with modifier keys (Ctrl, Alt, Meta)', () => {

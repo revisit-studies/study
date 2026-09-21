@@ -53,7 +53,7 @@
             { "label": "Right", "value": "ArrowRight", "key": "ArrowRight" },
             { "label": "Up", "value": "ARROWUP", "key": "ArrowUp" },
             { "label": "Down", "value": "arrowDown", "key": "ArrowDown" },
-            { "label": "Space", "value": "space", "key": "space" }
+            { "label": "Space", "value": "space", "key": "Space" }
           ]
         }],
       "type": "questionnaire",

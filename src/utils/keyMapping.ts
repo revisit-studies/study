@@ -105,6 +105,9 @@ export function getCanonicalEventKey(event: Pick<KeyboardEvent, 'key' | 'shiftKe
 
   const normalizedKey = (() => {
     const lower = key.toLowerCase();
+    if (key === ' ') {
+      return 'Space';
+    }
     if (SPECIAL_KEY_ALIASES[lower]) {
       return SPECIAL_KEY_ALIASES[lower];
     }

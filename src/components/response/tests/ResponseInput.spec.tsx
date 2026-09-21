@@ -1,7 +1,7 @@
 import { forwardRef, ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
-  render, act, cleanup,
+  render, act, cleanup, fireEvent,
 } from '@testing-library/react';
 import {
   afterEach, describe, expect, test, vi,
@@ -26,6 +26,7 @@ import { MatrixInput } from '../MatrixInput';
 import { RankingInput } from '../RankingInput';
 import { ResponseSwitcher } from '../ResponseSwitcher';
 import { FeedbackAlert } from '../FeedbackAlert';
+import { NextButton } from '../../NextButton';
 import type {
   ButtonsResponse,
   CheckboxResponse,
@@ -65,6 +66,15 @@ vi.mock('@mantine/core', () => {
     ({ children }: { children?: ReactNode }) => <ul>{children}</ul>,
     { Item: ({ children }: { children?: ReactNode }) => <li>{children}</li> },
   );
+  function RadioGroup({ children, label, description }: { children?: ReactNode; label?: ReactNode; description?: ReactNode }) {
+    return (
+      <div>
+        {label}
+        {description}
+        {children}
+      </div>
+    );
+  }
   const Radio = Object.assign(
     ({ label, value, children }: { label?: ReactNode; value?: string; children?: ReactNode }) => (
       <div data-value={value}>
@@ -73,15 +83,9 @@ vi.mock('@mantine/core', () => {
       </div>
     ),
     {
-      Group: ({ children, label, description }: { children?: ReactNode; label?: ReactNode; description?: ReactNode }) => (
-        <div>
-          {label}
-          {description}
-          {children}
-        </div>
-      ),
+      Group: RadioGroup,
       Card: ({ children, value }: { children?: ReactNode; value?: string }) => (
-        <div data-value={value}>{children}</div>
+        <button type="button" role="radio" data-value={value}>{children}</button>
       ),
     },
   );
@@ -112,6 +116,7 @@ vi.mock('@mantine/core', () => {
     Flex: Div,
     Box: Div,
     Text: Span,
+    Kbd: ({ children }: { children?: ReactNode }) => <kbd>{children}</kbd>,
     Tooltip: ({ children, label }: { children?: ReactNode; label?: ReactNode }) => (
       <div title={String(label)}>{children}</div>
     ),
@@ -277,13 +282,18 @@ vi.mock('../../../utils/stringOptions', () => ({
 vi.mock('react-router', () => ({
   useSearchParams: vi.fn(() => [new URLSearchParams(), vi.fn()]),
   useParams: vi.fn(() => ({})),
+  useNavigate: vi.fn(() => vi.fn()),
 }));
 
 vi.mock('../../../store/hooks/useStudyConfig', () => ({
   useStudyConfig: vi.fn(() => ({
-    uiConfig: { enumerateQuestions: false, responseDividers: false },
+    uiConfig: { enumerateQuestions: false, responseDividers: false, nextOnEnter: true },
     components: {},
   })),
+}));
+
+vi.mock('../../../store/hooks/useNextStep', () => ({
+  useNextStep: vi.fn(() => ({ isNextDisabled: false, goToNextStep: vi.fn() })),
 }));
 
 vi.mock('../../../store/hooks/useIsAnalysis', () => ({
@@ -293,6 +303,7 @@ vi.mock('../../../store/hooks/useIsAnalysis', () => ({
 vi.mock('../../../routes/utils', () => ({
   useCurrentStep: vi.fn(() => 0),
   useCurrentComponent: vi.fn(() => ''),
+  useCurrentIdentifier: vi.fn(() => 'test_0'),
 }));
 
 vi.mock('../../../utils/fetchStylesheet', () => ({
@@ -660,6 +671,60 @@ describe('ButtonsInput', () => {
     expect(html).toContain('Yes');
     expect(html).toContain('No');
     expect(html).toContain('Maybe');
+  });
+
+  test('mapped key works when a rendered response card has focus', () => {
+    const onChange = vi.fn();
+    const response = {
+      ...base,
+      options: [
+        { label: 'Yes', value: 'yes', key: 'Enter' },
+        { label: 'No', value: 'no', key: 'n' },
+      ],
+    } as ButtonsResponse;
+    const { container } = render(
+      <ButtonsInput
+        response={response}
+        disabled={false}
+        answer={{ value: '', onChange }}
+        index={1}
+        enumerateQuestions={false}
+      />,
+    );
+
+    const option = container.querySelector('[role="radio"]') as HTMLElement;
+    option.focus();
+    fireEvent.keyDown(option, { key: 'Enter', bubbles: true, cancelable: true });
+
+    expect(onChange).toHaveBeenCalledWith('yes');
+  });
+
+  test('mapped Enter does not also trigger NextButton', () => {
+    const onChange = vi.fn();
+    const onNext = vi.fn();
+    const response = {
+      ...base,
+      options: [{ label: 'Yes', value: 'yes', key: 'Enter' }],
+    } as ButtonsResponse;
+    const { container } = render(
+      <>
+        <ButtonsInput
+          response={response}
+          disabled={false}
+          answer={{ value: '', onChange }}
+          index={1}
+          enumerateQuestions={false}
+        />
+        <NextButton checkAnswer={null} onNext={onNext} />
+      </>,
+    );
+
+    const option = container.querySelector('[role="radio"]') as HTMLElement;
+    option.focus();
+    fireEvent.keyDown(option, { key: 'Enter', bubbles: true, cancelable: true });
+
+    expect(onChange).toHaveBeenCalledWith('yes');
+    expect(onNext).not.toHaveBeenCalled();
   });
 });
 

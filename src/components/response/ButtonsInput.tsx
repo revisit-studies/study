@@ -105,100 +105,101 @@ export function ButtonsInput({
 
   return (
     <FocusTrap>
-      <Radio.Group
-        ref={groupRef}
-        name={`radioInput${response.id}`}
-        label={prompt.length > 0 && (
-          <InputLabel
-            prompt={prompt}
-            required={required}
-            index={index}
-            enumerateQuestions={enumerateQuestions}
-            infoText={infoText}
-            clearSelectionButton={(
-              <ClearSelectionButton onClick={() => handleValueChange('')} disabled={disabled} visible={!!answer?.value} />
-            )}
+      <div ref={groupRef}>
+        <Radio.Group
+          name={`radioInput${response.id}`}
+          label={prompt.length > 0 && (
+            <InputLabel
+              prompt={prompt}
+              required={required}
+              index={index}
+              enumerateQuestions={enumerateQuestions}
+              infoText={infoText}
+              clearSelectionButton={(
+                <ClearSelectionButton onClick={() => handleValueChange('')} disabled={disabled} visible={!!answer?.value} />
+              )}
+            />
+          )}
+          description={secondaryText}
+          key={response.id}
+          value={answer?.value}
+          onChange={(value) => handleValueChange(value, 'click')}
+          error={error}
+          errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
+          style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
+        >
+          <KeyMapper
+            options={orderedOptions}
+            onSelect={(val, source) => handleValueChange(val, source ?? 'keyboard')}
+            disabled={disabled}
+            focusRootRef={groupRef}
           />
-        )}
-        description={secondaryText}
-        key={response.id}
-        value={answer?.value}
-        onChange={(value) => handleValueChange(value, 'click')}
-        error={error}
-        errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
-        style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
-      >
-        <KeyMapper
-          options={orderedOptions}
-          onSelect={(val, source) => handleValueChange(val, source ?? 'keyboard')}
-          disabled={disabled}
-          focusRootRef={groupRef}
-        />
-        <Flex justify="space-between" align="center" gap="xl" mt="xs">
-          {orderedOptions.map((radio, idx) => {
-            const hasKeyVisual = !hideKeyVisual && Boolean(radio.key);
+          <Flex justify="space-between" align="center" gap="xl" mt="xs">
+            {orderedOptions.map((radio, idx) => {
+              const hasKeyVisual = !hideKeyVisual && Boolean(radio.key);
 
-            return (
-              <Radio.Card
-                key={`radio-${idx}`}
-                value={radio.value}
-                disabled={disabled}
-                className={classes.root}
-                style={{
-                  overflow: 'hidden',
-                  padding: 0,
-                }}
-              >
-                <div
+              return (
+                <Radio.Card
+                  key={`radio-${idx}`}
+                  value={radio.value}
+                  disabled={disabled}
+                  className={classes.root}
                   style={{
-                    display: 'flex',
-                    alignItems: 'stretch',
-                    minHeight: '100%',
+                    overflow: 'hidden',
+                    padding: 0,
                   }}
                 >
-                  <Flex
-                    align="center"
-                    justify="center"
-                    gap="xs"
-                    style={{ flex: 1, padding: '10px 12px' }}
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'stretch',
+                      minHeight: '100%',
+                    }}
                   >
-                    <OptionLabel label={radio.label} infoText={radio.infoText} button />
-                  </Flex>
-
-                  {hasKeyVisual && (
                     <Flex
                       align="center"
                       justify="center"
-                      style={{
-                        flexShrink: 0,
-                        padding: '0 12px',
-                        borderLeft: '1px solid rgba(255, 255, 255, 0.25)',
-                        backgroundColor: 'rgba(0, 0, 0, 0.04)',
-                      }}
+                      gap="xs"
+                      style={{ flex: 1, padding: '10px 12px' }}
                     >
-                      <Kbd
-                        size="xs"
-                        aria-hidden="true"
+                      <OptionLabel label={radio.label} infoText={radio.infoText} button />
+                    </Flex>
+
+                    {hasKeyVisual && (
+                      <Flex
+                        align="center"
+                        justify="center"
                         style={{
-                          backgroundColor: 'transparent',
-                          color: 'inherit',
-                          boxShadow: 'none',
-                          border: 'none',
-                          fontSize: '10px',
-                          fontWeight: 600,
-                          padding: 0,
+                          flexShrink: 0,
+                          padding: '0 12px',
+                          borderLeft: '1px solid rgba(255, 255, 255, 0.25)',
+                          backgroundColor: 'rgba(0, 0, 0, 0.04)',
                         }}
                       >
-                        {formatKeyForDisplay(radio.key?.toLowerCase() as never)}
-                      </Kbd>
-                    </Flex>
-                  )}
-                </div>
-              </Radio.Card>
-            );
-          })}
-        </Flex>
-      </Radio.Group>
+                        <Kbd
+                          size="xs"
+                          aria-hidden="true"
+                          style={{
+                            backgroundColor: 'transparent',
+                            color: 'inherit',
+                            boxShadow: 'none',
+                            border: 'none',
+                            fontSize: '10px',
+                            fontWeight: 600,
+                            padding: 0,
+                          }}
+                        >
+                          {formatKeyForDisplay(radio.key?.toLowerCase() as never)}
+                        </Kbd>
+                      </Flex>
+                    )}
+                  </div>
+                </Radio.Card>
+              );
+            })}
+          </Flex>
+        </Radio.Group>
+      </div>
     </FocusTrap>
   );
 }
