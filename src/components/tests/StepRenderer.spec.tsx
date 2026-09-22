@@ -292,6 +292,14 @@ describe('StepRenderer', () => {
     vi.restoreAllMocks();
   });
 
+  test('keeps the main content free of form-only gutters', async () => {
+    const { container } = await act(async () => render(<StepRenderer />));
+    const content = container.querySelector<HTMLElement>('.study-content');
+
+    expect(content?.style.padding).toBe('');
+    expect(content?.querySelector('[data-testid="outlet"]')).not.toBeNull();
+  });
+
   test('shows the blocking storage modal when a queued participant data write fails', async () => {
     let onParticipantDataWriteError: ((error: Error) => void) | undefined;
     const unsubscribe = vi.fn();

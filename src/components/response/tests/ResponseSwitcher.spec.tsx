@@ -107,7 +107,7 @@ beforeEach(() => {
 
 afterEach(() => cleanup());
 
-test.each([true, false])('uses semantic validation colors and restores custom styles when valid (required=%s)', (required) => {
+test.each([true, false])('uses semantic validation defaults while preserving custom colors (required=%s)', (required) => {
   const errorColor = required ? 'red' : 'orange';
   const styledResponse: Response = {
     id: 'q1',
@@ -115,10 +115,10 @@ test.each([true, false])('uses semantic validation colors and restores custom st
     prompt: 'Q1',
     required,
     minCharLength: 5,
-    style: { color: 'navy', backgroundColor: 'beige', margin: '12px' },
+    style: { margin: '12px' },
   };
-  const content = (value: string) => (
-    <ResponseSwitcher response={styledResponse} form={{ ...form, value }} index={1} config={{} as IndividualComponent} errors />
+  const content = (value: string, responseConfig = styledResponse) => (
+    <ResponseSwitcher response={responseConfig} form={{ ...form, value }} index={1} config={{} as IndividualComponent} errors />
   );
   const view = render(content('bad'));
   const wrapper = view.container.querySelector<HTMLElement>('.response')!;
@@ -127,7 +127,16 @@ test.each([true, false])('uses semantic validation colors and restores custom st
   expect(wrapper.style.border).toBe(`1px solid var(--mantine-color-${errorColor}-outline)`);
   expect(wrapper.style.margin).toBe('12px');
 
-  view.rerender(content('valid answer'));
+  const customResponse: Response = {
+    ...styledResponse,
+    style: { ...styledResponse.style, color: 'navy', backgroundColor: 'beige' },
+  };
+  view.rerender(content('bad', customResponse));
+  expect(wrapper.style.backgroundColor).toBe('beige');
+  expect(wrapper.style.color).toBe('navy');
+  expect(wrapper.style.border).toBe(`1px solid var(--mantine-color-${errorColor}-outline)`);
+
+  view.rerender(content('valid answer', customResponse));
   expect(wrapper.style.backgroundColor).toBe('beige');
   expect(wrapper.style.color).toBe('navy');
   expect(wrapper.style.border).toBe('');
@@ -167,6 +176,45 @@ describe('ResponseSwitcher stored answer locking', () => {
     expect(() => renderSwitcher({ storedAnswer: undefined, answerFinalized: false })).not.toThrow();
     expect(capturedStringInputProps.disabled).toBe(true);
     expect(capturedStringInputProps.answer).toMatchObject({ value: undefined, readOnly: true });
+  });
+});
+
+describe('ResponseSwitcher style overrides', () => {
+  test('lets an explicit width control the response and releases the input cap', () => {
+    const { container } = render(
+      <ResponseSwitcher
+        response={{ ...response, style: { width: '600px' } } as Response}
+        form={form}
+        index={1}
+        config={{} as IndividualComponent}
+      />,
+    );
+    const wrapper = container.querySelector<HTMLElement>('.response');
+    expect(wrapper?.style.width).toBe('600px');
+    expect(wrapper?.dataset.answerWidth).toBeUndefined();
+  });
+
+  test('keeps user styles when displaying a validation error', () => {
+    const { container } = render(
+      <ResponseSwitcher
+        response={{
+          ...response,
+          type: 'custom',
+          style: {
+            padding: '0', border: '0', borderRadius: '0', backgroundColor: 'white',
+          },
+        } as Response}
+        customError="Required answer"
+        form={form}
+        index={1}
+        config={{} as IndividualComponent}
+      />,
+    );
+    const wrapper = container.querySelector<HTMLElement>('.response');
+    expect(wrapper?.style.padding).toBe('0px');
+    expect(wrapper?.style.borderWidth).toBe('0px');
+    expect(wrapper?.style.borderRadius).toBe('0px');
+    expect(wrapper?.style.backgroundColor).toBe('white');
   });
 });
 

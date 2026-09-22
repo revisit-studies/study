@@ -90,7 +90,9 @@ describe('PDF export helpers', () => {
     liveElement.innerHTML = `
       <header data-pdf-export-header style="display: none"></header>
       <aside class="sidebar" style="display: block; width: 300px"></aside>
-      <main class="main" style="width: calc(100% - 310px)"><iframe title="Chart"></iframe></main>
+      <main class="main" style="width: calc(100% - 310px); padding-inline: 16px">
+        <div class="study-content"><iframe title="Chart"></iframe></div>
+      </main>
     `;
     const clonedContainer = document.createElement('div');
     clonedContainer.append(liveElement.cloneNode(true));

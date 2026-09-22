@@ -2,6 +2,14 @@ import { describe, expect, test } from 'vitest';
 import { getComponentContainerStyle } from '../componentStyle';
 
 describe('getComponentContainerStyle', () => {
+  test('keeps configured padding inside the styled stimulus', () => {
+    const style = getComponentContainerStyle('image', { padding: '0 12px', backgroundColor: 'white', border: '1px solid black' });
+
+    expect(style.padding).toBe('0 12px');
+    expect(style.backgroundColor).toBe('white');
+    expect(style.border).toBe('1px solid black');
+  });
+
   test('adds maxWidth clamp when width is provided without maxWidth', () => {
     const style = getComponentContainerStyle('image', { width: '800px' });
 
