@@ -2,7 +2,9 @@ import {
   Flex, Image, Select, Title, Space, Grid, AppShell, Button, Text, ActionIcon, Tooltip,
 } from '@mantine/core';
 
-import { useLocation, useNavigate, useParams } from 'react-router';
+import {
+  matchPath, useLocation, useNavigate, useParams,
+} from 'react-router';
 
 import {
   IconListCheck, IconSettings, IconMoon, IconSun,
@@ -38,8 +40,8 @@ export function AppHeader({
     .filter((version): version is string => version !== undefined)
     .sort((a, b) => b.localeCompare(a, undefined, { numeric: true }))[0];
 
-  const inAnalysis = location.pathname === '/analysis' || location.pathname.startsWith('/analysis/');
-  const showThemeToggle = ['/', '/settings', '/login'].includes(location.pathname) || inAnalysis;
+  const inAnalysis = matchPath('/analysis/*', location.pathname) !== null;
+  const showThemeToggle = ['/', '/settings', '/login'].some((path) => matchPath(path, location.pathname)) || inAnalysis;
 
   return (
     <AppShell.Header p="md">

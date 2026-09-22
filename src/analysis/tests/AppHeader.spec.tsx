@@ -3,6 +3,7 @@ import {
   beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { ReactNode } from 'react';
+import { matchPath } from 'react-router';
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import { AppHeader } from '../interface/AppHeader';
 
@@ -14,11 +15,15 @@ vi.mock('../../components/AppThemeProvider', () => ({
   useAppColorMode: () => ({ colorMode: mockColorMode, toggleColorMode: mockToggleColorMode }),
 }));
 
-vi.mock('react-router', () => ({
-  useNavigate: () => vi.fn(),
-  useParams: vi.fn(() => ({ studyId: 'my-study' })),
-  useLocation: () => ({ pathname: mockPathname }),
-}));
+vi.mock('react-router', async () => {
+  const actual = await vi.importActual<{ matchPath: typeof matchPath }>('react-router');
+  return {
+    matchPath: actual.matchPath,
+    useNavigate: () => vi.fn(),
+    useParams: vi.fn(() => ({ studyId: 'my-study' })),
+    useLocation: () => ({ pathname: mockPathname }),
+  };
+});
 
 vi.mock('../../utils/Prefix', () => ({ PREFIX: '/' }));
 
@@ -61,7 +66,10 @@ beforeEach(() => {
 });
 
 describe('AppHeader', () => {
-  test.each(['/', '/settings', '/login', '/analysis/stats', '/analysis/stats/my-study/summary'])('offers a theme toggle on %s', (pathname) => {
+  test.each([
+    '/', '/settings', '/settings/', '/Settings', '/login', '/login/', '/LOGIN',
+    '/analysis/stats', '/analysis/stats/my-study/summary', '/Analysis/stats/my-study/summary/',
+  ])('offers a theme toggle on %s', (pathname) => {
     mockPathname = pathname;
     const { getByRole } = render(<AppHeader studyIds={[]} />);
     fireEvent.click(getByRole('button', { name: 'Switch to dark mode' }));
@@ -74,7 +82,7 @@ describe('AppHeader', () => {
     expect(getByRole('button', { name: 'Switch to light mode' })).toBeDefined();
   });
 
-  test.each(['/demo-style', '/demo-analysis'])('does not offer a toggle on %s', (pathname) => {
+  test.each(['/demo-style', '/demo-analysis', '/settings-study', '/login-study', '/analysis-study'])('does not offer a toggle on %s', (pathname) => {
     mockPathname = pathname;
     const { queryByRole } = render(<AppHeader studyIds={[]} />);
     expect(queryByRole('button', { name: /Switch to .* mode/ })).toBeNull();
