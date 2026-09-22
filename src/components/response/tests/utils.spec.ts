@@ -10,6 +10,7 @@ import type { CustomResponseValidate } from '../../../store/types';
 import {
   generateInitFields,
   getDefaultFieldValue,
+  getResponseWidth,
   generateValidation,
   mergeReactiveAnswers,
   normalizeCheckboxValue,
@@ -26,6 +27,49 @@ import {
   usesStandaloneDontKnowField,
 } from '../responseErrors';
 import { validateResponse } from '../responseValidation';
+
+describe('getResponseWidth', () => {
+  test.each(['width', 'minWidth', 'maxWidth'] as const)('explicit %s removes the default input width limit', (property) => {
+    expect(getResponseWidth({ type: 'shortText', style: { [property]: '600px' } } as Response)).toBeUndefined();
+    expect(getResponseWidth({ type: 'longText', style: { [property]: '1800px' } } as Response)).toBeUndefined();
+  });
+
+  test('unrelated styles keep the default input width', () => {
+    expect(getResponseWidth({ type: 'shortText', style: { color: 'red', padding: '0' } } as Response)).toBe('medium');
+  });
+
+  test('numerical uses the xs width', () => {
+    expect(getResponseWidth({ type: 'numerical' } as Response)).toBe('xs');
+  });
+
+  test('time uses the small width', () => {
+    expect(getResponseWidth({ type: 'time' } as Response)).toBe('small');
+  });
+
+  test.each(['date', 'month', 'year'] as const)('date option %s uses the xs width', (options) => {
+    expect(getResponseWidth({ type: 'date', options } as Response)).toBe('xs');
+  });
+
+  test.each(['phoneNumber', 'usPhoneNumber'] as const)('%s uses the xs width', (builtInValidation) => {
+    expect(getResponseWidth({ type: 'shortText', builtInValidation } as Response)).toBe('xs');
+  });
+
+  test.each([undefined, 'email', 'url'] as const)('short text with %s validation uses the medium width', (builtInValidation) => {
+    expect(getResponseWidth({ type: 'shortText', builtInValidation } as Response)).toBe('medium');
+  });
+
+  test.each([undefined, 3])('dropdown with maxSelections %s uses the medium width', (maxSelections) => {
+    expect(getResponseWidth({ type: 'dropdown', maxSelections } as Response)).toBe('medium');
+  });
+
+  test.each([
+    'longText', 'radio', 'checkbox', 'buttons', 'likert', 'slider',
+    'matrix-radio', 'matrix-checkbox', 'ranking-sublist', 'ranking-categorical',
+    'ranking-pairwise', 'reactive', 'textOnly', 'divider', 'custom',
+  ] as const)('%s keeps the full width', (type) => {
+    expect(getResponseWidth({ type } as Response)).toBe('full');
+  });
+});
 
 describe('generateInitFields', () => {
   const originalWindow = globalThis.window;

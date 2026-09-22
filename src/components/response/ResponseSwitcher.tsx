@@ -22,6 +22,7 @@ import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { MatrixInput } from './MatrixInput';
 import { ButtonsInput } from './ButtonsInput';
 import classes from './css/Checkbox.module.css';
+import './css/default-form.css';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import { useStoreSelector } from '../../store/store';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
@@ -31,7 +32,7 @@ import { useFetchStylesheet } from '../../utils/fetchStylesheet';
 import { parseStringOptionValue, parseStringOptions } from '../../utils/stringOptions';
 import { getDropdownOptions } from '../../utils/dropdownOptions';
 import {
-  getDefaultFieldValue, normalizeCheckboxValue,
+  getDefaultFieldValue, getResponseWidth, normalizeCheckboxValue,
 } from './utils';
 import {
   generateErrorMessage,
@@ -218,12 +219,12 @@ export function ResponseSwitcher({
     const errorColor = response.required === false ? 'orange' : 'red';
 
     return {
-      ...responseStyle,
       border: `1px solid var(--mantine-color-${errorColor}-outline)`,
       backgroundColor: `var(--mantine-color-${errorColor}-light)`,
       color: `var(--mantine-color-${errorColor}-light-color)`,
       borderRadius: 'var(--mantine-radius-md)',
       padding: 'var(--mantine-spacing-sm)',
+      ...responseStyle,
     };
   }, [displayError, response.required, responseStyle]);
 
@@ -255,7 +256,7 @@ export function ResponseSwitcher({
   }
 
   return (
-    <Box mb={responseDividers ? 'xl' : 'lg'} className="response" id={response.id} style={responseWrapperStyle}>
+    <Box mb={responseDividers ? 'xl' : 'lg'} className="response" data-answer-width={getResponseWidth(response)} id={response.id} style={responseWrapperStyle}>
       {response.type === 'numerical' && (
       <NumericInput
         response={withTemplatedFields(response)}

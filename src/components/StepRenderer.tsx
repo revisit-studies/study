@@ -379,7 +379,17 @@ export function StepRenderer() {
                     Study Browser
                   </Button>
                 )}
-                <Outlet />
+                <div
+                  className="study-content"
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    flexGrow: 1,
+                    minWidth: 0,
+                  }}
+                >
+                  <Outlet />
+                </div>
               </AppShell.Main>
             </Flex>
             {isAnalysis && (

@@ -6,7 +6,8 @@ body {
 .image {
   height: 200px;
   overflow-y: hidden;
-  width: 50% !important;
+  width: 100%;
+  max-width: 640px;
   object-fit: cover;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -30,7 +31,8 @@ body {
   padding: 20px;
   border: 2px solid var(--mantine-color-default-border);
   border-radius: 12px;
-  width: 50%;
+  width: 100%;
+  max-width: 640px;
   box-sizing: border-box;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }

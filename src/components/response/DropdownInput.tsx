@@ -42,7 +42,7 @@ export function DropdownInput({
         disabled={disabled}
         label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
         description={secondaryText}
-        placeholder={!answer.value || answer.value.length === 0 ? resolvedPlaceholder : undefined}
+        placeholder={!answer.value || answer.value.length === 0 ? resolvedPlaceholder : ' '}
         data={optionsAsStringOptions}
         radius="md"
         size="md"
@@ -51,7 +51,7 @@ export function DropdownInput({
         error={error}
         withErrorStyles={required}
         errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
-        classNames={{ input: classes.fixDisabled }}
+        classNames={{ input: classes.fixDisabled, inputField: classes.multiSelectSearch, pillsList: classes.multiSelectPills }}
         maxDropdownHeight={200}
         clearable
         searchable

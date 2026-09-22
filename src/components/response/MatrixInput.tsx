@@ -2,7 +2,7 @@ import {
   Box, Radio, Text, Checkbox,
 } from '@mantine/core';
 import {
-  ChangeEvent, useMemo,
+  ChangeEvent, CSSProperties, useMemo,
 } from 'react';
 import ClearSelectionButton from './ClearSelectionButton';
 import { MatrixResponse, ParsedMatrixQuestionOption, ParsedStringOption } from '../../parser/types';
@@ -224,11 +224,13 @@ export function MatrixInput({
       )}
       <Text c="dimmed" size="sm" mt={0}>{secondaryText}</Text>
       <Box
+        className="matrix-grid"
         style={{
           display: 'grid',
           gridTemplateColumns: hasRightQuestionLabels ? 'auto 1fr auto' : 'auto 1fr',
           gridTemplateRows: 'auto 1fr',
-        }}
+          '--matrix-min-width': `${140 + (_n * 80) + (hasRightQuestionLabels ? 140 : 0)}px`,
+        } as CSSProperties}
         m="md"
         mt="xs"
       >
