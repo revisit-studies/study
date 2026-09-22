@@ -1,5 +1,5 @@
 import {
-  createContext, ReactNode, useContext, useLayoutEffect, useMemo, useState,
+  createContext, ReactNode, useContext, useInsertionEffect, useLayoutEffect, useMemo, useState,
 } from 'react';
 import { MantineColorScheme, MantineProvider } from '@mantine/core';
 import { useColorScheme, useLocalStorage } from '@mantine/hooks';
@@ -24,6 +24,20 @@ export function AppThemeProvider({ children }: { children: ReactNode }) {
   const [studyColorMode, setStudyColorMode] = useState<'light' | 'dark'>();
   const colorMode = userColorMode === 'auto' ? systemColorMode : userColorMode;
   const effectiveColorMode = studyColorMode ?? colorMode;
+  useInsertionEffect(() => {
+    // forceColorScheme bypasses Mantine's normal transition suppression.
+    // Install this before Mantine applies the theme, then restore table interactions after a paint.
+    const style = document.createElement('style');
+    style.textContent = '[class*="MRT_"], [class*="MRT_"] * { transition: none !important; }';
+    document.head.appendChild(style);
+    let frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => style.remove());
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+      style.remove();
+    };
+  }, [effectiveColorMode]);
   const context = useMemo(() => ({
     colorMode,
     toggleColorMode: () => setUserColorMode(colorMode === 'dark' ? 'light' : 'dark'),
