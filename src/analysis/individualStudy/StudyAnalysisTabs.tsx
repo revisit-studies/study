@@ -119,7 +119,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   // 0-1 percentage of scroll height
 
   const { value: expData, execute, status } = useAsync(getParticipantsData, [studyConfig, storageEngine, canonicalStudyId ?? undefined]);
-  const { value: currentConfigHashValue } = useAsync(
+  const { value: currentConfigHashValue, status: currentConfigStatus } = useAsync(
     getCurrentConfigHashForStudy,
     storageEngine && canonicalStudyId ? [storageEngine, canonicalStudyId] : null,
   );
@@ -667,7 +667,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                   )}
               </Tabs.Panel>
               <Tabs.Panel style={{ overflow: 'auto' }} value="config" pt="xs">
-                {studyConfig && <ConfigView visibleParticipants={visibleParticipants} studyId={canonicalStudyId ?? undefined} currentConfigHash={currentConfigHash} />}
+                {studyConfig && <ConfigView visibleParticipants={visibleParticipants} studyId={canonicalStudyId ?? undefined} currentConfigHash={currentConfigHash} currentConfigStatus={currentConfigStatus} />}
               </Tabs.Panel>
               <Tabs.Panel style={{ overflow: 'auto' }} value="manage" pt="xs">
                 {canonicalStudyId && user.isAdmin ? <ManageView studyId={canonicalStudyId} refresh={() => execute(studyConfig, storageEngine, canonicalStudyId)} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to manage the data for this study.</Alert></Container>}
