@@ -39,7 +39,7 @@ export function AppHeader({
     .sort((a, b) => b.localeCompare(a, undefined, { numeric: true }))[0];
 
   const inAnalysis = location.pathname === '/analysis' || location.pathname.startsWith('/analysis/');
-  const showThemeToggle = location.pathname === '/' || inAnalysis;
+  const showThemeToggle = ['/', '/settings', '/login'].includes(location.pathname) || inAnalysis;
 
   return (
     <AppShell.Header p="md">

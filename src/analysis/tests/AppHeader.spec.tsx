@@ -61,7 +61,7 @@ beforeEach(() => {
 });
 
 describe('AppHeader', () => {
-  test.each(['/', '/analysis/stats', '/analysis/stats/my-study/summary'])('offers a theme toggle on %s', (pathname) => {
+  test.each(['/', '/settings', '/login', '/analysis/stats', '/analysis/stats/my-study/summary'])('offers a theme toggle on %s', (pathname) => {
     mockPathname = pathname;
     const { getByRole } = render(<AppHeader studyIds={[]} />);
     fireEvent.click(getByRole('button', { name: 'Switch to dark mode' }));
@@ -74,7 +74,7 @@ describe('AppHeader', () => {
     expect(getByRole('button', { name: 'Switch to light mode' })).toBeDefined();
   });
 
-  test.each(['/settings', '/login', '/demo-style', '/demo-analysis'])('does not offer a toggle on %s', (pathname) => {
+  test.each(['/demo-style', '/demo-analysis'])('does not offer a toggle on %s', (pathname) => {
     mockPathname = pathname;
     const { queryByRole } = render(<AppHeader studyIds={[]} />);
     expect(queryByRole('button', { name: /Switch to .* mode/ })).toBeNull();
