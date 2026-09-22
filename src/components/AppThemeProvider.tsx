@@ -1,5 +1,5 @@
 import {
-  createContext, ReactNode, useContext, useLayoutEffect, useMemo, useState,
+  createContext, ReactNode, useContext, useInsertionEffect, useLayoutEffect, useMemo, useState,
 } from 'react';
 import { MantineColorScheme, MantineProvider } from '@mantine/core';
 import { useColorScheme, useLocalStorage } from '@mantine/hooks';
@@ -24,6 +24,30 @@ export function AppThemeProvider({ children }: { children: ReactNode }) {
   const [studyColorMode, setStudyColorMode] = useState<'light' | 'dark'>();
   const colorMode = userColorMode === 'auto' ? systemColorMode : userColorMode;
   const effectiveColorMode = studyColorMode ?? colorMode;
+  useInsertionEffect(() => {
+    // forceColorScheme bypasses Mantine's normal transition suppression.
+    // Keep suppression until Mantine applies the requested root attribute and paints the theme.
+    const style = document.createElement('style');
+    style.textContent = '[class*="MRT_"], [class*="MRT_"] * { transition: none !important; }';
+    document.head.appendChild(style);
+    let frame: number | undefined;
+    const root = document.documentElement;
+    const restoreAfterThemeChange = (observer: MutationObserver) => {
+      if (root.getAttribute('data-mantine-color-scheme') !== effectiveColorMode) return;
+      observer.disconnect();
+      frame = requestAnimationFrame(() => {
+        frame = requestAnimationFrame(() => style.remove());
+      });
+    };
+    const observer = new MutationObserver((_, currentObserver) => restoreAfterThemeChange(currentObserver));
+    observer.observe(root, { attributes: true, attributeFilter: ['data-mantine-color-scheme'] });
+    restoreAfterThemeChange(observer);
+    return () => {
+      observer.disconnect();
+      if (frame !== undefined) cancelAnimationFrame(frame);
+      style.remove();
+    };
+  }, [effectiveColorMode]);
   const context = useMemo(() => ({
     colorMode,
     toggleColorMode: () => setUserColorMode(colorMode === 'dark' ? 'light' : 'dark'),

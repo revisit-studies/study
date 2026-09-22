@@ -51,6 +51,95 @@ afterEach(() => {
 });
 
 describe('AppThemeProvider', () => {
+  describe('table transition suppression', () => {
+    const frames = new Map<number, FrameRequestCallback>();
+    let nextFrame = 0;
+    const suppressionStyles = () => [...document.head.querySelectorAll('style')]
+      .filter((style) => style.textContent?.includes('[class*="MRT_"]'));
+
+    function advanceFrame() {
+      const callbacks = [...frames.values()];
+      frames.clear();
+      act(() => callbacks.forEach((callback) => callback(0)));
+    }
+
+    beforeEach(() => {
+      frames.clear();
+      nextFrame = 0;
+      document.documentElement.removeAttribute('data-mantine-color-scheme');
+      vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+        nextFrame += 1;
+        frames.set(nextFrame, callback);
+        return nextFrame;
+      });
+      vi.stubGlobal('cancelAnimationFrame', (id: number) => frames.delete(id));
+    });
+
+    test('waits for the actual theme change before restoring transitions', async () => {
+      const view = render(<AppThemeProvider><Toggle /></AppThemeProvider>);
+      await act(async () => {});
+      advanceFrame();
+      advanceFrame();
+      const root = document.documentElement;
+      const setAttribute = root.setAttribute.bind(root);
+      vi.spyOn(root, 'setAttribute').mockImplementation((name, value) => {
+        if (name !== 'data-mantine-color-scheme') setAttribute(name, value);
+      });
+
+      fireEvent.click(view.getByRole('button', { name: 'light' }));
+      advanceFrame();
+      advanceFrame();
+      expectTheme('light');
+      expect(suppressionStyles()).toHaveLength(1);
+
+      await act(async () => setAttribute('data-mantine-color-scheme', 'dark'));
+      advanceFrame();
+      expect(suppressionStyles()).toHaveLength(1);
+      advanceFrame();
+      expect(suppressionStyles()).toHaveLength(0);
+    });
+
+    test('restores transitions when the root already has the requested theme', async () => {
+      document.documentElement.setAttribute('data-mantine-color-scheme', 'light');
+      render(<StrictMode><AppThemeProvider><Toggle /></AppThemeProvider></StrictMode>);
+      await act(async () => {});
+      advanceFrame();
+      expect(suppressionStyles()).toHaveLength(1);
+      advanceFrame();
+      expect(suppressionStyles()).toHaveLength(0);
+    });
+
+    test('cancels stale removal during rapid toggles and cleans up pending frames on unmount', async () => {
+      const view = render(<AppThemeProvider><Toggle /></AppThemeProvider>);
+      await act(async () => {});
+      advanceFrame();
+      fireEvent.click(view.getByRole('button', { name: 'light' }));
+      await act(async () => {});
+      advanceFrame();
+      expect(suppressionStyles()).toHaveLength(1);
+      fireEvent.click(view.getByRole('button', { name: 'dark' }));
+      await act(async () => {});
+      advanceFrame();
+      expect(suppressionStyles()).toHaveLength(1);
+      view.unmount();
+      expect(frames.size).toBe(0);
+      expect(suppressionStyles()).toHaveLength(0);
+    });
+
+    test('stops waiting for a theme change on unmount', async () => {
+      const root = document.documentElement;
+      const setAttribute = root.setAttribute.bind(root);
+      vi.spyOn(root, 'setAttribute').mockImplementation((name, value) => {
+        if (name !== 'data-mantine-color-scheme') setAttribute(name, value);
+      });
+      const view = render(<AppThemeProvider><Toggle /></AppThemeProvider>);
+      view.unmount();
+      await act(async () => setAttribute('data-mantine-color-scheme', 'light'));
+      expect(frames.size).toBe(0);
+      expect(suppressionStyles()).toHaveLength(0);
+    });
+  });
+
   test('follows system changes until the user chooses a mode, then preserves that choice on reload', () => {
     const view = render(<AppThemeProvider><Toggle /></AppThemeProvider>);
     expectTheme('light');
