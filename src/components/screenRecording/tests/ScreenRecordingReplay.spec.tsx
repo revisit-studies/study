@@ -226,6 +226,29 @@ describe('ScreenRecordingReplay', () => {
     expect(view.getByRole('button', { name: 'Move webcam replay' })).toBeDefined();
   });
 
+  test('keeps the webcam source when switching replay layouts', async () => {
+    mockIsAnalysis = true;
+    mockStorageEngine = {
+      getScreenRecording: vi.fn().mockResolvedValue('http://example.com/video.mp4'),
+      getWebcamRecording: vi.fn().mockResolvedValue('http://example.com/webcam.webm'),
+    };
+    mockSearchParams = new URLSearchParams({ participantId: 'p1' });
+    const view = await act(async () => render(<ScreenRecordingReplay />));
+    const firstWebcam = view.container.querySelectorAll('video')[1];
+    await waitFor(() => expect(firstWebcam.src).toBe('http://example.com/webcam.webm'));
+    const replayUpdatesBeforeSwitch = mockUpdateReplayRef.mock.calls.length;
+
+    mockReplayLayout = 'picture-in-picture';
+    view.rerender(<ScreenRecordingReplay />);
+    const pictureInPictureWebcam = view.container.querySelectorAll('video')[1];
+    expect(pictureInPictureWebcam.src).toBe('http://example.com/webcam.webm');
+    expect(mockUpdateReplayRef).toHaveBeenCalledTimes(replayUpdatesBeforeSwitch + 1);
+
+    mockReplayLayout = 'side-by-side';
+    view.rerender(<ScreenRecordingReplay />);
+    expect(view.container.querySelectorAll('video')[1].src).toBe('http://example.com/webcam.webm');
+  });
+
   test('allows webcam-top replay to use a smaller size', async () => {
     mockIsAnalysis = true;
     mockReplayLayout = 'webcam-top';

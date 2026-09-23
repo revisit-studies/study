@@ -216,7 +216,7 @@ export function ComponentController() {
     // Assume that screen recording video exists.
     // The value is set to false from ScreenRecordingReplay component if video starts after stimulus start time.
     storeDispatch(setAnalysisCanPlayScreenRecording(true));
-  }, [currentStep, setAnalysisCanPlayScreenRecording, storeDispatch]);
+  }, [currentIdentifier, setAnalysisCanPlayScreenRecording, storeDispatch]);
 
   useFetchStylesheet(currentConfig?.stylesheetPath);
 

@@ -24,7 +24,7 @@ import { MarkdownController } from '../MarkdownController';
 import { ReactComponentController } from '../ReactComponentController';
 import { VegaController } from '../VegaController';
 import { VideoController } from '../VideoController';
-import { useCurrentComponent, useCurrentStep } from '../../routes/utils';
+import { useCurrentComponent, useCurrentIdentifier, useCurrentStep } from '../../routes/utils';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { getStaticAssetByPath, getJsonAssetByPath } from '../../utils/getStaticAsset';
 import { useStoreDispatch, useStoreSelector } from '../../store/store';
@@ -604,6 +604,7 @@ describe('ComponentController — effect coverage (render-based)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useCurrentComponent).mockReturnValue('end');
+    vi.mocked(useCurrentIdentifier).mockReturnValue('trial1_0');
     vi.mocked(useCurrentStep).mockReturnValue(0);
     vi.mocked(useIsAnalysis).mockReturnValue(false);
     vi.mocked(useRecordingConfig).mockReturnValue({
@@ -722,6 +723,18 @@ describe('ComponentController — effect coverage (render-based)', () => {
     };
     render(<ComponentController />);
     await waitFor(() => expect(setAnalysisCanPlaySpy).toHaveBeenCalledWith(true));
+  });
+
+  test('resets recording replay availability for the next dynamic child', async () => {
+    const setAnalysisCanPlaySpy = vi.fn();
+    mockStoreActions.setAnalysisCanPlayScreenRecording = setAnalysisCanPlaySpy;
+    vi.mocked(useCurrentIdentifier).mockReturnValue('block_0_first_0');
+    const view = render(<ComponentController />);
+    await waitFor(() => expect(setAnalysisCanPlaySpy).toHaveBeenCalledTimes(1));
+
+    vi.mocked(useCurrentIdentifier).mockReturnValue('block_0_second_1');
+    view.rerender(<ComponentController />);
+    await waitFor(() => expect(setAnalysisCanPlaySpy).toHaveBeenCalledTimes(2));
   });
 
   test('auto-forward navigates when last answer step > currentStep', async () => {

@@ -160,10 +160,15 @@ export function ScreenRecordingReplay({ webcamOnly = false }: ScreenRecordingRep
   const [hasScreenVideo, setHasScreenVideo] = useState(false);
   const [hasWebcamVideo, setHasWebcamVideo] = useState(false);
   const [webcamTopSize, setWebcamTopSize] = useState<WebcamTopSize>('small');
+  const webcamRecordingUrl = useRef<string | null>(null);
 
   useEffect(() => {
+    if (webcamVideoRef.current && webcamRecordingUrl.current
+      && webcamVideoRef.current.src !== webcamRecordingUrl.current) {
+      webcamVideoRef.current.src = webcamRecordingUrl.current;
+    }
     updateReplayRef();
-  }, [updateReplayRef]);
+  }, [replayLayout, updateReplayRef, webcamVideoRef]);
 
   const { storageEngine } = useStorageEngine();
 
@@ -194,6 +199,7 @@ export function ScreenRecordingReplay({ webcamOnly = false }: ScreenRecordingRep
       };
       const screenVideo = screenVideoRef.current;
       const webcamVideo = webcamVideoRef.current;
+      webcamRecordingUrl.current = null;
       clearVideoSource(screenVideo);
       clearVideoSource(webcamVideo);
       updateReplayRef();
@@ -227,6 +233,7 @@ export function ScreenRecordingReplay({ webcamOnly = false }: ScreenRecordingRep
               return;
             }
             loadedUrls = [screenUrl, webcamUrl].filter((url): url is string => !!url);
+            webcamRecordingUrl.current = webcamUrl;
 
             const hasScreenRecording = !!screenUrl;
             const hasWebcamRecording = !!webcamUrl;
@@ -270,6 +277,7 @@ export function ScreenRecordingReplay({ webcamOnly = false }: ScreenRecordingRep
 
       return () => {
         cancelled = true;
+        webcamRecordingUrl.current = null;
         loadedUrls.forEach(releaseUrl);
         loadedUrls = [];
         clearVideoSource(screenVideo);
