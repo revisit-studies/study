@@ -65,7 +65,7 @@ vi.mock('../../utils/encryptDecryptIndex', () => ({
   encryptIndex: vi.fn((x: number) => String(x)),
 }));
 
-vi.mock('../../storage/engines/utils', () => ({
+vi.mock('../../storage/engines/utils/storageEngineHelpers', () => ({
   hash: vi.fn(() => 'abc123'),
 }));
 
@@ -451,6 +451,33 @@ describe('Shell', () => {
     render(<Shell globalConfig={globalConfig} />);
     await waitFor(() => expect(mockStorageEngine!.initializeStudyDb).toHaveBeenCalled(), { timeout: 3000 });
     await waitFor(() => expect(vi.mocked(studyStoreCreator)).toHaveBeenCalled(), { timeout: 3000 });
+    await waitFor(() => expect(fetch).toHaveBeenCalled());
+  });
+
+  test.each(['p1', ''])('does not collect or overwrite participant metadata during replay (participantId=%s)', async (participantId) => {
+    mockSearchParams = new URLSearchParams({ participantId });
+    vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
+
+    mockStorageEngine = {
+      initializeStudyDb: vi.fn().mockResolvedValue(undefined),
+      saveConfig: vi.fn().mockResolvedValue(undefined),
+      getSequenceArray: vi.fn().mockResolvedValue(['seq1']),
+      getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
+      initializeParticipantSession: vi.fn().mockResolvedValue(baseSession),
+      updateParticipantMetadata: vi.fn().mockResolvedValue(undefined),
+      getParticipantCompletionStatus: vi.fn().mockResolvedValue(false),
+      peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
+      getAllConfigsFromHash: vi.fn().mockResolvedValue({}),
+      isConnected: vi.fn().mockReturnValue(true),
+      getEngine: vi.fn().mockReturnValue('firebase'),
+    };
+
+    render(<Shell globalConfig={globalConfig} />);
+    await waitFor(() => expect(vi.mocked(studyStoreCreator)).toHaveBeenCalled(), { timeout: 3000 });
+    await waitFor(() => expect(mockStorageEngine!.getParticipantCompletionStatus).toHaveBeenCalled());
+
+    expect(fetch).not.toHaveBeenCalled();
+    expect(mockStorageEngine.updateParticipantMetadata).not.toHaveBeenCalled();
   });
 
   test('passes the contact email to the unmatched-route fallback outside the study provider', async () => {
