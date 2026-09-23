@@ -73,6 +73,8 @@ const describe = (value: unknown) => {
   }
 };
 
+const thrownMessage = (error: unknown) => (error instanceof Error ? error.message : String(error));
+
 const testLabel = (functionName: string, { args, expected }: TestCase) => `${functionName}(${args.map(describe).join(', ')}) → ${describe(expected)}`;
 
 /**
@@ -95,14 +97,14 @@ export function runTestCases(
     // eslint-disable-next-line no-new-func
     factory = new Function(`"use strict";\n${source}\n;return typeof ${functionName} === "function" ? ${functionName} : undefined;`) as () => unknown;
   } catch (error) {
-    return { results: [], runtimeError: `Your code has a syntax error: ${(error as Error).message}` };
+    return { results: [], runtimeError: `Your code has a syntax error: ${thrownMessage(error)}` };
   }
 
   let candidate: unknown;
   try {
     candidate = factory();
   } catch (error) {
-    return { results: [], runtimeError: `Your code threw before any test ran: ${(error as Error).message}` };
+    return { results: [], runtimeError: `Your code threw before any test ran: ${thrownMessage(error)}` };
   }
 
   if (typeof candidate !== 'function') {
@@ -120,7 +122,7 @@ export function runTestCases(
         actual: describe(actual),
       };
     } catch (error) {
-      return { label, passed: false, actual: `threw ${(error as Error).message}` };
+      return { label, passed: false, actual: `threw ${thrownMessage(error)}` };
     }
   });
 
