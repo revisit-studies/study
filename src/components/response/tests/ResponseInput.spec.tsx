@@ -649,6 +649,8 @@ describe('CheckBoxInput', () => {
 // ── ButtonsInput ──────────────────────────────────────────────────────────────
 
 describe('ButtonsInput', () => {
+  afterEach(() => { cleanup(); });
+
   const base: ButtonsResponse = {
     type: 'buttons',
     id: 'q1',
@@ -696,7 +698,23 @@ describe('ButtonsInput', () => {
     option.focus();
     fireEvent.keyDown(option, { key: 'Enter', bubbles: true, cancelable: true });
 
-    expect(onChange).toHaveBeenCalledWith('yes');
+    expect(onChange).toHaveBeenCalledWith('yes', 'keyboard');
+  });
+
+  test('reports a click when clearing a button response', () => {
+    const onChange = vi.fn();
+    const { getByRole } = render(
+      <ButtonsInput
+        response={base}
+        disabled={false}
+        answer={{ value: 'Yes', onChange }}
+        index={1}
+        enumerateQuestions={false}
+      />,
+    );
+
+    fireEvent.click(getByRole('button', { name: 'Clear selection' }));
+    expect(onChange).toHaveBeenCalledWith('', 'click');
   });
 
   test('mapped Enter does not also trigger NextButton', () => {
@@ -723,7 +741,7 @@ describe('ButtonsInput', () => {
     option.focus();
     fireEvent.keyDown(option, { key: 'Enter', bubbles: true, cancelable: true });
 
-    expect(onChange).toHaveBeenCalledWith('yes');
+    expect(onChange).toHaveBeenCalledWith('yes', 'keyboard');
     expect(onNext).not.toHaveBeenCalled();
   });
 });

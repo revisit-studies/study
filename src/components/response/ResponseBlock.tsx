@@ -468,6 +468,7 @@ export function ResponseBlock({
 
   useEffect(() => {
     const interactionSource = lastInteractionSourceRef.current;
+    lastInteractionSourceRef.current = 'click';
     trrack.apply(`Update form field (${interactionSource})`, actions.updateFormAction({
       values: structuredClone(answerValidator.values),
       interactionSource,

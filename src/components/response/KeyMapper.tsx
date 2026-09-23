@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import type { ParsedStringOption } from '../../parser/types';
 import { keyEventMatchesMapping } from '../../utils/keyMapping';
 
@@ -6,67 +6,20 @@ interface KeyMapperProps {
   options: ParsedStringOption[];
   onSelect: (value: string, source?: 'keyboard' | 'click') => void;
   disabled?: boolean;
-  children?: React.ReactNode;
-  autoFocus?: boolean;
-  focusRootRef?: React.RefObject<HTMLElement | null>;
 }
 
 export function KeyMapper({
   options,
   onSelect,
   disabled = false,
-  children,
-  autoFocus = false,
-  focusRootRef,
 }: KeyMapperProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!autoFocus || !options?.some((opt) => typeof opt === 'object' && opt !== null && Boolean(opt.key))) {
-      return undefined;
-    }
-
-    const timer = setTimeout(() => {
-      const { activeElement } = document;
-      if (containerRef.current && (!activeElement || !(activeElement instanceof HTMLElement) || !focusRootRef?.current?.contains(activeElement))) {
-        containerRef.current.focus();
-      }
-    }, 50);
-
-    return () => clearTimeout(timer);
-  }, [autoFocus, focusRootRef, options]);
-
   useEffect(() => {
     if (disabled || !options || options.length === 0) {
       return undefined;
     }
 
-    const isOwnedTarget = (target: EventTarget | null): boolean => {
-      if (!(target instanceof Element)) {
-        return false;
-      }
-      return Boolean(focusRootRef?.current && focusRootRef.current.contains(target));
-    };
-
-    const isTextEntryTarget = (target: EventTarget | null): boolean => {
-      if (!(target instanceof HTMLElement)) {
-        return false;
-      }
-      if (target.isContentEditable) {
-        return true;
-      }
-      return ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName);
-    };
-
-    const isNativeEnterTarget = (target: EventTarget | null, event: KeyboardEvent): boolean => (
-      event.key === 'Enter'
-      && target instanceof HTMLElement
-      && ['BUTTON', 'A'].includes(target.tagName)
-    );
-
     const handleKeyDown = (event: KeyboardEvent) => {
-      // currently ctrl win, meta, command and ctrl are not supported
-      if (event.repeat || event.ctrlKey || event.metaKey) {
+      if (event.repeat || event.key === 'Tab' || event.ctrlKey || event.metaKey) {
         return;
       }
 
@@ -74,8 +27,13 @@ export function KeyMapper({
         return;
       }
 
-      const targetIsOwned = isOwnedTarget(event.target) || isOwnedTarget(document.activeElement);
-      if (!targetIsOwned && (isTextEntryTarget(event.target) || isNativeEnterTarget(event.target, event))) {
+      const target = event.target instanceof Element ? event.target : document.activeElement;
+      if (target instanceof Element && (
+        (target instanceof HTMLElement && target.isContentEditable)
+        || target.closest('input, textarea, select')
+        || ((event.key === 'Enter' || event.key === ' ')
+          && target.closest('button, a[href], [role="button"]') && !target.closest('[role="radio"]'))
+      )) {
         return;
       }
 
@@ -96,7 +54,7 @@ export function KeyMapper({
 
     window.addEventListener('keydown', handleKeyDown, true);
     return () => window.removeEventListener('keydown', handleKeyDown, true);
-  }, [disabled, focusRootRef, onSelect, options]);
+  }, [disabled, onSelect, options]);
 
-  return <div ref={containerRef} tabIndex={-1}>{children}</div>;
+  return null;
 }

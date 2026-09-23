@@ -622,13 +622,15 @@ function verifyKeyMappings(
   basePath: string,
   component: Partial<IndividualComponent>,
   errors: ParsedConfig<StudyConfig>['errors'],
+  warnings: ParsedConfig<StudyConfig>['warnings'],
+  nextOnEnter = false,
 ) {
   if (!component.response || !Array.isArray(component.response)) return;
 
   const seenMappings = new Map<string, { responseIndex: number; optionIndex: number; label: string }>();
 
   component.response.forEach((res, resIdx) => {
-    if (!('options' in res) || !Array.isArray(res.options)) {
+    if (res.type !== 'buttons') {
       return;
     }
 
@@ -646,6 +648,31 @@ function verifyKeyMappings(
           category: 'invalid-config',
         });
         return;
+      }
+
+      const instancePath = `${basePath}/response/${resIdx}/options/${optIdx}/key`;
+      const parts = normalizedKey.split('+');
+      const baseKey = parts[parts.length - 1];
+      if (baseKey === 'Tab' || (nextOnEnter && normalizedKey === 'Enter')) {
+        errors.push({
+          message: baseKey === 'Tab'
+            ? 'Tab cannot be mapped to a button because it is needed to move keyboard focus.'
+            : 'Enter cannot be mapped to a button when nextOnEnter is enabled.',
+          instancePath,
+          params: { action: baseKey === 'Tab' ? 'Choose another shortcut' : 'Disable nextOnEnter or choose another shortcut' },
+          category: 'invalid-config',
+        });
+      }
+
+      const ignoredModifier = parts.includes('Ctrl') || parts.includes('Meta');
+      const layoutDependent = parts.length > 1 && baseKey.length === 1 && !(parts.length === 2 && parts[0] === 'Shift' && /^[A-Z]$/.test(baseKey));
+      if (ignoredModifier || layoutDependent) {
+        warnings.push({
+          message: `Key mapping \`${String(opt.key)}\` may not work: ${ignoredModifier ? 'Ctrl and Meta shortcuts are ignored.' : 'Modified printable keys can produce different values across keyboard layouts.'}`,
+          instancePath,
+          params: { action: 'Use an unmodified key or a supported named key such as ArrowLeft' },
+          category: 'invalid-config',
+        });
       }
 
       const previous = seenMappings.get(normalizedKey);
@@ -673,14 +700,14 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
     verifyTextResponseConstraints(`/baseComponents/${componentName}`, component, errors, warnings);
     verifyDateTimeResponseConstraints(`/baseComponents/${componentName}`, component, errors);
     verifyDropdownResponseConstraints(`/baseComponents/${componentName}`, component, errors);
-    verifyKeyMappings(`/baseComponents/${componentName}`, component, errors);
+    verifyKeyMappings(`/baseComponents/${componentName}`, component, errors, []);
   });
   Object.entries(studyConfig.components).forEach(([componentName, component]) => {
     const mergedComponent = studyComponentToIndividualComponent(component, studyConfig);
     verifyTextResponseConstraints(`/components/${componentName}`, mergedComponent, errors, warnings);
     verifyDateTimeResponseConstraints(`/components/${componentName}`, mergedComponent, errors);
     verifyDropdownResponseConstraints(`/components/${componentName}`, mergedComponent, errors);
-    verifyKeyMappings(`/components/${componentName}`, mergedComponent, errors);
+    verifyKeyMappings(`/components/${componentName}`, mergedComponent, errors, warnings, mergedComponent.nextOnEnter ?? studyConfig.uiConfig.nextOnEnter);
   });
 
   const hasConditional = hasConditionalBlock(studyConfig.sequence);

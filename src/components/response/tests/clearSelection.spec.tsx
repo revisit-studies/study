@@ -217,17 +217,17 @@ describe('RadioInput / ButtonsInput clear & toggle behaviour', () => {
     expect(cardX).toBeTruthy();
     if (cardX) {
       fireEvent.click(cardX);
-      expect(onChange).toHaveBeenLastCalledWith('X');
+      expect(onChange).toHaveBeenLastCalledWith('X', 'click');
       rerender(
         <ButtonsInput response={response} disabled={false} answer={{ ...answer, value: 'X' }} error={null} index={0} enumerateQuestions={false} />,
       );
       fireEvent.click(cardX);
-      expect(onChange).toHaveBeenLastCalledWith('X');
+      expect(onChange).toHaveBeenLastCalledWith('X', 'click');
     }
 
     const clearBtn = getByText('Clear selection');
     fireEvent.click(clearBtn);
-    expect(onChange).toHaveBeenLastCalledWith('');
+    expect(onChange).toHaveBeenLastCalledWith('', 'click');
   });
 
   test('ButtonsInput does not clear a one-option answer during arrow navigation', () => {
@@ -246,7 +246,7 @@ describe('RadioInput / ButtonsInput clear & toggle behaviour', () => {
       fireEvent.keyDown(card, { key: 'ArrowRight' });
     }
 
-    expect(onChange).toHaveBeenLastCalledWith('Only option');
+    expect(onChange).toHaveBeenLastCalledWith('Only option', 'click');
   });
 });
 

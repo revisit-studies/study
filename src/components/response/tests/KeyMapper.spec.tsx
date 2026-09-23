@@ -1,6 +1,4 @@
-import {
-  cleanup, render, fireEvent, act,
-} from '@testing-library/react';
+import { cleanup, render, fireEvent } from '@testing-library/react';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
@@ -11,13 +9,10 @@ import type { ParsedStringOption } from '../../../parser/types';
 describe('KeyMapper Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.useFakeTimers();
   });
 
   afterEach(() => {
     cleanup();
-    vi.runOnlyPendingTimers();
-    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -192,6 +187,49 @@ describe('KeyMapper Component', () => {
     expect(onSelectMock2).not.toHaveBeenCalled();
   });
 
+  test.each(['Enter', 'Space'])('does not take %s from a focused action button in its response', (key) => {
+    const onSelect = vi.fn();
+    const { getByRole } = render(
+      <div>
+        <button type="button">Clear selection</button>
+        <KeyMapper options={[{ label: 'A', value: 'a', key }]} onSelect={onSelect} />
+      </div>,
+    );
+    const button = getByRole('button', { name: 'Clear selection' });
+    button.focus();
+
+    const event = new KeyboardEvent('keydown', { key: key === 'Space' ? ' ' : key, bubbles: true, cancelable: true });
+    button.dispatchEvent(event);
+    expect(onSelect).not.toHaveBeenCalled();
+    expect(event.defaultPrevented).toBe(false);
+  });
+
+  test('does not take Space from a focused Next button', () => {
+    const onSelect = vi.fn();
+    const { getByRole } = render(
+      <>
+        <button type="button">Next</button>
+        <KeyMapper options={[{ label: 'A', value: 'a', key: 'Space' }]} onSelect={onSelect} />
+      </>,
+    );
+    const button = getByRole('button', { name: 'Next' });
+    button.focus();
+
+    const event = new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true });
+    button.dispatchEvent(event);
+    expect(onSelect).not.toHaveBeenCalled();
+    expect(event.defaultPrevented).toBe(false);
+  });
+
+  test('never prevents Tab focus navigation', () => {
+    const onSelect = vi.fn();
+    render(<KeyMapper options={[{ label: 'A', value: 'a', key: 'Tab' }]} onSelect={onSelect} />);
+    const event = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+    window.dispatchEvent(event);
+    expect(onSelect).not.toHaveBeenCalled();
+    expect(event.defaultPrevented).toBe(false);
+  });
+
   test('preserves keydown events for secondary global instrumentation listeners', () => {
     const onSelectMock = vi.fn();
     const secondaryWindowListener = vi.fn();
@@ -227,34 +265,6 @@ describe('KeyMapper Component', () => {
 
     fireEvent.keyDown(window, { key: 'Enter' });
     expect(onSelectMock).toHaveBeenCalledWith('next', 'keyboard');
-  });
-
-  test('does not steal focus or autofocus when option keys are absent', () => {
-    const onSelectMock = vi.fn();
-    const optionsWithoutKeys: ParsedStringOption[] = [
-      { label: 'Option A', value: 'a' },
-      { label: 'Option B', value: 'b' },
-    ];
-
-    const { container } = render(
-      <div>
-        <input data-testid="external-input" />
-        <KeyMapper
-          options={optionsWithoutKeys}
-          onSelect={onSelectMock}
-        />
-      </div>,
-    );
-
-    const input = container.querySelector('input')!;
-    input.focus();
-    expect(document.activeElement).toBe(input);
-
-    act(() => {
-      vi.advanceTimersByTime(100);
-    });
-
-    expect(document.activeElement).toBe(input);
   });
 
   test('does nothing when unmounted', () => {
@@ -397,16 +407,6 @@ describe('KeyMapper Component', () => {
 
       fireEvent.keyDown(window, { key: '1' });
       expect(onSelectMock).toHaveBeenLastCalledWith('x', 'keyboard');
-    });
-
-    test('does not render any extra controls for options with keys', () => {
-      const onSelectMock = vi.fn();
-      const { container } = render(
-        <KeyMapper options={sampleOptions} onSelect={onSelectMock} />,
-      );
-      expect(container.querySelectorAll('button')).toHaveLength(0);
-      expect(container.firstChild).toBeInstanceOf(HTMLDivElement);
-      expect(container.firstChild?.textContent).toBe('');
     });
   });
 });

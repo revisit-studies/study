@@ -349,7 +349,10 @@ export interface StringOption {
   value?: string;
   /** The description that is displayed when the participant hovers over the option. This does not accept markdown. */
   infoText?: string;
-  /** Optional keyboard key shortcut mapped to this option (e.g., "r", "ArrowLeft", "Space"). Can also use combinations see https://www.digitala11y.com/aria-properties/. */
+}
+
+export interface ButtonOption extends StringOption {
+  /** Keyboard shortcut for this button (e.g., "r", "ArrowLeft", or "Shift+X"). */
   key?: string;
 }
 
@@ -369,6 +372,7 @@ export interface MatrixQuestionOption extends StringOption {
 /** StringOption normalized to always include a value. */
 export interface ParsedStringOption extends Omit<StringOption, 'value'> {
   value: string;
+  key?: string;
 }
 
 /** MatrixQuestionOption normalized to always include a value. */
@@ -1113,7 +1117,7 @@ export interface CustomResponse extends BaseResponse {
  */
 export interface ButtonsResponse extends BaseResponse {
   type: 'buttons';
-  options: (StringOption | string)[];
+  options: (ButtonOption | string)[];
   /** The default value of the response. Specify one option value as a string. */
   default?: string;
   /** The order in which the buttons are displayed. Defaults to fixed. */
