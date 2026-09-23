@@ -1,6 +1,6 @@
 ---
 name: adversarial-review
-description: Launch an independent, exhaustive adversarial review subagent on gpt-5.6-sol with high reasoning effort to challenge work for correctness, regressions, edge cases, test adequacy, and YAGNI minimality. Use when the user invokes $adversarial-review or asks to launch, spawn, or run an adversarial reviewer or review subagent to check correctness, conciseness, simplicity, speculative complexity, unnecessary churn, or overlooked issues.
+description: Launch an independent, exhaustive adversarial review subagent on gpt-6-sol with high reasoning effort to challenge work for correctness, regressions, edge cases, test adequacy, and YAGNI minimality. Use when the user invokes $adversarial-review or asks to launch, spawn, or run an adversarial reviewer or review subagent to check correctness, conciseness, simplicity, speculative complexity, unnecessary churn, or overlooked issues.
 ---
 
 # Adversarial Review
@@ -44,7 +44,7 @@ Apply these principles in order, with correctness and required contracts taking 
 Call `collaboration.spawn_agent` directly with:
 
 - `task_name`: `adversarial_review`, adding a short numeric suffix only if that name is already in use
-- `model`: `gpt-5.6-sol`
+- `model`: `gpt-6-sol`
 - `reasoning_effort`: `high`
 - `fork_turns`: `none`
 - `message`: the self-contained handoff plus the review contract below
