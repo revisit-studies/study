@@ -6,7 +6,9 @@
  * reports fold into a state, and a pair of functions for driving an editor from
  * a recorded state during replay. A host framework only has to mount an
  * `EditorView`, forward entries into Trrack, and call `replayTo` when an
- * analyst seeks to a different provenance node.
+ * analyst seeks to a different provenance node. This module supports
+ * single-selection replay only: snapshots may contain multiple ranges, but
+ * `replayTo` restores only the primary range.
  */
 import {
   Annotation, Compartment, EditorState, Extension, Transaction,

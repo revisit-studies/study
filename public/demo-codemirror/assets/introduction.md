@@ -27,6 +27,8 @@ Key presses other than standalone modifier keys are recorded, along with documen
 
 Every entry — of any kind — also carries the caret and selection state as character offsets: one `anchor`/`head` pair per selection range, plus which range is the primary one. A collapsed range is a plain caret, and the order of `anchor` and `head` tells you which end of a selection was dragged. Key entries are observed before CodeMirror acts on the key, so their snapshot is where the caret was when the key went down; the selection entry that follows carries where it landed.
 
+This module supports single-selection replay only. Although recorded snapshots can contain multiple selection ranges, replay restores just the primary range. Extend `replayTo` before using it with an editor that allows multiple simultaneous selections.
+
 A typed character therefore produces a key entry and an edit entry; an arrow key produces a key entry and a selection entry. The eight most recent entries are shown live under the editor.
 
 Your final code, the results of your last test run, how many times you ran the tests, and the total event count are saved as reactive responses. If you edit or reset after running tests, the results are marked as belonging to an earlier version of the code.
