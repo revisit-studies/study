@@ -272,6 +272,7 @@ export function StepsPanel({
   const factorLabels = useMemo(() => {
     const labels = new Map<string, string>();
     const visit = (block: Sequence & { __revisitFactorLabels?: Record<string, string> }) => {
+      if (isDynamicBlock(block)) return;
       Object.entries(block.__revisitFactorLabels ?? {}).forEach(([id, label]) => labels.set(id, label));
       block.components.forEach((child) => {
         if (typeof child !== 'string') visit(child);

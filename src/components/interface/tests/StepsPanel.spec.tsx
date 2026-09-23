@@ -47,7 +47,7 @@ vi.mock('../../../utils/encryptDecryptIndex', () => ({
 }));
 
 vi.mock('../../../parser/utils', () => ({
-  isDynamicBlock: () => false,
+  isDynamicBlock: (block: { order?: string }) => block.order === 'dynamic',
   isInheritedComponent: () => false,
 }));
 
@@ -179,6 +179,20 @@ describe('StepsPanel rendering', () => {
       />,
     ));
     expect(container).toBeDefined();
+  });
+
+  test('renders a study containing a dynamic block', async () => {
+    const studyConfig = makeStudyConfig({
+      components: { intro: { type: 'markdown', path: 'intro.md', response: [] } },
+      sequence: {
+        order: 'fixed',
+        components: ['intro', { id: 'adaptive', order: 'dynamic', functionPath: 'adaptive.ts' }],
+      },
+    });
+    const { container } = await act(async () => render(
+      <StepsPanel participantAnswers={{}} studyConfig={studyConfig} />,
+    ));
+    expect(container.querySelector('[role="link"]')).toBeDefined();
   });
 
   test('renders with a participant sequence', async () => {
