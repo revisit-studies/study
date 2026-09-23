@@ -1,5 +1,7 @@
 import React, { ReactNode } from 'react';
-import { render, waitFor, act } from '@testing-library/react';
+import {
+  render, waitFor, act, fireEvent,
+} from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
@@ -37,6 +39,7 @@ let mockVegaImpl: React.FC = () => React.createElement('div', null, 'Vega');
 const mockTrrackApply = vi.fn();
 
 let mockStoreActions = {
+  setAssetStatus: vi.fn(),
   setReactiveAnswers: vi.fn(),
   updateProvenance: vi.fn(),
   updateResponseBlockValidation: vi.fn(),
@@ -47,7 +50,9 @@ let mockStoreActions = {
 // ── mocks ────────────────────────────────────────────────────────────────────
 
 vi.mock('@mantine/core', () => ({
-  Image: ({ src }: { src?: string }) => <img src={src} alt="img" />,
+  Image: ({ src, onLoad, onError }: { src?: string; onLoad?: () => void; onError?: () => void }) => (
+    <img src={src} onLoad={onLoad} onError={onError} alt="img" />
+  ),
   Text: ({ children }: { children: ReactNode }) => <p>{children}</p>,
   Box: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Center: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -64,7 +69,8 @@ vi.mock('../../ResourceNotFound', () => ({
   ResourceNotFound: ({ path, email }: { path?: string; email?: string }) => (
     <div>
       ResourceNotFound:
-      {path ?? email}
+      {path}
+      {email}
     </div>
   ),
 }));
@@ -311,31 +317,34 @@ describe('ImageController', () => {
     expect(html).toContain('https://example.com/img.png');
   });
 
-  test('renders ResourceNotFound after fetch returns undefined', async () => {
-    vi.mocked(getStaticAssetByPath).mockResolvedValueOnce(undefined);
+  test('renders ResourceNotFound after an image load error', () => {
     const { container } = render(<ImageController currentConfig={{ type: 'image', path: '/missing.png', response: [] }} />);
-    await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
+    fireEvent.error(container.querySelector('img')!);
+    expect(container.textContent).toContain('ResourceNotFound');
+    expect(container.textContent).toContain('test@test.com');
+    expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith({ identifier: 'trial1_0', status: 'error' });
   });
 
-  test('renders ResourceNotFound after fetch returns empty content', async () => {
-    vi.mocked(getStaticAssetByPath).mockResolvedValueOnce('');
-    const { container } = render(<ImageController currentConfig={{ type: 'image', path: '/empty.png', response: [] }} />);
-    await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
-  });
-
-  test('renders img after fetch returns content', async () => {
-    vi.mocked(getStaticAssetByPath).mockResolvedValueOnce('image-data');
+  test('starts loading and becomes ready after the image loads', () => {
     const { container } = render(<ImageController currentConfig={{ type: 'image', path: '/found.png', response: [] }} />);
-    await waitFor(() => expect(container.querySelector('img')).toBeTruthy());
+    expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith({ identifier: 'trial1_0', status: 'loading' });
+    fireEvent.load(container.querySelector('img')!);
+    expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith({ identifier: 'trial1_0', status: 'ready' });
+    expect(container.querySelector('img')).toBeTruthy();
   });
 
-  test('checks absolute image URLs without prefixing them', async () => {
+  test('waits for the new image when its path changes after an error', () => {
+    const { container, rerender } = render(<ImageController currentConfig={{ type: 'image', path: '/missing.png', response: [] }} />);
+    fireEvent.error(container.querySelector('img')!);
+    rerender(<ImageController currentConfig={imageConfig} />);
+    expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith({ identifier: 'trial1_0', status: 'loading' });
+    fireEvent.load(container.querySelector('img')!);
+    expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith({ identifier: 'trial1_0', status: 'ready' });
+  });
+
+  test('uses absolute image URLs without prefixing them', () => {
     const remotePath = 'https://raw.githubusercontent.com/revisit-studies/library-assets/v1/vlat/VLAT1.png';
-    vi.mocked(getStaticAssetByPath).mockResolvedValueOnce('image-data');
-
     const { container } = render(<ImageController currentConfig={{ type: 'image', path: remotePath, response: [] }} />);
-
-    await waitFor(() => expect(getStaticAssetByPath).toHaveBeenCalledWith(remotePath));
     expect(container.querySelector('img')?.getAttribute('src')).toBe(remotePath);
   });
 });
@@ -352,6 +361,7 @@ describe('MarkdownController', () => {
     vi.mocked(getStaticAssetByPath).mockResolvedValueOnce(undefined);
     const { container } = render(<MarkdownController currentConfig={{ type: 'markdown', path: '/missing.md', response: [] }} />);
     await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
+    expect(container.textContent).toContain('test@test.com');
   });
 
   test('renders markdown text after fetch resolves with content', async () => {
@@ -364,11 +374,29 @@ describe('MarkdownController', () => {
 // ── ReactComponentController ──────────────────────────────────────────────────
 
 describe('ReactComponentController', () => {
+  test.each(['render', 'effect'])('renders ResourceNotFound and marks the asset failed after a %s exception', async (failure) => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const path = 'libraries/test/assets/ThrowingStimulus.tsx';
+    const { container } = render(
+      <ReactComponentController
+        currentConfig={{
+          type: 'react-component', path, parameters: { failure }, response: [],
+        }}
+        answers={{}}
+      />,
+    );
+
+    await waitFor(() => expect(container.textContent).toContain(`ResourceNotFound:${path}`));
+    expect(container.textContent).not.toContain('Stimulus initialization failed');
+    expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith({ identifier: 'trial1_0', status: 'error' });
+  });
+
   test('renders ResourceNotFound when the module path is not in import.meta.glob', () => {
     const html = renderToStaticMarkup(
       <ReactComponentController currentConfig={missingReactConfig} answers={{}} />,
     );
     expect(html).toContain('ResourceNotFound');
+    expect(html).toContain('test@test.com');
   });
 });
 
@@ -395,6 +423,7 @@ describe('VegaController', () => {
     vi.mocked(getJsonAssetByPath).mockResolvedValueOnce(undefined);
     const { container } = render(<VegaController currentConfig={{ type: 'vega', path: '/missing.json', response: [] }} />);
     await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
+    expect(container.textContent).toContain('test@test.com');
   });
 
   test('resets validation while a changed path is loading after a previous failure', async () => {
@@ -416,7 +445,9 @@ describe('VegaController', () => {
     const { container, rerender } = render(<VegaController currentConfig={firstConfig} />);
 
     await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
-    expect(mockStoreActions.updateResponseBlockValidation).toHaveBeenLastCalledWith(expect.objectContaining({ status: true }));
+    expect(container.textContent).toContain('test@test.com');
+    expect(mockStoreActions.updateResponseBlockValidation).toHaveBeenLastCalledWith(expect.objectContaining({ status: false }));
+    expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'error' }));
 
     rerender(<VegaController currentConfig={secondConfig} />);
     await waitFor(() => expect(mockStoreActions.updateResponseBlockValidation).toHaveBeenLastCalledWith(expect.objectContaining({ status: false })));
@@ -448,6 +479,7 @@ describe('VideoController', () => {
     vi.mocked(getStaticAssetByPath).mockResolvedValueOnce(undefined);
     const { container } = render(<VideoController currentConfig={{ type: 'video', path: '/missing.mp4', response: [] }} />);
     await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
+    expect(container.textContent).toContain('test@test.com');
   });
 
   test('renders video element for a valid YouTube URL', async () => {
@@ -520,6 +552,7 @@ describe('ComponentController', () => {
     vi.mocked(useCurrentComponent).mockReturnValue('Notfound');
     const html = renderToStaticMarkup(<ComponentController />);
     expect(html).toContain('ResourceNotFound');
+    expect(html).toContain('test@test.com');
   });
 
   test('renders Loader when participantId in URL does not match store participantId', () => {
@@ -585,6 +618,7 @@ describe('ComponentController — effect coverage (render-based)', () => {
     vi.mocked(findBlockForStep).mockReturnValue([]);
     vi.mocked(useStoreDispatch).mockReturnValue(vi.fn());
     mockStoreActions = {
+      setAssetStatus: vi.fn(),
       setReactiveAnswers: vi.fn(),
       updateProvenance: vi.fn(),
       updateResponseBlockValidation: vi.fn(),
@@ -679,6 +713,7 @@ describe('ComponentController — effect coverage (render-based)', () => {
   test('setAnalysisCanPlayScreenRecording dispatched with true', async () => {
     const setAnalysisCanPlaySpy = vi.fn().mockReturnValue('PLAY_ACTION');
     mockStoreActions = {
+      setAssetStatus: vi.fn(),
       setReactiveAnswers: vi.fn(),
       updateProvenance: vi.fn(),
       updateResponseBlockValidation: vi.fn(),
@@ -762,6 +797,7 @@ describe('VegaController — signal and event coverage', () => {
     vi.mocked(useIsAnalysis).mockReturnValue(false);
     vi.mocked(useStoreDispatch).mockReturnValue(vi.fn());
     mockStoreActions = {
+      setAssetStatus: vi.fn(),
       setReactiveAnswers: vi.fn(),
       updateProvenance: vi.fn(),
       updateResponseBlockValidation: vi.fn(),

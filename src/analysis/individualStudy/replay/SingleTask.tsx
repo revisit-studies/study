@@ -91,7 +91,7 @@ export function SingleTask({
   const answerStatusIcon = answerStatus === 'correct'
     ? (
       <IconCheck
-        color="var(--mantine-color-green-6)"
+        color="var(--mantine-color-green-text)"
         style={{ marginTop: 2, strokeWidth: 4 }}
         size="14"
       />
@@ -99,7 +99,7 @@ export function SingleTask({
     : answerStatus === 'incorrect'
       ? (
         <IconX
-          color="var(--mantine-color-red-6)"
+          color="var(--mantine-color-red-text)"
           style={{ marginTop: 2, strokeWidth: 4 }}
           size={14}
         />
@@ -119,7 +119,7 @@ export function SingleTask({
       <rect
         opacity={isDimmed ? 0.45 : 1}
         fill={taskFill({ incomplete, answerStatus })}
-        stroke={isHovered ? 'cornflowerblue' : undefined}
+        stroke={isHovered ? 'var(--mantine-color-blue-text)' : undefined}
         strokeWidth={isHovered ? 3 : 0}
         x={xScale(scaleStart) + TASK_GAP}
         width={Math.max(0, xScale(scaleEnd) - xScale(scaleStart) - TASK_GAP * 2)}
@@ -133,10 +133,10 @@ export function SingleTask({
         width={labelWidth + LABEL_MARGIN * 2 + iconsWidth}
         y={height - TIMELINE_HEIGHT - LABEL_DISTANCE - labelHeight}
         height={LABEL_HEIGHT}
-        fill="whitesmoke"
+        fill="var(--mantine-color-default)"
       />
       <line
-        stroke="black"
+        stroke="var(--mantine-color-dimmed)"
         strokeWidth={1}
         opacity={labelOpacity}
         x1={xScale(scaleStart) - LABEL_MARGIN}
@@ -157,13 +157,13 @@ export function SingleTask({
             </Text>
             {hasScreenRecording && (
               <IconDeviceDesktop
-                color="orange"
+                color="var(--mantine-color-orange-text)"
                 size="14"
               />
             )}
             {hasAudio && (
               <IconMicrophone
-                color="orange"
+                color="var(--mantine-color-orange-text)"
                 size="14"
               />
             )}
@@ -175,7 +175,7 @@ export function SingleTask({
             )}
             {incomplete ? (
               <IconProgress
-                color="orange"
+                color="var(--mantine-color-orange-text)"
                 size="14"
               />
             ) : answerStatusIcon}

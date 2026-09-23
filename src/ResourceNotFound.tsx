@@ -29,14 +29,11 @@ export function ResourceNotFound({ email, path }: { email?: string, path?: strin
         <List.Item>
           <Text>
             If you&apos;re a participant, please contact the study administrator
-            {' '}
             {email && (
               <>
-                at
-                {' '}
+                {' at '}
                 <Anchor c="blue" href={`mailto:${email}`}>
                   {email}
-                  {' '}
                 </Anchor>
               </>
             )}

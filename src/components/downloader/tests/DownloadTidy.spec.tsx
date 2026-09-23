@@ -9,6 +9,7 @@ import { DownloadTidy, getTableData } from '../DownloadTidy';
 import type { StudyConfig } from '../../../parser/types';
 import type { StorageEngine } from '../../../storage/engines/types';
 import type { ParticipantDataWithStatus } from '../../../storage/types';
+import type { StoredAnswer } from '../../../store/types';
 import testConfigSimple from '../../../storage/tests/testConfigSimple.json';
 
 const storageEngineHookMock = vi.hoisted(() => ({
@@ -148,6 +149,46 @@ describe('getTableData', () => {
       responseMax: 10,
       parameters_speed: 'fast',
     }));
+  });
+
+  test('falls back to the stored config when a legacy answer omits correctAnswer', async () => {
+    const configWithCorrectAnswer = {
+      ...configWithComponentMetadata,
+      components: {
+        ...configWithComponentMetadata.components,
+        testComponent: {
+          ...configWithComponentMetadata.components.testComponent,
+          correctAnswer: [{ id: 'response', answer: 'config answer' }],
+        },
+      },
+    } as StudyConfig;
+    const participant = makeParticipant();
+    delete (participant.answers.testComponent_0 as Partial<StoredAnswer>).correctAnswer;
+    const storageEngine = makeStorageEngine({ 'hash-1': configWithCorrectAnswer });
+
+    const tableData = await getTableData(
+      ['correctAnswer'],
+      [participant],
+      storageEngine,
+      'test-study',
+    );
+
+    expect(tableData.rows[0].correctAnswer).toBe('config answer');
+  });
+
+  test('exports a legacy answer without correctAnswer when its config is missing', async () => {
+    const participant = makeParticipant({ participantConfigHash: 'missing-hash' });
+    delete (participant.answers.testComponent_0 as Partial<StoredAnswer>).correctAnswer;
+    const storageEngine = makeStorageEngine({});
+
+    const tableData = await getTableData(
+      ['correctAnswer'],
+      [participant],
+      storageEngine,
+      'test-study',
+    );
+
+    expect(tableData.rows[0].correctAnswer).toBeUndefined();
   });
 
   test('keeps participant-derived rows when configs are missing', async () => {

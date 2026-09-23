@@ -51,8 +51,8 @@ vi.mock('@mantine/form', () => ({
 }));
 
 vi.mock('@mantine/core', () => ({
-  ActionIcon: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => (
-    <button type="button" onClick={onClick}>{children}</button>
+  ActionIcon: ({ children, onClick, color }: { children: ReactNode; onClick?: () => void; color?: string }) => (
+    <button type="button" onClick={onClick} data-color={color}>{children}</button>
   ),
   Box: ({ children, component, onSubmit }: { children: ReactNode; component?: string; onSubmit?: React.FormEventHandler }) => (
     component === 'form' ? <form onSubmit={onSubmit}>{children}</form> : <div>{children}</div>
@@ -197,6 +197,7 @@ describe('GlobalSettings', () => {
     await act(async () => {
       const buttons = screen.getAllByRole('button');
       const trashButton = buttons.find((b) => !b.textContent && b.getAttribute('type') === 'button' && !b.getAttribute('data-testid'));
+      expect(trashButton?.getAttribute('data-color')).toBe('red');
       if (trashButton) fireEvent.click(trashButton);
     });
 

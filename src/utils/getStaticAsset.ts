@@ -16,7 +16,8 @@ export async function getStaticAssetByPath(path: string) {
 }
 
 export async function getJsonAssetByPath(path: string) {
-  const res = await fetch(`${PREFIX}${path}`);
+  const res = await fetch(path.startsWith('http') ? path : `${PREFIX}${path}`);
+  if (!res.ok) return undefined;
 
   let data;
   try {

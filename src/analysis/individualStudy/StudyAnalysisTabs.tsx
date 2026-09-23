@@ -38,6 +38,7 @@ import { ThinkAloudAnalysis } from './thinkAloud/ThinkAloudAnalysis';
 import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
 import { ConfigView } from './config/ConfigView';
 import { StartupErrorScreen } from '../../components/StartupErrorScreen';
+import { ResourceNotFound } from '../../ResourceNotFound';
 
 const TABLE_HEADER_HEIGHT = 37; // Height of the tabs header
 
@@ -118,7 +119,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   // 0-1 percentage of scroll height
 
   const { value: expData, execute, status } = useAsync(getParticipantsData, [studyConfig, storageEngine, canonicalStudyId ?? undefined]);
-  const { value: currentConfigHashValue } = useAsync(
+  const { value: currentConfigHashValue, status: currentConfigStatus } = useAsync(
     getCurrentConfigHashForStudy,
     storageEngine && canonicalStudyId ? [storageEngine, canonicalStudyId] : null,
   );
@@ -414,6 +415,17 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     );
   }
 
+  if (canonicalStudyId === null || !['summary', 'table', 'stats', 'tagging', 'live-monitor', 'config', 'manage'].includes(analysisTab ?? '')) {
+    return (
+      <>
+        <AppHeader studyIds={globalConfig.configsList} selectedStudyId={displayStudyId} />
+        <AppShell.Main>
+          <ResourceNotFound email={canonicalStudyId ? studyConfig?.uiConfig.contactEmail : undefined} />
+        </AppShell.Main>
+      </>
+    );
+  }
+
   return (
     <>
       <AppHeader studyIds={globalConfig.configsList} selectedStudyId={displayStudyId} studyConfigs={studyConfig && displayStudyId ? { [displayStudyId]: studyConfig } : undefined} />
@@ -656,7 +668,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                   )}
               </Tabs.Panel>
               <Tabs.Panel style={{ overflow: 'auto' }} value="config" pt="xs">
-                {studyConfig && <ConfigView visibleParticipants={visibleParticipants} studyId={canonicalStudyId ?? undefined} currentConfigHash={currentConfigHash} />}
+                {studyConfig && <ConfigView visibleParticipants={visibleParticipants} studyId={canonicalStudyId ?? undefined} currentConfigHash={currentConfigHash} currentConfigStatus={currentConfigStatus} />}
               </Tabs.Panel>
               <Tabs.Panel style={{ overflow: 'auto' }} value="manage" pt="xs">
                 {canonicalStudyId && user.isAdmin ? <ManageView studyId={canonicalStudyId} refresh={() => execute(studyConfig, storageEngine, canonicalStudyId)} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to manage the data for this study.</Alert></Container>}

@@ -329,7 +329,7 @@ export function StepRenderer() {
                 data-pdf-export-header
                 style={{
                   alignItems: 'center',
-                  borderBottom: '1px solid #dee2e6',
+                  borderBottom: '1px solid var(--mantine-color-default-border)',
                   display: 'none',
                   gap: 12,
                   marginBottom: 20,
@@ -348,7 +348,7 @@ export function StepRenderer() {
                   <div style={{ fontSize: 20, fontWeight: 700 }}>
                     {studyConfig.studyMetadata.title}
                   </div>
-                  <div style={{ color: '#5f6368', fontSize: 12 }}>
+                  <div style={{ color: 'var(--mantine-color-dimmed)', fontSize: 12 }}>
                     {currentComponent}
                   </div>
                 </div>
@@ -380,7 +380,17 @@ export function StepRenderer() {
                     Study Browser
                   </Button>
                 )}
-                <Outlet />
+                <div
+                  className="study-content"
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    flexGrow: 1,
+                    minWidth: 0,
+                  }}
+                >
+                  <Outlet />
+                </div>
               </AppShell.Main>
             </Flex>
             {isAnalysis && (

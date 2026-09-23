@@ -54,7 +54,8 @@ export function useNextStep(responses: Response[] = []) {
 
   // Status of the next button. If false, the next button should be disabled
   const isAnalysis = useIsAnalysis();
-  const isNextDisabled = typeof currentStep !== 'number' || isAnalysis;
+  const assetStatus = trialValidation[identifier]?.assetStatus;
+  const isNextDisabled = typeof currentStep !== 'number' || isAnalysis || (assetStatus !== undefined && assetStatus !== 'ready');
 
   const storedAnswer = useStoredAnswer();
 
@@ -66,7 +67,7 @@ export function useNextStep(responses: Response[] = []) {
   const windowEvents = useWindowEvents();
   const goToNextStep = useCallback((collectData = true) => {
     try {
-      if (typeof currentStep !== 'number') {
+      if (isNextDisabled) {
         return;
       }
       // Get answer from across the 3 response blocks and the provenance graph
@@ -169,7 +170,7 @@ export function useNextStep(responses: Response[] = []) {
         color: 'red',
       });
     }
-  }, [currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, clickedPrevious, sequence, answers, startTime, funcIndex, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, setRankingAnswers, setAlertModal, studyConfig, participantSequence, navigate, studyId, responseSubmitAttempted, checkAnswerState, responses]);
+  }, [isNextDisabled, currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, clickedPrevious, sequence, answers, startTime, funcIndex, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, setRankingAnswers, setAlertModal, studyConfig, participantSequence, navigate, studyId, responseSubmitAttempted, checkAnswerState, responses]);
 
   return {
     isNextDisabled,

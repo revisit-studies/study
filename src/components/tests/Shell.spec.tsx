@@ -13,10 +13,14 @@ import { makeGlobalConfig, makeStudyConfig } from '../../tests/utils';
 import { studyStoreCreator } from '../../store/store';
 import { parseConditionParam } from '../../utils/handleConditionLogic';
 import { parseStudyConfig } from '../../parser/parser';
+import { useStudyColorMode } from '../AppThemeProvider';
+import type { ParticipantMetadata } from '../../store/types';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
 let mockStudyId = 'test-study';
+let mockSystemColorMode: 'light' | 'dark' = 'light';
+let mockSearchParams = new URLSearchParams();
 let mockStorageEngine: Record<string, ReturnType<typeof vi.fn>> | null = null;
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
@@ -32,6 +36,11 @@ vi.mock('../../utils/fetchConfig', () => ({
 
 vi.mock('../../storage/storageEngineHooks', () => ({
   useStorageEngine: () => ({ storageEngine: mockStorageEngine }),
+}));
+
+vi.mock('../AppThemeProvider', () => ({
+  useStudyColorMode: vi.fn(),
+  useAppColorMode: () => ({ colorMode: localStorage.getItem('revisit-user-color-mode') ?? 'light' }),
 }));
 
 vi.mock('../../utils/handleRandomSequences', () => ({
@@ -56,7 +65,7 @@ vi.mock('../../utils/encryptDecryptIndex', () => ({
   encryptIndex: vi.fn((x: number) => String(x)),
 }));
 
-vi.mock('../../storage/engines/utils', () => ({
+vi.mock('../../storage/engines/utils/storageEngineHelpers', () => ({
   hash: vi.fn(() => 'abc123'),
 }));
 
@@ -69,7 +78,7 @@ vi.mock('../StartupErrorScreen', () => ({
 }));
 
 vi.mock('../../ResourceNotFound', () => ({
-  ResourceNotFound: () => <div data-testid="resource-not-found" />,
+  ResourceNotFound: ({ email }: { email?: string }) => <div data-testid="resource-not-found" data-email={email} />,
 }));
 
 vi.mock('../StepRenderer', () => ({
@@ -86,7 +95,7 @@ vi.mock('../../utils/NavigateWithParams', () => ({
 
 vi.mock('react-router', () => ({
   useRoutes: vi.fn(() => <div data-testid="routing" />),
-  useSearchParams: () => [new URLSearchParams(), vi.fn()],
+  useSearchParams: () => [mockSearchParams, vi.fn()],
 }));
 
 vi.mock('@mantine/core', () => ({
@@ -107,7 +116,7 @@ vi.mock('react-redux', () => ({
 
 vi.mock('../../store/store', () => ({
   studyStoreCreator: vi.fn().mockResolvedValue({
-    store: { getState: vi.fn(), dispatch: vi.fn(), subscribe: vi.fn() },
+    store: { getState: vi.fn(() => ({ config: { uiConfig: {} }, metadata: {} })), dispatch: vi.fn(), subscribe: vi.fn() },
   }),
   StudyStoreContext: {
     Provider: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -137,13 +146,49 @@ const baseSession = {
   },
   completed: false,
   answers: {},
+  metadata: {
+    language: 'en', userAgent: 'test', resolution: {}, ip: '',
+  },
 };
+
+function setupThemeSession(colorMode: StudyConfig['uiConfig']['colorMode'], savedMetadata?: ParticipantMetadata) {
+  const config = { ...mockActiveConfig, uiConfig: { ...mockActiveConfig.uiConfig, colorMode } };
+  vi.mocked(getStudyConfig).mockResolvedValue(config);
+  mockStorageEngine = {
+    initializeStudyDb: vi.fn().mockResolvedValue(undefined),
+    saveConfig: vi.fn().mockResolvedValue(undefined),
+    getSequenceArray: vi.fn().mockResolvedValue(['seq1']),
+    getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
+    initializeParticipantSession: vi.fn(async (_params, _config, metadata) => ({
+      ...baseSession, metadata: savedMetadata ?? metadata,
+    })),
+    getAllConfigsFromHash: vi.fn().mockResolvedValue({ abc123: config }),
+    getParticipantCompletionStatus: vi.fn().mockResolvedValue(false),
+    updateParticipantMetadata: vi.fn().mockResolvedValue(undefined),
+    isConnected: vi.fn().mockReturnValue(true),
+    getEngine: vi.fn().mockReturnValue('firebase'),
+  };
+  vi.mocked(studyStoreCreator).mockImplementationOnce(async (_id, runtimeConfig, _sequence, metadata) => ({
+    store: {
+      getState: () => ({ config: runtimeConfig, metadata }),
+      dispatch: vi.fn(),
+      subscribe: vi.fn(),
+    },
+    actions: { setMetadata: vi.fn(), setParticipantCompleted: vi.fn() },
+  }) as unknown as Awaited<ReturnType<typeof studyStoreCreator>>);
+}
 
 // ── tests ─────────────────────────────────────────────────────────────────────
 
 describe('Shell', () => {
   beforeEach(() => {
     mockStudyId = 'test-study';
+    mockSystemColorMode = 'light';
+    localStorage.removeItem('revisit-user-color-mode');
+    vi.stubGlobal('matchMedia', vi.fn((query: string) => ({
+      matches: query === '(prefers-color-scheme: dark)' && mockSystemColorMode === 'dark',
+    })));
+    mockSearchParams = new URLSearchParams();
     mockStorageEngine = null;
     vi.mocked(getStudyConfig).mockResolvedValue(null);
     vi.mocked(resolveConfigKey).mockReturnValue('test-study');
@@ -168,6 +213,102 @@ describe('Shell', () => {
     vi.useRealTimers();
     vi.clearAllMocks();
     vi.unstubAllGlobals();
+    localStorage.removeItem('revisit-user-color-mode');
+  });
+
+  test.each([
+    ['userPreference', 'dark'], ['light', 'light'], ['dark', 'dark'], [undefined, 'light'],
+  ] as const)('captures %s once as %s and preserves it when IP metadata arrives', async (configuredMode, expectedMode) => {
+    mockSystemColorMode = 'dark';
+    setupThemeSession(configuredMode);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ ip: '1.2.3.4' }))));
+    const view = render(<Shell globalConfig={globalConfig} />);
+    await waitFor(() => expect(mockStorageEngine!.updateParticipantMetadata).toHaveBeenCalledWith(
+      expect.objectContaining({ colorMode: expectedMode, ip: '1.2.3.4' }),
+    ));
+    expect(mockStorageEngine!.initializeParticipantSession).toHaveBeenCalledWith({}, expect.anything(), expect.objectContaining({ colorMode: expectedMode }), undefined);
+    mockSystemColorMode = 'light';
+    view.rerender(<Shell globalConfig={globalConfig} />);
+    expect(useStudyColorMode).toHaveBeenLastCalledWith(expectedMode);
+    expect(mockStorageEngine!.initializeParticipantSession).toHaveBeenCalledTimes(1);
+  });
+
+  test.each(['light', 'dark'] as const)('uses system %s instead of the saved app preference', async (systemMode) => {
+    mockSystemColorMode = systemMode;
+    const appPreference = systemMode === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('revisit-user-color-mode', appPreference);
+    setupThemeSession('userPreference');
+
+    const view = render(<Shell globalConfig={globalConfig} />);
+
+    await waitFor(() => expect(mockStorageEngine!.initializeParticipantSession).toHaveBeenCalledWith({}, expect.anything(), expect.objectContaining({ colorMode: systemMode }), undefined));
+    await waitFor(() => expect(useStudyColorMode).toHaveBeenLastCalledWith(systemMode));
+    expect(localStorage.getItem('revisit-user-color-mode')).toBe(appPreference);
+    mockSystemColorMode = appPreference;
+    localStorage.setItem('revisit-user-color-mode', systemMode);
+    view.rerender(<Shell globalConfig={globalConfig} />);
+    expect(useStudyColorMode).toHaveBeenLastCalledWith(systemMode);
+    expect(mockStorageEngine!.initializeParticipantSession).toHaveBeenCalledTimes(1);
+  });
+
+  test.each([false, true])('uses the persisted participant mode on resume/replay (replay=%s)', async (isReplay) => {
+    if (isReplay) mockSearchParams = new URLSearchParams('participantId=p1');
+    setupThemeSession('userPreference', { ...baseSession.metadata, colorMode: 'dark' });
+    render(<Shell globalConfig={globalConfig} />);
+    await waitFor(() => expect(useStudyColorMode).toHaveBeenLastCalledWith('dark'));
+    if (isReplay) expect(fetch).not.toHaveBeenCalled();
+    expect(mockStorageEngine!.updateParticipantMetadata).not.toHaveBeenCalled();
+  });
+
+  test.each([false, true])('keeps the initial dark preference during startup recovery (disconnected=%s)', async (disconnected) => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      vi.stubEnv('VITE_STORAGE_ENGINE', 'firebase');
+      mockSystemColorMode = 'dark';
+      setupThemeSession('userPreference');
+      mockStorageEngine!.initializeStudyDb.mockRejectedValue(new Error('db init failed'));
+      mockStorageEngine!.isConnected.mockReturnValue(!disconnected);
+      mockStorageEngine!.peekCurrentParticipantId = vi.fn().mockResolvedValue(undefined);
+
+      const view = render(<Shell globalConfig={globalConfig} />);
+      await waitFor(() => expect(studyStoreCreator).toHaveBeenCalled());
+      expect(vi.mocked(studyStoreCreator).mock.calls[0][3].colorMode).toBe('dark');
+      await waitFor(() => expect(useStudyColorMode).toHaveBeenLastCalledWith('dark'));
+      mockSystemColorMode = 'light';
+      view.rerender(<Shell globalConfig={globalConfig} />);
+      expect(useStudyColorMode).toHaveBeenLastCalledWith('dark');
+    } finally {
+      consoleSpy.mockRestore();
+      vi.unstubAllEnvs();
+    }
+  });
+
+  test.each([
+    ['dark', 'dark'], ['light', 'light'], ['userPreference', 'light'], [undefined, 'light'],
+  ] as const)('uses historical %s for legacy replay without recording a new preference', async (configuredMode, expectedMode) => {
+    mockSystemColorMode = 'dark';
+    mockSearchParams = new URLSearchParams('participantId=p1');
+    setupThemeSession(configuredMode, baseSession.metadata);
+    render(<Shell globalConfig={globalConfig} />);
+    await waitFor(() => expect(studyStoreCreator).toHaveBeenCalled());
+    await waitFor(() => expect(useStudyColorMode).toHaveBeenLastCalledWith(expectedMode));
+    expect(mockStorageEngine!.updateParticipantMetadata).not.toHaveBeenCalled();
+  });
+
+  test('applies config color mode and clears the old config when navigating to another study', async () => {
+    vi.mocked(getStudyConfig).mockResolvedValue({
+      ...mockActiveConfig,
+      uiConfig: { ...mockActiveConfig.uiConfig, colorMode: 'dark' },
+    });
+    const view = render(<Shell globalConfig={globalConfig} />);
+    await waitFor(() => expect(useStudyColorMode).toHaveBeenLastCalledWith('dark'));
+
+    mockStudyId = 'another-study';
+    vi.mocked(resolveConfigKey).mockReturnValue('another-study');
+    vi.mocked(getStudyConfig).mockReturnValue(new Promise(() => {}));
+    view.rerender(<Shell globalConfig={globalConfig} />);
+    expect(useStudyColorMode).toHaveBeenLastCalledWith(undefined);
+    expect(view.getByTestId('loading-overlay')).toBeDefined();
   });
 
   test('shows loading context only after startup remains pending for 1.5 seconds', () => {
@@ -256,7 +397,7 @@ describe('Shell', () => {
   test('shows ResourceNotFound for an invalid study ID', async () => {
     vi.mocked(resolveConfigKey).mockReturnValue(null);
     const { getByTestId } = await act(async () => render(<Shell globalConfig={globalConfig} />));
-    expect(getByTestId('resource-not-found')).toBeDefined();
+    expect(getByTestId('resource-not-found').getAttribute('data-email')).toBeNull();
   });
 
   test('__revisit-widget: canonicalStudyId returns routeStudyId', async () => {
@@ -310,6 +451,56 @@ describe('Shell', () => {
     render(<Shell globalConfig={globalConfig} />);
     await waitFor(() => expect(mockStorageEngine!.initializeStudyDb).toHaveBeenCalled(), { timeout: 3000 });
     await waitFor(() => expect(vi.mocked(studyStoreCreator)).toHaveBeenCalled(), { timeout: 3000 });
+    await waitFor(() => expect(fetch).toHaveBeenCalled());
+  });
+
+  test.each(['p1', ''])('does not collect or overwrite participant metadata during replay (participantId=%s)', async (participantId) => {
+    mockSearchParams = new URLSearchParams({ participantId });
+    vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
+
+    mockStorageEngine = {
+      initializeStudyDb: vi.fn().mockResolvedValue(undefined),
+      saveConfig: vi.fn().mockResolvedValue(undefined),
+      getSequenceArray: vi.fn().mockResolvedValue(['seq1']),
+      getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
+      initializeParticipantSession: vi.fn().mockResolvedValue(baseSession),
+      updateParticipantMetadata: vi.fn().mockResolvedValue(undefined),
+      getParticipantCompletionStatus: vi.fn().mockResolvedValue(false),
+      peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
+      getAllConfigsFromHash: vi.fn().mockResolvedValue({}),
+      isConnected: vi.fn().mockReturnValue(true),
+      getEngine: vi.fn().mockReturnValue('firebase'),
+    };
+
+    render(<Shell globalConfig={globalConfig} />);
+    await waitFor(() => expect(vi.mocked(studyStoreCreator)).toHaveBeenCalled(), { timeout: 3000 });
+    await waitFor(() => expect(mockStorageEngine!.getParticipantCompletionStatus).toHaveBeenCalled());
+
+    expect(fetch).not.toHaveBeenCalled();
+    expect(mockStorageEngine.updateParticipantMetadata).not.toHaveBeenCalled();
+  });
+
+  test('passes the contact email to the unmatched-route fallback outside the study provider', async () => {
+    vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
+
+    mockStorageEngine = {
+      initializeStudyDb: vi.fn().mockResolvedValue(undefined),
+      saveConfig: vi.fn().mockResolvedValue(undefined),
+      getSequenceArray: vi.fn().mockResolvedValue(['seq1']), // non-null → no setSequenceArray
+      getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
+      initializeParticipantSession: vi.fn().mockResolvedValue(baseSession),
+      getParticipantCompletionStatus: vi.fn().mockResolvedValue(false),
+      peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
+      getAllConfigsFromHash: vi.fn().mockResolvedValue({}),
+      isConnected: vi.fn().mockReturnValue(true),
+      getEngine: vi.fn().mockReturnValue('firebase'),
+    };
+
+    vi.mocked(useRoutes).mockReturnValue(null);
+    const { getByTestId } = render(<Shell globalConfig={globalConfig} />);
+    await waitFor(() => expect(mockStorageEngine!.initializeStudyDb).toHaveBeenCalled(), { timeout: 3000 });
+    await waitFor(() => expect(getByTestId('resource-not-found').getAttribute('data-email'))
+      .toBe(mockActiveConfig.uiConfig.contactEmail));
   });
 
   test('calls setSequenceArray when getSequenceArray returns null', async () => {

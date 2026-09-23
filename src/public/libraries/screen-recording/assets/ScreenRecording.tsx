@@ -143,7 +143,7 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
                 autoPlay
                 playsInline
                 muted
-                style={{ width: '400px', border: '1px solid #ccc' }}
+                style={{ width: '400px', border: '1px solid var(--mantine-color-default-border)' }}
               />
             </Box>
             {studyHasWebcamRecording && (
@@ -154,7 +154,7 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
                   autoPlay
                   playsInline
                   muted
-                  style={{ width: '300px', border: '1px solid #ccc', transform: 'scaleX(-1)' }}
+                  style={{ width: '300px', border: '1px solid var(--mantine-color-default-border)', transform: 'scaleX(-1)' }}
                 />
               </Box>
             )}
@@ -165,7 +165,7 @@ function ScreenRecordingPermission({ setAnswer }: StimulusParams<undefined>) {
             <strong>Speak</strong>
             {' '}
             into your microphone to check if audio is working.
-            {audioCapturing ? <Box h={200} w={400} bd="1px solid #ccc"><RecordingAudioWaveform height={200} width={400} /></Box> : <Box h={200} w={400} bd="1px solid #ccc" />}
+            {audioCapturing ? <Box h={200} w={400} bd="1px solid var(--mantine-color-default-border)"><RecordingAudioWaveform height={200} width={400} /></Box> : <Box h={200} w={400} bd="1px solid var(--mantine-color-default-border)" />}
           </li>
         )}
       </ol>
