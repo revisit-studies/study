@@ -8,7 +8,7 @@ export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd());
 
   return {
-    base: command === 'build' ? env.VITE_BASE_PATH : '/',
+    base: command === 'build' ? (env.VITE_BASE_PATH || '/') : '/',
     plugins: [
       react({ devTarget: 'es2022' }),
     ],
@@ -23,12 +23,13 @@ export default defineConfig(({ command, mode }) => {
     test: {
       environment: 'jsdom',
       exclude: ['./tests/**', 'node_modules/**'],
+      setupFiles: ['vitest-localstorage-mock'],
       fileParallelism: true,
       maxWorkers: '100%',
       minWorkers: 1,
       coverage: {
         provider: 'v8',
-        include: ['src/**/*.{ts,tsx}'],
+        all: true,
         exclude: [
           ...coverageConfigDefaults.exclude,
           'public/**',

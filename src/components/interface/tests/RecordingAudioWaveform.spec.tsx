@@ -5,6 +5,7 @@ import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { RecordingAudioWaveform } from '../RecordingAudioWaveform';
+import type { StoreState } from '../../../store/types';
 
 // ── stubs for canvas / Web Audio API (not available in jsdom) ─────────────────
 
@@ -29,6 +30,7 @@ const mockSource = { connect: vi.fn(), disconnect: vi.fn() };
 
 const mockClose = vi.fn().mockResolvedValue(undefined);
 const mockGetUserMedia = vi.fn();
+let mockModes = { dataCollectionEnabled: true, developmentModeEnabled: false, dataSharingEnabled: false };
 
 class MockAudioContext {
   state: AudioContextState = 'running';
@@ -44,10 +46,17 @@ vi.mock('@mantine/core', () => ({
   Flex: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
+vi.mock('../../../store/store', () => ({
+  useStoreSelector: (selector: (s: StoreState) => unknown) => selector({
+    modes: mockModes,
+  } as StoreState),
+}));
+
 describe('RecordingAudioWaveform', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetUserMedia.mockResolvedValue({ getTracks: () => [{ stop: vi.fn() }] });
+    mockModes = { dataCollectionEnabled: true, developmentModeEnabled: false, dataSharingEnabled: false };
     vi.stubGlobal('AudioContext', vi.fn(MockAudioContext));
     vi.stubGlobal('requestAnimationFrame', vi.fn(() => 1));
     vi.stubGlobal('cancelAnimationFrame', vi.fn());
@@ -126,5 +135,13 @@ describe('RecordingAudioWaveform', () => {
     // Should render without crashing even when context is unavailable
     const { container } = await act(async () => render(<RecordingAudioWaveform />));
     expect(container.querySelector('canvas')).not.toBeNull();
+  });
+
+  test('does not call getUserMedia when data collection is disabled', async () => {
+    mockModes = { ...mockModes, dataCollectionEnabled: false };
+    await act(async () => {
+      render(<RecordingAudioWaveform width={60} height={36} fps={30} />);
+    });
+    expect(mockGetUserMedia).not.toHaveBeenCalled();
   });
 });

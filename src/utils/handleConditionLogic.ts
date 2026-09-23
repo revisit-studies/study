@@ -4,7 +4,7 @@ import { Sequence } from '../store/types';
 
 function assertConditionalBlocksHaveIds(sequence: StudyConfig['sequence'] | Sequence): void {
   const validateNode = (node: StudyConfig['sequence'] | Sequence) => {
-    if (node.conditional && !node.id) {
+    if ('conditional' in node && node.conditional && !node.id) {
       throw new Error('Invalid sequence: blocks with `conditional: true` must define an `id`.');
     }
 
@@ -99,7 +99,7 @@ export function getSequenceConditions(sequence: StudyConfig['sequence'] | Sequen
       return;
     }
 
-    if (node.conditional && node.id) {
+    if ('conditional' in node && node.conditional && node.id) {
       conditions.add(node.id);
     }
 

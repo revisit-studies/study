@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.4/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Ranking Widget Demo",
     "version": "pilot",
@@ -63,7 +63,7 @@
             "University of California - Berkeley",
             "Washington State University"
           ],
-          "numItems": 3
+          "max": 3
         }
       ]
     },
@@ -102,7 +102,7 @@
             "University of California - Berkeley",
             "Washington State University"
           ],
-          "numItems": 2
+          "max": 2
         }
       ]
     },

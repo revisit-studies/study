@@ -21,7 +21,7 @@ import { IndividualComponent } from '../parser/types';
 import { useDisableBrowserBack } from '../utils/useDisableBrowserBack';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import {
-  useStoreActions, useStoreDispatch, useStoreSelector,
+  useFlatSequence, useStoreActions, useStoreDispatch, useStoreSelector,
 } from '../store/store';
 import { StudyEnd } from '../components/StudyEnd';
 import { TrainingFailed } from '../components/TrainingFailed';
@@ -37,6 +37,7 @@ import { ScreenRecordingReplay } from '../components/screenRecording/ScreenRecor
 import { decryptIndex, encryptIndex } from '../utils/encryptDecryptIndex';
 import { useRecordingConfig } from '../store/hooks/useRecordingConfig';
 import { getComponentContainerStyle } from '../utils/componentStyle';
+import { compileTemplate } from '../utils/handlebars';
 import { generateStimulusErrorMessage } from '../components/response/stimulusErrors';
 import { getStimulusProvenanceState, getStimulusShowErrorsFromState } from '../components/response/stimulusProvenance';
 
@@ -53,6 +54,7 @@ export function ComponentController() {
   const { storageEngine } = useStorageEngine();
 
   const answers = useStoreSelector((store) => store.answers);
+  const flatSequence = useFlatSequence();
   const analysisCanPlayScreenRecording = useStoreSelector((state) => state.analysisCanPlayScreenRecording);
 
   const { setAnalysisCanPlayScreenRecording } = useStoreActions();
@@ -202,11 +204,11 @@ export function ComponentController() {
     }
 
     return {
-      ...componentContainerStyle,
-      border: '1px solid var(--mantine-color-red-3)',
-      backgroundColor: 'var(--mantine-color-red-0)',
+      border: '1px solid var(--mantine-color-red-light-color)',
+      backgroundColor: 'var(--mantine-color-red-light)',
       borderRadius: 'var(--mantine-radius-md)',
       padding: 'var(--mantine-spacing-sm)',
+      ...componentContainerStyle,
     };
   }, [componentContainerStyle, hasStimulusIssue]);
 
@@ -239,6 +241,18 @@ export function ComponentController() {
     }
   }, [answers, currentComponent, currentStep, funcIndex, isAnalysis, modes.developmentModeEnabled, navigate, status, studyId]);
 
+  const templateData = useMemo(
+    () => ({
+      answers, flatSequence, currentStep, currentComponent, funcIndex: funcIndex ? decryptIndex(funcIndex) : undefined,
+    }),
+    [answers, flatSequence, currentStep, currentComponent, funcIndex],
+  );
+
+  const instruction = useMemo(
+    () => compileTemplate(currentConfig?.instruction || '', currentConfig?.parameters ?? {}, { data: templateData }),
+    [currentConfig?.instruction, currentConfig?.parameters, templateData],
+  );
+
   // We're not using hooks below here, so we can return early if we're at the end of the study.
   // This avoids issues with the component config being undefined for the end of the study.
   if (currentComponent === 'end') {
@@ -266,7 +280,7 @@ export function ComponentController() {
   if (!storageEngine?.isConnected()) {
     return (
       <Center style={{ height: '80vh', flexDirection: 'column', textAlign: 'center' }}>
-        <IconPlugConnectedX size={48} stroke={1.5} color="orange" />
+        <IconPlugConnectedX size={48} stroke={1.5} color="var(--mantine-color-orange-text)" />
         <Title mt="md" order={4}>Database Disconnected</Title>
         <Text mt="md">Please check your network connection or disable your adblocker for this site, then refresh the page.</Text>
       </Center>
@@ -280,7 +294,6 @@ export function ComponentController() {
       </Center>
     );
   }
-  const instruction = currentConfig?.instruction || '';
   const instructionLocation = currentConfig.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar';
   const instructionInSideBar = instructionLocation === 'sidebar';
 

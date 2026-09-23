@@ -16,8 +16,8 @@ const MARGIN = {
 
 const COLORS = {
   UNANSWERED: {
-    FILL: 'grey',
-    STROKE: '#666',
+    FILL: 'var(--mantine-color-gray-7)',
+    STROKE: 'var(--mantine-color-gray-8)',
   },
   ANSWERED: {
     FILL: 'green',
@@ -141,15 +141,15 @@ export function ProgressHeatmap({ total, answered, isDynamic }: ProgressHeatmapP
         height: 8px;
       }
       .progress-heatmap::-webkit-scrollbar-track {
-        background: #f1f1f1;
+        background: light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-6));
         border-radius: 4px;
       }
       .progress-heatmap::-webkit-scrollbar-thumb {
-        background: #c1c1c1;
+        background: light-dark(var(--mantine-color-gray-4), var(--mantine-color-dark-3));
         border-radius: 4px;
       }
       .progress-heatmap::-webkit-scrollbar-thumb:hover {
-        background: #a8a8a8;
+        background: light-dark(var(--mantine-color-gray-5), var(--mantine-color-dark-2));
       }
       
       @media (max-width: 900px) {

@@ -7,6 +7,7 @@ import { MatrixResponse, Response, StudyConfig } from '../../../parser/types';
 import { responseAnswerIsCorrect, shouldIgnoreArrayOrder } from '../../../utils/correctAnswer';
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 import { getMatrixAnswerOptions } from '../../../utils/responseOptions';
+import { getDropdownOptions } from '../../../utils/dropdownOptions';
 
 type ConfigScopedStudyConfig = {
   configHash: string;
@@ -213,9 +214,12 @@ function getResponseOptions(response: Response): string {
   if (response.type === 'slider') {
     return response.options.map((option) => `${option.label} (${option.value})`).join(', ');
   }
+  if (response.type === 'dropdown') {
+    return getDropdownOptions(response).map((option) => option.label).join(', ');
+  }
   // Dropdown, Checkbox, Radio, Button
   // example: Option 1, Option 2, Option 3
-  if ('options' in response) {
+  if ('options' in response && Array.isArray(response.options)) {
     return response.options.map((option) => (typeof option === 'string' ? option : option.label)).join(', ');
   }
   // Matrix Radio, Matrix Checkbox
@@ -234,7 +238,7 @@ function getResponseOptions(response: Response): string {
   }
   // Likert Scale
   // example: Dislike ~ Like (9 items)
-  if ('numItems' in response) {
+  if (response.type === 'likert') {
     return `${response.leftLabel ? ` ${response.leftLabel} ~ ${response.rightLabel}` : ''} (${response.numItems} items)`;
   }
   return 'N/A';

@@ -15,6 +15,33 @@ type ResponseWithDefault = Response & { default?: ResponseDefault };
 
 export const DONT_KNOW_DEFAULT_VALUE = "I don't know";
 
+export function getResponseWidth(response: Response): 'xs' | 'small' | 'medium' | 'full' | undefined {
+  // Explicit sizing owns the available width instead of the default field cap.
+  if (response.style?.width !== undefined || response.style?.minWidth !== undefined || response.style?.maxWidth !== undefined) {
+    return undefined;
+  }
+  if (response.type === 'numerical' || response.type === 'date') {
+    return 'xs';
+  }
+  if (response.type === 'time') {
+    return 'small';
+  }
+  if (response.type === 'shortText') {
+    return response.builtInValidation === 'phoneNumber' || response.builtInValidation === 'usPhoneNumber'
+      ? 'xs'
+      : 'medium';
+  }
+  return response.type === 'dropdown' ? 'medium' : 'full';
+}
+
+export function normalizeCheckboxValue(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string => typeof item === 'string');
+  }
+
+  return typeof value === 'string' && value.length > 0 ? [value] : [];
+}
+
 export function normalizeCheckboxDontKnowValue(value: string[]) {
   return value.includes(DONT_KNOW_DEFAULT_VALUE) ? [] : value;
 }
@@ -45,7 +72,7 @@ export const getDefaultFieldValue = (response: Response) => {
   }
 
   if (response.type === 'checkbox') {
-    return Array.isArray(responseDefault) ? responseDefault : (responseDefault === null ? [] : [responseDefault.toString()]);
+    return normalizeCheckboxValue(responseDefault);
   }
 
   if (response.type === 'likert') {
@@ -94,7 +121,7 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
     if (hasStoredAnswer) {
       initObj = {
         ...initObj,
-        [response.id]: answer,
+        [response.id]: response.type === 'checkbox' ? normalizeCheckboxValue(answer) : answer,
         ...dontKnowObj,
         ...otherObj,
       };
@@ -102,10 +129,11 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
       let initField: StoredAnswer['answer'][string] = '';
       const defaultFieldValue = getDefaultFieldValue(response);
       if (response.paramCapture) {
-        initField = queryParameters.get(response.paramCapture);
+        const capturedValue = queryParameters.get(response.paramCapture);
+        initField = response.type === 'checkbox' ? normalizeCheckboxValue(capturedValue) : capturedValue;
       } else if (defaultFieldValue !== null) {
         initField = defaultFieldValue;
-      } else if (response.type === 'reactive' || response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') {
+      } else if (response.type === 'checkbox' || response.type === 'reactive' || response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') {
         initField = [];
       } else if (response.type === 'matrix-radio' || response.type === 'matrix-checkbox') {
         initField = Object.fromEntries(

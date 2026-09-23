@@ -26,7 +26,7 @@ const participantMetadata: ParticipantMetadata = {
 };
 
 const conditionalLatinSquareConfig: StudyConfig = {
-  $schema: 'https://raw.githubusercontent.com/revisit-studies/study/v2.4.4/src/parser/StudyConfigSchema.json',
+  $schema: 'https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/StudyConfigSchema.json',
   studyMetadata: {
     title: 'Conditional Latin Square Test',
     version: '1.0.0',
@@ -431,6 +431,14 @@ describe.each([
     expect(participantData!.metadata).toEqual(participantMetadata);
     expect(participantData!.rejected).toBe(false);
     expect(participantData!.participantTags).toEqual([]);
+  });
+
+  test('retains the initial participant color mode when resuming with a different preference', async () => {
+    const session = await storageEngine.initializeParticipantSession({}, configSimple, { ...participantMetadata, colorMode: 'dark' });
+    await storageEngine.flushPendingParticipantData();
+    expect((await storageEngine.getParticipantData(session.participantId))?.metadata.colorMode).toBe('dark');
+    const resumed = await storageEngine.initializeParticipantSession({}, configSimple, { ...participantMetadata, colorMode: 'light' });
+    expect(resumed.metadata.colorMode).toBe('dark');
   });
 
   test('initializeParticipantSession reads modes only once for a new participant', async () => {

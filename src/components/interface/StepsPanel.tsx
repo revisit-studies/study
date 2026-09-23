@@ -17,6 +17,7 @@ import {
   IconArrowsShuffle, IconBinaryTree, IconBrain, IconCheck, IconChevronUp, IconDice3, IconDice5, IconInfoCircle,
   IconArrowForward,
   IconPackageImport,
+  IconUserPlus,
   IconX,
 } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router';
@@ -33,6 +34,7 @@ import {
   getDynamicComponentsForBlock,
   getSkipConditionSummariesForBlock,
   getSkippedTrialOrders,
+  formatFactorLevel,
 } from './StepsPanel.utils';
 
 function hasRandomization(responses: Response[]) {
@@ -77,6 +79,17 @@ function findMatchingComponentInFullOrder(
 function countComponentsInSequence(sequence: Sequence, participantAnswers: ParticipantData['answers']) {
   let count = 0;
 
+  if (
+    'type' in sequence
+    && sequence.type === 'factor-runtime-plan'
+    && 'conditionComponents' in sequence
+    && sequence.conditionComponents
+    && typeof sequence.conditionComponents === 'object'
+  ) {
+    return Object.values(sequence.conditionComponents as Record<string, string[][]>)
+      .reduce((total, components) => total + components.length, 0);
+  }
+
   // Dynamic blocks generate components at runtime, so we count from participant answers
   if (isDynamicBlock(sequence)) {
     return Object.entries(participantAnswers).filter(([key, _]) => key.startsWith(`${sequence.id}_`)).length;
@@ -119,6 +132,7 @@ type BlockStepItem = StepItemBase & {
   type: 'block';
   order: Sequence['order'];
   orderPath?: string; // Order path for blocks
+  parameters?: Sequence['parameters'];
   conditional?: boolean;
   numInterruptions?: number;
   numComponentsInSequence?: number;
@@ -280,6 +294,7 @@ export function StepsPanel({
           isLibraryImport,
           importedLibraryName,
         } = parseLibraryComponentReference(key);
+        const component = studyComponentToIndividualComponent(studyConfig.components[key], studyConfig);
 
         return {
           type: 'component',
@@ -289,6 +304,7 @@ export function StepsPanel({
           href: `/${studyId}/reviewer-${key}`,
           isLibraryImport,
           importedLibraryName,
+          component,
           componentName: key,
         };
       });
@@ -318,6 +334,9 @@ export function StepsPanel({
             isLibraryImport,
             importedLibraryName,
           } = parseLibraryComponentReference(node);
+          const component = studyConfig.components[node]
+            ? studyComponentToIndividualComponent(studyConfig.components[node], studyConfig)
+            : undefined;
 
           // Generate component identifier for participantAnswers lookup
           const componentIdentifier = dynamic ? `${parentNode.id}_${idx}_${node}_${dynamicIdx}` : `${node}_${idx}`;
@@ -338,7 +357,7 @@ export function StepsPanel({
             // Component Attributes
             href: dynamic ? `/${studyId}/${encryptIndex(idx)}/${encryptIndex(dynamicIdx)}` : `/${studyId}/${encryptIndex(idx)}`,
             isInterruption: (parentNode.interruptions || []).flatMap((intr) => intr.components).includes(node),
-            component: studyConfig.components[node],
+            component,
             componentAnswer: participantAnswers[componentIdentifier],
             componentName: node,
           });
@@ -407,6 +426,7 @@ export function StepsPanel({
           // Block Attributes
           order: node.order,
           orderPath: node.orderPath,
+          parameters: node.parameters,
           conditional: node.conditional,
           numInterruptions: node.components.filter((comp) => typeof comp === 'string' && blockInterruptions.includes(comp)).length,
           numComponentsInSequence,
@@ -738,6 +758,7 @@ export function StepsPanel({
           const {
             order,
             orderPath,
+            parameters: blockParameters,
             conditional,
             numInterruptions,
             numComponentsInSequence,
@@ -748,6 +769,12 @@ export function StepsPanel({
           } = (block ?? {}) as Partial<BlockStepItem>;
           const isLibraryImport = isComponent ? isComponentLibraryImport : isBlockLibraryImport;
           const importedLibraryName = isComponent ? componentImportedLibraryName : blockImportedLibraryName;
+          const betweenSubjectsEntries = !isComponent && blockParameters
+            ? Object.entries(blockParameters)
+            : [];
+          const betweenSubjectsLabel = betweenSubjectsEntries
+            .map(([factorName, factorLevel]) => `${factorName}=${formatFactorLevel(factorLevel)}`)
+            .join(', ');
           const resolvedComponent = component
             ? studyComponentToIndividualComponent(component, studyConfig)
             : undefined;
@@ -760,9 +787,9 @@ export function StepsPanel({
             resolvedComponent?.response,
           );
           const answerStatusIcon = answerStatus === 'correct'
-            ? <IconCheck size={16} style={{ marginRight: 4, flexShrink: 0 }} color="green" />
+            ? <IconCheck size={16} style={{ marginRight: 4, flexShrink: 0 }} color="var(--mantine-color-green-text)" />
             : answerStatus === 'incorrect'
-              ? <IconX size={16} style={{ marginRight: 4, flexShrink: 0 }} color="red" />
+              ? <IconX size={16} style={{ marginRight: 4, flexShrink: 0 }} color="var(--mantine-color-red-text)" />
               : answerStatus === 'unknown'
                 ? <UnknownAnswerIcon size={16} style={{ marginRight: 4, flexShrink: 0 }} />
                 : null;
@@ -826,17 +853,17 @@ export function StepsPanel({
                     <Flex align="center">
                       {isInterruption && (
                         <Tooltip label="Interruption" position="right" withArrow>
-                          <IconBrain size={16} style={{ marginRight: 4, flexShrink: 0 }} color="orange" />
+                          <IconBrain size={16} style={{ marginRight: 4, flexShrink: 0 }} color="var(--mantine-color-orange-text)" />
                         </Tooltip>
                       )}
                       {isLibraryImport && (
                         <Tooltip label={importedLibraryName ? `Imported from ${importedLibraryName}` : 'Package import'} position="right" withArrow>
-                          <IconPackageImport size={16} style={{ marginRight: 4, flexShrink: 0 }} color="blue" />
+                          <IconPackageImport size={16} style={{ marginRight: 4, flexShrink: 0 }} color="var(--mantine-color-blue-text)" />
                         </Tooltip>
                       )}
                       {!isComponent && conditional && (
                         <Tooltip label={`Condition: ${label}`} position="right" withArrow>
-                          <IconBinaryTree size={16} style={{ marginRight: 4, flexShrink: 0 }} color="green" />
+                          <IconBinaryTree size={16} style={{ marginRight: 4, flexShrink: 0 }} color="var(--mantine-color-green-text)" />
                         </Tooltip>
                       )}
                       {!isComponent && skipSummaries && skipSummaries.length > 0 && (
@@ -846,17 +873,22 @@ export function StepsPanel({
                           position="right"
                           withArrow
                         >
-                          <IconArrowForward size={16} style={{ marginRight: 4, flexShrink: 0 }} color="purple" />
+                          <IconArrowForward size={16} style={{ marginRight: 4, flexShrink: 0 }} color="var(--mantine-color-violet-text)" />
+                        </Tooltip>
+                      )}
+                      {betweenSubjectsEntries.length > 0 && (
+                        <Tooltip label={`Between Subjects: ${betweenSubjectsLabel}`} position="right" withArrow>
+                          <IconUserPlus size={16} style={{ marginRight: 4, flexShrink: 0 }} color="var(--mantine-color-teal-text)" />
                         </Tooltip>
                       )}
                       {(resolvedComponent?.responseOrder === 'random' || (!participantSequence && componentName && studyConfig.components[componentName]?.responseOrder === 'random')) && (
                         <Tooltip label="Random responses" position="right" withArrow>
-                          <IconDice3 size={16} opacity={0.8} style={{ marginRight: 4, flexShrink: 0 }} color="black" />
+                          <IconDice3 size={16} opacity={0.8} style={{ marginRight: 4, flexShrink: 0 }} />
                         </Tooltip>
                       )}
                       {(componentName && componentHasRandomization.get(componentName)) && (
                         <Tooltip label="Random options" position="right" withArrow>
-                          <IconDice5 size={16} opacity={0.8} style={{ marginRight: 4, flexShrink: 0 }} color="black" />
+                          <IconDice5 size={16} opacity={0.8} style={{ marginRight: 4, flexShrink: 0 }} />
                         </Tooltip>
                       )}
                       {answerStatusIcon}
@@ -889,6 +921,20 @@ export function StepsPanel({
                           <IconArrowsShuffle size="15" opacity={0.5} style={{ marginLeft: '5px', verticalAlign: 'middle' }} />
                         </Tooltip>
                       ) : null}
+                      {betweenSubjectsEntries.map(([factorName, factorLevel]) => (
+                        <Tooltip
+                          key={factorName}
+                          label={`Between-subjects factor: ${factorName} = ${formatFactorLevel(factorLevel)}`}
+                          position="right"
+                          withArrow
+                        >
+                          <Badge ml={5} color="teal" variant="light">
+                            {factorName}
+                            =
+                            {formatFactorLevel(factorLevel)}
+                          </Badge>
+                        </Tooltip>
+                      ))}
                       {!isComponent && !isExcluded && (
                         <Badge ml={5} variant="light">
                           {(numComponentsInSequence || 0) - (numInterruptions || 0)}

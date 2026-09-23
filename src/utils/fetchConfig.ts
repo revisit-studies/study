@@ -3,9 +3,36 @@ import { GlobalConfig, ParsedConfig, StudyConfig } from '../parser/types';
 import { parseStudyConfig } from '../parser/parser';
 import { PREFIX } from './Prefix';
 
-async function fetchStudyConfig(configLocation: string) {
-  const config = await (await fetch(`${PREFIX}${configLocation}`)).text();
-  return await parseStudyConfig(config);
+function createConfigLoadError(message: string): ParsedConfig<StudyConfig> {
+  return {
+    errors: [{
+      message,
+      instancePath: 'root',
+      params: { action: 'Check that the config path exists and the deployment is serving it' },
+      category: 'invalid-config',
+    }],
+    warnings: [],
+  } as unknown as ParsedConfig<StudyConfig>;
+}
+
+async function fetchStudyConfig(configLocation: string): Promise<ParsedConfig<StudyConfig>> {
+  let configText: string;
+
+  try {
+    const response = await fetch(`${PREFIX}${configLocation}`);
+    if (!response.ok) {
+      return createConfigLoadError(
+        `Unable to load study config \`${configLocation}\`: ${response.status} ${response.statusText || 'Request failed'}`,
+      );
+    }
+
+    configText = await response.text();
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    return createConfigLoadError(`Unable to load study config \`${configLocation}\`: ${detail}`);
+  }
+
+  return await parseStudyConfig(configText);
 }
 
 function sanitizeStringForUrlLegacy(fileName: string) {

@@ -20,6 +20,8 @@ export interface ParticipantMetadata {
   language: string;
   /** The IP address of the participant. */
   ip: string | null;
+  /** The effective color mode chosen when participation starts, retained for resume and replay. Absent in older data. */
+  colorMode?: 'light' | 'dark';
 }
 
 export type ProvenanceTraversalEvent = {
@@ -51,6 +53,8 @@ export type ValidationStatus = {
   reason?: StimulusIssueReason;
   message?: string;
 }
+export type AssetStatus = 'loading' | 'ready' | 'error';
+
 export type TrialValidation = Record<
   string,
   {
@@ -58,6 +62,7 @@ export type TrialValidation = Record<
     belowStimulus: ValidationStatus;
     sidebar: ValidationStatus;
     stimulus: ValidationStatus;
+    assetStatus?: AssetStatus;
     provenanceGraph: StoredProvenance;
   }
 >;
@@ -240,6 +245,7 @@ export interface Sequence {
   orderPath: string;
   order: ComponentBlock['order'] | 'dynamic';
   components: (string | Sequence)[];
+  parameters?: Record<string, unknown>;
   skip: SkipConditions;
   interruptions?: InterruptionBlock[];
   conditional?: boolean;

@@ -1,5 +1,5 @@
 import {
-  cleanup, render, waitFor,
+  cleanup, fireEvent, render, screen, waitFor, within,
 } from '@testing-library/react';
 import { MantineProvider } from '@mantine/core';
 import {
@@ -9,6 +9,7 @@ import { DownloadTidy, getTableData } from '../DownloadTidy';
 import type { StudyConfig } from '../../../parser/types';
 import type { StorageEngine } from '../../../storage/engines/types';
 import type { ParticipantDataWithStatus } from '../../../storage/types';
+import type { StoredAnswer } from '../../../store/types';
 import testConfigSimple from '../../../storage/tests/testConfigSimple.json';
 
 const storageEngineHookMock = vi.hoisted(() => ({
@@ -148,6 +149,46 @@ describe('getTableData', () => {
       responseMax: 10,
       parameters_speed: 'fast',
     }));
+  });
+
+  test('falls back to the stored config when a legacy answer omits correctAnswer', async () => {
+    const configWithCorrectAnswer = {
+      ...configWithComponentMetadata,
+      components: {
+        ...configWithComponentMetadata.components,
+        testComponent: {
+          ...configWithComponentMetadata.components.testComponent,
+          correctAnswer: [{ id: 'response', answer: 'config answer' }],
+        },
+      },
+    } as StudyConfig;
+    const participant = makeParticipant();
+    delete (participant.answers.testComponent_0 as Partial<StoredAnswer>).correctAnswer;
+    const storageEngine = makeStorageEngine({ 'hash-1': configWithCorrectAnswer });
+
+    const tableData = await getTableData(
+      ['correctAnswer'],
+      [participant],
+      storageEngine,
+      'test-study',
+    );
+
+    expect(tableData.rows[0].correctAnswer).toBe('config answer');
+  });
+
+  test('exports a legacy answer without correctAnswer when its config is missing', async () => {
+    const participant = makeParticipant({ participantConfigHash: 'missing-hash' });
+    delete (participant.answers.testComponent_0 as Partial<StoredAnswer>).correctAnswer;
+    const storageEngine = makeStorageEngine({});
+
+    const tableData = await getTableData(
+      ['correctAnswer'],
+      [participant],
+      storageEngine,
+      'test-study',
+    );
+
+    expect(tableData.rows[0].correctAnswer).toBeUndefined();
   });
 
   test('keeps participant-derived rows when configs are missing', async () => {
@@ -359,7 +400,22 @@ describe('getTableData', () => {
     }));
   });
 
-  test('exports empty answer rows and window event counts', async () => {
+  test('omits window event rows by default', async () => {
+    const storageEngine = makeStorageEngine({
+      'hash-1': configSimple,
+    });
+
+    const tableData = await getTableData(
+      ['answer'],
+      [makeParticipant()],
+      storageEngine,
+      'test-study',
+    );
+
+    expect(tableData.rows.find((row) => row.responseId === 'windowEvents')).toBeUndefined();
+  });
+
+  test('exports empty answer rows and selected window event counts', async () => {
     const participant = makeParticipant({
       answers: {
         testComponent_0: {
@@ -386,7 +442,7 @@ describe('getTableData', () => {
     });
 
     const tableData = await getTableData(
-      ['answer'],
+      ['answer', 'windowEvents'],
       [participant],
       storageEngine,
       'test-study',
@@ -401,6 +457,7 @@ describe('getTableData', () => {
       responseId: '',
     }));
     expect(emptyAnswerRow?.answer).toBeUndefined();
+    expect(tableData.header).not.toContain('windowEvents');
     expect(windowEventsRow).toEqual(expect.objectContaining({
       participantId: 'p1',
       trialId: 'testComponent',
@@ -416,6 +473,37 @@ describe('getTableData', () => {
         resize: 1,
         scroll: 1,
         visibility: 1,
+      }),
+    }));
+  });
+
+  test('exports zero window event counts when selected', async () => {
+    const storageEngine = makeStorageEngine({
+      'hash-1': configSimple,
+    });
+
+    const tableData = await getTableData(
+      ['windowEvents'],
+      [makeParticipant()],
+      storageEngine,
+      'test-study',
+    );
+
+    expect(tableData.rows.find((row) => row.responseId === 'windowEvents')).toEqual(expect.objectContaining({
+      participantId: 'p1',
+      trialId: 'testComponent',
+      responseId: 'windowEvents',
+      answer: JSON.stringify({
+        focus: 0,
+        input: 0,
+        keydown: 0,
+        keyup: 0,
+        mousemove: 0,
+        mousedown: 0,
+        mouseup: 0,
+        resize: 0,
+        scroll: 0,
+        visibility: 0,
       }),
     }));
   });
@@ -535,6 +623,42 @@ describe('DownloadTidy', () => {
     cleanup();
     storageEngineHookMock.storageEngine = undefined;
     vi.clearAllMocks();
+  });
+
+  test('exposes window events as an unselected optional property', async () => {
+    storageEngineHookMock.storageEngine = makeStorageEngine({
+      'hash-1': configSimple,
+    });
+
+    render(
+      <MantineProvider>
+        <DownloadTidy
+          opened
+          close={vi.fn()}
+          filename="test-study_tidy.csv"
+          data={[makeParticipant()]}
+          studyId="test-study"
+        />
+      </MantineProvider>,
+    );
+
+    const windowEventsButton = screen.getByRole('button', { name: 'windowEvents' });
+    await waitFor(() => {
+      expect(within(document.body.querySelector('tbody')!).getByText('response')).not.toBeNull();
+    });
+    expect(within(document.body.querySelector('tbody')!).queryByText('windowEvents')).toBeNull();
+
+    fireEvent.click(windowEventsButton);
+
+    await waitFor(() => {
+      expect(within(document.body.querySelector('tbody')!).getByText('windowEvents')).not.toBeNull();
+    });
+
+    fireEvent.click(windowEventsButton);
+
+    await waitFor(() => {
+      expect(within(document.body.querySelector('tbody')!).queryByText('windowEvents')).toBeNull();
+    });
   });
 
   test('shows an informational warning when selected participants reference missing configs', async () => {

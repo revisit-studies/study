@@ -1,5 +1,5 @@
 import {
-  Box, Group, LoadingOverlay, Stack,
+  Box, Group, LoadingOverlay, Stack, useComputedColorScheme, useMantineTheme,
 } from '@mantine/core';
 import {
   useLocation, useNavigate, useParams, useSearchParams,
@@ -147,12 +147,17 @@ export function AudioProvenanceVis({
     setCurrentResponseNodes({ ...currentResponseNodes, [location]: node });
   });
 
-  const _setPlayTime = useThrottledCallback((n: number) => {
+  const updatePlayTime = useCallback((n: number) => {
     setPlayTime(startTime + n);
     if (setTime) {
       setTime(startTime + n);
     }
-  }, 100); // 100ms throttle
+  }, [setTime, startTime]);
+  const throttledUpdatePlayTime = useThrottledCallback(updatePlayTime, 100);
+  // Replay seeks must reach the provenance state immediately. The throttled
+  // path is useful for live audio rendering, but can drop an intermediate
+  // seek while the analysis component is still applying the previous one.
+  const _setPlayTime = context === 'provenanceVis' ? updatePlayTime : throttledUpdatePlayTime;
 
   useEffect(() => {
     _setPlayTime(seekTime * 1000);
@@ -289,6 +294,17 @@ export function AudioProvenanceVis({
   }, [analysisHasAudio, answers, taskName, setDuration]);
 
   const isAnalysis = useIsAnalysis();
+  const theme = useMantineTheme();
+  const colorScheme = useComputedColorScheme('light');
+  const waveColors = useMemo(() => ({
+    waveColor: colorScheme === 'dark' ? theme.colors.dark[2] : theme.colors.gray[7],
+    progressColor: theme.colors.blue[colorScheme === 'dark' ? 4 : 7],
+  }), [colorScheme, theme]);
+
+  useEffect(() => {
+    // WaveSurfer only reads its React options on mount; recolor without reloading audio.
+    wavesurfer.current?.setOptions(waveColors);
+  }, [waveColors]);
 
   const handleWSMount = useEvent(
     async (waveSurfer: WaveSurferType | null) => {
@@ -369,7 +385,7 @@ export function AudioProvenanceVis({
                 display={analysisHasAudio ? 'block' : 'none'}
                 id="waveformDiv"
               >
-                <WaveSurfer backend="MediaElement" onMount={handleWSMount} plugins={[]} container="#waveformDiv" height={50} waveColor="#484848" progressColor="cornflowerblue" barHeight={0} cursorColor="rgba(0, 0, 0, 0)">
+                <WaveSurfer backend="MediaElement" onMount={handleWSMount} plugins={[]} container="#waveformDiv" height={50} {...waveColors} barHeight={0} cursorColor="rgba(0, 0, 0, 0)">
                   <WaveForm id="waveform" height={50} />
                 </WaveSurfer>
               </Box>

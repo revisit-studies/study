@@ -7,7 +7,7 @@ import {
 } from 'vitest';
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
 import { RankingInput } from '../RankingInput';
-import type { RankingResponse } from '../../../parser/types';
+import type { BaseRankingResponse, RankingResponse } from '../../../parser/types';
 
 // ── DnD handler capture ──────────────────────────────────────────────────────
 
@@ -111,7 +111,7 @@ vi.mock('../../../utils/stringOptions', () => ({
 
 const OPTIONS = ['Item A', 'Item B', 'Item C'];
 
-function makeResponse(type: 'ranking-sublist' | 'ranking-categorical' | 'ranking-pairwise', extra: Partial<RankingResponse> = {}): RankingResponse {
+function makeResponse(type: 'ranking-sublist' | 'ranking-categorical' | 'ranking-pairwise', extra: Partial<BaseRankingResponse> = {}): RankingResponse {
   return {
     type,
     id: 'q1',

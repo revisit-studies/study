@@ -1,4 +1,5 @@
 import {
+  Badge,
   Box,
   Button,
   CloseButton,
@@ -26,6 +27,7 @@ import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import { useStudyRecordings } from '../../utils/useStudyRecordings';
 import { useDeviceRules } from '../../utils/useDeviceRules';
 import { getUnmetDeviceRestrictionLines, getUnmetDeviceRestrictionTooltip } from './DeviceRestrictionString';
+import { formatFactorLevel } from './StepsPanel.utils';
 
 function InfoHover({ text }: { text: string }) {
   return (
@@ -74,6 +76,7 @@ export function AppAside() {
     isInputAllowed,
     isDisplayAllowed,
   }), [isBrowserAllowed, isDeviceAllowed, isDisplayAllowed, isInputAllowed, studyConfig.studyRules]);
+  const betweenSubjectsEntries = useMemo(() => Object.entries(sequence.parameters || {}), [sequence.parameters]);
 
   return (
     <AppShell.Aside className="studyBrowser" data-testid="app-aside" p="0">
@@ -110,7 +113,7 @@ export function AppAside() {
           <Flex gap="sm" align="center">
             <Tooltip label="Edit Study Settings" withinPortal position="bottom">
               <ActionIcon
-                variant="white"
+                variant="subtle"
                 aria-label="Edit Study Modes"
                 component="a"
                 href={useHref(`/analysis/stats/${studyId}/manage`)}
@@ -121,31 +124,52 @@ export function AppAside() {
             </Tooltip>
             {hasAudioRecording && (
               <Tooltip label="Audio recording enabled" withinPortal position="bottom">
-                <IconMicrophone size={16} color="orange" />
+                <IconMicrophone size={16} color="var(--mantine-color-orange-text)" />
               </Tooltip>
             )}
             {hasScreenRecording && (
               <Tooltip label="Screen recording enabled" withinPortal position="bottom">
-                <IconDeviceDesktop size={16} color="orange" />
+                <IconDeviceDesktop size={16} color="var(--mantine-color-orange-text)" />
               </Tooltip>
             )}
             {modes?.dataSharingEnabled
-              ? <Tooltip label="Data sharing enabled" withinPortal position="bottom"><IconGraph size={16} color="green" /></Tooltip>
-              : <Tooltip label="Data sharing disabled" withinPortal position="bottom"><IconGraphOff size={16} color="red" /></Tooltip>}
+              ? <Tooltip label="Data sharing enabled" withinPortal position="bottom"><IconGraph size={16} color="var(--mantine-color-green-text)" /></Tooltip>
+              : <Tooltip label="Data sharing disabled" withinPortal position="bottom"><IconGraphOff size={16} color="var(--mantine-color-red-text)" /></Tooltip>}
             {storageEngine?.getEngine() === 'localStorage'
-              ? <Tooltip label="Local storage enabled" withinPortal position="bottom"><IconDatabase size={16} color="green" /></Tooltip>
+              ? <Tooltip label="Local storage enabled" withinPortal position="bottom"><IconDatabase size={16} color="var(--mantine-color-green-text)" /></Tooltip>
               : storageEngine?.getEngine() === 'firebase'
-                ? <Tooltip label="Firebase enabled" withinPortal position="bottom"><IconBrandFirebase size={16} color="green" /></Tooltip>
+                ? <Tooltip label="Firebase enabled" withinPortal position="bottom"><IconBrandFirebase size={16} color="var(--mantine-color-green-text)" /></Tooltip>
                 : storageEngine?.getEngine() === 'supabase'
-                  ? <Tooltip label="Supabase enabled" withinPortal position="bottom"><IconBrandSupabase size={16} color="green" /></Tooltip>
-                  : <Tooltip label="Unknown storage engine enabled" withinPortal position="bottom"><IconDatabase size={16} color="red" /></Tooltip>}
+                  ? <Tooltip label="Supabase enabled" withinPortal position="bottom"><IconBrandSupabase size={16} color="var(--mantine-color-green-text)" /></Tooltip>
+                  : <Tooltip label="Unknown storage engine enabled" withinPortal position="bottom"><IconDatabase size={16} color="var(--mantine-color-red-text)" /></Tooltip>}
             {unmetRestrictions.length > 0 && (
               <Tooltip label={restrictionsTooltip} multiline style={{ whiteSpace: 'pre-line' }} withinPortal position="bottom">
-                <IconBan size={16} color="red" />
+                <IconBan size={16} color="var(--mantine-color-red-text)" />
               </Tooltip>
             )}
           </Flex>
         </Flex>
+        {betweenSubjectsEntries.length > 0 && (
+          <Flex direction="row" gap={4} align="center" mt={4} wrap="wrap">
+            <Text size="xs" fw={700} c="dimmed">
+              Between Subjects:
+            </Text>
+            {betweenSubjectsEntries.map(([factorName, factorLevel]) => (
+              <Tooltip
+                key={factorName}
+                label={`Between-subjects factor: ${factorName} = ${formatFactorLevel(factorLevel)}`}
+                withinPortal
+                position="bottom"
+              >
+                <Badge size="sm" color="teal" variant="light">
+                  {factorName}
+                  =
+                  {formatFactorLevel(factorLevel)}
+                </Badge>
+              </Tooltip>
+            ))}
+          </Flex>
+        )}
       </AppShell.Section>
 
       <AppShell.Section
@@ -165,7 +189,7 @@ export function AppAside() {
           <Box style={{
             position: 'sticky',
             top: 0,
-            backgroundColor: 'white',
+            backgroundColor: 'var(--mantine-color-body)',
             zIndex: 1,
             flexShrink: 0,
           }}

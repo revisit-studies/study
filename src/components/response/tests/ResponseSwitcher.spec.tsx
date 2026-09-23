@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ComponentPropsWithoutRef } from 'react';
 import { render, cleanup } from '@testing-library/react';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
@@ -8,7 +8,9 @@ import { ResponseSwitcher } from '../ResponseSwitcher';
 
 // ── mocks ────────────────────────────────────────────────────────────────────
 
-const { capturedStringInputProps, mockIsAnalysis, mockStoreState } = vi.hoisted(() => ({
+const {
+  capturedStringInputProps, mockIsAnalysis, mockStoreState, mockCurrentComponent,
+} = vi.hoisted(() => ({
   capturedStringInputProps: {
     disabled: undefined as boolean | undefined,
     answer: undefined as { value?: unknown; readOnly?: boolean } | undefined,
@@ -19,17 +21,20 @@ const { capturedStringInputProps, mockIsAnalysis, mockStoreState } = vi.hoisted(
       order: 'fixed', orderPath: 'root', components: ['trial1'], skip: [],
     },
     completed: false,
+    answers: {},
   },
+  mockCurrentComponent: { value: '' },
 }));
 
 vi.mock('@mantine/core', () => ({
-  Box: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+  Box: ({ children, ...props }: ComponentPropsWithoutRef<'div'>) => <div {...props}>{children}</div>,
   Checkbox: () => <input type="checkbox" />,
   Divider: () => <hr />,
 }));
 
 vi.mock('react-router', () => ({
   useSearchParams: vi.fn(() => [new URLSearchParams()]),
+  useParams: vi.fn(() => ({})),
 }));
 
 vi.mock('../../../store/hooks/useStudyConfig', () => ({
@@ -42,6 +47,7 @@ vi.mock('../../../store/hooks/useIsAnalysis', () => ({
 
 vi.mock('../../../routes/utils', () => ({
   useCurrentStep: vi.fn(() => 0),
+  useCurrentComponent: vi.fn(() => mockCurrentComponent.value),
 }));
 
 vi.mock('../../../utils/fetchStylesheet', () => ({
@@ -50,6 +56,7 @@ vi.mock('../../../utils/fetchStylesheet', () => ({
 
 vi.mock('../../../store/store', () => ({
   useStoreSelector: vi.fn((selector: (state: unknown) => unknown) => selector(mockStoreState)),
+  useFlatSequence: vi.fn(() => []),
 }));
 
 vi.mock('../CustomResponseInput', () => ({
@@ -72,7 +79,10 @@ const response = {
 
 const form = { value: 'live', onChange: vi.fn() } as Parameters<typeof ResponseSwitcher>[0]['form'];
 
-function renderSwitcher({ storedAnswer, answerFinalized }: { storedAnswer?: Record<string, JsonValue>; answerFinalized?: boolean }) {
+function renderSwitcher({ storedAnswer, answerFinalized }: {
+  storedAnswer?: Record<string, JsonValue>;
+  answerFinalized?: boolean;
+}) {
   return render(
     <ResponseSwitcher
       response={response}
@@ -91,10 +101,46 @@ beforeEach(() => {
   capturedStringInputProps.disabled = undefined;
   capturedStringInputProps.answer = undefined;
   mockIsAnalysis.value = false;
+  mockCurrentComponent.value = '';
   mockStoreState.completed = false;
 });
 
 afterEach(() => cleanup());
+
+test.each([true, false])('uses semantic validation defaults while preserving custom colors (required=%s)', (required) => {
+  const errorColor = required ? 'red' : 'orange';
+  const styledResponse: Response = {
+    id: 'q1',
+    type: 'shortText',
+    prompt: 'Q1',
+    required,
+    minCharLength: 5,
+    style: { margin: '12px' },
+  };
+  const content = (value: string, responseConfig = styledResponse) => (
+    <ResponseSwitcher response={responseConfig} form={{ ...form, value }} index={1} config={{} as IndividualComponent} errors />
+  );
+  const view = render(content('bad'));
+  const wrapper = view.container.querySelector<HTMLElement>('.response')!;
+  expect(wrapper.style.backgroundColor).toBe(`var(--mantine-color-${errorColor}-light)`);
+  expect(wrapper.style.color).toBe(`var(--mantine-color-${errorColor}-light-color)`);
+  expect(wrapper.style.border).toBe(`1px solid var(--mantine-color-${errorColor}-outline)`);
+  expect(wrapper.style.margin).toBe('12px');
+
+  const customResponse: Response = {
+    ...styledResponse,
+    style: { ...styledResponse.style, color: 'navy', backgroundColor: 'beige' },
+  };
+  view.rerender(content('bad', customResponse));
+  expect(wrapper.style.backgroundColor).toBe('beige');
+  expect(wrapper.style.color).toBe('navy');
+  expect(wrapper.style.border).toBe(`1px solid var(--mantine-color-${errorColor}-outline)`);
+
+  view.rerender(content('valid answer', customResponse));
+  expect(wrapper.style.backgroundColor).toBe('beige');
+  expect(wrapper.style.color).toBe('navy');
+  expect(wrapper.style.border).toBe('');
+});
 
 // ── ResponseSwitcher stored answer locking ────────────────────────────────────
 
@@ -130,5 +176,61 @@ describe('ResponseSwitcher stored answer locking', () => {
     expect(() => renderSwitcher({ storedAnswer: undefined, answerFinalized: false })).not.toThrow();
     expect(capturedStringInputProps.disabled).toBe(true);
     expect(capturedStringInputProps.answer).toMatchObject({ value: undefined, readOnly: true });
+  });
+});
+
+describe('ResponseSwitcher style overrides', () => {
+  test('lets an explicit width control the response and releases the input cap', () => {
+    const { container } = render(
+      <ResponseSwitcher
+        response={{ ...response, style: { width: '600px' } } as Response}
+        form={form}
+        index={1}
+        config={{} as IndividualComponent}
+      />,
+    );
+    const wrapper = container.querySelector<HTMLElement>('.response');
+    expect(wrapper?.style.width).toBe('600px');
+    expect(wrapper?.dataset.answerWidth).toBeUndefined();
+  });
+
+  test('keeps user styles when displaying a validation error', () => {
+    const { container } = render(
+      <ResponseSwitcher
+        response={{
+          ...response,
+          type: 'custom',
+          style: {
+            padding: '0', border: '0', borderRadius: '0', backgroundColor: 'white',
+          },
+        } as Response}
+        customError="Required answer"
+        form={form}
+        index={1}
+        config={{} as IndividualComponent}
+      />,
+    );
+    const wrapper = container.querySelector<HTMLElement>('.response');
+    expect(wrapper?.style.padding).toBe('0px');
+    expect(wrapper?.style.borderWidth).toBe('0px');
+    expect(wrapper?.style.borderRadius).toBe('0px');
+    expect(wrapper?.style.backgroundColor).toBe('white');
+  });
+});
+
+describe('ResponseSwitcher dynamic loading', () => {
+  test('does not render raw templated response text while the component is resolving', () => {
+    mockCurrentComponent.value = '__dynamicLoading';
+    const { container } = render(
+      <ResponseSwitcher
+        response={{ ...response, prompt: 'Question: {{value}}' } as Response}
+        form={form}
+        index={1}
+        config={{ parameters: { value: 'static' } } as unknown as IndividualComponent}
+      />,
+    );
+
+    expect(container.textContent).not.toContain('{{value}}');
+    expect(container.querySelector('[data-testid="string-input"]')).toBeNull();
   });
 });

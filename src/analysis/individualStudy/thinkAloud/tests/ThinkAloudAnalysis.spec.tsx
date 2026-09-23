@@ -1,4 +1,5 @@
-import { forwardRef, ReactNode } from 'react';
+import { CSSProperties, forwardRef, ReactNode } from 'react';
+import type { isLightColor } from '@mantine/core';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
   render, act, cleanup, fireEvent, waitFor,
@@ -11,10 +12,11 @@ import { useNavigate, useParams, useSearchParams } from 'react-router';
 import type { NavigateFunction } from 'react-router';
 import { EditedText, Tag, TranscribedAudio } from '../types';
 import type { ParticipantData } from '../../../../storage/types';
-import { makeStoredAnswer as makeStoredAnswerBase, makeStorageEngine } from '../../../../tests/utils';
+import { makeParticipant, makeStoredAnswer as makeStoredAnswerBase, makeStorageEngine } from '../../../../tests/utils';
 import type { FirebaseStorageEngine } from '../../../../storage/engines/FirebaseStorageEngine';
 import { useAsync } from '../../../../store/hooks/useAsync';
 import { useReplayContext } from '../../../../store/hooks/useReplay';
+import { handleTaskScreenRecording } from '../../../../utils/handleDownloadFiles';
 import { Pills } from '../tags/Pills';
 import { AddTagDropdown } from '../tags/AddTagDropdown';
 import { TagEditor } from '../tags/TagEditor';
@@ -90,7 +92,8 @@ const createMockNavigate = (): NavigateFunction => vi.fn() as unknown as Navigat
 
 // ── mocks ────────────────────────────────────────────────────────────────────
 
-vi.mock('@mantine/core', () => ({
+vi.mock('@mantine/core', async () => ({
+  isLightColor: (await vi.importActual<{ isLightColor: typeof isLightColor }>('@mantine/core')).isLightColor,
   ActionIcon: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => <button type="button" onClick={onClick}>{children}</button>,
   Alert: ({ children }: { children: ReactNode }) => <div role="alert">{children}</div>,
   AppShell: Object.assign(
@@ -133,7 +136,7 @@ vi.mock('@mantine/core', () => ({
   Input: { Placeholder: ({ children }: { children: ReactNode }) => <span>{children}</span> },
   Loader: () => <span>loading</span>,
   Pill: Object.assign(
-    ({ children }: { children: ReactNode }) => <span>{children}</span>,
+    ({ children, styles }: { children: ReactNode; styles?: { root: CSSProperties } }) => <span style={styles?.root}>{children}</span>,
     { Group: ({ children }: { children: ReactNode }) => <div>{children}</div> },
   ),
   PillsInput: Object.assign(
@@ -186,7 +189,7 @@ vi.mock('@mantine/hooks', () => ({
 vi.mock('@tabler/icons-react', () => ({
   IconArrowLeft: () => null,
   IconArrowRight: () => null,
-  IconDeviceDesktopDown: () => null,
+  IconDeviceDesktopDown: () => <span data-testid="screen-recording-icon" />,
   IconEdit: () => <span>icon-edit</span>,
   IconInfoCircle: () => <span>icon-info</span>,
   IconMusicDown: () => null,
@@ -266,9 +269,19 @@ function makeTag(overrides: Partial<Tag> = {}): Tag {
   };
 }
 
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((res) => { resolve = res; });
+  return { promise, resolve };
+}
+
 const mockStorageEngine = makeStorageEngine() as unknown as FirebaseStorageEngine;
 
-afterEach(() => { cleanup(); });
+afterEach(() => {
+  cleanup();
+  vi.mocked(useAsync).mockReset();
+  vi.mocked(useSearchParams).mockReset();
+});
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // SSR TESTS (renderToStaticMarkup)
@@ -295,9 +308,12 @@ describe('Pills', () => {
     expect(html).toBe('');
   });
 
-  test('renders dark text color on a light tag', () => {
-    const html = renderToStaticMarkup(<Pills selectedTags={[makeTag({ color: '#ffffff' })]} />);
-    expect(html).toContain('Confusion');
+  test.each([
+    ['#ffffff', 'black'], ['#fab005', 'black'], ['#82c91e', 'black'], ['#2e2e2e', 'white'], ['#0000ff', 'white'],
+  ])('uses contrasting text on a %s tag without changing its background', (color, foreground) => {
+    const html = renderToStaticMarkup(<Pills selectedTags={[makeTag({ color })]} />);
+    expect(html).toContain(`background-color:${color}`);
+    expect(html).toContain(`;color:${foreground}`);
   });
 
   test('renders with removeFunc', () => {
@@ -576,6 +592,107 @@ describe('ThinkAloudFooter', () => {
     expect(mockFooterStorageEngine.getScreenRecording).toHaveBeenCalled();
   });
 
+  test('ignores stale screen recording results after participant changes', async () => {
+    let selectedParticipantId = 'p1';
+    const setSearchParamsForRace = vi.fn();
+    const audioP1 = deferred<string>();
+    const screenP1 = deferred<string>();
+    const audioP2 = deferred<string>();
+    const screenP2 = deferred<string>();
+    const participants = {
+      p1: makeParticipant({
+        participantId: 'p1',
+        answers: { trial_0: makeStoredAnswer({ identifier: 'trial_0', componentName: 'Component 1' }) },
+      }),
+      p2: makeParticipant({
+        participantId: 'p2',
+        answers: { trial_0: makeStoredAnswer({ identifier: 'trial_0', componentName: 'Component 1' }) },
+      }),
+    };
+    const storageEngine = makeStorageEngine({
+      getAudioUrl: vi.fn((_task, participantId) => (
+        participantId === 'p1' ? audioP1.promise : audioP2.promise
+      )),
+      getScreenRecording: vi.fn((_task, participantId) => (
+        participantId === 'p1' ? screenP1.promise : screenP2.promise
+      )),
+    });
+    vi.mocked(useSearchParams).mockImplementation(() => [
+      new URLSearchParams(`participantId=${selectedParticipantId}`), setSearchParamsForRace,
+    ] as ReturnType<typeof useSearchParams>);
+    vi.mocked(useAsync).mockImplementation((_fn, args) => ({
+      value: Array.isArray(args) && args.length === 2 && typeof args[0] === 'string'
+        ? participants[args[0] as 'p1' | 'p2'] ?? null
+        : null,
+      status: 'success',
+      execute: vi.fn(),
+      error: null,
+    }));
+    vi.mocked(handleTaskScreenRecording).mockClear();
+
+    const view = render(<RealThinkAloudFooter {...footerDefaultProps} storageEngine={storageEngine} />);
+    await waitFor(() => expect(storageEngine.getAudioUrl).toHaveBeenCalledWith('trial_0', 'p1'));
+    audioP1.resolve('audio-p1');
+    await waitFor(() => expect(storageEngine.getScreenRecording).toHaveBeenCalledWith('trial_0', 'p1'));
+
+    selectedParticipantId = 'p2';
+    view.rerender(<RealThinkAloudFooter {...footerDefaultProps} storageEngine={storageEngine} />);
+    expect(view.queryByTestId('screen-recording-icon')).toBeNull();
+
+    await waitFor(() => expect(storageEngine.getAudioUrl).toHaveBeenCalledWith('trial_0', 'p2'));
+    audioP2.resolve('audio-p2');
+    await waitFor(() => expect(storageEngine.getScreenRecording).toHaveBeenCalledWith('trial_0', 'p2'));
+    screenP2.resolve('screen-p2');
+    const screenIcon = await waitFor(() => view.getByTestId('screen-recording-icon'));
+    fireEvent.click(screenIcon.closest('button')!);
+    expect(handleTaskScreenRecording).toHaveBeenLastCalledWith(expect.objectContaining({ screenRecordingUrl: 'screen-p2' }));
+
+    screenP1.resolve('screen-p1');
+    await act(async () => { await screenP1.promise; });
+    const liveScreenIcon = view.getByTestId('screen-recording-icon');
+    fireEvent.click(liveScreenIcon.closest('button')!);
+    expect(handleTaskScreenRecording).toHaveBeenLastCalledWith(expect.objectContaining({
+      participantId: 'p2', identifier: 'trial_0', screenRecordingUrl: 'screen-p2',
+    }));
+  });
+
+  test('hides the previous recording while the next participant loads', async () => {
+    let selectedParticipantId = 'p1';
+    const setSearchParamsForRace = vi.fn();
+    const participants = {
+      p1: makeParticipant({
+        participantId: 'p1',
+        answers: { trial_0: makeStoredAnswer({ identifier: 'trial_0', componentName: 'Component 1' }) },
+      }),
+      p2: makeParticipant({
+        participantId: 'p2',
+        answers: { trial_0: makeStoredAnswer({ identifier: 'trial_0', componentName: 'Component 1' }) },
+      }),
+    };
+    const storageEngine = makeStorageEngine({
+      getAudioUrl: vi.fn((_task, participantId) => Promise.resolve(`audio-${participantId}`)),
+      getScreenRecording: vi.fn((_task, participantId) => Promise.resolve(`screen-${participantId}`)),
+    });
+    vi.mocked(useSearchParams).mockImplementation(() => [
+      new URLSearchParams(`participantId=${selectedParticipantId}`), setSearchParamsForRace,
+    ] as ReturnType<typeof useSearchParams>);
+    vi.mocked(useAsync).mockImplementation((_fn, args) => ({
+      value: Array.isArray(args) && args.length === 2 && typeof args[0] === 'string'
+        ? participants[args[0] as 'p1' | 'p2'] ?? null
+        : null,
+      status: 'success',
+      execute: vi.fn(),
+      error: null,
+    }));
+
+    const view = render(<RealThinkAloudFooter {...footerDefaultProps} storageEngine={storageEngine} />);
+    await waitFor(() => expect(view.getByTestId('screen-recording-icon')).toBeTruthy());
+
+    selectedParticipantId = 'p2';
+    view.rerender(<RealThinkAloudFooter {...footerDefaultProps} storageEngine={storageEngine} />);
+    expect(view.queryByTestId('screen-recording-icon')).toBeNull();
+  });
+
   test('next participant remains usable when there is no current task', async () => {
     const updatedParams = new URLSearchParams('participantId=p1');
     mockSetSearchParams.mockImplementation((updater: (params: URLSearchParams) => void) => {
@@ -632,11 +749,12 @@ describe('ThinkAloudFooter', () => {
         }),
       },
     };
-    vi.mocked(useAsync).mockReturnValueOnce({
-      value: mockParticipantWithAnswers as unknown as ParticipantData, status: 'success', execute: vi.fn(), error: null,
-    }).mockReturnValue({
-      value: null, status: 'success', execute: vi.fn(), error: null,
-    });
+    vi.mocked(useAsync).mockImplementation((fn) => ({
+      value: fn.name === 'getParticipantData' ? (mockParticipantWithAnswers as unknown as ParticipantData) : null,
+      status: 'success',
+      execute: vi.fn(),
+      error: null,
+    }));
     const { getAllByRole } = await act(async () => render(
       <RealThinkAloudFooter {...footerDefaultProps} currentTrial="trial_0" />,
     ));
@@ -761,11 +879,12 @@ describe('ThinkAloudFooter', () => {
         }),
       },
     };
-    vi.mocked(useAsync).mockReturnValueOnce({
-      value: mockParticipantWithAnswers as unknown as ParticipantData, status: 'success', execute: vi.fn(), error: null,
-    }).mockReturnValue({
-      value: null, status: 'success', execute: vi.fn(), error: null,
-    });
+    vi.mocked(useAsync).mockImplementation((fn) => ({
+      value: fn.name === 'getParticipantData' ? (mockParticipantWithAnswers as unknown as ParticipantData) : null,
+      status: 'success',
+      execute: vi.fn(),
+      error: null,
+    }));
     const { getAllByRole } = await act(async () => render(
       <RealThinkAloudFooter {...footerDefaultProps} currentTrial="trial_0" />,
     ));
@@ -950,12 +1069,13 @@ describe('TranscriptLine (DOM)', () => {
 
   test('applies highlight style when current is within start–end range', () => {
     const { container } = render(<RealTranscriptLine {...lineProps} start={0} current={5} end={10} />);
-    expect(container.innerHTML).toContain('rgba(100, 149, 237, 0.3)');
+    expect(container.innerHTML).toContain('var(--mantine-color-blue-light)');
   });
 
   test('does not apply highlight when current is outside range', () => {
     const { container } = render(<RealTranscriptLine {...lineProps} start={0} current={20} end={10} />);
-    expect(container.innerHTML).not.toContain('rgba(100, 149, 237, 0.3)');
+    expect(container.innerHTML).not.toContain('var(--mantine-color-blue-light)');
+    expect(container.innerHTML).toContain('var(--mantine-color-body)');
   });
 
   test('Enter keydown calls addRowCallback', () => {
@@ -1031,7 +1151,7 @@ describe('TranscriptSegmentsVis', () => {
     expect((html.match(/<line /g) || []).length).toBe(2);
   });
 
-  test('highlights the active segment with cornflowerblue stroke', () => {
+  test('uses themed strokes to distinguish active and inactive segments', () => {
     const lines = [
       {
         start: 0, end: 2, lineStart: 0, lineEnd: 1, tags: [],
@@ -1043,8 +1163,8 @@ describe('TranscriptSegmentsVis', () => {
     const html = renderToStaticMarkup(
       <RealTranscriptSegmentsVis transcriptLines={lines} xScale={xScale} startTime={0} currentShownTranscription={0} />,
     );
-    expect(html).toContain('cornflowerblue');
-    expect(html).toContain('lightgray');
+    expect(html).toContain('var(--mantine-color-blue-text)');
+    expect(html).toContain('var(--mantine-color-default-border)');
   });
 
   test('renders ColorSwatch for each tag on a segment', () => {

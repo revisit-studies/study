@@ -49,8 +49,19 @@ import {
   shouldWarnForDefaultSupabaseConfig,
 } from '../../utils/defaultStorageConfig';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
+import { PdfExportMenuItem } from './PdfExportMenuItem';
 
-export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { developmentModeEnabled: boolean; dataCollectionEnabled: boolean }) {
+export function AppHeader({
+  developmentModeEnabled,
+  dataCollectionEnabled,
+  isExportingPdf = false,
+  onExportPdf,
+}: {
+  developmentModeEnabled: boolean;
+  dataCollectionEnabled: boolean;
+  isExportingPdf?: boolean;
+  onExportPdf?: () => Promise<void> | void;
+}) {
   const studyConfig = useStoreSelector((state) => state.config);
   const isAnalysis = useIsAnalysis();
 
@@ -202,7 +213,7 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
 
   return (
     <AppShell.Header className="header" p="md">
-      <Grid mt={-7} align="center">
+      <Grid align="center">
         <Grid.Col span={4}>
           <Flex align="center">
             <Image w={40} src={`${PREFIX}${logoPath}`} alt="Study Logo" className="logoImage" />
@@ -258,15 +269,15 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
             {storageEngineFailedToConnect && <Tooltip multiline withArrow arrowSize={6} w={300} label="Failed to connect to the storage engine. Study data will not be saved. Check your connection or restart the app."><Badge size="lg" color="red">Storage Disconnected</Badge></Tooltip>}
             {showDefaultFirebaseWarning && (
               <Tooltip multiline withArrow arrowSize={6} w={360} label={DEFAULT_FIREBASE_WARNING_MESSAGE}>
-                <Badge size="lg" color="orange">Default Firebase</Badge>
+                <Badge size="lg" color="orange" autoContrast>Default Firebase</Badge>
               </Tooltip>
             )}
             {showDefaultSupabaseWarning && (
               <Tooltip multiline withArrow arrowSize={6} w={360} label={DEFAULT_SUPABASE_WARNING_MESSAGE}>
-                <Badge size="lg" color="orange">Default Supabase</Badge>
+                <Badge size="lg" color="orange" autoContrast>Default Supabase</Badge>
               </Tooltip>
             )}
-            {!storageEngineFailedToConnect && !dataCollectionEnabled && <Tooltip multiline withArrow arrowSize={6} w={300} label="This is a demo version of the study, we’re not collecting any data."><Badge size="lg" color="orange">Demo Mode</Badge></Tooltip>}
+            {!storageEngineFailedToConnect && !dataCollectionEnabled && <Tooltip multiline withArrow arrowSize={6} w={300} label="This is a demo version of the study, we’re not collecting any data."><Badge size="lg" color="orange" autoContrast>Demo Mode</Badge></Tooltip>}
             {hasUnmetDeviceRequirement && developmentModeEnabled && <Tooltip multiline withArrow arrowSize={6} w={420} label="Your device does not meet this study's requirements. You are still able to explore this study while in debug mode."><Badge size="lg" color="red">Device Requirement Not Met</Badge></Tooltip>}
             {studyConfig?.uiConfig.helpTextPath !== undefined && (
               <Button
@@ -285,11 +296,20 @@ export function AppHeader({ developmentModeEnabled, dataCollectionEnabled }: { d
               onChange={setMenuOpened}
             >
               <Menu.Target>
-                <ActionIcon size="lg" className="studyBrowserMenuDropdown" variant="subtle" color="gray">
+                <ActionIcon aria-label="Study actions" size="lg" className="studyBrowserMenuDropdown" variant="subtle" color="gray">
                   <IconDotsVertical />
                 </ActionIcon>
               </Menu.Target>
               <Menu.Dropdown>
+                {onExportPdf && (
+                  <PdfExportMenuItem
+                    isExportingPdf={isExportingPdf}
+                    onExportPdf={() => {
+                      setMenuOpened(false);
+                      onExportPdf();
+                    }}
+                  />
+                )}
                 {developmentModeEnabled && (
                   <Menu.Item
                     leftSection={<IconSchema size={14} />}

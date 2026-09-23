@@ -5,7 +5,7 @@ import {
 import {
   afterEach, describe, expect, test, vi,
 } from 'vitest';
-import type { Answer, NumericalResponse } from '../../../parser/types';
+import type { Answer, NumericalResponse, StudyConfig } from '../../../parser/types';
 import { Sequence, StoredAnswer } from '../../../store/types';
 import { makeStudyConfig, makeStoredAnswer } from '../../../tests/utils';
 import { getDynamicComponentsForBlock } from '../StepsPanel.utils';
@@ -129,6 +129,28 @@ afterEach(() => { cleanup(); });
 // ── component rendering tests ──────────────────────────────────────────────────
 
 describe('StepsPanel rendering', () => {
+  test('uses the component ID as its Study Browser label', async () => {
+    const studyConfig = makeStudyConfig({
+      components: {
+        trial: {
+          type: 'markdown',
+          path: 'trial.md',
+          description: 'Animal: cat; color: blue',
+          response: [],
+        },
+      },
+      sequence: {
+        ...minimalSequence,
+        components: ['trial'],
+      },
+    });
+    const { container } = await act(async () => render(
+      <StepsPanel participantAnswers={{}} studyConfig={studyConfig} />,
+    ));
+
+    expect(container.querySelector('[role="link"]')?.textContent).toContain('trial');
+  });
+
   test('renders without crashing when no participant sequence provided', async () => {
     const { container } = await act(async () => render(
       <StepsPanel
@@ -148,6 +170,47 @@ describe('StepsPanel rendering', () => {
       />,
     ));
     expect(container).toBeDefined();
+  });
+
+  test('uses generated factor components for the runtime-plan denominator', async () => {
+    const runtimePlan = {
+      type: 'factor-runtime-plan',
+      id: 'trials',
+      order: 'fixed',
+      orderPath: 'root',
+      components: [],
+      skip: [],
+      conditionComponents: {
+        first: ['trialA'],
+        second: ['trialB'],
+        third: ['trialC'],
+      },
+    } as unknown as StudyConfig['sequence'];
+    const studyConfig = makeStudyConfig({
+      components: {
+        trialA: { type: 'markdown', path: 'trialA.md', response: [] },
+        trialB: { type: 'markdown', path: 'trialB.md', response: [] },
+        trialC: { type: 'markdown', path: 'trialC.md', response: [] },
+      },
+      sequence: runtimePlan,
+    });
+    const participantSequence: Sequence = {
+      id: 'trials',
+      orderPath: 'root',
+      order: 'fixed',
+      components: ['trialA', 'trialB'],
+      skip: [],
+    };
+
+    const { container } = await act(async () => render(
+      <StepsPanel
+        participantSequence={participantSequence}
+        participantAnswers={{}}
+        studyConfig={studyConfig}
+      />,
+    ));
+
+    expect(container.textContent).toContain('2/3');
   });
 
   test('renders in analysis mode', async () => {
@@ -194,7 +257,7 @@ describe('StepsPanel answer status indicators', () => {
     endTime,
   });
 
-  test('shows an accessible grey checkmark for a submitted response without correct answers', async () => {
+  test('shows an accessible theme-dimmed checkmark for a submitted response without correct answers', async () => {
     const participantAnswer = makeCompletedAnswer({ q1: 'A' });
     const { getAllByLabelText, container } = await act(async () => render(
       <StepsPanel
@@ -206,7 +269,7 @@ describe('StepsPanel answer status indicators', () => {
 
     const unknownIcons = getAllByLabelText(UNKNOWN_ANSWER_LABEL);
     expect(unknownIcons.length).toBeGreaterThan(0);
-    expect(unknownIcons[0].getAttribute('data-color')).toBe('var(--mantine-color-gray-6)');
+    expect(unknownIcons[0].getAttribute('data-color')).toBe('var(--mantine-color-dimmed)');
     expect(container.textContent).toContain('icon-check');
     expect(container.textContent).not.toContain('icon-x');
   });

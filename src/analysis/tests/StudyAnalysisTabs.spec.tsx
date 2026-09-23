@@ -7,10 +7,11 @@ import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { StudyAnalysisTabs } from '../individualStudy/StudyAnalysisTabs';
+import { ConfigView } from '../individualStudy/config/ConfigView';
 import type { StudyConfig, ParsedConfig } from '../../parser/types';
-import { getStudyConfig } from '../../utils/fetchConfig';
+import { getStudyConfig, resolveConfigKey } from '../../utils/fetchConfig';
 import { useAsync } from '../../store/hooks/useAsync';
-import { makeGlobalConfig } from '../../tests/utils';
+import { makeGlobalConfig, makeStudyConfig } from '../../tests/utils';
 import { parseStudyConfig } from '../../parser/parser';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
@@ -112,7 +113,7 @@ vi.mock('../individualStudy/thinkAloud/ThinkAloudAnalysis', () => ({
   ThinkAloudAnalysis: () => <div>ThinkAloudAnalysis</div>,
 }));
 vi.mock('../individualStudy/config/ConfigView', () => ({
-  ConfigView: () => <div>ConfigView</div>,
+  ConfigView: vi.fn(() => <div>ConfigView</div>),
 }));
 vi.mock('../../components/downloader/DownloadButtons', () => ({
   DownloadButtons: () => <div>DownloadButtons</div>,
@@ -120,6 +121,10 @@ vi.mock('../../components/downloader/DownloadButtons', () => ({
 
 vi.mock('../../components/StartupErrorScreen', () => ({
   StartupErrorScreen: () => <div role="alert">startup fallback</div>,
+}));
+
+vi.mock('../../ResourceNotFound', () => ({
+  ResourceNotFound: ({ email }: { email?: string }) => <div data-testid="not-found" data-email={email}>404</div>,
 }));
 
 vi.mock('react-vega', () => ({
@@ -192,6 +197,7 @@ describe('StudyAnalysisTabs', () => {
     mockStorageEngine = { getEngine: vi.fn().mockReturnValue('supabase') };
     mockStudyRecordings = { hasAudioRecording: false, hasScreenRecording: false };
     vi.mocked(getStudyConfig).mockResolvedValue(null);
+    vi.mocked(resolveConfigKey).mockImplementation((key) => key);
     currentStable = {
       value: {}, status: 'success', execute: () => Promise.resolve(), error: null,
     } as ReturnType<typeof useAsync>;
@@ -209,6 +215,26 @@ describe('StudyAnalysisTabs', () => {
     expect(html).toContain('Select a study from the header menu to view analysis data.');
   });
 
+  test('shows 404 with the study email for an unknown analysis tab', async () => {
+    mockParams.analysisTab = 'df';
+    vi.mocked(getStudyConfig).mockResolvedValue({ ...makeStudyConfig(), errors: [], warnings: [] });
+
+    render(<StudyAnalysisTabs globalConfig={mockGlobalConfig} />);
+
+    await waitFor(() => expect(screen.getByTestId('not-found').getAttribute('data-email')).toBe('test@test.com'));
+    expect(screen.queryByText('Study Summary')).toBeNull();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  test('shows 404 without a contact email for an unknown analysis study', async () => {
+    vi.mocked(resolveConfigKey).mockReturnValue(null);
+
+    await act(async () => render(<StudyAnalysisTabs globalConfig={mockGlobalConfig} />));
+
+    expect(screen.getByTestId('not-found').getAttribute('data-email')).toBeNull();
+    expect(screen.queryByText('Study Summary')).toBeNull();
+  });
+
   test('renders standard tabs regardless of engine', () => {
     const html = renderToStaticMarkup(<StudyAnalysisTabs globalConfig={mockGlobalConfig} />);
     expect(html).toContain('Study Summary');
@@ -217,6 +243,30 @@ describe('StudyAnalysisTabs', () => {
     expect(html).toContain('Coding');
     expect(html).toContain('Config');
     expect(html).toContain('Manage');
+  });
+
+  test.each(['idle', 'pending', 'error', 'success'] as const)('passes the current hash lookup status to ConfigView: %s', async (status) => {
+    mockParams.analysisTab = 'config';
+    vi.mocked(getStudyConfig).mockResolvedValue({ ...makeStudyConfig(), errors: [], warnings: [] });
+    mockStorageEngine = {
+      getEngine: vi.fn().mockReturnValue('supabase'),
+      getStageData: vi.fn().mockResolvedValue({ allStages: [] }),
+      getAllConfigsFromHash: vi.fn().mockResolvedValue({}),
+    };
+    const hashLookup = { ...currentStable, value: null, status };
+    vi.mocked(useAsync).mockImplementation((fn) => (
+      fn.name === 'getCurrentConfigHashForStudy' ? hashLookup : currentStable
+    ));
+
+    render(<StudyAnalysisTabs globalConfig={mockGlobalConfig} />);
+
+    await waitFor(() => {
+      expect(vi.mocked(ConfigView).mock.calls.at(-1)?.[0]).toEqual(expect.objectContaining({
+        currentConfigStatus: status,
+        currentConfigHash: undefined,
+        visibleParticipants: [],
+      }));
+    });
   });
 
   test('renders disabled Live Monitor tab and Firebase-only message when not Firebase', () => {
