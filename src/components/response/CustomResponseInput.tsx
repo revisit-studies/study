@@ -1,5 +1,6 @@
 import { CustomResponse, JsonValue } from '../../parser/types';
 import { ResourceNotFound } from '../../ResourceNotFound';
+import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { CustomResponseField } from '../../store/types';
 import { ErrorBoundary } from '../../controllers/ErrorBoundary';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
@@ -22,11 +23,12 @@ export function CustomResponseInput({
   enumerateQuestions: boolean;
   field: CustomResponseField;
 }) {
+  const studyConfig = useStudyConfig();
   const isAnalysis = useIsAnalysis();
   const ResponseComponent = getCustomResponseModule(response)?.default || null;
 
   if (!ResponseComponent) {
-    return <ResourceNotFound path={response.path} />;
+    return <ResourceNotFound email={studyConfig.uiConfig.contactEmail} path={response.path} />;
   }
 
   return (

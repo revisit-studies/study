@@ -207,7 +207,7 @@ function participantDataToRows(
         }
         if (properties.includes('correctAnswer')) {
           const configCorrectAnswer = completeComponent?.correctAnswer?.find((ans) => ans.id === key)?.answer;
-          const answerCorrectAnswer = trialAnswer.correctAnswer.find((ans) => ans.id === key)?.answer;
+          const answerCorrectAnswer = trialAnswer.correctAnswer?.find((ans) => ans.id === key)?.answer;
           const correctAnswer = answerCorrectAnswer ?? configCorrectAnswer;
           tidyRow.correctAnswer = typeof correctAnswer === 'object' ? JSON.stringify(correctAnswer) : correctAnswer;
         }
@@ -543,7 +543,7 @@ export function DownloadTidy({
             const button = (
               <Button
                 key={prop}
-                variant={isSelected ? 'light' : 'white'}
+                variant={isSelected ? 'light' : 'subtle'}
                 color={isSelected ? 'blue' : 'gray'}
                 size="xs"
                 onClick={() => {

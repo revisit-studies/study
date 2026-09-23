@@ -10,7 +10,7 @@ import { HelpModal } from '../HelpModal';
 // ── mutable state ─────────────────────────────────────────────────────────────
 
 let mockShowHelpText = true;
-let mockConfig: { components: Record<string, unknown>; uiConfig: { helpTextPath: string | undefined } } = {
+let mockConfig: { components: Record<string, unknown>; uiConfig: { helpTextPath: string | undefined; contactEmail?: string } } = {
   components: {},
   uiConfig: { helpTextPath: undefined },
 };
@@ -58,8 +58,8 @@ vi.mock('../../ReactMarkdownWrapper', () => ({
 }));
 
 vi.mock('../../../ResourceNotFound', () => ({
-  ResourceNotFound: ({ path }: { path?: string }) => (
-    <div data-testid="not-found">{path ?? 'not found'}</div>
+  ResourceNotFound: ({ path, email }: { path?: string; email?: string }) => (
+    <div data-testid="not-found" data-email={email}>{path ?? 'not found'}</div>
   ),
 }));
 
@@ -122,13 +122,13 @@ describe('HelpModal', () => {
   test('shows ResourceNotFound when asset fetch returns undefined', async () => {
     mockConfig = {
       components: {},
-      uiConfig: { helpTextPath: 'missing.md' },
+      uiConfig: { helpTextPath: 'missing.md', contactEmail: 'help@example.com' },
     };
     mockGetStaticAssetByPath = vi.fn().mockResolvedValue(undefined);
     await act(async () => {
       render(<HelpModal />);
     });
-    expect(screen.getByTestId('not-found')).toBeDefined();
+    expect(screen.getByTestId('not-found').getAttribute('data-email')).toBe('help@example.com');
   });
 
   test('prefixes the help text path when fetching the asset', async () => {

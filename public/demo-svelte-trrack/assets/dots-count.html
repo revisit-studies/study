@@ -6,7 +6,6 @@
     <title>Svelte Trrack Demo</title>
     <style>
         body {
-            color: #1f2933;
             font-family: Arial, Helvetica, sans-serif;
             margin: 0;
             padding: 24px;
@@ -24,17 +23,41 @@
         }
 
         button {
-            background: #ffffff;
-            border: 1px solid #9aa5b1;
+            border: 1px solid light-dark(#9aa5b1, #5c5f66);
             border-radius: 4px;
-            color: #1f2933;
             cursor: pointer;
             font: inherit;
             padding: 6px 12px;
         }
 
-        button:hover {
-            background: #f5f7fa;
+        :root {
+            color-scheme: light dark;
+        }
+
+        body {
+            background-color: light-dark(#ffffff, #242424);
+            color: light-dark(#212529, #c1c2c5);
+        }
+
+        button {
+            background-color: light-dark(#ffffff, #2e2e2e);
+            border-color: light-dark(#9aa5b1, #5c5f66);
+            color: light-dark(#212529, #c1c2c5);
+        }
+
+        button:hover:not(:disabled) {
+            background-color: light-dark(#f5f7fa, #373a40);
+        }
+
+        button:disabled {
+            background-color: light-dark(#f1f3f5, #2e2e2e);
+            color: light-dark(#868e96, #909296);
+            cursor: not-allowed;
+        }
+
+        button:focus-visible {
+            outline: 2px solid light-dark(#1971c2, #74c0fc);
+            outline-offset: 2px;
         }
     </style>
     <script type="importmap">

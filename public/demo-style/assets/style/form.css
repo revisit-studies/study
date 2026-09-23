@@ -1,11 +1,13 @@
 body {
-  background-color: #f5f7fa;
+  background-color: light-dark(#f5f7fa, var(--mantine-color-dark-7));
+  color: var(--mantine-color-text);
 }
 
 .image {
   height: 200px;
   overflow-y: hidden;
-  width: 50% !important;
+  width: 100%;
+  max-width: 640px;
   object-fit: cover;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -23,12 +25,14 @@ body {
 }
 
 .response {
-  background-color: #ffffff;
+  background-color: var(--mantine-color-default);
+  color: var(--mantine-color-text);
   margin: 10px auto 0;
   padding: 20px;
-  border: 2px solid #e3e8ed;
+  border: 2px solid var(--mantine-color-default-border);
   border-radius: 12px;
-  width: 50%;
+  width: 100%;
+  max-width: 640px;
   box-sizing: border-box;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
