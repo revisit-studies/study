@@ -189,30 +189,30 @@ function ValidStudyCard({
         <Flex ml="auto" gap="sm" opacity={0.7}>
           {hasAudioRecording && (
           <Tooltip label="Audio recording enabled" withinPortal position="bottom">
-            <IconMicrophone size={16} color="orange" />
+            <IconMicrophone size={16} color="var(--mantine-color-orange-text)" />
           </Tooltip>
           )}
           {hasScreenRecording && (
           <Tooltip label="Screen recording enabled" withinPortal position="bottom">
-            <IconDeviceDesktop size={16} color="orange" />
+            <IconDeviceDesktop size={16} color="var(--mantine-color-orange-text)" />
           </Tooltip>
           )}
           {modes?.developmentModeEnabled
-            ? <Tooltip label="Development mode enabled" withinPortal position="bottom"><IconSchema size={16} color="green" /></Tooltip>
-            : <Tooltip label="Development mode disabled" withinPortal position="bottom"><IconSchemaOff size={16} color="red" /></Tooltip>}
+            ? <Tooltip label="Development mode enabled" withinPortal position="bottom"><IconSchema size={16} color="var(--mantine-color-green-text)" /></Tooltip>
+            : <Tooltip label="Development mode disabled" withinPortal position="bottom"><IconSchemaOff size={16} color="var(--mantine-color-red-text)" /></Tooltip>}
           {modes?.dataSharingEnabled
-            ? <Tooltip label="Data sharing enabled" withinPortal position="bottom"><IconGraph size={16} color="green" /></Tooltip>
-            : <Tooltip label="Data sharing disabled" withinPortal position="bottom"><IconGraphOff size={16} color="red" /></Tooltip>}
+            ? <Tooltip label="Data sharing enabled" withinPortal position="bottom"><IconGraph size={16} color="var(--mantine-color-green-text)" /></Tooltip>
+            : <Tooltip label="Data sharing disabled" withinPortal position="bottom"><IconGraphOff size={16} color="var(--mantine-color-red-text)" /></Tooltip>}
           {storageEngine?.getEngine() === 'localStorage'
-            ? <Tooltip label="Local storage enabled" withinPortal position="bottom"><IconDatabase size={16} color="green" /></Tooltip>
+            ? <Tooltip label="Local storage enabled" withinPortal position="bottom"><IconDatabase size={16} color="var(--mantine-color-green-text)" /></Tooltip>
             : storageEngine?.getEngine() === 'firebase'
-              ? <Tooltip label="Firebase enabled" withinPortal position="bottom"><IconBrandFirebase size={16} color="green" /></Tooltip>
+              ? <Tooltip label="Firebase enabled" withinPortal position="bottom"><IconBrandFirebase size={16} color="var(--mantine-color-green-text)" /></Tooltip>
               : storageEngine?.getEngine() === 'supabase'
-                ? <Tooltip label="Supabase enabled" withinPortal position="bottom"><IconBrandSupabase size={16} color="green" /></Tooltip>
-                : <Tooltip label="Unknown storage engine enabled" withinPortal position="bottom"><IconDatabase size={16} color="red" /></Tooltip>}
+                ? <Tooltip label="Supabase enabled" withinPortal position="bottom"><IconBrandSupabase size={16} color="var(--mantine-color-green-text)" /></Tooltip>
+                : <Tooltip label="Unknown storage engine enabled" withinPortal position="bottom"><IconDatabase size={16} color="var(--mantine-color-red-text)" /></Tooltip>}
           {unmetRestrictions.length > 0 && (
           <Tooltip label={restrictionsTooltip} multiline style={{ whiteSpace: 'pre-line' }} withinPortal position="bottom">
-            <IconBan size={16} color="red" />
+            <IconBan size={16} color="var(--mantine-color-red-text)" />
           </Tooltip>
           )}
         </Flex>

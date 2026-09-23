@@ -221,7 +221,6 @@ export function LiveMonitorView({
           position: 'sticky',
           top: 0,
           zIndex: 100,
-          backgroundColor: 'white',
           marginBottom: '1rem',
         }}
       >
@@ -290,9 +289,9 @@ export function LiveMonitorView({
                 withBorder
               >
                 {connectionStatus === 'connected' ? (
-                  <IconWifi size={22} color="green" />
+                  <IconWifi size={22} color="var(--mantine-color-green-text)" />
                 ) : (
-                  <IconWifiOff size={22} color={connectionStatus === 'connecting' ? 'orange' : 'red'} />
+                  <IconWifiOff size={22} color={connectionStatus === 'connecting' ? 'var(--mantine-color-orange-text)' : 'var(--mantine-color-red-text)'} />
                 )}
               </Indicator>
             </Tooltip>

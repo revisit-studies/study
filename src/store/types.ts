@@ -20,6 +20,8 @@ export interface ParticipantMetadata {
   language: string;
   /** The IP address of the participant. */
   ip: string | null;
+  /** The effective color mode chosen when participation starts, retained for resume and replay. Absent in older data. */
+  colorMode?: 'light' | 'dark';
 }
 
 export type ProvenanceTraversalEvent = {

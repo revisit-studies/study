@@ -1,5 +1,4 @@
 import { notifications } from '@mantine/notifications';
-import classes from './notify.module.css';
 
 export interface RevisitNotification {
   title: string;
@@ -17,7 +16,6 @@ export const showNotification = (notification: RevisitNotification) => {
     title,
     message,
     position: 'top-center',
-    classNames: classes,
     color: color || 'blue',
     autoClose: autoClose ?? (color === 'red' || color === 'yellow' ? false : 5000), // 'warnings' and 'errors' never auto-close. Successes or defaults auto close after 5 seconds.
     style: animated ? undefined : {

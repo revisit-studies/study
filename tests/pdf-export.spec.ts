@@ -569,7 +569,7 @@ test('uses portrait for long components and fits them on a single PDF page', asy
   await resetClientStudyState(page);
   await openStudyFromLanding(page, 'Demo Studies', 'Form Elements Demo');
   await nextClick(page);
-  await expect(page.getByPlaceholder('Enter your age here, range from 0 to 100')).toBeVisible();
+  await expect(page.locator('.main input[data-path="q-numerical"]')).toBeVisible();
 
   await page.getByRole('button', { name: 'Study actions' }).click();
   const downloadPromise = page.waitForEvent('download');

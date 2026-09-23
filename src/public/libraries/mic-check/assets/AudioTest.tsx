@@ -94,7 +94,7 @@ export function AudioTest({ setAnswer }: StimulusParams<undefined>) {
           <strong>Speak</strong>
           {' '}
           into your microphone to check if audio is working.
-          <Box h={200} w={400} bd="1px solid #ccc" mt="sm">
+          <Box h={200} w={400} bd="1px solid var(--mantine-color-default-border)" mt="sm">
             <RecordingAudioWaveform height={200} width={400} />
           </Box>
         </li>

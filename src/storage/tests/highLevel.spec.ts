@@ -433,6 +433,14 @@ describe.each([
     expect(participantData!.participantTags).toEqual([]);
   });
 
+  test('retains the initial participant color mode when resuming with a different preference', async () => {
+    const session = await storageEngine.initializeParticipantSession({}, configSimple, { ...participantMetadata, colorMode: 'dark' });
+    await storageEngine.flushPendingParticipantData();
+    expect((await storageEngine.getParticipantData(session.participantId))?.metadata.colorMode).toBe('dark');
+    const resumed = await storageEngine.initializeParticipantSession({}, configSimple, { ...participantMetadata, colorMode: 'light' });
+    expect(resumed.metadata.colorMode).toBe('dark');
+  });
+
   test('initializeParticipantSession reads modes only once for a new participant', async () => {
     const getModesSpy = vi.spyOn(storageEngine, 'getModes');
 

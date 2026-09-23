@@ -177,6 +177,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
         width: '100%',
         flexGrow: 1,
         border: 0,
+        colorScheme: currentConfig.colorMode ?? 'inherit',
         pointerEvents: isAnalysis ? 'none' : undefined,
       }}
       src={url}
