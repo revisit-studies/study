@@ -320,6 +320,22 @@ describe('Factor Compiler', () => {
     const result = compileFactorBlocks(config.sequence, config);
 
     expect(Object.keys(result.components)).toHaveLength(4);
+    expect(result.sequence).toMatchObject({
+      __revisitFactorLabels: {
+        'typedValues__mixed=1__trial': 'typedValues: {"mixed":1}_trial',
+        'typedValues__mixed=%221%22__trial': 'typedValues: {"mixed":"1"}_trial',
+      },
+    });
+    expect(JSON.stringify(result.sequence)).not.toContain('__revisitFactorLabels');
+
+    config.sequence = {
+      type: 'factor', id: '', factor: 'mixed', components: 'trial',
+    };
+    expect(compileFactorBlocks(config.sequence, config).sequence).toMatchObject({
+      __revisitFactorLabels: {
+        '__mixed=1__trial': '{"mixed":1}_trial',
+      },
+    });
   });
 });
 
