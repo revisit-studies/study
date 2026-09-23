@@ -277,6 +277,7 @@ vi.mock('../utils', () => ({
   normalizeCheckboxValue: vi.fn((v: unknown) => (typeof v === 'string' && v.length > 0 ? [v] : [])),
   usesStandaloneDontKnowField: vi.fn(() => false),
   getDefaultFieldValue: vi.fn(() => null),
+  getResponseWidth: vi.fn(() => 'full'),
 }));
 
 vi.mock('../../../utils/stringOptions', () => ({
@@ -897,7 +898,7 @@ describe('SliderInput', () => {
       />,
     );
     const getThumb = () => Array.from(container.querySelectorAll('div')).find(
-      (element) => element.style.backgroundColor === 'var(--mantine-color-red-6)'
+      (element) => element.style.backgroundColor === 'var(--mantine-color-red-text)'
         && element.style.width === '20px',
     );
     expect(getThumb()?.style.bottom).toContain('20%');

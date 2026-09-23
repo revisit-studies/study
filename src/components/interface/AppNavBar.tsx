@@ -53,7 +53,7 @@ export function AppNavBar({
   return runtimeConfig ? (
     <Box
       className="sidebar"
-      bg="gray.1"
+      bg="light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-6))"
       display={sidebarOpen ? 'block' : 'none'}
       style={{
         marginBottom: bottom,
@@ -66,10 +66,10 @@ export function AppNavBar({
     >
       {instructionInSideBar && instruction !== '' && (
         <Box
-          bg="gray.3"
+          bg="light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-5))"
           p="md"
         >
-          <Text span c="orange.8" fw={700} inherit>
+          <Text span c="light-dark(var(--mantine-color-orange-8), var(--mantine-color-orange-4))" fw={700} inherit>
             Task:
           </Text>
           <ReactMarkdownWrapper text={instruction} />

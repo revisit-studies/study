@@ -44,15 +44,22 @@ async function selectRadioOption(page: Page, label: string, timeout = 10000) {
   await expect(availableRadio).toBeChecked({ timeout });
 }
 
+async function advanceStep(page: Page) {
+  // Consecutive steps can render the same text and controls; wait for their route to change.
+  const previousPath = new URL(page.url()).pathname;
+  await nextClick(page);
+  await page.waitForURL((url) => url.pathname !== previousPath);
+}
+
 async function answerTrial1(page: Page, q1: string, q2: string) {
   await selectRadioOption(page, q1);
   await selectRadioOption(page, q2);
-  await nextClick(page);
+  await advanceStep(page);
 }
 
 async function answerAttentionCheck(page: Page, q1: string) {
   await selectRadioOption(page, q1);
-  await nextClick(page);
+  await advanceStep(page);
 }
 
 async function answerAttentionCheckBlock(page: Page, numIncorrect: number) {
@@ -77,17 +84,17 @@ async function answerAttentionCheckBlock(page: Page, numIncorrect: number) {
 
 async function verifyContinuingComponent(page: Page) {
   await expect(page.getByText('This component exists to show that we didn\'t get skipped over.')).toBeVisible();
-  await nextClick(page);
+  await advanceStep(page);
 }
 
 async function verifyTargetComponent(page: Page) {
   await expect(page.getByText('This component exists to show that we can choose where to skip to.')).toBeVisible();
-  await nextClick(page);
+  await advanceStep(page);
 }
 
 async function verifyTargetBlockComponent(page: Page) {
   await expect(page.getByText('This component exists to show that we can choose a block to skip to.')).toBeVisible();
-  await nextClick(page);
+  await advanceStep(page);
 }
 
 async function verifyStudyEnd(page: Page) {

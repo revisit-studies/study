@@ -67,7 +67,7 @@ export function ParticipantSection({
                           {assignment.participantId || `#${index + 1}`}
                         </Text>
                         {showDynamicBadge && assignment.isDynamic && (
-                          <Badge size="xs" color="cyan">
+                          <Badge size="xs" color="cyan" variant="light">
                             DYNAMIC
                           </Badge>
                         )}
