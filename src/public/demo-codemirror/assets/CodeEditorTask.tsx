@@ -18,6 +18,7 @@ import {
   CodeProvenanceState,
   EMPTY_SELECTION,
   InputEntry,
+  VISIBLE_LOG_ENTRIES,
   createCodeProvenance,
   entryLabel,
   formatEntry,
@@ -61,10 +62,8 @@ interface CodeEditorState extends CodeProvenanceState {
   results: TestResult[];
   runtimeError: string | null;
   runCount: number;
+  lastRunCode: string | null;
 }
-
-/** How many of the most recent entries the on-screen log shows. */
-const VISIBLE_LOG_ENTRIES = 8;
 
 const describe = (value: unknown) => {
   try {
@@ -84,7 +83,7 @@ const testLabel = (functionName: string, { args, expected }: TestCase) => `${fun
  * freeze the tab. That is acceptable for a short demo task; a production study
  * would run this in a Web Worker it can terminate.
  */
-function runTestCases(
+export function runTestCases(
   source: string,
   functionName: string,
   testCases: TestCase[],
@@ -114,7 +113,7 @@ function runTestCases(
   const results = testCases.map((testCase) => {
     const label = testLabel(functionName, testCase);
     try {
-      const actual = participantFunction(...testCase.args);
+      const actual = participantFunction(...structuredClone(testCase.args));
       return {
         label,
         passed: describe(actual) === describe(testCase.expected),
@@ -132,12 +131,13 @@ function runTestCases(
 // an analyst replaying the session sees the results as they stood at each node.
 const { registry, recordAction } = createCodeProvenance<CodeEditorState>();
 
-const runTestsAction = registry.register<'runTests', 'undoRunTests', TestRun>(
+const runTestsAction = registry.register<'runTests', 'undoRunTests', TestRun & { code: string }>(
   'runTests',
   (state: CodeEditorState, run) => {
     state.results = run.results;
     state.runtimeError = run.runtimeError;
     state.runCount += 1;
+    state.lastRunCode = run.code;
     return state;
   },
 );
@@ -153,17 +153,21 @@ function CodeEditorTask({
       code: starterCode,
       selection: EMPTY_SELECTION,
       inputLog: [],
+      inputEventCount: 0,
       results: [],
       runtimeError: null,
       runCount: 0,
+      lastRunCode: null,
     },
   });
 
   const [code, setCode] = useState(starterCode);
   const [inputLog, setInputLog] = useState<InputEntry[]>([]);
+  const [inputEventCount, setInputEventCount] = useState(0);
   const [results, setResults] = useState<TestResult[]>([]);
   const [runtimeError, setRuntimeError] = useState<string | null>(null);
   const [runCount, setRunCount] = useState(0);
+  const [lastRunCode, setLastRunCode] = useState<string | null>(null);
 
   const editorParent = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
@@ -172,7 +176,8 @@ function CodeEditorTask({
   // through a ref rather than by rebuilding extensions on every render.
   const onEntryRef = useRef<(entry: InputEntry) => void>(() => {});
   onEntryRef.current = useCallback((entry: InputEntry) => {
-    setInputLog((previous) => [...previous, entry]);
+    setInputLog((previous) => [...previous, entry].slice(-VISIBLE_LOG_ENTRIES));
+    setInputEventCount((previous) => previous + 1);
     if (entry.kind === 'edit') {
       setCode(viewRef.current?.state.doc.toString() ?? '');
     }
@@ -213,6 +218,7 @@ function CodeEditorTask({
             // comparable across participants without leaking wall-clock time.
             now: () => Date.now() - mountedAt,
           }),
+          EditorView.contentAttributes.of({ 'aria-label': 'JavaScript code editor' }),
           EditorView.theme({
             '&': {
               height: '320px',
@@ -249,7 +255,8 @@ function CodeEditorTask({
     setResults(run.results);
     setRuntimeError(run.runtimeError);
     setRunCount((previous) => previous + 1);
-    trrack.apply('Run tests', runTestsAction(run));
+    setLastRunCode(code);
+    trrack.apply('Run tests', runTestsAction({ ...run, code }));
   }, [code, functionName, testCases, trrack]);
 
   // Report answers continuously rather than only on a run, so a participant who
@@ -266,12 +273,10 @@ function CodeEditorTask({
           ? [runtimeError]
           : results.map((result) => `${result.passed ? 'PASS' : 'FAIL'}  ${result.label}${result.passed ? '' : ` (got ${result.actual})`}`),
         runCount,
-        // The full log lives in the provenance graph, one node per entry. The
-        // count is surfaced as an answer so it is available without replaying.
-        inputEvents: inputLog.length,
+        inputEvents: inputEventCount,
       },
     });
-  }, [code, inputLog.length, results, runCount, runtimeError, setAnswer]);
+  }, [code, inputEventCount, results, runCount, runtimeError, setAnswer]);
 
   // Replay: drive the editor to whatever node the analyst has seeked to, and
   // lock it so their typing can't disturb the participant's session.
@@ -292,13 +297,15 @@ function CodeEditorTask({
     replayTo(view, provenanceState);
     setCode(provenanceState.code);
     setInputLog(provenanceState.inputLog);
+    setInputEventCount(provenanceState.inputEventCount);
     setResults(provenanceState.results);
     setRuntimeError(provenanceState.runtimeError);
     setRunCount(provenanceState.runCount);
+    setLastRunCode(provenanceState.lastRunCode);
   }, [provenanceState]);
 
   const passingCount = results.filter((result) => result.passed).length;
-  const recentEntries = inputLog.slice(-VISIBLE_LOG_ENTRIES);
+  const resultsAreStale = lastRunCode !== null && code !== lastRunCode;
 
   return (
     <Stack gap="md" style={{ maxWidth: 760, margin: '0 auto' }}>
@@ -313,7 +320,7 @@ function CodeEditorTask({
         >
           Reset code
         </Button>
-        <Badge variant="light" color="gray">{`${inputLog.length} input events`}</Badge>
+        <Badge variant="light" color="gray">{`${inputEventCount} input events`}</Badge>
         {runCount > 0 && !runtimeError && (
           <Badge color={passingCount === results.length ? 'green' : 'red'} variant="light">
             {`${passingCount} / ${results.length} passing`}
@@ -321,15 +328,15 @@ function CodeEditorTask({
         )}
       </Group>
 
-      {recentEntries.length > 0 && (
+      {inputLog.length > 0 && (
         <ScrollArea.Autosize mah={130}>
           <Stack gap={2}>
-            {recentEntries.map((entry, index) => (
+            {inputLog.map((entry, index) => (
               <Text
                 // Entries are append-only and never reordered, so an entry's
                 // position in the log is a stable key.
                 // eslint-disable-next-line react/no-array-index-key
-                key={`${inputLog.length - recentEntries.length + index}`}
+                key={`${inputEventCount - inputLog.length + index}`}
                 size="xs"
                 c="dimmed"
                 ff="monospace"
@@ -340,6 +347,8 @@ function CodeEditorTask({
           </Stack>
         </ScrollArea.Autosize>
       )}
+
+      {resultsAreStale && <Text size="sm" c="dimmed">Code changed since the last test run. Run tests again for current results.</Text>}
 
       {runtimeError && (
         <Alert color="red" title="Your code didn't run">

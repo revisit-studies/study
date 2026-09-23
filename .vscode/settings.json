@@ -1,11 +1,5 @@
 {
   "yaml.schemas": {
     "./src/parser/StudyConfigSchema.json": "*.yaml"
-  },
-  "editor.formatOnSave": false,
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
-  },
-  "prettier.enable": false,
-  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"]
+  }
 }

@@ -62,6 +62,7 @@ test('Test CodeMirror editor stimulus records individual keys, selections, edits
   for (const { buggyLine, fixedLine, testCount } of trials) {
     const editor = page.locator('.cm-content');
     await expect(editor).toBeVisible();
+    await expect(page.getByRole('textbox', { name: 'JavaScript code editor' })).toBeVisible();
     await expect(editor).toContainText(buggyLine);
 
     const runButton = page.getByRole('button', {
@@ -96,6 +97,7 @@ test('Test CodeMirror editor stimulus records individual keys, selections, edits
     await expect(page.locator('.cm-line', { hasText: buggyLine })).toHaveCount(
       0,
     );
+    await expect(page.getByText('Code changed since the last test run. Run tests again for current results.')).toBeVisible();
 
     // Typed characters are logged as edits, tagged with CodeMirror's own
     // user-event annotation rather than just "the document changed", and
@@ -124,6 +126,7 @@ test('Test CodeMirror editor stimulus records individual keys, selections, edits
       page.getByText(`${testCount} / ${testCount} passing`),
     ).toBeVisible();
     await expect(listItems.filter({ hasText: 'FAIL' })).toHaveCount(0);
+    await expect(page.getByText('Code changed since the last test run. Run tests again for current results.')).toHaveCount(0);
 
     // The sidebar reactive responses mirror the run: one PASS line per test
     // case, the run counter, the input-event counter, and the final code.
@@ -136,6 +139,10 @@ test('Test CodeMirror editor stimulus records individual keys, selections, edits
         hasText: new RegExp(`^${await eventCount(eventBadge)}$`),
       }),
     ).toHaveCount(1);
+
+    await page.getByRole('button', { name: 'Reset code' }).click();
+    await expect(editor).toContainText(buggyLine);
+    await expect(page.getByText('Code changed since the last test run. Run tests again for current results.')).toBeVisible();
 
     await nextClick(page);
     await page.waitForTimeout(100);

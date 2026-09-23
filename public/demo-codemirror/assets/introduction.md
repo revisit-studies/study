@@ -19,7 +19,7 @@ Use **Reset code** to go back to the original version.
 
 ## What gets recorded
 
-Every individual key press is recorded, not just the resulting document changes:
+Key presses other than standalone modifier keys are recorded, along with document and selection changes:
 
 * **Key entries** come from the keyboard, so keys that move the caret or do nothing at all — arrows, `Escape`, a `Ctrl-Z` with nothing to undo — are captured along with the ones that type characters. Each entry carries the key name, its modifiers, and a timestamp relative to when the editor appeared.
 * **Edit entries** come from the document, so a paste, a drag, or an undo is captured even though no key produced it. Each entry carries CodeMirror's own user-event annotation (`input.type`, `delete.backward`, `undo`, …), the offset the change starts at, the inserted text, and how many characters were removed.
@@ -27,13 +27,13 @@ Every individual key press is recorded, not just the resulting document changes:
 
 Every entry — of any kind — also carries the caret and selection state as character offsets: one `anchor`/`head` pair per selection range, plus which range is the primary one. A collapsed range is a plain caret, and the order of `anchor` and `head` tells you which end of a selection was dragged. Key entries are observed before CodeMirror acts on the key, so their snapshot is where the caret was when the key went down; the selection entry that follows carries where it landed.
 
-A typed character therefore produces a key entry and an edit entry; an arrow key produces a key entry and a selection entry. The running log is shown live under the editor.
+A typed character therefore produces a key entry and an edit entry; an arrow key produces a key entry and a selection entry. The eight most recent entries are shown live under the editor.
 
-Your final code, the results of your last test run, how many times you ran the tests, and the total event count are saved as reactive responses.
+Your final code, the results of your last test run, how many times you ran the tests, and the total event count are saved as reactive responses. If you edit or reset after running tests, the results are marked as belonging to an earlier version of the code.
 
 ## Replay
 
-Every entry becomes its own node in the trial's provenance graph. When an analyst scrubs through a recorded session, the editor is driven back to the state at the node they land on: the document as it stood, the caret or selection as it stood, the input log up to that point, and the test results from their most recent run. Replay transactions are marked so the recorder ignores them, and the editor is locked while replay is active so an analyst cannot type into a participant's document.
+Every entry becomes its own node in the trial's provenance graph. Each node keeps the eight most recent log entries and the total count, rather than copying the entire log into every state. When an analyst scrubs through a recorded session, the editor is driven back to the document, caret or selection, recent log, and last test results at that node. The editor is locked during replay, and replay activity is not recorded as participant input.
 
 ## Relevant files:
  * [The Config](https://github.com/revisit-studies/study/blob/main/public/demo-codemirror/config.json)

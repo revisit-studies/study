@@ -24,14 +24,14 @@
   "baseComponents": {
     "debugTask": {
       "description": "Find and fix the bug in a short JavaScript function.",
-      "instruction": "The function below has a bug. Edit it in the code editor until it behaves as described, then press \"Run tests\" to check your fix. Every key you press and every change to the document is recorded. You can move on once you have run the tests at least once.",
+      "instruction": "The function below has a bug. Edit it in the code editor until it behaves as described, then press \"Run tests\" to check your fix. Keys other than standalone modifiers, edits, and selection changes are recorded. You can move on once you have run the tests at least once.",
       "type": "react-component",
       "path": "demo-codemirror/assets/CodeEditorTask.tsx",
       "nextButtonLocation": "sidebar",
       "response": [
         {
           "id": "testResults",
-          "prompt": "Test results",
+          "prompt": "Last test run results",
           "location": "sidebar",
           "type": "reactive"
         },
@@ -43,7 +43,7 @@
         },
         {
           "id": "inputEvents",
-          "prompt": "Key and edit events recorded",
+          "prompt": "Input events recorded",
           "location": "sidebar",
           "type": "reactive"
         },

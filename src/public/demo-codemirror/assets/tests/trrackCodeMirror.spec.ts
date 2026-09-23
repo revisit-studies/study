@@ -14,6 +14,7 @@ import {
   setReplayMode,
   snapshotSelection,
   trrackCodeMirror,
+  VISIBLE_LOG_ENTRIES,
 } from '../trrackCodeMirror';
 
 const DOC = 'const a = 1;\nconst b = 2;\n';
@@ -152,6 +153,7 @@ describe('replay', () => {
       code: DOC,
       selection: { ranges: [{ anchor: 6, head: 12 }], main: 0 },
       inputLog: [],
+      inputEventCount: 0,
     };
 
     replayTo(view, state);
@@ -169,6 +171,7 @@ describe('replay', () => {
       code: 'ab',
       selection: { ranges: [{ anchor: 99, head: 99 }], main: 0 },
       inputLog: [],
+      inputEventCount: 0,
     });
 
     expect(view.state.doc.toString()).toBe('ab');
@@ -181,6 +184,9 @@ describe('replay', () => {
 
     setReplayMode(view, true);
     expect(view.state.facet(EditorView.editable)).toBe(false);
+    keydown(view, { key: 'ArrowRight' });
+    view.dispatch({ selection: { anchor: 2 } });
+    expect(entries).toHaveLength(0);
 
     setReplayMode(view, false);
     expect(view.state.facet(EditorView.editable)).toBe(true);
@@ -197,6 +203,7 @@ describe('trrack wiring', () => {
       code: '',
       selection: { ranges: [{ anchor: 0, head: 0 }], main: 0 },
       inputLog: [],
+      inputEventCount: 0,
     };
     const entry: InputEntry = {
       kind: 'edit',
@@ -217,8 +224,26 @@ describe('trrack wiring', () => {
 
     expect(next.code).toBe('abc');
     expect(next.inputLog).toHaveLength(1);
+    expect(next.inputEventCount).toBe(1);
     expect(next.selection).toEqual(entry.selection);
     expect(recordAction).toBeTypeOf('function');
+  });
+
+  test('keeps the live log bounded while counting every event', () => {
+    const { registry } = createCodeProvenance<CodeProvenanceState>();
+    const reducer = registry.get('record').func as unknown as (
+      state: CodeProvenanceState,
+      payload: { entries: InputEntry[] },
+    ) => CodeProvenanceState;
+    let state: CodeProvenanceState = {
+      code: '', selection: { ranges: [{ anchor: 0, head: 0 }], main: 0 }, inputLog: [], inputEventCount: 0,
+    };
+    for (let at = 0; at < 100; at += 1) {
+      state = reducer(state, { entries: [{ kind: 'key', at, key: 'a', selection: state.selection }] });
+    }
+    expect(state.inputEventCount).toBe(100);
+    expect(state.inputLog).toHaveLength(VISIBLE_LOG_ENTRIES);
+    expect(state.inputLog[0].at).toBe(100 - VISIBLE_LOG_ENTRIES);
   });
 });
 

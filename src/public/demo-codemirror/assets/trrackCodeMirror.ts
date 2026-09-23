@@ -66,7 +66,11 @@ export interface CodeProvenanceState {
   code: string;
   selection: SelectionSnapshot;
   inputLog: InputEntry[];
+  inputEventCount: number;
 }
+
+/** Only the entries shown in the live log need to be held in each node's state. */
+export const VISIBLE_LOG_ENTRIES = 8;
 
 /** A caret at the very start of an empty selection. */
 export const EMPTY_SELECTION: SelectionSnapshot = { ranges: [{ anchor: 0, head: 0 }], main: 0 };
@@ -181,7 +185,7 @@ export function trrackCodeMirror({ onEntry, now }: RecorderOptions): Extension {
   return [
     EditorView.domEventObservers({
       keydown: (event, view) => {
-        if (MODIFIER_KEYS.has(event.key)) {
+        if (!view.state.facet(EditorView.editable) || MODIFIER_KEYS.has(event.key)) {
           return;
         }
         onEntry({
@@ -195,7 +199,8 @@ export function trrackCodeMirror({ onEntry, now }: RecorderOptions): Extension {
     EditorView.updateListener.of((update) => {
       // Replay drives the editor through the same transactions a participant
       // would, so skip anything this module dispatched itself.
-      if (update.transactions.some((transaction) => transaction.annotation(replayed))) {
+      if (!update.state.facet(EditorView.editable)
+        || update.transactions.some((transaction) => transaction.annotation(replayed))) {
         return;
       }
       const at = now();
@@ -262,7 +267,8 @@ export function createCodeProvenance<State extends CodeProvenanceState>() {
   const recordAction = registry.register<'record', 'undoRecord', { entries: InputEntry[]; code?: string }>(
     'record',
     (state: State, payload) => {
-      state.inputLog.push(...payload.entries);
+      state.inputLog = [...state.inputLog, ...payload.entries].slice(-VISIBLE_LOG_ENTRIES);
+      state.inputEventCount += payload.entries.length;
       const latest = payload.entries.at(-1);
       if (latest) {
         state.selection = latest.selection;
