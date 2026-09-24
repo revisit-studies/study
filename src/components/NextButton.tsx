@@ -10,6 +10,7 @@ import type { IndividualComponent, ResponseBlockLocation } from '../parser/types
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { useCurrentIdentifier } from '../routes/utils';
 import { PreviousButton } from './PreviousButton';
+import { getComponentContainerStyle } from '../utils/componentStyle';
 import {
   DEFAULT_AUTO_ADVANCE_WARNING_MESSAGE,
   DEFAULT_AUTO_ADVANCE_WARNING_TIME,
@@ -132,10 +133,18 @@ export function NextButton({
   const nextButtonDisabled = disabled || isNextDisabled || !buttonTimerSatisfied;
   const previousButtonText = config?.previousButtonText ?? studyConfig.uiConfig.previousButtonText ?? 'Previous';
   const nextButtonAlignment = config?.nextButtonAlignment ?? studyConfig.uiConfig.nextButtonAlignment ?? 'right';
+  const componentWidth = config && getComponentContainerStyle(config.type, config.style);
 
   return (
     <>
-      <Group justify={nextButtonJustify[nextButtonAlignment]} gap="xs" mt="sm" wrap="wrap">
+      <Group
+        className={location === 'sidebar' ? undefined : 'responseBlock-actions'}
+        justify={nextButtonJustify[nextButtonAlignment]}
+        gap="xs"
+        mt="sm"
+        wrap="wrap"
+        style={location === 'sidebar' ? undefined : { width: componentWidth?.width, maxWidth: componentWidth?.maxWidth }}
+      >
         {config?.previousButton && (
           <PreviousButton
             label={previousButtonText}
