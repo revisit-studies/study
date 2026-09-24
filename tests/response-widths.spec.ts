@@ -6,14 +6,16 @@ test.beforeEach(async ({ page }) => {
   await resetClientStudyState(page);
 });
 
-test('form blocks center within the available space while sidebar and stimulus keep their layout', async ({ page }) => {
+test('form blocks and stimulus center within the available space and allow study CSS overrides', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/demo-form-elements/reviewer-Form%20Elements');
   const main = page.locator('.main');
   const form = main.locator('.responseBlock-belowStimulus');
+  const stimulus = main.locator('.stimulus');
   const sidebar = page.locator('.responseBlock-sidebar');
   await page.getByRole('complementary').locator('.mantine-CloseButton-root').click();
   await expect(form).toHaveCSS('width', '880px');
+  await expect(stimulus).toHaveCSS('width', '880px');
   await expect(form).toHaveCSS('padding-left', '40px');
   await expect(sidebar).toHaveCSS('padding-left', '0px');
   const centered = await form.evaluate((block) => {
@@ -22,8 +24,9 @@ test('form blocks center within the available space while sidebar and stimulus k
     return Math.abs((bounds.left + bounds.right) - (mainBounds.left + mainBounds.right));
   });
   expect(centered).toBeLessThanOrEqual(1);
-  await page.addStyleTag({ content: '.responseBlock-belowStimulus { max-width: 1000px; }' });
+  await page.addStyleTag({ content: '.responseBlock-belowStimulus, .stimulus { max-width: 1000px; }' });
   await expect(form).toHaveCSS('width', '1000px');
+  await expect(stimulus).toHaveCSS('width', '1000px');
 
   await page.goto('/demo-style/reviewer-responses');
   await page.getByRole('complementary').locator('.mantine-CloseButton-root').click();

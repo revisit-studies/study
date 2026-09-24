@@ -6,6 +6,11 @@
   padding-inline: clamp(16px, 3vw, 40px);
 }
 
+:where(.stimulus) {
+  max-width: 880px;
+  margin-inline: auto;
+}
+
 :where(.responseBlock-aboveStimulus, .responseBlock-belowStimulus) > div {
   min-width: 0;
   overflow-x: auto;
