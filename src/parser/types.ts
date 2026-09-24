@@ -376,15 +376,47 @@ export interface ParsedMatrixQuestionOption extends Omit<MatrixQuestionOption, '
   value: string;
 }
 
+export type EqualityComparison = 'equals' | 'doesNotEqual';
+
+export type StringComparison =
+  | 'matchesRegex'
+  | 'contains'
+  | 'doesNotContain';
+
+export type NumericComparison =
+  | 'lessThan'
+  | 'lessThanOrEqual'
+  | 'greaterThan'
+  | 'greaterThanOrEqual';
+
+export type ValueCondition =
+  | {
+      comparison: EqualityComparison;
+      value: string | number | boolean | string[];
+    }
+  | {
+      comparison: StringComparison;
+      value: string;
+    }
+  | {
+      comparison: NumericComparison;
+      value: number;
+    };
+
 /**
  * Controls visibility based on another response's answer in the same component.
- * List comparisons require the same selections, regardless of order.
- * Neither operator matches when the controlling response is unanswered or conditionally hidden.
+ * List equality comparisons ignore selection order.
+ * Unanswered or conditionally hidden controlling responses never satisfy a condition.
  */
 export type ResponseVisibilityCondition = {
   responseId: string;
-} & ({ equals: string | number | boolean | string[]; notEquals?: never }
-  | { notEquals: string | number | boolean | string[]; equals?: never });
+} & (
+  | ValueCondition
+  | {
+      comparison: 'isCorrect';
+      value: boolean;
+    }
+);
 
 /**
  * The BaseResponse interface is used to define the required fields for all responses.
@@ -459,7 +491,7 @@ export interface NumericalResponse extends BaseResponse {
 }
 
 /** The validation operations available for short and long text responses. */
-export type TextValidationType = 'matchesRegex' | 'contains' | 'doesNotContain' | 'equals' | 'doesNotEqual';
+export type TextValidationType = EqualityComparison | StringComparison;
 
 /**
  * A validation rule applied to a short or long text response.

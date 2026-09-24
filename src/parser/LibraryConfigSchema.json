@@ -1067,6 +1067,13 @@
       ],
       "type": "object"
     },
+    "EqualityComparison": {
+      "enum": [
+        "equals",
+        "doesNotEqual"
+      ],
+      "type": "string"
+    },
     "FactorBlock": {
       "additionalProperties": false,
       "properties": {
@@ -2738,6 +2745,15 @@
       ],
       "type": "object"
     },
+    "NumericComparison": {
+      "enum": [
+        "lessThan",
+        "lessThanOrEqual",
+        "greaterThan",
+        "greaterThanOrEqual"
+      ],
+      "type": "string"
+    },
     "NumericalResponse": {
       "additionalProperties": false,
       "description": "The NumericalResponse interface is used to define the properties of a numerical response. NumericalResponses render as a text input that only accepts numbers, and can optionally have a min and max value, or a placeholder. ```json {   \"id\": \"q-numerical\",   \"prompt\": \"Numerical example\",   \"location\": \"aboveStimulus\",   \"type\": \"numerical\",   \"default\": 25,   \"placeholder\": \"Enter your age, range from 0 - 120\",   \"max\": 120,   \"min\": 0 } ```",
@@ -3878,7 +3894,13 @@
         {
           "additionalProperties": false,
           "properties": {
-            "equals": {
+            "comparison": {
+              "$ref": "#/definitions/EqualityComparison"
+            },
+            "responseId": {
+              "type": "string"
+            },
+            "value": {
               "anyOf": [
                 {
                   "type": "string"
@@ -3896,51 +3918,78 @@
                   "type": "array"
                 }
               ]
-            },
-            "responseId": {
-              "type": "string"
             }
           },
           "required": [
-            "equals",
-            "responseId"
+            "comparison",
+            "responseId",
+            "value"
           ],
           "type": "object"
         },
         {
           "additionalProperties": false,
           "properties": {
-            "notEquals": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                },
-                {
-                  "type": "boolean"
-                },
-                {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                }
-              ]
+            "comparison": {
+              "$ref": "#/definitions/StringComparison"
             },
             "responseId": {
+              "type": "string"
+            },
+            "value": {
               "type": "string"
             }
           },
           "required": [
-            "notEquals",
-            "responseId"
+            "comparison",
+            "responseId",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "comparison": {
+              "$ref": "#/definitions/NumericComparison"
+            },
+            "responseId": {
+              "type": "string"
+            },
+            "value": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "comparison",
+            "responseId",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "comparison": {
+              "const": "isCorrect",
+              "type": "string"
+            },
+            "responseId": {
+              "type": "string"
+            },
+            "value": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "comparison",
+            "responseId",
+            "value"
           ],
           "type": "object"
         }
       ],
-      "description": "Controls visibility based on another response's answer in the same component. List comparisons require the same selections, regardless of order. Neither operator matches when the controlling response is unanswered or conditionally hidden."
+      "description": "Controls visibility based on another response's answer in the same component. List equality comparisons ignore selection order. Unanswered or conditionally hidden controlling responses never satisfy a condition."
     },
     "ShortTextResponse": {
       "additionalProperties": false,
@@ -4194,6 +4243,14 @@
         "type"
       ],
       "type": "object"
+    },
+    "StringComparison": {
+      "enum": [
+        "matchesRegex",
+        "contains",
+        "doesNotContain"
+      ],
+      "type": "string"
     },
     "StringOption": {
       "additionalProperties": false,
@@ -4470,15 +4527,15 @@
       "type": "object"
     },
     "TextValidationType": {
-      "description": "The validation operations available for short and long text responses.",
-      "enum": [
-        "matchesRegex",
-        "contains",
-        "doesNotContain",
-        "equals",
-        "doesNotEqual"
+      "anyOf": [
+        {
+          "$ref": "#/definitions/EqualityComparison"
+        },
+        {
+          "$ref": "#/definitions/StringComparison"
+        }
       ],
-      "type": "string"
+      "description": "The validation operations available for short and long text responses."
     },
     "TimeResponse": {
       "additionalProperties": false,
