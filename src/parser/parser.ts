@@ -4,7 +4,7 @@ import { parseDocument } from 'yaml';
 import configSchema from './StudyConfigSchema.json';
 import globalSchema from './GlobalConfigSchema.json';
 import {
-  GlobalConfig, LibraryConfig, ParsedConfig, StudyConfig, ParserErrorWarning, IndividualComponent,
+  GlobalConfig, LibraryConfig, ParsedConfig, StudyConfig, ParserErrorWarning, IndividualComponent, ResponseVisibilityCondition,
 } from './types';
 import { getSequenceFlatMapWithInterruptions } from '../utils/getSequenceFlatMap';
 import {
@@ -31,6 +31,7 @@ import {
   parseDateValue,
 } from '../utils/dateTimeValidation';
 import { checkBuiltInValidation } from '../components/response/builtInValidation';
+import { visibilityControllerTypes } from '../utils/responseVisibility';
 import { getDropdownOptions } from '../utils/dropdownOptions';
 
 const modules = import.meta.glob(
@@ -47,6 +48,7 @@ const globalValidate = ajv1.getSchema<GlobalConfig>('#/definitions/GlobalConfig'
 const ajv2 = new Ajv({ allowUnionTypes: true });
 ajv2.addSchema(configSchema);
 const studyValidate = ajv2.getSchema<StudyConfig>('#/definitions/StudyConfig')!;
+const visibilityConditionValidate = ajv2.getSchema<ResponseVisibilityCondition>('#/definitions/ResponseVisibilityCondition')!;
 
 // This function verifies the global config file satisfies conditions that are not covered by the schema
 function verifyGlobalConfig(data: GlobalConfig) {
@@ -699,6 +701,37 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
         ...(baseComponent || {}),
         ...component,
       };
+
+      const visibilityResponses = studyComponentToIndividualComponent(component, studyConfig).response ?? [];
+      visibilityResponses.forEach((response, index) => {
+        if (!response.visibleIf) return;
+        const controller = visibilityResponses.find((candidate) => candidate.id === response.visibleIf?.responseId);
+        let message: string | undefined;
+        if (!visibilityConditionValidate(response.visibleIf)) message = 'visibleIf must specify exactly one valid equals or notEquals condition';
+        else if (!controller) message = 'visibleIf must reference a response in the same component';
+        else if (!visibilityControllerTypes.has(controller.type)) message = `visibleIf cannot use a ${controller.type} response as its controller`;
+        else {
+          const seen = new Set([response.id]);
+          let current: typeof controller | undefined = controller;
+          while (current) {
+            if (seen.has(current.id)) {
+              message = 'visibleIf cannot contain self references or cyclic dependencies';
+              break;
+            }
+            seen.add(current.id);
+            const nextId: string | undefined = current.visibleIf?.responseId;
+            current = visibilityResponses.find((candidate) => candidate.id === nextId);
+          }
+        }
+        if (message) {
+          errors.push({
+            message,
+            instancePath: `/components/${componentName}/response/${index}/visibleIf`,
+            params: { action: 'Reference a supported response in this component without creating a cycle' },
+            category: 'invalid-config',
+          });
+        }
+      });
 
       const isInheritedFromImportedLibrary = isInheritedComponent(component)
         && component.baseComponent.startsWith('$')

@@ -9,6 +9,7 @@ import {
 import {
   FactorPlanBlock, isDynamicBlock, isFactorBlock, isInheritedComponent,
 } from './utils';
+import { mergeComponentConfigs, studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
 import { PREFIX } from '../utils/Prefix';
 import { getSequenceFlatMapWithInterruptions } from '../utils/getSequenceFlatMap';
 
@@ -1077,9 +1078,7 @@ export function materializeParticipantConfig(
 ): StudyConfig {
   const components = Object.fromEntries(
     Object.entries(config.components).map(([componentId, component]) => {
-      const inheritedComponent = isInheritedComponent(component) && config.baseComponents
-        ? merge({}, config.baseComponents[component.baseComponent], component)
-        : component;
+      const inheritedComponent = studyComponentToIndividualComponent(component, config);
       const parameters = {
         ...('parameters' in inheritedComponent ? inheritedComponent.parameters : {}),
         ...globalParameters,
@@ -1470,8 +1469,7 @@ export async function loadLibrariesParseNamespace(importedLibraries: string[], e
             baseComponent: component.baseComponent,
             ...(component.withSidebar !== undefined ? { withSidebar: component.withSidebar } : {}),
           };
-          const mergedComponent = merge(
-            {},
+          const mergedComponent = mergeComponentConfigs(
             importedLibrariesData[libraryName].baseComponents?.[component.baseComponent],
             component,
           ) as IndividualComponent & { baseComponent?: string };

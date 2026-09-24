@@ -11,6 +11,7 @@ import type { CheckAnswerState, Sequence, StoredAnswer } from '../../../store/ty
 import type { REVISIT_MODE } from '../../../storage/engines/types';
 import { studyStoreCreator, StudyStoreContext } from '../../../store/store';
 import { ResponseBlock } from '../ResponseBlock';
+import { generateInitFields, useAnswerField } from '../utils';
 import { makeStoredAnswer } from '../../../tests/utils';
 import { responseAnswerIsCorrect } from '../../../utils/correctAnswer';
 
@@ -849,4 +850,82 @@ describe('ResponseBlock unlimited attempts', () => {
     await act(async () => { fireEvent.click(findButton(container, 'Check Answer')); });
     expect(findButton(container, 'Next')).toHaveProperty('disabled', false);
   });
+});
+
+test('replay treats a location snapshot as authoritative when a controller answer was removed', async () => {
+  mockIsAnalysis.value = true;
+  mockStoredAnswerData.formOrder = undefined;
+  const config: IndividualComponent = {
+    type: 'questionnaire',
+    response: [
+      {
+        id: 'controller', type: 'radio', prompt: '', options: ['yes', 'no'], location: 'sidebar',
+      },
+      {
+        id: 'dependent', type: 'shortText', prompt: '', visibleIf: { responseId: 'controller', equals: 'yes' },
+      },
+    ],
+  };
+  const status = makeStoredAnswer({ answer: { controller: 'yes', dependent: 'University' } });
+  const studyStore = await makeStudyStore();
+  const { container } = render(withStore(studyStore, <ResponseBlock config={config} location="belowStimulus" status={status} />));
+  expect(container.querySelector('[data-response-id="dependent"]')).not.toBeNull();
+  act(() => {
+    studyStore.store.dispatch(studyStore.actions.saveAnalysisState({ location: 'sidebar', prov: { form: {} } }));
+  });
+  expect(container.querySelector('[data-response-id="dependent"]')).toBeNull();
+  act(() => {
+    studyStore.store.dispatch(studyStore.actions.saveAnalysisState({ location: 'sidebar', prov: { form: { controller: 'yes' } } }));
+  });
+  expect(container.querySelector('[data-response-id="dependent"]')).not.toBeNull();
+});
+
+test('uses restored answers until another location publishes a complete snapshot', async () => {
+  mockStoredAnswerData.formOrder = undefined;
+  const config: IndividualComponent = {
+    type: 'questionnaire',
+    response: [
+      {
+        id: 'controller', type: 'radio', prompt: '', options: ['yes', 'no'], location: 'sidebar',
+      },
+      {
+        id: 'dependent', type: 'shortText', prompt: '', visibleIf: { responseId: 'controller', equals: 'yes' },
+      },
+    ],
+  };
+  const status = makeStoredAnswer({ answer: { controller: 'yes', dependent: 'University' } });
+  vi.mocked(generateInitFields).mockImplementation(() => ({ ...status.answer }));
+  const studyStore = await makeStudyStore();
+  render(withStore(studyStore, <ResponseBlock config={config} location="belowStimulus" status={status} />));
+  expect(vi.mocked(useAnswerField).mock.lastCall?.[6]).toMatchObject({ controller: 'yes' });
+  act(() => {
+    studyStore.store.dispatch(studyStore.actions.updateResponseBlockValidation({
+      location: 'sidebar', identifier: 'trial1_0', values: {}, status: true, replaceValues: true,
+    }));
+  });
+  expect(vi.mocked(useAnswerField).mock.lastCall?.[6]).not.toHaveProperty('controller');
+  vi.mocked(generateInitFields).mockReturnValue({});
+});
+
+test('Check Answer ignores a conditionally hidden correct answer', async () => {
+  vi.mocked(responseAnswerIsCorrect).mockClear();
+  mockStoredAnswerData.formOrder = undefined;
+  mockAnswerField.values = { controller: '' };
+  const config: IndividualComponent = {
+    type: 'questionnaire',
+    provideFeedback: true,
+    response: [
+      {
+        id: 'controller', type: 'radio', prompt: '', options: ['yes', 'no'], required: false,
+      },
+      {
+        id: 'dependent', type: 'shortText', prompt: '', visibleIf: { responseId: 'controller', equals: 'yes' },
+      },
+    ],
+    correctAnswer: [{ id: 'dependent', answer: 'University' }],
+  };
+  const { store } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+  act(() => capturedNextButtonProps.onCheckAnswer?.());
+  expect(responseAnswerIsCorrect).not.toHaveBeenCalled();
+  expect(store.getState().checkAnswer.trial1_0?.correct).toBe(true);
 });

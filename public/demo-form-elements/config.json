@@ -310,6 +310,121 @@
         }
       ]
     },
+    "Conditional Responses": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "conditionalTitle",
+          "type": "textOnly",
+          "prompt": "# Conditional Responses\n\nTell us about your university experience. Selecting **Yes** reveals questions about your university and graduation status. Try changing your answers to see how the follow-up questions change."
+        },
+        {
+          "id": "attendedUniversity",
+          "type": "radio",
+          "prompt": "Did you attend university?",
+          "required": true,
+          "options": [
+            {
+              "label": "Yes",
+              "value": "yes"
+            },
+            {
+              "label": "No",
+              "value": "no"
+            }
+          ]
+        },
+        {
+          "id": "universityName",
+          "type": "shortText",
+          "prompt": "Name of University",
+          "required": true,
+          "visibleIf": {
+            "responseId": "attendedUniversity",
+            "equals": "yes"
+          }
+        },
+        {
+          "id": "major",
+          "type": "shortText",
+          "prompt": "Major",
+          "required": true,
+          "visibleIf": {
+            "responseId": "attendedUniversity",
+            "equals": "yes"
+          }
+        },
+        {
+          "id": "degreeProgram",
+          "type": "dropdown",
+          "prompt": "Degree program",
+          "required": true,
+          "options": [
+            {
+              "label": "Bachelor's degree",
+              "value": "bachelor"
+            },
+            {
+              "label": "Master's degree",
+              "value": "master"
+            },
+            {
+              "label": "Doctoral degree",
+              "value": "doctoral"
+            },
+            {
+              "label": "Other",
+              "value": "other"
+            }
+          ],
+          "visibleIf": {
+            "responseId": "attendedUniversity",
+            "equals": "yes"
+          }
+        },
+        {
+          "id": "graduationStatus",
+          "type": "radio",
+          "prompt": "What is your graduation status?",
+          "required": true,
+          "options": [
+            {
+              "label": "Graduated",
+              "value": "graduated"
+            },
+            {
+              "label": "Currently enrolled",
+              "value": "enrolled"
+            }
+          ],
+          "visibleIf": {
+            "responseId": "attendedUniversity",
+            "equals": "yes"
+          }
+        },
+        {
+          "id": "graduationYear",
+          "type": "numerical",
+          "prompt": "Graduation year",
+          "required": true,
+          "visibleIf": {
+            "responseId": "graduationStatus",
+            "equals": "graduated"
+          }
+        },
+        {
+          "id": "expectedGraduationYear",
+          "type": "numerical",
+          "prompt": "Expected graduation year",
+          "required": true,
+          "visibleIf": {
+            "responseId": "graduationStatus",
+            "equals": "enrolled"
+          }
+        }
+      ],
+      "withSidebar": false
+    },
     "Next Button Alignment": {
       "type": "questionnaire",
       "nextButtonAlignment": "left",
@@ -1228,6 +1343,7 @@
     "components": [
       "Introduction",
       "Form Elements",
+      "Conditional Responses",
       "Next Button Alignment",
       "Text Validation",
       "Default Values",

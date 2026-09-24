@@ -1,3 +1,4 @@
+import { resolveResponseVisibility } from './responseVisibility';
 import type { Response } from '../parser/types';
 import { StoredAnswer, TrialValidation, ValidationStatus } from '../store/types';
 
@@ -26,7 +27,7 @@ export function getPersistedAnswersFromAllLocations(
   trialValidationEntry: TrialValidation[string] | undefined,
   responses: Response[] = [],
 ): StoredAnswer['answer'] {
-  const answers = getAnswersFromAllLocations(trialValidationEntry);
+  const { answers } = resolveResponseVisibility(responses, getAnswersFromAllLocations(trialValidationEntry));
   const responseIds = new Set(responses.map((response) => response.id));
   const responseIdsWithOther = new Set(
     responses

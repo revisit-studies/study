@@ -7,6 +7,7 @@ import { parseStudyConfig } from '../parser';
 import { materializeParticipantConfig } from '../libraryParser';
 import { isDynamicBlock, isFactorBlock } from '../utils';
 import { generateSequenceArray } from '../../utils/handleRandomSequences';
+import { resolveResponseVisibility } from '../../utils/responseVisibility';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 
 global.fetch = vi.fn();
@@ -2705,5 +2706,120 @@ describe('React component path validation', () => {
       message: 'Unresolved path',
       instancePath: '/components/trial/path',
     }));
+  });
+});
+
+describe('conditional response config', () => {
+  function configWithCondition(condition: object) {
+    return {
+      $schema: '',
+      studyMetadata: {
+        title: 'Visibility', version: '1', authors: [], date: '', description: '', organizations: [],
+      },
+      uiConfig: {
+        contactEmail: '', logoPath: '', withSidebar: false, withProgressBar: true,
+      },
+      components: {
+        form: {
+          type: 'questionnaire',
+          response: [
+            {
+              id: 'attended', type: 'radio', prompt: '', options: ['yes', 'no'],
+            },
+            {
+              id: 'name', type: 'shortText', prompt: '', visibleIf: condition,
+            },
+            {
+              id: 'text', type: 'textOnly', prompt: '', visibleIf: condition,
+            },
+            { id: 'divider', type: 'divider', visibleIf: condition },
+          ],
+        },
+      },
+      sequence: { order: 'fixed', components: ['form'] },
+    };
+  }
+
+  test.each([{ equals: 'yes' }, { notEquals: 'no' }])('accepts visibility on input, textOnly and divider: %j', async (operator) => {
+    const result = await parseStudyConfig(JSON.stringify(configWithCondition({ responseId: 'attended', ...operator })));
+    expect(result.errors).toEqual([]);
+  });
+
+  test.each([
+    { responseId: 'attended' },
+    { responseId: 'attended', equals: 'yes', notEquals: 'no' },
+    { responseId: 'attended', equals: null },
+    { responseId: 'missing', equals: 'yes' },
+    { responseId: 'name', equals: 'yes' },
+    { responseId: 'divider', equals: 'yes' },
+  ])('rejects invalid condition %j', async (condition) => {
+    const result = await parseStudyConfig(JSON.stringify(configWithCondition(condition)));
+    expect(result.errors.length).toBeGreaterThan(0);
+  });
+
+  test('rejects cyclic dependencies', async () => {
+    const config = configWithCondition({ responseId: 'attended', equals: 'yes' });
+    Object.assign(config.components.form.response[0], { visibleIf: { responseId: 'name', equals: 'university' } });
+    const result = await parseStudyConfig(JSON.stringify(config));
+    expect(result.errors.some((error) => error.message.includes('cyclic'))).toBe(true);
+  });
+
+  test('validates inherited responses using the same merged config as runtime', async () => {
+    const config = configWithCondition({ responseId: 'attended', equals: 'yes' });
+    const result = await parseStudyConfig(JSON.stringify({
+      ...config,
+      baseComponents: { base: config.components.form },
+      components: { form: { baseComponent: 'base' } },
+    }));
+    expect(result.errors).toEqual([]);
+  });
+
+  test.each(['local', 'library-internal', 'library-external'])('replaces inherited visibility operators through %s inheritance and materialization', async (source) => {
+    const config = configWithCondition({ responseId: 'attended', equals: 'yes' });
+    const replacement = { responseId: 'attended', notEquals: 'yes' };
+    const override = configWithCondition(replacement).components.form.response;
+    const library = {
+      $schema: '',
+      description: 'Conditional inheritance test',
+      baseComponents: { base: config.components.form },
+      components: source === 'library-internal'
+        ? { form: { baseComponent: 'base', response: override } }
+        : { form: config.components.form },
+      sequences: {},
+    };
+    if (source !== 'local') vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify(library)));
+    const result = await parseStudyConfig(JSON.stringify({
+      ...config,
+      baseComponents: source === 'local' ? { base: config.components.form } : undefined,
+      importedLibraries: source === 'local' ? [] : ['conditional'],
+      components: {
+        form: {
+          baseComponent: source === 'local' ? 'base' : '$conditional.components.form',
+          ...(source === 'library-internal' ? {} : { response: override }),
+        },
+      },
+    }));
+    expect(result.errors).toEqual([]);
+    const materialized = materializeParticipantConfig(result, {});
+    const responses = materialized.components.form.response ?? [];
+    expect(responses[1].visibleIf).toEqual(replacement);
+    expect(resolveResponseVisibility(responses, { attended: 'no' }).visibleIds.has('name')).toBe(true);
+    expect(resolveResponseVisibility(responses, { attended: 'yes' }).visibleIds.has('name')).toBe(false);
+  });
+
+  test('accepts conditional responses from imported libraries', async () => {
+    const config = configWithCondition({ responseId: 'attended', equals: 'yes' });
+    vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify({
+      $schema: '',
+      description: 'Conditional response library',
+      components: { form: config.components.form },
+      sequences: {},
+    })));
+    const result = await parseStudyConfig(JSON.stringify({
+      ...config,
+      importedLibraries: ['conditional'],
+      components: { form: { baseComponent: '$conditional.components.form' } },
+    }));
+    expect(result.errors).toEqual([]);
   });
 });

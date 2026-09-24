@@ -110,3 +110,23 @@ describe('getAnswersFromAllLocations', () => {
     });
   });
 });
+
+test('saved answers omit conditional fields and auxiliary values across locations', () => {
+  const responses: Response[] = [
+    {
+      id: 'attended', type: 'radio', prompt: '', options: ['yes', 'no'], location: 'aboveStimulus',
+    },
+    {
+      id: 'university', type: 'radio', prompt: '', options: ['other'], withOther: true, withDontKnow: true, location: 'sidebar', visibleIf: { responseId: 'attended', equals: 'yes' },
+    },
+  ];
+  const entry = makeEntry({
+    aboveStimulus: { valid: true, values: { attended: 'no' } },
+    sidebar: { valid: false, values: { university: 'other', 'university-other': 'old university', 'university-dontKnow': false } },
+  });
+  expect(getPersistedAnswersFromAllLocations(entry, responses)).toEqual({ attended: 'no' });
+  entry.aboveStimulus.values = { attended: 'yes' };
+  expect(getPersistedAnswersFromAllLocations(entry, responses)).toEqual({
+    attended: 'yes', university: 'other', 'university-other': 'old university', 'university-dontKnow': false,
+  });
+});
