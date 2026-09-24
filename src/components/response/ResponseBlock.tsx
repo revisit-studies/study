@@ -30,7 +30,7 @@ import {
   usesStandaloneDontKnowField,
 } from './responseErrors';
 import { shouldUseStimulusValidation } from './stimulusErrors';
-import { resolveResponseVisibility, responseValueKeys } from '../../utils/responseVisibility';
+import { getApplicableCorrectAnswers, resolveResponseVisibility, responseValueKeys } from '../../utils/responseVisibility';
 import { ResponseSwitcher } from './ResponseSwitcher';
 import { FeedbackAlert } from './FeedbackAlert';
 import {
@@ -583,10 +583,7 @@ export function ResponseBlock({
 
     const allAnswers = getAnswersFromAllLocations(trialValidation[identifier]);
 
-    const applicableCorrectAnswers = (config?.correctAnswer ?? []).filter((answer) => {
-      const response = allResponsesWithDefaults.find((candidate) => candidate.id === answer.id);
-      return !response?.visibleIf || visibleIds.has(answer.id);
-    });
+    const applicableCorrectAnswers = getApplicableCorrectAnswers(allResponsesWithDefaults, allAnswers, config.correctAnswer);
     const correctAnswers = Object.fromEntries(
       applicableCorrectAnswers.map((configCorrectAnswer) => {
         const response = allResponsesWithDefaults.find((r) => r.id === configCorrectAnswer.id);
@@ -621,7 +618,7 @@ export function ResponseBlock({
       correct: allCorrect,
       responses: correctAnswers,
     }));
-  }, [allResponsesWithDefaults, visibleIds, attemptsUsed, config, hasCorrectAnswerFeedback, hasResponseIssues, hasStimulusIssue, identifier, revealResponseErrors, revealStimulusErrors, saveIncorrectAnswer, setCheckAnswerResult, storeDispatch, trialValidation]);
+  }, [allResponsesWithDefaults, attemptsUsed, config, hasCorrectAnswerFeedback, hasResponseIssues, hasStimulusIssue, identifier, revealResponseErrors, revealStimulusErrors, saveIncorrectAnswer, setCheckAnswerResult, storeDispatch, trialValidation]);
 
   const nextButtonText = useMemo(() => config?.nextButtonText ?? studyConfig.uiConfig.nextButtonText ?? 'Next', [config, studyConfig]);
 

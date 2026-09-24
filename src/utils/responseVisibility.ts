@@ -69,3 +69,14 @@ export function resolveResponseVisibility(
   responses.forEach(visit);
   return { answers, visibleIds };
 }
+
+/** Exclude hidden responses while preserving correctness checks for legacy IDs absent from the config. */
+export function getApplicableCorrectAnswers(
+  responses: Response[],
+  values: StoredAnswer['answer'],
+  correctAnswers: Answer[] = [],
+): Answer[] {
+  const { visibleIds } = resolveResponseVisibility(responses, values, {}, correctAnswers);
+  const byId = new Map(responses.map((response) => [response.id, response]));
+  return correctAnswers.filter((answer) => !byId.get(answer.id)?.visibleIf || visibleIds.has(answer.id));
+}

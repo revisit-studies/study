@@ -24,7 +24,7 @@ import { TimelineMode } from '../replay/timelineLayout';
 import { youtubeReadableDuration } from '../../../utils/humanReadableDuration';
 import { getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
 import { MetaCell } from './MetaCell';
-import { componentAnswersAreCorrect } from '../../../utils/correctAnswer';
+import { componentAnswersAreCorrect } from '../../../utils/componentCorrectness';
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 
 function formatDate(date: Date): JSX.Element {

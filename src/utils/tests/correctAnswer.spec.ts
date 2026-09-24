@@ -4,8 +4,10 @@ import {
 } from '../../parser/types';
 import { makeStoredAnswer } from '../../tests/utils';
 import {
-  compareResponseValues, componentAnswersAreCorrect, getComponentAnswerStatus, responseAnswerIsCorrect,
+  compareResponseValues, responseAnswerIsCorrect,
 } from '../correctAnswer';
+
+import { componentAnswersAreCorrect, getComponentAnswerStatus } from '../componentCorrectness';
 
 type TestStoredAnswer = StoredAnswer['answer'][string];
 type TestCorrectAnswer = Answer['answer'];

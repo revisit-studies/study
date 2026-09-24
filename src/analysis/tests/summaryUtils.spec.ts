@@ -14,6 +14,7 @@ import type { StoredAnswer } from '../../store/types';
 import { StudyConfig } from '../../parser/types';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 import { makeStudyConfig, makeStoredAnswer } from '../../tests/utils';
+import type { compareResponseValues } from '../../utils/correctAnswer';
 
 const invalidCleanTimeAnswers = new Set<StoredAnswer>();
 
@@ -29,7 +30,8 @@ vi.mock('../../utils/getCleanedDuration', () => ({
   }),
 }));
 
-vi.mock('../../utils/correctAnswer', () => ({
+vi.mock('../../utils/correctAnswer', async (importOriginal) => ({
+  ...await importOriginal<{ compareResponseValues: typeof compareResponseValues }>(),
   shouldIgnoreArrayOrder: vi.fn((response?: { type?: string }) => response?.type === 'checkbox' || response?.type === 'dropdown'),
   responseAnswerIsCorrect: vi.fn((
     userAnswer: unknown,
@@ -2879,4 +2881,42 @@ describe('utils.tsx', () => {
       });
     });
   });
+});
+
+it.each(['yes', 'no'])('counts only applicable correct answers in analysis when gate is %s', (gate) => {
+  const config = makeStudyConfig({
+    components: {
+      form: {
+        type: 'questionnaire',
+        response: [
+          {
+            id: 'gate', type: 'radio', prompt: '', options: ['yes', 'no'],
+          },
+          {
+            id: 'followUp',
+            type: 'shortText',
+            prompt: '',
+            visibleIf: { responseId: 'gate', comparison: 'equals', value: 'yes' },
+          },
+        ],
+      },
+    },
+  });
+  const participants = [createMockParticipant({
+    participantId: 'conditional',
+    completed: true,
+    answers: {
+      form_1: createMockAnswer({
+        componentName: 'form',
+        startTime: 1,
+        endTime: 10000,
+        answer: { gate },
+        correctAnswer: [{ id: 'gate', answer: gate }, { id: 'followUp', answer: 'expected' }],
+      }),
+    },
+  })];
+  const [stats] = getComponentStats(participants, config, { 'config-hash-1': config });
+  expect(stats.correctCount).toBe(1);
+  expect(stats.totalQuestionCount).toBe(gate === 'yes' ? 2 : 1);
+  expect(stats.correctness).toBe(gate === 'yes' ? 50 : 100);
 });

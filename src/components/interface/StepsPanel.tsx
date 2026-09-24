@@ -27,7 +27,7 @@ import { addPathToComponentBlock } from '../../utils/getSequenceFlatMap';
 import { useStudyId } from '../../routes/utils';
 import { encryptIndex } from '../../utils/encryptDecryptIndex';
 import { isDynamicBlock } from '../../parser/utils';
-import { getComponentAnswerStatus } from '../../utils/correctAnswer';
+import { getComponentAnswerStatus } from '../../utils/componentCorrectness';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 import { UnknownAnswerIcon } from './UnknownAnswerIcon';
 import {

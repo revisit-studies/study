@@ -2833,6 +2833,54 @@ describe('conditional response config', () => {
     };
   }
 
+  describe.each([
+    { option: 'withOther', suffix: 'other' },
+    { option: 'withDontKnow', suffix: 'dontKnow' },
+  ])('auxiliary key collisions for $option', ({ option, suffix }) => {
+    test.each(['local', 'base', 'library'])('rejects a conflicting response ID in a %s component', async (source) => {
+      const config = configWithCondition({ responseId: 'attended', comparison: 'equals', value: 'yes' });
+      const form = {
+        ...config.components.form,
+        response: [
+          config.components.form.response[0],
+          {
+            id: 'q',
+            type: 'radio',
+            prompt: '',
+            options: ['yes', 'no'],
+            [option]: true,
+            visibleIf: { responseId: 'attended', comparison: 'equals', value: 'yes' },
+          },
+          { id: `q-${suffix}`, type: 'shortText', prompt: '' },
+        ],
+      };
+      if (source === 'library') {
+        vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify({
+          $schema: '', description: 'Auxiliary key test', components: { form }, sequences: {},
+        })));
+      }
+      const result = await parseStudyConfig(JSON.stringify({
+        ...config,
+        baseComponents: source === 'base' ? { base: form } : undefined,
+        importedLibraries: source === 'library' ? ['conditional'] : [],
+        components: { form: source === 'local' ? form : { baseComponent: source === 'base' ? 'base' : '$conditional.components.form' } },
+      }));
+      expect(result.errors).toContainEqual(expect.objectContaining({
+        message: `Response ID "q-${suffix}" conflicts with an auxiliary answer key for response "q"`,
+        instancePath: '/components/form/response/2/id',
+      }));
+    });
+
+    test('allows a suffixed response ID when the auxiliary option is disabled', async () => {
+      const config = configWithCondition({ responseId: 'attended', comparison: 'equals', value: 'yes' }, {
+        type: 'radio', options: ['yes', 'no'], [option]: false,
+      });
+      config.components.form.response[1].id = `attended-${suffix}`;
+      const result = await parseStudyConfig(JSON.stringify(config));
+      expect(result.errors).toEqual([]);
+    });
+  });
+
   test.each([{ comparison: 'equals', value: 'yes' }, { comparison: 'doesNotEqual', value: 'no' }])('accepts visibility on input, textOnly and divider: %j', async (operator) => {
     const result = await parseStudyConfig(JSON.stringify(configWithCondition({ responseId: 'attended', ...operator })));
     expect(result.errors).toEqual([]);
@@ -2850,6 +2898,29 @@ describe('conditional response config', () => {
   ])('rejects invalid condition %j', async (condition) => {
     const result = await parseStudyConfig(JSON.stringify(configWithCondition(condition)));
     expect(result.errors.length).toBeGreaterThan(0);
+  });
+
+  describe.each(['equals', 'doesNotEqual'])('%s operand types', (comparison) => {
+    test.each([
+      { controller: { type: 'checkbox', options: ['yes'] }, valid: ['yes'], invalid: 'yes' },
+      { controller: { type: 'dropdown', options: ['yes'], minSelections: 1 }, valid: ['yes'], invalid: 'yes' },
+      { controller: { type: 'dropdown', options: ['yes'], maxSelections: 2 }, valid: ['yes'], invalid: 'yes' },
+      { controller: { type: 'dropdown', options: ['yes'], maxSelections: 1 }, valid: 'yes', invalid: ['yes'] },
+      { controller: { type: 'radio', options: ['yes'] }, valid: 'yes', invalid: ['yes'] },
+      { controller: { type: 'buttons', options: ['yes'] }, valid: 'yes', invalid: true },
+      { controller: { type: 'shortText' }, valid: '21', invalid: 21 },
+      { controller: { type: 'date' }, valid: '2020-01-01', invalid: ['2020-01-01'] },
+      { controller: { type: 'numerical' }, valid: 21, invalid: '21' },
+    ])('matches the runtime answer shape of $controller', async ({ controller, valid, invalid }) => {
+      const config = configWithCondition({ responseId: 'attended', comparison, value: valid }, controller);
+      expect((await parseStudyConfig(JSON.stringify(config))).errors).toEqual([]);
+      const invalidConfig = configWithCondition({ responseId: 'attended', comparison, value: invalid }, controller);
+      const result = await parseStudyConfig(JSON.stringify(invalidConfig));
+      expect(result.errors).toContainEqual(expect.objectContaining({
+        message: expect.stringContaining(`visibleIf ${comparison} requires a `),
+        instancePath: '/components/form/response/1/visibleIf',
+      }));
+    });
   });
 
   test.each(['lessThan', 'lessThanOrEqual', 'greaterThan', 'greaterThanOrEqual'])('%s accepts numerical controllers and rejects text controllers', async (comparison) => {

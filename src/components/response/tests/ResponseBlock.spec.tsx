@@ -14,7 +14,7 @@ import { ResponseBlock } from '../ResponseBlock';
 import { generateInitFields, useAnswerField } from '../utils';
 import { makeStoredAnswer } from '../../../tests/utils';
 import { responseAnswerIsCorrect } from '../../../utils/correctAnswer';
-import type * as CorrectAnswerUtils from '../../../utils/correctAnswer';
+import type { compareResponseValues } from '../../../utils/correctAnswer';
 
 // ── mocks ────────────────────────────────────────────────────────────────────
 
@@ -145,7 +145,7 @@ vi.mock('../utils', () => ({
 }));
 
 vi.mock('../../../utils/correctAnswer', async (importOriginal) => ({
-  ...await importOriginal<typeof CorrectAnswerUtils>(),
+  ...await importOriginal<{ compareResponseValues: typeof compareResponseValues }>(),
   responseAnswerIsCorrect: vi.fn(() => true),
 }));
 

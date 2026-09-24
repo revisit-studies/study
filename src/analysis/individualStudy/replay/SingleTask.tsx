@@ -6,7 +6,7 @@ import {
   IconCamera, IconCheck, IconDeviceDesktop, IconMicrophone, IconProgress, IconX,
 } from '@tabler/icons-react';
 import { useNavigateToTrial } from '../../../utils/useNavigateToTrial';
-import type { ComponentAnswerStatus } from '../../../utils/correctAnswer';
+import type { ComponentAnswerStatus } from '../../../utils/componentCorrectness';
 import { UnknownAnswerIcon } from '../../../components/interface/UnknownAnswerIcon';
 
 const LABEL_MARGIN = 3;

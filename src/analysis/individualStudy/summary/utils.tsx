@@ -5,6 +5,7 @@ import {
 } from '../../types';
 import { MatrixResponse, Response, StudyConfig } from '../../../parser/types';
 import { responseAnswerIsCorrect, shouldIgnoreArrayOrder } from '../../../utils/correctAnswer';
+import { getApplicableCorrectAnswers } from '../../../utils/responseVisibility';
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 import { getMatrixAnswerOptions } from '../../../utils/responseOptions';
 import { getDropdownOptions } from '../../../utils/dropdownOptions';
@@ -178,7 +179,7 @@ function calculateCorrectnessStats(
       : undefined;
     const responsesById = new Map((component?.response ?? []).map((r) => [r.id, r]));
 
-    answer.correctAnswer.forEach((correctEntry) => {
+    getApplicableCorrectAnswers(component?.response ?? [], answer.answer, answer.correctAnswer).forEach((correctEntry) => {
       if (responseId !== undefined && correctEntry.id !== responseId) return;
 
       totalQuestions += 1;

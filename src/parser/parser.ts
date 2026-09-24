@@ -31,7 +31,7 @@ import {
   parseDateValue,
 } from '../utils/dateTimeValidation';
 import { checkBuiltInValidation } from '../components/response/builtInValidation';
-import { visibilityControllerTypes } from '../utils/responseVisibility';
+import { responseValueKeys, visibilityControllerTypes } from '../utils/responseVisibility';
 import { getDropdownOptions } from '../utils/dropdownOptions';
 
 const modules = import.meta.glob(
@@ -704,7 +704,18 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
 
       const visibilityComponent = studyComponentToIndividualComponent(component, studyConfig);
       const visibilityResponses = visibilityComponent.response ?? [];
+      const responseIndices = new Map(visibilityResponses.map((response, index) => [response.id, index]));
       visibilityResponses.forEach((response, index) => {
+        responseValueKeys(response).slice(1).forEach((key) => {
+          const conflictingIndex = responseIndices.get(key);
+          if (conflictingIndex === undefined) return;
+          errors.push({
+            message: `Response ID "${key}" conflicts with an auxiliary answer key for response "${response.id}"`,
+            instancePath: `/components/${componentName}/response/${conflictingIndex}/id`,
+            params: { action: 'Rename the conflicting response ID or disable the option that generates the auxiliary key' },
+            category: 'invalid-config',
+          });
+        });
         if (!response.visibleIf) return;
         const condition = response.visibleIf;
         const controller = visibilityResponses.find((candidate) => candidate.id === response.visibleIf?.responseId);
@@ -714,13 +725,23 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
         else if (!controller) message = 'visibleIf must reference a response in the same component';
         else if (!visibilityControllerTypes.has(controller.type)) message = `visibleIf cannot use a ${controller.type} response as its controller`;
         else {
-          if (['lessThan', 'lessThanOrEqual', 'greaterThan', 'greaterThanOrEqual'].includes(condition.comparison)
+          const isMultiselect = controller.type === 'dropdown'
+            && ((controller.minSelections ?? 0) >= 1 || (controller.maxSelections ?? 0) > 1);
+          if (condition.comparison === 'equals' || condition.comparison === 'doesNotEqual') {
+            const expectsList = controller.type === 'checkbox' || isMultiselect;
+            const expectedType = expectsList ? 'string[]' : controller.type === 'numerical' ? 'number' : 'string';
+            const compatible = expectsList
+              ? Array.isArray(condition.value)
+              : controller.type === 'numerical' ? typeof condition.value === 'number' : typeof condition.value === 'string';
+            if (!compatible) {
+              message = `visibleIf ${condition.comparison} requires a ${expectedType} value for this controller`;
+              action = 'Use a comparison value with the same type as the controlling response answer';
+            }
+          } else if (['lessThan', 'lessThanOrEqual', 'greaterThan', 'greaterThanOrEqual'].includes(condition.comparison)
             && controller.type !== 'numerical') {
             message = `visibleIf ${condition.comparison} requires a numerical controller`;
             action = 'Reference a numerical response or use a comparison supported by the controller';
           } else if (['contains', 'doesNotContain', 'matchesRegex'].includes(condition.comparison)) {
-            const isMultiselect = controller.type === 'dropdown'
-              && ((controller.minSelections ?? 0) >= 1 || (controller.maxSelections ?? 0) > 1);
             if (controller.type === 'numerical' || controller.type === 'checkbox' || isMultiselect) {
               message = `visibleIf ${condition.comparison} requires a controller with a single string value`;
               action = 'Reference a shortText, date, radio, buttons, or single-select dropdown response';
