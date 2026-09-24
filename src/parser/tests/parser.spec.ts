@@ -1898,6 +1898,7 @@ describe('Parser Warnings', () => {
     expect(emptySequenceWarning).toBeDefined();
     expect(emptySequenceWarning?.instancePath).toBe('/sequence/');
     expect((emptySequenceWarning?.params as { action: string }).action).toBe('Remove empty components block or add components to the sequence');
+    expect(result.warnings.filter((warning) => warning.category === 'empty-sidebar')).toEqual([]);
   });
 
   test('adds unused-component warning with expected message and action', async () => {

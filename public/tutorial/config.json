@@ -22,7 +22,7 @@
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
-    "withSidebar": false
+    "withSidebar": true
   },
   "components": {},
   "sequence": {
