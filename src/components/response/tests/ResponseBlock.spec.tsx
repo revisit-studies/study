@@ -854,6 +854,16 @@ describe('ResponseBlock unlimited attempts', () => {
   });
 });
 
+test.each([null, {}])('replay distinguishes an initial form from an empty snapshot: %j', async (form) => {
+  mockIsAnalysis.value = true;
+  const status = makeStoredAnswer({ answer: { q1: 'saved' } });
+  const studyStore = await makeStudyStore();
+  studyStore.store.dispatch(studyStore.actions.saveAnalysisState({ location: 'belowStimulus', prov: { form } }));
+  render(withStore(studyStore, <ResponseBlock config={baseConfig} location="belowStimulus" status={status} />));
+  expect(capturedSwitcherProps.storedAnswer).toEqual(form === null ? status.answer : {});
+  expect(vi.mocked(useAnswerField).mock.lastCall?.[6]).toEqual(form === null ? status.answer : {});
+});
+
 test('replay treats a location snapshot as authoritative when a controller answer was removed', async () => {
   mockIsAnalysis.value = true;
   mockStoredAnswerData.formOrder = undefined;
@@ -871,6 +881,10 @@ test('replay treats a location snapshot as authoritative when a controller answe
   const status = makeStoredAnswer({ answer: { controller: 'yes', dependent: 'University' } });
   const studyStore = await makeStudyStore();
   const { container } = render(withStore(studyStore, <ResponseBlock config={config} location="belowStimulus" status={status} />));
+  expect(container.querySelector('[data-response-id="dependent"]')).not.toBeNull();
+  act(() => {
+    studyStore.store.dispatch(studyStore.actions.saveAnalysisState({ location: 'sidebar', prov: { form: null } }));
+  });
   expect(container.querySelector('[data-response-id="dependent"]')).not.toBeNull();
   act(() => {
     studyStore.store.dispatch(studyStore.actions.saveAnalysisState({ location: 'sidebar', prov: { form: {} } }));

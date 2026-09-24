@@ -72,8 +72,8 @@ function collectResponseValuesFromAnalysisState(
 ): StoredAnswer['answer'] {
   return (['aboveStimulus', 'belowStimulus', 'sidebar'] as ResponseBlockLocation[]).reduce((acc, responseLocation) => {
     const locationProv = analysisProvState[responseLocation];
-    // A provenance form is a complete snapshot for its location, including deletions.
-    if (locationProv) {
+    // A non-null form is a complete snapshot, including deletions; null is the initial state.
+    if (locationProv?.form != null) {
       responses.filter((response) => (response.location ?? 'belowStimulus') === responseLocation)
         .flatMap(responseValueKeys).forEach((key) => { delete acc[key]; });
     }
@@ -100,7 +100,7 @@ export function ResponseBlock({
   const isAnalysis = useIsAnalysis();
   const currentProvenance = useStoreSelector((state) => state.analysisProvState[location]) as FormElementProvenance | undefined;
 
-  const storedAnswer = useMemo(() => (currentProvenance ? currentProvenance.form || {} : status?.answer), [currentProvenance, status]);
+  const storedAnswer = useMemo(() => currentProvenance?.form ?? status?.answer, [currentProvenance, status]);
   const storedAnswerData = useStoredAnswer();
   const formOrders: Record<string, string[]> = useMemo(() => storedAnswerData?.formOrder || {}, [storedAnswerData]);
 
