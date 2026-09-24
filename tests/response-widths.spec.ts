@@ -56,8 +56,9 @@ test('form blocks and stimulus center within the available space and allow study
 
   await page.goto('/demo-form-elements/reviewer-Next%20Button%20Alignment');
   await page.getByRole('complementary').locator('.mantine-CloseButton-root').click();
+  await expect(actions).toHaveCSS('padding-left', '40px');
   const leftEdges = await Promise.all([
-    stimulus.evaluate((block) => block.getBoundingClientRect().left),
+    form.evaluate((block) => block.getBoundingClientRect().left + Number.parseFloat(getComputedStyle(block).paddingLeft)),
     next.evaluate((button) => button.getBoundingClientRect().left),
   ]);
   expect(Math.abs(leftEdges[0] - leftEdges[1])).toBeLessThanOrEqual(1);

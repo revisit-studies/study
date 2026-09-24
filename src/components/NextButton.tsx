@@ -139,6 +139,7 @@ export function NextButton({
     <>
       <Group
         className={location === 'sidebar' ? undefined : 'responseBlock-actions'}
+        data-alignment={nextButtonAlignment}
         justify={nextButtonJustify[nextButtonAlignment]}
         gap="xs"
         mt="sm"
