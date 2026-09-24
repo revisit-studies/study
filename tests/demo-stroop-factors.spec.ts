@@ -47,10 +47,13 @@ test('completes all 90 unique incongruent Stroop trials', async ({ page }) => {
     expect(seenConditions.has(condition)).toBe(false);
     seenConditions.add(condition);
 
+    const previousUrl = page.url();
     await expect(page.getByRole('button', { name: `${COLOR_KEYS[inkColor]}. ${inkColor}`, exact: true })).toBeEnabled();
     await page.keyboard.press(COLOR_KEYS[inkColor]);
+    await expect(page.getByText('Response recorded', { exact: true })).toBeVisible();
 
     if (trialIndex < 89) {
+      await expect.poll(() => page.url()).not.toBe(previousUrl);
       await expect(stimulus).not.toHaveAttribute('data-stroop-condition', condition);
     }
   }

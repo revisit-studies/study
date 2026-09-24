@@ -353,6 +353,11 @@ export interface StringOption {
   infoText?: string;
 }
 
+export interface ButtonOption extends StringOption {
+  /** Keyboard shortcut for this button (e.g., "r", "ArrowLeft", or "Shift+X"). */
+  key?: string;
+}
+
 /**
  * The MatrixQuestionOption interface is used to define the question options for matrix responses.
  * The label is the fallback text displayed to participants, and the value is the key stored in the participant's data.
@@ -369,6 +374,7 @@ export interface MatrixQuestionOption extends StringOption {
 /** StringOption normalized to always include a value. */
 export interface ParsedStringOption extends Omit<StringOption, 'value'> {
   value: string;
+  key?: string;
 }
 
 /** MatrixQuestionOption normalized to always include a value. */
@@ -1113,11 +1119,13 @@ export interface CustomResponse extends BaseResponse {
  */
 export interface ButtonsResponse extends BaseResponse {
   type: 'buttons';
-  options: (StringOption | string)[];
+  options: (ButtonOption | string)[];
   /** The default value of the response. Specify one option value as a string. */
   default?: string;
   /** The order in which the buttons are displayed. Defaults to fixed. */
   optionOrder?: 'fixed' | 'random';
+  /** Set to true to hide keybinding indicators on buttons. Defaults to false when keymapping is active, else false. */
+  hideKeyVisual?: boolean;
 }
 
 /**

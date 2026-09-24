@@ -158,6 +158,186 @@ describe('Text response validation config parsing', () => {
     },
   );
 
+  test.each(['', '   ', '14', 'RightKeyboardArrow', 'Shift+14', 'Shift+foo', 'Shift+'])('rejects invalid key mapping %p', async (key) => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Key Validation Test',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2026-08-20',
+        description: 'Ensures key mappings are validated.',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: '',
+        logoPath: '',
+        withProgressBar: true,
+        withSidebar: false,
+      },
+      components: {
+        question1: {
+          type: 'questionnaire',
+          response: [{
+            id: 'buttons',
+            prompt: 'Choose a response',
+            type: 'buttons',
+            options: [{ label: 'A', value: 'a', key }],
+          }],
+        },
+      },
+      sequence: { order: 'fixed', components: ['question1'] },
+    } as const;
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors.some((error) => error.instancePath.includes('/key'))).toBe(true);
+  });
+
+  test.each(['Tab', 'Shift+Tab'])('rejects %s because Tab is needed for focus navigation', async (key) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1, {
+      response: [{
+        id: 'buttons', prompt: 'Choose', type: 'buttons', options: [{ label: 'A', key }],
+      }],
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      instancePath: '/components/question1/response/0/options/0/key',
+      message: expect.stringContaining('Tab cannot be mapped'),
+    }));
+  });
+
+  test('rejects Enter on a button when nextOnEnter is enabled', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1, {
+      nextOnEnter: true,
+      response: [{
+        id: 'buttons', prompt: 'Choose', type: 'buttons', options: [{ label: 'A', key: 'Enter' }],
+      }],
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      instancePath: '/components/question1/response/0/options/0/key',
+      message: expect.stringContaining('nextOnEnter'),
+    }));
+  });
+
+  test('rejects Enter when nextOnEnter is inherited from uiConfig', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.uiConfig, { nextOnEnter: true });
+    Object.assign(studyConfig.components.question1, {
+      response: [{
+        id: 'buttons', prompt: 'Choose', type: 'buttons', options: [{ label: 'A', key: 'Enter' }],
+      }],
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors.some((error) => error.message.includes('Enter cannot be mapped'))).toBe(true);
+  });
+
+  test('allows Enter on a button when nextOnEnter is disabled', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1, {
+      response: [{
+        id: 'buttons', prompt: 'Choose', type: 'buttons', options: [{ label: 'A', key: 'Enter' }],
+      }],
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toEqual([]);
+  });
+
+  test('rejects key mappings on non-button response options', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1, {
+      response: [{
+        id: 'radio', prompt: 'Choose', type: 'radio', options: [{ label: 'A', key: 'a' }],
+      }],
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      instancePath: '/components/question1/response/0/options/0',
+      params: expect.objectContaining({ additionalProperty: 'key' }),
+    }));
+  });
+
+  test.each(['Ctrl+X', 'Meta+X', 'Shift+1'])('warns for unsupported shortcut %s without rejecting the config', async (key) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1, {
+      response: [{
+        id: 'buttons', prompt: 'Choose', type: 'buttons', options: [{ label: 'A', key }],
+      }],
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toEqual([]);
+    expect(result.warnings).toContainEqual(expect.objectContaining({
+      instancePath: '/components/question1/response/0/options/0/key',
+      message: expect.stringContaining('may not work'),
+    }));
+  });
+
+  test('does not warn for a supported named or Shift+letter shortcut', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1, {
+      response: [{
+        id: 'buttons',
+        prompt: 'Choose',
+        type: 'buttons',
+        options: [
+          { label: 'A', key: 'ArrowLeft' }, { label: 'B', key: 'Shift+X' },
+        ],
+      }],
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toEqual([]);
+    expect(result.warnings.filter((warning) => warning.instancePath.includes('/key'))).toEqual([]);
+  });
+
+  test('rejects duplicate key mappings within a component', async () => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Duplicate Key Validation Test',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2026-08-20',
+        description: 'Ensures duplicate key mappings are rejected.',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: '',
+        logoPath: '',
+        withProgressBar: true,
+        withSidebar: false,
+      },
+      components: {
+        question1: {
+          type: 'questionnaire',
+          response: [{
+            id: 'buttons',
+            prompt: 'Choose a response',
+            type: 'buttons',
+            options: [
+              { label: 'A', value: 'a', key: 'Shift+X' },
+              { label: 'B', value: 'b', key: 'shift+x' },
+            ],
+          }],
+        },
+      },
+      sequence: { order: 'fixed', components: ['question1'] },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors.some((error) => error.message.includes('Duplicate key mapping'))).toBe(true);
+  });
+
   test.each(['email', 'phoneNumber', 'usPhoneNumber', 'url'])('accepts the %s built-in validation for short text responses', async (builtInValidation) => {
     const studyConfig = makeStudyConfig('contains');
     Object.assign(studyConfig.components.question1.response[0], { builtInValidation });

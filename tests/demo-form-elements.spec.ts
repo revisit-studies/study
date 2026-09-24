@@ -154,6 +154,9 @@ test('Test questionnaire component with responses and randomizing questions and 
   // Button
   await page.getByRole('radio', { name: 'Option 4' }).nth(0).click();
 
+  // Buttons with keymapping (Using configured key mapping)
+  await page.keyboard.press('r');
+
   // Likert scale
   await page.getByRole('radio', { name: '5' }).nth(0).click();
 

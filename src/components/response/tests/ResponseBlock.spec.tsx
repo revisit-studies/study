@@ -17,7 +17,7 @@ import { responseAnswerIsCorrect } from '../../../utils/correctAnswer';
 // ── mocks ────────────────────────────────────────────────────────────────────
 
 const {
-  mockStoredAnswerData, capturedNextButtonProps, capturedSwitcherProps, mockIsAnalysis, mockCurrentIdentifier, mockNavigate, mockSaveAnswers, mockAnswerField,
+  mockStoredAnswerData, capturedNextButtonProps, capturedSwitcherProps, mockIsAnalysis, mockCurrentIdentifier, mockNavigate, mockSaveAnswers, mockTrrackApply, mockAnswerField,
 } = vi.hoisted(() => ({
   mockStoredAnswerData: {
     formOrder: { response: ['q1'] } as { response: string[] } | undefined,
@@ -32,15 +32,18 @@ const {
   capturedSwitcherProps: {
     storedAnswer: undefined as Record<string, unknown> | undefined,
     answerFinalized: undefined as boolean | undefined,
+    onChange: undefined as ((value: unknown, source?: 'keyboard' | 'click') => void) | undefined,
   },
   mockIsAnalysis: { value: false },
   mockCurrentIdentifier: { value: 'trial1_0' },
   mockNavigate: vi.fn(),
   mockSaveAnswers: vi.fn(() => Promise.resolve()),
+  mockTrrackApply: vi.fn(),
   mockAnswerField: {
     values: {} as Record<string, unknown>,
     isValid: vi.fn(() => true),
     setValues: vi.fn(),
+    setFieldValue: vi.fn(),
     setInitialValues: vi.fn(),
     reset: vi.fn(),
     getInputProps: vi.fn(() => ({ value: '', onChange: vi.fn() })),
@@ -60,6 +63,7 @@ vi.mock('@mantine/core', () => ({
   Group: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
   Text: ({ children }: { children?: ReactNode }) => <p>{children}</p>,
   ThemeIcon: ({ children }: { children?: ReactNode }) => <span>{children}</span>,
+  Kbd: ({ children }: { children?: ReactNode }) => <kbd>{children}</kbd>,
 }));
 
 vi.mock('react-router', () => ({
@@ -73,7 +77,7 @@ vi.mock('@trrack/core', () => ({
     create: vi.fn(() => ({ register: vi.fn(() => vi.fn()) })),
   },
   initializeTrrack: vi.fn(() => ({
-    apply: vi.fn(),
+    apply: mockTrrackApply,
     currentChange: vi.fn(() => vi.fn()),
     graph: {
       backend: {
@@ -152,9 +156,12 @@ vi.mock('../customResponseModules', () => ({
 }));
 
 vi.mock('../ResponseSwitcher', () => ({
-  ResponseSwitcher: ({ response, storedAnswer, answerFinalized }: { response: { id: string; type: string }; storedAnswer?: Record<string, unknown>; answerFinalized?: boolean }) => {
+  ResponseSwitcher: ({
+    response, storedAnswer, answerFinalized, form,
+  }: { response: { id: string; type: string }; storedAnswer?: Record<string, unknown>; answerFinalized?: boolean; form: { onChange?: (value: unknown, source?: 'keyboard' | 'click') => void } }) => {
     capturedSwitcherProps.storedAnswer = storedAnswer;
     capturedSwitcherProps.answerFinalized = answerFinalized;
+    capturedSwitcherProps.onChange = form.onChange;
     return (
       <div data-testid={`switcher-${response.type}`} data-response-id={response.id}>
         {response.type}
@@ -287,11 +294,14 @@ beforeEach(() => {
   capturedNextButtonProps.onCheckAnswer = undefined;
   capturedSwitcherProps.storedAnswer = undefined;
   capturedSwitcherProps.answerFinalized = undefined;
+  capturedSwitcherProps.onChange = undefined;
   mockIsAnalysis.value = false;
   mockCurrentIdentifier.value = 'trial1_0';
   mockNavigate.mockClear();
   mockSaveAnswers.mockClear();
+  mockTrrackApply.mockClear();
   mockAnswerField.values = {};
+  mockAnswerField.setFieldValue.mockReset();
 });
 
 // Unmount between tests so window keydown listeners from prior renders don't leak
@@ -300,6 +310,20 @@ afterEach(() => cleanup());
 // ── ResponseBlock ─────────────────────────────────────────────────────────────
 
 describe('ResponseBlock', () => {
+  test('records the interaction source of a mapped button answer', async () => {
+    const { rerender, studyStore } = await renderWithStore(<ResponseBlock config={baseConfig} location="belowStimulus" />);
+    mockTrrackApply.mockClear();
+    mockAnswerField.setFieldValue.mockImplementation((id: string, value: unknown) => {
+      mockAnswerField.values = { ...mockAnswerField.values, [id]: value };
+    });
+
+    act(() => { capturedSwitcherProps.onChange?.('A', 'keyboard'); });
+    rerender(withStore(studyStore, <ResponseBlock config={baseConfig} location="belowStimulus" />));
+
+    expect(mockAnswerField.setFieldValue).toHaveBeenCalledWith('q1', 'A');
+    expect(mockTrrackApply).toHaveBeenCalledWith('Update form field (keyboard)', undefined);
+  });
+
   test('renders without error', async () => {
     const studyStore = await makeStudyStore();
     const { container } = render(withStore(studyStore, <ResponseBlock config={baseConfig} location="belowStimulus" />));
