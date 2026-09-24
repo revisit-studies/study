@@ -902,6 +902,12 @@ function compileFactorBlock(
     ? [block.components]
     : block.components;
   const materializedConditions = new Map<string, string[]>();
+  const factorLabels: Record<string, string> = {};
+  const withFactorLabels = (sequence: StudyConfig['sequence']): StudyConfig['sequence'] => {
+    // Display labels must not change the persisted config hash.
+    Object.defineProperty(sequence, '__revisitFactorLabels', { value: factorLabels });
+    return sequence;
+  };
   const materializeCondition = (condition: MaterializedFactorCondition): string[] => {
     const conditionId = createFactorConditionId(block.id, condition);
     const existing = materializedConditions.get(conditionId);
@@ -952,6 +958,7 @@ function compileFactorBlock(
       }
 
       components[componentId] = component;
+      factorLabels[componentId] = `${block.id ? `${block.id}: ` : ''}${JSON.stringify(condition)}_${baseComponent}`;
       return [componentId];
     });
     materializedConditions.set(conditionId, conditionComponentIds);
@@ -978,7 +985,7 @@ function compileFactorBlock(
   if (resolution.hasRuntimeOrder || resolution.hasRuntimeSample) {
     conditions.forEach((condition) => materializeCondition(condition));
     return {
-      sequence: {
+      sequence: withFactorLabels({
         type: 'factor-runtime-plan',
         id: block.id,
         order: 'fixed',
@@ -989,7 +996,7 @@ function compileFactorBlock(
         ...(block.interruptions !== undefined ? { interruptions: block.interruptions } : {}),
         ...(block.skip !== undefined ? { skip: block.skip } : {}),
         ...(block.conditional !== undefined ? { conditional: block.conditional } : {}),
-      } as StudyConfig['sequence'],
+      } as StudyConfig['sequence']),
       components,
     };
   }
@@ -1013,7 +1020,7 @@ function compileFactorBlock(
   }
 
   return {
-    sequence: {
+    sequence: withFactorLabels({
       id: block.id,
       order,
       components: sequenceComponents,
@@ -1021,7 +1028,7 @@ function compileFactorBlock(
       ...(block.interruptions !== undefined ? { interruptions: block.interruptions } : {}),
       ...(block.skip !== undefined ? { skip: block.skip } : {}),
       ...(block.conditional !== undefined ? { conditional: block.conditional } : {}),
-    },
+    } as StudyConfig['sequence']),
     components,
   };
 }

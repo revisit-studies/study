@@ -150,12 +150,12 @@ type SequenceWithImportReference = Sequence & {
   __revisitImportedSequenceRef?: string;
 };
 
-function parseLibraryComponentReference(componentName: string) {
+function parseLibraryComponentReference(componentName: string, factorLabels: Map<string, string>) {
   const separator = componentName.includes('.components.')
     ? '.components.'
     : (componentName.includes('.co.') ? '.co.' : false);
   const isLibraryImport = separator !== false && componentName.startsWith('$');
-  const label = isLibraryImport ? componentName.split(separator).at(-1)! : componentName;
+  const label = isLibraryImport ? componentName.split(separator).at(-1)! : factorLabels.get(componentName) ?? componentName;
   const importedLibraryName = isLibraryImport ? componentName.split(separator)[0].slice(1) : undefined;
   return { isLibraryImport, label, importedLibraryName };
 }
@@ -269,6 +269,19 @@ export function StepsPanel({
     return r;
   }, [studyConfig.sequence]);
 
+  const factorLabels = useMemo(() => {
+    const labels = new Map<string, string>();
+    const visit = (block: Sequence & { __revisitFactorLabels?: Record<string, string> }) => {
+      if (isDynamicBlock(block)) return;
+      Object.entries(block.__revisitFactorLabels ?? {}).forEach(([id, label]) => labels.set(id, label));
+      block.components.forEach((child) => {
+        if (typeof child !== 'string') visit(child);
+      });
+    };
+    visit(studyConfig.sequence as Sequence);
+    return labels;
+  }, [studyConfig.sequence]);
+
   // Memoize hasRandomization checks for all components
   const componentHasRandomization = useMemo(() => {
     const map = new Map<string, boolean>();
@@ -293,7 +306,7 @@ export function StepsPanel({
           label,
           isLibraryImport,
           importedLibraryName,
-        } = parseLibraryComponentReference(key);
+        } = parseLibraryComponentReference(key, factorLabels);
         const component = studyComponentToIndividualComponent(studyConfig.components[key], studyConfig);
 
         return {
@@ -301,7 +314,7 @@ export function StepsPanel({
           label,
           indentLevel: 0,
           path: `browse.${key}`,
-          href: `/${studyId}/reviewer-${key}`,
+          href: `/${studyId}/reviewer-${encodeURIComponent(key)}`,
           isLibraryImport,
           importedLibraryName,
           component,
@@ -333,7 +346,7 @@ export function StepsPanel({
             label,
             isLibraryImport,
             importedLibraryName,
-          } = parseLibraryComponentReference(node);
+          } = parseLibraryComponentReference(node, factorLabels);
           const component = studyConfig.components[node]
             ? studyComponentToIndividualComponent(studyConfig.components[node], studyConfig)
             : undefined;
@@ -462,7 +475,7 @@ export function StepsPanel({
               label,
               isLibraryImport,
               importedLibraryName,
-            } = parseLibraryComponentReference(excludedComponent);
+            } = parseLibraryComponentReference(excludedComponent, factorLabels);
             const excludedComponentPath = `${blockPath}.${excludedComponent}_excluded`;
 
             newFlatTree.push({
@@ -519,7 +532,7 @@ export function StepsPanel({
                     label,
                     isLibraryImport,
                     importedLibraryName,
-                  } = parseLibraryComponentReference(child);
+                  } = parseLibraryComponentReference(child, factorLabels);
                   const childPath = `${excludedParentPath}.${child}_excluded`;
 
                   newFlatTree.push({
@@ -608,7 +621,7 @@ export function StepsPanel({
     // Set full and rendered flat tree
     setFullFlatTree(newFlatTree);
     setRenderedFlatTree(newFlatTree);
-  }, [fullOrder, participantAnswers, participantSequence, skippedTrialOrders, studyConfig.components, studyId]);
+  }, [factorLabels, fullOrder, participantAnswers, participantSequence, skippedTrialOrders, studyConfig.components, studyId]);
 
   const collapseBlock = useCallback((startIndex: number, startItem: StepItem) => {
     setRenderedFlatTree((prevRenderedFlatTree) => {
