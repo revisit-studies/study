@@ -60,7 +60,7 @@ async function expectTimePickerValue(page: Page, responseId: string, value: stri
 }
 
 async function advanceToSidebarFormElements(page: Page) {
-  const sidebarAgeInput = page.locator('input[placeholder="Enter your age here, range from 0 to 100"]:visible').first();
+  const sidebarAgeInput = page.locator('.sidebar input[data-path="q-numerical"]');
 
   for (let i = 0; i < 3; i += 1) {
     if (await sidebarAgeInput.isVisible().catch(() => false)) {
@@ -97,7 +97,7 @@ test('Test questionnaire component with responses and randomizing questions and 
   // Fill the survey: Form Elements
 
   // Number input
-  const ageInput = page.getByPlaceholder('Enter your age here, range from 0 to 100');
+  const ageInput = page.locator('.main input[data-path="q-numerical"]');
   await expect(ageInput).toBeVisible({ timeout: 10000 });
   await ageInput.fill('120');
   await ageInput.press('Tab');
@@ -186,8 +186,8 @@ test('Test questionnaire component with responses and randomizing questions and 
   await characterLengthInput.fill('no');
   await wordLengthInput.fill('only three words');
   await page.getByPlaceholder('test@revisit.dev').fill('test@revisit.dev');
-  await page.getByPlaceholder('+800-0000-0000').fill('+800-0000-0000');
-  await page.getByPlaceholder('800-000-0000').fill('800-000-0000');
+  await page.locator('#built-in-validation-phone-number input').fill('+800-000-0000');
+  await page.locator('#built-in-validation-us-phone-number input').fill('800-000-0000');
   await page.getByPlaceholder('https://revisit.dev').fill('https://revisit.dev');
   await page.getByLabel('Date within a range.').fill('06/24/2026');
   await page.locator('#month-picker-response [data-dates-input]').click();

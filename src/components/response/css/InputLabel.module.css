@@ -1,0 +1,10 @@
+/* Let the final text block flow directly into the following info icon. */
+.withInfo > :nth-last-child(2):is(p, h1, h2, h3, h4, h5, h6) {
+  display: inline;
+}
+
+.infoIcon {
+  display: inline-block;
+  margin-inline-start: 4px;
+  vertical-align: -0.125em;
+}

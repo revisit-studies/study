@@ -21,10 +21,12 @@ export function ConfigView({
   visibleParticipants,
   studyId,
   currentConfigHash,
+  currentConfigStatus,
 }: {
   visibleParticipants: ParticipantData[];
   studyId?: string;
   currentConfigHash?: string;
+  currentConfigStatus: 'idle' | 'pending' | 'success' | 'error';
 }) {
   const [checked, setChecked] = useState<MrtRowSelectionState>({});
   const { storageEngine } = useStorageEngine();
@@ -33,15 +35,21 @@ export function ConfigView({
   const [modalViewConfigOpened, setModalViewConfigOpened] = useState(false);
   const [modalCompareConfigOpened, setModalCompareConfigOpened] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
+    if (currentConfigStatus === 'idle' || currentConfigStatus === 'pending') return undefined;
+
     if (!storageEngine || !studyId) {
       setConfigs([]);
+      setHasError(true);
       setLoading(false);
-      return;
+      return undefined;
     }
 
+    let cancelled = false;
     const fetchConfigs = async () => {
+      setLoading(true);
       try {
         const participantConfigHashes = visibleParticipants
           .map((participant) => participant.participantConfigHash)
@@ -51,16 +59,21 @@ export function ConfigView({
           : [...new Set(participantConfigHashes)];
         const fetchedConfigs = await storageEngine.getAllConfigsFromHash(allConfigHashes, studyId);
         const rows = buildConfigRows(fetchedConfigs, visibleParticipants);
+        if (cancelled) return;
         setConfigs(rows);
+        setHasError(false);
       } catch (error) {
+        if (cancelled) return;
         console.error('Error fetching configs:', error);
         setConfigs([]);
+        setHasError(true);
       }
       setLoading(false);
     };
 
     fetchConfigs();
-  }, [visibleParticipants, storageEngine, studyId, currentConfigHash]);
+    return () => { cancelled = true; };
+  }, [visibleParticipants, storageEngine, studyId, currentConfigHash, currentConfigStatus]);
 
   const handleViewConfig = useCallback((hash: string) => {
     const selectedConfig = configs.find((config) => config.hash === hash) || null;
@@ -241,7 +254,9 @@ export function ConfigView({
     },
   });
 
-  return loading ? (
+  const hashLoading = currentConfigStatus === 'idle' || currentConfigStatus === 'pending';
+  const hashError = currentConfigStatus === 'error';
+  const content = hashLoading || loading ? (
     <Stack align="center" p="md">
       <Loader size="sm" />
       <Text size="sm" c="dimmed">Loading config data...</Text>
@@ -249,6 +264,7 @@ export function ConfigView({
   ) : (
     configs.length > 0 ? (
       <>
+        {hashError && <Text c="red" size="sm">Unable to identify the current Study Config version.</Text>}
         <MantineReactTable
           table={table}
         />
@@ -300,9 +316,24 @@ export function ConfigView({
       <>
         <Space h="xl" />
         <Flex justify="center" align="center">
-          <Text>No data available</Text>
+          <Text>
+            {hasError
+              ? 'Unable to load saved Study Config versions. Please try again.'
+              : hashError
+                ? 'Unable to identify the current Study Config version. Please try again.'
+                : 'No Study Config versions are available for the current filters.'}
+          </Text>
         </Flex>
       </>
     )
+  );
+
+  return (
+    <>
+      <Text size="sm" mb="md">
+        View, download, and compare saved Study Config versions. Participant counts and time frames reflect currently visible participants.
+      </Text>
+      {content}
+    </>
   );
 }

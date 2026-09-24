@@ -29,8 +29,7 @@ export default function ClearSelectionButton({
         opacity: visible ? 1 : 0,
         pointerEvents: visible ? 'auto' : 'none',
         whiteSpace: 'nowrap',
-        alignItems: 'center',
-        justifyContent: 'center',
+        transform: 'translateY(2px)',
       }}
     >
       Clear selection

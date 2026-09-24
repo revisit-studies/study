@@ -1,0 +1,49 @@
+:where(.responseBlock-aboveStimulus, .responseBlock-belowStimulus) {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 880px;
+  margin-inline: auto;
+  padding-inline: clamp(16px, 3vw, 40px);
+}
+
+:where(.responseBlock-aboveStimulus, .responseBlock-belowStimulus) > div {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+:where(.responseBlock-aboveStimulus, .responseBlock-belowStimulus) .matrix-grid {
+  min-width: var(--matrix-min-width);
+}
+
+/* numerical, date (date/month/year), shortText (phoneNumber/usPhoneNumber) */
+:where(.response[data-answer-width="xs"]) {
+  --response-field-max-width: 150px;
+}
+
+/* time */
+:where(.response[data-answer-width="small"]) {
+  --response-field-max-width: 180px;
+}
+
+/* shortText (except phone numbers), dropdown (single/multiple selection) */
+:where(.response[data-answer-width="medium"]) {
+  --response-field-max-width: 280px;
+}
+
+/*
+ * Full width: longText, radio, checkbox, buttons, likert, slider,
+ * matrix-radio, matrix-checkbox, ranking-sublist, ranking-categorical,
+ * ranking-pairwise, reactive, textOnly, divider, custom.
+ * Cap the response container so controls without an Input wrapper are included.
+ */
+:where(.response[data-answer-width="full"]) {
+  --response-field-max-width: 1600px;
+  width: 100%;
+  max-width: var(--response-field-max-width);
+}
+
+/* Keep questions wide while constraining compact answer fields. */
+:where(.response:is([data-answer-width="xs"], [data-answer-width="small"], [data-answer-width="medium"]) .mantine-Input-wrapper) {
+  width: 100%;
+  max-width: var(--response-field-max-width);
+}
