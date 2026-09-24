@@ -1,12 +1,13 @@
 import type { Answer, Response } from '../parser/types';
 import type { StoredAnswer } from '../store/types';
 import { compareResponseValues, responseAnswerIsCorrect, shouldIgnoreArrayOrder } from './correctAnswer';
+import { usesStandaloneDontKnowField } from '../components/response/responseValidation';
 
 export const visibilityControllerTypes = new Set(['radio', 'dropdown', 'buttons', 'checkbox', 'shortText', 'numerical', 'date']);
 
 export function responseValueKeys(response: Response): string[] {
   return [response.id,
-    ...(response.withDontKnow ? [`${response.id}-dontKnow`] : []),
+    ...(usesStandaloneDontKnowField(response) ? [`${response.id}-dontKnow`] : []),
     ...('withOther' in response && response.withOther ? [`${response.id}-other`] : []),
   ];
 }

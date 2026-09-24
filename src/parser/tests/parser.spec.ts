@@ -2881,6 +2881,25 @@ describe('conditional response config', () => {
     });
   });
 
+  test.each(['matrix-radio', 'matrix-checkbox'])('allows a separate -dontKnow response ID beside %s', async (type) => {
+    const config = configWithCondition({ responseId: 'attended', comparison: 'equals', value: 'yes' });
+    const result = await parseStudyConfig(JSON.stringify({
+      ...config,
+      components: {
+        form: {
+          type: 'questionnaire',
+          response: [
+            {
+              id: 'matrix', type, prompt: '', withDontKnow: true, questionOptions: ['Question'], answerOptions: ['Answer'],
+            },
+            { id: 'matrix-dontKnow', type: 'shortText', prompt: '' },
+          ],
+        },
+      },
+    }));
+    expect(result.errors).toEqual([]);
+  });
+
   test.each([{ comparison: 'equals', value: 'yes' }, { comparison: 'doesNotEqual', value: 'no' }])('accepts visibility on input, textOnly and divider: %j', async (operator) => {
     const result = await parseStudyConfig(JSON.stringify(configWithCondition({ responseId: 'attended', ...operator })));
     expect(result.errors).toEqual([]);

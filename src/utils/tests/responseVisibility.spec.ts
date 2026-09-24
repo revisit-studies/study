@@ -13,6 +13,24 @@ const responses: Response[] = [
 ];
 
 describe('conditional response visibility', () => {
+  test.each(['matrix-radio', 'matrix-checkbox'] as const)('hiding %s preserves an unrelated -dontKnow answer', (type) => {
+    const fields: Response[] = [
+      responses[0],
+      {
+        id: 'matrix',
+        type,
+        prompt: '',
+        withDontKnow: true,
+        questionOptions: ['Question'],
+        answerOptions: ['Answer'],
+        visibleIf: { responseId: 'attended', comparison: 'equals', value: 'yes' },
+      },
+      { id: 'matrix-dontKnow', type: 'shortText', prompt: '' },
+    ];
+    const result = resolveResponseVisibility(fields, { attended: 'no', matrix: { Question: 'Answer' }, 'matrix-dontKnow': 'Keep this' });
+    expect(result.answers).toEqual({ attended: 'no', 'matrix-dontKnow': 'Keep this' });
+  });
+
   test.each([undefined, null, '', [], 'no'])('hides dependent fields for %j', (attended) => {
     const values: StoredAnswer['answer'] = attended === undefined ? { name: 'Old university' } : { attended, name: 'Old university' };
     const result = resolveResponseVisibility(responses, values);

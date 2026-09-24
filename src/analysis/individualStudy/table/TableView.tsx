@@ -219,8 +219,9 @@ export function TableView({
         accessorFn: (row: ParticipantDataWithStatus) => Object.values(row.answers)
           .filter((answer) => (answer.correctAnswer?.length ?? 0) > 0 && answer.endTime > 0)
           .map((answer) => {
-            const componentConfig = studyConfig.components[answer.componentName];
-            const component = componentConfig ? studyComponentToIndividualComponent(componentConfig, studyConfig) : undefined;
+            const participantConfig = allConfigs[row.participantConfigHash] ?? studyConfig;
+            const componentConfig = participantConfig.components[answer.componentName];
+            const component = componentConfig ? studyComponentToIndividualComponent(componentConfig, participantConfig) : undefined;
 
             return componentAnswersAreCorrect(answer.answer, answer.correctAnswer, component?.response);
           }),
@@ -257,7 +258,7 @@ export function TableView({
         Cell: ({ cell }: { cell: MrtCell<ParticipantDataWithStatus, ParticipantDataWithStatus['metadata']> }) => <MetaCell metaData={cell.getValue()} />,
       },
     ];
-  }, [studyConfig, stageColors, copied, visibleParticipants]);
+  }, [studyConfig, allConfigs, stageColors, copied, visibleParticipants]);
 
   const table = useMantineReactTable({
     columns,
