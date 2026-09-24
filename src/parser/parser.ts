@@ -735,7 +735,7 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
 
   const usedComponents = getSequenceFlatMapWithInterruptions(studyConfig.sequence);
 
-  if (studyConfig.uiConfig.withSidebar && usedComponents.length > 0 && !Object.values(studyConfig.components).some((component) => {
+  if (studyConfig.uiConfig.withSidebar && !Object.values(studyConfig.components).some((component) => {
     const resolved = studyComponentToIndividualComponent(component, studyConfig);
     return (resolved.withSidebar ?? studyConfig.uiConfig.withSidebar)
       && ((resolved.instruction && (resolved.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar') === 'sidebar')
