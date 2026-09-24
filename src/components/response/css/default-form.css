@@ -18,6 +18,14 @@
   overflow-x: auto;
 }
 
+.mantine-Slider-markWrapper {
+  width: var(--slider-size);
+}
+
+.mantine-Slider-markLabel {
+  width: max-content;
+}
+
 :where(.responseBlock-aboveStimulus, .responseBlock-belowStimulus) .matrix-grid {
   min-width: var(--matrix-min-width);
 }
