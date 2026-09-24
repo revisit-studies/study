@@ -24,6 +24,7 @@
     "demo-video",
     "demo-dynamic",
     "demo-condition",
+    "demo-dark-mode",
     "demo-style",
     "demo-yaml",
     "demo-ranking-widget",
@@ -109,6 +110,9 @@
     },
     "demo-form-elements": {
       "path": "demo-form-elements/config.json"
+    },
+    "demo-dark-mode": {
+      "path": "demo-dark-mode/config.json"
     },
     "demo-training": {
       "path": "demo-training/config.json"
