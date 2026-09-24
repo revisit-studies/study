@@ -768,6 +768,21 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
 
   const usedComponents = getSequenceFlatMapWithInterruptions(studyConfig.sequence);
 
+  if (studyConfig.uiConfig.withSidebar && !Object.values(studyConfig.components).some((component) => {
+    const resolved = studyComponentToIndividualComponent(component, studyConfig);
+    return (resolved.withSidebar ?? studyConfig.uiConfig.withSidebar)
+      && ((resolved.instruction && (resolved.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar') === 'sidebar')
+        || (resolved.nextButtonLocation ?? studyConfig.uiConfig.nextButtonLocation) === 'sidebar'
+        || resolved.response?.some((response) => 'location' in response && response.location === 'sidebar'));
+  })) {
+    warnings.push({
+      message: 'The sidebar is enabled but no component puts content in it',
+      instancePath: '/uiConfig/withSidebar',
+      params: { action: 'Set withSidebar to false, or add sidebar instructions, responses, or navigation buttons' },
+      category: 'empty-sidebar',
+    });
+  }
+
   // Verify sequence is well defined
   usedComponents.forEach((component) => {
     // Verify component is defined in components object

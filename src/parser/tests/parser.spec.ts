@@ -1899,6 +1899,7 @@ describe('Parser Warnings', () => {
     expect(emptySequenceWarning).toBeDefined();
     expect(emptySequenceWarning?.instancePath).toBe('/sequence/');
     expect((emptySequenceWarning?.params as { action: string }).action).toBe('Remove empty components block or add components to the sequence');
+    expect(result.warnings.filter((warning) => warning.category === 'empty-sidebar')).toHaveLength(1);
   });
 
   test('adds unused-component warning with expected message and action', async () => {
@@ -1987,6 +1988,98 @@ describe('Parser Warnings', () => {
       (warning) => warning.category === 'unused-component' && warning.message.includes('unusedComponent'),
     );
     expect(hasUnusedWarning).toBe(true);
+  });
+
+  test('warns when an enabled sidebar has no content', async () => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study', version: '1.0', authors: ['Test'], date: '2024-01-01', description: 'Test', organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'test@test.com', logoPath: '', withProgressBar: true, withSidebar: true,
+      },
+      components: {
+        question: {
+          type: 'questionnaire',
+          instruction: 'Answer the question',
+          instructionLocation: 'aboveStimulus',
+          response: [{ id: 'answer', type: 'shortText', prompt: 'Answer' }],
+        },
+      },
+      sequence: { order: 'fixed', components: ['question'] },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toEqual([]);
+    expect(result.warnings).toContainEqual(expect.objectContaining({
+      category: 'empty-sidebar', instancePath: '/uiConfig/withSidebar',
+    }));
+  });
+
+  test.each([
+    ['instruction with default location', { instruction: 'Answer the question', response: [] }],
+    ['instruction with explicit location', { instruction: 'Answer the question', instructionLocation: 'sidebar', response: [] }],
+    ['response', {
+      response: [{
+        id: 'answer', type: 'shortText', prompt: 'Answer', location: 'sidebar',
+      }],
+    }],
+    ['navigation', { nextButtonLocation: 'sidebar', response: [] }],
+  ])('does not warn when an inherited component puts %s in the sidebar', async (_, sidebarContent) => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study', version: '1.0', authors: ['Test'], date: '2024-01-01', description: 'Test', organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'test@test.com', logoPath: '', withProgressBar: true, withSidebar: true,
+      },
+      baseComponents: {
+        question: { type: 'questionnaire', ...sidebarContent },
+      },
+      components: { question: { baseComponent: 'question' } },
+      sequence: { order: 'fixed', components: ['question'] },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toEqual([]);
+    expect(result.warnings.filter((warning) => warning.category === 'empty-sidebar')).toEqual([]);
+  });
+
+  test('does not warn when an imported library supplies sidebar content', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify({
+      $schema: '',
+      description: 'Test library',
+      components: {
+        question: {
+          type: 'questionnaire',
+          response: [{
+            id: 'answer', type: 'shortText', prompt: 'Answer', location: 'sidebar',
+          }],
+        },
+      },
+      sequences: {},
+    })));
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study', version: '1.0', authors: ['Test'], date: '2024-01-01', description: 'Test', organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'test@test.com', logoPath: '', withProgressBar: true, withSidebar: true,
+      },
+      importedLibraries: ['testLib'],
+      components: {},
+      sequence: { order: 'fixed', components: ['$testLib.components.question'] },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toEqual([]);
+    expect(result.warnings.filter((warning) => warning.category === 'empty-sidebar')).toEqual([]);
   });
 
   test('adds disabled-sidebar warning when sidebar location is used but sidebar is disabled', async () => {

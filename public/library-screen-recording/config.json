@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Screen Recording",
     "version": "1.0.0",
@@ -7,7 +7,7 @@
       "The reVISit Team"
     ],
     "date": "2026-02-23",
-    "description": "Example study using the screen-recording library.",
+    "description": "Example study using the screen-recording library with screen and webcam capture.",
     "organizations": [
       "University of Utah",
       "WPI"
@@ -18,7 +18,8 @@
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "withSidebar": false,
-    "recordScreen": true
+    "recordScreen": true,
+    "recordWebcam": true
   },
   "importedLibraries": [
     "screen-recording"

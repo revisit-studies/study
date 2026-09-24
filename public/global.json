@@ -24,6 +24,7 @@
     "demo-video",
     "demo-dynamic",
     "demo-condition",
+    "demo-dark-mode",
     "demo-style",
     "demo-yaml",
     "demo-ranking-widget",
@@ -49,6 +50,7 @@
     "library-quis",
     "library-sam",
     "library-screen-recording",
+    "library-webcam-recording",
     "library-smeq",
     "library-sus",
     "library-ueq",
@@ -109,6 +111,9 @@
     },
     "demo-form-elements": {
       "path": "demo-form-elements/config.json"
+    },
+    "demo-dark-mode": {
+      "path": "demo-dark-mode/config.json"
     },
     "demo-training": {
       "path": "demo-training/config.json"
@@ -221,6 +226,10 @@
     },
     "library-screen-recording": {
       "path": "library-screen-recording/config.json",
+      "test": true
+    },
+    "library-webcam-recording": {
+      "path": "library-webcam-recording/config.json",
       "test": true
     },
     "library-smeq": {

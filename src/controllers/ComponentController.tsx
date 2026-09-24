@@ -64,7 +64,7 @@ export function ComponentController() {
 
   const navigate = useNavigate();
 
-  const { studyHasScreenRecording } = useRecordingConfig();
+  const { studyHasScreenRecording, studyHasWebcamRecording } = useRecordingConfig();
 
   const isAnalysis = useIsAnalysis();
 
@@ -216,7 +216,7 @@ export function ComponentController() {
     // Assume that screen recording video exists.
     // The value is set to false from ScreenRecordingReplay component if video starts after stimulus start time.
     storeDispatch(setAnalysisCanPlayScreenRecording(true));
-  }, [currentStep, setAnalysisCanPlayScreenRecording, storeDispatch]);
+  }, [currentIdentifier, setAnalysisCanPlayScreenRecording, storeDispatch]);
 
   useFetchStylesheet(currentConfig?.stylesheetPath);
 
@@ -297,7 +297,14 @@ export function ComponentController() {
   const instructionLocation = currentConfig.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar';
   const instructionInSideBar = instructionLocation === 'sidebar';
 
-  if (studyHasScreenRecording && isAnalysis && analysisCanPlayScreenRecording) return <ScreenRecordingReplay key={`${currentStep}-stimulus`} />;
+  const shouldShowRecordingReplay = (studyHasScreenRecording || studyHasWebcamRecording)
+    && isAnalysis
+    && analysisCanPlayScreenRecording;
+  const isWebcamOnlyReplay = shouldShowRecordingReplay
+    && studyHasWebcamRecording
+    && !studyHasScreenRecording;
+
+  if (shouldShowRecordingReplay && !isWebcamOnlyReplay) return <ScreenRecordingReplay key={`${currentStep}-stimulus`} />;
 
   return (
     <>
@@ -310,7 +317,7 @@ export function ComponentController() {
       />
       <Box
         id={currentComponent}
-        className={currentConfig.type}
+        className={`stimulus ${currentConfig.type}`}
         style={stimulusContainerStyle}
       >
         <Suspense key={`${currentStep}-stimulus`} fallback={<div>Loading...</div>}>
@@ -337,6 +344,7 @@ export function ComponentController() {
         config={currentConfig}
         location="belowStimulus"
       />
+      {isWebcamOnlyReplay && <ScreenRecordingReplay key={`${currentStep}-webcam-replay`} webcamOnly />}
     </>
   );
 }
