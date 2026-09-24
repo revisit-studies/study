@@ -1,9 +1,16 @@
-:where(.responseBlock-aboveStimulus, .responseBlock-belowStimulus) {
+:where(.responseBlock-aboveStimulus, .responseBlock-belowStimulus, .stimulus, .responseBlock-actions) {
   box-sizing: border-box;
   width: 100%;
   max-width: 880px;
   margin-inline: auto;
+}
+
+:where(.responseBlock-aboveStimulus, .responseBlock-belowStimulus) {
   padding-inline: clamp(16px, 3vw, 40px);
+}
+
+:where(.responseBlock-actions[data-alignment="left"]) {
+  padding-left: clamp(16px, 3vw, 40px);
 }
 
 :where(.responseBlock-aboveStimulus, .responseBlock-belowStimulus) > div {

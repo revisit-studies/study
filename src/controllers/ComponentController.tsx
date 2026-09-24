@@ -310,7 +310,7 @@ export function ComponentController() {
       />
       <Box
         id={currentComponent}
-        className={currentConfig.type}
+        className={`stimulus ${currentConfig.type}`}
         style={stimulusContainerStyle}
       >
         <Suspense key={`${currentStep}-stimulus`} fallback={<div>Loading...</div>}>

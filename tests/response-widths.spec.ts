@@ -6,24 +6,62 @@ test.beforeEach(async ({ page }) => {
   await resetClientStudyState(page);
 });
 
-test('form blocks center within the available space while sidebar and stimulus keep their layout', async ({ page }) => {
+test('Next follows a configured stimulus width', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/demo-style/reviewer-markdown-component');
+  const stimulus = page.locator('.stimulus');
+  const actions = page.locator('.responseBlock-actions');
+  const next = page.getByRole('button', { name: 'Next', exact: true });
+  await expect(stimulus).toHaveCSS('width', '800px');
+  await expect(actions).toHaveCSS('width', '800px');
+  const rightEdges = await Promise.all([
+    stimulus.evaluate((element) => element.getBoundingClientRect().right),
+    next.evaluate((button) => button.getBoundingClientRect().right),
+  ]);
+  expect(Math.abs(rightEdges[0] - rightEdges[1])).toBeLessThanOrEqual(1);
+});
+
+test('form blocks and stimulus center within the available space and allow study CSS overrides', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/demo-form-elements/reviewer-Form%20Elements');
   const main = page.locator('.main');
   const form = main.locator('.responseBlock-belowStimulus');
+  const stimulus = main.locator('.stimulus');
+  const actions = main.locator('.responseBlock-actions');
+  const next = main.getByRole('button', { name: 'Next', exact: true });
   const sidebar = page.locator('.responseBlock-sidebar');
   await page.getByRole('complementary').locator('.mantine-CloseButton-root').click();
   await expect(form).toHaveCSS('width', '880px');
+  await expect(stimulus).toHaveCSS('width', '880px');
+  await expect(actions).toHaveCSS('width', '880px');
   await expect(form).toHaveCSS('padding-left', '40px');
   await expect(sidebar).toHaveCSS('padding-left', '0px');
-  const centered = await form.evaluate((block) => {
-    const mainBounds = block.closest('.main')!.getBoundingClientRect();
-    const bounds = block.getBoundingClientRect();
-    return Math.abs((bounds.left + bounds.right) - (mainBounds.left + mainBounds.right));
-  });
-  expect(centered).toBeLessThanOrEqual(1);
-  await page.addStyleTag({ content: '.responseBlock-belowStimulus { max-width: 1000px; }' });
+  for (const element of [form, stimulus]) {
+    const centered = await element.evaluate((block) => {
+      const mainBounds = block.closest('.main')!.getBoundingClientRect();
+      const bounds = block.getBoundingClientRect();
+      return Math.abs((bounds.left + bounds.right) - (mainBounds.left + mainBounds.right));
+    });
+    expect(centered).toBeLessThanOrEqual(1);
+  }
+  const rightEdges = await Promise.all([
+    stimulus.evaluate((block) => block.getBoundingClientRect().right),
+    next.evaluate((button) => button.getBoundingClientRect().right),
+  ]);
+  expect(Math.abs(rightEdges[0] - rightEdges[1])).toBeLessThanOrEqual(1);
+  await page.addStyleTag({ content: '.responseBlock-belowStimulus, .stimulus, .responseBlock-actions { max-width: 1000px; }' });
   await expect(form).toHaveCSS('width', '1000px');
+  await expect(stimulus).toHaveCSS('width', '1000px');
+  await expect(actions).toHaveCSS('width', '1000px');
+
+  await page.goto('/demo-form-elements/reviewer-Next%20Button%20Alignment');
+  await page.getByRole('complementary').locator('.mantine-CloseButton-root').click();
+  await expect(actions).toHaveCSS('padding-left', '40px');
+  const leftEdges = await Promise.all([
+    form.evaluate((block) => block.getBoundingClientRect().left + Number.parseFloat(getComputedStyle(block).paddingLeft)),
+    next.evaluate((button) => button.getBoundingClientRect().left),
+  ]);
+  expect(Math.abs(leftEdges[0] - leftEdges[1])).toBeLessThanOrEqual(1);
 
   await page.goto('/demo-style/reviewer-responses');
   await page.getByRole('complementary').locator('.mantine-CloseButton-root').click();
