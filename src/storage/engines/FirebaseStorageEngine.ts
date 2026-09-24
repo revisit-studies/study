@@ -577,6 +577,8 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     participantId: string,
   ): Promise<string | null> {
     const storage = getStorage();
+
+    // Fetches webm converted by firebase function
     const screenRecordingRef = ref(storage, `${this.collectionPrefix}${this.studyId}/screenRecording/${participantId}_${task}`);
 
     try {
