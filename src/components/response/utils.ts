@@ -5,7 +5,7 @@ import {
 import isEqual from 'lodash.isequal';
 import { resolveResponseVisibility, responseValueKeys } from '../../utils/responseVisibility';
 import {
-  CheckboxResponse, JsonValue, RadioResponse, Response,
+  Answer, CheckboxResponse, JsonValue, RadioResponse, Response,
 } from '../../parser/types';
 import { CustomResponseValidate, StoredAnswer } from '../../store/types';
 import { parseStringOptionValue } from '../../utils/stringOptions';
@@ -187,6 +187,7 @@ export const generateValidation = (
   customResponseLoadErrors: Record<string, string | undefined> = {},
   allResponses: Response[] = responses,
   context: StoredAnswer['answer'] = {},
+  correctAnswers: Answer[] = [],
 ): Record<string, (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => string | null> => {
   let validateObj: Record<string, (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => string | null> = {};
   responses.forEach((response) => {
@@ -194,7 +195,7 @@ export const generateValidation = (
       validateObj = {
         ...validateObj,
         [response.id]: (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => (
-          !resolveResponseVisibility(allResponses, { ...context, ...values }).visibleIds.has(response.id) ? null : generateInvalidResponseErrorMessage(
+          !resolveResponseVisibility(allResponses, { ...context, ...values }, {}, correctAnswers).visibleIds.has(response.id) ? null : generateInvalidResponseErrorMessage(
             response,
             value,
             values,
@@ -218,12 +219,13 @@ export function useAnswerField(
   allResponses: Response[] = responses,
   context: StoredAnswer['answer'] = {},
   isAnalysis = false,
+  correctAnswers: Answer[] = [],
 ) {
   const [_id, setId] = useState<string | number | null>(null);
 
   const answerField = useForm<StoredAnswer['answer']>({
     initialValues: generateInitFields(responses, storedAnswer),
-    validate: generateValidation(responses, customResponseValidators, customResponseLoadErrors, allResponses, context),
+    validate: generateValidation(responses, customResponseValidators, customResponseLoadErrors, allResponses, context, correctAnswers),
   });
 
   useEffect(() => {
@@ -241,10 +243,11 @@ export function useAnswerField(
       allResponses,
       { ...otherValues, ...(isAnalysis ? storedAnswer : answerField.values) },
       isAnalysis ? {} : generateInitFields(responses, {}),
+      correctAnswers,
     ).answers;
     const localKeys = new Set(responses.flatMap(responseValueKeys));
     return Object.fromEntries(Object.entries(resolved).filter(([key]) => localKeys.has(key)));
-  }, [allResponses, responses, context, answerField.values, isAnalysis, storedAnswer]);
+  }, [allResponses, responses, context, answerField.values, isAnalysis, storedAnswer, correctAnswers]);
   const stableValues = useRef(values);
   if (!isEqual(stableValues.current, values)) stableValues.current = values;
 

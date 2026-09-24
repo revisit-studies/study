@@ -707,7 +707,7 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
         if (!response.visibleIf) return;
         const controller = visibilityResponses.find((candidate) => candidate.id === response.visibleIf?.responseId);
         let message: string | undefined;
-        if (!visibilityConditionValidate(response.visibleIf)) message = 'visibleIf must specify exactly one valid equals or notEquals condition';
+        if (!visibilityConditionValidate(response.visibleIf)) message = 'visibleIf must specify a valid comparison and value';
         else if (!controller) message = 'visibleIf must reference a response in the same component';
         else if (!visibilityControllerTypes.has(controller.type)) message = `visibleIf cannot use a ${controller.type} response as its controller`;
         else {

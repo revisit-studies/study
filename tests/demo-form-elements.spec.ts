@@ -183,6 +183,18 @@ test('Test questionnaire component with responses and randomizing questions and 
   await nextClick(page);
   await expect(graduationYear).toHaveAttribute('aria-invalid', 'true');
   await graduationYear.fill('2020');
+  const expectedGraduationYear = page.getByLabel('Expected graduation year');
+  await page.getByRole('radio', { name: 'Currently enrolled', exact: true }).check();
+  await expect(graduationYear).toHaveCount(0);
+  await expect(expectedGraduationYear).toBeVisible();
+  await expectedGraduationYear.fill('2028');
+  await page.getByRole('radio', { name: 'Graduated', exact: true }).check();
+  await expect(expectedGraduationYear).toHaveCount(0);
+  await expect(graduationYear).toHaveValue('');
+  await page.getByRole('radio', { name: 'Currently enrolled', exact: true }).check();
+  await expect(expectedGraduationYear).toHaveValue('');
+  await page.getByRole('radio', { name: 'Graduated', exact: true }).check();
+  await graduationYear.fill('2020');
   await page.getByRole('radio', { name: 'No', exact: true }).check();
   await expect(universityName).toHaveCount(0);
   await expect(graduationYear).toHaveCount(0);

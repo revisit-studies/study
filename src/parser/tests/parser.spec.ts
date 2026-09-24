@@ -2833,32 +2833,34 @@ describe('conditional response config', () => {
     };
   }
 
-  test.each([{ equals: 'yes' }, { notEquals: 'no' }])('accepts visibility on input, textOnly and divider: %j', async (operator) => {
+  test.each([{ comparison: 'equals', value: 'yes' }, { comparison: 'doesNotEqual', value: 'no' }])('accepts visibility on input, textOnly and divider: %j', async (operator) => {
     const result = await parseStudyConfig(JSON.stringify(configWithCondition({ responseId: 'attended', ...operator })));
     expect(result.errors).toEqual([]);
   });
 
   test.each([
     { responseId: 'attended' },
-    { responseId: 'attended', equals: 'yes', notEquals: 'no' },
-    { responseId: 'attended', equals: null },
-    { responseId: 'missing', equals: 'yes' },
-    { responseId: 'name', equals: 'yes' },
-    { responseId: 'divider', equals: 'yes' },
+    {
+      responseId: 'attended', comparison: 'equals', value: 'yes', notEquals: 'no',
+    },
+    { responseId: 'attended', comparison: 'equals', value: null },
+    { responseId: 'missing', comparison: 'equals', value: 'yes' },
+    { responseId: 'name', comparison: 'equals', value: 'yes' },
+    { responseId: 'divider', comparison: 'equals', value: 'yes' },
   ])('rejects invalid condition %j', async (condition) => {
     const result = await parseStudyConfig(JSON.stringify(configWithCondition(condition)));
     expect(result.errors.length).toBeGreaterThan(0);
   });
 
   test('rejects cyclic dependencies', async () => {
-    const config = configWithCondition({ responseId: 'attended', equals: 'yes' });
-    Object.assign(config.components.form.response[0], { visibleIf: { responseId: 'name', equals: 'university' } });
+    const config = configWithCondition({ responseId: 'attended', comparison: 'equals', value: 'yes' });
+    Object.assign(config.components.form.response[0], { visibleIf: { responseId: 'name', comparison: 'equals', value: 'university' } });
     const result = await parseStudyConfig(JSON.stringify(config));
     expect(result.errors.some((error) => error.message.includes('cyclic'))).toBe(true);
   });
 
   test('validates inherited responses using the same merged config as runtime', async () => {
-    const config = configWithCondition({ responseId: 'attended', equals: 'yes' });
+    const config = configWithCondition({ responseId: 'attended', comparison: 'equals', value: 'yes' });
     const result = await parseStudyConfig(JSON.stringify({
       ...config,
       baseComponents: { base: config.components.form },
@@ -2868,8 +2870,8 @@ describe('conditional response config', () => {
   });
 
   test.each(['local', 'library-internal', 'library-external'])('replaces inherited visibility operators through %s inheritance and materialization', async (source) => {
-    const config = configWithCondition({ responseId: 'attended', equals: 'yes' });
-    const replacement = { responseId: 'attended', notEquals: 'yes' };
+    const config = configWithCondition({ responseId: 'attended', comparison: 'equals', value: 'yes' });
+    const replacement = { responseId: 'attended', comparison: 'doesNotEqual', value: 'yes' };
     const override = configWithCondition(replacement).components.form.response;
     const library = {
       $schema: '',
@@ -2901,7 +2903,7 @@ describe('conditional response config', () => {
   });
 
   test('accepts conditional responses from imported libraries', async () => {
-    const config = configWithCondition({ responseId: 'attended', equals: 'yes' });
+    const config = configWithCondition({ responseId: 'attended', comparison: 'equals', value: 'yes' });
     vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify({
       $schema: '',
       description: 'Conditional response library',

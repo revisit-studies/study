@@ -862,7 +862,7 @@ test('replay treats a location snapshot as authoritative when a controller answe
         id: 'controller', type: 'radio', prompt: '', options: ['yes', 'no'], location: 'sidebar',
       },
       {
-        id: 'dependent', type: 'shortText', prompt: '', visibleIf: { responseId: 'controller', equals: 'yes' },
+        id: 'dependent', type: 'shortText', prompt: '', visibleIf: { responseId: 'controller', comparison: 'equals', value: 'yes' },
       },
     ],
   };
@@ -889,7 +889,7 @@ test('uses restored answers until another location publishes a complete snapshot
         id: 'controller', type: 'radio', prompt: '', options: ['yes', 'no'], location: 'sidebar',
       },
       {
-        id: 'dependent', type: 'shortText', prompt: '', visibleIf: { responseId: 'controller', equals: 'yes' },
+        id: 'dependent', type: 'shortText', prompt: '', visibleIf: { responseId: 'controller', comparison: 'equals', value: 'yes' },
       },
     ],
   };
@@ -919,7 +919,7 @@ test('Check Answer ignores a conditionally hidden correct answer', async () => {
         id: 'controller', type: 'radio', prompt: '', options: ['yes', 'no'], required: false,
       },
       {
-        id: 'dependent', type: 'shortText', prompt: '', visibleIf: { responseId: 'controller', equals: 'yes' },
+        id: 'dependent', type: 'shortText', prompt: '', visibleIf: { responseId: 'controller', comparison: 'equals', value: 'yes' },
       },
     ],
     correctAnswer: [{ id: 'dependent', answer: 'University' }],

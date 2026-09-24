@@ -178,7 +178,7 @@ export function ResponseBlock({
 
   const trialValidation = useStoreSelector((state) => state.trialValidation);
   const analysisProvState = useStoreSelector((state) => state.analysisProvState);
-  const { goToNextStep } = useNextStep(config.response);
+  const { goToNextStep } = useNextStep(config.response, config.correctAnswer);
 
   const studyConfig = useStudyConfig();
 
@@ -300,13 +300,14 @@ export function ResponseBlock({
     allResponsesWithDefaults,
     combinedValues,
     isAnalysis,
+    config.correctAnswer,
   );
   const visibilityValues = { ...combinedValues };
   responses.forEach((response) => responseValueKeys(response).forEach((key) => { delete visibilityValues[key]; }));
   const { visibleIds } = resolveResponseVisibility(allResponsesWithDefaults, {
     ...visibilityValues,
     ...answerValidator.values,
-  });
+  }, {}, config.correctAnswer);
   const applicableResponses = allResponsesWithDefaults.filter((response) => visibleIds.has(response.id));
   useEffect(() => {
     if (isAnalysis) return;
@@ -654,7 +655,7 @@ export function ResponseBlock({
       // The resolved route key is authoritative for legacy records that were
       // persisted without their internal identifier.
       identifier,
-      answer: getPersistedAnswersFromAllLocations(trialValidation[identifier], config.response),
+      answer: getPersistedAnswersFromAllLocations(trialValidation[identifier], config.response, config.correctAnswer),
       checkAnswer: currentCheckAnswer,
     };
 

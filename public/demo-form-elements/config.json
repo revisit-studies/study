@@ -341,7 +341,8 @@
           "required": true,
           "visibleIf": {
             "responseId": "attendedUniversity",
-            "equals": "yes"
+            "comparison": "equals",
+            "value": "yes"
           }
         },
         {
@@ -351,7 +352,8 @@
           "required": true,
           "visibleIf": {
             "responseId": "attendedUniversity",
-            "equals": "yes"
+            "comparison": "equals",
+            "value": "yes"
           }
         },
         {
@@ -379,7 +381,8 @@
           ],
           "visibleIf": {
             "responseId": "attendedUniversity",
-            "equals": "yes"
+            "comparison": "equals",
+            "value": "yes"
           }
         },
         {
@@ -399,7 +402,8 @@
           ],
           "visibleIf": {
             "responseId": "attendedUniversity",
-            "equals": "yes"
+            "comparison": "equals",
+            "value": "yes"
           }
         },
         {
@@ -409,7 +413,8 @@
           "required": true,
           "visibleIf": {
             "responseId": "graduationStatus",
-            "equals": "graduated"
+            "comparison": "equals",
+            "value": "graduated"
           }
         },
         {
@@ -419,7 +424,8 @@
           "required": true,
           "visibleIf": {
             "responseId": "graduationStatus",
-            "equals": "enrolled"
+            "comparison": "equals",
+            "value": "enrolled"
           }
         }
       ],

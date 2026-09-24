@@ -1,6 +1,6 @@
-import isEqual from 'lodash.isequal';
-import type { Response } from '../parser/types';
+import type { Answer, Response } from '../parser/types';
 import type { StoredAnswer } from '../store/types';
+import { compareResponseValues, responseAnswerIsCorrect, shouldIgnoreArrayOrder } from './correctAnswer';
 
 export const visibilityControllerTypes = new Set(['radio', 'dropdown', 'buttons', 'checkbox', 'shortText', 'numerical', 'date']);
 
@@ -18,6 +18,7 @@ export function resolveResponseVisibility(
   responses: Response[],
   values: StoredAnswer['answer'],
   defaults: StoredAnswer['answer'] = {},
+  correctAnswers: Answer[] = [],
 ) {
   const answers = { ...values };
   const byId = new Map(responses.map((response) => [response.id, response]));
@@ -38,11 +39,23 @@ export function resolveResponseVisibility(
       const answered = value !== undefined && value !== null && value !== ''
         && !(Array.isArray(value) && value.length === 0)
         && !answers[`${condition.responseId}-dontKnow`];
-      const expected = 'equals' in condition ? condition.equals : condition.notEquals;
-      const equal = Array.isArray(value) && Array.isArray(expected)
-        ? isEqual([...value].sort(), [...expected].sort())
-        : isEqual(value, expected);
-      visible = visible && answered && ('equals' in condition ? equal : !equal);
+      visible = visible && answered;
+      if (visible) {
+        if (condition.comparison === 'isCorrect') {
+          const correctAnswer = correctAnswers.find((answer) => answer.id === condition.responseId);
+          visible = !!correctAnswer && responseAnswerIsCorrect(
+            value,
+            correctAnswer.answer,
+            correctAnswer.acceptableLow,
+            correctAnswer.acceptableHigh,
+            { ignoreArrayOrder: shouldIgnoreArrayOrder(controller) },
+          ) === condition.value;
+        } else {
+          visible = compareResponseValues(value, condition.value, condition.comparison, {
+            ignoreArrayOrder: true,
+          });
+        }
+      }
       responseValueKeys(response).forEach((key) => {
         if (!visible) delete answers[key];
         else if (answers[key] === undefined && Object.hasOwn(defaults, key)) answers[key] = defaults[key];

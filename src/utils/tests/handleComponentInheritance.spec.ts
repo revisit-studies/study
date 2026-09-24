@@ -49,9 +49,9 @@ describe('getComponent', () => {
 });
 
 test.each<[ResponseVisibilityCondition, ResponseVisibilityCondition]>([
-  [{ responseId: 'control', equals: 'yes' }, { responseId: 'control', notEquals: 'yes' }],
-  [{ responseId: 'control', notEquals: 'yes' }, { responseId: 'control', equals: 'no' }],
-  [{ responseId: 'control', equals: ['a', 'b'] }, { responseId: 'control', equals: ['c'] }],
+  [{ responseId: 'control', comparison: 'equals', value: 'yes' }, { responseId: 'control', comparison: 'doesNotEqual', value: 'yes' }],
+  [{ responseId: 'control', comparison: 'doesNotEqual', value: 'yes' }, { responseId: 'control', comparison: 'equals', value: 'no' }],
+  [{ responseId: 'control', comparison: 'equals', value: ['a', 'b'] }, { responseId: 'control', comparison: 'equals', value: ['c'] }],
 ])('replaces the entire inherited condition %j with %j', (original, replacement) => {
   const base: IndividualComponent = {
     type: 'questionnaire',

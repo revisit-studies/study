@@ -2071,7 +2071,7 @@ describe('conditional form values', () => {
       id: 'attended', type: 'radio', prompt: '', options: ['yes', 'no'], required: true,
     },
     {
-      id: 'name', type: 'shortText', prompt: '', default: 'Default university', required: true, requiredValue: 'Correct university', requiredLabel: 'the university', visibleIf: { responseId: 'attended', equals: 'yes' },
+      id: 'name', type: 'shortText', prompt: '', default: 'Default university', required: true, requiredValue: 'Correct university', requiredLabel: 'the university', visibleIf: { responseId: 'attended', comparison: 'equals', value: 'yes' },
     },
   ];
 
@@ -2118,7 +2118,7 @@ test('hidden custom responses do not invoke their custom validator', () => {
       id: 'controller', type: 'radio', prompt: '', options: ['yes', 'no'],
     },
     {
-      id: 'custom', type: 'custom', prompt: '', path: 'custom.tsx', required: true, visibleIf: { responseId: 'controller', equals: 'yes' },
+      id: 'custom', type: 'custom', prompt: '', path: 'custom.tsx', required: true, visibleIf: { responseId: 'controller', comparison: 'equals', value: 'yes' },
     },
   ];
   const validate = generateValidation(responses, { custom: customValidate });
@@ -2126,4 +2126,30 @@ test('hidden custom responses do not invoke their custom validator', () => {
   expect(customValidate).not.toHaveBeenCalled();
   expect(validate.custom('answer', { controller: 'yes', custom: 'answer' })).toBe('Invalid');
   expect(customValidate).toHaveBeenCalledOnce();
+});
+
+test('isCorrect visibility uses configured answers for live values and required validation', () => {
+  const responses: Response[] = [
+    {
+      id: 'quiz', type: 'radio', prompt: '', options: ['yes', 'no'],
+    },
+    {
+      id: 'explanation',
+      type: 'shortText',
+      prompt: '',
+      required: true,
+      visibleIf: { responseId: 'quiz', comparison: 'isCorrect', value: false },
+    },
+  ];
+  const correctAnswers = [{ id: 'quiz', answer: 'yes' }];
+  const { result } = renderHook(() => useAnswerField(responses, 0, {}, {}, {}, responses, {}, false, correctAnswers));
+  expect(result.current.values).not.toHaveProperty('explanation');
+  act(() => result.current.setFieldValue('quiz', 'no'));
+  expect(result.current.values).toHaveProperty('explanation', '');
+  expect(result.current.isValid()).toBe(false);
+  act(() => result.current.setFieldValue('explanation', 'My reason'));
+  expect(result.current.isValid()).toBe(true);
+  act(() => result.current.setFieldValue('quiz', 'yes'));
+  expect(result.current.values).not.toHaveProperty('explanation');
+  expect(result.current.isValid()).toBe(true);
 });

@@ -117,7 +117,7 @@ test('saved answers omit conditional fields and auxiliary values across location
       id: 'attended', type: 'radio', prompt: '', options: ['yes', 'no'], location: 'aboveStimulus',
     },
     {
-      id: 'university', type: 'radio', prompt: '', options: ['other'], withOther: true, withDontKnow: true, location: 'sidebar', visibleIf: { responseId: 'attended', equals: 'yes' },
+      id: 'university', type: 'radio', prompt: '', options: ['other'], withOther: true, withDontKnow: true, location: 'sidebar', visibleIf: { responseId: 'attended', comparison: 'equals', value: 'yes' },
     },
   ];
   const entry = makeEntry({
@@ -129,4 +129,23 @@ test('saved answers omit conditional fields and auxiliary values across location
   expect(getPersistedAnswersFromAllLocations(entry, responses)).toEqual({
     attended: 'yes', university: 'other', 'university-other': 'old university', 'university-dontKnow': false,
   });
+});
+
+test('persistence evaluates isCorrect using the component answer configuration', () => {
+  const responses: Response[] = [
+    {
+      id: 'quiz', type: 'radio', prompt: '', options: ['yes', 'no'],
+    },
+    {
+      id: 'explanation',
+      type: 'shortText',
+      prompt: '',
+      visibleIf: { responseId: 'quiz', comparison: 'isCorrect', value: false },
+    },
+  ];
+  const correctAnswers = [{ id: 'quiz', answer: 'yes' }];
+  const entry = makeEntry({ belowStimulus: { valid: true, values: { quiz: 'no', explanation: 'My reason' } } });
+  expect(getPersistedAnswersFromAllLocations(entry, responses, correctAnswers)).toEqual({ quiz: 'no', explanation: 'My reason' });
+  entry.belowStimulus.values = { quiz: 'yes', explanation: 'My reason' };
+  expect(getPersistedAnswersFromAllLocations(entry, responses, correctAnswers)).toEqual({ quiz: 'yes' });
 });
