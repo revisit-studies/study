@@ -31,7 +31,7 @@ export function InputLabel({
       }}
     >
       {required && (
-        <Box component="span" className="required-asterisk" ml={-10} style={{ flexShrink: 0 }}>
+        <Box component="span" className="required-asterisk" ml={0} style={{ flexShrink: 0 }}>
           *
         </Box>
       )}
