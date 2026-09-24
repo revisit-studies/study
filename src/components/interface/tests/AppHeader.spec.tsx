@@ -17,6 +17,7 @@ let mockIsAnalysis = false;
 
 let mockedRecordingContext = {
   isScreenRecording: false,
+  isWebcamRecording: false,
   isAudioRecording: false,
   setIsMuted: vi.fn(),
   isMuted: false,
@@ -212,6 +213,7 @@ describe('AppHeader', () => {
     mockedCurrentComponent = 'componentA';
     mockedRecordingContext = {
       isScreenRecording: false,
+      isWebcamRecording: false,
       isAudioRecording: false,
       setIsMuted: vi.fn(),
       isMuted: false,

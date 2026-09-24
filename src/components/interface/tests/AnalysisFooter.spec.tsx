@@ -32,6 +32,7 @@ vi.mock('../../../store/store', () => ({
 
 vi.mock('react-router', () => ({
   useParams: () => ({ studyId: 'test-study' }),
+  useSearchParams: () => [new URLSearchParams(), vi.fn()],
 }));
 
 vi.mock('../../../analysis/individualStudy/thinkAloud/ThinkAloudFooter', () => ({
