@@ -316,7 +316,7 @@
         {
           "id": "conditionalTitle",
           "type": "textOnly",
-          "prompt": "# Conditional Responses\n\nTell us about your university experience. Selecting **Yes** reveals questions about your university and graduation status. Try changing your answers to see how the follow-up questions change."
+          "prompt": "# Conditional Responses\n\nTell us about your university experience. Selecting **Yes** reveals questions about your university and graduation status."
         },
         {
           "id": "attendedUniversity",
@@ -338,6 +338,7 @@
           "id": "universityName",
           "type": "shortText",
           "prompt": "Name of University",
+          "infoText": "Enter University of Utah or WPI to reveal a follow-up question.",
           "required": true,
           "visibleIf": {
             "responseId": "attendedUniversity",
@@ -346,14 +347,14 @@
           }
         },
         {
-          "id": "major",
-          "type": "shortText",
-          "prompt": "Major",
+          "id": "revisitBackground",
+          "type": "longText",
+          "prompt": "How did you hear about reVISit?",
           "required": true,
           "visibleIf": {
-            "responseId": "attendedUniversity",
-            "comparison": "equals",
-            "value": "yes"
+            "responseId": "universityName",
+            "comparison": "matchesRegex",
+            "value": "^(University of Utah|WPI)$"
           }
         },
         {
@@ -410,11 +411,28 @@
           "id": "graduationYear",
           "type": "numerical",
           "prompt": "Graduation year",
+          "infoText": "Enter a year greater than 2020 to reveal a follow-up question.",
           "required": true,
           "visibleIf": {
             "responseId": "graduationStatus",
             "comparison": "equals",
             "value": "graduated"
+          }
+        },
+        {
+          "id": "graduationSemester",
+          "type": "dropdown",
+          "prompt": "In which semester did you graduate?",
+          "required": true,
+          "options": [
+            { "label": "Spring", "value": "spring" },
+            { "label": "Summer", "value": "summer" },
+            { "label": "Fall", "value": "fall" }
+          ],
+          "visibleIf": {
+            "responseId": "graduationYear",
+            "comparison": "greaterThan",
+            "value": 2020
           }
         },
         {

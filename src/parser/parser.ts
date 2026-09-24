@@ -702,18 +702,44 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
         ...component,
       };
 
-      const visibilityResponses = studyComponentToIndividualComponent(component, studyConfig).response ?? [];
+      const visibilityComponent = studyComponentToIndividualComponent(component, studyConfig);
+      const visibilityResponses = visibilityComponent.response ?? [];
       visibilityResponses.forEach((response, index) => {
         if (!response.visibleIf) return;
+        const condition = response.visibleIf;
         const controller = visibilityResponses.find((candidate) => candidate.id === response.visibleIf?.responseId);
         let message: string | undefined;
+        let action = 'Reference a supported response in this component without creating a cycle';
         if (!visibilityConditionValidate(response.visibleIf)) message = 'visibleIf must specify a valid comparison and value';
         else if (!controller) message = 'visibleIf must reference a response in the same component';
         else if (!visibilityControllerTypes.has(controller.type)) message = `visibleIf cannot use a ${controller.type} response as its controller`;
         else {
+          if (['lessThan', 'lessThanOrEqual', 'greaterThan', 'greaterThanOrEqual'].includes(condition.comparison)
+            && controller.type !== 'numerical') {
+            message = `visibleIf ${condition.comparison} requires a numerical controller`;
+            action = 'Reference a numerical response or use a comparison supported by the controller';
+          } else if (['contains', 'doesNotContain', 'matchesRegex'].includes(condition.comparison)) {
+            const isMultiselect = controller.type === 'dropdown'
+              && ((controller.minSelections ?? 0) >= 1 || (controller.maxSelections ?? 0) > 1);
+            if (controller.type === 'numerical' || controller.type === 'checkbox' || isMultiselect) {
+              message = `visibleIf ${condition.comparison} requires a controller with a single string value`;
+              action = 'Reference a shortText, date, radio, buttons, or single-select dropdown response';
+            } else if (condition.comparison === 'matchesRegex') {
+              try {
+                RegExp(condition.value);
+              } catch {
+                message = 'visibleIf matchesRegex value must be a valid regular expression';
+                action = 'Fix the regular expression pattern';
+              }
+            }
+          } else if (condition.comparison === 'isCorrect'
+            && !visibilityComponent.correctAnswer?.some((answer) => answer.id === condition.responseId)) {
+            message = `visibleIf isCorrect requires a correctAnswer for response "${condition.responseId}"`;
+            action = 'Define a correctAnswer for the controlling response in this component';
+          }
           const seen = new Set([response.id]);
           let current: typeof controller | undefined = controller;
-          while (current) {
+          while (current && !message) {
             if (seen.has(current.id)) {
               message = 'visibleIf cannot contain self references or cyclic dependencies';
               break;
@@ -727,7 +753,7 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
           errors.push({
             message,
             instancePath: `/components/${componentName}/response/${index}/visibleIf`,
-            params: { action: 'Reference a supported response in this component without creating a cycle' },
+            params: { action },
             category: 'invalid-config',
           });
         }

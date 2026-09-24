@@ -14,6 +14,7 @@ import { ResponseBlock } from '../ResponseBlock';
 import { generateInitFields, useAnswerField } from '../utils';
 import { makeStoredAnswer } from '../../../tests/utils';
 import { responseAnswerIsCorrect } from '../../../utils/correctAnswer';
+import type * as CorrectAnswerUtils from '../../../utils/correctAnswer';
 
 // ── mocks ────────────────────────────────────────────────────────────────────
 
@@ -143,7 +144,8 @@ vi.mock('../utils', () => ({
   usesStandaloneDontKnowField: vi.fn(() => false),
 }));
 
-vi.mock('../../../utils/correctAnswer', () => ({
+vi.mock('../../../utils/correctAnswer', async (importOriginal) => ({
+  ...await importOriginal<typeof CorrectAnswerUtils>(),
   responseAnswerIsCorrect: vi.fn(() => true),
 }));
 

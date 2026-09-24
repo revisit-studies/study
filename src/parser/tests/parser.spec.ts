@@ -2803,7 +2803,7 @@ describe('React component path validation', () => {
 });
 
 describe('conditional response config', () => {
-  function configWithCondition(condition: object) {
+  function configWithCondition(condition: object, controller: object = { type: 'radio', options: ['yes', 'no'] }) {
     return {
       $schema: '',
       studyMetadata: {
@@ -2817,7 +2817,7 @@ describe('conditional response config', () => {
           type: 'questionnaire',
           response: [
             {
-              id: 'attended', type: 'radio', prompt: '', options: ['yes', 'no'],
+              id: 'attended', prompt: '', ...controller,
             },
             {
               id: 'name', type: 'shortText', prompt: '', visibleIf: condition,
@@ -2850,6 +2850,89 @@ describe('conditional response config', () => {
   ])('rejects invalid condition %j', async (condition) => {
     const result = await parseStudyConfig(JSON.stringify(configWithCondition(condition)));
     expect(result.errors.length).toBeGreaterThan(0);
+  });
+
+  test.each(['lessThan', 'lessThanOrEqual', 'greaterThan', 'greaterThanOrEqual'])('%s accepts numerical controllers and rejects text controllers', async (comparison) => {
+    const condition = { responseId: 'attended', comparison, value: 21 };
+    const valid = await parseStudyConfig(JSON.stringify(configWithCondition(condition, { type: 'numerical' })));
+    expect(valid.errors).toEqual([]);
+    const invalid = await parseStudyConfig(JSON.stringify(configWithCondition(condition, { type: 'shortText' })));
+    expect(invalid.errors).toContainEqual(expect.objectContaining({
+      message: `visibleIf ${comparison} requires a numerical controller`,
+      instancePath: '/components/form/response/1/visibleIf',
+    }));
+  });
+
+  test.each([
+    { type: 'shortText' },
+    { type: 'date' },
+    { type: 'radio', options: ['yes', 'no'] },
+    { type: 'buttons', options: ['yes', 'no'] },
+    { type: 'dropdown', options: ['yes', 'no'] },
+  ])('accepts string comparisons on %j', async (controller) => {
+    const config = configWithCondition({ responseId: 'attended', comparison: 'matchesRegex', value: '^(yes|no)$' }, controller);
+    const result = await parseStudyConfig(JSON.stringify(config));
+    expect(result.errors).toEqual([]);
+  });
+
+  test.each([
+    ['contains', { type: 'numerical' }],
+    ['doesNotContain', { type: 'checkbox', options: ['yes', 'no'] }],
+    ['matchesRegex', { type: 'dropdown', options: ['yes', 'no'], maxSelections: 2 }],
+    ['contains', { type: 'dropdown', options: ['yes', 'no'], minSelections: 1 }],
+  ])('rejects %s on a non-string controller %j', async (comparison, controller) => {
+    const config = configWithCondition({ responseId: 'attended', comparison, value: 'yes' }, controller);
+    const result = await parseStudyConfig(JSON.stringify(config));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: `visibleIf ${comparison} requires a controller with a single string value`,
+    }));
+  });
+
+  test('rejects an invalid visibility regex', async () => {
+    const config = configWithCondition({ responseId: 'attended', comparison: 'matchesRegex', value: '[' });
+    const result = await parseStudyConfig(JSON.stringify(config));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'visibleIf matchesRegex value must be a valid regular expression',
+      instancePath: '/components/form/response/1/visibleIf',
+      params: { action: 'Fix the regular expression pattern' },
+    }));
+  });
+
+  test.each([true, false])('isCorrect=%s requires a matching correctAnswer', async (value) => {
+    const config = configWithCondition({ responseId: 'attended', comparison: 'isCorrect', value });
+    const valid = await parseStudyConfig(JSON.stringify({
+      ...config,
+      components: { form: { ...config.components.form, correctAnswer: [{ id: 'attended', answer: 'yes' }] } },
+    }));
+    expect(valid.errors).toEqual([]);
+    const missing = await parseStudyConfig(JSON.stringify(config));
+    expect(missing.errors).toContainEqual(expect.objectContaining({
+      message: 'visibleIf isCorrect requires a correctAnswer for response "attended"',
+    }));
+    const wrongId = await parseStudyConfig(JSON.stringify({
+      ...config,
+      components: { form: { ...config.components.form, correctAnswer: [{ id: 'name', answer: 'yes' }] } },
+    }));
+    expect(wrongId.errors).toContainEqual(expect.objectContaining({
+      message: 'visibleIf isCorrect requires a correctAnswer for response "attended"',
+    }));
+  });
+
+  test.each(['local', 'library'])('isCorrect accepts a correctAnswer inherited from a %s base', async (source) => {
+    const config = configWithCondition({ responseId: 'attended', comparison: 'isCorrect', value: true });
+    const base = { ...config.components.form, correctAnswer: [{ id: 'attended', answer: 'yes' }] };
+    if (source === 'library') {
+      vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify({
+        $schema: '', description: 'Correctness conditions', components: { form: base }, sequences: {},
+      })));
+    }
+    const result = await parseStudyConfig(JSON.stringify({
+      ...config,
+      baseComponents: source === 'local' ? { base } : undefined,
+      importedLibraries: source === 'library' ? ['conditional'] : [],
+      components: { form: { baseComponent: source === 'local' ? 'base' : '$conditional.components.form' } },
+    }));
+    expect(result.errors).toEqual([]);
   });
 
   test('rejects cyclic dependencies', async () => {
