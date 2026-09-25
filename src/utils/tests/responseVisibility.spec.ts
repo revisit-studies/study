@@ -78,11 +78,26 @@ describe('conditional response visibility', () => {
   });
 
   test('textOnly and divider can be conditional; dontKnow does not reveal dependents', () => {
-    const fields: Response[] = [responses[0], {
+    const fields: Response[] = [{
+      id: 'attended', type: 'radio', prompt: '', options: ['yes', 'no'], withDontKnow: true,
+    }, {
       id: 'text', type: 'textOnly', prompt: '', visibleIf: { responseId: 'attended', comparison: 'equals', value: 'yes' },
     }, { id: 'divider', type: 'divider', visibleIf: { responseId: 'attended', comparison: 'equals', value: 'yes' } }];
     expect([...resolveResponseVisibility(fields, { attended: 'yes' }).visibleIds]).toEqual(['attended', 'text', 'divider']);
     expect([...resolveResponseVisibility(fields, { attended: 'yes', 'attended-dontKnow': true }).visibleIds]).toEqual(['attended']);
+  });
+
+  test('a separate response ending in -dontKnow does not hide dependents', () => {
+    const fields: Response[] = [
+      responses[0],
+      { id: 'attended-dontKnow', type: 'shortText', prompt: '' },
+      responses[1],
+    ];
+    const result = resolveResponseVisibility(fields, {
+      attended: 'yes', 'attended-dontKnow': 'A separate answer', name: 'University',
+    });
+    expect(result.visibleIds.has('name')).toBe(true);
+    expect(result.answers.name).toBe('University');
   });
 });
 
@@ -98,7 +113,20 @@ describe('comparison conditions', () => {
     ];
     expect(resolveResponseVisibility(fields, { age }).visibleIds.has('name')).toBe(visible);
     expect(resolveResponseVisibility(fields, {}).visibleIds.has('name')).toBe(false);
-    expect(resolveResponseVisibility(fields, { age: '20' }).visibleIds.has('name')).toBe(false);
+    expect(resolveResponseVisibility(fields, { age: String(age) }).visibleIds.has('name')).toBe(visible);
+    expect(resolveResponseVisibility(fields, { age: 'invalid' }).visibleIds.has('name')).toBe(false);
+  });
+
+  test('compares captured numerical strings with numeric equality values', () => {
+    const fields: Response[] = [
+      {
+        id: 'age', type: 'numerical', prompt: '', paramCapture: 'age',
+      },
+      { ...responses[1], visibleIf: { responseId: 'age', comparison: 'equals', value: 21 } },
+    ];
+    expect(resolveResponseVisibility(fields, { age: '21' }).visibleIds.has('name')).toBe(true);
+    fields[1].visibleIf = { responseId: 'age', comparison: 'doesNotEqual', value: 21 };
+    expect(resolveResponseVisibility(fields, { age: 'invalid' }).visibleIds.has('name')).toBe(false);
   });
 
   test.each([

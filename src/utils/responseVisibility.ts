@@ -36,10 +36,13 @@ export function resolveResponseVisibility(
     if (condition) {
       const controller = byId.get(condition.responseId);
       visible = !!controller && visit(controller);
-      const value = answers[condition.responseId];
+      const storedValue = answers[condition.responseId];
+      const value = controller?.type === 'numerical' && typeof storedValue === 'string' && storedValue.trim() !== ''
+        ? Number(storedValue) : storedValue;
       const answered = value !== undefined && value !== null && value !== ''
         && !(Array.isArray(value) && value.length === 0)
-        && !answers[`${condition.responseId}-dontKnow`];
+        && (controller?.type !== 'numerical' || (typeof value === 'number' && Number.isFinite(value)))
+        && !(controller && usesStandaloneDontKnowField(controller) && answers[`${condition.responseId}-dontKnow`]);
       visible = visible && answered;
       if (visible) {
         if (condition.comparison === 'isCorrect') {
