@@ -340,7 +340,7 @@
     },
     "survey-form": {
       "type": "image",
-      "path": "revisitAssets/googleFormExampleHeader.jpg",
+      "path": "demo-style/assets/utah.jpg",
       "stylesheetPath": "revisitAssets/googleForm.css",
       "response": [
         {

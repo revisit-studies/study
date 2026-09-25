@@ -15,7 +15,7 @@ Load custom CSS files for comprehensive styling:
 }
 ```
 
-The survey form and Shared Form Style pages use the same `revisitAssets/googleForm.css` stylesheet. The second page shows different response IDs, a section divider, and no header image. Other studies can reference the stylesheet on a component and optionally use an image from `revisitAssets/` as a header.
+The survey form and Shared Form Style pages use the same `revisitAssets/googleForm.css` stylesheet. The second page shows different response IDs, a section divider, and no header image. Other studies can reference the stylesheet on a component and optionally provide their own header image.
 
 ### 2. Inline Styles (`style`)
 Apply specific styling directly to components or responses:
