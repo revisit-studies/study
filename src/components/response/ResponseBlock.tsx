@@ -714,10 +714,10 @@ export function ResponseBlock({
           const isInCurrentLocation = responses.some((r) => r.id === response.id);
 
           if (isInCurrentLocation) {
-            // Increment index for each response, unless it is a textOnly response
-            if (response.type !== 'textOnly') {
+            // Text and divider responses do not represent numbered questions.
+            if (response.type !== 'textOnly' && response.type !== 'divider') {
               index += 1;
-            } else if (response.restartEnumeration) {
+            } else if (response.type === 'textOnly' && response.restartEnumeration) {
               index = 0;
             }
           }

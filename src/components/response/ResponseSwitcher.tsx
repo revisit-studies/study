@@ -256,7 +256,7 @@ export function ResponseSwitcher({
   }
 
   return (
-    <Box mb={responseDividers ? 'xl' : 'lg'} className="response" data-answer-width={getResponseWidth(response)} id={response.id} style={responseWrapperStyle}>
+    <Box mb={responseDividers ? 'xl' : 'lg'} className={`response response--${response.type}`} data-answer-width={getResponseWidth(response)} id={response.id} style={responseWrapperStyle}>
       {response.type === 'numerical' && (
       <NumericInput
         response={withTemplatedFields(response)}
