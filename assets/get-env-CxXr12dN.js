@@ -1,0 +1,1 @@
+function e(e,t,n){return t===void 0&&n===void 0?e:t!==void 0&&n===void 0?Math.max(e,t):Math.min(t===void 0&&n!==void 0?e:Math.max(e,t),n)}function t(){return typeof process<`u`?`production`:`development`}export{e as n,t};

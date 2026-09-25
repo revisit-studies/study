@@ -1,0 +1,1 @@
+import{o as e}from"./rolldown-runtime-C0FnF6B9.js";import{t}from"./react-IpA8Qn9U.js";import{t as n}from"./jsx-runtime-CA2T8_y1.js";n();var r=e(t(),1),i=(0,r.createContext)({dir:`ltr`,toggleDirection:()=>{},setDirection:()=>{}});function a(){return(0,r.useContext)(i)}export{a as t};

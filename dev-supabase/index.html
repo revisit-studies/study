@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/study/dev-supabase/revisitAssets/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ReVISit</title>
+
+    <!-- Required for react browser router on GitHub pages -->
+    <script type="text/javascript">
+      // Single Page Apps for GitHub Pages
+      // MIT License
+      // https://github.com/rafgraph/spa-github-pages
+      // This script checks to see if a redirect is present in the query string,
+      // converts it back into the correct url and adds it to the // browser's history using window.history.replaceState(...),
+      // which won't cause the browser to attempt to load the new url.
+      // When the single page app is loaded further down in this file,
+      // the correct url will be waiting in the browser's history for
+      // the single page app to route accordingly.
+      (function(l) {
+        if (l.search[1] === '/' ) {
+          var decoded = l.search.slice(1).split('&').map(function(s) { 
+            return s.replace(/~and~/g, '&')
+          }).join('?');
+          window.history.replaceState(null, null,
+              l.pathname.slice(0, -1) + decoded + l.hash
+          );
+        }
+      }(window.location))
+    </script>
+
+    <script type="module" crossorigin src="/study/dev-supabase/assets/index-wd5Wn6X_.js"></script>
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/rolldown-runtime-C0FnF6B9.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/react-C21x__mS.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/react-dom-BddMPX6d.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/clamp-BVhf2JRQ.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/use-id-DNOlRwW-.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/to-int-BUxqyWcn.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/clsx-DB0hHKMi.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/jsx-runtime-BdxMnOeJ.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/Box-AQKwppQo.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/Transition-kpOefR2n.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/use-merged-ref-DALjXO0h.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/use-uncontrolled-D6JyaPJK.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/colors-Cg5Vh3br.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/Tableau10-DoRnRkZL.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/create-safe-context-DyY1EXuR.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/get-size-BVVAmeRH.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/get-env-MimdSsZv.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/get-contrast-color-DL2EAPhG.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/DirectionProvider-BP370mPs.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/Group-DJrtPWaK.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/Text-zt3Q-hii.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/UnstyledButton-D2hdmYWb.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/Loader-BgsKuun1.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/Button-nt9UpmV4.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/Stack-N3UaHIQu.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/value-DZLSVLrJ.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/defaultLocale-xNPunHPA.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/init-ZlXS9mIS.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/linear-CjRz_khA.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/extent-V-JVJWfI.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/ordinal-BdBDtYTt.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/select-9NOwYGpe.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/timer-D012sKj0.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/src-Dv7b162y.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/nice--vROP43K.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/defaultLocale-CHENtpTV.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/time-DwISxEuf.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/floating-ui.react-DllRWkub.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/Tooltip-RWyRqmZg.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/Center-BBZGKhxX.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/XAxisBar-CpEJcNWG.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/YAxis-BTzecvNY.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/Paintbrush-xiC0fhXR.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/Scatter-CnNr9utm.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/Input-FA3Oe160.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/Radio-C6KzjVZs.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/Paper-CFySPFKj.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/Alert-CtRhTOr4.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/Badge-D5r4Putq.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/InputBase-DffbY0sv.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/Textarea-DI1mIODV.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/Title-C5z4WmNX.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/DataSerializationTask-OSV7VQg3.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/VLAT9-DtkNMGDy.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/tslib.es6-BmVIhgZL.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/Flex-Jepry8ol.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/Prefix-xJELgy4X.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/feature-BywtEtBB.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/max-Db0q5_zr.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/range-EplFIxc7.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/array-Dp7h8rVn.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/arc-BDBMB5R8.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/dsv-BSut97vP.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/dsv-tOojWCBj.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/pack-CZLU_OkB.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/band-D9osr4BM.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/axis-DfTJZREU.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/mapUtils-DNBZ30wA.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/core-DrGgzIQk.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/trrack-tdAyBrRF.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/vlatQ-CfRPDrcR.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/YAxisBar-novNzKg0.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/Bar-B4RLdnvP.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/BrushPlot-BQFgcg6e.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/useChartDimensions-BrG8hkTM.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/Bars-JZUFxnUP.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/NumericAxisV-Cv8SiAcX.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/OrdinalAxisHWithDotMarks-DCyXOaxM.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/Bubbles-X-NFH3qT.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/DotMarks-fvBUsFz6.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/CorrelationPlot-CoN-lInG.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/Comparison-BRCop9yK.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/utils-BH3kYm3x.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/BrushPlotWrapper-DHudpeEC.js">
+    <link rel="modulepreload" crossorigin href="/study/dev-supabase/assets/Scatter-DYs_3SbP.js">
+    <link rel="stylesheet" crossorigin href="/study/dev-supabase/assets/index-DecLK-zB.css">
+  </head>
+  <body style="margin: 0;">
+    <style>
+      /* Global style overrides */
+      .no-last-child-bottom-padding > *:last-child {
+        padding-bottom: 0 !important;
+      }
+
+      .no-last-child-bottom-padding {
+        font-weight: 500;
+      }
+
+      .required-asterisk {
+        color: var(--mantine-color-red-text);
+        margin-left: 4px;
+      }
+    </style>
+
+    <div id="root"></div>
+  </body>
+</html>

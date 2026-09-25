@@ -1,0 +1,47 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Markdown Templating with Factors",
+    "version": "pilot",
+    "authors": ["The reVISit Team"],
+    "date": "2026-08-21",
+    "description": "A minimal demo of rendering factor values in a Markdown stimulus with Handlebars templates.",
+    "organizations": ["University of Utah", "WPI", "University of Toronto"]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": false,
+    "windowEventDebounceTime": 200
+  },
+  "baseComponents": {
+    "factorTemplate": {
+      "type": "markdown",
+      "path": "demo-markdown-factors/assets/factor-template.md",
+      "description": "Animal: {{animal}}; color: {{color}}",
+      "response": []
+    }
+  },
+  "components": {},
+  "factors": {
+    "animal": ["cat", "dog"],
+    "color": ["blue", "orange"],
+    "animalColor": {
+      "action": "cross",
+      "factors": ["animal", "color"]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      {
+        "type": "factor",
+        "id": "markdownFactorTrials",
+        "factor": "animalColor",
+        "components": "factorTemplate"
+      }
+    ]
+  }
+}

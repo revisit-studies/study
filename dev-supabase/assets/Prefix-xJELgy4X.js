@@ -1,0 +1,1 @@
+var e=`/study/dev-supabase/`;export{e as t};
