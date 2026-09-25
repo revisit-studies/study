@@ -6,9 +6,11 @@ import {
   ROOT_KEY,
   buildProvenanceLegendEntries,
   getColorForKey,
+  getNodeColor,
   getNodeColorKey,
   normalizeActionName,
 } from '../provenanceColors';
+import { FACE_BUTTONS, FACE_BUTTON_COLORS, gamepadPressActionType } from '../../../utils/gamepadButtons';
 
 function createGraph(nodes: TrrackedProvenance['nodes'], root: string): TrrackedProvenance {
   return {
@@ -148,5 +150,58 @@ describe('provenanceColors', () => {
     const legendEntries = buildProvenanceLegendEntries([graphA, graphB]);
     expect(legendEntries.size).toBe(2);
     expect(legendEntries.get('signal setzoom')?.color).toBe(getColorForKey('signal setzoom'));
+  });
+});
+
+describe('gamepad provenance colors', () => {
+  function pressNode(actionType: string): TrrackedProvenance['nodes'][string] {
+    return {
+      id: 'n1',
+      label: 'Pressed something',
+      createdOn: 1,
+      artifacts: [],
+      meta: { annotation: [], bookmark: [] },
+      children: [],
+      state: { type: 'checkpoint', val: {} },
+      level: 1,
+      event: 'press',
+      parent: 'root',
+      sideEffects: { do: [{ type: actionType }], undo: [] },
+    } as TrrackedProvenance['nodes'][string];
+  }
+
+  test('a face-button press is colored with that button, not a hashed color', () => {
+    FACE_BUTTONS.forEach((button) => {
+      const node = pressNode(gamepadPressActionType(button));
+      expect(getNodeColor(node)).toBe(FACE_BUTTON_COLORS[button]);
+    });
+  });
+
+  test('every face button gets a distinct color', () => {
+    const colors = FACE_BUTTONS.map((button) => FACE_BUTTON_COLORS[button]);
+    expect(new Set(colors).size).toBe(FACE_BUTTONS.length);
+  });
+
+  test('the override survives the action-name normalization used for lookup', () => {
+    expect(getColorForKey(normalizeActionName('Gamepad-Press-X'))).toBe(FACE_BUTTON_COLORS.X);
+  });
+
+  test('other gamepad actions still fall back to a hashed color', () => {
+    const node = pressNode('gamepad-spawn-target');
+    const color = getNodeColor(node);
+    expect(color).toMatch(/^hsl\(/);
+    expect(Object.values(FACE_BUTTON_COLORS)).not.toContain(color);
+  });
+
+  test('the legend reports button colors alongside their labels', () => {
+    const graph = createGraph({
+      root: {
+        id: 'root', label: 'Root', createdOn: 0, artifacts: [], meta: { annotation: [], bookmark: [] }, children: [], state: { type: 'checkpoint', val: {} }, level: 0, event: 'Root',
+      } as TrrackedProvenance['nodes'][string],
+      n1: pressNode(gamepadPressActionType('B')),
+    }, 'root');
+
+    const legendEntries = buildProvenanceLegendEntries([graph]);
+    expect(legendEntries.get('gamepad press b')?.color).toBe(FACE_BUTTON_COLORS.B);
   });
 });
