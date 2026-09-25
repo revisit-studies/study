@@ -10,6 +10,10 @@
     outline-offset: -2px;
   }
 
+  &[data-checked]:focus-visible {
+    outline-color: var(--mantine-color-white);
+  }
+
   &[data-checked] {
     background-color: var(--mantine-color-blue-filled);
     color: var(--mantine-color-white);
