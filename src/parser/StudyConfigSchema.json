@@ -36,6 +36,10 @@
             "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
             "type": "boolean"
           },
+          "captureGamepad": {
+            "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
+            "type": "boolean"
+          },
           "clickToRecord": {
             "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
             "type": "boolean"
@@ -1435,6 +1439,10 @@
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
           "type": "boolean"
         },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
+          "type": "boolean"
+        },
         "clickToRecord": {
           "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
@@ -1714,6 +1722,10 @@
         },
         "baseComponent": {
           "type": "string"
+        },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
+          "type": "boolean"
         },
         "clickToRecord": {
           "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
@@ -2231,6 +2243,10 @@
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
           "type": "boolean"
         },
         "clickToRecord": {
@@ -2890,6 +2906,10 @@
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
           "type": "boolean"
         },
         "clickToRecord": {
@@ -3561,6 +3581,10 @@
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
           "type": "boolean"
         },
         "clickToRecord": {
@@ -4696,6 +4720,10 @@
           "description": "The time in milliseconds to wait before automatically downloading the study data.",
           "type": "number"
         },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If true, gamepad button and axis events are recorded on all components unless deactivated on individual components. Defaults to false. Browsers do not expose a gamepad to the page until the participant presses a button on it, so nothing is captured before that first press.",
+          "type": "boolean"
+        },
         "clickToRecord": {
           "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
@@ -4901,6 +4929,10 @@
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
           "type": "boolean"
         },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
+          "type": "boolean"
+        },
         "clickToRecord": {
           "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
@@ -5085,6 +5117,10 @@
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
           "type": "boolean"
         },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
+          "type": "boolean"
+        },
         "clickToRecord": {
           "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
@@ -5267,6 +5303,10 @@
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
           "type": "boolean"
         },
         "clickToRecord": {
@@ -5455,6 +5495,10 @@
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
           "type": "boolean"
         },
         "clickToRecord": {

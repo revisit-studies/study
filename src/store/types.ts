@@ -45,7 +45,13 @@ type MouseMoveEvent = [number, 'mousemove', number[]];
 type ResizeEvent = [number, 'resize', number[]];
 type ScrollEvent = [number, 'scroll', number[]];
 type VisibilityEvent = [number, 'visibility', string];
-export type EventType = MouseMoveEvent | MouseDownEvent | MouseUpEvent | KeydownEvent | KeyupEvent | ScrollEvent | FocusEvent | InputEvent | ResizeEvent | VisibilityEvent;
+// Gamepad input is polled rather than delivered as DOM events, so these timestamps
+// mark when the poll observed the change, within one animation frame of the press.
+type GamepadConnectionEvent = [number, 'gamepadconnection', string];
+type GamepadButtonDownEvent = [number, 'gamepadbuttondown', string];
+type GamepadButtonUpEvent = [number, 'gamepadbuttonup', string];
+type GamepadAxisEvent = [number, 'gamepadaxis', number[]];
+export type EventType = MouseMoveEvent | MouseDownEvent | MouseUpEvent | KeydownEvent | KeyupEvent | ScrollEvent | FocusEvent | InputEvent | ResizeEvent | VisibilityEvent | GamepadConnectionEvent | GamepadButtonDownEvent | GamepadButtonUpEvent | GamepadAxisEvent;
 
 export type ValidationStatus = {
   valid: boolean;
@@ -102,7 +108,7 @@ export interface StoredAnswer {
   /** Time that the user ended interaction with the component in epoch milliseconds. */
   endTime: number;
   /**
-   * A list containing the time (in epoch milliseconds), the action (focus, input, keypress, mousedown, mouseup, mousemove, resize, scroll or visibility), and then either a coordinate pertaining to where the event took place on the screen or string related to such event. Below is an example of the windowEvents list.
+   * A list containing the time (in epoch milliseconds), the action (focus, input, keypress, mousedown, mouseup, mousemove, resize, scroll, visibility, gamepadconnection, gamepadbuttondown, gamepadbuttonup or gamepadaxis), and then either a coordinate pertaining to where the event took place on the screen or string related to such event. Below is an example of the windowEvents list.
    *
    * ```json
    * "windowEvents": [

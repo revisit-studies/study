@@ -247,6 +247,10 @@ function participantDataToRows(
           resize: trialAnswer.windowEvents.filter((event) => event[1] === 'resize').length,
           scroll: trialAnswer.windowEvents.filter((event) => event[1] === 'scroll').length,
           visibility: trialAnswer.windowEvents.filter((event) => event[1] === 'visibility').length,
+          gamepadconnection: trialAnswer.windowEvents.filter((event) => event[1] === 'gamepadconnection').length,
+          gamepadbuttondown: trialAnswer.windowEvents.filter((event) => event[1] === 'gamepadbuttondown').length,
+          gamepadbuttonup: trialAnswer.windowEvents.filter((event) => event[1] === 'gamepadbuttonup').length,
+          gamepadaxis: trialAnswer.windowEvents.filter((event) => event[1] === 'gamepadaxis').length,
         };
 
         // Add a window events count row for each component
