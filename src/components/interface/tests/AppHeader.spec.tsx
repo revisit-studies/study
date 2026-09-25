@@ -14,6 +14,7 @@ import { getNewParticipant } from '../../../utils/nextParticipant';
 let mockStorageEngineFailedToConnect = false;
 let mockedCurrentComponent = 'componentA';
 let mockIsAnalysis = false;
+let mockComponentHelpTextPath: string | undefined;
 
 let mockedRecordingContext = {
   isScreenRecording: false,
@@ -40,6 +41,7 @@ const mockStudyConfig = {
     withProgressBar: false,
     showTitle: true,
     contactEmail: 'test@test.com',
+    helpTextPath: undefined as string | undefined,
   },
   components: {},
   sequences: {},
@@ -147,6 +149,7 @@ vi.mock('../../../utils/handleComponentInheritance', () => ({
   studyComponentToIndividualComponent: vi.fn(() => ({
     withProgressBar: false,
     showTitle: true,
+    helpTextPath: mockComponentHelpTextPath,
   })),
 }));
 
@@ -211,6 +214,8 @@ describe('AppHeader', () => {
     mockStorageEngineFailedToConnect = false;
     mockIsAnalysis = false;
     mockedCurrentComponent = 'componentA';
+    mockComponentHelpTextPath = undefined;
+    mockStudyConfig.uiConfig.helpTextPath = undefined;
     mockedRecordingContext = {
       isScreenRecording: false,
       isWebcamRecording: false,
@@ -238,6 +243,20 @@ describe('AppHeader', () => {
     expect(html.length).toBeGreaterThan(0);
     // No "Demo Mode" badge when data collection is enabled
     expect(html).not.toContain('Demo Mode');
+  });
+
+  test.each([
+    ['component only', 'component-help.md', undefined, true],
+    ['global only', undefined, 'global-help.md', true],
+    ['both', 'component-help.md', 'global-help.md', true],
+    ['neither', undefined, undefined, false],
+  ])('shows Help when configured for %s', (_case, componentPath, globalPath, visible) => {
+    mockComponentHelpTextPath = componentPath;
+    mockStudyConfig.uiConfig.helpTextPath = globalPath;
+
+    const html = renderToStaticMarkup(<AppHeader developmentModeEnabled={false} dataCollectionEnabled />);
+
+    expect(html.includes('>Help</button>')).toBe(visible);
   });
 
   test('shows study browser and analyze links in development mode', () => {
