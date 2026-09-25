@@ -24,7 +24,7 @@ import { TimelineMode } from '../replay/timelineLayout';
 import { youtubeReadableDuration } from '../../../utils/humanReadableDuration';
 import { getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
 import { MetaCell } from './MetaCell';
-import { componentAnswersAreCorrect } from '../../../utils/correctAnswer';
+import { componentAnswersAreCorrect } from '../../../utils/componentCorrectness';
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 
 function formatDate(date: Date): JSX.Element {
@@ -219,14 +219,16 @@ export function TableView({
         accessorFn: (row: ParticipantDataWithStatus) => Object.values(row.answers)
           .filter((answer) => (answer.correctAnswer?.length ?? 0) > 0 && answer.endTime > 0)
           .map((answer) => {
-            const componentConfig = studyConfig.components[answer.componentName];
-            const component = componentConfig ? studyComponentToIndividualComponent(componentConfig, studyConfig) : undefined;
+            const participantConfig = row.participantConfigHash ? allConfigs[row.participantConfigHash] : studyConfig;
+            if (!participantConfig) return null;
+            const componentConfig = participantConfig.components[answer.componentName];
+            const component = componentConfig ? studyComponentToIndividualComponent(componentConfig, participantConfig) : undefined;
 
             return componentAnswersAreCorrect(answer.answer, answer.correctAnswer, component?.response);
           }),
         header: 'Correct Answers',
         size: 160,
-        Cell: ({ cell }: { cell: MrtCell<ParticipantDataWithStatus, boolean[]> }) => (
+        Cell: ({ cell }: { cell: MrtCell<ParticipantDataWithStatus, (boolean | null)[]> }) => (
           <Group gap={4}>
             <Badge
               variant="light"
@@ -245,8 +247,13 @@ export function TableView({
               pb={1}
             >
 
-              {cell.getValue().length - cell.getValue().filter((b) => b).length}
+              {cell.getValue().filter((value) => value === false).length}
             </Badge>
+            {cell.getValue().includes(null) && (
+              <Badge color="gray" variant="light">
+                {`${cell.getValue().filter((value) => value === null).length} unknown`}
+              </Badge>
+            )}
           </Group>
         ),
       },
@@ -257,7 +264,7 @@ export function TableView({
         Cell: ({ cell }: { cell: MrtCell<ParticipantDataWithStatus, ParticipantDataWithStatus['metadata']> }) => <MetaCell metaData={cell.getValue()} />,
       },
     ];
-  }, [studyConfig, stageColors, copied, visibleParticipants]);
+  }, [studyConfig, allConfigs, stageColors, copied, visibleParticipants]);
 
   const table = useMantineReactTable({
     columns,
@@ -287,6 +294,10 @@ export function TableView({
 
       if (!r.participantId) {
         return null;
+      }
+
+      if (r.participantConfigHash && !allConfigs[r.participantConfigHash]) {
+        return <Text>Participant configuration unavailable. Replay correctness is unknown.</Text>;
       }
 
       return (

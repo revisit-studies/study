@@ -310,6 +310,145 @@
         }
       ]
     },
+    "Conditional Responses": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "conditionalTitle",
+          "type": "textOnly",
+          "prompt": "# Conditional Responses\n\nTell us about your university experience. Selecting **Yes** reveals questions about your university and graduation status."
+        },
+        {
+          "id": "attendedUniversity",
+          "type": "radio",
+          "prompt": "Did you attend university?",
+          "required": true,
+          "options": [
+            {
+              "label": "Yes",
+              "value": "yes"
+            },
+            {
+              "label": "No",
+              "value": "no"
+            }
+          ]
+        },
+        {
+          "id": "universityName",
+          "type": "shortText",
+          "prompt": "Name of University",
+          "infoText": "Enter University of Utah or WPI to reveal a follow-up question.",
+          "required": true,
+          "visibleIf": {
+            "responseId": "attendedUniversity",
+            "comparison": "equals",
+            "value": "yes"
+          }
+        },
+        {
+          "id": "revisitBackground",
+          "type": "longText",
+          "prompt": "How did you hear about reVISit?",
+          "required": true,
+          "visibleIf": {
+            "responseId": "universityName",
+            "comparison": "matchesRegex",
+            "value": "^(University of Utah|WPI)$"
+          }
+        },
+        {
+          "id": "degreeProgram",
+          "type": "dropdown",
+          "prompt": "Degree program",
+          "required": true,
+          "options": [
+            {
+              "label": "Bachelor's degree",
+              "value": "bachelor"
+            },
+            {
+              "label": "Master's degree",
+              "value": "master"
+            },
+            {
+              "label": "Doctoral degree",
+              "value": "doctoral"
+            },
+            {
+              "label": "Other",
+              "value": "other"
+            }
+          ],
+          "visibleIf": {
+            "responseId": "attendedUniversity",
+            "comparison": "equals",
+            "value": "yes"
+          }
+        },
+        {
+          "id": "graduationStatus",
+          "type": "radio",
+          "prompt": "What is your graduation status?",
+          "required": true,
+          "options": [
+            {
+              "label": "Graduated",
+              "value": "graduated"
+            },
+            {
+              "label": "Currently enrolled",
+              "value": "enrolled"
+            }
+          ],
+          "visibleIf": {
+            "responseId": "attendedUniversity",
+            "comparison": "equals",
+            "value": "yes"
+          }
+        },
+        {
+          "id": "graduationYear",
+          "type": "numerical",
+          "prompt": "Graduation year",
+          "infoText": "Enter a year greater than 2020 to reveal a follow-up question.",
+          "required": true,
+          "visibleIf": {
+            "responseId": "graduationStatus",
+            "comparison": "equals",
+            "value": "graduated"
+          }
+        },
+        {
+          "id": "graduationSemester",
+          "type": "dropdown",
+          "prompt": "In which semester did you graduate?",
+          "required": true,
+          "options": [
+            { "label": "Spring", "value": "spring" },
+            { "label": "Summer", "value": "summer" },
+            { "label": "Fall", "value": "fall" }
+          ],
+          "visibleIf": {
+            "responseId": "graduationYear",
+            "comparison": "greaterThan",
+            "value": 2020
+          }
+        },
+        {
+          "id": "expectedGraduationYear",
+          "type": "numerical",
+          "prompt": "Expected graduation year",
+          "required": true,
+          "visibleIf": {
+            "responseId": "graduationStatus",
+            "comparison": "equals",
+            "value": "enrolled"
+          }
+        }
+      ],
+      "withSidebar": false
+    },
     "Next Button Alignment": {
       "type": "questionnaire",
       "nextButtonAlignment": "left",
@@ -1228,6 +1367,7 @@
     "components": [
       "Introduction",
       "Form Elements",
+      "Conditional Responses",
       "Next Button Alignment",
       "Text Validation",
       "Default Values",

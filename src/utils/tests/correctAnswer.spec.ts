@@ -4,8 +4,10 @@ import {
 } from '../../parser/types';
 import { makeStoredAnswer } from '../../tests/utils';
 import {
-  componentAnswersAreCorrect, getComponentAnswerStatus, responseAnswerIsCorrect,
+  compareResponseValues, responseAnswerIsCorrect,
 } from '../correctAnswer';
+
+import { componentAnswersAreCorrect, getComponentAnswerStatus } from '../componentCorrectness';
 
 type TestStoredAnswer = StoredAnswer['answer'][string];
 type TestCorrectAnswer = Answer['answer'];
@@ -271,4 +273,31 @@ describe('correctAnswer utilities', () => {
       )).toBe('incorrect');
     });
   });
+});
+
+test('equality preserves numeric-looking text and value types', () => {
+  expect(compareResponseValues('01', '1', 'equals')).toBe(false);
+  expect(compareResponseValues('21', 21, 'equals')).toBe(false);
+  expect(compareResponseValues('01', '1', 'doesNotEqual')).toBe(true);
+  expect(compareResponseValues('01', '01', 'equals')).toBe(true);
+});
+
+test('array equality ignores order only when requested', () => {
+  expect(compareResponseValues(['a', 'b'], ['b', 'a'], 'equals')).toBe(false);
+  expect(compareResponseValues(['a', 'b'], ['b', 'a'], 'equals', { ignoreArrayOrder: true })).toBe(true);
+  expect(compareResponseValues(['a'], ['a', 'b'], 'equals', { ignoreArrayOrder: true })).toBe(false);
+});
+
+test('numeric comparisons reject non-numeric and non-finite values', () => {
+  expect(compareResponseValues('20', 21, 'lessThan')).toBe(false);
+  expect(compareResponseValues(null, 21, 'lessThan')).toBe(false);
+  expect(compareResponseValues(Infinity, 21, 'greaterThan')).toBe(false);
+  expect(compareResponseValues(20, 21, 'lessThan')).toBe(true);
+});
+
+test('text comparisons do not convert non-string inputs', () => {
+  expect(compareResponseValues(21, '2', 'contains')).toBe(false);
+  expect(compareResponseValues('21', '2', 'contains')).toBe(true);
+  expect(compareResponseValues('21', '^2', 'matchesRegex')).toBe(true);
+  expect(compareResponseValues('21', '[', 'matchesRegex')).toBe(false);
 });

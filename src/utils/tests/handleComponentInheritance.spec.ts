@@ -1,7 +1,7 @@
 import {
   describe, expect, test, vi,
 } from 'vitest';
-import type { IndividualComponent, InheritedComponent } from '../../parser/types';
+import type { IndividualComponent, InheritedComponent, ResponseVisibilityCondition } from '../../parser/types';
 import { getComponent, studyComponentToIndividualComponent } from '../handleComponentInheritance';
 import { makeStudyConfig } from '../../tests/utils';
 
@@ -46,4 +46,30 @@ describe('getComponent', () => {
     const config = makeStudyConfig({ components: { intro: comp } });
     expect(getComponent('intro', config)).toEqual(comp);
   });
+});
+
+test.each<[ResponseVisibilityCondition, ResponseVisibilityCondition]>([
+  [{ responseId: 'control', comparison: 'equals', value: 'yes' }, { responseId: 'control', comparison: 'doesNotEqual', value: 'yes' }],
+  [{ responseId: 'control', comparison: 'doesNotEqual', value: 'yes' }, { responseId: 'control', comparison: 'equals', value: 'no' }],
+  [{ responseId: 'control', comparison: 'equals', value: ['a', 'b'] }, { responseId: 'control', comparison: 'equals', value: ['c'] }],
+])('replaces the entire inherited condition %j with %j', (original, replacement) => {
+  const base: IndividualComponent = {
+    type: 'questionnaire',
+    response: [{
+      id: 'dependent', type: 'shortText', prompt: 'Base prompt', visibleIf: original,
+    }],
+  };
+  const inherited: InheritedComponent = {
+    baseComponent: 'base',
+    response: [{
+      id: 'dependent', type: 'shortText', prompt: 'Override prompt', visibleIf: replacement,
+    }],
+  };
+  const config = makeStudyConfig({ baseComponents: { base } });
+  const result = studyComponentToIndividualComponent(inherited, config);
+  expect(result.response?.[0].visibleIf).toEqual(replacement);
+  expect(base.response?.[0].visibleIf).toEqual(original);
+  expect(inherited.response?.[0].visibleIf).toEqual(replacement);
+  expect(result.response?.[0].visibleIf).not.toBe(replacement);
+  expect(studyComponentToIndividualComponent({ baseComponent: 'base' }, config).response?.[0].visibleIf).toEqual(original);
 });

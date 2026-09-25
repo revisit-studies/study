@@ -10,7 +10,7 @@ import { ParticipantData } from '../../../storage/types';
 import { SingleTaskLabelLines } from './SingleTaskLabelLines';
 import { SingleTask } from './SingleTask';
 import { StoredAnswer, StudyConfig } from '../../../parser/types';
-import { getComponentAnswerStatus } from '../../../utils/correctAnswer';
+import { getComponentAnswerStatus } from '../../../utils/componentCorrectness';
 import { parseConditionParam } from '../../../utils/handleConditionLogic';
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 import {

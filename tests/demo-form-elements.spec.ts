@@ -2,6 +2,7 @@
 import { test, expect, Page } from '@playwright/test';
 import {
   nextClick,
+  readParticipantRecording,
   readStoredComponentTiming,
   seekReplay,
   waitForStudyEndMessage,
@@ -165,6 +166,76 @@ test('Test questionnaire component with responses and randomizing questions and 
 
   // Go to the next page
   await nextClick(page);
+
+  // Conditional responses validate only while visible and clear when hidden.
+  const universityName = page.getByLabel('Name of University');
+  const graduationYear = page.getByLabel(/Graduation year$/);
+  await expect(page.getByRole('radio', { name: 'Yes', exact: true })).not.toBeChecked();
+  await expect(universityName).toHaveCount(0);
+  await page.getByRole('radio', { name: 'Yes', exact: true }).check();
+  await nextClick(page);
+  await expect(universityName).toHaveAttribute('aria-invalid', 'true');
+  const revisitBackground = page.getByLabel('How did you hear about reVISit?');
+  await expect(revisitBackground).toHaveCount(0);
+  await universityName.fill('University of Utah');
+  await expect(revisitBackground).toBeVisible();
+  await revisitBackground.fill('Through a university research project');
+  await universityName.fill('Another university');
+  await expect(revisitBackground).toHaveCount(0);
+  await universityName.fill('WPI');
+  await expect(revisitBackground).toHaveValue('');
+  await revisitBackground.fill('From a colleague at WPI');
+  await universityName.fill('WPI extension');
+  await expect(revisitBackground).toHaveCount(0);
+  await universityName.fill('University of Utah');
+  await expect(revisitBackground).toHaveValue('');
+  await revisitBackground.fill('Through a university research project');
+  await page.locator('#degreeProgram').getByRole('combobox').click();
+  await page.getByRole('option', { name: "Bachelor's degree", exact: true }).click();
+  await page.getByRole('radio', { name: 'Graduated', exact: true }).check();
+  await nextClick(page);
+  await expect(graduationYear).toHaveAttribute('aria-invalid', 'true');
+  const graduationSemester = page.locator('#graduationSemester').getByRole('combobox');
+  await graduationYear.fill('2020');
+  await expect(graduationSemester).toHaveCount(0);
+  await graduationYear.fill('2021');
+  await expect(graduationSemester).toBeVisible();
+  await nextClick(page);
+  await expect(graduationSemester).toHaveAttribute('aria-invalid', 'true');
+  await graduationSemester.click();
+  await page.getByRole('option', { name: 'Spring', exact: true }).click();
+  await graduationYear.fill('2020');
+  await expect(graduationSemester).toHaveCount(0);
+  await graduationYear.fill('2021');
+  await expect(graduationSemester).toHaveValue('');
+  await graduationSemester.click();
+  await page.getByRole('option', { name: 'Fall', exact: true }).click();
+  const expectedGraduationYear = page.getByLabel('Expected graduation year');
+  await page.getByRole('radio', { name: 'Currently enrolled', exact: true }).check();
+  await expect(graduationYear).toHaveCount(0);
+  await expect(graduationSemester).toHaveCount(0);
+  await expect(expectedGraduationYear).toBeVisible();
+  await expectedGraduationYear.fill('2028');
+  await page.getByRole('radio', { name: 'Graduated', exact: true }).check();
+  await expect(expectedGraduationYear).toHaveCount(0);
+  await expect(graduationYear).toHaveValue('');
+  await page.getByRole('radio', { name: 'Currently enrolled', exact: true }).check();
+  await expect(expectedGraduationYear).toHaveValue('');
+  await page.getByRole('radio', { name: 'Graduated', exact: true }).check();
+  await graduationYear.fill('2020');
+  await page.getByRole('radio', { name: 'No', exact: true }).check();
+  await expect(universityName).toHaveCount(0);
+  await expect(graduationYear).toHaveCount(0);
+  await page.getByRole('radio', { name: 'Yes', exact: true }).check();
+  await expect(universityName).toHaveValue('');
+  await expect(page.getByRole('radio', { name: 'Graduated', exact: true })).not.toBeChecked();
+  await page.getByRole('radio', { name: 'Graduated', exact: true }).check();
+  await expect(graduationYear).toHaveValue('');
+  await page.getByRole('radio', { name: 'No', exact: true }).check();
+  await nextClick(page);
+  await expect.poll(async () => (
+    await readParticipantRecording(page, 'demo-form-elements', 'Conditional Responses_2')
+  )?.answer).toEqual({ conditionalTitle: '', attendedUniversity: 'no' });
 
   // Go to the next page
   await nextClick(page);

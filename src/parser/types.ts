@@ -378,6 +378,48 @@ export interface ParsedMatrixQuestionOption extends Omit<MatrixQuestionOption, '
   value: string;
 }
 
+export type EqualityComparison = 'equals' | 'doesNotEqual';
+
+export type StringComparison =
+  | 'matchesRegex'
+  | 'contains'
+  | 'doesNotContain';
+
+export type NumericComparison =
+  | 'lessThan'
+  | 'lessThanOrEqual'
+  | 'greaterThan'
+  | 'greaterThanOrEqual';
+
+export type ValueCondition =
+  | {
+      comparison: EqualityComparison;
+      value: string | number | boolean | string[];
+    }
+  | {
+      comparison: StringComparison;
+      value: string;
+    }
+  | {
+      comparison: NumericComparison;
+      value: number;
+    };
+
+/**
+ * Controls visibility based on another response's answer in the same component.
+ * List equality comparisons ignore selection order.
+ * Unanswered or conditionally hidden controlling responses never satisfy a condition.
+ */
+export type ResponseVisibilityCondition = {
+  responseId: string;
+} & (
+  | ValueCondition
+  | {
+      comparison: 'isCorrect';
+      value: boolean;
+    }
+);
+
 /**
  * The BaseResponse interface is used to define the required fields for all responses.
  * Other Response interfaces inherit properties from the BaseResponse interface.
@@ -414,6 +456,8 @@ export interface BaseResponse {
   style?: Styles;
   /** Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false. */
   excludeFromRandomization?: boolean;
+  /** Show this response only when another response in this component satisfies the condition. */
+  visibleIf?: ResponseVisibilityCondition;
 }
 
 /**
@@ -449,7 +493,7 @@ export interface NumericalResponse extends BaseResponse {
 }
 
 /** The validation operations available for short and long text responses. */
-export type TextValidationType = 'matchesRegex' | 'contains' | 'doesNotContain' | 'equals' | 'doesNotEqual';
+export type TextValidationType = EqualityComparison | StringComparison;
 
 /**
  * A validation rule applied to a short or long text response.

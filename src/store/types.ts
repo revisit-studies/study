@@ -52,6 +52,8 @@ export type ValidationStatus = {
   values: object;
   reason?: StimulusIssueReason;
   message?: string;
+  /** Whether this location has initialized its form values, so answers cleared by visibleIf are not restored from saved answers or defaults. */
+  initialized?: boolean;
 }
 export type AssetStatus = 'loading' | 'ready' | 'error';
 
