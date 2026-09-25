@@ -15,6 +15,8 @@ Load custom CSS files for comprehensive styling:
 }
 ```
 
+The survey form and Shared Form Style pages use the same `revisitAssets/googleForm.css` stylesheet. The second page shows different response IDs, a section divider, and no header image. Other studies can reference the stylesheet on a component and optionally use an image from `revisitAssets/` as a header.
+
 ### 2. Inline Styles (`style`)
 Apply specific styling directly to components or responses:
 
@@ -39,7 +41,7 @@ Apply specific styling directly to components or responses:
  * [markdownComponent.md](https://github.com/revisit-studies/study/blob/main/public/demo-style/assets/markdownComponent.md)
  * [responseStylesheet.md](https://github.com/revisit-studies/study/blob/main/public/demo-style/assets/responseStylesheet.md)
  * [style/componentStylesheet.css](https://github.com/revisit-studies/study/blob/main/public/demo-style/assets/style/componentStylesheet.css)
- * [style/form.css](https://github.com/revisit-studies/study/blob/main/public/demo-style/assets/style/form.css)
+ * [Shared Google Forms style](https://github.com/revisit-studies/study/blob/main/public/revisitAssets/googleForm.css)
  * [style/largeText.css](https://github.com/revisit-studies/study/blob/main/public/demo-style/assets/style/largeText.css)
  * [style/layout.css](https://github.com/revisit-studies/study/blob/main/public/demo-style/assets/style/layout.css)
  * [style/responseStylesheet.css](https://github.com/revisit-studies/study/blob/main/public/demo-style/assets/style/responseStylesheet.css)

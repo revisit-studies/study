@@ -142,6 +142,24 @@ test.each([true, false])('uses semantic validation defaults while preserving cus
   expect(wrapper.style.border).toBe('');
 });
 
+test.each([
+  ['shortText', 'response--shortText'],
+  ['divider', 'response--divider'],
+] as const)('adds a response type class for %s', (type, expectedClass) => {
+  const typedResponse = type === 'divider'
+    ? { id: 'section-break', type }
+    : response;
+  const view = render(
+    <ResponseSwitcher
+      response={typedResponse as Response}
+      form={form}
+      index={1}
+      config={{} as IndividualComponent}
+    />,
+  );
+  expect(view.container.querySelector('.response')?.classList.contains(expectedClass)).toBe(true);
+});
+
 // ── ResponseSwitcher stored answer locking ────────────────────────────────────
 
 describe('ResponseSwitcher stored answer locking', () => {

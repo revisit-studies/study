@@ -340,14 +340,18 @@
     },
     "survey-form": {
       "type": "image",
-      "path": "demo-style/assets/utah.jpg",
-      "stylesheetPath": "demo-style/assets/style/form.css",
+      "path": "revisitAssets/googleFormExampleHeader.jpg",
+      "stylesheetPath": "revisitAssets/googleForm.css",
       "response": [
         {
           "id": "form-title",
           "prompt": "Welcome to our study!",
           "type": "textOnly",
-          "location": "belowStimulus"
+          "location": "belowStimulus",
+          "style": {
+            "fontSize": "32px",
+            "fontWeight": "bold"
+          }
         },
         {
           "id": "form-gender",
@@ -404,6 +408,43 @@
           "prompt": "Please give us any feedback on this survey.",
           "type": "longText",
           "location": "belowStimulus"
+        }
+      ]
+    },
+    "shared-form-style": {
+      "type": "questionnaire",
+      "stylesheetPath": "revisitAssets/googleForm.css",
+      "response": [
+        {
+          "id": "shared-style-introduction",
+          "type": "textOnly",
+          "prompt": "# Shared form style\n\nThis page reuses the previous survey form's stylesheet with different response IDs and no header image."
+        },
+        {
+          "id": "shared-style-frequency",
+          "type": "radio",
+          "prompt": "How often do you create surveys?",
+          "options": [
+            "Often",
+            "Sometimes",
+            "Rarely"
+          ],
+          "required": false
+        },
+        {
+          "id": "shared-style-section-break",
+          "type": "divider"
+        },
+        {
+          "id": "shared-style-feedback-heading",
+          "type": "textOnly",
+          "prompt": "## Feedback"
+        },
+        {
+          "id": "shared-style-feedback",
+          "type": "longText",
+          "prompt": "What would make a survey easier to complete?",
+          "required": false
         }
       ]
     },
@@ -583,6 +624,7 @@
         "order": "fixed",
         "components": [
           "survey-form",
+          "shared-form-style",
           "large-text",
           "layout"
         ]

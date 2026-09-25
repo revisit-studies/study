@@ -155,11 +155,13 @@ vi.mock('../customResponseModules', () => ({
 }));
 
 vi.mock('../ResponseSwitcher', () => ({
-  ResponseSwitcher: ({ response, storedAnswer, answerFinalized }: { response: { id: string; type: string }; storedAnswer?: Record<string, unknown>; answerFinalized?: boolean }) => {
+  ResponseSwitcher: ({
+    response, index, storedAnswer, answerFinalized,
+  }: { response: { id: string; type: string }; index: number; storedAnswer?: Record<string, unknown>; answerFinalized?: boolean }) => {
     capturedSwitcherProps.storedAnswer = storedAnswer;
     capturedSwitcherProps.answerFinalized = answerFinalized;
     return (
-      <div data-testid={`switcher-${response.type}`} data-response-id={response.id}>
+      <div data-testid={`switcher-${response.type}`} data-response-id={response.id} data-index={index}>
         {response.type}
         <input data-testid={`control-${response.id}`} />
       </div>
@@ -410,6 +412,25 @@ describe('ResponseBlock', () => {
     const { container } = render(withStore(studyStore, <ResponseBlock config={textOnlyConfig} location="belowStimulus" />));
     const html = container.innerHTML;
     expect(html).toContain('switcher-textOnly');
+  });
+
+  test('does not count section dividers as questions', async () => {
+    mockStoredAnswerData.formOrder = undefined;
+    const config = {
+      type: 'questionnaire',
+      response: [
+        {
+          type: 'shortText', id: 'first', prompt: 'First', required: false,
+        },
+        { type: 'divider', id: 'section-break' },
+        {
+          type: 'shortText', id: 'second', prompt: 'Second', required: false,
+        },
+      ],
+    } as IndividualComponent;
+    const { container } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+    expect(container.querySelector('[data-response-id="first"]')?.getAttribute('data-index')).toBe('1');
+    expect(container.querySelector('[data-response-id="second"]')?.getAttribute('data-index')).toBe('2');
   });
 
   test('initialises from status.answer when status prop is provided', async () => {

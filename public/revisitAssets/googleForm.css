@@ -37,11 +37,17 @@ body {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-label {
-  margin-bottom: 10px;
+.response--divider {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
 }
 
-#form-title p {
-  font-size: 32px;
-  font-weight: bold;
+.response--divider > * {
+  margin: 0 !important;
+}
+
+.responseBlock label {
+  margin-bottom: 10px;
 }
