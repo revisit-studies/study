@@ -74,7 +74,7 @@ function createMockParticipant(overrides: Partial<ParticipantDataWithStatus> & {
   const { participantId, ...rest } = overrides;
   return {
     participantId,
-    participantConfigHash: 'config-hash-1',
+    participantConfigHash: '', // Legacy fixture; versioned-config tests provide their hash explicitly.
     sequence: {
       orderPath: '', order: 'fixed', components: [], skip: [], interruptions: [],
     },
@@ -2904,6 +2904,7 @@ it.each(['yes', 'no'])('counts only applicable correct answers in analysis when 
   });
   const participants = [createMockParticipant({
     participantId: 'conditional',
+    participantConfigHash: 'config-hash-1',
     completed: true,
     answers: {
       form_1: createMockAnswer({
@@ -2915,8 +2916,19 @@ it.each(['yes', 'no'])('counts only applicable correct answers in analysis when 
       }),
     },
   })];
+  const [unavailable] = getComponentStats(participants, config);
+  expect(unavailable.correctness).toBeNaN();
+  expect(unavailable.correctCount).toBe(0);
+  expect(unavailable.totalQuestionCount).toBe(0);
   const [stats] = getComponentStats(participants, config, { 'config-hash-1': config });
   expect(stats.correctCount).toBe(1);
   expect(stats.totalQuestionCount).toBe(gate === 'yes' ? 2 : 1);
   expect(stats.correctness).toBe(gate === 'yes' ? 50 : 100);
+  const [mixed] = getComponentStats([
+    ...participants,
+    { ...participants[0], participantId: 'missing-config', participantConfigHash: 'unavailable' },
+  ], config, { 'config-hash-1': config });
+  expect(mixed.correctCount).toBe(stats.correctCount);
+  expect(mixed.totalQuestionCount).toBe(stats.totalQuestionCount);
+  expect(mixed.correctness).toBe(stats.correctness);
 });

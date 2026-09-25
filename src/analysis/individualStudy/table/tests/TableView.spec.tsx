@@ -157,8 +157,13 @@ describe('TableView', () => {
     const visibleParticipants = [participant];
     const { rerender } = render(<TableView {...defaultProps} studyConfig={currentConfig} visibleParticipants={visibleParticipants} />);
     const score = () => capturedTableOptions!.columns.find((column) => column.header === 'Correct Answers')!.accessorFn!(participant);
-    // Use the current config when the saved version is unavailable, matching the detail panel.
-    expect(score()).toEqual([false]);
+    // A known hash must never fall back to the current config.
+    expect(score()).toEqual([null]);
+    const unknownColumn = capturedTableOptions!.columns.find((column) => column.header === 'Correct Answers')!;
+    const unknownHtml = renderToStaticMarkup(unknownColumn.Cell({ cell: { getValue: () => [null] } }));
+    expect(unknownHtml).toContain('1 unknown');
+    expect(renderToStaticMarkup(capturedTableOptions!.renderDetailPanel({ row: { original: participant } }))).toContain('configuration unavailable');
+    expect(unknownColumn.accessorFn!({ ...participant, participantConfigHash: '' })).toEqual([false]);
     rerender(<TableView {...defaultProps} studyConfig={currentConfig} visibleParticipants={visibleParticipants} allConfigs={{ hash1: configFor('yes') }} />);
     expect(score()).toEqual([true]);
     cleanup();
@@ -196,7 +201,7 @@ describe('TableView', () => {
   test('uses sequence ordering and time sizing by default for participant timelines', () => {
     const participant = makeParticipant();
     renderToStaticMarkup(
-      <TableView {...defaultProps} visibleParticipants={[participant]} />,
+      <TableView {...defaultProps} allConfigs={{ hash1: emptyConfig }} visibleParticipants={[participant]} />,
     );
 
     const html = renderToStaticMarkup(capturedTableOptions!.renderDetailPanel({ row: { original: participant } }));

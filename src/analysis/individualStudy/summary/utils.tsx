@@ -171,6 +171,7 @@ function calculateCorrectnessStats(
     if (!answer.correctAnswer || answer.correctAnswer.length === 0) return;
 
     const participantStudyConfig = getParticipantStudyConfig(participant.participantConfigHash, studyConfig, allConfigs);
+    if (participant.participantConfigHash && !participantStudyConfig) return;
     const component = participantStudyConfig?.components[answer.componentName]
       ? studyComponentToIndividualComponent(
         participantStudyConfig.components[answer.componentName],
