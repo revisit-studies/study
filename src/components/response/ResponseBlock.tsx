@@ -1,5 +1,5 @@
 import {
-  Box, Button, Group, Text, ThemeIcon,
+  Box, Button, Group, Kbd, Text, ThemeIcon,
 } from '@mantine/core';
 
 import React, {
@@ -135,11 +135,13 @@ export function ResponseBlock({
     return response;
   }), [allResponses]);
   // Set up trrack to store provenance graph of the answerValidator status
+  const lastInteractionSourceRef = useRef<'keyboard' | 'click'>('click');
   const { actions, registry } = useMemo(() => {
     const reg = Registry.create();
 
-    const updateFormAction = reg.register('update', (state, payload: StoredAnswer['answer']) => {
-      state.form = payload;
+    const updateFormAction = reg.register('update', (state, payload: { values: StoredAnswer['answer']; interactionSource: 'keyboard' | 'click' }) => {
+      state.form = payload.values;
+      state.interactionSource = payload.interactionSource;
       return state;
     });
     const updateShowResponseErrorsAction = reg.register('show-response-errors', (state, payload: boolean) => {
@@ -168,6 +170,7 @@ export function ResponseBlock({
     initialState: {
       form: null,
       showResponseErrors: false,
+      interactionSource: 'click',
     },
   }, reportProvenance, identifier);
 
@@ -430,6 +433,13 @@ export function ResponseBlock({
     stickyVisibleRef.current = stickyVisible;
   }, [stickyVisible, scrollToFirstUnresolvedQuestion, isAnalysis]);
 
+  const trackInputChange = useCallback((responseId: string, value: unknown, source: 'keyboard' | 'click' = 'click') => {
+    lastInteractionSourceRef.current = source;
+    const targetValue = typeof value === 'object' && value !== null && 'target' in value && value.target && typeof value.target === 'object' && 'value' in value.target
+      ? value.target.value
+      : value;
+    answerValidator.setFieldValue(responseId, targetValue as never);
+  }, [answerValidator]);
   const revealResponseErrors = useCallback(() => {
     storeDispatch(setResponseSubmitAttempt({ identifier, attempted: true }));
     answerValidator.validate();
@@ -495,7 +505,12 @@ export function ResponseBlock({
 
   useEffect(() => {
     if (isAnalysis) return;
-    trrack.apply('Update form field', actions.updateFormAction(structuredClone(answerValidator.values)));
+    const interactionSource = lastInteractionSourceRef.current;
+    lastInteractionSourceRef.current = 'click';
+    trrack.apply(`Update form field (${interactionSource})`, actions.updateFormAction({
+      values: structuredClone(answerValidator.values),
+      interactionSource,
+    }));
 
     storeDispatch(
       updateResponseBlockValidation({
@@ -732,6 +747,7 @@ export function ResponseBlock({
                       answerFinalized={!!status && status.endTime !== -1}
                       form={{
                         ...answerValidator.getInputProps(response.id),
+                        onChange: (value: unknown, source: 'keyboard' | 'click' = 'click') => trackInputChange(response.id, value, source),
                       }}
                       dontKnowCheckbox={usesStandaloneDontKnowField(response)
                         ? {
@@ -818,6 +834,8 @@ export function ResponseBlock({
               disabled={disabledAttempts}
               onClick={() => checkAnswerProvideFeedback()}
               px={location === 'sidebar' ? 8 : undefined}
+              aria-label="Check Answer"
+              rightSection={(config?.nextOnEnter ?? studyConfig.uiConfig.nextOnEnter) ? <Kbd size="xs" aria-hidden="true">↵ Enter</Kbd> : undefined}
             >
               Check Answer
             </Button>
