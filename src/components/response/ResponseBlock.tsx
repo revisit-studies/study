@@ -30,6 +30,7 @@ import {
   usesStandaloneDontKnowField,
 } from './responseErrors';
 import { shouldUseStimulusValidation } from './stimulusErrors';
+import { getApplicableCorrectAnswers, resolveResponseVisibility, responseValueKeys } from '../../utils/responseVisibility';
 import { ResponseSwitcher } from './ResponseSwitcher';
 import { FeedbackAlert } from './FeedbackAlert';
 import {
@@ -67,9 +68,15 @@ function findMatchingStrings(arr1: string[], arr2: string[]): string[] {
 function collectResponseValuesFromAnalysisState(
   analysisProvState: Partial<Record<ResponseBlockLocation, FormElementProvenance>>,
   status?: StoredAnswer,
+  responses: Response[] = [],
 ): StoredAnswer['answer'] {
   return (['aboveStimulus', 'belowStimulus', 'sidebar'] as ResponseBlockLocation[]).reduce((acc, responseLocation) => {
     const locationProv = analysisProvState[responseLocation];
+    // A non-null form is a complete snapshot, including deletions; null is the initial state.
+    if (locationProv?.form != null) {
+      responses.filter((response) => (response.location ?? 'belowStimulus') === responseLocation)
+        .flatMap(responseValueKeys).forEach((key) => { delete acc[key]; });
+    }
     return {
       ...acc,
       ...(locationProv?.form || {}),
@@ -85,7 +92,7 @@ export function ResponseBlock({
 }: Props) {
   const storeDispatch = useStoreDispatch();
   const {
-    updateProvenance, updateResponseBlockValidation, saveIncorrectAnswer, saveTrialAnswer, setResponseSubmitAttempt, setStimulusSubmitAttempt, setCheckAnswerResult,
+    clearResponseAnswers, updateProvenance, updateResponseBlockValidation, saveIncorrectAnswer, saveTrialAnswer, setResponseSubmitAttempt, setStimulusSubmitAttempt, setCheckAnswerResult,
   } = useStoreActions();
 
   const currentStep = useCurrentStep();
@@ -93,7 +100,7 @@ export function ResponseBlock({
   const isAnalysis = useIsAnalysis();
   const currentProvenance = useStoreSelector((state) => state.analysisProvState[location]) as FormElementProvenance | undefined;
 
-  const storedAnswer = useMemo(() => currentProvenance?.form || status?.answer, [currentProvenance, status]);
+  const storedAnswer = useMemo(() => currentProvenance?.form ?? status?.answer, [currentProvenance, status]);
   const storedAnswerData = useStoredAnswer();
   const formOrders: Record<string, string[]> = useMemo(() => storedAnswerData?.formOrder || {}, [storedAnswerData]);
 
@@ -174,7 +181,7 @@ export function ResponseBlock({
 
   const trialValidation = useStoreSelector((state) => state.trialValidation);
   const analysisProvState = useStoreSelector((state) => state.analysisProvState);
-  const { goToNextStep } = useNextStep(config.response);
+  const { goToNextStep } = useNextStep(config.response, config.correctAnswer);
 
   const studyConfig = useStudyConfig();
 
@@ -263,26 +270,63 @@ export function ResponseBlock({
     ),
     [customResponseModules],
   );
-  const combinedLiveValues = useMemo(() => getAnswersFromAllLocations(trialValidation[identifier]), [identifier, trialValidation]);
+  const combinedLiveValues = useMemo<StoredAnswer['answer']>(() => {
+    const initialValues: StoredAnswer['answer'] = generateInitFields(allResponses, storedAnswer || {});
+    // Locations mount independently. Until each publishes a snapshot, use its
+    // restored values/defaults so dependents do not clear valid restored answers.
+    allResponses.forEach((response) => {
+      const responseLocation = response.location ?? 'belowStimulus';
+      if (trialValidation[identifier]?.[responseLocation]?.initialized) {
+        responseValueKeys(response).forEach((key) => { delete initialValues[key]; });
+      }
+    });
+    return { ...initialValues, ...getAnswersFromAllLocations(trialValidation[identifier]) };
+  }, [allResponses, storedAnswer, identifier, trialValidation]);
   const combinedAnalysisValues = useMemo(
     () => collectResponseValuesFromAnalysisState(
       analysisProvState as Partial<Record<ResponseBlockLocation, FormElementProvenance>>,
       status,
+      allResponses,
     ),
-    [analysisProvState, status],
+    [analysisProvState, status, allResponses],
   );
   const combinedValues = useMemo(
     () => (isAnalysis ? combinedAnalysisValues : combinedLiveValues),
     [combinedAnalysisValues, combinedLiveValues, isAnalysis],
   );
+  const answerValidator = useAnswerField(
+    responsesWithDefaults,
+    currentStep,
+    storedAnswer || {},
+    customResponseValidators,
+    customResponseLoadErrors,
+    allResponsesWithDefaults,
+    combinedValues,
+    isAnalysis,
+    config.correctAnswer,
+  );
+  const visibilityValues = { ...combinedValues };
+  responses.forEach((response) => responseValueKeys(response).forEach((key) => { delete visibilityValues[key]; }));
+  const { visibleIds } = resolveResponseVisibility(allResponsesWithDefaults, {
+    ...visibilityValues,
+    ...answerValidator.values,
+  }, {}, config.correctAnswer);
+  const applicableResponses = allResponsesWithDefaults.filter((response) => visibleIds.has(response.id));
+  useEffect(() => {
+    if (isAnalysis) return;
+    const hiddenIds = responses.filter((response) => response.visibleIf && !visibleIds.has(response.id))
+      .map((response) => response.id)
+      .filter((id) => Object.hasOwn(reactiveAnswers, id) || Object.hasOwn(matrixAnswers, id) || Object.hasOwn(rankingAnswers, id));
+    if (hiddenIds.length) storeDispatch(clearResponseAnswers(hiddenIds));
+  }, [responses, visibleIds, reactiveAnswers, matrixAnswers, rankingAnswers, isAnalysis, storeDispatch, clearResponseAnswers]);
   const responseIssueSummary = useMemo(
     () => summarizeResponseIssues(
-      allResponsesWithDefaults.filter((response) => !response.hidden),
+      applicableResponses.filter((response) => !response.hidden),
       combinedValues,
       customResponseValidators,
       customResponseLoadErrors,
     ),
-    [allResponsesWithDefaults, combinedValues, customResponseLoadErrors, customResponseValidators],
+    [applicableResponses, combinedValues, customResponseLoadErrors, customResponseValidators],
   );
   const summaryMessage = useMemo(() => {
     const unanswered = responseIssueSummary.unansweredCount;
@@ -325,7 +369,7 @@ export function ResponseBlock({
     [responseIssueSummary.invalidCount, responseIssueSummary.unansweredCount],
   );
   const unresolvedResponseIds = useMemo(
-    () => allResponsesWithDefaults
+    () => applicableResponses
       .filter((response) => !response.hidden)
       .filter((response) => getResponseIssueType(
         response,
@@ -334,7 +378,7 @@ export function ResponseBlock({
         customResponseLoadErrors[response.id],
       ) !== null)
       .map((response) => response.id),
-    [allResponsesWithDefaults, combinedValues, customResponseLoadErrors, customResponseValidators],
+    [applicableResponses, combinedValues, customResponseLoadErrors, customResponseValidators],
   );
   const revealStimulusErrors = useCallback(() => {
     storeDispatch(setStimulusSubmitAttempt({ identifier, attempted: true }));
@@ -389,13 +433,6 @@ export function ResponseBlock({
     stickyVisibleRef.current = stickyVisible;
   }, [stickyVisible, scrollToFirstUnresolvedQuestion, isAnalysis]);
 
-  const answerValidator = useAnswerField(
-    responsesWithDefaults,
-    currentStep,
-    storedAnswer || {},
-    customResponseValidators,
-    customResponseLoadErrors,
-  );
   const trackInputChange = useCallback((responseId: string, value: unknown, source: 'keyboard' | 'click' = 'click') => {
     lastInteractionSourceRef.current = source;
     const targetValue = typeof value === 'object' && value !== null && 'target' in value && value.target && typeof value.target === 'object' && 'value' in value.target
@@ -467,6 +504,7 @@ export function ResponseBlock({
   }, [matrixAnswers, rankingAnswers]);
 
   useEffect(() => {
+    if (isAnalysis) return;
     const interactionSource = lastInteractionSourceRef.current;
     lastInteractionSourceRef.current = 'click';
     trrack.apply(`Update form field (${interactionSource})`, actions.updateFormAction({
@@ -479,6 +517,7 @@ export function ResponseBlock({
         location,
         identifier,
         status: answerValidator.isValid() || bypassValidationForFailedTraining,
+        replaceValues: true,
         values: structuredClone(answerValidator.values),
       }),
     );
@@ -496,6 +535,7 @@ export function ResponseBlock({
         location,
         identifier,
         status: answerValidator.isValid() || bypassValidationForFailedTraining,
+        replaceValues: true,
         values: structuredClone(answerValidator.values),
       }),
     );
@@ -558,8 +598,9 @@ export function ResponseBlock({
 
     const allAnswers = getAnswersFromAllLocations(trialValidation[identifier]);
 
+    const applicableCorrectAnswers = getApplicableCorrectAnswers(allResponsesWithDefaults, allAnswers, config.correctAnswer);
     const correctAnswers = Object.fromEntries(
-      (config?.correctAnswer ?? []).map((configCorrectAnswer) => {
+      applicableCorrectAnswers.map((configCorrectAnswer) => {
         const response = allResponsesWithDefaults.find((r) => r.id === configCorrectAnswer.id);
         const suppliedAnswer = allAnswers[configCorrectAnswer.id];
 
@@ -575,7 +616,7 @@ export function ResponseBlock({
     const allCorrect = Object.values(correctAnswers).every((isCorrect) => isCorrect);
 
     if (hasCorrectAnswerFeedback) {
-      (config?.correctAnswer ?? []).forEach((configCorrectAnswer) => {
+      applicableCorrectAnswers.forEach((configCorrectAnswer) => {
         const response = allResponsesWithDefaults.find((r) => r.id === configCorrectAnswer.id);
         if (!response || response.type === 'textOnly' || response.type === 'divider') {
           return;
@@ -626,7 +667,7 @@ export function ResponseBlock({
       // The resolved route key is authoritative for legacy records that were
       // persisted without their internal identifier.
       identifier,
-      answer: getPersistedAnswersFromAllLocations(trialValidation[identifier], config.response),
+      answer: getPersistedAnswersFromAllLocations(trialValidation[identifier], config.response, config.correctAnswer),
       checkAnswer: currentCheckAnswer,
     };
 
@@ -679,7 +720,7 @@ export function ResponseBlock({
   return (
     <>
       <Box className={`responseBlock responseBlock-${location}`} style={style}>
-        {allResponsesWithDefaults.map((response) => {
+        {applicableResponses.map((response) => {
           const configCorrectAnswer = config.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
           const correctAnswer = configCorrectAnswer === undefined
             ? undefined
@@ -688,10 +729,10 @@ export function ResponseBlock({
           const isInCurrentLocation = responses.some((r) => r.id === response.id);
 
           if (isInCurrentLocation) {
-            // Increment index for each response, unless it is a textOnly response
-            if (response.type !== 'textOnly') {
+            // Text and divider responses do not represent numbered questions.
+            if (response.type !== 'textOnly' && response.type !== 'divider') {
               index += 1;
-            } else if (response.restartEnumeration) {
+            } else if (response.type === 'textOnly' && response.restartEnumeration) {
               index = 0;
             }
           }

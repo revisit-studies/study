@@ -8,7 +8,7 @@ import {
 } from 'vitest';
 import { DownloadButtons } from '../DownloadButtons';
 import { download } from '../DownloadTidy';
-import { downloadParticipantsAudioZip, downloadParticipantsScreenRecordingZip } from '../../../utils/handleDownloadFiles';
+import { downloadParticipantsAudioZip, downloadParticipantsRecordingsZip } from '../../../utils/handleDownloadFiles';
 import type { ParticipantDataWithStatus } from '../../../storage/types';
 import { makeStoredAnswer } from '../../../tests/utils';
 
@@ -45,7 +45,7 @@ vi.mock('../DownloadTidy', () => ({
 vi.mock('../../../utils/handleDownloadFiles', () => ({
   downloadParticipantsAudioZip: vi.fn().mockResolvedValue(undefined),
   downloadParticipantsProvenanceZip: vi.fn().mockResolvedValue(undefined),
-  downloadParticipantsScreenRecordingZip: vi.fn().mockResolvedValue(undefined),
+  downloadParticipantsRecordingsZip: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('@mantine/core', () => ({
@@ -115,6 +115,18 @@ describe('DownloadButtons', () => {
   test('renders screen recording button when hasScreenRecording is true', () => {
     const html = renderToStaticMarkup(<DownloadButtons {...baseProps} hasScreenRecording />);
     expect(html).toContain('screen-icon');
+  });
+
+  test('reuses the recording button when only webcam recording is enabled', () => {
+    const html = renderToStaticMarkup(<DownloadButtons {...baseProps} hasWebcamRecording />);
+    expect(html).toContain('screen-icon');
+  });
+
+  test('renders only one recording button when screen and webcam are enabled', () => {
+    const html = renderToStaticMarkup(
+      <DownloadButtons {...baseProps} hasScreenRecording hasWebcamRecording />,
+    );
+    expect(html.match(/screen-icon/g)).toHaveLength(1);
   });
 
   test('buttons are disabled when participant list is empty', () => {
@@ -251,16 +263,18 @@ describe('DownloadButtons click handlers', () => {
     );
   });
 
-  test('screen recording button click calls downloadParticipantsScreenRecordingZip', async () => {
+  test('recording button downloads both configured recording types', async () => {
     await act(async () => {
-      render(<DownloadButtons studyId="test-study" visibleParticipants={[participant]} hasScreenRecording />);
+      render(<DownloadButtons studyId="test-study" visibleParticipants={[participant]} hasScreenRecording hasWebcamRecording />);
     });
 
     const screenBtn = screen.getByText('screen-icon').closest('button')!;
     await act(async () => { fireEvent.click(screenBtn); });
 
-    expect(vi.mocked(downloadParticipantsScreenRecordingZip)).toHaveBeenCalledWith(
-      expect.objectContaining({ studyId: 'test-study' }),
+    expect(vi.mocked(downloadParticipantsRecordingsZip)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        studyId: 'test-study', includeScreen: true, includeWebcam: true,
+      }),
     );
   });
 

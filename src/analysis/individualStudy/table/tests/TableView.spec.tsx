@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import type { isLightColor } from '@mantine/core';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { render, cleanup } from '@testing-library/react';
 import {
   beforeEach, describe, expect, test, vi,
 } from 'vitest';
@@ -123,6 +124,51 @@ beforeEach(() => {
 // ── TableView ─────────────────────────────────────────────────────────────────
 
 describe('TableView', () => {
+  test('scores historical visibility rules and refreshes when saved configs load', () => {
+    const configFor = (value: string) => createMockStudyConfig({
+      components: {
+        trial1: {
+          type: 'questionnaire',
+          response: [
+            {
+              id: 'gate', type: 'radio', prompt: '', options: ['yes', 'no'],
+            },
+            {
+              id: 'followUp',
+              type: 'shortText',
+              prompt: '',
+              visibleIf: { responseId: 'gate', comparison: 'equals', value },
+            },
+          ],
+        },
+      },
+    });
+    const currentConfig = configFor('no');
+    const participant = makeParticipant({
+      answers: {
+        trial1_0: makeStoredAnswer({
+          componentName: 'trial1',
+          answer: { gate: 'no' },
+          correctAnswer: [{ id: 'gate', answer: 'no' }, { id: 'followUp', answer: 'expected' }],
+          endTime: 100,
+        }),
+      },
+    });
+    const visibleParticipants = [participant];
+    const { rerender } = render(<TableView {...defaultProps} studyConfig={currentConfig} visibleParticipants={visibleParticipants} />);
+    const score = () => capturedTableOptions!.columns.find((column) => column.header === 'Correct Answers')!.accessorFn!(participant);
+    // A known hash must never fall back to the current config.
+    expect(score()).toEqual([null]);
+    const unknownColumn = capturedTableOptions!.columns.find((column) => column.header === 'Correct Answers')!;
+    const unknownHtml = renderToStaticMarkup(unknownColumn.Cell({ cell: { getValue: () => [null] } }));
+    expect(unknownHtml).toContain('1 unknown');
+    expect(renderToStaticMarkup(capturedTableOptions!.renderDetailPanel({ row: { original: participant } }))).toContain('configuration unavailable');
+    expect(unknownColumn.accessorFn!({ ...participant, participantConfigHash: '' })).toEqual([false]);
+    rerender(<TableView {...defaultProps} studyConfig={currentConfig} visibleParticipants={visibleParticipants} allConfigs={{ hash1: configFor('yes') }} />);
+    expect(score()).toEqual([true]);
+    cleanup();
+  });
+
   test('shows "No data available" when visibleParticipants is empty', () => {
     const html = renderToStaticMarkup(
       <TableView {...defaultProps} visibleParticipants={[]} />,
@@ -155,7 +201,7 @@ describe('TableView', () => {
   test('uses sequence ordering and time sizing by default for participant timelines', () => {
     const participant = makeParticipant();
     renderToStaticMarkup(
-      <TableView {...defaultProps} visibleParticipants={[participant]} />,
+      <TableView {...defaultProps} allConfigs={{ hash1: emptyConfig }} visibleParticipants={[participant]} />,
     );
 
     const html = renderToStaticMarkup(capturedTableOptions!.renderDetailPanel({ row: { original: participant } }));

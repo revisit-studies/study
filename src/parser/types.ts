@@ -301,6 +301,8 @@ export interface UIConfig {
   clickToRecord?: boolean;
   /** Whether or not we want to utilize screen recording feature. If true, will record audio on all components unless deactivated on individual components. This must be set to true if you want to record audio on any component in your study. Defaults to false. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before any component that you want to record the screen on to ensure permissions are granted and screen capture has started. */
   recordScreen?: boolean;
+  /** Whether or not we want to utilize webcam recording. If true, will record webcam video on all components unless deactivated on individual components. Defaults to false. Studies using webcam without screen capture should include the webcam permission component before any recorded component. Studies combining webcam with screen capture should use the screen recording permission component. */
+  recordWebcam?: boolean;
   /** Desired fps for recording screen. If possible, this value will be used, but if it's not possible, the user agent will use the closest possible match. */
   recordScreenFPS?: number;
   /** Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar. */
@@ -382,6 +384,48 @@ export interface ParsedMatrixQuestionOption extends Omit<MatrixQuestionOption, '
   value: string;
 }
 
+export type EqualityComparison = 'equals' | 'doesNotEqual';
+
+export type StringComparison =
+  | 'matchesRegex'
+  | 'contains'
+  | 'doesNotContain';
+
+export type NumericComparison =
+  | 'lessThan'
+  | 'lessThanOrEqual'
+  | 'greaterThan'
+  | 'greaterThanOrEqual';
+
+export type ValueCondition =
+  | {
+      comparison: EqualityComparison;
+      value: string | number | boolean | string[];
+    }
+  | {
+      comparison: StringComparison;
+      value: string;
+    }
+  | {
+      comparison: NumericComparison;
+      value: number;
+    };
+
+/**
+ * Controls visibility based on another response's answer in the same component.
+ * List equality comparisons ignore selection order.
+ * Unanswered or conditionally hidden controlling responses never satisfy a condition.
+ */
+export type ResponseVisibilityCondition = {
+  responseId: string;
+} & (
+  | ValueCondition
+  | {
+      comparison: 'isCorrect';
+      value: boolean;
+    }
+);
+
 /**
  * The BaseResponse interface is used to define the required fields for all responses.
  * Other Response interfaces inherit properties from the BaseResponse interface.
@@ -418,6 +462,8 @@ export interface BaseResponse {
   style?: Styles;
   /** Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false. */
   excludeFromRandomization?: boolean;
+  /** Show this response only when another response in this component satisfies the condition. */
+  visibleIf?: ResponseVisibilityCondition;
 }
 
 /**
@@ -453,7 +499,7 @@ export interface NumericalResponse extends BaseResponse {
 }
 
 /** The validation operations available for short and long text responses. */
-export type TextValidationType = 'matchesRegex' | 'contains' | 'doesNotContain' | 'equals' | 'doesNotEqual';
+export type TextValidationType = EqualityComparison | StringComparison;
 
 /**
  * A validation rule applied to a short or long text response.
@@ -1300,6 +1346,8 @@ export interface BaseIndividualComponent {
   clickToRecord?: boolean;
   /** Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started. */
   recordScreen?: boolean;
+  /** Whether or not we want to utilize webcam recording. If present, will override the record webcam setting in the uiConfig. Studies using webcam without screen capture should include the webcam permission component before this component. Studies combining webcam with screen capture should use the screen recording permission component. */
+  recordWebcam?: boolean;
   /** Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar. If present, will override the enumeration of questions setting in the uiConfig. */
   enumerateQuestions?: boolean;
   /** Whether to show the response dividers. If present, will override the response dividers setting in the uiConfig. */
@@ -2253,7 +2301,7 @@ export interface LibraryConfig {
   baseComponents?: BaseComponents;
 }
 
-export type ErrorWarningCategory = 'invalid-config' | 'invalid-library-config' | 'undefined-library' | 'undefined-base-component' | 'undefined-component' | 'sequence-validation' | 'skip-validation' | 'unused-component' | 'disabled-sidebar' | 'default-contact-email' | 'default-firebase-config' | 'default-supabase-config';
+export type ErrorWarningCategory = 'invalid-config' | 'invalid-library-config' | 'undefined-library' | 'undefined-base-component' | 'undefined-component' | 'sequence-validation' | 'skip-validation' | 'unused-component' | 'disabled-sidebar' | 'empty-sidebar' | 'default-contact-email' | 'default-firebase-config' | 'default-supabase-config';
 
 /**
  * @ignore
