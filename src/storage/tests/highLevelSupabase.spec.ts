@@ -48,7 +48,7 @@ vi.mock('@supabase/supabase-js', () => {
   ): Array<RowData> {
     return rows.filter((row) => filters.every(({ col, val, type }) => {
       const colVal = getFieldValue(row, col);
-      if (type === 'eq') return colVal === val;
+      if (type === 'eq') return col === 'data' ? JSON.stringify(colVal) === val : colVal === val;
       if (type === 'is') return colVal == null;
       return typeof colVal === 'string' && matchLike(colVal, String(val));
     }));
@@ -915,14 +915,14 @@ describe.each([
       const second = new SupabaseStorageEngine(true);
       vi.spyOn(second, 'getVerifiedUser').mockResolvedValue({ email: 'second@test.com', uid: 'uid-2' });
 
-      await expect(first.initializeAuthentication({ email: 'impostor@test.com', uid: 'uid-3' }))
+      await expect(first.enableAuthentication({ email: 'impostor@test.com', uid: 'uid-3' }))
         .rejects.toThrow('The signed-in user changed during authentication setup');
       expect(revisitRows.filter((row) => row.studyId === '' && row.docId === 'user-management'))
         .toHaveLength(existingRow ? 1 : 0);
 
       const results = await Promise.allSettled([
-        first.initializeAuthentication({ email: 'test@test.com', uid: 'mock-uid' }),
-        second.initializeAuthentication({ email: 'second@test.com', uid: 'uid-2' }),
+        first.enableAuthentication({ email: 'test@test.com', uid: 'mock-uid' }),
+        second.enableAuthentication({ email: 'second@test.com', uid: 'uid-2' }),
       ]);
       expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
       expect(results.filter((result) => result.status === 'rejected')).toHaveLength(1);
@@ -932,8 +932,39 @@ describe.each([
       expect(data.authentication.isEnabled).toBe(true);
       expect(data.adminUsers.adminUsersList).toHaveLength(1);
 
-      await expect(first.initializeAuthentication({ email: 'test@test.com', uid: 'mock-uid' }))
+      await expect(first.enableAuthentication({ email: 'test@test.com', uid: 'mock-uid' }))
         .rejects.toThrow('Authentication setup has already started');
+    } finally {
+      revisitRows.splice(0, revisitRows.length, ...savedRows);
+    }
+  });
+
+  test.each([false, true])('explicitly disabled authentication can be enabled; existing admin list: %s', async (hasAdmins) => {
+    const savedRows = revisitRows.splice(0);
+    const existingAdmin = { email: 'existing@test.com', uid: 'uid-1' };
+    const row = {
+      studyId: '',
+      docId: 'user-management',
+      data: {
+        authentication: { isEnabled: false },
+        ...(hasAdmins ? { adminUsers: { adminUsersList: [existingAdmin] } } : {}),
+      },
+    };
+    revisitRows.push(row);
+    try {
+      const first = new SupabaseStorageEngine(true);
+      const second = new SupabaseStorageEngine(true);
+      vi.spyOn(second, 'getVerifiedUser').mockResolvedValue({ email: 'second@test.com', uid: 'uid-2' });
+      const results = await Promise.allSettled([
+        first.enableAuthentication({ email: 'test@test.com', uid: 'mock-uid' }),
+        second.enableAuthentication({ email: 'second@test.com', uid: 'uid-2' }),
+      ]);
+      expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+      expect(results.filter((result) => result.status === 'rejected')).toHaveLength(1);
+      const data = row.data as { authentication: { isEnabled: boolean }; adminUsers: { adminUsersList: StoredUser[] } };
+      expect(data.authentication.isEnabled).toBe(true);
+      expect(data.adminUsers.adminUsersList).toHaveLength(hasAdmins ? 2 : 1);
+      if (hasAdmins) expect(data.adminUsers.adminUsersList).toContainEqual(existingAdmin);
     } finally {
       revisitRows.splice(0, revisitRows.length, ...savedRows);
     }

@@ -105,7 +105,7 @@ export function GlobalSettings() {
     try {
       if (storageEngine && isCloudStorageEngine(storageEngine) && rootUser) {
         if (storageEngine.getEngine() === 'supabase') {
-          await (storageEngine as SupabaseStorageEngine).initializeAuthentication(rootUser);
+          await (storageEngine as SupabaseStorageEngine).enableAuthentication(rootUser);
         } else {
           await storageEngine.addAdminUser(rootUser);
           await storageEngine.changeAuth(true);

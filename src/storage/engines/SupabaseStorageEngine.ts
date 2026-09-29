@@ -884,7 +884,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     return super.validateUser(user, refresh);
   }
 
-  async initializeAuthentication(rootUser: StoredUser): Promise<StoredUser> {
+  async enableAuthentication(rootUser: StoredUser): Promise<StoredUser> {
     const verifiedUser = await this.getVerifiedUser();
     if (!verifiedUser?.email || verifiedUser.email !== rootUser.email || verifiedUser.uid !== rootUser.uid) {
       throw new Error('The signed-in user changed during authentication setup');
@@ -897,25 +897,35 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       .eq('docId', 'user-management');
     if (readError) throw readError;
     const existingData = rows?.[0]?.data;
-    if (rows?.length && (!existingData || typeof existingData !== 'object' || Array.isArray(existingData)
-      || 'authentication' in existingData || 'adminUsers' in existingData)) {
+    if (rows?.length && (!existingData || typeof existingData !== 'object' || Array.isArray(existingData))) {
       throw new Error('Authentication setup has already started');
     }
+    const currentData = (existingData || {}) as Record<string, unknown>;
+    const { authentication, adminUsers } = currentData;
+    const wasDisabled = authentication !== null && typeof authentication === 'object' && !Array.isArray(authentication)
+      && 'isEnabled' in authentication && authentication.isEnabled === false;
+    if (rows?.length && ((!wasDisabled && ('authentication' in currentData || 'adminUsers' in currentData))
+      || (wasDisabled && adminUsers !== undefined && (!adminUsers || typeof adminUsers !== 'object'
+        || !('adminUsersList' in adminUsers) || !Array.isArray(adminUsers.adminUsersList))))) {
+      throw new Error('Authentication setup has already started');
+    }
+    const existingAdmins = wasDisabled && adminUsers
+      ? (adminUsers as { adminUsersList: StoredUser[] }).adminUsersList : [];
 
     const data = {
-      ...(existingData as Record<string, unknown> | undefined),
-      adminUsers: { adminUsersList: [verifiedUser] },
+      ...currentData,
+      adminUsers: { adminUsersList: [...existingAdmins.filter((admin) => admin.email !== verifiedUser.email), verifiedUser] },
       authentication: { isEnabled: true },
     };
     if (rows?.length) {
-      const { data: updated, error } = await this.supabase
+      let query = this.supabase
         .from('revisit')
         .update({ data })
         .eq('studyId', '')
-        .eq('docId', 'user-management')
-        .is('data->authentication', null)
-        .is('data->adminUsers', null)
-        .select('docId');
+        .eq('docId', 'user-management');
+      query = wasDisabled ? query.eq('data', JSON.stringify(currentData))
+        : query.is('data->authentication', null).is('data->adminUsers', null);
+      const { data: updated, error } = await query.select('docId');
       if (error) throw error;
       if (updated?.length !== 1) throw new Error('Authentication setup has already started');
     } else {
