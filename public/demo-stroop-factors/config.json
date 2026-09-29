@@ -34,7 +34,6 @@
       "action": "sample",
       "numSamples": 1,
       "samplingStrategy": "withoutReplacement",
-      "groupBy": "word",
       "factors": [{
         "action": "remove",
         "factor": {
@@ -67,11 +66,11 @@
           "secondaryText": "Keyboard shortcuts: 1-9 and 0",
           "type": "buttons",
           "options": [
-            {"label": "1. RED", "value": "RED", "key": 1},
-            {"label": "2. YELLOW", "value": "YELLOW", "key": 2},
-            {"label": "3. GREEN", "value": "GREEN", "key": 3},
-            {"label": "4. BLUE", "value": "BLUE", "key": 4},
-            {"label": "5. BLACK", "value": "BLACK", "key": 5}
+            {"label": "1. RED", "value": "RED", "key": "1"},
+            {"label": "2. YELLOW", "value": "YELLOW", "key": "2"},
+            {"label": "3. GREEN", "value": "GREEN", "key": "3"},
+            {"label": "4. BLUE", "value": "BLUE", "key": "4"},
+            {"label": "5. BLACK", "value": "BLACK", "key": "5"}
           ],
           "location": "belowStimulus",
           "required": true

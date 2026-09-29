@@ -58,6 +58,13 @@
 
       Revisit.postAnswers({ "selected": selected, "correct": isCorrect, "corrLeft": corrLeft, "corrRight":  corrRight});
     })
+
+    document.addEventListener('keydown', (e) => {
+      const selected = e.key.split("Arrow")[1].toLowerCase();
+      const isCorrect = selected == correct;
+
+      Revisit.postAnswers({ "selected": selected, "correct": isCorrect, "corrLeft": corrLeft, "corrRight":  corrRight});
+    })
   </script>
 
   <style>

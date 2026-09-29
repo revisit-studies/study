@@ -76,8 +76,8 @@
           "required": true,
           "type": "buttons",
           "options": [
-            {"label": "A", "value": "left"},
-            {"label": "B", "value": "right"}
+            {"label": "A", "value": "left", "key": "arrowLeft"},
+            {"label": "B", "value": "right", "key": "arrowRight"}
           ],
           "hidden": true,
           "location": "belowStimulus"
@@ -148,7 +148,7 @@
       "tutorial",
       {
         "type": "factor",
-        "id": "training",
+        "id": "",
         "factor": "trainingPairs",
         "components": "practice",
         "order": "random"
@@ -156,7 +156,7 @@
       "task-details",
       {
         "type": "factor",
-        "id": "test",
+        "id": "",
         "factor": "testTrials",
         "order": "latinSquare",
         "components": "test"
