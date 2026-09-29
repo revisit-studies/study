@@ -1,7 +1,8 @@
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
-import { initializeStorageEngine } from '../initialize';
+import { initializeStorageEngine, selectStudyStorageEngine } from '../initialize';
+import { CloudStorageEngine, SequenceAssignment } from '../engines/types';
 
 // ── hoisted mocks ─────────────────────────────────────────────────────────────
 
@@ -23,8 +24,16 @@ const mocks = vi.hoisted(() => {
   });
 
   const mockLocalConnect = vi.fn(async () => {});
+  const mockLocalParticipantId = vi.fn<() => Promise<string | undefined>>(async () => undefined);
+  const mockLocalAssignments = vi.fn<() => Promise<SequenceAssignment[]>>(async () => []);
   const MockLocal = vi.fn(class MockLocalStorageEngine {
     connect = mockLocalConnect;
+
+    getEngine = () => 'localStorage';
+
+    peekCurrentParticipantId = mockLocalParticipantId;
+
+    getAllSequenceAssignments = mockLocalAssignments;
   });
 
   return {
@@ -36,6 +45,8 @@ const mocks = vi.hoisted(() => {
     mockFirebaseIsConnected,
     MockLocal,
     mockLocalConnect,
+    mockLocalParticipantId,
+    mockLocalAssignments,
   };
 });
 
@@ -56,6 +67,7 @@ vi.mock('../engines/LocalStorageEngine', () => ({
 describe('initializeStorageEngine', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.sessionStorage.clear();
     mocks.mockSupabaseIsConnected.mockReturnValue(true);
     mocks.mockFirebaseIsConnected.mockReturnValue(true);
   });
@@ -125,5 +137,81 @@ describe('initializeStorageEngine', () => {
     expect(mocks.mockLocalConnect).toHaveBeenCalledOnce();
     expect(mocks.MockSupabase).not.toHaveBeenCalled();
     expect(mocks.MockFirebase).not.toHaveBeenCalled();
+  });
+});
+
+describe('selectStudyStorageEngine', () => {
+  const cloud = {
+    isCloudEngine: () => true,
+    getEngine: () => 'firebase',
+    getStorageDisconnected: vi.fn<() => Promise<boolean>>(),
+    peekCurrentParticipantId: vi.fn<() => Promise<string | undefined>>(),
+    getAllSequenceAssignments: vi.fn<() => Promise<SequenceAssignment[]>>(async () => []),
+  } as unknown as CloudStorageEngine;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    window.sessionStorage.clear();
+    vi.mocked(cloud.getStorageDisconnected).mockResolvedValue(false);
+    vi.mocked(cloud.peekCurrentParticipantId).mockResolvedValue(undefined);
+    mocks.mockLocalParticipantId.mockResolvedValue(undefined);
+  });
+
+  test('uses browser storage for disconnected analytics and keeps each study setting separate', async () => {
+    vi.mocked(cloud.getStorageDisconnected).mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+
+    const first = await selectStudyStorageEngine(cloud, 'study-a', false);
+    const second = await selectStudyStorageEngine(cloud, 'study-b', false);
+
+    expect(first.getEngine()).toBe('localStorage');
+    expect(second).toBe(cloud);
+    expect(cloud.getStorageDisconnected).toHaveBeenNthCalledWith(1, 'study-a');
+    expect(cloud.getStorageDisconnected).toHaveBeenNthCalledWith(2, 'study-b');
+  });
+
+  test('keeps an in-progress cloud participant on cloud after disconnect', async () => {
+    vi.mocked(cloud.getStorageDisconnected).mockResolvedValue(true);
+    vi.mocked(cloud.peekCurrentParticipantId).mockResolvedValue('cloud-participant');
+    vi.mocked(cloud.getAllSequenceAssignments).mockResolvedValue([{
+      participantId: 'cloud-participant', completed: null,
+    } as SequenceAssignment]);
+
+    expect(await selectStudyStorageEngine(cloud, 'study-a', true)).toBe(cloud);
+  });
+
+  test('preserves a cached cloud session before its assignment is persisted', async () => {
+    vi.mocked(cloud.getStorageDisconnected).mockResolvedValue(true);
+    vi.mocked(cloud.peekCurrentParticipantId).mockResolvedValue('cloud-participant');
+
+    expect(await selectStudyStorageEngine(cloud, 'study-a', true)).toBe(cloud);
+  });
+
+  test('keeps an in-progress local participant on local after reconnection', async () => {
+    mocks.mockLocalParticipantId.mockResolvedValue('local-participant');
+    mocks.mockLocalAssignments.mockResolvedValue([{
+      participantId: 'local-participant', completed: null,
+    } as SequenceAssignment]);
+
+    expect((await selectStudyStorageEngine(cloud, 'study-a', true)).getEngine()).toBe('localStorage');
+  });
+
+  test('uses the tab previous backend when both stores have an unfinished participant', async () => {
+    vi.mocked(cloud.peekCurrentParticipantId).mockResolvedValue('cloud-participant');
+    vi.mocked(cloud.getAllSequenceAssignments).mockResolvedValue([{
+      participantId: 'cloud-participant', completed: null,
+    } as SequenceAssignment]);
+    mocks.mockLocalParticipantId.mockResolvedValue('local-participant');
+    mocks.mockLocalAssignments.mockResolvedValue([{
+      participantId: 'local-participant', completed: null,
+    } as SequenceAssignment]);
+    window.sessionStorage.setItem('revisit-storage-study-a', 'localStorage');
+
+    expect((await selectStudyStorageEngine(cloud, 'study-a', true)).getEngine()).toBe('localStorage');
+  });
+
+  test('does not silently choose a backend when reading the setting fails', async () => {
+    vi.mocked(cloud.getStorageDisconnected).mockRejectedValue(new Error('Cloud unavailable'));
+
+    await expect(selectStudyStorageEngine(cloud, 'study-a', false)).rejects.toThrow('Cloud unavailable');
   });
 });

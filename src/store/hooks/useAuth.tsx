@@ -60,20 +60,21 @@ export function AuthProvider({ children } : { children: ReactNode }) {
     },
     determiningStatus: false,
     isAdmin: true,
-    adminVerification: true,
+    adminVerification: false,
   };
 
   const [user, setUser] = useState(loadingNullUser);
   const [enableAuthTrigger, setEnableAuthTrigger] = useState(false);
-  const { storageEngine } = useStorageEngine();
+  const { storageEngine, configuredStorageEngine } = useStorageEngine();
+  const authEngine = configuredStorageEngine ?? storageEngine;
   const location = useLocation();
   const studyRouteMatch = useMatch('/:studyId/*');
 
   // Logs the user out by removing the user and navigating to '/login'
   const logout = async () => {
-    if (storageEngine && isCloudStorageEngine(storageEngine)) {
+    if (authEngine && isCloudStorageEngine(authEngine)) {
       try {
-        await storageEngine.logout();
+        await authEngine.logout();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         console.error(`There was an issue signing-out the user: ${error.message}`);
@@ -90,9 +91,9 @@ export function AuthProvider({ children } : { children: ReactNode }) {
   // This useEffect checks for an existing Supabase session on mount since it requires a redirect to login
   useEffect(() => {
     const checkSession = async () => {
-      if (storageEngine?.getEngine() === 'supabase') {
+      if (authEngine?.getEngine() === 'supabase') {
         try {
-          await (storageEngine as SupabaseStorageEngine).getSession();
+          await (authEngine as SupabaseStorageEngine).getSession();
         } catch (err) {
           // optional: log or handle errors
           console.error('Supabase session check failed', err);
@@ -100,11 +101,11 @@ export function AuthProvider({ children } : { children: ReactNode }) {
       }
     };
     checkSession();
-  }, [storageEngine, triggerAuth]);
+  }, [authEngine, triggerAuth]);
 
   const verifyAdminStatus = async (inputUser: UserWrapped) => {
-    if (storageEngine && isCloudStorageEngine(storageEngine)) {
-      return await storageEngine.validateUser(inputUser, true);
+    if (authEngine && isCloudStorageEngine(authEngine)) {
+      return await authEngine.validateUser(inputUser, true);
     }
     return false;
   };
@@ -140,26 +141,30 @@ export function AuthProvider({ children } : { children: ReactNode }) {
 
     // Determine authentication listener based on storageEngine and authEnabled variable
     const determineAuthentication = async () => {
-      if (storageEngine && isCloudStorageEngine(storageEngine)) {
-        const authInfo = await storageEngine.getUserManagementData('authentication');
+      if (authEngine && isCloudStorageEngine(authEngine)) {
+        const authInfo = await authEngine.getUserManagementData('authentication');
         if (authInfo?.isEnabled) {
-          storageEngine.unsubscribe(handleAuthStateChanged);
-        } else {
-          setUser(nonAuthUser);
+          const unsubscribe = authEngine.unsubscribe(handleAuthStateChanged);
+          return () => unsubscribe?.();
         }
-      } else if (storageEngine) {
+        setUser(nonAuthUser);
+      } else if (authEngine) {
         setUser(nonAuthUser);
       }
       return () => {};
     };
 
-    const cleanupPromise = determineAuthentication();
+    const cleanupPromise = determineAuthentication().catch((error) => {
+      console.error('Failed to determine authentication status:', error);
+      setUser(nonLoadingNullUser);
+      return () => {};
+    });
 
     return () => {
       cleanupPromise.then((cleanup) => cleanup());
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storageEngine, enableAuthTrigger]);
+  }, [authEngine, enableAuthTrigger]);
 
   const value = useMemo(() => ({
     user,

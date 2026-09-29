@@ -14,7 +14,7 @@ import { type ParticipantMetadata, type StudyConfig } from '../../parser/types';
 import testConfigSimple from './testConfigSimple.json';
 import { generateSequenceArray } from '../../utils/handleRandomSequences';
 import { FirebaseStorageEngine } from '../engines/FirebaseStorageEngine';
-import { type StorageEngine, cleanupModes } from '../engines/types';
+import { cleanupModes } from '../engines/types';
 import { hash } from '../engines/utils/storageEngineHelpers';
 
 type DocData = Record<string, string | number | boolean | null | object>;
@@ -276,7 +276,7 @@ afterAll(() => {
 describe.each([
   { TestEngine: FirebaseStorageEngine },
 ])('describe object $TestEngine', ({ TestEngine }) => {
-  let storageEngine: StorageEngine;
+  let storageEngine: FirebaseStorageEngine;
 
   beforeEach(async () => {
     storageEngine = new TestEngine(true);
@@ -390,6 +390,23 @@ describe.each([
     expect(updatedModes.dataSharingEnabled).toBe(true);
     expect(updatedModes.dataCollectionEnabled).toBe(false);
     expect(updatedModes.developmentModeEnabled).toBe(true);
+  });
+
+  test('storage disconnect is study-scoped and requires a signed-in listed admin', async () => {
+    expect(await storageEngine.getStorageDisconnected(studyId)).toBe(false);
+    await expect(storageEngine.setStorageDisconnected(studyId, true)).rejects.toThrow('verified administrator');
+
+    authState.currentUser = { email: 'admin@example.com', uid: 'admin-uid' };
+    firestoreData['user-management/authentication'] = { isEnabled: true };
+    firestoreData['user-management/adminUsers'] = {
+      adminUsersList: [{ email: 'admin@example.com', uid: 'admin-uid' }],
+    };
+
+    await storageEngine.setStorageDisconnected(studyId, true);
+    expect(await storageEngine.getStorageDisconnected(studyId)).toBe(true);
+    expect(await storageEngine.getStorageDisconnected('another-study')).toBe(false);
+    await storageEngine.setStorageDisconnected(studyId, false);
+    expect(await storageEngine.getStorageDisconnected(studyId)).toBe(false);
   });
 
   test('setMode toggles each ReVISit mode independently', async () => {

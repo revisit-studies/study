@@ -5,7 +5,7 @@ import { ParticipantMetadata, StudyConfig } from '../../parser/types';
 import testConfigSimple from './testConfigSimple.json';
 import { generateSequenceArray } from '../../utils/handleRandomSequences';
 import { SupabaseStorageEngine } from '../engines/SupabaseStorageEngine';
-import { StorageEngine, cleanupModes } from '../engines/types';
+import { cleanupModes } from '../engines/types';
 import { hash } from '../engines/utils/storageEngineHelpers';
 
 type RowData = Record<string, string | number | boolean | null | object>;
@@ -178,6 +178,7 @@ vi.mock('@supabase/supabase-js', () => {
         }),
       },
       auth: {
+        getUser: async () => ({ data: { user: { id: 'admin-uid', email: 'admin@example.com' } }, error: null }),
         getSession: async () => ({
           data: { session: { user: { id: 'mock-uid', email: null } } },
           error: null,
@@ -222,7 +223,7 @@ const participantMetadata: ParticipantMetadata = {
 describe.each([
   { TestEngine: SupabaseStorageEngine },
 ])('describe object $TestEngine', ({ TestEngine }) => {
-  let storageEngine: StorageEngine;
+  let storageEngine: SupabaseStorageEngine;
 
   beforeEach(async () => {
     storageEngine = new TestEngine(true);
@@ -343,6 +344,28 @@ describe.each([
     expect(updatedModes.dataSharingEnabled).toBe(true);
     expect(updatedModes.dataCollectionEnabled).toBe(false);
     expect(updatedModes.developmentModeEnabled).toBe(true);
+  });
+
+  test('stores a study-scoped disconnect setting after administrator verification', async () => {
+    expect(await storageEngine.getStorageDisconnected(studyId)).toBe(false);
+    await expect(storageEngine.setStorageDisconnected(studyId, true)).rejects.toThrow('verified administrator');
+
+    revisitRows.push({
+      studyId: '',
+      docId: 'user-management',
+      data: {
+        authentication: { isEnabled: true },
+        adminUsers: { adminUsersList: [{ email: 'admin@example.com', uid: 'admin-uid' }] },
+      },
+    });
+
+    await storageEngine.setStorageDisconnected(studyId, true);
+    expect(await storageEngine.getStorageDisconnected(studyId)).toBe(true);
+    expect(await storageEngine.getStorageDisconnected('another-study')).toBe(false);
+    await storageEngine.setStorageDisconnected(studyId, false);
+    expect(await storageEngine.getStorageDisconnected(studyId)).toBe(false);
+
+    revisitRows.splice(revisitRows.findIndex((row) => row.studyId === '' && row.docId === 'user-management'), 1);
   });
 
   test('setMode toggles each ReVISit mode independently', async () => {

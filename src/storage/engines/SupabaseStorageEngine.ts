@@ -441,6 +441,31 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     }
   }
 
+  async getStorageDisconnected(studyId: string) {
+    const { data, error } = await this.supabase
+      .from('revisit')
+      .select('data')
+      .eq('studyId', `${this.collectionPrefix}${studyId}`)
+      .eq('docId', 'storage');
+    if (error) throw new Error('Failed to read storage mode', { cause: error });
+    return data[0]?.data?.disconnected === true;
+  }
+
+  protected async _setStorageDisconnected(studyId: string, disconnected: boolean) {
+    const { error } = await this.supabase.from('revisit').upsert({
+      studyId: `${this.collectionPrefix}${studyId}`,
+      docId: 'storage',
+      data: { disconnected },
+    });
+    if (error) throw new Error('Failed to update storage mode', { cause: error });
+  }
+
+  protected async getAuthenticatedUser() {
+    const { data, error } = await this.supabase.auth.getUser();
+    if (error) throw new Error('Failed to verify administrator', { cause: error });
+    return data.user ? { email: data.user.email ?? null, uid: data.user.id } : null;
+  }
+
   async getModes(studyId: string) {
     // get the modes from the study collection
     const { data, error } = await this.supabase

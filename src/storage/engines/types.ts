@@ -2084,6 +2084,30 @@ export abstract class CloudStorageEngine extends StorageEngine {
 
   protected userManagementData: UserManagementData = {};
 
+  abstract getStorageDisconnected(studyId: string): Promise<boolean>;
+
+  protected abstract _setStorageDisconnected(studyId: string, disconnected: boolean): Promise<void>;
+
+  protected abstract getAuthenticatedUser(): Promise<StoredUser | null>;
+
+  async isStorageAdmin() {
+    this.userManagementData = {};
+    const auth = await this.getUserManagementData('authentication');
+    const signedInUser = await this.getAuthenticatedUser();
+    if (!auth?.isEnabled || !signedInUser?.email || !signedInUser.uid) return false;
+    const adminUsers = await this.getUserManagementData('adminUsers');
+    return Boolean(adminUsers?.adminUsersList.some((admin) => admin.email === signedInUser.email
+      && (admin.uid === null || admin.uid === signedInUser.uid)));
+  }
+
+  async setStorageDisconnected(studyId: string, disconnected: boolean) {
+    if (!await this.isStorageAdmin()) {
+      throw new Error('A verified administrator must sign in to change storage.');
+    }
+
+    await this._setStorageDisconnected(studyId, disconnected);
+  }
+
   protected shouldDeferInitialParticipantDataPersistence() {
     return true;
   }

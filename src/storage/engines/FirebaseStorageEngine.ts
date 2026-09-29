@@ -519,6 +519,20 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     }
   }
 
+  async getStorageDisconnected(studyId: string) {
+    const storageDoc = await getDoc(doc(this.firestore, `${this.collectionPrefix}${studyId}`, 'storage'));
+    return storageDoc.exists() && storageDoc.data().disconnected === true;
+  }
+
+  protected async _setStorageDisconnected(studyId: string, disconnected: boolean) {
+    await setDoc(doc(this.firestore, `${this.collectionPrefix}${studyId}`, 'storage'), { disconnected }, { merge: true });
+  }
+
+  protected async getAuthenticatedUser() {
+    const user = getAuth().currentUser;
+    return user ? { email: user.email, uid: user.uid } : null;
+  }
+
   async getModes(studyId: string) {
     const revisitModesDoc = doc(
       this.firestore,
