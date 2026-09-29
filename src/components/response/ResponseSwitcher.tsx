@@ -41,6 +41,7 @@ import {
 import { CustomResponseField } from '../../store/types';
 import { compileTemplate } from '../../utils/handlebars';
 import { useTemplateAnswerContext } from '../../store/hooks/useTemplateAnswerContext';
+import { OptionTextTemplateContext } from './OptionLabel';
 
 export function ResponseSwitcher({
   response,
@@ -229,6 +230,10 @@ export function ResponseSwitcher({
   }, [displayError, response.required, responseStyle]);
 
   const templateData = useTemplateAnswerContext();
+  const optionTextTemplate = useMemo(() => ({
+    parameters: config?.parameters ?? {},
+    data: templateData ?? {},
+  }), [config?.parameters, templateData]);
 
   const templatedFields = useMemo(() => {
     const parameters = config?.parameters ?? {};
@@ -255,7 +260,7 @@ export function ResponseSwitcher({
     return null;
   }
 
-  return (
+  const content = (
     <Box mb={responseDividers ? 'xl' : 'lg'} className={`response response--${response.type}`} data-answer-width={getResponseWidth(response)} id={response.id} style={responseWrapperStyle}>
       {response.type === 'numerical' && (
       <NumericInput
@@ -426,5 +431,10 @@ export function ResponseSwitcher({
       )}
       {(response.type === 'divider' || responseDividers) && <Divider mt="xl" mb="xs" />}
     </Box>
+  );
+  return (
+    <OptionTextTemplateContext.Provider value={optionTextTemplate}>
+      {content}
+    </OptionTextTemplateContext.Provider>
   );
 }

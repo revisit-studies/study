@@ -90,6 +90,7 @@ vi.mock('../InputLabel', () => ({
 
 vi.mock('../OptionLabel', () => ({
   OptionLabel: ({ label }: { label: string }) => React.createElement('span', null, label),
+  useOptionTextTemplate: () => (value: string) => value,
 }));
 
 vi.mock('../css/RankingDnd.module.css', () => ({
