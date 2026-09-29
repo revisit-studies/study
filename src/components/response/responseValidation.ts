@@ -1,4 +1,5 @@
 import isEqual from 'lodash.isequal';
+import { compareResponseValues } from '../../utils/correctAnswer';
 import {
   CheckboxResponse,
   DateResponse,
@@ -193,27 +194,7 @@ const DEFAULT_TEXT_VALIDATION_MESSAGES: Record<TextValidationRule['type'], strin
 };
 
 function textValidationRulePasses(rule: TextValidationRule, value: string) {
-  if (rule.type === 'equals') {
-    return value === rule.value;
-  }
-
-  if (rule.type === 'doesNotEqual') {
-    return value !== rule.value;
-  }
-
-  if (rule.type === 'contains') {
-    return value.includes(rule.value);
-  }
-
-  if (rule.type === 'doesNotContain') {
-    return !value.includes(rule.value);
-  }
-
-  try {
-    return new RegExp(rule.value).test(value);
-  } catch {
-    return false;
-  }
+  return compareResponseValues(value, rule.value, rule.type);
 }
 
 // Count words by splitting on whitespace and filtering out any empty strings or strings that don't contain letters or numbers

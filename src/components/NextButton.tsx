@@ -1,4 +1,6 @@
-import { Alert, Button, Group } from '@mantine/core';
+import {
+  Alert, Button, Group, Kbd,
+} from '@mantine/core';
 import {
   JSX, useEffect, useMemo, useRef, useState,
 } from 'react';
@@ -10,6 +12,7 @@ import type { IndividualComponent, ResponseBlockLocation } from '../parser/types
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { useCurrentIdentifier } from '../routes/utils';
 import { PreviousButton } from './PreviousButton';
+import { getComponentContainerStyle } from '../utils/componentStyle';
 import {
   DEFAULT_AUTO_ADVANCE_WARNING_MESSAGE,
   DEFAULT_AUTO_ADVANCE_WARNING_TIME,
@@ -41,7 +44,7 @@ export function NextButton({
   onCheckAnswer,
   onNext,
 }: Props) {
-  const { isNextDisabled, goToNextStep } = useNextStep(config?.response);
+  const { isNextDisabled, goToNextStep } = useNextStep(config?.response, config?.correctAnswer);
   const studyConfig = useStudyConfig();
   const navigate = useNavigate();
   const identifier = useCurrentIdentifier();
@@ -108,7 +111,7 @@ export function NextButton({
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Enter' || shouldIgnoreEnter(event.target)) {
+      if (event.key !== 'Enter' || event.defaultPrevented || (event as unknown as { __keyMapperHandled?: boolean }).__keyMapperHandled || shouldIgnoreEnter(event.target)) {
         return;
       }
 
@@ -132,10 +135,19 @@ export function NextButton({
   const nextButtonDisabled = disabled || isNextDisabled || !buttonTimerSatisfied;
   const previousButtonText = config?.previousButtonText ?? studyConfig.uiConfig.previousButtonText ?? 'Previous';
   const nextButtonAlignment = config?.nextButtonAlignment ?? studyConfig.uiConfig.nextButtonAlignment ?? 'right';
+  const componentWidth = config && getComponentContainerStyle(config.type, config.style);
 
   return (
     <>
-      <Group justify={nextButtonJustify[nextButtonAlignment]} gap="xs" mt="sm" wrap="wrap">
+      <Group
+        className={location === 'sidebar' ? undefined : 'responseBlock-actions'}
+        data-alignment={nextButtonAlignment}
+        justify={nextButtonJustify[nextButtonAlignment]}
+        gap="xs"
+        mt="sm"
+        wrap="wrap"
+        style={location === 'sidebar' ? undefined : { width: componentWidth?.width, maxWidth: componentWidth?.maxWidth }}
+      >
         {config?.previousButton && (
           <PreviousButton
             label={previousButtonText}
@@ -148,6 +160,35 @@ export function NextButton({
           disabled={nextButtonDisabled}
           onClick={() => onNext()}
           px={location === 'sidebar' && checkAnswer ? 8 : undefined}
+          aria-label={label}
+          rightSection={nextOnEnter && !onCheckAnswer ? (
+            <Kbd
+              size="xs"
+              aria-hidden="true"
+              style={{
+                backgroundColor: 'transparent',
+                color: 'inherit',
+                boxShadow: 'none',
+                border: 'none',
+                fontSize: '11px',
+                fontWeight: 600,
+              }}
+            >
+              ↵
+            </Kbd>
+          ) : undefined}
+          styles={{
+            inner: { alignItems: 'stretch' },
+            section: nextOnEnter && !onCheckAnswer ? {
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '0 10px',
+              marginRight: -16,
+              marginBlock: -1,
+              borderLeft: '1px solid rgba(255, 255, 255, 0.25)',
+              backgroundColor: 'rgba(0, 0, 0, 0.08)',
+            } : undefined,
+          }}
         >
           {label}
         </Button>

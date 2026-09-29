@@ -12,10 +12,17 @@ import { LocalStorageEngine } from '../../storage/engines/LocalStorageEngine';
 import { StorageObject, StorageObjectType } from '../../storage/engines/types';
 import { ParticipantData } from '../../storage/types';
 import { StoredAnswer } from '../../store/types';
+import type { UseGamepadOptions } from '../../store/hooks/useGamepad';
+import type { WindowEventsRef } from '../../store/hooks/useWindowEvents';
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
 const mockDispatch = vi.fn();
+const gamepadMocks = vi.hoisted(() => ({
+  options: undefined as UseGamepadOptions | undefined,
+  events: undefined as WindowEventsRef | undefined,
+  capture: false,
+}));
 const mockSetAlertModal = vi.fn((payload) => ({ type: 'setAlertModal', payload }));
 const mockSubscribeToParticipantDataWriteErrors = vi.fn();
 const pdfExportMocks = vi.hoisted(() => ({
@@ -137,7 +144,16 @@ vi.mock('../../store/hooks/useIsAnalysis', () => ({
 }));
 
 vi.mock('../../store/hooks/useWindowEvents', () => ({
-  WindowEventsContext: { Provider: ({ children }: { children: ReactNode }) => <span>{children}</span> },
+  WindowEventsContext: {
+    Provider: ({ children, value }: { children: ReactNode; value: WindowEventsRef }) => {
+      gamepadMocks.events = value;
+      return <span>{children}</span>;
+    },
+  },
+}));
+
+vi.mock('../../store/hooks/useGamepad', () => ({
+  useGamepad: (options: UseGamepadOptions) => { gamepadMocks.options = options; return { device: null, connected: false }; },
 }));
 
 vi.mock('../../store/hooks/useRecording', () => ({
@@ -190,6 +206,7 @@ vi.mock('../../routes/utils', () => ({
 
 vi.mock('../../utils/handleComponentInheritance', () => ({
   studyComponentToIndividualComponent: vi.fn(() => ({
+    captureGamepad: gamepadMocks.capture,
     withSidebar: true,
     sidebarWidth: 300,
     showTitleBar: mockShowTitleBar,
@@ -220,6 +237,7 @@ vi.mock('../../utils/notifications', () => ({
 
 vi.mock('react-router', () => ({
   Outlet: () => <div data-testid="outlet" />,
+  useSearchParams: () => [new URLSearchParams(), vi.fn()],
 }));
 
 vi.mock('@mantine/core', () => ({
@@ -270,6 +288,9 @@ vi.mock('lodash.debounce', () => ({
 
 describe('StepRenderer', () => {
   beforeEach(() => {
+    gamepadMocks.capture = false;
+    gamepadMocks.options = undefined;
+    gamepadMocks.events = undefined;
     mockDispatch.mockClear();
     mockSetAlertModal.mockClear();
     mockSubscribeToParticipantDataWriteErrors.mockReset();
@@ -289,6 +310,7 @@ describe('StepRenderer', () => {
 
   afterEach(() => {
     cleanup();
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -298,6 +320,36 @@ describe('StepRenderer', () => {
 
     expect(content?.style.padding).toBe('');
     expect(content?.querySelector('[data-testid="outlet"]')).not.toBeNull();
+  });
+
+  test('captures a quick stick flick and flushes its resting position before saving', async () => {
+    gamepadMocks.capture = true;
+    const { unmount } = await act(async () => render(<StepRenderer />));
+    expect(gamepadMocks.options?.enabled).toBe(true);
+    vi.useFakeTimers();
+
+    act(() => {
+      gamepadMocks.options?.onAxes?.([0], 1000);
+      gamepadMocks.options?.onAxes?.([1], 1020);
+      gamepadMocks.options?.onAxes?.([0], 1040);
+    });
+    expect(gamepadMocks.events?.current.filter((event) => event[1] === 'gamepadaxis')).toHaveLength(2);
+    act(() => vi.advanceTimersByTime(100));
+
+    act(() => {
+      gamepadMocks.options?.onAxes?.([1], 1200);
+      gamepadMocks.options?.onAxes?.([0], 1220);
+      gamepadMocks.events?.flushPending?.();
+    });
+
+    expect(gamepadMocks.events?.current.filter((event) => event[1] === 'gamepadaxis')).toEqual([
+      [1000, 'gamepadaxis', [0]],
+      [1020, 'gamepadaxis', [1]],
+      [1040, 'gamepadaxis', [0]],
+      [1200, 'gamepadaxis', [1]],
+      [1220, 'gamepadaxis', [0]],
+    ]);
+    unmount();
   });
 
   test('shows the blocking storage modal when a queued participant data write fails', async () => {

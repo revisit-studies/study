@@ -7,6 +7,7 @@ import { useMove } from '@mantine/hooks';
 import { SliderResponse } from '../../parser/types';
 import classes from './css/SliderInput.module.css';
 import { InputLabel } from './InputLabel';
+import { useOptionTextTemplate } from './OptionLabel';
 import {
   generateSliderBreakValues,
   getSliderPrecision,
@@ -31,7 +32,7 @@ export function SliderInput({
   const {
     prompt,
     required,
-    options,
+    options: rawOptions,
     secondaryText,
     infoText,
     snap,
@@ -41,6 +42,11 @@ export function SliderInput({
     smeqStyle,
     spacing,
   } = response;
+  const template = useOptionTextTemplate();
+  const options = useMemo(
+    () => rawOptions.map((option) => ({ ...option, label: template(option.label, true) })),
+    [rawOptions, template],
+  );
 
   const [min, max] = useMemo(() => [Math.min(...options.map((opt) => opt.value)), Math.max(...options.map((opt) => opt.value))], [options]);
   const sliderStep = step ?? (snap ? 0.001 : (max - min) / 100);

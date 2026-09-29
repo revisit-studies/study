@@ -1,4 +1,5 @@
-import type { Response } from '../parser/types';
+import { resolveResponseVisibility } from './responseVisibility';
+import type { Answer, Response } from '../parser/types';
 import { StoredAnswer, TrialValidation, ValidationStatus } from '../store/types';
 
 const OTHER_ANSWER_SUFFIX = '-other';
@@ -25,8 +26,9 @@ export function getAnswersFromAllLocations(trialValidationEntry: TrialValidation
 export function getPersistedAnswersFromAllLocations(
   trialValidationEntry: TrialValidation[string] | undefined,
   responses: Response[] = [],
+  correctAnswers: Answer[] = [],
 ): StoredAnswer['answer'] {
-  const answers = getAnswersFromAllLocations(trialValidationEntry);
+  const { answers } = resolveResponseVisibility(responses, getAnswersFromAllLocations(trialValidationEntry), {}, correctAnswers);
   const responseIds = new Set(responses.map((response) => response.id));
   const responseIdsWithOther = new Set(
     responses

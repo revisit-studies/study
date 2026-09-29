@@ -9,7 +9,7 @@ import classes from './css/Radio.module.css';
 import inputClasses from './css/Input.module.css';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { InputLabel } from './InputLabel';
-import { OptionLabel } from './OptionLabel';
+import { OptionLabel, useOptionTextTemplate } from './OptionLabel';
 import { parseStringOptions } from '../../utils/stringOptions';
 
 export function RadioInput({
@@ -43,6 +43,9 @@ export function RadioInput({
     options,
     labelLocation,
   } = response;
+  const template = useOptionTextTemplate();
+  const renderedLeftLabel = leftLabel && template(leftLabel, true);
+  const renderedRightLabel = rightLabel && template(rightLabel, true);
 
   const storedAnswer = useStoredAnswer();
   const optionOrders: Record<string, ParsedStringOption[]> = useMemo(() => storedAnswer?.optionOrders ?? {}, [storedAnswer]);
@@ -78,14 +81,14 @@ export function RadioInput({
       errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
       style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
     >
-      {horizontal && label === 'above' && (leftLabel || rightLabel) && (
+      {horizontal && label === 'above' && (renderedLeftLabel || renderedRightLabel) && (
         <Group gap="lg" justify="space-between" mt={0}>
-          {leftLabel && <Text>{leftLabel}</Text>}
-          {rightLabel && <Text>{rightLabel}</Text>}
+          {renderedLeftLabel && <Text>{renderedLeftLabel}</Text>}
+          {renderedRightLabel && <Text>{renderedRightLabel}</Text>}
         </Group>
       )}
       <Group gap="lg" align="flex-end" mt={horizontal ? 0 : 'sm'}>
-        {horizontal && label === 'inline' && leftLabel && <Text>{leftLabel}</Text>}
+        {horizontal && label === 'inline' && renderedLeftLabel && <Text>{renderedLeftLabel}</Text>}
         <HorizontalHandler horizontal={!!horizontal} style={{ flexGrow: 1 }}>
           {orderedOptions.map((radio) => (
             <div
@@ -162,7 +165,7 @@ export function RadioInput({
             </div>
           )}
         </HorizontalHandler>
-        {horizontal && label === 'inline' && rightLabel && <Text>{rightLabel}</Text>}
+        {horizontal && label === 'inline' && renderedRightLabel && <Text>{renderedRightLabel}</Text>}
       </Group>
       {horizontal && withOther && (
         <Input
@@ -174,10 +177,10 @@ export function RadioInput({
           classNames={{ input: inputClasses.fixDisabled }}
         />
       )}
-      {horizontal && label === 'below' && (leftLabel || rightLabel) && (
+      {horizontal && label === 'below' && (renderedLeftLabel || renderedRightLabel) && (
         <Group gap="lg" justify="space-between" mt="sm">
-          {leftLabel && <Text>{leftLabel}</Text>}
-          {rightLabel && <Text>{rightLabel}</Text>}
+          {renderedLeftLabel && <Text>{renderedLeftLabel}</Text>}
+          {renderedRightLabel && <Text>{renderedRightLabel}</Text>}
         </Group>
       )}
     </Radio.Group>
