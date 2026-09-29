@@ -440,7 +440,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     );
   }
 
-  if (canonicalStudyId === null || !['summary', 'table', 'stats', 'tagging', 'live-monitor', 'config', 'manage'].includes(analysisTab ?? '')) {
+  if (canonicalStudyId === null || !['summary', 'table', 'stats', 'tagging', 'live-monitor', 'config', 'manage', 'storage'].includes(analysisTab ?? '')) {
     return (
       <>
         <AppHeader studyIds={globalConfig.configsList} selectedStudyId={displayStudyId} />

@@ -831,6 +831,29 @@ describe.each([
   });
 
   // User management tests
+  test('analysis access requires explicitly stored data sharing', async () => {
+    const engine = storageEngine as SupabaseStorageEngine;
+    const accessStudyId = 'access-check';
+    expect(await engine.getAccessModes(accessStudyId)).toBeNull();
+    expect(revisitRows.some((row) => String(row.studyId).endsWith(accessStudyId) && row.docId === 'metadata')).toBe(false);
+
+    const metadataRow = {
+      studyId: `${import.meta.env.DEV ? 'dev-' : 'prod-'}${accessStudyId}`,
+      docId: 'metadata',
+      data: { dataSharingEnabled: 'true' as string | boolean },
+    };
+    revisitRows.push(metadataRow);
+    try {
+      expect((await engine.getAccessModes(accessStudyId))?.dataSharingEnabled).toBe(false);
+      metadataRow.data.dataSharingEnabled = false;
+      expect((await engine.getAccessModes(accessStudyId))?.dataSharingEnabled).toBe(false);
+      metadataRow.data.dataSharingEnabled = true;
+      expect((await engine.getAccessModes(accessStudyId))?.dataSharingEnabled).toBe(true);
+    } finally {
+      revisitRows.splice(revisitRows.indexOf(metadataRow), 1);
+    }
+  });
+
   test('getUserManagementData returns undefined when no data exists', async () => {
     // @ts-expect-error accessing CloudStorageEngine method via StorageEngine
     const authData = await storageEngine.getUserManagementData('authentication');
@@ -838,6 +861,28 @@ describe.each([
     // @ts-expect-error accessing CloudStorageEngine method via StorageEngine
     const adminData = await storageEngine.getUserManagementData('adminUsers');
     expect(adminData).toBeUndefined();
+  });
+
+  test('missing authentication setting never validates an administrator', async () => {
+    const supabaseEngine = storageEngine as SupabaseStorageEngine;
+    const result = await supabaseEngine.validateUser({
+      user: { email: 'admin@test.com', uid: 'uid-1' },
+      isAdmin: true,
+      determiningStatus: false,
+      adminVerification: true,
+    }, true);
+    expect(result).toBe(false);
+  });
+
+  test('malformed authentication setting is rejected', async () => {
+    const row = { studyId: '', docId: 'user-management', data: { authentication: {} } };
+    revisitRows.push(row);
+    try {
+      await expect((storageEngine as SupabaseStorageEngine).getUserManagementData('authentication'))
+        .rejects.toThrow('Invalid authentication setting');
+    } finally {
+      revisitRows.splice(revisitRows.indexOf(row), 1);
+    }
   });
 
   test('changeAuth enables and disables authentication', async () => {

@@ -385,9 +385,9 @@ export function ConfigSwitcher({
         configsList.map(async (configName) => {
           if (storageEngine) {
             try {
-              const modes = await storageEngine.getModes(configName);
+              const modes = await storageEngine.getAccessModes(configName);
               if (isCloudStorageEngine(storageEngine)) {
-                visibility[configName] = modes.dataSharingEnabled;
+                visibility[configName] = modes?.dataSharingEnabled === true;
               }
               modesMap[configName] = modes;
             } catch (error) {

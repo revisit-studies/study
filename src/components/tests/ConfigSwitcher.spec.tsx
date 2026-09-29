@@ -146,6 +146,7 @@ const studyConfigs: Record<string, ParsedConfig<StudyConfig> | null> = {
 };
 
 const makeAuthValue = (isAdmin: boolean): ReturnType<typeof useAuth> => ({
+  supabaseAuthStatus: 'loading',
   user: {
     user: null,
     determiningStatus: false,
@@ -300,6 +301,23 @@ describe('ConfigSwitcher', () => {
       <ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigs} />,
     ));
     expect(container).toBeDefined();
+  });
+
+  test('hides a Supabase study without persisted sharing modes', async () => {
+    const mockEngine = {
+      getAccessModes: vi.fn().mockResolvedValue(null),
+      getModes: vi.fn().mockResolvedValue({ dataSharingEnabled: true }),
+      isCloudEngine: vi.fn().mockReturnValue(true),
+      getEngine: vi.fn().mockReturnValue('supabase'),
+    };
+    vi.mocked(useAuth).mockReturnValue(makeAuthValue(false));
+    vi.mocked(useStorageEngine).mockReturnValue({ storageEngine: makeStorageEngine(mockEngine), setStorageEngine: vi.fn() });
+    const { container } = await act(async () => render(
+      <ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigs} />,
+    ));
+    expect(mockEngine.getAccessModes).toHaveBeenCalledWith('test-study');
+    expect(mockEngine.getModes).not.toHaveBeenCalled();
+    expect(container.textContent).not.toContain(parsedStudyConfig.studyMetadata.title);
   });
 
   test('settles visibility loading and reports a failed mode lookup', async () => {

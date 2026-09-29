@@ -10,6 +10,7 @@ import { useAuth, AuthProvider } from '../useAuth';
 // ── mutable mock state ─────────────────────────────────────────────────────────
 
 let mockStorageEngineVal: Record<string, ReturnType<typeof vi.fn>> | null = null;
+let mockConfiguredStorageEngineVal: Record<string, ReturnType<typeof vi.fn>> | null = null;
 let mockIsCloudStorage = false;
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
@@ -21,7 +22,7 @@ vi.mock('@mantine/core', () => ({
 }));
 
 vi.mock('../../../storage/storageEngineHooks', () => ({
-  useStorageEngine: () => ({ storageEngine: mockStorageEngineVal }),
+  useStorageEngine: () => ({ storageEngine: mockStorageEngineVal, configuredStorageEngine: mockConfiguredStorageEngineVal }),
 }));
 
 vi.mock('../../../storage/engines/utils/storageEngineHelpers', () => ({
@@ -37,6 +38,7 @@ vi.mock('react-router', () => ({
 
 beforeEach(() => {
   mockStorageEngineVal = null;
+  mockConfiguredStorageEngineVal = null;
   mockIsCloudStorage = false;
 });
 
@@ -107,6 +109,84 @@ describe('AuthProvider', () => {
 });
 
 describe('AuthProvider — non-null storage engine paths', () => {
+  test('uses configured Supabase authentication while study data uses local storage', async () => {
+    mockStorageEngineVal = { getEngine: vi.fn(() => 'localStorage') };
+    mockConfiguredStorageEngineVal = {
+      getEngine: vi.fn(() => 'supabase'),
+      getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
+      getUserManagementData: vi.fn().mockResolvedValue(undefined),
+    };
+    mockIsCloudStorage = true;
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: ({ children }: { children: ReactNode }) => <AuthProvider>{children}</AuthProvider>,
+    });
+    await waitFor(() => expect(result.current.supabaseAuthStatus).toBe('unconfigured'));
+    expect(result.current.user.isAdmin).toBe(false);
+    expect(mockConfiguredStorageEngineVal.getUserManagementData).toHaveBeenCalledWith('authentication');
+  });
+
+  test.each([
+    [undefined, 'unconfigured'],
+    [{ isEnabled: false }, 'disabled'],
+  ])('Supabase setting %s has status %s', async (setting, status) => {
+    mockStorageEngineVal = {
+      getEngine: vi.fn(() => 'supabase'),
+      getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
+      getUserManagementData: vi.fn().mockResolvedValue(setting),
+    };
+    mockIsCloudStorage = true;
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: ({ children }: { children: ReactNode }) => <AuthProvider>{children}</AuthProvider>,
+    });
+    await waitFor(() => expect(result.current.supabaseAuthStatus).toBe(status));
+    expect(result.current.user.isAdmin).toBe(status === 'disabled');
+  });
+
+  test('Supabase read failure remains non-admin and can be retried', async () => {
+    const getUserManagementData = vi.fn().mockRejectedValueOnce(new Error('read failed'))
+      .mockResolvedValueOnce({ isEnabled: false });
+    mockStorageEngineVal = {
+      getEngine: vi.fn(() => 'supabase'),
+      getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
+      getUserManagementData,
+    };
+    mockIsCloudStorage = true;
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: ({ children }: { children: ReactNode }) => <AuthProvider>{children}</AuthProvider>,
+    });
+    await waitFor(() => expect(result.current.supabaseAuthStatus).toBe('error'));
+    expect(result.current.user.isAdmin).toBe(false);
+    act(() => result.current.triggerAuth());
+    await waitFor(() => expect(result.current.supabaseAuthStatus).toBe('disabled'));
+    expect(result.current.user.isAdmin).toBe(true);
+    consoleSpy.mockRestore();
+  });
+
+  test('an earlier admin check cannot restore access after sign-out', async () => {
+    let authChanged: ((cloudUser: { email: string; uid: string } | null) => Promise<void>) | undefined;
+    let resolveValidation: ((value: boolean) => void) | undefined;
+    const validateUser = vi.fn(() => new Promise<boolean>((resolve) => { resolveValidation = resolve; }));
+    mockStorageEngineVal = {
+      getEngine: vi.fn(() => 'supabase'),
+      getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
+      getUserManagementData: vi.fn().mockResolvedValue({ isEnabled: true }),
+      unsubscribe: vi.fn((callback) => { authChanged = callback; return vi.fn(); }),
+      validateUser,
+    };
+    mockIsCloudStorage = true;
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: ({ children }: { children: ReactNode }) => <AuthProvider>{children}</AuthProvider>,
+    });
+    await waitFor(() => expect(authChanged).toBeDefined());
+    act(() => { authChanged?.({ email: 'admin@test.com', uid: 'uid-1' }); });
+    await waitFor(() => expect(validateUser).toHaveBeenCalled());
+    await act(async () => { await authChanged?.(null); });
+    await act(async () => { resolveValidation?.(true); });
+    expect(result.current.user.isAdmin).toBe(false);
+    expect(result.current.user.user).toBeNull();
+  });
+
   test('non-cloud storageEngine sets nonAuthUser', async () => {
     mockStorageEngineVal = { getEngine: vi.fn(() => 'localStorage') };
     mockIsCloudStorage = false;

@@ -154,7 +154,7 @@ export function GlobalConfigParser() {
   }, [globalConfig]);
 
   // Initialize storage engine
-  const { storageEngine, setStorageEngine } = useStorageEngine();
+  const { storageEngine, configuredStorageEngine, setStorageEngine } = useStorageEngine();
   useEffect(() => {
     if (storageEngine !== undefined) {
       return undefined;
@@ -185,7 +185,7 @@ export function GlobalConfigParser() {
       return false;
     }
 
-    return shouldProtectAnalysisRoute(studyId, globalConfig, storageEngine);
+    return shouldProtectAnalysisRoute(studyId, globalConfig, configuredStorageEngine ?? storageEngine);
   };
 
   if (startupError) {
@@ -261,7 +261,7 @@ export function GlobalConfigParser() {
               <Route
                 path="/settings"
                 element={(
-                  <ProtectedRoute>
+                  <ProtectedRoute allowSupabaseSetup>
                     <PageTitle title="ReVISit | Settings" />
                     <AppShell
                       padding="md"
