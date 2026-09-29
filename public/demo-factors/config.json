@@ -7,7 +7,7 @@
       "The reVISit Team"
     ],
     "date": "2023-04-14",
-    "description": "A simple demo of using stimuli in an HTML file that renders a D3 visualization. Data is collected via a numeric response field.",
+    "description": "Demonstrates how factors combine to produce both within and between subjects experiments with far less JSON",
     "organizations": [
       "University of Utah",
       "WPI",
@@ -48,6 +48,11 @@
     }
   },
   "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-factors/assets/introduction.md",
+      "response": []
+    },
     "Ok_googleTutorial": {
       "type": "markdown",
       "path": "demo-factors/assets/ok-google-tutorial-{{ageGroup}}.md",
@@ -194,6 +199,7 @@
   "sequence": {
     "order": "fixed",
     "components": [
+      "introduction",
       {
         "type": "factor",
         "id": "crossBlockFixed",

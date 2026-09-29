@@ -2823,6 +2823,10 @@ describe('Parser Warnings', () => {
     const result = await parseStudyConfig(config);
 
     expect(result.errors).toEqual([]);
+    expect(isComponentBlock(result.sequence)).toBe(true);
+    if (isComponentBlock(result.sequence)) {
+      expect(result.sequence.components[0]).toBe('introduction');
+    }
   });
 
   test('parses the factorized correlation study', async () => {
