@@ -2,7 +2,7 @@ import { MultiSelect, Select } from '@mantine/core';
 import { DropdownResponse } from '../../parser/types';
 import classes from './css/Input.module.css';
 import { InputLabel } from './InputLabel';
-import { OptionLabel } from './OptionLabel';
+import { OptionLabel, useOptionTextTemplate } from './OptionLabel';
 import { getDropdownOptions } from '../../utils/dropdownOptions';
 
 export function DropdownInput({
@@ -28,13 +28,17 @@ export function DropdownInput({
     infoText,
   } = response;
 
-  const optionsAsStringOptions = getDropdownOptions(response);
+  const template = useOptionTextTemplate();
+  const rawOptions = getDropdownOptions(response);
+  const optionsByValue = new Map(rawOptions.map((option) => [option.value, option]));
+  const optionsAsStringOptions = rawOptions.map((option) => ({ ...option, label: template(option.label, true) }));
   const resolvedPlaceholder = placeholder ?? (response.options === 'countries' ? 'Select a country' : undefined);
   const countryPreset = response.options === 'countries';
   const isMultiselect = (response.minSelections && response.minSelections >= 1) || (response.maxSelections && response.maxSelections > 1);
-  const renderOption = ({ option }: { option: { label: string; infoText?: string } }) => (
-    <OptionLabel label={option.label} infoText={option.infoText} />
-  );
+  const renderOption = ({ option }: { option: { value: string; label: string; infoText?: string } }) => {
+    const rawOption = optionsByValue.get(option.value);
+    return <OptionLabel label={rawOption?.label ?? option.label} infoText={rawOption?.infoText ?? option.infoText} />;
+  };
 
   return (
     isMultiselect ? (
