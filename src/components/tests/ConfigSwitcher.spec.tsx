@@ -146,6 +146,7 @@ const studyConfigs: Record<string, ParsedConfig<StudyConfig> | null> = {
 };
 
 const makeAuthValue = (isAdmin: boolean): ReturnType<typeof useAuth> => ({
+  supabaseAuthStatus: 'loading',
   user: {
     user: null,
     determiningStatus: false,

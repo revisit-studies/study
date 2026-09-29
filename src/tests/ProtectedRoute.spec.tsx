@@ -1,5 +1,5 @@
 import {
-  render, act, cleanup, screen,
+  render, act, cleanup, screen, fireEvent,
 } from '@testing-library/react';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
@@ -9,6 +9,8 @@ import { ProtectedRoute } from '../ProtectedRoute';
 let mockUser: { isAdmin: boolean; determiningStatus: boolean };
 const mockVerifyAdminStatus = vi.fn();
 const mockLogout = vi.fn();
+const mockTriggerAuth = vi.fn();
+let mockSupabaseAuthStatus = 'loading';
 let mockStorageEngine: { getEngine: ReturnType<typeof vi.fn> } | undefined;
 
 vi.mock('../store/hooks/useAuth', () => ({
@@ -16,6 +18,8 @@ vi.mock('../store/hooks/useAuth', () => ({
     user: mockUser,
     verifyAdminStatus: mockVerifyAdminStatus,
     logout: mockLogout,
+    triggerAuth: mockTriggerAuth,
+    supabaseAuthStatus: mockSupabaseAuthStatus,
   }),
 }));
 
@@ -31,6 +35,8 @@ vi.mock('react-router', () => ({
 }));
 
 vi.mock('@mantine/core', () => ({
+  Alert: ({ children }: { children: React.ReactNode }) => <div role="alert">{children}</div>,
+  Button: ({ children, onClick }: { children: React.ReactNode; onClick: () => void }) => <button type="button" onClick={onClick}>{children}</button>,
   LoadingOverlay: ({ visible }: { visible: boolean }) => (
     visible ? <div data-testid="loading-overlay" /> : null
   ),
@@ -42,6 +48,8 @@ describe('ProtectedRoute', () => {
     mockVerifyAdminStatus.mockResolvedValue(true);
     mockLogout.mockReset();
     mockStorageEngine = { getEngine: vi.fn().mockReturnValue('localStorage') };
+    mockSupabaseAuthStatus = 'loading';
+    mockParams = {};
   });
 
   afterEach(() => {
@@ -104,5 +112,59 @@ describe('ProtectedRoute', () => {
     });
 
     expect(mockParamCallback).toHaveBeenCalledWith('test-study');
+  });
+
+  test('does not render private analysis before sharing status resolves', async () => {
+    mockStorageEngine = { getEngine: vi.fn().mockReturnValue('supabase') };
+    mockSupabaseAuthStatus = 'disabled';
+    mockParams = { studyId: 'test-study', analysisTab: 'stats' };
+    const callback = vi.fn().mockReturnValue(new Promise(() => {}));
+    render(<ProtectedRoute paramToCheck="studyId" paramCallback={callback}><div>private data</div></ProtectedRoute>);
+    expect(screen.queryByText('private data')).toBeNull();
+    expect(screen.getByTestId('loading-overlay')).toBeDefined();
+  });
+
+  test('renders shared analysis without waiting for authentication', async () => {
+    mockStorageEngine = { getEngine: vi.fn().mockReturnValue('supabase') };
+    mockParams = { studyId: 'test-study', analysisTab: 'stats' };
+    const callback = vi.fn().mockResolvedValue(false);
+    await act(async () => render(<ProtectedRoute paramToCheck="studyId" paramCallback={callback}><div>shared data</div></ProtectedRoute>));
+    expect(screen.getByText('shared data')).toBeDefined();
+  });
+
+  test('missing auth redirects direct Manage access to setup', async () => {
+    mockStorageEngine = { getEngine: vi.fn().mockReturnValue('supabase') };
+    mockSupabaseAuthStatus = 'unconfigured';
+    mockParams = { studyId: 'test-study', analysisTab: 'manage' };
+    await act(async () => render(<ProtectedRoute paramToCheck="studyId" paramCallback={vi.fn()}><div>manage data</div></ProtectedRoute>));
+    expect(screen.queryByText('manage data')).toBeNull();
+    expect(screen.getByTestId('navigate-to-settings')).toBeDefined();
+  });
+
+  test('setup remains available when authentication is unconfigured', async () => {
+    mockStorageEngine = { getEngine: vi.fn().mockReturnValue('supabase') };
+    mockSupabaseAuthStatus = 'unconfigured';
+    await act(async () => render(<ProtectedRoute allowSupabaseSetup><div>settings</div></ProtectedRoute>));
+    expect(screen.getByText('settings')).toBeDefined();
+  });
+
+  test('failed auth read blocks settings and offers retry', async () => {
+    mockStorageEngine = { getEngine: vi.fn().mockReturnValue('supabase') };
+    mockSupabaseAuthStatus = 'error';
+    await act(async () => render(<ProtectedRoute allowSupabaseSetup><div>settings</div></ProtectedRoute>));
+    expect(screen.queryByText('settings')).toBeNull();
+    fireEvent.click(screen.getByText('Retry'));
+    expect(mockTriggerAuth).toHaveBeenCalled();
+  });
+
+  test('admin verification failure denies protected content and offers retry', async () => {
+    mockStorageEngine = { getEngine: vi.fn().mockReturnValue('supabase') };
+    mockSupabaseAuthStatus = 'enabled';
+    mockUser = { isAdmin: true, determiningStatus: false };
+    mockVerifyAdminStatus.mockRejectedValue(new Error('read failed'));
+    await act(async () => render(<ProtectedRoute><div>settings</div></ProtectedRoute>));
+    expect(screen.queryByText('settings')).toBeNull();
+    fireEvent.click(screen.getByText('Retry'));
+    expect(mockTriggerAuth).toHaveBeenCalled();
   });
 });

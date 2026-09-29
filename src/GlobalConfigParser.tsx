@@ -216,7 +216,7 @@ export function GlobalConfigParser() {
             <Route
               path="/settings"
               element={(
-                <ProtectedRoute>
+                <ProtectedRoute allowSupabaseSetup>
                   <PageTitle title="ReVISit | Settings" />
                   <AppShell
                     padding="md"

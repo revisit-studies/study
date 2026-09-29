@@ -13,14 +13,17 @@ import { GlobalSettings } from '../GlobalSettings';
 let mockIsCloud = true;
 let mockGetUserManagementData = vi.fn().mockResolvedValue(null);
 let mockStorageEngine: Record<string, ReturnType<typeof vi.fn>> | null = null;
+let mockSupabaseAuthStatus = 'disabled';
+const mockTriggerAuth = vi.fn();
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
 vi.mock('../../../store/hooks/useAuth', () => ({
   useAuth: () => ({
     user: { user: { email: 'test@test.com' } },
-    triggerAuth: vi.fn(),
+    triggerAuth: mockTriggerAuth,
     logout: vi.fn(),
+    supabaseAuthStatus: mockSupabaseAuthStatus,
   }),
 }));
 
@@ -93,6 +96,7 @@ vi.mock('@tabler/icons-react', () => ({
 describe('GlobalSettings', () => {
   beforeEach(() => {
     mockIsCloud = true;
+    mockSupabaseAuthStatus = 'disabled';
     mockGetUserManagementData = vi.fn().mockResolvedValue(null);
     mockStorageEngine = {
       getUserManagementData: mockGetUserManagementData,
@@ -177,6 +181,28 @@ describe('GlobalSettings', () => {
     });
 
     expect(screen.getByText('Enable Authentication?')).toBeDefined();
+  });
+
+  test('unconfigured Supabase lets the signed-in user establish the first administrator', async () => {
+    mockSupabaseAuthStatus = 'unconfigured';
+    const addAdminUser = vi.fn().mockResolvedValue(undefined);
+    const changeAuth = vi.fn().mockResolvedValue(undefined);
+    mockStorageEngine = {
+      getUserManagementData: mockGetUserManagementData,
+      getEngine: vi.fn().mockReturnValue('supabase'),
+      getSession: vi.fn().mockResolvedValue({ data: { session: { user: { email: 'test@test.com', id: '123' } } } }),
+      addAdminUser,
+      changeAuth,
+    };
+    await act(async () => render(<GlobalSettings />));
+    expect(mockGetUserManagementData).not.toHaveBeenCalled();
+    expect(screen.getByText('Authentication has not been configured.')).toBeDefined();
+    await act(async () => fireEvent.click(screen.getByText('Enable Authentication')));
+    await act(async () => fireEvent.click(screen.getByText("Yes, I'm sure.")));
+    expect(addAdminUser).toHaveBeenCalledWith({ email: 'test@test.com', uid: '123' });
+    expect(changeAuth).toHaveBeenCalledWith(true);
+    expect(addAdminUser.mock.invocationCallOrder[0]).toBeLessThan(changeAuth.mock.invocationCallOrder[0]);
+    expect(mockTriggerAuth).toHaveBeenCalled();
   });
 
   test('shows trash button and opens remove modal for non-current admin user', async () => {

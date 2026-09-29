@@ -840,6 +840,28 @@ describe.each([
     expect(adminData).toBeUndefined();
   });
 
+  test('missing authentication setting never validates an administrator', async () => {
+    const supabaseEngine = storageEngine as SupabaseStorageEngine;
+    const result = await supabaseEngine.validateUser({
+      user: { email: 'admin@test.com', uid: 'uid-1' },
+      isAdmin: true,
+      determiningStatus: false,
+      adminVerification: true,
+    }, true);
+    expect(result).toBe(false);
+  });
+
+  test('malformed authentication setting is rejected', async () => {
+    const row = { studyId: '', docId: 'user-management', data: { authentication: {} } };
+    revisitRows.push(row);
+    try {
+      await expect((storageEngine as SupabaseStorageEngine).getUserManagementData('authentication'))
+        .rejects.toThrow('Invalid authentication setting');
+    } finally {
+      revisitRows.splice(revisitRows.indexOf(row), 1);
+    }
+  });
+
   test('changeAuth enables and disables authentication', async () => {
     // @ts-expect-error accessing CloudStorageEngine method
     await storageEngine.changeAuth(true);

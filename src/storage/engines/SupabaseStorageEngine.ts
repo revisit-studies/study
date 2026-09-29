@@ -777,24 +777,29 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       .single();
 
     if (error) {
-      console.error(`Error fetching user management data for key ${key}:`, error);
-      return undefined;
+      if (error.code === 'PGRST116') return undefined;
+      throw new Error(`Failed to read user management data: ${error.message}`);
     }
 
-    this.userManagementData = data?.data || {};
+    if (!data?.data || typeof data.data !== 'object' || Array.isArray(data.data)) {
+      throw new Error('Invalid user management data');
+    }
+    this.userManagementData = data.data;
 
     if (key in this.userManagementData) {
       // Type narrowing to ensure correct return type
       if (key === 'authentication') {
         const value = this.userManagementData[key];
-        if (value && typeof value === 'object' && 'isEnabled' in value) {
+        if (value && typeof value === 'object' && 'isEnabled' in value && typeof value.isEnabled === 'boolean') {
           return value as { isEnabled: boolean };
         }
+        throw new Error('Invalid authentication setting');
       } else if (key === 'adminUsers') {
         const value = this.userManagementData[key];
-        if (value && typeof value === 'object' && 'adminUsersList' in value) {
+        if (value && typeof value === 'object' && 'adminUsersList' in value && Array.isArray(value.adminUsersList)) {
           return value as { adminUsersList: StoredUser[] };
         }
+        throw new Error('Invalid administrator list');
       }
     }
     return undefined;

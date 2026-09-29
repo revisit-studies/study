@@ -107,6 +107,44 @@ describe('AuthProvider', () => {
 });
 
 describe('AuthProvider — non-null storage engine paths', () => {
+  test.each([
+    [undefined, 'unconfigured'],
+    [{ isEnabled: false }, 'disabled'],
+  ])('Supabase setting %s has status %s', async (setting, status) => {
+    mockStorageEngineVal = {
+      getEngine: vi.fn(() => 'supabase'),
+      getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
+      getUserManagementData: vi.fn().mockResolvedValue(setting),
+    };
+    mockIsCloudStorage = true;
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: ({ children }: { children: ReactNode }) => <AuthProvider>{children}</AuthProvider>,
+    });
+    await waitFor(() => expect(result.current.supabaseAuthStatus).toBe(status));
+    expect(result.current.user.isAdmin).toBe(status === 'disabled');
+  });
+
+  test('Supabase read failure remains non-admin and can be retried', async () => {
+    const getUserManagementData = vi.fn().mockRejectedValueOnce(new Error('read failed'))
+      .mockResolvedValueOnce({ isEnabled: false });
+    mockStorageEngineVal = {
+      getEngine: vi.fn(() => 'supabase'),
+      getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
+      getUserManagementData,
+    };
+    mockIsCloudStorage = true;
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: ({ children }: { children: ReactNode }) => <AuthProvider>{children}</AuthProvider>,
+    });
+    await waitFor(() => expect(result.current.supabaseAuthStatus).toBe('error'));
+    expect(result.current.user.isAdmin).toBe(false);
+    act(() => result.current.triggerAuth());
+    await waitFor(() => expect(result.current.supabaseAuthStatus).toBe('disabled'));
+    expect(result.current.user.isAdmin).toBe(true);
+    consoleSpy.mockRestore();
+  });
+
   test('non-cloud storageEngine sets nonAuthUser', async () => {
     mockStorageEngineVal = { getEngine: vi.fn(() => 'localStorage') };
     mockIsCloudStorage = false;

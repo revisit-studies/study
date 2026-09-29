@@ -2158,7 +2158,7 @@ export abstract class CloudStorageEngine extends StorageEngine {
           return false;
         }
       }
-      return true;
+      return this.engine !== 'supabase' || authInfo?.isEnabled === false;
     }
     return false;
   }
