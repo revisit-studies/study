@@ -521,7 +521,10 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
 
   async getStorageDisconnected(studyId: string) {
     const storageDoc = await getDoc(doc(this.firestore, `${this.collectionPrefix}${studyId}`, 'storage'));
-    return storageDoc.exists() && storageDoc.data().disconnected === true;
+    if (!storageDoc.exists()) return false;
+    const { disconnected } = storageDoc.data();
+    if (typeof disconnected !== 'boolean') throw new Error('Invalid storage mode');
+    return disconnected;
   }
 
   protected async _setStorageDisconnected(studyId: string, disconnected: boolean) {

@@ -409,6 +409,13 @@ describe.each([
     expect(await storageEngine.getStorageDisconnected(studyId)).toBe(false);
   });
 
+  test('rejects a malformed saved storage setting', async () => {
+    const prefix = import.meta.env.DEV ? 'dev-' : 'prod-';
+    firestoreData[`${prefix}${studyId}/storage`] = { disconnected: 'true' };
+
+    await expect(storageEngine.getStorageDisconnected(studyId)).rejects.toThrow('Invalid storage mode');
+  });
+
   test('setMode toggles each ReVISit mode independently', async () => {
     const initialModes = await storageEngine.getModes(studyId);
     expect(initialModes.dataCollectionEnabled).toBe(true);

@@ -368,6 +368,13 @@ describe.each([
     revisitRows.splice(revisitRows.findIndex((row) => row.studyId === '' && row.docId === 'user-management'), 1);
   });
 
+  test('rejects a malformed saved storage setting', async () => {
+    const prefix = import.meta.env.DEV ? 'dev-' : 'prod-';
+    revisitRows.push({ studyId: `${prefix}${studyId}`, docId: 'storage', data: { disconnected: 'true' } });
+
+    await expect(storageEngine.getStorageDisconnected(studyId)).rejects.toThrow('Invalid storage mode');
+  });
+
   test('setMode toggles each ReVISit mode independently', async () => {
     const initialModes = await storageEngine.getModes(studyId);
     expect(initialModes.dataCollectionEnabled).toBe(true);

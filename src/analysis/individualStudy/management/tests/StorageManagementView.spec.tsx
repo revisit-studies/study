@@ -9,7 +9,7 @@ import { StorageManagementView } from '../StorageManagementView';
 
 const cloud = {
   isCloudEngine: () => true,
-  getEngine: () => 'firebase',
+  getEngine: vi.fn(() => 'firebase'),
   getStorageDisconnected: vi.fn(async () => false),
   setStorageDisconnected: vi.fn(async () => {}),
 };
@@ -42,6 +42,7 @@ describe('StorageManagementView', () => {
       removeEventListener: vi.fn(),
     })));
     verifiedAdmin = true;
+    cloud.getEngine.mockReturnValue('firebase');
     vi.stubEnv('VITE_STORAGE_ENGINE', 'firebase');
     vi.stubEnv('VITE_FIREBASE_CONFIG', '{ projectId: "project-a", apiKey: "client-key" }');
   });
@@ -72,5 +73,23 @@ describe('StorageManagementView', () => {
     await waitFor(() => expect(cloud.setStorageDisconnected).toHaveBeenCalledWith('study-a', true));
     expect(await screen.findByText('Save failed')).toBeDefined();
     expect(toggle.hasAttribute('disabled')).toBe(false);
+  });
+
+  test('links a hosted Supabase project to its database editor', () => {
+    cloud.getEngine.mockReturnValue('supabase');
+    vi.stubEnv('VITE_SUPABASE_URL', 'https://project-123.supabase.co');
+    renderView();
+
+    expect(screen.getByRole('link', { name: 'Open database' }).getAttribute('href'))
+      .toBe('https://supabase.com/dashboard/project/project-123/editor');
+  });
+
+  test('labels a self-hosted Supabase link as an endpoint', () => {
+    cloud.getEngine.mockReturnValue('supabase');
+    vi.stubEnv('VITE_SUPABASE_URL', 'https://db.example.org');
+    renderView();
+
+    expect(screen.getByRole('link', { name: 'Open configured endpoint' }).getAttribute('href'))
+      .toBe('https://db.example.org');
   });
 });

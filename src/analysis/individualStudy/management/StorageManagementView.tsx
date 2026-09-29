@@ -18,9 +18,12 @@ export function StorageManagementView({ studyId }: { studyId: string }) {
     ? parseFirebaseConfig(import.meta.env.VITE_FIREBASE_CONFIG) : null;
   const projectId = firebaseConfig && typeof firebaseConfig === 'object' && 'projectId' in firebaseConfig
     ? String(firebaseConfig.projectId) : null;
+  const supabaseUrl = cloudEngine?.getEngine() === 'supabase' ? import.meta.env.VITE_SUPABASE_URL : null;
+  const supabaseProjectRef = supabaseUrl
+    ? new URL(supabaseUrl).hostname.match(/^([a-z0-9-]+)\.supabase\.co$/)?.[1] : null;
   const databaseUrl = cloudEngine?.getEngine() === 'firebase' && projectId
     ? `https://console.firebase.google.com/project/${encodeURIComponent(projectId)}/firestore/data`
-    : cloudEngine?.getEngine() === 'supabase' ? import.meta.env.VITE_SUPABASE_URL : null;
+    : supabaseProjectRef ? `https://supabase.com/dashboard/project/${supabaseProjectRef}/editor` : supabaseUrl;
 
   useEffect(() => {
     if (!cloudEngine || !user.isAdmin || !user.adminVerification || !user.user?.uid) return undefined;
@@ -66,7 +69,7 @@ export function StorageManagementView({ studyId }: { studyId: string }) {
           {' '}
           {storageEngine?.getEngine() ?? 'loading'}
         </Text>
-        {databaseUrl && <Anchor href={databaseUrl} target="_blank" rel="noopener noreferrer">Open database</Anchor>}
+        {databaseUrl && <Anchor href={databaseUrl} target="_blank" rel="noopener noreferrer">{supabaseUrl && !supabaseProjectRef ? 'Open configured endpoint' : 'Open database'}</Anchor>}
         <Text fw={600}>VITE_STORAGE_ENGINE</Text>
         <Code block>{import.meta.env.VITE_STORAGE_ENGINE}</Code>
         {cloudEngine.getEngine() === 'firebase' ? (

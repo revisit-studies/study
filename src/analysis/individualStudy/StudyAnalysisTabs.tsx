@@ -108,6 +108,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   const { storageEngine, configuredStorageEngine } = useStorageEngine();
   const navigate = useNavigate();
   const { analysisTab } = useParams();
+  const isStorageTab = analysisTab === 'storage';
   const { user } = useAuth();
   const [storageAdmin, setStorageAdmin] = useState(false);
   const [storageAdminError, setStorageAdminError] = useState<string | null>(null);
@@ -122,7 +123,6 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
       .then((verified) => {
         if (!cancelled) {
           setStorageAdmin(verified);
-          if (!verified) setStorageAdminError('Datastore management requires a verified cloud administrator.');
         }
       })
       .catch((error) => {
@@ -142,10 +142,13 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
 
   // 0-1 percentage of scroll height
 
-  const { value: expData, execute, status } = useAsync(getParticipantsData, [studyConfig, storageEngine, canonicalStudyId ?? undefined]);
+  const { value: expData, execute, status } = useAsync(
+    getParticipantsData,
+    isStorageTab ? null : [studyConfig, storageEngine, canonicalStudyId ?? undefined],
+  );
   const { value: currentConfigHashValue, status: currentConfigStatus } = useAsync(
     getCurrentConfigHashForStudy,
-    storageEngine && canonicalStudyId ? [storageEngine, canonicalStudyId] : null,
+    storageEngine && canonicalStudyId && !isStorageTab ? [storageEngine, canonicalStudyId] : null,
   );
   const studyUsesConditions = useMemo(
     () => (studyConfig?.sequence ? getSequenceConditions(studyConfig.sequence).length > 0 : false),
@@ -259,7 +262,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
 
   // Load available stages
   const loadStages = useCallback(async () => {
-    if (!canonicalStudyId || !storageEngine) return;
+    if (!canonicalStudyId || !storageEngine || isStorageTab) return;
 
     try {
       const stageData = await storageEngine.getStageData(canonicalStudyId);
@@ -279,11 +282,11 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
       setAvailableStages([{ value: 'ALL', label: 'ALL' }]);
       setStageColors({});
     }
-  }, [canonicalStudyId, storageEngine]);
+  }, [canonicalStudyId, storageEngine, isStorageTab]);
 
   // Load available configs
   const loadConfigs = useCallback(async () => {
-    if (!canonicalStudyId || !storageEngine) return;
+    if (!canonicalStudyId || !storageEngine || isStorageTab) return;
 
     try {
       const participantData = expData ? Object.values(expData) : [];
@@ -309,7 +312,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
       setAvailableConfigs([{ value: 'ALL', label: 'ALL' }]);
       setAllConfigs({});
     }
-  }, [canonicalStudyId, storageEngine, expData, currentConfigHash]);
+  }, [canonicalStudyId, storageEngine, expData, currentConfigHash, isStorageTab]);
 
   const allConditions = useMemo(() => {
     if (!expData) return [];
@@ -363,7 +366,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     setStartupError(null);
     setStudyConfig(undefined);
 
-    if (!routeStudyId) return () => { };
+    if (!routeStudyId || isStorageTab) return () => { };
     if (routeStudyId === '__revisit-widget') {
       const messageListener = (event: MessageEvent) => {
         if (event.data.type === 'revisitWidget/CONFIG' && storageEngine) {
@@ -406,7 +409,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     return () => {
       cancelled = true;
     };
-  }, [routeStudyId, globalConfig, storageEngine]);
+  }, [routeStudyId, globalConfig, storageEngine, isStorageTab]);
 
   if (startupError) {
     return <StartupErrorScreen error={startupError.error} />;
@@ -617,10 +620,10 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
               </Flex>
             </Flex>
           </Flex>
-          <LoadingOverlay visible={status === 'pending'} />
+          <LoadingOverlay visible={!isStorageTab && status === 'pending'} />
           {storageAdminError && <Alert color="red" title="Datastore access unavailable">{storageAdminError}</Alert>}
 
-          {status === 'success' ? (
+          {status === 'success' || isStorageTab ? (
             <Tabs
               style={{
                 flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden',

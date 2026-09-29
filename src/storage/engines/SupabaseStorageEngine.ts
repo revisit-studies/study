@@ -448,7 +448,10 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       .eq('studyId', `${this.collectionPrefix}${studyId}`)
       .eq('docId', 'storage');
     if (error) throw new Error('Failed to read storage mode', { cause: error });
-    return data[0]?.data?.disconnected === true;
+    if (!data.length) return false;
+    const disconnected = data[0]?.data?.disconnected;
+    if (typeof disconnected !== 'boolean') throw new Error('Invalid storage mode');
+    return disconnected;
   }
 
   protected async _setStorageDisconnected(studyId: string, disconnected: boolean) {
