@@ -145,6 +145,30 @@ describe('AuthProvider — non-null storage engine paths', () => {
     consoleSpy.mockRestore();
   });
 
+  test('an earlier admin check cannot restore access after sign-out', async () => {
+    let authChanged: ((cloudUser: { email: string; uid: string } | null) => Promise<void>) | undefined;
+    let resolveValidation: ((value: boolean) => void) | undefined;
+    const validateUser = vi.fn(() => new Promise<boolean>((resolve) => { resolveValidation = resolve; }));
+    mockStorageEngineVal = {
+      getEngine: vi.fn(() => 'supabase'),
+      getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
+      getUserManagementData: vi.fn().mockResolvedValue({ isEnabled: true }),
+      unsubscribe: vi.fn((callback) => { authChanged = callback; return vi.fn(); }),
+      validateUser,
+    };
+    mockIsCloudStorage = true;
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: ({ children }: { children: ReactNode }) => <AuthProvider>{children}</AuthProvider>,
+    });
+    await waitFor(() => expect(authChanged).toBeDefined());
+    act(() => { authChanged?.({ email: 'admin@test.com', uid: 'uid-1' }); });
+    await waitFor(() => expect(validateUser).toHaveBeenCalled());
+    await act(async () => { await authChanged?.(null); });
+    await act(async () => { resolveValidation?.(true); });
+    expect(result.current.user.isAdmin).toBe(false);
+    expect(result.current.user.user).toBeNull();
+  });
+
   test('non-cloud storageEngine sets nonAuthUser', async () => {
     mockStorageEngineVal = { getEngine: vi.fn(() => 'localStorage') };
     mockIsCloudStorage = false;

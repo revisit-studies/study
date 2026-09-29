@@ -441,6 +441,19 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     }
   }
 
+  async getAccessModes(studyId: string) {
+    const { data, error } = await this.supabase
+      .from('revisit')
+      .select('data')
+      .eq('studyId', `${this.collectionPrefix}${studyId}`)
+      .eq('docId', 'metadata');
+    if (error) throw new Error('Failed to get modes');
+    const modes = data?.[0]?.data;
+    if (!modes || typeof modes !== 'object' || Array.isArray(modes)) return null;
+    const cleanedModes = cleanupModes(modes as Record<string, boolean>);
+    return { ...cleanedModes, dataSharingEnabled: cleanedModes.dataSharingEnabled === true };
+  }
+
   async getModes(studyId: string) {
     // get the modes from the study collection
     const { data, error } = await this.supabase
@@ -475,7 +488,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     const defaultModes = {
       dataCollectionEnabled: true,
       developmentModeEnabled: true,
-      dataSharingEnabled: true,
+      dataSharingEnabled: false,
     };
     await this.supabase
       .from('revisit')

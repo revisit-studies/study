@@ -1,5 +1,5 @@
 import {
-  Card, Container, Text, LoadingOverlay, Box, Title, Flex, Modal, TextInput, Button, Tooltip, ActionIcon,
+  Alert, Card, Container, Text, LoadingOverlay, Box, Title, Flex, Modal, TextInput, Button, Tooltip, ActionIcon,
 } from '@mantine/core';
 import { useForm, isEmail } from '@mantine/form';
 import { useEffect, useMemo, useState } from 'react';
@@ -20,6 +20,7 @@ export function GlobalSettings() {
   const [isAuthEnabled, setAuthEnabled] = useState<boolean>(false);
   const [authenticatedUsers, setAuthenticatedUsers] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [settingsReadError, setSettingsReadError] = useState(false);
   const [modalAddOpened, setModalAddOpened] = useState<boolean>(false);
   const [modalRemoveOpened, setModalRemoveOpened] = useState<boolean>(false);
   const [modalEnableAuthOpened, setModalEnableAuthOpened] = useState<boolean>(false);
@@ -40,17 +41,24 @@ export function GlobalSettings() {
     const determineAuthenticationEnabled = async () => {
       if (storageEngine?.getEngine() === 'supabase' && supabaseAuthStatus === 'unconfigured') return;
       setLoading(true);
-      if (storageEngine && isCloudStorageEngine(storageEngine)) {
-        const authInfo = await storageEngine?.getUserManagementData('authentication');
-        setAuthEnabled(authInfo?.isEnabled === true);
-        const adminUsers = await storageEngine?.getUserManagementData('adminUsers');
-        if (adminUsers && adminUsers.adminUsersList) {
-          setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser: StoredUser) => storedUser.email).filter((x) => x !== null));
+      setSettingsReadError(false);
+      try {
+        if (storageEngine && isCloudStorageEngine(storageEngine)) {
+          const authInfo = await storageEngine.getUserManagementData('authentication');
+          setAuthEnabled(authInfo?.isEnabled === true);
+          const adminUsers = await storageEngine.getUserManagementData('adminUsers');
+          if (adminUsers && adminUsers.adminUsersList) {
+            setAuthenticatedUsers(adminUsers.adminUsersList.map((storedUser: StoredUser) => storedUser.email).filter((x) => x !== null));
+          }
+        } else {
+          setAuthEnabled(false);
         }
-      } else {
-        setAuthEnabled(false);
+      } catch (error) {
+        console.error('Failed to load authentication settings:', error);
+        setSettingsReadError(true);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     determineAuthenticationEnabled();
   }, [storageEngine, supabaseAuthStatus]);
@@ -142,6 +150,14 @@ export function GlobalSettings() {
   };
 
   const storageEngineIsCloud = useMemo(() => storageEngine && isCloudStorageEngine(storageEngine), [storageEngine]);
+
+  if (settingsReadError) {
+    return (
+      <Alert title="Unable to load authentication settings" color="red">
+        <Button onClick={triggerAuth}>Retry</Button>
+      </Alert>
+    );
+  }
 
   return (
     <>

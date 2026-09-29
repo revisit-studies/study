@@ -119,11 +119,14 @@ export function AuthProvider({ children } : { children: ReactNode }) {
     setUser(loadingNullUser);
     setSupabaseAuthStatus('loading');
     let cancelled = false;
+    let authEvent = 0;
     let unsubscribe: (() => void) | undefined;
 
     // Handle auth state changes for Firebase
     const handleAuthStateChanged = async (cloudUser: StoredUser | null) => {
       if (cancelled) return;
+      authEvent += 1;
+      const currentEvent = authEvent;
       // Reset the user. This also gets called on signOut
       setUser((prevUser) => ({
         user: prevUser.user,
@@ -141,14 +144,14 @@ export function AuthProvider({ children } : { children: ReactNode }) {
         };
         try {
           currUser.isAdmin = !!(await verifyAdminStatus(currUser));
-          if (!cancelled) setUser(currUser);
+          if (!cancelled && currentEvent === authEvent) setUser(currUser);
         } catch {
-          if (!cancelled) {
+          if (!cancelled && currentEvent === authEvent) {
             setUser(nonLoadingNullUser);
             setSupabaseAuthStatus('error');
           }
         }
-      } else if (!cancelled) setUser(nonLoadingNullUser);
+      } else if (!cancelled && currentEvent === authEvent) setUser(nonLoadingNullUser);
     };
 
     // Determine authentication listener based on storageEngine and authEnabled variable

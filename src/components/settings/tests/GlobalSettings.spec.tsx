@@ -54,6 +54,12 @@ vi.mock('@mantine/form', () => ({
 }));
 
 vi.mock('@mantine/core', () => ({
+  Alert: ({ children, title }: { children: ReactNode; title: string }) => (
+    <div role="alert">
+      {title}
+      {children}
+    </div>
+  ),
   ActionIcon: ({ children, onClick, color }: { children: ReactNode; onClick?: () => void; color?: string }) => (
     <button type="button" onClick={onClick} data-color={color}>{children}</button>
   ),
@@ -203,6 +209,21 @@ describe('GlobalSettings', () => {
     expect(changeAuth).toHaveBeenCalledWith(true);
     expect(addAdminUser.mock.invocationCallOrder[0]).toBeLessThan(changeAuth.mock.invocationCallOrder[0]);
     expect(mockTriggerAuth).toHaveBeenCalled();
+  });
+
+  test('a failed settings read clears loading and offers retry', async () => {
+    mockSupabaseAuthStatus = 'enabled';
+    mockGetUserManagementData.mockImplementation(async (key: string) => {
+      if (key === 'authentication') return { isEnabled: true };
+      throw new Error('administrator list unavailable');
+    });
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await act(async () => render(<GlobalSettings />));
+    expect(screen.getByRole('alert').textContent).toContain('Unable to load authentication settings');
+    expect(screen.queryByTestId('loading-overlay')).toBeNull();
+    fireEvent.click(screen.getByText('Retry'));
+    expect(mockTriggerAuth).toHaveBeenCalled();
+    consoleSpy.mockRestore();
   });
 
   test('shows trash button and opens remove modal for non-current admin user', async () => {
