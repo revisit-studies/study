@@ -787,9 +787,9 @@ export function StepsPanel({
             resolvedComponent?.response,
           );
           const answerStatusIcon = answerStatus === 'correct'
-            ? <IconCheck size={16} style={{ marginRight: 4, flexShrink: 0 }} color="green" />
+            ? <IconCheck size={16} style={{ marginRight: 4, flexShrink: 0 }} color="var(--mantine-color-green-text)" />
             : answerStatus === 'incorrect'
-              ? <IconX size={16} style={{ marginRight: 4, flexShrink: 0 }} color="red" />
+              ? <IconX size={16} style={{ marginRight: 4, flexShrink: 0 }} color="var(--mantine-color-red-text)" />
               : answerStatus === 'unknown'
                 ? <UnknownAnswerIcon size={16} style={{ marginRight: 4, flexShrink: 0 }} />
                 : null;
@@ -853,17 +853,17 @@ export function StepsPanel({
                     <Flex align="center">
                       {isInterruption && (
                         <Tooltip label="Interruption" position="right" withArrow>
-                          <IconBrain size={16} style={{ marginRight: 4, flexShrink: 0 }} color="orange" />
+                          <IconBrain size={16} style={{ marginRight: 4, flexShrink: 0 }} color="var(--mantine-color-orange-text)" />
                         </Tooltip>
                       )}
                       {isLibraryImport && (
                         <Tooltip label={importedLibraryName ? `Imported from ${importedLibraryName}` : 'Package import'} position="right" withArrow>
-                          <IconPackageImport size={16} style={{ marginRight: 4, flexShrink: 0 }} color="blue" />
+                          <IconPackageImport size={16} style={{ marginRight: 4, flexShrink: 0 }} color="var(--mantine-color-blue-text)" />
                         </Tooltip>
                       )}
                       {!isComponent && conditional && (
                         <Tooltip label={`Condition: ${label}`} position="right" withArrow>
-                          <IconBinaryTree size={16} style={{ marginRight: 4, flexShrink: 0 }} color="green" />
+                          <IconBinaryTree size={16} style={{ marginRight: 4, flexShrink: 0 }} color="var(--mantine-color-green-text)" />
                         </Tooltip>
                       )}
                       {!isComponent && skipSummaries && skipSummaries.length > 0 && (
@@ -873,22 +873,22 @@ export function StepsPanel({
                           position="right"
                           withArrow
                         >
-                          <IconArrowForward size={16} style={{ marginRight: 4, flexShrink: 0 }} color="purple" />
+                          <IconArrowForward size={16} style={{ marginRight: 4, flexShrink: 0 }} color="var(--mantine-color-violet-text)" />
                         </Tooltip>
                       )}
                       {betweenSubjectsEntries.length > 0 && (
                         <Tooltip label={`Between Subjects: ${betweenSubjectsLabel}`} position="right" withArrow>
-                          <IconUserPlus size={16} style={{ marginRight: 4, flexShrink: 0 }} color="teal" />
+                          <IconUserPlus size={16} style={{ marginRight: 4, flexShrink: 0 }} color="var(--mantine-color-teal-text)" />
                         </Tooltip>
                       )}
                       {(resolvedComponent?.responseOrder === 'random' || (!participantSequence && componentName && studyConfig.components[componentName]?.responseOrder === 'random')) && (
                         <Tooltip label="Random responses" position="right" withArrow>
-                          <IconDice3 size={16} opacity={0.8} style={{ marginRight: 4, flexShrink: 0 }} color="black" />
+                          <IconDice3 size={16} opacity={0.8} style={{ marginRight: 4, flexShrink: 0 }} />
                         </Tooltip>
                       )}
                       {(componentName && componentHasRandomization.get(componentName)) && (
                         <Tooltip label="Random options" position="right" withArrow>
-                          <IconDice5 size={16} opacity={0.8} style={{ marginRight: 4, flexShrink: 0 }} color="black" />
+                          <IconDice5 size={16} opacity={0.8} style={{ marginRight: 4, flexShrink: 0 }} />
                         </Tooltip>
                       )}
                       {answerStatusIcon}

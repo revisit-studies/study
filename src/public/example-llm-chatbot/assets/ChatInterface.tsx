@@ -93,13 +93,13 @@ function MarkdownCode({
   return (
     <code
       style={{
-        backgroundColor: inline ? '#e9ecef' : '#f1f3f5',
+        backgroundColor: inline ? 'light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-5))' : 'light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-6))',
         borderRadius: 4,
         padding: inline ? '2px 4px' : '8px',
         display: inline ? 'inline' : 'block',
         overflowX: 'auto',
         fontFamily: 'monospace',
-        color: '#212529',
+        color: 'var(--mantine-color-text)',
       }}
       {...props}
     >
@@ -532,7 +532,7 @@ Rules:
       {/* Messages Container */}
       <ScrollArea style={{ flex: 1, minHeight: rem(270), marginBottom: rem(16) }} offsetScrollbars>
         {messages.length === 0 ? (
-          <Flex direction="column" align="center" justify="center" py="xl" style={{ color: '#6B7280' }}>
+          <Flex direction="column" align="center" justify="center" py="xl" style={{ color: 'var(--mantine-color-dimmed)' }}>
             <IconMessage size={48} style={{ opacity: 0.5, marginBottom: rem(12) }} />
             <Text size="lg" fw={500} mb={4}>Start a conversation</Text>
             <Text size="sm" c="dimmed">
@@ -553,8 +553,8 @@ Rules:
                   withBorder
                   style={{
                     maxWidth: 400,
-                    backgroundColor: message.role === 'user' ? '#228be6' : '#f8f9fa',
-                    color: message.role === 'user' ? '#fff' : '#212529',
+                    backgroundColor: message.role === 'user' ? 'var(--mantine-color-blue-light)' : 'var(--mantine-color-default)',
+                    color: message.role === 'user' ? 'var(--mantine-color-blue-light-color)' : 'var(--mantine-color-text)',
                   }}
                 >
                   {message.role === 'assistant' ? (
@@ -567,7 +567,7 @@ Rules:
                   ) : (
                     <Text size="sm">{message.content}</Text>
                   )}
-                  <Text size="xs" mt={4} c={message.role === 'user' ? 'blue.1' : 'gray.6'}>
+                  <Text size="xs" mt={4} c={message.role === 'user' ? 'inherit' : 'dimmed'}>
                     {new Date(message.timestamp).toLocaleTimeString()}
                   </Text>
                 </Paper>
@@ -577,7 +577,7 @@ Rules:
         )}
         {isLoading && (
           <Flex justify="flex-start" mt="md">
-            <Paper shadow="xs" radius="md" p="md" withBorder style={{ backgroundColor: '#f8f9fa', color: '#212529' }}>
+            <Paper shadow="xs" radius="md" p="md" withBorder style={{ backgroundColor: 'var(--mantine-color-default)', color: 'var(--mantine-color-text)' }}>
               <Group gap="xs">
                 <Loader size="sm" color="gray" />
                 <Text size="sm">AI is thinking...</Text>
@@ -589,8 +589,8 @@ Rules:
       </ScrollArea>
       {/* Error Display */}
       {error && (
-        <Paper mb="md" p="sm" radius="md" withBorder style={{ backgroundColor: '#fff0f0', borderColor: '#ffe3e3' }}>
-          <Text c="red" size="sm">{error}</Text>
+        <Paper mb="md" p="sm" radius="md" withBorder style={{ backgroundColor: 'var(--mantine-color-red-light)', borderColor: 'var(--mantine-color-red-outline)' }}>
+          <Text c="var(--mantine-color-red-light-color)" size="sm">{error}</Text>
         </Paper>
       )}
       {/* Input Form */}

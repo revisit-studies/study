@@ -886,9 +886,9 @@ export function createFactorConditionId(
   condition: MaterializedFactorCondition,
 ): string {
   const conditionId = Object.entries(condition)
-    .map(([name, value]) => `${encodeURIComponent(name)}=${encodeURIComponent(JSON.stringify(value))}`)
-    .join('__');
-  return conditionId ? `${encodeURIComponent(blockId)}__${conditionId}` : encodeURIComponent(blockId);
+    .map(([name, value]) => `${encodeURIComponent(name)}=${encodeURIComponent(String(value))}`)
+    .join('_');
+  return conditionId ? `${conditionId}` : encodeURIComponent(blockId);
 }
 
 function compileFactorBlock(
@@ -924,7 +924,7 @@ function compileFactorBlock(
         ...condition,
       };
       const parameters = deepFillTemplate(rawParameters, rawParameters);
-      const componentId = `${conditionId}__${encodeURIComponent(baseComponent)}`;
+      const componentId = `${conditionId}_${encodeURIComponent(baseComponent)}`;
       const component = deepFillTemplateStrings(
         merge({}, template, { parameters }),
         parameters,

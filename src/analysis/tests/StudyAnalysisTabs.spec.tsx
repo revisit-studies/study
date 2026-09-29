@@ -7,6 +7,7 @@ import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { StudyAnalysisTabs } from '../individualStudy/StudyAnalysisTabs';
+import { ConfigView } from '../individualStudy/config/ConfigView';
 import type { StudyConfig, ParsedConfig } from '../../parser/types';
 import { getStudyConfig, resolveConfigKey } from '../../utils/fetchConfig';
 import { useAsync } from '../../store/hooks/useAsync';
@@ -112,7 +113,7 @@ vi.mock('../individualStudy/thinkAloud/ThinkAloudAnalysis', () => ({
   ThinkAloudAnalysis: () => <div>ThinkAloudAnalysis</div>,
 }));
 vi.mock('../individualStudy/config/ConfigView', () => ({
-  ConfigView: () => <div>ConfigView</div>,
+  ConfigView: vi.fn(() => <div>ConfigView</div>),
 }));
 vi.mock('../../components/downloader/DownloadButtons', () => ({
   DownloadButtons: () => <div>DownloadButtons</div>,
@@ -242,6 +243,30 @@ describe('StudyAnalysisTabs', () => {
     expect(html).toContain('Coding');
     expect(html).toContain('Config');
     expect(html).toContain('Manage');
+  });
+
+  test.each(['idle', 'pending', 'error', 'success'] as const)('passes the current hash lookup status to ConfigView: %s', async (status) => {
+    mockParams.analysisTab = 'config';
+    vi.mocked(getStudyConfig).mockResolvedValue({ ...makeStudyConfig(), errors: [], warnings: [] });
+    mockStorageEngine = {
+      getEngine: vi.fn().mockReturnValue('supabase'),
+      getStageData: vi.fn().mockResolvedValue({ allStages: [] }),
+      getAllConfigsFromHash: vi.fn().mockResolvedValue({}),
+    };
+    const hashLookup = { ...currentStable, value: null, status };
+    vi.mocked(useAsync).mockImplementation((fn) => (
+      fn.name === 'getCurrentConfigHashForStudy' ? hashLookup : currentStable
+    ));
+
+    render(<StudyAnalysisTabs globalConfig={mockGlobalConfig} />);
+
+    await waitFor(() => {
+      expect(vi.mocked(ConfigView).mock.calls.at(-1)?.[0]).toEqual(expect.objectContaining({
+        currentConfigStatus: status,
+        currentConfigHash: undefined,
+        visibleParticipants: [],
+      }));
+    });
   });
 
   test('renders disabled Live Monitor tab and Firebase-only message when not Firebase', () => {

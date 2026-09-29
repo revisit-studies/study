@@ -70,6 +70,17 @@ describe('IframeController', () => {
 
   const websiteConfig: WebsiteComponent = { type: 'website', path: 'https://example.com', response: [] };
 
+  test.each(['light', 'dark', undefined] as const)('applies iframe color mode %s in participation and replay without reloading', (colorMode) => {
+    const currentConfig = { ...websiteConfig, colorMode };
+    const { container, rerender } = render(<IframeController currentConfig={currentConfig} answers={{}} />);
+    const iframe = container.querySelector('iframe');
+    expect(iframe?.style.colorScheme).toBe(colorMode ?? 'inherit');
+    mockIsAnalysis.value = true;
+    rerender(<IframeController currentConfig={currentConfig} answers={{}} />);
+    expect(container.querySelector('iframe')).toBe(iframe);
+    expect(iframe?.style.colorScheme).toBe(colorMode ?? 'inherit');
+  });
+
   test('covers sendMessage via answers effect on mount', async () => {
     render(<IframeController currentConfig={websiteConfig} answers={{}} />);
     // answers effect fires sendMessage; ref.current is the iframe element in jsdom
