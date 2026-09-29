@@ -175,6 +175,7 @@ export function ResponseSwitcher({
     [`${response.id}-dontKnow`]: dontKnowChecked,
     [`${response.id}-other`]: otherValue.value,
   }), [response.id, ans.value, dontKnowChecked, otherValue.value]);
+  const templateData = useTemplateAnswerContext();
   const errorOptions = useMemo(() => {
     if (response.type === 'dropdown') {
       return getDropdownOptions(response);
@@ -204,13 +205,22 @@ export function ResponseSwitcher({
       return null;
     }
 
+    const displayOptions = errors && response.requiredValue != null
+      ? errorOptions?.map((option) => ({
+        ...option,
+        label: option.value === response.requiredValue
+          ? compileTemplate(option.label, config?.parameters ?? {}, { noEscape: true, data: templateData })
+          : option.label,
+      }))
+      : errorOptions;
+
     return generateErrorMessage(
       response,
       ans as { value?: number | string | string[] | Record<string, string>; checked?: string[] },
-      errorOptions,
+      displayOptions,
       { showRequiredErrors: errors, values: validationValues },
     );
-  }, [response, ans, errorOptions, errors, validationValues]);
+  }, [response, ans, errorOptions, errors, validationValues, config?.parameters, templateData]);
   const displayError = response.type === 'custom' ? customError : responseError;
   const responseWrapperStyle = useMemo(() => {
     if (!displayError) {
@@ -229,7 +239,6 @@ export function ResponseSwitcher({
     };
   }, [displayError, response.required, responseStyle]);
 
-  const templateData = useTemplateAnswerContext();
   const optionTextTemplate = useMemo(() => ({
     parameters: config?.parameters ?? {},
     data: templateData ?? {},

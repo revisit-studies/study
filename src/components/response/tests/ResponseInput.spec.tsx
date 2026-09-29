@@ -162,12 +162,13 @@ vi.mock('@mantine/core', () => {
       </div>
     ),
     Select: ({
-      label, description, data, searchable,
-    }: { label?: ReactNode; description?: ReactNode; data?: { label: string; value: string }[]; searchable?: boolean }) => (
+      label, description, data, searchable, error,
+    }: { label?: ReactNode; description?: ReactNode; data?: { label: string; value: string }[]; searchable?: boolean; error?: string }) => (
       <div data-searchable={searchable || undefined}>
         {label}
         {description}
         <select>{data?.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}</select>
+        {error}
       </div>
     ),
     MultiSelect: ({
@@ -1407,6 +1408,27 @@ describe('ResponseSwitcher', () => {
     );
     expect(html).toContain('<option value="fixed">A &amp; B</option>');
     expect(html).not.toContain('{{name}}');
+  });
+
+  test('required-value errors use the displayed option label', () => {
+    const response = {
+      type: 'dropdown',
+      id: 'q1',
+      prompt: 'Pick one',
+      required: true,
+      requiredValue: 'fixed',
+      options: [{ label: '{{name}}', value: 'fixed' }, { label: 'Other', value: 'other' }],
+    } as DropdownResponse;
+    const html = renderToStaticMarkup(
+      <ResponseSwitcher
+        {...makeSwitcherProps(response)}
+        form={{ value: 'other' } as Parameters<typeof ResponseSwitcher>[0]['form']}
+        config={{ type: 'questionnaire', response: [], parameters: { name: 'Pear' } } as IndividualComponent}
+        errors
+      />,
+    );
+    expect(html).toContain('Please select Pear to continue.');
+    expect(html).not.toContain('Please select {{name}}');
   });
 
   test('slider type renders SliderInput with data-slider', () => {
