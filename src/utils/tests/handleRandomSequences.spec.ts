@@ -1,5 +1,5 @@
 import {
-  describe, expect, test, vi,
+  describe, expect, test,
 } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { QuestionnaireComponent, StudyConfig } from '../../parser/types';
@@ -38,19 +38,6 @@ const trialGroupA = Array.from({ length: 10 }, (_, idx) => `trial${idx + 1}`);
 const trialGroupB = Array.from({ length: 10 }, (_, idx) => `trial${idx + 11}`);
 const testRandomizationConfigUrl = new URL('../../public/test-randomization/config.json', import.meta.url);
 const randomizationDistributionTest = existsSync(testRandomizationConfigUrl) ? test : test.skip;
-
-function generateWithSeededRandom(studyConfig: StudyConfig) {
-  let seed = 1;
-  const random = vi.spyOn(Math, 'random').mockImplementation(() => {
-    seed = (seed * 16807) % 2147483647;
-    return (seed - 1) / 2147483646;
-  });
-  try {
-    return generateSequenceArray(studyConfig);
-  } finally {
-    random.mockRestore();
-  }
-}
 
 function createLatinSquareConfig(
   trialIds: string[],
@@ -407,7 +394,7 @@ describe('Generating sequences works as expected', () => {
   });
 
   test('generateSequenceArray returns balanced random sequences, numSamples = 1', { timeout: 30_000 }, async () => {
-    const sequenceArray = generateWithSeededRandom(config);
+    const sequenceArray = generateSequenceArray(config);
 
     const counts = sequenceArray.flatMap(((seq) => seq.components)).filter((comp) => comp !== 'end').reduce((acc, compId) => {
       acc[compId as string] = (acc[compId as string] || 0) + 1;
@@ -423,7 +410,7 @@ describe('Generating sequences works as expected', () => {
   });
 
   test('generateSequenceArray returns balanced random sequences, numSamples = 50', { timeout: 30_000 }, async () => {
-    const sequenceArray = generateWithSeededRandom({ ...config, sequence: { order: 'random', numSamples: 31, components: Object.keys(components) } });
+    const sequenceArray = generateSequenceArray({ ...config, sequence: { order: 'random', numSamples: 31, components: Object.keys(components) } });
 
     const counts = sequenceArray.flatMap(((seq) => seq.components)).filter((comp) => comp !== 'end').reduce((acc, compId) => {
       acc[compId as string] = (acc[compId as string] || 0) + 1;
