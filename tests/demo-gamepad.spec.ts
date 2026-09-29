@@ -197,6 +197,7 @@ test.describe('Gamepad stimulus with provenance and screen recording', () => {
     await expect(page.getByText('Press any button on your controller')).toBeHidden({ timeout: 15000 });
     await expect(page.getByTestId('gamepad-target')).toBeVisible();
     await expect(page.getByText(/Xbox Wireless Controller/)).toBeVisible();
+    await expect(page.getByTestId('gamepad-outcome')).toContainText('press');
 
     // A wrong button counts as a miss and leaves the target in place.
     const firstTarget = await readPoint(page, 'gamepad-target');
@@ -220,6 +221,21 @@ test.describe('Gamepad stimulus with provenance and screen recording', () => {
     // The reactive responses in the sidebar mirror the game's own tally.
     const listItems = page.getByRole('listitem');
     await expect(listItems.filter({ hasText: String(TARGET_COUNT) }).first()).toBeVisible({ timeout: 10000 });
+  });
+
+  test('can leave the trial without connecting a controller', async ({ page }) => {
+    await openStudyFromLanding(page, 'Demo Studies', 'Gamepad Input with Provenance');
+    await nextClick(page);
+    await page.getByRole('button', { name: 'Start Recording' }).click();
+    const continueButton = page.getByRole('button', { name: 'Continue', exact: true });
+    await expect(continueButton).toBeEnabled({ timeout: 15000 });
+    await continueButton.click();
+
+    await expect(page.getByText('Press any button on your controller')).toBeVisible();
+    const firstTrialUrl = page.url();
+    await nextClick(page);
+    await expect(page).not.toHaveURL(firstTrialUrl);
+    await expect(page.getByText('Press any button on your controller')).toBeVisible();
   });
 
   test('stores gamepad telemetry and button-colored provenance', async ({ page }) => {

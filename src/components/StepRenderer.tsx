@@ -17,7 +17,7 @@ import { AlertModal } from './interface/AlertModal';
 import { ConfigVersionWarningModal } from './interface/ConfigVersionWarningModal';
 import { EventType } from '../store/types';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
-import { WindowEventsContext } from '../store/hooks/useWindowEvents';
+import { WindowEventsContext, type WindowEventsRef } from '../store/hooks/useWindowEvents';
 import { useStoreSelector, useStoreDispatch, useStoreActions } from '../store/store';
 import { AnalysisFooter } from './interface/AnalysisFooter';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
@@ -41,7 +41,7 @@ import { PREFIX } from '../utils/Prefix';
 const STUDY_BROWSER_WIDTH = 360;
 
 export function StepRenderer() {
-  const windowEvents = useRef<EventType[]>([]);
+  const windowEvents = useRef<EventType[]>([]) as WindowEventsRef;
   const dispatch = useStoreDispatch();
   const { toggleStudyBrowser, setAlertModal } = useStoreActions();
   const { storageEngine } = useStorageEngine();
@@ -162,11 +162,32 @@ export function StepRenderer() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Gamepad input is polled rather than event-driven, so it is captured separately
-  // from the DOM listeners above, and only when a study opts in. Button transitions
-  // are pushed as they happen -- debouncing them would merge distinct presses --
-  // while the continuous axis signal is throttled to the same budget as mousemove.
-  const lastAxisEventTime = useRef(0);
+  // Keep the last axis sample in each interval, including when the stick returns
+  // to rest. Flush it before saving the step so it belongs to the right trial.
+  const pendingAxis = useRef<Extract<EventType, [number, 'gamepadaxis', number[]]> | null>(null);
+  const lastRecordedAxes = useRef<number[]>([]);
+  const axisTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const recordAxis = useCallback((event: Extract<EventType, [number, 'gamepadaxis', number[]]>) => {
+    windowEvents.current.push(event);
+    lastRecordedAxes.current = event[2];
+  }, [windowEvents]);
+  const flushPendingAxis = useCallback(() => {
+    if (axisTimer.current !== null) {
+      clearTimeout(axisTimer.current);
+      axisTimer.current = null;
+    }
+    if (pendingAxis.current) {
+      recordAxis(pendingAxis.current);
+      pendingAxis.current = null;
+    }
+  }, [recordAxis]);
+  useEffect(() => {
+    windowEvents.flushPending = flushPendingAxis;
+    return () => {
+      windowEvents.flushPending = undefined;
+      if (axisTimer.current !== null) clearTimeout(axisTimer.current);
+    };
+  }, [flushPendingAxis, windowEvents]);
   useGamepad({
     onConnectionChange: (device, timestamp) => {
       windowEvents.current.push([timestamp, 'gamepadconnection', device ? `connected:${device.id}:${device.mapping || 'nonstandard'}` : 'disconnected']);
@@ -178,11 +199,18 @@ export function StepRenderer() {
       windowEvents.current.push([timestamp, 'gamepadbuttonup', button]);
     },
     onAxes: (axes, timestamp) => {
-      if (timestamp - lastAxisEventTime.current < windowEventDebounceTime) {
-        return;
+      const event: Extract<EventType, [number, 'gamepadaxis', number[]]> = [timestamp, 'gamepadaxis', axes.map((value) => Math.round(value * 1000) / 1000)];
+      if (axisTimer.current === null) {
+        recordAxis(event);
+        axisTimer.current = setTimeout(flushPendingAxis, windowEventDebounceTime);
+      } else {
+        const pending = pendingAxis.current;
+        if (pending) {
+          const distance = (values: number[]) => Math.hypot(...values.map((value, index) => value - (lastRecordedAxes.current[index] ?? 0)));
+          if (distance(event[2]) < distance(pending[2])) recordAxis(pending);
+        }
+        pendingAxis.current = event;
       }
-      lastAxisEventTime.current = timestamp;
-      windowEvents.current.push([timestamp, 'gamepadaxis', axes.map((value) => Math.round(value * 1000) / 1000)]);
     },
     enabled: captureGamepad,
   });

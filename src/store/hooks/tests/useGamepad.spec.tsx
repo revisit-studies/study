@@ -183,6 +183,21 @@ describe('useGamepad', () => {
     expect(typeof onFrame.mock.calls[0][1]).toBe('number');
   });
 
+  test('does not include a hidden-tab pause in the next movement frame', () => {
+    const now = vi.spyOn(performance, 'now').mockReturnValue(1000);
+    const onFrame = vi.fn();
+    render(<Harness onFrame={onFrame} />);
+
+    pads = [makeGamepad({ pressed: [], axes: [1, 0] })];
+    now.mockReturnValue(1016);
+    step();
+    now.mockReturnValue(6016);
+    step();
+
+    expect(onFrame.mock.calls[1][1]).toBe(50);
+    now.mockRestore();
+  });
+
   test('does not poll when disabled', () => {
     const onFrame = vi.fn();
     render(<Harness onFrame={onFrame} enabled={false} />);

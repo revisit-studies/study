@@ -151,7 +151,8 @@ export function useGamepad(options: UseGamepadOptions = {}): {
       frameHandle = requestAnimationFrame(poll);
 
       const now = performance.now();
-      const deltaMs = now - lastFrameTime;
+      // Animation frames pause in hidden tabs; do not turn that pause into motion.
+      const deltaMs = Math.min(now - lastFrameTime, 50);
       lastFrameTime = now;
 
       const gamepads = readGamepads();

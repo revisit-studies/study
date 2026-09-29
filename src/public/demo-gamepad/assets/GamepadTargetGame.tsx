@@ -91,6 +91,10 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
+function targetPrompt(target: Target, targetCount: number) {
+  return `Target ${target.index + 1} of ${targetCount}: press ${target.button}`;
+}
+
 function GamepadTargetGame({
   parameters, setAnswer, provenanceState, useTrrack,
 }: StimulusParams<GamepadGameParams, GameState>) {
@@ -134,7 +138,7 @@ function GamepadTargetGame({
     const spawnTarget = reg.register<string, string, Target, unknown, GameState>('gamepad-spawn-target', (state: GameState, target: Target) => {
       state.target = target;
       state.round = target.index;
-      state.outcome = `Target ${target.index + 1} of ${targetCount}: press ${target.button}`;
+      state.outcome = targetPrompt(target, targetCount);
       return state;
     });
 
@@ -181,6 +185,10 @@ function GamepadTargetGame({
     });
   }, [setAnswer]);
 
+  useEffect(() => {
+    if (!isReplay) publishAnswer(INITIAL_STATE);
+  }, [isReplay, publishAnswer]);
+
   const commit = useCallback((state: GameState) => {
     gameRef.current = state;
     setGame(state);
@@ -189,8 +197,8 @@ function GamepadTargetGame({
   const spawnNext = useCallback((index: number) => {
     const target = randomTarget(index, targetRadius);
     trrack.apply(`Target ${index + 1} (${target.button})`, actions.spawnTarget(target));
-    commit({ ...gameRef.current, target, round: index });
-  }, [actions, commit, targetRadius, trrack]);
+    commit({ ...gameRef.current, target, round: index, outcome: targetPrompt(target, targetCount) });
+  }, [actions, commit, targetCount, targetRadius, trrack]);
 
   const handleButtonDown = useCallback((button: string) => {
     if (isReplay || !isFaceButton(button)) {
