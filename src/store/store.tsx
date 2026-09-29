@@ -21,6 +21,8 @@ type UpdateResponseBlockValidationInput = {
   identifier: string;
   status: boolean;
   values: object;
+  /** Replace existing values instead of merging, so answers cleared by visibleIf are also removed from the store. */
+  replaceValues?: boolean;
   /** @deprecated Use the managed Trrack APIs, which report provenance separately. */
   provenanceGraph?: TrrackedProvenance;
   reason?: ValidationStatus['reason'];
@@ -187,6 +189,7 @@ export async function studyStoreCreator(
     analysisIsPlaying: false,
     analysisHasAudio: false,
     analysisHasScreenRecording: false,
+    analysisHasWebcamRecording: false,
     analysisCanPlayScreenRecording: true,
     analysisHasProvenance: false,
     provenanceJumpTime: 0,
@@ -291,6 +294,9 @@ export async function studyStoreCreator(
       setAnalysisHasScreenRecording(state, { payload }: PayloadAction<boolean>) {
         state.analysisHasScreenRecording = payload;
       },
+      setAnalysisHasWebcamRecording(state, { payload }: PayloadAction<boolean>) {
+        state.analysisHasWebcamRecording = payload;
+      },
       setAnalysisCanPlayScreenRecording(state, { payload }: PayloadAction<boolean>) {
         state.analysisCanPlayScreenRecording = payload;
       },
@@ -299,6 +305,13 @@ export async function studyStoreCreator(
       },
       setProvenanceJumpTime(state, { payload }: PayloadAction<number>) {
         state.provenanceJumpTime = payload;
+      },
+      clearResponseAnswers: (state, { payload }: PayloadAction<string[]>) => {
+        payload.forEach((id) => {
+          delete state.reactiveAnswers[id];
+          delete state.matrixAnswers[id];
+          delete state.rankingAnswers[id];
+        });
       },
       setMatrixAnswersRadio: (state, action: PayloadAction<{ questionKey: string, responseId: string, val: string } | null>) => {
         if (action.payload) {
@@ -365,10 +378,19 @@ export async function studyStoreCreator(
           const finalReason = payload.status ? undefined : (payload.reason ?? currentValidation?.reason);
           const finalMessage = payload.status ? undefined : (payload.message ?? currentValidation?.message);
 
-          if (Object.keys(payload.values).length > 0) {
+          if (payload.replaceValues) {
+            state.trialValidation[payload.identifier][payload.location] = {
+              valid: payload.status,
+              values: payload.values,
+              initialized: true,
+              reason: finalReason,
+              message: finalMessage,
+            };
+          } else if (Object.keys(payload.values).length > 0) {
             state.trialValidation[payload.identifier][payload.location] = {
               valid: payload.status,
               values: { ...currentValues, ...payload.values },
+              initialized: currentValidation?.initialized,
               reason: finalReason,
               message: finalMessage,
             };
@@ -376,6 +398,7 @@ export async function studyStoreCreator(
             state.trialValidation[payload.identifier][payload.location] = {
               valid: payload.status,
               values: currentValues || {},
+              initialized: currentValidation?.initialized,
               reason: finalReason,
               message: finalMessage,
             };

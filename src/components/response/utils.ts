@@ -1,7 +1,11 @@
 import { useForm } from '@mantine/form';
-import { useEffect, useState } from 'react';
 import {
-  CheckboxResponse, JsonValue, RadioResponse, Response,
+  useEffect, useMemo, useRef, useState,
+} from 'react';
+import isEqual from 'lodash.isequal';
+import { resolveResponseVisibility, responseValueKeys } from '../../utils/responseVisibility';
+import {
+  Answer, CheckboxResponse, JsonValue, RadioResponse, Response,
 } from '../../parser/types';
 import { CustomResponseValidate, StoredAnswer } from '../../store/types';
 import { parseStringOptionValue } from '../../utils/stringOptions';
@@ -181,21 +185,25 @@ export const generateValidation = (
   responses: Response[],
   customResponseValidators: Record<string, CustomResponseValidate | undefined> = {},
   customResponseLoadErrors: Record<string, string | undefined> = {},
+  allResponses: Response[] = responses,
+  context: StoredAnswer['answer'] = {},
+  correctAnswers: Answer[] = [],
 ): Record<string, (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => string | null> => {
   let validateObj: Record<string, (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => string | null> = {};
   responses.forEach((response) => {
     if (response.required || response.type === 'custom') {
       validateObj = {
         ...validateObj,
-        [response.id]: (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => generateInvalidResponseErrorMessage(
-          response,
-          value,
-          values,
-          {
-            customValidate: customResponseValidators[response.id],
-            loadError: customResponseLoadErrors[response.id],
-          },
-        ),
+        [response.id]: (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => (
+          !resolveResponseVisibility(allResponses, { ...context, ...values }, {}, correctAnswers).visibleIds.has(response.id) ? null : generateInvalidResponseErrorMessage(
+            response,
+            value,
+            values,
+            {
+              customValidate: customResponseValidators[response.id],
+              loadError: customResponseLoadErrors[response.id],
+            },
+          )),
       };
     }
   });
@@ -208,12 +216,16 @@ export function useAnswerField(
   storedAnswer: StoredAnswer['answer'],
   customResponseValidators: Record<string, CustomResponseValidate | undefined> = {},
   customResponseLoadErrors: Record<string, string | undefined> = {},
+  allResponses: Response[] = responses,
+  context: StoredAnswer['answer'] = {},
+  isAnalysis = false,
+  correctAnswers: Answer[] = [],
 ) {
   const [_id, setId] = useState<string | number | null>(null);
 
   const answerField = useForm<StoredAnswer['answer']>({
     initialValues: generateInitFields(responses, storedAnswer),
-    validate: generateValidation(responses, customResponseValidators, customResponseLoadErrors),
+    validate: generateValidation(responses, customResponseValidators, customResponseLoadErrors, allResponses, context, correctAnswers),
   });
 
   useEffect(() => {
@@ -223,5 +235,32 @@ export function useAnswerField(
     }
   }, [_id, answerField, currentStep]);
 
-  return answerField;
+  const values = useMemo(() => {
+    // Omit this location from shared state before overlaying the current local form.
+    const otherValues = { ...context };
+    responses.forEach((response) => responseValueKeys(response).forEach((key) => { delete otherValues[key]; }));
+    const resolved = resolveResponseVisibility(
+      allResponses,
+      { ...otherValues, ...(isAnalysis ? storedAnswer : answerField.values) },
+      isAnalysis ? {} : generateInitFields(responses, {}),
+      correctAnswers,
+    ).answers;
+    const localKeys = new Set(responses.flatMap(responseValueKeys));
+    return Object.fromEntries(Object.entries(resolved).filter(([key]) => localKeys.has(key)));
+  }, [allResponses, responses, context, answerField.values, isAnalysis, storedAnswer, correctAnswers]);
+  const stableValues = useRef(values);
+  if (!isEqual(stableValues.current, values)) stableValues.current = values;
+
+  useEffect(() => {
+    if (isAnalysis) return;
+    // Mantine merges setValues; undefined clears its internal field, while the
+    // normalized public values above omit hidden keys entirely.
+    responses.filter((response) => response.visibleIf).forEach((response) => {
+      responseValueKeys(response).forEach((key) => {
+        if (!isEqual(answerField.values[key], values[key])) answerField.setFieldValue(key, values[key]);
+      });
+    });
+  }, [values, responses, answerField, isAnalysis]);
+
+  return { ...answerField, values: stableValues.current };
 }

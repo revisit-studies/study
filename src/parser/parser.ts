@@ -4,7 +4,7 @@ import { parseDocument } from 'yaml';
 import configSchema from './StudyConfigSchema.json';
 import globalSchema from './GlobalConfigSchema.json';
 import {
-  GlobalConfig, LibraryConfig, ParsedConfig, StudyConfig, ParserErrorWarning, IndividualComponent,
+  GlobalConfig, LibraryConfig, ParsedConfig, StudyConfig, ParserErrorWarning, IndividualComponent, ResponseVisibilityCondition,
 } from './types';
 import { getSequenceFlatMapWithInterruptions } from '../utils/getSequenceFlatMap';
 import {
@@ -31,7 +31,9 @@ import {
   parseDateValue,
 } from '../utils/dateTimeValidation';
 import { checkBuiltInValidation } from '../components/response/builtInValidation';
+import { responseValueKeys, visibilityControllerTypes } from '../utils/responseVisibility';
 import { getDropdownOptions } from '../utils/dropdownOptions';
+import { normalizeKeyMapping } from '../utils/keyMapping';
 
 const modules = import.meta.glob(
   [
@@ -47,6 +49,7 @@ const globalValidate = ajv1.getSchema<GlobalConfig>('#/definitions/GlobalConfig'
 const ajv2 = new Ajv({ allowUnionTypes: true });
 ajv2.addSchema(configSchema);
 const studyValidate = ajv2.getSchema<StudyConfig>('#/definitions/StudyConfig')!;
+const visibilityConditionValidate = ajv2.getSchema<ResponseVisibilityCondition>('#/definitions/ResponseVisibilityCondition')!;
 
 // This function verifies the global config file satisfies conditions that are not covered by the schema
 function verifyGlobalConfig(data: GlobalConfig) {
@@ -617,6 +620,77 @@ function hasConditionalBlockInsideRestrictedOrderAncestor(
   ));
 }
 
+function verifyKeyMappings(
+  basePath: string,
+  component: Partial<IndividualComponent>,
+  errors: ParsedConfig<StudyConfig>['errors'],
+  warnings: ParsedConfig<StudyConfig>['warnings'],
+  nextOnEnter = false,
+) {
+  if (!component.response || !Array.isArray(component.response)) return;
+
+  const seenMappings = new Map<string, { responseIndex: number; optionIndex: number; label: string }>();
+
+  component.response.forEach((res, resIdx) => {
+    if (res.type !== 'buttons') {
+      return;
+    }
+
+    res.options.forEach((opt, optIdx) => {
+      if (typeof opt !== 'object' || opt === null || !('key' in opt)) {
+        return;
+      }
+
+      const normalizedKey = normalizeKeyMapping(String(opt.key));
+      if (normalizedKey === null) {
+        errors.push({
+          message: `Invalid key mapping \`${String(opt.key)}\` in option \`${opt.label || opt.value}\`. Key mappings must use a single character, a known named key (for example "ArrowRight" or "Space"), or a modifier-plus-key combination such as "Shift+X".`,
+          instancePath: `${basePath}/response/${resIdx}/options/${optIdx}/key`,
+          params: { action: 'Use a single printable key, a valid named key, or a canonical modifier-plus-key value like Shift+X' },
+          category: 'invalid-config',
+        });
+        return;
+      }
+
+      const instancePath = `${basePath}/response/${resIdx}/options/${optIdx}/key`;
+      const parts = normalizedKey.split('+');
+      const baseKey = parts[parts.length - 1];
+      if (baseKey === 'Tab' || (nextOnEnter && normalizedKey === 'Enter')) {
+        errors.push({
+          message: baseKey === 'Tab'
+            ? 'Tab cannot be mapped to a button because it is needed to move keyboard focus.'
+            : 'Enter cannot be mapped to a button when nextOnEnter is enabled.',
+          instancePath,
+          params: { action: baseKey === 'Tab' ? 'Choose another shortcut' : 'Disable nextOnEnter or choose another shortcut' },
+          category: 'invalid-config',
+        });
+      }
+
+      const ignoredModifier = parts.includes('Ctrl') || parts.includes('Meta');
+      const layoutDependent = parts.length > 1 && baseKey.length === 1 && !(parts.length === 2 && parts[0] === 'Shift' && /^[A-Z]$/.test(baseKey));
+      if (ignoredModifier || layoutDependent) {
+        warnings.push({
+          message: `Key mapping \`${String(opt.key)}\` may not work: ${ignoredModifier ? 'Ctrl and Meta shortcuts are ignored.' : 'Modified printable keys can produce different values across keyboard layouts.'}`,
+          instancePath,
+          params: { action: 'Use an unmodified key or a supported named key such as ArrowLeft' },
+          category: 'invalid-config',
+        });
+      }
+
+      const previous = seenMappings.get(normalizedKey);
+      if (previous) {
+        errors.push({
+          message: `Duplicate key mapping \`${normalizedKey}\` in option \`${opt.label || opt.value}\`. A component cannot assign the same key to multiple responses.`,
+          instancePath: `${basePath}/response/${resIdx}/options/${optIdx}/key`,
+          params: { action: `Remove or rename the duplicate mapping for \`${normalizedKey}\`` },
+          category: 'invalid-config',
+        });
+      }
+      seenMappings.set(normalizedKey, { responseIndex: resIdx, optionIndex: optIdx, label: String(opt.label || opt.value) });
+    });
+  });
+}
+
 // This function verifies the study config file satisfies conditions that are not covered by the schema
 function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Record<string, LibraryConfig>) {
   const errors: ParsedConfig<StudyConfig>['errors'] = [];
@@ -628,12 +702,14 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
     verifyTextResponseConstraints(`/baseComponents/${componentName}`, component, errors, warnings);
     verifyDateTimeResponseConstraints(`/baseComponents/${componentName}`, component, errors);
     verifyDropdownResponseConstraints(`/baseComponents/${componentName}`, component, errors);
+    verifyKeyMappings(`/baseComponents/${componentName}`, component, errors, []);
   });
   Object.entries(studyConfig.components).forEach(([componentName, component]) => {
     const mergedComponent = studyComponentToIndividualComponent(component, studyConfig);
     verifyTextResponseConstraints(`/components/${componentName}`, mergedComponent, errors, warnings);
     verifyDateTimeResponseConstraints(`/components/${componentName}`, mergedComponent, errors);
     verifyDropdownResponseConstraints(`/components/${componentName}`, mergedComponent, errors);
+    verifyKeyMappings(`/components/${componentName}`, mergedComponent, errors, warnings, mergedComponent.nextOnEnter ?? studyConfig.uiConfig.nextOnEnter);
   });
 
   const hasConditional = hasConditionalBlock(studyConfig.sequence);
@@ -700,6 +776,84 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
         ...component,
       };
 
+      const visibilityComponent = studyComponentToIndividualComponent(component, studyConfig);
+      const visibilityResponses = visibilityComponent.response ?? [];
+      const responseIndices = new Map(visibilityResponses.map((response, index) => [response.id, index]));
+      visibilityResponses.forEach((response, index) => {
+        responseValueKeys(response).slice(1).forEach((key) => {
+          const conflictingIndex = responseIndices.get(key);
+          if (conflictingIndex === undefined) return;
+          errors.push({
+            message: `Response ID "${key}" conflicts with an auxiliary answer key for response "${response.id}"`,
+            instancePath: `/components/${componentName}/response/${conflictingIndex}/id`,
+            params: { action: 'Rename the conflicting response ID or disable the option that generates the auxiliary key' },
+            category: 'invalid-config',
+          });
+        });
+        if (!response.visibleIf) return;
+        const condition = response.visibleIf;
+        const controller = visibilityResponses.find((candidate) => candidate.id === response.visibleIf?.responseId);
+        let message: string | undefined;
+        let action = 'Reference a supported response in this component without creating a cycle';
+        if (!visibilityConditionValidate(response.visibleIf)) message = 'visibleIf must specify a valid comparison and value';
+        else if (!controller) message = 'visibleIf must reference a response in the same component';
+        else if (!visibilityControllerTypes.has(controller.type)) message = `visibleIf cannot use a ${controller.type} response as its controller`;
+        else {
+          const isMultiselect = controller.type === 'dropdown'
+            && ((controller.minSelections ?? 0) >= 1 || (controller.maxSelections ?? 0) > 1);
+          if (condition.comparison === 'equals' || condition.comparison === 'doesNotEqual') {
+            const expectsList = controller.type === 'checkbox' || isMultiselect;
+            const expectedType = expectsList ? 'string[]' : controller.type === 'numerical' ? 'number' : 'string';
+            const compatible = expectsList
+              ? Array.isArray(condition.value)
+              : controller.type === 'numerical' ? typeof condition.value === 'number' : typeof condition.value === 'string';
+            if (!compatible) {
+              message = `visibleIf ${condition.comparison} requires a ${expectedType} value for this controller`;
+              action = 'Use a comparison value with the same type as the controlling response answer';
+            }
+          } else if (['lessThan', 'lessThanOrEqual', 'greaterThan', 'greaterThanOrEqual'].includes(condition.comparison)
+            && controller.type !== 'numerical') {
+            message = `visibleIf ${condition.comparison} requires a numerical controller`;
+            action = 'Reference a numerical response or use a comparison supported by the controller';
+          } else if (['contains', 'doesNotContain', 'matchesRegex'].includes(condition.comparison)) {
+            if (controller.type === 'numerical' || controller.type === 'checkbox' || isMultiselect) {
+              message = `visibleIf ${condition.comparison} requires a controller with a single string value`;
+              action = 'Reference a shortText, date, radio, buttons, or single-select dropdown response';
+            } else if (condition.comparison === 'matchesRegex') {
+              try {
+                RegExp(condition.value);
+              } catch {
+                message = 'visibleIf matchesRegex value must be a valid regular expression';
+                action = 'Fix the regular expression pattern';
+              }
+            }
+          } else if (condition.comparison === 'isCorrect'
+            && !visibilityComponent.correctAnswer?.some((answer) => answer.id === condition.responseId)) {
+            message = `visibleIf isCorrect requires a correctAnswer for response "${condition.responseId}"`;
+            action = 'Define a correctAnswer for the controlling response in this component';
+          }
+          const seen = new Set([response.id]);
+          let current: typeof controller | undefined = controller;
+          while (current && !message) {
+            if (seen.has(current.id)) {
+              message = 'visibleIf cannot contain self references or cyclic dependencies';
+              break;
+            }
+            seen.add(current.id);
+            const nextId: string | undefined = current.visibleIf?.responseId;
+            current = visibilityResponses.find((candidate) => candidate.id === nextId);
+          }
+        }
+        if (message) {
+          errors.push({
+            message,
+            instancePath: `/components/${componentName}/response/${index}/visibleIf`,
+            params: { action },
+            category: 'invalid-config',
+          });
+        }
+      });
+
       const isInheritedFromImportedLibrary = isInheritedComponent(component)
         && component.baseComponent.startsWith('$')
         && component.baseComponent.includes('.components.');
@@ -734,6 +888,21 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
     });
 
   const usedComponents = getSequenceFlatMapWithInterruptions(studyConfig.sequence);
+
+  if (studyConfig.uiConfig.withSidebar && !Object.values(studyConfig.components).some((component) => {
+    const resolved = studyComponentToIndividualComponent(component, studyConfig);
+    return (resolved.withSidebar ?? studyConfig.uiConfig.withSidebar)
+      && ((resolved.instruction && (resolved.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar') === 'sidebar')
+        || (resolved.nextButtonLocation ?? studyConfig.uiConfig.nextButtonLocation) === 'sidebar'
+        || resolved.response?.some((response) => 'location' in response && response.location === 'sidebar'));
+  })) {
+    warnings.push({
+      message: 'The sidebar is enabled but no component puts content in it',
+      instancePath: '/uiConfig/withSidebar',
+      params: { action: 'Set withSidebar to false, or add sidebar instructions, responses, or navigation buttons' },
+      category: 'empty-sidebar',
+    });
+  }
 
   // Verify sequence is well defined
   usedComponents.forEach((component) => {

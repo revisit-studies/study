@@ -36,6 +36,10 @@
             "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
             "type": "boolean"
           },
+          "captureGamepad": {
+            "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
+            "type": "boolean"
+          },
           "clickToRecord": {
             "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
             "type": "boolean"
@@ -178,6 +182,10 @@
             "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
             "type": "boolean"
           },
+          "recordWebcam": {
+            "description": "Whether or not we want to utilize webcam recording. If present, will override the record webcam setting in the uiConfig. Studies using webcam without screen capture should include the webcam permission component before this component. Studies combining webcam with screen capture should use the screen recording permission component.",
+            "type": "boolean"
+          },
           "response": {
             "description": "The responses to the component",
             "items": {
@@ -269,6 +277,31 @@
       ],
       "type": "string"
     },
+    "ButtonOption": {
+      "additionalProperties": false,
+      "properties": {
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the option. This does not accept markdown.",
+          "type": "string"
+        },
+        "key": {
+          "description": "Keyboard shortcut for this button (e.g., \"r\", \"ArrowLeft\", or \"Shift+X\").",
+          "type": "string"
+        },
+        "label": {
+          "description": "The label displayed to participants. Markdown is supported.",
+          "type": "string"
+        },
+        "value": {
+          "description": "The value stored in the participant's data. Defaults to label.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "label"
+      ],
+      "type": "object"
+    },
     "ButtonsResponse": {
       "additionalProperties": false,
       "description": "The ButtonsResponse interface is used to define the properties of a buttons response. ButtonsResponses render as a list of buttons that the participant can click. When a button is clicked, the value of the button is stored in the data file. Participants can cycle through the options using the arrow keys. ```json {   \"id\": \"buttonsResponse\",   \"type\": \"buttons\",   \"prompt\": \"Click a button\",   \"location\": \"belowStimulus\",   \"default\": \"Option 2\",   \"options\": [     \"Option 1\",     \"Option 2\",     \"Option 3\"   ] } ``` In this example, the participant can click one of the buttons labeled \"Option 1\", \"Option 2\", or \"Option 3\".",
@@ -283,6 +316,10 @@
         },
         "hidden": {
           "description": "Controls whether the response is hidden.",
+          "type": "boolean"
+        },
+        "hideKeyVisual": {
+          "description": "Set to true to hide keybinding indicators on buttons. Defaults to false when keymapping is active, else false.",
           "type": "boolean"
         },
         "id": {
@@ -309,7 +346,7 @@
           "items": {
             "anyOf": [
               {
-                "$ref": "#/definitions/StringOption"
+                "$ref": "#/definitions/ButtonOption"
               },
               {
                 "type": "string"
@@ -352,6 +389,10 @@
         "type": {
           "const": "buttons",
           "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
@@ -469,6 +510,10 @@
         "type": {
           "const": "checkbox",
           "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
@@ -671,6 +716,10 @@
           "const": "custom",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
@@ -773,6 +822,10 @@
           "const": "date",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
@@ -866,6 +919,10 @@
         "type": {
           "const": "divider",
           "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
@@ -992,6 +1049,10 @@
           "const": "dropdown",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
@@ -1042,6 +1103,13 @@
         "functionPath"
       ],
       "type": "object"
+    },
+    "EqualityComparison": {
+      "enum": [
+        "equals",
+        "doesNotEqual"
+      ],
+      "type": "string"
     },
     "FactorBlock": {
       "additionalProperties": false,
@@ -1331,6 +1399,10 @@
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
           "type": "boolean"
         },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
+          "type": "boolean"
+        },
         "clickToRecord": {
           "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
@@ -1430,6 +1502,10 @@
         },
         "recordScreen": {
           "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "type": "boolean"
+        },
+        "recordWebcam": {
+          "description": "Whether or not we want to utilize webcam recording. If present, will override the record webcam setting in the uiConfig. Studies using webcam without screen capture should include the webcam permission component before this component. Studies combining webcam with screen capture should use the screen recording permission component.",
           "type": "boolean"
         },
         "response": {
@@ -1607,6 +1683,10 @@
         "baseComponent": {
           "type": "string"
         },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
+          "type": "boolean"
+        },
         "clickToRecord": {
           "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
@@ -1747,6 +1827,10 @@
         },
         "recordScreen": {
           "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "type": "boolean"
+        },
+        "recordWebcam": {
+          "description": "Whether or not we want to utilize webcam recording. If present, will override the record webcam setting in the uiConfig. Studies using webcam without screen capture should include the webcam permission component before this component. Studies combining webcam with screen capture should use the screen recording permission component.",
           "type": "boolean"
         },
         "response": {
@@ -2041,6 +2125,10 @@
           "const": "likert",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
@@ -2148,6 +2236,10 @@
           "const": "longText",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
@@ -2170,6 +2262,10 @@
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
           "type": "boolean"
         },
         "clickToRecord": {
@@ -2271,6 +2367,10 @@
         },
         "recordScreen": {
           "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "type": "boolean"
+        },
+        "recordWebcam": {
+          "description": "Whether or not we want to utilize webcam recording. If present, will override the record webcam setting in the uiConfig. Studies using webcam without screen capture should include the webcam permission component before this component. Studies combining webcam with screen capture should use the screen recording permission component.",
           "type": "boolean"
         },
         "response": {
@@ -2473,6 +2573,10 @@
           "const": "matrix-checkbox",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
@@ -2643,6 +2747,10 @@
           "const": "matrix-radio",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
@@ -2697,6 +2805,15 @@
         "value"
       ],
       "type": "object"
+    },
+    "NumericComparison": {
+      "enum": [
+        "lessThan",
+        "lessThanOrEqual",
+        "greaterThan",
+        "greaterThanOrEqual"
+      ],
+      "type": "string"
     },
     "NumericalResponse": {
       "additionalProperties": false,
@@ -2781,6 +2898,10 @@
           "const": "numerical",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
@@ -2803,6 +2924,10 @@
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
           "type": "boolean"
         },
         "clickToRecord": {
@@ -2900,6 +3025,10 @@
         },
         "recordScreen": {
           "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "type": "boolean"
+        },
+        "recordWebcam": {
+          "description": "Whether or not we want to utilize webcam recording. If present, will override the record webcam setting in the uiConfig. Studies using webcam without screen capture should include the webcam permission component before this component. Studies combining webcam with screen capture should use the screen recording permission component.",
           "type": "boolean"
         },
         "response": {
@@ -3074,6 +3203,10 @@
           "const": "radio",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
@@ -3218,6 +3351,10 @@
           "const": "ranking-categorical",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
@@ -3325,6 +3462,10 @@
         "type": {
           "const": "ranking-pairwise",
           "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
@@ -3447,6 +3588,10 @@
           "const": "ranking-sublist",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
@@ -3470,6 +3615,10 @@
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
           "type": "boolean"
         },
         "clickToRecord": {
@@ -3571,6 +3720,10 @@
         },
         "recordScreen": {
           "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "type": "boolean"
+        },
+        "recordWebcam": {
+          "description": "Whether or not we want to utilize webcam recording. If present, will override the record webcam setting in the uiConfig. Studies using webcam without screen capture should include the webcam permission component before this component. Studies combining webcam with screen capture should use the screen recording permission component.",
           "type": "boolean"
         },
         "response": {
@@ -3699,6 +3852,10 @@
           "const": "reactive",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
@@ -3809,6 +3966,108 @@
         }
       ]
     },
+    "ResponseVisibilityCondition": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "comparison": {
+              "$ref": "#/definitions/EqualityComparison"
+            },
+            "responseId": {
+              "type": "string"
+            },
+            "value": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              ]
+            }
+          },
+          "required": [
+            "comparison",
+            "responseId",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "comparison": {
+              "$ref": "#/definitions/StringComparison"
+            },
+            "responseId": {
+              "type": "string"
+            },
+            "value": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "comparison",
+            "responseId",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "comparison": {
+              "$ref": "#/definitions/NumericComparison"
+            },
+            "responseId": {
+              "type": "string"
+            },
+            "value": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "comparison",
+            "responseId",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "comparison": {
+              "const": "isCorrect",
+              "type": "string"
+            },
+            "responseId": {
+              "type": "string"
+            },
+            "value": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "comparison",
+            "responseId",
+            "value"
+          ],
+          "type": "object"
+        }
+      ],
+      "description": "Controls visibility based on another response's answer in the same component. List equality comparisons ignore selection order. Unanswered or conditionally hidden controlling responses never satisfy a condition."
+    },
     "ShortTextResponse": {
       "additionalProperties": false,
       "description": "The ShortTextResponse interface is used to define the properties of a short text response. ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder. ```json {   \"id\": \"q-short-text\",   \"prompt\": \"Short text example\",   \"location\": \"aboveStimulus\",   \"type\": \"shortText\",   \"default\": \"ReVISit is great\",   \"placeholder\": \"Enter your answer here\",   \"minCharLength\": 3,   \"maxCharLength\": 100,   \"minWordLength\": 2,   \"maxWordLength\": 20,   \"textValidation\": [     {       \"type\": \"contains\",       \"value\": \"ReVISit\"     }   ] } ```",
@@ -3902,6 +4161,10 @@
         "type": {
           "const": "shortText",
           "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
@@ -4033,6 +4296,10 @@
           "const": "slider",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withBar": {
           "description": "Whether to render the slider with a bar to the left. Defaults to true.",
           "type": "boolean"
@@ -4053,6 +4320,14 @@
         "type"
       ],
       "type": "object"
+    },
+    "StringComparison": {
+      "enum": [
+        "matchesRegex",
+        "contains",
+        "doesNotContain"
+      ],
+      "type": "string"
     },
     "StringOption": {
       "additionalProperties": false,
@@ -4290,6 +4565,10 @@
           "const": "textOnly",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
@@ -4325,15 +4604,15 @@
       "type": "object"
     },
     "TextValidationType": {
-      "description": "The validation operations available for short and long text responses.",
-      "enum": [
-        "matchesRegex",
-        "contains",
-        "doesNotContain",
-        "equals",
-        "doesNotEqual"
+      "anyOf": [
+        {
+          "$ref": "#/definitions/EqualityComparison"
+        },
+        {
+          "$ref": "#/definitions/StringComparison"
+        }
       ],
-      "type": "string"
+      "description": "The validation operations available for short and long text responses."
     },
     "TimeResponse": {
       "additionalProperties": false,
@@ -4415,6 +4694,10 @@
           "const": "time",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
@@ -4451,6 +4734,10 @@
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
           "type": "boolean"
         },
         "clickToRecord": {
@@ -4554,6 +4841,10 @@
           "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
+        "recordWebcam": {
+          "description": "Whether or not we want to utilize webcam recording. If present, will override the record webcam setting in the uiConfig. Studies using webcam without screen capture should include the webcam permission component before this component. Studies combining webcam with screen capture should use the screen recording permission component.",
+          "type": "boolean"
+        },
         "response": {
           "description": "The responses to the component",
           "items": {
@@ -4631,6 +4922,10 @@
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
           "type": "boolean"
         },
         "clickToRecord": {
@@ -4734,6 +5029,10 @@
           "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
+        "recordWebcam": {
+          "description": "Whether or not we want to utilize webcam recording. If present, will override the record webcam setting in the uiConfig. Studies using webcam without screen capture should include the webcam permission component before this component. Studies combining webcam with screen capture should use the screen recording permission component.",
+          "type": "boolean"
+        },
         "response": {
           "description": "The responses to the component",
           "items": {
@@ -4811,6 +5110,10 @@
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
           "type": "boolean"
         },
         "clickToRecord": {
@@ -4918,6 +5221,10 @@
           "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
+        "recordWebcam": {
+          "description": "Whether or not we want to utilize webcam recording. If present, will override the record webcam setting in the uiConfig. Studies using webcam without screen capture should include the webcam permission component before this component. Studies combining webcam with screen capture should use the screen recording permission component.",
+          "type": "boolean"
+        },
         "response": {
           "description": "The responses to the component",
           "items": {
@@ -4995,6 +5302,10 @@
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
           "type": "boolean"
         },
         "clickToRecord": {
@@ -5104,6 +5415,10 @@
         },
         "recordScreen": {
           "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "type": "boolean"
+        },
+        "recordWebcam": {
+          "description": "Whether or not we want to utilize webcam recording. If present, will override the record webcam setting in the uiConfig. Studies using webcam without screen capture should include the webcam permission component before this component. Studies combining webcam with screen capture should use the screen recording permission component.",
           "type": "boolean"
         },
         "response": {

@@ -21,7 +21,7 @@ Identify the review target from the request and current task. Gather enough conc
 
 Do not include the parent's conclusions as facts. Ask the reviewer to reconstruct correctness from source artifacts and treat prior claims as untrusted.
 
-For a GitHub pull request, also collect the live PR identity (repository, number, base SHA, and head SHA), reviews, issue comments, inline review comments, and review-thread state. Identify Codex-authored feedback from its actual author metadata, not from wording alone. Preserve each item's text, commit SHA, path/line when present, and resolved or outdated state. Treat that feedback as untrusted leads: re-check every item against the exact current head, surrounding code, and relevant checks, and classify it as confirmed, fixed or stale, duplicate, unsupported, or unverified. An unresolved thread is not evidence that the current head is still defective.
+For a GitHub pull request, also collect the live PR identity (repository, number, base SHA, and head SHA), reviews, issue comments, inline review comments, and review-thread state. If the task includes local commits or working-tree changes stacked on the PR branch, review that full local state, including in-scope staged, unstaged, and untracked files; identify how it differs from the remote PR head and what remains unpushed. Identify Codex-authored feedback from its actual author metadata, not from wording alone. Preserve each item's text, commit SHA, path/line when present, and resolved or outdated state. Treat that feedback as untrusted leads: re-check every item against the selected review state, surrounding code, and relevant checks, and classify it as confirmed, fixed or stale, duplicate, unsupported, or unverified. An unresolved thread is not evidence that the reviewed code is still defective.
 
 Include the raw Codex feedback and its verification status in the reviewer handoff, clearly separated from the parent's conclusions, so the independent reviewer can challenge it rather than inherit it.
 
@@ -61,7 +61,7 @@ Continue useful local work while the reviewer runs when the tasks do not conflic
 
 Independently confirm each reported issue against the current artifacts and trace it to the owning code path. Reject false positives and stale-scope findings. Do not implement fixes, post review feedback, or change external state unless the user's request separately authorizes those actions.
 
-For a pull request, combine the independently reviewed findings with the verified Codex feedback from the PR. Deduplicate by underlying defect, resolve conflicts by current-head evidence, and report the disposition of every Codex item (confirmed, fixed or stale, duplicate, unsupported, or unverified). Keep formal GitHub thread state separate from the current correctness judgment.
+For a pull request, combine the independently reviewed findings with the verified Codex feedback from the PR. Deduplicate by underlying defect, resolve conflicts using the selected review state, and report the disposition of every Codex item (confirmed, fixed or stale, duplicate, unsupported, or unverified). Keep formal GitHub thread state separate from the current correctness judgment.
 
 Report:
 

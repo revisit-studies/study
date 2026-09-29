@@ -3,10 +3,10 @@ import * as d3 from 'd3';
 
 import { useResizeObserver } from '@mantine/hooks';
 import {
-  IconCheck, IconDeviceDesktop, IconMicrophone, IconProgress, IconX,
+  IconCamera, IconCheck, IconDeviceDesktop, IconMicrophone, IconProgress, IconX,
 } from '@tabler/icons-react';
 import { useNavigateToTrial } from '../../../utils/useNavigateToTrial';
-import type { ComponentAnswerStatus } from '../../../utils/correctAnswer';
+import type { ComponentAnswerStatus } from '../../../utils/componentCorrectness';
 import { UnknownAnswerIcon } from '../../../components/interface/UnknownAnswerIcon';
 
 const LABEL_MARGIN = 3;
@@ -48,6 +48,7 @@ export function SingleTask({
   answerStatus,
   hasAudio,
   hasScreenRecording,
+  hasWebcamRecording,
   scaleStart,
   scaleEnd,
   incomplete,
@@ -67,6 +68,7 @@ export function SingleTask({
   answerStatus: ComponentAnswerStatus | null,
   hasAudio: boolean,
   hasScreenRecording: boolean,
+  hasWebcamRecording: boolean,
   scaleStart: number,
   scaleEnd: number,
   incomplete: boolean,
@@ -82,7 +84,7 @@ export function SingleTask({
   const [ref, { width: labelWidth }] = useResizeObserver();
 
   const navigateToTrial = useNavigateToTrial();
-  const iconCount = (incomplete || answerStatus ? 1 : 0) + (hasAudio ? 1 : 0) + (hasScreenRecording ? 1 : 0);
+  const iconCount = (incomplete || answerStatus ? 1 : 0) + (hasAudio ? 1 : 0) + (hasScreenRecording ? 1 : 0) + (hasWebcamRecording ? 1 : 0);
   const iconsWidth = iconCount * (ICON_SIZE + ICON_GAP);
   const labelOpacity = isDimmed ? 0.35 : 1;
 
@@ -162,6 +164,12 @@ export function SingleTask({
             {hasAudio && (
               <IconMicrophone
                 color="var(--mantine-color-orange-text)"
+                size="14"
+              />
+            )}
+            {hasWebcamRecording && (
+              <IconCamera
+                color="orange"
                 size="14"
               />
             )}

@@ -19,12 +19,15 @@
     "demo-html-trrack",
     "demo-svelte-trrack",
     "demo-react-trrack",
+    "demo-codemirror",
     "demo-screen-recording",
+    "demo-gamepad",
     "demo-image",
     "demo-vega",
     "demo-video",
     "demo-dynamic",
     "demo-condition",
+    "demo-dark-mode",
     "demo-style",
     "demo-yaml",
     "demo-ranking-widget",
@@ -50,6 +53,7 @@
     "library-quis",
     "library-sam",
     "library-screen-recording",
+    "library-webcam-recording",
     "library-smeq",
     "library-sus",
     "library-ueq",
@@ -58,6 +62,7 @@
     "library-umux-lite",
     "library-virtual-chinrest",
     "library-vlat",
+    "test-keymapping",
     "test-audio",
     "test-device-restriction",
     "test-library",
@@ -107,6 +112,9 @@
     "demo-screen-recording": {
       "path": "demo-screen-recording/config.json"
     },
+    "demo-gamepad": {
+      "path": "demo-gamepad/config.json"
+    },
     "demo-html-input": {
       "path": "demo-html-input/config.json"
     },
@@ -115,6 +123,9 @@
     },
     "demo-form-elements": {
       "path": "demo-form-elements/config.json"
+    },
+    "demo-dark-mode": {
+      "path": "demo-dark-mode/config.json"
     },
     "demo-training": {
       "path": "demo-training/config.json"
@@ -139,6 +150,9 @@
     },
     "demo-react-trrack": {
       "path": "demo-react-trrack/config.json"
+    },
+    "demo-codemirror": {
+      "path": "demo-codemirror/config.json"
     },
     "demo-image": {
       "path": "demo-image/config.json"
@@ -229,6 +243,10 @@
       "path": "library-screen-recording/config.json",
       "test": true
     },
+    "library-webcam-recording": {
+      "path": "library-webcam-recording/config.json",
+      "test": true
+    },
     "library-smeq": {
       "path": "library-smeq/config.json",
       "test": true
@@ -247,6 +265,10 @@
     },
     "library-vlat": {
       "path": "library-vlat/config.json",
+      "test": true
+    },
+    "test-keymapping": {
+      "path": "test-keymapping/config.json",
       "test": true
     },
     "test-audio": {

@@ -12,7 +12,7 @@ import {
 
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { getPersistedAnswersFromAllLocations } from '../../utils/getAnswersFromAllLocations';
-import type { Response } from '../../parser/types';
+import type { Answer, Response } from '../../parser/types';
 import { useStoredAnswer } from './useStoredAnswer';
 import { useWindowEvents } from './useWindowEvents';
 import { findBlockForStep } from '../../utils/getSequenceFlatMap';
@@ -26,7 +26,7 @@ import {
   getStoredAnswersForSkipEvaluation,
 } from '../../utils/skipConditions';
 
-export function useNextStep(responses: Response[] = []) {
+export function useNextStep(responses: Response[] = [], correctAnswers: Answer[] = []) {
   const currentStep = useCurrentStep();
   const participantSequence = useFlatSequence();
 
@@ -72,13 +72,14 @@ export function useNextStep(responses: Response[] = []) {
       }
       // Get answer from across the 3 response blocks and the provenance graph
       const validation = trialValidation[identifier];
-      const answer = getPersistedAnswersFromAllLocations(validation, responses);
+      const answer = getPersistedAnswersFromAllLocations(validation, responses, correctAnswers);
       const provenanceGraph = validation?.provenanceGraph ? structuredClone(validation.provenanceGraph) : undefined;
       const endTime = Date.now();
       const answerToPersist = collectData ? answer : {};
 
       // Get current window events. Splice empties the array and returns the removed elements, which handles clearing the array
-      const currentWindowEvents = windowEvents && 'current' in windowEvents && windowEvents.current ? windowEvents.current.splice(0, windowEvents.current.length) : [];
+      windowEvents.flushPending?.();
+      const currentWindowEvents = windowEvents.current.splice(0, windowEvents.current.length);
 
       if (dataCollectionEnabled && (storedAnswer.endTime === -1 || clickedPrevious)) {
         const toSave = {
@@ -170,7 +171,7 @@ export function useNextStep(responses: Response[] = []) {
         color: 'red',
       });
     }
-  }, [isNextDisabled, currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, clickedPrevious, sequence, answers, startTime, funcIndex, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, setRankingAnswers, setAlertModal, studyConfig, participantSequence, navigate, studyId, responseSubmitAttempted, checkAnswerState, responses]);
+  }, [isNextDisabled, currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, clickedPrevious, sequence, answers, startTime, funcIndex, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, setRankingAnswers, setAlertModal, studyConfig, participantSequence, navigate, studyId, responseSubmitAttempted, checkAnswerState, responses, correctAnswers]);
 
   return {
     isNextDisabled,

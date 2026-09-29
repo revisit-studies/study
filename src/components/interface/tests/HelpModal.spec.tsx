@@ -10,6 +10,7 @@ import { HelpModal } from '../HelpModal';
 // ── mutable state ─────────────────────────────────────────────────────────────
 
 let mockShowHelpText = true;
+let mockComponentHelpTextPath: string | undefined;
 let mockConfig: { components: Record<string, unknown>; uiConfig: { helpTextPath: string | undefined; contactEmail?: string } } = {
   components: {},
   uiConfig: { helpTextPath: undefined },
@@ -48,7 +49,7 @@ vi.mock('../../../routes/utils', () => ({
 }));
 
 vi.mock('../../../utils/handleComponentInheritance', () => ({
-  studyComponentToIndividualComponent: () => ({ helpTextPath: undefined, parameters: { condition: 'A' } }),
+  studyComponentToIndividualComponent: () => ({ helpTextPath: mockComponentHelpTextPath, parameters: { condition: 'A' } }),
 }));
 
 vi.mock('../../ReactMarkdownWrapper', () => ({
@@ -74,6 +75,7 @@ vi.mock('@mantine/core', () => ({
 describe('HelpModal', () => {
   beforeEach(() => {
     mockShowHelpText = true;
+    mockComponentHelpTextPath = undefined;
     mockConfig = {
       components: {},
       uiConfig: { helpTextPath: undefined },
@@ -168,5 +170,18 @@ describe('HelpModal', () => {
     });
     expect(mockGetStaticAssetByPath).toHaveBeenCalledWith('/help-B.md');
     expect(screen.getByTestId('markdown').textContent).toBe('Condition: B');
+  });
+
+  test('uses component help when both component and global paths are defined', async () => {
+    mockComponentHelpTextPath = 'component-help.md';
+    mockConfig.uiConfig.helpTextPath = 'global-help.md';
+    mockGetStaticAssetByPath = vi.fn().mockResolvedValue('component help');
+
+    await act(async () => {
+      render(<HelpModal />);
+    });
+
+    expect(mockGetStaticAssetByPath).toHaveBeenCalledWith('/component-help.md');
+    expect(screen.getByTestId('markdown').textContent).toBe('component help');
   });
 });

@@ -66,7 +66,19 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
 
     const firebaseConfig = hjsonParse(import.meta.env.VITE_FIREBASE_CONFIG);
     const firebaseApp = initializeApp(firebaseConfig);
-    this.firestore = initializeFirestore(firebaseApp, {});
+    // Force long-polling instead of letting the SDK auto-detect the transport.
+    // By default the WebChannel backchannel is held open in case the backend has
+    // more data to send. Safari buffers that response rather than delivering it
+    // incrementally, so listener data and write acknowledgements only surface
+    // when the request eventually times out -- stalling study loads by 30-50s and
+    // hanging the end-of-study upload for exactly 30s. Forcing long-polling closes
+    // the request as soon as the backend sends data, costing one extra round trip
+    // per message. Note this cannot be combined with
+    // experimentalAutoDetectLongPolling, which is enabled by default and does not
+    // prevent the stall.
+    this.firestore = initializeFirestore(firebaseApp, {
+      experimentalForceLongPolling: true,
+    });
     this.studyCollection = collection(
       this.firestore,
       '_revisit',
@@ -583,6 +595,21 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       return await getDownloadURL(screenRecordingRef);
     } catch {
       console.warn(`Screen recording for task ${task} and participant ${participantId} not found.`);
+      return null;
+    }
+  }
+
+  protected async _getWebcamRecordingUrl(
+    task: string,
+    participantId: string,
+  ): Promise<string | null> {
+    const storage = getStorage();
+    const webcamRecordingRef = ref(storage, `${this.collectionPrefix}${this.studyId}/webcamRecording/${participantId}_${task}`);
+
+    try {
+      return await getDownloadURL(webcamRecordingRef);
+    } catch {
+      console.warn(`Webcam recording for task ${task} and participant ${participantId} not found.`);
       return null;
     }
   }

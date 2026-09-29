@@ -473,6 +473,10 @@ describe('getTableData', () => {
         resize: 1,
         scroll: 1,
         visibility: 1,
+        gamepadconnection: 0,
+        gamepadbuttondown: 0,
+        gamepadbuttonup: 0,
+        gamepadaxis: 0,
       }),
     }));
   });
@@ -504,6 +508,10 @@ describe('getTableData', () => {
         resize: 0,
         scroll: 0,
         visibility: 0,
+        gamepadconnection: 0,
+        gamepadbuttondown: 0,
+        gamepadbuttonup: 0,
+        gamepadaxis: 0,
       }),
     }));
   });

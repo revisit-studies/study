@@ -5,6 +5,15 @@
   background-color: var(--mantine-color-blue-light);
   color: var(--mantine-color-blue-light-color);
 
+  &:focus-visible {
+    /* Keep the keyboard focus ring inside the response's scroll boundary. */
+    outline-offset: -2px;
+  }
+
+  &[data-checked]:focus-visible {
+    outline-color: var(--mantine-color-white);
+  }
+
   &[data-checked] {
     background-color: var(--mantine-color-blue-filled);
     color: var(--mantine-color-white);

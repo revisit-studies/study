@@ -1,6 +1,6 @@
 import { renderHook, act } from '@testing-library/react';
 import {
-  afterEach, beforeEach, describe, expect, it, test,
+  afterEach, beforeEach, describe, expect, it, test, vi,
 } from 'vitest';
 import type {
   CheckboxResponse, CustomResponse, DateResponse, DropdownResponse, LongTextResponse, MatrixResponse,
@@ -2063,4 +2063,93 @@ describe('useAnswerField', () => {
     const errors = result.current.validate();
     expect(errors.hasErrors).toBe(true);
   });
+});
+
+describe('conditional form values', () => {
+  const responses: Response[] = [
+    {
+      id: 'attended', type: 'radio', prompt: '', options: ['yes', 'no'], required: true,
+    },
+    {
+      id: 'name', type: 'shortText', prompt: '', default: 'Default university', required: true, requiredValue: 'Correct university', requiredLabel: 'the university', visibleIf: { responseId: 'attended', comparison: 'equals', value: 'yes' },
+    },
+  ];
+
+  test('ignores hidden required/requiredValue validation and reapplies defaults only on reveal', () => {
+    const { result } = renderHook(() => useAnswerField(responses, 0, {}));
+    expect(result.current.values).not.toHaveProperty('name');
+    act(() => result.current.setFieldValue('attended', 'no'));
+    expect(result.current.isValid()).toBe(true);
+    act(() => result.current.setFieldValue('attended', 'yes'));
+    expect(result.current.values.name).toBe('Default university');
+    expect(result.current.isValid()).toBe(false);
+    act(() => result.current.setFieldValue('name', 'Correct university'));
+    expect(result.current.isValid()).toBe(true);
+    act(() => result.current.setFieldValue('name', ''));
+    expect(result.current.values.name).toBe('');
+    act(() => result.current.setFieldValue('attended', 'no'));
+    expect(result.current.values).not.toHaveProperty('name');
+    expect(result.current.isValid()).toBe(true);
+    act(() => result.current.setFieldValue('attended', 'yes'));
+    expect(result.current.values.name).toBe('Default university');
+  });
+
+  test('uses controlling answers from a different location and clears stale local values', () => {
+    const local = [responses[1]];
+    const { result, rerender } = renderHook(({ attended }) => useAnswerField(local, 0, {}, {}, {}, responses, { attended }), { initialProps: { attended: 'yes' } });
+    act(() => result.current.setFieldValue('name', 'Correct university'));
+    rerender({ attended: 'no' });
+    expect(result.current.values).toEqual({});
+    expect(result.current.isValid()).toBe(true);
+    rerender({ attended: 'yes' });
+    expect(result.current.values.name).toBe('Default university');
+  });
+
+  test('does not synthesize default answers in analysis', () => {
+    const { result } = renderHook(() => useAnswerField(responses, 0, { attended: 'yes' }, {}, {}, responses, {}, true));
+    expect(result.current.values).toEqual({ attended: 'yes' });
+  });
+});
+
+test('hidden custom responses do not invoke their custom validator', () => {
+  const customValidate = vi.fn(() => 'Invalid');
+  const responses: Response[] = [
+    {
+      id: 'controller', type: 'radio', prompt: '', options: ['yes', 'no'],
+    },
+    {
+      id: 'custom', type: 'custom', prompt: '', path: 'custom.tsx', required: true, visibleIf: { responseId: 'controller', comparison: 'equals', value: 'yes' },
+    },
+  ];
+  const validate = generateValidation(responses, { custom: customValidate });
+  expect(validate.custom('answer', { controller: 'no', custom: 'answer' })).toBeNull();
+  expect(customValidate).not.toHaveBeenCalled();
+  expect(validate.custom('answer', { controller: 'yes', custom: 'answer' })).toBe('Invalid');
+  expect(customValidate).toHaveBeenCalledOnce();
+});
+
+test('isCorrect visibility uses configured answers for live values and required validation', () => {
+  const responses: Response[] = [
+    {
+      id: 'quiz', type: 'radio', prompt: '', options: ['yes', 'no'],
+    },
+    {
+      id: 'explanation',
+      type: 'shortText',
+      prompt: '',
+      required: true,
+      visibleIf: { responseId: 'quiz', comparison: 'isCorrect', value: false },
+    },
+  ];
+  const correctAnswers = [{ id: 'quiz', answer: 'yes' }];
+  const { result } = renderHook(() => useAnswerField(responses, 0, {}, {}, {}, responses, {}, false, correctAnswers));
+  expect(result.current.values).not.toHaveProperty('explanation');
+  act(() => result.current.setFieldValue('quiz', 'no'));
+  expect(result.current.values).toHaveProperty('explanation', '');
+  expect(result.current.isValid()).toBe(false);
+  act(() => result.current.setFieldValue('explanation', 'My reason'));
+  expect(result.current.isValid()).toBe(true);
+  act(() => result.current.setFieldValue('quiz', 'yes'));
+  expect(result.current.values).not.toHaveProperty('explanation');
+  expect(result.current.isValid()).toBe(true);
 });
