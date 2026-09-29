@@ -701,7 +701,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 {canonicalStudyId && user.isAdmin ? <ManageView studyId={canonicalStudyId} refresh={() => execute(studyConfig, storageEngine, canonicalStudyId)} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to manage the data for this study.</Alert></Container>}
               </Tabs.Panel>
               <Tabs.Panel style={{ overflow: 'auto' }} value="storage" pt="xs">
-                {canonicalStudyId && canManageStorage ? <StorageManagementView studyId={canonicalStudyId} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red">Sign in as an administrator to manage storage.</Alert></Container>}
+                {canonicalStudyId && canManageStorage ? <StorageManagementView key={canonicalStudyId} studyId={canonicalStudyId} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red">Sign in as an administrator to manage storage.</Alert></Container>}
               </Tabs.Panel>
             </Tabs>
           ) : null}
