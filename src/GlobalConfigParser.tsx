@@ -20,7 +20,7 @@ import { AuthProvider } from './store/hooks/useAuth';
 import { GlobalSettings } from './components/settings/GlobalSettings';
 import { NavigateWithParams } from './utils/NavigateWithParams';
 import { AppHeader } from './analysis/interface/AppHeader';
-import { fetchStudyConfigs, resolveConfigKey } from './utils/fetchConfig';
+import { fetchStudyConfigs, getStudyConfig, resolveConfigKey } from './utils/fetchConfig';
 import { initializeStorageEngine, selectStudyStorageEngine } from './storage/initialize';
 import { useStorageEngine } from './storage/storageEngineHooks';
 import { PageTitle } from './utils/PageTitle';
@@ -83,12 +83,12 @@ function HomeRoute({
 
 function StudyStorageRoute({ globalConfig, children }: { globalConfig: GlobalConfig; children: ReactNode }) {
   const { configuredStorageEngine, setStorageEngine } = useStorageEngine();
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const routeParts = pathname.split('/').filter(Boolean);
   const participantRoute = routeParts[0] !== 'analysis';
   const routeStudyId = participantRoute ? routeParts[0] : routeParts[1] === 'stats' ? routeParts[2] : undefined;
   const studyId = routeStudyId ? resolveConfigKey(routeStudyId, globalConfig) : null;
-  const routeKey = studyId ? `${studyId}:${participantRoute}` : 'global';
+  const routeKey = studyId ? `${studyId}:${participantRoute}:${participantRoute ? search : ''}` : 'global';
   const [readyKey, setReadyKey] = useState<string | null>(null);
   const [selectionError, setSelectionError] = useState<unknown>(null);
 
@@ -97,10 +97,15 @@ function StudyStorageRoute({ globalConfig, children }: { globalConfig: GlobalCon
     let cancelled = false;
     setReadyKey(null);
     setSelectionError(null);
-    const selection = studyId
-      ? selectStudyStorageEngine(configuredStorageEngine, studyId, participantRoute)
-      : Promise.resolve(configuredStorageEngine);
-    selection.then((activeEngine) => {
+    const selection = async () => {
+      if (!studyId) return configuredStorageEngine;
+      const config = participantRoute && search ? await getStudyConfig(studyId, globalConfig) : null;
+      const participantIdParam = config?.uiConfig?.urlParticipantIdParam;
+      const requestedParticipantId = participantIdParam
+        ? new URLSearchParams(search).get(participantIdParam) ?? undefined : undefined;
+      return selectStudyStorageEngine(configuredStorageEngine, studyId, participantRoute, requestedParticipantId);
+    };
+    selection().then((activeEngine) => {
       if (!cancelled) {
         setStorageEngine(activeEngine, configuredStorageEngine);
         setReadyKey(routeKey);
@@ -109,7 +114,7 @@ function StudyStorageRoute({ globalConfig, children }: { globalConfig: GlobalCon
       if (!cancelled) setSelectionError(error);
     });
     return () => { cancelled = true; };
-  }, [configuredStorageEngine, participantRoute, routeKey, setStorageEngine, studyId]);
+  }, [configuredStorageEngine, globalConfig, participantRoute, routeKey, search, setStorageEngine, studyId]);
 
   if (selectionError) return <StartupErrorScreen error={selectionError} />;
   if (readyKey !== routeKey) return <LoadingOverlay visible />;

@@ -186,6 +186,25 @@ describe('selectStudyStorageEngine', () => {
     expect(await selectStudyStorageEngine(cloud, 'study-a', true)).toBe(cloud);
   });
 
+  test('resumes an unfinished cloud participant named by a study URL parameter', async () => {
+    vi.mocked(cloud.getStorageDisconnected).mockResolvedValue(true);
+    vi.mocked(cloud.getAllSequenceAssignments).mockResolvedValue([{
+      participantId: 'prolific-123', completed: null,
+    } as SequenceAssignment]);
+
+    expect(await selectStudyStorageEngine(cloud, 'study-a', true, 'prolific-123')).toBe(cloud);
+  });
+
+  test('lets a new URL participant use the selected backend despite an older cached session', async () => {
+    vi.mocked(cloud.getStorageDisconnected).mockResolvedValue(true);
+    vi.mocked(cloud.peekCurrentParticipantId).mockResolvedValue('old-participant');
+    vi.mocked(cloud.getAllSequenceAssignments).mockResolvedValue([{
+      participantId: 'old-participant', completed: null,
+    } as SequenceAssignment]);
+
+    expect((await selectStudyStorageEngine(cloud, 'study-a', true, 'new-participant')).getEngine()).toBe('localStorage');
+  });
+
   test('keeps an in-progress local participant on local after reconnection', async () => {
     mocks.mockLocalParticipantId.mockResolvedValue('local-participant');
     mocks.mockLocalAssignments.mockResolvedValue([{

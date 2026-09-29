@@ -54,15 +54,25 @@ export async function initializeStorageEngine() {
   return storageEngine!;
 }
 
-async function hasInProgressSession(engine: StorageEngine, studyId: string) {
+async function hasInProgressSession(engine: StorageEngine, studyId: string, requestedParticipantId?: string) {
   const participantId = await engine.peekCurrentParticipantId(studyId);
-  if (!participantId) return false;
+  if (!participantId && !requestedParticipantId) return false;
   const assignments = await engine.getAllSequenceAssignments(studyId);
-  const assignment = assignments.find((item) => item.participantId === participantId);
-  return !assignment || assignment.completed === null;
+  if (requestedParticipantId) {
+    const requestedAssignment = assignments.find((item) => item.participantId === requestedParticipantId);
+    return requestedAssignment?.completed === null
+      || (participantId === requestedParticipantId && !requestedAssignment);
+  }
+  const persistedAssignment = assignments.find((item) => item.participantId === participantId);
+  return !persistedAssignment || persistedAssignment.completed === null;
 }
 
-export async function selectStudyStorageEngine(configured: StorageEngine, studyId: string, participantRoute: boolean) {
+export async function selectStudyStorageEngine(
+  configured: StorageEngine,
+  studyId: string,
+  participantRoute: boolean,
+  requestedParticipantId?: string,
+) {
   if (!isCloudStorageEngine(configured)) return configured;
 
   const disconnected = await configured.getStorageDisconnected(studyId);
@@ -73,8 +83,8 @@ export async function selectStudyStorageEngine(configured: StorageEngine, studyI
   if (!participantRoute) return disconnected ? local : configured;
 
   const [cloudSession, localSession] = await Promise.all([
-    hasInProgressSession(configured, studyId),
-    hasInProgressSession(local, studyId),
+    hasInProgressSession(configured, studyId, requestedParticipantId),
+    hasInProgressSession(local, studyId, requestedParticipantId),
   ]);
   const sessionKey = `revisit-storage-${studyId}`;
   const previousEngine = window.sessionStorage.getItem(sessionKey);
