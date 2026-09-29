@@ -69,11 +69,11 @@ export function GlobalSettings() {
       if (storageEngine && isCloudStorageEngine(storageEngine)) {
         // Check if we're in supabase and have a session already
         if (storageEngine.getEngine() === 'supabase') {
-          const { data } = await (storageEngine as unknown as SupabaseStorageEngine).getSession();
-          if (data.session && data.session.user && data.session.user.email) {
+          const verifiedUser = await (storageEngine as SupabaseStorageEngine).getVerifiedUser();
+          if (verifiedUser?.email) {
             setEnableAuthUser({
-              email: data.session.user.email,
-              uid: data.session.user.id,
+              email: verifiedUser.email,
+              uid: verifiedUser.uid,
             });
             setModalEnableAuthOpened(true);
             return;
@@ -104,8 +104,12 @@ export function GlobalSettings() {
     setLoading(true);
     try {
       if (storageEngine && isCloudStorageEngine(storageEngine) && rootUser) {
-        await storageEngine.addAdminUser(rootUser);
-        await storageEngine.changeAuth(true);
+        if (storageEngine.getEngine() === 'supabase') {
+          await (storageEngine as SupabaseStorageEngine).initializeAuthentication(rootUser);
+        } else {
+          await storageEngine.addAdminUser(rootUser);
+          await storageEngine.changeAuth(true);
+        }
         setAuthenticatedUsers([rootUser.email!]);
         setAuthEnabled(true);
         triggerAuth();

@@ -2,7 +2,7 @@ import { AuthError, createClient } from '@supabase/supabase-js';
 import localforage from 'localforage';
 import {
   REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageObject, StorageObjectType, StoredUser,
-  CloudStorageEngine, cleanupModes,
+  CloudStorageEngine, UserWrapped, cleanupModes,
 } from './types';
 import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
 
@@ -867,6 +867,66 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     await this._updateAdminUsersList(updatedData.adminUsers);
   }
 
+  async getVerifiedUser(): Promise<StoredUser | null> {
+    const { data: sessionData, error: sessionError } = await this.supabase.auth.getSession();
+    if (sessionError) throw sessionError;
+    if (!sessionData.session) return null;
+    const { data, error } = await this.supabase.auth.getUser();
+    if (error) throw error;
+    return data.user ? { email: data.user.email ?? null, uid: data.user.id } : null;
+  }
+
+  async validateUser(user: UserWrapped | null, refresh = false) {
+    const authInfo = await this.getUserManagementData('authentication');
+    if (authInfo?.isEnabled !== true) return super.validateUser(user, refresh);
+    const verifiedUser = await this.getVerifiedUser();
+    if (!verifiedUser || verifiedUser.email !== user?.user?.email || verifiedUser.uid !== user?.user?.uid) return false;
+    return super.validateUser(user, refresh);
+  }
+
+  async initializeAuthentication(rootUser: StoredUser): Promise<StoredUser> {
+    const verifiedUser = await this.getVerifiedUser();
+    if (!verifiedUser?.email || verifiedUser.email !== rootUser.email || verifiedUser.uid !== rootUser.uid) {
+      throw new Error('The signed-in user changed during authentication setup');
+    }
+
+    const { data: rows, error: readError } = await this.supabase
+      .from('revisit')
+      .select('data')
+      .eq('studyId', '')
+      .eq('docId', 'user-management');
+    if (readError) throw readError;
+    const existingData = rows?.[0]?.data;
+    if (rows?.length && (!existingData || typeof existingData !== 'object' || Array.isArray(existingData)
+      || 'authentication' in existingData || 'adminUsers' in existingData)) {
+      throw new Error('Authentication setup has already started');
+    }
+
+    const data = {
+      ...(existingData as Record<string, unknown> | undefined),
+      adminUsers: { adminUsersList: [verifiedUser] },
+      authentication: { isEnabled: true },
+    };
+    if (rows?.length) {
+      const { data: updated, error } = await this.supabase
+        .from('revisit')
+        .update({ data })
+        .eq('studyId', '')
+        .eq('docId', 'user-management')
+        .is('data->authentication', null)
+        .is('data->adminUsers', null)
+        .select('docId');
+      if (error) throw error;
+      if (updated?.length !== 1) throw new Error('Authentication setup has already started');
+    } else {
+      const { error } = await this.supabase
+        .from('revisit')
+        .insert({ studyId: '', docId: 'user-management', data });
+      if (error) throw error;
+    }
+    return verifiedUser;
+  }
+
   async removeAdminUser(email: string): Promise<void> {
     await this.getUserManagementData('adminUsers');
     const updatedData = structuredClone(this.userManagementData);
@@ -889,10 +949,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     if (error) throw error;
 
     // Redirect-based flow: user not available immediately
-    const { data: sessionData } = await this.supabase.auth.getSession();
-    const user = sessionData.session?.user;
-
-    return user ? { email: user.email ?? null, uid: user.id } : null;
+    return this.getVerifiedUser();
   }
 
   async getSession() {
@@ -915,7 +972,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       // If first time and no user, just call back with null
       if (user === null && count === 0) {
         count += 1;
-        callback(null);
+        callback(null).catch((error) => console.error('Supabase auth callback failed:', error));
         return;
       }
 
@@ -923,7 +980,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       if (uid === lastUid) return;
       lastUid = uid;
 
-      await callback(user);
+      callback(user).catch((error) => console.error('Supabase auth callback failed:', error));
     });
 
     return () => listener.subscription.unsubscribe();
