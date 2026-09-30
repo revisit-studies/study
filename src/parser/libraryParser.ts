@@ -958,7 +958,8 @@ function compileFactorBlock(
       }
 
       components[componentId] = component;
-      factorLabels[componentId] = `${block.id ? `${block.id}: ` : ''}${JSON.stringify(condition)}_${baseComponent}`;
+      const values = Object.values(condition).map((value) => (typeof value === 'string' ? value : JSON.stringify(value)));
+      factorLabels[componentId] = values.length ? `${values.join(' · ')} — ${baseComponent}` : baseComponent;
       return [componentId];
     });
     materializedConditions.set(conditionId, conditionComponentIds);
