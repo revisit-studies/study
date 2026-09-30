@@ -22,6 +22,7 @@ import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { MatrixInput } from './MatrixInput';
 import { ButtonsInput } from './ButtonsInput';
 import classes from './css/Checkbox.module.css';
+import './css/default-form.css';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import { useStoreSelector } from '../../store/store';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
@@ -31,7 +32,7 @@ import { useFetchStylesheet } from '../../utils/fetchStylesheet';
 import { parseStringOptionValue, parseStringOptions } from '../../utils/stringOptions';
 import { getDropdownOptions } from '../../utils/dropdownOptions';
 import {
-  getDefaultFieldValue, normalizeCheckboxValue,
+  getDefaultFieldValue, getResponseWidth, normalizeCheckboxValue,
 } from './utils';
 import {
   generateErrorMessage,
@@ -40,6 +41,7 @@ import {
 import { CustomResponseField } from '../../store/types';
 import { compileTemplate } from '../../utils/handlebars';
 import { useTemplateAnswerContext } from '../../store/hooks/useTemplateAnswerContext';
+import { OptionTextTemplateContext } from './OptionLabel';
 
 export function ResponseSwitcher({
   response,
@@ -173,6 +175,7 @@ export function ResponseSwitcher({
     [`${response.id}-dontKnow`]: dontKnowChecked,
     [`${response.id}-other`]: otherValue.value,
   }), [response.id, ans.value, dontKnowChecked, otherValue.value]);
+  const templateData = useTemplateAnswerContext();
   const errorOptions = useMemo(() => {
     if (response.type === 'dropdown') {
       return getDropdownOptions(response);
@@ -202,13 +205,22 @@ export function ResponseSwitcher({
       return null;
     }
 
+    const displayOptions = errors && response.requiredValue != null
+      ? errorOptions?.map((option) => ({
+        ...option,
+        label: option.value === response.requiredValue
+          ? compileTemplate(option.label, config?.parameters ?? {}, { noEscape: true, data: templateData })
+          : option.label,
+      }))
+      : errorOptions;
+
     return generateErrorMessage(
       response,
       ans as { value?: number | string | string[] | Record<string, string>; checked?: string[] },
-      errorOptions,
+      displayOptions,
       { showRequiredErrors: errors, values: validationValues },
     );
-  }, [response, ans, errorOptions, errors, validationValues]);
+  }, [response, ans, errorOptions, errors, validationValues, config?.parameters, templateData]);
   const displayError = response.type === 'custom' ? customError : responseError;
   const responseWrapperStyle = useMemo(() => {
     if (!displayError) {
@@ -218,15 +230,19 @@ export function ResponseSwitcher({
     const errorColor = response.required === false ? 'orange' : 'red';
 
     return {
-      ...responseStyle,
-      border: `1px solid var(--mantine-color-${errorColor}-3)`,
-      backgroundColor: `var(--mantine-color-${errorColor}-0)`,
+      border: `1px solid var(--mantine-color-${errorColor}-outline)`,
+      backgroundColor: `var(--mantine-color-${errorColor}-light)`,
+      color: `var(--mantine-color-${errorColor}-light-color)`,
       borderRadius: 'var(--mantine-radius-md)',
       padding: 'var(--mantine-spacing-sm)',
+      ...responseStyle,
     };
   }, [displayError, response.required, responseStyle]);
 
-  const templateData = useTemplateAnswerContext();
+  const optionTextTemplate = useMemo(() => ({
+    parameters: config?.parameters ?? {},
+    data: templateData ?? {},
+  }), [config?.parameters, templateData]);
 
   const templatedFields = useMemo(() => {
     const parameters = config?.parameters ?? {};
@@ -253,8 +269,8 @@ export function ResponseSwitcher({
     return null;
   }
 
-  return (
-    <Box mb={responseDividers ? 'xl' : 'lg'} className="response" id={response.id} style={responseWrapperStyle}>
+  const content = (
+    <Box mb={responseDividers ? 'xl' : 'lg'} className={`response response--${response.type}`} data-answer-width={getResponseWidth(response)} id={response.id} style={responseWrapperStyle}>
       {response.type === 'numerical' && (
       <NumericInput
         response={withTemplatedFields(response)}
@@ -424,5 +440,10 @@ export function ResponseSwitcher({
       )}
       {(response.type === 'divider' || responseDividers) && <Divider mt="xl" mb="xs" />}
     </Box>
+  );
+  return (
+    <OptionTextTemplateContext.Provider value={optionTextTemplate}>
+      {content}
+    </OptionTextTemplateContext.Provider>
   );
 }

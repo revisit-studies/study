@@ -100,7 +100,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   const [selectedConditions, setSelectedConditions] = useState<string[]>(['ALL']);
   const [availableConditions, setAvailableConditions] = useState<{ value: string; label: string }[]>([]);
 
-  const { hasAudioRecording, hasScreenRecording } = useStudyRecordings(studyConfig);
+  const { hasAudioRecording, hasScreenRecording, hasWebcamRecording } = useStudyRecordings(studyConfig);
 
   const { storageEngine } = useStorageEngine();
   const navigate = useNavigate();
@@ -119,7 +119,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   // 0-1 percentage of scroll height
 
   const { value: expData, execute, status } = useAsync(getParticipantsData, [studyConfig, storageEngine, canonicalStudyId ?? undefined]);
-  const { value: currentConfigHashValue } = useAsync(
+  const { value: currentConfigHashValue, status: currentConfigStatus } = useAsync(
     getCurrentConfigHashForStudy,
     storageEngine && canonicalStudyId ? [storageEngine, canonicalStudyId] : null,
   );
@@ -441,6 +441,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                   gap="10px"
                   hasAudio={hasAudioRecording}
                   hasScreenRecording={hasScreenRecording}
+                  hasWebcamRecording={hasWebcamRecording}
                 />
               )}
             </Flex>
@@ -667,7 +668,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                   )}
               </Tabs.Panel>
               <Tabs.Panel style={{ overflow: 'auto' }} value="config" pt="xs">
-                {studyConfig && <ConfigView visibleParticipants={visibleParticipants} studyId={canonicalStudyId ?? undefined} currentConfigHash={currentConfigHash} />}
+                {studyConfig && <ConfigView visibleParticipants={visibleParticipants} studyId={canonicalStudyId ?? undefined} currentConfigHash={currentConfigHash} currentConfigStatus={currentConfigStatus} />}
               </Tabs.Panel>
               <Tabs.Panel style={{ overflow: 'auto' }} value="manage" pt="xs">
                 {canonicalStudyId && user.isAdmin ? <ManageView studyId={canonicalStudyId} refresh={() => execute(studyConfig, storageEngine, canonicalStudyId)} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to manage the data for this study.</Alert></Container>}

@@ -64,7 +64,7 @@ export function ComponentController() {
 
   const navigate = useNavigate();
 
-  const { studyHasScreenRecording } = useRecordingConfig();
+  const { studyHasScreenRecording, studyHasWebcamRecording } = useRecordingConfig();
 
   const isAnalysis = useIsAnalysis();
 
@@ -204,11 +204,11 @@ export function ComponentController() {
     }
 
     return {
-      ...componentContainerStyle,
-      border: '1px solid var(--mantine-color-red-3)',
-      backgroundColor: 'var(--mantine-color-red-0)',
+      border: '1px solid var(--mantine-color-red-light-color)',
+      backgroundColor: 'var(--mantine-color-red-light)',
       borderRadius: 'var(--mantine-radius-md)',
       padding: 'var(--mantine-spacing-sm)',
+      ...componentContainerStyle,
     };
   }, [componentContainerStyle, hasStimulusIssue]);
 
@@ -216,7 +216,7 @@ export function ComponentController() {
     // Assume that screen recording video exists.
     // The value is set to false from ScreenRecordingReplay component if video starts after stimulus start time.
     storeDispatch(setAnalysisCanPlayScreenRecording(true));
-  }, [currentStep, setAnalysisCanPlayScreenRecording, storeDispatch]);
+  }, [currentIdentifier, setAnalysisCanPlayScreenRecording, storeDispatch]);
 
   useFetchStylesheet(currentConfig?.stylesheetPath);
 
@@ -280,7 +280,7 @@ export function ComponentController() {
   if (!storageEngine?.isConnected()) {
     return (
       <Center style={{ height: '80vh', flexDirection: 'column', textAlign: 'center' }}>
-        <IconPlugConnectedX size={48} stroke={1.5} color="orange" />
+        <IconPlugConnectedX size={48} stroke={1.5} color="var(--mantine-color-orange-text)" />
         <Title mt="md" order={4}>Database Disconnected</Title>
         <Text mt="md">Please check your network connection or disable your adblocker for this site, then refresh the page.</Text>
       </Center>
@@ -297,7 +297,14 @@ export function ComponentController() {
   const instructionLocation = currentConfig.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar';
   const instructionInSideBar = instructionLocation === 'sidebar';
 
-  if (studyHasScreenRecording && isAnalysis && analysisCanPlayScreenRecording) return <ScreenRecordingReplay key={`${currentStep}-stimulus`} />;
+  const shouldShowRecordingReplay = (studyHasScreenRecording || studyHasWebcamRecording)
+    && isAnalysis
+    && analysisCanPlayScreenRecording;
+  const isWebcamOnlyReplay = shouldShowRecordingReplay
+    && studyHasWebcamRecording
+    && !studyHasScreenRecording;
+
+  if (shouldShowRecordingReplay && !isWebcamOnlyReplay) return <ScreenRecordingReplay key={`${currentStep}-stimulus`} />;
 
   return (
     <>
@@ -310,7 +317,7 @@ export function ComponentController() {
       />
       <Box
         id={currentComponent}
-        className={currentConfig.type}
+        className={`stimulus ${currentConfig.type}`}
         style={stimulusContainerStyle}
       >
         <Suspense key={`${currentStep}-stimulus`} fallback={<div>Loading...</div>}>
@@ -337,6 +344,7 @@ export function ComponentController() {
         config={currentConfig}
         location="belowStimulus"
       />
+      {isWebcamOnlyReplay && <ScreenRecordingReplay key={`${currentStep}-webcam-replay`} webcamOnly />}
     </>
   );
 }

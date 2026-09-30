@@ -1,5 +1,6 @@
 import html2canvas from 'html2canvas';
 import html2pdf from 'html2pdf.js';
+import { color as parseColor, rgb } from 'd3';
 
 const PDF_MARGIN_MM = 10;
 const PDF_MAX_WIDTH_PX = 920;
@@ -682,6 +683,43 @@ function cropIframeSnapshot(
   return croppedCanvas;
 }
 
+// Flatten solid-color layers once, including the backing color behind translucent ones.
+function getPdfBackgroundColor(element: HTMLElement) {
+  const view = element.ownerDocument.defaultView ?? window;
+  const layers = [];
+  let ancestor: HTMLElement | null = element;
+  while (ancestor) {
+    const layer = parseColor(view.getComputedStyle(ancestor).backgroundColor)?.rgb();
+    if (layer && layer.opacity > 0) {
+      layers.push(layer);
+      if (layer.opacity === 1) {
+        break;
+      }
+    }
+    ancestor = ancestor.parentElement;
+  }
+
+  if (layers[layers.length - 1]?.opacity !== 1) {
+    // An unstyled document still has a browser canvas color for its color scheme.
+    const canvasColor = element.ownerDocument.createElement('span');
+    canvasColor.style.display = 'none';
+    canvasColor.style.backgroundColor = 'Canvas';
+    canvasColor.style.colorScheme = view.getComputedStyle(element).colorScheme;
+    element.ownerDocument.body.append(canvasColor);
+    const { backgroundColor } = view.getComputedStyle(canvasColor);
+    canvasColor.remove();
+    layers.push(parseColor(backgroundColor)?.rgb() ?? rgb(255, 255, 255));
+  }
+
+  const composite = rgb(255, 255, 255);
+  layers.reverse().forEach((layer) => {
+    composite.r = layer.r * layer.opacity + composite.r * (1 - layer.opacity);
+    composite.g = layer.g * layer.opacity + composite.g * (1 - layer.opacity);
+    composite.b = layer.b * layer.opacity + composite.b * (1 - layer.opacity);
+  });
+  return composite.formatRgb();
+}
+
 export async function capturePdfIframeSnapshots(
   element: HTMLElement,
   pageScale?: number,
@@ -730,12 +768,15 @@ export async function capturePdfIframeSnapshots(
       rasterBudget,
     );
 
+    const backgroundColor = getPdfBackgroundColor(iframeRoot);
     const canvas = await html2canvas(iframeRoot, {
-      backgroundColor: '#ffffff',
+      backgroundColor,
       height,
       logging: false,
       onclone: async (clonedDocument) => {
         await prepareIframeClone(clonedDocument, iframeDocument, width);
+        // Flatten only the root: the body's translucent layer is still rendered once.
+        clonedDocument.documentElement.style.backgroundColor = backgroundColor;
         await replaceLargeSvgsWithSnapshots(clonedDocument, svgSnapshots);
       },
       scale: captureScale,
@@ -1094,7 +1135,6 @@ export function preparePdfClone(
   exportRoot.style.width = layout.exportWidth ? `${layout.exportWidth}px` : '100%';
   exportRoot.style.maxWidth = 'none';
   exportRoot.style.padding = '16px 16px 32px';
-  exportRoot.style.backgroundColor = 'white';
 
   const header = exportRoot.querySelector<HTMLElement>('[data-pdf-export-header]');
   if (header) {
@@ -1149,6 +1189,11 @@ export async function saveElementAsPdf(element: HTMLElement, filename: string) {
   const initialExportWidth = Math.min(elementWidth, PDF_MAX_WIDTH_PX);
   const pageScale = elementWidth > 0 ? initialExportWidth / elementWidth : 1;
   const pdfSource = element.cloneNode(true) as HTMLElement;
+  const backgroundColor = getPdfBackgroundColor(element);
+  const sourceStyle = window.getComputedStyle(element);
+  pdfSource.style.backgroundColor = backgroundColor;
+  pdfSource.style.color = sourceStyle.color;
+  pdfSource.style.colorScheme = sourceStyle.colorScheme;
   pdfSource.inert = false;
   pdfSource.removeAttribute('aria-busy');
   pdfSource.removeAttribute('inert');
@@ -1208,9 +1253,11 @@ export async function saveElementAsPdf(element: HTMLElement, filename: string) {
         image: { type: 'jpeg' as const, quality: 0.95 },
         enableLinks: true,
         html2canvas: {
-          backgroundColor: '#ffffff',
+          backgroundColor,
           logging: false,
           onclone: (_clonedDocument: Document, clonedElement: HTMLElement) => {
+            // html2pdf adds its own white container around the study clone.
+            clonedElement.style.backgroundColor = backgroundColor;
             preparePdfClone(clonedElement, {
               exportHeight,
               exportWidth,

@@ -1,7 +1,11 @@
 import { useForm } from '@mantine/form';
-import { useEffect, useState } from 'react';
 import {
-  CheckboxResponse, JsonValue, RadioResponse, Response,
+  useEffect, useMemo, useRef, useState,
+} from 'react';
+import isEqual from 'lodash.isequal';
+import { resolveResponseVisibility, responseValueKeys } from '../../utils/responseVisibility';
+import {
+  Answer, CheckboxResponse, JsonValue, RadioResponse, Response,
 } from '../../parser/types';
 import { CustomResponseValidate, StoredAnswer } from '../../store/types';
 import { parseStringOptionValue } from '../../utils/stringOptions';
@@ -14,6 +18,25 @@ type ResponseDefault = JsonValue;
 type ResponseWithDefault = Response & { default?: ResponseDefault };
 
 export const DONT_KNOW_DEFAULT_VALUE = "I don't know";
+
+export function getResponseWidth(response: Response): 'xs' | 'small' | 'medium' | 'full' | undefined {
+  // Explicit sizing owns the available width instead of the default field cap.
+  if (response.style?.width !== undefined || response.style?.minWidth !== undefined || response.style?.maxWidth !== undefined) {
+    return undefined;
+  }
+  if (response.type === 'numerical' || response.type === 'date') {
+    return 'xs';
+  }
+  if (response.type === 'time') {
+    return 'small';
+  }
+  if (response.type === 'shortText') {
+    return response.builtInValidation === 'phoneNumber' || response.builtInValidation === 'usPhoneNumber'
+      ? 'xs'
+      : 'medium';
+  }
+  return response.type === 'dropdown' ? 'medium' : 'full';
+}
 
 export function normalizeCheckboxValue(value: unknown): string[] {
   if (Array.isArray(value)) {
@@ -162,21 +185,25 @@ export const generateValidation = (
   responses: Response[],
   customResponseValidators: Record<string, CustomResponseValidate | undefined> = {},
   customResponseLoadErrors: Record<string, string | undefined> = {},
+  allResponses: Response[] = responses,
+  context: StoredAnswer['answer'] = {},
+  correctAnswers: Answer[] = [],
 ): Record<string, (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => string | null> => {
   let validateObj: Record<string, (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => string | null> = {};
   responses.forEach((response) => {
     if (response.required || response.type === 'custom') {
       validateObj = {
         ...validateObj,
-        [response.id]: (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => generateInvalidResponseErrorMessage(
-          response,
-          value,
-          values,
-          {
-            customValidate: customResponseValidators[response.id],
-            loadError: customResponseLoadErrors[response.id],
-          },
-        ),
+        [response.id]: (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => (
+          !resolveResponseVisibility(allResponses, { ...context, ...values }, {}, correctAnswers).visibleIds.has(response.id) ? null : generateInvalidResponseErrorMessage(
+            response,
+            value,
+            values,
+            {
+              customValidate: customResponseValidators[response.id],
+              loadError: customResponseLoadErrors[response.id],
+            },
+          )),
       };
     }
   });
@@ -189,12 +216,16 @@ export function useAnswerField(
   storedAnswer: StoredAnswer['answer'],
   customResponseValidators: Record<string, CustomResponseValidate | undefined> = {},
   customResponseLoadErrors: Record<string, string | undefined> = {},
+  allResponses: Response[] = responses,
+  context: StoredAnswer['answer'] = {},
+  isAnalysis = false,
+  correctAnswers: Answer[] = [],
 ) {
   const [_id, setId] = useState<string | number | null>(null);
 
   const answerField = useForm<StoredAnswer['answer']>({
     initialValues: generateInitFields(responses, storedAnswer),
-    validate: generateValidation(responses, customResponseValidators, customResponseLoadErrors),
+    validate: generateValidation(responses, customResponseValidators, customResponseLoadErrors, allResponses, context, correctAnswers),
   });
 
   useEffect(() => {
@@ -204,5 +235,32 @@ export function useAnswerField(
     }
   }, [_id, answerField, currentStep]);
 
-  return answerField;
+  const values = useMemo(() => {
+    // Omit this location from shared state before overlaying the current local form.
+    const otherValues = { ...context };
+    responses.forEach((response) => responseValueKeys(response).forEach((key) => { delete otherValues[key]; }));
+    const resolved = resolveResponseVisibility(
+      allResponses,
+      { ...otherValues, ...(isAnalysis ? storedAnswer : answerField.values) },
+      isAnalysis ? {} : generateInitFields(responses, {}),
+      correctAnswers,
+    ).answers;
+    const localKeys = new Set(responses.flatMap(responseValueKeys));
+    return Object.fromEntries(Object.entries(resolved).filter(([key]) => localKeys.has(key)));
+  }, [allResponses, responses, context, answerField.values, isAnalysis, storedAnswer, correctAnswers]);
+  const stableValues = useRef(values);
+  if (!isEqual(stableValues.current, values)) stableValues.current = values;
+
+  useEffect(() => {
+    if (isAnalysis) return;
+    // Mantine merges setValues; undefined clears its internal field, while the
+    // normalized public values above omit hidden keys entirely.
+    responses.filter((response) => response.visibleIf).forEach((response) => {
+      responseValueKeys(response).forEach((key) => {
+        if (!isEqual(answerField.values[key], values[key])) answerField.setFieldValue(key, values[key]);
+      });
+    });
+  }, [values, responses, answerField, isAnalysis]);
+
+  return { ...answerField, values: stableValues.current };
 }

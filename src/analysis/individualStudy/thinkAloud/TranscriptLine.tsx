@@ -25,7 +25,7 @@ export function TranscriptLine({
     <Grid style={{ width: '100%' }}>
       <Grid.Col span={8}>
 
-        <Group wrap="nowrap" gap={0} px={10} style={{ width: '100%', borderRadius: '10px', backgroundColor: current >= start && current <= end ? 'rgba(100, 149, 237, 0.3)' : 'white' }}>
+        <Group wrap="nowrap" gap={0} px={10} style={{ width: '100%', borderRadius: '10px', backgroundColor: current >= start && current <= end ? 'var(--mantine-color-blue-light)' : 'var(--mantine-color-body)' }}>
           <Textarea
             ref={(r) => (r ? addRef(indexRef.current, r) : undefined)}
             autosize

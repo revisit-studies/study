@@ -101,7 +101,7 @@ export default function DataSerializationTask({ parameters, setAnswer }: Stimulu
   return (
     <Stack gap="md" maw={1080} mx="auto">
       <Group gap="xs">
-        <Badge color={parameters.dataContext === 'config' ? 'violet' : 'cyan'}>{parameters.dataContext.toUpperCase()}</Badge>
+        <Badge color={parameters.dataContext === 'config' ? 'violet' : 'cyan'} variant="light">{parameters.dataContext.toUpperCase()}</Badge>
         <Badge variant="light">{parameters.format}</Badge>
         <Badge variant="outline">{parameters.taskType}</Badge>
       </Group>

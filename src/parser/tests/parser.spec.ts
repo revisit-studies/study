@@ -7,6 +7,7 @@ import { parseStudyConfig } from '../parser';
 import { materializeParticipantConfig } from '../libraryParser';
 import { isDynamicBlock, isFactorBlock } from '../utils';
 import { generateSequenceArray } from '../../utils/handleRandomSequences';
+import { resolveResponseVisibility } from '../../utils/responseVisibility';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 
 global.fetch = vi.fn();
@@ -27,6 +28,83 @@ function isComponentBlock(value: unknown): value is ComponentBlock {
     && !isDynamicBlock(value as StudyConfig['sequence'])
     && !isFactorBlock(value as StudyConfig['sequence']);
 }
+
+describe('Study and iframe color mode config parsing', () => {
+  function makeStudyConfig(colorMode?: unknown) {
+    return {
+      $schema: '',
+      studyMetadata: {
+        title: 'Color Mode Test',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2026-09-16',
+        description: 'Validates study color mode options.',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: '',
+        logoPath: '',
+        withProgressBar: true,
+        withSidebar: false,
+        colorMode,
+      },
+      components: {
+        question: { type: 'questionnaire', response: [] },
+      },
+      sequence: { order: 'fixed', components: ['question'] },
+    };
+  }
+
+  test.each(['light', 'dark', 'userPreference'] as const)('accepts and preserves %s', async (colorMode) => {
+    const result = await parseStudyConfig(JSON.stringify(makeStudyConfig(colorMode)));
+
+    expect(result.errors).toEqual([]);
+    expect(result.uiConfig.colorMode).toBe(colorMode);
+  });
+
+  test('accepts existing configs without a color mode', async () => {
+    const result = await parseStudyConfig(JSON.stringify(makeStudyConfig()));
+
+    expect(result.errors).toEqual([]);
+    expect(result.uiConfig).not.toHaveProperty('colorMode');
+  });
+
+  test.each(['user', 'auto', 'userPreference ', null, true])('rejects invalid color mode %s', async (colorMode) => {
+    const result = await parseStudyConfig(JSON.stringify(makeStudyConfig(colorMode)));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      instancePath: '/uiConfig/colorMode',
+    }));
+  });
+
+  function makeWebsiteConfig(colorMode?: unknown) {
+    return {
+      ...makeStudyConfig(),
+      components: {
+        website: {
+          type: 'website', path: 'demo-html/assets/bar-chart.html', colorMode, response: [],
+        },
+      },
+      sequence: { order: 'fixed', components: ['website'] },
+    };
+  }
+
+  test.each(['light', 'dark', undefined] as const)('accepts iframe color mode %s', async (colorMode) => {
+    const result = await parseStudyConfig(JSON.stringify(makeWebsiteConfig(colorMode)));
+    expect(result.errors).toEqual([]);
+    expect(result.components.website).toEqual(expect.objectContaining({ type: 'website' }));
+    if (colorMode === undefined) {
+      expect(result.components.website).not.toHaveProperty('colorMode');
+    } else {
+      expect(result.components.website).toHaveProperty('colorMode', colorMode);
+    }
+  });
+
+  test.each(['inherit', 'userPreference', 'auto', null])('rejects invalid iframe color mode %s', async (colorMode) => {
+    const result = await parseStudyConfig(JSON.stringify(makeWebsiteConfig(colorMode)));
+    expect(result.errors).toContainEqual(expect.objectContaining({ instancePath: '/components/website/colorMode' }));
+  });
+});
 
 describe('Text response validation config parsing', () => {
   function makeStudyConfig(validationType: string) {
@@ -80,6 +158,186 @@ describe('Text response validation config parsing', () => {
       expect(result.errors).toEqual([]);
     },
   );
+
+  test.each(['', '   ', '14', 'RightKeyboardArrow', 'Shift+14', 'Shift+foo', 'Shift+'])('rejects invalid key mapping %p', async (key) => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Key Validation Test',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2026-08-20',
+        description: 'Ensures key mappings are validated.',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: '',
+        logoPath: '',
+        withProgressBar: true,
+        withSidebar: false,
+      },
+      components: {
+        question1: {
+          type: 'questionnaire',
+          response: [{
+            id: 'buttons',
+            prompt: 'Choose a response',
+            type: 'buttons',
+            options: [{ label: 'A', value: 'a', key }],
+          }],
+        },
+      },
+      sequence: { order: 'fixed', components: ['question1'] },
+    } as const;
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors.some((error) => error.instancePath.includes('/key'))).toBe(true);
+  });
+
+  test.each(['Tab', 'Shift+Tab'])('rejects %s because Tab is needed for focus navigation', async (key) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1, {
+      response: [{
+        id: 'buttons', prompt: 'Choose', type: 'buttons', options: [{ label: 'A', key }],
+      }],
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      instancePath: '/components/question1/response/0/options/0/key',
+      message: expect.stringContaining('Tab cannot be mapped'),
+    }));
+  });
+
+  test('rejects Enter on a button when nextOnEnter is enabled', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1, {
+      nextOnEnter: true,
+      response: [{
+        id: 'buttons', prompt: 'Choose', type: 'buttons', options: [{ label: 'A', key: 'Enter' }],
+      }],
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      instancePath: '/components/question1/response/0/options/0/key',
+      message: expect.stringContaining('nextOnEnter'),
+    }));
+  });
+
+  test('rejects Enter when nextOnEnter is inherited from uiConfig', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.uiConfig, { nextOnEnter: true });
+    Object.assign(studyConfig.components.question1, {
+      response: [{
+        id: 'buttons', prompt: 'Choose', type: 'buttons', options: [{ label: 'A', key: 'Enter' }],
+      }],
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors.some((error) => error.message.includes('Enter cannot be mapped'))).toBe(true);
+  });
+
+  test('allows Enter on a button when nextOnEnter is disabled', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1, {
+      response: [{
+        id: 'buttons', prompt: 'Choose', type: 'buttons', options: [{ label: 'A', key: 'Enter' }],
+      }],
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toEqual([]);
+  });
+
+  test('rejects key mappings on non-button response options', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1, {
+      response: [{
+        id: 'radio', prompt: 'Choose', type: 'radio', options: [{ label: 'A', key: 'a' }],
+      }],
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      instancePath: '/components/question1/response/0/options/0',
+      params: expect.objectContaining({ additionalProperty: 'key' }),
+    }));
+  });
+
+  test.each(['Ctrl+X', 'Meta+X', 'Shift+1'])('warns for unsupported shortcut %s without rejecting the config', async (key) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1, {
+      response: [{
+        id: 'buttons', prompt: 'Choose', type: 'buttons', options: [{ label: 'A', key }],
+      }],
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toEqual([]);
+    expect(result.warnings).toContainEqual(expect.objectContaining({
+      instancePath: '/components/question1/response/0/options/0/key',
+      message: expect.stringContaining('may not work'),
+    }));
+  });
+
+  test('does not warn for a supported named or Shift+letter shortcut', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1, {
+      response: [{
+        id: 'buttons',
+        prompt: 'Choose',
+        type: 'buttons',
+        options: [
+          { label: 'A', key: 'ArrowLeft' }, { label: 'B', key: 'Shift+X' },
+        ],
+      }],
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toEqual([]);
+    expect(result.warnings.filter((warning) => warning.instancePath.includes('/key'))).toEqual([]);
+  });
+
+  test('rejects duplicate key mappings within a component', async () => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Duplicate Key Validation Test',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2026-08-20',
+        description: 'Ensures duplicate key mappings are rejected.',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: '',
+        logoPath: '',
+        withProgressBar: true,
+        withSidebar: false,
+      },
+      components: {
+        question1: {
+          type: 'questionnaire',
+          response: [{
+            id: 'buttons',
+            prompt: 'Choose a response',
+            type: 'buttons',
+            options: [
+              { label: 'A', value: 'a', key: 'Shift+X' },
+              { label: 'B', value: 'b', key: 'shift+x' },
+            ],
+          }],
+        },
+      },
+      sequence: { order: 'fixed', components: ['question1'] },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors.some((error) => error.message.includes('Duplicate key mapping'))).toBe(true);
+  });
 
   test.each(['email', 'phoneNumber', 'usPhoneNumber', 'url'])('accepts the %s built-in validation for short text responses', async (builtInValidation) => {
     const studyConfig = makeStudyConfig('contains');
@@ -1821,6 +2079,7 @@ describe('Parser Warnings', () => {
     expect(emptySequenceWarning).toBeDefined();
     expect(emptySequenceWarning?.instancePath).toBe('/sequence/');
     expect((emptySequenceWarning?.params as { action: string }).action).toBe('Remove empty components block or add components to the sequence');
+    expect(result.warnings.filter((warning) => warning.category === 'empty-sidebar')).toHaveLength(1);
   });
 
   test('adds unused-component warning with expected message and action', async () => {
@@ -1909,6 +2168,98 @@ describe('Parser Warnings', () => {
       (warning) => warning.category === 'unused-component' && warning.message.includes('unusedComponent'),
     );
     expect(hasUnusedWarning).toBe(true);
+  });
+
+  test('warns when an enabled sidebar has no content', async () => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study', version: '1.0', authors: ['Test'], date: '2024-01-01', description: 'Test', organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'test@test.com', logoPath: '', withProgressBar: true, withSidebar: true,
+      },
+      components: {
+        question: {
+          type: 'questionnaire',
+          instruction: 'Answer the question',
+          instructionLocation: 'aboveStimulus',
+          response: [{ id: 'answer', type: 'shortText', prompt: 'Answer' }],
+        },
+      },
+      sequence: { order: 'fixed', components: ['question'] },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toEqual([]);
+    expect(result.warnings).toContainEqual(expect.objectContaining({
+      category: 'empty-sidebar', instancePath: '/uiConfig/withSidebar',
+    }));
+  });
+
+  test.each([
+    ['instruction with default location', { instruction: 'Answer the question', response: [] }],
+    ['instruction with explicit location', { instruction: 'Answer the question', instructionLocation: 'sidebar', response: [] }],
+    ['response', {
+      response: [{
+        id: 'answer', type: 'shortText', prompt: 'Answer', location: 'sidebar',
+      }],
+    }],
+    ['navigation', { nextButtonLocation: 'sidebar', response: [] }],
+  ])('does not warn when an inherited component puts %s in the sidebar', async (_, sidebarContent) => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study', version: '1.0', authors: ['Test'], date: '2024-01-01', description: 'Test', organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'test@test.com', logoPath: '', withProgressBar: true, withSidebar: true,
+      },
+      baseComponents: {
+        question: { type: 'questionnaire', ...sidebarContent },
+      },
+      components: { question: { baseComponent: 'question' } },
+      sequence: { order: 'fixed', components: ['question'] },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toEqual([]);
+    expect(result.warnings.filter((warning) => warning.category === 'empty-sidebar')).toEqual([]);
+  });
+
+  test('does not warn when an imported library supplies sidebar content', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify({
+      $schema: '',
+      description: 'Test library',
+      components: {
+        question: {
+          type: 'questionnaire',
+          response: [{
+            id: 'answer', type: 'shortText', prompt: 'Answer', location: 'sidebar',
+          }],
+        },
+      },
+      sequences: {},
+    })));
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study', version: '1.0', authors: ['Test'], date: '2024-01-01', description: 'Test', organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'test@test.com', logoPath: '', withProgressBar: true, withSidebar: true,
+      },
+      importedLibraries: ['testLib'],
+      components: {},
+      sequence: { order: 'fixed', components: ['$testLib.components.question'] },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toEqual([]);
+    expect(result.warnings.filter((warning) => warning.category === 'empty-sidebar')).toEqual([]);
   });
 
   test('adds disabled-sidebar warning when sidebar location is used but sidebar is disabled', async () => {
@@ -2628,5 +2979,295 @@ describe('React component path validation', () => {
       message: 'Unresolved path',
       instancePath: '/components/trial/path',
     }));
+  });
+});
+
+describe('conditional response config', () => {
+  function configWithCondition(condition: object, controller: object = { type: 'radio', options: ['yes', 'no'] }) {
+    return {
+      $schema: '',
+      studyMetadata: {
+        title: 'Visibility', version: '1', authors: [], date: '', description: '', organizations: [],
+      },
+      uiConfig: {
+        contactEmail: '', logoPath: '', withSidebar: false, withProgressBar: true,
+      },
+      components: {
+        form: {
+          type: 'questionnaire',
+          response: [
+            {
+              id: 'attended', prompt: '', ...controller,
+            },
+            {
+              id: 'name', type: 'shortText', prompt: '', visibleIf: condition,
+            },
+            {
+              id: 'text', type: 'textOnly', prompt: '', visibleIf: condition,
+            },
+            { id: 'divider', type: 'divider', visibleIf: condition },
+          ],
+        },
+      },
+      sequence: { order: 'fixed', components: ['form'] },
+    };
+  }
+
+  describe.each([
+    { option: 'withOther', suffix: 'other' },
+    { option: 'withDontKnow', suffix: 'dontKnow' },
+  ])('auxiliary key collisions for $option', ({ option, suffix }) => {
+    test.each(['local', 'base', 'library'])('rejects a conflicting response ID in a %s component', async (source) => {
+      const config = configWithCondition({ responseId: 'attended', comparison: 'equals', value: 'yes' });
+      const form = {
+        ...config.components.form,
+        response: [
+          config.components.form.response[0],
+          {
+            id: 'q',
+            type: 'radio',
+            prompt: '',
+            options: ['yes', 'no'],
+            [option]: true,
+            visibleIf: { responseId: 'attended', comparison: 'equals', value: 'yes' },
+          },
+          { id: `q-${suffix}`, type: 'shortText', prompt: '' },
+        ],
+      };
+      if (source === 'library') {
+        vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify({
+          $schema: '', description: 'Auxiliary key test', components: { form }, sequences: {},
+        })));
+      }
+      const result = await parseStudyConfig(JSON.stringify({
+        ...config,
+        baseComponents: source === 'base' ? { base: form } : undefined,
+        importedLibraries: source === 'library' ? ['conditional'] : [],
+        components: { form: source === 'local' ? form : { baseComponent: source === 'base' ? 'base' : '$conditional.components.form' } },
+      }));
+      expect(result.errors).toContainEqual(expect.objectContaining({
+        message: `Response ID "q-${suffix}" conflicts with an auxiliary answer key for response "q"`,
+        instancePath: '/components/form/response/2/id',
+      }));
+    });
+
+    test('allows a suffixed response ID when the auxiliary option is disabled', async () => {
+      const config = configWithCondition({ responseId: 'attended', comparison: 'equals', value: 'yes' }, {
+        type: 'radio', options: ['yes', 'no'], [option]: false,
+      });
+      config.components.form.response[1].id = `attended-${suffix}`;
+      const result = await parseStudyConfig(JSON.stringify(config));
+      expect(result.errors).toEqual([]);
+    });
+  });
+
+  test.each(['matrix-radio', 'matrix-checkbox'])('allows a separate -dontKnow response ID beside %s', async (type) => {
+    const config = configWithCondition({ responseId: 'attended', comparison: 'equals', value: 'yes' });
+    const result = await parseStudyConfig(JSON.stringify({
+      ...config,
+      components: {
+        form: {
+          type: 'questionnaire',
+          response: [
+            {
+              id: 'matrix', type, prompt: '', withDontKnow: true, questionOptions: ['Question'], answerOptions: ['Answer'],
+            },
+            { id: 'matrix-dontKnow', type: 'shortText', prompt: '' },
+          ],
+        },
+      },
+    }));
+    expect(result.errors).toEqual([]);
+  });
+
+  test.each([{ comparison: 'equals', value: 'yes' }, { comparison: 'doesNotEqual', value: 'no' }])('accepts visibility on input, textOnly and divider: %j', async (operator) => {
+    const result = await parseStudyConfig(JSON.stringify(configWithCondition({ responseId: 'attended', ...operator })));
+    expect(result.errors).toEqual([]);
+  });
+
+  test.each([
+    { responseId: 'attended' },
+    {
+      responseId: 'attended', comparison: 'equals', value: 'yes', notEquals: 'no',
+    },
+    { responseId: 'attended', comparison: 'equals', value: null },
+    { responseId: 'missing', comparison: 'equals', value: 'yes' },
+    { responseId: 'name', comparison: 'equals', value: 'yes' },
+    { responseId: 'divider', comparison: 'equals', value: 'yes' },
+  ])('rejects invalid condition %j', async (condition) => {
+    const result = await parseStudyConfig(JSON.stringify(configWithCondition(condition)));
+    expect(result.errors.length).toBeGreaterThan(0);
+  });
+
+  describe.each(['equals', 'doesNotEqual'])('%s operand types', (comparison) => {
+    test.each([
+      { controller: { type: 'checkbox', options: ['yes'] }, valid: ['yes'], invalid: 'yes' },
+      { controller: { type: 'dropdown', options: ['yes'], minSelections: 1 }, valid: ['yes'], invalid: 'yes' },
+      { controller: { type: 'dropdown', options: ['yes'], maxSelections: 2 }, valid: ['yes'], invalid: 'yes' },
+      { controller: { type: 'dropdown', options: ['yes'], maxSelections: 1 }, valid: 'yes', invalid: ['yes'] },
+      { controller: { type: 'radio', options: ['yes'] }, valid: 'yes', invalid: ['yes'] },
+      { controller: { type: 'buttons', options: ['yes'] }, valid: 'yes', invalid: true },
+      { controller: { type: 'shortText' }, valid: '21', invalid: 21 },
+      { controller: { type: 'date' }, valid: '2020-01-01', invalid: ['2020-01-01'] },
+      { controller: { type: 'numerical' }, valid: 21, invalid: '21' },
+    ])('matches the runtime answer shape of $controller', async ({ controller, valid, invalid }) => {
+      const config = configWithCondition({ responseId: 'attended', comparison, value: valid }, controller);
+      expect((await parseStudyConfig(JSON.stringify(config))).errors).toEqual([]);
+      const invalidConfig = configWithCondition({ responseId: 'attended', comparison, value: invalid }, controller);
+      const result = await parseStudyConfig(JSON.stringify(invalidConfig));
+      expect(result.errors).toContainEqual(expect.objectContaining({
+        message: expect.stringContaining(`visibleIf ${comparison} requires a `),
+        instancePath: '/components/form/response/1/visibleIf',
+      }));
+    });
+  });
+
+  test.each(['lessThan', 'lessThanOrEqual', 'greaterThan', 'greaterThanOrEqual'])('%s accepts numerical controllers and rejects text controllers', async (comparison) => {
+    const condition = { responseId: 'attended', comparison, value: 21 };
+    const valid = await parseStudyConfig(JSON.stringify(configWithCondition(condition, { type: 'numerical' })));
+    expect(valid.errors).toEqual([]);
+    const invalid = await parseStudyConfig(JSON.stringify(configWithCondition(condition, { type: 'shortText' })));
+    expect(invalid.errors).toContainEqual(expect.objectContaining({
+      message: `visibleIf ${comparison} requires a numerical controller`,
+      instancePath: '/components/form/response/1/visibleIf',
+    }));
+  });
+
+  test.each([
+    { type: 'shortText' },
+    { type: 'date' },
+    { type: 'radio', options: ['yes', 'no'] },
+    { type: 'buttons', options: ['yes', 'no'] },
+    { type: 'dropdown', options: ['yes', 'no'] },
+  ])('accepts string comparisons on %j', async (controller) => {
+    const config = configWithCondition({ responseId: 'attended', comparison: 'matchesRegex', value: '^(yes|no)$' }, controller);
+    const result = await parseStudyConfig(JSON.stringify(config));
+    expect(result.errors).toEqual([]);
+  });
+
+  test.each([
+    ['contains', { type: 'numerical' }],
+    ['doesNotContain', { type: 'checkbox', options: ['yes', 'no'] }],
+    ['matchesRegex', { type: 'dropdown', options: ['yes', 'no'], maxSelections: 2 }],
+    ['contains', { type: 'dropdown', options: ['yes', 'no'], minSelections: 1 }],
+  ])('rejects %s on a non-string controller %j', async (comparison, controller) => {
+    const config = configWithCondition({ responseId: 'attended', comparison, value: 'yes' }, controller);
+    const result = await parseStudyConfig(JSON.stringify(config));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: `visibleIf ${comparison} requires a controller with a single string value`,
+    }));
+  });
+
+  test('rejects an invalid visibility regex', async () => {
+    const config = configWithCondition({ responseId: 'attended', comparison: 'matchesRegex', value: '[' });
+    const result = await parseStudyConfig(JSON.stringify(config));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'visibleIf matchesRegex value must be a valid regular expression',
+      instancePath: '/components/form/response/1/visibleIf',
+      params: { action: 'Fix the regular expression pattern' },
+    }));
+  });
+
+  test.each([true, false])('isCorrect=%s requires a matching correctAnswer', async (value) => {
+    const config = configWithCondition({ responseId: 'attended', comparison: 'isCorrect', value });
+    const valid = await parseStudyConfig(JSON.stringify({
+      ...config,
+      components: { form: { ...config.components.form, correctAnswer: [{ id: 'attended', answer: 'yes' }] } },
+    }));
+    expect(valid.errors).toEqual([]);
+    const missing = await parseStudyConfig(JSON.stringify(config));
+    expect(missing.errors).toContainEqual(expect.objectContaining({
+      message: 'visibleIf isCorrect requires a correctAnswer for response "attended"',
+    }));
+    const wrongId = await parseStudyConfig(JSON.stringify({
+      ...config,
+      components: { form: { ...config.components.form, correctAnswer: [{ id: 'name', answer: 'yes' }] } },
+    }));
+    expect(wrongId.errors).toContainEqual(expect.objectContaining({
+      message: 'visibleIf isCorrect requires a correctAnswer for response "attended"',
+    }));
+  });
+
+  test.each(['local', 'library'])('isCorrect accepts a correctAnswer inherited from a %s base', async (source) => {
+    const config = configWithCondition({ responseId: 'attended', comparison: 'isCorrect', value: true });
+    const base = { ...config.components.form, correctAnswer: [{ id: 'attended', answer: 'yes' }] };
+    if (source === 'library') {
+      vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify({
+        $schema: '', description: 'Correctness conditions', components: { form: base }, sequences: {},
+      })));
+    }
+    const result = await parseStudyConfig(JSON.stringify({
+      ...config,
+      baseComponents: source === 'local' ? { base } : undefined,
+      importedLibraries: source === 'library' ? ['conditional'] : [],
+      components: { form: { baseComponent: source === 'local' ? 'base' : '$conditional.components.form' } },
+    }));
+    expect(result.errors).toEqual([]);
+  });
+
+  test('rejects cyclic dependencies', async () => {
+    const config = configWithCondition({ responseId: 'attended', comparison: 'equals', value: 'yes' });
+    Object.assign(config.components.form.response[0], { visibleIf: { responseId: 'name', comparison: 'equals', value: 'university' } });
+    const result = await parseStudyConfig(JSON.stringify(config));
+    expect(result.errors.some((error) => error.message.includes('cyclic'))).toBe(true);
+  });
+
+  test('validates inherited responses using the same merged config as runtime', async () => {
+    const config = configWithCondition({ responseId: 'attended', comparison: 'equals', value: 'yes' });
+    const result = await parseStudyConfig(JSON.stringify({
+      ...config,
+      baseComponents: { base: config.components.form },
+      components: { form: { baseComponent: 'base' } },
+    }));
+    expect(result.errors).toEqual([]);
+  });
+
+  test.each(['local', 'library-internal', 'library-external'])('replaces inherited visibility operators through %s inheritance and materialization', async (source) => {
+    const config = configWithCondition({ responseId: 'attended', comparison: 'equals', value: 'yes' });
+    const replacement = { responseId: 'attended', comparison: 'doesNotEqual', value: 'yes' };
+    const override = configWithCondition(replacement).components.form.response;
+    const library = {
+      $schema: '',
+      description: 'Conditional inheritance test',
+      baseComponents: { base: config.components.form },
+      components: source === 'library-internal'
+        ? { form: { baseComponent: 'base', response: override } }
+        : { form: config.components.form },
+      sequences: {},
+    };
+    if (source !== 'local') vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify(library)));
+    const result = await parseStudyConfig(JSON.stringify({
+      ...config,
+      baseComponents: source === 'local' ? { base: config.components.form } : undefined,
+      importedLibraries: source === 'local' ? [] : ['conditional'],
+      components: {
+        form: {
+          baseComponent: source === 'local' ? 'base' : '$conditional.components.form',
+          ...(source === 'library-internal' ? {} : { response: override }),
+        },
+      },
+    }));
+    expect(result.errors).toEqual([]);
+    const materialized = materializeParticipantConfig(result, {});
+    const responses = materialized.components.form.response ?? [];
+    expect(responses[1].visibleIf).toEqual(replacement);
+    expect(resolveResponseVisibility(responses, { attended: 'no' }).visibleIds.has('name')).toBe(true);
+    expect(resolveResponseVisibility(responses, { attended: 'yes' }).visibleIds.has('name')).toBe(false);
+  });
+
+  test('accepts conditional responses from imported libraries', async () => {
+    const config = configWithCondition({ responseId: 'attended', comparison: 'equals', value: 'yes' });
+    vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify({
+      $schema: '',
+      description: 'Conditional response library',
+      components: { form: config.components.form },
+      sequences: {},
+    })));
+    const result = await parseStudyConfig(JSON.stringify({
+      ...config,
+      importedLibraries: ['conditional'],
+      components: { form: { baseComponent: '$conditional.components.form' } },
+    }));
+    expect(result.errors).toEqual([]);
   });
 });

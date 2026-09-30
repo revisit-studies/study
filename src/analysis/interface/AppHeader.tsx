@@ -1,11 +1,16 @@
 import {
-  Flex, Image, Select, Title, Space, Grid, AppShell, Button, Text,
+  Flex, Image, Select, Title, Space, Grid, AppShell, Button, Text, ActionIcon, Tooltip,
 } from '@mantine/core';
 
-import { useLocation, useNavigate, useParams } from 'react-router';
+import {
+  matchPath, useLocation, useNavigate, useParams,
+} from 'react-router';
 
-import { IconListCheck, IconSettings } from '@tabler/icons-react';
+import {
+  IconListCheck, IconSettings, IconMoon, IconSun,
+} from '@tabler/icons-react';
 import { PREFIX } from '../../utils/Prefix';
+import { useAppColorMode } from '../../components/AppThemeProvider';
 
 const STUDY_SCHEMA_VERSION_REGEX = /\/study\/(v\d+\.\d+\.\d+)\//;
 
@@ -23,6 +28,8 @@ export function AppHeader({
   const navigate = useNavigate();
   const { studyId } = useParams();
   const location = useLocation();
+  const { colorMode, toggleColorMode } = useAppColorMode();
+  const colorModeLabel = colorMode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
 
   const selectorData = studyIds.map((id) => ({ value: id, label: id })).sort((a, b) => a.label.localeCompare(b.label));
   const revisitVersion = studyIds
@@ -33,7 +40,8 @@ export function AppHeader({
     .filter((version): version is string => version !== undefined)
     .sort((a, b) => b.localeCompare(a, undefined, { numeric: true }))[0];
 
-  const inAnalysis = location.pathname.includes('analysis');
+  const inAnalysis = matchPath('/analysis/*', location.pathname) !== null;
+  const showThemeToggle = ['/', '/settings', '/login'].some((path) => matchPath(path, location.pathname)) || inAnalysis;
 
   return (
     <AppShell.Header p="md">
@@ -70,6 +78,13 @@ export function AppHeader({
               </>
             )}
 
+            {showThemeToggle && (
+              <Tooltip label={colorModeLabel}>
+                <ActionIcon aria-label={colorModeLabel} variant="default" size="lg" mr="sm" onClick={toggleColorMode}>
+                  {colorMode === 'dark' ? <IconSun size={18} /> : <IconMoon size={18} />}
+                </ActionIcon>
+              </Tooltip>
+            )}
             {revisitVersion && <Text c="dimmed" size="sm" mr="sm">{`reVISit ${revisitVersion}`}</Text>}
             <IconSettings onClick={() => navigate('/settings')} style={{ cursor: 'pointer' }} />
           </Flex>

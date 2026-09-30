@@ -25,7 +25,7 @@ import {
   useCallback, useEffect, useMemo, useRef, useState,
 } from 'react';
 import { InputLabel } from './InputLabel';
-import { OptionLabel } from './OptionLabel';
+import { OptionLabel, useOptionTextTemplate } from './OptionLabel';
 import classes from './css/RankingDnd.module.css';
 import {
   ParsedStringOption,
@@ -75,8 +75,8 @@ function DroppableZone({ id, title, children }: { id: string; title: string; chi
     <Paper
       ref={setNodeRef}
       style={{
-        backgroundColor: isOver ? '#f0f8ff' : undefined,
-        borderColor: isOver ? '#4dabf7' : undefined,
+        backgroundColor: isOver ? 'var(--mantine-color-blue-light)' : undefined,
+        borderColor: isOver ? 'var(--mantine-color-blue-outline)' : undefined,
         maxWidth: '600px',
       }}
       withBorder
@@ -387,6 +387,7 @@ function RankingPairwiseComponent({
   responseId: string;
   setError?: (error: string | null) => void;
 }) {
+  const template = useOptionTextTemplate();
   const { onChange } = answer as { onChange?: (value: Record<string, string>) => void };
   const { sensors, updateAnswer } = useRankingLogic(responseId, onChange);
   const items = useMemo(() => createItems(options), [options]);
@@ -519,7 +520,7 @@ function RankingPairwiseComponent({
 
     if (existingInOpposite) {
       const itemLabel = items.find((i) => i.id === baseItemId)?.option.label;
-      setError?.(`Item "${itemLabel}" cannot be in both HIGH and LOW.`);
+      setError?.(`Item "${itemLabel ? template(itemLabel, true) : itemLabel}" cannot be in both HIGH and LOW.`);
       return;
     }
 
@@ -630,7 +631,7 @@ function RankingPairwiseComponent({
               </Box>
             ))}
             <Button
-              variant="white"
+              variant="subtle"
               color="red"
               size="xs"
               onClick={() => handleRemovePair(pairId)}

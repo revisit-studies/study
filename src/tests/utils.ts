@@ -81,6 +81,8 @@ class TestStorageEngine extends StorageEngine {
 
   protected _getScreenRecordingUrl = vi.fn(async () => null);
 
+  protected _getWebcamRecordingUrl = vi.fn(async () => null);
+
   protected _testingReset = vi.fn(async () => { });
 
   protected _directoryExists = vi.fn(async () => false);
@@ -121,6 +123,8 @@ class TestStorageEngine extends StorageEngine {
   getTranscriptUrl = vi.fn(async () => null);
 
   getScreenRecording = vi.fn(async () => null);
+
+  getWebcamRecording = vi.fn(async () => null);
 
   saveAnswers = vi.fn(async () => { });
 

@@ -1,4 +1,5 @@
-import { forwardRef, ReactNode } from 'react';
+import { CSSProperties, forwardRef, ReactNode } from 'react';
+import type { isLightColor } from '@mantine/core';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
   render, act, cleanup, fireEvent, waitFor,
@@ -15,7 +16,7 @@ import { makeParticipant, makeStoredAnswer as makeStoredAnswerBase, makeStorageE
 import type { FirebaseStorageEngine } from '../../../../storage/engines/FirebaseStorageEngine';
 import { useAsync } from '../../../../store/hooks/useAsync';
 import { useReplayContext } from '../../../../store/hooks/useReplay';
-import { handleTaskScreenRecording } from '../../../../utils/handleDownloadFiles';
+import { handleTaskRecordings } from '../../../../utils/handleDownloadFiles';
 import { Pills } from '../tags/Pills';
 import { AddTagDropdown } from '../tags/AddTagDropdown';
 import { TagEditor } from '../tags/TagEditor';
@@ -91,7 +92,8 @@ const createMockNavigate = (): NavigateFunction => vi.fn() as unknown as Navigat
 
 // ── mocks ────────────────────────────────────────────────────────────────────
 
-vi.mock('@mantine/core', () => ({
+vi.mock('@mantine/core', async () => ({
+  isLightColor: (await vi.importActual<{ isLightColor: typeof isLightColor }>('@mantine/core')).isLightColor,
   ActionIcon: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => <button type="button" onClick={onClick}>{children}</button>,
   Alert: ({ children }: { children: ReactNode }) => <div role="alert">{children}</div>,
   AppShell: Object.assign(
@@ -134,7 +136,7 @@ vi.mock('@mantine/core', () => ({
   Input: { Placeholder: ({ children }: { children: ReactNode }) => <span>{children}</span> },
   Loader: () => <span>loading</span>,
   Pill: Object.assign(
-    ({ children }: { children: ReactNode }) => <span>{children}</span>,
+    ({ children, styles }: { children: ReactNode; styles?: { root: CSSProperties } }) => <span style={styles?.root}>{children}</span>,
     { Group: ({ children }: { children: ReactNode }) => <div>{children}</div> },
   ),
   PillsInput: Object.assign(
@@ -232,7 +234,7 @@ vi.mock('lodash.debounce', () => ({ default: (fn: (...args: never[]) => void) =>
 vi.mock('../../../../components/audioAnalysis/AudioProvenanceVis', () => ({ AudioProvenanceVis: () => <div data-testid="audio-provenance-vis" /> }));
 vi.mock('../../../../utils/encryptDecryptIndex', () => ({ encryptIndex: (i: number) => String(i) }));
 vi.mock('../../../../utils/Prefix', () => ({ PREFIX: '/' }));
-vi.mock('../../../../utils/handleDownloadFiles', () => ({ handleTaskAudio: vi.fn(), handleTaskScreenRecording: vi.fn() }));
+vi.mock('../../../../utils/handleDownloadFiles', () => ({ handleTaskAudio: vi.fn(), handleTaskRecordings: vi.fn() }));
 vi.mock('../../ParticipantRejectModal', () => ({ ParticipantRejectModal: () => null }));
 vi.mock('../../../../components/audioAnalysis/provenanceColors', () => ({ buildProvenanceLegendEntries: vi.fn(() => []) }));
 vi.mock('../../../../utils/syncReplay', () => ({ revisitPageId: 'test-page-id', syncChannel: { postMessage: vi.fn() } }));
@@ -306,9 +308,12 @@ describe('Pills', () => {
     expect(html).toBe('');
   });
 
-  test('renders dark text color on a light tag', () => {
-    const html = renderToStaticMarkup(<Pills selectedTags={[makeTag({ color: '#ffffff' })]} />);
-    expect(html).toContain('Confusion');
+  test.each([
+    ['#ffffff', 'black'], ['#fab005', 'black'], ['#82c91e', 'black'], ['#2e2e2e', 'white'], ['#0000ff', 'white'],
+  ])('uses contrasting text on a %s tag without changing its background', (color, foreground) => {
+    const html = renderToStaticMarkup(<Pills selectedTags={[makeTag({ color })]} />);
+    expect(html).toContain(`background-color:${color}`);
+    expect(html).toContain(`;color:${foreground}`);
   });
 
   test('renders with removeFunc', () => {
@@ -547,6 +552,7 @@ const footerDefaultProps = {
 const mockFooterStorageEngine = {
   getAudioUrl: vi.fn().mockResolvedValue('http://test/audio.mp3'),
   getScreenRecording: vi.fn().mockResolvedValue('http://test/video.mp4'),
+  getWebcamRecording: vi.fn().mockResolvedValue(null),
   saveTags: vi.fn().mockResolvedValue(undefined),
   getTags: vi.fn().mockResolvedValue([]),
   getAllParticipantAndTaskTags: vi.fn().mockResolvedValue(null),
@@ -623,7 +629,7 @@ describe('ThinkAloudFooter', () => {
       execute: vi.fn(),
       error: null,
     }));
-    vi.mocked(handleTaskScreenRecording).mockClear();
+    vi.mocked(handleTaskRecordings).mockClear();
 
     const view = render(<RealThinkAloudFooter {...footerDefaultProps} storageEngine={storageEngine} />);
     await waitFor(() => expect(storageEngine.getAudioUrl).toHaveBeenCalledWith('trial_0', 'p1'));
@@ -640,13 +646,17 @@ describe('ThinkAloudFooter', () => {
     screenP2.resolve('screen-p2');
     const screenIcon = await waitFor(() => view.getByTestId('screen-recording-icon'));
     fireEvent.click(screenIcon.closest('button')!);
-    expect(handleTaskScreenRecording).toHaveBeenLastCalledWith(expect.objectContaining({ screenRecordingUrl: 'screen-p2' }));
+    expect(handleTaskRecordings).toHaveBeenLastCalledWith(expect.objectContaining({
+      includeScreen: true,
+      includeWebcam: false,
+      screenRecordingUrl: 'screen-p2',
+    }));
 
     screenP1.resolve('screen-p1');
     await act(async () => { await screenP1.promise; });
     const liveScreenIcon = view.getByTestId('screen-recording-icon');
     fireEvent.click(liveScreenIcon.closest('button')!);
-    expect(handleTaskScreenRecording).toHaveBeenLastCalledWith(expect.objectContaining({
+    expect(handleTaskRecordings).toHaveBeenLastCalledWith(expect.objectContaining({
       participantId: 'p2', identifier: 'trial_0', screenRecordingUrl: 'screen-p2',
     }));
   });
@@ -1064,12 +1074,13 @@ describe('TranscriptLine (DOM)', () => {
 
   test('applies highlight style when current is within start–end range', () => {
     const { container } = render(<RealTranscriptLine {...lineProps} start={0} current={5} end={10} />);
-    expect(container.innerHTML).toContain('rgba(100, 149, 237, 0.3)');
+    expect(container.innerHTML).toContain('var(--mantine-color-blue-light)');
   });
 
   test('does not apply highlight when current is outside range', () => {
     const { container } = render(<RealTranscriptLine {...lineProps} start={0} current={20} end={10} />);
-    expect(container.innerHTML).not.toContain('rgba(100, 149, 237, 0.3)');
+    expect(container.innerHTML).not.toContain('var(--mantine-color-blue-light)');
+    expect(container.innerHTML).toContain('var(--mantine-color-body)');
   });
 
   test('Enter keydown calls addRowCallback', () => {
@@ -1145,7 +1156,7 @@ describe('TranscriptSegmentsVis', () => {
     expect((html.match(/<line /g) || []).length).toBe(2);
   });
 
-  test('highlights the active segment with cornflowerblue stroke', () => {
+  test('uses themed strokes to distinguish active and inactive segments', () => {
     const lines = [
       {
         start: 0, end: 2, lineStart: 0, lineEnd: 1, tags: [],
@@ -1157,8 +1168,8 @@ describe('TranscriptSegmentsVis', () => {
     const html = renderToStaticMarkup(
       <RealTranscriptSegmentsVis transcriptLines={lines} xScale={xScale} startTime={0} currentShownTranscription={0} />,
     );
-    expect(html).toContain('cornflowerblue');
-    expect(html).toContain('lightgray');
+    expect(html).toContain('var(--mantine-color-blue-text)');
+    expect(html).toContain('var(--mantine-color-default-border)');
   });
 
   test('renders ColorSwatch for each tag on a segment', () => {

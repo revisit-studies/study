@@ -7,6 +7,7 @@ import { useMove } from '@mantine/hooks';
 import { SliderResponse } from '../../parser/types';
 import classes from './css/SliderInput.module.css';
 import { InputLabel } from './InputLabel';
+import { useOptionTextTemplate } from './OptionLabel';
 import {
   generateSliderBreakValues,
   getSliderPrecision,
@@ -31,7 +32,7 @@ export function SliderInput({
   const {
     prompt,
     required,
-    options,
+    options: rawOptions,
     secondaryText,
     infoText,
     snap,
@@ -41,6 +42,11 @@ export function SliderInput({
     smeqStyle,
     spacing,
   } = response;
+  const template = useOptionTextTemplate();
+  const options = useMemo(
+    () => rawOptions.map((option) => ({ ...option, label: template(option.label, true) })),
+    [rawOptions, template],
+  );
 
   const [min, max] = useMemo(() => [Math.min(...options.map((opt) => opt.value)), Math.max(...options.map((opt) => opt.value))], [options]);
   const sliderStep = step ?? (snap ? 0.001 : (max - min) / 100);
@@ -154,23 +160,23 @@ export function SliderInput({
           ...(tlxStyle ? {
             height: 20, width: 1, marginTop: -6, marginLeft: 2, borderRadius: 0,
           } : {}),
-          ...(withBar === false ? { borderColor: 'var(--mantine-color-gray-2)' } : {}),
+          ...(withBar === false ? { borderColor: 'var(--mantine-color-default-border)' } : {}),
         },
         bar: withBar === false || tlxStyle ? { display: 'none' } : {},
         markLabel: {
           fontSize: theme.fontSizes.sm,
-          color: theme.colors.gray[6],
+          color: 'var(--mantine-color-dimmed)',
           transform: 'translate(calc((var(--mark-offset) * -1) + (var(--slider-size) / 2)), calc(var(--mantine-spacing-xs) / 2)',
         },
         // Red line thumb style
         thumb: {
           ...(tlxStyle ? {
-            borderColor: 'var(--mantine-color-red-6)',
+            borderColor: 'var(--mantine-color-red-text)',
             width: 1,
             borderWidth: 1,
             height: 22,
             borderRadius: 0,
-            backgroundColor: 'var(--mantine-color-red-6)',
+            backgroundColor: 'var(--mantine-color-red-text)',
             transform: 'translate(-50%, -62%)',
           } : {}),
         },
@@ -206,7 +212,7 @@ export function SliderInput({
                       position: 'absolute',
                       bottom: `${labelPosition}%`,
                       fontSize: 'var(--mantine-font-size-xs)',
-                      color: 'var(--mantine-color-gray-6)',
+                      color: 'var(--mantine-color-dimmed)',
                       right: 0,
                       transform: 'translateY(50%)',
                     }}
@@ -241,7 +247,7 @@ export function SliderInput({
                   top: 0,
                   width: 2,
                   height: '100%',
-                  backgroundColor: 'var(--mantine-color-gray-6)',
+                  backgroundColor: 'var(--mantine-color-dimmed)',
                 }}
               />
 
@@ -257,7 +263,7 @@ export function SliderInput({
                       left: 2,
                       width: 20,
                       height: 1,
-                      backgroundColor: 'var(--mantine-color-gray-6)',
+                      backgroundColor: 'var(--mantine-color-dimmed)',
                       transform: 'translateY(50%)',
                     }}
                   />
@@ -276,7 +282,7 @@ export function SliderInput({
                       left: option.label !== '' ? 20 : 2,
                       width: 20,
                       height: 1,
-                      backgroundColor: 'var(--mantine-color-gray-6)',
+                      backgroundColor: 'var(--mantine-color-dimmed)',
                       transform: 'translateY(50%)',
                     }}
                   />
@@ -286,10 +292,10 @@ export function SliderInput({
               {/* Thumb */}
               <Box
                 style={{
-                  backgroundColor: 'var(--mantine-color-red-6)',
+                  backgroundColor: 'var(--mantine-color-red-text)',
                   width: 20,
                   height: 1,
-                  border: '1px solid var(--mantine-color-red-6)',
+                  border: '1px solid var(--mantine-color-red-text)',
                   position: 'absolute',
                   // -1px to account for the border
                   bottom: `calc(${normalizedValue * 100}% - 1px)`,
@@ -300,10 +306,10 @@ export function SliderInput({
                 <Tooltip label={hoverValue} opened position="right" withArrow>
                   <Box
                     style={{
-                      backgroundColor: 'var(--mantine-color-gray-6)',
+                      backgroundColor: 'var(--mantine-color-dimmed)',
                       width: 20,
                       height: 1,
-                      border: '1px solid var(--mantine-color-gray-6)',
+                      border: '1px solid var(--mantine-color-dimmed)',
                       position: 'absolute',
                       left: 0,
                       bottom: `calc(${((hoverValue - min) / (max - min)) * 100}% - 1px)`,
@@ -331,7 +337,7 @@ export function SliderInput({
                     key={option.value}
                     style={{
                       fontSize: 'var(--mantine-font-size-xs)',
-                      color: 'var(--mantine-color-gray-6)',
+                      color: 'var(--mantine-color-dimmed)',
                       position: 'absolute',
                       bottom: `${markPosition}%`,
                       transform: 'translateY(50%)',
@@ -366,10 +372,10 @@ export function SliderInput({
               <Tooltip label={hoverValue} opened position="top" withArrow>
                 <Box
                   style={{
-                    backgroundColor: 'var(--mantine-color-gray-6)',
+                    backgroundColor: 'var(--mantine-color-dimmed)',
                     width: 1,
                     height: 22,
-                    border: '1px solid var(--mantine-color-gray-6)',
+                    border: '1px solid var(--mantine-color-dimmed)',
                     position: 'absolute',
                     left: `${((hoverValue - min) / (max - min)) * 100}%`,
                     top: `${'calc(0.5rem * var(--mantine-scale))'}`,

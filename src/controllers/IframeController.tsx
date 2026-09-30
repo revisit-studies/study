@@ -177,6 +177,9 @@ export function IframeController({ currentConfig, provState, answers }: { curren
         width: '100%',
         flexGrow: 1,
         border: 0,
+        colorScheme: currentConfig.colorMode ?? 'inherit',
+        // Keep transparent embedded pages readable when their scheme differs from the study.
+        backgroundColor: currentConfig.colorMode ? 'Canvas' : undefined,
         pointerEvents: isAnalysis ? 'none' : undefined,
       }}
       src={url}

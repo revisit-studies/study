@@ -60,7 +60,7 @@ export function Timer({
         width, height, position: 'absolute', zIndex: 10000,
       }}
     >
-      <line ref={timerRef} stroke="#e15759" strokeWidth={3} y1={0} y2={height} />
+      <line ref={timerRef} stroke="var(--mantine-color-red-text)" strokeWidth={3} y1={0} y2={height} />
     </svg>
   );
 }

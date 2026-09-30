@@ -17,7 +17,7 @@ import { AlertModal } from './interface/AlertModal';
 import { ConfigVersionWarningModal } from './interface/ConfigVersionWarningModal';
 import { EventType } from '../store/types';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
-import { WindowEventsContext } from '../store/hooks/useWindowEvents';
+import { WindowEventsContext, type WindowEventsRef } from '../store/hooks/useWindowEvents';
 import { useStoreSelector, useStoreDispatch, useStoreActions } from '../store/store';
 import { AnalysisFooter } from './interface/AnalysisFooter';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
@@ -25,6 +25,7 @@ import { studyComponentToIndividualComponent } from '../utils/handleComponentInh
 import { useCurrentComponent } from '../routes/utils';
 import { useFetchStylesheet } from '../utils/fetchStylesheet';
 import { RecordingContext, useRecording } from '../store/hooks/useRecording';
+import { useGamepad } from '../store/hooks/useGamepad';
 import { ScreenRecordingRejection } from './interface/ScreenRecordingRejection';
 import { ReplayContext, useReplay } from '../store/hooks/useReplay';
 import { DeviceWarning } from './interface/DeviceWarning';
@@ -40,7 +41,7 @@ import { PREFIX } from '../utils/Prefix';
 const STUDY_BROWSER_WIDTH = 360;
 
 export function StepRenderer() {
-  const windowEvents = useRef<EventType[]>([]);
+  const windowEvents = useRef<EventType[]>([]) as WindowEventsRef;
   const dispatch = useStoreDispatch();
   const { toggleStudyBrowser, setAlertModal } = useStoreActions();
   const { storageEngine } = useStorageEngine();
@@ -52,6 +53,8 @@ export function StepRenderer() {
   const componentConfig = useMemo(() => studyComponentToIndividualComponent(studyConfig.components[currentComponent] || {}, studyConfig), [currentComponent, studyConfig]);
 
   const windowEventDebounceTime = useMemo(() => componentConfig.windowEventDebounceTime ?? studyConfig.uiConfig.windowEventDebounceTime ?? 100, [componentConfig, studyConfig]);
+
+  const captureGamepad = useMemo(() => componentConfig.captureGamepad ?? studyConfig.uiConfig.captureGamepad ?? false, [componentConfig, studyConfig]);
 
   useFetchStylesheet(studyConfig?.uiConfig.stylesheetPath);
 
@@ -66,6 +69,7 @@ export function StepRenderer() {
   const { isRejected: isScreenRecordingUserRejected } = screenRecording;
 
   const analysisHasScreenRecording = useStoreSelector((state) => state.analysisHasScreenRecording);
+  const analysisHasWebcamRecording = useStoreSelector((state) => state.analysisHasWebcamRecording);
   const analysisCanPlayScreenRecording = useStoreSelector((state) => state.analysisCanPlayScreenRecording);
 
   useEffect(() => {
@@ -158,10 +162,63 @@ export function StepRenderer() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Keep the last axis sample in each interval, including when the stick returns
+  // to rest. Flush it before saving the step so it belongs to the right trial.
+  const pendingAxis = useRef<Extract<EventType, [number, 'gamepadaxis', number[]]> | null>(null);
+  const lastRecordedAxes = useRef<number[]>([]);
+  const axisTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const recordAxis = useCallback((event: Extract<EventType, [number, 'gamepadaxis', number[]]>) => {
+    windowEvents.current.push(event);
+    lastRecordedAxes.current = event[2];
+  }, [windowEvents]);
+  const flushPendingAxis = useCallback(() => {
+    if (axisTimer.current !== null) {
+      clearTimeout(axisTimer.current);
+      axisTimer.current = null;
+    }
+    if (pendingAxis.current) {
+      recordAxis(pendingAxis.current);
+      pendingAxis.current = null;
+    }
+  }, [recordAxis]);
+  useEffect(() => {
+    windowEvents.flushPending = flushPendingAxis;
+    return () => {
+      windowEvents.flushPending = undefined;
+      if (axisTimer.current !== null) clearTimeout(axisTimer.current);
+    };
+  }, [flushPendingAxis, windowEvents]);
+  useGamepad({
+    onConnectionChange: (device, timestamp) => {
+      windowEvents.current.push([timestamp, 'gamepadconnection', device ? `connected:${device.id}:${device.mapping || 'nonstandard'}` : 'disconnected']);
+    },
+    onButtonDown: (button, index, timestamp) => {
+      windowEvents.current.push([timestamp, 'gamepadbuttondown', button]);
+    },
+    onButtonUp: (button, index, timestamp) => {
+      windowEvents.current.push([timestamp, 'gamepadbuttonup', button]);
+    },
+    onAxes: (axes, timestamp) => {
+      const event: Extract<EventType, [number, 'gamepadaxis', number[]]> = [timestamp, 'gamepadaxis', axes.map((value) => Math.round(value * 1000) / 1000)];
+      if (axisTimer.current === null) {
+        recordAxis(event);
+        axisTimer.current = setTimeout(flushPendingAxis, windowEventDebounceTime);
+      } else {
+        const pending = pendingAxis.current;
+        if (pending) {
+          const distance = (values: number[]) => Math.hypot(...values.map((value, index) => value - (lastRecordedAxes.current[index] ?? 0)));
+          if (distance(event[2]) < distance(pending[2])) recordAxis(pending);
+        }
+        pendingAxis.current = event;
+      }
+    },
+    enabled: captureGamepad,
+  });
+
   const { developmentModeEnabled, dataCollectionEnabled } = useMemo(() => modes, [modes]);
 
   // No default value for withSidebar since it's a required field in uiConfig
-  const sidebarOpen = useMemo(() => (((analysisHasScreenRecording && analysisCanPlayScreenRecording) || currentComponent === 'end') ? false : (componentConfig.withSidebar ?? studyConfig.uiConfig.withSidebar)), [analysisHasScreenRecording, analysisCanPlayScreenRecording, currentComponent, componentConfig.withSidebar, studyConfig.uiConfig.withSidebar]);
+  const sidebarOpen = useMemo(() => ((((analysisHasScreenRecording || analysisHasWebcamRecording) && analysisCanPlayScreenRecording) || currentComponent === 'end') ? false : (componentConfig.withSidebar ?? studyConfig.uiConfig.withSidebar)), [analysisHasScreenRecording, analysisHasWebcamRecording, analysisCanPlayScreenRecording, currentComponent, componentConfig.withSidebar, studyConfig.uiConfig.withSidebar]);
   const sidebarWidth = useMemo(() => componentConfig?.sidebarWidth ?? studyConfig.uiConfig.sidebarWidth ?? 300, [componentConfig, studyConfig]);
   const showTitleBar = useMemo(() => componentConfig.showTitleBar ?? studyConfig.uiConfig.showTitleBar ?? true, [componentConfig, studyConfig]);
 
@@ -328,7 +385,7 @@ export function StepRenderer() {
                 data-pdf-export-header
                 style={{
                   alignItems: 'center',
-                  borderBottom: '1px solid #dee2e6',
+                  borderBottom: '1px solid var(--mantine-color-default-border)',
                   display: 'none',
                   gap: 12,
                   marginBottom: 20,
@@ -347,7 +404,7 @@ export function StepRenderer() {
                   <div style={{ fontSize: 20, fontWeight: 700 }}>
                     {studyConfig.studyMetadata.title}
                   </div>
-                  <div style={{ color: '#5f6368', fontSize: 12 }}>
+                  <div style={{ color: 'var(--mantine-color-dimmed)', fontSize: 12 }}>
                     {currentComponent}
                   </div>
                 </div>
@@ -379,7 +436,17 @@ export function StepRenderer() {
                     Study Browser
                   </Button>
                 )}
-                <Outlet />
+                <div
+                  className="study-content"
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    flexGrow: 1,
+                    minWidth: 0,
+                  }}
+                >
+                  <Outlet />
+                </div>
               </AppShell.Main>
             </Flex>
             {isAnalysis && (

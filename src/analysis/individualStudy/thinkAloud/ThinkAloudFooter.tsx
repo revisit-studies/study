@@ -28,7 +28,7 @@ import { TagSelector } from './tags/TagSelector';
 import { encryptIndex } from '../../../utils/encryptDecryptIndex';
 import { parseTrialOrder } from '../../../utils/parseTrialOrder';
 import { PREFIX } from '../../../utils/Prefix';
-import { handleTaskAudio, handleTaskScreenRecording } from '../../../utils/handleDownloadFiles';
+import { handleTaskAudio, handleTaskRecordings } from '../../../utils/handleDownloadFiles';
 import { ParticipantRejectModal } from '../ParticipantRejectModal';
 import { StorageEngine } from '../../../storage/engines/types';
 import { useReplayContext } from '../../../store/hooks/useReplay';
@@ -129,15 +129,35 @@ export function ThinkAloudFooter({
   const assetKey = `${participantId}\u0000${currentTrial}`;
   const [audio, setAudio] = useState<{ key: string; url: string | null }>({ key: '', url: null });
   const [screenRecording, setScreenRecording] = useState<{ key: string; url: string | null }>({ key: '', url: null });
+  const [webcamRecording, setWebcamRecording] = useState<{ key: string; url: string | null }>({ key: '', url: null });
   const audioUrl = audio.key === assetKey ? audio.url : null;
   const screenRecordingUrl = screenRecording.key === assetKey ? screenRecording.url : null;
+  const webcamRecordingUrl = webcamRecording.key === assetKey ? webcamRecording.url : null;
 
   useEffect(() => {
     let cancelled = false;
+    const loadedUrls: string[] = [];
+    const releaseUrl = (url: string | null) => {
+      if (url?.startsWith('blob:')) {
+        URL.revokeObjectURL(url);
+      }
+    };
+    const setLoadedAsset = (
+      setter: (value: { key: string; url: string | null }) => void,
+      url: string | null,
+    ) => {
+      if (cancelled) {
+        releaseUrl(url);
+        return;
+      }
+      if (url) loadedUrls.push(url);
+      setter({ key: assetKey, url });
+    };
 
     async function fetchAssetsUrl() {
       setAudio({ key: assetKey, url: null });
       setScreenRecording({ key: assetKey, url: null });
+      setWebcamRecording({ key: assetKey, url: null });
 
       if (!storageEngine || !participantId || !currentTrial) {
         return;
@@ -145,9 +165,7 @@ export function ThinkAloudFooter({
 
       try {
         const url = await storageEngine.getAudioUrl(currentTrial, participantId);
-        if (!cancelled) {
-          setAudio({ key: assetKey, url });
-        }
+        setLoadedAsset(setAudio, url);
       } catch {
         if (!cancelled) {
           setAudio({ key: assetKey, url: null });
@@ -156,12 +174,19 @@ export function ThinkAloudFooter({
 
       try {
         const url = await storageEngine.getScreenRecording(currentTrial, participantId);
-        if (!cancelled) {
-          setScreenRecording({ key: assetKey, url });
-        }
+        setLoadedAsset(setScreenRecording, url);
       } catch {
         if (!cancelled) {
           setScreenRecording({ key: assetKey, url: null });
+        }
+      }
+
+      try {
+        const url = await storageEngine.getWebcamRecording(currentTrial, participantId);
+        setLoadedAsset(setWebcamRecording, url);
+      } catch {
+        if (!cancelled) {
+          setWebcamRecording({ key: assetKey, url: null });
         }
       }
     }
@@ -170,6 +195,7 @@ export function ThinkAloudFooter({
 
     return () => {
       cancelled = true;
+      loadedUrls.forEach(releaseUrl);
     };
   }, [assetKey, currentTrial, participantId, storageEngine]);
 
@@ -186,18 +212,21 @@ export function ThinkAloudFooter({
     });
   }, [storageEngine, participantId, currentTrial, audioUrl]);
 
-  const handleDownloadScreenRecording = useCallback(async () => {
+  const handleDownloadRecordings = useCallback(async () => {
     if (!storageEngine || !participantId || !currentTrial) {
       return;
     }
 
-    await handleTaskScreenRecording({
+    await handleTaskRecordings({
       storageEngine,
       participantId,
       identifier: currentTrial,
+      includeScreen: !!screenRecordingUrl,
+      includeWebcam: !!webcamRecordingUrl,
       screenRecordingUrl,
+      webcamRecordingUrl,
     });
-  }, [storageEngine, participantId, currentTrial, screenRecordingUrl]);
+  }, [storageEngine, participantId, currentTrial, screenRecordingUrl, webcamRecordingUrl]);
 
   const [transcriptLines, setTranscriptLines] = useState<TranscriptLinesWithTimes[] | null>(null);
 
@@ -434,7 +463,7 @@ export function ThinkAloudFooter({
   const [browserWarningDismissed, setBrowserWarningDismissed] = useState(false);
   useEffect(() => {
     setBrowserWarningDismissed(false);
-  }, [participantId, screenRecordingUrl]);
+  }, [participantId, screenRecordingUrl, webcamRecordingUrl]);
 
   return (
     <AppShell.Footer zIndex={101} withBorder={false}>
@@ -446,7 +475,7 @@ export function ThinkAloudFooter({
           <Alert variant="filled" color="red" title="Participant hasn&apos;t completed any tasks." icon={<IconInfoCircle />} />
         </div>
       )}
-      {participantMatchesSelection && screenRecordingUrl && !participantUsedSameBrowser && !browserWarningDismissed && (
+      {participantMatchesSelection && (screenRecordingUrl || webcamRecordingUrl) && !participantUsedSameBrowser && !browserWarningDismissed && (
         <div style={{
           position: 'absolute', top: -5, left: 5, transform: 'translateY(-100%)',
         }}
@@ -454,15 +483,15 @@ export function ThinkAloudFooter({
           <Alert withCloseButton onClose={() => setBrowserWarningDismissed(true)} variant="filled" color="red" title={`Participant used ${getBrowser(participant.metadata?.userAgent ?? '')} — you are using ${getBrowser(navigator.userAgent)}. Video playback may not work properly.`} icon={<IconInfoCircle />} />
         </div>
       )}
-      <Stack style={{ backgroundColor: 'var(--mantine-color-blue-1)', height: '100%' }} gap={5} justify="center">
+      <Stack style={{ backgroundColor: 'light-dark(var(--mantine-color-blue-1), var(--mantine-color-dark-7))', height: '100%' }} gap={5} justify="center">
 
-        {participant && currentTrial && (!participant.answers[currentTrial] || participant.answers[currentTrial].endTime === -1) ? <Center><Text c="dimmed">{`Participant ${participant.participantId} has not completed this task`}</Text></Center> : null}
+        {participant && currentTrial && (!participant.answers[currentTrial] || participant.answers[currentTrial].endTime === -1) ? <Center><Text c="light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-1))">{`Participant ${participant.participantId} has not completed this task`}</Text></Center> : null}
         <AudioProvenanceVis setHasAudio={setHasAudio} saveProvenance={saveProvenance} setTime={onTimeUpdate} setTimeString={(_t) => setTimeString(_t)} answers={participant ? participant.answers : {}} taskName={currentTrial} context={isReplay ? 'provenanceVis' : 'audioAnalysis'} />
         {xScale && transcriptLines ? <TranscriptSegmentsVis startTime={xScale.domain()[0]} xScale={xScale} transcriptLines={transcriptLines} currentShownTranscription={currentShownTranscription || 0} /> : null}
 
         <Group gap="xs" style={{ width: '100%' }} justify="center" wrap="nowrap" mb={isReplay ? 0 : 'md'}>
           <Group wrap="nowrap">
-            <Text ff="monospace" style={{ textAlign: 'right' }} mt="lg" c="dimmed">{timeString}</Text>
+            <Text ff="monospace" style={{ textAlign: 'right' }} mt="lg" c="light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-1))">{timeString}</Text>
 
             <Tooltip label={hasEnded ? 'Restart' : isPlaying ? 'Pause' : 'Play'}>
               <ActionIcon aria-label={hasEnded ? 'Restart' : isPlaying ? 'Pause' : 'Play'} mt={25} size="lg" variant="light" onClick={() => { setIsPlaying(!isPlaying); }}>
@@ -647,9 +676,9 @@ export function ThinkAloudFooter({
                 </ActionIcon>
               </Tooltip>
             )}
-            {screenRecordingUrl && (
-              <Tooltip label="Download screen recording">
-                <ActionIcon variant="light" size={30} onClick={handleDownloadScreenRecording}>
+            {(screenRecordingUrl || webcamRecordingUrl) && (
+              <Tooltip label="Download recordings">
+                <ActionIcon variant="light" size={30} onClick={handleDownloadRecordings}>
                   <IconDeviceDesktopDown />
                 </ActionIcon>
               </Tooltip>
@@ -659,7 +688,7 @@ export function ThinkAloudFooter({
           {provenanceLegendEntries.size > 1 && (
             <HoverCard width={160} position="top" withArrow shadow="md">
               <HoverCard.Target>
-                <ActionIcon c="" size="lg" variant="light" mt="lg" style={{ cursor: 'default' }}><IconPalette /></ActionIcon>
+                <ActionIcon size="lg" variant="light" mt="lg" style={{ cursor: 'default' }}><IconPalette /></ActionIcon>
               </HoverCard.Target>
               <HoverCard.Dropdown>
                 <Stack gap={6}>
