@@ -15,6 +15,13 @@ export type JsonArray = JsonValue[];
 export interface GlobalConfig {
   /** A required json schema property. This should point to the GitHub link for the version of the schema you would like. See examples in the public folder for more information. */
   $schema: string;
+  /** Landing-page tabs in display order. Unassigned studies use the configured Studies tab, or a default Studies tab appended after configured tabs. If omitted or empty, all studies appear in Studies. */
+  tabs?: {
+    /** A unique, non-blank tab name. Study assignments and the tab URL parameter reference this exact label. */
+    label: string;
+    /** An optional Markdown description displayed above the studies in this tab. */
+    description?: string;
+  }[];
   /** A required property that specifies the options for the configList property. */
   configs: {
     /** The key is used to identify the study config file. This key is used in the configList property. */
@@ -23,6 +30,8 @@ export interface GlobalConfig {
       path: string;
       /** Indicates whether the study is a test study. This is used to hide the study from the landing page. */
       test?: boolean;
+      /** The exact label of a configured tab. Unassigned studies appear in the default Studies tab. */
+      tab?: string;
     };
   };
   /** A required property that is used to generate the list of available studies in the UI. This list is displayed on the landing page when running the app. */

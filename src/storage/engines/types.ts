@@ -440,6 +440,9 @@ export abstract class StorageEngine {
   // Gets all sequence assignments for the given studyId. The sequence assignments are sorted ascending by timestamp.
   public abstract getAllSequenceAssignments(studyId: string): Promise<SequenceAssignment[]>;
 
+  // Reads one participant's assignment without loading every participant in the study.
+  public abstract getSequenceAssignment(studyId: string, participantId: string): Promise<SequenceAssignment | null>;
+
   // Creates a sequence assignment for the given participantId and sequenceAssignment. Cloud storage engines should use the realtime database to create the sequence assignment and should use the server to prevent race conditions (i.e. using server timestamps).
   protected abstract _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment, withServerTimestamp: boolean): Promise<void>;
 
@@ -494,6 +497,11 @@ export abstract class StorageEngine {
 
   // Gets the modes for the given studyId. The modes are stored as a record with the mode name as the key and a boolean value indicating whether the mode is enabled or not.
   abstract getModes(studyId: string): Promise<RuntimeStudySettings>;
+
+  // Read modes for an access decision without creating a missing Supabase record.
+  async getAccessModes(studyId: string): Promise<(Record<REVISIT_MODE, boolean> & { stage?: StageData }) | null> {
+    return this.getModes(studyId);
+  }
 
   // Sets the mode for the given studyId. The mode is stored as a record with the mode name as the key and a boolean value indicating whether the mode is enabled or not.
   abstract setMode(studyId: string, mode: REVISIT_MODE, value: boolean): Promise<void>;
@@ -2692,6 +2700,30 @@ export abstract class CloudStorageEngine extends StorageEngine {
 
   protected userManagementData: UserManagementData = {};
 
+  abstract getStorageDisconnected(studyId: string): Promise<boolean>;
+
+  protected abstract _setStorageDisconnected(studyId: string, disconnected: boolean): Promise<void>;
+
+  protected abstract getAuthenticatedUser(): Promise<StoredUser | null>;
+
+  async isStorageAdmin() {
+    this.userManagementData = {};
+    const auth = await this.getUserManagementData('authentication');
+    const signedInUser = await this.getAuthenticatedUser();
+    if (!auth?.isEnabled || !signedInUser?.email || !signedInUser.uid) return false;
+    const adminUsers = await this.getUserManagementData('adminUsers');
+    return Boolean(adminUsers?.adminUsersList.some((admin) => admin.email === signedInUser.email
+      && (admin.uid === null || admin.uid === signedInUser.uid)));
+  }
+
+  async setStorageDisconnected(studyId: string, disconnected: boolean) {
+    if (!await this.isStorageAdmin()) {
+      throw new Error('A verified administrator must sign in to change storage.');
+    }
+
+    await this._setStorageDisconnected(studyId, disconnected);
+  }
+
   /*
   * PRIMITIVE METHODS
   * These methods are provided by the storage engine implementation and are used by the higher-level methods.
@@ -2762,7 +2794,7 @@ export abstract class CloudStorageEngine extends StorageEngine {
           return false;
         }
       }
-      return true;
+      return this.engine !== 'supabase' || authInfo?.isEnabled === false;
     }
     return false;
   }

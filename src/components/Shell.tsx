@@ -300,7 +300,7 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
   const [isCompletionCheckResolved, setIsCompletionCheckResolved] = useState(false);
   const [completionCheckError, setCompletionCheckError] = useState<string | null>(null);
   const [startupPreviewComponent, setStartupPreviewComponent] = useState<StaticFirstComponentPreview | null>(null);
-  const { storageEngine } = useStorageEngine();
+  const { storageEngine, configuredStorageEngine } = useStorageEngine();
   const [searchParams] = useSearchParams();
 
   const participantId = useMemo(() => searchParams.get('participantId'), [searchParams]);
@@ -517,7 +517,8 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
         }
         const isStorageFailure = isStorageStartupFailure(
           storageEngine,
-          import.meta.env.VITE_STORAGE_ENGINE,
+          storageEngine !== configuredStorageEngine && configuredStorageEngine
+            ? storageEngine.getEngine() : import.meta.env.VITE_STORAGE_ENGINE,
         );
         const resolvedModes = modes ?? await storageEngine.getModes(canonicalStudyId).catch(() => null);
         const developmentModeEnabledForAlert = resolvedModes?.developmentModeEnabled ?? false;
@@ -592,7 +593,7 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
     return () => {
       isCancelled = true;
     };
-  }, [storageEngine, activeConfig, canonicalStudyId, searchParams, participantId, urlParticipantId, studyCondition, initialSystemColorMode]);
+  }, [storageEngine, configuredStorageEngine, activeConfig, canonicalStudyId, searchParams, participantId, urlParticipantId, studyCondition, initialSystemColorMode]);
 
   const routing = useRoutes(routes);
   const participantState = store?.store.getState();

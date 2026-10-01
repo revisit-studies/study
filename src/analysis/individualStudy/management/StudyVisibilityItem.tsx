@@ -6,7 +6,8 @@ import { useStorageEngine } from '../../../storage/storageEngineHooks';
 import { showNotification } from '../../../utils/notifications';
 
 export function StudyVisibilityItem({ studyId }: { studyId: string }) {
-  const { storageEngine } = useStorageEngine();
+  const { storageEngine, configuredStorageEngine } = useStorageEngine();
+  const visibilityEngine = configuredStorageEngine ?? storageEngine;
   const [asyncStatus, setAsyncStatus] = useState(false);
   const [showStudyEnabled, setShowStudyEnabled] = useState(false);
   const activeRequest = useRef({ cancelled: false, saving: false });
@@ -17,9 +18,9 @@ export function StudyVisibilityItem({ studyId }: { studyId: string }) {
     setAsyncStatus(false);
 
     const fetchData = async () => {
-      if (storageEngine) {
+      if (visibilityEngine) {
         try {
-          const hidden = await storageEngine.getStudyHiddenFromLandingPage(studyId);
+          const hidden = await visibilityEngine.getStudyHiddenFromLandingPage(studyId);
           if (!request.cancelled) {
             setShowStudyEnabled(!hidden);
             setAsyncStatus(true);
@@ -38,15 +39,15 @@ export function StudyVisibilityItem({ studyId }: { studyId: string }) {
     fetchData();
 
     return () => { request.cancelled = true; };
-  }, [storageEngine, studyId]);
+  }, [visibilityEngine, studyId]);
 
   const handleChange = async (enabled: boolean) => {
     const request = activeRequest.current;
-    if (!storageEngine || !asyncStatus || request.saving) return;
+    if (!visibilityEngine || !asyncStatus || request.saving) return;
     request.saving = true;
 
     try {
-      await storageEngine.setStudyHiddenFromLandingPage(studyId, !enabled);
+      await visibilityEngine.setStudyHiddenFromLandingPage(studyId, !enabled);
       if (!request.cancelled) setShowStudyEnabled(enabled);
     } catch {
       if (!request.cancelled) {

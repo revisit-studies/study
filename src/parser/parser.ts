@@ -53,29 +53,50 @@ const visibilityConditionValidate = ajv2.getSchema<ResponseVisibilityCondition>(
 
 // This function verifies the global config file satisfies conditions that are not covered by the schema
 function verifyGlobalConfig(data: GlobalConfig) {
-  const errors: { message: string }[] = [];
-  const configsListVerified = data.configsList.every((configName) => {
+  const errors: { message: string; instancePath: string }[] = [];
+  data.configsList.forEach((configName, index) => {
     if (data.configs[configName] === undefined) {
-      errors.push({ message: `Config \`${configName}\` is not defined in configs object, but is present in configsList` });
-      return false;
+      errors.push({
+        message: `Config \`${configName}\` is not defined in configs object, but is present in configsList`,
+        instancePath: `/configsList/${index}`,
+      });
     }
-    return true;
   });
 
-  return [configsListVerified, errors] as const;
+  const labels = new Set<string>();
+  data.tabs?.forEach(({ label }, index) => {
+    if (!label.trim()) {
+      errors.push({ message: 'Tab label must not be blank', instancePath: `/tabs/${index}/label` });
+    } else if (labels.has(label)) {
+      errors.push({ message: `Tab label "${label}" is duplicated; tab labels must be unique`, instancePath: `/tabs/${index}/label` });
+    }
+    labels.add(label);
+  });
+
+  Object.entries(data.configs).forEach(([configName, config]) => {
+    if (config.tab !== undefined && !labels.has(config.tab)) {
+      errors.push({
+        message: `Config "${configName}" references undefined tab "${config.tab}"; use a label from tabs or omit tab`,
+        instancePath: `/configs/${configName.replace(/~/g, '~0').replace(/\//g, '~1')}/tab`,
+      });
+    }
+  });
+
+  return errors;
 }
 
 export function parseGlobalConfig(fileData: string) {
   const data = JSON.parse(fileData);
 
-  const validatedData = globalValidate(data) as boolean;
-  const extraValidation = verifyGlobalConfig(data);
+  const validatedData = globalValidate(data);
+  const extraValidation = validatedData ? verifyGlobalConfig(data) : [];
 
-  if (validatedData && extraValidation[0]) {
-    return data as GlobalConfig;
+  if (validatedData && extraValidation.length === 0) {
+    return data;
   }
-  console.error('Global config parsing errors', [...(globalValidate.errors || []), ...extraValidation[1]]);
-  throw Error('There was an issue validating your file global.json');
+  const errors = [...(globalValidate.errors || []), ...extraValidation];
+  console.error('Global config parsing errors', errors);
+  throw Error(`There was an issue validating your file global.json: ${errors.map(({ instancePath, message }) => `${instancePath}: ${message}`).join('; ')}`);
 }
 
 // Recursive function to verify that the skip.to component exists after the block it is used in
