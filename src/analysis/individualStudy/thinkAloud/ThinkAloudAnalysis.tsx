@@ -6,7 +6,7 @@ import {
   useLocation, useNavigate, useParams, useSearchParams,
 } from 'react-router';
 import {
-  useCallback, useEffect, useMemo, useState,
+  Ref, useCallback, useEffect, useMemo, useState,
 } from 'react';
 import debounce from 'lodash.debounce';
 
@@ -83,7 +83,7 @@ function getFirstTrialIdentifier(participant: ParticipantData | null | undefined
   return orderedAnswers[0]?.identifier || '';
 }
 
-export function ThinkAloudAnalysis({ visibleParticipants, storageEngine } : { visibleParticipants: ParticipantData[], storageEngine: FirebaseStorageEngine }) {
+export function ThinkAloudAnalysis({ visibleParticipants, storageEngine, footerRef } : { visibleParticipants: ParticipantData[], storageEngine: FirebaseStorageEngine, footerRef?: Ref<HTMLElement> }) {
   const auth = useAuth();
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -233,7 +233,7 @@ export function ThinkAloudAnalysis({ visibleParticipants, storageEngine } : { vi
                 </Stack>
               )}
 
-          <ThinkAloudFooter key={`${participantId}-${currentTrial}`} setHasAudio={setHasAudio} saveProvenance={() => null} studyId={studyId || ''} jumpedToLine={jumpedToLine} editedTranscript={editedTranscript} currentTrial={currentTrial} isReplay={false} visibleParticipants={visibleParticipants.map((v) => v.participantId)} rawTranscript={rawTranscript} onTimeUpdate={onTimeUpdate} currentShownTranscription={currentShownTranscription} width={width} storageEngine={storageEngine} />
+          <ThinkAloudFooter key={`${participantId}-${currentTrial}`} footerRef={footerRef} setHasAudio={setHasAudio} saveProvenance={() => null} studyId={studyId || ''} jumpedToLine={jumpedToLine} editedTranscript={editedTranscript} currentTrial={currentTrial} isReplay={false} visibleParticipants={visibleParticipants.map((v) => v.participantId)} rawTranscript={rawTranscript} onTimeUpdate={onTimeUpdate} currentShownTranscription={currentShownTranscription} width={width} storageEngine={storageEngine} />
         </Stack>
 
       </Group>
