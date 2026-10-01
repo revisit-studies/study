@@ -57,7 +57,11 @@ export function ProtectedRoute({
     let cancelled = false;
     setAdminCheck(null);
     verifyAdminStatus(user)
-      .then((isAdmin) => { if (!cancelled) setAdminCheck({ key: adminCheckKey, result: isAdmin }); })
+      .then(async (isAdmin) => {
+        if (cancelled) return;
+        if (!isAdmin) await logout();
+        if (!cancelled) setAdminCheck({ key: adminCheckKey, result: isAdmin });
+      })
       .catch(() => { if (!cancelled) setAdminCheck({ key: adminCheckKey, result: 'error' }); });
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps

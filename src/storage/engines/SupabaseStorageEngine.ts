@@ -154,6 +154,23 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       .sort((a, b) => a.timestamp - b.timestamp);
   }
 
+  public async getSequenceAssignment(studyId: string, participantId: string) {
+    const { data, error } = await this.supabase
+      .from('revisit')
+      .select('data, createdAt')
+      .eq('studyId', `${this.collectionPrefix}${studyId}`)
+      .eq('docId', `sequenceAssignment_${participantId}`)
+      .limit(1);
+    if (error) throw new Error('Failed to get sequence assignment');
+    if (!data?.length) return null;
+    const assignment = data[0];
+    return {
+      ...assignment.data,
+      timestamp: assignment.data.withServerTimestamp ? new Date(assignment.createdAt).getTime() : assignment.data.timestamp,
+      createdTime: new Date(assignment.createdAt).getTime(),
+    } as SequenceAssignment;
+  }
+
   protected async _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment, withServerTimestamp: boolean = false) {
     await this.verifyStudyDatabase();
     if (!this.studyId) {

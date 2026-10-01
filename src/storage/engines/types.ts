@@ -263,6 +263,9 @@ export abstract class StorageEngine {
   // Gets all sequence assignments for the given studyId. The sequence assignments are sorted ascending by timestamp.
   public abstract getAllSequenceAssignments(studyId: string): Promise<SequenceAssignment[]>;
 
+  // Reads one participant's assignment without loading every participant in the study.
+  public abstract getSequenceAssignment(studyId: string, participantId: string): Promise<SequenceAssignment | null>;
+
   // Creates a sequence assignment for the given participantId and sequenceAssignment. Cloud storage engines should use the realtime database to create the sequence assignment and should use the server to prevent race conditions (i.e. using server timestamps).
   protected abstract _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment, withServerTimestamp: boolean): Promise<void>;
 

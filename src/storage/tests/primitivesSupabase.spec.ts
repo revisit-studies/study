@@ -306,6 +306,12 @@ describe.each([
     expect(sequenceAssignment!.createdTime).equal(sequenceAssignment!.timestamp);
   });
 
+  test('reads one sequence assignment by study and participant ID', async () => {
+    const session = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    expect((await storageEngine.getSequenceAssignment(studyId, session.participantId))?.participantId).toBe(session.participantId);
+    expect(await storageEngine.getSequenceAssignment(studyId, 'missing')).toBeNull();
+  });
+
   test('_completeCurrentParticipantRealtime updates sequence assignment', async () => {
     const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
     const { participantId } = participantSession;

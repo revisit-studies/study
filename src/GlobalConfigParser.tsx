@@ -81,6 +81,13 @@ function HomeRoute({
   );
 }
 
+export function getRequestedParticipantId(search: string, participantIdParam?: string) {
+  const searchParams = new URLSearchParams(search);
+  return searchParams.get('participantId')
+    || (participantIdParam ? searchParams.get(participantIdParam) : null)
+    || undefined;
+}
+
 function StudyStorageRoute({ globalConfig, children }: { globalConfig: GlobalConfig; children: ReactNode }) {
   const { configuredStorageEngine, setStorageEngine } = useStorageEngine();
   const { pathname, search } = useLocation();
@@ -101,8 +108,7 @@ function StudyStorageRoute({ globalConfig, children }: { globalConfig: GlobalCon
       if (!studyId) return configuredStorageEngine;
       const config = participantRoute && search ? await getStudyConfig(studyId, globalConfig) : null;
       const participantIdParam = config?.uiConfig?.urlParticipantIdParam;
-      const requestedParticipantId = participantIdParam
-        ? new URLSearchParams(search).get(participantIdParam) ?? undefined : undefined;
+      const requestedParticipantId = getRequestedParticipantId(search, participantIdParam);
       return selectStudyStorageEngine(configuredStorageEngine, studyId, participantRoute, requestedParticipantId);
     };
     selection().then((activeEngine) => {

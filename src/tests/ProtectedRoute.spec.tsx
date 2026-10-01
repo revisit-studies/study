@@ -180,4 +180,15 @@ describe('ProtectedRoute', () => {
     fireEvent.click(screen.getByText('Retry'));
     expect(mockTriggerAuth).toHaveBeenCalled();
   });
+
+  test('signs out a Supabase admin whose access was revoked before redirecting', async () => {
+    mockStorageEngine = { getEngine: vi.fn().mockReturnValue('supabase') };
+    mockSupabaseAuthStatus = 'enabled';
+    mockUser = { isAdmin: true, determiningStatus: false };
+    mockVerifyAdminStatus.mockResolvedValue(false);
+    await act(async () => render(<ProtectedRoute><div>private settings</div></ProtectedRoute>));
+    expect(mockLogout).toHaveBeenCalledOnce();
+    expect(screen.queryByText('private settings')).toBeNull();
+    expect(screen.getByTestId('navigate-to-login')).toBeDefined();
+  });
 });

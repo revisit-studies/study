@@ -110,12 +110,13 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   const { analysisTab } = useParams();
   const isStorageTab = analysisTab === 'storage';
   const { user } = useAuth();
-  const [storageAdmin, setStorageAdmin] = useState(false);
+  const [storageAdmin, setStorageAdmin] = useState<boolean | null>(null);
   const [storageAdminError, setStorageAdminError] = useState<string | null>(null);
   useEffect(() => {
-    setStorageAdmin(false);
+    setStorageAdmin(null);
     setStorageAdminError(null);
     if (!user.isAdmin || !user.adminVerification || !user.user?.uid || !isCloudStorageEngine(configuredStorageEngine)) {
+      setStorageAdmin(false);
       return undefined;
     }
     let cancelled = false;
@@ -126,7 +127,10 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
         }
       })
       .catch((error) => {
-        if (!cancelled) setStorageAdminError(error instanceof Error ? error.message : String(error));
+        if (!cancelled) {
+          setStorageAdmin(false);
+          setStorageAdminError(error instanceof Error ? error.message : String(error));
+        }
       });
     return () => { cancelled = true; };
   }, [configuredStorageEngine, user.adminVerification, user.isAdmin, user.user?.uid]);
@@ -201,7 +205,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   const isFirebaseEngine = storageEngine?.getEngine() === 'firebase';
   const codingEnabled = isFirebaseEngine && hasAudioRecording;
   const liveMonitorEnabled = isFirebaseEngine;
-  const canManageStorage = storageAdmin;
+  const canManageStorage = storageAdmin === true;
 
   const currentConfigLabel = useMemo(() => {
     if (!currentConfigHash) return undefined;
@@ -657,7 +661,9 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 </Tooltip>
                 <Tabs.Tab value="config" leftSection={<IconFileCode size={16} />}>Config</Tabs.Tab>
                 <Tabs.Tab value="manage" leftSection={<IconSettings size={16} />} disabled={!user.isAdmin}>Manage</Tabs.Tab>
-                {canManageStorage && <Tabs.Tab value="storage" leftSection={<IconDatabase size={16} />}>Datastore</Tabs.Tab>}
+                {user.isAdmin && user.adminVerification && isCloudStorageEngine(configuredStorageEngine) && storageAdmin !== false && (
+                  <Tabs.Tab value="storage" leftSection={<IconDatabase size={16} />} disabled={!canManageStorage}>Datastore</Tabs.Tab>
+                )}
               </Tabs.List>
               <Tabs.Panel style={{ overflow: 'auto' }} value="summary" pt="xs">
                 {studyConfig && (
@@ -704,7 +710,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 {canonicalStudyId && user.isAdmin ? <ManageView studyId={canonicalStudyId} refresh={() => execute(studyConfig, storageEngine, canonicalStudyId)} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to manage the data for this study.</Alert></Container>}
               </Tabs.Panel>
               <Tabs.Panel style={{ overflow: 'auto' }} value="storage" pt="xs">
-                {canonicalStudyId && canManageStorage ? <StorageManagementView key={canonicalStudyId} studyId={canonicalStudyId} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red">Sign in as an administrator to manage storage.</Alert></Container>}
+                {storageAdmin === null ? <LoadingOverlay visible /> : canonicalStudyId && canManageStorage ? <StorageManagementView key={canonicalStudyId} studyId={canonicalStudyId} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red">Sign in as an administrator to manage storage.</Alert></Container>}
               </Tabs.Panel>
             </Tabs>
           ) : null}

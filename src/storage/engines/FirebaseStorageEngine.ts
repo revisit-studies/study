@@ -206,6 +206,21 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       .sort((a, b) => a.timestamp - b.timestamp);
   }
 
+  public async getSequenceAssignment(studyId: string, participantId: string) {
+    const studyCollection = collection(this.firestore, `${this.collectionPrefix}${studyId}`);
+    const sequenceAssignmentDoc = doc(studyCollection, 'sequenceAssignment');
+    const assignment = doc(collection(sequenceAssignmentDoc, 'sequenceAssignment'), participantId);
+    const snapshot = await getDoc(assignment);
+    if (!snapshot.exists()) return null;
+    const data = snapshot.data();
+    return {
+      ...data,
+      timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toMillis() : data.timestamp,
+      createdTime: data.createdTime instanceof Timestamp ? data.createdTime.toMillis() : data.createdTime,
+      completed: data.completed instanceof Timestamp ? data.completed.toMillis() : data.completed,
+    } as SequenceAssignment;
+  }
+
   // Set up realtime listener for sequence assignments
   _setupSequenceAssignmentListener(studyId: string, callback: (assignments: SequenceAssignment[]) => void) {
     const studyCollection = collection(

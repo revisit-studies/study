@@ -93,6 +93,26 @@ describe.each([
   });
 
   // getAllSequenceAssignments test
+  test('reads only the requested assignment and seeds browser modes once', async () => {
+    const session = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    expect((await storageEngine.getSequenceAssignment(studyId, session.participantId))?.participantId).toBe(session.participantId);
+    expect(await storageEngine.getSequenceAssignment(studyId, 'missing')).toBeNull();
+
+    const local = storageEngine as LocalStorageEngine;
+    await local.initializeModesFrom('new-study', {
+      dataCollectionEnabled: false,
+      developmentModeEnabled: false,
+      dataSharingEnabled: false,
+      stage: { currentStage: { stageName: 'SECOND', color: '#abc' }, allStages: [{ stageName: 'SECOND', color: '#abc' }] },
+    });
+    expect((await local.getModes('new-study')).dataCollectionEnabled).toBe(false);
+    expect((await local.getStageData('new-study')).currentStage.stageName).toBe('SECOND');
+    await local.initializeModesFrom('new-study', { dataCollectionEnabled: true, developmentModeEnabled: true, dataSharingEnabled: true });
+    expect((await local.getModes('new-study')).dataCollectionEnabled).toBe(false);
+    // @ts-expect-error using protected method for testing
+    await local._testingReset('new-study');
+  });
+
   test('getAllSequenceAssignments returns sequence assignment for participant', async () => {
     const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
     const { participantId } = participantSession;

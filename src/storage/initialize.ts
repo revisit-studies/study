@@ -57,13 +57,12 @@ export async function initializeStorageEngine() {
 async function hasInProgressSession(engine: StorageEngine, studyId: string, requestedParticipantId?: string) {
   const participantId = await engine.peekCurrentParticipantId(studyId);
   if (!participantId && !requestedParticipantId) return false;
-  const assignments = await engine.getAllSequenceAssignments(studyId);
   if (requestedParticipantId) {
-    const requestedAssignment = assignments.find((item) => item.participantId === requestedParticipantId);
+    const requestedAssignment = await engine.getSequenceAssignment(studyId, requestedParticipantId);
     return requestedAssignment?.completed === null
       || (participantId === requestedParticipantId && !requestedAssignment);
   }
-  const persistedAssignment = assignments.find((item) => item.participantId === participantId);
+  const persistedAssignment = await engine.getSequenceAssignment(studyId, participantId!);
   return !persistedAssignment || persistedAssignment.completed === null;
 }
 
@@ -80,7 +79,15 @@ export async function selectStudyStorageEngine(
 
   const local = new LocalStorageEngine();
   await local.connect();
-  if (!participantRoute) return disconnected ? local : configured;
+  const initializeLocalModes = async () => {
+    if (!await local.hasStoredModes(studyId)) {
+      await local.initializeModesFrom(studyId, await configured.getModes(studyId));
+    }
+  };
+  if (!participantRoute) {
+    if (disconnected) await initializeLocalModes();
+    return disconnected ? local : configured;
+  }
 
   const [cloudSession, localSession] = await Promise.all([
     hasInProgressSession(configured, studyId, requestedParticipantId),
@@ -93,6 +100,7 @@ export async function selectStudyStorageEngine(
     : localSession || (!cloudSession && disconnected);
 
   const active = useLocal ? local : configured;
+  if (useLocal && disconnected) await initializeLocalModes();
   window.sessionStorage.setItem(sessionKey, active.getEngine());
   return active;
 }
