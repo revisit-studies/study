@@ -63,6 +63,8 @@
       const selected = e.key.split("Arrow")[1].toLowerCase();
       const isCorrect = selected == correct;
 
+      console.log(selected, isCorrect);
+
       Revisit.postAnswers({ "selected": selected, "correct": isCorrect, "corrLeft": corrLeft, "corrRight":  corrRight});
     })
   </script>

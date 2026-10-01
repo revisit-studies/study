@@ -148,7 +148,7 @@
       "tutorial",
       {
         "type": "factor",
-        "id": "",
+        "id": "training",
         "factor": "trainingPairs",
         "components": "practice",
         "order": "random"
@@ -156,7 +156,7 @@
       "task-details",
       {
         "type": "factor",
-        "id": "",
+        "id": "test",
         "factor": "testTrials",
         "order": "latinSquare",
         "components": "test"
