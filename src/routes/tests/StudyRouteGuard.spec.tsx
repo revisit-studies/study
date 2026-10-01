@@ -10,7 +10,10 @@ import { makeStoredAnswer, makeStudyConfig } from '../../tests/utils';
 import { StoreState } from '../../store/types';
 
 const studyConfig = makeStudyConfig({
-  components: { intro: { type: 'markdown', path: 'intro.md', response: [] } },
+  components: {
+    intro: { type: 'markdown', path: 'intro.md', response: [] },
+    'trials__mixed=%221%22__trial': { type: 'markdown', path: 'intro.md', response: [] },
+  },
   sequence: {
     order: 'fixed',
     components: ['intro', { id: 'adaptive', order: 'dynamic', functionPath: 'adaptive.ts' }],
@@ -56,7 +59,8 @@ describe('StudyRouteGuard', () => {
   test.each([
     '', encryptIndex(0), encryptIndex(2),
     `${encryptIndex(1)}/${encryptIndex(0)}`,
-    'reviewer-intro', '__trainingFailed', '__timedOut',
+    'reviewer-intro', `reviewer-${encodeURIComponent('trials__mixed=%221%22__trial')}`,
+    '__trainingFailed', '__timedOut',
   ])('preserves valid navigation to %s', (path) => {
     expect(renderPath(path)).toContain('Study content');
     expect(renderStudy).toHaveBeenCalledOnce();

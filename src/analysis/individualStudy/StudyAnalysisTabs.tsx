@@ -9,6 +9,7 @@ import {
   IconTags,
   IconDashboard,
   IconFileCode,
+  IconDatabase,
 } from '@tabler/icons-react';
 import {
   useCallback, useEffect, useMemo, useState,
@@ -25,10 +26,12 @@ import { TableView } from './table/TableView';
 import { StatsView } from './stats/StatsView';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { ManageView } from './management/ManageView';
+import { StorageManagementView } from './management/StorageManagementView';
 import { useAuth } from '../../store/hooks/useAuth';
 import { parseStudyConfig } from '../../parser/parser';
 import { useAsync } from '../../store/hooks/useAsync';
 import { StorageEngine } from '../../storage/engines/types';
+import { isCloudStorageEngine } from '../../storage/engines/utils/storageEngineHelpers';
 import { DownloadButtons } from '../../components/downloader/DownloadButtons';
 import { ErrorLoadingConfig } from '../../components/ErrorLoadingConfig';
 import { useStudyRecordings } from '../../utils/useStudyRecordings';
@@ -102,10 +105,35 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
 
   const { hasAudioRecording, hasScreenRecording, hasWebcamRecording } = useStudyRecordings(studyConfig);
 
-  const { storageEngine } = useStorageEngine();
+  const { storageEngine, configuredStorageEngine } = useStorageEngine();
   const navigate = useNavigate();
   const { analysisTab } = useParams();
+  const isStorageTab = analysisTab === 'storage';
   const { user } = useAuth();
+  const [storageAdmin, setStorageAdmin] = useState<boolean | null>(null);
+  const [storageAdminError, setStorageAdminError] = useState<string | null>(null);
+  useEffect(() => {
+    setStorageAdmin(null);
+    setStorageAdminError(null);
+    if (!user.isAdmin || !user.adminVerification || !user.user?.uid || !isCloudStorageEngine(configuredStorageEngine)) {
+      setStorageAdmin(false);
+      return undefined;
+    }
+    let cancelled = false;
+    configuredStorageEngine.isStorageAdmin()
+      .then((verified) => {
+        if (!cancelled) {
+          setStorageAdmin(verified);
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setStorageAdmin(false);
+          setStorageAdminError(error instanceof Error ? error.message : String(error));
+        }
+      });
+    return () => { cancelled = true; };
+  }, [configuredStorageEngine, user.adminVerification, user.isAdmin, user.user?.uid]);
   const [ref, { width }] = useResizeObserver();
   const canonicalStudyId = useMemo(() => {
     if (!routeStudyId || routeStudyId === '__revisit-widget') {
@@ -118,10 +146,13 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
 
   // 0-1 percentage of scroll height
 
-  const { value: expData, execute, status } = useAsync(getParticipantsData, [studyConfig, storageEngine, canonicalStudyId ?? undefined]);
+  const { value: expData, execute, status } = useAsync(
+    getParticipantsData,
+    isStorageTab ? null : [studyConfig, storageEngine, canonicalStudyId ?? undefined],
+  );
   const { value: currentConfigHashValue, status: currentConfigStatus } = useAsync(
     getCurrentConfigHashForStudy,
-    storageEngine && canonicalStudyId ? [storageEngine, canonicalStudyId] : null,
+    storageEngine && canonicalStudyId && !isStorageTab ? [storageEngine, canonicalStudyId] : null,
   );
   const studyUsesConditions = useMemo(
     () => (studyConfig?.sequence ? getSequenceConditions(studyConfig.sequence).length > 0 : false),
@@ -174,6 +205,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   const isFirebaseEngine = storageEngine?.getEngine() === 'firebase';
   const codingEnabled = isFirebaseEngine && hasAudioRecording;
   const liveMonitorEnabled = isFirebaseEngine;
+  const canManageStorage = storageAdmin === true;
 
   const currentConfigLabel = useMemo(() => {
     if (!currentConfigHash) return undefined;
@@ -234,7 +266,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
 
   // Load available stages
   const loadStages = useCallback(async () => {
-    if (!canonicalStudyId || !storageEngine) return;
+    if (!canonicalStudyId || !storageEngine || isStorageTab) return;
 
     try {
       const stageData = await storageEngine.getStageData(canonicalStudyId);
@@ -254,11 +286,11 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
       setAvailableStages([{ value: 'ALL', label: 'ALL' }]);
       setStageColors({});
     }
-  }, [canonicalStudyId, storageEngine]);
+  }, [canonicalStudyId, storageEngine, isStorageTab]);
 
   // Load available configs
   const loadConfigs = useCallback(async () => {
-    if (!canonicalStudyId || !storageEngine) return;
+    if (!canonicalStudyId || !storageEngine || isStorageTab) return;
 
     try {
       const participantData = expData ? Object.values(expData) : [];
@@ -284,7 +316,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
       setAvailableConfigs([{ value: 'ALL', label: 'ALL' }]);
       setAllConfigs({});
     }
-  }, [canonicalStudyId, storageEngine, expData, currentConfigHash]);
+  }, [canonicalStudyId, storageEngine, expData, currentConfigHash, isStorageTab]);
 
   const allConditions = useMemo(() => {
     if (!expData) return [];
@@ -338,7 +370,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     setStartupError(null);
     setStudyConfig(undefined);
 
-    if (!routeStudyId) return () => { };
+    if (!routeStudyId || isStorageTab) return () => { };
     if (routeStudyId === '__revisit-widget') {
       const messageListener = (event: MessageEvent) => {
         if (event.data.type === 'revisitWidget/CONFIG' && storageEngine) {
@@ -381,7 +413,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     return () => {
       cancelled = true;
     };
-  }, [routeStudyId, globalConfig, storageEngine]);
+  }, [routeStudyId, globalConfig, storageEngine, isStorageTab]);
 
   if (startupError) {
     return <StartupErrorScreen error={startupError.error} />;
@@ -415,7 +447,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     );
   }
 
-  if (canonicalStudyId === null || !['summary', 'table', 'stats', 'tagging', 'live-monitor', 'config', 'manage'].includes(analysisTab ?? '')) {
+  if (canonicalStudyId === null || !['summary', 'table', 'stats', 'tagging', 'live-monitor', 'config', 'manage', 'storage'].includes(analysisTab ?? '')) {
     return (
       <>
         <AppHeader studyIds={globalConfig.configsList} selectedStudyId={displayStudyId} />
@@ -592,9 +624,10 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
               </Flex>
             </Flex>
           </Flex>
-          <LoadingOverlay visible={status === 'pending'} />
+          <LoadingOverlay visible={!isStorageTab && status === 'pending'} />
+          {storageAdminError && <Alert color="red" title="Datastore access unavailable">{storageAdminError}</Alert>}
 
-          {status === 'success' ? (
+          {status === 'success' || isStorageTab ? (
             <Tabs
               style={{
                 flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden',
@@ -628,6 +661,9 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 </Tooltip>
                 <Tabs.Tab value="config" leftSection={<IconFileCode size={16} />}>Config</Tabs.Tab>
                 <Tabs.Tab value="manage" leftSection={<IconSettings size={16} />} disabled={!user.isAdmin}>Manage</Tabs.Tab>
+                {user.isAdmin && user.adminVerification && isCloudStorageEngine(configuredStorageEngine) && storageAdmin !== false && (
+                  <Tabs.Tab value="storage" leftSection={<IconDatabase size={16} />} disabled={!canManageStorage}>Datastore</Tabs.Tab>
+                )}
               </Tabs.List>
               <Tabs.Panel style={{ overflow: 'auto' }} value="summary" pt="xs">
                 {studyConfig && (
@@ -672,6 +708,9 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
               </Tabs.Panel>
               <Tabs.Panel style={{ overflow: 'auto' }} value="manage" pt="xs">
                 {canonicalStudyId && user.isAdmin ? <ManageView studyId={canonicalStudyId} refresh={() => execute(studyConfig, storageEngine, canonicalStudyId)} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to manage the data for this study.</Alert></Container>}
+              </Tabs.Panel>
+              <Tabs.Panel style={{ overflow: 'auto' }} value="storage" pt="xs">
+                {storageAdmin === null ? <LoadingOverlay visible /> : canonicalStudyId && canManageStorage ? <StorageManagementView key={canonicalStudyId} studyId={canonicalStudyId} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red">Sign in as an administrator to manage storage.</Alert></Container>}
               </Tabs.Panel>
             </Tabs>
           ) : null}

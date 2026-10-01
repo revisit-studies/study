@@ -51,7 +51,7 @@ export function ComponentController() {
   const studyId = useStudyId();
 
   const stepConfig = studyConfig.components[currentComponent];
-  const { storageEngine } = useStorageEngine();
+  const { storageEngine, configuredStorageEngine } = useStorageEngine();
 
   const answers = useStoreSelector((store) => store.answers);
   const flatSequence = useFlatSequence();
@@ -86,26 +86,27 @@ export function ComponentController() {
   const storeDispatch = useStoreDispatch();
   const { setAlertModal } = useStoreActions();
   useEffect(() => {
-    const configuredStorageEngine = import.meta.env.VITE_STORAGE_ENGINE;
+    if (configuredStorageEngine && storageEngine !== configuredStorageEngine) return;
+    const configuredEngineName = import.meta.env.VITE_STORAGE_ENGINE;
     const activeStorageEngine = storageEngine?.getEngine();
-    if (!configuredStorageEngine || activeStorageEngine === configuredStorageEngine) {
+    if (!configuredEngineName || activeStorageEngine === configuredEngineName) {
       return;
     }
 
     if (activeStorageEngine === 'localStorage' && !import.meta.env.PROD) {
       storeDispatch(setAlertModal({
         show: true,
-        message: `There was an issue connecting to the ${configuredStorageEngine} database, so this development build is using localStorage instead. Study data will not be saved to cloud storage.`,
+        message: `There was an issue connecting to the ${configuredEngineName} database, so this development build is using localStorage instead. Study data will not be saved to cloud storage.`,
         title: 'Using localStorage fallback',
       }));
     } else {
       storeDispatch(setAlertModal({
         show: true,
-        message: `There was an issue connecting to the ${configuredStorageEngine} database. This could be caused by a network issue or your adblocker. If you are using an adblocker, please disable it for this website and refresh.`,
+        message: `There was an issue connecting to the ${configuredEngineName} database. This could be caused by a network issue or your adblocker. If you are using an adblocker, please disable it for this website and refresh.`,
         title: 'Failed to connect to the storage engine',
       }));
     }
-  }, [setAlertModal, storageEngine, storeDispatch]);
+  }, [configuredStorageEngine, setAlertModal, storageEngine, storeDispatch]);
 
   // Find current block, if it has an ID, add it as a participant tag
   const [blockForStep, setBlockForStep] = useState<string[]>([]);
