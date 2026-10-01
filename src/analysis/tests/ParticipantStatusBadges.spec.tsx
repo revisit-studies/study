@@ -39,18 +39,24 @@ describe('ParticipantStatusBadges', () => {
   });
 
   test('displays the timedOut count', () => {
-    const html = renderToStaticMarkup(<ParticipantStatusBadges {...noCounts} timedOut={6} />);
+    const html = renderToStaticMarkup(<ParticipantStatusBadges {...noCounts} timedOut={6} showTimeoutStatuses />);
     expect(html).toContain('6');
   });
 
   test('displays the completedLate count', () => {
-    const html = renderToStaticMarkup(<ParticipantStatusBadges {...noCounts} completedLate={9} />);
+    const html = renderToStaticMarkup(<ParticipantStatusBadges {...noCounts} completedLate={9} showTimeoutStatuses />);
     expect(html).toContain('9');
+  });
+
+  test('hides timeout statuses by default', () => {
+    const html = renderToStaticMarkup(<ParticipantStatusBadges {...noCounts} timedOut={6} completedLate={9} />);
+    expect(html).not.toContain('6');
+    expect(html).not.toContain('9');
   });
 
   test('displays all counts at once', () => {
     const html = renderToStaticMarkup(
-      <ParticipantStatusBadges completed={4} inProgress={7} rejected={1} timedOut={3} completedLate={8} />,
+      <ParticipantStatusBadges completed={4} inProgress={7} rejected={1} timedOut={3} completedLate={8} showTimeoutStatuses />,
     );
     ['4', '7', '1', '3', '8'].forEach((count) => expect(html).toContain(count));
   });

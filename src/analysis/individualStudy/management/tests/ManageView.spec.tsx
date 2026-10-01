@@ -758,25 +758,75 @@ describe('ManageView', () => {
 
     expect(mockStorageEngine!.updateStage).toHaveBeenCalledWith('test-study', 'DEFAULT', {
       maxParticipants: 20,
+      participantLimitEnabled: true,
     });
     expect((screen.getByLabelText('Maximum participants for DEFAULT') as HTMLInputElement).value).toBe('20');
   });
 
-  test('StageManagementItem restores the saved manual allocation total when limits are re-enabled', async () => {
+  test('StageManagementItem saves the maximum and refreshes its tables', async () => {
+    let finishSave!: () => void;
+    const pendingSave = new Promise<void>((resolve) => { finishSave = resolve; });
+    mockStorageEngine!.updateStage.mockReturnValueOnce(pendingSave);
+    mockStorageEngine!.getStageData
+      .mockResolvedValueOnce({
+        currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
+        allStages: [{ stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR, maxParticipants: 4 }],
+      })
+      .mockResolvedValueOnce({
+        currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
+        allStages: [{ stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR, maxParticipants: 12 }],
+      });
+
+    await act(async () => {
+      render(<StageManagementItem studyId="test-study" />);
+    });
+
+    expect((screen.getByRole('button', { name: 'Save maximum participants for DEFAULT' }) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText('Maximum participants for DEFAULT'), { target: { value: '12' } });
+    expect((screen.getByRole('button', { name: 'Save maximum participants for DEFAULT' }) as HTMLButtonElement).disabled).toBe(false);
+    act(() => {
+      fireEvent.click(screen.getByRole('button', { name: 'Save maximum participants for DEFAULT' }));
+    });
+
+    expect(mockStorageEngine!.updateStage).toHaveBeenCalledWith('test-study', 'DEFAULT', {
+      maxParticipants: 12,
+    });
+    expect(screen.getByText('0 / 12')).toBeDefined();
+    expect((screen.getByRole('button', { name: 'Save maximum participants for DEFAULT' }) as HTMLButtonElement).disabled).toBe(true);
+
+    await act(async () => {
+      finishSave();
+      await pendingSave;
+    });
+    await waitFor(() => expect(mockStorageEngine!.getStageData).toHaveBeenCalledTimes(2));
+  });
+
+  test('StageManagementItem retains the saved maximum and manual allocations while limits are off', async () => {
     const firstCombination = getBetweenSubjectsCombinationKey({ letter: 'a' }, ['letter']);
     const secondCombination = getBetweenSubjectsCombinationKey({ letter: 'b' }, ['letter']);
-    mockStorageEngine!.getStageData.mockResolvedValue({
-      currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
-      allStages: [{
-        stageName: 'DEFAULT',
-        color: DEFAULT_STAGE_COLOR,
-        participantAssignmentMode: 'manual',
-        manualDesiredParticipantsByCombination: {
-          [firstCombination]: 6,
-          [secondCombination]: 8,
-        },
-      }],
-    });
+    const manualStage = {
+      stageName: 'DEFAULT',
+      color: DEFAULT_STAGE_COLOR,
+      maxParticipants: 14,
+      participantAssignmentMode: 'manual' as const,
+      manualDesiredParticipantsByCombination: {
+        [firstCombination]: 6,
+        [secondCombination]: 8,
+      },
+    };
+    mockStorageEngine!.getStageData
+      .mockResolvedValueOnce({
+        currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
+        allStages: [manualStage],
+      })
+      .mockResolvedValueOnce({
+        currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
+        allStages: [{ ...manualStage, participantLimitEnabled: false }],
+      })
+      .mockResolvedValueOnce({
+        currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
+        allStages: [{ ...manualStage, participantLimitEnabled: true }],
+      });
     const studyConfig = {
       factors: { letter: ['a', 'b'] },
       betweenSubjects: ['letter'],
@@ -791,7 +841,26 @@ describe('ManageView', () => {
     });
 
     expect(mockStorageEngine!.updateStage).toHaveBeenCalledWith('test-study', 'DEFAULT', {
+      participantLimitEnabled: false,
+    });
+    expect((screen.getByLabelText('Maximum participants for DEFAULT') as HTMLInputElement).value).toBe('14');
+    screen.getAllByLabelText(/Desired participants/).forEach((input) => {
+      expect((input as HTMLInputElement).disabled).toBe(true);
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('checkbox', { name: 'Limit participants' }));
+    });
+
+    expect(mockStorageEngine!.updateStage).toHaveBeenLastCalledWith('test-study', 'DEFAULT', {
       maxParticipants: 14,
+      participantLimitEnabled: true,
+    });
+    expect((screen.getByLabelText('Maximum participants for DEFAULT') as HTMLInputElement).value).toBe('14');
+    const desiredParticipantInputs = screen.getAllByLabelText(/Desired participants/) as HTMLInputElement[];
+    expect(desiredParticipantInputs.map((input) => input.value)).toEqual(['6', '8']);
+    desiredParticipantInputs.forEach((input) => {
+      expect(input.disabled).toBe(false);
     });
   });
 

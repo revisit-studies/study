@@ -251,6 +251,15 @@ describe('StudyAnalysisTabs', () => {
     expect(screen.queryByText('Study Summary')).toBeNull();
   });
 
+  test('renders Stage Management instead of a 404 for the stages route', () => {
+    mockParams.analysisTab = 'stages';
+
+    render(<StudyAnalysisTabs globalConfig={mockGlobalConfig} />);
+
+    expect(screen.getByText('StageManagementItem')).toBeDefined();
+    expect(screen.queryByTestId('not-found')).toBeNull();
+  });
+
   test('renders standard tabs regardless of engine', () => {
     const html = renderToStaticMarkup(<StudyAnalysisTabs globalConfig={mockGlobalConfig} />);
     expect(html).toContain('Study Summary');

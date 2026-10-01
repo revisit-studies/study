@@ -444,7 +444,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     );
   }
 
-  if (canonicalStudyId === null || !['summary', 'table', 'stats', 'tagging', 'live-monitor', 'config', 'manage', 'storage'].includes(analysisTab ?? '')) {
+  if (canonicalStudyId === null || !['summary', 'table', 'stats', 'tagging', 'live-monitor', 'config', 'stages', 'manage', 'storage'].includes(analysisTab ?? '')) {
     return (
       <>
         <AppHeader studyIds={globalConfig.configsList} selectedStudyId={displayStudyId} />
@@ -637,7 +637,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
               }}
               keepMounted={false}
               orientation="vertical"
-              styles={{ tab: { paddingLeft: 6 } }}
+              styles={{ tab: { paddingLeft: 6 }, tabLabel: { textAlign: 'left' } }}
               variant="outline"
               value={analysisTab}
               onChange={(value) => navigate(`/analysis/stats/${routeStudyId}/${value}`)}

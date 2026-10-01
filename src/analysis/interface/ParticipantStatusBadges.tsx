@@ -17,10 +17,16 @@ const STATUS_BADGES: Record<ParticipantStatus, { color: string; Icon: typeof Ico
   completedLate: { color: 'grape', Icon: IconCheck },
 };
 
-export function ParticipantStatusBadges(counts: Omit<ParticipantCounts, 'total'>) {
+type ParticipantStatusBadgesProps = Omit<ParticipantCounts, 'total'> & {
+  showTimeoutStatuses?: boolean;
+};
+
+export function ParticipantStatusBadges({ showTimeoutStatuses = false, ...counts }: ParticipantStatusBadgesProps) {
   return (
     <Flex ml={4} gap={4}>
-      {PARTICIPANT_STATUSES.map((status) => {
+      {PARTICIPANT_STATUSES.filter((status) => (
+        showTimeoutStatuses || (status !== 'timedOut' && status !== 'completedLate')
+      )).map((status) => {
         const { color, Icon } = STATUS_BADGES[status];
         return (
           <Tooltip key={status} label={PARTICIPANT_STATUS_LABELS[status]}>

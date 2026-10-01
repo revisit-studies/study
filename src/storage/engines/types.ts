@@ -86,6 +86,8 @@ export interface StageInfo {
   color: string;
   /** Maximum number of non-rejected participants allowed in this stage. Undefined means unlimited. */
   maxParticipants?: number;
+  /** Whether the saved maximum is enforced. Undefined preserves the legacy behavior of enabling any defined maximum. */
+  participantLimitEnabled?: boolean;
   /** Disabled between-subjects condition keys. Undefined means every condition is enabled. */
   disabledBetweenSubjectsCombinations?: string[];
   /** Legacy manual target participant-count overrides for individual between-subjects conditions. */
@@ -100,10 +102,17 @@ export interface StageInfo {
 export interface StageUpdates {
   color?: string;
   maxParticipants?: number | null;
+  participantLimitEnabled?: boolean | null;
   disabledBetweenSubjectsCombinations?: string[] | null;
   desiredParticipantsByCombination?: Record<string, number> | null;
   participantAssignmentMode?: 'even' | 'manual' | null;
   manualDesiredParticipantsByCombination?: Record<string, number> | null;
+}
+
+export function isStageParticipantLimitEnabled(
+  stage: StageInfo,
+): stage is StageInfo & { maxParticipants: number } {
+  return stage.maxParticipants !== undefined && stage.participantLimitEnabled !== false;
 }
 
 export class StageCapacityExceededError extends Error {
@@ -189,7 +198,7 @@ function getDesiredParticipantCountsByCombination(
   sequenceArray: Sequence[],
   betweenSubjects: string[],
 ) {
-  if (stage.maxParticipants === undefined || betweenSubjects.length === 0) {
+  if (!isStageParticipantLimitEnabled(stage) || betweenSubjects.length === 0) {
     return undefined;
   }
 
@@ -1110,6 +1119,7 @@ export abstract class StorageEngine {
     }
 
     const updatesMaxParticipants = Object.hasOwn(updates, 'maxParticipants');
+    const updatesParticipantLimitEnabled = Object.hasOwn(updates, 'participantLimitEnabled');
     const updatesDisabledBetweenSubjectsCombinations = Object.hasOwn(updates, 'disabledBetweenSubjectsCombinations');
     const updatesDesiredParticipantsByCombination = Object.hasOwn(updates, 'desiredParticipantsByCombination');
     const updatesParticipantAssignmentMode = Object.hasOwn(updates, 'participantAssignmentMode');
@@ -1129,6 +1139,13 @@ export abstract class StorageEngine {
             delete updatedStage.maxParticipants;
           } else {
             updatedStage.maxParticipants = updates.maxParticipants;
+          }
+        }
+        if (updatesParticipantLimitEnabled) {
+          if (updates.participantLimitEnabled === null) {
+            delete updatedStage.participantLimitEnabled;
+          } else {
+            updatedStage.participantLimitEnabled = updates.participantLimitEnabled;
           }
         }
         if (updatesDisabledBetweenSubjectsCombinations) {
@@ -1577,7 +1594,7 @@ export abstract class StorageEngine {
       await this.timeoutExpiredAssignments(modes);
       const currentStage = stageData.currentStage.stageName;
       const currentStageInfo = stageData.allStages.find((stage) => stage.stageName === currentStage);
-      if (modes.dataCollectionEnabled && currentStageInfo?.maxParticipants !== undefined) {
+      if (modes.dataCollectionEnabled && currentStageInfo && isStageParticipantLimitEnabled(currentStageInfo)) {
         const stageParticipantCounts = getStageParticipantCounts(await this.getAllSequenceAssignments(this.studyId!));
         if ((stageParticipantCounts[currentStage] || 0) >= currentStageInfo.maxParticipants) {
           throw new StageCapacityExceededError(currentStage);

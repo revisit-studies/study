@@ -251,7 +251,7 @@ describe('stage capacity', () => {
     await storageEngine.setSequenceArray(await generateSequenceArray(betweenSubjectsConfig));
     const controlKey = getBetweenSubjectsCombinationKey({ version: 'control' }, ['version']);
     await storageEngine.updateStage(studyId, 'LIMITED', {
-      maxParticipants: null,
+      participantLimitEnabled: false,
       disabledBetweenSubjectsCombinations: [controlKey],
     });
 
