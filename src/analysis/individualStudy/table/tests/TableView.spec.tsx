@@ -221,7 +221,7 @@ describe('TableView', () => {
     );
     const col = capturedTableOptions!.columns.find((c) => c.header === 'Status')!;
     const html = renderToStaticMarkup(col.Cell({
-      cell: { getValue: () => ({ rejected: { reason: 'spam' }, completed: false, percent: 0 }) },
+      cell: { getValue: () => ({ rejected: { reason: 'spam' }, status: 'rejected', percent: 0 }) },
     }));
     expect(html).toContain('x-icon');
     expect(html).toContain('spam');
@@ -233,7 +233,7 @@ describe('TableView', () => {
     );
     const col = capturedTableOptions!.columns.find((c) => c.header === 'Status')!;
     const html = renderToStaticMarkup(col.Cell({
-      cell: { getValue: () => ({ rejected: false, completed: true, percent: 1 }) },
+      cell: { getValue: () => ({ rejected: false, status: 'completed', percent: 1 }) },
     }));
     expect(html).toContain('check');
   });
@@ -244,9 +244,32 @@ describe('TableView', () => {
     );
     const col = capturedTableOptions!.columns.find((c) => c.header === 'Status')!;
     const html = renderToStaticMarkup(col.Cell({
-      cell: { getValue: () => ({ rejected: false, completed: false, percent: 0.5 }) },
+      cell: { getValue: () => ({ rejected: false, status: 'inProgress', percent: 0.5 }) },
     }));
     expect(html).toContain('50'); // 0.5 * 100
+  });
+
+  test('Status Cell: timed-out participant is labelled Timed out', () => {
+    renderToStaticMarkup(
+      <TableView {...defaultProps} visibleParticipants={[makeParticipant()]} />,
+    );
+    const col = capturedTableOptions!.columns.find((c) => c.header === 'Status')!;
+    const html = renderToStaticMarkup(col.Cell({
+      cell: { getValue: () => ({ rejected: false, status: 'timedOut', percent: 0.5 }) },
+    }));
+    expect(html).toContain('Timed out');
+  });
+
+  test('Status Cell: a participant who finished after timing out is labelled Late', () => {
+    renderToStaticMarkup(
+      <TableView {...defaultProps} visibleParticipants={[makeParticipant()]} />,
+    );
+    const col = capturedTableOptions!.columns.find((c) => c.header === 'Status')!;
+    const html = renderToStaticMarkup(col.Cell({
+      cell: { getValue: () => ({ rejected: false, status: 'completedLate', percent: 1 }) },
+    }));
+    expect(html).toContain('Late');
+    expect(html).not.toContain('check');
   });
 
   // ── Stage column ───────────────────────────────────────────────────────────

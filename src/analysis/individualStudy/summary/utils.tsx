@@ -1,4 +1,5 @@
 import { ParticipantDataWithStatus } from '../../../storage/types';
+import { countParticipantStatuses, getParticipantDataStatus } from '../../../storage/participantStatus';
 import { getCleanedDuration } from '../../../utils/getCleanedDuration';
 import {
   ComponentData, OverviewData, ParticipantCounts, ResponseData,
@@ -55,12 +56,11 @@ function filterParticipants(
 function calculateParticipantCounts(visibleParticipants: ParticipantDataWithStatus[], componentName?: string): ParticipantCounts {
   const filteredParticipants = filterParticipants(visibleParticipants, componentName, false);
 
+  // The canonical mapping keeps a participant rejected after completing out of
+  // the completed count, and a late finisher out of both completed and timed out.
   const participantCounts: ParticipantCounts = {
     total: filteredParticipants.length,
-    // Include !p.rejected to exclude participants rejected manually after completing the study
-    completed: filteredParticipants.filter((p) => p.completed && !p.rejected).length,
-    inProgress: filteredParticipants.filter((p) => !p.completed && !p.rejected).length,
-    rejected: filteredParticipants.filter((p) => p.rejected).length,
+    ...countParticipantStatuses(filteredParticipants, getParticipantDataStatus),
   };
 
   return participantCounts;

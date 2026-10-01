@@ -18,6 +18,7 @@ type RowData = Record<string, string | number | boolean | null | object>;
 const revisitRows: RowData[] = [];
 const storageFiles: Record<string, string> = {};
 const localStore: Record<string, string | number | object | null> = {};
+const supabaseFailureState = vi.hoisted(() => ({ failNextUpdate: false }));
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 vi.mock('@supabase/supabase-js', () => {
@@ -140,6 +141,11 @@ vi.mock('@supabase/supabase-js', () => {
               error: null,
             });
           } else if (op === 'update') {
+            if (supabaseFailureState.failNextUpdate) {
+              supabaseFailureState.failNextUpdate = false;
+              resolve({ data: null, error: { message: 'simulated update failure' } });
+              return;
+            }
             const matched = applyFilters(rows, filters);
             matched.forEach((row) => Object.assign(row, payload as RowData));
             resolve({ data: matched, error: null });
@@ -1136,6 +1142,15 @@ describe.each([
     await expect(fresh._completeCurrentParticipantRealtime()).rejects.toThrow('Participant not initialized');
   });
 
+  test('_completeCurrentParticipantRealtime propagates a rejected assignment update', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    supabaseFailureState.failNextUpdate = true;
+
+    // @ts-expect-error protected
+    await expect(storageEngine._completeCurrentParticipantRealtime())
+      .rejects.toThrow('Failed to complete sequence assignment');
+  });
+
   // ── _rejectParticipantRealtime ───────────────────────────────────────────────
   test('_rejectParticipantRealtime sets rejected=true on the assignment', async () => {
     // Initialize two participants so the claimed-assignment lookup in
@@ -1224,6 +1239,31 @@ describe.each([
     expect(modes.dataCollectionEnabled).toBe(false);
     expect(modes.developmentModeEnabled).toBe(false);
     expect(modes.dataSharingEnabled).toBe(false);
+  });
+
+  test('setAutoTimeoutMinutes leaves the other stored settings alone', async () => {
+    await storageEngine.setMode(studyId, 'dataCollectionEnabled', false);
+    await storageEngine.setCurrentStage(studyId, 'STAGE_A', '#ff0000');
+    await storageEngine.setAutoTimeoutMinutes(studyId, 45);
+
+    const modes = await storageEngine.getModes(studyId);
+    expect(modes.autoTimeoutMinutes).toBe(45);
+    expect(modes.dataCollectionEnabled).toBe(false);
+    expect(modes.stage?.currentStage.stageName).toBe('STAGE_A');
+
+    await storageEngine.setAutoTimeoutMinutes(studyId, undefined);
+    const modesAfterDisable = await storageEngine.getModes(studyId);
+    expect(modesAfterDisable.autoTimeoutMinutes).toBeUndefined();
+    expect(modesAfterDisable.dataCollectionEnabled).toBe(false);
+    expect(modesAfterDisable.stage?.currentStage.stageName).toBe('STAGE_A');
+  });
+
+  test('setAutoTimeoutMinutes persists and removes the setting', async () => {
+    await storageEngine.setAutoTimeoutMinutes(studyId, 60);
+    expect((await storageEngine.getModes(studyId)).autoTimeoutMinutes).toBe(60);
+
+    await storageEngine.setAutoTimeoutMinutes(studyId, undefined);
+    expect((await storageEngine.getModes(studyId)).autoTimeoutMinutes).toBeUndefined();
   });
 
   // ── URL getters ──────────────────────────────────────────────────────────────

@@ -1098,6 +1098,31 @@ describe.each([
     expect(modes.dataSharingEnabled).toBe(false);
   });
 
+  test('setAutoTimeoutMinutes leaves the other stored settings alone', async () => {
+    await storageEngine.setMode(studyId, 'dataCollectionEnabled', false);
+    await storageEngine.setCurrentStage(studyId, 'STAGE_A', '#ff0000');
+    await storageEngine.setAutoTimeoutMinutes(studyId, 45);
+
+    const modes = await storageEngine.getModes(studyId);
+    expect(modes.autoTimeoutMinutes).toBe(45);
+    expect(modes.dataCollectionEnabled).toBe(false);
+    expect(modes.stage?.currentStage.stageName).toBe('STAGE_A');
+
+    await storageEngine.setAutoTimeoutMinutes(studyId, undefined);
+    const modesAfterDisable = await storageEngine.getModes(studyId);
+    expect(modesAfterDisable.autoTimeoutMinutes).toBeUndefined();
+    expect(modesAfterDisable.dataCollectionEnabled).toBe(false);
+    expect(modesAfterDisable.stage?.currentStage.stageName).toBe('STAGE_A');
+  });
+
+  test('setAutoTimeoutMinutes removes the Firebase setting when disabled', async () => {
+    await storageEngine.setAutoTimeoutMinutes(studyId, 60);
+    expect((await storageEngine.getModes(studyId)).autoTimeoutMinutes).toBe(60);
+
+    await storageEngine.setAutoTimeoutMinutes(studyId, undefined);
+    expect((await storageEngine.getModes(studyId)).autoTimeoutMinutes).toBeUndefined();
+  });
+
   // ── URL getters ──────────────────────────────────────────────────────────────
   test('_getAudioUrl returns URL when audio exists', async () => {
     // @ts-expect-error protected

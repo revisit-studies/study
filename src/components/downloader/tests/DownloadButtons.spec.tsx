@@ -177,6 +177,7 @@ const participant: ParticipantDataWithStatus = {
     userAgent: '', resolution: { width: 0, height: 0 }, language: '', ip: '',
   },
   completed: false,
+  timedOut: false,
   rejected: false,
   participantTags: [],
   stage: 'DEFAULT',

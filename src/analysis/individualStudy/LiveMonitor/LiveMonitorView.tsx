@@ -11,12 +11,14 @@ import { StudyConfig } from '../../../parser/types';
 import { StorageEngine, SequenceAssignment } from '../../../storage/engines/types';
 import { ParticipantSection } from './ParticipantSection';
 import { FirebaseStorageEngine } from '../../../storage/engines/FirebaseStorageEngine';
+import {
+  ParticipantStatus, countParticipantStatuses, getSequenceAssignmentStatus,
+} from '../../../storage/participantStatus';
 
 export interface LiveMonitorParticipantProgress {
   assignment: SequenceAssignment;
   progress: number;
-  isCompleted: boolean;
-  isRejected: boolean;
+  status: ParticipantStatus;
 }
 
 export function getFilteredParticipantProgress(
@@ -25,20 +27,12 @@ export function getFilteredParticipantProgress(
   selectedStages: string[],
 ): LiveMonitorParticipantProgress[] {
   return sequenceAssignments
-    .map((assignment) => {
-      const progress = assignment.total > 0 ? (assignment.answered.length / assignment.total) * 100 : 0;
-      const isCompleted = assignment.completed !== null;
-      const isRejected = assignment.rejected;
-
-      return {
-        assignment,
-        progress,
-        isCompleted,
-        isRejected,
-      };
-    })
-    .filter(({ isCompleted, isRejected, assignment }) => {
-      const status = isRejected ? 'rejected' : (isCompleted ? 'completed' : 'inProgress');
+    .map((assignment) => ({
+      assignment,
+      progress: assignment.total > 0 ? (assignment.answered.length / assignment.total) * 100 : 0,
+      status: getSequenceAssignmentStatus(assignment),
+    }))
+    .filter(({ status, assignment }) => {
       const statusMatch = includedParticipants.includes(status);
       const stageMatch = selectedStages.includes('ALL') || selectedStages.includes(assignment.stage || '');
 
@@ -48,11 +42,17 @@ export function getFilteredParticipantProgress(
 }
 
 export function groupParticipantProgress(filteredParticipantProgress: LiveMonitorParticipantProgress[]) {
-  const inProgress = filteredParticipantProgress.filter((participant) => !participant.isCompleted && !participant.isRejected);
-  const completed = filteredParticipantProgress.filter((participant) => participant.isCompleted && !participant.isRejected);
-  const rejected = filteredParticipantProgress.filter((participant) => participant.isRejected);
+  const byStatus = (status: ParticipantStatus) => filteredParticipantProgress.filter(
+    (participant) => participant.status === status,
+  );
 
-  return { inProgress, completed, rejected };
+  return {
+    inProgress: byStatus('inProgress'),
+    completed: byStatus('completed'),
+    rejected: byStatus('rejected'),
+    timedOut: byStatus('timedOut'),
+    completedLate: byStatus('completedLate'),
+  };
 }
 
 // Progress label components
@@ -80,19 +80,19 @@ function CompletedLabel() {
   );
 }
 
-function RejectedLabel({ progress }: { progress: number }) {
-  return (
-    <Text
-      c="red"
-      fw={700}
-      ta="center"
-      size="xs"
-    >
-      {Math.round(progress)}
-      %
-    </Text>
-  );
+function percentLabel(color: string) {
+  return function PercentLabel({ progress }: { progress: number }) {
+    return (
+      <Text c={color} fw={700} ta="center" size="xs">
+        {Math.round(progress)}
+        %
+      </Text>
+    );
+  };
 }
+
+const RejectedLabel = percentLabel('red');
+const TimedOutLabel = percentLabel('yellow');
 
 export function LiveMonitorView({
   studyConfig: _studyConfig, storageEngine, studyId, includedParticipants, selectedStages,
@@ -210,6 +210,11 @@ export function LiveMonitorView({
     [filteredParticipantProgress],
   );
 
+  const statusCounts = useMemo(
+    () => countParticipantStatuses(filteredParticipantProgress, (participant) => participant.status),
+    [filteredParticipantProgress],
+  );
+
   return (
     <Stack gap="sm">
       <Card
@@ -234,19 +239,29 @@ export function LiveMonitorView({
             </Text>
             <Group gap="xs">
               <Badge color="green" variant="light" size="sm">
-                {filteredParticipantProgress.filter((p) => p.isCompleted && !p.isRejected).length}
+                {statusCounts.completed}
                 {' '}
                 Completed
               </Badge>
               <Badge color="orange" variant="light" size="sm">
-                {filteredParticipantProgress.filter((p) => !p.isCompleted && !p.isRejected).length}
+                {statusCounts.inProgress}
                 {' '}
                 Active
               </Badge>
               <Badge color="red" variant="light" size="sm">
-                {filteredParticipantProgress.filter((p) => p.isRejected).length}
+                {statusCounts.rejected}
                 {' '}
                 Rejected
+              </Badge>
+              <Badge color="yellow" variant="light" size="sm">
+                {statusCounts.timedOut}
+                {' '}
+                Timed Out
+              </Badge>
+              <Badge color="grape" variant="light" size="sm">
+                {statusCounts.completedLate}
+                {' '}
+                Completed Late
               </Badge>
             </Group>
           </Group>
@@ -329,6 +344,24 @@ export function LiveMonitorView({
           progressValue={(_, progress) => progress}
           progressColor="red"
           progressLabel={RejectedLabel}
+        />
+
+        <ParticipantSection
+          title="Timed Out"
+          titleColor="yellow"
+          participants={participantGroups.timedOut}
+          progressValue={(_, progress) => progress}
+          progressColor="yellow"
+          progressLabel={TimedOutLabel}
+        />
+
+        <ParticipantSection
+          title="Completed Late"
+          titleColor="grape"
+          participants={participantGroups.completedLate}
+          progressValue={() => 100}
+          progressColor="grape"
+          progressLabel={CompletedLabel}
         />
       </Stack>
 

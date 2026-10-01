@@ -15,7 +15,7 @@ import { makeGlobalConfig, makeStorageEngine, makeStudyConfig } from '../../test
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useAuth } from '../../store/hooks/useAuth';
 import { getSequenceConditions } from '../../utils/handleConditionLogic';
-import { REVISIT_MODE } from '../../storage/engines/types';
+import { StudyModes } from '../../storage/engines/types';
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
@@ -83,7 +83,9 @@ vi.mock('../ErrorLoadingConfig', () => ({
 }));
 
 vi.mock('../../analysis/interface/ParticipantStatusBadges', () => ({
-  ParticipantStatusBadges: () => <div data-testid="status-badges" />,
+  ParticipantStatusBadges: ({ showTimeoutStatuses }: { showTimeoutStatuses?: boolean }) => (
+    <div data-testid="status-badges" data-show-timeout-statuses={showTimeoutStatuses ? 'true' : 'false'} />
+  ),
 }));
 
 vi.mock('../../storage/storageEngineHooks', () => ({
@@ -165,7 +167,7 @@ const makeAuthValue = (isAdmin: boolean): ReturnType<typeof useAuth> => ({
   verifyAdminStatus: async () => false,
 });
 
-const makeLandingEngine = (modes: Partial<Record<REVISIT_MODE, boolean>> = {}, hidden = false) => ({
+const makeLandingEngine = (modes: Partial<StudyModes> = {}, hidden = false) => ({
   getModes: vi.fn().mockResolvedValue({
     dataCollectionEnabled: true,
     developmentModeEnabled: false,
@@ -239,6 +241,29 @@ describe('ConfigSwitcher', () => {
     expect(engine.getConditionData).not.toHaveBeenCalled();
   });
 
+  test('treats completed-late participant data as collected data', async () => {
+    const engine = makeLandingEngine();
+    engine.getParticipantsStatusCounts.mockResolvedValue({
+      completed: 0,
+      completedLate: 1,
+      inProgress: 0,
+      timedOut: 0,
+      rejected: 0,
+      minTime: 1000,
+      maxTime: 2000,
+    });
+    vi.mocked(useStorageEngine).mockReturnValue({
+      storageEngine: makeStorageEngine(engine),
+      setStorageEngine: vi.fn(),
+    });
+
+    const view = await act(async () => render(
+      <ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigs} />,
+    ));
+
+    expect(view.getByText(/Study Status:/).textContent).toContain('Collecting Data');
+  });
+
   test.each([false, true])('hides a study from public visitors independently of data sharing (%s)', async (dataSharingEnabled) => {
     const engine = makeLandingEngine({ dataSharingEnabled }, true);
     vi.mocked(useStorageEngine).mockReturnValue({ storageEngine: makeStorageEngine(engine), setStorageEngine: vi.fn() });
@@ -283,7 +308,7 @@ describe('ConfigSwitcher', () => {
   });
 
   test.each([false, true])('shows analytics when data sharing is enabled (admin: %s)', async (isAdmin) => {
-    const engine = makeLandingEngine({ dataSharingEnabled: true });
+    const engine = makeLandingEngine({ dataSharingEnabled: true, autoTimeoutMinutes: 60 });
     vi.mocked(useStorageEngine).mockReturnValue({ storageEngine: makeStorageEngine(engine), setStorageEngine: vi.fn() });
     vi.mocked(useAuth).mockReturnValue(makeAuthValue(isAdmin));
     vi.mocked(getSequenceConditions).mockReturnValue(['condA']);
@@ -300,6 +325,7 @@ describe('ConfigSwitcher', () => {
 
     expect(view.getByRole('link', { name: 'Analyze & Manage Study' }).getAttribute('href')).toBe('/analysis/stats/test-study');
     expect(view.getByTestId('status-badges')).toBeDefined();
+    expect(view.getByTestId('status-badges').getAttribute('data-show-timeout-statuses')).toBe('true');
     expect(view.getByTestId('error-loading-config')).toBeDefined();
     expect(view.getByText(/Study Status:/)).toBeDefined();
     expect(view.getByTitle(/Development mode/)).toBeDefined();
@@ -317,6 +343,7 @@ describe('ConfigSwitcher', () => {
     vi.mocked(getSequenceConditions).mockReturnValue(['condA']);
     const view = await act(async () => render(<ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigs} />));
     expect(view.getByTestId('status-badges')).toBeDefined();
+    expect(view.getByTestId('status-badges').getAttribute('data-show-timeout-statuses')).toBe('false');
 
     engine.getModes.mockResolvedValue({ dataCollectionEnabled: true, developmentModeEnabled: false, dataSharingEnabled: false });
     await act(async () => view.rerender(<ConfigSwitcher globalConfig={{ ...globalConfig, configsList: [...globalConfig.configsList] }} studyConfigs={studyConfigs} />));

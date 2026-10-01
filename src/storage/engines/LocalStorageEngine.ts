@@ -1,6 +1,6 @@
 import localforage from 'localforage';
 import {
-  REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageEngine, StorageObject, StorageObjectType, cleanupModes,
+  REVISIT_MODE, RuntimeStudySettings, SequenceAssignment, SnapshotDocContent, StorageEngine, StorageObject, StorageObjectType, cleanupModes,
 } from './types';
 import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
 
@@ -77,10 +77,12 @@ export class LocalStorageEngine extends StorageEngine {
     if (this.studyId === undefined) {
       throw new Error('Study ID is not set');
     }
-    const sequenceAssignmentPath = `${this.collectionPrefix}${this.studyId}/sequenceAssignment`;
-    const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath) || {};
-    sequenceAssignments[participantId] = sequenceAssignment;
-    await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
+    await this._runWithLock('sequence-assignments', async () => {
+      const sequenceAssignmentPath = `${this.collectionPrefix}${this.studyId}/sequenceAssignment`;
+      const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath) || {};
+      sequenceAssignments[participantId] = sequenceAssignment;
+      await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
+    });
   }
 
   protected async _updateSequenceAssignmentFields(participantId: string, updatedFields: Partial<SequenceAssignment>) {
@@ -88,21 +90,23 @@ export class LocalStorageEngine extends StorageEngine {
     if (this.studyId === undefined) {
       throw new Error('Study ID is not set');
     }
-    const sequenceAssignmentPath = `${this.collectionPrefix}${this.studyId}/sequenceAssignment`;
-    const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath) || {};
-    const existingAssignment = sequenceAssignments[participantId];
-    if (!existingAssignment) {
-      throw new Error(`Sequence assignment for participant ${participantId} not found`);
-    }
-    const updatedAssignment = {
-      ...existingAssignment,
-      ...updatedFields,
-    };
-    if (Object.hasOwn(updatedFields, 'conditions') && updatedFields.conditions === undefined) {
-      delete updatedAssignment.conditions;
-    }
-    sequenceAssignments[participantId] = updatedAssignment;
-    await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
+    await this._runWithLock('sequence-assignments', async () => {
+      const sequenceAssignmentPath = `${this.collectionPrefix}${this.studyId}/sequenceAssignment`;
+      const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath) || {};
+      const existingAssignment = sequenceAssignments[participantId];
+      if (!existingAssignment) {
+        throw new Error(`Sequence assignment for participant ${participantId} not found`);
+      }
+      const updatedAssignment = {
+        ...existingAssignment,
+        ...updatedFields,
+      };
+      if (Object.hasOwn(updatedFields, 'conditions') && updatedFields.conditions === undefined) {
+        delete updatedAssignment.conditions;
+      }
+      sequenceAssignments[participantId] = updatedAssignment;
+      await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
+    });
   }
 
   protected async _getSequenceAssignment(participantId: string) {
@@ -145,90 +149,127 @@ export class LocalStorageEngine extends StorageEngine {
       throw new Error('Study ID is not set');
     }
 
-    const sequenceAssignmentPath = `${this.collectionPrefix}${this.studyId}/sequenceAssignment`;
-    const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath) || {};
+    const participantId = this.currentParticipantId;
+    await this._runWithLock('sequence-assignments', async () => {
+      const sequenceAssignmentPath = `${this.collectionPrefix}${this.studyId}/sequenceAssignment`;
+      const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath) || {};
 
-    if (sequenceAssignments[this.currentParticipantId]) {
-      sequenceAssignments[this.currentParticipantId] = {
-        ...sequenceAssignments[this.currentParticipantId],
-        completed: new Date().getTime(),
-      };
-    } else {
-      throw new Error('Participant sequence assignment not found');
-    }
-    await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
+      if (sequenceAssignments[participantId]) {
+        sequenceAssignments[participantId] = {
+          ...sequenceAssignments[participantId],
+          completed: new Date().getTime(),
+        };
+      } else {
+        throw new Error('Participant sequence assignment not found');
+      }
+      await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
+    });
   }
 
   protected async _rejectParticipantRealtime(participantId: string) {
     await this.verifyStudyDatabase();
-    const sequenceAssignmentPath = `${this.collectionPrefix}${this.studyId}/sequenceAssignment`;
-    const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath) || {};
+    await this._runWithLock('sequence-assignments', async () => {
+      const sequenceAssignmentPath = `${this.collectionPrefix}${this.studyId}/sequenceAssignment`;
+      const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath) || {};
 
-    const participantSequenceAssignment = sequenceAssignments[participantId];
+      const participantSequenceAssignment = sequenceAssignments[participantId];
 
-    // If this was a claimed sequence assignment, we need to mark it as available again
-    const claimedAssignmentData = participantSequenceAssignment?.claimedParticipantId
-      ? sequenceAssignments[participantSequenceAssignment.claimedParticipantId]
-      : Object.values(sequenceAssignments).find(
-        (assignment) => assignment.claimed && assignment.timestamp === participantSequenceAssignment.timestamp,
-      );
-    if (participantSequenceAssignment && claimedAssignmentData) {
-      // Mark the claimed assignment as available again
-      claimedAssignmentData.claimed = false;
-      claimedAssignmentData.rejected = true; // Mark it as rejected
-      await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
+      // If this was a claimed sequence assignment, we need to mark it as available again
+      const claimedAssignmentData = participantSequenceAssignment?.claimedParticipantId
+        ? sequenceAssignments[participantSequenceAssignment.claimedParticipantId]
+        : Object.values(sequenceAssignments).find(
+          (assignment) => assignment.participantId !== participantId
+            && assignment.claimed
+            && assignment.timestamp === participantSequenceAssignment.timestamp,
+        );
+      if (participantSequenceAssignment && claimedAssignmentData) {
+        // Mark the claimed assignment as available again
+        claimedAssignmentData.claimed = false;
+        if (claimedAssignmentData.autoTimedOutAt === undefined) {
+          claimedAssignmentData.rejected = true;
+        }
+        sequenceAssignments[participantId] = {
+          ...participantSequenceAssignment,
+          timestamp: new Date().getTime(),
+          rejected: true,
+        };
+        await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
+        return;
+      }
 
-      // Delete the participant's sequence assignment
-      // delete sequenceAssignments[participantId];
-      sequenceAssignments[participantId] = {
-        ...participantSequenceAssignment,
-        timestamp: new Date().getTime(),
-        rejected: true,
-      };
-      await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
-      return;
-    }
-
-    // Handle the original participant's sequence assignment
-    if (participantSequenceAssignment) {
-      participantSequenceAssignment.rejected = true;
-      await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
-    }
+      // Handle the original participant's sequence assignment
+      if (participantSequenceAssignment) {
+        participantSequenceAssignment.rejected = true;
+        await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
+      }
+    });
   }
 
   protected async _undoRejectParticipantRealtime(participantId: string) {
     await this.verifyStudyDatabase();
-    const sequenceAssignmentPath = `${this.collectionPrefix}${this.studyId}/sequenceAssignment`;
-    const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath) || {};
+    await this._runWithLock('sequence-assignments', async () => {
+      const sequenceAssignmentPath = `${this.collectionPrefix}${this.studyId}/sequenceAssignment`;
+      const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath) || {};
 
-    const participantSequenceAssignment = sequenceAssignments[participantId];
-    if (participantSequenceAssignment) {
-      participantSequenceAssignment.rejected = false;
-      if (participantSequenceAssignment.claimedParticipantId) {
-        const claimedAssignmentData = sequenceAssignments[participantSequenceAssignment.claimedParticipantId];
-        if (claimedAssignmentData) {
-          claimedAssignmentData.claimed = true;
-          claimedAssignmentData.rejected = true;
-          participantSequenceAssignment.timestamp = claimedAssignmentData.timestamp;
+      const participantSequenceAssignment = sequenceAssignments[participantId];
+      if (participantSequenceAssignment) {
+        participantSequenceAssignment.rejected = false;
+        if (participantSequenceAssignment.claimedParticipantId) {
+          const claimedAssignmentData = sequenceAssignments[participantSequenceAssignment.claimedParticipantId];
+          if (claimedAssignmentData) {
+            claimedAssignmentData.claimed = true;
+            if (claimedAssignmentData.autoTimedOutAt === undefined) {
+              claimedAssignmentData.rejected = true;
+            }
+            participantSequenceAssignment.timestamp = claimedAssignmentData.timestamp;
+          }
         }
+        await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
       }
-      await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
-    }
+    });
   }
 
-  protected async _claimSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment) {
+  protected async _claimSequenceAssignment(participantId: string) {
     await this.verifyStudyDatabase();
-    const sequenceAssignmentPath = `${this.collectionPrefix}${this.studyId}/sequenceAssignment`;
-    const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath) || {};
-    if (sequenceAssignments[participantId]) {
+    await this._runWithLock('sequence-assignments', async () => {
+      const sequenceAssignmentPath = `${this.collectionPrefix}${this.studyId}/sequenceAssignment`;
+      const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath) || {};
+      const existingAssignment = sequenceAssignments[participantId];
+      if (!existingAssignment) {
+        throw new Error(`Sequence assignment for participant ${participantId} not found`);
+      }
+      // Merge into the record as it exists inside the lock. A completion,
+      // rejection, or timeout that landed after the caller read the assignment
+      // must survive being claimed for slot reuse.
       sequenceAssignments[participantId] = {
-        ...sequenceAssignment,
+        ...existingAssignment,
         claimed: true,
       };
       await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
-    } else {
-      throw new Error(`Sequence assignment for participant ${participantId} not found`);
-    }
+    });
+  }
+
+  // The local engine has a single client, so its own clock is the only clock.
+  protected async _getServerTimeMs(): Promise<number> {
+    return Date.now();
+  }
+
+  protected async _markSequenceAssignmentTimedOut(participantId: string, timedOutAt: number): Promise<boolean> {
+    return await this._runWithLock('sequence-assignments', async () => {
+      await this.verifyStudyDatabase();
+      const sequenceAssignmentPath = `${this.collectionPrefix}${this.studyId}/sequenceAssignment`;
+      const assignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath) || {};
+      const assignment = assignments[participantId];
+      if (!assignment) {
+        throw new Error(`Sequence assignment for participant ${participantId} not found`);
+      }
+      if (assignment.completed !== null || assignment.rejected || assignment.autoTimedOutAt !== undefined) {
+        return false;
+      }
+      assignments[participantId] = { ...assignment, autoTimedOutAt: timedOutAt };
+      await this.studyDatabase.setItem(sequenceAssignmentPath, assignments);
+      return true;
+    });
   }
 
   async initializeStudyDb(studyId: string) {
@@ -244,7 +285,7 @@ export class LocalStorageEngine extends StorageEngine {
     const key = `${this.collectionPrefix}${studyId}/modes`;
 
     // Get the modes
-    const modes = await this.studyDatabase.getItem(key) as Record<REVISIT_MODE, boolean> | null;
+    const modes = await this.studyDatabase.getItem(key) as RuntimeStudySettings | null;
     if (modes) {
       const cleanedModes = cleanupModes(modes as Record<string, boolean>);
       await this.studyDatabase.setItem(key, cleanedModes);
@@ -273,19 +314,15 @@ export class LocalStorageEngine extends StorageEngine {
 
   async setMode(studyId: string, mode: REVISIT_MODE, value: boolean) {
     const key = `${this.collectionPrefix}${studyId}/modes`;
-
-    // Get the modes
-    const modes = await this.studyDatabase.getItem(key) as Record<REVISIT_MODE, boolean> | null;
-    if (!modes) {
+    // Unlike the cloud engines, this one does not create the modes on demand.
+    if (await this.studyDatabase.getItem(key) === null) {
       throw new Error('Modes not initialized');
     }
 
-    // Set the mode
-    modes[mode] = value;
-    await this.studyDatabase.setItem(key, modes);
+    await this._updateModesFields(studyId, { [mode]: value });
   }
 
-  protected async _setModesDocument(studyId: string, modesDocument: Record<string, unknown>): Promise<void> {
+  protected async _setModesDocument(studyId: string, modesDocument: RuntimeStudySettings): Promise<void> {
     const key = `${this.collectionPrefix}${studyId}/modes`;
     await this.studyDatabase.setItem(key, modesDocument);
   }

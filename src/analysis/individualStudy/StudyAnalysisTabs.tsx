@@ -21,6 +21,7 @@ import {
 } from '../../parser/types';
 import { getStudyConfig, resolveConfigKey } from '../../utils/fetchConfig';
 import { LiveMonitorView } from './LiveMonitor/LiveMonitorView';
+import { AutoTimeoutSettings } from './LiveMonitor/AutoTimeoutSettings';
 import { SummaryView } from './summary/SummaryView';
 import { TableView } from './table/TableView';
 import { StatsView } from './stats/StatsView';
@@ -32,6 +33,13 @@ import { useAuth } from '../../store/hooks/useAuth';
 import { parseStudyConfig } from '../../parser/parser';
 import { useAsync } from '../../store/hooks/useAsync';
 import { StorageEngine } from '../../storage/engines/types';
+import {
+  PARTICIPANT_STATUSES,
+  PARTICIPANT_STATUS_LABELS,
+  countParticipantStatuses,
+  emptyParticipantStatusCounts,
+  getParticipantDataStatus,
+} from '../../storage/participantStatus';
 import { isCloudStorageEngine } from '../../storage/engines/utils/storageEngineHelpers';
 import { DownloadButtons } from '../../components/downloader/DownloadButtons';
 import { ErrorLoadingConfig } from '../../components/ErrorLoadingConfig';
@@ -90,7 +98,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   const [studyConfig, setStudyConfig] = useState<ParsedConfig<StudyConfig> | undefined>(undefined);
   const [startupError, setStartupError] = useState<{ error: unknown } | null>(null);
 
-  const [includedParticipants, setIncludedParticipants] = useState<string[]>(['completed', 'inProgress', 'rejected']);
+  const [includedParticipants, setIncludedParticipants] = useState<string[]>([...PARTICIPANT_STATUSES]);
 
   const [selectedStages, setSelectedStages] = useState<string[]>(['ALL']);
   const [availableStages, setAvailableStages] = useState<{ value: string; label: string }[]>([{ value: 'ALL', label: 'ALL' }]);
@@ -159,7 +167,9 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   );
 
   const participantCounts = useMemo(() => {
-    if (!expData) return { completed: 0, inProgress: 0, rejected: 0 };
+    if (!expData) {
+      return emptyParticipantStatusCounts();
+    }
     const expList = Object.values(expData);
 
     // Apply config filter before counting
@@ -183,27 +193,17 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
         return conds.some((c) => selectedConditions.includes(c));
       });
 
-    return {
-      completed: conditionFiltered.filter((d) => !d.rejected && d.completed).length,
-      inProgress: conditionFiltered.filter((d) => !d.rejected && !d.completed).length,
-      rejected: conditionFiltered.filter((d) => d.rejected).length,
-    };
+    return countParticipantStatuses(conditionFiltered, getParticipantDataStatus);
   }, [expData, selectedStages, selectedConfigs, selectedConditions, studyUsesConditions]);
 
-  const selectedParticipantCounts = useMemo(() => {
-    if (selectedParticipants.length === 0) return { completed: 0, inProgress: 0, rejected: 0 };
-
-    return {
-      completed: selectedParticipants.filter((d) => !d.rejected && d.completed).length,
-      inProgress: selectedParticipants.filter((d) => !d.rejected && !d.completed).length,
-      rejected: selectedParticipants.filter((d) => d.rejected).length,
-    };
-  }, [selectedParticipants]);
+  const selectedParticipantCounts = useMemo(
+    () => countParticipantStatuses(selectedParticipants, getParticipantDataStatus),
+    [selectedParticipants],
+  );
 
   const currentConfigHash = currentConfigHashValue ?? undefined;
   const isFirebaseEngine = storageEngine?.getEngine() === 'firebase';
   const codingEnabled = isFirebaseEngine && hasAudioRecording;
-  const liveMonitorEnabled = isFirebaseEngine;
   const canManageStorage = storageAdmin === true;
 
   const currentConfigLabel = useMemo(() => {
@@ -233,11 +233,9 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     if (!expData) return [];
     const expList = Object.values(expData);
 
-    const comp = includedParticipants.includes('completed') ? expList.filter((d) => !d.rejected && d.completed) : [];
-    const prog = includedParticipants.includes('inProgress') ? expList.filter((d) => !d.rejected && !d.completed) : [];
-    const rej = includedParticipants.includes('rejected') ? expList.filter((d) => d.rejected) : [];
-
-    const statusFiltered = [...comp, ...prog, ...rej];
+    const statusFiltered = expList.filter(
+      (d) => includedParticipants.includes(getParticipantDataStatus(d)),
+    );
 
     // Apply config filter - if "ALL" is selected, show all participants
     const configFiltered = selectedConfigs.includes('ALL')
@@ -446,7 +444,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     );
   }
 
-  if (canonicalStudyId === null || !['summary', 'table', 'stats', 'tagging', 'live-monitor', 'config', 'manage', 'storage'].includes(analysisTab ?? '')) {
+  if (canonicalStudyId === null || !['summary', 'table', 'stats', 'tagging', 'live-monitor', 'config', 'stages', 'manage', 'storage'].includes(analysisTab ?? '')) {
     return (
       <>
         <AppHeader studyIds={globalConfig.configsList} selectedStudyId={displayStudyId} />
@@ -612,30 +610,17 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                   onChange={(e) => setIncludedParticipants(e)}
                 >
                   <Group gap={6} wrap="nowrap">
-                    <Checkbox
-                      value="completed"
-                      label={selectedParticipants.length > 0
-                        ? `Completed (${selectedParticipantCounts.completed} of ${participantCounts.completed})`
-                        : `Completed (${participantCounts.completed})`}
-                      size="xs"
-                      styles={{ label: { whiteSpace: 'nowrap' } }}
-                    />
-                    <Checkbox
-                      value="inProgress"
-                      label={selectedParticipants.length > 0
-                        ? `In Progress (${selectedParticipantCounts.inProgress} of ${participantCounts.inProgress})`
-                        : `In Progress (${participantCounts.inProgress})`}
-                      size="xs"
-                      styles={{ label: { whiteSpace: 'nowrap' } }}
-                    />
-                    <Checkbox
-                      value="rejected"
-                      label={selectedParticipants.length > 0
-                        ? `Rejected (${selectedParticipantCounts.rejected} of ${participantCounts.rejected})`
-                        : `Rejected (${participantCounts.rejected})`}
-                      size="xs"
-                      styles={{ label: { whiteSpace: 'nowrap' } }}
-                    />
+                    {PARTICIPANT_STATUSES.map((participantStatus) => (
+                      <Checkbox
+                        key={participantStatus}
+                        value={participantStatus}
+                        label={selectedParticipants.length > 0
+                          ? `${PARTICIPANT_STATUS_LABELS[participantStatus]} (${selectedParticipantCounts[participantStatus]} of ${participantCounts[participantStatus]})`
+                          : `${PARTICIPANT_STATUS_LABELS[participantStatus]} (${participantCounts[participantStatus]})`}
+                        size="xs"
+                        styles={{ label: { whiteSpace: 'nowrap' } }}
+                      />
+                    ))}
                   </Group>
                 </Checkbox.Group>
               </Flex>
@@ -652,7 +637,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
               }}
               keepMounted={false}
               orientation="vertical"
-              styles={{ tab: { paddingLeft: 6 } }}
+              styles={{ tab: { paddingLeft: 6 }, tabLabel: { textAlign: 'left' } }}
               variant="outline"
               value={analysisTab}
               onChange={(value) => navigate(`/analysis/stats/${routeStudyId}/${value}`)}
@@ -671,14 +656,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                     <Tabs.Tab value="tagging" leftSection={<IconTags size={16} />} disabled={!codingEnabled} style={{ justifyContent: 'flex-start' }}>Coding</Tabs.Tab>
                   </span>
                 </Tooltip>
-                <Tooltip
-                  label="Live Monitor is only available when using Firebase"
-                  disabled={liveMonitorEnabled}
-                >
-                  <span>
-                    <Tabs.Tab value="live-monitor" leftSection={<IconDashboard size={16} />} disabled={!liveMonitorEnabled} style={{ justifyContent: 'flex-start' }}>Live Monitor</Tabs.Tab>
-                  </span>
-                </Tooltip>
+                <Tabs.Tab value="live-monitor" leftSection={<IconDashboard size={16} />} style={{ justifyContent: 'flex-start' }}>Live Monitor</Tabs.Tab>
                 <Tabs.Tab value="config" leftSection={<IconFileCode size={16} />} style={{ justifyContent: 'flex-start' }}>Config</Tabs.Tab>
                 <Tabs.Tab value="stages" leftSection={<IconSettings size={16} />} disabled={!user.isAdmin} style={{ justifyContent: 'flex-start' }}>Stage Management</Tabs.Tab>
                 <Tabs.Tab value="manage" leftSection={<IconSettings size={16} />} disabled={!user.isAdmin} style={{ justifyContent: 'flex-start' }}>Manage</Tabs.Tab>
@@ -717,13 +695,16 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                     )}
                 </Tabs.Panel>
                 <Tabs.Panel style={{ flex: 1, minHeight: 0, overflow: 'auto' }} value="live-monitor" pt="xs">
-                  {studyConfig && liveMonitorEnabled
-                    ? <LiveMonitorView studyConfig={studyConfig} storageEngine={storageEngine} studyId={canonicalStudyId ?? undefined} includedParticipants={includedParticipants} selectedStages={selectedStages} />
-                    : (
-                      <Center>
-                        <Text c="dimmed">Live Monitor is only available when using Firebase</Text>
-                      </Center>
-                    )}
+                  <Stack gap="sm">
+                    <AutoTimeoutSettings storageEngine={storageEngine} studyId={canonicalStudyId ?? undefined} />
+                    {studyConfig && isFirebaseEngine
+                      ? <LiveMonitorView studyConfig={studyConfig} storageEngine={storageEngine} studyId={canonicalStudyId ?? undefined} includedParticipants={includedParticipants} selectedStages={selectedStages} />
+                      : (
+                        <Center>
+                          <Text c="dimmed">Live participant monitoring is only available when using Firebase</Text>
+                        </Center>
+                      )}
+                  </Stack>
                 </Tabs.Panel>
                 <Tabs.Panel style={{ flex: 1, minHeight: 0, overflow: 'auto' }} value="config" pt="xs">
                   {studyConfig && <ConfigView visibleParticipants={visibleParticipants} studyId={canonicalStudyId ?? undefined} currentConfigHash={currentConfigHash} currentConfigStatus={currentConfigStatus} />}

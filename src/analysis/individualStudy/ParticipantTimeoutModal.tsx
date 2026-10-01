@@ -5,6 +5,7 @@ import { IconClockOff } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { ParticipantDataWithStatus } from '../../storage/types';
+import { getParticipantDataStatus } from '../../storage/participantStatus';
 import { useAuth } from '../../store/hooks/useAuth';
 
 export type TimedOutParticipant = ParticipantDataWithStatus & {
@@ -43,7 +44,10 @@ export function getInProgressParticipantsByElapsedTime(
   now: number = Date.now(),
 ): TimedOutParticipant[] {
   return participants
-    .filter((participant) => !participant.completed && !participant.rejected)
+    // Auto-timed-out participants are deliberately left out: timing them out
+    // here would reject them, and a timed-out participant is still allowed to
+    // finish the study.
+    .filter((participant) => getParticipantDataStatus(participant) === 'inProgress')
     .map((participant) => {
       const startTime = getParticipantStartTime(participant);
       return {

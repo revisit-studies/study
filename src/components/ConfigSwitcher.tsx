@@ -15,8 +15,9 @@ import { PREFIX } from '../utils/Prefix';
 import { ErrorLoadingConfig } from './ErrorLoadingConfig';
 import { ReactMarkdownWrapper } from './ReactMarkdownWrapper';
 import { ParticipantStatusBadges } from '../analysis/interface/ParticipantStatusBadges';
+import { ParticipantStatusCounts } from '../storage/participantStatus';
 import { useStorageEngine } from '../storage/storageEngineHooks';
-import { REVISIT_MODE } from '../storage/engines/types';
+import { StudyModes } from '../storage/engines/types';
 import { getSequenceConditions } from '../utils/handleConditionLogic';
 import { useStudyRecordings } from '../utils/useStudyRecordings';
 import { useDeviceRules } from '../utils/useDeviceRules';
@@ -34,12 +35,12 @@ function ValidStudyCard({
   configName: string;
   config: ParsedConfig<StudyConfig>;
   url: string;
-  modes: Record<REVISIT_MODE, boolean> | null;
+  modes: StudyModes | null;
   canViewAnalytics: boolean;
 }) {
   const { storageEngine } = useStorageEngine();
 
-  const [studyStatusAndTiming, setStudyStatusAndTiming] = useState<{ completed: number; rejected: number; inProgress: number; minTime: Timestamp | number | null; maxTime: Timestamp | number | null } | null>(null);
+  const [studyStatusAndTiming, setStudyStatusAndTiming] = useState<ParticipantStatusCounts & { minTime: Timestamp | number | null; maxTime: Timestamp | number | null } | null>(null);
 
   useEffect(() => {
     if (!storageEngine) return undefined;
@@ -73,7 +74,11 @@ function ValidStudyCard({
     if (!modes) return 'Unknown';
 
     if (modes.dataCollectionEnabled) {
-      if (studyStatusAndTiming && (studyStatusAndTiming.inProgress > 0 || studyStatusAndTiming.completed > 0)) {
+      if (studyStatusAndTiming && (
+        studyStatusAndTiming.inProgress > 0
+        || studyStatusAndTiming.completed > 0
+        || studyStatusAndTiming.completedLate > 0
+      )) {
         return 'Collecting Data';
       }
       return 'Ready to Collect Data';
@@ -182,8 +187,16 @@ function ValidStudyCard({
           {' '}
           {currentMode}
         </Text>
-        {canViewAnalytics && studyStatusAndTiming
-                && <ParticipantStatusBadges completed={studyStatusAndTiming.completed} inProgress={studyStatusAndTiming.inProgress} rejected={studyStatusAndTiming.rejected} />}
+        {canViewAnalytics && studyStatusAndTiming && (
+          <ParticipantStatusBadges
+            completed={studyStatusAndTiming.completed}
+            inProgress={studyStatusAndTiming.inProgress}
+            rejected={studyStatusAndTiming.rejected}
+            timedOut={studyStatusAndTiming.timedOut}
+            completedLate={studyStatusAndTiming.completedLate}
+            showTimeoutStatuses={modes?.autoTimeoutMinutes !== undefined}
+          />
+        )}
         <Flex ml="auto" gap="sm" opacity={0.7}>
           {hasAudioRecording && (
           <Tooltip label="Audio recording enabled" withinPortal position="bottom">
@@ -197,7 +210,7 @@ function ValidStudyCard({
           )}
           {hasWebcamRecording && (
           <Tooltip label="Webcam recording enabled" withinPortal position="bottom">
-            <IconCamera size={16} color="orange" />
+            <IconCamera size={16} color="var(--mantine-color-orange-text)" />
           </Tooltip>
           )}
           {modes?.developmentModeEnabled
@@ -318,7 +331,7 @@ function StudyCard({
   configName: string;
   config: ParsedConfig<StudyConfig>;
   url: string;
-  modes: Record<REVISIT_MODE, boolean> | null;
+  modes: StudyModes | null;
 }) {
   const canViewAnalytics = !!modes?.dataSharingEnabled;
 
@@ -344,7 +357,7 @@ function StudyCards({
 }: {
   configNames: string[];
   studyConfigs: Record<string, ParsedConfig<StudyConfig> | null>;
-  modesByConfig: Record<string, Record<REVISIT_MODE, boolean> | null>;
+  modesByConfig: Record<string, StudyModes | null>;
 }) {
   return configNames.map((configName) => {
     const config = studyConfigs[configName];
@@ -367,7 +380,7 @@ export function ConfigSwitcher({
   const { configsList } = globalConfig;
 
   const [studyVisibility, setStudyVisibility] = useState<Record<string, boolean>>({});
-  const [modesByConfig, setModesByConfig] = useState<Record<string, Record<REVISIT_MODE, boolean> | null>>({});
+  const [modesByConfig, setModesByConfig] = useState<Record<string, StudyModes | null>>({});
   const [modeLoadErrors, setModeLoadErrors] = useState<string[]>([]);
   const [isLoadingVisibility, setIsLoadingVisibility] = useState(true);
 
@@ -382,7 +395,7 @@ export function ConfigSwitcher({
 
       setIsLoadingVisibility(true);
       const visibility: Record<string, boolean> = {};
-      const modesMap: Record<string, Record<REVISIT_MODE, boolean> | null> = {};
+      const modesMap: Record<string, StudyModes | null> = {};
       const failedConfigNames: string[] = [];
       await Promise.all(
         configsList.map(async (configName) => {

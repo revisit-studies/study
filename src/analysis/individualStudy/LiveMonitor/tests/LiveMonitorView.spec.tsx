@@ -7,6 +7,7 @@ import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { SequenceAssignment } from '../../../../storage/engines/types';
+import { ParticipantStatus } from '../../../../storage/participantStatus';
 import { makeStorageEngine, makeSequenceAssignment } from '../../../../tests/utils';
 import {
   getFilteredParticipantProgress,
@@ -86,16 +87,35 @@ describe('getFilteredParticipantProgress', () => {
     expect(result.progress).toBe(0);
   });
 
-  test('isCompleted is true when completed is non-null', () => {
+  test('status is completed when completed is non-null', () => {
     const a = makeAssignment({ completed: 1_700_000_000_000 });
     const [result] = getFilteredParticipantProgress([a], ['completed'], ['ALL']);
-    expect(result.isCompleted).toBe(true);
+    expect(result.status).toBe('completed');
   });
 
-  test('isRejected is true when rejected is true', () => {
+  test('status is rejected when rejected is true', () => {
     const a = makeAssignment({ rejected: true });
     const [result] = getFilteredParticipantProgress([a], ['rejected'], ['ALL']);
-    expect(result.isRejected).toBe(true);
+    expect(result.status).toBe('rejected');
+  });
+
+  test('status is timedOut for an unfinished timed-out assignment', () => {
+    const a = makeAssignment({ autoTimedOutAt: 1_700_000_000_000 });
+    const [result] = getFilteredParticipantProgress([a], ['timedOut'], ['ALL']);
+    expect(result.status).toBe('timedOut');
+  });
+
+  test('status is completedLate when a timed-out assignment finishes', () => {
+    const a = makeAssignment({ autoTimedOutAt: 1_700_000_000_000, completed: 1_700_000_100_000 });
+    expect(getFilteredParticipantProgress([a], ['timedOut'], ['ALL'])).toHaveLength(0);
+    const [result] = getFilteredParticipantProgress([a], ['completedLate'], ['ALL']);
+    expect(result.status).toBe('completedLate');
+  });
+
+  test('a rejected assignment stays rejected even when it timed out', () => {
+    const a = makeAssignment({ autoTimedOutAt: 1_700_000_000_000, rejected: true });
+    const [result] = getFilteredParticipantProgress([a], ['rejected'], ['ALL']);
+    expect(result.status).toBe('rejected');
   });
 
   test('filters out participants whose status is not in includedParticipants', () => {
@@ -129,34 +149,41 @@ describe('getFilteredParticipantProgress', () => {
 // ── groupParticipantProgress ──────────────────────────────────────────────────
 
 describe('groupParticipantProgress', () => {
-  function makeProgress(overrides: Partial<{ isCompleted: boolean; isRejected: boolean }> = {}) {
-    return {
-      assignment: makeAssignment(),
-      progress: 50,
-      isCompleted: false,
-      isRejected: false,
-      ...overrides,
-    };
+  function makeProgress(status: ParticipantStatus) {
+    return { assignment: makeAssignment(), progress: 50, status };
   }
 
-  test('splits into inProgress, completed, rejected groups', () => {
+  test('splits into one group per status', () => {
     const items = [
-      makeProgress(), // inProgress
-      makeProgress({ isCompleted: true }), // completed
-      makeProgress({ isCompleted: true, isRejected: true }), // rejected (rejected takes precedence)
-      makeProgress({ isRejected: true }), // rejected
+      makeProgress('inProgress'),
+      makeProgress('completed'),
+      makeProgress('rejected'),
+      makeProgress('rejected'),
+      makeProgress('timedOut'),
+      makeProgress('completedLate'),
     ];
-    const { inProgress, completed, rejected } = groupParticipantProgress(items);
-    expect(inProgress).toHaveLength(1);
-    expect(completed).toHaveLength(1);
-    expect(rejected).toHaveLength(2);
+    const groups = groupParticipantProgress(items);
+    expect(groups.inProgress).toHaveLength(1);
+    expect(groups.completed).toHaveLength(1);
+    expect(groups.rejected).toHaveLength(2);
+    expect(groups.timedOut).toHaveLength(1);
+    expect(groups.completedLate).toHaveLength(1);
+  });
+
+  test('a completed-late participant is grouped as neither completed nor timed out', () => {
+    const groups = groupParticipantProgress([makeProgress('completedLate')]);
+    expect(groups.completed).toHaveLength(0);
+    expect(groups.timedOut).toHaveLength(0);
+    expect(groups.completedLate).toHaveLength(1);
   });
 
   test('empty input returns empty groups', () => {
-    const { inProgress, completed, rejected } = groupParticipantProgress([]);
-    expect(inProgress).toHaveLength(0);
-    expect(completed).toHaveLength(0);
-    expect(rejected).toHaveLength(0);
+    const groups = groupParticipantProgress([]);
+    expect(groups.inProgress).toHaveLength(0);
+    expect(groups.completed).toHaveLength(0);
+    expect(groups.rejected).toHaveLength(0);
+    expect(groups.timedOut).toHaveLength(0);
+    expect(groups.completedLate).toHaveLength(0);
   });
 });
 
@@ -167,7 +194,7 @@ afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 describe('LiveMonitorView', () => {
   const baseProps = {
     studyConfig: {} as Parameters<typeof LiveMonitorView>[0]['studyConfig'],
-    includedParticipants: ['inProgress', 'completed', 'rejected'],
+    includedParticipants: ['inProgress', 'completed', 'rejected', 'timedOut', 'completedLate'],
     selectedStages: ['ALL'],
   };
 
@@ -182,11 +209,13 @@ describe('LiveMonitorView', () => {
     expect(html).toContain('0');
   });
 
-  test('shows Completed, Active, Rejected badges', () => {
+  test('shows a badge for every participant status', () => {
     const html = renderToStaticMarkup(<LiveMonitorView {...baseProps} />);
     expect(html).toContain('Completed');
     expect(html).toContain('Active');
     expect(html).toContain('Rejected');
+    expect(html).toContain('Timed Out');
+    expect(html).toContain('Completed Late');
   });
 
   test('shows disconnected wifi icon when no storageEngine', () => {
@@ -196,11 +225,13 @@ describe('LiveMonitorView', () => {
     expect(html).toContain('icon-wifioff');
   });
 
-  test('shows In Progress, Completed, Rejected section titles', () => {
+  test('shows a section title for every participant status', () => {
     const html = renderToStaticMarkup(<LiveMonitorView {...baseProps} />);
     expect(html).toContain('In Progress');
     expect(html).toContain('Completed');
     expect(html).toContain('Rejected');
+    expect(html).toContain('Timed Out');
+    expect(html).toContain('Completed Late');
   });
 
   test('sets connectionStatus to disconnected when no storageEngine after effect', async () => {
@@ -256,7 +287,7 @@ describe('ParticipantSection', () => {
   test('renders each participant card with participantId', () => {
     const participants = [
       {
-        assignment: makeAssignment({ participantId: 'p-alpha', answered: ['q1'], total: 4 }), progress: 25, isCompleted: false, isRejected: false,
+        assignment: makeAssignment({ participantId: 'p-alpha', answered: ['q1'], total: 4 }), progress: 25, status: 'inProgress' as const,
       },
     ];
     const html = renderToStaticMarkup(
@@ -268,7 +299,7 @@ describe('ParticipantSection', () => {
   test('shows DYNAMIC badge when showDynamicBadge and assignment.isDynamic', () => {
     const participants = [
       {
-        assignment: makeAssignment({ participantId: 'p1', isDynamic: true }), progress: 50, isCompleted: false, isRejected: false,
+        assignment: makeAssignment({ participantId: 'p1', isDynamic: true }), progress: 50, status: 'inProgress' as const,
       },
     ];
     const html = renderToStaticMarkup(
@@ -281,7 +312,7 @@ describe('ParticipantSection', () => {
   test('no DYNAMIC badge when isDynamic is false', () => {
     const participants = [
       {
-        assignment: makeAssignment({ participantId: 'p1', isDynamic: false }), progress: 50, isCompleted: false, isRejected: false,
+        assignment: makeAssignment({ participantId: 'p1', isDynamic: false }), progress: 50, status: 'inProgress' as const,
       },
     ];
     const html = renderToStaticMarkup(
@@ -293,7 +324,7 @@ describe('ParticipantSection', () => {
   test('uses "#N" fallback when participantId is empty', () => {
     const participants = [
       {
-        assignment: makeAssignment({ participantId: '' }), progress: 50, isCompleted: false, isRejected: false,
+        assignment: makeAssignment({ participantId: '' }), progress: 50, status: 'inProgress' as const,
       },
     ];
     const html = renderToStaticMarkup(
@@ -305,7 +336,7 @@ describe('ParticipantSection', () => {
   test('renders ProgressHeatmap when showProgressHeatmap is true', () => {
     const participants = [
       {
-        assignment: makeAssignment({ participantId: 'p1', answered: ['q1'], total: 3 }), progress: 33, isCompleted: false, isRejected: false,
+        assignment: makeAssignment({ participantId: 'p1', answered: ['q1'], total: 3 }), progress: 33, status: 'inProgress' as const,
       },
     ];
     const html = renderToStaticMarkup(
@@ -321,7 +352,7 @@ describe('ParticipantSection', () => {
 describe('LiveMonitorView interactive', () => {
   const baseProps = {
     studyConfig: {} as Parameters<typeof LiveMonitorView>[0]['studyConfig'],
-    includedParticipants: ['inProgress', 'completed', 'rejected'],
+    includedParticipants: ['inProgress', 'completed', 'rejected', 'timedOut', 'completedLate'],
     selectedStages: ['ALL'],
     studyId: 'test-study',
   };
