@@ -320,6 +320,41 @@ describe('Factor Compiler', () => {
     const result = compileFactorBlocks(config.sequence, config);
 
     expect(Object.keys(result.components)).toHaveLength(4);
+    expect(result.sequence).toMatchObject({
+      __revisitFactorLabels: {
+        'typedValues__mixed=1__trial': '1 — trial',
+        'typedValues__mixed=%221%22__trial': '1 — trial',
+        'typedValues__mixed=%5B%22a%22%2C%22b%22%5D__trial': '["a","b"] — trial',
+      },
+    });
+    expect(JSON.stringify(result.sequence)).not.toContain('__revisitFactorLabels');
+
+    config.sequence = {
+      type: 'factor', id: '', factor: 'mixed', components: 'trial',
+    };
+    expect(compileFactorBlocks(config.sequence, config).sequence).toMatchObject({
+      __revisitFactorLabels: {
+        '__mixed=1__trial': '1 — trial',
+      },
+    });
+
+    config.baseComponents = { 'chart-task': { type: 'questionnaire', response: [] } };
+    config.factors = {
+      visualization: ['bar', 'scatterplot'],
+      dataset: ['sales', 'population'],
+      trials: { action: 'cross', factors: ['visualization', 'dataset'] },
+    };
+    config.sequence = {
+      type: 'factor', id: 'trials', factor: 'trials', components: 'chart-task',
+    };
+    expect(compileFactorBlocks(config.sequence, config).sequence).toMatchObject({
+      __revisitFactorLabels: {
+        'trials__visualization=%22bar%22__dataset=%22sales%22__chart-task': 'bar · sales — chart-task',
+        'trials__visualization=%22bar%22__dataset=%22population%22__chart-task': 'bar · population — chart-task',
+        'trials__visualization=%22scatterplot%22__dataset=%22sales%22__chart-task': 'scatterplot · sales — chart-task',
+        'trials__visualization=%22scatterplot%22__dataset=%22population%22__chart-task': 'scatterplot · population — chart-task',
+      },
+    });
   });
 });
 

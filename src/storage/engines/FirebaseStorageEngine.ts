@@ -601,6 +601,15 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     await setDoc(revisitModesDoc, modesDocument, { merge: true });
   }
 
+  async getStudyHiddenFromLandingPage(studyId: string): Promise<boolean> {
+    const visibility = await getDoc(doc(this.firestore, `${this.collectionPrefix}${studyId}`, 'hideStudyFromLandingPage'));
+    return visibility.data()?.hidden === true;
+  }
+
+  async setStudyHiddenFromLandingPage(studyId: string, hidden: boolean): Promise<void> {
+    await setDoc(doc(this.firestore, `${this.collectionPrefix}${studyId}`, 'hideStudyFromLandingPage'), { hidden });
+  }
+
   protected async _getAudioUrl(
     task: string,
     participantId: string,

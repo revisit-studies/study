@@ -267,6 +267,16 @@ export class LocalStorageEngine extends StorageEngine {
     await this.studyDatabase.setItem(key, modesDocument);
   }
 
+  async getStudyHiddenFromLandingPage(studyId: string): Promise<boolean> {
+    const key = `${this.collectionPrefix}${studyId}/hideStudyFromLandingPage`;
+    return await this.studyDatabase.getItem<boolean>(key) === true;
+  }
+
+  async setStudyHiddenFromLandingPage(studyId: string, hidden: boolean): Promise<void> {
+    const key = `${this.collectionPrefix}${studyId}/hideStudyFromLandingPage`;
+    await this.studyDatabase.setItem(key, hidden);
+  }
+
   protected async _getAudioUrl(task: string, participantId?: string) {
     await this.verifyStudyDatabase();
     if (this.studyId === undefined) {
@@ -330,7 +340,7 @@ export class LocalStorageEngine extends StorageEngine {
     const keys = await this.studyDatabase.keys();
     const sourceKeys = keys.filter((key) => key.startsWith(source));
     const copyPromises = sourceKeys.map(async (key) => {
-      if (key.endsWith('/snapshots') || key.endsWith('modes') || key.endsWith('configHash') || key.endsWith('currentParticipantId')) {
+      if (key.endsWith('/snapshots') || key.endsWith('modes') || key.endsWith('configHash') || key.endsWith('currentParticipantId') || key.endsWith('/hideStudyFromLandingPage')) {
         // Skip copying the snapshots file
         return;
       }
@@ -343,7 +353,7 @@ export class LocalStorageEngine extends StorageEngine {
 
   protected async _deleteDirectory(path: string) {
     const keys = await this.studyDatabase.keys();
-    const targetKeys = keys.filter((key) => key.startsWith(path) && !key.includes('snapshots'));
+    const targetKeys = keys.filter((key) => key.startsWith(path) && !key.includes('snapshots') && !key.endsWith('/hideStudyFromLandingPage'));
     const deletePromises = targetKeys.map((key) => this.studyDatabase.removeItem(key));
     await Promise.all(deletePromises);
   }

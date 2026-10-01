@@ -13,6 +13,7 @@ type RowData = Record<string, string | number | boolean | null | object>;
 const revisitRows: RowData[] = [];
 const storageFiles: Record<string, string> = {};
 const localStore: Record<string, string | number | object | null> = {};
+const metadataErrors = { select: false, upsert: false, update: false };
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 vi.mock('@supabase/supabase-js', () => {
@@ -69,6 +70,13 @@ vi.mock('@supabase/supabase-js', () => {
       ) {
         Promise.resolve().then(() => {
           const rows = getRows();
+          if ((op === 'select' && metadataErrors.select) || (op === 'upsert' && metadataErrors.upsert) || (op === 'update' && metadataErrors.update)) {
+            metadataErrors.select = false;
+            metadataErrors.upsert = false;
+            metadataErrors.update = false;
+            resolve({ data: null, error: { message: 'Permission denied' } });
+            return;
+          }
           if (op === 'select') {
             const matched = applyFilters(rows, filters);
             // Return deep copies so later mutations to revisitRows don't alias into returned data
@@ -236,6 +244,9 @@ describe.each([
   });
 
   afterEach(async () => {
+    metadataErrors.select = false;
+    metadataErrors.upsert = false;
+    metadataErrors.update = false;
     // @ts-expect-error using protected method for testing
     await storageEngine._testingReset(studyId);
     // @ts-expect-error using protected method for testing
@@ -379,6 +390,93 @@ describe.each([
     revisitRows.push({ studyId: `${prefix}${studyId}`, docId: 'storage', data: { disconnected: 'true' } });
 
     await expect(storageEngine.getStorageDisconnected(studyId)).rejects.toThrow('Invalid storage mode');
+  });
+
+  test('landing-page visibility reads and writes do not initialize modes', async () => {
+    const storedBeforeRead = JSON.stringify(revisitRows);
+    expect(await storageEngine.getStudyHiddenFromLandingPage(studyId)).toBe(false);
+    expect(JSON.stringify(revisitRows)).toBe(storedBeforeRead);
+    await storageEngine.setStudyHiddenFromLandingPage(studyId, true);
+    expect(revisitRows.find((row) => row.docId === 'hideStudyFromLandingPage')?.data).toEqual({ hidden: true });
+    expect(revisitRows.find((row) => row.docId === 'metadata')).toBeUndefined();
+  });
+
+  test('landing-page visibility is independent of modes and survives mode and stage updates', async () => {
+    const existingModes = {
+      dataCollectionEnabled: false,
+      developmentModeEnabled: true,
+      dataSharingEnabled: false,
+    };
+    // @ts-expect-error using protected method to seed an existing modes document
+    await storageEngine._setModesDocument(studyId, existingModes);
+    const storedBeforeRead = JSON.stringify(revisitRows);
+
+    expect(await storageEngine.getStudyHiddenFromLandingPage(studyId)).toBe(false);
+    expect(JSON.stringify(revisitRows)).toBe(storedBeforeRead);
+
+    await storageEngine.setStudyHiddenFromLandingPage(studyId, true);
+    expect(await storageEngine.getStudyHiddenFromLandingPage(studyId)).toBe(true);
+    expect(await storageEngine.getModes(studyId)).toEqual(existingModes);
+
+    await storageEngine.getStageData(studyId);
+    expect(await storageEngine.getStudyHiddenFromLandingPage(studyId)).toBe(true);
+    await storageEngine.setMode(studyId, 'developmentModeEnabled', false);
+    await storageEngine.setCurrentStage(studyId, 'Pilot');
+    await storageEngine.updateStageColor(studyId, 'Pilot', '#123456');
+    expect(await storageEngine.getStudyHiddenFromLandingPage(studyId)).toBe(true);
+    expect(await storageEngine.getModes(studyId)).not.toHaveProperty('hideStudyFromLandingPage');
+
+    await storageEngine.setStudyHiddenFromLandingPage(studyId, false);
+    expect(await storageEngine.getStudyHiddenFromLandingPage(studyId)).toBe(false);
+    expect(await storageEngine.getModes(studyId)).toMatchObject({
+      ...existingModes,
+      developmentModeEnabled: false,
+      stage: { currentStage: { stageName: 'Pilot', color: '#123456' } },
+    });
+  });
+
+  test('landing-page visibility rejects cloud read and write failures', async () => {
+    await storageEngine.getModes(studyId);
+    metadataErrors.select = true;
+    await expect(storageEngine.getStudyHiddenFromLandingPage(studyId)).rejects.toThrow('Failed to get landing-page visibility');
+
+    metadataErrors.select = false;
+    metadataErrors.upsert = true;
+    await expect(storageEngine.setStudyHiddenFromLandingPage(studyId, true)).rejects.toThrow('Failed to update landing-page visibility');
+    metadataErrors.upsert = false;
+    expect(await storageEngine.getStudyHiddenFromLandingPage(studyId)).toBe(false);
+  });
+
+  test('getModes rejects failed metadata initialization', async () => {
+    metadataErrors.upsert = true;
+    await expect(storageEngine.getModes(studyId)).rejects.toThrow('Failed to update study metadata');
+    metadataErrors.upsert = false;
+    expect(await storageEngine.getStudyHiddenFromLandingPage(studyId)).toBe(false);
+    expect(await storageEngine.getModes(studyId)).toEqual({
+      dataCollectionEnabled: true,
+      developmentModeEnabled: true,
+      dataSharingEnabled: false,
+    });
+  });
+
+  test('getModes preserves readable legacy settings when migration fails', async () => {
+    revisitRows.push({
+      // @ts-expect-error using protected prefix to seed legacy metadata
+      studyId: `${storageEngine.collectionPrefix}${studyId}`,
+      docId: 'metadata',
+      data: {
+        dataCollectionEnabled: true,
+        studyNavigatorEnabled: false,
+        analyticsInterfacePubliclyAccessible: false,
+      },
+    });
+    metadataErrors.update = true;
+
+    expect(await storageEngine.getModes(studyId)).toEqual({
+      dataCollectionEnabled: true,
+      developmentModeEnabled: false,
+      dataSharingEnabled: false,
+    });
   });
 
   test('setMode toggles each ReVISit mode independently', async () => {
