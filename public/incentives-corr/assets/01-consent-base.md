@@ -9,7 +9,7 @@
 
 **Supported By**: This research is supported by the Institute of Human-Centered Computing, Graz University of Technology.
 
-**Key Information about this research study**: 
+**Key Information about this research study**:
 The following is a short summary of this study to help you decide whether to be a part of this study. Information that is more detailed is explained later on in this form. The purpose of this study is to understand how people make decisions when presented with uncertain information. You will be asked to complete a survey. The survey will consist of a brief training, followed by the actual tasks. For each task, you will have to make a decision based on the graphs presented to you. We expect that participation will take approximately 8-9 mins.
 
 **Why am I being asked to take part in this research study?**
@@ -41,11 +41,11 @@ Participation in research is voluntary. You can decide to participate or not to 
 Each participant will be assigned an arbitrary ID, which will be associated with your Prolific ID. The mapping between the assigned ID and the Prolific ID will be kept in a file separate from the data. Only anonymized data will be shared for analyses.
 
 **Who will have access to the information collected during this research study?**
-Efforts will be made to limit the use and disclosure of your personal information, including research study records, to people who have a need to review this information. We cannot promise complete secrecy. There are reasons why information about you may be used or seen by other people beyond the research team during or after this study. Examples include: University officials, government officials, study funders, auditors, and the Ethics Review Board may need access to the study information to make sure the study is done in a safe and appropriate manner.  
+Efforts will be made to limit the use and disclosure of your personal information, including research study records, to people who have a need to review this information. We cannot promise complete secrecy. There are reasons why information about you may be used or seen by other people beyond the research team during or after this study. Examples include: University officials, government officials, study funders, auditors, and the Ethics Review Board may need access to the study information to make sure the study is done in a safe and appropriate manner.
 
 **How might the information collected in this study be shared in the future?**
 We will keep the information we collect about you during this research study for study recordkeeping and for potential use in future research projects. Your Prolific ID and other demographic information will be stored securely and separately from the rest of the research information we collect from you. De-identified data (without Prolific ID and demographic information) from this study may be shared with the research community, with journals in which study results are published, and with databases and data repositories used for research. We will remove or code any personal information that could directly identify you before the study data are shared. Despite these measures, we cannot guarantee anonymity of your personal data.
- 
+
 **Will I be paid or given anything for taking part in this study?**
 You will receive a guaranteed $3 for your participation in this study.
 

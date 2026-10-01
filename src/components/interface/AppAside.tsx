@@ -12,7 +12,7 @@ import {
 } from '@mantine/core';
 import { useMemo, useState } from 'react';
 import {
-  IconBan, IconBrandFirebase, IconBrandSupabase, IconDatabase, IconDeviceDesktop, IconGraph, IconGraphOff, IconInfoCircle, IconMicrophone, IconSettingsShare, IconUserPlus,
+  IconBan, IconBrandFirebase, IconBrandSupabase, IconCamera, IconDatabase, IconDeviceDesktop, IconGraph, IconGraphOff, IconInfoCircle, IconMicrophone, IconSettingsShare, IconUserPlus,
 } from '@tabler/icons-react';
 import { useHref } from 'react-router';
 import { StepsPanel } from './StepsPanel';
@@ -27,6 +27,7 @@ import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import { useStudyRecordings } from '../../utils/useStudyRecordings';
 import { useDeviceRules } from '../../utils/useDeviceRules';
 import { getUnmetDeviceRestrictionLines, getUnmetDeviceRestrictionTooltip } from './DeviceRestrictionString';
+import { formatFactorLevel } from './StepsPanel.utils';
 
 function InfoHover({ text }: { text: string }) {
   return (
@@ -56,7 +57,7 @@ export function AppAside() {
   const nextParticipantDisabled = useMemo(() => activeTab === 'allTrials' || isAnalysis, [activeTab, isAnalysis]);
 
   const modes = useStoreSelector((state) => state.modes);
-  const { hasAudioRecording, hasScreenRecording } = useStudyRecordings(studyConfig);
+  const { hasAudioRecording, hasScreenRecording, hasWebcamRecording } = useStudyRecordings(studyConfig);
   const {
     isBrowserAllowed,
     isDeviceAllowed,
@@ -112,7 +113,7 @@ export function AppAside() {
           <Flex gap="sm" align="center">
             <Tooltip label="Edit Study Settings" withinPortal position="bottom">
               <ActionIcon
-                variant="white"
+                variant="subtle"
                 aria-label="Edit Study Modes"
                 component="a"
                 href={useHref(`/analysis/stats/${studyId}/manage`)}
@@ -123,27 +124,32 @@ export function AppAside() {
             </Tooltip>
             {hasAudioRecording && (
               <Tooltip label="Audio recording enabled" withinPortal position="bottom">
-                <IconMicrophone size={16} color="orange" />
+                <IconMicrophone size={16} color="var(--mantine-color-orange-text)" />
               </Tooltip>
             )}
             {hasScreenRecording && (
               <Tooltip label="Screen recording enabled" withinPortal position="bottom">
-                <IconDeviceDesktop size={16} color="orange" />
+                <IconDeviceDesktop size={16} color="var(--mantine-color-orange-text)" />
+              </Tooltip>
+            )}
+            {hasWebcamRecording && (
+              <Tooltip label="Webcam recording enabled" withinPortal position="bottom">
+                <IconCamera size={16} color="orange" />
               </Tooltip>
             )}
             {modes?.dataSharingEnabled
-              ? <Tooltip label="Data sharing enabled" withinPortal position="bottom"><IconGraph size={16} color="green" /></Tooltip>
-              : <Tooltip label="Data sharing disabled" withinPortal position="bottom"><IconGraphOff size={16} color="red" /></Tooltip>}
+              ? <Tooltip label="Data sharing enabled" withinPortal position="bottom"><IconGraph size={16} color="var(--mantine-color-green-text)" /></Tooltip>
+              : <Tooltip label="Data sharing disabled" withinPortal position="bottom"><IconGraphOff size={16} color="var(--mantine-color-red-text)" /></Tooltip>}
             {storageEngine?.getEngine() === 'localStorage'
-              ? <Tooltip label="Local storage enabled" withinPortal position="bottom"><IconDatabase size={16} color="green" /></Tooltip>
+              ? <Tooltip label="Local storage enabled" withinPortal position="bottom"><IconDatabase size={16} color="var(--mantine-color-green-text)" /></Tooltip>
               : storageEngine?.getEngine() === 'firebase'
-                ? <Tooltip label="Firebase enabled" withinPortal position="bottom"><IconBrandFirebase size={16} color="green" /></Tooltip>
+                ? <Tooltip label="Firebase enabled" withinPortal position="bottom"><IconBrandFirebase size={16} color="var(--mantine-color-green-text)" /></Tooltip>
                 : storageEngine?.getEngine() === 'supabase'
-                  ? <Tooltip label="Supabase enabled" withinPortal position="bottom"><IconBrandSupabase size={16} color="green" /></Tooltip>
-                  : <Tooltip label="Unknown storage engine enabled" withinPortal position="bottom"><IconDatabase size={16} color="red" /></Tooltip>}
+                  ? <Tooltip label="Supabase enabled" withinPortal position="bottom"><IconBrandSupabase size={16} color="var(--mantine-color-green-text)" /></Tooltip>
+                  : <Tooltip label="Unknown storage engine enabled" withinPortal position="bottom"><IconDatabase size={16} color="var(--mantine-color-red-text)" /></Tooltip>}
             {unmetRestrictions.length > 0 && (
               <Tooltip label={restrictionsTooltip} multiline style={{ whiteSpace: 'pre-line' }} withinPortal position="bottom">
-                <IconBan size={16} color="red" />
+                <IconBan size={16} color="var(--mantine-color-red-text)" />
               </Tooltip>
             )}
           </Flex>
@@ -156,14 +162,14 @@ export function AppAside() {
             {betweenSubjectsEntries.map(([factorName, factorLevel]) => (
               <Tooltip
                 key={factorName}
-                label={`Between-subjects factor: ${factorName} = ${String(factorLevel)}`}
+                label={`Between-subjects factor: ${factorName} = ${formatFactorLevel(factorLevel)}`}
                 withinPortal
                 position="bottom"
               >
                 <Badge size="sm" color="teal" variant="light">
                   {factorName}
                   =
-                  {String(factorLevel)}
+                  {formatFactorLevel(factorLevel)}
                 </Badge>
               </Tooltip>
             ))}
@@ -188,7 +194,7 @@ export function AppAside() {
           <Box style={{
             position: 'sticky',
             top: 0,
-            backgroundColor: 'white',
+            backgroundColor: 'var(--mantine-color-body)',
             zIndex: 1,
             flexShrink: 0,
           }}

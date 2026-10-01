@@ -180,15 +180,15 @@
         {
           "id": "numerical-response-style",
           "prompt": "How many websites do you visit daily?",
-          "secondaryText": "width: 700px; margin: 10px auto; padding: 12px; border: 2px solid green; border-radius: 6px; background-color: #f8fff9; color: green",
+          "secondaryText": "width: 700px; maxWidth: 100%; margin: 10px auto; padding: 12px; border: 2px solid green; border-radius: 6px; background-color: #f8fff9; color: green",
           "type": "numerical",
           "location": "belowStimulus",
           "min": 1,
           "max": 999,
-          "placeholder": "Enter number",
           "required": false,
           "style": {
             "width": "700px",
+            "maxWidth": "100%",
             "margin": "10px auto",
             "padding": "12px",
             "border": "2px solid green",
@@ -201,12 +201,13 @@
           "id": "long-text-response-style",
           "type": "longText",
           "prompt": "What makes a website design effective and visually appealing?",
-          "secondaryText": "width: 700px; margin: 25px auto; padding: 15px; border: 3px dashed #dc3545; border-radius: 10px; background-color: #fff5f5; color: #721c24; fontStyle: italic; fontWeight: 600; textTransform: lowercase",
+          "secondaryText": "width: 700px; maxWidth: 100%; margin: 25px auto; padding: 15px; border: 3px dashed #dc3545; border-radius: 10px; background-color: #fff5f5; color: #721c24; fontStyle: italic; fontWeight: 600; textTransform: lowercase",
           "location": "belowStimulus",
           "placeholder": "Enter your answer",
           "required": false,
           "style": {
             "width": "700px",
+            "maxWidth": "100%",
             "margin": "25px auto",
             "padding": "15px",
             "border": "3px dashed #dc3545",
@@ -221,7 +222,7 @@
         {
           "id": "likert-response-style",
           "prompt": "How much do you enjoy interactive web elements?",
-          "secondaryText": "width: 700px; margin: 30px auto; padding: 20px; background: linear-gradient(#667eea, #764ba2); borderRadius: 12px; textAlign: center;",
+          "secondaryText": "width: 700px; maxWidth: 100%; margin: 30px auto; padding: 20px; background: linear-gradient(to bottom right, #f5f5f5, #e0e0e0); borderRadius: 12px; textAlign: center;",
           "type": "likert",
           "location": "belowStimulus",
           "numItems": 7,
@@ -230,6 +231,7 @@
           "required": false,
           "style": {
             "width": "700px",
+            "maxWidth": "100%",
             "margin": "30px auto",
             "padding": "20px",
             "background": "linear-gradient(to bottom right, #f5f5f5, #e0e0e0)",
@@ -240,7 +242,7 @@
         {
           "id": "matrix-response-style",
           "prompt": "What is your overall opinion on the use of the following CSS styles?",
-          "secondaryText": "width: 700px; margin: 15px auto; border: 3px solid #ffc107; borderRadius: 8px; padding: 15px; backgroundColor: #fff8e1; color: #856404; fontSize: 14px; fontWeight: 500; top: 10px; left: 10px",
+          "secondaryText": "width: 700px; maxWidth: 100%; margin: 15px auto; border: 3px solid #ffc107; borderRadius: 8px; padding: 15px; backgroundColor: #fff8e1; color: #856404; fontSize: 14px; fontWeight: 500",
           "type": "matrix-radio",
           "location": "belowStimulus",
           "answerOptions": [
@@ -257,6 +259,7 @@
           "required": false,
           "style": {
             "width": "700px",
+            "maxWidth": "100%",
             "margin": "15px auto",
             "border": "3px solid #ffc107",
             "borderRadius": "8px",
@@ -264,15 +267,13 @@
             "backgroundColor": "#fff8e1",
             "color": "#856404",
             "fontSize": "14px",
-            "fontWeight": "500",
-            "top": "10px",
-            "left": "20px"
+            "fontWeight": "500"
           }
         },
         {
           "id": "buttons-response-style",
           "prompt": "Would you use this styling approach in your own projects?",
-          "secondaryText": "width: 700px; margin: 25px auto; padding: 25px; border: 4px ridge #20c997; borderRadius: 30px; backgroundColor: #e8f8f5; color: #0f5132; textAlign: right; transform: rotate(-1deg); bottom: 8px",
+          "secondaryText": "width: 700px; maxWidth: 100%; margin: 25px auto; padding: 25px; border: 4px ridge #20c997; borderRadius: 30px; backgroundColor: #e8f8f5; color: #0f5132; textAlign: right; transform: rotate(-1deg)",
           "type": "buttons",
           "location": "belowStimulus",
           "options": [
@@ -284,6 +285,7 @@
           "required": false,
           "style": {
             "width": "700px",
+            "maxWidth": "100%",
             "margin": "25px auto",
             "padding": "25px",
             "border": "4px ridge #20c997",
@@ -291,8 +293,7 @@
             "backgroundColor": "#e8f8f5",
             "color": "#0f5132",
             "textAlign": "right",
-            "transform": "rotate(-1deg)",
-            "bottom": "8px"
+            "transform": "rotate(-1deg)"
           }
         }
       ]
@@ -340,13 +341,17 @@
     "survey-form": {
       "type": "image",
       "path": "demo-style/assets/utah.jpg",
-      "stylesheetPath": "demo-style/assets/style/form.css",
+      "stylesheetPath": "revisitAssets/googleForm.css",
       "response": [
         {
           "id": "form-title",
           "prompt": "Welcome to our study!",
           "type": "textOnly",
-          "location": "belowStimulus"
+          "location": "belowStimulus",
+          "style": {
+            "fontSize": "32px",
+            "fontWeight": "bold"
+          }
         },
         {
           "id": "form-gender",
@@ -403,6 +408,43 @@
           "prompt": "Please give us any feedback on this survey.",
           "type": "longText",
           "location": "belowStimulus"
+        }
+      ]
+    },
+    "shared-form-style": {
+      "type": "questionnaire",
+      "stylesheetPath": "revisitAssets/googleForm.css",
+      "response": [
+        {
+          "id": "shared-style-introduction",
+          "type": "textOnly",
+          "prompt": "# Shared form style\n\nThis page reuses the previous survey form's stylesheet with different response IDs and no header image."
+        },
+        {
+          "id": "shared-style-frequency",
+          "type": "radio",
+          "prompt": "How often do you create surveys?",
+          "options": [
+            "Often",
+            "Sometimes",
+            "Rarely"
+          ],
+          "required": false
+        },
+        {
+          "id": "shared-style-section-break",
+          "type": "divider"
+        },
+        {
+          "id": "shared-style-feedback-heading",
+          "type": "textOnly",
+          "prompt": "## Feedback"
+        },
+        {
+          "id": "shared-style-feedback",
+          "type": "longText",
+          "prompt": "What would make a survey easier to complete?",
+          "required": false
         }
       ]
     },
@@ -582,6 +624,7 @@
         "order": "fixed",
         "components": [
           "survey-form",
+          "shared-form-style",
           "large-text",
           "layout"
         ]

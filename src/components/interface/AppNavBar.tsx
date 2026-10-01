@@ -33,17 +33,27 @@ export function AppNavBar({
   const status = useStoredAnswer();
   const templateData = useTemplateAnswerContext();
 
-  const instruction = useMemo(
-    () => compileTemplate(currentConfig?.instruction || '', currentConfig?.parameters ?? {}, { data: templateData }),
-    [currentConfig?.instruction, currentConfig?.parameters, templateData],
+  const instructionParameters = useMemo(
+    () => status?.parameters ?? currentConfig?.parameters ?? {},
+    [status?.parameters, currentConfig?.parameters],
   );
-  const instructionLocation = useMemo(() => currentConfig?.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar', [currentConfig, studyConfig]);
+
+  const runtimeConfig = useMemo(
+    () => (currentConfig ? { ...currentConfig, parameters: instructionParameters } : null),
+    [currentConfig, instructionParameters],
+  );
+
+  const instruction = useMemo(
+    () => (templateData ? compileTemplate(runtimeConfig?.instruction || '', runtimeConfig?.parameters ?? {}, { data: templateData }) : ''),
+    [runtimeConfig, templateData],
+  );
+  const instructionLocation = useMemo(() => runtimeConfig?.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar', [runtimeConfig, studyConfig]);
   const instructionInSideBar = instructionLocation === 'sidebar';
 
-  return currentConfig ? (
+  return runtimeConfig ? (
     <Box
       className="sidebar"
-      bg="gray.1"
+      bg="light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-6))"
       display={sidebarOpen ? 'block' : 'none'}
       style={{
         marginBottom: bottom,
@@ -56,10 +66,10 @@ export function AppNavBar({
     >
       {instructionInSideBar && instruction !== '' && (
         <Box
-          bg="gray.3"
+          bg="light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-5))"
           p="md"
         >
-          <Text span c="orange.8" fw={700} inherit>
+          <Text span c="light-dark(var(--mantine-color-orange-8), var(--mantine-color-orange-4))" fw={700} inherit>
             Task:
           </Text>
           <ReactMarkdownWrapper text={instruction} />
@@ -70,7 +80,7 @@ export function AppNavBar({
         <ResponseBlock
           key={`${currentComponent}-sidebar-response-block`}
           status={status}
-          config={currentConfig}
+          config={runtimeConfig}
           location="sidebar"
         />
       </Box>

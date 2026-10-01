@@ -54,6 +54,24 @@ describe('getStaticFirstComponent', () => {
     ))).toEqual({ componentName: 'intro', component });
   });
 
+  test('does not preview a component with a custom response, whose mount effects would run', () => {
+    const component: MarkdownComponent = {
+      ...intro,
+      response: [{
+        id: 'answer',
+        type: 'custom',
+        prompt: 'Answer',
+        location: 'belowStimulus',
+        path: 'test-study/assets/CustomResponse.tsx',
+      }],
+    };
+
+    expect(getStaticFirstComponent(makeConfig(
+      { order: 'fixed', components: ['intro'] },
+      component,
+    ))).toBeNull();
+  });
+
   test('does not preview a component that needs templating', () => {
     expect(getStaticFirstComponent(makeConfig(
       { order: 'fixed', components: ['intro'] },

@@ -2,18 +2,23 @@ import Ajv from 'ajv';
 import isEqual from 'lodash.isequal';
 import merge from 'lodash.merge';
 import librarySchema from './LibraryConfigSchema.json';
+import studySchema from './StudyConfigSchema.json';
 import {
   ComponentBlock, ComponentOrder, Factor, FactorBlock, FactorObject, FactorObjectValue, FactorOption, FactorValue, IndividualComponent, LibraryConfig, OrderedFactorValues, ParsedConfig, ParserErrorWarning, StudyConfig,
 } from './types';
 import {
   FactorPlanBlock, isDynamicBlock, isFactorBlock, isInheritedComponent,
 } from './utils';
+import { mergeComponentConfigs, studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
 import { PREFIX } from '../utils/Prefix';
 import { getSequenceFlatMapWithInterruptions } from '../utils/getSequenceFlatMap';
 
 const ajv = new Ajv({ allowUnionTypes: true });
 ajv.addSchema(librarySchema);
 const libraryValidate = ajv.getSchema<LibraryConfig>('#/definitions/LibraryConfig')!;
+const studyAjv = new Ajv({ allowUnionTypes: true });
+studyAjv.addSchema(studySchema);
+const individualComponentValidate = studyAjv.getSchema<IndividualComponent>('#/definitions/IndividualComponent')!;
 
 type SequenceWithImportReference = StudyConfig['sequence'] & {
   __revisitImportedSequenceRef?: string;
@@ -108,14 +113,14 @@ export function fillTemplate(str: string, vars: Record<string, unknown>): string
     ? String(vars[key])
     : match);
 
-  return str.replace(/\{\{\s*([A-Za-z_]\w*)\s*\}\}/g, fillToken);
+  return str.replace(/\{\{\s*([A-Za-z_][\w-]*)\s*\}\}/g, fillToken);
 }
 
 // Recursively replace templates in any TS value.
 export function deepFillTemplate<T>(value: T, vars: Record<string, unknown>): T {
   // Strings: apply template replacement
   if (typeof value === 'string') {
-    const exactToken = value.match(/^\{\{\s*([A-Za-z_]\w*)\s*\}\}$/);
+    const exactToken = value.match(/^\{\{\s*([A-Za-z_][\w-]*)\s*\}\}$/);
     if (exactToken && vars[exactToken[1]] !== undefined && vars[exactToken[1]] !== null) {
       return vars[exactToken[1]] as T;
     }
@@ -162,14 +167,11 @@ type FactorResolutionMode = 'standard' | 'materialize' | 'runtime';
 
 export type FactorOrderContext = {
   sequenceIndex: number;
-  orderedValues: Map<string, FactorValue[]>;
   sampledConditions: Map<string, FactorCondition[]>;
 };
 
 export function createFactorOrderContext(sequenceIndex: number): FactorOrderContext {
-  return {
-    sequenceIndex, orderedValues: new Map(), sampledConditions: new Map(),
-  };
+  return { sequenceIndex, sampledConditions: new Map() };
 }
 
 function isOrderedFactorValues(factor: Factor): factor is OrderedFactorValues {
@@ -232,28 +234,54 @@ function addFactorError(
   }
 }
 
+function addFactorWarning(
+  warnings: ParserErrorWarning[],
+  message: string,
+  instancePath = '/factors/',
+) {
+  if (!warnings.some((warning) => warning.instancePath === instancePath && warning.message === message)) {
+    warnings.push({
+      message,
+      instancePath,
+      params: { action: 'Check the factor definition and its references' },
+      category: 'sequence-validation',
+    });
+  }
+}
+
+function deepFillTemplateStrings<T>(value: T, vars: Record<string, unknown>): T {
+  if (typeof value === 'string') {
+    return fillTemplate(value, vars) as T;
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => deepFillTemplateStrings(item, vars)) as unknown as T;
+  }
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, child]) => [key, deepFillTemplateStrings(child, vars)]),
+    ) as T;
+  }
+  return value;
+}
+
 function orderFactorValues(
   factorName: string,
   factor: OrderedFactorValues,
   errors: ParserErrorWarning[],
   context?: FactorOrderContext,
+  warnings: ParserErrorWarning[] = [],
 ): FactorValue[] {
   const order: ComponentOrder = factor.order || 'fixed';
   if (factor.values.length === 0) {
     addFactorError(errors, `Factor \`${factorName}\` must contain at least one value`);
     return [];
   }
-  if (factor.numSamples !== undefined && (!Number.isInteger(factor.numSamples) || factor.numSamples < 1 || factor.numSamples > factor.values.length)) {
-    addFactorError(errors, `Factor \`${factorName}\` numSamples must be between 1 and ${factor.values.length}`);
+  if (factor.numSamples !== undefined && (!Number.isInteger(factor.numSamples) || factor.numSamples < 1)) {
+    addFactorError(errors, `Factor \`${factorName}\` numSamples must be a positive integer`);
     return [];
   }
   if (!context) {
     return [...factor.values];
-  }
-
-  const existing = context.orderedValues.get(factorName);
-  if (existing) {
-    return existing;
   }
 
   let values = [...factor.values];
@@ -263,8 +291,13 @@ function orderFactorValues(
     const offset = context.sequenceIndex % values.length;
     values = [...values.slice(offset), ...values.slice(0, offset)];
   }
+  if (factor.numSamples !== undefined && factor.numSamples > values.length) {
+    addFactorWarning(
+      warnings,
+      `Factor \`${factorName}\` requested ${factor.numSamples} values but only ${values.length} are available; stopping after the list is exhausted`,
+    );
+  }
   const selectedValues = values.slice(0, factor.numSamples);
-  context.orderedValues.set(factorName, selectedValues);
   return selectedValues;
 }
 
@@ -290,6 +323,23 @@ function mergeFactorParameterNames(
   return Object.keys(parameterNames).length > 0 ? parameterNames : undefined;
 }
 
+function materializeConditionForParameterNames(
+  condition: FactorCondition,
+  parameterNames: FactorParameterNames = {},
+): MaterializedFactorCondition {
+  return Object.entries(condition).reduce<MaterializedFactorCondition>(
+    (materialized, [factorName, value]) => {
+      const values = isRepeatedFactorValues(value) ? value.values : [value];
+      values.forEach((factorValue, index) => {
+        const sourceName = values.length === 1 ? factorName : `${factorName}_${index}`;
+        materialized[parameterNames[sourceName] || sourceName] = factorValue;
+      });
+      return materialized;
+    },
+    {},
+  );
+}
+
 function createFactorParameterNames(
   resolutions: FactorResolution[],
   outputNames: string[],
@@ -313,13 +363,13 @@ function createFactorParameterNames(
     if (!firstCondition) {
       return undefined;
     }
-    const factorNames = Object.keys(firstCondition);
+    const materializedFirstCondition = materializeConditionForParameterNames(firstCondition, resolution.parameterNames);
+    const factorNames = Object.keys(materializedFirstCondition);
     const inputName = factorNames[0];
     const hasOneScalarInput = factorNames.length === 1
       && resolution.conditions.every((condition) => (
-        Object.keys(condition).length === 1
-        && Object.hasOwn(condition, inputName)
-        && !Array.isArray(condition[inputName])
+        Object.keys(materializeConditionForParameterNames(condition, resolution.parameterNames)).length === 1
+        && !Array.isArray(materializeConditionForParameterNames(condition, resolution.parameterNames)[inputName])
       ));
     if (!hasOneScalarInput) {
       addFactorError(
@@ -347,6 +397,20 @@ function createFactorParameterNames(
     parameterNames[sourceName] = outputNames[index];
     return parameterNames;
   }, {});
+}
+
+function getSingleFactorParameterName(
+  resolution: FactorResolution,
+): string | undefined {
+  const parameterNames = resolution.conditions.length > 0
+    ? Object.keys(materializeConditionForParameterNames(resolution.conditions[0], resolution.parameterNames))
+    : [];
+  if (parameterNames.length !== 1 || resolution.conditions.some((condition) => (
+    Object.keys(materializeConditionForParameterNames(condition, resolution.parameterNames)).length !== 1
+  ))) {
+    return undefined;
+  }
+  return parameterNames[0];
 }
 
 function mergeFactorConditions(
@@ -389,17 +453,18 @@ function zipFactorConditions(
   conditionSets: FactorCondition[][],
   factorName: string,
   errors: ParserErrorWarning[],
+  warnings: ParserErrorWarning[],
 ): FactorCondition[] {
   const lengths = conditionSets.map((conditions) => conditions.length);
   if (new Set(lengths).size > 1) {
-    addFactorError(
-      errors,
-      `Zip factor \`${factorName}\` requires inputs with equal lengths; received ${lengths.join(', ')}`,
+    addFactorWarning(
+      warnings,
+      `Zip factor \`${factorName}\` received inputs with different lengths (${lengths.join(', ')}); stopping after the shortest input`,
     );
-    return [];
   }
 
-  return Array.from({ length: lengths[0] ?? 0 }, (_, index) => (
+  const length = lengths.length > 0 ? Math.min(...lengths) : 0;
+  return Array.from({ length }, (_, index) => (
     conditionSets.reduce<FactorCondition>((condition, conditions) => (
       mergeFactorConditions(condition, conditions[index])
     ), {})
@@ -431,6 +496,24 @@ function materializeFactorCondition(
   );
 }
 
+function filterFactorConditionsByAssignment(
+  conditions: FactorCondition[],
+  assignmentParameters: Record<string, unknown> | undefined,
+  errors: ParserErrorWarning[],
+  parameterNames?: FactorParameterNames,
+): FactorCondition[] {
+  if (!assignmentParameters) {
+    return conditions;
+  }
+
+  return conditions.filter((condition) => {
+    const materialized = materializeFactorCondition(condition, errors, parameterNames);
+    return Object.entries(assignmentParameters).every(([name, value]) => (
+      materialized[name] === undefined || isEqual(materialized[name], value)
+    ));
+  });
+}
+
 function resolveFactor(
   factorSource: FactorOption,
   factors: Record<string, Factor>,
@@ -439,6 +522,8 @@ function resolveFactor(
   expressionName = 'inline',
   mode: FactorResolutionMode = 'standard',
   orderContext?: FactorOrderContext,
+  assignmentParameters?: Record<string, unknown>,
+  warnings: ParserErrorWarning[] = [],
 ): FactorResolution {
   if (typeof factorSource === 'string') {
     if (stack.includes(factorSource)) {
@@ -457,21 +542,29 @@ function resolveFactor(
     if (factor.length === 0) {
       addFactorError(errors, `Factor \`${factorName}\` must contain at least one value`);
     }
+    const conditions = factor.map((value) => (
+      typeof value === 'object' && !Array.isArray(value)
+        ? { ...value }
+        : { [factorName]: value }
+    ));
     return {
-      conditions: factor.map((value) => (
-        typeof value === 'object' && !Array.isArray(value)
-          ? { ...value }
-          : { [factorName]: value }
-      )),
+      conditions: filterFactorConditionsByAssignment(conditions, assignmentParameters, errors),
     };
   }
 
   if (isOrderedFactorValues(factor)) {
+    const eligibleValues = factor.values.filter((value) => {
+      const condition = typeof value === 'object' && !Array.isArray(value)
+        ? { ...value }
+        : { [factorName]: value };
+      return filterFactorConditionsByAssignment([condition], assignmentParameters, errors).length > 0;
+    });
     const values = orderFactorValues(
       factorName,
-      factor,
+      { ...factor, values: eligibleValues },
       errors,
       mode === 'runtime' ? orderContext : undefined,
+      mode === 'runtime' ? warnings : [],
     );
     return {
       conditions: values.map((value) => (
@@ -507,11 +600,9 @@ function resolveFactor(
       `${factorName}.${factor.action}`,
       mode,
       orderContext,
+      assignmentParameters,
+      warnings,
     );
-    if (resolution.numSamples !== undefined) {
-      addFactorError(errors, `Factor expression \`${factorName}\` cannot nest a sampled factor`);
-      return { conditions: [] };
-    }
 
     const itemResolution = hasItems && !Array.isArray(factor.items)
       ? resolveFactor(
@@ -522,23 +613,34 @@ function resolveFactor(
         `${factorName}.${factor.action}.items`,
         mode,
         orderContext,
+        assignmentParameters,
+        warnings,
       )
       : undefined;
-    if (itemResolution?.numSamples !== undefined) {
-      addFactorError(errors, `Factor expression \`${factorName}\` cannot use sampled items`);
-      return { conditions: [] };
-    }
 
-    const matchesSelection = hasCondition
-      ? (sourceCondition: FactorCondition) => (
-        Object.entries(factor.condition!).every(([name, value]) => (
-          Object.hasOwn(sourceCondition, name) && isEqual(sourceCondition[name], value)
-        ))
-      )
-      : (sourceCondition: FactorCondition) => (
-        (Array.isArray(factor.items) ? factor.items : itemResolution!.conditions)
-          .some((item) => isEqual(sourceCondition, item))
+    const matchesSelection = (sourceCondition: FactorCondition) => {
+      const materializedSource = materializeFactorCondition(
+        sourceCondition,
+        errors,
+        resolution.parameterNames,
       );
+
+      if (hasCondition) {
+        return Object.entries(factor.condition!).every(([name, value]) => (
+          Object.hasOwn(materializedSource, name) && isEqual(materializedSource[name], value)
+        ));
+      }
+
+      const items = Array.isArray(factor.items) ? factor.items : itemResolution!.conditions;
+      return items.some((item) => isEqual(
+        materializedSource,
+        materializeFactorCondition(
+          item as FactorCondition,
+          errors,
+          itemResolution?.parameterNames || resolution.parameterNames,
+        ),
+      ));
+    };
 
     return {
       conditions: resolution.conditions.filter((sourceCondition) => (
@@ -548,6 +650,10 @@ function resolveFactor(
       )),
       parameterNames: resolution.parameterNames,
       hasRuntimeOrder: resolution.hasRuntimeOrder || itemResolution?.hasRuntimeOrder,
+      hasRuntimeSample: resolution.hasRuntimeSample
+        || itemResolution?.hasRuntimeSample
+        || resolution.numSamples !== undefined
+        || itemResolution?.numSamples !== undefined,
     };
   }
 
@@ -555,6 +661,42 @@ function resolveFactor(
   if (inputs.length === 0) {
     addFactorError(errors, `Factor expression \`${factorName}\` must reference at least one factor`);
     return { conditions: [] };
+  }
+
+  const aliasNames = (factor.action === 'cross' || factor.action === 'zip') ? factor.as : undefined;
+  let parameterNameResolutions: FactorResolution[] | undefined;
+  let inputAssignmentParameters = inputs.map(() => assignmentParameters);
+  if (aliasNames !== undefined) {
+    const parameterErrors: ParserErrorWarning[] = [];
+    parameterNameResolutions = inputs.map((input, index) => (
+      resolveFactor(
+        input,
+        factors,
+        parameterErrors,
+        typeof factorSource === 'string' ? [...stack, factorSource] : stack,
+        `${factorName}.${action}[${index}]`,
+        'materialize',
+        undefined,
+        undefined,
+        warnings,
+      )
+    ));
+    parameterErrors.forEach((error) => addFactorError(errors, error.message, error.instancePath));
+
+    const parameterNames = parameterNameResolutions.map((resolution) => (
+      getSingleFactorParameterName(resolution)
+    ));
+    if (parameterNames.every((name): name is string => name !== undefined)) {
+      inputAssignmentParameters = parameterNames.map((inputName, index) => {
+        if (!assignmentParameters || !Object.hasOwn(assignmentParameters, aliasNames[index])) {
+          return assignmentParameters;
+        }
+        const mappedAssignment = { ...assignmentParameters };
+        delete mappedAssignment[aliasNames[index]];
+        mappedAssignment[inputName] = assignmentParameters[aliasNames[index]];
+        return mappedAssignment;
+      });
+    }
   }
 
   const resolutions = inputs.map((input, index) => (
@@ -566,16 +708,10 @@ function resolveFactor(
       `${factorName}.${action}[${index}]`,
       mode,
       orderContext,
+      inputAssignmentParameters[index],
+      warnings,
     )
   ));
-  const hasNestedSample = resolutions.some((resolution) => resolution.numSamples !== undefined);
-  if (hasNestedSample && mode !== 'materialize') {
-    addFactorError(
-      errors,
-      `Factor expression \`${factorName}\` cannot nest a sampled factor`,
-    );
-    return { conditions: [] };
-  }
 
   const conditionSets = resolutions.map((resolution) => resolution.conditions);
   const hasRuntimeOrder = resolutions.some((resolution) => resolution.hasRuntimeOrder);
@@ -583,8 +719,8 @@ function resolveFactor(
     resolution.hasRuntimeSample || resolution.numSamples !== undefined
   ));
   const parameterNames = (factor.action === 'cross' || factor.action === 'zip')
-    && factor.as !== undefined
-    ? createFactorParameterNames(resolutions, factor.as, factorName, errors)
+    && aliasNames !== undefined
+    ? createFactorParameterNames(parameterNameResolutions || resolutions, aliasNames, factorName, errors)
     : mergeFactorParameterNames(resolutions, factorName, errors);
   if (action === 'cross') {
     return {
@@ -595,10 +731,13 @@ function resolveFactor(
     };
   }
   if (action === 'zip') {
+    if (mode === 'materialize' && (hasRuntimeOrder || hasRuntimeSample)) {
+      zipFactorConditions(conditionSets, factorName, errors, warnings);
+    }
     return {
       conditions: mode === 'materialize' && (hasRuntimeOrder || hasRuntimeSample)
         ? crossFactorConditions(conditionSets)
-        : zipFactorConditions(conditionSets, factorName, errors),
+        : zipFactorConditions(conditionSets, factorName, errors, warnings),
       parameterNames,
       hasRuntimeOrder,
       hasRuntimeSample,
@@ -645,10 +784,28 @@ function resolveFactor(
   if (
     factor.samplingStrategy === 'withoutReplacement'
     && factor.numSamples > conditions.length
+    && mode !== 'runtime'
+    && !hasRuntimeSample
   ) {
     addFactorError(
       errors,
       `Sample factor \`${factorName}\` cannot select ${factor.numSamples} conditions from ${conditions.length}`,
+    );
+    return { conditions: [] };
+  }
+  if (
+    factor.samplingStrategy === 'withoutReplacement'
+    && factor.numSamples > conditions.length
+  ) {
+    addFactorWarning(
+      warnings,
+      `Sample factor \`${factorName}\` requested ${factor.numSamples} conditions but only ${conditions.length} are available; stopping after the list is exhausted`,
+    );
+  }
+  if (conditions.length === 0) {
+    addFactorError(
+      errors,
+      `Sample factor \`${factorName}\` cannot sample from an empty condition set`,
     );
     return { conditions: [] };
   }
@@ -671,7 +828,7 @@ function resolveFactor(
     samplingStrategy: factor.samplingStrategy,
     parameterNames,
     hasRuntimeOrder,
-    hasRuntimeSample: factor.samplingStrategy === 'withReplacement',
+    hasRuntimeSample: hasRuntimeSample || factor.samplingStrategy === 'withReplacement',
   };
 }
 
@@ -681,9 +838,10 @@ export function resolveFactorConditions(
   errors: ParserErrorWarning[] = [],
   stack: string[] = [],
   expressionName = 'inline',
+  warnings: ParserErrorWarning[] = [],
 ): FactorCondition[] {
-  const resolution = resolveFactor(factorSource, factors, errors, stack, expressionName);
-  if (resolution.numSamples !== undefined) {
+  const resolution = resolveFactor(factorSource, factors, errors, stack, expressionName, 'standard', undefined, undefined, warnings);
+  if (resolution.numSamples !== undefined || resolution.hasRuntimeSample) {
     addFactorError(
       errors,
       `Sample factor \`${typeof factorSource === 'string' ? factorSource : expressionName}\` must be materialized by a factor block`,
@@ -701,6 +859,8 @@ export function resolveOrderedFactorConditions(
   orderContext: FactorOrderContext,
   errors: ParserErrorWarning[] = [],
   expressionName = 'inline',
+  assignmentParameters?: Record<string, unknown>,
+  warnings: ParserErrorWarning[] = [],
 ): Record<string, FactorObjectValue>[] {
   const resolution = resolveFactor(
     factorSource,
@@ -710,8 +870,10 @@ export function resolveOrderedFactorConditions(
     expressionName,
     'runtime',
     orderContext,
+    assignmentParameters,
+    warnings,
   );
-  if (resolution.numSamples !== undefined) {
+  if (resolution.numSamples !== undefined || resolution.hasRuntimeSample) {
     addFactorError(errors, `Sample factor \`${typeof factorSource === 'string' ? factorSource : expressionName}\` must be materialized by a factor block`);
     return [];
   }
@@ -734,12 +896,19 @@ function compileFactorBlock(
   block: FactorBlock,
   config: StudyConfig,
   errors: ParserErrorWarning[],
+  warnings: ParserErrorWarning[],
 ): FactorCompileResult {
   const components: Record<string, IndividualComponent> = {};
   const baseComponents = typeof block.components === 'string'
     ? [block.components]
     : block.components;
   const materializedConditions = new Map<string, string[]>();
+  const factorLabels: Record<string, string> = {};
+  const withFactorLabels = (sequence: StudyConfig['sequence']): StudyConfig['sequence'] => {
+    // Display labels must not change the persisted config hash.
+    Object.defineProperty(sequence, '__revisitFactorLabels', { value: factorLabels });
+    return sequence;
+  };
   const materializeCondition = (condition: MaterializedFactorCondition): string[] => {
     const conditionId = createFactorConditionId(block.id, condition);
     const existing = materializedConditions.get(conditionId);
@@ -757,17 +926,25 @@ function compileFactorBlock(
         );
         return [];
       }
-
       const rawParameters = {
         ...('parameters' in template ? template.parameters : {}),
         ...condition,
       };
       const parameters = deepFillTemplate(rawParameters, rawParameters);
       const componentId = `${conditionId}__${encodeURIComponent(baseComponent)}`;
-      const component = deepFillTemplate(
+      const component = deepFillTemplateStrings(
         merge({}, template, { parameters }),
         parameters,
       ) as IndividualComponent;
+
+      if (!individualComponentValidate(component)) {
+        addFactorError(
+          errors,
+          `Factor block \`${block.id}\` generated component from base component \`${baseComponent}\` that does not satisfy the IndividualComponent schema`,
+          '/sequence/',
+        );
+        return [];
+      }
 
       if (
         config.components[componentId]
@@ -782,6 +959,8 @@ function compileFactorBlock(
       }
 
       components[componentId] = component;
+      const values = Object.values(condition).map((value) => (typeof value === 'string' ? value : JSON.stringify(value)));
+      factorLabels[componentId] = values.length ? `${values.join(' · ')} — ${baseComponent}` : baseComponent;
       return [componentId];
     });
     materializedConditions.set(conditionId, conditionComponentIds);
@@ -795,6 +974,9 @@ function compileFactorBlock(
     [],
     block.id,
     'materialize',
+    undefined,
+    undefined,
+    warnings,
   );
   const conditions = resolution.conditions.map((condition) => (
     materializeFactorCondition(condition, errors, resolution.parameterNames)
@@ -805,7 +987,7 @@ function compileFactorBlock(
   if (resolution.hasRuntimeOrder || resolution.hasRuntimeSample) {
     conditions.forEach((condition) => materializeCondition(condition));
     return {
-      sequence: {
+      sequence: withFactorLabels({
         type: 'factor-runtime-plan',
         id: block.id,
         order: 'fixed',
@@ -816,7 +998,7 @@ function compileFactorBlock(
         ...(block.interruptions !== undefined ? { interruptions: block.interruptions } : {}),
         ...(block.skip !== undefined ? { skip: block.skip } : {}),
         ...(block.conditional !== undefined ? { conditional: block.conditional } : {}),
-      } as StudyConfig['sequence'],
+      } as StudyConfig['sequence']),
       components,
     };
   }
@@ -840,7 +1022,7 @@ function compileFactorBlock(
   }
 
   return {
-    sequence: {
+    sequence: withFactorLabels({
       id: block.id,
       order,
       components: sequenceComponents,
@@ -848,7 +1030,7 @@ function compileFactorBlock(
       ...(block.interruptions !== undefined ? { interruptions: block.interruptions } : {}),
       ...(block.skip !== undefined ? { skip: block.skip } : {}),
       ...(block.conditional !== undefined ? { conditional: block.conditional } : {}),
-    },
+    } as StudyConfig['sequence']),
     components,
   };
 }
@@ -857,12 +1039,13 @@ export function compileFactorBlocks(
   sequence: StudyConfig['sequence'],
   config: StudyConfig,
   errors: ParserErrorWarning[] = [],
+  warnings: ParserErrorWarning[] = [],
 ): FactorCompileResult {
   if (isDynamicBlock(sequence)) {
     return { sequence, components: {} };
   }
   if (isFactorBlock(sequence)) {
-    return compileFactorBlock(sequence, config, errors);
+    return compileFactorBlock(sequence, config, errors, warnings);
   }
 
   const components: Record<string, IndividualComponent> = {};
@@ -873,7 +1056,7 @@ export function compileFactorBlocks(
         return component;
       }
 
-      const compiled = compileFactorBlocks(component, config, errors);
+      const compiled = compileFactorBlocks(component, config, errors, warnings);
       Object.entries(compiled.components).forEach(([componentId, compiledComponent]) => {
         if (components[componentId] && !isEqual(components[componentId], compiledComponent)) {
           addFactorError(
@@ -903,16 +1086,18 @@ export function materializeParticipantConfig(
 ): StudyConfig {
   const components = Object.fromEntries(
     Object.entries(config.components).map(([componentId, component]) => {
-      const inheritedComponent = isInheritedComponent(component) && config.baseComponents
-        ? merge({}, config.baseComponents[component.baseComponent], component)
-        : component;
+      const inheritedComponent = studyComponentToIndividualComponent(component, config);
       const parameters = {
         ...('parameters' in inheritedComponent ? inheritedComponent.parameters : {}),
         ...globalParameters,
       };
+      const materializedComponent = deepFillTemplateStrings(inheritedComponent, parameters);
       return [
         componentId,
-        deepFillTemplate({ ...inheritedComponent, parameters }, parameters),
+        {
+          ...materializedComponent,
+          parameters: deepFillTemplate(parameters, parameters),
+        },
       ];
     }),
   );
@@ -920,30 +1105,64 @@ export function materializeParticipantConfig(
   return { ...config, components };
 }
 
+export function resolveBetweenSubjectsFactorLevels(
+  factorName: string,
+  factors: Record<string, Factor>,
+  errors: ParserErrorWarning[] = [],
+): FactorValue[] | undefined {
+  const factor = factors[factorName];
+  if (Array.isArray(factor)) {
+    return factor;
+  }
+  if (factor && typeof factor === 'object' && 'action' in factor) {
+    const factorErrors: ParserErrorWarning[] = [];
+    const levels = resolveFactorConditions(factorName, factors, factorErrors);
+    factorErrors.forEach((error) => errors.push(error));
+    return factorErrors.length === 0 ? levels as FactorValue[] : undefined;
+  }
+  return undefined;
+}
+
 export function validateBetweenSubjects(
   config: StudyConfig,
   warnings: ParserErrorWarning[] = [],
+  errors: ParserErrorWarning[] = [],
 ) {
   const betweenSubjectsObjectFactors: Array<{ factorName: string; index: number; levels: FactorObject[] }> = [];
+  const namespaceOwners = new Map<string, string>();
+  const seenFactors = new Set<string>();
 
   config.betweenSubjects?.forEach((factorName, index) => {
-    const factor = config.factors?.[factorName];
     const instancePath = `/betweenSubjects/${index}`;
-    const isObjectFactor = Array.isArray(factor)
-      && factor.length > 0
-      && factor.every((level) => level !== null && typeof level === 'object' && !Array.isArray(level));
-    const isPrimitiveFactor = Array.isArray(factor)
-      && factor.length > 0
-      && factor.every((level) => typeof level !== 'object');
+    if (seenFactors.has(factorName)) {
+      errors.push({
+        message: `Between-subjects factor \`${factorName}\` is declared more than once`,
+        instancePath,
+        params: { action: 'Declare each between-subjects factor only once' },
+        category: 'sequence-validation',
+      });
+    }
+    seenFactors.add(factorName);
+
+    const beforeResolutionErrors = errors.length;
+    const levels = resolveBetweenSubjectsFactorLevels(factorName, config.factors || {}, errors);
+    if (errors.length > beforeResolutionErrors) {
+      return;
+    }
+    const isObjectFactor = levels !== undefined
+      && levels.length > 0
+      && levels.every((level) => level !== null && typeof level === 'object' && !Array.isArray(level));
+    const isPrimitiveFactor = levels !== undefined
+      && levels.length > 0
+      && levels.every((level) => typeof level !== 'object');
 
     if (
-      !factor
-      || !Array.isArray(factor)
-      || factor.length === 0
+      levels === undefined
+      || levels.length === 0
       || (!isPrimitiveFactor && !isObjectFactor)
     ) {
-      warnings.push({
-        message: !factor
+      errors.push({
+        message: levels === undefined
           ? `Between-subjects factor \`${factorName}\` is not defined in factors`
           : `Between-subjects factor \`${factorName}\` must be a non-empty factor with either all primitive levels or all object levels`,
         instancePath,
@@ -954,9 +1173,35 @@ export function validateBetweenSubjects(
       betweenSubjectsObjectFactors.push({
         factorName,
         index,
-        levels: factor as FactorObject[],
+        levels: levels as FactorObject[],
       });
     }
+
+    const parameterNames = new Set([
+      factorName,
+      ...(isObjectFactor ? (levels as FactorObject[]).flatMap((level) => Object.keys(level)) : []),
+    ]);
+    if (isObjectFactor && (levels as FactorObject[]).some((level) => Object.hasOwn(level, factorName))) {
+      errors.push({
+        message: `Between-subjects factor \`${factorName}\` collides with its own parameter namespace`,
+        instancePath,
+        params: { action: 'Use unique between-subjects factor and parameter names' },
+        category: 'sequence-validation',
+      });
+    }
+    parameterNames.forEach((parameterName) => {
+      const owner = namespaceOwners.get(parameterName);
+      if (owner && owner !== factorName) {
+        errors.push({
+          message: `Between-subjects factors \`${owner}\` and \`${factorName}\` collide on parameter namespace \`${parameterName}\``,
+          instancePath,
+          params: { action: 'Use unique between-subjects factor and parameter names' },
+          category: 'sequence-validation',
+        });
+      } else {
+        namespaceOwners.set(parameterName, factorName);
+      }
+    });
   });
 
   betweenSubjectsObjectFactors.forEach((factor, factorIndex) => {
@@ -1232,8 +1477,7 @@ export async function loadLibrariesParseNamespace(importedLibraries: string[], e
             baseComponent: component.baseComponent,
             ...(component.withSidebar !== undefined ? { withSidebar: component.withSidebar } : {}),
           };
-          const mergedComponent = merge(
-            {},
+          const mergedComponent = mergeComponentConfigs(
             importedLibrariesData[libraryName].baseComponents?.[component.baseComponent],
             component,
           ) as IndividualComponent & { baseComponent?: string };

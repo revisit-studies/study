@@ -1,4 +1,6 @@
-import { ReactNode } from 'react';
+import {
+  Children, cloneElement, isValidElement, ReactNode,
+} from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
   render, act, cleanup, screen, fireEvent, waitFor,
@@ -16,6 +18,7 @@ import { DataManagementItem } from '../DataManagementItem';
 import { showNotification } from '../../../../utils/notifications';
 import { StudyConfig } from '../../../../parser/types';
 import { getBetweenSubjectsCombinationKey } from '../../../../storage/engines/types';
+import { DISTINCT_COLOR_PALETTE } from '../../../../utils/colors';
 
 let mockStorageEngine: {
   getModes: ReturnType<typeof vi.fn>;
@@ -107,10 +110,18 @@ vi.mock('@mantine/core', () => ({
   Flex: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Modal: ({ opened, children }: { opened: boolean; children: ReactNode }) => (opened ? <div>{children}</div> : null),
   Popover: Object.assign(
-    ({ children }: { children: ReactNode }) => <div>{children}</div>,
+    ({ children, opened }: { children: ReactNode; opened?: boolean }) => (
+      <div>
+        {Children.map(children, (child) => (isValidElement<{ opened?: boolean }>(child)
+          ? cloneElement(child, { opened })
+          : child))}
+      </div>
+    ),
     {
       Target: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-      Dropdown: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+      Dropdown: ({ children, opened }: { children: ReactNode; opened?: boolean }) => (
+        opened ? <div>{children}</div> : null
+      ),
     },
   ),
   ScrollArea: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -168,6 +179,52 @@ vi.mock('@mantine/core', () => ({
   ),
 }));
 
+type MrtColumn = {
+  id?: string;
+  accessorKey?: string;
+  header: string;
+  Header?: () => ReactNode;
+  Cell?: (props: { row: { original: Record<string, unknown> } }) => ReactNode;
+};
+type MrtTableOptions = {
+  columns: MrtColumn[];
+  data: Record<string, unknown>[];
+  getRowId: (row: Record<string, unknown>) => string;
+};
+
+// mantine-react-table is not transformed by Vitest, so it resolves the real
+// @mantine/core instead of the mock above and then fails without a provider.
+// Render an equivalent plain table so the cells stay assertable.
+vi.mock('mantine-react-table', () => ({
+  useMantineReactTable: (options: MrtTableOptions) => options,
+  MantineReactTable: ({ table }: { table: MrtTableOptions }) => (
+    <table>
+      <thead>
+        <tr>
+          {table.columns.map((column) => (
+            <th key={column.id ?? column.accessorKey}>
+              {column.Header ? column.Header() : column.header}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {table.data.map((row) => (
+          <tr key={table.getRowId(row)}>
+            {table.columns.map((column) => (
+              <td key={column.id ?? column.accessorKey}>
+                {column.Cell
+                  ? column.Cell({ row: { original: row } })
+                  : String(row[column.accessorKey as string] ?? '')}
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  ),
+}));
+
 vi.mock('@tabler/icons-react', () => ({
   IconEdit: () => <span>edit</span>,
   IconCheck: () => <span>check</span>,
@@ -193,8 +250,10 @@ vi.mock('../../../../components/downloader/DownloadButtons', () => ({
 }));
 
 const successResponse = { status: 'SUCCESS', notifications: [] };
-const DEFAULT_STAGE_COLOR = '#F35C34';
-const FIRST_ADDITIONAL_STAGE_COLOR = '#F35C34';
+const DEFAULT_STAGE_COLOR = DISTINCT_COLOR_PALETTE[0];
+// getNextStageColor hands out the first unused palette color, so a second stage
+// takes the entry after the default one.
+const FIRST_ADDITIONAL_STAGE_COLOR = DISTINCT_COLOR_PALETTE[1];
 
 const makeEngine = () => ({
   getModes: vi.fn().mockResolvedValue({
@@ -305,7 +364,7 @@ describe('ManageView', () => {
       render(<StageManagementItem studyId="test-study" />);
     });
     expect(screen.getByText('Stage Management')).toBeDefined();
-    expect(screen.getByText('DEFAULT')).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Active stage DEFAULT' })).toBeDefined();
     expect(screen.getByText('Add New Stage')).toBeDefined();
   });
 
@@ -323,7 +382,7 @@ describe('ManageView', () => {
       render(<StageManagementItem studyId="test-study" />);
     });
     expect(consoleSpy).toHaveBeenCalledWith('Failed to load stage data:', expect.any(Error));
-    expect(screen.getByText('DEFAULT')).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Active stage DEFAULT' })).toBeDefined();
   });
 
   test('StageManagementItem confirms before activating a stage', async () => {
@@ -617,7 +676,7 @@ describe('ManageView', () => {
       render(<StageManagementItem studyId="test-study" studyConfig={studyConfig} />);
     });
 
-    expect(screen.getByText('Participant limits for DEFAULT')).toBeDefined();
+    expect(screen.getByRole('heading', { name: 'Participant limits for DEFAULT' })).toBeDefined();
     expect(screen.getByText('letter')).toBeDefined();
     expect(screen.getByText('number')).toBeDefined();
     expect(screen.getAllByLabelText('Information about current participants')).toHaveLength(1);

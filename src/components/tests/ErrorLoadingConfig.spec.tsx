@@ -20,6 +20,24 @@ describe('ErrorLoadingConfig', () => {
     vi.unstubAllGlobals();
   });
 
+  test.each([
+    { type: 'error' as const, color: 'red' },
+    { type: 'warning' as const, color: 'orange' },
+  ])('uses the theme foreground color for the $type icon', ({ type, color }) => {
+    const { container } = render(
+      <MantineProvider>
+        <ErrorLoadingConfig
+          type={type}
+          issues={[{
+            category: 'invalid-config', instancePath: 'root', message: 'Validation issue', params: {},
+          }]}
+        />
+      </MantineProvider>,
+    );
+
+    expect(container.querySelector('svg')?.getAttribute('stroke')).toBe(`var(--mantine-color-${color}-text)`);
+  });
+
   test('separates non-combinable grouped messages on new lines', () => {
     const issues: ParsedConfig<StudyConfig>['errors'] = [
       {

@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { getStaticAssetByPath } from '../../../utils/getStaticAsset';
+import { PREFIX } from '../../../utils/Prefix';
 
 type Point = [number, number];
 
@@ -18,11 +20,25 @@ export default function CorrelationPlot({
   const [data, setData] = useState<Point[]>([]);
 
   useEffect(() => {
-    fetch(`/incentives-corr/datasets/${datasetName}`)
-      .then((response) => response.text())
-      .then((text) => setData(text.trim().split('\n').slice(1).map((row) => (
-        row.split(',').map(Number) as Point
-      ))));
+    let cancelled = false;
+    setData([]);
+    getStaticAssetByPath(`${PREFIX}incentives-corr/datasets/${datasetName}`)
+      .then((text) => {
+        if (cancelled || text === undefined) {
+          return;
+        }
+        setData(text.trim().split('\n').slice(1).map((row) => (
+          row.split(',').map(Number) as Point
+        )));
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setData([]);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [datasetName]);
 
   const leftValues = data.map(([value]) => value);

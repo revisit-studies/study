@@ -18,7 +18,7 @@
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
-    "withSidebar": true,
+    "withSidebar": false,
     "urlParticipantIdParam": "PROLIFIC_PID",
     "participantNameField": "introduction.prolificId",
     "studyEndMsg": "Thank you for completing the study! Please wait while we automatically redirect you to Prolific. Or you can click on this [link](https://app.prolific.com/submissions/complete?cc=C1PEMLO4)",
@@ -143,11 +143,6 @@
           "answer": true
         }
       ]
-    },
-    "summary": {
-      "type": "react-component",
-      "path": "incentives-corr/assets/Summary.tsx",
-      "response": []
     }
   },
   "components": {
@@ -181,6 +176,7 @@
           "id": "consentApproval",
           "prompt": "By clicking on 'Yes' below, you indicate that you have understood the Information Sheet and agree to participate in this study.",
           "type": "radio",
+          "requiredValue": "Yes",
           "options": [
             "Yes",
             "No"

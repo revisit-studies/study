@@ -261,6 +261,8 @@ export interface UIConfig {
   withSidebar: boolean;
 
   // Optional fields
+  /** The study's color mode. Defaults to light. userPreference uses the participant's system preference. */
+  colorMode?: 'light' | 'dark' | 'userPreference';
   /** The width of the left sidebar. Defaults to 300. */
   sidebarWidth?: number;
   /** Controls whether the title should be hidden in the study. */
@@ -299,8 +301,12 @@ export interface UIConfig {
   clickToRecord?: boolean;
   /** Whether or not we want to utilize screen recording feature. If true, will record audio on all components unless deactivated on individual components. This must be set to true if you want to record audio on any component in your study. Defaults to false. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before any component that you want to record the screen on to ensure permissions are granted and screen capture has started. */
   recordScreen?: boolean;
+  /** Whether or not we want to utilize webcam recording. If true, will record webcam video on all components unless deactivated on individual components. Defaults to false. Studies using webcam without screen capture should include the webcam permission component before any recorded component. Studies combining webcam with screen capture should use the screen recording permission component. */
+  recordWebcam?: boolean;
   /** Desired fps for recording screen. If possible, this value will be used, but if it's not possible, the user agent will use the closest possible match. */
   recordScreenFPS?: number;
+  /** Whether or not to capture game controller input into windowEvents. If true, gamepad button and axis events are recorded on all components unless deactivated on individual components. Defaults to false. Browsers do not expose a gamepad to the page until the participant presses a button on it, so nothing is captured before that first press. */
+  captureGamepad?: boolean;
   /** Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar. */
   enumerateQuestions?: boolean;
   /** Whether to show the response dividers. Defaults to false. */
@@ -351,6 +357,11 @@ export interface StringOption {
   infoText?: string;
 }
 
+export interface ButtonOption extends StringOption {
+  /** Keyboard shortcut for this button (e.g., "r", "ArrowLeft", or "Shift+X"). */
+  key?: string;
+}
+
 /**
  * The MatrixQuestionOption interface is used to define the question options for matrix responses.
  * The label is the fallback text displayed to participants, and the value is the key stored in the participant's data.
@@ -367,12 +378,55 @@ export interface MatrixQuestionOption extends StringOption {
 /** StringOption normalized to always include a value. */
 export interface ParsedStringOption extends Omit<StringOption, 'value'> {
   value: string;
+  key?: string;
 }
 
 /** MatrixQuestionOption normalized to always include a value. */
 export interface ParsedMatrixQuestionOption extends Omit<MatrixQuestionOption, 'value'> {
   value: string;
 }
+
+export type EqualityComparison = 'equals' | 'doesNotEqual';
+
+export type StringComparison =
+  | 'matchesRegex'
+  | 'contains'
+  | 'doesNotContain';
+
+export type NumericComparison =
+  | 'lessThan'
+  | 'lessThanOrEqual'
+  | 'greaterThan'
+  | 'greaterThanOrEqual';
+
+export type ValueCondition =
+  | {
+      comparison: EqualityComparison;
+      value: string | number | boolean | string[];
+    }
+  | {
+      comparison: StringComparison;
+      value: string;
+    }
+  | {
+      comparison: NumericComparison;
+      value: number;
+    };
+
+/**
+ * Controls visibility based on another response's answer in the same component.
+ * List equality comparisons ignore selection order.
+ * Unanswered or conditionally hidden controlling responses never satisfy a condition.
+ */
+export type ResponseVisibilityCondition = {
+  responseId: string;
+} & (
+  | ValueCondition
+  | {
+      comparison: 'isCorrect';
+      value: boolean;
+    }
+);
 
 /**
  * The BaseResponse interface is used to define the required fields for all responses.
@@ -410,6 +464,8 @@ export interface BaseResponse {
   style?: Styles;
   /** Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false. */
   excludeFromRandomization?: boolean;
+  /** Show this response only when another response in this component satisfies the condition. */
+  visibleIf?: ResponseVisibilityCondition;
 }
 
 /**
@@ -430,7 +486,7 @@ export interface BaseResponse {
  */
 export interface NumericalResponse extends BaseResponse {
   type: 'numerical';
-  /** The placeholder text that is displayed in the input. */
+  /** The placeholder text displayed in the input. */
   placeholder?: string;
   /** The default value of the response. Specify a numeric value such as `25` or `3.14`. */
   default?: number;
@@ -438,7 +494,137 @@ export interface NumericalResponse extends BaseResponse {
   min?: number;
   /** The maximum value that is accepted in the input. */
   max?: number;
+  /** Only values above this minimum value are accepted in the input. */
+  strictMin?: number;
+  /** Only values below this maximum value are accepted in the input. */
+  strictMax?: number;
 }
+
+/** The validation operations available for short and long text responses. */
+export type TextValidationType = EqualityComparison | StringComparison;
+
+/**
+ * A validation rule applied to a short or long text response.
+ * Rules are evaluated in array order, and the first failing rule is displayed to the participant.
+ *
+ * For example, the following rules accept only `ReVISit is great`: it must start with `ReVISit`,
+ * contain `great`, not contain `invalid`, equal `ReVISit is great`, and not equal `TEST`.
+ * See the [MDN regular expression syntax cheat sheet](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet)
+ * for help writing regular expression patterns.
+ * ```json
+ * "textValidation": [
+ *   {
+ *     "type": "matchesRegex",
+ *     "value": "^ReVISit"
+ *   },
+ *   {
+ *     "type": "contains",
+ *     "value": "great"
+ *   },
+ *   {
+ *     "type": "doesNotContain",
+ *     "value": "invalid"
+ *   },
+ *   {
+ *     "type": "equals",
+ *     "value": "ReVISit is great"
+ *   },
+ *   {
+ *     "type": "doesNotEqual",
+ *     "value": "TEST"
+ *   }
+ * ]
+ * ```
+ */
+export interface TextValidationRule {
+  /** The operation used to validate the response value. */
+  type: TextValidationType;
+  /**
+   * The regular expression pattern or text value used by the validation operation.
+   * Must be non-empty for `equals`, `contains`, and `doesNotContain`.
+   * Empty `matchesRegex` and `doesNotEqual` values produce a parser warning because they do not restrict responses.
+   */
+  value: string;
+}
+
+/**
+ * The DateResponse interface defines a date entered directly or selected with a date picker,
+ * or a month or year selected with the corresponding picker.
+ * Values are stored as `MM/DD/YYYY`, `MM/YYYY`, or `YYYY` strings based on `options`.
+ * Supported years range from `0100` through `9999`.
+ * ```json
+ * {
+ *   "id": "q-date",
+ *   "prompt": "Select a date.",
+ *   "location": "aboveStimulus",
+ *   "type": "date",
+ *   "options": "date",
+ *   "default": "08/21/2026",
+ *   "min": "08/01/2026",
+ *   "max": "08/31/2026",
+ *   "placeholder": "MM/DD/YYYY"
+ * }
+ * ```
+ */
+export interface DateResponse extends BaseResponse {
+  type: 'date';
+  /** Determines whether participants enter or select a date, or select a month or year with a picker. Defaults to `date`. */
+  options?: 'date' | 'month' | 'year';
+  /** The placeholder text displayed in the input. Defaults to the format used by `options`. */
+  placeholder?: string;
+  /** The default value, using the format selected by `options`. Years must be between `0100` and `9999`. */
+  default?: string;
+  /** The value required for a correct response, using the format selected by `options`. Years must be between `0100` and `9999`. */
+  requiredValue?: string;
+  /** The earliest value accepted, using the format selected by `options`. Years must be between `0100` and `9999`. */
+  min?: string;
+  /** The latest value accepted, using the format selected by `options`. Years must be between `0100` and `9999`. */
+  max?: string;
+}
+
+/**
+ * The TimeResponse interface defines a time selected with a time input.
+ * Time values are stored as 24-hour `HH:mm` strings, or `HH:mm:ss` when
+ * `withSeconds` is `true`.
+ * ```json
+ * {
+ *   "id": "q-time",
+ *   "prompt": "Select a time.",
+ *   "location": "aboveStimulus",
+ *   "type": "time",
+ *   "default": "14:28:30",
+ *   "min": "09:00:00",
+ *   "max": "18:00:00",
+ *   "format": "24h",
+ *   "withSeconds": true
+ * }
+ * ```
+ */
+export interface TimeResponse extends BaseResponse {
+  type: 'time';
+  /** The default time in 24-hour `HH:mm` format, or `HH:mm:ss` when `withSeconds` is `true`. */
+  default?: string;
+  /** The time required for a correct response, in 24-hour `HH:mm` format, or `HH:mm:ss` when `withSeconds` is `true`. */
+  requiredValue?: string;
+  /** The earliest time accepted, in the same format as the response value. */
+  min?: string;
+  /** The latest time accepted, in the same format as the response value. */
+  max?: string;
+  /** The format displayed to participants. Defaults to `24h`. Values are always stored in 24-hour format. */
+  format?: '12h' | '24h';
+  /** Determines whether the input includes seconds. Defaults to `false`. */
+  withSeconds?: boolean;
+}
+
+/**
+ * The built-in validation operations available for short text responses.
+ *
+ * - `email`: An email in `local@domain.tld` format, such as `test@revisit.dev`.
+ * - `phoneNumber`: An international phone number containing 7–15 digits, with an optional leading `+` and hyphens between digits.
+ * - `usPhoneNumber`: A 10-digit US phone number in `000-000-0000` format.
+ * - `url`: An absolute HTTP or HTTPS URL, such as `https://revisit.dev`.
+ */
+export type BuiltInValidationType = 'email' | 'phoneNumber' | 'usPhoneNumber' | 'url';
 
 /**
  * The ShortTextResponse interface is used to define the properties of a short text response.
@@ -449,8 +635,18 @@ export interface NumericalResponse extends BaseResponse {
  *   "prompt": "Short text example",
  *   "location": "aboveStimulus",
  *   "type": "shortText",
- *   "default": "Jane Doe",
- *   "placeholder": "Enter your answer here"
+ *   "default": "ReVISit is great",
+ *   "placeholder": "Enter your answer here",
+ *   "minCharLength": 3,
+ *   "maxCharLength": 100,
+ *   "minWordLength": 2,
+ *   "maxWordLength": 20,
+ *   "textValidation": [
+ *     {
+ *       "type": "contains",
+ *       "value": "ReVISit"
+ *     }
+ *   ]
  * }
  * ```
  *
@@ -461,6 +657,18 @@ export interface ShortTextResponse extends BaseResponse {
   placeholder?: string;
   /** The default value of the response. Specify a string such as `"Jane Doe"`. */
   default?: string;
+  /** The minimum number of characters accepted in the response. */
+  minCharLength?: number;
+  /** The maximum number of characters accepted in the response. Must be greater than 0 when the response is required. */
+  maxCharLength?: number;
+  /** The minimum number of whitespace-separated words accepted in the response. */
+  minWordLength?: number;
+  /** The maximum number of whitespace-separated words accepted in the response. Must be greater than 0 when the response is required. */
+  maxWordLength?: number;
+  /** Validation rules applied to the response value in array order. */
+  textValidation?: TextValidationRule[];
+  /** Applies one predefined format from BuiltInValidationType to the response value. */
+  builtInValidation?: BuiltInValidationType;
 }
 
 /**
@@ -473,7 +681,17 @@ export interface ShortTextResponse extends BaseResponse {
  *   "location": "aboveStimulus",
  *   "type": "longText",
  *   "default": "I enjoyed this study because...",
- *   "placeholder": "Please enter your first name"
+ *   "placeholder": "Please enter your comments",
+ *   "minCharLength": 20,
+ *   "maxCharLength": 500,
+ *   "minWordLength": 4,
+ *   "maxWordLength": 100,
+ *   "textValidation": [
+ *     {
+ *       "type": "doesNotContain",
+ *       "value": "invalid"
+ *     }
+ *   ]
  * }
  * ```
  *
@@ -484,6 +702,16 @@ export interface LongTextResponse extends BaseResponse {
   placeholder?: string;
   /** The default value of the response. Specify a string such as `"I enjoyed this study because..."`. */
   default?: string;
+  /** The minimum number of characters accepted in the response. */
+  minCharLength?: number;
+  /** The maximum number of characters accepted in the response. Must be greater than 0 when the response is required. */
+  maxCharLength?: number;
+  /** The minimum number of whitespace-separated words accepted in the response. */
+  minWordLength?: number;
+  /** The maximum number of whitespace-separated words accepted in the response. Must be greater than 0 when the response is required. */
+  maxWordLength?: number;
+  /** Validation rules applied to the response value in array order. */
+  textValidation?: TextValidationRule[];
 }
 
 /**
@@ -612,9 +840,16 @@ export interface MatrixCheckboxResponse extends BaseMatrixResponse {
   type: 'matrix-checkbox';
   /** The default value of the response by question key. Provide an object where each key is a question value and each value is an array of selected answer option values. */
   default?: Record<string, string[]>;
+  /** The minimum amount of answers given per row for the matrix. */
+  min?: number;
+  /** The maximum amount of answers given per row for the matrix. */
+  max?: number;
 }
 
 export type MatrixResponse = MatrixRadioResponse | MatrixCheckboxResponse;
+
+/** Predefined option sets available to dropdown responses. */
+export type DropdownOptionPreset = 'countries';
 
 /**
  * The DropdownResponse interface is used to define the properties of a dropdown response.
@@ -646,15 +881,25 @@ export type MatrixResponse = MatrixRadioResponse | MatrixCheckboxResponse;
  *   "maxSelections": 4
  * }
  * ```
+ *
+ * A dropdown can alternatively use a predefined option set:
+ * ```json
+ * {
+ *   "id": "q-country",
+ *   "prompt": "Select your country.",
+ *   "type": "dropdown",
+ *   "options": "countries"
+ * }
+ * ```
  */
 export interface DropdownResponse extends BaseResponse {
   type: 'dropdown';
-  /** The placeholder text that is displayed in the input. */
+  /** The placeholder text displayed in the input. Defaults to `Select a country` when `options` is `countries`. */
   placeholder?: string;
   /** The default value of the response. Use a string for single-select dropdowns and a string array for multiselect dropdowns. */
   default?: string | string[];
-  /** The options that are displayed in the dropdown. */
-  options: (StringOption | string)[];
+  /** The options that are displayed in the dropdown, or a predefined option set. */
+  options: (StringOption | string)[] | DropdownOptionPreset;
   /** The minimum number of selections that are required. This will make the dropdown a multiselect dropdown. */
   minSelections?: number;
   /** The maximum number of selections that are required. This will make the dropdown a multiselect dropdown. */
@@ -820,15 +1065,34 @@ export interface CheckboxResponse extends BaseResponse {
  * }
  * ```
 */
-export interface RankingResponse extends BaseResponse {
-  type: 'ranking-sublist' | 'ranking-categorical' | 'ranking-pairwise';
+export interface BaseRankingResponse extends BaseResponse {
   /** The options that are displayed as ranking options, provided as an array of objects, with label and value fields. */
   options: (StringOption | string)[];
   /** The default value of the response. Provide an object keyed by option value. Values depend on ranking type: index strings for sublist (e.g. `"0"`), category labels for categorical (`"HIGH"`, `"MEDIUM"`, `"LOW"`), and pairwise slots (`"pair-<n>-high"` / `"pair-<n>-low"`). */
   default?: Record<string, string>;
   /** The number of items to rank. Applies only to sublist and categorical ranking widgets. */
   numItems?: number;
+  /** The minimum number of items to rank. For sublist ranking it is the number of items, for categorical ranking it is items per category, and for pairwise ranking it is the number of pairs. */
+  min?: number;
+  /** The maximum number of items to rank. For sublist ranking it is the number of items, for categorical ranking it is items per category, and for pairwise ranking it is the number of pairs. */
+  max?: number;
 }
+
+export interface RankingSublistResponse extends BaseRankingResponse {
+  type: 'ranking-sublist';
+}
+
+export interface RankingPairwiseResponse extends BaseRankingResponse {
+  type: 'ranking-pairwise';
+}
+
+export interface RankingCategoricalResponse extends BaseRankingResponse {
+  type: 'ranking-categorical';
+  /** Whether all items need to be categorized. Defaults to false. */
+  categorizeAll?: boolean;
+}
+
+export type RankingResponse = | RankingSublistResponse | RankingPairwiseResponse | RankingCategoricalResponse;
 
 /**
  * The ReactiveResponse interface is used to define the properties of a reactive response.
@@ -903,11 +1167,13 @@ export interface CustomResponse extends BaseResponse {
  */
 export interface ButtonsResponse extends BaseResponse {
   type: 'buttons';
-  options: (StringOption | string)[];
+  options: (ButtonOption | string)[];
   /** The default value of the response. Specify one option value as a string. */
   default?: string;
   /** The order in which the buttons are displayed. Defaults to fixed. */
   optionOrder?: 'fixed' | 'random';
+  /** Set to true to hide keybinding indicators on buttons. Defaults to false when keymapping is active, else false. */
+  hideKeyVisual?: boolean;
 }
 
 /**
@@ -969,7 +1235,7 @@ export interface DividerResponse extends Omit<BaseResponse, 'prompt' | 'infoText
   withDontKnow?: undefined;
 }
 
-export type Response = NumericalResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | RankingResponse | ReactiveResponse | CustomResponse | MatrixResponse | ButtonsResponse | TextOnlyResponse | DividerResponse;
+export type Response = NumericalResponse | DateResponse | TimeResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | RankingResponse | ReactiveResponse | CustomResponse | MatrixResponse | ButtonsResponse | TextOnlyResponse | DividerResponse;
 
 /**
  * The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks or if skip logic is required based on the answer.
@@ -1082,6 +1348,10 @@ export interface BaseIndividualComponent {
   clickToRecord?: boolean;
   /** Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started. */
   recordScreen?: boolean;
+  /** Whether or not we want to utilize webcam recording. If present, will override the record webcam setting in the uiConfig. Studies using webcam without screen capture should include the webcam permission component before this component. Studies combining webcam with screen capture should use the screen recording permission component. */
+  recordWebcam?: boolean;
+  /** Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig. */
+  captureGamepad?: boolean;
   /** Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar. If present, will override the enumeration of questions setting in the uiConfig. */
   enumerateQuestions?: boolean;
   /** Whether to show the response dividers. If present, will override the response dividers setting in the uiConfig. */
@@ -1242,6 +1512,8 @@ export interface WebsiteComponent extends BaseIndividualComponent {
   type: 'website';
   /** The path to the website. This should be a relative path from the public folder or could be an external website. */
   path: string;
+  /** The iframe's color scheme. Defaults to the study's color mode. The embedded page must support color schemes. */
+  colorMode?: 'light' | 'dark';
 }
 
 /**
@@ -2033,7 +2305,7 @@ export interface LibraryConfig {
   baseComponents?: BaseComponents;
 }
 
-export type ErrorWarningCategory = 'invalid-config' | 'invalid-library-config' | 'undefined-library' | 'undefined-base-component' | 'undefined-component' | 'sequence-validation' | 'skip-validation' | 'unused-component' | 'disabled-sidebar' | 'default-contact-email' | 'default-firebase-config' | 'default-supabase-config';
+export type ErrorWarningCategory = 'invalid-config' | 'invalid-library-config' | 'undefined-library' | 'undefined-base-component' | 'undefined-component' | 'sequence-validation' | 'skip-validation' | 'unused-component' | 'disabled-sidebar' | 'empty-sidebar' | 'default-contact-email' | 'default-firebase-config' | 'default-supabase-config';
 
 /**
  * @ignore

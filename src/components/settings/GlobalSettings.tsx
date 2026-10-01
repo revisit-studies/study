@@ -133,7 +133,7 @@ export function GlobalSettings() {
   return (
     <>
       <Container>
-        <Card withBorder style={{ backgroundColor: '#FAFAFA' }}>
+        <Card withBorder>
           <Title mb={20} order={3}>Authentication</Title>
           {isAuthEnabled
             ? <Flex><Text>Authentication is enabled.</Text></Flex>
@@ -157,7 +157,7 @@ export function GlobalSettings() {
           {isAuthEnabled
             ? (
               <Flex mt={40} direction="column">
-                <Flex style={{ borderBottom: '1px solid #dedede' }} direction="row" justify="space-between" mb={15} pb={15}>
+                <Flex style={{ borderBottom: '1px solid var(--mantine-color-default-border)' }} direction="row" justify="space-between" mb={15} pb={15}>
                   <Title order={6}>Enabled Users</Title>
                   <IconUserPlus style={{ cursor: 'pointer' }} onClick={() => setModalAddOpened(true)} />
                 </Flex>
@@ -166,7 +166,7 @@ export function GlobalSettings() {
                     <Flex key={storedUser} justify="space-between" mb={10}>
                       <Text>{storedUser}</Text>
                       {storedUser === user.user?.email ? <Text c="blue" size="xs">You</Text>
-                        : <ActionIcon variant="subtle" onClick={() => handleRemoveUser(storedUser)}><IconTrashX color="red" /></ActionIcon>}
+                        : <ActionIcon variant="subtle" color="red" onClick={() => handleRemoveUser(storedUser)}><IconTrashX /></ActionIcon>}
                     </Flex>
                   ),
                 ) : null}

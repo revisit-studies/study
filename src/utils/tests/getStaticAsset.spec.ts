@@ -36,6 +36,7 @@ describe('getJsonAssetByPath', () => {
   test('returns parsed JSON object', async () => {
     const payload = { $schema: 'vega', marks: [] };
     vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({
+      ok: true,
       json: () => Promise.resolve(payload),
     })));
     await expect(getJsonAssetByPath('chart.json')).resolves.toEqual(payload);
@@ -44,6 +45,7 @@ describe('getJsonAssetByPath', () => {
   test('returns undefined and logs error when JSON is malformed', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({
+      ok: true,
       json: () => Promise.reject(new Error('SyntaxError')),
     })));
     await expect(getJsonAssetByPath('bad.json')).resolves.toBeUndefined();
@@ -51,9 +53,14 @@ describe('getJsonAssetByPath', () => {
   });
 
   test('prepends PREFIX to the requested path', async () => {
-    const fetchSpy = vi.fn(() => Promise.resolve({ json: () => Promise.resolve({}) }));
+    const fetchSpy = vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({}) }));
     vi.stubGlobal('fetch', fetchSpy);
     await getJsonAssetByPath('assets/data.json');
     expect(fetchSpy).toHaveBeenCalledWith('/prefix/assets/data.json');
+  });
+
+  test('returns undefined for an unsuccessful response even when the body is valid JSON', async () => {
+    mockFetch('{"error":"Not found"}', false);
+    await expect(getJsonAssetByPath('missing.json')).resolves.toBeUndefined();
   });
 });

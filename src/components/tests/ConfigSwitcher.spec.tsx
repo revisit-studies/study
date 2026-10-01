@@ -1,9 +1,9 @@
 import { ReactNode } from 'react';
 import {
-  render, act, cleanup,
+  render, act, cleanup, waitFor,
 } from '@testing-library/react';
 import {
-  afterEach, describe, expect, test, vi,
+  afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import type {
   ParsedConfig, ParserErrorWarning, StudyConfig,
@@ -11,6 +11,7 @@ import type {
 import { ConfigSwitcher, FACTOR_DEMO_CONFIG_NAMES } from '../ConfigSwitcher';
 import { makeGlobalConfig, makeStorageEngine, makeStudyConfig } from '../../tests/utils';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
+import { useAuth } from '../../store/hooks/useAuth';
 import { getSequenceConditions } from '../../utils/handleConditionLogic';
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
@@ -54,6 +55,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconBan: () => null,
   IconBrandFirebase: () => null,
   IconBrandSupabase: () => null,
+  IconCamera: () => null,
   IconChartHistogram: () => null,
   IconCheck: () => null,
   IconCopy: () => null,
@@ -96,7 +98,7 @@ vi.mock('../../storage/storageEngineHooks', () => ({
 }));
 
 vi.mock('../../store/hooks/useAuth', () => ({
-  useAuth: () => ({ user: { isAdmin: true, determiningStatus: false } }),
+  useAuth: vi.fn(() => ({ user: { isAdmin: true, determiningStatus: false } })),
 }));
 
 vi.mock('../../storage/engines/utils', () => ({
@@ -107,8 +109,10 @@ vi.mock('../../utils/handleConditionLogic', () => ({
   getSequenceConditions: vi.fn(() => []),
 }));
 
+const useStudyRecordingsMock = vi.hoisted(() => vi.fn(() => ({ hasAudio: false, hasScreenRecording: false })));
+
 vi.mock('../../utils/useStudyRecordings', () => ({
-  useStudyRecordings: () => ({ hasAudio: false, hasScreenRecording: false }),
+  useStudyRecordings: useStudyRecordingsMock,
 }));
 
 vi.mock('../../utils/useDeviceRules', () => ({
@@ -141,9 +145,25 @@ const studyConfigs: Record<string, ParsedConfig<StudyConfig> | null> = {
   'test-study': parsedStudyConfig,
 };
 
+const makeAuthValue = (isAdmin: boolean): ReturnType<typeof useAuth> => ({
+  user: {
+    user: null,
+    determiningStatus: false,
+    isAdmin,
+    adminVerification: false,
+  },
+  logout: async () => {},
+  triggerAuth: () => {},
+  verifyAdminStatus: async () => false,
+});
+
 // ── tests ─────────────────────────────────────────────────────────────────────
 
-afterEach(() => { cleanup(); });
+beforeEach(() => { vi.clearAllMocks(); });
+afterEach(() => {
+  cleanup();
+  vi.mocked(useAuth).mockImplementation(() => makeAuthValue(true));
+});
 
 describe('ConfigSwitcher', () => {
   test('renders without crashing', async () => {
@@ -174,15 +194,17 @@ describe('ConfigSwitcher', () => {
     };
     const studyConfigsWithErrors: Record<string, ParsedConfig<StudyConfig> | null> = {
       'test-study': {
-        ...minimalStudyConfig,
         errors: [mockError],
-        warnings: [{ ...mockError, message: 'A warning', category: 'unused-component' }],
-      },
+        warnings: [],
+      } as unknown as ParsedConfig<StudyConfig>,
     };
     const { container } = await act(async () => render(
       <ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigsWithErrors} />,
     ));
-    expect(container).toBeDefined();
+    expect(container.textContent).toContain('test-study');
+    expect(container.querySelector('[data-testid="error-loading-config"]')).not.toBeNull();
+    expect(vi.mocked(getSequenceConditions)).not.toHaveBeenCalled();
+    expect(useStudyRecordingsMock).not.toHaveBeenCalled();
   });
 
   test('renders config with warnings but no errors', async () => {
@@ -278,5 +300,67 @@ describe('ConfigSwitcher', () => {
       <ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigs} />,
     ));
     expect(container).toBeDefined();
+  });
+
+  test('settles visibility loading and reports a failed mode lookup', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const mockEngine = {
+      getModes: vi.fn((studyId: string) => (
+        studyId === 'failed-study'
+          ? Promise.reject(new Error('Firestore unavailable'))
+          : Promise.resolve({ dataCollectionEnabled: true, developmentModeEnabled: true, dataSharingEnabled: true })
+      )),
+      getParticipantsStatusCounts: vi.fn().mockResolvedValue({
+        completed: 0, inProgress: 0, rejected: 0, minTime: null, maxTime: null,
+      }),
+      isCloudEngine: vi.fn().mockReturnValue(true),
+      getEngine: vi.fn().mockReturnValue('firebase'),
+    };
+    const multiGlobalConfig = makeGlobalConfig({ configsList: ['healthy-study', 'failed-study'] });
+    const configs = {
+      'healthy-study': parsedStudyConfig,
+      'failed-study': {
+        ...parsedStudyConfig,
+        studyMetadata: { ...parsedStudyConfig.studyMetadata, title: 'Failed Study' },
+      },
+    };
+    vi.mocked(useAuth).mockReturnValue(makeAuthValue(false));
+    vi.mocked(useStorageEngine).mockReturnValue({ storageEngine: makeStorageEngine(mockEngine), setStorageEngine: vi.fn() });
+
+    const { container } = await act(async () => render(
+      <ConfigSwitcher globalConfig={multiGlobalConfig} studyConfigs={configs} />,
+    ));
+
+    await waitFor(() => expect(container.textContent).toContain('Unable to load study visibility for: failed-study.'));
+    expect(container.textContent).toContain('Test Study');
+    expect(container.textContent).toContain('Ready to Collect Data');
+    expect(container.textContent).not.toContain('Failed Study');
+    expect(mockEngine.getModes).toHaveBeenCalledTimes(2);
+    consoleSpy.mockRestore();
+  });
+
+  test('reports all failed mode lookups after loading settles', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const mockEngine = {
+      getModes: vi.fn().mockRejectedValue(new Error('Firestore unavailable')),
+      isCloudEngine: vi.fn().mockReturnValue(true),
+      getEngine: vi.fn().mockReturnValue('firebase'),
+    };
+    const multiGlobalConfig = makeGlobalConfig({ configsList: ['failed-study-a', 'failed-study-b'] });
+    const configs = { 'failed-study-a': null, 'failed-study-b': null };
+    vi.mocked(useAuth).mockReturnValue(makeAuthValue(false));
+    vi.mocked(useStorageEngine).mockReturnValue({ storageEngine: makeStorageEngine(mockEngine), setStorageEngine: vi.fn() });
+
+    const { container } = await act(async () => render(
+      <ConfigSwitcher globalConfig={multiGlobalConfig} studyConfigs={configs} />,
+    ));
+
+    await waitFor(() => {
+      expect(container.textContent).toContain('failed-study-a');
+      expect(container.textContent).toContain('failed-study-b');
+    });
+    expect(container.textContent).not.toContain('No studies found.');
+    expect(mockEngine.getModes).toHaveBeenCalledTimes(2);
+    consoleSpy.mockRestore();
   });
 });

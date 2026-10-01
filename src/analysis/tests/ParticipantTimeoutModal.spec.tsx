@@ -129,6 +129,8 @@ describe('ParticipantTimeoutModal', () => {
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Review (1)' }));
+    });
+    await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Time Out' }));
     });
 

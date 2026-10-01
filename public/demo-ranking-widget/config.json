@@ -19,7 +19,7 @@
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
-    "withSidebar": true,
+    "withSidebar": false,
     "nextOnEnter": true
   },
   "components": {
@@ -63,7 +63,7 @@
             "University of California - Berkeley",
             "Washington State University"
           ],
-          "numItems": 3
+          "max": 3
         }
       ]
     },
@@ -102,7 +102,7 @@
             "University of California - Berkeley",
             "Washington State University"
           ],
-          "numItems": 2
+          "max": 2
         }
       ]
     },

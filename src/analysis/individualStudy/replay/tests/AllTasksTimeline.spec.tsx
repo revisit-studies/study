@@ -8,7 +8,7 @@ import { StudyConfig } from '../../../../parser/types';
 import { ParticipantData } from '../../../../storage/types';
 import type { StoredAnswer } from '../../../../store/types';
 import { createMockStudyConfig } from '../../../tests/testUtils';
-import { makeStoredAnswer, makeParticipant as _makeParticipant } from '../../../../tests/utils';
+import { makeStudyConfig, makeStoredAnswer, makeParticipant as _makeParticipant } from '../../../../tests/utils';
 import { AllTasksTimeline } from '../AllTasksTimeline';
 import { SingleTask } from '../SingleTask';
 import { SingleTaskLabelLines } from '../SingleTaskLabelLines';
@@ -37,6 +37,7 @@ vi.mock('@tabler/icons-react', () => ({
     'aria-label'?: string;
     color?: string;
   }) => <span aria-label={ariaLabel} data-color={color}>icon-check</span>,
+  IconCamera: () => <span>icon-camera</span>,
   IconMicrophone: () => <span>icon-microphone</span>,
   IconProgress: () => <span>icon-progress</span>,
   IconX: () => <span>icon-x</span>,
@@ -126,6 +127,7 @@ describe('SingleTask', () => {
     answerStatus: null,
     hasAudio: false,
     hasScreenRecording: false,
+    hasWebcamRecording: false,
   };
 
   test('renders task name', () => {
@@ -154,7 +156,7 @@ describe('SingleTask', () => {
       <svg><SingleTask {...baseProps} answerStatus="unknown" /></svg>,
     );
     expect(html).toContain('icon-check');
-    expect(html).toContain('var(--mantine-color-gray-6)');
+    expect(html).toContain('var(--mantine-color-dimmed)');
     expect(html).toContain('Response recorded; correctness not configured.');
     expect(html).toContain('fill="lightgray"');
   });
@@ -164,6 +166,13 @@ describe('SingleTask', () => {
       <svg><SingleTask {...baseProps} hasAudio /></svg>,
     );
     expect(html).toContain('icon-microphone');
+  });
+
+  test('shows camera icon when hasWebcamRecording', () => {
+    const html = renderToStaticMarkup(
+      <svg><SingleTask {...baseProps} hasWebcamRecording /></svg>,
+    );
+    expect(html).toContain('icon-camera');
   });
 
   test('shows progress icon when incomplete', () => {
@@ -210,6 +219,19 @@ describe('AllTasksTimeline', () => {
     expect(html).toContain('trial1_0');
   });
 
+  test('shows the webcam icon for a webcam-recorded task', () => {
+    const html = renderToStaticMarkup(
+      <AllTasksTimeline
+        participantData={makeParticipant()}
+        width={600}
+        studyId="test-study"
+        studyConfig={makeStudyConfig({ components: { trial1: { recordWebcam: true } } })}
+        maxLength={undefined}
+      />,
+    );
+    expect(html).toContain('icon-camera');
+  });
+
   test('shows an unknown indicator and tooltip value for an answer without configured correctness', () => {
     const participant = makeParticipant({
       answers: {
@@ -229,7 +251,28 @@ describe('AllTasksTimeline', () => {
     expect(html).toContain('q1');
     expect(html).toContain('yes');
     expect(html).toContain('icon-check');
-    expect(html).toContain('var(--mantine-color-gray-6)');
+    expect(html).toContain('var(--mantine-color-dimmed)');
+    expect(html).toContain('Response recorded; correctness not configured.');
+  });
+
+  test('handles legacy answers without correctAnswer', () => {
+    const legacyAnswer = makeAnswer({ answer: { q1: 'yes' } });
+    delete (legacyAnswer as Partial<StoredAnswer>).correctAnswer;
+    const participant = makeParticipant({
+      answers: { trial1_0: legacyAnswer },
+    });
+
+    const html = renderToStaticMarkup(
+      <AllTasksTimeline
+        participantData={participant}
+        width={600}
+        studyId="test-study"
+        studyConfig={emptyConfig}
+        maxLength={undefined}
+      />,
+    );
+
+    expect(html).toContain('trial1_0');
     expect(html).toContain('Response recorded; correctness not configured.');
   });
 
@@ -337,7 +380,7 @@ describe('AllTasksTimeline', () => {
 
     expect(timeHtml).toContain('data-testid="timeline-gap-break"');
     expect(timeHtml).toContain('3d 5h 2m 4s gap — no component timing recorded');
-    expect(timeHtml).toContain('height="25" fill="var(--mantine-color-orange-1)"');
+    expect(timeHtml).toContain('height="25" fill="var(--mantine-color-orange-light)"');
     expect(timeHtml).toContain('stroke-dasharray="3 2"');
     expect(timeHtml).toContain('font-weight="700"');
     expect(uniformHtml).not.toContain('timeline-gap-break');

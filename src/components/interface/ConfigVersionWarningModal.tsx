@@ -57,8 +57,8 @@ export function ConfigVersionWarningModal() {
         onClose={() => setOpened(false)}
         styles={{
           root: {
-            backgroundColor: 'var(--mantine-color-yellow-1)',
-            borderColor: 'var(--mantine-color-yellow-4)',
+            backgroundColor: 'light-dark(var(--mantine-color-yellow-1), var(--mantine-color-dark-6))',
+            borderColor: 'light-dark(var(--mantine-color-yellow-4), var(--mantine-color-yellow-8))',
             opacity: 1,
           },
         }}
@@ -70,7 +70,7 @@ export function ConfigVersionWarningModal() {
         </Text>
         {developmentModeEnabled && (
           <Group w="100%" justify="end">
-            <Button onClick={() => getNewParticipant(storageEngine, studyHref)} color="yellow" variant="filled">
+            <Button onClick={() => getNewParticipant(storageEngine, studyHref)} color="yellow" variant="filled" autoContrast>
               Next Participant
             </Button>
           </Group>

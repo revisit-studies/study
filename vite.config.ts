@@ -8,7 +8,7 @@ export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd());
 
   return {
-    base: command === 'build' ? env.VITE_BASE_PATH : '/',
+    base: command === 'build' ? (env.VITE_BASE_PATH || '/') : '/',
     plugins: [
       react({ devTarget: 'es2022' }),
     ],
@@ -23,6 +23,13 @@ export default defineConfig(({ command, mode }) => {
     test: {
       environment: 'jsdom',
       exclude: ['./tests/**', 'node_modules/**'],
+      server: {
+        deps: {
+          // Trrack ships CJS that re-exports @reduxjs/toolkit; Vite has to
+          // process it for named imports to resolve under Vitest.
+          inline: ['@trrack/core'],
+        },
+      },
       setupFiles: ['vitest-localstorage-mock'],
       fileParallelism: true,
       maxWorkers: '100%',
