@@ -190,7 +190,7 @@ vi.mock('firebase/firestore', () => {
         docs = docs.filter((document) => {
           const fieldValue = document.data()[constraint.field!];
           if (constraint.operator === '==') return fieldValue === constraint.value;
-          if (constraint.operator === '<') {
+          if (constraint.operator === '<' || constraint.operator === '>=') {
             const toComparableNumber = (value: unknown) => (
               value
               && typeof value === 'object'
@@ -201,7 +201,10 @@ vi.mock('firebase/firestore', () => {
             );
             const constraintValue = toComparableNumber(constraint.value);
             const comparableFieldValue = toComparableNumber(fieldValue);
-            return comparableFieldValue < constraintValue;
+            if (typeof fieldValue !== typeof constraint.value) return false;
+            return constraint.operator === '<'
+              ? comparableFieldValue < constraintValue
+              : comparableFieldValue >= constraintValue;
           }
           if (constraint.operator === '>') {
             return fieldValue !== undefined
@@ -222,7 +225,8 @@ vi.mock('firebase/firestore', () => {
               ? value.toMillis()
               : Number(value)
           );
-          return (toComparableNumber(aValue) - toComparableNumber(bValue))
+          const typeComparison = typeof aValue === typeof bValue ? 0 : (typeof aValue === 'number' ? -1 : 1);
+          return (typeComparison || (toComparableNumber(aValue) - toComparableNumber(bValue)))
             * (constraint.direction === 'desc' ? -1 : 1);
         });
       } else if (constraint.type === 'limit') {
@@ -315,6 +319,10 @@ vi.mock('firebase/firestore', () => {
     constructor(public seconds: number, public nanoseconds: number) { }
 
     toMillis() { return this.seconds * 1000 + Math.floor(this.nanoseconds / 1e6); }
+
+    static fromMillis(milliseconds: number) {
+      return new MockTimestamp(Math.floor(milliseconds / 1000), (milliseconds % 1000) * 1e6);
+    }
   }
 
   return {
@@ -514,7 +522,7 @@ describe.each([
     const participant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
     expect(scanSpy).not.toHaveBeenCalled();
     expect(countMock).toHaveBeenCalledTimes(2);
-    expect(getDocsMock).toHaveBeenCalledTimes(1);
+    expect(getDocsMock).toHaveBeenCalledTimes(2);
     expect(transactionMock).toHaveBeenCalledTimes(1);
 
     const getDocMock = vi.mocked(getDoc);
@@ -546,7 +554,7 @@ describe.each([
 
     expect(scanSpy).not.toHaveBeenCalled();
     expect(countMock).not.toHaveBeenCalled();
-    expect(getDocsMock).toHaveBeenCalledTimes(1);
+    expect(getDocsMock).toHaveBeenCalledTimes(2);
     expect(transactionMock).toHaveBeenCalledTimes(1);
   });
 
@@ -590,9 +598,85 @@ describe.each([
 
     expect(participant.participantIndex).toBe(1);
     expect(scanSpy).not.toHaveBeenCalled();
-    expect(countMock).toHaveBeenCalledTimes(2);
+    expect(countMock).toHaveBeenCalledTimes(3);
     expect(getDocsMock).not.toHaveBeenCalled();
     expect(transactionMock).not.toHaveBeenCalled();
+  });
+
+  test.each([false, true])('legacy mixed timestamps preserve the sequence slot (returning: %s)', async (returning) => {
+    sequenceArray = [sequenceArray[0], {
+      ...sequenceArray[0], components: [...sequenceArray[0].components].reverse(),
+    }];
+    await storageEngine.setSequenceArray(sequenceArray);
+    const assignment: SequenceAssignment = {
+      participantId: 'earlier',
+      timestamp: 1000,
+      createdTime: 1000,
+      rejected: false,
+      claimed: false,
+      completed: null,
+      total: 0,
+      answered: [],
+      isDynamic: false,
+      stage: 'DEFAULT',
+    };
+    const path = `dev-${studyId}/sequenceAssignment/sequenceAssignment`;
+    firestoreData[`${path}/earlier`] = {
+      ...assignment, timestamp: new Timestamp(1, 0), createdTime: new Timestamp(1, 0),
+    };
+    firestoreData[`${path}/legacy`] = {
+      ...assignment,
+      participantId: 'legacy',
+      timestamp: 2000,
+      createdTime: new Timestamp(2, 0),
+      rejected: !returning,
+    };
+
+    const participant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, returning ? 'legacy' : 'replacement');
+
+    expect(participant.sequence).toEqual(sequenceArray[1]);
+    expect(participant.participantIndex).toBe(returning ? 2 : 3);
+  });
+
+  test('legacy rejected-slot selection compares numeric and Firestore timestamps chronologically', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'seed');
+    await storageEngine.clearCurrentParticipantId();
+    const path = `dev-${studyId}/sequenceAssignment/sequenceAssignment`;
+    const assignment = firestoreData[`${path}/seed`];
+    firestoreData[`${path}/older`] = {
+      ...assignment, participantId: 'older', timestamp: new Timestamp(1, 0), rejected: true, sequenceIndex: 1,
+    };
+    firestoreData[`${path}/newer`] = {
+      ...assignment, participantId: 'newer', timestamp: 2000, rejected: true, sequenceIndex: 2,
+    };
+
+    const participant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement');
+
+    expect(participant.sequence).toEqual(sequenceArray[1]);
+    expect(firestoreData[`${path}/older`].claimed).toBe(true);
+    expect(firestoreData[`${path}/newer`].claimed).toBe(false);
+  });
+
+  test('rejecting a legacy replacement initializes the missing allocator', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'original');
+    await storageEngine.rejectParticipant('original', 'test');
+    await storageEngine.clearCurrentParticipantId();
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement');
+    delete firestoreData[`dev-${studyId}/sequenceAssignmentAllocator`];
+    const path = `dev-${studyId}/sequenceAssignment/sequenceAssignment`;
+    delete firestoreData[`${path}/original`].sequenceIndex;
+    delete firestoreData[`${path}/replacement`].sequenceIndex;
+    delete firestoreData[`${path}/original`].creationIndex;
+    delete firestoreData[`${path}/replacement`].creationIndex;
+
+    await storageEngine.rejectParticipant('replacement', 'test');
+
+    expect(firestoreData[`${path}/original`].claimed).toBe(false);
+    expect(firestoreData[`${path}/replacement`].rejected).toBe(true);
+    expect(firestoreData[`${path}/replacement`].reusableSequenceIndex).toBe(1);
+    expect(firestoreData[`dev-${studyId}/sequenceAssignmentAllocator`]).toEqual({
+      nextSequenceIndex: 2, nextCreationIndex: 2,
+    });
   });
 
   test('legacy rejected-slot reuse uses bounded counts instead of an assignment scan', async () => {
@@ -635,7 +719,7 @@ describe.each([
 
     expect(participant.sequence).toEqual(sequenceArray[1]);
     expect(scanSpy).not.toHaveBeenCalled();
-    expect(countMock).toHaveBeenCalledTimes(3);
+    expect(countMock).toHaveBeenCalledTimes(4);
   });
 
   test('rejected-slot reuse selects the earliest assignment timestamp', async () => {

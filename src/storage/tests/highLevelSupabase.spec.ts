@@ -19,6 +19,8 @@ const revisitRows: RowData[] = [];
 const storageFiles: Record<string, string> = {};
 const localStore: Record<string, string | number | object | null> = {};
 let nextSupabaseSelectError: { message: string; code?: string } | null = null;
+let assignmentWriteError = false;
+let rejectedAssignmentError: 'lookup' | 'claim' | null = null;
 const supabaseOperations: Array<{
   op: string | null;
   filters: Array<{ col: string; type: string; val: string | number | boolean | null }>;
@@ -112,6 +114,12 @@ vi.mock('@supabase/supabase-js', () => {
             resolve({ data: null, error });
             return;
           }
+          if (filters.some((filter) => filter.col === 'data->rejected' && filter.val === true)
+            && ((op === 'select' && rejectedAssignmentError === 'lookup')
+              || (op === 'update' && rejectedAssignmentError === 'claim'))) {
+            resolve({ data: null, error: { message: 'rejected assignment operation failed' } });
+            return;
+          }
           const rows = getRows();
           if (op === 'select') {
             let matched = applyFilters(rows, filters);
@@ -163,6 +171,10 @@ vi.mock('@supabase/supabase-js', () => {
             const toUpsert = (Array.isArray(payload)
               ? payload
               : [payload]) as Array<RowData>;
+            if (assignmentWriteError && toUpsert.some((row) => String(row.docId).startsWith('sequenceAssignment_'))) {
+              resolve({ data: null, error: { message: 'assignment write failed' } });
+              return;
+            }
             toUpsert.forEach((row) => {
               const idx = rows.findIndex(
                 (r) => r.studyId === row.studyId && r.docId === row.docId,
@@ -382,12 +394,18 @@ describe.each([
       sequenceArray,
     );
     nextSupabaseSelectError = null;
+    assignmentWriteError = false;
+    rejectedAssignmentError = null;
     supabaseOperations.length = 0;
   });
 
   afterEach(async () => {
+    nextSupabaseSelectError = null;
+    assignmentWriteError = false;
+    rejectedAssignmentError = null;
     // @ts-expect-error using protected method for testing
     await storageEngine._testingReset(studyId);
+    Object.keys(localStore).forEach((key) => delete localStore[key]);
   });
 
   // saveConfig and getAllConfigsFromHash tests
@@ -460,6 +478,7 @@ describe.each([
     expect(assignmentQueries.filter((operation) => operation.headOnly)).toHaveLength(2);
     expect(assignmentQueries.filter((operation) => !operation.headOnly)).toEqual([
       expect.objectContaining({ limit: 1 }),
+      expect.objectContaining({ limit: 1 }),
     ]);
 
     supabaseOperations.length = 0;
@@ -523,6 +542,7 @@ describe.each([
     expect(scanSpy).not.toHaveBeenCalled();
     expect(assignmentQueries.filter((operation) => operation.headOnly)).toHaveLength(0);
     expect(assignmentQueries.filter((operation) => !operation.headOnly)).toEqual([
+      expect.objectContaining({ limit: 1 }),
       expect.objectContaining({ limit: 1 }),
     ]);
   });
@@ -618,6 +638,58 @@ describe.each([
     expect(participant.sequence).toEqual(sequenceArray[1]);
     expect(scanSpy).not.toHaveBeenCalled();
     expect(unboundedReads).toHaveLength(0);
+  });
+
+  test('assignment write failures stop participant startup', async () => {
+    assignmentWriteError = true;
+
+    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'failed-assignment'))
+      .rejects.toThrow('Failed to create sequence assignment');
+    expect(revisitRows.some((row) => row.docId === 'sequenceAssignment_failed-assignment')).toBe(false);
+  });
+
+  test.each(['lookup', 'claim'] as const)('rejected-slot %s failures stop participant startup', async (operation) => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'original');
+    await storageEngine.rejectParticipant('original', 'test');
+    await storageEngine.clearCurrentParticipantId();
+    rejectedAssignmentError = operation;
+
+    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement'))
+      .rejects.toThrow(operation === 'lookup'
+        ? 'Failed to retrieve rejected sequence assignment'
+        : 'Failed to claim rejected sequence assignment');
+    expect(revisitRows.some((row) => row.docId === 'sequenceAssignment_replacement')).toBe(false);
+    const original = revisitRows.find((row) => row.docId === 'sequenceAssignment_original')!;
+    expect((original.data as SequenceAssignment).claimed).toBe(false);
+  });
+
+  test('rejected-slot reuse preserves effective server timestamp ordering', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'original');
+    await storageEngine.clearCurrentParticipantId();
+    const original = revisitRows.find((row) => row.docId === 'sequenceAssignment_original')!;
+    const data = original.data as SequenceAssignment;
+    original.createdAt = '2026-01-01T00:00:00.000Z';
+    original.data = { ...data, rejected: true, timestamp: Date.parse('2026-01-03T00:00:00.000Z') };
+    revisitRows.push({
+      studyId: `dev-${studyId}`,
+      docId: 'sequenceAssignment_reused',
+      createdAt: '2026-01-04T00:00:00.000Z',
+      data: {
+        ...data,
+        participantId: 'reused',
+        rejected: true,
+        withServerTimestamp: false,
+        timestamp: Date.parse('2026-01-02T00:00:00.000Z'),
+        sequenceIndex: 1,
+        creationIndex: 1,
+      },
+    });
+
+    const participant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement');
+
+    expect(participant.sequence).toEqual(sequenceArray[0]);
+    expect((original.data as SequenceAssignment).claimed).toBe(true);
+    expect((revisitRows.find((row) => row.docId === 'sequenceAssignment_reused')!.data as SequenceAssignment).claimed).toBe(false);
   });
 
   test('rejected-slot reuse selects the earliest assignment timestamp', async () => {

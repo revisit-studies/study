@@ -169,7 +169,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     }
 
     // Create a sequence assignment for the participant in the study collection
-    await this.supabase
+    const { error } = await this.supabase
       .from('revisit')
       .upsert({
         studyId: `${this.collectionPrefix}${this.studyId}`,
@@ -178,6 +178,9 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       })
       .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
       .eq('docId', `sequenceAssignment_${participantId}`);
+    if (error) {
+      throw new Error('Failed to create sequence assignment');
+    }
   }
 
   private async getSequenceAllocatorSeed() {
@@ -381,7 +384,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     }
 
     const studyId = `${this.collectionPrefix}${this.studyId}`;
-    const [{ data: reusableRow }, initialAllocator] = await Promise.all([
+    const [serverTimestampResult, storedTimestampResult, initialAllocator] = await Promise.all([
       this.supabase
         .from('revisit')
         .select('docId, data, createdAt')
@@ -389,11 +392,33 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
         .like('docId', 'sequenceAssignment_%')
         .eq('data->rejected', true)
         .eq('data->claimed', false)
+        .eq('data->withServerTimestamp', true)
+        .order('createdAt', { ascending: true })
+        .limit(1)
+        .maybeSingle(),
+      this.supabase
+        .from('revisit')
+        .select('docId, data, createdAt')
+        .eq('studyId', studyId)
+        .like('docId', 'sequenceAssignment_%')
+        .eq('data->rejected', true)
+        .eq('data->claimed', false)
+        .eq('data->withServerTimestamp', false)
         .order('data->timestamp', { ascending: true })
         .limit(1)
         .maybeSingle(),
       this.getOrCreateSequenceAllocator(),
     ]);
+    if (serverTimestampResult.error || storedTimestampResult.error) {
+      throw new Error('Failed to retrieve rejected sequence assignment');
+    }
+    const reusableRow = [serverTimestampResult.data, storedTimestampResult.data]
+      .filter((row) => row !== null)
+      .sort((a, b) => {
+        const aTimestamp = a.data.withServerTimestamp ? new Date(a.createdAt).getTime() : a.data.timestamp;
+        const bTimestamp = b.data.withServerTimestamp ? new Date(b.createdAt).getTime() : b.data.timestamp;
+        return aTimestamp - bTimestamp;
+      })[0];
 
     let reusableAssignment = reusableRow?.data as SequenceAssignment | undefined;
     let reusableSequenceIndex = reusableAssignment?.reusableSequenceIndex
@@ -408,7 +433,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     }
 
     if (reusableRow && reusableAssignment && reusableSequenceIndex !== undefined) {
-      const { data: claimedRows } = await this.supabase
+      const { data: claimedRows, error: claimError } = await this.supabase
         .from('revisit')
         .update({
           data: {
@@ -422,6 +447,9 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
         .eq('data->rejected', true)
         .eq('data->claimed', false)
         .select('data');
+      if (claimError) {
+        throw new Error('Failed to claim rejected sequence assignment');
+      }
       if (!claimedRows || claimedRows.length === 0) {
         reusableAssignment = undefined;
         reusableSequenceIndex = undefined;

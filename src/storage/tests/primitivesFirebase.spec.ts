@@ -244,6 +244,10 @@ vi.mock('firebase/firestore', () => {
     constructor(public seconds: number, public nanoseconds: number) { }
 
     toMillis() { return this.seconds * 1000 + Math.floor(this.nanoseconds / 1e6); }
+
+    static fromMillis(milliseconds: number) {
+      return new MockTimestamp(Math.floor(milliseconds / 1000), (milliseconds % 1000) * 1e6);
+    }
   }
 
   return {
