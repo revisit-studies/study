@@ -1,5 +1,5 @@
 import {
-  Alert, AppShell, Badge, Center, Checkbox, Container, Flex, Group, LoadingOverlay, Stack, Tabs, Text, Title, MultiSelect, Tooltip,
+  Alert, AppShell, Badge, Center, Checkbox, Container, Divider, Flex, Group, LoadingOverlay, Stack, Tabs, Text, Title, MultiSelect, Tooltip,
 } from '@mantine/core';
 import { useNavigate, useParams } from 'react-router';
 import {
@@ -26,6 +26,7 @@ import { TableView } from './table/TableView';
 import { StatsView } from './stats/StatsView';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { ManageView } from './management/ManageView';
+import { StageManagementItem } from './management/StageManagementItem';
 import { StorageManagementView } from './management/StorageManagementView';
 import { useAuth } from '../../store/hooks/useAuth';
 import { parseStudyConfig } from '../../parser/parser';
@@ -42,8 +43,6 @@ import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngi
 import { ConfigView } from './config/ConfigView';
 import { StartupErrorScreen } from '../../components/StartupErrorScreen';
 import { ResourceNotFound } from '../../ResourceNotFound';
-
-const TABLE_HEADER_HEIGHT = 37; // Height of the tabs header
 
 function sortByStartTime(a: ParticipantDataWithStatus, b: ParticipantDataWithStatus) {
   const aStartTimes = Object.values(a.answers).map((answer) => answer.startTime).filter((startTime) => startTime !== undefined).sort();
@@ -463,23 +462,38 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
       <AppHeader studyIds={globalConfig.configsList} selectedStudyId={displayStudyId} studyConfigs={studyConfig && displayStudyId ? { [displayStudyId]: studyConfig } : undefined} />
       <AppShell.Main style={{ height: '100dvh' }}>
         <Stack ref={ref} style={{ height: '100%', maxHeight: '100dvh', overflow: 'hidden' }} justify="space-between">
-          <Flex direction="row" align="center" justify="space-between" py="sm" gap="md">
-            <Flex direction="row" align="center" gap="md">
-              <Title order={5}>{displayStudyId}</Title>
+          <Flex direction="row" align="center" justify="space-between" p="sm" gap="md" wrap="wrap" style={{ minWidth: 0 }}>
+            <Flex direction="row" align="center" gap="md" wrap="nowrap" style={{ minWidth: 0 }}>
+              <Title
+                order={5}
+                title={displayStudyId}
+                style={{
+                  flexShrink: 1,
+                  minWidth: 0,
+                  maxWidth: 'min(30vw, 360px)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {displayStudyId}
+              </Title>
               {studyConfig && canonicalStudyId && (
-                <DownloadButtons
-                  visibleParticipants={selectedParticipants.length > 0 ? selectedParticipants : visibleParticipants}
-                  studyId={canonicalStudyId}
-                  gap="10px"
-                  hasAudio={hasAudioRecording}
-                  hasScreenRecording={hasScreenRecording}
-                  hasWebcamRecording={hasWebcamRecording}
-                />
+                <Group gap="sm" wrap="nowrap">
+                  <DownloadButtons
+                    visibleParticipants={selectedParticipants.length > 0 ? selectedParticipants : visibleParticipants}
+                    studyId={canonicalStudyId}
+                    gap="10px"
+                    hasAudio={hasAudioRecording}
+                    hasScreenRecording={hasScreenRecording}
+                    hasWebcamRecording={hasWebcamRecording}
+                  />
+                </Group>
               )}
             </Flex>
-            <Flex direction="row" align="center" gap="md">
-              <Flex direction="row" align="center" gap="xs">
-                <Text size="sm" fw={500}>Stage:</Text>
+            <Flex direction="row" align="center" gap="md" wrap="nowrap">
+              <Flex direction="row" align="center" gap="xs" wrap="nowrap">
+                <Text size="sm" fw={500} style={{ whiteSpace: 'nowrap' }}>Stage:</Text>
                 <MultiSelect
                   data={availableStages}
                   value={selectedStages}
@@ -506,8 +520,8 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 />
               </Flex>
 
-              <Flex direction="row" align="center" gap="xs">
-                <Text size="sm" fw={500}>Config:</Text>
+              <Flex direction="row" align="center" gap="xs" wrap="nowrap">
+                <Text size="sm" fw={500} style={{ whiteSpace: 'nowrap' }}>Config:</Text>
                 <MultiSelect
                   data={configSelectData}
                   value={selectedConfigs}
@@ -562,8 +576,8 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
               </Flex>
 
               {availableConditions.length > 0 && (
-                <Flex direction="row" align="center" gap="xs">
-                  <Text size="sm" fw={500}>Condition:</Text>
+                <Flex direction="row" align="center" gap="xs" wrap="nowrap">
+                  <Text size="sm" fw={500} style={{ whiteSpace: 'nowrap' }}>Condition:</Text>
                   <MultiSelect
                     data={availableConditions}
                     value={selectedConditions}
@@ -591,56 +605,62 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                 </Flex>
               )}
 
-              <Flex direction="row" align="center" gap="xs">
-                <Text size="sm" fw={500}>Participants:</Text>
+              <Flex direction="row" align="center" gap="xs" wrap="nowrap">
+                <Text size="sm" fw={500} style={{ whiteSpace: 'nowrap' }}>Participants:</Text>
                 <Checkbox.Group
                   value={includedParticipants}
                   onChange={(e) => setIncludedParticipants(e)}
                 >
-                  <Group gap="xs">
+                  <Group gap={6} wrap="nowrap">
                     <Checkbox
                       value="completed"
                       label={selectedParticipants.length > 0
                         ? `Completed (${selectedParticipantCounts.completed} of ${participantCounts.completed})`
                         : `Completed (${participantCounts.completed})`}
-                      size="sm"
+                      size="xs"
+                      styles={{ label: { whiteSpace: 'nowrap' } }}
                     />
                     <Checkbox
                       value="inProgress"
                       label={selectedParticipants.length > 0
                         ? `In Progress (${selectedParticipantCounts.inProgress} of ${participantCounts.inProgress})`
                         : `In Progress (${participantCounts.inProgress})`}
-                      size="sm"
+                      size="xs"
+                      styles={{ label: { whiteSpace: 'nowrap' } }}
                     />
                     <Checkbox
                       value="rejected"
                       label={selectedParticipants.length > 0
                         ? `Rejected (${selectedParticipantCounts.rejected} of ${participantCounts.rejected})`
                         : `Rejected (${participantCounts.rejected})`}
-                      size="sm"
+                      size="xs"
+                      styles={{ label: { whiteSpace: 'nowrap' } }}
                     />
                   </Group>
                 </Checkbox.Group>
               </Flex>
             </Flex>
           </Flex>
+          <Divider style={{ marginBlock: -4 }} />
           <LoadingOverlay visible={!isStorageTab && status === 'pending'} />
           {storageAdminError && <Alert color="red" title="Datastore access unavailable">{storageAdminError}</Alert>}
 
           {status === 'success' || isStorageTab ? (
             <Tabs
               style={{
-                flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden',
+                flexGrow: 1, display: 'flex', minHeight: 0, overflow: 'hidden',
               }}
               keepMounted={false}
+              orientation="vertical"
+              styles={{ tab: { paddingLeft: 6 } }}
               variant="outline"
               value={analysisTab}
               onChange={(value) => navigate(`/analysis/stats/${routeStudyId}/${value}`)}
             >
-              <Tabs.List>
-                <Tabs.Tab value="summary" leftSection={<IconChartPie size={16} />}>Study Summary</Tabs.Tab>
-                <Tabs.Tab value="table" leftSection={<IconTable size={16} />}>Participant View</Tabs.Tab>
-                <Tabs.Tab value="stats" leftSection={<IconChartDonut2 size={16} />}>Trial Stats</Tabs.Tab>
+              <Tabs.List style={{ flex: '0 0 190px', overflowY: 'auto' }}>
+                <Tabs.Tab value="summary" leftSection={<IconChartPie size={16} />} style={{ justifyContent: 'flex-start' }}>Study Summary</Tabs.Tab>
+                <Tabs.Tab value="table" leftSection={<IconTable size={16} />} style={{ justifyContent: 'flex-start' }}>Participant View</Tabs.Tab>
+                <Tabs.Tab value="stats" leftSection={<IconChartDonut2 size={16} />} style={{ justifyContent: 'flex-start' }}>Trial Stats</Tabs.Tab>
                 <Tooltip
                   label={!isFirebaseEngine
                     ? 'Think aloud coding is only available when using Firebase and when audio recording is enabled in your study config'
@@ -648,7 +668,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                   disabled={codingEnabled}
                 >
                   <span>
-                    <Tabs.Tab value="tagging" leftSection={<IconTags size={16} />} disabled={!codingEnabled}>Coding</Tabs.Tab>
+                    <Tabs.Tab value="tagging" leftSection={<IconTags size={16} />} disabled={!codingEnabled} style={{ justifyContent: 'flex-start' }}>Coding</Tabs.Tab>
                   </span>
                 </Tooltip>
                 <Tooltip
@@ -656,62 +676,68 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                   disabled={liveMonitorEnabled}
                 >
                   <span>
-                    <Tabs.Tab value="live-monitor" leftSection={<IconDashboard size={16} />} disabled={!liveMonitorEnabled}>Live Monitor</Tabs.Tab>
+                    <Tabs.Tab value="live-monitor" leftSection={<IconDashboard size={16} />} disabled={!liveMonitorEnabled} style={{ justifyContent: 'flex-start' }}>Live Monitor</Tabs.Tab>
                   </span>
                 </Tooltip>
-                <Tabs.Tab value="config" leftSection={<IconFileCode size={16} />}>Config</Tabs.Tab>
-                <Tabs.Tab value="manage" leftSection={<IconSettings size={16} />} disabled={!user.isAdmin}>Manage</Tabs.Tab>
+                <Tabs.Tab value="config" leftSection={<IconFileCode size={16} />} style={{ justifyContent: 'flex-start' }}>Config</Tabs.Tab>
+                <Tabs.Tab value="stages" leftSection={<IconSettings size={16} />} disabled={!user.isAdmin} style={{ justifyContent: 'flex-start' }}>Stage Management</Tabs.Tab>
+                <Tabs.Tab value="manage" leftSection={<IconSettings size={16} />} disabled={!user.isAdmin} style={{ justifyContent: 'flex-start' }}>Manage</Tabs.Tab>
                 {user.isAdmin && user.adminVerification && isCloudStorageEngine(configuredStorageEngine) && storageAdmin !== false && (
-                  <Tabs.Tab value="storage" leftSection={<IconDatabase size={16} />} disabled={!canManageStorage}>Datastore</Tabs.Tab>
+                  <Tabs.Tab value="storage" leftSection={<IconDatabase size={16} />} disabled={!canManageStorage} style={{ justifyContent: 'flex-start' }}>Datastore</Tabs.Tab>
                 )}
               </Tabs.List>
-              <Tabs.Panel style={{ overflow: 'auto' }} value="summary" pt="xs">
-                {studyConfig && (
-                  <SummaryView
-                    studyConfig={studyConfig}
-                    visibleParticipants={visibleParticipants}
-                    allConfigs={allConfigs}
-                    currentConfigLabel={currentConfigLabel}
-                  />
-                )}
-              </Tabs.Panel>
-              <Tabs.Panel style={{ height: `calc(100% - ${TABLE_HEADER_HEIGHT}px)` }} value="table" pt="xs">
-                {studyConfig && <TableView width={width} stageColors={stageColors} visibleParticipants={visibleParticipants} studyConfig={studyConfig} allConfigs={allConfigs} refresh={() => execute(studyConfig, storageEngine, canonicalStudyId ?? undefined)} selectedParticipants={selectedParticipants} onSelectionChange={setSelectedParticipants} />}
-              </Tabs.Panel>
-              <Tabs.Panel style={{ overflow: 'auto' }} value="stats" pt="xs">
-                {studyConfig && <StatsView studyConfig={studyConfig} visibleParticipants={visibleParticipants} allConfigs={allConfigs} />}
-              </Tabs.Panel>
-              <Tabs.Panel value="tagging" pt="xs">
-                {studyConfig && codingEnabled
-                  ? <ThinkAloudAnalysis visibleParticipants={visibleParticipants} storageEngine={storageEngine as FirebaseStorageEngine} />
-                  : (
-                    <Center>
-                      <Text c="dimmed">
-                        {!isFirebaseEngine
-                          ? 'Think aloud coding is only available when using Firebase and when audio recording is enabled in your study config'
-                          : 'Think aloud coding is only available for studies with audio recording enabled in your study config'}
-                      </Text>
-                    </Center>
+              <Stack gap={0} pl="xs" pr="sm" style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+                <Tabs.Panel style={{ flex: 1, minHeight: 0, overflow: 'auto' }} value="summary" pt="xs">
+                  {studyConfig && (
+                    <SummaryView
+                      studyConfig={studyConfig}
+                      visibleParticipants={visibleParticipants}
+                      allConfigs={allConfigs}
+                      currentConfigLabel={currentConfigLabel}
+                    />
                   )}
-              </Tabs.Panel>
-              <Tabs.Panel style={{ overflow: 'auto' }} value="live-monitor" pt="xs">
-                {studyConfig && liveMonitorEnabled
-                  ? <LiveMonitorView studyConfig={studyConfig} storageEngine={storageEngine} studyId={canonicalStudyId ?? undefined} includedParticipants={includedParticipants} selectedStages={selectedStages} />
-                  : (
-                    <Center>
-                      <Text c="dimmed">Live Monitor is only available when using Firebase</Text>
-                    </Center>
-                  )}
-              </Tabs.Panel>
-              <Tabs.Panel style={{ overflow: 'auto' }} value="config" pt="xs">
-                {studyConfig && <ConfigView visibleParticipants={visibleParticipants} studyId={canonicalStudyId ?? undefined} currentConfigHash={currentConfigHash} currentConfigStatus={currentConfigStatus} />}
-              </Tabs.Panel>
-              <Tabs.Panel style={{ overflow: 'auto' }} value="manage" pt="xs">
-                {canonicalStudyId && user.isAdmin ? <ManageView studyId={canonicalStudyId} refresh={() => execute(studyConfig, storageEngine, canonicalStudyId)} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to manage the data for this study.</Alert></Container>}
-              </Tabs.Panel>
-              <Tabs.Panel style={{ overflow: 'auto' }} value="storage" pt="xs">
-                {storageAdmin === null ? <LoadingOverlay visible /> : canonicalStudyId && canManageStorage ? <StorageManagementView key={canonicalStudyId} studyId={canonicalStudyId} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red">Sign in as an administrator to manage storage.</Alert></Container>}
-              </Tabs.Panel>
+                </Tabs.Panel>
+                <Tabs.Panel style={{ flex: 1, minHeight: 0, overflow: 'auto' }} value="table" pt="xs">
+                  {studyConfig && <TableView width={width} stageColors={stageColors} visibleParticipants={visibleParticipants} participantsForTimeout={expData ?? []} studyConfig={studyConfig} allConfigs={allConfigs} refresh={() => execute(studyConfig, storageEngine, canonicalStudyId ?? undefined)} selectedParticipants={selectedParticipants} onSelectionChange={setSelectedParticipants} />}
+                </Tabs.Panel>
+                <Tabs.Panel style={{ flex: 1, minHeight: 0, overflow: 'auto' }} value="stats" pt="xs">
+                  {studyConfig && <StatsView studyConfig={studyConfig} visibleParticipants={visibleParticipants} allConfigs={allConfigs} />}
+                </Tabs.Panel>
+                <Tabs.Panel style={{ flex: 1, minHeight: 0, overflow: 'auto' }} value="tagging" pt="xs">
+                  {studyConfig && codingEnabled
+                    ? <ThinkAloudAnalysis visibleParticipants={visibleParticipants} storageEngine={storageEngine as FirebaseStorageEngine} />
+                    : (
+                      <Center>
+                        <Text c="dimmed">
+                          {!isFirebaseEngine
+                            ? 'Think aloud coding is only available when using Firebase and when audio recording is enabled in your study config'
+                            : 'Think aloud coding is only available for studies with audio recording enabled in your study config'}
+                        </Text>
+                      </Center>
+                    )}
+                </Tabs.Panel>
+                <Tabs.Panel style={{ flex: 1, minHeight: 0, overflow: 'auto' }} value="live-monitor" pt="xs">
+                  {studyConfig && liveMonitorEnabled
+                    ? <LiveMonitorView studyConfig={studyConfig} storageEngine={storageEngine} studyId={canonicalStudyId ?? undefined} includedParticipants={includedParticipants} selectedStages={selectedStages} />
+                    : (
+                      <Center>
+                        <Text c="dimmed">Live Monitor is only available when using Firebase</Text>
+                      </Center>
+                    )}
+                </Tabs.Panel>
+                <Tabs.Panel style={{ flex: 1, minHeight: 0, overflow: 'auto' }} value="config" pt="xs">
+                  {studyConfig && <ConfigView visibleParticipants={visibleParticipants} studyId={canonicalStudyId ?? undefined} currentConfigHash={currentConfigHash} currentConfigStatus={currentConfigStatus} />}
+                </Tabs.Panel>
+                <Tabs.Panel style={{ flex: 1, minHeight: 0, overflow: 'auto' }} value="stages" pt="xs">
+                  {canonicalStudyId && user.isAdmin ? <StageManagementItem studyId={canonicalStudyId} studyConfig={studyConfig} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to manage the data for this study.</Alert></Container>}
+                </Tabs.Panel>
+                <Tabs.Panel style={{ flex: 1, minHeight: 0, overflow: 'auto' }} value="manage" pt="xs">
+                  {canonicalStudyId && user.isAdmin ? <ManageView studyId={canonicalStudyId} refresh={() => execute(studyConfig, storageEngine, canonicalStudyId)} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to manage the data for this study.</Alert></Container>}
+                </Tabs.Panel>
+                <Tabs.Panel style={{ flex: 1, minHeight: 0, overflow: 'auto' }} value="storage" pt="xs">
+                  {storageAdmin === null ? <LoadingOverlay visible /> : canonicalStudyId && canManageStorage ? <StorageManagementView key={canonicalStudyId} studyId={canonicalStudyId} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red">Sign in as an administrator to manage storage.</Alert></Container>}
+                </Tabs.Panel>
+              </Stack>
             </Tabs>
           ) : null}
         </Stack>

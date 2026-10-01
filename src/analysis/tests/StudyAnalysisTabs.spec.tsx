@@ -111,6 +111,9 @@ vi.mock('../individualStudy/stats/StatsView', () => ({
 vi.mock('../individualStudy/management/ManageView', () => ({
   ManageView: () => <div>ManageView</div>,
 }));
+vi.mock('../individualStudy/management/StageManagementItem', () => ({
+  StageManagementItem: () => <div>StageManagementItem</div>,
+}));
 vi.mock('../individualStudy/management/StorageManagementView', () => ({
   StorageManagementView: () => <div>StorageManagementView</div>,
 }));
@@ -153,6 +156,7 @@ vi.mock('@mantine/core', () => ({
     { Group: ({ children }: { children: ReactNode }) => <div>{children}</div> },
   ),
   Container: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Divider: () => <hr />,
   Flex: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Group: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   LoadingOverlay: ({ visible }: { visible: boolean }) => (visible ? <div data-testid="loading-overlay" /> : null),
@@ -250,6 +254,7 @@ describe('StudyAnalysisTabs', () => {
     expect(html).toContain('Trial Stats');
     expect(html).toContain('Coding');
     expect(html).toContain('Config');
+    expect(html).toContain('Stage Management');
     expect(html).toContain('Manage');
   });
 

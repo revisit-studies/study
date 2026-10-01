@@ -82,6 +82,16 @@ export function ComponentController() {
   // Disable browser back button from all stimuli
   useDisableBrowserBack();
 
+  useEffect(() => {
+    if (!storageEngine) {
+      return undefined;
+    }
+
+    return storageEngine.subscribeToCurrentParticipantRejection(() => {
+      navigate(`./../__timedOut${window.location.search}`);
+    });
+  }, [navigate, storageEngine]);
+
   // Check if we have issues connecting to the database, if so show alert modal
   const storeDispatch = useStoreDispatch();
   const { setAlertModal } = useStoreActions();

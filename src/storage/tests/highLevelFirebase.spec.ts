@@ -141,7 +141,12 @@ vi.mock('firebase/firestore', () => {
   function mockSetDoc(docRef: { _path: string }, data: DocData, options?: { merge?: boolean }) {
     const resolved = resolveSentinels(data);
     if (options?.merge) {
-      firestoreData[docRef._path] = { ...(firestoreData[docRef._path] ?? {}), ...resolved };
+      const merged = { ...(firestoreData[docRef._path] ?? {}), ...resolved };
+      // A merging write also honours deleteField(), same as Firestore itself.
+      for (const [key, value] of Object.entries(merged)) {
+        if (value === DELETE_FIELD_SENTINEL) delete merged[key];
+      }
+      firestoreData[docRef._path] = merged;
     } else {
       firestoreData[docRef._path] = resolved;
     }
@@ -215,6 +220,33 @@ vi.mock('firebase/firestore', () => {
     };
   }
 
+  function mockRunTransaction<T>(
+    _firestore: unknown,
+    updateFunction: (transaction: {
+      get: (docRef: { _path: string; id?: string }) => Promise<unknown>;
+      set: (docRef: { _path: string }, data: DocData, options?: { merge?: boolean }) => void;
+      update: (docRef: { _path: string }, data: DocData) => void;
+      delete: (docRef: { _path: string }) => void;
+    }) => Promise<T>,
+  ): Promise<T> {
+    // Runs the body straight through: the in-memory store has no concurrency,
+    // so there is nothing to retry or roll back.
+    const transaction = {
+      get: mockGetDoc,
+      set: (docRef: { _path: string }, data: DocData, options?: { merge?: boolean }) => {
+        mockSetDoc(docRef, data, options);
+      },
+      update: (docRef: { _path: string }, data: DocData) => {
+        if (!firestoreData[docRef._path]) {
+          throw new Error(`No document to update: ${docRef._path}`);
+        }
+        mockUpdateDoc(docRef, data);
+      },
+      delete: (docRef: { _path: string }) => { delete firestoreData[docRef._path]; },
+    };
+    return updateFunction(transaction);
+  }
+
   class MockTimestamp {
     constructor(public seconds: number, public nanoseconds: number) { }
 
@@ -230,6 +262,7 @@ vi.mock('firebase/firestore', () => {
     updateDoc: vi.fn(mockUpdateDoc),
     onSnapshot: vi.fn(mockOnSnapshot),
     writeBatch: vi.fn(mockWriteBatch),
+    runTransaction: vi.fn(mockRunTransaction),
     deleteField: vi.fn(() => DELETE_FIELD_SENTINEL),
     serverTimestamp: vi.fn(() => SERVER_TS_SENTINEL),
     initializeFirestore: vi.fn(() => ({})),
