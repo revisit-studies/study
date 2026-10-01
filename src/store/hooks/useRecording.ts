@@ -7,7 +7,6 @@ import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useRecordingConfig } from './useRecordingConfig';
 import { useStoredAnswer } from './useStoredAnswer';
 import { useIsAnalysis } from './useIsAnalysis';
-import { useIsStartupPreview } from '../../components/StartupPreviewContext';
 import {
   getRmsLevel,
   isSpeakingAtLevel,
@@ -38,7 +37,6 @@ function stopRecorder(recorder: MediaRecorder | null) {
  * When just audio recording is enabled throughout the study, recording is initiated on each screen separately.
  */
 export function useRecording() {
-  const isStartupPreview = useIsStartupPreview();
   const studyConfig = useStudyConfig();
 
   const { recordScreenFPS, recordAudio } = studyConfig.uiConfig;
@@ -179,10 +177,6 @@ export function useRecording() {
 
   // Start separate per-trial screen, webcam, and audio recordings from persistent capture streams.
   const startScreenRecording = useCallback((trialName: string) => {
-    if (isStartupPreview) {
-      return;
-    }
-
     const wantsScreen = currentComponentHasScreenRecording;
     const wantsAudio = currentComponentHasAudioRecording;
     const wantsWebcam = currentComponentHasWebcamRecording;
@@ -258,7 +252,6 @@ export function useRecording() {
     currentComponentHasScreenRecording,
     currentComponentHasWebcamRecording,
     dataCollectionEnabled,
-    isStartupPreview,
     storageEngine,
   ]);
 
@@ -368,7 +361,7 @@ export function useRecording() {
 
   // For study with just audio recording
   useEffect(() => {
-    if (isStartupPreview || !studyConfig || studyHasScreenRecording || studyHasWebcamRecording || !studyHasAudioRecording || !storageEngine || (status && status.endTime > 0) || isAnalysis) {
+    if (!studyConfig || studyHasScreenRecording || studyHasWebcamRecording || !studyHasAudioRecording || !storageEngine || (status && status.endTime > 0) || isAnalysis) {
       return;
     }
 
@@ -390,11 +383,11 @@ export function useRecording() {
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentComponent, identifier, currentComponentHasAudioRecording, isStartupPreview]);
+  }, [currentComponent, identifier, currentComponentHasAudioRecording]);
 
   // For studies with screen or webcam recording.
   useEffect(() => {
-    if (isStartupPreview || !studyConfig || !(studyHasScreenRecording || studyHasWebcamRecording) || !storageEngine || (status && status.endTime > 0) || isAnalysis) {
+    if (!studyConfig || !(studyHasScreenRecording || studyHasWebcamRecording) || !storageEngine || (status && status.endTime > 0) || isAnalysis) {
       return;
     }
 
@@ -413,7 +406,7 @@ export function useRecording() {
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentComponent, identifier, currentComponentHasAudioRecording, currentComponentHasScreenRecording, currentComponentHasWebcamRecording, isMediaCapturing, isStartupPreview]);
+  }, [currentComponent, identifier, currentComponentHasAudioRecording, currentComponentHasScreenRecording, currentComponentHasWebcamRecording, isMediaCapturing]);
 
   // Start persistent capture. Per-trial recording begins in the navigation effect above.
   const startMediaCapture = useCallback(async ({
@@ -425,7 +418,7 @@ export function useRecording() {
     includeAudio: boolean;
     includeWebcam: boolean;
   }) => {
-    if (isStartupPreview || !dataCollectionEnabled) {
+    if (!dataCollectionEnabled) {
       return;
     }
 
@@ -552,7 +545,7 @@ export function useRecording() {
       }
       document.title = pageTitle;
     }
-  }, [currentComponentHasClickToRecord, dataCollectionEnabled, isStartupPreview, pageTitle, recordAudio, recordScreenFPS, stopScreenCapture]);
+  }, [currentComponentHasClickToRecord, dataCollectionEnabled, pageTitle, recordAudio, recordScreenFPS, stopScreenCapture]);
 
   const startScreenCapture = useCallback(() => {
     startMediaCapture({

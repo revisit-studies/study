@@ -101,11 +101,13 @@ vi.mock('react-router', () => ({
 
 vi.mock('@mantine/core', () => ({
   Anchor: ({ children, href }: { children: ReactNode; href?: string }) => <a href={href}>{children}</a>,
+  Box: ({ children, ...props }: HTMLAttributes<HTMLDivElement>) => <div {...props}>{children}</div>,
   Button: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => (
     <button type="button" onClick={onClick}>{children}</button>
   ),
   Center: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Code: ({ children }: { children: ReactNode }) => <pre>{children}</pre>,
+  Image: ({ src }: { src: string }) => <img src={src} alt="" />,
   LoadingOverlay: ({ visible }: { visible: boolean }) => (
     visible ? <div data-testid="loading-overlay" /> : null
   ),
@@ -508,7 +510,7 @@ describe('Shell', () => {
       .toBe(mockActiveConfig.uiConfig.contactEmail));
   });
 
-  test('renders a fixed, response-free first component in the normal study shell while a new participant is assigned', async () => {
+  test('renders an inert first-stimulus preview while a new participant is assigned', async () => {
     const previewConfig: ParsedConfig<StudyConfig> = {
       ...mockActiveConfig,
       components: {
@@ -535,8 +537,10 @@ describe('Shell', () => {
 
     const { getByTestId, queryByTestId } = render(<Shell globalConfig={globalConfig} />);
 
-    await waitFor(() => expect(getByTestId('routing')).toBeDefined());
+    await waitFor(() => expect(getByTestId('startup-preview')).toBeDefined());
+    expect(queryByTestId('routing')).toBeNull();
     expect(queryByTestId('loading-overlay')).toBeNull();
+    expect(studyStoreCreator).not.toHaveBeenCalled();
   });
 
   test('calls setSequenceArray when getSequenceArray returns null', async () => {

@@ -20,6 +20,7 @@ import { ParticipantDataWithStatus } from '../../../storage/types';
 import { getBetweenSubjectsCombinationKey, StageInfo } from '../../../storage/engines/types';
 import { DISTINCT_COLOR_PALETTE, getDistinctColorShade } from '../../../utils/colors';
 import { ParticipantTimeoutModal } from '../ParticipantTimeoutModal';
+import { showNotification } from '../../../utils/notifications';
 
 type BetweenSubjectsLevel = FactorPrimitive | FactorObject;
 
@@ -573,6 +574,24 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
     setStageParticipantStatusCounts(getStageParticipantStatusCounts(allParticipants));
   }, [storageEngine, studyId]);
 
+  const persistStageChange = useCallback(async (operation: () => Promise<void>) => {
+    try {
+      await operation();
+      return true;
+    } catch (error) {
+      console.error('Failed to save stage settings:', error);
+      showNotification({
+        title: 'Stage settings not saved',
+        message: 'The latest stage change could not be saved. The stored settings have been restored.',
+        color: 'red',
+      });
+      await refreshStageData().catch((refreshError) => {
+        console.error('Failed to restore stage settings:', refreshError);
+      });
+      return false;
+    }
+  }, [refreshStageData]);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -593,7 +612,10 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
 
   const handleSetCurrentStage = async (stageName: string, color: string) => {
     if (storageEngine) {
-      await storageEngine.setCurrentStage(studyId, stageName, color);
+      const saved = await persistStageChange(
+        () => storageEngine.setCurrentStage(studyId, stageName, color),
+      );
+      if (!saved) return;
       setCurrentStage({ stageName, color });
       const selectedStage = allStages.find((stage) => stage.stageName === stageName);
       setEditingLimitMaxParticipants(selectedStage?.maxParticipants ?? '');
@@ -638,9 +660,12 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
 
   const handleSaveEdit = async (originalName: string) => {
     if (storageEngine) {
-      await storageEngine.updateStage(studyId, originalName, {
-        color: editingStageColor,
-      });
+      const saved = await persistStageChange(() => storageEngine.updateStage(
+        studyId,
+        originalName,
+        { color: editingStageColor },
+      ));
+      if (!saved) return;
 
       // Refresh data
       await refreshStageData();
@@ -666,17 +691,23 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
         ? Object.values(manualDesiredParticipants).reduce((total, count) => total + count, 0)
         : Math.max(betweenSubjectsCombinations.length, 1) * 10;
       setEditingLimitMaxParticipants(initialMaximumParticipants);
-      await storageEngine.updateStage(studyId, stage.stageName, {
-        maxParticipants: initialMaximumParticipants,
-      });
+      const saved = await persistStageChange(() => storageEngine.updateStage(
+        studyId,
+        stage.stageName,
+        { maxParticipants: initialMaximumParticipants },
+      ));
+      if (!saved) return;
       await refreshStageData();
       return;
     }
 
     setEditingLimitMaxParticipants('');
-    await storageEngine.updateStage(studyId, stage.stageName, {
-      maxParticipants: null,
-    });
+    const saved = await persistStageChange(() => storageEngine.updateStage(
+      studyId,
+      stage.stageName,
+      { maxParticipants: null },
+    ));
+    if (!saved) return;
     await refreshStageData();
   };
 
@@ -685,9 +716,12 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
       return;
     }
 
-    await storageEngine.updateStage(studyId, stage.stageName, {
-      maxParticipants: editingLimitMaxParticipants,
-    });
+    const saved = await persistStageChange(() => storageEngine.updateStage(
+      studyId,
+      stage.stageName,
+      { maxParticipants: editingLimitMaxParticipants },
+    ));
+    if (!saved) return;
     await refreshStageData();
   };
 
@@ -710,7 +744,10 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
 
     if (storageEngine) {
       // Add the new stage by setting it as current (which adds it to allStages).
-      await storageEngine.setCurrentStage(studyId, normalizedStageName, newStageColor);
+      const saved = await persistStageChange(
+        () => storageEngine.setCurrentStage(studyId, normalizedStageName, newStageColor),
+      );
+      if (!saved) return;
 
       // Refresh data
       await refreshStageData();
@@ -736,15 +773,15 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
       return;
     }
 
-    const disabledCombinations = stage.disabledBetweenSubjectsCombinations || [];
-    const nextDisabledCombinations = enabled
-      ? disabledCombinations.filter((key) => key !== combinationKey)
-      : [...new Set([...disabledCombinations, combinationKey])];
-    await storageEngine.updateStage(studyId, stage.stageName, {
-      disabledBetweenSubjectsCombinations: nextDisabledCombinations.length === 0
-        ? null
-        : nextDisabledCombinations,
-    });
+    const saved = await persistStageChange(
+      () => storageEngine.setStageCombinationEnabled(
+        studyId,
+        stage.stageName,
+        combinationKey,
+        enabled,
+      ),
+    );
+    if (!saved) return;
     await refreshStageData();
   };
 
@@ -793,12 +830,16 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
     const previousWrite = manualDesiredParticipantsWriteChainsRef.current[stage.stageName]
       ?? Promise.resolve();
     const write = previousWrite.catch(() => undefined).then(async () => {
-      await storageEngine.updateStage(studyId, stage.stageName, {
-        manualDesiredParticipantsByCombination: nextDesiredParticipantsByCombination,
-        maxParticipants: Object.values(nextDesiredParticipantsByCombination)
-          .reduce<number>((total, count) => total + count, 0),
-        participantAssignmentMode: 'manual',
-      });
+      const saved = await persistStageChange(
+        () => storageEngine.setStageDesiredParticipants(
+          studyId,
+          stage.stageName,
+          combinationKey,
+          desiredParticipants === '' ? 0 : desiredParticipants,
+          currentDesiredParticipantCounts,
+        ),
+      );
+      if (!saved) return;
       await refreshStageData();
     });
     manualDesiredParticipantsWriteChainsRef.current[stage.stageName] = write;
@@ -810,12 +851,13 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
       return;
     }
 
-    await storageEngine.updateStage(studyId, stage.stageName, {
+    const saved = await persistStageChange(() => storageEngine.updateStage(studyId, stage.stageName, {
       participantAssignmentMode: mode as 'even' | 'manual',
       ...(mode === 'manual' && !getManualDesiredParticipants(stage)
         ? { manualDesiredParticipantsByCombination: getDefaultDesiredParticipantCounts(stage.maxParticipants, betweenSubjectsCombinations) }
         : {}),
-    });
+    }));
+    if (!saved) return;
     await refreshStageData();
   };
 

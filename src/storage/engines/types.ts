@@ -130,8 +130,9 @@ export interface ConditionData {
 
 const defaultStageColor = DISTINCT_COLOR_PALETTE[0];
 
-// Every stage edit rewrites the whole modes document, so they all share one lock.
-const STAGE_DATA_LOCK_KEY = 'stage-data';
+// Admission and stage policy changes share one lock so a participant cannot be
+// committed against a stage configuration that changed mid-assignment.
+const ADMISSION_POLICY_LOCK_KEY = 'participant-assignment';
 
 export function getStageParticipantCounts(sequenceAssignments: SequenceAssignment[]) {
   return sequenceAssignments.reduce<Record<string, number>>((counts, assignment) => {
@@ -389,10 +390,6 @@ export abstract class StorageEngine {
     };
   }
 
-  protected shouldDeferInitialParticipantDataPersistence() {
-    return false;
-  }
-
   /*
   * PRIMITIVE METHODS
   * These methods are provided by the storage engine implementation and are used by the higher-level methods.
@@ -598,6 +595,21 @@ export abstract class StorageEngine {
     } catch (error) {
       console.warn('Failed to read cached participant data:', error);
       return null;
+    }
+  }
+
+  private async removeCachedParticipantDataSnapshot(participantId?: string) {
+    const targetParticipantId = participantId || this.currentParticipantId;
+    if (!this.studyId || !targetParticipantId) {
+      return;
+    }
+
+    try {
+      await this.participantStore.removeItem(
+        this.getParticipantDataSnapshotStorageKey(targetParticipantId),
+      );
+    } catch (error) {
+      console.warn('Failed to remove cached participant data:', error);
     }
   }
 
@@ -909,7 +921,7 @@ export abstract class StorageEngine {
   ): Promise<void> {
     // The modes document holds every stage, so a read-modify-write of one stage
     // would otherwise drop a concurrent admin's edit to a different stage.
-    await this._runWithLock(STAGE_DATA_LOCK_KEY, async () => {
+    await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, async () => {
       await this.setCurrentStageUnlocked(studyId, stageName, color, maxParticipants);
     });
   }
@@ -965,8 +977,63 @@ export abstract class StorageEngine {
   ): Promise<void> {
     // Two admins editing different stages, or different switches on one stage,
     // both rewrite the whole allStages array, so serialize the read and write.
-    await this._runWithLock(STAGE_DATA_LOCK_KEY, async () => {
+    await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, async () => {
       await this.updateStageUnlocked(studyId, stageName, updates);
+    });
+  }
+
+  async setStageCombinationEnabled(
+    studyId: string,
+    stageName: string,
+    combinationKey: string,
+    enabled: boolean,
+  ) {
+    await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, async () => {
+      const stage = (await this.getModes(studyId)).stage?.allStages.find(
+        (candidate) => candidate.stageName === stageName,
+      );
+      if (!stage) {
+        throw new Error(`Stage ${stageName} not found`);
+      }
+      const disabledCombinations = stage.disabledBetweenSubjectsCombinations || [];
+      const nextDisabledCombinations = enabled
+        ? disabledCombinations.filter((key) => key !== combinationKey)
+        : [...new Set([...disabledCombinations, combinationKey])];
+      await this.updateStageUnlocked(studyId, stageName, {
+        disabledBetweenSubjectsCombinations: nextDisabledCombinations.length === 0
+          ? null
+          : nextDisabledCombinations,
+      });
+    });
+  }
+
+  async setStageDesiredParticipants(
+    studyId: string,
+    stageName: string,
+    combinationKey: string,
+    desiredParticipants: number,
+    initialDesiredParticipants: Record<string, number>,
+  ) {
+    await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, async () => {
+      const stage = (await this.getModes(studyId)).stage?.allStages.find(
+        (candidate) => candidate.stageName === stageName,
+      );
+      if (!stage) {
+        throw new Error(`Stage ${stageName} not found`);
+      }
+      const currentDesiredParticipants = stage.manualDesiredParticipantsByCombination
+        ?? stage.desiredParticipantsByCombination
+        ?? initialDesiredParticipants;
+      const nextDesiredParticipants = {
+        ...currentDesiredParticipants,
+        [combinationKey]: desiredParticipants,
+      };
+      await this.updateStageUnlocked(studyId, stageName, {
+        manualDesiredParticipantsByCombination: nextDesiredParticipants,
+        maxParticipants: Object.values(nextDesiredParticipants)
+          .reduce((total, count) => total + count, 0),
+        participantAssignmentMode: 'manual',
+      });
     });
   }
 
@@ -1274,8 +1341,15 @@ export abstract class StorageEngine {
         };
         // Mark the first reject as claimed
         await this._claimSequenceAssignment(firstReject.participantId, firstReject);
-        // Set the participant's sequence assignment document
-        await this._createSequenceAssignment(this.currentParticipantId, participantSequenceAssignmentData, false);
+        try {
+          // Set the participant's sequence assignment document
+          await this._createSequenceAssignment(this.currentParticipantId, participantSequenceAssignmentData, false);
+        } catch (error) {
+          // The source slot must remain reusable if creating its replacement
+          // fails before the replacement assignment exists.
+          await this._updateSequenceAssignmentFields(firstReject.participantId, { claimed: false });
+          throw error;
+        }
       }
     } else if (modes.dataCollectionEnabled) {
       const timestamp = new Date().getTime();
@@ -1402,10 +1476,7 @@ export abstract class StorageEngine {
       return participant;
     }
 
-    const initializedParticipant = await this._runWithLock<{
-      participant: ParticipantData;
-      modes: Record<REVISIT_MODE, boolean> | null;
-    }>('participant-assignment', async () => {
+    const initializedParticipant = await this._runWithLock<ParticipantData>(ADMISSION_POLICY_LOCK_KEY, async () => {
       // Another session may have completed initialization while this session waited
       // for the lock, so always read the participant record again inside it.
       const existingParticipant = await this._getFromStorage(
@@ -1413,7 +1484,8 @@ export abstract class StorageEngine {
         'participantData',
       );
       if (isParticipantData(existingParticipant)) {
-        return { participant: existingParticipant, modes: null };
+        await this.cacheParticipantDataSnapshot(existingParticipant, this.currentParticipantId);
+        return existingParticipant;
       }
 
       const { modes, stageData } = await this.getModesAndStageData(this.studyId!);
@@ -1441,44 +1513,43 @@ export abstract class StorageEngine {
         throw error;
       }
       const { currentRow, creationIndex } = sequence;
-      return {
-        participant: {
-          participantId: this.currentParticipantId!,
-          participantConfigHash,
-          sequence: currentRow,
-          participantIndex: creationIndex,
-          answers: {},
-          searchParams,
-          conditions,
-          metadata,
-          rejected: false as const,
-          participantTags: [],
-          stage: currentStage,
-          createdTime: Date.now(),
-        },
-        modes,
+      const participantData: ParticipantData = {
+        participantId: this.currentParticipantId!,
+        participantConfigHash,
+        sequence: currentRow,
+        participantIndex: creationIndex,
+        answers: {},
+        searchParams,
+        conditions,
+        metadata,
+        rejected: false,
+        participantTags: [],
+        stage: currentStage,
+        createdTime: Date.now(),
       };
+
+      this.participantData = participantData;
+      try {
+        if (modes.dataCollectionEnabled) {
+          // Do not expose a session until its participant record and assignment
+          // both exist. Otherwise a failed first write can strand a capacity slot
+          // and leave only a browser-local participant snapshot.
+          await this.persistCurrentParticipantData({ immediate: true });
+        } else {
+          await this.cacheParticipantDataSnapshot(participantData, this.currentParticipantId);
+        }
+      } catch (error) {
+        await this.releaseInitialSequenceAssignment();
+        await this.removeCachedParticipantDataSnapshot(this.currentParticipantId);
+        this.participantData = undefined;
+        throw error;
+      }
+
+      return participantData;
     });
 
-    const participantData = initializedParticipant.participant;
-    this.participantData = participantData;
-
-    if (!initializedParticipant.modes) {
-      await this.cacheParticipantDataSnapshot(participantData, this.currentParticipantId);
-      return participantData;
-    }
-
-    if (initializedParticipant.modes.dataCollectionEnabled) {
-      if (this.shouldDeferInitialParticipantDataPersistence()) {
-        this.persistCurrentParticipantData({ immediate: true }).catch(() => undefined);
-      } else {
-        await this.persistCurrentParticipantData({ immediate: true });
-      }
-    } else {
-      await this.cacheParticipantDataSnapshot(participantData, this.currentParticipantId);
-    }
-
-    return participantData;
+    this.participantData = initializedParticipant;
+    return initializedParticipant;
   }
 
   // Gets all participant IDs for the given studyId
@@ -1766,49 +1837,57 @@ export abstract class StorageEngine {
 
   // Un-rejects a participant with the given participantId.
   async undoRejectParticipant(participantId: string) {
-    const participant = participantId === this.currentParticipantId && this.participantData
-      ? this.participantData
-      : await this._getFromStorage(
-        `participants/${participantId}`,
-        'participantData',
-      );
-    let participantRecordUpdated = false;
-
-    try {
-      // If the user doesn't exist, return
-      if (!participant || !isParticipantData(participant)) {
-        return;
+    return await this._runWithLock(`participant-${participantId}`, async () => {
+      const assignment = await this._getSequenceAssignment(participantId);
+      if (assignment?.claimed) {
+        throw new Error('Cannot undo rejection after the participant slot has been reassigned');
       }
 
-      const restoredParticipant: ParticipantData = {
-        ...participant,
-        rejected: false,
-      };
-      await this._pushToStorage(
-        `participants/${participantId}`,
-        'participantData',
-        restoredParticipant,
-      );
-      participantRecordUpdated = true;
-      await this._undoRejectParticipantRealtime(participantId);
+      const participant = participantId === this.currentParticipantId && this.participantData
+        ? this.participantData
+        : await this._getFromStorage(
+          `participants/${participantId}`,
+          'participantData',
+        );
+      let participantRecordUpdated = false;
 
-      if (participantId === this.currentParticipantId && this.participantData) {
-        this.participantData = restoredParticipant;
-      }
-    } catch (error) {
       try {
-        if (participantRecordUpdated && participant && isParticipantData(participant)) {
-          await this._pushToStorage(
-            `participants/${participantId}`,
-            'participantData',
-            participant,
-          );
+        // If the user doesn't exist, return
+        if (!participant || !isParticipantData(participant)) {
+          return;
         }
-      } catch (rollbackError) {
-        console.warn('Error rolling back participant unrejection state:', rollbackError);
+
+        const restoredParticipant: ParticipantData = {
+          ...participant,
+          rejected: false,
+        };
+        await this._pushToStorage(
+          `participants/${participantId}`,
+          'participantData',
+          restoredParticipant,
+        );
+        participantRecordUpdated = true;
+        await this._undoRejectParticipantRealtime(participantId);
+
+        if (participantId === this.currentParticipantId && this.participantData) {
+          this.participantData = restoredParticipant;
+        }
+      } catch (error) {
+        try {
+          if (participantRecordUpdated && participant && isParticipantData(participant)) {
+            await this._pushToStorage(
+              `participants/${participantId}`,
+              'participantData',
+              participant,
+            );
+          }
+        } catch (rollbackError) {
+          console.warn('Error rolling back participant unrejection state:', rollbackError);
+        }
+        console.warn('Error undoing participant rejection:', error);
+        throw normalizeError(error);
       }
-      console.warn('Error undoing participant rejection:', error);
-    }
+    });
   }
 
   // Un-rejects the current participant.
@@ -2531,10 +2610,6 @@ export abstract class CloudStorageEngine extends StorageEngine {
   protected cloudEngine = true;
 
   protected userManagementData: UserManagementData = {};
-
-  protected shouldDeferInitialParticipantDataPersistence() {
-    return true;
-  }
 
   /*
   * PRIMITIVE METHODS

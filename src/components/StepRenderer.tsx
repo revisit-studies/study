@@ -1,5 +1,5 @@
 import {
-  ActionIcon, AppShell, Button, Center, Flex, Loader, Menu, Stack, Text,
+  ActionIcon, AppShell, Button, Flex, Menu,
 } from '@mantine/core';
 import { Outlet } from 'react-router';
 import {
@@ -31,7 +31,6 @@ import { ReplayContext, useReplay } from '../store/hooks/useReplay';
 import { DeviceWarning } from './interface/DeviceWarning';
 import { handleBeforeUnload, shouldConfirmTabClose } from '../utils/closeTabConfirmation';
 import { useStorageEngine } from '../storage/storageEngineHooks';
-import { useIsStartupPreview } from './StartupPreviewContext';
 import {
   buildPdfFilename, getPdfExportUnsupportedReason, saveElementAsPdf, waitForNextPaint,
 } from '../utils/pdfExport';
@@ -41,21 +40,7 @@ import { PREFIX } from '../utils/Prefix';
 
 const STUDY_BROWSER_WIDTH = 360;
 
-function StartupPreviewAside() {
-  return (
-    <AppShell.Aside className="studyBrowser" data-testid="startup-preview-aside" p="0">
-      <Center h="100%">
-        <Stack align="center" gap="sm">
-          <Loader size="sm" />
-          <Text size="sm">Preparing study browser…</Text>
-        </Stack>
-      </Center>
-    </AppShell.Aside>
-  );
-}
-
 export function StepRenderer() {
-  const isStartupPreview = useIsStartupPreview();
   const windowEvents = useRef<EventType[]>([]) as WindowEventsRef;
   const dispatch = useStoreDispatch();
   const { toggleStudyBrowser, setAlertModal } = useStoreActions();
@@ -88,7 +73,7 @@ export function StepRenderer() {
   const analysisCanPlayScreenRecording = useStoreSelector((state) => state.analysisCanPlayScreenRecording);
 
   useEffect(() => {
-    if (isStartupPreview || !storageEngine) {
+    if (!storageEngine) {
       return undefined;
     }
 
@@ -100,7 +85,7 @@ export function StepRenderer() {
         title: 'Failed to Save Response',
       }));
     });
-  }, [dispatch, isStartupPreview, setAlertModal, storageEngine]);
+  }, [dispatch, setAlertModal, storageEngine]);
 
   // Attach event listeners
   useEffect(() => {
@@ -349,7 +334,7 @@ export function StepRenderer() {
             footer={{ height: isAnalysis ? 125 + (hasAudio ? 55 : 0) : 0 }}
             style={{ '--app-shell-aside-offset': '0rem' } as CSSProperties}
           >
-            {asideOpen && (isStartupPreview ? <StartupPreviewAside /> : <AppAside />)}
+            {asideOpen && <AppAside />}
             {showTitleBar && (
             <AppHeader
               developmentModeEnabled={developmentModeEnabled}
@@ -382,7 +367,7 @@ export function StepRenderer() {
                 </Menu.Dropdown>
               </Menu>
             )}
-            {!isStartupPreview && <DeviceWarning developmentModeEnabled={developmentModeEnabled} />}
+            <DeviceWarning developmentModeEnabled={developmentModeEnabled} />
             {isScreenRecordingUserRejected && <ScreenRecordingRejection />}
             <HelpModal />
             <AlertModal />

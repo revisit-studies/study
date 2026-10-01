@@ -18,7 +18,6 @@ import {
   DEFAULT_AUTO_ADVANCE_WARNING_TIME,
   getAutoAdvanceWarning,
 } from './nextButtonTimeout';
-import { useIsStartupPreview } from './StartupPreviewContext';
 
 const nextButtonJustify = {
   left: 'flex-start',
@@ -46,7 +45,6 @@ export function NextButton({
   onNext,
 }: Props) {
   const { isNextDisabled, goToNextStep } = useNextStep(config?.response, config?.correctAnswer);
-  const isStartupPreview = useIsStartupPreview();
   const studyConfig = useStudyConfig();
   const navigate = useNavigate();
   const identifier = useCurrentIdentifier();
@@ -73,22 +71,22 @@ export function NextButton({
   }, [identifier]);
 
   useEffect(() => {
-    if (isStartupPreview || timer === undefined) {
+    if (timer === undefined) {
       return;
     }
     if (nextButtonDisableTime && timer >= nextButtonDisableTime && studyConfig.uiConfig.timeoutReject) {
       navigate(`./../__timedOut${window.location.search}`);
     }
-  }, [isStartupPreview, nextButtonDisableTime, timer, navigate, studyConfig.uiConfig.timeoutReject]);
+  }, [nextButtonDisableTime, timer, navigate, studyConfig.uiConfig.timeoutReject]);
 
   useEffect(() => {
-    if (isStartupPreview || isNextDisabled || timer === undefined || nextButtonAutoAdvanceTime === undefined || timer < nextButtonAutoAdvanceTime || autoAdvanceTriggered.current) {
+    if (isNextDisabled || timer === undefined || nextButtonAutoAdvanceTime === undefined || timer < nextButtonAutoAdvanceTime || autoAdvanceTriggered.current) {
       return;
     }
 
     autoAdvanceTriggered.current = true;
     goToNextStep(false);
-  }, [goToNextStep, isNextDisabled, isStartupPreview, nextButtonAutoAdvanceTime, timer]);
+  }, [goToNextStep, isNextDisabled, nextButtonAutoAdvanceTime, timer]);
 
   const buttonTimerSatisfied = useMemo(
     () => {
@@ -121,7 +119,7 @@ export function NextButton({
         onCheckAnswer();
         return;
       }
-      if (!isStartupPreview && !disabled && !isNextDisabled && buttonTimerSatisfied) {
+      if (!disabled && !isNextDisabled && buttonTimerSatisfied) {
         onNext();
       }
     };
@@ -132,9 +130,9 @@ export function NextButton({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [disabled, isStartupPreview, isNextDisabled, buttonTimerSatisfied, onCheckAnswer, onNext, nextOnEnter]);
+  }, [disabled, isNextDisabled, buttonTimerSatisfied, onCheckAnswer, onNext, nextOnEnter]);
 
-  const nextButtonDisabled = isStartupPreview || disabled || isNextDisabled || !buttonTimerSatisfied;
+  const nextButtonDisabled = disabled || isNextDisabled || !buttonTimerSatisfied;
   const previousButtonText = config?.previousButtonText ?? studyConfig.uiConfig.previousButtonText ?? 'Previous';
   const nextButtonAlignment = config?.nextButtonAlignment ?? studyConfig.uiConfig.nextButtonAlignment ?? 'right';
   const componentWidth = config && getComponentContainerStyle(config.type, config.style);
@@ -160,14 +158,7 @@ export function NextButton({
         <Button
           type="submit"
           disabled={nextButtonDisabled}
-          aria-busy={isStartupPreview || undefined}
-          color={isStartupPreview ? 'gray' : undefined}
-          onClick={() => {
-            if (!nextButtonDisabled) {
-              onNext();
-            }
-          }}
-          loading={isStartupPreview}
+          onClick={() => onNext()}
           px={location === 'sidebar' && checkAnswer ? 8 : undefined}
           aria-label={label}
           rightSection={nextOnEnter && !onCheckAnswer ? (
