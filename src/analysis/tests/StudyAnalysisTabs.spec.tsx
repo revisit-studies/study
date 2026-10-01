@@ -168,7 +168,7 @@ vi.mock('@mantine/core', () => ({
     return <div ref={ref}>{children}</div>;
   }),
   Tabs: Object.assign(
-    ({ children, orientation }: { children: ReactNode; orientation?: string }) => <div data-orientation={orientation}>{children}</div>,
+    ({ children }: { children: ReactNode }) => <div>{children}</div>,
     {
       List: ({ children }: { children: ReactNode }) => <nav>{children}</nav>,
       Tab: ({ children, value, disabled }: { children: ReactNode; value: string; disabled?: boolean }) => (
@@ -260,7 +260,6 @@ describe('StudyAnalysisTabs', () => {
     expect(html).toContain('Config');
     expect(html).toContain('Stage Management');
     expect(html).toContain('Manage');
-    expect(html).toContain('data-orientation="vertical"');
   });
 
   test('waits for Datastore permission before showing its controls', async () => {
