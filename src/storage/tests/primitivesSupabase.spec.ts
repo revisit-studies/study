@@ -5,7 +5,7 @@ import { ParticipantMetadata, StudyConfig } from '../../parser/types';
 import testConfigSimple from './testConfigSimple.json';
 import { generateSequenceArray } from '../../utils/handleRandomSequences';
 import { SupabaseStorageEngine } from '../engines/SupabaseStorageEngine';
-import { StorageEngine, cleanupModes } from '../engines/types';
+import { cleanupModes } from '../engines/types';
 import { hash } from '../engines/utils/storageEngineHelpers';
 
 type RowData = Record<string, string | number | boolean | null | object>;
@@ -59,7 +59,7 @@ vi.mock('@supabase/supabase-js', () => {
     let payload: RowData | RowData[] | Partial<RowData> | null = null;
     const filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'neq' | 'is' | 'like' }> = [];
     let isSingle = false;
-    let allowNoRows = false;
+    let isMaybeSingle = false;
 
     const qb = {
       select(_fields?: string) { if (op === null) op = 'select'; return qb; },
@@ -73,7 +73,7 @@ vi.mock('@supabase/supabase-js', () => {
       like(col: string, val: string) { filters.push({ col, val, type: 'like' }); return qb; },
       limit(_count: number) { return qb; },
       single() { isSingle = true; return qb; },
-      maybeSingle() { isSingle = true; allowNoRows = true; return qb; },
+      maybeSingle() { isMaybeSingle = true; return qb; },
       then(
         resolve: (val: { data: RowData | RowData[] | null; error: { message: string; code?: string } | null }) => void,
         reject?: (err: Error) => void,
@@ -90,9 +90,11 @@ vi.mock('@supabase/supabase-js', () => {
           if (op === 'select') {
             const matched = applyFilters(rows, filters);
             // Return deep copies so later mutations to revisitRows don't alias into returned data
-            if (isSingle) {
-              if (matched.length === 0) {
-                resolve({ data: null, error: allowNoRows ? null : { message: 'No rows', code: 'PGRST116' } });
+            if (isSingle || isMaybeSingle) {
+              if (matched.length > 1 || (isSingle && matched.length === 0)) {
+                resolve({ data: null, error: { message: 'Expected one row', code: 'PGRST116' } });
+              } else if (matched.length === 0) {
+                resolve({ data: null, error: null });
               } else {
                 resolve({ data: JSON.parse(JSON.stringify(matched[0])), error: null });
               }
@@ -216,6 +218,7 @@ vi.mock('@supabase/supabase-js', () => {
         }),
       },
       auth: {
+        getUser: async () => ({ data: { user: { id: 'admin-uid', email: 'admin@example.com' } }, error: null }),
         getSession: async () => ({
           data: { session: { user: { id: 'mock-uid', email: null } } },
           error: null,
@@ -260,7 +263,7 @@ const participantMetadata: ParticipantMetadata = {
 describe.each([
   { TestEngine: SupabaseStorageEngine },
 ])('describe object $TestEngine', ({ TestEngine }) => {
-  let storageEngine: StorageEngine;
+  let storageEngine: SupabaseStorageEngine;
 
   beforeEach(async () => {
     storageEngine = new TestEngine(true);
@@ -346,6 +349,12 @@ describe.each([
     expect(sequenceAssignment!.createdTime).equal(sequenceAssignment!.timestamp);
   });
 
+  test('reads one sequence assignment by study and participant ID', async () => {
+    const session = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    expect((await storageEngine.getSequenceAssignment(studyId, session.participantId))?.participantId).toBe(session.participantId);
+    expect(await storageEngine.getSequenceAssignment(studyId, 'missing')).toBeNull();
+  });
+
   test('_completeCurrentParticipantRealtime updates sequence assignment', async () => {
     const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
     const { participantId } = participantSession;
@@ -374,16 +383,45 @@ describe.each([
   test('_getModes returns correct modes and _setMode updates correctly', async () => {
     const modes = await storageEngine.getModes(studyId);
     expect(modes).toBeDefined();
-    expect(modes.dataSharingEnabled).toBe(true);
+    expect(modes.dataSharingEnabled).toBe(false);
     expect(modes.dataCollectionEnabled).toBe(true);
     expect(modes.developmentModeEnabled).toBe(true);
 
     await storageEngine.setMode(studyId, 'dataCollectionEnabled', false);
     const updatedModes = await storageEngine.getModes(studyId);
     expect(updatedModes).toBeDefined();
-    expect(updatedModes.dataSharingEnabled).toBe(true);
+    expect(updatedModes.dataSharingEnabled).toBe(false);
     expect(updatedModes.dataCollectionEnabled).toBe(false);
     expect(updatedModes.developmentModeEnabled).toBe(true);
+  });
+
+  test('stores a study-scoped disconnect setting after administrator verification', async () => {
+    expect(await storageEngine.getStorageDisconnected(studyId)).toBe(false);
+    await expect(storageEngine.setStorageDisconnected(studyId, true)).rejects.toThrow('verified administrator');
+
+    revisitRows.push({
+      studyId: '',
+      docId: 'user-management',
+      data: {
+        authentication: { isEnabled: true },
+        adminUsers: { adminUsersList: [{ email: 'admin@example.com', uid: 'admin-uid' }] },
+      },
+    });
+
+    await storageEngine.setStorageDisconnected(studyId, true);
+    expect(await storageEngine.getStorageDisconnected(studyId)).toBe(true);
+    expect(await storageEngine.getStorageDisconnected('another-study')).toBe(false);
+    await storageEngine.setStorageDisconnected(studyId, false);
+    expect(await storageEngine.getStorageDisconnected(studyId)).toBe(false);
+
+    revisitRows.splice(revisitRows.findIndex((row) => row.studyId === '' && row.docId === 'user-management'), 1);
+  });
+
+  test('rejects a malformed saved storage setting', async () => {
+    const prefix = import.meta.env.DEV ? 'dev-' : 'prod-';
+    revisitRows.push({ studyId: `${prefix}${studyId}`, docId: 'storage', data: { disconnected: 'true' } });
+
+    await expect(storageEngine.getStorageDisconnected(studyId)).rejects.toThrow('Invalid storage mode');
   });
 
   test('landing-page visibility reads and writes do not initialize modes', async () => {
@@ -449,7 +487,7 @@ describe.each([
     expect(await storageEngine.getModes(studyId)).toEqual({
       dataCollectionEnabled: true,
       developmentModeEnabled: true,
-      dataSharingEnabled: true,
+      dataSharingEnabled: false,
     });
   });
 
@@ -477,25 +515,25 @@ describe.each([
     const initialModes = await storageEngine.getModes(studyId);
     expect(initialModes.dataCollectionEnabled).toBe(true);
     expect(initialModes.developmentModeEnabled).toBe(true);
-    expect(initialModes.dataSharingEnabled).toBe(true);
+    expect(initialModes.dataSharingEnabled).toBe(false);
 
     await storageEngine.setMode(studyId, 'dataCollectionEnabled', false);
     const afterDataCollectionToggle = await storageEngine.getModes(studyId);
     expect(afterDataCollectionToggle.dataCollectionEnabled).toBe(false);
     expect(afterDataCollectionToggle.developmentModeEnabled).toBe(true);
-    expect(afterDataCollectionToggle.dataSharingEnabled).toBe(true);
+    expect(afterDataCollectionToggle.dataSharingEnabled).toBe(false);
 
     await storageEngine.setMode(studyId, 'developmentModeEnabled', false);
     const afterDevelopmentToggle = await storageEngine.getModes(studyId);
     expect(afterDevelopmentToggle.dataCollectionEnabled).toBe(false);
     expect(afterDevelopmentToggle.developmentModeEnabled).toBe(false);
-    expect(afterDevelopmentToggle.dataSharingEnabled).toBe(true);
+    expect(afterDevelopmentToggle.dataSharingEnabled).toBe(false);
 
-    await storageEngine.setMode(studyId, 'dataSharingEnabled', false);
+    await storageEngine.setMode(studyId, 'dataSharingEnabled', true);
     const afterDataSharingToggle = await storageEngine.getModes(studyId);
     expect(afterDataSharingToggle.dataCollectionEnabled).toBe(false);
     expect(afterDataSharingToggle.developmentModeEnabled).toBe(false);
-    expect(afterDataSharingToggle.dataSharingEnabled).toBe(false);
+    expect(afterDataSharingToggle.dataSharingEnabled).toBe(true);
   });
 
   test('cleanupModes updates old modes to new modes', async () => {

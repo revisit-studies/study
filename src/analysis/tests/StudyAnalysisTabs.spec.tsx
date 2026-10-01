@@ -18,6 +18,8 @@ import { parseStudyConfig } from '../../parser/parser';
 
 let mockParams: Record<string, string | undefined> = { studyId: 'test-study', analysisTab: 'summary' };
 let mockStorageEngine: Record<string, ReturnType<typeof vi.fn>> | undefined;
+let mockConfiguredStorageEngine: Record<string, ReturnType<typeof vi.fn>> | undefined;
+let mockUser: { isAdmin: boolean; adminVerification?: boolean; user?: { uid: string } };
 let mockStudyRecordings = { hasAudioRecording: false, hasScreenRecording: false };
 
 // Stable result returned by the useAsync mock. Reset in beforeEach so each test
@@ -42,11 +44,11 @@ vi.mock('@mantine/hooks', () => ({
 }));
 
 vi.mock('../../storage/storageEngineHooks', () => ({
-  useStorageEngine: () => ({ storageEngine: mockStorageEngine }),
+  useStorageEngine: () => ({ storageEngine: mockStorageEngine, configuredStorageEngine: mockConfiguredStorageEngine }),
 }));
 
 vi.mock('../../store/hooks/useAuth', () => ({
-  useAuth: () => ({ user: { isAdmin: true } }),
+  useAuth: () => ({ user: mockUser }),
 }));
 
 vi.mock('../../store/hooks/useAsync', () => ({
@@ -112,6 +114,9 @@ vi.mock('../individualStudy/management/ManageView', () => ({
 vi.mock('../individualStudy/management/StageManagementItem', () => ({
   StageManagementItem: () => <div>StageManagementItem</div>,
 }));
+vi.mock('../individualStudy/management/StorageManagementView', () => ({
+  StorageManagementView: () => <div>StorageManagementView</div>,
+}));
 vi.mock('../individualStudy/thinkAloud/ThinkAloudAnalysis', () => ({
   ThinkAloudAnalysis: () => <div>ThinkAloudAnalysis</div>,
 }));
@@ -154,7 +159,7 @@ vi.mock('@mantine/core', () => ({
   Divider: () => <hr />,
   Flex: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Group: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  LoadingOverlay: () => null,
+  LoadingOverlay: ({ visible }: { visible: boolean }) => (visible ? <div data-testid="loading-overlay" /> : null),
   Stack: forwardRef<HTMLDivElement, { children: ReactNode }>(function Stack({ children }, ref) { // eslint-disable-line prefer-arrow-callback
     return <div ref={ref}>{children}</div>;
   }),
@@ -162,8 +167,8 @@ vi.mock('@mantine/core', () => ({
     ({ children, orientation }: { children: ReactNode; orientation?: string }) => <div data-orientation={orientation}>{children}</div>,
     {
       List: ({ children }: { children: ReactNode }) => <nav>{children}</nav>,
-      Tab: ({ children, value }: { children: ReactNode; value: string }) => (
-        <button type="button" data-tab={value}>{children}</button>
+      Tab: ({ children, value, disabled }: { children: ReactNode; value: string; disabled?: boolean }) => (
+        <button type="button" data-tab={value} disabled={disabled}>{children}</button>
       ),
       Panel: ({ children, value }: { children: ReactNode; value: string }) => (
         <section data-panel={value}>{children}</section>
@@ -187,6 +192,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconTags: () => null,
   IconDashboard: () => null,
   IconFileCode: () => null,
+  IconDatabase: () => null,
 }));
 
 // ── fixtures ──────────────────────────────────────────────────────────────────
@@ -199,6 +205,8 @@ describe('StudyAnalysisTabs', () => {
   beforeEach(() => {
     mockParams = { studyId: 'test-study', analysisTab: 'summary' };
     mockStorageEngine = { getEngine: vi.fn().mockReturnValue('supabase') };
+    mockConfiguredStorageEngine = undefined;
+    mockUser = { isAdmin: true };
     mockStudyRecordings = { hasAudioRecording: false, hasScreenRecording: false };
     vi.mocked(getStudyConfig).mockResolvedValue(null);
     vi.mocked(resolveConfigKey).mockImplementation((key) => key);
@@ -249,6 +257,30 @@ describe('StudyAnalysisTabs', () => {
     expect(html).toContain('Stage Management');
     expect(html).toContain('Manage');
     expect(html).toContain('data-orientation="vertical"');
+  });
+
+  test('waits for Datastore permission before showing its controls', async () => {
+    mockParams.analysisTab = 'storage';
+    mockUser = { isAdmin: true, adminVerification: true, user: { uid: 'admin' } };
+    let resolveAdmin!: (value: boolean) => void;
+    mockConfiguredStorageEngine = {
+      isCloudEngine: vi.fn().mockReturnValue(true),
+      isStorageAdmin: vi.fn().mockReturnValue(new Promise<boolean>((resolve) => { resolveAdmin = resolve; })),
+    };
+    vi.mocked(getStudyConfig).mockResolvedValue({ ...makeStudyConfig(), errors: [], warnings: [] });
+    mockStorageEngine = {
+      getEngine: vi.fn().mockReturnValue('localStorage'),
+      getStageData: vi.fn().mockResolvedValue({ allStages: [] }),
+      getAllConfigsFromHash: vi.fn().mockResolvedValue({}),
+    };
+    render(<StudyAnalysisTabs globalConfig={mockGlobalConfig} />);
+    await waitFor(() => expect(screen.getByText('Datastore')).toBeDefined());
+    expect(screen.getByText('Datastore').closest('button')?.disabled).toBe(true);
+    expect(screen.getByTestId('loading-overlay')).toBeDefined();
+    expect(screen.queryByText('Unauthorized Access')).toBeNull();
+    await act(async () => resolveAdmin(true));
+    expect(screen.getByText('Datastore').closest('button')?.disabled).toBe(false);
+    expect(screen.getByText('StorageManagementView')).toBeDefined();
   });
 
   test.each(['idle', 'pending', 'error', 'success'] as const)('passes the current hash lookup status to ConfigView: %s', async (status) => {

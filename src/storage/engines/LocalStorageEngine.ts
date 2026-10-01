@@ -66,6 +66,12 @@ export class LocalStorageEngine extends StorageEngine {
     return Object.values(sequenceAssignments).sort((a, b) => a.timestamp - b.timestamp);
   }
 
+  public async getSequenceAssignment(studyId: string, participantId: string) {
+    const key = `${this.collectionPrefix}${studyId}/sequenceAssignment`;
+    const assignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(key);
+    return assignments?.[participantId] ?? null;
+  }
+
   protected async _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment) {
     await this.verifyStudyDatabase();
     if (this.studyId === undefined) {
@@ -252,6 +258,17 @@ export class LocalStorageEngine extends StorageEngine {
     };
     await this.studyDatabase.setItem(key, defaults);
     return defaults;
+  }
+
+  async initializeModesFrom(studyId: string, modes: Awaited<ReturnType<StorageEngine['getModes']>>) {
+    const key = `${this.collectionPrefix}${studyId}/modes`;
+    if (!await this.studyDatabase.getItem(key)) {
+      await this.studyDatabase.setItem(key, modes);
+    }
+  }
+
+  async hasStoredModes(studyId: string) {
+    return Boolean(await this.studyDatabase.getItem(`${this.collectionPrefix}${studyId}/modes`));
   }
 
   async setMode(studyId: string, mode: REVISIT_MODE, value: boolean) {
