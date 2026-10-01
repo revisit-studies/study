@@ -65,6 +65,8 @@ class TestStorageEngine extends StorageEngine {
 
   protected _getSequenceAssignment = vi.fn(async () => null);
 
+  public getSequenceAssignment = vi.fn(async () => null);
+
   protected _updateSequenceAssignmentFields = vi.fn(async () => { });
 
   protected _completeCurrentParticipantRealtime = vi.fn(async () => { });
@@ -113,6 +115,10 @@ class TestStorageEngine extends StorageEngine {
   getModes = vi.fn(async () => ({ dataCollectionEnabled: true, developmentModeEnabled: false, dataSharingEnabled: false }));
 
   setMode = vi.fn(async () => { });
+
+  getStudyHiddenFromLandingPage = vi.fn(async () => false);
+
+  setStudyHiddenFromLandingPage = vi.fn(async () => { });
 
   getSnapshots = vi.fn(async () => ({}));
 

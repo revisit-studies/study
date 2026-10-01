@@ -9,12 +9,13 @@
 import {
   beforeAll, beforeEach, afterAll, afterEach, describe, expect, test, vi,
 } from 'vitest';
+import { getDoc, setDoc } from 'firebase/firestore';
 
 import { type ParticipantMetadata, type StudyConfig } from '../../parser/types';
 import testConfigSimple from './testConfigSimple.json';
 import { generateSequenceArray } from '../../utils/handleRandomSequences';
 import { FirebaseStorageEngine } from '../engines/FirebaseStorageEngine';
-import { type StorageEngine, cleanupModes } from '../engines/types';
+import { cleanupModes } from '../engines/types';
 import { hash } from '../engines/utils/storageEngineHelpers';
 
 type DocData = Record<string, string | number | boolean | null | object>;
@@ -276,7 +277,7 @@ afterAll(() => {
 describe.each([
   { TestEngine: FirebaseStorageEngine },
 ])('describe object $TestEngine', ({ TestEngine }) => {
-  let storageEngine: StorageEngine;
+  let storageEngine: FirebaseStorageEngine;
 
   beforeEach(async () => {
     storageEngine = new TestEngine(true);
@@ -361,6 +362,12 @@ describe.each([
     expect(sequenceAssignment!.createdTime).equal(sequenceAssignment!.timestamp);
   });
 
+  test('reads one sequence assignment by study and participant ID', async () => {
+    const session = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    expect((await storageEngine.getSequenceAssignment(studyId, session.participantId))?.participantId).toBe(session.participantId);
+    expect(await storageEngine.getSequenceAssignment(studyId, 'missing')).toBeNull();
+  });
+
   test('_completeCurrentParticipantRealtime updates sequence assignment', async () => {
     const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
     const { participantId } = participantSession;
@@ -390,6 +397,85 @@ describe.each([
     expect(updatedModes.dataSharingEnabled).toBe(true);
     expect(updatedModes.dataCollectionEnabled).toBe(false);
     expect(updatedModes.developmentModeEnabled).toBe(true);
+  });
+
+  test('storage disconnect is study-scoped and requires a signed-in listed admin', async () => {
+    expect(await storageEngine.getStorageDisconnected(studyId)).toBe(false);
+    await expect(storageEngine.setStorageDisconnected(studyId, true)).rejects.toThrow('verified administrator');
+
+    authState.currentUser = { email: 'admin@example.com', uid: 'admin-uid' };
+    firestoreData['user-management/authentication'] = { isEnabled: true };
+    firestoreData['user-management/adminUsers'] = {
+      adminUsersList: [{ email: 'admin@example.com', uid: 'admin-uid' }],
+    };
+
+    await storageEngine.setStorageDisconnected(studyId, true);
+    expect(await storageEngine.getStorageDisconnected(studyId)).toBe(true);
+    expect(await storageEngine.getStorageDisconnected('another-study')).toBe(false);
+    await storageEngine.setStorageDisconnected(studyId, false);
+    expect(await storageEngine.getStorageDisconnected(studyId)).toBe(false);
+  });
+
+  test('rejects a malformed saved storage setting', async () => {
+    const prefix = import.meta.env.DEV ? 'dev-' : 'prod-';
+    firestoreData[`${prefix}${studyId}/storage`] = { disconnected: 'true' };
+
+    await expect(storageEngine.getStorageDisconnected(studyId)).rejects.toThrow('Invalid storage mode');
+  });
+
+  test('landing-page visibility reads and writes do not initialize modes', async () => {
+    const storedBeforeRead = JSON.stringify(firestoreData);
+    expect(await storageEngine.getStudyHiddenFromLandingPage(studyId)).toBe(false);
+    expect(JSON.stringify(firestoreData)).toBe(storedBeforeRead);
+    // @ts-expect-error inspecting persisted documents for testing
+    const studyPath = `${storageEngine.collectionPrefix}${studyId}`;
+    await storageEngine.setStudyHiddenFromLandingPage(studyId, true);
+    expect(firestoreData[`${studyPath}/hideStudyFromLandingPage`]).toEqual({ hidden: true });
+    expect(firestoreData[`${studyPath}/modes`]).toBeUndefined();
+  });
+
+  test('landing-page visibility is independent of modes and survives mode and stage updates', async () => {
+    const existingModes = {
+      dataCollectionEnabled: false,
+      developmentModeEnabled: true,
+      dataSharingEnabled: false,
+    };
+    // @ts-expect-error using protected method to seed an existing modes document
+    await storageEngine._setModesDocument(studyId, existingModes);
+    const storedBeforeRead = JSON.stringify(firestoreData);
+
+    expect(await storageEngine.getStudyHiddenFromLandingPage(studyId)).toBe(false);
+    expect(JSON.stringify(firestoreData)).toBe(storedBeforeRead);
+
+    await storageEngine.setStudyHiddenFromLandingPage(studyId, true);
+    expect(await storageEngine.getStudyHiddenFromLandingPage(studyId)).toBe(true);
+    expect(await storageEngine.getModes(studyId)).toEqual(existingModes);
+
+    await storageEngine.getStageData(studyId);
+    expect(await storageEngine.getStudyHiddenFromLandingPage(studyId)).toBe(true);
+    await storageEngine.setMode(studyId, 'developmentModeEnabled', false);
+    await storageEngine.setCurrentStage(studyId, 'Pilot');
+    await storageEngine.updateStageColor(studyId, 'Pilot', '#123456');
+    expect(await storageEngine.getStudyHiddenFromLandingPage(studyId)).toBe(true);
+    expect(await storageEngine.getModes(studyId)).not.toHaveProperty('hideStudyFromLandingPage');
+
+    await storageEngine.setStudyHiddenFromLandingPage(studyId, false);
+    expect(await storageEngine.getStudyHiddenFromLandingPage(studyId)).toBe(false);
+    expect(await storageEngine.getModes(studyId)).toMatchObject({
+      ...existingModes,
+      developmentModeEnabled: false,
+      stage: { currentStage: { stageName: 'Pilot', color: '#123456' } },
+    });
+  });
+
+  test('landing-page visibility rejects cloud read and write failures', async () => {
+    await storageEngine.getModes(studyId);
+    vi.mocked(getDoc).mockRejectedValueOnce(new Error('read denied'));
+    await expect(storageEngine.getStudyHiddenFromLandingPage(studyId)).rejects.toThrow('read denied');
+
+    vi.mocked(setDoc).mockRejectedValueOnce(new Error('write denied'));
+    await expect(storageEngine.setStudyHiddenFromLandingPage(studyId, true)).rejects.toThrow('write denied');
+    expect(await storageEngine.getStudyHiddenFromLandingPage(studyId)).toBe(false);
   });
 
   test('setMode toggles each ReVISit mode independently', async () => {
