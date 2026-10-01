@@ -206,6 +206,21 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       .sort((a, b) => a.timestamp - b.timestamp);
   }
 
+  public async getSequenceAssignment(studyId: string, participantId: string) {
+    const studyCollection = collection(this.firestore, `${this.collectionPrefix}${studyId}`);
+    const sequenceAssignmentDoc = doc(studyCollection, 'sequenceAssignment');
+    const assignment = doc(collection(sequenceAssignmentDoc, 'sequenceAssignment'), participantId);
+    const snapshot = await getDoc(assignment);
+    if (!snapshot.exists()) return null;
+    const data = snapshot.data();
+    return {
+      ...data,
+      timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toMillis() : data.timestamp,
+      createdTime: data.createdTime instanceof Timestamp ? data.createdTime.toMillis() : data.createdTime,
+      completed: data.completed instanceof Timestamp ? data.completed.toMillis() : data.completed,
+    } as SequenceAssignment;
+  }
+
   // Set up realtime listener for sequence assignments
   _setupSequenceAssignmentListener(studyId: string, callback: (assignments: SequenceAssignment[]) => void) {
     const studyCollection = collection(
@@ -517,6 +532,23 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       this.connected = false;
       console.warn('Failed to connect to Firebase');
     }
+  }
+
+  async getStorageDisconnected(studyId: string) {
+    const storageDoc = await getDoc(doc(this.firestore, `${this.collectionPrefix}${studyId}`, 'storage'));
+    if (!storageDoc.exists()) return false;
+    const { disconnected } = storageDoc.data();
+    if (typeof disconnected !== 'boolean') throw new Error('Invalid storage mode');
+    return disconnected;
+  }
+
+  protected async _setStorageDisconnected(studyId: string, disconnected: boolean) {
+    await setDoc(doc(this.firestore, `${this.collectionPrefix}${studyId}`, 'storage'), { disconnected }, { merge: true });
+  }
+
+  protected async getAuthenticatedUser() {
+    const user = getAuth().currentUser;
+    return user ? { email: user.email, uid: user.uid } : null;
   }
 
   async getModes(studyId: string) {

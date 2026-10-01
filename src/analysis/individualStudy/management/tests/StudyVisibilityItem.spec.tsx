@@ -17,9 +17,10 @@ const storageEngine = {
   getStudyHiddenFromLandingPage: getHidden,
   setStudyHiddenFromLandingPage: setHidden,
 };
+let configuredStorageEngine: typeof storageEngine | undefined;
 
 vi.mock('../../../../storage/storageEngineHooks', () => ({
-  useStorageEngine: () => ({ storageEngine }),
+  useStorageEngine: () => ({ storageEngine, configuredStorageEngine }),
 }));
 
 vi.mock('../../../../utils/notifications', () => ({
@@ -39,6 +40,7 @@ describe('StudyVisibilityItem', () => {
     vi.clearAllMocks();
     getHidden.mockResolvedValue(false);
     setHidden.mockResolvedValue(undefined);
+    configuredStorageEngine = undefined;
     vi.stubGlobal('matchMedia', vi.fn(() => ({
       matches: false,
       addEventListener: vi.fn(),
@@ -58,6 +60,22 @@ describe('StudyVisibilityItem', () => {
     expect(getHidden).toHaveBeenCalledWith('test-study');
     expect(getSwitch().checked).toBe(!hidden);
     expect(getSwitch().disabled).toBe(false);
+  });
+
+  test('uses configured cloud storage for visibility while a study uses browser storage', async () => {
+    const cloudRead = vi.fn().mockResolvedValue(false);
+    const cloudWrite = vi.fn().mockResolvedValue(undefined);
+    configuredStorageEngine = {
+      getStudyHiddenFromLandingPage: cloudRead,
+      setStudyHiddenFromLandingPage: cloudWrite,
+    };
+    await act(async () => { render(visibilityItem()); });
+    expect(cloudRead).toHaveBeenCalledWith('test-study');
+    expect(getHidden).not.toHaveBeenCalled();
+
+    await act(async () => { fireEvent.click(getSwitch()); });
+    expect(cloudWrite).toHaveBeenCalledWith('test-study', true);
+    expect(setHidden).not.toHaveBeenCalled();
   });
 
   test.each([false, true])('renders the saved hidden setting %s without flashing a default toggle', async (hidden) => {

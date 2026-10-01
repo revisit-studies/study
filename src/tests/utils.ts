@@ -65,6 +65,8 @@ class TestStorageEngine extends StorageEngine {
 
   protected _getSequenceAssignment = vi.fn(async () => null);
 
+  public getSequenceAssignment = vi.fn(async () => null);
+
   protected _updateSequenceAssignmentFields = vi.fn(async () => { });
 
   protected _completeCurrentParticipantRealtime = vi.fn(async () => { });

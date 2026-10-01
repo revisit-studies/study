@@ -1,5 +1,5 @@
 import {
-  Card, Container, Text, LoadingOverlay, Box, Title, Flex, Modal, TextInput, Button, Tooltip, ActionIcon,
+  Alert, Card, Container, Text, LoadingOverlay, Box, Title, Flex, Modal, TextInput, Button, Tooltip, ActionIcon,
 } from '@mantine/core';
 import { useForm, isEmail } from '@mantine/form';
 import { useEffect, useMemo, useState } from 'react';
@@ -12,12 +12,16 @@ import { isCloudStorageEngine } from '../../storage/engines/utils/storageEngineH
 import { SupabaseStorageEngine } from '../../storage/engines/SupabaseStorageEngine';
 
 export function GlobalSettings() {
-  const { user, triggerAuth, logout } = useAuth();
+  const {
+    user, triggerAuth, logout, supabaseAuthStatus,
+  } = useAuth();
   const { storageEngine } = useStorageEngine();
 
   const [isAuthEnabled, setAuthEnabled] = useState<boolean>(false);
   const [authenticatedUsers, setAuthenticatedUsers] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
+  const [settingsRetry, setSettingsRetry] = useState(0);
   const [modalAddOpened, setModalAddOpened] = useState<boolean>(false);
   const [modalRemoveOpened, setModalRemoveOpened] = useState<boolean>(false);
   const [modalEnableAuthOpened, setModalEnableAuthOpened] = useState<boolean>(false);
@@ -36,80 +40,106 @@ export function GlobalSettings() {
 
   useEffect(() => {
     const determineAuthenticationEnabled = async () => {
+      if (storageEngine?.getEngine() === 'supabase' && supabaseAuthStatus === 'unconfigured') return;
       setLoading(true);
-      if (storageEngine && isCloudStorageEngine(storageEngine)) {
-        const authInfo = await storageEngine?.getUserManagementData('authentication');
-        setAuthEnabled(authInfo?.isEnabled || false);
-        const adminUsers = await storageEngine?.getUserManagementData('adminUsers');
-        if (adminUsers && adminUsers.adminUsersList) {
-          setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser: StoredUser) => storedUser.email).filter((x) => x !== null));
+      setSettingsError(null);
+      try {
+        if (storageEngine && isCloudStorageEngine(storageEngine)) {
+          const authInfo = await storageEngine.getUserManagementData('authentication');
+          setAuthEnabled(authInfo?.isEnabled === true);
+          const adminUsers = await storageEngine.getUserManagementData('adminUsers');
+          if (adminUsers && adminUsers.adminUsersList) {
+            setAuthenticatedUsers(adminUsers.adminUsersList.map((storedUser: StoredUser) => storedUser.email).filter((x) => x !== null));
+          }
+        } else {
+          setAuthEnabled(false);
         }
-      } else {
-        setAuthEnabled(false);
+      } catch (error) {
+        console.error('Failed to load authentication settings:', error);
+        setSettingsError('Unable to load authentication settings');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     determineAuthenticationEnabled();
-  }, [storageEngine]);
+  }, [storageEngine, supabaseAuthStatus, settingsRetry]);
 
   const handleEnableAuth = async () => {
     setLoading(true);
-    if (storageEngine && isCloudStorageEngine(storageEngine)) {
-      // Check if we're in supabase and have a session already
-      if (storageEngine.getEngine() === 'supabase') {
-        const { data } = await (storageEngine as unknown as SupabaseStorageEngine).getSession();
-        if (data.session && data.session.user && data.session.user.email) {
+    try {
+      if (storageEngine && isCloudStorageEngine(storageEngine)) {
+        // Check if we're in supabase and have a session already
+        if (storageEngine.getEngine() === 'supabase') {
+          const verifiedUser = await (storageEngine as SupabaseStorageEngine).getVerifiedUser();
+          if (verifiedUser?.email) {
+            setEnableAuthUser({
+              email: verifiedUser.email,
+              uid: verifiedUser.uid,
+            });
+            setModalEnableAuthOpened(true);
+            return;
+          }
+        }
+
+        const newUser = await signIn(storageEngine, setLoading);
+        if (storageEngine.getEngine() === 'supabase' && !newUser) return;
+        if (newUser && newUser.email) {
           setEnableAuthUser({
-            email: data.session.user.email,
-            uid: data.session.user.id,
+            email: newUser.email,
+            uid: newUser.uid,
           });
           setModalEnableAuthOpened(true);
-          setLoading(false);
-          return;
+        } else {
+          setModalEnableAuthErrorOpened(true);
         }
       }
-
-      const newUser = await signIn(storageEngine, setLoading);
-      if (newUser && newUser.email) {
-        setEnableAuthUser({
-          email: newUser.email,
-          uid: newUser.uid,
-        });
-        setModalEnableAuthOpened(true);
-      } else {
-        setModalEnableAuthErrorOpened(true);
-      }
+    } catch (error) {
+      console.error('Failed to start authentication setup:', error);
+      setModalEnableAuthErrorOpened(true);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const confirmEnableAuth = async (rootUser: StoredUser | null) => {
     setLoading(true);
-    if (storageEngine && isCloudStorageEngine(storageEngine)) {
-      if (rootUser) {
-        await storageEngine.changeAuth(true);
-        await storageEngine.addAdminUser(rootUser);
+    try {
+      if (storageEngine && isCloudStorageEngine(storageEngine) && rootUser) {
+        if (storageEngine.getEngine() === 'supabase') {
+          await (storageEngine as SupabaseStorageEngine).enableAuthentication(rootUser);
+        } else {
+          await storageEngine.addAdminUser(rootUser);
+          await storageEngine.changeAuth(true);
+        }
         setAuthenticatedUsers([rootUser.email!]);
         setAuthEnabled(true);
         triggerAuth();
       }
+      setModalEnableAuthOpened(false);
+    } catch (error) {
+      console.error('Failed to enable authentication:', error);
+      setModalEnableAuthErrorOpened(true);
+    } finally {
+      setLoading(false);
     }
-    setModalEnableAuthOpened(false);
-    setLoading(false);
   };
 
   const handleAddUser = async () => {
     setLoading(true);
-    if (storageEngine && isCloudStorageEngine(storageEngine)) {
-      await storageEngine.addAdminUser({ email: form.values.email, uid: null });
-      const adminUsers = await storageEngine.getUserManagementData('adminUsers');
-      setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser: StoredUser) => storedUser.email).filter((x) => x !== null) || []);
+    try {
+      if (storageEngine && isCloudStorageEngine(storageEngine)) {
+        await storageEngine.addAdminUser({ email: form.values.email, uid: null });
+        const adminUsers = await storageEngine.getUserManagementData('adminUsers');
+        setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser: StoredUser) => storedUser.email).filter((x) => x !== null) || []);
+      }
+      form.setValues({ email: '' });
+    } catch (error) {
+      console.error('Failed to add administrator:', error);
+      setSettingsError('Unable to add administrator');
+    } finally {
+      setLoading(false);
+      setModalAddOpened(false);
     }
-    setLoading(false);
-    setModalAddOpened(false);
-    form.setValues({
-      email: '',
-    });
   };
 
   const handleRemoveUser = (inputUser: string) => {
@@ -119,16 +149,30 @@ export function GlobalSettings() {
 
   const confirmRemoveUser = async () => {
     setLoading(true);
-    if (storageEngine && isCloudStorageEngine(storageEngine)) {
-      await storageEngine.removeAdminUser(userToRemove);
-      const adminUsers = await storageEngine.getUserManagementData('adminUsers');
-      setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser: StoredUser) => storedUser.email).filter((x) => x !== null) || []);
+    try {
+      if (storageEngine && isCloudStorageEngine(storageEngine)) {
+        await storageEngine.removeAdminUser(userToRemove);
+        const adminUsers = await storageEngine.getUserManagementData('adminUsers');
+        setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser: StoredUser) => storedUser.email).filter((x) => x !== null) || []);
+      }
+    } catch (error) {
+      console.error('Failed to remove administrator:', error);
+      setSettingsError('Unable to remove administrator');
+    } finally {
+      setModalRemoveOpened(false);
+      setLoading(false);
     }
-    setModalRemoveOpened(false);
-    setLoading(false);
   };
 
   const storageEngineIsCloud = useMemo(() => storageEngine && isCloudStorageEngine(storageEngine), [storageEngine]);
+
+  if (settingsError) {
+    return (
+      <Alert title={settingsError} color="red">
+        <Button onClick={() => setSettingsRetry((value) => value + 1)}>Retry</Button>
+      </Alert>
+    );
+  }
 
   return (
     <>
@@ -140,7 +184,7 @@ export function GlobalSettings() {
             : (
               <Flex justify="space-between">
                 <Box>
-                  <Text>Authentication is currently disabled.</Text>
+                  <Text>{supabaseAuthStatus === 'unconfigured' ? 'Authentication has not been configured.' : 'Authentication is currently disabled.'}</Text>
                 </Box>
                 <Tooltip label="You can only enable auth when using a cloud storage engine (Firebase/Supabase)" disabled={storageEngineIsCloud}>
                   <Button

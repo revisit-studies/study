@@ -153,6 +153,7 @@ const studyConfigs: Record<string, ParsedConfig<StudyConfig> | null> = {
 };
 
 const makeAuthValue = (isAdmin: boolean): ReturnType<typeof useAuth> => ({
+  supabaseAuthStatus: 'loading',
   user: {
     user: isAdmin ? { email: 'admin@example.com', uid: 'admin' } : null,
     determiningStatus: false,
@@ -595,6 +596,25 @@ describe('ConfigSwitcher', () => {
       <ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigs} />,
     ));
     expect(container).toBeDefined();
+  });
+
+  test('shows an unhidden Supabase study without persisted sharing modes but keeps analytics private', async () => {
+    const mockEngine = {
+      ...makeLandingEngine(),
+      getAccessModes: vi.fn().mockResolvedValue(null),
+      getEngine: vi.fn().mockReturnValue('supabase'),
+    };
+    vi.mocked(useAuth).mockReturnValue(makeAuthValue(false));
+    vi.mocked(useStorageEngine).mockReturnValue({ storageEngine: makeStorageEngine(mockEngine), setStorageEngine: vi.fn() });
+    const { container } = await act(async () => render(
+      <ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigs} />,
+    ));
+    expect(mockEngine.getAccessModes).toHaveBeenCalledWith('test-study');
+    expect(mockEngine.getModes).not.toHaveBeenCalled();
+    expect(container.textContent).toContain(parsedStudyConfig.studyMetadata.title);
+    expect(container.querySelector('a[href="/analysis/stats/test-study"]')).toBeNull();
+    expect(container.textContent).not.toContain('Analyze & Manage Study');
+    expect(container.querySelector('[data-testid="status-badges"]')).toBeNull();
   });
 
   test('settles visibility loading and reports a failed mode lookup', async () => {

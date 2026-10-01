@@ -674,6 +674,20 @@ describe('ComponentController — effect coverage (render-based)', () => {
     });
   });
 
+  test('does not show a connection warning for a study intentionally using local storage', async () => {
+    vi.stubEnv('VITE_STORAGE_ENGINE', 'firebase');
+    vi.stubEnv('PROD', true);
+    const cloudEngine = makeStorageEngine({ getEngine: vi.fn<() => 'firebase'>(() => 'firebase') });
+    vi.mocked(useStorageEngine).mockReturnValue({
+      storageEngine: makeStorageEngine({ getEngine: vi.fn<() => 'localStorage'>(() => 'localStorage') }),
+      configuredStorageEngine: cloudEngine,
+      setStorageEngine: vi.fn(),
+    });
+    render(<ComponentController />);
+    await act(async () => {});
+    expect(mockStoreActions.setAlertModal).not.toHaveBeenCalled();
+  });
+
   test('isAnalysis=true returns early from block effect', async () => {
     vi.mocked(useIsAnalysis).mockReturnValue(true);
     render(<ComponentController />);

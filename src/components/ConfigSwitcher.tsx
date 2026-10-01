@@ -389,7 +389,7 @@ export function ConfigSwitcher({
           if (storageEngine) {
             try {
               const [modes, hidden] = await Promise.all([
-                storageEngine.getModes(configName),
+                storageEngine.getAccessModes(configName),
                 storageEngine.getStudyHiddenFromLandingPage(configName),
               ]);
               visibility[configName] = !hidden;
