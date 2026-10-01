@@ -2,7 +2,7 @@ import {
   describe, expect, test, vi,
 } from 'vitest';
 import {
-  compileFactorBlocks, createFactorConditionId, deepFillTemplate, expandLibrarySequences, fillTemplate, resolveFactorConditions, verifyLibraryUsage, loadLibrariesParseNamespace,
+  compileFactorBlocks, createFactorConditionId, deepFillTemplate, expandLibrarySequences, fillTemplate, materializeParticipantConfig, resolveFactorConditions, verifyLibraryUsage, loadLibrariesParseNamespace,
 } from '../libraryParser';
 import {
   ComponentBlock, DynamicBlock, FactorBlock, LibraryConfig, StudyConfig, InheritedComponent, IndividualComponent, ParserErrorWarning,
@@ -27,6 +27,15 @@ describe('Factor Templates', () => {
     })).toBe('data=d1; vis=bar');
   });
 
+  test('fills hyphenated factor names in double-brace template tokens', () => {
+    expect(fillTemplate('{{study-arm}}.md', {
+      'study-arm': 'control',
+    })).toBe('control.md');
+    expect(deepFillTemplate('{{study-arm}}', {
+      'study-arm': 'control',
+    })).toBe('control');
+  });
+
   test('does not replace legacy template syntax or at-sign text', () => {
     const legacySyntax = ['email contact@revisit.dev; legacy @data/', '$', '{data}'].join('');
     expect(fillTemplate(legacySyntax, {
@@ -41,6 +50,30 @@ describe('Factor Templates', () => {
   test('preserves unresolved participant-global tokens', () => {
     const unresolved = '{{vis}}/{{missing}}';
     expect(fillTemplate(unresolved, {})).toBe(unresolved);
+  });
+
+  test('preserves component string fields during participant materialization', () => {
+    const config = {
+      components: {
+        trial: {
+          type: 'markdown' as const,
+          path: '{{arm}}.md',
+          response: [],
+          parameters: { arm: '{{arm}}' },
+        },
+      },
+    } as unknown as StudyConfig;
+
+    const materialized = materializeParticipantConfig(config, { arm: 1 });
+    const component = materialized.components.trial;
+
+    expect(component).toMatchObject({
+      path: '1.md',
+      parameters: { arm: 1 },
+    });
+    if (!('path' in component)) throw new Error('Expected a path component');
+    expect(typeof component.path).toBe('string');
+    expect(typeof component.parameters?.arm).toBe('number');
   });
 });
 
@@ -189,20 +222,21 @@ describe('Factor Compiler', () => {
 
   test('reports invalid zip lengths and cycles', () => {
     const errors: ParserErrorWarning[] = [];
-    resolveFactorConditions('badZip', {
+    const warnings: ParserErrorWarning[] = [];
+    expect(resolveFactorConditions('badZip', {
       short: [1],
       long: [1, 2],
       badZip: { action: 'zip', factors: ['short', 'long'] },
-    }, errors);
+    }, errors, [], 'badZip', warnings)).toEqual([{ short: 1, long: 1 }]);
     resolveFactorConditions('a', {
       a: { action: 'cross', factors: ['b'] },
       b: { action: 'cross', factors: ['a'] },
     }, errors);
 
-    expect(errors.map((error) => error.message)).toEqual(expect.arrayContaining([
-      'Zip factor `badZip` requires inputs with equal lengths; received 1, 2',
-      'Circular factor reference: a -> b -> a',
-    ]));
+    expect(errors.map((error) => error.message)).toContain('Circular factor reference: a -> b -> a');
+    expect(warnings.map((warning) => warning.message)).toContain(
+      'Zip factor `badZip` received inputs with different lengths (1, 2); stopping after the shortest input',
+    );
   });
 
   test('compiles factor components into one flat sequence', () => {
@@ -286,6 +320,41 @@ describe('Factor Compiler', () => {
     const result = compileFactorBlocks(config.sequence, config);
 
     expect(Object.keys(result.components)).toHaveLength(4);
+    expect(result.sequence).toMatchObject({
+      __revisitFactorLabels: {
+        'typedValues__mixed=1__trial': '1 — trial',
+        'typedValues__mixed=%221%22__trial': '1 — trial',
+        'typedValues__mixed=%5B%22a%22%2C%22b%22%5D__trial': '["a","b"] — trial',
+      },
+    });
+    expect(JSON.stringify(result.sequence)).not.toContain('__revisitFactorLabels');
+
+    config.sequence = {
+      type: 'factor', id: '', factor: 'mixed', components: 'trial',
+    };
+    expect(compileFactorBlocks(config.sequence, config).sequence).toMatchObject({
+      __revisitFactorLabels: {
+        '__mixed=1__trial': '1 — trial',
+      },
+    });
+
+    config.baseComponents = { 'chart-task': { type: 'questionnaire', response: [] } };
+    config.factors = {
+      visualization: ['bar', 'scatterplot'],
+      dataset: ['sales', 'population'],
+      trials: { action: 'cross', factors: ['visualization', 'dataset'] },
+    };
+    config.sequence = {
+      type: 'factor', id: 'trials', factor: 'trials', components: 'chart-task',
+    };
+    expect(compileFactorBlocks(config.sequence, config).sequence).toMatchObject({
+      __revisitFactorLabels: {
+        'trials__visualization=%22bar%22__dataset=%22sales%22__chart-task': 'bar · sales — chart-task',
+        'trials__visualization=%22bar%22__dataset=%22population%22__chart-task': 'bar · population — chart-task',
+        'trials__visualization=%22scatterplot%22__dataset=%22sales%22__chart-task': 'scatterplot · sales — chart-task',
+        'trials__visualization=%22scatterplot%22__dataset=%22population%22__chart-task': 'scatterplot · population — chart-task',
+      },
+    });
   });
 });
 

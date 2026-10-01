@@ -653,3 +653,27 @@ describe('useFlatSequence', () => {
     expect(Array.isArray(result.current)).toBe(true);
   });
 });
+
+test('complete form snapshots replace cleared answers, including an empty snapshot', async () => {
+  const { store, actions } = await studyStoreCreator('test', minimalConfig, minimalSequence, metadata, emptyAnswers, modes, 'p1', false, false);
+  const identifier = Object.keys(store.getState().trialValidation)[0];
+  store.dispatch(actions.updateResponseBlockValidation({
+    identifier, location: 'sidebar', status: true, values: { university: 'old' }, replaceValues: true,
+  }));
+  store.dispatch(actions.updateResponseBlockValidation({
+    identifier, location: 'sidebar', status: true, values: {}, replaceValues: true,
+  }));
+  expect(store.getState().trialValidation[identifier].sidebar.values).toEqual({});
+  expect(store.getState().trialValidation[identifier].sidebar.initialized).toBe(true);
+});
+
+test('clearing hidden responses removes widget caches without affecting other responses', async () => {
+  const { store, actions } = await studyStoreCreator('test', minimalConfig, minimalSequence, metadata, emptyAnswers, modes, 'p1', false, false);
+  store.dispatch(actions.setReactiveAnswers({ hidden: 'old', other: 'keep' }));
+  store.dispatch(actions.setMatrixAnswersRadio({ responseId: 'hidden', questionKey: 'row', val: 'old' }));
+  store.dispatch(actions.setRankingAnswers({ responseId: 'hidden', values: { option: 'old' } }));
+  store.dispatch(actions.clearResponseAnswers(['hidden']));
+  expect(store.getState().reactiveAnswers).toEqual({ other: 'keep' });
+  expect(store.getState().matrixAnswers).toEqual({});
+  expect(store.getState().rankingAnswers).toEqual({});
+});

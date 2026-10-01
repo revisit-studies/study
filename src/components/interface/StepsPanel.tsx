@@ -27,13 +27,14 @@ import { addPathToComponentBlock } from '../../utils/getSequenceFlatMap';
 import { useStudyId } from '../../routes/utils';
 import { encryptIndex } from '../../utils/encryptDecryptIndex';
 import { isDynamicBlock } from '../../parser/utils';
-import { getComponentAnswerStatus } from '../../utils/correctAnswer';
+import { getComponentAnswerStatus } from '../../utils/componentCorrectness';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 import { UnknownAnswerIcon } from './UnknownAnswerIcon';
 import {
   getDynamicComponentsForBlock,
   getSkipConditionSummariesForBlock,
   getSkippedTrialOrders,
+  formatFactorLevel,
 } from './StepsPanel.utils';
 
 function hasRandomization(responses: Response[]) {
@@ -77,6 +78,17 @@ function findMatchingComponentInFullOrder(
 
 function countComponentsInSequence(sequence: Sequence, participantAnswers: ParticipantData['answers']) {
   let count = 0;
+
+  if (
+    'type' in sequence
+    && sequence.type === 'factor-runtime-plan'
+    && 'conditionComponents' in sequence
+    && sequence.conditionComponents
+    && typeof sequence.conditionComponents === 'object'
+  ) {
+    return Object.values(sequence.conditionComponents as Record<string, string[][]>)
+      .reduce((total, components) => total + components.length, 0);
+  }
 
   // Dynamic blocks generate components at runtime, so we count from participant answers
   if (isDynamicBlock(sequence)) {
@@ -138,12 +150,12 @@ type SequenceWithImportReference = Sequence & {
   __revisitImportedSequenceRef?: string;
 };
 
-function parseLibraryComponentReference(componentName: string) {
+function parseLibraryComponentReference(componentName: string, factorLabels: Map<string, string>) {
   const separator = componentName.includes('.components.')
     ? '.components.'
     : (componentName.includes('.co.') ? '.co.' : false);
   const isLibraryImport = separator !== false && componentName.startsWith('$');
-  const label = isLibraryImport ? componentName.split(separator).at(-1)! : componentName;
+  const label = isLibraryImport ? componentName.split(separator).at(-1)! : factorLabels.get(componentName) ?? componentName;
   const importedLibraryName = isLibraryImport ? componentName.split(separator)[0].slice(1) : undefined;
   return { isLibraryImport, label, importedLibraryName };
 }
@@ -257,6 +269,19 @@ export function StepsPanel({
     return r;
   }, [studyConfig.sequence]);
 
+  const factorLabels = useMemo(() => {
+    const labels = new Map<string, string>();
+    const visit = (block: Sequence & { __revisitFactorLabels?: Record<string, string> }) => {
+      if (isDynamicBlock(block)) return;
+      Object.entries(block.__revisitFactorLabels ?? {}).forEach(([id, label]) => labels.set(id, label));
+      block.components.forEach((child) => {
+        if (typeof child !== 'string') visit(child);
+      });
+    };
+    visit(studyConfig.sequence as Sequence);
+    return labels;
+  }, [studyConfig.sequence]);
+
   // Memoize hasRandomization checks for all components
   const componentHasRandomization = useMemo(() => {
     const map = new Map<string, boolean>();
@@ -281,15 +306,15 @@ export function StepsPanel({
           label,
           isLibraryImport,
           importedLibraryName,
-        } = parseLibraryComponentReference(key);
+        } = parseLibraryComponentReference(key, factorLabels);
         const component = studyComponentToIndividualComponent(studyConfig.components[key], studyConfig);
 
         return {
           type: 'component',
-          label: component.description || label,
+          label,
           indentLevel: 0,
           path: `browse.${key}`,
-          href: `/${studyId}/reviewer-${key}`,
+          href: `/${studyId}/reviewer-${encodeURIComponent(key)}`,
           isLibraryImport,
           importedLibraryName,
           component,
@@ -321,7 +346,7 @@ export function StepsPanel({
             label,
             isLibraryImport,
             importedLibraryName,
-          } = parseLibraryComponentReference(node);
+          } = parseLibraryComponentReference(node, factorLabels);
           const component = studyConfig.components[node]
             ? studyComponentToIndividualComponent(studyConfig.components[node], studyConfig)
             : undefined;
@@ -333,7 +358,7 @@ export function StepsPanel({
 
           newFlatTree.push({
             type: 'component',
-            label: component?.description || label,
+            label,
             indentLevel,
             path: componentPath,
             isExcluded: isSkipped,
@@ -450,7 +475,7 @@ export function StepsPanel({
               label,
               isLibraryImport,
               importedLibraryName,
-            } = parseLibraryComponentReference(excludedComponent);
+            } = parseLibraryComponentReference(excludedComponent, factorLabels);
             const excludedComponentPath = `${blockPath}.${excludedComponent}_excluded`;
 
             newFlatTree.push({
@@ -507,7 +532,7 @@ export function StepsPanel({
                     label,
                     isLibraryImport,
                     importedLibraryName,
-                  } = parseLibraryComponentReference(child);
+                  } = parseLibraryComponentReference(child, factorLabels);
                   const childPath = `${excludedParentPath}.${child}_excluded`;
 
                   newFlatTree.push({
@@ -596,7 +621,7 @@ export function StepsPanel({
     // Set full and rendered flat tree
     setFullFlatTree(newFlatTree);
     setRenderedFlatTree(newFlatTree);
-  }, [fullOrder, participantAnswers, participantSequence, skippedTrialOrders, studyConfig.components, studyId]);
+  }, [factorLabels, fullOrder, participantAnswers, participantSequence, skippedTrialOrders, studyConfig, studyId]);
 
   const collapseBlock = useCallback((startIndex: number, startItem: StepItem) => {
     setRenderedFlatTree((prevRenderedFlatTree) => {
@@ -761,7 +786,7 @@ export function StepsPanel({
             ? Object.entries(blockParameters)
             : [];
           const betweenSubjectsLabel = betweenSubjectsEntries
-            .map(([factorName, factorLevel]) => `${factorName}=${String(factorLevel)}`)
+            .map(([factorName, factorLevel]) => `${factorName}=${formatFactorLevel(factorLevel)}`)
             .join(', ');
           const resolvedComponent = component
             ? studyComponentToIndividualComponent(component, studyConfig)
@@ -775,9 +800,9 @@ export function StepsPanel({
             resolvedComponent?.response,
           );
           const answerStatusIcon = answerStatus === 'correct'
-            ? <IconCheck size={16} style={{ marginRight: 4, flexShrink: 0 }} color="green" />
+            ? <IconCheck size={16} style={{ marginRight: 4, flexShrink: 0 }} color="var(--mantine-color-green-text)" />
             : answerStatus === 'incorrect'
-              ? <IconX size={16} style={{ marginRight: 4, flexShrink: 0 }} color="red" />
+              ? <IconX size={16} style={{ marginRight: 4, flexShrink: 0 }} color="var(--mantine-color-red-text)" />
               : answerStatus === 'unknown'
                 ? <UnknownAnswerIcon size={16} style={{ marginRight: 4, flexShrink: 0 }} />
                 : null;
@@ -841,17 +866,17 @@ export function StepsPanel({
                     <Flex align="center">
                       {isInterruption && (
                         <Tooltip label="Interruption" position="right" withArrow>
-                          <IconBrain size={16} style={{ marginRight: 4, flexShrink: 0 }} color="orange" />
+                          <IconBrain size={16} style={{ marginRight: 4, flexShrink: 0 }} color="var(--mantine-color-orange-text)" />
                         </Tooltip>
                       )}
                       {isLibraryImport && (
                         <Tooltip label={importedLibraryName ? `Imported from ${importedLibraryName}` : 'Package import'} position="right" withArrow>
-                          <IconPackageImport size={16} style={{ marginRight: 4, flexShrink: 0 }} color="blue" />
+                          <IconPackageImport size={16} style={{ marginRight: 4, flexShrink: 0 }} color="var(--mantine-color-blue-text)" />
                         </Tooltip>
                       )}
                       {!isComponent && conditional && (
                         <Tooltip label={`Condition: ${label}`} position="right" withArrow>
-                          <IconBinaryTree size={16} style={{ marginRight: 4, flexShrink: 0 }} color="green" />
+                          <IconBinaryTree size={16} style={{ marginRight: 4, flexShrink: 0 }} color="var(--mantine-color-green-text)" />
                         </Tooltip>
                       )}
                       {!isComponent && skipSummaries && skipSummaries.length > 0 && (
@@ -861,22 +886,22 @@ export function StepsPanel({
                           position="right"
                           withArrow
                         >
-                          <IconArrowForward size={16} style={{ marginRight: 4, flexShrink: 0 }} color="purple" />
+                          <IconArrowForward size={16} style={{ marginRight: 4, flexShrink: 0 }} color="var(--mantine-color-violet-text)" />
                         </Tooltip>
                       )}
                       {betweenSubjectsEntries.length > 0 && (
                         <Tooltip label={`Between Subjects: ${betweenSubjectsLabel}`} position="right" withArrow>
-                          <IconUserPlus size={16} style={{ marginRight: 4, flexShrink: 0 }} color="teal" />
+                          <IconUserPlus size={16} style={{ marginRight: 4, flexShrink: 0 }} color="var(--mantine-color-teal-text)" />
                         </Tooltip>
                       )}
                       {(resolvedComponent?.responseOrder === 'random' || (!participantSequence && componentName && studyConfig.components[componentName]?.responseOrder === 'random')) && (
                         <Tooltip label="Random responses" position="right" withArrow>
-                          <IconDice3 size={16} opacity={0.8} style={{ marginRight: 4, flexShrink: 0 }} color="black" />
+                          <IconDice3 size={16} opacity={0.8} style={{ marginRight: 4, flexShrink: 0 }} />
                         </Tooltip>
                       )}
                       {(componentName && componentHasRandomization.get(componentName)) && (
                         <Tooltip label="Random options" position="right" withArrow>
-                          <IconDice5 size={16} opacity={0.8} style={{ marginRight: 4, flexShrink: 0 }} color="black" />
+                          <IconDice5 size={16} opacity={0.8} style={{ marginRight: 4, flexShrink: 0 }} />
                         </Tooltip>
                       )}
                       {answerStatusIcon}
@@ -912,14 +937,14 @@ export function StepsPanel({
                       {betweenSubjectsEntries.map(([factorName, factorLevel]) => (
                         <Tooltip
                           key={factorName}
-                          label={`Between-subjects factor: ${factorName} = ${String(factorLevel)}`}
+                          label={`Between-subjects factor: ${factorName} = ${formatFactorLevel(factorLevel)}`}
                           position="right"
                           withArrow
                         >
                           <Badge ml={5} color="teal" variant="light">
                             {factorName}
                             =
-                            {String(factorLevel)}
+                            {formatFactorLevel(factorLevel)}
                           </Badge>
                         </Tooltip>
                       ))}

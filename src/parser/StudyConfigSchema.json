@@ -36,9 +36,21 @@
             "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
             "type": "boolean"
           },
+          "captureGamepad": {
+            "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
+            "type": "boolean"
+          },
           "clickToRecord": {
             "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
             "type": "boolean"
+          },
+          "colorMode": {
+            "description": "The iframe's color scheme. Defaults to the study's color mode. The embedded page must support color schemes.",
+            "enum": [
+              "light",
+              "dark"
+            ],
+            "type": "string"
           },
           "config": {
             "description": "The vega or vega-lite configuration.",
@@ -170,6 +182,10 @@
             "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
             "type": "boolean"
           },
+          "recordWebcam": {
+            "description": "Whether or not we want to utilize webcam recording. If present, will override the record webcam setting in the uiConfig. Studies using webcam without screen capture should include the webcam permission component before this component. Studies combining webcam with screen capture should use the screen recording permission component.",
+            "type": "boolean"
+          },
           "response": {
             "description": "The responses to the component",
             "items": {
@@ -272,6 +288,41 @@
       ],
       "type": "object"
     },
+    "BuiltInValidationType": {
+      "description": "The built-in validation operations available for short text responses.\n\n- `email`: An email in `local@domain.tld` format, such as `test@revisit.dev`.\n- `phoneNumber`: An international phone number containing 7–15 digits, with an optional leading `+` and hyphens between digits.\n- `usPhoneNumber`: A 10-digit US phone number in `000-000-0000` format.\n- `url`: An absolute HTTP or HTTPS URL, such as `https://revisit.dev`.",
+      "enum": [
+        "email",
+        "phoneNumber",
+        "usPhoneNumber",
+        "url"
+      ],
+      "type": "string"
+    },
+    "ButtonOption": {
+      "additionalProperties": false,
+      "properties": {
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the option. This does not accept markdown.",
+          "type": "string"
+        },
+        "key": {
+          "description": "Keyboard shortcut for this button (e.g., \"r\", \"ArrowLeft\", or \"Shift+X\").",
+          "type": "string"
+        },
+        "label": {
+          "description": "The label displayed to participants. Markdown is supported.",
+          "type": "string"
+        },
+        "value": {
+          "description": "The value stored in the participant's data. Defaults to label.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "label"
+      ],
+      "type": "object"
+    },
     "ButtonsResponse": {
       "additionalProperties": false,
       "description": "The ButtonsResponse interface is used to define the properties of a buttons response. ButtonsResponses render as a list of buttons that the participant can click. When a button is clicked, the value of the button is stored in the data file. Participants can cycle through the options using the arrow keys. ```json {   \"id\": \"buttonsResponse\",   \"type\": \"buttons\",   \"prompt\": \"Click a button\",   \"location\": \"belowStimulus\",   \"default\": \"Option 2\",   \"options\": [     \"Option 1\",     \"Option 2\",     \"Option 3\"   ] } ``` In this example, the participant can click one of the buttons labeled \"Option 1\", \"Option 2\", or \"Option 3\".",
@@ -286,6 +337,10 @@
         },
         "hidden": {
           "description": "Controls whether the response is hidden.",
+          "type": "boolean"
+        },
+        "hideKeyVisual": {
+          "description": "Set to true to hide keybinding indicators on buttons. Defaults to false when keymapping is active, else false.",
           "type": "boolean"
         },
         "id": {
@@ -312,7 +367,7 @@
           "items": {
             "anyOf": [
               {
-                "$ref": "#/definitions/StringOption"
+                "$ref": "#/definitions/ButtonOption"
               },
               {
                 "type": "string"
@@ -355,6 +410,10 @@
         "type": {
           "const": "buttons",
           "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
@@ -472,6 +531,10 @@
         "type": {
           "const": "checkbox",
           "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
@@ -674,6 +737,10 @@
           "const": "custom",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
@@ -686,6 +753,111 @@
       "required": [
         "id",
         "path",
+        "prompt",
+        "type"
+      ],
+      "type": "object"
+    },
+    "DateResponse": {
+      "additionalProperties": false,
+      "description": "The DateResponse interface defines a date entered directly or selected with a date picker, or a month or year selected with the corresponding picker. Values are stored as `MM/DD/YYYY`, `MM/YYYY`, or `YYYY` strings based on `options`. Supported years range from `0100` through `9999`. ```json {   \"id\": \"q-date\",   \"prompt\": \"Select a date.\",   \"location\": \"aboveStimulus\",   \"type\": \"date\",   \"options\": \"date\",   \"default\": \"08/21/2026\",   \"min\": \"08/01/2026\",   \"max\": \"08/31/2026\",   \"placeholder\": \"MM/DD/YYYY\" } ```",
+      "properties": {
+        "default": {
+          "description": "The default value, using the format selected by `options`. Years must be between `0100` and `9999`.",
+          "type": "string"
+        },
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
+        "hidden": {
+          "description": "Controls whether the response is hidden.",
+          "type": "boolean"
+        },
+        "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "max": {
+          "description": "The latest value accepted, using the format selected by `options`. Years must be between `0100` and `9999`.",
+          "type": "string"
+        },
+        "min": {
+          "description": "The earliest value accepted, using the format selected by `options`. Years must be between `0100` and `9999`.",
+          "type": "string"
+        },
+        "options": {
+          "description": "Determines whether participants enter or select a date, or select a month or year with a picker. Defaults to `date`.",
+          "enum": [
+            "date",
+            "month",
+            "year"
+          ],
+          "type": "string"
+        },
+        "paramCapture": {
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "placeholder": {
+          "description": "The placeholder text displayed in the input. Defaults to the format used by `options`.",
+          "type": "string"
+        },
+        "prompt": {
+          "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
+          "type": "string"
+        },
+        "required": {
+          "description": "Controls whether the response is required to be answered. Defaults to true.",
+          "type": "boolean"
+        },
+        "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
+          "type": "string"
+        },
+        "requiredValue": {
+          "description": "The value required for a correct response, using the format selected by `options`. Years must be between `0100` and `9999`.",
+          "type": "string"
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
+          "type": "string"
+        },
+        "type": {
+          "const": "date",
+          "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
         "prompt",
         "type"
       ],
@@ -821,6 +993,10 @@
           "const": "divider",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
@@ -835,9 +1011,14 @@
       ],
       "type": "object"
     },
+    "DropdownOptionPreset": {
+      "const": "countries",
+      "description": "Predefined option sets available to dropdown responses.",
+      "type": "string"
+    },
     "DropdownResponse": {
       "additionalProperties": false,
-      "description": "The DropdownResponse interface is used to define the properties of a dropdown response. DropdownResponses render as a select input with user specified options. ```json {   \"id\": \"q-color\",   \"prompt\": \"What is your favorite color?\",   \"location\": \"aboveStimulus\",   \"type\": \"dropdown\",   \"default\": \"Blue\",   \"placeholder\": \"Please choose your favorite color\",   \"options\": [\"Red\", \"Blue\"] } ```\n\nHere's an example of a multiselect dropdown with minimum and maximum selections:\n\n```json {   \"id\": \"q-multiselect-dropdown\",   \"prompt\": \"Select the fruits you like.\",   \"location\": \"aboveStimulus\",   \"type\": \"dropdown\",   \"default\": [\"Banana\", \"Orange\"],   \"placeholder\": \"Select your favorite fruits\",   \"options\": [\"Apple\", \"Banana\", \"Cherry\", \"Grape\", \"Orange\", \"Strawberry\", \"Watermelon\", \"Pineapple\"],   \"minSelections\": 2,   \"maxSelections\": 4 } ```",
+      "description": "The DropdownResponse interface is used to define the properties of a dropdown response. DropdownResponses render as a select input with user specified options. ```json {   \"id\": \"q-color\",   \"prompt\": \"What is your favorite color?\",   \"location\": \"aboveStimulus\",   \"type\": \"dropdown\",   \"default\": \"Blue\",   \"placeholder\": \"Please choose your favorite color\",   \"options\": [\"Red\", \"Blue\"] } ```\n\nHere's an example of a multiselect dropdown with minimum and maximum selections:\n\n```json {   \"id\": \"q-multiselect-dropdown\",   \"prompt\": \"Select the fruits you like.\",   \"location\": \"aboveStimulus\",   \"type\": \"dropdown\",   \"default\": [\"Banana\", \"Orange\"],   \"placeholder\": \"Select your favorite fruits\",   \"options\": [\"Apple\", \"Banana\", \"Cherry\", \"Grape\", \"Orange\", \"Strawberry\", \"Watermelon\", \"Pineapple\"],   \"minSelections\": 2,   \"maxSelections\": 4 } ```\n\nA dropdown can alternatively use a predefined option set: ```json {   \"id\": \"q-country\",   \"prompt\": \"Select your country.\",   \"type\": \"dropdown\",   \"options\": \"countries\" } ```",
       "properties": {
         "default": {
           "anyOf": [
@@ -882,25 +1063,32 @@
           "type": "number"
         },
         "options": {
-          "description": "The options that are displayed in the dropdown.",
-          "items": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/StringOption"
+          "anyOf": [
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/StringOption"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
-              {
-                "type": "string"
-              }
-            ]
-          },
-          "type": "array"
+              "type": "array"
+            },
+            {
+              "$ref": "#/definitions/DropdownOptionPreset"
+            }
+          ],
+          "description": "The options that are displayed in the dropdown, or a predefined option set."
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
         },
         "placeholder": {
-          "description": "The placeholder text that is displayed in the input.",
+          "description": "The placeholder text displayed in the input. Defaults to `Select a country` when `options` is `countries`.",
           "type": "string"
         },
         "prompt": {
@@ -933,6 +1121,10 @@
         "type": {
           "const": "dropdown",
           "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
@@ -984,6 +1176,13 @@
         "functionPath"
       ],
       "type": "object"
+    },
+    "EqualityComparison": {
+      "enum": [
+        "equals",
+        "doesNotEqual"
+      ],
+      "type": "string"
     },
     "Factor": {
       "anyOf": [
@@ -1300,6 +1499,10 @@
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
           "type": "boolean"
         },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
+          "type": "boolean"
+        },
         "clickToRecord": {
           "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
@@ -1399,6 +1602,10 @@
         },
         "recordScreen": {
           "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "type": "boolean"
+        },
+        "recordWebcam": {
+          "description": "Whether or not we want to utilize webcam recording. If present, will override the record webcam setting in the uiConfig. Studies using webcam without screen capture should include the webcam permission component before this component. Studies combining webcam with screen capture should use the screen recording permission component.",
           "type": "boolean"
         },
         "response": {
@@ -1576,9 +1783,21 @@
         "baseComponent": {
           "type": "string"
         },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
+          "type": "boolean"
+        },
         "clickToRecord": {
           "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
+        },
+        "colorMode": {
+          "description": "The iframe's color scheme. Defaults to the study's color mode. The embedded page must support color schemes.",
+          "enum": [
+            "light",
+            "dark"
+          ],
+          "type": "string"
         },
         "config": {
           "description": "The vega or vega-lite configuration.",
@@ -1708,6 +1927,10 @@
         },
         "recordScreen": {
           "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "type": "boolean"
+        },
+        "recordWebcam": {
+          "description": "Whether or not we want to utilize webcam recording. If present, will override the record webcam setting in the uiConfig. Studies using webcam without screen capture should include the webcam permission component before this component. Studies combining webcam with screen capture should use the screen recording permission component.",
           "type": "boolean"
         },
         "response": {
@@ -1951,6 +2174,10 @@
           "const": "likert",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
@@ -1970,7 +2197,7 @@
     },
     "LongTextResponse": {
       "additionalProperties": false,
-      "description": "The LongTextResponse interface is used to define the properties of a long text response. LongTextResponses render as a text area that accepts any text and can optionally have a placeholder. ```json {   \"id\": \"q-name\",   \"prompt\": \"What is your first name?\",   \"location\": \"aboveStimulus\",   \"type\": \"longText\",   \"default\": \"I enjoyed this study because...\",   \"placeholder\": \"Please enter your first name\" } ```",
+      "description": "The LongTextResponse interface is used to define the properties of a long text response. LongTextResponses render as a text area that accepts any text and can optionally have a placeholder. ```json {   \"id\": \"q-name\",   \"prompt\": \"What is your first name?\",   \"location\": \"aboveStimulus\",   \"type\": \"longText\",   \"default\": \"I enjoyed this study because...\",   \"placeholder\": \"Please enter your comments\",   \"minCharLength\": 20,   \"maxCharLength\": 500,   \"minWordLength\": 4,   \"maxWordLength\": 100,   \"textValidation\": [     {       \"type\": \"doesNotContain\",       \"value\": \"invalid\"     }   ] } ```",
       "properties": {
         "default": {
           "description": "The default value of the response. Specify a string such as `\"I enjoyed this study because...\"`.",
@@ -1995,6 +2222,22 @@
         "location": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "maxCharLength": {
+          "description": "The maximum number of characters accepted in the response. Must be greater than 0 when the response is required.",
+          "type": "number"
+        },
+        "maxWordLength": {
+          "description": "The maximum number of whitespace-separated words accepted in the response. Must be greater than 0 when the response is required.",
+          "type": "number"
+        },
+        "minCharLength": {
+          "description": "The minimum number of characters accepted in the response.",
+          "type": "number"
+        },
+        "minWordLength": {
+          "description": "The minimum number of whitespace-separated words accepted in the response.",
+          "type": "number"
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
@@ -2031,9 +2274,20 @@
           "description": "The path to the external stylesheet file.",
           "type": "string"
         },
+        "textValidation": {
+          "description": "Validation rules applied to the response value in array order.",
+          "items": {
+            "$ref": "#/definitions/TextValidationRule"
+          },
+          "type": "array"
+        },
         "type": {
           "const": "longText",
           "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
@@ -2057,6 +2311,10 @@
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
           "type": "boolean"
         },
         "clickToRecord": {
@@ -2158,6 +2416,10 @@
         },
         "recordScreen": {
           "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "type": "boolean"
+        },
+        "recordWebcam": {
+          "description": "Whether or not we want to utilize webcam recording. If present, will override the record webcam setting in the uiConfig. Studies using webcam without screen capture should include the webcam permission component before this component. Studies combining webcam with screen capture should use the screen recording permission component.",
           "type": "boolean"
         },
         "response": {
@@ -2295,6 +2557,14 @@
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
+        "max": {
+          "description": "The maximum amount of answers given per row for the matrix.",
+          "type": "number"
+        },
+        "min": {
+          "description": "The minimum amount of answers given per row for the matrix.",
+          "type": "number"
+        },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
@@ -2351,6 +2621,10 @@
         "type": {
           "const": "matrix-checkbox",
           "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
@@ -2522,6 +2796,10 @@
           "const": "matrix-radio",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
@@ -2577,6 +2855,15 @@
       ],
       "type": "object"
     },
+    "NumericComparison": {
+      "enum": [
+        "lessThan",
+        "lessThanOrEqual",
+        "greaterThan",
+        "greaterThanOrEqual"
+      ],
+      "type": "string"
+    },
     "NumericalResponse": {
       "additionalProperties": false,
       "description": "The NumericalResponse interface is used to define the properties of a numerical response. NumericalResponses render as a text input that only accepts numbers, and can optionally have a min and max value, or a placeholder. ```json {   \"id\": \"q-numerical\",   \"prompt\": \"Numerical example\",   \"location\": \"aboveStimulus\",   \"type\": \"numerical\",   \"default\": 25,   \"placeholder\": \"Enter your age, range from 0 - 120\",   \"max\": 120,   \"min\": 0 } ```",
@@ -2618,7 +2905,7 @@
           "type": "string"
         },
         "placeholder": {
-          "description": "The placeholder text that is displayed in the input.",
+          "description": "The placeholder text displayed in the input.",
           "type": "string"
         },
         "prompt": {
@@ -2640,6 +2927,14 @@
           "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
           "type": "string"
         },
+        "strictMax": {
+          "description": "Only values below this maximum value are accepted in the input.",
+          "type": "number"
+        },
+        "strictMin": {
+          "description": "Only values above this minimum value are accepted in the input.",
+          "type": "number"
+        },
         "style": {
           "$ref": "#/definitions/Styles",
           "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
@@ -2651,6 +2946,10 @@
         "type": {
           "const": "numerical",
           "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
@@ -2696,6 +2995,10 @@
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
           "type": "boolean"
         },
         "clickToRecord": {
@@ -2793,6 +3096,10 @@
         },
         "recordScreen": {
           "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "type": "boolean"
+        },
+        "recordWebcam": {
+          "description": "Whether or not we want to utilize webcam recording. If present, will override the record webcam setting in the uiConfig. Studies using webcam without screen capture should include the webcam permission component before this component. Studies combining webcam with screen capture should use the screen recording permission component.",
           "type": "boolean"
         },
         "response": {
@@ -2967,6 +3274,10 @@
           "const": "radio",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
@@ -3016,10 +3327,13 @@
       ],
       "type": "object"
     },
-    "RankingResponse": {
+    "RankingCategoricalResponse": {
       "additionalProperties": false,
-      "description": "The RankingResponse interface is used to define the properties of a ranking widget response. RankingResponses render as a ranking widget with user specified options.\n\nThere are three types of ranking widgets: Ranking Sublist: The participant is asked to rank a subset of items from a larger list. Ranking Categorical: The participant is asked to rank items within categories: HIGH, MEDIUM, and LOW. Ranking Pairwise: The participant is asked to rank items by comparing them in pairs.\n\n```json {   \"id\": \"ranking-sublist\",   \"type\": \"ranking-sublist\",   \"prompt\": \"Rank your top 2 favorite fruits from the list below\",   \"location\": \"belowStimulus\",   \"options\": [\"Apple\", \"Banana\", \"Orange\", \"Strawberry\", \"Grapes\"],   \"default\": {\"Orange\": \"0\", \"Apple\": \"1\"},   \"numItems\": 2 }, {   \"id\": \"ranking-categorical\",   \"type\": \"ranking-categorical\",   \"prompt\": \"Sort these hobbies into the categories of HIGH, MEDIUM, and LOW based on your level of interest.\",   \"location\": \"belowStimulus\",   \"options\": [\"Drawing\", \"Singing\", \"Hiking\", \"Dancing\", \"Photography\"],   \"default\": {\"Drawing\": \"HIGH\", \"Hiking\": \"MEDIUM\", \"Singing\": \"LOW\"} }, {   \"id\": \"ranking-pairwise\",   \"type\": \"ranking-pairwise\",   \"prompt\": \"Which meal would you prefer\",   \"location\": \"belowStimulus\",   \"options\": [\"Pizza\", \"Sushi\", \"Burger\", \"Pasta\", \"Salad\", \"Tacos\"],   \"default\": {\"Pizza\": \"pair-0-high\", \"Sushi\": \"pair-0-low\"} } ```",
       "properties": {
+        "categorizeAll": {
+          "description": "Whether all items need to be categorized. Defaults to false.",
+          "type": "boolean"
+        },
         "default": {
           "additionalProperties": {
             "type": "string"
@@ -3046,6 +3360,14 @@
         "location": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "max": {
+          "description": "The maximum number of items to rank. For sublist ranking it is the number of items, for categorical ranking it is items per category, and for pairwise ranking it is the number of pairs.",
+          "type": "number"
+        },
+        "min": {
+          "description": "The minimum number of items to rank. For sublist ranking it is the number of items, for categorical ranking it is items per category, and for pairwise ranking it is the number of pairs.",
+          "type": "number"
         },
         "numItems": {
           "description": "The number of items to rank. Applies only to sublist and categorical ranking widgets.",
@@ -3097,12 +3419,249 @@
           "type": "string"
         },
         "type": {
-          "enum": [
-            "ranking-sublist",
-            "ranking-categorical",
-            "ranking-pairwise"
-          ],
+          "const": "ranking-categorical",
           "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "options",
+        "prompt",
+        "type"
+      ],
+      "type": "object"
+    },
+    "RankingPairwiseResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "default": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "The default value of the response. Provide an object keyed by option value. Values depend on ranking type: index strings for sublist (e.g. `\"0\"`), category labels for categorical (`\"HIGH\"`, `\"MEDIUM\"`, `\"LOW\"`), and pairwise slots (`\"pair-<n>-high\"` / `\"pair-<n>-low\"`).",
+          "type": "object"
+        },
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
+        "hidden": {
+          "description": "Controls whether the response is hidden.",
+          "type": "boolean"
+        },
+        "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "max": {
+          "description": "The maximum number of items to rank. For sublist ranking it is the number of items, for categorical ranking it is items per category, and for pairwise ranking it is the number of pairs.",
+          "type": "number"
+        },
+        "min": {
+          "description": "The minimum number of items to rank. For sublist ranking it is the number of items, for categorical ranking it is items per category, and for pairwise ranking it is the number of pairs.",
+          "type": "number"
+        },
+        "numItems": {
+          "description": "The number of items to rank. Applies only to sublist and categorical ranking widgets.",
+          "type": "number"
+        },
+        "options": {
+          "description": "The options that are displayed as ranking options, provided as an array of objects, with label and value fields.",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/StringOption"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        "paramCapture": {
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "prompt": {
+          "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
+          "type": "string"
+        },
+        "required": {
+          "description": "Controls whether the response is required to be answered. Defaults to true.",
+          "type": "boolean"
+        },
+        "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
+          "type": "string"
+        },
+        "requiredValue": {
+          "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
+          "type": "string"
+        },
+        "type": {
+          "const": "ranking-pairwise",
+          "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "options",
+        "prompt",
+        "type"
+      ],
+      "type": "object"
+    },
+    "RankingResponse": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/RankingSublistResponse"
+        },
+        {
+          "$ref": "#/definitions/RankingPairwiseResponse"
+        },
+        {
+          "$ref": "#/definitions/RankingCategoricalResponse"
+        }
+      ]
+    },
+    "RankingSublistResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "default": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "The default value of the response. Provide an object keyed by option value. Values depend on ranking type: index strings for sublist (e.g. `\"0\"`), category labels for categorical (`\"HIGH\"`, `\"MEDIUM\"`, `\"LOW\"`), and pairwise slots (`\"pair-<n>-high\"` / `\"pair-<n>-low\"`).",
+          "type": "object"
+        },
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
+        "hidden": {
+          "description": "Controls whether the response is hidden.",
+          "type": "boolean"
+        },
+        "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "max": {
+          "description": "The maximum number of items to rank. For sublist ranking it is the number of items, for categorical ranking it is items per category, and for pairwise ranking it is the number of pairs.",
+          "type": "number"
+        },
+        "min": {
+          "description": "The minimum number of items to rank. For sublist ranking it is the number of items, for categorical ranking it is items per category, and for pairwise ranking it is the number of pairs.",
+          "type": "number"
+        },
+        "numItems": {
+          "description": "The number of items to rank. Applies only to sublist and categorical ranking widgets.",
+          "type": "number"
+        },
+        "options": {
+          "description": "The options that are displayed as ranking options, provided as an array of objects, with label and value fields.",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/StringOption"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        "paramCapture": {
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "prompt": {
+          "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
+          "type": "string"
+        },
+        "required": {
+          "description": "Controls whether the response is required to be answered. Defaults to true.",
+          "type": "boolean"
+        },
+        "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
+          "type": "string"
+        },
+        "requiredValue": {
+          "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
+          "type": "string"
+        },
+        "type": {
+          "const": "ranking-sublist",
+          "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
@@ -3127,6 +3686,10 @@
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
           "type": "boolean"
         },
         "clickToRecord": {
@@ -3228,6 +3791,10 @@
         },
         "recordScreen": {
           "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "type": "boolean"
+        },
+        "recordWebcam": {
+          "description": "Whether or not we want to utilize webcam recording. If present, will override the record webcam setting in the uiConfig. Studies using webcam without screen capture should include the webcam permission component before this component. Studies combining webcam with screen capture should use the screen recording permission component.",
           "type": "boolean"
         },
         "response": {
@@ -3356,6 +3923,10 @@
           "const": "reactive",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
@@ -3417,6 +3988,12 @@
           "$ref": "#/definitions/NumericalResponse"
         },
         {
+          "$ref": "#/definitions/DateResponse"
+        },
+        {
+          "$ref": "#/definitions/TimeResponse"
+        },
+        {
           "$ref": "#/definitions/ShortTextResponse"
         },
         {
@@ -3460,10 +4037,116 @@
         }
       ]
     },
+    "ResponseVisibilityCondition": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "comparison": {
+              "$ref": "#/definitions/EqualityComparison"
+            },
+            "responseId": {
+              "type": "string"
+            },
+            "value": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              ]
+            }
+          },
+          "required": [
+            "comparison",
+            "responseId",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "comparison": {
+              "$ref": "#/definitions/StringComparison"
+            },
+            "responseId": {
+              "type": "string"
+            },
+            "value": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "comparison",
+            "responseId",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "comparison": {
+              "$ref": "#/definitions/NumericComparison"
+            },
+            "responseId": {
+              "type": "string"
+            },
+            "value": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "comparison",
+            "responseId",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "comparison": {
+              "const": "isCorrect",
+              "type": "string"
+            },
+            "responseId": {
+              "type": "string"
+            },
+            "value": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "comparison",
+            "responseId",
+            "value"
+          ],
+          "type": "object"
+        }
+      ],
+      "description": "Controls visibility based on another response's answer in the same component. List equality comparisons ignore selection order. Unanswered or conditionally hidden controlling responses never satisfy a condition."
+    },
     "ShortTextResponse": {
       "additionalProperties": false,
-      "description": "The ShortTextResponse interface is used to define the properties of a short text response. ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder. ```json {   \"id\": \"q-short-text\",   \"prompt\": \"Short text example\",   \"location\": \"aboveStimulus\",   \"type\": \"shortText\",   \"default\": \"Jane Doe\",   \"placeholder\": \"Enter your answer here\" } ```",
+      "description": "The ShortTextResponse interface is used to define the properties of a short text response. ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder. ```json {   \"id\": \"q-short-text\",   \"prompt\": \"Short text example\",   \"location\": \"aboveStimulus\",   \"type\": \"shortText\",   \"default\": \"ReVISit is great\",   \"placeholder\": \"Enter your answer here\",   \"minCharLength\": 3,   \"maxCharLength\": 100,   \"minWordLength\": 2,   \"maxWordLength\": 20,   \"textValidation\": [     {       \"type\": \"contains\",       \"value\": \"ReVISit\"     }   ] } ```",
       "properties": {
+        "builtInValidation": {
+          "$ref": "#/definitions/BuiltInValidationType",
+          "description": "Applies one predefined format from BuiltInValidationType to the response value."
+        },
         "default": {
           "description": "The default value of the response. Specify a string such as `\"Jane Doe\"`.",
           "type": "string"
@@ -3487,6 +4170,22 @@
         "location": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "maxCharLength": {
+          "description": "The maximum number of characters accepted in the response. Must be greater than 0 when the response is required.",
+          "type": "number"
+        },
+        "maxWordLength": {
+          "description": "The maximum number of whitespace-separated words accepted in the response. Must be greater than 0 when the response is required.",
+          "type": "number"
+        },
+        "minCharLength": {
+          "description": "The minimum number of characters accepted in the response.",
+          "type": "number"
+        },
+        "minWordLength": {
+          "description": "The minimum number of whitespace-separated words accepted in the response.",
+          "type": "number"
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
@@ -3523,9 +4222,20 @@
           "description": "The path to the external stylesheet file.",
           "type": "string"
         },
+        "textValidation": {
+          "description": "Validation rules applied to the response value in array order.",
+          "items": {
+            "$ref": "#/definitions/TextValidationRule"
+          },
+          "type": "array"
+        },
         "type": {
           "const": "shortText",
           "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
@@ -3657,6 +4367,10 @@
           "const": "slider",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withBar": {
           "description": "Whether to render the slider with a bar to the left. Defaults to true.",
           "type": "boolean"
@@ -3677,6 +4391,14 @@
         "type"
       ],
       "type": "object"
+    },
+    "StringComparison": {
+      "enum": [
+        "matchesRegex",
+        "contains",
+        "doesNotContain"
+      ],
+      "type": "string"
     },
     "StringOption": {
       "additionalProperties": false,
@@ -4064,12 +4786,150 @@
           "const": "textOnly",
           "type": "string"
         },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
           "type": "boolean"
         },
         "withDontKnow": {
           "not": {}
+        }
+      },
+      "required": [
+        "id",
+        "prompt",
+        "type"
+      ],
+      "type": "object"
+    },
+    "TextValidationRule": {
+      "additionalProperties": false,
+      "description": "A validation rule applied to a short or long text response. Rules are evaluated in array order, and the first failing rule is displayed to the participant.\n\nFor example, the following rules accept only `ReVISit is great`: it must start with `ReVISit`, contain `great`, not contain `invalid`, equal `ReVISit is great`, and not equal `TEST`. See the [MDN regular expression syntax cheat sheet](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet) for help writing regular expression patterns. ```json \"textValidation\": [   {     \"type\": \"matchesRegex\",     \"value\": \"^ReVISit\"   },   {     \"type\": \"contains\",     \"value\": \"great\"   },   {     \"type\": \"doesNotContain\",     \"value\": \"invalid\"   },   {     \"type\": \"equals\",     \"value\": \"ReVISit is great\"   },   {     \"type\": \"doesNotEqual\",     \"value\": \"TEST\"   } ] ```",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/TextValidationType",
+          "description": "The operation used to validate the response value."
+        },
+        "value": {
+          "description": "The regular expression pattern or text value used by the validation operation. Must be non-empty for `equals`, `contains`, and `doesNotContain`. Empty `matchesRegex` and `doesNotEqual` values produce a parser warning because they do not restrict responses.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "value"
+      ],
+      "type": "object"
+    },
+    "TextValidationType": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/EqualityComparison"
+        },
+        {
+          "$ref": "#/definitions/StringComparison"
+        }
+      ],
+      "description": "The validation operations available for short and long text responses."
+    },
+    "TimeResponse": {
+      "additionalProperties": false,
+      "description": "The TimeResponse interface defines a time selected with a time input. Time values are stored as 24-hour `HH:mm` strings, or `HH:mm:ss` when `withSeconds` is `true`. ```json {   \"id\": \"q-time\",   \"prompt\": \"Select a time.\",   \"location\": \"aboveStimulus\",   \"type\": \"time\",   \"default\": \"14:28:30\",   \"min\": \"09:00:00\",   \"max\": \"18:00:00\",   \"format\": \"24h\",   \"withSeconds\": true } ```",
+      "properties": {
+        "default": {
+          "description": "The default time in 24-hour `HH:mm` format, or `HH:mm:ss` when `withSeconds` is `true`.",
+          "type": "string"
+        },
+        "excludeFromRandomization": {
+          "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
+          "type": "boolean"
+        },
+        "format": {
+          "description": "The format displayed to participants. Defaults to `24h`. Values are always stored in 24-hour format.",
+          "enum": [
+            "12h",
+            "24h"
+          ],
+          "type": "string"
+        },
+        "hidden": {
+          "description": "Controls whether the response is hidden.",
+          "type": "boolean"
+        },
+        "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "infoText": {
+          "description": "The description that is displayed when the participant hovers over the response. This does not accept markdown.",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "max": {
+          "description": "The latest time accepted, in the same format as the response value.",
+          "type": "string"
+        },
+        "min": {
+          "description": "The earliest time accepted, in the same format as the response value.",
+          "type": "string"
+        },
+        "paramCapture": {
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "prompt": {
+          "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
+          "type": "string"
+        },
+        "required": {
+          "description": "Controls whether the response is required to be answered. Defaults to true.",
+          "type": "boolean"
+        },
+        "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
+          "type": "string"
+        },
+        "requiredValue": {
+          "description": "The time required for a correct response, in 24-hour `HH:mm` format, or `HH:mm:ss` when `withSeconds` is `true`.",
+          "type": "string"
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "style": {
+          "$ref": "#/definitions/Styles",
+          "description": "You can set styles here, using React CSSProperties, for example: `{\"width\": 100}` or `{\"width\": \"50%\"}`"
+        },
+        "stylesheetPath": {
+          "description": "The path to the external stylesheet file.",
+          "type": "string"
+        },
+        "type": {
+          "const": "time",
+          "type": "string"
+        },
+        "visibleIf": {
+          "$ref": "#/definitions/ResponseVisibilityCondition",
+          "description": "Show this response only when another response in this component satisfies the condition."
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider. If present, will override the divider setting in the components or `uiConfig`.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
+        },
+        "withSeconds": {
+          "description": "Determines whether the input includes seconds. Defaults to `false`.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -4095,9 +4955,22 @@
           "description": "The time in milliseconds to wait before automatically downloading the study data.",
           "type": "number"
         },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If true, gamepad button and axis events are recorded on all components unless deactivated on individual components. Defaults to false. Browsers do not expose a gamepad to the page until the participant presses a button on it, so nothing is captured before that first press.",
+          "type": "boolean"
+        },
         "clickToRecord": {
           "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
+        },
+        "colorMode": {
+          "description": "The study's color mode. Defaults to light. userPreference uses the participant's system preference.",
+          "enum": [
+            "light",
+            "dark",
+            "userPreference"
+          ],
+          "type": "string"
         },
         "contactEmail": {
           "description": "The email address that used during the study if a participant clicks contact.",
@@ -4170,6 +5043,10 @@
         "recordScreenFPS": {
           "description": "Desired fps for recording screen. If possible, this value will be used, but if it's not possible, the user agent will use the closest possible match.",
           "type": "number"
+        },
+        "recordWebcam": {
+          "description": "Whether or not we want to utilize webcam recording. If true, will record webcam video on all components unless deactivated on individual components. Defaults to false. Studies using webcam without screen capture should include the webcam permission component before any recorded component. Studies combining webcam with screen capture should use the screen recording permission component.",
+          "type": "boolean"
         },
         "responseDividers": {
           "description": "Whether to show the response dividers. Defaults to false.",
@@ -4287,6 +5164,10 @@
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
           "type": "boolean"
         },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
+          "type": "boolean"
+        },
         "clickToRecord": {
           "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
@@ -4388,6 +5269,10 @@
           "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
+        "recordWebcam": {
+          "description": "Whether or not we want to utilize webcam recording. If present, will override the record webcam setting in the uiConfig. Studies using webcam without screen capture should include the webcam permission component before this component. Studies combining webcam with screen capture should use the screen recording permission component.",
+          "type": "boolean"
+        },
         "response": {
           "description": "The responses to the component",
           "items": {
@@ -4465,6 +5350,10 @@
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
           "type": "boolean"
         },
         "clickToRecord": {
@@ -4568,6 +5457,10 @@
           "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
+        "recordWebcam": {
+          "description": "Whether or not we want to utilize webcam recording. If present, will override the record webcam setting in the uiConfig. Studies using webcam without screen capture should include the webcam permission component before this component. Studies combining webcam with screen capture should use the screen recording permission component.",
+          "type": "boolean"
+        },
         "response": {
           "description": "The responses to the component",
           "items": {
@@ -4645,6 +5538,10 @@
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
           "type": "boolean"
         },
         "clickToRecord": {
@@ -4752,6 +5649,10 @@
           "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
           "type": "boolean"
         },
+        "recordWebcam": {
+          "description": "Whether or not we want to utilize webcam recording. If present, will override the record webcam setting in the uiConfig. Studies using webcam without screen capture should include the webcam permission component before this component. Studies combining webcam with screen capture should use the screen recording permission component.",
+          "type": "boolean"
+        },
         "response": {
           "description": "The responses to the component",
           "items": {
@@ -4831,9 +5732,21 @@
           "description": "Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig.",
           "type": "boolean"
         },
+        "captureGamepad": {
+          "description": "Whether or not to capture game controller input into windowEvents. If present, will override the capture gamepad setting in the uiConfig.",
+          "type": "boolean"
+        },
         "clickToRecord": {
           "description": "Enables a click-and-hold microphone button instead of continuous recording. When true, audio is muted by default and is recorded only while the button is held. When false, recording starts immediately and can be paused/resumed via the microphone button. Defaults to false.",
           "type": "boolean"
+        },
+        "colorMode": {
+          "description": "The iframe's color scheme. Defaults to the study's color mode. The embedded page must support color schemes.",
+          "enum": [
+            "light",
+            "dark"
+          ],
+          "type": "string"
         },
         "correctAnswer": {
           "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
@@ -4930,6 +5843,10 @@
         },
         "recordScreen": {
           "description": "Whether or not we want to utilize screen recording feature. If present, will override the record screen setting in the uiConfig. If true, the uiConfig must have recordScreen set to true or the screen will not be captured. It's also required that the library component, $screen-recording.components.screenRecordingPermission, be included in the study at some point before this component to ensure permissions are granted and screen capture has started.",
+          "type": "boolean"
+        },
+        "recordWebcam": {
+          "description": "Whether or not we want to utilize webcam recording. If present, will override the record webcam setting in the uiConfig. Studies using webcam without screen capture should include the webcam permission component before this component. Studies combining webcam with screen capture should use the screen recording permission component.",
           "type": "boolean"
         },
         "response": {

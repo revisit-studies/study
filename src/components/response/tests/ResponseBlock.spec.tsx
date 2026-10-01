@@ -11,13 +11,15 @@ import type { CheckAnswerState, Sequence, StoredAnswer } from '../../../store/ty
 import type { REVISIT_MODE } from '../../../storage/engines/types';
 import { studyStoreCreator, StudyStoreContext } from '../../../store/store';
 import { ResponseBlock } from '../ResponseBlock';
+import { generateInitFields, useAnswerField } from '../utils';
 import { makeStoredAnswer } from '../../../tests/utils';
 import { responseAnswerIsCorrect } from '../../../utils/correctAnswer';
+import type { compareResponseValues } from '../../../utils/correctAnswer';
 
 // ── mocks ────────────────────────────────────────────────────────────────────
 
 const {
-  mockStoredAnswerData, capturedNextButtonProps, capturedSwitcherProps, mockIsAnalysis, mockCurrentIdentifier, mockNavigate, mockSaveAnswers, mockAnswerField,
+  mockStoredAnswerData, capturedNextButtonProps, capturedSwitcherProps, mockIsAnalysis, mockCurrentIdentifier, mockNavigate, mockSaveAnswers, mockTrrackApply, mockAnswerField,
 } = vi.hoisted(() => ({
   mockStoredAnswerData: {
     formOrder: { response: ['q1'] } as { response: string[] } | undefined,
@@ -32,15 +34,18 @@ const {
   capturedSwitcherProps: {
     storedAnswer: undefined as Record<string, unknown> | undefined,
     answerFinalized: undefined as boolean | undefined,
+    onChange: undefined as ((value: unknown, source?: 'keyboard' | 'click') => void) | undefined,
   },
   mockIsAnalysis: { value: false },
   mockCurrentIdentifier: { value: 'trial1_0' },
   mockNavigate: vi.fn(),
   mockSaveAnswers: vi.fn(() => Promise.resolve()),
+  mockTrrackApply: vi.fn(),
   mockAnswerField: {
     values: {} as Record<string, unknown>,
     isValid: vi.fn(() => true),
     setValues: vi.fn(),
+    setFieldValue: vi.fn(),
     setInitialValues: vi.fn(),
     reset: vi.fn(),
     getInputProps: vi.fn(() => ({ value: '', onChange: vi.fn() })),
@@ -60,6 +65,7 @@ vi.mock('@mantine/core', () => ({
   Group: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
   Text: ({ children }: { children?: ReactNode }) => <p>{children}</p>,
   ThemeIcon: ({ children }: { children?: ReactNode }) => <span>{children}</span>,
+  Kbd: ({ children }: { children?: ReactNode }) => <kbd>{children}</kbd>,
 }));
 
 vi.mock('react-router', () => ({
@@ -73,7 +79,7 @@ vi.mock('@trrack/core', () => ({
     create: vi.fn(() => ({ register: vi.fn(() => vi.fn()) })),
   },
   initializeTrrack: vi.fn(() => ({
-    apply: vi.fn(),
+    apply: mockTrrackApply,
     currentChange: vi.fn(() => vi.fn()),
     graph: {
       backend: {
@@ -142,7 +148,8 @@ vi.mock('../utils', () => ({
   usesStandaloneDontKnowField: vi.fn(() => false),
 }));
 
-vi.mock('../../../utils/correctAnswer', () => ({
+vi.mock('../../../utils/correctAnswer', async (importOriginal) => ({
+  ...await importOriginal<{ compareResponseValues: typeof compareResponseValues }>(),
   responseAnswerIsCorrect: vi.fn(() => true),
 }));
 
@@ -152,11 +159,14 @@ vi.mock('../customResponseModules', () => ({
 }));
 
 vi.mock('../ResponseSwitcher', () => ({
-  ResponseSwitcher: ({ response, storedAnswer, answerFinalized }: { response: { id: string; type: string }; storedAnswer?: Record<string, unknown>; answerFinalized?: boolean }) => {
+  ResponseSwitcher: ({
+    response, index, storedAnswer, answerFinalized, form,
+  }: { response: { id: string; type: string }; index: number; storedAnswer?: Record<string, unknown>; answerFinalized?: boolean; form: { onChange?: (value: unknown, source?: 'keyboard' | 'click') => void } }) => {
     capturedSwitcherProps.storedAnswer = storedAnswer;
     capturedSwitcherProps.answerFinalized = answerFinalized;
+    capturedSwitcherProps.onChange = form.onChange;
     return (
-      <div data-testid={`switcher-${response.type}`} data-response-id={response.id}>
+      <div data-testid={`switcher-${response.type}`} data-response-id={response.id} data-index={index}>
         {response.type}
         <input data-testid={`control-${response.id}`} />
       </div>
@@ -287,11 +297,14 @@ beforeEach(() => {
   capturedNextButtonProps.onCheckAnswer = undefined;
   capturedSwitcherProps.storedAnswer = undefined;
   capturedSwitcherProps.answerFinalized = undefined;
+  capturedSwitcherProps.onChange = undefined;
   mockIsAnalysis.value = false;
   mockCurrentIdentifier.value = 'trial1_0';
   mockNavigate.mockClear();
   mockSaveAnswers.mockClear();
+  mockTrrackApply.mockClear();
   mockAnswerField.values = {};
+  mockAnswerField.setFieldValue.mockReset();
 });
 
 // Unmount between tests so window keydown listeners from prior renders don't leak
@@ -300,6 +313,20 @@ afterEach(() => cleanup());
 // ── ResponseBlock ─────────────────────────────────────────────────────────────
 
 describe('ResponseBlock', () => {
+  test('records the interaction source of a mapped button answer', async () => {
+    const { rerender, studyStore } = await renderWithStore(<ResponseBlock config={baseConfig} location="belowStimulus" />);
+    mockTrrackApply.mockClear();
+    mockAnswerField.setFieldValue.mockImplementation((id: string, value: unknown) => {
+      mockAnswerField.values = { ...mockAnswerField.values, [id]: value };
+    });
+
+    act(() => { capturedSwitcherProps.onChange?.('A', 'keyboard'); });
+    rerender(withStore(studyStore, <ResponseBlock config={baseConfig} location="belowStimulus" />));
+
+    expect(mockAnswerField.setFieldValue).toHaveBeenCalledWith('q1', 'A');
+    expect(mockTrrackApply).toHaveBeenCalledWith('Update form field (keyboard)', undefined);
+  });
+
   test('renders without error', async () => {
     const studyStore = await makeStudyStore();
     const { container } = render(withStore(studyStore, <ResponseBlock config={baseConfig} location="belowStimulus" />));
@@ -407,6 +434,25 @@ describe('ResponseBlock', () => {
     const { container } = render(withStore(studyStore, <ResponseBlock config={textOnlyConfig} location="belowStimulus" />));
     const html = container.innerHTML;
     expect(html).toContain('switcher-textOnly');
+  });
+
+  test('does not count section dividers as questions', async () => {
+    mockStoredAnswerData.formOrder = undefined;
+    const config = {
+      type: 'questionnaire',
+      response: [
+        {
+          type: 'shortText', id: 'first', prompt: 'First', required: false,
+        },
+        { type: 'divider', id: 'section-break' },
+        {
+          type: 'shortText', id: 'second', prompt: 'Second', required: false,
+        },
+      ],
+    } as IndividualComponent;
+    const { container } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+    expect(container.querySelector('[data-response-id="first"]')?.getAttribute('data-index')).toBe('1');
+    expect(container.querySelector('[data-response-id="second"]')?.getAttribute('data-index')).toBe('2');
   });
 
   test('initialises from status.answer when status prop is provided', async () => {
@@ -849,4 +895,96 @@ describe('ResponseBlock unlimited attempts', () => {
     await act(async () => { fireEvent.click(findButton(container, 'Check Answer')); });
     expect(findButton(container, 'Next')).toHaveProperty('disabled', false);
   });
+});
+
+test.each([null, {}])('replay distinguishes an initial form from an empty snapshot: %j', async (form) => {
+  mockIsAnalysis.value = true;
+  const status = makeStoredAnswer({ answer: { q1: 'saved' } });
+  const studyStore = await makeStudyStore();
+  studyStore.store.dispatch(studyStore.actions.saveAnalysisState({ location: 'belowStimulus', prov: { form } }));
+  render(withStore(studyStore, <ResponseBlock config={baseConfig} location="belowStimulus" status={status} />));
+  expect(capturedSwitcherProps.storedAnswer).toEqual(form === null ? status.answer : {});
+  expect(vi.mocked(useAnswerField).mock.lastCall?.[6]).toEqual(form === null ? status.answer : {});
+});
+
+test('replay treats a location snapshot as authoritative when a controller answer was removed', async () => {
+  mockIsAnalysis.value = true;
+  mockStoredAnswerData.formOrder = undefined;
+  const config: IndividualComponent = {
+    type: 'questionnaire',
+    response: [
+      {
+        id: 'controller', type: 'radio', prompt: '', options: ['yes', 'no'], location: 'sidebar',
+      },
+      {
+        id: 'dependent', type: 'shortText', prompt: '', visibleIf: { responseId: 'controller', comparison: 'equals', value: 'yes' },
+      },
+    ],
+  };
+  const status = makeStoredAnswer({ answer: { controller: 'yes', dependent: 'University' } });
+  const studyStore = await makeStudyStore();
+  const { container } = render(withStore(studyStore, <ResponseBlock config={config} location="belowStimulus" status={status} />));
+  expect(container.querySelector('[data-response-id="dependent"]')).not.toBeNull();
+  act(() => {
+    studyStore.store.dispatch(studyStore.actions.saveAnalysisState({ location: 'sidebar', prov: { form: null } }));
+  });
+  expect(container.querySelector('[data-response-id="dependent"]')).not.toBeNull();
+  act(() => {
+    studyStore.store.dispatch(studyStore.actions.saveAnalysisState({ location: 'sidebar', prov: { form: {} } }));
+  });
+  expect(container.querySelector('[data-response-id="dependent"]')).toBeNull();
+  act(() => {
+    studyStore.store.dispatch(studyStore.actions.saveAnalysisState({ location: 'sidebar', prov: { form: { controller: 'yes' } } }));
+  });
+  expect(container.querySelector('[data-response-id="dependent"]')).not.toBeNull();
+});
+
+test('uses restored answers until another location publishes a complete snapshot', async () => {
+  mockStoredAnswerData.formOrder = undefined;
+  const config: IndividualComponent = {
+    type: 'questionnaire',
+    response: [
+      {
+        id: 'controller', type: 'radio', prompt: '', options: ['yes', 'no'], location: 'sidebar',
+      },
+      {
+        id: 'dependent', type: 'shortText', prompt: '', visibleIf: { responseId: 'controller', comparison: 'equals', value: 'yes' },
+      },
+    ],
+  };
+  const status = makeStoredAnswer({ answer: { controller: 'yes', dependent: 'University' } });
+  vi.mocked(generateInitFields).mockImplementation(() => ({ ...status.answer }));
+  const studyStore = await makeStudyStore();
+  render(withStore(studyStore, <ResponseBlock config={config} location="belowStimulus" status={status} />));
+  expect(vi.mocked(useAnswerField).mock.lastCall?.[6]).toMatchObject({ controller: 'yes' });
+  act(() => {
+    studyStore.store.dispatch(studyStore.actions.updateResponseBlockValidation({
+      location: 'sidebar', identifier: 'trial1_0', values: {}, status: true, replaceValues: true,
+    }));
+  });
+  expect(vi.mocked(useAnswerField).mock.lastCall?.[6]).not.toHaveProperty('controller');
+  vi.mocked(generateInitFields).mockReturnValue({});
+});
+
+test('Check Answer ignores a conditionally hidden correct answer', async () => {
+  vi.mocked(responseAnswerIsCorrect).mockClear();
+  mockStoredAnswerData.formOrder = undefined;
+  mockAnswerField.values = { controller: '' };
+  const config: IndividualComponent = {
+    type: 'questionnaire',
+    provideFeedback: true,
+    response: [
+      {
+        id: 'controller', type: 'radio', prompt: '', options: ['yes', 'no'], required: false,
+      },
+      {
+        id: 'dependent', type: 'shortText', prompt: '', visibleIf: { responseId: 'controller', comparison: 'equals', value: 'yes' },
+      },
+    ],
+    correctAnswer: [{ id: 'dependent', answer: 'University' }],
+  };
+  const { store } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+  act(() => capturedNextButtonProps.onCheckAnswer?.());
+  expect(responseAnswerIsCorrect).not.toHaveBeenCalled();
+  expect(store.getState().checkAnswer.trial1_0?.correct).toBe(true);
 });

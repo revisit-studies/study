@@ -4,6 +4,7 @@ import {
   beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { useParams } from 'react-router';
+import { DEFAULT_THEME } from '@mantine/core';
 import { IndividualComponent, StudyConfig } from '../../../../parser/types';
 import { ParticipantData, ParticipantDataWithStatus } from '../../../../storage/types';
 import { studyComponentToIndividualComponent } from '../../../../utils/handleComponentInheritance';
@@ -13,6 +14,9 @@ import { TrialVisualization } from '../TrialVisualization';
 import { ResponseVisualization } from '../ResponseVisualization';
 
 // ── mocks ────────────────────────────────────────────────────────────────────
+
+let mockColorScheme = 'light';
+beforeEach(() => { mockColorScheme = 'light'; });
 
 vi.mock('react-router', () => ({
   useParams: vi.fn(() => ({})),
@@ -24,10 +28,13 @@ vi.mock('@mantine/hooks', () => ({
 }));
 
 vi.mock('react-vega', () => ({
-  VegaLite: () => <div>VegaLite</div>,
+  VegaLite: ({ spec }: { spec: unknown }) => <div data-vega-spec={JSON.stringify(spec)}>VegaLite</div>,
 }));
 
-vi.mock('@mantine/core', () => ({
+vi.mock('@mantine/core', async () => ({
+  DEFAULT_THEME: (await vi.importActual<{ DEFAULT_THEME: typeof DEFAULT_THEME }>('@mantine/core')).DEFAULT_THEME,
+  useMantineTheme: () => DEFAULT_THEME,
+  useComputedColorScheme: () => mockColorScheme,
   Box: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Divider: () => <hr />,
   Flex: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -36,7 +43,7 @@ vi.mock('@mantine/core', () => ({
   }),
   Text: ({ children }: { children: ReactNode }) => <p>{children}</p>,
   Title: ({ children }: { children: ReactNode }) => <h5>{children}</h5>,
-  Collapse: ({ children, in: open }: { children: ReactNode; in?: boolean }) => (
+  Collapse: ({ children, expanded: open }: { children: ReactNode; expanded?: boolean }) => (
     open ? <div>{children}</div> : null
   ),
   Code: ({ children }: { children: ReactNode }) => <code>{children}</code>,
@@ -47,6 +54,7 @@ vi.mock('@mantine/core', () => ({
 vi.mock('@tabler/icons-react', () => ({
   IconAdjustmentsHorizontal: () => <span>icon-slider</span>,
   IconBubbleText: () => <span>icon-text</span>,
+  IconCalendar: () => <span>icon-date</span>,
   IconChartGridDots: () => <span>icon-matrix-cb</span>,
   IconChevronDown: () => <span>icon-chevron</span>,
   IconCodePlus: () => <span>icon-metadata</span>,
@@ -60,6 +68,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconRadio: () => <span>icon-radio</span>,
   IconSelect: () => <span>icon-dropdown</span>,
   IconSquares: () => <span>icon-checkbox</span>,
+  IconClock: () => <span>icon-time</span>,
 }));
 
 vi.mock('../../../../components/interface/StepsPanel', () => ({
@@ -226,6 +235,27 @@ describe('ResponseVisualization', () => {
     trialConfig: mockTrialConfig,
   };
 
+  test.each(['light', 'dark'])('themes analysis chart furniture in %s mode without changing data colors', (scheme) => {
+    mockColorScheme = scheme;
+    const html = renderToStaticMarkup(
+      <ResponseVisualization
+        {...baseProps}
+        response={{
+          id: 'q1', type: 'radio', prompt: '', options: ['A', 'B'],
+        }}
+        trialConfig={{ ...mockTrialConfig, correctAnswer: [{ id: 'q1', answer: 'A' }] }}
+      />,
+    );
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const spec = JSON.parse(doc.querySelector('[data-vega-spec]')!.getAttribute('data-vega-spec')!);
+    const text = scheme === 'dark' ? DEFAULT_THEME.colors.dark[0] : DEFAULT_THEME.black;
+    expect(spec.config.background).toBe(scheme === 'dark' ? DEFAULT_THEME.colors.dark[7] : DEFAULT_THEME.white);
+    expect(spec.config.axis).toMatchObject({ labelColor: text, titleColor: text });
+    expect(spec.config.header).toEqual({ labelColor: text, titleColor: text });
+    expect(spec.config.legend).toEqual({ labelColor: text, titleColor: text });
+    expect(spec.encoding.color.scale.range).toEqual(['#69DB7C', '#ADB5BD']);
+  });
+
   test('metadata type: shows icon and config JSON code block', () => {
     const html = renderToStaticMarkup(
       <ResponseVisualization
@@ -281,6 +311,35 @@ describe('ResponseVisualization', () => {
     );
     expect(html).toContain('icon-radio');
     expect(html).toContain('VegaLite');
+  });
+
+  test('sorts date responses chronologically across years', () => {
+    const participantWithDate = (date: string) => ({
+      ...mockParticipant,
+      answers: {
+        trial1_0: {
+          answer: { date },
+          startTime: 1,
+          endTime: 2,
+          componentName: 'trial1',
+          trialOrder: '0',
+          windowEvents: [],
+          timedOut: false,
+        },
+      },
+    }) as unknown as ParticipantData;
+    const html = renderToStaticMarkup(
+      <ResponseVisualization
+        {...baseProps}
+        participantData={[
+          participantWithDate('01/01/2026'),
+          participantWithDate('12/31/2025'),
+        ]}
+        response={{ type: 'date', id: 'date', prompt: 'Select a date.' }}
+      />,
+    );
+
+    expect(html).toContain('sort&quot;:[&quot;12/31/2025&quot;,&quot;01/01/2026&quot;]');
   });
 
   test('radio type: shows the no-data message when answers exist but lack this response', () => {

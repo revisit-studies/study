@@ -9,7 +9,7 @@ import { useDisclosure } from '@mantine/hooks';
 import { DownloadTidy, download } from './DownloadTidy';
 import { ParticipantDataWithStatus } from '../../storage/types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
-import { downloadParticipantsAudioZip, downloadParticipantsProvenanceZip, downloadParticipantsScreenRecordingZip } from '../../utils/handleDownloadFiles';
+import { downloadParticipantsAudioZip, downloadParticipantsProvenanceZip, downloadParticipantsRecordingsZip } from '../../utils/handleDownloadFiles';
 import { useAuth } from '../../store/hooks/useAuth';
 import type { StorageEngine } from '../../storage/engines/types';
 import { getParticipantQualitativeCodes } from './qualitativeCodes';
@@ -33,13 +33,13 @@ async function attachQualitativeCodesToParticipants(
 }
 
 export function DownloadButtons({
-  visibleParticipants, studyId, gap, fileName, hasAudio, hasScreenRecording,
-}: { visibleParticipants: ParticipantDataFetcher; studyId: string, gap?: string, fileName?: string | null; hasAudio?: boolean; hasScreenRecording?: boolean; }) {
+  visibleParticipants, studyId, gap, fileName, hasAudio, hasScreenRecording, hasWebcamRecording,
+}: { visibleParticipants: ParticipantDataFetcher; studyId: string, gap?: string, fileName?: string | null; hasAudio?: boolean; hasScreenRecording?: boolean; hasWebcamRecording?: boolean; }) {
   const [openDownload, { open, close }] = useDisclosure(false);
   const [participants, setParticipants] = useState<ParticipantDataWithStatus[]>([]);
   const [loadingProvenance, setLoadingProvenance] = useState(false);
   const [loadingAudio, setLoadingAudio] = useState(false);
-  const [loadingScreenRecording, setLoadingScreenRecording] = useState(false);
+  const [loadingRecordings, setLoadingRecordings] = useState(false);
   const { storageEngine } = useStorageEngine();
   const auth = useAuth();
 
@@ -99,24 +99,29 @@ export function DownloadButtons({
     }
   };
 
-  const handleDownloadScreenRecording = async () => {
-    setLoadingScreenRecording(true);
+  const handleDownloadRecordings = async () => {
+    setLoadingRecordings(true);
 
     try {
       const currParticipants = await fetchParticipants();
       if (!storageEngine) return;
-      await downloadParticipantsScreenRecordingZip({
+      await downloadParticipantsRecordingsZip({
         storageEngine,
         participants: currParticipants,
         studyId,
+        includeScreen: !!hasScreenRecording,
+        includeWebcam: !!hasWebcamRecording,
         fileName,
       });
     } finally {
-      setLoadingScreenRecording(false);
+      setLoadingRecordings(false);
     }
   };
 
   const tooltipText = typeof visibleParticipants !== 'function' ? `Download ${visibleParticipants.length} participants` : 'Download participants data';
+  const recordingsLabel = hasScreenRecording && hasWebcamRecording
+    ? 'screen and webcam recordings'
+    : hasWebcamRecording ? 'webcam recordings' : 'screen recordings';
 
   return (
     <>
@@ -166,14 +171,14 @@ export function DownloadButtons({
           </Tooltip>
         )}
 
-        {hasScreenRecording && (
-          <Tooltip label={`${tooltipText} screen recordings ZIP`}>
+        {(hasScreenRecording || hasWebcamRecording) && (
+          <Tooltip label={`${tooltipText} ${recordingsLabel} ZIP`}>
             <Button
               variant="light"
               disabled={visibleParticipants.length === 0 && typeof visibleParticipants !== 'function'}
-              onClick={handleDownloadScreenRecording}
+              onClick={handleDownloadRecordings}
               px={4}
-              loading={loadingScreenRecording}
+              loading={loadingRecordings}
             >
               <IconDeviceDesktopDown />
             </Button>

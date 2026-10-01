@@ -15,7 +15,7 @@ export function UnknownAnswerIcon({
     <Tooltip label={UNKNOWN_ANSWER_LABEL} withArrow>
       <IconCheck
         aria-label={UNKNOWN_ANSWER_LABEL}
-        color="var(--mantine-color-gray-6)"
+        color="var(--mantine-color-dimmed)"
         size={size}
         style={style}
       />

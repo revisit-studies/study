@@ -1,15 +1,16 @@
-import { forwardRef, ReactNode } from 'react';
+import {
+  CSSProperties, forwardRef, ReactNode,
+} from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
-  render, act, cleanup,
+  render, act, cleanup, fireEvent,
 } from '@testing-library/react';
 import {
   afterEach, describe, expect, test, vi,
 } from 'vitest';
 import { useMove } from '@mantine/hooks';
-import { generateSliderBreakValues } from '../sliderBreaks';
 import { HorizontalHandler } from '../HorizontalHandler';
-import { OptionLabel } from '../OptionLabel';
+import { OptionLabel, OptionTextTemplateContext } from '../OptionLabel';
 import { InputLabel } from '../InputLabel';
 import { TextOnlyInput } from '../TextOnlyInput';
 import { StringInput } from '../StringInput';
@@ -25,7 +26,9 @@ import { SliderInput } from '../SliderInput';
 import { MatrixInput } from '../MatrixInput';
 import { RankingInput } from '../RankingInput';
 import { ResponseSwitcher } from '../ResponseSwitcher';
+import { useStoredAnswer } from '../../../store/hooks/useStoredAnswer';
 import { FeedbackAlert } from '../FeedbackAlert';
+import { NextButton } from '../../NextButton';
 import type {
   ButtonsResponse,
   CheckboxResponse,
@@ -42,8 +45,8 @@ import type {
 // ── mocks ────────────────────────────────────────────────────────────────────
 
 vi.mock('@mantine/core', () => {
-  const Div = forwardRef<HTMLDivElement, { children?: ReactNode }>(function Div({ children }, ref) { // eslint-disable-line prefer-arrow-callback
-    return <div ref={ref}>{children}</div>;
+  const Div = forwardRef<HTMLDivElement, { children?: ReactNode; style?: CSSProperties }>(function Div({ children, style }, ref) { // eslint-disable-line prefer-arrow-callback
+    return <div ref={ref} style={style}>{children}</div>;
   });
   function Span({ children }: { children?: ReactNode }) {
     return <span>{children}</span>;
@@ -51,11 +54,14 @@ vi.mock('@mantine/core', () => {
   const Input = Object.assign(
     ({ children }: { children?: ReactNode }) => <div>{children}</div>,
     {
-      Wrapper: ({ children, label, description }: { children?: ReactNode; label?: ReactNode; description?: ReactNode }) => (
+      Wrapper: ({
+        children, label, description, error,
+      }: { children?: ReactNode; label?: ReactNode; description?: ReactNode; error?: ReactNode }) => (
         <div>
           {label}
           {description}
           {children}
+          {error}
         </div>
       ),
       Placeholder: ({ children }: { children?: ReactNode }) => <span>{children}</span>,
@@ -65,6 +71,15 @@ vi.mock('@mantine/core', () => {
     ({ children }: { children?: ReactNode }) => <ul>{children}</ul>,
     { Item: ({ children }: { children?: ReactNode }) => <li>{children}</li> },
   );
+  function RadioGroup({ children, label, description }: { children?: ReactNode; label?: ReactNode; description?: ReactNode }) {
+    return (
+      <div>
+        {label}
+        {description}
+        {children}
+      </div>
+    );
+  }
   const Radio = Object.assign(
     ({ label, value, children }: { label?: ReactNode; value?: string; children?: ReactNode }) => (
       <div data-value={value}>
@@ -73,15 +88,9 @@ vi.mock('@mantine/core', () => {
       </div>
     ),
     {
-      Group: ({ children, label, description }: { children?: ReactNode; label?: ReactNode; description?: ReactNode }) => (
-        <div>
-          {label}
-          {description}
-          {children}
-        </div>
-      ),
+      Group: RadioGroup,
       Card: ({ children, value }: { children?: ReactNode; value?: string }) => (
-        <div data-value={value}>{children}</div>
+        <button type="button" role="radio" data-value={value}>{children}</button>
       ),
     },
   );
@@ -90,8 +99,15 @@ vi.mock('@mantine/core', () => {
       <div data-value={value} data-checked={checked}>{label}</div>
     ),
     {
-      Group: ({ children, label, description }: { children?: ReactNode; label?: ReactNode; description?: ReactNode }) => (
-        <div>
+      Group: ({
+        children, label, description, value,
+      }: {
+        children?: ReactNode;
+        label?: ReactNode;
+        description?: ReactNode;
+        value?: string[];
+      }) => (
+        <div data-group-value={JSON.stringify(value)}>
           {label}
           {description}
           {children}
@@ -105,6 +121,7 @@ vi.mock('@mantine/core', () => {
     Flex: Div,
     Box: Div,
     Text: Span,
+    Kbd: ({ children }: { children?: ReactNode }) => <kbd>{children}</kbd>,
     Tooltip: ({ children, label }: { children?: ReactNode; label?: ReactNode }) => (
       <div title={String(label)}>{children}</div>
     ),
@@ -144,28 +161,43 @@ vi.mock('@mantine/core', () => {
         <textarea placeholder={placeholder} />
       </div>
     ),
-    Select: ({ label, description, data }: { label?: ReactNode; description?: ReactNode; data?: { label: string }[] }) => (
-      <div>
+    Select: ({
+      label, description, data, searchable, error,
+    }: { label?: ReactNode; description?: ReactNode; data?: { label: string; value: string }[]; searchable?: boolean; error?: string }) => (
+      <div data-searchable={searchable || undefined}>
         {label}
         {description}
-        <select>{data?.map((d) => <option key={d.label}>{d.label}</option>)}</select>
+        <select>{data?.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}</select>
+        {error}
       </div>
     ),
-    MultiSelect: ({ label, description, data }: { label?: ReactNode; description?: ReactNode; data?: { label: string }[] }) => (
-      <div data-multiselect>
+    MultiSelect: ({
+      label, description, data, searchable,
+    }: { label?: ReactNode; description?: ReactNode; data?: { label: string; value: string }[]; searchable?: boolean }) => (
+      <div data-multiselect data-searchable={searchable || undefined}>
         {label}
         {description}
-        <select multiple>{data?.map((d) => <option key={d.label}>{d.label}</option>)}</select>
+        <select multiple>{data?.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}</select>
       </div>
     ),
     Slider: ({
-      classNames, disabled, max, min, value,
-    }: { classNames?: { thumb?: string }; disabled?: boolean; max?: number; min?: number; value?: number }) => (
+      classNames, disabled, max, min, precision, step, value,
+    }: {
+      classNames?: { thumb?: string };
+      disabled?: boolean;
+      max?: number;
+      min?: number;
+      precision?: number;
+      step?: number;
+      value?: number;
+    }) => (
       <div
         data-slider
         data-disabled={disabled}
         data-min={min}
         data-max={max}
+        data-precision={precision}
+        data-step={step}
         data-value={value}
         data-thumb-class={classNames?.thumb}
       />
@@ -185,11 +217,7 @@ vi.mock('../../ReactMarkdownWrapper', () => ({
 }));
 
 vi.mock('@mantine/hooks', () => ({
-  useMove: vi.fn(() => ({ ref: { current: null } })),
-}));
-
-vi.mock('../sliderBreaks', () => ({
-  generateSliderBreakValues: vi.fn(() => []),
+  useMove: vi.fn(() => ({ ref: () => undefined, active: false })),
 }));
 
 vi.mock('../../../store/store', () => ({
@@ -210,7 +238,9 @@ vi.mock('../../../store/store', () => ({
 }));
 
 vi.mock('../../../utils/responseOptions', () => ({
-  getMatrixAnswerOptions: vi.fn((response) => (response.answerOptions || []).map((o: string) => ({ label: o, value: o }))),
+  getMatrixAnswerOptions: vi.fn((response) => (response.answerOptions || []).map((option: string | { label: string; value: string }) => (
+    typeof option === 'string' ? { label: option, value: option } : option
+  ))),
   isMatrixDontKnowValue: vi.fn(() => false),
   MATRIX_DONT_KNOW_OPTION: { value: '__dontKnow', label: "I don't know" },
 }));
@@ -253,8 +283,10 @@ vi.mock('../utils', () => ({
   generateErrorMessage: vi.fn(() => null),
   DONT_KNOW_DEFAULT_VALUE: "I don't know",
   normalizeCheckboxDontKnowValue: vi.fn((v: string[]) => v),
+  normalizeCheckboxValue: vi.fn((v: unknown) => (typeof v === 'string' && v.length > 0 ? [v] : [])),
   usesStandaloneDontKnowField: vi.fn(() => false),
   getDefaultFieldValue: vi.fn(() => null),
+  getResponseWidth: vi.fn(() => 'full'),
 }));
 
 vi.mock('../../../utils/stringOptions', () => ({
@@ -264,13 +296,19 @@ vi.mock('../../../utils/stringOptions', () => ({
 
 vi.mock('react-router', () => ({
   useSearchParams: vi.fn(() => [new URLSearchParams(), vi.fn()]),
+  useParams: vi.fn(() => ({})),
+  useNavigate: vi.fn(() => vi.fn()),
 }));
 
 vi.mock('../../../store/hooks/useStudyConfig', () => ({
   useStudyConfig: vi.fn(() => ({
-    uiConfig: { enumerateQuestions: false, responseDividers: false },
+    uiConfig: { enumerateQuestions: false, responseDividers: false, nextOnEnter: true },
     components: {},
   })),
+}));
+
+vi.mock('../../../store/hooks/useNextStep', () => ({
+  useNextStep: vi.fn(() => ({ isNextDisabled: false, goToNextStep: vi.fn() })),
 }));
 
 vi.mock('../../../store/hooks/useIsAnalysis', () => ({
@@ -279,6 +317,8 @@ vi.mock('../../../store/hooks/useIsAnalysis', () => ({
 
 vi.mock('../../../routes/utils', () => ({
   useCurrentStep: vi.fn(() => 0),
+  useCurrentComponent: vi.fn(() => ''),
+  useCurrentIdentifier: vi.fn(() => 'test_0'),
 }));
 
 vi.mock('../../../utils/fetchStylesheet', () => ({
@@ -339,6 +379,30 @@ describe('OptionLabel', () => {
   test('no info icon when infoText is absent', () => {
     const html = renderToStaticMarkup(<OptionLabel label="A" />);
     expect(html).not.toContain('icon-info');
+  });
+
+  test('templates labels and tooltips with parameters and prior answers', () => {
+    const html = renderToStaticMarkup(
+      <OptionTextTemplateContext.Provider value={{
+        parameters: { name: 'Rome' },
+        data: { flatSequence: ['intro', 'end'], answers: { intro_0: { answer: { city: 'Paris' } } } },
+      }}
+      >
+        <OptionLabel label='{{name}} after {{lookupAnswers -1 "city"}}' infoText="Hint for {{name}}" />
+      </OptionTextTemplateContext.Provider>,
+    );
+    expect(html).toContain('Rome after Paris');
+    expect(html).toContain('Hint for Rome');
+  });
+
+  test('escapes inserted markup in markdown labels but shows plain button text', () => {
+    const content = (button: boolean) => renderToStaticMarkup(
+      <OptionTextTemplateContext.Provider value={{ parameters: { name: 'A & B' }, data: {} }}>
+        <OptionLabel label="{{name}}" button={button} />
+      </OptionTextTemplateContext.Provider>,
+    );
+    expect(content(false)).toContain('A &amp;amp; B');
+    expect(content(true)).toContain('A &amp; B');
   });
 });
 
@@ -530,6 +594,7 @@ describe('DropdownInput', () => {
     expect(html).toContain('Choose a color');
     expect(html).toContain('Red');
     expect(html).toContain('Blue');
+    expect(html).not.toContain('data-searchable');
   });
 
   test('renders MultiSelect when maxSelections > 1', () => {
@@ -543,6 +608,24 @@ describe('DropdownInput', () => {
       />,
     );
     expect(html).toContain('data-multiselect');
+    expect(html).toContain('data-searchable="true"');
+  });
+
+  test('renders the countries option preset with emoji labels', () => {
+    const html = renderToStaticMarkup(
+      <DropdownInput
+        response={{
+          id: 'country', prompt: 'Select a country', type: 'dropdown', options: 'countries',
+        }}
+        disabled={false}
+        answer={{ value: '' }}
+        index={1}
+        enumerateQuestions={false}
+      />,
+    );
+
+    expect(html).toContain('🇺🇸 United States');
+    expect(html).toContain('data-searchable="true"');
   });
 });
 
@@ -574,6 +657,19 @@ describe('CheckBoxInput', () => {
     expect(html).toContain('C');
   });
 
+  test('renders a malformed scalar answer as a selected checkbox', () => {
+    const html = renderToStaticMarkup(
+      <CheckBoxInput
+        response={base}
+        disabled={false}
+        answer={{ value: 'A' } as unknown as { value: string[] }}
+        index={1}
+        enumerateQuestions={false}
+      />,
+    );
+    expect(html).toContain('data-group-value="[&quot;A&quot;]"');
+  });
+
   test('renders "Other" checkbox label when withOther=true and horizontal=true', () => {
     const html = renderToStaticMarkup(
       <CheckBoxInput
@@ -592,6 +688,8 @@ describe('CheckBoxInput', () => {
 // ── ButtonsInput ──────────────────────────────────────────────────────────────
 
 describe('ButtonsInput', () => {
+  afterEach(() => { cleanup(); });
+
   const base: ButtonsResponse = {
     type: 'buttons',
     id: 'q1',
@@ -614,6 +712,76 @@ describe('ButtonsInput', () => {
     expect(html).toContain('Yes');
     expect(html).toContain('No');
     expect(html).toContain('Maybe');
+  });
+
+  test('mapped key works when a rendered response card has focus', () => {
+    const onChange = vi.fn();
+    const response = {
+      ...base,
+      options: [
+        { label: 'Yes', value: 'yes', key: 'Enter' },
+        { label: 'No', value: 'no', key: 'n' },
+      ],
+    } as ButtonsResponse;
+    const { container } = render(
+      <ButtonsInput
+        response={response}
+        disabled={false}
+        answer={{ value: '', onChange }}
+        index={1}
+        enumerateQuestions={false}
+      />,
+    );
+
+    const option = container.querySelector('[role="radio"]') as HTMLElement;
+    option.focus();
+    fireEvent.keyDown(option, { key: 'Enter', bubbles: true, cancelable: true });
+
+    expect(onChange).toHaveBeenCalledWith('yes', 'keyboard');
+  });
+
+  test('reports a click when clearing a button response', () => {
+    const onChange = vi.fn();
+    const { getByRole } = render(
+      <ButtonsInput
+        response={base}
+        disabled={false}
+        answer={{ value: 'Yes', onChange }}
+        index={1}
+        enumerateQuestions={false}
+      />,
+    );
+
+    fireEvent.click(getByRole('button', { name: 'Clear selection' }));
+    expect(onChange).toHaveBeenCalledWith('', 'click');
+  });
+
+  test('mapped Enter does not also trigger NextButton', () => {
+    const onChange = vi.fn();
+    const onNext = vi.fn();
+    const response = {
+      ...base,
+      options: [{ label: 'Yes', value: 'yes', key: 'Enter' }],
+    } as ButtonsResponse;
+    const { container } = render(
+      <>
+        <ButtonsInput
+          response={response}
+          disabled={false}
+          answer={{ value: '', onChange }}
+          index={1}
+          enumerateQuestions={false}
+        />
+        <NextButton checkAnswer={null} onNext={onNext} />
+      </>,
+    );
+
+    const option = container.querySelector('[role="radio"]') as HTMLElement;
+    option.focus();
+    fireEvent.keyDown(option, { key: 'Enter', bubbles: true, cancelable: true });
+
+    expect(onChange).toHaveBeenCalledWith('yes', 'keyboard');
+    expect(onNext).not.toHaveBeenCalled();
   });
 });
 
@@ -748,6 +916,26 @@ describe('SliderInput', () => {
     expect(html).toContain('data-slider');
   });
 
+  test('passes fractional minimum precision to the horizontal slider', () => {
+    const html = renderToStaticMarkup(
+      <SliderInput
+        response={{
+          ...base,
+          options: [{ label: 'Low', value: 0.05 }, { label: 'High', value: 1.05 }],
+          step: 0.1,
+          tlxStyle: true,
+        }}
+        disabled={false}
+        answer={{}}
+        index={1}
+        enumerateQuestions={false}
+      />,
+    );
+
+    expect(html).toContain('data-step="0.1"');
+    expect(html).toContain('data-precision="2"');
+  });
+
   test('renders smeq vertical layout with option labels when smeqStyle=true', () => {
     const html = renderToStaticMarkup(
       <SliderInput
@@ -765,25 +953,7 @@ describe('SliderInput', () => {
     expect(html).not.toContain('data-slider');
   });
 
-  test('renders smeq mark elements when generateSliderBreakValues returns non-empty', () => {
-    // smeq block renders mark elements when labelValues is non-empty
-    vi.mocked(generateSliderBreakValues).mockReturnValueOnce([25, 50, 75]);
-    const html = renderToStaticMarkup(
-      <SliderInput
-        response={{ ...base, smeqStyle: true } as Parameters<typeof SliderInput>[0]['response']}
-        disabled={false}
-        answer={{}}
-        index={1}
-        enumerateQuestions={false}
-      />,
-    );
-    expect(html).toContain('Low');
-  });
-
   test('renders SMEQ numeric labels including both endpoints', () => {
-    vi.mocked(generateSliderBreakValues).mockReturnValueOnce([
-      10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140,
-    ]);
     const html = renderToStaticMarkup(
       <SliderInput
         response={{
@@ -810,7 +980,7 @@ describe('SliderInput', () => {
     let capturedCallback: ((pos: { x: number; y: number }) => void) | null = null;
     vi.mocked(useMove).mockImplementationOnce((fn: (pos: { x: number; y: number }) => void) => {
       capturedCallback = fn;
-      return { ref: { current: null }, active: false };
+      return { ref: () => undefined, active: false };
     });
     const mockOnChange = vi.fn();
     await act(async () => render(
@@ -838,7 +1008,11 @@ describe('SliderInput', () => {
         enumerateQuestions={false}
       />,
     );
-    expect(container.querySelector('[title="20"]')).not.toBeNull();
+    const getThumb = () => Array.from(container.querySelectorAll('div')).find(
+      (element) => element.style.backgroundColor === 'var(--mantine-color-red-text)'
+        && element.style.width === '20px',
+    );
+    expect(getThumb()?.style.bottom).toContain('20%');
 
     rerender(
       <SliderInput
@@ -849,7 +1023,7 @@ describe('SliderInput', () => {
         enumerateQuestions={false}
       />,
     );
-    expect(container.querySelector('[title="80"]')).not.toBeNull();
+    expect(getThumb()?.style.bottom).toContain('80%');
     cleanup();
   });
 
@@ -884,7 +1058,7 @@ describe('SliderInput', () => {
     let capturedCallback: ((pos: { x: number; y: number }) => void) | null = null;
     vi.mocked(useMove).mockImplementationOnce((fn: (pos: { x: number; y: number }) => void) => {
       capturedCallback = fn;
-      return { ref: { current: null }, active: false };
+      return { ref: () => undefined, active: false };
     });
     const mockOnChange = vi.fn();
     render(
@@ -1222,6 +1396,41 @@ describe('ResponseSwitcher', () => {
     expect(html).toContain('Red');
   });
 
+  test('dropdown shows templated option text while retaining its answer value', () => {
+    const response = {
+      type: 'dropdown', id: 'q1', prompt: 'Pick one', options: [{ label: '{{name}}', value: 'fixed', infoText: 'About {{name}}' }],
+    } as DropdownResponse;
+    const html = renderToStaticMarkup(
+      <ResponseSwitcher
+        {...makeSwitcherProps(response)}
+        config={{ type: 'questionnaire', response: [], parameters: { name: 'A & B' } } as IndividualComponent}
+      />,
+    );
+    expect(html).toContain('<option value="fixed">A &amp; B</option>');
+    expect(html).not.toContain('{{name}}');
+  });
+
+  test('required-value errors use the displayed option label', () => {
+    const response = {
+      type: 'dropdown',
+      id: 'q1',
+      prompt: 'Pick one',
+      required: true,
+      requiredValue: 'fixed',
+      options: [{ label: '{{name}}', value: 'fixed' }, { label: 'Other', value: 'other' }],
+    } as DropdownResponse;
+    const html = renderToStaticMarkup(
+      <ResponseSwitcher
+        {...makeSwitcherProps(response)}
+        form={{ value: 'other' } as Parameters<typeof ResponseSwitcher>[0]['form']}
+        config={{ type: 'questionnaire', response: [], parameters: { name: 'Pear' } } as IndividualComponent}
+        errors
+      />,
+    );
+    expect(html).toContain('Please select Pear to continue.');
+    expect(html).not.toContain('Please select {{name}}');
+  });
+
   test('slider type renders SliderInput with data-slider', () => {
     const html = renderToStaticMarkup(
       <ResponseSwitcher
@@ -1231,6 +1440,25 @@ describe('ResponseSwitcher', () => {
       />,
     );
     expect(html).toContain('data-slider');
+  });
+
+  test('slider labels use component parameters without changing numeric values', () => {
+    const response = {
+      type: 'slider',
+      id: 'q1',
+      prompt: 'Effort',
+      smeqStyle: true,
+      options: [{ label: '{{low}}', value: 0 }, { label: '{{high}}', value: 100 }],
+    } as SliderResponse;
+    const html = renderToStaticMarkup(
+      <ResponseSwitcher
+        {...makeSwitcherProps(response)}
+        config={{ type: 'questionnaire', response: [], parameters: { low: 'Easy', high: 'Hard' } } as IndividualComponent}
+      />,
+    );
+    expect(html).toContain('Easy');
+    expect(html).toContain('Hard');
+    expect(html).not.toContain('{{low}}');
   });
 
   test('radio type renders RadioInput', () => {
@@ -1243,6 +1471,40 @@ describe('ResponseSwitcher', () => {
     );
     expect(html).toContain('Agree?');
     expect(html).toContain('Yes');
+  });
+
+  test.each(['radio', 'checkbox', 'buttons'] as const)('%s renders option labels and tooltips from component parameters', (type) => {
+    const response = {
+      type, id: 'q1', prompt: 'Pick one', options: [{ label: '{{name}}', value: 'fixed', infoText: 'About {{name}}' }],
+    } as RadioResponse | CheckboxResponse | ButtonsResponse;
+    const html = renderToStaticMarkup(
+      <ResponseSwitcher
+        {...makeSwitcherProps(response)}
+        config={{ type: 'questionnaire', response: [], parameters: { name: 'Pear' } } as IndividualComponent}
+      />,
+    );
+    expect(html).toContain('Pear');
+    expect(html).toContain('About Pear');
+    expect(html).toContain('data-value="fixed"');
+    expect(html).not.toContain('{{name}}');
+  });
+
+  test('templates a persisted radio option without changing its saved order or value', () => {
+    vi.mocked(useStoredAnswer).mockReturnValueOnce({
+      optionOrders: { q1: [{ label: '{{name}}', value: 'fixed' }] },
+    } as unknown as ReturnType<typeof useStoredAnswer>);
+    const response = {
+      type: 'radio', id: 'q1', prompt: 'Pick one', options: [{ label: '{{name}}', value: 'fixed' }],
+    } as RadioResponse;
+    const html = renderToStaticMarkup(
+      <ResponseSwitcher
+        {...makeSwitcherProps(response)}
+        config={{ type: 'questionnaire', response: [], parameters: { name: 'Pear' } } as IndividualComponent}
+      />,
+    );
+    expect(html).toContain('Pear');
+    expect(html).toContain('data-value="fixed"');
+    expect(html).not.toContain('{{name}}');
   });
 
   test('checkbox type renders CheckBoxInput', () => {
@@ -1268,6 +1530,20 @@ describe('ResponseSwitcher', () => {
     expect(html).toContain('Rank items');
   });
 
+  test('ranking labels use component parameters', () => {
+    const response = {
+      type: 'ranking-sublist', id: 'q1', prompt: 'Rank items', options: [{ label: '{{name}}', value: 'fixed' }],
+    } as Response;
+    const html = renderToStaticMarkup(
+      <ResponseSwitcher
+        {...makeSwitcherProps(response)}
+        config={{ type: 'questionnaire', response: [], parameters: { name: 'Pear' } } as IndividualComponent}
+      />,
+    );
+    expect(html).toContain('Pear');
+    expect(html).not.toContain('{{name}}');
+  });
+
   test('reactive type renders ReactiveInput', () => {
     const html = renderToStaticMarkup(
       <ResponseSwitcher
@@ -1277,6 +1553,28 @@ describe('ResponseSwitcher', () => {
       />,
     );
     expect(html).toContain('Selected');
+  });
+
+  test('reactive type displays requiredLabel for a requiredValue mismatch', () => {
+    const response = {
+      type: 'reactive',
+      id: 'q1',
+      prompt: 'Selected',
+      required: true,
+      requiredValue: 'complete',
+      requiredLabel: 'the completed state',
+    } as Response;
+    const props = makeSwitcherProps(response);
+
+    const html = renderToStaticMarkup(
+      <ResponseSwitcher
+        {...props}
+        form={{ value: 'incomplete' } as Parameters<typeof ResponseSwitcher>[0]['form']}
+        errors
+      />,
+    );
+
+    expect(html).toContain('Please enter the completed state to continue.');
   });
 
   test('matrix-radio type renders MatrixInput', () => {
@@ -1293,6 +1591,27 @@ describe('ResponseSwitcher', () => {
       />,
     );
     expect(html).toContain('Rate each');
+  });
+
+  test('matrix row and column option text uses component parameters', () => {
+    const response = {
+      type: 'matrix-radio',
+      id: 'q1',
+      prompt: 'Rate each',
+      questionOptions: [{ label: '{{row}}', value: 'fixed-row', infoText: 'About {{row}}' }],
+      answerOptions: [{ label: '{{column}}', value: 'fixed-column' }],
+    } as MatrixRadioResponse;
+    const html = renderToStaticMarkup(
+      <ResponseSwitcher
+        {...makeSwitcherProps(response)}
+        config={{ type: 'questionnaire', response: [], parameters: { row: 'Fruit', column: 'Yes' } } as IndividualComponent}
+      />,
+    );
+    expect(html).toContain('Fruit');
+    expect(html).toContain('About Fruit');
+    expect(html).toContain('Yes');
+    expect(html).toContain('data-value="fixed-column"');
+    expect(html).not.toContain('{{row}}');
   });
 
   test('buttons type renders ButtonsInput', () => {

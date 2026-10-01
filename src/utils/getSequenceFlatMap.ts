@@ -1,7 +1,9 @@
 import {
   DynamicBlock, StudyConfig,
 } from '../parser/types';
-import { isDynamicBlock, isFactorBlock, isFactorPlanBlock } from '../parser/utils';
+import {
+  isDynamicBlock, isFactorBlock, isFactorPlanBlock, isFactorRuntimePlanBlock,
+} from '../parser/utils';
 import { Sequence } from '../store/types';
 
 function getFactorPlanComponents(sequence: Sequence | StudyConfig['sequence']): string[] | null {
@@ -19,22 +21,32 @@ function getFactorPlanComponents(sequence: Sequence | StudyConfig['sequence']): 
   )))];
 }
 
+function getFactorRuntimePlanComponents(sequence: Sequence | StudyConfig['sequence']): string[] | null {
+  if (!isFactorRuntimePlanBlock(sequence)) {
+    return null;
+  }
+  return [...new Set(Object.values(sequence.conditionComponents).flat())];
+}
+
 export function getSequenceFlatMap<T extends Sequence | StudyConfig['sequence']>(sequence: T): string[] {
   if (isDynamicBlock(sequence) || isFactorBlock(sequence)) {
     return [sequence.id];
   }
 
-  return getFactorPlanComponents(sequence)
+  return getFactorRuntimePlanComponents(sequence)
+    ?? getFactorPlanComponents(sequence)
     ?? sequence.components.flatMap((component) => (
       typeof component === 'string' ? component : getSequenceFlatMap(component)
     ));
 }
 
-function findAllFuncBlocks(sequence: StudyConfig['sequence']): DynamicBlock[] {
+function findAllFuncBlocks(sequence: StudyConfig['sequence'] | Sequence): (DynamicBlock | Sequence)[] {
   return isDynamicBlock(sequence) ? [sequence] : isFactorBlock(sequence) ? [] : sequence.components.flatMap((component) => (typeof component === 'string' ? [] : findAllFuncBlocks(component)));
 }
 
-export function findFuncBlock(name: string, sequence: StudyConfig['sequence']): (DynamicBlock | undefined) {
+export function findFuncBlock(name: string, sequence: Sequence): (Sequence | undefined);
+export function findFuncBlock(name: string, sequence: StudyConfig['sequence']): (DynamicBlock | undefined);
+export function findFuncBlock(name: string, sequence: StudyConfig['sequence'] | Sequence): (DynamicBlock | Sequence | undefined) {
   const allFuncBlocks = findAllFuncBlocks(sequence);
   return allFuncBlocks.find((funcBlock) => funcBlock.id === name);
 }
@@ -45,7 +57,8 @@ export function getSequenceFlatMapWithInterruptions(sequence: StudyConfig['seque
   }
 
   return [
-    ...(getFactorPlanComponents(sequence)
+    ...(getFactorRuntimePlanComponents(sequence)
+      ?? getFactorPlanComponents(sequence)
       ?? sequence.components.flatMap((component) => (
         typeof component === 'string'
           ? component

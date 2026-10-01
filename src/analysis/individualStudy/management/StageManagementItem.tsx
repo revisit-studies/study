@@ -970,8 +970,8 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
                         height: 14,
                         flex: '0 0 auto',
                         backgroundColor: stage.color,
-                        border: '1px solid #dee2e6',
-                        borderRadius: 3,
+                        border: '1px solid var(--mantine-color-default-border)',
+                        borderRadius: 4,
                       }}
                     />
                     <Text size="sm">{stage.stageName}</Text>
@@ -1053,7 +1053,7 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
           })}
 
           {addingNewStage && (
-            <Table.Tr style={{ backgroundColor: '#f8f9fa' }}>
+            <Table.Tr style={{ backgroundColor: 'light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-5))' }}>
               <Table.Td />
               <Table.Td>
                 <Group gap="xs" wrap="nowrap">

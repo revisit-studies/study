@@ -75,6 +75,280 @@ describe('factor sequence actions', () => {
     ]);
   });
 
+  test('applies aliases when selecting factor conditions', () => {
+    const factors = {
+      color: ['RED', 'GREEN', 'BLUE'],
+      stroopConditions: {
+        action: 'cross' as const,
+        factors: ['color', 'color'],
+        as: ['word', 'inkColor'],
+      },
+    };
+
+    expect(resolveFactorConditions({
+      action: 'keep',
+      factor: 'stroopConditions',
+      condition: { word: 'RED' },
+    }, factors)).toEqual([
+      { word: 'RED', inkColor: 'RED' },
+      { word: 'RED', inkColor: 'GREEN' },
+      { word: 'RED', inkColor: 'BLUE' },
+    ]);
+  });
+
+  test('rejects aliases for repeated multi-value inputs', () => {
+    const errors: ParserErrorWarning[] = [];
+
+    resolveFactorConditions({
+      action: 'cross',
+      factors: [
+        { action: 'cross', factors: ['a', 'a'] },
+        'b',
+      ],
+      as: ['repeated', 'other'],
+    }, factorConfig().factors!, errors, [], 'nestedAlias');
+
+    expect(errors.map((error) => error.message)).toContain(
+      'Factor expression `nestedAlias` cannot apply as name `repeated` to an input with multiple parameters',
+    );
+  });
+
+  test('rejects sampling after a selector removes every condition', () => {
+    const errors: ParserErrorWarning[] = [];
+
+    resolveFactorConditions({
+      action: 'sample',
+      factors: [{ action: 'keep', factor: 'a', condition: { a: 99 } }],
+      numSamples: 1,
+      samplingStrategy: 'withReplacement',
+    }, factorConfig().factors!, errors, [], 'emptySample');
+
+    expect(errors.map((error) => error.message)).toContain(
+      'Sample factor `emptySample` cannot sample from an empty condition set',
+    );
+  });
+
+  test('allocates mixed primitive between-subjects levels', () => {
+    const config = factorConfig();
+    config.factors = { arm: [0, 'control'] };
+    config.betweenSubjects = ['arm'];
+    config.components = {
+      numericArm: {
+        type: 'markdown', path: 'numeric.md', response: [], parameters: { arm: 0 },
+      },
+      stringArm: {
+        type: 'markdown', path: 'string.md', response: [], parameters: { arm: 'control' },
+      },
+    };
+    config.sequence = { order: 'fixed', components: ['numericArm', 'stringArm'] };
+
+    const sequences = generateSequenceArray(config);
+
+    expect(sequences.map((sequence) => sequence.parameters?.arm)).toEqual([0, 'control']);
+    expect(sequences.map((sequence) => sequence.components[0])).toEqual(['numericArm', 'stringArm']);
+  });
+
+  test('reports invalid between-subjects factors as parser errors', async () => {
+    const invalidFactors: Array<[string, StudyConfig['factors']]> = [
+      ['missing', {}],
+      ['empty', { empty: [] }],
+      ['ordered', { ordered: { values: ['A'], order: 'fixed' } }],
+    ];
+
+    await Promise.all(invalidFactors.map(async ([factorName, factors]) => {
+      const result = await parseStudyConfig(JSON.stringify({
+        ...factorConfig(),
+        factors,
+        betweenSubjects: [factorName],
+      }));
+
+      expect(result.errors).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          message: expect.stringContaining(`Between-subjects factor \`${factorName}\``),
+          category: 'sequence-validation',
+        }),
+      ]));
+      expect(result.warnings).not.toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          message: expect.stringContaining(`Between-subjects factor \`${factorName}\``),
+        }),
+      ]));
+    }));
+  });
+
+  test('filters between-subjects levels before factor sampling', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    const config = factorConfig();
+    config.factors = {
+      arm: ['A', 'B'],
+      stimulus: ['x', 'y'],
+      trials: { action: 'cross', factors: ['arm', 'stimulus'] },
+    };
+    config.betweenSubjects = ['arm'];
+    config.sequence = {
+      type: 'factor',
+      id: 'sampledTrials',
+      factor: {
+        action: 'sample', factors: ['trials'], numSamples: 1, samplingStrategy: 'withoutReplacement',
+      },
+      components: 'trial',
+    };
+
+    const compiled = compileFactorBlocks(config.sequence, config);
+    const sequences = generateSequenceArray({
+      ...config,
+      sequence: compiled.sequence,
+      components: compiled.components,
+    });
+    random.mockRestore();
+
+    expect(sequences).toHaveLength(2);
+    sequences.forEach((sequence) => {
+      const sampled = sequence.components.slice(0, -1);
+      expect(sampled).toHaveLength(1);
+      expect(compiled.components[sampled[0] as string]).toMatchObject({
+        parameters: { arm: sequence.parameters?.arm },
+      });
+    });
+  });
+
+  test('filters aliased derived assignments before factor-owned sampling', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    const config = factorConfig();
+    config.uiConfig.numSequences = 2;
+    config.factors = {
+      stimulus: { values: [1, 2], order: 'random', numSamples: 1 },
+      assignment: { action: 'cross', factors: ['stimulus'], as: ['arm'] },
+    };
+    config.betweenSubjects = ['assignment'];
+    config.sequence = {
+      type: 'factor', id: 'aliasedAssignment', factor: 'assignment', components: 'trial',
+    };
+
+    const compiled = compileFactorBlocks(config.sequence, config);
+    const sequences = generateSequenceArray({
+      ...config,
+      sequence: compiled.sequence,
+      components: compiled.components,
+    });
+    random.mockRestore();
+
+    sequences.forEach((sequence) => {
+      const componentId = sequence.components.find((component): component is string => component !== 'end');
+      expect(componentId).toBeDefined();
+      expect(compiled.components[componentId!].parameters?.arm).toBe(sequence.parameters?.arm);
+    });
+  });
+
+  test('filters each aliased input before cross-product sampling', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    const config = factorConfig();
+    config.uiConfig.numSequences = 4;
+    config.factors = {
+      stimulus: { values: [1, 2], order: 'random', numSamples: 1 },
+      context: { values: ['x', 'y'], order: 'random', numSamples: 1 },
+      assignment: {
+        action: 'cross', factors: ['stimulus', 'context'], as: ['arm', 'condition'],
+      },
+    };
+    config.betweenSubjects = ['assignment'];
+    config.sequence = {
+      type: 'factor', id: 'multiAliasedAssignment', factor: 'assignment', components: 'trial',
+    };
+
+    const compiled = compileFactorBlocks(config.sequence, config);
+    const sequences = generateSequenceArray({
+      ...config,
+      sequence: compiled.sequence,
+      components: compiled.components,
+    });
+    random.mockRestore();
+
+    sequences.forEach((sequence) => {
+      const componentId = sequence.components.find((component): component is string => component !== 'end');
+      expect(componentId).toBeDefined();
+      expect(compiled.components[componentId!].parameters).toMatchObject({
+        arm: sequence.parameters?.arm,
+        condition: sequence.parameters?.condition,
+      });
+    });
+  });
+
+  test('filters repeated aliased ordered inputs independently', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    const config = factorConfig();
+    config.uiConfig.numSequences = 4;
+    config.factors = {
+      stimulus: { values: [1, 2], order: 'random', numSamples: 1 },
+      assignment: {
+        action: 'cross', factors: ['stimulus', 'stimulus'], as: ['word', 'inkColor'],
+      },
+    };
+    config.betweenSubjects = ['assignment'];
+    config.sequence = {
+      type: 'factor', id: 'repeatedAliasedAssignment', factor: 'assignment', components: 'trial',
+    };
+
+    const compiled = compileFactorBlocks(config.sequence, config);
+    const sequences = generateSequenceArray({
+      ...config,
+      sequence: compiled.sequence,
+      components: compiled.components,
+    });
+    random.mockRestore();
+
+    sequences.forEach((sequence) => {
+      const componentId = sequence.components.find((component): component is string => component !== 'end');
+      expect(componentId).toBeDefined();
+      expect(compiled.components[componentId!].parameters).toMatchObject({
+        word: sequence.parameters?.word,
+        inkColor: sequence.parameters?.inkColor,
+      });
+    });
+  });
+
+  test('filters nested aliases before sampling the inner factor', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    const config = factorConfig();
+    config.uiConfig.numSequences = 2;
+    config.factors = {
+      stimulus: { values: [1, 2], order: 'random', numSamples: 1 },
+      innerAssignment: { action: 'cross', factors: ['stimulus'], as: ['innerArm'] },
+      assignment: { action: 'cross', factors: ['innerAssignment'], as: ['arm'] },
+    };
+    config.betweenSubjects = ['assignment'];
+    config.sequence = {
+      type: 'factor', id: 'nestedAliasedAssignment', factor: 'assignment', components: 'trial',
+    };
+
+    const compiled = compileFactorBlocks(config.sequence, config);
+    const sequences = generateSequenceArray({
+      ...config,
+      sequence: compiled.sequence,
+      components: compiled.components,
+    });
+    random.mockRestore();
+
+    sequences.forEach((sequence) => {
+      const componentId = sequence.components.find((component): component is string => component !== 'end');
+      expect(componentId).toBeDefined();
+      expect(compiled.components[componentId!].parameters?.arm).toBe(sequence.parameters?.arm);
+    });
+  });
+
+  test('rejects incomplete base components used by factor blocks', () => {
+    const config = factorConfig();
+    config.baseComponents!.trial = {};
+    const errors: ParserErrorWarning[] = [];
+
+    const compiled = compileFactorBlocks(config.sequence, config, errors);
+
+    expect(errors.map((error) => error.message)).toContain(
+      'Factor block `test` generated component from base component `trial` that does not satisfy the IndividualComponent schema',
+    );
+    expect(compiled.components).toEqual({});
+  });
+
   test('validates factor as names', () => {
     const errors: ParserErrorWarning[] = [];
     const factors = factorConfig().factors!;
@@ -121,7 +395,7 @@ describe('factor sequence actions', () => {
     ))).toBe(true);
   });
 
-  test('supports object-valued between-subjects factors and warns about conflicting fields', async () => {
+  test('supports object-valued between-subjects factors and rejects namespace collisions', async () => {
     const config = factorConfig();
     config.factors = {
       taskOrder: [
@@ -141,6 +415,11 @@ describe('factor sequence actions', () => {
 
     const result = await parseStudyConfig(JSON.stringify(config));
 
+    expect(result.errors).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        message: 'Between-subjects factors `taskOrder` and `conflictingOrder` collide on parameter namespace `firstTask`',
+      }),
+    ]));
     expect(result.warnings).toEqual(expect.arrayContaining([
       expect.objectContaining({
         message: 'Between-subjects factors `taskOrder` and `conflictingOrder` assign incompatible values to `firstTask`',
@@ -152,7 +431,28 @@ describe('factor sequence actions', () => {
     ]));
   });
 
-  test('validates keep/remove selectors and nested samples', () => {
+  test('allocates derived between-subjects factors', () => {
+    const config = factorConfig();
+    config.uiConfig.numSequences = 4;
+    config.factors = {
+      task: ['A', 'B'],
+      interface: ['FFL', 'LaTeX'],
+      assignment: { action: 'cross', factors: ['task', 'interface'] },
+    };
+    config.betweenSubjects = ['assignment'];
+
+    const sequences = generateSequenceArray(config);
+
+    expect(sequences).toHaveLength(4);
+    expect(sequences.map((sequence) => sequence.parameters)).toEqual(expect.arrayContaining([
+      expect.objectContaining({ task: 'A', interface: 'FFL' }),
+      expect.objectContaining({ task: 'A', interface: 'LaTeX' }),
+      expect.objectContaining({ task: 'B', interface: 'FFL' }),
+      expect.objectContaining({ task: 'B', interface: 'LaTeX' }),
+    ]));
+  });
+
+  test('validates keep/remove selectors and materializes nested samples in factor blocks', () => {
     const errors: ParserErrorWarning[] = [];
     const factors = factorConfig().factors!;
 
@@ -169,7 +469,7 @@ describe('factor sequence actions', () => {
 
     expect(errors.map((error) => error.message)).toEqual(expect.arrayContaining([
       'Keep factor `missingKeepSelector` requires exactly one non-empty condition or items list',
-      'Factor expression `sampledRemove` cannot nest a sampled factor',
+      'Sample factor `sampledRemove` must be materialized by a factor block',
     ]));
   });
 
@@ -319,21 +619,206 @@ describe('factor sequence actions', () => {
     ]));
   });
 
-  test('rejects sampled factors nested inside another expression', () => {
+  test('evaluates nested sampled factors from the inner factor outward', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    const config = factorConfig();
+    config.uiConfig.numSequences = 1;
+    config.sequence = {
+      type: 'factor',
+      id: 'nestedSample',
+      factor: {
+        action: 'cross',
+        factors: [
+          {
+            action: 'sample', factors: ['a'], numSamples: 2, samplingStrategy: 'withoutReplacement',
+          },
+          'b',
+        ],
+      },
+      components: 'trial',
+    };
+
     const errors: ParserErrorWarning[] = [];
+    const compiled = compileFactorBlocks(config.sequence, config, errors);
+    expect(errors).toEqual([]);
+    expect(compiled.sequence).toMatchObject({ type: 'factor-runtime-plan', id: 'nestedSample' });
+    expect(Object.keys(compiled.components)).toHaveLength(6);
 
-    resolveFactorConditions({
-      action: 'cross',
-      factors: [
-        {
-          action: 'sample', factors: ['a'], numSamples: 2, samplingStrategy: 'withoutReplacement',
-        },
-        'b',
-      ],
-    }, factorConfig().factors!, errors, [], 'nestedSample');
+    const sequences = generateSequenceArray({
+      ...config,
+      sequence: compiled.sequence,
+      components: compiled.components,
+    });
+    random.mockRestore();
 
-    expect(errors.map((error) => error.message)).toContain(
-      'Factor expression `nestedSample` cannot nest a sampled factor',
+    expect(sequences).toHaveLength(1);
+    const generatedComponents = getSequenceFlatMap(sequences[0]).filter((componentId) => componentId !== 'end');
+    expect(generatedComponents).toHaveLength(4);
+    generatedComponents.forEach((componentId) => {
+      const component = compiled.components[componentId];
+      expect(component).toMatchObject({ parameters: { b: expect.any(String) } });
+      expect(component).toMatchObject({ parameters: { a: expect.any(Number) } });
+    });
+  });
+
+  test('preserves runtime sampling when an outer sample wraps a nested sample', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    const config = factorConfig();
+    config.uiConfig.numSequences = 1;
+    config.sequence = {
+      type: 'factor',
+      id: 'nestedOuterSample',
+      factor: {
+        action: 'sample',
+        factors: [
+          {
+            action: 'sample', factors: ['a'], numSamples: 1, samplingStrategy: 'withoutReplacement',
+          },
+          'b',
+        ],
+        numSamples: 5,
+        samplingStrategy: 'withoutReplacement',
+      },
+      components: 'trial',
+    };
+
+    const errors: ParserErrorWarning[] = [];
+    const compiled = compileFactorBlocks(config.sequence, config, errors);
+    expect(errors).toEqual([]);
+    const runtimeWarnings: ParserErrorWarning[] = [];
+    resolveOrderedFactorConditions(
+      config.sequence.factor,
+      config.factors!,
+      createFactorOrderContext(0),
+      [],
+      'nestedOuterSample',
+      undefined,
+      runtimeWarnings,
+    );
+    expect(runtimeWarnings.map((warning) => warning.message)).toContain(
+      'Sample factor `nestedOuterSample` requested 5 conditions but only 3 are available; stopping after the list is exhausted',
+    );
+    expect(compiled.sequence).toMatchObject({ type: 'factor-runtime-plan', id: 'nestedOuterSample' });
+
+    const sequences = generateSequenceArray({
+      ...config,
+      sequence: compiled.sequence,
+      components: compiled.components,
+    });
+    random.mockRestore();
+
+    const generatedComponents = getSequenceFlatMap(sequences[0]).filter((componentId) => componentId !== 'end');
+    expect(generatedComponents).toHaveLength(3);
+    expect(generatedComponents.filter((componentId) => compiled.components[componentId].parameters?.a !== undefined)).toHaveLength(1);
+    expect(generatedComponents.filter((componentId) => compiled.components[componentId].parameters?.b !== undefined)).toHaveLength(2);
+  });
+
+  test('preserves string types when filling component templates', () => {
+    const config = factorConfig();
+    config.factors = { file: [1] };
+    config.sequence = {
+      type: 'factor', id: 'stringTemplate', factor: 'file', components: 'trial',
+    };
+    if (!config.baseComponents?.trial || !('path' in config.baseComponents.trial)) {
+      throw new Error('Expected a path component');
+    }
+    config.baseComponents!.trial.path = '{{file}}';
+
+    const compiled = compileFactorBlocks(config.sequence, config);
+    const component = Object.values(compiled.components)[0];
+
+    if (!('path' in component)) throw new Error('Expected a path component');
+    expect(component.path).toBe('1');
+    expect(typeof component.path).toBe('string');
+  });
+
+  test('warns when a runtime zip will truncate unequal inputs', () => {
+    const config = factorConfig();
+    config.factors = {
+      ordered: { values: ['A', 'B'], order: 'random' },
+      short: ['x'],
+    };
+    const errors: ParserErrorWarning[] = [];
+    const warnings: ParserErrorWarning[] = [];
+
+    compileFactorBlocks({
+      type: 'factor',
+      id: 'runtimeZip',
+      factor: { action: 'zip', factors: ['ordered', 'short'] },
+      components: 'trial',
+    }, config, errors, warnings);
+
+    expect(errors).toEqual([]);
+    expect(warnings.map((warning) => warning.message)).toContain(
+      'Zip factor `runtimeZip` received inputs with different lengths (2, 1); stopping after the shortest input',
+    );
+  });
+
+  test('surfaces warnings when runtime zip inputs become unequal', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    const config = factorConfig();
+    config.uiConfig.numSequences = 1;
+    config.factors = {
+      ordered: { values: ['A', 'B'], order: 'random', numSamples: 1 },
+      long: ['x', 'y'],
+    };
+    config.sequence = {
+      type: 'factor',
+      id: 'runtimeZipSampled',
+      factor: { action: 'zip', factors: ['ordered', 'long'] },
+      components: 'trial',
+    };
+
+    const errors: ParserErrorWarning[] = [];
+    const warnings: ParserErrorWarning[] = [];
+    const compiled = compileFactorBlocks(config.sequence, config, errors, warnings);
+    expect(errors).toEqual([]);
+    expect(warnings).toEqual([]);
+
+    const sequences = generateSequenceArray({
+      ...config,
+      sequence: compiled.sequence,
+      components: compiled.components,
+    }, warnings);
+    random.mockRestore();
+
+    expect(sequences[0].components).toHaveLength(2);
+    expect(warnings.map((warning) => warning.message)).toContain(
+      'Zip factor `runtimeZipSampled` received inputs with different lengths (1, 2); stopping after the shortest input',
+    );
+  });
+
+  test('warns when factor-owned numSamples exceeds participant-eligible values', () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    const config = factorConfig();
+    config.uiConfig.numSequences = 2;
+    config.factors = {
+      arm: ['A', 'B'],
+      ordered: {
+        values: [{ arm: 'A', value: 'x' }, { arm: 'B', value: 'y' }], order: 'random', numSamples: 2,
+      },
+    };
+    config.betweenSubjects = ['arm'];
+    config.sequence = {
+      type: 'factor', id: 'runtimeSampled', factor: 'ordered', components: 'trial',
+    };
+
+    const errors: ParserErrorWarning[] = [];
+    const warnings: ParserErrorWarning[] = [];
+    const compiled = compileFactorBlocks(config.sequence, config, errors, warnings);
+    expect(errors).toEqual([]);
+
+    const sequences = generateSequenceArray({
+      ...config,
+      sequence: compiled.sequence,
+      components: compiled.components,
+    }, warnings);
+    random.mockRestore();
+
+    expect(sequences).toHaveLength(2);
+    expect(sequences.every((sequence) => sequence.components.length === 2)).toBe(true);
+    expect(warnings.map((warning) => warning.message)).toContain(
+      'Factor `ordered` requested 2 values but only 1 are available; stopping after the list is exhausted',
     );
   });
 
