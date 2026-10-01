@@ -9,6 +9,7 @@
 import {
   beforeAll, beforeEach, afterAll, afterEach, describe, expect, test, vi,
 } from 'vitest';
+import { getDoc, setDoc } from 'firebase/firestore';
 
 import { type ParticipantMetadata, type StudyConfig } from '../../parser/types';
 import testConfigSimple from './testConfigSimple.json';
@@ -390,6 +391,61 @@ describe.each([
     expect(updatedModes.dataSharingEnabled).toBe(true);
     expect(updatedModes.dataCollectionEnabled).toBe(false);
     expect(updatedModes.developmentModeEnabled).toBe(true);
+  });
+
+  test('landing-page visibility reads and writes do not initialize modes', async () => {
+    const storedBeforeRead = JSON.stringify(firestoreData);
+    expect(await storageEngine.getStudyHiddenFromLandingPage(studyId)).toBe(false);
+    expect(JSON.stringify(firestoreData)).toBe(storedBeforeRead);
+    // @ts-expect-error inspecting persisted documents for testing
+    const studyPath = `${storageEngine.collectionPrefix}${studyId}`;
+    await storageEngine.setStudyHiddenFromLandingPage(studyId, true);
+    expect(firestoreData[`${studyPath}/hideStudyFromLandingPage`]).toEqual({ hidden: true });
+    expect(firestoreData[`${studyPath}/modes`]).toBeUndefined();
+  });
+
+  test('landing-page visibility is independent of modes and survives mode and stage updates', async () => {
+    const existingModes = {
+      dataCollectionEnabled: false,
+      developmentModeEnabled: true,
+      dataSharingEnabled: false,
+    };
+    // @ts-expect-error using protected method to seed an existing modes document
+    await storageEngine._setModesDocument(studyId, existingModes);
+    const storedBeforeRead = JSON.stringify(firestoreData);
+
+    expect(await storageEngine.getStudyHiddenFromLandingPage(studyId)).toBe(false);
+    expect(JSON.stringify(firestoreData)).toBe(storedBeforeRead);
+
+    await storageEngine.setStudyHiddenFromLandingPage(studyId, true);
+    expect(await storageEngine.getStudyHiddenFromLandingPage(studyId)).toBe(true);
+    expect(await storageEngine.getModes(studyId)).toEqual(existingModes);
+
+    await storageEngine.getStageData(studyId);
+    expect(await storageEngine.getStudyHiddenFromLandingPage(studyId)).toBe(true);
+    await storageEngine.setMode(studyId, 'developmentModeEnabled', false);
+    await storageEngine.setCurrentStage(studyId, 'Pilot');
+    await storageEngine.updateStageColor(studyId, 'Pilot', '#123456');
+    expect(await storageEngine.getStudyHiddenFromLandingPage(studyId)).toBe(true);
+    expect(await storageEngine.getModes(studyId)).not.toHaveProperty('hideStudyFromLandingPage');
+
+    await storageEngine.setStudyHiddenFromLandingPage(studyId, false);
+    expect(await storageEngine.getStudyHiddenFromLandingPage(studyId)).toBe(false);
+    expect(await storageEngine.getModes(studyId)).toMatchObject({
+      ...existingModes,
+      developmentModeEnabled: false,
+      stage: { currentStage: { stageName: 'Pilot', color: '#123456' } },
+    });
+  });
+
+  test('landing-page visibility rejects cloud read and write failures', async () => {
+    await storageEngine.getModes(studyId);
+    vi.mocked(getDoc).mockRejectedValueOnce(new Error('read denied'));
+    await expect(storageEngine.getStudyHiddenFromLandingPage(studyId)).rejects.toThrow('read denied');
+
+    vi.mocked(setDoc).mockRejectedValueOnce(new Error('write denied'));
+    await expect(storageEngine.setStudyHiddenFromLandingPage(studyId, true)).rejects.toThrow('write denied');
+    expect(await storageEngine.getStudyHiddenFromLandingPage(studyId)).toBe(false);
   });
 
   test('setMode toggles each ReVISit mode independently', async () => {

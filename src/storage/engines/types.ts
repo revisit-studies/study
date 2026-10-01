@@ -306,6 +306,12 @@ export abstract class StorageEngine {
   // Sets the mode for the given studyId. The mode is stored as a record with the mode name as the key and a boolean value indicating whether the mode is enabled or not.
   abstract setMode(studyId: string, mode: REVISIT_MODE, value: boolean): Promise<void>;
 
+  // Gets the landing-page visibility for the given studyId. This method is used to check whether the study is hidden from the landing page or not.
+  abstract getStudyHiddenFromLandingPage(studyId: string): Promise<boolean>;
+
+  // Sets the landing-page visibility for the given studyId. This method is used to control whether the study is hidden from the landing page or not.
+  abstract setStudyHiddenFromLandingPage(studyId: string, hidden: boolean): Promise<void>;
+
   // Protected helper: Sets the full modes document (including stage data and mode flags)
   protected abstract _setModesDocument(studyId: string, modesDocument: Record<REVISIT_MODE, boolean> & { stage?: StageData }): Promise<void>;
 

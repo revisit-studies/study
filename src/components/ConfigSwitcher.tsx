@@ -16,8 +16,6 @@ import { ErrorLoadingConfig } from './ErrorLoadingConfig';
 import { ParticipantStatusBadges } from '../analysis/interface/ParticipantStatusBadges';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import { REVISIT_MODE } from '../storage/engines/types';
-import { useAuth } from '../store/hooks/useAuth';
-import { isCloudStorageEngine } from '../storage/engines/utils/storageEngineHelpers';
 import { getSequenceConditions } from '../utils/handleConditionLogic';
 import { useStudyRecordings } from '../utils/useStudyRecordings';
 import { useDeviceRules } from '../utils/useDeviceRules';
@@ -39,21 +37,27 @@ function ValidStudyCard({
   config,
   url,
   modes,
+  canViewAnalytics,
 }: {
   configName: string;
   config: ParsedConfig<StudyConfig>;
   url: string;
   modes: Record<REVISIT_MODE, boolean> | null;
+  canViewAnalytics: boolean;
 }) {
   const { storageEngine } = useStorageEngine();
 
   const [studyStatusAndTiming, setStudyStatusAndTiming] = useState<{ completed: number; rejected: number; inProgress: number; minTime: Timestamp | number | null; maxTime: Timestamp | number | null } | null>(null);
 
   useEffect(() => {
-    if (!storageEngine) return;
+    if (!storageEngine) return undefined;
+    let isCancelled = false;
     storageEngine.getParticipantsStatusCounts(configName).then((status) => {
-      setStudyStatusAndTiming(status);
+      if (!isCancelled) setStudyStatusAndTiming(status);
+    }).catch((error) => {
+      console.error('Failed to load participant counts:', error);
     });
+    return () => { isCancelled = true; };
   }, [configName, storageEngine]);
 
   const { minTime, maxTime } = useMemo(() => {
@@ -110,27 +114,29 @@ function ValidStudyCard({
 
   // Load participant counts into dropdown for each condition
   useEffect(() => {
+    let isCancelled = false;
     async function loadConditionCounts() {
-      if (!storageEngine) return;
+      if (!storageEngine || !canViewAnalytics) return;
       try {
         const conditionData = await storageEngine.getConditionData(configName);
-        setConditionParticipantCounts(conditionData.conditionCounts);
+        if (!isCancelled) setConditionParticipantCounts(conditionData.conditionCounts);
       } catch (error) {
-        setConditionParticipantCounts({});
+        if (!isCancelled) setConditionParticipantCounts({});
         console.error('Failed to load condition counts:', error);
       }
     }
 
     loadConditionCounts();
-  }, [configName, storageEngine]);
+    return () => { isCancelled = true; };
+  }, [configName, storageEngine, canViewAnalytics]);
 
   const conditionOptions = useMemo(() => (
     ['default', ...conditions].map((condition) => ({
       value: condition,
       // e.g. default (10 participants)
-      label: `${condition} (${conditionParticipantCounts[condition] || 0} participant${(conditionParticipantCounts[condition] || 0) === 1 ? '' : 's'})`,
+      label: canViewAnalytics ? `${condition} (${conditionParticipantCounts[condition] || 0} participant${(conditionParticipantCounts[condition] || 0) === 1 ? '' : 's'})` : condition,
     }))
-  ), [conditions, conditionParticipantCounts]);
+  ), [conditions, conditionParticipantCounts, canViewAnalytics]);
 
   const selectedStudyConditions = useMemo(
     () => selectedConditions.filter((condition) => condition !== 'default'),
@@ -172,7 +178,7 @@ function ValidStudyCard({
         </Anchor>
       </Text>
 
-      {config.warnings.length > 0 && (
+      {canViewAnalytics && config.warnings.length > 0 && (
       <ErrorLoadingConfig issues={config.warnings} type="warning" />
       )}
 
@@ -184,7 +190,7 @@ function ValidStudyCard({
           {' '}
           {currentMode}
         </Text>
-        {studyStatusAndTiming
+        {canViewAnalytics && studyStatusAndTiming
                 && <ParticipantStatusBadges completed={studyStatusAndTiming.completed} inProgress={studyStatusAndTiming.inProgress} rejected={studyStatusAndTiming.rejected} />}
         <Flex ml="auto" gap="sm" opacity={0.7}>
           {hasAudioRecording && (
@@ -287,6 +293,7 @@ function ValidStudyCard({
           }}
         />
         )}
+        {canViewAnalytics && (
         <Button
           leftSection={<IconChartHistogram />}
           style={{ marginLeft: 'auto' }}
@@ -296,8 +303,10 @@ function ValidStudyCard({
         >
           Analyze & Manage Study
         </Button>
+        )}
         <Button
           leftSection={<IconListCheck />}
+          ml={canViewAnalytics ? undefined : 'auto'}
           component="a"
           href={studyUrl}
         >
@@ -319,19 +328,21 @@ function StudyCard({
   url: string;
   modes: Record<REVISIT_MODE, boolean> | null;
 }) {
+  const canViewAnalytics = !!modes?.dataSharingEnabled;
+
   if (config.errors.length > 0) {
     return (
       <Card key={configName} shadow="sm" radius="md" my="sm" withBorder>
         <Text size="md" fw="bold">{configName}</Text>
-        <ErrorLoadingConfig issues={config.errors} type="error" />
-        {config.warnings.length > 0 && (
+        {canViewAnalytics && <ErrorLoadingConfig issues={config.errors} type="error" />}
+        {canViewAnalytics && config.warnings.length > 0 && (
           <ErrorLoadingConfig issues={config.warnings} type="warning" />
         )}
       </Card>
     );
   }
 
-  return <ValidStudyCard configName={configName} config={config} url={url} modes={modes} />;
+  return <ValidStudyCard configName={configName} config={config} url={url} modes={modes} canViewAnalytics={canViewAnalytics} />;
 }
 
 function StudyCards({
@@ -385,14 +396,15 @@ export function ConfigSwitcher({
         configsList.map(async (configName) => {
           if (storageEngine) {
             try {
-              const modes = await storageEngine.getAccessModes(configName);
-              if (isCloudStorageEngine(storageEngine)) {
-                visibility[configName] = modes?.dataSharingEnabled === true;
-              }
+              const [modes, hidden] = await Promise.all([
+                storageEngine.getAccessModes(configName),
+                storageEngine.getStudyHiddenFromLandingPage(configName),
+              ]);
+              visibility[configName] = !hidden;
               modesMap[configName] = modes;
             } catch (error) {
               failedConfigNames.push(configName);
-              console.error(`Error loading modes for study ${configName}:`, error);
+              console.error(`Error loading settings for study ${configName}:`, error);
             }
           } else {
             modesMap[configName] = null;
@@ -413,13 +425,12 @@ export function ConfigSwitcher({
     };
   }, [configsList, storageEngine]);
 
-  const { user } = useAuth();
   const isLoadingStudyConfigs = useMemo(
     () => configsList.some((configName) => !(configName in studyConfigs)),
     [configsList, studyConfigs],
   );
   const isLoadingStudies = isLoadingVisibility || isLoadingStudyConfigs;
-  const configsFiltered = useMemo(() => configsList.filter((configName) => studyVisibility[configName] || user.isAdmin), [configsList, studyVisibility, user]);
+  const configsFiltered = useMemo(() => configsList.filter((configName) => studyVisibility[configName]), [configsList, studyVisibility]);
 
   const factorDemos = useMemo(
     () => configsFiltered.filter((configName) => FACTOR_DEMO_CONFIG_NAMES.has(configName)),
