@@ -97,7 +97,7 @@ test('keeps landing visibility and data sharing independent while allowing direc
   await page.goto('/');
   await expect(landingCard.getByText(/^Study Status:/)).toBeVisible();
   await expect(landingCard.getByRole('link', { name: 'Analyze & Manage Study', exact: true })).toBeVisible();
-  await expect(landingCard.locator('.mantine-Badge-root')).toHaveCount(5);
+  await expect(landingCard.locator('.mantine-Badge-root')).toHaveCount(3);
   await expect(statusIcons).toHaveCount(3);
   await landingCard.getByRole('link', { name: 'Go to Study', exact: true }).click();
   await expect(page.getByText(/example study.*embed html elements/i)).toBeVisible();

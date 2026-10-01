@@ -844,9 +844,9 @@ describe('ManageView', () => {
       participantLimitEnabled: false,
     });
     expect((screen.getByLabelText('Maximum participants for DEFAULT') as HTMLInputElement).value).toBe('14');
-    screen.getAllByLabelText(/Desired participants/).forEach((input) => {
-      expect((input as HTMLInputElement).disabled).toBe(true);
-    });
+    expect(screen.queryByLabelText(/Desired participants/)).toBeNull();
+    expect(screen.getByText('0 / 6')).toBeDefined();
+    expect(screen.getByText('0 / 8')).toBeDefined();
 
     await act(async () => {
       fireEvent.click(screen.getByRole('checkbox', { name: 'Limit participants' }));
