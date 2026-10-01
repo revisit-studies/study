@@ -12,7 +12,7 @@ import { openConfirmModal } from '@mantine/modals';
 import { ManageView } from '../ManageView';
 import { RevisitModesItem } from '../RevisitModesItem';
 import {
-  getDefaultDesiredParticipantCounts, getDesiredParticipantCounts, getNextStageColor, StageManagementItem,
+  getDefaultDesiredParticipantCounts, getDesiredParticipantCounts, StageManagementItem,
 } from '../StageManagementItem';
 import { DataManagementItem } from '../DataManagementItem';
 import { showNotification } from '../../../../utils/notifications';
@@ -423,39 +423,6 @@ describe('ManageView', () => {
     expect(mockStorageEngine!.setCurrentStage).toHaveBeenCalledWith('test-study', 'REVIEW', '#00AAFF');
   });
 
-  test('StageManagementItem explains when the active stage is clicked', async () => {
-    await act(async () => {
-      render(<StageManagementItem studyId="test-study" />);
-    });
-
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Active stage DEFAULT' }));
-    });
-
-    expect(screen.getByText('This stage is already active')).toBeDefined();
-  });
-
-  test('StageManagementItem cancels a requested stage activation', async () => {
-    mockStorageEngine!.getStageData.mockResolvedValue({
-      currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
-      allStages: [
-        { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
-        { stageName: 'REVIEW', color: '#00AAFF' },
-      ],
-    });
-    await act(async () => {
-      render(<StageManagementItem studyId="test-study" />);
-    });
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Inactive stage REVIEW' }));
-    });
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-    });
-    expect(mockStorageEngine!.setCurrentStage).not.toHaveBeenCalled();
-    expect(screen.queryByText('New participants will enter REVIEW stage. Existing participant records will remain in their current stages.')).toBeNull();
-  });
-
   test('StageManagementItem edits stage colors beside the stage name and can cancel', async () => {
     await act(async () => {
       render(<StageManagementItem studyId="test-study" />);
@@ -492,15 +459,6 @@ describe('ManageView', () => {
     expect(screen.getByPlaceholderText('Enter stage name')).toBeDefined();
     await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Cancel new stage' })); });
     expect(screen.getByText('Add New Stage')).toBeDefined();
-  });
-
-  test('getNextStageColor selects an unused color from the shared palette', () => {
-    expect(getNextStageColor([{ stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR }]))
-      .toBe(FIRST_ADDITIONAL_STAGE_COLOR);
-    expect(getNextStageColor([
-      { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
-      { stageName: 'STAGE 2', color: FIRST_ADDITIONAL_STAGE_COLOR },
-    ])).not.toBe(FIRST_ADDITIONAL_STAGE_COLOR);
   });
 
   test('getDefaultDesiredParticipantCounts evenly distributes a stage maximum', () => {

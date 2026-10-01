@@ -5,7 +5,9 @@ async function openComponent(page: Page, component: string) {
   await page.goto(`/demo-style/reviewer-${component}`);
   await expect(page.locator('.responseBlock-belowStimulus')).toBeAttached();
   const closeBrowser = page.getByRole('complementary').locator('.mantine-CloseButton-root');
-  await closeBrowser.click();
+  if (await closeBrowser.isVisible()) {
+    await closeBrowser.click();
+  }
   await expect(page.getByRole('complementary')).toHaveCount(0);
   await expect(page.locator('.study-content')).toBeVisible();
 }
