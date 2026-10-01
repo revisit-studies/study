@@ -114,6 +114,10 @@ class TestStorageEngine extends StorageEngine {
 
   setMode = vi.fn(async () => { });
 
+  getStudyHiddenFromLandingPage = vi.fn(async () => false);
+
+  setStudyHiddenFromLandingPage = vi.fn(async () => { });
+
   getSnapshots = vi.fn(async () => ({}));
 
   addParticipantTags = vi.fn(async () => { });

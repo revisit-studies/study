@@ -513,7 +513,9 @@ async function renderTrial(overrides: Partial<ImageComponent> = {}) {
       userAgent: '', resolution: {}, language: '', ip: null,
     },
     {},
-    { dataCollectionEnabled: true, developmentModeEnabled: false, dataSharingEnabled: false },
+    {
+      dataCollectionEnabled: true, developmentModeEnabled: false, dataSharingEnabled: false,
+    },
     'participant',
     false,
     false,
