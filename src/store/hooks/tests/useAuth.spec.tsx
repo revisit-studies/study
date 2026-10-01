@@ -10,6 +10,7 @@ import { useAuth, AuthProvider } from '../useAuth';
 // ── mutable mock state ─────────────────────────────────────────────────────────
 
 let mockStorageEngineVal: Record<string, ReturnType<typeof vi.fn>> | null = null;
+let mockConfiguredStorageEngineVal: Record<string, ReturnType<typeof vi.fn>> | null = null;
 let mockIsCloudStorage = false;
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
@@ -21,7 +22,7 @@ vi.mock('@mantine/core', () => ({
 }));
 
 vi.mock('../../../storage/storageEngineHooks', () => ({
-  useStorageEngine: () => ({ storageEngine: mockStorageEngineVal }),
+  useStorageEngine: () => ({ storageEngine: mockStorageEngineVal, configuredStorageEngine: mockConfiguredStorageEngineVal }),
 }));
 
 vi.mock('../../../storage/engines/utils/storageEngineHelpers', () => ({
@@ -37,6 +38,7 @@ vi.mock('react-router', () => ({
 
 beforeEach(() => {
   mockStorageEngineVal = null;
+  mockConfiguredStorageEngineVal = null;
   mockIsCloudStorage = false;
 });
 
@@ -107,6 +109,22 @@ describe('AuthProvider', () => {
 });
 
 describe('AuthProvider — non-null storage engine paths', () => {
+  test('uses configured Supabase authentication while study data uses local storage', async () => {
+    mockStorageEngineVal = { getEngine: vi.fn(() => 'localStorage') };
+    mockConfiguredStorageEngineVal = {
+      getEngine: vi.fn(() => 'supabase'),
+      getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
+      getUserManagementData: vi.fn().mockResolvedValue(undefined),
+    };
+    mockIsCloudStorage = true;
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: ({ children }: { children: ReactNode }) => <AuthProvider>{children}</AuthProvider>,
+    });
+    await waitFor(() => expect(result.current.supabaseAuthStatus).toBe('unconfigured'));
+    expect(result.current.user.isAdmin).toBe(false);
+    expect(mockConfiguredStorageEngineVal.getUserManagementData).toHaveBeenCalledWith('authentication');
+  });
+
   test.each([
     [undefined, 'unconfigured'],
     [{ isEnabled: false }, 'disabled'],

@@ -1,28 +1,34 @@
 import {
-  ReactNode, createContext, useContext, useMemo, useState,
+  ReactNode, createContext, useCallback, useContext, useMemo, useState,
 } from 'react';
 
 import { StorageEngine } from './engines/types';
 
 interface StorageContextValue {
   storageEngine: StorageEngine | undefined;
-  setStorageEngine: (engine: StorageEngine) => void;
+  configuredStorageEngine?: StorageEngine;
+  setStorageEngine: (engine: StorageEngine, configured?: StorageEngine) => void;
 }
 
 const StorageEngineContext = createContext<StorageContextValue>({
   storageEngine: undefined,
+  configuredStorageEngine: undefined,
   setStorageEngine: () => {},
 });
 
 export const useStorageEngine = () => useContext(StorageEngineContext);
 
 export function StorageEngineProvider({ children }: { children: ReactNode}) {
-  const [storageEngine, setStorageEngine] = useState<StorageEngine | undefined>(undefined);
+  const [engines, setEngines] = useState<{ configured: StorageEngine; active: StorageEngine } | undefined>(undefined);
+  const setStorageEngine = useCallback((engine: StorageEngine, configured?: StorageEngine) => {
+    setEngines({ configured: configured ?? engine, active: engine });
+  }, []);
 
   const value = useMemo(() => ({
-    storageEngine,
+    storageEngine: engines?.active,
+    configuredStorageEngine: engines?.configured,
     setStorageEngine,
-  }), [storageEngine]);
+  }), [engines, setStorageEngine]);
 
   return <StorageEngineContext.Provider value={value}>{children}</StorageEngineContext.Provider>;
 }

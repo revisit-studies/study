@@ -70,15 +70,16 @@ export function AuthProvider({ children } : { children: ReactNode }) {
   const [user, setUser] = useState(loadingNullUser);
   const [enableAuthTrigger, setEnableAuthTrigger] = useState(0);
   const [supabaseAuthStatus, setSupabaseAuthStatus] = useState<SupabaseAuthStatus>('loading');
-  const { storageEngine } = useStorageEngine();
+  const { storageEngine, configuredStorageEngine } = useStorageEngine();
+  const authEngine = configuredStorageEngine ?? storageEngine;
   const location = useLocation();
   const studyRouteMatch = useMatch('/:studyId/*');
 
   // Logs the user out by removing the user and navigating to '/login'
   const logout = async () => {
-    if (storageEngine && isCloudStorageEngine(storageEngine)) {
+    if (authEngine && isCloudStorageEngine(authEngine)) {
       try {
-        await storageEngine.logout();
+        await authEngine.logout();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         console.error(`There was an issue signing-out the user: ${error.message}`);
@@ -95,9 +96,9 @@ export function AuthProvider({ children } : { children: ReactNode }) {
   // This useEffect checks for an existing Supabase session on mount since it requires a redirect to login
   useEffect(() => {
     const checkSession = async () => {
-      if (storageEngine?.getEngine() === 'supabase') {
+      if (authEngine?.getEngine() === 'supabase') {
         try {
-          await (storageEngine as SupabaseStorageEngine).getSession();
+          await (authEngine as SupabaseStorageEngine).getSession();
         } catch (err) {
           // optional: log or handle errors
           console.error('Supabase session check failed', err);
@@ -105,11 +106,11 @@ export function AuthProvider({ children } : { children: ReactNode }) {
       }
     };
     checkSession();
-  }, [storageEngine, triggerAuth]);
+  }, [authEngine, triggerAuth]);
 
   const verifyAdminStatus = async (inputUser: UserWrapped) => {
-    if (storageEngine && isCloudStorageEngine(storageEngine)) {
-      return await storageEngine.validateUser(inputUser, true);
+    if (authEngine && isCloudStorageEngine(authEngine)) {
+      return await authEngine.validateUser(inputUser, true);
     }
     return false;
   };
@@ -154,23 +155,23 @@ export function AuthProvider({ children } : { children: ReactNode }) {
       } else if (!cancelled && currentEvent === authEvent) setUser(nonLoadingNullUser);
     };
 
-    // Determine authentication listener based on storageEngine and authEnabled variable
+    // Keep authentication on the configured cloud engine while study data uses local storage.
     const determineAuthentication = async () => {
       try {
-        if (storageEngine && isCloudStorageEngine(storageEngine)) {
-          const authInfo = await storageEngine.getUserManagementData('authentication');
+        if (authEngine && isCloudStorageEngine(authEngine)) {
+          const authInfo = await authEngine.getUserManagementData('authentication');
           if (cancelled) return;
           if (authInfo?.isEnabled === true) {
-            if (storageEngine.getEngine() === 'supabase') setSupabaseAuthStatus('enabled');
-            unsubscribe = storageEngine.unsubscribe(handleAuthStateChanged);
-          } else if (storageEngine.getEngine() === 'supabase' && authInfo?.isEnabled !== false) {
+            if (authEngine.getEngine() === 'supabase') setSupabaseAuthStatus('enabled');
+            unsubscribe = authEngine.unsubscribe(handleAuthStateChanged);
+          } else if (authEngine.getEngine() === 'supabase' && authInfo?.isEnabled !== false) {
             setSupabaseAuthStatus('unconfigured');
             setUser(nonLoadingNullUser);
           } else {
-            if (storageEngine.getEngine() === 'supabase') setSupabaseAuthStatus('disabled');
+            if (authEngine.getEngine() === 'supabase') setSupabaseAuthStatus('disabled');
             setUser(nonAuthUser);
           }
-        } else if (storageEngine) {
+        } else if (authEngine) {
           setUser(nonAuthUser);
         }
       } catch (error) {
@@ -189,7 +190,7 @@ export function AuthProvider({ children } : { children: ReactNode }) {
       unsubscribe?.();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storageEngine, enableAuthTrigger]);
+  }, [authEngine, enableAuthTrigger]);
 
   const value = useMemo(() => ({
     user,
@@ -200,7 +201,7 @@ export function AuthProvider({ children } : { children: ReactNode }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [user, supabaseAuthStatus]);
 
-  const allowChildrenWhileDeterminingStatus = storageEngine?.getEngine() === 'supabase'
+  const allowChildrenWhileDeterminingStatus = authEngine?.getEngine() === 'supabase'
     || (Boolean(studyRouteMatch) && !location.pathname.startsWith('/analysis'));
 
   return (

@@ -12,6 +12,7 @@ const mockLogout = vi.fn();
 const mockTriggerAuth = vi.fn();
 let mockSupabaseAuthStatus = 'loading';
 let mockStorageEngine: { getEngine: ReturnType<typeof vi.fn> } | undefined;
+let mockConfiguredStorageEngine: { getEngine: ReturnType<typeof vi.fn> } | undefined;
 
 vi.mock('../store/hooks/useAuth', () => ({
   useAuth: () => ({
@@ -24,7 +25,7 @@ vi.mock('../store/hooks/useAuth', () => ({
 }));
 
 vi.mock('../storage/storageEngineHooks', () => ({
-  useStorageEngine: () => ({ storageEngine: mockStorageEngine }),
+  useStorageEngine: () => ({ storageEngine: mockStorageEngine, configuredStorageEngine: mockConfiguredStorageEngine }),
 }));
 
 let mockParams: Record<string, string> = {};
@@ -48,6 +49,7 @@ describe('ProtectedRoute', () => {
     mockVerifyAdminStatus.mockResolvedValue(true);
     mockLogout.mockReset();
     mockStorageEngine = { getEngine: vi.fn().mockReturnValue('localStorage') };
+    mockConfiguredStorageEngine = undefined;
     mockSupabaseAuthStatus = 'loading';
     mockParams = {};
   });
@@ -141,6 +143,17 @@ describe('ProtectedRoute', () => {
     expect(screen.getByTestId('navigate-to-settings')).toBeDefined();
   });
 
+  test('local-mode Datastore route remains protected by configured Supabase authentication', async () => {
+    mockConfiguredStorageEngine = { getEngine: vi.fn().mockReturnValue('supabase') };
+    mockSupabaseAuthStatus = 'unconfigured';
+    mockParams = { studyId: 'test-study', analysisTab: 'storage' };
+    const callback = vi.fn().mockResolvedValue(false);
+    await act(async () => render(<ProtectedRoute paramToCheck="studyId" paramCallback={callback}><div>datastore</div></ProtectedRoute>));
+    expect(callback).not.toHaveBeenCalled();
+    expect(screen.queryByText('datastore')).toBeNull();
+    expect(screen.getByTestId('navigate-to-settings')).toBeDefined();
+  });
+
   test('setup remains available when authentication is unconfigured', async () => {
     mockStorageEngine = { getEngine: vi.fn().mockReturnValue('supabase') };
     mockSupabaseAuthStatus = 'unconfigured';
@@ -166,5 +179,16 @@ describe('ProtectedRoute', () => {
     expect(screen.queryByText('settings')).toBeNull();
     fireEvent.click(screen.getByText('Retry'));
     expect(mockTriggerAuth).toHaveBeenCalled();
+  });
+
+  test('signs out a Supabase admin whose access was revoked before redirecting', async () => {
+    mockStorageEngine = { getEngine: vi.fn().mockReturnValue('supabase') };
+    mockSupabaseAuthStatus = 'enabled';
+    mockUser = { isAdmin: true, determiningStatus: false };
+    mockVerifyAdminStatus.mockResolvedValue(false);
+    await act(async () => render(<ProtectedRoute><div>private settings</div></ProtectedRoute>));
+    expect(mockLogout).toHaveBeenCalledOnce();
+    expect(screen.queryByText('private settings')).toBeNull();
+    expect(screen.getByTestId('navigate-to-login')).toBeDefined();
   });
 });

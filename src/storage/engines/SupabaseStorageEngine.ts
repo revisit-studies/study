@@ -154,6 +154,23 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       .sort((a, b) => a.timestamp - b.timestamp);
   }
 
+  public async getSequenceAssignment(studyId: string, participantId: string) {
+    const { data, error } = await this.supabase
+      .from('revisit')
+      .select('data, createdAt')
+      .eq('studyId', `${this.collectionPrefix}${studyId}`)
+      .eq('docId', `sequenceAssignment_${participantId}`)
+      .limit(1);
+    if (error) throw new Error('Failed to get sequence assignment');
+    if (!data?.length) return null;
+    const assignment = data[0];
+    return {
+      ...assignment.data,
+      timestamp: assignment.data.withServerTimestamp ? new Date(assignment.createdAt).getTime() : assignment.data.timestamp,
+      createdTime: new Date(assignment.createdAt).getTime(),
+    } as SequenceAssignment;
+  }
+
   protected async _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment, withServerTimestamp: boolean = false) {
     await this.verifyStudyDatabase();
     if (!this.studyId) {
@@ -439,6 +456,34 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     if (error) {
       throw new Error('Failed to connect to Supabase');
     }
+  }
+
+  async getStorageDisconnected(studyId: string) {
+    const { data, error } = await this.supabase
+      .from('revisit')
+      .select('data')
+      .eq('studyId', `${this.collectionPrefix}${studyId}`)
+      .eq('docId', 'storage');
+    if (error) throw new Error('Failed to read storage mode', { cause: error });
+    if (!data.length) return false;
+    const disconnected = data[0]?.data?.disconnected;
+    if (typeof disconnected !== 'boolean') throw new Error('Invalid storage mode');
+    return disconnected;
+  }
+
+  protected async _setStorageDisconnected(studyId: string, disconnected: boolean) {
+    const { error } = await this.supabase.from('revisit').upsert({
+      studyId: `${this.collectionPrefix}${studyId}`,
+      docId: 'storage',
+      data: { disconnected },
+    });
+    if (error) throw new Error('Failed to update storage mode', { cause: error });
+  }
+
+  protected async getAuthenticatedUser() {
+    const { data, error } = await this.supabase.auth.getUser();
+    if (error) throw new Error('Failed to verify administrator', { cause: error });
+    return data.user ? { email: data.user.email ?? null, uid: data.user.id } : null;
   }
 
   async getAccessModes(studyId: string) {

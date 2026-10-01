@@ -31,7 +31,8 @@ export async function signIn(storageEngine: StorageEngine | undefined, setLoadin
 export function Login() {
   const { user } = useAuth();
   const [loading, setLoading] = useState<boolean>(false);
-  const { storageEngine } = useStorageEngine();
+  const { storageEngine, configuredStorageEngine } = useStorageEngine();
+  const loginEngine = configuredStorageEngine ?? storageEngine;
 
   useEffect(() => {
     if (!user.determiningStatus && !user.isAdmin && user.adminVerification) {
@@ -40,7 +41,7 @@ export function Login() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.adminVerification]);
 
-  const engine = useMemo(() => storageEngine?.getEngine(), [storageEngine]);
+  const engine = useMemo(() => loginEngine?.getEngine(), [loginEngine]);
 
   if (!storageEngine) return <LoadingOverlay visible />;
 
@@ -60,7 +61,7 @@ export function Login() {
               {engine === 'supabase' ? ' Supabase' : ' Google'}
               .
             </Text>
-            <Button onClick={() => signIn(storageEngine, setLoading)} leftSection={engine === 'supabase' ? <IconBrandSupabase /> : <IconBrandGoogleFilled />} variant="filled">
+            <Button onClick={() => signIn(loginEngine, setLoading)} leftSection={engine === 'supabase' ? <IconBrandSupabase /> : <IconBrandGoogleFilled />} variant="filled">
               Sign In With
               {' '}
               {engine === 'supabase' ? 'Supabase' : ' Google '}

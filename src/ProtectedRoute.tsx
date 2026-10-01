@@ -18,7 +18,7 @@ export function ProtectedRoute({
   const {
     user, verifyAdminStatus, logout, supabaseAuthStatus, triggerAuth,
   } = useAuth();
-  const { storageEngine } = useStorageEngine();
+  const { storageEngine, configuredStorageEngine } = useStorageEngine();
   const [isEnabled, setIsEnabled] = useState<boolean>(false);
   const [supabaseAccess, setSupabaseAccess] = useState<{
     route: string; status: 'public' | 'protected' | 'error';
@@ -28,7 +28,7 @@ export function ProtectedRoute({
   } | null>(null);
   const [routeRetry, setRouteRetry] = useState(0);
   const params = useParams();
-  const isSupabase = storageEngine?.getEngine() === 'supabase';
+  const isSupabase = (configuredStorageEngine ?? storageEngine)?.getEngine() === 'supabase';
   const studyParam = paramToCheck ? params[paramToCheck] : undefined;
   const route = `${studyParam ?? ''}:${params.analysisTab ?? ''}:${routeRetry}`;
   const access = supabaseAccess?.route === route ? supabaseAccess.status : 'checking';
@@ -37,7 +37,7 @@ export function ProtectedRoute({
 
   useEffect(() => {
     if (!isSupabase) return undefined;
-    if (!paramCallback || !studyParam || params.analysisTab === 'manage') {
+    if (!paramCallback || !studyParam || params.analysisTab === 'manage' || params.analysisTab === 'storage') {
       setSupabaseAccess({ route, status: 'protected' });
       return undefined;
     }
@@ -57,7 +57,11 @@ export function ProtectedRoute({
     let cancelled = false;
     setAdminCheck(null);
     verifyAdminStatus(user)
-      .then((isAdmin) => { if (!cancelled) setAdminCheck({ key: adminCheckKey, result: isAdmin }); })
+      .then(async (isAdmin) => {
+        if (cancelled) return;
+        if (!isAdmin) await logout();
+        if (!cancelled) setAdminCheck({ key: adminCheckKey, result: isAdmin });
+      })
       .catch(() => { if (!cancelled) setAdminCheck({ key: adminCheckKey, result: 'error' }); });
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
