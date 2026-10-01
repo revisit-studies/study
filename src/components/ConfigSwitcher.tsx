@@ -1,18 +1,19 @@
 import {
-  Anchor, AppShell, Badge, Button, Card, Container, CopyButton, Divider, Flex, Image, MultiSelect, Skeleton, rem, Tabs, Text, Tooltip,
+  Anchor, AppShell, Badge, Box, Button, Card, Container, CopyButton, Divider, Flex, Image, MultiSelect, Skeleton, rem, Tabs, Text, Tooltip,
 } from '@mantine/core';
 import {
   IconBan, IconBrandFirebase, IconBrandSupabase, IconCamera, IconChartHistogram, IconCheck, IconCopy, IconDatabase, IconDeviceDesktop, IconExternalLink, IconGraph, IconGraphOff, IconListCheck, IconMicrophone, IconSchema, IconSchemaOff,
 } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Timestamp } from 'firebase/firestore';
-import { useNavigate, useSearchParams } from 'react-router';
+import { useSearchParams } from 'react-router';
 import {
   GlobalConfig, ParsedConfig, StudyConfig,
 } from '../parser/types';
 import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
 import { PREFIX } from '../utils/Prefix';
 import { ErrorLoadingConfig } from './ErrorLoadingConfig';
+import { ReactMarkdownWrapper } from './ReactMarkdownWrapper';
 import { ParticipantStatusBadges } from '../analysis/interface/ParticipantStatusBadges';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import { REVISIT_MODE } from '../storage/engines/types';
@@ -23,16 +24,7 @@ import { useStudyRecordings } from '../utils/useStudyRecordings';
 import { useDeviceRules } from '../utils/useDeviceRules';
 import { getUnmetDeviceRestrictionLines, getUnmetDeviceRestrictionTooltip } from './interface/DeviceRestrictionString';
 
-export const FACTOR_DEMO_CONFIG_NAMES = new Set([
-  'demo-factors',
-  'demo-markdown-factors',
-  'demo-stroop-factors',
-  'demo-max-study2',
-  'demo-ffl-study',
-  'demo-dsf-study',
-  'demo-calvi-study',
-  'incentives-corr',
-]);
+const DEFAULT_TAB_LABEL = 'Studies';
 
 function ValidStudyCard({
   configName,
@@ -421,42 +413,27 @@ export function ConfigSwitcher({
   const isLoadingStudies = isLoadingVisibility || isLoadingStudyConfigs;
   const configsFiltered = useMemo(() => configsList.filter((configName) => studyVisibility[configName] || user.isAdmin), [configsList, studyVisibility, user]);
 
-  const factorDemos = useMemo(
-    () => configsFiltered.filter((configName) => FACTOR_DEMO_CONFIG_NAMES.has(configName)),
-    [configsFiltered],
-  );
-  const demos = useMemo(
-    () => configsFiltered.filter((configName) => (
-      configName.startsWith('demo-') && !FACTOR_DEMO_CONFIG_NAMES.has(configName)
-    )),
-    [configsFiltered],
-  );
-  const tutorials = useMemo(() => configsFiltered.filter((configName) => configName.startsWith('tutorial')), [configsFiltered]);
-  const examples = useMemo(() => configsFiltered.filter((configName) => configName.startsWith('example-')), [configsFiltered]);
-  const tests = useMemo(() => configsFiltered.filter((configName) => configName.startsWith('test-')), [configsFiltered]);
-  const libraries = useMemo(() => configsFiltered.filter((configName) => configName.startsWith('library-')), [configsFiltered]);
-  const others = useMemo(() => configsFiltered.filter((configName) => (
-    !FACTOR_DEMO_CONFIG_NAMES.has(configName)
-    && !configName.startsWith('demo-')
-    && !configName.startsWith('tutorial')
-    && !configName.startsWith('example-')
-    && !configName.startsWith('test-')
-    && !configName.startsWith('library-')
-  )), [configsFiltered]);
+  const tabs = useMemo(() => {
+    const configuredTabs = globalConfig.tabs ?? [];
+    const tabDefinitions = configuredTabs.some(({ label }) => label === DEFAULT_TAB_LABEL)
+      ? configuredTabs
+      : [...configuredTabs, { label: DEFAULT_TAB_LABEL }];
 
-  const [searchParams] = useSearchParams();
-  const firstTab = useMemo(() => {
-    if (others.length > 0) return 'Others';
-    if (demos.length > 0) return 'Demos';
-    if (factorDemos.length > 0) return 'Factor-demos';
-    if (examples.length > 0) return 'Examples';
-    if (tutorials.length > 0) return 'Tutorials';
-    if (tests.length > 0) return 'Tests';
-    if (libraries.length > 0) return 'Libraries';
-    return 'Demos';
-  }, [others, factorDemos, demos, examples, tutorials, tests, libraries]);
-  const tab = useMemo(() => searchParams.get('tab') || firstTab, [firstTab, searchParams]);
-  const navigate = useNavigate();
+    return tabDefinitions.map((definition) => ({
+      ...definition,
+      configNames: configsFiltered.filter((configName) => (
+        (globalConfig.configs[configName].tab ?? DEFAULT_TAB_LABEL) === definition.label
+      )),
+    })).filter(({ configNames }) => configNames.length > 0).map((definition) => ({
+      ...definition,
+      // Mantine derives ARIA IDs from tab values, which must not contain whitespace.
+      value: encodeURIComponent(definition.label),
+    }));
+  }, [configsFiltered, globalConfig.configs, globalConfig.tabs]);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedTab = searchParams.get('tab');
+  const tab = tabs.find(({ label }) => label === requestedTab) ?? tabs[0];
 
   return (
     <AppShell.Main>
@@ -471,16 +448,6 @@ export function ConfigSwitcher({
         />
         {isLoadingStudies && (
           <>
-            <Tabs variant="outline" value={null} mb="md">
-              <Tabs.List>
-                <Tabs.Tab value="demos" disabled>Demo Studies</Tabs.Tab>
-                <Tabs.Tab value="factor-demos" disabled>Factor-demos</Tabs.Tab>
-                <Tabs.Tab value="examples" disabled>Example Studies</Tabs.Tab>
-                <Tabs.Tab value="tutorials" disabled>Tutorials</Tabs.Tab>
-                <Tabs.Tab value="tests" disabled>Tests</Tabs.Tab>
-                <Tabs.Tab value="libraries" disabled>Libraries</Tabs.Tab>
-              </Tabs.List>
-            </Tabs>
             <Text c="dimmed" ta="center" mt="sm" mb="md">Loading studies...</Text>
             <Card shadow="sm" radius="md" my="sm" withBorder p="lg">
               <Skeleton height={28} width="55%" mb="md" />
@@ -525,79 +492,34 @@ export function ConfigSwitcher({
                 . Check the storage connection and try again.
               </Text>
             )}
-            <Tabs variant="outline" defaultValue={firstTab} value={tab} onChange={(value) => navigate(`/?tab=${value}`)}>
-              <Tabs.List>
-                {others.length > 0 && (
-                  <Tabs.Tab value="Others">Your Studies</Tabs.Tab>
-                )}
-                {demos.length > 0 && (
-                  <Tabs.Tab value="Demos">Demo Studies</Tabs.Tab>
-                )}
-                {factorDemos.length > 0 && (
-                  <Tabs.Tab value="Factor-demos">Factor-demos</Tabs.Tab>
-                )}
-                {examples.length > 0 && (
-                  <Tabs.Tab value="Examples">Example Studies</Tabs.Tab>
-                )}
-                {tutorials.length > 0 && (
-                  <Tabs.Tab value="Tutorials">Tutorials</Tabs.Tab>
-                )}
-                {tests.length > 0 && (
-                  <Tabs.Tab value="Tests">Tests</Tabs.Tab>
-                )}
-                {libraries.length > 0 && (
-                  <Tabs.Tab value="Libraries">Libraries</Tabs.Tab>
-                )}
-              </Tabs.List>
-
-              {others.length > 0 && (
-                <Tabs.Panel value="Others">
-                  <StudyCards configNames={others} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
-                </Tabs.Panel>
-              )}
-
-              {demos.length > 0 && (
-                <Tabs.Panel value="Demos">
-                  <Text c="dimmed" mt="sm">These studies show off individual features of the reVISit platform.</Text>
-                  <StudyCards configNames={demos} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
-                </Tabs.Panel>
-              )}
-
-              {factorDemos.length > 0 && (
-                <Tabs.Panel value="Factor-demos">
-                  <Text c="dimmed" mt="sm">These studies demonstrate the factors configuration language and its participant-level scheduling behavior.</Text>
-                  <StudyCards configNames={factorDemos} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
-                </Tabs.Panel>
-              )}
-
-              {examples.length > 0 && (
-                <Tabs.Panel value="Examples">
-                  <Text c="dimmed" mt="sm">These are full studies that demonstrate the capabilities of the reVISit platform.</Text>
-                  <StudyCards configNames={examples} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
-                </Tabs.Panel>
-              )}
-
-              {tutorials.length > 0 && (
-                <Tabs.Panel value="Tutorials">
-                  <Text c="dimmed" mt="sm">These studies are designed to help you learn how to use the reVISit platform.</Text>
-                  <StudyCards configNames={tutorials} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
-                </Tabs.Panel>
-              )}
-
-              {tests.length > 0 && (
-                <Tabs.Panel value="Tests">
-                  <Text c="dimmed" mt="sm">These studies exist for testing purposes.</Text>
-                  <StudyCards configNames={tests} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
-                </Tabs.Panel>
-              )}
-
-              {libraries.length > 0 && (
-                <Tabs.Panel value="Libraries">
-                  <Text c="dimmed" mt="sm">Here you can see an example of every library that we publish.</Text>
-                  <StudyCards configNames={libraries} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
-                </Tabs.Panel>
-              )}
-            </Tabs>
+            {tabs.length > 0 && (
+              <Tabs
+                variant="outline"
+                value={tab?.value ?? null}
+                onChange={(value) => {
+                  if (value === null) return;
+                  const nextParams = new URLSearchParams(searchParams);
+                  nextParams.set('tab', decodeURIComponent(value));
+                  setSearchParams(nextParams);
+                }}
+              >
+                <Tabs.List>
+                  {tabs.map(({ label, value }) => <Tabs.Tab key={label} value={value}>{label}</Tabs.Tab>)}
+                </Tabs.List>
+                {tabs.map(({
+                  label, value, description, configNames,
+                }) => (
+                  <Tabs.Panel key={label} value={value}>
+                    {description && (
+                      <Box c="dimmed" mt="sm">
+                        <ReactMarkdownWrapper text={description} />
+                      </Box>
+                    )}
+                    <StudyCards configNames={configNames} studyConfigs={studyConfigs} modesByConfig={modesByConfig} />
+                  </Tabs.Panel>
+                ))}
+              </Tabs>
+            )}
 
             {configsFiltered.length === 0 && modeLoadErrors.length === 0 && (
               <Text c="dimmed" ta="center" mt="xl">
