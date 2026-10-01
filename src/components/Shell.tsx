@@ -52,26 +52,32 @@ const RESUME_STARTUP_ERROR = 'This study session could not be resumed.';
 const STUDY_LOADING_MESSAGE = 'Loading your study. This may take a moment.';
 const STUDY_LOADING_MESSAGE_DELAY_MS = 1500;
 
-export function StudyLoadingOverlay({ visible }: { visible: boolean }) {
-  const [showMessage, setShowMessage] = useState(false);
+export function StudyLoadingOverlay({
+  visible,
+  showMessage = true,
+}: {
+  visible: boolean;
+  showMessage?: boolean;
+}) {
+  const [showDelayedMessage, setShowDelayedMessage] = useState(false);
 
   useEffect(() => {
-    if (!visible) {
-      setShowMessage(false);
+    if (!visible || !showMessage) {
+      setShowDelayedMessage(false);
       return undefined;
     }
 
     const timeoutId = window.setTimeout(() => {
-      setShowMessage(true);
+      setShowDelayedMessage(true);
     }, STUDY_LOADING_MESSAGE_DELAY_MS);
 
     return () => window.clearTimeout(timeoutId);
-  }, [visible]);
+  }, [showMessage, visible]);
 
   return (
     <>
       <LoadingOverlay visible={visible} />
-      {visible && showMessage && (
+      {visible && showMessage && showDelayedMessage && (
         <Text
           role="status"
           aria-live="polite"
@@ -107,15 +113,19 @@ export function isStorageStartupFailure(
 }
 
 export function getStartupErrorMessage(error: unknown) {
-  if (error instanceof Error && error.message.trim().length > 0) {
-    return error.message;
+  let message = '';
+  if (error instanceof Error) {
+    message = error.message.trim();
+  } else if (typeof error === 'string') {
+    message = error.trim();
+  }
+  if (!message) return GENERIC_STARTUP_ERROR;
+
+  if (message.toLowerCase().includes('query requires an index')) {
+    return `${message}\n\nCreating this index is a one-time setup for this Firebase project/database; it does not need to be repeated for each study. It must be completed by the study owner (Study Designer) who administers the Firebase deployment.`;
   }
 
-  if (typeof error === 'string' && error.trim().length > 0) {
-    return error;
-  }
-
-  return GENERIC_STARTUP_ERROR;
+  return message;
 }
 
 export function getInitialStartupAlert(
@@ -147,6 +157,7 @@ export function getShellUiState({
 }) {
   return {
     isLoading: isValidStudyId && (!hasRoutes || !hasStore || !isCompletionCheckResolved),
+    showLoadingMessage: isValidStudyId && (!hasRoutes || !hasStore),
     showCompletionCheckError: completionCheckError !== null,
   };
 }
@@ -313,12 +324,12 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
         await storageEngine.saveConfig(activeConfig);
 
-        const sequenceArray = await storageEngine.getSequenceArray();
+        let sequenceArray = await storageEngine.getSequenceArray();
 
         if (!sequenceArray) {
-          const generatedSequenceArray = await generateSequenceArray(activeConfig, activeConfig.warnings);
+          sequenceArray = await generateSequenceArray(activeConfig, activeConfig.warnings);
 
-          await storageEngine.setSequenceArray(generatedSequenceArray);
+          await storageEngine.setSequenceArray(sequenceArray);
         }
 
         // Get or generate participant session
@@ -340,6 +351,10 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
           activeConfig,
           initialMetadata,
           participantId || urlParticipantId,
+          {
+            modesDocument: resolvedModes,
+            sequenceArray,
+          },
         );
 
         if (studyCondition.length > 0 && resolvedModes.developmentModeEnabled) {
@@ -540,7 +555,7 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
     : loadingColorMode;
   useStudyColorMode(studyColorMode);
   const hasConfigErrors = (activeConfig?.errors?.length ?? 0) > 0;
-  const { isLoading, showCompletionCheckError } = getShellUiState({
+  const { isLoading, showLoadingMessage, showCompletionCheckError } = getShellUiState({
     isValidStudyId,
     hasRoutes: routes.length > 0,
     hasStore: store !== null,
@@ -578,7 +593,10 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
   return (
     <>
-      <StudyLoadingOverlay visible={!startupError && !hasConfigErrors && isLoading} />
+      <StudyLoadingOverlay
+        visible={!startupError && !hasConfigErrors && isLoading}
+        showMessage={showLoadingMessage}
+      />
       {!startupError && !hasConfigErrors && showCompletionCheckError && (
         <Stack
           align="center"
