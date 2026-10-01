@@ -7,7 +7,7 @@ import { ParticipantMetadata } from '../../../store/types';
 import { generateSequenceArray } from '../../../utils/handleRandomSequences';
 import { LocalStorageEngine } from '../LocalStorageEngine';
 import {
-  getBetweenSubjectsCombinationKey, getStageParticipantCounts, StageCapacityExceededError, StageNoAvailableConditionsError, StageOnlyDisabledConditionsHaveCapacityError, StorageEngine, type SequenceAssignment,
+  getBetweenSubjectsCombinationKey, getStageParticipantCounts, StageCapacityExceededError, StageNoAvailableConditionsError, StageOnlyDisabledConditionsHaveCapacityError, StorageEngine, type SequenceAssignment, type StorageObject, type StorageObjectType,
 } from '../types';
 
 const studyId = 'stage-capacity-test';
@@ -31,6 +31,28 @@ const metadata: ParticipantMetadata = {
 class FailingAssignmentStorageEngine extends LocalStorageEngine {
   protected override async _updateSequenceAssignmentFields(): Promise<void> {
     throw new Error('Simulated sequence assignment failure');
+  }
+}
+
+class FailingAssignmentCreationStorageEngine extends LocalStorageEngine {
+  protected override async _createSequenceAssignment(): Promise<void> {
+    throw new Error('Simulated assignment creation failure');
+  }
+}
+
+class FailingInitialParticipantWriteStorageEngine extends LocalStorageEngine {
+  private failParticipantWrite = true;
+
+  protected override async _pushToStorage<T extends StorageObjectType>(
+    prefix: string,
+    type: T,
+    objectToUpload: StorageObject<T>,
+  ) {
+    if (this.failParticipantWrite && type === 'participantData' && prefix.startsWith('participants/')) {
+      this.failParticipantWrite = false;
+      throw new Error('Simulated initial participant write failure');
+    }
+    return super._pushToStorage(prefix, type, objectToUpload);
   }
 }
 
@@ -75,6 +97,20 @@ describe('stage capacity', () => {
 
     expect(replacementParticipant.participantId).not.toBe(firstParticipant.participantId);
     expect(getStageParticipantCounts(await storageEngine.getAllSequenceAssignments(studyId))).toEqual({ LIMITED: 1 });
+  });
+
+  test('does not restore a rejected participant after its slot is reassigned', async () => {
+    const firstParticipant = await storageEngine.initializeParticipantSession({}, config, metadata, 'first-participant');
+    await storageEngine.rejectParticipant(firstParticipant.participantId, 'Test rejection');
+    await storageEngine.clearCurrentParticipantId();
+    await storageEngine.initializeParticipantSession({}, config, metadata, 'replacement-participant');
+
+    await expect(storageEngine.undoRejectParticipant(firstParticipant.participantId))
+      .rejects.toThrow('Cannot undo rejection after the participant slot has been reassigned');
+
+    expect((await storageEngine.getParticipantData(firstParticipant.participantId))?.rejected).not.toBe(false);
+    expect(getStageParticipantCounts(await storageEngine.getAllSequenceAssignments(studyId)))
+      .toEqual({ LIMITED: 1 });
   });
 
   test('serializes concurrent entries so a stage limit is never exceeded', async () => {
@@ -265,6 +301,25 @@ describe('stage capacity', () => {
     expect(allStages).toContainEqual(expect.objectContaining({ stageName: 'DEFAULT', color: '#123456' }));
   });
 
+  test('keeps concurrent condition toggles from different admins', async () => {
+    const secondStorageEngine = new LocalStorageEngine(true);
+    await secondStorageEngine.connect();
+    await secondStorageEngine.initializeStudyDb(studyId);
+    const controlKey = getBetweenSubjectsCombinationKey({ version: 'control' }, ['version']);
+    const treatmentKey = getBetweenSubjectsCombinationKey({ version: 'treatment' }, ['version']);
+
+    await Promise.all([
+      storageEngine.setStageCombinationEnabled(studyId, 'LIMITED', controlKey, false),
+      secondStorageEngine.setStageCombinationEnabled(studyId, 'LIMITED', treatmentKey, false),
+    ]);
+
+    const limitedStage = (await storageEngine.getStageData(studyId)).allStages.find(
+      (stage) => stage.stageName === 'LIMITED',
+    );
+    expect(limitedStage?.disabledBetweenSubjectsCombinations)
+      .toEqual(expect.arrayContaining([controlKey, treatmentKey]));
+  });
+
   test('releases the stage slot when initialization fails after the assignment is created', async () => {
     await storageEngine.setSequenceArray(await generateSequenceArray(betweenSubjectsConfig));
     const failingStorageEngine = new FailingAssignmentStorageEngine(true);
@@ -288,6 +343,65 @@ describe('stage capacity', () => {
       'replacement-participant',
     );
     expect(replacementParticipant.sequence).toBeDefined();
+    expect(getStageParticipantCounts(await storageEngine.getAllSequenceAssignments(studyId)))
+      .toEqual({ LIMITED: 1 });
+  });
+
+  test('unclaims a reusable slot when replacement assignment creation fails', async () => {
+    const firstParticipant = await storageEngine.initializeParticipantSession({}, config, metadata, 'source-participant');
+    await storageEngine.rejectParticipant(firstParticipant.participantId, 'Test rejection');
+
+    const failingStorageEngine = new FailingAssignmentCreationStorageEngine(true);
+    await failingStorageEngine.connect();
+    await failingStorageEngine.initializeStudyDb(studyId);
+
+    await expect(failingStorageEngine.initializeParticipantSession(
+      {},
+      config,
+      metadata,
+      'failed-replacement',
+    )).rejects.toThrow('Simulated assignment creation failure');
+
+    expect(await storageEngine.getAllSequenceAssignments(studyId)).toContainEqual(
+      expect.objectContaining({
+        participantId: firstParticipant.participantId,
+        rejected: true,
+        claimed: false,
+      }),
+    );
+
+    await storageEngine.clearCurrentParticipantId();
+    const replacement = await storageEngine.initializeParticipantSession(
+      {},
+      config,
+      metadata,
+      'successful-replacement',
+    );
+    expect(replacement.participantId).toBe('successful-replacement');
+  });
+
+  test('releases the assignment and local snapshot when the initial participant write fails', async () => {
+    const failingStorageEngine = new FailingInitialParticipantWriteStorageEngine(true);
+    await failingStorageEngine.connect();
+    await failingStorageEngine.initializeStudyDb(studyId);
+
+    await expect(failingStorageEngine.initializeParticipantSession(
+      {},
+      config,
+      metadata,
+      'write-failure',
+    )).rejects.toThrow('Simulated initial participant write failure');
+
+    expect(getStageParticipantCounts(await storageEngine.getAllSequenceAssignments(studyId))).toEqual({});
+    expect(await storageEngine.getParticipantData('write-failure')).toBeNull();
+
+    const retriedParticipant = await failingStorageEngine.initializeParticipantSession(
+      {},
+      config,
+      metadata,
+      'write-failure',
+    );
+    expect(retriedParticipant.participantId).toBe('write-failure');
     expect(getStageParticipantCounts(await storageEngine.getAllSequenceAssignments(studyId)))
       .toEqual({ LIMITED: 1 });
   });

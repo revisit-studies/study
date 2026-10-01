@@ -54,7 +54,7 @@ describe('getStaticFirstComponent', () => {
     ))).toEqual({ componentName: 'intro', component });
   });
 
-  test('does not preview a component with a custom response, whose mount effects would run', () => {
+  test('returns a static stimulus even when its response is custom', () => {
     const component: MarkdownComponent = {
       ...intro,
       response: [{
@@ -69,7 +69,7 @@ describe('getStaticFirstComponent', () => {
     expect(getStaticFirstComponent(makeConfig(
       { order: 'fixed', components: ['intro'] },
       component,
-    ))).toBeNull();
+    ))).toEqual({ componentName: 'intro', component });
   });
 
   test('does not preview a component that needs templating', () => {

@@ -40,11 +40,9 @@ import { getComponentContainerStyle } from '../utils/componentStyle';
 import { compileTemplate } from '../utils/handlebars';
 import { generateStimulusErrorMessage } from '../components/response/stimulusErrors';
 import { getStimulusProvenanceState, getStimulusShowErrorsFromState } from '../components/response/stimulusProvenance';
-import { useIsStartupPreview } from '../components/StartupPreviewContext';
 
 // current active stimuli presented to the user
 export function ComponentController() {
-  const isStartupPreview = useIsStartupPreview();
   // Get the config for the current step
   const studyConfig = useStudyConfig();
   const currentStep = useCurrentStep();
@@ -82,17 +80,17 @@ export function ComponentController() {
   const participantId = useMemo(() => searchParams.get('participantId'), [searchParams]);
 
   // Disable browser back button from all stimuli
-  useDisableBrowserBack(isStartupPreview);
+  useDisableBrowserBack();
 
   useEffect(() => {
-    if (isStartupPreview || !storageEngine) {
+    if (!storageEngine) {
       return undefined;
     }
 
     return storageEngine.subscribeToCurrentParticipantRejection(() => {
       navigate(`./../__timedOut${window.location.search}`);
     });
-  }, [isStartupPreview, navigate, storageEngine]);
+  }, [navigate, storageEngine]);
 
   // Check if we have issues connecting to the database, if so show alert modal
   const storeDispatch = useStoreDispatch();
@@ -123,7 +121,7 @@ export function ComponentController() {
   const [blockForStep, setBlockForStep] = useState<string[]>([]);
   const prevBlockForStepRef = useRef<string[]>([]);
   useEffect(() => {
-    if (isAnalysis || isStartupPreview) {
+    if (isAnalysis) {
       return;
     }
     async function updateBlockForStep() {
@@ -150,7 +148,7 @@ export function ComponentController() {
 
     updateBlockForStep().then(addParticipantTag);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentStep, isStartupPreview, storageEngine, sequence]);
+  }, [currentStep, storageEngine, sequence]);
 
   const currentConfig = useMemo(() => {
     const toReturn = currentComponent && currentComponent !== 'end' && !currentComponent.startsWith('__') && studyComponentToIndividualComponent(stepConfig, studyConfig) as IndividualComponent;
@@ -289,7 +287,7 @@ export function ComponentController() {
     return <ResourceNotFound email={studyConfig.uiConfig.contactEmail} />;
   }
 
-  if (!isStartupPreview && !storageEngine?.isConnected()) {
+  if (!storageEngine?.isConnected()) {
     return (
       <Center style={{ height: '80vh', flexDirection: 'column', textAlign: 'center' }}>
         <IconPlugConnectedX size={48} stroke={1.5} color="var(--mantine-color-orange-text)" />

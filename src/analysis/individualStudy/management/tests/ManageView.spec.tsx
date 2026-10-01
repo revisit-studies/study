@@ -29,6 +29,8 @@ let mockStorageEngine: {
   getAllSequenceAssignments: ReturnType<typeof vi.fn>;
   setCurrentStage: ReturnType<typeof vi.fn>;
   updateStage: ReturnType<typeof vi.fn>;
+  setStageCombinationEnabled: ReturnType<typeof vi.fn>;
+  setStageDesiredParticipants: ReturnType<typeof vi.fn>;
   getSnapshots: ReturnType<typeof vi.fn>;
   createSnapshot: ReturnType<typeof vi.fn>;
   renameSnapshot: ReturnType<typeof vi.fn>;
@@ -276,6 +278,8 @@ const makeEngine = () => ({
   getAllSequenceAssignments: vi.fn().mockResolvedValue([]),
   setCurrentStage: vi.fn().mockResolvedValue(undefined),
   updateStage: vi.fn().mockResolvedValue(undefined),
+  setStageCombinationEnabled: vi.fn().mockResolvedValue(undefined),
+  setStageDesiredParticipants: vi.fn().mockResolvedValue(undefined),
   getSnapshots: vi.fn().mockResolvedValue({}),
   createSnapshot: vi.fn().mockResolvedValue(successResponse),
   renameSnapshot: vi.fn().mockResolvedValue(successResponse),
@@ -698,15 +702,12 @@ describe('ManageView', () => {
       fireEvent.click(screen.getByRole('checkbox', { name: 'Enable a / 2 for DEFAULT' }));
     });
     expect(screen.getByText('This condition will be available for future participant assignments. Existing participant data will not change.')).toBeDefined();
-    expect(mockStorageEngine!.updateStage).not.toHaveBeenCalledWith('test-study', 'DEFAULT', {
-      disabledBetweenSubjectsCombinations: null,
-    });
+    expect(mockStorageEngine!.setStageCombinationEnabled).not.toHaveBeenCalled();
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Yes, enable condition' }));
     });
-    expect(mockStorageEngine!.updateStage).toHaveBeenCalledWith('test-study', 'DEFAULT', {
-      disabledBetweenSubjectsCombinations: null,
-    });
+    expect(mockStorageEngine!.setStageCombinationEnabled)
+      .toHaveBeenCalledWith('test-study', 'DEFAULT', disabledCombination, true);
   });
 
   test('StageManagementItem disables even allocations and enables manual assignments', async () => {
@@ -746,6 +747,32 @@ describe('ManageView', () => {
         [combinations[1]]: 2,
       },
     });
+  });
+
+  test('StageManagementItem reports and reloads a failed stage change', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockStorageEngine!.getStageData.mockResolvedValue({
+      currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
+      allStages: [{ stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR, maxParticipants: 4 }],
+    });
+    mockStorageEngine!.updateStage.mockRejectedValueOnce(new Error('write failed'));
+    const studyConfig = {
+      factors: { letter: ['a', 'b'] },
+      betweenSubjects: ['letter'],
+    } as unknown as StudyConfig;
+
+    await act(async () => {
+      render(<StageManagementItem studyId="test-study" studyConfig={studyConfig} />);
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Manually' }));
+    });
+
+    expect(showNotification).toHaveBeenCalledWith(expect.objectContaining({
+      title: 'Stage settings not saved',
+      color: 'red',
+    }));
+    expect(mockStorageEngine!.getStageData).toHaveBeenCalledTimes(2);
   });
 
   test('StageManagementItem sets an initial limit of ten participants per condition group', async () => {

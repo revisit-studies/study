@@ -29,7 +29,7 @@ import { StudyRouteGuard } from '../routes/StudyRouteGuard';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import { generateSequenceArray } from '../utils/handleRandomSequences';
 import { getStudyConfig, resolveConfigKey } from '../utils/fetchConfig';
-import type { AlertModalState, ParticipantMetadata, Sequence } from '../store/types';
+import type { AlertModalState, ParticipantMetadata } from '../store/types';
 import { ErrorLoadingConfig } from './ErrorLoadingConfig';
 import { ResourceNotFound } from '../ResourceNotFound';
 import { encryptIndex } from '../utils/encryptDecryptIndex';
@@ -50,8 +50,8 @@ import {
 import { StartupErrorScreen } from './StartupErrorScreen';
 import { materializeParticipantConfig } from '../parser/libraryParser';
 import { getStaticFirstComponent, type StaticFirstComponentPreview } from '../utils/getStaticFirstComponent';
-import { StartupPreviewContext } from './StartupPreviewContext';
 import { useStudyColorMode } from './AppThemeProvider';
+import { StartupPreview } from './StartupPreview';
 
 type StartupStorageStatus = Pick<StorageEngine, 'getEngine' | 'isConnected'>;
 
@@ -59,22 +59,14 @@ const GENERIC_STARTUP_ERROR = 'There was a problem loading the study.';
 const RESUME_STARTUP_ERROR = 'This study session could not be resumed.';
 const STUDY_LOADING_MESSAGE = 'Loading your study. This may take a moment.';
 const STUDY_LOADING_MESSAGE_DELAY_MS = 1500;
-const STARTUP_PREVIEW_MODES: Record<REVISIT_MODE, boolean> = {
-  dataCollectionEnabled: true,
-  developmentModeEnabled: import.meta.env.DEV,
-  dataSharingEnabled: false,
-};
-
-function getParticipantRoutes(startupPreview = false) {
+function getParticipantRoutes() {
   return [
     {
       element: <StudyRouteGuard><StepRenderer /></StudyRouteGuard>,
       children: [
         {
           path: '/',
-          element: startupPreview
-            ? <ComponentController />
-            : <NavigateWithParams to={encryptIndex(0)} replace />,
+          element: <NavigateWithParams to={encryptIndex(0)} replace />,
         },
         {
           path: '/:index/:funcIndex?',
@@ -305,7 +297,6 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
   const [routes, setRoutes] = useState<RouteObject[]>([]);
   const [store, setStore] = useState<Nullable<StudyStore>>(null);
-  const [startupPreviewStore, setStartupPreviewStore] = useState<Nullable<StudyStore>>(null);
   const [isCompletionCheckResolved, setIsCompletionCheckResolved] = useState(false);
   const [completionCheckError, setCompletionCheckError] = useState<string | null>(null);
   const [startupPreviewComponent, setStartupPreviewComponent] = useState<StaticFirstComponentPreview | null>(null);
@@ -322,7 +313,6 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
   useEffect(() => {
     let cancelled = false;
     setStartupPreviewComponent(null);
-    setStartupPreviewStore(null);
 
     if (store || !storageEngine || !activeConfig || !canonicalStudyId
       || participantId || urlParticipantId || studyCondition.length > 0
@@ -332,7 +322,7 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
       };
     }
 
-    storageEngine.peekCurrentParticipantId(canonicalStudyId).then(async (existingParticipantId) => {
+    storageEngine.peekCurrentParticipantId(canonicalStudyId).then((existingParticipantId) => {
       if (cancelled || existingParticipantId) {
         return;
       }
@@ -342,29 +332,8 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
         return;
       }
 
-      const previewSequence: Sequence = {
-        id: 'startup-preview',
-        orderPath: 'startup-preview',
-        order: 'fixed',
-        components: [previewComponent.componentName],
-        skip: [],
-      };
-      const previewStore = await studyStoreCreator(
-        canonicalStudyId,
-        activeConfig,
-        previewSequence,
-        createEmptyParticipantMetadata(),
-        {},
-        STARTUP_PREVIEW_MODES,
-        '',
-        false,
-        false,
-      );
-
       if (!cancelled) {
         setStartupPreviewComponent(previewComponent);
-        setStartupPreviewStore(previewStore);
-        setRoutes(getParticipantRoutes(true));
       }
     }).catch(() => {
       // Startup remains unchanged if preview construction is unavailable.
@@ -642,9 +611,7 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
     completionCheckError,
     hasStageCapacityError: stageEntryError !== null,
   });
-  const hasStartupPreview = startupPreviewComponent !== null && startupPreviewStore !== null && store === null;
-  const activeStore = store ?? startupPreviewStore;
-  const hasRenderableStudy = routing !== null && activeStore !== null;
+  const hasStartupPreview = startupPreviewComponent !== null && store === null;
 
   let content: ReactNode = null;
 
@@ -697,21 +664,21 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
     );
   } else if (!isValidStudyId) {
     content = <ResourceNotFound />;
-  } else if (routing && activeStore) {
+  } else if (routing && store) {
     content = (
-      <StudyStoreContext.Provider key={hasStartupPreview ? 'startup-preview' : 'participant-session'} value={activeStore}>
-        <StartupPreviewContext.Provider value={hasStartupPreview}>
-          <Provider store={activeStore.store}>{routing}</Provider>
-        </StartupPreviewContext.Provider>
+      <StudyStoreContext.Provider value={store}>
+        <Provider store={store.store}>{routing}</Provider>
       </StudyStoreContext.Provider>
     );
+  } else if (hasStartupPreview) {
+    content = <StartupPreview preview={startupPreviewComponent} />;
   } else if (!isLoading) {
     content = <ResourceNotFound email={activeConfig?.uiConfig.contactEmail} />;
   }
 
   return (
     <>
-      <StudyLoadingOverlay visible={!startupError && !hasConfigErrors && isLoading && !hasRenderableStudy} />
+      <StudyLoadingOverlay visible={!startupError && !hasConfigErrors && isLoading && !hasStartupPreview} />
       {!startupError && !hasConfigErrors && showCompletionCheckError && (
         <Stack
           align="center"

@@ -46,20 +46,10 @@ function getFirstComponentName(block: unknown): string | null {
   return firstComponent === undefined ? null : getFirstComponentName(firstComponent);
 }
 
-// Custom responses mount study-author React components, whose mount effects run
-// even when the response is rendered disabled. Previewing them before the
-// participant is assigned would let those effects fire against a session that does
-// not exist yet, so a component carrying one is never previewed.
-function hasNonPreviewableResponse(component: StaticFirstComponent) {
-  return component.response.some((response) => response.type === 'custom');
-}
-
 /**
  * Returns a component that can be displayed while a new participant's sequence
- * is assigned. This deliberately accepts only fixed Markdown or image
- * components without custom responses. The remaining response types are
- * built-in inputs rendered disabled until the assigned session replaces the
- * preview, so no participant input can be lost.
+ * is assigned. The preview renderer displays only this static stimulus; it does
+ * not mount the component's responses or the participant runtime.
  */
 export function getStaticFirstComponent(studyConfig: StudyConfig): StaticFirstComponentPreview | null {
   // Assignment can materialize a different config for each between-subjects
@@ -76,8 +66,7 @@ export function getStaticFirstComponent(studyConfig: StudyConfig): StaticFirstCo
 
   const component = getComponent(componentName, studyConfig);
   if ((component?.type !== 'markdown' && component?.type !== 'image')
-    || hasTemplateSyntax(component.path)
-    || hasNonPreviewableResponse(component)) {
+    || hasTemplateSyntax(component.path)) {
     return null;
   }
 
