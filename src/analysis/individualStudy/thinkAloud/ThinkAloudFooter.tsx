@@ -10,7 +10,7 @@ import {
 } from '@mantine/core';
 import { useLocation, useNavigate, useSearchParams } from 'react-router';
 import {
-  useCallback, useEffect, useMemo, useState,
+  Ref, useCallback, useEffect, useMemo, useState,
 } from 'react';
 import * as d3 from 'd3';
 
@@ -103,9 +103,9 @@ function getBrowser(ua: string) {
 }
 
 export function ThinkAloudFooter({
-  visibleParticipants, rawTranscript, currentShownTranscription, width, onTimeUpdate, isReplay, editedTranscript, currentTrial, saveProvenance, jumpedToLine = 0, studyId, setHasAudio, storageEngine,
+  visibleParticipants, rawTranscript, currentShownTranscription, width, onTimeUpdate, isReplay, editedTranscript, currentTrial, saveProvenance, jumpedToLine = 0, studyId, setHasAudio, storageEngine, footerRef,
 }: {
-  visibleParticipants: string[], rawTranscript: TranscribedAudio | null, currentShownTranscription: number | null, width: number, onTimeUpdate: (n: number) => void, isReplay: boolean, editedTranscript?: EditedText[], currentTrial: string, saveProvenance: (prov: unknown) => void, jumpedToLine?: number, studyId: string, setHasAudio: (b: boolean) => void, storageEngine: StorageEngine | undefined,
+  visibleParticipants: string[], rawTranscript: TranscribedAudio | null, currentShownTranscription: number | null, width: number, onTimeUpdate: (n: number) => void, isReplay: boolean, editedTranscript?: EditedText[], currentTrial: string, saveProvenance: (prov: unknown) => void, jumpedToLine?: number, studyId: string, setHasAudio: (b: boolean) => void, storageEngine: StorageEngine | undefined, footerRef?: Ref<HTMLElement>,
 }) {
   const auth = useAuth();
 
@@ -466,7 +466,7 @@ export function ThinkAloudFooter({
   }, [participantId, screenRecordingUrl, webcamRecordingUrl]);
 
   return (
-    <AppShell.Footer zIndex={101} withBorder={false}>
+    <AppShell.Footer ref={footerRef} zIndex={101} withBorder={false}>
       {currentTrial && participant && currentTrialClean === '' && (
         <div style={{
           position: 'absolute', top: -5, left: 5, transform: 'translateY(-100%)',

@@ -107,6 +107,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   const { analysisTab } = useParams();
   const { user } = useAuth();
   const [ref, { width }] = useResizeObserver();
+  const [footerRef, { height: footerHeight }] = useResizeObserver();
   const canonicalStudyId = useMemo(() => {
     if (!routeStudyId || routeStudyId === '__revisit-widget') {
       return routeStudyId;
@@ -429,7 +430,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   return (
     <>
       <AppHeader studyIds={globalConfig.configsList} selectedStudyId={displayStudyId} studyConfigs={studyConfig && displayStudyId ? { [displayStudyId]: studyConfig } : undefined} />
-      <AppShell.Main style={{ height: '100dvh' }}>
+      <AppShell.Main style={{ height: '100dvh', paddingBottom: analysisTab === 'tagging' && codingEnabled ? `calc(var(--app-shell-padding) + ${footerHeight}px)` : undefined }}>
         <Stack ref={ref} style={{ height: '100%', maxHeight: '100dvh', overflow: 'hidden' }} justify="space-between">
           <Flex direction="row" align="center" justify="space-between" py="sm" gap="md">
             <Flex direction="row" align="center" gap="md">
@@ -645,9 +646,9 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
               <Tabs.Panel style={{ overflow: 'auto' }} value="stats" pt="xs">
                 {studyConfig && <StatsView studyConfig={studyConfig} visibleParticipants={visibleParticipants} allConfigs={allConfigs} />}
               </Tabs.Panel>
-              <Tabs.Panel value="tagging" pt="xs">
+              <Tabs.Panel style={{ overflow: 'auto' }} value="tagging" pt="xs">
                 {studyConfig && codingEnabled
-                  ? <ThinkAloudAnalysis visibleParticipants={visibleParticipants} storageEngine={storageEngine as FirebaseStorageEngine} />
+                  ? <ThinkAloudAnalysis footerRef={footerRef} visibleParticipants={visibleParticipants} storageEngine={storageEngine as FirebaseStorageEngine} />
                   : (
                     <Center>
                       <Text c="dimmed">
