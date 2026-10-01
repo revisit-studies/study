@@ -82,6 +82,16 @@ export interface StageInfo {
   manualDesiredParticipantsByCombination?: Record<string, number>;
 }
 
+/** The fields of a {@link StageInfo} that an admin can change. An omitted field is left alone and a null clears it. */
+export interface StageUpdates {
+  color?: string;
+  maxParticipants?: number | null;
+  disabledBetweenSubjectsCombinations?: string[] | null;
+  desiredParticipantsByCombination?: Record<string, number> | null;
+  participantAssignmentMode?: 'even' | 'manual' | null;
+  manualDesiredParticipantsByCombination?: Record<string, number> | null;
+}
+
 export class StageCapacityExceededError extends Error {
   constructor(public readonly stageName: string) {
     super(`The ${stageName} stage has reached its participant limit`);
@@ -119,6 +129,9 @@ export interface ConditionData {
 }
 
 const defaultStageColor = DISTINCT_COLOR_PALETTE[0];
+
+// Every stage edit rewrites the whole modes document, so they all share one lock.
+const STAGE_DATA_LOCK_KEY = 'stage-data';
 
 export function getStageParticipantCounts(sequenceAssignments: SequenceAssignment[]) {
   return sequenceAssignments.reduce<Record<string, number>>((counts, assignment) => {
@@ -172,7 +185,14 @@ function getDesiredParticipantCountsByCombination(
     (total, key) => total + (manuallySpecifiedCounts[key] ?? 0),
     0,
   );
-  const unspecifiedCombinationKeys = combinationKeys.filter((key) => !Object.hasOwn(manuallySpecifiedCounts, key));
+  // Disabled conditions take no new participants, so including them in the even
+  // split would strand part of the stage maximum in conditions nobody can be
+  // assigned to. An explicit target still counts, so an admin who sets one for a
+  // disabled condition keeps that reservation.
+  const disabledCombinationKeys = new Set(stage.disabledBetweenSubjectsCombinations ?? []);
+  const unspecifiedCombinationKeys = combinationKeys.filter((key) => (
+    !Object.hasOwn(manuallySpecifiedCounts, key) && !disabledCombinationKeys.has(key)
+  ));
   const remainingCount = Math.max(stage.maxParticipants - manualCount, 0);
   const countPerUnspecifiedCombination = unspecifiedCombinationKeys.length === 0
     ? 0
@@ -181,11 +201,41 @@ function getDesiredParticipantCountsByCombination(
     ? 0
     : remainingCount % unspecifiedCombinationKeys.length;
 
-  return Object.fromEntries(combinationKeys.map((key) => [
-    key,
-    manuallySpecifiedCounts[key]
-      ?? countPerUnspecifiedCombination + (unspecifiedCombinationKeys.indexOf(key) < remainder ? 1 : 0),
-  ]));
+  return Object.fromEntries(combinationKeys.map((key) => {
+    if (Object.hasOwn(manuallySpecifiedCounts, key)) {
+      return [key, manuallySpecifiedCounts[key]];
+    }
+
+    const unspecifiedIndex = unspecifiedCombinationKeys.indexOf(key);
+    if (unspecifiedIndex === -1) {
+      return [key, 0];
+    }
+
+    return [key, countPerUnspecifiedCombination + (unspecifiedIndex < remainder ? 1 : 0)];
+  }));
+}
+
+// Returns the sequences whose between-subjects condition is furthest from its
+// target, so new participants top up the condition that is behind. Conditions with
+// a target are compared by the fraction of that target already filled, so unequal
+// targets fill in proportion rather than largest-first; without targets the raw
+// participant count is used.
+function getLeastServedSequences(
+  sequences: Sequence[],
+  combinationCounts: Record<string, number>,
+  desiredParticipantCountsByCombination: Record<string, number> | undefined,
+  betweenSubjects: string[],
+) {
+  const servedFractions = sequences.map((sequence) => {
+    const combinationKey = getBetweenSubjectsCombinationKey(sequence.parameters, betweenSubjects);
+    const count = combinationCounts[combinationKey] || 0;
+    const desiredCount = desiredParticipantCountsByCombination?.[combinationKey];
+
+    return desiredCount ? count / desiredCount : count;
+  });
+  const leastServedFraction = Math.min(...servedFractions);
+
+  return sequences.filter((_, index) => servedFractions[index] === leastServedFraction);
 }
 
 export type StorageObjectType = 'sequenceArray' | 'participantData' | 'config' | string;
@@ -848,6 +898,19 @@ export abstract class StorageEngine {
     color: string = defaultStageColor,
     maxParticipants?: number,
   ): Promise<void> {
+    // The modes document holds every stage, so a read-modify-write of one stage
+    // would otherwise drop a concurrent admin's edit to a different stage.
+    await this._runWithLock(STAGE_DATA_LOCK_KEY, async () => {
+      await this.setCurrentStageUnlocked(studyId, stageName, color, maxParticipants);
+    });
+  }
+
+  private async setCurrentStageUnlocked(
+    studyId: string,
+    stageName: string,
+    color: string,
+    maxParticipants?: number,
+  ): Promise<void> {
     const modesDoc = await this.getModes(studyId);
 
     // Initialize if doesn't exist or invalid
@@ -889,14 +952,19 @@ export abstract class StorageEngine {
   async updateStage(
     studyId: string,
     stageName: string,
-    updates: {
-      color?: string;
-      maxParticipants?: number | null;
-      disabledBetweenSubjectsCombinations?: string[] | null;
-      desiredParticipantsByCombination?: Record<string, number> | null;
-      participantAssignmentMode?: 'even' | 'manual' | null;
-      manualDesiredParticipantsByCombination?: Record<string, number> | null;
-    },
+    updates: StageUpdates,
+  ): Promise<void> {
+    // Two admins editing different stages, or different switches on one stage,
+    // both rewrite the whole allStages array, so serialize the read and write.
+    await this._runWithLock(STAGE_DATA_LOCK_KEY, async () => {
+      await this.updateStageUnlocked(studyId, stageName, updates);
+    });
+  }
+
+  private async updateStageUnlocked(
+    studyId: string,
+    stageName: string,
+    updates: StageUpdates,
   ): Promise<void> {
     const modesDoc = await this.getModes(studyId);
 
@@ -1118,8 +1186,13 @@ export abstract class StorageEngine {
     const desiredParticipantCountsByCombination = currentStageInfo
       ? getDesiredParticipantCountsByCombination(currentStageInfo, sequenceArray, betweenSubjects)
       : undefined;
-    if (modes.dataCollectionEnabled && desiredParticipantCountsByCombination && currentStageInfo) {
-      const combinationCounts: Record<string, number> = {};
+    let combinationCounts: Record<string, number> | undefined;
+    // Counts are needed to balance conditions, not only to cap them, so they are
+    // gathered for every between-subjects study rather than only for stages that
+    // set a maximum.
+    if (modes.dataCollectionEnabled && betweenSubjects.length > 0 && currentStageInfo) {
+      const counts: Record<string, number> = {};
+      combinationCounts = counts;
       const assignmentsMissingCombinationKey = sequenceAssignments.filter((assignment) => (
         !assignment.rejected
         && assignment.stage === currentStage
@@ -1128,8 +1201,8 @@ export abstract class StorageEngine {
 
       sequenceAssignments.forEach((assignment) => {
         if (!assignment.rejected && assignment.stage === currentStage && assignment.betweenSubjectsCombinationKey) {
-          combinationCounts[assignment.betweenSubjectsCombinationKey] = (
-            combinationCounts[assignment.betweenSubjectsCombinationKey] || 0
+          counts[assignment.betweenSubjectsCombinationKey] = (
+            counts[assignment.betweenSubjectsCombinationKey] || 0
           ) + 1;
         }
       });
@@ -1145,24 +1218,26 @@ export abstract class StorageEngine {
       }));
       missingCombinationKeys.forEach((combinationKey) => {
         if (combinationKey) {
-          combinationCounts[combinationKey] = (combinationCounts[combinationKey] || 0) + 1;
+          counts[combinationKey] = (counts[combinationKey] || 0) + 1;
         }
       });
 
-      const hasRemainingCapacity = (sequence: Sequence) => {
-        const combinationKey = getBetweenSubjectsCombinationKey(sequence.parameters, betweenSubjects);
-        return (combinationCounts[combinationKey] || 0) < desiredParticipantCountsByCombination[combinationKey];
-      };
-      availableSequenceArray = enabledSequenceArray.filter(hasRemainingCapacity);
-      if (availableSequenceArray.length === 0) {
-        const hasCapacityInDisabledCondition = sequenceArray.some((sequence) => (
-          !isSequenceEnabledForStage(sequence, currentStageInfo, betweenSubjects)
-          && hasRemainingCapacity(sequence)
-        ));
-        if (hasCapacityInDisabledCondition) {
-          throw new StageOnlyDisabledConditionsHaveCapacityError(currentStage);
+      if (desiredParticipantCountsByCombination) {
+        const hasRemainingCapacity = (sequence: Sequence) => {
+          const combinationKey = getBetweenSubjectsCombinationKey(sequence.parameters, betweenSubjects);
+          return (counts[combinationKey] || 0) < desiredParticipantCountsByCombination[combinationKey];
+        };
+        availableSequenceArray = enabledSequenceArray.filter(hasRemainingCapacity);
+        if (availableSequenceArray.length === 0) {
+          const hasCapacityInDisabledCondition = sequenceArray.some((sequence) => (
+            !isSequenceEnabledForStage(sequence, currentStageInfo, betweenSubjects)
+            && hasRemainingCapacity(sequence)
+          ));
+          if (hasCapacityInDisabledCondition) {
+            throw new StageOnlyDisabledConditionsHaveCapacityError(currentStage);
+          }
+          throw new StageCapacityExceededError(currentStage);
         }
-        throw new StageCapacityExceededError(currentStage);
       }
     }
 
@@ -1219,7 +1294,7 @@ export abstract class StorageEngine {
       (assignment) => !assignment.rejected && assignment.stage === currentStage,
     ).findIndex(
       (assignment) => assignment.participantId === this.currentParticipantId,
-    ) % availableSequenceArray.length;
+    );
     // If index = -1, we probably have data collection disabled. Give a random assignment.
     if (intentIndex === -1) {
       return {
@@ -1227,7 +1302,20 @@ export abstract class StorageEngine {
         creationIndex: 1,
       };
     }
-    const currentRow = availableSequenceArray[intentIndex];
+    // Rotating through the sequences alone assigns whichever condition is next in
+    // the latin square, which never catches a condition up after it was disabled,
+    // given a smaller target, or emptied by rejections. Narrow the rotation to the
+    // conditions that are furthest behind, then keep the latin-square rotation
+    // within them.
+    const balancedSequenceArray = combinationCounts
+      ? getLeastServedSequences(
+        availableSequenceArray,
+        combinationCounts,
+        desiredParticipantCountsByCombination,
+        betweenSubjects,
+      )
+      : availableSequenceArray;
+    const currentRow = balancedSequenceArray[intentIndex % balancedSequenceArray.length];
 
     if (!currentRow) {
       throw new Error('Latin square is empty');
@@ -1244,6 +1332,27 @@ export abstract class StorageEngine {
     const creationIndex = creationSorted.findIndex((assignment) => assignment.participantId === this.currentParticipantId) + 1;
 
     return { currentRow, creationIndex };
+  }
+
+  // Releases a sequence assignment created for the current participant during a
+  // failed initialization. Rejecting the assignment frees the stage slot and
+  // lets the next participant claim it, and reverses any slot this assignment
+  // claimed from an earlier rejection. Failures here are swallowed: the caller
+  // is already reporting the initialization error it is rolling back.
+  private async releaseInitialSequenceAssignment() {
+    if (!this.currentParticipantId) {
+      return;
+    }
+
+    try {
+      const assignment = await this._getSequenceAssignment(this.currentParticipantId);
+      if (!assignment || assignment.rejected) {
+        return;
+      }
+      await this._rejectParticipantRealtime(this.currentParticipantId);
+    } catch (error) {
+      console.warn('Error releasing the sequence assignment of a failed participant initialization:', error);
+    }
   }
 
   // Initializes or resumes a participant session for the given studyId. This will create a new participant data object if it does not exist, or update the existing one.
@@ -1311,7 +1420,18 @@ export abstract class StorageEngine {
       const participantConfigHash = await hash(JSON.stringify(config));
       const parsedConditions = parseConditionParam(searchParams.condition);
       const conditions = parsedConditions.length > 0 ? parsedConditions : undefined;
-      const { currentRow, creationIndex } = await this._getSequence(conditions, { modes, stageData }, config);
+      let sequence: { currentRow: Sequence; creationIndex: number };
+      try {
+        sequence = await this._getSequence(conditions, { modes, stageData }, config);
+      } catch (error) {
+        // _getSequence writes the sequence assignment before it picks a row, so a
+        // later failure leaves an assignment that occupies a stage slot with no
+        // participant record for an admin to reject. Release it here, while the
+        // assignment lock is still held, so the slot stays recoverable.
+        await this.releaseInitialSequenceAssignment();
+        throw error;
+      }
+      const { currentRow, creationIndex } = sequence;
       return {
         participant: {
           participantId: this.currentParticipantId!,

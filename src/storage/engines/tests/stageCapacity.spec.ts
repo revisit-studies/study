@@ -25,6 +25,15 @@ const metadata: ParticipantMetadata = {
   ip: '127.0.0.1',
 };
 
+// _getSequence writes the between-subjects combination key after it has already
+// created the sequence assignment, so failing that write reproduces an
+// initialization that dies with an assignment already on record.
+class FailingAssignmentStorageEngine extends LocalStorageEngine {
+  protected override async _updateSequenceAssignmentFields(): Promise<void> {
+    throw new Error('Simulated sequence assignment failure');
+  }
+}
+
 describe('stage capacity', () => {
   let storageEngine: StorageEngine;
 
@@ -200,6 +209,87 @@ describe('stage capacity', () => {
 
     await expect(storageEngine.initializeParticipantSession({}, betweenSubjectsConfig, metadata))
       .rejects.toBeInstanceOf(StageOnlyDisabledConditionsHaveCapacityError);
+  });
+
+  test('tops up the condition that is behind instead of continuing the rotation', async () => {
+    await storageEngine.setSequenceArray(await generateSequenceArray(betweenSubjectsConfig));
+    const controlKey = getBetweenSubjectsCombinationKey({ version: 'control' }, ['version']);
+    await storageEngine.updateStage(studyId, 'LIMITED', {
+      maxParticipants: null,
+      disabledBetweenSubjectsCombinations: [controlKey],
+    });
+
+    const assignVersion = async (participantId: string) => {
+      const participant = await storageEngine.initializeParticipantSession(
+        {},
+        betweenSubjectsConfig,
+        metadata,
+        participantId,
+      );
+      await storageEngine.clearCurrentParticipantId();
+      return String(participant.sequence.parameters?.version);
+    };
+
+    expect(await assignVersion('treatment-one')).toBe('treatment');
+    expect(await assignVersion('treatment-two')).toBe('treatment');
+
+    await storageEngine.updateStage(studyId, 'LIMITED', {
+      disabledBetweenSubjectsCombinations: null,
+    });
+
+    // Control is two participants behind, so both new participants go to it
+    // rather than resuming the latin-square alternation.
+    expect(await assignVersion('catch-up-one')).toBe('control');
+    expect(await assignVersion('catch-up-two')).toBe('control');
+
+    const assignments = await storageEngine.getAllSequenceAssignments(studyId);
+    const treatmentKey = getBetweenSubjectsCombinationKey({ version: 'treatment' }, ['version']);
+    const countFor = (combinationKey: string) => assignments.filter(
+      (assignment) => assignment.betweenSubjectsCombinationKey === combinationKey,
+    ).length;
+    expect(countFor(controlKey)).toBe(countFor(treatmentKey));
+  });
+
+  test('keeps concurrent edits to different stages', async () => {
+    const secondStorageEngine = new LocalStorageEngine(true);
+    await secondStorageEngine.connect();
+    await secondStorageEngine.initializeStudyDb(studyId);
+
+    await Promise.all([
+      storageEngine.updateStage(studyId, 'LIMITED', { maxParticipants: 7 }),
+      secondStorageEngine.updateStage(studyId, 'DEFAULT', { color: '#123456' }),
+    ]);
+
+    const { allStages } = await storageEngine.getStageData(studyId);
+    expect(allStages).toContainEqual(expect.objectContaining({ stageName: 'LIMITED', maxParticipants: 7 }));
+    expect(allStages).toContainEqual(expect.objectContaining({ stageName: 'DEFAULT', color: '#123456' }));
+  });
+
+  test('releases the stage slot when initialization fails after the assignment is created', async () => {
+    await storageEngine.setSequenceArray(await generateSequenceArray(betweenSubjectsConfig));
+    const failingStorageEngine = new FailingAssignmentStorageEngine(true);
+    await failingStorageEngine.connect();
+    await failingStorageEngine.initializeStudyDb(studyId);
+
+    await expect(failingStorageEngine.initializeParticipantSession(
+      {},
+      betweenSubjectsConfig,
+      metadata,
+      'failed-participant',
+    )).rejects.toThrow('Simulated sequence assignment failure');
+
+    // The abandoned assignment must not keep the single slot of the stage.
+    expect(getStageParticipantCounts(await storageEngine.getAllSequenceAssignments(studyId))).toEqual({});
+
+    const replacementParticipant = await storageEngine.initializeParticipantSession(
+      {},
+      betweenSubjectsConfig,
+      metadata,
+      'replacement-participant',
+    );
+    expect(replacementParticipant.sequence).toBeDefined();
+    expect(getStageParticipantCounts(await storageEngine.getAllSequenceAssignments(studyId)))
+      .toEqual({ LIMITED: 1 });
   });
 
   test('stores and clears manual desired participant counts for a combination', async () => {
