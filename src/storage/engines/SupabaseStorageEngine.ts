@@ -507,7 +507,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       .eq('docId', sequenceAssignmentPath);
   }
 
-  protected async _claimSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment) {
+  protected async _claimSequenceAssignment(participantId: string) {
     await this.verifyStudyDatabase();
     if (!this.currentParticipantId) {
       throw new Error('Participant not initialized');
@@ -518,12 +518,22 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
 
     const sequenceAssignmentPath = `sequenceAssignment_${participantId}`;
     await this._runWithLock(`participant-${participantId}`, async () => {
-      // Update the sequence assignment for the participant to mark it as claimed.
-      // The participant lock keeps this whole-record JSON update from racing a
-      // late completion on the source assignment.
+      // Re-read the source row inside the lock. This whole-record JSON update
+      // would otherwise overwrite a completion, rejection, or timeout that
+      // landed after the caller read the assignment.
+      const { data: existingRow, error: readError } = await this.supabase
+        .from('revisit')
+        .select('data')
+        .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
+        .eq('docId', sequenceAssignmentPath)
+        .single();
+      if (readError || !existingRow) {
+        throw new Error(`Sequence assignment for participant ${participantId} not found`);
+      }
+
       const { data, error } = await this.supabase
         .from('revisit')
-        .update({ data: { ...sequenceAssignment, claimed: true } })
+        .update({ data: { ...existingRow.data, claimed: true } })
         .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
         .eq('docId', sequenceAssignmentPath)
         .select('docId');
@@ -533,7 +543,32 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     });
   }
 
-  protected async _markSequenceAssignmentTimedOut(participantId: string): Promise<boolean> {
+  protected async _getServerTimeMs(): Promise<number> {
+    await this.verifyStudyDatabase();
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+    // `createdAt` is filled in by the database, so re-creating a throwaway row
+    // reads back the server's clock. Callers hold the participant-assignment
+    // lock, so only one session touches this row at a time.
+    const studyId = `${this.collectionPrefix}${this.studyId}`;
+    await this.supabase
+      .from('revisit')
+      .delete()
+      .eq('studyId', studyId)
+      .eq('docId', 'serverTime');
+    const { data, error } = await this.supabase
+      .from('revisit')
+      .insert({ studyId, docId: 'serverTime', data: {} })
+      .select('createdAt')
+      .single();
+    if (error || !data?.createdAt) {
+      throw new Error('Failed to read the server clock');
+    }
+    return new Date(data.createdAt).getTime();
+  }
+
+  protected async _markSequenceAssignmentTimedOut(participantId: string, timedOutAt: number): Promise<boolean> {
     return await this._runWithLock(`participant-${participantId}`, async () => {
       await this.verifyStudyDatabase();
       if (!this.studyId) {
@@ -556,7 +591,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       }
       const { data: updatedRows, error: updateError } = await this.supabase
         .from('revisit')
-        .update({ data: { ...assignment, autoTimedOutAt: Date.now() } })
+        .update({ data: { ...assignment, autoTimedOutAt: timedOutAt } })
         .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
         .eq('docId', sequenceAssignmentPath)
         .eq('data->>rejected', 'false')
@@ -680,19 +715,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
   }
 
   async setMode(studyId: string, mode: REVISIT_MODE, value: boolean) {
-    const modes = await this.getModes(studyId);
-    // Update the mode
-    modes[mode] = value;
-    // Set the updated modes in the study collection
-    await this.supabase
-      .from('revisit')
-      .upsert({
-        studyId: `${this.collectionPrefix}${studyId}`,
-        docId: 'metadata',
-        data: modes,
-      })
-      .eq('studyId', `${this.collectionPrefix}${studyId}`)
-      .eq('docId', 'metadata');
+    await this._updateModesFields(studyId, { [mode]: value });
   }
 
   protected async _setModesDocument(studyId: string, modesDocument: RuntimeStudySettings): Promise<void> {

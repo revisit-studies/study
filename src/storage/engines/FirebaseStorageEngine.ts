@@ -548,6 +548,20 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     await updateDoc(participantSequenceAssignmentDoc, { claimed: true });
   }
 
+  protected async _getServerTimeMs(): Promise<number> {
+    await this.verifyStudyDatabase();
+    // Firestore has no clock to query, so stamp a document with the server's
+    // time and read the committed value back.
+    const serverTimeDocument = doc(this.studyCollection, 'serverTime');
+    await setDoc(serverTimeDocument, { readAt: serverTimestamp() }, { merge: true });
+    const snapshot = await getDoc(serverTimeDocument);
+    const readAt = snapshot.data()?.readAt;
+    if (!(readAt instanceof Timestamp)) {
+      throw new Error('Failed to read the server clock');
+    }
+    return readAt.toMillis();
+  }
+
   protected async _markSequenceAssignmentTimedOut(participantId: string): Promise<boolean> {
     if (!this.studyId) {
       throw new Error('Study ID is not set');
@@ -673,11 +687,21 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       `${this.collectionPrefix}${studyId}`,
       'modes',
     );
-    const firestoreModes: Record<string, unknown> = { ...modesDocument };
-    if (Object.hasOwn(modesDocument, 'autoTimeoutMinutes') && modesDocument.autoTimeoutMinutes === undefined) {
-      firestoreModes.autoTimeoutMinutes = deleteField();
-    }
-    await setDoc(revisitModesDoc, firestoreModes, { merge: true });
+    await setDoc(revisitModesDoc, modesDocument, { merge: true });
+  }
+
+  protected async _updateModesFields(studyId: string, fields: Partial<RuntimeStudySettings>): Promise<void> {
+    const revisitModesDoc = doc(
+      this.firestore,
+      `${this.collectionPrefix}${studyId}`,
+      'modes',
+    );
+    // Firestore merges field by field, so this cannot clobber a concurrent
+    // stage or mode update.
+    const fieldUpdates = Object.fromEntries(
+      Object.entries(fields).map(([field, value]) => [field, value === undefined ? deleteField() : value]),
+    );
+    await setDoc(revisitModesDoc, fieldUpdates, { merge: true });
   }
 
   protected async _getAudioUrl(

@@ -14,6 +14,7 @@ import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
 import { PREFIX } from '../utils/Prefix';
 import { ErrorLoadingConfig } from './ErrorLoadingConfig';
 import { ParticipantStatusBadges } from '../analysis/interface/ParticipantStatusBadges';
+import { ParticipantStatusCounts } from '../storage/participantStatus';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import { REVISIT_MODE } from '../storage/engines/types';
 import { useAuth } from '../store/hooks/useAuth';
@@ -47,7 +48,7 @@ function StudyCard({
 }) {
   const { storageEngine } = useStorageEngine();
 
-  const [studyStatusAndTiming, setStudyStatusAndTiming] = useState<{ completed: number; rejected: number; inProgress: number; minTime: Timestamp | number | null; maxTime: Timestamp | number | null } | null>(null);
+  const [studyStatusAndTiming, setStudyStatusAndTiming] = useState<ParticipantStatusCounts & { minTime: Timestamp | number | null; maxTime: Timestamp | number | null } | null>(null);
 
   useEffect(() => {
     if (!storageEngine) return;
@@ -197,7 +198,15 @@ function StudyCard({
                 {currentMode}
               </Text>
               {studyStatusAndTiming
-                && <ParticipantStatusBadges completed={studyStatusAndTiming.completed} inProgress={studyStatusAndTiming.inProgress} rejected={studyStatusAndTiming.rejected} />}
+                && (
+                  <ParticipantStatusBadges
+                    completed={studyStatusAndTiming.completed}
+                    inProgress={studyStatusAndTiming.inProgress}
+                    rejected={studyStatusAndTiming.rejected}
+                    timedOut={studyStatusAndTiming.timedOut}
+                    completedLate={studyStatusAndTiming.completedLate}
+                  />
+                )}
               <Flex ml="auto" gap="sm" opacity={0.7}>
                 {hasAudioRecording && (
                   <Tooltip label="Audio recording enabled" withinPortal position="bottom">

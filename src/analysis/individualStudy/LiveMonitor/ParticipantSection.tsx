@@ -4,6 +4,7 @@ import {
 } from '@mantine/core';
 import { IconChevronDown, IconChevronRight } from '@tabler/icons-react';
 import { SequenceAssignment } from '../../../storage/engines/types';
+import { ParticipantStatus } from '../../../storage/participantStatus';
 import { ProgressHeatmap } from './ProgressHeatmap';
 
 interface ParticipantSectionProps {
@@ -12,8 +13,7 @@ interface ParticipantSectionProps {
   participants: Array<{
     assignment: SequenceAssignment;
     progress: number;
-    isCompleted: boolean;
-    isRejected: boolean;
+    status: ParticipantStatus;
   }>;
   showProgressHeatmap?: boolean;
   showDynamicBadge?: boolean;

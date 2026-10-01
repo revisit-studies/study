@@ -166,7 +166,6 @@ const participant: ParticipantDataWithStatus = {
   },
   completed: false,
   timedOut: false,
-  completedLate: false,
   rejected: false,
   participantTags: [],
   stage: 'DEFAULT',

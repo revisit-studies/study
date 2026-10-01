@@ -20,6 +20,7 @@ import {
 } from '../../parser/types';
 import { getStudyConfig, resolveConfigKey } from '../../utils/fetchConfig';
 import { LiveMonitorView } from './LiveMonitor/LiveMonitorView';
+import { AutoTimeoutSettings } from './LiveMonitor/AutoTimeoutSettings';
 import { SummaryView } from './summary/SummaryView';
 import { TableView } from './table/TableView';
 import { StatsView } from './stats/StatsView';
@@ -30,6 +31,13 @@ import { useAuth } from '../../store/hooks/useAuth';
 import { parseStudyConfig } from '../../parser/parser';
 import { useAsync } from '../../store/hooks/useAsync';
 import { StorageEngine } from '../../storage/engines/types';
+import {
+  PARTICIPANT_STATUSES,
+  PARTICIPANT_STATUS_LABELS,
+  countParticipantStatuses,
+  emptyParticipantStatusCounts,
+  getParticipantDataStatus,
+} from '../../storage/participantStatus';
 import { DownloadButtons } from '../../components/downloader/DownloadButtons';
 import { useStudyRecordings } from '../../utils/useStudyRecordings';
 import { getSequenceConditions, parseConditionParam } from '../../utils/handleConditionLogic';
@@ -85,7 +93,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   const [studyConfig, setStudyConfig] = useState<ParsedConfig<StudyConfig> | undefined>(undefined);
   const [startupError, setStartupError] = useState<{ error: unknown } | null>(null);
 
-  const [includedParticipants, setIncludedParticipants] = useState<string[]>(['completed', 'inProgress', 'rejected', 'timedOut']);
+  const [includedParticipants, setIncludedParticipants] = useState<string[]>([...PARTICIPANT_STATUSES]);
 
   const [selectedStages, setSelectedStages] = useState<string[]>(['ALL']);
   const [availableStages, setAvailableStages] = useState<{ value: string; label: string }[]>([{ value: 'ALL', label: 'ALL' }]);
@@ -127,9 +135,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
 
   const participantCounts = useMemo(() => {
     if (!expData) {
-      return {
-        completed: 0, inProgress: 0, rejected: 0, timedOut: 0,
-      };
+      return emptyParticipantStatusCounts();
     }
     const expList = Object.values(expData);
 
@@ -154,28 +160,13 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
         return conds.some((c) => selectedConditions.includes(c));
       });
 
-    return {
-      completed: conditionFiltered.filter((d) => !d.rejected && !d.timedOut && d.completed).length,
-      inProgress: conditionFiltered.filter((d) => !d.rejected && !d.timedOut && !d.completed).length,
-      rejected: conditionFiltered.filter((d) => d.rejected).length,
-      timedOut: conditionFiltered.filter((d) => !d.rejected && d.timedOut).length,
-    };
+    return countParticipantStatuses(conditionFiltered, getParticipantDataStatus);
   }, [expData, selectedStages, selectedConfigs, selectedConditions, studyUsesConditions]);
 
-  const selectedParticipantCounts = useMemo(() => {
-    if (selectedParticipants.length === 0) {
-      return {
-        completed: 0, inProgress: 0, rejected: 0, timedOut: 0,
-      };
-    }
-
-    return {
-      completed: selectedParticipants.filter((d) => !d.rejected && !d.timedOut && d.completed).length,
-      inProgress: selectedParticipants.filter((d) => !d.rejected && !d.timedOut && !d.completed).length,
-      rejected: selectedParticipants.filter((d) => d.rejected).length,
-      timedOut: selectedParticipants.filter((d) => !d.rejected && d.timedOut).length,
-    };
-  }, [selectedParticipants]);
+  const selectedParticipantCounts = useMemo(
+    () => countParticipantStatuses(selectedParticipants, getParticipantDataStatus),
+    [selectedParticipants],
+  );
 
   const currentConfigHash = currentConfigHashValue ?? undefined;
   const isFirebaseEngine = storageEngine?.getEngine() === 'firebase';
@@ -208,12 +199,9 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     if (!expData) return [];
     const expList = Object.values(expData);
 
-    const comp = includedParticipants.includes('completed') ? expList.filter((d) => !d.rejected && !d.timedOut && d.completed) : [];
-    const prog = includedParticipants.includes('inProgress') ? expList.filter((d) => !d.rejected && !d.timedOut && !d.completed) : [];
-    const rej = includedParticipants.includes('rejected') ? expList.filter((d) => d.rejected) : [];
-    const timedOut = includedParticipants.includes('timedOut') ? expList.filter((d) => !d.rejected && d.timedOut) : [];
-
-    const statusFiltered = [...comp, ...prog, ...rej, ...timedOut];
+    const statusFiltered = expList.filter(
+      (d) => includedParticipants.includes(getParticipantDataStatus(d)),
+    );
 
     // Apply config filter - if "ALL" is selected, show all participants
     const configFiltered = selectedConfigs.includes('ALL')
@@ -561,38 +549,17 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                   onChange={(e) => setIncludedParticipants(e)}
                 >
                   <Group gap={6} wrap="nowrap">
-                    <Checkbox
-                      value="completed"
-                      label={selectedParticipants.length > 0
-                        ? `Completed (${selectedParticipantCounts.completed} of ${participantCounts.completed})`
-                        : `Completed (${participantCounts.completed})`}
-                      size="xs"
-                      styles={{ label: { whiteSpace: 'nowrap' } }}
-                    />
-                    <Checkbox
-                      value="inProgress"
-                      label={selectedParticipants.length > 0
-                        ? `In Progress (${selectedParticipantCounts.inProgress} of ${participantCounts.inProgress})`
-                        : `In Progress (${participantCounts.inProgress})`}
-                      size="xs"
-                      styles={{ label: { whiteSpace: 'nowrap' } }}
-                    />
-                    <Checkbox
-                      value="rejected"
-                      label={selectedParticipants.length > 0
-                        ? `Rejected (${selectedParticipantCounts.rejected} of ${participantCounts.rejected})`
-                        : `Rejected (${participantCounts.rejected})`}
-                      size="xs"
-                      styles={{ label: { whiteSpace: 'nowrap' } }}
-                    />
-                    <Checkbox
-                      value="timedOut"
-                      label={selectedParticipants.length > 0
-                        ? `Timed Out (${selectedParticipantCounts.timedOut} of ${participantCounts.timedOut})`
-                        : `Timed Out (${participantCounts.timedOut})`}
-                      size="xs"
-                      styles={{ label: { whiteSpace: 'nowrap' } }}
-                    />
+                    {PARTICIPANT_STATUSES.map((participantStatus) => (
+                      <Checkbox
+                        key={participantStatus}
+                        value={participantStatus}
+                        label={selectedParticipants.length > 0
+                          ? `${PARTICIPANT_STATUS_LABELS[participantStatus]} (${selectedParticipantCounts[participantStatus]} of ${participantCounts[participantStatus]})`
+                          : `${PARTICIPANT_STATUS_LABELS[participantStatus]} (${participantCounts[participantStatus]})`}
+                        size="xs"
+                        styles={{ label: { whiteSpace: 'nowrap' } }}
+                      />
+                    ))}
                   </Group>
                 </Checkbox.Group>
               </Flex>
@@ -663,7 +630,16 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
                     )}
                 </Tabs.Panel>
                 <Tabs.Panel style={{ flex: 1, minHeight: 0, overflow: 'auto' }} value="live-monitor" pt="xs">
-                  {studyConfig && <LiveMonitorView studyConfig={studyConfig} storageEngine={storageEngine} studyId={canonicalStudyId ?? undefined} includedParticipants={includedParticipants} selectedStages={selectedStages} />}
+                  <Stack gap="sm">
+                    <AutoTimeoutSettings storageEngine={storageEngine} studyId={canonicalStudyId ?? undefined} />
+                    {studyConfig && isFirebaseEngine
+                      ? <LiveMonitorView studyConfig={studyConfig} storageEngine={storageEngine} studyId={canonicalStudyId ?? undefined} includedParticipants={includedParticipants} selectedStages={selectedStages} />
+                      : (
+                        <Center>
+                          <Text c="dimmed">Live participant monitoring is only available when using Firebase</Text>
+                        </Center>
+                      )}
+                  </Stack>
                 </Tabs.Panel>
                 <Tabs.Panel style={{ flex: 1, minHeight: 0, overflow: 'auto' }} value="config" pt="xs">
                   {studyConfig && <ConfigView visibleParticipants={visibleParticipants} studyId={canonicalStudyId ?? undefined} currentConfigHash={currentConfigHash} />}

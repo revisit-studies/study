@@ -15,6 +15,7 @@ import {
 
 import { StudyConfig } from '../../../parser/types';
 import { ParticipantDataWithStatus } from '../../../storage/types';
+import { ParticipantStatus, getParticipantDataStatus } from '../../../storage/participantStatus';
 import { StoredAnswer } from '../../../store/types';
 import { ParticipantRejectModal } from '../ParticipantRejectModal';
 import { participantName } from '../../../utils/participantName';
@@ -94,16 +95,15 @@ export function TableView({
 
           return {
             percent: (Object.entries(row.answers).length - incompleteEntries.length) / denominator,
-            completed: row.completed,
+            status: getParticipantDataStatus(row),
             rejected: row.rejected,
-            timedOut: !!row.timedOut,
-            completedLate: !!row.completedLate,
           };
         },
         header: 'Status',
         size: 100,
-        Cell: ({ cell }: { cell: MrtCell<ParticipantDataWithStatus, { percent: number, completed: boolean, rejected: ParticipantDataWithStatus['rejected'], timedOut: boolean, completedLate: boolean }> }) => {
+        Cell: ({ cell }: { cell: MrtCell<ParticipantDataWithStatus, { percent: number, status: ParticipantStatus, rejected: ParticipantDataWithStatus['rejected'] }> }) => {
           const cellValue = cell.getValue();
+          const isLate = cellValue.status === 'completedLate';
           return (
             cellValue.rejected ? (
               <Stack align="center" justify="center" gap={4} w="100%">
@@ -111,13 +111,13 @@ export function TableView({
                 <Text size="xs" c="dimmed" ta="center">{cellValue.rejected.reason}</Text>
               </Stack>
             )
-              : cellValue.timedOut ? (
+              : (cellValue.status === 'timedOut' || isLate) ? (
                 <Stack align="center" justify="center" gap={2} w="100%">
-                  <Tooltip label={cellValue.completedLate ? 'Completed late after timing out' : 'Timed out'}>
-                    <Text size="xs" fw={700} c="orange">{cellValue.completedLate ? 'Late' : 'Timed out'}</Text>
+                  <Tooltip label={isLate ? 'Completed late after timing out' : 'Timed out'}>
+                    <Text size="xs" fw={700} c="orange">{isLate ? 'Late' : 'Timed out'}</Text>
                   </Tooltip>
                 </Stack>
-              ) : cellValue.completed ? (
+              ) : cellValue.status === 'completed' ? (
                 <Group align="center" justify="center" w="100%">
                   <Tooltip label="Completed"><IconCheck size={30} color="teal" style={{ marginBottom: -3 }} /></Tooltip>
                 </Group>

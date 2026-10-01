@@ -232,6 +232,8 @@ describe('utils.tsx', () => {
           completed: 0,
           inProgress: 0,
           rejected: 0,
+          timedOut: 0,
+          completedLate: 0,
         });
         expect(result.startDate).toBeNull();
         expect(result.endDate).toBeNull();
@@ -285,6 +287,53 @@ describe('utils.tsx', () => {
 
         expect(result.participantCounts.completed).toBe(0);
         expect(result.participantCounts.rejected).toBe(1);
+      });
+
+      it('should count timed-out participants separately from in progress', () => {
+        const participants = [
+          createMockParticipant({ participantId: '1', completed: false, rejected: false }),
+          createMockParticipant({
+            participantId: '2', completed: false, rejected: false, timedOut: true,
+          }),
+        ];
+
+        const result = getOverviewStats(participants);
+
+        expect(result.participantCounts.total).toBe(2);
+        expect(result.participantCounts.inProgress).toBe(1);
+        expect(result.participantCounts.timedOut).toBe(1);
+        expect(result.participantCounts.completed).toBe(0);
+      });
+
+      it('should count a participant who finished after timing out as completed late', () => {
+        const participants = [
+          createMockParticipant({
+            participantId: '1', completed: true, rejected: false, timedOut: true,
+          }),
+        ];
+
+        const result = getOverviewStats(participants);
+
+        expect(result.participantCounts.completedLate).toBe(1);
+        expect(result.participantCounts.completed).toBe(0);
+        expect(result.participantCounts.timedOut).toBe(0);
+      });
+
+      it('should count a rejected timed-out participant as rejected only', () => {
+        const participants = [
+          createMockParticipant({
+            participantId: '1',
+            completed: false,
+            timedOut: true,
+            rejected: { reason: 'spam', timestamp: Date.now() },
+          }),
+        ];
+
+        const result = getOverviewStats(participants);
+
+        expect(result.participantCounts.rejected).toBe(1);
+        expect(result.participantCounts.timedOut).toBe(0);
+        expect(result.participantCounts.completedLate).toBe(0);
       });
 
       it('should include rejected participants in total count', () => {

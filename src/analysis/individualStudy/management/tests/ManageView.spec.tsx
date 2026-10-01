@@ -844,6 +844,8 @@ describe('ManageView', () => {
       { completed: false, rejected: false },
       { completed: false, rejected: false },
       { completed: false, rejected: { reason: 'duplicate', timestamp: 2 } },
+      { completed: false, rejected: false, timedOut: true },
+      { completed: true, rejected: false, timedOut: true },
     ]);
 
     await act(async () => {
@@ -854,11 +856,13 @@ describe('ManageView', () => {
       expect(mockStorageEngine!.updateSnapshotParticipantCounts).toHaveBeenCalledWith(
         'test-study',
         'dev-test-study-snapshot-2026T01:00',
-        { completed: 1, inProgress: 2, rejected: 2 },
+        {
+          completed: 1, inProgress: 2, rejected: 2, timedOut: 1, completedLate: 1,
+        },
       );
     });
     expect(mockStorageEngine!.getAllParticipantsData).toHaveBeenCalledWith('test-study-snapshot-2026T01:00');
-    expect(screen.getByText('1')).toBeDefined();
+    expect(screen.getAllByText('1').length).toBe(3);
     expect(screen.getAllByText('2').length).toBe(2);
   });
 
@@ -933,7 +937,8 @@ describe('ManageView', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getAllByText('Unavailable').length).toBe(3);
+      // One per status column: completed, in progress, rejected, timed out, completed late.
+      expect(screen.getAllByText('Unavailable').length).toBe(5);
     });
     expect(screen.getByRole('button', { name: 'Rename snapshot snap-one' })).toBeDefined();
     expect(screen.getByRole('button', { name: 'Restore snapshot snap-one' })).toBeDefined();

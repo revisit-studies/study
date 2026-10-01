@@ -83,6 +83,10 @@ vi.mock('../interface/AppHeader', () => ({
 vi.mock('../individualStudy/LiveMonitor/LiveMonitorView', () => ({
   LiveMonitorView: () => <div>LiveMonitorView</div>,
 }));
+
+vi.mock('../individualStudy/LiveMonitor/AutoTimeoutSettings', () => ({
+  AutoTimeoutSettings: () => <div>AutoTimeoutSettings</div>,
+}));
 vi.mock('../individualStudy/summary/SummaryView', () => ({
   SummaryView: () => <div>SummaryView</div>,
 }));
@@ -225,10 +229,21 @@ describe('StudyAnalysisTabs', () => {
     expect(html).toContain('data-orientation="vertical"');
   });
 
-  test('renders disabled Live Monitor tab and Firebase-only message when not Firebase', () => {
+  test('renders an enabled Live Monitor tab even when not Firebase', () => {
     const html = renderToStaticMarkup(<StudyAnalysisTabs globalConfig={mockGlobalConfig} />);
     expect(html).toContain('Live Monitor');
-    expect(html).toContain('Live Monitor is only available when using Firebase');
+    // The tab now also hosts the auto-timeout settings, which every engine
+    // supports, so it is no longer disabled for non-Firebase studies.
+    expect(html).not.toContain('Live Monitor is only available when using Firebase');
+  });
+
+  test('offers a filter checkbox for every participant status', () => {
+    const html = renderToStaticMarkup(<StudyAnalysisTabs globalConfig={mockGlobalConfig} />);
+    expect(html).toContain('Completed (0)');
+    expect(html).toContain('In Progress (0)');
+    expect(html).toContain('Rejected (0)');
+    expect(html).toContain('Timed Out (0)');
+    expect(html).toContain('Completed Late (0)');
   });
 
   test('renders Live Monitor tab when Firebase', () => {

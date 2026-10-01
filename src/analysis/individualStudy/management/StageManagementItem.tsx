@@ -17,6 +17,7 @@ import {
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
 import { FactorObject, FactorPrimitive, StudyConfig } from '../../../parser/types';
 import { ParticipantDataWithStatus } from '../../../storage/types';
+import { getParticipantDataStatus, statusConsumesCapacity } from '../../../storage/participantStatus';
 import { getBetweenSubjectsCombinationKey, StageInfo } from '../../../storage/engines/types';
 import { DISTINCT_COLOR_PALETTE, getDistinctColorShade } from '../../../utils/colors';
 import { ParticipantTimeoutModal } from '../ParticipantTimeoutModal';
@@ -74,18 +75,21 @@ export function getBetweenSubjectsFactors(studyConfig?: StudyConfig): BetweenSub
 
 type StageParticipantStatusCounts = Record<string, { completed: number; inProgress: number }>;
 
+/** The status under which a participant still occupies a stage slot, else null. */
+function getStageSlotStatus(participant: ParticipantDataWithStatus) {
+  const status = getParticipantDataStatus(participant);
+  return statusConsumesCapacity(status) ? status : null;
+}
+
 export function getStageParticipantStatusCounts(participants: ParticipantDataWithStatus[]) {
   return participants.reduce<StageParticipantStatusCounts>((counts, participant) => {
-    if (participant.rejected || participant.timedOut) {
+    const status = getStageSlotStatus(participant);
+    if (!status) {
       return counts;
     }
 
     const stageCounts = counts[participant.stage] || { completed: 0, inProgress: 0 };
-    if (participant.completed) {
-      stageCounts.completed += 1;
-    } else {
-      stageCounts.inProgress += 1;
-    }
+    stageCounts[status] += 1;
     counts[participant.stage] = stageCounts;
     return counts;
   }, {});
@@ -130,8 +134,7 @@ function getBetweenSubjectsCombinationStatusCounts(
   betweenSubjectsFactors: BetweenSubjectsFactor[],
 ) {
   return participants.reduce((counts, participant) => {
-    const matchesCombination = !participant.rejected
-      && !participant.timedOut
+    const matchesCombination = getStageSlotStatus(participant) !== null
       && participantMatchesBetweenSubjectsCombination(
         participant,
         stageName,
@@ -411,9 +414,7 @@ function BetweenSubjectsCombinationTable({
       .join(', ');
     onReviewInProgress(
       participants.filter((participant) => (
-        !participant.completed
-        && !participant.rejected
-        && !participant.timedOut
+        getParticipantDataStatus(participant) === 'inProgress'
         && participantMatchesBetweenSubjectsCombination(
           participant,
           stage.stageName,
@@ -445,7 +446,6 @@ function BetweenSubjectsCombinationTable({
     ...(showParticipantLimits ? [{
       accessorKey: 'desiredParticipants',
       header: 'Total / Maximum',
-      size: 240,
       Cell: ({ row }: { row: { original: BetweenSubjectsCombinationRow } }) => renderDesiredParticipantsCell(
         row.original,
         stage,
@@ -494,12 +494,10 @@ function BetweenSubjectsCombinationTable({
     },
     mantineTableContainerProps: { style: { maxWidth: '100%', overflowX: 'auto' } },
     mantineTableProps: { style: { minWidth: 'max-content', width: '100%' } },
-    mantineTableBodyRowProps: { style: { height: 44 } },
     mantineTableBodyCellProps: ({ column, row }) => {
-      const compactCellStyle = { paddingBlock: 4 };
       const factorIndex = betweenSubjectsFactors.findIndex((factor) => factor.factorName === column.id);
       if (factorIndex === -1) {
-        return { style: compactCellStyle };
+        return {};
       }
 
       const factor = betweenSubjectsFactors[factorIndex];
@@ -509,7 +507,6 @@ function BetweenSubjectsCombinationTable({
 
       return {
         style: {
-          ...compactCellStyle,
           backgroundColor: getDistinctColorShade(factorIndex, levelIndex, factor.levels.length),
         },
       };
@@ -1038,9 +1035,7 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
                       color="dark"
                       onClick={() => handleReviewInProgress(participants.filter((participant) => (
                         participant.stage === stage.stageName
-                          && !participant.completed
-                          && !participant.rejected
-                          && !participant.timedOut
+                          && getParticipantDataStatus(participant) === 'inProgress'
                       )), `Showing only in-progress participants in the ${stage.stageName} stage — not all in-progress participants in the study.`)}
                       p={0}
                       size="compact-xs"

@@ -219,24 +219,32 @@ export class LocalStorageEngine extends StorageEngine {
     }
   }
 
-  protected async _claimSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment) {
+  protected async _claimSequenceAssignment(participantId: string) {
     await this.verifyStudyDatabase();
     await this._runWithLock(`participant-${participantId}`, async () => {
       const sequenceAssignmentPath = `${this.collectionPrefix}${this.studyId}/sequenceAssignment`;
       const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath) || {};
-      if (sequenceAssignments[participantId]) {
-        sequenceAssignments[participantId] = {
-          ...sequenceAssignment,
-          claimed: true,
-        };
-        await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
-      } else {
+      const existingAssignment = sequenceAssignments[participantId];
+      if (!existingAssignment) {
         throw new Error(`Sequence assignment for participant ${participantId} not found`);
       }
+      // Merge into the record as it exists inside the lock. A completion,
+      // rejection, or timeout that landed after the caller read the assignment
+      // must survive being claimed for slot reuse.
+      sequenceAssignments[participantId] = {
+        ...existingAssignment,
+        claimed: true,
+      };
+      await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
     });
   }
 
-  protected async _markSequenceAssignmentTimedOut(participantId: string): Promise<boolean> {
+  // The local engine has a single client, so its own clock is the only clock.
+  protected async _getServerTimeMs(): Promise<number> {
+    return Date.now();
+  }
+
+  protected async _markSequenceAssignmentTimedOut(participantId: string, timedOutAt: number): Promise<boolean> {
     return await this._runWithLock(`participant-${participantId}`, async () => {
       await this.verifyStudyDatabase();
       const sequenceAssignmentPath = `${this.collectionPrefix}${this.studyId}/sequenceAssignment`;
@@ -248,7 +256,7 @@ export class LocalStorageEngine extends StorageEngine {
       if (assignment.completed !== null || assignment.rejected || assignment.autoTimedOutAt !== undefined) {
         return false;
       }
-      assignments[participantId] = { ...assignment, autoTimedOutAt: Date.now() };
+      assignments[participantId] = { ...assignment, autoTimedOutAt: timedOutAt };
       await this.studyDatabase.setItem(sequenceAssignmentPath, assignments);
       return true;
     });
@@ -285,16 +293,12 @@ export class LocalStorageEngine extends StorageEngine {
 
   async setMode(studyId: string, mode: REVISIT_MODE, value: boolean) {
     const key = `${this.collectionPrefix}${studyId}/modes`;
-
-    // Get the modes
-    const modes = await this.studyDatabase.getItem(key) as RuntimeStudySettings | null;
-    if (!modes) {
+    // Unlike the cloud engines, this one does not create the modes on demand.
+    if (await this.studyDatabase.getItem(key) === null) {
       throw new Error('Modes not initialized');
     }
 
-    // Set the mode
-    modes[mode] = value;
-    await this.studyDatabase.setItem(key, modes);
+    await this._updateModesFields(studyId, { [mode]: value });
   }
 
   protected async _setModesDocument(studyId: string, modesDocument: RuntimeStudySettings): Promise<void> {

@@ -14,6 +14,7 @@ import {
   SequenceAssignment, StorageEngine, StorageObject, StorageObjectType,
 } from '../engines/types';
 import { filterSequenceByCondition } from '../../utils/handleConditionLogic';
+import { getParticipantDataStatus } from '../participantStatus';
 
 const studyId = 'test-study';
 const configSimple = testConfigSimple as StudyConfig;
@@ -867,6 +868,95 @@ describe.each([
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  test('a completion landing during slot reuse is not erased by the claim', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'));
+      await storageEngine.setAutoTimeoutMinutes(studyId, 1);
+      const firstParticipant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+      // The claim reads the source assignment, then a late completion lands
+      // before the claim is written. Without a re-read inside the lock, the
+      // claim would write back the pre-completion copy of the record.
+      const engineInternals = storageEngine as unknown as {
+        _claimSequenceAssignment: (participantId: string) => Promise<void>;
+        _updateSequenceAssignmentFields: (participantId: string, fields: Partial<SequenceAssignment>) => Promise<void>;
+      };
+      const originalClaim = engineInternals._claimSequenceAssignment.bind(storageEngine);
+      const claimSpy = vi.spyOn(engineInternals, '_claimSequenceAssignment')
+        .mockImplementation(async (participantId: string) => {
+          await engineInternals._updateSequenceAssignmentFields(participantId, { completed: Date.now() });
+          await originalClaim(participantId);
+        });
+
+      vi.setSystemTime(new Date('2026-01-01T00:01:00.000Z'));
+      await storageEngine.clearCurrentParticipantId();
+      const secondParticipant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+      expect(claimSpy).toHaveBeenCalledTimes(1);
+
+      const assignments = await storageEngine.getAllSequenceAssignments(studyId);
+      const firstAssignment = assignments.find((assignment) => assignment.participantId === firstParticipant.participantId);
+      expect(firstAssignment?.completed).not.toBeNull();
+      expect(firstAssignment?.claimed).toBe(true);
+      expect(firstAssignment?.autoTimedOutAt).toBeDefined();
+      expect(firstAssignment?.rejected).toBe(false);
+
+      // The late finisher is reported as completed late, not as timed out.
+      const participants = await storageEngine.getAllParticipantsData(studyId);
+      const firstParticipantData = participants.find((participant) => participant.participantId === firstParticipant.participantId)!;
+      expect(getParticipantDataStatus(firstParticipantData)).toBe('completedLate');
+      expect(secondParticipant.participantId).not.toBe(firstParticipant.participantId);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('auto-timeouts use the backend clock rather than the participant browser clock', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'));
+      await storageEngine.setAutoTimeoutMinutes(studyId, 10);
+      const firstParticipant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+      // The next participant's clock runs an hour fast. The backend clock has
+      // only advanced a minute, so nothing may be timed out yet.
+      const engineInternals = storageEngine as unknown as { _getServerTimeMs: () => Promise<number> };
+      const serverTimeSpy = vi.spyOn(engineInternals, '_getServerTimeMs')
+        .mockResolvedValue(new Date('2026-01-01T00:01:00.000Z').getTime());
+
+      vi.setSystemTime(new Date('2026-01-01T01:00:00.000Z'));
+      await storageEngine.clearCurrentParticipantId();
+      await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+      expect(serverTimeSpy).toHaveBeenCalled();
+
+      const assignments = await storageEngine.getAllSequenceAssignments(studyId);
+      const firstAssignment = assignments.find((assignment) => assignment.participantId === firstParticipant.participantId);
+      expect(firstAssignment?.autoTimedOutAt).toBeUndefined();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('setAutoTimeoutMinutes leaves a concurrently written stage untouched', async () => {
+    await storageEngine.setCurrentStage(studyId, 'STAGE_A', '#ff0000');
+    await storageEngine.setAutoTimeoutMinutes(studyId, 30);
+
+    const modes = await storageEngine.getModes(studyId);
+    expect(modes.autoTimeoutMinutes).toBe(30);
+    expect(modes.stage?.currentStage.stageName).toBe('STAGE_A');
+    expect(modes.dataCollectionEnabled).toBe(true);
+
+    await storageEngine.setCurrentStage(studyId, 'STAGE_B', '#00ff00');
+    const modesAfterStageChange = await storageEngine.getModes(studyId);
+    expect(modesAfterStageChange.autoTimeoutMinutes).toBe(30);
+    expect(modesAfterStageChange.stage?.currentStage.stageName).toBe('STAGE_B');
+
+    await storageEngine.setAutoTimeoutMinutes(studyId, undefined);
+    const modesAfterDisable = await storageEngine.getModes(studyId);
+    expect(modesAfterDisable.autoTimeoutMinutes).toBeUndefined();
+    expect(modesAfterDisable.stage?.currentStage.stageName).toBe('STAGE_B');
   });
 
   // rejectCurrentParticipant test

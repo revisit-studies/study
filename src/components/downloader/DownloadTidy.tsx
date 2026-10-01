@@ -18,6 +18,7 @@ import {
 } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 import { ParticipantDataWithStatus } from '../../storage/types';
+import { ParticipantStatus, getParticipantDataStatus } from '../../storage/participantStatus';
 import { Prettify, StudyConfig } from '../../parser/types';
 import { StorageEngine } from '../../storage/engines/types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
@@ -71,6 +72,16 @@ type MetaProperty = `meta-${string}`;
 type Property = OptionalProperty | RequiredProperty | MetaProperty;
 // Cap in-flight transcript requests to avoid flooding browser/network/Firebase on large studies.
 const TRANSCRIPTION_CONCURRENCY_LIMIT = 50;
+
+// Downstream analysis scripts read these strings, so they stay lowercase and
+// keep the historical spelling of the three original statuses.
+const TIDY_STATUS_LABELS: Record<ParticipantStatus, string> = {
+  completed: 'completed',
+  inProgress: 'in progress',
+  rejected: 'rejected',
+  timedOut: 'timed out',
+  completedLate: 'completed late',
+};
 
 async function runWithConcurrencyLimit(tasks: Array<() => Promise<void>>, concurrencyLimit: number) {
   const safeLimit = Math.max(1, concurrencyLimit);
@@ -172,7 +183,7 @@ function participantDataToRows(
           tidyRow.stage = participant.stage;
         }
         if (properties.includes('status')) {
-          tidyRow.status = participant.rejected ? 'rejected' : (participant.completed ? 'completed' : 'in progress');
+          tidyRow.status = TIDY_STATUS_LABELS[getParticipantDataStatus(participant)];
         }
         if (properties.includes('rejectReason')) {
           tidyRow.rejectReason = participant.rejected ? participant.rejected.reason : undefined;
