@@ -3,7 +3,7 @@ import {
 } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { ComponentBlock, StudyConfig } from '../types';
-import { parseStudyConfig } from '../parser';
+import { parseGlobalConfig, parseStudyConfig } from '../parser';
 import { materializeParticipantConfig } from '../libraryParser';
 import { isDynamicBlock, isFactorBlock } from '../utils';
 import { generateSequenceArray } from '../../utils/handleRandomSequences';
@@ -28,6 +28,86 @@ function isComponentBlock(value: unknown): value is ComponentBlock {
     && !isDynamicBlock(value as StudyConfig['sequence'])
     && !isFactorBlock(value as StudyConfig['sequence']);
 }
+
+describe('Global config tabs', () => {
+  function makeGlobalConfig(tabs?: unknown, tab?: unknown) {
+    return {
+      $schema: '',
+      tabs,
+      configs: { demo: { path: 'demo/config.json', tab } },
+      configsList: ['demo'],
+    };
+  }
+
+  function expectConfigError(config: unknown, message: string) {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      expect(() => parseGlobalConfig(JSON.stringify(config))).toThrow(message);
+      expect(consoleError).toHaveBeenCalledWith('Global config parsing errors', expect.any(Array));
+    } finally {
+      consoleError.mockRestore();
+    }
+  }
+
+  test('preserves configured tab labels, descriptions, order, and study assignments', () => {
+    const config = makeGlobalConfig([
+      { label: 'Examples', description: 'Example studies.' },
+      { label: 'Demo Studies', description: '' },
+      { label: 'Tutorials' },
+    ], 'Demo Studies');
+
+    expect(parseGlobalConfig(JSON.stringify(config))).toEqual(config);
+  });
+
+  test.each([undefined, []])('accepts unassigned studies when tabs are %j', (tabs) => {
+    const config = makeGlobalConfig(tabs);
+    expect(parseGlobalConfig(JSON.stringify(config))).toEqual(config);
+  });
+
+  test('accepts unassigned studies alongside configured tabs and an empty study list', () => {
+    const config = { ...makeGlobalConfig([{ label: 'Examples' }]), configsList: [] };
+    expect(parseGlobalConfig(JSON.stringify(config))).toEqual(config);
+  });
+
+  test.each(['__proto__', 'constructor', 'Studies'])('accepts the label %s without reserving names', (label) => {
+    const config = makeGlobalConfig([{ label }], label);
+    expect(parseGlobalConfig(JSON.stringify(config))).toEqual(config);
+  });
+
+  test.each(['Demo Studies', '__proto__'])('rejects duplicate labels: %s', (label) => {
+    expectConfigError(makeGlobalConfig([{ label }, { label }]), `/tabs/1/label: Tab label "${label}" is duplicated`);
+  });
+
+  test.each(['', ' \t\n '])('rejects blank labels: %j', (label) => {
+    expectConfigError(makeGlobalConfig([{ label }]), '/tabs/0/label: Tab label must not be blank');
+  });
+
+  test.each(['Missing', '', 'demo studies'])('rejects undefined tab references: %j', (tab) => {
+    expectConfigError(makeGlobalConfig([{ label: 'Demo Studies' }], tab), `/configs/demo/tab: Config "demo" references undefined tab "${tab}"`);
+  });
+
+  test.each([undefined, []])('rejects a tab assignment when tabs are %j', (tabs) => {
+    expectConfigError(makeGlobalConfig(tabs, 'Studies'), 'references undefined tab "Studies"');
+  });
+
+  test.each([
+    { tabs: null },
+    { tabs: {} },
+    { tabs: [null] },
+    { tabs: [{}] },
+    { tabs: [{ label: 12 }] },
+    { tabs: [{ label: 'Demos', description: true }] },
+    { configs: { demo: { path: 'demo/config.json', tab: [] } } },
+    { configs: null },
+    { configsList: null },
+  ])('reports schema errors without running semantic checks for %j', (invalidFields) => {
+    expectConfigError({ ...makeGlobalConfig(), ...invalidFields }, 'There was an issue validating your file global.json');
+  });
+
+  test('still rejects configsList entries without a corresponding config', () => {
+    expectConfigError({ ...makeGlobalConfig(), configsList: ['missing'] }, '/configsList/0: Config `missing` is not defined in configs object');
+  });
+});
 
 describe('Study and iframe color mode config parsing', () => {
   function makeStudyConfig(colorMode?: unknown) {
