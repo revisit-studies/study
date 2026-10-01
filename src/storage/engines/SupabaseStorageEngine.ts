@@ -664,7 +664,6 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
   }
 
   async getModes(studyId: string) {
-    // get the modes from the study collection
     const { data, error } = await this.supabase
       .from('revisit')
       .select('data')
@@ -673,25 +672,25 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     if (error) {
       throw new Error('Failed to get modes');
     }
-    if (data.length > 0) {
-      // get the metadata field from the data object
-      const metadata = data[0].data;
-      if (metadata) {
-        const modes = metadata as RuntimeStudySettings;
-        const needsUpdate = 'studyNavigatorEnabled' in modes || 'analyticsInterfacePubliclyAccessible' in modes;
+    const metadata = data[0]?.data;
+    if (metadata) {
+      const modes = metadata as RuntimeStudySettings;
+      const needsUpdate = 'studyNavigatorEnabled' in modes || 'analyticsInterfacePubliclyAccessible' in modes;
+      const cleanedModes = cleanupModes(modes) as RuntimeStudySettings;
 
-        if (needsUpdate) {
-          const cleanedModes = cleanupModes(modes);
-          await this.supabase
-            .from('revisit')
-            .update({ data: cleanedModes })
-            .eq('studyId', `${this.collectionPrefix}${studyId}`)
-            .eq('docId', 'metadata');
-          return cleanedModes;
+      if (needsUpdate) {
+        const { error: migrationError } = await this.supabase
+          .from('revisit')
+          .update({ data: cleanedModes })
+          .eq('studyId', `${this.collectionPrefix}${studyId}`)
+          .eq('docId', 'metadata');
+        if (migrationError) {
+          // A failed migration must not discard settings that were successfully read.
+          console.warn('Failed to migrate study metadata:', migrationError);
         }
-
-        return modes;
       }
+
+      return cleanedModes;
     }
 
     const defaultModes = {
@@ -709,7 +708,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       .eq('studyId', `${this.collectionPrefix}${studyId}`)
       .eq('docId', 'metadata');
     if (defaultModesError) {
-      throw new Error('Failed to update study runtime settings');
+      throw new Error('Failed to update study metadata');
     }
     return defaultModes;
   }
@@ -730,6 +729,33 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       .eq('docId', 'metadata');
     if (error) {
       throw new Error('Failed to update study runtime settings');
+    }
+  }
+
+  async getStudyHiddenFromLandingPage(studyId: string): Promise<boolean> {
+    const { data, error } = await this.supabase
+      .from('revisit')
+      .select('data')
+      .eq('studyId', `${this.collectionPrefix}${studyId}`)
+      .eq('docId', 'hideStudyFromLandingPage');
+    if (error) {
+      throw new Error('Failed to get landing-page visibility');
+    }
+    return data[0]?.data?.hidden === true;
+  }
+
+  async setStudyHiddenFromLandingPage(studyId: string, hidden: boolean): Promise<void> {
+    const { error } = await this.supabase
+      .from('revisit')
+      .upsert({
+        studyId: `${this.collectionPrefix}${studyId}`,
+        docId: 'hideStudyFromLandingPage',
+        data: { hidden },
+      })
+      .eq('studyId', `${this.collectionPrefix}${studyId}`)
+      .eq('docId', 'hideStudyFromLandingPage');
+    if (error) {
+      throw new Error('Failed to update landing-page visibility');
     }
   }
 

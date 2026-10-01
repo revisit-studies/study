@@ -510,6 +510,12 @@ export abstract class StorageEngine {
     await this._updateModesFields(studyId, { autoTimeoutMinutes: minutes });
   }
 
+  // Gets the landing-page visibility for the given studyId. This method is used to check whether the study is hidden from the landing page or not.
+  abstract getStudyHiddenFromLandingPage(studyId: string): Promise<boolean>;
+
+  // Sets the landing-page visibility for the given studyId. This method is used to control whether the study is hidden from the landing page or not.
+  abstract setStudyHiddenFromLandingPage(studyId: string, hidden: boolean): Promise<void>;
+
   // Protected helper: Sets the full modes document (including stage data and mode flags)
   protected abstract _setModesDocument(studyId: string, modesDocument: RuntimeStudySettings): Promise<void>;
 

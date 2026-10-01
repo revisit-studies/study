@@ -23,6 +23,8 @@ import { DISTINCT_COLOR_PALETTE } from '../../../../utils/colors';
 let mockStorageEngine: {
   getModes: ReturnType<typeof vi.fn>;
   setMode: ReturnType<typeof vi.fn>;
+  getStudyHiddenFromLandingPage: ReturnType<typeof vi.fn>;
+  setStudyHiddenFromLandingPage: ReturnType<typeof vi.fn>;
   getStageData: ReturnType<typeof vi.fn>;
   getAllSequenceAssignments: ReturnType<typeof vi.fn>;
   setCurrentStage: ReturnType<typeof vi.fn>;
@@ -99,12 +101,15 @@ vi.mock('@mantine/core', () => ({
   }: { children: ReactNode; onClick?: () => void; 'aria-label'?: string }) => (
     <button type="button" onClick={onClick} aria-label={ariaLabel}>{children}</button>
   ),
+  Radio: ({ checked, onChange, 'aria-label': ariaLabel }: { checked: boolean; onChange?: () => void; 'aria-label'?: string }) => (
+    <input type="radio" readOnly checked={checked} onChange={onChange} aria-label={ariaLabel} />
+  ),
   Switch: ({
     checked, label, onChange, 'aria-label': ariaLabel,
   }: { checked?: boolean; label?: ReactNode; onChange?: React.ChangeEventHandler<HTMLInputElement>; 'aria-label'?: string }) => (
     <label>
       {label}
-      <input type="checkbox" defaultChecked={checked} onChange={onChange} aria-label={ariaLabel} />
+      <input type="checkbox" checked={checked} onChange={onChange} aria-label={ariaLabel} />
     </label>
   ),
   Flex: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -262,6 +267,8 @@ const makeEngine = () => ({
     dataSharingEnabled: false,
   }),
   setMode: vi.fn().mockResolvedValue(undefined),
+  getStudyHiddenFromLandingPage: vi.fn().mockResolvedValue(false),
+  setStudyHiddenFromLandingPage: vi.fn().mockResolvedValue(undefined),
   getStageData: vi.fn().mockResolvedValue({
     currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
     allStages: [{ stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR }],
@@ -291,11 +298,14 @@ describe('ManageView', () => {
 
   // ── ManageView layout ────────────────────────────────────────────────────
 
-  test('renders modes and data management sections', async () => {
+  test('renders the visibility setting in its own card directly after ReVISit Modes', async () => {
     await act(async () => {
       render(<ManageView studyId="my-study" refresh={async () => []} />);
     });
-    expect(screen.getByText('ReVISit Modes')).toBeDefined();
+    const visibilityCard = screen.getByText('Study visibility').parentElement;
+    expect(screen.getByText('Show study on landing page')).toBeDefined();
+    expect(screen.getByText(/^By default, all available studies are publicly visible/).parentElement).toBe(visibilityCard);
+    expect(visibilityCard?.previousElementSibling).toBe(screen.getByText('ReVISit Modes').parentElement);
     expect(screen.getByText('Data Management')).toBeDefined();
   });
 
@@ -314,6 +324,7 @@ describe('ManageView', () => {
     expect(screen.getByText('Data Collection')).toBeDefined();
     expect(screen.getByText('Development Mode')).toBeDefined();
     expect(screen.getByText('Share Data and Make Analytics Interface Public')).toBeDefined();
+    expect(screen.queryByText('Show study on landing page')).toBeNull();
   });
 
   test('RevisitModesItem calls getModes with the provided studyId', async () => {
