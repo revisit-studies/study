@@ -468,17 +468,17 @@ export function ThinkAloudFooter({
   return (
     <AppShell.Footer ref={footerRef} zIndex={101} withBorder={false}>
       {currentTrial && participant && currentTrialClean === '' && (
-        <div style={{
+        <div style={isReplay ? {
           position: 'absolute', top: -5, left: 5, transform: 'translateY(-100%)',
-        }}
+        } : { padding: 5 }}
         >
           <Alert variant="filled" color="red" title="Participant hasn&apos;t completed any tasks." icon={<IconInfoCircle />} />
         </div>
       )}
       {participantMatchesSelection && (screenRecordingUrl || webcamRecordingUrl) && !participantUsedSameBrowser && !browserWarningDismissed && (
-        <div style={{
+        <div style={isReplay ? {
           position: 'absolute', top: -5, left: 5, transform: 'translateY(-100%)',
-        }}
+        } : { padding: 5 }}
         >
           <Alert withCloseButton onClose={() => setBrowserWarningDismissed(true)} variant="filled" color="red" title={`Participant used ${getBrowser(participant.metadata?.userAgent ?? '')} — you are using ${getBrowser(navigator.userAgent)}. Video playback may not work properly.`} icon={<IconInfoCircle />} />
         </div>
