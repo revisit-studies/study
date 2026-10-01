@@ -18,6 +18,7 @@ type RowData = Record<string, string | number | boolean | null | object>;
 const revisitRows: RowData[] = [];
 const storageFiles: Record<string, string> = {};
 const localStore: Record<string, string | number | object | null> = {};
+const supabaseFailureState = vi.hoisted(() => ({ failNextUpdate: false }));
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 vi.mock('@supabase/supabase-js', () => {
@@ -138,6 +139,11 @@ vi.mock('@supabase/supabase-js', () => {
               error: null,
             });
           } else if (op === 'update') {
+            if (supabaseFailureState.failNextUpdate) {
+              supabaseFailureState.failNextUpdate = false;
+              resolve({ data: null, error: { message: 'simulated update failure' } });
+              return;
+            }
             const matched = applyFilters(rows, filters);
             matched.forEach((row) => Object.assign(row, payload as RowData));
             resolve({ data: matched, error: null });
@@ -988,6 +994,15 @@ describe.each([
     await fresh.initializeStudyDb(studyId);
     // @ts-expect-error protected
     await expect(fresh._completeCurrentParticipantRealtime()).rejects.toThrow('Participant not initialized');
+  });
+
+  test('_completeCurrentParticipantRealtime propagates a rejected assignment update', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    supabaseFailureState.failNextUpdate = true;
+
+    // @ts-expect-error protected
+    await expect(storageEngine._completeCurrentParticipantRealtime())
+      .rejects.toThrow('Failed to complete sequence assignment');
   });
 
   // ── _rejectParticipantRealtime ───────────────────────────────────────────────

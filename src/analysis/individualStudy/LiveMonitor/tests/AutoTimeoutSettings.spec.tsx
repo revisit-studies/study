@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import {
-  act, cleanup, fireEvent, render, screen,
+  act, cleanup, fireEvent, render, screen, waitFor,
 } from '@testing-library/react';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
@@ -86,6 +86,16 @@ function makeEngine(overrides: Partial<{
   };
 }
 
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (error: Error) => void;
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+  return { promise, resolve, reject };
+}
+
 async function renderSettings(engine: ReturnType<typeof makeEngine>) {
   await act(async () => {
     render(<AutoTimeoutSettings storageEngine={engine} studyId="test-study" />);
@@ -139,6 +149,50 @@ describe('AutoTimeoutSettings', () => {
     expect(engine.setAutoTimeoutMinutes).toHaveBeenCalledWith('test-study', undefined);
   });
 
+  test('serializes a changed-minute blur before a following disable intent', async () => {
+    const firstSave = deferred<void>();
+    const engine = makeEngine({
+      getModes: vi.fn().mockResolvedValue({ autoTimeoutMinutes: 30 }),
+      setAutoTimeoutMinutes: vi.fn()
+        .mockImplementationOnce(() => firstSave.promise)
+        .mockResolvedValueOnce(undefined),
+    });
+    const { minutesInput, toggle } = await renderSettings(engine);
+
+    await act(async () => { fireEvent.change(minutesInput, { target: { value: '45' } }); });
+    fireEvent.blur(minutesInput);
+    fireEvent.click(toggle);
+
+    await waitFor(() => expect(engine.setAutoTimeoutMinutes).toHaveBeenCalledTimes(1));
+    expect(engine.setAutoTimeoutMinutes).toHaveBeenNthCalledWith(1, 'test-study', 45);
+
+    await act(async () => { firstSave.resolve(); });
+    await waitFor(() => expect(engine.setAutoTimeoutMinutes).toHaveBeenCalledTimes(2));
+    expect(engine.setAutoTimeoutMinutes).toHaveBeenNthCalledWith(2, 'test-study', undefined);
+    await waitFor(() => expect((screen.getByLabelText('Enable auto-timeout') as HTMLInputElement).checked).toBe(false));
+  });
+
+  test('continues to the latest intent after an earlier save fails', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => { });
+    const firstSave = deferred<void>();
+    const engine = makeEngine({
+      getModes: vi.fn().mockResolvedValue({ autoTimeoutMinutes: 30 }),
+      setAutoTimeoutMinutes: vi.fn()
+        .mockImplementationOnce(() => firstSave.promise)
+        .mockResolvedValueOnce(undefined),
+    });
+    const { minutesInput, toggle } = await renderSettings(engine);
+
+    await act(async () => { fireEvent.change(minutesInput, { target: { value: '45' } }); });
+    fireEvent.blur(minutesInput);
+    fireEvent.click(toggle);
+    await waitFor(() => expect(engine.setAutoTimeoutMinutes).toHaveBeenCalledTimes(1));
+    await act(async () => { firstSave.reject(new Error('first save failed')); });
+
+    await waitFor(() => expect(engine.setAutoTimeoutMinutes).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect((screen.getByLabelText('Enable auto-timeout') as HTMLInputElement).checked).toBe(false));
+  });
+
   test('turning the toggle on asks for confirmation before saving', async () => {
     const engine = makeEngine();
     const { toggle } = await renderSettings(engine);
@@ -169,6 +223,27 @@ describe('AutoTimeoutSettings', () => {
     });
 
     expect(getModes).toHaveBeenCalledTimes(2);
+    expect((screen.getByLabelText('Auto-timeout minutes') as HTMLInputElement).value).toBe('15');
+    expect((screen.getByLabelText('Enable auto-timeout') as HTMLInputElement).disabled).toBe(false);
+  });
+
+  test('disables and resets stale controls while a different study loads', async () => {
+    const nextModes = deferred<{ autoTimeoutMinutes: number }>();
+    const firstEngine = makeEngine({ getModes: vi.fn().mockResolvedValue({ autoTimeoutMinutes: 30 }) });
+    const nextEngine = makeEngine({ getModes: vi.fn().mockReturnValue(nextModes.promise) });
+    let view: ReturnType<typeof render>;
+    await act(async () => {
+      view = render(<AutoTimeoutSettings storageEngine={firstEngine} studyId="study-a" />);
+    });
+    expect((screen.getByLabelText('Auto-timeout minutes') as HTMLInputElement).value).toBe('30');
+
+    await act(async () => {
+      view!.rerender(<AutoTimeoutSettings storageEngine={nextEngine} studyId="study-b" />);
+    });
+    expect((screen.getByLabelText('Auto-timeout minutes') as HTMLInputElement).value).toBe('60');
+    expect((screen.getByLabelText('Enable auto-timeout') as HTMLInputElement).disabled).toBe(true);
+
+    await act(async () => { nextModes.resolve({ autoTimeoutMinutes: 15 }); });
     expect((screen.getByLabelText('Auto-timeout minutes') as HTMLInputElement).value).toBe('15');
     expect((screen.getByLabelText('Enable auto-timeout') as HTMLInputElement).disabled).toBe(false);
   });

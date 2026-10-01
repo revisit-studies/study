@@ -82,7 +82,11 @@ function ValidStudyCard({
     if (!modes) return 'Unknown';
 
     if (modes.dataCollectionEnabled) {
-      if (studyStatusAndTiming && (studyStatusAndTiming.inProgress > 0 || studyStatusAndTiming.completed > 0)) {
+      if (studyStatusAndTiming && (
+        studyStatusAndTiming.inProgress > 0
+        || studyStatusAndTiming.completed > 0
+        || studyStatusAndTiming.completedLate > 0
+      )) {
         return 'Collecting Data';
       }
       return 'Ready to Collect Data';

@@ -436,12 +436,14 @@ describe.each([
     expect(resumed.metadata.colorMode).toBe('dark');
   });
 
-  test('initializeParticipantSession reads modes only once for a new participant', async () => {
+  test('initializeParticipantSession rereads modes before adding a missing default stage', async () => {
     const getModesSpy = vi.spyOn(storageEngine, 'getModes');
 
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
 
-    expect(getModesSpy).toHaveBeenCalledTimes(1);
+    // Opaque settings backends merge the stage field under the settings lock,
+    // which requires one fresh read instead of rewriting the earlier snapshot.
+    expect(getModesSpy).toHaveBeenCalledTimes(2);
   });
 
   test('initializeParticipantSession sets conditions from searchParams condition', async () => {

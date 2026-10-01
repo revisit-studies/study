@@ -224,6 +224,29 @@ describe('ConfigSwitcher', () => {
     expect(engine.getConditionData).not.toHaveBeenCalled();
   });
 
+  test('treats completed-late participant data as collected data', async () => {
+    const engine = makeLandingEngine();
+    engine.getParticipantsStatusCounts.mockResolvedValue({
+      completed: 0,
+      completedLate: 1,
+      inProgress: 0,
+      timedOut: 0,
+      rejected: 0,
+      minTime: 1000,
+      maxTime: 2000,
+    });
+    vi.mocked(useStorageEngine).mockReturnValue({
+      storageEngine: makeStorageEngine(engine),
+      setStorageEngine: vi.fn(),
+    });
+
+    const view = await act(async () => render(
+      <ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigs} />,
+    ));
+
+    expect(view.getByText(/Study Status:/).textContent).toContain('Collecting Data');
+  });
+
   test.each([false, true])('hides a study from public visitors independently of data sharing (%s)', async (dataSharingEnabled) => {
     const engine = makeLandingEngine({ dataSharingEnabled }, true);
     vi.mocked(useStorageEngine).mockReturnValue({ storageEngine: makeStorageEngine(engine), setStorageEngine: vi.fn() });

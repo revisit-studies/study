@@ -1,7 +1,9 @@
 import {
   Alert, Button, Card, Group, Modal, NumberInput, Stack, Switch, Text, Title,
 } from '@mantine/core';
-import { useCallback, useEffect, useState } from 'react';
+import {
+  useCallback, useEffect, useRef, useState,
+} from 'react';
 import { StorageEngine } from '../../../storage/engines/types';
 import { useAuth } from '../../../store/hooks/useAuth';
 
@@ -25,9 +27,20 @@ export function AutoTimeoutSettings({
   // Until the stored value has been read, the controls have nothing truthful to
   // show, so they stay disabled rather than offering a made-up default.
   const [loaded, setLoaded] = useState(false);
+  const minutesRef = useRef<number | undefined>(undefined);
+  const saveChainRef = useRef<Promise<void>>(Promise.resolve());
+  const contextVersionRef = useRef(0);
 
   useEffect(() => {
+    contextVersionRef.current += 1;
     let cancelled = false;
+    setLoaded(false);
+    setMinutes(undefined);
+    minutesRef.current = undefined;
+    setDraftMinutes(DEFAULT_MINUTES);
+    setConfirmationOpen(false);
+    setSaving(false);
+    saveChainRef.current = Promise.resolve();
     if (!storageEngine || !studyId) {
       setLoading(false);
       return () => { cancelled = true; };
@@ -38,6 +51,7 @@ export function AutoTimeoutSettings({
       .then((modes) => {
         if (cancelled) return;
         setMinutes(modes.autoTimeoutMinutes);
+        minutesRef.current = modes.autoTimeoutMinutes;
         setDraftMinutes(modes.autoTimeoutMinutes ?? DEFAULT_MINUTES);
         setLoaded(true);
         setLoading(false);
@@ -53,28 +67,43 @@ export function AutoTimeoutSettings({
 
   const save = useCallback(async (updatedMinutes: number | undefined) => {
     if (!storageEngine || !studyId || !user.isAdmin) return;
-    const previousMinutes = minutes;
+    const contextVersion = contextVersionRef.current;
     setSaving(true);
-    setError(null);
-    try {
-      await storageEngine.setAutoTimeoutMinutes(studyId, updatedMinutes);
-      setMinutes(updatedMinutes);
-      if (updatedMinutes !== undefined) {
-        setDraftMinutes(updatedMinutes);
+    const queuedSave = saveChainRef.current.catch(() => undefined).then(async () => {
+      const previousMinutes = minutesRef.current;
+      if (contextVersion === contextVersionRef.current) {
+        setError(null);
       }
-    } catch (saveError) {
-      console.error('Failed to save auto-timeout setting:', saveError);
-      // Roll back to what the backend still holds, so the controls never claim
-      // a setting that was not stored.
-      setMinutes(previousMinutes);
-      setDraftMinutes(previousMinutes ?? DEFAULT_MINUTES);
-      setError('The auto-timeout setting could not be saved.');
+      try {
+        await storageEngine.setAutoTimeoutMinutes(studyId, updatedMinutes);
+        if (contextVersion !== contextVersionRef.current) return;
+        minutesRef.current = updatedMinutes;
+        setMinutes(updatedMinutes);
+        if (updatedMinutes !== undefined) {
+          setDraftMinutes(updatedMinutes);
+        }
+      } catch (saveError) {
+        console.error('Failed to save auto-timeout setting:', saveError);
+        if (contextVersion === contextVersionRef.current) {
+          // Roll back to the last write that actually reached the backend.
+          setMinutes(previousMinutes);
+          setDraftMinutes(previousMinutes ?? DEFAULT_MINUTES);
+          setError('The auto-timeout setting could not be saved.');
+        }
+        throw saveError;
+      }
+    });
+    saveChainRef.current = queuedSave;
+    try {
+      await queuedSave;
     } finally {
-      setSaving(false);
+      if (contextVersion === contextVersionRef.current && saveChainRef.current === queuedSave) {
+        setSaving(false);
+      }
     }
-  }, [minutes, storageEngine, studyId, user.isAdmin]);
+  }, [storageEngine, studyId, user.isAdmin]);
 
-  const editable = user.isAdmin && loaded;
+  const editable = user.isAdmin && loaded && !loading;
 
   return (
     <>
