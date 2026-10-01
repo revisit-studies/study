@@ -33,7 +33,8 @@ vi.mock('@supabase/supabase-js', () => {
     if (col.includes('->')) {
       const arrowIdx = col.indexOf('->');
       const parent = col.slice(0, arrowIdx);
-      const child = col.slice(arrowIdx + 2);
+      // `data->>field` extracts the field as text, so drop the extra '>'.
+      const child = col.slice(arrowIdx + 2).replace(/^>/, '');
       const parentVal = obj[parent];
       return parentVal && typeof parentVal === 'object'
         ? (parentVal as RowData)[child]
@@ -44,30 +45,39 @@ vi.mock('@supabase/supabase-js', () => {
 
   function applyFilters(
     rows: Array<RowData>,
-    filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'like' }>,
+    filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'neq' | 'is' | 'like' }>,
   ): Array<RowData> {
     return rows.filter((row) => filters.every(({ col, val, type }) => {
       const colVal = getFieldValue(row, col);
-      if (type === 'eq') return colVal === val;
+      // PostgREST compares filter values as text, so `data->>rejected` matches
+      // the string 'false' rather than the boolean.
+      if (type === 'eq') return String(colVal) === String(val);
+      if (type === 'neq') return String(colVal) !== String(val);
+      if (type === 'is') return (colVal ?? null) === val;
       return typeof colVal === 'string' && matchLike(colVal, String(val));
     }));
   }
 
   function makeQueryBuilder(getRows: () => Array<RowData>) {
-    let op: 'select' | 'upsert' | 'update' | 'delete' | null = null;
+    let op: 'select' | 'upsert' | 'insert' | 'update' | 'delete' | null = null;
     let payload: RowData | RowData[] | Partial<RowData> | null = null;
-    const filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'like' }> = [];
+    const filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'neq' | 'is' | 'like' }> = [];
     let isSingle = false;
+    let allowNoRows = false;
 
     const qb = {
-      select(_fields?: string) { op = 'select'; return qb; },
+      select(_fields?: string) { if (op === null) op = 'select'; return qb; },
       upsert(row: RowData | RowData[]) { op = 'upsert'; payload = row; return qb; },
+      insert(row: RowData | RowData[]) { op = 'insert'; payload = row; return qb; },
       update(obj: Partial<RowData>) { op = 'update'; payload = obj; return qb; },
       delete() { op = 'delete'; return qb; },
       eq(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'eq' }); return qb; },
+      neq(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'neq' }); return qb; },
+      is(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'is' }); return qb; },
       like(col: string, val: string) { filters.push({ col, val, type: 'like' }); return qb; },
       limit(_count: number) { return qb; },
       single() { isSingle = true; return qb; },
+      maybeSingle() { isSingle = true; allowNoRows = true; return qb; },
       then(
         resolve: (val: { data: RowData | RowData[] | null; error: { message: string; code?: string } | null }) => void,
         reject?: (err: Error) => void,
@@ -79,7 +89,7 @@ vi.mock('@supabase/supabase-js', () => {
             // Return deep copies so later mutations to revisitRows don't alias into returned data
             if (isSingle) {
               if (matched.length === 0) {
-                resolve({ data: null, error: { message: 'No rows', code: 'PGRST116' } });
+                resolve({ data: null, error: allowNoRows ? null : { message: 'No rows', code: 'PGRST116' } });
               } else {
                 resolve({ data: JSON.parse(JSON.stringify(matched[0])), error: null });
               }
@@ -107,6 +117,26 @@ vi.mock('@supabase/supabase-js', () => {
               }
             });
             resolve({ data: toUpsert, error: null });
+          } else if (op === 'insert') {
+            const toInsert = (Array.isArray(payload) ? payload : [payload]) as Array<RowData>;
+            const conflict = toInsert.find((row) => rows.some(
+              (existing) => existing.studyId === row.studyId && existing.docId === row.docId,
+            ));
+            if (conflict) {
+              resolve({ data: null, error: { message: 'duplicate key value', code: '23505' } });
+              return;
+            }
+            const inserted = toInsert.map((row) => ({
+              ...row,
+              createdAt: (row.createdAt as string | undefined) ?? new Date().toISOString(),
+            }));
+            rows.push(...inserted);
+            resolve({
+              data: isSingle
+                ? JSON.parse(JSON.stringify(inserted[0]))
+                : JSON.parse(JSON.stringify(inserted)),
+              error: null,
+            });
           } else if (op === 'update') {
             const matched = applyFilters(rows, filters);
             matched.forEach((row) => Object.assign(row, payload as RowData));
