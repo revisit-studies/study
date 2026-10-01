@@ -20,7 +20,8 @@ export function GlobalSettings() {
   const [isAuthEnabled, setAuthEnabled] = useState<boolean>(false);
   const [authenticatedUsers, setAuthenticatedUsers] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [settingsReadError, setSettingsReadError] = useState(false);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
+  const [settingsRetry, setSettingsRetry] = useState(0);
   const [modalAddOpened, setModalAddOpened] = useState<boolean>(false);
   const [modalRemoveOpened, setModalRemoveOpened] = useState<boolean>(false);
   const [modalEnableAuthOpened, setModalEnableAuthOpened] = useState<boolean>(false);
@@ -41,7 +42,7 @@ export function GlobalSettings() {
     const determineAuthenticationEnabled = async () => {
       if (storageEngine?.getEngine() === 'supabase' && supabaseAuthStatus === 'unconfigured') return;
       setLoading(true);
-      setSettingsReadError(false);
+      setSettingsError(null);
       try {
         if (storageEngine && isCloudStorageEngine(storageEngine)) {
           const authInfo = await storageEngine.getUserManagementData('authentication');
@@ -55,13 +56,13 @@ export function GlobalSettings() {
         }
       } catch (error) {
         console.error('Failed to load authentication settings:', error);
-        setSettingsReadError(true);
+        setSettingsError('Unable to load authentication settings');
       } finally {
         setLoading(false);
       }
     };
     determineAuthenticationEnabled();
-  }, [storageEngine, supabaseAuthStatus]);
+  }, [storageEngine, supabaseAuthStatus, settingsRetry]);
 
   const handleEnableAuth = async () => {
     setLoading(true);
@@ -69,11 +70,11 @@ export function GlobalSettings() {
       if (storageEngine && isCloudStorageEngine(storageEngine)) {
         // Check if we're in supabase and have a session already
         if (storageEngine.getEngine() === 'supabase') {
-          const { data } = await (storageEngine as unknown as SupabaseStorageEngine).getSession();
-          if (data.session && data.session.user && data.session.user.email) {
+          const verifiedUser = await (storageEngine as SupabaseStorageEngine).getVerifiedUser();
+          if (verifiedUser?.email) {
             setEnableAuthUser({
-              email: data.session.user.email,
-              uid: data.session.user.id,
+              email: verifiedUser.email,
+              uid: verifiedUser.uid,
             });
             setModalEnableAuthOpened(true);
             return;
@@ -104,8 +105,12 @@ export function GlobalSettings() {
     setLoading(true);
     try {
       if (storageEngine && isCloudStorageEngine(storageEngine) && rootUser) {
-        await storageEngine.addAdminUser(rootUser);
-        await storageEngine.changeAuth(true);
+        if (storageEngine.getEngine() === 'supabase') {
+          await (storageEngine as SupabaseStorageEngine).enableAuthentication(rootUser);
+        } else {
+          await storageEngine.addAdminUser(rootUser);
+          await storageEngine.changeAuth(true);
+        }
         setAuthenticatedUsers([rootUser.email!]);
         setAuthEnabled(true);
         triggerAuth();
@@ -121,16 +126,20 @@ export function GlobalSettings() {
 
   const handleAddUser = async () => {
     setLoading(true);
-    if (storageEngine && isCloudStorageEngine(storageEngine)) {
-      await storageEngine.addAdminUser({ email: form.values.email, uid: null });
-      const adminUsers = await storageEngine.getUserManagementData('adminUsers');
-      setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser: StoredUser) => storedUser.email).filter((x) => x !== null) || []);
+    try {
+      if (storageEngine && isCloudStorageEngine(storageEngine)) {
+        await storageEngine.addAdminUser({ email: form.values.email, uid: null });
+        const adminUsers = await storageEngine.getUserManagementData('adminUsers');
+        setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser: StoredUser) => storedUser.email).filter((x) => x !== null) || []);
+      }
+      form.setValues({ email: '' });
+    } catch (error) {
+      console.error('Failed to add administrator:', error);
+      setSettingsError('Unable to add administrator');
+    } finally {
+      setLoading(false);
+      setModalAddOpened(false);
     }
-    setLoading(false);
-    setModalAddOpened(false);
-    form.setValues({
-      email: '',
-    });
   };
 
   const handleRemoveUser = (inputUser: string) => {
@@ -140,21 +149,27 @@ export function GlobalSettings() {
 
   const confirmRemoveUser = async () => {
     setLoading(true);
-    if (storageEngine && isCloudStorageEngine(storageEngine)) {
-      await storageEngine.removeAdminUser(userToRemove);
-      const adminUsers = await storageEngine.getUserManagementData('adminUsers');
-      setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser: StoredUser) => storedUser.email).filter((x) => x !== null) || []);
+    try {
+      if (storageEngine && isCloudStorageEngine(storageEngine)) {
+        await storageEngine.removeAdminUser(userToRemove);
+        const adminUsers = await storageEngine.getUserManagementData('adminUsers');
+        setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser: StoredUser) => storedUser.email).filter((x) => x !== null) || []);
+      }
+    } catch (error) {
+      console.error('Failed to remove administrator:', error);
+      setSettingsError('Unable to remove administrator');
+    } finally {
+      setModalRemoveOpened(false);
+      setLoading(false);
     }
-    setModalRemoveOpened(false);
-    setLoading(false);
   };
 
   const storageEngineIsCloud = useMemo(() => storageEngine && isCloudStorageEngine(storageEngine), [storageEngine]);
 
-  if (settingsReadError) {
+  if (settingsError) {
     return (
-      <Alert title="Unable to load authentication settings" color="red">
-        <Button onClick={triggerAuth}>Retry</Button>
+      <Alert title={settingsError} color="red">
+        <Button onClick={() => setSettingsRetry((value) => value + 1)}>Retry</Button>
       </Alert>
     );
   }

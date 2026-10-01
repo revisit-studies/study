@@ -129,12 +129,12 @@ export function AuthProvider({ children } : { children: ReactNode }) {
       authEvent += 1;
       const currentEvent = authEvent;
       // Reset the user. This also gets called on signOut
-      setUser((prevUser) => ({
-        user: prevUser.user,
-        isAdmin: prevUser.isAdmin,
-        determiningStatus: true,
+      setUser({
+        user: cloudUser,
+        isAdmin: false,
+        determiningStatus: cloudUser !== null,
         adminVerification: false,
-      }));
+      });
       if (cloudUser) {
         // Reach out to firebase to validate user
         const currUser: UserWrapped = {

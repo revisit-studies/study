@@ -54,6 +54,7 @@ vi.mock('@supabase/supabase-js', () => {
     let payload: RowData | RowData[] | Partial<RowData> | null = null;
     const filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'like' }> = [];
     let isSingle = false;
+    let isMaybeSingle = false;
 
     const qb = {
       select(_fields?: string) { op = 'select'; return qb; },
@@ -64,6 +65,7 @@ vi.mock('@supabase/supabase-js', () => {
       like(col: string, val: string) { filters.push({ col, val, type: 'like' }); return qb; },
       limit(_count: number) { return qb; },
       single() { isSingle = true; return qb; },
+      maybeSingle() { isMaybeSingle = true; return qb; },
       then(
         resolve: (val: { data: RowData | RowData[] | null; error: { message: string; code?: string } | null }) => void,
         reject?: (err: Error) => void,
@@ -80,9 +82,11 @@ vi.mock('@supabase/supabase-js', () => {
           if (op === 'select') {
             const matched = applyFilters(rows, filters);
             // Return deep copies so later mutations to revisitRows don't alias into returned data
-            if (isSingle) {
-              if (matched.length === 0) {
-                resolve({ data: null, error: { message: 'No rows', code: 'PGRST116' } });
+            if (isSingle || isMaybeSingle) {
+              if (matched.length > 1 || (isSingle && matched.length === 0)) {
+                resolve({ data: null, error: { message: 'Expected one row', code: 'PGRST116' } });
+              } else if (matched.length === 0) {
+                resolve({ data: null, error: null });
               } else {
                 resolve({ data: JSON.parse(JSON.stringify(matched[0])), error: null });
               }

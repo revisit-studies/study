@@ -165,13 +165,13 @@ describe('GlobalSettings', () => {
     expect(mockGetUserManagementData).not.toHaveBeenCalled();
   });
 
-  test('opens enable-auth confirm modal via supabase session on button click', async () => {
+  test('explicitly disabled Supabase authentication can be enabled by the verified user', async () => {
+    const enableAuthentication = vi.fn().mockResolvedValue({ email: 'test@test.com', uid: '123' });
     mockStorageEngine = {
       getUserManagementData: mockGetUserManagementData,
       getEngine: vi.fn().mockReturnValue('supabase'),
-      getSession: vi.fn().mockResolvedValue({
-        data: { session: { user: { email: 'test@test.com', id: '123' } } },
-      }),
+      getVerifiedUser: vi.fn().mockResolvedValue({ email: 'test@test.com', uid: '123' }),
+      enableAuthentication,
     };
     mockGetUserManagementData.mockImplementation(async (key: string) => {
       if (key === 'authentication') return { isEnabled: false };
@@ -187,42 +187,68 @@ describe('GlobalSettings', () => {
     });
 
     expect(screen.getByText('Enable Authentication?')).toBeDefined();
+    await act(async () => fireEvent.click(screen.getByText("Yes, I'm sure.")));
+    expect(enableAuthentication).toHaveBeenCalledWith({ email: 'test@test.com', uid: '123' });
+    expect(mockTriggerAuth).toHaveBeenCalled();
   });
 
   test('unconfigured Supabase lets the signed-in user establish the first administrator', async () => {
     mockSupabaseAuthStatus = 'unconfigured';
-    const addAdminUser = vi.fn().mockResolvedValue(undefined);
-    const changeAuth = vi.fn().mockResolvedValue(undefined);
+    const enableAuthentication = vi.fn().mockResolvedValue({ email: 'test@test.com', uid: '123' });
     mockStorageEngine = {
       getUserManagementData: mockGetUserManagementData,
       getEngine: vi.fn().mockReturnValue('supabase'),
-      getSession: vi.fn().mockResolvedValue({ data: { session: { user: { email: 'test@test.com', id: '123' } } } }),
-      addAdminUser,
-      changeAuth,
+      getVerifiedUser: vi.fn().mockResolvedValue({ email: 'test@test.com', uid: '123' }),
+      enableAuthentication,
     };
     await act(async () => render(<GlobalSettings />));
     expect(mockGetUserManagementData).not.toHaveBeenCalled();
     expect(screen.getByText('Authentication has not been configured.')).toBeDefined();
     await act(async () => fireEvent.click(screen.getByText('Enable Authentication')));
     await act(async () => fireEvent.click(screen.getByText("Yes, I'm sure.")));
-    expect(addAdminUser).toHaveBeenCalledWith({ email: 'test@test.com', uid: '123' });
-    expect(changeAuth).toHaveBeenCalledWith(true);
-    expect(addAdminUser.mock.invocationCallOrder[0]).toBeLessThan(changeAuth.mock.invocationCallOrder[0]);
+    expect(enableAuthentication).toHaveBeenCalledWith({ email: 'test@test.com', uid: '123' });
     expect(mockTriggerAuth).toHaveBeenCalled();
   });
 
-  test('a failed settings read clears loading and offers retry', async () => {
-    mockSupabaseAuthStatus = 'enabled';
-    mockGetUserManagementData.mockImplementation(async (key: string) => {
-      if (key === 'authentication') return { isEnabled: true };
-      throw new Error('administrator list unavailable');
-    });
+  test('failed first-administrator setup stays unconfigured and shows an error', async () => {
+    mockSupabaseAuthStatus = 'unconfigured';
+    const enableAuthentication = vi.fn().mockRejectedValue(new Error('Authentication setup has already started'));
+    mockStorageEngine = {
+      getUserManagementData: mockGetUserManagementData,
+      getEngine: vi.fn().mockReturnValue('supabase'),
+      getVerifiedUser: vi.fn().mockResolvedValue({ email: 'test@test.com', uid: '123' }),
+      enableAuthentication,
+    };
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      await act(async () => render(<GlobalSettings />));
+      await act(async () => fireEvent.click(screen.getByText('Enable Authentication')));
+      await act(async () => fireEvent.click(screen.getByText("Yes, I'm sure.")));
+      expect(enableAuthentication).toHaveBeenCalledOnce();
+      expect(screen.getByText('Authentication has not been configured.')).toBeDefined();
+      expect(screen.getByText(/An error has occurred when trying to enable authentication/)).toBeDefined();
+      expect(mockTriggerAuth).not.toHaveBeenCalled();
+    } finally {
+      consoleSpy.mockRestore();
+    }
+  });
+
+  test('Firebase settings retry reruns a failed read', async () => {
+    mockSupabaseAuthStatus = 'loading';
+    mockStorageEngine = {
+      getUserManagementData: mockGetUserManagementData,
+      getEngine: vi.fn().mockReturnValue('firebase'),
+    };
+    mockGetUserManagementData.mockRejectedValueOnce(new Error('temporary read failure'))
+      .mockImplementation(async (key: string) => (key === 'authentication' ? { isEnabled: true } : { adminUsersList: [] }));
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     await act(async () => render(<GlobalSettings />));
     expect(screen.getByRole('alert').textContent).toContain('Unable to load authentication settings');
     expect(screen.queryByTestId('loading-overlay')).toBeNull();
-    fireEvent.click(screen.getByText('Retry'));
-    expect(mockTriggerAuth).toHaveBeenCalled();
+    await act(async () => fireEvent.click(screen.getByText('Retry')));
+    expect(screen.getByText('Authentication is enabled.')).toBeDefined();
+    expect(mockGetUserManagementData).toHaveBeenCalledTimes(3);
+    expect(mockTriggerAuth).not.toHaveBeenCalled();
     consoleSpy.mockRestore();
   });
 
@@ -287,6 +313,32 @@ describe('GlobalSettings', () => {
     expect(mockRemoveAdminUser).toHaveBeenCalledWith('other@test.com');
   });
 
+  test('failed administrator removal clears loading and offers a settings retry', async () => {
+    mockStorageEngine = {
+      getUserManagementData: mockGetUserManagementData,
+      getEngine: vi.fn().mockReturnValue('supabase'),
+      removeAdminUser: vi.fn().mockRejectedValue(new Error('write failed')),
+    };
+    mockGetUserManagementData.mockImplementation(async (key: string) => (
+      key === 'authentication' ? { isEnabled: true }
+        : { adminUsersList: [{ email: 'other@test.com', uid: '2' }] }
+    ));
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      await act(async () => render(<GlobalSettings />));
+      const removeButton = screen.getAllByRole('button').find((button) => button.getAttribute('data-color') === 'red');
+      expect(removeButton).toBeDefined();
+      fireEvent.click(removeButton!);
+      await act(async () => fireEvent.click(screen.getByText(/yes.*sure/i)));
+      expect(screen.getByRole('alert').textContent).toContain('Unable to remove administrator');
+      expect(screen.queryByTestId('loading-overlay')).toBeNull();
+      await act(async () => fireEvent.click(screen.getByText('Retry')));
+      expect(screen.getByText('other@test.com')).toBeDefined();
+    } finally {
+      consoleSpy.mockRestore();
+    }
+  });
+
   test('handleAddUser calls addAdminUser and refreshes list', async () => {
     const mockAddAdminUser = vi.fn().mockResolvedValue(undefined);
     mockStorageEngine = {
@@ -315,6 +367,29 @@ describe('GlobalSettings', () => {
     });
 
     expect(mockAddAdminUser).toHaveBeenCalled();
+  });
+
+  test('failed administrator addition clears loading and offers a settings retry', async () => {
+    mockStorageEngine = {
+      getUserManagementData: mockGetUserManagementData,
+      getEngine: vi.fn().mockReturnValue('supabase'),
+      addAdminUser: vi.fn().mockRejectedValue(new Error('write failed')),
+    };
+    mockGetUserManagementData.mockImplementation(async (key: string) => (
+      key === 'authentication' ? { isEnabled: true } : { adminUsersList: [] }
+    ));
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      await act(async () => render(<GlobalSettings />));
+      fireEvent.click(screen.getByTestId('icon-user-plus'));
+      await act(async () => fireEvent.click(screen.getByText('Save')));
+      expect(screen.getByRole('alert').textContent).toContain('Unable to add administrator');
+      expect(screen.queryByTestId('loading-overlay')).toBeNull();
+      await act(async () => fireEvent.click(screen.getByText('Retry')));
+      expect(screen.getByText('Authentication is enabled.')).toBeDefined();
+    } finally {
+      consoleSpy.mockRestore();
+    }
   });
 
   test('Log out button is present when auth is enabled', async () => {
