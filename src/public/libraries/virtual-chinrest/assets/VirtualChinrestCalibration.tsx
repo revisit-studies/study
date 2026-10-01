@@ -1,15 +1,25 @@
 /* eslint-disable react/no-unescaped-entities */
-import { useState, useRef, useEffect } from 'react';
+import {
+  useState, useRef, useEffect, useMemo,
+} from 'react';
 import {
   Slider, Button, Stack, Text,
 } from '@mantine/core';
+import { Registry } from '@trrack/core';
 import { StimulusParams } from '../../../../store/types';
+import { useIsAnalysis } from '../../../../store/hooks/useIsAnalysis';
+import { useStoredAnswer } from '../../../../store/hooks/useStoredAnswer';
 import cardImage from './card.png';
 
-interface VirtualChinrestCalibrationProps extends StimulusParams<{ taskid: string }> {
+interface VirtualChinrestCalibrationProps extends StimulusParams<{ taskid: string }, CardCalibrationState> {
   itemWidthMM: number;
   itemHeightMM: number;
   fixedCorner: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+}
+
+interface CardCalibrationState {
+  itemWidthPx: number;
+  isCalibrationComplete: boolean;
 }
 
 // --- utility functions
@@ -19,19 +29,49 @@ const calculateHeight = (width: number, aspectRatio:number) => Math.round(width 
 export default function VirtualChinrestCalibration({
   parameters,
   setAnswer,
+  provenanceState,
+  useTrrack,
   itemWidthMM = 85.6, // Standard credit card width
   itemHeightMM = 53.98, // Standard credit card height
   fixedCorner = 'top-left', // Default to top-left fixed corner
 }: VirtualChinrestCalibrationProps) {
+  const { actions, registry } = useMemo(() => {
+    const reg = Registry.create();
+    return {
+      actions: {
+        setWidth: reg.register('set-width', (state, itemWidthPx: number) => {
+          state.itemWidthPx = itemWidthPx;
+          return state;
+        }),
+        complete: reg.register('complete', (state, isCalibrationComplete: boolean) => {
+          state.isCalibrationComplete = isCalibrationComplete;
+          return state;
+        }),
+      },
+      registry: reg,
+    };
+  }, []);
+  const trrack = useTrrack<CardCalibrationState>({
+    registry,
+    initialState: {
+      itemWidthPx: 300,
+      isCalibrationComplete: false,
+    },
+  });
+
   // Set states
   const [itemWidthPx, setItemWidthPx] = useState(300); // default starting slider value (unit is px)
   const [isCalibrationComplete, setIsCalibrationComplete] = useState(false);
   const [sliderRange, setSliderRange] = useState({ min: 100, max: 500 });
   const [hasMovedSlider, setHasMovedSlider] = useState(false);
   const [showMoveSliderWarning, setShowMoveSliderWarning] = useState(false);
+  const isAnalysis = useIsAnalysis();
+  const storedAnswer = useStoredAnswer();
 
   const { taskid } = parameters;
   const pixelsPerMM = itemWidthPx / itemWidthMM; // pixel to MM conversion
+  const storedValue = Number(storedAnswer?.answer?.[taskid]);
+  const storedPixelsPerMM = Number.isFinite(storedValue) && storedValue > 0 ? storedValue : null;
 
   // Set references
   const containerRef = useRef<HTMLDivElement>(null);
@@ -53,9 +93,30 @@ export default function VirtualChinrestCalibration({
     return () => window.removeEventListener('resize', updateSliderRange);
   }, []);
 
+  useEffect(() => {
+    const replayWidth = Number(provenanceState?.itemWidthPx);
+    if (Number.isFinite(replayWidth) && replayWidth > 0) {
+      setItemWidthPx(replayWidth);
+      setHasMovedSlider(replayWidth !== 300);
+      setIsCalibrationComplete(provenanceState?.isCalibrationComplete === true);
+      setShowMoveSliderWarning(false);
+      return;
+    }
+
+    if (storedPixelsPerMM === null) {
+      return;
+    }
+
+    setItemWidthPx(storedPixelsPerMM * itemWidthMM);
+    setHasMovedSlider(true);
+    setIsCalibrationComplete(true);
+    setShowMoveSliderWarning(false);
+  }, [itemWidthMM, provenanceState, storedPixelsPerMM]);
+
   // Handle a change in the slider
   const handleSliderChange = (value: number) => {
     setItemWidthPx(value);
+    trrack.apply('Adjust card size', actions.setWidth(value));
     setHasMovedSlider(true);
     setShowMoveSliderWarning(false);
   };
@@ -75,6 +136,7 @@ export default function VirtualChinrestCalibration({
       },
     });
 
+    trrack.apply('Complete card calibration', actions.complete(true));
     setIsCalibrationComplete(true);
   };
 
@@ -95,6 +157,7 @@ export default function VirtualChinrestCalibration({
       <Text size="md"> If you do not have access to a real card, you can use a ruler to measure the image width to 3.37 inches or 85.6mm. </Text>
       <Text size="md"> Once you are finished, click "Confirm Size" and then "Next". </Text>
       <Slider
+        disabled={isAnalysis}
         min={sliderRange.min}
         max={sliderRange.max}
         value={itemWidthPx}
@@ -113,6 +176,7 @@ export default function VirtualChinrestCalibration({
         {/* Card container that changes size */}
         <div
           ref={containerRef}
+          data-testid="virtual-card"
           style={{
             width: `${itemWidthPx}px`,
             height: `${calculateHeight(itemWidthPx, aspectRatio)}px`,
@@ -147,6 +211,7 @@ export default function VirtualChinrestCalibration({
         )
       }
       <Button
+        disabled={isAnalysis}
         onClick={handleCalibrationComplete}
         size="lg"
         variant="transparent"

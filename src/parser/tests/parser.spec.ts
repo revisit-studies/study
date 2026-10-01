@@ -1,8 +1,14 @@
 import {
   afterEach, describe, expect, test, vi,
 } from 'vitest';
-import { parseStudyConfig } from '../parser';
-import { isDynamicBlock } from '../utils';
+import { readFileSync } from 'node:fs';
+import { ComponentBlock, StudyConfig } from '../types';
+import { parseGlobalConfig, parseStudyConfig } from '../parser';
+import { materializeParticipantConfig } from '../libraryParser';
+import { isDynamicBlock, isFactorBlock } from '../utils';
+import { generateSequenceArray } from '../../utils/handleRandomSequences';
+import { resolveResponseVisibility } from '../../utils/responseVisibility';
+import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 
 global.fetch = vi.fn();
 
@@ -14,6 +20,1087 @@ afterEach(() => {
 function mockFetchText(body: string) {
   return { text: () => Promise.resolve(body) } as Response;
 }
+
+function isComponentBlock(value: unknown): value is ComponentBlock {
+  return typeof value === 'object'
+    && value !== null
+    && 'components' in value
+    && !isDynamicBlock(value as StudyConfig['sequence'])
+    && !isFactorBlock(value as StudyConfig['sequence']);
+}
+
+describe('Global config tabs', () => {
+  function makeGlobalConfig(tabs?: unknown, tab?: unknown) {
+    return {
+      $schema: '',
+      tabs,
+      configs: { demo: { path: 'demo/config.json', tab } },
+      configsList: ['demo'],
+    };
+  }
+
+  function expectConfigError(config: unknown, message: string) {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      expect(() => parseGlobalConfig(JSON.stringify(config))).toThrow(message);
+      expect(consoleError).toHaveBeenCalledWith('Global config parsing errors', expect.any(Array));
+    } finally {
+      consoleError.mockRestore();
+    }
+  }
+
+  test('preserves configured tab labels, descriptions, order, and study assignments', () => {
+    const config = makeGlobalConfig([
+      { label: 'Examples', description: 'Example studies.' },
+      { label: 'Demo Studies', description: '' },
+      { label: 'Tutorials' },
+    ], 'Demo Studies');
+
+    expect(parseGlobalConfig(JSON.stringify(config))).toEqual(config);
+  });
+
+  test.each([undefined, []])('accepts unassigned studies when tabs are %j', (tabs) => {
+    const config = makeGlobalConfig(tabs);
+    expect(parseGlobalConfig(JSON.stringify(config))).toEqual(config);
+  });
+
+  test('accepts unassigned studies alongside configured tabs and an empty study list', () => {
+    const config = { ...makeGlobalConfig([{ label: 'Examples' }]), configsList: [] };
+    expect(parseGlobalConfig(JSON.stringify(config))).toEqual(config);
+  });
+
+  test.each(['__proto__', 'constructor', 'Studies'])('accepts the label %s without reserving names', (label) => {
+    const config = makeGlobalConfig([{ label }], label);
+    expect(parseGlobalConfig(JSON.stringify(config))).toEqual(config);
+  });
+
+  test.each(['Demo Studies', '__proto__'])('rejects duplicate labels: %s', (label) => {
+    expectConfigError(makeGlobalConfig([{ label }, { label }]), `/tabs/1/label: Tab label "${label}" is duplicated`);
+  });
+
+  test.each(['', ' \t\n '])('rejects blank labels: %j', (label) => {
+    expectConfigError(makeGlobalConfig([{ label }]), '/tabs/0/label: Tab label must not be blank');
+  });
+
+  test.each(['Missing', '', 'demo studies'])('rejects undefined tab references: %j', (tab) => {
+    expectConfigError(makeGlobalConfig([{ label: 'Demo Studies' }], tab), `/configs/demo/tab: Config "demo" references undefined tab "${tab}"`);
+  });
+
+  test.each([undefined, []])('rejects a tab assignment when tabs are %j', (tabs) => {
+    expectConfigError(makeGlobalConfig(tabs, 'Studies'), 'references undefined tab "Studies"');
+  });
+
+  test.each([
+    { tabs: null },
+    { tabs: {} },
+    { tabs: [null] },
+    { tabs: [{}] },
+    { tabs: [{ label: 12 }] },
+    { tabs: [{ label: 'Demos', description: true }] },
+    { configs: { demo: { path: 'demo/config.json', tab: [] } } },
+    { configs: null },
+    { configsList: null },
+  ])('reports schema errors without running semantic checks for %j', (invalidFields) => {
+    expectConfigError({ ...makeGlobalConfig(), ...invalidFields }, 'There was an issue validating your file global.json');
+  });
+
+  test('still rejects configsList entries without a corresponding config', () => {
+    expectConfigError({ ...makeGlobalConfig(), configsList: ['missing'] }, '/configsList/0: Config `missing` is not defined in configs object');
+  });
+});
+
+describe('Study and iframe color mode config parsing', () => {
+  function makeStudyConfig(colorMode?: unknown) {
+    return {
+      $schema: '',
+      studyMetadata: {
+        title: 'Color Mode Test',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2026-09-16',
+        description: 'Validates study color mode options.',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: '',
+        logoPath: '',
+        withProgressBar: true,
+        withSidebar: false,
+        colorMode,
+      },
+      components: {
+        question: { type: 'questionnaire', response: [] },
+      },
+      sequence: { order: 'fixed', components: ['question'] },
+    };
+  }
+
+  test.each(['light', 'dark', 'userPreference'] as const)('accepts and preserves %s', async (colorMode) => {
+    const result = await parseStudyConfig(JSON.stringify(makeStudyConfig(colorMode)));
+
+    expect(result.errors).toEqual([]);
+    expect(result.uiConfig.colorMode).toBe(colorMode);
+  });
+
+  test('accepts existing configs without a color mode', async () => {
+    const result = await parseStudyConfig(JSON.stringify(makeStudyConfig()));
+
+    expect(result.errors).toEqual([]);
+    expect(result.uiConfig).not.toHaveProperty('colorMode');
+  });
+
+  test.each(['user', 'auto', 'userPreference ', null, true])('rejects invalid color mode %s', async (colorMode) => {
+    const result = await parseStudyConfig(JSON.stringify(makeStudyConfig(colorMode)));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      instancePath: '/uiConfig/colorMode',
+    }));
+  });
+
+  function makeWebsiteConfig(colorMode?: unknown) {
+    return {
+      ...makeStudyConfig(),
+      components: {
+        website: {
+          type: 'website', path: 'demo-html/assets/bar-chart.html', colorMode, response: [],
+        },
+      },
+      sequence: { order: 'fixed', components: ['website'] },
+    };
+  }
+
+  test.each(['light', 'dark', undefined] as const)('accepts iframe color mode %s', async (colorMode) => {
+    const result = await parseStudyConfig(JSON.stringify(makeWebsiteConfig(colorMode)));
+    expect(result.errors).toEqual([]);
+    expect(result.components.website).toEqual(expect.objectContaining({ type: 'website' }));
+    if (colorMode === undefined) {
+      expect(result.components.website).not.toHaveProperty('colorMode');
+    } else {
+      expect(result.components.website).toHaveProperty('colorMode', colorMode);
+    }
+  });
+
+  test.each(['inherit', 'userPreference', 'auto', null])('rejects invalid iframe color mode %s', async (colorMode) => {
+    const result = await parseStudyConfig(JSON.stringify(makeWebsiteConfig(colorMode)));
+    expect(result.errors).toContainEqual(expect.objectContaining({ instancePath: '/components/website/colorMode' }));
+  });
+});
+
+describe('Text response validation config parsing', () => {
+  function makeStudyConfig(validationType: string) {
+    return {
+      $schema: '',
+      studyMetadata: {
+        title: 'Text Validation Test',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2026-08-20',
+        description: 'Ensures text validation rules are accepted.',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: '',
+        logoPath: '',
+        withProgressBar: true,
+        withSidebar: false,
+      },
+      components: {
+        question1: {
+          type: 'questionnaire',
+          response: [
+            {
+              id: 'short',
+              prompt: 'Short response',
+              type: 'shortText',
+              textValidation: [{ type: validationType, value: 'ReVISit' }],
+            },
+            {
+              id: 'long',
+              prompt: 'Long response',
+              type: 'longText',
+              textValidation: [{ type: validationType, value: 'ReVISit' }],
+            },
+          ],
+        },
+      },
+      sequence: {
+        order: 'fixed',
+        components: ['question1'],
+      },
+    };
+  }
+
+  test.each(['matchesRegex', 'contains', 'doesNotContain', 'equals', 'doesNotEqual'])(
+    'accepts the %s validation type for short and long text responses',
+    async (validationType) => {
+      const result = await parseStudyConfig(JSON.stringify(makeStudyConfig(validationType)));
+
+      expect(result.errors).toEqual([]);
+    },
+  );
+
+  test.each(['', '   ', '14', 'RightKeyboardArrow', 'Shift+14', 'Shift+foo', 'Shift+'])('rejects invalid key mapping %p', async (key) => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Key Validation Test',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2026-08-20',
+        description: 'Ensures key mappings are validated.',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: '',
+        logoPath: '',
+        withProgressBar: true,
+        withSidebar: false,
+      },
+      components: {
+        question1: {
+          type: 'questionnaire',
+          response: [{
+            id: 'buttons',
+            prompt: 'Choose a response',
+            type: 'buttons',
+            options: [{ label: 'A', value: 'a', key }],
+          }],
+        },
+      },
+      sequence: { order: 'fixed', components: ['question1'] },
+    } as const;
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors.some((error) => error.instancePath.includes('/key'))).toBe(true);
+  });
+
+  test.each(['Tab', 'Shift+Tab'])('rejects %s because Tab is needed for focus navigation', async (key) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1, {
+      response: [{
+        id: 'buttons', prompt: 'Choose', type: 'buttons', options: [{ label: 'A', key }],
+      }],
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      instancePath: '/components/question1/response/0/options/0/key',
+      message: expect.stringContaining('Tab cannot be mapped'),
+    }));
+  });
+
+  test('rejects Enter on a button when nextOnEnter is enabled', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1, {
+      nextOnEnter: true,
+      response: [{
+        id: 'buttons', prompt: 'Choose', type: 'buttons', options: [{ label: 'A', key: 'Enter' }],
+      }],
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      instancePath: '/components/question1/response/0/options/0/key',
+      message: expect.stringContaining('nextOnEnter'),
+    }));
+  });
+
+  test('rejects Enter when nextOnEnter is inherited from uiConfig', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.uiConfig, { nextOnEnter: true });
+    Object.assign(studyConfig.components.question1, {
+      response: [{
+        id: 'buttons', prompt: 'Choose', type: 'buttons', options: [{ label: 'A', key: 'Enter' }],
+      }],
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors.some((error) => error.message.includes('Enter cannot be mapped'))).toBe(true);
+  });
+
+  test('allows Enter on a button when nextOnEnter is disabled', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1, {
+      response: [{
+        id: 'buttons', prompt: 'Choose', type: 'buttons', options: [{ label: 'A', key: 'Enter' }],
+      }],
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toEqual([]);
+  });
+
+  test('rejects key mappings on non-button response options', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1, {
+      response: [{
+        id: 'radio', prompt: 'Choose', type: 'radio', options: [{ label: 'A', key: 'a' }],
+      }],
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      instancePath: '/components/question1/response/0/options/0',
+      params: expect.objectContaining({ additionalProperty: 'key' }),
+    }));
+  });
+
+  test.each(['Ctrl+X', 'Meta+X', 'Shift+1'])('warns for unsupported shortcut %s without rejecting the config', async (key) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1, {
+      response: [{
+        id: 'buttons', prompt: 'Choose', type: 'buttons', options: [{ label: 'A', key }],
+      }],
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toEqual([]);
+    expect(result.warnings).toContainEqual(expect.objectContaining({
+      instancePath: '/components/question1/response/0/options/0/key',
+      message: expect.stringContaining('may not work'),
+    }));
+  });
+
+  test('does not warn for a supported named or Shift+letter shortcut', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1, {
+      response: [{
+        id: 'buttons',
+        prompt: 'Choose',
+        type: 'buttons',
+        options: [
+          { label: 'A', key: 'ArrowLeft' }, { label: 'B', key: 'Shift+X' },
+        ],
+      }],
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toEqual([]);
+    expect(result.warnings.filter((warning) => warning.instancePath.includes('/key'))).toEqual([]);
+  });
+
+  test('rejects duplicate key mappings within a component', async () => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Duplicate Key Validation Test',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2026-08-20',
+        description: 'Ensures duplicate key mappings are rejected.',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: '',
+        logoPath: '',
+        withProgressBar: true,
+        withSidebar: false,
+      },
+      components: {
+        question1: {
+          type: 'questionnaire',
+          response: [{
+            id: 'buttons',
+            prompt: 'Choose a response',
+            type: 'buttons',
+            options: [
+              { label: 'A', value: 'a', key: 'Shift+X' },
+              { label: 'B', value: 'b', key: 'shift+x' },
+            ],
+          }],
+        },
+      },
+      sequence: { order: 'fixed', components: ['question1'] },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors.some((error) => error.message.includes('Duplicate key mapping'))).toBe(true);
+  });
+
+  test.each(['email', 'phoneNumber', 'usPhoneNumber', 'url'])('accepts the %s built-in validation for short text responses', async (builtInValidation) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], { builtInValidation });
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toEqual([]);
+  });
+  test.each([
+    {
+      fixedValue: { requiredValue: 'not-an-email' },
+      instancePath: '/components/question1/response/0/requiredValue',
+      label: 'requiredValue',
+    },
+    {
+      fixedValue: { textValidation: [{ type: 'equals', value: 'not-an-email' }] },
+      instancePath: '/components/question1/response/0/textValidation/0/value',
+      label: 'equals',
+    },
+  ])('rejects an invalid built-in validation $label value', async ({
+    fixedValue, instancePath, label,
+  }) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      builtInValidation: 'email',
+      ...fixedValue,
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: `${label} value \`not-an-email\` does not satisfy email built-in validation`,
+      instancePath,
+    }));
+  });
+  test('validates inherited fixed values against built-in validation', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig, {
+      baseComponents: {
+        sharedQuestion: {
+          type: 'questionnaire',
+          response: [{
+            id: 'email',
+            prompt: 'Email',
+            type: 'shortText',
+            builtInValidation: 'email',
+          }],
+        },
+      },
+      components: {
+        inheritedQuestion: {
+          baseComponent: 'sharedQuestion',
+          response: [{
+            id: 'email',
+            prompt: 'Email',
+            type: 'shortText',
+            requiredValue: 'not-an-email',
+          }],
+        },
+      },
+      sequence: {
+        order: 'fixed',
+        components: ['inheritedQuestion'],
+      },
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'requiredValue value `not-an-email` does not satisfy email built-in validation',
+      instancePath: '/components/inheritedQuestion/response/0/requiredValue',
+    }));
+  });
+  test('rejects different requiredValue and equals values with built-in validation', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      builtInValidation: 'email',
+      requiredValue: 'first@example.com',
+      textValidation: [{ type: 'equals', value: 'second@example.com' }],
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'requiredValue value `first@example.com` conflicts with equals value `second@example.com`',
+      instancePath: '/components/question1/response/0/textValidation/0/value',
+    }));
+  });
+  test.each(['currency', 'date', 'time'])('rejects the unsupported %s built-in validation', async (builtInValidation) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], { builtInValidation });
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors.some((error) => error.instancePath.includes('builtInValidation'))).toBe(true);
+  });
+  test('accepts a date response with MM/DD/YYYY default and required values', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type: 'date',
+      default: '08/21/2026',
+      requiredValue: '08/22/2026',
+      min: '08/01/2026',
+      max: '08/31/2026',
+      placeholder: 'MM/DD/YYYY',
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toEqual([]);
+  });
+  test.each([
+    {
+      options: 'month', defaultValue: '06/2009', requiredValue: '07/2009', min: '01/2009', max: '12/2009',
+    },
+    {
+      options: 'year', defaultValue: '2009', requiredValue: '2010', min: '2000', max: '2020',
+    },
+  ])('accepts a date response with $options values', async ({
+    options, defaultValue, requiredValue, min, max,
+  }) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type: 'date', options, default: defaultValue, requiredValue, min, max,
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toEqual([]);
+  });
+  test('accepts a time response with HH:mm default and required values', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type: 'time',
+      default: '14:28',
+      requiredValue: '23:59',
+      min: '08:00',
+      max: '23:59',
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toEqual([]);
+  });
+  test('accepts a time response with HH:mm:ss values when withSeconds is true', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type: 'time',
+      default: '14:28:30',
+      requiredValue: '23:59:59',
+      withSeconds: true,
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toEqual([]);
+  });
+  test.each(['12h', '24h'])('accepts the %s time display format', async (format) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type: 'time',
+      default: '14:28',
+      format,
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toEqual([]);
+  });
+  test('rejects an unsupported time display format', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type: 'time',
+      format: 'military',
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors.some((error) => error.instancePath.includes('/format'))).toBe(true);
+  });
+  test.each([
+    {
+      type: 'date', field: 'default', value: '02/29/2025', format: 'MM/DD/YYYY',
+    },
+    {
+      type: 'date', field: 'requiredValue', value: '2025-02-28', format: 'MM/DD/YYYY',
+    },
+    {
+      type: 'date', field: 'min', value: '2025-02-28', format: 'MM/DD/YYYY',
+    },
+    {
+      type: 'date', field: 'max', value: '02/29/2025', format: 'MM/DD/YYYY',
+    },
+    {
+      type: 'date', field: 'default', value: '06/24/0099', format: 'MM/DD/YYYY',
+    },
+    {
+      type: 'date', field: 'default', value: '13/2025', format: 'MM/YYYY', options: 'month',
+    },
+    {
+      type: 'date', field: 'requiredValue', value: '06/24/2025', format: 'MM/YYYY', options: 'month',
+    },
+    {
+      type: 'date', field: 'default', value: '06/0099', format: 'MM/YYYY', options: 'month',
+    },
+    {
+      type: 'date', field: 'min', value: '0000', format: 'YYYY', options: 'year',
+    },
+    {
+      type: 'date', field: 'max', value: '06/2025', format: 'YYYY', options: 'year',
+    },
+    {
+      type: 'date', field: 'default', value: '0099', format: 'YYYY', options: 'year',
+    },
+    {
+      type: 'time', field: 'default', value: '24:00', format: 'HH:mm',
+    },
+    {
+      type: 'time', field: 'requiredValue', value: '2:30 PM', format: 'HH:mm',
+    },
+    {
+      type: 'time', field: 'default', value: '14:28:30', format: 'HH:mm',
+    },
+    {
+      type: 'time', field: 'requiredValue', value: '14:28', format: 'HH:mm:ss', withSeconds: true,
+    },
+    {
+      type: 'time', field: 'min', value: '2:30', format: 'HH:mm',
+    },
+    {
+      type: 'time', field: 'max', value: '24:00', format: 'HH:mm',
+    },
+  ])('rejects invalid $type $field values', async ({
+    type, field, value, format, withSeconds, options,
+  }) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type,
+      [field]: value,
+      ...(withSeconds === undefined ? {} : { withSeconds }),
+      ...(options === undefined ? {} : { options }),
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: `${type} ${field} must be a valid ${format} value`,
+      instancePath: `/components/question1/response/0/${field}`,
+    }));
+  });
+  test('rejects a date range where min is after max', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type: 'date',
+      min: '08/31/2026',
+      max: '08/01/2026',
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'date min must be less than or equal to max',
+      instancePath: '/components/question1/response/0',
+    }));
+  });
+  test.each([
+    { options: 'month', min: '12/2026', max: '01/2026' },
+    { options: 'year', min: '2026', max: '2009' },
+  ])('rejects a reversed $options date option range', async ({ options, min, max }) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type: 'date', options, min, max,
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'date min must be less than or equal to max',
+      instancePath: '/components/question1/response/0',
+    }));
+  });
+  test.each([
+    { field: 'default', value: '07/31/2026', bound: 'min' },
+    { field: 'requiredValue', value: '09/01/2026', bound: 'max' },
+  ])('rejects a date $field outside $bound', async ({ field, value, bound }) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type: 'date',
+      [field]: value,
+      min: '08/01/2026',
+      max: '08/31/2026',
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: `date ${field} must be on ${bound === 'min' ? 'or after' : 'or before'} ${bound}`,
+      instancePath: `/components/question1/response/0/${field}`,
+    }));
+  });
+  test('rejects a time range where min is after max', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type: 'time',
+      min: '18:00',
+      max: '09:00',
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'time min must be less than or equal to max',
+      instancePath: '/components/question1/response/0',
+    }));
+  });
+  test('rejects a time requiredValue outside the configured range', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type: 'time',
+      requiredValue: '18:01',
+      min: '09:00',
+      max: '18:00',
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'time requiredValue must be at or before max',
+      instancePath: '/components/question1/response/0/requiredValue',
+    }));
+  });
+  test('validates date and time constraints defined in base components', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig, {
+      baseComponents: {
+        sharedQuestion: {
+          type: 'questionnaire',
+          response: [
+            {
+              id: 'base-date', prompt: 'Date', type: 'date', default: '04/31/2025',
+            },
+            {
+              id: 'base-time', prompt: 'Time', type: 'time', requiredValue: '14:60',
+            },
+          ],
+        },
+      },
+    });
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'date default must be a valid MM/DD/YYYY value',
+      instancePath: '/baseComponents/sharedQuestion/response/0/default',
+    }));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'time requiredValue must be a valid HH:mm value',
+      instancePath: '/baseComponents/sharedQuestion/response/1/requiredValue',
+    }));
+  });
+  test.each(['date', 'time'])('rejects a non-string requiredValue for a %s response', async (type) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type,
+      requiredValue: 1234,
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      instancePath: '/components/question1/response/0/requiredValue',
+    }));
+  });
+  test('accepts a country dropdown preset as its options', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type: 'dropdown',
+      options: 'countries',
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+    expect(result.errors).toEqual([]);
+  });
+  test.each([
+    { field: 'default', value: 'XX', valuePath: '/components/question1/response/0/default' },
+    { field: 'requiredValue', value: 'United States', valuePath: '/components/question1/response/0/requiredValue' },
+    { field: 'default', value: ['US', 'XX'], valuePath: '/components/question1/response/0/default/1' },
+  ])('rejects an invalid country preset $field value', async ({ field, value, valuePath }) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      type: 'dropdown',
+      options: 'countries',
+      [field]: value,
+    });
+    Reflect.deleteProperty(studyConfig.components.question1.response[0], 'textValidation');
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: `dropdown ${field} value \`${Array.isArray(value) ? 'XX' : value}\` is not a valid country code`,
+      instancePath: valuePath,
+    }));
+  });
+  test.each([0, 1])('rejects a malformed regular expression for response %s', async (responseIndex) => {
+    const studyConfig = makeStudyConfig('matchesRegex');
+    studyConfig.components.question1.response[responseIndex].textValidation[0].value = '[';
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'matchesRegex value must be a valid regular expression',
+      instancePath: `/components/question1/response/${responseIndex}/textValidation/0/value`,
+    }));
+  });
+
+  test('accepts character and word length constraints for short and long text responses', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    studyConfig.components.question1.response.forEach((response) => {
+      Object.assign(response, {
+        minCharLength: 3, maxCharLength: 100, minWordLength: 2, maxWordLength: 20,
+      });
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toEqual([]);
+  });
+
+  test.each([
+    { name: 'minCharLength', value: -1 },
+    { name: 'minCharLength', value: 1.5 },
+    { name: 'maxCharLength', value: -1 },
+    { name: 'maxCharLength', value: 1.5 },
+    { name: 'minWordLength', value: -1 },
+    { name: 'minWordLength', value: 1.5 },
+    { name: 'maxWordLength', value: -1 },
+    { name: 'maxWordLength', value: 1.5 },
+  ])('rejects invalid $name constraint value $value for short and long text', async ({ name, value }) => {
+    const studyConfig = makeStudyConfig('contains');
+    studyConfig.components.question1.response.forEach((response) => {
+      Object.assign(response, { [name]: value });
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    [0, 1].forEach((responseIndex) => {
+      expect(result.errors).toContainEqual(expect.objectContaining({
+        message: `${name} must be a non-negative integer`,
+        instancePath: `/components/question1/response/${responseIndex}/${name}`,
+      }));
+    });
+  });
+
+  test('accepts zero minimum length constraints', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    studyConfig.components.question1.response.forEach((response) => {
+      Object.assign(response, {
+        minCharLength: 0, maxCharLength: 1, minWordLength: 0, maxWordLength: 1,
+      });
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toEqual([]);
+  });
+
+  test('rejects zero maximum length constraints for required text responses', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    studyConfig.components.question1.response.forEach((response) => {
+      Object.assign(response, { maxCharLength: 0, maxWordLength: 0 });
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    [0, 1].forEach((responseIndex) => {
+      expect(result.errors).toContainEqual(expect.objectContaining({
+        message: 'maxCharLength must be greater than zero for a required text response',
+        instancePath: `/components/question1/response/${responseIndex}/maxCharLength`,
+      }));
+      expect(result.errors).toContainEqual(expect.objectContaining({
+        message: 'maxWordLength must be greater than zero for a required text response',
+        instancePath: `/components/question1/response/${responseIndex}/maxWordLength`,
+      }));
+    });
+  });
+
+  test('accepts zero maximum length constraints for optional text responses', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    studyConfig.components.question1.response.forEach((response) => {
+      Object.assign(response, { required: false, maxCharLength: 0, maxWordLength: 0 });
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toEqual([]);
+  });
+
+  test.each([0, 1])('rejects minCharLength greater than maxCharLength for response %s', async (responseIndex) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[responseIndex], {
+      minCharLength: 10,
+      maxCharLength: 5,
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'minCharLength must be less than or equal to maxCharLength',
+      instancePath: `/components/question1/response/${responseIndex}`,
+    }));
+  });
+
+  test.each([0, 1])('rejects minWordLength greater than maxWordLength for response %s', async (responseIndex) => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[responseIndex], {
+      minWordLength: 10,
+      maxWordLength: 5,
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'minWordLength must be less than or equal to maxWordLength',
+      instancePath: `/components/question1/response/${responseIndex}`,
+    }));
+  });
+
+  test('rejects minWordLength that cannot fit within maxCharLength', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], {
+      minWordLength: 2,
+      maxCharLength: 2,
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'minWordLength of 2 requires at least 3 characters, which exceeds maxCharLength of 2',
+      instancePath: '/components/question1/response/0',
+    }));
+  });
+
+  test.each(['equals', 'contains', 'doesNotContain'])(
+    'rejects an empty %s validation value',
+    async (validationType) => {
+      const studyConfig = makeStudyConfig(validationType);
+      studyConfig.components.question1.response.forEach((response) => {
+        response.textValidation[0].value = '';
+      });
+
+      const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+      [0, 1].forEach((responseIndex) => {
+        expect(result.errors).toContainEqual(expect.objectContaining({
+          message: `${validationType} value must not be empty`,
+          instancePath: `/components/question1/response/${responseIndex}/textValidation/0/value`,
+        }));
+      });
+    },
+  );
+
+  test.each(['matchesRegex', 'doesNotEqual'])(
+    'warns when an empty %s value does not restrict responses',
+    async (validationType) => {
+      const studyConfig = makeStudyConfig(validationType);
+      studyConfig.components.question1.response.forEach((response) => {
+        response.textValidation[0].value = '';
+      });
+
+      const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+      expect(result.errors).toEqual([]);
+      [0, 1].forEach((responseIndex) => {
+        expect(result.warnings).toContainEqual(expect.objectContaining({
+          message: `${validationType} value is empty and does not restrict participant responses`,
+          instancePath: `/components/question1/response/${responseIndex}/textValidation/0/value`,
+        }));
+      });
+    },
+  );
+
+  test('rejects direct contains and doesNotContain contradictions', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    studyConfig.components.question1.response[0].textValidation = [
+      { type: 'contains', value: 'ReVISit' },
+      { type: 'doesNotContain', value: 'ReVISit' },
+    ];
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'contains value `ReVISit` always includes doesNotContain value `ReVISit`',
+      instancePath: '/components/question1/response/0/textValidation/1/value',
+    }));
+  });
+
+  test('rejects equals that conflicts with literal and length constraints', async () => {
+    const studyConfig = makeStudyConfig('equals');
+    Object.assign(studyConfig.components.question1.response[0], {
+      maxCharLength: 6,
+      textValidation: [
+        { type: 'equals', value: 'ReVISit' },
+        { type: 'contains', value: 'study' },
+        { type: 'doesNotEqual', value: 'ReVISit' },
+      ],
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'equals value `ReVISit` conflicts with contains value `study`',
+      instancePath: '/components/question1/response/0/textValidation/1/value',
+    }));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'equals value `ReVISit` conflicts with doesNotEqual value `ReVISit`',
+      instancePath: '/components/question1/response/0/textValidation/2/value',
+    }));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'equals value `ReVISit` has 7 characters, which exceeds maxCharLength of 6',
+      instancePath: '/components/question1/response/0/textValidation/0/value',
+    }));
+  });
+
+  test('rejects the replaced minLength and maxLength properties', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig.components.question1.response[0], { minLength: 3, maxLength: 100 });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors.some((error) => error.instancePath.includes('/components/question1/response/0'))).toBe(true);
+  });
+
+  test('validates text length constraints defined in base components', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig, {
+      baseComponents: {
+        sharedQuestion: {
+          type: 'questionnaire',
+          response: [{
+            id: 'base-text',
+            prompt: 'Base text response',
+            type: 'shortText',
+            minWordLength: -1,
+          }],
+        },
+      },
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'minWordLength must be a non-negative integer',
+      instancePath: '/baseComponents/sharedQuestion/response/0/minWordLength',
+    }));
+  });
+
+  test('rejects unsatisfiable text length constraints after merging inherited components', async () => {
+    const studyConfig = makeStudyConfig('contains');
+    Object.assign(studyConfig, {
+      baseComponents: {
+        sharedQuestion: {
+          type: 'questionnaire',
+          response: [{
+            id: 'inherited-text',
+            prompt: 'Inherited text response',
+            type: 'shortText',
+            minCharLength: 10,
+          }],
+        },
+      },
+      components: {
+        inheritedQuestion: {
+          baseComponent: 'sharedQuestion',
+          response: [{
+            id: 'inherited-text',
+            prompt: 'Inherited text response',
+            type: 'shortText',
+            maxCharLength: 5,
+          }],
+        },
+      },
+      sequence: {
+        order: 'fixed',
+        components: ['inheritedQuestion'],
+      },
+    });
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'minCharLength must be less than or equal to maxCharLength',
+      instancePath: '/components/inheritedQuestion/response/0',
+    }));
+  });
+
+  test('rejects an unsupported text validation type', async () => {
+    const result = await parseStudyConfig(JSON.stringify(makeStudyConfig('startsWith')));
+
+    expect(result.errors.some((error) => error.instancePath.includes('textValidation'))).toBe(true);
+  });
+});
 
 describe('Component auto-advance config parsing', () => {
   test('accepts component-level auto-advance timeout options on a base component', async () => {
@@ -445,8 +1532,9 @@ describe('BaseComponent Macro Expansion', () => {
 
       const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
-      expect(!isDynamicBlock(result.sequence)).toBe(true);
-      if (!isDynamicBlock(result.sequence)) {
+      // Check sequence expansion - the .co. should have been expanded to .components.
+      expect(isComponentBlock(result.sequence)).toBe(true);
+      if (isComponentBlock(result.sequence)) {
         expect(result.sequence.components).toContain('$testLib.components.directComp');
       }
 
@@ -505,12 +1593,12 @@ describe('BaseComponent Macro Expansion', () => {
 
       const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
-      expect(!isDynamicBlock(result.sequence)).toBe(true);
-      if (!isDynamicBlock(result.sequence)) {
+      expect(isComponentBlock(result.sequence)).toBe(true);
+      if (isComponentBlock(result.sequence)) {
         expect(result.sequence.components).toHaveLength(1);
         const inlinedSequence = result.sequence.components[0];
         expect(typeof inlinedSequence).toBe('object');
-        if (typeof inlinedSequence === 'object' && inlinedSequence !== null && !isDynamicBlock(inlinedSequence)) {
+        if (isComponentBlock(inlinedSequence)) {
           expect(inlinedSequence.id).toBe('$testLib.sequences.sequenceFromLibrary');
           expect(inlinedSequence.components).toEqual(['$testLib.components.sequenceComp']);
         }
@@ -566,12 +1654,12 @@ describe('BaseComponent Macro Expansion', () => {
 
       const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
-      expect(!isDynamicBlock(result.sequence)).toBe(true);
-      if (!isDynamicBlock(result.sequence)) {
+      expect(isComponentBlock(result.sequence)).toBe(true);
+      if (isComponentBlock(result.sequence)) {
         expect(result.sequence.components).toHaveLength(1);
         const inlinedSequence = result.sequence.components[0];
         expect(typeof inlinedSequence).toBe('object');
-        if (typeof inlinedSequence === 'object' && inlinedSequence !== null && !isDynamicBlock(inlinedSequence)) {
+        if (isComponentBlock(inlinedSequence)) {
           expect(inlinedSequence.id).toBe('$testLib.sequences.sequenceFromLibrary');
           expect(inlinedSequence.components).toEqual(['$testLib.components.sequenceComp']);
         }
@@ -656,12 +1744,12 @@ describe('BaseComponent Macro Expansion', () => {
 
       const result = await parseStudyConfig(JSON.stringify(studyConfig));
 
-      expect(!isDynamicBlock(result.sequence)).toBe(true);
-      if (!isDynamicBlock(result.sequence)) {
+      expect(isComponentBlock(result.sequence)).toBe(true);
+      if (isComponentBlock(result.sequence)) {
         expect(result.sequence.components[1]).toBe('$testLib.components.target');
         const firstComponent = result.sequence.components[0];
         expect(typeof firstComponent).toBe('object');
-        if (typeof firstComponent === 'object' && firstComponent !== null && !isDynamicBlock(firstComponent)) {
+        if (isComponentBlock(firstComponent)) {
           expect(firstComponent.interruptions?.[0].components).toEqual(['$testLib.components.breakComp']);
           expect(firstComponent.skip?.[0].to).toBe('$testLib.components.target');
         }
@@ -959,6 +2047,77 @@ describe('Parser Warnings', () => {
     expect(conditionalOrderError).toBeUndefined();
   });
 
+  test('validates skip targets for dynamic and runtime factor blocks', async () => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Skip target test',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2026-08-20',
+        description: 'Checks compiled sequence skip targets.',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'test@test.com',
+        logoPath: '',
+        withProgressBar: true,
+        withSidebar: false,
+      },
+      baseComponents: {
+        trial: {
+          type: 'markdown',
+          path: 'trial.md',
+          response: [],
+        },
+      },
+      components: {
+        trial: {
+          type: 'markdown',
+          path: 'trial.md',
+          response: [],
+        },
+      },
+      factors: {
+        ordered: {
+          values: ['A', 'B'],
+          order: 'random',
+        },
+      },
+      sequence: {
+        order: 'fixed',
+        components: [
+          {
+            order: 'fixed',
+            components: ['trial'],
+            skip: [{ name: 'trial', check: 'responses', to: 'dynamicGate' }],
+          },
+          {
+            id: 'dynamicGate',
+            order: 'dynamic',
+            functionPath: 'dynamic-function.js',
+          },
+          {
+            order: 'fixed',
+            components: ['trial'],
+            skip: [{ name: 'trial', check: 'responses', to: 'factorGate' }],
+          },
+          {
+            type: 'factor',
+            id: 'factorGate',
+            factor: 'ordered',
+            components: 'trial',
+          },
+        ],
+      },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors.filter((error) => error.category === 'skip-validation')).toEqual([]);
+    expect(result.warnings.filter((warning) => warning.category === 'unused-component')).toEqual([]);
+  });
+
   test('adds sequence-validation warning for empty components block', async () => {
     const studyConfig = {
       $schema: '',
@@ -1000,6 +2159,7 @@ describe('Parser Warnings', () => {
     expect(emptySequenceWarning).toBeDefined();
     expect(emptySequenceWarning?.instancePath).toBe('/sequence/');
     expect((emptySequenceWarning?.params as { action: string }).action).toBe('Remove empty components block or add components to the sequence');
+    expect(result.warnings.filter((warning) => warning.category === 'empty-sidebar')).toHaveLength(1);
   });
 
   test('adds unused-component warning with expected message and action', async () => {
@@ -1088,6 +2248,98 @@ describe('Parser Warnings', () => {
       (warning) => warning.category === 'unused-component' && warning.message.includes('unusedComponent'),
     );
     expect(hasUnusedWarning).toBe(true);
+  });
+
+  test('warns when an enabled sidebar has no content', async () => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study', version: '1.0', authors: ['Test'], date: '2024-01-01', description: 'Test', organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'test@test.com', logoPath: '', withProgressBar: true, withSidebar: true,
+      },
+      components: {
+        question: {
+          type: 'questionnaire',
+          instruction: 'Answer the question',
+          instructionLocation: 'aboveStimulus',
+          response: [{ id: 'answer', type: 'shortText', prompt: 'Answer' }],
+        },
+      },
+      sequence: { order: 'fixed', components: ['question'] },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toEqual([]);
+    expect(result.warnings).toContainEqual(expect.objectContaining({
+      category: 'empty-sidebar', instancePath: '/uiConfig/withSidebar',
+    }));
+  });
+
+  test.each([
+    ['instruction with default location', { instruction: 'Answer the question', response: [] }],
+    ['instruction with explicit location', { instruction: 'Answer the question', instructionLocation: 'sidebar', response: [] }],
+    ['response', {
+      response: [{
+        id: 'answer', type: 'shortText', prompt: 'Answer', location: 'sidebar',
+      }],
+    }],
+    ['navigation', { nextButtonLocation: 'sidebar', response: [] }],
+  ])('does not warn when an inherited component puts %s in the sidebar', async (_, sidebarContent) => {
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study', version: '1.0', authors: ['Test'], date: '2024-01-01', description: 'Test', organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'test@test.com', logoPath: '', withProgressBar: true, withSidebar: true,
+      },
+      baseComponents: {
+        question: { type: 'questionnaire', ...sidebarContent },
+      },
+      components: { question: { baseComponent: 'question' } },
+      sequence: { order: 'fixed', components: ['question'] },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toEqual([]);
+    expect(result.warnings.filter((warning) => warning.category === 'empty-sidebar')).toEqual([]);
+  });
+
+  test('does not warn when an imported library supplies sidebar content', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify({
+      $schema: '',
+      description: 'Test library',
+      components: {
+        question: {
+          type: 'questionnaire',
+          response: [{
+            id: 'answer', type: 'shortText', prompt: 'Answer', location: 'sidebar',
+          }],
+        },
+      },
+      sequences: {},
+    })));
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study', version: '1.0', authors: ['Test'], date: '2024-01-01', description: 'Test', organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'test@test.com', logoPath: '', withProgressBar: true, withSidebar: true,
+      },
+      importedLibraries: ['testLib'],
+      components: {},
+      sequence: { order: 'fixed', components: ['$testLib.components.question'] },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).toEqual([]);
+    expect(result.warnings.filter((warning) => warning.category === 'empty-sidebar')).toEqual([]);
   });
 
   test('adds disabled-sidebar warning when sidebar location is used but sidebar is disabled', async () => {
@@ -1644,5 +2896,458 @@ describe('Parser Warnings', () => {
     const result = await parseStudyConfig(JSON.stringify(buildContactEmailStudyConfig('researcher@university.edu')));
 
     expect(result.warnings.some((warning) => warning.category === 'default-supabase-config')).toBe(false);
+  });
+
+  test('keeps Zach\'s factor demo valid', async () => {
+    const config = readFileSync('public/demo-factors/config.json', 'utf8');
+    const result = await parseStudyConfig(config);
+
+    expect(result.errors).toEqual([]);
+  });
+
+  test('parses the factorized correlation study', async () => {
+    const config = readFileSync('public/incentives-corr/config.json', 'utf8');
+    const result = await parseStudyConfig(config);
+    const generatedComponents = Object.values(result.components);
+
+    expect(result.errors).toEqual([]);
+    expect(generatedComponents.filter((component) => (
+      'parameters' in component && component.parameters?.taskid === 'test'
+    ))).toHaveLength(65);
+    expect(generatedComponents.filter((component) => (
+      'parameters' in component && component.parameters?.r1Training !== undefined
+    ))).toHaveLength(9);
+    expect(generatedComponents.filter((component) => (
+      'parameters' in component
+      && component.parameters?.r1Training !== undefined
+    )).map((component) => (
+      'parameters' in component
+        ? [component.parameters?.r1Training, component.parameters?.r2Training]
+        : []
+    ))).toEqual(expect.arrayContaining([
+      [0.3, 0.7],
+      [0.9, 0.6],
+      [0.6, 0.3],
+      [0.6, 0.9],
+      [0.3, 0.1],
+      [0.5, 0.3],
+      [0.9, 0.8],
+      [0.6, 0.7],
+      [0.99, 0.9],
+    ]));
+
+    const sequences = generateSequenceArray({
+      ...result,
+      uiConfig: { ...result.uiConfig, numSequences: 4 },
+    });
+    expect(sequences.map((sequence) => sequence.parameters)).toEqual([
+      { incentive: 'base', vis: 'pcp' },
+      { incentive: 'base', vis: 'scatter' },
+      { incentive: 'inc', vis: 'pcp' },
+      { incentive: 'inc', vis: 'scatter' },
+    ]);
+    sequences.forEach((sequence) => {
+      const componentNames = getSequenceFlatMap(sequence);
+      const sequenceComponents = componentNames.map((name) => result.components[name]).filter(Boolean);
+      const incentive = sequence.parameters?.incentive;
+      const vis = sequence.parameters?.vis;
+      const runtimeConfig = materializeParticipantConfig(result, sequence.parameters || {});
+      expect(componentNames).toContain('introduction');
+      expect(componentNames).toContain('task-details');
+      expect(runtimeConfig.components.introduction).toMatchObject({
+        path: `incentives-corr/assets/00-intro-${incentive}.md`,
+      });
+      expect(runtimeConfig.components['task-details']).toMatchObject({
+        path: `incentives-corr/assets/04-instructions-${incentive}.md`,
+      });
+      expect(runtimeConfig.components.tutorial).toMatchObject({
+        path: `incentives-corr/assets/02-tutorial-${vis}.md`,
+      });
+      expect(sequenceComponents.filter((component) => (
+        'parameters' in component && component.parameters?.taskid === 'test'
+      ))).toHaveLength(65);
+      expect(sequenceComponents.filter((component) => (
+        'parameters' in component && component.parameters?.taskid === 'attention'
+      ))).toHaveLength(5);
+      expect(sequenceComponents.filter((component) => (
+        'parameters' in component && component.parameters?.r1Training !== undefined
+      ))).toHaveLength(9);
+    });
+  });
+});
+
+describe('React component path validation', () => {
+  function makeReactComponentStudyConfig(path: string) {
+    return {
+      $schema: '',
+      studyMetadata: {
+        title: 'React Path Test',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2026-08-22',
+        description: 'Ensures react-component path validation behaves as expected.',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: '',
+        logoPath: '',
+        withProgressBar: true,
+        withSidebar: false,
+      },
+      components: {
+        trial: {
+          type: 'react-component',
+          path,
+          response: [],
+        },
+      },
+      sequence: {
+        order: 'fixed',
+        components: ['trial'],
+      },
+    };
+  }
+
+  test('accepts a real path under src/public', async () => {
+    const result = await parseStudyConfig(JSON.stringify(
+      makeReactComponentStudyConfig('demo-react-trrack/assets/DemoReactTrrack.tsx'),
+    ));
+
+    expect(result.errors).not.toContainEqual(expect.objectContaining({ message: 'Unresolved path' }));
+  });
+
+  test('rejects a path that does not resolve to a real file', async () => {
+    const result = await parseStudyConfig(JSON.stringify(
+      makeReactComponentStudyConfig('demo-react-trrack/assets/DoesNotExist.tsx'),
+    ));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'Unresolved path',
+      instancePath: '/components/trial/path',
+    }));
+  });
+
+  test('does not flag a Handlebars-templated path, since it can only resolve at runtime', async () => {
+    const result = await parseStudyConfig(JSON.stringify(
+      makeReactComponentStudyConfig('demo-react-trrack/assets/{{file}}.tsx'),
+    ));
+
+    expect(result.errors).not.toContainEqual(expect.objectContaining({ message: 'Unresolved path' }));
+  });
+
+  test('rejects a path with malformed Handlebars syntax instead of treating it as templated', async () => {
+    const result = await parseStudyConfig(JSON.stringify(
+      makeReactComponentStudyConfig('demo-react-trrack/assets/{{file.tsx'),
+    ));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'Unresolved path',
+      instancePath: '/components/trial/path',
+    }));
+  });
+
+  test.each([
+    'demo-react-trrack/assets/{{#if file}}thing.tsx',
+    'demo-react-trrack/assets/{{else}}.tsx',
+    'demo-react-trrack/assets/{{! comment}}missing.tsx',
+    'demo-react-trrack/assets/{{"literal"}}.tsx',
+    'demo-react-trrack/assets/{{> missingPartial}}.tsx',
+  ])('rejects a path with no valid runtime expression: %s', async (path) => {
+    const result = await parseStudyConfig(JSON.stringify(makeReactComponentStudyConfig(path)));
+
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'Unresolved path',
+      instancePath: '/components/trial/path',
+    }));
+  });
+});
+
+describe('conditional response config', () => {
+  function configWithCondition(condition: object, controller: object = { type: 'radio', options: ['yes', 'no'] }) {
+    return {
+      $schema: '',
+      studyMetadata: {
+        title: 'Visibility', version: '1', authors: [], date: '', description: '', organizations: [],
+      },
+      uiConfig: {
+        contactEmail: '', logoPath: '', withSidebar: false, withProgressBar: true,
+      },
+      components: {
+        form: {
+          type: 'questionnaire',
+          response: [
+            {
+              id: 'attended', prompt: '', ...controller,
+            },
+            {
+              id: 'name', type: 'shortText', prompt: '', visibleIf: condition,
+            },
+            {
+              id: 'text', type: 'textOnly', prompt: '', visibleIf: condition,
+            },
+            { id: 'divider', type: 'divider', visibleIf: condition },
+          ],
+        },
+      },
+      sequence: { order: 'fixed', components: ['form'] },
+    };
+  }
+
+  describe.each([
+    { option: 'withOther', suffix: 'other' },
+    { option: 'withDontKnow', suffix: 'dontKnow' },
+  ])('auxiliary key collisions for $option', ({ option, suffix }) => {
+    test.each(['local', 'base', 'library'])('rejects a conflicting response ID in a %s component', async (source) => {
+      const config = configWithCondition({ responseId: 'attended', comparison: 'equals', value: 'yes' });
+      const form = {
+        ...config.components.form,
+        response: [
+          config.components.form.response[0],
+          {
+            id: 'q',
+            type: 'radio',
+            prompt: '',
+            options: ['yes', 'no'],
+            [option]: true,
+            visibleIf: { responseId: 'attended', comparison: 'equals', value: 'yes' },
+          },
+          { id: `q-${suffix}`, type: 'shortText', prompt: '' },
+        ],
+      };
+      if (source === 'library') {
+        vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify({
+          $schema: '', description: 'Auxiliary key test', components: { form }, sequences: {},
+        })));
+      }
+      const result = await parseStudyConfig(JSON.stringify({
+        ...config,
+        baseComponents: source === 'base' ? { base: form } : undefined,
+        importedLibraries: source === 'library' ? ['conditional'] : [],
+        components: { form: source === 'local' ? form : { baseComponent: source === 'base' ? 'base' : '$conditional.components.form' } },
+      }));
+      expect(result.errors).toContainEqual(expect.objectContaining({
+        message: `Response ID "q-${suffix}" conflicts with an auxiliary answer key for response "q"`,
+        instancePath: '/components/form/response/2/id',
+      }));
+    });
+
+    test('allows a suffixed response ID when the auxiliary option is disabled', async () => {
+      const config = configWithCondition({ responseId: 'attended', comparison: 'equals', value: 'yes' }, {
+        type: 'radio', options: ['yes', 'no'], [option]: false,
+      });
+      config.components.form.response[1].id = `attended-${suffix}`;
+      const result = await parseStudyConfig(JSON.stringify(config));
+      expect(result.errors).toEqual([]);
+    });
+  });
+
+  test.each(['matrix-radio', 'matrix-checkbox'])('allows a separate -dontKnow response ID beside %s', async (type) => {
+    const config = configWithCondition({ responseId: 'attended', comparison: 'equals', value: 'yes' });
+    const result = await parseStudyConfig(JSON.stringify({
+      ...config,
+      components: {
+        form: {
+          type: 'questionnaire',
+          response: [
+            {
+              id: 'matrix', type, prompt: '', withDontKnow: true, questionOptions: ['Question'], answerOptions: ['Answer'],
+            },
+            { id: 'matrix-dontKnow', type: 'shortText', prompt: '' },
+          ],
+        },
+      },
+    }));
+    expect(result.errors).toEqual([]);
+  });
+
+  test.each([{ comparison: 'equals', value: 'yes' }, { comparison: 'doesNotEqual', value: 'no' }])('accepts visibility on input, textOnly and divider: %j', async (operator) => {
+    const result = await parseStudyConfig(JSON.stringify(configWithCondition({ responseId: 'attended', ...operator })));
+    expect(result.errors).toEqual([]);
+  });
+
+  test.each([
+    { responseId: 'attended' },
+    {
+      responseId: 'attended', comparison: 'equals', value: 'yes', notEquals: 'no',
+    },
+    { responseId: 'attended', comparison: 'equals', value: null },
+    { responseId: 'missing', comparison: 'equals', value: 'yes' },
+    { responseId: 'name', comparison: 'equals', value: 'yes' },
+    { responseId: 'divider', comparison: 'equals', value: 'yes' },
+  ])('rejects invalid condition %j', async (condition) => {
+    const result = await parseStudyConfig(JSON.stringify(configWithCondition(condition)));
+    expect(result.errors.length).toBeGreaterThan(0);
+  });
+
+  describe.each(['equals', 'doesNotEqual'])('%s operand types', (comparison) => {
+    test.each([
+      { controller: { type: 'checkbox', options: ['yes'] }, valid: ['yes'], invalid: 'yes' },
+      { controller: { type: 'dropdown', options: ['yes'], minSelections: 1 }, valid: ['yes'], invalid: 'yes' },
+      { controller: { type: 'dropdown', options: ['yes'], maxSelections: 2 }, valid: ['yes'], invalid: 'yes' },
+      { controller: { type: 'dropdown', options: ['yes'], maxSelections: 1 }, valid: 'yes', invalid: ['yes'] },
+      { controller: { type: 'radio', options: ['yes'] }, valid: 'yes', invalid: ['yes'] },
+      { controller: { type: 'buttons', options: ['yes'] }, valid: 'yes', invalid: true },
+      { controller: { type: 'shortText' }, valid: '21', invalid: 21 },
+      { controller: { type: 'date' }, valid: '2020-01-01', invalid: ['2020-01-01'] },
+      { controller: { type: 'numerical' }, valid: 21, invalid: '21' },
+    ])('matches the runtime answer shape of $controller', async ({ controller, valid, invalid }) => {
+      const config = configWithCondition({ responseId: 'attended', comparison, value: valid }, controller);
+      expect((await parseStudyConfig(JSON.stringify(config))).errors).toEqual([]);
+      const invalidConfig = configWithCondition({ responseId: 'attended', comparison, value: invalid }, controller);
+      const result = await parseStudyConfig(JSON.stringify(invalidConfig));
+      expect(result.errors).toContainEqual(expect.objectContaining({
+        message: expect.stringContaining(`visibleIf ${comparison} requires a `),
+        instancePath: '/components/form/response/1/visibleIf',
+      }));
+    });
+  });
+
+  test.each(['lessThan', 'lessThanOrEqual', 'greaterThan', 'greaterThanOrEqual'])('%s accepts numerical controllers and rejects text controllers', async (comparison) => {
+    const condition = { responseId: 'attended', comparison, value: 21 };
+    const valid = await parseStudyConfig(JSON.stringify(configWithCondition(condition, { type: 'numerical' })));
+    expect(valid.errors).toEqual([]);
+    const invalid = await parseStudyConfig(JSON.stringify(configWithCondition(condition, { type: 'shortText' })));
+    expect(invalid.errors).toContainEqual(expect.objectContaining({
+      message: `visibleIf ${comparison} requires a numerical controller`,
+      instancePath: '/components/form/response/1/visibleIf',
+    }));
+  });
+
+  test.each([
+    { type: 'shortText' },
+    { type: 'date' },
+    { type: 'radio', options: ['yes', 'no'] },
+    { type: 'buttons', options: ['yes', 'no'] },
+    { type: 'dropdown', options: ['yes', 'no'] },
+  ])('accepts string comparisons on %j', async (controller) => {
+    const config = configWithCondition({ responseId: 'attended', comparison: 'matchesRegex', value: '^(yes|no)$' }, controller);
+    const result = await parseStudyConfig(JSON.stringify(config));
+    expect(result.errors).toEqual([]);
+  });
+
+  test.each([
+    ['contains', { type: 'numerical' }],
+    ['doesNotContain', { type: 'checkbox', options: ['yes', 'no'] }],
+    ['matchesRegex', { type: 'dropdown', options: ['yes', 'no'], maxSelections: 2 }],
+    ['contains', { type: 'dropdown', options: ['yes', 'no'], minSelections: 1 }],
+  ])('rejects %s on a non-string controller %j', async (comparison, controller) => {
+    const config = configWithCondition({ responseId: 'attended', comparison, value: 'yes' }, controller);
+    const result = await parseStudyConfig(JSON.stringify(config));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: `visibleIf ${comparison} requires a controller with a single string value`,
+    }));
+  });
+
+  test('rejects an invalid visibility regex', async () => {
+    const config = configWithCondition({ responseId: 'attended', comparison: 'matchesRegex', value: '[' });
+    const result = await parseStudyConfig(JSON.stringify(config));
+    expect(result.errors).toContainEqual(expect.objectContaining({
+      message: 'visibleIf matchesRegex value must be a valid regular expression',
+      instancePath: '/components/form/response/1/visibleIf',
+      params: { action: 'Fix the regular expression pattern' },
+    }));
+  });
+
+  test.each([true, false])('isCorrect=%s requires a matching correctAnswer', async (value) => {
+    const config = configWithCondition({ responseId: 'attended', comparison: 'isCorrect', value });
+    const valid = await parseStudyConfig(JSON.stringify({
+      ...config,
+      components: { form: { ...config.components.form, correctAnswer: [{ id: 'attended', answer: 'yes' }] } },
+    }));
+    expect(valid.errors).toEqual([]);
+    const missing = await parseStudyConfig(JSON.stringify(config));
+    expect(missing.errors).toContainEqual(expect.objectContaining({
+      message: 'visibleIf isCorrect requires a correctAnswer for response "attended"',
+    }));
+    const wrongId = await parseStudyConfig(JSON.stringify({
+      ...config,
+      components: { form: { ...config.components.form, correctAnswer: [{ id: 'name', answer: 'yes' }] } },
+    }));
+    expect(wrongId.errors).toContainEqual(expect.objectContaining({
+      message: 'visibleIf isCorrect requires a correctAnswer for response "attended"',
+    }));
+  });
+
+  test.each(['local', 'library'])('isCorrect accepts a correctAnswer inherited from a %s base', async (source) => {
+    const config = configWithCondition({ responseId: 'attended', comparison: 'isCorrect', value: true });
+    const base = { ...config.components.form, correctAnswer: [{ id: 'attended', answer: 'yes' }] };
+    if (source === 'library') {
+      vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify({
+        $schema: '', description: 'Correctness conditions', components: { form: base }, sequences: {},
+      })));
+    }
+    const result = await parseStudyConfig(JSON.stringify({
+      ...config,
+      baseComponents: source === 'local' ? { base } : undefined,
+      importedLibraries: source === 'library' ? ['conditional'] : [],
+      components: { form: { baseComponent: source === 'local' ? 'base' : '$conditional.components.form' } },
+    }));
+    expect(result.errors).toEqual([]);
+  });
+
+  test('rejects cyclic dependencies', async () => {
+    const config = configWithCondition({ responseId: 'attended', comparison: 'equals', value: 'yes' });
+    Object.assign(config.components.form.response[0], { visibleIf: { responseId: 'name', comparison: 'equals', value: 'university' } });
+    const result = await parseStudyConfig(JSON.stringify(config));
+    expect(result.errors.some((error) => error.message.includes('cyclic'))).toBe(true);
+  });
+
+  test('validates inherited responses using the same merged config as runtime', async () => {
+    const config = configWithCondition({ responseId: 'attended', comparison: 'equals', value: 'yes' });
+    const result = await parseStudyConfig(JSON.stringify({
+      ...config,
+      baseComponents: { base: config.components.form },
+      components: { form: { baseComponent: 'base' } },
+    }));
+    expect(result.errors).toEqual([]);
+  });
+
+  test.each(['local', 'library-internal', 'library-external'])('replaces inherited visibility operators through %s inheritance and materialization', async (source) => {
+    const config = configWithCondition({ responseId: 'attended', comparison: 'equals', value: 'yes' });
+    const replacement = { responseId: 'attended', comparison: 'doesNotEqual', value: 'yes' };
+    const override = configWithCondition(replacement).components.form.response;
+    const library = {
+      $schema: '',
+      description: 'Conditional inheritance test',
+      baseComponents: { base: config.components.form },
+      components: source === 'library-internal'
+        ? { form: { baseComponent: 'base', response: override } }
+        : { form: config.components.form },
+      sequences: {},
+    };
+    if (source !== 'local') vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify(library)));
+    const result = await parseStudyConfig(JSON.stringify({
+      ...config,
+      baseComponents: source === 'local' ? { base: config.components.form } : undefined,
+      importedLibraries: source === 'local' ? [] : ['conditional'],
+      components: {
+        form: {
+          baseComponent: source === 'local' ? 'base' : '$conditional.components.form',
+          ...(source === 'library-internal' ? {} : { response: override }),
+        },
+      },
+    }));
+    expect(result.errors).toEqual([]);
+    const materialized = materializeParticipantConfig(result, {});
+    const responses = materialized.components.form.response ?? [];
+    expect(responses[1].visibleIf).toEqual(replacement);
+    expect(resolveResponseVisibility(responses, { attended: 'no' }).visibleIds.has('name')).toBe(true);
+    expect(resolveResponseVisibility(responses, { attended: 'yes' }).visibleIds.has('name')).toBe(false);
+  });
+
+  test('accepts conditional responses from imported libraries', async () => {
+    const config = configWithCondition({ responseId: 'attended', comparison: 'equals', value: 'yes' });
+    vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify({
+      $schema: '',
+      description: 'Conditional response library',
+      components: { form: config.components.form },
+      sequences: {},
+    })));
+    const result = await parseStudyConfig(JSON.stringify({
+      ...config,
+      importedLibraries: ['conditional'],
+      components: { form: { baseComponent: '$conditional.components.form' } },
+    }));
+    expect(result.errors).toEqual([]);
   });
 });

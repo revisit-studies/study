@@ -1,6 +1,7 @@
 import { fixupConfigRules, fixupPluginRules } from '@eslint/compat';
 import typescriptEslint from '@typescript-eslint/eslint-plugin';
 import react from 'eslint-plugin-react';
+import reactHooks from 'eslint-plugin-react-hooks';
 import globals from 'globals';
 import tsParser from '@typescript-eslint/parser';
 import path from 'node:path';
@@ -25,11 +26,11 @@ export default [{
   'eslint:recommended',
   'plugin:import/typescript',
   'plugin:@typescript-eslint/recommended',
-  'plugin:react-hooks/recommended',
 )), {
   plugins: {
     '@typescript-eslint': fixupPluginRules(typescriptEslint),
     react: fixupPluginRules(react),
+    'react-hooks': fixupPluginRules(reactHooks),
   },
 
   languageOptions: {
@@ -73,6 +74,8 @@ export default [{
     }],
 
     'react/no-array-index-key': 'off',
+    'react-hooks/rules-of-hooks': 'error',
+    'react-hooks/exhaustive-deps': 'warn',
     'jsx-a11y/click-events-have-key-events': 'off',
     'no-return-await': 'off',
 

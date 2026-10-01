@@ -2,15 +2,17 @@ import {
   Box,
   Code,
   Collapse, Divider, Flex, Paper, ScrollArea, SimpleGrid, Text, Title,
+  useComputedColorScheme, useMantineTheme,
 } from '@mantine/core';
 import { useDisclosure, useResizeObserver } from '@mantine/hooks';
 import {
-  IconAdjustmentsHorizontal, IconBubbleText, IconChartGridDots, IconChevronDown, IconCodePlus, IconCopyCheck, IconDots, IconGridDots, IconHtml, IconLetterCase, IconDragDrop, IconNumber123, IconRadio, IconSelect, IconSquares,
+  IconAdjustmentsHorizontal, IconBubbleText, IconCalendar, IconChartGridDots, IconChevronDown, IconClock, IconCodePlus, IconCopyCheck, IconDots, IconGridDots, IconHtml, IconLetterCase, IconDragDrop, IconNumber123, IconRadio, IconSelect, IconSquares,
 } from '@tabler/icons-react';
 import { useMemo } from 'react';
 import { VegaLite, VisualizationSpec } from 'react-vega';
 import { IndividualComponent, ParticipantData, Response } from '../../../parser/types';
 import { responseAnswerIsCorrect } from '../../../utils/correctAnswer';
+import { parseDateValue } from '../../../utils/dateTimeValidation';
 
 export function ResponseVisualization({
   response, participantData, trialId, trialConfig,
@@ -22,6 +24,23 @@ export function ResponseVisualization({
 }) {
   const [opened, { toggle }] = useDisclosure(true);
   const [ref, dms] = useResizeObserver();
+  const theme = useMantineTheme();
+  const colorScheme = useComputedColorScheme('light');
+  const chartConfig = useMemo(() => {
+    const textColor = colorScheme === 'dark' ? theme.colors.dark[0] : theme.black;
+    const borderColor = colorScheme === 'dark' ? theme.colors.dark[4] : theme.colors.gray[4];
+    const labelColors = { labelColor: textColor, titleColor: textColor };
+    return {
+      background: colorScheme === 'dark' ? theme.colors.dark[7] : theme.white,
+      axis: {
+        ...labelColors, domainColor: borderColor, tickColor: borderColor, gridColor: borderColor,
+      },
+      legend: labelColors,
+      header: labelColors,
+      title: { color: textColor },
+      view: { stroke: borderColor },
+    };
+  }, [colorScheme, theme]);
 
   const correctAnswer = useMemo(() => {
     if (response.type === 'metadata') {
@@ -55,14 +74,24 @@ export function ResponseVisualization({
 
       return answerData;
     })).flat();
-    return data;
+
+    return data.filter((row) => row[response.id] !== undefined && row[response.id] !== null && row[response.id] !== '');
   }, [participantData, response.type, trialId, correctAnswer, response.id]);
+
+  // Completion times for the metadata timing histogram
+  const timingData = useMemo(() => (response.type === 'metadata'
+    ? participantData
+      .map((p) => Object.entries(p.answers).filter(([key]) => key.slice(0, key.lastIndexOf('_')) === trialId))
+      .map((p) => p.filter(([_, value]) => value.endTime !== -1).map(([_, value]) => (value.endTime - value.startTime) / 1000))
+      .flat()
+    : []), [participantData, response.type, trialId]);
 
   // eslint-disable-next-line consistent-return
   const vegaLiteSpec = useMemo(() => {
     const baseSpec = {
       height: 'container',
       width: 'container',
+      config: chartConfig,
     };
 
     if (response.type === 'shortText' || response.type === 'longText') {
@@ -71,11 +100,6 @@ export function ResponseVisualization({
 
     // Timing visualization for metadata block
     if (response.type === 'metadata') {
-      const timingData = participantData
-        .map((p) => Object.entries(p.answers).filter(([key]) => key.slice(0, key.lastIndexOf('_')) === trialId))
-        .map((p) => p.filter(([_, value]) => value.endTime !== -1).map(([_, value]) => (value.endTime - value.startTime) / 1000))
-        .flat();
-
       // Histogram of completion times
       const spec = {
         ...baseSpec,
@@ -196,7 +220,19 @@ export function ResponseVisualization({
     }
 
     // Categorical visualization
-    if (response.type === 'radio' || response.type === 'dropdown' || response.type === 'checkbox' || response.type === 'buttons' || response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') {
+    if (response.type === 'date' || response.type === 'time' || response.type === 'radio' || response.type === 'dropdown' || response.type === 'checkbox' || response.type === 'buttons' || response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') {
+      const dateSort = response.type === 'date'
+        ? Array.from(new Set(questionData
+          .map((row) => row[response.id])
+          .filter((value): value is string => typeof value === 'string')))
+          .sort((first, second) => {
+            const firstDate = parseDateValue(first, response.options);
+            const secondDate = parseDateValue(second, response.options);
+            return firstDate && secondDate
+              ? firstDate.getTime() - secondDate.getTime()
+              : first.localeCompare(second);
+          })
+        : undefined;
       const spec = {
         ...baseSpec,
         data: { values: questionData },
@@ -204,15 +240,17 @@ export function ResponseVisualization({
         params: correctAnswer !== undefined ? correctAnswerSpec.params : undefined,
         transform: Array.isArray(correctAnswer?.answer) ? undefined : (correctAnswer !== undefined ? correctAnswerSpec.transform : undefined),
         encoding: {
-          x: { field: response.id, type: 'ordinal', title: 'Answer' },
+          x: {
+            field: response.id, type: 'ordinal', title: 'Answer', sort: dateSort,
+          },
           y: { aggregate: 'count', type: 'quantitative', title: 'Count' },
           color: correctAnswer !== undefined ? correctAnswerSpec.color : undefined,
         },
       };
       return spec;
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps, @typescript-eslint/no-explicit-any
-  }, [participantData, questionData, response.id, (response as any).max, (response as any).min, (response as any).numItems, (response as any).options, response.type, trialId, correctAnswer]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps, @typescript-eslint/no-explicit-any
+  }, [chartConfig, participantData, questionData, timingData, response.id, (response as any).max, (response as any).min, (response as any).numItems, (response as any).options, response.type, trialId, correctAnswer]);
 
   return (
     <Paper p="lg" withBorder ref={ref}>
@@ -220,6 +258,8 @@ export function ResponseVisualization({
         <Flex align="center">
           {response.type === 'metadata' && <IconCodePlus size={20} />}
           {response.type === 'numerical' && <IconNumber123 size={20} />}
+          {response.type === 'date' && <IconCalendar size={20} />}
+          {response.type === 'time' && <IconClock size={20} />}
           {(response.type === 'shortText' || response.type === 'longText') && <IconBubbleText size={20} />}
           {response.type === 'likert' && <IconDots size={20} />}
           {response.type === 'dropdown' && <IconSelect size={20} />}
@@ -241,10 +281,10 @@ export function ResponseVisualization({
         <IconChevronDown style={{ rotate: opened ? '180deg' : 'none', transition: 'rotate 200ms' }} />
       </Flex>
 
-      <Collapse in={opened} mah={400}>
+      <Collapse expanded={opened} mah={400}>
         <Box
           style={{
-            position: 'sticky', backgroundColor: 'white', zIndex: 2,
+            position: 'sticky', backgroundColor: 'var(--mantine-color-body)', zIndex: 2,
           }}
           py="md"
         >
@@ -253,7 +293,9 @@ export function ResponseVisualization({
 
         <SimpleGrid cols={2} h={360}>
           <ScrollArea mih={200}>
-            {(response.type !== 'metadata' && response.type !== 'shortText' && response.type !== 'longText' && response.type !== 'reactive' && response.type !== 'custom' && response.type !== 'textOnly' && response.type !== 'ranking-sublist' && response.type !== 'ranking-categorical' && response.type !== 'ranking-pairwise') ? (
+            {(response.type !== 'metadata' && response.type !== 'shortText' && response.type !== 'longText' && response.type !== 'reactive' && response.type !== 'custom' && response.type !== 'textOnly' && response.type !== 'ranking-sublist' && response.type !== 'ranking-categorical' && response.type !== 'ranking-pairwise') && questionData.length === 0 ? (
+              <Text>No responses for this task yet.</Text>
+            ) : (response.type !== 'metadata' && response.type !== 'shortText' && response.type !== 'longText' && response.type !== 'reactive' && response.type !== 'custom' && response.type !== 'textOnly' && response.type !== 'ranking-sublist' && response.type !== 'ranking-categorical' && response.type !== 'ranking-pairwise') ? (
               <VegaLite
                 spec={vegaLiteSpec as VisualizationSpec}
                 actions={false}
@@ -286,34 +328,36 @@ export function ResponseVisualization({
           </ScrollArea>
 
           <ScrollArea mih={200}>
-            {response.type === 'metadata'
-              ? (
-                <VegaLite
-                  spec={vegaLiteSpec as VisualizationSpec}
-                  actions={false}
-                  width={(dms.width / 2) - 60}
-                  height={270}
-                  padding={0}
-                  style={{ justifySelf: 'center' }}
-                />
-              )
-              : (
-                <>
-                  <Text fw={700}>Response Specification: </Text>
-                  <Code block>
-                    {JSON.stringify(response, null, 2)}
-                  </Code>
-                  <br />
-                  {correctAnswer && (
+            {response.type === 'metadata' && timingData.length === 0
+              ? <Text>No responses for this task yet.</Text>
+              : response.type === 'metadata'
+                ? (
+                  <VegaLite
+                    spec={vegaLiteSpec as VisualizationSpec}
+                    actions={false}
+                    width={(dms.width / 2) - 60}
+                    height={270}
+                    padding={0}
+                    style={{ justifySelf: 'center' }}
+                  />
+                )
+                : (
                   <>
-                    <Text fw={700}>Correct Answer: </Text>
+                    <Text fw={700}>Response Specification: </Text>
                     <Code block>
-                      {JSON.stringify(correctAnswer, null, 2)}
+                      {JSON.stringify(response, null, 2)}
                     </Code>
+                    <br />
+                    {correctAnswer && (
+                      <>
+                        <Text fw={700}>Correct Answer: </Text>
+                        <Code block>
+                          {JSON.stringify(correctAnswer, null, 2)}
+                        </Code>
+                      </>
+                    )}
                   </>
-                  )}
-                </>
-              )}
+                )}
 
           </ScrollArea>
         </SimpleGrid>

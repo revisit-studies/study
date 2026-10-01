@@ -9,9 +9,10 @@ import { AppNavBar } from '../AppNavBar';
 
 let mockCurrentComponent = 'trial1';
 let mockStudyConfig = {
-  components: {} as Record<string, { response: unknown[]; instruction?: string; instructionLocation?: string }>,
+  components: {} as Record<string, { response: unknown[]; instruction?: string; instructionLocation?: string; parameters?: Record<string, unknown> }>,
   uiConfig: { instructionLocation: 'sidebar' as string },
 };
+let mockStoredAnswer: { parameters?: Record<string, unknown> } | null = null;
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
@@ -21,10 +22,16 @@ vi.mock('../../../store/hooks/useStudyConfig', () => ({
 
 vi.mock('../../../routes/utils', () => ({
   useCurrentComponent: () => mockCurrentComponent,
+  useCurrentStep: () => 0,
 }));
 
 vi.mock('../../../store/hooks/useStoredAnswer', () => ({
-  useStoredAnswer: () => null,
+  useStoredAnswer: () => mockStoredAnswer,
+}));
+
+vi.mock('../../../store/store', () => ({
+  useStoreSelector: (selector: (state: { answers: Record<string, unknown> }) => unknown) => selector({ answers: {} }),
+  useFlatSequence: () => [],
 }));
 
 vi.mock('../../../utils/handleComponentInheritance', () => ({
@@ -38,14 +45,18 @@ vi.mock('../../ReactMarkdownWrapper', () => ({
 }));
 
 vi.mock('../../response/ResponseBlock', () => ({
-  ResponseBlock: () => <div data-testid="response-block" />,
+  ResponseBlock: ({ config }: { config?: { parameters?: Record<string, unknown>; response?: Array<{ prompt?: string }> } }) => (
+    <div data-testid="response-block">
+      {config?.response?.[0]?.prompt?.replace('{{value}}', String(config.parameters?.value ?? ''))}
+    </div>
+  ),
 }));
 
 vi.mock('@mantine/core', () => ({
   Box: ({
-    children, display, w,
-  }: { children: ReactNode; display?: string; w?: number }) => (
-    <div style={{ display, width: w }}>{children}</div>
+    children, display, w, style,
+  }: { children: ReactNode; display?: string; w?: number; style?: React.CSSProperties }) => (
+    <div style={{ display, width: w, ...style }}>{children}</div>
   ),
   Text: ({ children }: { children: ReactNode }) => <span>{children}</span>,
 }));
@@ -59,6 +70,7 @@ describe('AppNavBar', () => {
       components: {},
       uiConfig: { instructionLocation: 'sidebar' },
     };
+    mockStoredAnswer = null;
   });
 
   test('renders null when current component has no config', () => {
@@ -67,7 +79,7 @@ describe('AppNavBar', () => {
       uiConfig: { instructionLocation: 'sidebar' },
     };
     const html = renderToStaticMarkup(
-      <AppNavBar width={300} top={60} sidebarOpen />,
+      <AppNavBar width={300} top={60} bottom={0} sidebarOpen />,
     );
     expect(html).toBe('');
   });
@@ -78,7 +90,7 @@ describe('AppNavBar', () => {
       uiConfig: { instructionLocation: 'sidebar' },
     };
     const html = renderToStaticMarkup(
-      <AppNavBar width={300} top={60} sidebarOpen />,
+      <AppNavBar width={300} top={60} bottom={0} sidebarOpen />,
     );
     expect(html).toContain('data-testid="response-block"');
   });
@@ -89,7 +101,7 @@ describe('AppNavBar', () => {
       uiConfig: { instructionLocation: 'sidebar' },
     };
     const html = renderToStaticMarkup(
-      <AppNavBar width={300} top={60} sidebarOpen />,
+      <AppNavBar width={300} top={60} bottom={0} sidebarOpen />,
     );
     expect(html).toContain('Complete the task');
     expect(html).toContain('Task:');
@@ -101,7 +113,7 @@ describe('AppNavBar', () => {
       uiConfig: { instructionLocation: 'aboveStimulus' },
     };
     const html = renderToStaticMarkup(
-      <AppNavBar width={300} top={60} sidebarOpen />,
+      <AppNavBar width={300} top={60} bottom={0} sidebarOpen />,
     );
     expect(html).not.toContain('Task:');
   });
@@ -112,8 +124,79 @@ describe('AppNavBar', () => {
       uiConfig: { instructionLocation: 'sidebar' },
     };
     const html = renderToStaticMarkup(
-      <AppNavBar width={300} top={60} sidebarOpen={false} />,
+      <AppNavBar width={300} top={60} bottom={0} sidebarOpen={false} />,
     );
     expect(html).toContain('display:none');
+  });
+
+  test('reserves room below the sidebar for the replay footer', () => {
+    mockStudyConfig = {
+      components: { trial1: { response: [], instruction: 'Do the task' } },
+      uiConfig: { instructionLocation: 'sidebar' },
+    };
+    const html = renderToStaticMarkup(
+      <AppNavBar width={300} top={70} bottom={125} sidebarOpen />,
+    );
+
+    expect(html).toContain('margin-bottom:125px');
+    expect(html).toContain('position:relative');
+    expect(html).not.toContain('overflow-y:auto');
+    expect(html).not.toContain('max-height:');
+  });
+
+  test('uses the dynamic component\'s runtime parameters over the static config parameters when templating the instruction', () => {
+    mockStudyConfig = {
+      components: {
+        trial1: {
+          response: [],
+          instruction: 'Value: {{value}}',
+          parameters: { value: 'static' },
+        },
+      },
+      uiConfig: { instructionLocation: 'sidebar' },
+    };
+    mockStoredAnswer = { parameters: { value: 'dynamic' } };
+
+    const html = renderToStaticMarkup(
+      <AppNavBar width={300} top={60} bottom={0} sidebarOpen />,
+    );
+
+    expect(html).toContain('Value: dynamic');
+    expect(html).not.toContain('Value: static');
+  });
+
+  test('passes dynamic runtime parameters to sidebar responses', () => {
+    mockStudyConfig = {
+      components: {
+        trial1: {
+          response: [{ id: 'q1', type: 'shortText', prompt: 'Response: {{value}}' }],
+          parameters: { value: 'static' },
+        },
+      },
+      uiConfig: { instructionLocation: 'sidebar' },
+    };
+    mockStoredAnswer = { parameters: { value: 'dynamic' } };
+
+    const html = renderToStaticMarkup(
+      <AppNavBar width={300} top={60} bottom={0} sidebarOpen />,
+    );
+
+    expect(html).toContain('Response: dynamic');
+    expect(html).not.toContain('Response: static');
+  });
+
+  test('keeps participant sidebar and content under one page scrollbar', () => {
+    mockStudyConfig = {
+      components: { trial1: { response: [], instruction: 'Do the task' } },
+      uiConfig: { instructionLocation: 'sidebar' },
+    };
+    const html = renderToStaticMarkup(
+      <AppNavBar width={300} top={70} bottom={0} sidebarOpen />,
+    );
+
+    expect(html).toContain('position:relative');
+    expect(html).toContain('margin-bottom:0');
+    expect(html).not.toContain('overflow-y:auto');
+    expect(html).not.toContain('max-height:');
   });
 });

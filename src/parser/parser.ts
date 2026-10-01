@@ -1,13 +1,18 @@
 import Ajv from 'ajv';
+import Handlebars from 'handlebars';
 import { parseDocument } from 'yaml';
 import configSchema from './StudyConfigSchema.json';
 import globalSchema from './GlobalConfigSchema.json';
 import {
-  GlobalConfig, LibraryConfig, ParsedConfig, StudyConfig, ParserErrorWarning, IndividualComponent,
+  GlobalConfig, LibraryConfig, ParsedConfig, StudyConfig, ParserErrorWarning, IndividualComponent, ResponseVisibilityCondition,
 } from './types';
 import { getSequenceFlatMapWithInterruptions } from '../utils/getSequenceFlatMap';
-import { expandLibrarySequences, loadLibrariesParseNamespace, verifyLibraryUsage } from './libraryParser';
-import { isDynamicBlock, isInheritedComponent } from './utils';
+import {
+  compileFactorBlocks, expandLibrarySequences, loadLibrariesParseNamespace, validateBetweenSubjects, verifyLibraryUsage,
+} from './libraryParser';
+import {
+  isDynamicBlock, isFactorBlock, isFactorRuntimePlanBlock, isInheritedComponent,
+} from './utils';
 import {
   DEFAULT_CONTACT_EMAIL,
   DEFAULT_FIREBASE_WARNING_ACTION,
@@ -20,6 +25,15 @@ import {
   shouldWarnForDefaultSupabaseConfig,
 } from '../utils/defaultStorageConfig';
 import { studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
+import {
+  getDateValueFormat,
+  isValidTime,
+  parseDateValue,
+} from '../utils/dateTimeValidation';
+import { checkBuiltInValidation } from '../components/response/builtInValidation';
+import { responseValueKeys, visibilityControllerTypes } from '../utils/responseVisibility';
+import { getDropdownOptions } from '../utils/dropdownOptions';
+import { normalizeKeyMapping } from '../utils/keyMapping';
 
 const modules = import.meta.glob(
   [
@@ -28,7 +42,6 @@ const modules = import.meta.glob(
   ],
   { eager: false }, // the parser only checks if the path exists
 );
-
 const ajv1 = new Ajv({ allowUnionTypes: true });
 ajv1.addSchema(globalSchema);
 const globalValidate = ajv1.getSchema<GlobalConfig>('#/definitions/GlobalConfig')!;
@@ -36,32 +49,54 @@ const globalValidate = ajv1.getSchema<GlobalConfig>('#/definitions/GlobalConfig'
 const ajv2 = new Ajv({ allowUnionTypes: true });
 ajv2.addSchema(configSchema);
 const studyValidate = ajv2.getSchema<StudyConfig>('#/definitions/StudyConfig')!;
+const visibilityConditionValidate = ajv2.getSchema<ResponseVisibilityCondition>('#/definitions/ResponseVisibilityCondition')!;
 
 // This function verifies the global config file satisfies conditions that are not covered by the schema
 function verifyGlobalConfig(data: GlobalConfig) {
-  const errors: { message: string }[] = [];
-  const configsListVerified = data.configsList.every((configName) => {
+  const errors: { message: string; instancePath: string }[] = [];
+  data.configsList.forEach((configName, index) => {
     if (data.configs[configName] === undefined) {
-      errors.push({ message: `Config \`${configName}\` is not defined in configs object, but is present in configsList` });
-      return false;
+      errors.push({
+        message: `Config \`${configName}\` is not defined in configs object, but is present in configsList`,
+        instancePath: `/configsList/${index}`,
+      });
     }
-    return true;
   });
 
-  return [configsListVerified, errors] as const;
+  const labels = new Set<string>();
+  data.tabs?.forEach(({ label }, index) => {
+    if (!label.trim()) {
+      errors.push({ message: 'Tab label must not be blank', instancePath: `/tabs/${index}/label` });
+    } else if (labels.has(label)) {
+      errors.push({ message: `Tab label "${label}" is duplicated; tab labels must be unique`, instancePath: `/tabs/${index}/label` });
+    }
+    labels.add(label);
+  });
+
+  Object.entries(data.configs).forEach(([configName, config]) => {
+    if (config.tab !== undefined && !labels.has(config.tab)) {
+      errors.push({
+        message: `Config "${configName}" references undefined tab "${config.tab}"; use a label from tabs or omit tab`,
+        instancePath: `/configs/${configName.replace(/~/g, '~0').replace(/\//g, '~1')}/tab`,
+      });
+    }
+  });
+
+  return errors;
 }
 
 export function parseGlobalConfig(fileData: string) {
   const data = JSON.parse(fileData);
 
-  const validatedData = globalValidate(data) as boolean;
-  const extraValidation = verifyGlobalConfig(data);
+  const validatedData = globalValidate(data);
+  const extraValidation = validatedData ? verifyGlobalConfig(data) : [];
 
-  if (validatedData && extraValidation[0]) {
-    return data as GlobalConfig;
+  if (validatedData && extraValidation.length === 0) {
+    return data;
   }
-  console.error('Global config parsing errors', [...(globalValidate.errors || []), ...extraValidation[1]]);
-  throw Error('There was an issue validating your file global.json');
+  const errors = [...(globalValidate.errors || []), ...extraValidation];
+  console.error('Global config parsing errors', errors);
+  throw Error(`There was an issue validating your file global.json: ${errors.map(({ instancePath, message }) => `${instancePath}: ${message}`).join('; ')}`);
 }
 
 // Recursive function to verify that the skip.to component exists after the block it is used in
@@ -84,7 +119,25 @@ function verifyStudySkip(
   };
 
   if (isDynamicBlock(sequence)) {
+    if (sequence.id) {
+      removeTargetInPlace(sequence.id);
+    }
     return;
+  }
+
+  if (isFactorBlock(sequence) || isFactorRuntimePlanBlock(sequence)) {
+    if (sequence.id) {
+      removeTargetInPlace(sequence.id);
+    }
+    if (sequence.skip && sequence.skip.length > 0) {
+      skipTargets.push(...sequence.skip.map((skip) => skip.to).filter((target) => target !== 'end'));
+    }
+    return;
+  }
+
+  // If the block has an ID, remove it from the skipTargets array
+  if (sequence.id) {
+    removeTargetInPlace(sequence.id);
   }
 
   // Base case: empty sequence
@@ -97,11 +150,6 @@ function verifyStudySkip(
       category: 'sequence-validation',
     });
     return;
-  }
-
-  // If the block has an ID, remove it from the skipTargets array
-  if (sequence.id) {
-    removeTargetInPlace(sequence.id);
   }
 
   // Recursive case: sequence has at least one component
@@ -123,6 +171,36 @@ function verifyStudySkip(
   }
 }
 
+function isTemplatedPath(path: string) {
+  if (!path.includes('{{')) {
+    return false;
+  }
+
+  try {
+    const ast = Handlebars.parse(path) as unknown;
+    const hasRuntimeExpression = (node: unknown): boolean => {
+      if (Array.isArray(node)) {
+        return node.some(hasRuntimeExpression);
+      }
+      if (!node || typeof node !== 'object') {
+        return false;
+      }
+
+      const { type } = node as { type?: unknown };
+      if (type === 'MustacheStatement' || type === 'BlockStatement') {
+        const pathType = (node as { path?: { type?: unknown } }).path?.type;
+        return pathType === 'PathExpression';
+      }
+
+      return Object.entries(node).some(([key, value]) => key !== 'loc' && hasRuntimeExpression(value));
+    };
+
+    return hasRuntimeExpression(ast);
+  } catch {
+    return false;
+  }
+}
+
 function verifyReactComponent(
   instancePath: string,
   component: Partial<IndividualComponent>,
@@ -132,6 +210,9 @@ function verifyReactComponent(
     'path' in component
       && component.path != null
       && component.type === 'react-component'
+      // A templated path (e.g. `{{file}}.tsx`) can't be resolved until runtime, once
+      // parameters/answers are known, so it can never match a real file in this static glob.
+      && !isTemplatedPath(component.path)
       && !(`../public/${component.path}` in modules)
   ) {
     errors.push({
@@ -146,7 +227,381 @@ function verifyReactComponent(
 }
 
 function isUrlConditionalBlock(sequence: StudyConfig['sequence']): boolean {
-  return sequence.conditional === true && Boolean(sequence.id);
+  return !isFactorBlock(sequence) && sequence.conditional === true && Boolean(sequence.id);
+}
+
+function countTextResponseWords(value: string) {
+  return value
+    .trim()
+    .split(/\s+/)
+    .filter((word) => /[\p{L}\p{N}]/u.test(word))
+    .length;
+}
+function verifyTextResponseConstraints(
+  componentPath: string,
+  component: Partial<IndividualComponent>,
+  errors: ParserErrorWarning[],
+  warnings: ParserErrorWarning[],
+) {
+  component.response?.forEach((response, index) => {
+    if (response.type !== 'shortText' && response.type !== 'longText') {
+      return;
+    }
+
+    const responsePath = `${componentPath}/response/${index}`;
+    const constraints = {
+      minCharLength: response.minCharLength,
+      maxCharLength: response.maxCharLength,
+      minWordLength: response.minWordLength,
+      maxWordLength: response.maxWordLength,
+    };
+    const constraintsAreValid = Object.values(constraints).every(
+      (value) => value === undefined || (Number.isInteger(value) && value >= 0),
+    );
+
+    Object.entries(constraints).forEach(([name, value]) => {
+      if (value !== undefined && (!Number.isInteger(value) || value < 0)) {
+        errors.push({
+          message: `${name} must be a non-negative integer`,
+          instancePath: `${responsePath}/${name}`,
+          params: { action: `Set ${name} to a non-negative integer` },
+          category: 'invalid-config',
+        });
+      }
+    });
+
+    if (constraintsAreValid && response.required !== false && response.maxCharLength === 0) {
+      errors.push({
+        message: 'maxCharLength must be greater than zero for a required text response',
+        instancePath: `${responsePath}/maxCharLength`,
+        params: { action: 'Increase maxCharLength or make the response optional' },
+        category: 'invalid-config',
+      });
+    }
+
+    if (constraintsAreValid && response.required !== false && response.maxWordLength === 0) {
+      errors.push({
+        message: 'maxWordLength must be greater than zero for a required text response',
+        instancePath: `${responsePath}/maxWordLength`,
+        params: { action: 'Increase maxWordLength or make the response optional' },
+        category: 'invalid-config',
+      });
+    }
+
+    if (
+      constraintsAreValid
+      && response.minCharLength !== undefined
+      && response.maxCharLength !== undefined
+      && response.minCharLength > response.maxCharLength
+    ) {
+      errors.push({
+        message: 'minCharLength must be less than or equal to maxCharLength',
+        instancePath: responsePath,
+        params: { action: 'Decrease minCharLength or increase maxCharLength' },
+        category: 'invalid-config',
+      });
+    }
+
+    if (
+      constraintsAreValid
+      && response.minWordLength !== undefined
+      && response.maxWordLength !== undefined
+      && response.minWordLength > response.maxWordLength
+    ) {
+      errors.push({
+        message: 'minWordLength must be less than or equal to maxWordLength',
+        instancePath: responsePath,
+        params: { action: 'Decrease minWordLength or increase maxWordLength' },
+        category: 'invalid-config',
+      });
+    }
+
+    if (
+      constraintsAreValid
+      && response.minWordLength !== undefined
+      && response.minWordLength > 0
+      && response.maxCharLength !== undefined
+    ) {
+      const minimumRequiredCharacters = response.minWordLength * 2 - 1;
+      if (minimumRequiredCharacters > response.maxCharLength) {
+        errors.push({
+          message: `minWordLength of ${response.minWordLength} requires at least ${minimumRequiredCharacters} characters, which exceeds maxCharLength of ${response.maxCharLength}`,
+          instancePath: responsePath,
+          params: { action: 'Decrease minWordLength or increase maxCharLength' },
+          category: 'invalid-config',
+        });
+      }
+    }
+    response.textValidation?.forEach((rule, ruleIndex) => {
+      if (
+        rule.value === ''
+        && (rule.type === 'equals' || rule.type === 'contains' || rule.type === 'doesNotContain')
+      ) {
+        errors.push({
+          message: `${rule.type} value must not be empty`,
+          instancePath: `${responsePath}/textValidation/${ruleIndex}/value`,
+          params: { action: `Set ${rule.type} value to a non-empty string` },
+          category: 'invalid-config',
+        });
+        return;
+      }
+
+      if (rule.value === '' && (rule.type === 'matchesRegex' || rule.type === 'doesNotEqual')) {
+        warnings.push({
+          message: `${rule.type} value is empty and does not restrict participant responses`,
+          instancePath: `${responsePath}/textValidation/${ruleIndex}/value`,
+          params: { action: `Set ${rule.type} value to a non-empty string or remove the rule` },
+          category: 'invalid-config',
+        });
+      }
+      if (rule.type !== 'matchesRegex') {
+        return;
+      }
+
+      try {
+        RegExp(rule.value);
+      } catch {
+        errors.push({
+          message: 'matchesRegex value must be a valid regular expression',
+          instancePath: `${responsePath}/textValidation/${ruleIndex}/value`,
+          params: { action: 'Fix the regular expression pattern' },
+          category: 'invalid-config',
+        });
+      }
+    });
+    const textValidation = response.textValidation ?? [];
+    const fixedValues = [
+      ...(response.requiredValue !== undefined && response.requiredValue !== null
+        ? [{
+          label: 'requiredValue',
+          path: `${responsePath}/requiredValue`,
+          value: response.requiredValue.toString(),
+        }]
+        : []),
+      ...textValidation.flatMap((rule, ruleIndex) => (rule.type === 'equals' && rule.value !== ''
+        ? [{
+          label: 'equals',
+          path: `${responsePath}/textValidation/${ruleIndex}/value`,
+          value: rule.value,
+        }]
+        : [])),
+    ];
+    const firstFixedValue = fixedValues[0];
+    const conflictingFixedValue = fixedValues.find(
+      ({ value }) => value !== firstFixedValue?.value,
+    );
+    if (firstFixedValue && conflictingFixedValue) {
+      errors.push({
+        message: `${firstFixedValue.label} value \`${firstFixedValue.value}\` conflicts with ${conflictingFixedValue.label} value \`${conflictingFixedValue.value}\``,
+        instancePath: conflictingFixedValue.path,
+        params: { action: 'Use the same value for requiredValue and all equals rules' },
+        category: 'invalid-config',
+      });
+    }
+    if (response.type === 'shortText' && response.builtInValidation) {
+      fixedValues.forEach(({ label, path, value }) => {
+        if (checkBuiltInValidation(response.builtInValidation!, value) !== null) {
+          errors.push({
+            message: `${label} value \`${value}\` does not satisfy ${response.builtInValidation} built-in validation`,
+            instancePath: path,
+            params: { action: `Change ${label} or remove the conflicting built-in validation` },
+            category: 'invalid-config',
+          });
+        }
+      });
+    }
+    textValidation.forEach((firstRule, firstRuleIndex) => {
+      textValidation.slice(firstRuleIndex + 1).forEach((secondRule, offset) => {
+        const secondRuleIndex = firstRuleIndex + offset + 1;
+        const containsRule = firstRule.type === 'contains' ? firstRule : secondRule;
+        const doesNotContainRule = firstRule.type === 'doesNotContain' ? firstRule : secondRule;
+        if (
+          containsRule.type === 'contains'
+          && doesNotContainRule.type === 'doesNotContain'
+          && containsRule.value !== ''
+          && doesNotContainRule.value !== ''
+          && containsRule.value.includes(doesNotContainRule.value)
+        ) {
+          errors.push({
+            message: `contains value \`${containsRule.value}\` always includes doesNotContain value \`${doesNotContainRule.value}\``,
+            instancePath: `${responsePath}/textValidation/${secondRuleIndex}/value`,
+            params: { action: 'Change or remove one of the conflicting text validation rules' },
+            category: 'invalid-config',
+          });
+        }
+      });
+    });
+    textValidation.forEach((rule, ruleIndex) => {
+      if (rule.type !== 'equals' || rule.value === '') {
+        return;
+      }
+      textValidation.forEach((otherRule, otherRuleIndex) => {
+        if (otherRuleIndex === ruleIndex || otherRule.value === '') {
+          return;
+        }
+        const conflicts = (
+          (otherRule.type === 'doesNotEqual' && otherRule.value === rule.value)
+          || (otherRule.type === 'contains' && !rule.value.includes(otherRule.value))
+          || (otherRule.type === 'doesNotContain' && rule.value.includes(otherRule.value))
+        );
+        if (conflicts) {
+          errors.push({
+            message: `equals value \`${rule.value}\` conflicts with ${otherRule.type} value \`${otherRule.value}\``,
+            instancePath: `${responsePath}/textValidation/${Math.max(ruleIndex, otherRuleIndex)}/value`,
+            params: { action: 'Change or remove one of the conflicting text validation rules' },
+            category: 'invalid-config',
+          });
+        }
+      });
+      if (!constraintsAreValid) {
+        return;
+      }
+      const charLength = rule.value.length;
+      const wordLength = countTextResponseWords(rule.value);
+      const equalsConstraintConflicts = [
+        response.minCharLength !== undefined && charLength < response.minCharLength
+          ? `has ${charLength} characters, which is less than minCharLength of ${response.minCharLength}` : null,
+        response.maxCharLength !== undefined && charLength > response.maxCharLength
+          ? `has ${charLength} characters, which exceeds maxCharLength of ${response.maxCharLength}` : null,
+        response.minWordLength !== undefined && wordLength < response.minWordLength
+          ? `contains ${wordLength} words, which is less than minWordLength of ${response.minWordLength}` : null,
+        response.maxWordLength !== undefined && wordLength > response.maxWordLength
+          ? `contains ${wordLength} words, which exceeds maxWordLength of ${response.maxWordLength}` : null,
+      ].filter((message): message is string => message !== null);
+      equalsConstraintConflicts.forEach((message) => {
+        errors.push({
+          message: `equals value \`${rule.value}\` ${message}`,
+          instancePath: `${responsePath}/textValidation/${ruleIndex}/value`,
+          params: { action: 'Change the equals value or the conflicting length constraint' },
+          category: 'invalid-config',
+        });
+      });
+    });
+  });
+}
+
+function verifyDropdownResponseConstraints(
+  componentPath: string,
+  component: Partial<IndividualComponent>,
+  errors: ParserErrorWarning[],
+) {
+  component.response?.forEach((response, index) => {
+    if (response.type !== 'dropdown' || response.options !== 'countries') {
+      return;
+    }
+
+    const responsePath = `${componentPath}/response/${index}`;
+    const countryValues = new Set(getDropdownOptions(response).map((option) => option.value));
+
+    (['default', 'requiredValue'] as const).forEach((field) => {
+      const configuredValue = field === 'default' ? response.default : response.requiredValue;
+      if (configuredValue === undefined || configuredValue === null) {
+        return;
+      }
+
+      const values = Array.isArray(configuredValue) ? configuredValue : [configuredValue];
+      values.forEach((value, valueIndex) => {
+        if (typeof value === 'string' && countryValues.has(value)) {
+          return;
+        }
+
+        const valuePath = Array.isArray(configuredValue)
+          ? `${responsePath}/${field}/${valueIndex}`
+          : `${responsePath}/${field}`;
+        errors.push({
+          message: `dropdown ${field} value \`${String(value)}\` is not a valid country code`,
+          instancePath: valuePath,
+          params: { action: `Set ${field} to a valid country code from the countries preset` },
+          category: 'invalid-config',
+        });
+      });
+    });
+  });
+}
+
+function verifyDateTimeResponseConstraints(
+  componentPath: string,
+  component: Partial<IndividualComponent>,
+  errors: ParserErrorWarning[],
+) {
+  component.response?.forEach((response, index) => {
+    if (response.type !== 'date' && response.type !== 'time') {
+      return;
+    }
+
+    const responsePath = `${componentPath}/response/${index}`;
+    const isDateResponse = response.type === 'date';
+    const dateOptions = isDateResponse ? response.options ?? 'date' : 'date';
+    const isValidValue = isDateResponse
+      ? (value: string) => parseDateValue(value, dateOptions) !== null
+      : (value: string) => isValidTime(value, response.withSeconds);
+    const expectedFormat = response.type === 'date'
+      ? getDateValueFormat(dateOptions)
+      : response.withSeconds ? 'HH:mm:ss' : 'HH:mm';
+    const fields = ['default', 'requiredValue', 'min', 'max'] as const;
+
+    fields.forEach((field) => {
+      const value = response[field];
+      if (value === undefined || value === null) {
+        return;
+      }
+
+      if (!isValidValue(value)) {
+        errors.push({
+          message: `${response.type} ${field} must be a valid ${expectedFormat} value`,
+          instancePath: `${responsePath}/${field}`,
+          params: { action: `Set ${field} to a valid ${expectedFormat} value` },
+          category: 'invalid-config',
+        });
+      }
+    });
+
+    const toComparableValue = (value: string) => {
+      if (isDateResponse) {
+        return parseDateValue(value, dateOptions)?.getTime() ?? null;
+      }
+      if (!isValidTime(value, response.withSeconds)) {
+        return null;
+      }
+      return value.split(':').reduce((total, part) => (total * 60) + Number(part), 0);
+    };
+    const min = response.min ? toComparableValue(response.min) : null;
+    const max = response.max ? toComparableValue(response.max) : null;
+    if (min !== null && max !== null && min > max) {
+      errors.push({
+        message: `${response.type} min must be less than or equal to max`,
+        instancePath: responsePath,
+        params: { action: 'Set min to a value less than or equal to max' },
+        category: 'invalid-config',
+      });
+      return;
+    }
+
+    (['default', 'requiredValue'] as const).forEach((field) => {
+      const value = response[field];
+      const comparableValue = value ? toComparableValue(value) : null;
+      if (comparableValue === null) {
+        return;
+      }
+
+      if (min !== null && comparableValue < min) {
+        errors.push({
+          message: `${response.type} ${field} must be ${isDateResponse ? 'on' : 'at'} or after min`,
+          instancePath: `${responsePath}/${field}`,
+          params: { action: `Set ${field} to a value greater than or equal to min` },
+          category: 'invalid-config',
+        });
+      }
+      if (max !== null && comparableValue > max) {
+        errors.push({
+          message: `${response.type} ${field} must be ${isDateResponse ? 'on' : 'at'} or before max`,
+          instancePath: `${responsePath}/${field}`,
+          params: { action: `Set ${field} to a value less than or equal to max` },
+          category: 'invalid-config',
+        });
+      }
+    });
+  });
 }
 
 function hasConditionalBlock(sequence: StudyConfig['sequence']): boolean {
@@ -154,7 +609,7 @@ function hasConditionalBlock(sequence: StudyConfig['sequence']): boolean {
     return true;
   }
 
-  if (isDynamicBlock(sequence)) {
+  if (isDynamicBlock(sequence) || isFactorBlock(sequence)) {
     return false;
   }
 
@@ -172,7 +627,7 @@ function hasConditionalBlockInsideRestrictedOrderAncestor(
     return true;
   }
 
-  if (isDynamicBlock(sequence)) {
+  if (isDynamicBlock(sequence) || isFactorBlock(sequence)) {
     return false;
   }
 
@@ -186,12 +641,97 @@ function hasConditionalBlockInsideRestrictedOrderAncestor(
   ));
 }
 
+function verifyKeyMappings(
+  basePath: string,
+  component: Partial<IndividualComponent>,
+  errors: ParsedConfig<StudyConfig>['errors'],
+  warnings: ParsedConfig<StudyConfig>['warnings'],
+  nextOnEnter = false,
+) {
+  if (!component.response || !Array.isArray(component.response)) return;
+
+  const seenMappings = new Map<string, { responseIndex: number; optionIndex: number; label: string }>();
+
+  component.response.forEach((res, resIdx) => {
+    if (res.type !== 'buttons') {
+      return;
+    }
+
+    res.options.forEach((opt, optIdx) => {
+      if (typeof opt !== 'object' || opt === null || !('key' in opt)) {
+        return;
+      }
+
+      const normalizedKey = normalizeKeyMapping(String(opt.key));
+      if (normalizedKey === null) {
+        errors.push({
+          message: `Invalid key mapping \`${String(opt.key)}\` in option \`${opt.label || opt.value}\`. Key mappings must use a single character, a known named key (for example "ArrowRight" or "Space"), or a modifier-plus-key combination such as "Shift+X".`,
+          instancePath: `${basePath}/response/${resIdx}/options/${optIdx}/key`,
+          params: { action: 'Use a single printable key, a valid named key, or a canonical modifier-plus-key value like Shift+X' },
+          category: 'invalid-config',
+        });
+        return;
+      }
+
+      const instancePath = `${basePath}/response/${resIdx}/options/${optIdx}/key`;
+      const parts = normalizedKey.split('+');
+      const baseKey = parts[parts.length - 1];
+      if (baseKey === 'Tab' || (nextOnEnter && normalizedKey === 'Enter')) {
+        errors.push({
+          message: baseKey === 'Tab'
+            ? 'Tab cannot be mapped to a button because it is needed to move keyboard focus.'
+            : 'Enter cannot be mapped to a button when nextOnEnter is enabled.',
+          instancePath,
+          params: { action: baseKey === 'Tab' ? 'Choose another shortcut' : 'Disable nextOnEnter or choose another shortcut' },
+          category: 'invalid-config',
+        });
+      }
+
+      const ignoredModifier = parts.includes('Ctrl') || parts.includes('Meta');
+      const layoutDependent = parts.length > 1 && baseKey.length === 1 && !(parts.length === 2 && parts[0] === 'Shift' && /^[A-Z]$/.test(baseKey));
+      if (ignoredModifier || layoutDependent) {
+        warnings.push({
+          message: `Key mapping \`${String(opt.key)}\` may not work: ${ignoredModifier ? 'Ctrl and Meta shortcuts are ignored.' : 'Modified printable keys can produce different values across keyboard layouts.'}`,
+          instancePath,
+          params: { action: 'Use an unmodified key or a supported named key such as ArrowLeft' },
+          category: 'invalid-config',
+        });
+      }
+
+      const previous = seenMappings.get(normalizedKey);
+      if (previous) {
+        errors.push({
+          message: `Duplicate key mapping \`${normalizedKey}\` in option \`${opt.label || opt.value}\`. A component cannot assign the same key to multiple responses.`,
+          instancePath: `${basePath}/response/${resIdx}/options/${optIdx}/key`,
+          params: { action: `Remove or rename the duplicate mapping for \`${normalizedKey}\`` },
+          category: 'invalid-config',
+        });
+      }
+      seenMappings.set(normalizedKey, { responseIndex: resIdx, optionIndex: optIdx, label: String(opt.label || opt.value) });
+    });
+  });
+}
+
 // This function verifies the study config file satisfies conditions that are not covered by the schema
 function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Record<string, LibraryConfig>) {
   const errors: ParsedConfig<StudyConfig>['errors'] = [];
   const warnings: ParsedConfig<StudyConfig>['warnings'] = [];
 
   verifyLibraryUsage(studyConfig, errors, warnings, importedLibrariesData);
+
+  Object.entries(studyConfig.baseComponents ?? {}).forEach(([componentName, component]) => {
+    verifyTextResponseConstraints(`/baseComponents/${componentName}`, component, errors, warnings);
+    verifyDateTimeResponseConstraints(`/baseComponents/${componentName}`, component, errors);
+    verifyDropdownResponseConstraints(`/baseComponents/${componentName}`, component, errors);
+    verifyKeyMappings(`/baseComponents/${componentName}`, component, errors, []);
+  });
+  Object.entries(studyConfig.components).forEach(([componentName, component]) => {
+    const mergedComponent = studyComponentToIndividualComponent(component, studyConfig);
+    verifyTextResponseConstraints(`/components/${componentName}`, mergedComponent, errors, warnings);
+    verifyDateTimeResponseConstraints(`/components/${componentName}`, mergedComponent, errors);
+    verifyDropdownResponseConstraints(`/components/${componentName}`, mergedComponent, errors);
+    verifyKeyMappings(`/components/${componentName}`, mergedComponent, errors, warnings, mergedComponent.nextOnEnter ?? studyConfig.uiConfig.nextOnEnter);
+  });
 
   const hasConditional = hasConditionalBlock(studyConfig.sequence);
   const hasConditionalInsideRestrictedOrderAncestor = hasConditionalBlockInsideRestrictedOrderAncestor(
@@ -257,6 +797,84 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
         ...component,
       };
 
+      const visibilityComponent = studyComponentToIndividualComponent(component, studyConfig);
+      const visibilityResponses = visibilityComponent.response ?? [];
+      const responseIndices = new Map(visibilityResponses.map((response, index) => [response.id, index]));
+      visibilityResponses.forEach((response, index) => {
+        responseValueKeys(response).slice(1).forEach((key) => {
+          const conflictingIndex = responseIndices.get(key);
+          if (conflictingIndex === undefined) return;
+          errors.push({
+            message: `Response ID "${key}" conflicts with an auxiliary answer key for response "${response.id}"`,
+            instancePath: `/components/${componentName}/response/${conflictingIndex}/id`,
+            params: { action: 'Rename the conflicting response ID or disable the option that generates the auxiliary key' },
+            category: 'invalid-config',
+          });
+        });
+        if (!response.visibleIf) return;
+        const condition = response.visibleIf;
+        const controller = visibilityResponses.find((candidate) => candidate.id === response.visibleIf?.responseId);
+        let message: string | undefined;
+        let action = 'Reference a supported response in this component without creating a cycle';
+        if (!visibilityConditionValidate(response.visibleIf)) message = 'visibleIf must specify a valid comparison and value';
+        else if (!controller) message = 'visibleIf must reference a response in the same component';
+        else if (!visibilityControllerTypes.has(controller.type)) message = `visibleIf cannot use a ${controller.type} response as its controller`;
+        else {
+          const isMultiselect = controller.type === 'dropdown'
+            && ((controller.minSelections ?? 0) >= 1 || (controller.maxSelections ?? 0) > 1);
+          if (condition.comparison === 'equals' || condition.comparison === 'doesNotEqual') {
+            const expectsList = controller.type === 'checkbox' || isMultiselect;
+            const expectedType = expectsList ? 'string[]' : controller.type === 'numerical' ? 'number' : 'string';
+            const compatible = expectsList
+              ? Array.isArray(condition.value)
+              : controller.type === 'numerical' ? typeof condition.value === 'number' : typeof condition.value === 'string';
+            if (!compatible) {
+              message = `visibleIf ${condition.comparison} requires a ${expectedType} value for this controller`;
+              action = 'Use a comparison value with the same type as the controlling response answer';
+            }
+          } else if (['lessThan', 'lessThanOrEqual', 'greaterThan', 'greaterThanOrEqual'].includes(condition.comparison)
+            && controller.type !== 'numerical') {
+            message = `visibleIf ${condition.comparison} requires a numerical controller`;
+            action = 'Reference a numerical response or use a comparison supported by the controller';
+          } else if (['contains', 'doesNotContain', 'matchesRegex'].includes(condition.comparison)) {
+            if (controller.type === 'numerical' || controller.type === 'checkbox' || isMultiselect) {
+              message = `visibleIf ${condition.comparison} requires a controller with a single string value`;
+              action = 'Reference a shortText, date, radio, buttons, or single-select dropdown response';
+            } else if (condition.comparison === 'matchesRegex') {
+              try {
+                RegExp(condition.value);
+              } catch {
+                message = 'visibleIf matchesRegex value must be a valid regular expression';
+                action = 'Fix the regular expression pattern';
+              }
+            }
+          } else if (condition.comparison === 'isCorrect'
+            && !visibilityComponent.correctAnswer?.some((answer) => answer.id === condition.responseId)) {
+            message = `visibleIf isCorrect requires a correctAnswer for response "${condition.responseId}"`;
+            action = 'Define a correctAnswer for the controlling response in this component';
+          }
+          const seen = new Set([response.id]);
+          let current: typeof controller | undefined = controller;
+          while (current && !message) {
+            if (seen.has(current.id)) {
+              message = 'visibleIf cannot contain self references or cyclic dependencies';
+              break;
+            }
+            seen.add(current.id);
+            const nextId: string | undefined = current.visibleIf?.responseId;
+            current = visibilityResponses.find((candidate) => candidate.id === nextId);
+          }
+        }
+        if (message) {
+          errors.push({
+            message,
+            instancePath: `/components/${componentName}/response/${index}/visibleIf`,
+            params: { action },
+            category: 'invalid-config',
+          });
+        }
+      });
+
       const isInheritedFromImportedLibrary = isInheritedComponent(component)
         && component.baseComponent.startsWith('$')
         && component.baseComponent.includes('.components.');
@@ -291,6 +909,21 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
     });
 
   const usedComponents = getSequenceFlatMapWithInterruptions(studyConfig.sequence);
+
+  if (studyConfig.uiConfig.withSidebar && !Object.values(studyConfig.components).some((component) => {
+    const resolved = studyComponentToIndividualComponent(component, studyConfig);
+    return (resolved.withSidebar ?? studyConfig.uiConfig.withSidebar)
+      && ((resolved.instruction && (resolved.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar') === 'sidebar')
+        || (resolved.nextButtonLocation ?? studyConfig.uiConfig.nextButtonLocation) === 'sidebar'
+        || resolved.response?.some((response) => 'location' in response && response.location === 'sidebar'));
+  })) {
+    warnings.push({
+      message: 'The sidebar is enabled but no component puts content in it',
+      instancePath: '/uiConfig/withSidebar',
+      params: { action: 'Set withSidebar to false, or add sidebar instructions, responses, or navigation buttons' },
+      category: 'empty-sidebar',
+    });
+  }
 
   // Verify sequence is well defined
   usedComponents.forEach((component) => {
@@ -407,6 +1040,10 @@ export async function parseStudyConfig(fileData: string): Promise<ParsedConfig<S
 
     // Expand the imported sequences to use the correct component names
     data.sequence = expandLibrarySequences(data.sequence, importedLibrariesData, errors);
+    validateBetweenSubjects(data, warnings, errors);
+    const compiledFactors = compileFactorBlocks(data.sequence, data, errors, warnings);
+    data.sequence = compiledFactors.sequence;
+    data.components = { ...data.components, ...compiledFactors.components };
 
     const { errors: parserErrors, warnings: parserWarnings } = verifyStudyConfig(data, importedLibrariesData);
     errors = [...errors, ...parserErrors];

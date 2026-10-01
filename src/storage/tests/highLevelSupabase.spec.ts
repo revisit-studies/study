@@ -53,11 +53,12 @@ vi.mock('@supabase/supabase-js', () => {
 
   function applyFilters(
     rows: Array<RowData>,
-    filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'like' | 'not' | 'lt' }>,
+    filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'like' | 'not' | 'lt' | 'is' }>,
   ): Array<RowData> {
     return rows.filter((row) => filters.every(({ col, val, type }) => {
       const colVal = getFieldValue(row, col);
-      if (type === 'eq') return colVal === val;
+      if (type === 'eq') return col === 'data' ? JSON.stringify(colVal) === val : colVal === val;
+      if (type === 'is') return colVal == null;
       if (type === 'not') return colVal !== null && colVal !== undefined;
       if (type === 'lt') return colVal !== undefined && colVal !== null && colVal < val!;
       return typeof colVal === 'string' && matchLike(colVal, String(val));
@@ -67,9 +68,9 @@ vi.mock('@supabase/supabase-js', () => {
   function makeQueryBuilder(getRows: () => Array<RowData>) {
     let op: 'select' | 'insert' | 'upsert' | 'update' | 'delete' | null = null;
     let payload: RowData | RowData[] | Partial<RowData> | null = null;
-    const filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'like' | 'not' | 'lt' }> = [];
+    const filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'like' | 'not' | 'lt' | 'is' }> = [];
     let isSingle = false;
-    let allowMissingSingle = false;
+    let isMaybeSingle = false;
     let requestedCount = false;
     let headOnly = false;
     let resultLimit: number | undefined;
@@ -88,6 +89,7 @@ vi.mock('@supabase/supabase-js', () => {
       delete() { op = 'delete'; return qb; },
       eq(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'eq' }); return qb; },
       lt(col: string, val: string | number) { filters.push({ col, val, type: 'lt' }); return qb; },
+      is(col: string, val: null) { filters.push({ col, val, type: 'is' }); return qb; },
       like(col: string, val: string) { filters.push({ col, val, type: 'like' }); return qb; },
       not(col: string, _operator: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'not' }); return qb; },
       order(col: string, options?: { ascending?: boolean }) {
@@ -96,7 +98,7 @@ vi.mock('@supabase/supabase-js', () => {
       },
       limit(count: number) { resultLimit = count; return qb; },
       single() { isSingle = true; return qb; },
-      maybeSingle() { isSingle = true; allowMissingSingle = true; return qb; },
+      maybeSingle() { isMaybeSingle = true; return qb; },
       then(
         resolve: (val: { data: RowData | RowData[] | null; error: { message: string; code?: string } | null; count?: number | null }) => void,
         reject?: (err: Error) => void,
@@ -140,13 +142,11 @@ vi.mock('@supabase/supabase-js', () => {
               return;
             }
             // Return deep copies so later mutations to revisitRows don't alias into returned data
-            if (isSingle) {
+            if (isSingle || isMaybeSingle) {
               if (matched.length === 0) {
-                resolve({
-                  data: null,
-                  error: allowMissingSingle ? null : { message: 'No rows', code: 'PGRST116' },
-                  count,
-                });
+                resolve({ data: null, error: isMaybeSingle ? null : { message: 'No rows', code: 'PGRST116' }, count });
+              } else if (matched.length > 1) {
+                resolve({ data: null, error: { message: 'Multiple rows', code: 'PGRST116' } });
               } else {
                 resolve({ data: JSON.parse(JSON.stringify(matched[0])), error: null, count });
               }
@@ -273,6 +273,7 @@ vi.mock('@supabase/supabase-js', () => {
           data: { session: { user: { id: 'mock-uid', email: null } } },
           error: null,
         }),
+        getUser: async () => ({ data: { user: { id: 'mock-uid', email: 'test@test.com' } }, error: null }),
         signInAnonymously: async () => ({ data: { user: { id: 'mock-uid' } }, error: null }),
         onAuthStateChange: (callback: (event: string, session: object | null) => void) => {
           callback('SIGNED_IN', { user: { id: 'mock-uid', email: null } });
@@ -1220,6 +1221,29 @@ describe.each([
   });
 
   // User management tests
+  test('analysis access requires explicitly stored data sharing', async () => {
+    const engine = storageEngine as SupabaseStorageEngine;
+    const accessStudyId = 'access-check';
+    expect(await engine.getAccessModes(accessStudyId)).toBeNull();
+    expect(revisitRows.some((row) => String(row.studyId).endsWith(accessStudyId) && row.docId === 'metadata')).toBe(false);
+
+    const metadataRow = {
+      studyId: `${import.meta.env.DEV ? 'dev-' : 'prod-'}${accessStudyId}`,
+      docId: 'metadata',
+      data: { dataSharingEnabled: 'true' as string | boolean },
+    };
+    revisitRows.push(metadataRow);
+    try {
+      expect((await engine.getAccessModes(accessStudyId))?.dataSharingEnabled).toBe(false);
+      metadataRow.data.dataSharingEnabled = false;
+      expect((await engine.getAccessModes(accessStudyId))?.dataSharingEnabled).toBe(false);
+      metadataRow.data.dataSharingEnabled = true;
+      expect((await engine.getAccessModes(accessStudyId))?.dataSharingEnabled).toBe(true);
+    } finally {
+      revisitRows.splice(revisitRows.indexOf(metadataRow), 1);
+    }
+  });
+
   test('getUserManagementData returns undefined when no data exists', async () => {
     // @ts-expect-error accessing CloudStorageEngine method via StorageEngine
     const authData = await storageEngine.getUserManagementData('authentication');
@@ -1227,6 +1251,126 @@ describe.each([
     // @ts-expect-error accessing CloudStorageEngine method via StorageEngine
     const adminData = await storageEngine.getUserManagementData('adminUsers');
     expect(adminData).toBeUndefined();
+  });
+
+  test('duplicate user-management rows fail closed instead of starting setup', async () => {
+    const savedRows = revisitRows.splice(0);
+    revisitRows.push(
+      { studyId: '', docId: 'user-management', data: { authentication: { isEnabled: false } } },
+      { studyId: '', docId: 'user-management', data: { authentication: { isEnabled: true } } },
+    );
+    try {
+      await expect((storageEngine as SupabaseStorageEngine).getUserManagementData('authentication'))
+        .rejects.toThrow('Multiple rows');
+    } finally {
+      revisitRows.splice(0, revisitRows.length, ...savedRows);
+    }
+  });
+
+  test('missing authentication setting never validates an administrator', async () => {
+    const supabaseEngine = storageEngine as SupabaseStorageEngine;
+    const result = await supabaseEngine.validateUser({
+      user: { email: 'admin@test.com', uid: 'uid-1' },
+      isAdmin: true,
+      determiningStatus: false,
+      adminVerification: true,
+    }, true);
+    expect(result).toBe(false);
+  });
+
+  test('enabled authentication rejects a forged session user', async () => {
+    const savedRows = revisitRows.splice(0);
+    try {
+      const engine = storageEngine as SupabaseStorageEngine;
+      await engine.changeAuth(true);
+      await engine.addAdminUser({ email: 'admin@test.com', uid: 'admin-uid' });
+      const forgedUser = {
+        user: { email: 'admin@test.com', uid: 'admin-uid' },
+        isAdmin: false,
+        determiningStatus: false,
+        adminVerification: false,
+      };
+      expect(await engine.validateUser(forgedUser, true)).toBe(false);
+
+      await engine.addAdminUser({ email: 'test@test.com', uid: 'mock-uid' });
+      expect(await engine.validateUser({ ...forgedUser, user: { email: 'test@test.com', uid: 'mock-uid' } }, true)).toBe(true);
+    } finally {
+      revisitRows.splice(0, revisitRows.length, ...savedRows);
+    }
+  });
+
+  test.each([false, true])('first-admin setup is one conditional write with existing row: %s', async (existingRow) => {
+    const savedRows = revisitRows.splice(0);
+    try {
+      if (existingRow) revisitRows.push({ studyId: '', docId: 'user-management', data: {} });
+      const first = new SupabaseStorageEngine(true);
+      const second = new SupabaseStorageEngine(true);
+      vi.spyOn(second, 'getVerifiedUser').mockResolvedValue({ email: 'second@test.com', uid: 'uid-2' });
+
+      await expect(first.enableAuthentication({ email: 'impostor@test.com', uid: 'uid-3' }))
+        .rejects.toThrow('The signed-in user changed during authentication setup');
+      expect(revisitRows.filter((row) => row.studyId === '' && row.docId === 'user-management'))
+        .toHaveLength(existingRow ? 1 : 0);
+
+      const results = await Promise.allSettled([
+        first.enableAuthentication({ email: 'test@test.com', uid: 'mock-uid' }),
+        second.enableAuthentication({ email: 'second@test.com', uid: 'uid-2' }),
+      ]);
+      expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+      expect(results.filter((result) => result.status === 'rejected')).toHaveLength(1);
+      const managementRows = revisitRows.filter((row) => row.studyId === '' && row.docId === 'user-management');
+      expect(managementRows).toHaveLength(1);
+      const data = managementRows[0].data as { authentication: { isEnabled: boolean }; adminUsers: { adminUsersList: StoredUser[] } };
+      expect(data.authentication.isEnabled).toBe(true);
+      expect(data.adminUsers.adminUsersList).toHaveLength(1);
+
+      await expect(first.enableAuthentication({ email: 'test@test.com', uid: 'mock-uid' }))
+        .rejects.toThrow('Authentication setup has already started');
+    } finally {
+      revisitRows.splice(0, revisitRows.length, ...savedRows);
+    }
+  });
+
+  test.each([false, true])('explicitly disabled authentication can be enabled; existing admin list: %s', async (hasAdmins) => {
+    const savedRows = revisitRows.splice(0);
+    const existingAdmin = { email: 'existing@test.com', uid: 'uid-1' };
+    const row = {
+      studyId: '',
+      docId: 'user-management',
+      data: {
+        authentication: { isEnabled: false },
+        ...(hasAdmins ? { adminUsers: { adminUsersList: [existingAdmin] } } : {}),
+      },
+    };
+    revisitRows.push(row);
+    try {
+      const first = new SupabaseStorageEngine(true);
+      const second = new SupabaseStorageEngine(true);
+      vi.spyOn(second, 'getVerifiedUser').mockResolvedValue({ email: 'second@test.com', uid: 'uid-2' });
+      const results = await Promise.allSettled([
+        first.enableAuthentication({ email: 'test@test.com', uid: 'mock-uid' }),
+        second.enableAuthentication({ email: 'second@test.com', uid: 'uid-2' }),
+      ]);
+      expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+      expect(results.filter((result) => result.status === 'rejected')).toHaveLength(1);
+      const data = row.data as { authentication: { isEnabled: boolean }; adminUsers: { adminUsersList: StoredUser[] } };
+      expect(data.authentication.isEnabled).toBe(true);
+      expect(data.adminUsers.adminUsersList).toHaveLength(hasAdmins ? 2 : 1);
+      if (hasAdmins) expect(data.adminUsers.adminUsersList).toContainEqual(existingAdmin);
+    } finally {
+      revisitRows.splice(0, revisitRows.length, ...savedRows);
+    }
+  });
+
+  test('malformed authentication setting is rejected', async () => {
+    const row = { studyId: '', docId: 'user-management', data: { authentication: {} } };
+    revisitRows.push(row);
+    try {
+      await expect((storageEngine as SupabaseStorageEngine).getUserManagementData('authentication'))
+        .rejects.toThrow('Invalid authentication setting');
+    } finally {
+      revisitRows.splice(revisitRows.indexOf(row), 1);
+    }
   });
 
   test('changeAuth enables and disables authentication', async () => {
@@ -1534,6 +1678,6 @@ describe.each([
     expect(result).toBeDefined();
     expect(result).not.toBeNull();
     expect(result!.uid).toBe('mock-uid');
-    expect(result!.email).toBeNull();
+    expect(result!.email).toBe('test@test.com');
   });
 });

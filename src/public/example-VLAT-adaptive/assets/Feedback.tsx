@@ -25,7 +25,7 @@ export default function Feedback({ answers }: StimulusParams<any>) {
 
   const replayRecord = topAnswer.map((item) => {
     const ans = item[1].answer[taskid];
-    const correctAns = item[1].correctAnswer[0].answer;
+    const correctAns = item[1].correctAnswer?.[0]?.answer;
     const activeQidx = item[1].parameters.activeQuestionIdx;
     const correct = ans === correctAns;
     if (correct) correctNum += 1;
@@ -36,6 +36,13 @@ export default function Feedback({ answers }: StimulusParams<any>) {
       correct,
     };
   });
+
+  // Nothing to review if the participant has not completed any dynamic trials
+  if (replayRecord.length === 0) {
+    return (
+      <Text>No completed trials to review yet.</Text>
+    );
+  }
 
   return (
     <Grid maw={1800}>
@@ -61,18 +68,18 @@ export default function Feedback({ answers }: StimulusParams<any>) {
               {' '}
               questions.
               <br />
-              <Text c="grey">(Click each circle to check the question and your answer)</Text>
+              <Text c="dimmed">(Click each circle to check the question and your answer)</Text>
             </Title>
           </Center>
           <Group>
             {replayRecord.map((record, idx) => (
               <ColorSwatch style={{ cursor: 'pointer' }} key={`circle${idx}`} color={record.correct ? 'green' : 'red'} onClick={() => openTrialCheck(idx)}>
-                {idx === currentCheck && <IconEyeglass2 size={12} />}
+                {idx === currentCheck && <IconEyeglass2 size={12} color={record.correct ? 'white' : 'black'} />}
               </ColorSwatch>
             ))}
           </Group>
           <Center>
-            <Text w="80%" mt={20} size="sm" c="grey">*This score is based on an adaptive testing methodology and cannot be mapped to 0-1 or 0-100. Instead, it can be used to compare runs between yourself or with other peoples’ scores.</Text>
+            <Text w="80%" mt={20} size="sm" c="dimmed">*This score is based on an adaptive testing methodology and cannot be mapped to 0-1 or 0-100. Instead, it can be used to compare your own runs with each other or with other people&apos;s scores.</Text>
 
           </Center>
         </Card>

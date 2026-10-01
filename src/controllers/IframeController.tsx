@@ -1,12 +1,19 @@
 import {
-  useCallback, useEffect, useMemo, useRef,
+  useCallback, useContext, useEffect, useMemo, useRef, useState,
 } from 'react';
 import { useDispatch } from 'react-redux';
 import { useCurrentComponent, useCurrentIdentifier } from '../routes/utils';
 import { useStoreDispatch, useStoreActions, useStoreSelector } from '../store/store';
 import { ParticipantData, WebsiteComponent } from '../parser/types';
-import { PREFIX as BASE_PREFIX } from '../utils/Prefix';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
+import { ReplayContext } from '../store/hooks/useReplay';
+import { compileTemplate } from '../utils/handlebars';
+import { useTemplateAnswerContext } from '../store/hooks/useTemplateAnswerContext';
+import { getAssetStatus, useAssetStatus, useAssetLoadStatus } from '../store/hooks/useAssetStatus';
+import { useAsyncResource } from '../store/hooks/useAsyncResource';
+import { getStaticAssetByPath } from '../utils/getStaticAsset';
+import { PREFIX as BASE_PREFIX } from '../utils/Prefix';
+import { ResourceNotFound } from '../ResourceNotFound';
 
 const PREFIX = '@REVISIT_COMMS';
 
@@ -18,7 +25,24 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   const dispatch = useDispatch();
   const identifier = useCurrentIdentifier();
   const isAnalysis = useIsAnalysis();
+  const replay = useContext(ReplayContext);
+  const initialReplayTime = useRef(replay?.seekTime ?? 0);
+  const [hasReplayStarted, setHasReplayStarted] = useState(false);
   const stimulusValidation = useStoreSelector((state) => state.trialValidation[identifier]?.stimulus);
+
+  useEffect(() => {
+    if (replay && (replay.isPlaying || replay.seekTime !== initialReplayTime.current)) {
+      setHasReplayStarted(true);
+    }
+  }, [replay]);
+
+  const shouldSendProvenance = !isAnalysis || !replay || hasReplayStarted;
+
+  const templateData = useTemplateAnswerContext();
+  const templatedPath = useMemo(
+    () => (templateData ? compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true, data: templateData }) : undefined),
+    [currentConfig.path, currentConfig.parameters, templateData],
+  );
 
   const ref = useRef<HTMLIFrameElement>(null);
   const stimulusValidationRef = useRef(stimulusValidation);
@@ -34,6 +58,25 @@ export function IframeController({ currentConfig, provState, answers }: { curren
 
   // navigation
   const currentComponent = useCurrentComponent();
+
+  const url = useMemo(() => {
+    if (templatedPath === undefined) return undefined;
+    return templatedPath.startsWith('http')
+      ? templatedPath
+      : `${BASE_PREFIX}${templatedPath}?trialid=${currentComponent}&id=${iframeId}`;
+  }, [templatedPath, currentComponent, iframeId]);
+  const requestKey = url === undefined ? undefined : `${identifier}:${url}`;
+  const checkWebsite = useCallback(async () => {
+    if (url === undefined) return undefined;
+    // External iframe responses cannot be inspected without the site's CORS permission.
+    if (new URL(url, window.location.href).origin !== window.location.origin) return true;
+    return await getStaticAssetByPath(url) === undefined ? undefined : true;
+  }, [url]);
+  const { status } = useAsyncResource(requestKey, checkWebsite);
+  const { status: frameStatus, onReady, onError } = useAssetLoadStatus(requestKey);
+  const assetStatus = getAssetStatus(status, frameStatus);
+
+  useAssetStatus(assetStatus);
 
   const sendMessage = useCallback(
     (tag: string, message: unknown) => {
@@ -51,10 +94,10 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   );
 
   useEffect(() => {
-    if (provState) {
+    if (provState && shouldSendProvenance) {
       sendMessage('PROVENANCE', provState);
     }
-  }, [provState, sendMessage]);
+  }, [provState, sendMessage, shouldSendProvenance]);
 
   useEffect(() => {
     if (answers) {
@@ -71,7 +114,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
             if (currentConfig.parameters) {
               sendMessage('STUDY_DATA', currentConfig.parameters);
             }
-            if (provState) {
+            if (provState && shouldSendProvenance) {
               sendMessage('PROVENANCE', provState);
             }
             if (answers) {
@@ -112,17 +155,36 @@ export function IframeController({ currentConfig, provState, answers }: { curren
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, [storeDispatch, dispatch, iframeId, currentConfig, sendMessage, setReactiveAnswers, updateProvenance, updateResponseBlockValidation, identifier, isAnalysis, provState, answers]);
+  }, [storeDispatch, dispatch, iframeId, currentConfig, sendMessage, setReactiveAnswers, updateProvenance, updateResponseBlockValidation, identifier, isAnalysis, provState, answers, shouldSendProvenance]);
+
+  // While the path is templated inside a dynamic block, templatedPath is undefined until the
+  // block's current iteration resolves — don't load an iframe built from the wrong iteration.
+  if (templatedPath === undefined) {
+    return null;
+  }
+
+  if (assetStatus === 'error') {
+    return <ResourceNotFound path={templatedPath} />;
+  }
 
   return (
     <iframe
+      key={requestKey}
       ref={ref}
-      style={{ width: '100%', flexGrow: 1, border: 0 }}
-      src={
-        currentConfig.path.startsWith('http')
-          ? currentConfig.path
-          : `${BASE_PREFIX}${currentConfig.path}?trialid=${currentComponent}&id=${iframeId}`
-      }
+      inert={isAnalysis}
+      aria-disabled={isAnalysis}
+      style={{
+        width: '100%',
+        flexGrow: 1,
+        border: 0,
+        colorScheme: currentConfig.colorMode ?? 'inherit',
+        // Keep transparent embedded pages readable when their scheme differs from the study.
+        backgroundColor: currentConfig.colorMode ? 'Canvas' : undefined,
+        pointerEvents: isAnalysis ? 'none' : undefined,
+      }}
+      src={url}
+      onLoad={onReady}
+      onErrorCapture={onError}
     />
   );
 }

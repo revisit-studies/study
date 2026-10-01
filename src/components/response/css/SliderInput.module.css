@@ -14,3 +14,10 @@
     opacity: 1 !important;
   }
 }
+
+.fixDisabledThumb {
+  &[data-disabled] {
+    display: flex !important;
+    opacity: 1 !important;
+  }
+}

@@ -7,6 +7,7 @@ import { getComponent } from '../../utils/handleComponentInheritance';
 import { decryptIndex } from '../../utils/encryptDecryptIndex';
 import { findFuncBlock } from '../../utils/getSequenceFlatMap';
 import type { IndividualComponent } from '../../parser/types';
+import type { Sequence } from '../../store/types';
 import { makeStudyConfig } from '../../tests/utils';
 import {
   useStudyId, useCurrentStep, useCurrentComponent, useCurrentIdentifier,
@@ -32,7 +33,12 @@ let mockParams: Record<string, string | undefined> = { studyId: 'test-study' };
 let mockSearchParams = new URLSearchParams();
 let mockNavigate = vi.fn();
 let mockFlatSequence: string[] = ['intro', 'end'];
-let mockAnswers: Record<string, Record<string, string | number | undefined>> = {};
+let mockAnswers: Record<string, Record<string, string | number | object | undefined>> = {};
+let mockParticipantSequence: Sequence = {
+  id: 'root', orderPath: 'root', order: 'fixed', components: ['intro', 'end'], skip: [],
+};
+const mockPushToFuncSequence = vi.fn((payload) => payload);
+const mockStoreDispatch = vi.fn();
 const mockStudyConfig = makeStudyConfig({
   sequence: {
     id: 'root', order: 'fixed', components: ['intro', 'end'], skip: [],
@@ -49,9 +55,9 @@ vi.mock('react-router', () => ({
 
 vi.mock('../../store/store', () => ({
   useFlatSequence: () => mockFlatSequence,
-  useStoreActions: () => ({ pushToFuncSequence: vi.fn() }),
-  useStoreDispatch: () => vi.fn(),
-  useStoreSelector: (selector: (s: { answers: typeof mockAnswers }) => string | number | undefined) => selector({ answers: mockAnswers }),
+  useStoreActions: () => ({ pushToFuncSequence: mockPushToFuncSequence }),
+  useStoreDispatch: () => mockStoreDispatch,
+  useStoreSelector: (selector: (s: { answers: typeof mockAnswers; sequence: Sequence }) => unknown) => selector({ answers: mockAnswers, sequence: mockParticipantSequence }),
 }));
 
 vi.mock('../../utils/encryptDecryptIndex', () => ({
@@ -84,6 +90,11 @@ beforeEach(() => {
   mockNavigate = vi.fn();
   mockFlatSequence = ['intro', 'end'];
   mockAnswers = {};
+  mockParticipantSequence = {
+    id: 'root', orderPath: 'root', order: 'fixed', components: ['intro', 'end'], skip: [],
+  };
+  mockPushToFuncSequence.mockClear();
+  mockStoreDispatch.mockClear();
   vi.mocked(parseTrialOrder).mockReturnValue({ step: null, funcIndex: null });
   vi.mocked(getComponent).mockReturnValue({ type: 'markdown', path: '/test.md', response: [] } as IndividualComponent);
   vi.mocked(decryptIndex).mockImplementation((x: string) => parseInt(x, 10));
@@ -241,6 +252,46 @@ describe('useCurrentComponent', () => {
     const { result } = renderHook(() => useCurrentComponent());
 
     expect(result.current).toBe('CompA');
+  });
+
+  test('passes participant sequence parameters to the dynamic function', async () => {
+    mockParams = { studyId: 'test-study', index: '0', funcIndex: '0' };
+    mockFlatSequence = ['myFunc', 'end'];
+    mockAnswers = { participant: { endTime: 1 } };
+    mockParticipantSequence = {
+      id: 'root',
+      orderPath: 'root',
+      order: 'fixed',
+      components: [{
+        id: 'myFunc',
+        orderPath: 'root-0',
+        order: 'dynamic',
+        components: [],
+        parameters: { name: 'participant' },
+        skip: [],
+      }, 'end'],
+      skip: [],
+    };
+    const configuredBlock = {
+      id: 'myFunc',
+      order: 'dynamic' as const,
+      functionPath: 'test-step-logic/func.ts',
+      parameters: { name: 'configured' },
+    };
+    vi.mocked(findFuncBlock).mockImplementation((_name, sequence) => (
+      sequence === mockParticipantSequence ? mockParticipantSequence.components[0] as Sequence : configuredBlock
+    ) as never);
+    vi.mocked(getComponent).mockImplementation((name) => (name === 'reactComponent'
+      ? { type: 'react-component', path: 'test-step-logic/Example.tsx', response: [] } as IndividualComponent
+      : null));
+
+    const { result } = renderHook(() => useCurrentComponent());
+
+    expect(result.current).toBe('reactComponent');
+    expect(mockStoreDispatch).toHaveBeenCalledWith(expect.objectContaining({
+      component: 'reactComponent',
+      parameters: { n: 1 },
+    }));
   });
 });
 

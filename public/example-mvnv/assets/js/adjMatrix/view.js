@@ -1538,6 +1538,7 @@ var View = /** @class */ (function () {
         nonAnswerColumn.attr('cursor', 'pointer');
         d3.select('.loading').style('display', 'none');
         this.controller.model.setUpProvenance();
+        rehydrateRevisitState();
         window.focus();
         // Draw buttons for alternative sorts
         var initalY = -this.margins.left + 10;

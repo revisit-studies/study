@@ -41,11 +41,11 @@ test('Test website component with reactive response', async ({ page }) => {
   const vis2 = await page.frameLocator('#root iframe').getByRole('img');
   await expect(vis2).toBeVisible();
 
-  // Select a bar
-  await page.frameLocator('#root iframe').locator('rect:nth-child(4)').click();
+  // Select the smallest bar
+  await page.frameLocator('#root iframe').locator('rect:nth-child(7)').click();
 
   // Check that the bar is selected and the response is filled
-  const responseValue2 = await page.getByText('1.3');
+  const responseValue2 = await page.getByText('-0.3');
   await expect(responseValue2).toBeVisible();
 
   // Click on the next button

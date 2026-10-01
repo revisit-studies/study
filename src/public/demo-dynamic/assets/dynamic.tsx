@@ -15,7 +15,7 @@ export default function dynamic({ answers, currentStep, currentBlock }: JumpFunc
     || (answer.answer.buttonResponse === 'Same' && answer.parameters.left === answer.parameters.right);
 
   const lastAnswer = filteredAnswers[filteredAnswers.length - 1]?.[1];
-  let message = 'The answer difficulty will change based on your last answer';
+  let message = 'The question difficulty will change based on your last answer';
   let color = 'blue';
 
   const isCorrect = lastAnswer && checkCorrectness(lastAnswer);

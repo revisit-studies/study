@@ -1,5 +1,7 @@
 import React, { ReactNode } from 'react';
-import { render, waitFor, act } from '@testing-library/react';
+import {
+  render, waitFor, act, fireEvent,
+} from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
@@ -22,7 +24,7 @@ import { MarkdownController } from '../MarkdownController';
 import { ReactComponentController } from '../ReactComponentController';
 import { VegaController } from '../VegaController';
 import { VideoController } from '../VideoController';
-import { useCurrentComponent, useCurrentStep } from '../../routes/utils';
+import { useCurrentComponent, useCurrentIdentifier, useCurrentStep } from '../../routes/utils';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { getStaticAssetByPath, getJsonAssetByPath } from '../../utils/getStaticAsset';
 import { useStoreDispatch, useStoreSelector } from '../../store/store';
@@ -34,8 +36,10 @@ import { makeStoredAnswer, makeStorageEngine } from '../../tests/utils';
 // ── mutable state ────────────────────────────────────────────────────────────
 
 let mockVegaImpl: React.FC = () => React.createElement('div', null, 'Vega');
+const mockTrrackApply = vi.fn();
 
 let mockStoreActions = {
+  setAssetStatus: vi.fn(),
   setReactiveAnswers: vi.fn(),
   updateProvenance: vi.fn(),
   updateResponseBlockValidation: vi.fn(),
@@ -46,7 +50,9 @@ let mockStoreActions = {
 // ── mocks ────────────────────────────────────────────────────────────────────
 
 vi.mock('@mantine/core', () => ({
-  Image: ({ src }: { src?: string }) => <img src={src} alt="img" />,
+  Image: ({ src, onLoad, onError }: { src?: string; onLoad?: () => void; onError?: () => void }) => (
+    <img src={src} onLoad={onLoad} onError={onError} alt="img" />
+  ),
   Text: ({ children }: { children: ReactNode }) => <p>{children}</p>,
   Box: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Center: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -63,7 +69,8 @@ vi.mock('../../ResourceNotFound', () => ({
   ResourceNotFound: ({ path, email }: { path?: string; email?: string }) => (
     <div>
       ResourceNotFound:
-      {path ?? email}
+      {path}
+      {email}
     </div>
   ),
 }));
@@ -91,7 +98,9 @@ vi.mock('../../components/response/ResponseBlock', () => ({
 }));
 
 vi.mock('../../components/screenRecording/ScreenRecordingReplay', () => ({
-  ScreenRecordingReplay: () => <div>ScreenRecordingReplay</div>,
+  ScreenRecordingReplay: ({ webcamOnly }: { webcamOnly?: boolean }) => (
+    <div>{webcamOnly ? 'WebcamOnlyReplay' : 'ScreenRecordingReplay'}</div>
+  ),
 }));
 
 vi.mock('../../utils/getStaticAsset', () => ({
@@ -106,6 +115,7 @@ vi.mock('../../utils/Prefix', () => ({
 vi.mock('../../store/store', () => ({
   useStoreDispatch: vi.fn(() => vi.fn()),
   useStoreActions: vi.fn(() => mockStoreActions),
+  useFlatSequence: vi.fn(() => []),
   useStoreSelector: vi.fn((selector: (s: StoreState) => StoreState[keyof StoreState]) => selector({
     answers: {},
     analysisCanPlayScreenRecording: false,
@@ -225,7 +235,7 @@ vi.mock('@trrack/core', () => ({
     })),
   },
   initializeTrrack: vi.fn(() => ({
-    apply: vi.fn(),
+    apply: mockTrrackApply,
     currentChange: vi.fn(() => vi.fn()),
     graph: { backend: {} },
   })),
@@ -307,25 +317,34 @@ describe('ImageController', () => {
     expect(html).toContain('https://example.com/img.png');
   });
 
-  test('renders ResourceNotFound after fetch returns undefined', async () => {
-    vi.mocked(getStaticAssetByPath).mockResolvedValueOnce(undefined);
+  test('renders ResourceNotFound after an image load error', () => {
     const { container } = render(<ImageController currentConfig={{ type: 'image', path: '/missing.png', response: [] }} />);
-    await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
+    fireEvent.error(container.querySelector('img')!);
+    expect(container.textContent).toContain('ResourceNotFound');
+    expect(container.textContent).toContain('test@test.com');
+    expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith({ identifier: 'trial1_0', status: 'error' });
   });
 
-  test('renders img after fetch returns content', async () => {
-    vi.mocked(getStaticAssetByPath).mockResolvedValueOnce('image-data');
+  test('starts loading and becomes ready after the image loads', () => {
     const { container } = render(<ImageController currentConfig={{ type: 'image', path: '/found.png', response: [] }} />);
-    await waitFor(() => expect(container.querySelector('img')).toBeTruthy());
+    expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith({ identifier: 'trial1_0', status: 'loading' });
+    fireEvent.load(container.querySelector('img')!);
+    expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith({ identifier: 'trial1_0', status: 'ready' });
+    expect(container.querySelector('img')).toBeTruthy();
   });
 
-  test('checks absolute image URLs without prefixing them', async () => {
+  test('waits for the new image when its path changes after an error', () => {
+    const { container, rerender } = render(<ImageController currentConfig={{ type: 'image', path: '/missing.png', response: [] }} />);
+    fireEvent.error(container.querySelector('img')!);
+    rerender(<ImageController currentConfig={imageConfig} />);
+    expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith({ identifier: 'trial1_0', status: 'loading' });
+    fireEvent.load(container.querySelector('img')!);
+    expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith({ identifier: 'trial1_0', status: 'ready' });
+  });
+
+  test('uses absolute image URLs without prefixing them', () => {
     const remotePath = 'https://raw.githubusercontent.com/revisit-studies/library-assets/v1/vlat/VLAT1.png';
-    vi.mocked(getStaticAssetByPath).mockResolvedValueOnce('image-data');
-
     const { container } = render(<ImageController currentConfig={{ type: 'image', path: remotePath, response: [] }} />);
-
-    await waitFor(() => expect(getStaticAssetByPath).toHaveBeenCalledWith(remotePath));
     expect(container.querySelector('img')?.getAttribute('src')).toBe(remotePath);
   });
 });
@@ -342,6 +361,7 @@ describe('MarkdownController', () => {
     vi.mocked(getStaticAssetByPath).mockResolvedValueOnce(undefined);
     const { container } = render(<MarkdownController currentConfig={{ type: 'markdown', path: '/missing.md', response: [] }} />);
     await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
+    expect(container.textContent).toContain('test@test.com');
   });
 
   test('renders markdown text after fetch resolves with content', async () => {
@@ -354,11 +374,29 @@ describe('MarkdownController', () => {
 // ── ReactComponentController ──────────────────────────────────────────────────
 
 describe('ReactComponentController', () => {
+  test.each(['render', 'effect'])('renders ResourceNotFound and marks the asset failed after a %s exception', async (failure) => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const path = 'libraries/test/assets/ThrowingStimulus.tsx';
+    const { container } = render(
+      <ReactComponentController
+        currentConfig={{
+          type: 'react-component', path, parameters: { failure }, response: [],
+        }}
+        answers={{}}
+      />,
+    );
+
+    await waitFor(() => expect(container.textContent).toContain(`ResourceNotFound:${path}`));
+    expect(container.textContent).not.toContain('Stimulus initialization failed');
+    expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith({ identifier: 'trial1_0', status: 'error' });
+  });
+
   test('renders ResourceNotFound when the module path is not in import.meta.glob', () => {
     const html = renderToStaticMarkup(
       <ReactComponentController currentConfig={missingReactConfig} answers={{}} />,
     );
     expect(html).toContain('ResourceNotFound');
+    expect(html).toContain('test@test.com');
   });
 });
 
@@ -385,6 +423,40 @@ describe('VegaController', () => {
     vi.mocked(getJsonAssetByPath).mockResolvedValueOnce(undefined);
     const { container } = render(<VegaController currentConfig={{ type: 'vega', path: '/missing.json', response: [] }} />);
     await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
+    expect(container.textContent).toContain('test@test.com');
+  });
+
+  test('resets validation while a changed path is loading after a previous failure', async () => {
+    vi.clearAllMocks();
+    mockStoreActions.updateResponseBlockValidation.mockClear();
+    let resolveNextConfig!: (config: Record<string, unknown>) => void;
+    const nextConfig = new Promise<Record<string, unknown>>((resolve) => {
+      resolveNextConfig = resolve;
+    });
+    vi.mocked(getJsonAssetByPath)
+      .mockResolvedValueOnce(undefined)
+      .mockReturnValueOnce(nextConfig);
+
+    const response = [{
+      id: 'r', type: 'reactive', prompt: 'Complete', required: true,
+    }];
+    const firstConfig = { type: 'vega', path: '/first.json', response } as unknown as VegaComponent;
+    const secondConfig = { type: 'vega', path: '/second.json', response } as unknown as VegaComponent;
+    const { container, rerender } = render(<VegaController currentConfig={firstConfig} />);
+
+    await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
+    expect(container.textContent).toContain('test@test.com');
+    expect(mockStoreActions.updateResponseBlockValidation).toHaveBeenLastCalledWith(expect.objectContaining({ status: false }));
+    expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'error' }));
+
+    rerender(<VegaController currentConfig={secondConfig} />);
+    await waitFor(() => expect(mockStoreActions.updateResponseBlockValidation).toHaveBeenLastCalledWith(expect.objectContaining({ status: false })));
+
+    await act(async () => {
+      resolveNextConfig({ $schema: 'vega', marks: [] });
+    });
+    await waitFor(() => expect(container.textContent).toContain('Vega'));
+    expect(mockStoreActions.updateResponseBlockValidation).toHaveBeenLastCalledWith(expect.objectContaining({ status: false }));
   });
 
   test('renders Vega for an inline config object', async () => {
@@ -407,6 +479,7 @@ describe('VideoController', () => {
     vi.mocked(getStaticAssetByPath).mockResolvedValueOnce(undefined);
     const { container } = render(<VideoController currentConfig={{ type: 'video', path: '/missing.mp4', response: [] }} />);
     await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
+    expect(container.textContent).toContain('test@test.com');
   });
 
   test('renders video element for a valid YouTube URL', async () => {
@@ -479,6 +552,7 @@ describe('ComponentController', () => {
     vi.mocked(useCurrentComponent).mockReturnValue('Notfound');
     const html = renderToStaticMarkup(<ComponentController />);
     expect(html).toContain('ResourceNotFound');
+    expect(html).toContain('test@test.com');
   });
 
   test('renders Loader when participantId in URL does not match store participantId', () => {
@@ -530,18 +604,22 @@ describe('ComponentController — effect coverage (render-based)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useCurrentComponent).mockReturnValue('end');
+    vi.mocked(useCurrentIdentifier).mockReturnValue('trial1_0');
     vi.mocked(useCurrentStep).mockReturnValue(0);
     vi.mocked(useIsAnalysis).mockReturnValue(false);
     vi.mocked(useRecordingConfig).mockReturnValue({
       studyHasScreenRecording: false,
       studyHasAudioRecording: false,
+      studyHasWebcamRecording: false,
       currentComponentHasAudioRecording: false,
       currentComponentHasScreenRecording: false,
+      currentComponentHasWebcamRecording: false,
       currentComponentHasClickToRecord: false,
     });
     vi.mocked(findBlockForStep).mockReturnValue([]);
     vi.mocked(useStoreDispatch).mockReturnValue(vi.fn());
     mockStoreActions = {
+      setAssetStatus: vi.fn(),
       setReactiveAnswers: vi.fn(),
       updateProvenance: vi.fn(),
       updateResponseBlockValidation: vi.fn(),
@@ -596,6 +674,20 @@ describe('ComponentController — effect coverage (render-based)', () => {
     });
   });
 
+  test('does not show a connection warning for a study intentionally using local storage', async () => {
+    vi.stubEnv('VITE_STORAGE_ENGINE', 'firebase');
+    vi.stubEnv('PROD', true);
+    const cloudEngine = makeStorageEngine({ getEngine: vi.fn<() => 'firebase'>(() => 'firebase') });
+    vi.mocked(useStorageEngine).mockReturnValue({
+      storageEngine: makeStorageEngine({ getEngine: vi.fn<() => 'localStorage'>(() => 'localStorage') }),
+      configuredStorageEngine: cloudEngine,
+      setStorageEngine: vi.fn(),
+    });
+    render(<ComponentController />);
+    await act(async () => {});
+    expect(mockStoreActions.setAlertModal).not.toHaveBeenCalled();
+  });
+
   test('isAnalysis=true returns early from block effect', async () => {
     vi.mocked(useIsAnalysis).mockReturnValue(true);
     render(<ComponentController />);
@@ -636,6 +728,7 @@ describe('ComponentController — effect coverage (render-based)', () => {
   test('setAnalysisCanPlayScreenRecording dispatched with true', async () => {
     const setAnalysisCanPlaySpy = vi.fn().mockReturnValue('PLAY_ACTION');
     mockStoreActions = {
+      setAssetStatus: vi.fn(),
       setReactiveAnswers: vi.fn(),
       updateProvenance: vi.fn(),
       updateResponseBlockValidation: vi.fn(),
@@ -644,6 +737,18 @@ describe('ComponentController — effect coverage (render-based)', () => {
     };
     render(<ComponentController />);
     await waitFor(() => expect(setAnalysisCanPlaySpy).toHaveBeenCalledWith(true));
+  });
+
+  test('resets recording replay availability for the next dynamic child', async () => {
+    const setAnalysisCanPlaySpy = vi.fn();
+    mockStoreActions.setAnalysisCanPlayScreenRecording = setAnalysisCanPlaySpy;
+    vi.mocked(useCurrentIdentifier).mockReturnValue('block_0_first_0');
+    const view = render(<ComponentController />);
+    await waitFor(() => expect(setAnalysisCanPlaySpy).toHaveBeenCalledTimes(1));
+
+    vi.mocked(useCurrentIdentifier).mockReturnValue('block_0_second_1');
+    view.rerender(<ComponentController />);
+    await waitFor(() => expect(setAnalysisCanPlaySpy).toHaveBeenCalledTimes(2));
   });
 
   test('auto-forward navigates when last answer step > currentStep', async () => {
@@ -669,8 +774,10 @@ describe('ComponentController — effect coverage (render-based)', () => {
     vi.mocked(useRecordingConfig).mockReturnValue({
       studyHasScreenRecording: true,
       studyHasAudioRecording: false,
+      studyHasWebcamRecording: false,
       currentComponentHasAudioRecording: false,
       currentComponentHasScreenRecording: false,
+      currentComponentHasWebcamRecording: false,
       currentComponentHasClickToRecord: false,
     });
     const stableStateCanPlay = makeStableState({ analysisCanPlayScreenRecording: true });
@@ -680,6 +787,32 @@ describe('ComponentController — effect coverage (render-based)', () => {
 
     const { container } = render(<ComponentController />);
     await waitFor(() => expect(container.textContent).toContain('ScreenRecordingReplay'));
+  });
+
+  test('webcam-only replay renders alongside the stimulus', async () => {
+    vi.mocked(useCurrentComponent).mockReturnValue('testTrial');
+    vi.mocked(useIsAnalysis).mockReturnValue(true);
+    vi.mocked(useStorageEngine).mockReturnValue({
+      storageEngine: makeStorageEngine(),
+      setStorageEngine: vi.fn(),
+    });
+    vi.mocked(useRecordingConfig).mockReturnValue({
+      studyHasScreenRecording: false,
+      studyHasAudioRecording: false,
+      studyHasWebcamRecording: true,
+      currentComponentHasAudioRecording: false,
+      currentComponentHasScreenRecording: false,
+      currentComponentHasWebcamRecording: true,
+      currentComponentHasClickToRecord: false,
+    });
+    const stableStateCanPlay = makeStableState({ analysisCanPlayScreenRecording: true });
+    vi.mocked(useStoreSelector).mockImplementation(
+      (selector) => selector(stableStateCanPlay),
+    );
+
+    const { container } = render(<ComponentController />);
+    await waitFor(() => expect(container.textContent).toContain('WebcamOnlyReplay'));
+    expect(container.textContent).toContain('ResponseBlock');
   });
 });
 
@@ -691,6 +824,7 @@ describe('VegaController — signal and event coverage', () => {
     vi.mocked(useIsAnalysis).mockReturnValue(false);
     vi.mocked(useStoreDispatch).mockReturnValue(vi.fn());
     mockStoreActions = {
+      setAssetStatus: vi.fn(),
       setReactiveAnswers: vi.fn(),
       updateProvenance: vi.fn(),
       updateResponseBlockValidation: vi.fn(),
@@ -738,7 +872,18 @@ describe('VegaController — signal and event coverage', () => {
 
     await waitFor(() => expect(capturedOnNewView).toBeDefined());
 
-    const fakeView = { signal: vi.fn().mockReturnValue({ run: vi.fn() }) } as unknown as View;
+    const signalValues: Record<string, unknown> = {
+      mySignal: 'initial',
+      revisitAnswer: {},
+    };
+    const fakeView = {
+      signal: vi.fn((name: string, value?: unknown) => {
+        if (value === undefined) return signalValues[name];
+        signalValues[name] = value;
+        return fakeView;
+      }),
+      run: vi.fn(),
+    } as unknown as View;
     await act(async () => {
       capturedSignalListeners.mySignal?.('mySignal', 'hello');
       capturedSignalListeners.revisitAnswer?.('revisitAnswer', { responseId: 'r1', response: 'yes' });
@@ -747,6 +892,92 @@ describe('VegaController — signal and event coverage', () => {
 
     expect(mockDispatch).toHaveBeenCalled();
     expect(fakeView.signal).toHaveBeenCalledWith('mySignal', 'testVal');
+  });
+
+  test('restores cumulative signals and resets them when replay seeks to the root', async () => {
+    type SignalHandler = (name: string, value: string | Record<string, string>) => void;
+    let capturedOnNewView: ((v: View) => void) | undefined;
+
+    vi.mocked(getJsonAssetByPath).mockResolvedValueOnce({
+      $schema: 'vega',
+      config: { signals: [{ name: 'xField' }, { name: 'yField' }] },
+    });
+
+    mockVegaImpl = (props: {
+      signalListeners?: Record<string, SignalHandler>;
+      onNewView?: (v: View) => void;
+    }) => {
+      capturedOnNewView = props.onNewView;
+      return React.createElement('div', null, 'Vega');
+    };
+
+    const { rerender } = render(
+      <VegaController
+        currentConfig={{ type: 'vega', path: '/chart.json', response: [] }}
+        provState={{ signals: { xField: 'Worldwide Gross', yField: 'US Gross' } }}
+      />,
+    );
+
+    await waitFor(() => expect(capturedOnNewView).toBeDefined());
+
+    const signalValues: Record<string, unknown> = {
+      xField: 'Rotten Tomatoes Rating',
+      yField: 'IMDB Rating',
+    };
+    const fakeView = {
+      signal: vi.fn((name: string, value?: unknown) => {
+        if (value === undefined) return signalValues[name];
+        signalValues[name] = value;
+        return fakeView;
+      }),
+      run: vi.fn(),
+    } as unknown as View;
+    await act(async () => {
+      capturedOnNewView?.(fakeView);
+    });
+
+    expect(signalValues).toEqual({
+      xField: 'Worldwide Gross',
+      yField: 'US Gross',
+    });
+
+    rerender(
+      <VegaController
+        currentConfig={{ type: 'vega', path: '/chart.json', response: [] }}
+        provState={{ signals: {} }}
+      />,
+    );
+
+    expect(signalValues).toEqual({
+      xField: 'Rotten Tomatoes Rating',
+      yField: 'IMDB Rating',
+    });
+  });
+
+  test('does not track signal events fired while applying replay state', async () => {
+    type SignalHandler = (name: string, value: string | Record<string, string>) => void;
+    let capturedSignalListeners: Record<string, SignalHandler> = {};
+
+    vi.mocked(useIsAnalysis).mockReturnValue(true);
+    vi.mocked(getJsonAssetByPath).mockResolvedValueOnce({
+      $schema: 'vega',
+      config: { signals: [{ name: 'mySignal' }, { name: 'revisitAnswer' }] },
+    });
+    mockVegaImpl = (props: { signalListeners?: Record<string, SignalHandler> }) => {
+      capturedSignalListeners = props.signalListeners ?? {};
+      return React.createElement('div', null, 'Vega');
+    };
+
+    const { container } = render(
+      <VegaController currentConfig={{ type: 'vega', path: '/chart.json', response: [] }} />,
+    );
+    await waitFor(() => expect(capturedSignalListeners.mySignal).toBeDefined());
+
+    capturedSignalListeners.mySignal('mySignal', 'replayed');
+    capturedSignalListeners.revisitAnswer('revisitAnswer', { responseId: 'r1', response: 'yes' });
+
+    expect(mockTrrackApply).not.toHaveBeenCalled();
+    expect(container.firstElementChild?.hasAttribute('inert')).toBe(true);
   });
 
   test('ignores replayed provenance for signals missing from the active vega config', async () => {
@@ -775,11 +1006,19 @@ describe('VegaController — signal and event coverage', () => {
 
     await waitFor(() => expect(capturedOnNewView).toBeDefined());
 
-    const fakeView = { signal: vi.fn().mockReturnValue({ run: vi.fn() }) } as unknown as View;
+    const signalValues: Record<string, unknown> = { revisitAnswer: {} };
+    const fakeView = {
+      signal: vi.fn((name: string, value?: unknown) => {
+        if (value === undefined) return signalValues[name];
+        signalValues[name] = value;
+        return fakeView;
+      }),
+      run: vi.fn(),
+    } as unknown as View;
     await act(async () => {
       capturedOnNewView?.(fakeView);
     });
 
-    expect(fakeView.signal).not.toHaveBeenCalled();
+    expect(vi.mocked(fakeView.signal).mock.calls.some(([signalName]) => signalName === 'tooltip')).toBe(false);
   });
 });

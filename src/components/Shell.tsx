@@ -25,6 +25,7 @@ import {
 import { ComponentController } from '../controllers/ComponentController';
 import { NavigateWithParams } from '../utils/NavigateWithParams';
 import { StepRenderer } from './StepRenderer';
+import { StudyRouteGuard } from '../routes/StudyRouteGuard';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import { generateSequenceArray } from '../utils/handleRandomSequences';
 import { getStudyConfig, resolveConfigKey } from '../utils/fetchConfig';
@@ -41,6 +42,8 @@ import {
   resolveParticipantConditions,
 } from '../utils/handleConditionLogic';
 import { StartupErrorScreen } from './StartupErrorScreen';
+import { materializeParticipantConfig } from '../parser/libraryParser';
+import { useStudyColorMode } from './AppThemeProvider';
 
 type StartupStorageStatus = Pick<StorageEngine, 'getEngine' | 'isConnected'>;
 
@@ -192,8 +195,11 @@ function createEmptyParticipantMetadata(): ParticipantMetadata {
     ip: '',
   };
 }
-
-export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
+function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
+  // Capture the system preference once, independently of saved app theme toggles.
+  const [initialSystemColorMode] = useState<'light' | 'dark'>(() => (
+    window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  ));
   // Pull study config
   const routeStudyId = useStudyId();
   const [activeConfig, setActiveConfig] = useState<ParsedConfig<StudyConfig> | null>(null);
@@ -241,7 +247,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
                 setActiveConfig(config);
               }
 
-              const sequenceArray = await generateSequenceArray(config);
+              const sequenceArray = await generateSequenceArray(config, config.warnings);
               if (!cancelled) {
                 window.parent.postMessage({ type: 'revisitWidget/SEQUENCE_ARRAY', payload: sequenceArray }, '*');
               }
@@ -274,7 +280,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   const [store, setStore] = useState<Nullable<StudyStore>>(null);
   const [isCompletionCheckResolved, setIsCompletionCheckResolved] = useState(false);
   const [completionCheckError, setCompletionCheckError] = useState<string | null>(null);
-  const { storageEngine } = useStorageEngine();
+  const { storageEngine, configuredStorageEngine } = useStorageEngine();
   const [searchParams] = useSearchParams();
 
   const participantId = useMemo(() => searchParams.get('participantId'), [searchParams]);
@@ -308,6 +314,8 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       const urlParticipantId = activeConfig.uiConfig.urlParticipantIdParam
         ? searchParams.get(activeConfig.uiConfig.urlParticipantIdParam) ?? undefined
         : undefined;
+      const initialColorMode = activeConfig.uiConfig.colorMode === 'userPreference'
+        ? initialSystemColorMode : activeConfig.uiConfig.colorMode ?? 'light';
       try {
         // Make sure that we have a study database and that the study database has a sequence array
         await storageEngine.initializeStudyDb(canonicalStudyId);
@@ -319,7 +327,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
         let sequenceArray = await storageEngine.getSequenceArray();
 
         if (!sequenceArray) {
-          sequenceArray = await generateSequenceArray(activeConfig);
+          sequenceArray = await generateSequenceArray(activeConfig, activeConfig.warnings);
 
           await storageEngine.setSequenceArray(sequenceArray);
         }
@@ -333,7 +341,10 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
         ]);
         modes = resolvedModes;
 
-        const initialMetadata = createParticipantMetadata();
+        const initialMetadata: ParticipantMetadata = {
+          ...createParticipantMetadata(),
+          colorMode: initialColorMode,
+        };
 
         let participantSession = await storageEngine.initializeParticipantSession(
           searchParamsObject,
@@ -374,11 +385,16 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           allowUrlOverride: resolvedModes.developmentModeEnabled,
         });
         const filteredParticipantSequence = filterSequenceByCondition(participantSession.sequence, resolvedCondition);
-
+        // Resolve participant-global templates only after loading the participant's persisted
+        // sequence, while keeping the canonical config used for hashing unchanged.
+        const runtimeConfig = materializeParticipantConfig(
+          participantConfig,
+          filteredParticipantSequence.parameters || {},
+        );
         // Initialize the redux stores
         const newStore = await studyStoreCreator(
           canonicalStudyId,
-          participantConfig,
+          runtimeConfig,
           filteredParticipantSequence,
           participantSession.metadata,
           participantSession.answers,
@@ -395,13 +411,13 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
         setStore(newStore);
 
-        if (resolvedModes.dataCollectionEnabled) {
+        if (resolvedModes.dataCollectionEnabled && !searchParams.has('participantId')) {
           fetchParticipantIp().then(async (ip) => {
             if (isCancelled || !ip.ip || participantSession.metadata.ip === ip.ip) {
               return;
             }
 
-            const metadataWithIp = createParticipantMetadata(ip.ip);
+            const metadataWithIp = { ...participantSession.metadata, ip: ip.ip };
             participantSession = {
               ...participantSession,
               metadata: metadataWithIp,
@@ -438,7 +454,8 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
         console.error('Error initializing user store routing:', error);
         const isStorageFailure = isStorageStartupFailure(
           storageEngine,
-          import.meta.env.VITE_STORAGE_ENGINE,
+          storageEngine !== configuredStorageEngine && configuredStorageEngine
+            ? storageEngine.getEngine() : import.meta.env.VITE_STORAGE_ENGINE,
         );
         const resolvedModes = modes ?? await storageEngine.getModes(canonicalStudyId).catch(() => null);
         const developmentModeEnabledForAlert = resolvedModes?.developmentModeEnabled ?? false;
@@ -456,19 +473,23 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
         try {
           // Preserve the existing disconnected-storage and participant alert recovery paths.
-          const generatedSequences = await generateSequenceArray(activeConfig);
+          const generatedSequences = await generateSequenceArray(activeConfig, activeConfig.warnings);
 
           const matchingSequence = generatedSequences[0];
           const fallbackSequence = filterSequenceByCondition(
             matchingSequence,
             studyCondition,
           );
+          const fallbackConfig = materializeParticipantConfig(
+            activeConfig,
+            fallbackSequence.parameters || {},
+          );
 
           const emptyStore = await studyStoreCreator(
             canonicalStudyId,
-            activeConfig,
+            fallbackConfig,
             fallbackSequence,
-            createEmptyParticipantMetadata(),
+            { ...createEmptyParticipantMetadata(), colorMode: initialColorMode },
             {},
             fallbackModes,
             '',
@@ -500,7 +521,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       // Initialize the routing
       setRoutes([
         {
-          element: <StepRenderer />,
+          element: <StudyRouteGuard><StepRenderer /></StudyRouteGuard>,
           children: [
             {
               path: '/',
@@ -523,9 +544,16 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
     return () => {
       isCancelled = true;
     };
-  }, [storageEngine, activeConfig, canonicalStudyId, searchParams, participantId, studyCondition]);
+  }, [storageEngine, configuredStorageEngine, activeConfig, canonicalStudyId, searchParams, participantId, studyCondition, initialSystemColorMode]);
 
   const routing = useRoutes(routes);
+  const participantState = store?.store.getState();
+  const loadingColorMode = activeConfig?.uiConfig?.colorMode === 'userPreference'
+    ? initialSystemColorMode : activeConfig?.uiConfig?.colorMode;
+  const studyColorMode = participantState
+    ? participantState.metadata.colorMode ?? (participantState.config.uiConfig.colorMode === 'dark' ? 'dark' : 'light')
+    : loadingColorMode;
+  useStudyColorMode(studyColorMode);
   const hasConfigErrors = (activeConfig?.errors?.length ?? 0) > 0;
   const { isLoading, showLoadingMessage, showCompletionCheckError } = getShellUiState({
     isValidStudyId,
@@ -560,7 +588,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       </StudyStoreContext.Provider>
     );
   } else if (!isLoading) {
-    content = <ResourceNotFound />;
+    content = <ResourceNotFound email={activeConfig?.uiConfig.contactEmail} />;
   }
 
   return (
@@ -592,4 +620,11 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       {content}
     </>
   );
+}
+
+export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
+  const studyId = useStudyId();
+  const [searchParams] = useSearchParams();
+  // A new study or replay participant must not retain the previous participant's store.
+  return <StudyShell key={`${studyId}:${searchParams.get('participantId') ?? ''}`} globalConfig={globalConfig} />;
 }

@@ -1,4 +1,4 @@
-This is an example project to show how to pass answers from a  React component to the reVISit Framework.
+This is an example project to show how to pass answers from a React component to the reVISit framework.
 It also shows how to use the Trrack library to track user interactions in React components.
 
 The example is a Stroop color test.

@@ -1,5 +1,22 @@
+.multiSelectSearch {
+  min-width: 3em;
+}
+
+.multiSelectPills:has(:global(.mantine-Pill-root)) .multiSelectSearch:placeholder-shown:not(:focus) {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  min-width: 0;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .fixDisabled {
-  &:disabled, [data-disabled] {
+
+  &:disabled,
+  &[data-disabled] {
     background-color: var(--input-bg) !important;
     color: var(--input-color) !important;
     opacity: 1 !important;

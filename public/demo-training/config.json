@@ -96,7 +96,7 @@
       "response": [
         {
           "id": "quiz",
-          "prompt": "Select A, D, F",
+          "prompt": "Select A, D, and F.",
           "required": true,
           "location": "sidebar",
           "type": "checkbox",
@@ -153,7 +153,7 @@
         },
         {
           "id": "number-question",
-          "answer": "13"
+          "answer": 13
         }
       ],
       "provideFeedback": true,

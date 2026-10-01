@@ -1,24 +1,140 @@
 import {
-  useState, useRef, useEffect, useCallback,
+  useState, useRef, useEffect, useCallback, useMemo,
 } from 'react';
 import {
   Stack, List, Text, Container, Button,
 } from '@mantine/core';
-import { StimulusParams } from '../../../../store/types';
+import { Registry } from '@trrack/core';
+import {
+  StimulusParams, StoredAnswer,
+} from '../../../../store/types';
 import { useStoreSelector } from '../../../../store/store';
+import { useIsAnalysis } from '../../../../store/hooks/useIsAnalysis';
+import { useStoredAnswer } from '../../../../store/hooks/useStoredAnswer';
+import { parseTrialOrder } from '../../../../utils/parseTrialOrder';
 
 // Utility functions
 const degToRadians = (degrees: number) => (degrees * Math.PI) / 180;
+const cardSizeComponent = '$virtual-chinrest.components.card-size';
 
-export default function ViewingDistanceCalibration({ parameters, setAnswer }: StimulusParams<{ blindspotAngle: number }>) {
+interface ViewingDistanceState {
+  ballPosition: number;
+  ballPositions: number[];
+  viewingDistance: number | null;
+}
+
+function normalizeViewingDistanceState(state: unknown): ViewingDistanceState | null {
+  if (typeof state !== 'object' || state === null) {
+    return null;
+  }
+
+  const candidate = state as Partial<ViewingDistanceState>;
+  const hasReplayState = 'ballPosition' in candidate
+    || 'ballPositions' in candidate
+    || 'viewingDistance' in candidate;
+  if (!hasReplayState) {
+    return null;
+  }
+
+  return {
+    ballPosition: Number.isFinite(candidate.ballPosition) ? candidate.ballPosition! : 740,
+    ballPositions: Array.isArray(candidate.ballPositions)
+      ? candidate.ballPositions.filter((position) => Number.isFinite(position))
+      : [],
+    viewingDistance: Number.isFinite(candidate.viewingDistance)
+      ? candidate.viewingDistance!
+      : null,
+  };
+}
+
+function compareTrialOrders(left: string, right: string) {
+  const leftOrder = parseTrialOrder(left);
+  const rightOrder = parseTrialOrder(right);
+  if (leftOrder.step === null || rightOrder.step === null) {
+    return undefined;
+  }
+
+  return leftOrder.step - rightOrder.step
+    || (leftOrder.funcIndex ?? -1) - (rightOrder.funcIndex ?? -1);
+}
+
+export function findPreviousCardSizeAnswer(
+  answers: Record<string, StoredAnswer>,
+  currentTrialOrder: StoredAnswer['trialOrder'] | undefined,
+) {
+  if (!currentTrialOrder || parseTrialOrder(currentTrialOrder).step === null) {
+    return undefined;
+  }
+
+  return Object.values(answers)
+    .filter((answer) => (
+      answer.componentName === cardSizeComponent
+      && (compareTrialOrders(answer.trialOrder, currentTrialOrder) ?? 0) < 0
+    ))
+    .sort((a, b) => compareTrialOrders(b.trialOrder, a.trialOrder) ?? 0)[0];
+}
+
+export default function ViewingDistanceCalibration({
+  parameters,
+  provenanceState,
+  setAnswer,
+  useTrrack,
+}: StimulusParams<{ blindspotAngle: number }, ViewingDistanceState>) {
+  const { actions, registry } = useMemo(() => {
+    const reg = Registry.create();
+    return {
+      actions: {
+        recordMeasurement: reg.register('record-measurement', (
+          state: ViewingDistanceState,
+          measurement: ViewingDistanceState,
+        ) => {
+          state.ballPosition = measurement.ballPosition;
+          state.ballPositions = measurement.ballPositions;
+          state.viewingDistance = measurement.viewingDistance;
+          return state;
+        }),
+      },
+      registry: reg,
+    };
+  }, []);
+  const trrack = useTrrack<ViewingDistanceState>({
+    registry,
+    initialState: {
+      ballPosition: 740,
+      ballPositions: [],
+      viewingDistance: null,
+    },
+  });
   const ballRef = useRef<HTMLDivElement>(null);
   const squareRef = useRef<HTMLDivElement>(null);
   const animationFrameRef = useRef<number | null>(null);
   const { blindspotAngle } = parameters;
+  const isAnalysis = useIsAnalysis();
 
   const ans = useStoreSelector((state) => state.answers);
-  const cardSizeAnswer = Object.values(ans).find((answer) => answer.componentName === '$virtual-chinrest.components.card-size');
+  const currentAnswer = useStoredAnswer();
+  const cardSizeAnswer = findPreviousCardSizeAnswer(ans, currentAnswer?.trialOrder);
   const pixelsPerMM = Number(cardSizeAnswer?.answer?.pixelsPerMM);
+  const storedViewingDistance = Number(currentAnswer?.answer?.['dist-calibration-MM']);
+  const replayState = useMemo(
+    () => normalizeViewingDistanceState(provenanceState),
+    [provenanceState],
+  );
+  const storedBallPositions = useMemo(() => {
+    const value = currentAnswer?.answer?.['ball-positions'];
+    if (typeof value !== 'string') {
+      return [];
+    }
+
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) && parsed.every((position) => typeof position === 'number')
+        ? parsed
+        : [];
+    } catch {
+      return [];
+    }
+  }, [currentAnswer]);
 
   // States
   const [ballPositions, setBallPositions] = useState<number[]>([]);
@@ -29,7 +145,7 @@ export default function ViewingDistanceCalibration({ parameters, setAnswer }: St
 
   // Calculate viewing distance function
   const calculateViewingDistance = useCallback((positions: number[]) => {
-    if (!positions.length || !pixelsPerMM || !squareRef.current) return;
+    if (!positions.length || !pixelsPerMM || !squareRef.current) return null;
 
     const avgBallPos = positions.reduce((a, b) => a + b, 0) / positions.length;
     const squareRect = squareRef.current.getBoundingClientRect();
@@ -39,6 +155,7 @@ export default function ViewingDistanceCalibration({ parameters, setAnswer }: St
 
     setViewingDistance(viewDistance);
     setIsTracking(false);
+    return viewDistance;
   }, [blindspotAngle, pixelsPerMM]);
 
   // Reset ball to starting position
@@ -95,7 +212,7 @@ export default function ViewingDistanceCalibration({ parameters, setAnswer }: St
   };
 
   useEffect(() => {
-    if (viewingDistance !== null && ballPositions.length === 5) {
+    if (!isAnalysis && viewingDistance !== null && ballPositions.length === 5) {
       setAnswer({
         status: true,
         answers: {
@@ -106,10 +223,14 @@ export default function ViewingDistanceCalibration({ parameters, setAnswer }: St
         },
       });
     }
-  }, [viewingDistance, ballPositions, setAnswer]);
+  }, [isAnalysis, viewingDistance, ballPositions, setAnswer]);
 
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
+      if (isAnalysis) {
+        return;
+      }
+
       if (event.code === 'Space') {
         event.preventDefault();
 
@@ -119,14 +240,18 @@ export default function ViewingDistanceCalibration({ parameters, setAnswer }: St
           stopTracking();
           const ballRect = ballRef.current.getBoundingClientRect();
           const newPosition = ballRect.left;
+          const replayBallPosition = Number.parseFloat(ballRef.current.style.left || '740');
+          const newPositions = [...ballPositions, newPosition];
+          const nextViewingDistance = newPositions.length >= 5
+            ? calculateViewingDistance(newPositions)
+            : null;
 
-          setBallPositions((prev) => {
-            const newPositions = [...prev, newPosition];
-            if (newPositions.length >= 5) {
-              calculateViewingDistance(newPositions);
-            }
-            return newPositions;
-          });
+          setBallPositions(newPositions);
+          trrack.apply('Record viewing-distance measurement', actions.recordMeasurement({
+            ballPosition: replayBallPosition,
+            ballPositions: newPositions,
+            viewingDistance: nextViewingDistance,
+          }));
 
           setClickCount((prev) => prev - 1);
           resetBall();
@@ -136,7 +261,15 @@ export default function ViewingDistanceCalibration({ parameters, setAnswer }: St
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [isTracking, startBlindspotTracking, calculateViewingDistance]);
+  }, [
+    actions,
+    ballPositions,
+    calculateViewingDistance,
+    isAnalysis,
+    isTracking,
+    startBlindspotTracking,
+    trrack,
+  ]);
 
   // Reset state when pixelsPerMM changes
   useEffect(() => {
@@ -154,6 +287,28 @@ export default function ViewingDistanceCalibration({ parameters, setAnswer }: St
     };
   }, []);
 
+  useEffect(() => {
+    if (replayState) {
+      setBallPositions(replayState.ballPositions);
+      setViewingDistance(replayState.viewingDistance);
+      setIsTracking(false);
+      setClickCount(Math.max(0, 5 - replayState.ballPositions.length));
+      if (ballRef.current) {
+        ballRef.current.style.left = `${replayState.ballPosition}px`;
+      }
+      return;
+    }
+
+    if (!Number.isFinite(storedViewingDistance) || storedViewingDistance <= 0) {
+      return;
+    }
+
+    setBallPositions(storedBallPositions);
+    setViewingDistance(storedViewingDistance);
+    setIsTracking(false);
+    setClickCount(Math.max(0, 5 - storedBallPositions.length));
+  }, [replayState, storedBallPositions, storedViewingDistance]);
+
   // Cleanup animation frame on unmount
   useEffect(() => () => {
     if (animationFrameRef.current) {
@@ -168,6 +323,11 @@ export default function ViewingDistanceCalibration({ parameters, setAnswer }: St
     setIsTracking(false);
     setClickCount(5);
     resetBall();
+    trrack.apply('Reset viewing-distance measurements', actions.recordMeasurement({
+      ballPosition: 740,
+      ballPositions: [],
+      viewingDistance: null,
+    }));
     // clear submitted answers
     setAnswer({
       status: false,
@@ -215,6 +375,7 @@ export default function ViewingDistanceCalibration({ parameters, setAnswer }: St
         >
           <div
             ref={ballRef}
+            data-testid="blindspot-ball"
             style={{
               position: 'absolute',
               width: '30px',
@@ -244,7 +405,7 @@ export default function ViewingDistanceCalibration({ parameters, setAnswer }: St
           ballPositions.length > 0 && (
             <>
               <Text ta="left"> Not happy with your measurements? You can restart by clicking &quot;Retake&quot;.</Text>
-              <Button size="md-compact" w="fit-content" color="indigo" onClick={handleRetake}>Retake</Button>
+              <Button disabled={isAnalysis} size="md-compact" w="fit-content" color="indigo" onClick={handleRetake}>Retake</Button>
             </>
           )
         }

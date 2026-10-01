@@ -223,13 +223,15 @@ export function ThinkAloudAnalysis({ visibleParticipants, storageEngine } : { vi
       <Group wrap="nowrap" gap={25}>
         <Stack ref={ref} style={{ width: '100%' }} gap={10}>
 
-          {!participantId || !currentTrial ? <Center><Text c="dimmed" size="24">Select a Participant and Trial to Analyze</Text></Center>
-            : !hasAudio || (rawTranscriptStatus === 'success' && rawTranscript === null) ? <Center><Text c="dimmed" size="24">No transcripts found for this task</Text></Center> : (
+          {participantId && participant && Object.keys(participant.answers).length === 0
+            ? <Center><Text c="dimmed" size="24">No components or transcripts to display for this participant</Text></Center>
+            : !participantId || !currentTrial ? <Center><Text c="dimmed" size="24">Select a Participant and Trial to Analyze</Text></Center>
+              : !hasAudio || (rawTranscriptStatus === 'success' && rawTranscript === null) ? <Center><Text c="dimmed" size="24">No transcripts found for this task</Text></Center> : (
 
-              <Stack>
-                <TextEditor onClickLine={changeLine} transcriptList={editedTranscript} setTranscriptList={setEditedTranscript} currentShownTranscription={currentShownTranscription} />
-              </Stack>
-            )}
+                <Stack>
+                  <TextEditor onClickLine={changeLine} transcriptList={editedTranscript} setTranscriptList={setEditedTranscript} currentShownTranscription={currentShownTranscription} />
+                </Stack>
+              )}
 
           <ThinkAloudFooter key={`${participantId}-${currentTrial}`} setHasAudio={setHasAudio} saveProvenance={() => null} studyId={studyId || ''} jumpedToLine={jumpedToLine} editedTranscript={editedTranscript} currentTrial={currentTrial} isReplay={false} visibleParticipants={visibleParticipants.map((v) => v.participantId)} rawTranscript={rawTranscript} onTimeUpdate={onTimeUpdate} currentShownTranscription={currentShownTranscription} width={width} storageEngine={storageEngine} />
         </Stack>

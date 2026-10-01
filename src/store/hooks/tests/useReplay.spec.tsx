@@ -91,6 +91,13 @@ describe('useReplay — returned state defaults', () => {
     expect(result.current.speed).toBe(1);
   });
 
+  test('starts with the side-by-side replay layout and updates it locally', () => {
+    const { result } = renderHook(() => useReplay());
+    expect(result.current.replayLayout).toBe('side-by-side');
+    act(() => { result.current.setReplayLayout('picture-in-picture'); });
+    expect(result.current.replayLayout).toBe('picture-in-picture');
+  });
+
   test('starts with hasEnded false', () => {
     const { result } = renderHook(() => useReplay());
     expect(result.current.hasEnded).toBe(false);
@@ -147,6 +154,36 @@ describe('useReplay — returned function invocation', () => {
     expect(result.current.seekTime).toBe(5);
   });
 
+  test('keeps updateReplayRef stable when replay control becomes remote', () => {
+    const { result } = renderHook(() => useReplay());
+    const initialUpdateReplayRef = result.current.updateReplayRef;
+
+    act(() => { result.current.setSeekTime(5, true); });
+
+    expect(result.current.updateReplayRef).toBe(initialUpdateReplayRef);
+  });
+
+  test('updates muting when ownership changes during playback', () => {
+    const { result } = renderHook(() => useReplay());
+    const video = document.createElement('video');
+    Object.defineProperty(video, 'src', { value: 'fake.mp4', writable: true, configurable: true });
+    video.play = vi.fn(async () => {});
+    video.pause = vi.fn();
+
+    act(() => {
+      result.current.videoRef.current = video;
+      result.current.updateReplayRef();
+      result.current.setIsPlaying(true);
+    });
+    expect(video.muted).toBe(false);
+
+    act(() => { result.current.setSeekTime(5, true); });
+    expect(video.muted).toBe(true);
+
+    act(() => { result.current.setSeekTime(6); });
+    expect(video.muted).toBe(false);
+  });
+
   test('setSpeed with isRemoteTriggered=true covers remote path', () => {
     const { result } = renderHook(() => useReplay());
     act(() => { result.current.setSpeed(1.5, true); });
@@ -162,8 +199,16 @@ describe('useReplay — syncEmitter listener', () => {
     const listenerEntry = onCalls.find(([event]) => event === 'replaySync');
     const listener = listenerEntry?.[1] as ((v: { seekTime: number; isPlaying: boolean; speed: number }) => void) | undefined;
     expect(listener).toBeDefined();
+    act(() => { result.current.setDuration(3); });
     act(() => { listener?.({ seekTime: 3, isPlaying: false, speed: 1.5 }); });
     expect(result.current.speed).toBe(1.5);
+    expect(result.current.seekTime).toBe(3);
+    expect(result.current.hasEnded).toBe(true);
+
+    act(() => { result.current.setIsPlaying(true); });
+    expect(result.current.seekTime).toBe(0);
+    expect(result.current.hasEnded).toBe(false);
+    expect(result.current.isPlaying).toBe(true);
   });
 
   test('cleanup removes the replaySync listener on unmount', () => {
@@ -224,7 +269,7 @@ describe('useReplay — handlePlay/Seeked/Pause via video element events', () =>
     expect(audio.muted).toBe(true);
   });
 
-  test('handleSeeked: seeked event updates seekTime', () => {
+  test('handleSeeked: seeked event preserves the task seekTime', () => {
     const { result } = renderHook(() => useReplay());
     const video = makeVideoWithSrc();
     act(() => {
@@ -281,6 +326,138 @@ describe('useReplay — handlePlay/Seeked/Pause via video element events', () =>
     expect(result.current.replayRef.current).toBe(audio);
   });
 
+  test('updateReplayRef uses webcam video when no screen recording exists', () => {
+    const { result } = renderHook(() => useReplay());
+    const webcam = makeVideoWithSrc();
+    act(() => {
+      result.current.webcamVideoRef.current = webcam;
+      result.current.updateReplayRef();
+    });
+    expect(result.current.replayRef.current).toBe(webcam);
+    expect(webcam.muted).toBe(true);
+  });
+
+  test('does not select an empty screen source over an available webcam source', () => {
+    const { result } = renderHook(() => useReplay());
+    const screen = document.createElement('video');
+    const webcam = makeVideoWithSrc();
+    screen.setAttribute('src', '');
+
+    act(() => {
+      result.current.videoRef.current = screen;
+      result.current.webcamVideoRef.current = webcam;
+      result.current.updateReplayRef();
+    });
+
+    expect(result.current.replayRef.current).toBe(webcam);
+  });
+
+  test('uses audio as the authoritative source when replaying webcam and audio', () => {
+    const { result } = renderHook(() => useReplay());
+    const webcam = makeVideoWithSrc();
+    const audio = document.createElement('audio');
+    Object.defineProperty(audio, 'src', { value: 'fake.mp3', writable: true, configurable: true });
+
+    act(() => {
+      result.current.webcamVideoRef.current = webcam;
+      result.current.audioRef.current = audio;
+      result.current.updateReplayRef();
+    });
+
+    expect(result.current.replayRef.current).toBe(audio);
+  });
+
+  test('starts a secondary webcam source added while audio playback is active', () => {
+    const { result } = renderHook(() => useReplay());
+    const audio = document.createElement('audio');
+    Object.defineProperty(audio, 'src', { value: 'fake.mp3', writable: true, configurable: true });
+    audio.play = vi.fn(async () => {});
+    const webcam = document.createElement('video');
+    webcam.play = vi.fn(async () => {});
+
+    act(() => {
+      result.current.audioRef.current = audio;
+      result.current.webcamVideoRef.current = webcam;
+      result.current.updateReplayRef();
+      result.current.setIsPlaying(true);
+    });
+    expect(result.current.replayRef.current).toBe(audio);
+
+    act(() => {
+      webcam.setAttribute('src', 'fake-webcam.mp4');
+      result.current.updateReplayRef();
+    });
+
+    expect(webcam.play).toHaveBeenCalled();
+  });
+
+  test('stops playback when a newly available source replaces the master', () => {
+    const { result } = renderHook(() => useReplay());
+    const screen = makeVideoWithSrc();
+    screen.play = vi.fn(async () => {});
+    screen.pause = vi.fn();
+    const webcam = makeVideoWithSrc();
+    webcam.pause = vi.fn();
+    const audio = document.createElement('audio');
+    Object.defineProperty(audio, 'src', { value: 'fake.mp3', writable: true, configurable: true });
+
+    act(() => {
+      result.current.videoRef.current = screen;
+      result.current.webcamVideoRef.current = webcam;
+      result.current.updateReplayRef();
+      result.current.setIsPlaying(true);
+    });
+    expect(result.current.isPlaying).toBe(true);
+
+    act(() => {
+      screen.removeAttribute('src');
+      Object.defineProperty(screen, 'src', { value: '', writable: true, configurable: true });
+      result.current.audioRef.current = audio;
+      result.current.updateReplayRef();
+    });
+
+    expect(result.current.isPlaying).toBe(false);
+    expect(screen.pause).toHaveBeenCalled();
+    expect(webcam.pause).toHaveBeenCalled();
+  });
+
+  test('screen playback starts and seeks the webcam recording', () => {
+    const { result } = renderHook(() => useReplay());
+    const screenVideo = makeVideoWithSrc();
+    const webcamVideo = makeVideoWithSrc();
+    webcamVideo.play = vi.fn(async () => {});
+    webcamVideo.pause = vi.fn();
+
+    act(() => {
+      result.current.videoRef.current = screenVideo;
+      result.current.webcamVideoRef.current = webcamVideo;
+      result.current.updateReplayRef();
+      result.current.setSeekTime(4);
+      screenVideo.dispatchEvent(new Event('play'));
+    });
+
+    expect(webcamVideo.currentTime).toBe(4);
+    expect(webcamVideo.play).toHaveBeenCalled();
+    expect(webcamVideo.muted).toBe(true);
+  });
+
+  test('updateReplayRef detaches listeners from the previous media element', () => {
+    const { result } = renderHook(() => useReplay());
+    const originalVideo = makeVideoWithSrc();
+    const replacementVideo = makeVideoWithSrc();
+
+    act(() => {
+      result.current.videoRef.current = originalVideo;
+      result.current.updateReplayRef();
+      result.current.videoRef.current = replacementVideo;
+      result.current.updateReplayRef();
+      originalVideo.dispatchEvent(new Event('play'));
+    });
+
+    expect(result.current.replayRef.current).toBe(replacementVideo);
+    expect(result.current.isPlaying).toBe(false);
+  });
+
   test('media replay continues emitting timeupdate events after play state changes', () => {
     vi.useFakeTimers();
     const { result } = renderHook(() => useReplay());
@@ -308,22 +485,138 @@ describe('useReplay — handlePlay/Seeked/Pause via video element events', () =>
 });
 
 describe('useReplay — public setIsPlaying with hasEnded=true', () => {
-  test('setIsPlaying resets hasEnded and seeks to 0', () => {
+  test('seeking to task end sets hasEnded and one play activation restarts from 0', () => {
     const { result } = renderHook(() => useReplay());
-    // Drive hasEnded to true
-    act(() => {
-      result.current.setSeekTime(15);
-    });
     act(() => {
       result.current.setDuration(10);
+      result.current.setSeekTime(10);
     });
     expect(result.current.hasEnded).toBe(true);
-    // setIsPlaying(true) with hasEnded → resets + seeks to 0
+
     act(() => {
       result.current.setIsPlaying(true);
     });
     expect(result.current.hasEnded).toBe(false);
     expect(result.current.seekTime).toBe(0);
+  });
+});
+
+describe('useReplay — task clock is authoritative', () => {
+  test('does not advance beyond pending or stalled media progress', () => {
+    vi.useFakeTimers();
+    const { result } = renderHook(() => useReplay());
+    const video = makeVideoWithSrc();
+    video.play = vi.fn(() => new Promise<void>(() => {}));
+    Object.defineProperty(video, 'duration', { value: 3, configurable: true });
+    Object.defineProperty(video, 'currentTime', { value: 0.25, writable: true, configurable: true });
+
+    const timeUpdateListener = vi.fn();
+    act(() => {
+      result.current.videoRef.current = video;
+      result.current.updateReplayRef();
+      video.currentTime = 0.25;
+      result.current.setDuration(3);
+      result.current.replayEvent.on('timeupdate', timeUpdateListener);
+      result.current.setIsPlaying(true);
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(1_000);
+    });
+
+    expect(timeUpdateListener).toHaveBeenLastCalledWith(0.25);
+    expect(result.current.hasEnded).toBe(false);
+  });
+
+  test('stops the task clock when media playback is rejected', async () => {
+    vi.useFakeTimers();
+    const { result } = renderHook(() => useReplay());
+    const video = makeVideoWithSrc();
+    video.play = vi.fn(async () => { throw new Error('autoplay blocked'); });
+    Object.defineProperty(video, 'duration', { value: 3, configurable: true });
+
+    act(() => {
+      result.current.videoRef.current = video;
+      result.current.updateReplayRef();
+      result.current.setDuration(3);
+      result.current.setIsPlaying(true);
+    });
+    await act(async () => Promise.resolve());
+
+    act(() => {
+      vi.advanceTimersByTime(1_000);
+    });
+
+    expect(result.current.isPlaying).toBe(false);
+    expect(result.current.seekTime).toBe(0);
+    expect(result.current.hasEnded).toBe(false);
+  });
+
+  test('keeps task time when shorter media clamps a seek and resumes media when seeking back', () => {
+    const { result } = renderHook(() => useReplay());
+    const video = makeVideoWithSrc();
+    video.play = vi.fn(async () => {});
+    video.pause = vi.fn();
+    Object.defineProperty(video, 'duration', { value: 1, configurable: true });
+    Object.defineProperty(video, 'paused', { value: true, configurable: true });
+
+    act(() => {
+      result.current.videoRef.current = video;
+      result.current.updateReplayRef();
+      result.current.setSeekTime(3);
+      video.dispatchEvent(new Event('seeked'));
+    });
+
+    expect(video.currentTime).toBe(1);
+    expect(result.current.seekTime).toBe(3);
+
+    vi.mocked(video.play).mockClear();
+    act(() => {
+      result.current.setIsPlaying(true);
+    });
+    expect(video.play).not.toHaveBeenCalled();
+    expect(result.current.isPlaying).toBe(true);
+
+    act(() => {
+      result.current.setSeekTime(0.5);
+    });
+
+    expect(video.currentTime).toBe(0.5);
+    expect(video.play).toHaveBeenCalledOnce();
+    expect(result.current.seekTime).toBe(0.5);
+  });
+
+  test('continues to the task duration after shorter media ends', () => {
+    vi.useFakeTimers();
+    const { result } = renderHook(() => useReplay());
+    const video = makeVideoWithSrc();
+    video.play = vi.fn(async () => {});
+    video.pause = vi.fn();
+    Object.defineProperty(video, 'ended', { value: false, configurable: true });
+
+    act(() => {
+      result.current.videoRef.current = video;
+      result.current.updateReplayRef();
+      result.current.setDuration(3);
+      result.current.setIsPlaying(true);
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(1_000);
+      video.currentTime = 1;
+      video.dispatchEvent(new Event('pause'));
+      Object.defineProperty(video, 'ended', { value: true, configurable: true });
+      video.dispatchEvent(new Event('ended'));
+    });
+    expect(result.current.isPlaying).toBe(true);
+    expect(result.current.hasEnded).toBe(false);
+
+    act(() => {
+      vi.advanceTimersByTime(2_100);
+    });
+    expect(result.current.seekTime).toBe(3);
+    expect(result.current.hasEnded).toBe(true);
+    expect(result.current.isPlaying).toBe(false);
   });
 });
 

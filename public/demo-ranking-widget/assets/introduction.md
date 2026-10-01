@@ -1,6 +1,6 @@
-This is an demo study to show how to use ranking widget.
+This is a demo study to show how to use ranking widgets.
 
-The study demontrates
+The study demonstrates
 - **sublist ranking** by ordering items in your preferred sequence
 - **categorical ranking** by sorting items into High, Medium, and Low priority groups
 - **pairwise comparisons** by choosing between pairs of options

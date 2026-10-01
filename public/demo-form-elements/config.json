@@ -14,6 +14,7 @@
     ]
   },
   "uiConfig": {
+    "colorMode": "userPreference",
     "contactEmail": "contact@revisit.dev",
     "helpTextPath": "demo-form-elements/assets/introduction.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
@@ -34,7 +35,7 @@
         {
           "id": "title",
           "type": "textOnly",
-          "prompt": "# Form Element\n\n This page shows many of the form elements that are supported in reVISit.",
+          "prompt": "# Form Elements\n\n This page shows many of the form elements that are supported in reVISit.",
           "restartEnumeration": true
         },
         {
@@ -54,7 +55,7 @@
           "secondaryText": "A numeric example that is required to complete and has an option to say 'Don't know'.",
           "infoText": "This numerical input accepts values between 0 and 100.",
           "type": "numerical",
-          "placeholder": "Enter your age here, range from 0 - 100",
+          "placeholder": "0 – 100",
           "max": 100,
           "min": 0,
           "withDontKnow": true
@@ -129,7 +130,7 @@
         },
         {
           "id": "q-multiselect-dropdown",
-          "prompt": "Multiselect dropdown example - which chart have you used before?",
+          "prompt": "Multiselect dropdown example - which charts have you used before?",
           "secondaryText": "Dropdown for multi-selection",
           "infoText": "Select the chart types you have used before. You have to select at least 2 options and up to 3 options.",
           "type": "dropdown",
@@ -148,6 +149,12 @@
           ],
           "minSelections": 2,
           "maxSelections": 3
+        },
+        {
+          "id": "q-country-dropdown",
+          "prompt": "Country dropdown example",
+          "type": "dropdown",
+          "options": "countries"
         },
         {
           "id": "q-checkbox",
@@ -206,7 +213,7 @@
           "type": "radio",
           "options": [
             "Option 1",
-            "Option 2 this is long a long option that will wrap"
+            "Option 2 is a long option that will wrap"
           ],
           "horizontal": true,
           "withOther": true
@@ -225,6 +232,20 @@
             "Option 2",
             "Option 3",
             "Option 4"
+          ]
+        },
+        {
+          "id": "q-buttons-color-keybind",
+          "type": "buttons",
+          "prompt": "Buttons example",
+          "secondaryText": "Buttons with keymappings, can be controlled with the corresponding key.",
+          "infoText": "Choose the option that best represents your answer.",
+          "options": [
+            { "label": "RED", "value": "red", "key": "r" },
+            { "label": "ORANGE", "value": "orange", "key": "o" },
+            { "label": "YELLOW", "value": "yellow", "key": "y" },
+            { "label": "GREEN", "value": "green", "key": "g" },
+            { "label": "BLUE", "value": "blue", "key": "b" }
           ]
         },
         {
@@ -255,7 +276,7 @@
           "id": "q-multi-satisfaction",
           "prompt": "Rate your satisfaction from 1 (Highly Unsatisfied) to 5 (Highly Satisfied) for the following items.",
           "secondaryText": "A simple matrix of Likert responses with predefined options for satisfaction.",
-          "infoText": "This is a matrix radio where you rate each item on a 5 point scale from 'Highly Unsatisfied' to 'Highly Satisfied'.",
+          "infoText": "This is a matrix radio where you rate each item on a 5-point scale from 'Highly Unsatisfied' to 'Highly Satisfied'.",
           "type": "matrix-radio",
           "answerOptions": "satisfaction5",
           "questionOptions": [
@@ -303,6 +324,333 @@
         }
       ]
     },
+    "Conditional Responses": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "conditionalTitle",
+          "type": "textOnly",
+          "prompt": "# Conditional Responses\n\nTell us about your university experience. Selecting **Yes** reveals questions about your university and graduation status."
+        },
+        {
+          "id": "attendedUniversity",
+          "type": "radio",
+          "prompt": "Did you attend university?",
+          "required": true,
+          "options": [
+            {
+              "label": "Yes",
+              "value": "yes"
+            },
+            {
+              "label": "No",
+              "value": "no"
+            }
+          ]
+        },
+        {
+          "id": "universityName",
+          "type": "shortText",
+          "prompt": "Name of University",
+          "infoText": "Enter University of Utah or WPI to reveal a follow-up question.",
+          "required": true,
+          "visibleIf": {
+            "responseId": "attendedUniversity",
+            "comparison": "equals",
+            "value": "yes"
+          }
+        },
+        {
+          "id": "revisitBackground",
+          "type": "longText",
+          "prompt": "How did you hear about reVISit?",
+          "required": true,
+          "visibleIf": {
+            "responseId": "universityName",
+            "comparison": "matchesRegex",
+            "value": "^(University of Utah|WPI)$"
+          }
+        },
+        {
+          "id": "degreeProgram",
+          "type": "dropdown",
+          "prompt": "Degree program",
+          "required": true,
+          "options": [
+            {
+              "label": "Bachelor's degree",
+              "value": "bachelor"
+            },
+            {
+              "label": "Master's degree",
+              "value": "master"
+            },
+            {
+              "label": "Doctoral degree",
+              "value": "doctoral"
+            },
+            {
+              "label": "Other",
+              "value": "other"
+            }
+          ],
+          "visibleIf": {
+            "responseId": "attendedUniversity",
+            "comparison": "equals",
+            "value": "yes"
+          }
+        },
+        {
+          "id": "graduationStatus",
+          "type": "radio",
+          "prompt": "What is your graduation status?",
+          "required": true,
+          "options": [
+            {
+              "label": "Graduated",
+              "value": "graduated"
+            },
+            {
+              "label": "Currently enrolled",
+              "value": "enrolled"
+            }
+          ],
+          "visibleIf": {
+            "responseId": "attendedUniversity",
+            "comparison": "equals",
+            "value": "yes"
+          }
+        },
+        {
+          "id": "graduationYear",
+          "type": "numerical",
+          "prompt": "Graduation year",
+          "infoText": "Enter a year greater than 2020 to reveal a follow-up question.",
+          "required": true,
+          "visibleIf": {
+            "responseId": "graduationStatus",
+            "comparison": "equals",
+            "value": "graduated"
+          }
+        },
+        {
+          "id": "graduationSemester",
+          "type": "dropdown",
+          "prompt": "In which semester did you graduate?",
+          "required": true,
+          "options": [
+            { "label": "Spring", "value": "spring" },
+            { "label": "Summer", "value": "summer" },
+            { "label": "Fall", "value": "fall" }
+          ],
+          "visibleIf": {
+            "responseId": "graduationYear",
+            "comparison": "greaterThan",
+            "value": 2020
+          }
+        },
+        {
+          "id": "expectedGraduationYear",
+          "type": "numerical",
+          "prompt": "Expected graduation year",
+          "required": true,
+          "visibleIf": {
+            "responseId": "graduationStatus",
+            "comparison": "equals",
+            "value": "enrolled"
+          }
+        }
+      ],
+      "withSidebar": false
+    },
+    "Next Button Alignment": {
+      "type": "questionnaire",
+      "nextButtonAlignment": "left",
+      "response": [
+        {
+          "id": "next-button-alignment-left",
+          "type": "textOnly",
+          "prompt": "# Next Button Alignment\n\nUse `nextButtonAlignment` to align the navigation buttons within the main content area or sidebar.\n\nYou can align the Next button to the `left`, `center`, or `right` (default). This page uses `\"nextButtonAlignment\": \"left\"`."
+        }
+      ]
+    },
+    "Text Validation": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "text-validation-title",
+          "type": "textOnly",
+          "prompt": "# Text Validation\n\nThis page demonstrates validation rules for short and long text responses. Enter a value that satisfies each instruction, then continue to see how the rules are validated. For help writing regular expression patterns, see the [MDN regular expression syntax cheat sheet](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Cheatsheet).",
+          "restartEnumeration": true
+        },
+        {
+          "id": "text-validation-regex",
+          "type": "shortText",
+          "prompt": "Enter a code with three uppercase letters, a hyphen, and three digits.",
+          "secondaryText": "For example: ABC-123. This response uses matchesRegex with the pattern ^[A-Z]{3}-\\d{3}$.",
+          "placeholder": "ABC-123",
+          "textValidation": [
+            {
+              "type": "matchesRegex",
+              "value": "^[A-Z]{3}-\\d{3}$"
+            }
+          ]
+        },
+        {
+          "id": "text-validation-contains",
+          "type": "longText",
+          "prompt": "Please give us feedback on ReVISit.",
+          "secondaryText": "Your response must contain the exact text “ReVISit” and must not contain the exact lowercase text “test”. Both validations are case-sensitive.",
+          "placeholder": "Share your feedback...",
+          "textValidation": [
+            {
+              "type": "contains",
+              "value": "ReVISit"
+            },
+            {
+              "type": "doesNotContain",
+              "value": "test"
+            }
+          ]
+        },
+        {
+          "id": "text-validation-equals",
+          "type": "shortText",
+          "prompt": "Enter exactly “ReVISit”.",
+          "secondaryText": "This response uses equals and is case-sensitive.",
+          "placeholder": "ReVISit",
+          "textValidation": [
+            {
+              "type": "equals",
+              "value": "ReVISit"
+            }
+          ]
+        },
+        {
+          "id": "length-validation-title",
+          "type": "textOnly",
+          "prompt": "## Length Validation\n\nShort and long text responses can require a minimum and maximum number of characters or words.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "character-length-short",
+          "type": "shortText",
+          "prompt": "Enter between 3 and 10 characters.",
+          "secondaryText": "This short text response uses minCharLength: 3 and maxCharLength: 10.",
+          "placeholder": "3–10 characters",
+          "minCharLength": 3,
+          "maxCharLength": 10
+        },
+        {
+          "id": "word-length-long",
+          "type": "longText",
+          "prompt": "Enter between four and ten words.",
+          "secondaryText": "This long text response uses minWordLength: 4 and maxWordLength: 10.",
+          "placeholder": "4–10 words",
+          "minWordLength": 4,
+          "maxWordLength": 10
+        },
+        {
+          "id": "built-in-validation-title",
+          "type": "textOnly",
+          "prompt": "## Built-in Validation\n\nShort text responses can use built-in validation to ensure the entered data is in the correct format.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "built-in-validation-email",
+          "type": "shortText",
+          "prompt": "Enter an email address.",
+          "secondaryText": "For example: test@revisit.dev.",
+          "placeholder": "test@revisit.dev",
+          "builtInValidation": "email"
+        },
+        {
+          "id": "built-in-validation-phone-number",
+          "type": "shortText",
+          "prompt": "Enter an international phone number containing 7 to 15 digits.",
+          "secondaryText": "It may begin with + and use hyphens between digits. For example: +800-000-0000 or 8000000000.",
+          "placeholder": "+800-000-0000",
+          "builtInValidation": "phoneNumber"
+        },
+        {
+          "id": "built-in-validation-us-phone-number",
+          "type": "shortText",
+          "prompt": "Enter a 10-digit US phone number with two hyphens.",
+          "secondaryText": "For example: 800-000-0000.",
+          "placeholder": "800-000-0000",
+          "builtInValidation": "usPhoneNumber"
+        },
+        {
+          "id": "built-in-validation-url",
+          "type": "shortText",
+          "prompt": "Enter an HTTP or HTTPS URL.",
+          "secondaryText": "For example: https://revisit.dev.",
+          "placeholder": "https://revisit.dev",
+          "builtInValidation": "url"
+        },
+        {
+          "id": "date-time-response-title",
+          "type": "textOnly",
+          "prompt": "## Date and Time Responses\n\nDate and time responses use dedicated inputs and store their values as strings. The examples below demonstrate each date and time option separately.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "date-range-response",
+          "type": "date",
+          "prompt": "Date within a range.",
+          "secondaryText": "This response uses min: 06/01/2026 and max: 08/30/2026.",
+          "min": "06/01/2026",
+          "max": "08/30/2026"
+        },
+        {
+          "id": "month-picker-response",
+          "type": "date",
+          "options": "month",
+          "prompt": "Month input.",
+          "default": "06/2026",
+          "min": "01/2026",
+          "max": "12/2026"
+        },
+        {
+          "id": "year-picker-response",
+          "type": "date",
+          "options": "year",
+          "prompt": "Year input.",
+          "default": "2026",
+          "min": "2000",
+          "max": "2030"
+        },
+        {
+          "id": "time-standard-response",
+          "type": "time",
+          "prompt": "Time without seconds.",
+          "secondaryText": "By default, time responses use the 24-hour HH:mm format."
+        },
+        {
+          "id": "time-12-hour-response",
+          "type": "time",
+          "prompt": "Time in 12-hour format.",
+          "secondaryText": "This response uses format: 12h.",
+          "format": "12h",
+          "default": "14:28"
+        },
+        {
+          "id": "time-range-response",
+          "type": "time",
+          "prompt": "Time within a range.",
+          "secondaryText": "This response uses min: 09:00 and max: 18:00.",
+          "min": "09:00",
+          "max": "18:00"
+        },
+        {
+          "id": "time-seconds-response",
+          "type": "time",
+          "prompt": "Time with seconds.",
+          "secondaryText": "This response uses withSeconds: true and the HH:mm:ss format.",
+          "withSeconds": true
+        }
+      ]
+    },
     "Default Values": {
       "type": "questionnaire",
       "response": [
@@ -331,6 +679,37 @@
           "type": "longText",
           "prompt": "Long text default",
           "default": "Prefilled long text value for local testing."
+        },
+        {
+          "id": "default-date",
+          "type": "date",
+          "prompt": "Date default",
+          "default": "06/24/2026",
+          "min": "06/01/2026",
+          "max": "06/30/2026"
+        },
+        {
+          "id": "default-month",
+          "type": "date",
+          "options": "month",
+          "prompt": "Month default",
+          "default": "06/2026"
+        },
+        {
+          "id": "default-year",
+          "type": "date",
+          "options": "year",
+          "prompt": "Year default",
+          "default": "2026"
+        },
+        {
+          "id": "default-time",
+          "type": "time",
+          "prompt": "Time default",
+          "default": "14:28:30",
+          "min": "09:00:00",
+          "max": "18:00:00",
+          "withSeconds": true
         },
         {
           "id": "default-likert",
@@ -382,6 +761,13 @@
           "default": "pie"
         },
         {
+          "id": "default-dropdown-country",
+          "type": "dropdown",
+          "prompt": "Country dropdown default",
+          "options": "countries",
+          "default": "US"
+        },
+        {
           "id": "default-dropdown-multiselect",
           "type": "dropdown",
           "prompt": "Multiselect dropdown default (string input normalized to array)",
@@ -393,10 +779,7 @@
           ],
           "minSelections": 1,
           "maxSelections": 3,
-          "default": [
-            "Line",
-            "test"
-          ]
+          "default": "Line"
         },
         {
           "id": "default-radio",
@@ -820,7 +1203,7 @@
         {
           "id": "title",
           "type": "textOnly",
-          "prompt": "# Form Elements in Sidebars \n\n This page shows form elements that can be used in the sidebar. \n\n For all elements that have horizontal and vertical variants, you should always use the vertical one in the sidebars. \n\n Matrix form elements are not supported in the sidebar. \n\n Limit Likert scales to 7 or less to fit. \n\n Limit the number of buttons to avoid overflow.",
+          "prompt": "# Form Elements in Sidebars \n\n This page shows form elements that can be used in the sidebar. \n\n For all elements that have horizontal and vertical variants, you should always use the vertical one in the sidebars. \n\n Matrix form elements are not supported in the sidebar. \n\n Limit Likert scales to 6 or fewer to fit. \n\n Limit the number of buttons to avoid overflow.",
           "restartEnumeration": true
         },
         {
@@ -835,7 +1218,7 @@
           "prompt": "Numerical example",
           "secondaryText": "A numeric example that is required to complete and has an option to say 'Don't know'.",
           "type": "numerical",
-          "placeholder": "Enter your age here, range from 0 - 100",
+          "placeholder": "0 - 100",
           "max": 100,
           "min": 0,
           "withDontKnow": true,
@@ -844,7 +1227,7 @@
         {
           "id": "q-slider",
           "prompt": "Slider example",
-          "secondaryText": "A slider for 0-100 with 3 breakpoints for bad, mid, and good",
+          "secondaryText": "A slider for 0 to 100 with three breakpoints for Bad, Mid, and Good",
           "type": "slider",
           "startingValue": 50,
           "spacing": 50,
@@ -910,7 +1293,7 @@
         },
         {
           "id": "q-multiselect-dropdown",
-          "prompt": "Multiselect dropdown example - which chart have you used before?",
+          "prompt": "Multiselect dropdown example - which charts have you used before?",
           "secondaryText": "Dropdown for multi-selection",
           "infoText": "Select the chart types you have used before. You have to select at least 2 options and up to 3 options.",
           "type": "dropdown",
@@ -982,9 +1365,9 @@
         {
           "id": "q-likert",
           "prompt": "Likert scale example",
-          "secondaryText": "A Likert example with 7 items",
+          "secondaryText": "A Likert example with 5 items",
           "type": "likert",
-          "numItems": 7,
+          "numItems": 5,
           "rightLabel": "Like",
           "leftLabel": "Dislike",
           "labelLocation": "above",
@@ -998,6 +1381,9 @@
     "components": [
       "Introduction",
       "Form Elements",
+      "Conditional Responses",
+      "Next Button Alignment",
+      "Text Validation",
       "Default Values",
       "Custom Response",
       "Randomizing Options",

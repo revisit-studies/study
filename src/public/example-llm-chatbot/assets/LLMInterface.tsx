@@ -18,25 +18,25 @@ export default function LLMInterface({
   // Setup provenance tracking (Trrack)
   const { actions, registry } = useMemo<{
     actions: {
-      updateMessages: (messages: ChatMessage[]) => { payload: ChatMessage[]; type: string };
-    };
+      updateMessages:(messages: ChatMessage[]) => { payload: ChatMessage[]; type: string };
+        };
     registry: Trrack<ChatTrrackState, string>['registry'];
-  }>(() => {
-    const reg = Registry.create();
+        }>(() => {
+          const reg = Registry.create();
 
-    // Register an "updateMessages" action to update chat history state
-    const updateMessages = reg.register('brush', (state, newMessages: ChatMessage[]) => {
-      state.messages = newMessages;
-      return state;
-    });
+          // Register an "updateMessages" action to update chat history state
+          const updateMessages = reg.register('update-messages', (state, newMessages: ChatMessage[]) => {
+            state.messages = newMessages;
+            return state;
+          });
 
-    return {
-      actions: {
-        updateMessages,
-      },
-      registry: reg,
-    };
-  }, []);
+          return {
+            actions: {
+              updateMessages,
+            },
+            registry: reg,
+          };
+        }, []);
   const trrack = useTrrack({
     registry,
     initialState: {
@@ -54,7 +54,7 @@ export default function LLMInterface({
   }, [setAnswer]);
 
   return (
-    <Grid gutter="md">
+    <Grid gap="md">
       <Grid.Col span={6}>
         <ImageDisplay />
       </Grid.Col>

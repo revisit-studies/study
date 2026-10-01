@@ -1,5 +1,5 @@
 import {
-  Box, Group, LoadingOverlay, Stack,
+  Box, Group, LoadingOverlay, Stack, useComputedColorScheme, useMantineTheme,
 } from '@mantine/core';
 import {
   useLocation, useNavigate, useParams, useSearchParams,
@@ -97,6 +97,8 @@ export function AudioProvenanceVis({
   const [playTime, setPlayTime] = useState<number>(0);
 
   const wavesurfer = useRef<WaveSurferType | null>(null);
+  const loadedAnalysisUrls = useRef<string[]>([]);
+  const analysisLoadGeneration = useRef(0);
 
   const waveSurferDiv = useRef(null);
 
@@ -105,6 +107,13 @@ export function AudioProvenanceVis({
   const [waveSurferLoading, setWaveSurferLoading] = useState<boolean>(true);
 
   const trrackForTrial = useRef<Trrack<object, string> | null>(null);
+  const hasLoadableTask = Boolean(participantId && taskName && answers[taskName]);
+
+  useEffect(() => () => {
+    analysisLoadGeneration.current += 1;
+    loadedAnalysisUrls.current.forEach((url) => URL.revokeObjectURL(url));
+    loadedAnalysisUrls.current = [];
+  }, []);
 
   useEffect(() => {
     let canceled = false;
@@ -146,12 +155,17 @@ export function AudioProvenanceVis({
     setCurrentResponseNodes({ ...currentResponseNodes, [location]: node });
   });
 
-  const _setPlayTime = useThrottledCallback((n: number) => {
+  const updatePlayTime = useCallback((n: number) => {
     setPlayTime(startTime + n);
     if (setTime) {
       setTime(startTime + n);
     }
-  }, 100); // 100ms throttle
+  }, [setTime, startTime]);
+  const throttledUpdatePlayTime = useThrottledCallback(updatePlayTime, 100);
+  // Replay seeks must reach the provenance state immediately. The throttled
+  // path is useful for live audio rendering, but can drop an intermediate
+  // seek while the analysis component is still applying the previous one.
+  const _setPlayTime = context === 'provenanceVis' ? updatePlayTime : throttledUpdatePlayTime;
 
   useEffect(() => {
     _setPlayTime(seekTime * 1000);
@@ -288,15 +302,30 @@ export function AudioProvenanceVis({
   }, [analysisHasAudio, answers, taskName, setDuration]);
 
   const isAnalysis = useIsAnalysis();
+  const theme = useMantineTheme();
+  const colorScheme = useComputedColorScheme('light');
+  const waveColors = useMemo(() => ({
+    waveColor: colorScheme === 'dark' ? theme.colors.dark[2] : theme.colors.gray[7],
+    progressColor: theme.colors.blue[colorScheme === 'dark' ? 4 : 7],
+  }), [colorScheme, theme]);
+
+  useEffect(() => {
+    // WaveSurfer only reads its React options on mount; recolor without reloading audio.
+    wavesurfer.current?.setOptions(waveColors);
+  }, [waveColors]);
 
   const handleWSMount = useEvent(
     async (waveSurfer: WaveSurferType | null) => {
+      const loadGeneration = analysisLoadGeneration.current + 1;
+      analysisLoadGeneration.current = loadGeneration;
+      loadedAnalysisUrls.current.forEach((url) => URL.revokeObjectURL(url));
+      loadedAnalysisUrls.current = [];
       wavesurfer.current = waveSurfer;
 
       audioRef.current = null;
       updateReplayRef();
 
-      if (waveSurfer && isAnalysis && taskName && storageEngine) {
+      if (waveSurfer && isAnalysis && hasLoadableTask && storageEngine) {
         try {
           if (!participantId) {
             throw new Error('Participant ID is required to load audio');
@@ -306,8 +335,16 @@ export function AudioProvenanceVis({
             safe(storageEngine.getAudio(taskName, participantId)),
             safe(storageEngine.getScreenRecording(taskName, participantId)),
           ]);
+          const loadedUrls = [audioUrl, screenUrl]
+            .filter((url): url is string => !!url && url.startsWith('blob:'));
+          if (loadGeneration !== analysisLoadGeneration.current) {
+            loadedUrls.forEach((url) => URL.revokeObjectURL(url));
+            return;
+          }
+          loadedAnalysisUrls.current = loadedUrls;
 
           const url = screenUrl ?? audioUrl ?? null;
+          const hasAudioSource = !!(screenUrl ?? audioUrl);
 
           if (!url) {
             setAnalysisHasAudio(false);
@@ -317,16 +354,23 @@ export function AudioProvenanceVis({
           }
 
           await waveSurfer.load(url!, undefined, duration);
+          if (loadGeneration !== analysisLoadGeneration.current) {
+            loadedUrls.forEach((loadedUrl) => URL.revokeObjectURL(loadedUrl));
+            return;
+          }
           setWaveSurferLoading(false);
 
           audioRef.current = waveSurfer.getMediaElement();
           updateReplayRef();
 
           setWaveSurferWidth(waveSurfer.getWidth());
-          setAnalysisHasAudio(true);
+          setAnalysisHasAudio(hasAudioSource);
           waveSurfer.seekTo(0);
           waveSurfer.on('redrawcomplete', () => setWaveSurferWidth(waveSurfer.getWidth()));
         } catch (error: unknown) {
+          if (loadGeneration !== analysisLoadGeneration.current) {
+            return;
+          }
           setAnalysisHasAudio(false);
           setWaveSurferLoading(false);
           audioRef.current = null;
@@ -355,9 +399,9 @@ export function AudioProvenanceVis({
   return (
     <Group wrap="nowrap" gap={0} mx={0}>
       <Stack ref={ref} style={{ width: '100%' }} gap={0}>
-        <LoadingOverlay visible={waveSurferLoading} overlayProps={{ blur: 5, backgroundOpacity: 0.35 }} />
+        <LoadingOverlay visible={waveSurferLoading && hasLoadableTask} overlayProps={{ blur: 5, backgroundOpacity: 0.35 }} />
 
-        {participantId !== undefined && taskName
+        {hasLoadableTask
           ? (
             <Box pos="relative" ml={margin.left} mr={margin.right}>
               <Box
@@ -368,7 +412,7 @@ export function AudioProvenanceVis({
                 display={analysisHasAudio ? 'block' : 'none'}
                 id="waveformDiv"
               >
-                <WaveSurfer backend="MediaElement" onMount={handleWSMount} plugins={[]} container="#waveformDiv" height={50} waveColor="#484848" progressColor="cornflowerblue" barHeight={0} cursorColor="rgba(0, 0, 0, 0)">
+                <WaveSurfer backend="MediaElement" onMount={handleWSMount} plugins={[]} container="#waveformDiv" height={50} {...waveColors} barHeight={0} cursorColor="rgba(0, 0, 0, 0)">
                   <WaveForm id="waveform" height={50} />
                 </WaveSurfer>
               </Box>

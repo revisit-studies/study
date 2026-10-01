@@ -1,1 +1,1 @@
-This is a simple demo of VLAT, please select the answer you think is correct.
+This is a demo of the adaptive VLAT (A-VLAT). Please select the answer you think is correct.

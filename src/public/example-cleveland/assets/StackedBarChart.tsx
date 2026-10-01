@@ -67,7 +67,7 @@ function StackedBarChart({ parameters }: { parameters: any }) {
   );
 
   return (
-    <div className="Chart__wrapper" ref={ref} style={{ height: '400' }}>
+    <div className="Chart__wrapper" ref={ref} style={{ height: 400 }}>
       <svg width={dms.width} height={dms.height}>
         <g
           transform={`translate(${[dms.marginLeft, dms.marginTop].join(',')})`}

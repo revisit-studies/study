@@ -2,6 +2,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <style>
+        :root {
+            color-scheme: light dark;
+        }
+
+        html,
+        body {
+            background-color: light-dark(#ffffff, #242424);
+            color: light-dark(#212529, #c1c2c5);
+        }
+    </style>
     <title>D3 Nice Axes</title>
     <script src="https://d3js.org/d3.v7.js"></script>
 </head>
@@ -12,10 +23,10 @@
 </body>
 
 <script>
-    height = 400;
-    width = 750;
-    padding = 25;
-    svg = d3.select("svg");
+    const height = 400;
+    const width = 750;
+    const padding = 25;
+    const svg = d3.select("svg");
     svg.attr("width", width + 2 * padding)
         .attr("height", height + 2 * padding);
 

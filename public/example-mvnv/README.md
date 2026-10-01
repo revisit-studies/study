@@ -6,7 +6,7 @@ This repository contains all the code necessary to run the MVNV Crowdsourced Stu
 
 The survey tested two different MVNV techniques, node-link diagrams and adjacency Matrices.
 
-![Study Conditions](study_conditions.png)
+![Study Conditions](assets/study_conditions.png)
 
 ### Live version
 

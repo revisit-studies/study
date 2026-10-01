@@ -3,7 +3,9 @@ import {
   beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import type { StudyConfig } from '../../../parser/types';
-import type { Sequence, StoredAnswer, StoreState } from '../../types';
+import type {
+  AssetStatus, Sequence, StoredAnswer, StoreState, TrialValidation, TrrackedProvenance,
+} from '../../types';
 import { makeStudyConfig } from '../../../tests/utils';
 import { areComponentAnswersCorrect, getSkipConditionCorrectAnswers } from '../useNextStep.utils';
 import { useNextStep } from '../useNextStep';
@@ -20,7 +22,7 @@ let mockCurrentStep: number | string = 0;
 let mockIdentifier = 'trial1_0';
 let mockFlatSequence = ['trial1', 'attentionCheck', 'end'];
 let mockAnswers: Record<string, StoredAnswer> = {};
-let mockTrialValidation: Record<string, Record<string, object>> = {};
+let mockTrialValidation: TrialValidation = {};
 let mockCheckAnswer: Record<string, { attemptsUsed: number; correct: boolean; responses: Record<string, boolean> }> = {};
 let mockSequence = defaultSequence;
 let mockModes = { dataCollectionEnabled: true, developmentModeEnabled: false, dataSharingEnabled: false };
@@ -47,7 +49,7 @@ vi.mock('react-router', () => ({
 }));
 
 vi.mock('../../store', () => ({
-  useStoreSelector: (selector: (s: StoreState) => unknown) => selector({
+  useStoreSelector: <T>(selector: (s: StoreState) => T) => selector({
     trialValidation: mockTrialValidation,
     sequence: mockSequence,
     answers: mockAnswers,
@@ -260,6 +262,41 @@ describe('useNextStep', () => {
     expect(result.current.isNextDisabled).toBe(false);
   });
 
+  test.each<{ status: AssetStatus | undefined; disabled: boolean }>([
+    { status: 'loading', disabled: true },
+    { status: 'error', disabled: true },
+    { status: 'ready', disabled: false },
+    { status: undefined, disabled: false },
+  ])('asset status $status sets disabled=$disabled and guards navigation', async ({ status, disabled }) => {
+    mockTrialValidation = {
+      trial1_0: {
+        assetStatus: status,
+        stimulus: { valid: true, values: {} },
+        aboveStimulus: { valid: true, values: {} },
+        belowStimulus: { valid: true, values: {} },
+        sidebar: { valid: true, values: {} },
+        provenanceGraph: {
+          aboveStimulus: undefined, belowStimulus: undefined, stimulus: undefined, sidebar: undefined,
+        },
+      },
+    };
+    const { result } = renderHook(() => useNextStep());
+
+    expect(result.current.isNextDisabled).toBe(disabled);
+    await act(async () => { await result.current.goToNextStep(); });
+
+    if (disabled) {
+      // Automatic advancement must respect the same asset gate.
+      await act(async () => { await result.current.goToNextStep(false); });
+      expect(mockNavigate).not.toHaveBeenCalled();
+      expect(mockSaveAnswers).not.toHaveBeenCalled();
+      expect(mockDispatch).not.toHaveBeenCalled();
+    } else {
+      expect(mockNavigate).toHaveBeenCalledWith('/test-study/1');
+      expect(mockSaveAnswers).toHaveBeenCalled();
+    }
+  });
+
   test('isNextDisabled is true when currentStep is a string', () => {
     mockCurrentStep = 'reviewer-0';
     const { result } = renderHook(() => useNextStep());
@@ -329,7 +366,7 @@ describe('useNextStep', () => {
         belowStimulus: { valid: true, values: {} },
         sidebar: { valid: true, values: { q2: 'Cat' } },
         provenanceGraph: {
-          aboveStimulus: null, belowStimulus: null, stimulus: null, sidebar: null,
+          aboveStimulus: undefined, belowStimulus: undefined, stimulus: undefined, sidebar: undefined,
         },
       },
     };
@@ -340,7 +377,23 @@ describe('useNextStep', () => {
   });
 
   test('goToNextStep snapshots the provenance graph before saving it', async () => {
-    const liveGraph = { nodes: { a: { id: 'a' } } };
+    const liveGraph: TrrackedProvenance = {
+      root: 'a',
+      current: 'a',
+      nodes: {
+        a: {
+          id: 'a',
+          label: 'Root',
+          event: 'Root',
+          createdOn: 0,
+          artifacts: [],
+          meta: { annotation: [], bookmark: [] },
+          children: [],
+          state: { type: 'checkpoint', val: {} },
+          level: 0,
+        },
+      },
+    };
     mockTrialValidation = {
       trial1_0: {
         stimulus: { valid: true, values: {} },
@@ -348,13 +401,13 @@ describe('useNextStep', () => {
         belowStimulus: { valid: true, values: {} },
         sidebar: { valid: true, values: {} },
         provenanceGraph: {
-          aboveStimulus: liveGraph, belowStimulus: null, stimulus: null, sidebar: null,
+          aboveStimulus: liveGraph, belowStimulus: undefined, stimulus: undefined, sidebar: undefined,
         },
       },
     };
     const { result } = renderHook(() => useNextStep());
     await act(async () => { await result.current.goToNextStep(); });
-    const savedGraph = mockSaveProvenance.mock.calls[0][0] as Record<string, object | null>;
+    const savedGraph = mockSaveProvenance.mock.calls[0][0] as TrialValidation[string]['provenanceGraph'];
     expect(savedGraph.aboveStimulus).toEqual(liveGraph);
     expect(savedGraph.aboveStimulus).not.toBe(liveGraph);
   });
@@ -409,7 +462,7 @@ describe('useNextStep', () => {
         belowStimulus: { valid: true, values: {} },
         sidebar: { valid: true, values: {} },
         provenanceGraph: {
-          aboveStimulus: null, belowStimulus: null, stimulus: null, sidebar: null,
+          aboveStimulus: undefined, belowStimulus: undefined, stimulus: undefined, sidebar: undefined,
         },
       },
     };

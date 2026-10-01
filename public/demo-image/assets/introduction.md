@@ -1,4 +1,4 @@
-This demo introduced how to use images as stimuli in reVISit, and how to collect data via form fields.
+This demo introduces how to use images as stimuli in reVISit, and how to collect data via form fields.
 
 ## Study Scenario
 
@@ -29,9 +29,9 @@ $6,000 from your budget.
 temperature forecast like the one below. In the forecast, each
 dot represents a 1 out of 20 chance the nighttime low will
 be that temperature. You will be asked some questions about
-this forecast, including if you will issue blankets to the alpacas.
+this forecast, including whether you will issue blankets to the alpacas.
 Compensation: Please respond to the best of your ability.
-You will receive an extra $0.15 cents for every $1,000 that
+You will receive an extra $0.15 for every $1,000 that
 you have in your budget at the end of 48 days.
 
 ## Relevant files:

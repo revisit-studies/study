@@ -1,4 +1,4 @@
-This demo shows how a URL query parameter can be used to direct participants into specific conditions. included or skipped based on the URL query parameter. Blocks without a condition are always included; blocks with a matching condition are included.
+This demo shows how a URL query parameter can be used to direct participants into specific conditions. Conditional blocks are included or skipped based on the URL query parameter. Blocks without a condition are always included; blocks with a matching condition are included.
 
 **Remember to hit “Next Participant” before trying out a new condition in study preview mode.**
 

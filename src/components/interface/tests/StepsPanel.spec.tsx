@@ -5,7 +5,7 @@ import {
 import {
   afterEach, describe, expect, test, vi,
 } from 'vitest';
-import type { Answer, NumericalResponse } from '../../../parser/types';
+import type { Answer, NumericalResponse, StudyConfig } from '../../../parser/types';
 import { Sequence, StoredAnswer } from '../../../store/types';
 import { makeStudyConfig, makeStoredAnswer } from '../../../tests/utils';
 import { getDynamicComponentsForBlock } from '../StepsPanel.utils';
@@ -47,7 +47,7 @@ vi.mock('../../../utils/encryptDecryptIndex', () => ({
 }));
 
 vi.mock('../../../parser/utils', () => ({
-  isDynamicBlock: () => false,
+  isDynamicBlock: (block: { order?: string }) => block.order === 'dynamic',
   isInheritedComponent: () => false,
 }));
 
@@ -129,6 +129,50 @@ afterEach(() => { cleanup(); });
 // ── component rendering tests ──────────────────────────────────────────────────
 
 describe('StepsPanel rendering', () => {
+  test('shows compact factor labels while preserving distinct and manual component IDs', async () => {
+    const generated = [
+      ['trials__level=1__trial', '1 — trial'],
+      ['trials__level=%221%22__trial', '1 — trial'],
+    ];
+    const manualId = 'manual__version=1__trial';
+    const escapedManualId = 'task%2D1';
+    const factorBlock: Sequence & { __revisitFactorLabels: Record<string, string> } = {
+      id: 'trials',
+      orderPath: 'root.trials',
+      order: 'fixed',
+      components: generated.map(([id]) => id),
+      skip: [],
+      __revisitFactorLabels: Object.fromEntries(generated),
+    };
+    const component = { type: 'markdown' as const, path: 'trial.md', response: [] };
+    const studyConfig = makeStudyConfig({
+      components: Object.fromEntries([
+        ...generated.map(([id]) => id), manualId, escapedManualId, 'task-1',
+      ].map((id) => [id, component])),
+      sequence: {
+        ...minimalSequence,
+        components: [factorBlock, {
+          id: 'manual', orderPath: 'root.manual', order: 'fixed', components: [manualId], skip: [],
+        }, escapedManualId, 'task-1'],
+      },
+    });
+    const { container } = await act(async () => render(
+      <StepsPanel participantAnswers={{}} studyConfig={studyConfig} />,
+    ));
+
+    const links = container.querySelectorAll('[role="link"]');
+    generated.forEach(([, label], index) => {
+      expect(links[index].textContent).toContain(label);
+    });
+    expect(links[2].textContent).toContain(manualId);
+    expect(links[3].textContent).toContain(escapedManualId);
+    expect(links[4].textContent).toContain('task-1');
+    fireEvent.click(links[0]);
+    expect(mockNavigate).toHaveBeenLastCalledWith(`/test-study/reviewer-${encodeURIComponent(generated[0][0])}`);
+    fireEvent.click(links[1]);
+    expect(mockNavigate).toHaveBeenLastCalledWith(`/test-study/reviewer-${encodeURIComponent(generated[1][0])}`);
+  });
+
   test('renders without crashing when no participant sequence provided', async () => {
     const { container } = await act(async () => render(
       <StepsPanel
@@ -137,6 +181,20 @@ describe('StepsPanel rendering', () => {
       />,
     ));
     expect(container).toBeDefined();
+  });
+
+  test('renders a study containing a dynamic block', async () => {
+    const studyConfig = makeStudyConfig({
+      components: { intro: { type: 'markdown', path: 'intro.md', response: [] } },
+      sequence: {
+        order: 'fixed',
+        components: ['intro', { id: 'adaptive', order: 'dynamic', functionPath: 'adaptive.ts' }],
+      },
+    });
+    const { container } = await act(async () => render(
+      <StepsPanel participantAnswers={{}} studyConfig={studyConfig} />,
+    ));
+    expect(container.querySelector('[role="link"]')).toBeDefined();
   });
 
   test('renders with a participant sequence', async () => {
@@ -148,6 +206,47 @@ describe('StepsPanel rendering', () => {
       />,
     ));
     expect(container).toBeDefined();
+  });
+
+  test('uses generated factor components for the runtime-plan denominator', async () => {
+    const runtimePlan = {
+      type: 'factor-runtime-plan',
+      id: 'trials',
+      order: 'fixed',
+      orderPath: 'root',
+      components: [],
+      skip: [],
+      conditionComponents: {
+        first: ['trialA'],
+        second: ['trialB'],
+        third: ['trialC'],
+      },
+    } as unknown as StudyConfig['sequence'];
+    const studyConfig = makeStudyConfig({
+      components: {
+        trialA: { type: 'markdown', path: 'trialA.md', response: [] },
+        trialB: { type: 'markdown', path: 'trialB.md', response: [] },
+        trialC: { type: 'markdown', path: 'trialC.md', response: [] },
+      },
+      sequence: runtimePlan,
+    });
+    const participantSequence: Sequence = {
+      id: 'trials',
+      orderPath: 'root',
+      order: 'fixed',
+      components: ['trialA', 'trialB'],
+      skip: [],
+    };
+
+    const { container } = await act(async () => render(
+      <StepsPanel
+        participantSequence={participantSequence}
+        participantAnswers={{}}
+        studyConfig={studyConfig}
+      />,
+    ));
+
+    expect(container.textContent).toContain('2/3');
   });
 
   test('renders in analysis mode', async () => {
@@ -194,7 +293,7 @@ describe('StepsPanel answer status indicators', () => {
     endTime,
   });
 
-  test('shows an accessible grey checkmark for a submitted response without correct answers', async () => {
+  test('shows an accessible theme-dimmed checkmark for a submitted response without correct answers', async () => {
     const participantAnswer = makeCompletedAnswer({ q1: 'A' });
     const { getAllByLabelText, container } = await act(async () => render(
       <StepsPanel
@@ -206,7 +305,7 @@ describe('StepsPanel answer status indicators', () => {
 
     const unknownIcons = getAllByLabelText(UNKNOWN_ANSWER_LABEL);
     expect(unknownIcons.length).toBeGreaterThan(0);
-    expect(unknownIcons[0].getAttribute('data-color')).toBe('var(--mantine-color-gray-6)');
+    expect(unknownIcons[0].getAttribute('data-color')).toBe('var(--mantine-color-dimmed)');
     expect(container.textContent).toContain('icon-check');
     expect(container.textContent).not.toContain('icon-x');
   });

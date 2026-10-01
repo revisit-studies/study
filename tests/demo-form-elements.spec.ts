@@ -1,6 +1,12 @@
 /* eslint-disable no-await-in-loop */
 import { test, expect, Page } from '@playwright/test';
-import { nextClick, waitForStudyEndMessage } from './utils';
+import {
+  nextClick,
+  readParticipantRecording,
+  readStoredComponentTiming,
+  seekReplay,
+  waitForStudyEndMessage,
+} from './utils';
 
 async function answerMatrixRadioRows(page: Page, responseId: string, rowCount: number) {
   for (let row = 0; row < rowCount; row += 1) {
@@ -28,8 +34,34 @@ async function answerMatrixCheckboxRows(
   }
 }
 
+function getTimePickerInputs(page: Page, responseId: string) {
+  return page.locator(`#${responseId} input:not([type="hidden"])`);
+}
+
+async function fillTimePicker(page: Page, responseId: string, value: string) {
+  const [hours, minutes, seconds] = value.split(':');
+  const inputs = getTimePickerInputs(page, responseId);
+  await expect(inputs).toHaveCount(seconds === undefined ? 2 : 3);
+  await inputs.nth(0).fill(hours);
+  await inputs.nth(1).fill(minutes);
+  if (seconds !== undefined) {
+    await inputs.nth(2).fill(seconds);
+  }
+}
+
+async function expectTimePickerValue(page: Page, responseId: string, value: string) {
+  const [hours, minutes, seconds] = value.split(':');
+  const inputs = getTimePickerInputs(page, responseId);
+  await expect(inputs).toHaveCount(seconds === undefined ? 2 : 3);
+  await expect(inputs.nth(0)).toHaveValue(hours);
+  await expect(inputs.nth(1)).toHaveValue(minutes);
+  if (seconds !== undefined) {
+    await expect(inputs.nth(2)).toHaveValue(seconds);
+  }
+}
+
 async function advanceToSidebarFormElements(page: Page) {
-  const sidebarAgeInput = page.locator('input[placeholder="Enter your age here, range from 0 - 100"]:visible').first();
+  const sidebarAgeInput = page.locator('.sidebar input[data-path="q-numerical"]');
 
   for (let i = 0; i < 3; i += 1) {
     if (await sidebarAgeInput.isVisible().catch(() => false)) {
@@ -60,15 +92,17 @@ test('Test questionnaire component with responses and randomizing questions and 
     .getByText('Go to Study')
     .click();
 
+  const shortSidebarReplayPath = new URL(page.url()).pathname;
   await nextClick(page);
 
   // Fill the survey: Form Elements
 
   // Number input
-  const ageInput = page.getByPlaceholder('Enter your age here, range from 0 - 100');
+  const ageInput = page.locator('.main input[data-path="q-numerical"]');
   await expect(ageInput).toBeVisible({ timeout: 10000 });
   await ageInput.fill('120');
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await ageInput.press('Tab');
+  await nextClick(page);
   await expect(page.getByText('Please enter a value between 0 and 100')).toBeVisible();
   await ageInput.fill('12');
 
@@ -91,6 +125,12 @@ test('Test questionnaire component with responses and randomizing questions and 
   const minDropdownSelectionsText = await page.getByText('Please select at least 2 options');
   await expect(minDropdownSelectionsText).toBeVisible();
   await page.getByRole('option', { name: 'Scatter', exact: true }).click();
+
+  // Country dropdown
+  const countryDropdown = page.getByPlaceholder('Select a country');
+  await countryDropdown.fill('United Sta');
+  await page.getByRole('option', { name: /United States$/ }).click();
+  await expect(countryDropdown).toHaveValue(/United States/);
 
   // Vertical Checkbox
   await page.getByRole('checkbox', { name: 'Option 2' }).nth(0).click();
@@ -115,6 +155,9 @@ test('Test questionnaire component with responses and randomizing questions and 
   // Button
   await page.getByRole('radio', { name: 'Option 4' }).nth(0).click();
 
+  // Buttons with keymapping (Using configured key mapping)
+  await page.keyboard.press('r');
+
   // Likert scale
   await page.getByRole('radio', { name: '5' }).nth(0).click();
 
@@ -127,8 +170,126 @@ test('Test questionnaire component with responses and randomizing questions and 
   // Go to the next page
   await nextClick(page);
 
+  // Conditional responses validate only while visible and clear when hidden.
+  const universityName = page.getByLabel('Name of University');
+  const graduationYear = page.getByLabel(/Graduation year$/);
+  await expect(page.getByRole('radio', { name: 'Yes', exact: true })).not.toBeChecked();
+  await expect(universityName).toHaveCount(0);
+  await page.getByRole('radio', { name: 'Yes', exact: true }).check();
+  await nextClick(page);
+  await expect(universityName).toHaveAttribute('aria-invalid', 'true');
+  const revisitBackground = page.getByLabel('How did you hear about reVISit?');
+  await expect(revisitBackground).toHaveCount(0);
+  await universityName.fill('University of Utah');
+  await expect(revisitBackground).toBeVisible();
+  await revisitBackground.fill('Through a university research project');
+  await universityName.fill('Another university');
+  await expect(revisitBackground).toHaveCount(0);
+  await universityName.fill('WPI');
+  await expect(revisitBackground).toHaveValue('');
+  await revisitBackground.fill('From a colleague at WPI');
+  await universityName.fill('WPI extension');
+  await expect(revisitBackground).toHaveCount(0);
+  await universityName.fill('University of Utah');
+  await expect(revisitBackground).toHaveValue('');
+  await revisitBackground.fill('Through a university research project');
+  await page.locator('#degreeProgram').getByRole('combobox').click();
+  await page.getByRole('option', { name: "Bachelor's degree", exact: true }).click();
+  await page.getByRole('radio', { name: 'Graduated', exact: true }).check();
+  await nextClick(page);
+  await expect(graduationYear).toHaveAttribute('aria-invalid', 'true');
+  const graduationSemester = page.locator('#graduationSemester').getByRole('combobox');
+  await graduationYear.fill('2020');
+  await expect(graduationSemester).toHaveCount(0);
+  await graduationYear.fill('2021');
+  await expect(graduationSemester).toBeVisible();
+  await nextClick(page);
+  await expect(graduationSemester).toHaveAttribute('aria-invalid', 'true');
+  await graduationSemester.click();
+  await page.getByRole('option', { name: 'Spring', exact: true }).click();
+  await graduationYear.fill('2020');
+  await expect(graduationSemester).toHaveCount(0);
+  await graduationYear.fill('2021');
+  await expect(graduationSemester).toHaveValue('');
+  await graduationSemester.click();
+  await page.getByRole('option', { name: 'Fall', exact: true }).click();
+  const expectedGraduationYear = page.getByLabel('Expected graduation year');
+  await page.getByRole('radio', { name: 'Currently enrolled', exact: true }).check();
+  await expect(graduationYear).toHaveCount(0);
+  await expect(graduationSemester).toHaveCount(0);
+  await expect(expectedGraduationYear).toBeVisible();
+  await expectedGraduationYear.fill('2028');
+  await page.getByRole('radio', { name: 'Graduated', exact: true }).check();
+  await expect(expectedGraduationYear).toHaveCount(0);
+  await expect(graduationYear).toHaveValue('');
+  await page.getByRole('radio', { name: 'Currently enrolled', exact: true }).check();
+  await expect(expectedGraduationYear).toHaveValue('');
+  await page.getByRole('radio', { name: 'Graduated', exact: true }).check();
+  await graduationYear.fill('2020');
+  await page.getByRole('radio', { name: 'No', exact: true }).check();
+  await expect(universityName).toHaveCount(0);
+  await expect(graduationYear).toHaveCount(0);
+  await page.getByRole('radio', { name: 'Yes', exact: true }).check();
+  await expect(universityName).toHaveValue('');
+  await expect(page.getByRole('radio', { name: 'Graduated', exact: true })).not.toBeChecked();
+  await page.getByRole('radio', { name: 'Graduated', exact: true }).check();
+  await expect(graduationYear).toHaveValue('');
+  await page.getByRole('radio', { name: 'No', exact: true }).check();
+  await nextClick(page);
+  await expect.poll(async () => (
+    await readParticipantRecording(page, 'demo-form-elements', 'Conditional Responses_2')
+  )?.answer).toEqual({ conditionalTitle: '', attendedUniversity: 'no' });
+
+  // Go to the next page
+  await nextClick(page);
+
+  // Fill the survey: Text Validation
+  await expect(page.getByText('Text Validation', { exact: true })).toBeVisible();
+  const textValidationReplayPath = new URL(page.url()).pathname;
+  const regexInput = page.getByPlaceholder('ABC-123');
+  await regexInput.fill('^[A-Z]{3}-\\d{3}$');
+  await nextClick(page);
+  await expect(
+    page.getByText('Please enter a value that matches the required format.'),
+  ).toBeVisible();
+  await regexInput.fill('ABC-123');
+  await page.getByPlaceholder('Share your feedback...').fill('ReVISit is great');
+  await page.getByPlaceholder('ReVISit', { exact: true }).fill('ReVISit');
+  const characterLengthInput = page.getByPlaceholder('3–10 characters');
+  const wordLengthInput = page.getByPlaceholder('4–10 words');
+  await characterLengthInput.fill('no');
+  await wordLengthInput.fill('only three words');
+  await page.getByPlaceholder('test@revisit.dev').fill('test@revisit.dev');
+  await page.locator('#built-in-validation-phone-number input').fill('+800-000-0000');
+  await page.locator('#built-in-validation-us-phone-number input').fill('800-000-0000');
+  await page.getByPlaceholder('https://revisit.dev').fill('https://revisit.dev');
+  await page.getByLabel('Date within a range.').fill('06/24/2026');
+  await page.locator('#month-picker-response [data-dates-input]').click();
+  await page.getByRole('button', { name: 'Jul', exact: true }).click();
+  await page.locator('#year-picker-response [data-dates-input]').click();
+  await page.getByRole('button', { name: '2027', exact: true }).click();
+  await fillTimePicker(page, 'time-standard-response', '14:28');
+  await fillTimePicker(page, 'time-range-response', '14:28');
+  await fillTimePicker(page, 'time-seconds-response', '14:28:30');
+  const twelveHourInputs = getTimePickerInputs(page, 'time-12-hour-response');
+  await expect(twelveHourInputs).toHaveCount(3);
+  await expect(twelveHourInputs.nth(0)).toHaveValue('02');
+  await expect(twelveHourInputs.nth(1)).toHaveValue('28');
+  await expect(twelveHourInputs.nth(2)).toHaveValue('PM');
+  await nextClick(page);
+  await expect(page.getByText('Please enter between 3 and 10 characters.')).toBeVisible();
+  await expect(page.getByText('Please enter between 4 and 10 words.')).toBeVisible();
+  await characterLengthInput.fill('valid');
+  await wordLengthInput.fill('This has four words');
+  await nextClick(page);
+
   // Default Values should be fully answerable via defaults
   await expect(page.getByText('Default Values Demo')).toBeVisible();
+  await expect(page.getByLabel('Date default')).toHaveValue('06/24/2026');
+  await expect(page.locator('#default-month [data-dates-input]')).toHaveText('06/2026');
+  await expect(page.locator('#default-year [data-dates-input]')).toHaveText('2026');
+  await expectTimePickerValue(page, 'default-time', '14:28:30');
+  await expect(page.getByPlaceholder('Select a country')).toHaveValue(/United States/);
   await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeEnabled();
   await nextClick(page);
 
@@ -202,6 +363,11 @@ test('Test questionnaire component with responses and randomizing questions and 
 
   // Number input
   const sidebarAgeInput = await advanceToSidebarFormElements(page);
+  const sidebarReplayPath = new URL(page.url()).pathname;
+  const sidebar = page.locator('.sidebar');
+  await expect(sidebar).toBeVisible();
+  expect(await sidebar.evaluate((element) => getComputedStyle(element).overflowY)).not.toBe('auto');
+
   await sidebarAgeInput.fill('120');
   await sidebarAgeInput.press('Tab');
   await page.getByRole('button', { name: 'Next', exact: true }).click();
@@ -237,11 +403,65 @@ test('Test questionnaire component with responses and randomizing questions and 
   await page.getByRole('radio', { name: 'Option 1' }).nth(1).click();
 
   // Likert scale
-  await page.getByRole('radio', { name: '6' }).nth(0).click();
+  await page.getByRole('radio', { name: '5' }).nth(0).click();
 
   // Go to the next page
   await nextClick(page);
 
   // Check that the thank you message is displayed
   await waitForStudyEndMessage(page);
+
+  await expect.poll(() => readStoredComponentTiming(page, 'Text Validation')).not.toBeNull();
+  const textValidationTiming = await readStoredComponentTiming(page, 'Text Validation');
+  await expect.poll(() => readStoredComponentTiming(page, 'Sidebar Form Elements')).not.toBeNull();
+  const sidebarTiming = await readStoredComponentTiming(page, 'Sidebar Form Elements');
+  if (!textValidationTiming || !sidebarTiming) {
+    throw new Error('Form element timing was not stored');
+  }
+
+  const replaySearch = `participantId=${encodeURIComponent(sidebarTiming.participantId)}&revisitPageId=e2e-sidebar-replay`;
+  await page.goto(`${textValidationReplayPath}?${replaySearch}`);
+  await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
+  await seekReplay(
+    page,
+    textValidationTiming.startTime,
+    textValidationTiming.endTime,
+    textValidationTiming.endTime,
+  );
+  await expect(page.getByLabel('Date within a range.')).toHaveValue('06/24/2026');
+  await expect(page.locator('#month-picker-response [data-dates-input]')).toHaveText('07/2026');
+  await expect(page.locator('#year-picker-response [data-dates-input]')).toHaveText('2027');
+  await expectTimePickerValue(page, 'time-seconds-response', '14:28:30');
+
+  await page.goto(`${sidebarReplayPath}?${replaySearch}`);
+  await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
+
+  const replaySidebar = page.locator('.sidebar');
+  const replayFooter = page.locator('footer');
+  await expect(replaySidebar).toBeVisible();
+  expect(await replaySidebar.evaluate((element) => getComputedStyle(element).overflowY)).not.toBe('auto');
+  await page.evaluate(() => {
+    window.scrollTo(0, document.documentElement.scrollHeight);
+  });
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+  expect(await replaySidebar.evaluate((element) => element.scrollTop)).toBe(0);
+
+  const replaySidebarBox = await replaySidebar.boundingBox();
+  const replayFooterBox = await replayFooter.boundingBox();
+  expect(replaySidebarBox).not.toBeNull();
+  expect(replayFooterBox).not.toBeNull();
+  expect((replaySidebarBox?.y ?? 0) + (replaySidebarBox?.height ?? 0))
+    .toBeLessThanOrEqual((replayFooterBox?.y ?? 0) + 1);
+
+  await page.goto(`${shortSidebarReplayPath}?${replaySearch}`);
+  await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
+  const shortSidebar = page.locator('.sidebar');
+  await expect(shortSidebar).toBeVisible();
+  const shortSidebarLayout = await shortSidebar.evaluate((element) => ({
+    alignSelf: getComputedStyle(element).alignSelf,
+    clientHeight: element.clientHeight,
+    scrollHeight: element.scrollHeight,
+  }));
+  expect(shortSidebarLayout.alignSelf).not.toBe('flex-start');
+  expect(shortSidebarLayout.scrollHeight).toBeLessThanOrEqual(shortSidebarLayout.clientHeight);
 });

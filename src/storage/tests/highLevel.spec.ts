@@ -180,7 +180,7 @@ class DelayedLocalStorageEngine extends LocalStorageEngine {
   ) {
     const isParticipantDataWrite = type === 'participantData' && prefix.startsWith('participants/');
     const isAssetUpload = objectToUpload instanceof Blob
-      && (prefix.startsWith('audio/') || prefix.startsWith('screenRecording/'));
+      && (prefix.startsWith('audio/') || prefix.startsWith('screenRecording/') || prefix.startsWith('webcamRecording/'));
 
     if (isParticipantDataWrite && this.holdParticipantDataWrite) {
       this.holdParticipantDataWrite = false;
@@ -457,6 +457,14 @@ describe.each([
 
     expect(modesSpy).not.toHaveBeenCalled();
     expect(sequenceSpy).not.toHaveBeenCalled();
+  });
+
+  test('retains the initial participant color mode when resuming with a different preference', async () => {
+    const session = await storageEngine.initializeParticipantSession({}, configSimple, { ...participantMetadata, colorMode: 'dark' });
+    await storageEngine.flushPendingParticipantData();
+    expect((await storageEngine.getParticipantData(session.participantId))?.metadata.colorMode).toBe('dark');
+    const resumed = await storageEngine.initializeParticipantSession({}, configSimple, { ...participantMetadata, colorMode: 'light' });
+    expect(resumed.metadata.colorMode).toBe('dark');
   });
 
   test('initializeParticipantSession reads modes only once for a new participant', async () => {
@@ -1504,6 +1512,14 @@ describe.each([
 
     const finalizeResult = await finalizePromise;
     expect(finalizeResult.status).toBe('complete');
+  });
+
+  test('saveWebcamRecording persists a webcam asset for the current participant', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+    await expect(
+      storageEngine.saveWebcamRecording(new Blob(['webcam'], { type: 'video/webm' }), 'intro_0'),
+    ).resolves.toBeUndefined();
   });
 
   // getAudio and saveAudio untestable due to browser-specific implementation

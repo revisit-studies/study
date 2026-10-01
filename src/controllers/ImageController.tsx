@@ -1,35 +1,46 @@
+import { useMemo } from 'react';
 import { Image } from '@mantine/core';
-import {
-  useEffect, useMemo, useState,
-} from 'react';
 import { ImageComponent } from '../parser/types';
 import { PREFIX } from '../utils/Prefix';
-import { getStaticAssetByPath } from '../utils/getStaticAsset';
 import { ResourceNotFound } from '../ResourceNotFound';
+import { useStudyConfig } from '../store/hooks/useStudyConfig';
+import { compileTemplate } from '../utils/handlebars';
+import { useTemplateAnswerContext } from '../store/hooks/useTemplateAnswerContext';
+import { useAssetStatus, useAssetLoadStatus } from '../store/hooks/useAssetStatus';
+import { useCurrentIdentifier } from '../routes/utils';
 
 export function ImageController({ currentConfig }: { currentConfig: ImageComponent; }) {
+  const studyConfig = useStudyConfig();
+  const templateData = useTemplateAnswerContext();
+  const templatedPath = useMemo(
+    () => (templateData ? compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true, data: templateData }) : undefined),
+    [currentConfig.path, currentConfig.parameters, templateData],
+  );
+
   const url = useMemo(() => {
-    if (currentConfig.path.startsWith('http')) {
-      return currentConfig.path;
-    }
-    return `${PREFIX}${currentConfig.path}`;
-  }, [currentConfig.path]);
+    if (templatedPath === undefined) return undefined;
+    if (templatedPath.startsWith('http')) return templatedPath;
+    return `${PREFIX}${templatedPath}`;
+  }, [templatedPath]);
+  const identifier = useCurrentIdentifier();
+  const requestKey = url === undefined ? undefined : `${identifier}:${url}`;
+  const { status: assetStatus, onReady, onError } = useAssetLoadStatus(requestKey);
 
-  const [loading, setLoading] = useState(true);
-  const [assetFound, setAssetFound] = useState(false);
+  useAssetStatus(assetStatus);
 
-  useEffect(() => {
-    async function fetchImage() {
-      let asset = await getStaticAssetByPath(url);
-      asset = asset?.includes('File not found') ? undefined : asset;
-      setAssetFound(!!asset);
-      setLoading(false);
-    }
+  if (url === undefined || templatedPath === undefined) {
+    return null;
+  }
 
-    fetchImage();
-  }, [url]);
-
-  return loading || assetFound
-    ? <Image mx="auto" src={url} />
-    : <ResourceNotFound path={currentConfig.path} />;
+  return assetStatus === 'error'
+    ? <ResourceNotFound email={studyConfig.uiConfig.contactEmail} path={templatedPath} />
+    : (
+      <Image
+        key={requestKey}
+        mx="auto"
+        src={url}
+        onLoad={onReady}
+        onError={onError}
+      />
+    );
 }

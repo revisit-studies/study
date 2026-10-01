@@ -10,7 +10,7 @@ import { showNotification } from '../utils/notifications';
 // ── mutable state ─────────────────────────────────────────────────────────────
 
 let mockUser = { isAdmin: false, determiningStatus: false, adminVerification: false };
-let mockEngine = 'localStorage';
+let mockEngine: string | undefined = 'localStorage';
 let mockIsCloud = false;
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
@@ -21,7 +21,7 @@ vi.mock('../store/hooks/useAuth', () => ({
 
 vi.mock('../storage/storageEngineHooks', () => ({
   useStorageEngine: () => ({
-    storageEngine: {
+    storageEngine: mockEngine === undefined ? undefined : {
       getEngine: () => mockEngine,
       login: vi.fn().mockResolvedValue({ email: 'test@test.com', uid: '1' }),
     },
@@ -87,6 +87,13 @@ describe('Login', () => {
     expect(html).toContain('Sign In With');
     expect(html).toContain('Supabase');
     expect(html).toContain('supabase-icon');
+  });
+
+  test('waits for storage initialization before showing a provider', () => {
+    mockEngine = undefined;
+    const html = renderToStaticMarkup(<Login />);
+    expect(html).toContain('data-testid="loading"');
+    expect(html).not.toContain('Sign In With');
   });
 
   test('shows Google sign-in button when engine is not supabase', () => {

@@ -21,7 +21,7 @@ import { IndividualComponent } from '../parser/types';
 import { useDisableBrowserBack } from '../utils/useDisableBrowserBack';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import {
-  useStoreActions, useStoreDispatch, useStoreSelector,
+  useFlatSequence, useStoreActions, useStoreDispatch, useStoreSelector,
 } from '../store/store';
 import { StudyEnd } from '../components/StudyEnd';
 import { TrainingFailed } from '../components/TrainingFailed';
@@ -37,6 +37,7 @@ import { ScreenRecordingReplay } from '../components/screenRecording/ScreenRecor
 import { decryptIndex, encryptIndex } from '../utils/encryptDecryptIndex';
 import { useRecordingConfig } from '../store/hooks/useRecordingConfig';
 import { getComponentContainerStyle } from '../utils/componentStyle';
+import { compileTemplate } from '../utils/handlebars';
 import { generateStimulusErrorMessage } from '../components/response/stimulusErrors';
 import { getStimulusProvenanceState, getStimulusShowErrorsFromState } from '../components/response/stimulusProvenance';
 
@@ -50,9 +51,10 @@ export function ComponentController() {
   const studyId = useStudyId();
 
   const stepConfig = studyConfig.components[currentComponent];
-  const { storageEngine } = useStorageEngine();
+  const { storageEngine, configuredStorageEngine } = useStorageEngine();
 
   const answers = useStoreSelector((store) => store.answers);
+  const flatSequence = useFlatSequence();
   const analysisCanPlayScreenRecording = useStoreSelector((state) => state.analysisCanPlayScreenRecording);
 
   const { setAnalysisCanPlayScreenRecording } = useStoreActions();
@@ -62,7 +64,7 @@ export function ComponentController() {
 
   const navigate = useNavigate();
 
-  const { studyHasScreenRecording } = useRecordingConfig();
+  const { studyHasScreenRecording, studyHasWebcamRecording } = useRecordingConfig();
 
   const isAnalysis = useIsAnalysis();
 
@@ -84,26 +86,27 @@ export function ComponentController() {
   const storeDispatch = useStoreDispatch();
   const { setAlertModal } = useStoreActions();
   useEffect(() => {
-    const configuredStorageEngine = import.meta.env.VITE_STORAGE_ENGINE;
+    if (configuredStorageEngine && storageEngine !== configuredStorageEngine) return;
+    const configuredEngineName = import.meta.env.VITE_STORAGE_ENGINE;
     const activeStorageEngine = storageEngine?.getEngine();
-    if (!configuredStorageEngine || activeStorageEngine === configuredStorageEngine) {
+    if (!configuredEngineName || activeStorageEngine === configuredEngineName) {
       return;
     }
 
     if (activeStorageEngine === 'localStorage' && !import.meta.env.PROD) {
       storeDispatch(setAlertModal({
         show: true,
-        message: `There was an issue connecting to the ${configuredStorageEngine} database, so this development build is using localStorage instead. Study data will not be saved to cloud storage.`,
+        message: `There was an issue connecting to the ${configuredEngineName} database, so this development build is using localStorage instead. Study data will not be saved to cloud storage.`,
         title: 'Using localStorage fallback',
       }));
     } else {
       storeDispatch(setAlertModal({
         show: true,
-        message: `There was an issue connecting to the ${configuredStorageEngine} database. This could be caused by a network issue or your adblocker. If you are using an adblocker, please disable it for this website and refresh.`,
+        message: `There was an issue connecting to the ${configuredEngineName} database. This could be caused by a network issue or your adblocker. If you are using an adblocker, please disable it for this website and refresh.`,
         title: 'Failed to connect to the storage engine',
       }));
     }
-  }, [setAlertModal, storageEngine, storeDispatch]);
+  }, [configuredStorageEngine, setAlertModal, storageEngine, storeDispatch]);
 
   // Find current block, if it has an ID, add it as a participant tag
   const [blockForStep, setBlockForStep] = useState<string[]>([]);
@@ -202,11 +205,11 @@ export function ComponentController() {
     }
 
     return {
-      ...componentContainerStyle,
-      border: '1px solid var(--mantine-color-red-3)',
-      backgroundColor: 'var(--mantine-color-red-0)',
+      border: '1px solid var(--mantine-color-red-light-color)',
+      backgroundColor: 'var(--mantine-color-red-light)',
       borderRadius: 'var(--mantine-radius-md)',
       padding: 'var(--mantine-spacing-sm)',
+      ...componentContainerStyle,
     };
   }, [componentContainerStyle, hasStimulusIssue]);
 
@@ -214,7 +217,7 @@ export function ComponentController() {
     // Assume that screen recording video exists.
     // The value is set to false from ScreenRecordingReplay component if video starts after stimulus start time.
     storeDispatch(setAnalysisCanPlayScreenRecording(true));
-  }, [currentStep, setAnalysisCanPlayScreenRecording, storeDispatch]);
+  }, [currentIdentifier, setAnalysisCanPlayScreenRecording, storeDispatch]);
 
   useFetchStylesheet(currentConfig?.stylesheetPath);
 
@@ -238,6 +241,18 @@ export function ComponentController() {
       }
     }
   }, [answers, currentComponent, currentStep, funcIndex, isAnalysis, modes.developmentModeEnabled, navigate, status, studyId]);
+
+  const templateData = useMemo(
+    () => ({
+      answers, flatSequence, currentStep, currentComponent, funcIndex: funcIndex ? decryptIndex(funcIndex) : undefined,
+    }),
+    [answers, flatSequence, currentStep, currentComponent, funcIndex],
+  );
+
+  const instruction = useMemo(
+    () => compileTemplate(currentConfig?.instruction || '', currentConfig?.parameters ?? {}, { data: templateData }),
+    [currentConfig?.instruction, currentConfig?.parameters, templateData],
+  );
 
   // We're not using hooks below here, so we can return early if we're at the end of the study.
   // This avoids issues with the component config being undefined for the end of the study.
@@ -266,7 +281,7 @@ export function ComponentController() {
   if (!storageEngine?.isConnected()) {
     return (
       <Center style={{ height: '80vh', flexDirection: 'column', textAlign: 'center' }}>
-        <IconPlugConnectedX size={48} stroke={1.5} color="orange" />
+        <IconPlugConnectedX size={48} stroke={1.5} color="var(--mantine-color-orange-text)" />
         <Title mt="md" order={4}>Database Disconnected</Title>
         <Text mt="md">Please check your network connection or disable your adblocker for this site, then refresh the page.</Text>
       </Center>
@@ -280,11 +295,17 @@ export function ComponentController() {
       </Center>
     );
   }
-  const instruction = currentConfig?.instruction || '';
   const instructionLocation = currentConfig.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar';
   const instructionInSideBar = instructionLocation === 'sidebar';
 
-  if (studyHasScreenRecording && isAnalysis && analysisCanPlayScreenRecording) return <ScreenRecordingReplay key={`${currentStep}-stimulus`} />;
+  const shouldShowRecordingReplay = (studyHasScreenRecording || studyHasWebcamRecording)
+    && isAnalysis
+    && analysisCanPlayScreenRecording;
+  const isWebcamOnlyReplay = shouldShowRecordingReplay
+    && studyHasWebcamRecording
+    && !studyHasScreenRecording;
+
+  if (shouldShowRecordingReplay && !isWebcamOnlyReplay) return <ScreenRecordingReplay key={`${currentStep}-stimulus`} />;
 
   return (
     <>
@@ -297,7 +318,7 @@ export function ComponentController() {
       />
       <Box
         id={currentComponent}
-        className={currentConfig.type}
+        className={`stimulus ${currentConfig.type}`}
         style={stimulusContainerStyle}
       >
         <Suspense key={`${currentStep}-stimulus`} fallback={<div>Loading...</div>}>
@@ -324,6 +345,7 @@ export function ComponentController() {
         config={currentConfig}
         location="belowStimulus"
       />
+      {isWebcamOnlyReplay && <ScreenRecordingReplay key={`${currentStep}-webcam-replay`} webcamOnly />}
     </>
   );
 }

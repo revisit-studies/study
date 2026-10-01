@@ -53,11 +53,10 @@ Please check the Prolific description.
 ## Contact
 For more information about this research or about the rights of
 research participants, or in case of research-related injury,
-contact:  Lane Harrison (contact info at the top of this page). In addition,
-include the contact information for the IRB Manager (Ruth McKeogh,
-Tel. 508-831-6699, Email: irb@wpi.edu ) and the Human Protection
-Administrator (Gabriel Johnson, Tel. 508-831-4989, Email:
-gjohnson@wpi.edu).
+contact: Lane Harrison (contact info at the top of this page). You may
+also contact the IRB Manager (Ruth McKeogh, Tel. 508-831-6699,
+Email: irb@wpi.edu) or the Human Protection Administrator
+(Gabriel Johnson, Tel. 508-831-4989, Email: gjohnson@wpi.edu).
 
 Your participation in this research is voluntary
 Your refusal to participate will not result in any penalty to you
@@ -72,5 +71,3 @@ You acknowledge that you have been informed about and consent to
 be a participant in the study described above. Make sure that your
 questions are answered to your satisfaction before signing. You
 are entitled to retain a copy of this consent agreement.
-
-

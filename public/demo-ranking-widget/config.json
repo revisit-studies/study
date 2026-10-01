@@ -7,7 +7,7 @@
       "The reVISit Team"
     ],
     "date": "2026-02-23",
-    "description": "A demo of ranking widget, based on the study design by Kuhlman et al., 2019 (doi:10.1145/3290605.3300742).",
+    "description": "A demo of ranking widgets, based on the study design by Kuhlman et al., 2019 (doi:10.1145/3290605.3300742).",
     "organizations": [
       "University of Utah",
       "WPI"
@@ -19,7 +19,7 @@
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
-    "withSidebar": true,
+    "withSidebar": false,
     "nextOnEnter": true
   },
   "components": {
@@ -63,7 +63,7 @@
             "University of California - Berkeley",
             "Washington State University"
           ],
-          "numItems": 3
+          "max": 3
         }
       ]
     },
@@ -102,7 +102,7 @@
             "University of California - Berkeley",
             "Washington State University"
           ],
-          "numItems": 2
+          "max": 2
         }
       ]
     },

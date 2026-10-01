@@ -2,7 +2,9 @@
 
 This demo study shows how to use an LLM-based chatbot in a reVISit study. Participants can ask questions about a clustered heatmap, and the chatbot responds with streaming text. When a question needs exact data values or visual details, the chatbot can request the dataset or the chart image through tools.
 
-All of the input and output is tracked by trrack, so you can analyze how participants interact with the chatbot and what information they request. You could also combine this with audio or screen capture to run a remote unmoderated study.
+> **Note:** The chatbot does not work when running this study on `localhost`. The default proxy server only accepts requests from `https://revisit.dev`, so requests from other origins are blocked by CORS. To develop locally, run your own proxy and point `VITE_OPENAI_API_URL` to it (see the "Set up the API Key" section below).
+
+All of the input and output is tracked by Trrack, so you can analyze how participants interact with the chatbot and what information they request. You could also combine this with audio or screen capture to run a remote unmoderated study.
 
 Below we describe what makes the chatbot good for studies, the core features, and how to customize it.
 
@@ -61,6 +63,8 @@ In `.env`, set `VITE_OPENAI_API_URL`:
 * Local development: `VITE_OPENAI_API_URL="http://localhost:3000"`
 * Production: `VITE_OPENAI_API_URL=https://apps.vdl.sci.utah.edu/openai-proxy`
 
+The production proxy restricts allowed origins to `https://revisit.dev`, so it cannot be used from `localhost` — running your own proxy locally is required for local development.
+
 ### Request Payloads (what we send to the API)
 
 The Responses API expects a JSON payload, which is the request body sent in `fetch(..., { body: JSON.stringify({ ... }) })` in `ChatInterface.tsx`. In other words, every field inside that JSON object (such as `model`, `instructions`, `tools`, `input`, and so on) is a payload parameter. In this demo, the payload shape is designed to be easy to reason about and to keep data transfer minimal.
@@ -109,7 +113,7 @@ Learn more: [Model list](https://developers.openai.com/api/docs/models)
 Learn more: [Responses API parameters](https://developers.openai.com/api/reference/resources/responses)
 
 **Change the data or chart image:**
-* Dataset: replace `assets/data/clustered-heatmap.csv` to your dataset.
-* Chart image: replace the OpenAI `file_id` to your image returned by `get_chart_image_file_id`.
+* Dataset: replace `assets/data/clustered-heatmap.csv` with your dataset.
+* Chart image: replace the OpenAI `file_id` with your image returned by `get_chart_image_file_id`.
 
 Learn more: [Files API](https://developers.openai.com/api/reference/resources/files)

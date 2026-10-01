@@ -7,7 +7,7 @@
       "The reVISit Team"
     ],
     "date": "2026-02-23",
-    "description": "A simple demo of using screen recording on stimuli that render an external website, where provenance tracking is difficult to implement.",
+    "description": "A simple demo of using screen and webcam recording on stimuli that render an external website, where provenance tracking is difficult to implement.",
     "organizations": [
       "University of Utah",
       "WPI"
@@ -23,6 +23,7 @@
     "windowEventDebounceTime": 200,
     "recordAudio": true,
     "recordScreen": true,
+    "recordWebcam": true,
     "recordScreenFPS": 30
   },
   "importedLibraries": [
@@ -40,15 +41,17 @@
       "response": [],
       "instruction": "On this page, only audio recording is enabled.",
       "recordAudio": true,
-      "recordScreen": false
+      "recordScreen": false,
+      "recordWebcam": false
     },
     "external_website_audio_screen": {
       "type": "website",
       "path": "https://www.revisit.dev",
       "response": [],
-      "instruction": "On this page, screen recording is enabled, and audio recording is only enabled while clicking and holding the mic icon.",
+      "instruction": "On this page, screen and webcam recording are enabled, and audio recording is only enabled while clicking and holding the mic icon.",
       "recordAudio": true,
       "recordScreen": true,
+      "recordWebcam": true,
       "clickToRecord": true
     },
     "barChart_audio_screen": {
@@ -58,7 +61,8 @@
         "difficulty": "hard"
       },
       "description": "Question that asks users to count the number of bars that have a value greater than 1.",
-      "instruction": "How many bars have a value greater than 1? (Both audio and screen recording are enabled on this page)",
+      "instruction": "How many bars have a value greater than 1? (Audio, screen, and webcam recording are enabled on this page)",
+      "recordWebcam": true,
       "path": "demo-screen-recording/assets/bar-chart.html",
       "response": [
         {

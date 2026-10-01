@@ -17,12 +17,11 @@
             bottom: calc(100% + 8px);
             color: #ffffff;
             font: 12px/1.4 Arial, Helvetica, sans-serif;
-            left: 50%;
+            left: 0;
             opacity: 0;
             padding: 6px 8px;
             pointer-events: none;
             position: absolute;
-            transform: translateX(-50%);
             visibility: hidden;
             white-space: nowrap;
             z-index: 1;
@@ -38,6 +37,36 @@
         .limit-tooltip[hidden] {
             display: none;
         }
+        :root {
+            color-scheme: light dark;
+        }
+
+        html,
+        body {
+            background-color: light-dark(#ffffff, #242424);
+            color: light-dark(#212529, #c1c2c5);
+        }
+
+        button {
+            background-color: light-dark(#ffffff, #2e2e2e);
+            border-color: light-dark(#9aa5b1, #5c5f66);
+            color: light-dark(#212529, #c1c2c5);
+        }
+
+        button:hover:not(:disabled) {
+            background-color: light-dark(#f5f7fa, #373a40);
+        }
+
+        button:disabled {
+            background-color: light-dark(#f1f3f5, #2e2e2e);
+            color: light-dark(#868e96, #909296);
+            cursor: not-allowed;
+        }
+
+        button:focus-visible {
+            outline: 2px solid light-dark(#1971c2, #74c0fc);
+            outline-offset: 2px;
+        }
     </style>
 </head>
 
@@ -52,11 +81,13 @@
                 <div>
                     <span class="limit-control" id="add-control">
                         <button id="add">Add</button>
-                        <span class="limit-tooltip" id="add-limit-tooltip" role="tooltip" hidden>Maximum of 20 dots reached.</span>
+                        <span class="limit-tooltip" id="add-limit-tooltip" role="tooltip" hidden>Maximum of 20 dots
+                            reached.</span>
                     </span>
                     <span class="limit-control" id="remove-control">
                         <button id="rem">Remove</button>
-                        <span class="limit-tooltip" id="remove-limit-tooltip" role="tooltip" hidden>Minimum of 0 dots reached.</span>
+                        <span class="limit-tooltip" id="remove-limit-tooltip" role="tooltip" hidden>Minimum of 0 dots
+                            reached.</span>
                     </span>
                 </div>
             </div>
@@ -71,6 +102,7 @@
 
     // Task id should match the task's answer id in the config file
     const taskId = 'circlesCount';
+    const minDots = 0;
     const maxDots = 20;
 
     function dots(initialDots) {
@@ -174,7 +206,7 @@
     function renderState(currentDots) {
         dotActions.update(currentDots);
         setLimitState(addButton, addControl, addTooltip, currentDots.length >= maxDots);
-        setLimitState(removeButton, removeControl, removeTooltip, currentDots.length === 0);
+        setLimitState(removeButton, removeControl, removeTooltip, currentDots.length <= minDots);
     }
 
     function publishState() {
@@ -196,7 +228,7 @@
     };
 
     removeButton.onclick = () => {
-        if (trrack.getState().dots.length > 0) {
+        if (trrack.getState().dots.length > minDots) {
             trrack.apply("Remove Dot", updateDots("remove"));
         }
     };

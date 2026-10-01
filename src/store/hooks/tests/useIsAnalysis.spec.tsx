@@ -28,6 +28,15 @@ describe('useIsAnalysis', () => {
     expect(result.current).toBe(true);
   });
 
+  test('returns true when participantId is present but not yet populated', () => {
+    vi.mocked(useSearchParams).mockReturnValue([
+      new URLSearchParams('participantId='),
+      vi.fn(),
+    ]);
+    const { result } = renderHook(() => useIsAnalysis());
+    expect(result.current).toBe(true);
+  });
+
   test('returns false when only unrelated params are present', () => {
     vi.mocked(useSearchParams).mockReturnValue([
       new URLSearchParams({ studyId: 'my-study' }),

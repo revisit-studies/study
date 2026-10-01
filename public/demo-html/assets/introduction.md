@@ -1,4 +1,4 @@
-This is an example study to show how to embed html elements into the study page. In this simple example, there is no communication from the stimulus to revisit, and all answers and provenance data is solely recorded by the revisit app.
+This is an example study to show how to embed HTML elements into the study page. In this simple example, there is no communication from the stimulus to reVISit, and all answers and provenance data are solely recorded by the reVISit app.
 
 ## Relevant files:
  * [The Config](https://github.com/revisit-studies/study/blob/main/public/demo-html/config.json)

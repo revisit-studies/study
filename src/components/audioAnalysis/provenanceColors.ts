@@ -1,5 +1,6 @@
 /* eslint-disable no-bitwise */
 import { TrrackedProvenance } from '../../store/types';
+import { FACE_BUTTON_COLORS, FACE_BUTTONS, gamepadPressActionType } from '../../utils/gamepadButtons';
 
 export const PROVENANCE_COLOR_PALETTE = ['#4269d0', '#ff725c', '#6cc5b0', '#3ca951', '#ff8ab7', '#a463f2', '#97bbf5', '#9c6b4e'];
 export const ROOT_COLOR = '#efb118';
@@ -75,6 +76,21 @@ function isFormUpdateKey(key: string): boolean {
   return key === FORM_UPDATE_KEY || key === normalizeKeyText('Update form field');
 }
 
+/**
+ * Colors for action types whose color carries meaning, rather than just needing to
+ * be distinguishable from its neighbours. Keys are normalized action names.
+ *
+ * Gamepad presses are the current entries: painting a node in the color of the
+ * button that produced it makes a timeline of controller input readable at a
+ * glance. Studies with their own meaningful palette can add entries here.
+ */
+export const EXPLICIT_KEY_COLORS = new Map<string, string>(
+  FACE_BUTTONS.map((button) => [
+    normalizeKeyText(gamepadPressActionType(button)),
+    FACE_BUTTON_COLORS[button],
+  ]),
+);
+
 export function getColorForKey(key: string): string {
   if (key === ROOT_KEY) {
     return ROOT_COLOR;
@@ -85,6 +101,11 @@ export function getColorForKey(key: string): string {
 
   if (isFormUpdateKey(key)) {
     return FORM_UPDATE_COLOR;
+  }
+
+  const explicitColor = EXPLICIT_KEY_COLORS.get(key);
+  if (explicitColor) {
+    return explicitColor;
   }
 
   // Use deterministic HSL from a 32-bit hash to greatly reduce collisions
