@@ -25,28 +25,7 @@
       "BLUE",
       "BLACK"
     ],
-    "stroopCongruent": {
-      "action": "zip",
-      "factors": ["color", "color"],
-      "as": ["word", "inkColor"]
-    },
-    "stroopIncongruent": {
-      "action": "sample",
-      "numSamples": 1,
-      "samplingStrategy": "withoutReplacement",
-      "factors": [{
-        "action": "remove",
-        "factor": {
-          "action": "cross",
-          "factors": ["color", "color"],
-          "as": ["word", "inkColor"]
-        },
-        "items": {
-          "action": "zip",
-          "factors": ["color", "color"]
-        }
-      }]
-    },
+    "fontSize": ["24px", "48px"],
     "stroopConditions": {
       "action": "cross",
       "factors": ["color", "color"],
@@ -91,6 +70,7 @@
       "response": []
     }
   },
+  "betweenSubjects": ["fontSize"],
   "sequence": {
     "order": "fixed",
     "components": [
