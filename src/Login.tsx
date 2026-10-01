@@ -42,6 +42,8 @@ export function Login() {
 
   const engine = useMemo(() => storageEngine?.getEngine(), [storageEngine]);
 
+  if (!storageEngine) return <LoadingOverlay visible />;
+
   if (!user.determiningStatus && user.isAdmin) {
     return <Navigate to="/" />;
   }

@@ -59,6 +59,7 @@ vi.mock('@supabase/supabase-js', () => {
     let payload: RowData | RowData[] | Partial<RowData> | null = null;
     const filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'like' | 'is' }> = [];
     let isSingle = false;
+    let isMaybeSingle = false;
 
     const qb = {
       select(_fields?: string) { if (!op) op = 'select'; return qb; },
@@ -71,6 +72,7 @@ vi.mock('@supabase/supabase-js', () => {
       like(col: string, val: string) { filters.push({ col, val, type: 'like' }); return qb; },
       limit(_count: number) { return qb; },
       single() { isSingle = true; return qb; },
+      maybeSingle() { isMaybeSingle = true; return qb; },
       then(
         resolve: (val: { data: RowData | RowData[] | null; error: { message: string; code?: string } | null }) => void,
         reject?: (err: Error) => void,
@@ -80,9 +82,11 @@ vi.mock('@supabase/supabase-js', () => {
           if (op === 'select') {
             const matched = applyFilters(rows, filters);
             // Return deep copies so later mutations to revisitRows don't alias into returned data
-            if (isSingle) {
+            if (isSingle || isMaybeSingle) {
               if (matched.length === 0) {
-                resolve({ data: null, error: { message: 'No rows', code: 'PGRST116' } });
+                resolve({ data: null, error: isMaybeSingle ? null : { message: 'No rows', code: 'PGRST116' } });
+              } else if (matched.length > 1) {
+                resolve({ data: null, error: { message: 'Multiple rows', code: 'PGRST116' } });
               } else {
                 resolve({ data: JSON.parse(JSON.stringify(matched[0])), error: null });
               }
@@ -873,6 +877,20 @@ describe.each([
     // @ts-expect-error accessing CloudStorageEngine method via StorageEngine
     const adminData = await storageEngine.getUserManagementData('adminUsers');
     expect(adminData).toBeUndefined();
+  });
+
+  test('duplicate user-management rows fail closed instead of starting setup', async () => {
+    const savedRows = revisitRows.splice(0);
+    revisitRows.push(
+      { studyId: '', docId: 'user-management', data: { authentication: { isEnabled: false } } },
+      { studyId: '', docId: 'user-management', data: { authentication: { isEnabled: true } } },
+    );
+    try {
+      await expect((storageEngine as SupabaseStorageEngine).getUserManagementData('authentication'))
+        .rejects.toThrow('Multiple rows');
+    } finally {
+      revisitRows.splice(0, revisitRows.length, ...savedRows);
+    }
   });
 
   test('missing authentication setting never validates an administrator', async () => {

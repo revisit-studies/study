@@ -787,12 +787,10 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       .select('data')
       .eq('studyId', '')
       .eq('docId', 'user-management')
-      .single();
+      .maybeSingle();
 
-    if (error) {
-      if (error.code === 'PGRST116') return undefined;
-      throw new Error(`Failed to read user management data: ${error.message}`);
-    }
+    if (error) throw new Error(`Failed to read user management data: ${error.message}`);
+    if (data === null) return undefined;
 
     if (!data?.data || typeof data.data !== 'object' || Array.isArray(data.data)) {
       throw new Error('Invalid user management data');
