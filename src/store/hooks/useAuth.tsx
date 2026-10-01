@@ -10,12 +10,15 @@ import { StoredUser, UserWrapped } from '../../storage/engines/types';
 import { isCloudStorageEngine } from '../../storage/engines/utils/storageEngineHelpers';
 import { SupabaseStorageEngine } from '../../storage/engines/SupabaseStorageEngine';
 
+type SupabaseAuthStatus = 'loading' | 'enabled' | 'disabled' | 'unconfigured' | 'error';
+
 // Defines default AuthContextValue
 interface AuthContextValue {
   user: UserWrapped;
   logout: () => Promise<void>;
   triggerAuth: () => void;
   verifyAdminStatus: (inputUser: UserWrapped) => Promise<boolean>;
+  supabaseAuthStatus: SupabaseAuthStatus;
   }
 
 // Initializes AuthContext
@@ -29,6 +32,7 @@ const AuthContext = createContext<AuthContextValue>({
   logout: async () => {},
   triggerAuth: () => {},
   verifyAdminStatus: () => Promise.resolve(false),
+  supabaseAuthStatus: 'loading',
 });
 
 // Firebase auth context
@@ -64,7 +68,8 @@ export function AuthProvider({ children } : { children: ReactNode }) {
   };
 
   const [user, setUser] = useState(loadingNullUser);
-  const [enableAuthTrigger, setEnableAuthTrigger] = useState(false);
+  const [enableAuthTrigger, setEnableAuthTrigger] = useState(0);
+  const [supabaseAuthStatus, setSupabaseAuthStatus] = useState<SupabaseAuthStatus>('loading');
   const { storageEngine } = useStorageEngine();
   const location = useLocation();
   const studyRouteMatch = useMatch('/:studyId/*');
@@ -84,7 +89,7 @@ export function AuthProvider({ children } : { children: ReactNode }) {
   };
 
   const triggerAuth = useCallback(() => {
-    setEnableAuthTrigger(true);
+    setEnableAuthTrigger((value) => value + 1);
   }, []);
 
   // This useEffect checks for an existing Supabase session on mount since it requires a redirect to login
@@ -112,16 +117,23 @@ export function AuthProvider({ children } : { children: ReactNode }) {
   useEffect(() => {
     // Set initialUser
     setUser(loadingNullUser);
+    setSupabaseAuthStatus('loading');
+    let cancelled = false;
+    let authEvent = 0;
+    let unsubscribe: (() => void) | undefined;
 
     // Handle auth state changes for Firebase
     const handleAuthStateChanged = async (cloudUser: StoredUser | null) => {
+      if (cancelled) return;
+      authEvent += 1;
+      const currentEvent = authEvent;
       // Reset the user. This also gets called on signOut
-      setUser((prevUser) => ({
-        user: prevUser.user,
-        isAdmin: prevUser.isAdmin,
-        determiningStatus: true,
+      setUser({
+        user: cloudUser,
+        isAdmin: false,
+        determiningStatus: cloudUser !== null,
         adminVerification: false,
-      }));
+      });
       if (cloudUser) {
         // Reach out to firebase to validate user
         const currUser: UserWrapped = {
@@ -130,33 +142,51 @@ export function AuthProvider({ children } : { children: ReactNode }) {
           isAdmin: false,
           adminVerification: true,
         };
-        const isAdmin = await verifyAdminStatus(currUser);
-        currUser.isAdmin = !!isAdmin;
-        setUser(currUser);
-      } else {
-        logout();
-      }
+        try {
+          currUser.isAdmin = !!(await verifyAdminStatus(currUser));
+          if (!cancelled && currentEvent === authEvent) setUser(currUser);
+        } catch {
+          if (!cancelled && currentEvent === authEvent) {
+            setUser(nonLoadingNullUser);
+            setSupabaseAuthStatus('error');
+          }
+        }
+      } else if (!cancelled && currentEvent === authEvent) setUser(nonLoadingNullUser);
     };
 
     // Determine authentication listener based on storageEngine and authEnabled variable
     const determineAuthentication = async () => {
-      if (storageEngine && isCloudStorageEngine(storageEngine)) {
-        const authInfo = await storageEngine.getUserManagementData('authentication');
-        if (authInfo?.isEnabled) {
-          storageEngine.unsubscribe(handleAuthStateChanged);
-        } else {
+      try {
+        if (storageEngine && isCloudStorageEngine(storageEngine)) {
+          const authInfo = await storageEngine.getUserManagementData('authentication');
+          if (cancelled) return;
+          if (authInfo?.isEnabled === true) {
+            if (storageEngine.getEngine() === 'supabase') setSupabaseAuthStatus('enabled');
+            unsubscribe = storageEngine.unsubscribe(handleAuthStateChanged);
+          } else if (storageEngine.getEngine() === 'supabase' && authInfo?.isEnabled !== false) {
+            setSupabaseAuthStatus('unconfigured');
+            setUser(nonLoadingNullUser);
+          } else {
+            if (storageEngine.getEngine() === 'supabase') setSupabaseAuthStatus('disabled');
+            setUser(nonAuthUser);
+          }
+        } else if (storageEngine) {
           setUser(nonAuthUser);
         }
-      } else if (storageEngine) {
-        setUser(nonAuthUser);
+      } catch (error) {
+        if (!cancelled) {
+          console.error('Failed to determine authentication status:', error);
+          setSupabaseAuthStatus('error');
+          setUser(nonLoadingNullUser);
+        }
       }
-      return () => {};
     };
 
-    const cleanupPromise = determineAuthentication();
+    determineAuthentication();
 
     return () => {
-      cleanupPromise.then((cleanup) => cleanup());
+      cancelled = true;
+      unsubscribe?.();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storageEngine, enableAuthTrigger]);
@@ -166,10 +196,12 @@ export function AuthProvider({ children } : { children: ReactNode }) {
     triggerAuth,
     logout,
     verifyAdminStatus,
+    supabaseAuthStatus,
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [user]);
+  }), [user, supabaseAuthStatus]);
 
-  const allowChildrenWhileDeterminingStatus = Boolean(studyRouteMatch) && !location.pathname.startsWith('/analysis');
+  const allowChildrenWhileDeterminingStatus = storageEngine?.getEngine() === 'supabase'
+    || (Boolean(studyRouteMatch) && !location.pathname.startsWith('/analysis'));
 
   return (
     <AuthContext.Provider value={value}>

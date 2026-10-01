@@ -298,6 +298,11 @@ export abstract class StorageEngine {
   // Gets the modes for the given studyId. The modes are stored as a record with the mode name as the key and a boolean value indicating whether the mode is enabled or not.
   abstract getModes(studyId: string): Promise<Record<REVISIT_MODE, boolean> & { stage?: StageData }>;
 
+  // Read modes for an access decision without creating a missing Supabase record.
+  async getAccessModes(studyId: string): Promise<(Record<REVISIT_MODE, boolean> & { stage?: StageData }) | null> {
+    return this.getModes(studyId);
+  }
+
   // Sets the mode for the given studyId. The mode is stored as a record with the mode name as the key and a boolean value indicating whether the mode is enabled or not.
   abstract setMode(studyId: string, mode: REVISIT_MODE, value: boolean): Promise<void>;
 
@@ -2164,7 +2169,7 @@ export abstract class CloudStorageEngine extends StorageEngine {
           return false;
         }
       }
-      return true;
+      return this.engine !== 'supabase' || authInfo?.isEnabled === false;
     }
     return false;
   }
