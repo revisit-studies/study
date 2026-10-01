@@ -463,7 +463,8 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
           .eq('studyId', `${this.collectionPrefix}${studyId}`)
           .eq('docId', 'metadata');
         if (migrationError) {
-          throw new Error('Failed to update study metadata');
+          // A failed migration must not discard settings that were successfully read.
+          console.warn('Failed to migrate study metadata:', migrationError);
         }
       }
 

@@ -13,7 +13,7 @@ type RowData = Record<string, string | number | boolean | null | object>;
 const revisitRows: RowData[] = [];
 const storageFiles: Record<string, string> = {};
 const localStore: Record<string, string | number | object | null> = {};
-const metadataErrors = { select: false, upsert: false };
+const metadataErrors = { select: false, upsert: false, update: false };
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 vi.mock('@supabase/supabase-js', () => {
@@ -70,9 +70,10 @@ vi.mock('@supabase/supabase-js', () => {
       ) {
         Promise.resolve().then(() => {
           const rows = getRows();
-          if ((op === 'select' && metadataErrors.select) || (op === 'upsert' && metadataErrors.upsert)) {
+          if ((op === 'select' && metadataErrors.select) || (op === 'upsert' && metadataErrors.upsert) || (op === 'update' && metadataErrors.update)) {
             metadataErrors.select = false;
             metadataErrors.upsert = false;
+            metadataErrors.update = false;
             resolve({ data: null, error: { message: 'Permission denied' } });
             return;
           }
@@ -244,6 +245,7 @@ describe.each([
   afterEach(async () => {
     metadataErrors.select = false;
     metadataErrors.upsert = false;
+    metadataErrors.update = false;
     // @ts-expect-error using protected method for testing
     await storageEngine._testingReset(studyId);
     // @ts-expect-error using protected method for testing
@@ -418,6 +420,26 @@ describe.each([
       dataCollectionEnabled: true,
       developmentModeEnabled: true,
       dataSharingEnabled: true,
+    });
+  });
+
+  test('getModes preserves readable legacy settings when migration fails', async () => {
+    revisitRows.push({
+      // @ts-expect-error using protected prefix to seed legacy metadata
+      studyId: `${storageEngine.collectionPrefix}${studyId}`,
+      docId: 'metadata',
+      data: {
+        dataCollectionEnabled: true,
+        studyNavigatorEnabled: false,
+        analyticsInterfacePubliclyAccessible: false,
+      },
+    });
+    metadataErrors.update = true;
+
+    expect(await storageEngine.getModes(studyId)).toEqual({
+      dataCollectionEnabled: true,
+      developmentModeEnabled: false,
+      dataSharingEnabled: false,
     });
   });
 
