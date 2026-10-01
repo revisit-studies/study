@@ -526,7 +526,6 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
   }
 
   async getModes(studyId: string) {
-    // get the modes from the study collection
     const { data, error } = await this.supabase
       .from('revisit')
       .select('data')
@@ -535,25 +534,25 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     if (error) {
       throw new Error('Failed to get modes');
     }
-    if (data.length > 0) {
-      // get the metadata field from the data object
-      const metadata = data[0].data;
-      if (metadata) {
-        const modes = metadata as Record<string, boolean>;
-        const needsUpdate = 'studyNavigatorEnabled' in modes || 'analyticsInterfacePubliclyAccessible' in modes;
+    const metadata = data[0]?.data;
+    if (metadata) {
+      const modes = metadata as Record<string, boolean>;
+      const needsUpdate = 'studyNavigatorEnabled' in modes || 'analyticsInterfacePubliclyAccessible' in modes;
+      const cleanedModes = cleanupModes(modes);
 
-        if (needsUpdate) {
-          const cleanedModes = cleanupModes(modes);
-          await this.supabase
-            .from('revisit')
-            .update({ data: cleanedModes })
-            .eq('studyId', `${this.collectionPrefix}${studyId}`)
-            .eq('docId', 'metadata');
-          return cleanedModes;
+      if (needsUpdate) {
+        const { error: migrationError } = await this.supabase
+          .from('revisit')
+          .update({ data: cleanedModes })
+          .eq('studyId', `${this.collectionPrefix}${studyId}`)
+          .eq('docId', 'metadata');
+        if (migrationError) {
+          // A failed migration must not discard settings that were successfully read.
+          console.warn('Failed to migrate study metadata:', migrationError);
         }
-
-        return modes;
       }
+
+      return cleanedModes;
     }
 
     const defaultModes = {
@@ -561,7 +560,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       developmentModeEnabled: true,
       dataSharingEnabled: true,
     };
-    await this.supabase
+    const { error: writeError } = await this.supabase
       .from('revisit')
       .upsert({
         studyId: `${this.collectionPrefix}${studyId}`,
@@ -570,27 +569,20 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       })
       .eq('studyId', `${this.collectionPrefix}${studyId}`)
       .eq('docId', 'metadata');
+    if (writeError) {
+      throw new Error('Failed to update study metadata');
+    }
     return defaultModes;
   }
 
   async setMode(studyId: string, mode: REVISIT_MODE, value: boolean) {
     const modes = await this.getModes(studyId);
-    // Update the mode
     modes[mode] = value;
-    // Set the updated modes in the study collection
-    await this.supabase
-      .from('revisit')
-      .upsert({
-        studyId: `${this.collectionPrefix}${studyId}`,
-        docId: 'metadata',
-        data: modes,
-      })
-      .eq('studyId', `${this.collectionPrefix}${studyId}`)
-      .eq('docId', 'metadata');
+    await this._setModesDocument(studyId, modes);
   }
 
   protected async _setModesDocument(studyId: string, modesDocument: Record<string, unknown>): Promise<void> {
-    await this.supabase
+    const { error } = await this.supabase
       .from('revisit')
       .upsert({
         studyId: `${this.collectionPrefix}${studyId}`,
@@ -599,6 +591,36 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       })
       .eq('studyId', `${this.collectionPrefix}${studyId}`)
       .eq('docId', 'metadata');
+    if (error) {
+      throw new Error('Failed to update study metadata');
+    }
+  }
+
+  async getStudyHiddenFromLandingPage(studyId: string): Promise<boolean> {
+    const { data, error } = await this.supabase
+      .from('revisit')
+      .select('data')
+      .eq('studyId', `${this.collectionPrefix}${studyId}`)
+      .eq('docId', 'hideStudyFromLandingPage');
+    if (error) {
+      throw new Error('Failed to get landing-page visibility');
+    }
+    return data[0]?.data?.hidden === true;
+  }
+
+  async setStudyHiddenFromLandingPage(studyId: string, hidden: boolean): Promise<void> {
+    const { error } = await this.supabase
+      .from('revisit')
+      .upsert({
+        studyId: `${this.collectionPrefix}${studyId}`,
+        docId: 'hideStudyFromLandingPage',
+        data: { hidden },
+      })
+      .eq('studyId', `${this.collectionPrefix}${studyId}`)
+      .eq('docId', 'hideStudyFromLandingPage');
+    if (error) {
+      throw new Error('Failed to update landing-page visibility');
+    }
   }
 
   protected async _getAudioUrl(task: string, participantId?: string) {

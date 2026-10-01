@@ -55,7 +55,9 @@ describe('studyStoreCreator factor parameters', () => {
       sequence,
       metadata,
       {},
-      { developmentModeEnabled: true, dataSharingEnabled: true, dataCollectionEnabled: false },
+      {
+        developmentModeEnabled: true, dataSharingEnabled: true, dataCollectionEnabled: false,
+      },
       'participant',
       false,
       false,
