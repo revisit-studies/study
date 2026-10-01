@@ -34,9 +34,14 @@ async function expectAboveFooter(element: Locator, footer: Locator) {
 for (const warning of [false, true]) {
   test(`Coding final row stays editable above playback${warning ? ' and its warning' : ''}`, async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 600 });
-    await page.route('**/src/storage/initialize.ts*', (route) => route.fulfill({
-      contentType: 'application/javascript', body: "export { initializeStorageEngine } from '/tests/fixtures/codingStorage.ts';",
-    }));
+    await page.route('**/src/storage/initialize.ts*', async (route) => {
+      const response = await route.fetch();
+      const source = await response.text();
+      // Preserve other storage exports used when CI merges the PR with dev.
+      const body = source.replace(/export(?=\s+async function initializeStorageEngine\b)/, '')
+        + "\nexport { initializeStorageEngine } from '/tests/fixtures/codingStorage.ts';";
+      await route.fulfill({ response, body });
+    });
     await page.route('**/global.json', (route) => route.fulfill({ json: {
       $schema: 'https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/GlobalConfigSchema.json',
       configsList: ['coding-scroll'], configs: { 'coding-scroll': { path: 'coding-scroll/config.json' } },
