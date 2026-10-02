@@ -410,7 +410,7 @@ export interface BaseResponse {
   style?: Styles;
   /** Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false. */
   excludeFromRandomization?: boolean;
-  /** Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible. */
+  /** Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active. @minimum 0 */
   delay?: number;
 }
 

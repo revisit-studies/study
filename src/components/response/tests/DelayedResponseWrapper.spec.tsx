@@ -9,7 +9,7 @@ describe('DelayedResponseWrapper', () => {
     let capturedState: boolean | undefined;
 
     renderToStaticMarkup(
-      <DelayedResponseWrapper delay={5000} disabled={false}>
+      <DelayedResponseWrapper delay={5000}>
         {(isDelayedDisabled) => {
           capturedState = isDelayedDisabled;
           return <div data-disabled={isDelayedDisabled}>Test Content</div>;
@@ -24,7 +24,7 @@ describe('DelayedResponseWrapper', () => {
     let capturedState: boolean | undefined;
 
     renderToStaticMarkup(
-      <DelayedResponseWrapper delay={0} disabled={false}>
+      <DelayedResponseWrapper delay={0}>
         {(isDelayedDisabled) => {
           capturedState = isDelayedDisabled;
           return <div data-disabled={isDelayedDisabled}>Test Content</div>;
@@ -35,11 +35,11 @@ describe('DelayedResponseWrapper', () => {
     expect(capturedState).toBe(false);
   });
 
-  it('respects parent disabled prop even if delay is 0', () => {
+  it('treats a negative delay as immediately active', () => {
     let capturedState: boolean | undefined;
 
     renderToStaticMarkup(
-      <DelayedResponseWrapper delay={0} disabled>
+      <DelayedResponseWrapper delay={-1}>
         {(isDelayedDisabled) => {
           capturedState = isDelayedDisabled;
           return <div data-disabled={isDelayedDisabled}>Test Content</div>;
@@ -47,6 +47,6 @@ describe('DelayedResponseWrapper', () => {
       </DelayedResponseWrapper>,
     );
 
-    expect(capturedState).toBe(true);
+    expect(capturedState).toBe(false);
   });
 });

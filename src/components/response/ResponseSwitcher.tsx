@@ -51,6 +51,7 @@ export function ResponseSwitcher({
   dontKnowCheckbox,
   otherInput,
   disabled,
+  isDelayedDisabled = false,
   field,
   customError,
   errors,
@@ -64,6 +65,7 @@ export function ResponseSwitcher({
   dontKnowCheckbox?: GetInputPropsReturnType;
   otherInput?: GetInputPropsReturnType;
   disabled?: boolean;
+  isDelayedDisabled?: boolean;
   field?: CustomResponseField;
   customError?: string | null;
   errors?: boolean;
@@ -97,7 +99,7 @@ export function ResponseSwitcher({
 
   useFetchStylesheet(response.stylesheetPath);
 
-  const isDisabled = useMemo(() => {
+  const isStateDisabled = useMemo(() => {
     // Always disable if participant is completed
     if (completed) {
       return true;
@@ -133,6 +135,7 @@ export function ResponseSwitcher({
     }
     return inputDisabled;
   }, [completed, currentStep, flatSequence, response.paramCapture, inputDisabled, sequence.components, nextConfig?.previousButton, searchParams]);
+  const isDisabled = isStateDisabled || isDelayedDisabled;
 
   const fieldInitialValue = useMemo(() => {
     if (response.paramCapture) {
@@ -255,7 +258,20 @@ export function ResponseSwitcher({
   }
 
   return (
-    <Box mb={responseDividers ? 'xl' : 'lg'} className="response" id={response.id} style={responseWrapperStyle}>
+    <Box
+      mb={responseDividers ? 'xl' : 'lg'}
+      className="response"
+      id={response.id}
+      data-testid={response.delay && response.delay > 0 ? `delay-wrapper-${response.id}` : undefined}
+      inert={isDelayedDisabled}
+      tabIndex={isDelayedDisabled ? -1 : undefined}
+      style={isDelayedDisabled ? {
+        ...responseWrapperStyle,
+        pointerEvents: 'none',
+        opacity: 0.4,
+        transition: 'opacity 0.3s ease',
+      } : responseWrapperStyle}
+    >
       {response.type === 'numerical' && (
       <NumericInput
         response={withTemplatedFields(response)}
