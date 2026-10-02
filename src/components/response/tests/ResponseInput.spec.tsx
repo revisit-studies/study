@@ -293,6 +293,7 @@ vi.mock('../../../store/hooks/useIsAnalysis', () => ({
 
 vi.mock('../../../routes/utils', () => ({
   useCurrentStep: vi.fn(() => 0),
+  useCurrentIdentifier: vi.fn(() => 'trial1_0'),
   useCurrentComponent: vi.fn(() => ''),
 }));
 

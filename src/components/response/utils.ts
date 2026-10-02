@@ -51,6 +51,10 @@ export function hasAnswerValue(value: unknown): boolean {
   return true;
 }
 
+export function isResponseChangeLocked(userInteracted: boolean, value: unknown): boolean {
+  return userInteracted && hasAnswerValue(value);
+}
+
 export const getDefaultFieldValue = (response: Response) => {
   const responseDefault = (response as ResponseWithDefault).default;
   if (!Object.hasOwn(response, 'default') || responseDefault === undefined) {

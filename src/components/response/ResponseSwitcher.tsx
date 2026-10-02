@@ -1,7 +1,7 @@
 import { Box, Checkbox, Divider } from '@mantine/core';
-import { useSearchParams } from 'react-router';
-import { useMemo, useRef } from 'react';
 import { GetInputPropsReturnType } from '@mantine/form/lib/types';
+import { useSearchParams } from 'react-router';
+import { useEffect, useMemo, useState } from 'react';
 import {
   CustomResponse, IndividualComponent, JsonValue, MatrixResponse, Response, SliderResponse, StoredAnswer,
 } from '../../parser/types';
@@ -25,13 +25,13 @@ import classes from './css/Checkbox.module.css';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import { useStoreSelector } from '../../store/store';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
-import { useCurrentStep } from '../../routes/utils';
+import { useCurrentIdentifier, useCurrentStep } from '../../routes/utils';
 import { TextOnlyInput } from './TextOnlyInput';
 import { useFetchStylesheet } from '../../utils/fetchStylesheet';
 import { parseStringOptionValue, parseStringOptions } from '../../utils/stringOptions';
 import { getDropdownOptions } from '../../utils/dropdownOptions';
 import {
-  getDefaultFieldValue, normalizeCheckboxValue,
+  getDefaultFieldValue, hasAnswerValue, isResponseChangeLocked, normalizeCheckboxValue,
 } from './utils';
 import {
   generateErrorMessage,
@@ -40,6 +40,7 @@ import {
 import { CustomResponseField } from '../../store/types';
 import { compileTemplate } from '../../utils/handlebars';
 import { useTemplateAnswerContext } from '../../store/hooks/useTemplateAnswerContext';
+import { publishAutoAdvanceSelection } from './autoAdvanceEvents';
 
 export function ResponseSwitcher({
   response,
@@ -74,9 +75,14 @@ export function ResponseSwitcher({
   const sequence = useStoreSelector((state) => state.sequence);
   const flatSequence = useMemo(() => getSequenceFlatMap(sequence), [sequence]);
   const currentStep = useCurrentStep();
+  const identifier = useCurrentIdentifier();
   const nextComponent = useMemo(() => (typeof currentStep === 'number' ? flatSequence[currentStep + 1] : undefined), [currentStep, flatSequence]);
   const nextConfig = useMemo(() => (nextComponent ? studyConfig.components[nextComponent] : undefined), [nextComponent, studyConfig]);
-  const userSelectedFieldsRef = useRef<Record<string, boolean>>({});
+  const [userSelected, setUserSelected] = useState(false);
+
+  useEffect(() => {
+    setUserSelected(false);
+  }, [identifier]);
 
   const completed = useStoreSelector((state) => state.completed);
   const usesStandaloneDontKnow = usesStandaloneDontKnowField(response);
@@ -91,11 +97,20 @@ export function ResponseSwitcher({
     return {
       ...form,
       onChange: (val: unknown) => {
-        userSelectedFieldsRef.current[response.id] = true;
+        const hasSelectedAnswer = hasAnswerValue(val);
+        setUserSelected(hasSelectedAnswer);
+        if (response.type === 'buttons' && response.autoAdvanceToNextStep) {
+          publishAutoAdvanceSelection({
+            identifier,
+            responseId: response.id,
+            delay: response.autoAdvanceDelay ?? 0,
+            selected: hasSelectedAnswer,
+          });
+        }
         form.onChange(val);
       },
     };
-  }, [form, response.id]);
+  }, [form, identifier, response]);
 
   // Don't update if we're in analysis mode
   const ans = useMemo(
@@ -158,13 +173,11 @@ export function ResponseSwitcher({
     }
 
     if (response.allowResponseChange === false) {
-      const userInteracted = Boolean(userSelectedFieldsRef.current[response.id]);
-      const hasNonDefaultValue = ans.value !== undefined && ans.value !== '' && ans.value !== fieldInitialValue;
-      return userInteracted || hasNonDefaultValue;
+      return isResponseChangeLocked(userSelected, ans.value);
     }
 
     return false;
-  }, [response, ans.value, fieldInitialValue]);
+  }, [response, ans.value, userSelected]);
 
   const isDisabled = useMemo(() => {
     // Always disable if participant is completed
