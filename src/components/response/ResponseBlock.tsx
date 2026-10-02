@@ -21,7 +21,7 @@ import {
 
 import { NextButton } from '../NextButton';
 import {
-  generateInitFields, hasAnswerValue, mergeReactiveAnswers, useAnswerField,
+  generateInitFields, mergeReactiveAnswers, useAnswerField,
 } from './utils';
 import {
   generateCustomResponseErrorMessage,
@@ -48,6 +48,7 @@ import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { showNotification } from '../../utils/notifications';
 import { getAnswersFromAllLocations, getPersistedAnswersFromAllLocations } from '../../utils/getAnswersFromAllLocations';
 import { DelayedResponseWrapper } from './DelayedResponseWrapper';
+import { useAutoAdvanceSelection } from './autoAdvanceEvents';
 
 type Props = {
   status?: StoredAnswer;
@@ -706,15 +707,15 @@ export function ResponseBlock({
   const handleNextClick = useCallback(() => {
     if (hasStimulusIssue) {
       revealStimulusErrors();
-      return;
+      return false;
     }
 
     if (bypassValidationForFailedTraining || !hasResponseIssues) {
-      goToNextStep();
-      return;
+      return goToNextStep();
     }
 
     revealResponseErrors();
+    return false;
   }, [bypassValidationForFailedTraining, goToNextStep, hasResponseIssues, hasStimulusIssue, revealResponseErrors, revealStimulusErrors]);
 
   const autoAdvanceResponses = useMemo(
@@ -722,82 +723,8 @@ export function ResponseBlock({
     [allResponsesWithDefaults],
   );
   const autoAdvanceOwner = showBtnsInLocation && autoAdvanceResponses.length > 0 && !isAnalysis;
-  const autoAdvanceTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const autoAdvanceIdentifierRef = useRef<string | null>(null);
-  useEffect(() => {
-    autoAdvanceIdentifierRef.current = null;
-    return () => {
-      if (autoAdvanceTimeoutRef.current) {
-        clearTimeout(autoAdvanceTimeoutRef.current);
-        autoAdvanceTimeoutRef.current = undefined;
-      }
-    };
-  }, [identifier]);
-
-  const userInteractedRef = useRef(false);
-
-  useEffect(() => {
-    userInteractedRef.current = false;
-  }, [identifier]);
-
-  const handleNextClickRef = useRef(handleNextClick);
-  useEffect(() => {
-    handleNextClickRef.current = handleNextClick;
-  }, [handleNextClick]);
-
-  const prevCombinedValuesRef = useRef(combinedValues);
-  useEffect(() => {
-    const hasValuesChanged = !isEqual(prevCombinedValuesRef.current, combinedValues);
-
-    if (hasValuesChanged) {
-      if (Object.keys(combinedValues || {}).length > 0) {
-        userInteractedRef.current = true;
-      }
-      prevCombinedValuesRef.current = combinedValues;
-    }
-  }, [combinedValues]);
-
-  useEffect(() => {
-    if (!autoAdvanceOwner) {
-      return undefined;
-    }
-
-    const readyResponse = autoAdvanceResponses.find((response) => hasAnswerValue(combinedValues[response.id]));
-
-    if (!readyResponse) {
-      autoAdvanceIdentifierRef.current = null;
-      return undefined;
-    }
-
-    const hasFeedback = 'provideFeedback' in readyResponse && Boolean(readyResponse.provideFeedback);
-    if (hasFeedback) {
-      return undefined;
-    }
-
-    if (!userInteractedRef.current) {
-      return undefined;
-    }
-
-    if (autoAdvanceTimeoutRef.current) {
-      clearTimeout(autoAdvanceTimeoutRef.current);
-      autoAdvanceTimeoutRef.current = undefined;
-    }
-
-    autoAdvanceIdentifierRef.current = identifier;
-    if (readyResponse.type === 'buttons') {
-      const delay = readyResponse.autoAdvanceDelay ?? 0;
-      autoAdvanceTimeoutRef.current = setTimeout(() => {
-        handleNextClickRef.current();
-      }, delay);
-    }
-
-    return () => {
-      if (autoAdvanceTimeoutRef.current) {
-        clearTimeout(autoAdvanceTimeoutRef.current);
-        autoAdvanceTimeoutRef.current = undefined;
-      }
-    };
-  }, [autoAdvanceOwner, autoAdvanceResponses, combinedValues, identifier]);
+  const autoAdvanceResponseIds = useMemo(() => autoAdvanceResponses.map((response) => response.id), [autoAdvanceResponses]);
+  const autoAdvanceSelection = useAutoAdvanceSelection(identifier, autoAdvanceResponseIds, autoAdvanceOwner);
 
   let index = 0;
   return (
@@ -919,6 +846,8 @@ export function ResponseBlock({
           label={nextButtonText}
           config={config}
           location={location}
+          autoAdvanceRequest={autoAdvanceSelection}
+          autoAdvanceEligible={!hasStimulusIssue && (bypassValidationForFailedTraining || !hasResponseIssues)}
           onNext={handleNextClick}
           onCheckAnswer={!isAnalysis && hasCorrectAnswerFeedback && !disabledAttempts ? checkAnswerProvideFeedback : undefined}
           checkAnswer={showBtnsInLocation && hasCorrectAnswerFeedback ? (

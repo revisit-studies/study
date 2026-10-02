@@ -9,6 +9,7 @@ import ClearSelectionButton from '../ClearSelectionButton';
 import { RadioInput } from '../RadioInput';
 import { ButtonsInput } from '../ButtonsInput';
 import { MatrixInput } from '../MatrixInput';
+import { hasAnswerValue, isResponseChangeLocked } from '../utils';
 
 interface DivProps {
   children?: React.ReactNode;
@@ -25,6 +26,7 @@ interface RadioProps {
 interface RadioGroupProps extends DivProps {
   label?: React.ReactNode;
   description?: React.ReactNode;
+  value?: string;
   onChange?: (value: string) => void;
 }
 
@@ -168,6 +170,23 @@ describe('ClearSelectionButton', () => {
     rerender(<ClearSelectionButton onClick={onClick} disabled />);
     fireEvent.click(btn);
     expect(onClick).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('response change locking', () => {
+  test('recognizes whether an answer has a selected value', () => {
+    expect(hasAnswerValue('')).toBe(false);
+    expect(hasAnswerValue(undefined)).toBe(false);
+    expect(hasAnswerValue([''])).toBe(false);
+    expect(hasAnswerValue({ nested: '' })).toBe(false);
+    expect(hasAnswerValue(0)).toBe(true);
+    expect(hasAnswerValue(false)).toBe(true);
+  });
+
+  test('locks only after a user interaction leaves an answer selected', () => {
+    expect(isResponseChangeLocked(true, 'B')).toBe(true);
+    expect(isResponseChangeLocked(true, '')).toBe(false);
+    expect(isResponseChangeLocked(false, 'B')).toBe(false);
   });
 });
 

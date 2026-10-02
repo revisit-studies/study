@@ -18,6 +18,7 @@ import {
   DEFAULT_AUTO_ADVANCE_WARNING_TIME,
   getAutoAdvanceWarning,
 } from './nextButtonTimeout';
+import type { AutoAdvanceSelection } from './response/autoAdvanceEvents';
 
 const nextButtonJustify = {
   left: 'flex-start',
@@ -32,7 +33,9 @@ type Props = {
   location?: ResponseBlockLocation;
   checkAnswer: JSX.Element | null;
   onCheckAnswer?: () => void;
-  onNext: () => void;
+  onNext: () => boolean;
+  autoAdvanceRequest?: AutoAdvanceSelection;
+  autoAdvanceEligible?: boolean;
 };
 
 export function NextButton({
@@ -43,6 +46,8 @@ export function NextButton({
   checkAnswer,
   onCheckAnswer,
   onNext,
+  autoAdvanceRequest,
+  autoAdvanceEligible = true,
 }: Props) {
   const { isNextDisabled, goToNextStep } = useNextStep(config?.response, config?.correctAnswer);
   const studyConfig = useStudyConfig();
@@ -54,13 +59,33 @@ export function NextButton({
   const nextButtonAutoAdvanceTime = config?.nextButtonAutoAdvanceTime;
   const nextButtonAutoAdvanceWarningTime = config?.nextButtonAutoAdvanceWarningTime ?? DEFAULT_AUTO_ADVANCE_WARNING_TIME;
   const nextButtonAutoAdvanceWarningMessage = config?.nextButtonAutoAdvanceWarningMessage ?? DEFAULT_AUTO_ADVANCE_WARNING_MESSAGE;
-  const nextButtonHidden = config?.nextButtonHidden ?? false;
+  const responseAutoAdvances = config?.response?.some((response) => response.type === 'buttons' && response.autoAdvanceToNextStep && !response.hidden);
+  const nextButtonHidden = config?.nextButtonHidden ?? (
+    nextButtonAutoAdvanceTime !== undefined
+    || responseAutoAdvances
+    || false
+  );
 
   const [timer, setTimer] = useState<number | undefined>(undefined);
-  const autoAdvanceTriggered = useRef(false);
+  const deadlineAutoAdvanceTriggered = useRef(false);
+  const navigationStarted = useRef(false);
+  const attemptedRequest = useRef<number | undefined>(undefined);
+  const latestOnNext = useRef(onNext);
+  const [readyAutoAdvanceRequest, setReadyAutoAdvanceRequest] = useState<number | undefined>();
+
+  useEffect(() => {
+    latestOnNext.current = onNext;
+  }, [onNext]);
+
+  useEffect(() => {
+    if (!autoAdvanceEligible) {
+      attemptedRequest.current = undefined;
+    }
+  }, [autoAdvanceEligible]);
   // Use the current identifier so nested function-sequence items reset their timer state.
   useEffect(() => {
-    autoAdvanceTriggered.current = false;
+    deadlineAutoAdvanceTriggered.current = false;
+    navigationStarted.current = false;
     const start = Date.now();
     setTimer(0);
     const interval = setInterval(() => {
@@ -72,6 +97,18 @@ export function NextButton({
   }, [identifier]);
 
   useEffect(() => {
+    setReadyAutoAdvanceRequest(undefined);
+    if (!autoAdvanceRequest || !autoAdvanceRequest.selected || autoAdvanceRequest.identifier !== identifier) {
+      return undefined;
+    }
+
+    const timeout = setTimeout(() => {
+      setReadyAutoAdvanceRequest(autoAdvanceRequest.eventId);
+    }, autoAdvanceRequest.delay);
+    return () => clearTimeout(timeout);
+  }, [autoAdvanceRequest, identifier]);
+
+  useEffect(() => {
     if (timer === undefined) {
       return;
     }
@@ -79,15 +116,6 @@ export function NextButton({
       navigate(`./../__timedOut${window.location.search}`);
     }
   }, [nextButtonDisableTime, timer, navigate, studyConfig.uiConfig.timeoutReject]);
-
-  useEffect(() => {
-    if (isNextDisabled || timer === undefined || nextButtonAutoAdvanceTime === undefined || timer < nextButtonAutoAdvanceTime || autoAdvanceTriggered.current) {
-      return;
-    }
-
-    autoAdvanceTriggered.current = true;
-    goToNextStep(false);
-  }, [goToNextStep, isNextDisabled, nextButtonAutoAdvanceTime, timer]);
 
   const buttonTimerSatisfied = useMemo(
     () => {
@@ -100,6 +128,39 @@ export function NextButton({
     },
     [nextButtonDisableTime, nextButtonEnableTime, timer],
   );
+
+  const nextButtonDisabled = disabled || isNextDisabled || !buttonTimerSatisfied;
+
+  useEffect(() => {
+    if (isNextDisabled || timer === undefined || nextButtonAutoAdvanceTime === undefined || timer < nextButtonAutoAdvanceTime || deadlineAutoAdvanceTriggered.current) {
+      return;
+    }
+
+    deadlineAutoAdvanceTriggered.current = true;
+    if (!navigationStarted.current && goToNextStep(false)) {
+      navigationStarted.current = true;
+    }
+  }, [goToNextStep, isNextDisabled, nextButtonAutoAdvanceTime, timer]);
+
+  useEffect(() => {
+    if (
+      readyAutoAdvanceRequest === undefined
+      || !autoAdvanceRequest?.selected
+      || autoAdvanceRequest.eventId !== readyAutoAdvanceRequest
+      || autoAdvanceRequest.identifier !== identifier
+      || nextButtonDisabled
+      || !autoAdvanceEligible
+      || navigationStarted.current
+      || attemptedRequest.current === readyAutoAdvanceRequest
+    ) {
+      return;
+    }
+
+    attemptedRequest.current = readyAutoAdvanceRequest;
+    if (latestOnNext.current()) {
+      navigationStarted.current = true;
+    }
+  }, [autoAdvanceEligible, autoAdvanceRequest, identifier, nextButtonDisabled, readyAutoAdvanceRequest]);
 
   const autoAdvanceWarning = useMemo(() => getAutoAdvanceWarning({
     timer,
@@ -133,7 +194,6 @@ export function NextButton({
     };
   }, [disabled, isNextDisabled, nextButtonHidden, buttonTimerSatisfied, onCheckAnswer, onNext, nextOnEnter]);
 
-  const nextButtonDisabled = disabled || isNextDisabled || !buttonTimerSatisfied;
   const previousButtonText = config?.previousButtonText ?? studyConfig.uiConfig.previousButtonText ?? 'Previous';
   const nextButtonAlignment = config?.nextButtonAlignment ?? studyConfig.uiConfig.nextButtonAlignment ?? 'right';
   const componentWidth = config && getComponentContainerStyle(config.type, config.style);

@@ -434,6 +434,244 @@ describe('NextButton', () => {
     expect(onNext).not.toHaveBeenCalled();
   });
 
+  test('waits for the response auto-advance delay before calling onNext', async () => {
+    vi.useFakeTimers();
+    const onNext = vi.fn();
+    await act(async () => {
+      render(
+        <NextButton
+          checkAnswer={null}
+          onNext={onNext}
+          autoAdvanceRequest={{
+            eventId: 20, identifier: 'intro_0', responseId: 'choice', delay: 250, selected: true,
+          }}
+        />,
+      );
+    });
+
+    await act(async () => { vi.advanceTimersByTime(249); });
+    expect(onNext).not.toHaveBeenCalled();
+    await act(async () => { vi.advanceTimersByTime(1); });
+    expect(onNext).toHaveBeenCalledTimes(1);
+  });
+
+  test('waits for nextButtonEnableTime before response auto-advance', async () => {
+    vi.useFakeTimers();
+    mockStudyConfig = {
+      uiConfig: { ...mockStudyConfig.uiConfig, nextButtonEnableTime: 300 },
+    };
+    const onNext = vi.fn();
+    await act(async () => {
+      render(
+        <NextButton
+          checkAnswer={null}
+          onNext={onNext}
+          autoAdvanceRequest={{
+            eventId: 21, identifier: 'intro_0', responseId: 'choice', delay: 0, selected: true,
+          }}
+        />,
+      );
+    });
+
+    await act(async () => { vi.advanceTimersByTime(0); });
+    expect(onNext).not.toHaveBeenCalled();
+    await act(async () => { vi.advanceTimersByTime(300); });
+    expect(onNext).toHaveBeenCalledTimes(1);
+  });
+
+  test('does not response-auto-advance after nextButtonDisableTime', async () => {
+    vi.useFakeTimers();
+    mockStudyConfig = {
+      uiConfig: { ...mockStudyConfig.uiConfig, nextButtonDisableTime: 200 },
+    };
+    const onNext = vi.fn();
+    await act(async () => {
+      render(
+        <NextButton
+          checkAnswer={null}
+          onNext={onNext}
+          autoAdvanceRequest={{
+            eventId: 22, identifier: 'intro_0', responseId: 'choice', delay: 250, selected: true,
+          }}
+        />,
+      );
+    });
+
+    await act(async () => { vi.advanceTimersByTime(500); });
+    expect(onNext).not.toHaveBeenCalled();
+  });
+
+  test('cancels a pending response auto-advance when the answer is cleared', async () => {
+    vi.useFakeTimers();
+    const onNext = vi.fn();
+    let rerender!: ReturnType<typeof render>['rerender'];
+    await act(async () => {
+      ({ rerender } = render(
+        <NextButton
+          checkAnswer={null}
+          onNext={onNext}
+          autoAdvanceRequest={{
+            eventId: 24, identifier: 'intro_0', responseId: 'choice', delay: 250, selected: true,
+          }}
+        />,
+      ));
+    });
+
+    await act(async () => {
+      rerender(
+        <NextButton
+          checkAnswer={null}
+          onNext={onNext}
+          autoAdvanceRequest={{
+            eventId: 25, identifier: 'intro_0', responseId: 'choice', delay: 0, selected: false,
+          }}
+        />,
+      );
+    });
+    await act(async () => { vi.advanceTimersByTime(500); });
+    expect(onNext).not.toHaveBeenCalled();
+  });
+
+  test('preserves the configured auto-advance deadline despite Next timing and disabled gates', async () => {
+    vi.useFakeTimers();
+    mockStudyConfig = {
+      uiConfig: {
+        ...mockStudyConfig.uiConfig,
+        nextButtonEnableTime: 300,
+        nextButtonDisableTime: 200,
+      },
+    };
+    const config = {
+      type: 'questionnaire', response: [], nextButtonAutoAdvanceTime: 100,
+    } as unknown as IndividualComponent;
+
+    await act(async () => {
+      render(<NextButton config={config} disabled checkAnswer={null} onNext={vi.fn()} />);
+    });
+    await act(async () => { vi.advanceTimersByTime(100); });
+    expect(mockGoToNextStep).toHaveBeenCalledTimes(1);
+    expect(mockGoToNextStep).toHaveBeenLastCalledWith(false);
+  });
+
+  test('waits for validation eligibility and does not retry on callback identity changes', async () => {
+    vi.useFakeTimers();
+    const failedValidation = vi.fn(() => false);
+    let rerender!: ReturnType<typeof render>['rerender'];
+    const request = {
+      eventId: 26, identifier: 'intro_0', responseId: 'choice', delay: 0, selected: true,
+    };
+    await act(async () => {
+      ({ rerender } = render(
+        <NextButton
+          checkAnswer={null}
+          onNext={failedValidation}
+          autoAdvanceRequest={request}
+          autoAdvanceEligible={false}
+        />,
+      ));
+    });
+    await act(async () => { vi.advanceTimersByTime(0); });
+    expect(failedValidation).not.toHaveBeenCalled();
+
+    await act(async () => {
+      rerender(
+        <NextButton
+          checkAnswer={null}
+          onNext={failedValidation}
+          autoAdvanceRequest={request}
+          autoAdvanceEligible
+        />,
+      );
+    });
+    expect(failedValidation).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      rerender(
+        <NextButton
+          checkAnswer={null}
+          onNext={() => false}
+          autoAdvanceRequest={request}
+          autoAdvanceEligible
+        />,
+      );
+    });
+    expect(failedValidation).toHaveBeenCalledTimes(1);
+  });
+
+  test('ignores a ready request after the current identifier changes', async () => {
+    vi.useFakeTimers();
+    const onNext = vi.fn(() => true);
+    const request = {
+      eventId: 27, identifier: 'intro_0', responseId: 'choice', delay: 0, selected: true,
+    };
+    let rerender!: ReturnType<typeof render>['rerender'];
+    await act(async () => {
+      ({ rerender } = render(<NextButton checkAnswer={null} onNext={onNext} autoAdvanceRequest={request} />));
+    });
+    mockIdentifier = 'intro_0_dynamic_1';
+    await act(async () => {
+      rerender(<NextButton checkAnswer={null} onNext={onNext} autoAdvanceRequest={request} />);
+    });
+    await act(async () => { vi.advanceTimersByTime(500); });
+    expect(onNext).not.toHaveBeenCalled();
+  });
+
+  test('does not navigate twice when deadline and response advancement become ready together', async () => {
+    vi.useFakeTimers();
+    mockGoToNextStep.mockReturnValue(true);
+    const onNext = vi.fn(() => true);
+    const config = {
+      type: 'questionnaire', response: [], nextButtonAutoAdvanceTime: 100,
+    } as unknown as IndividualComponent;
+    await act(async () => {
+      render(
+        <NextButton
+          config={config}
+          checkAnswer={null}
+          onNext={onNext}
+          autoAdvanceRequest={{
+            eventId: 28, identifier: 'intro_0', responseId: 'choice', delay: 100, selected: true,
+          }}
+        />,
+      );
+    });
+    await act(async () => { vi.advanceTimersByTime(100); });
+    expect(mockGoToNextStep.mock.calls.length + onNext.mock.calls.length).toBe(1);
+  });
+
+  test('holds a ready response auto-advance while training keeps Next disabled', async () => {
+    vi.useFakeTimers();
+    const onNext = vi.fn();
+    let rerender!: ReturnType<typeof render>['rerender'];
+    await act(async () => {
+      ({ rerender } = render(
+        <NextButton
+          disabled
+          checkAnswer={null}
+          onNext={onNext}
+          autoAdvanceRequest={{
+            eventId: 23, identifier: 'intro_0', responseId: 'choice', delay: 0, selected: true,
+          }}
+        />,
+      ));
+    });
+    await act(async () => { vi.advanceTimersByTime(0); });
+    expect(onNext).not.toHaveBeenCalled();
+
+    await act(async () => {
+      rerender(
+        <NextButton
+          checkAnswer={null}
+          onNext={onNext}
+          autoAdvanceRequest={{
+            eventId: 23, identifier: 'intro_0', responseId: 'choice', delay: 0, selected: true,
+          }}
+        />,
+      );
+    });
+    expect(onNext).toHaveBeenCalledTimes(1);
+  });
+
   test('resets auto-advance state when the current identifier changes', async () => {
     const config = {
       type: 'questionnaire',
