@@ -332,7 +332,8 @@
           "type": "string"
         },
         "delay": {
-          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
           "type": "number"
         },
         "excludeFromRandomization": {
@@ -448,7 +449,8 @@
           "type": "array"
         },
         "delay": {
-          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
           "type": "number"
         },
         "excludeFromRandomization": {
@@ -682,7 +684,8 @@
           "description": "The default value of the response. Must be JSON-serializable."
         },
         "delay": {
-          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
           "type": "number"
         },
         "excludeFromRandomization": {
@@ -779,7 +782,8 @@
           "type": "string"
         },
         "delay": {
-          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
           "type": "number"
         },
         "excludeFromRandomization": {
@@ -962,7 +966,8 @@
       "additionalProperties": false,
       "properties": {
         "delay": {
-          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
           "type": "number"
         },
         "excludeFromRandomization": {
@@ -1055,7 +1060,8 @@
           "description": "The default value of the response. Use a string for single-select dropdowns and a string array for multiselect dropdowns."
         },
         "delay": {
-          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
           "type": "number"
         },
         "excludeFromRandomization": {
@@ -2115,7 +2121,8 @@
           ]
         },
         "delay": {
-          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
           "type": "number"
         },
         "excludeFromRandomization": {
@@ -2232,7 +2239,8 @@
           "type": "string"
         },
         "delay": {
-          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
           "type": "number"
         },
         "excludeFromRandomization": {
@@ -2570,7 +2578,8 @@
           "type": "object"
         },
         "delay": {
-          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
           "type": "number"
         },
         "excludeFromRandomization": {
@@ -2756,7 +2765,8 @@
           "type": "object"
         },
         "delay": {
-          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
           "type": "number"
         },
         "excludeFromRandomization": {
@@ -2913,7 +2923,8 @@
           "type": "number"
         },
         "delay": {
-          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
           "type": "number"
         },
         "excludeFromRandomization": {
@@ -3221,7 +3232,8 @@
           "type": "string"
         },
         "delay": {
-          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
           "type": "number"
         },
         "excludeFromRandomization": {
@@ -3390,7 +3402,8 @@
           "type": "object"
         },
         "delay": {
-          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
           "type": "number"
         },
         "excludeFromRandomization": {
@@ -3506,7 +3519,8 @@
           "type": "object"
         },
         "delay": {
-          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
           "type": "number"
         },
         "excludeFromRandomization": {
@@ -3635,7 +3649,8 @@
           "type": "object"
         },
         "delay": {
-          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
           "type": "number"
         },
         "excludeFromRandomization": {
@@ -3929,7 +3944,8 @@
       "description": "The ReactiveResponse interface is used to define the properties of a reactive response. ReactiveResponses render as a list, that is connected to a WebsiteComponent, VegaComponent, or ReactComponent. When data is sent from the components, it is displayed in the list. ```json {   \"id\": \"reactiveResponse\",   \"prompt\": \"Answer clicked in the stimulus\",   \"location\": \"aboveStimulus\",   \"type\": \"reactive\" } ```",
       "properties": {
         "delay": {
-          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
           "type": "number"
         },
         "excludeFromRandomization": {
@@ -4216,7 +4232,8 @@
           "type": "string"
         },
         "delay": {
-          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
           "type": "number"
         },
         "excludeFromRandomization": {
@@ -4350,7 +4367,8 @@
           "type": "number"
         },
         "delay": {
-          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
           "type": "number"
         },
         "excludeFromRandomization": {
@@ -4805,7 +4823,8 @@
       "description": "The TextOnlyResponse interface is used to define the properties of a text only response. TextOnlyResponses render as a block of text that is displayed to the user. This can be used to display instructions or other information. It does not accept any input from the user. ```json {   \"id\": \"textOnlyResponse\",   \"type\": \"textOnly\",   \"prompt\": \"This is a text only response, it accepts markdown so you can **bold** or _italicize_ text.\",   \"location\": \"belowStimulus\",   \"restartEnumeration\": true } ```\n\nIn this example, the text only response is displayed below the stimulus and the enumeration of the questions is restarted.",
       "properties": {
         "delay": {
-          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
           "type": "number"
         },
         "excludeFromRandomization": {
@@ -4920,7 +4939,8 @@
           "type": "string"
         },
         "delay": {
-          "description": "Delay in milliseconds before an element activates. Defaults to 0 meaning the element is always visible.",
+          "description": "Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active.",
+          "minimum": 0,
           "type": "number"
         },
         "excludeFromRandomization": {
