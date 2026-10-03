@@ -65,47 +65,82 @@ function findCurrentPosition(
   return identifiers.indexOf(`${flatSequence[currentStep]}_${currentStep}`);
 }
 
+type LookupData = {
+  answers?: Record<string, StoredAnswer>;
+  flatSequence?: string[];
+  currentStep?: unknown;
+  currentComponent?: unknown;
+  funcIndex?: unknown;
+};
+
+// The stored record of the step `offset` steps away from the current one (-1 is the previous step).
+function resolveRelativeStep(offset: number, options: Handlebars.HelperOptions): StoredAnswer | undefined {
+  const {
+    answers, flatSequence, currentStep, currentComponent, funcIndex,
+  } = (options.data ?? {}) as LookupData;
+  if (!answers || !flatSequence || typeof currentStep !== 'number') {
+    return undefined;
+  }
+  const identifiers = getAnswerBearingSequence(flatSequence, answers);
+  const currentPosition = findCurrentPosition(identifiers, flatSequence, currentStep, currentComponent, funcIndex);
+  if (currentPosition === -1) {
+    return undefined;
+  }
+  const targetPosition = currentPosition + offset;
+  if (targetPosition < 0 || targetPosition >= identifiers.length) {
+    return undefined;
+  }
+  return answers[identifiers[targetPosition]];
+}
+
+// The stored record of the step at absolute position `index` in the sequence.
+function resolveAbsoluteStep(index: number, options: Handlebars.HelperOptions): StoredAnswer | undefined {
+  const { answers, flatSequence } = (options.data ?? {}) as LookupData;
+  if (!answers || !flatSequence) {
+    return undefined;
+  }
+  const identifiers = getAnswerBearingSequence(flatSequence, answers);
+  // Python-style negative indexing: -1 is the last step, -2 the second-to-last, etc.
+  const resolvedIndex = index < 0 ? identifiers.length + index : index;
+  if (resolvedIndex < 0 || resolvedIndex >= identifiers.length) {
+    return undefined;
+  }
+  return answers[identifiers[resolvedIndex]];
+}
+
+const getAnswer = (step: StoredAnswer | undefined, responseId: string) => step?.answer?.[responseId];
+const getParameter = (step: StoredAnswer | undefined, name: string) => step?.parameters?.[name];
+const getCorrectAnswer = (step: StoredAnswer | undefined, responseId: string) => step?.correctAnswer?.find((entry) => entry.id === responseId)?.answer;
+
+// Each lookup comes in two forms: `lookupXRel offset key` (relative to the current step) and
+// `lookupX index key` (absolute position in the sequence).
 Handlebars.registerHelper(
   'lookupAnswersRel',
-  (offset: number, responseId: string, options: Handlebars.HelperOptions) => {
-    const {
-      answers, flatSequence, currentStep, currentComponent, funcIndex,
-    } = (options.data ?? {}) as {
-      answers?: Record<string, StoredAnswer>; flatSequence?: string[]; currentStep?: unknown; currentComponent?: unknown; funcIndex?: unknown;
-    };
-    if (!answers || !flatSequence || typeof currentStep !== 'number') {
-      return undefined;
-    }
-    const identifiers = getAnswerBearingSequence(flatSequence, answers);
-    const currentPosition = findCurrentPosition(identifiers, flatSequence, currentStep, currentComponent, funcIndex);
-    if (currentPosition === -1) {
-      return undefined;
-    }
-    const targetPosition = currentPosition + offset;
-    if (targetPosition < 0 || targetPosition >= identifiers.length) {
-      return undefined;
-    }
-    return answers[identifiers[targetPosition]]?.answer?.[responseId];
-  },
+  (offset: number, responseId: string, options: Handlebars.HelperOptions) => getAnswer(resolveRelativeStep(offset, options), responseId),
 );
-
 Handlebars.registerHelper(
   'lookupAnswers',
-  (index: number, responseId: string, options: Handlebars.HelperOptions) => {
-    const { answers, flatSequence } = (options.data ?? {}) as {
-      answers?: Record<string, StoredAnswer>; flatSequence?: string[];
-    };
-    if (!answers || !flatSequence) {
-      return undefined;
-    }
-    const identifiers = getAnswerBearingSequence(flatSequence, answers);
-    // Python-style negative indexing: -1 is the last step, -2 the second-to-last, etc.
-    const resolvedIndex = index < 0 ? identifiers.length + index : index;
-    if (resolvedIndex < 0 || resolvedIndex >= identifiers.length) {
-      return undefined;
-    }
-    return answers[identifiers[resolvedIndex]]?.answer?.[responseId];
-  },
+  (index: number, responseId: string, options: Handlebars.HelperOptions) => getAnswer(resolveAbsoluteStep(index, options), responseId),
+);
+
+// The parameters a step was shown with, including sequence and factor parameters.
+Handlebars.registerHelper(
+  'lookupParametersRel',
+  (offset: number, name: string, options: Handlebars.HelperOptions) => getParameter(resolveRelativeStep(offset, options), name),
+);
+Handlebars.registerHelper(
+  'lookupParameters',
+  (index: number, name: string, options: Handlebars.HelperOptions) => getParameter(resolveAbsoluteStep(index, options), name),
+);
+
+// The `answer` of the step's `correctAnswer` entry for the given response id.
+Handlebars.registerHelper(
+  'lookupCorrectAnswerRel',
+  (offset: number, responseId: string, options: Handlebars.HelperOptions) => getCorrectAnswer(resolveRelativeStep(offset, options), responseId),
+);
+Handlebars.registerHelper(
+  'lookupCorrectAnswer',
+  (index: number, responseId: string, options: Handlebars.HelperOptions) => getCorrectAnswer(resolveAbsoluteStep(index, options), responseId),
 );
 
 export function compileTemplate(text: string, parameters: Record<string, unknown> = {}, options?: { noEscape?: boolean; data?: Record<string, unknown> }): string {

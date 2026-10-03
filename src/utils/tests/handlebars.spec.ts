@@ -224,3 +224,59 @@ describe('lookupAnswersRel helper', () => {
     expect(compileTemplate('{{lookupAnswersRel 1 "response"}}', {}, { data: dynamicData })).toBe('outro-answer');
   });
 });
+
+describe('lookupParameters and lookupCorrectAnswer helpers', () => {
+  function makeStep(value: unknown, parameters: Record<string, unknown>, correct?: string): StoredAnswer {
+    return {
+      ...makeAnswer(value),
+      parameters,
+      correctAnswer: correct === undefined ? [] : [{ id: 'response', answer: correct }],
+    } as StoredAnswer;
+  }
+
+  const data = {
+    flatSequence: ['intro', 'trial', 'outro', 'end'],
+    currentStep: 2,
+    answers: {
+      intro_0: makeStep(undefined, {}),
+      trial_1: makeStep('Paris', { country: 'France', flag: 'FR', details: { continent: 'Europe' } }, 'Paris'),
+      outro_2: makeStep('Toronto', { country: 'Canada' }, 'Ottawa'),
+    },
+  };
+
+  test('lookupParametersRel reads a parameter from a step relative to the current one', () => {
+    expect(compileTemplate('{{lookupParametersRel -1 "flag"}} {{lookupParametersRel 0 "country"}}', {}, { data })).toBe('FR Canada');
+  });
+
+  test('lookupParameters reads a parameter by absolute index, including negative indexing', () => {
+    expect(compileTemplate('{{lookupParameters 1 "country"}}', {}, { data })).toBe('France');
+    expect(compileTemplate('{{lookupParameters -1 "country"}}', {}, { data })).toBe('Canada');
+  });
+
+  test('a nested parameter can be read with the built-in lookup helper', () => {
+    expect(compileTemplate('{{lookup (lookupParametersRel -1 "details") "continent"}}', {}, { data })).toBe('Europe');
+  });
+
+  test('lookupCorrectAnswerRel and lookupCorrectAnswer read the correctAnswer entry for a response id', () => {
+    expect(compileTemplate('{{lookupCorrectAnswerRel -1 "response"}}', {}, { data })).toBe('Paris');
+    expect(compileTemplate('{{lookupCorrectAnswer 2 "response"}}', {}, { data })).toBe('Ottawa');
+  });
+
+  test('compares an answer to its correct answer without naming the step', () => {
+    const template = '{{#ifEquals (lookupAnswersRel -1 "response") (lookupCorrectAnswerRel -1 "response")}}correct{{else}}incorrect{{/ifEquals}}';
+    expect(compileTemplate(template, {}, { data })).toBe('correct');
+    expect(compileTemplate(template.replaceAll('-1', '0'), {}, { data })).toBe('incorrect');
+  });
+
+  test('renders empty for a missing parameter, a missing correctAnswer entry, or an out-of-range step', () => {
+    expect(compileTemplate('{{lookupParametersRel -1 "missing"}}', {}, { data })).toBe('');
+    expect(compileTemplate('{{lookupCorrectAnswerRel -1 "other-response"}}', {}, { data })).toBe('');
+    expect(compileTemplate('{{lookupCorrectAnswer 0 "response"}}', {}, { data })).toBe('');
+    expect(compileTemplate('{{lookupParametersRel -5 "country"}}', {}, { data })).toBe('');
+    expect(compileTemplate('{{lookupCorrectAnswer 9 "response"}}', {}, { data })).toBe('');
+  });
+
+  test('renders empty when the data frame is missing', () => {
+    expect(compileTemplate('{{lookupParametersRel -1 "country"}}{{lookupCorrectAnswer 1 "response"}}', {})).toBe('');
+  });
+});
