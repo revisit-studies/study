@@ -29,11 +29,15 @@
     <body>
         <!-- Double-stache in markup: the substituted value is HTML-escaped. -->
         <div style="margin: 0 50px 25px">
-            <i
-                >You answered {{lookupAnswersRel -1 'capital-answer'}} in your
-                previous task.</i
-            >
+            <!-- Compare the previous step's answer with its own correctAnswer field. -->
+            <i>
+                {{lookupParametersRel -1 'flag'}} You answered
+                {{lookupAnswersRel -1 'capital-answer'}} in your previous task,
+                which is
+                {{#ifEquals (lookupAnswersRel -1 'capital-answer') (lookupCorrectAnswerRel -1 'capital-answer')}}correct{{else}}incorrect{{/ifEquals}}.
+            </i>
         </div>
+        <h1>{{flag}} {{country}}</h1>
         <h2>Which of these is the capital of {{country}}?</h2>
         <p>A country in {{continent}}, known for {{funFact}}.</p>
         <div id="options"></div>
@@ -54,7 +58,7 @@
                             other.setAttribute("aria-pressed", "false"),
                         );
                     button.setAttribute("aria-pressed", "true");
-                    Revisit.postAnswers({ "picked-capital": city });
+                    Revisit.postAnswers({ "capital-answer": city });
                 });
                 container.appendChild(button);
             });
