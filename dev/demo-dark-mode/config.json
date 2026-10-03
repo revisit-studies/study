@@ -1,0 +1,174 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Dark Mode Demo",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2026-09-22",
+    "description": "A compact tour of dark-mode inputs, menus, scales, sidebar responses, charts, and embedded content.",
+    "organizations": [
+      "University of Utah",
+      "WPI"
+    ]
+  },
+  "uiConfig": {
+    "colorMode": "dark",
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-dark-mode/assets/introduction.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "withSidebar": false,
+    "autoDownloadStudy": false
+  },
+  "components": {
+    "Introduction": {
+      "type": "markdown",
+      "path": "demo-dark-mode/assets/introduction.md",
+      "response": []
+    },
+    "Form Elements": {
+      "type": "questionnaire",
+      "withSidebar": true,
+      "response": [
+        {
+          "id": "sidebar-instructions",
+          "type": "textOnly",
+          "location": "sidebar",
+          "prompt": "## Form elements\n\nTry a few form elements in dark mode."
+        },
+        {
+          "id": "validation-email",
+          "type": "shortText",
+          "prompt": "Example email",
+          "required": false,
+          "placeholder": "demo@revisit.dev",
+          "builtInValidation": "email"
+        },
+        {
+          "id": "multiple-charts",
+          "type": "dropdown",
+          "prompt": "Which charts have you used?",
+          "required": false,
+          "placeholder": "Select charts",
+          "options": [
+            "Bar chart",
+            "Line chart",
+            "Scatterplot",
+            "Heatmap"
+          ],
+          "maxSelections": 4,
+          "default": [
+            "Line chart"
+          ]
+        },
+        {
+          "id": "checkbox",
+          "type": "checkbox",
+          "prompt": "What helps you read a chart?",
+          "required": false,
+          "options": [
+            "Axis labels",
+            "Grid lines",
+            "Legend"
+          ],
+          "withOther": true
+        },
+        {
+          "id": "buttons",
+          "type": "buttons",
+          "prompt": "Choose a layout.",
+          "required": false,
+          "options": [
+            "Compact",
+            "Comfortable",
+            "Spacious"
+          ]
+        },
+        {
+          "id": "readability",
+          "type": "slider",
+          "prompt": "Is the text easy to read?",
+          "startingValue": 50,
+          "spacing": 50,
+          "options": [
+            {
+              "label": "Difficult",
+              "value": 0
+            },
+            {
+              "label": "Neutral",
+              "value": 50
+            },
+            {
+              "label": "Easy",
+              "value": 100
+            }
+          ],
+          "required": false
+        },
+        {
+          "id": "matrix-radio",
+          "type": "matrix-radio",
+          "prompt": "How do these look?",
+          "required": false,
+          "answerOptions": "satisfaction5",
+          "questionOptions": [
+            "Text",
+            "Borders",
+            "Selected options"
+          ]
+        },
+        {
+          "id": "comments",
+          "type": "longText",
+          "prompt": "Any comments?",
+          "placeholder": "Your comments",
+          "required": false
+        }
+      ]
+    },
+    "Visualization": {
+      "type": "vega",
+      "path": "demo-dark-mode/specs/bar-chart.json",
+      "withActions": false,
+      "response": [
+        {
+          "id": "chart-introduction",
+          "type": "textOnly",
+          "location": "aboveStimulus",
+          "prompt": "# Visualization in dark mode\n\nHover over a bar to highlight it and click to display its category below. This is the Vega demo chart with a transparent background and lighter labels for dark mode."
+        },
+        {
+          "id": "vegaDemoResponse1",
+          "type": "reactive",
+          "prompt": "Selected category",
+          "required": false
+        }
+      ]
+    },
+    "Website Component": {
+      "type": "website",
+      "path": "https://revisit.dev/docs/introduction/",
+      "colorMode": "light",
+      "response": [
+        {
+          "id": "embedded-introduction",
+          "type": "textOnly",
+          "location": "aboveStimulus",
+          "prompt": "# Website Component\n\nThis example embeds the [reVISit documentation](https://revisit.dev/docs/introduction/) with a light iframe color scheme."
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "Introduction",
+      "Form Elements",
+      "Visualization",
+      "Website Component"
+    ]
+  }
+}
