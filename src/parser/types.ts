@@ -1516,7 +1516,7 @@ export interface ImageComponent extends BaseIndividualComponent {
  *   });
  * ```
  *
- * As an alternative to passing data over `Revisit.onDataReceive`, you can set `templated` to true. The HTML file is then fetched and compiled as a Handlebars template before it is rendered, exactly like a markdown component's file, so `parameters` (and the `{{REVISIT.*}}` data frame and the `lookupAnswers`/`lookupAnswersRel` helpers) can be substituted directly into the markup:
+ * As an alternative to passing data over `Revisit.onDataReceive`, you can set `templated` to true. The HTML file is then fetched and compiled as a Handlebars template before it is rendered, exactly like a markdown component's file, so `parameters` (and the `{{REVISIT.*}}` data frame and the `lookupAnswers`, `lookupParameters`, and `lookupCorrectAnswer` helpers and their `Rel` forms) can be substituted directly into the markup:
  *
  * ```json
  * {
