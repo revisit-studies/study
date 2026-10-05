@@ -1,22 +1,22 @@
 .root {
   position: relative;
   padding: var(--mantine-spacing-md);
-  transition: border-color 150ms ease;
-  background-color: var(--mantine-color-blue-light);
-  color: var(--mantine-color-blue-light-color);
+  transition: background-color 150ms ease, border-color 150ms ease;
+  background-color: var(--mantine-color-blue-6);
+  border-color: var(--mantine-color-blue-6);
+  color: var(--mantine-color-white);
 
-  &:focus-visible {
-    /* Keep the keyboard focus ring inside the response's scroll boundary. */
-    outline-offset: -2px;
-  }
-
-  &[data-checked]:focus-visible {
-    outline-color: var(--mantine-color-white);
+  &:hover:not([disabled]) {
+    background-color: var(--mantine-color-blue-9);
+    border-color: var(--mantine-color-blue-9);
   }
 
   &[data-checked] {
-    background-color: var(--mantine-color-blue-filled);
+    background-color: var(--mantine-color-blue-9);
+    border-color: var(--mantine-color-blue-9);
     color: var(--mantine-color-white);
+    outline: 2px solid var(--mantine-primary-color-filled);
+    outline-offset: calc(0.125rem * var(--mantine-scale));
   }
 
   &[disabled] {
@@ -25,7 +25,7 @@
     cursor: default;
 
     &[data-checked] {
-      background-color: var(--mantine-color-blue-filled);
+      background-color: var(--mantine-color-blue-9);
       color: var(--mantine-color-white);
     }
   }

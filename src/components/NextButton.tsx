@@ -13,6 +13,7 @@ import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { useCurrentIdentifier } from '../routes/utils';
 import { PreviousButton } from './PreviousButton';
 import { getComponentContainerStyle } from '../utils/componentStyle';
+import classes from './NextButton.module.css';
 import {
   DEFAULT_AUTO_ADVANCE_WARNING_MESSAGE,
   DEFAULT_AUTO_ADVANCE_WARNING_TIME,
@@ -159,6 +160,7 @@ export function NextButton({
         {checkAnswer}
         <Button
           type="submit"
+          className={classes.root}
           disabled={nextButtonDisabled}
           onClick={() => (checkAnswer ? onNext : (onCheckAnswer ?? onNext))()}
           aria-label={label}
@@ -171,7 +173,8 @@ export function NextButton({
                 color: 'inherit',
                 boxShadow: 'none',
                 border: 'none',
-                fontSize: '11px',
+                marginTop: -4,
+                fontSize: '16px',
                 fontWeight: 600,
               }}
             >
@@ -183,7 +186,7 @@ export function NextButton({
             section: nextOnEnter && (!checkAnswer || !onCheckAnswer) ? {
               alignItems: 'center',
               justifyContent: 'center',
-              padding: '0 10px',
+              padding: '0 8px',
               marginRight: -16,
               marginBlock: -1,
               borderLeft: '1px solid rgba(255, 255, 255, 0.25)',
