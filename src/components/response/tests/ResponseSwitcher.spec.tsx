@@ -1,4 +1,4 @@
-import { ComponentPropsWithoutRef, ReactNode } from 'react';
+import { ComponentPropsWithoutRef, ReactNode, useState } from 'react';
 import {
   render, cleanup, fireEvent, act, renderHook,
 } from '@testing-library/react';
@@ -48,13 +48,18 @@ vi.mock('@mantine/core', () => ({
       <div data-value={value} {...props}>{children}</div>
     ),
     {
-      Group: ({ children, onChange }: { children?: ReactNode; onChange?: (value: string) => void }) => {
+      Group: ({ children, label, onChange }: { children?: ReactNode; label?: ReactNode; onChange?: (value: string) => void }) => {
         const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
           const card = (event.target as HTMLElement).closest('[data-radio-card]');
           if (card) onChange?.(card.getAttribute('data-value') || '');
         };
 
-        return <div onClick={handleClick}>{children}</div>;
+        return (
+          <div onClick={handleClick}>
+            {label}
+            {children}
+          </div>
+        );
       },
       Card: ({ children, value, ...props }: { children?: ReactNode; value?: string; [key: string]: unknown }) => (
         <button type="button" data-radio-card data-value={value} {...props}>{children}</button>
@@ -367,6 +372,49 @@ describe('ResponseSwitcher delay state', () => {
 });
 
 describe('ResponseSwitcher dynamic loading', () => {
+  test('clearing a default keeps required buttons editable until a non-empty selection', async () => {
+    vi.useFakeTimers();
+    const onNext = vi.fn(() => true);
+    const buttonResponse: Response = {
+      type: 'buttons',
+      id: 'choice',
+      prompt: 'Choose',
+      required: true,
+      options: ['A', 'B'],
+      default: 'A',
+      allowResponseChange: false,
+      autoAdvanceToNextStep: true,
+      autoAdvanceDelay: 100,
+    };
+    function Trial() {
+      const [value, setValue] = useState('A');
+      return (
+        <>
+          <ResponseSwitcher response={buttonResponse} form={{ value, onChange: setValue }} index={1} config={{} as IndividualComponent} />
+          <AutoAdvanceOwner onNext={onNext} />
+          <output data-testid="answer">{value}</output>
+        </>
+      );
+    }
+    try {
+      const view = render(<Trial />);
+      const options = Array.from(view.container.querySelectorAll<HTMLButtonElement>('[data-radio-card]'));
+      fireEvent.click(view.getByText('Clear selection'));
+      expect(view.getByTestId('answer').textContent).toBe('');
+      expect(options.every((option) => !option.disabled)).toBe(true);
+      await act(async () => { vi.advanceTimersByTime(100); });
+      expect(onNext).not.toHaveBeenCalled();
+
+      fireEvent.click(options[1]);
+      expect(view.getByTestId('answer').textContent).toBe('B');
+      expect(options.every((option) => option.disabled)).toBe(true);
+      await act(async () => { vi.advanceTimersByTime(100); });
+      expect(onNext).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   test('does not render raw templated response text while the component is resolving', () => {
     mockCurrentComponent.value = '__dynamicLoading';
     const { container } = render(
