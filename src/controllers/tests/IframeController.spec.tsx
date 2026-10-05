@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, waitFor } from '@testing-library/react';
+import {
+  act, cleanup, render, waitFor,
+} from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
@@ -316,6 +318,23 @@ describe('IframeController', () => {
       parameters: { country: 'France' },
       response: [],
     };
+
+    test('does not load raw HTML while the template is being fetched', async () => {
+      let resolveHtml!: (html: string) => void;
+      vi.mocked(getStaticAssetByPath).mockReturnValue(new Promise<string>((resolve) => {
+        resolveHtml = resolve;
+      }));
+      const { container } = render(<IframeController currentConfig={templatedConfig} answers={{}} />);
+
+      await waitFor(() => expect(getStaticAssetByPath).toHaveBeenCalled());
+      expect(container.querySelector('iframe[src]')).toBeNull();
+
+      await act(async () => {
+        resolveHtml('<html><head></head><body>{{country}}</body></html>');
+      });
+      expect(container.querySelector('iframe')?.getAttribute('srcdoc')).toContain('<body>France</body>');
+      expect(container.querySelector('iframe[src]')).toBeNull();
+    });
 
     test('leaves a non-templated website on src with no srcdoc', async () => {
       const { container } = render(

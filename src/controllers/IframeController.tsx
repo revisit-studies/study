@@ -98,7 +98,9 @@ export function IframeController({ currentConfig, provState, answers }: { curren
     if (!isTemplated) return true;
     return buildIframeSrcDoc(
       compileTemplate(text, currentConfig.parameters ?? {}, { data: templateDataRef.current }),
-      { baseHref: getBaseHref(templatedPath), iframeId, trialId: currentComponent },
+      {
+        baseHref: getBaseHref(templatedPath), documentUrl: new URL(fetchUrl, window.location.href).href, iframeId, trialId: currentComponent,
+      },
     );
   }, [fetchUrl, templatedPath, isTemplated, currentConfig.parameters, iframeId, currentComponent]);
   const { status, value } = useAsyncResource<string | true>(requestKey, loadWebsite);
@@ -195,6 +197,10 @@ export function IframeController({ currentConfig, provState, answers }: { curren
 
   if (assetStatus === 'error') {
     return <ResourceNotFound path={templatedPath} />;
+  }
+
+  if (isTemplated && srcDoc === undefined) {
+    return null;
   }
 
   return (

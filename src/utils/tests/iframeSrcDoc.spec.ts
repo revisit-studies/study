@@ -11,7 +11,9 @@ vi.mock('../Prefix', () => ({
   get PREFIX() { return mockPrefix.value; },
 }));
 
-const options = { baseHref: 'http://localhost:3000/my-study/assets/', iframeId: 'iframe-1', trialId: 'trial-1' };
+const options = {
+  baseHref: 'http://localhost:3000/my-study/assets/', documentUrl: 'http://localhost:3000/my-study/assets/chart.html', iframeId: 'iframe-1', trialId: 'trial-1',
+};
 
 describe('getBaseHref', () => {
   beforeEach(() => {
@@ -69,6 +71,23 @@ describe('buildIframeSrcDoc', () => {
     expect(result).not.toContain(options.baseHref);
     expect(result.match(/<base/g)).toHaveLength(1);
     expect(result).toContain('__REVISIT_PARAMS__');
+  });
+
+  test.each(['"./images/"', "'../images/'", './images/'])('resolves an authored relative base href %s from the stimulus folder', (href) => {
+    const result = buildIframeSrcDoc(`<html><head><base href=${href} target="_blank"></head><body><img src="chart.png"></body></html>`, options);
+    const document = new DOMParser().parseFromString(result, 'text/html');
+    const directory = href.includes('../') ? 'my-study/images/' : 'my-study/assets/images/';
+
+    expect(document.querySelector('img')?.src).toBe(`http://localhost:3000/${directory}chart.png`);
+    expect(document.querySelector('base')?.target).toBe('_blank');
+    expect(document.querySelectorAll('base')).toHaveLength(1);
+  });
+
+  test('preserves dollar sequences in an authored base URL', () => {
+    const result = buildIframeSrcDoc('<html><head><base href="./$$/$&/"></head><body><img src="chart.png"></body></html>', options);
+    const document = new DOMParser().parseFromString(result, 'text/html');
+
+    expect(document.querySelector('img')?.src).toBe('http://localhost:3000/my-study/assets/$$/$&/chart.png');
   });
 
   test('escapes the base href as an attribute value', () => {

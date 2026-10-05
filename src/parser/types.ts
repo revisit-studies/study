@@ -1525,7 +1525,7 @@ export interface ImageComponent extends BaseIndividualComponent {
  *   "templated": true,
  *   "parameters": {
  *     "country": "France",
- *     "barData": [0.32, 0.01, 1.2]
+ *     "barData": "[0.32,0.01,1.2]"
  *   }
  * }
  * ```
@@ -1533,8 +1533,8 @@ export interface ImageComponent extends BaseIndividualComponent {
  * ```html
  * <h1>Capital of {{country}}</h1>
  * <script>
- *   // Values used inside a script must use the triple-stache form, since the double-stache
- *   // form HTML-escapes the substituted value.
+ *   // barData is a pre-serialized JSON string. Triple braces preserve it without HTML escaping.
+ *   // Only insert trusted parameters this way, never participant answers.
  *   const barData = {{{barData}}};
  * </script>
  * ```

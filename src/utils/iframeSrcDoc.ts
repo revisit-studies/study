@@ -30,13 +30,21 @@ export function getBaseHref(templatedPath: string): string {
  * a literal `<head>`/`<html>` inside a comment or string before the real one mis-targets.
  */
 export function buildIframeSrcDoc(
-  html: string,
-  { baseHref, iframeId, trialId }: { baseHref: string; iframeId: string; trialId: string },
+  inputHtml: string,
+  {
+    baseHref, documentUrl, iframeId, trialId,
+  }: { baseHref: string; documentUrl: string; iframeId: string; trialId: string },
 ): string {
-  // The first `<base href>` wins per spec, so don't override one the author already set.
-  const hasBase = /<base\b[^>]*href/i.test(html);
+  let html = inputHtml;
+  // Preserve the author's base destination, resolving it from the original file URL.
+  const baseMatch = html.match(/<base\b[^>]*href[^>]*>/i);
+  const authoredBase = baseMatch && new DOMParser().parseFromString(baseMatch[0], 'text/html').querySelector('base[href]');
+  if (authoredBase && baseMatch) {
+    authoredBase.setAttribute('href', new URL(authoredBase.getAttribute('href')!, documentUrl).href);
+    html = html.replace(baseMatch[0], () => authoredBase.outerHTML);
+  }
   const params = JSON.stringify({ id: iframeId, trialid: trialId }).replace(/</g, '\\u003c');
-  const base = hasBase ? '' : `<base href="${escapeAttribute(baseHref)}">`;
+  const base = authoredBase ? '' : `<base href="${escapeAttribute(baseHref)}">`;
   const prelude = `${base}<script>window.__REVISIT_PARAMS__ = ${params};</script>`;
 
   // `<base>` has to precede every element that carries a relative URL, so aim for first-in-head.

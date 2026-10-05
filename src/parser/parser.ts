@@ -1013,10 +1013,10 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
   }
 
   for (const [name, component] of Object.entries(studyConfig.components ?? {})) {
+    const mergedComponent = studyComponentToIndividualComponent(component, studyConfig);
+    verifyWebsiteComponent(`/components/${name}/path`, mergedComponent, warnings);
     if ('path' in component) {
-      const mergedComponent = studyComponentToIndividualComponent(component, studyConfig);
       verifyReactComponent(`/components/${name}/path`, mergedComponent, errors);
-      verifyWebsiteComponent(`/components/${name}/path`, mergedComponent, warnings);
     } else {
       // Path is inherited and will be verified on the base component
     }
