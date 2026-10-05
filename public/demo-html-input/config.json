@@ -78,6 +78,17 @@
           0.3
         ]
       }
+    },
+    "bar-chart-auto-advance": {
+      "baseComponent": "bar-chart",
+      "description": "A trial that automatically advances when a bar is clicked.",
+      "instruction": "Click a bar to automatically continue.",
+      "nextButtonHidden": true,
+      "parameters": {
+        "barData": [0.4, 0.8, 1.2, 0.6],
+        "autoAdvanceToNextStep": true,
+        "autoAdvanceDelay": 300
+      }
     }
   },
   "sequence": {
@@ -85,7 +96,8 @@
     "components": [
       "introduction",
       "bar-chart-1",
-      "bar-chart-2"
+      "bar-chart-2",
+      "bar-chart-auto-advance"
     ]
   }
 }

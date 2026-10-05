@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import {
   nextClick,
   openStudyFromLanding,
+  readParticipantRecording,
   resetClientStudyState,
   waitForStudyEndMessage,
 } from './utils';
@@ -51,6 +52,12 @@ test('Test website component with reactive response', async ({ page }) => {
   // Click on the next button
   await nextClick(page);
 
-  // Check that the end of study text renders
+  // The final HTML trial submits the selection and advances without Next.
+  await expect(page.getByText('Click a bar to automatically continue.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeHidden();
+  await page.frameLocator('#root iframe').locator('.bar').nth(2).click();
   await waitForStudyEndMessage(page);
+  await expect.poll(async () => (
+    await readParticipantRecording(page, 'demo-html-input', 'bar-chart-auto-advance_3')
+  )?.answer).toEqual({ barChart: 1.2 });
 });

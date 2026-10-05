@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 export type AutoAdvanceSelection = {
   eventId: number;
   identifier: string;
-  responseId: string;
+  responseId?: string;
   delay: number;
   selected: boolean;
 };
@@ -30,6 +30,7 @@ export function useAutoAdvanceSelection(
   identifier: string,
   responseIds: string[],
   enabled: boolean,
+  allowTrialRequests = false,
 ): AutoAdvanceSelection | undefined {
   const [selection, setSelection] = useState<AutoAdvanceSelection>();
 
@@ -44,12 +45,15 @@ export function useAutoAdvanceSelection(
 
     const allowedResponseIds = new Set(responseIds);
     const unsubscribe = subscribeToAutoAdvanceSelections((nextSelection) => {
-      if (nextSelection.identifier === identifier && allowedResponseIds.has(nextSelection.responseId)) {
+      const allowed = nextSelection.responseId === undefined
+        ? allowTrialRequests
+        : allowedResponseIds.has(nextSelection.responseId);
+      if (nextSelection.identifier === identifier && allowed) {
         setSelection(nextSelection);
       }
     });
     return () => unsubscribe();
-  }, [enabled, identifier, responseIds]);
+  }, [enabled, identifier, responseIds, allowTrialRequests]);
 
   return selection;
 }

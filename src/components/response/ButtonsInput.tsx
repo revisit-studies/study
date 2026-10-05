@@ -88,10 +88,6 @@ export function ButtonsInput({
     hideKeyVisual = false,
   } = response;
 
-  const handleUserSelect = (value: string) => {
-    answer.onChange?.(value);
-  };
-
   const storedAnswer = useStoredAnswer();
   const optionOrders: Record<string, ParsedStringOption[]> = useMemo(() => storedAnswer?.optionOrders ?? {}, [storedAnswer]);
 

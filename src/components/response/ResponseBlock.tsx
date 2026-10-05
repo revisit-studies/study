@@ -722,9 +722,10 @@ export function ResponseBlock({
     () => allResponsesWithDefaults.filter((response) => !response.hidden && response.type === 'buttons' && response.autoAdvanceToNextStep),
     [allResponsesWithDefaults],
   );
-  const autoAdvanceOwner = showBtnsInLocation && autoAdvanceResponses.length > 0 && !isAnalysis;
+  const allowTrialRequests = config.type === 'website';
+  const autoAdvanceOwner = showBtnsInLocation && (autoAdvanceResponses.length > 0 || allowTrialRequests) && !isAnalysis;
   const autoAdvanceResponseIds = useMemo(() => autoAdvanceResponses.map((response) => response.id), [autoAdvanceResponses]);
-  const autoAdvanceSelection = useAutoAdvanceSelection(identifier, autoAdvanceResponseIds, autoAdvanceOwner);
+  const autoAdvanceSelection = useAutoAdvanceSelection(identifier, autoAdvanceResponseIds, autoAdvanceOwner, allowTrialRequests);
 
   let index = 0;
   return (

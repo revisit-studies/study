@@ -1,13 +1,13 @@
 import { ComponentPropsWithoutRef, ReactNode } from 'react';
 import {
-  render, cleanup, fireEvent, act,
+  render, cleanup, fireEvent, act, renderHook,
 } from '@testing-library/react';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import type { IndividualComponent, JsonValue, Response } from '../../../parser/types';
 import { ResponseSwitcher } from '../ResponseSwitcher';
-import { useAutoAdvanceSelection } from '../autoAdvanceEvents';
+import { publishAutoAdvanceSelection, useAutoAdvanceSelection } from '../autoAdvanceEvents';
 import { NextButton } from '../../NextButton';
 
 // ── mocks ────────────────────────────────────────────────────────────────────
@@ -134,6 +134,7 @@ vi.mock('../InputLabel', () => ({
 }));
 
 vi.mock('../OptionLabel', () => ({
+  OptionTextTemplateContext: { Provider: ({ children }: { children?: ReactNode }) => children },
   OptionLabel: ({ label }: { label: ReactNode }) => <span>{label}</span>,
 }));
 
@@ -414,5 +415,42 @@ describe('ResponseSwitcher dynamic loading', () => {
 
     expect(selectedOption.disabled).toBe(true);
     expect(onNext).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('HTML auto advance requests', () => {
+  const ids = ['button-answer'];
+
+  test('only an enabled website owner receives trial requests and cancellations', () => {
+    const owner = renderHook(() => useAutoAdvanceSelection('trial_0', ids, true, true));
+    const buttonsOnly = renderHook(() => useAutoAdvanceSelection('trial_0', ids, true));
+    const disabled = renderHook(() => useAutoAdvanceSelection('trial_0', ids, false, true));
+    const otherTrial = renderHook(() => useAutoAdvanceSelection('trial_1', ids, true, true));
+
+    act(() => publishAutoAdvanceSelection({ identifier: 'trial_0', selected: true, delay: 300 }));
+    expect(owner.result.current).toMatchObject({ selected: true, delay: 300 });
+    expect(buttonsOnly.result.current).toBeUndefined();
+    expect(disabled.result.current).toBeUndefined();
+    expect(otherTrial.result.current).toBeUndefined();
+
+    act(() => publishAutoAdvanceSelection({ identifier: 'trial_0', selected: false, delay: 0 }));
+    expect(owner.result.current?.selected).toBe(false);
+  });
+
+  test('preserves response filtering and clears requests on trial changes', () => {
+    const { result, rerender } = renderHook(
+      ({ identifier }) => useAutoAdvanceSelection(identifier, ids, true, true),
+      { initialProps: { identifier: 'trial_0' } },
+    );
+    act(() => publishAutoAdvanceSelection({
+      identifier: 'trial_0', responseId: 'unrelated', selected: true, delay: 0,
+    }));
+    expect(result.current).toBeUndefined();
+    act(() => publishAutoAdvanceSelection({
+      identifier: 'trial_0', responseId: 'button-answer', selected: true, delay: 0,
+    }));
+    expect(result.current?.responseId).toBe('button-answer');
+    rerender({ identifier: 'trial_1' });
+    expect(result.current).toBeUndefined();
   });
 });
