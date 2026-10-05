@@ -20,57 +20,39 @@
   "factors": {
     "color": [
       "RED",
-      "ORANGE",
       "YELLOW",
       "GREEN",
       "BLUE",
-      "PURPLE",
-      "PINK",
-      "BROWN",
-      "GRAY",
       "BLACK"
     ],
+    "fontSize": ["24px", "48px"],
     "stroopConditions": {
       "action": "cross",
       "factors": ["color", "color"],
       "as": ["word", "inkColor"]
-    },
-    "stroopWithFilter": {
-      "action": "remove",
-      "factor": "stroopConditions",
-      "items": {
-        "action": "zip",
-        "factors": ["color", "color"]
-      }
     }
   },
   "baseComponents": {
     "stroopTrial": {
-      "type": "react-component",
-      "path": "demo-stroop-factors/assets/StroopTrial.tsx",
-      "instruction": "Report the word's ink color, not the color named by the word. Use the buttons or the corresponding number key.",
-      "instructionLocation": "aboveStimulus",
+      "type": "markdown",
+      "path": "demo-stroop-factors/assets/trial.md",
+      "stylesheetPath": "demo-stroop-factors/assets/css/trial.css",
       "nextButtonLocation": "belowStimulus",
       "response": [
         {
           "id": "response",
-          "prompt": "Selected ink color",
+          "prompt": "Report the word's ink color, not the color named by the word. Use the buttons or the corresponding number key.",
+          "secondaryText": "Keyboard shortcuts: 1-9 and 0",
           "type": "buttons",
           "options": [
-            "RED",
-            "ORANGE",
-            "YELLOW",
-            "GREEN",
-            "BLUE",
-            "PURPLE",
-            "PINK",
-            "BROWN",
-            "GRAY",
-            "BLACK"
+            {"label": "1. RED", "value": "RED", "key": "1"},
+            {"label": "2. YELLOW", "value": "YELLOW", "key": "2"},
+            {"label": "3. GREEN", "value": "GREEN", "key": "3"},
+            {"label": "4. BLUE", "value": "BLUE", "key": "4"},
+            {"label": "5. BLACK", "value": "BLACK", "key": "5"}
           ],
           "location": "belowStimulus",
-          "required": true,
-          "hidden": true
+          "required": true
         }
       ],
       "correctAnswer": [
@@ -88,14 +70,15 @@
       "response": []
     }
   },
+  "betweenSubjects": ["fontSize"],
   "sequence": {
     "order": "fixed",
     "components": [
       "introduction",
       {
         "type": "factor",
-        "id": "stroopTrials",
-        "factor": "stroopWithFilter",
+        "id": "t",
+        "factor": "stroopConditions",
         "components": "stroopTrial",
         "order": "random"
       }
