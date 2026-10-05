@@ -1,7 +1,7 @@
 import {
   Flex, FocusTrap, Kbd, Radio,
 } from '@mantine/core';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import ClearSelectionButton from './ClearSelectionButton';
 import { ButtonsResponse, ParsedStringOption } from '../../parser/types';
 import classes from './css/ButtonsInput.module.css';
@@ -11,45 +11,59 @@ import { OptionLabel } from './OptionLabel';
 import { parseStringOptions } from '../../utils/stringOptions';
 import { KeyMapper } from './KeyMapper';
 
-// could use this if we want the arrow symbols instead of mantine default
-function formatKeyForDisplay(key: string): string {
+const renderSymbol = (symbol: string) => (
+  <span
+    style={{
+      fontSize: '1.4em',
+      verticalAlign: '-0.09em',
+    }}
+  >
+    {symbol}
+  </span>
+);
+
+function formatKeyForDisplay(key: string): React.ReactNode {
   const k = key.toLowerCase().trim();
   if (k.includes('+')) {
     return k
       .split('+')
-      .map((part) => formatKeyForDisplay(part))
-      .join('+');
+      .map((part, index, array) => (
+        <React.Fragment key={index}>
+          {formatKeyForDisplay(part)}
+          {index < array.length - 1 && '+'}
+        </React.Fragment>
+      ));
   }
 
   switch (k) {
     case 'arrowleft':
-      return '←';
+      return renderSymbol('←');
     case 'arrowright':
-      return '→';
+      return renderSymbol('→');
     case 'arrowup':
-      return '↑';
+      return renderSymbol('↑');
     case 'arrowdown':
-      return '↓';
+      return renderSymbol('↓');
     case 'enter':
     case 'return':
-      return '↵';
+      return renderSymbol('↵');
     case 'backspace':
-      return '⌫';
+      return renderSymbol('⌫');
     case 'delete':
     case 'del':
-      return '⌦';
+      return renderSymbol('⌦');
     case 'escape':
     case 'esc':
       return 'Esc';
     case 'tab':
-      return '⇥';
+      return renderSymbol('⇥');
     case 'space':
-      return '␣';
+      return renderSymbol('⎵');
     case 'capslock':
     case 'caps':
-      return '⇪';
+      return renderSymbol('⇪');
     case 'shift':
-      return '⇧';
+      return renderSymbol('⇧');
     case 'control':
     case 'ctrl':
       return 'Ctrl';
@@ -58,7 +72,7 @@ function formatKeyForDisplay(key: string): string {
     case 'meta':
     case 'cmd':
     case 'command':
-      return '⌘';
+      return renderSymbol('⌘');
     default:
       return key.toUpperCase();
   }
@@ -129,7 +143,7 @@ export function ButtonsInput({
           onSelect={(val, source) => handleValueChange(val, source ?? 'keyboard')}
           disabled={disabled}
         />
-        <Flex justify="space-between" align="center" gap="xl" mt="xs">
+        <Flex justify="space-between" align="center" gap="xl" mt="xs" p="4px">
           {orderedOptions.map((radio, idx) => {
             const hasKeyVisual = !hideKeyVisual && Boolean(radio.key);
 
@@ -168,7 +182,7 @@ export function ButtonsInput({
                         flexShrink: 0,
                         padding: '0 12px',
                         borderLeft: '1px solid rgba(255, 255, 255, 0.25)',
-                        backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                        backgroundColor: 'rgba(0, 0, 0, 0.08)',
                       }}
                     >
                       <Kbd
@@ -179,12 +193,12 @@ export function ButtonsInput({
                           color: 'inherit',
                           boxShadow: 'none',
                           border: 'none',
-                          fontSize: '10px',
+                          fontSize: '12px',
                           fontWeight: 600,
                           padding: 0,
                         }}
                       >
-                        {formatKeyForDisplay(radio.key?.toLowerCase() as never)}
+                        {formatKeyForDisplay(radio.key as never)}
                       </Kbd>
                     </Flex>
                   )}

@@ -1,0 +1,14 @@
+.root {
+  transition: background-color 150ms ease, border-color 150ms ease;
+
+  &:not([disabled]):not([data-disabled]) {
+    background-color: var(--mantine-color-blue-6);
+    border-color: var(--mantine-color-blue-6);
+    color: var(--mantine-color-white);
+
+    &:hover {
+      background-color: var(--mantine-color-blue-8);
+      border-color: var(--mantine-color-blue-8);
+    }
+  }
+}
