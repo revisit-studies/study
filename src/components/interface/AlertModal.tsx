@@ -1,7 +1,9 @@
 import {
   ActionIcon, Alert, Anchor, Box, Button, Code, Group, Modal, Text,
 } from '@mantine/core';
-import { IconAlertCircle, IconCheck, IconCopy } from '@tabler/icons-react';
+import {
+  IconAlertCircle, IconCheck, IconCopy, IconExternalLink,
+} from '@tabler/icons-react';
 import {
   useCallback, useEffect, useMemo, useState,
 } from 'react';
@@ -22,6 +24,7 @@ export function AlertModal() {
 
   const [opened, setOpened] = useState(alertModal.show);
   const [copied, setCopied] = useState(false);
+  const [copiedIndexUrl, setCopiedIndexUrl] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
   const close = useCallback(() => storeDispatch(setAlertModal({ ...alertModal, show: false, title: '' })), [alertModal, setAlertModal, storeDispatch]);
 
@@ -69,6 +72,13 @@ export function AlertModal() {
     return `mailto:${studyConfig.uiConfig.contactEmail}?subject=${subject}&body=${body}`;
   }, [alertModal.message, diagnosticsMessage, studyConfig.uiConfig.contactEmail, studyId]);
 
+  const firebaseIndexUrl = useMemo(() => {
+    if (!alertModal.message.toLowerCase().includes('query requires an index')) {
+      return null;
+    }
+    return alertModal.message.match(/https:\/\/console\.firebase\.google\.com\/\S+/)?.[0] ?? null;
+  }, [alertModal.message]);
+
   const handleCopyMessage = useCallback(async () => {
     try {
       if (!window.isSecureContext || !navigator.clipboard?.writeText) return;
@@ -80,6 +90,17 @@ export function AlertModal() {
     }
   }, [diagnosticsMessage]);
 
+  const handleCopyIndexUrl = useCallback(async () => {
+    try {
+      if (!firebaseIndexUrl || !window.isSecureContext || !navigator.clipboard?.writeText) return;
+      await navigator.clipboard.writeText(firebaseIndexUrl);
+      setCopiedIndexUrl(true);
+      setTimeout(() => setCopiedIndexUrl(false), 1000);
+    } catch {
+      // Fail silently when clipboard access is unavailable or denied.
+    }
+  }, [firebaseIndexUrl]);
+
   return (
     <Modal
       opened={opened}
@@ -87,6 +108,13 @@ export function AlertModal() {
       size={isStorageEngineAlert ? '70%' : 'lg'}
       withCloseButton={false}
       onClose={handleClose}
+      styles={{
+        body: {
+          maxHeight: '75vh',
+          overflowX: 'hidden',
+          overflowY: 'auto',
+        },
+      }}
     >
       <Alert
         color="red"
@@ -96,22 +124,56 @@ export function AlertModal() {
         onClose={isStorageEngineAlert ? undefined : close}
         styles={{ root: { backgroundColor: 'unset' } }}
       >
-        <Text my="xs">
-          {alertModal.message}
-          {isStorageEngineAlert && (
-            <>
-              <br />
-              <br />
-              Please email if you need help
-              {' '}
-              <Anchor href={mailTemplate}>
-                {studyConfig.uiConfig.contactEmail}
-              </Anchor>
-              {' '}
-              and include the following details to help us troubleshoot the issue:
-            </>
-          )}
-        </Text>
+        {firebaseIndexUrl ? (
+          <>
+            <Text my="xs">
+              Firebase requires a composite index before this study can load. Creating it is a one-time setup for this Firebase project/database and does not need to be repeated for each study. The study owner must administer the Firebase deployment to complete this step.
+            </Text>
+            <Group my="md">
+              <Button
+                component="a"
+                href={firebaseIndexUrl}
+                target="_blank"
+                rel="noreferrer"
+                leftSection={<IconExternalLink size={16} />}
+              >
+                Open Firebase index setup
+              </Button>
+              <Button
+                variant="outline"
+                leftSection={copiedIndexUrl ? <IconCheck size={16} /> : <IconCopy size={16} />}
+                onClick={handleCopyIndexUrl}
+              >
+                {copiedIndexUrl ? 'Copied' : 'Copy setup URL'}
+              </Button>
+            </Group>
+            <Code
+              block
+              style={{
+                overflowWrap: 'anywhere',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+              }}
+            >
+              {firebaseIndexUrl}
+            </Code>
+          </>
+        ) : (
+          <Text my="xs">
+            {alertModal.message}
+          </Text>
+        )}
+        {isStorageEngineAlert && (
+          <Text my="xs">
+            Please email if you need help
+            {' '}
+            <Anchor href={mailTemplate}>
+              {studyConfig.uiConfig.contactEmail}
+            </Anchor>
+            {' '}
+            and include the following details to help us troubleshoot the issue:
+          </Text>
+        )}
 
         {isStorageEngineAlert && (
           <Box pos="relative">
