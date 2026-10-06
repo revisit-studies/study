@@ -475,6 +475,8 @@ export interface BaseResponse {
   excludeFromRandomization?: boolean;
   /** Show this response only when another response in this component satisfies the condition. */
   visibleIf?: ResponseVisibilityCondition;
+  /** Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active. @minimum 0 */
+  delay?: number;
 }
 
 /**
