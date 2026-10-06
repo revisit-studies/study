@@ -1,4 +1,5 @@
 import { MantineProvider } from '@mantine/core';
+import { StrictMode } from 'react';
 import { cleanup, render, waitFor } from '@testing-library/react';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
@@ -73,6 +74,7 @@ vi.mock('../utils/PageTitle', () => ({
 
 describe('GlobalConfigParser startup failures', () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({
       matches: false,
       addEventListener: vi.fn(),
@@ -103,6 +105,23 @@ describe('GlobalConfigParser startup failures', () => {
 
     await waitFor(() => expect(getByRole('alert')).toBeDefined());
     expect(consoleSpy).toHaveBeenCalledWith('Error loading global config:', expect.any(Error));
+  });
+
+  test('initializes storage once when StrictMode replays startup effects', async () => {
+    const engine = {} as never;
+    vi.mocked(initializeStorageEngine).mockResolvedValue(engine);
+
+    render(
+      <StrictMode>
+        <MantineProvider>
+          <GlobalConfigParser />
+        </MantineProvider>
+      </StrictMode>,
+    );
+
+    await waitFor(() => expect(setStorageEngine).toHaveBeenCalledWith(engine));
+    expect(initializeStorageEngine).toHaveBeenCalledTimes(1);
+    expect(setStorageEngine).toHaveBeenCalledTimes(1);
   });
 
   test('shows the fallback when storage-engine initialization rejects', async () => {

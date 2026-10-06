@@ -14,6 +14,8 @@ export default defineConfig(({ command, mode }) => {
     ],
     resolve: {
       alias: {
+        // Use HJSON's browser bundle, which does not read Node's os.EOL.
+        hjson: fileURLToPath(new URL('./node_modules/hjson/bundle/hjson.js', import.meta.url)),
         // /esm/icons/index.mjs only exports the icons statically, so no separate chunks are created
         '@tabler/icons-react': '@tabler/icons-react/dist/esm/icons/index.mjs',
         // UpSet treats this peer as optional, but Vite still resolves its dynamic import during pre-bundling.

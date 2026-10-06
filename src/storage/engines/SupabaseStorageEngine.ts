@@ -230,7 +230,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       .select('data, createdAt')
       .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
       .eq('docId', `sequenceAssignment_${participantId}`)
-      .single();
+      .maybeSingle();
 
     if (error || !data) {
       return null;

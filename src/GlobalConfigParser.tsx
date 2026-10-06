@@ -1,5 +1,5 @@
 import {
-  ReactNode, useCallback, useEffect, useState,
+  ReactNode, useCallback, useEffect, useRef, useState,
 } from 'react';
 import {
   BrowserRouter, Route, Routes, useLocation,
@@ -161,6 +161,7 @@ export function GlobalConfigParser() {
 
   // Initialize storage engine
   const { storageEngine, configuredStorageEngine, setStorageEngine } = useStorageEngine();
+  const storageInitialization = useRef<ReturnType<typeof initializeStorageEngine> | null>(null);
   useEffect(() => {
     if (storageEngine !== undefined) {
       return undefined;
@@ -168,7 +169,9 @@ export function GlobalConfigParser() {
 
     let cancelled = false;
 
-    initializeStorageEngine()
+    // StrictMode replays effects; reuse the pending initialization and auth client.
+    storageInitialization.current ??= initializeStorageEngine();
+    storageInitialization.current
       .then((configuredEngine) => {
         if (!cancelled) {
           setStorageEngine(configuredEngine);
