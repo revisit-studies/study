@@ -253,35 +253,6 @@ services:
         "log_min_messages=fatal" # prevents Realtime polling queries from appearing in logs
       ]
 
-  minio:
-    image: minio/minio
-    restart: unless-stopped
-    ports:
-      - '9000:9000'
-      - '9001:9001'
-    environment:
-      MINIO_ROOT_USER: supa-storage
-      MINIO_ROOT_PASSWORD: secret1234
-    command: server --console-address ":9001" /data
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://minio:9000/minio/health/live" ]
-      interval: 2s
-      timeout: 10s
-      retries: 5
-    volumes:
-      - ./volumes/storage:/data:z
-
-  minio-createbucket:
-    image: minio/mc
-    depends_on:
-      minio:
-        condition: service_healthy
-    entrypoint: >
-      /bin/sh -c "
-      /usr/bin/mc alias set supa-minio http://minio:9000 supa-storage secret1234;
-      /usr/bin/mc mb --ignore-existing supa-minio/stub;
-      exit 0;
-      "
   storage:
     container_name: supabase-storage
     image: supabase/storage-api:v1.11.13
@@ -290,8 +261,6 @@ services:
         condition: service_healthy
       rest:
         condition: service_started
-      minio:
-        condition: service_healthy
     healthcheck:
       test:
         [
@@ -313,20 +282,33 @@ services:
       PGRST_JWT_SECRET: ${JWT_SECRET}
       DATABASE_URL: postgres://supabase_storage_admin:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
       FILE_SIZE_LIMIT: 52428800
-      STORAGE_BACKEND: s3
+      STORAGE_BACKEND: file
+      # This Storage API version also uses the bucket as a filesystem namespace.
       GLOBAL_S3_BUCKET: stub
-      GLOBAL_S3_ENDPOINT: http://minio:9000
-      GLOBAL_S3_PROTOCOL: http
-      GLOBAL_S3_FORCE_PATH_STYLE: true
-      AWS_ACCESS_KEY_ID: supa-storage
-      AWS_SECRET_ACCESS_KEY: secret1234
-      AWS_DEFAULT_REGION: stub
       FILE_STORAGE_BACKEND_PATH: /var/lib/storage
       TENANT_ID: stub
       REGION: stub
-      ENABLE_IMAGE_TRANSFORMATION: "true"
+      ENABLE_IMAGE_TRANSFORMATION: "false"
     volumes:
-      - ./volumes/storage:/var/lib/storage:z
+      - storage-data:/var/lib/storage
+
+  # Storage applies its own migrations before this service creates the bucket.
+  revisit-init:
+    image: supabase/postgres:15.8.1.060
+    restart: "no"
+    depends_on:
+      storage:
+        condition: service_healthy
+    environment:
+      PGHOST: ${POSTGRES_HOST}
+      PGPORT: ${POSTGRES_PORT}
+      PGDATABASE: ${POSTGRES_DB}
+      PGUSER: postgres
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./volumes/db/init/data.sql:/revisit-init.sql:ro
+    entrypoint: ["psql", "-v", "ON_ERROR_STOP=1", "-f", "/revisit-init.sql"]
 
 volumes:
   db-config:
+  storage-data:
