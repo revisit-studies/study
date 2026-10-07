@@ -1,0 +1,232 @@
+# Migrate the bundled MinIO deployment
+
+This procedure targets the previous bundled stack (Postgres 15.8.1.060,
+Supabase Storage v1.11.13, and MinIO) and moves it to the release in [UPSTREAM](UPSTREAM),
+using Postgres 17 and Storage v1.74.0's default file backend.
+Rehearse against a restored copy of your deployment first. New installations
+use [README.md](README.md); hosted Supabase users are unaffected.
+
+The database upgrade and storage move are separate steps in **one maintenance
+window**. Storage object IDs, versions, owners, timestamps, bucket definitions,
+and policies remain in Postgres. `migrate-storage.py` exports object bytes through
+the old API and installs their versioned files with HTTP metadata in the new
+backend. It never writes database records or re-uploads objects through the API.
+
+Requirements: a Linux server, Docker Compose, Bash, curl, OpenSSL, Python 3.11+,
+root access for the upstream database upgrade, and enough space for the database
+backup/upgrade and two copies of object data. Pre-pull the target images before
+starting the upgrade; allow at least 15 GB additional temporary space for the
+upgrade images, extracted binaries, and compressed bundle (also inside the
+Docker VM when using Docker Desktop). The destination filesystem must
+support Linux extended attributes. Do not reuse MinIO's on-disk directory as
+Supabase file storage. Custom S3 layouts, custom object-version separators, or
+multiple Supabase stacks on one Docker host require a separately rehearsed plan.
+
+## 1. Inventory and export while the old stack is running
+
+Keep the old Compose/configuration files and images available for rollback.
+Save cached MinIO server/client images if the registry can no longer supply them.
+Record your database extensions, OAuth/SMTP settings, proxy configuration,
+bucket limits, storage tenant, backend bucket, and any custom access policies.
+Restrict application traffic and pause participant/designer/background writes
+for the remainder of the procedure. Keep Supabase accessible to the migration
+operator until export finishes.
+
+Copy `migrate-storage.py` from the new checkout to the **old deployment directory**.
+From that old directory, create a private backup outside the deployment:
+
+```sh
+umask 077
+mkdir ../supabase-migration-backup
+cp .env docker-compose.yml ../supabase-migration-backup/
+cp -a volumes/api ../supabase-migration-backup/api
+docker image save minio/minio minio/mc \
+  -o ../supabase-migration-backup/minio-images.tar
+docker exec supabase-db pg_dumpall -U supabase_admin \
+  > ../supabase-migration-backup/database.sql
+db_config_volume=$(docker inspect supabase-db --format \
+  '{{range .Mounts}}{{if eq .Destination "/etc/postgresql-custom"}}{{.Name}}{{end}}{{end}}')
+test -n "$db_config_volume"
+docker run --rm -v "$db_config_volume:/source:ro" \
+  -v "$(cd ../supabase-migration-backup && pwd):/backup" \
+  alpine:3.22 tar -cf /backup/db-config.tar -C /source .
+```
+
+Privately set `SUPABASE_SERVICE_ROLE_KEY` to the **old** `.env`'s `SERVICE_ROLE_KEY`
+(for example, use `read -rs SUPABASE_SERVICE_ROLE_KEY` in Bash, then `export
+SUPABASE_SERVICE_ROLE_KEY`; paste the key when prompted). Do not put the key in
+shell history or in the application's `VITE_*` variables.
+
+```sh
+python3 migrate-storage.py export ../supabase-migration-backup/objects \
+  --url http://localhost:8000
+```
+
+Use your actual gateway URL. Export includes all live objects in every Supabase
+bucket, not only `revisit`, and fails on missing objects or size mismatches.
+The export directory must not already exist. An interrupted export must be
+repeated into a new directory; only a completed export contains `manifest.json`.
+It does not copy orphaned MinIO objects absent from the database.
+
+Stop the old stack **using its old Compose file**, without deleting volumes:
+
+```sh
+docker compose down
+sudo cp -a volumes/db/data ../supabase-migration-backup/postgres15-data
+sudo cp -a volumes/storage ../supabase-migration-backup/minio-data
+```
+
+Save the other deployment-specific configuration files as needed. Verify backup
+completion before continuing. The physical database and encryption-volume
+backups must belong to the same quiesced deployment.
+
+## 2. Install the new configuration; preserve existing secrets
+
+Copy the new checkout's `supabase/` configuration, scripts, and supporting files
+into the deployment directory, excluding runtime data and `.env`. For example,
+from the old deployment directory, with rsync installed:
+
+```sh
+rsync -av --exclude='.env' --exclude='.env.old' --exclude='.supabase-version' \
+  --exclude='volumes/db/data*' --exclude='volumes/storage*' \
+  /path/to/new-checkout/supabase/ ./
+```
+
+Use the actual path to the new checkout. Do not add `--delete`. Preserve the
+existing Compose project name and `db-config` named volume.
+
+Merge new `.env.example` settings into your existing private `.env`. Keep the
+existing database password, `JWT_SECRET`, `ANON_KEY`, `SERVICE_ROLE_KEY`, and
+encryption keys. **Do not run `generate-keys.sh` during migration:** rotating
+these values can invalidate sessions or make encrypted data unreadable.
+
+- Set `COMPOSE_FILE=docker-compose.yml` and `ENABLE_ANONYMOUS_USERS=true`.
+- Carry the previous `TENANT_ID` into `STORAGE_TENANT_ID`; keep `GLOBAL_S3_BUCKET`
+  and `REGION` consistent with the storage installation command below.
+- Set the new gateway port `API_GW_HTTP_PORT` to your previous HTTP port.
+- Supply newly required secrets such as `SECRET_KEY_BASE`, `REALTIME_DB_ENC_KEY`,
+  `VAULT_ENC_KEY`, and `PG_META_CRYPTO_KEY` if absent. Also generate fresh
+  `S3_PROTOCOL_ACCESS_KEY_ID` and `S3_PROTOCOL_ACCESS_KEY_SECRET` if missing;
+  these secure Storage’s S3 API even when its backend is local files. Generate
+  only missing values using the commands/lengths in `.env.example`; never use
+  the template’s default secrets or credentials.
+- Preserve URLs, SMTP, signup settings, and OAuth provider credentials. The old
+  GitHub settings are preserved by `sh run.sh config add github`. This optional
+  override reads the existing `ENABLE_GITHUB_OAUTH`, `GITHUB_OAUTH_CLIENT_ID`,
+  `GITHUB_OAUTH_SECRET`, and `GITHUB_OAUTH_REDIRECT_URI` variables. Keep the same
+  callback URL and registered GitHub OAuth application.
+- Keep legacy signing for this migration. Introducing asymmetric signing/key
+  rotation is optional later; legacy keys are supported by the pinned stack.
+
+Before modifying database files, pull the target images and check the two Node
+services start on this host:
+
+```sh
+sh run.sh pull
+docker compose run --rm --no-deps studio node --version
+docker compose run --rm --no-deps meta node --version
+```
+
+If either crashes, resolve host/image compatibility before upgrading. Our ARM64
+Docker Desktop rehearsal required the amd64 variants of these two images, as
+noted in [README.md](README.md).
+
+Move the old MinIO data aside and create an empty file-storage directory:
+
+```sh
+mv volumes/storage volumes/storage.minio-backup
+mkdir volumes/storage
+```
+
+Do **not** apply `revisit.sql`: existing application schema, buckets, and policies
+are retained by the database upgrade.
+
+## 3. Upgrade Postgres using the upstream script
+
+The upgrade script expects a running Postgres 15 container. Start **only the old
+database** with the saved old configuration, pointing Compose at this deployment
+directory so its relative paths still refer to the original data:
+
+```sh
+docker compose --project-directory "$PWD" \
+  -f ../supabase-migration-backup/docker-compose.yml up -d --wait db
+docker exec supabase-db pg_isready -U postgres
+# Our previous Compose did not initialize the upstream Realtime schema.
+docker exec -i supabase-db psql -U supabase_admin -d postgres \
+  -v ON_ERROR_STOP=1 < volumes/db/realtime.sql
+sudo bash utils/upgrade-pg17.sh
+```
+
+Read all output, including migration warnings. This script uses upstream's
+`pg_upgrade` procedure, preserves `data.bak.pg15` and the encryption key, applies
+required role/extension changes, and starts the new stack. See
+[upstream database upgrade guidance](https://supabase.com/docs/guides/self-hosting/postgres-upgrade-17).
+On a host with multiple `db-config` volumes, stop and resolve the target before
+running: this upstream script selects a matching volume by name.
+
+Confirm the script reaches **Upgrade complete** and all services start. Do not
+rerun it blindly after a partial upgrade: it refuses an already upgraded database.
+Resolve startup failures and use the preserved backups to rehearse again.
+
+The target image changes the libc collation version. While traffic is still
+blocked, rebuild indexes in each retained database (include any custom databases):
+
+```sh
+for database in postgres template1 _supabase; do
+  docker exec supabase-db psql -U supabase_admin -d "$database" \
+    -v ON_ERROR_STOP=1 -c "REINDEX DATABASE \"$database\";"
+done
+```
+
+The upstream script refreshes the version marker; that alone does not rebuild
+indexes. See [PostgreSQL collation guidance](https://www.postgresql.org/docs/17/sql-altercollation.html).
+Allow time and temporary disk space for this step.
+
+Keep application access blocked. Stop Storage and install exported files:
+
+```sh
+docker compose stop storage
+sudo python3 migrate-storage.py install ../supabase-migration-backup/objects \
+  --destination volumes/storage --bucket stub --tenant stub
+docker compose up -d storage
+sh run.sh start
+```
+
+Replace `stub` with your preserved backend bucket and tenant values. The helper
+checks all export hashes before writing, rejects unsafe paths/conflicting files,
+and preserves Content-Type and Cache-Control using Linux extended attributes.
+It can be rerun with the same verified export after fixing an installation error.
+
+## 4. Verify before reopening writes
+
+```sh
+python3 migrate-storage.py verify ../supabase-migration-backup/objects \
+  --url http://localhost:8000
+sh run.sh status
+docker exec supabase-db psql -U supabase_admin -d postgres \
+  -c 'SHOW server_version;'
+printf 'ref=self-hosted/v0.8.2\n' > .supabase-version
+```
+
+Verification streams every migrated object through the new API and checks its
+SHA-256, Content-Type, and Cache-Control, plus the original database object
+metadata. Keep the legacy application URL/key unchanged when possible. Check Study Designer login,
+existing participants/answers/configurations, recordings, exports, access
+policies, and a new participant submission. Restart the stack and confirm both
+old and new data persist. Retain database/file/encryption backups and old images
+until the deployment has been accepted. Then reopen application writes.
+
+## Rollback
+
+While writes are still paused, stop the new stack without `-v`. Restore the saved
+old Compose/API configuration and `.env`, the quiesced Postgres 15 data, the
+MinIO directory, and the matching `db-config` encryption/configuration volume.
+The database upgrade changes the volume's ownership/configuration, so restoring
+only database files is insufficient. Use the physical backup and saved volume
+archive (and load saved MinIO images with `docker image load -i`), or follow the
+upstream rollback steps together with the original configuration. Start the old stack with the saved original images and verify
+data and login before reopening writes. Keep the failed new data separately
+for diagnosis.
+
+After new writes are accepted, restoring the old backups loses those writes.
+Pause and plan how to retain them rather than treating rollback as lossless.
