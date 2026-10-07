@@ -33,12 +33,7 @@ docsLibraries/
 public/__revisit-widget
 src/public/__revisit-widget
 
-supabase/volumes/db/data.bak.*
-supabase/volumes/db/data_migration/
-supabase/volumes/db/pg17_upgrade_bin_*.tar.gz
-supabase/volumes/db/pgsodium_root.key.bak.*
-supabase/.env.old
+supabase/volumes/
 /supabase-migration-backup/
-/supabase/volumes/storage.minio-backup/
 
 coverage/

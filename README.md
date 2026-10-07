@@ -25,7 +25,7 @@ To run this demo experiment locally, you will need to install Node.js on your co
 
 ## Self-hosted Supabase
 
-See [first-time setup](supabase/README.md) and the [migration guide](supabase/MIGRATION.md) for the bundled, version-pinned Supabase stack. Existing MinIO installations must migrate before starting the new configuration.
+See [first-time setup](supabase/README.md) and the [migration guide](supabase/MIGRATION.md) for a version-pinned upstream Supabase deployment. Existing MinIO installations must migrate before starting the new configuration.
 
 ## Adding Tests
 

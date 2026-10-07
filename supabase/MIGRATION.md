@@ -12,7 +12,7 @@ and policies remain in Postgres. `migrate-storage.py` exports object bytes throu
 the old API and installs their versioned files with HTTP metadata in the new
 backend. It never writes database records or re-uploads objects through the API.
 
-Requirements: a Linux server, Docker Compose, Bash, curl, OpenSSL, Python 3.11+,
+Requirements: a Linux server, Git, Docker Compose, Bash, curl, OpenSSL, Python 3.11+,
 root access for the upstream database upgrade, and enough space for the database
 backup/upgrade and two copies of object data. Pre-pull the target images before
 starting the upgrade; allow at least 15 GB additional temporary space for the
@@ -32,23 +32,27 @@ Restrict application traffic and pause participant/designer/background writes
 for the remainder of the procedure. Keep Supabase accessible to the migration
 operator until export finishes.
 
-Copy `migrate-storage.py` from the new checkout to the **old deployment directory**.
+Obtain the new reVISit checkout separately; do not update the old deployment
+in place before taking backups, because this change removes its bundled
+configuration files. Copy `migrate-storage.py` from the new checkout to the
+**old deployment directory**.
 From that old directory, create a private backup outside the deployment:
 
 ```sh
 umask 077
-mkdir ../supabase-migration-backup
-cp .env docker-compose.yml ../supabase-migration-backup/
-cp -a volumes/api ../supabase-migration-backup/api
+migration_backup="$(cd .. && pwd)/supabase-migration-backup"
+mkdir "$migration_backup"
+cp .env docker-compose.yml "$migration_backup/"
+cp -a volumes/api "$migration_backup/api"
 docker image save minio/minio minio/mc \
-  -o ../supabase-migration-backup/minio-images.tar
+  -o "$migration_backup/minio-images.tar"
 docker exec supabase-db pg_dumpall -U supabase_admin \
-  > ../supabase-migration-backup/database.sql
+  > "$migration_backup/database.sql"
 db_config_volume=$(docker inspect supabase-db --format \
   '{{range .Mounts}}{{if eq .Destination "/etc/postgresql-custom"}}{{.Name}}{{end}}{{end}}')
 test -n "$db_config_volume"
 docker run --rm -v "$db_config_volume:/source:ro" \
-  -v "$(cd ../supabase-migration-backup && pwd):/backup" \
+  -v "$migration_backup:/backup" \
   alpine:3.22 tar -cf /backup/db-config.tar -C /source .
 ```
 
@@ -58,7 +62,7 @@ SUPABASE_SERVICE_ROLE_KEY`; paste the key when prompted). Do not put the key in
 shell history or in the application's `VITE_*` variables.
 
 ```sh
-python3 migrate-storage.py export ../supabase-migration-backup/objects \
+python3 migrate-storage.py export "$migration_backup/objects" \
   --url http://localhost:8000
 ```
 
@@ -72,8 +76,8 @@ Stop the old stack **using its old Compose file**, without deleting volumes:
 
 ```sh
 docker compose down
-sudo cp -a volumes/db/data ../supabase-migration-backup/postgres15-data
-sudo cp -a volumes/storage ../supabase-migration-backup/minio-data
+sudo cp -a volumes/db/data "$migration_backup/postgres15-data"
+sudo cp -a volumes/storage "$migration_backup/minio-data"
 ```
 
 Save the other deployment-specific configuration files as needed. Verify backup
@@ -82,18 +86,41 @@ backups must belong to the same quiesced deployment.
 
 ## 2. Install the new configuration; preserve existing secrets
 
-Copy the new checkout's `supabase/` configuration, scripts, and supporting files
-into the deployment directory, excluding runtime data and `.env`. For example,
-from the old deployment directory, with rsync installed:
+If this deployment is inside the old reVISit checkout, move the stopped directory
+outside it after verifying the backups. Choose a destination that does not exist:
 
 ```sh
-rsync -av --exclude='.env' --exclude='.env.old' --exclude='.supabase-version' \
-  --exclude='volumes/db/data*' --exclude='volumes/storage*' \
-  /path/to/new-checkout/supabase/ ./
+deployment=/absolute/path/to/supabase-project
+test ! -e "$deployment"
+sudo mv "$PWD" "$deployment"
+cd "$deployment"
 ```
 
-Use the actual path to the new checkout. Do not add `--delete`. Preserve the
-existing Compose project name and `db-config` named volume.
+Skip the move if the deployment is already separate. Keep the same shell session
+so `migration_backup` continues to refer to the original absolute backup path.
+Application checkout updates must not replace deployment configuration or data.
+
+Fetch the pinned official bundle into a separate source directory. From the
+old deployment directory, replace the support path with your new reVISit checkout:
+
+```sh
+revisit_support=/absolute/path/to/new-checkout/supabase
+git clone --filter=blob:none --sparse --depth 1 --branch self-hosted/v0.8.2 \
+  https://github.com/supabase/supabase.git ../supabase-upstream
+git -C ../supabase-upstream sparse-checkout set docker
+test "$(git -C ../supabase-upstream rev-parse HEAD)" = \
+  564eab8ad7840b13324f68b1bfac074ef8d51c21
+rsync -av --exclude='.env' --exclude='.env.old' --exclude='.supabase-version' \
+  --exclude='volumes/db/data*' --exclude='volumes/storage*' \
+  ../supabase-upstream/docker/ ./
+cp "$revisit_support/docker-compose.github.yml" .
+```
+
+Do not add `--delete`. The command replaces files supplied by upstream; review
+any local edits to those files before copying and carry them over deliberately.
+Preserve the existing Compose project name and `db-config` named volume.
+The upstream scripts now live in this deployment;
+reVISit does not maintain copies of them.
 
 Merge new `.env.example` settings into your existing private `.env`. Keep the
 existing database password, `JWT_SECRET`, `ANON_KEY`, `SERVICE_ROLE_KEY`, and
@@ -149,7 +176,7 @@ directory so its relative paths still refer to the original data:
 
 ```sh
 docker compose --project-directory "$PWD" \
-  -f ../supabase-migration-backup/docker-compose.yml up -d --wait db
+  -f "$migration_backup/docker-compose.yml" up -d --wait db
 docker exec supabase-db pg_isready -U postgres
 # Our previous Compose did not initialize the upstream Realtime schema.
 docker exec -i supabase-db psql -U supabase_admin -d postgres \
@@ -186,7 +213,7 @@ Keep application access blocked. Stop Storage and install exported files:
 
 ```sh
 docker compose stop storage
-sudo python3 migrate-storage.py install ../supabase-migration-backup/objects \
+sudo python3 migrate-storage.py install "$migration_backup/objects" \
   --destination volumes/storage --bucket stub --tenant stub
 docker compose up -d storage
 sh run.sh start
@@ -200,7 +227,7 @@ It can be rerun with the same verified export after fixing an installation error
 ## 4. Verify before reopening writes
 
 ```sh
-python3 migrate-storage.py verify ../supabase-migration-backup/objects \
+python3 migrate-storage.py verify "$migration_backup/objects" \
   --url http://localhost:8000
 sh run.sh status
 docker exec supabase-db psql -U supabase_admin -d postgres \
