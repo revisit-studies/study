@@ -94,10 +94,12 @@ names: run only one copy per Docker host, or deliberately isolate it.
 4. Initialize the reVISit table and private bucket **on a fresh database only**:
 
    ```sh
-   docker exec -i supabase-db psql -U supabase_admin -d postgres \
+   docker exec -i supabase-db psql -U supabase_admin \
      -v ON_ERROR_STOP=1 < "$revisit_support/revisit.sql"
    ```
 
+   `psql` uses the container's `PGDATABASE`, which upstream sets from
+   `POSTGRES_DB`; this initializes the configured application database.
    This applies the same schema and access model as the existing
    [reVISit setup instructions](https://revisit.dev/docs/data-and-deployment/supabase/setup/).
    Those policies allow anyone holding the public application key to read and

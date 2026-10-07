@@ -162,6 +162,8 @@ Before modifying database files, pull the target images and check the two Node
 services start on this host:
 
 ```sh
+# The existing ENABLE_GITHUB_OAUTH value controls whether GitHub sign-in is enabled.
+sh run.sh config add github
 sh run.sh pull
 docker compose run --rm --no-deps studio node --version
 docker compose run --rm --no-deps meta node --version
@@ -256,14 +258,29 @@ These checks complement review of all migration output, including database-local
 function/search-path, role settings, GraphQL trigger, and extension changes.
 
 The target image changes the libc collation version. While traffic is still
-blocked, rebuild indexes in each retained database (include any custom databases):
+blocked, rebuild indexes in each retained database. The block includes the
+configured application database once; add any other retained databases to the
+`set --` list:
 
 ```sh
-for database in postgres template1 _supabase; do
-  docker exec supabase-db psql -U supabase_admin -d "$database" \
-    -v ON_ERROR_STOP=1 -c "REINDEX DATABASE \"$database\";"
-done
+(
+  set -- postgres template1 _supabase
+  case "$postgres_database" in
+    postgres|template1|_supabase) ;;
+    *) set -- "$@" "$postgres_database" ;;
+  esac
+  for database do
+    docker exec -i supabase-db psql -U supabase_admin -d "$database" \
+      -v ON_ERROR_STOP=1 -v database="$database" <<'SQL' || exit 1
+REINDEX DATABASE :"database";
+SQL
+  done
+)
 ```
+
+Require this block to exit successfully for **every** database. On any failure,
+stop, resolve the error, and rerun it before installing files or reopening writes.
+The subshell stops at the first failed command without closing your login shell.
 
 The upstream script refreshes the version marker; that alone does not rebuild
 indexes. See [PostgreSQL collation guidance](https://www.postgresql.org/docs/17/sql-altercollation.html).
