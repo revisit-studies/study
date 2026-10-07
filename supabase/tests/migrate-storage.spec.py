@@ -32,6 +32,17 @@ class StorageMigrationTests(unittest.TestCase):
     def manifest(self, objects):
         (self.export / "manifest.json").write_text(json.dumps(objects))
 
+    def test_export_and_verify_query_the_selected_database(self):
+        directory = self.export / "empty"
+        with patch("subprocess.run") as query:
+            query.return_value.stdout = "[]"
+            for operation in ("export", "verify"):
+                with patch("sys.argv", ["migrate-storage.py", operation, str(directory),
+                                        "--database", "study_database"]):
+                    migration["main"]()
+                command = query.call_args.args[0]
+                self.assertEqual(command[command.index("-d") + 1], "study_database")
+
     def test_preserves_versioned_layout_and_http_metadata(self):
         self.manifest([self.obj])
         with patch("os.setxattr", create=True) as attributes:
@@ -84,10 +95,10 @@ class StorageMigrationTests(unittest.TestCase):
             return response
 
         with patch.dict(migration["verify"].__globals__,
-                        objects=lambda: list(reversed(objects)), download=download):
+                        objects=lambda database: list(reversed(objects)), download=download):
             migration["verify"]("http://example.test", self.export)
         changed = [{**objects[0], "version": "changed"}, objects[1]]
-        with patch.dict(migration["verify"].__globals__, objects=lambda: changed):
+        with patch.dict(migration["verify"].__globals__, objects=lambda database: changed):
             with self.assertRaisesRegex(ValueError, "metadata changed"):
                 migration["verify"]("http://example.test", self.export)
 

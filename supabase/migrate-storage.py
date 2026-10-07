@@ -15,11 +15,11 @@ import urllib.parse
 import urllib.request
 
 
-def objects():
+def objects(database):
     sql = "SELECT coalesce(json_agg(o ORDER BY bucket_id, name), '[]'::json) FROM storage.objects o"
     result = subprocess.run(
         ["docker", "exec", "supabase-db", "psql", "-U", "supabase_admin",
-         "-d", "postgres", "-At", "-v", "ON_ERROR_STOP=1", "-c", sql],
+         "-d", database, "-At", "-v", "ON_ERROR_STOP=1", "-c", sql],
         check=True, capture_output=True, text=True,
     )
     return json.loads(result.stdout)
@@ -40,9 +40,9 @@ def digest(file):
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
-def export(url, directory):
+def export(url, directory, database="postgres"):
     directory.mkdir(parents=True, exist_ok=False)
-    manifest = objects()
+    manifest = objects(database)
     for index, obj in enumerate(manifest):
         obj["file"] = f"{index:08d}.bin"
         target = directory / obj["file"]
@@ -100,9 +100,9 @@ def install(directory, root, bucket, tenant):
     print(f"Installed {len(manifest)} objects; database metadata unchanged")
 
 
-def verify(url, directory):
+def verify(url, directory, database="postgres"):
     manifest = json.loads((directory / "manifest.json").read_text())
-    current = objects()
+    current = objects(database)
     exported_columns = set(manifest[0]) - {"file", "sha256", "content_type", "cache_control"} if manifest else set()
     original = {obj["id"]: {key: obj[key] for key in exported_columns} for obj in manifest}
     retained = {obj["id"]: {key: obj.get(key) for key in exported_columns} for obj in current}
@@ -127,6 +127,7 @@ def main():
     parser.add_argument("operation", choices=["export", "install", "verify"])
     parser.add_argument("directory", type=Path)
     parser.add_argument("--url", default="http://localhost:8000")
+    parser.add_argument("--database", default="postgres", help="POSTGRES_DB for export and verify")
     parser.add_argument("--destination", type=Path)
     parser.add_argument("--bucket", default="stub", help="GLOBAL_S3_BUCKET, not the application bucket")
     parser.add_argument("--tenant", default="stub", help="STORAGE_TENANT_ID (previously TENANT_ID)")
@@ -136,9 +137,9 @@ def main():
             parser.error("install requires --destination")
         install(args.directory, args.destination, args.bucket, args.tenant)
     elif args.operation == "export":
-        export(args.url, args.directory)
+        export(args.url, args.directory, args.database)
     else:
-        verify(args.url, args.directory)
+        verify(args.url, args.directory, args.database)
 
 
 if __name__ == "__main__":

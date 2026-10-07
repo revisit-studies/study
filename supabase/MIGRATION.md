@@ -40,6 +40,7 @@ From that old directory, create a private backup outside the deployment:
 
 ```sh
 umask 077
+postgres_database=postgres # Set this to the existing .env POSTGRES_DB.
 migration_backup="$(cd .. && pwd)/supabase-migration-backup"
 mkdir "$migration_backup"
 cp .env docker-compose.yml "$migration_backup/"
@@ -63,11 +64,12 @@ shell history or in the application's `VITE_*` variables.
 
 ```sh
 python3 migrate-storage.py export "$migration_backup/objects" \
-  --url http://localhost:8000
+  --url http://localhost:8000 --database "$postgres_database"
 ```
 
-Use your actual gateway URL. Export includes all live objects in every Supabase
-bucket, not only `revisit`, and fails on missing objects or size mismatches.
+Use your actual gateway URL and preserved `POSTGRES_DB` for both export and
+verification. Keep `postgres_database` in the same shell session. Export includes
+all live objects in every Supabase bucket, not only `revisit`, and fails on missing objects or size mismatches.
 The export directory must not already exist. An interrupted export must be
 repeated into a new directory; only a completed export contains `manifest.json`.
 It does not copy orphaned MinIO objects absent from the database.
@@ -123,7 +125,7 @@ The upstream scripts now live in this deployment;
 reVISit does not maintain copies of them.
 
 Merge new `.env.example` settings into your existing private `.env`. Keep the
-existing database password, `JWT_SECRET`, `ANON_KEY`, `SERVICE_ROLE_KEY`, and
+existing `POSTGRES_DB`, database password, `JWT_SECRET`, `ANON_KEY`, `SERVICE_ROLE_KEY`, and
 encryption keys. **Do not run `generate-keys.sh` during migration:** rotating
 these values can invalidate sessions or make encrypted data unreadable.
 
@@ -137,8 +139,19 @@ these values can invalidate sessions or make encrypted data unreadable.
   these secure Storage’s S3 API even when its backend is local files. Generate
   only missing values using the commands/lengths in `.env.example`; never use
   the template’s default secrets or credentials.
-- Preserve URLs, SMTP, signup settings, and OAuth provider credentials. The old
-  GitHub settings are preserved by `sh run.sh config add github`. This optional
+- Preserve `SITE_URL`, application redirects, SMTP, signup settings, and OAuth
+  provider credentials. Convert `API_EXTERNAL_URL` to the full Auth endpoint:
+  `https://your-domain` becomes `https://your-domain/auth/v1` (do not append the
+  suffix twice). Keep the final `GITHUB_OAUTH_REDIRECT_URI` registered with
+  GitHub unchanged at `https://your-domain/auth/v1/callback`. Any custom OAuth
+  override derived from `${API_EXTERNAL_URL}/auth/v1/callback` must now use
+  `${API_EXTERNAL_URL}/callback`. SAML deployments must update their IdP's ACS
+  and metadata endpoints to `<base>/auth/v1/sso/saml/acs` and
+  `<base>/auth/v1/sso/saml/metadata`. If configured, convert `SAML_EXTERNAL_URL`
+  (mapped to `GOTRUE_SAML_EXTERNAL_URL`) to the full `/auth/v1` base too; it
+  overrides `API_EXTERNAL_URL`. Re-fetch provider metadata afterwards. See
+  [upstream Auth URL migration guidance](https://supabase.com/changelog/47093-self-hosted-supabase-api-external-url-to-include-auth-v1).
+  The old GitHub settings are preserved by `sh run.sh config add github`. This optional
   override reads the existing `ENABLE_GITHUB_OAUTH`, `GITHUB_OAUTH_CLIENT_ID`,
   `GITHUB_OAUTH_SECRET`, and `GITHUB_OAUTH_REDIRECT_URI` variables. Keep the same
   callback URL and registered GitHub OAuth application.
@@ -179,7 +192,7 @@ docker compose --project-directory "$PWD" \
   -f "$migration_backup/docker-compose.yml" up -d --wait db
 docker exec supabase-db pg_isready -U postgres
 # Our previous Compose did not initialize the upstream Realtime schema.
-docker exec -i supabase-db psql -U supabase_admin -d postgres \
+docker exec -i supabase-db psql -U supabase_admin -d "$postgres_database" \
   -v ON_ERROR_STOP=1 < volumes/db/realtime.sql
 sudo bash utils/upgrade-pg17.sh
 ```
@@ -191,9 +204,56 @@ required role/extension changes, and starts the new stack. See
 On a host with multiple `db-config` volumes, stop and resolve the target before
 running: this upstream script selects a matching volume by name.
 
-Confirm the script reaches **Upgrade complete** and all services start. Do not
-rerun it blindly after a partial upgrade: it refuses an already upgraded database.
-Resolve startup failures and use the preserved backups to rehearse again.
+Require a successful script exit and healthy services.
+**Upgrade complete is not sufficient:** the pinned script warns about failed
+required SQL migrations and can still report success. Keep writes blocked and
+**stop here** on missing migration files, SQL errors, or migration/extension
+reconciliation failures. Resolve each failure and reapply only its affected SQL
+from `/docker-entrypoint-initdb.d/migrations/` in the target database container
+with `psql -v ON_ERROR_STOP=1`; inspect the pinned `utils/upgrade-pg17.sh` for the
+required files and effects. Do not rerun the whole database upgrade: it refuses
+an already upgraded database. Resolve startup failures or restore the preserved
+backups to rehearse again.
+
+The upstream script applies its database-local SQL to `postgres`. If your
+`POSTGRES_DB` differs, separately rehearse and apply the required database-local
+migrations there as well; the helper's database option does not adapt the
+upstream upgrade script. Before proceeding, require the following role/grant
+check to succeed in the configured application database, and confirm every
+required migration completed without errors:
+
+```sh
+docker exec -i supabase-db psql -U supabase_admin -d "$postgres_database" \
+  -v ON_ERROR_STOP=1 <<'SQL'
+DO $$
+BEGIN
+  IF NOT (
+    pg_has_role('postgres', 'supabase_privileged_role', 'MEMBER')
+    AND pg_has_role('supabase_etl_admin', 'supabase_privileged_role', 'MEMBER')
+    AND pg_has_role('supabase_etl_admin', 'pg_read_all_data', 'MEMBER')
+    AND has_database_privilege('supabase_etl_admin', current_database(), 'CREATE')
+    AND pg_has_role('supabase_etl_admin', 'pg_monitor', 'MEMBER')
+    AND pg_has_role('supabase_read_only_user', 'pg_monitor', 'MEMBER')
+    AND EXISTS (
+      SELECT 1 FROM pg_auth_members m
+      JOIN pg_roles granted ON granted.oid = m.roleid
+      JOIN pg_roles member_role ON member_role.oid = m.member
+      WHERE granted.rolname = 'pg_create_subscription'
+        AND member_role.rolname = 'postgres' AND m.admin_option
+    )
+    AND has_function_privilege('postgres', 'pg_catalog.pg_reload_conf()',
+                               'EXECUTE WITH GRANT OPTION')
+  ) THEN
+    RAISE EXCEPTION 'Required PG17 roles/grants missing; keep writes blocked';
+  END IF;
+END
+$$;
+SQL
+```
+
+A missing role or grant is a migration failure; resolve it before continuing.
+These checks complement review of all migration output, including database-local
+function/search-path, role settings, GraphQL trigger, and extension changes.
 
 The target image changes the libc collation version. While traffic is still
 blocked, rebuild indexes in each retained database (include any custom databases):
@@ -231,7 +291,7 @@ It can be rerun with the same verified export after fixing an installation error
 
 ```sh
 python3 migrate-storage.py verify "$migration_backup/objects" \
-  --url http://localhost:8000
+  --url http://localhost:8000 --database "$postgres_database"
 sh run.sh status
 docker exec supabase-db psql -U supabase_admin -d postgres \
   -c 'SHOW server_version;'
@@ -244,7 +304,15 @@ metadata. Keep the legacy application URL/key unchanged when possible. Check Stu
 existing participants/answers/configurations, recordings, exports, access
 policies, and a new participant submission. Restart the stack and confirm both
 old and new data persist. Retain database/file/encryption backups and old images
-until the deployment has been accepted. Then reopen application writes.
+until the deployment has been accepted. After verifying your external database/file/encryption backups and accepting
+the migration, move `volumes/db/data.bak.pg15` and
+`volumes/storage.minio-backup` outside the deployment (retain them for rollback).
+Do this **before any upstream update**: its configuration archive excludes only
+the exact live `data` and `storage` directories, includes these retained copies,
+and can continue after archive errors. Keep their new locations in your rollback
+inventory. Also move or remove the disposable `volumes/db/pg17_upgrade_bin_*.tar.gz`
+cache after acceptance; it is also included in that archive and can exceed 1 GB.
+Retain the encryption/key backups. Then reopen application writes.
 
 ## Rollback
 

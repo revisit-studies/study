@@ -135,6 +135,15 @@ For deployments requiring object storage, use
 [upstream S3 configuration](https://supabase.com/docs/guides/self-hosting/self-hosted-s3).
 
 Use `sh run.sh stop`, `start`, `status`, and `logs` to operate the stack.
+Before any update, verify external backups and move retained migration copies
+`volumes/db/data.bak.pg15` and `volumes/storage.minio-backup` outside the deployment;
+keep them for rollback. Also move or remove the disposable
+`volumes/db/pg17_upgrade_bin_*.tar.gz` cache after accepting migration, while
+retaining encryption/key backups. Upstream's configuration backup excludes only the exact
+live-data paths, so these copies would be archived too, potentially filling the
+disk. Archive errors only warn: check the resulting configuration archive before
+relying on it, and stop if it is incomplete.
+
 Review future tagged updates using `sh update.sh --dry-run --to <release-tag>`
 and [upstream update guidance](https://supabase.com/docs/guides/self-hosting/updating).
 The update tool belongs to the downloaded upstream bundle. Review its plan and
