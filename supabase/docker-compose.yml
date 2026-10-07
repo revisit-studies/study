@@ -254,7 +254,7 @@ services:
       ]
 
   minio:
-    image: minio/minio
+    image: pgsty/silo
     ports:
       - '9000:9000'
       - '9001:9001'
@@ -271,7 +271,7 @@ services:
       - ./volumes/storage:/data:z
 
   minio-createbucket:
-    image: minio/mc
+    image: pgsty/mc
     depends_on:
       minio:
         condition: service_healthy
