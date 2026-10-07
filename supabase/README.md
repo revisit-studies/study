@@ -31,12 +31,12 @@ names: run only one copy per Docker host, or deliberately isolate it.
    ```sh
    revisit_support=/absolute/path/to/revisit-study/supabase
    git clone --filter=blob:none --sparse --depth 1 --branch self-hosted/v0.8.2 \
-     https://github.com/supabase/supabase.git supabase-upstream
-   git -C supabase-upstream sparse-checkout set docker
+     https://github.com/supabase/supabase.git supabase-upstream &&
+   git -C supabase-upstream sparse-checkout set docker &&
    test "$(git -C supabase-upstream rev-parse HEAD)" = \
-     564eab8ad7840b13324f68b1bfac074ef8d51c21
-   mkdir supabase-project
-   cp -a supabase-upstream/docker/. supabase-project/
+     564eab8ad7840b13324f68b1bfac074ef8d51c21 &&
+   mkdir supabase-project &&
+   cp -a supabase-upstream/docker/. supabase-project/ &&
    cd supabase-project
    ```
 

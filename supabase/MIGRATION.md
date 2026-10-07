@@ -108,13 +108,13 @@ old deployment directory, replace the support path with your new reVISit checkou
 ```sh
 revisit_support=/absolute/path/to/new-checkout/supabase
 git clone --filter=blob:none --sparse --depth 1 --branch self-hosted/v0.8.2 \
-  https://github.com/supabase/supabase.git ../supabase-upstream
-git -C ../supabase-upstream sparse-checkout set docker
+  https://github.com/supabase/supabase.git ../supabase-upstream &&
+git -C ../supabase-upstream sparse-checkout set docker &&
 test "$(git -C ../supabase-upstream rev-parse HEAD)" = \
-  564eab8ad7840b13324f68b1bfac074ef8d51c21
+  564eab8ad7840b13324f68b1bfac074ef8d51c21 &&
 rsync -av --exclude='.env' --exclude='.env.old' --exclude='.supabase-version' \
   --exclude='volumes/db/data*' --exclude='volumes/storage*' \
-  ../supabase-upstream/docker/ ./
+  ../supabase-upstream/docker/ ./ &&
 cp "$revisit_support/docker-compose.github.yml" .
 ```
 
