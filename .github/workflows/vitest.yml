@@ -24,3 +24,6 @@ jobs:
 
       - name: Run unit tests
         run: yarn unittest
+
+      - name: Run storage migration tests
+        run: python3 supabase/tests/migrate-storage.spec.py

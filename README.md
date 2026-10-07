@@ -23,6 +23,10 @@ To run this demo experiment locally, you will need to install Node.js on your co
 * To run locally, run `yarn serve`.
 * Go to [http://localhost:8080](http://localhost:8080) to view it in your browser. The page will reload when you make changes.
 
+## Self-hosted Supabase
+
+See [first-time setup](supabase/README.md) and the [migration guide](supabase/MIGRATION.md) for a version-pinned upstream Supabase deployment. Existing MinIO installations must migrate before starting the new configuration.
+
 ## Adding Tests
 
 This repo uses two test types:

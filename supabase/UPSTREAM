@@ -1,0 +1,6 @@
+Supabase self-hosted/v0.8.2
+Commit: 564eab8ad7840b13324f68b1bfac074ef8d51c21
+Source: https://github.com/supabase/supabase/tree/self-hosted/v0.8.2/docker
+
+The deployment configuration and scripts are obtained directly from upstream.
+This directory contains only reVISit setup, migration, and integration files.
