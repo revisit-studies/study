@@ -55,6 +55,16 @@ class StorageMigrationTests(unittest.TestCase):
             if directory.is_relative_to(self.target):
                 self.assertEqual(directory.stat().st_mode & 0o777, 0o755)
 
+    def test_empty_export_prepares_readable_storage_root(self):
+        self.manifest([])
+        self.target.mkdir(mode=0o700)
+        previous = os.umask(0o077)
+        try:
+            migration["install"](self.export, self.target, "stub", "stub")
+        finally:
+            os.umask(previous)
+        self.assertEqual(self.target.stat().st_mode & 0o777, 0o755)
+
     def test_corruption_is_rejected_before_installing_any_object(self):
         self.manifest([self.obj, {**self.obj, "file": "00000001.bin"}])
         (self.export / "00000001.bin").write_bytes(b"corrupted")

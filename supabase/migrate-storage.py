@@ -82,6 +82,8 @@ def install(directory, root, bucket, tenant):
         target = destination(root, bucket, tenant, obj)
         if target.exists() and digest(target) != obj["sha256"]:
             raise ValueError("Destination already contains different data")
+    root.mkdir(parents=True, exist_ok=True)
+    root.chmod(0o755)
     for obj in manifest:
         target = destination(root, bucket, tenant, obj)
         target.parent.mkdir(parents=True, exist_ok=True)
