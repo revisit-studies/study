@@ -4,6 +4,7 @@ import os
 from io import BytesIO
 from pathlib import Path
 import runpy
+import shutil
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -49,8 +50,34 @@ class StorageMigrationTests(unittest.TestCase):
             migration["install"](self.export, self.target, "stub", "stub")
         result = self.target / "stub/stub/revisit/study/participant data.json/existing-version"
         self.assertEqual(result.read_bytes(), b"existing participant data")
-        attributes.assert_any_call(result, "user.supabase.content-type", b"application/json")
-        attributes.assert_any_call(result, "user.supabase.cache-control", b"max-age=3600")
+        self.assertEqual({call.args[1]: call.args[2] for call in attributes.call_args_list}, {
+            "user.supabase.content-type": b"application/json",
+            "user.supabase.cache-control": b"max-age=3600",
+        })
+
+    def test_interrupted_copy_preserves_destination_and_can_be_retried(self):
+        self.manifest([self.obj])
+
+        def interrupted_copy(source, target):
+            Path(target).write_bytes(b"partial copy")
+            raise OSError("copy interrupted")
+
+        for existing in (False, True):
+            with self.subTest(existing=existing):
+                root = self.target / str(existing)
+                target = migration["destination"](root, "stub", "stub", self.obj)
+                if existing:
+                    target.parent.mkdir(parents=True)
+                    shutil.copyfile(self.export / self.obj["file"], target)
+                with patch("shutil.copyfile", side_effect=interrupted_copy):
+                    with self.assertRaisesRegex(OSError, "copy interrupted"):
+                        migration["install"](self.export, root, "stub", "stub")
+                if existing:
+                    self.assertEqual(target.read_bytes(), b"existing participant data")
+                else:
+                    self.assertFalse(target.exists())
+                migration["install"](self.export, root, "stub", "stub")
+                self.assertEqual(target.read_bytes(), b"existing participant data")
 
     def test_installed_files_are_readable_by_imgproxy_with_private_backup_umask(self):
         self.manifest([self.obj])
