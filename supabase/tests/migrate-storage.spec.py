@@ -1,5 +1,6 @@
 import hashlib
 import json
+import os
 from io import BytesIO
 from pathlib import Path
 import runpy
@@ -39,6 +40,20 @@ class StorageMigrationTests(unittest.TestCase):
         self.assertEqual(result.read_bytes(), b"existing participant data")
         attributes.assert_any_call(result, "user.supabase.content-type", b"application/json")
         attributes.assert_any_call(result, "user.supabase.cache-control", b"max-age=3600")
+
+    def test_installed_files_are_readable_by_imgproxy_with_private_backup_umask(self):
+        self.manifest([self.obj])
+        self.target.mkdir(mode=0o700)
+        previous = os.umask(0o077)
+        try:
+            migration["install"](self.export, self.target, "stub", "stub")
+        finally:
+            os.umask(previous)
+        result = migration["destination"](self.target, "stub", "stub", self.obj)
+        self.assertEqual(result.stat().st_mode & 0o777, 0o644)
+        for directory in result.parents:
+            if directory.is_relative_to(self.target):
+                self.assertEqual(directory.stat().st_mode & 0o777, 0o755)
 
     def test_corruption_is_rejected_before_installing_any_object(self):
         self.manifest([self.obj, {**self.obj, "file": "00000001.bin"}])

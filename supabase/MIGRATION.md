@@ -222,6 +222,9 @@ sh run.sh start
 Replace `stub` with your preserved backend bucket and tenant values. The helper
 checks all export hashes before writing, rejects unsafe paths/conflicting files,
 and preserves Content-Type and Cache-Control using Linux extended attributes.
+Installed directories use mode 755 and files 644 so the separate imgproxy user
+can read them; restrict server access to this storage directory. Export backups
+retain their private permissions.
 It can be rerun with the same verified export after fixing an installation error.
 
 ## 4. Verify before reopening writes

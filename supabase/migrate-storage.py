@@ -85,7 +85,13 @@ def install(directory, root, bucket, tenant):
     for obj in manifest:
         target = destination(root, bucket, tenant, obj)
         target.parent.mkdir(parents=True, exist_ok=True)
+        # imgproxy runs as a different user; private backup umasks must not
+        # prevent it from traversing the installed tree or reading payloads.
+        for directory_path in [target.parent, *target.parent.parents]:
+            if directory_path.is_relative_to(root):
+                directory_path.chmod(0o755)
         shutil.copyfile(directory / obj["file"], target)
+        target.chmod(0o644)
         # Storage reads HTTP metadata from Linux extended attributes.
         os.setxattr(target, "user.supabase.content-type", obj["content_type"].encode())
         os.setxattr(target, "user.supabase.cache-control", obj["cache_control"].encode())
