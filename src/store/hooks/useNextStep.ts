@@ -67,8 +67,8 @@ export function useNextStep(responses: Response[] = [], correctAnswers: Answer[]
   const windowEvents = useWindowEvents();
   const goToNextStep = useCallback((collectData = true) => {
     try {
-      if (isNextDisabled) {
-        return;
+      if (isNextDisabled || typeof currentStep !== 'number') {
+        return false;
       }
       // Get answer from across the 3 response blocks and the provenance graph
       const validation = trialValidation[identifier];
@@ -163,6 +163,7 @@ export function useNextStep(responses: Response[] = [], correctAnswers: Answer[]
       } else {
         navigate(`/${studyId}/${encryptIndex(nextStep)}${window.location.search}`);
       }
+      return true;
     } catch (error) {
       console.error('Failed to advance to next step', error);
       showNotification({
@@ -170,6 +171,7 @@ export function useNextStep(responses: Response[] = [], correctAnswers: Answer[]
         message: 'Something went wrong while processing your response. Please try again.',
         color: 'red',
       });
+      return false;
     }
   }, [isNextDisabled, currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, clickedPrevious, sequence, answers, startTime, funcIndex, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, setRankingAnswers, setAlertModal, studyConfig, participantSequence, navigate, studyId, responseSubmitAttempted, checkAnswerState, responses, correctAnswers]);
 

@@ -13,13 +13,14 @@
 
   const id = urlParams.get("id") || injectedParams.id || null;
 
-  const sendMessage = (tag, message) => {
+  const sendMessage = (tag, message, options) => {
     window.parent.postMessage(
       {
         error: false,
         type: `${PREFIX}/${tag}`,
         iframeId: id,
         message,
+        ...(options === undefined ? {} : { options }),
       },
       "*"
     );
@@ -87,8 +88,11 @@
   });
 
   window.Revisit = {
-    postAnswers: (answers) => {
-      sendMessage("ANSWERS", answers);
+    postAnswers: (answers, autoAdvanceToNextStep, autoAdvanceDelay = 0) => {
+      const options = typeof autoAdvanceToNextStep === "boolean"
+        ? { autoAdvanceToNextStep, autoAdvanceDelay }
+        : undefined;
+      sendMessage("ANSWERS", answers, options);
     },
     /**
      * @deprecated Use Revisit.createTrrack so every traversal is reported automatically.

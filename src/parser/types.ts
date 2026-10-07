@@ -1185,6 +1185,12 @@ export interface ButtonsResponse extends BaseResponse {
   optionOrder?: 'fixed' | 'random';
   /** Set to true to hide keybinding indicators on buttons. Defaults to false when keymapping is active, else false. */
   hideKeyVisual?: boolean;
+  /** Controls whether the participant is automatically advanced to the next step as soon as this response has been answered. Defaults to false. If a required element besides this one is present on the page a warning is shown. */
+  autoAdvanceToNextStep?: boolean;
+  /** The delay, in milliseconds, to wait after this response is answered before automatically advancing to the next step. Only used when `autoAdvanceToNextStep` is `true`. Defaults to 0. */
+  autoAdvanceDelay?: number;
+  /** Controls whether the participant is allowed to change their response after they have selected an answer. Set to `false` to lock the response in as soon as it is provided, including when returning with Previous. Defaults to true. */
+  allowResponseChange?: boolean;
 }
 
 /**
@@ -1335,6 +1341,8 @@ export interface BaseIndividualComponent {
   nextButtonAlignment?: NextButtonAlignment;
   /** The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig. */
   nextButtonEnableTime?: number;
+  /** Whether to hide the next button during the initial answering flow. Defaults to true when auto-advance is enabled, otherwise false. A completed trial with auto-advance responses shows Next on return when no selection request is pending, even if explicitly hidden. */
+  nextButtonHidden?: boolean;
   /** The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig. */
   nextButtonDisableTime?: number;
   /** The time in milliseconds after which the participant is automatically advanced to the next component without saving answers from the current component. */
