@@ -88,8 +88,8 @@
   });
 
   window.Revisit = {
-    postAnswers: (answers, autoAdvanceToNextStep = false, autoAdvanceDelay = 0) => {
-      const options = autoAdvanceToNextStep === true
+    postAnswers: (answers, autoAdvanceToNextStep, autoAdvanceDelay = 0) => {
+      const options = typeof autoAdvanceToNextStep === "boolean"
         ? { autoAdvanceToNextStep, autoAdvanceDelay }
         : undefined;
       sendMessage("ANSWERS", answers, options);

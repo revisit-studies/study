@@ -35,8 +35,11 @@ export function useAutoAdvanceSelection(
   const [selection, setSelection] = useState<AutoAdvanceSelection>();
 
   useEffect(() => {
-    setSelection(undefined);
-  }, [identifier]);
+    setSelection((current) => {
+      const allowed = current?.responseId === undefined ? allowTrialRequests : responseIds.includes(current.responseId);
+      return enabled && current?.identifier === identifier && allowed ? current : undefined;
+    });
+  }, [enabled, identifier, responseIds, allowTrialRequests]);
 
   useEffect(() => {
     if (!enabled) {
@@ -49,11 +52,14 @@ export function useAutoAdvanceSelection(
         ? allowTrialRequests
         : allowedResponseIds.has(nextSelection.responseId);
       if (nextSelection.identifier === identifier && allowed) {
-        setSelection(nextSelection);
+        setSelection((current) => (!nextSelection.selected && current?.responseId !== nextSelection.responseId ? current : nextSelection));
       }
     });
     return () => unsubscribe();
   }, [enabled, identifier, responseIds, allowTrialRequests]);
 
-  return selection;
+  const applicable = selection?.responseId === undefined
+    ? allowTrialRequests
+    : responseIds.includes(selection.responseId);
+  return enabled && selection?.identifier === identifier && applicable ? selection : undefined;
 }

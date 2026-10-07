@@ -60,6 +60,119 @@
       "type": "questionnaire",
       "nextButtonHidden": false
     },
+    "keyboard-auto-advance": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "keyboard-choice",
+          "type": "buttons",
+          "prompt": "Auto-advance with keyboard selection",
+          "secondaryText": "Press A or B to select an answer. The study should continue after one second without pressing Next. You can change your selection during the delay.",
+          "options": [
+            { "label": "Option A", "value": "A", "key": "a" },
+            { "label": "Option B", "value": "B", "key": "b" }
+          ],
+          "autoAdvanceToNextStep": true,
+          "autoAdvanceDelay": 1000
+        }
+      ]
+    },
+    "conditional-auto-advance": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "conditional-instructions",
+          "type": "textOnly",
+          "prompt": "### Conditional auto-advance\n1. With Hide selected, Next should be visible.\n2. Select Show: the answer buttons should appear and Next should disappear.\n3. Select an answer, then select Hide within five seconds. Next should reappear, and the study should stay on this page even after five seconds.\n4. Select Show again and wait five seconds without answering. The cancelled request should not resume.\n5. To continue, either select a new answer and wait five seconds, or select Hide and click Next."
+        },
+        {
+          "id": "show-auto-advance",
+          "type": "radio",
+          "prompt": "Show the auto-advance answer buttons?",
+          "default": "hide",
+          "options": [
+            { "label": "Show", "value": "show" },
+            { "label": "Hide", "value": "hide" }
+          ]
+        },
+        {
+          "id": "conditional-choice",
+          "type": "buttons",
+          "prompt": "Select an answer to advance after five seconds",
+          "options": ["Option A", "Option B"],
+          "autoAdvanceToNextStep": true,
+          "autoAdvanceDelay": 5000,
+          "visibleIf": {
+            "responseId": "show-auto-advance",
+            "comparison": "equals",
+            "value": "show"
+          }
+        }
+      ]
+    },
+    "dont-know-auto-advance": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "dont-know-choice",
+          "type": "buttons",
+          "prompt": "Auto-advance with I don't know",
+          "secondaryText": "Check I don't know to start a five-second advance delay. Uncheck it before five seconds, then wait: the study should stay here. Check it again and leave it checked to continue. Next should stay hidden, and the answer buttons should be disabled only while the checkbox is checked.",
+          "options": ["Option A", "Option B"],
+          "withDontKnow": true,
+          "allowResponseChange": true,
+          "autoAdvanceToNextStep": true,
+          "autoAdvanceDelay": 5000
+        }
+      ]
+    },
+    "dont-know-auto-advance-locked": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "locked-dont-know-choice",
+          "type": "buttons",
+          "prompt": "Locking an I don't know answer",
+          "secondaryText": "Check I don't know. The checkbox and answer buttons should become disabled immediately, preventing changes. Next should stay hidden, and the study should advance after five seconds.",
+          "options": ["Option A", "Option B"],
+          "withDontKnow": true,
+          "allowResponseChange": false,
+          "autoAdvanceToNextStep": true,
+          "autoAdvanceDelay": 5000
+        }
+      ]
+    },
+    "auto-advance-hidden-next": {
+      "type": "questionnaire",
+      "nextButtonHidden": true,
+      "response": [
+        {
+          "id": "return-choice",
+          "type": "buttons",
+          "prompt": "Auto-advance with Next always hidden",
+          "secondaryText": "Select an option or press A or B to continue. On the following page, use Previous to return here. Then select an option again to go forward. Next should remain hidden, and Enter alone should not advance.",
+          "options": [
+            { "label": "Option A", "value": "A", "key": "a" },
+            { "label": "Option B", "value": "B", "key": "b" }
+          ],
+          "autoAdvanceToNextStep": true,
+          "autoAdvanceDelay": 1000,
+          "allowResponseChange": false
+        }
+      ]
+    },
+    "return-to-hidden-next": {
+      "type": "questionnaire",
+      "previousButton": true,
+      "nextOnEnter": true,
+      "response": [
+        {
+          "id": "return-instructions",
+          "type": "textOnly",
+          "prompt": "Use Previous to return to the auto-advance page and check that you can select an answer again while Next stays hidden. After returning to this page, use Next or Enter to continue the study."
+        }
+      ]
+    },
     "warning": {
       "response": [
         {
@@ -118,6 +231,12 @@
     "order": "fixed",
     "components": [
       "auto-advance",
+      "keyboard-auto-advance",
+      "conditional-auto-advance",
+      "dont-know-auto-advance",
+      "dont-know-auto-advance-locked",
+      "auto-advance-hidden-next",
+      "return-to-hidden-next",
       "warning",
       "block-change",
       "html-auto-advance"

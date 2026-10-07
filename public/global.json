@@ -355,6 +355,7 @@
       "test": true
     },
     "test-auto-advance": {
+      "tab": "Tests",
       "path": "test-auto-advance/config.json",
       "test": true
     },

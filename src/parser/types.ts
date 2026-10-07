@@ -1189,7 +1189,7 @@ export interface ButtonsResponse extends BaseResponse {
   autoAdvanceToNextStep?: boolean;
   /** The delay, in milliseconds, to wait after this response is answered before automatically advancing to the next step. Only used when `autoAdvanceToNextStep` is `true`. Defaults to 0. */
   autoAdvanceDelay?: number;
-  /** Controls whether the participant is allowed to change their response after they have selected an answer. Set to `false` to lock the response in as soon as it is provided. Defaults to true. */
+  /** Controls whether the participant is allowed to change their response after they have selected an answer. Set to `false` to lock the response in as soon as it is provided, including when returning with Previous. Defaults to true. */
   allowResponseChange?: boolean;
 }
 
@@ -1341,7 +1341,7 @@ export interface BaseIndividualComponent {
   nextButtonAlignment?: NextButtonAlignment;
   /** The time in milliseconds to wait before the next button is enabled. If present, will override the next button enable time setting in the uiConfig. */
   nextButtonEnableTime?: number;
-  /** Whether to hide the next button. Defaults to false, if autoAdvance is enabled it will default to true. */
+  /** Whether to hide the next button during the initial answering flow. Defaults to true when auto-advance is enabled, otherwise false. A completed trial with auto-advance responses shows Next on return when no selection request is pending, even if explicitly hidden. */
   nextButtonHidden?: boolean;
   /** The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig. */
   nextButtonDisableTime?: number;

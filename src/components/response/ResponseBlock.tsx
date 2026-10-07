@@ -3,11 +3,11 @@ import {
 } from '@mantine/core';
 
 import React, {
-  useEffect, useMemo, useCallback, useRef,
+  useEffect, useLayoutEffect, useMemo, useCallback, useRef,
 } from 'react';
 import isEqual from 'lodash.isequal';
 import { IconAlertTriangle } from '@tabler/icons-react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import { Registry } from '@trrack/core';
 import {
   IndividualComponent,
@@ -99,11 +99,13 @@ export function ResponseBlock({
 
   const currentStep = useCurrentStep();
   const identifier = useCurrentIdentifier();
+  const [searchParams] = useSearchParams();
   const isAnalysis = useIsAnalysis();
   const currentProvenance = useStoreSelector((state) => state.analysisProvState[location]) as FormElementProvenance | undefined;
 
   const storedAnswer = useMemo(() => currentProvenance?.form ?? status?.answer, [currentProvenance, status]);
   const storedAnswerData = useStoredAnswer();
+  const answerFinalized = !!status && status.endTime !== -1;
   const formOrders: Record<string, string[]> = useMemo(() => storedAnswerData?.formOrder || {}, [storedAnswerData]);
 
   const navigate = useNavigate();
@@ -656,7 +658,8 @@ export function ResponseBlock({
     storeDispatch(setCheckAnswerResult({ identifier, ...savedCheckAnswer }));
   }, [currentCheckAnswer, identifier, isAnalysis, savedCheckAnswer, setCheckAnswerResult, storeDispatch]);
 
-  useEffect(() => {
+  // Persist grading before child navigation effects can finalize the same trial.
+  useLayoutEffect(() => {
     const storedAnswerForIdentifier = storeAnswers[identifier];
     // Dynamic block navigation briefly uses a loading identifier. Never persist
     // against it, even if a malformed loading record was restored from storage.
@@ -719,9 +722,10 @@ export function ResponseBlock({
   }, [bypassValidationForFailedTraining, goToNextStep, hasResponseIssues, hasStimulusIssue, revealResponseErrors, revealStimulusErrors]);
 
   const autoAdvanceResponses = useMemo(
-    () => allResponsesWithDefaults.filter((response) => !response.hidden && response.type === 'buttons' && response.autoAdvanceToNextStep),
-    [allResponsesWithDefaults],
+    () => applicableResponses.filter((response) => !response.hidden && response.type === 'buttons' && response.autoAdvanceToNextStep),
+    [applicableResponses],
   );
+  const hasUncapturedAutoAdvanceResponse = autoAdvanceResponses.some((response) => !(response.paramCapture && searchParams.get(response.paramCapture)));
   const allowTrialRequests = config.type === 'website';
   const autoAdvanceOwner = showBtnsInLocation && (autoAdvanceResponses.length > 0 || allowTrialRequests) && !isAnalysis;
   const autoAdvanceResponseIds = useMemo(() => autoAdvanceResponses.map((response) => response.id), [autoAdvanceResponses]);
@@ -761,7 +765,7 @@ export function ResponseBlock({
                       {(isDelayedDisabled: boolean) => (
                         <ResponseSwitcher
                           storedAnswer={storedAnswer}
-                          answerFinalized={!!status && status.endTime !== -1}
+                          answerFinalized={answerFinalized}
                           form={{
                             ...answerValidator.getInputProps(response.id),
                             onChange: (value: unknown, source: 'keyboard' | 'click' = 'click') => trackInputChange(response.id, value, source),
@@ -847,6 +851,8 @@ export function ResponseBlock({
           label={nextButtonText}
           config={config}
           location={location}
+          showNextOnReturn={answerFinalized && autoAdvanceResponses.length > 0 && !autoAdvanceSelection?.selected}
+          responseAutoAdvances={hasUncapturedAutoAdvanceResponse && !(enableNextButton && !autoAdvanceSelection?.selected)}
           autoAdvanceRequest={autoAdvanceSelection}
           autoAdvanceEligible={!hasStimulusIssue && (bypassValidationForFailedTraining || !hasResponseIssues)}
           onNext={handleNextClick}

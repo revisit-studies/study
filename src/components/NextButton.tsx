@@ -36,6 +36,8 @@ type Props = {
   onNext: () => boolean;
   autoAdvanceRequest?: AutoAdvanceSelection;
   autoAdvanceEligible?: boolean;
+  responseAutoAdvances?: boolean;
+  showNextOnReturn?: boolean;
 };
 
 export function NextButton({
@@ -48,6 +50,8 @@ export function NextButton({
   onNext,
   autoAdvanceRequest,
   autoAdvanceEligible = true,
+  showNextOnReturn = false,
+  responseAutoAdvances = config?.response?.some((response) => response.type === 'buttons' && response.autoAdvanceToNextStep && !response.hidden),
 }: Props) {
   const { isNextDisabled, goToNextStep } = useNextStep(config?.response, config?.correctAnswer);
   const studyConfig = useStudyConfig();
@@ -59,14 +63,14 @@ export function NextButton({
   const nextButtonAutoAdvanceTime = config?.nextButtonAutoAdvanceTime;
   const nextButtonAutoAdvanceWarningTime = config?.nextButtonAutoAdvanceWarningTime ?? DEFAULT_AUTO_ADVANCE_WARNING_TIME;
   const nextButtonAutoAdvanceWarningMessage = config?.nextButtonAutoAdvanceWarningMessage ?? DEFAULT_AUTO_ADVANCE_WARNING_MESSAGE;
-  const responseAutoAdvances = config?.response?.some((response) => response.type === 'buttons' && response.autoAdvanceToNextStep && !response.hidden);
-  const nextButtonHidden = config?.nextButtonHidden ?? (
+  const nextButtonHidden = !showNextOnReturn && (config?.nextButtonHidden ?? (
     nextButtonAutoAdvanceTime !== undefined
     || responseAutoAdvances
     || false
-  );
+  ));
 
   const [timer, setTimer] = useState<number | undefined>(undefined);
+  const trialStartTime = useRef(Date.now());
   const deadlineAutoAdvanceTriggered = useRef(false);
   const navigationStarted = useRef(false);
   const attemptedRequest = useRef<number | undefined>(undefined);
@@ -87,6 +91,7 @@ export function NextButton({
     deadlineAutoAdvanceTriggered.current = false;
     navigationStarted.current = false;
     const start = Date.now();
+    trialStartTime.current = start;
     setTimer(0);
     const interval = setInterval(() => {
       setTimer(Date.now() - start);
@@ -156,11 +161,17 @@ export function NextButton({
       return;
     }
 
+    const elapsed = Date.now() - trialStartTime.current;
+    const pastDisableTime = nextButtonDisableTime && elapsed >= nextButtonDisableTime;
+    if (pastDisableTime || elapsed < nextButtonEnableTime) {
+      return;
+    }
+
     attemptedRequest.current = readyAutoAdvanceRequest;
     if (latestOnNext.current()) {
       navigationStarted.current = true;
     }
-  }, [autoAdvanceEligible, autoAdvanceRequest, identifier, nextButtonDisabled, readyAutoAdvanceRequest]);
+  }, [autoAdvanceEligible, autoAdvanceRequest, identifier, nextButtonDisabled, nextButtonDisableTime, nextButtonEnableTime, readyAutoAdvanceRequest, studyConfig.uiConfig.timeoutReject]);
 
   const autoAdvanceWarning = useMemo(() => getAutoAdvanceWarning({
     timer,

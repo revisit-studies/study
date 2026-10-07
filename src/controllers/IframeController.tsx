@@ -169,7 +169,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
               status: true,
               values: data.message,
             }));
-            if (e.source === ref.current?.contentWindow) {
+            if (e.source === ref.current?.contentWindow && typeof data.options?.autoAdvanceToNextStep === 'boolean') {
               const delay = data.options?.autoAdvanceDelay;
               publishAutoAdvanceSelection({
                 identifier,

@@ -1275,12 +1275,9 @@ describe('Component auto-advance config parsing', () => {
     expect(hasAutoAdvanceFieldError).toBe(false);
   });
 
-  test.each([
-    ['buttons', true],
-    ['buttons', false],
-  ])(
-    'validates %s response with autoAdvanceToNextStep set to %s without errors',
-    async () => {
+  test.each([true, false])(
+    'validates buttons response with autoAdvanceToNextStep set to %s without errors',
+    async (autoAdvanceToNextStep) => {
       const studyConfig = {
         $schema: '',
         studyMetadata: {
@@ -1308,7 +1305,7 @@ describe('Component auto-advance config parsing', () => {
                 type: 'buttons',
                 prompt: 'Select an option',
                 options: ['Option 1', 'Option 2'],
-                autoAdvanceToNextStep: true,
+                autoAdvanceToNextStep,
               },
             ],
           },

@@ -145,6 +145,27 @@ describe('NextButton', () => {
     expect(html).toContain('Next');
   });
 
+  test.each([false, true])('explicit hiding applies until a return requires manual continuation (showNextOnReturn=%s)', (showNextOnReturn) => {
+    const onNext = vi.fn(() => true);
+    render(
+      <NextButton
+        config={{ type: 'questionnaire', response: [], nextButtonHidden: true }}
+        showNextOnReturn={showNextOnReturn}
+        checkAnswer={null}
+        onNext={onNext}
+      />,
+    );
+    const next = screen.queryByRole('button', { name: 'Next' });
+    if (showNextOnReturn) {
+      expect(next).not.toBeNull();
+      fireEvent.click(next!);
+      expect(onNext).toHaveBeenCalledTimes(1);
+    } else {
+      expect(next).toBeNull();
+      expect(onNext).not.toHaveBeenCalled();
+    }
+  });
+
   test('renders button with custom label', () => {
     const html = renderToStaticMarkup(<NextButton label="Continue" checkAnswer={null} onNext={vi.fn()} />);
     expect(html).toContain('Continue');
@@ -497,8 +518,58 @@ describe('NextButton', () => {
       );
     });
 
-    await act(async () => { vi.advanceTimersByTime(500); });
+    await act(async () => { vi.advanceTimersByTime(200); });
+    await act(async () => { vi.advanceTimersByTime(50); });
     expect(onNext).not.toHaveBeenCalled();
+  });
+
+  test.each([true, false])('response auto-advance succeeds just before the disable cutoff (timeoutReject=%s)', async (timeoutReject) => {
+    vi.useFakeTimers();
+    mockStudyConfig = {
+      uiConfig: { ...mockStudyConfig.uiConfig, nextButtonDisableTime: 200, timeoutReject },
+    };
+    const onNext = vi.fn(() => true);
+    render(
+      <NextButton
+        checkAnswer={null}
+        onNext={onNext}
+        autoAdvanceRequest={{
+          eventId: 24, identifier: 'intro_0', responseId: 'choice', delay: 199, selected: true,
+        }}
+      />,
+    );
+    await act(async () => { vi.advanceTimersByTime(198); });
+    expect(onNext).not.toHaveBeenCalled();
+    await act(async () => { vi.advanceTimersByTime(1); });
+    expect(onNext).toHaveBeenCalledTimes(1);
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  test.each([true, false])('response auto-advance respects the exact disable cutoff (timeoutReject=%s)', async (timeoutReject) => {
+    vi.useFakeTimers();
+    mockStudyConfig = {
+      uiConfig: { ...mockStudyConfig.uiConfig, nextButtonDisableTime: 200, timeoutReject },
+    };
+    const onNext = vi.fn(() => true);
+    render(
+      <NextButton
+        checkAnswer={null}
+        onNext={onNext}
+        autoAdvanceRequest={{
+          eventId: 23, identifier: 'intro_0', responseId: 'choice', delay: 200, selected: true,
+        }}
+      />,
+    );
+    await act(async () => { vi.advanceTimersByTime(199); });
+    expect(onNext).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalled();
+    await act(async () => { vi.advanceTimersByTime(1); });
+    expect(onNext).not.toHaveBeenCalled();
+    if (timeoutReject) {
+      expect(mockNavigate).toHaveBeenCalledExactlyOnceWith(`./../__timedOut${window.location.search}`);
+    } else {
+      expect(mockNavigate).not.toHaveBeenCalled();
+    }
   });
 
   test('cancels a pending response auto-advance when the answer is cleared', async () => {

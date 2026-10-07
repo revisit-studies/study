@@ -89,12 +89,11 @@ describe('IframeController', () => {
   });
 
   test.each([
-    { options: undefined, selected: false, delay: 0 },
+    { options: { autoAdvanceToNextStep: false }, selected: false, delay: 0 },
     { options: { autoAdvanceToNextStep: true, autoAdvanceDelay: 300 }, selected: true, delay: 300 },
     { options: { autoAdvanceToNextStep: true }, selected: true, delay: 0 },
     { options: { autoAdvanceToNextStep: true, autoAdvanceDelay: -1 }, selected: true, delay: 0 },
     { options: { autoAdvanceToNextStep: true, autoAdvanceDelay: Infinity }, selected: true, delay: 0 },
-    { options: { autoAdvanceToNextStep: 'true', autoAdvanceDelay: '300' }, selected: false, delay: 0 },
   ])('publishes HTML submission or cancellation after updating answers: $options', async ({ options, selected, delay }) => {
     const { container } = render(<IframeController currentConfig={{ ...websiteConfig, path: 'study/task.html' }} answers={{}} />);
     await waitFor(() => expect(container.querySelector('iframe')).not.toBeNull());
@@ -115,6 +114,29 @@ describe('IframeController', () => {
         },
       }));
       expect(listener).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ identifier: 'countDots_0', selected, delay }));
+    } finally {
+      unsubscribe();
+    }
+  });
+
+  test.each([undefined, {}, { autoAdvanceToNextStep: 'true' }])('updates legacy answers without changing navigation: %s', async (options) => {
+    const { container } = render(<IframeController currentConfig={{ ...websiteConfig, path: 'study/task.html' }} answers={{}} />);
+    await waitFor(() => expect(container.querySelector('iframe')).not.toBeNull());
+    const iframe = container.querySelector('iframe')!;
+    const listener = vi.fn();
+    const unsubscribe = subscribeToAutoAdvanceSelections(listener);
+    try {
+      window.dispatchEvent(new MessageEvent('message', {
+        source: iframe.contentWindow,
+        data: {
+          iframeId: new URL(iframe.src).searchParams.get('id'),
+          type: '@REVISIT_COMMS/ANSWERS',
+          message: { color: 'blue' },
+          options,
+        },
+      }));
+      expect(mockSetReactiveAnswers).toHaveBeenCalledWith({ color: 'blue' });
+      expect(listener).not.toHaveBeenCalled();
     } finally {
       unsubscribe();
     }

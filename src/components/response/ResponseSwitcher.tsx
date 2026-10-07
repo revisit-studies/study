@@ -1,7 +1,9 @@
 import { Box, Checkbox, Divider } from '@mantine/core';
 import { GetInputPropsReturnType } from '@mantine/form/lib/types';
 import { useSearchParams } from 'react-router';
-import { useEffect, useMemo, useState } from 'react';
+import {
+  useCallback, useEffect, useMemo, useState,
+} from 'react';
 import {
   CustomResponse, IndividualComponent, JsonValue, MatrixResponse, Response, SliderResponse, StoredAnswer,
 } from '../../parser/types';
@@ -92,6 +94,23 @@ export function ResponseSwitcher({
   const usesStandaloneDontKnow = usesStandaloneDontKnowField(response);
 
   const finalStoredAnswer = isAnalysis || answerFinalized || completed ? storedAnswer : undefined;
+  const restoredResponseLocked = 'allowResponseChange' in response && response.allowResponseChange === false
+    && isResponseChangeLocked(
+      !!answerFinalized,
+      (usesStandaloneDontKnow && finalStoredAnswer?.[`${response.id}-dontKnow`]) || finalStoredAnswer?.[response.id],
+    );
+
+  const selectAnswer = useCallback((selected: boolean) => {
+    setUserSelected(selected);
+    if (response.type === 'buttons' && response.autoAdvanceToNextStep) {
+      publishAutoAdvanceSelection({
+        identifier,
+        responseId: response.id,
+        delay: response.autoAdvanceDelay ?? 0,
+        selected,
+      });
+    }
+  }, [identifier, response]);
 
   const wrappedForm = useMemo(() => {
     if (!form || typeof form.onChange !== 'function') {
@@ -100,28 +119,19 @@ export function ResponseSwitcher({
 
     return {
       ...form,
-      onChange: (val: unknown) => {
-        const hasSelectedAnswer = hasAnswerValue(val);
-        setUserSelected(hasSelectedAnswer);
-        if (response.type === 'buttons' && response.autoAdvanceToNextStep) {
-          publishAutoAdvanceSelection({
-            identifier,
-            responseId: response.id,
-            delay: response.autoAdvanceDelay ?? 0,
-            selected: hasSelectedAnswer,
-          });
-        }
-        form.onChange(val);
+      onChange: (val: unknown, source?: 'keyboard' | 'click') => {
+        selectAnswer(hasAnswerValue(val));
+        form.onChange(val, source);
       },
     };
-  }, [form, identifier, response]);
+  }, [form, selectAnswer]);
 
   // Don't update if we're in analysis mode
   const ans = useMemo(
-    () => (isAnalysis || (Object.keys(finalStoredAnswer || {}).length > 0 && !nextConfig?.previousButton) || completed
+    () => (isAnalysis || restoredResponseLocked || (Object.keys(finalStoredAnswer || {}).length > 0 && !nextConfig?.previousButton) || completed
       ? { value: finalStoredAnswer?.[response.id], readOnly: true }
       : wrappedForm) || { value: undefined },
-    [isAnalysis, finalStoredAnswer, response.id, wrappedForm, nextConfig?.previousButton, completed],
+    [isAnalysis, restoredResponseLocked, finalStoredAnswer, response.id, wrappedForm, nextConfig?.previousButton, completed],
   );
   const dontKnowValue = usesStandaloneDontKnow
     ? ((Object.keys(finalStoredAnswer || {}).length > 0 ? { checked: finalStoredAnswer![`${response.id}-dontKnow`] } : dontKnowCheckbox) || { checked: undefined })
@@ -177,11 +187,11 @@ export function ResponseSwitcher({
     }
 
     if (response.allowResponseChange === false) {
-      return isResponseChangeLocked(userSelected, ans.value);
+      return restoredResponseLocked || isResponseChangeLocked(userSelected, dontKnowChecked || ans.value);
     }
 
     return false;
-  }, [response, ans.value, userSelected]);
+  }, [response, restoredResponseLocked, ans.value, dontKnowChecked, userSelected]);
 
   const isStateDisabled = useMemo(() => {
     // Always disable if participant is completed
@@ -503,7 +513,12 @@ export function ResponseSwitcher({
         classNames={{ input: classes.fixDisabled, label: classes.fixDisabledLabel, icon: classes.fixDisabledIcon }}
         {...dontKnowCheckbox}
         checked={dontKnowValue.checked}
-        onChange={(event) => { dontKnowCheckbox?.onChange(event.currentTarget.checked); wrappedForm.onChange(fieldInitialValue); }}
+        onChange={(event) => {
+          const { checked } = event.currentTarget;
+          dontKnowCheckbox?.onChange(checked);
+          form.onChange(fieldInitialValue);
+          selectAnswer(checked);
+        }}
       />
       )}
       {(response.type === 'divider' || responseDividers) && <Divider mt="xl" mb="xs" />}
