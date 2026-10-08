@@ -1,13 +1,7 @@
 # {{flag}} {{country}}
 
-{{#ifEquals (lookupAnswersRel -1 "capital-answer") "Paris"}}
-
-> _Nice — you answered "Paris" (the capital of France) on the previous trial!_
-
----
-
-{{/ifEquals}}
-
 **Hint for this task:** {{country}} is well known for {{funFact}}.
+
+_Note: This is a markdown file where the variables `\{{country}}` and `\{{funFact}}` are replaced by **"{{country}}"** and **"{{funFact}},"** respectively._
 
 ---
