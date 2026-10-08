@@ -161,6 +161,7 @@ export function NextButton({
           className={classes.root}
           disabled={nextButtonDisabled}
           onClick={() => onNext()}
+          fw={700}
           px={location === 'sidebar' && checkAnswer ? 8 : undefined}
           aria-label={label}
           rightSection={nextOnEnter && !onCheckAnswer ? (

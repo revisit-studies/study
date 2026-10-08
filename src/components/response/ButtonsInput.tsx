@@ -171,7 +171,7 @@ export function ButtonsInput({
                     gap="xs"
                     style={{ flex: 1, padding: '10px 12px' }}
                   >
-                    <OptionLabel label={radio.label} infoText={radio.infoText} button />
+                    <OptionLabel label={radio.label} infoText={radio.infoText} button fw={700} />
                   </Flex>
 
                   {hasKeyVisual && (
