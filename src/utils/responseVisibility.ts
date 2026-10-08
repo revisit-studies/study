@@ -52,7 +52,11 @@ export function resolveResponseVisibility(
             correctAnswer.answer,
             correctAnswer.acceptableLow,
             correctAnswer.acceptableHigh,
-            { ignoreArrayOrder: shouldIgnoreArrayOrder(controller) },
+            {
+              ignoreArrayOrder: shouldIgnoreArrayOrder(controller),
+              acceptableAnswers: correctAnswer.acceptableAnswers,
+              caseSensitive: correctAnswer.caseSensitive,
+            },
           ) === condition.value;
         } else {
           visible = compareResponseValues(value, condition.value, condition.comparison, {

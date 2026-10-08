@@ -21,7 +21,11 @@ export function componentAnswersAreCorrect(
         correctAnswer.answer,
         correctAnswer.acceptableLow,
         correctAnswer.acceptableHigh,
-        { ignoreArrayOrder: shouldIgnoreArrayOrder(response) },
+        {
+          ignoreArrayOrder: shouldIgnoreArrayOrder(response),
+          acceptableAnswers: correctAnswer.acceptableAnswers,
+          caseSensitive: correctAnswer.caseSensitive,
+        },
       )
     ) {
       allCorrect = false;

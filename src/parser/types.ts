@@ -298,11 +298,11 @@ export interface UIConfig {
   previousButtonText?: string;
   /** Whether to redirect a timed out participant to a rejection page. This only works for components where the `nextButtonDisableTime` field is set. */
   timeoutReject?: boolean;
-  /** Controls whether the component should provide feedback to the participant, such as in a training trial. Defaults to false. */
+  /** Enable answer checking and feedback. Defaults to false, but answer-level feedback automatically enables it. */
   provideFeedback?: boolean;
-  /** The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.  */
+  /** The number of answer-checking attempts allowed for the component. Defaults to 2. Check Answer grades responses before Next can continue. With hideCheckAnswerButton, Next performs the check first. Incorrect answers block continuing unless allowFailedTraining is true and attempts are exhausted. The final failed attempt reveals accepted answers. Set -1 for unlimited attempts, requiring a correct answer and hiding the reveal. */
   trainingAttempts?: number;
-  /** Controls whether the component should allow failed training. Defaults to true. */
+  /** Allow continuing with incorrect answers after attempts are exhausted. Defaults to false. */
   allowFailedTraining?: boolean;
   /** Whether or not we want to utilize think-aloud features. If true, will record audio on all components unless deactivated on individual components. Defaults to false. */
   recordAudio?: boolean;
@@ -849,6 +849,8 @@ export interface MatrixRadioResponse extends BaseMatrixResponse {
  */
 export interface MatrixCheckboxResponse extends BaseMatrixResponse {
   type: 'matrix-checkbox';
+  /** Where per-row correctness feedback is displayed. Defaults to the right of the matrix. */
+  feedbackPosition?: 'left' | 'right';
   /** The default value of the response by question key. Provide an object where each key is a question value and each value is an array of selected answer option values. */
   default?: Record<string, string[]>;
   /** The minimum amount of answers given per row for the matrix. */
@@ -1248,10 +1250,22 @@ export interface DividerResponse extends Omit<BaseResponse, 'prompt' | 'infoText
 
 export type Response = NumericalResponse | DateResponse | TimeResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | RankingResponse | ReactiveResponse | CustomResponse | MatrixResponse | ButtonsResponse | TextOnlyResponse | DividerResponse;
 
+/** Custom training messages. Arrays select a message for each answer-checking attempt (first entry for attempt 1), repeating the last entry for later attempts. Tokens: {attemptsUsed} and {attemptsLeft}. */
+export interface ResponseFeedback {
+  /** Message when this response is correct. */
+  correctText?: string | string[];
+  /** Message when this response is incorrect. Also used after the final attempt when exhaustedText is absent. */
+  incorrectText?: string | string[];
+  /** Message when this response is incorrect and all attempts have been used. */
+  exhaustedText?: string | string[];
+  /** Progressive hints shown alongside incorrect feedback while attempts remain. One per trial-wide answer-checking attempt, repeating the final hint for later attempts. */
+  hints?: string[];
+}
+
 /**
  * The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks or if skip logic is required based on the answer.
  *
- * Answers are used to defined correct answers for a task. These are generally used in training tasks or if skip logic is required based on the answer. The answer field is used to define the correct answer to the question. The acceptableLow and acceptableHigh fields are used to define a range of acceptable answers (these are currently only used for training). For example, if the correct answer is 5, and the acceptableLow is 4 and the acceptableHigh is 6, then any answer between 4 and 6 will be considered correct.
+ * Answers are used to defined correct answers for a task. These are generally used in training tasks or if skip logic is required based on the answer. The answer field is used to define the correct answer to the question. The acceptableLow and acceptableHigh fields are used to define a range of acceptable answers (inclusive, also used for skip logic and analysis). For example, if the correct answer is 5, and the acceptableLow is 4 and the acceptableHigh is 6, then any answer between 4 and 6 will be considered correct.
  *
  * Here's an example of how to use the Answer interface to define the correct answer to a question:
  *
@@ -1279,13 +1293,20 @@ export type Response = NumericalResponse | DateResponse | TimeResponse | ShortTe
 export interface Answer {
   /** The id of the answer. This is used to identify the answer in the data file. */
   id: string;
-  /** The correct answer to the question. */
+  /** The exact or preferred answer. Optional when acceptableAnswers or a numeric bound defines accepted answers. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  answer: any;
+  answer?: any;
   /** The acceptable low value for the answer. This is used to define a range of acceptable answers. */
   acceptableLow?: number;
   /** The acceptable high value for the answer. This is used to define a range of acceptable answers. */
   acceptableHigh?: number;
+  /** Accepted complete answers, usable on their own or in addition to answer. Each entry is a complete value, such as a checkbox selection array or a ranking value-to-position object. */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  acceptableAnswers?: any[];
+  /** Whether textual answers must match letter case. Defaults to true. */
+  caseSensitive?: boolean;
+  /** Customize correct and incorrect feedback and hints for this response. */
+  feedback?: ResponseFeedback;
 }
 
 /**
@@ -1347,11 +1368,13 @@ export interface BaseIndividualComponent {
   previousButton?: boolean;
   /** The text that is displayed on the previous button. If present, will override the previous button text setting in the uiConfig. */
   previousButtonText?: string;
-  /** Controls whether the component should provide feedback to the participant, such as in a training trial. If present, will override the provide feedback setting in the uiConfig. */
+  /** Enable answer checking and feedback. Overrides uiConfig.provideFeedback. Answer-level feedback enables it even when this flag is omitted or false. */
   provideFeedback?: boolean;
+  /** Hide the Check Answer button and grade answers on Next instead. Defaults to false. Feedback must be enabled by provideFeedback or answer-level feedback. */
+  hideCheckAnswerButton?: boolean;
   /** The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig. */
   trainingAttempts?: number;
-  /** Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig. */
+  /** Allow continuing with incorrect answers after attempts are exhausted. Overrides uiConfig.allowFailedTraining. Defaults to false. */
   allowFailedTraining?: boolean;
   /** Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig. */
   recordAudio?: boolean;

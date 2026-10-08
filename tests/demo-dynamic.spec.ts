@@ -63,7 +63,7 @@ test('Test dynamic block', async ({ page }) => {
   await waitForStudyEndMessage(page);
 });
 
-test('nextOnEnter shows Check Answer feedback once in the correct response location', async ({ page }) => {
+test('nextOnEnter shows feedback once in the correct response location', async ({ page }) => {
   await resetClientStudyState(page);
   await openStudyFromLanding(page, 'Demo Studies', 'Dynamic Blocks');
 
@@ -82,9 +82,14 @@ test('nextOnEnter shows Check Answer feedback once in the correct response locat
   const choice = (leftValue === rightValue) ? 'Same' : (leftValue > rightValue ? 'Left' : 'Right');
 
   await page.getByRole('radio', { name: choice }).click();
+  const trialUrl = page.url();
   await page.keyboard.press('Enter');
 
   const feedback = page.getByText('You have answered the question correctly.');
   await expect(feedback).toHaveCount(1);
   await expect(page.locator('.responseBlock-belowStimulus').getByText('You have answered the question correctly.')).toHaveCount(1);
+  expect(page.url()).toBe(trialUrl);
+  await expect(page.getByRole('button', { name: 'Check Answer', exact: true })).toBeVisible();
+  await page.keyboard.press('Enter');
+  await expect.poll(() => page.url()).not.toBe(trialUrl);
 });

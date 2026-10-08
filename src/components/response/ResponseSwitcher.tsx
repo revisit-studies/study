@@ -42,6 +42,7 @@ import { CustomResponseField } from '../../store/types';
 import { compileTemplate } from '../../utils/handlebars';
 import { useTemplateAnswerContext } from '../../store/hooks/useTemplateAnswerContext';
 import { OptionTextTemplateContext } from './OptionLabel';
+import { AnswerStatus } from '../../utils/correctAnswer';
 
 export function ResponseSwitcher({
   response,
@@ -57,6 +58,7 @@ export function ResponseSwitcher({
   field,
   customError,
   errors,
+  matrixRowFeedback,
 }: {
   response: Response;
   form: GetInputPropsReturnType;
@@ -71,6 +73,7 @@ export function ResponseSwitcher({
   field?: CustomResponseField;
   customError?: string | null;
   errors?: boolean;
+  matrixRowFeedback?: Record<string, AnswerStatus>;
 }) {
   const studyConfig = useStudyConfig();
   const isAnalysis = useIsAnalysis();
@@ -418,6 +421,8 @@ export function ResponseSwitcher({
         error={responseError}
         index={index}
         enumerateQuestions={enumerateQuestions}
+        rowFeedback={matrixRowFeedback}
+        rowFeedbackPosition={response.type === 'matrix-checkbox' ? response.feedbackPosition ?? 'right' : 'right'}
       />
       )}
       {response.type === 'buttons' && (

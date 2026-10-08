@@ -48,8 +48,8 @@ vi.mock('@mantine/core', () => {
   const Div = forwardRef<HTMLDivElement, { children?: ReactNode; style?: CSSProperties }>(function Div({ children, style }, ref) { // eslint-disable-line prefer-arrow-callback
     return <div ref={ref} style={style}>{children}</div>;
   });
-  function Span({ children }: { children?: ReactNode }) {
-    return <span>{children}</span>;
+  function Span({ children, size }: { children?: ReactNode; size?: string }) {
+    return <span data-size={size}>{children}</span>;
   }
   const Input = Object.assign(
     ({ children }: { children?: ReactNode }) => <div>{children}</div>,
@@ -125,8 +125,8 @@ vi.mock('@mantine/core', () => {
     Tooltip: ({ children, label }: { children?: ReactNode; label?: ReactNode }) => (
       <div title={String(label)}>{children}</div>
     ),
-    Alert: ({ children, title }: { children?: ReactNode; title?: ReactNode }) => (
-      <div data-alert>
+    Alert: ({ children, title, style }: { children?: ReactNode; title?: ReactNode; style?: CSSProperties }) => (
+      <div data-alert style={style}>
         <div data-title>{title}</div>
         {children}
       </div>
@@ -772,7 +772,7 @@ describe('ButtonsInput', () => {
           index={1}
           enumerateQuestions={false}
         />
-        <NextButton checkAnswer={null} onNext={onNext} />
+        <NextButton onNext={onNext} />
       </>,
     );
 
@@ -1281,6 +1281,68 @@ describe('FeedbackAlert', () => {
       />,
     );
     expect(html).not.toContain('review the help text');
+    expect(html).not.toContain('<br/>');
+  });
+
+  test.each([true, false])('uses explicit retry state %s for custom feedback', (retryAllowed) => {
+    const html = renderToStaticMarkup(
+      <FeedbackAlert
+        response={baseResponse}
+        correctAnswer={undefined}
+        alertConfig={{ q1: { ...baseAlertConfig.q1, message: 'Custom hint', retryAllowed } }}
+        identifier="trial1_0"
+        attemptsUsed={1}
+        trainingAttempts={2}
+      />,
+    );
+    expect(html.includes('review the help text')).toBe(retryAllowed);
+  });
+
+  test('hides the help text link when individual feedback is provided', () => {
+    const html = renderToStaticMarkup(
+      <FeedbackAlert
+        response={baseResponse}
+        correctAnswer={undefined}
+        alertConfig={{ q1: { ...baseAlertConfig.q1, retryAllowed: true, showHelpTextLink: false } }}
+        identifier="trial1_0"
+        attemptsUsed={1}
+        trainingAttempts={3}
+      />,
+    );
+    expect(html).not.toContain('review the help text');
+  });
+
+  test('renders an answer hint alongside its incorrect feedback', () => {
+    const html = renderToStaticMarkup(
+      <FeedbackAlert
+        response={baseResponse}
+        correctAnswer={undefined}
+        alertConfig={{ q1: { ...baseAlertConfig.q1, message: 'Not quite.', hint: 'Think about two groups of two.' } }}
+        identifier="trial1_0"
+        attemptsUsed={1}
+        trainingAttempts={3}
+      />,
+    );
+    expect(html).toContain('Not quite.');
+    expect(html).toContain('Think about two groups of two.');
+    expect(html.indexOf('data-size="md"')).toBeLessThan(html.indexOf('data-size="sm"'));
+    expect(html).toContain('data-size="md"');
+    expect(html).toContain('data-size="sm"');
+  });
+
+  test('sizes custom feedback alert vertically without changing its width', () => {
+    const html = renderToStaticMarkup(
+      <FeedbackAlert
+        response={baseResponse}
+        correctAnswer={undefined}
+        alertConfig={{ q1: { ...baseAlertConfig.q1, fitHeight: true } }}
+        identifier="trial1_0"
+        attemptsUsed={1}
+        trainingAttempts={3}
+      />,
+    );
+    expect(html).toContain('height:fit-content');
+    expect(html).not.toContain('width:fit-content');
   });
 
   test('shows correct answer when attemptsUsed >= trainingAttempts and correctAnswer provided', () => {

@@ -4,7 +4,7 @@ import {
 } from '../../parser/types';
 import { makeStoredAnswer } from '../../tests/utils';
 import {
-  compareResponseValues, responseAnswerIsCorrect,
+  aggregateAnswerStatuses, compareResponseValues, evaluateSelectionAnswer, getMatrixCheckboxRowStatuses, responseAnswerIsCorrect,
 } from '../correctAnswer';
 
 import { componentAnswersAreCorrect, getComponentAnswerStatus } from '../componentCorrectness';
@@ -21,7 +21,49 @@ describe('correctAnswer utilities', () => {
       expect(responseAnswerIsCorrect(5, 5)).toBe(true);
       expect(responseAnswerIsCorrect('5', 5)).toBe(true);
       expect(responseAnswerIsCorrect(5, '5')).toBe(true);
+      expect(responseAnswerIsCorrect('05', '5')).toBe(true);
       expect(responseAnswerIsCorrect('4', 5)).toBe(false);
+    });
+
+    test('matches textual answers case-insensitively only when configured', () => {
+      expect(responseAnswerIsCorrect('usa', 'USA')).toBe(false);
+      expect(responseAnswerIsCorrect('usa', 'USA', undefined, undefined, { caseSensitive: false })).toBe(true);
+      expect(responseAnswerIsCorrect('uSa', undefined, undefined, undefined, {
+        acceptableAnswers: ['USA'],
+        caseSensitive: false,
+      })).toBe(true);
+    });
+
+    test.each([
+      [0, -1, 1, true], [-1, -1, 1, true], [1, -1, 1, true], [2, -1, 1, false],
+      ['0', 0, undefined, true], [-1, 0, undefined, false],
+      ['0', undefined, 0, true], [1, undefined, 0, false],
+    ])('grades %s using only bounds %s and %s', (value, low, high, expected) => {
+      expect(responseAnswerIsCorrect(value, undefined, low, high)).toBe(expected);
+    });
+
+    test('accepts list-only scalar and selection definitions', () => {
+      expect(responseAnswerIsCorrect('US', undefined, undefined, undefined, { acceptableAnswers: ['USA', 'US'] })).toBe(true);
+      expect(responseAnswerIsCorrect('Canada', undefined, undefined, undefined, { acceptableAnswers: ['USA', 'US'] })).toBe(false);
+      expect(responseAnswerIsCorrect(['B', 'A'], undefined, undefined, undefined, { acceptableAnswers: [['A', 'B']] })).toBe(true);
+      expect(responseAnswerIsCorrect(['A'], undefined, undefined, undefined, { acceptableAnswers: [['A', 'B']] })).toBe(false);
+    });
+
+    test('does not treat missing inputs or missing definitions as correct', () => {
+      expect(responseAnswerIsCorrect(undefined, undefined)).toBe(false);
+      expect(responseAnswerIsCorrect(0, undefined)).toBe(false);
+      expect(responseAnswerIsCorrect(null, undefined)).toBe(false);
+      expect(responseAnswerIsCorrect(undefined, undefined, undefined, undefined, { acceptableAnswers: [null] })).toBe(false);
+    });
+
+    test('accepts preferred and near-perfect values with ranges and one-sided bounds', () => {
+      expect(responseAnswerIsCorrect(50, 50, 45, 55)).toBe(true);
+      expect(responseAnswerIsCorrect(45, 50, 45, 55)).toBe(true);
+      expect(responseAnswerIsCorrect(44, 50, 45, 55)).toBe(false);
+      expect(responseAnswerIsCorrect(50, 50, 45)).toBe(true);
+      expect(responseAnswerIsCorrect(46, 50, 45)).toBe(true);
+      expect(responseAnswerIsCorrect(50, 50, undefined, 55)).toBe(true);
+      expect(responseAnswerIsCorrect(54, 50, undefined, 55)).toBe(true);
     });
 
     test('supports acceptable range when numeric answer is provided', () => {
@@ -50,6 +92,41 @@ describe('correctAnswer utilities', () => {
     test('treats numeric strings consistently with acceptable bounds', () => {
       expect(responseAnswerIsCorrect('8', 0, 7, 10)).toBe(true);
       expect(responseAnswerIsCorrect('6', 0, 7, 10)).toBe(false);
+    });
+
+    test.each(['', ' ', 'not a number', Infinity, -Infinity, NaN, null, undefined])('rejects invalid numerical answers %s even with a zero or open bound', (value) => {
+      expect(responseAnswerIsCorrect(value, 0, 0, 10)).toBe(false);
+      expect(responseAnswerIsCorrect(value, 0, undefined, 10)).toBe(false);
+      expect(responseAnswerIsCorrect(value, undefined, 0, 10)).toBe(false);
+      expect(responseAnswerIsCorrect(value, undefined, undefined, 10)).toBe(false);
+    });
+
+    test('does not treat blank answers as an exact zero', () => {
+      expect(responseAnswerIsCorrect('', 0)).toBe(false);
+      expect(responseAnswerIsCorrect(' ', 0)).toBe(false);
+    });
+
+    test('accepts alternative scalar answers without losing the primary answer', () => {
+      const options = { acceptableAnswers: ['four', 4] };
+      expect(responseAnswerIsCorrect('IV', 'IV', undefined, undefined, options)).toBe(true);
+      expect(responseAnswerIsCorrect('four', 'IV', undefined, undefined, options)).toBe(true);
+      expect(responseAnswerIsCorrect('4', 'IV', undefined, undefined, options)).toBe(true);
+      expect(responseAnswerIsCorrect('five', 'IV', undefined, undefined, options)).toBe(false);
+    });
+
+    test('combines numeric ranges and exact alternative answers', () => {
+      const options = { acceptableAnswers: [20] };
+      expect(responseAnswerIsCorrect(7, 8, 7, 10, options)).toBe(true);
+      expect(responseAnswerIsCorrect(10, 8, 7, 10, options)).toBe(true);
+      expect(responseAnswerIsCorrect(20, 8, 7, 10, options)).toBe(true);
+      expect(responseAnswerIsCorrect(11, 8, 7, 10, options)).toBe(false);
+    });
+
+    test('treats each alternative array as a complete answer and preserves ranking order', () => {
+      const options = { acceptableAnswers: [['c', 'd']], ignoreArrayOrder: true };
+      expect(responseAnswerIsCorrect(['d', 'c'], ['a', 'b'], undefined, undefined, options)).toBe(true);
+      expect(responseAnswerIsCorrect(['c'], ['a', 'b'], undefined, undefined, options)).toBe(false);
+      expect(responseAnswerIsCorrect(['d', 'c'], ['a', 'b'], undefined, undefined, { ...options, ignoreArrayOrder: false })).toBe(false);
     });
 
     test('compares checkbox arrays ignoring order', () => {
@@ -155,6 +232,46 @@ describe('correctAnswer utilities', () => {
     });
   });
 
+  describe('selection answer status', () => {
+    test('aggregates matrix rows only as fully correct or incorrect when every row agrees', () => {
+      expect(aggregateAnswerStatuses(['correct', 'correct'])).toBe('correct');
+      expect(aggregateAnswerStatuses(['incorrect', 'incorrect'])).toBe('incorrect');
+      expect(aggregateAnswerStatuses(['correct', 'incorrect'])).toBe('partially correct');
+      expect(aggregateAnswerStatuses(['partially correct', 'partially correct'])).toBe('partially correct');
+      expect(aggregateAnswerStatuses(['correct', 'partially correct'])).toBe('partially correct');
+    });
+
+    test('distinguishes correct, incorrect, and partially correct selections', () => {
+      expect(evaluateSelectionAnswer(['A', 'B'], ['A', 'B'])).toBe('correct');
+      expect(evaluateSelectionAnswer(['C'], ['A', 'B'])).toBe('incorrect');
+      expect(evaluateSelectionAnswer(['A', 'C'], ['A', 'B'])).toBe('partially correct');
+      expect(evaluateSelectionAnswer(['A'], ['A', 'B'])).toBe('partially correct');
+    });
+
+    test('accepts an alternative complete selection', () => {
+      expect(evaluateSelectionAnswer(['C'], ['A', 'B'], [['C']])).toBe('correct');
+    });
+
+    test('grades each matrix-checkbox row by its selected options', () => {
+      expect(getMatrixCheckboxRowStatuses({
+        type: 'matrix-checkbox',
+        id: 'matrix',
+        prompt: '',
+        answerOptions: ['A', 'B', 'C'],
+        questionOptions: ['row-1', { label: 'Row Two', value: 'row-2' }],
+      }, {
+        'row-1': 'A|C',
+        'row-2': 'B',
+      }, {
+        id: 'matrix',
+        answer: [['A', 'B'], ['B']],
+      })).toEqual({
+        'row-1': 'partially correct',
+        'row-2': 'correct',
+      });
+    });
+  });
+
   describe('componentAnswersAreCorrect', () => {
     test('returns true when there are no correct answers configured', () => {
       expect(componentAnswersAreCorrect({ any: 'value' }, [])).toBe(true);
@@ -206,6 +323,12 @@ describe('correctAnswer utilities', () => {
 
       expect(componentAnswersAreCorrect(userAnswers, correctAnswers)).toBe(true);
       expect(componentAnswersAreCorrect({ slider1: 6 }, correctAnswers)).toBe(false);
+    });
+
+    test('uses alternative answers for component correctness', () => {
+      const answers = [{ id: 'q1', answer: 'A', acceptableAnswers: ['B', 'C'] }];
+      expect(componentAnswersAreCorrect({ q1: 'C' }, answers)).toBe(true);
+      expect(componentAnswersAreCorrect({ q1: 'D' }, answers)).toBe(false);
     });
 
     test('supports mixed exact and ranged validations together', () => {

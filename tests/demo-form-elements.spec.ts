@@ -429,6 +429,19 @@ test('Test questionnaire component with responses and randomizing questions and 
   // Go to the next page
   await nextClick(page);
 
+  // Answer Feedback: answer, check, and expect feedback for each response
+  await page.getByRole('checkbox', { name: 'C', exact: true }).check();
+  await page.getByRole('checkbox', { name: 'D', exact: true }).check();
+  for (const option of ['4', '-4', '|4|', '16/4']) {
+    await page.getByRole('checkbox', { name: option, exact: true }).check();
+  }
+  await page.locator('#dropdown-set').getByPlaceholder('Choose two colors').click();
+  await page.getByRole('option', { name: 'Green', exact: true }).click();
+  await page.getByRole('option', { name: 'Yellow', exact: true }).click();
+  // matrix and ranking: see below
+  await page.getByRole('button', { name: 'Check Answer', exact: true }).click();
+  await expect(page.getByRole('alert')).toHaveCount(5);
+
   // Check that the thank you message is displayed
   await waitForStudyEndMessage(page);
 

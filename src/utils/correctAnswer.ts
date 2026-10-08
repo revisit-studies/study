@@ -1,7 +1,60 @@
 import isEqual from 'lodash.isequal';
 import {
-  Answer, Response, StoredAnswer, ValueCondition,
+  Answer, MatrixCheckboxResponse, Response, StoredAnswer, ValueCondition,
 } from '../parser/types';
+import { parseStringOptionValue } from './stringOptions';
+
+export type AnswerStatus = 'correct' | 'incorrect' | 'partially correct';
+
+export function aggregateAnswerStatuses(statuses: AnswerStatus[]): AnswerStatus {
+  if (statuses.length > 0 && statuses.every((status) => status === 'correct')) return 'correct';
+  if (statuses.length > 0 && statuses.every((status) => status === 'incorrect')) return 'incorrect';
+  return 'partially correct';
+}
+
+export function evaluateSelectionAnswer(
+  userAnswer: unknown,
+  correctAnswer: unknown,
+  acceptableAnswers: unknown[] = [],
+): AnswerStatus {
+  const selected = Array.isArray(userAnswer)
+    ? userAnswer.map(String)
+    : typeof userAnswer === 'string' && userAnswer !== '' ? userAnswer.split('|') : [];
+  const correctAnswers = [correctAnswer, ...acceptableAnswers].filter(Array.isArray) as unknown[][];
+  const statuses = correctAnswers.map((correctValues) => {
+    const correct = correctValues.map(String);
+    const matched = selected.filter((value) => correct.includes(value));
+    if (matched.length === 0) return 'incorrect';
+    if (matched.length === correct.length && selected.length === correct.length) return 'correct';
+    return 'partially correct';
+  });
+
+  return statuses.includes('correct')
+    ? 'correct'
+    : statuses.includes('partially correct') ? 'partially correct' : 'incorrect';
+}
+
+export function getMatrixCheckboxRowStatuses(
+  response: MatrixCheckboxResponse,
+  userAnswer: unknown,
+  correctAnswer: Answer,
+): Record<string, AnswerStatus> {
+  const questions = response.questionOptions.map(parseStringOptionValue);
+  const userRows = userAnswer && typeof userAnswer === 'object' && !Array.isArray(userAnswer)
+    ? userAnswer as Record<string, unknown>
+    : {};
+  const correctRows = Array.isArray(correctAnswer.answer) ? correctAnswer.answer : [];
+  const alternativeRows = (correctAnswer.acceptableAnswers ?? []).filter(Array.isArray) as unknown[][];
+
+  return Object.fromEntries(questions.map((question, index) => [
+    question,
+    evaluateSelectionAnswer(
+      userRows[question],
+      correctRows[index],
+      alternativeRows.map((rows) => rows[index]),
+    ),
+  ]));
+}
 
 /** Compare values without converting strings to numbers. */
 export function compareResponseValues(
@@ -44,28 +97,44 @@ export function shouldIgnoreArrayOrder(response?: Response) {
 }
 
 export function responseAnswerIsCorrect(
-  responseUserAnswer: StoredAnswer['answer'][string],
+  responseUserAnswer: StoredAnswer['answer'][string] | undefined,
   responseCorrectAnswer: Answer['answer'],
   acceptableLow?: number,
   acceptableHigh?: number,
-  options: { ignoreArrayOrder?: boolean } = {},
+  options: { ignoreArrayOrder?: boolean; acceptableAnswers?: Answer['acceptableAnswers']; caseSensitive?: boolean } = {},
 ): boolean {
-  // Handle numeric-string comparison for likert and slider responses
+  if (responseUserAnswer === undefined) return false;
+  if (options.acceptableAnswers?.some((answer) => responseAnswerIsCorrect(responseUserAnswer, answer, undefined, undefined, {
+    ignoreArrayOrder: options.ignoreArrayOrder,
+    caseSensitive: options.caseSensitive,
+  }))) return true;
+
+  // Numeric bounds define accepted answers independently of a preferred answer.
+  if (acceptableLow !== undefined || acceptableHigh !== undefined) {
+    if ((typeof responseUserAnswer !== 'number' && typeof responseUserAnswer !== 'string')
+      || String(responseUserAnswer).trim() === '') return false;
+    const value = Number(responseUserAnswer);
+    return Number.isFinite(value)
+      && (acceptableLow === undefined || value >= acceptableLow)
+      && (acceptableHigh === undefined || value <= acceptableHigh);
+  }
+
+  if (responseCorrectAnswer === undefined) return false;
+
+  if (typeof responseUserAnswer === 'string' && typeof responseCorrectAnswer === 'string') {
+    const matchesText = options.caseSensitive === false
+      ? responseUserAnswer.toLowerCase() === responseCorrectAnswer.toLowerCase()
+      : responseUserAnswer === responseCorrectAnswer;
+    if (matchesText) return true;
+  }
+
+  // Handle numeric-string comparison for likert and slider responses.
   if ((typeof responseUserAnswer === 'number' || typeof responseUserAnswer === 'string')
     && (typeof responseCorrectAnswer === 'string' || typeof responseCorrectAnswer === 'number')) {
     const userAnswerNumber = Number(responseUserAnswer);
-
-    if (!Number.isNaN(userAnswerNumber)) {
-      if (acceptableLow !== undefined && acceptableHigh !== undefined) {
-        return userAnswerNumber >= acceptableLow && userAnswerNumber <= acceptableHigh;
-      } if (acceptableLow !== undefined) {
-        return userAnswerNumber >= acceptableLow;
-      } if (acceptableHigh !== undefined) {
-        return userAnswerNumber <= acceptableHigh;
-      }
-    }
-
-    return String(responseUserAnswer) === String(responseCorrectAnswer) || Number(responseUserAnswer) === Number(responseCorrectAnswer);
+    const hasNumericAnswer = Number.isFinite(userAnswerNumber) && String(responseUserAnswer).trim() !== '';
+    return String(responseUserAnswer) === String(responseCorrectAnswer)
+      || (hasNumericAnswer && String(responseCorrectAnswer).trim() !== '' && userAnswerNumber === Number(responseCorrectAnswer));
   }
 
   // Checkbox and dropdown answers ignore selection order; ranking answers do not.

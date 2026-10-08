@@ -1410,6 +1410,198 @@
           "location": "sidebar"
         }
       ]
+    },
+    "Answer Feedback": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "selections-title",
+          "type": "textOnly",
+          "prompt": "# Alternative Selection Sets\n\nSelect one complete accepted set for each question. Selecting just part of a set or mixing the sets is incorrect.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "checkbox-set",
+          "type": "checkbox",
+          "prompt": "Select A and B, or C and D.",
+          "secondaryText": "Correct: A + B or C + D, in either selection order. Incorrect: A + C or A + B + C.",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ]
+        },
+        { 
+          "id": "checkbox-multiple",
+          "type": "checkbox",
+          "prompt": "What is the square root of 16?",
+          "secondaryText": "Correct answer: 4 and -4 and any alteration of that.",
+          "options": [
+            "4",
+            "-4",
+            "|4|",
+            "16/4"
+          ]
+        },
+        {
+          "id": "checkbox-matrix",
+          "prompt": "For each animal, select all that apply.",
+          "location": "belowStimulus",
+          "type": "matrix-checkbox",
+          "feedbackPosition": "left",
+          "answerOptions": [
+            "Has wings",
+            "Has fur",
+            "Has tail",
+            "Is taller than a human"
+          ],
+          "questionOptions": [
+            "Cat",
+            "Dog",
+            "Rat",
+            "Horse",
+            "Pidgeon"
+          ]
+        },
+        {
+          "id": "dropdown-set",
+          "type": "dropdown",
+          "prompt": "Select two colors from one accepted pair.",
+          "secondaryText": "Correct: Red + Blue or Green + Yellow, in either selection order. Incorrect: Red + Green.",
+          "placeholder": "Choose two colors",
+          "options": [
+            "Red",
+            "Blue",
+            "Green",
+            "Yellow"
+          ],
+          "minSelections": 2,
+          "maxSelections": 2
+        },
+        {
+          "id": "ranking-set",
+          "type": "ranking-sublist",
+          "prompt": "Rank one accepted pair of letters.",
+          "secondaryText": "Correct: A then B, or C then D. Incorrect: B then A, or A then C. Move exactly two letters into the ranked list.",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ],
+          "numItems": 2
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "checkbox-set",
+          "acceptableAnswers": [
+            [
+              "A",
+              "B"
+            ],
+            [
+              "C",
+              "D"
+            ]
+          ],
+          "feedback": {
+            "correctText": "You chose one complete accepted letter pair.",
+            "incorrectText": "Those selections do not form an accepted pair.",
+            "exhaustedText": "You used all {attemptsUsed} attempts. Review the accepted answers, then continue.",
+            "hints": [
+              "Choose both letters from the same pair.",
+              "Hint: choose A + B or C + D, without extra letters."
+            ]
+          }
+        },
+        {
+          "id": "checkbox-multiple",
+          "acceptableAnswers": [
+            [
+              "4",
+              "-4",
+              "|4|",
+              "16/4"
+            ]
+          ],
+          "feedback": {
+            "correctText": "You chose all correct options.",
+            "incorrectText": "Not all of the options are correct or you missed some.",
+            "exhaustedText": "You used all {attemptsUsed} attempts. Review the accepted answers, then continue.",
+            "hints": [
+              "More than one answer is correct.",
+              "Take a better look, you should know this from school."
+            ]
+          }
+        },
+        {
+          "id": "checkbox-matrix",
+          "answer": [
+            ["Has fur", "Has tail"],
+            ["Has fur", "Has tail"],
+            ["Has fur", "Has tail"],
+            ["Has fur", "Has tail", "Is taller than a human"],
+            ["Has wings", "Has tail"]
+          ],
+          "feedback": {
+            "correctText": "All five rows match the accepted traits.",
+            "incorrectText": "Some rows are missing a correct trait or include a trait that does not apply.",
+            "exhaustedText": "Review the accepted traits, then continue.",
+            "hints": [
+              "Compare fur, wings, tails, and typical adult height.",
+              "Cats, dogs, rats, and horses have fur and tails; adult horses are taller than people. Pigeons have wings and tails."
+            ]
+          }
+        },
+        {
+          "id": "dropdown-set",
+          "acceptableAnswers": [
+            [
+              "Red",
+              "Blue"
+            ],
+            [
+              "Green",
+              "Yellow"
+            ]
+          ],
+          "feedback": {
+            "correctText": "You chose one complete accepted color pair.",
+            "incorrectText": "Those colors do not form an accepted pair.",
+            "exhaustedText": "You used all {attemptsUsed} attempts. Review the accepted answers, then continue.",
+            "hints": [
+              "Keep the two colors in the same accepted pair.",
+              "Hint: choose Red + Blue or Green + Yellow."
+            ]
+          }
+        },
+        {
+          "id": "ranking-set",
+          "acceptableAnswers": [
+            {
+              "A": "0",
+              "B": "1"
+            },
+            {
+              "C": "0",
+              "D": "1"
+            }
+          ],
+          "feedback": {
+            "correctText": "Your letters are in an accepted order.",
+            "incorrectText": "Both the selected letters and their order matter.",
+            "exhaustedText": "You used all {attemptsUsed} attempts. Review the accepted answers, then continue.",
+            "hints": [
+              "Try two letters from the same pair in alphabetical order.",
+              "Hint: rank A then B, or C then D."
+            ]
+          }
+        }
+      ],
+      "trainingAttempts": 3,
+      "allowFailedTraining": true
     }
   },
   "sequence": {
@@ -1425,7 +1617,8 @@
       "Randomizing Options",
       "Randomizing Questions",
       "Ranking Widgets",
-      "Sidebar Form Elements"
+      "Sidebar Form Elements",
+      "Answer Feedback"
     ]
   }
 }

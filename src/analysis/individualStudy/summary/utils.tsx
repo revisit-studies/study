@@ -194,7 +194,11 @@ function calculateCorrectnessStats(
         correctEntry.answer,
         correctEntry.acceptableLow,
         correctEntry.acceptableHigh,
-        { ignoreArrayOrder: shouldIgnoreArrayOrder(response) },
+        {
+          ignoreArrayOrder: shouldIgnoreArrayOrder(response),
+          acceptableAnswers: correctEntry.acceptableAnswers,
+          caseSensitive: correctEntry.caseSensitive,
+        },
       );
 
       if (isCorrect) {

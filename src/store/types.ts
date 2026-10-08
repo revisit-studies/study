@@ -103,7 +103,7 @@ export interface StoredAnswer {
   componentName: string;
   /** The order of the trial in the sequence. */
   trialOrder: string;
-  /** Object whose keys are the "id"s in the Response list of the component in the StudyConfig and whose value is a list of incorrect inputted values from the participant. Only relevant for trials with `provideFeedback` and correct answers enabled. */
+  /** Object whose keys are the "id"s in the Response list of the component in the StudyConfig and whose value is a list of incorrect inputted values from the participant. Only relevant for trials with `provideFeedback` enabled or custom answer-level feedback. */
   incorrectAnswers: Record<string, { id: string, value: unknown[] }>;
   /** Time that the user began interacting with the component in epoch milliseconds. */
   startTime: number;
@@ -162,7 +162,7 @@ export interface StoredAnswer {
 }
 
 /**
- * The CheckAnswerState object is a data structure describing the participant's interaction with an individual component when they click "Check Answer". It is the data structure used as values of the `checkAnswer` object of [StoreState](../StoreState). The general structure for this is below:
+ * The CheckAnswerState object is a data structure describing the participant's interaction with an individual component when they click "Check Answer" or "Next". It is the data structure used as values of the `checkAnswer` object of [StoreState](../StoreState). The general structure for this is below:
  *
  * ```json
  * {
@@ -183,6 +183,8 @@ export interface CheckAnswerState {
   correct: boolean;
   /** The correctness of each response at the last check. Keys are the "id"s in the [Response](../BaseResponse) list of the component in your [StudyConfiguration](../StudyConfig); values indicate whether that response was correct. */
   responses: Record<string, boolean>;
+  /** Answer values captured at the last check, used to keep displayed feedback stable while responses are edited. */
+  checkedAnswers?: StoredAnswer['answer'];
 }
 
 export interface JumpFunctionParameters<T> {
