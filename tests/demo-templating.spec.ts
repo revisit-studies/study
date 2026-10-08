@@ -16,14 +16,15 @@ test('Test Handlebars templating in instructions, path, help text, and response 
 
   // markdown-template-quiz: France / Europe / hint-europe / no previous answer yet
   await expect(page.getByText('Which city is the capital of France?', { exact: true })).toBeVisible();
-  await expect(page.getByText(/Hint for this task:\s*France is well known for the Eiffel Tower\./)).toBeVisible();
+  await expect(page.getByText(/Hint for this task:\s*A country in Europe, known for the Eiffel Tower\./)).toBeVisible();
   await expect(page.getByText('Choose the capital of France:', { exact: false })).toBeVisible();
   await page.getByRole('radio', { name: 'Paris' }).check();
   await nextClick(page);
 
   // html-template-quiz: templated HTML stimulus, previous answer = Paris
   const frame = page.frameLocator('#root iframe');
-  await expect(frame.getByText('Which of these is the capital of Canada?')).toBeVisible();
+  await expect(frame.getByRole('heading', { name: '🇨🇦 Canada' })).toBeVisible();
+  await expect(frame.getByText('Hint for the task: A country in North America, known for maple syrup.')).toBeVisible();
   await expect(frame.getByText('You answered Paris in your previous task, which is correct.')).toBeVisible();
 
   // The help table reads the markdown quiz's correctAnswer once it is answered
