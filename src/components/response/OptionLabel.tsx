@@ -20,10 +20,12 @@ export function OptionLabel({
   label,
   infoText,
   button = false,
+  fw,
 }: {
   label: string;
   infoText?: string;
   button?: boolean;
+  fw?: number;
 }) {
   const template = useOptionTextTemplate();
   const renderedLabel = template(label, button);
@@ -31,7 +33,7 @@ export function OptionLabel({
   return (
     <Flex direction="row" gap={4} align="center" justify={button ? 'center' : undefined}>
       {/* Option labels don't need bottom padding and should use small text size */}
-      {button ? <Text size="sm">{renderedLabel}</Text>
+      {button ? <Text size="sm" fw={fw}>{renderedLabel}</Text>
         : <ReactMarkdownWrapper text={renderedLabel} inline />}
       {renderedInfoText && (
         <Tooltip label={renderedInfoText} multiline maw={400} position="bottom">

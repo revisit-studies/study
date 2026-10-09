@@ -95,6 +95,7 @@ function StudyStorageRoute({ globalConfig, children }: { globalConfig: GlobalCon
   const participantRoute = routeParts[0] !== 'analysis';
   const routeStudyId = participantRoute ? routeParts[0] : routeParts[1] === 'stats' ? routeParts[2] : undefined;
   const studyId = routeStudyId ? resolveConfigKey(routeStudyId, globalConfig) : null;
+  const storageSearch = studyId ? search : '';
   const routeKey = studyId ? `${studyId}:${participantRoute}:${participantRoute ? search : ''}` : 'global';
   const [readyKey, setReadyKey] = useState<string | null>(null);
   const [selectionError, setSelectionError] = useState<unknown>(null);
@@ -106,9 +107,9 @@ function StudyStorageRoute({ globalConfig, children }: { globalConfig: GlobalCon
     setSelectionError(null);
     const selection = async () => {
       if (!studyId) return configuredStorageEngine;
-      const config = participantRoute && search ? await getStudyConfig(studyId, globalConfig) : null;
+      const config = participantRoute && storageSearch ? await getStudyConfig(studyId, globalConfig) : null;
       const participantIdParam = config?.uiConfig?.urlParticipantIdParam;
-      const requestedParticipantId = getRequestedParticipantId(search, participantIdParam);
+      const requestedParticipantId = getRequestedParticipantId(storageSearch, participantIdParam);
       return selectStudyStorageEngine(configuredStorageEngine, studyId, participantRoute, requestedParticipantId);
     };
     selection().then((activeEngine) => {
@@ -120,7 +121,7 @@ function StudyStorageRoute({ globalConfig, children }: { globalConfig: GlobalCon
       if (!cancelled) setSelectionError(error);
     });
     return () => { cancelled = true; };
-  }, [configuredStorageEngine, globalConfig, participantRoute, routeKey, search, setStorageEngine, studyId]);
+  }, [configuredStorageEngine, globalConfig, participantRoute, routeKey, setStorageEngine, storageSearch, studyId]);
 
   if (selectionError) return <StartupErrorScreen error={selectionError} />;
   if (readyKey !== routeKey) return <LoadingOverlay visible />;

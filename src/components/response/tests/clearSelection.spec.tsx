@@ -89,8 +89,10 @@ vi.mock('@mantine/core', () => {
         const ref = React.useRef<HTMLButtonElement>(null);
         return (
           <button
+            {...rest}
             type="button"
             ref={ref}
+            role="radio"
             data-radio-card
             data-value={value}
             onKeyDown={(event) => {
@@ -99,7 +101,6 @@ vi.mock('@mantine/core', () => {
                 ref.current?.click();
               }
             }}
-            {...rest}
           >
             {children}
           </button>
@@ -243,6 +244,7 @@ describe('RadioInput / ButtonsInput clear & toggle behaviour', () => {
     const card = container.querySelector('[data-value="Only option"]');
     expect(card).toBeTruthy();
     if (card) {
+      (card as HTMLElement).focus();
       fireEvent.keyDown(card, { key: 'ArrowRight' });
     }
 
