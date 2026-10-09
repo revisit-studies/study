@@ -13,7 +13,8 @@ import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { useCurrentIdentifier } from '../routes/utils';
 import { PreviousButton } from './PreviousButton';
 import { getComponentContainerStyle } from '../utils/componentStyle';
-import classes from './NextButton.module.css';
+import classes from './response/css/ButtonsInput.module.css';
+
 import {
   DEFAULT_AUTO_ADVANCE_WARNING_MESSAGE,
   DEFAULT_AUTO_ADVANCE_WARNING_TIME,
@@ -160,7 +161,7 @@ export function NextButton({
         {checkAnswer}
         <Button
           type="submit"
-          className={classes.root}
+          className={classes.nextButton}
           disabled={nextButtonDisabled}
           onClick={() => (checkAnswer ? onNext : (onCheckAnswer ?? onNext))()}
           fw={700}

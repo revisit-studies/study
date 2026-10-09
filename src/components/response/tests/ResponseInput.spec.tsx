@@ -80,6 +80,10 @@ vi.mock('@mantine/core', () => {
       </div>
     );
   }
+  const RadioCard = forwardRef<HTMLButtonElement, { children?: ReactNode; value?: string }>(
+    ({ children, value }, ref) => <button ref={ref} type="button" role="radio" data-value={value}>{children}</button>,
+  );
+  RadioCard.displayName = 'RadioCard';
   const Radio = Object.assign(
     ({ label, value, children }: { label?: ReactNode; value?: string; children?: ReactNode }) => (
       <div data-value={value}>
@@ -89,9 +93,7 @@ vi.mock('@mantine/core', () => {
     ),
     {
       Group: RadioGroup,
-      Card: ({ children, value }: { children?: ReactNode; value?: string }) => (
-        <button type="button" role="radio" data-value={value}>{children}</button>
-      ),
+      Card: RadioCard,
     },
   );
   const Checkbox = Object.assign(
@@ -712,6 +714,46 @@ describe('ButtonsInput', () => {
     expect(html).toContain('Yes');
     expect(html).toContain('No');
     expect(html).toContain('Maybe');
+  });
+
+  test('focuses and selects the first option when arrow navigation starts from the page', () => {
+    const onChange = vi.fn();
+    const { container } = render(
+      <ButtonsInput
+        response={base}
+        disabled={false}
+        answer={{ value: '', onChange }}
+        index={1}
+        enumerateQuestions={false}
+      />,
+    );
+
+    const firstOption = container.querySelector('[role="radio"]');
+    expect(document.activeElement).toBe(document.body);
+
+    fireEvent.keyDown(document.body, { key: 'ArrowRight', bubbles: true });
+
+    expect(document.activeElement).toBe(firstOption);
+    expect(onChange).toHaveBeenCalledWith('Yes', 'keyboard');
+  });
+
+  test('returns focus to the selected option without changing the answer', () => {
+    const onChange = vi.fn();
+    const { container } = render(
+      <ButtonsInput
+        response={base}
+        disabled={false}
+        answer={{ value: 'No', onChange }}
+        index={1}
+        enumerateQuestions={false}
+      />,
+    );
+
+    const selectedOption = container.querySelector('[role="radio"][data-value="No"]');
+    fireEvent.keyDown(document.body, { key: 'ArrowLeft', bubbles: true });
+
+    expect(document.activeElement).toBe(selectedOption);
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   test('mapped key works when a rendered response card has focus', () => {

@@ -1,7 +1,10 @@
 import {
-  Flex, FocusTrap, Kbd, Radio,
+  Flex, Kbd, Radio,
 } from '@mantine/core';
-import React, { useMemo } from 'react';
+import {
+  IconArrowDown, IconArrowLeft, IconArrowRight, IconArrowUp,
+} from '@tabler/icons-react';
+import React, { useMemo, useRef } from 'react';
 import ClearSelectionButton from './ClearSelectionButton';
 import { ButtonsResponse, ParsedStringOption } from '../../parser/types';
 import classes from './css/ButtonsInput.module.css';
@@ -21,6 +24,9 @@ const renderSymbol = (symbol: string) => (
     {symbol}
   </span>
 );
+const renderArrow = (Icon: typeof IconArrowLeft) => (
+  <Icon size={18} stroke={2.5} style={{ verticalAlign: 'middle' }} />
+);
 
 function formatKeyForDisplay(key: string): React.ReactNode {
   const k = key.toLowerCase().trim();
@@ -37,13 +43,13 @@ function formatKeyForDisplay(key: string): React.ReactNode {
 
   switch (k) {
     case 'arrowleft':
-      return renderSymbol('←');
+      return renderArrow(IconArrowLeft);
     case 'arrowright':
-      return renderSymbol('→');
+      return renderArrow(IconArrowRight);
     case 'arrowup':
-      return renderSymbol('↑');
+      return renderArrow(IconArrowUp);
     case 'arrowdown':
-      return renderSymbol('↓');
+      return renderArrow(IconArrowDown);
     case 'enter':
     case 'return':
       return renderSymbol('↵');
@@ -93,6 +99,7 @@ export function ButtonsInput({
   index: number;
   enumerateQuestions: boolean;
 }) {
+  const optionRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const {
     prompt,
     required,
@@ -114,100 +121,116 @@ export function ButtonsInput({
     answer?.onChange?.(value, source);
   };
 
-  return (
-    <FocusTrap>
-      <Radio.Group
-        name={`radioInput${response.id}`}
-        label={prompt.length > 0 && (
-          <InputLabel
-            prompt={prompt}
-            required={required}
-            index={index}
-            enumerateQuestions={enumerateQuestions}
-            infoText={infoText}
-            clearSelectionButton={(
-              <ClearSelectionButton onClick={() => handleValueChange('')} disabled={disabled} visible={!!answer?.value} />
-            )}
-          />
-        )}
-        description={secondaryText}
-        key={response.id}
-        value={answer?.value}
-        onChange={(value) => handleValueChange(value, 'click')}
-        error={error}
-        errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
-        style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
-      >
-        <KeyMapper
-          options={orderedOptions}
-          onSelect={(val, source) => handleValueChange(val, source ?? 'keyboard')}
-          disabled={disabled}
-        />
-        <Flex justify="space-between" align="center" gap="xl" mt="xs" p="4px">
-          {orderedOptions.map((radio, idx) => {
-            const hasKeyVisual = !hideKeyVisual && Boolean(radio.key);
+  const startArrowNavigation = () => {
+    const selectedOption = orderedOptions.find((option) => option.value === answer?.value);
+    const optionToFocus = selectedOption ?? orderedOptions[0];
+    optionRefs.current[optionToFocus.value]?.focus();
 
-            return (
-              <Radio.Card
-                key={`radio-${idx}`}
-                value={radio.value}
-                disabled={disabled}
-                className={classes.root}
+    if (!selectedOption) {
+      handleValueChange(optionToFocus.value, 'keyboard');
+    }
+  };
+
+  return (
+    <Radio.Group
+      name={`radioInput${response.id}`}
+      label={prompt.length > 0 && (
+        <InputLabel
+          prompt={prompt}
+          required={required}
+          index={index}
+          enumerateQuestions={enumerateQuestions}
+          infoText={infoText}
+          clearSelectionButton={(
+            <ClearSelectionButton onClick={() => handleValueChange('')} disabled={disabled} visible={!!answer?.value} />
+          )}
+        />
+      )}
+      description={secondaryText}
+      key={response.id}
+      value={answer?.value}
+      onChange={(value) => handleValueChange(value, 'click')}
+      error={error}
+      errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
+      style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
+    >
+      <KeyMapper
+        options={orderedOptions}
+        onSelect={(val, source) => handleValueChange(val, source ?? 'keyboard')}
+        onArrowNavigation={startArrowNavigation}
+        disabled={disabled}
+      />
+      <Flex justify="space-between" align="center" gap="xl" mt="xs" p="4px">
+        {orderedOptions.map((radio, idx) => {
+          const hasKeyVisual = !hideKeyVisual && Boolean(radio.key);
+
+          return (
+            <Radio.Card
+              key={`radio-${idx}`}
+              value={radio.value}
+              disabled={disabled}
+              ref={(node) => {
+                if (node) {
+                  optionRefs.current[radio.value] = node;
+                } else {
+                  delete optionRefs.current[radio.value];
+                }
+              }}
+              className={classes.root}
+              style={{
+                overflow: 'hidden',
+                padding: 0,
+              }}
+            >
+              <div
                 style={{
-                  overflow: 'hidden',
-                  padding: 0,
+                  display: 'flex',
+                  alignItems: 'stretch',
+                  minHeight: '100%',
                 }}
               >
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'stretch',
-                    minHeight: '100%',
-                  }}
+                <Flex
+                  align="center"
+                  justify="center"
+                  gap="xs"
+                  style={{ flex: 1, padding: '6px 12px' }}
                 >
+                  <OptionLabel label={radio.label} infoText={radio.infoText} button fw={700} />
+                </Flex>
+
+                {hasKeyVisual && (
                   <Flex
                     align="center"
                     justify="center"
-                    gap="xs"
-                    style={{ flex: 1, padding: '10px 12px' }}
+                    style={{
+                      flexShrink: 0,
+                      padding: '0 12px',
+                      borderLeft: '1px solid rgba(255, 255, 255, 0.25)',
+                      backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                    }}
                   >
-                    <OptionLabel label={radio.label} infoText={radio.infoText} button fw={700} />
-                  </Flex>
-
-                  {hasKeyVisual && (
-                    <Flex
-                      align="center"
-                      justify="center"
+                    <Kbd
+                      size="xs"
+                      aria-hidden="true"
                       style={{
-                        flexShrink: 0,
-                        padding: '0 12px',
-                        borderLeft: '1px solid rgba(255, 255, 255, 0.25)',
-                        backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                        backgroundColor: 'transparent',
+                        color: 'inherit',
+                        boxShadow: 'none',
+                        border: 'none',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        padding: 0,
                       }}
                     >
-                      <Kbd
-                        size="xs"
-                        aria-hidden="true"
-                        style={{
-                          backgroundColor: 'transparent',
-                          color: 'inherit',
-                          boxShadow: 'none',
-                          border: 'none',
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          padding: 0,
-                        }}
-                      >
-                        {formatKeyForDisplay(radio.key as never)}
-                      </Kbd>
-                    </Flex>
-                  )}
-                </div>
-              </Radio.Card>
-            );
-          })}
-        </Flex>
-      </Radio.Group>
-    </FocusTrap>
+                      {formatKeyForDisplay(radio.key as never)}
+                    </Kbd>
+                  </Flex>
+                )}
+              </div>
+            </Radio.Card>
+          );
+        })}
+      </Flex>
+    </Radio.Group>
   );
 }
