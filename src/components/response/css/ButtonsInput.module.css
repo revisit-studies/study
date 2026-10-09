@@ -1,6 +1,7 @@
 .root,
 .nextButton {
-  min-height: 40px;
+  --response-button-min-height: 40px;
+  min-height: var(--response-button-min-height);
   transition: background-color 150ms ease, border-color 150ms ease;
   background-color: var(--mantine-color-blue-7);
   border-color: var(--mantine-color-blue-7);
@@ -15,14 +16,10 @@
 .root:hover:not([disabled]),
 .nextButton:hover:not([disabled]):not([data-disabled]) {
   background-color: var(--mantine-color-blue-9);
-  border-color: var(--mantine-color-blue-9);
 }
 
 .root[data-checked] {
-  background-color: var(--mantine-color-blue-9);
-  border-color: var(--mantine-color-blue-4);
-  color: var(--mantine-color-white);
-  box-shadow: inset 0 0 0 2px var(--mantine-color-blue-4);
+  background-color: oklch(from var(--mantine-color-blue-9) calc(l * 0.8) calc(c * 1.2) h);
 }
 
 .root:focus-visible,
@@ -38,4 +35,8 @@
   border-color: var(--mantine-color-disabled);
   color: var(--mantine-color-disabled-color);
   cursor: default;
+      &[data-checked] {
+      background-color: oklch(from var(--mantine-color-blue-9) calc(l * 0.8) calc(c * 1.2) h);
+      color: var(--mantine-color-white);
+    }
 }
