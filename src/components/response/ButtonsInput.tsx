@@ -186,7 +186,7 @@ export function ButtonsInput({
                 style={{
                   display: 'flex',
                   alignItems: 'stretch',
-                  minHeight: '100%',
+                  minHeight: 'var(--response-button-min-height)',
                 }}
               >
                 <Flex
@@ -204,22 +204,26 @@ export function ButtonsInput({
                     justify="center"
                     style={{
                       flexShrink: 0,
-                      padding: '0 12px',
-                      borderLeft: '1px solid rgba(255, 255, 255, 0.25)',
-                      backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                      alignSelf: 'stretch',
                     }}
                   >
                     <Kbd
                       size="xs"
                       aria-hidden="true"
                       style={{
-                        backgroundColor: 'transparent',
+                        // backgroundColor: 'transparent',
                         color: 'inherit',
                         boxShadow: 'none',
                         border: 'none',
                         fontSize: '12px',
                         fontWeight: 600,
-                        padding: 0,
+                        padding: '0 12px',
+                        alignSelf: 'stretch',
+                        display: 'flex',
+                        alignItems: 'center',
+                        borderRadius: 0,
+                        borderLeft: '1px solid rgba(255, 255, 255, 0.25)',
+                        backgroundColor: 'rgba(0, 0, 0, 0.08)',
                       }}
                     >
                       {formatKeyForDisplay(radio.key as never)}
