@@ -1,0 +1,25 @@
+.studyTitle {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.progressBar {
+  min-height: 18px;
+}
+
+#large-text-title p {
+  font-size: 32px;
+  font-weight: bold;
+}
+.response {
+  margin-bottom: 40px;
+}
+.responseBlock p {
+  font-size: 24px;
+}
+
+.responseBlock input,
+.responseBlock textarea,
+.responseBlock button {
+  font-size: 22px;
+}

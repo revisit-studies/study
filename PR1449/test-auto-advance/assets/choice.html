@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>HTML bar chart</title>
+    <script src="../../revisitUtilities/revisit-communicate.js"></script>
+    <style>
+      body { font-family: sans-serif; margin: 24px; }
+      svg { width: 100%; max-width: 600px; }
+      .bar { fill: steelblue; cursor: pointer; }
+      .bar:hover, .bar:focus { fill: darkorange; }
+      .bar:focus { outline: 2px solid black; }
+      .bar[aria-pressed="true"] { fill: darkorange; }
+      text { pointer-events: none; }
+    </style>
+  </head>
+  <body>
+    <h1>HTML bar chart</h1>
+    <p>Click a bar to record its value and automatically continue after 300 milliseconds.
+      You can also focus a bar with Tab and select it with Enter or Space.</p>
+    <svg viewBox="0 0 600 340" aria-label="Bar chart with four selectable bars">
+      <line x1="40" y1="280" x2="560" y2="280" stroke="black" />
+      <g>
+        <rect class="bar" x="70" y="200" width="80" height="80"
+          role="button" tabindex="0" aria-label="Bar A: 20" aria-pressed="false" data-value="20" />
+        <text x="110" y="190" text-anchor="middle">20</text>
+        <text x="110" y="305" text-anchor="middle">A</text>
+      </g>
+      <g>
+        <rect class="bar" x="190" y="100" width="80" height="180"
+          role="button" tabindex="0" aria-label="Bar B: 45" aria-pressed="false" data-value="45" />
+        <text x="230" y="90" text-anchor="middle">45</text>
+        <text x="230" y="305" text-anchor="middle">B</text>
+      </g>
+      <g>
+        <rect class="bar" x="310" y="160" width="80" height="120"
+          role="button" tabindex="0" aria-label="Bar C: 30" aria-pressed="false" data-value="30" />
+        <text x="350" y="150" text-anchor="middle">30</text>
+        <text x="350" y="305" text-anchor="middle">C</text>
+      </g>
+      <g>
+        <rect class="bar" x="430" y="40" width="80" height="240"
+          role="button" tabindex="0" aria-label="Bar D: 60" aria-pressed="false" data-value="60" />
+        <text x="470" y="30" text-anchor="middle">60</text>
+        <text x="470" y="305" text-anchor="middle">D</text>
+      </g>
+    </svg>
+    <p id="status" aria-live="polite">No bar selected.</p>
+    <script>
+      const bars = document.querySelectorAll('.bar');
+      function selectBar(bar) {
+        const selectedBar = Number(bar.dataset.value);
+        bars.forEach((otherBar) => {
+          otherBar.setAttribute('aria-pressed', String(otherBar === bar));
+        });
+        Revisit.postAnswers(
+          { selectedBar },
+          true,
+          300
+        );
+        document.getElementById('status').textContent = `Selected value: ${selectedBar}. Continuing…`;
+      }
+      bars.forEach((bar) => {
+        bar.addEventListener('click', () => selectBar(bar));
+        bar.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            selectBar(bar);
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

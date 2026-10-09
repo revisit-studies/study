@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>D3 Nice Axes</title>
+    <script src="https://d3js.org/d3.v7.js"></script>
+</head>
+
+<body>
+    <svg>
+    </svg>
+</body>
+
+<script>
+    height = 400;
+    width = 750;
+    padding = 25;
+    svg = d3.select("svg");
+    svg.attr("width", width + 2 * padding)
+        .attr("height", height + 2 * padding);
+
+    let data = [0.32, 0.01, 1.2, 1.3, 0.82, 0.4, 0.3];
+    let spacing = height / data.length;
+
+    let min = d3.min(data);
+    let max = d3.max(data);
+
+    let xScale = d3.scaleLinear()
+        .domain([min, max])
+        .range([0, width])
+        .nice();
+
+    let color = d3.scaleLinear()
+        .domain([min, 0, max])
+        .range(["darkred", "lightgray", "steelblue"]);
+
+    let xAxis = d3.axisBottom();
+    xAxis.scale(xScale);
+
+    svg.selectAll(".bar")
+        .data(data)
+        .join("rect")
+        .classed("bar", true)
+        .attr("transform", "translate(" + padding + "," + padding + ")")
+        .attr("x", d => xScale(Math.min(0, d)))
+        .attr("y", (d, i) => i * spacing + 5)
+        .attr("width", d => Math.abs(xScale(d) - xScale(0)))
+        .attr("height", 20)
+        .style("fill", d => color(d));
+
+    svg.append("g")
+        .attr("transform", "translate(" + padding + "," + (height + padding) + ")")
+        .call(xAxis);
+</script>
+</html>

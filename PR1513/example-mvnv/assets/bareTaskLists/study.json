@@ -1,0 +1,278 @@
+{
+    "S-task01": {
+        "hypothesis":"Distractor Effect Hypothesis, Attribute Sorting Hypothesis",
+        "prompt": "Find the <span class='attribute'>North American</span> with the <span class='attribute'>most Tweets</span>",
+        "replyType": [
+            "singleNodeSelection"
+        ],
+        "replyCount": 1,
+        "answerKey": {
+            "nodes": ["T.J"],
+            "id":["18704160"]
+        },
+        "taxonomy": {
+            "target": "single node",
+            "type": "TGA"
+        }
+    },
+    "S-task02": {
+        "hypothesis":"Distractor Effect Hypothesis, Attribute Sorting Hypothesis",
+        "prompt": "Find the <span class='attribute'>European person or institution </span> with the <span class='attribute'>least likes </span>",
+        "replyType": [
+            "singleNodeSelection"
+        ],
+        "replyCount": 1,
+        "answerKey": {
+            "nodes": ["EVis2018"],
+            "ids":["909697437694087200"]
+        },
+        "taxonomy": {
+            "target": "single node",
+            "type": "TGA"
+        }
+    },
+    "S-task03": {
+        "hypothesis":"Scalable Attributes Hypothesis",
+        "prompt": "Which <span class='attribute'>person</span> has <span class='attribute'>many interactions (edges) </span> in this network, <span class='attribute'>several followers</span>, but  <span class='attribute'>few tweets and likes</span> in general?",
+        "replyType": [
+            "singleNodeSelection"
+        ],
+        "replyCount": 1,
+        "answerKey": {
+            "nodes":["Rob","Alex","Jeffrey"],
+            "ids" :["208312922","81658145","247943631"]
+        },
+        "taxonomy": {
+            "target": "single node",
+            "type": "TGA"
+        }
+    },
+    "S-task04": {
+        "hypothesis":"Distractor Effects Hypothesis",
+        "prompt": "Find all of Lane's <span class='attribute'>European</span> Neighbors",
+        "replyType": [
+            "multipleNodeSelection"
+        ],
+        "replyCount": {
+            "type": "at least",
+            "value": 1
+        },
+        "answerKey": {
+            "nodes":["AA","Noeska","Till","Joe"],
+            "ids": ["191257554","36853217","15208867","40219508"]
+        },
+        "taxonomy": {
+            "target": "neighbors",
+            "type": "TGA"
+        }
+    },
+    "S-task05": {
+        "hypothesis":"Distractor Effects Hypothesis",
+        "prompt": "Find all of giCentre's <span class='attribute'>North American</span> Neighbors",
+        "replyType": [
+            "multipleNodeSelection"
+        ],
+        "replyCount": {
+            "type": "at least",
+            "value": 1
+        },
+        "answerKey": {
+            "nodes":["Robert"],
+            "ids": ["16112517"]
+        },
+        "taxonomy": {
+            "target": "neighbors",
+            "type": "TGA"
+        }
+    },
+    "S-task06": {
+        "hypothesis":"Edge Attribute Hypothesis",
+        "prompt": "Who had the <span class='attribute'>most mention interactions</span> with Jeffrey?",
+        "replyType": [
+            "singleNodeSelection"
+        ],
+        "replyCount": 1,
+        "answerKey": {
+            "nodes":["Robert"],
+            "id": ["16112517"]
+        },
+        "taxonomy": {
+            "target": "neighbors",
+            "type": "TGA"
+        }
+    },
+    "S-task07": {
+        "hypothesis":"Topology plus Simple Attributes Hypothesis",
+        "prompt": "Does Alex have <span class='attribute'>more mention</span> interactions with <span class='attribute'>North American or European</span> accounts? Who does he have the <span class='attribute'>most mentions interactions</span> with?",
+        "replyType": [
+            "singleNodeSelection","radio"
+        ],
+        "replyCount": 1,
+        "radioButtons":["European","North American"],
+        "answerKey": {
+            "value": "European"
+        },
+        "taxonomy": {
+            "target": "neighbors",
+            "type": "AGT"
+        }
+    },
+    "S-task08": {
+        "hypothesis":"Topology plus Simple Attributes Hypothesis, Common Neighbor Hypothesis",
+        "prompt": "Among all people who have interacted with both Jeffrey and Robert, who has the <span class='attribute'>most followers</span>?",
+        "replyType": [
+            "singleNodeSelection"
+        ],
+        "replyCount": 1,
+        "answerKey": {
+            "nodes":["Chris"],
+            "ids": ["1652270612"]
+        },
+        "taxonomy": {
+            "target": "neighbors",
+            "type": "TGA"
+        }
+    },
+    "S-task09": {
+        "hypothesis":"Edge Attribute Hypothesis",
+        "prompt": "What is the <span class='attribute' >most common form of interaction </span> between Evis19 and Jon? How often has this interaction happened?",
+        "replyType": [
+            "radio","value"
+        ],
+        "radioButtons":["Mentions", "Retweets"],
+        "answerKey": {
+            "radio": "mentions",
+            "valule": "mentions"
+
+        },
+        "taxonomy": {
+            "target": "neighbors",
+            "type": "AGT"
+        }
+    },
+    "S-task10": {
+        "hypothesis":"Within Node Comparison Hypothesis, Small/Large Network Hypothesis",
+        "prompt": "Select all of Noeska’s neighbors that are <span class='attribute'>people</span> and have <span class='attribute'>more friends than followers</span>",
+        "replyType": [
+            "multipleNodeSelection"
+        ],
+        "replyCount": {
+            "type": "at least",
+            "value": 1
+        },
+        "answerKey": {
+            "nodes": ["Robert","Klaus","Lonni","Anna"],
+            "ids": ["16112517","270431596","2924711485","446672281"],
+            "value": ""
+        },
+        "taxonomy": {
+            "target": "neighbors",
+            "type": "TGA"
+        }
+    },
+    "S-task11": {
+        "hypothesis":"Within Node Comparison Hypothesis,Small/Large Network Hypothesis",
+        "prompt": "Select the <span class='attribute'>people</span> who have interacted with Thomas and have <span class='attribute'>more friends than followers</span>",
+        "replyType": [
+            "multipleNodeSelection"
+        ],
+        "replyCount": {
+            "type": "at least",
+            "value": 1
+        },
+        "answerKey": {
+            "nodes": ["Anna"],
+            "ids": ["446672281"],
+            "value": ""
+        },
+        "taxonomy": {
+            "target": "neighbors",
+            "type": "TGA"
+        }
+    },
+    "S-task12": {
+        "hypothesis": "Cluster Hypothesis",
+        "prompt": "Select all the <span class='attribute'>people</span> who are in a cluster with Alex. Estimate the <span class='attribute'>average number of  followers</span> among the selected people.",
+        "replyType": ["multipleNodeSelection", "value"],
+        "replyCount": {
+            "type": "at least",
+            "value": 3
+        },
+        "answerKey": {
+            "nodes": [],
+            "value": "2000"
+        },
+        "taxonomy": {
+            "target": "clusters",
+            "type": "AGT"
+        }
+    },
+    "S-task13": {
+        "hypothesis":"Path Hypothesis, Small/Large Network Hypothesis",
+        "prompt":"What is the <span class='attribute'>institution</span> on a <span class='attribute'>shortest path </span> between Lane and Rob. What is its <span class='attribute'>continent of origin</span>?",
+        "replyType": [
+            "singleNodeSelection","radio"
+        ],
+        "radioButtons":["NA","SA","EU","AS"],
+        "answerKey": {
+            "nodes": ["EVis19","Mandy"],
+            "id":["1085199426837188600","1035496563743842300"],
+            "value": ""
+        },
+        "taxonomy": {
+            "target": "paths",
+            "type": "TGA"
+        }
+    },
+    "S-task14": {
+        "hypothesis":"Path Hypothesis, Small/Large Network Hypothesis",
+        "prompt":"What is the <span class='attribute'>institution</span> on a <span class='attribute'>shortest path </span> between Jason and Jon. What is its <span class='attribute'>continent of origin</span>?",
+        "replyType": [
+            "singleNodeSelection","radio"
+        ],
+        "radioButtons":["NA","SA","EU","AS"],
+        "answerKey": {
+            "ids": ["81658145"],
+            "nodes":["Alex"],
+            "value": ""
+        },
+        "taxonomy": {
+            "target": "paths",
+            "type": "TGA"
+        }
+    },
+    "S-task15": {
+        "hypothesis":"Topology plus Simple Attribute Hypothesis",
+        "prompt": "Of the <span class='attribute'>North Americans</span> who are <span class='attribute'>two interactions away</span> from Sereno, who has <span class='attribute'>been on twitter the longest</span>?",
+        "replyType": [
+            "singleNodeSelection"
+        ],
+        "replyCount":1,
+        "answerKey": {
+            "nodes": ["Robert"],
+            "ids":["16112517"],
+            "value": ""
+        },
+        "taxonomy": {
+            "target": "paths",
+            "type": "TGA"
+        }
+    },
+    "S-task16": {
+        "hypothesis":"Insight Generation Hypothesis",
+        "prompt": "Please explore the network freely and report on your findings. Is there anything surprising or particularly interesting in the network?  ",
+        "replyType": [
+            "text"
+        ],
+        "answerKey": {
+            "nodes": [],
+            "value": ""
+        },
+        "taxonomy": {
+            "target": "NA",
+            "type": "NA"
+        }
+    }
+
+}
+
