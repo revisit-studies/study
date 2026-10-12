@@ -45,7 +45,7 @@
         "additionalProperties": false,
         "properties": {
           "allowFailedTraining": {
-            "description": "Allow continuing with incorrect answers after attempts are exhausted. Overrides uiConfig.allowFailedTraining. Defaults to false.",
+            "description": "Allow continuing with incorrect answers after attempts are exhausted. Overrides uiConfig.allowFailedTraining. Defaults to true.",
             "type": "boolean"
           },
           "captureGamepad": {
@@ -1446,7 +1446,7 @@
       "description": "The ImageComponent interface is used to define the properties of an image component. This component is used to render an image with optional styling.\n\nFor example, to render an image with a path of `path/to/study/assets/image.jpg` and a max width of 50%, you would use the following snippet: ```json {   \"type\": \"image\",   \"path\": \"<study-name>/assets/image.jpg\",   \"style\": {     \"maxWidth\": \"50%\"   } } ```",
       "properties": {
         "allowFailedTraining": {
-          "description": "Allow continuing with incorrect answers after attempts are exhausted. Overrides uiConfig.allowFailedTraining. Defaults to false.",
+          "description": "Allow continuing with incorrect answers after attempts are exhausted. Overrides uiConfig.allowFailedTraining. Defaults to true.",
           "type": "boolean"
         },
         "captureGamepad": {
@@ -1731,7 +1731,7 @@
       "description": "An InheritedComponent is a component that inherits properties from a baseComponent. This is used to avoid repeating properties in components. This also means that components in the baseComponents object can be partially defined, while components in the components object can inherit from them and must be fully defined and include all properties (after potentially merging with a base component).",
       "properties": {
         "allowFailedTraining": {
-          "description": "Allow continuing with incorrect answers after attempts are exhausted. Overrides uiConfig.allowFailedTraining. Defaults to false.",
+          "description": "Allow continuing with incorrect answers after attempts are exhausted. Overrides uiConfig.allowFailedTraining. Defaults to true.",
           "type": "boolean"
         },
         "baseComponent": {
@@ -2333,7 +2333,7 @@
       "description": "The MarkdownComponent interface is used to define the properties of a markdown component. The components can be used to render many different things, such as consent forms, instructions, and debriefs. Additionally, you can use the markdown component to render images, videos, and other media, with supporting text. Markdown components can have responses (e.g. in a consent form), or no responses (e.g. in a help text file). Here's an example with no responses for a simple help text file:\n\n```json {   \"type\": \"markdown\",   \"path\": \"<study-name>/assets/help.md\",   \"response\": [] } ```",
       "properties": {
         "allowFailedTraining": {
-          "description": "Allow continuing with incorrect answers after attempts are exhausted. Overrides uiConfig.allowFailedTraining. Defaults to false.",
+          "description": "Allow continuing with incorrect answers after attempts are exhausted. Overrides uiConfig.allowFailedTraining. Defaults to true.",
           "type": "boolean"
         },
         "captureGamepad": {
@@ -3022,7 +3022,7 @@
       "description": "A QuestionnaireComponent is used to render simple questions that require a response. The main use case of this component type is to ask participants questions when you don't need to render a stimulus. Please note, that even though we're not using a stimulus, the responses still require a `location`. For example this could be used to collect demographic information from a participant using the following snippet:\n\n```json {   \"type\": \"questionnaire\",   \"response\": [     {       \"id\": \"gender\",       \"prompt\": \"Gender:\",       \"location\": \"belowStimulus\",       \"type\": \"checkbox\",       \"options\": [\"Man\", \"Woman\", \"Genderqueer\", \"Third-gender\", ...]     }   ] } ```",
       "properties": {
         "allowFailedTraining": {
-          "description": "Allow continuing with incorrect answers after attempts are exhausted. Overrides uiConfig.allowFailedTraining. Defaults to false.",
+          "description": "Allow continuing with incorrect answers after attempts are exhausted. Overrides uiConfig.allowFailedTraining. Defaults to true.",
           "type": "boolean"
         },
         "captureGamepad": {
@@ -3737,7 +3737,7 @@
       "description": "The ReactComponent interface is used to define the properties of a react component. This component is used to render react code with certain parameters. These parameters can be used within your react code to render different things.\n\nUnlike other types of components, the path for a React component is relative to the `src/public/` folder. Similar to our standard assets, we suggest creating a folder named `src/public/{studyName}/assets` to house all of the React component assets for a particular study. Your React component which you link to in the path must be default exported from its file.\n\nReact components created this way have a generic prop type passed to the component on render, `<StimulusParams<T>>`, which has the following types.\n\n```ts {   parameters: T;   useTrrack: (options: ConfigureTrrackOptions) => Trrack;   setAnswer: ({ status, answers }: { status: boolean, answers: Record<string, any> }) => void } ```\n\n`parameters` is the same object passed in from the ReactComponent type below, allowing you to pass options in from the config to your component. `setAnswer` is a callback function allowing the creator of the ReactComponent to programmatically set the answer. This can be useful if you don't use the default answer interface, and instead have something more unique. Call the `useTrrack` function supplied in `StimulusParams` when the component needs provenance. It creates the Trrack instance and reports apply, undo, redo, and other traversals automatically.\n\nSo, for example, if I had the following ReactComponent in my config: ```json {   \"type\": \"react-component\",   \"path\": \"my_study/CoolComponent.tsx\",   \"parameters\": {     \"name\": \"Zach\",     \"age\": 26   } } ```\n\nMy react component, CoolComponent.tsx, would exist in src/public/my_study/assets, and look something like this:\n\n```ts export default function CoolComponent({ parameters, setAnswer, useTrrack }: StimulusParams<{name: string, age: number}>) {   // render something } ```\n\nFor in depth examples, see the following studies, and their associated codebases. https://revisit.dev/study/demo-react-trrack (https://github.com/revisit-studies/study/tree/v2.4.3/src/public/demo-react-trrack/assets) https://revisit.dev/study/example-brush-interactions (https://github.com/revisit-studies/study/tree/v2.4.3/src/public/example-brush-interactions/assets)",
       "properties": {
         "allowFailedTraining": {
-          "description": "Allow continuing with incorrect answers after attempts are exhausted. Overrides uiConfig.allowFailedTraining. Defaults to false.",
+          "description": "Allow continuing with incorrect answers after attempts are exhausted. Overrides uiConfig.allowFailedTraining. Defaults to true.",
           "type": "boolean"
         },
         "captureGamepad": {
@@ -4941,7 +4941,7 @@
       "description": "The VegaComponentConfig interface is used to define the properties of a Vega Component. This component is used to render a Vega/Vega-Lite Component by adding Vega/Vega-Lite specs within the reVISit config itself.\n\nTo do this, you would use the following snippet: ```json {   \"type\": \"vega\",   \"config\": { ... vega specs here ...} } ```\n\nIf you are using Vega, you can use signals with `revisitAnswer` to send the user's responses back to the reVISit. For example, you can use the following snippet in your Vega spec's signals section: ```json {   \"signals\": [     {       \"name\": \"revisitAnswer\",       \"value\": {},       \"on\": [         {           \"events\": \"rect:click\",           \"update\": \"{responseId: 'vegaDemoResponse1', response: datum.category}\"         }       ]     }   ] } ``` In this example, when a user clicks on a rectangle in the Vega chart, the `revisitAnswer` signal is updated with the responseId and response.",
       "properties": {
         "allowFailedTraining": {
-          "description": "Allow continuing with incorrect answers after attempts are exhausted. Overrides uiConfig.allowFailedTraining. Defaults to false.",
+          "description": "Allow continuing with incorrect answers after attempts are exhausted. Overrides uiConfig.allowFailedTraining. Defaults to true.",
           "type": "boolean"
         },
         "captureGamepad": {
@@ -5133,7 +5133,7 @@
       "description": "The VegaComponentPath interface is used to define the properties of a Vega Component. This component is used to render a Vega/Vega-Lite Component with path pointing to your Vega/Vega-Lite specs file.\n\nFor example, to render a vega based stimuli with a path of `<study-name>/assets/vega.spec.json`, you would use the following snippet: ```json {   \"type\": \"vega\",   \"path\": \"<study-name>/assets/vega.spec.json\", } ```\n\nIf you are using Vega, you can use signals with `revisitAnswer` to send the user's responses back to the reVISit. For example, you can use the following snippet in your Vega spec file's signals section: ```json {   \"signals\": [     {       \"name\": \"revisitAnswer\",       \"value\": {},       \"on\": [         {           \"events\": \"rect:click\",           \"update\": \"{responseId: 'vegaDemoResponse1', response: datum.category}\"         }       ]     }   ] } ```  In this example, when a user clicks on a rectangle in the Vega chart, the `revisitAnswer` signal is updated with the responseId and response. This signal is then passed to reVISit as the participant's response.",
       "properties": {
         "allowFailedTraining": {
-          "description": "Allow continuing with incorrect answers after attempts are exhausted. Overrides uiConfig.allowFailedTraining. Defaults to false.",
+          "description": "Allow continuing with incorrect answers after attempts are exhausted. Overrides uiConfig.allowFailedTraining. Defaults to true.",
           "type": "boolean"
         },
         "captureGamepad": {
@@ -5325,7 +5325,7 @@
       "description": "The VideoComponent interface is used to define the properties of a video component. This component is used to render a video with optional controls.\n\nMost often, video components will be used for trainings, and will have a `forceCompletion` field set to true. This will prevent the participant from moving on until the video has finished playing.\n\nAs such, the `forceCompletion` field is set to true by default, and the `withTimeline` field is set to false by default.\n\nFor example, to render a training video with a path of `<study-name>/assets/video.mp4`, you would use the following snippet: ```json {   \"type\": \"video\",   \"path\": \"<study-name>/assets/video.mp4\", } ```",
       "properties": {
         "allowFailedTraining": {
-          "description": "Allow continuing with incorrect answers after attempts are exhausted. Overrides uiConfig.allowFailedTraining. Defaults to false.",
+          "description": "Allow continuing with incorrect answers after attempts are exhausted. Overrides uiConfig.allowFailedTraining. Defaults to true.",
           "type": "boolean"
         },
         "captureGamepad": {
@@ -5521,7 +5521,7 @@
       "description": "The WebsiteComponent interface is used to define the properties of a website component. A WebsiteComponent is used to render an iframe with a website inside of it. This can be used to display an external website or an html file that is located in the public folder. ```json {   \"type\": \"website\",   \"path\": \"<study-name>/assets/website.html\" } ```\n\nTo pass a data from the config to the website, you can use the `parameters` field as below:\n\n```json {   \"type\": \"website\",   \"path\": \"<study-name>/website.html\",   \"parameters\": {     \"barData\": [0.32, 0.01, 1.2, 1.3, 0.82, 0.4, 0.3]   },   \"response\": [     {       \"id\": \"barChart\",       \"prompt\": \"Your selected answer:\",       \"location\": \"belowStimulus\",       \"type\": \"reactive\"     }   ] } ``` In the `website.html` file, by including `revisit-communicate.js`, you can use the `Revisit.onDataReceive` method to retrieve the data, and `Revisit.postAnswers` to send the user's responses back to the reVISit as shown in the example below:\n\n```html <script src=\"../../revisitUtilities/revisit-communicate.js\"></script> <script> Revisit.onDataReceive((data) => {     const barData = data['barData'];     ...   });\n\n  // Call out that 'barChart' needs to match ID in 'response' object   Revisit.postAnswers({ barChart: userAnswer });   </script> ```\n\nIf the html website implements Trrack provenance tracking, create the instance through `Revisit.createTrrack`. reVISit subscribes before returning the instance and automatically reports apply, undo, redo, and other traversals.\n\n```ts const trrack = Revisit.createTrrack({     initializeTrrack,     initialState,     registry   }); ```\n\nAs an alternative to passing data over `Revisit.onDataReceive`, you can set `templated` to true. The HTML file is then fetched and compiled as a Handlebars template before it is rendered, exactly like a markdown component's file, so `parameters` (and the `{{REVISIT.*}}` data frame and the `lookupAnswers`, `lookupParameters`, and `lookupCorrectAnswer` helpers and their `Rel` forms) can be substituted directly into the markup:\n\n```json {   \"type\": \"website\",   \"path\": \"<study-name>/assets/chart.html\",   \"templated\": true,   \"parameters\": {     \"country\": \"France\",     \"barData\": \"[0.32,0.01,1.2]\"   } } ```\n\n```html <h1>Capital of {{country}}</h1> <script>   // barData is a pre-serialized JSON string. Triple braces preserve it without HTML escaping.   // Only insert trusted parameters this way, never participant answers.   const barData = {{{barData}}}; </script> ```\n\nA few things to know about templated websites:\n- The file is rendered from its compiled contents rather than from its URL, so it is compiled once when the trial loads and is not re-compiled as answers change.\n- Relative paths inside the file (scripts, stylesheets, images) keep working; reVISit injects a `<base>` tag pointing at the file's folder.\n- `revisit-communicate.js` keeps working, but the file must reference the shared `revisitUtilities/revisit-communicate.js` rather than an old vendored copy of it.\n- `templated` is ignored when `path` points at an external website.",
       "properties": {
         "allowFailedTraining": {
-          "description": "Allow continuing with incorrect answers after attempts are exhausted. Overrides uiConfig.allowFailedTraining. Defaults to false.",
+          "description": "Allow continuing with incorrect answers after attempts are exhausted. Overrides uiConfig.allowFailedTraining. Defaults to true.",
           "type": "boolean"
         },
         "captureGamepad": {

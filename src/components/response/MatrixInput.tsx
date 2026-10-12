@@ -246,7 +246,6 @@ export function MatrixInput({
           display: 'grid',
           gridTemplateColumns: columns,
           gridTemplateRows: 'auto 1fr',
-          width: '100%',
           '--matrix-min-width': `${minWidth}px`,
         } as CSSProperties}
         m="md"

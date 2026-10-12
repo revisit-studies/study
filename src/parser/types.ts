@@ -1374,7 +1374,7 @@ export interface BaseIndividualComponent {
   hideCheckAnswerButton?: boolean;
   /** The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig. */
   trainingAttempts?: number;
-  /** Allow continuing with incorrect answers after attempts are exhausted. Overrides uiConfig.allowFailedTraining. Defaults to false. */
+  /** Allow continuing with incorrect answers after attempts are exhausted. Overrides uiConfig.allowFailedTraining. Defaults to true. */
   allowFailedTraining?: boolean;
   /** Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig. */
   recordAudio?: boolean;
