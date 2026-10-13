@@ -230,7 +230,6 @@
           "prompt": "For each animal, select all that apply.",
           "location": "belowStimulus",
           "type": "matrix-checkbox",
-          "feedbackPosition": "left",
           "answerOptions": [
             "Has wings",
             "Has fur",

@@ -422,7 +422,6 @@ export function ResponseSwitcher({
         index={index}
         enumerateQuestions={enumerateQuestions}
         rowFeedback={matrixRowFeedback}
-        rowFeedbackPosition={response.type === 'matrix-checkbox' ? response.feedbackPosition ?? 'right' : 'right'}
       />
       )}
       {response.type === 'buttons' && (

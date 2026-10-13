@@ -2573,14 +2573,6 @@
           "description": "Exclude response from randomization. If present, will override the `responseOrder` randomization setting in the components. Defaults to false.",
           "type": "boolean"
         },
-        "feedbackPosition": {
-          "description": "Where per-row correctness feedback is displayed. Defaults to the right of the matrix.",
-          "enum": [
-            "left",
-            "right"
-          ],
-          "type": "string"
-        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"

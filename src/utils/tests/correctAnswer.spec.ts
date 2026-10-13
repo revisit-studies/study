@@ -296,6 +296,21 @@ describe('correctAnswer utilities', () => {
       expect(getMatrixCheckboxRowStatuses(response, { 'row-1': '4' }, answer)).toEqual({ 'row-1': 'incorrect' });
     });
 
+    test('matches flat matrix answers using the canonical grader string comparison', () => {
+      const response = {
+        type: 'matrix-checkbox' as const,
+        id: 'matrix',
+        prompt: '',
+        answerOptions: ['4'],
+        questionOptions: ['row-1'],
+      };
+      const userAnswer = { 'row-1': '4' };
+      const answer = { id: 'matrix', answer: [4] };
+
+      expect(responseAnswerIsCorrect(userAnswer, answer.answer)).toBe(true);
+      expect(getMatrixCheckboxRowStatuses(response, userAnswer, answer)).toEqual({ 'row-1': 'correct' });
+    });
+
     test('grades keyed matrix answers consistently with the canonical grader', () => {
       const response = {
         type: 'matrix-checkbox' as const,
@@ -348,6 +363,46 @@ describe('correctAnswer utilities', () => {
       ];
 
       expect(componentAnswersAreCorrect(userAnswers, correctAnswers)).toBe(false);
+    });
+
+    test('grades matrix rows in configured question order for integer-like IDs', () => {
+      const response: Extract<Response, { type: 'matrix-checkbox' }> = {
+        id: 'matrix',
+        prompt: '',
+        type: 'matrix-checkbox',
+        answerOptions: ['A', 'B'],
+        questionOptions: ['10', '2'],
+      };
+      const matrixUserAnswer = { 10: 'A', 2: 'B' };
+      const userAnswer = { matrix: matrixUserAnswer };
+      const correctAnswers = [{ id: 'matrix', answer: [['A'], ['B']] }];
+
+      expect(responseAnswerIsCorrect(matrixUserAnswer, correctAnswers[0].answer)).toBe(false);
+      expect(responseAnswerIsCorrect(matrixUserAnswer, correctAnswers[0].answer, undefined, undefined, { matrixQuestionIds: ['10', '2'] })).toBe(true);
+      expect(componentAnswersAreCorrect(userAnswer, correctAnswers, [response])).toBe(true);
+      expect(getMatrixCheckboxRowStatuses(response, matrixUserAnswer, correctAnswers[0])).toEqual({
+        10: 'correct',
+        2: 'correct',
+      });
+    });
+
+    test('keeps configured row order when grading a list-only matrix alternative', () => {
+      const response: Extract<Response, { type: 'matrix-checkbox' }> = {
+        id: 'matrix',
+        prompt: '',
+        type: 'matrix-checkbox',
+        answerOptions: ['A', 'B'],
+        questionOptions: ['10', '2'],
+      };
+      const submitted = { 10: 'A', 2: 'B' };
+      const correctAnswers: Answer[] = [{ id: 'matrix', acceptableAnswers: [[['A'], ['B']]] }];
+
+      expect(responseAnswerIsCorrect(submitted, undefined, undefined, undefined, {
+        acceptableAnswers: correctAnswers[0].acceptableAnswers,
+        matrixQuestionIds: ['10', '2'],
+      })).toBe(true);
+      expect(componentAnswersAreCorrect({ matrix: submitted }, correctAnswers, [response])).toBe(true);
+      expect(componentAnswersAreCorrect({ matrix: { 10: 'B', 2: 'A' } }, correctAnswers, [response])).toBe(false);
     });
 
     test('uses acceptable range settings from correct answer entries', () => {

@@ -1,5 +1,5 @@
 import type { IndividualComponent, Response, StoredAnswer } from '../parser/types';
-import { responseAnswerIsCorrect, shouldIgnoreArrayOrder } from './correctAnswer';
+import { getMatrixQuestionIds, responseAnswerIsCorrect, shouldIgnoreArrayOrder } from './correctAnswer';
 import { getApplicableCorrectAnswers } from './responseVisibility';
 
 export function componentAnswersAreCorrect(
@@ -25,6 +25,7 @@ export function componentAnswersAreCorrect(
           ignoreArrayOrder: shouldIgnoreArrayOrder(response),
           acceptableAnswers: correctAnswer.acceptableAnswers,
           caseSensitive: correctAnswer.caseSensitive,
+          matrixQuestionIds: getMatrixQuestionIds(response),
         },
       )
     ) {

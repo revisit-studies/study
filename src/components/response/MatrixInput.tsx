@@ -119,7 +119,6 @@ export function MatrixInput({
   error,
   enumerateQuestions,
   rowFeedback,
-  rowFeedbackPosition = 'right',
 }: {
   response: MatrixResponse;
   answer: { value?: Record<string, string> };
@@ -128,7 +127,6 @@ export function MatrixInput({
   error?: string | null;
   enumerateQuestions: boolean;
   rowFeedback?: Record<string, AnswerStatus>;
-  rowFeedbackPosition?: 'left' | 'right';
 }) {
   const { setMatrixAnswersRadio, setMatrixAnswersCheckbox } = useStoreActions();
   const storeDispatch = useStoreDispatch();
@@ -213,18 +211,11 @@ export function MatrixInput({
     (choice) => isMatrixDontKnowValue(choice.value) || isMatrixDontKnowValue(choice.label),
   );
   const separatorAfterIndex = dontKnowIndex > 0 ? dontKnowIndex - 1 : -1;
-  const feedbackOnLeft = !!rowFeedback && rowFeedbackPosition === 'left';
-  const questionColumn = feedbackOnLeft ? 2 : 1;
-  const answerColumn = feedbackOnLeft ? 3 : 2;
-  const rightLabelColumn = feedbackOnLeft ? 4 : 3;
-  const feedbackColumn = feedbackOnLeft ? 1 : (hasRightQuestionLabels ? 4 : 3);
-  const feedbackColWidth = 'minmax(110px, max-content)';
-  const columns = rowFeedback
-    ? feedbackOnLeft
-      ? `${feedbackColWidth} auto 1fr${hasRightQuestionLabels ? ' auto' : ''}`
-      : `auto 1fr${hasRightQuestionLabels ? ' auto' : ''} ${feedbackColWidth}`
-    : hasRightQuestionLabels ? 'auto 1fr auto' : 'auto 1fr';
-  const minWidth = 140 + (_n * 80) + (hasRightQuestionLabels ? 140 : 0) + (rowFeedback ? 120 : 0);
+  const questionColumn = 1;
+  const answerColumn = 2;
+  const rightLabelColumn = 3;
+  const columns = hasRightQuestionLabels ? 'auto 1fr auto' : 'auto 1fr';
+  const minWidth = 140 + (_n * 80) + (hasRightQuestionLabels ? 140 : 0);
   return (
     <>
       {prompt.length > 0 && (
@@ -343,8 +334,9 @@ export function MatrixInput({
                 minHeight: '80px',
                 width: '100%',
                 display: 'flex',
-                alignItems: 'safe center',
-                justifyContent: 'end',
+                flexDirection: rowFeedback ? 'column' : 'row',
+                alignItems: rowFeedback ? 'flex-end' : 'safe center',
+                justifyContent: rowFeedback ? 'center' : 'end',
                 borderRight: '1px solid var(--mantine-color-default-border)',
                 backgroundColor: (idx + 1) % 2 === 0 ? 'light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-6))' : 'var(--mantine-color-body)',
               }}
@@ -357,6 +349,18 @@ export function MatrixInput({
                 label={(questionsByValue[questionKey]?.leftLabel || questionsByValue[questionKey]?.label || questionKey)}
                 infoText={questionsByValue[questionKey]?.infoText}
               />
+              {rowFeedback && (
+                <Text
+                  role="status"
+                  size="xs"
+                  c={rowFeedback[questionKey] === 'correct' ? 'green' : rowFeedback[questionKey] === 'partially correct' ? 'orange' : 'red'}
+                  style={{ whiteSpace: 'nowrap' }}
+                  mt={4}
+                  data-testid={`matrix-row-feedback-${questionKey}`}
+                >
+                  {rowFeedback[questionKey]}
+                </Text>
+              )}
             </Box>
           ))}
         </div>
@@ -457,32 +461,6 @@ export function MatrixInput({
                 )}
               </Box>
             ))}
-          </div>
-        )}
-        {rowFeedback && (
-          <div
-            data-testid="matrix-row-feedback"
-            style={{
-              display: 'grid',
-              gridTemplateRows: `repeat(${_m}, 1fr)`,
-              gridColumn: feedbackColumn,
-              gridRow: 2,
-            }}
-          >
-            {orderedQuestions.map((questionKey) => {
-              const status = rowFeedback[questionKey];
-              return (
-                <Text
-                  key={`question-${questionKey}-feedback`}
-                  role="status"
-                  size="xs"
-                  c={status === 'correct' ? 'green' : status === 'partially correct' ? 'orange' : 'red'}
-                  style={{ alignSelf: 'center', whiteSpace: 'nowrap' }}
-                >
-                  {status}
-                </Text>
-              );
-            })}
           </div>
         )}
       </Box>

@@ -325,6 +325,35 @@ describe('ResponseVisualization', () => {
     ]);
   });
 
+  test('colors matrix alternatives using configured order for numeric row IDs', () => {
+    const participant = {
+      ...answeredParticipant,
+      answers: {
+        trial1_0: {
+          ...answeredParticipant.answers.trial1_0,
+          answer: { q1: { 10: 'A', 2: 'B' } },
+        },
+      },
+    } as unknown as ParticipantData;
+    const html = renderToStaticMarkup(
+      <ResponseVisualization
+        {...baseProps}
+        participantData={[participant]}
+        response={{
+          id: 'q1', type: 'matrix-checkbox', prompt: '', questionOptions: ['10', '2'], answerOptions: ['A', 'B'],
+        }}
+        trialConfig={{ ...mockTrialConfig, correctAnswer: [{ id: 'q1', acceptableAnswers: [[['A'], ['B']]] }] }}
+      />,
+    );
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const spec = JSON.parse(doc.querySelector('[data-vega-spec]')!.getAttribute('data-vega-spec')!);
+
+    expect(spec.data.values).toEqual([
+      { question: '2', value: 'B', result: 'correct' },
+      { question: '10', value: 'A', result: 'correct' },
+    ]);
+  });
+
   test('metadata type: shows icon and config JSON code block', () => {
     const html = renderToStaticMarkup(
       <ResponseVisualization

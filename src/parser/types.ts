@@ -849,8 +849,6 @@ export interface MatrixRadioResponse extends BaseMatrixResponse {
  */
 export interface MatrixCheckboxResponse extends BaseMatrixResponse {
   type: 'matrix-checkbox';
-  /** Where per-row correctness feedback is displayed. Defaults to the right of the matrix. */
-  feedbackPosition?: 'left' | 'right';
   /** The default value of the response by question key. Provide an object where each key is a question value and each value is an array of selected answer option values. */
   default?: Record<string, string[]>;
   /** The minimum amount of answers given per row for the matrix. */

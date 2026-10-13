@@ -1,6 +1,8 @@
 import type { Answer, Response } from '../parser/types';
 import type { StoredAnswer } from '../store/types';
-import { compareResponseValues, responseAnswerIsCorrect, shouldIgnoreArrayOrder } from './correctAnswer';
+import {
+  compareResponseValues, getMatrixQuestionIds, responseAnswerIsCorrect, shouldIgnoreArrayOrder,
+} from './correctAnswer';
 import { usesStandaloneDontKnowField } from '../components/response/responseValidation';
 
 export const visibilityControllerTypes = new Set(['radio', 'dropdown', 'buttons', 'checkbox', 'shortText', 'numerical', 'date']);
@@ -56,6 +58,7 @@ export function resolveResponseVisibility(
               ignoreArrayOrder: shouldIgnoreArrayOrder(controller),
               acceptableAnswers: correctAnswer.acceptableAnswers,
               caseSensitive: correctAnswer.caseSensitive,
+              matrixQuestionIds: getMatrixQuestionIds(controller),
             },
           ) === condition.value;
         } else {

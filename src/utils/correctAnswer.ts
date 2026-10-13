@@ -51,13 +51,26 @@ export function getMatrixCheckboxRowStatuses(
       ? (userRows[question] as string).split('|')
       : [];
     const expectedRows = answerSets.map((answerSet) => {
-      if (Array.isArray(answerSet)) return answerSet[index];
-      return answerSet && typeof answerSet === 'object' ? (answerSet as Record<string, unknown>)[question] : undefined;
-    }).filter((value) => value !== undefined);
-    const matchesExactly = expectedRows.some((expected) => (Array.isArray(expected)
-      ? matrixCheckboxSelectionsAreEqual(userRows[question], expected)
-      : isEqual(userRows[question], expected)));
-    const matchesPartially = expectedRows.some((expected) => {
+      if (Array.isArray(answerSet)) {
+        return {
+          value: answerSet[index],
+          compareAsMatrixRadio: !Array.isArray(answerSet[0]),
+        };
+      }
+      return {
+        value: answerSet && typeof answerSet === 'object'
+          ? (answerSet as Record<string, unknown>)[question]
+          : undefined,
+        compareAsMatrixRadio: false,
+      };
+    }).filter(({ value }) => value !== undefined);
+    const matchesExactly = expectedRows.some(({ value: expected, compareAsMatrixRadio }) => {
+      if (compareAsMatrixRadio) return String(userRows[question]) === String(expected);
+      return Array.isArray(expected)
+        ? matrixCheckboxSelectionsAreEqual(userRows[question], expected)
+        : isEqual(userRows[question], expected);
+    });
+    const matchesPartially = expectedRows.some(({ value: expected }) => {
       const expectedValues = Array.isArray(expected)
         ? expected
         : typeof expected === 'string' && expected.includes('|') ? expected.split('|') : [expected];
@@ -107,17 +120,42 @@ export function shouldIgnoreArrayOrder(response?: Response) {
   return response?.type === 'checkbox' || response?.type === 'dropdown';
 }
 
+export function getMatrixQuestionIds(response?: Response): string[] | undefined {
+  return response?.type === 'matrix-checkbox' || response?.type === 'matrix-radio'
+    ? response.questionOptions.map(parseStringOptionValue)
+    : undefined;
+}
+
+/** Use the complete accepted rule when no preferred exact answer is configured. */
+export function getCorrectAnswerDisplayValue(rule?: Answer): unknown {
+  if (rule?.answer !== undefined) return rule.answer;
+  const { acceptableAnswers, acceptableLow, acceptableHigh } = rule ?? {};
+  if (acceptableAnswers === undefined && acceptableLow === undefined && acceptableHigh === undefined) return undefined;
+  if (acceptableAnswers !== undefined && acceptableLow === undefined && acceptableHigh === undefined) return acceptableAnswers;
+  return {
+    ...(acceptableAnswers !== undefined ? { acceptableAnswers } : {}),
+    ...(acceptableLow !== undefined ? { acceptableLow } : {}),
+    ...(acceptableHigh !== undefined ? { acceptableHigh } : {}),
+  };
+}
+
 export function responseAnswerIsCorrect(
   responseUserAnswer: StoredAnswer['answer'][string] | undefined,
   responseCorrectAnswer: Answer['answer'],
   acceptableLow?: number,
   acceptableHigh?: number,
-  options: { ignoreArrayOrder?: boolean; acceptableAnswers?: Answer['acceptableAnswers']; caseSensitive?: boolean } = {},
+  options: {
+    ignoreArrayOrder?: boolean;
+    acceptableAnswers?: Answer['acceptableAnswers'];
+    caseSensitive?: boolean;
+    matrixQuestionIds?: string[];
+  } = {},
 ): boolean {
   if (responseUserAnswer === undefined) return false;
   if (options.acceptableAnswers?.some((answer) => responseAnswerIsCorrect(responseUserAnswer, answer, undefined, undefined, {
     ignoreArrayOrder: options.ignoreArrayOrder,
     caseSensitive: options.caseSensitive,
+    matrixQuestionIds: options.matrixQuestionIds,
   }))) return true;
 
   // Numeric bounds define accepted answers independently of a preferred answer.
@@ -157,7 +195,15 @@ export function responseAnswerIsCorrect(
 
   // Handle array of object (e.g. matrix-radio and matrix-checkbox)
   if (responseUserAnswer !== null && typeof responseUserAnswer === 'object' && !Array.isArray(responseUserAnswer) && Array.isArray(responseCorrectAnswer)) {
-    const userAnswerArray = Object.values(responseUserAnswer);
+    const userAnswerObject = responseUserAnswer as Record<string, unknown>;
+    const userAnswerArray = options.matrixQuestionIds
+      ? options.matrixQuestionIds.map((questionId) => userAnswerObject[questionId])
+      : Object.values(userAnswerObject);
+
+    if (options.matrixQuestionIds && (
+      Object.keys(userAnswerObject).length !== options.matrixQuestionIds.length
+      || options.matrixQuestionIds.some((questionId) => !Object.prototype.hasOwnProperty.call(userAnswerObject, questionId))
+    )) return false;
 
     if (userAnswerArray.length !== responseCorrectAnswer.length) return false;
 

@@ -979,6 +979,28 @@ describe('ResponseBlock feedback on Next', () => {
     expect(mockNavigate).toHaveBeenCalledTimes(1);
   });
 
+  test('passes configured matrix row IDs through the live Check Answer grading path', async () => {
+    mockStoredAnswerData.formOrder = undefined;
+    mockAnswerField.values = { matrix: { 10: 'A', 2: 'B' } };
+    const config: IndividualComponent = {
+      ...baseConfig,
+      provideFeedback: true,
+      response: [{
+        id: 'matrix', type: 'matrix-checkbox', prompt: '', questionOptions: ['10', '2'], answerOptions: ['A', 'B'],
+      }],
+      correctAnswer: [{ id: 'matrix', acceptableAnswers: [[['A'], ['B']]] }],
+    };
+    vi.mocked(responseAnswerIsCorrect).mockImplementation((_answer, _expected, _low, _high, options) => options?.matrixQuestionIds?.join(',') === '10,2');
+    const { store } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+
+    act(() => capturedNextButtonProps.onCheckAnswer?.());
+
+    expect(responseAnswerIsCorrect).toHaveBeenCalledWith({ 10: 'A', 2: 'B' }, undefined, undefined, undefined, expect.objectContaining({
+      matrixQuestionIds: ['10', '2'], acceptableAnswers: [[['A'], ['B']]],
+    }));
+    expect(store.getState().checkAnswer.trial1_0).toMatchObject({ correct: true, responses: { matrix: true } });
+  });
+
   test.each([undefined, false])('answer-level feedback enables checking with provideFeedback=%s', async (provideFeedback) => {
     const { container, store } = await renderWithStore(
       <ResponseBlock config={{ ...answerFeedbackConfig, provideFeedback }} location="belowStimulus" />,

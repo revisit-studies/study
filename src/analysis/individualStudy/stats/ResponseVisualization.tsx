@@ -11,7 +11,7 @@ import {
 import { useMemo } from 'react';
 import { VegaLite, VisualizationSpec } from 'react-vega';
 import { IndividualComponent, ParticipantData, Response } from '../../../parser/types';
-import { responseAnswerIsCorrect } from '../../../utils/correctAnswer';
+import { getMatrixQuestionIds, responseAnswerIsCorrect } from '../../../utils/correctAnswer';
 import { parseDateValue } from '../../../utils/dateTimeValidation';
 
 export function ResponseVisualization({
@@ -72,6 +72,7 @@ export function ResponseVisualization({
             ignoreArrayOrder: response.type === 'checkbox' || response.type === 'dropdown',
             acceptableAnswers: correctAnswer.acceptableAnswers,
             caseSensitive: correctAnswer.caseSensitive,
+            matrixQuestionIds: getMatrixQuestionIds(response),
           },
         ) ? 'correct' : 'incorrect';
       }
@@ -80,7 +81,7 @@ export function ResponseVisualization({
     })).flat();
 
     return data.filter((row) => row[response.id] !== undefined && row[response.id] !== null && row[response.id] !== '');
-  }, [participantData, response.type, trialId, correctAnswer, response.id]);
+  }, [participantData, response, trialId, correctAnswer]);
 
   // Completion times for the metadata timing histogram
   const timingData = useMemo(() => (response.type === 'metadata'

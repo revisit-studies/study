@@ -22,7 +22,7 @@ vi.mock('@mantine/core', () => {
       <input readOnly type="checkbox" checked={checked} value={value} />
     ),
     Radio,
-    Text: ({ children, role }: { children: ReactNode; role?: string }) => <span role={role}>{children}</span>,
+    Text: ({ children, role, ...props }: { children: ReactNode; role?: string; [key: string]: unknown }) => <span role={role} {...props}>{children}</span>,
   };
 });
 
@@ -79,7 +79,7 @@ describe('MatrixInput', () => {
     expect(markup).toContain('data-radio-value=""');
   });
 
-  it('renders row feedback in a separate track to the right of the unchanged matrix grid', () => {
+  it('renders row feedback below each matrix row label', () => {
     const response: MatrixResponse = {
       id: 'matrix',
       prompt: '',
@@ -102,32 +102,9 @@ describe('MatrixInput', () => {
     expect(markup).toContain('correct');
     expect(markup).toContain('partially correct');
     expect(markup).toContain('incorrect');
-    expect(markup).toContain('grid-template-columns:auto 1fr minmax(110px, max-content);');
-    expect(markup).toContain('data-testid="matrix-row-feedback"');
-    expect(markup).toContain('grid-column:3;grid-row:2');
-  });
-
-  it('can place row feedback to the left of the unchanged matrix grid', () => {
-    const response: MatrixResponse = {
-      id: 'matrix',
-      prompt: '',
-      type: 'matrix-checkbox',
-      answerOptions: ['A', 'B'],
-      questionOptions: ['row-1'],
-    };
-    const markup = renderToStaticMarkup(
-      <MatrixInput
-        response={response}
-        answer={{ value: { 'row-1': 'A' } }}
-        index={0}
-        disabled={false}
-        enumerateQuestions={false}
-        rowFeedback={{ 'row-1': 'correct' }}
-        rowFeedbackPosition="left"
-      />,
-    );
-
-    expect(markup).toContain('grid-template-columns:minmax(110px, max-content) auto 1fr;');
-    expect(markup).toContain('grid-column:1;grid-row:2');
+    expect(markup).toContain('grid-template-columns:auto 1fr;');
+    expect(markup).toContain('flex-direction:column');
+    expect(markup).toContain('data-testid="matrix-row-feedback-row-1"');
+    expect(markup).not.toContain('data-testid="matrix-row-feedback"');
   });
 });

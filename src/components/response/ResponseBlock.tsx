@@ -43,7 +43,7 @@ import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { useNextStep } from '../../store/hooks/useNextStep';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import {
-  AnswerStatus, evaluateSelectionAnswer, getMatrixCheckboxRowStatuses, responseAnswerIsCorrect,
+  AnswerStatus, evaluateSelectionAnswer, getMatrixCheckboxRowStatuses, getMatrixQuestionIds, responseAnswerIsCorrect,
 } from '../../utils/correctAnswer';
 import { getCustomResponseModule, getCustomResponseModuleLoadError } from './customResponseModules';
 import { appendStimulusShowErrorsToGraph } from './stimulusProvenance';
@@ -641,6 +641,7 @@ export function ResponseBlock({
             ignoreArrayOrder: response?.type === 'checkbox' || response?.type === 'dropdown',
             acceptableAnswers: configCorrectAnswer.acceptableAnswers,
             caseSensitive: configCorrectAnswer.caseSensitive,
+            matrixQuestionIds: getMatrixQuestionIds(response),
           },
         )];
       }),
