@@ -1,6 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import { test, expect, Page } from '@playwright/test';
 import {
+  moveRankingItem,
   nextClick,
   readParticipantRecording,
   readStoredComponentTiming,
@@ -427,6 +428,58 @@ test('Test questionnaire component with responses and randomizing questions and 
   await page.getByRole('radio', { name: '5' }).nth(0).click();
 
   // Go to the next page
+  await nextClick(page);
+
+  // Answer Feedback: submit a complete but incorrect set, then correct it.
+  await page.getByRole('checkbox', { name: 'A', exact: true }).check();
+  await page.getByRole('checkbox', { name: 'C', exact: true }).check();
+  await page.getByRole('checkbox', { name: '4', exact: true }).check();
+  const matrixCheckboxes = page.locator('#checkbox-matrix input[type="checkbox"]');
+  await expect(matrixCheckboxes).toHaveCount(20);
+  for (let row = 0; row < 5; row += 1) {
+    await matrixCheckboxes.nth(row * 4).check();
+  }
+
+  const colorInput = page.locator('#dropdown-set input:not([type="hidden"])');
+  const yellow = page.getByRole('option', { name: 'Yellow' });
+  await colorInput.focus();
+  await page.keyboard.press('ArrowDown');
+  await expect(yellow).toBeVisible();
+  await page.getByRole('option', { name: 'Red' }).click();
+  await page.getByRole('option', { name: 'Green' }).click();
+  await page.keyboard.press('Escape');
+  await moveRankingItem(page, 'A', 'available', 'selected');
+  await moveRankingItem(page, 'C', 'available', 'selected');
+  const checkAnswer = page.getByRole('button', { name: 'Check Answer', exact: true });
+  await checkAnswer.click();
+  await expect(page.getByRole('alert')).toHaveCount(5);
+
+  await page.getByRole('checkbox', { name: 'A', exact: true }).uncheck();
+  await page.getByRole('checkbox', { name: 'C', exact: true }).uncheck();
+  await page.getByRole('checkbox', { name: 'C', exact: true }).check();
+  await page.getByRole('checkbox', { name: 'D', exact: true }).check();
+  for (const option of ['-4', '|4|', '16/4']) {
+    await page.getByRole('checkbox', { name: option, exact: true }).check();
+  }
+  const acceptedTraits = [[1, 2], [1, 2], [1, 2], [1, 2, 3], [0, 2]];
+  await page.locator('#checkbox-matrix').getByRole('button', { name: 'Clear selection' }).click();
+  for (let row = 0; row < acceptedTraits.length; row += 1) {
+    for (const column of acceptedTraits[row]) {
+      await matrixCheckboxes.nth((row * 4) + column).check();
+    }
+  }
+  await colorInput.focus();
+  await page.keyboard.press('ArrowDown');
+  await expect(yellow).toBeVisible();
+  await page.getByRole('option', { name: 'Red' }).click();
+  await yellow.click();
+  await page.keyboard.press('Escape');
+  await expect(yellow).toBeHidden();
+  await moveRankingItem(page, 'C', 'selected', 'available');
+  await moveRankingItem(page, 'B', 'available', 'selected');
+  await checkAnswer.click();
+  await expect(page.getByRole('alert')).toHaveCount(5);
+  await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeEnabled();
   await nextClick(page);
 
   // Check that the thank you message is displayed

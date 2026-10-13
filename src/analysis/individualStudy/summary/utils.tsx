@@ -4,7 +4,7 @@ import {
   ComponentData, OverviewData, ParticipantCounts, ResponseData,
 } from '../../types';
 import { MatrixResponse, Response, StudyConfig } from '../../../parser/types';
-import { responseAnswerIsCorrect, shouldIgnoreArrayOrder } from '../../../utils/correctAnswer';
+import { getMatrixQuestionIds, responseAnswerIsCorrect, shouldIgnoreArrayOrder } from '../../../utils/correctAnswer';
 import { getApplicableCorrectAnswers } from '../../../utils/responseVisibility';
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 import { getMatrixAnswerOptions } from '../../../utils/responseOptions';
@@ -194,7 +194,12 @@ function calculateCorrectnessStats(
         correctEntry.answer,
         correctEntry.acceptableLow,
         correctEntry.acceptableHigh,
-        { ignoreArrayOrder: shouldIgnoreArrayOrder(response) },
+        {
+          ignoreArrayOrder: shouldIgnoreArrayOrder(response),
+          acceptableAnswers: correctEntry.acceptableAnswers,
+          caseSensitive: correctEntry.caseSensitive,
+          matrixQuestionIds: getMatrixQuestionIds(response),
+        },
       );
 
       if (isCorrect) {

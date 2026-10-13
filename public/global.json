@@ -41,6 +41,7 @@
     "demo-templating",
     "demo-form-elements",
     "demo-training",
+    "demo-answer-feedback",
     "demo-html-trrack",
     "demo-svelte-trrack",
     "demo-react-trrack",
@@ -162,6 +163,10 @@
     "demo-dark-mode": {
       "tab": "Demo Studies",
       "path": "demo-dark-mode/config.json"
+    },
+    "demo-answer-feedback": {
+      "tab": "Demo Studies",
+      "path": "demo-answer-feedback/config.json"
     },
     "demo-training": {
       "tab": "Demo Studies",

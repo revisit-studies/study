@@ -742,6 +742,23 @@ function verifyKeyMappings(
   });
 }
 
+function verifyCorrectAnswers(
+  basePath: string,
+  component: Partial<IndividualComponent>,
+  errors: ParsedConfig<StudyConfig>['errors'],
+) {
+  component.correctAnswer?.forEach((answer, index) => {
+    if (Object.hasOwn(answer, 'answer') || answer.acceptableAnswers?.length
+      || answer.acceptableLow !== undefined || answer.acceptableHigh !== undefined) return;
+    errors.push({
+      message: 'A correctAnswer must define an answer, a non-empty acceptableAnswers list, or a numeric bound',
+      instancePath: `${basePath}/correctAnswer/${index}`,
+      params: { action: 'Define answer, acceptableAnswers, acceptableLow, or acceptableHigh' },
+      category: 'invalid-config',
+    });
+  });
+}
+
 // This function verifies the study config file satisfies conditions that are not covered by the schema
 function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Record<string, LibraryConfig>) {
   const errors: ParsedConfig<StudyConfig>['errors'] = [];
@@ -750,6 +767,7 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
   verifyLibraryUsage(studyConfig, errors, warnings, importedLibrariesData);
 
   Object.entries(studyConfig.baseComponents ?? {}).forEach(([componentName, component]) => {
+    verifyCorrectAnswers(`/baseComponents/${componentName}`, component, errors);
     verifyTextResponseConstraints(`/baseComponents/${componentName}`, component, errors, warnings);
     verifyDateTimeResponseConstraints(`/baseComponents/${componentName}`, component, errors);
     verifyDropdownResponseConstraints(`/baseComponents/${componentName}`, component, errors);
@@ -757,6 +775,7 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
   });
   Object.entries(studyConfig.components).forEach(([componentName, component]) => {
     const mergedComponent = studyComponentToIndividualComponent(component, studyConfig);
+    verifyCorrectAnswers(`/components/${componentName}`, mergedComponent, errors);
     verifyTextResponseConstraints(`/components/${componentName}`, mergedComponent, errors, warnings);
     verifyDateTimeResponseConstraints(`/components/${componentName}`, mergedComponent, errors);
     verifyDropdownResponseConstraints(`/components/${componentName}`, mergedComponent, errors);
