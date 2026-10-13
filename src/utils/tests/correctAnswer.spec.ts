@@ -269,6 +269,33 @@ describe('correctAnswer utilities', () => {
       });
     });
 
+    test('uses one complete accepted matrix for all row feedback', () => {
+      const response = {
+        type: 'matrix-checkbox' as const,
+        id: 'matrix',
+        prompt: '',
+        answerOptions: ['A', 'B'],
+        questionOptions: ['row-1', 'row-2'],
+      };
+      const answer = {
+        id: 'matrix',
+        answer: [['A'], ['A']],
+        acceptableAnswers: [[['B'], ['B']]],
+      };
+
+      expect(responseAnswerIsCorrect({ 'row-1': 'A', 'row-2': 'B' }, answer.answer, undefined, undefined, {
+        acceptableAnswers: answer.acceptableAnswers,
+      })).toBe(false);
+      expect(getMatrixCheckboxRowStatuses(response, { 'row-1': 'A', 'row-2': 'B' }, answer)).toEqual({
+        'row-1': 'correct',
+        'row-2': 'incorrect',
+      });
+      expect(getMatrixCheckboxRowStatuses(response, { 'row-1': 'B', 'row-2': 'B' }, answer)).toEqual({
+        'row-1': 'correct',
+        'row-2': 'correct',
+      });
+    });
+
     test('accepts an empty matrix row when the correct row is empty', () => {
       expect(getMatrixCheckboxRowStatuses({
         type: 'matrix-checkbox',
