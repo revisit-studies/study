@@ -1,0 +1,29 @@
+nav {
+    background: blue;
+}
+
+.studyTitle {
+    font-size: 18px;
+}
+
+.progressBar {
+    background-color: #eeeeee;
+}
+
+.progressBar .mantine-Progress-section {
+    background-color: green;
+}
+
+.helpModal p {
+    color: #666666;
+    font-style: italic;
+    font-size: 24px;
+}
+
+.response {
+    background-color: white;
+    border: 1px solid #cccccc;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+}

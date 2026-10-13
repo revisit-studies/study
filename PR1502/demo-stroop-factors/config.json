@@ -1,0 +1,87 @@
+{
+  "$schema": "../../src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Stroop Test with Factors",
+    "version": "pilot",
+    "authors": ["The reVISit Team"],
+    "date": "2026-08-20",
+    "description": "A ten-color Stroop test that crosses one reusable color factor with itself and subtracts congruent pairs.",
+    "organizations": ["University of Utah", "WPI", "University of Toronto"]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-stroop-factors/assets/introduction.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": false,
+    "windowEventDebounceTime": 200
+  },
+  "factors": {
+    "color": [
+      "RED",
+      "YELLOW",
+      "GREEN",
+      "BLUE",
+      "BLACK"
+    ],
+    "fontSize": ["24px", "48px"],
+    "stroopConditions": {
+      "action": "cross",
+      "factors": ["color", "color"],
+      "as": ["word", "inkColor"]
+    }
+  },
+  "baseComponents": {
+    "stroopTrial": {
+      "type": "markdown",
+      "path": "demo-stroop-factors/assets/trial.md",
+      "stylesheetPath": "demo-stroop-factors/assets/css/trial.css",
+      "nextButtonLocation": "belowStimulus",
+      "response": [
+        {
+          "id": "response",
+          "prompt": "Report the word's ink color, not the color named by the word. Use the buttons or the corresponding number key.",
+          "secondaryText": "Keyboard shortcuts: 1-9 and 0",
+          "type": "buttons",
+          "options": [
+            {"label": "1. RED", "value": "RED", "key": "1"},
+            {"label": "2. YELLOW", "value": "YELLOW", "key": "2"},
+            {"label": "3. GREEN", "value": "GREEN", "key": "3"},
+            {"label": "4. BLUE", "value": "BLUE", "key": "4"},
+            {"label": "5. BLACK", "value": "BLACK", "key": "5"}
+          ],
+          "location": "belowStimulus",
+          "required": true
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "response",
+          "answer": "{{inkColor}}"
+        }
+      ]
+    }
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-stroop-factors/assets/introduction.md",
+      "response": []
+    }
+  },
+  "betweenSubjects": ["fontSize"],
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      {
+        "type": "factor",
+        "id": "t",
+        "factor": "stroopConditions",
+        "components": "stroopTrial",
+        "order": "random"
+      }
+    ]
+  }
+}

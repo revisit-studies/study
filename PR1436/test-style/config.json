@@ -1,0 +1,191 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Test Style",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2026-08-22",
+    "description": "Stress tests responsive styling for participant-facing form elements.",
+    "organizations": [
+      "University of Utah",
+      "WPI"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": false,
+    "autoDownloadStudy": false,
+    "withSidebar": false,
+    "enumerateQuestions": true
+  },
+  "components": {
+    "Layout Stress Test": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "stress-title",
+          "type": "textOnly",
+          "prompt": "# Layout Stress Test\n\nResize the browser to inspect how form elements respond to long prompts, long option labels, and unusually large option sets. Every response on this page is optional.",
+          "restartEnumeration": true
+        },
+        {
+          "id": "stress-long-copy",
+          "type": "textOnly",
+          "prompt": "## Long-form content\n\nThis intentionally long paragraph checks that text wraps within the response area instead of creating a horizontal scrollbar. It includes aVeryLongUnbrokenIdentifierThatShouldStillWrapWithinTheAvailableParticipantViewportWithoutExpandingThePageBeyondItsBounds."
+        },
+        {
+          "id": "stress-short-text",
+          "type": "shortText",
+          "prompt": "Enter a short response for a question whose prompt is deliberately much longer than the input value participants are expected to provide.",
+          "secondaryText": "The prompt and supporting text should wrap while the input retains a reasonable maximum width.",
+          "infoText": "The information icon should retain a consistent size even beside a long prompt.",
+          "placeholder": "Short answer",
+          "required": false
+        },
+        {
+          "id": "stress-long-text",
+          "type": "longText",
+          "prompt": "Describe what happens to this textarea and its label as the available width becomes narrow.",
+          "secondaryText": "The textarea should shrink with the viewport without stretching indefinitely on wide screens.",
+          "placeholder": "Optional layout notes",
+          "required": false
+        },
+        {
+          "id": "stress-dropdown",
+          "type": "dropdown",
+          "prompt": "Choose an option from a dropdown containing labels of very different lengths.",
+          "placeholder": "Choose an option",
+          "options": [
+            "Short",
+            "A medium-length option label",
+            "An intentionally long dropdown option label that should remain readable without widening the form indefinitely",
+            {
+              "label": "An option with additional information",
+              "infoText": "This tooltip also checks the size and alignment of the information icon."
+            }
+          ],
+          "required": false
+        },
+        {
+          "id": "stress-buttons",
+          "type": "buttons",
+          "prompt": "Choose from many buttons with mixed label lengths. The buttons should wrap into additional rows as space becomes constrained.",
+          "options": [
+            "One",
+            "Two",
+            "A longer third option",
+            "Four",
+            "A considerably longer fifth option label",
+            "Six",
+            "Seven",
+            {
+              "label": "Eight with info",
+              "infoText": "Button option information text."
+            }
+          ],
+          "required": false
+        },
+        {
+          "id": "stress-radio-horizontal",
+          "type": "radio",
+          "prompt": "Horizontal radio options with several long labels.",
+          "options": [
+            "Compact",
+            "Moderately descriptive",
+            "A long radio option that needs to wrap",
+            "Another option",
+            "The final and longest radio option in this group"
+          ],
+          "horizontal": true,
+          "required": false
+        },
+        {
+          "id": "stress-checkbox-horizontal",
+          "type": "checkbox",
+          "prompt": "Horizontal checkbox options with mixed content lengths.",
+          "options": [
+            "Alpha",
+            "A longer beta option",
+            "Gamma",
+            "A deliberately verbose delta option",
+            "Epsilon",
+            "Zeta"
+          ],
+          "horizontal": true,
+          "required": false
+        },
+        {
+          "id": "stress-likert",
+          "type": "likert",
+          "prompt": "An eleven-point Likert scale with long endpoint labels.",
+          "numItems": 11,
+          "leftLabel": "Completely disagree with this statement",
+          "rightLabel": "Completely agree with this statement",
+          "labelLocation": "above",
+          "required": false
+        },
+        {
+          "id": "stress-matrix-radio",
+          "type": "matrix-radio",
+          "prompt": "Dense matrix-radio example with seven columns and long row and column labels.",
+          "secondaryText": "Each row accepts one response. Resize the viewport to inspect wrapping and control alignment.",
+          "answerOptions": [
+            "Strongly disagree",
+            "Disagree",
+            "Somewhat disagree",
+            "Neither agree nor disagree",
+            "Somewhat agree",
+            "Agree",
+            "Strongly agree"
+          ],
+          "questionOptions": [
+            "The interface remains understandable when the available horizontal space is limited",
+            "Long question labels wrap without obscuring their associated controls",
+            {
+              "label": "Information icons remain usable",
+              "infoText": "This row includes supplemental information."
+            },
+            "Column headings remain distinguishable when several answer choices are present",
+            "The selected radio option remains visually associated with the correct row"
+          ],
+          "required": false
+        },
+        {
+          "id": "stress-matrix-checkbox",
+          "type": "matrix-checkbox",
+          "prompt": "Dense matrix-checkbox example with long category names and many rows.",
+          "secondaryText": "Each row may accept multiple responses.",
+          "answerOptions": [
+            "Essential",
+            "Useful in most situations",
+            "Useful in some situations",
+            "Optional",
+            "Not applicable",
+            {
+              "label": "Unsure without more context",
+              "infoText": "Choose this when the row does not provide enough information."
+            }
+          ],
+          "questionOptions": [
+            "Readable labels at desktop widths",
+            "Readable labels at tablet widths",
+            "Readable labels at narrow mobile widths",
+            "Consistent alignment for controls and information icons",
+            "No unexpected page-level horizontal overflow",
+            "Clear association between each row and its selected columns"
+          ],
+          "required": false
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "Layout Stress Test"
+    ]
+  }
+}

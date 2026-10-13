@@ -1,0 +1,1 @@
+var e=`/study/PR1443/`;export{e as t};
