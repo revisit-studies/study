@@ -66,9 +66,13 @@ export function ResponseVisualization({
         answerData.result = responseAnswerIsCorrect(
           participantAnswer,
           expectedAnswer,
-          undefined,
-          undefined,
-          { ignoreArrayOrder: response.type === 'checkbox' || response.type === 'dropdown' },
+          correctAnswer.acceptableLow,
+          correctAnswer.acceptableHigh,
+          {
+            ignoreArrayOrder: response.type === 'checkbox' || response.type === 'dropdown',
+            acceptableAnswers: correctAnswer.acceptableAnswers,
+            caseSensitive: correctAnswer.caseSensitive,
+          },
         ) ? 'correct' : 'incorrect';
       }
 
@@ -120,12 +124,7 @@ export function ResponseVisualization({
     }
 
     const correctAnswerSpec = {
-      params: [
-        { name: 'correctAnswer', value: correctAnswer?.answer },
-        { name: 'variable', value: response.id },
-      ],
       transform: [
-        { calculate: "datum[variable] === correctAnswer ? 'correct' : 'incorrect'", as: 'result' },
         {
           calculate: "if(datum.result === 'correct', 0, if(datum.result === 'incorrect', 1, 2))",
           as: 'order',
@@ -143,15 +142,14 @@ export function ResponseVisualization({
     if (response.type === 'matrix-radio' || response.type === 'matrix-checkbox') {
       const data = questionData
         .map((row) => Object.entries(row[response.id] || {}).map(([question, value]) => (response.type === 'matrix-checkbox'
-          ? (value as string).split('|').map((option) => ({ question, value: option }))
-          : [{ question, value }])).flat()).flat();
+          ? (value as string).split('|').map((option) => ({ question, value: option, result: row.result }))
+          : [{ question, value, result: row.result }])).flat()).flat();
 
       // Histogram
       const spec = {
         ...baseSpec,
         data: { values: data },
         mark: 'bar',
-        params: correctAnswer !== undefined ? correctAnswerSpec.params : undefined,
         transform: Array.isArray(correctAnswer?.answer) ? undefined : (correctAnswer !== undefined ? correctAnswerSpec.transform : undefined),
         encoding: {
           row: { field: 'question', type: 'nominal', header: { title: 'Question' } },
@@ -192,7 +190,6 @@ export function ResponseVisualization({
         ...baseSpec,
         data: { values: questionData },
         mark: 'bar',
-        params: correctAnswer !== undefined ? correctAnswerSpec.params : undefined,
         transform: [
           {
             bin: response.type === 'likert' ? { step: 1 } : { maxbins: 10 },
@@ -237,8 +234,7 @@ export function ResponseVisualization({
         ...baseSpec,
         data: { values: questionData },
         mark: 'bar',
-        params: correctAnswer !== undefined ? correctAnswerSpec.params : undefined,
-        transform: Array.isArray(correctAnswer?.answer) ? undefined : (correctAnswer !== undefined ? correctAnswerSpec.transform : undefined),
+        transform: correctAnswer !== undefined ? correctAnswerSpec.transform : undefined,
         encoding: {
           x: {
             field: response.id, type: 'ordinal', title: 'Answer', sort: dateSort,

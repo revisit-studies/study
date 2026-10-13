@@ -43,7 +43,7 @@ import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { useNextStep } from '../../store/hooks/useNextStep';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import {
-  aggregateAnswerStatuses, AnswerStatus, evaluateSelectionAnswer, getMatrixCheckboxRowStatuses, responseAnswerIsCorrect,
+  AnswerStatus, evaluateSelectionAnswer, getMatrixCheckboxRowStatuses, responseAnswerIsCorrect,
 } from '../../utils/correctAnswer';
 import { getCustomResponseModule, getCustomResponseModuleLoadError } from './customResponseModules';
 import { appendStimulusShowErrorsToGraph } from './stimulusProvenance';
@@ -548,17 +548,31 @@ export function ResponseBlock({
     return Object.fromEntries(allResponsesWithDefaults.flatMap((response) => {
       if (!Object.hasOwn(checkAnswerResponses, response.id)) return [];
       const answer = config.correctAnswer?.find((correct) => correct.id === response.id);
-      const matrixStatuses = Object.values(matrixRowFeedback[response.id] ?? {});
-      const answerStatus: AnswerStatus = response.type === 'matrix-checkbox' && matrixStatuses.length > 0
-        ? aggregateAnswerStatuses(matrixStatuses)
+      const answerStatus: AnswerStatus = response.type === 'matrix-checkbox'
+        ? checkAnswerResponses[response.id] ? 'correct' : 'incorrect'
         : response.type === 'checkbox' && answer
-          ? checkedAnswerValues
-            ? evaluateSelectionAnswer(checkedAnswerValues[response.id], answer.answer, answer.acceptableAnswers)
-            : checkAnswerResponses[response.id] ? 'correct' : 'incorrect'
+          ? checkAnswerResponses[response.id]
+            ? 'correct'
+            : checkedAnswerValues
+              && evaluateSelectionAnswer(checkedAnswerValues[response.id], answer.answer, answer.acceptableAnswers) === 'partially correct'
+              ? 'partially correct'
+              : 'incorrect'
           : checkAnswerResponses[response.id] ? 'correct' : 'incorrect';
       return [[response.id, answerStatus]];
     }));
-  }, [allResponsesWithDefaults, checkAnswerResponses, checkedAnswerValues, config.correctAnswer, matrixRowFeedback]);
+  }, [allResponsesWithDefaults, checkAnswerResponses, checkedAnswerValues, config.correctAnswer]);
+  const checkedResponses = useMemo(() => allResponsesWithDefaults.filter((response) => (
+    response.type !== 'textOnly'
+      && response.type !== 'divider'
+      && !!checkAnswerResponses
+      && Object.hasOwn(checkAnswerResponses, response.id)
+  )), [allResponsesWithDefaults, checkAnswerResponses]);
+  const correctResponseCount = checkedResponses.filter((response) => checkAnswerResponses?.[response.id]).length;
+  const incorrectResponseCount = checkedResponses.length - correctResponseCount;
+  const feedbackSummaryResponseId = applicableResponses.find((response) => (
+    !response.hidden && response.type !== 'textOnly' && response.type !== 'divider'
+  ))?.id;
+  const showFeedbackSummary = hasCorrectAnswerFeedback && !!checkAnswerResponses && checkedResponses.length > 0;
   const alertConfig = useMemo(() => Object.fromEntries(allResponsesWithDefaults.map((response) => {
     const hiddenAlert = {
       visible: false,
@@ -825,6 +839,11 @@ export function ResponseBlock({
                       attemptsUsed={attemptsUsed}
                       trainingAttempts={trainingAttempts}
                     />
+                    {showFeedbackSummary && response.id === feedbackSummaryResponseId && (
+                      <div data-testid="trial-answer-summary" aria-live="polite">
+                        {`${correctResponseCount} of ${checkedResponses.length} answers correct; ${incorrectResponseCount} incorrect.`}
+                      </div>
+                    )}
                   </div>
                 )
               ) : null}

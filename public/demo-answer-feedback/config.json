@@ -392,7 +392,7 @@
         {
           "id": "unlimited-title",
           "type": "textOnly",
-          "prompt": "# Unlimited Attempts\n\nTry 140 and click **Check Answer** repeatedly to see progressively more specific hints. After the second hint, later attempts repeat it. Enter a correct value to continue.",
+          "prompt": "# Unlimited Attempts\n\nTry 140 and click **Next** to check your answer. Each incorrect check shows a new hint for eleven attempts; later checks repeat the eleventh hint. Enter a correct value to continue.",
           "restartEnumeration": true
         },
         {

@@ -50,12 +50,12 @@ export function FeedbackAlert({
   return currentAlert?.visible ? (
     <Alert
       mb="md"
-      title={currentAlert.title}
+      title={<Text size="lg" fw={700}>{currentAlert.title}</Text>}
       color={currentAlert.color}
       style={currentAlert.fitHeight ? { height: 'fit-content' } : undefined}
     >
       <Text size="md">{currentAlert.message}</Text>
-      {currentAlert.hint && <Text mt="sm" size="sm">{currentAlert.hint}</Text>}
+      {currentAlert.hint && <Text mt="sm" size="md">{currentAlert.hint}</Text>}
       {currentAlert.showHelpTextLink !== false
         && (currentAlert.retryAllowed ?? currentAlert.message.includes('Please try again')) && (
         <>
@@ -68,10 +68,10 @@ export function FeedbackAlert({
         </>
       )}
       {attemptsUsed >= trainingAttempts && trainingAttempts >= 0 && correctAnswer && (
-        <>
+        <Text size="md">
           <br />
           {`The correct answer was: ${correctAnswer}.`}
-        </>
+        </Text>
       )}
     </Alert>
   ) : null;

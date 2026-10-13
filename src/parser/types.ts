@@ -302,7 +302,7 @@ export interface UIConfig {
   provideFeedback?: boolean;
   /** The number of answer-checking attempts allowed for the component. Defaults to 2. Check Answer grades responses before Next can continue. With hideCheckAnswerButton, Next performs the check first. Incorrect answers block continuing unless allowFailedTraining is true and attempts are exhausted. The final failed attempt reveals accepted answers. Set -1 for unlimited attempts, requiring a correct answer and hiding the reveal. */
   trainingAttempts?: number;
-  /** Allow continuing with incorrect answers after attempts are exhausted. Defaults to false. */
+  /** Allow continuing with incorrect answers after attempts are exhausted. Defaults to true. */
   allowFailedTraining?: boolean;
   /** Whether or not we want to utilize think-aloud features. If true, will record audio on all components unless deactivated on individual components. Defaults to false. */
   recordAudio?: boolean;

@@ -4,7 +4,7 @@ import {
 } from '../../parser/types';
 import { makeStoredAnswer } from '../../tests/utils';
 import {
-  aggregateAnswerStatuses, compareResponseValues, evaluateSelectionAnswer, getMatrixCheckboxRowStatuses, responseAnswerIsCorrect,
+  compareResponseValues, evaluateSelectionAnswer, getMatrixCheckboxRowStatuses, responseAnswerIsCorrect,
 } from '../correctAnswer';
 
 import { componentAnswersAreCorrect, getComponentAnswerStatus } from '../componentCorrectness';
@@ -233,19 +233,17 @@ describe('correctAnswer utilities', () => {
   });
 
   describe('selection answer status', () => {
-    test('aggregates matrix rows only as fully correct or incorrect when every row agrees', () => {
-      expect(aggregateAnswerStatuses(['correct', 'correct'])).toBe('correct');
-      expect(aggregateAnswerStatuses(['incorrect', 'incorrect'])).toBe('incorrect');
-      expect(aggregateAnswerStatuses(['correct', 'incorrect'])).toBe('partially correct');
-      expect(aggregateAnswerStatuses(['partially correct', 'partially correct'])).toBe('partially correct');
-      expect(aggregateAnswerStatuses(['correct', 'partially correct'])).toBe('partially correct');
-    });
-
     test('distinguishes correct, incorrect, and partially correct selections', () => {
       expect(evaluateSelectionAnswer(['A', 'B'], ['A', 'B'])).toBe('correct');
       expect(evaluateSelectionAnswer(['C'], ['A', 'B'])).toBe('incorrect');
       expect(evaluateSelectionAnswer(['A', 'C'], ['A', 'B'])).toBe('partially correct');
       expect(evaluateSelectionAnswer(['A'], ['A', 'B'])).toBe('partially correct');
+      expect(evaluateSelectionAnswer(['4', 'X'], [4])).toBe('incorrect');
+    });
+
+    test('accepts an empty selection when the correct selection is empty', () => {
+      expect(evaluateSelectionAnswer([], [])).toBe('correct');
+      expect(evaluateSelectionAnswer([], ['A'])).toBe('incorrect');
     });
 
     test('accepts an alternative complete selection', () => {
@@ -269,6 +267,48 @@ describe('correctAnswer utilities', () => {
         'row-1': 'partially correct',
         'row-2': 'correct',
       });
+    });
+
+    test('accepts an empty matrix row when the correct row is empty', () => {
+      expect(getMatrixCheckboxRowStatuses({
+        type: 'matrix-checkbox',
+        id: 'matrix',
+        prompt: '',
+        answerOptions: ['A', 'B'],
+        questionOptions: ['row-1'],
+      }, { 'row-1': '' }, {
+        id: 'matrix',
+        answer: [[]],
+      })).toEqual({ 'row-1': 'correct' });
+    });
+
+    test('matches matrix row types using the canonical grader', () => {
+      const response = {
+        type: 'matrix-checkbox' as const,
+        id: 'matrix',
+        prompt: '',
+        answerOptions: ['4'],
+        questionOptions: ['row-1'],
+      };
+      const answer = { id: 'matrix', answer: [[4]] };
+
+      expect(responseAnswerIsCorrect({ 'row-1': '4' }, answer.answer)).toBe(false);
+      expect(getMatrixCheckboxRowStatuses(response, { 'row-1': '4' }, answer)).toEqual({ 'row-1': 'incorrect' });
+    });
+
+    test('grades keyed matrix answers consistently with the canonical grader', () => {
+      const response = {
+        type: 'matrix-checkbox' as const,
+        id: 'matrix',
+        prompt: '',
+        answerOptions: ['A', 'B'],
+        questionOptions: ['cat', 'dog'],
+      };
+      const userAnswer = { cat: 'A', dog: 'B' };
+      const answer = { id: 'matrix', answer: { cat: 'A', dog: 'B' } };
+
+      expect(responseAnswerIsCorrect(userAnswer, answer.answer)).toBe(true);
+      expect(getMatrixCheckboxRowStatuses(response, userAnswer, answer)).toEqual({ cat: 'correct', dog: 'correct' });
     });
   });
 

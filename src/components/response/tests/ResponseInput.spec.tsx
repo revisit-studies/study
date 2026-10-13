@@ -1325,9 +1325,10 @@ describe('FeedbackAlert', () => {
     );
     expect(html).toContain('Not quite.');
     expect(html).toContain('Think about two groups of two.');
-    expect(html.indexOf('data-size="md"')).toBeLessThan(html.indexOf('data-size="sm"'));
+    expect(html).toContain('data-size="lg"');
+    expect((html.match(/data-size="md"/g) ?? [])).toHaveLength(2);
     expect(html).toContain('data-size="md"');
-    expect(html).toContain('data-size="sm"');
+    expect(html).not.toContain('data-size="sm"');
   });
 
   test('sizes custom feedback alert vertically without changing its width', () => {

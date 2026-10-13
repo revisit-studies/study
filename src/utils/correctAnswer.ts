@@ -6,32 +6,33 @@ import { parseStringOptionValue } from './stringOptions';
 
 export type AnswerStatus = 'correct' | 'incorrect' | 'partially correct';
 
-export function aggregateAnswerStatuses(statuses: AnswerStatus[]): AnswerStatus {
-  if (statuses.length > 0 && statuses.every((status) => status === 'correct')) return 'correct';
-  if (statuses.length > 0 && statuses.every((status) => status === 'incorrect')) return 'incorrect';
-  return 'partially correct';
-}
-
 export function evaluateSelectionAnswer(
   userAnswer: unknown,
   correctAnswer: unknown,
   acceptableAnswers: unknown[] = [],
 ): AnswerStatus {
   const selected = Array.isArray(userAnswer)
-    ? userAnswer.map(String)
+    ? userAnswer
     : typeof userAnswer === 'string' && userAnswer !== '' ? userAnswer.split('|') : [];
   const correctAnswers = [correctAnswer, ...acceptableAnswers].filter(Array.isArray) as unknown[][];
   const statuses = correctAnswers.map((correctValues) => {
-    const correct = correctValues.map(String);
-    const matched = selected.filter((value) => correct.includes(value));
+    if (isEqual([...selected].sort(), [...correctValues].sort())) return 'correct';
+    const matched = selected.filter((value) => correctValues.includes(value));
     if (matched.length === 0) return 'incorrect';
-    if (matched.length === correct.length && selected.length === correct.length) return 'correct';
     return 'partially correct';
   });
 
   return statuses.includes('correct')
     ? 'correct'
     : statuses.includes('partially correct') ? 'partially correct' : 'incorrect';
+}
+
+function matrixCheckboxSelectionsAreEqual(userAnswer: unknown, correctAnswer: unknown[]): boolean {
+  const selected = typeof userAnswer === 'string' && userAnswer !== '' ? userAnswer.split('|') : [];
+  if (selected.length !== correctAnswer.length) return false;
+  const sortedSelected = [...selected].sort();
+  const sortedCorrect = [...correctAnswer].sort();
+  return sortedSelected.every((value, index) => value === sortedCorrect[index]);
 }
 
 export function getMatrixCheckboxRowStatuses(
@@ -43,17 +44,27 @@ export function getMatrixCheckboxRowStatuses(
   const userRows = userAnswer && typeof userAnswer === 'object' && !Array.isArray(userAnswer)
     ? userAnswer as Record<string, unknown>
     : {};
-  const correctRows = Array.isArray(correctAnswer.answer) ? correctAnswer.answer : [];
-  const alternativeRows = (correctAnswer.acceptableAnswers ?? []).filter(Array.isArray) as unknown[][];
+  const answerSets = [correctAnswer.answer, ...(correctAnswer.acceptableAnswers ?? [])];
 
-  return Object.fromEntries(questions.map((question, index) => [
-    question,
-    evaluateSelectionAnswer(
-      userRows[question],
-      correctRows[index],
-      alternativeRows.map((rows) => rows[index]),
-    ),
-  ]));
+  return Object.fromEntries(questions.map((question, index) => {
+    const selected = typeof userRows[question] === 'string' && userRows[question] !== ''
+      ? (userRows[question] as string).split('|')
+      : [];
+    const expectedRows = answerSets.map((answerSet) => {
+      if (Array.isArray(answerSet)) return answerSet[index];
+      return answerSet && typeof answerSet === 'object' ? (answerSet as Record<string, unknown>)[question] : undefined;
+    }).filter((value) => value !== undefined);
+    const matchesExactly = expectedRows.some((expected) => (Array.isArray(expected)
+      ? matrixCheckboxSelectionsAreEqual(userRows[question], expected)
+      : isEqual(userRows[question], expected)));
+    const matchesPartially = expectedRows.some((expected) => {
+      const expectedValues = Array.isArray(expected)
+        ? expected
+        : typeof expected === 'string' && expected.includes('|') ? expected.split('|') : [expected];
+      return selected.some((value) => expectedValues.includes(value));
+    });
+    return [question, matchesExactly ? 'correct' : matchesPartially ? 'partially correct' : 'incorrect'];
+  }));
 }
 
 /** Compare values without converting strings to numbers. */
@@ -157,12 +168,7 @@ export function responseAnswerIsCorrect(
         const correctVal = responseCorrectAnswer[idx];
         if (!Array.isArray(correctVal)) return false;
 
-        const userValArray = typeof userVal === 'string' ? (userVal === '' ? [] : userVal.split('|')) : [];
-        if (userValArray.length !== correctVal.length) return false;
-
-        const sortedUserAnswer = [...userValArray].sort();
-        const sortedCorrectAnswer = [...correctVal].sort();
-        return sortedUserAnswer.every((val, i) => val === sortedCorrectAnswer[i]);
+        return matrixCheckboxSelectionsAreEqual(userVal, correctVal);
       });
     }
 

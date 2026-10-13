@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import isEqual from 'lodash.isequal';
 import { Provider } from 'react-redux';
 import {
   render, act, fireEvent, cleanup,
@@ -6,6 +7,7 @@ import {
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
+import * as FeedbackAlertModule from '../FeedbackAlert';
 import type { IndividualComponent, StudyConfig } from '../../../parser/types';
 import type { CheckAnswerState, Sequence, StoredAnswer } from '../../../store/types';
 import type { REVISIT_MODE } from '../../../storage/engines/types';
@@ -193,7 +195,7 @@ vi.mock('../ResponseSwitcher', () => ({
 }));
 
 vi.mock('../FeedbackAlert', async (importOriginal) => ({
-  ...await importOriginal<typeof import('../FeedbackAlert')>(),
+  ...await importOriginal<typeof FeedbackAlertModule>(),
   FeedbackAlert: ({ response, alertConfig }: { response: { id: string }; alertConfig: Record<string, { visible: boolean; title: string; message: string; hint?: string; showHelpTextLink?: boolean; fitHeight?: boolean }> }) => (
     alertConfig[response.id]?.visible ? (
       <div data-testid={`feedback-alert-${response.id}`} data-title={alertConfig[response.id].title} data-show-help-text-link={alertConfig[response.id].showHelpTextLink} data-fit-height={alertConfig[response.id].fitHeight}>
@@ -316,6 +318,7 @@ function countButtons(container: HTMLElement, label: string) {
 
 beforeEach(() => {
   vi.mocked(responseAnswerIsCorrect).mockReturnValue(true);
+  vi.mocked(isEqual).mockReturnValue(true);
   mockStoredAnswerData.formOrder = { response: ['q1'] };
   mockStoredAnswerData.responseSubmitAttempted = undefined;
   mockStoredAnswerData.checkAnswer = undefined;
@@ -341,9 +344,15 @@ afterEach(() => cleanup());
 
 describe('ResponseBlock', () => {
   test('shows partial correctness beneath a checkbox question', async () => {
+    vi.mocked(isEqual).mockImplementation((left, right) => JSON.stringify(left) === JSON.stringify(right));
     const checkedAnswer = makeStoredAnswer({
       answer: { q1: ['A', 'C'] },
-      checkAnswer: { attemptsUsed: 1, correct: false, responses: { q1: false } },
+      checkAnswer: {
+        attemptsUsed: 1,
+        correct: false,
+        responses: { q1: false },
+        checkedAnswers: { q1: ['A', 'C'] },
+      },
     });
     const config: IndividualComponent = {
       type: 'questionnaire',
@@ -360,6 +369,56 @@ describe('ResponseBlock', () => {
     expect(container.querySelector('[role="status"]')).toBeNull();
     expect(container.querySelector('[data-testid="feedback-alert-q1"]')?.textContent).toContain('partially correct');
     expect(container.querySelector('[data-testid="feedback-alert-q1"]')?.getAttribute('data-title')).toBe('Partially Correct');
+  });
+
+  test('does not show answer totals before checking an enabled training page', async () => {
+    const config: IndividualComponent = {
+      type: 'questionnaire',
+      provideFeedback: true,
+      response: [{ id: 'q1', type: 'shortText', prompt: 'Answer' }],
+      correctAnswer: [{ id: 'q1', answer: 'correct' }],
+    };
+    const { container } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+
+    expect(container.querySelector('[data-testid="trial-answer-summary"]')).toBeNull();
+  });
+
+  test('does not show answer totals when feedback is disabled', async () => {
+    mockStoredAnswerData.checkAnswer = { attemptsUsed: 1, correct: true, responses: { q1: true } };
+    const config: IndividualComponent = {
+      type: 'questionnaire',
+      provideFeedback: false,
+      response: [{ id: 'q1', type: 'shortText', prompt: 'Answer' }],
+      correctAnswer: [{ id: 'q1', answer: 'correct' }],
+    };
+    const { container } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+
+    expect(container.querySelector('[data-testid="trial-answer-summary"]')).toBeNull();
+  });
+
+  test('uses the canonical grading result for checkbox correctness', async () => {
+    vi.mocked(responseAnswerIsCorrect).mockReturnValue(false);
+    const checkedAnswer = makeStoredAnswer({
+      answer: { q1: ['4'] },
+      checkAnswer: {
+        attemptsUsed: 1,
+        correct: false,
+        responses: { q1: false },
+        checkedAnswers: { q1: ['4'] },
+      },
+    });
+    const config: IndividualComponent = {
+      type: 'questionnaire',
+      provideFeedback: true,
+      response: [{
+        id: 'q1', type: 'checkbox', prompt: 'Select four', options: ['4'],
+      }],
+      correctAnswer: [{ id: 'q1', answer: [4] }],
+    };
+    const { container } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" status={checkedAnswer} />);
+
+    expect(container.querySelector('[data-testid="feedback-alert-q1"]')?.getAttribute('data-title')).toBe('Incorrect Answer');
+    expect(container.querySelector('[data-testid="trial-answer-summary"]')?.textContent).toBe('0 of 1 answers correct; 1 incorrect.');
   });
 
   test('shows incorrect feedback beneath a Likert question', async () => {
@@ -381,7 +440,7 @@ describe('ResponseBlock', () => {
     expect(container.querySelector('[role="status"]')?.textContent).toBe('incorrect');
   });
 
-  test('marks the matrix-level alert partially correct when all rows are partial', async () => {
+  test('uses the canonical matrix result for overall feedback when all rows are partial', async () => {
     const checkedAnswer = makeStoredAnswer({
       answer: { q1: { cat: 'A|C', dog: 'A|C' } },
       checkAnswer: { attemptsUsed: 1, correct: false, responses: { q1: false } },
@@ -408,14 +467,54 @@ describe('ResponseBlock', () => {
     };
     const { container } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" status={checkedAnswer} />);
 
-    expect(container.querySelector('[data-testid="feedback-alert-q1"]')?.textContent).toContain('Your answer is partially correct. Review the selected traits.');
-    expect(container.querySelector('[data-testid="feedback-alert-q1"]')?.getAttribute('data-title')).toBe('Partially Correct');
+    expect(container.querySelector('[data-testid="feedback-alert-q1"]')?.textContent).toContain('Review the selected traits.');
+    expect(container.querySelector('[data-testid="feedback-alert-q1"]')?.getAttribute('data-title')).toBe('Incorrect Answer');
+  });
+
+  test('does not mark mixed matrix alternatives correct when the canonical check failed', async () => {
+    mockStoredAnswerData.formOrder = { response: ['matrix'] };
+    const checkedAnswer = makeStoredAnswer({
+      answer: { matrix: { cat: 'A|B', dog: 'C|D' } },
+      checkAnswer: {
+        attemptsUsed: 1,
+        correct: false,
+        responses: { matrix: false },
+        checkedAnswers: { matrix: { cat: 'A|B', dog: 'C|D' } },
+      },
+    });
+    const config: IndividualComponent = {
+      type: 'questionnaire',
+      provideFeedback: true,
+      response: [{
+        id: 'matrix',
+        type: 'matrix-checkbox',
+        prompt: 'Select traits',
+        answerOptions: ['A', 'B', 'C', 'D'],
+        questionOptions: ['cat', 'dog'],
+      }],
+      correctAnswer: [{
+        id: 'matrix',
+        answer: [['A', 'B'], ['A', 'B']],
+        acceptableAnswers: [[['C', 'D'], ['C', 'D']]],
+      }],
+    };
+    const { container } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" status={checkedAnswer} />);
+    const alert = container.querySelector('[data-testid="feedback-alert-matrix"]');
+
+    expect(alert?.getAttribute('data-title')).toBe('Incorrect Answer');
+    expect(alert?.getAttribute('data-title')).not.toBe('Correct Answer');
   });
 
   test('keeps checkbox feedback frozen until the next check', async () => {
+    vi.mocked(isEqual).mockImplementation((left, right) => JSON.stringify(left) === JSON.stringify(right));
     const checkedAnswer = makeStoredAnswer({
       answer: { q1: ['A'] },
-      checkAnswer: { attemptsUsed: 1, correct: false, responses: { q1: false } },
+      checkAnswer: {
+        attemptsUsed: 1,
+        correct: false,
+        responses: { q1: false },
+        checkedAnswers: { q1: ['A'] },
+      },
     });
     const config: IndividualComponent = {
       type: 'questionnaire',
@@ -444,6 +543,7 @@ describe('ResponseBlock', () => {
     });
     expect(container.querySelector('[data-testid="feedback-alert-q1"]')?.getAttribute('data-title')).toBe('Partially Correct');
 
+    vi.mocked(responseAnswerIsCorrect).mockReturnValue(false);
     await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
     expect(store.getState().checkAnswer.trial1_0.checkedAnswers).toEqual({ q1: ['C'] });
     expect(container.querySelector('[data-testid="feedback-alert-q1"]')?.getAttribute('data-title')).toBe('Incorrect Answer');
@@ -1314,6 +1414,42 @@ test('Check Answer ignores a conditionally hidden correct answer', async () => {
   expect(store.getState().checkAnswer.trial1_0?.correct).toBe(true);
 });
 
+test('keeps trial totals from the checked snapshot when an answer hides a dependent response', async () => {
+  vi.mocked(isEqual).mockImplementation((left, right) => JSON.stringify(left) === JSON.stringify(right));
+  mockStoredAnswerData.formOrder = undefined;
+  mockAnswerField.values = { controller: 'no' };
+  const config: IndividualComponent = {
+    type: 'questionnaire',
+    provideFeedback: true,
+    response: [
+      {
+        id: 'controller', type: 'radio', prompt: '', options: ['yes', 'no'], required: false,
+      },
+      {
+        id: 'dependent', type: 'shortText', prompt: '', visibleIf: { responseId: 'controller', comparison: 'equals', value: 'yes' },
+      },
+    ],
+    correctAnswer: [
+      { id: 'controller', answer: 'yes' },
+      { id: 'dependent', answer: 'expected' },
+    ],
+  };
+  const checkedAnswer = makeStoredAnswer({
+    answer: { controller: 'yes', dependent: 'saved answer' },
+    checkAnswer: {
+      attemptsUsed: 1,
+      correct: false,
+      responses: { controller: true, dependent: false },
+      checkedAnswers: { controller: 'yes', dependent: 'saved answer' },
+    },
+  });
+  const { container } = await renderWithStore(
+    <ResponseBlock config={config} location="belowStimulus" status={checkedAnswer} />,
+  );
+  expect(container.querySelector('[data-testid="trial-answer-summary"]')?.textContent).toBe('1 of 2 answers correct; 1 incorrect.');
+  expect(container.querySelector('[data-response-id="dependent"]')).toBeNull();
+});
+
 describe('custom training feedback', () => {
   const config: IndividualComponent = {
     type: 'questionnaire',
@@ -1349,7 +1485,7 @@ describe('custom training feedback', () => {
     expect(container.querySelector('[data-testid="feedback-alert-q1"]')?.getAttribute('data-fit-height')).toBe('true');
     expect(container.querySelector('[data-testid="feedback-alert-q2"]')?.getAttribute('data-fit-height')).toBe('true');
     expect(container.querySelector('[data-testid="feedback-alert-q1"]')?.textContent).not.toContain('answer-specific hint');
-    expect(container.textContent).not.toContain('answers correct');
+    expect(container.querySelector('[data-testid="trial-answer-summary"]')?.textContent).toBe('1 of 2 answers correct; 1 incorrect.');
   });
 
   test('uses exhausted text after the final failed attempt', async () => {
@@ -1390,10 +1526,50 @@ describe('custom training feedback', () => {
     expect(container.textContent).not.toContain('answer-specific hint');
   });
 
-  test('does not render aggregate answer counts', async () => {
-    mockStoredAnswerData.checkAnswer = { attemptsUsed: 1, correct: true, responses: { q1: true, q2: true } };
-    const { container } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+  test('shows correct and incorrect totals once across response locations', async () => {
+    mockStoredAnswerData.formOrder = { response: ['q1', 'q2'] };
+    mockStoredAnswerData.checkAnswer = { attemptsUsed: 1, correct: false, responses: { q1: true, q2: false } };
+    const { container } = await renderWithStore(
+      <>
+        <ResponseBlock config={config} location="aboveStimulus" />
+        <ResponseBlock config={config} location="belowStimulus" />
+      </>,
+    );
     expect(container.textContent).toContain('First correct answer');
-    expect(container.textContent).not.toContain('answers correct');
+    expect(container.querySelector('[data-testid="trial-answer-summary"]')?.textContent).toBe('1 of 2 answers correct; 1 incorrect.');
+    expect(container.querySelectorAll('[data-testid="trial-answer-summary"]')).toHaveLength(1);
+  });
+
+  test('shows trial totals when the first checked response is hidden', async () => {
+    mockStoredAnswerData.formOrder = { response: ['hidden-q', 'visible-q'] };
+    const checkedAnswer = makeStoredAnswer({
+      answer: { 'hidden-q': 'hidden', 'visible-q': 'visible' },
+      checkAnswer: {
+        attemptsUsed: 1,
+        correct: false,
+        responses: { 'hidden-q': true, 'visible-q': false },
+        checkedAnswers: { 'hidden-q': 'hidden', 'visible-q': 'visible' },
+      },
+    });
+    const hiddenFirstConfig: IndividualComponent = {
+      type: 'questionnaire',
+      provideFeedback: true,
+      response: [
+        {
+          id: 'hidden-q', type: 'shortText', prompt: 'Hidden answer', hidden: true,
+        },
+        {
+          id: 'visible-q', type: 'shortText', prompt: 'Visible answer',
+        },
+      ],
+      correctAnswer: [
+        { id: 'hidden-q', answer: 'hidden' },
+        { id: 'visible-q', answer: 'expected' },
+      ],
+    };
+    const { container } = await renderWithStore(<ResponseBlock config={hiddenFirstConfig} location="belowStimulus" status={checkedAnswer} />);
+
+    expect(container.querySelector('[data-testid="switcher-shortText"][data-response-id="hidden-q"]')).toBeNull();
+    expect(container.querySelector('[data-testid="trial-answer-summary"]')?.textContent).toBe('1 of 2 answers correct; 1 incorrect.');
   });
 });
