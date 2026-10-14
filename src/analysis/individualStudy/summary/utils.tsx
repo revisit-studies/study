@@ -4,7 +4,7 @@ import {
   ComponentData, OverviewData, ParticipantCounts, ResponseData,
 } from '../../types';
 import { MatrixResponse, Response, StudyConfig } from '../../../parser/types';
-import { responseAnswerIsCorrect, shouldIgnoreArrayOrder } from '../../../utils/correctAnswer';
+import { scoreResponseAnswer } from '../../../utils/correctAnswer';
 import { getApplicableCorrectAnswers } from '../../../utils/responseVisibility';
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 import { getMatrixAnswerOptions } from '../../../utils/responseOptions';
@@ -189,17 +189,7 @@ function calculateCorrectnessStats(
       if (userAnswer === undefined) return;
 
       const response = responsesById.get(correctEntry.id);
-      const isCorrect = responseAnswerIsCorrect(
-        userAnswer,
-        correctEntry.answer,
-        correctEntry.acceptableLow,
-        correctEntry.acceptableHigh,
-        { ignoreArrayOrder: shouldIgnoreArrayOrder(response) },
-      );
-
-      if (isCorrect) {
-        correctSum += 1;
-      }
+      correctSum += scoreResponseAnswer(userAnswer, correctEntry, response, answer.answer);
     });
   });
 

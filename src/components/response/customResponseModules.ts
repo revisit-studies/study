@@ -1,6 +1,7 @@
 import type { ComponentType } from 'react';
 import { CustomResponse, JsonValue } from '../../parser/types';
 import { CustomResponseParams, CustomResponseValidate } from '../../store/types';
+import { registerCustomResponseValidatorLookup } from '../../utils/correctAnswer';
 
 export type CustomResponseModule = {
   default?: ComponentType<CustomResponseParams<Record<string, unknown>, JsonValue>>;
@@ -36,3 +37,5 @@ export function getCustomResponseModule(response: CustomResponse): CustomRespons
 
   return module ? module as CustomResponseModule : null;
 }
+
+registerCustomResponseValidatorLookup((response) => getCustomResponseModule(response)?.validate);

@@ -451,7 +451,12 @@ export async function studyStoreCreator(
         state.stimulusSubmitAttempted[payload.identifier] = payload.attempted;
       },
       setCheckAnswerResult(state, { payload }: PayloadAction<{ identifier: string } & CheckAnswerState>) {
-        state.checkAnswer[payload.identifier] = { attemptsUsed: payload.attemptsUsed, correct: payload.correct, responses: payload.responses };
+        state.checkAnswer[payload.identifier] = {
+          attemptsUsed: payload.attemptsUsed,
+          correct: payload.correct,
+          responses: payload.responses,
+          ...(payload.scores && Object.keys(payload.scores).length > 0 ? { scores: payload.scores } : {}),
+        };
       },
       saveTrialAnswer(state, { payload }: PayloadAction<{ identifier: string } & StoredAnswer>) {
         state.answers[payload.identifier] = { ...payload };

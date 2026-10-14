@@ -1653,6 +1653,37 @@ describe('utils.tsx', () => {
       expect(result[0].correctness).toBe(100);
     });
 
+    it('should include partial response scores in component correctness', () => {
+      const participants = [createMockParticipant({
+        participantId: '1',
+        completed: true,
+        answers: {
+          comp1_1: createMockAnswer({
+            componentName: 'comp1',
+            startTime: 1,
+            endTime: 10000,
+            answer: { q1: 5 },
+            correctAnswer: [{ id: 'q1', answer: 10 }],
+          }),
+        },
+      })];
+      const studyConfig = makeConfig({
+        components: {
+          comp1: {
+            type: 'questionnaire',
+            response: [{
+              id: 'q1', type: 'numerical', prompt: 'Score', path: 'test-response-functions/assets/PartialScore.response.ts',
+            }],
+          },
+        },
+      });
+
+      expect(getComponentStats(participants, studyConfig)[0]).toMatchObject({
+        correctness: 50,
+        correctCount: 0.5,
+      });
+    });
+
     it('should use each participant config hash when calculating correctness', () => {
       const participants = [
         createMockParticipant({

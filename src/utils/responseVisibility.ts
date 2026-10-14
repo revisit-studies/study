@@ -1,6 +1,6 @@
 import type { Answer, Response } from '../parser/types';
-import type { StoredAnswer } from '../store/types';
-import { compareResponseValues, responseAnswerIsCorrect, shouldIgnoreArrayOrder } from './correctAnswer';
+import type { CustomResponseValidate, StoredAnswer } from '../store/types';
+import { compareResponseValues, scoreResponseAnswer } from './correctAnswer';
 import { usesStandaloneDontKnowField } from '../components/response/responseValidation';
 
 export const visibilityControllerTypes = new Set(['radio', 'dropdown', 'buttons', 'checkbox', 'shortText', 'numerical', 'date']);
@@ -20,6 +20,7 @@ export function resolveResponseVisibility(
   values: StoredAnswer['answer'],
   defaults: StoredAnswer['answer'] = {},
   correctAnswers: Answer[] = [],
+  customResponseValidators: Record<string, CustomResponseValidate | undefined> = {},
 ) {
   const answers = { ...values };
   const byId = new Map(responses.map((response) => [response.id, response]));
@@ -47,13 +48,16 @@ export function resolveResponseVisibility(
       if (visible) {
         if (condition.comparison === 'isCorrect') {
           const correctAnswer = correctAnswers.find((answer) => answer.id === condition.responseId);
-          visible = !!correctAnswer && responseAnswerIsCorrect(
-            value,
-            correctAnswer.answer,
-            correctAnswer.acceptableLow,
-            correctAnswer.acceptableHigh,
-            { ignoreArrayOrder: shouldIgnoreArrayOrder(controller) },
-          ) === condition.value;
+          if (!correctAnswer) {
+            visible = false;
+          } else {
+            try {
+              visible = (scoreResponseAnswer(value, correctAnswer, controller, answers, controller ? customResponseValidators[controller.id] : undefined) === 1) === condition.value;
+            } catch {
+              // An invalid response module must not crash rendering; its response validation reports the load error.
+              visible = false;
+            }
+          }
         } else {
           visible = compareResponseValues(value, condition.value, condition.comparison, {
             ignoreArrayOrder: true,
@@ -79,8 +83,9 @@ export function getApplicableCorrectAnswers(
   responses: Response[],
   values: StoredAnswer['answer'],
   correctAnswers: Answer[] = [],
+  customResponseValidators: Record<string, CustomResponseValidate | undefined> = {},
 ): Answer[] {
-  const { visibleIds } = resolveResponseVisibility(responses, values, {}, correctAnswers);
+  const { visibleIds } = resolveResponseVisibility(responses, values, {}, correctAnswers, customResponseValidators);
   const byId = new Map(responses.map((response) => [response.id, response]));
   return correctAnswers.filter((answer) => !byId.get(answer.id)?.visibleIf || visibleIds.has(answer.id));
 }

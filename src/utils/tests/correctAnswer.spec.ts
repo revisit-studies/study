@@ -4,7 +4,7 @@ import {
 } from '../../parser/types';
 import { makeStoredAnswer } from '../../tests/utils';
 import {
-  compareResponseValues, responseAnswerIsCorrect,
+  compareResponseValues, registerCustomResponseValidatorLookup, responseAnswerIsCorrect, scoreResponseAnswer,
 } from '../correctAnswer';
 
 import { componentAnswersAreCorrect, getComponentAnswerStatus } from '../componentCorrectness';
@@ -16,6 +16,54 @@ const asStoredAnswer = (value: TestStoredAnswer) => value;
 const asCorrectAnswer = (value: TestCorrectAnswer) => value;
 
 describe('correctAnswer utilities', () => {
+  test('custom response scoring uses the existing custom module validator', () => {
+    const response: Response = {
+      id: 'custom-score',
+      type: 'custom',
+      prompt: 'Score',
+      path: 'test-response-functions/assets/CustomPartialScore.tsx',
+    };
+
+    registerCustomResponseValidatorLookup(() => (value, _values, _response, expected) => (
+      (value as { score: number }).score / (expected as { score: number }).score
+    ));
+    expect(scoreResponseAnswer({ score: 5 }, { id: 'custom-score', answer: { score: 10 } }, response)).toBe(0.5);
+    registerCustomResponseValidatorLookup();
+  });
+
+  test('a study score module returns partial credit and full credit controls correctness', () => {
+    const answer = { id: 'q', answer: 10 };
+    const response: Response = {
+      id: 'q', type: 'numerical', prompt: 'Score', path: 'test-response-functions/assets/PartialScore.response.ts',
+    };
+    expect(scoreResponseAnswer(5, answer, response, { q: 5 })).toBe(0.5);
+    expect(scoreResponseAnswer(10, answer, response, { q: 10 })).toBe(1);
+    expect(scoreResponseAnswer(undefined, answer, response)).toBe(0);
+    expect(componentAnswersAreCorrect({ q: 5 }, [answer], [response])).toBe(false);
+    expect(componentAnswersAreCorrect({ q: 10 }, [answer], [response])).toBe(true);
+  });
+
+  test('a study score module can score partial overlap for a built-in checkbox', () => {
+    const response: Response = {
+      id: 'fruit',
+      type: 'checkbox',
+      prompt: 'Select fruit',
+      options: ['Apple', 'Banana', 'Carrot'],
+      path: 'test-response-functions/assets/SelectionScore.response.ts',
+    };
+    const answer = { id: 'fruit', answer: ['Apple', 'Banana'] };
+
+    expect(scoreResponseAnswer(['Apple', 'Carrot'], answer, response)).toBeCloseTo(1 / 3);
+    expect(scoreResponseAnswer(['Apple', 'Banana'], answer, response)).toBe(1);
+  });
+
+  test('a missing score module fails with its configured path', () => {
+    expect(() => scoreResponseAnswer(5, { id: 'q', answer: 10 }, {
+      id: 'q', type: 'numerical', prompt: '', path: 'missing.ts',
+    }))
+      .toThrow('Unable to load response module at missing.ts');
+  });
+
   describe('responseAnswerIsCorrect', () => {
     test('matches numeric and string values', () => {
       expect(responseAnswerIsCorrect(5, 5)).toBe(true);

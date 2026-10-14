@@ -19,7 +19,7 @@ import type { compareResponseValues } from '../../../utils/correctAnswer';
 // ── mocks ────────────────────────────────────────────────────────────────────
 
 const {
-  mockStoredAnswerData, capturedNextButtonProps, capturedSwitcherProps, mockIsAnalysis, mockCurrentIdentifier, mockNavigate, mockSaveAnswers, mockTrrackApply, mockAnswerField,
+  mockStoredAnswerData, capturedNextButtonProps, capturedSwitcherProps, mockIsAnalysis, mockCurrentIdentifier, mockNavigate, mockSaveAnswers, mockTrrackApply, mockAnswerField, mockCustomResponseModule,
 } = vi.hoisted(() => ({
   mockStoredAnswerData: {
     formOrder: { response: ['q1'] } as { response: string[] } | undefined,
@@ -56,6 +56,7 @@ const {
     reset: vi.fn(),
     getInputProps: vi.fn(() => ({ value: '', onChange: vi.fn() })),
   },
+  mockCustomResponseModule: { value: null as { default: () => null; validate?: (value: unknown, values: unknown, response: unknown, expected?: unknown) => number | null } | null },
 }));
 
 vi.mock('../../../storage/storageEngineHooks', () => {
@@ -160,7 +161,7 @@ vi.mock('../../../utils/correctAnswer', async (importOriginal) => ({
 }));
 
 vi.mock('../customResponseModules', () => ({
-  getCustomResponseModule: vi.fn(() => null),
+  getCustomResponseModule: vi.fn(() => mockCustomResponseModule.value),
   getCustomResponseModuleLoadError: vi.fn(() => null),
 }));
 
@@ -192,8 +193,8 @@ vi.mock('../ResponseSwitcher', () => ({
 }));
 
 vi.mock('../FeedbackAlert', () => ({
-  FeedbackAlert: ({ response, alertConfig }: { response: { id: string }; alertConfig: Record<string, { visible: boolean; title: string }> }) => (
-    alertConfig[response.id]?.visible ? <div data-testid={`feedback-alert-${response.id}`} data-title={alertConfig[response.id].title} /> : null
+  FeedbackAlert: ({ response, alertConfig }: { response: { id: string }; alertConfig: Record<string, { visible: boolean; title: string; message: string }> }) => (
+    alertConfig[response.id]?.visible ? <div data-testid={`feedback-alert-${response.id}`} data-title={alertConfig[response.id].title}>{alertConfig[response.id].message}</div> : null
   ),
 }));
 
@@ -322,6 +323,7 @@ beforeEach(() => {
   mockSaveAnswers.mockClear();
   mockTrrackApply.mockClear();
   mockAnswerField.values = {};
+  mockCustomResponseModule.value = null;
   mockAnswerField.setFieldValue.mockReset();
 });
 
@@ -661,6 +663,48 @@ describe('ResponseBlock focus recovery', () => {
 // ── Check Answer via keyboard ─────────────────────────────────────────────────
 
 describe('ResponseBlock onCheckAnswer', () => {
+  test('uses a custom response module validator for scoring', async () => {
+    mockAnswerField.values = { customGuess: { score: 5 } };
+    mockStoredAnswerData.formOrder = { response: ['customGuess'] };
+    mockCustomResponseModule.value = {
+      default: () => null,
+      validate: (value, _values, _response, expected) => (expected === undefined
+        ? null
+        : (value as { score: number }).score / (expected as { score: number }).score),
+    };
+    const customScoredConfig: IndividualComponent = {
+      ...baseConfig,
+      provideFeedback: true,
+      response: [{
+        id: 'customGuess', type: 'custom', prompt: 'Custom score', path: 'test-response-functions/assets/CustomPartialScore.tsx', required: false,
+      }],
+      correctAnswer: [{ id: 'customGuess', answer: { score: 10 } }],
+    };
+
+    const { store } = await renderWithStore(<ResponseBlock config={customScoredConfig} location="belowStimulus" />);
+    await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
+    expect(store.getState().checkAnswer.trial1_0).toMatchObject({ correct: false, scores: { customGuess: 0.5 } });
+    mockCustomResponseModule.value = null;
+  });
+
+  test('stores partial scores and shows the percentage while keeping Next disabled', async () => {
+    mockAnswerField.values = { q1: 5 };
+    const scoredConfig: IndividualComponent = {
+      ...baseConfig,
+      provideFeedback: true,
+      allowFailedTraining: false,
+      response: [{
+        id: 'q1', type: 'numerical', prompt: 'Score', required: false, path: 'test-response-functions/assets/PartialScore.response.ts',
+      }],
+      correctAnswer: [{ id: 'q1', answer: 10 }],
+    };
+    const { container, store } = await renderWithStore(<ResponseBlock config={scoredConfig} location="belowStimulus" />);
+    await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
+    expect(store.getState().checkAnswer.trial1_0).toMatchObject({ correct: false, scores: { q1: 0.5 } });
+    expect(container.querySelector('[data-testid="feedback-alert-q1"]')?.textContent).toContain('50% credit');
+    expect(findButton(container, 'Next')).toHaveProperty('disabled', true);
+  });
+
   const feedbackEnterConfig = {
     ...baseConfig,
     nextOnEnter: true,

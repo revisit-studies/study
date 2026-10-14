@@ -1,7 +1,25 @@
 import isEqual from 'lodash.isequal';
 import {
-  Answer, Response, StoredAnswer, ValueCondition,
+  Answer, CustomResponse, JsonValue, Response, StoredAnswer, ValueCondition,
 } from '../parser/types';
+import type { CustomResponseValidate } from '../store/types';
+
+type ResponseFunctionModule = {
+  validate?: (value: unknown, values: Record<string, unknown>, response: Response, expected?: unknown) => string | boolean | number | null;
+};
+
+const responseFunctionModules = import.meta.glob('../public/**/*.response.{ts,tsx,js,jsx,mjs,mts}', { eager: true }) as Record<string, ResponseFunctionModule>;
+let customResponseValidatorLookup: ((response: CustomResponse) => CustomResponseValidate | undefined) | undefined;
+
+export function registerCustomResponseValidatorLookup(
+  lookup?: (response: CustomResponse) => CustomResponseValidate | undefined,
+) {
+  customResponseValidatorLookup = lookup;
+}
+
+export function getResponseFunctionModule(path: string): ResponseFunctionModule | null {
+  return responseFunctionModules[`../public/${path}`] ?? null;
+}
 
 /** Compare values without converting strings to numbers. */
 export function compareResponseValues(
@@ -101,4 +119,46 @@ export function responseAnswerIsCorrect(
   }
 
   return compareResponseValues(responseUserAnswer, responseCorrectAnswer, 'equals');
+}
+
+/** Return fractional correctness while preserving the existing comparison for unscored answers. */
+export function scoreResponseAnswer(
+  value: StoredAnswer['answer'][string] | undefined,
+  correctAnswer: Answer,
+  response?: Response,
+  values: StoredAnswer['answer'] = {},
+  customValidate?: CustomResponseValidate,
+): number {
+  if (value === undefined) return 0;
+
+  const module = response?.path && response.type !== 'custom' ? getResponseFunctionModule(response.path) : null;
+  if (response?.path && response.type !== 'custom' && !module) {
+    throw new Error(`Unable to load response module at ${response.path}`);
+  }
+  const resolvedCustomValidate = response?.type === 'custom'
+    ? customValidate ?? customResponseValidatorLookup?.(response)
+    : undefined;
+  const result = response?.type === 'custom' && resolvedCustomValidate
+    ? resolvedCustomValidate(value as JsonValue | null, values, response as CustomResponse, correctAnswer.answer)
+    : response && module?.validate
+      ? module.validate(value, values, response, correctAnswer.answer)
+      : null;
+  if (result !== null) {
+    if (typeof result === 'boolean') return Number(result);
+    if (typeof result === 'number') {
+      if (!Number.isFinite(result) || result < 0 || result > 1) {
+        throw new Error(`Validation function at ${response?.path} must return a score between 0 and 1`);
+      }
+      return result;
+    }
+    if (typeof result === 'string') return 0;
+  }
+
+  return Number(responseAnswerIsCorrect(
+    value,
+    correctAnswer.answer,
+    correctAnswer.acceptableLow,
+    correctAnswer.acceptableHigh,
+    { ignoreArrayOrder: shouldIgnoreArrayOrder(response) },
+  ));
 }

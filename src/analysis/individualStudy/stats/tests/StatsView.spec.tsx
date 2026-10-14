@@ -253,7 +253,7 @@ describe('ResponseVisualization', () => {
     expect(spec.config.axis).toMatchObject({ labelColor: text, titleColor: text });
     expect(spec.config.header).toEqual({ labelColor: text, titleColor: text });
     expect(spec.config.legend).toEqual({ labelColor: text, titleColor: text });
-    expect(spec.encoding.color.scale.range).toEqual(['#69DB7C', '#ADB5BD']);
+    expect(spec.encoding.color.scale.range).toEqual(['#69DB7C', '#FFD43B', '#ADB5BD', '#868E96']);
   });
 
   test('metadata type: shows icon and config JSON code block', () => {
@@ -393,6 +393,44 @@ describe('ResponseVisualization', () => {
     );
     expect(html).toContain('icon-numerical');
     expect(html).toContain('VegaLite');
+  });
+
+  test('uses the response scorer classification without replacing it in Vega transforms', () => {
+    const participant = {
+      ...mockParticipant,
+      answers: {
+        trial1_0: {
+          answer: {
+            q1: 5,
+          },
+          startTime: 1,
+          endTime: 2,
+          componentName: 'trial1',
+          trialOrder: '0',
+          windowEvents: [],
+          timedOut: false,
+        },
+      },
+    } as unknown as ParticipantData;
+    const html = renderToStaticMarkup(
+      <ResponseVisualization
+        {...baseProps}
+        participantData={[participant]}
+        response={{
+          type: 'numerical',
+          id: 'q1',
+          prompt: 'Enter number',
+          path: 'test-response-functions/assets/PartialScore.response.ts',
+        }}
+        trialConfig={{ ...mockTrialConfig, correctAnswer: [{ id: 'q1', answer: 10 }] }}
+      />,
+    );
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const spec = JSON.parse(doc.querySelector('[data-vega-spec]')!.getAttribute('data-vega-spec')!);
+
+    expect(spec.data.values[0].result).toBe('partial');
+    expect(spec.data.values[0].order).toBe(1);
+    expect(spec.transform.some((transform: { calculate?: string }) => transform.calculate?.includes('result'))).toBe(false);
   });
 
   test('slider type: shows slider icon and VegaLite chart', () => {

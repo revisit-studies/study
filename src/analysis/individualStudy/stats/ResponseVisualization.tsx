@@ -11,7 +11,7 @@ import {
 import { useMemo } from 'react';
 import { VegaLite, VisualizationSpec } from 'react-vega';
 import { IndividualComponent, ParticipantData, Response } from '../../../parser/types';
-import { responseAnswerIsCorrect } from '../../../utils/correctAnswer';
+import { scoreResponseAnswer } from '../../../utils/correctAnswer';
 import { parseDateValue } from '../../../utils/dateTimeValidation';
 
 export function ResponseVisualization({
@@ -61,22 +61,21 @@ export function ResponseVisualization({
 
       if (correctAnswer) {
         const participantAnswer = value.answer[response.id];
-        const expectedAnswer = correctAnswer.answer;
-
-        answerData.result = responseAnswerIsCorrect(
-          participantAnswer,
-          expectedAnswer,
-          undefined,
-          undefined,
-          { ignoreArrayOrder: response.type === 'checkbox' || response.type === 'dropdown' },
-        ) ? 'correct' : 'incorrect';
+        let score: number | undefined;
+        try {
+          score = scoreResponseAnswer(participantAnswer, correctAnswer, response, value.answer);
+        } catch {
+          score = undefined;
+        }
+        answerData.result = score === undefined ? 'unknown' : score === 1 ? 'correct' : score > 0 ? 'partial' : 'incorrect';
+        answerData.order = score === undefined ? 3 : score === 1 ? 0 : score > 0 ? 1 : 2;
       }
 
       return answerData;
     })).flat();
 
     return data.filter((row) => row[response.id] !== undefined && row[response.id] !== null && row[response.id] !== '');
-  }, [participantData, response.type, trialId, correctAnswer, response.id]);
+  }, [participantData, response, trialId, correctAnswer]);
 
   // Completion times for the metadata timing histogram
   const timingData = useMemo(() => (response.type === 'metadata'
@@ -120,21 +119,13 @@ export function ResponseVisualization({
     }
 
     const correctAnswerSpec = {
-      params: [
-        { name: 'correctAnswer', value: correctAnswer?.answer },
-        { name: 'variable', value: response.id },
-      ],
-      transform: [
-        { calculate: "datum[variable] === correctAnswer ? 'correct' : 'incorrect'", as: 'result' },
-        {
-          calculate: "if(datum.result === 'correct', 0, if(datum.result === 'incorrect', 1, 2))",
-          as: 'order',
-        },
-      ],
       color: {
         field: 'result',
         type: 'nominal',
-        scale: { domain: ['correct', 'incorrect'], range: ['#69DB7C', '#ADB5BD'] },
+        scale: {
+          domain: ['correct', 'partial', 'incorrect', 'unknown'],
+          range: ['#69DB7C', '#FFD43B', '#ADB5BD', '#868E96'],
+        },
       },
       order: { field: 'order' },
     };
@@ -144,15 +135,13 @@ export function ResponseVisualization({
       const data = questionData
         .map((row) => Object.entries(row[response.id] || {}).map(([question, value]) => (response.type === 'matrix-checkbox'
           ? (value as string).split('|').map((option) => ({ question, value: option }))
-          : [{ question, value }])).flat()).flat();
+          : [{ question, value }]).map((entry) => ({ ...entry, result: row.result, order: row.order }))).flat()).flat();
 
       // Histogram
       const spec = {
         ...baseSpec,
         data: { values: data },
         mark: 'bar',
-        params: correctAnswer !== undefined ? correctAnswerSpec.params : undefined,
-        transform: Array.isArray(correctAnswer?.answer) ? undefined : (correctAnswer !== undefined ? correctAnswerSpec.transform : undefined),
         encoding: {
           row: { field: 'question', type: 'nominal', header: { title: 'Question' } },
           x: { field: 'value', type: 'ordinal', title: 'Answer' },
@@ -192,14 +181,12 @@ export function ResponseVisualization({
         ...baseSpec,
         data: { values: questionData },
         mark: 'bar',
-        params: correctAnswer !== undefined ? correctAnswerSpec.params : undefined,
         transform: [
           {
             bin: response.type === 'likert' ? { step: 1 } : { maxbins: 10 },
             field: response.id,
             as: 'bins',
           },
-          ...(correctAnswer !== undefined ? correctAnswerSpec.transform : []),
         ],
         encoding: {
           x: {
@@ -237,8 +224,6 @@ export function ResponseVisualization({
         ...baseSpec,
         data: { values: questionData },
         mark: 'bar',
-        params: correctAnswer !== undefined ? correctAnswerSpec.params : undefined,
-        transform: Array.isArray(correctAnswer?.answer) ? undefined : (correctAnswer !== undefined ? correctAnswerSpec.transform : undefined),
         encoding: {
           x: {
             field: response.id, type: 'ordinal', title: 'Answer', sort: dateSort,

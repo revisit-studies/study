@@ -183,6 +183,8 @@ export interface CheckAnswerState {
   correct: boolean;
   /** The correctness of each response at the last check. Keys are the "id"s in the [Response](../BaseResponse) list of the component in your [StudyConfiguration](../StudyConfig); values indicate whether that response was correct. */
   responses: Record<string, boolean>;
+  /** Fractional score for each checked response, when custom scoring is configured. */
+  scores?: Record<string, number>;
 }
 
 export interface JumpFunctionParameters<T> {
@@ -246,7 +248,8 @@ export type CustomResponseValidate<TValue extends JsonValue = JsonValue> = (
   value: TValue | null,
   values: StoredAnswer['answer'],
   response: CustomResponse,
-) => string | null;
+  expected?: unknown,
+) => string | boolean | number | null;
 
 export interface Sequence {
   id?: string;

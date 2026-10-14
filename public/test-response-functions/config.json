@@ -1,0 +1,165 @@
+{
+  "$schema": "../../src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Response Validation and Partial Scoring",
+    "version": "pilot",
+    "authors": ["The reVISit Team"],
+    "date": "2026-10-14",
+    "description": "A test study for custom validation and scoring functions on built-in and custom responses.",
+    "organizations": ["University of Utah"]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "withSidebar": true
+  },
+  "components": {
+    "validate-even-number": {
+      "type": "questionnaire",
+      "instruction": "Try entering 3 to see the custom error, then enter an even number to continue.",
+      "response": [
+        {
+          "id": "evenNumber",
+          "type": "numerical",
+          "prompt": "Enter an even number from 2 to 10. Enter an odd number for the custom error message.",
+          "location": "belowStimulus",
+          "required": true,
+          "placeholder": "Enter 3 or 5",
+          "min": 2,
+          "max": 10,
+          "path": "test-response-functions/assets/EvenNumber.response.ts"
+        }
+      ]
+    },
+    "validate-text": {
+      "type": "questionnaire",
+      "instruction": "This built-in text field uses a response function for study-specific validation.",
+      "response": [
+        {
+          "id": "chartDescription",
+          "type": "shortText",
+          "prompt": "Type something that contains the word chart, if it is something else, you will fail this question.",
+          "location": "belowStimulus",
+          "required": true,
+          "placeholder": "Try: This chart compares values",
+          "path": "test-response-functions/assets/ContainsChart.response.ts"
+        }
+      ]
+    },
+    "score-number": {
+      "type": "questionnaire",
+      "instruction": "This built-in numerical field uses the same function for validation and scoring. Try 5.5 for the validation error, 5 for 50% credit, then 10 for full credit.",
+      "response": [
+        {
+          "id": "guess",
+          "type": "numerical",
+          "prompt": "How close can you get to 10? Enter a whole number. Try 5 for 50% credit, then 10 for full credit.",
+          "location": "belowStimulus",
+          "required": true,
+          "min": 0,
+          "max": 10,
+          "path": "test-response-functions/assets/PartialScore.response.ts"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "guess",
+          "answer": 10
+        }
+      ],
+      "provideFeedback": true,
+      "allowFailedTraining": true,
+      "trainingAttempts": 3
+    },
+    "score-slider": {
+      "type": "questionnaire",
+      "instruction": "This built-in slider uses the numerical distance scoring algorithm.",
+      "response": [
+        {
+          "id": "sliderGuess",
+          "type": "slider",
+          "prompt": "Move the slider toward 10. A value of 5 receives 50% credit.",
+          "location": "belowStimulus",
+          "required": true,
+          "startingValue": 5,
+          "step": 1,
+          "spacing": 5,
+          "options": [
+            { "label": "0", "value": 0 },
+            { "label": "5", "value": 5 },
+            { "label": "10", "value": 10 }
+          ],
+          "path": "test-response-functions/assets/PartialScore.response.ts"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "sliderGuess",
+          "answer": 10
+        }
+      ],
+      "provideFeedback": true,
+      "allowFailedTraining": true,
+      "trainingAttempts": 3
+    },
+    "score-checkbox": {
+      "type": "questionnaire",
+      "instruction": "This built-in checkbox field requires two selections and scores partial overlap using Jaccard similarity.",
+      "response": [
+        {
+          "id": "fruitGuess",
+          "type": "checkbox",
+          "prompt": "Select the two fruits.",
+          "location": "belowStimulus",
+          "required": true,
+          "options": ["Apple", "Banana", "Money", "Date"],
+          "path": "test-response-functions/assets/SelectionScore.response.ts"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "fruitGuess",
+          "answer": ["Apple", "Banana"]
+        }
+      ],
+      "provideFeedback": true,
+      "allowFailedTraining": true,
+      "trainingAttempts": 3
+    },
+    "score-custom-number": {
+      "type": "questionnaire",
+      "instruction": "This custom response uses the same validate return contract for form validation and partial scoring.",
+      "response": [
+        {
+          "id": "customGuess",
+          "type": "custom",
+          "prompt": "How close can you get to 10? Click to switch between 5 and 10.",
+          "path": "test-response-functions/assets/CustomPartialScore.tsx",
+          "default": { "score": 5 }
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "customGuess",
+          "answer": { "score": 10 }
+        }
+      ],
+      "provideFeedback": true,
+      "allowFailedTraining": true,
+      "trainingAttempts": 3
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "validate-even-number",
+      "validate-text",
+      "score-number",
+      "score-slider",
+      "score-checkbox",
+      "score-custom-number"
+    ]
+  }
+}

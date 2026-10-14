@@ -28,6 +28,62 @@ import {
 } from '../responseErrors';
 import { validateResponse } from '../responseValidation';
 
+test('built-in responses run study validation after built-in checks', () => {
+  const response: NumericalResponse = {
+    id: 'n',
+    type: 'numerical',
+    prompt: 'Even number',
+    min: 2,
+    required: true,
+    path: 'test-response-functions/assets/EvenNumber.response.ts',
+  };
+  expect(validateResponse(response, 4, { n: 4 }).valid).toBe(true);
+  expect(validateResponse(response, 3, { n: 3 })).toMatchObject({ valid: false, message: 'Enter an even number.' });
+  expect(validateResponse(response, 1, { n: 1 }).message).toContain('2');
+});
+
+test('missing built-in validation module produces a visible error', () => {
+  const response: NumericalResponse = {
+    id: 'n',
+    type: 'numerical',
+    prompt: 'Number',
+    path: 'missing.ts',
+  };
+  expect(validateResponse(response, 2, { n: 2 })).toMatchObject({
+    valid: false, message: 'Unable to load response module at missing.ts',
+  });
+});
+
+test('built-in response modules can provide custom validation', () => {
+  expect(validateResponse({
+    id: 'number',
+    type: 'numerical',
+    prompt: '',
+    path: 'test-response-functions/assets/PartialScore.response.ts',
+  }, 5.5, { number: 5.5 })).toMatchObject({ valid: false, message: 'Enter a whole number.' });
+
+  expect(validateResponse({
+    id: 'text',
+    type: 'shortText',
+    prompt: '',
+    path: 'test-response-functions/assets/ContainsChart.response.ts',
+  }, 'A table', { text: 'A table' })).toMatchObject({
+    valid: false,
+    message: 'Include the word "chart".',
+  });
+
+  expect(validateResponse({
+    id: 'selection',
+    type: 'checkbox',
+    prompt: '',
+    options: ['Apple', 'Banana'],
+    path: 'test-response-functions/assets/SelectionScore.response.ts',
+  }, ['Apple'], { selection: ['Apple'] })).toMatchObject({
+    valid: false,
+    message: 'Select at least two options.',
+  });
+});
+
 describe('getResponseWidth', () => {
   test.each(['width', 'minWidth', 'maxWidth'] as const)('explicit %s removes the default input width limit', (property) => {
     expect(getResponseWidth({ type: 'shortText', style: { [property]: '600px' } } as Response)).toBeUndefined();
@@ -260,6 +316,21 @@ describe('generateValidation custom', () => {
     }, {});
 
     expect(error).toBe('Set confidence to at least 70 to continue.');
+  });
+
+  it('passes combined answers to custom validation', () => {
+    const validateWithContext: CustomResponseValidate = (_value, values) => (
+      values.otherResponse === 'ready' ? null : 'Complete the other response first.'
+    );
+    const validation = generateValidation(
+      [response],
+      { [response.id]: validateWithContext },
+      {},
+      [response],
+      { otherResponse: 'ready' },
+    );
+
+    expect(validation[response.id]({ chartType: 'Bar' }, { [response.id]: { chartType: 'Bar' } })).toBeNull();
   });
 
   it('passes once the custom response module validation succeeds', () => {
@@ -1396,6 +1467,19 @@ describe('validateResponse', () => {
       issueType: 'invalid',
       message: 'Custom validation failed.',
       blocksProgression: true,
+    });
+  });
+
+  test('custom response validator score does not block submission', () => {
+    const response: CustomResponse = {
+      id: 'custom', prompt: 'Question', type: 'custom', required: true, path: 'custom-response/Example.tsx',
+    };
+    const customValidate: CustomResponseValidate = () => 0.5;
+
+    expect(validateResponse(response, { value: true }, { custom: { value: true } }, { customValidate })).toMatchObject({
+      valid: true,
+      issueType: 'none',
+      blocksProgression: false,
     });
   });
 

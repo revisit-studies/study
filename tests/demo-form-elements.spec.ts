@@ -317,13 +317,26 @@ test('Test questionnaire component with responses and randomizing questions and 
   // Custom Response page
   await expect(page.getByText('Custom Response')).toBeVisible();
   const customResponseNextButton = page.getByRole('button', { name: 'Next', exact: true });
-  await expect(customResponseNextButton).toBeEnabled();
+  const checkCustomResponseButton = page.getByRole('button', { name: 'Check Answer', exact: true });
+  await expect(page.getByText('Pick a chart type and set your confidence.')).toBeVisible();
+  const scoreNumberInput = page.getByPlaceholder('Enter a number from 0 to 10');
+  await expect(page.getByText('How close can you get to 10? Enter a whole number. Try 5.5 for a custom validation error, 5 for 50% credit, then 10 for full credit.')).toBeVisible();
+  await expect(customResponseNextButton).toBeDisabled();
   await page.getByRole('button', { name: 'Bar', exact: true }).click();
-  await customResponseNextButton.click();
+  await checkCustomResponseButton.click();
   await expect(page.getByText('Set confidence to at least 70 to continue.')).toBeVisible();
   await page.getByLabel('Confidence').fill('80');
   await page.getByLabel('Rationale').fill('Useful for comparing categories');
+  await scoreNumberInput.fill('5.5');
+  await checkCustomResponseButton.click();
+  await expect(page.getByText('Enter a whole number.', { exact: true })).toBeVisible();
+  await scoreNumberInput.fill('5');
   await expect(page.getByText('"chartType":"Bar"')).toBeVisible();
+  await checkCustomResponseButton.click();
+  await expect(page.getByText(/You received 50% credit/)).toBeVisible();
+  await scoreNumberInput.fill('10');
+  await checkCustomResponseButton.click();
+  await expect(page.getByText('You have answered the question correctly.')).toBeVisible();
   await expect(customResponseNextButton).toBeEnabled();
   await nextClick(page);
 

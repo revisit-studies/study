@@ -40,7 +40,7 @@ import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { useNextStep } from '../../store/hooks/useNextStep';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
-import { responseAnswerIsCorrect } from '../../utils/correctAnswer';
+import { getResponseFunctionModule, responseAnswerIsCorrect, scoreResponseAnswer } from '../../utils/correctAnswer';
 import { getCustomResponseModule, getCustomResponseModuleLoadError } from './customResponseModules';
 import { appendStimulusShowErrorsToGraph } from './stimulusProvenance';
 import { useManagedTrrack } from '../../store/hooks/useRevisitTrrack';
@@ -201,6 +201,7 @@ export function ResponseBlock({
   const attemptsUsed = currentCheckAnswer?.attemptsUsed ?? 0;
   const hasCorrectAnswer = currentCheckAnswer?.correct ?? false;
   const checkAnswerResponses = currentCheckAnswer?.responses;
+  const checkAnswerScores = currentCheckAnswer?.scores;
   const usedAllAttempts = attemptsUsed >= trainingAttempts && trainingAttempts >= 0;
   // Unlock Next after a correct answer, or once attempts run out if failed training is allowed. usedAllAttempts excludes -1, so unlimited attempts require a correct answer
   const enableNextButton = hasCorrectAnswerFeedback && attemptsUsed > 0 && (hasCorrectAnswer || (allowFailedTraining && usedAllAttempts));
@@ -311,7 +312,7 @@ export function ResponseBlock({
   const { visibleIds } = resolveResponseVisibility(allResponsesWithDefaults, {
     ...visibilityValues,
     ...answerValidator.values,
-  }, {}, config.correctAnswer);
+  }, {}, config.correctAnswer, customResponseValidators);
   const applicableResponses = allResponsesWithDefaults.filter((response) => visibleIds.has(response.id));
   useEffect(() => {
     if (isAnalysis) return;
@@ -557,6 +558,7 @@ export function ResponseBlock({
       }];
     }
     let message = '';
+    const partialScore = checkAnswerScores?.[response.id];
     // -1 gives unlimited attempts
     if (trainingAttempts === -1) {
       message = 'Please try again.';
@@ -567,7 +569,7 @@ export function ResponseBlock({
     } else {
       message = `Please try again. You have ${trainingAttempts - attemptsUsed} attempts left.`;
     }
-    if (response.type === 'checkbox') {
+    if (response.type === 'checkbox' && partialScore === undefined) {
       const correct = config?.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
       const incorrectValues = storeAnswers[identifier]?.incorrectAnswers?.[response.id]?.value;
       const lastIncorrect = incorrectValues?.[incorrectValues.length - 1];
@@ -580,10 +582,13 @@ export function ResponseBlock({
         message = `You have successfully checked ${matches.length}/${correct.length} correct boxes. ${tooManySelected}${message}`;
       }
     }
+    if (partialScore !== undefined && partialScore > 0 && partialScore < 1) {
+      message = `You received ${Math.round(partialScore * 100)}% credit. ${message}`;
+    }
     return [response.id, {
       visible: true, title: 'Incorrect Answer', message, color: 'red',
     }];
-  })), [allResponsesWithDefaults, allowFailedTraining, attemptsUsed, checkAnswerResponses, config, hasCorrectAnswerFeedback, identifier, storeAnswers, trainingAttempts]);
+  })), [allResponsesWithDefaults, allowFailedTraining, attemptsUsed, checkAnswerResponses, checkAnswerScores, config, hasCorrectAnswerFeedback, identifier, storeAnswers, trainingAttempts]);
   const checkAnswerProvideFeedback = useCallback(() => {
     if (hasStimulusIssue) {
       revealStimulusErrors();
@@ -599,13 +604,23 @@ export function ResponseBlock({
 
     const allAnswers = getAnswersFromAllLocations(trialValidation[identifier]);
 
-    const applicableCorrectAnswers = getApplicableCorrectAnswers(allResponsesWithDefaults, allAnswers, config.correctAnswer);
+    const applicableCorrectAnswers = getApplicableCorrectAnswers(allResponsesWithDefaults, allAnswers, config.correctAnswer, customResponseValidators);
+    const scores: Record<string, number> = {};
+    applicableCorrectAnswers.forEach((answer) => {
+      const response = allResponsesWithDefaults.find((r) => r.id === answer.id);
+      const hasValidator = response?.type === 'custom'
+        ? !!customResponseValidators[answer.id]
+        : !!response?.path && !!getResponseFunctionModule(response.path)?.validate;
+      if (hasValidator) {
+        scores[answer.id] = scoreResponseAnswer(allAnswers[answer.id], answer, response, allAnswers, customResponseValidators[answer.id]);
+      }
+    });
     const correctAnswers = Object.fromEntries(
       applicableCorrectAnswers.map((configCorrectAnswer) => {
         const response = allResponsesWithDefaults.find((r) => r.id === configCorrectAnswer.id);
         const suppliedAnswer = allAnswers[configCorrectAnswer.id];
 
-        return [configCorrectAnswer.id, responseAnswerIsCorrect(
+        return [configCorrectAnswer.id, Object.hasOwn(scores, configCorrectAnswer.id) ? scores[configCorrectAnswer.id] === 1 : responseAnswerIsCorrect(
           suppliedAnswer,
           configCorrectAnswer.answer,
           configCorrectAnswer.acceptableLow,
@@ -633,8 +648,9 @@ export function ResponseBlock({
       attemptsUsed: newAttemptsUsed,
       correct: allCorrect,
       responses: correctAnswers,
+      scores,
     }));
-  }, [allResponsesWithDefaults, attemptsUsed, config, hasCorrectAnswerFeedback, hasResponseIssues, hasStimulusIssue, identifier, revealResponseErrors, revealStimulusErrors, saveIncorrectAnswer, setCheckAnswerResult, storeDispatch, trialValidation]);
+  }, [allResponsesWithDefaults, attemptsUsed, config, customResponseValidators, hasCorrectAnswerFeedback, hasResponseIssues, hasStimulusIssue, identifier, revealResponseErrors, revealStimulusErrors, saveIncorrectAnswer, setCheckAnswerResult, storeDispatch, trialValidation]);
 
   const nextButtonText = useMemo(() => config?.nextButtonText ?? studyConfig.uiConfig.nextButtonText ?? 'Next', [config, studyConfig]);
 
@@ -771,11 +787,12 @@ export function ResponseBlock({
                               onBlur: () => answerValidator.getInputProps(response.id).onBlur?.(),
                             } as CustomResponseField
                             : undefined}
+                          validationContext={{ ...combinedValues, ...answerValidator.values }}
                           customError={response.type === 'custom'
                             ? generateCustomResponseErrorMessage(
                               response,
                               answerValidator.values[response.id],
-                              answerValidator.values,
+                              { ...combinedValues, ...answerValidator.values },
                               customResponseValidators[response.id],
                               customResponseLoadErrors[response.id],
                               { showRequiredErrors: errors },

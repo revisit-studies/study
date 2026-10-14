@@ -999,8 +999,28 @@
             ],
             "minimumConfidence": 70
           }
+        },
+        {
+          "id": "score-number-demo",
+          "type": "numerical",
+          "prompt": "How close can you get to 10? Enter a whole number. Try 5.5 for a custom validation error, 5 for 50% credit, then 10 for full credit.",
+          "location": "belowStimulus",
+          "required": true,
+          "placeholder": "Enter a number from 0 to 10",
+          "min": 0,
+          "max": 10,
+          "path": "test-response-functions/assets/PartialScore.response.ts"
         }
-      ]
+      ],
+      "correctAnswer": [
+        {
+          "id": "score-number-demo",
+          "answer": 10
+        }
+      ],
+      "provideFeedback": true,
+      "trainingAttempts": 2,
+      "allowFailedTraining": true
     },
     "Randomizing Options": {
       "type": "questionnaire",

@@ -389,6 +389,10 @@
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
         },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
+          "type": "string"
+        },
         "prompt": {
           "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
           "type": "string"
@@ -513,6 +517,10 @@
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "prompt": {
@@ -831,6 +839,10 @@
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
         },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
+          "type": "string"
+        },
         "placeholder": {
           "description": "The placeholder text displayed in the input. Defaults to the format used by `options`.",
           "type": "string"
@@ -995,6 +1007,10 @@
         "paramCapture": {
           "not": {}
         },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
+          "type": "string"
+        },
         "prompt": {
           "not": {}
         },
@@ -1119,6 +1135,10 @@
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "placeholder": {
@@ -2174,6 +2194,10 @@
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
         },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
+          "type": "string"
+        },
         "prompt": {
           "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
           "type": "string"
@@ -2289,6 +2313,10 @@
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "placeholder": {
@@ -2622,6 +2650,10 @@
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
         },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
+          "type": "string"
+        },
         "prompt": {
           "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
           "type": "string"
@@ -2801,6 +2833,10 @@
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
         },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
+          "type": "string"
+        },
         "prompt": {
           "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
           "type": "string"
@@ -2965,6 +3001,10 @@
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "placeholder": {
@@ -3307,6 +3347,10 @@
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
         },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
+          "type": "string"
+        },
         "prompt": {
           "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
           "type": "string"
@@ -3464,6 +3508,10 @@
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
         },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
+          "type": "string"
+        },
         "prompt": {
           "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
           "type": "string"
@@ -3579,6 +3627,10 @@
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "prompt": {
@@ -3709,6 +3761,10 @@
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "prompt": {
@@ -3978,6 +4034,10 @@
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "prompt": {
@@ -4284,6 +4344,10 @@
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
         },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
+          "type": "string"
+        },
         "placeholder": {
           "description": "The placeholder text that is displayed in the input.",
           "type": "string"
@@ -4408,6 +4472,10 @@
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "prompt": {
@@ -4857,6 +4925,10 @@
         "paramCapture": {
           "not": {}
         },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
+          "type": "string"
+        },
         "prompt": {
           "description": "The markdown text that is displayed to the user.",
           "type": "string"
@@ -4989,6 +5061,10 @@
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "prompt": {

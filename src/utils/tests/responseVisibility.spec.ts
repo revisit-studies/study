@@ -157,6 +157,18 @@ describe('comparison conditions', () => {
     expect(resolveResponseVisibility(fields, { attended: 21 }).visibleIds.has('name')).toBe(false);
   });
 
+  test('isCorrect requires a full custom score', () => {
+    const fields: Response[] = [{
+      id: 'score', type: 'numerical', prompt: '', path: 'test-response-functions/assets/PartialScore.response.ts',
+    }, {
+      id: 'dependent', type: 'shortText', prompt: '', visibleIf: { responseId: 'score', comparison: 'isCorrect', value: true },
+    }];
+    const correctAnswers = [{ id: 'score', answer: 10 }];
+
+    expect(resolveResponseVisibility(fields, { score: 5 }, {}, correctAnswers).visibleIds.has('dependent')).toBe(false);
+    expect(resolveResponseVisibility(fields, { score: 10 }, {}, correctAnswers).visibleIds.has('dependent')).toBe(true);
+  });
+
   test('isCorrect cannot reveal a dependent of a hidden controller', () => {
     const fields: Response[] = [...responses, {
       id: 'leaf', type: 'shortText', prompt: '', visibleIf: { responseId: 'name', comparison: 'isCorrect', value: false },
@@ -164,5 +176,26 @@ describe('comparison conditions', () => {
     const result = resolveResponseVisibility(fields, { attended: 'no', name: 'incorrect', leaf: 'old' }, {}, [{ id: 'name', answer: 'University' }]);
     expect(result.answers).toEqual({ attended: 'no' });
     expect(result.visibleIds.has('leaf')).toBe(false);
+  });
+
+  test('isCorrect visibility handles an unresolved response module without throwing', () => {
+    const fields: Response[] = [{
+      id: 'controller',
+      type: 'numerical',
+      prompt: '',
+      path: 'missing.response.ts',
+    }, {
+      id: 'dependent',
+      type: 'shortText',
+      prompt: '',
+      visibleIf: {
+        responseId: 'controller', comparison: 'isCorrect', value: true,
+      },
+    }];
+
+    expect(() => resolveResponseVisibility(fields, { controller: 1 }, {}, [{ id: 'controller', answer: 1 }]))
+      .not.toThrow();
+    expect(resolveResponseVisibility(fields, { controller: 1 }, {}, [{ id: 'controller', answer: 1 }]).visibleIds.has('dependent'))
+      .toBe(false);
   });
 });

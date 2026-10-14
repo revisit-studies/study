@@ -1,5 +1,5 @@
 import isEqual from 'lodash.isequal';
-import { compareResponseValues } from '../../utils/correctAnswer';
+import { compareResponseValues, getResponseFunctionModule } from '../../utils/correctAnswer';
 import {
   CheckboxResponse,
   DateResponse,
@@ -518,7 +518,7 @@ function createValidationResult(
   };
 }
 
-export function validateResponse(
+function validateResponseBase(
   response: Response,
   value: StoredAnswer['answer'][string] | undefined,
   values: StoredAnswer['answer'],
@@ -560,7 +560,7 @@ export function validateResponse(
     }
 
     const customValidationMessage = customValidate(customValue, values, response);
-    return customValidationMessage
+    return typeof customValidationMessage === 'string' && customValidationMessage
       ? createValidationResult(response, 'invalid', { message: customValidationMessage })
       : createValidationResult(response, 'none');
   }
@@ -758,4 +758,24 @@ export function validateResponse(
   }
 
   return createValidationResult(response, 'none');
+}
+
+export function validateResponse(
+  response: Response,
+  value: StoredAnswer['answer'][string] | undefined,
+  values: StoredAnswer['answer'],
+  options: ResponseValidationOptions = {},
+): ResponseValidationResult {
+  const result = validateResponseBase(response, value, values, options);
+  if (!result.valid || !response.path || response.type === 'custom' || response.type === 'textOnly' || response.type === 'divider'
+    || isEmptyCustomResponseValue(value)
+    || shouldBypassValidationForStandaloneDontKnow(response, !!values[`${response.id}-dontKnow`])) return result;
+
+  const module = getResponseFunctionModule(response.path);
+  if (!module) {
+    return createValidationResult(response, 'invalid', { message: `Unable to load response module at ${response.path}` });
+  }
+  if (!module.validate) return result;
+  const message = module.validate(value, values, response);
+  return typeof message === 'string' && message ? createValidationResult(response, 'invalid', { message }) : result;
 }

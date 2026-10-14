@@ -445,6 +445,8 @@ export type ResponseVisibilityCondition = {
 export interface BaseResponse {
   /** The id of the response. This is used to identify the response in the data file. */
   id: string;
+  /** Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked. */
+  path?: string;
   /** The prompt that is displayed to the participant. You can use markdown here to render images, links, etc. */
   prompt: string;
   /** The secondary text that is displayed to the participant under the prompt. This does not accept markdown. */

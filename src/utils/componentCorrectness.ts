@@ -1,5 +1,5 @@
 import type { IndividualComponent, Response, StoredAnswer } from '../parser/types';
-import { responseAnswerIsCorrect, shouldIgnoreArrayOrder } from './correctAnswer';
+import { getResponseFunctionModule, scoreResponseAnswer } from './correctAnswer';
 import { getApplicableCorrectAnswers } from './responseVisibility';
 
 export function componentAnswersAreCorrect(
@@ -16,13 +16,7 @@ export function componentAnswersAreCorrect(
 
     if (
       userAnswer === undefined
-      || !responseAnswerIsCorrect(
-        userAnswer,
-        correctAnswer.answer,
-        correctAnswer.acceptableLow,
-        correctAnswer.acceptableHigh,
-        { ignoreArrayOrder: shouldIgnoreArrayOrder(response) },
-      )
+      || scoreResponseAnswer(userAnswer, correctAnswer, response, componentUserAnswers) !== 1
     ) {
       allCorrect = false;
     }
@@ -47,6 +41,14 @@ export function getComponentAnswerStatus(
   }
 
   if (!componentCorrectAnswers?.length) {
+    return 'unknown';
+  }
+
+  const missingResponseModule = responses?.some((response) => response.type !== 'custom'
+    && response.path
+    && componentCorrectAnswers.some((answer) => answer.id === response.id)
+    && !getResponseFunctionModule(response.path));
+  if (missingResponseModule) {
     return 'unknown';
   }
 

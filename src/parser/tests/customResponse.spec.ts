@@ -1,6 +1,7 @@
 import {
   describe, expect, it,
 } from 'vitest';
+import responseFunctionConfig from '../../../public/test-response-functions/config.json';
 import { parseStudyConfig } from '../parser';
 
 function createBaseStudyConfig() {
@@ -50,6 +51,14 @@ function createBaseStudyConfig() {
 }
 
 describe('custom parser support', () => {
+  it('accepts a module path for built-in response validation', async () => {
+    const parsed = await parseStudyConfig(JSON.stringify(responseFunctionConfig));
+
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.components['validate-even-number'].response?.[0])
+      .toMatchObject({ path: 'test-response-functions/assets/EvenNumber.response.ts' });
+  });
+
   it('accepts custom definitions with path, parameters, and defaults', async () => {
     const parsed = await parseStudyConfig(JSON.stringify(createBaseStudyConfig()));
     const response = parsed.components.customResponsePage.response?.[0];

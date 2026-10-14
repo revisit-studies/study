@@ -43,3 +43,12 @@ test('isCorrect visibility uses controller correctness without recursively scori
   expect(componentAnswersAreCorrect({ gate: 'no' }, component.correctAnswer, responses)).toBe(true);
   expect(componentAnswersAreCorrect({ gate: 'yes' }, component.correctAnswer, responses)).toBe(false);
 });
+
+test('component status is unknown when its response module cannot load', () => {
+  const answer = makeStoredAnswer({ answer: { score: 10 }, endTime: 100 });
+  const responses: IndividualComponent['response'] = [{
+    id: 'score', type: 'numerical', prompt: '', path: 'missing.response.ts',
+  }];
+
+  expect(getComponentAnswerStatus(answer, [{ id: 'score', answer: 10 }], responses)).toBe('unknown');
+});

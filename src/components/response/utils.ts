@@ -195,10 +195,10 @@ export const generateValidation = (
       validateObj = {
         ...validateObj,
         [response.id]: (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => (
-          !resolveResponseVisibility(allResponses, { ...context, ...values }, {}, correctAnswers).visibleIds.has(response.id) ? null : generateInvalidResponseErrorMessage(
+          !resolveResponseVisibility(allResponses, { ...context, ...values }, {}, correctAnswers, customResponseValidators).visibleIds.has(response.id) ? null : generateInvalidResponseErrorMessage(
             response,
             value,
-            values,
+            { ...context, ...values, [response.id]: value },
             {
               customValidate: customResponseValidators[response.id],
               loadError: customResponseLoadErrors[response.id],
@@ -244,10 +244,11 @@ export function useAnswerField(
       { ...otherValues, ...(isAnalysis ? storedAnswer : answerField.values) },
       isAnalysis ? {} : generateInitFields(responses, {}),
       correctAnswers,
+      customResponseValidators,
     ).answers;
     const localKeys = new Set(responses.flatMap(responseValueKeys));
     return Object.fromEntries(Object.entries(resolved).filter(([key]) => localKeys.has(key)));
-  }, [allResponses, responses, context, answerField.values, isAnalysis, storedAnswer, correctAnswers]);
+  }, [allResponses, responses, context, answerField.values, isAnalysis, storedAnswer, correctAnswers, customResponseValidators]);
   const stableValues = useRef(values);
   if (!isEqual(stableValues.current, values)) stableValues.current = values;
 

@@ -55,6 +55,7 @@ export function ResponseSwitcher({
   disabled,
   isDelayedDisabled = false,
   field,
+  validationContext,
   customError,
   errors,
 }: {
@@ -69,6 +70,7 @@ export function ResponseSwitcher({
   disabled?: boolean;
   isDelayedDisabled?: boolean;
   field?: CustomResponseField;
+  validationContext?: StoredAnswer['answer'];
   customError?: string | null;
   errors?: boolean;
 }) {
@@ -174,10 +176,11 @@ export function ResponseSwitcher({
   const responseDividers = useMemo(() => response.withDivider ?? config?.responseDividers ?? studyConfig.uiConfig.responseDividers, [response, config, studyConfig]);
   const customResponseValue = useMemo<JsonValue | null>(() => (ans.value ?? null) as JsonValue | null, [ans.value]);
   const validationValues = useMemo(() => ({
+    ...validationContext,
     [response.id]: ans.value,
     [`${response.id}-dontKnow`]: dontKnowChecked,
     [`${response.id}-other`]: otherValue.value,
-  }), [response.id, ans.value, dontKnowChecked, otherValue.value]);
+  }), [validationContext, response.id, ans.value, dontKnowChecked, otherValue.value]);
   const templateData = useTemplateAnswerContext();
   const errorOptions = useMemo(() => {
     if (response.type === 'dropdown') {
