@@ -1,0 +1,38 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Drawing: Provenance-Tracked Sketching",
+    "version": "1.0.0",
+    "authors": ["The reVISit Team"],
+    "date": "2026-10-15",
+    "description": "Example study using the drawing library to capture and replay sketches.",
+    "organizations": ["University of Utah", "WPI"]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "withSidebar": false
+  },
+  "importedLibraries": ["drawing"],
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "library-drawing/assets/drawing.md",
+      "response": []
+    },
+    "sketch": {
+      "baseComponent": "$drawing.components.canvas",
+      "instruction": "Sketch a simple chart. Try changing ink colors and pen sizes, erasing a stroke, undoing and redoing, and clearing the canvas. The interaction history is available in participant replay.",
+      "parameters": {
+        "responseId": "drawing",
+        "height": 500,
+        "requireDrawing": true
+      }
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": ["introduction", "sketch"]
+  }
+}

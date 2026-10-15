@@ -1,0 +1,10 @@
+.revisit-drawing-canvas {
+  width: 100%;
+  height: 100%;
+}
+
+/* Study controls replace the Excalidraw menus on desktop and mobile. */
+.revisit-drawing-canvas .excalidraw .main-menu-trigger,
+.revisit-drawing-canvas .excalidraw .FixedSideContainer_side_top {
+  display: none;
+}

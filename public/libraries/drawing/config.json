@@ -1,0 +1,35 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/LibraryConfigSchema.json",
+  "description": "A freehand drawing canvas with pen, eraser, seven ink colors, three pen sizes, clear, undo, and redo. Uses Excalidraw with reVISit's managed Trrack provenance capture for participant replay. The final scene is saved as the drawing response. Parameters: responseId (default drawing), height (default 600 pixels), initialColor (default red), initialPenSize (m, l, or xl; default m), initialDrawing (optional scene), and requireDrawing (default false). The component also renders archived pen-only tldraw snapshots passed through provenanceState; rendering is approximate because the freehand engines differ.",
+  "externalLink": "https://docs.excalidraw.com/",
+  "components": {
+    "canvas": {
+      "type": "react-component",
+      "description": "A provenance-tracked freehand drawing canvas.",
+      "path": "libraries/drawing/assets/Canvas.tsx",
+      "withSidebar": false,
+      "parameters": {
+        "responseId": "drawing",
+        "height": 600,
+        "initialColor": "red",
+        "initialPenSize": "m",
+        "requireDrawing": false
+      },
+      "response": [
+        {
+          "id": "drawing",
+          "type": "reactive",
+          "hidden": true,
+          "required": false,
+          "prompt": "Drawing scene"
+        }
+      ]
+    }
+  },
+  "sequences": {
+    "drawing": {
+      "order": "fixed",
+      "components": ["canvas"]
+    }
+  }
+}
