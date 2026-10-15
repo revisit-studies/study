@@ -80,6 +80,7 @@
     "library-screen-recording",
     "library-webcam-recording",
     "library-smeq",
+    "library-drawing",
     "library-sus",
     "library-ueq",
     "library-ueq-s",
@@ -321,6 +322,11 @@
     "library-smeq": {
       "tab": "Libraries",
       "path": "library-smeq/config.json",
+      "test": true
+    },
+    "library-drawing": {
+      "tab": "Libraries",
+      "path": "library-drawing/config.json",
       "test": true
     },
     "library-sus": {
