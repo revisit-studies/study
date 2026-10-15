@@ -10,9 +10,8 @@ import {
 import type { SyntheticEvent } from 'react';
 import {
   DRAWING_COLORS, DRAWING_WIDTHS, DrawingAPI, DrawingAppState,
-  DrawingChangeHandler, DrawingElement, DrawingFiles, DrawingScene, DrawingSnapshot, DrawingTool,
+  DrawingChangeHandler, DrawingElement, DrawingFiles, DrawingScene, DrawingTool, emptyDrawing,
 } from './types';
-import { toDrawingScene } from './legacy';
 import './drawing.css';
 
 function preventNativeEdit(event: SyntheticEvent) {
@@ -37,8 +36,8 @@ function captureScene(elements: readonly DrawingElement[], appState: DrawingAppS
 export default function DrawingEditor({
   initialDrawing, snapshot, readOnly, color, tool, penSize, onChange, onCommit,
 }: {
-  initialDrawing?: DrawingSnapshot;
-  snapshot?: DrawingSnapshot | null;
+  initialDrawing?: DrawingScene;
+  snapshot?: DrawingScene | null;
   readOnly: boolean;
   color: string;
   tool: DrawingTool;
@@ -46,7 +45,7 @@ export default function DrawingEditor({
   onChange: (scene: DrawingScene) => void;
   onCommit: (scene: DrawingScene) => void;
 }) {
-  const [initialData] = useState(() => toDrawingScene(snapshot ?? initialDrawing ?? null));
+  const [initialData] = useState(() => snapshot ?? initialDrawing ?? emptyDrawing());
   const [api, setApi] = useState<DrawingAPI | null>(null);
   const [ready, setReady] = useState(false);
   const restoring = useRef(false);
@@ -63,7 +62,7 @@ export default function DrawingEditor({
       cancelAnimationFrame(commitFrame.current);
       commitFrame.current = undefined;
     }
-    const scene = toDrawingScene(snapshot);
+    const scene = snapshot ?? emptyDrawing();
     restoring.current = true;
     api.addFiles(Object.values(scene.files));
     api.updateScene({

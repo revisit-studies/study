@@ -11,7 +11,7 @@ import DrawingEditor from '../DrawingEditor';
 import {
   DrawingAPI, DrawingAppState, DrawingChangeHandler, DrawingScene, emptyDrawing,
 } from '../types';
-import { legacySnapshot, legacyStroke, sceneWithStroke } from './fixtures';
+import { sceneWithStroke } from './fixtures';
 
 type ExcalidrawProps = ComponentProps<typeof Excalidraw>;
 const engine = vi.hoisted(() => ({
@@ -74,10 +74,10 @@ test.each(['contextmenu', 'cut', 'paste', 'dragover', 'drop'])('blocks native %s
   if (type === 'paste') expect(engine.props!.onPaste?.({ text: 'Native clipboard content' }, null)).toBe(false);
 });
 
-test('seeks backward and clears legacy replay scenes without recording restored state', async () => {
+test('seeks backward and clears replay scenes without recording restored state', async () => {
   const onChange = vi.fn();
   const onCommit = vi.fn();
-  const snapshot = legacySnapshot({ stroke: legacyStroke() });
+  const snapshot = sceneWithStroke();
   const before = structuredClone(snapshot);
   const view = render(<DrawingEditor {...controls} snapshot={snapshot} onChange={onChange} onCommit={onCommit} />);
   await waitFor(() => expect(engine.scene?.elements).toHaveLength(1));

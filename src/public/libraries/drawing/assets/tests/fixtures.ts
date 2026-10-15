@@ -1,38 +1,39 @@
-import {
-  DrawingScene, LegacyDrawingSnapshot, LegacyShape,
-} from '../types';
-import { toDrawingScene } from '../legacy';
+import { DrawingScene, emptyDrawing } from '../types';
 
-export function legacyStroke(overrides: Partial<LegacyShape> = {}): LegacyShape {
+export function sceneWithStroke(id: string = 'stroke:test'): DrawingScene {
   return {
-    id: 'shape:test',
-    typeName: 'shape',
-    type: 'draw',
-    parentId: 'page:page',
-    index: 'a1',
-    x: 198,
-    y: 81.2,
-    rotation: 0,
-    opacity: 1,
-    props: {
-      color: 'red',
-      size: 'm',
-      scale: 1,
-      isPen: false,
-      isComplete: true,
-      segments: [{ type: 'free', points: [{ x: 0, y: 0, z: 0.5 }, { x: 10, y: 20, z: 0.6 }] }],
-    },
-    ...overrides,
+    ...emptyDrawing(),
+    elements: [{
+      id,
+      type: 'freedraw',
+      x: 100,
+      y: 100,
+      width: 10,
+      height: 20,
+      points: [[0, 0], [10, 20]],
+      pressures: [],
+      simulatePressure: true,
+      lastCommittedPoint: [10, 20],
+      strokeColor: '#ff6b6b',
+      strokeWidth: 4.5 / 4.25,
+      backgroundColor: 'transparent',
+      fillStyle: 'solid',
+      strokeStyle: 'solid',
+      roughness: 0,
+      opacity: 100,
+      angle: 0 as DrawingScene['elements'][number]['angle'],
+      seed: 1,
+      version: 1,
+      versionNonce: 0,
+      roundness: null,
+      index: null,
+      isDeleted: false,
+      groupIds: [],
+      frameId: null,
+      boundElements: null,
+      updated: 0,
+      link: null,
+      locked: false,
+    }],
   };
-}
-
-export function legacySnapshot(store: Record<string, unknown>): LegacyDrawingSnapshot {
-  return {
-    document: { store },
-    session: { currentPageId: 'page:page', pageStates: [{ pageId: 'page:page', camera: { x: 12, y: -5, z: 2 } }] },
-  };
-}
-
-export function sceneWithStroke(id: string = 'shape:test'): DrawingScene {
-  return toDrawingScene(legacySnapshot({ stroke: legacyStroke({ id }) }));
 }

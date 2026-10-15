@@ -16,40 +16,8 @@ export interface DrawingScene {
   files: DrawingFiles;
 }
 
-export interface LegacyPoint { x: number; y: number; z?: number }
-export interface LegacyShape {
-  id: string;
-  typeName: 'shape';
-  type: string;
-  parentId: string;
-  index: string;
-  x: number;
-  y: number;
-  rotation?: number;
-  opacity?: number;
-  props: {
-    color: string;
-    size: string;
-    scale?: number;
-    scaleX?: number;
-    scaleY?: number;
-    isPen?: boolean;
-    isComplete?: boolean;
-    segments: Array<{ type: string; points?: LegacyPoint[]; path?: string }>;
-  };
-}
-
-/** Structural legacy types avoid adding tldraw as a dependency of this library. */
-export interface LegacyDrawingSnapshot {
-  document: { store: Record<string, unknown> };
-  session: {
-    currentPageId?: string;
-    pageStates?: Array<{ pageId: string; camera?: { x: number; y: number; z: number } }>;
-  };
-}
-export type DrawingSnapshot = DrawingScene | LegacyDrawingSnapshot;
 export interface DrawingState {
-  state: DrawingSnapshot | null;
+  state: DrawingScene | null;
   tool: DrawingTool;
   color: string;
   penSize: string;
@@ -59,7 +27,7 @@ export interface DrawingParameters {
   height?: number;
   initialColor?: string;
   initialPenSize?: PenSize;
-  initialDrawing?: DrawingSnapshot;
+  initialDrawing?: DrawingScene;
   requireDrawing?: boolean;
 }
 
@@ -74,7 +42,7 @@ export const DRAWING_COLORS: Record<string, string> = {
 };
 // Excalidraw's freehand renderer multiplies strokeWidth by 4.25.
 export const DRAWING_WIDTHS: Record<string, number> = {
-  s: 3 / 4.25, m: 4.5 / 4.25, l: 6 / 4.25, xl: 11 / 4.25,
+  m: 4.5 / 4.25, l: 6 / 4.25, xl: 11 / 4.25,
 };
 
 export function emptyDrawing(): DrawingScene {

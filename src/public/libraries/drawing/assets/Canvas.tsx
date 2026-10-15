@@ -13,7 +13,6 @@ import { useIsAnalysis } from '../../../../store/hooks/useIsAnalysis';
 import {
   DRAWING_COLORS, DrawingParameters, DrawingScene, DrawingState, DrawingTool, emptyDrawing, hasDrawing,
 } from './types';
-import { toDrawingScene } from './legacy';
 import { drawingHistory, drawingProvenance } from './provenance';
 import DrawingEditor from './DrawingEditor';
 
@@ -25,7 +24,7 @@ export default function Canvas({
   const [definition] = useState(() => drawingProvenance(parameters));
   const trrack = useTrrack({ registry: definition.registry, initialState: definition.initialState });
   const [controls, setControls] = useState(definition.initialState);
-  const [initialScene] = useState(() => toDrawingScene(parameters.initialDrawing ?? null));
+  const [initialScene] = useState(() => parameters.initialDrawing ?? emptyDrawing());
   const [restoreScene, setRestoreScene] = useState<DrawingScene | undefined>(undefined);
   const [history] = useState(() => drawingHistory(initialScene));
   const [, refreshHistory] = useState(0);
