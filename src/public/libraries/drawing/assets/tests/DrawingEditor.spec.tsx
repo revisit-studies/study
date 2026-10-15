@@ -2,7 +2,7 @@ import type { ComponentProps } from 'react';
 import { useEffect } from 'react';
 import type { Excalidraw } from '@excalidraw/excalidraw';
 import {
-  act, cleanup, render, waitFor,
+  act, cleanup, fireEvent, render, screen, waitFor,
 } from '@testing-library/react';
 import {
   afterEach, beforeEach, expect, test, vi,
@@ -63,6 +63,16 @@ afterEach(() => { cleanup(); });
 const controls = {
   readOnly: true, color: 'red', tool: 'pen' as const, penSize: 'm',
 };
+
+test.each(['contextmenu', 'cut', 'paste', 'dragover', 'drop'])('blocks native %s editing before it reaches the engine', (type) => {
+  render(<DrawingEditor {...controls} readOnly={false} onChange={vi.fn()} onCommit={vi.fn()} />);
+  const target = screen.getByTestId('engine');
+  const nativeEdit = vi.fn();
+  target.addEventListener(type, nativeEdit);
+  expect(fireEvent(target, new Event(type, { bubbles: true, cancelable: true }))).toBe(false);
+  expect(nativeEdit).not.toHaveBeenCalled();
+  if (type === 'paste') expect(engine.props!.onPaste?.({ text: 'Native clipboard content' }, null)).toBe(false);
+});
 
 test('seeks backward and clears legacy replay scenes without recording restored state', async () => {
   const onChange = vi.fn();

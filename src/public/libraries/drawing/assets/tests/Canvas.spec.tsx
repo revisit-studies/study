@@ -49,6 +49,31 @@ function mount(parameters: DrawingParameters = {}, provenanceState?: DrawingStat
 }
 
 describe('drawing library Canvas', () => {
+  test.each([undefined, 420])('uses available space by default and honors an explicit height of %s', (height) => {
+    const { container } = mount({ height });
+    const layout = container.querySelector<HTMLElement>('.revisit-drawing')!;
+    const surface = container.querySelector<HTMLElement>('.revisit-drawing-surface')!;
+    expect(layout.hasAttribute('data-fill-available')).toBe(height === undefined);
+    expect(surface.style.height).toBe(height === undefined ? '' : 'calc(26.25rem * var(--mantine-scale))');
+    expect(surface.style.flexGrow).toBe(height === undefined ? '1' : '0');
+    expect(surface.style.border).toBe('');
+  });
+
+  test.each([
+    { key: 'Escape' },
+    { key: 'Delete' },
+    { key: 'Backspace' },
+    ...['a', 'd', 'x', 'v'].flatMap((key) => [{ key, ctrlKey: true }, { key, metaKey: true }]),
+  ])('blocks native editing shortcut $key before it reaches the engine', (shortcut) => {
+    mount();
+    const target = screen.getByTestId('mock-drawing-editor');
+    const nativeShortcut = vi.fn();
+    target.addEventListener('keydown', nativeShortcut);
+    expect(fireEvent.keyDown(target, shortcut)).toBe(false);
+    expect(nativeShortcut).not.toHaveBeenCalled();
+    expect(editor.props!.tool).toBe('pen');
+  });
+
   test('publishes a JSON scene under the configured response and validates visible ink', () => {
     const { setAnswer, onProvenanceChange } = mount({ responseId: 'sketch', requireDrawing: true });
     expect(setAnswer.mock.lastCall?.[0]).toMatchObject({ status: false, answers: { sketch: emptyDrawing() } });

@@ -7,12 +7,18 @@ import '@excalidraw/excalidraw/index.css';
 import {
   useEffect, useRef, useState,
 } from 'react';
+import type { SyntheticEvent } from 'react';
 import {
   DRAWING_COLORS, DRAWING_WIDTHS, DrawingAPI, DrawingAppState,
   DrawingChangeHandler, DrawingElement, DrawingFiles, DrawingScene, DrawingSnapshot, DrawingTool,
 } from './types';
 import { toDrawingScene } from './legacy';
 import './drawing.css';
+
+function preventNativeEdit(event: SyntheticEvent) {
+  event.preventDefault();
+  event.stopPropagation();
+}
 
 function captureScene(elements: readonly DrawingElement[], appState: DrawingAppState, files: DrawingFiles): DrawingScene {
   return {
@@ -108,12 +114,21 @@ export default function DrawingEditor({
   };
 
   return (
-    <div className="revisit-drawing-canvas" data-testid="drawing-canvas">
+    <div
+      className="revisit-drawing-canvas"
+      data-testid="drawing-canvas"
+      onContextMenuCapture={preventNativeEdit}
+      onCutCapture={preventNativeEdit}
+      onPasteCapture={preventNativeEdit}
+      onDragOverCapture={preventNativeEdit}
+      onDropCapture={preventNativeEdit}
+    >
       <Excalidraw
         excalidrawAPI={setApi}
         initialData={initialData}
         onChange={handleChange}
         onPointerUp={handlePointerUp}
+        onPaste={() => false}
         viewModeEnabled={readOnly}
         zenModeEnabled
         UIOptions={{ canvasActions: { loadScene: false, saveToActiveFile: false, export: false } }}

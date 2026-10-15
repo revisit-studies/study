@@ -20,19 +20,10 @@
       "type": "markdown",
       "path": "library-drawing/assets/drawing.md",
       "response": []
-    },
-    "sketch": {
-      "baseComponent": "$drawing.components.canvas",
-      "instruction": "Sketch a simple chart. Try changing ink colors and pen sizes, erasing a stroke, undoing and redoing, and clearing the canvas. The interaction history is available in participant replay.",
-      "parameters": {
-        "responseId": "drawing",
-        "height": 500,
-        "requireDrawing": true
-      }
     }
   },
   "sequence": {
     "order": "fixed",
-    "components": ["introduction", "sketch"]
+    "components": ["introduction", "$drawing.components.canvas"]
   }
 }

@@ -94,6 +94,9 @@ export default function Canvas({
   const displayed = provenanceState ?? controls;
   return (
     <Stack
+      className="revisit-drawing"
+      data-fill-available={parameters.height === undefined || undefined}
+      style={{ flexGrow: 1, minHeight: 0 }}
       gap="sm"
       onKeyDownCapture={(event) => {
         if (readOnly) return;
@@ -101,11 +104,17 @@ export default function Canvas({
         if ((event.ctrlKey || event.metaKey) && (key === 'z' || key === 'y')) {
           event.preventDefault(); event.stopPropagation();
           if (key === 'y' || event.shiftKey) redo(); else undo();
-        } else if (!event.ctrlKey && !event.metaKey && /^[a-z0-9]$/.test(key)) {
-          // Excalidraw shortcuts must not select hidden tools.
+        } else if (
+          ['escape', 'delete', 'backspace'].includes(key)
+          || (!(event.ctrlKey || event.metaKey) && /^[a-z0-9]$/.test(key))
+          || ((event.ctrlKey || event.metaKey) && ['a', 'd', 'x', 'v'].includes(key))
+        ) {
+          // Native selection/editing bypasses the study's tools and gesture history.
           event.preventDefault(); event.stopPropagation();
-          if (key === 'e') changeTool('eraser');
-          if (key === 'p' || key === 'd') changeTool('pen');
+          if (!event.ctrlKey && !event.metaKey) {
+            if (key === 'e') changeTool('eraser');
+            if (key === 'p' || key === 'd') changeTool('pen');
+          }
         }
       }}
     >
@@ -167,7 +176,7 @@ export default function Canvas({
         <Tooltip label="Undo"><ActionIcon aria-label="Undo drawing" disabled={readOnly || !history.canUndo} onClick={undo}><IconArrowBackUp /></ActionIcon></Tooltip>
         <Tooltip label="Redo"><ActionIcon aria-label="Redo drawing" disabled={readOnly || !history.canRedo} onClick={redo}><IconArrowForwardUp /></ActionIcon></Tooltip>
       </Group>
-      <Box h={parameters.height ?? 600} style={{ minHeight: 200, border: '1px solid var(--mantine-color-gray-4)' }}>
+      <Box className="revisit-drawing-surface" h={parameters.height} style={{ minHeight: 200, flex: parameters.height === undefined ? '1 1 0px' : '0 0 auto' }}>
         <DrawingEditor
           initialDrawing={parameters.initialDrawing}
           snapshot={readOnly ? provenanceState?.state ?? null : restoreScene}

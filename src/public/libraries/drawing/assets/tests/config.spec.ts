@@ -7,12 +7,17 @@ import exampleConfig from '../../../../../../public/library-drawing/config.json'
 
 afterEach(() => vi.unstubAllGlobals());
 
-test('the example resolves the imported library canvas without parser changes', async () => {
+test('the example uses the library canvas directly with unchanged library defaults', async () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ text: async () => JSON.stringify(libraryConfig) }));
   const parsed = await parseStudyConfig(JSON.stringify(exampleConfig));
   expect(parsed.errors).toEqual([]);
-  expect(parsed.components.sketch).toMatchObject({
-    baseComponent: '$drawing.components.canvas', parameters: { requireDrawing: true },
+  expect(parsed.sequence).toMatchObject({ order: 'fixed', components: ['introduction', '$drawing.components.canvas'] });
+  expect(Object.keys(exampleConfig.components)).toEqual(['introduction']);
+  expect(parsed.components['$drawing.components.canvas']).toMatchObject({
+    type: 'react-component',
+    path: 'libraries/drawing/assets/Canvas.tsx',
+    style: { maxWidth: 'none' },
+    parameters: { requireDrawing: false },
   });
 });
 
