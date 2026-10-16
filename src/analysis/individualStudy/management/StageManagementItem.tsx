@@ -18,6 +18,7 @@ import { useStorageEngine } from '../../../storage/storageEngineHooks';
 import { FactorObject, FactorPrimitive, StudyConfig } from '../../../parser/types';
 import { ParticipantDataWithStatus } from '../../../storage/types';
 import { getBetweenSubjectsCombinationKey, StageInfo } from '../../../storage/engines/types';
+import { getStageCombinationTargets } from '../../../storage/engines/utils/stageAllocation';
 import { DISTINCT_COLOR_PALETTE, getDistinctColorShade } from '../../../utils/colors';
 import { ParticipantTimeoutModal } from '../ParticipantTimeoutModal';
 import { showNotification } from '../../../utils/notifications';
@@ -167,23 +168,25 @@ export function getDefaultDesiredParticipantCounts(
   ]));
 }
 
+// Uses the same calculation admission enforces, so a disabled condition shows
+// the 0 target it is actually given and the enabled ones show their full share.
 export function getDesiredParticipantCounts(
   maxParticipants: number | undefined,
   combinations: BetweenSubjectsCombination[],
   desiredParticipantsByCombination: Record<string, number> | undefined,
+  disabledCombinationKeys: string[] = [],
 ): Record<string, number | ''> {
-  const manualCount = combinations.reduce((count, combination) => (
-    count + (desiredParticipantsByCombination?.[combination.key] ?? 0)
-  ), 0);
-  const automaticallyAllocatedCounts = getDefaultDesiredParticipantCounts(
-    maxParticipants === undefined ? undefined : Math.max(maxParticipants - manualCount, 0),
-    combinations.filter((combination) => !Object.hasOwn(desiredParticipantsByCombination || {}, combination.key)),
+  const targets = getStageCombinationTargets(
+    maxParticipants,
+    combinations.map((combination) => combination.key),
+    desiredParticipantsByCombination,
+    disabledCombinationKeys,
   );
 
   return Object.fromEntries(combinations.map((combination) => [
     combination.key,
-    desiredParticipantsByCombination?.[combination.key]
-      ?? automaticallyAllocatedCounts[combination.key]
+    targets?.[combination.key]
+      ?? desiredParticipantsByCombination?.[combination.key]
       ?? '',
   ]));
 }
@@ -380,6 +383,7 @@ function BetweenSubjectsCombinationTable({
       stage.maxParticipants,
       combinations,
       getActiveDesiredParticipants(stage),
+      stage.disabledBetweenSubjectsCombinations,
     );
 
     return combinations.map((combination) => ({
@@ -878,6 +882,7 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
       selectedStage.maxParticipants,
       betweenSubjectsCombinations,
       getActiveDesiredParticipants(selectedStage),
+      selectedStage.disabledBetweenSubjectsCombinations,
     )
     : {};
   const manuallyAssignedParticipantTotal = Object.values(selectedStageDesiredParticipantCounts)

@@ -6,11 +6,15 @@ import type {
 } from '../parser/types';
 import { isFactorPlanBlock, isFactorRuntimePlanBlock } from '../parser/utils';
 import { getComponent } from './handleComponentInheritance';
+import { getStaticAssetByPath } from './getStaticAsset';
+import { PREFIX } from './Prefix';
 
 export type StaticFirstComponent = MarkdownComponent | ImageComponent;
 export type StaticFirstComponentPreview = {
   componentName: string;
   component: StaticFirstComponent;
+  /** The fetched body of a Markdown component, already checked to be static. */
+  markdown?: string;
 };
 
 function hasTemplateSyntax(value: string) {
@@ -71,4 +75,31 @@ export function getStaticFirstComponent(studyConfig: StudyConfig): StaticFirstCo
   }
 
   return { componentName, component };
+}
+
+export function getStaticAssetUrl(path: string) {
+  return path.startsWith('http') ? path : `${PREFIX}${path}`;
+}
+
+/**
+ * Resolves the startup preview, including the body of a Markdown component. The
+ * participant page compiles that body with the full template context, which is
+ * unavailable until the participant is initialized, so a body with template
+ * syntax (placeholders or conditional branches) is not previewed. A body that
+ * cannot be loaded is not previewed either, leaving the regular loading state.
+ */
+export async function loadStaticFirstComponentPreview(
+  studyConfig: StudyConfig,
+): Promise<StaticFirstComponentPreview | null> {
+  const preview = getStaticFirstComponent(studyConfig);
+  if (preview?.component.type !== 'markdown') {
+    return preview;
+  }
+
+  const markdown = await getStaticAssetByPath(getStaticAssetUrl(preview.component.path));
+  if (markdown === undefined || hasTemplateSyntax(markdown)) {
+    return null;
+  }
+
+  return { ...preview, markdown };
 }

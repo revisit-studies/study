@@ -395,6 +395,19 @@ describe.each([
     expect(updatedModes.developmentModeEnabled).toBe(true);
   });
 
+  test('keeps both a mode change and a stage edit that overlap', async () => {
+    await storageEngine.setCurrentStage(studyId, 'Pilot');
+
+    await Promise.all([
+      storageEngine.updateStage(studyId, 'Pilot', { maxParticipants: 7 }),
+      storageEngine.setMode(studyId, 'dataCollectionEnabled', false),
+    ]);
+
+    expect((await storageEngine.getModes(studyId)).dataCollectionEnabled).toBe(false);
+    expect((await storageEngine.getStageData(studyId)).allStages)
+      .toContainEqual(expect.objectContaining({ stageName: 'Pilot', maxParticipants: 7 }));
+  });
+
   test('stores a study-scoped disconnect setting after administrator verification', async () => {
     expect(await storageEngine.getStorageDisconnected(studyId)).toBe(false);
     await expect(storageEngine.setStorageDisconnected(studyId, true)).rejects.toThrow('verified administrator');

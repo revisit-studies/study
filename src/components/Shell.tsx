@@ -49,7 +49,7 @@ import {
 } from '../utils/handleConditionLogic';
 import { StartupErrorScreen } from './StartupErrorScreen';
 import { materializeParticipantConfig } from '../parser/libraryParser';
-import { getStaticFirstComponent, type StaticFirstComponentPreview } from '../utils/getStaticFirstComponent';
+import { loadStaticFirstComponentPreview, type StaticFirstComponentPreview } from '../utils/getStaticFirstComponent';
 import { useStudyColorMode } from './AppThemeProvider';
 import { StartupPreview } from './StartupPreview';
 
@@ -322,12 +322,12 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
       };
     }
 
-    storageEngine.peekCurrentParticipantId(canonicalStudyId).then((existingParticipantId) => {
+    storageEngine.peekCurrentParticipantId(canonicalStudyId).then(async (existingParticipantId) => {
       if (cancelled || existingParticipantId) {
         return;
       }
 
-      const previewComponent = getStaticFirstComponent(activeConfig);
+      const previewComponent = await loadStaticFirstComponentPreview(activeConfig);
       if (!previewComponent) {
         return;
       }

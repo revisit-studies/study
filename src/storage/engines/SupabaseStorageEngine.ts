@@ -644,7 +644,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     return defaultModes;
   }
 
-  async setMode(studyId: string, mode: REVISIT_MODE, value: boolean) {
+  protected async _setMode(studyId: string, mode: REVISIT_MODE, value: boolean) {
     const modes = await this.getModes(studyId);
     modes[mode] = value;
     await this._setModesDocument(studyId, modes);

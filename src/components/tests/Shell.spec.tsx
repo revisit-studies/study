@@ -16,6 +16,7 @@ import { parseStudyConfig } from '../../parser/parser';
 import { StageCapacityExceededError, StageOnlyDisabledConditionsHaveCapacityError } from '../../storage/engines/types';
 import { useStudyColorMode } from '../AppThemeProvider';
 import type { ParticipantMetadata } from '../../store/types';
+import { getStaticAssetByPath } from '../../utils/getStaticAsset';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
@@ -68,6 +69,11 @@ vi.mock('../../utils/encryptDecryptIndex', () => ({
 
 vi.mock('../../storage/engines/utils/storageEngineHelpers', () => ({
   hash: vi.fn(() => 'abc123'),
+}));
+
+vi.mock('../../utils/getStaticAsset', () => ({
+  getStaticAssetByPath: vi.fn(),
+  getJsonAssetByPath: vi.fn(),
 }));
 
 vi.mock('../ErrorLoadingConfig', () => ({
@@ -535,12 +541,52 @@ describe('Shell', () => {
       getEngine: vi.fn().mockReturnValue('firebase'),
     };
 
+    vi.mocked(getStaticAssetByPath).mockResolvedValue('# Welcome');
+
     const { getByTestId, queryByTestId } = render(<Shell globalConfig={globalConfig} />);
 
     await waitFor(() => expect(getByTestId('startup-preview')).toBeDefined());
+    expect(getByTestId('startup-preview').textContent).toContain('Welcome');
     expect(queryByTestId('routing')).toBeNull();
     expect(queryByTestId('loading-overlay')).toBeNull();
     expect(studyStoreCreator).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ['a placeholder', 'Hello {{participantName}}'],
+    ['a conditional branch', '{{#if treatment}}Treatment{{else}}Control{{/if}}'],
+  ])('keeps the loading state instead of previewing a Markdown body with %s', async (_, markdown) => {
+    const previewConfig: ParsedConfig<StudyConfig> = {
+      ...mockActiveConfig,
+      components: {
+        intro: {
+          type: 'markdown',
+          path: 'test-study/assets/intro.md',
+          response: [],
+        },
+      },
+      sequence: { order: 'fixed', components: ['intro'] },
+    };
+    vi.mocked(getStudyConfig).mockResolvedValue(previewConfig);
+    vi.mocked(getStaticAssetByPath).mockResolvedValue(markdown);
+
+    mockStorageEngine = {
+      initializeStudyDb: vi.fn().mockResolvedValue(undefined),
+      saveConfig: vi.fn().mockResolvedValue(undefined),
+      getSequenceArray: vi.fn().mockResolvedValue(['seq1']),
+      getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
+      initializeParticipantSession: vi.fn().mockImplementation(() => new Promise(() => { })),
+      peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
+      isConnected: vi.fn().mockReturnValue(true),
+      getEngine: vi.fn().mockReturnValue('firebase'),
+    };
+
+    const { queryByTestId } = render(<Shell globalConfig={globalConfig} />);
+
+    await waitFor(() => expect(getStaticAssetByPath).toHaveBeenCalledWith(expect.stringContaining('test-study/assets/intro.md')));
+    await waitFor(() => expect(mockStorageEngine!.initializeParticipantSession).toHaveBeenCalled());
+    expect(queryByTestId('startup-preview')).toBeNull();
+    expect(queryByTestId('loading-overlay')).not.toBeNull();
   });
 
   test('calls setSequenceArray when getSequenceArray returns null', async () => {

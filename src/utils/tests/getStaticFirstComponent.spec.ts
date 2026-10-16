@@ -1,7 +1,14 @@
-import { describe, expect, test } from 'vitest';
+import {
+  beforeEach, describe, expect, test, vi,
+} from 'vitest';
 import type { MarkdownComponent, StudyConfig } from '../../parser/types';
 import { makeStudyConfig } from '../../tests/utils';
-import { getStaticFirstComponent } from '../getStaticFirstComponent';
+import { getStaticAssetByPath } from '../getStaticAsset';
+import { getStaticFirstComponent, loadStaticFirstComponentPreview } from '../getStaticFirstComponent';
+
+vi.mock('../getStaticAsset', () => ({
+  getStaticAssetByPath: vi.fn(),
+}));
 
 const intro: MarkdownComponent = {
   type: 'markdown',
@@ -84,5 +91,53 @@ describe('getStaticFirstComponent', () => {
     config.betweenSubjects = ['condition'];
 
     expect(getStaticFirstComponent(config)).toBeNull();
+  });
+});
+
+describe('loadStaticFirstComponentPreview', () => {
+  const config = makeConfig({ order: 'fixed', components: ['intro'] });
+
+  beforeEach(() => {
+    vi.mocked(getStaticAssetByPath).mockReset();
+  });
+
+  test('includes a static Markdown body in the preview', async () => {
+    vi.mocked(getStaticAssetByPath).mockResolvedValue('# Welcome');
+
+    await expect(loadStaticFirstComponentPreview(config)).resolves.toEqual({
+      componentName: 'intro',
+      component: intro,
+      markdown: '# Welcome',
+    });
+  });
+
+  test.each([
+    ['a placeholder', 'Hello {{participantName}}'],
+    ['a conditional branch', '{{#if treatment}}Treatment{{else}}Control{{/if}}'],
+    ['a closing delimiter', 'Value: name}}'],
+  ])('skips a Markdown body with %s', async (_, markdown) => {
+    vi.mocked(getStaticAssetByPath).mockResolvedValue(markdown);
+
+    await expect(loadStaticFirstComponentPreview(config)).resolves.toBeNull();
+  });
+
+  test('skips a Markdown body that cannot be loaded', async () => {
+    vi.mocked(getStaticAssetByPath).mockResolvedValue(undefined);
+
+    await expect(loadStaticFirstComponentPreview(config)).resolves.toBeNull();
+  });
+
+  test('does not fetch anything for an image preview', async () => {
+    const image = { type: 'image' as const, path: 'test-study/assets/intro.png', response: [] };
+    const imageConfig = makeStudyConfig({
+      components: { intro: image },
+      sequence: { order: 'fixed', components: ['intro'] },
+    });
+
+    await expect(loadStaticFirstComponentPreview(imageConfig)).resolves.toEqual({
+      componentName: 'intro',
+      component: image,
+    });
+    expect(getStaticAssetByPath).not.toHaveBeenCalled();
   });
 });
