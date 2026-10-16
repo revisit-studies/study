@@ -194,7 +194,13 @@ function ValidStudyCard({
             rejected={studyStatusAndTiming.rejected}
             timedOut={studyStatusAndTiming.timedOut}
             completedLate={studyStatusAndTiming.completedLate}
-            showTimeoutStatuses={modes?.autoTimeoutMinutes !== undefined}
+            // Turning auto-timeout off does not clear earlier timeouts, and those
+            // participants are not counted in any other badge.
+            showTimeoutStatuses={
+              modes?.autoTimeoutMinutes !== undefined
+              || studyStatusAndTiming.timedOut > 0
+              || studyStatusAndTiming.completedLate > 0
+            }
           />
         )}
         <Flex ml="auto" gap="sm" opacity={0.7}>

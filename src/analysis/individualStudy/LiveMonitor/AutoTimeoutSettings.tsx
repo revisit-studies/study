@@ -18,6 +18,10 @@ export function AutoTimeoutSettings({
 }) {
   const { user } = useAuth();
   const [minutes, setMinutes] = useState<number | undefined>();
+  // The switch shows the most recent request rather than the last saved value,
+  // so a click while a save is pending reverses that request instead of
+  // repeating it.
+  const [requestedEnabled, setRequestedEnabled] = useState(false);
   const [draftMinutes, setDraftMinutes] = useState(DEFAULT_MINUTES);
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -29,6 +33,7 @@ export function AutoTimeoutSettings({
   const [loaded, setLoaded] = useState(false);
   const minutesRef = useRef<number | undefined>(undefined);
   const saveChainRef = useRef<Promise<void>>(Promise.resolve());
+  const latestSaveRef = useRef(0);
   const contextVersionRef = useRef(0);
 
   useEffect(() => {
@@ -36,6 +41,7 @@ export function AutoTimeoutSettings({
     let cancelled = false;
     setLoaded(false);
     setMinutes(undefined);
+    setRequestedEnabled(false);
     minutesRef.current = undefined;
     setDraftMinutes(DEFAULT_MINUTES);
     setConfirmationOpen(false);
@@ -51,6 +57,7 @@ export function AutoTimeoutSettings({
       .then((modes) => {
         if (cancelled) return;
         setMinutes(modes.autoTimeoutMinutes);
+        setRequestedEnabled(modes.autoTimeoutMinutes !== undefined);
         minutesRef.current = modes.autoTimeoutMinutes;
         setDraftMinutes(modes.autoTimeoutMinutes ?? DEFAULT_MINUTES);
         setLoaded(true);
@@ -68,6 +75,9 @@ export function AutoTimeoutSettings({
   const save = useCallback(async (updatedMinutes: number | undefined) => {
     if (!storageEngine || !studyId || !user.isAdmin) return;
     const contextVersion = contextVersionRef.current;
+    latestSaveRef.current += 1;
+    const saveId = latestSaveRef.current;
+    setRequestedEnabled(updatedMinutes !== undefined);
     setSaving(true);
     const queuedSave = saveChainRef.current.catch(() => undefined).then(async () => {
       const previousMinutes = minutesRef.current;
@@ -88,6 +98,10 @@ export function AutoTimeoutSettings({
           // Roll back to the last write that actually reached the backend.
           setMinutes(previousMinutes);
           setDraftMinutes(previousMinutes ?? DEFAULT_MINUTES);
+          // A later request that is still queued keeps the switch showing it.
+          if (saveId === latestSaveRef.current) {
+            setRequestedEnabled(previousMinutes !== undefined);
+          }
           setError('The auto-timeout setting could not be saved.');
         }
         throw saveError;
@@ -159,14 +173,14 @@ export function AutoTimeoutSettings({
                 // Only persist a value that actually changed. Saving on every
                 // blur would disable the switch just as a click on it lands,
                 // swallowing the first attempt to turn auto-timeout off.
-                if (minutes !== undefined && draftMinutes !== minutes) {
+                if (requestedEnabled && minutes !== undefined && draftMinutes !== minutes) {
                   save(draftMinutes).catch(() => undefined);
                 }
               }}
             />
             <Switch
               aria-label="Enable auto-timeout"
-              checked={minutes !== undefined}
+              checked={requestedEnabled}
               // Deliberately stays interactive while a save is pending, so a
               // click arriving right after the minutes input blurs is not lost.
               disabled={!editable}

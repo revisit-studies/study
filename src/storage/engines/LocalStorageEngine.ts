@@ -282,30 +282,50 @@ export class LocalStorageEngine extends StorageEngine {
   }
 
   async getModes(studyId: string) {
-    const key = `${this.collectionPrefix}${studyId}/modes`;
-
-    // Get the modes
-    const modes = await this.studyDatabase.getItem(key) as RuntimeStudySettings | null;
+    // Reads must not write: a write here would put back a copy read before a
+    // concurrent settings update and erase that update.
+    const modes = await this.readStoredModes(studyId);
     if (modes) {
-      const cleanedModes = cleanupModes(modes as Record<string, boolean>);
-      await this.studyDatabase.setItem(key, cleanedModes);
-      return cleanedModes;
+      return modes;
     }
 
-    const defaults: Record<REVISIT_MODE, boolean> = {
-      dataCollectionEnabled: true,
-      developmentModeEnabled: true,
-      dataSharingEnabled: true,
-    };
-    await this.studyDatabase.setItem(key, defaults);
-    return defaults;
+    // Creating the defaults is the one write, so it re-reads under the same
+    // lock that settings updates hold.
+    return await this._runWithLock('study-settings', async () => {
+      const storedModes = await this.readStoredModes(studyId);
+      if (storedModes) {
+        return storedModes;
+      }
+      const defaults = { ...LocalStorageEngine.defaultModes };
+      await this.studyDatabase.setItem(`${this.collectionPrefix}${studyId}/modes`, defaults);
+      return defaults;
+    });
+  }
+
+  private static readonly defaultModes: Record<REVISIT_MODE, boolean> = {
+    dataCollectionEnabled: true,
+    developmentModeEnabled: true,
+    dataSharingEnabled: true,
+  };
+
+  private async readStoredModes(studyId: string) {
+    const modes = await this.studyDatabase.getItem(`${this.collectionPrefix}${studyId}/modes`) as RuntimeStudySettings | null;
+    return modes ? cleanupModes(modes as Record<string, boolean>) as RuntimeStudySettings : null;
+  }
+
+  // Runs while `_updateModesFields` holds the settings lock, which `getModes`
+  // would wait on when it creates the defaults.
+  protected async _readModesForUpdate(studyId: string): Promise<RuntimeStudySettings> {
+    return await this.readStoredModes(studyId) ?? { ...LocalStorageEngine.defaultModes };
   }
 
   async initializeModesFrom(studyId: string, modes: Awaited<ReturnType<StorageEngine['getModes']>>) {
     const key = `${this.collectionPrefix}${studyId}/modes`;
-    if (!await this.studyDatabase.getItem(key)) {
-      await this.studyDatabase.setItem(key, modes);
-    }
+    await this._runWithLock('study-settings', async () => {
+      if (!await this.studyDatabase.getItem(key)) {
+        await this.studyDatabase.setItem(key, modes);
+      }
+    });
   }
 
   async hasStoredModes(studyId: string) {

@@ -544,7 +544,7 @@ export abstract class StorageEngine {
    */
   protected async _updateModesFields(studyId: string, fields: Partial<RuntimeStudySettings>): Promise<void> {
     await this._runWithLock('study-settings', async () => {
-      const modes = await this.getModes(studyId);
+      const modes = await this._readModesForUpdate(studyId);
       const updatedModes: Record<string, unknown> = { ...modes };
       Object.entries(fields).forEach(([field, value]) => {
         if (value === undefined) {
@@ -555,6 +555,13 @@ export abstract class StorageEngine {
       });
       await this._setModesDocument(studyId, updatedModes as RuntimeStudySettings);
     });
+  }
+
+  // Protected helper: reads the settings that `_updateModesFields` merges into
+  // while it holds the settings lock. An engine whose `getModes` takes that lock
+  // must override this to read without it.
+  protected async _readModesForUpdate(studyId: string): Promise<RuntimeStudySettings> {
+    return await this.getModes(studyId);
   }
 
   // Gets the audio URL for the given task and participantId. This method is used to fetch the audio file from the storage engine.
@@ -1420,8 +1427,10 @@ export abstract class StorageEngine {
           await this._createSequenceAssignment(this.currentParticipantId, participantSequenceAssignmentData, false);
         } catch (error) {
           // The source slot must remain reusable if creating its replacement
-          // fails before the replacement assignment exists.
-          await this._updateSequenceAssignmentFields(firstReusableAssignment.participantId, { claimed: false });
+          // fails before the replacement assignment exists. The source
+          // participant may still finish, so hold their lock while the
+          // assignment is rewritten.
+          await this.updateSequenceAssignmentFieldsLocked(firstReusableAssignment.participantId, { claimed: false });
           throw error;
         }
       }
@@ -1479,7 +1488,7 @@ export abstract class StorageEngine {
     }
 
     if (modes.dataCollectionEnabled && betweenSubjects.length > 0) {
-      await this._updateSequenceAssignmentFields(this.currentParticipantId, {
+      await this.updateSequenceAssignmentFieldsLocked(this.currentParticipantId, {
         betweenSubjectsCombinationKey: getBetweenSubjectsCombinationKey(currentRow.parameters, betweenSubjects),
       });
     }
@@ -1517,6 +1526,19 @@ export abstract class StorageEngine {
       // eslint-disable-next-line no-await-in-loop
       await this._markSequenceAssignmentTimedOut(assignment.participantId, serverNow);
     }
+  }
+
+  // Patches an assignment while holding its participant lock. Some engines
+  // rewrite the whole record, so an unlocked patch could erase a completion,
+  // rejection, or timeout written in the meantime. Callers that already hold
+  // the participant lock call `_updateSequenceAssignmentFields` directly.
+  private async updateSequenceAssignmentFieldsLocked(
+    participantId: string,
+    updatedFields: Partial<SequenceAssignment>,
+  ) {
+    await this._runWithLock(`participant-${participantId}`, async () => {
+      await this._updateSequenceAssignmentFields(participantId, updatedFields);
+    });
   }
 
   // Releases a sequence assignment created for the current participant during a
@@ -1839,7 +1861,7 @@ export abstract class StorageEngine {
       throw new Error('Participant not initialized');
     }
 
-    await this._updateSequenceAssignmentFields(
+    await this.updateSequenceAssignmentFieldsLocked(
       this.currentParticipantId,
       { conditions: this.participantData.conditions },
     );

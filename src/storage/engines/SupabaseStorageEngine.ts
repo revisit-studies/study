@@ -450,18 +450,34 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     }
 
     // Fallback for legacy reused assignments that predate claimedParticipantId.
-    const { data: claimedData, error: claimedError } = await this.supabase
+    // Only a replacement copies its source's timestamp; a fresh assignment uses
+    // the server timestamp, so it never claimed anything and must not release
+    // another participant who happens to share its stored timestamp.
+    if (data.data.withServerTimestamp) {
+      return;
+    }
+    const { data: matchingRows, error: claimedError } = await this.supabase
       .from('revisit')
       .select('data')
       .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
+      .like('docId', 'sequenceAssignment_%')
       .eq('data->timestamp', data.data.timestamp)
-      .neq('docId', sequenceAssignmentPath)
-      .single();
+      .neq('docId', sequenceAssignmentPath);
 
-    if (claimedError || !claimedData) {
+    if (claimedError || !matchingRows) {
       return;
     }
-    const legacyClaimedParticipantId = claimedData.data.participantId as string;
+    // The source of a legacy replacement is claimed, no longer holds a slot,
+    // and is not itself a current-format replacement.
+    const legacySources = (matchingRows as { data: SequenceAssignment }[]).filter(({ data: candidate }) => (
+      candidate.claimed
+      && candidate.claimedParticipantId === undefined
+      && (candidate.rejected || candidate.autoTimedOutAt !== undefined)
+    ));
+    if (legacySources.length !== 1) {
+      return;
+    }
+    const legacyClaimedParticipantId = legacySources[0].data.participantId;
     await this._runWithLock(`participant-${legacyClaimedParticipantId}`, async () => {
       const { data: latestClaimedData, error: latestClaimedError } = await this.supabase
         .from('revisit')
@@ -471,6 +487,9 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
         .single();
       if (latestClaimedError || !latestClaimedData) {
         throw new Error('Failed to retrieve claimed sequence assignment for rejection');
+      }
+      if (!latestClaimedData.data.claimed) {
+        return;
       }
       await this.updateSequenceAssignmentRow(
         legacyClaimedParticipantId,

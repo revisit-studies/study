@@ -193,6 +193,62 @@ describe('AutoTimeoutSettings', () => {
     await waitFor(() => expect((screen.getByLabelText('Enable auto-timeout') as HTMLInputElement).checked).toBe(false));
   });
 
+  test('a second click while a disable is pending requests re-enabling', async () => {
+    const firstSave = deferred<void>();
+    const engine = makeEngine({
+      getModes: vi.fn().mockResolvedValue({ autoTimeoutMinutes: 30 }),
+      setAutoTimeoutMinutes: vi.fn()
+        .mockImplementationOnce(() => firstSave.promise)
+        .mockResolvedValueOnce(undefined),
+    });
+    const { toggle } = await renderSettings(engine);
+
+    await act(async () => { fireEvent.click(toggle); });
+    expect(engine.setAutoTimeoutMinutes).toHaveBeenNthCalledWith(1, 'test-study', undefined);
+    // The switch follows the pending request, so the next click turns it back on.
+    expect(toggle.checked).toBe(false);
+
+    await act(async () => { fireEvent.click(toggle); });
+    expect(screen.getByText('Enable auto-timeout?')).toBeDefined();
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Enable auto-timeout' }));
+    });
+    expect(toggle.checked).toBe(true);
+    expect(engine.setAutoTimeoutMinutes).toHaveBeenCalledTimes(1);
+
+    await act(async () => { firstSave.resolve(); });
+    await waitFor(() => expect(engine.setAutoTimeoutMinutes).toHaveBeenCalledTimes(2));
+    expect(engine.setAutoTimeoutMinutes).toHaveBeenNthCalledWith(2, 'test-study', 30);
+    await waitFor(() => expect(toggle.checked).toBe(true));
+  });
+
+  test('a failed disable leaves a later re-enable request on the switch', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => { });
+    const firstSave = deferred<void>();
+    const secondSave = deferred<void>();
+    const engine = makeEngine({
+      getModes: vi.fn().mockResolvedValue({ autoTimeoutMinutes: 30 }),
+      setAutoTimeoutMinutes: vi.fn()
+        .mockImplementationOnce(() => firstSave.promise)
+        .mockImplementationOnce(() => secondSave.promise),
+    });
+    const { toggle } = await renderSettings(engine);
+
+    await act(async () => { fireEvent.click(toggle); });
+    await act(async () => { fireEvent.click(toggle); });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Enable auto-timeout' }));
+    });
+
+    await act(async () => { firstSave.reject(new Error('disable failed')); });
+    expect(toggle.checked).toBe(true);
+
+    await act(async () => { secondSave.reject(new Error('enable failed')); });
+    // Once the latest request fails, the switch falls back to the stored value.
+    await waitFor(() => expect(screen.getByText('The auto-timeout setting could not be saved.')).toBeDefined());
+    expect(toggle.checked).toBe(true);
+  });
+
   test('turning the toggle on asks for confirmation before saving', async () => {
     const engine = makeEngine();
     const { toggle } = await renderSettings(engine);

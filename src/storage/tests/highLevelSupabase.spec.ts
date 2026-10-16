@@ -1218,6 +1218,129 @@ describe.each([
     }
   });
 
+  // ── Participant-lock races ───────────────────────────────────────────────────
+  // Pauses the first whole-record assignment write that `shouldPause` selects,
+  // runs `competingWrite` from another session in that window, and then lets the
+  // paused write continue. While the paused write holds the participant lock the
+  // competing write has to wait, so it cannot be overwritten by the stale copy.
+  async function interleaveWithAssignmentWrite(
+    shouldPause: (participantId: string, data: Record<string, unknown>) => boolean,
+    competingWrite: () => Promise<unknown>,
+  ) {
+    const engineInternals = storageEngine as unknown as {
+      updateSequenceAssignmentRow: (participantId: string, data: Record<string, unknown>, operation: string) => Promise<void>;
+    };
+    const originalWrite = engineInternals.updateSequenceAssignmentRow.bind(storageEngine);
+    let competing: Promise<unknown> | undefined;
+    vi.spyOn(engineInternals, 'updateSequenceAssignmentRow').mockImplementation(async (participantId, data, operation) => {
+      if (!competing && shouldPause(participantId, data)) {
+        competing = competingWrite();
+        await Promise.race([
+          competing,
+          new Promise<void>((resolve) => { setTimeout(resolve, 300); }),
+        ]);
+      }
+      await originalWrite(participantId, data, operation);
+    });
+    return () => competing;
+  }
+
+  async function makeSecondSession(participantId?: string) {
+    const otherSession = new SupabaseStorageEngine(true);
+    await otherSession.connect();
+    await otherSession.initializeStudyDb(studyId);
+    if (participantId) {
+      // @ts-expect-error protected
+      otherSession.currentParticipantId = participantId;
+    }
+    return otherSession;
+  }
+
+  test('rolling back a failed slot reuse does not erase the source participant completing', async () => {
+    const source = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    // @ts-expect-error protected
+    await storageEngine._markSequenceAssignmentTimedOut(source.participantId, Date.now());
+    const sourceSession = await makeSecondSession(source.participantId);
+
+    // @ts-expect-error protected
+    vi.spyOn(storageEngine, '_createSequenceAssignment').mockRejectedValueOnce(new Error('replacement failed'));
+    const getCompeting = await interleaveWithAssignmentWrite(
+      (participantId, data) => participantId === source.participantId && data.claimed === false,
+      // @ts-expect-error protected
+      () => sourceSession._completeCurrentParticipantRealtime(),
+    );
+
+    await storageEngine.clearCurrentParticipantId();
+    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata))
+      .rejects.toThrow('replacement failed');
+    await getCompeting();
+
+    const sourceAssignment = (await storageEngine.getAllSequenceAssignments(studyId))
+      .find((assignment) => assignment.participantId === source.participantId);
+    expect(sourceAssignment?.completed).not.toBeNull();
+    expect(sourceAssignment?.claimed).toBe(false);
+    expect(sourceAssignment?.autoTimedOutAt).toBeDefined();
+  });
+
+  test('updateStudyCondition does not erase a concurrent auto-timeout', async () => {
+    const session = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    const adminSession = await makeSecondSession();
+    const getCompeting = await interleaveWithAssignmentWrite(
+      (participantId, data) => participantId === session.participantId && Array.isArray(data.conditions),
+      // @ts-expect-error protected
+      () => adminSession._markSequenceAssignmentTimedOut(session.participantId, Date.now()),
+    );
+
+    await storageEngine.updateStudyCondition('color');
+    await getCompeting();
+
+    const assignment = (await storageEngine.getAllSequenceAssignments(studyId))
+      .find((candidate) => candidate.participantId === session.participantId);
+    expect(assignment?.conditions).toEqual(['color']);
+    expect(assignment?.autoTimedOutAt).toBeDefined();
+  });
+
+  // ── Legacy replacement fallback ──────────────────────────────────────────────
+  test('rejecting a timed-out source leaves its active replacement alone when their timestamps match', async () => {
+    const source = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    // @ts-expect-error protected
+    await storageEngine._markSequenceAssignmentTimedOut(source.participantId, Date.now());
+    await storageEngine.clearCurrentParticipantId();
+    const replacement = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+    // Force the stored timestamps to collide, as they can when the server and
+    // client clocks agree to the millisecond.
+    const sourceRow = revisitRows.find((row) => row.docId === `sequenceAssignment_${source.participantId}`)!;
+    const replacementRow = revisitRows.find((row) => row.docId === `sequenceAssignment_${replacement.participantId}`)!;
+    (replacementRow.data as RowData).timestamp = (sourceRow.data as RowData).timestamp;
+    expect((replacementRow.data as RowData).claimedParticipantId).toBe(source.participantId);
+
+    await storageEngine.rejectParticipant(source.participantId, 'test');
+
+    const assignments = await storageEngine.getAllSequenceAssignments(studyId);
+    const replacementAssignment = assignments.find((assignment) => assignment.participantId === replacement.participantId);
+    expect(replacementAssignment?.rejected).toBe(false);
+    expect(replacementAssignment?.claimed).toBe(false);
+  });
+
+  test('rejecting a legacy replacement without claimedParticipantId still releases its source', async () => {
+    const source = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    await storageEngine.rejectParticipant(source.participantId, 'test');
+    await storageEngine.clearCurrentParticipantId();
+    const replacement = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+    // Records written before claimedParticipantId existed only share the timestamp.
+    const replacementRow = revisitRows.find((row) => row.docId === `sequenceAssignment_${replacement.participantId}`)!;
+    delete (replacementRow.data as RowData).claimedParticipantId;
+
+    await storageEngine.rejectParticipant(replacement.participantId, 'test');
+
+    const sourceAssignment = (await storageEngine.getAllSequenceAssignments(studyId))
+      .find((assignment) => assignment.participantId === source.participantId);
+    expect(sourceAssignment?.claimed).toBe(false);
+    expect(sourceAssignment?.rejected).toBe(true);
+  });
+
   // ── _claimSequenceAssignment ─────────────────────────────────────────────────
   test('_claimSequenceAssignment sets claimed=true on the assignment', async () => {
     const session = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);

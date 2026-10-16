@@ -438,12 +438,17 @@ describe.each([
 
   test('initializeParticipantSession rereads modes before adding a missing default stage', async () => {
     const getModesSpy = vi.spyOn(storageEngine, 'getModes');
+    const readModesForUpdateSpy = vi.spyOn(
+      storageEngine as unknown as { _readModesForUpdate: (id: string) => Promise<unknown> },
+      '_readModesForUpdate',
+    );
 
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
 
     // Opaque settings backends merge the stage field under the settings lock,
     // which requires one fresh read instead of rewriting the earlier snapshot.
-    expect(getModesSpy).toHaveBeenCalledTimes(2);
+    expect(getModesSpy).toHaveBeenCalledTimes(1);
+    expect(readModesForUpdateSpy).toHaveBeenCalledTimes(1);
   });
 
   test('initializeParticipantSession sets conditions from searchParams condition', async () => {
@@ -929,6 +934,35 @@ describe.each([
     const modesAfterDisable = await storageEngine.getModes(studyId);
     expect(modesAfterDisable.autoTimeoutMinutes).toBeUndefined();
     expect(modesAfterDisable.stage?.currentStage.stageName).toBe('STAGE_B');
+  });
+
+  test('a settings read paused across a timeout save does not undo it', async () => {
+    await storageEngine.getModes(studyId);
+    const { studyDatabase } = storageEngine as unknown as { studyDatabase: LocalForage };
+    const originalGetItem = studyDatabase.getItem.bind(studyDatabase);
+    let paused = false;
+    vi.spyOn(studyDatabase, 'getItem').mockImplementation(async (key: string) => {
+      const value = await originalGetItem(key);
+      if (!paused && key.endsWith(`${studyId}/modes`)) {
+        // The save lands after this read but before the read returns.
+        paused = true;
+        await storageEngine.setAutoTimeoutMinutes(studyId, 30);
+      }
+      return value;
+    });
+
+    const staleModes = await storageEngine.getModes(studyId);
+    vi.mocked(studyDatabase.getItem).mockRestore();
+
+    expect(staleModes.autoTimeoutMinutes).toBeUndefined();
+    expect((await storageEngine.getModes(studyId)).autoTimeoutMinutes).toBe(30);
+  });
+
+  test('getModes creates the default settings once and setMode updates them', async () => {
+    const [first, second] = await Promise.all([storageEngine.getModes(studyId), storageEngine.getModes(studyId)]);
+    expect(first).toEqual(second);
+    await storageEngine.setMode(studyId, 'dataSharingEnabled', false);
+    expect((await storageEngine.getModes(studyId)).dataSharingEnabled).toBe(false);
   });
 
   // rejectCurrentParticipant test

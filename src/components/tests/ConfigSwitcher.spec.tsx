@@ -337,6 +337,22 @@ describe('ConfigSwitcher', () => {
     expect(engine.getConditionData).toHaveBeenCalledWith('test-study');
   });
 
+  test.each([
+    { timedOut: 0, completedLate: 0, expected: 'false' },
+    { timedOut: 2, completedLate: 0, expected: 'true' },
+    { timedOut: 0, completedLate: 3, expected: 'true' },
+  ])('shows timeout badges after auto-timeout is disabled only when timed-out ($timedOut) or completed-late ($completedLate) participants remain', async ({ timedOut, completedLate, expected }) => {
+    const engine = makeLandingEngine({ dataSharingEnabled: true });
+    engine.getParticipantsStatusCounts.mockResolvedValue({
+      completed: 5, inProgress: 2, rejected: 1, timedOut, completedLate, minTime: 1000, maxTime: 2000,
+    });
+    vi.mocked(useStorageEngine).mockReturnValue({ storageEngine: makeStorageEngine(engine), setStorageEngine: vi.fn() });
+
+    const view = await act(async () => render(<ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigs} />));
+
+    expect(view.getByTestId('status-badges').getAttribute('data-show-timeout-statuses')).toBe(expected);
+  });
+
   test('hides count pills and analytics but retains status and activity when sharing is turned off', async () => {
     const engine = makeLandingEngine({ dataSharingEnabled: true });
     vi.mocked(useStorageEngine).mockReturnValue({ storageEngine: makeStorageEngine(engine), setStorageEngine: vi.fn() });
