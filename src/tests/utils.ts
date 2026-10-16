@@ -89,6 +89,8 @@ class TestStorageEngine extends StorageEngine {
 
   protected _updateModesFields = vi.fn(async () => { });
 
+  protected _setMode = vi.fn(async () => { });
+
   protected _getAudioUrl = vi.fn(async () => null);
 
   protected _getScreenRecordingUrl = vi.fn(async () => null);

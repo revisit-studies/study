@@ -1329,9 +1329,11 @@ describe.each([
     await storageEngine.clearCurrentParticipantId();
     const replacement = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
 
-    // Records written before claimedParticipantId existed only share the timestamp.
+    // Records written before claimedParticipantId existed only share the stored timestamp.
+    const sourceRow = revisitRows.find((row) => row.docId === `sequenceAssignment_${source.participantId}`)!;
     const replacementRow = revisitRows.find((row) => row.docId === `sequenceAssignment_${replacement.participantId}`)!;
     delete (replacementRow.data as RowData).claimedParticipantId;
+    (sourceRow.data as RowData).timestamp = (replacementRow.data as RowData).timestamp;
 
     await storageEngine.rejectParticipant(replacement.participantId, 'test');
 

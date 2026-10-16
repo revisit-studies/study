@@ -1,41 +1,16 @@
 import { Box, Center, Image } from '@mantine/core';
-import { useEffect, useState } from 'react';
 import { getComponentContainerStyle } from '../utils/componentStyle';
-import { getStaticAssetByPath } from '../utils/getStaticAsset';
-import type { StaticFirstComponentPreview } from '../utils/getStaticFirstComponent';
-import { PREFIX } from '../utils/Prefix';
+import { getStaticAssetUrl, type StaticFirstComponentPreview } from '../utils/getStaticFirstComponent';
 import { ReactMarkdownWrapper } from './ReactMarkdownWrapper';
-
-function getAssetUrl(path: string) {
-  return path.startsWith('http') ? path : `${PREFIX}${path}`;
-}
 
 /**
  * Displays only the first static stimulus while participant initialization is
  * pending. It intentionally does not mount the participant runtime, responses,
- * navigation, recording, timers, or global input handlers.
+ * navigation, recording, timers, or global input handlers. Markdown bodies are
+ * loaded and checked to be free of template syntax before the preview is chosen.
  */
 export function StartupPreview({ preview }: { preview: StaticFirstComponentPreview }) {
-  const [markdown, setMarkdown] = useState('');
-  const { component, componentName } = preview;
-
-  useEffect(() => {
-    let cancelled = false;
-    if (component.type !== 'markdown') {
-      setMarkdown('');
-      return () => { cancelled = true; };
-    }
-
-    getStaticAssetByPath(getAssetUrl(component.path))
-      .then((text) => {
-        if (!cancelled) setMarkdown(text ?? '');
-      })
-      .catch(() => {
-        if (!cancelled) setMarkdown('');
-      });
-
-    return () => { cancelled = true; };
-  }, [component]);
+  const { component, componentName, markdown } = preview;
 
   return (
     <Center mih="80vh">
@@ -46,9 +21,9 @@ export function StartupPreview({ preview }: { preview: StaticFirstComponentPrevi
         style={getComponentContainerStyle(component.type, component.style)}
       >
         {component.type === 'markdown' ? (
-          <ReactMarkdownWrapper text={markdown} />
+          <ReactMarkdownWrapper text={markdown ?? ''} />
         ) : (
-          <Image mx="auto" src={getAssetUrl(component.path)} />
+          <Image mx="auto" src={getStaticAssetUrl(component.path)} />
         )}
       </Box>
     </Center>

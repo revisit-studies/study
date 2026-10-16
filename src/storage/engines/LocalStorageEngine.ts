@@ -332,7 +332,7 @@ export class LocalStorageEngine extends StorageEngine {
     return Boolean(await this.studyDatabase.getItem(`${this.collectionPrefix}${studyId}/modes`));
   }
 
-  async setMode(studyId: string, mode: REVISIT_MODE, value: boolean) {
+  protected async _setMode(studyId: string, mode: REVISIT_MODE, value: boolean) {
     const key = `${this.collectionPrefix}${studyId}/modes`;
     // Unlike the cloud engines, this one does not create the modes on demand.
     if (await this.studyDatabase.getItem(key) === null) {

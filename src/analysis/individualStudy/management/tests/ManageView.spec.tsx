@@ -491,6 +491,16 @@ describe('ManageView', () => {
     });
   });
 
+  test('getDesiredParticipantCounts shows the targets admission enforces when a condition is disabled', () => {
+    const combinations = [
+      { key: 'a', parameters: {} },
+      { key: 'b', parameters: {} },
+    ];
+
+    expect(getDesiredParticipantCounts(10, combinations, undefined, ['b'])).toEqual({ a: 10, b: 0 });
+    expect(getDesiredParticipantCounts(undefined, combinations, { a: 4 })).toEqual({ a: 4, b: '' });
+  });
+
   test('StageManagementItem handleSaveNewStage shows error for invalid name', async () => {
     await act(async () => {
       render(<StageManagementItem studyId="test-study" />);
