@@ -30,7 +30,7 @@ import {
   updateDoc,
   writeBatch,
 } from 'firebase/firestore';
-import { ReCaptchaV3Provider, initializeAppCheck } from '@firebase/app-check';
+import { ReCaptchaV3Provider, ReCaptchaEnterpriseProvider, initializeAppCheck } from '@firebase/app-check';
 import {
   browserPopupRedirectResolver, getAuth, GoogleAuthProvider, onAuthStateChanged, signInAnonymously, signInWithPopup, signOut,
 } from '@firebase/auth';
@@ -49,8 +49,6 @@ import { EditedText, TaglessEditedText } from '../../analysis/individualStudy/th
 import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
 
 export class FirebaseStorageEngine extends CloudStorageEngine {
-  private RECAPTCHAV3TOKEN = import.meta.env.VITE_RECAPTCHAV3TOKEN;
-
   private firestore: Firestore;
 
   private studyCollection: CollectionReference<DocumentData, DocumentData>;
@@ -92,8 +90,11 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     }
     try {
       initializeAppCheck(firebaseApp, {
-        provider: new ReCaptchaV3Provider(this.RECAPTCHAV3TOKEN),
-        isTokenAutoRefreshEnabled: false,
+        // Opt in separately so existing deployments keep their v3 provider and key.
+        provider: import.meta.env.VITE_RECAPTCHA_ENTERPRISE_SITE_KEY
+          ? new ReCaptchaEnterpriseProvider(import.meta.env.VITE_RECAPTCHA_ENTERPRISE_SITE_KEY)
+          : new ReCaptchaV3Provider(import.meta.env.VITE_RECAPTCHAV3TOKEN),
+        isTokenAutoRefreshEnabled: true,
       });
     } catch {
       console.warn('Failed to initialize Firebase App Check');

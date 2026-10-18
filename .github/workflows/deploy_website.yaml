@@ -15,6 +15,8 @@ concurrency:
 
 jobs:
   deploy-main:
+    env:
+      VITE_RECAPTCHA_ENTERPRISE_SITE_KEY: ${{ vars.VITE_RECAPTCHA_ENTERPRISE_SITE_KEY }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -61,6 +63,8 @@ jobs:
         run: .github/scripts/publish-pages-snapshot.sh ./dist supabase ./.pages
 
   deploy-dev:
+    env:
+      VITE_RECAPTCHA_ENTERPRISE_SITE_KEY: ${{ vars.VITE_RECAPTCHA_ENTERPRISE_SITE_KEY_PREVIEW }}
     runs-on: ubuntu-latest
     if: ${{ github.ref == 'refs/heads/dev' }}
     permissions:
@@ -106,6 +110,8 @@ jobs:
         run: .github/scripts/publish-pages-snapshot.sh ./dist dev-supabase ./.pages
 
   pr-deploy:
+    env:
+      VITE_RECAPTCHA_ENTERPRISE_SITE_KEY: ${{ vars.VITE_RECAPTCHA_ENTERPRISE_SITE_KEY_PREVIEW }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
