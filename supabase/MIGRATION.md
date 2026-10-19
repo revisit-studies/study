@@ -72,6 +72,10 @@ docker exec supabase-db pg_dumpall -U supabase_admin \
 db_config_volume=$(docker inspect supabase-db --format \
   '{{range .Mounts}}{{if eq .Destination "/etc/postgresql-custom"}}{{.Name}}{{end}}{{end}}')
 test -n "$db_config_volume"
+printf '%s\n' "$db_config_volume" > "$migration_backup/db-config-volume"
+docker inspect supabase-db --format \
+  '{{index .Config.Labels "com.docker.compose.project"}}' \
+  > "$migration_backup/compose-project"
 docker run --rm -v "$db_config_volume:/source:ro" \
   -v "$migration_backup:/backup" \
   alpine:3.22 tar -cf /backup/db-config.tar -C /source .
@@ -363,23 +367,91 @@ Retain the encryption/key backups. Then reopen application writes.
 
 ## Rollback
 
-While writes are still paused, stop the new stack without `-v`. Restore the saved
-old Compose/API configuration and `.env`, the quiesced Postgres 15 data, the
-MinIO directory, and the matching `db-config` encryption/configuration volume.
-The database upgrade changes the volume's ownership/configuration, so restoring
-only database files is insufficient. Use the physical backup and saved volume
-archive, then load the saved images and use the pinned storage override:
+Keep writes paused. Run the following in **Bash from the migrated deployment
+directory**, using the same absolute `migration_backup` path as above. If using
+a new shell, set that variable again first. The commands preserve the failed
+deployment's data/configuration for diagnosis, then restore the coordinated
+Postgres 15, MinIO/pgsty, and `db-config` backups. Restoring only database files
+is insufficient: the upgrade also changes ownership/configuration in the
+encryption volume.
+
+The saved Compose project name preserves the original named-volume mapping,
+even if the deployment directory was renamed. The volume name comes from the
+original database container, rather than guessing a name. Restore any additional
+custom configuration/overrides from your inventory before restarting.
 
 ```sh
+(
+set -eu
+: "${migration_backup:?Set migration_backup to the original absolute backup path}"
+db_config_volume=$(cat "$migration_backup/db-config-volume")
+compose_project=$(cat "$migration_backup/compose-project")
+test -n "$db_config_volume" && test -n "$compose_project"
+test -d "$migration_backup/postgres15-data"
+test -d "$migration_backup/minio-data"
+test -f "$migration_backup/.env"
+test -f "$migration_backup/docker-compose.yml"
+test -d "$migration_backup/api"
+tar -tf "$migration_backup/db-config.tar" > /dev/null
+docker volume inspect "$db_config_volume" > /dev/null
 docker image load -i "$migration_backup/storage-images.tar"
-docker compose -f docker-compose.yml \
+
+# Stop the upgraded stack with its current configuration. Never add -v.
+docker compose --project-name "$compose_project" down
+volume_users=$(docker ps -q --filter "volume=$db_config_volume")
+if [ -n "$volume_users" ]; then
+  echo 'db-config is still in use; stop leftover upgrade containers before restoring.' >&2
+  exit 1
+fi
+umask 077
+failed_upgrade="$migration_backup/failed-upgrade-$(date -u +%Y%m%dT%H%M%SZ)"
+mkdir "$failed_upgrade"
+cp -a .env docker-compose.yml "$failed_upgrade/"
+docker run --rm -v "$db_config_volume:/source:ro" \
+  -v "$failed_upgrade:/backup" \
+  alpine:3.22 tar -cf /backup/db-config.tar -C /source .
+for directory in volumes/db/data volumes/storage volumes/api; do
+  if [ -e "$directory" ]; then
+    sudo mv "$directory" "$failed_upgrade/$(basename "$directory")"
+  fi
+done
+
+sudo cp -a "$migration_backup/postgres15-data" volumes/db/data
+sudo cp -a "$migration_backup/minio-data" volumes/storage
+sudo cp -a "$migration_backup/api" volumes/api
+cp "$migration_backup/.env" .env
+cp "$migration_backup/docker-compose.yml" docker-compose.yml
+
+# Remove PG17-only files, including hidden files, before restoring PG15's
+# numeric ownership, permissions, encryption keys, and configuration.
+docker run --rm -v "$db_config_volume:/restore" \
+  -v "$migration_backup:/backup:ro" alpine:3.22 sh -ec '
+    rm -rf /restore/* /restore/.[!.]* /restore/..?*
+    tar -xpf /backup/db-config.tar -C /restore
+  '
+
+docker compose --project-name "$compose_project" -f docker-compose.yml \
+  -f "$migration_backup/docker-compose.storage-images.yml" up -d --wait db
+docker exec supabase-db psql -U supabase_admin -d postgres \
+  -v ON_ERROR_STOP=1 -c 'SHOW server_version;'
+docker compose --project-name "$compose_project" -f docker-compose.yml \
   -f "$migration_backup/docker-compose.storage-images.yml" up -d
+)
 ```
 
-Run this from the restored old deployment directory with its original `.env`
-and Compose file. This restores the same pgsty or MinIO image IDs that were
-running before migration. Verify data and login before reopening writes. Keep
-the failed new data separately for diagnosis.
+The subshell stops on any failed command; do not restart services after a failed
+restore. It restores the same pgsty or MinIO image IDs that were running before
+migration. Once the Auth and Storage APIs are ready, verify the restored objects
+with the old service-role key and gateway URL, using the original `POSTGRES_DB`:
+
+```sh
+python3 migrate-storage.py verify "$migration_backup/objects" \
+  --url http://localhost:8000 --database "$postgres_database"
+```
+
+Check existing participants/answers and Study Designer login before reopening
+writes. Keep the failed-upgrade directory and original backups until rollback
+has been accepted. These are local copies, not automatic off-host backups.
 
 After new writes are accepted, restoring the old backups loses those writes.
 Pause and plan how to retain them rather than treating rollback as lossless.
