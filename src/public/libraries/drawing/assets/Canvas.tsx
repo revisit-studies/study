@@ -10,6 +10,7 @@ import {
 import throttle from 'lodash.throttle';
 import { StimulusParams } from '../../../../store/types';
 import { useIsAnalysis } from '../../../../store/hooks/useIsAnalysis';
+import { useCurrentIdentifier } from '../../../../routes/utils';
 import {
   DRAWING_COLORS, DrawingParameters, DrawingScene, DrawingState, DrawingTool, emptyDrawing, hasDrawing,
 } from './types';
@@ -17,19 +18,23 @@ import { drawingHistory, drawingProvenance } from './provenance';
 import DrawingEditor from './DrawingEditor';
 
 export default function Canvas({
-  parameters = {}, provenanceState, setAnswer, useTrrack,
+  parameters = {}, answers, provenanceState, setAnswer, useTrrack,
 }: StimulusParams<DrawingParameters, DrawingState>) {
   const isAnalysis = useIsAnalysis();
   const readOnly = isAnalysis || provenanceState !== undefined;
-  const [definition] = useState(() => drawingProvenance(parameters));
+  const identifier = useCurrentIdentifier();
+  const responseId = parameters.responseId ?? 'drawing';
+  const [initialScene] = useState(() => {
+    const savedScene = answers[identifier]?.answer?.[responseId] as unknown as DrawingScene | undefined;
+    return savedScene ?? parameters.initialDrawing ?? emptyDrawing();
+  });
+  const [definition] = useState(() => drawingProvenance({ ...parameters, initialDrawing: initialScene }));
   const trrack = useTrrack({ registry: definition.registry, initialState: definition.initialState });
   const [controls, setControls] = useState(definition.initialState);
-  const [initialScene] = useState(() => parameters.initialDrawing ?? emptyDrawing());
   const [restoreScene, setRestoreScene] = useState<DrawingScene | undefined>(undefined);
   const [history] = useState(() => drawingHistory(initialScene));
   const [, refreshHistory] = useState(0);
   const currentScene = useRef(initialScene);
-  const responseId = parameters.responseId ?? 'drawing';
   const requireDrawing = parameters.requireDrawing ?? false;
 
   const publishAnswer = useCallback((scene: DrawingScene) => {
@@ -177,7 +182,7 @@ export default function Canvas({
       </Group>
       <Box className="revisit-drawing-surface" h={parameters.height} style={{ minHeight: 200, flex: parameters.height === undefined ? '1 1 0px' : '0 0 auto' }}>
         <DrawingEditor
-          initialDrawing={parameters.initialDrawing}
+          initialDrawing={initialScene}
           snapshot={readOnly ? provenanceState?.state ?? null : restoreScene}
           readOnly={readOnly}
           color={displayed.color}

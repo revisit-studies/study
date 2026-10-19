@@ -10,11 +10,13 @@ import {
 import Canvas from '../Canvas';
 import type DrawingEditor from '../DrawingEditor';
 import { RevisitProvenanceProvider } from '../../../../../store/hooks/useRevisitTrrack';
+import { StimulusParams } from '../../../../../store/types';
 import { DrawingParameters, DrawingState, emptyDrawing } from '../types';
 import { sceneWithStroke } from './fixtures';
 
 type EditorProps = ComponentProps<typeof DrawingEditor>;
 const editor = vi.hoisted(() => ({ props: null as EditorProps | null }));
+vi.mock('../../../../../routes/utils', () => ({ useCurrentIdentifier: () => 'drawing_1' }));
 vi.mock('../DrawingEditor', () => ({
   default: (props: EditorProps) => { editor.props = props; return <div data-testid="mock-drawing-editor" />; },
 }));
@@ -33,14 +35,14 @@ beforeEach(() => {
 });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
-function mount(parameters: DrawingParameters = {}, provenanceState?: DrawingState, route = '/') {
+function mount(parameters: DrawingParameters = {}, provenanceState?: DrawingState, route = '/', answers: StimulusParams<DrawingParameters>['answers'] = {}) {
   const setAnswer = vi.fn();
   const onProvenanceChange = vi.fn();
   const result = render(
     <MemoryRouter initialEntries={[route]}>
       <MantineProvider>
         <RevisitProvenanceProvider onProvenanceChange={onProvenanceChange}>
-          {(useTrrack) => <Canvas parameters={parameters} answers={{}} setAnswer={setAnswer} provenanceState={provenanceState} useTrrack={useTrrack} />}
+          {(useTrrack) => <Canvas parameters={parameters} answers={answers} setAnswer={setAnswer} provenanceState={provenanceState} useTrrack={useTrrack} />}
         </RevisitProvenanceProvider>
       </MantineProvider>
     </MemoryRouter>,
@@ -49,6 +51,43 @@ function mount(parameters: DrawingParameters = {}, provenanceState?: DrawingStat
 }
 
 describe('drawing library Canvas', () => {
+  test.each(['drawing', 'sketch'])('restores the saved %s response on return and undoes new edits to that scene', (responseId) => {
+    const first = mount({ responseId, requireDrawing: true });
+    const saved = sceneWithStroke();
+    act(() => { editor.props!.onChange(saved); editor.props!.onCommit(saved); });
+    const answer = first.setAnswer.mock.lastCall![0].answers;
+    first.unmount();
+
+    const resumed = mount({ responseId, requireDrawing: true, initialDrawing: sceneWithStroke('configured') }, undefined, '/', {
+      drawing_1: { answer },
+    } as unknown as StimulusParams<DrawingParameters>['answers']);
+    expect(editor.props!.initialDrawing).toEqual(saved);
+    expect(resumed.setAnswer.mock.lastCall?.[0]).toEqual({ status: true, answers: answer });
+    const graph = resumed.onProvenanceChange.mock.lastCall![0];
+    expect(graph.nodes[graph.root].state.val.state).toEqual(saved);
+    expect((screen.getByRole('button', { name: 'Undo drawing' }) as HTMLButtonElement).disabled).toBe(true);
+
+    const edited = { ...saved, elements: [...saved.elements, ...sceneWithStroke('new').elements] };
+    act(() => { editor.props!.onChange(edited); editor.props!.onCommit(edited); });
+    fireEvent.click(screen.getByRole('button', { name: 'Undo drawing' }));
+    expect(editor.props!.snapshot).toEqual(saved);
+    expect(resumed.setAnswer.mock.lastCall?.[0]).toEqual({ status: true, answers: answer });
+  });
+
+  test('preserves a saved empty drawing and does not restore another trial', () => {
+    const savedAnswers = { drawing_1: { answer: { drawing: emptyDrawing() } } } as unknown as StimulusParams<DrawingParameters>['answers'];
+    const resumed = mount({ requireDrawing: true, initialDrawing: sceneWithStroke('configured') }, undefined, '/', savedAnswers);
+    expect(editor.props!.initialDrawing).toEqual(emptyDrawing());
+    expect(resumed.setAnswer.mock.lastCall?.[0].status).toBe(false);
+    resumed.unmount();
+
+    const configured = sceneWithStroke('configured');
+    mount({ initialDrawing: configured }, undefined, '/', {
+      other_2: { answer: { drawing: sceneWithStroke('other') } },
+    } as unknown as StimulusParams<DrawingParameters>['answers']);
+    expect(editor.props!.initialDrawing).toEqual(configured);
+  });
+
   test.each([undefined, 420])('uses available space by default and honors an explicit height of %s', (height) => {
     const { container } = mount({ height });
     const layout = container.querySelector<HTMLElement>('.revisit-drawing')!;
