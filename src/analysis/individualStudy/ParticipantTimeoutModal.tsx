@@ -2,7 +2,7 @@ import {
   Alert, Button, Group, Modal, Stack, Text, Tooltip,
 } from '@mantine/core';
 import { IconClockOff } from '@tabler/icons-react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { ParticipantDataWithStatus } from '../../storage/types';
 import { useAuth } from '../../store/hooks/useAuth';
@@ -64,10 +64,7 @@ export function ParticipantTimeoutModal({
   const [timeoutError, setTimeoutError] = useState<string | null>(null);
   const opened = controlledOpened ?? uncontrolledOpened;
 
-  const inProgressParticipants = useMemo(
-    () => getInProgressParticipantsByElapsedTime(participants),
-    [participants],
-  );
+  const inProgressParticipants = getInProgressParticipantsByElapsedTime(participants);
 
   const handleTimeOutParticipant = useCallback(async (participantId: string) => {
     if (!storageEngine || timingOutParticipantIds.includes(participantId)) {

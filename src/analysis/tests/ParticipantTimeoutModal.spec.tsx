@@ -86,6 +86,26 @@ describe('ParticipantTimeoutModal', () => {
     expect(formatElapsedTime(45 * 60_000)).toBe('45m');
   });
 
+  test.each([false, true])('refreshes elapsed time when opening Review (controlled: %s)', async (controlled) => {
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
+    const participants = [makeParticipant({ assignmentCreatedTime: 1_000_000 })];
+    const refresh = vi.fn();
+    try {
+      const { rerender } = render(<ParticipantTimeoutModal participants={participants} refresh={refresh} opened={controlled ? false : undefined} />);
+      clock.mockReturnValue(1_000_000 + 2 * 60 * 60_000);
+      await act(async () => {
+        if (controlled) {
+          rerender(<ParticipantTimeoutModal participants={participants} refresh={refresh} opened />);
+        } else {
+          fireEvent.click(screen.getByRole('button', { name: 'Review (1)' }));
+        }
+      });
+      expect(screen.getByText('2h 0m')).toBeDefined();
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
   test('opens the review modal and times out the chosen participant', async () => {
     const refresh = vi.fn().mockResolvedValue(undefined);
     await act(async () => {
