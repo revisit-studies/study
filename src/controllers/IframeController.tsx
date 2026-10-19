@@ -225,6 +225,8 @@ export function IframeController({ currentConfig, provState, answers }: { curren
         flexGrow: 1,
         border: 0,
         colorScheme: colorMode,
+        // Do not expose the document's automatic theme before onLoad applies the study scheme.
+        visibility: frameStatus === 'ready' ? undefined : 'hidden',
         // Keep transparent embedded pages readable when their scheme differs from the study.
         backgroundColor: currentConfig.colorMode ? 'Canvas' : undefined,
         pointerEvents: isAnalysis ? 'none' : undefined,

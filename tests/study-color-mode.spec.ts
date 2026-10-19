@@ -66,3 +66,42 @@ for (const mode of ['light', 'dark'] as const) {
     await expect(frame.locator('body')).toHaveCSS('background-color', opposite === 'light' ? 'rgb(255, 255, 255)' : 'rgb(36, 36, 36)');
   });
 }
+
+test('HTML stays hidden until its study color scheme is applied after slow resources load', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.route('**/demo-html/config.json', async (route) => {
+    const response = await route.fetch();
+    const config = await response.json();
+    config.uiConfig.colorMode = 'light';
+    config.components = {
+      loading: { type: 'website', path: 'demo-html/assets/slow-theme.html', response: [] },
+    };
+    config.sequence = { order: 'fixed', components: ['loading'] };
+    await route.fulfill({ response, json: config });
+  });
+  await page.route('**/demo-html/assets/slow-theme.html*', (route) => route.fulfill({
+    contentType: 'text/html',
+    body: '<!doctype html><html><head><style>:root { color-scheme: light dark; } body { background: light-dark(white, rgb(36, 36, 36)); }</style></head><body><p>Slow stimulus</p><img src="delayed-image.png" alt="Delayed resource"></body></html>',
+  }));
+  let releaseImage = () => { };
+  const imageReleased = new Promise<void>((resolve) => { releaseImage = resolve; });
+  await page.route('**/demo-html/assets/delayed-image.png', async (route) => {
+    await imageReleased;
+    await route.fulfill({ status: 404, body: '' });
+  });
+
+  await page.goto('/demo-html', { waitUntil: 'domcontentloaded' });
+  const iframe = page.locator('#root iframe');
+  const frame = page.frameLocator('#root iframe');
+  try {
+    // The child document is usable while its resource still prevents window.load.
+    await expect(frame.getByText('Slow stimulus', { exact: true })).toBeAttached();
+    await expect.poll(() => frame.locator('html').evaluate(() => document.readyState)).toBe('interactive');
+    await expect(iframe).toBeHidden();
+  } finally {
+    releaseImage();
+  }
+  await expect(iframe).toBeVisible();
+  await expect(frame.locator('html')).toHaveCSS('color-scheme', 'light');
+  await expect(frame.locator('body')).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+});

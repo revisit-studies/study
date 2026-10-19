@@ -102,8 +102,10 @@ describe('IframeController', () => {
     Object.defineProperty(iframe, 'contentDocument', { value: frameDocument, configurable: true });
     const root = frameDocument.documentElement;
     root.style.colorScheme = 'light dark';
+    expect(iframe.style.visibility).toBe('hidden');
     fireEvent.load(iframe);
     expect(root.style.colorScheme).toBe(studyMode);
+    expect(iframe.style.visibility).toBe('');
     const originalSrc = iframe.src;
 
     const override = studyMode === 'light' ? 'dark' : 'light';
