@@ -15,6 +15,7 @@ import { getStaticAssetByPath } from '../utils/getStaticAsset';
 import { buildIframeSrcDoc, getBaseHref } from '../utils/iframeSrcDoc';
 import { PREFIX as BASE_PREFIX } from '../utils/Prefix';
 import { ResourceNotFound } from '../ResourceNotFound';
+import { publishAutoAdvanceSelection } from '../components/response/autoAdvanceEvents';
 
 const PREFIX = '@REVISIT_COMMS';
 
@@ -140,7 +141,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   useEffect(() => {
     const handler = (e: MessageEvent) => {
       const { data } = e;
-      if (typeof data === 'object' && iframeId === data.iframeId) {
+      if (data && typeof data === 'object' && iframeId === data.iframeId) {
         switch (data.type) {
           case `${PREFIX}/WINDOW_READY`:
             if (currentConfig.parameters) {
@@ -168,6 +169,14 @@ export function IframeController({ currentConfig, provState, answers }: { curren
               status: true,
               values: data.message,
             }));
+            if (e.source === ref.current?.contentWindow && typeof data.options?.autoAdvanceToNextStep === 'boolean') {
+              const delay = data.options?.autoAdvanceDelay;
+              publishAutoAdvanceSelection({
+                identifier,
+                delay: typeof delay === 'number' && Number.isFinite(delay) && delay >= 0 ? delay : 0,
+                selected: data.options?.autoAdvanceToNextStep === true,
+              });
+            }
             break;
           case `${PREFIX}/PROVENANCE`: {
             if (isAnalysis) return;

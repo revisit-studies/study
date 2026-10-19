@@ -18,6 +18,7 @@ import {
   DEFAULT_AUTO_ADVANCE_WARNING_TIME,
   getAutoAdvanceWarning,
 } from './nextButtonTimeout';
+import type { AutoAdvanceSelection } from './response/autoAdvanceEvents';
 
 const nextButtonJustify = {
   left: 'flex-start',
@@ -32,7 +33,11 @@ type Props = {
   location?: ResponseBlockLocation;
   checkAnswer: JSX.Element | null;
   onCheckAnswer?: () => void;
-  onNext: () => void;
+  onNext: () => boolean;
+  autoAdvanceRequest?: AutoAdvanceSelection;
+  autoAdvanceEligible?: boolean;
+  responseAutoAdvances?: boolean;
+  showNextOnReturn?: boolean;
 };
 
 export function NextButton({
@@ -43,6 +48,10 @@ export function NextButton({
   checkAnswer,
   onCheckAnswer,
   onNext,
+  autoAdvanceRequest,
+  autoAdvanceEligible = true,
+  showNextOnReturn = false,
+  responseAutoAdvances = config?.response?.some((response) => response.type === 'buttons' && response.autoAdvanceToNextStep && !response.hidden),
 }: Props) {
   const { isNextDisabled, goToNextStep } = useNextStep(config?.response, config?.correctAnswer);
   const studyConfig = useStudyConfig();
@@ -54,13 +63,35 @@ export function NextButton({
   const nextButtonAutoAdvanceTime = config?.nextButtonAutoAdvanceTime;
   const nextButtonAutoAdvanceWarningTime = config?.nextButtonAutoAdvanceWarningTime ?? DEFAULT_AUTO_ADVANCE_WARNING_TIME;
   const nextButtonAutoAdvanceWarningMessage = config?.nextButtonAutoAdvanceWarningMessage ?? DEFAULT_AUTO_ADVANCE_WARNING_MESSAGE;
+  const nextButtonHidden = !showNextOnReturn && (config?.nextButtonHidden ?? (
+    nextButtonAutoAdvanceTime !== undefined
+    || responseAutoAdvances
+    || false
+  ));
 
   const [timer, setTimer] = useState<number | undefined>(undefined);
-  const autoAdvanceTriggered = useRef(false);
+  const trialStartTime = useRef(Date.now());
+  const deadlineAutoAdvanceTriggered = useRef(false);
+  const navigationStarted = useRef(false);
+  const attemptedRequest = useRef<number | undefined>(undefined);
+  const latestOnNext = useRef(onNext);
+  const [readyAutoAdvanceRequest, setReadyAutoAdvanceRequest] = useState<number | undefined>();
+
+  useEffect(() => {
+    latestOnNext.current = onNext;
+  }, [onNext]);
+
+  useEffect(() => {
+    if (!autoAdvanceEligible) {
+      attemptedRequest.current = undefined;
+    }
+  }, [autoAdvanceEligible]);
   // Use the current identifier so nested function-sequence items reset their timer state.
   useEffect(() => {
-    autoAdvanceTriggered.current = false;
+    deadlineAutoAdvanceTriggered.current = false;
+    navigationStarted.current = false;
     const start = Date.now();
+    trialStartTime.current = start;
     setTimer(0);
     const interval = setInterval(() => {
       setTimer(Date.now() - start);
@@ -71,6 +102,18 @@ export function NextButton({
   }, [identifier]);
 
   useEffect(() => {
+    setReadyAutoAdvanceRequest(undefined);
+    if (!autoAdvanceRequest || !autoAdvanceRequest.selected || autoAdvanceRequest.identifier !== identifier) {
+      return undefined;
+    }
+
+    const timeout = setTimeout(() => {
+      setReadyAutoAdvanceRequest(autoAdvanceRequest.eventId);
+    }, autoAdvanceRequest.delay);
+    return () => clearTimeout(timeout);
+  }, [autoAdvanceRequest, identifier]);
+
+  useEffect(() => {
     if (timer === undefined) {
       return;
     }
@@ -78,15 +121,6 @@ export function NextButton({
       navigate(`./../__timedOut${window.location.search}`);
     }
   }, [nextButtonDisableTime, timer, navigate, studyConfig.uiConfig.timeoutReject]);
-
-  useEffect(() => {
-    if (isNextDisabled || timer === undefined || nextButtonAutoAdvanceTime === undefined || timer < nextButtonAutoAdvanceTime || autoAdvanceTriggered.current) {
-      return;
-    }
-
-    autoAdvanceTriggered.current = true;
-    goToNextStep(false);
-  }, [goToNextStep, isNextDisabled, nextButtonAutoAdvanceTime, timer]);
 
   const buttonTimerSatisfied = useMemo(
     () => {
@@ -99,6 +133,45 @@ export function NextButton({
     },
     [nextButtonDisableTime, nextButtonEnableTime, timer],
   );
+
+  const nextButtonDisabled = disabled || isNextDisabled || !buttonTimerSatisfied;
+
+  useEffect(() => {
+    if (isNextDisabled || timer === undefined || nextButtonAutoAdvanceTime === undefined || timer < nextButtonAutoAdvanceTime || deadlineAutoAdvanceTriggered.current) {
+      return;
+    }
+
+    deadlineAutoAdvanceTriggered.current = true;
+    if (!navigationStarted.current && goToNextStep(false)) {
+      navigationStarted.current = true;
+    }
+  }, [goToNextStep, isNextDisabled, nextButtonAutoAdvanceTime, timer]);
+
+  useEffect(() => {
+    if (
+      readyAutoAdvanceRequest === undefined
+      || !autoAdvanceRequest?.selected
+      || autoAdvanceRequest.eventId !== readyAutoAdvanceRequest
+      || autoAdvanceRequest.identifier !== identifier
+      || nextButtonDisabled
+      || !autoAdvanceEligible
+      || navigationStarted.current
+      || attemptedRequest.current === readyAutoAdvanceRequest
+    ) {
+      return;
+    }
+
+    const elapsed = Date.now() - trialStartTime.current;
+    const pastDisableTime = nextButtonDisableTime && elapsed >= nextButtonDisableTime;
+    if (pastDisableTime || elapsed < nextButtonEnableTime) {
+      return;
+    }
+
+    attemptedRequest.current = readyAutoAdvanceRequest;
+    if (latestOnNext.current()) {
+      navigationStarted.current = true;
+    }
+  }, [autoAdvanceEligible, autoAdvanceRequest, identifier, nextButtonDisabled, nextButtonDisableTime, nextButtonEnableTime, readyAutoAdvanceRequest, studyConfig.uiConfig.timeoutReject]);
 
   const autoAdvanceWarning = useMemo(() => getAutoAdvanceWarning({
     timer,
@@ -119,7 +192,7 @@ export function NextButton({
         onCheckAnswer();
         return;
       }
-      if (!disabled && !isNextDisabled && buttonTimerSatisfied) {
+      if (!disabled && !isNextDisabled && buttonTimerSatisfied && !nextButtonHidden) {
         onNext();
       }
     };
@@ -130,9 +203,8 @@ export function NextButton({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [disabled, isNextDisabled, buttonTimerSatisfied, onCheckAnswer, onNext, nextOnEnter]);
+  }, [disabled, isNextDisabled, nextButtonHidden, buttonTimerSatisfied, onCheckAnswer, onNext, nextOnEnter]);
 
-  const nextButtonDisabled = disabled || isNextDisabled || !buttonTimerSatisfied;
   const previousButtonText = config?.previousButtonText ?? studyConfig.uiConfig.previousButtonText ?? 'Previous';
   const nextButtonAlignment = config?.nextButtonAlignment ?? studyConfig.uiConfig.nextButtonAlignment ?? 'right';
   const componentWidth = config && getComponentContainerStyle(config.type, config.style);
@@ -155,43 +227,45 @@ export function NextButton({
           />
         )}
         {checkAnswer}
-        <Button
-          type="submit"
-          disabled={nextButtonDisabled}
-          onClick={() => onNext()}
-          px={location === 'sidebar' && checkAnswer ? 8 : undefined}
-          aria-label={label}
-          rightSection={nextOnEnter && !onCheckAnswer ? (
-            <Kbd
-              size="xs"
-              aria-hidden="true"
-              style={{
-                backgroundColor: 'transparent',
-                color: 'inherit',
-                boxShadow: 'none',
-                border: 'none',
-                fontSize: '11px',
-                fontWeight: 600,
-              }}
-            >
-              ↵
-            </Kbd>
-          ) : undefined}
-          styles={{
-            inner: { alignItems: 'stretch' },
-            section: nextOnEnter && !onCheckAnswer ? {
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '0 10px',
-              marginRight: -16,
-              marginBlock: -1,
-              borderLeft: '1px solid rgba(255, 255, 255, 0.25)',
-              backgroundColor: 'rgba(0, 0, 0, 0.08)',
-            } : undefined,
-          }}
-        >
-          {label}
-        </Button>
+        {!nextButtonHidden && (
+          <Button
+            type="submit"
+            disabled={nextButtonDisabled}
+            onClick={() => onNext()}
+            px={location === 'sidebar' && checkAnswer ? 8 : undefined}
+            aria-label={label}
+            rightSection={nextOnEnter && !onCheckAnswer ? (
+              <Kbd
+                size="xs"
+                aria-hidden="true"
+                style={{
+                  backgroundColor: 'transparent',
+                  color: 'inherit',
+                  boxShadow: 'none',
+                  border: 'none',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                }}
+              >
+                ↵
+              </Kbd>
+            ) : undefined}
+            styles={{
+              inner: { alignItems: 'stretch' },
+              section: nextOnEnter && !onCheckAnswer ? {
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0 10px',
+                marginRight: -16,
+                marginBlock: -1,
+                borderLeft: '1px solid rgba(255, 255, 255, 0.25)',
+                backgroundColor: 'rgba(0, 0, 0, 0.08)',
+              } : undefined,
+            }}
+          >
+            {label}
+          </Button>
+        )}
       </Group>
       {timer !== undefined && (
         <>

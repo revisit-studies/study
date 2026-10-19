@@ -20,7 +20,7 @@
   </head>
 
   <body>
-    <svg></svg>
+    <svg role="img" aria-label="Interactive bar chart"></svg>
   </body>
 
   <script>
@@ -68,9 +68,12 @@
 
         // Post answer from the html to reVISit platform
         .on('click', (e, d) => {
-          Revisit.postAnswers({
-            [taskID]: d,
-          });
+          // Trial parameters decide whether a click also requests submission.
+          Revisit.postAnswers(
+            { [taskID]: d },
+            data.autoAdvanceToNextStep === true,
+            data.autoAdvanceDelay ?? 0
+          );
         });
 
       svg

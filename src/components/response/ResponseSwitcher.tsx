@@ -1,7 +1,9 @@
 import { Box, Checkbox, Divider } from '@mantine/core';
-import { useSearchParams } from 'react-router';
-import { useMemo } from 'react';
 import { GetInputPropsReturnType } from '@mantine/form/lib/types';
+import { useSearchParams } from 'react-router';
+import {
+  useCallback, useEffect, useMemo, useState,
+} from 'react';
 import {
   CustomResponse, IndividualComponent, JsonValue, MatrixResponse, Response, SliderResponse, StoredAnswer,
 } from '../../parser/types';
@@ -26,13 +28,13 @@ import './css/default-form.css';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import { useStoreSelector } from '../../store/store';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
-import { useCurrentStep } from '../../routes/utils';
+import { useCurrentIdentifier, useCurrentStep } from '../../routes/utils';
 import { TextOnlyInput } from './TextOnlyInput';
 import { useFetchStylesheet } from '../../utils/fetchStylesheet';
 import { parseStringOptionValue, parseStringOptions } from '../../utils/stringOptions';
 import { getDropdownOptions } from '../../utils/dropdownOptions';
 import {
-  getDefaultFieldValue, getResponseWidth, normalizeCheckboxValue,
+  getDefaultFieldValue, getResponseWidth, hasAnswerValue, isResponseChangeLocked, normalizeCheckboxValue,
 } from './utils';
 import {
   generateErrorMessage,
@@ -42,6 +44,7 @@ import { CustomResponseField } from '../../store/types';
 import { compileTemplate } from '../../utils/handlebars';
 import { useTemplateAnswerContext } from '../../store/hooks/useTemplateAnswerContext';
 import { OptionTextTemplateContext } from './OptionLabel';
+import { publishAutoAdvanceSelection } from './autoAdvanceEvents';
 
 export function ResponseSwitcher({
   response,
@@ -78,22 +81,64 @@ export function ResponseSwitcher({
   const sequence = useStoreSelector((state) => state.sequence);
   const flatSequence = useMemo(() => getSequenceFlatMap(sequence), [sequence]);
   const currentStep = useCurrentStep();
+  const identifier = useCurrentIdentifier();
   const nextComponent = useMemo(() => (typeof currentStep === 'number' ? flatSequence[currentStep + 1] : undefined), [currentStep, flatSequence]);
   const nextConfig = useMemo(() => (nextComponent ? studyConfig.components[nextComponent] : undefined), [nextComponent, studyConfig]);
+  const [userSelected, setUserSelected] = useState(false);
+
+  useEffect(() => {
+    setUserSelected(false);
+  }, [identifier]);
 
   const completed = useStoreSelector((state) => state.completed);
   const usesStandaloneDontKnow = usesStandaloneDontKnowField(response);
 
   const finalStoredAnswer = isAnalysis || answerFinalized || completed ? storedAnswer : undefined;
+  const restoredResponseLocked = 'allowResponseChange' in response && response.allowResponseChange === false
+    && isResponseChangeLocked(
+      !!answerFinalized,
+      (usesStandaloneDontKnow && finalStoredAnswer?.[`${response.id}-dontKnow`]) || finalStoredAnswer?.[response.id],
+    );
+
+  const selectAnswer = useCallback((selected: boolean) => {
+    setUserSelected(selected);
+    if (response.type === 'buttons' && response.autoAdvanceToNextStep) {
+      publishAutoAdvanceSelection({
+        identifier,
+        responseId: response.id,
+        delay: response.autoAdvanceDelay ?? 0,
+        selected,
+      });
+    }
+  }, [identifier, response]);
+
+  const wrappedForm = useMemo(() => {
+    if (!form || typeof form.onChange !== 'function') {
+      return form;
+    }
+
+    return {
+      ...form,
+      onChange: (val: unknown, source?: 'keyboard' | 'click') => {
+        selectAnswer(hasAnswerValue(val));
+        form.onChange(val, source);
+      },
+    };
+  }, [form, selectAnswer]);
 
   // Don't update if we're in analysis mode
-  const ans = useMemo(() => (isAnalysis || (Object.keys(finalStoredAnswer || {}).length > 0 && !nextConfig?.previousButton) || completed ? { value: finalStoredAnswer?.[response.id], readOnly: true } : form) || { value: undefined }, [isAnalysis, finalStoredAnswer, response.id, form, nextConfig?.previousButton, completed]);
+  const ans = useMemo(
+    () => (isAnalysis || restoredResponseLocked || (Object.keys(finalStoredAnswer || {}).length > 0 && !nextConfig?.previousButton) || completed
+      ? { value: finalStoredAnswer?.[response.id], readOnly: true }
+      : wrappedForm) || { value: undefined },
+    [isAnalysis, restoredResponseLocked, finalStoredAnswer, response.id, wrappedForm, nextConfig?.previousButton, completed],
+  );
   const dontKnowValue = usesStandaloneDontKnow
     ? ((Object.keys(finalStoredAnswer || {}).length > 0 ? { checked: finalStoredAnswer![`${response.id}-dontKnow`] } : dontKnowCheckbox) || { checked: undefined })
     : { checked: undefined };
   const dontKnowChecked = !!dontKnowValue.checked;
   const otherValue = (Object.keys(finalStoredAnswer || {}).length > 0 ? { value: finalStoredAnswer![`${response.id}-other`] } : otherInput) || { value: undefined };
-  const inputDisabled = !!(Object.keys(finalStoredAnswer || {}).length > 0 || disabled || completed);
+  const inputDisabled = (Object.keys(finalStoredAnswer || {}).length > 0 || disabled || completed);
 
   const [searchParams] = useSearchParams();
 
@@ -101,9 +146,56 @@ export function ResponseSwitcher({
 
   useFetchStylesheet(response.stylesheetPath);
 
+  const fieldInitialValue = useMemo(() => {
+    if (response.paramCapture) {
+      const capturedValue = searchParams.get(response.paramCapture);
+      return response.type === 'checkbox' ? normalizeCheckboxValue(capturedValue) : capturedValue || '';
+    }
+
+    const defaultFieldValue = getDefaultFieldValue(response);
+    if (defaultFieldValue !== null) {
+      return defaultFieldValue;
+    }
+
+    if (response.type === 'reactive' || response.type === 'checkbox') {
+      return [];
+    }
+
+    if (response.type === 'matrix-radio' || response.type === 'matrix-checkbox') {
+      return Object.fromEntries(response.questionOptions.map((entry) => [parseStringOptionValue(entry), '']));
+    }
+
+    if (response.type === 'slider' && response.startingValue !== undefined) {
+      return response.startingValue.toString();
+    }
+
+    if (response.type === 'custom') {
+      return null;
+    }
+
+    return '';
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [response.paramCapture, (response as MatrixResponse).questionOptions, (response as SliderResponse).startingValue, response.type, searchParams]);
+
+  const responseChangeLocked = useMemo(() => {
+    if (!('allowResponseChange' in response)) {
+      return false;
+    }
+
+    if (response.type === 'buttons' && response.allowResponseChange !== false) {
+      return false;
+    }
+
+    if (response.allowResponseChange === false) {
+      return restoredResponseLocked || isResponseChangeLocked(userSelected, dontKnowChecked || ans.value);
+    }
+
+    return false;
+  }, [response, restoredResponseLocked, ans.value, dontKnowChecked, userSelected]);
+
   const isStateDisabled = useMemo(() => {
     // Always disable if participant is completed
-    if (completed) {
+    if (completed || responseChangeLocked) {
       return true;
     }
 
@@ -136,39 +228,8 @@ export function ResponseSwitcher({
       return inputDisabled || !!responseParam;
     }
     return inputDisabled;
-  }, [completed, currentStep, flatSequence, response.paramCapture, inputDisabled, sequence.components, nextConfig?.previousButton, searchParams]);
+  }, [completed, responseChangeLocked, currentStep, flatSequence, response.paramCapture, inputDisabled, sequence.components, nextConfig?.previousButton, searchParams]);
   const isDisabled = isStateDisabled || isDelayedDisabled;
-
-  const fieldInitialValue = useMemo(() => {
-    if (response.paramCapture) {
-      const capturedValue = searchParams.get(response.paramCapture);
-      return response.type === 'checkbox' ? normalizeCheckboxValue(capturedValue) : capturedValue || '';
-    }
-
-    const defaultFieldValue = getDefaultFieldValue(response);
-    if (defaultFieldValue !== null) {
-      return defaultFieldValue;
-    }
-
-    if (response.type === 'reactive' || response.type === 'checkbox') {
-      return [];
-    }
-
-    if (response.type === 'matrix-radio' || response.type === 'matrix-checkbox') {
-      return Object.fromEntries(response.questionOptions.map((entry) => [parseStringOptionValue(entry), '']));
-    }
-
-    if (response.type === 'slider' && response.startingValue !== undefined) {
-      return response.startingValue.toString();
-    }
-
-    if (response.type === 'custom') {
-      return null;
-    }
-
-    return '';
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [response.paramCapture, (response as MatrixResponse).questionOptions, (response as SliderResponse).startingValue, response.type, searchParams]);
 
   const responseStyle = useMemo(() => response.style || {}, [response.style]);
   const responseDividers = useMemo(() => response.withDivider ?? config?.responseDividers ?? studyConfig.uiConfig.responseDividers, [response, config, studyConfig]);
@@ -452,7 +513,12 @@ export function ResponseSwitcher({
         classNames={{ input: classes.fixDisabled, label: classes.fixDisabledLabel, icon: classes.fixDisabledIcon }}
         {...dontKnowCheckbox}
         checked={dontKnowValue.checked}
-        onChange={(event) => { dontKnowCheckbox?.onChange(event.currentTarget.checked); form.onChange(fieldInitialValue); }}
+        onChange={(event) => {
+          const { checked } = event.currentTarget;
+          dontKnowCheckbox?.onChange(checked);
+          form.onChange(fieldInitialValue);
+          selectAnswer(checked);
+        }}
       />
       )}
       {(response.type === 'divider' || responseDividers) && <Divider mt="xl" mb="xs" />}

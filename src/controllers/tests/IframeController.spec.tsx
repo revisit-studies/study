@@ -11,6 +11,7 @@ import { IframeController } from '../IframeController';
 import type { WebsiteComponent } from '../../parser/types';
 import { ReplayContext } from '../../store/hooks/useReplay';
 import { getStaticAssetByPath } from '../../utils/getStaticAsset';
+import { subscribeToAutoAdvanceSelections } from '../../components/response/autoAdvanceEvents';
 
 const mockDispatch = vi.fn();
 const mockSetAssetStatus = vi.fn((payload) => ({ type: 'setAssetStatus', payload }));
@@ -85,6 +86,84 @@ describe('IframeController', () => {
     rerender(<IframeController currentConfig={currentConfig} answers={{}} />);
     expect(container.querySelector('iframe')).toBe(iframe);
     expect(iframe?.style.colorScheme).toBe(colorMode ?? 'inherit');
+  });
+
+  test.each([
+    { options: { autoAdvanceToNextStep: false }, selected: false, delay: 0 },
+    { options: { autoAdvanceToNextStep: true, autoAdvanceDelay: 300 }, selected: true, delay: 300 },
+    { options: { autoAdvanceToNextStep: true }, selected: true, delay: 0 },
+    { options: { autoAdvanceToNextStep: true, autoAdvanceDelay: -1 }, selected: true, delay: 0 },
+    { options: { autoAdvanceToNextStep: true, autoAdvanceDelay: Infinity }, selected: true, delay: 0 },
+  ])('publishes HTML submission or cancellation after updating answers: $options', async ({ options, selected, delay }) => {
+    const { container } = render(<IframeController currentConfig={{ ...websiteConfig, path: 'study/task.html' }} answers={{}} />);
+    await waitFor(() => expect(container.querySelector('iframe')).not.toBeNull());
+    const iframe = container.querySelector('iframe')!;
+    const listener = vi.fn(() => {
+      expect(mockSetReactiveAnswers).toHaveBeenCalledWith({ color: 'blue' });
+      expect(mockUpdateResponseBlockValidation).toHaveBeenCalledWith(expect.objectContaining({ values: { color: 'blue' } }));
+    });
+    const unsubscribe = subscribeToAutoAdvanceSelections(listener);
+    try {
+      window.dispatchEvent(new MessageEvent('message', {
+        source: iframe.contentWindow,
+        data: {
+          iframeId: new URL(iframe.src).searchParams.get('id'),
+          type: '@REVISIT_COMMS/ANSWERS',
+          message: { color: 'blue' },
+          options,
+        },
+      }));
+      expect(listener).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ identifier: 'countDots_0', selected, delay }));
+    } finally {
+      unsubscribe();
+    }
+  });
+
+  test.each([undefined, {}, { autoAdvanceToNextStep: 'true' }])('updates legacy answers without changing navigation: %s', async (options) => {
+    const { container } = render(<IframeController currentConfig={{ ...websiteConfig, path: 'study/task.html' }} answers={{}} />);
+    await waitFor(() => expect(container.querySelector('iframe')).not.toBeNull());
+    const iframe = container.querySelector('iframe')!;
+    const listener = vi.fn();
+    const unsubscribe = subscribeToAutoAdvanceSelections(listener);
+    try {
+      window.dispatchEvent(new MessageEvent('message', {
+        source: iframe.contentWindow,
+        data: {
+          iframeId: new URL(iframe.src).searchParams.get('id'),
+          type: '@REVISIT_COMMS/ANSWERS',
+          message: { color: 'blue' },
+          options,
+        },
+      }));
+      expect(mockSetReactiveAnswers).toHaveBeenCalledWith({ color: 'blue' });
+      expect(listener).not.toHaveBeenCalled();
+    } finally {
+      unsubscribe();
+    }
+  });
+
+  test.each([false, true])('does not accept navigation from another window or during analysis: $0', async (analysis) => {
+    mockIsAnalysis.value = analysis;
+    const { container } = render(<IframeController currentConfig={{ ...websiteConfig, path: 'study/task.html' }} answers={{}} />);
+    await waitFor(() => expect(container.querySelector('iframe')).not.toBeNull());
+    const iframe = container.querySelector('iframe')!;
+    const listener = vi.fn();
+    const unsubscribe = subscribeToAutoAdvanceSelections(listener);
+    try {
+      window.dispatchEvent(new MessageEvent('message', {
+        source: analysis ? iframe.contentWindow : window,
+        data: {
+          iframeId: new URL(iframe.src).searchParams.get('id'),
+          type: '@REVISIT_COMMS/ANSWERS',
+          message: { color: 'blue' },
+          options: { autoAdvanceToNextStep: true },
+        },
+      }));
+      expect(listener).not.toHaveBeenCalled();
+      if (analysis) expect(mockSetReactiveAnswers).not.toHaveBeenCalled();
+    } finally {
+      unsubscribe();
+    }
   });
 
   test('covers sendMessage via answers effect on mount', async () => {

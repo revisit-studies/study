@@ -287,6 +287,7 @@ vi.mock('../utils', () => ({
   usesStandaloneDontKnowField: vi.fn(() => false),
   getDefaultFieldValue: vi.fn(() => null),
   getResponseWidth: vi.fn(() => 'full'),
+  hasAnswerValue: vi.fn((val) => val !== undefined && val !== null && val !== ''),
 }));
 
 vi.mock('../../../utils/stringOptions', () => ({
