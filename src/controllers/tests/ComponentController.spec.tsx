@@ -49,6 +49,9 @@ let mockStoreActions = {
 
 // ── mocks ────────────────────────────────────────────────────────────────────
 
+// Stimulus discovery imports every editor; these host tests do not exercise the drawing engine.
+vi.mock('../../public/libraries/drawing/assets/DrawingEditor', () => ({ default: () => null }));
+
 vi.mock('@mantine/core', () => ({
   Image: ({ src, onLoad, onError }: { src?: string; onLoad?: () => void; onError?: () => void }) => (
     <img src={src} onLoad={onLoad} onError={onError} alt="img" />
