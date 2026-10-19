@@ -131,19 +131,57 @@ describe('KeyMapper Component', () => {
     expect(onSelectMock).toHaveBeenCalledWith('a', 'keyboard');
   });
 
+  test('checks later response mappings before starting arrow navigation', () => {
+    const onFirstSelect = vi.fn();
+    const onSecondSelect = vi.fn();
+    const onFirstNavigation = vi.fn();
+    const onSecondNavigation = vi.fn();
+    render(
+      <>
+        <KeyMapper
+          options={[{ label: 'A', value: 'a', key: 'a' }]}
+          onSelect={onFirstSelect}
+          onArrowNavigation={onFirstNavigation}
+        />
+        <KeyMapper
+          options={[{ label: 'Down', value: 'down', key: 'ArrowDown' }]}
+          onSelect={onSecondSelect}
+          onArrowNavigation={onSecondNavigation}
+        />
+      </>,
+    );
+
+    fireEvent.keyDown(document.body, { key: 'ArrowDown' });
+
+    expect(onSecondSelect).toHaveBeenCalledExactlyOnceWith('down', 'keyboard');
+    expect(onFirstSelect).not.toHaveBeenCalled();
+    expect(onFirstNavigation).not.toHaveBeenCalled();
+    expect(onSecondNavigation).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(document.body, { key: 'ArrowUp' });
+
+    expect(onFirstNavigation).toHaveBeenCalledTimes(1);
+    expect(onSecondNavigation).not.toHaveBeenCalled();
+    expect(onSecondSelect).toHaveBeenCalledTimes(1);
+  });
+
   test('does not trigger onSelect when component is disabled', () => {
     const onSelectMock = vi.fn();
+    const onArrowNavigation = vi.fn();
 
     render(
       <KeyMapper
         options={sampleOptions}
         onSelect={onSelectMock}
+        onArrowNavigation={onArrowNavigation}
         disabled
       />,
     );
 
     fireEvent.keyDown(window, { key: '1' });
+    fireEvent.keyDown(document.body, { key: 'ArrowDown' });
     expect(onSelectMock).not.toHaveBeenCalled();
+    expect(onArrowNavigation).not.toHaveBeenCalled();
   });
 
   test('ignores keypresses from text-entry controls and native Enter targets', () => {
@@ -303,18 +341,22 @@ describe('KeyMapper Component', () => {
 
   test('does nothing when unmounted', () => {
     const onSelectMock = vi.fn();
+    const onArrowNavigation = vi.fn();
 
     const { unmount } = render(
       <KeyMapper
         options={sampleOptions}
         onSelect={onSelectMock}
+        onArrowNavigation={onArrowNavigation}
       />,
     );
 
     unmount();
 
     fireEvent.keyDown(window, { key: '1' });
+    fireEvent.keyDown(document.body, { key: 'ArrowDown' });
     expect(onSelectMock).not.toHaveBeenCalled();
+    expect(onArrowNavigation).not.toHaveBeenCalled();
   });
 
   // --- Tests for Inline Key Mappings ---
