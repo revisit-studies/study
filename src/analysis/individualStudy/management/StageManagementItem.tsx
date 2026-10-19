@@ -857,12 +857,12 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
       return;
     }
 
-    const saved = await persistStageChange(() => storageEngine.updateStage(studyId, stage.stageName, {
-      participantAssignmentMode: mode as 'even' | 'manual',
-      ...(mode === 'manual' && !getManualDesiredParticipants(stage)
-        ? { manualDesiredParticipantsByCombination: getDefaultDesiredParticipantCounts(stage.maxParticipants, betweenSubjectsCombinations) }
-        : {}),
-    }));
+    const saved = await persistStageChange(() => storageEngine.setStageParticipantAssignmentMode(
+      studyId,
+      stage.stageName,
+      mode as 'even' | 'manual',
+      betweenSubjectsCombinations.map((combination) => combination.key),
+    ));
     if (!saved) return;
     await refreshStageData();
   };

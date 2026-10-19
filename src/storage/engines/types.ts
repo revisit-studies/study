@@ -48,6 +48,7 @@ export type SequenceAssignment = {
   stage: string; // The stage of the participant in the study
   conditions?: string[]; // The study condition(s) assigned to this participant.
   betweenSubjectsCombinationKey?: string; // The between-subjects combination assigned to this participant.
+  sequenceKey?: string; // Config hash and prepared row index, used to balance active task orders.
 };
 
 export type REVISIT_MODE = 'dataCollectionEnabled' | 'developmentModeEnabled' | 'dataSharingEnabled';
@@ -223,6 +224,7 @@ function getLeastServedSequence(
   desiredParticipantCountsByCombination: Record<string, number> | undefined,
   betweenSubjects: string[],
   intentIndex: number,
+  sequenceCounts: Map<Sequence, number>,
 ) {
   const combinationKeys = [...new Set(sequences.map((sequence) => (
     getBetweenSubjectsCombinationKey(sequence.parameters, betweenSubjects)
@@ -240,9 +242,11 @@ function getLeastServedSequence(
   const combinationSequences = sequences.filter((sequence) => (
     getBetweenSubjectsCombinationKey(sequence.parameters, betweenSubjects) === combinationKey
   ));
-  // The overall participant index can repeatedly skip rows within a condition.
-  // Advance its Latin-square row using only that condition's participant count.
-  return combinationSequences[(combinationCounts[combinationKey] || 0) % combinationSequences.length];
+  // Rejections free a particular row, so choose the least-used active row rather
+  // than advancing by a count that loses track of which order was rejected.
+  return combinationSequences.reduce((leastUsed, sequence) => (
+    sequenceCounts.get(sequence)! < sequenceCounts.get(leastUsed)! ? sequence : leastUsed
+  ));
 }
 
 export type StorageObjectType = 'sequenceArray' | 'participantData' | 'config' | string;
@@ -1031,6 +1035,40 @@ export abstract class StorageEngine {
     });
   }
 
+  async setStageParticipantAssignmentMode(
+    studyId: string,
+    stageName: string,
+    mode: 'even' | 'manual',
+    combinationKeys: string[],
+  ) {
+    await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, async () => {
+      const stage = (await this.getModes(studyId)).stage?.allStages.find(
+        (candidate) => candidate.stageName === stageName,
+      );
+      if (!stage) {
+        throw new Error(`Stage ${stageName} not found`);
+      }
+      if (mode === 'even') {
+        await this.updateStageUnlocked(studyId, stageName, { participantAssignmentMode: mode });
+        return;
+      }
+      const targets = getStageCombinationTargets(
+        stage.maxParticipants,
+        combinationKeys,
+        stage.manualDesiredParticipantsByCombination ?? stage.desiredParticipantsByCombination,
+        stage.disabledBetweenSubjectsCombinations,
+      );
+      if (!targets) {
+        throw new Error('Set a stage maximum before assigning participants manually');
+      }
+      await this.updateStageUnlocked(studyId, stageName, {
+        participantAssignmentMode: mode,
+        manualDesiredParticipantsByCombination: targets,
+        maxParticipants: Object.values(targets).reduce((total, count) => total + count, 0),
+      });
+    });
+  }
+
   async setStageDesiredParticipants(
     studyId: string,
     stageName: string,
@@ -1282,9 +1320,10 @@ export abstract class StorageEngine {
   // It uses the notion of sequence intents and assignments to determine the current sequence for the participant.
   // It handles rejected participants and allows for reusing a rejected participant's sequence.
   protected async _getSequence(
-    conditions?: string[],
-    bootstrapData?: ModesAndStageData,
-    config?: StudyConfig,
+    conditions: string[] | undefined,
+    bootstrapData: ModesAndStageData,
+    config: StudyConfig,
+    participantConfigHash: string,
   ) {
     if (!this.currentParticipantId) {
       throw new Error('Participant not initialized');
@@ -1294,7 +1333,7 @@ export abstract class StorageEngine {
     }
     let sequenceAssignments = await this.getAllSequenceAssignments(this.studyId);
 
-    const { modes, stageData } = bootstrapData ?? await this.getModesAndStageData(this.studyId);
+    const { modes, stageData } = bootstrapData;
     const currentStage = stageData.currentStage.stageName;
     const sequenceArray = await this.getSequenceArray();
     if (!sequenceArray) {
@@ -1302,7 +1341,7 @@ export abstract class StorageEngine {
     }
 
     const currentStageInfo = stageData.allStages.find((stage) => stage.stageName === currentStage);
-    const enabledSequenceArray = currentStageInfo && config
+    const enabledSequenceArray = currentStageInfo
       ? sequenceArray.filter((sequence) => isSequenceEnabledForStage(
         sequence,
         currentStageInfo,
@@ -1314,7 +1353,7 @@ export abstract class StorageEngine {
     }
 
     let availableSequenceArray = enabledSequenceArray;
-    const betweenSubjects = config?.betweenSubjects || [];
+    const betweenSubjects = config.betweenSubjects || [];
     const desiredParticipantCountsByCombination = currentStageInfo
       ? getDesiredParticipantCountsByCombination(currentStageInfo, sequenceArray, betweenSubjects)
       : undefined;
@@ -1415,7 +1454,16 @@ export abstract class StorageEngine {
         creationIndex: 1,
       };
     }
-    // Choose a condition that is behind, then rotate through its Latin-square rows.
+    const activeRowCounts = new Map<string, number>();
+    sequenceAssignments.forEach((assignment) => {
+      if (!assignment.rejected && assignment.stage === currentStage && assignment.sequenceKey) {
+        activeRowCounts.set(assignment.sequenceKey, (activeRowCounts.get(assignment.sequenceKey) || 0) + 1);
+      }
+    });
+    const sequenceCounts = new Map(sequenceArray.map((sequence, index) => [
+      sequence, activeRowCounts.get(`${participantConfigHash}:${index}`) || 0,
+    ]));
+    // Choose a condition that is behind, then its least-used prepared row.
     const currentRow = combinationCounts
       ? getLeastServedSequence(
         availableSequenceArray,
@@ -1423,6 +1471,7 @@ export abstract class StorageEngine {
         desiredParticipantCountsByCombination,
         betweenSubjects,
         intentIndex,
+        sequenceCounts,
       )
       : availableSequenceArray[intentIndex % availableSequenceArray.length];
 
@@ -1433,6 +1482,7 @@ export abstract class StorageEngine {
     if (modes.dataCollectionEnabled && betweenSubjects.length > 0) {
       await this._updateSequenceAssignmentFields(this.currentParticipantId, {
         betweenSubjectsCombinationKey: getBetweenSubjectsCombinationKey(currentRow.parameters, betweenSubjects),
+        sequenceKey: `${participantConfigHash}:${sequenceArray.indexOf(currentRow)}`,
       });
     }
 
@@ -1546,7 +1596,7 @@ export abstract class StorageEngine {
       const conditions = parsedConditions.length > 0 ? parsedConditions : undefined;
       let sequence: { currentRow: Sequence; creationIndex: number };
       try {
-        sequence = await this._getSequence(conditions, { modes, stageData }, config);
+        sequence = await this._getSequence(conditions, { modes, stageData }, config, participantConfigHash);
       } catch (error) {
         // _getSequence writes the sequence assignment before it picks a row, so a
         // later failure leaves an assignment that occupies a stage slot with no

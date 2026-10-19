@@ -1,6 +1,7 @@
 import {
   afterEach, beforeEach, describe, expect, test,
 } from 'vitest';
+import { ParticipantData } from '../../types';
 import testConfigSimple from '../../tests/testConfigSimple.json';
 import { StudyConfig } from '../../../parser/types';
 import { ParticipantMetadata, Sequence } from '../../../store/types';
@@ -17,6 +18,12 @@ const betweenSubjectsConfig: StudyConfig = {
   uiConfig: { ...config.uiConfig, numSequences: 10 },
   factors: { version: ['control', 'treatment'] },
   betweenSubjects: ['version'],
+};
+const latinSquareConfig: StudyConfig = {
+  ...betweenSubjectsConfig,
+  uiConfig: { ...betweenSubjectsConfig.uiConfig, numSequences: 4 },
+  components: { ...config.components, secondComponent: config.components.testComponent },
+  sequence: { order: 'latinSquare', components: ['testComponent', 'secondComponent'] },
 };
 const metadata: ParticipantMetadata = {
   userAgent: 'test-user-agent',
@@ -302,12 +309,6 @@ describe('stage capacity', () => {
   });
 
   test.each([null, 8])('rotates Latin-square rows within each condition with stage maximum %s', async (maxParticipants) => {
-    const latinSquareConfig: StudyConfig = {
-      ...betweenSubjectsConfig,
-      uiConfig: { ...betweenSubjectsConfig.uiConfig, numSequences: 4 },
-      components: { ...config.components, secondComponent: config.components.testComponent },
-      sequence: { order: 'latinSquare', components: ['testComponent', 'secondComponent'] },
-    };
     const sequences = generateSequenceArray(latinSquareConfig);
     await storageEngine.setSequenceArray(sequences);
     await storageEngine.updateStage(studyId, 'LIMITED', { maxParticipants });
@@ -326,6 +327,56 @@ describe('stage capacity', () => {
       expect(assignedSequences.filter((sequence) => sequence.parameters?.version === version)
         .map((sequence) => sequence.components)).toEqual([...expectedOrders, ...expectedOrders]);
     });
+  });
+
+  test.each([0, 1])('fills the missing order after rejecting participant %s', async (rejectedIndex) => {
+    await storageEngine.setSequenceArray(generateSequenceArray(latinSquareConfig));
+    await storageEngine.updateStage(studyId, 'LIMITED', { maxParticipants: 4 });
+    const participants: ParticipantData[] = [];
+    for (let index = 0; index < 4; index += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      participants.push(await storageEngine.initializeParticipantSession({}, latinSquareConfig, metadata, `participant-${index}`));
+    }
+    const rejected = participants[rejectedIndex];
+    await storageEngine.rejectParticipant(rejected.participantId, 'Timed out');
+    const replacement = await storageEngine.initializeParticipantSession({}, latinSquareConfig, metadata, 'replacement');
+
+    expect(replacement.sequence.parameters).toEqual(rejected.sequence.parameters);
+    expect(replacement.sequence.components).toEqual(rejected.sequence.components);
+  });
+
+  test('initializes manual targets from the saved stage maximum', async () => {
+    const keys = ['control', 'treatment'].map((version) => getBetweenSubjectsCombinationKey({ version }, ['version']));
+    await storageEngine.updateStage(studyId, 'LIMITED', { maxParticipants: 4 });
+
+    await storageEngine.setStageParticipantAssignmentMode(studyId, 'LIMITED', 'manual', keys);
+
+    expect((await storageEngine.getStageData(studyId)).allStages).toContainEqual(expect.objectContaining({
+      stageName: 'LIMITED',
+      maxParticipants: 4,
+      participantAssignmentMode: 'manual',
+      manualDesiredParticipantsByCombination: { [keys[0]]: 2, [keys[1]]: 2 },
+    }));
+  });
+
+  test('restores the enforced maximum when reactivating saved manual targets', async () => {
+    const keys = ['control', 'treatment'].map((version) => getBetweenSubjectsCombinationKey({ version }, ['version']));
+    const targets = { [keys[0]]: 6, [keys[1]]: 8 };
+    await storageEngine.updateStage(studyId, 'LIMITED', {
+      maxParticipants: 14,
+      participantAssignmentMode: 'manual',
+      manualDesiredParticipantsByCombination: targets,
+    });
+    await storageEngine.setStageParticipantAssignmentMode(studyId, 'LIMITED', 'even', keys);
+    await storageEngine.updateStage(studyId, 'LIMITED', { maxParticipants: 2 });
+    await storageEngine.setStageParticipantAssignmentMode(studyId, 'LIMITED', 'manual', keys);
+
+    expect((await storageEngine.getStageData(studyId)).allStages).toContainEqual(expect.objectContaining({
+      stageName: 'LIMITED',
+      maxParticipants: 14,
+      participantAssignmentMode: 'manual',
+      manualDesiredParticipantsByCombination: targets,
+    }));
   });
 
   test('keeps concurrent edits to different stages', async () => {

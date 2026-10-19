@@ -31,6 +31,7 @@ let mockStorageEngine: {
   updateStage: ReturnType<typeof vi.fn>;
   setStageCombinationEnabled: ReturnType<typeof vi.fn>;
   setStageDesiredParticipants: ReturnType<typeof vi.fn>;
+  setStageParticipantAssignmentMode: ReturnType<typeof vi.fn>;
   getSnapshots: ReturnType<typeof vi.fn>;
   createSnapshot: ReturnType<typeof vi.fn>;
   renameSnapshot: ReturnType<typeof vi.fn>;
@@ -280,6 +281,7 @@ const makeEngine = () => ({
   updateStage: vi.fn().mockResolvedValue(undefined),
   setStageCombinationEnabled: vi.fn().mockResolvedValue(undefined),
   setStageDesiredParticipants: vi.fn().mockResolvedValue(undefined),
+  setStageParticipantAssignmentMode: vi.fn().mockResolvedValue(undefined),
   getSnapshots: vi.fn().mockResolvedValue({}),
   createSnapshot: vi.fn().mockResolvedValue(successResponse),
   renameSnapshot: vi.fn().mockResolvedValue(successResponse),
@@ -781,13 +783,7 @@ describe('ManageView', () => {
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Manually' }));
     });
-    expect(mockStorageEngine!.updateStage).toHaveBeenCalledWith('test-study', 'DEFAULT', {
-      participantAssignmentMode: 'manual',
-      manualDesiredParticipantsByCombination: {
-        [combinations[0]]: 2,
-        [combinations[1]]: 2,
-      },
-    });
+    expect(mockStorageEngine!.setStageParticipantAssignmentMode).toHaveBeenCalledWith('test-study', 'DEFAULT', 'manual', combinations);
   });
 
   test('StageManagementItem reports and reloads a failed stage change', async () => {
@@ -796,7 +792,7 @@ describe('ManageView', () => {
       currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
       allStages: [{ stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR, maxParticipants: 4 }],
     });
-    mockStorageEngine!.updateStage.mockRejectedValueOnce(new Error('write failed'));
+    mockStorageEngine!.setStageParticipantAssignmentMode.mockRejectedValueOnce(new Error('write failed'));
     const studyConfig = {
       factors: { letter: ['a', 'b'] },
       betweenSubjects: ['letter'],
