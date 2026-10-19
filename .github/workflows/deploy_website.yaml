@@ -15,8 +15,6 @@ concurrency:
 
 jobs:
   deploy-main:
-    env:
-      VITE_RECAPTCHA_ENTERPRISE_SITE_KEY: ${{ vars.VITE_RECAPTCHA_ENTERPRISE_SITE_KEY }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -63,8 +61,6 @@ jobs:
         run: .github/scripts/publish-pages-snapshot.sh ./dist supabase ./.pages
 
   deploy-dev:
-    env:
-      VITE_RECAPTCHA_ENTERPRISE_SITE_KEY: ${{ vars.VITE_RECAPTCHA_ENTERPRISE_SITE_KEY_PREVIEW }}
     runs-on: ubuntu-latest
     if: ${{ github.ref == 'refs/heads/dev' }}
     permissions:
@@ -82,9 +78,9 @@ jobs:
       - name: Build dev deployment
         run: |
           if [ "$GITHUB_REPOSITORY" = "revisit-studies/study" ]; then
-            VITE_STORAGE_ENGINE=firebase yarn build
+            VITE_STORAGE_ENGINE=firebase yarn build --mode preview
           else
-            yarn build
+            yarn build --mode preview
           fi
         env:
           VITE_BASE_PATH: "/${{ github.event.repository.name }}/dev/"
@@ -110,8 +106,6 @@ jobs:
         run: .github/scripts/publish-pages-snapshot.sh ./dist dev-supabase ./.pages
 
   pr-deploy:
-    env:
-      VITE_RECAPTCHA_ENTERPRISE_SITE_KEY: ${{ vars.VITE_RECAPTCHA_ENTERPRISE_SITE_KEY_PREVIEW }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -139,13 +133,13 @@ jobs:
 
       - name: Build PR deployment
         if: ${{ github.repository != 'revisit-studies/study' }}
-        run: yarn build
+        run: yarn build --mode preview
         env:
           VITE_BASE_PATH: "/${{ github.event.repository.name }}/PR${{ github.event.number }}/"
 
       - name: Build with github environment variables
         if: ${{ github.repository == 'revisit-studies/study' && vars.VITE_STORAGE_ENGINE != '' }}
-        run: VITE_STORAGE_ENGINE=$VITE_STORAGE_ENGINE VITE_BASE_PATH=$VITE_BASE_PATH yarn build
+        run: VITE_STORAGE_ENGINE=$VITE_STORAGE_ENGINE VITE_BASE_PATH=$VITE_BASE_PATH yarn build --mode preview
         env:
           VITE_STORAGE_ENGINE: ${{ vars.VITE_STORAGE_ENGINE }}
           VITE_BASE_PATH: "/${{ github.event.repository.name }}/PR${{ github.event.number }}/"
