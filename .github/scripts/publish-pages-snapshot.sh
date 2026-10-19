@@ -44,10 +44,7 @@ if [[ -n "$destination_dir" && ! "$destination_dir" =~ ^PR[0-9]+$ ]]; then
 fi
 
 if [[ -z "$destination_dir" ]]; then
-  # Existing browser sessions can still request chunks from the previous build.
-  # Protect old hashed assets from deletion while copying in the new assets.
   rsync -a --delete \
-    --filter='P /assets/***' \
     --exclude='/.git/' \
     --exclude='/.nojekyll' \
     --exclude='/CNAME' \
