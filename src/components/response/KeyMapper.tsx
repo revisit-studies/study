@@ -40,17 +40,6 @@ export function KeyMapper({
       }
 
       const isArrowKey = ['ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowUp'].includes(event.key);
-      if (isArrowKey && target instanceof Element && target.closest('[role="radio"]')) {
-        return;
-      }
-
-      if (isArrowKey && document.activeElement === document.body && onArrowNavigation) {
-        (event as unknown as { __keyMapperHandled?: boolean }).__keyMapperHandled = true;
-        event.preventDefault();
-        onArrowNavigation();
-        return;
-      }
-
       for (const option of options) {
         if (typeof option === 'object' && option !== null && option.key) {
           if (keyEventMatchesMapping(option.key, event)) {
@@ -59,10 +48,20 @@ export function KeyMapper({
             if (typeof event.preventDefault === 'function') {
               event.preventDefault();
             }
+            if (isArrowKey && target instanceof Element && target.closest('[role="radio"]')) {
+              // Mantine's arrow handler would otherwise overwrite the mapped answer.
+              event.stopPropagation();
+            }
             onSelect(String(option.value), 'keyboard');
             return;
           }
         }
+      }
+
+      if (isArrowKey && document.activeElement === document.body && onArrowNavigation) {
+        (event as unknown as { __keyMapperHandled?: boolean }).__keyMapperHandled = true;
+        event.preventDefault();
+        onArrowNavigation();
       }
     };
 

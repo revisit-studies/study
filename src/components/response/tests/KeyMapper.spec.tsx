@@ -3,6 +3,7 @@ import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import React from 'react';
+import { MantineProvider, Radio } from '@mantine/core';
 import { KeyMapper } from '../KeyMapper';
 import type { ParsedStringOption } from '../../../parser/types';
 
@@ -14,6 +15,7 @@ describe('KeyMapper Component', () => {
   afterEach(() => {
     cleanup();
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   const sampleOptions: ParsedStringOption[] = [
@@ -77,6 +79,38 @@ describe('KeyMapper Component', () => {
 
     fireEvent.keyDown(window, { key: ' ' });
     expect(onSelectMock).toHaveBeenCalledWith('c', 'keyboard');
+  });
+
+  test.each(['page', 'card'])('prioritizes mapped arrows over navigation with focus on the %s', (focusTarget) => {
+    vi.stubGlobal('matchMedia', vi.fn(() => ({
+      matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn(),
+    })));
+    const onSelect = vi.fn();
+    const onArrowNavigation = vi.fn();
+    const onGroupChange = vi.fn();
+    const options: ParsedStringOption[] = [
+      { label: 'Left', value: 'left', key: 'ArrowLeft' },
+      { label: 'Right', value: 'right', key: 'ArrowRight' },
+      { label: 'Down', value: 'down', key: 'ArrowDown' },
+    ];
+    const { getByRole } = render(
+      <MantineProvider env="test">
+        <Radio.Group name="mapped-arrows" value="left" onChange={onGroupChange}>
+          <KeyMapper options={options} onSelect={onSelect} onArrowNavigation={onArrowNavigation} />
+          {options.map((option) => <Radio.Card key={option.value} value={option.value}>{option.label}</Radio.Card>)}
+        </Radio.Group>
+      </MantineProvider>,
+    );
+    const target = focusTarget === 'card' ? getByRole('radio', { name: 'Left' }) : document.body;
+    if (focusTarget === 'card') target.focus();
+
+    fireEvent.keyDown(target, {
+      key: 'ArrowDown', code: 'ArrowDown', bubbles: true, cancelable: true,
+    });
+
+    expect(onSelect).toHaveBeenCalledExactlyOnceWith('down', 'keyboard');
+    expect(onArrowNavigation).not.toHaveBeenCalled();
+    expect(onGroupChange).not.toHaveBeenCalled();
   });
 
   test('matches canonical Shift+X combinations without swallowing plain x', () => {
