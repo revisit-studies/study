@@ -48,6 +48,8 @@ export function ParticipantRejectModal({
   const [modalRejectOpened, setModalRejectOpened] = useState(false);
   const [modalUndoRejectOpened, setModalUndoRejectOpened] = useState(false);
   const [rejectMessage, setRejectMessage] = useState<string>('');
+  const [rejectError, setRejectError] = useState<string | null>(null);
+  const [rejecting, setRejecting] = useState(false);
   const [undoRejectError, setUndoRejectError] = useState<string | null>(null);
   const [restoring, setRestoring] = useState(false);
 
@@ -71,23 +73,33 @@ export function ParticipantRejectModal({
   }, [storageEngine, studyId]);
 
   const handleRejectParticipant = useCallback(async () => {
-    setModalRejectOpened(false);
-
-    if (currentAndSelectedParticipants.length > 0) {
-      const participantsToReject = currentAndSelectedParticipants.filter((p) => !p.rejected);
-      const promises = participantsToReject.map(async (p) => await rejectParticipant(p.participantId, rejectMessage));
-      await Promise.all(promises);
-    } else {
-      await rejectParticipant(participantId || '', rejectMessage);
+    setRejectError(null);
+    setRejecting(true);
+    const errors: string[] = [];
+    const participantIds = currentAndSelectedParticipants.length > 0
+      ? [...new Set(currentAndSelectedParticipants.filter((participant) => !participant.rejected).map((participant) => participant.participantId))]
+      : [participantId || ''];
+    try {
+      const results = await Promise.allSettled(participantIds.map((id) => rejectParticipant(id, rejectMessage)));
+      results.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          const message = result.reason instanceof Error ? result.reason.message : 'The participant could not be rejected';
+          errors.push(`Participant ${participantIds[index]}: ${message}`);
+        }
+      });
+      if (refresh) await refresh();
+      if (currentParticipantData) await refreshCurrentParticipantData();
+    } catch (error) {
+      console.error('Failed to refresh participants after rejection:', error);
+      errors.push('The participant list could not be refreshed. Please reload to see the latest results.');
+    } finally {
+      setRejectError(errors.length ? errors.join(' ') : null);
+      if (errors.length === 0) {
+        setModalRejectOpened(false);
+        setRejectMessage('');
+      }
+      setRejecting(false);
     }
-    if (refresh) {
-      await refresh();
-    }
-    if (currentParticipantData) {
-      await refreshCurrentParticipantData();
-    }
-
-    setRejectMessage('');
   }, [currentAndSelectedParticipants, refresh, currentParticipantData, rejectParticipant, rejectMessage, participantId, refreshCurrentParticipantData]);
 
   const handleUndoRejectParticipant = useCallback(async () => {
@@ -131,7 +143,7 @@ export function ParticipantRejectModal({
           )}
           {nonRejectedParticipantsCount > 0 && (
             <Tooltip label="Only admins can reject participants" disabled={user.isAdmin}>
-              <Button disabled={!user.isAdmin} onClick={() => setModalRejectOpened(true)} color="red">
+              <Button disabled={!user.isAdmin} onClick={() => { setRejectError(null); setModalRejectOpened(true); }} color="red">
                 {footer ? 'Reject' : `${rejectParticipantLabel} (${nonRejectedParticipantsCount})`}
               </Button>
             </Tooltip>
@@ -140,11 +152,12 @@ export function ParticipantRejectModal({
       )}
       <Modal
         opened={modalRejectOpened}
-        onClose={() => setModalRejectOpened(false)}
+        onClose={() => { if (!rejecting) setModalRejectOpened(false); }}
         title={footer
           ? rejectParticipantLabel
           : `${rejectParticipantLabel} (${nonRejectedParticipantsCount})`}
       >
+        {rejectError && <Alert title="Unable to reject participants" color="red">{rejectError}</Alert>}
         <Alert
           icon={<IconAlertTriangle size={16} />}
           title="Warning"
@@ -182,10 +195,10 @@ export function ParticipantRejectModal({
           onChange={(event) => setRejectMessage(event.target.value)}
         />
         <Flex mt="sm" justify="right">
-          <Button mr={5} variant="subtle" color="dark" onClick={() => { setModalRejectOpened(false); setRejectMessage(''); }}>
+          <Button mr={5} variant="subtle" color="dark" onClick={() => { setModalRejectOpened(false); setRejectMessage(''); }} disabled={rejecting}>
             Cancel
           </Button>
-          <Button color="red" onClick={handleRejectParticipant}>
+          <Button color="red" onClick={handleRejectParticipant} loading={rejecting} disabled={rejecting}>
             {rejectParticipantLabel}
           </Button>
         </Flex>

@@ -176,6 +176,24 @@ describe('ParticipantRejectModal', () => {
     });
     expect(mockStorageEngine!.undoRejectParticipant).toHaveBeenCalledWith('p1');
   });
+  test('shows rejection failures and refreshes after all bulk attempts settle', async () => {
+    const participants = ['failed', 'successful'].map((participantId) => makeParticipant({ participantId }));
+    let finishRejection!: () => void;
+    mockStorageEngine!.rejectParticipant.mockImplementation(async (participantId: string) => {
+      if (participantId === 'failed') throw new Error('Storage unavailable');
+      await new Promise<void>((resolve) => { finishRejection = resolve; });
+    });
+    const refresh = vi.fn().mockResolvedValue(undefined);
+    await act(async () => { render(<ParticipantRejectModal selectedParticipants={participants} refresh={refresh} />); });
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Reject Participants (2)' })); });
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Reject Participants' })); });
+    expect(refresh).not.toHaveBeenCalled();
+    await act(async () => { finishRejection(); });
+    expect(refresh).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(/failed.*Storage unavailable/)).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Reject Participants' })).toBeDefined();
+  });
+
   test('shows restore failures and refreshes only after every bulk attempt finishes', async () => {
     const participants = ['claimed', 'available'].map((participantId) => makeParticipant({ participantId, rejected: { reason: 'test', timestamp: 1 } }));
     let finishRestore!: () => void;

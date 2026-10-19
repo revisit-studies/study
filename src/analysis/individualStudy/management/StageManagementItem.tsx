@@ -91,7 +91,7 @@ export function getStageParticipantStatusCounts(participants: ParticipantDataWit
     }
     counts[participant.stage] = stageCounts;
     return counts;
-  }, {});
+  }, Object.create(null) as StageParticipantStatusCounts);
 }
 
 export function getBetweenSubjectsCombinations(
@@ -295,11 +295,35 @@ function renderEnabledHeader() {
   );
 }
 
+function DesiredParticipantsInput({
+  value, minimum, label, onSave,
+}: { value: number | ''; minimum: number; label: string; onSave: (value: number) => Promise<void> }) {
+  const [draft, setDraft] = useState<number | '' | undefined>(undefined);
+
+  return (
+    <NumberInput
+      aria-label={label}
+      min={minimum}
+      allowDecimal={false}
+      hideControls
+      value={draft ?? value}
+      onChange={(next) => setDraft(typeof next === 'number' ? next : '')}
+      onBlur={async () => {
+        setDraft(undefined);
+        if (draft === undefined || draft === '') return;
+        const next = Math.max(minimum, draft);
+        if (next !== value) await onSave(next);
+      }}
+      w={72}
+    />
+  );
+}
+
 function renderDesiredParticipantsCell(
   row: BetweenSubjectsCombinationRow,
   stage: StageInfo,
   disabled: boolean,
-  onSetDesiredParticipants: (stage: StageInfo, combinationKey: string, desiredParticipants: number | '') => Promise<void>,
+  onSetDesiredParticipants: (stage: StageInfo, combinationKey: string, desiredParticipants: number) => Promise<void>,
 ) {
   const totalParticipants = row.participantStatusCounts.completed
     + row.participantStatusCounts.inProgress;
@@ -311,18 +335,12 @@ function renderDesiredParticipantsCell(
   return (
     <Group gap={4} wrap="nowrap">
       <Text size="sm">{`${totalParticipants} /`}</Text>
-      <NumberInput
-        aria-label={`Desired participants for ${row.combinationKey} in ${stage.stageName}`}
-        min={totalParticipants}
-        allowDecimal={false}
-        hideControls
+      <DesiredParticipantsInput
+        key={`${stage.stageName}:${row.combinationKey}`}
+        label={`Desired participants for ${row.combinationKey} in ${stage.stageName}`}
+        minimum={totalParticipants}
         value={row.desiredParticipants}
-        onChange={(value) => onSetDesiredParticipants(
-          stage,
-          row.combinationKey,
-          typeof value === 'number' ? value : '',
-        )}
-        w={72}
+        onSave={(value) => onSetDesiredParticipants(stage, row.combinationKey, value)}
       />
     </Group>
   );
@@ -373,7 +391,7 @@ function BetweenSubjectsCombinationTable({
   betweenSubjectsFactors: BetweenSubjectsFactor[];
   combinations: BetweenSubjectsCombination[];
   onToggle: (stage: StageInfo, combinationKey: string, enabled: boolean) => Promise<void>;
-  onSetDesiredParticipants: (stage: StageInfo, combinationKey: string, desiredParticipants: number | '') => Promise<void>;
+  onSetDesiredParticipants: (stage: StageInfo, combinationKey: string, desiredParticipants: number) => Promise<void>;
   onReviewInProgress: (participants: ParticipantDataWithStatus[], description: string) => void;
   showParticipantCounts: boolean;
   showParticipantLimits: boolean;
@@ -525,7 +543,7 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
   const [asyncStatus, setAsyncStatus] = useState(false);
   const [currentStage, setCurrentStage] = useState<StageInfo>({ stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR });
   const [allStages, setAllStages] = useState<StageInfo[]>([{ stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR }]);
-  const [stageParticipantStatusCounts, setStageParticipantStatusCounts] = useState<StageParticipantStatusCounts>({});
+  const [stageParticipantStatusCounts, setStageParticipantStatusCounts] = useState<StageParticipantStatusCounts>(() => Object.create(null) as StageParticipantStatusCounts);
   const [participants, setParticipants] = useState<ParticipantDataWithStatus[]>([]);
   const [timeoutParticipantSelection, setTimeoutParticipantSelection] = useState<{
     participantIds: string[];
@@ -543,8 +561,8 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
   const [editingStageColor, setEditingStageColor] = useState(DEFAULT_STAGE_COLOR);
   const [editingLimitMaxParticipants, setEditingLimitMaxParticipants] = useState<number | ''>('');
   const [editingLimitEnabled, setEditingLimitEnabled] = useState(false);
-  const manualDesiredParticipantsRef = useRef<Record<string, Record<string, number>>>({});
-  const manualDesiredParticipantsWriteChainsRef = useRef<Record<string, Promise<void>>>({});
+  const manualDesiredParticipantsRef = useRef<Record<string, Record<string, number>>>(Object.create(null));
+  const manualDesiredParticipantsWriteChainsRef = useRef<Record<string, Promise<void>>>(Object.create(null));
   const [addingNewStage, setAddingNewStage] = useState(false);
   const [newStageName, setNewStageName] = useState('');
   const [newStageColor, setNewStageColor] = useState(DEFAULT_STAGE_COLOR);
@@ -818,7 +836,7 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
   const handleSetDesiredParticipants = async (
     stage: StageInfo,
     combinationKey: string,
-    desiredParticipants: number | '',
+    desiredParticipants: number,
   ) => {
     if (!storageEngine) {
       return;
@@ -832,7 +850,7 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
       );
     const nextDesiredParticipantsByCombination = {
       ...currentDesiredParticipantCounts,
-      [combinationKey]: desiredParticipants === '' ? 0 : desiredParticipants,
+      [combinationKey]: desiredParticipants,
     };
     manualDesiredParticipantsRef.current[stage.stageName] = nextDesiredParticipantsByCombination;
 
@@ -844,7 +862,7 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
           studyId,
           stage.stageName,
           combinationKey,
-          desiredParticipants === '' ? 0 : desiredParticipants,
+          desiredParticipants,
           currentDesiredParticipantCounts,
         ),
       );

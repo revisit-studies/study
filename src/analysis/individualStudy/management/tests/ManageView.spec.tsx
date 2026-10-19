@@ -12,12 +12,13 @@ import { openConfirmModal } from '@mantine/modals';
 import { ManageView } from '../ManageView';
 import { RevisitModesItem } from '../RevisitModesItem';
 import {
-  getDefaultDesiredParticipantCounts, getDesiredParticipantCounts, StageManagementItem,
+  getDefaultDesiredParticipantCounts, getDesiredParticipantCounts, getStageParticipantStatusCounts, StageManagementItem,
 } from '../StageManagementItem';
 import { DataManagementItem } from '../DataManagementItem';
 import { showNotification } from '../../../../utils/notifications';
 import { StudyConfig } from '../../../../parser/types';
 import { getBetweenSubjectsCombinationKey } from '../../../../storage/engines/types';
+import { makeParticipant } from '../../../../tests/utils';
 import { DISTINCT_COLOR_PALETTE } from '../../../../utils/colors';
 
 let mockStorageEngine: {
@@ -681,6 +682,50 @@ describe('ManageView', () => {
       .toHaveBeenCalledWith('test-study', 'DEFAULT', disabledCombination, true);
   });
 
+  test.each(['constructor', 'toString', '__proto__'])('counts participants and saves targets in a stage named %s', async (stageName) => {
+    const key = getBetweenSubjectsCombinationKey({ letter: 'a' }, ['letter']);
+    mockStorageEngine!.getStageData.mockResolvedValue({
+      currentStage: { stageName, color: DEFAULT_STAGE_COLOR },
+      allStages: [{
+        stageName, color: DEFAULT_STAGE_COLOR, maxParticipants: 10, participantAssignmentMode: 'manual', manualDesiredParticipantsByCombination: { [key]: 10 },
+      }],
+    });
+    const participants = [{ ...makeParticipant({ participantId: 'p1', stage: stageName, sequence: { ...makeParticipant().sequence, parameters: { letter: 'a' } } }), completed: false }];
+    mockStorageEngine!.getAllParticipantsData.mockResolvedValue(participants);
+    expect(getStageParticipantStatusCounts(participants)[stageName]).toEqual({ completed: 0, inProgress: 1 });
+    const studyConfig = { factors: { letter: ['a'] }, betweenSubjects: ['letter'] } as unknown as StudyConfig;
+    await act(async () => { render(<StageManagementItem studyId="test-study" studyConfig={studyConfig} />); });
+    const input = screen.getByLabelText(`Desired participants for ${key} in ${stageName}`);
+    await act(async () => { fireEvent.change(input, { target: { value: '11' } }); });
+    await act(async () => { fireEvent.blur(input); });
+    expect(mockStorageEngine!.setStageDesiredParticipants).toHaveBeenCalledWith('test-study', stageName, key, 11, { [key]: 10 });
+  });
+
+  test('keeps unfinished target edits local and saves only the completed number on blur', async () => {
+    const key = getBetweenSubjectsCombinationKey({ letter: 'a' }, ['letter']);
+    mockStorageEngine!.getStageData.mockResolvedValue({
+      currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
+      allStages: [{
+        stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR, maxParticipants: 20, participantAssignmentMode: 'manual', manualDesiredParticipantsByCombination: { [key]: 20 },
+      }],
+    });
+    const studyConfig = { factors: { letter: ['a'] }, betweenSubjects: ['letter'] } as unknown as StudyConfig;
+    await act(async () => { render(<StageManagementItem studyId="test-study" studyConfig={studyConfig} />); });
+    const input = screen.getByLabelText(`Desired participants for ${key} in DEFAULT`) as HTMLInputElement;
+    await act(async () => { fireEvent.change(input, { target: { value: '' } }); });
+    expect(input.value).toBe('');
+    expect(mockStorageEngine!.setStageDesiredParticipants).not.toHaveBeenCalled();
+    await act(async () => { fireEvent.blur(input); });
+    expect(input.value).toBe('20');
+    expect(mockStorageEngine!.setStageDesiredParticipants).not.toHaveBeenCalled();
+    await act(async () => { fireEvent.change(input, { target: { value: '3' } }); });
+    await act(async () => { fireEvent.change(input, { target: { value: '30' } }); });
+    expect(mockStorageEngine!.setStageDesiredParticipants).not.toHaveBeenCalled();
+    await act(async () => { fireEvent.blur(input); });
+    expect(mockStorageEngine!.setStageDesiredParticipants).toHaveBeenCalledTimes(1);
+    expect(mockStorageEngine!.setStageDesiredParticipants).toHaveBeenCalledWith('test-study', 'DEFAULT', key, 30, { [key]: 20 });
+  });
+
   test.each(['combinationKey', 'enabled', 'desiredParticipants', 'participantStatusCounts'])('keeps controls working with a factor named %s', async (factorName) => {
     const key = getBetweenSubjectsCombinationKey({ [factorName]: 'A' }, [factorName]);
     mockStorageEngine!.getStageData.mockResolvedValue({
@@ -700,6 +745,7 @@ describe('ManageView', () => {
     const target = screen.getByLabelText(`Desired participants for ${key} in DEFAULT`) as HTMLInputElement;
     expect(target.value).toBe('10');
     await act(async () => { fireEvent.change(target, { target: { value: '11' } }); });
+    await act(async () => { fireEvent.blur(target); });
     expect(mockStorageEngine!.setStageDesiredParticipants).toHaveBeenCalledWith('test-study', 'DEFAULT', key, 11, { [key]: 10 });
     await act(async () => { fireEvent.click(toggle); });
     await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Yes, enable condition' })); });

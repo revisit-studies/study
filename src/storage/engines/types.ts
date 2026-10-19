@@ -172,7 +172,7 @@ export function getStageParticipantCounts(sequenceAssignments: SequenceAssignmen
       counts[assignment.stage] = (counts[assignment.stage] || 0) + 1;
     }
     return counts;
-  }, {});
+  }, Object.create(null) as Record<string, number>);
 }
 
 export function getBetweenSubjectsCombinationKey(

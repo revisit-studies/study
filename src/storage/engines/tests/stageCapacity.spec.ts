@@ -138,6 +138,14 @@ describe('stage capacity', () => {
     await expect(storageEngine.saveConfig(removed)).rejects.toThrow(/removed or renamed/);
   });
 
+  test.each(['constructor', 'toString', '__proto__'])('enforces capacity for a stage named %s', async (stageName) => {
+    await storageEngine.setCurrentStage(studyId, stageName, '#00AAFF', 1);
+    await storageEngine.initializeParticipantSession({}, config, metadata, 'first');
+    expect(getStageParticipantCounts(await storageEngine.getAllSequenceAssignments(studyId))[stageName]).toBe(1);
+    await expect(storageEngine.initializeParticipantSession({}, config, metadata, 'second'))
+      .rejects.toBeInstanceOf(StageCapacityExceededError);
+  });
+
   test('counts completed and in-progress participants but excludes rejected participants', () => {
     expect(getStageParticipantCounts([
       { stage: 'LIMITED', rejected: false },
