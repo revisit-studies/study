@@ -5,6 +5,7 @@ import {
   CloudStorageEngine, SequenceAssignmentAllocation, UserWrapped, cleanupModes,
 } from './types';
 import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
+import { rebuildSequenceAllocator } from './utils/storageEngineHelpers';
 
 type SupabaseSequenceAllocator = {
   nextSequenceIndex: number;
@@ -1080,16 +1081,28 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
   }
 
   protected async _copyRealtimeData(source: string, target: string) {
-    const { data: rows, error } = await this.supabase
-      .from('revisit')
-      .select('createdAt, studyId, docId, data')
-      .eq('studyId', source)
-      .like('docId', 'sequenceAssignment_%');
-    if (error) {
+    const [assignments, allocator] = await Promise.all([
+      this.supabase
+        .from('revisit')
+        .select('createdAt, studyId, docId, data')
+        .eq('studyId', source)
+        .like('docId', 'sequenceAssignment_%'),
+      this.supabase
+        .from('revisit')
+        .select('createdAt, studyId, docId, data')
+        .eq('studyId', source)
+        .eq('docId', 'sequenceAllocator')
+        .maybeSingle(),
+    ]);
+    if (assignments.error || allocator.error) {
       throw new Error('Failed to copy realtime data');
     }
 
     // Batch upload the rows to the target study
+    const rows = [...assignments.data, allocator.data ?? {
+      docId: 'sequenceAllocator',
+      data: { ...rebuildSequenceAllocator(assignments.data.map((row) => row.data as SequenceAssignment)), version: 0 },
+    }];
     const toUpload = rows.map((row) => ({
       ...row,
       studyId: target,
@@ -1098,17 +1111,24 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       .from('revisit')
       .upsert(toUpload);
     if (uploadError) {
-      console.error('Error uploading realtime data for:', uploadError);
+      throw new Error('Failed to copy realtime data');
     }
   }
 
   protected async _deleteRealtimeData(target: string) {
-    const { error } = await this.supabase
-      .from('revisit')
-      .delete()
-      .eq('studyId', target)
-      .like('docId', 'sequenceAssignment_%');
-    if (error) {
+    const results = await Promise.all([
+      this.supabase
+        .from('revisit')
+        .delete()
+        .eq('studyId', target)
+        .like('docId', 'sequenceAssignment_%'),
+      ...['sequenceAllocator', 'currentConfigHash'].map((docId) => this.supabase
+        .from('revisit')
+        .delete()
+        .eq('studyId', target)
+        .eq('docId', docId)),
+    ]);
+    if (results.some(({ error }) => error)) {
       throw new Error('Failed to delete realtime data');
     }
   }

@@ -54,6 +54,7 @@ import {
 } from './types';
 import { EditedText, TaglessEditedText } from '../../analysis/individualStudy/thinkAloud/types';
 import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
+import { rebuildSequenceAllocator } from './utils/storageEngineHelpers';
 
 export class FirebaseStorageEngine extends CloudStorageEngine {
   private RECAPTCHAV3TOKEN = import.meta.env.VITE_RECAPTCHAV3TOKEN;
@@ -1028,9 +1029,16 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       'sequenceAssignment',
     );
 
-    const sourceSnapshot = await getDocs(sourceSequenceAssignmentCollectionRef);
+    const [sourceSnapshot, allocatorSnapshot] = await Promise.all([
+      getDocs(sourceSequenceAssignmentCollectionRef),
+      getDoc(doc(sourceCollectionRef, 'sequenceAssignmentAllocator')),
+    ]);
 
     const batch = writeBatch(this.firestore);
+    const targetAllocatorRef = doc(targetCollectionRef, 'sequenceAssignmentAllocator');
+    batch.set(targetAllocatorRef, allocatorSnapshot.exists()
+      ? allocatorSnapshot.data()
+      : rebuildSequenceAllocator(sourceSnapshot.docs.map((snapshot) => snapshot.data() as SequenceAssignment)));
 
     sourceSnapshot.docs.forEach((docSnapshot) => {
       const targetDocRef = doc(
@@ -1068,6 +1076,8 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       batch.delete(docRef);
     });
     batch.delete(sourceSequenceAssignmentDocRef);
+    batch.delete(doc(sourceCollectionRef, 'sequenceAssignmentAllocator'));
+    batch.delete(doc(sourceCollectionRef, 'configHash'));
 
     await batch.commit();
   }

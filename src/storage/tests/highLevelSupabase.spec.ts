@@ -1129,6 +1129,71 @@ describe.each([
     await expect(disconnectedStorageEngine.setSequenceArray([])).rejects.toThrow('Study database not initialized');
   });
 
+  test('clearing live data resets participant allocation', async () => {
+    const first = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'before-clear');
+    expect(first.participantIndex).toBe(1);
+
+    expect((await storageEngine.removeSnapshotOrLive(studyId, studyId)).status).toBe('SUCCESS');
+    await storageEngine.setSequenceArray(sequenceArray);
+    const next = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'after-clear');
+
+    expect(next.participantIndex).toBe(1);
+    const assignments = await storageEngine.getAllSequenceAssignments(studyId);
+    expect(assignments).toHaveLength(1);
+    expect(assignments[0].sequenceIndex).toBe(0);
+  });
+
+  test('clearing live data allows the unchanged config to be saved again', async () => {
+    await storageEngine.saveConfig(configSimple);
+    const configHash = await hash(JSON.stringify(configSimple));
+
+    expect((await storageEngine.removeSnapshotOrLive(studyId, studyId)).status).toBe('SUCCESS');
+    await storageEngine.saveConfig(configSimple);
+
+    const configs = await storageEngine.getAllConfigsFromHash([configHash], studyId);
+    expect(configs[configHash]).toEqual(configSimple);
+  });
+
+  test.each([false, true])('restoring a snapshot resumes its allocation (legacy: %s)', async (legacy) => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-01-01T00:00:00Z'));
+    try {
+      await storageEngine.saveConfig(configSimple);
+      // Older snapshots can contain offset indexes after live data was cleared.
+      if (legacy) {
+        revisitRows.push({
+          studyId: `dev-${studyId}`,
+          docId: 'sequenceAllocator',
+          data: { nextSequenceIndex: 3, nextCreationIndex: 3, version: 0 },
+        });
+      }
+      for (let index = 0; index < 3; index += 1) {
+        // eslint-disable-next-line no-await-in-loop
+        await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, `snapshot-${index}`);
+      }
+      expect((await storageEngine.createSnapshot(studyId, false)).status).toBe('SUCCESS');
+      const [snapshotName] = Object.keys(await storageEngine.getSnapshots(studyId));
+      if (legacy) {
+        const allocatorIndex = revisitRows.findIndex((row) => row.studyId === snapshotName && row.docId === 'sequenceAllocator');
+        revisitRows.splice(allocatorIndex, 1);
+      }
+      expect(revisitRows.find((row) => row.studyId === snapshotName && row.docId === 'sequenceAllocator')?.data)
+        .toEqual(legacy ? undefined : { nextSequenceIndex: 3, nextCreationIndex: 3, version: 3 });
+
+      await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'after-snapshot');
+      vi.setSystemTime(new Date('2026-01-01T00:00:01Z'));
+      expect((await storageEngine.restoreSnapshot(studyId, snapshotName)).status).toBe('SUCCESS');
+      const next = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'after-restore');
+
+      expect(next.participantIndex).toBe(legacy ? 7 : 4);
+      const assignments = await storageEngine.getAllSequenceAssignments(studyId);
+      expect(assignments).toHaveLength(4);
+      expect(assignments.find(({ participantId }) => participantId === 'after-restore')?.sequenceIndex).toBe(legacy ? 6 : 3);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   // createSnapshot, restoreSnapshot, renameSnapshot, removeSnapshotOrLive, getSnapshots tests
   test('createSnapshot, restoreSnapshot, renameSnapshot, removeSnapshotOrLive, getSnapshots work correctly', async () => {
     const actionResponse1 = await storageEngine.createSnapshot('non-existent', false);

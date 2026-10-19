@@ -1,5 +1,5 @@
 import { ParticipantData } from '../../types';
-import type { CloudStorageEngine, StorageEngine } from '../types';
+import type { CloudStorageEngine, SequenceAssignment, StorageEngine } from '../types';
 import { StudyConfig } from '../../../parser/types';
 
 export async function hash(input: string) {
@@ -17,6 +17,20 @@ export function isParticipantData(obj: unknown): obj is ParticipantData {
 
 export function isCloudStorageEngine(engine: StorageEngine | undefined): engine is CloudStorageEngine {
   return !!engine && engine.isCloudEngine();
+}
+
+export function rebuildSequenceAllocator(assignments: SequenceAssignment[]) {
+  return assignments.reduce((allocator, assignment) => ({
+    nextSequenceIndex: Math.max(
+      allocator.nextSequenceIndex,
+      (assignment.sequenceIndex ?? -1) + 1,
+      (assignment.reusableSequenceIndex ?? -1) + 1,
+    ),
+    nextCreationIndex: Math.max(allocator.nextCreationIndex, (assignment.creationIndex ?? -1) + 1),
+  }), {
+    nextSequenceIndex: assignments.filter((assignment) => !assignment.claimed).length,
+    nextCreationIndex: assignments.length,
+  });
 }
 
 export function calculateProgressData(
