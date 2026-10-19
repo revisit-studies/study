@@ -17,6 +17,12 @@
         "answer": {
           "description": "The correct answer to the question."
         },
+        "correctnessThreshold": {
+          "description": "Minimum score from 0 to 1 required for this answer to be considered correct. Defaults to 0.8.",
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
         "id": {
           "description": "The id of the answer. This is used to identify the answer in the data file.",
           "type": "string"
@@ -369,7 +375,7 @@
           "type": "string"
         },
         "path": {
-          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "prompt": {
@@ -499,7 +505,7 @@
           "type": "string"
         },
         "path": {
-          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "prompt": {
@@ -819,7 +825,7 @@
           "type": "string"
         },
         "path": {
-          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "placeholder": {
@@ -935,7 +941,7 @@
           "not": {}
         },
         "path": {
-          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "prompt": {
@@ -1065,7 +1071,7 @@
           "type": "string"
         },
         "path": {
-          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "placeholder": {
@@ -2146,7 +2152,7 @@
           "type": "string"
         },
         "path": {
-          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "prompt": {
@@ -2267,7 +2273,7 @@
           "type": "string"
         },
         "path": {
-          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "placeholder": {
@@ -2602,7 +2608,7 @@
           "type": "string"
         },
         "path": {
-          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "prompt": {
@@ -2785,7 +2791,7 @@
           "type": "string"
         },
         "path": {
-          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "prompt": {
@@ -2955,7 +2961,7 @@
           "type": "string"
         },
         "path": {
-          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "placeholder": {
@@ -3277,7 +3283,7 @@
           "type": "string"
         },
         "path": {
-          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "prompt": {
@@ -3438,7 +3444,7 @@
           "type": "string"
         },
         "path": {
-          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "prompt": {
@@ -3559,7 +3565,7 @@
           "type": "string"
         },
         "path": {
-          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "prompt": {
@@ -3693,7 +3699,7 @@
           "type": "string"
         },
         "path": {
-          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "prompt": {
@@ -3966,7 +3972,7 @@
           "type": "string"
         },
         "path": {
-          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "prompt": {
@@ -4274,7 +4280,7 @@
           "type": "string"
         },
         "path": {
-          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "placeholder": {
@@ -4404,7 +4410,7 @@
           "type": "string"
         },
         "path": {
-          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "prompt": {
@@ -4705,7 +4711,7 @@
           "not": {}
         },
         "path": {
-          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "prompt": {
@@ -4843,7 +4849,7 @@
           "type": "string"
         },
         "path": {
-          "description": "Path under `src/public/` to response code. Custom responses require a default React component; response modules may export `validate(value, values, response, expected?)`. A string is a submission error, null uses ordinary correctness, a boolean is correct/incorrect, and a number from 0 to 1 is a score. `expected` is the configured correct answer when correctness is checked.",
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "prompt": {

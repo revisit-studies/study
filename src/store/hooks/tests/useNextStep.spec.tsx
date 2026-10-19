@@ -232,6 +232,46 @@ describe('useNextStep', () => {
     expect(mockStoredAnswer.endTime).toBeGreaterThan(-1);
   });
 
+  test('submits a required unanswered response as incorrect when its threshold is zero', async () => {
+    mockTrialValidation = {
+      intro_0: {
+        aboveStimulus: { valid: true, values: {} },
+        belowStimulus: {
+          valid: true,
+          values: { response: '' },
+        },
+        sidebar: { valid: true, values: {} },
+        stimulus: { valid: true, values: {} },
+        provenanceGraph: {
+          aboveStimulus: undefined,
+          belowStimulus: undefined,
+          stimulus: undefined,
+          sidebar: undefined,
+        },
+      },
+    };
+    mockStudyConfig = {
+      components: {
+        intro: {
+          type: 'questionnaire',
+          response: [{
+            id: 'response', type: 'numerical', prompt: 'Number', required: true,
+          }],
+          correctAnswer: [{ id: 'response', answer: 10, correctnessThreshold: 0 }],
+        },
+      },
+    };
+
+    renderToStaticMarkup(<HookHarness />);
+    capturedGoToNextStep?.();
+
+    expect(mockSaveTrialAnswer).toHaveBeenCalledWith(expect.objectContaining({
+      checkAnswer: expect.objectContaining({
+        correct: false,
+      }),
+    }));
+  });
+
   test('shows the storage modal after a provenance persistence failure', async () => {
     mockSaveAnswers.mockResolvedValueOnce(undefined);
     mockSaveProvenance.mockRejectedValueOnce(new Error('provenance write failed'));

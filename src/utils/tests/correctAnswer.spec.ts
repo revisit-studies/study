@@ -4,7 +4,7 @@ import {
 } from '../../parser/types';
 import { makeStoredAnswer } from '../../tests/utils';
 import {
-  compareResponseValues, registerCustomResponseValidatorLookup, responseAnswerIsCorrect, scoreResponseAnswer,
+  compareResponseValues, getResponseScoreResultError, isResponseAnswered, isResponseScoreCorrect, responseAnswerIsCorrect, scoreResponseAnswer, scoreResponseAnswerWithStatus,
 } from '../correctAnswer';
 
 import { componentAnswersAreCorrect, getComponentAnswerStatus } from '../componentCorrectness';
@@ -16,6 +16,16 @@ const asStoredAnswer = (value: TestStoredAnswer) => value;
 const asCorrectAnswer = (value: TestCorrectAnswer) => value;
 
 describe('correctAnswer utilities', () => {
+  test.each([undefined, null, '', [], {}, { row: '' }, { row: [] }, { rows: { first: '', second: null } }])(
+    'treats recursively empty values as unanswered: %j',
+    (value) => expect(isResponseAnswered(value)).toBe(false),
+  );
+
+  test.each([{ row: 'selected' }, { rows: { first: '', second: 'selected' } }, ['selected']])(
+    'recognizes values with at least one non-empty nested value: %j',
+    (value) => expect(isResponseAnswered(value)).toBe(true),
+  );
+
   test('custom response scoring uses the existing custom module validator', () => {
     const response: Response = {
       id: 'custom-score',
@@ -24,11 +34,15 @@ describe('correctAnswer utilities', () => {
       path: 'test-response-functions/assets/CustomPartialScore.tsx',
     };
 
-    registerCustomResponseValidatorLookup(() => (value, _values, _response, expected) => (
-      (value as { score: number }).score / (expected as { score: number }).score
-    ));
     expect(scoreResponseAnswer({ score: 5 }, { id: 'custom-score', answer: { score: 10 } }, response)).toBe(0.5);
-    registerCustomResponseValidatorLookup();
+  });
+
+  test('custom responses without a scorer use ordinary equality', () => {
+    const response: Response = {
+      id: 'custom-card', type: 'custom', prompt: 'Card', path: 'demo-form-elements/assets/CustomResponseCard.tsx',
+    };
+    const answer = { chartType: 'bar', confidence: 80 };
+    expect(scoreResponseAnswer(answer, { id: response.id, answer }, response, { [response.id]: answer })).toBe(1);
   });
 
   test('a study score module returns partial credit and full credit controls correctness', () => {
@@ -41,6 +55,63 @@ describe('correctAnswer utilities', () => {
     expect(scoreResponseAnswer(undefined, answer, response)).toBe(0);
     expect(componentAnswersAreCorrect({ q: 5 }, [answer], [response])).toBe(false);
     expect(componentAnswersAreCorrect({ q: 10 }, [answer], [response])).toBe(true);
+  });
+
+  test('built-in responses can use a custom component file as their scoring module', () => {
+    const response: Response = {
+      id: 'q', type: 'numerical', prompt: 'Score', path: 'test-response-functions/assets/CustomPartialScore.tsx',
+    };
+    expect(scoreResponseAnswer({ score: 5 }, { id: 'q', answer: { score: 10 } }, response)).toBe(0.5);
+  });
+
+  test('a response module can export score instead of validate', () => {
+    const response: Response = {
+      id: 'q', type: 'numerical', prompt: 'Score', path: 'test-response-functions/assets/GameScore.ts',
+    };
+    expect(scoreResponseAnswer(5, undefined, response)).toBe(0.5);
+    expect(scoreResponseAnswer('10', undefined, response)).toBe(1);
+  });
+
+  test('a validation-only module does not score answers', () => {
+    const response: Response = {
+      id: 'q',
+      type: 'numerical',
+      prompt: 'Answer',
+      path: 'test-response-functions/assets/EmptyStringValidation.response.ts',
+    };
+    expect(scoreResponseAnswer('accepted', { id: 'q', answer: 'accepted' }, response)).toBe(1);
+    // A validation error does not alter grading; this module has no score export.
+    expect(scoreResponseAnswer('other', { id: 'q', answer: 'other' }, response)).toBe(1);
+  });
+
+  test('the score slider awards credit by value range and applies an explicit 80% correctness threshold', () => {
+    const response: Response = {
+      id: 'slider',
+      type: 'slider',
+      prompt: 'Score',
+      options: [],
+      path: 'test-response-functions/assets/SliderScore.ts',
+    };
+    const answer = { id: 'slider', answer: 10 };
+    [
+      [10, 1], [9, 0.8], [7, 0.8], [6, 0.6], [5, 0.6], [4, 0.2], [3, 0], [0, 0],
+    ].forEach(([value, expected]) => {
+      expect(scoreResponseAnswer(value, answer, response)).toBe(expected);
+    });
+    expect(isResponseScoreCorrect(0.8)).toBe(false);
+    expect(isResponseScoreCorrect(0.8, 0.8)).toBe(true);
+    expect(isResponseScoreCorrect(0.79)).toBe(false);
+    expect(isResponseScoreCorrect(0.7, 0.7)).toBe(true);
+    expect(isResponseScoreCorrect(null)).toBeNull();
+  });
+
+  test('a selected I do not know flag ignores a populated default while grading', () => {
+    const response: Response = {
+      id: 'score', type: 'numerical', prompt: 'Score', path: 'test-response-functions/assets/GameScore.ts', withDontKnow: true,
+    };
+    const answers = { score: 10, 'score-dontKnow': true };
+    expect(scoreResponseAnswerWithStatus(10, { id: 'score', answer: 10 }, response, answers)).toEqual({ score: 0, error: false });
+    expect(scoreResponseAnswerWithStatus(10, undefined, response, answers)).toEqual({ score: null, error: false });
   });
 
   test('a study score module can score partial overlap for a built-in checkbox', () => {
@@ -57,11 +128,18 @@ describe('correctAnswer utilities', () => {
     expect(scoreResponseAnswer(['Apple', 'Banana'], answer, response)).toBe(1);
   });
 
-  test('a missing score module fails with its configured path', () => {
-    expect(() => scoreResponseAnswer(5, { id: 'q', answer: 10 }, {
+  test('invalid or unavailable score modules return an unknown score', () => {
+    expect(scoreResponseAnswer(5, { id: 'q', answer: 10 }, {
       id: 'q', type: 'numerical', prompt: '', path: 'missing.ts',
-    }))
-      .toThrow('Unable to load response module at missing.ts');
+    })).toBeNull();
+    expect(scoreResponseAnswer(
+      { score: 5 },
+      { id: 'custom-score', answer: { score: 10 } },
+      {
+        id: 'custom-score', type: 'custom', prompt: '', path: 'test-response-functions/assets/InvalidScore.tsx',
+      },
+    )).toBeNull();
+    expect(getResponseScoreResultError(1.5, 'score.ts')).toBe('Score function at score.ts must return a score between 0 and 1');
   });
 
   describe('responseAnswerIsCorrect', () => {
@@ -279,7 +357,7 @@ describe('correctAnswer utilities', () => {
         id: 'customSequence',
         prompt: 'Order the items',
         type: 'custom',
-        path: 'demo-form-elements/assets/CustomResponseCard.tsx',
+        path: 'libraries/test/assets/test.tsx',
       }];
 
       expect(componentAnswersAreCorrect(userAnswers, correctAnswers, responses)).toBe(false);

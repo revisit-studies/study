@@ -329,7 +329,8 @@ vi.mock('../../../utils/getSequenceFlatMap', () => ({
   getSequenceFlatMap: vi.fn(() => []),
 }));
 
-vi.mock('../customResponseModules', () => ({
+vi.mock('../customResponseModules', async (importOriginal) => ({
+  ...await importOriginal(),
   getCustomResponseModule: vi.fn(() => null),
   getCustomResponseModuleLoadError: vi.fn(() => null),
 }));

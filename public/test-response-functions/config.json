@@ -61,12 +61,42 @@
           "min": 0,
           "max": 10,
           "path": "test-response-functions/assets/PartialScore.response.ts"
+        },
+        {
+          "id": "ThreasholdTest04",
+          "type": "numerical",
+          "prompt": "This uses a correctness threshold of 0.4 so 4 is considered correct, everything below it is incorrect.",
+          "location": "belowStimulus",
+          "required": false,
+          "min": 0,
+          "max": 10,
+          "path": "test-response-functions/assets/PartialScore.response.ts"
+        },
+        {
+          "id": "ThreasholdTest09",
+          "type": "numerical",
+          "prompt": "This uses a correctness threshold of 0.9 so 9 is considered correct, everything below it is incorrect.",
+          "location": "belowStimulus",
+          "required": false,
+          "min": 0,
+          "max": 10,
+          "path": "test-response-functions/assets/PartialScore.response.ts"
         }
       ],
       "correctAnswer": [
         {
           "id": "guess",
           "answer": 10
+        },
+        {
+          "id": "ThreasholdTest04",
+          "answer": 10,
+          "correctnessThreshold": 0.4
+        },
+        {
+          "id": "ThreasholdTest09",
+          "answer": 10,
+          "correctnessThreshold": 0.9
         }
       ],
       "provideFeedback": true,
@@ -75,12 +105,12 @@
     },
     "score-slider": {
       "type": "questionnaire",
-      "instruction": "This built-in slider uses the numerical distance scoring algorithm.",
+      "instruction": "This built-in slider awards 100% for 10, 80% for 7–9, 60% for 5–6, 20% for 4, and 0% below 4.",
       "response": [
         {
           "id": "sliderGuess",
           "type": "slider",
-          "prompt": "Move the slider toward 10. A value of 5 receives 50% credit.",
+          "prompt": "Move the slider and see how the score changes across the ranges.",
           "location": "belowStimulus",
           "required": true,
           "startingValue": 5,
@@ -91,7 +121,7 @@
             { "label": "5", "value": 5 },
             { "label": "10", "value": 10 }
           ],
-          "path": "test-response-functions/assets/PartialScore.response.ts"
+          "path": "test-response-functions/assets/SliderScore.ts"
         }
       ],
       "correctAnswer": [
@@ -149,6 +179,135 @@
       "provideFeedback": true,
       "allowFailedTraining": true,
       "trainingAttempts": 3
+    },
+    "mixed-partial-score": {
+      "type": "questionnaire",
+      "instruction": "Enter the expected text and leave the custom score at 5. Check Answer: the text is correct, but the 50% custom score should keep the component incorrect. Change the custom score to 10 and check again to get full credit.",
+      "response": [
+        {
+          "id": "mixedText",
+          "type": "shortText",
+          "prompt": "Type exactly: correct",
+          "location": "belowStimulus",
+          "required": true
+        },
+        {
+          "id": "mixedScore",
+          "type": "custom",
+          "prompt": "This required scorer-only response contributes its score to the whole component.",
+          "path": "test-response-functions/assets/CustomPartialScore.tsx",
+          "default": { "score": 5 }
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "mixedText",
+          "answer": "correct"
+        }
+      ],
+      "provideFeedback": true,
+      "allowFailedTraining": true,
+      "trainingAttempts": 3
+    },
+    "optional-empty-score": {
+      "type": "questionnaire",
+      "instruction": "Type the expected text, leave the optional custom score untouched, and leave the second numerical field empty. The first numerical field defaults to 5 (50% credit); change it to 10 for full credit. The empty optional fields should not count as incorrect.",
+      "response": [
+        {
+          "id": "optionalText",
+          "type": "shortText",
+          "prompt": "Type exactly: correct",
+          "location": "belowStimulus",
+          "required": true
+        },
+        {
+          "id": "optionalScore",
+          "type": "custom",
+          "prompt": "Optional score (leave this at its empty default to test unanswered grading).",
+          "path": "test-response-functions/assets/CustomPartialScore.tsx",
+          "required": false,
+          "default": {}
+        },
+        {
+          "id": "optionalDefaultScore",
+          "type": "numerical",
+          "prompt": "Optional numerical score with a default value (leave at 5).",
+          "location": "belowStimulus",
+          "path": "test-response-functions/assets/PartialScore.response.ts",
+          "required": false,
+          "default": 5
+        },
+        {
+          "id": "optionalEmptyNumber",
+          "type": "numerical",
+          "prompt": "Optional numerical score (leave empty).",
+          "location": "belowStimulus",
+          "required": false,
+          "path": "test-response-functions/assets/PartialScore.response.ts"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "optionalText",
+          "answer": "correct"
+        },
+        {
+          "id": "optionalDefaultScore",
+          "answer": 5
+        },
+        {
+          "id": "optionalEmptyNumber",
+          "answer": 10
+        }
+      ],
+      "provideFeedback": true,
+      "allowFailedTraining": true,
+      "trainingAttempts": 3
+    },
+    "score-on-submit": {
+      "type": "questionnaire",
+      "instruction": "This component has no Check Answer button. Enter 5 and continue: the 50% score should be calculated and saved with your answer when you submit the component.",
+      "response": [
+        {
+          "id": "submitGuess",
+          "type": "numerical",
+          "prompt": "Enter a whole number from 0 to 10. The expected answer is 10.",
+          "location": "belowStimulus",
+          "required": true,
+          "min": 0,
+          "max": 10,
+          "path": "test-response-functions/assets/PartialScore.response.ts"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "submitGuess",
+          "answer": 10
+        }
+      ]
+    },
+    "standalone-score": {
+      "type": "questionnaire",
+      "instruction": "This custom response has a scorer but no configured correct answer. Leave the score at 5 and continue; its 50% score should be saved when you submit.",
+      "response": [
+        {
+          "id": "standaloneScore",
+          "type": "custom",
+          "prompt": "Standalone score (click to switch between 5 and 10).",
+          "path": "test-response-functions/assets/CustomPartialScore.tsx",
+          "default": { "score": 5 }
+        },
+        {
+          "id": "gameScore",
+          "type": "numerical",
+          "prompt": "Enter a number from 0 to 10. The score is the selected value divided by 10.",
+          "location": "belowStimulus",
+          "required": true,
+          "min": 0,
+          "max": 10,
+          "path": "test-response-functions/assets/GameScore.ts"
+        }
+      ]
     }
   },
   "sequence": {
@@ -159,7 +318,11 @@
       "score-number",
       "score-slider",
       "score-checkbox",
-      "score-custom-number"
+      "score-custom-number",
+      "mixed-partial-score",
+      "optional-empty-score",
+      "score-on-submit",
+      "standalone-score"
     ]
   }
 }

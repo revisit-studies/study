@@ -34,6 +34,7 @@ import { checkBuiltInValidation } from '../components/response/builtInValidation
 import { responseValueKeys, visibilityControllerTypes } from '../utils/responseVisibility';
 import { getDropdownOptions } from '../utils/dropdownOptions';
 import { normalizeKeyMapping } from '../utils/keyMapping';
+import { hasResponseScorer } from '../utils/correctAnswer';
 
 const modules = import.meta.glob(
   [
@@ -879,9 +880,10 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
               }
             }
           } else if (condition.comparison === 'isCorrect'
-            && !visibilityComponent.correctAnswer?.some((answer) => answer.id === condition.responseId)) {
+            && !visibilityComponent.correctAnswer?.some((answer) => answer.id === condition.responseId)
+            && !hasResponseScorer(controller)) {
             message = `visibleIf isCorrect requires a correctAnswer for response "${condition.responseId}"`;
-            action = 'Define a correctAnswer for the controlling response in this component';
+            action = 'Define a correctAnswer or a response scorer for the controlling response in this component';
           }
           const seen = new Set([response.id]);
           let current: typeof controller | undefined = controller;

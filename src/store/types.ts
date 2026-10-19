@@ -157,12 +157,12 @@ export interface StoredAnswer {
   formOrder?: Record<string, string[]>;
   /** Whether required-response errors were revealed for this trial after a Next attempt. */
   responseSubmitAttempted?: boolean;
-  /** Check Answer state for this trial: attempts used and per-response correctness at the last check. */
+  /** Per-response grading state and Check Answer attempts for this trial. */
   checkAnswer?: CheckAnswerState;
 }
 
 /**
- * The CheckAnswerState object is a data structure describing the participant's interaction with an individual component when they click "Check Answer". It is the data structure used as values of the `checkAnswer` object of [StoreState](../StoreState). The general structure for this is below:
+ * The CheckAnswerState object stores per-response grading and Check Answer attempt state for a component. It is used in [StoreState](../StoreState) and persisted with participant answers. Scores are calculated on submission even when Check Answer feedback is disabled.
  *
  * ```json
  * {
@@ -185,6 +185,8 @@ export interface CheckAnswerState {
   responses: Record<string, boolean>;
   /** Fractional score for each checked response, when custom scoring is configured. */
   scores?: Record<string, number>;
+  /** Answers used to calculate responses and scores, so later edits cannot reuse stale results. */
+  answerSnapshot?: StoredAnswer['answer'];
 }
 
 export interface JumpFunctionParameters<T> {
@@ -248,8 +250,14 @@ export type CustomResponseValidate<TValue extends JsonValue = JsonValue> = (
   value: TValue | null,
   values: StoredAnswer['answer'],
   response: CustomResponse,
+) => string | boolean | null;
+
+export type CustomResponseScore<TValue extends JsonValue = JsonValue> = (
+  value: TValue | null,
+  values: StoredAnswer['answer'],
+  response: CustomResponse,
   expected?: unknown,
-) => string | boolean | number | null;
+) => number | boolean | null;
 
 export interface Sequence {
   id?: string;

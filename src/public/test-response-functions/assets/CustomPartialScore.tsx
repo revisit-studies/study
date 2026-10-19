@@ -1,16 +1,22 @@
 import { Text } from '@mantine/core';
-import type { CustomResponseParams, CustomResponseValidate } from '../../../store/types';
+import type { CustomResponseParams, CustomResponseScore, CustomResponseValidate } from '../../../store/types';
 import type { JsonValue } from '../../../parser/types';
 
 type ScoredValue = { score?: number };
 
-export const validate: CustomResponseValidate = (value, _values, _response, expected) => {
+export const validate: CustomResponseValidate = (value) => {
   if (!value || typeof value !== 'object' || Array.isArray(value)
     || typeof value.score !== 'number') return 'Enter a score.';
 
   if (value.score < 0 || value.score > 10) return 'Enter a score between 0 and 10.';
-  if (expected === undefined) return null;
-  if (!expected || typeof expected !== 'object' || typeof (expected as ScoredValue).score !== 'number') return 'Enter a score.';
+  return null;
+};
+
+export const score: CustomResponseScore = (value, _values, _response, expected) => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)
+    || typeof value.score !== 'number' || value.score < 0 || value.score > 10) return null;
+  if (expected === undefined) return value.score / 10;
+  if (!expected || typeof expected !== 'object' || typeof (expected as ScoredValue).score !== 'number') return null;
 
   const expectedScore = (expected as ScoredValue).score!;
   if (expectedScore === 0) return value.score === 0;

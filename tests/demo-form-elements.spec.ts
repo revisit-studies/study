@@ -333,7 +333,7 @@ test('Test questionnaire component with responses and randomizing questions and 
   await scoreNumberInput.fill('5');
   await expect(page.getByText('"chartType":"Bar"')).toBeVisible();
   await checkCustomResponseButton.click();
-  await expect(page.getByText(/You received 50% credit/)).toBeVisible();
+  await expect(page.getByText(/You scored 50% on this question/)).toBeVisible();
   await scoreNumberInput.fill('10');
   await checkCustomResponseButton.click();
   await expect(page.getByText('You have answered the question correctly.')).toBeVisible();

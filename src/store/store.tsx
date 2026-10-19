@@ -456,6 +456,7 @@ export async function studyStoreCreator(
           correct: payload.correct,
           responses: payload.responses,
           ...(payload.scores && Object.keys(payload.scores).length > 0 ? { scores: payload.scores } : {}),
+          ...(payload.answerSnapshot ? { answerSnapshot: payload.answerSnapshot } : {}),
         };
       },
       saveTrialAnswer(state, { payload }: PayloadAction<{ identifier: string } & StoredAnswer>) {

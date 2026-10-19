@@ -42,6 +42,23 @@ test('built-in responses run study validation after built-in checks', () => {
   expect(validateResponse(response, 1, { n: 1 }).message).toContain('2');
 });
 
+test('normalizes finite numerical URL captures before custom validation', () => {
+  const response: NumericalResponse = {
+    id: 'n',
+    type: 'numerical',
+    prompt: 'Even number',
+    required: true,
+    paramCapture: 'n',
+    path: 'test-response-functions/assets/EvenNumber.response.ts',
+  };
+
+  expect(validateResponse(response, '4', { n: '4' }).valid).toBe(true);
+  expect(validateResponse(response, '5', { n: '5' })).toMatchObject({
+    valid: false,
+    message: 'Enter an even number.',
+  });
+});
+
 test('missing built-in validation module produces a visible error', () => {
   const response: NumericalResponse = {
     id: 'n',
@@ -342,6 +359,18 @@ describe('generateValidation custom', () => {
     }, {});
 
     expect(error).toBeNull();
+  });
+
+  it('turns a throwing custom validator into a configuration error', () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const validation = generateValidation([response], {
+      [response.id]: () => { throw new Error('broken validator'); },
+    });
+
+    expect(validation[response.id]({ chartType: 'Bar' }, {})).toBe(
+      `Validation function at ${response.path} failed`,
+    );
+    consoleError.mockRestore();
   });
 
   it('treats empty objects as missing required input', () => {
@@ -1470,16 +1499,44 @@ describe('validateResponse', () => {
     });
   });
 
-  test('custom response validator score does not block submission', () => {
+  test('custom response validator returning a score is rejected', () => {
     const response: CustomResponse = {
       id: 'custom', prompt: 'Question', type: 'custom', required: true, path: 'custom-response/Example.tsx',
     };
-    const customValidate: CustomResponseValidate = () => 0.5;
+    const customValidate = (() => 0.5) as unknown as CustomResponseValidate;
 
     expect(validateResponse(response, { value: true }, { custom: { value: true } }, { customValidate })).toMatchObject({
-      valid: true,
-      issueType: 'none',
-      blocksProgression: false,
+      valid: false,
+      issueType: 'invalid',
+      message: 'Validation function at custom-response/Example.tsx must return a string, boolean, or null',
+      blocksProgression: true,
+    });
+  });
+
+  test('custom response validator returning false rejects the answer', () => {
+    const response: CustomResponse = {
+      id: 'custom', prompt: 'Question', type: 'custom', required: true, path: 'custom-response/Example.tsx',
+    };
+    const customValidate: CustomResponseValidate = () => false;
+
+    expect(validateResponse(response, { value: true }, { custom: { value: true } }, { customValidate })).toMatchObject({
+      valid: false,
+      issueType: 'invalid',
+      message: 'The response is invalid.',
+      blocksProgression: true,
+    });
+  });
+
+  test('an empty string passes response validation while a nonempty string reports an error', () => {
+    const response: Response = {
+      id: 'q', type: 'numerical', prompt: 'Answer', path: 'test-response-functions/assets/EmptyStringValidation.response.ts',
+    };
+
+    expect(validateResponse(response, 'accepted', { q: 'accepted' })).toMatchObject({ valid: true, issueType: 'none' });
+    expect(validateResponse(response, 'other', { q: 'other' })).toMatchObject({
+      valid: false,
+      issueType: 'invalid',
+      message: 'This value is not accepted',
     });
   });
 
@@ -2236,4 +2293,63 @@ test('isCorrect visibility uses configured answers for live values and required 
   act(() => result.current.setFieldValue('quiz', 'yes'));
   expect(result.current.values).not.toHaveProperty('explanation');
   expect(result.current.isValid()).toBe(true);
+});
+
+test('replay visibility uses persisted scores only when supplied for the replayed answer', () => {
+  const responses: Response[] = [
+    {
+      id: 'score', type: 'numerical', prompt: '', path: 'test-response-functions/assets/PartialScore.response.ts',
+    },
+    {
+      id: 'dependent',
+      type: 'shortText',
+      prompt: '',
+      visibleIf: { responseId: 'score', comparison: 'isCorrect', value: true },
+    },
+  ];
+  const { result } = renderHook(() => useAnswerField(
+    responses,
+    0,
+    { score: 5, dependent: 'replayed' },
+    {},
+    {},
+    responses,
+    {},
+    true,
+    [{ id: 'score', answer: 10 }],
+  ));
+
+  expect(result.current.values).not.toHaveProperty('dependent');
+});
+
+test.each([
+  [0.5, true],
+  [0.9, false],
+] as const)('uses the answer threshold for visible values and required validation (%s)', (threshold, isVisible) => {
+  const responses: Response[] = [{
+    id: 'score', type: 'numerical', prompt: '', path: 'test-response-functions/assets/GameScore.ts',
+  }, {
+    id: 'dependent',
+    type: 'shortText',
+    prompt: '',
+    required: true,
+    visibleIf: { responseId: 'score', comparison: 'isCorrect', value: true },
+  }];
+  const { result } = renderHook(() => useAnswerField(
+    responses,
+    0,
+    {},
+    {},
+    {},
+    responses,
+    {},
+    false,
+    [{ id: 'score', answer: 10, correctnessThreshold: threshold }],
+  ));
+
+  act(() => result.current.setFieldValue('score', 6));
+
+  if (isVisible) expect(result.current.values).toHaveProperty('dependent', '');
+  else expect(result.current.values).not.toHaveProperty('dependent');
+  expect(result.current.isValid()).toBe(!isVisible);
 });
