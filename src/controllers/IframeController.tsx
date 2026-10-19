@@ -1,6 +1,7 @@
 import {
-  useCallback, useContext, useEffect, useMemo, useRef, useState,
+  useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState,
 } from 'react';
+import { useComputedColorScheme } from '@mantine/core';
 import { useDispatch } from 'react-redux';
 import { useCurrentComponent, useCurrentIdentifier } from '../routes/utils';
 import { useStoreDispatch, useStoreActions, useStoreSelector } from '../store/store';
@@ -19,6 +20,8 @@ import { ResourceNotFound } from '../ResourceNotFound';
 const PREFIX = '@REVISIT_COMMS';
 
 export function IframeController({ currentConfig, provState, answers }: { currentConfig: WebsiteComponent; provState?: unknown, answers: ParticipantData['answers'] }) {
+  const studyColorMode = useComputedColorScheme('light');
+  const colorMode = currentConfig.colorMode ?? studyColorMode;
   const {
     setReactiveAnswers, updateProvenance, updateResponseBlockValidation,
   } = useStoreActions();
@@ -65,6 +68,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   }, [currentConfig.templated, isExternal, templatedPath]);
 
   const ref = useRef<HTMLIFrameElement>(null);
+  const [frameDocument, setFrameDocument] = useState<Document | null>(null);
   const stimulusValidationRef = useRef(stimulusValidation);
 
   useEffect(() => {
@@ -105,8 +109,33 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   }, [fetchUrl, templatedPath, isTemplated, currentConfig.parameters, iframeId, currentComponent]);
   const { status, value } = useAsyncResource<string | true>(requestKey, loadWebsite);
   const srcDoc = typeof value === 'string' ? value : undefined;
-  const { status: frameStatus, onReady, onError } = useAssetLoadStatus(requestKey);
+  const {
+    status: frameStatus, onLoading, onReady, onError,
+  } = useAssetLoadStatus(requestKey);
   const assetStatus = getAssetStatus(status, frameStatus);
+
+  const applyColorMode = useCallback(() => {
+    // The iframe hint alone does not override an embedded page's own `light dark` choice.
+    // contentDocument is null for cross-origin pages; those retain the CSS hint below.
+    ref.current?.contentDocument?.documentElement?.style.setProperty('color-scheme', colorMode, 'important');
+  }, [colorMode]);
+
+  useLayoutEffect(applyColorMode, [applyColorMode, srcDoc, url]);
+
+  useLayoutEffect(() => {
+    if (!frameDocument || frameDocument !== ref.current?.contentDocument) return undefined;
+    const frameWindow = frameDocument.defaultView;
+    if (!frameWindow) return undefined;
+    const events = new frameWindow.AbortController();
+    // Internal navigation keeps the iframe URL prop and request key unchanged.
+    frameWindow.addEventListener('pagehide', onLoading, { signal: events.signal });
+    frameWindow.addEventListener('pageshow', () => {
+      applyColorMode();
+      onReady();
+    }, { signal: events.signal });
+    // Abort removes listeners safely even after the frame changes origin.
+    return () => events.abort();
+  }, [frameDocument, applyColorMode, onLoading, onReady]);
 
   useAssetStatus(assetStatus);
 
@@ -213,13 +242,19 @@ export function IframeController({ currentConfig, provState, answers }: { curren
         width: '100%',
         flexGrow: 1,
         border: 0,
-        colorScheme: currentConfig.colorMode ?? 'inherit',
+        colorScheme: colorMode,
+        // Do not expose the document's automatic theme before onLoad applies the study scheme.
+        visibility: frameStatus === 'ready' ? undefined : 'hidden',
         // Keep transparent embedded pages readable when their scheme differs from the study.
         backgroundColor: currentConfig.colorMode ? 'Canvas' : undefined,
         pointerEvents: isAnalysis ? 'none' : undefined,
       }}
       {...(srcDoc !== undefined ? { srcDoc } : { src: url })}
-      onLoad={onReady}
+      onLoad={() => {
+        applyColorMode();
+        setFrameDocument(ref.current?.contentDocument ?? null);
+        onReady();
+      }}
       onErrorCapture={onError}
     />
   );

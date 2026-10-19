@@ -1,5 +1,5 @@
 import {
-  ActionIcon, AppShell, Button, Flex, Menu,
+  ActionIcon, AppShell, Button, Flex, Menu, useComputedColorScheme,
 } from '@mantine/core';
 import { Outlet } from 'react-router';
 import {
@@ -36,7 +36,7 @@ import {
 } from '../utils/pdfExport';
 import { hideNotification, showNotification } from '../utils/notifications';
 import { PdfExportMenuItem } from './interface/PdfExportMenuItem';
-import { PREFIX } from '../utils/Prefix';
+import { getStudyLogoUrl } from '../utils/studyLogo';
 
 const STUDY_BROWSER_WIDTH = 360;
 
@@ -48,6 +48,7 @@ export function StepRenderer() {
 
   const isAnalysis = useIsAnalysis();
   const studyConfig = useStudyConfig();
+  const studyColorMode = useComputedColorScheme('light');
   const currentComponent = useCurrentComponent();
 
   const componentConfig = useMemo(() => studyComponentToIndividualComponent(studyConfig.components[currentComponent] || {}, studyConfig), [currentComponent, studyConfig]);
@@ -396,7 +397,7 @@ export function StepRenderer() {
                 {studyConfig.uiConfig.logoPath && (
                   <img
                     alt="Study logo"
-                    src={`${PREFIX}${studyConfig.uiConfig.logoPath}`}
+                    src={getStudyLogoUrl(studyConfig.uiConfig.logoPath, studyColorMode)}
                     style={{ height: 40, maxWidth: 120, objectFit: 'contain' }}
                   />
                 )}
