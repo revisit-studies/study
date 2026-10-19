@@ -36,13 +36,14 @@ const metadata: ParticipantMetadata = {
 // created the sequence assignment, so failing that write reproduces an
 // initialization that dies with an assignment already on record.
 class FailingAssignmentStorageEngine extends LocalStorageEngine {
-  protected override async _updateSequenceAssignmentFields(): Promise<void> {
+  protected override async _allocateSequenceAssignment(participantId: string, assignment: SequenceAssignment): Promise<never> {
+    await super._allocateSequenceAssignment(participantId, assignment);
     throw new Error('Simulated sequence assignment failure');
   }
 }
 
 class FailingAssignmentCreationStorageEngine extends LocalStorageEngine {
-  protected override async _createSequenceAssignment(): Promise<void> {
+  protected override async _allocateSequenceAssignment(): Promise<never> {
     throw new Error('Simulated assignment creation failure');
   }
 }

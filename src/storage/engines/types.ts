@@ -13,14 +13,8 @@ import { parseConditionParam } from '../../utils/handleConditionLogic';
 import {
   ParticipantTags, Tag, TaglessEditedText, TranscribedAudio,
 } from '../../analysis/individualStudy/thinkAloud/types';
-import {
-  normalizeStoredProvenance,
-  splitProvenanceFromAnswers,
-} from '../../store/provenance';
-import {
-  SnapshotParticipantCounts,
-  calculateSnapshotParticipantCounts,
-} from './utils/snapshotParticipantCounts';
+import { normalizeStoredProvenance, splitProvenanceFromAnswers } from '../../store/provenance';
+import { SnapshotParticipantCounts, calculateSnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
 import { getStageCombinationTargets } from './utils/stageAllocation';
 
 export interface StoredUser {
@@ -49,7 +43,9 @@ export type SequenceAssignment = {
   stage: string; // The stage of the participant in the study
   conditions?: string[]; // The study condition(s) assigned to this participant.
   betweenSubjectsCombinationKey?: string; // The between-subjects combination assigned to this participant.
-  creationIndex?: number; // Stable index of a transactional reservation, including retries.
+  creationIndex?: number; // Stable zero-based participant creation order.
+  sequenceIndex?: number; // Stable zero-based allocator slot.
+  reusableSequenceIndex?: number;
   initialization?: { pending: string[]; complete: boolean }; // Overlapping first uploads share one reservation.
   sequenceKey?: string; // Config hash and prepared row index, used to balance active task orders.
 };
@@ -377,6 +373,19 @@ type ProgressDataWrite = {
   progressData: ProgressData;
 };
 
+export type StageAllocation = { count: number; combinationCounts: Record<string, number>; rowCounts: Record<string, number> };
+
+export function getStageAllocationFromAssignments(all: SequenceAssignment[], stage: string): StageAllocation {
+  const assignments = all.filter((assignment) => assignment.stage === stage && !assignment.rejected);
+  const combinationCounts: Record<string, number> = {};
+  const rowCounts: Record<string, number> = {};
+  assignments.forEach((assignment) => {
+    if (assignment.betweenSubjectsCombinationKey) combinationCounts[assignment.betweenSubjectsCombinationKey] = (combinationCounts[assignment.betweenSubjectsCombinationKey] || 0) + 1;
+    if (assignment.sequenceKey) rowCounts[assignment.sequenceKey] = (rowCounts[assignment.sequenceKey] || 0) + 1;
+  });
+  return { count: assignments.length, combinationCounts, rowCounts };
+}
+
 export abstract class StorageEngine {
   protected engine: 'localStorage' | 'supabase' | 'firebase';
 
@@ -698,8 +707,11 @@ export abstract class StorageEngine {
     }
   }
 
-  private async getModesAndStageData(studyId: string): Promise<ModesAndStageData> {
-    const modesDoc = await this.getModes(studyId);
+  protected async getModesAndStageData(
+    studyId: string,
+    existingModesDocument?: Record<REVISIT_MODE, boolean> & { stage?: StageData },
+  ): Promise<ModesAndStageData> {
+    const modesDoc = existingModesDocument ?? await this.getModes(studyId);
     const { stage, ...modeValues } = modesDoc;
 
     if (stage) {
@@ -1140,10 +1152,11 @@ export abstract class StorageEngine {
   async saveConfig(config: StudyConfig) {
     await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, async () => {
       if (!this.studyId) throw new Error('Study ID is not set');
-      const keys = getConfigConditionKeys(config);
-      await this.validateStageConditions(this.studyId, keys);
       const currentConfigHash = await this._getCurrentConfigHash();
       const configHash = await hash(JSON.stringify(config));
+      if (currentConfigHash === configHash) return;
+      const keys = getConfigConditionKeys(config);
+      await this.validateStageConditions(this.studyId, keys);
       const storedConfig = currentConfigHash === configHash
         ? await this._getFromStorage(`configs/${configHash}`, 'config') : null;
       if (!storedConfig || Object.keys(storedConfig).length === 0) {
@@ -1222,38 +1235,6 @@ export abstract class StorageEngine {
     await this.participantStore.removeItem(storageKey);
   }
 
-  // Counts the non-rejected participants of a stage in each between-subjects
-  // combination. Assignments written before the combination key was stored fall
-  // back to the sequence saved in their participant record.
-  private async getStageCombinationCounts(
-    sequenceAssignments: SequenceAssignment[],
-    stageName: string,
-    betweenSubjects: string[],
-  ) {
-    const counts: Record<string, number> = {};
-    const stageAssignments = sequenceAssignments.filter((assignment) => (
-      !assignment.rejected && assignment.stage === stageName
-    ));
-    const combinationKeys = await Promise.all(stageAssignments.map(async (assignment) => {
-      if (assignment.betweenSubjectsCombinationKey !== undefined) {
-        return assignment.betweenSubjectsCombinationKey;
-      }
-      const participant = await this._getFromStorage(
-        `participants/${assignment.participantId}`,
-        'participantData',
-      );
-      return isParticipantData(participant)
-        ? getBetweenSubjectsCombinationKey(participant.sequence.parameters, betweenSubjects)
-        : undefined;
-    }));
-    combinationKeys.forEach((combinationKey) => {
-      if (combinationKey) {
-        counts[combinationKey] = (counts[combinationKey] || 0) + 1;
-      }
-    });
-    return counts;
-  }
-
   // This function is one of the most critical functions in the storage engine.
   // It uses the notion of sequence intents and assignments to determine the current sequence for the participant.
   // It handles rejected participants and allows for reusing a rejected participant's sequence.
@@ -1263,174 +1244,70 @@ export abstract class StorageEngine {
     config: StudyConfig,
     participantConfigHash: string,
   ) {
-    if (!this.currentParticipantId) {
-      throw new Error('Participant not initialized');
-    }
-    if (this.studyId === undefined) {
-      throw new Error('Study ID is not set');
-    }
-    let sequenceAssignments = await this.getAllSequenceAssignments(this.studyId);
-
+    if (!this.currentParticipantId || !this.studyId) throw new Error('Participant not initialized');
     const { modes, stageData } = bootstrapData;
-    const currentStage = stageData.currentStage.stageName;
-    const sequenceArray = bootstrapData.sequenceArray
+    const stage = stageData.allStages.find((item) => item.stageName === stageData.currentStage.stageName)!;
+    const sequences = bootstrapData.sequenceArray
       ?? await this.getSequenceArray(await this._getCurrentConfigHash() ? participantConfigHash : undefined);
-    if (!sequenceArray) {
-      throw new Error('Latin square not initialized');
+    if (!sequences?.length) throw new Error('Latin square not initialized');
+    const existing = modes.dataCollectionEnabled ? await this._getSequenceAssignment(this.currentParticipantId) : null;
+    if (existing && !existing.rejected) {
+      const allocation = await this._allocateSequenceAssignment(this.currentParticipantId, existing);
+      const prefix = `${participantConfigHash}:`;
+      const currentRow = existing.sequenceKey?.startsWith(prefix) ? sequences[Number(existing.sequenceKey.slice(prefix.length))]
+        : existing.sequenceKey === undefined ? sequences[allocation.sequenceIndex % sequences.length] : undefined;
+      if (!currentRow) throw new Error('The unfinished reservation uses a different study configuration. Please contact the study administrator.');
+      return { currentRow, creationIndex: allocation.creationIndex + 1, stage: existing.stage };
     }
-
-    await this.registerStageConditions(this.studyId, getConfigConditionKeys(config));
-    const currentStageInfo = stageData.allStages.find((stage) => stage.stageName === currentStage);
-    const enabledSequenceArray = currentStageInfo
-      ? sequenceArray.filter((sequence) => isSequenceEnabledForStage(
-        sequence,
-        currentStageInfo,
-        config.betweenSubjects || [],
-      ))
-      : sequenceArray;
-    if (enabledSequenceArray.length === 0) {
-      throw new StageNoAvailableConditionsError(currentStage);
-    }
-
-    let availableSequenceArray = enabledSequenceArray;
     const betweenSubjects = config.betweenSubjects || [];
-    const desiredParticipantCountsByCombination = currentStageInfo
-      ? getDesiredParticipantCountsByCombination(currentStageInfo, sequenceArray, betweenSubjects)
-      : undefined;
-    let combinationCounts: Record<string, number> | undefined;
-    // Counts are needed to balance conditions, not only to cap them, so they are
-    // gathered for every between-subjects study rather than only for stages that
-    // set a maximum.
-    if (modes.dataCollectionEnabled && betweenSubjects.length > 0 && currentStageInfo) {
-      const counts = await this.getStageCombinationCounts(sequenceAssignments, currentStage, betweenSubjects);
-      combinationCounts = counts;
-
-      if (desiredParticipantCountsByCombination) {
-        const hasRemainingCapacity = (sequence: Sequence) => {
-          const combinationKey = getBetweenSubjectsCombinationKey(sequence.parameters, betweenSubjects);
-          return (counts[combinationKey] || 0) < desiredParticipantCountsByCombination[combinationKey];
-        };
-        availableSequenceArray = enabledSequenceArray.filter(hasRemainingCapacity);
-        if (availableSequenceArray.length === 0) {
-          const hasCapacityInDisabledCondition = sequenceArray.some((sequence) => (
-            !isSequenceEnabledForStage(sequence, currentStageInfo, betweenSubjects)
-            && hasRemainingCapacity(sequence)
-          ));
-          if (hasCapacityInDisabledCondition) {
-            throw new StageOnlyDisabledConditionsHaveCapacityError(currentStage);
-          }
-          throw new StageCapacityExceededError(currentStage);
-        }
-      }
+    const keys = getConfigConditionKeys(config);
+    const state = await this.getStageAllocation(stage.stageName, keys);
+    if (JSON.stringify(stage.conditionKeys) !== JSON.stringify(keys)) {
+      if (stage.conditionKeys?.length && await this.hasStageAssignments(stage.stageName)) assertAppendOnlyConditions(stage.conditionKeys || [], keys);
+      await this._setModesDocument(this.studyId, { ...modes, stage: applyStageUpdates(stageData, stage.stageName, { conditionKeys: keys }) });
     }
-
-    // Find all rejected documents
-    // A participant's own released assignment is about to be replaced, so it is
-    // never a slot this participant can claim.
-    const rejectedDocs = sequenceAssignments
-      .filter((doc) => doc.rejected && !doc.claimed && doc.participantId !== this.currentParticipantId);
-    if (rejectedDocs.length > 0) {
-      const firstReject = rejectedDocs[0];
-      const firstRejectTime = firstReject.timestamp;
-      if (modes.dataCollectionEnabled) {
-        // Make the sequence assignment document for the participant
-        const participantSequenceAssignmentData: SequenceAssignment = {
-          participantId: this.currentParticipantId,
-          timestamp: firstRejectTime, // Use the timestamp of the first reject
-          rejected: false,
-          claimed: false,
-          claimedParticipantId: firstReject.participantId,
-          completed: null,
-          createdTime: new Date().getTime(), // Placeholder, will be set to server timestamp in cloud engines
-          total: 0,
-          answered: [],
-          isDynamic: false,
-          stage: currentStage,
-          ...(conditions ? { conditions } : {}),
-        };
-        // Mark the first reject as claimed
-        await this._claimSequenceAssignment(firstReject.participantId, firstReject);
-        try {
-          // Set the participant's sequence assignment document
-          await this._createSequenceAssignment(this.currentParticipantId, participantSequenceAssignmentData, false);
-        } catch (error) {
-          // The source slot must remain reusable if creating its replacement
-          // fails before the replacement assignment exists.
-          await this._updateSequenceAssignmentFields(firstReject.participantId, { claimed: false });
-          throw error;
-        }
-      }
-    } else if (modes.dataCollectionEnabled) {
-      const timestamp = new Date().getTime();
-      const participantSequenceAssignmentData: SequenceAssignment = {
-        participantId: this.currentParticipantId,
-        timestamp, // Placeholder, will be set to server timestamp in cloud engines
-        rejected: false,
-        claimed: false,
-        completed: null,
-        createdTime: timestamp, // Placeholder, will be set to server timestamp in cloud engines
-        total: 0,
-        answered: [],
-        isDynamic: false,
-        stage: currentStage,
-        ...(conditions ? { conditions } : {}),
-      };
-      await this._createSequenceAssignment(this.currentParticipantId, participantSequenceAssignmentData, true);
+    if (modes.dataCollectionEnabled && stage.maxParticipants !== undefined && state.count >= stage.maxParticipants) {
+      throw new StageCapacityExceededError(stage.stageName);
     }
-
-    // Query all the intents to get a sequence and find our position in the queue
-    sequenceAssignments = await this.getAllSequenceAssignments(this.studyId);
-
-    // Get the current row
-    const intentIndex = sequenceAssignments.filter(
-      (assignment) => !assignment.rejected && assignment.stage === currentStage,
-    ).findIndex(
-      (assignment) => assignment.participantId === this.currentParticipantId,
-    );
-    // If index = -1, we probably have data collection disabled. Give a random assignment.
-    if (intentIndex === -1) {
-      return {
-        currentRow: availableSequenceArray[Math.floor(Math.random() * availableSequenceArray.length)],
-        creationIndex: 1,
-      };
+    const enabled = sequences.filter((row) => isSequenceEnabledForStage(row, stage, betweenSubjects));
+    if (!enabled.length) throw new StageNoAvailableConditionsError(stage.stageName);
+    const targets = getDesiredParticipantCountsByCombination(stage, sequences, betweenSubjects);
+    const hasCapacity = (row: Sequence) => !modes.dataCollectionEnabled || !targets
+      || (state.combinationCounts[getBetweenSubjectsCombinationKey(row.parameters, betweenSubjects)] || 0) < targets[getBetweenSubjectsCombinationKey(row.parameters, betweenSubjects)];
+    const eligible = enabled.filter(hasCapacity);
+    if (!eligible.length) {
+      if (sequences.some((row) => !isSequenceEnabledForStage(row, stage, betweenSubjects) && hasCapacity(row))) throw new StageOnlyDisabledConditionsHaveCapacityError(stage.stageName);
+      throw new StageCapacityExceededError(stage.stageName);
     }
-    const activeRowCounts = new Map<string, number>();
-    sequenceAssignments.forEach((assignment) => {
-      if (!assignment.rejected && assignment.stage === currentStage && assignment.sequenceKey) {
-        activeRowCounts.set(assignment.sequenceKey, (activeRowCounts.get(assignment.sequenceKey) || 0) + 1);
-      }
+    if (!modes.dataCollectionEnabled) return { currentRow: eligible[Math.floor(Math.random() * eligible.length)], creationIndex: 1 };
+    const rowCounts = new Map(sequences.map((row, index) => [row, state.rowCounts[`${participantConfigHash}:${index}`] || 0]));
+    const balancedRow = betweenSubjects.length ? getLeastServedSequence(eligible, state.combinationCounts, targets, betweenSubjects, state.count, rowCounts) : undefined;
+    const timestamp = Date.now();
+    const allocation = await this._allocateSequenceAssignment(this.currentParticipantId, {
+      participantId: this.currentParticipantId,
+      timestamp,
+      createdTime: timestamp,
+      rejected: false,
+      claimed: false,
+      completed: null,
+      total: 0,
+      answered: [],
+      isDynamic: false,
+      stage: stage.stageName,
+      ...(conditions ? { conditions } : {}),
+      ...(balancedRow ? {
+        betweenSubjectsCombinationKey: getBetweenSubjectsCombinationKey(balancedRow.parameters, betweenSubjects),
+        sequenceKey: `${participantConfigHash}:${sequences.indexOf(balancedRow)}`,
+      } : {}),
     });
-    const sequenceCounts = new Map(sequenceArray.map((sequence, index) => [
-      sequence, activeRowCounts.get(`${participantConfigHash}:${index}`) || 0,
-    ]));
-    // Choose a condition that is behind, then its least-used prepared row.
-    const currentRow = combinationCounts
-      ? getLeastServedSequence(
-        availableSequenceArray,
-        combinationCounts,
-        desiredParticipantCountsByCombination,
-        betweenSubjects,
-        intentIndex,
-        sequenceCounts,
-      )
-      : availableSequenceArray[intentIndex % availableSequenceArray.length];
-
-    if (!currentRow) {
-      throw new Error('Latin square is empty');
-    }
-
-    if (modes.dataCollectionEnabled && betweenSubjects.length > 0) {
+    const currentRow = balancedRow ?? eligible[allocation.sequenceIndex % eligible.length];
+    if (!balancedRow) {
       await this._updateSequenceAssignmentFields(this.currentParticipantId, {
+        sequenceKey: `${participantConfigHash}:${sequences.indexOf(currentRow)}`,
         betweenSubjectsCombinationKey: getBetweenSubjectsCombinationKey(currentRow.parameters, betweenSubjects),
-        sequenceKey: `${participantConfigHash}:${sequenceArray.indexOf(currentRow)}`,
       });
     }
-
-    const creationSorted = sequenceAssignments.sort((a, b) => a.createdTime - b.createdTime);
-
-    const creationIndex = creationSorted.findIndex((assignment) => assignment.participantId === this.currentParticipantId) + 1;
-
-    return { currentRow, creationIndex };
+    return { currentRow, creationIndex: allocation.creationIndex + 1 };
   }
 
   // Releases a sequence assignment created for the current participant during a
@@ -1468,7 +1345,7 @@ export abstract class StorageEngine {
   protected hasAtomicSequenceReservation = false;
 
   protected async prepareParticipantReservation(participantId: string) {
-    if (!this.hasAtomicSequenceReservation) await this.releaseOrphanedSequenceAssignment(participantId);
+    return this._getSequenceAssignment(participantId);
   }
 
   // Cloud backends can confirm the reservation before exposing a persisted session.
@@ -1540,14 +1417,14 @@ export abstract class StorageEngine {
       // record when both its participant write and its own cleanup failed. Release
       // it before counting, so the participant's abandoned slot cannot keep them
       // out of the stage, and the retry below assigns them afresh.
-      await this.prepareParticipantReservation(this.currentParticipantId!);
+      const existingReservation = await this.prepareParticipantReservation(this.currentParticipantId!);
 
-      const { modes, stageData } = await this.getModesAndStageData(this.studyId!);
+      const { modes, stageData } = await this.getModesAndStageData(this.studyId!, this.cloudEngine ? undefined : bootstrapData?.modesDocument);
       const currentStage = stageData.currentStage.stageName;
       const currentStageInfo = stageData.allStages.find((stage) => stage.stageName === currentStage);
-      if (!this.hasAtomicSequenceReservation && modes.dataCollectionEnabled && currentStageInfo?.maxParticipants !== undefined) {
-        const stageParticipantCounts = getStageParticipantCounts(await this.getAllSequenceAssignments(this.studyId!));
-        if ((stageParticipantCounts[currentStage] || 0) >= currentStageInfo.maxParticipants) {
+      if (!this.hasAtomicSequenceReservation && modes.dataCollectionEnabled && (!existingReservation || existingReservation.rejected) && currentStageInfo?.maxParticipants !== undefined) {
+        const stageParticipantCounts = await this.getStageAllocation(currentStage, getConfigConditionKeys(config));
+        if (stageParticipantCounts.count >= currentStageInfo.maxParticipants) {
           throw new StageCapacityExceededError(currentStage);
         }
       }
@@ -2140,10 +2017,10 @@ export abstract class StorageEngine {
       throw new Error('Participant not initialized');
     }
 
-    const sequenceAssignments = await this.getAllSequenceAssignments(studyIdToUse);
-    const sequenceAssignment = sequenceAssignments.find(
-      (assignment) => assignment.participantId === participantIdToUse,
-    );
+    if (studyIdToUse !== this.studyId) {
+      await this.initializeStudyDb(studyIdToUse);
+    }
+    const sequenceAssignment = await this._getSequenceAssignment(participantIdToUse);
 
     return sequenceAssignment ? sequenceAssignment.completed !== null : false;
   }
@@ -2734,6 +2611,15 @@ export abstract class StorageEngine {
   ) {
     await this._updateSnapshotParticipantCounts(snapshotName, studyId, participantCounts);
   }
+
+  protected abstract _allocateSequenceAssignment(
+    participantId: string,
+    sequenceAssignment: SequenceAssignment,
+  ): Promise<SequenceAssignmentAllocation>;
+
+  protected async hasStageAssignments(stage: string): Promise<boolean> { return (await this.getAllSequenceAssignments(this.studyId!)).some((assignment) => assignment.stage === stage); }
+
+  protected async getStageAllocation(stage: string, _conditionKeys: string[] = []): Promise<StageAllocation> { return getStageAllocationFromAssignments(await this.getAllSequenceAssignments(this.studyId!), stage); }
 }
 
 export type UserManagementData = { authentication?: { isEnabled: boolean }; adminUsers?: { adminUsersList: StoredUser[] } };
@@ -2844,3 +2730,14 @@ export abstract class CloudStorageEngine extends StorageEngine {
     return false;
   }
 }
+
+export type SequenceAllocator = {
+  nextSequenceIndex: number;
+  nextCreationIndex: number;
+  availableSequenceIndexes?: number[]; // Unused replacement vacancies returned by undoing rejection.
+};
+
+export type SequenceAssignmentAllocation = {
+  sequenceIndex: number;
+  creationIndex: number;
+};

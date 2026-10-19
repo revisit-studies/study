@@ -121,6 +121,15 @@ vi.mock('localforage', () => ({
 }));
 
 vi.mock('firebase/firestore', () => {
+  type QueryConstraint = {
+    type: 'where' | 'limit' | 'orderBy';
+    field?: string;
+    operator?: string;
+    value?: unknown;
+    count?: number;
+    direction?: 'asc' | 'desc';
+  };
+
   function resolveSentinels(data: DocData): DocData {
     const now = Date.now();
     const result: DocData = {};
@@ -185,8 +194,56 @@ vi.mock('firebase/firestore', () => {
     return docs;
   }
 
-  function mockGetDocs(collRef: { _path: string }) {
-    const docs = getDocsInCollection(collRef._path);
+  function mockGetDocs(collRef: { _path: string; _constraints?: QueryConstraint[] }) {
+    let docs = getDocsInCollection(collRef._path);
+    (collRef._constraints ?? []).forEach((constraint) => {
+      if (constraint.type === 'where') {
+        docs = docs.filter((document) => {
+          const fieldValue = document.data()[constraint.field!];
+          if (constraint.operator === '==') return fieldValue === constraint.value;
+          if (constraint.operator === '<' || constraint.operator === '>=') {
+            const toComparableNumber = (value: unknown) => (
+              value
+              && typeof value === 'object'
+              && 'toMillis' in value
+              && typeof value.toMillis === 'function'
+                ? value.toMillis()
+                : Number(value)
+            );
+            const constraintValue = toComparableNumber(constraint.value);
+            const comparableFieldValue = toComparableNumber(fieldValue);
+            if (typeof fieldValue !== typeof constraint.value) return false;
+            return constraint.operator === '<'
+              ? comparableFieldValue < constraintValue
+              : comparableFieldValue >= constraintValue;
+          }
+          if (constraint.operator === '>') {
+            return fieldValue !== undefined
+              && fieldValue !== null
+              && String(fieldValue) > String(constraint.value);
+          }
+          return true;
+        });
+      } else if (constraint.type === 'orderBy') {
+        docs = [...docs].sort((a, b) => {
+          const aValue = a.data()[constraint.field!];
+          const bValue = b.data()[constraint.field!];
+          const toComparableNumber = (value: unknown) => (
+            value
+            && typeof value === 'object'
+            && 'toMillis' in value
+            && typeof value.toMillis === 'function'
+              ? value.toMillis()
+              : Number(value)
+          );
+          const typeComparison = typeof aValue === typeof bValue ? 0 : (typeof aValue === 'number' ? -1 : 1);
+          return (typeComparison || (toComparableNumber(aValue) - toComparableNumber(bValue)))
+            * (constraint.direction === 'desc' ? -1 : 1);
+        });
+      } else if (constraint.type === 'limit') {
+        docs = docs.slice(0, constraint.count);
+      }
+    });
     return Promise.resolve({
       docs,
       forEach: (cb: (d: { id: string; data: () => DocData }) => void) => docs.forEach(cb),
@@ -260,9 +317,20 @@ vi.mock('firebase/firestore', () => {
     constructor(public seconds: number, public nanoseconds: number) { }
 
     toMillis() { return this.seconds * 1000 + Math.floor(this.nanoseconds / 1e6); }
+
+    static fromMillis(milliseconds: number) {
+      return new MockTimestamp(Math.floor(milliseconds / 1000), (milliseconds % 1000) * 1e6);
+    }
   }
 
   return {
+    query: vi.fn((parent, ...constraints) => ({ ...parent, _constraints: constraints })),
+    where: vi.fn((field, operator, value) => ({
+      type: 'where', field, operator, value,
+    })),
+    orderBy: vi.fn((field, direction) => ({ type: 'orderBy', field, direction })),
+    limit: vi.fn((count) => ({ type: 'limit', count })),
+    getCountFromServer: vi.fn(async (reference) => { const snapshot = await mockGetDocs(reference); return { data: () => ({ count: snapshot.docs.length }) }; }),
     collection: vi.fn(mockCollection),
     doc: vi.fn(mockDoc),
     setDoc: vi.fn(mockSetDoc),
