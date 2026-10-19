@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Dark Mode Demo",
     "version": "pilot",
@@ -7,7 +7,7 @@
       "The reVISit Team"
     ],
     "date": "2026-09-22",
-    "description": "A compact tour of dark-mode inputs, menus, scales, sidebar responses, charts, and embedded content.",
+    "description": "A tour of every stimulus and response type in dark mode, including sidebar controls, charts, media, custom responses, and HTML theme overrides.",
     "organizations": [
       "University of Utah",
       "WPI"
@@ -22,6 +22,9 @@
     "withSidebar": false,
     "autoDownloadStudy": false
   },
+  "importedLibraries": [
+    "drawing"
+  ],
   "components": {
     "Introduction": {
       "type": "markdown",
@@ -39,12 +42,83 @@
           "prompt": "## Form elements\n\nTry a few form elements in dark mode."
         },
         {
+          "id": "sidebar-note",
+          "type": "shortText",
+          "prompt": "Sidebar note",
+          "location": "sidebar",
+          "placeholder": "Try the sidebar input",
+          "required": false
+        },
+        {
+          "id": "form-heading",
+          "type": "textOnly",
+          "prompt": "# Form elements\n\nTry text, number, date, and time inputs. All answers in this demo are optional."
+        },
+        {
           "id": "validation-email",
           "type": "shortText",
           "prompt": "Example email",
           "required": false,
           "placeholder": "demo@revisit.dev",
           "builtInValidation": "email"
+        },
+        {
+          "id": "numerical",
+          "type": "numerical",
+          "prompt": "Number of charts",
+          "min": 0,
+          "max": 100,
+          "placeholder": "0–100",
+          "withDontKnow": true,
+          "required": false
+        },
+        {
+          "id": "date",
+          "type": "date",
+          "prompt": "Example date",
+          "default": "10/18/2026",
+          "required": false
+        },
+        {
+          "id": "time",
+          "type": "time",
+          "prompt": "Example time",
+          "default": "14:30",
+          "format": "24h",
+          "required": false
+        },
+        {
+          "id": "divider",
+          "type": "divider"
+        },
+        {
+          "id": "comments",
+          "type": "longText",
+          "prompt": "Any comments?",
+          "placeholder": "Your comments",
+          "required": false
+        }
+      ]
+    },
+    "Choices and Scales": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "choices-heading",
+          "type": "textOnly",
+          "prompt": "# Choices and scales\n\nCheck the menus, selected states, slider, Likert scale, and both kinds of matrix."
+        },
+        {
+          "id": "single-dropdown",
+          "type": "dropdown",
+          "prompt": "Favorite chart",
+          "placeholder": "Choose a chart",
+          "options": [
+            "Bar chart",
+            "Line chart",
+            "Scatterplot"
+          ],
+          "required": false
         },
         {
           "id": "multiple-charts",
@@ -74,6 +148,16 @@
             "Legend"
           ],
           "withOther": true
+        },
+        {
+          "id": "radio",
+          "type": "radio",
+          "prompt": "Preferred chart orientation",
+          "options": [
+            "Horizontal",
+            "Vertical"
+          ],
+          "required": false
         },
         {
           "id": "buttons",
@@ -109,6 +193,15 @@
           "required": false
         },
         {
+          "id": "likert",
+          "type": "likert",
+          "prompt": "Overall readability",
+          "numItems": 5,
+          "leftLabel": "Difficult",
+          "rightLabel": "Easy",
+          "required": false
+        },
+        {
           "id": "matrix-radio",
           "type": "matrix-radio",
           "prompt": "How do these look?",
@@ -121,10 +214,85 @@
           ]
         },
         {
-          "id": "comments",
-          "type": "longText",
-          "prompt": "Any comments?",
-          "placeholder": "Your comments",
+          "id": "matrix-checkbox",
+          "type": "matrix-checkbox",
+          "prompt": "Which features help each chart?",
+          "questionOptions": [
+            "Bar chart",
+            "Scatterplot"
+          ],
+          "answerOptions": [
+            "Labels",
+            "Legend"
+          ],
+          "required": false
+        }
+      ]
+    },
+    "Ranking Widgets": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "ranking-heading",
+          "type": "textOnly",
+          "prompt": "# Ranking widgets\n\nDrag chart types into an ordered list, categories, or a pairwise comparison."
+        },
+        {
+          "id": "ranking-sublist",
+          "type": "ranking-sublist",
+          "prompt": "Rank your two favorite charts",
+          "options": [
+            "Bar",
+            "Line",
+            "Scatter"
+          ],
+          "numItems": 2,
+          "required": false
+        },
+        {
+          "id": "ranking-categorical",
+          "type": "ranking-categorical",
+          "prompt": "Sort charts by preference",
+          "options": [
+            "Area",
+            "Bubble",
+            "Heatmap"
+          ],
+          "required": false
+        },
+        {
+          "id": "ranking-pairwise",
+          "type": "ranking-pairwise",
+          "prompt": "Compare two charts",
+          "options": [
+            "Histogram",
+            "Boxplot"
+          ],
+          "required": false
+        }
+      ]
+    },
+    "Custom Response": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "custom-heading",
+          "type": "textOnly",
+          "prompt": "# Custom response\n\nThis reuses the form-elements demo’s React response. Select a chart and confidence to see a structured answer."
+        },
+        {
+          "id": "custom-response-demo",
+          "type": "custom",
+          "prompt": "Pick a chart and your confidence",
+          "path": "demo-form-elements/assets/CustomResponseCard.tsx",
+          "parameters": {
+            "chartOptions": [
+              "Bar",
+              "Line",
+              "Scatter"
+            ],
+            "minimumConfidence": 70
+          },
           "required": false
         }
       ]
@@ -148,16 +316,83 @@
         }
       ]
     },
+    "React Component": {
+      "baseComponent": "$drawing.components.canvas",
+      "parameters": {
+        "height": 400,
+        "responseId": "drawing",
+        "initialColor": "blue",
+        "initialPenSize": "m",
+        "requireDrawing": false
+      },
+      "response": [
+        {
+          "id": "react-heading",
+          "type": "textOnly",
+          "location": "aboveStimulus",
+          "prompt": "# React component\n\nThe drawing library runs inside the study. Its controls follow the study theme; the drawing paper keeps its white background."
+        },
+        {
+          "id": "drawing",
+          "type": "reactive",
+          "hidden": true,
+          "required": false,
+          "prompt": "Drawing scene"
+        }
+      ]
+    },
+    "Image": {
+      "type": "image",
+      "path": "demo-image/assets/uncertainty-1.png",
+      "style": {
+        "maxWidth": "800px",
+        "width": "100%"
+      },
+      "response": [
+        {
+          "id": "image-heading",
+          "type": "textOnly",
+          "location": "aboveStimulus",
+          "prompt": "# Image component\n\nImage colors remain as authored, including this chart’s white background."
+        }
+      ]
+    },
+    "Video": {
+      "type": "video",
+      "path": "demo-video/assets/venice.mp4",
+      "forceCompletion": false,
+      "withTimeline": true,
+      "response": [
+        {
+          "id": "video-heading",
+          "type": "textOnly",
+          "location": "aboveStimulus",
+          "prompt": "# Video component\n\nTry the video player controls. You can continue without watching the entire clip."
+        }
+      ]
+    },
     "Website Component": {
       "type": "website",
-      "path": "https://revisit.dev/docs/introduction/",
+      "path": "demo-dark-mode/assets/stimulus.html",
+      "response": [
+        {
+          "id": "html-heading",
+          "type": "textOnly",
+          "location": "aboveStimulus",
+          "prompt": "# HTML component\n\nThis local page supports both color schemes and inherits the dark study theme."
+        }
+      ]
+    },
+    "Light Website Component": {
+      "type": "website",
+      "path": "demo-dark-mode/assets/stimulus.html",
       "colorMode": "light",
       "response": [
         {
-          "id": "embedded-introduction",
+          "id": "light-html-heading",
           "type": "textOnly",
           "location": "aboveStimulus",
-          "prompt": "# Website Component\n\nThis example embeds the [reVISit documentation](https://revisit.dev/docs/introduction/) with a light iframe color scheme."
+          "prompt": "# HTML with a light override\n\nThe same local page explicitly uses light mode while the study interface remains dark."
         }
       ]
     }
@@ -167,8 +402,15 @@
     "components": [
       "Introduction",
       "Form Elements",
+      "Choices and Scales",
+      "Ranking Widgets",
+      "Custom Response",
       "Visualization",
-      "Website Component"
+      "React Component",
+      "Image",
+      "Video",
+      "Website Component",
+      "Light Website Component"
     ]
   }
 }
