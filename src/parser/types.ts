@@ -298,7 +298,7 @@ export interface UIConfig {
   previousButtonText?: string;
   /** Whether to redirect a timed out participant to a rejection page. This only works for components where the `nextButtonDisableTime` field is set. */
   timeoutReject?: boolean;
-  /** Enable answer checking and feedback. Defaults to false, but answer-level feedback automatically enables it. */
+  /** Enable answer checking and feedback when a component omits provideFeedback and has no answer-level feedback. Defaults to false. */
   provideFeedback?: boolean;
   /** The number of answer-checking attempts allowed for the component. Defaults to 2. Check Answer grades responses before Next can continue. With hideCheckAnswerButton, Next performs the check first. Incorrect answers block continuing unless allowFailedTraining is true and attempts are exhausted. The final failed attempt reveals accepted answers. Set -1 for unlimited attempts, requiring a correct answer and hiding the reveal. */
   trainingAttempts?: number;
@@ -1366,7 +1366,7 @@ export interface BaseIndividualComponent {
   previousButton?: boolean;
   /** The text that is displayed on the previous button. If present, will override the previous button text setting in the uiConfig. */
   previousButtonText?: string;
-  /** Enable answer checking and feedback. Overrides uiConfig.provideFeedback. Answer-level feedback enables it even when this flag is omitted or false. */
+  /** Enable answer checking and feedback. Explicit false disables it even with answer-level feedback. When omitted, answer-level feedback enables it before falling back to uiConfig.provideFeedback. */
   provideFeedback?: boolean;
   /** Hide the Check Answer button and grade answers on Next instead. Defaults to false. Feedback must be enabled by provideFeedback or answer-level feedback. */
   hideCheckAnswerButton?: boolean;

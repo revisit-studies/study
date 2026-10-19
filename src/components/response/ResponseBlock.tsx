@@ -180,9 +180,9 @@ export function ResponseBlock({
 
   const studyConfig = useStudyConfig();
 
-  const provideFeedback = useMemo(() => config?.provideFeedback ?? studyConfig.uiConfig.provideFeedback, [config, studyConfig]);
-  const hasCorrectAnswerFeedback = !!config.correctAnswer?.length
-    && (!!provideFeedback || config.correctAnswer.some((answer) => answer.feedback !== undefined));
+  const provideFeedback = useMemo(() => config.provideFeedback
+    ?? (config.correctAnswer?.some((answer) => answer.feedback !== undefined) || studyConfig.uiConfig.provideFeedback), [config, studyConfig]);
+  const hasCorrectAnswerFeedback = !!config.correctAnswer?.length && !!provideFeedback;
   const allowFailedTraining = useMemo(() => config?.allowFailedTraining ?? studyConfig.uiConfig.allowFailedTraining ?? true, [config, studyConfig]);
   const trainingAttempts = useMemo(() => config?.trainingAttempts ?? studyConfig.uiConfig.trainingAttempts ?? 2, [config, studyConfig]);
   const savedSubmitAttempt = storedAnswerData?.responseSubmitAttempted ?? status?.responseSubmitAttempted ?? false;
@@ -195,14 +195,14 @@ export function ResponseBlock({
   const { storageEngine } = useStorageEngine();
   const attemptsUsed = currentCheckAnswer?.attemptsUsed ?? 0;
   const hasCorrectAnswer = currentCheckAnswer?.correct ?? false;
-  const checkAnswerResponses = currentCheckAnswer?.responses;
+  const checkAnswerResponses = hasCorrectAnswerFeedback ? currentCheckAnswer?.responses : undefined;
   const checkedAnswerValues = currentCheckAnswer?.checkedAnswers
     ?? (savedCheckAnswer ? status?.answer ?? storedAnswer : undefined);
   const usedAllAttempts = attemptsUsed >= trainingAttempts && trainingAttempts >= 0;
   // Permit continuing only after a correct check or explicitly allowed exhausted failure.
   const canContinueAfterFeedback = attemptsUsed > 0 && (hasCorrectAnswer || (allowFailedTraining && usedAllAttempts));
   const bypassValidationForFailedTraining = hasCorrectAnswerFeedback && allowFailedTraining && usedAllAttempts;
-  const disabledAttempts = usedAllAttempts || hasCorrectAnswer;
+  const disabledAttempts = hasCorrectAnswerFeedback && (usedAllAttempts || hasCorrectAnswer);
   const showBtnsInLocation = useMemo(() => location === (config?.nextButtonLocation ?? studyConfig.uiConfig.nextButtonLocation ?? 'belowStimulus'), [config, studyConfig, location]);
   const analysisErrors = useMemo(
     () => ['aboveStimulus', 'belowStimulus', 'sidebar'].some((responseLocation) => (

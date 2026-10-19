@@ -21,7 +21,7 @@ import type { compareResponseValues } from '../../../utils/correctAnswer';
 // ── mocks ────────────────────────────────────────────────────────────────────
 
 const {
-  mockStoredAnswerData, capturedNextButtonProps, capturedSwitcherProps, mockIsAnalysis, mockCurrentIdentifier, mockNavigate, mockSaveAnswers, mockTrrackApply, mockAnswerField, mockAllowFailedTraining,
+  mockStoredAnswerData, capturedNextButtonProps, capturedSwitcherProps, mockIsAnalysis, mockCurrentIdentifier, mockNavigate, mockSaveAnswers, mockTrrackApply, mockAnswerField, mockAllowFailedTraining, mockProvideFeedback,
 } = vi.hoisted(() => ({
   mockStoredAnswerData: {
     formOrder: { response: ['q1'] } as { response: string[] } | undefined,
@@ -48,6 +48,7 @@ const {
   mockCurrentIdentifier: { value: 'trial1_0' },
   mockNavigate: vi.fn(),
   mockAllowFailedTraining: { value: true as boolean | undefined },
+  mockProvideFeedback: { value: false as boolean | undefined },
   mockSaveAnswers: vi.fn(() => Promise.resolve()),
   mockTrrackApply: vi.fn(),
   mockAnswerField: {
@@ -122,7 +123,7 @@ vi.mock('../../../store/hooks/useStudyConfig', () => ({
   useStudyConfig: vi.fn(() => ({
     uiConfig: {
       nextButtonLocation: 'belowStimulus',
-      provideFeedback: false,
+      provideFeedback: mockProvideFeedback.value,
       allowFailedTraining: mockAllowFailedTraining.value,
       trainingAttempts: 2,
       nextButtonText: 'Next',
@@ -329,6 +330,7 @@ beforeEach(() => {
   capturedSwitcherProps.indexes = [];
   mockIsAnalysis.value = false;
   mockAllowFailedTraining.value = true;
+  mockProvideFeedback.value = false;
   mockCurrentIdentifier.value = 'trial1_0';
   mockNavigate.mockClear();
   mockSaveAnswers.mockClear();
@@ -1001,9 +1003,9 @@ describe('ResponseBlock feedback on Next', () => {
     expect(store.getState().checkAnswer.trial1_0).toMatchObject({ correct: true, responses: { matrix: true } });
   });
 
-  test.each([undefined, false])('answer-level feedback enables checking with provideFeedback=%s', async (provideFeedback) => {
+  test('answer-level feedback enables checking when the component flag is omitted', async () => {
     const { container, store } = await renderWithStore(
-      <ResponseBlock config={{ ...answerFeedbackConfig, provideFeedback }} location="belowStimulus" />,
+      <ResponseBlock config={answerFeedbackConfig} location="belowStimulus" />,
     );
     expect(countButtons(container, 'Check Answer')).toBe(0);
     expect(findButton(container, 'Next')).toHaveProperty('disabled', false);
@@ -1014,6 +1016,86 @@ describe('ResponseBlock feedback on Next', () => {
     await act(async () => { fireEvent.click(findButton(container, 'Next')); });
     expect(mockNavigate).toHaveBeenCalledTimes(1);
     expect(store.getState().checkAnswer.trial1_0.attemptsUsed).toBe(1);
+  });
+
+  test.each([
+    {
+      componentFlag: false, customFeedback: true, globalFlag: true, enabled: false,
+    },
+    {
+      componentFlag: true, customFeedback: false, globalFlag: false, enabled: true,
+    },
+    {
+      componentFlag: undefined, customFeedback: true, globalFlag: false, enabled: true,
+    },
+    {
+      componentFlag: undefined, customFeedback: false, globalFlag: true, enabled: true,
+    },
+    {
+      componentFlag: undefined, customFeedback: false, globalFlag: false, enabled: false,
+    },
+    {
+      componentFlag: undefined, customFeedback: false, globalFlag: undefined, enabled: false,
+    },
+  ])('resolves feedback with component=$componentFlag, custom=$customFeedback, global=$globalFlag', async ({
+    componentFlag, customFeedback, globalFlag, enabled,
+  }) => {
+    mockProvideFeedback.value = globalFlag;
+    vi.mocked(responseAnswerIsCorrect).mockClear();
+    const { container, store } = await renderWithStore(
+      <ResponseBlock
+        config={{
+          ...baseConfig,
+          hideCheckAnswerButton: false,
+          provideFeedback: componentFlag,
+          correctAnswer: [{
+            id: 'q1',
+            acceptableAnswers: ['correct', 'also correct'],
+            feedback: customFeedback ? { correctText: 'Well done!' } : undefined,
+          }],
+        }}
+        location="belowStimulus"
+      />,
+    );
+
+    expect(countButtons(container, 'Check Answer')).toBe(enabled ? 1 : 0);
+    expect(findButton(container, 'Next')).toHaveProperty('disabled', enabled);
+    await act(async () => { fireEvent.click(findButton(container, enabled ? 'Check Answer' : 'Next')); });
+
+    if (enabled) {
+      expect(store.getState().checkAnswer.trial1_0).toMatchObject({ attemptsUsed: 1, correct: true });
+      expect(container.textContent).toContain(customFeedback ? 'Well done!' : 'You have answered the question correctly.');
+      expect(mockNavigate).not.toHaveBeenCalled();
+    } else {
+      expect(store.getState().checkAnswer.trial1_0).toBeUndefined();
+      expect(responseAnswerIsCorrect).not.toHaveBeenCalled();
+      expect(container.querySelector('[data-testid="feedback-alert-q1"]')).toBeNull();
+      expect(mockNavigate).toHaveBeenCalledTimes(1);
+    }
+  });
+
+  test.each([true, false])('ignores restored correct=%s checks when component feedback is disabled', async (correct) => {
+    mockStoredAnswerData.checkAnswer = { attemptsUsed: correct ? 1 : 2, correct, responses: { q1: correct } };
+    const { container } = await renderWithStore(
+      <ResponseBlock
+        config={{
+          ...answerFeedbackConfig,
+          provideFeedback: false,
+          allowFailedTraining: false,
+          response: [{
+            id: 'q1', type: 'likert', prompt: 'Rate this', numItems: 5, required: false,
+          }],
+        }}
+        location="belowStimulus"
+      />,
+    );
+
+    expect(capturedSwitcherProps.indexes.filter(({ id }) => id === 'q1').every(({ disabled }) => disabled === false)).toBe(true);
+    expect(container.querySelector('[role="status"]')).toBeNull();
+    expect(container.querySelector('[data-testid="feedback-alert-q1"]')).toBeNull();
+    expect(findButton(container, 'Next')).toHaveProperty('disabled', false);
+    await act(async () => { fireEvent.click(findButton(container, 'Next')); });
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
   });
 
   test('incorrect answers do not block continuing by default after attempts run out', async () => {

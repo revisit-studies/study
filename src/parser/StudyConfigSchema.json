@@ -187,7 +187,7 @@
             "type": "string"
           },
           "provideFeedback": {
-            "description": "Enable answer checking and feedback. Overrides uiConfig.provideFeedback. Answer-level feedback enables it even when this flag is omitted or false.",
+            "description": "Enable answer checking and feedback. Explicit false disables it even with answer-level feedback. When omitted, answer-level feedback enables it before falling back to uiConfig.provideFeedback.",
             "type": "boolean"
           },
           "recordAudio": {
@@ -1647,7 +1647,7 @@
           "type": "string"
         },
         "provideFeedback": {
-          "description": "Enable answer checking and feedback. Overrides uiConfig.provideFeedback. Answer-level feedback enables it even when this flag is omitted or false.",
+          "description": "Enable answer checking and feedback. Explicit false disables it even with answer-level feedback. When omitted, answer-level feedback enables it before falling back to uiConfig.provideFeedback.",
           "type": "boolean"
         },
         "recordAudio": {
@@ -1976,7 +1976,7 @@
           "type": "string"
         },
         "provideFeedback": {
-          "description": "Enable answer checking and feedback. Overrides uiConfig.provideFeedback. Answer-level feedback enables it even when this flag is omitted or false.",
+          "description": "Enable answer checking and feedback. Explicit false disables it even with answer-level feedback. When omitted, answer-level feedback enables it before falling back to uiConfig.provideFeedback.",
           "type": "boolean"
         },
         "recordAudio": {
@@ -2483,7 +2483,7 @@
           "type": "string"
         },
         "provideFeedback": {
-          "description": "Enable answer checking and feedback. Overrides uiConfig.provideFeedback. Answer-level feedback enables it even when this flag is omitted or false.",
+          "description": "Enable answer checking and feedback. Explicit false disables it even with answer-level feedback. When omitted, answer-level feedback enables it before falling back to uiConfig.provideFeedback.",
           "type": "boolean"
         },
         "recordAudio": {
@@ -3182,7 +3182,7 @@
           "type": "string"
         },
         "provideFeedback": {
-          "description": "Enable answer checking and feedback. Overrides uiConfig.provideFeedback. Answer-level feedback enables it even when this flag is omitted or false.",
+          "description": "Enable answer checking and feedback. Explicit false disables it even with answer-level feedback. When omitted, answer-level feedback enables it before falling back to uiConfig.provideFeedback.",
           "type": "boolean"
         },
         "recordAudio": {
@@ -3901,7 +3901,7 @@
           "type": "string"
         },
         "provideFeedback": {
-          "description": "Enable answer checking and feedback. Overrides uiConfig.provideFeedback. Answer-level feedback enables it even when this flag is omitted or false.",
+          "description": "Enable answer checking and feedback. Explicit false disables it even with answer-level feedback. When omitted, answer-level feedback enables it before falling back to uiConfig.provideFeedback.",
           "type": "boolean"
         },
         "recordAudio": {
@@ -5229,7 +5229,7 @@
           "type": "string"
         },
         "provideFeedback": {
-          "description": "Enable answer checking and feedback. Defaults to false, but answer-level feedback automatically enables it.",
+          "description": "Enable answer checking and feedback when a component omits provideFeedback and has no answer-level feedback. Defaults to false.",
           "type": "boolean"
         },
         "recordAudio": {
@@ -5462,7 +5462,7 @@
           "type": "string"
         },
         "provideFeedback": {
-          "description": "Enable answer checking and feedback. Overrides uiConfig.provideFeedback. Answer-level feedback enables it even when this flag is omitted or false.",
+          "description": "Enable answer checking and feedback. Explicit false disables it even with answer-level feedback. When omitted, answer-level feedback enables it before falling back to uiConfig.provideFeedback.",
           "type": "boolean"
         },
         "recordAudio": {
@@ -5654,7 +5654,7 @@
           "type": "string"
         },
         "provideFeedback": {
-          "description": "Enable answer checking and feedback. Overrides uiConfig.provideFeedback. Answer-level feedback enables it even when this flag is omitted or false.",
+          "description": "Enable answer checking and feedback. Explicit false disables it even with answer-level feedback. When omitted, answer-level feedback enables it before falling back to uiConfig.provideFeedback.",
           "type": "boolean"
         },
         "recordAudio": {
@@ -5850,7 +5850,7 @@
           "type": "string"
         },
         "provideFeedback": {
-          "description": "Enable answer checking and feedback. Overrides uiConfig.provideFeedback. Answer-level feedback enables it even when this flag is omitted or false.",
+          "description": "Enable answer checking and feedback. Explicit false disables it even with answer-level feedback. When omitted, answer-level feedback enables it before falling back to uiConfig.provideFeedback.",
           "type": "boolean"
         },
         "recordAudio": {
@@ -6050,7 +6050,7 @@
           "type": "string"
         },
         "provideFeedback": {
-          "description": "Enable answer checking and feedback. Overrides uiConfig.provideFeedback. Answer-level feedback enables it even when this flag is omitted or false.",
+          "description": "Enable answer checking and feedback. Explicit false disables it even with answer-level feedback. When omitted, answer-level feedback enables it before falling back to uiConfig.provideFeedback.",
           "type": "boolean"
         },
         "recordAudio": {
