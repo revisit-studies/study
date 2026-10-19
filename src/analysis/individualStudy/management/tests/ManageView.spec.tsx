@@ -107,11 +107,11 @@ vi.mock('@mantine/core', () => ({
     <input type="radio" readOnly checked={checked} onChange={onChange} aria-label={ariaLabel} />
   ),
   Switch: ({
-    checked, label, onChange, 'aria-label': ariaLabel,
-  }: { checked?: boolean; label?: ReactNode; onChange?: React.ChangeEventHandler<HTMLInputElement>; 'aria-label'?: string }) => (
+    checked, disabled, label, onChange, 'aria-label': ariaLabel,
+  }: { checked?: boolean; disabled?: boolean; label?: ReactNode; onChange?: React.ChangeEventHandler<HTMLInputElement>; 'aria-label'?: string }) => (
     <label>
       {label}
-      <input type="checkbox" checked={checked} onChange={onChange} aria-label={ariaLabel} />
+      <input type="checkbox" checked={checked} disabled={disabled} onChange={onChange} aria-label={ariaLabel} />
     </label>
   ),
   Flex: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -773,7 +773,7 @@ describe('ManageView', () => {
     expect((screen.getByLabelText('Maximum participants for DEFAULT') as HTMLInputElement).value).toBe('20');
   });
 
-  test('StageManagementItem saves the maximum and refreshes its tables', async () => {
+  test('StageManagementItem displays the saved maximum only after persistence succeeds', async () => {
     let finishSave!: () => void;
     const pendingSave = new Promise<void>((resolve) => { finishSave = resolve; });
     mockStorageEngine!.updateStage.mockReturnValueOnce(pendingSave);
@@ -781,10 +781,6 @@ describe('ManageView', () => {
       .mockResolvedValueOnce({
         currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
         allStages: [{ stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR, maxParticipants: 4 }],
-      })
-      .mockResolvedValueOnce({
-        currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
-        allStages: [{ stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR, maxParticipants: 12 }],
       });
 
     await act(async () => {
@@ -801,14 +797,77 @@ describe('ManageView', () => {
     expect(mockStorageEngine!.updateStage).toHaveBeenCalledWith('test-study', 'DEFAULT', {
       maxParticipants: 12,
     });
-    expect(screen.getByText('0 / 12')).toBeDefined();
+    expect(screen.getByText('0 / 4')).toBeDefined();
     expect((screen.getByRole('button', { name: 'Save maximum participants for DEFAULT' }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByLabelText('Maximum participants for DEFAULT') as HTMLInputElement).disabled).toBe(true);
+    expect((screen.getByRole('checkbox', { name: 'Limit participants' }) as HTMLInputElement).disabled).toBe(true);
+    expect((screen.getByRole('button', { name: 'Active stage DEFAULT' }) as HTMLButtonElement).disabled).toBe(true);
 
     await act(async () => {
       finishSave();
       await pendingSave;
     });
-    await waitFor(() => expect(mockStorageEngine!.getStageData).toHaveBeenCalledTimes(2));
+    expect(screen.getByText('0 / 12')).toBeDefined();
+    expect(mockStorageEngine!.getStageData).toHaveBeenCalledTimes(1);
+  });
+
+  test('StageManagementItem keeps a failed maximum save retryable without a recovery read', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockStorageEngine!.getStageData
+      .mockResolvedValueOnce({
+        currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
+        allStages: [{ stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR, maxParticipants: 4 }],
+      })
+      .mockRejectedValue(new Error('offline read'));
+    mockStorageEngine!.updateStage.mockRejectedValueOnce(new Error('offline write'));
+
+    await act(async () => { render(<StageManagementItem studyId="test-study" />); });
+    fireEvent.change(screen.getByLabelText('Maximum participants for DEFAULT'), { target: { value: '12' } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Save maximum participants for DEFAULT' }));
+    });
+
+    expect(screen.getByText('0 / 4')).toBeDefined();
+    expect((screen.getByLabelText('Maximum participants for DEFAULT') as HTMLInputElement).value).toBe('12');
+    expect((screen.getByRole('button', { name: 'Save maximum participants for DEFAULT' }) as HTMLButtonElement).disabled).toBe(false);
+    expect(showNotification).toHaveBeenCalledWith(expect.objectContaining({
+      title: 'Stage settings not saved',
+      message: 'The latest stage change could not be saved. Please try again.',
+    }));
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Save maximum participants for DEFAULT' }));
+    });
+    expect(mockStorageEngine!.updateStage).toHaveBeenCalledTimes(2);
+    expect(mockStorageEngine!.updateStage).toHaveBeenLastCalledWith('test-study', 'DEFAULT', { maxParticipants: 12 });
+    expect(screen.getByText('0 / 12')).toBeDefined();
+    expect(mockStorageEngine!.getStageData).toHaveBeenCalledTimes(1);
+  });
+
+  test.each([true, false])('StageManagementItem preserves the confirmed limit when toggling to %s fails', async (enabled) => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockStorageEngine!.getStageData
+      .mockResolvedValueOnce({
+        currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
+        allStages: [{
+          stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR, maxParticipants: 4, participantLimitEnabled: !enabled,
+        }],
+      })
+      .mockRejectedValue(new Error('offline read'));
+    mockStorageEngine!.updateStage.mockRejectedValueOnce(new Error('offline write'));
+
+    await act(async () => { render(<StageManagementItem studyId="test-study" />); });
+    await act(async () => { fireEvent.click(screen.getByRole('checkbox', { name: 'Limit participants' })); });
+
+    expect((screen.getByRole('checkbox', { name: 'Limit participants' }) as HTMLInputElement).checked).toBe(!enabled);
+    expect((screen.getByRole('checkbox', { name: 'Limit participants' }) as HTMLInputElement).disabled).toBe(false);
+    expect(screen.getByText(enabled ? '0 / Unlimited' : '0 / 4')).toBeDefined();
+
+    await act(async () => { fireEvent.click(screen.getByRole('checkbox', { name: 'Limit participants' })); });
+    expect((screen.getByRole('checkbox', { name: 'Limit participants' }) as HTMLInputElement).checked).toBe(enabled);
+    expect(screen.getByText(enabled ? '0 / 4' : '0 / Unlimited')).toBeDefined();
+    expect(mockStorageEngine!.updateStage).toHaveBeenCalledTimes(2);
+    expect(mockStorageEngine!.getStageData).toHaveBeenCalledTimes(1);
   });
 
   test('StageManagementItem retains the saved maximum and manual allocations while limits are off', async () => {

@@ -545,6 +545,7 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
   const [editingStageColor, setEditingStageColor] = useState(DEFAULT_STAGE_COLOR);
   const [editingLimitMaxParticipants, setEditingLimitMaxParticipants] = useState<number | ''>('');
   const [editingLimitEnabled, setEditingLimitEnabled] = useState(false);
+  const [savingParticipantLimit, setSavingParticipantLimit] = useState(false);
   const manualDesiredParticipantsRef = useRef<Record<string, Record<string, number>>>({});
   const manualDesiredParticipantsWriteChainsRef = useRef<Record<string, Promise<void>>>({});
   const [addingNewStage, setAddingNewStage] = useState(false);
@@ -582,7 +583,7 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
     setStageParticipantStatusCounts(getStageParticipantStatusCounts(allParticipants));
   }, [storageEngine, studyId]);
 
-  const persistStageChange = useCallback(async (operation: () => Promise<void>) => {
+  const persistStageChange = useCallback(async (operation: () => Promise<void>, reloadOnFailure = true) => {
     try {
       await operation();
       return true;
@@ -590,12 +591,14 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
       console.error('Failed to save stage settings:', error);
       showNotification({
         title: 'Stage settings not saved',
-        message: 'The latest stage change could not be saved. The stored settings have been restored.',
+        message: 'The latest stage change could not be saved. Please try again.',
         color: 'red',
       });
-      await refreshStageData().catch((refreshError) => {
-        console.error('Failed to restore stage settings:', refreshError);
-      });
+      if (reloadOnFailure) {
+        await refreshStageData().catch((refreshError) => {
+          console.error('Failed to restore stage settings:', refreshError);
+        });
+      }
       return false;
     }
   }, [refreshStageData]);
@@ -686,46 +689,51 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
     setEditingStageColor(DEFAULT_STAGE_COLOR);
   };
 
-  const handleSetParticipantLimitEnabled = async (stage: StageInfo, enabled: boolean) => {
-    if (!storageEngine) {
-      return;
+  const saveParticipantLimit = async (
+    stage: StageInfo,
+    updates: Pick<StageInfo, 'maxParticipants' | 'participantLimitEnabled'>,
+  ) => {
+    if (!storageEngine || savingParticipantLimit) {
+      return false;
     }
 
-    setEditingLimitEnabled(enabled);
+    setSavingParticipantLimit(true);
+    try {
+      // Keep the confirmed stage separate from the draft. A failed write must
+      // remain retryable even when an offline backend cannot be read again.
+      const saved = await persistStageChange(
+        () => storageEngine.updateStage(studyId, stage.stageName, updates),
+        false,
+      );
+      if (!saved) return false;
+      setAllStages((stages) => stages.map((existingStage) => (
+        existingStage.stageName === stage.stageName ? { ...existingStage, ...updates } : existingStage
+      )));
+      return true;
+    } finally {
+      setSavingParticipantLimit(false);
+    }
+  };
+
+  const handleSetParticipantLimitEnabled = async (stage: StageInfo, enabled: boolean) => {
     if (enabled) {
       const manualDesiredParticipants = getManualDesiredParticipants(stage);
       const initialMaximumParticipants = getParticipantAssignmentMode(stage) === 'manual'
         && manualDesiredParticipants
         ? Object.values(manualDesiredParticipants).reduce((total, count) => total + count, 0)
         : stage.maxParticipants ?? Math.max(betweenSubjectsCombinations.length, 1) * 10;
-      setEditingLimitMaxParticipants(initialMaximumParticipants);
-      setAllStages((stages) => stages.map((existingStage) => (
-        existingStage.stageName === stage.stageName
-          ? { ...existingStage, maxParticipants: initialMaximumParticipants, participantLimitEnabled: true }
-          : existingStage
-      )));
-      const saved = await persistStageChange(() => storageEngine.updateStage(
-        studyId,
-        stage.stageName,
-        { maxParticipants: initialMaximumParticipants, participantLimitEnabled: true },
-      ));
+      const saved = await saveParticipantLimit(stage, {
+        maxParticipants: initialMaximumParticipants, participantLimitEnabled: true,
+      });
       if (!saved) return;
-      await refreshStageData();
+      setEditingLimitMaxParticipants(initialMaximumParticipants);
+      setEditingLimitEnabled(true);
       return;
     }
 
-    setAllStages((stages) => stages.map((existingStage) => (
-      existingStage.stageName === stage.stageName
-        ? { ...existingStage, participantLimitEnabled: false }
-        : existingStage
-    )));
-    const saved = await persistStageChange(() => storageEngine.updateStage(
-      studyId,
-      stage.stageName,
-      { participantLimitEnabled: false },
-    ));
+    const saved = await saveParticipantLimit(stage, { participantLimitEnabled: false });
     if (!saved) return;
-    await refreshStageData();
+    setEditingLimitEnabled(false);
   };
 
   const handleCommitParticipantLimit = async (stage: StageInfo) => {
@@ -733,20 +741,7 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
       return;
     }
 
-    const updatedMaxParticipants = editingLimitMaxParticipants;
-    setAllStages((stages) => stages.map((existingStage) => (
-      existingStage.stageName === stage.stageName
-        ? { ...existingStage, maxParticipants: updatedMaxParticipants }
-        : existingStage
-    )));
-
-    const saved = await persistStageChange(() => storageEngine.updateStage(
-      studyId,
-      stage.stageName,
-      { maxParticipants: updatedMaxParticipants },
-    ));
-    if (!saved) return;
-    await refreshStageData();
+    await saveParticipantLimit(stage, { maxParticipants: editingLimitMaxParticipants });
   };
 
   const handleAddNewStage = () => {
@@ -929,7 +924,7 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
           </Text>
         </Stack>
         {!addingNewStage && (
-          <Button size="sm" onClick={handleAddNewStage}>
+          <Button size="sm" disabled={savingParticipantLimit} onClick={handleAddNewStage}>
             Add New Stage
           </Button>
         )}
@@ -1019,6 +1014,7 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
                     <Button
                       aria-label={`${currentStage.stageName === stage.stageName ? 'Active' : 'Inactive'} stage ${stage.stageName}`}
                       color={currentStage.stageName === stage.stageName ? 'green' : 'gray'}
+                      disabled={savingParticipantLimit}
                       onClick={() => handleStageStatusButtonClick(stage)}
                       size="compact-xs"
                       variant={currentStage.stageName === stage.stageName ? 'filled' : 'default'}
@@ -1205,6 +1201,7 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
                 <Switch
                   aria-label="Limit participants"
                   checked={editingLimitEnabled}
+                  disabled={savingParticipantLimit}
                   onChange={(event) => handleSetParticipantLimitEnabled(
                     selectedStage,
                     event.currentTarget.checked,
@@ -1223,7 +1220,7 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
                     { label: 'Evenly', value: 'even' },
                     { label: 'Manually', value: 'manual' },
                   ]}
-                  disabled={!editingLimitEnabled || selectedStage.maxParticipants === undefined}
+                  disabled={savingParticipantLimit || !editingLimitEnabled || selectedStage.maxParticipants === undefined}
                   onChange={(mode) => handleSetParticipantAssignmentMode(selectedStage, mode)}
                   size="sm"
                   value={participantAssignmentMode}
@@ -1236,7 +1233,7 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
                 <Group align="flex-end" gap="xs">
                   <NumberInput
                     aria-label={`Maximum participants for ${selectedStage.stageName}`}
-                    disabled={!editingLimitEnabled || (
+                    disabled={savingParticipantLimit || !editingLimitEnabled || (
                       participantAssignmentMode === 'manual'
                       && selectedStage.maxParticipants !== undefined
                     )}
@@ -1253,7 +1250,7 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
                   />
                   <Button
                     aria-label={`Save maximum participants for ${selectedStage.stageName}`}
-                    disabled={!editingLimitEnabled
+                    disabled={savingParticipantLimit || !editingLimitEnabled
                       || editingLimitMaxParticipants === ''
                       || editingLimitMaxParticipants === selectedStage.maxParticipants
                       || (
@@ -1283,7 +1280,7 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
                   participants={participants}
                   betweenSubjectsFactors={betweenSubjectsFactors}
                   combinations={betweenSubjectsCombinations}
-                  desiredParticipantsDisabled={!editingLimitEnabled || participantAssignmentMode === 'even'}
+                  desiredParticipantsDisabled={savingParticipantLimit || !editingLimitEnabled || participantAssignmentMode === 'even'}
                   onReviewInProgress={handleReviewInProgress}
                   onSetDesiredParticipants={handleSetDesiredParticipants}
                   onToggle={handleRequestConditionToggle}
