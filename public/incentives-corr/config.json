@@ -74,12 +74,7 @@
           "id": "test",
           "prompt": "",
           "required": true,
-          "type": "buttons",
-          "options": [
-            {"label": "A", "value": "left", "key": "arrowLeft"},
-            {"label": "B", "value": "right", "key": "arrowRight"}
-          ],
-          "hidden": true,
+          "type": "reactive",
           "location": "belowStimulus"
         }
       ],

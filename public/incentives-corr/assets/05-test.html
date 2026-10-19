@@ -11,10 +11,10 @@
       Revisit.onDataReceive((data) => {
         const r1 = Math.round(data.r1 * 100) / 100;
         const r2 = Math.round((data.r1 + data.delta)*100) / 100;
-        
+
         const randomize = Math.round(Math.random());
         const order = randomize ? ["r1", "r2"] : ["r2", "r1"];
-        
+
         correct = randomize ? 'right' : 'left'; // r2 > r1 always
         corrLeft = randomize ? r1 : r2;
         corrRight = randomize ? r2 : r1;
@@ -39,34 +39,42 @@
     </p>
     <div class="stimuliContainer">
       <div id="option-left" class="imgContainer">
-        <img id="stimuli-left"/>
-        <button id="buttonA-left">A</button>
+        <img id="stimuli-left" data-answer="left" alt="Visualization A"/>
+        <button id="button-left" data-answer="left">A</button>
       </div>
       <div id="option-right" class="imgContainer">
-        <img id="stimuli-right"/>
-        <button id="button-right">B</button>
+        <img id="stimuli-right" data-answer="right" alt="Visualization B"/>
+        <button id="button-right" data-answer="right">B</button>
       </div>
     </div>
+    <p id="feedback" role="status" style="text-align: center; font-weight: bold;"></p>
   </body>
 
   <script>
-    const buttons = document.querySelector("button")
+    let answered = false;
 
-    document.addEventListener('click', (e) => {
-      const selected = e.target.id.split("-")[1];
-      const isCorrect = selected == correct;
+    function respond(selected) {
+      if (answered || !correct) return;
+      answered = true;
+      const isCorrect = selected === correct;
+      const feedback = document.getElementById("feedback");
+      feedback.textContent = isCorrect ? "Correct" : "Incorrect";
+      feedback.style.color = isCorrect ? "green" : "red";
+      document.querySelectorAll("button").forEach((button) => { button.disabled = true; });
+      Revisit.postAnswers({ test: isCorrect, selected, correct: isCorrect, corrLeft: corrLeft, corrRight: corrRight });
+    }
 
-      Revisit.postAnswers({ "selected": selected, "correct": isCorrect, "corrLeft": corrLeft, "corrRight":  corrRight});
-    })
+    document.addEventListener("click", (event) => {
+      const option = event.target.closest("[data-answer]");
+      if (option) respond(option.dataset.answer);
+    });
 
-    document.addEventListener('keydown', (e) => {
-      const selected = e.key.split("Arrow")[1].toLowerCase();
-      const isCorrect = selected == correct;
-
-      console.log(selected, isCorrect);
-
-      Revisit.postAnswers({ "selected": selected, "correct": isCorrect, "corrLeft": corrLeft, "corrRight":  corrRight});
-    })
+    document.addEventListener("keydown", (event) => {
+      if (event.repeat || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return;
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      event.preventDefault();
+      respond(event.key === "ArrowLeft" ? "left" : "right");
+    });
   </script>
 
   <style>
@@ -94,7 +102,7 @@
       padding: 4px 18px;
       margin: auto;
     }
-    
+
     button:focus,
     button:hover,
     button:active {

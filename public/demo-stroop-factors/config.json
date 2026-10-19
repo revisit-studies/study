@@ -5,7 +5,7 @@
     "version": "pilot",
     "authors": ["The reVISit Team"],
     "date": "2026-08-20",
-    "description": "A ten-color Stroop test that crosses one reusable color factor with itself and subtracts congruent pairs.",
+    "description": "A Markdown Stroop test with 25 word/ink-color pairs from a five-level color factor and font size assigned between participants.",
     "organizations": ["University of Utah", "WPI", "University of Toronto"]
   },
   "uiConfig": {
@@ -36,13 +36,12 @@
     "stroopTrial": {
       "type": "markdown",
       "path": "demo-stroop-factors/assets/trial.md",
-      "stylesheetPath": "demo-stroop-factors/assets/css/trial.css",
       "nextButtonLocation": "belowStimulus",
       "response": [
         {
           "id": "response",
           "prompt": "Report the word's ink color, not the color named by the word. Use the buttons or the corresponding number key.",
-          "secondaryText": "Keyboard shortcuts: 1-9 and 0",
+          "secondaryText": "Keyboard shortcuts: 1-5",
           "type": "buttons",
           "options": [
             {"label": "1. RED", "value": "RED", "key": "1"},

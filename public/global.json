@@ -125,6 +125,7 @@
       "path": "demo-stroop-factors/config.json"
     },
     "demo-stroop-html-factors": {
+      "tab": "Factor-demos",
       "path": "demo-stroop-html-factors/config.json"
     },
     "demo-max-study2": {

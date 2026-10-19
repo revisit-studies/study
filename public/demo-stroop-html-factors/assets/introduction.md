@@ -1,6 +1,6 @@
 # Stroop Test with Factors
 
-This example uses reVISit's factors syntax to generate a complete incongruent Stroop design from one ten-level `color` factor. Referencing `color` twice in `cross` creates all 100 ordered pairs, while `as` exposes their generated parameters as `word` and `inkColor`. A `subtract` expression then removes the ten congruent pairs produced by `zip`, leaving 90 trials that are shown in a random order.
+This HTML example crosses a ten-level `color` factor with a two-level `congruence` factor to generate 20 trials in random order. Each color word appears once with matching ink (`neutral`) and once with a randomly selected different ink color (`incongruent`). The HTML stimulus receives these factor values as parameters and renders the word and ink color.
 
 On every trial, report the **ink color** of the displayed word while ignoring what the word says. Respond with the on-screen buttons or their corresponding number keys.
 

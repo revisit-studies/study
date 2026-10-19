@@ -5,7 +5,7 @@
     "version": "pilot",
     "authors": ["The reVISit Team"],
     "date": "2026-08-20",
-    "description": "A ten-color Stroop test that crosses one reusable color factor with itself and subtracts congruent pairs.",
+    "description": "An HTML Stroop test that crosses ten color words with two congruence levels to generate 20 trials.",
     "organizations": ["University of Utah", "WPI", "University of Toronto"]
   },
   "uiConfig": {
@@ -37,16 +37,16 @@
           "secondaryText": "Keyboard shortcuts: 1-9 and 0",
           "type": "buttons",
           "options": [
-            "1. RED",
-            "2. ORANGE",
-            "3. YELLOW",
-            "4. GREEN",
-            "5. BLUE",
-            "6. PURPLE",
-            "7. PINK",
-            "8. BROWN",
-            "9. GRAY",
-            "0. BLACK"
+            {"label": "1. RED", "value": "RED", "key": "1"},
+            {"label": "2. ORANGE", "value": "ORANGE", "key": "2"},
+            {"label": "3. YELLOW", "value": "YELLOW", "key": "3"},
+            {"label": "4. GREEN", "value": "GREEN", "key": "4"},
+            {"label": "5. BLUE", "value": "BLUE", "key": "5"},
+            {"label": "6. PURPLE", "value": "PURPLE", "key": "6"},
+            {"label": "7. PINK", "value": "PINK", "key": "7"},
+            {"label": "8. BROWN", "value": "BROWN", "key": "8"},
+            {"label": "9. GRAY", "value": "GRAY", "key": "9"},
+            {"label": "0. BLACK", "value": "BLACK", "key": "0"}
           ],
           "location": "belowStimulus",
           "required": true

@@ -2899,7 +2899,7 @@ describe('Parser Warnings', () => {
   });
 
   test('keeps Zach\'s factor demo valid', async () => {
-    const config = readFileSync('public/demo-factors/config.json', 'utf8');
+    const config = readFileSync('public/test-factors/config.json', 'utf8');
     const result = await parseStudyConfig(config);
 
     expect(result.errors).toEqual([]);
@@ -2911,6 +2911,24 @@ describe('Parser Warnings', () => {
     const generatedComponents = Object.values(result.components);
 
     expect(result.errors).toEqual([]);
+    generatedComponents.filter((component) => (
+      'parameters' in component && component.parameters?.taskid === 'test'
+    )).forEach((component) => {
+      expect(component).toMatchObject({
+        type: 'website',
+        response: [{ id: 'test', type: 'reactive' }],
+        correctAnswer: [{ id: 'test', answer: true }],
+      });
+    });
+    generatedComponents.filter((component) => (
+      'parameters' in component && component.parameters?.r1Training !== undefined
+    )).forEach((component) => {
+      expect(component).toMatchObject({
+        type: 'website',
+        response: [{ id: 'training', type: 'reactive' }],
+        correctAnswer: [{ id: 'training', answer: true }],
+      });
+    });
     expect(generatedComponents.filter((component) => (
       'parameters' in component && component.parameters?.taskid === 'test'
     ))).toHaveLength(65);
@@ -2968,7 +2986,7 @@ describe('Parser Warnings', () => {
       ))).toHaveLength(65);
       expect(sequenceComponents.filter((component) => (
         'parameters' in component && component.parameters?.taskid === 'attention'
-      ))).toHaveLength(5);
+      ))).toHaveLength(0);
       expect(sequenceComponents.filter((component) => (
         'parameters' in component && component.parameters?.r1Training !== undefined
       ))).toHaveLength(9);

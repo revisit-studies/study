@@ -19,7 +19,7 @@
   "baseComponents": {
     "factorTemplate": {
       "type": "markdown",
-      "path": "demo-markdown-factors/assets/factor-template.md",
+      "path": "test-markdown-factors/assets/factor-template.md",
       "response": []
     }
   },

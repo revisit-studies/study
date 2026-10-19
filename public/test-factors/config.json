@@ -16,7 +16,7 @@
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
-    "helpTextPath": "demo-factors/assets/help.md",
+    "helpTextPath": "test-factors/assets/help.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
@@ -26,12 +26,12 @@
   "baseComponents": {
     "factorComponent": {
       "type": "react-component",
-      "path": "demo-factors/assets/Factors.tsx",
+      "path": "test-factors/assets/Factors.tsx",
       "response": []
     },
     "factorKeywordComponent": {
       "type": "react-component",
-      "path": "demo-factors/assets/Factors.tsx",
+      "path": "test-factors/assets/Factors.tsx",
       "parameters": {
         "templateLabel": "{{data}} shown as {{visType}} for {{task}}",
         "literalEmail": "contact@revisit.dev"
@@ -40,7 +40,7 @@
     },
     "nestedFactorKeywordComponent": {
       "type": "react-component",
-      "path": "demo-factors/assets/Factors.tsx",
+      "path": "test-factors/assets/Factors.tsx",
       "parameters": {
         "nestedTemplateLabel": "{{zipBlock}} includes {{data}} and {{visType}} for {{task}}"
       },
@@ -50,7 +50,7 @@
   "components": {
     "Ok_googleTutorial": {
       "type": "markdown",
-      "path": "demo-factors/assets/ok-google-tutorial-{{ageGroup}}.md",
+      "path": "test-factors/assets/ok-google-tutorial-{{ageGroup}}.md",
       "response": []
     }
   },
