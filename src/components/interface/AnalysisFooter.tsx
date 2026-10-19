@@ -1,4 +1,4 @@
-import { useParams } from 'react-router';
+import { useParams, useSearchParams } from 'react-router';
 
 import { useCallback } from 'react';
 import { useAsync } from '../../store/hooks/useAsync';
@@ -22,6 +22,8 @@ export function AnalysisFooter({ setHasAudio }: {setHasAudio: (b: boolean) => vo
   const { value: allParticipants } = useAsync(getAllParticipantsNames, [storageEngine]);
 
   const identifier = useCurrentIdentifier();
+  const [searchParams] = useSearchParams();
+  const participantId = searchParams.get('participantId') || '';
 
   const storeDispatch = useStoreDispatch();
 
@@ -35,6 +37,6 @@ export function AnalysisFooter({ setHasAudio }: {setHasAudio: (b: boolean) => vo
   const saveProvenance = useCallback((prov: any) => storeDispatch(saveAnalysisState(prov)), [storeDispatch, saveAnalysisState]);
 
   return (
-    <ThinkAloudFooter storageEngine={storageEngine} setHasAudio={setHasAudio} studyId={studyId || ''} currentTrial={identifier} isReplay visibleParticipants={allParticipants || []} rawTranscript={null} currentShownTranscription={null} width={3000} onTimeUpdate={() => {}} saveProvenance={saveProvenance} />
+    <ThinkAloudFooter key={`${participantId}-${identifier}`} storageEngine={storageEngine} setHasAudio={setHasAudio} studyId={studyId || ''} currentTrial={identifier} isReplay visibleParticipants={allParticipants || []} rawTranscript={null} currentShownTranscription={null} width={3000} onTimeUpdate={() => {}} saveProvenance={saveProvenance} />
   );
 }

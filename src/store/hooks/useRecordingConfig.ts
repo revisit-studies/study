@@ -1,40 +1,92 @@
 import { useMemo } from 'react';
 import { useStudyConfig } from './useStudyConfig';
-import { useFlatSequence } from '../store';
 import { useCurrentComponent } from '../../routes/utils';
+import { useStoreSelector } from '../store';
+import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
+import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
+import { getStudyRecordings } from '../../utils/useStudyRecordings';
+import type { Sequence } from '../types';
+
+function getAssignedComponentNames(
+  participantSequence: Sequence,
+  funcSequence: Record<string, string[]>,
+) {
+  const componentNames = new Set(getSequenceFlatMap(participantSequence));
+
+  const collectDynamicComponents = (sequence: Sequence) => {
+    sequence.components.forEach((component) => {
+      if (typeof component === 'string') {
+        return;
+      }
+
+      if (component.order === 'dynamic') {
+        if (component.id) {
+          funcSequence[component.id]?.forEach((componentName) => componentNames.add(componentName));
+        }
+        return;
+      }
+
+      collectDynamicComponents(component);
+    });
+  };
+
+  collectDynamicComponents(participantSequence);
+  return Array.from(componentNames);
+}
 
 export function useRecordingConfig() {
   const studyConfig = useStudyConfig();
-  const participantSequence = useFlatSequence();
+  const participantSequence = useStoreSelector((state) => state.sequence);
+  const funcSequence = useStoreSelector((state) => state.funcSequence);
   const currentComponent = useCurrentComponent();
   const stepConfig = studyConfig.components[currentComponent];
+  const resolvedStepConfig = stepConfig
+    ? studyComponentToIndividualComponent(stepConfig, studyConfig)
+    : undefined;
 
-  const { recordScreen, recordAudio, clickToRecord } = studyConfig.uiConfig;
+  const {
+    recordScreen,
+    recordAudio,
+    recordWebcam,
+    clickToRecord,
+  } = studyConfig.uiConfig;
 
-  const studyHasScreenRecording = useMemo(() => (recordScreen || participantSequence.some((comp) => studyConfig.components[comp]?.recordScreen)), [participantSequence, studyConfig, recordScreen]);
-
-  const studyHasAudioRecording = useMemo(() => (recordAudio || participantSequence.some((comp) => studyConfig.components[comp]?.recordAudio)), [participantSequence, studyConfig, recordAudio]);
+  const {
+    hasAudioRecording: studyHasAudioRecording,
+    hasScreenRecording: studyHasScreenRecording,
+    hasWebcamRecording: studyHasWebcamRecording,
+  } = useMemo(() => getStudyRecordings(
+    studyConfig,
+    getAssignedComponentNames(participantSequence, funcSequence),
+  ), [funcSequence, participantSequence, studyConfig]);
 
   const currentComponentHasScreenRecording = useMemo(
-    () => stepConfig?.recordScreen ?? !!recordScreen,
-    [recordScreen, stepConfig],
+    () => resolvedStepConfig?.recordScreen ?? !!recordScreen,
+    [recordScreen, resolvedStepConfig],
   );
 
   const currentComponentHasAudioRecording = useMemo(
-    () => stepConfig?.recordAudio ?? !!recordAudio,
-    [recordAudio, stepConfig],
+    () => resolvedStepConfig?.recordAudio ?? !!recordAudio,
+    [recordAudio, resolvedStepConfig],
+  );
+
+  const currentComponentHasWebcamRecording = useMemo(
+    () => resolvedStepConfig?.recordWebcam ?? !!recordWebcam,
+    [recordWebcam, resolvedStepConfig],
   );
 
   const currentComponentHasClickToRecord = useMemo(
-    () => stepConfig?.clickToRecord ?? !!clickToRecord,
-    [clickToRecord, stepConfig],
+    () => resolvedStepConfig?.clickToRecord ?? !!clickToRecord,
+    [clickToRecord, resolvedStepConfig],
   );
 
   return {
     studyHasAudioRecording,
     studyHasScreenRecording,
+    studyHasWebcamRecording,
     currentComponentHasAudioRecording,
     currentComponentHasScreenRecording,
+    currentComponentHasWebcamRecording,
     currentComponentHasClickToRecord,
   };
 }

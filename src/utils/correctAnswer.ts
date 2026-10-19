@@ -1,7 +1,43 @@
 import isEqual from 'lodash.isequal';
 import {
-  Answer, IndividualComponent, Response, StoredAnswer,
+  Answer, Response, StoredAnswer, ValueCondition,
 } from '../parser/types';
+
+/** Compare values without converting strings to numbers. */
+export function compareResponseValues(
+  value: unknown,
+  expected: unknown,
+  comparison: ValueCondition['comparison'],
+  options: { ignoreArrayOrder?: boolean } = {},
+): boolean {
+  if (comparison === 'equals' || comparison === 'doesNotEqual') {
+    const equal = Array.isArray(value) && Array.isArray(expected) && options.ignoreArrayOrder
+      ? isEqual([...value].sort(), [...expected].sort())
+      : isEqual(value, expected);
+    return comparison === 'equals' ? equal : !equal;
+  }
+
+  if (comparison === 'contains' || comparison === 'doesNotContain' || comparison === 'matchesRegex') {
+    if (typeof value !== 'string' || typeof expected !== 'string') return false;
+    if (comparison === 'contains') return value.includes(expected);
+    if (comparison === 'doesNotContain') return !value.includes(expected);
+    try {
+      return new RegExp(expected).test(value);
+    } catch {
+      return false;
+    }
+  }
+
+  if (typeof value !== 'number' || typeof expected !== 'number'
+    || !Number.isFinite(value) || !Number.isFinite(expected)) return false;
+  switch (comparison) {
+    case 'lessThan': return value < expected;
+    case 'lessThanOrEqual': return value <= expected;
+    case 'greaterThan': return value > expected;
+    case 'greaterThanOrEqual': return value >= expected;
+    default: return false;
+  }
+}
 
 export function shouldIgnoreArrayOrder(response?: Response) {
   return response?.type === 'checkbox' || response?.type === 'dropdown';
@@ -13,7 +49,7 @@ export function responseAnswerIsCorrect(
   acceptableLow?: number,
   acceptableHigh?: number,
   options: { ignoreArrayOrder?: boolean } = {},
-) {
+): boolean {
   // Handle numeric-string comparison for likert and slider responses
   if ((typeof responseUserAnswer === 'number' || typeof responseUserAnswer === 'string')
     && (typeof responseCorrectAnswer === 'string' || typeof responseCorrectAnswer === 'number')) {
@@ -32,16 +68,11 @@ export function responseAnswerIsCorrect(
     return String(responseUserAnswer) === String(responseCorrectAnswer) || Number(responseUserAnswer) === Number(responseCorrectAnswer);
   }
 
-  // Ignore order for checkbox answers by sorting
+  // Checkbox and dropdown answers ignore selection order; ranking answers do not.
   if (Array.isArray(responseUserAnswer) && Array.isArray(responseCorrectAnswer)) {
-    if (!(options.ignoreArrayOrder ?? true)) {
-      return isEqual(responseUserAnswer, responseCorrectAnswer);
-    }
-
-    if (responseUserAnswer.length !== responseCorrectAnswer.length) return false;
-    const sortedUserAnswer = [...responseUserAnswer].sort();
-    const sortedCorrectAnswer = [...responseCorrectAnswer].sort();
-    return isEqual(sortedUserAnswer, sortedCorrectAnswer);
+    return compareResponseValues(responseUserAnswer, responseCorrectAnswer, 'equals', {
+      ignoreArrayOrder: options.ignoreArrayOrder ?? true,
+    });
   }
 
   // Handle array of object (e.g. matrix-radio and matrix-checkbox)
@@ -69,60 +100,5 @@ export function responseAnswerIsCorrect(
     return userAnswerArray.every((val, idx) => String(val) === String(responseCorrectAnswer[idx]));
   }
 
-  return isEqual(responseUserAnswer, responseCorrectAnswer);
-}
-
-export function componentAnswersAreCorrect(
-  componentUserAnswers: StoredAnswer['answer'],
-  componentCorrectAnswers: IndividualComponent['correctAnswer'],
-  responses?: Response[],
-) {
-  let allCorrect = true;
-  const responsesById = new Map((responses || []).map((response) => [response.id, response]));
-
-  (componentCorrectAnswers || []).forEach((correctAnswer) => {
-    const userAnswer = componentUserAnswers[correctAnswer.id];
-    const response = responsesById.get(correctAnswer.id);
-
-    if (
-      userAnswer === undefined
-      || !responseAnswerIsCorrect(
-        userAnswer,
-        correctAnswer.answer,
-        correctAnswer.acceptableLow,
-        correctAnswer.acceptableHigh,
-        { ignoreArrayOrder: shouldIgnoreArrayOrder(response) },
-      )
-    ) {
-      allCorrect = false;
-    }
-  });
-
-  return allCorrect;
-}
-
-export type ComponentAnswerStatus = 'correct' | 'incorrect' | 'unknown';
-
-export function getComponentAnswerStatus(
-  componentAnswer: StoredAnswer | undefined,
-  componentCorrectAnswers: IndividualComponent['correctAnswer'],
-  responses?: Response[],
-): ComponentAnswerStatus | null {
-  if (
-    !componentAnswer
-    || componentAnswer.endTime < 0
-    || Object.keys(componentAnswer.answer).length === 0
-  ) {
-    return null;
-  }
-
-  if (!componentCorrectAnswers?.length) {
-    return 'unknown';
-  }
-
-  return componentAnswersAreCorrect(
-    componentAnswer.answer,
-    componentCorrectAnswers,
-    responses,
-  ) ? 'correct' : 'incorrect';
+  return compareResponseValues(responseUserAnswer, responseCorrectAnswer, 'equals');
 }

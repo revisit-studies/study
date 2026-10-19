@@ -64,6 +64,12 @@ export class LocalStorageEngine extends StorageEngine {
     return Object.values(sequenceAssignments).sort((a, b) => a.timestamp - b.timestamp);
   }
 
+  public async getSequenceAssignment(studyId: string, participantId: string) {
+    const key = `${this.collectionPrefix}${studyId}/sequenceAssignment`;
+    const assignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(key);
+    return assignments?.[participantId] ?? null;
+  }
+
   protected async _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment) {
     await this.verifyStudyDatabase();
     if (this.studyId === undefined) {
@@ -231,6 +237,17 @@ export class LocalStorageEngine extends StorageEngine {
     return defaults;
   }
 
+  async initializeModesFrom(studyId: string, modes: Awaited<ReturnType<StorageEngine['getModes']>>) {
+    const key = `${this.collectionPrefix}${studyId}/modes`;
+    if (!await this.studyDatabase.getItem(key)) {
+      await this.studyDatabase.setItem(key, modes);
+    }
+  }
+
+  async hasStoredModes(studyId: string) {
+    return Boolean(await this.studyDatabase.getItem(`${this.collectionPrefix}${studyId}/modes`));
+  }
+
   async setMode(studyId: string, mode: REVISIT_MODE, value: boolean) {
     const key = `${this.collectionPrefix}${studyId}/modes`;
 
@@ -248,6 +265,16 @@ export class LocalStorageEngine extends StorageEngine {
   protected async _setModesDocument(studyId: string, modesDocument: Record<string, unknown>): Promise<void> {
     const key = `${this.collectionPrefix}${studyId}/modes`;
     await this.studyDatabase.setItem(key, modesDocument);
+  }
+
+  async getStudyHiddenFromLandingPage(studyId: string): Promise<boolean> {
+    const key = `${this.collectionPrefix}${studyId}/hideStudyFromLandingPage`;
+    return await this.studyDatabase.getItem<boolean>(key) === true;
+  }
+
+  async setStudyHiddenFromLandingPage(studyId: string, hidden: boolean): Promise<void> {
+    const key = `${this.collectionPrefix}${studyId}/hideStudyFromLandingPage`;
+    await this.studyDatabase.setItem(key, hidden);
   }
 
   protected async _getAudioUrl(task: string, participantId?: string) {
@@ -272,6 +299,18 @@ export class LocalStorageEngine extends StorageEngine {
       throw new Error(`ScreenRecording for task ${task} and participant ${participantId || this.currentParticipantId} not found`);
     }
     return URL.createObjectURL(screenRecordingBlob);
+  }
+
+  protected async _getWebcamRecordingUrl(task: string, participantId?: string) {
+    await this.verifyStudyDatabase();
+    if (this.studyId === undefined) {
+      throw new Error('Study ID is not set');
+    }
+    const webcamRecordingBlob = await this._getFromStorage(`webcamRecording/${participantId || this.currentParticipantId}`, task);
+    if (!webcamRecordingBlob) {
+      throw new Error(`WebcamRecording for task ${task} and participant ${participantId || this.currentParticipantId} not found`);
+    }
+    return URL.createObjectURL(webcamRecordingBlob);
   }
 
   protected async _testingReset(studyId: string) {
@@ -301,7 +340,7 @@ export class LocalStorageEngine extends StorageEngine {
     const keys = await this.studyDatabase.keys();
     const sourceKeys = keys.filter((key) => key.startsWith(source));
     const copyPromises = sourceKeys.map(async (key) => {
-      if (key.endsWith('/snapshots') || key.endsWith('modes') || key.endsWith('configHash') || key.endsWith('currentParticipantId')) {
+      if (key.endsWith('/snapshots') || key.endsWith('modes') || key.endsWith('configHash') || key.endsWith('currentParticipantId') || key.endsWith('/hideStudyFromLandingPage')) {
         // Skip copying the snapshots file
         return;
       }
@@ -314,7 +353,7 @@ export class LocalStorageEngine extends StorageEngine {
 
   protected async _deleteDirectory(path: string) {
     const keys = await this.studyDatabase.keys();
-    const targetKeys = keys.filter((key) => key.startsWith(path) && !key.includes('snapshots'));
+    const targetKeys = keys.filter((key) => key.startsWith(path) && !key.includes('snapshots') && !key.endsWith('/hideStudyFromLandingPage'));
     const deletePromises = targetKeys.map((key) => this.studyDatabase.removeItem(key));
     await Promise.all(deletePromises);
   }

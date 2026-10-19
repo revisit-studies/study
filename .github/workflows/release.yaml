@@ -15,7 +15,7 @@ jobs:
           [[ "${{ github.event.pull_request.title }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
         shell: bash
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
         with:
           token: ${{ secrets.PAT }}
 
@@ -33,7 +33,7 @@ jobs:
           git tag -a ${{ github.event.pull_request.title }} -m "Release version ${{ github.event.pull_request.title }}"
           git push --follow-tags
 
-      - uses: peter-evans/repository-dispatch@v2
+      - uses: peter-evans/repository-dispatch@v4
         name: Build documentation in revisit.dev if repo is in revisit-studies
         if: ${{ github.repository_owner == 'revisit-studies' }}
         with:
@@ -41,7 +41,7 @@ jobs:
           repository: revisit-studies/reVISit-studies.github.io
           event-type: study_repo_publish
 
-      - uses: peter-evans/repository-dispatch@v2
+      - uses: peter-evans/repository-dispatch@v4
         name: Build documentation in revisit.dev if repo is in revisit-studies
         if: ${{ github.repository_owner == 'revisit-studies' }}
         with:
@@ -49,7 +49,7 @@ jobs:
           repository: revisit-studies/revisitpy
           event-type: study_repo_publish
 
-      - uses: peter-evans/repository-dispatch@v2
+      - uses: peter-evans/repository-dispatch@v4
         name: Build documentation in revisit.dev if repo is in revisit-studies
         if: ${{ github.repository_owner == 'revisit-studies' }}
         with:

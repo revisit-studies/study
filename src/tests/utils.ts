@@ -65,6 +65,8 @@ class TestStorageEngine extends StorageEngine {
 
   protected _getSequenceAssignment = vi.fn(async () => null);
 
+  public getSequenceAssignment = vi.fn(async () => null);
+
   protected _updateSequenceAssignmentFields = vi.fn(async () => { });
 
   protected _completeCurrentParticipantRealtime = vi.fn(async () => { });
@@ -80,6 +82,8 @@ class TestStorageEngine extends StorageEngine {
   protected _getAudioUrl = vi.fn(async () => null);
 
   protected _getScreenRecordingUrl = vi.fn(async () => null);
+
+  protected _getWebcamRecordingUrl = vi.fn(async () => null);
 
   protected _testingReset = vi.fn(async () => { });
 
@@ -112,6 +116,10 @@ class TestStorageEngine extends StorageEngine {
 
   setMode = vi.fn(async () => { });
 
+  getStudyHiddenFromLandingPage = vi.fn(async () => false);
+
+  setStudyHiddenFromLandingPage = vi.fn(async () => { });
+
   getSnapshots = vi.fn(async () => ({}));
 
   addParticipantTags = vi.fn(async () => { });
@@ -121,6 +129,8 @@ class TestStorageEngine extends StorageEngine {
   getTranscriptUrl = vi.fn(async () => null);
 
   getScreenRecording = vi.fn(async () => null);
+
+  getWebcamRecording = vi.fn(async () => null);
 
   saveAnswers = vi.fn(async () => { });
 

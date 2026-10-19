@@ -10,7 +10,7 @@ import { ParticipantData } from '../../../storage/types';
 import { SingleTaskLabelLines } from './SingleTaskLabelLines';
 import { SingleTask } from './SingleTask';
 import { StoredAnswer, StudyConfig } from '../../../parser/types';
-import { getComponentAnswerStatus } from '../../../utils/correctAnswer';
+import { getComponentAnswerStatus } from '../../../utils/componentCorrectness';
 import { parseConditionParam } from '../../../utils/handleConditionLogic';
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 import {
@@ -211,12 +211,13 @@ export function AllTasksTimeline({
       const resolvedComponent = component && studyConfig
         ? studyComponentToIndividualComponent(component, studyConfig)
         : undefined;
-      const correctAnswers = answer.correctAnswer.length > 0
+      const correctAnswers = answer.correctAnswer?.length
         ? answer.correctAnswer
         : resolvedComponent?.correctAnswer;
       const answerStatus = getComponentAnswerStatus(answer, correctAnswers, resolvedComponent?.response);
       const hasAudio = resolvedComponent?.recordAudio ?? studyConfig?.uiConfig?.recordAudio ?? false;
       const hasScreenRecording = resolvedComponent?.recordScreen ?? studyConfig?.uiConfig?.recordScreen ?? false;
+      const hasWebcamRecording = resolvedComponent?.recordWebcam ?? studyConfig?.uiConfig?.recordWebcam ?? false;
 
       return {
         identifier,
@@ -246,7 +247,7 @@ export function AllTasksTimeline({
             )}
           >
             <g>
-              <SingleTask incomplete={answer.startTime === 0} answerStatus={answerStatus} hasAudio={hasAudio} hasScreenRecording={hasScreenRecording} key={identifier} labelHeight={currentHeight * LABEL_GAP} height={maxHeight} identifier={identifier} xScale={scale} scaleStart={scaleStart} scaleEnd={scaleEnd} trialOrder={answer.trialOrder} participantId={participantData.participantId} studyId={studyId} condition={conditionParam} isHovered={hoveredTaskIdentifier === identifier} isDimmed={hoveredTaskIdentifier !== null && hoveredTaskIdentifier !== identifier} onHover={() => setHoveredTaskIdentifier(identifier)} onHoverEnd={() => setHoveredTaskIdentifier(null)} />
+              <SingleTask incomplete={answer.startTime === 0} answerStatus={answerStatus} hasAudio={hasAudio} hasScreenRecording={hasScreenRecording} hasWebcamRecording={hasWebcamRecording} key={identifier} labelHeight={currentHeight * LABEL_GAP} height={maxHeight} identifier={identifier} xScale={scale} scaleStart={scaleStart} scaleEnd={scaleEnd} trialOrder={answer.trialOrder} participantId={participantData.participantId} studyId={studyId} condition={conditionParam} isHovered={hoveredTaskIdentifier === identifier} isDimmed={hoveredTaskIdentifier !== null && hoveredTaskIdentifier !== identifier} onHover={() => setHoveredTaskIdentifier(identifier)} onHoverEnd={() => setHoveredTaskIdentifier(null)} />
             </g>
           </Tooltip>),
       };
@@ -321,10 +322,10 @@ export function AllTasksTimeline({
           return (
             <Tooltip withinPortal key={`${gap.startTime}-${gap.endTime}`} label={label}>
               <g data-testid="timeline-gap-break" aria-label={label}>
-                <rect x={gap.startX} width={gap.endX - gap.startX} y={maxHeight - 25} height={25} fill="var(--mantine-color-orange-1)" />
-                <line x1={gap.startX} x2={gap.startX} y1={maxHeight - 25} y2={maxHeight} stroke="var(--mantine-color-orange-7)" strokeDasharray="3 2" />
-                <line x1={gap.endX} x2={gap.endX} y1={maxHeight - 25} y2={maxHeight} stroke="var(--mantine-color-orange-7)" strokeDasharray="3 2" />
-                <text x={midpoint} y={maxHeight - 12.5} textAnchor="middle" dominantBaseline="middle" fontSize={12} fontWeight={700} fill="var(--mantine-color-orange-9)">&#47;&#47;</text>
+                <rect x={gap.startX} width={gap.endX - gap.startX} y={maxHeight - 25} height={25} fill="var(--mantine-color-orange-light)" />
+                <line x1={gap.startX} x2={gap.startX} y1={maxHeight - 25} y2={maxHeight} stroke="var(--mantine-color-orange-outline)" strokeDasharray="3 2" />
+                <line x1={gap.endX} x2={gap.endX} y1={maxHeight - 25} y2={maxHeight} stroke="var(--mantine-color-orange-outline)" strokeDasharray="3 2" />
+                <text x={midpoint} y={maxHeight - 12.5} textAnchor="middle" dominantBaseline="middle" fontSize={12} fontWeight={700} fill="var(--mantine-color-orange-light-color)">&#47;&#47;</text>
               </g>
             </Tooltip>
           );

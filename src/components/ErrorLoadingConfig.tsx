@@ -221,7 +221,7 @@ export function ErrorLoadingConfig({
       <UnstyledButton onClick={() => setIsOpen((open) => !open)} style={{ width: '100%' }}>
         <Group justify="space-between">
           <Group gap="xs">
-            <IconAlertTriangle size={16} color={badgeColor} />
+            <IconAlertTriangle size={16} color={`var(--mantine-color-${badgeColor}-text)`} />
             <Text size="md" fw="bold" c={badgeColor}>{title}</Text>
           </Group>
           <Group gap="xs">
@@ -240,7 +240,7 @@ export function ErrorLoadingConfig({
       <Text size="sm" c="dimmed">
         {headerText}
       </Text>
-      <Collapse in={isOpen}>
+      <Collapse expanded={isOpen}>
         <Stack gap="md" mt="xs">
           {groupIssuesByCategory().map(({ category, entries }, idx, arr) => {
             const categoryCount = entries.reduce((sum, e) => sum + e.issues.length, 0);

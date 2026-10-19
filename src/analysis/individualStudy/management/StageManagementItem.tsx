@@ -211,7 +211,7 @@ export function StageManagementItem({ studyId }: { studyId: string }) {
                         width: 20,
                         height: 20,
                         backgroundColor: stage.color,
-                        border: '1px solid #dee2e6',
+                        border: '1px solid var(--mantine-color-default-border)',
                         borderRadius: 4,
                       }}
                     />
@@ -253,7 +253,7 @@ export function StageManagementItem({ studyId }: { studyId: string }) {
           ))}
 
           {addingNewStage && (
-            <Table.Tr style={{ backgroundColor: '#f8f9fa' }}>
+            <Table.Tr style={{ backgroundColor: 'light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-5))' }}>
               <Table.Td />
               <Table.Td>
                 <TextInput

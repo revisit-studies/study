@@ -4,7 +4,14 @@
   const queryString = window.location.search;
   const urlParams = new URLSearchParams(queryString);
 
-  const id = urlParams.get("id");
+  // Templated websites are rendered from their compiled contents rather than from their URL,
+  // so they have no query string; reVISit injects the same values on window.__REVISIT_PARAMS__.
+  const injectedParams =
+    window.__REVISIT_PARAMS__ && typeof window.__REVISIT_PARAMS__ === "object"
+      ? window.__REVISIT_PARAMS__
+      : {};
+
+  const id = urlParams.get("id") || injectedParams.id || null;
 
   const sendMessage = (tag, message) => {
     window.parent.postMessage(

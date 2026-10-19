@@ -30,7 +30,7 @@ import {
   updateDoc,
   writeBatch,
 } from 'firebase/firestore';
-import { ReCaptchaV3Provider, initializeAppCheck } from '@firebase/app-check';
+import { ReCaptchaV3Provider, ReCaptchaEnterpriseProvider, initializeAppCheck } from '@firebase/app-check';
 import {
   browserPopupRedirectResolver, getAuth, GoogleAuthProvider, onAuthStateChanged, signInAnonymously, signInWithPopup, signOut,
 } from '@firebase/auth';
@@ -49,8 +49,6 @@ import { EditedText, TaglessEditedText } from '../../analysis/individualStudy/th
 import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
 
 export class FirebaseStorageEngine extends CloudStorageEngine {
-  private RECAPTCHAV3TOKEN = import.meta.env.VITE_RECAPTCHAV3TOKEN;
-
   private firestore: Firestore;
 
   private studyCollection: CollectionReference<DocumentData, DocumentData>;
@@ -66,7 +64,19 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
 
     const firebaseConfig = hjsonParse(import.meta.env.VITE_FIREBASE_CONFIG);
     const firebaseApp = initializeApp(firebaseConfig);
-    this.firestore = initializeFirestore(firebaseApp, {});
+    // Force long-polling instead of letting the SDK auto-detect the transport.
+    // By default the WebChannel backchannel is held open in case the backend has
+    // more data to send. Safari buffers that response rather than delivering it
+    // incrementally, so listener data and write acknowledgements only surface
+    // when the request eventually times out -- stalling study loads by 30-50s and
+    // hanging the end-of-study upload for exactly 30s. Forcing long-polling closes
+    // the request as soon as the backend sends data, costing one extra round trip
+    // per message. Note this cannot be combined with
+    // experimentalAutoDetectLongPolling, which is enabled by default and does not
+    // prevent the stall.
+    this.firestore = initializeFirestore(firebaseApp, {
+      experimentalForceLongPolling: true,
+    });
     this.studyCollection = collection(
       this.firestore,
       '_revisit',
@@ -80,8 +90,11 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     }
     try {
       initializeAppCheck(firebaseApp, {
-        provider: new ReCaptchaV3Provider(this.RECAPTCHAV3TOKEN),
-        isTokenAutoRefreshEnabled: false,
+        // Opt in separately so existing deployments keep their v3 provider and key.
+        provider: import.meta.env.VITE_RECAPTCHA_ENTERPRISE_SITE_KEY
+          ? new ReCaptchaEnterpriseProvider(import.meta.env.VITE_RECAPTCHA_ENTERPRISE_SITE_KEY)
+          : new ReCaptchaV3Provider(import.meta.env.VITE_RECAPTCHAV3TOKEN),
+        isTokenAutoRefreshEnabled: true,
       });
     } catch {
       console.warn('Failed to initialize Firebase App Check');
@@ -192,6 +205,21 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
         completed: data.completed instanceof Timestamp ? data.completed.toMillis() : data.completed,
       } as SequenceAssignment))
       .sort((a, b) => a.timestamp - b.timestamp);
+  }
+
+  public async getSequenceAssignment(studyId: string, participantId: string) {
+    const studyCollection = collection(this.firestore, `${this.collectionPrefix}${studyId}`);
+    const sequenceAssignmentDoc = doc(studyCollection, 'sequenceAssignment');
+    const assignment = doc(collection(sequenceAssignmentDoc, 'sequenceAssignment'), participantId);
+    const snapshot = await getDoc(assignment);
+    if (!snapshot.exists()) return null;
+    const data = snapshot.data();
+    return {
+      ...data,
+      timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toMillis() : data.timestamp,
+      createdTime: data.createdTime instanceof Timestamp ? data.createdTime.toMillis() : data.createdTime,
+      completed: data.completed instanceof Timestamp ? data.completed.toMillis() : data.completed,
+    } as SequenceAssignment;
   }
 
   // Set up realtime listener for sequence assignments
@@ -507,6 +535,23 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     }
   }
 
+  async getStorageDisconnected(studyId: string) {
+    const storageDoc = await getDoc(doc(this.firestore, `${this.collectionPrefix}${studyId}`, 'storage'));
+    if (!storageDoc.exists()) return false;
+    const { disconnected } = storageDoc.data();
+    if (typeof disconnected !== 'boolean') throw new Error('Invalid storage mode');
+    return disconnected;
+  }
+
+  protected async _setStorageDisconnected(studyId: string, disconnected: boolean) {
+    await setDoc(doc(this.firestore, `${this.collectionPrefix}${studyId}`, 'storage'), { disconnected }, { merge: true });
+  }
+
+  protected async getAuthenticatedUser() {
+    const user = getAuth().currentUser;
+    return user ? { email: user.email, uid: user.uid } : null;
+  }
+
   async getModes(studyId: string) {
     const revisitModesDoc = doc(
       this.firestore,
@@ -557,6 +602,15 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     await setDoc(revisitModesDoc, modesDocument, { merge: true });
   }
 
+  async getStudyHiddenFromLandingPage(studyId: string): Promise<boolean> {
+    const visibility = await getDoc(doc(this.firestore, `${this.collectionPrefix}${studyId}`, 'hideStudyFromLandingPage'));
+    return visibility.data()?.hidden === true;
+  }
+
+  async setStudyHiddenFromLandingPage(studyId: string, hidden: boolean): Promise<void> {
+    await setDoc(doc(this.firestore, `${this.collectionPrefix}${studyId}`, 'hideStudyFromLandingPage'), { hidden });
+  }
+
   protected async _getAudioUrl(
     task: string,
     participantId: string,
@@ -583,6 +637,21 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       return await getDownloadURL(screenRecordingRef);
     } catch {
       console.warn(`Screen recording for task ${task} and participant ${participantId} not found.`);
+      return null;
+    }
+  }
+
+  protected async _getWebcamRecordingUrl(
+    task: string,
+    participantId: string,
+  ): Promise<string | null> {
+    const storage = getStorage();
+    const webcamRecordingRef = ref(storage, `${this.collectionPrefix}${this.studyId}/webcamRecording/${participantId}_${task}`);
+
+    try {
+      return await getDownloadURL(webcamRecordingRef);
+    } catch {
+      console.warn(`Webcam recording for task ${task} and participant ${participantId} not found.`);
       return null;
     }
   }

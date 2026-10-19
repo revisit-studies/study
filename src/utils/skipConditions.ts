@@ -5,7 +5,7 @@ import type {
   StudyConfig,
 } from '../parser/types';
 import type { Sequence, StoredAnswer } from '../store/types';
-import { componentAnswersAreCorrect } from './correctAnswer';
+import { componentAnswersAreCorrect } from './componentCorrectness';
 import { findIndexOfBlock } from './getSequenceFlatMap';
 import { studyComponentToIndividualComponent } from './handleComponentInheritance';
 import { parseTrialOrder } from './parseTrialOrder';

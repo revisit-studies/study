@@ -70,7 +70,7 @@ export default function FeedbackTrial({
       <Center>
         {correctAnswer === userAnswer
           ? (
-            <Title order={3} c="green.5">
+            <Title order={3} c="green">
               Your answer is:
               {' '}
               {' '}
@@ -84,7 +84,7 @@ export default function FeedbackTrial({
             </Title>
           )
           : (
-            <Title order={3} c="red.5">
+            <Title order={3} c="red">
               Your answer is:
               {' '}
               {' '}

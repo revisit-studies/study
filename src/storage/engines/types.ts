@@ -263,6 +263,9 @@ export abstract class StorageEngine {
   // Gets all sequence assignments for the given studyId. The sequence assignments are sorted ascending by timestamp.
   public abstract getAllSequenceAssignments(studyId: string): Promise<SequenceAssignment[]>;
 
+  // Reads one participant's assignment without loading every participant in the study.
+  public abstract getSequenceAssignment(studyId: string, participantId: string): Promise<SequenceAssignment | null>;
+
   // Creates a sequence assignment for the given participantId and sequenceAssignment. Cloud storage engines should use the realtime database to create the sequence assignment and should use the server to prevent race conditions (i.e. using server timestamps).
   protected abstract _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment, withServerTimestamp: boolean): Promise<void>;
 
@@ -298,8 +301,19 @@ export abstract class StorageEngine {
   // Gets the modes for the given studyId. The modes are stored as a record with the mode name as the key and a boolean value indicating whether the mode is enabled or not.
   abstract getModes(studyId: string): Promise<Record<REVISIT_MODE, boolean> & { stage?: StageData }>;
 
+  // Read modes for an access decision without creating a missing Supabase record.
+  async getAccessModes(studyId: string): Promise<(Record<REVISIT_MODE, boolean> & { stage?: StageData }) | null> {
+    return this.getModes(studyId);
+  }
+
   // Sets the mode for the given studyId. The mode is stored as a record with the mode name as the key and a boolean value indicating whether the mode is enabled or not.
   abstract setMode(studyId: string, mode: REVISIT_MODE, value: boolean): Promise<void>;
+
+  // Gets the landing-page visibility for the given studyId. This method is used to check whether the study is hidden from the landing page or not.
+  abstract getStudyHiddenFromLandingPage(studyId: string): Promise<boolean>;
+
+  // Sets the landing-page visibility for the given studyId. This method is used to control whether the study is hidden from the landing page or not.
+  abstract setStudyHiddenFromLandingPage(studyId: string, hidden: boolean): Promise<void>;
 
   // Protected helper: Sets the full modes document (including stage data and mode flags)
   protected abstract _setModesDocument(studyId: string, modesDocument: Record<REVISIT_MODE, boolean> & { stage?: StageData }): Promise<void>;
@@ -309,6 +323,9 @@ export abstract class StorageEngine {
 
   // Gets the screen recording URL for the given task and participantId. This method is used to fetch the screen recording video file from the storage engine.
   protected abstract _getScreenRecordingUrl(task: string, participantId?: string): Promise<string | null>;
+
+  // Gets the webcam recording URL for the given task and participantId.
+  protected abstract _getWebcamRecordingUrl(task: string, participantId?: string): Promise<string | null>;
 
   // Gets the transcript URL for the given task and participantId. (Optional - not all storage engines need to implement this, only if they generate transcripts).
   protected _getTranscriptUrl?(task: string, participantId?: string): Promise<string | null>;
@@ -1560,15 +1577,24 @@ export abstract class StorageEngine {
       return null;
     }
 
-    const asset = new Promise<string>((resolve) => {
+    const asset = new Promise<string>((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.responseType = 'blob';
       xhr.onload = () => {
         const blob = xhr.response;
-
-        const _url = URL.createObjectURL(blob);
-
-        resolve(_url);
+        try {
+          resolve(URL.createObjectURL(blob));
+        } finally {
+          if (url.startsWith('blob:')) {
+            URL.revokeObjectURL(url);
+          }
+        }
+      };
+      xhr.onerror = () => {
+        if (url.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
+        reject(new Error(`Failed to load asset: ${url}`));
       };
       xhr.open('GET', url);
       xhr.send();
@@ -1764,6 +1790,32 @@ export abstract class StorageEngine {
     });
   }
 
+  // Gets the webcam recording for a specific task and participantId.
+  async getWebcamRecording(
+    task: string,
+    participantId: string,
+  ) {
+    const url = await this._getWebcamRecordingUrl(task, participantId);
+    return this.getAsset(url);
+  }
+
+  // Saves the webcam video stream as a separate per-task asset.
+  async saveWebcamRecording(
+    blob: Blob,
+    taskName: string,
+  ) {
+    return this.trackAssetOperation(`webcamRecording/${taskName}`, async () => {
+      if (this.studyId === undefined) {
+        throw new Error('Study ID is not set');
+      }
+      const modes = await this.getModes(this.studyId);
+      if (!modes.dataCollectionEnabled) {
+        throw new Error('Data collection is disabled for this study');
+      }
+      return this.saveAsset('webcamRecording', blob, taskName);
+    });
+  }
+
   // Gets the sequence array from the storage engine.
   async getSequenceArray() {
     await this.verifyStudyDatabase();
@@ -1846,6 +1898,7 @@ export abstract class StorageEngine {
       await this._copyDirectory(`${sourceName}/participants`, `${targetName}/participants`);
       await this._copyDirectory(`${sourceName}/audio`, `${targetName}/audio`);
       await this._copyDirectory(`${sourceName}/screenRecording`, `${targetName}/screenRecording`);
+      await this._copyDirectory(`${sourceName}/webcamRecording`, `${targetName}/webcamRecording`);
       await this._copyDirectory(`${sourceName}/provenance`, `${targetName}/provenance`);
       await this._copyDirectory(sourceName, targetName);
       await this._copyRealtimeData(sourceName, targetName);
@@ -1894,6 +1947,7 @@ export abstract class StorageEngine {
         await this._deleteDirectory(`${deletionTarget}/participants`);
         await this._deleteDirectory(`${deletionTarget}/audio`);
         await this._deleteDirectory(`${deletionTarget}/screenRecording`);
+        await this._deleteDirectory(`${deletionTarget}/webcamRecording`);
         await this._deleteDirectory(`${deletionTarget}/provenance`);
         await this._deleteDirectory(deletionTarget);
         await this._deleteRealtimeData(deletionTarget);
@@ -1963,6 +2017,10 @@ export abstract class StorageEngine {
       await this._copyDirectory(
         `${snapshotName}/screenRecording`,
         `${originalName}/screenRecording`,
+      );
+      await this._copyDirectory(
+        `${snapshotName}/webcamRecording`,
+        `${originalName}/webcamRecording`,
       );
       await this._copyDirectory(
         `${snapshotName}/provenance`,
@@ -2040,6 +2098,30 @@ export abstract class CloudStorageEngine extends StorageEngine {
 
   protected userManagementData: UserManagementData = {};
 
+  abstract getStorageDisconnected(studyId: string): Promise<boolean>;
+
+  protected abstract _setStorageDisconnected(studyId: string, disconnected: boolean): Promise<void>;
+
+  protected abstract getAuthenticatedUser(): Promise<StoredUser | null>;
+
+  async isStorageAdmin() {
+    this.userManagementData = {};
+    const auth = await this.getUserManagementData('authentication');
+    const signedInUser = await this.getAuthenticatedUser();
+    if (!auth?.isEnabled || !signedInUser?.email || !signedInUser.uid) return false;
+    const adminUsers = await this.getUserManagementData('adminUsers');
+    return Boolean(adminUsers?.adminUsersList.some((admin) => admin.email === signedInUser.email
+      && (admin.uid === null || admin.uid === signedInUser.uid)));
+  }
+
+  async setStorageDisconnected(studyId: string, disconnected: boolean) {
+    if (!await this.isStorageAdmin()) {
+      throw new Error('A verified administrator must sign in to change storage.');
+    }
+
+    await this._setStorageDisconnected(studyId, disconnected);
+  }
+
   protected shouldDeferInitialParticipantDataPersistence() {
     return true;
   }
@@ -2114,7 +2196,7 @@ export abstract class CloudStorageEngine extends StorageEngine {
           return false;
         }
       }
-      return true;
+      return this.engine !== 'supabase' || authInfo?.isEnabled === false;
     }
     return false;
   }

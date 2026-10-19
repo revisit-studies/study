@@ -32,6 +32,7 @@ vi.mock('firebase/app', () => ({
 vi.mock('@firebase/app-check', () => ({
   initializeAppCheck: vi.fn(),
   ReCaptchaV3Provider: vi.fn(),
+  ReCaptchaEnterpriseProvider: vi.fn(),
 }));
 
 vi.mock('@firebase/auth', () => ({
@@ -474,6 +475,7 @@ describe.each([
   });
 
   test('initializeParticipantSession omits conditions field in sequence assignment when empty', async () => {
+    // @ts-expect-error accessing protected method for spying
     const createSequenceAssignmentSpy = vi.spyOn(storageEngine, '_createSequenceAssignment');
 
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
@@ -1091,6 +1093,20 @@ describe.each([
   test('_getScreenRecordingUrl returns null when recording does not exist', async () => {
     // @ts-expect-error protected
     expect(await storageEngine._getScreenRecordingUrl('missing', 'p1')).toBeNull();
+  });
+
+  test('_getWebcamRecordingUrl returns URL when recording exists', async () => {
+    // @ts-expect-error protected
+    const prefix = storageEngine.collectionPrefix;
+    const path = `${prefix}${studyId}/webcamRecording/p1_task2`;
+    storageObjects[path] = 'data';
+    // @ts-expect-error protected
+    expect(await storageEngine._getWebcamRecordingUrl('task2', 'p1')).toContain(path);
+  });
+
+  test('_getWebcamRecordingUrl returns null when recording does not exist', async () => {
+    // @ts-expect-error protected
+    expect(await storageEngine._getWebcamRecordingUrl('missing', 'p1')).toBeNull();
   });
 
   test('_getTranscriptUrl returns URL when transcript exists', async () => {

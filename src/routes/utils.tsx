@@ -48,6 +48,7 @@ export function useCurrentComponent(): string {
   const { funcIndex } = useParams();
   const _answers = useStoreSelector((state) => state.answers);
   const studyConfig = useStudyConfig();
+  const participantSequence = useStoreSelector((state) => state.sequence);
   const currentStep = useCurrentStep();
   const flatSequence = useFlatSequence();
   const navigate = useNavigate();
@@ -110,9 +111,17 @@ export function useCurrentComponent(): string {
 
       // in a func component
       if (!component && nextFunc !== null) {
+        const configuredBlock = findFuncBlock(flatSequence[currentStep], studyConfig.sequence);
+        const participantBlock = findFuncBlock(flatSequence[currentStep], participantSequence);
+        const customParameters = configuredBlock?.parameters || participantBlock?.parameters
+          ? {
+            ...(configuredBlock?.parameters || {}),
+            ...(participantBlock?.parameters || {}),
+          }
+          : undefined;
         const { component: currCompName, parameters: _params, correctAnswer } = nextFunc({
           answers: _answers,
-          customParameters: findFuncBlock(flatSequence[currentStep], studyConfig.sequence)?.parameters,
+          customParameters,
           currentStep,
           currentBlock: flatSequence[currentStep],
         });
@@ -140,7 +149,7 @@ export function useCurrentComponent(): string {
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentStep, funcIndex]);
+  }, [currentStep, funcIndex, participantSequence, studyConfig.sequence]);
 
   if (typeof currentStep === 'number' && flatSequence[currentStep] === 'end') {
     return 'end';

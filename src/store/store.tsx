@@ -4,10 +4,10 @@ import {
 import { createContext, useContext } from 'react';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import {
-  ParsedStringOption, ResponseBlockLocation, StudyConfig, ValueOf, Answer, ParticipantData,
+  ParsedStringOption, ResponseBlockLocation, StudyConfig, ValueOf, Answer, ParticipantData, IndividualComponent,
 } from '../parser/types';
 import type {
-  AlertModalState, CheckAnswerState, StoredAnswer, TrialValidation, TrrackedProvenance, StoreState, Sequence, ParticipantMetadata, ValidationStatus,
+  AssetStatus, AlertModalState, CheckAnswerState, StoredAnswer, TrialValidation, TrrackedProvenance, StoreState, Sequence, ParticipantMetadata, ValidationStatus,
 } from './types';
 import { getSequenceFlatMap } from '../utils/getSequenceFlatMap';
 import { REVISIT_MODE } from '../storage/engines/types';
@@ -21,6 +21,8 @@ type UpdateResponseBlockValidationInput = {
   identifier: string;
   status: boolean;
   values: object;
+  /** Replace existing values instead of merging, so answers cleared by visibleIf are also removed from the store. */
+  replaceValues?: boolean;
   /** @deprecated Use the managed Trrack APIs, which report provenance separately. */
   provenanceGraph?: TrrackedProvenance;
   reason?: ValidationStatus['reason'];
@@ -41,6 +43,29 @@ type UpdateProvenancePayload = UpdateProvenanceInput & {
   provenanceObservedAt: number;
 };
 
+function withSequenceParameters(
+  componentParameters: Record<string, unknown> = {},
+  sequenceParameters?: Record<string, unknown>,
+): Record<string, unknown> {
+  return {
+    ...componentParameters,
+    ...(sequenceParameters || {}),
+  };
+}
+
+function getComponentParameters(componentConfig: IndividualComponent): Record<string, unknown> {
+  if (
+    'parameters' in componentConfig
+    && componentConfig.parameters
+    && typeof componentConfig.parameters === 'object'
+    && !Array.isArray(componentConfig.parameters)
+  ) {
+    return componentConfig.parameters;
+  }
+
+  return {};
+}
+
 export async function studyStoreCreator(
   studyId: string,
   config: StudyConfig,
@@ -55,6 +80,7 @@ export async function studyStoreCreator(
   initialAlertModal?: AlertModalState,
 ) {
   const flatSequence = getSequenceFlatMap(sequence);
+  const sequenceParameters = sequence.parameters || {};
 
   const emptyAnswers: ParticipantData['answers'] = Object.fromEntries(flatSequence.filter((id) => id !== 'end')
     .map((id, idx) => {
@@ -78,8 +104,10 @@ export async function studyStoreCreator(
           windowEvents: [],
           timedOut: false,
           helpButtonClickedCount: 0,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          parameters: Object.hasOwn(componentConfig, 'parameters') ? (componentConfig as any).parameters : {},
+          parameters: withSequenceParameters(
+            getComponentParameters(componentConfig),
+            sequenceParameters,
+          ),
           correctAnswer: Object.hasOwn(componentConfig, 'correctAnswer') ? componentConfig.correctAnswer! : [],
           optionOrders: randomizeOptions(componentConfig),
           questionOrders: randomizeQuestionOrder(componentConfig),
@@ -98,6 +126,7 @@ export async function studyStoreCreator(
           belowStimulus: { valid: false, values: {} },
           sidebar: { valid: false, values: {} },
           stimulus: getInitialStimulusValidation(componentConfig),
+          ...(['video', 'image', 'website', 'markdown', 'react-component', 'vega'].includes(componentConfig.type) ? { assetStatus: 'loading' } : {}),
           provenanceGraph: {
             aboveStimulus: undefined,
             belowStimulus: undefined,
@@ -108,22 +137,33 @@ export async function studyStoreCreator(
       };
     }),
   );
+  // The flat sequence contains dynamic block IDs but not their generated trials.
+  // Include saved trials so their assets are checked again when the study resumes.
+  const restoredComponents = {
+    ...Object.fromEntries(flatSequence.map((id, idx) => [`${id}_${idx}`, id])),
+    ...Object.fromEntries(Object.entries(answers).map(([identifier, answer]) => [identifier, answer.componentName])),
+  };
   const allValid = Object.assign(
     {},
-    ...flatSequence.map((id, idx) => ({
-      [`${id}_${idx}`]: {
-        aboveStimulus: { valid: true, values: {} },
-        belowStimulus: { valid: true, values: {} },
-        sidebar: { valid: true, values: {} },
-        stimulus: { valid: true, values: {} },
-        provenanceGraph: {
-          aboveStimulus: undefined,
-          belowStimulus: undefined,
-          stimulus: undefined,
-          sidebar: undefined,
+    ...Object.entries(restoredComponents).map(([identifier, id]): TrialValidation => {
+      const componentConfig = studyComponentToIndividualComponent(config.components[id] || { response: [] }, config);
+
+      return {
+        [identifier]: {
+          ...(['video', 'image', 'website', 'markdown', 'react-component', 'vega'].includes(componentConfig.type) ? { assetStatus: 'loading' } : {}),
+          aboveStimulus: { valid: true, values: {} },
+          belowStimulus: { valid: true, values: {} },
+          sidebar: { valid: true, values: {} },
+          stimulus: { valid: true, values: {} },
+          provenanceGraph: {
+            aboveStimulus: undefined,
+            belowStimulus: undefined,
+            stimulus: undefined,
+            sidebar: undefined,
+          },
         },
-      },
-    })),
+      };
+    }),
   );
 
   const initialState: StoreState = {
@@ -149,6 +189,7 @@ export async function studyStoreCreator(
     analysisIsPlaying: false,
     analysisHasAudio: false,
     analysisHasScreenRecording: false,
+    analysisHasWebcamRecording: false,
     analysisCanPlayScreenRecording: true,
     analysisHasProvenance: false,
     provenanceJumpTime: 0,
@@ -168,6 +209,10 @@ export async function studyStoreCreator(
     name: 'storeSlice',
     initialState,
     reducers: {
+      setAssetStatus(state, { payload }: PayloadAction<{ identifier: string; status: AssetStatus }>) {
+        const validation = state.trialValidation[payload.identifier];
+        if (validation) validation.assetStatus = payload.status;
+      },
       setConfig(state, { payload }: PayloadAction<StudyConfig>) {
         state.config = payload;
       },
@@ -201,7 +246,10 @@ export async function studyStoreCreator(
           timedOut: false,
           helpButtonClickedCount: 0,
 
-          parameters: payload.parameters || ('parameters' in componentConfig ? componentConfig.parameters : {}) || {},
+          parameters: withSequenceParameters(
+            payload.parameters || getComponentParameters(componentConfig),
+            state.sequence.parameters,
+          ),
           correctAnswer: payload.correctAnswer || componentConfig.correctAnswer || [],
           optionOrders: randomizeOptions(componentConfig),
           questionOrders: randomizeQuestionOrder(componentConfig),
@@ -211,6 +259,7 @@ export async function studyStoreCreator(
           aboveStimulus: { valid: false, values: {} },
           belowStimulus: { valid: false, values: {} },
           stimulus: getInitialStimulusValidation(componentConfig),
+          ...(['video', 'image', 'website', 'markdown', 'react-component', 'vega'].includes(componentConfig.type) ? { assetStatus: 'loading' } : {}),
           sidebar: { valid: false, values: {} },
           provenanceGraph: {
             aboveStimulus: undefined,
@@ -245,6 +294,9 @@ export async function studyStoreCreator(
       setAnalysisHasScreenRecording(state, { payload }: PayloadAction<boolean>) {
         state.analysisHasScreenRecording = payload;
       },
+      setAnalysisHasWebcamRecording(state, { payload }: PayloadAction<boolean>) {
+        state.analysisHasWebcamRecording = payload;
+      },
       setAnalysisCanPlayScreenRecording(state, { payload }: PayloadAction<boolean>) {
         state.analysisCanPlayScreenRecording = payload;
       },
@@ -253,6 +305,13 @@ export async function studyStoreCreator(
       },
       setProvenanceJumpTime(state, { payload }: PayloadAction<number>) {
         state.provenanceJumpTime = payload;
+      },
+      clearResponseAnswers: (state, { payload }: PayloadAction<string[]>) => {
+        payload.forEach((id) => {
+          delete state.reactiveAnswers[id];
+          delete state.matrixAnswers[id];
+          delete state.rankingAnswers[id];
+        });
       },
       setMatrixAnswersRadio: (state, action: PayloadAction<{ questionKey: string, responseId: string, val: string } | null>) => {
         if (action.payload) {
@@ -319,10 +378,19 @@ export async function studyStoreCreator(
           const finalReason = payload.status ? undefined : (payload.reason ?? currentValidation?.reason);
           const finalMessage = payload.status ? undefined : (payload.message ?? currentValidation?.message);
 
-          if (Object.keys(payload.values).length > 0) {
+          if (payload.replaceValues) {
+            state.trialValidation[payload.identifier][payload.location] = {
+              valid: payload.status,
+              values: payload.values,
+              initialized: true,
+              reason: finalReason,
+              message: finalMessage,
+            };
+          } else if (Object.keys(payload.values).length > 0) {
             state.trialValidation[payload.identifier][payload.location] = {
               valid: payload.status,
               values: { ...currentValues, ...payload.values },
+              initialized: currentValidation?.initialized,
               reason: finalReason,
               message: finalMessage,
             };
@@ -330,6 +398,7 @@ export async function studyStoreCreator(
             state.trialValidation[payload.identifier][payload.location] = {
               valid: payload.status,
               values: currentValues || {},
+              initialized: currentValidation?.initialized,
               reason: finalReason,
               message: finalMessage,
             };

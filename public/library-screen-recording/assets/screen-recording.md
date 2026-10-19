@@ -2,7 +2,7 @@
 
 This is a demo of the library `screen-recording`.
 
-This is a required library for screen recording. It provides a component that requests user permission for screen and microphone access. Then, it starts screen capture until the end of the study.
+This library requests permission for screen recording and any configured webcam or microphone recording, then keeps those capture streams active until the end of the study.
 
 ## Available Components
 

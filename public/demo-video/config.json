@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.4/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.4.3/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Video as a Stimulus",
     "version": "pilot",
@@ -19,7 +19,7 @@
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
-    "withSidebar": true,
+    "withSidebar": false,
     "windowEventDebounceTime": 200
   },
   "components": {

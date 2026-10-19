@@ -19,6 +19,10 @@
                 "description": "The path to the study config file. This should be a relative path from the public folder.",
                 "type": "string"
               },
+              "tab": {
+                "description": "The exact label of a configured tab. Unassigned studies appear in the default Studies tab.",
+                "type": "string"
+              },
               "test": {
                 "description": "Indicates whether the study is a test study. This is used to hide the study from the landing page.",
                 "type": "boolean"
@@ -36,6 +40,27 @@
           "description": "A required property that is used to generate the list of available studies in the UI. This list is displayed on the landing page when running the app.",
           "items": {
             "type": "string"
+          },
+          "type": "array"
+        },
+        "tabs": {
+          "description": "Landing-page tabs in display order. Unassigned studies use the configured Studies tab, or a default Studies tab appended after configured tabs. If omitted or empty, all studies appear in Studies.",
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "description": {
+                "description": "An optional Markdown description displayed above the studies in this tab.",
+                "type": "string"
+              },
+              "label": {
+                "description": "A unique, non-blank tab name. Study assignments and the tab URL parameter reference this exact label.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "label"
+            ],
+            "type": "object"
           },
           "type": "array"
         }
