@@ -369,7 +369,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     );
   }
 
-  protected async _rejectParticipantRealtime(participantId: string) {
+  protected async _rejectParticipantRealtime(participantId: string, onlyIncomplete = false) {
     await this.verifyStudyDatabase();
     if (!this.studyId) {
       throw new Error('Study ID is not set');
@@ -388,6 +388,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       throw new Error('Failed to retrieve sequence assignment for current participant');
     }
 
+    if (onlyIncomplete && data.data.completed !== null) return false;
     // Update the sequence assignment for the participant to mark it as rejected
     await this.updateSequenceAssignmentRow(
       participantId,
@@ -416,7 +417,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
         { ...claimedData.data, claimed: false, rejected: true },
         'release claimed',
       );
-      return;
+      return true;
     }
 
     // Fallback for legacy reused assignments that predate claimedParticipantId.
@@ -428,13 +429,14 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       .single();
 
     if (claimedError || !claimedData) {
-      return;
+      return true;
     }
     await this.updateSequenceAssignmentRow(
       claimedData.data.participantId,
       { ...claimedData.data, claimed: false, rejected: true },
       'release claimed',
     );
+    return true;
   }
 
   protected async _undoRejectParticipantRealtime(participantId: string) {

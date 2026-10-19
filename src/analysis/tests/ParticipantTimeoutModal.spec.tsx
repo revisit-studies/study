@@ -11,7 +11,7 @@ import {
 import { makeParticipant } from '../../tests/utils';
 
 let mockUser: { isAdmin: boolean };
-let mockStorageEngine: { rejectParticipant: ReturnType<typeof vi.fn> } | undefined;
+let mockStorageEngine: { timeoutParticipant: ReturnType<typeof vi.fn> } | undefined;
 
 vi.mock('../../storage/storageEngineHooks', () => ({
   useStorageEngine: () => ({ storageEngine: mockStorageEngine }),
@@ -49,7 +49,7 @@ vi.mock('@tabler/icons-react', () => ({
 describe('ParticipantTimeoutModal', () => {
   beforeEach(() => {
     mockUser = { isAdmin: true };
-    mockStorageEngine = { rejectParticipant: vi.fn().mockResolvedValue(undefined) };
+    mockStorageEngine = { timeoutParticipant: vi.fn().mockResolvedValue(undefined) };
   });
 
   afterEach(() => {
@@ -86,16 +86,18 @@ describe('ParticipantTimeoutModal', () => {
     });
     expect(screen.getByText('In-Progress Participants')).toBeDefined();
     expect(screen.getByText('p1')).toBeDefined();
+    expect(screen.getByText('Participant 2')).toBeDefined();
+    expect(screen.queryByText('Participant 3')).toBeNull();
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Time Out' }));
     });
-    expect(mockStorageEngine!.rejectParticipant).toHaveBeenCalledWith('p1', 'Timed out by admin');
+    expect(mockStorageEngine!.timeoutParticipant).toHaveBeenCalledWith('p1');
     expect(refresh).toHaveBeenCalledOnce();
   });
 
   test('shows an error and does not refresh when timing out a participant fails', async () => {
-    mockStorageEngine!.rejectParticipant.mockRejectedValue(new Error('Storage unavailable'));
+    mockStorageEngine!.timeoutParticipant.mockRejectedValue(new Error('Storage unavailable'));
     const refresh = vi.fn();
     render(<ParticipantTimeoutModal participants={[makeParticipant({ participantId: 'p1', createdTime: 1 })]} refresh={refresh} />);
 

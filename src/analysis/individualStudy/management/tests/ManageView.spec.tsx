@@ -841,6 +841,19 @@ describe('ManageView', () => {
     expect((screen.getByLabelText('Maximum participants for DEFAULT') as HTMLInputElement).value).toBe('20');
   });
 
+  test('StageManagementItem enables limits at the assigned population when it exceeds the default', async () => {
+    mockStorageEngine!.getStageData.mockResolvedValue({
+      currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
+      allStages: [{ stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR }],
+    });
+    mockStorageEngine!.getAllParticipantsData.mockResolvedValue(Array.from({ length: 11 }, () => ({
+      stage: 'DEFAULT', rejected: false, completed: false,
+    })));
+    await act(async () => { render(<StageManagementItem studyId="test-study" />); });
+    await act(async () => { fireEvent.click(screen.getByRole('checkbox', { name: 'Limit participants' })); });
+    expect(mockStorageEngine!.updateStage).toHaveBeenCalledWith('test-study', 'DEFAULT', { maxParticipants: 11 });
+  });
+
   test('StageManagementItem restores the saved manual allocation total when limits are re-enabled', async () => {
     const firstCombination = getBetweenSubjectsCombinationKey({ letter: 'a' }, ['letter']);
     const secondCombination = getBetweenSubjectsCombinationKey({ letter: 'b' }, ['letter']);

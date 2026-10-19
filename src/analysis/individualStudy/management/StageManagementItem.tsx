@@ -313,7 +313,7 @@ function renderDesiredParticipantsCell(
       <Text size="sm">{`${totalParticipants} /`}</Text>
       <NumberInput
         aria-label={`Desired participants for ${row.combinationKey} in ${stage.stageName}`}
-        min={0}
+        min={totalParticipants}
         allowDecimal={false}
         hideControls
         value={row.desiredParticipants}
@@ -587,7 +587,7 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
       console.error('Failed to save stage settings:', error);
       showNotification({
         title: 'Stage settings not saved',
-        message: 'The latest stage change could not be saved. The stored settings have been restored.',
+        message: error instanceof Error ? error.message : 'The latest stage change could not be saved. The stored settings have been restored.',
         color: 'red',
       });
       await refreshStageData().catch((refreshError) => {
@@ -691,11 +691,13 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
     setEditingLimitEnabled(enabled);
     if (enabled) {
       const manualDesiredParticipants = getManualDesiredParticipants(stage);
-      const initialMaximumParticipants = betweenSubjectsCombinations.length > 0
+      const defaultMaximumParticipants = betweenSubjectsCombinations.length > 0
         && getParticipantAssignmentMode(stage) === 'manual'
         && manualDesiredParticipants
         ? Object.values(manualDesiredParticipants).reduce((total, count) => total + count, 0)
         : Math.max(betweenSubjectsCombinations.length, 1) * 10;
+      const counts = stageParticipantStatusCounts[stage.stageName];
+      const initialMaximumParticipants = Math.max(defaultMaximumParticipants, (counts?.completed || 0) + (counts?.inProgress || 0));
       setEditingLimitMaxParticipants(initialMaximumParticipants);
       const saved = await persistStageChange(() => storageEngine.updateStage(
         studyId,
@@ -1224,7 +1226,7 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
                     && selectedStage.maxParticipants !== undefined
                   )}
                   label={<Text fw={500} size="sm">Maximum participants</Text>}
-                  min={0}
+                  min={(stageParticipantStatusCounts[selectedStage.stageName]?.completed || 0) + (stageParticipantStatusCounts[selectedStage.stageName]?.inProgress || 0)}
                   allowDecimal={false}
                   hideControls
                   onBlur={() => handleCommitParticipantLimit(selectedStage)}

@@ -227,6 +227,17 @@ describe('StudyAnalysisTabs', () => {
     expect(html).toContain('Select a study from the header menu to view analysis data.');
   });
 
+  test('opens the Stage Management route for an admin', async () => {
+    mockParams.analysisTab = 'stages';
+    mockStorageEngine!.getAllConfigsFromHash = vi.fn().mockResolvedValue({});
+    mockStorageEngine!.getStageData = vi.fn().mockResolvedValue({ allStages: [] });
+    mockUser = { isAdmin: true };
+    vi.mocked(getStudyConfig).mockResolvedValue({ ...makeStudyConfig(), errors: [], warnings: [] });
+    render(<StudyAnalysisTabs globalConfig={mockGlobalConfig} />);
+    await waitFor(() => expect(screen.getByText('StageManagementItem')).toBeDefined());
+    expect(screen.queryByTestId('not-found')).toBeNull();
+  });
+
   test('shows 404 with the study email for an unknown analysis tab', async () => {
     mockParams.analysisTab = 'df';
     vi.mocked(getStudyConfig).mockResolvedValue({ ...makeStudyConfig(), errors: [], warnings: [] });

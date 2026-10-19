@@ -89,7 +89,7 @@ export function ParticipantTimeoutModal({
     setTimingOutParticipantIds((ids) => [...ids, participantId]);
     setTimeoutError(null);
     try {
-      await storageEngine.rejectParticipant(participantId, 'Timed out by admin');
+      await storageEngine.timeoutParticipant(participantId);
       await refresh();
     } catch (error) {
       console.error('Failed to time out participant:', error);
@@ -147,7 +147,7 @@ export function ParticipantTimeoutModal({
                   <Text fw={500}>
                     Participant
                     {' '}
-                    {participant.participantIndex + 1}
+                    {participant.participantIndex}
                   </Text>
                   <Text size="sm" c="dimmed" truncate="end">{participant.participantId}</Text>
                 </Stack>

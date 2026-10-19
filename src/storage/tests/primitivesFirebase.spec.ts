@@ -144,9 +144,9 @@ vi.mock('firebase/firestore', () => {
     return { _path: `${collPath}/${docId}`, id: docId };
   }
 
-  function mockSetDoc(docRef: { _path: string }, data: DocData, options?: { merge?: boolean }) {
+  function mockSetDoc(docRef: { _path: string }, data: DocData, options?: { merge?: boolean; mergeFields?: string[] }) {
     const resolved = resolveSentinels(data);
-    if (options?.merge) {
+    if (options?.merge || options?.mergeFields) {
       const merged = { ...(firestoreData[docRef._path] ?? {}), ...resolved };
       // A merging write also honours deleteField(), same as Firestore itself.
       for (const [key, value] of Object.entries(merged)) {
@@ -191,7 +191,8 @@ vi.mock('firebase/firestore', () => {
     });
   }
 
-  function mockUpdateDoc(docRef: { _path: string }, data: DocData) {
+  function mockUpdateDoc(docRef: { _path: string }, fields: DocData, fieldValue?: unknown) {
+    const data = fieldValue === undefined ? fields : { [String(fields.key)]: fieldValue };
     const existing = firestoreData[docRef._path];
     if (!existing) return Promise.reject(new Error(`No document to update: ${docRef._path}`));
     const now = Date.now();
@@ -230,8 +231,8 @@ vi.mock('firebase/firestore', () => {
     _firestore: unknown,
     updateFunction: (transaction: {
       get: (docRef: { _path: string; id?: string }) => Promise<unknown>;
-      set: (docRef: { _path: string }, data: DocData, options?: { merge?: boolean }) => void;
-      update: (docRef: { _path: string }, data: DocData) => void;
+      set: (docRef: { _path: string }, data: DocData, options?: { merge?: boolean; mergeFields?: string[] }) => void;
+      update: (docRef: { _path: string }, data: DocData, value?: unknown) => void;
       delete: (docRef: { _path: string }) => void;
     }) => Promise<T>,
   ): Promise<T> {
@@ -239,14 +240,14 @@ vi.mock('firebase/firestore', () => {
     // so there is nothing to retry or roll back.
     const transaction = {
       get: mockGetDoc,
-      set: (docRef: { _path: string }, data: DocData, options?: { merge?: boolean }) => {
+      set: (docRef: { _path: string }, data: DocData, options?: { merge?: boolean; mergeFields?: string[] }) => {
         mockSetDoc(docRef, data, options);
       },
-      update: (docRef: { _path: string }, data: DocData) => {
+      update: (docRef: { _path: string }, data: DocData, value?: unknown) => {
         if (!firestoreData[docRef._path]) {
           throw new Error(`No document to update: ${docRef._path}`);
         }
-        mockUpdateDoc(docRef, data);
+        mockUpdateDoc(docRef, data, value);
       },
       delete: (docRef: { _path: string }) => { delete firestoreData[docRef._path]; },
     };
@@ -265,6 +266,8 @@ vi.mock('firebase/firestore', () => {
     setDoc: vi.fn(mockSetDoc),
     getDoc: vi.fn(mockGetDoc),
     getDocs: vi.fn(mockGetDocs),
+    getDocsFromServer: vi.fn(mockGetDocs),
+    FieldPath: class { constructor(public key: string) {} },
     updateDoc: vi.fn(mockUpdateDoc),
     onSnapshot: vi.fn(mockOnSnapshot),
     writeBatch: vi.fn(mockWriteBatch),

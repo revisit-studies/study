@@ -94,6 +94,50 @@ describe('stage capacity', () => {
     await storageEngine._testingReset(studyId);
   });
 
+  test('allows a target equal to assigned participants but rejects a smaller target', async () => {
+    await storageEngine.updateStage(studyId, 'LIMITED', { maxParticipants: 10 });
+    await storageEngine.setSequenceArray(generateSequenceArray(betweenSubjectsConfig));
+    await storageEngine.initializeParticipantSession({}, betweenSubjectsConfig, metadata, 'assigned');
+    const assignment = (await storageEngine.getAllSequenceAssignments(studyId))[0];
+    const key = assignment.betweenSubjectsCombinationKey!;
+    await expect(storageEngine.setStageDesiredParticipants(studyId, 'LIMITED', key, 0, {})).rejects.toThrow(/already assigned/);
+    await expect(storageEngine.setStageDesiredParticipants(studyId, 'LIMITED', key, 1, {})).resolves.toBeUndefined();
+  });
+
+  test('keeps five assigned B participants while allowing a target of six in A', async () => {
+    await storageEngine.setSequenceArray(generateSequenceArray(betweenSubjectsConfig));
+    await storageEngine.updateStage(studyId, 'LIMITED', { maxParticipants: 10 });
+    const [a, b] = ['control', 'treatment'].map((version) => getBetweenSubjectsCombinationKey({ version }, ['version']));
+    await storageEngine.setStageCombinationEnabled(studyId, 'LIMITED', a, false);
+    for (let index = 0; index < 5; index += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      await storageEngine.initializeParticipantSession({}, betweenSubjectsConfig, metadata, `b-${index}`);
+    }
+    await storageEngine.setStageDesiredParticipants(studyId, 'LIMITED', b, 5, { [a]: 0, [b]: 10 });
+    await storageEngine.setStageDesiredParticipants(studyId, 'LIMITED', a, 6, { [a]: 0, [b]: 5 });
+    const stage = (await storageEngine.getStageData(studyId)).allStages.find((item) => item.stageName === 'LIMITED')!;
+    expect(stage.maxParticipants).toBe(11);
+    expect(stage.manualDesiredParticipantsByCombination).toEqual({ [a]: 6, [b]: 5 });
+    expect(await storageEngine.getAllSequenceAssignments(studyId)).toHaveLength(5);
+  });
+
+  test('refuses to time out a participant who completed after the admin snapshot', async () => {
+    await storageEngine.initializeParticipantSession({}, config, metadata, 'finished');
+    await storageEngine.finalizeParticipant();
+    await storageEngine.timeoutParticipant('finished');
+    expect((await storageEngine.getAllSequenceAssignments(studyId))[0].rejected).toBe(false);
+  });
+
+  test('keeps condition definitions append-only after a participant joins', async () => {
+    await storageEngine.saveConfig(betweenSubjectsConfig);
+    await storageEngine.setSequenceArray(generateSequenceArray(betweenSubjectsConfig));
+    await storageEngine.initializeParticipantSession({}, betweenSubjectsConfig, metadata, 'assigned');
+    const appended = { ...betweenSubjectsConfig, factors: { version: ['control', 'treatment', 'new'] } };
+    await expect(storageEngine.saveConfig(appended)).resolves.toBeUndefined();
+    const removed = { ...appended, factors: { version: ['control', 'new'] } };
+    await expect(storageEngine.saveConfig(removed)).rejects.toThrow(/removed or renamed/);
+  });
+
   test('counts completed and in-progress participants but excludes rejected participants', () => {
     expect(getStageParticipantCounts([
       { stage: 'LIMITED', rejected: false },
