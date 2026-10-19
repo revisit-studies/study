@@ -78,9 +78,9 @@ jobs:
       - name: Build dev deployment
         run: |
           if [ "$GITHUB_REPOSITORY" = "revisit-studies/study" ]; then
-            VITE_STORAGE_ENGINE=firebase yarn build --mode preview
+            VITE_STORAGE_ENGINE=firebase yarn build
           else
-            yarn build --mode preview
+            yarn build
           fi
         env:
           VITE_BASE_PATH: "/${{ github.event.repository.name }}/dev/"
@@ -133,13 +133,13 @@ jobs:
 
       - name: Build PR deployment
         if: ${{ github.repository != 'revisit-studies/study' }}
-        run: yarn build --mode preview
+        run: yarn build
         env:
           VITE_BASE_PATH: "/${{ github.event.repository.name }}/PR${{ github.event.number }}/"
 
       - name: Build with github environment variables
         if: ${{ github.repository == 'revisit-studies/study' && vars.VITE_STORAGE_ENGINE != '' }}
-        run: VITE_STORAGE_ENGINE=$VITE_STORAGE_ENGINE VITE_BASE_PATH=$VITE_BASE_PATH yarn build --mode preview
+        run: VITE_STORAGE_ENGINE=$VITE_STORAGE_ENGINE VITE_BASE_PATH=$VITE_BASE_PATH yarn build
         env:
           VITE_STORAGE_ENGINE: ${{ vars.VITE_STORAGE_ENGINE }}
           VITE_BASE_PATH: "/${{ github.event.repository.name }}/PR${{ github.event.number }}/"
