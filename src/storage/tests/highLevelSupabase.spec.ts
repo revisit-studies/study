@@ -6,6 +6,7 @@ import {
 import { ParticipantMetadata, StudyConfig } from '../../parser/types';
 import testConfigSimple from './testConfigSimple.json';
 import testConfigSimple2 from './testConfigSimple2.json';
+import { makeStoredAnswer } from '../../tests/utils';
 import { generateSequenceArray } from '../../utils/handleRandomSequences';
 import { hash } from '../engines/utils/storageEngineHelpers';
 import { Sequence } from '../../store/types';
@@ -355,6 +356,24 @@ describe.each([
   });
 
   // saveConfig and getAllConfigsFromHash tests
+  test('a restored participant reloads past a cached rejection and saves answers', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'restored-cache');
+    const admin = new SupabaseStorageEngine(true);
+    await admin.connect();
+    await admin.initializeStudyDb(studyId);
+    await admin.timeoutParticipant('restored-cache');
+    await storageEngine.saveAnswers({});
+    await storageEngine.flushPendingParticipantData();
+    expect(storageEngine.getCurrentParticipantDataSnapshot()?.rejected).not.toBe(false);
+    await admin.undoRejectParticipant('restored-cache');
+    const resumed = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'restored-cache');
+    expect(resumed.rejected).toBe(false);
+    const answers = { trial_0: makeStoredAnswer({ answer: { value: 'saved after restoration' } }) };
+    await storageEngine.saveAnswers(answers);
+    await storageEngine.flushPendingParticipantData();
+    expect((await storageEngine.getParticipantData('restored-cache'))?.answers).toEqual(answers);
+  });
+
   test('admin restoration overrides limits while new admissions remain closed', async () => {
     const config: StudyConfig = { ...configSimple, factors: { group: ['A'] }, betweenSubjects: ['group'] };
     await storageEngine.saveConfig(config);

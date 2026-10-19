@@ -41,7 +41,7 @@ type BetweenSubjectsCombinationRow = {
   participantStatusCounts: { completed: number; inProgress: number };
   desiredParticipants: number | '';
   enabled: boolean;
-  [factorName: string]: string | number | boolean | { completed: number; inProgress: number };
+  factorValues: Record<string, string>;
 };
 
 const DEFAULT_STAGE_COLOR = DISTINCT_COLOR_PALETTE[0];
@@ -238,7 +238,7 @@ function renderCombinationEnabledCell(
   onToggle: (stage: StageInfo, combinationKey: string, enabled: boolean) => Promise<void>,
 ) {
   const combinationLabel = betweenSubjectsFactors
-    .map((factor) => String(row[factor.factorName]))
+    .map((factor) => row.factorValues[factor.factorName])
     .join(' / ');
 
   return (
@@ -397,7 +397,7 @@ function BetweenSubjectsCombinationTable({
       ),
       desiredParticipants: desiredParticipantCounts[combination.key],
       enabled: !stage.disabledBetweenSubjectsCombinations?.includes(combination.key),
-      ...Object.fromEntries(betweenSubjectsFactors.map((factor) => [
+      factorValues: Object.fromEntries(betweenSubjectsFactors.map((factor) => [
         factor.factorName,
         formatBetweenSubjectsLevel(combination.parameters[factor.factorName]),
       ])),
@@ -430,7 +430,8 @@ function BetweenSubjectsCombinationTable({
 
   const columns = useMemo<MrtColumnDef<BetweenSubjectsCombinationRow>[]>(() => [
     ...betweenSubjectsFactors.map((factor) => ({
-      accessorKey: factor.factorName,
+      id: `factor:${factor.factorName}`,
+      accessorFn: (row: BetweenSubjectsCombinationRow) => row.factorValues[factor.factorName],
       header: factor.factorName,
     } satisfies MrtColumnDef<BetweenSubjectsCombinationRow>)),
     ...(showParticipantCounts ? [{
@@ -497,14 +498,14 @@ function BetweenSubjectsCombinationTable({
     mantineTableContainerProps: { style: { maxWidth: '100%', overflowX: 'auto' } },
     mantineTableProps: { style: { minWidth: 'max-content', width: '100%' } },
     mantineTableBodyCellProps: ({ column, row }) => {
-      const factorIndex = betweenSubjectsFactors.findIndex((factor) => factor.factorName === column.id);
+      const factorIndex = betweenSubjectsFactors.findIndex((factor) => `factor:${factor.factorName}` === column.id);
       if (factorIndex === -1) {
         return {};
       }
 
       const factor = betweenSubjectsFactors[factorIndex];
       const levelIndex = factor.levels.findIndex((level) => (
-        formatBetweenSubjectsLevel(level) === row.original[factor.factorName]
+        formatBetweenSubjectsLevel(level) === row.original.factorValues[factor.factorName]
       ));
 
       return {

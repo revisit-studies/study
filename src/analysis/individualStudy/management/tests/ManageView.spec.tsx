@@ -190,6 +190,7 @@ vi.mock('@mantine/core', () => ({
 type MrtColumn = {
   id?: string;
   accessorKey?: string;
+  accessorFn?: (row: Record<string, unknown>) => unknown;
   header: string;
   Header?: () => ReactNode;
   Cell?: (props: { row: { original: Record<string, unknown> } }) => ReactNode;
@@ -223,7 +224,7 @@ vi.mock('mantine-react-table', () => ({
               <td key={column.id ?? column.accessorKey}>
                 {column.Cell
                   ? column.Cell({ row: { original: row } })
-                  : String(row[column.accessorKey as string] ?? '')}
+                  : String((column.accessorFn ? column.accessorFn(row) : row[column.accessorKey as string]) ?? '')}
               </td>
             ))}
           </tr>
@@ -678,6 +679,31 @@ describe('ManageView', () => {
     });
     expect(mockStorageEngine!.setStageCombinationEnabled)
       .toHaveBeenCalledWith('test-study', 'DEFAULT', disabledCombination, true);
+  });
+
+  test.each(['combinationKey', 'enabled', 'desiredParticipants', 'participantStatusCounts'])('keeps controls working with a factor named %s', async (factorName) => {
+    const key = getBetweenSubjectsCombinationKey({ [factorName]: 'A' }, [factorName]);
+    mockStorageEngine!.getStageData.mockResolvedValue({
+      currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
+      allStages: [{
+        stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR, maxParticipants: 10, participantAssignmentMode: 'manual', manualDesiredParticipantsByCombination: { [key]: 10 }, disabledBetweenSubjectsCombinations: [key],
+      }],
+    });
+    mockStorageEngine!.getAllParticipantsData.mockResolvedValue([{
+      participantId: 'collision', stage: 'DEFAULT', rejected: false, completed: false, sequence: { parameters: { [factorName]: 'A' } },
+    }]);
+    const studyConfig = { factors: { [factorName]: ['A'] }, betweenSubjects: [factorName] } as unknown as StudyConfig;
+    await act(async () => { render(<StageManagementItem studyId="test-study" studyConfig={studyConfig} />); });
+    const toggle = screen.getByRole('checkbox', { name: 'Enable A for DEFAULT' }) as HTMLInputElement;
+    expect(toggle.checked).toBe(false);
+    expect(screen.getAllByRole('button', { name: 'Review 1 in-progress participant' })).toHaveLength(2);
+    const target = screen.getByLabelText(`Desired participants for ${key} in DEFAULT`) as HTMLInputElement;
+    expect(target.value).toBe('10');
+    await act(async () => { fireEvent.change(target, { target: { value: '11' } }); });
+    expect(mockStorageEngine!.setStageDesiredParticipants).toHaveBeenCalledWith('test-study', 'DEFAULT', key, 11, { [key]: 10 });
+    await act(async () => { fireEvent.click(toggle); });
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Yes, enable condition' })); });
+    expect(mockStorageEngine!.setStageCombinationEnabled).toHaveBeenCalledWith('test-study', 'DEFAULT', key, true);
   });
 
   test('StageManagementItem populates derived groups and saves their complete condition keys', async () => {

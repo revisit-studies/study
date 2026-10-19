@@ -1482,7 +1482,16 @@ export abstract class StorageEngine {
       throw new Error('Participant not initialized');
     }
 
-    const cachedParticipant = await this.getCachedParticipantDataSnapshot(this.currentParticipantId);
+    let cachedParticipant = await this.getCachedParticipantDataSnapshot(this.currentParticipantId);
+    if (cachedParticipant?.rejected) {
+      // An admin may have restored the participant since this browser learned
+      // about the rejection. A rejected cache must not permanently block saves.
+      const current = await this._getFromStorage(`participants/${this.currentParticipantId}`, 'participantData');
+      if (isParticipantData(current)) {
+        cachedParticipant = current;
+        await this.cacheParticipantDataSnapshot(current, this.currentParticipantId);
+      }
+    }
     if (cachedParticipant && await this.confirmParticipantReservation(cachedParticipant, undefined, true)) {
       this.participantData = cachedParticipant;
       return cachedParticipant;
@@ -1505,7 +1514,7 @@ export abstract class StorageEngine {
       return participant;
     }
 
-    const initializedParticipant = await this._runWithLock<ParticipantData>(ADMISSION_POLICY_LOCK_KEY, async () => {
+    const initializeParticipant = async (): Promise<ParticipantData> => {
       // Another session may have completed initialization while this session waited
       // for the lock, so always read the participant record again inside it.
       const existingParticipant = await this._getFromStorage(
@@ -1588,7 +1597,14 @@ export abstract class StorageEngine {
       }
 
       return participantData;
-    });
+    };
+
+    // Atomic reservation engines own admission in the database transaction.
+    // Serialize starts for the same participant without blocking other participants
+    // on a slow upload. Admission itself remains transactional.
+    const initializedParticipant = this.hasAtomicSequenceReservation
+      ? await this._runWithLock(`initialize-participant-${this.currentParticipantId}`, initializeParticipant)
+      : await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, initializeParticipant);
 
     this.participantData = initializedParticipant;
     return initializedParticipant;

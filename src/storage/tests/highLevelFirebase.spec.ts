@@ -6,6 +6,7 @@ import { enableNetwork, Timestamp, runTransaction } from 'firebase/firestore';
 import { type ParticipantMetadata, type StudyConfig } from '../../parser/types';
 import testConfigSimple from './testConfigSimple.json';
 import testConfigSimple2 from './testConfigSimple2.json';
+import { makeStoredAnswer } from '../../tests/utils';
 import { generateSequenceArray } from '../../utils/handleRandomSequences';
 import { hash } from '../engines/utils/storageEngineHelpers';
 import { type Sequence } from '../../store/types';
@@ -507,6 +508,81 @@ describe.each([
     expect(Object.values(firestoreData).filter((data) => data.count === 1 && data.combinationCounts)).toHaveLength(1);
   });
 
+  test('a slow initial upload does not block another participant from joining', async () => {
+    await storageEngine.setCurrentStage(studyId, 'LIMITED', '#00AAFF', 2);
+    const second = new FirebaseStorageEngine(true);
+    await second.connect();
+    await second.initializeStudyDb(studyId);
+    let release!: () => void;
+    let uploading!: () => void;
+    const uploadStarted = new Promise<void>((resolve) => { uploading = resolve; });
+    // @ts-expect-error Hold the first participant's upload while another joins.
+    const upload = storageEngine._pushToStorage.bind(storageEngine);
+    // @ts-expect-error Keep the real participant and admission locks enabled.
+    vi.spyOn(storageEngine, '_pushToStorage').mockImplementationOnce(async (path, type, data) => {
+      uploading();
+      await new Promise<void>((resolve) => { release = resolve; });
+      return upload(path, type, data);
+    });
+    const first = storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'slow');
+    await uploadStarted;
+    vi.useFakeTimers();
+    try {
+      const result = second.initializeParticipantSession({}, configSimple, participantMetadata, 'fast')
+        .then(() => 'joined', () => 'failed');
+      await vi.advanceTimersByTimeAsync(30_000);
+      const outcome = await result;
+      release();
+      await first;
+      expect(outcome).toBe('joined');
+      expect((await storageEngine.getAllSequenceAssignments(studyId)).filter((assignment) => !assignment.rejected)).toHaveLength(2);
+    } finally {
+      release();
+      await first;
+      vi.useRealTimers();
+    }
+  });
+
+  test('a delayed same-ID startup preserves answers saved by the first session', async () => {
+    const second = new FirebaseStorageEngine(true);
+    await second.connect();
+    await second.initializeStudyDb(studyId);
+    let releaseUpload!: () => void;
+    let uploading!: () => void;
+    const uploadStarted = new Promise<void>((resolve) => { uploading = resolve; });
+    // @ts-expect-error Pause the first record upload before another startup reads it.
+    const upload = storageEngine._pushToStorage.bind(storageEngine);
+    // @ts-expect-error Keep the actual locks enabled.
+    vi.spyOn(storageEngine, '_pushToStorage').mockImplementationOnce(async (path, type, data) => {
+      uploading();
+      await new Promise<void>((resolve) => { releaseUpload = resolve; });
+      return upload(path, type, data);
+    });
+    let resumeSecond!: () => void;
+    let secondWaiting!: () => void;
+    const secondPaused = new Promise<void>((resolve) => { secondWaiting = resolve; });
+    // @ts-expect-error Hold the second startup before its first lock acquisition.
+    const runWithLock = second._runWithLock.bind(second);
+    // @ts-expect-error Let the first session save an answer before the delayed startup continues.
+    vi.spyOn(second, '_runWithLock').mockImplementationOnce(async (key, operation) => {
+      secondWaiting();
+      await new Promise<void>((resolve) => { resumeSecond = resolve; });
+      return runWithLock(key, operation);
+    });
+    const first = storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'same');
+    await uploadStarted;
+    const retry = second.initializeParticipantSession({}, configSimple, participantMetadata, 'same');
+    await secondPaused;
+    releaseUpload();
+    await first;
+    const answers = { trial_0: makeStoredAnswer({ answer: { value: 'already saved' } }) };
+    await storageEngine.saveAnswers(answers);
+    await storageEngine.flushPendingParticipantData();
+    resumeSecond();
+    expect((await retry).answers).toEqual(answers);
+    expect((await storageEngine.getParticipantData('same'))?.answers).toEqual(answers);
+  });
+
   test('concurrent starts for the same participant reuse one reservation', async () => {
     await storageEngine.setCurrentStage(studyId, 'LIMITED', '#00AAFF', 1);
     const second = new FirebaseStorageEngine(true);
@@ -676,6 +752,24 @@ describe.each([
     await storageEngine.finalizeParticipant();
     await storageEngine.timeoutParticipant('finished');
     expect((await storageEngine.getSequenceAssignment(studyId, 'finished'))?.rejected).toBe(false);
+  });
+
+  test('a restored participant reloads past a cached rejection and saves answers', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'restored-cache');
+    const admin = new FirebaseStorageEngine(true);
+    await admin.connect();
+    await admin.initializeStudyDb(studyId);
+    await admin.timeoutParticipant('restored-cache');
+    await storageEngine.saveAnswers({});
+    await storageEngine.flushPendingParticipantData();
+    expect(storageEngine.getCurrentParticipantDataSnapshot()?.rejected).not.toBe(false);
+    await admin.undoRejectParticipant('restored-cache');
+    const resumed = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'restored-cache');
+    expect(resumed.rejected).toBe(false);
+    const answers = { trial_0: makeStoredAnswer({ answer: { value: 'saved after restoration' } }) };
+    await storageEngine.saveAnswers(answers);
+    await storageEngine.flushPendingParticipantData();
+    expect((await storageEngine.getParticipantData('restored-cache'))?.answers).toEqual(answers);
   });
 
   test('admin restoration overrides limits while new admissions remain closed', async () => {

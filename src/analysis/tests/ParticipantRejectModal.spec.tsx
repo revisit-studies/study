@@ -176,4 +176,32 @@ describe('ParticipantRejectModal', () => {
     });
     expect(mockStorageEngine!.undoRejectParticipant).toHaveBeenCalledWith('p1');
   });
+  test('shows restore failures and refreshes only after every bulk attempt finishes', async () => {
+    const participants = ['claimed', 'available'].map((participantId) => makeParticipant({ participantId, rejected: { reason: 'test', timestamp: 1 } }));
+    let finishRestore!: () => void;
+    mockStorageEngine!.undoRejectParticipant.mockImplementation(async (participantId: string) => {
+      if (participantId === 'claimed') throw new Error('The place has already been reassigned');
+      await new Promise<void>((resolve) => { finishRestore = resolve; });
+    });
+    const refresh = vi.fn().mockResolvedValue(undefined);
+    await act(async () => { render(<ParticipantRejectModal selectedParticipants={participants} refresh={refresh} />); });
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Undo Reject Participants (2)' })); });
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Undo Reject Participants' })); });
+    expect(refresh).not.toHaveBeenCalled();
+    await act(async () => { finishRestore(); });
+    expect(refresh).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(/claimed.*already been reassigned/)).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Undo Reject Participants' })).toBeDefined();
+  });
+  test('shows a refresh error after restoring and permits retrying', async () => {
+    const participants = [makeParticipant({ participantId: 'p1', rejected: { reason: 'test', timestamp: 1 } })];
+    const refresh = vi.fn().mockRejectedValueOnce(new Error('offline')).mockResolvedValue(undefined);
+    await act(async () => { render(<ParticipantRejectModal selectedParticipants={participants} refresh={refresh} />); });
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Undo Reject Participant (1)' })); });
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Undo Reject Participant' })); });
+    expect(screen.getByText(/participant list could not be refreshed/)).toBeDefined();
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Undo Reject Participant' })); });
+    expect(refresh).toHaveBeenCalledTimes(2);
+    expect(screen.queryByRole('button', { name: 'Undo Reject Participant' })).toBeNull();
+  });
 });
