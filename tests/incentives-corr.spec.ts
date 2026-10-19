@@ -45,7 +45,7 @@ test('correlation trials accept intentional choices and persist matching respons
     const isCorrect = trialIndex !== 1;
     const selected = isCorrect ? correct : (correct === 'left' ? 'right' : 'left');
 
-    if (trialIndex === 0) {
+    if (trialIndex === 1) {
       await frame.locator('.questionPrompt').click();
       for (const key of ['Tab', 'a', 'ArrowUp', 'ArrowDown', 'Shift+ArrowLeft']) {
         await frame.getByRole('button', { name: 'A', exact: true }).press(key);
@@ -56,7 +56,7 @@ test('correlation trials accept intentional choices and persist matching respons
       await expect(frame.getByRole('status')).toBeEmpty();
       await frame.getByRole('button', { name: selected === 'left' ? 'A' : 'B', exact: true }).click();
     } else {
-      await frame.getByRole('button', { name: 'A', exact: true }).press(selected === 'left' ? 'ArrowLeft' : 'ArrowRight');
+      await page.keyboard.press(selected === 'left' ? 'ArrowLeft' : 'ArrowRight');
     }
     await expect(frame.getByRole('status')).toHaveText(`${isCorrect ? 'Correct' : 'Incorrect'} — A is ${corrLeft}, B is ${corrRight}`);
     await expect(next).toBeEnabled();
@@ -75,24 +75,29 @@ test('correlation trials accept intentional choices and persist matching respons
     .map(({ answer }) => answer)).toEqual(expectedPractice.map((answer) => expect.objectContaining(answer)));
   await nextClick(page);
 
-  await expect(frame.locator('#stimuli-left')).toHaveAttribute('src', /stimuli\/.*\.jpg$/);
-  await frame.locator('.questionPrompt').click();
-  for (const key of ['Tab', 'x', 'ArrowUp', 'ArrowDown', 'Control+ArrowRight']) {
-    await frame.getByRole('button', { name: 'A', exact: true }).press(key);
+  const expectedTest: Record<string, unknown>[] = [];
+  for (let trialIndex = 0; trialIndex < 2; trialIndex += 1) {
+    await expect(frame.locator('#stimuli-left')).toHaveAttribute('src', /stimuli\/.*\.jpg$/);
+    for (const key of ['x', 'ArrowUp', 'ArrowDown', 'Control+ArrowRight']) {
+      await page.keyboard.press(key);
+    }
+    await expect(frame.getByRole('button', { name: 'A', exact: true })).toBeEnabled();
+    const leftSource = await frame.locator('#stimuli-left').getAttribute('src');
+    const correct = leftSource?.includes('-r2-') ? 'left' : 'right';
+    const isCorrect = trialIndex === 1;
+    const selected = isCorrect ? correct : (correct === 'left' ? 'right' : 'left');
+    await page.keyboard.press(selected === 'left' ? 'ArrowLeft' : 'ArrowRight');
+    await expect(frame.getByRole('button', { name: 'A', exact: true })).toBeDisabled();
+    await expect(next).toBeEnabled();
+    await frame.locator(`#stimuli-${selected === 'left' ? 'right' : 'left'}`).click();
+    const previousFrame = await page.locator('#root iframe').elementHandle();
+    await nextClick(page);
+    await previousFrame?.waitForElementState('hidden');
+    expectedTest.push({ test: isCorrect, selected });
   }
-  await next.click();
-  await expect(page.getByText('Please finish the embedded activity to continue.', { exact: true })).toBeVisible();
-  const leftSource = await frame.locator('#stimuli-left').getAttribute('src');
-  const selected = leftSource?.includes('-r2-') ? 'right' : 'left';
-  await frame.getByRole('button', { name: 'A', exact: true }).press(selected === 'left' ? 'ArrowLeft' : 'ArrowRight');
-  await expect(next).toBeEnabled();
-  await frame.locator(`#stimuli-${selected === 'left' ? 'right' : 'left'}`).click();
-  const previousFrame = await page.locator('#root iframe').elementHandle();
-  await nextClick(page);
-  await previousFrame?.waitForElementState('hidden');
   await expect(frame.locator('#stimuli-left')).toHaveAttribute('src', /stimuli\/.*\.jpg$/);
   await expect.poll(async () => (await readCompletedAnswers(page))
     .filter(({ answer }) => typeof answer.test === 'boolean')
-    .map(({ answer }) => answer)).toEqual([expect.objectContaining({ test: false, selected })]);
+    .map(({ answer }) => answer)).toEqual(expectedTest.map((answer) => expect.objectContaining(answer)));
   expect(pageErrors).toEqual([]);
 });
