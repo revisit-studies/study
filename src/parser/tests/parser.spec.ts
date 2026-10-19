@@ -169,6 +169,25 @@ describe('Study and iframe color mode config parsing', () => {
     };
   }
 
+  test.each([
+    ['https://example.com/chart.html', 'external websites'],
+    ['demo-html/assets/chart.svg', 'not an HTML file'],
+  ])('warns when templated inherits the unsupported path %s', async (path, message) => {
+    const config = {
+      ...makeStudyConfig(),
+      baseComponents: { web: { type: 'website', path, response: [] } },
+      components: { website: { baseComponent: 'web', templated: true } },
+      sequence: { order: 'fixed', components: ['website'] },
+    };
+    const result = await parseStudyConfig(JSON.stringify(config));
+
+    expect(result.errors).toEqual([]);
+    expect(result.warnings).toContainEqual(expect.objectContaining({
+      instancePath: '/components/website/path',
+      message: expect.stringContaining(message),
+    }));
+  });
+
   test.each(['light', 'dark', undefined] as const)('accepts iframe color mode %s', async (colorMode) => {
     const result = await parseStudyConfig(JSON.stringify(makeWebsiteConfig(colorMode)));
     expect(result.errors).toEqual([]);

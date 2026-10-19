@@ -34,7 +34,7 @@ import {
   setDoc,
   updateDoc,
 } from 'firebase/firestore';
-import { ReCaptchaV3Provider, initializeAppCheck } from '@firebase/app-check';
+import { ReCaptchaV3Provider, ReCaptchaEnterpriseProvider, initializeAppCheck } from '@firebase/app-check';
 import {
   browserPopupRedirectResolver, getAuth, GoogleAuthProvider, onAuthStateChanged, signInAnonymously, signInWithPopup, signOut,
 } from '@firebase/auth';
@@ -273,8 +273,6 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     }
   }
 
-  private RECAPTCHAV3TOKEN = import.meta.env.VITE_RECAPTCHAV3TOKEN;
-
   private firestore: Firestore;
 
   private studyCollection: CollectionReference<DocumentData, DocumentData>;
@@ -316,8 +314,11 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     }
     try {
       initializeAppCheck(firebaseApp, {
-        provider: new ReCaptchaV3Provider(this.RECAPTCHAV3TOKEN),
-        isTokenAutoRefreshEnabled: false,
+        // Opt in separately so existing deployments keep their v3 provider and key.
+        provider: import.meta.env.VITE_RECAPTCHA_ENTERPRISE_SITE_KEY
+          ? new ReCaptchaEnterpriseProvider(import.meta.env.VITE_RECAPTCHA_ENTERPRISE_SITE_KEY)
+          : new ReCaptchaV3Provider(import.meta.env.VITE_RECAPTCHAV3TOKEN),
+        isTokenAutoRefreshEnabled: true,
       });
     } catch {
       console.warn('Failed to initialize Firebase App Check');
@@ -849,7 +850,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     return await setDoc(revisitModesDoc, { [mode]: value }, { merge: true });
   }
 
-  private async updateModesAtomically(studyId: string, update: (modes: Record<string, unknown>) => Record<string, unknown>) {
+  private async updateModesAtomically(studyId: string, update: (modes: Record<string, unknown>) => Record<string, unknown>, configHash?: string) {
     const studyCollection = collection(this.firestore, `${this.collectionPrefix}${studyId}`);
     const reference = doc(studyCollection, 'modes');
     await runTransaction(this.firestore, async (transaction) => {
@@ -877,7 +878,15 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
         }
       });
       transaction.set(reference, next, { merge: true });
+      if (configHash !== undefined) transaction.set(doc(studyCollection, 'configHash'), { configHash });
     });
+  }
+
+  protected override async activateConfig(configHash: string, keys: string[]) {
+    await this.updateModesAtomically(this.studyId!, (modes) => {
+      const data = modes.stage as StageData;
+      return { ...modes, stage: applyStageUpdates(data, data.currentStage.stageName, { conditionKeys: keys }) };
+    }, configHash);
   }
 
   protected override async changeStagePolicy(studyId: string, stageName: string, update: (stage: StageInfo) => StageUpdates) {

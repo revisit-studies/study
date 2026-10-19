@@ -3,6 +3,7 @@ FROM node:lts AS builder
 WORKDIR /app
 
 COPY package.json yarn.lock ./
+COPY scripts/patch-mantine-react-table.cjs ./scripts/patch-mantine-react-table.cjs
 RUN yarn install --frozen-lockfile
 
 COPY . .

@@ -9,10 +9,13 @@ This is your first capital-city question — there's no previous answer to refer
 {{/if}}
 
 All of your answers in one place:
-|Tasks|Identifier|Answers|
-|-----|----------|-------|
+
+| Country | Your answer | Correct answer |     |
+| ------- | ----------- | -------------- | --- |
 {{#each REVISIT.answers}}
-|TASK {{@index}}|{{this.identifier}}|{{lookupAnswers @index 'capital-answer'}}|
+{{#if (lookupCorrectAnswer @index 'capital-answer')}}
+| {{lookupParameters @index 'flag'}} {{lookupParameters @index 'country'}} | {{#if (lookupAnswers @index 'capital-answer')}}{{lookupAnswers @index 'capital-answer'}} | {{lookupCorrectAnswer @index 'capital-answer'}} | {{#ifEquals (lookupAnswers @index 'capital-answer') (lookupCorrectAnswer @index 'capital-answer')}}✅{{else}}❌{{/ifEquals}}{{else}}— | — | —{{/if}} |
+{{/if}}
 {{/each}}
 
-This help text comes from the `quizQuestion` base component's own `helpTextPath`, which is also run through Handlebars, just like markdown stimuli.
+This help text comes from the `helpTextPath` of the `markdown-template-quiz` and `html-template-quiz` components, and is run through Handlebars just like markdown stimuli. The correct answers come from each component's `correctAnswer`.

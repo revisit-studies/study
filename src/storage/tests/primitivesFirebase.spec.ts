@@ -10,6 +10,7 @@ import {
   beforeAll, beforeEach, afterAll, afterEach, describe, expect, test, vi,
 } from 'vitest';
 import { getDoc, setDoc } from 'firebase/firestore';
+import { initializeAppCheck, ReCaptchaV3Provider, ReCaptchaEnterpriseProvider } from '@firebase/app-check';
 
 import { type ParticipantMetadata, type StudyConfig } from '../../parser/types';
 import testConfigSimple from './testConfigSimple.json';
@@ -37,6 +38,7 @@ vi.mock('firebase/app', () => ({
 vi.mock('@firebase/app-check', () => ({
   initializeAppCheck: vi.fn(),
   ReCaptchaV3Provider: vi.fn(),
+  ReCaptchaEnterpriseProvider: vi.fn(),
 }));
 
 vi.mock('@firebase/auth', () => ({
@@ -308,6 +310,44 @@ beforeAll(() => {
 
 afterAll(() => {
   vi.restoreAllMocks();
+});
+
+describe('Firebase App Check provider selection', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.stubEnv('VITE_RECAPTCHAV3TOKEN', 'legacy-site-key');
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.stubEnv('VITE_FIREBASE_CONFIG', JSON.stringify({ projectId: PROJECT_ID }));
+    vi.stubEnv('VITE_RECAPTCHAV3TOKEN', 'fake-recaptcha-token');
+  });
+
+  test.each([undefined, ''])('keeps v3 when the Enterprise key is %s', (enterpriseKey) => {
+    vi.stubEnv('VITE_RECAPTCHA_ENTERPRISE_SITE_KEY', enterpriseKey);
+    // Constructing the engine initializes App Check without contacting Firebase.
+    const engine = new FirebaseStorageEngine(true);
+    expect(engine).toBeDefined();
+    expect(ReCaptchaV3Provider).toHaveBeenCalledExactlyOnceWith('legacy-site-key');
+    expect(ReCaptchaEnterpriseProvider).not.toHaveBeenCalled();
+    expect(initializeAppCheck).toHaveBeenCalledExactlyOnceWith(expect.anything(), {
+      provider: expect.any(ReCaptchaV3Provider),
+      isTokenAutoRefreshEnabled: true,
+    });
+  });
+
+  test('uses the explicit Enterprise key instead of the legacy key', () => {
+    vi.stubEnv('VITE_RECAPTCHA_ENTERPRISE_SITE_KEY', 'enterprise-site-key');
+    const engine = new FirebaseStorageEngine(true);
+    expect(engine).toBeDefined();
+    expect(ReCaptchaEnterpriseProvider).toHaveBeenCalledExactlyOnceWith('enterprise-site-key');
+    expect(ReCaptchaV3Provider).not.toHaveBeenCalled();
+    expect(initializeAppCheck).toHaveBeenCalledExactlyOnceWith(expect.anything(), {
+      provider: expect.any(ReCaptchaEnterpriseProvider),
+      isTokenAutoRefreshEnabled: true,
+    });
+  });
 });
 
 describe.each([

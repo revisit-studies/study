@@ -17,6 +17,7 @@ type RowData = Record<string, string | number | boolean | null | object>;
 
 const revisitRows: RowData[] = [];
 const storageFiles: Record<string, string> = {};
+let failConfigActivation = false;
 const localStore: Record<string, string | number | object | null> = {};
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
@@ -102,6 +103,11 @@ vi.mock('@supabase/supabase-js', () => {
             const toUpsert = (Array.isArray(payload)
               ? payload
               : [payload]) as Array<RowData>;
+            if (failConfigActivation && toUpsert.some((row) => row.docId === 'currentConfigHash')) {
+              failConfigActivation = false;
+              resolve({ data: null, error: { message: 'Failed to activate study config' } });
+              return;
+            }
             toUpsert.forEach((row) => {
               const idx = rows.findIndex(
                 (r) => r.studyId === row.studyId && r.docId === row.docId,
@@ -379,6 +385,20 @@ describe.each([
     await expect(storageEngine.saveConfig(original)).resolves.toBeUndefined();
     await expect(storageEngine.initializeParticipantSession({}, original, participantMetadata, 'second')).resolves.toBeDefined();
     expect((await storageEngine.getStageData(studyId)).allStages[0].conditionKeys).toHaveLength(1);
+  });
+
+  test('failed config activation commits neither the definitions nor the active hash', async () => {
+    const original: StudyConfig = { ...configSimple, factors: { group: ['A'] }, betweenSubjects: ['group'] };
+    const appended: StudyConfig = { ...original, factors: { group: ['A', 'B'] } };
+    await storageEngine.saveConfig(original);
+    await storageEngine.setSequenceArray(generateSequenceArray(original));
+    await storageEngine.initializeParticipantSession({}, original, participantMetadata, 'first');
+    failConfigActivation = true;
+    await expect(storageEngine.saveConfig(appended)).rejects.toThrow('Failed to activate study config');
+    expect(await storageEngine.getCurrentConfigHash(studyId)).toBe(await hash(JSON.stringify(original)));
+    expect((await storageEngine.getStageData(studyId)).allStages[0].conditionKeys).toHaveLength(1);
+    await expect(storageEngine.saveConfig(original)).resolves.toBeUndefined();
+    await expect(storageEngine.initializeParticipantSession({}, original, participantMetadata, 'second')).resolves.toBeDefined();
   });
 
   test('a delayed old config cannot overwrite the current config prepared orders', async () => {

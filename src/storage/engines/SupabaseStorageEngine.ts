@@ -3,7 +3,7 @@ import localforage from 'localforage';
 import { v4 as uuidv4 } from 'uuid';
 import {
   REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageObject, StorageObjectType, StoredUser,
-  CloudStorageEngine, UserWrapped, cleanupModes,
+  CloudStorageEngine, UserWrapped, cleanupModes, applyStageUpdates, StageData,
 } from './types';
 import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
 
@@ -133,6 +133,18 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       })
       .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
       .eq('docId', 'currentConfigHash');
+  }
+
+  protected override async activateConfig(configHash: string, keys: string[]) {
+    const stage = await this.validateStageConditions(this.studyId!, keys);
+    const modes: Record<REVISIT_MODE, boolean> & { stage?: StageData } = await this.getModes(this.studyId!);
+    const studyId = `${this.collectionPrefix}${this.studyId}`;
+    // A single upsert commits both rows in one database transaction.
+    const { error } = await this.supabase.from('revisit').upsert([
+      { studyId, docId: 'metadata', data: { ...modes, stage: applyStageUpdates(modes.stage!, stage.stageName, { conditionKeys: keys }) } },
+      { studyId, docId: 'currentConfigHash', data: { configHash } },
+    ]);
+    if (error) throw new Error('Failed to activate study config');
   }
 
   public async getAllSequenceAssignments(studyId: string) {

@@ -1112,7 +1112,7 @@ export abstract class StorageEngine {
     await this._setModesDocument(studyId, { ...modes, stage: data });
   }
 
-  private async validateStageConditions(studyId: string, keys: string[]) {
+  protected async validateStageConditions(studyId: string, keys: string[]) {
     const { stageData } = await this.getModesAndStageData(studyId);
     const stage = stageData.allStages.find((candidate) => candidate.stageName === stageData.currentStage.stageName)!;
     const assignments = await this.getAllSequenceAssignments(studyId);
@@ -1143,9 +1143,13 @@ export abstract class StorageEngine {
         await this._cacheStorageObject(`configs/${configHash}`, 'config');
       }
       // Failed uploads must not advance the append-only condition definitions.
-      await this.registerStageConditions(this.studyId, keys);
-      if (currentConfigHash !== configHash) await this._setCurrentConfigHash(configHash);
+      await this.activateConfig(configHash, keys);
     });
+  }
+
+  protected async activateConfig(configHash: string, keys: string[]) {
+    await this.registerStageConditions(this.studyId!, keys);
+    if (await this._getCurrentConfigHash() !== configHash) await this._setCurrentConfigHash(configHash);
   }
 
   // Gets all configs from the storage engine based on the provided temporary hashes and studyId.

@@ -19,6 +19,7 @@ const firestoreData: Record<string, DocData> = {};
 const SERVER_TS_SENTINEL = { __sentinel: 'serverTimestamp' };
 const DELETE_FIELD_SENTINEL = { __sentinel: 'deleteField' };
 const storageObjects: Record<string, string> = {};
+let failConfigActivation = false;
 const localStore: Record<string, string | number | object | null> = {};
 const authState: { currentUser: { email: string | null; uid: string } | null } = {
   currentUser: null,
@@ -32,6 +33,7 @@ vi.mock('firebase/app', () => ({
 vi.mock('@firebase/app-check', () => ({
   initializeAppCheck: vi.fn(),
   ReCaptchaV3Provider: vi.fn(),
+  ReCaptchaEnterpriseProvider: vi.fn(),
 }));
 
 vi.mock('@firebase/auth', () => ({
@@ -139,6 +141,10 @@ vi.mock('firebase/firestore', () => {
   }
 
   function mockSetDoc(docRef: { _path: string }, data: DocData, options?: { merge?: boolean; mergeFields?: string[] }) {
+    if (failConfigActivation && docRef._path.endsWith('/configHash')) {
+      failConfigActivation = false;
+      throw new Error('Failed to activate study config');
+    }
     const resolved = resolveSentinels(data);
     if (options?.merge || options?.mergeFields) {
       const merged = { ...(firestoreData[docRef._path] ?? {}), ...resolved };
@@ -703,6 +709,20 @@ describe.each([
     await expect(storageEngine.saveConfig(original)).resolves.toBeUndefined();
     await expect(storageEngine.initializeParticipantSession({}, original, participantMetadata, 'second')).resolves.toBeDefined();
     expect((await storageEngine.getStageData(studyId)).allStages[0].conditionKeys).toHaveLength(1);
+  });
+
+  test('failed config activation commits neither the definitions nor the active hash', async () => {
+    const original: StudyConfig = { ...configSimple, factors: { group: ['A'] }, betweenSubjects: ['group'] };
+    const appended: StudyConfig = { ...original, factors: { group: ['A', 'B'] } };
+    await storageEngine.saveConfig(original);
+    await storageEngine.setSequenceArray(generateSequenceArray(original));
+    await storageEngine.initializeParticipantSession({}, original, participantMetadata, 'first');
+    failConfigActivation = true;
+    await expect(storageEngine.saveConfig(appended)).rejects.toThrow('Failed to activate study config');
+    expect(await storageEngine.getCurrentConfigHash(studyId)).toBe(await hash(JSON.stringify(original)));
+    expect((await storageEngine.getStageData(studyId)).allStages[0].conditionKeys).toHaveLength(1);
+    await expect(storageEngine.saveConfig(original)).resolves.toBeUndefined();
+    await expect(storageEngine.initializeParticipantSession({}, original, participantMetadata, 'second')).resolves.toBeDefined();
   });
 
   test('a delayed old config cannot overwrite the current config prepared orders', async () => {

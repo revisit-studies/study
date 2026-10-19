@@ -35,6 +35,12 @@ const {
     storedAnswer: undefined as Record<string, unknown> | undefined,
     answerFinalized: undefined as boolean | undefined,
     onChange: undefined as ((value: unknown, source?: 'keyboard' | 'click') => void) | undefined,
+    indexes: [] as Array<{
+      id: string;
+      index: number;
+      disabled: boolean | undefined;
+      isDelayedDisabled: boolean | undefined;
+    }>,
   },
   mockIsAnalysis: { value: false },
   mockCurrentIdentifier: { value: 'trial1_0' },
@@ -160,13 +166,24 @@ vi.mock('../customResponseModules', () => ({
 
 vi.mock('../ResponseSwitcher', () => ({
   ResponseSwitcher: ({
-    response, index, storedAnswer, answerFinalized, form,
-  }: { response: { id: string; type: string }; index: number; storedAnswer?: Record<string, unknown>; answerFinalized?: boolean; form: { onChange?: (value: unknown, source?: 'keyboard' | 'click') => void } }) => {
+    response, storedAnswer, answerFinalized, index, disabled, isDelayedDisabled, form,
+  }: {
+    response: { id: string; type: string };
+    storedAnswer?: Record<string, unknown>;
+    answerFinalized?: boolean;
+    index: number;
+    disabled?: boolean;
+    isDelayedDisabled?: boolean;
+    form: { onChange?: (value: unknown, source?: 'keyboard' | 'click') => void };
+  }) => {
     capturedSwitcherProps.storedAnswer = storedAnswer;
     capturedSwitcherProps.answerFinalized = answerFinalized;
     capturedSwitcherProps.onChange = form.onChange;
+    capturedSwitcherProps.indexes.push({
+      id: response.id, index, disabled, isDelayedDisabled,
+    });
     return (
-      <div data-testid={`switcher-${response.type}`} data-response-id={response.id} data-index={index}>
+      <div className="response" data-testid={`switcher-${response.type}`} data-response-id={response.id} data-index={index}>
         {response.type}
         <input data-testid={`control-${response.id}`} />
       </div>
@@ -298,6 +315,7 @@ beforeEach(() => {
   capturedSwitcherProps.storedAnswer = undefined;
   capturedSwitcherProps.answerFinalized = undefined;
   capturedSwitcherProps.onChange = undefined;
+  capturedSwitcherProps.indexes = [];
   mockIsAnalysis.value = false;
   mockCurrentIdentifier.value = 'trial1_0';
   mockNavigate.mockClear();
@@ -491,6 +509,101 @@ describe('ResponseBlock', () => {
     await act(async () => { fireEvent.click(checkBtn); });
     // After a correct answer the Check Answer button should become disabled
     expect(checkBtn).toHaveProperty('disabled', true);
+    expect(capturedSwitcherProps.indexes.at(-1)).toMatchObject({
+      id: 'q1', disabled: true, isDelayedDisabled: false,
+    });
+  });
+
+  test('passes timer state to the response without adding a wrapper around it', async () => {
+    const delayedConfig = {
+      ...baseConfig,
+      response: [
+        {
+          type: 'shortText',
+          id: 'q1',
+          prompt: 'Delayed Question',
+          required: false,
+          delay: 5000,
+        },
+      ],
+    } as IndividualComponent;
+
+    const studyStore = await makeStudyStore();
+    const { container } = render(withStore(studyStore, <ResponseBlock config={delayedConfig} location="belowStimulus" />));
+
+    const questionBlock = container.querySelector('[data-question-id="q1"]');
+    expect(questionBlock).not.toBeNull();
+    expect(questionBlock?.querySelector('.response')?.parentElement).toBe(questionBlock);
+    expect(capturedSwitcherProps.indexes[0]).toEqual({
+      id: 'q1', index: 1, disabled: false, isDelayedDisabled: true,
+    });
+  });
+
+  test('keeps sequential indices across dividers and enumeration restart settings', async () => {
+    const mixedConfig = {
+      ...baseConfig,
+      response: [
+        {
+          type: 'shortText',
+          id: 'q1',
+          prompt: 'Immediate Question',
+          required: false,
+        },
+        {
+          type: 'divider',
+          id: 'd1',
+        },
+        {
+          type: 'shortText',
+          id: 'q2',
+          prompt: 'Second Question',
+          required: false,
+        },
+        {
+          type: 'textOnly',
+          id: 'instructions-no-restart',
+          prompt: 'Continue enumeration',
+          restartEnumeration: false,
+        },
+        {
+          type: 'shortText',
+          id: 'q3',
+          prompt: 'Third Question',
+          required: false,
+        },
+        {
+          type: 'textOnly',
+          id: 'instructions-restart',
+          prompt: 'Restart enumeration',
+          restartEnumeration: true,
+        },
+        {
+          type: 'shortText',
+          id: 'q4',
+          prompt: 'Fourth Question',
+          required: false,
+        },
+      ],
+    } as IndividualComponent;
+
+    mockStoredAnswerData.formOrder = {
+      response: ['q1', 'd1', 'q2', 'instructions-no-restart', 'q3', 'instructions-restart', 'q4'],
+    };
+    const studyStore = await makeStudyStore();
+    render(withStore(studyStore, <ResponseBlock config={mixedConfig} location="belowStimulus" />));
+
+    const responseIndexes = Array.from(new Map(
+      capturedSwitcherProps.indexes
+        .filter(({ id }) => ['q1', 'q2', 'q3', 'q4'].includes(id))
+        .map(({ id, index }) => [id, index]),
+    ));
+    expect(responseIndexes).toEqual([
+      ['q1', 1],
+      ['q2', 2],
+      ['q3', 3],
+      ['q4', 1],
+    ]);
+    expect(capturedSwitcherProps.indexes.every(({ isDelayedDisabled }) => !isDelayedDisabled)).toBe(true);
   });
 });
 

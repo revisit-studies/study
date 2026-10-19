@@ -1112,6 +1112,7 @@ describe('StorageEngine edge cases', () => {
 
     test('new participant after config change gets new hash, old keeps old hash', async () => {
       await storageEngine.saveConfig(configSimple);
+      await storageEngine.setSequenceArray(generateSequenceArray(configSimple));
       const session1 = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
       await storageEngine.clearCurrentParticipantId();
 
