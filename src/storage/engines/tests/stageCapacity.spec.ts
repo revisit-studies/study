@@ -3,7 +3,7 @@ import {
 } from 'vitest';
 import testConfigSimple from '../../tests/testConfigSimple.json';
 import { StudyConfig } from '../../../parser/types';
-import { ParticipantMetadata } from '../../../store/types';
+import { ParticipantMetadata, Sequence } from '../../../store/types';
 import { generateSequenceArray } from '../../../utils/handleRandomSequences';
 import { LocalStorageEngine } from '../LocalStorageEngine';
 import {
@@ -299,6 +299,33 @@ describe('stage capacity', () => {
       (assignment) => assignment.betweenSubjectsCombinationKey === combinationKey,
     ).length;
     expect(countFor(controlKey)).toBe(countFor(treatmentKey));
+  });
+
+  test.each([null, 8])('rotates Latin-square rows within each condition with stage maximum %s', async (maxParticipants) => {
+    const latinSquareConfig: StudyConfig = {
+      ...betweenSubjectsConfig,
+      uiConfig: { ...betweenSubjectsConfig.uiConfig, numSequences: 4 },
+      components: { ...config.components, secondComponent: config.components.testComponent },
+      sequence: { order: 'latinSquare', components: ['testComponent', 'secondComponent'] },
+    };
+    const sequences = generateSequenceArray(latinSquareConfig);
+    await storageEngine.setSequenceArray(sequences);
+    await storageEngine.updateStage(studyId, 'LIMITED', { maxParticipants });
+
+    const assignedSequences: Sequence[] = [];
+    for (let index = 0; index < 8; index += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      const participant = await storageEngine.initializeParticipantSession({}, latinSquareConfig, metadata, `participant-${index}`);
+      assignedSequences.push(participant.sequence);
+    }
+
+    ['control', 'treatment'].forEach((version) => {
+      const expectedOrders = sequences.filter((sequence) => sequence.parameters?.version === version)
+        .map((sequence) => sequence.components);
+      expect(new Set(expectedOrders.map((order) => JSON.stringify(order))).size).toBe(2);
+      expect(assignedSequences.filter((sequence) => sequence.parameters?.version === version)
+        .map((sequence) => sequence.components)).toEqual([...expectedOrders, ...expectedOrders]);
+    });
   });
 
   test('keeps concurrent edits to different stages', async () => {

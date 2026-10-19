@@ -16,6 +16,7 @@ import {
 } from 'mantine-react-table';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
 import { FactorObject, FactorPrimitive, StudyConfig } from '../../../parser/types';
+import { resolveBetweenSubjectsFactorLevels } from '../../../parser/libraryParser';
 import { ParticipantDataWithStatus } from '../../../storage/types';
 import { getBetweenSubjectsCombinationKey, StageInfo } from '../../../storage/engines/types';
 import { getStageCombinationTargets } from '../../../storage/engines/utils/stageAllocation';
@@ -63,14 +64,14 @@ function getActiveDesiredParticipants(stage: StageInfo) {
 
 export function getBetweenSubjectsFactors(studyConfig?: StudyConfig): BetweenSubjectsFactor[] {
   return studyConfig?.betweenSubjects?.flatMap((factorName) => {
-    const factor = studyConfig.factors?.[factorName];
-    if (!Array.isArray(factor) || factor.length === 0 || !factor.every((level) => (
+    const levels = resolveBetweenSubjectsFactorLevels(factorName, studyConfig.factors || {});
+    if (!levels || levels.length === 0 || !levels.every((level) => (
       typeof level !== 'object' || (level !== null && !Array.isArray(level))
     ))) {
       return [];
     }
 
-    return [{ factorName, levels: factor as BetweenSubjectsLevel[] }];
+    return [{ factorName, levels: levels as BetweenSubjectsLevel[] }];
   }) || [];
 }
 
@@ -690,7 +691,8 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
     setEditingLimitEnabled(enabled);
     if (enabled) {
       const manualDesiredParticipants = getManualDesiredParticipants(stage);
-      const initialMaximumParticipants = getParticipantAssignmentMode(stage) === 'manual'
+      const initialMaximumParticipants = betweenSubjectsCombinations.length > 0
+        && getParticipantAssignmentMode(stage) === 'manual'
         && manualDesiredParticipants
         ? Object.values(manualDesiredParticipants).reduce((total, count) => total + count, 0)
         : Math.max(betweenSubjectsCombinations.length, 1) * 10;
@@ -874,7 +876,7 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
 
   const selectedStage = allStages.find((stage) => stage.stageName === currentStage.stageName)
     ?? allStages[0];
-  const participantAssignmentMode = selectedStage
+  const participantAssignmentMode = selectedStage && betweenSubjectsCombinations.length > 0
     ? getParticipantAssignmentMode(selectedStage)
     : 'even';
   const selectedStageDesiredParticipantCounts = selectedStage
@@ -1195,23 +1197,25 @@ export function StageManagementItem({ studyId, studyConfig }: { studyId: string;
                   Set a maximum number of participants who can enter this stage.
                 </Text>
               </Stack>
-              <Stack align="flex-start" gap={2}>
-                <Text fw={500} size="sm">Assign participants</Text>
-                <SegmentedControl
-                  aria-label={`Participant assignment mode for ${selectedStage.stageName}`}
-                  data={[
-                    { label: 'Evenly', value: 'even' },
-                    { label: 'Manually', value: 'manual' },
-                  ]}
-                  disabled={!editingLimitEnabled || selectedStage.maxParticipants === undefined}
-                  onChange={(mode) => handleSetParticipantAssignmentMode(selectedStage, mode)}
-                  size="sm"
-                  value={participantAssignmentMode}
-                />
-                <Text c="dimmed" size="xs">
-                  Choose whether that maximum is divided evenly or set for each condition.
-                </Text>
-              </Stack>
+              {betweenSubjectsCombinations.length > 0 && (
+                <Stack align="flex-start" gap={2}>
+                  <Text fw={500} size="sm">Assign participants</Text>
+                  <SegmentedControl
+                    aria-label={`Participant assignment mode for ${selectedStage.stageName}`}
+                    data={[
+                      { label: 'Evenly', value: 'even' },
+                      { label: 'Manually', value: 'manual' },
+                    ]}
+                    disabled={!editingLimitEnabled || selectedStage.maxParticipants === undefined}
+                    onChange={(mode) => handleSetParticipantAssignmentMode(selectedStage, mode)}
+                    size="sm"
+                    value={participantAssignmentMode}
+                  />
+                  <Text c="dimmed" size="xs">
+                    Choose whether that maximum is divided evenly or set for each condition.
+                  </Text>
+                </Stack>
+              )}
               <Stack gap={2}>
                 <NumberInput
                   aria-label={`Maximum participants for ${selectedStage.stageName}`}

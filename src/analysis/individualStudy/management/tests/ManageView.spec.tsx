@@ -78,9 +78,9 @@ vi.mock('@mantine/core', () => ({
     <input placeholder={placeholder} onChange={onChange} />
   ),
   NumberInput: ({
-    disabled, onChange, placeholder, value, 'aria-label': ariaLabel,
-  }: { disabled?: boolean; onChange?: (value: number | string) => void; placeholder?: string; value?: number | string; 'aria-label'?: string }) => (
-    <input disabled={disabled} aria-label={ariaLabel} placeholder={placeholder} value={value ?? ''} onChange={(event) => onChange?.(event.currentTarget.value === '' ? '' : Number(event.currentTarget.value))} />
+    disabled, onBlur, onChange, placeholder, value, 'aria-label': ariaLabel,
+  }: { disabled?: boolean; onBlur?: () => void; onChange?: (value: number | string) => void; placeholder?: string; value?: number | string; 'aria-label'?: string }) => (
+    <input disabled={disabled} aria-label={ariaLabel} placeholder={placeholder} value={value ?? ''} onBlur={onBlur} onChange={(event) => onChange?.(event.currentTarget.value === '' ? '' : Number(event.currentTarget.value))} />
   ),
   ColorInput: ({
     value, onChange, 'aria-label': ariaLabel,
@@ -676,6 +676,79 @@ describe('ManageView', () => {
     });
     expect(mockStorageEngine!.setStageCombinationEnabled)
       .toHaveBeenCalledWith('test-study', 'DEFAULT', disabledCombination, true);
+  });
+
+  test('StageManagementItem populates derived groups and saves their complete condition keys', async () => {
+    const studyConfig = {
+      factors: {
+        task: ['A', 'B'],
+        interface: ['FFL', 'LaTeX'],
+        assignment: { action: 'cross', factors: ['task', 'interface'] },
+      },
+      betweenSubjects: ['assignment'],
+    } as unknown as StudyConfig;
+
+    await act(async () => {
+      render(<StageManagementItem studyId="test-study" studyConfig={studyConfig} />);
+    });
+
+    expect(screen.getAllByRole('checkbox', { name: /^Enable / })).toHaveLength(4);
+    await act(async () => {
+      fireEvent.click(screen.getByRole('checkbox', { name: 'Enable {"task":"A","interface":"FFL"} for DEFAULT' }));
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Yes, disable condition' }));
+    });
+    expect(mockStorageEngine!.setStageCombinationEnabled).toHaveBeenCalledWith(
+      'test-study',
+      'DEFAULT',
+      getBetweenSubjectsCombinationKey({ assignment: { task: 'A', interface: 'FFL' } }, ['assignment']),
+      false,
+    );
+  });
+
+  test.each(['even', 'manual'])('StageManagementItem keeps the cap editable without groups when saved mode is %s', async (participantAssignmentMode) => {
+    mockStorageEngine!.getStageData.mockResolvedValue({
+      currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
+      allStages: [{
+        stageName: 'DEFAULT',
+        color: DEFAULT_STAGE_COLOR,
+        maxParticipants: 10,
+        participantAssignmentMode,
+        manualDesiredParticipantsByCombination: {},
+      }],
+    });
+    await act(async () => {
+      render(<StageManagementItem studyId="test-study" />);
+    });
+
+    expect(screen.queryByRole('button', { name: 'Manually' })).toBeNull();
+    const maximum = screen.getByLabelText('Maximum participants for DEFAULT') as HTMLInputElement;
+    expect(maximum.disabled).toBe(false);
+    expect(maximum.value).toBe('10');
+    await act(async () => { fireEvent.change(maximum, { target: { value: '11' } }); });
+    await act(async () => { fireEvent.blur(maximum); });
+    expect(mockStorageEngine!.updateStage).toHaveBeenCalledWith('test-study', 'DEFAULT', { maxParticipants: 11 });
+  });
+
+  test('StageManagementItem enables a nonzero cap without groups when manual mode was saved', async () => {
+    mockStorageEngine!.getStageData.mockResolvedValue({
+      currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
+      allStages: [{
+        stageName: 'DEFAULT',
+        color: DEFAULT_STAGE_COLOR,
+        participantAssignmentMode: 'manual',
+        manualDesiredParticipantsByCombination: {},
+      }],
+    });
+    await act(async () => {
+      render(<StageManagementItem studyId="test-study" />);
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('checkbox', { name: 'Limit participants' }));
+    });
+
+    expect(mockStorageEngine!.updateStage).toHaveBeenCalledWith('test-study', 'DEFAULT', { maxParticipants: 10 });
   });
 
   test('StageManagementItem disables even allocations and enables manual assignments', async () => {

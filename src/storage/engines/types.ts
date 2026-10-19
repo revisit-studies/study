@@ -212,19 +212,22 @@ function getDesiredParticipantCountsByCombination(
   );
 }
 
-// Returns the sequences whose between-subjects condition is furthest from its
+// Chooses a sequence from the between-subjects condition furthest from its
 // target, so new participants top up the condition that is behind. Conditions with
 // a target are compared by the fraction of that target already filled, so unequal
 // targets fill in proportion rather than largest-first; without targets the raw
 // participant count is used.
-function getLeastServedSequences(
+function getLeastServedSequence(
   sequences: Sequence[],
   combinationCounts: Record<string, number>,
   desiredParticipantCountsByCombination: Record<string, number> | undefined,
   betweenSubjects: string[],
+  intentIndex: number,
 ) {
-  const servedFractions = sequences.map((sequence) => {
-    const combinationKey = getBetweenSubjectsCombinationKey(sequence.parameters, betweenSubjects);
+  const combinationKeys = [...new Set(sequences.map((sequence) => (
+    getBetweenSubjectsCombinationKey(sequence.parameters, betweenSubjects)
+  )))];
+  const servedFractions = combinationKeys.map((combinationKey) => {
     const count = combinationCounts[combinationKey] || 0;
     const desiredCount = desiredParticipantCountsByCombination?.[combinationKey];
 
@@ -232,7 +235,14 @@ function getLeastServedSequences(
   });
   const leastServedFraction = Math.min(...servedFractions);
 
-  return sequences.filter((_, index) => servedFractions[index] === leastServedFraction);
+  const leastServedKeys = combinationKeys.filter((_, index) => servedFractions[index] === leastServedFraction);
+  const combinationKey = leastServedKeys[intentIndex % leastServedKeys.length];
+  const combinationSequences = sequences.filter((sequence) => (
+    getBetweenSubjectsCombinationKey(sequence.parameters, betweenSubjects) === combinationKey
+  ));
+  // The overall participant index can repeatedly skip rows within a condition.
+  // Advance its Latin-square row using only that condition's participant count.
+  return combinationSequences[(combinationCounts[combinationKey] || 0) % combinationSequences.length];
 }
 
 export type StorageObjectType = 'sequenceArray' | 'participantData' | 'config' | string;
@@ -1405,20 +1415,16 @@ export abstract class StorageEngine {
         creationIndex: 1,
       };
     }
-    // Rotating through the sequences alone assigns whichever condition is next in
-    // the latin square, which never catches a condition up after it was disabled,
-    // given a smaller target, or emptied by rejections. Narrow the rotation to the
-    // conditions that are furthest behind, then keep the latin-square rotation
-    // within them.
-    const balancedSequenceArray = combinationCounts
-      ? getLeastServedSequences(
+    // Choose a condition that is behind, then rotate through its Latin-square rows.
+    const currentRow = combinationCounts
+      ? getLeastServedSequence(
         availableSequenceArray,
         combinationCounts,
         desiredParticipantCountsByCombination,
         betweenSubjects,
+        intentIndex,
       )
-      : availableSequenceArray;
-    const currentRow = balancedSequenceArray[intentIndex % balancedSequenceArray.length];
+      : availableSequenceArray[intentIndex % availableSequenceArray.length];
 
     if (!currentRow) {
       throw new Error('Latin square is empty');
