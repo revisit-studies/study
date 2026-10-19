@@ -74,6 +74,13 @@ export function getStaticFirstComponent(studyConfig: StudyConfig): StaticFirstCo
     return null;
   }
 
+  // The participant runtime starts these timers only after initialization.
+  const enableTime = component.nextButtonEnableTime ?? studyConfig.uiConfig.nextButtonEnableTime;
+  const disableTime = component.nextButtonDisableTime ?? studyConfig.uiConfig.nextButtonDisableTime;
+  if (enableTime || disableTime || component.nextButtonAutoAdvanceTime !== undefined) {
+    return null;
+  }
+
   return { componentName, component };
 }
 

@@ -13,7 +13,9 @@ import { generateSequenceArray } from '../../utils/handleRandomSequences';
 import { hash } from '../engines/utils/storageEngineHelpers';
 import { type Sequence } from '../../store/types';
 import { FirebaseStorageEngine } from '../engines/FirebaseStorageEngine';
-import { type StorageEngine, type SequenceAssignment, type StoredUser } from '../engines/types';
+import {
+  type StorageEngine, getBetweenSubjectsCombinationKey, type SequenceAssignment, type StoredUser,
+} from '../engines/types';
 import { filterSequenceByCondition } from '../../utils/handleConditionLogic';
 
 type DocData = Record<string, string | number | boolean | null | object>;
@@ -24,6 +26,7 @@ const DELETE_FIELD_SENTINEL = { __sentinel: 'deleteField' };
 const storageObjects: Record<string, string> = {};
 let failConfigActivation = false;
 let failSequenceReads = false;
+let failParticipantReads = false;
 const localStore: Record<string, string | number | object | null> = {};
 const authState: { currentUser: { email: string | null; uid: string } | null } = {
   currentUser: null,
@@ -68,6 +71,7 @@ vi.mock('firebase/storage', () => {
       return { ref: refObj };
     }),
     getBlob: vi.fn(async (refObj: { path: string }) => {
+      if (failParticipantReads && refObj.path.endsWith('_participantData')) throw new Error('Participant storage unavailable');
       if (failSequenceReads && refObj.path.endsWith('_sequenceArray')) throw new Error('Storage unavailable');
       const data = storageObjects[refObj.path];
       if (data !== undefined) {
@@ -1099,6 +1103,113 @@ describe.each([
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'after-snapshot');
     expect(await storageEngine.getSequenceAssignment(studyId, 'after-snapshot'))
       .toMatchObject({ sequenceIndex: 1, creationIndex: 10 });
+  });
+
+  test.each(['download', 'json', 'payload'])('failed participant %s reads cannot release a live reservation', async (failure) => {
+    await storageEngine.setCurrentStage(studyId, 'READ-FAILURE', '#00AAFF', 1);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'still-active');
+    await storageEngine.clearCurrentParticipantId();
+    const path = `dev-${studyId}/participants/still-active_participantData`;
+    const saved = storageObjects[path];
+    if (failure === 'download') failParticipantReads = true;
+    else storageObjects[path] = failure === 'json' ? '{broken' : '{}';
+    try {
+      await expect(storageEngine.rejectParticipant('still-active', 'review')).rejects.toBeDefined();
+    } finally {
+      failParticipantReads = false;
+      storageObjects[path] = saved;
+    }
+    expect((await storageEngine.getSequenceAssignment(studyId, 'still-active'))?.rejected).toBe(false);
+    expect((await storageEngine.getParticipantData('still-active'))?.rejected).toBe(false);
+    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement')).rejects.toThrow(/participant limit/);
+  });
+
+  test('an orphan recheck read failure leaves the assignment reserved', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'recheck-active');
+    await storageEngine.clearCurrentParticipantId();
+    // @ts-expect-error Simulate an initially absent blob followed by a failing admission-lock recheck.
+    vi.spyOn(storageEngine, '_getFromStorage').mockResolvedValueOnce({});
+    failParticipantReads = true;
+    try {
+      await expect(storageEngine.rejectParticipant('recheck-active', 'review')).rejects.toMatchObject({ message: 'Participant storage unavailable' });
+    } finally {
+      failParticipantReads = false;
+    }
+    expect((await storageEngine.getSequenceAssignment(studyId, 'recheck-active'))?.rejected).toBe(false);
+    expect((await storageEngine.getParticipantData('recheck-active'))?.rejected).toBe(false);
+  });
+
+  test('manual edits discard obsolete conditions and preserve current defaults', async () => {
+    const original: StudyConfig = { ...configSimple, factors: { group: ['A', 'B'] }, betweenSubjects: ['group'] };
+    const changed: StudyConfig = { ...original, factors: { group: ['C', 'D'] } };
+    await storageEngine.saveConfig(original);
+    const [a, b, c, d] = ['A', 'B', 'C', 'D'].map((group) => getBetweenSubjectsCombinationKey({ group }, ['group']));
+    await storageEngine.setStageDesiredParticipants(studyId, 'DEFAULT', a, 5, { [a]: 5, [b]: 5 });
+    await storageEngine.saveConfig(changed);
+    // The UI can still hold the previous saved map after the config changes.
+    await storageEngine.setStageDesiredParticipants(studyId, 'DEFAULT', c, 6, { [a]: 5, [b]: 5 });
+    const stage = (await storageEngine.getStageData(studyId)).allStages[0];
+    expect(stage.maxParticipants).toBe(11);
+    expect(stage.manualDesiredParticipantsByCombination).toEqual({ [c]: 6, [d]: 5 });
+  });
+
+  test('manual edits refresh an empty reactivated stage while protecting enrolled stages', async () => {
+    const original: StudyConfig = { ...configSimple, factors: { group: ['A', 'B'] }, betweenSubjects: ['group'] };
+    const changed: StudyConfig = { ...original, factors: { group: ['C', 'D'] } };
+    const [a, b, c, d] = ['A', 'B', 'C', 'D'].map((group) => getBetweenSubjectsCombinationKey({ group }, ['group']));
+    await storageEngine.saveConfig(original);
+    await storageEngine.setStageDesiredParticipants(studyId, 'DEFAULT', a, 5, { [a]: 5, [b]: 5 });
+    await storageEngine.setCurrentStage(studyId, 'OTHER', '#00AAFF');
+    await storageEngine.saveConfig(changed);
+    await storageEngine.setCurrentStage(studyId, 'DEFAULT', '#00AAFF');
+    await storageEngine.saveConfig(changed);
+    await storageEngine.setStageDesiredParticipants(studyId, 'DEFAULT', c, 6, { [a]: 5, [b]: 5 });
+    const stage = (await storageEngine.getStageData(studyId)).allStages[0];
+    expect(stage).toMatchObject({ maxParticipants: 11, conditionKeys: [c, d], manualDesiredParticipantsByCombination: { [c]: 6, [d]: 5 } });
+    await expect(storageEngine.setStageDesiredParticipants(studyId, 'DEFAULT', a, 6, { [a]: 5, [b]: 5 })).rejects.toThrow(/no longer available/);
+    await storageEngine.setSequenceArray(generateSequenceArray(changed));
+    await storageEngine.initializeParticipantSession({}, changed, participantMetadata, 'enrolled');
+    await storageEngine.setCurrentStage(studyId, 'OTHER', '#00AAFF');
+    await storageEngine.saveConfig(original);
+    await expect(storageEngine.setStageDesiredParticipants(studyId, 'DEFAULT', a, 6, { [a]: 5, [b]: 5 })).rejects.toThrow(/removed or renamed/);
+    expect((await storageEngine.getStageData(studyId)).allStages[0]).toEqual(stage);
+  });
+
+  test('manual edits stop when the active config cannot be loaded', async () => {
+    const config: StudyConfig = { ...configSimple, factors: { group: ['A', 'B'] }, betweenSubjects: ['group'] };
+    await storageEngine.saveConfig(config);
+    const stage = (await storageEngine.getStageData(studyId)).allStages[0];
+    const a = getBetweenSubjectsCombinationKey({ group: 'A' }, ['group']);
+    // @ts-expect-error Do not fall back to stale keys if the authoritative config is unavailable.
+    vi.spyOn(storageEngine, '_getFromStorage').mockResolvedValueOnce({});
+    await expect(storageEngine.setStageDesiredParticipants(studyId, 'DEFAULT', a, 6, { [a]: 5 })).rejects.toThrow(/configuration could not be loaded/);
+    expect((await storageEngine.getStageData(studyId)).allStages[0]).toEqual(stage);
+  });
+
+  test('analysis receives the assignment start time even when the participant clock is wrong', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'clock-skew');
+    const path = `dev-${studyId}/participants/clock-skew_participantData`;
+    const participant = JSON.parse(storageObjects[path]);
+    storageObjects[path] = JSON.stringify({ ...participant, createdTime: 1 });
+    const assignment = await storageEngine.getSequenceAssignment(studyId, 'clock-skew');
+    const analysis = (await storageEngine.getAllParticipantsData(studyId))[0];
+    expect(analysis.createdTime).toBe(1);
+    expect(analysis).toHaveProperty('assignmentCreatedTime', assignment!.createdTime);
+    expect(assignment!.createdTime).toBeGreaterThan(1);
+  });
+
+  test.each(['.', '..', '__pilot__', '界'.repeat(600), 'A/B'])('stage name %s uses a safe bounded Firestore ID', async (stageName) => {
+    await storageEngine.setCurrentStage(studyId, stageName, '#00AAFF', 1);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'safe-stage');
+    const stageDocuments = Object.keys(firestoreData).filter((path) => path.startsWith(`dev-${studyId}/allocation/stages/`));
+    expect(stageDocuments.length).toBeGreaterThan(0);
+    stageDocuments.forEach((path) => {
+      const documentId = path.split('/').at(-1)!;
+      expect(['.', '..']).not.toContain(documentId);
+      expect(documentId).not.toMatch(/^__.*__$/);
+      expect(new TextEncoder().encode(documentId).length).toBeLessThanOrEqual(1500);
+    });
+    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'blocked-stage')).rejects.toThrow(/participant limit/);
   });
 
   test('stage admission preserves bounded reads and zero-based allocator metadata', async () => {

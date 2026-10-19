@@ -79,6 +79,30 @@ describe('getStaticFirstComponent', () => {
     ))).toEqual({ componentName: 'intro', component });
   });
 
+  test.each(['nextButtonEnableTime', 'nextButtonDisableTime', 'nextButtonAutoAdvanceTime'] as const)('does not preview a component with %s', (setting) => {
+    const config = makeConfig({ order: 'fixed', components: ['intro'] }, { ...intro, [setting]: 5000 });
+    expect(getStaticFirstComponent(config)).toBeNull();
+  });
+
+  test.each(['nextButtonEnableTime', 'nextButtonDisableTime'] as const)('respects global %s and component overrides', (setting) => {
+    const config = makeConfig({ order: 'fixed', components: ['intro'] });
+    config.uiConfig[setting] = 5000;
+    expect(getStaticFirstComponent(config)).toBeNull();
+    config.components.intro = { ...intro, [setting]: 0 };
+    expect(getStaticFirstComponent(config)).not.toBeNull();
+  });
+
+  test('does not preview inherited image timing restrictions', () => {
+    const config = makeConfig({ order: 'fixed', components: ['intro'] });
+    config.baseComponents = {
+      timedImage: {
+        type: 'image', path: 'image.png', response: [], nextButtonAutoAdvanceTime: 5000,
+      },
+    };
+    config.components.intro = { baseComponent: 'timedImage' };
+    expect(getStaticFirstComponent(config)).toBeNull();
+  });
+
   test('does not preview a component that needs templating', () => {
     expect(getStaticFirstComponent(makeConfig(
       { order: 'fixed', components: ['intro'] },

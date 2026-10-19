@@ -1067,11 +1067,11 @@ export abstract class StorageEngine {
     await this.updateStage(studyId, stageName, { color });
   }
 
-  protected async changeStagePolicy(studyId: string, stageName: string, update: (stage: StageInfo) => StageUpdates) {
+  protected async changeStagePolicy(studyId: string, stageName: string, update: (stage: StageInfo) => StageUpdates | Promise<StageUpdates>) {
     await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, async () => {
       const stage = (await this.getModes(studyId)).stage?.allStages.find((item) => item.stageName === stageName);
       if (!stage) throw new Error(`Stage ${stageName} not found`);
-      await this.updateStageUnlocked(studyId, stageName, update(stage));
+      await this.updateStageUnlocked(studyId, stageName, await update(stage));
     });
   }
 
@@ -1106,15 +1106,23 @@ export abstract class StorageEngine {
   }
 
   async setStageDesiredParticipants(studyId: string, stageName: string, combinationKey: string, desiredParticipants: number, initialDesiredParticipants: Record<string, number>) {
-    await this.changeStagePolicy(studyId, stageName, (stage) => {
+    await this.changeStagePolicy(studyId, stageName, async (stage) => {
+      const configHash = await this._getCurrentConfigHash();
+      const config = configHash ? await this._getFromStorage(`configs/${configHash}`, 'config', studyId) : undefined;
+      if (configHash && !config?.sequence) throw new Error('The active study configuration could not be loaded. Please try again.');
+      const keys = config?.sequence ? getConfigConditionKeys(config) : stage.conditionKeys ?? Object.keys(initialDesiredParticipants);
+      if ((configHash || stage.conditionKeys) && !keys.includes(combinationKey)) throw new Error('This condition is no longer available. Please reload the study settings.');
+      const saved = stage.manualDesiredParticipantsByCombination ?? stage.desiredParticipantsByCombination;
+      const effective = getStageCombinationTargets(stage.maxParticipants, keys, saved, stage.disabledBetweenSubjectsCombinations) ?? initialDesiredParticipants;
       const targets = {
-        ...(stage.manualDesiredParticipantsByCombination ?? stage.desiredParticipantsByCombination ?? initialDesiredParticipants),
+        ...Object.fromEntries(keys.map((key) => [key, effective[key] ?? 0])),
         [combinationKey]: desiredParticipants,
       };
       return {
         participantAssignmentMode: 'manual',
         manualDesiredParticipantsByCombination: targets,
         maxParticipants: Object.values(targets).reduce((total, count) => total + count, 0),
+        conditionKeys: keys,
       };
     });
   }
@@ -1891,13 +1899,9 @@ export abstract class StorageEngine {
 
   // Gets all participant IDs for the current studyId or a provided studyId.
   async getAllParticipantsData(studyId: string): Promise<ParticipantDataWithStatus[]> {
-    const participantIds = await this.getAllParticipantIds(studyId);
     const sequenceAssignments = await this.getAllSequenceAssignments(studyId);
-    const completedByParticipantId = new Map(
-      sequenceAssignments.map((assignment) => [assignment.participantId, assignment.completed !== null]),
-    );
-
-    const participantPulls = participantIds.map(async (participantId) => {
+    const participantPulls = sequenceAssignments.map(async (assignment): Promise<ParticipantDataWithStatus | null> => {
+      const { participantId } = assignment;
       const participantData = await this._getFromStorage(
         `participants/${participantId}`,
         'participantData',
@@ -1907,7 +1911,8 @@ export abstract class StorageEngine {
       if (isParticipantData(participantData)) {
         return {
           ...participantData,
-          completed: completedByParticipantId.get(participantId) ?? false,
+          completed: assignment.completed !== null,
+          assignmentCreatedTime: assignment.createdTime,
         } satisfies ParticipantDataWithStatus;
       }
       return null;

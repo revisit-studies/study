@@ -1,4 +1,5 @@
 import { parse as hjsonParse } from 'hjson';
+import sha256 from 'crypto-js/sha256';
 import localforage from 'localforage';
 import { v4 as uuidv4 } from 'uuid';
 import { initializeApp } from 'firebase/app';
@@ -12,7 +13,7 @@ import { ReCaptchaV3Provider, ReCaptchaEnterpriseProvider, initializeAppCheck } 
 import {
   browserPopupRedirectResolver, getAuth, GoogleAuthProvider, onAuthStateChanged, signInAnonymously, signInWithPopup, signOut,
 } from '@firebase/auth';
-import { rebuildSequenceAllocator, retrySequenceAllocation } from './utils/storageEngineHelpers';
+import { isParticipantData, rebuildSequenceAllocator, retrySequenceAllocation } from './utils/storageEngineHelpers';
 import {
   StageAllocation, CloudStorageEngine, REVISIT_MODE, StorageObjectType, StorageObject, UserManagementData, SequenceAssignment, SnapshotDocContent, StoredUser, cleanupModes, ModesAndStageData, StageInfo, StageUpdates, StageData, applyStageUpdates, StageCapacityExceededError, StageNoAvailableConditionsError, StageOnlyDisabledConditionsHaveCapacityError, getBetweenSubjectsCombinationKey, getConfigConditionKeys, getDesiredParticipantCountsByCombination, getLeastServedSequence, getStageParticipantCounts, isSequenceEnabledForStage, assertAppendOnlyConditions, validateStageParticipantLimits, SequenceAssignmentAllocation, SequenceAllocator,
 } from './types';
@@ -39,7 +40,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
   }
 
   private stageAllocationReference(stage: string, studyCollection = this.studyCollection) {
-    return doc(collection(doc(studyCollection, 'allocation'), 'stages'), encodeURIComponent(stage));
+    return doc(collection(doc(studyCollection, 'allocation'), 'stages'), sha256(stage).toString());
   }
 
   private async readAllocation(transaction: Transaction, studyCollection = this.studyCollection): Promise<AllocationState> {
@@ -303,9 +304,10 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       const blob = await getBlob(storageRef);
       const fullProvStr = await blob.text();
       storageObj = JSON.parse(fullProvStr);
+      if (type === 'participantData' && !isParticipantData(storageObj)) throw new Error('Invalid participant data');
     } catch (error) {
-      // A failed sequence read must not look absent and trigger replacement.
-      if (type === 'sequenceArray' && (error as { code?: string } | null)?.code !== 'storage/object-not-found') throw error;
+      // Only confirmed absence may trigger replacement or orphan cleanup.
+      if ((type === 'sequenceArray' || type === 'participantData') && (error as { code?: string } | null)?.code !== 'storage/object-not-found') throw error;
       console.warn(
         `${prefix} does not have ${type} for ${this.collectionPrefix}${this.studyId}.`,
       );
@@ -826,7 +828,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     return await setDoc(revisitModesDoc, { [mode]: value }, { merge: true });
   }
 
-  private async updateModesAtomically(studyId: string, update: (modes: Record<string, unknown>) => Record<string, unknown>, configHash?: string) {
+  private async updateModesAtomically(studyId: string, update: (modes: Record<string, unknown>) => Record<string, unknown> | Promise<Record<string, unknown>>, configHash?: string) {
     const studyCollection = collection(this.firestore, `${this.collectionPrefix}${studyId}`);
     const reference = doc(studyCollection, 'modes');
     await runTransaction(this.firestore, async (transaction) => {
@@ -834,7 +836,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       const current = (await transaction.get(reference)).data() || {
         dataCollectionEnabled: true, developmentModeEnabled: true, dataSharingEnabled: true,
       };
-      const next = update(current);
+      const next = await update(current);
       const stageData = next.stage as StageData | undefined;
       const previous = current.stage as StageData | undefined;
       const stageStates = stageData ? await Promise.all(stageData.allStages.map((stage) => (
@@ -865,12 +867,12 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     }, configHash);
   }
 
-  protected override async changeStagePolicy(studyId: string, stageName: string, update: (stage: StageInfo) => StageUpdates) {
-    await this.updateModesAtomically(studyId, (modes) => {
+  protected override async changeStagePolicy(studyId: string, stageName: string, update: (stage: StageInfo) => StageUpdates | Promise<StageUpdates>) {
+    await this.updateModesAtomically(studyId, async (modes) => {
       const data = modes.stage as StageData | undefined;
       const stage = data?.allStages.find((item) => item.stageName === stageName);
       if (!stage || !data) throw new Error(`Stage ${stageName} not found`);
-      return { ...modes, stage: applyStageUpdates(data, stageName, update(stage)) };
+      return { ...modes, stage: applyStageUpdates(data, stageName, await update(stage)) };
     });
   }
 

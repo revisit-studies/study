@@ -2,7 +2,7 @@ import { AuthError, createClient } from '@supabase/supabase-js';
 import localforage from 'localforage';
 import { v4 as uuidv4 } from 'uuid';
 import {
-  rebuildSequenceAllocator, retrySequenceAllocation, SEQUENCE_ALLOCATION_ATTEMPTS, waitForAllocationRetry,
+  isParticipantData, rebuildSequenceAllocator, retrySequenceAllocation, SEQUENCE_ALLOCATION_ATTEMPTS, waitForAllocationRetry,
 } from './utils/storageEngineHelpers';
 import {
   StageAllocation, REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageObject, StorageObjectType, StoredUser, CloudStorageEngine, UserWrapped, cleanupModes, applyStageUpdates, StageData, SequenceAssignmentAllocation, SequenceAllocator,
@@ -27,16 +27,18 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
 
     if (error) {
       const downloadError = error as { status?: number; statusCode?: string };
-      if (type === 'sequenceArray' && downloadError.status !== 404 && downloadError.statusCode !== '404') throw error;
+      if ((type === 'sequenceArray' || type === 'participantData') && downloadError.status !== 404 && downloadError.statusCode !== '404') throw error;
       return {} as StorageObject<T>;
     }
 
     const dataToParse = this.testing ? new Blob([data as unknown as string], { type: 'application/json' }) : data;
     try {
       const text = await dataToParse.text();
-      return JSON.parse(text) as StorageObject<T>;
+      const parsed = JSON.parse(text) as StorageObject<T>;
+      if (type === 'participantData' && !isParticipantData(parsed)) throw new Error('Invalid participant data');
+      return parsed;
     } catch (parseError) {
-      if (type === 'sequenceArray') throw parseError;
+      if (type === 'sequenceArray' || type === 'participantData') throw parseError;
       // Return the Blob directly if parsing fails
       return dataToParse as StorageObject<T>;
     }

@@ -61,12 +61,23 @@ describe('ParticipantTimeoutModal', () => {
     const participants = getInProgressParticipantsByElapsedTime([
       makeParticipant({ participantId: 'completed', createdTime: 100, completed: true }),
       makeParticipant({ participantId: 'rejected', createdTime: 100, rejected: { reason: 'test', timestamp: 1 } }),
-      makeParticipant({ participantId: 'short', createdTime: 900 }),
-      makeParticipant({ participantId: 'long', createdTime: 100 }),
+      makeParticipant({ participantId: 'short', assignmentCreatedTime: 900 }),
+      makeParticipant({ participantId: 'long', assignmentCreatedTime: 100 }),
     ], 1000);
 
     expect(participants.map((participant) => participant.participantId)).toEqual(['long', 'short']);
     expect(participants.map((participant) => participant.elapsedTime)).toEqual([900, 100]);
+  });
+
+  test('uses assignment start times instead of skewed participant clocks', () => {
+    const participants = getInProgressParticipantsByElapsedTime([
+      { ...makeParticipant({ participantId: 'behind', createdTime: 1 }), assignmentCreatedTime: 800 },
+      { ...makeParticipant({ participantId: 'ahead', createdTime: 10000 }), assignmentCreatedTime: 700 },
+      makeParticipant({ participantId: 'unknown', createdTime: 1 }),
+    ], 1000);
+    expect(participants.map((participant) => [participant.participantId, participant.elapsedTime])).toEqual([
+      ['ahead', 300], ['behind', 200], ['unknown', null],
+    ]);
   });
 
   test('formats elapsed time with days, hours, and minutes', () => {

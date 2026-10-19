@@ -26,18 +26,6 @@ export function formatElapsedTime(elapsedTime: number) {
   return `${minutes}m`;
 }
 
-function getParticipantStartTime(participant: ParticipantDataWithStatus) {
-  if (participant.createdTime) {
-    return participant.createdTime;
-  }
-
-  const answerStartTimes = Object.values(participant.answers)
-    .map((answer) => answer.startTime)
-    .filter((startTime) => startTime > 0);
-
-  return answerStartTimes.length > 0 ? Math.min(...answerStartTimes) : null;
-}
-
 export function getInProgressParticipantsByElapsedTime(
   participants: ParticipantDataWithStatus[],
   now: number = Date.now(),
@@ -45,10 +33,10 @@ export function getInProgressParticipantsByElapsedTime(
   return participants
     .filter((participant) => !participant.completed && !participant.rejected)
     .map((participant) => {
-      const startTime = getParticipantStartTime(participant);
+      const startTime = participant.assignmentCreatedTime;
       return {
         ...participant,
-        elapsedTime: startTime === null ? null : Math.max(now - startTime, 0),
+        elapsedTime: startTime === undefined || !Number.isFinite(startTime) ? null : Math.max(now - startTime, 0),
       };
     })
     .sort((a, b) => (b.elapsedTime ?? -1) - (a.elapsedTime ?? -1));
