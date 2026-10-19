@@ -86,6 +86,9 @@ describe('useAssetLoadStatus', () => {
     expect(result.current.status).toBe('loading');
     act(() => result.current.onReady());
     expect(result.current.status).toBe('ready');
+    act(() => result.current.onLoading());
+    expect(result.current.status).toBe('loading');
+    act(() => result.current.onReady());
 
     rerender({ key: 'second_1:image.png' });
     expect(result.current.status).toBe('loading');
@@ -93,7 +96,7 @@ describe('useAssetLoadStatus', () => {
     expect(result.current.status).toBe('error');
   });
 
-  test.each<'onReady' | 'onError'>(['onReady', 'onError'])('ignores a late %s callback from the previous request', (callback) => {
+  test.each<'onLoading' | 'onReady' | 'onError'>(['onLoading', 'onReady', 'onError'])('ignores a late %s callback from the previous request', (callback) => {
     const { result, rerender } = renderHook(
       ({ key }) => useAssetLoadStatus(key),
       { initialProps: { key: 'first_0:old.png' } },

@@ -68,6 +68,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   }, [currentConfig.templated, isExternal, templatedPath]);
 
   const ref = useRef<HTMLIFrameElement>(null);
+  const [frameDocument, setFrameDocument] = useState<Document | null>(null);
   const stimulusValidationRef = useRef(stimulusValidation);
 
   useEffect(() => {
@@ -108,7 +109,9 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   }, [fetchUrl, templatedPath, isTemplated, currentConfig.parameters, iframeId, currentComponent]);
   const { status, value } = useAsyncResource<string | true>(requestKey, loadWebsite);
   const srcDoc = typeof value === 'string' ? value : undefined;
-  const { status: frameStatus, onReady, onError } = useAssetLoadStatus(requestKey);
+  const {
+    status: frameStatus, onLoading, onReady, onError,
+  } = useAssetLoadStatus(requestKey);
   const assetStatus = getAssetStatus(status, frameStatus);
 
   const applyColorMode = useCallback(() => {
@@ -118,6 +121,21 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   }, [colorMode]);
 
   useLayoutEffect(applyColorMode, [applyColorMode, srcDoc, url]);
+
+  useLayoutEffect(() => {
+    if (!frameDocument || frameDocument !== ref.current?.contentDocument) return undefined;
+    const frameWindow = frameDocument.defaultView;
+    if (!frameWindow) return undefined;
+    const events = new frameWindow.AbortController();
+    // Internal navigation keeps the iframe URL prop and request key unchanged.
+    frameWindow.addEventListener('pagehide', onLoading, { signal: events.signal });
+    frameWindow.addEventListener('pageshow', () => {
+      applyColorMode();
+      onReady();
+    }, { signal: events.signal });
+    // Abort removes listeners safely even after the frame changes origin.
+    return () => events.abort();
+  }, [frameDocument, applyColorMode, onLoading, onReady]);
 
   useAssetStatus(assetStatus);
 
@@ -234,6 +252,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
       {...(srcDoc !== undefined ? { srcDoc } : { src: url })}
       onLoad={() => {
         applyColorMode();
+        setFrameDocument(ref.current?.contentDocument ?? null);
         onReady();
       }}
       onErrorCapture={onError}

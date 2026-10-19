@@ -105,3 +105,54 @@ test('HTML stays hidden until its study color scheme is applied after slow resou
   await expect(frame.locator('html')).toHaveCSS('color-scheme', 'light');
   await expect(frame.locator('body')).toHaveCSS('background-color', 'rgb(255, 255, 255)');
 });
+
+test('internal HTML navigation hides the replacement page until themed and restores history', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.route('**/demo-html/config.json', async (route) => {
+    const response = await route.fetch();
+    const config = await response.json();
+    config.uiConfig.colorMode = 'light';
+    config.components = {
+      navigation: { type: 'website', path: 'demo-html/assets/first-theme.html', response: [] },
+    };
+    config.sequence = { order: 'fixed', components: ['navigation'] };
+    await route.fulfill({ response, json: config });
+  });
+  await page.route('**/demo-html/assets/first-theme.html*', (route) => route.fulfill({
+    contentType: 'text/html',
+    body: '<!doctype html><html><head><style>:root { color-scheme: light dark; } body { background: light-dark(white, rgb(36, 36, 36)); }</style></head><body><h1>First stimulus page</h1><a href="next-theme.html">Open next page</a></body></html>',
+  }));
+  await page.route('**/demo-html/assets/next-theme.html*', (route) => route.fulfill({
+    contentType: 'text/html',
+    body: '<!doctype html><html><head><style>:root { color-scheme: light dark; } body { background: light-dark(white, rgb(36, 36, 36)); }</style></head><body><h1>Second stimulus page</h1><button onclick="history.back()">Back</button><img src="navigation-image.png" alt="Delayed resource"></body></html>',
+  }));
+  let releaseImage = () => { };
+  const imageReleased = new Promise<void>((resolve) => { releaseImage = resolve; });
+  await page.route('**/demo-html/assets/navigation-image.png', async (route) => {
+    await imageReleased;
+    await route.fulfill({ status: 404, body: '' });
+  });
+
+  await page.goto('/demo-html');
+  const iframe = page.locator('#root iframe');
+  const frame = page.frameLocator('#root iframe');
+  await expect(frame.getByRole('heading', { name: 'First stimulus page' })).toBeVisible();
+  await expect(frame.locator('body')).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+  await frame.getByRole('link', { name: 'Open next page' }).click({ noWaitAfter: true });
+  try {
+    await expect(frame.getByRole('heading', { name: 'Second stimulus page' })).toBeAttached();
+    await expect.poll(() => frame.locator('html').evaluate(() => document.readyState)).toBe('interactive');
+    await expect.poll(() => frame.locator('html').evaluate(() => window.location.pathname)).toBe('/demo-html/assets/next-theme.html');
+    await expect(iframe).toBeHidden();
+  } finally {
+    releaseImage();
+  }
+  await expect(iframe).toBeVisible();
+  await expect(frame.locator('html')).toHaveCSS('color-scheme', 'light');
+  await expect(frame.locator('body')).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+  await frame.getByRole('button', { name: 'Back', exact: true }).click({ noWaitAfter: true });
+  await expect(frame.getByRole('heading', { name: 'First stimulus page' })).toBeVisible();
+  await expect(iframe).toBeVisible();
+  await expect.poll(() => frame.locator('html').evaluate(() => window.location.pathname)).toBe('/demo-html/assets/first-theme.html');
+  await expect(frame.locator('html')).toHaveCSS('color-scheme', 'light');
+});

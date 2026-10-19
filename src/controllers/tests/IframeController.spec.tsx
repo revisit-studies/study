@@ -129,6 +129,40 @@ describe('IframeController', () => {
     expect(iframe.style.colorScheme).toBe('dark');
   });
 
+  test('hides navigating documents, restores their current theme on pageshow, and removes listeners on unmount', () => {
+    const config: WebsiteComponent = { ...websiteConfig, path: 'study/chart.html' };
+    const { container, rerender, unmount } = render(
+      <>
+        <iframe title="Document host" />
+        <IframeController currentConfig={config} answers={{}} />
+      </>,
+    );
+    const documentHost = container.querySelector('iframe')!;
+    const iframe = container.querySelector('iframe:not([title])')! as HTMLIFrameElement;
+    const frameDocument = documentHost.contentDocument!;
+    const frameWindow = frameDocument.defaultView!;
+    Object.defineProperty(iframe, 'contentDocument', { value: frameDocument, configurable: true });
+    fireEvent.load(iframe);
+    act(() => { frameWindow.dispatchEvent(new frameWindow.Event('pagehide')); });
+    expect(iframe.style.visibility).toBe('hidden');
+    mockStudyColorMode = 'dark';
+    rerender(
+      <>
+        <iframe title="Document host" />
+        <IframeController currentConfig={config} answers={{}} />
+      </>,
+    );
+    frameDocument.documentElement.style.colorScheme = 'light dark';
+    act(() => { frameWindow.dispatchEvent(new frameWindow.Event('pageshow')); });
+    expect(frameDocument.documentElement.style.colorScheme).toBe('dark');
+    expect(iframe.style.visibility).toBe('');
+
+    unmount();
+    frameDocument.documentElement.style.colorScheme = 'light dark';
+    act(() => { frameWindow.dispatchEvent(new frameWindow.Event('pageshow')); });
+    expect(frameDocument.documentElement.style.colorScheme).toBe('light dark');
+  });
+
   test('covers sendMessage via answers effect on mount', async () => {
     render(<IframeController currentConfig={websiteConfig} answers={{}} />);
     // answers effect fires sendMessage; ref.current is the iframe element in jsdom
