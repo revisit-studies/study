@@ -380,21 +380,19 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
         await storageEngine.saveConfig(activeConfig);
 
-        const sequenceArray = await storageEngine.getSequenceArray();
+        const activeHash = await activeHashPromise;
+        const sequenceArray = await storageEngine.getSequenceArray(activeHash);
 
         if (!sequenceArray) {
           const generatedSequenceArray = await generateSequenceArray(activeConfig, activeConfig.warnings);
 
-          await storageEngine.setSequenceArray(generatedSequenceArray);
+          await storageEngine.setSequenceArray(generatedSequenceArray, activeHash);
         }
 
         // Get or generate participant session
         const searchParamsObject = Object.fromEntries(searchParams.entries());
 
-        const [resolvedModes, activeHash] = await Promise.all([
-          storageEngine.getModes(canonicalStudyId),
-          activeHashPromise,
-        ]);
+        const resolvedModes = await storageEngine.getModes(canonicalStudyId);
         modes = resolvedModes;
 
         const initialMetadata: ParticipantMetadata = {

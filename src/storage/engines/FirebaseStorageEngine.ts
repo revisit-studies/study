@@ -54,7 +54,6 @@ import {
   StageData,
   applyStageUpdates,
   StageCapacityExceededError,
-  StageConditionCapacityExceededError,
   StageNoAvailableConditionsError,
   StageOnlyDisabledConditionsHaveCapacityError,
   getBetweenSubjectsCombinationKey,
@@ -71,7 +70,6 @@ import { DISTINCT_COLOR_PALETTE } from '../../utils/colors';
 import { StudyConfig } from '../../parser/types';
 import { Sequence } from '../../store/types';
 import { ParticipantData } from '../types';
-import { getStageCombinationTargets } from './utils/stageAllocation';
 import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
 
 type AllocationState = {
@@ -141,7 +139,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       return super._getSequence(conditions, bootstrapData, config, participantConfigHash);
     }
     const participantId = this.currentParticipantId!;
-    const sequences = await this.getSequenceArray();
+    const sequences = await this.getSequenceArray(await this._getCurrentConfigHash() ? participantConfigHash : undefined);
     if (!sequences?.length) throw new Error('Latin square not initialized');
     const betweenSubjects = config.betweenSubjects || [];
     const conditionKeys = getConfigConditionKeys(config);
@@ -698,29 +696,12 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     if (!this.studyId) throw new Error('Study ID is not set');
     await runTransaction(this.firestore, async (transaction) => {
       const state = await this.readAllocation(transaction);
-      const modes = (await transaction.get(doc(this.studyCollection, 'modes'))).data();
       const assignment = state.assignments.find((item) => item.participantId === participantId);
       if (!assignment) throw new Error('Failed to retrieve sequence assignment for current participant');
       if (!assignment.rejected) return;
       if (assignment.claimed) throw new Error('Cannot undo rejection after the participant slot has been reassigned');
       const source = state.assignments.find((item) => item.participantId === assignment.claimedParticipantId);
       if (source?.claimed) throw new Error('Cannot restore a participant whose original slot has been reassigned');
-      const stage = (modes?.stage as ModesAndStageData['stageData'] | undefined)?.allStages.find((item) => item.stageName === assignment.stage);
-      const stageState = (await transaction.get(this.stageAllocationReference(assignment.stage))).data();
-      const active = state.assignments.filter((item) => item.stage === assignment.stage && !item.rejected);
-      if (stage?.maxParticipants !== undefined) {
-        if (active.length >= stage.maxParticipants) throw new StageCapacityExceededError(assignment.stage);
-        const targets = getStageCombinationTargets(
-          stage.maxParticipants,
-          [...new Set([...(stageState?.conditionKeys || []), ...(stage.conditionKeys || [])])],
-          stage.participantAssignmentMode === 'even' ? undefined : stage.manualDesiredParticipantsByCombination ?? stage.desiredParticipantsByCombination,
-          stage.disabledBetweenSubjectsCombinations,
-        );
-        const key = assignment.betweenSubjectsCombinationKey;
-        if (key && targets?.[key] !== undefined && active.filter((item) => item.betweenSubjectsCombinationKey === key).length >= targets[key]) {
-          throw new StageConditionCapacityExceededError(assignment.stage);
-        }
-      }
       if (source) {
         source.claimed = true;
         transaction.update(this.assignmentReference(source.participantId), { claimed: true });
@@ -889,7 +870,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
         }
       });
       stageData?.allStages.forEach((stage, index) => {
-        validateStageParticipantLimits(stage, state.assignments);
+        validateStageParticipantLimits(stage, state.assignments, previous?.allStages.find((item) => item.stageName === stage.stageName));
         if (state.assignments.some((assignment) => assignment.stage === stage.stageName)) {
           const knownKeys = previous?.allStages.find((item) => item.stageName === stage.stageName)?.conditionKeys || [];
           assertAppendOnlyConditions([...knownKeys, ...(stageStates[index].data()?.conditionKeys || [])], stage.conditionKeys || []);

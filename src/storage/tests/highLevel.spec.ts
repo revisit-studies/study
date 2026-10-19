@@ -435,12 +435,9 @@ describe.each([
     expect(resumed.metadata.colorMode).toBe('dark');
   });
 
-  test('initializeParticipantSession reads modes only once for a new participant', async () => {
-    const getModesSpy = vi.spyOn(storageEngine, 'getModes');
-
+  test('initializeParticipantSession registers condition definitions for a new participant', async () => {
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
-
-    expect(getModesSpy).toHaveBeenCalledTimes(1);
+    expect((await storageEngine.getStageData(studyId)).allStages[0].conditionKeys).toEqual(['[]']);
   });
 
   test('initializeParticipantSession sets conditions from searchParams condition', async () => {

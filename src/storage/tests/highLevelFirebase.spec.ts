@@ -578,9 +578,12 @@ describe.each([
     await expect(storageEngine.updateStage(studyId, 'DEFAULT', { maxParticipants: 0 })).rejects.toThrow(/already assigned/);
   });
 
-  test('restoration checks conditions appended since the last admission', async () => {
-    const original: StudyConfig = { ...configSimple, factors: { group: ['A'] }, betweenSubjects: ['group'] };
+  test('admin restoration can exceed condition targets after config changes', async () => {
+    const original: StudyConfig = {
+      ...configSimple, uiConfig: { ...configSimple.uiConfig, numSequences: 4 }, factors: { group: ['A'] }, betweenSubjects: ['group'],
+    };
     const appended: StudyConfig = { ...original, factors: { group: ['A', 'B'] } };
+    await storageEngine.saveConfig(original);
     await storageEngine.setSequenceArray(generateSequenceArray(original));
     await storageEngine.initializeParticipantSession({}, original, participantMetadata, 'rejected');
     await storageEngine.rejectParticipant('rejected', 'test');
@@ -593,13 +596,17 @@ describe.each([
     await storageEngine.saveConfig(appended);
     await storageEngine.updateStage(studyId, 'DEFAULT', { maxParticipants: 2, participantAssignmentMode: 'even' });
     // @ts-expect-error Check the transaction itself, independently of the shared precheck.
-    await expect(storageEngine._undoRejectParticipantRealtime('rejected')).rejects.toThrow(/condition.*participant limit/);
-    expect((await storageEngine.getSequenceAssignment(studyId, 'rejected'))?.rejected).toBe(true);
+    await storageEngine._undoRejectParticipantRealtime('rejected');
+    expect((await storageEngine.getSequenceAssignment(studyId, 'rejected'))?.rejected).toBe(false);
+    expect((await storageEngine.getAllSequenceAssignments(studyId)).filter((assignment) => !assignment.rejected)).toHaveLength(2);
   });
 
   test('an older config cannot overwrite conditions appended after its config save', async () => {
-    const original: StudyConfig = { ...configSimple, factors: { group: ['A'] }, betweenSubjects: ['group'] };
+    const original: StudyConfig = {
+      ...configSimple, uiConfig: { ...configSimple.uiConfig, numSequences: 4 }, factors: { group: ['A'] }, betweenSubjects: ['group'],
+    };
     const appended: StudyConfig = { ...original, factors: { group: ['A', 'B'] } };
+    await storageEngine.saveConfig(original);
     await storageEngine.setSequenceArray(generateSequenceArray(original));
     await storageEngine.initializeParticipantSession({}, original, participantMetadata, 'first');
     await storageEngine.saveConfig(appended);
@@ -663,6 +670,60 @@ describe.each([
     await storageEngine.finalizeParticipant();
     await storageEngine.timeoutParticipant('finished');
     expect((await storageEngine.getSequenceAssignment(studyId, 'finished'))?.rejected).toBe(false);
+  });
+
+  test('admin restoration overrides limits while new admissions remain closed', async () => {
+    const config: StudyConfig = { ...configSimple, factors: { group: ['A'] }, betweenSubjects: ['group'] };
+    await storageEngine.saveConfig(config);
+    await storageEngine.setSequenceArray(generateSequenceArray(config));
+    await storageEngine.initializeParticipantSession({}, config, participantMetadata, 'restored');
+    const assignment = await storageEngine.getSequenceAssignment(studyId, 'restored');
+    await storageEngine.rejectParticipant('restored', 'test');
+    await storageEngine.setStageDesiredParticipants(studyId, 'DEFAULT', assignment!.betweenSubjectsCombinationKey!, 0, {});
+    await storageEngine.undoRejectParticipant('restored');
+    expect((await storageEngine.getParticipantData('restored'))?.rejected).toBe(false);
+    expect((await storageEngine.getSequenceAssignment(studyId, 'restored'))?.rejected).toBe(false);
+    expect((await storageEngine.getStageData(studyId)).allStages[0].maxParticipants).toBe(0);
+    await storageEngine.updateStage(studyId, 'DEFAULT', { color: '#123456' });
+    await expect(storageEngine.initializeParticipantSession({}, config, participantMetadata, 'blocked')).rejects.toThrow(/participant limit/);
+  });
+
+  test('a failed config upload leaves the previous condition definitions usable', async () => {
+    const original: StudyConfig = {
+      ...configSimple, uiConfig: { ...configSimple.uiConfig, numSequences: 4 }, factors: { group: ['A'] }, betweenSubjects: ['group'],
+    };
+    const appended: StudyConfig = { ...original, factors: { group: ['A', 'B'] } };
+    await storageEngine.saveConfig(original);
+    await storageEngine.saveConfig(original);
+    await storageEngine.setSequenceArray(generateSequenceArray(original));
+    await storageEngine.initializeParticipantSession({}, original, participantMetadata, 'first');
+    // @ts-expect-error Inject an upload failure after append-only validation.
+    vi.spyOn(storageEngine, '_pushToStorage').mockRejectedValueOnce(new Error('config upload failed'));
+    await expect(storageEngine.saveConfig(appended)).rejects.toThrow('config upload failed');
+    await expect(storageEngine.saveConfig(original)).resolves.toBeUndefined();
+    await expect(storageEngine.initializeParticipantSession({}, original, participantMetadata, 'second')).resolves.toBeDefined();
+    expect((await storageEngine.getStageData(studyId)).allStages[0].conditionKeys).toHaveLength(1);
+  });
+
+  test('a delayed old config cannot overwrite the current config prepared orders', async () => {
+    const original: StudyConfig = {
+      ...configSimple, uiConfig: { ...configSimple.uiConfig, numSequences: 4 }, factors: { group: ['A'] }, betweenSubjects: ['group'],
+    };
+    const appended: StudyConfig = { ...original, factors: { group: ['A', 'B'] } };
+    const oldHash = await hash(JSON.stringify(original));
+    const currentHash = await hash(JSON.stringify(appended));
+    await storageEngine.saveConfig(original);
+    const oldOrders = generateSequenceArray(original);
+    await storageEngine.saveConfig(appended);
+    const currentOrders = generateSequenceArray(appended);
+    await storageEngine.setSequenceArray(currentOrders, currentHash);
+    // Simulate the old startup finishing its upload last.
+    await storageEngine.setSequenceArray(oldOrders, oldHash);
+    expect(await storageEngine.getSequenceArray()).toEqual(currentOrders);
+    await storageEngine.updateStage(studyId, 'DEFAULT', { maxParticipants: 2 });
+    const first = await storageEngine.initializeParticipantSession({}, appended, participantMetadata, 'one');
+    const second = await storageEngine.initializeParticipantSession({}, appended, participantMetadata, 'two');
+    expect(new Set([first.sequence.parameters?.group, second.sequence.parameters?.group]).size).toBe(2);
   });
 
   test('saveConfig and getAllConfigsFromHash work correctly', async () => {

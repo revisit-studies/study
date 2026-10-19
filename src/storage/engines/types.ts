@@ -197,9 +197,9 @@ export function assertAppendOnlyConditions(previousKeys: string[], nextKeys: str
   }
 }
 
-export function validateStageParticipantLimits(stage: StageInfo, assignments: SequenceAssignment[]) {
+export function validateStageParticipantLimits(stage: StageInfo, assignments: SequenceAssignment[], previousStage?: StageInfo) {
   const active = assignments.filter((assignment) => assignment.stage === stage.stageName && !assignment.rejected);
-  if (stage.maxParticipants !== undefined && stage.maxParticipants < active.length) {
+  if (stage.maxParticipants !== undefined && stage.maxParticipants !== previousStage?.maxParticipants && stage.maxParticipants < active.length) {
     throw new Error(`The stage maximum cannot be below the ${active.length} participants already assigned`);
   }
   const targets = stage.participantAssignmentMode === 'even'
@@ -212,24 +212,13 @@ export function validateStageParticipantLimits(stage: StageInfo, assignments: Se
       counts[key] = (counts[key] || 0) + 1;
     }
   });
+  const previousTargets = previousStage?.participantAssignmentMode === 'even'
+    ? undefined : previousStage?.manualDesiredParticipantsByCombination ?? previousStage?.desiredParticipantsByCombination;
   Object.entries(targets || {}).forEach(([key, target]) => {
-    if (target < (counts[key] || 0)) {
+    if (target !== previousTargets?.[key] && target < (counts[key] || 0)) {
       throw new Error(`The condition target cannot be below the ${counts[key]} participants already assigned`);
     }
   });
-}
-
-// Recovers the factor names a combination key was built from, in their original
-// order, so a stored key can be compared without the study config.
-function getBetweenSubjectsFactorNames(combinationKey: string) {
-  try {
-    const entries: unknown = JSON.parse(combinationKey);
-    return Array.isArray(entries)
-      ? entries.flatMap((entry) => (Array.isArray(entry) && typeof entry[0] === 'string' ? [entry[0]] : []))
-      : [];
-  } catch {
-    return [];
-  }
 }
 
 export function isSequenceEnabledForStage(
@@ -1116,20 +1105,25 @@ export abstract class StorageEngine {
     const data = applyStageUpdates(modes.stage, stageName, updates);
     const assignments = await this.getAllSequenceAssignments(studyId);
     const stage = data.allStages.find((item) => item.stageName === stageName)!;
-    validateStageParticipantLimits(stage, assignments);
+    validateStageParticipantLimits(stage, assignments, modes.stage.allStages.find((item) => item.stageName === stageName));
     if (assignments.some((assignment) => assignment.stage === stageName)) {
       assertAppendOnlyConditions(modes.stage.allStages.find((item) => item.stageName === stageName)!.conditionKeys || [], stage.conditionKeys || []);
     }
     await this._setModesDocument(studyId, { ...modes, stage: data });
   }
 
-  private async registerStageConditions(studyId: string, keys: string[]) {
+  private async validateStageConditions(studyId: string, keys: string[]) {
     const { stageData } = await this.getModesAndStageData(studyId);
     const stage = stageData.allStages.find((candidate) => candidate.stageName === stageData.currentStage.stageName)!;
     const assignments = await this.getAllSequenceAssignments(studyId);
     if (assignments.some((assignment) => assignment.stage === stage.stageName)) {
       assertAppendOnlyConditions(stage.conditionKeys || [], keys);
     }
+    return stage;
+  }
+
+  private async registerStageConditions(studyId: string, keys: string[]) {
+    const stage = await this.validateStageConditions(studyId, keys);
     if (JSON.stringify(stage.conditionKeys) !== JSON.stringify(keys)) {
       await this.updateStageUnlocked(studyId, stage.stageName, { conditionKeys: keys });
     }
@@ -1138,46 +1132,20 @@ export abstract class StorageEngine {
   async saveConfig(config: StudyConfig) {
     await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, async () => {
       if (!this.studyId) throw new Error('Study ID is not set');
-      await this.registerStageConditions(this.studyId, getConfigConditionKeys(config));
-      await this.saveConfigUnlocked(config);
+      const keys = getConfigConditionKeys(config);
+      await this.validateStageConditions(this.studyId, keys);
+      const currentConfigHash = await this._getCurrentConfigHash();
+      const configHash = await hash(JSON.stringify(config));
+      const storedConfig = currentConfigHash === configHash
+        ? await this._getFromStorage(`configs/${configHash}`, 'config') : null;
+      if (!storedConfig || Object.keys(storedConfig).length === 0) {
+        await this._pushToStorage(`configs/${configHash}`, 'config', config);
+        await this._cacheStorageObject(`configs/${configHash}`, 'config');
+      }
+      // Failed uploads must not advance the append-only condition definitions.
+      await this.registerStageConditions(this.studyId, keys);
+      if (currentConfigHash !== configHash) await this._setCurrentConfigHash(configHash);
     });
-  }
-
-  private async saveConfigUnlocked(config: StudyConfig) {
-    const currentConfigHash = await this._getCurrentConfigHash();
-    // Hash the provided config
-    const configHash = await hash(JSON.stringify(config));
-
-    // Skip saving config if the active config is already saved in storage
-    if (currentConfigHash === configHash) {
-      const storedConfig = await this._getFromStorage(`configs/${configHash}`, 'config');
-      if (storedConfig && Object.keys(storedConfig).length > 0) {
-        return;
-      }
-    }
-
-    // Push the config to storage and cache it, since it won't change
-    await this._pushToStorage(
-      `configs/${configHash}`,
-      'config',
-      config,
-    );
-    await this._cacheStorageObject(`configs/${configHash}`, 'config');
-
-    // Clear sequence array if the config has changed.
-    // Keep currentParticipantId so existing participant sessions can continue
-    // against their original participantConfigHash.
-    if (currentConfigHash && currentConfigHash !== configHash) {
-      try {
-        await this._deleteFromStorage('', 'sequenceArray');
-      } catch {
-        // pass, if this happens, we didn't have a sequence array yet
-      }
-    }
-
-    if (currentConfigHash !== configHash) {
-      await this._setCurrentConfigHash(configHash);
-    }
   }
 
   // Gets all configs from the storage engine based on the provided temporary hashes and studyId.
@@ -1293,7 +1261,7 @@ export abstract class StorageEngine {
 
     const { modes, stageData } = bootstrapData;
     const currentStage = stageData.currentStage.stageName;
-    const sequenceArray = await this.getSequenceArray();
+    const sequenceArray = await this.getSequenceArray(await this._getCurrentConfigHash() ? participantConfigHash : undefined);
     if (!sequenceArray) {
       throw new Error('Latin square not initialized');
     }
@@ -1950,9 +1918,8 @@ export abstract class StorageEngine {
 
   // Un-rejects a participant with the given participantId.
   async undoRejectParticipant(participantId: string) {
-    // Restoring a participant takes a stage slot just like admitting one, so it
-    // holds the admission policy lock. The participant lock is taken inside it,
-    // in the same order initialization uses, so the two cannot deadlock.
+    // Admin restoration may exceed recruitment limits. Keep the admission lock
+    // to coordinate rejected-slot ownership with new admissions.
     return await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, () => this._runWithLock(`participant-${participantId}`, async () => {
       const assignment = await this._getSequenceAssignment(participantId);
       if (assignment?.claimed) {
@@ -1970,10 +1937,6 @@ export abstract class StorageEngine {
       // If the user doesn't exist, return
       if (!participant || !isParticipantData(participant)) {
         return;
-      }
-
-      if (assignment?.rejected) {
-        await this.assertRestorationCapacity(assignment);
       }
 
       try {
@@ -2008,50 +1971,6 @@ export abstract class StorageEngine {
         throw normalizeError(error);
       }
     }));
-  }
-
-  // Throws when restoring a rejected assignment would push its stage, or its
-  // between-subjects condition, past the limit that admission enforces. Other
-  // participants can be admitted into the slot a rejection freed, including by
-  // reusing a rejected assignment from a different stage, so the slot cannot be
-  // assumed to still be available. Callers must hold the admission policy lock.
-  private async assertRestorationCapacity(assignment: SequenceAssignment) {
-    if (this.studyId === undefined) {
-      throw new Error('Study ID is not set');
-    }
-
-    const { stageData } = await this.getModesAndStageData(this.studyId);
-    const stageInfo = stageData.allStages.find((stage) => stage.stageName === assignment.stage);
-    if (stageInfo?.maxParticipants === undefined) {
-      return;
-    }
-
-    const otherAssignments = (await this.getAllSequenceAssignments(this.studyId))
-      .filter((candidate) => candidate.participantId !== assignment.participantId);
-    const stageParticipantCount = getStageParticipantCounts(otherAssignments)[assignment.stage] || 0;
-    if (stageParticipantCount >= stageInfo.maxParticipants) {
-      throw new StageCapacityExceededError(assignment.stage);
-    }
-
-    const combinationKey = assignment.betweenSubjectsCombinationKey;
-    if (!combinationKey) {
-      return;
-    }
-    const betweenSubjects = getBetweenSubjectsFactorNames(combinationKey);
-    const sequenceArray = await this.getSequenceArray();
-    const desiredCount = getDesiredParticipantCountsByCombination(
-      stageInfo,
-      sequenceArray ?? [],
-      betweenSubjects,
-    )?.[combinationKey];
-    if (desiredCount === undefined) {
-      return;
-    }
-
-    const combinationCounts = await this.getStageCombinationCounts(otherAssignments, assignment.stage, betweenSubjects);
-    if ((combinationCounts[combinationKey] || 0) >= desiredCount) {
-      throw new StageConditionCapacityExceededError(assignment.stage);
-    }
   }
 
   // Un-rejects the current participant.
@@ -2498,11 +2417,12 @@ export abstract class StorageEngine {
   }
 
   // Gets the sequence array from the storage engine.
-  async getSequenceArray() {
+  async getSequenceArray(configHash?: string) {
     await this.verifyStudyDatabase();
 
+    const version = configHash ?? await this._getCurrentConfigHash();
     const sequenceArrayDocData = await this._getFromStorage(
-      '',
+      version ? `configs/${version}` : '',
       'sequenceArray',
     );
 
@@ -2510,10 +2430,11 @@ export abstract class StorageEngine {
   }
 
   // Sets the sequence array in the storage engine.
-  async setSequenceArray(latinSquare: Sequence[]) {
+  async setSequenceArray(latinSquare: Sequence[], configHash?: string) {
     await this.verifyStudyDatabase();
 
-    await this._pushToStorage('', 'sequenceArray', latinSquare);
+    const version = configHash ?? await this._getCurrentConfigHash();
+    await this._pushToStorage(version ? `configs/${version}` : '', 'sequenceArray', latinSquare);
   }
 
   protected async __testingReset() {
