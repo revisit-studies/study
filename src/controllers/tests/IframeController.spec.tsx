@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import {
-  act, cleanup, render, waitFor,
+  act, cleanup, fireEvent, render, waitFor,
 } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
@@ -19,6 +19,11 @@ const mockUpdateProvenance = vi.fn((payload) => ({ type: 'updateProvenance', pay
 const mockUpdateResponseBlockValidation = vi.fn((payload) => ({ type: 'updateResponseBlockValidation', payload }));
 const mockIsAnalysis = { value: false };
 const mockCurrentComponent = { value: 'countDots' };
+let mockStudyColorMode: 'light' | 'dark' = 'light';
+
+vi.mock('@mantine/core', () => ({
+  useComputedColorScheme: () => mockStudyColorMode,
+}));
 
 vi.mock('react-redux', () => ({
   useDispatch: () => vi.fn(),
@@ -67,6 +72,7 @@ describe('IframeController', () => {
     vi.mocked(getStaticAssetByPath).mockResolvedValue('<html></html>');
     mockIsAnalysis.value = false;
     mockCurrentComponent.value = 'countDots';
+    mockStudyColorMode = 'light';
   });
 
   afterEach(() => {
@@ -80,11 +86,45 @@ describe('IframeController', () => {
     const currentConfig = { ...websiteConfig, colorMode };
     const { container, rerender } = render(<IframeController currentConfig={currentConfig} answers={{}} />);
     const iframe = container.querySelector('iframe');
-    expect(iframe?.style.colorScheme).toBe(colorMode ?? 'inherit');
+    expect(iframe?.style.colorScheme).toBe(colorMode ?? 'light');
     mockIsAnalysis.value = true;
     rerender(<IframeController currentConfig={currentConfig} answers={{}} />);
     expect(container.querySelector('iframe')).toBe(iframe);
-    expect(iframe?.style.colorScheme).toBe(colorMode ?? 'inherit');
+    expect(iframe?.style.colorScheme).toBe(colorMode ?? 'light');
+  });
+
+  test.each(['light', 'dark'] as const)('applies study %s inside a local document and preserves overrides without reloading', (studyMode) => {
+    mockStudyColorMode = studyMode;
+    const config: WebsiteComponent = { ...websiteConfig, path: 'study/chart.html' };
+    const { container, rerender } = render(<IframeController currentConfig={config} answers={{}} />);
+    const iframe = container.querySelector('iframe')!;
+    const frameDocument = document.implementation.createHTMLDocument('Stimulus');
+    Object.defineProperty(iframe, 'contentDocument', { value: frameDocument, configurable: true });
+    const root = frameDocument.documentElement;
+    root.style.colorScheme = 'light dark';
+    fireEvent.load(iframe);
+    expect(root.style.colorScheme).toBe(studyMode);
+    const originalSrc = iframe.src;
+
+    const override = studyMode === 'light' ? 'dark' : 'light';
+    rerender(<IframeController currentConfig={{ ...config, colorMode: override }} answers={{}} />);
+    expect(root.style.colorScheme).toBe(override);
+    mockStudyColorMode = override;
+    rerender(<IframeController currentConfig={{ ...config, colorMode: studyMode }} answers={{}} />);
+    expect(root.style.colorScheme).toBe(studyMode);
+    rerender(<IframeController currentConfig={config} answers={{}} />);
+    expect(root.style.colorScheme).toBe(override);
+    expect(container.querySelector('iframe')).toBe(iframe);
+    expect(iframe.src).toBe(originalSrc);
+  });
+
+  test('keeps the color scheme hint when the embedded document is cross-origin', () => {
+    mockStudyColorMode = 'dark';
+    const { container } = render(<IframeController currentConfig={websiteConfig} answers={{}} />);
+    const iframe = container.querySelector('iframe')!;
+    Object.defineProperty(iframe, 'contentDocument', { value: null, configurable: true });
+    fireEvent.load(iframe);
+    expect(iframe.style.colorScheme).toBe('dark');
   });
 
   test('covers sendMessage via answers effect on mount', async () => {

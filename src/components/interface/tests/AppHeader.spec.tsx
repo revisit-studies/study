@@ -48,6 +48,7 @@ const mockStudyConfig = {
 };
 
 vi.mock('@mantine/core', () => ({
+  useComputedColorScheme: () => 'light',
   ActionIcon: ({
     'aria-label': ariaLabel, children, onClick,
   }: { 'aria-label'?: string; children: ReactNode; onClick?: () => void }) => (

@@ -1,6 +1,7 @@
 import {
-  useCallback, useContext, useEffect, useMemo, useRef, useState,
+  useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState,
 } from 'react';
+import { useComputedColorScheme } from '@mantine/core';
 import { useDispatch } from 'react-redux';
 import { useCurrentComponent, useCurrentIdentifier } from '../routes/utils';
 import { useStoreDispatch, useStoreActions, useStoreSelector } from '../store/store';
@@ -19,6 +20,8 @@ import { ResourceNotFound } from '../ResourceNotFound';
 const PREFIX = '@REVISIT_COMMS';
 
 export function IframeController({ currentConfig, provState, answers }: { currentConfig: WebsiteComponent; provState?: unknown, answers: ParticipantData['answers'] }) {
+  const studyColorMode = useComputedColorScheme('light');
+  const colorMode = currentConfig.colorMode ?? studyColorMode;
   const {
     setReactiveAnswers, updateProvenance, updateResponseBlockValidation,
   } = useStoreActions();
@@ -107,6 +110,14 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   const srcDoc = typeof value === 'string' ? value : undefined;
   const { status: frameStatus, onReady, onError } = useAssetLoadStatus(requestKey);
   const assetStatus = getAssetStatus(status, frameStatus);
+
+  const applyColorMode = useCallback(() => {
+    // The iframe hint alone does not override an embedded page's own `light dark` choice.
+    // contentDocument is null for cross-origin pages; those retain the CSS hint below.
+    ref.current?.contentDocument?.documentElement?.style.setProperty('color-scheme', colorMode, 'important');
+  }, [colorMode]);
+
+  useLayoutEffect(applyColorMode, [applyColorMode, srcDoc, url]);
 
   useAssetStatus(assetStatus);
 
@@ -213,13 +224,16 @@ export function IframeController({ currentConfig, provState, answers }: { curren
         width: '100%',
         flexGrow: 1,
         border: 0,
-        colorScheme: currentConfig.colorMode ?? 'inherit',
+        colorScheme: colorMode,
         // Keep transparent embedded pages readable when their scheme differs from the study.
         backgroundColor: currentConfig.colorMode ? 'Canvas' : undefined,
         pointerEvents: isAnalysis ? 'none' : undefined,
       }}
       {...(srcDoc !== undefined ? { srcDoc } : { src: url })}
-      onLoad={onReady}
+      onLoad={() => {
+        applyColorMode();
+        onReady();
+      }}
       onErrorCapture={onError}
     />
   );

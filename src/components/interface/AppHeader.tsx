@@ -13,6 +13,7 @@ import {
   Title,
   Tooltip,
   Text,
+  useComputedColorScheme,
 } from '@mantine/core';
 import {
   IconChartHistogram,
@@ -50,6 +51,7 @@ import {
 } from '../../utils/defaultStorageConfig';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import { PdfExportMenuItem } from './PdfExportMenuItem';
+import { getStudyLogoUrl } from '../../utils/studyLogo';
 
 export function AppHeader({
   developmentModeEnabled,
@@ -63,6 +65,7 @@ export function AppHeader({
   onExportPdf?: () => Promise<void> | void;
 }) {
   const studyConfig = useStoreSelector((state) => state.config);
+  const studyColorMode = useComputedColorScheme('light');
   const isAnalysis = useIsAnalysis();
 
   const answers = useStoreSelector((state) => state.answers);
@@ -225,7 +228,7 @@ export function AppHeader({
       <Grid align="center">
         <Grid.Col span={4}>
           <Flex align="center">
-            <Image w={40} src={`${PREFIX}${logoPath}`} alt="Study Logo" className="logoImage" />
+            <Image w={40} src={getStudyLogoUrl(logoPath, studyColorMode)} alt="Study Logo" className="logoImage" />
             <Space w="md" />
             {showTitle ? (
               <Title

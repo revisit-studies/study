@@ -241,6 +241,7 @@ vi.mock('react-router', () => ({
 }));
 
 vi.mock('@mantine/core', () => ({
+  useComputedColorScheme: () => 'light',
   ActionIcon: ({
     'aria-label': ariaLabel, children,
   }: { 'aria-label'?: string; children: ReactNode }) => (
