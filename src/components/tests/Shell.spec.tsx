@@ -330,6 +330,32 @@ describe('Shell', () => {
     expect(getByRole('status').getAttribute('aria-atomic')).toBe('true');
   });
 
+  test.each([false, true])('blocks Firebase index failures outside development mode (resuming: %s)', async (resuming) => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      vi.stubEnv('VITE_STORAGE_ENGINE', 'firebase');
+      if (resuming) mockSearchParams = new URLSearchParams('participantId=existing');
+      setupThemeSession('light');
+      const indexUrl = 'https://console.firebase.google.com/example';
+      mockStorageEngine!.initializeParticipantSession.mockRejectedValue(new Error(`The query requires an index. ${indexUrl}`));
+      mockStorageEngine!.peekCurrentParticipantId = vi.fn().mockResolvedValue(undefined);
+
+      render(<Shell globalConfig={globalConfig} />);
+      await waitFor(() => expect(studyStoreCreator).toHaveBeenCalled());
+      const storeArguments = vi.mocked(studyStoreCreator).mock.calls[0];
+      expect(storeArguments[5]?.dataCollectionEnabled).toBe(false);
+      expect(storeArguments[10]).toEqual({
+        show: true,
+        title: 'Failed to connect to the storage engine',
+        message: resuming ? 'This study session could not be resumed.' : 'There was a problem loading the study.',
+      });
+      expect(storeArguments[10]?.message).not.toContain(indexUrl);
+    } finally {
+      consoleSpy.mockRestore();
+      vi.unstubAllEnvs();
+    }
+  });
+
   test('explains Firebase index ownership and one-time project scope', () => {
     const message = getStartupErrorMessage(
       new Error('The query requires an index. You can create it here: https://console.firebase.google.com/example'),

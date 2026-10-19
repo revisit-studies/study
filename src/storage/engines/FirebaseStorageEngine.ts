@@ -590,6 +590,9 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
         if (!currentParticipantSnapshot.exists() || !claimedSequenceAssignmentSnapshot.exists()) {
           throw new Error('Failed to retrieve claimed sequence assignment for rejection');
         }
+        if ((currentParticipantSnapshot.data() as SequenceAssignment).rejected) {
+          return;
+        }
         const allocator = allocatorSnapshot.exists()
           ? allocatorSnapshot.data() as typeof allocatorSeed
           : allocatorSeed;
@@ -654,6 +657,9 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
         ]);
         if (!currentParticipantSnapshot.exists() || !currentClaimedSnapshot.exists()) {
           throw new Error('Failed to retrieve claimed sequence assignment for rejection');
+        }
+        if ((currentParticipantSnapshot.data() as SequenceAssignment).rejected) {
+          return;
         }
         const allocator = allocatorSnapshot.exists()
           ? allocatorSnapshot.data() as typeof allocatorSeed

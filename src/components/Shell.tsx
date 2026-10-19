@@ -133,11 +133,14 @@ export function getInitialStartupAlert(
   developmentModeEnabled: boolean,
   resumeParticipantId?: string | null,
 ): AlertModalState {
+  const message = getStartupErrorMessage(error);
+  // Keep index failures blocking even when participant-facing details are redacted.
+  const isIndexError = message.toLowerCase().includes('query requires an index');
   return {
     show: true,
-    title: 'Problem loading the study',
+    title: isIndexError ? 'Failed to connect to the storage engine' : 'Problem loading the study',
     message: developmentModeEnabled
-      ? getStartupErrorMessage(error)
+      ? message
       : (resumeParticipantId ? RESUME_STARTUP_ERROR : GENERIC_STARTUP_ERROR),
   };
 }

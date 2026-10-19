@@ -243,7 +243,7 @@ export class LocalStorageEngine extends StorageEngine {
         sequenceAssignmentPath,
       ) || {};
       const participantSequenceAssignment = sequenceAssignments[participantId];
-      if (!participantSequenceAssignment) {
+      if (!participantSequenceAssignment || participantSequenceAssignment.rejected) {
         return;
       }
 

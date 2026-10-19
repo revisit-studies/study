@@ -426,6 +426,31 @@ describe.each([
     expect(participantData!.participantTags).toEqual([]);
   });
 
+  test.each([false, true])('concurrent duplicate rejection reserves one vacancy (legacy: %s)', async (legacy) => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'original');
+    await storageEngine.flushPendingParticipantData();
+    await storageEngine.rejectParticipant('original', 'review');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement');
+    await storageEngine.flushPendingParticipantData();
+    if (legacy) {
+      const replacement = (await storageEngine.getAllSequenceAssignments(studyId))
+        .find((assignment) => assignment.participantId === 'replacement')!;
+      delete replacement.claimedParticipantId;
+      // @ts-expect-error protected storage boundary
+      await storageEngine._createSequenceAssignment('replacement', replacement, false);
+    }
+    await Promise.all([
+      storageEngine.rejectParticipant('replacement', 'review'),
+      storageEngine.rejectParticipant('replacement', 'review'),
+    ]);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'next-a');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'next-b');
+    const assignments = await storageEngine.getAllSequenceAssignments(studyId);
+    expect(assignments.find((assignment) => assignment.participantId === 'replacement')?.reusableSequenceIndex).toBe(1);
+    expect(assignments.find((assignment) => assignment.participantId === 'next-a')?.sequenceIndex).toBe(0);
+    expect(assignments.find((assignment) => assignment.participantId === 'next-b')?.sequenceIndex).toBe(1);
+  });
+
   test('undo rejection returns an unused replacement slot exactly once', async () => {
     const rows = [
       { ...sequenceArray[0], parameters: { row: 'first' } },
