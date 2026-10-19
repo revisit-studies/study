@@ -33,9 +33,13 @@ test('correlation trials accept intentional choices and persist matching respons
   const frame = page.frameLocator('#root iframe');
   const next = page.getByRole('button', { name: 'Next', exact: true });
   const expectedPractice: Record<string, unknown>[] = [];
+  const replayPaths: { path: string; practice: boolean }[] = [];
 
   for (let trialIndex = 0; trialIndex < 9; trialIndex += 1) {
     await expect(frame.locator('#stimuli-left')).toHaveAttribute('src', /training\/.*\.jpg$/);
+    if (trialIndex === 0) {
+      replayPaths.push({ path: new URL(page.url()).pathname, practice: true });
+    }
     const leftSource = await frame.locator('#stimuli-left').getAttribute('src');
     const rightSource = await frame.locator('#stimuli-right').getAttribute('src');
     const corrLeft = Number(leftSource?.match(/-r1-([\d.]+)-/)?.[1]);
@@ -82,6 +86,9 @@ test('correlation trials accept intentional choices and persist matching respons
       await page.keyboard.press(key);
     }
     await expect(frame.getByRole('button', { name: 'A', exact: true })).toBeEnabled();
+    if (trialIndex === 0) {
+      replayPaths.push({ path: new URL(page.url()).pathname, practice: false });
+    }
     const leftSource = await frame.locator('#stimuli-left').getAttribute('src');
     const correct = leftSource?.includes('-r2-') ? 'left' : 'right';
     const isCorrect = trialIndex === 1;
@@ -99,5 +106,29 @@ test('correlation trials accept intentional choices and persist matching respons
   await expect.poll(async () => (await readCompletedAnswers(page))
     .filter(({ answer }) => typeof answer.test === 'boolean')
     .map(({ answer }) => answer)).toEqual(expectedTest.map((answer) => expect.objectContaining(answer)));
+  const participantId = await readStoredValue<string>(page, 'dev-incentives-corr/currentParticipantId');
+  expect(participantId).toBeTruthy();
+  const participantKey = `dev-incentives-corr/participants/${participantId}_participantData`;
+  const participantBeforeReplay = await readStoredValue(page, participantKey);
+  for (const { path, practice } of replayPaths) {
+    await page.goto(`${path}?participantId=${participantId}&revisitPageId=e2e-correlation-replay`);
+    await expect(page.locator('#root iframe')).toHaveAttribute('inert', '');
+    await expect(frame.locator('#stimuli-left')).toHaveAttribute('src', practice ? /training\/.*\.jpg$/ : /stimuli\/.*\.jpg$/);
+    const leftButton = frame.getByRole('button', { name: 'A', exact: true });
+    await expect(leftButton).not.toBeFocused();
+    await expect(page.locator('#root iframe')).not.toBeFocused();
+    for (const forceFocus of [false, true]) {
+      if (forceFocus) {
+        await leftButton.evaluate((button) => button.focus());
+        await expect(leftButton).toBeFocused();
+      }
+      await page.keyboard.press('ArrowLeft');
+      await page.keyboard.press('ArrowRight');
+      await expect(leftButton).toBeEnabled();
+      await expect(frame.getByRole('button', { name: 'B', exact: true })).toBeEnabled();
+      await expect(frame.getByRole('status')).toBeEmpty();
+      expect(await readStoredValue(page, participantKey)).toEqual(participantBeforeReplay);
+    }
+  }
   expect(pageErrors).toEqual([]);
 });

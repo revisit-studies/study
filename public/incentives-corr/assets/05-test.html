@@ -26,7 +26,9 @@
         document.getElementById("stimuli-left").src = imgLeftURL;
         // set right image
         document.getElementById("stimuli-right").src = imgRightURL;
-        document.getElementById("button-left").focus({ preventScroll: true });
+        if (!window.frameElement?.inert) {
+          document.getElementById("button-left").focus({ preventScroll: true });
+        }
       })
     </script>
   </head>
@@ -55,7 +57,7 @@
     let answered = false;
 
     function respond(selected) {
-      if (answered || !correct) return;
+      if (answered || !correct || window.frameElement?.inert) return;
       answered = true;
       const isCorrect = selected === correct;
       const feedback = document.getElementById("feedback");
