@@ -50,6 +50,12 @@ export type SequenceAssignment = {
   creationIndex?: number; // Stable zero-based participant creation order.
 };
 
+export type SequenceAllocator = {
+  nextSequenceIndex: number;
+  nextCreationIndex: number;
+  availableSequenceIndexes?: number[]; // Unused replacement vacancies returned by undoing rejection.
+};
+
 export type SequenceAssignmentAllocation = {
   sequenceIndex: number;
   creationIndex: number;

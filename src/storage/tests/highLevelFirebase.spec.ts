@@ -1423,6 +1423,56 @@ describe.each([
     expect(all.find((a) => a.participantId === session.participantId)?.rejected).toBe(true);
   });
 
+  test('undo rejection returns an unused replacement slot exactly once', async () => {
+    const rows = [
+      { ...sequenceArray[0], parameters: { row: 'first' } },
+      { ...sequenceArray[0], parameters: { row: 'second' } },
+    ];
+    await storageEngine.setSequenceArray(rows);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'original');
+    await storageEngine.rejectParticipant('original', 'review');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement');
+    await storageEngine.rejectParticipant('replacement', 'review');
+    await storageEngine.undoRejectParticipant('replacement');
+    await storageEngine.undoRejectParticipant('replacement');
+    const next = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'next');
+    expect(next.sequence.parameters?.row).toBe('second');
+    const following = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'following');
+    expect(following.sequence.parameters?.row).toBe('first');
+  });
+
+  test('undo rejection preserves an unused slot across later allocations and rejections', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'original');
+    await storageEngine.rejectParticipant('original', 'review');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement');
+    await storageEngine.rejectParticipant('replacement', 'review');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'reuse-original');
+    await storageEngine.undoRejectParticipant('replacement');
+    await storageEngine.rejectParticipant('reuse-original', 'review');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'reuse-again');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'reuse-vacancy');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'returned-slot');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'fresh-slot');
+    const assignments = await storageEngine.getAllSequenceAssignments(studyId);
+    expect(assignments.find((assignment) => assignment.participantId === 'returned-slot'))
+      .toMatchObject({ sequenceIndex: 1, creationIndex: 5 });
+    expect(assignments.find((assignment) => assignment.participantId === 'fresh-slot'))
+      .toMatchObject({ sequenceIndex: 3, creationIndex: 6 });
+  });
+
+  test('undo rejection does not return a replacement slot already claimed by another participant', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'original');
+    await storageEngine.rejectParticipant('original', 'review');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement');
+    await storageEngine.rejectParticipant('replacement', 'review');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'reuse-original');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'reuse-replacement');
+    await storageEngine.undoRejectParticipant('replacement');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'next');
+    const assignments = await storageEngine.getAllSequenceAssignments(studyId);
+    expect(assignments.find((assignment) => assignment.participantId === 'next')?.sequenceIndex).toBe(2);
+  });
+
   // ── _undoRejectParticipantRealtime ───────────────────────────────────────────
   test('_undoRejectParticipantRealtime throws when studyId is not set', async () => {
     const fresh = new FirebaseStorageEngine(true);
