@@ -24,6 +24,8 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       .download(`${this.collectionPrefix}${studyId || this.studyId}/${prefix}_${type}`);
 
     if (error) {
+      const downloadError = error as { status?: number; statusCode?: string };
+      if (type === 'sequenceArray' && downloadError.status !== 404 && downloadError.statusCode !== '404') throw error;
       return {} as StorageObject<T>;
     }
 
@@ -31,7 +33,8 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     try {
       const text = await dataToParse.text();
       return JSON.parse(text) as StorageObject<T>;
-    } catch {
+    } catch (parseError) {
+      if (type === 'sequenceArray') throw parseError;
       // Return the Blob directly if parsing fails
       return dataToParse as StorageObject<T>;
     }

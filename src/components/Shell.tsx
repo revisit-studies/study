@@ -381,13 +381,10 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
         await storageEngine.saveConfig(activeConfig);
 
         const activeHash = await activeHashPromise;
-        const sequenceArray = await storageEngine.getSequenceArray(activeHash);
-
-        if (!sequenceArray) {
-          const generatedSequenceArray = await generateSequenceArray(activeConfig, activeConfig.warnings);
-
-          await storageEngine.setSequenceArray(generatedSequenceArray, activeHash);
-        }
+        const sequenceArray = await storageEngine.getOrCreateSequenceArray(
+          activeHash,
+          () => generateSequenceArray(activeConfig, activeConfig.warnings),
+        );
 
         // Get or generate participant session
         const searchParamsObject = Object.fromEntries(searchParams.entries());
@@ -405,6 +402,7 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
           activeConfig,
           initialMetadata,
           participantId || urlParticipantId,
+          { modesDocument: resolvedModes, sequenceArray },
         );
 
         if (studyCondition.length > 0 && resolvedModes.developmentModeEnabled) {

@@ -180,7 +180,7 @@ vi.mock('@supabase/supabase-js', () => {
             if (path in storageFiles) {
               return { data: storageFiles[path], error: null };
             }
-            return { data: null, error: { message: 'Object not found' } };
+            return { data: null, error: { message: 'Object not found', status: 400, statusCode: '404' } };
           },
           upload: async (path: string, data: Blob | Buffer | string | object, _opts?: object) => {
             let text: string;

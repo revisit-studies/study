@@ -19,6 +19,7 @@ type RowData = Record<string, string | number | boolean | null | object>;
 const revisitRows: RowData[] = [];
 const storageFiles: Record<string, string> = {};
 let failConfigActivation = false;
+let failSequenceReads = false;
 const localStore: Record<string, string | number | object | null> = {};
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
@@ -181,11 +182,12 @@ vi.mock('@supabase/supabase-js', () => {
       storage: {
         from: (_bucket: string) => ({
           download: async (path: string) => {
+            if (failSequenceReads && path.endsWith('_sequenceArray')) return { data: null, error: { message: 'Storage unavailable', status: 503, statusCode: '503' } };
             if (path in storageFiles) {
               // Return raw string — _getFromStorage (testing=true) wraps it in new Blob([string])
               return { data: storageFiles[path], error: null };
             }
-            return { data: null, error: { message: 'Object not found' } };
+            return { data: null, error: { message: 'Object not found', status: 400, statusCode: '404' } };
           },
           upload: async (path: string, data: Blob | Buffer | string | object, _opts?: object) => {
             let text: string;
@@ -356,6 +358,91 @@ describe.each([
   });
 
   // saveConfig and getAllConfigsFromHash tests
+  test('concurrent preparation returns one saved array and reuses it during startup', async () => {
+    const configHash = await hash(JSON.stringify(configSimple));
+    const second = new SupabaseStorageEngine(true);
+    await second.connect();
+    await second.initializeStudyDb(studyId);
+    const canonical = generateSequenceArray(configSimple);
+    let release!: () => void;
+    let uploading!: () => void;
+    const started = new Promise<void>((resolve) => { uploading = resolve; });
+    // @ts-expect-error Pause publication while the other client observes the missing array.
+    const upload = storageEngine._pushToStorage.bind(storageEngine);
+    // @ts-expect-error Exercise the actual distributed lock.
+    vi.spyOn(storageEngine, '_pushToStorage').mockImplementationOnce(async (path, type, data) => {
+      uploading();
+      await new Promise<void>((resolve) => { release = resolve; });
+      return upload(path, type, data);
+    });
+    const first = storageEngine.getOrCreateSequenceArray(configHash, () => canonical);
+    await started;
+    let sawMissing!: () => void;
+    const missing = new Promise<void>((resolve) => { sawMissing = resolve; });
+    const read = second.getSequenceArray.bind(second);
+    vi.spyOn(second, 'getSequenceArray').mockImplementationOnce(async (version) => {
+      const result = await read(version);
+      expect(result).toBeNull();
+      sawMissing();
+      return result;
+    });
+    const competingGenerator = vi.fn(() => generateSequenceArray(configSimple2));
+    const retry = second.getOrCreateSequenceArray(configHash, competingGenerator);
+    await missing;
+    release();
+    expect(await first).toEqual(canonical);
+    const prepared = await retry;
+    expect(prepared).toEqual(canonical);
+    expect(competingGenerator).not.toHaveBeenCalled();
+    expect(await storageEngine.getSequenceArray(configHash)).toEqual(canonical);
+    const modesDocument = await second.getModes(studyId);
+    const readSpy = vi.spyOn(second, 'getSequenceArray');
+    readSpy.mockClear();
+    const session = await second.initializeParticipantSession({}, configSimple, participantMetadata, 'prepared', { modesDocument, sequenceArray: prepared });
+    expect(canonical).toContainEqual(session.sequence);
+    expect(readSpy).not.toHaveBeenCalled();
+  });
+
+  test.each([false, true])('failed sequence reads cannot replace published orders (locked recheck: %s)', async (lockedRecheck) => {
+    const configHash = await hash(JSON.stringify(configSimple));
+    const canonical = generateSequenceArray(configSimple);
+    await storageEngine.setSequenceArray(canonical, configHash);
+    if (lockedRecheck) vi.spyOn(storageEngine, 'getSequenceArray').mockResolvedValueOnce(null);
+    const generate = vi.fn(() => generateSequenceArray(configSimple2));
+    // @ts-expect-error Failed reads must never result in a replacement upload.
+    const upload = vi.spyOn(storageEngine, '_pushToStorage');
+    failSequenceReads = true;
+    try {
+      await expect(storageEngine.getOrCreateSequenceArray(configHash, generate)).rejects.toMatchObject({ message: 'Storage unavailable' });
+    } finally {
+      failSequenceReads = false;
+    }
+    expect(generate).not.toHaveBeenCalled();
+    expect(upload).not.toHaveBeenCalled();
+    expect(await storageEngine.getSequenceArray(configHash)).toEqual(canonical);
+  });
+
+  test('existing prepared arrays skip the publication lock and generation', async () => {
+    const configHash = await hash(JSON.stringify(configSimple));
+    const canonical = generateSequenceArray(configSimple);
+    await storageEngine.setSequenceArray(canonical, configHash);
+    const generate = vi.fn(() => generateSequenceArray(configSimple2));
+    // @ts-expect-error Existing arrays must take the normal read path without a lock.
+    const lock = vi.spyOn(storageEngine, '_runWithLock');
+    expect(await storageEngine.getOrCreateSequenceArray(configHash, generate)).toEqual(canonical);
+    expect(generate).not.toHaveBeenCalled();
+    expect(lock).not.toHaveBeenCalled();
+  });
+
+  test('failed publication releases the preparation lock for a retry', async () => {
+    const configHash = await hash(JSON.stringify(configSimple));
+    const canonical = generateSequenceArray(configSimple);
+    // @ts-expect-error A failed first upload must not leave the preparation lock held.
+    vi.spyOn(storageEngine, '_pushToStorage').mockRejectedValueOnce(new Error('upload failed'));
+    await expect(storageEngine.getOrCreateSequenceArray(configHash, () => canonical)).rejects.toThrow('upload failed');
+    await expect(storageEngine.getOrCreateSequenceArray(configHash, () => canonical)).resolves.toEqual(canonical);
+  });
+
   test('a restored participant reloads past a cached rejection and saves answers', async () => {
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'restored-cache');
     const admin = new SupabaseStorageEngine(true);

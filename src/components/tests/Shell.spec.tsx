@@ -169,7 +169,7 @@ function setupThemeSession(colorMode: StudyConfig['uiConfig']['colorMode'], save
   mockStorageEngine = {
     initializeStudyDb: vi.fn().mockResolvedValue(undefined),
     saveConfig: vi.fn().mockResolvedValue(undefined),
-    getSequenceArray: vi.fn().mockResolvedValue(['seq1']),
+    getOrCreateSequenceArray: vi.fn().mockResolvedValue(['seq1']),
     getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
     initializeParticipantSession: vi.fn(async (_params, _config, metadata) => ({
       ...baseSession, metadata: savedMetadata ?? metadata,
@@ -239,7 +239,7 @@ describe('Shell', () => {
     await waitFor(() => expect(mockStorageEngine!.updateParticipantMetadata).toHaveBeenCalledWith(
       expect.objectContaining({ colorMode: expectedMode, ip: '1.2.3.4' }),
     ));
-    expect(mockStorageEngine!.initializeParticipantSession).toHaveBeenCalledWith({}, expect.anything(), expect.objectContaining({ colorMode: expectedMode }), undefined);
+    expect(mockStorageEngine!.initializeParticipantSession).toHaveBeenCalledWith({}, expect.anything(), expect.objectContaining({ colorMode: expectedMode }), undefined, expect.objectContaining({ sequenceArray: ['seq1'] }));
     mockSystemColorMode = 'light';
     view.rerender(<Shell globalConfig={globalConfig} />);
     expect(useStudyColorMode).toHaveBeenLastCalledWith(expectedMode);
@@ -254,7 +254,7 @@ describe('Shell', () => {
 
     const view = render(<Shell globalConfig={globalConfig} />);
 
-    await waitFor(() => expect(mockStorageEngine!.initializeParticipantSession).toHaveBeenCalledWith({}, expect.anything(), expect.objectContaining({ colorMode: systemMode }), undefined));
+    await waitFor(() => expect(mockStorageEngine!.initializeParticipantSession).toHaveBeenCalledWith({}, expect.anything(), expect.objectContaining({ colorMode: systemMode }), undefined, expect.objectContaining({ sequenceArray: ['seq1'] })));
     await waitFor(() => expect(useStudyColorMode).toHaveBeenLastCalledWith(systemMode));
     expect(localStorage.getItem('revisit-user-color-mode')).toBe(appPreference);
     mockSystemColorMode = appPreference;
@@ -451,7 +451,7 @@ describe('Shell', () => {
     mockStorageEngine = {
       initializeStudyDb: vi.fn().mockResolvedValue(undefined),
       saveConfig: vi.fn().mockResolvedValue(undefined),
-      getSequenceArray: vi.fn().mockResolvedValue(['seq1']), // non-null → no setSequenceArray
+      getOrCreateSequenceArray: vi.fn().mockResolvedValue(['seq1']),
       getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
       initializeParticipantSession: vi.fn().mockResolvedValue(baseSession),
       getParticipantCompletionStatus: vi.fn().mockResolvedValue(false),
@@ -474,7 +474,7 @@ describe('Shell', () => {
     mockStorageEngine = {
       initializeStudyDb: vi.fn().mockResolvedValue(undefined),
       saveConfig: vi.fn().mockResolvedValue(undefined),
-      getSequenceArray: vi.fn().mockResolvedValue(['seq1']),
+      getOrCreateSequenceArray: vi.fn().mockResolvedValue(['seq1']),
       getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
       initializeParticipantSession: vi.fn().mockResolvedValue(baseSession),
       updateParticipantMetadata: vi.fn().mockResolvedValue(undefined),
@@ -499,7 +499,7 @@ describe('Shell', () => {
     mockStorageEngine = {
       initializeStudyDb: vi.fn().mockResolvedValue(undefined),
       saveConfig: vi.fn().mockResolvedValue(undefined),
-      getSequenceArray: vi.fn().mockResolvedValue(['seq1']), // non-null → no setSequenceArray
+      getOrCreateSequenceArray: vi.fn().mockResolvedValue(['seq1']),
       getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
       initializeParticipantSession: vi.fn().mockResolvedValue(baseSession),
       getParticipantCompletionStatus: vi.fn().mockResolvedValue(false),
@@ -533,7 +533,7 @@ describe('Shell', () => {
     mockStorageEngine = {
       initializeStudyDb: vi.fn().mockResolvedValue(undefined),
       saveConfig: vi.fn().mockResolvedValue(undefined),
-      getSequenceArray: vi.fn().mockResolvedValue(['seq1']),
+      getOrCreateSequenceArray: vi.fn().mockResolvedValue(['seq1']),
       getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
       initializeParticipantSession: vi.fn().mockImplementation(() => new Promise(() => { })),
       peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
@@ -573,7 +573,7 @@ describe('Shell', () => {
     mockStorageEngine = {
       initializeStudyDb: vi.fn().mockResolvedValue(undefined),
       saveConfig: vi.fn().mockResolvedValue(undefined),
-      getSequenceArray: vi.fn().mockResolvedValue(['seq1']),
+      getOrCreateSequenceArray: vi.fn().mockResolvedValue(['seq1']),
       getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
       initializeParticipantSession: vi.fn().mockImplementation(() => new Promise(() => { })),
       peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
@@ -589,14 +589,13 @@ describe('Shell', () => {
     expect(queryByTestId('loading-overlay')).not.toBeNull();
   });
 
-  test('calls setSequenceArray when getSequenceArray returns null', async () => {
+  test('passes the canonical prepared array into participant startup', async () => {
     vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
 
     mockStorageEngine = {
       initializeStudyDb: vi.fn().mockResolvedValue(undefined),
       saveConfig: vi.fn().mockResolvedValue(undefined),
-      getSequenceArray: vi.fn().mockResolvedValue(null), // null → calls setSequenceArray
-      setSequenceArray: vi.fn().mockResolvedValue(undefined),
+      getOrCreateSequenceArray: vi.fn().mockResolvedValue(['saved-order']),
       getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
       initializeParticipantSession: vi.fn().mockResolvedValue(baseSession),
       getParticipantCompletionStatus: vi.fn().mockResolvedValue(false),
@@ -607,7 +606,8 @@ describe('Shell', () => {
     };
 
     render(<Shell globalConfig={globalConfig} />);
-    await waitFor(() => expect(mockStorageEngine!.setSequenceArray).toHaveBeenCalled(), { timeout: 3000 });
+    await waitFor(() => expect(mockStorageEngine!.initializeParticipantSession).toHaveBeenCalledWith({}, expect.anything(), expect.anything(), undefined, { modesDocument: expect.anything(), sequenceArray: ['saved-order'] }));
+    expect(mockStorageEngine!.getOrCreateSequenceArray).toHaveBeenCalledWith(expect.any(String), expect.any(Function));
   });
 
   test('shows the study-full screen when the current stage is at capacity', async () => {
@@ -616,7 +616,7 @@ describe('Shell', () => {
     mockStorageEngine = {
       initializeStudyDb: vi.fn().mockResolvedValue(undefined),
       saveConfig: vi.fn().mockResolvedValue(undefined),
-      getSequenceArray: vi.fn().mockResolvedValue(['seq1']),
+      getOrCreateSequenceArray: vi.fn().mockResolvedValue(['seq1']),
       getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
       initializeParticipantSession: vi.fn().mockRejectedValue(new StageCapacityExceededError('LIMITED')),
       peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
@@ -638,7 +638,7 @@ describe('Shell', () => {
     mockStorageEngine = {
       initializeStudyDb: vi.fn().mockResolvedValue(undefined),
       saveConfig: vi.fn().mockResolvedValue(undefined),
-      getSequenceArray: vi.fn().mockResolvedValue(['seq1']),
+      getOrCreateSequenceArray: vi.fn().mockResolvedValue(['seq1']),
       getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
       initializeParticipantSession: vi.fn().mockRejectedValue(new StageOnlyDisabledConditionsHaveCapacityError('LIMITED')),
       peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
@@ -662,7 +662,7 @@ describe('Shell', () => {
     mockStorageEngine = {
       initializeStudyDb: vi.fn().mockResolvedValue(undefined),
       saveConfig: vi.fn().mockResolvedValue(undefined),
-      getSequenceArray: vi.fn().mockResolvedValue(['seq1']),
+      getOrCreateSequenceArray: vi.fn().mockResolvedValue(['seq1']),
       getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: true, dataSharingEnabled: true, dataCollectionEnabled: true }),
       initializeParticipantSession: vi.fn().mockResolvedValue({
         ...baseSession,
@@ -688,7 +688,7 @@ describe('Shell', () => {
     mockStorageEngine = {
       initializeStudyDb: vi.fn().mockResolvedValue(undefined),
       saveConfig: vi.fn().mockResolvedValue(undefined),
-      getSequenceArray: vi.fn().mockResolvedValue(['seq1']),
+      getOrCreateSequenceArray: vi.fn().mockResolvedValue(['seq1']),
       getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
       initializeParticipantSession: vi.fn().mockResolvedValue({
         ...baseSession,

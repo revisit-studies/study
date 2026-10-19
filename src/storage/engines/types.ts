@@ -153,6 +153,14 @@ export interface StageData {
 export type ModesAndStageData = {
   modes: Record<REVISIT_MODE, boolean>;
   stageData: StageData;
+  sequenceArray?: Sequence[];
+};
+
+// Reuse the orders prepared during startup. Admission still rechecks policy
+// under its own lock rather than trusting the earlier modes snapshot.
+export type ParticipantSessionBootstrapData = {
+  modesDocument: Record<REVISIT_MODE, boolean> & { stage?: StageData };
+  sequenceArray: Sequence[];
 };
 
 export interface ConditionData {
@@ -1265,7 +1273,8 @@ export abstract class StorageEngine {
 
     const { modes, stageData } = bootstrapData;
     const currentStage = stageData.currentStage.stageName;
-    const sequenceArray = await this.getSequenceArray(await this._getCurrentConfigHash() ? participantConfigHash : undefined);
+    const sequenceArray = bootstrapData.sequenceArray
+      ?? await this.getSequenceArray(await this._getCurrentConfigHash() ? participantConfigHash : undefined);
     if (!sequenceArray) {
       throw new Error('Latin square not initialized');
     }
@@ -1473,6 +1482,7 @@ export abstract class StorageEngine {
     config: StudyConfig,
     metadata: ParticipantMetadata,
     urlParticipantId?: string,
+    bootstrapData?: ParticipantSessionBootstrapData,
   ) {
     await this.verifyStudyDatabase();
 
@@ -1547,7 +1557,7 @@ export abstract class StorageEngine {
       const conditions = parsedConditions.length > 0 ? parsedConditions : undefined;
       let sequence: { currentRow: Sequence; creationIndex: number; stage?: string; reservationToken?: string };
       try {
-        sequence = await this._getSequence(conditions, { modes, stageData }, config, participantConfigHash);
+        sequence = await this._getSequence(conditions, { modes, stageData, sequenceArray: bootstrapData?.sequenceArray }, config, participantConfigHash);
       } catch (error) {
         // _getSequence writes the sequence assignment before it picks a row, so a
         // later failure leaves an assignment that occupies a stage slot with no
@@ -2447,6 +2457,21 @@ export abstract class StorageEngine {
     );
 
     return Array.isArray(sequenceArrayDocData) ? sequenceArrayDocData : null;
+  }
+
+  // Only first-time preparation takes a config-specific lock. Every caller gets
+  // the published array, including callers that waited for another publisher.
+  async getOrCreateSequenceArray(configHash: string, generate: () => Sequence[]) {
+    const existing = await this.getSequenceArray(configHash);
+    if (existing) return existing;
+
+    return this._runWithLock(`prepare-sequences-${configHash}`, async () => {
+      const prepared = await this.getSequenceArray(configHash);
+      if (prepared) return prepared;
+      const sequences = generate();
+      await this.setSequenceArray(sequences, configHash);
+      return sequences;
+    });
   }
 
   // Sets the sequence array in the storage engine.

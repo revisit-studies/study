@@ -139,7 +139,8 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       return super._getSequence(conditions, bootstrapData, config, participantConfigHash);
     }
     const participantId = this.currentParticipantId!;
-    const sequences = await this.getSequenceArray(await this._getCurrentConfigHash() ? participantConfigHash : undefined);
+    const sequences = bootstrapData.sequenceArray
+      ?? await this.getSequenceArray(await this._getCurrentConfigHash() ? participantConfigHash : undefined);
     if (!sequences?.length) throw new Error('Latin square not initialized');
     const betweenSubjects = config.betweenSubjects || [];
     const conditionKeys = getConfigConditionKeys(config);
@@ -336,7 +337,9 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       const blob = await getBlob(storageRef);
       const fullProvStr = await blob.text();
       storageObj = JSON.parse(fullProvStr);
-    } catch {
+    } catch (error) {
+      // A failed sequence read must not look absent and trigger replacement.
+      if (type === 'sequenceArray' && (error as { code?: string } | null)?.code !== 'storage/object-not-found') throw error;
       console.warn(
         `${prefix} does not have ${type} for ${this.collectionPrefix}${this.studyId}.`,
       );
