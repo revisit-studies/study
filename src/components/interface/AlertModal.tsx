@@ -29,8 +29,9 @@ export function AlertModal() {
   const close = useCallback(() => storeDispatch(setAlertModal({ ...alertModal, show: false, title: '' })), [alertModal, setAlertModal, storeDispatch]);
 
   useEffect(() => setOpened(alertModal.show), [alertModal.show]);
+  const isFirebaseIndexAlert = alertModal.message.toLowerCase().includes('query requires an index');
   const isSaveResponseAlert = alertModal.title === 'Failed to Save Response';
-  const isStorageEngineAlert = alertModal.title === 'Failed to connect to the storage engine' || isSaveResponseAlert;
+  const isStorageEngineAlert = alertModal.title === 'Failed to connect to the storage engine' || isSaveResponseAlert || isFirebaseIndexAlert;
   const handleClose = useCallback(() => {
     if (isStorageEngineAlert) {
       return;

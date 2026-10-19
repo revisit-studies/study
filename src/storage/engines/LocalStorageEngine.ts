@@ -133,14 +133,30 @@ export class LocalStorageEngine extends StorageEngine {
         .filter((assignment) => assignment.rejected && !assignment.claimed)
         .sort((a, b) => a.timestamp - b.timestamp)[0];
       const creationIndex = assignments.length;
-      const logicalSlotCount = assignments.filter((assignment) => !assignment.claimed).length;
+      const unclaimedAssignments = assignments.filter((assignment) => !assignment.claimed);
+      let nextSequenceIndex = unclaimedAssignments.length;
+      if (!reusableAssignment) {
+        const legacySlots = unclaimedAssignments.some((assignment) => assignment.sequenceIndex === undefined)
+          ? new Map(assignments.filter((assignment) => !assignment.rejected)
+            .sort((a, b) => a.timestamp - b.timestamp)
+            .map((assignment, index) => [assignment.participantId, index]))
+          : undefined;
+        // Undo can leave holes below later allocations; reclaim those holes without renumbering participants.
+        const occupiedSlots = new Set(unclaimedAssignments.map((assignment) => (
+          assignment.reusableSequenceIndex ?? assignment.sequenceIndex ?? legacySlots?.get(assignment.participantId)
+        )));
+        nextSequenceIndex = 0;
+        while (occupiedSlots.has(nextSequenceIndex)) {
+          nextSequenceIndex += 1;
+        }
+      }
       const sequenceIndex = reusableAssignment?.reusableSequenceIndex
         ?? reusableAssignment?.sequenceIndex
         ?? (reusableAssignment
           ? assignments.filter((assignment) => (
             !assignment.rejected && assignment.timestamp < reusableAssignment.timestamp
           )).length
-          : logicalSlotCount);
+          : nextSequenceIndex);
 
       if (reusableAssignment) {
         assignmentsByParticipant[reusableAssignment.participantId] = {

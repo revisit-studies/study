@@ -468,6 +468,44 @@ describe.each([
     expect(participantData!.participantTags).toEqual([]);
   });
 
+  test('concurrent rejected-slot claims retry the next available vacancy', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'original-a');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'original-b');
+    // @ts-expect-error protected rejection boundary
+    await storageEngine._rejectParticipantRealtime('original-a');
+    // @ts-expect-error protected rejection boundary
+    await storageEngine._rejectParticipantRealtime('original-b');
+    const assignment = (await storageEngine.getAllSequenceAssignments(studyId))[0];
+    const allocate = (participantId: string) => (
+      // @ts-expect-error protected allocation boundary
+      storageEngine._allocateSequenceAssignment(participantId, {
+        ...assignment, participantId, rejected: false, claimed: false,
+      })
+    );
+    const allocations = await Promise.all([allocate('new-a'), allocate('new-b')]);
+    expect(allocations.map((allocation) => allocation.sequenceIndex).sort()).toEqual([0, 1]);
+  });
+
+  test('allocator handles a synchronized enrollment burst without exhausting retries', async () => {
+    const allocatorEngine = storageEngine as unknown as {
+      getOrCreateSequenceAllocator: () => Promise<{ nextSequenceIndex: number; nextCreationIndex: number; version: number }>;
+      reserveSequenceAllocator: (allocator: { nextSequenceIndex: number; nextCreationIndex: number; version: number }) =>
+        Promise<{ sequenceIndex: number; creationIndex: number }>;
+    };
+    const allocator = await allocatorEngine.getOrCreateSequenceAllocator();
+    vi.useFakeTimers();
+    try {
+      const pending = Promise.allSettled(Array.from({ length: 20 }, () => allocatorEngine.reserveSequenceAllocator(allocator)));
+      await vi.runAllTimersAsync();
+      const results = await pending;
+      expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(20);
+      const updatedAllocator = await allocatorEngine.getOrCreateSequenceAllocator();
+      expect(updatedAllocator).toMatchObject({ nextSequenceIndex: 20, nextCreationIndex: 20 });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   test('fresh participant startup does not scan all sequence assignments', async () => {
     const scanSpy = vi.spyOn(storageEngine, 'getAllSequenceAssignments');
 

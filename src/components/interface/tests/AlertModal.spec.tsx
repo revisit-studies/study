@@ -75,8 +75,13 @@ vi.mock('@mantine/core', () => ({
     : <button type="button" disabled={loading} onClick={onClick}>{children}</button>),
   Code: ({ children }: { children: ReactNode }) => <pre>{children}</pre>,
   Group: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  Modal: ({ opened, children }: { opened: boolean; children: ReactNode }) => (
-    opened ? <div role="dialog">{children}</div> : null
+  Modal: ({ opened, children, onClose }: { opened: boolean; children: ReactNode; onClose: () => void }) => (
+    opened ? (
+      <div role="dialog">
+        <button type="button" onClick={onClose}>Dismiss modal</button>
+        {children}
+      </div>
+    ) : null
   ),
   Text: ({ children }: { children: ReactNode }) => <p>{children}</p>,
 }));
@@ -182,7 +187,11 @@ describe('AlertModal', () => {
     expect(screen.getByRole('button', { name: /Copied/ })).toBeDefined();
   });
 
-  test('reconnect reloads the page without closing storage engine alert', () => {
+  test.each([
+    { title: 'Failed to connect to the storage engine', message: 'Connection refused' },
+    { title: 'Problem loading the study', message: 'The query requires an index. https://console.firebase.google.com/example' },
+    { title: 'Problem loading the study', message: 'The query requires an index.' },
+  ])('reconnect reloads without dismissing a blocking alert: $message', (alert) => {
     const reloadSpy = vi.fn();
     const originalLocation = window.location;
     Object.defineProperty(window, 'location', {
@@ -192,14 +201,13 @@ describe('AlertModal', () => {
         reload: reloadSpy,
       },
     });
-    mockAlertModal = {
-      show: true,
-      title: 'Failed to connect to the storage engine',
-      message: 'Connection refused',
-    };
+    mockAlertModal = { show: true, ...alert };
 
     try {
       render(<AlertModal />);
+      expect(screen.queryByRole('button', { name: 'Continue Study' })).toBeNull();
+      fireEvent.click(screen.getByRole('button', { name: 'Dismiss modal' }));
+      expect(mockStoreDispatch).not.toHaveBeenCalled();
       fireEvent.click(screen.getByRole('button', { name: 'Reconnect' }));
 
       expect(reloadSpy).toHaveBeenCalledTimes(1);

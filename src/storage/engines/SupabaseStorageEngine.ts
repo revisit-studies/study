@@ -5,7 +5,9 @@ import {
   CloudStorageEngine, SequenceAssignmentAllocation, SequenceAllocator, UserWrapped, cleanupModes,
 } from './types';
 import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
-import { rebuildSequenceAllocator } from './utils/storageEngineHelpers';
+import {
+  rebuildSequenceAllocator, retrySequenceAllocation, SEQUENCE_ALLOCATION_ATTEMPTS, waitForAllocationRetry,
+} from './utils/storageEngineHelpers';
 
 type SupabaseSequenceAllocator = SequenceAllocator & {
   version: number;
@@ -277,9 +279,11 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     const studyId = `${this.collectionPrefix}${this.studyId}`;
     const allocatorPath = 'sequenceAllocator';
 
-    for (let attempt = 0; attempt < 10; attempt += 1) {
+    for (let attempt = 0; attempt < SEQUENCE_ALLOCATION_ATTEMPTS; attempt += 1) {
       let allocator = initialAllocator;
       if (attempt > 0) {
+        // eslint-disable-next-line no-await-in-loop
+        await waitForAllocationRetry(attempt);
         // eslint-disable-next-line no-await-in-loop
         const { data, error } = await this.supabase
           .from('revisit')
@@ -377,6 +381,13 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     participantId: string,
     sequenceAssignment: SequenceAssignment,
   ): Promise<SequenceAssignmentAllocation> {
+    return retrySequenceAllocation(() => this.tryAllocateSequenceAssignment(participantId, sequenceAssignment));
+  }
+
+  private async tryAllocateSequenceAssignment(
+    participantId: string,
+    sequenceAssignment: SequenceAssignment,
+  ): Promise<SequenceAssignmentAllocation | null> {
     await this.verifyStudyDatabase();
     if (!this.studyId) {
       throw new Error('Study ID is not set');
@@ -441,7 +452,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
         return aTimestamp - bTimestamp;
       })[0];
 
-    let reusableAssignment = reusableRow?.data as SequenceAssignment | undefined;
+    const reusableAssignment = reusableRow?.data as SequenceAssignment | undefined;
     let reusableSequenceIndex = reusableAssignment?.reusableSequenceIndex
       ?? reusableAssignment?.sequenceIndex;
     if (reusableAssignment && reusableSequenceIndex === undefined) {
@@ -472,8 +483,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
         throw new Error('Failed to claim rejected sequence assignment');
       }
       if (!claimedRows || claimedRows.length === 0) {
-        reusableAssignment = undefined;
-        reusableSequenceIndex = undefined;
+        return null;
       }
     }
 
@@ -682,7 +692,11 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
 
   private async returnSequenceIndex(sequenceIndex: number) {
     const studyId = `${this.collectionPrefix}${this.studyId}`;
-    for (let attempt = 0; attempt < 10; attempt += 1) {
+    for (let attempt = 0; attempt < SEQUENCE_ALLOCATION_ATTEMPTS; attempt += 1) {
+      if (attempt > 0) {
+        // eslint-disable-next-line no-await-in-loop
+        await waitForAllocationRetry(attempt);
+      }
       // eslint-disable-next-line no-await-in-loop
       const allocator = await this.getOrCreateSequenceAllocator();
       const nextAllocator: SupabaseSequenceAllocator = {

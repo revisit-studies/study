@@ -510,6 +510,24 @@ describe.each([
     expect(participantData!.participantTags).toEqual([]);
   });
 
+  test('concurrent rejected-slot claims retry the next available vacancy', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'original-a');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'original-b');
+    // @ts-expect-error protected rejection boundary
+    await storageEngine._rejectParticipantRealtime('original-a');
+    // @ts-expect-error protected rejection boundary
+    await storageEngine._rejectParticipantRealtime('original-b');
+    const assignment = (await storageEngine.getAllSequenceAssignments(studyId))[0];
+    const allocate = (participantId: string) => (
+      // @ts-expect-error protected allocation boundary
+      storageEngine._allocateSequenceAssignment(participantId, {
+        ...assignment, participantId, rejected: false, claimed: false,
+      })
+    );
+    const allocations = await Promise.all([allocate('new-a'), allocate('new-b')]);
+    expect(allocations.map((allocation) => allocation.sequenceIndex).sort()).toEqual([0, 1]);
+  });
+
   test('fresh participant startup does not scan all sequence assignments', async () => {
     const scanSpy = vi.spyOn(storageEngine, 'getAllSequenceAssignments');
     const countMock = vi.mocked(getCountFromServer);

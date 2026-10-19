@@ -55,7 +55,7 @@ import {
 } from './types';
 import { EditedText, TaglessEditedText } from '../../analysis/individualStudy/thinkAloud/types';
 import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
-import { rebuildSequenceAllocator } from './utils/storageEngineHelpers';
+import { rebuildSequenceAllocator, retrySequenceAllocation } from './utils/storageEngineHelpers';
 
 export class FirebaseStorageEngine extends CloudStorageEngine {
   private RECAPTCHAV3TOKEN = import.meta.env.VITE_RECAPTCHAV3TOKEN;
@@ -304,6 +304,13 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     participantId: string,
     sequenceAssignment: SequenceAssignment,
   ): Promise<SequenceAssignmentAllocation> {
+    return retrySequenceAllocation(() => this.tryAllocateSequenceAssignment(participantId, sequenceAssignment));
+  }
+
+  private async tryAllocateSequenceAssignment(
+    participantId: string,
+    sequenceAssignment: SequenceAssignment,
+  ): Promise<SequenceAssignmentAllocation | null> {
     await this.verifyStudyDatabase();
     if (this.studyId === undefined) {
       throw new Error('Study ID is not set');
@@ -409,6 +416,10 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
         ? reusableAssignmentSnapshot.data() as SequenceAssignment
         : undefined;
       const canReuse = reusableAssignment?.rejected && !reusableAssignment.claimed;
+      if (reusableDocument && !canReuse) {
+        // Another start claimed our candidate; select the next vacancy before reserving a fresh slot.
+        return null;
+      }
       const sequenceIndex = canReuse
         ? reusableAssignment.reusableSequenceIndex
           ?? reusableAssignment.sequenceIndex
