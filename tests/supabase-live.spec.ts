@@ -110,4 +110,37 @@ test.describe('Live self-hosted Supabase', () => {
     await expect(page.getByPlaceholder('Select an option')).toHaveValue('A');
     expect(colorAnswers(await readParticipant(participantId!))).toEqual(colorAnswers(participant));
   });
+
+  test('supports binary files, overwrites and signed downloads with a participant session', async ({ request }) => {
+    const client = createClient(process.env.VITE_SUPABASE_URL!, process.env.VITE_SUPABASE_ANON_KEY!, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { error: authError } = await client.auth.signInAnonymously();
+    expect(authError).toBeNull();
+    const bucket = client.storage.from('revisit');
+    const path = `${studyId}/recording checks/${randomUUID()}.webm`;
+    const original = Uint8Array.from([0, 1, 127, 128, 255]);
+    const replacement = Uint8Array.from([255, 128, 0, 42]);
+    try {
+      const { error: uploadError } = await bucket.upload(path, original, { contentType: 'video/webm' });
+      expect(uploadError).toBeNull();
+      const { data: downloaded, error: downloadError } = await bucket.download(path);
+      expect(downloadError).toBeNull();
+      expect(new Uint8Array(await downloaded!.arrayBuffer())).toEqual(original);
+
+      const { error: overwriteError } = await bucket.upload(path, replacement, { upsert: true, contentType: 'video/webm' });
+      expect(overwriteError).toBeNull();
+      const { data: signed, error: signError } = await bucket.createSignedUrl(path, 60);
+      expect(signError).toBeNull();
+      const response = await request.get(signed!.signedUrl);
+      expect(response.ok()).toBeTruthy();
+      expect(response.headers()['content-type']).toContain('video/webm');
+      expect(new Uint8Array(await response.body())).toEqual(replacement);
+    } finally {
+      const { error } = await bucket.remove([path]);
+      expect(error).toBeNull();
+    }
+    const { error: removedError } = await bucket.download(path);
+    expect(removedError).not.toBeNull();
+  });
 });

@@ -1,7 +1,7 @@
 # Self-hosted Supabase for reVISit
 
 This directory contains the reVISit-specific setup and migration files. Obtain
-the deployment bundle directly from **Supabase self-hosted/v0.8.2** (see
+the deployment bundle directly from **Supabase self-hosted/v0.8.3** (see
 [UPSTREAM](UPSTREAM)), following the upstream manual installation below. Its
 default Storage backend uses persistent local files; MinIO is not required.
 For an existing deployment, follow [MIGRATION.md](MIGRATION.md) **before starting
@@ -15,10 +15,8 @@ resources and operating-system details, follow the
 [upstream installation guide](https://supabase.com/docs/guides/self-hosting/docker).
 The storage filesystem must support Linux extended attributes. Mac shared
 folders in Docker Desktop may reject these attributes; use a Docker-managed
-Linux volume for a local rehearsal and back it up separately. The pinned ARM64
-Studio and postgres-meta images also crashed on our Apple Silicon Docker Desktop
-host; their amd64 variants worked under emulation. Verify image startup on your
-actual host before a migration.
+Linux volume for a local rehearsal and back it up separately. Verify image
+startup on your actual host before a migration.
 
 Keep the deployment outside the reVISit checkout so application updates do not
 replace its configuration or data. The upstream stack uses fixed container
@@ -30,11 +28,11 @@ names: run only one copy per Docker host, or deliberately isolate it.
 
    ```sh
    revisit_support=/absolute/path/to/revisit-study/supabase
-   git clone --filter=blob:none --sparse --depth 1 --branch self-hosted/v0.8.2 \
+   git clone --filter=blob:none --sparse --depth 1 --branch self-hosted/v0.8.3 \
      https://github.com/supabase/supabase.git supabase-upstream &&
    git -C supabase-upstream sparse-checkout set docker &&
    test "$(git -C supabase-upstream rev-parse HEAD)" = \
-     564eab8ad7840b13324f68b1bfac074ef8d51c21 &&
+     bc27d2661edd09a5d0b8d76ce33da6d4071a756e &&
    mkdir supabase-project &&
    cp -a supabase-upstream/docker/. supabase-project/ &&
    cd supabase-project
@@ -48,7 +46,7 @@ names: run only one copy per Docker host, or deliberately isolate it.
    cp .env.example .env
    sh utils/generate-keys.sh --update-env
    sh utils/add-new-auth-keys.sh --update-env
-   printf 'ref=self-hosted/v0.8.2\n' > .supabase-version
+   printf 'ref=self-hosted/v0.8.3\n' > .supabase-version
    ```
 
    These helpers print secrets; keep their output private. Never commit `.env`.
@@ -113,7 +111,7 @@ names: run only one copy per Docker host, or deliberately isolate it.
    ```dotenv
    VITE_STORAGE_ENGINE="supabase"
    VITE_SUPABASE_URL="http://localhost:8000"
-   VITE_SUPABASE_ANON_KEY="<SUPABASE_PUBLISHABLE_KEY from supabase/.env>"
+   VITE_SUPABASE_ANON_KEY="<SUPABASE_PUBLISHABLE_KEY from your deployment .env>"
    ```
 
    The application variable retains its existing name and accepts the new
@@ -150,7 +148,13 @@ Review future tagged updates using `sh update.sh --dry-run --to <release-tag>`
 and [upstream update guidance](https://supabase.com/docs/guides/self-hosting/updating).
 The update tool belongs to the downloaded upstream bundle. Review its plan and
 your GitHub override before applying an update; this guide and migration helper
-target the pinned release above.
+target the pinned release above. This release includes Storage and Realtime
+security fixes. Its Storage database migrations are one-way: reverting an image
+alone is unsafe; restore coordinated pre-upgrade backups for rollback. Review
+[upstream release notes](https://github.com/supabase/supabase/blob/self-hosted/v0.8.3/docker/CHANGELOG.md)
+before upgrading. If you use Realtime Postgres Changes, the release notes also
+document a connection-restart issue and the `REGION: us-east-1` workaround;
+reVISit's storage engine does not subscribe to Postgres Changes.
 
 ## Local regression checks
 

@@ -1,8 +1,9 @@
-# Migrate the bundled MinIO deployment
+# Migrate the bundled MinIO or pgsty deployment
 
 This procedure targets the previous bundled stack (Postgres 15.8.1.060,
-Supabase Storage v1.11.13, and MinIO) and moves it to the release in [UPSTREAM](UPSTREAM),
-using Postgres 17 and Storage v1.74.0's default file backend.
+Supabase Storage v1.11.13, and either the original MinIO images or `main`'s
+`pgsty/silo` + `pgsty/mc` replacement images) and moves it to the release in
+[UPSTREAM](UPSTREAM), using Postgres 17 and Storage v1.81.0's default file backend.
 Rehearse against a restored copy of your deployment first. New installations
 use [README.md](README.md); hosted Supabase users are unaffected.
 
@@ -11,21 +12,28 @@ window**. Storage object IDs, versions, owners, timestamps, bucket definitions,
 and policies remain in Postgres. `migrate-storage.py` exports object bytes through
 the old API and installs their versioned files with HTTP metadata in the new
 backend. It never writes database records or re-uploads objects through the API.
+Storage v1.81.0 itself applies one-way database migrations: after it starts, an
+older Storage image cannot safely use that database. Rollback requires the
+coordinated pre-upgrade database, object-store, encryption and configuration
+backups below; changing image tags alone is insufficient.
 
 Requirements: a Linux server, Git, Docker Compose, Bash, curl, OpenSSL, Python 3.11+,
 root access for the upstream database upgrade, and enough space for the database
 backup/upgrade and two copies of object data. Pre-pull the target images before
 starting the upgrade; allow at least 15 GB additional temporary space for the
 upgrade images, extracted binaries, and compressed bundle (also inside the
-Docker VM when using Docker Desktop). The destination filesystem must
-support Linux extended attributes. Do not reuse MinIO's on-disk directory as
+Docker VM when using Docker Desktop). The command below puts build files next
+to the backup, avoiding a small or memory-backed `/tmp`. The destination
+filesystem must support Linux extended attributes. Do not reuse MinIO's on-disk directory as
 Supabase file storage. Custom S3 layouts, custom object-version separators, or
 multiple Supabase stacks on one Docker host require a separately rehearsed plan.
 
 ## 1. Inventory and export while the old stack is running
 
 Keep the old Compose/configuration files and images available for rollback.
-Save cached MinIO server/client images if the registry can no longer supply them.
+Save the exact cached server/client images used by the old containers, including
+the pgsty images when migrating `main`. Do not replace Silo with an old MinIO
+image or change object-store versions during this migration.
 Record your database extensions, OAuth/SMTP settings, proxy configuration,
 bucket limits, storage tenant, backend bucket, and any custom access policies.
 Restrict application traffic and pause participant/designer/background writes
@@ -45,8 +53,20 @@ migration_backup="$(cd .. && pwd)/supabase-migration-backup"
 mkdir "$migration_backup"
 cp .env docker-compose.yml "$migration_backup/"
 cp -a volumes/api "$migration_backup/api"
-docker image save minio/minio minio/mc \
-  -o "$migration_backup/minio-images.tar"
+storage_server_image=$(docker inspect "$(docker compose ps -q minio)" \
+  --format '{{.Image}}')
+storage_client_image=$(docker inspect "$(docker compose ps -a -q minio-createbucket)" \
+  --format '{{.Image}}')
+test -n "$storage_server_image" && test -n "$storage_client_image" &&
+docker image save "$storage_server_image" "$storage_client_image" \
+  -o "$migration_backup/storage-images.tar" &&
+cat > "$migration_backup/docker-compose.storage-images.yml" <<YAML
+services:
+  minio:
+    image: $storage_server_image
+  minio-createbucket:
+    image: $storage_client_image
+YAML
 docker exec supabase-db pg_dumpall -U supabase_admin \
   > "$migration_backup/database.sql"
 db_config_volume=$(docker inspect supabase-db --format \
@@ -56,6 +76,14 @@ docker run --rm -v "$db_config_volume:/source:ro" \
   -v "$migration_backup:/backup" \
   alpine:3.22 tar -cf /backup/db-config.tar -C /source .
 ```
+
+Require every backup command to succeed before proceeding. The storage-image
+archive and override use immutable IDs from the existing containers, so rollback
+does not depend on mutable `latest` tags or registry availability. The bucket
+setup container may be stopped; keep it until its image has been saved. If it
+was already removed, resolve its original client image ID from your deployment
+inventory and save it with the server image before continuing. The Compose
+service names remain `minio` and `minio-createbucket` with the pgsty images.
 
 Privately set `SUPABASE_SERVICE_ROLE_KEY` to the **old** `.env`'s `SERVICE_ROLE_KEY`
 (for example, use `read -rs SUPABASE_SERVICE_ROLE_KEY` in Bash, then `export
@@ -107,11 +135,11 @@ old deployment directory, replace the support path with your new reVISit checkou
 
 ```sh
 revisit_support=/absolute/path/to/new-checkout/supabase
-git clone --filter=blob:none --sparse --depth 1 --branch self-hosted/v0.8.2 \
+git clone --filter=blob:none --sparse --depth 1 --branch self-hosted/v0.8.3 \
   https://github.com/supabase/supabase.git ../supabase-upstream &&
 git -C ../supabase-upstream sparse-checkout set docker &&
 test "$(git -C ../supabase-upstream rev-parse HEAD)" = \
-  564eab8ad7840b13324f68b1bfac074ef8d51c21 &&
+  bc27d2661edd09a5d0b8d76ce33da6d4071a756e &&
 rsync -av --exclude='.env' --exclude='.env.old' --exclude='.supabase-version' \
   --exclude='volumes/db/data*' --exclude='volumes/storage*' \
   ../supabase-upstream/docker/ ./ &&
@@ -169,9 +197,7 @@ docker compose run --rm --no-deps studio node --version
 docker compose run --rm --no-deps meta node --version
 ```
 
-If either crashes, resolve host/image compatibility before upgrading. Our ARM64
-Docker Desktop rehearsal required the amd64 variants of these two images, as
-noted in [README.md](README.md).
+If either crashes, resolve host/image compatibility before upgrading.
 
 Move the old MinIO data aside and create an empty file-storage directory:
 
@@ -196,7 +222,9 @@ docker exec supabase-db pg_isready -U postgres
 # Our previous Compose did not initialize the upstream Realtime schema.
 docker exec -i supabase-db psql -U supabase_admin -d "$postgres_database" \
   -v ON_ERROR_STOP=1 < volumes/db/realtime.sql
-sudo bash utils/upgrade-pg17.sh
+mkdir -p "$migration_backup/upgrade-tmp"
+sudo env TMPDIR="$migration_backup/upgrade-tmp" bash utils/upgrade-pg17.sh &&
+sudo rmdir "$migration_backup/upgrade-tmp"
 ```
 
 Read all output, including migration warnings. This script uses upstream's
@@ -314,7 +342,7 @@ python3 migrate-storage.py verify "$migration_backup/objects" \
 sh run.sh status
 docker exec supabase-db psql -U supabase_admin -d postgres \
   -c 'SHOW server_version;'
-printf 'ref=self-hosted/v0.8.2\n' > .supabase-version
+printf 'ref=self-hosted/v0.8.3\n' > .supabase-version
 ```
 
 Verification streams every migrated object through the new API and checks its
@@ -340,10 +368,18 @@ old Compose/API configuration and `.env`, the quiesced Postgres 15 data, the
 MinIO directory, and the matching `db-config` encryption/configuration volume.
 The database upgrade changes the volume's ownership/configuration, so restoring
 only database files is insufficient. Use the physical backup and saved volume
-archive (and load saved MinIO images with `docker image load -i`), or follow the
-upstream rollback steps together with the original configuration. Start the old stack with the saved original images and verify
-data and login before reopening writes. Keep the failed new data separately
-for diagnosis.
+archive, then load the saved images and use the pinned storage override:
+
+```sh
+docker image load -i "$migration_backup/storage-images.tar"
+docker compose -f docker-compose.yml \
+  -f "$migration_backup/docker-compose.storage-images.yml" up -d
+```
+
+Run this from the restored old deployment directory with its original `.env`
+and Compose file. This restores the same pgsty or MinIO image IDs that were
+running before migration. Verify data and login before reopening writes. Keep
+the failed new data separately for diagnosis.
 
 After new writes are accepted, restoring the old backups loses those writes.
 Pause and plan how to retain them rather than treating rollback as lossless.

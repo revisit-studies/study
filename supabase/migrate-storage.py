@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Offline MinIO -> Supabase v1.74.0 file-backend migration. No database writes.
+"""Offline MinIO/pgsty -> Supabase v1.81.0 file-backend migration. No database writes.
 
 Export runs with the old stack online and application writes stopped. Install
 runs on Linux with the new Storage service stopped. See MIGRATION.md.
@@ -60,7 +60,7 @@ def export(url, directory, database="postgres"):
 
 
 def destination(root, bucket, tenant, obj):
-    # These match v1.74.0's default location and withOptionalVersion helpers.
+    # These match v1.81.0's default location and withOptionalVersion helpers.
     parts = [bucket, tenant, obj["bucket_id"], *obj["name"].split("/")]
     if obj.get("version"):
         parts.append(obj["version"])
