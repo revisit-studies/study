@@ -15,13 +15,16 @@
     "withProgressBar": true,
     "autoDownloadStudy": false,
     "withSidebar": true,
-    "windowEventDebounceTime": 200
+    "windowEventDebounceTime": 200,
+    "nextButtonLocation": "sidebar"
   },
   "components": {
     "introduction": {
       "type": "markdown",
       "path": "demo-templating/assets/introduction.md",
-      "response": []
+      "response": [],
+      "nextButtonLocation": "belowStimulus",
+      "withSidebar": false
     },
     "markdown-template-quiz": {
       "type": "markdown",
@@ -41,8 +44,8 @@
           "id": "capital-answer",
           "prompt": "Choose the capital of {{country}}:",
           "secondaryText": "{{country}} is a country in {{continent}}",
-          "infoText": "This trial's parameters: country={{country}}, continent={{continent}}.{{#if (lookupAnswersRel -1 'capital-answer')}} Previous answer: {{lookupAnswersRel -1 'capital-answer'}}.{{/if}}",
-          "location": "belowStimulus",
+          "infoText": "This trial's parameters: country={{country}}, continent={{continent}}, hintFile={{hintFile}}, funFact={{funFact}}, flag={{flag}}.{{#if (lookupAnswersRel -1 'capital-answer')}} Previous answer: {{lookupAnswersRel -1 'capital-answer'}}.{{/if}}",
+          "location": "sidebar",
           "type": "radio",
           "horizontal": true,
           "options": ["Lyon", "Paris", "Marseille"]
@@ -57,13 +60,14 @@
     },
     "html-template-quiz": {
       "type": "website",
-      "instruction": "Which city is the capital of {{country}}?{{#if (lookupAnswersRel -1 'capital-answer')}} (Last time, you answered \"{{lookupAnswersRel -1 'capital-answer'}}\".){{/if}}",
+      "instruction": "Which city is the capital of {{country}}?{{#if (lookupAnswersRel -1 'capital-answer')}} (Last time, you answered \"{{lookupAnswersRel -1 'capital-answer'}}\".){{/if}}\n\n*Select your answer from the options on your right.*",
+      "instructionLocation": "sidebar",
       "path": "demo-templating/assets/capital-picker.html",
       "templated": true,
       "description": "Templated HTML stimulus: the parameters are substituted into the file itself.",
       "parameters": {
         "country": "Canada",
-        "continent": "Americas",
+        "continent": "North America",
         "funFact": "maple syrup",
         "cityOptions": "Toronto,Ottawa,Vancouver",
         "flag": "🇨🇦"
@@ -72,7 +76,8 @@
         {
           "id": "capital-answer",
           "prompt": "Your selection:",
-          "location": "belowStimulus",
+          "infoText": "This trial's parameters: country={{country}}, continent={{continent}}, funFact={{funFact}}, cityOptions={{cityOptions}}, flag={{flag}}.{{#if (lookupAnswersRel -1 'capital-answer')}} Previous answer: {{lookupAnswersRel -1 'capital-answer'}}.{{/if}}",
+          "location": "sidebar",
           "type": "reactive"
         }
       ],
@@ -87,7 +92,9 @@
     "summary": {
       "type": "markdown",
       "path": "demo-templating/assets/summary.md",
-      "response": []
+      "response": [],
+      "withSidebar": false,
+      "nextButtonLocation": "belowStimulus"
     }
   },
   "sequence": {

@@ -1,13 +1,7 @@
 # {{flag}} {{country}}
 
-{{#ifEquals (lookupAnswersRel -1 "capital-answer") "Paris"}}
+**Hint for this task:** A country in {{continent}}, known for {{funFact}}.
 
-> _Nice — you answered "Paris" (the capital of France) on the previous trial!_
-
----
-
-{{/ifEquals}}
-
-**Hint for this task:** {{country}} is well known for {{funFact}}.
+_Note: This is a markdown file where the variables `\{{country}}`, `\{{continent}}`, and `\{{funFact}}` are replaced by **"{{country}}"**, **"{{continent}}"**, and **"{{funFact}}"**, respectively._
 
 ---
