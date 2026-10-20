@@ -28,6 +28,7 @@ import { getCleanedDuration } from '../../utils/getCleanedDuration';
 import { showNotification } from '../../utils/notifications';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 import { parseConditionParam } from '../../utils/handleConditionLogic';
+import { getCorrectAnswerDisplayValue } from '../../utils/correctAnswer';
 import { getAnswerIdentifier, getParticipantQualitativeCodes } from './qualitativeCodes';
 import type { DownloadedQualitativeCodes } from './qualitativeCodes';
 
@@ -206,9 +207,9 @@ function participantDataToRows(
           tidyRow.transcript = transcripts?.[`${participant.participantId}_${identifier}`] ?? undefined;
         }
         if (properties.includes('correctAnswer')) {
-          const configCorrectAnswer = completeComponent?.correctAnswer?.find((ans) => ans.id === key)?.answer;
-          const answerCorrectAnswer = trialAnswer.correctAnswer?.find((ans) => ans.id === key)?.answer;
-          const correctAnswer = answerCorrectAnswer ?? configCorrectAnswer;
+          const configCorrectAnswer = completeComponent?.correctAnswer?.find((ans) => ans.id === key);
+          const answerCorrectAnswer = trialAnswer.correctAnswer?.find((ans) => ans.id === key);
+          const correctAnswer = getCorrectAnswerDisplayValue(answerCorrectAnswer ?? configCorrectAnswer);
           tidyRow.correctAnswer = typeof correctAnswer === 'object' ? JSON.stringify(correctAnswer) : correctAnswer;
         }
         if (properties.includes('startTime')) {

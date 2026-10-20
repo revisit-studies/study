@@ -8,7 +8,9 @@ import { StudyConfig } from '../../../../parser/types';
 import { ParticipantDataWithStatus } from '../../../../storage/types';
 import { OverviewData } from '../../../types';
 import { createMockStudyConfig } from '../../../tests/testUtils';
+import { makeParticipant, makeStoredAnswer } from '../../../../tests/utils';
 import { SummaryView } from '../SummaryView';
+import { getResponseStats } from '../utils';
 import { OverviewStats } from '../OverviewStats';
 import { ComponentStats } from '../ComponentStats';
 import { ResponseStats } from '../ResponseStats';
@@ -71,6 +73,38 @@ const emptyConfig: StudyConfig = createMockStudyConfig({
 });
 
 const noParticipants: ParticipantDataWithStatus[] = [];
+
+test('summary stats grade matrix alternatives in configured numeric row order', () => {
+  const config = createMockStudyConfig({
+    components: {
+      trial1: {
+        type: 'questionnaire',
+        response: [{
+          id: 'matrix', type: 'matrix-checkbox', prompt: 'Matrix', questionOptions: ['10', '2'], answerOptions: ['A', 'B'],
+        }],
+      },
+    },
+    sequence: { order: 'fixed', components: ['trial1'] },
+  });
+  const participant = makeParticipant({
+    participantConfigHash: 'hash-1',
+    answers: {
+      trial1_0: makeStoredAnswer({
+        componentName: 'trial1',
+        startTime: 1,
+        endTime: 2,
+        answer: { matrix: { 10: 'A', 2: 'B' } },
+        correctAnswer: [{ id: 'matrix', acceptableAnswers: [[['A'], ['B']]] }],
+      }),
+    },
+  });
+
+  expect(getResponseStats([participant], config, { 'hash-1': config })[0]).toMatchObject({
+    correctCount: 1,
+    totalQuestionCount: 1,
+    correctness: 100,
+  });
+});
 
 // ── SummaryView ──────────────────────────────────────────────────────────────
 

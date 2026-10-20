@@ -2,7 +2,7 @@ import {
   Alert, Button, Group, Kbd,
 } from '@mantine/core';
 import {
-  JSX, useEffect, useMemo, useRef, useState,
+  ReactNode, useEffect, useMemo, useRef, useState,
 } from 'react';
 import { IconInfoCircle, IconAlertTriangle } from '@tabler/icons-react';
 import { useNavigate } from 'react-router';
@@ -30,7 +30,7 @@ type Props = {
   disabled?: boolean;
   config?: IndividualComponent;
   location?: ResponseBlockLocation;
-  checkAnswer: JSX.Element | null;
+  checkAnswer?: ReactNode;
   onCheckAnswer?: () => void;
   onNext: () => void;
 };
@@ -115,12 +115,14 @@ export function NextButton({
         return;
       }
 
-      if (onCheckAnswer) {
+      if (checkAnswer && onCheckAnswer && !isNextDisabled) {
         onCheckAnswer();
-        return;
-      }
-      if (!disabled && !isNextDisabled && buttonTimerSatisfied) {
-        onNext();
+      } else if (!disabled && !isNextDisabled && buttonTimerSatisfied) {
+        if (onCheckAnswer) {
+          onCheckAnswer();
+        } else {
+          onNext();
+        }
       }
     };
 
@@ -130,7 +132,7 @@ export function NextButton({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [disabled, isNextDisabled, buttonTimerSatisfied, onCheckAnswer, onNext, nextOnEnter]);
+  }, [checkAnswer, disabled, isNextDisabled, buttonTimerSatisfied, onCheckAnswer, onNext, nextOnEnter]);
 
   const nextButtonDisabled = disabled || isNextDisabled || !buttonTimerSatisfied;
   const previousButtonText = config?.previousButtonText ?? studyConfig.uiConfig.previousButtonText ?? 'Previous';
@@ -158,10 +160,9 @@ export function NextButton({
         <Button
           type="submit"
           disabled={nextButtonDisabled}
-          onClick={() => onNext()}
-          px={location === 'sidebar' && checkAnswer ? 8 : undefined}
+          onClick={() => (checkAnswer ? onNext : (onCheckAnswer ?? onNext))()}
           aria-label={label}
-          rightSection={nextOnEnter && !onCheckAnswer ? (
+          rightSection={nextOnEnter && (!checkAnswer || !onCheckAnswer) ? (
             <Kbd
               size="xs"
               aria-hidden="true"
@@ -179,7 +180,7 @@ export function NextButton({
           ) : undefined}
           styles={{
             inner: { alignItems: 'stretch' },
-            section: nextOnEnter && !onCheckAnswer ? {
+            section: nextOnEnter && (!checkAnswer || !onCheckAnswer) ? {
               alignItems: 'center',
               justifyContent: 'center',
               padding: '0 10px',
