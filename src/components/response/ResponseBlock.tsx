@@ -549,7 +549,13 @@ export function ResponseBlock({
       if (!Object.hasOwn(checkAnswerResponses, response.id)) return [];
       const answer = config.correctAnswer?.find((correct) => correct.id === response.id);
       const answerStatus: AnswerStatus = response.type === 'matrix-checkbox'
-        ? checkAnswerResponses[response.id] ? 'correct' : 'incorrect'
+        ? (() => {
+          const rowStatuses = Object.values(matrixRowFeedback[response.id] ?? {});
+          if (rowStatuses.length === 0) return checkAnswerResponses[response.id] ? 'correct' : 'incorrect';
+          if (rowStatuses.every((rowStatus) => rowStatus === 'correct') && checkAnswerResponses[response.id]) return 'correct';
+          if (rowStatuses.every((rowStatus) => rowStatus === 'incorrect')) return 'incorrect';
+          return 'partially correct';
+        })()
         : response.type === 'checkbox' && answer
           ? checkAnswerResponses[response.id]
             ? 'correct'
@@ -560,7 +566,7 @@ export function ResponseBlock({
           : checkAnswerResponses[response.id] ? 'correct' : 'incorrect';
       return [[response.id, answerStatus]];
     }));
-  }, [allResponsesWithDefaults, checkAnswerResponses, checkedAnswerValues, config.correctAnswer]);
+  }, [allResponsesWithDefaults, checkAnswerResponses, checkedAnswerValues, config.correctAnswer, matrixRowFeedback]);
   const checkedResponses = useMemo(() => allResponsesWithDefaults.filter((response) => (
     response.type !== 'textOnly'
       && response.type !== 'divider'

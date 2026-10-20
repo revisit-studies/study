@@ -442,7 +442,7 @@ describe('ResponseBlock', () => {
     expect(container.querySelector('[role="status"]')?.textContent).toBe('incorrect');
   });
 
-  test('uses the canonical matrix result for overall feedback when all rows are partial', async () => {
+  test('shows partially correct overall feedback when all matrix rows are partial', async () => {
     const checkedAnswer = makeStoredAnswer({
       answer: { q1: { cat: 'A|C', dog: 'A|C' } },
       checkAnswer: { attemptsUsed: 1, correct: false, responses: { q1: false } },
@@ -470,7 +470,7 @@ describe('ResponseBlock', () => {
     const { container } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" status={checkedAnswer} />);
 
     expect(container.querySelector('[data-testid="feedback-alert-q1"]')?.textContent).toContain('Review the selected traits.');
-    expect(container.querySelector('[data-testid="feedback-alert-q1"]')?.getAttribute('data-title')).toBe('Incorrect Answer');
+    expect(container.querySelector('[data-testid="feedback-alert-q1"]')?.getAttribute('data-title')).toBe('Partially Correct');
   });
 
   test('does not mark mixed matrix alternatives correct when the canonical check failed', async () => {
@@ -503,7 +503,7 @@ describe('ResponseBlock', () => {
     const { container } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" status={checkedAnswer} />);
     const alert = container.querySelector('[data-testid="feedback-alert-matrix"]');
 
-    expect(alert?.getAttribute('data-title')).toBe('Incorrect Answer');
+    expect(alert?.getAttribute('data-title')).toBe('Partially Correct');
     expect(alert?.getAttribute('data-title')).not.toBe('Correct Answer');
   });
 
