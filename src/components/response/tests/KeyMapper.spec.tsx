@@ -3,6 +3,7 @@ import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import React from 'react';
+import { MantineProvider, Radio } from '@mantine/core';
 import { KeyMapper } from '../KeyMapper';
 import type { ParsedStringOption } from '../../../parser/types';
 
@@ -14,6 +15,7 @@ describe('KeyMapper Component', () => {
   afterEach(() => {
     cleanup();
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   const sampleOptions: ParsedStringOption[] = [
@@ -79,6 +81,38 @@ describe('KeyMapper Component', () => {
     expect(onSelectMock).toHaveBeenCalledWith('c', 'keyboard');
   });
 
+  test.each(['page', 'card'])('prioritizes mapped arrows over navigation with focus on the %s', (focusTarget) => {
+    vi.stubGlobal('matchMedia', vi.fn(() => ({
+      matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn(),
+    })));
+    const onSelect = vi.fn();
+    const onArrowNavigation = vi.fn();
+    const onGroupChange = vi.fn();
+    const options: ParsedStringOption[] = [
+      { label: 'Left', value: 'left', key: 'ArrowLeft' },
+      { label: 'Right', value: 'right', key: 'ArrowRight' },
+      { label: 'Down', value: 'down', key: 'ArrowDown' },
+    ];
+    const { getByRole } = render(
+      <MantineProvider env="test">
+        <Radio.Group name="mapped-arrows" value="left" onChange={onGroupChange}>
+          <KeyMapper options={options} onSelect={onSelect} onArrowNavigation={onArrowNavigation} />
+          {options.map((option) => <Radio.Card key={option.value} value={option.value}>{option.label}</Radio.Card>)}
+        </Radio.Group>
+      </MantineProvider>,
+    );
+    const target = focusTarget === 'card' ? getByRole('radio', { name: 'Left' }) : document.body;
+    if (focusTarget === 'card') target.focus();
+
+    fireEvent.keyDown(target, {
+      key: 'ArrowDown', code: 'ArrowDown', bubbles: true, cancelable: true,
+    });
+
+    expect(onSelect).toHaveBeenCalledExactlyOnceWith('down', 'keyboard');
+    expect(onArrowNavigation).not.toHaveBeenCalled();
+    expect(onGroupChange).not.toHaveBeenCalled();
+  });
+
   test('matches canonical Shift+X combinations without swallowing plain x', () => {
     const onSelectMock = vi.fn();
 
@@ -97,19 +131,57 @@ describe('KeyMapper Component', () => {
     expect(onSelectMock).toHaveBeenCalledWith('a', 'keyboard');
   });
 
+  test('checks later response mappings before starting arrow navigation', () => {
+    const onFirstSelect = vi.fn();
+    const onSecondSelect = vi.fn();
+    const onFirstNavigation = vi.fn();
+    const onSecondNavigation = vi.fn();
+    render(
+      <>
+        <KeyMapper
+          options={[{ label: 'A', value: 'a', key: 'a' }]}
+          onSelect={onFirstSelect}
+          onArrowNavigation={onFirstNavigation}
+        />
+        <KeyMapper
+          options={[{ label: 'Down', value: 'down', key: 'ArrowDown' }]}
+          onSelect={onSecondSelect}
+          onArrowNavigation={onSecondNavigation}
+        />
+      </>,
+    );
+
+    fireEvent.keyDown(document.body, { key: 'ArrowDown' });
+
+    expect(onSecondSelect).toHaveBeenCalledExactlyOnceWith('down', 'keyboard');
+    expect(onFirstSelect).not.toHaveBeenCalled();
+    expect(onFirstNavigation).not.toHaveBeenCalled();
+    expect(onSecondNavigation).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(document.body, { key: 'ArrowUp' });
+
+    expect(onFirstNavigation).toHaveBeenCalledTimes(1);
+    expect(onSecondNavigation).not.toHaveBeenCalled();
+    expect(onSecondSelect).toHaveBeenCalledTimes(1);
+  });
+
   test('does not trigger onSelect when component is disabled', () => {
     const onSelectMock = vi.fn();
+    const onArrowNavigation = vi.fn();
 
     render(
       <KeyMapper
         options={sampleOptions}
         onSelect={onSelectMock}
+        onArrowNavigation={onArrowNavigation}
         disabled
       />,
     );
 
     fireEvent.keyDown(window, { key: '1' });
+    fireEvent.keyDown(document.body, { key: 'ArrowDown' });
     expect(onSelectMock).not.toHaveBeenCalled();
+    expect(onArrowNavigation).not.toHaveBeenCalled();
   });
 
   test('ignores keypresses from text-entry controls and native Enter targets', () => {
@@ -269,18 +341,22 @@ describe('KeyMapper Component', () => {
 
   test('does nothing when unmounted', () => {
     const onSelectMock = vi.fn();
+    const onArrowNavigation = vi.fn();
 
     const { unmount } = render(
       <KeyMapper
         options={sampleOptions}
         onSelect={onSelectMock}
+        onArrowNavigation={onArrowNavigation}
       />,
     );
 
     unmount();
 
     fireEvent.keyDown(window, { key: '1' });
+    fireEvent.keyDown(document.body, { key: 'ArrowDown' });
     expect(onSelectMock).not.toHaveBeenCalled();
+    expect(onArrowNavigation).not.toHaveBeenCalled();
   });
 
   // --- Tests for Inline Key Mappings ---

@@ -139,7 +139,8 @@ export function StepRenderer() {
 
     window.addEventListener('focus', focusListener, true);
     window.addEventListener('input', inputListener as () => void);
-    window.addEventListener('keydown', keydownListener);
+    // Record shortcuts even when response controls stop propagation.
+    window.addEventListener('keydown', keydownListener, true);
     window.addEventListener('keyup', keyupListener);
     window.addEventListener('mousedown', mouseDownListener);
     window.addEventListener('mouseup', mouseUpListener);
@@ -151,7 +152,7 @@ export function StepRenderer() {
     return () => {
       window.removeEventListener('focus', focusListener, true);
       window.removeEventListener('input', inputListener as () => void);
-      window.removeEventListener('keydown', keydownListener);
+      window.removeEventListener('keydown', keydownListener, true);
       window.removeEventListener('keyup', keyupListener);
       window.removeEventListener('mousedown', mouseDownListener);
       window.removeEventListener('mouseup', mouseUpListener);

@@ -1,12 +1,13 @@
 import { forwardRef, ReactNode } from 'react';
 import {
-  render, act, cleanup, waitFor,
+  render, act, cleanup, waitFor, fireEvent,
 } from '@testing-library/react';
 import {
   describe, expect, test, vi,
   beforeEach, afterEach,
 } from 'vitest';
 import { StepRenderer } from '../StepRenderer';
+import { KeyMapper } from '../response/KeyMapper';
 import { shouldConfirmTabClose } from '../../utils/closeTabConfirmation';
 import { LocalStorageEngine } from '../../storage/engines/LocalStorageEngine';
 import { StorageObject, StorageObjectType } from '../../storage/engines/types';
@@ -557,6 +558,30 @@ describe('StepRenderer', () => {
     const { unmount } = await act(async () => render(<StepRenderer />));
     // Unmount triggers the useEffect cleanup which removes all event listeners
     expect(() => act(() => { unmount(); })).not.toThrow();
+  });
+
+  test('records mapped arrows from focused response cards and removes the recorder on unmount', async () => {
+    const onSelect = vi.fn();
+    const { getByRole, unmount } = await act(async () => render(
+      <>
+        <StepRenderer />
+        <KeyMapper options={[{ label: 'Down', value: 'down', key: 'ArrowDown' }]} onSelect={onSelect} />
+        <button type="button" role="radio" aria-checked="false">Left</button>
+      </>,
+    ));
+    const card = getByRole('radio', { name: 'Left' });
+    card.focus();
+    fireEvent.keyDown(card, { key: 'ArrowDown' });
+
+    expect(onSelect).toHaveBeenCalledExactlyOnceWith('down', 'keyboard');
+    const events = gamepadMocks.events!.current;
+    expect(events.filter((event) => event[1] === 'keydown')).toEqual([
+      [expect.any(Number), 'keydown', 'ArrowDown'],
+    ]);
+
+    unmount();
+    fireEvent.keyDown(document.body, { key: 'ArrowDown' });
+    expect(events.filter((event) => event[1] === 'keydown')).toHaveLength(1);
   });
 
   test('beforeunload listener added when shouldConfirmClose is true', async () => {
