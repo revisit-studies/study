@@ -14,4 +14,4 @@ On the other hand, take the relationship between the price of the running shoe a
 
 ### Task description
 
-In the this study, you will be shown several pairs of charts and asked to choose which visualization appears more correlated. On the following pages, you will perform eight <b>training trials</b> to familiarize yourself with the task and study interface. This will then be followed by 65 test trials.
+In the this study, you will be shown several pairs of charts and asked to choose which visualization appears more correlated. On the following pages, you will perform nine <b>training trials</b> to familiarize yourself with the task and study interface. This will then be followed by 65 test trials.
