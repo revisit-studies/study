@@ -753,12 +753,11 @@ export function ResponseBlock({
     const allCorrect = Object.values(responseCorrectness).every((isCorrect) => isCorrect);
 
     if (hasCorrectAnswerFeedback) {
-      applicableCorrectAnswers.forEach((configCorrectAnswer) => {
-        const response = allResponsesWithDefaults.find((r) => r.id === configCorrectAnswer.id);
-        if (!response || response.type === 'textOnly' || response.type === 'divider') {
+      allResponsesWithDefaults.forEach((response) => {
+        if (response.type === 'textOnly' || response.type === 'divider') {
           return;
         }
-        if (!responseCorrectness[response.id]) {
+        if (responseCorrectness[response.id] === false) {
           storeDispatch(saveIncorrectAnswer({ question: identifier, identifier: response.id, answer: allAnswers[response.id] }));
         }
       });

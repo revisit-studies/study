@@ -1057,6 +1057,32 @@ describe('ResponseBlock onCheckAnswer', () => {
     mockCustomResponseModule.value = null;
   });
 
+  test.each([0, 0.5, 1])('records failed scorer-only attempts once per check (score=%s)', async (score) => {
+    mockAnswerField.values = { q1: 'incorrect', customScore: 5 };
+    mockStoredAnswerData.formOrder = { response: ['q1', 'customScore'] };
+    mockCustomResponseModule.value = { default: () => null, score: () => score };
+    const config: IndividualComponent = {
+      ...baseConfig,
+      provideFeedback: true,
+      response: [
+        { id: 'q1', type: 'shortText', prompt: 'Expected answer' },
+        {
+          id: 'customScore', type: 'custom', prompt: 'Scored answer', path: 'test-response-functions/assets/CustomPartialScore.tsx',
+        },
+      ],
+      correctAnswer: [{ id: 'q1', answer: 'correct' }],
+    };
+    const { store } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+    await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
+    await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
+
+    const history = store.getState().answers.trial1_0.incorrectAnswers;
+    expect(history.q1.value).toEqual(['incorrect', 'incorrect']);
+    if (score < 1) expect(history.customScore.value).toEqual([5, 5]);
+    else expect(history.customScore).toBeUndefined();
+    expect(store.getState().checkAnswer.trial1_0.attemptsUsed).toBe(2);
+  });
+
   test('enables Check Answer training for a scorer-only component', async () => {
     mockAnswerField.values = { customScore: 10 };
     mockStoredAnswerData.formOrder = { response: ['customScore'] };
