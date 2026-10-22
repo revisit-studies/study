@@ -311,11 +311,12 @@ describe('StepsPanel answer status indicators', () => {
   });
 
   test('preserves correct and incorrect indicators when correct answers are configured', async () => {
+    const correctAnswer = [{ id: 'q1', answer: 'A' }];
     const { container } = await act(async () => render(
       <StepsPanel
         participantSequence={minimalSequence}
-        participantAnswers={{ intro_0: makeCompletedAnswer({ q1: 'A' }) }}
-        studyConfig={makeStatusConfig([{ id: 'q1', answer: 'A' }])}
+        participantAnswers={{ intro_0: { ...makeCompletedAnswer({ q1: 'A' }), correctAnswer } }}
+        studyConfig={makeStatusConfig(correctAnswer)}
       />,
     ));
 
@@ -327,13 +328,28 @@ describe('StepsPanel answer status indicators', () => {
     const incorrect = await act(async () => render(
       <StepsPanel
         participantSequence={minimalSequence}
-        participantAnswers={{ intro_0: makeCompletedAnswer({ q1: 'B' }) }}
-        studyConfig={makeStatusConfig([{ id: 'q1', answer: 'A' }])}
+        participantAnswers={{ intro_0: { ...makeCompletedAnswer({ q1: 'B' }), correctAnswer } }}
+        studyConfig={makeStatusConfig(correctAnswer)}
       />,
     ));
 
     expect(incorrect.container.textContent).toContain('icon-x');
     expect(incorrect.container.querySelector(`[aria-label="${UNKNOWN_ANSWER_LABEL}"]`)).toBeNull();
+  });
+
+  test.each([true, false])('preserves an empty dynamic grading override (saved=%s)', async (hasSavedRules) => {
+    const participantAnswer = makeCompletedAnswer({ q1: 'B' });
+    if (!hasSavedRules) delete (participantAnswer as Partial<StoredAnswer>).correctAnswer;
+    const { container } = await act(async () => render(
+      <StepsPanel
+        participantSequence={minimalSequence}
+        participantAnswers={{ intro_0: participantAnswer }}
+        studyConfig={makeStatusConfig([{ id: 'q1', answer: 'A' }])}
+      />,
+    ));
+
+    expect(container.querySelector(`[aria-label="${UNKNOWN_ANSWER_LABEL}"]`) !== null).toBe(hasSavedRules);
+    expect(container.textContent?.includes('icon-x')).toBe(!hasSavedRules);
   });
 
   test('shows no answer-status indicator for incomplete or unanswered components', async () => {

@@ -21,16 +21,22 @@ import {
   deleteField,
   doc,
   enableNetwork,
+  getCountFromServer,
   getDoc,
   getDocs,
   initializeFirestore,
+  limit,
   onSnapshot,
+  orderBy,
+  query,
+  runTransaction,
   serverTimestamp,
   setDoc,
   updateDoc,
+  where,
   writeBatch,
 } from 'firebase/firestore';
-import { ReCaptchaV3Provider, initializeAppCheck } from '@firebase/app-check';
+import { ReCaptchaV3Provider, ReCaptchaEnterpriseProvider, initializeAppCheck } from '@firebase/app-check';
 import {
   browserPopupRedirectResolver, getAuth, GoogleAuthProvider, onAuthStateChanged, signInAnonymously, signInWithPopup, signOut,
 } from '@firebase/auth';
@@ -41,16 +47,17 @@ import {
   StorageObject,
   UserManagementData,
   SequenceAssignment,
+  SequenceAssignmentAllocation,
+  SequenceAllocator,
   SnapshotDocContent,
   StoredUser,
   cleanupModes,
 } from './types';
 import { EditedText, TaglessEditedText } from '../../analysis/individualStudy/thinkAloud/types';
 import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
+import { rebuildSequenceAllocator, retrySequenceAllocation } from './utils/storageEngineHelpers';
 
 export class FirebaseStorageEngine extends CloudStorageEngine {
-  private RECAPTCHAV3TOKEN = import.meta.env.VITE_RECAPTCHAV3TOKEN;
-
   private firestore: Firestore;
 
   private studyCollection: CollectionReference<DocumentData, DocumentData>;
@@ -92,8 +99,11 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     }
     try {
       initializeAppCheck(firebaseApp, {
-        provider: new ReCaptchaV3Provider(this.RECAPTCHAV3TOKEN),
-        isTokenAutoRefreshEnabled: false,
+        // Opt in separately so existing deployments keep their v3 provider and key.
+        provider: import.meta.env.VITE_RECAPTCHA_ENTERPRISE_SITE_KEY
+          ? new ReCaptchaEnterpriseProvider(import.meta.env.VITE_RECAPTCHA_ENTERPRISE_SITE_KEY)
+          : new ReCaptchaV3Provider(import.meta.env.VITE_RECAPTCHAV3TOKEN),
+        isTokenAutoRefreshEnabled: true,
       });
     } catch {
       console.warn('Failed to initialize Firebase App Check');
@@ -267,6 +277,193 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     await setDoc(participantSequenceAssignmentDoc, { ...toUpload, createdTime: serverTimestamp() });
   }
 
+  private async getSequenceAllocatorSeed(sequenceAssignments: CollectionReference<DocumentData>): Promise<SequenceAllocator> {
+    const [totalAssignments, claimedAssignments] = await Promise.all([
+      getCountFromServer(sequenceAssignments),
+      getCountFromServer(query(sequenceAssignments, where('claimed', '==', true))),
+    ]);
+    return {
+      nextSequenceIndex: totalAssignments.data().count - claimedAssignments.data().count,
+      nextCreationIndex: totalAssignments.data().count,
+    };
+  }
+
+  private async getLegacySequenceIndex(sequenceAssignments: CollectionReference<DocumentData>, timestamp: number | Timestamp) {
+    const milliseconds = timestamp instanceof Timestamp ? timestamp.toMillis() : timestamp;
+    // Legacy records contain both numeric milliseconds and Firestore timestamps.
+    const counts = await Promise.all([milliseconds, Timestamp.fromMillis(milliseconds)].map((threshold) => (
+      getCountFromServer(query(
+        sequenceAssignments,
+        where('rejected', '==', false),
+        where('timestamp', '<', threshold),
+      ))
+    )));
+    return counts.reduce((total, count) => total + count.data().count, 0);
+  }
+
+  protected async _allocateSequenceAssignment(
+    participantId: string,
+    sequenceAssignment: SequenceAssignment,
+  ): Promise<SequenceAssignmentAllocation> {
+    return retrySequenceAllocation(() => this.tryAllocateSequenceAssignment(participantId, sequenceAssignment));
+  }
+
+  private async tryAllocateSequenceAssignment(
+    participantId: string,
+    sequenceAssignment: SequenceAssignment,
+  ): Promise<SequenceAssignmentAllocation | null> {
+    await this.verifyStudyDatabase();
+    if (this.studyId === undefined) {
+      throw new Error('Study ID is not set');
+    }
+
+    const sequenceAssignmentDoc = doc(this.studyCollection, 'sequenceAssignment');
+    const sequenceAssignmentCollection = collection(
+      sequenceAssignmentDoc,
+      'sequenceAssignment',
+    );
+    const participantSequenceAssignmentDoc = doc(sequenceAssignmentCollection, participantId);
+    const allocatorDoc = doc(this.studyCollection, 'sequenceAssignmentAllocator');
+
+    const [existingAssignmentSnapshot, existingAllocatorSnapshot] = await Promise.all([
+      getDoc(participantSequenceAssignmentDoc),
+      getDoc(allocatorDoc),
+    ]);
+    const existingAssignment = existingAssignmentSnapshot.exists()
+      ? existingAssignmentSnapshot.data() as SequenceAssignment
+      : null;
+    if (existingAssignment) {
+      if (
+        existingAssignment.sequenceIndex !== undefined
+        && existingAssignment.creationIndex !== undefined
+      ) {
+        return {
+          sequenceIndex: existingAssignment.sequenceIndex,
+          creationIndex: existingAssignment.creationIndex,
+        };
+      }
+
+      const [sequenceIndex, creationCount] = await Promise.all([
+        this.getLegacySequenceIndex(sequenceAssignmentCollection, existingAssignment.timestamp),
+        getCountFromServer(query(
+          sequenceAssignmentCollection,
+          where('createdTime', '<', existingAssignment.createdTime),
+        )),
+      ]);
+      return {
+        sequenceIndex,
+        creationIndex: creationCount.data().count,
+      };
+    }
+
+    const allocatorSeedPromise = existingAllocatorSnapshot.exists()
+      ? Promise.resolve(existingAllocatorSnapshot.data() as SequenceAllocator)
+      : this.getSequenceAllocatorSeed(sequenceAssignmentCollection);
+    const [allocatorSeed, reusableSnapshots] = await Promise.all([
+      allocatorSeedPromise,
+      Promise.all([0, Timestamp.fromMillis(0)].map((threshold) => getDocs(query(
+        sequenceAssignmentCollection,
+        where('rejected', '==', true),
+        where('claimed', '==', false),
+        where('timestamp', '>=', threshold),
+        orderBy('timestamp', 'asc'),
+        limit(1),
+      )))),
+    ]);
+    const reusableDocument = reusableSnapshots.flatMap((snapshot) => snapshot.docs).sort((a, b) => {
+      const aTimestamp = a.data().timestamp;
+      const bTimestamp = b.data().timestamp;
+      return (aTimestamp instanceof Timestamp ? aTimestamp.toMillis() : aTimestamp)
+        - (bTimestamp instanceof Timestamp ? bTimestamp.toMillis() : bTimestamp);
+    })[0];
+    const reusableData = reusableDocument?.data() as SequenceAssignment | undefined;
+    let legacyReusableIndex: number | undefined;
+    if (
+      reusableData
+      && reusableData.reusableSequenceIndex === undefined
+      && reusableData.sequenceIndex === undefined
+    ) {
+      legacyReusableIndex = await this.getLegacySequenceIndex(
+        sequenceAssignmentCollection,
+        reusableData.timestamp,
+      );
+    }
+
+    return runTransaction(this.firestore, async (transaction) => {
+      const [currentAssignmentSnapshot, allocatorSnapshot, reusableAssignmentSnapshot] = await Promise.all([
+        transaction.get(participantSequenceAssignmentDoc),
+        transaction.get(allocatorDoc),
+        reusableDocument ? transaction.get(doc(sequenceAssignmentCollection, reusableDocument.id)) : null,
+      ]);
+
+      if (currentAssignmentSnapshot.exists()) {
+        const currentAssignment = currentAssignmentSnapshot.data() as SequenceAssignment;
+        if (
+          currentAssignment.sequenceIndex === undefined
+          || currentAssignment.creationIndex === undefined
+        ) {
+          throw new Error('Existing sequence assignment is missing allocator metadata');
+        }
+        return {
+          sequenceIndex: currentAssignment.sequenceIndex,
+          creationIndex: currentAssignment.creationIndex,
+        };
+      }
+
+      const allocator = allocatorSnapshot.exists()
+        ? allocatorSnapshot.data() as typeof allocatorSeed
+        : allocatorSeed;
+      const reusableAssignment = reusableAssignmentSnapshot?.exists()
+        ? reusableAssignmentSnapshot.data() as SequenceAssignment
+        : undefined;
+      const canReuse = reusableAssignment?.rejected && !reusableAssignment.claimed;
+      if (reusableDocument && !canReuse) {
+        // Another start claimed our candidate; select the next vacancy before reserving a fresh slot.
+        return null;
+      }
+      const sequenceIndex = canReuse
+        ? reusableAssignment.reusableSequenceIndex
+          ?? reusableAssignment.sequenceIndex
+          ?? legacyReusableIndex
+        : allocator.availableSequenceIndexes?.[0] ?? allocator.nextSequenceIndex;
+      if (sequenceIndex === undefined || sequenceIndex < 0) {
+        throw new Error('Unable to determine sequence assignment index');
+      }
+      const creationIndex = allocator.nextCreationIndex;
+
+      if (canReuse && reusableDocument) {
+        transaction.update(doc(sequenceAssignmentCollection, reusableDocument.id), {
+          claimed: true,
+          sequenceIndex,
+        });
+      }
+      transaction.set(participantSequenceAssignmentDoc, {
+        ...sequenceAssignment,
+        ...(canReuse && reusableDocument ? {
+          timestamp: reusableAssignment.timestamp,
+          claimedParticipantId: reusableDocument.id,
+        } : { timestamp: serverTimestamp() }),
+        createdTime: serverTimestamp(),
+        sequenceIndex,
+        creationIndex,
+      });
+      transaction.set(allocatorDoc, {
+        ...allocator,
+        ...(allocator.availableSequenceIndexes ? {
+          availableSequenceIndexes: canReuse
+            ? allocator.availableSequenceIndexes
+            : allocator.availableSequenceIndexes.slice(1),
+        } : {}),
+        nextSequenceIndex: canReuse || allocator.availableSequenceIndexes?.length
+          ? allocator.nextSequenceIndex
+          : allocator.nextSequenceIndex + 1,
+        nextCreationIndex: allocator.nextCreationIndex + 1,
+      });
+
+      return { sequenceIndex, creationIndex };
+    });
+  }
+
   protected async _updateSequenceAssignmentFields(participantId: string, updatedFields: Partial<SequenceAssignment>) {
     if (this.studyId === undefined) {
       throw new Error('Study ID is not set');
@@ -360,13 +557,65 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       sequenceAssignmentDoc,
       'sequenceAssignment',
     );
-    const sequenceAssignmentSnapshot = await getDocs(sequenceAssignmentCollection);
-    const participantSequenceAssignmentSnapshot = sequenceAssignmentSnapshot.docs.find((docSnapshot) => docSnapshot.id === participantId);
-    if (!participantSequenceAssignmentSnapshot) {
+    const participantSequenceAssignmentDoc = doc(
+      sequenceAssignmentCollection,
+      participantId,
+    );
+    const participantSequenceAssignmentSnapshot = await getDoc(participantSequenceAssignmentDoc);
+    if (!participantSequenceAssignmentSnapshot.exists()) {
       throw new Error('Failed to retrieve sequence assignment for current participant');
     }
 
     const participantSequenceAssignment = participantSequenceAssignmentSnapshot.data() as SequenceAssignment;
+    if (participantSequenceAssignment.claimedParticipantId) {
+      const claimedSequenceAssignmentDoc = doc(
+        sequenceAssignmentCollection,
+        participantSequenceAssignment.claimedParticipantId,
+      );
+      const allocatorDoc = doc(this.studyCollection, 'sequenceAssignmentAllocator');
+      const existingAllocatorSnapshot = await getDoc(allocatorDoc);
+      const allocatorSeed = existingAllocatorSnapshot.exists()
+        ? existingAllocatorSnapshot.data() as SequenceAllocator
+        : await this.getSequenceAllocatorSeed(sequenceAssignmentCollection);
+
+      await runTransaction(this.firestore, async (transaction) => {
+        const [
+          currentParticipantSnapshot,
+          claimedSequenceAssignmentSnapshot,
+          allocatorSnapshot,
+        ] = await Promise.all([
+          transaction.get(participantSequenceAssignmentDoc),
+          transaction.get(claimedSequenceAssignmentDoc),
+          transaction.get(allocatorDoc),
+        ]);
+        if (!currentParticipantSnapshot.exists() || !claimedSequenceAssignmentSnapshot.exists()) {
+          throw new Error('Failed to retrieve claimed sequence assignment for rejection');
+        }
+        if ((currentParticipantSnapshot.data() as SequenceAssignment).rejected) {
+          return;
+        }
+        const allocator = allocatorSnapshot.exists()
+          ? allocatorSnapshot.data() as typeof allocatorSeed
+          : allocatorSeed;
+        transaction.update(claimedSequenceAssignmentDoc, {
+          claimed: false,
+          rejected: true,
+        });
+        transaction.update(participantSequenceAssignmentDoc, {
+          rejected: true,
+          timestamp: new Date().getTime(),
+          reusableSequenceIndex: allocator.nextSequenceIndex,
+        });
+        transaction.set(allocatorDoc, {
+          ...allocator,
+          nextSequenceIndex: allocator.nextSequenceIndex + 1,
+          nextCreationIndex: allocator.nextCreationIndex,
+        });
+      });
+      return;
+    }
+
+    const sequenceAssignmentSnapshot = await getDocs(sequenceAssignmentCollection);
     const toMillis = (value: unknown) => {
       if (value instanceof Timestamp) {
         return value.toMillis();
@@ -390,13 +639,50 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
 
     if (claimedSequenceAssignmentSnapshot) {
       const claimedSequenceAssignmentDoc = doc(sequenceAssignmentCollection, claimedSequenceAssignmentSnapshot.id);
-      await updateDoc(claimedSequenceAssignmentDoc, { claimed: false, rejected: true });
+      const allocatorDoc = doc(this.studyCollection, 'sequenceAssignmentAllocator');
+      const allocatorSeed: SequenceAllocator = {
+        nextSequenceIndex: sequenceAssignmentSnapshot.docs.filter(
+          (docSnapshot) => !(docSnapshot.data() as SequenceAssignment).claimed,
+        ).length,
+        nextCreationIndex: sequenceAssignmentSnapshot.docs.length,
+      };
+      await runTransaction(this.firestore, async (transaction) => {
+        const [
+          currentParticipantSnapshot,
+          currentClaimedSnapshot,
+          allocatorSnapshot,
+        ] = await Promise.all([
+          transaction.get(participantSequenceAssignmentDoc),
+          transaction.get(claimedSequenceAssignmentDoc),
+          transaction.get(allocatorDoc),
+        ]);
+        if (!currentParticipantSnapshot.exists() || !currentClaimedSnapshot.exists()) {
+          throw new Error('Failed to retrieve claimed sequence assignment for rejection');
+        }
+        if ((currentParticipantSnapshot.data() as SequenceAssignment).rejected) {
+          return;
+        }
+        const allocator = allocatorSnapshot.exists()
+          ? allocatorSnapshot.data() as typeof allocatorSeed
+          : allocatorSeed;
+        transaction.update(claimedSequenceAssignmentDoc, {
+          claimed: false,
+          rejected: true,
+        });
+        transaction.update(participantSequenceAssignmentDoc, {
+          rejected: true,
+          timestamp: new Date().getTime(),
+          reusableSequenceIndex: allocator.nextSequenceIndex,
+        });
+        transaction.set(allocatorDoc, {
+          ...allocator,
+          nextSequenceIndex: allocator.nextSequenceIndex + 1,
+          nextCreationIndex: allocator.nextCreationIndex,
+        });
+      });
+      return;
     }
 
-    const participantSequenceAssignmentDoc = doc(
-      sequenceAssignmentCollection,
-      participantId,
-    );
     await updateDoc(participantSequenceAssignmentDoc, {
       rejected: true,
       timestamp: new Date().getTime(),
@@ -423,43 +709,52 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       sequenceAssignmentCollection,
       participantId,
     );
-    const participantSequenceAssignmentSnapshot = await getDoc(participantSequenceAssignmentDoc);
-    if (!participantSequenceAssignmentSnapshot.exists()) {
-      throw new Error('Failed to retrieve sequence assignment for current participant');
-    }
-
-    const participantSequenceAssignment = participantSequenceAssignmentSnapshot.data() as SequenceAssignment;
-    const toMillis = (value: unknown) => {
-      if (value instanceof Timestamp) {
-        return value.toMillis();
+    const allocatorDoc = doc(this.studyCollection, 'sequenceAssignmentAllocator');
+    await runTransaction(this.firestore, async (transaction) => {
+      const participantSnapshot = await transaction.get(participantSequenceAssignmentDoc);
+      if (!participantSnapshot.exists()) {
+        throw new Error('Failed to retrieve sequence assignment for current participant');
       }
-      if (typeof value === 'number') {
-        return value;
+      const assignment = participantSnapshot.data() as SequenceAssignment;
+      if (!assignment.rejected) {
+        return;
       }
-      return Number(value);
-    };
-    let restoredTimestamp: number | undefined;
-    if (participantSequenceAssignment.claimedParticipantId) {
-      const claimedSequenceAssignmentDoc = doc(
-        sequenceAssignmentCollection,
-        participantSequenceAssignment.claimedParticipantId,
-      );
-      const claimedSequenceAssignmentSnapshot = await getDoc(claimedSequenceAssignmentDoc);
-      if (!claimedSequenceAssignmentSnapshot.exists()) {
+      const claimedDoc = assignment.claimedParticipantId
+        ? doc(sequenceAssignmentCollection, assignment.claimedParticipantId)
+        : undefined;
+      const returnSlot = !assignment.claimed && assignment.reusableSequenceIndex !== undefined;
+      const [claimedSnapshot, allocatorSnapshot] = await Promise.all([
+        claimedDoc ? transaction.get(claimedDoc) : undefined,
+        returnSlot ? transaction.get(allocatorDoc) : undefined,
+      ]);
+      if (claimedDoc && !claimedSnapshot?.exists()) {
         throw new Error('Failed to retrieve claimed sequence assignment for current participant');
       }
-
-      const claimedSequenceAssignment = claimedSequenceAssignmentSnapshot.data() as SequenceAssignment;
-      restoredTimestamp = toMillis(claimedSequenceAssignment.timestamp);
-      await updateDoc(claimedSequenceAssignmentDoc, { claimed: true, rejected: true });
-    }
-
-    await updateDoc(
-      participantSequenceAssignmentDoc,
-      restoredTimestamp === undefined
-        ? { rejected: false }
-        : { rejected: false, timestamp: restoredTimestamp },
-    );
+      let restoredTimestamp: number | undefined;
+      if (claimedDoc && claimedSnapshot) {
+        const timestamp = claimedSnapshot.data()?.timestamp;
+        restoredTimestamp = timestamp instanceof Timestamp ? timestamp.toMillis() : Number(timestamp);
+        transaction.update(claimedDoc, { claimed: true, rejected: true });
+      }
+      if (returnSlot) {
+        if (!allocatorSnapshot?.exists()) {
+          throw new Error('Failed to retrieve sequence assignment allocator');
+        }
+        const allocator = allocatorSnapshot.data() as SequenceAllocator;
+        transaction.set(allocatorDoc, {
+          ...allocator,
+          availableSequenceIndexes: [...new Set([
+            ...(allocator.availableSequenceIndexes ?? []),
+            assignment.reusableSequenceIndex as number,
+          ])].sort((a, b) => a - b),
+        });
+      }
+      transaction.update(participantSequenceAssignmentDoc, {
+        rejected: false,
+        ...(restoredTimestamp === undefined ? {} : { timestamp: restoredTimestamp }),
+        reusableSequenceIndex: deleteField(),
+      });
+    });
   }
 
   protected async _claimSequenceAssignment(participantId: string) {
@@ -763,9 +1058,16 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       'sequenceAssignment',
     );
 
-    const sourceSnapshot = await getDocs(sourceSequenceAssignmentCollectionRef);
+    const [sourceSnapshot, allocatorSnapshot] = await Promise.all([
+      getDocs(sourceSequenceAssignmentCollectionRef),
+      getDoc(doc(sourceCollectionRef, 'sequenceAssignmentAllocator')),
+    ]);
 
     const batch = writeBatch(this.firestore);
+    const targetAllocatorRef = doc(targetCollectionRef, 'sequenceAssignmentAllocator');
+    batch.set(targetAllocatorRef, allocatorSnapshot.exists()
+      ? allocatorSnapshot.data()
+      : rebuildSequenceAllocator(sourceSnapshot.docs.map((snapshot) => snapshot.data() as SequenceAssignment)));
 
     sourceSnapshot.docs.forEach((docSnapshot) => {
       const targetDocRef = doc(
@@ -803,6 +1105,8 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       batch.delete(docRef);
     });
     batch.delete(sourceSequenceAssignmentDocRef);
+    batch.delete(doc(sourceCollectionRef, 'sequenceAssignmentAllocator'));
+    batch.delete(doc(sourceCollectionRef, 'configHash'));
 
     await batch.commit();
   }

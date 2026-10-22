@@ -4,8 +4,10 @@ import {
   ComponentData, OverviewData, ParticipantCounts, ResponseData,
 } from '../../types';
 import { MatrixResponse, Response, StudyConfig } from '../../../parser/types';
-import { responseAnswerIsCorrect, shouldIgnoreArrayOrder } from '../../../utils/correctAnswer';
-import { getApplicableCorrectAnswers } from '../../../utils/responseVisibility';
+import {
+  getSavedScoresForAnswer, hasResponseScorer, isResponseAnsweredForScoring, isResponseScoreCorrect, scoreResponseAnswer,
+} from '../../../utils/correctAnswer';
+import { getApplicableCorrectAnswers, resolveResponseVisibility } from '../../../utils/responseVisibility';
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 import { getMatrixAnswerOptions } from '../../../utils/responseOptions';
 import { getDropdownOptions } from '../../../utils/dropdownOptions';
@@ -168,8 +170,6 @@ function calculateCorrectnessStats(
   let correctSum = 0;
 
   participantAnswers.forEach(({ answer, participant }) => {
-    if (!answer.correctAnswer || answer.correctAnswer.length === 0) return;
-
     const participantStudyConfig = getParticipantStudyConfig(participant.participantConfigHash, studyConfig, allConfigs);
     if (participant.participantConfigHash && !participantStudyConfig) return;
     const component = participantStudyConfig?.components[answer.componentName]
@@ -180,26 +180,51 @@ function calculateCorrectnessStats(
       : undefined;
     const responsesById = new Map((component?.response ?? []).map((r) => [r.id, r]));
 
-    getApplicableCorrectAnswers(component?.response ?? [], answer.answer, answer.correctAnswer).forEach((correctEntry) => {
-      if (responseId !== undefined && correctEntry.id !== responseId) return;
+    const persistedScores = getSavedScoresForAnswer(answer.checkAnswer, answer.answer);
+    const expectedAnswers = getApplicableCorrectAnswers(component?.response ?? [], answer.answer, answer.correctAnswer, persistedScores);
+    const expectedIds = new Set(expectedAnswers.map((entry) => entry.id));
+    const visibleResponseIds = resolveResponseVisibility(
+      component?.response ?? [],
+      answer.answer,
+      {},
+      answer.correctAnswer,
+      persistedScores,
+    ).visibleIds;
+    const responseIdsToScore = new Set([
+      ...expectedAnswers
+        .filter(({ id }) => isResponseAnsweredForScoring(responsesById.get(id), answer.answer[id], answer.answer) || responsesById.get(id)?.required !== false)
+        .map(({ id }) => id),
+      ...(component?.response ?? [])
+        .filter((response) => visibleResponseIds.has(response.id)
+          && !expectedIds.has(response.id)
+          && (hasResponseScorer(response) || Object.hasOwn(persistedScores ?? {}, response.id))
+          && isResponseAnsweredForScoring(response, answer.answer[response.id], answer.answer))
+        .map(({ id }) => id),
+      ...Object.keys(persistedScores ?? {})
+        .filter((id) => !responsesById.has(id) && !expectedIds.has(id)),
+    ]);
+
+    responseIdsToScore.forEach((id) => {
+      if (responseId !== undefined && id !== responseId) return;
 
       totalQuestions += 1;
 
-      const userAnswer = answer.answer[correctEntry.id];
+      const userAnswer = answer.answer[id];
       if (userAnswer === undefined) return;
 
-      const response = responsesById.get(correctEntry.id);
-      const isCorrect = responseAnswerIsCorrect(
-        userAnswer,
-        correctEntry.answer,
-        correctEntry.acceptableLow,
-        correctEntry.acceptableHigh,
-        { ignoreArrayOrder: shouldIgnoreArrayOrder(response) },
-      );
+      const response = responsesById.get(id);
+      if (!isResponseAnsweredForScoring(response, userAnswer, answer.answer)) return;
 
-      if (isCorrect) {
-        correctSum += 1;
+      const correctEntry = expectedAnswers.find((candidate) => candidate.id === id);
+      const persistedScore = persistedScores?.[id];
+      const score = persistedScore === undefined
+        ? scoreResponseAnswer(userAnswer, correctEntry, response, answer.answer)
+        : persistedScore;
+      if (score === null || !Number.isFinite(score) || score < 0 || score > 1) {
+        totalQuestions -= 1;
+        return;
       }
+      correctSum += Number(isResponseScoreCorrect(score, correctEntry?.correctnessThreshold));
     });
   });
 

@@ -157,6 +157,122 @@ describe('comparison conditions', () => {
     expect(resolveResponseVisibility(fields, { attended: 21 }).visibleIds.has('name')).toBe(false);
   });
 
+  test('isCorrect applies the configured 80% correctness threshold', () => {
+    const fields: Response[] = [{
+      id: 'score', type: 'numerical', prompt: '', path: 'test-response-functions/assets/PartialScore.response.ts',
+    }, {
+      id: 'dependent', type: 'shortText', prompt: '', visibleIf: { responseId: 'score', comparison: 'isCorrect', value: true },
+    }];
+    const correctAnswers = [{ id: 'score', answer: 10, correctnessThreshold: 0.8 }];
+
+    expect(resolveResponseVisibility(fields, { score: 5 }, {}, correctAnswers).visibleIds.has('dependent')).toBe(false);
+    expect(resolveResponseVisibility(fields, { score: 8 }, {}, correctAnswers).visibleIds.has('dependent')).toBe(true);
+    expect(resolveResponseVisibility(fields, { score: 10 }, {}, correctAnswers).visibleIds.has('dependent')).toBe(true);
+  });
+
+  test('isCorrect visibility supports a scorer without a configured correct answer', () => {
+    const fields: Response[] = [{
+      id: 'score', type: 'custom', prompt: '', path: 'test-response-functions/assets/CustomPartialScore.tsx',
+    }, {
+      ...responses[1], visibleIf: { responseId: 'score', comparison: 'isCorrect', value: true },
+    }];
+    expect(resolveResponseVisibility(fields, { score: { score: 10 } }).visibleIds.has('name')).toBe(true);
+    expect(resolveResponseVisibility(fields, { score: { score: 5 } }).visibleIds.has('name')).toBe(false);
+  });
+
+  test('numeric param captures use the shared normalized score for visibility', () => {
+    const fields: Response[] = [{
+      id: 'score',
+      type: 'numerical',
+      prompt: '',
+      paramCapture: 'score',
+      path: 'test-response-functions/assets/GameScore.ts',
+    }, {
+      id: 'dependent',
+      type: 'shortText',
+      prompt: '',
+      visibleIf: { responseId: 'score', comparison: 'isCorrect', value: true },
+    }];
+
+    expect(resolveResponseVisibility(fields, { score: '10' }).visibleIds.has('dependent')).toBe(true);
+  });
+
+  test('isCorrect visibility prefers a saved score for the matching answer snapshot', () => {
+    const fields: Response[] = [{
+      id: 'score', type: 'numerical', prompt: '', path: 'test-response-functions/assets/PartialScore.response.ts',
+    }, {
+      id: 'dependent', type: 'shortText', prompt: '', visibleIf: { responseId: 'score', comparison: 'isCorrect', value: false },
+    }];
+    const correctAnswers = [{ id: 'score', answer: 10 }];
+
+    expect(resolveResponseVisibility(fields, { score: 5 }, {}, correctAnswers).visibleIds.has('dependent')).toBe(true);
+    expect(resolveResponseVisibility(fields, { score: 5 }, {}, correctAnswers, { score: 1 }).visibleIds.has('dependent')).toBe(false);
+  });
+
+  test('isCorrect scoring does not depend on whether a hidden response was visited first', () => {
+    const fields: Response[] = [
+      {
+        id: 'controller',
+        type: 'numerical',
+        prompt: '',
+        path: 'test-response-functions/assets/ContextAwareScore.response.ts',
+      },
+      {
+        id: 'gate', type: 'radio', prompt: '', options: ['yes', 'no'],
+      },
+      {
+        id: 'secret',
+        type: 'shortText',
+        prompt: '',
+        visibleIf: { responseId: 'gate', comparison: 'equals', value: 'yes' },
+      },
+      {
+        id: 'dependent',
+        type: 'shortText',
+        prompt: '',
+        visibleIf: { responseId: 'controller', comparison: 'isCorrect', value: false },
+      },
+    ];
+    const values = { controller: 1, gate: 'no', secret: 'visible' };
+    const forward = resolveResponseVisibility(fields, values);
+    const reverse = resolveResponseVisibility([...fields].reverse(), values);
+
+    expect(forward.visibleIds.has('dependent')).toBe(true);
+    expect(reverse.visibleIds.has('dependent')).toBe(true);
+    expect(forward.answers).not.toHaveProperty('secret');
+    expect(reverse.answers).not.toHaveProperty('secret');
+  });
+
+  test('isCorrect scoring includes visible conditional answers regardless of response order', () => {
+    const fields: Response[] = [
+      {
+        id: 'controller',
+        type: 'numerical',
+        prompt: '',
+        path: 'test-response-functions/assets/ContextAwareScore.response.ts',
+      },
+      {
+        id: 'gate', type: 'radio', prompt: '', options: ['yes', 'no'],
+      },
+      {
+        id: 'secret',
+        type: 'shortText',
+        prompt: '',
+        visibleIf: { responseId: 'gate', comparison: 'equals', value: 'yes' },
+      },
+      {
+        id: 'dependent',
+        type: 'shortText',
+        prompt: '',
+        visibleIf: { responseId: 'controller', comparison: 'isCorrect', value: true },
+      },
+    ];
+    const values = { controller: 1, gate: 'yes', secret: 'visible' };
+
+    expect(resolveResponseVisibility(fields, values).visibleIds.has('dependent')).toBe(true);
+    expect(resolveResponseVisibility([...fields].reverse(), values).visibleIds.has('dependent')).toBe(true);
+  });
+
   test('isCorrect cannot reveal a dependent of a hidden controller', () => {
     const fields: Response[] = [...responses, {
       id: 'leaf', type: 'shortText', prompt: '', visibleIf: { responseId: 'name', comparison: 'isCorrect', value: false },
@@ -165,4 +281,33 @@ describe('comparison conditions', () => {
     expect(result.answers).toEqual({ attended: 'no' });
     expect(result.visibleIds.has('leaf')).toBe(false);
   });
+
+  test('isCorrect visibility handles an unresolved response module without throwing', () => {
+    const fields: Response[] = [{
+      id: 'controller',
+      type: 'numerical',
+      prompt: '',
+      path: 'missing.response.ts',
+    }, {
+      id: 'dependent',
+      type: 'shortText',
+      prompt: '',
+      visibleIf: {
+        responseId: 'controller', comparison: 'isCorrect', value: true,
+      },
+    }];
+
+    expect(() => resolveResponseVisibility(fields, { controller: 1 }, {}, [{ id: 'controller', answer: 1 }]))
+      .not.toThrow();
+    expect(resolveResponseVisibility(fields, { controller: 1 }, {}, [{ id: 'controller', answer: 1 }]).visibleIds.has('dependent'))
+      .toBe(false);
+  });
+});
+
+test('isCorrect visibility recognizes alternative answers', () => {
+  const fields: Response[] = [responses[0], {
+    ...responses[1], visibleIf: { responseId: 'attended', comparison: 'isCorrect', value: true },
+  }];
+  const correctAnswers = [{ id: 'attended', answer: 'yes', acceptableAnswers: ['no'] }];
+  expect(resolveResponseVisibility(fields, { attended: 'no' }, {}, correctAnswers).visibleIds.has('name')).toBe(true);
 });

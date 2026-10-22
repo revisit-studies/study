@@ -8,6 +8,7 @@ import {
   vi,
 } from 'vitest';
 import { useNextStep } from '../useNextStep';
+import type { Answer } from '../../../parser/types';
 
 const mockNavigate = vi.fn();
 const mockShowNotification = vi.fn();
@@ -32,7 +33,7 @@ let mockStoredAnswer: {
   timedOut: boolean;
   helpButtonClickedCount: number;
   parameters: Record<string, string>;
-  correctAnswer: never[];
+  correctAnswer: Answer[];
   optionOrders: Record<string, string>;
   questionOrders: Record<string, string>;
   responseSubmitAttempted?: boolean;
@@ -230,6 +231,48 @@ describe('useNextStep', () => {
     });
     expect(mockShowNotification).not.toHaveBeenCalled();
     expect(mockStoredAnswer.endTime).toBeGreaterThan(-1);
+  });
+
+  test('submits a required unanswered response as incorrect when its threshold is zero', async () => {
+    const correctAnswer = [{ id: 'response', answer: 10, correctnessThreshold: 0 }];
+    mockStoredAnswer.correctAnswer = correctAnswer;
+    mockTrialValidation = {
+      intro_0: {
+        aboveStimulus: { valid: true, values: {} },
+        belowStimulus: {
+          valid: true,
+          values: { response: '' },
+        },
+        sidebar: { valid: true, values: {} },
+        stimulus: { valid: true, values: {} },
+        provenanceGraph: {
+          aboveStimulus: undefined,
+          belowStimulus: undefined,
+          stimulus: undefined,
+          sidebar: undefined,
+        },
+      },
+    };
+    mockStudyConfig = {
+      components: {
+        intro: {
+          type: 'questionnaire',
+          response: [{
+            id: 'response', type: 'numerical', prompt: 'Number', required: true,
+          }],
+          correctAnswer,
+        },
+      },
+    };
+
+    renderToStaticMarkup(<HookHarness />);
+    capturedGoToNextStep?.();
+
+    expect(mockSaveTrialAnswer).toHaveBeenCalledWith(expect.objectContaining({
+      checkAnswer: expect.objectContaining({
+        correct: false,
+      }),
+    }));
   });
 
   test('shows the storage modal after a provenance persistence failure', async () => {

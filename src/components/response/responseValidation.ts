@@ -1,5 +1,8 @@
 import isEqual from 'lodash.isequal';
-import { compareResponseValues } from '../../utils/correctAnswer';
+import {
+  compareResponseValues, getResponseFunctionModule, getResponseValidationResultError, isResponseAnswered,
+  normalizeResponseValue,
+} from '../../utils/correctAnswer';
 import {
   CheckboxResponse,
   DateResponse,
@@ -82,20 +85,7 @@ export type ResponseValidationOptions = {
 };
 
 export function isEmptyCustomResponseValue(value: StoredAnswer['answer'][string] | undefined): boolean {
-  if (value === null || value === undefined || value === '') {
-    return true;
-  }
-
-  if (Array.isArray(value)) {
-    return value.length === 0 || value.every((entry) => isEmptyCustomResponseValue(entry));
-  }
-
-  if (typeof value === 'object') {
-    const objectValues = Object.values(value);
-    return objectValues.length === 0 || objectValues.every((entry) => isEmptyCustomResponseValue(entry));
-  }
-
-  return false;
+  return !isResponseAnswered(value);
 }
 
 export function checkDropdownResponse(dropdownResponse: DropdownResponse, value: string[]) {
@@ -518,7 +508,7 @@ function createValidationResult(
   };
 }
 
-export function validateResponse(
+function validateResponseBase(
   response: Response,
   value: StoredAnswer['answer'][string] | undefined,
   values: StoredAnswer['answer'],
@@ -559,8 +549,17 @@ export function validateResponse(
       return createValidationResult(response, 'none');
     }
 
-    const customValidationMessage = customValidate(customValue, values, response);
-    return customValidationMessage
+    let customValidationMessage: unknown;
+    try {
+      customValidationMessage = customValidate(customValue, values, response);
+    } catch (error) {
+      console.error(`Validation function at ${response.path} failed`, error);
+      return createValidationResult(response, 'invalid', { message: `Validation function at ${response.path} failed` });
+    }
+    const resultError = getResponseValidationResultError(customValidationMessage, response.path);
+    if (resultError) return createValidationResult(response, 'invalid', { message: resultError });
+    if (customValidationMessage === false) return createValidationResult(response, 'invalid', { message: 'The response is invalid.' });
+    return typeof customValidationMessage === 'string' && customValidationMessage
       ? createValidationResult(response, 'invalid', { message: customValidationMessage })
       : createValidationResult(response, 'none');
   }
@@ -758,4 +757,33 @@ export function validateResponse(
   }
 
   return createValidationResult(response, 'none');
+}
+
+export function validateResponse(
+  response: Response,
+  value: StoredAnswer['answer'][string] | undefined,
+  values: StoredAnswer['answer'],
+  options: ResponseValidationOptions = {},
+): ResponseValidationResult {
+  const result = validateResponseBase(response, value, values, options);
+  if (!result.valid || !response.path || response.type === 'custom' || response.type === 'textOnly' || response.type === 'divider'
+    || isEmptyCustomResponseValue(value)
+    || shouldBypassValidationForStandaloneDontKnow(response, !!values[`${response.id}-dontKnow`])) return result;
+
+  const module = getResponseFunctionModule(response.path);
+  if (!module) {
+    return createValidationResult(response, 'invalid', { message: `Unable to load response module at ${response.path}` });
+  }
+  if (!module.validate) return result;
+  let message: unknown;
+  try {
+    message = module.validate(normalizeResponseValue(response, value), values, response);
+  } catch (error) {
+    console.error(`Validation function at ${response.path} failed`, error);
+    return createValidationResult(response, 'invalid', { message: `Validation function at ${response.path} failed` });
+  }
+  const resultError = getResponseValidationResultError(message, response.path);
+  if (resultError) return createValidationResult(response, 'invalid', { message: resultError });
+  if (message === false) return createValidationResult(response, 'invalid', { message: 'The response is invalid.' });
+  return typeof message === 'string' && message ? createValidationResult(response, 'invalid', { message }) : result;
 }
