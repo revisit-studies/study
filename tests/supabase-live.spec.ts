@@ -165,7 +165,7 @@ test.describe('Live self-hosted Supabase', () => {
     test.skip(!email || !password || !participantId, 'Set Designer credentials and the retained participant ID');
 
     await page.goto('/analysis/stats/demo-condition/manage');
-    await expect(page.getByRole('button', { name: 'Sign In With Supabase' })).toBeVisible();
+    await expect(page.getByRole('alert', { name: 'Unauthorized Access' })).toBeVisible();
 
     // The app's sign-in button uses external GitHub OAuth. Use a real Auth password
     // session here to exercise account retention, authorization and exports locally.
