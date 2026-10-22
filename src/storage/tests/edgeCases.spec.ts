@@ -287,6 +287,14 @@ describe('StorageEngine edge cases', () => {
       await expect(storageEngine.saveScreenRecording(blob, 'task1')).rejects.toThrow('Data collection is disabled');
     });
 
+    test('saveWebcamRecording throws when data collection is disabled', async () => {
+      await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+      await storageEngine.setMode(studyId, 'dataCollectionEnabled', false);
+
+      const blob = new Blob(['video'], { type: 'video/webm' });
+      await expect(storageEngine.saveWebcamRecording(blob, 'task1')).rejects.toThrow('Data collection is disabled');
+    });
+
     test('multiple concurrent saveAsset calls are tracked independently', async () => {
       await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
 

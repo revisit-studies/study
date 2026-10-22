@@ -1,52 +1,216 @@
 import isEqual from 'lodash.isequal';
 import {
-  Answer, IndividualComponent, Response, StoredAnswer,
+  Answer, MatrixCheckboxResponse, Response, StoredAnswer, ValueCondition,
 } from '../parser/types';
+import { parseStringOptionValue } from './stringOptions';
+
+export type AnswerStatus = 'correct' | 'incorrect' | 'partially correct';
+
+export function evaluateSelectionAnswer(
+  userAnswer: unknown,
+  correctAnswer: unknown,
+  acceptableAnswers: unknown[] = [],
+): AnswerStatus {
+  const selected = Array.isArray(userAnswer)
+    ? userAnswer
+    : typeof userAnswer === 'string' && userAnswer !== '' ? userAnswer.split('|') : [];
+  const correctAnswers = [correctAnswer, ...acceptableAnswers].filter(Array.isArray) as unknown[][];
+  const statuses = correctAnswers.map((correctValues) => {
+    if (isEqual([...selected].sort(), [...correctValues].sort())) return 'correct';
+    const matched = selected.filter((value) => correctValues.includes(value));
+    if (matched.length === 0) return 'incorrect';
+    return 'partially correct';
+  });
+
+  return statuses.includes('correct')
+    ? 'correct'
+    : statuses.includes('partially correct') ? 'partially correct' : 'incorrect';
+}
+
+function matrixCheckboxSelectionsAreEqual(userAnswer: unknown, correctAnswer: unknown[]): boolean {
+  const selected = typeof userAnswer === 'string' && userAnswer !== '' ? userAnswer.split('|') : [];
+  if (selected.length !== correctAnswer.length) return false;
+  const sortedSelected = [...selected].sort();
+  const sortedCorrect = [...correctAnswer].sort();
+  return sortedSelected.every((value, index) => value === sortedCorrect[index]);
+}
+
+export function getMatrixCheckboxRowStatuses(
+  response: MatrixCheckboxResponse,
+  userAnswer: unknown,
+  correctAnswer: Answer,
+): Record<string, AnswerStatus> {
+  const questions = response.questionOptions.map(parseStringOptionValue);
+  const userRows = userAnswer && typeof userAnswer === 'object' && !Array.isArray(userAnswer)
+    ? userAnswer as Record<string, unknown>
+    : {};
+  const answerSets = [correctAnswer.answer, ...(correctAnswer.acceptableAnswers ?? [])];
+
+  let bestStatuses: AnswerStatus[] = [];
+  let bestCorrectCount = -1;
+  let bestPartialCount = -1;
+
+  answerSets.forEach((answerSet) => {
+    const statuses: AnswerStatus[] = questions.map((question, index) => {
+      const selected = typeof userRows[question] === 'string' && userRows[question] !== ''
+        ? (userRows[question] as string).split('|')
+        : [];
+      if (Array.isArray(answerSet)) {
+        const expected = answerSet[index];
+        if (expected === undefined) return 'incorrect';
+        if (!Array.isArray(answerSet[0]) && String(userRows[question]) === String(expected)) return 'correct';
+        if (Array.isArray(expected) && matrixCheckboxSelectionsAreEqual(userRows[question], expected)) return 'correct';
+        const expectedValues = Array.isArray(expected)
+          ? expected
+          : typeof expected === 'string' && expected.includes('|') ? expected.split('|') : [expected];
+        return selected.some((value) => expectedValues.includes(value)) ? 'partially correct' : 'incorrect';
+      }
+      const expected = answerSet && typeof answerSet === 'object'
+        ? (answerSet as Record<string, unknown>)[question]
+        : undefined;
+      if (expected === undefined) return 'incorrect';
+      if (Array.isArray(expected) ? matrixCheckboxSelectionsAreEqual(userRows[question], expected) : isEqual(userRows[question], expected)) return 'correct';
+      const expectedValues = Array.isArray(expected)
+        ? expected
+        : typeof expected === 'string' && expected.includes('|') ? expected.split('|') : [expected];
+      return selected.some((value) => expectedValues.includes(value)) ? 'partially correct' : 'incorrect';
+    });
+    const correctCount = statuses.filter((status) => status === 'correct').length;
+    const partialCount = statuses.filter((status) => status === 'partially correct').length;
+    if (correctCount > bestCorrectCount || (correctCount === bestCorrectCount && partialCount > bestPartialCount)) {
+      bestStatuses = statuses;
+      bestCorrectCount = correctCount;
+      bestPartialCount = partialCount;
+    }
+  });
+
+  return Object.fromEntries(questions.map((question, index) => [question, bestStatuses[index] ?? 'incorrect']));
+}
+
+/** Compare values without converting strings to numbers. */
+export function compareResponseValues(
+  value: unknown,
+  expected: unknown,
+  comparison: ValueCondition['comparison'],
+  options: { ignoreArrayOrder?: boolean } = {},
+): boolean {
+  if (comparison === 'equals' || comparison === 'doesNotEqual') {
+    const equal = Array.isArray(value) && Array.isArray(expected) && options.ignoreArrayOrder
+      ? isEqual([...value].sort(), [...expected].sort())
+      : isEqual(value, expected);
+    return comparison === 'equals' ? equal : !equal;
+  }
+
+  if (comparison === 'contains' || comparison === 'doesNotContain' || comparison === 'matchesRegex') {
+    if (typeof value !== 'string' || typeof expected !== 'string') return false;
+    if (comparison === 'contains') return value.includes(expected);
+    if (comparison === 'doesNotContain') return !value.includes(expected);
+    try {
+      return new RegExp(expected).test(value);
+    } catch {
+      return false;
+    }
+  }
+
+  if (typeof value !== 'number' || typeof expected !== 'number'
+    || !Number.isFinite(value) || !Number.isFinite(expected)) return false;
+  switch (comparison) {
+    case 'lessThan': return value < expected;
+    case 'lessThanOrEqual': return value <= expected;
+    case 'greaterThan': return value > expected;
+    case 'greaterThanOrEqual': return value >= expected;
+    default: return false;
+  }
+}
 
 export function shouldIgnoreArrayOrder(response?: Response) {
   return response?.type === 'checkbox' || response?.type === 'dropdown';
 }
 
+export function getMatrixQuestionIds(response?: Response): string[] | undefined {
+  return response?.type === 'matrix-checkbox' || response?.type === 'matrix-radio'
+    ? response.questionOptions.map(parseStringOptionValue)
+    : undefined;
+}
+
+/** Use the complete accepted rule when no preferred exact answer is configured. */
+export function getCorrectAnswerDisplayValue(rule?: Answer): unknown {
+  if (rule?.answer !== undefined) return rule.answer;
+  const { acceptableAnswers, acceptableLow, acceptableHigh } = rule ?? {};
+  if (acceptableAnswers === undefined && acceptableLow === undefined && acceptableHigh === undefined) return undefined;
+  if (acceptableAnswers !== undefined && acceptableLow === undefined && acceptableHigh === undefined) return acceptableAnswers;
+  return {
+    ...(acceptableAnswers !== undefined ? { acceptableAnswers } : {}),
+    ...(acceptableLow !== undefined ? { acceptableLow } : {}),
+    ...(acceptableHigh !== undefined ? { acceptableHigh } : {}),
+  };
+}
+
 export function responseAnswerIsCorrect(
-  responseUserAnswer: StoredAnswer['answer'][string],
+  responseUserAnswer: StoredAnswer['answer'][string] | undefined,
   responseCorrectAnswer: Answer['answer'],
   acceptableLow?: number,
   acceptableHigh?: number,
-  options: { ignoreArrayOrder?: boolean } = {},
-) {
-  // Handle numeric-string comparison for likert and slider responses
+  options: {
+    ignoreArrayOrder?: boolean;
+    acceptableAnswers?: Answer['acceptableAnswers'];
+    caseSensitive?: boolean;
+    matrixQuestionIds?: string[];
+  } = {},
+): boolean {
+  if (responseUserAnswer === undefined) return false;
+  if (options.acceptableAnswers?.some((answer) => responseAnswerIsCorrect(responseUserAnswer, answer, undefined, undefined, {
+    ignoreArrayOrder: options.ignoreArrayOrder,
+    caseSensitive: options.caseSensitive,
+    matrixQuestionIds: options.matrixQuestionIds,
+  }))) return true;
+
+  // Numeric bounds define accepted answers independently of a preferred answer.
+  if (acceptableLow !== undefined || acceptableHigh !== undefined) {
+    if ((typeof responseUserAnswer !== 'number' && typeof responseUserAnswer !== 'string')
+      || String(responseUserAnswer).trim() === '') return false;
+    const value = Number(responseUserAnswer);
+    return Number.isFinite(value)
+      && (acceptableLow === undefined || value >= acceptableLow)
+      && (acceptableHigh === undefined || value <= acceptableHigh);
+  }
+
+  if (responseCorrectAnswer === undefined) return false;
+
+  if (typeof responseUserAnswer === 'string' && typeof responseCorrectAnswer === 'string') {
+    const matchesText = options.caseSensitive === false
+      ? responseUserAnswer.toLowerCase() === responseCorrectAnswer.toLowerCase()
+      : responseUserAnswer === responseCorrectAnswer;
+    if (matchesText) return true;
+  }
+
+  // Handle numeric-string comparison for likert and slider responses.
   if ((typeof responseUserAnswer === 'number' || typeof responseUserAnswer === 'string')
     && (typeof responseCorrectAnswer === 'string' || typeof responseCorrectAnswer === 'number')) {
     const userAnswerNumber = Number(responseUserAnswer);
-
-    if (!Number.isNaN(userAnswerNumber)) {
-      if (acceptableLow !== undefined && acceptableHigh !== undefined) {
-        return userAnswerNumber >= acceptableLow && userAnswerNumber <= acceptableHigh;
-      } if (acceptableLow !== undefined) {
-        return userAnswerNumber >= acceptableLow;
-      } if (acceptableHigh !== undefined) {
-        return userAnswerNumber <= acceptableHigh;
-      }
-    }
-
-    return String(responseUserAnswer) === String(responseCorrectAnswer) || Number(responseUserAnswer) === Number(responseCorrectAnswer);
+    const hasNumericAnswer = Number.isFinite(userAnswerNumber) && String(responseUserAnswer).trim() !== '';
+    return String(responseUserAnswer) === String(responseCorrectAnswer)
+      || (hasNumericAnswer && String(responseCorrectAnswer).trim() !== '' && userAnswerNumber === Number(responseCorrectAnswer));
   }
 
-  // Ignore order for checkbox answers by sorting
+  // Checkbox and dropdown answers ignore selection order; ranking answers do not.
   if (Array.isArray(responseUserAnswer) && Array.isArray(responseCorrectAnswer)) {
-    if (!(options.ignoreArrayOrder ?? true)) {
-      return isEqual(responseUserAnswer, responseCorrectAnswer);
-    }
-
-    if (responseUserAnswer.length !== responseCorrectAnswer.length) return false;
-    const sortedUserAnswer = [...responseUserAnswer].sort();
-    const sortedCorrectAnswer = [...responseCorrectAnswer].sort();
-    return isEqual(sortedUserAnswer, sortedCorrectAnswer);
+    return compareResponseValues(responseUserAnswer, responseCorrectAnswer, 'equals', {
+      ignoreArrayOrder: options.ignoreArrayOrder ?? true,
+    });
   }
 
   // Handle array of object (e.g. matrix-radio and matrix-checkbox)
   if (responseUserAnswer !== null && typeof responseUserAnswer === 'object' && !Array.isArray(responseUserAnswer) && Array.isArray(responseCorrectAnswer)) {
-    const userAnswerArray = Object.values(responseUserAnswer);
+    const userAnswerObject = responseUserAnswer as Record<string, unknown>;
+    const userAnswerArray = options.matrixQuestionIds
+      ? options.matrixQuestionIds.map((questionId) => userAnswerObject[questionId])
+      : Object.values(userAnswerObject);
+
+    if (options.matrixQuestionIds && (
+      Object.keys(userAnswerObject).length !== options.matrixQuestionIds.length
+      || options.matrixQuestionIds.some((questionId) => !Object.prototype.hasOwnProperty.call(userAnswerObject, questionId))
+    )) return false;
 
     if (userAnswerArray.length !== responseCorrectAnswer.length) return false;
 
@@ -57,72 +221,12 @@ export function responseAnswerIsCorrect(
         const correctVal = responseCorrectAnswer[idx];
         if (!Array.isArray(correctVal)) return false;
 
-        const userValArray = typeof userVal === 'string' ? (userVal === '' ? [] : userVal.split('|')) : [];
-        if (userValArray.length !== correctVal.length) return false;
-
-        const sortedUserAnswer = [...userValArray].sort();
-        const sortedCorrectAnswer = [...correctVal].sort();
-        return sortedUserAnswer.every((val, i) => val === sortedCorrectAnswer[i]);
+        return matrixCheckboxSelectionsAreEqual(userVal, correctVal);
       });
     }
 
     return userAnswerArray.every((val, idx) => String(val) === String(responseCorrectAnswer[idx]));
   }
 
-  return isEqual(responseUserAnswer, responseCorrectAnswer);
-}
-
-export function componentAnswersAreCorrect(
-  componentUserAnswers: StoredAnswer['answer'],
-  componentCorrectAnswers: IndividualComponent['correctAnswer'],
-  responses?: Response[],
-) {
-  let allCorrect = true;
-  const responsesById = new Map((responses || []).map((response) => [response.id, response]));
-
-  (componentCorrectAnswers || []).forEach((correctAnswer) => {
-    const userAnswer = componentUserAnswers[correctAnswer.id];
-    const response = responsesById.get(correctAnswer.id);
-
-    if (
-      userAnswer === undefined
-      || !responseAnswerIsCorrect(
-        userAnswer,
-        correctAnswer.answer,
-        correctAnswer.acceptableLow,
-        correctAnswer.acceptableHigh,
-        { ignoreArrayOrder: shouldIgnoreArrayOrder(response) },
-      )
-    ) {
-      allCorrect = false;
-    }
-  });
-
-  return allCorrect;
-}
-
-export type ComponentAnswerStatus = 'correct' | 'incorrect' | 'unknown';
-
-export function getComponentAnswerStatus(
-  componentAnswer: StoredAnswer | undefined,
-  componentCorrectAnswers: IndividualComponent['correctAnswer'],
-  responses?: Response[],
-): ComponentAnswerStatus | null {
-  if (
-    !componentAnswer
-    || componentAnswer.endTime < 0
-    || Object.keys(componentAnswer.answer).length === 0
-  ) {
-    return null;
-  }
-
-  if (!componentCorrectAnswers?.length) {
-    return 'unknown';
-  }
-
-  return componentAnswersAreCorrect(
-    componentAnswer.answer,
-    componentCorrectAnswers,
-    responses,
-  ) ? 'correct' : 'incorrect';
+  return compareResponseValues(responseUserAnswer, responseCorrectAnswer, 'equals');
 }

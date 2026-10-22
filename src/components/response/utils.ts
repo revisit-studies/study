@@ -1,7 +1,11 @@
 import { useForm } from '@mantine/form';
-import { useEffect, useState } from 'react';
 import {
-  CheckboxResponse, JsonValue, RadioResponse, Response,
+  useEffect, useMemo, useRef, useState,
+} from 'react';
+import isEqual from 'lodash.isequal';
+import { resolveResponseVisibility, responseValueKeys } from '../../utils/responseVisibility';
+import {
+  Answer, CheckboxResponse, JsonValue, RadioResponse, Response,
 } from '../../parser/types';
 import { CustomResponseValidate, StoredAnswer } from '../../store/types';
 import { parseStringOptionValue } from '../../utils/stringOptions';
@@ -14,6 +18,33 @@ type ResponseDefault = JsonValue;
 type ResponseWithDefault = Response & { default?: ResponseDefault };
 
 export const DONT_KNOW_DEFAULT_VALUE = "I don't know";
+
+export function getResponseWidth(response: Response): 'xs' | 'small' | 'medium' | 'full' | undefined {
+  // Explicit sizing owns the available width instead of the default field cap.
+  if (response.style?.width !== undefined || response.style?.minWidth !== undefined || response.style?.maxWidth !== undefined) {
+    return undefined;
+  }
+  if (response.type === 'numerical' || response.type === 'date') {
+    return 'xs';
+  }
+  if (response.type === 'time') {
+    return 'small';
+  }
+  if (response.type === 'shortText') {
+    return response.builtInValidation === 'phoneNumber' || response.builtInValidation === 'usPhoneNumber'
+      ? 'xs'
+      : 'medium';
+  }
+  return response.type === 'dropdown' ? 'medium' : 'full';
+}
+
+export function normalizeCheckboxValue(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string => typeof item === 'string');
+  }
+
+  return typeof value === 'string' && value.length > 0 ? [value] : [];
+}
 
 export function normalizeCheckboxDontKnowValue(value: string[]) {
   return value.includes(DONT_KNOW_DEFAULT_VALUE) ? [] : value;
@@ -45,7 +76,7 @@ export const getDefaultFieldValue = (response: Response) => {
   }
 
   if (response.type === 'checkbox') {
-    return Array.isArray(responseDefault) ? responseDefault : (responseDefault === null ? [] : [responseDefault.toString()]);
+    return normalizeCheckboxValue(responseDefault);
   }
 
   if (response.type === 'likert') {
@@ -94,7 +125,7 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
     if (hasStoredAnswer) {
       initObj = {
         ...initObj,
-        [response.id]: answer,
+        [response.id]: response.type === 'checkbox' ? normalizeCheckboxValue(answer) : answer,
         ...dontKnowObj,
         ...otherObj,
       };
@@ -102,10 +133,11 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
       let initField: StoredAnswer['answer'][string] = '';
       const defaultFieldValue = getDefaultFieldValue(response);
       if (response.paramCapture) {
-        initField = queryParameters.get(response.paramCapture);
+        const capturedValue = queryParameters.get(response.paramCapture);
+        initField = response.type === 'checkbox' ? normalizeCheckboxValue(capturedValue) : capturedValue;
       } else if (defaultFieldValue !== null) {
         initField = defaultFieldValue;
-      } else if (response.type === 'reactive' || response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') {
+      } else if (response.type === 'checkbox' || response.type === 'reactive' || response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') {
         initField = [];
       } else if (response.type === 'matrix-radio' || response.type === 'matrix-checkbox') {
         initField = Object.fromEntries(
@@ -153,21 +185,25 @@ export const generateValidation = (
   responses: Response[],
   customResponseValidators: Record<string, CustomResponseValidate | undefined> = {},
   customResponseLoadErrors: Record<string, string | undefined> = {},
+  allResponses: Response[] = responses,
+  context: StoredAnswer['answer'] = {},
+  correctAnswers: Answer[] = [],
 ): Record<string, (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => string | null> => {
   let validateObj: Record<string, (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => string | null> = {};
   responses.forEach((response) => {
     if (response.required || response.type === 'custom') {
       validateObj = {
         ...validateObj,
-        [response.id]: (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => generateInvalidResponseErrorMessage(
-          response,
-          value,
-          values,
-          {
-            customValidate: customResponseValidators[response.id],
-            loadError: customResponseLoadErrors[response.id],
-          },
-        ),
+        [response.id]: (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => (
+          !resolveResponseVisibility(allResponses, { ...context, ...values }, {}, correctAnswers).visibleIds.has(response.id) ? null : generateInvalidResponseErrorMessage(
+            response,
+            value,
+            values,
+            {
+              customValidate: customResponseValidators[response.id],
+              loadError: customResponseLoadErrors[response.id],
+            },
+          )),
       };
     }
   });
@@ -180,12 +216,16 @@ export function useAnswerField(
   storedAnswer: StoredAnswer['answer'],
   customResponseValidators: Record<string, CustomResponseValidate | undefined> = {},
   customResponseLoadErrors: Record<string, string | undefined> = {},
+  allResponses: Response[] = responses,
+  context: StoredAnswer['answer'] = {},
+  isAnalysis = false,
+  correctAnswers: Answer[] = [],
 ) {
   const [_id, setId] = useState<string | number | null>(null);
 
   const answerField = useForm<StoredAnswer['answer']>({
     initialValues: generateInitFields(responses, storedAnswer),
-    validate: generateValidation(responses, customResponseValidators, customResponseLoadErrors),
+    validate: generateValidation(responses, customResponseValidators, customResponseLoadErrors, allResponses, context, correctAnswers),
   });
 
   useEffect(() => {
@@ -195,5 +235,32 @@ export function useAnswerField(
     }
   }, [_id, answerField, currentStep]);
 
-  return answerField;
+  const values = useMemo(() => {
+    // Omit this location from shared state before overlaying the current local form.
+    const otherValues = { ...context };
+    responses.forEach((response) => responseValueKeys(response).forEach((key) => { delete otherValues[key]; }));
+    const resolved = resolveResponseVisibility(
+      allResponses,
+      { ...otherValues, ...(isAnalysis ? storedAnswer : answerField.values) },
+      isAnalysis ? {} : generateInitFields(responses, {}),
+      correctAnswers,
+    ).answers;
+    const localKeys = new Set(responses.flatMap(responseValueKeys));
+    return Object.fromEntries(Object.entries(resolved).filter(([key]) => localKeys.has(key)));
+  }, [allResponses, responses, context, answerField.values, isAnalysis, storedAnswer, correctAnswers]);
+  const stableValues = useRef(values);
+  if (!isEqual(stableValues.current, values)) stableValues.current = values;
+
+  useEffect(() => {
+    if (isAnalysis) return;
+    // Mantine merges setValues; undefined clears its internal field, while the
+    // normalized public values above omit hidden keys entirely.
+    responses.filter((response) => response.visibleIf).forEach((response) => {
+      responseValueKeys(response).forEach((key) => {
+        if (!isEqual(answerField.values[key], values[key])) answerField.setFieldValue(key, values[key]);
+      });
+    });
+  }, [values, responses, answerField, isAnalysis]);
+
+  return { ...answerField, values: stableValues.current };
 }

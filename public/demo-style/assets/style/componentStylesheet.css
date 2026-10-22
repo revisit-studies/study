@@ -1,5 +1,6 @@
 .markdown {
-  background-color: #f1f1f1;
+  background-color: light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-6));
+  color: var(--mantine-color-text);
   padding: 30px;
   border-radius: 10px;
 }
@@ -11,5 +12,5 @@
 }
 
 #markdown-styling code {
-  color: #0079cd;
+  color: var(--mantine-color-blue-text);
 }

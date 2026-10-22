@@ -53,8 +53,8 @@ test('Test example cleveland', async ({ page }) => {
     // Fill in answer guess
     await page.getByPlaceholder('0-100').fill('66');
 
-    // Click on the check answer button
-    await page.getByRole('button', { name: 'Check Answer' }).click();
+    // Grade using the Next button
+    await page.getByRole('button', { name: 'Check Answer', exact: true }).click();
 
     // Check that the correct answer is shown
     const correctAnswer = await page.getByText('You have answered the question correctly.');
@@ -65,7 +65,7 @@ test('Test example cleveland', async ({ page }) => {
     await page.waitForTimeout(100);
   }
 
-  // Check that the next question does not have a check answer button
+  // The separate Check Answer button is absent
   await expect(await page.getByRole('button', { name: 'Check Answer' })).toBeHidden();
 
   // Check for each question

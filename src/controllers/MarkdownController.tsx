@@ -1,30 +1,48 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { ReactMarkdownWrapper } from '../components/ReactMarkdownWrapper';
 import { MarkdownComponent } from '../parser/types';
 import { getStaticAssetByPath } from '../utils/getStaticAsset';
-import { ResourceNotFound } from '../ResourceNotFound';
 import { PREFIX } from '../utils/Prefix';
+import { ResourceNotFound } from '../ResourceNotFound';
+import { useStudyConfig } from '../store/hooks/useStudyConfig';
+import { compileTemplate } from '../utils/handlebars';
+import { useTemplateAnswerContext } from '../store/hooks/useTemplateAnswerContext';
+import { getAssetStatus, useAssetStatus } from '../store/hooks/useAssetStatus';
+import { useCurrentIdentifier } from '../routes/utils';
+import { useAsyncResource } from '../store/hooks/useAsyncResource';
 
 export function MarkdownController({ currentConfig }: { currentConfig: MarkdownComponent; }) {
-  const [foundAsset, setFoundAsset] = useState(true);
-  const [importedText, setImportedText] = useState<string>('');
+  const studyConfig = useStudyConfig();
+  const templateData = useTemplateAnswerContext();
+  const templatedPath = useMemo(
+    () => (templateData ? compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true, data: templateData }) : undefined),
+    [currentConfig.path, currentConfig.parameters, templateData],
+  );
 
-  const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    async function fetchImage() {
-      const asset = await getStaticAssetByPath(`${PREFIX}${currentConfig.path}`);
-      if (asset !== undefined) {
-        setImportedText(asset);
-      } else {
-        setFoundAsset(false);
-      }
-      setLoading(false);
-    }
+  const identifier = useCurrentIdentifier();
+  const requestKey = templatedPath === undefined ? undefined : `${identifier}:${templatedPath}`;
+  const loadMarkdown = useCallback(async () => {
+    if (templatedPath === undefined) return undefined;
+    return getStaticAssetByPath(templatedPath.startsWith('http') ? templatedPath : `${PREFIX}${templatedPath}`);
+  }, [templatedPath]);
+  const { status, value: importedText = '' } = useAsyncResource(requestKey, loadMarkdown);
+  const assetStatus = getAssetStatus(status);
+  useAssetStatus(assetStatus);
 
-    fetchImage();
-  }, [currentConfig.path]);
+  const renderedText = useMemo(
+    () => (templateData ? compileTemplate(importedText, currentConfig.parameters ?? {}, { data: templateData }) : ''),
+    [importedText, currentConfig.parameters, templateData],
+  );
 
-  return loading || foundAsset
-    ? <ReactMarkdownWrapper text={importedText} />
-    : <ResourceNotFound path={currentConfig.path} />;
+  if (templatedPath === undefined) {
+    return null;
+  }
+
+  if (status === 'loading') {
+    return <ReactMarkdownWrapper text="" />;
+  }
+
+  return status === 'success'
+    ? <ReactMarkdownWrapper text={renderedText} />
+    : <ResourceNotFound email={studyConfig.uiConfig.contactEmail} path={templatedPath} />;
 }

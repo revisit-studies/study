@@ -1,5 +1,5 @@
 /* eslint-disable no-await-in-loop */
-import { expect, Page } from '@playwright/test';
+import { expect, Locator, Page } from '@playwright/test';
 
 const UPLOADING_MESSAGE = 'Please wait while your answers are uploaded.';
 const DEFAULT_COMPLETED_MESSAGE = 'Thank you for completing the study. You may close this window now.';
@@ -92,6 +92,9 @@ export async function openStudyFromLanding(
 
   const matchers = Array.isArray(cardTitle) ? cardTitle : [cardTitle];
   const section = page.getByLabel(sectionLabel);
+  if (!(await section.isVisible().catch(() => false))) {
+    await page.getByRole('tab', { name: sectionLabel, exact: true }).click();
+  }
   await expect(section).toBeVisible();
 
   for (const matcher of matchers) {
@@ -148,18 +151,82 @@ export async function nextClick(page: Page, timeout = 10000) {
   throw new Error('Timed out clicking Next button');
 }
 
+export async function moveRankingItem(
+  page: Page,
+  item: string,
+  from: 'available' | 'selected',
+  to: 'available' | 'selected',
+) {
+  const papers = page.locator('div.mantine-Paper-root[data-with-border="true"]');
+  const zone = (which: 'available' | 'selected'): Locator => (which === 'available'
+    ? papers.filter({ has: page.getByText('Available Items', { exact: true }) }).first()
+    : papers.filter({ has: page.getByText('HIGH', { exact: true }) })
+      .filter({ has: page.getByText('LOW', { exact: true }) }).first());
+
+  const sourceZone = zone(from);
+  const targetZone = zone(to);
+  const itemIn = (z: Locator) => z.getByText(item, { exact: true });
+
+  await expect(async () => {
+    const source = itemIn(sourceZone).first()
+      .locator('xpath=ancestor::div[contains(@class,"mantine-Paper-root")][1]');
+    // For "available" the drop target is the "Available Items" text itself.
+    const target = to === 'available'
+      ? targetZone.getByText('Available Items', { exact: true })
+      : targetZone;
+
+    await source.scrollIntoViewIfNeeded();
+    await expect(source).toBeVisible({ timeout: 2000 });
+    await expect(target).toBeVisible({ timeout: 2000 });
+
+    const sourceBox = await source.boundingBox();
+    const targetBox = await target.boundingBox();
+    if (!sourceBox || !targetBox) throw new Error(`Could not measure ${item} or the ${to} target`);
+
+    const sourceX = sourceBox.x + sourceBox.width / 2;
+    const sourceY = sourceBox.y + sourceBox.height / 2;
+    const targetX = targetBox.x + targetBox.width / 2;
+    const targetY = to === 'available'
+      ? targetBox.y + targetBox.height / 2
+      : targetBox.y + Math.max(32, Math.min(targetBox.height - 8, targetBox.height * 0.65));
+
+    await page.mouse.move(sourceX, sourceY);
+    await page.mouse.down();
+    await page.mouse.move(sourceX + 8, sourceY + 8);
+    await page.mouse.move(targetX, targetY, { steps: 12 });
+    await page.mouse.up();
+
+    await expect(itemIn(targetZone)).toBeVisible({ timeout: 2000 });
+    await expect(itemIn(sourceZone)).toHaveCount(0, { timeout: 2000 });
+  }).toPass({ timeout: 15000 });
+
+  await page.waitForTimeout(250);
+}
+
 export async function waitForStudyEndMessage(page: Page, timeout = 30000) {
   const uploading = page.getByText(UPLOADING_MESSAGE, { exact: true });
   const defaultCompleted = page.getByText(DEFAULT_COMPLETED_MESSAGE, { exact: true });
   const prolificCompleted = page.getByText(PROLIFIC_COMPLETED_MESSAGE);
+  const bodyContains = async (message: string | RegExp) => {
+    const body = await page.locator('body').innerText().catch(() => '');
+    return typeof message === 'string' ? body.includes(message) : message.test(body);
+  };
+  const isDefaultCompleted = async () => (
+    await defaultCompleted.isVisible().catch(() => false)
+    || await bodyContains(DEFAULT_COMPLETED_MESSAGE)
+  );
+  const isProlificCompleted = async () => (
+    await prolificCompleted.isVisible().catch(() => false)
+    || await bodyContains(PROLIFIC_COMPLETED_MESSAGE)
+  );
 
   await expect.poll(async () => (
-    (await defaultCompleted.isVisible())
-    || (await prolificCompleted.isVisible())
+    (await isDefaultCompleted())
+    || (await isProlificCompleted())
     || (await uploading.isVisible())
   ), { timeout }).toBe(true);
 
-  if (!(await defaultCompleted.isVisible()) && !(await prolificCompleted.isVisible())) {
+  if (!(await isDefaultCompleted()) && !(await isProlificCompleted())) {
     await expect(defaultCompleted.or(prolificCompleted)).toBeVisible({ timeout });
   }
 }
@@ -230,6 +297,7 @@ export async function seekReplay(
   startTime: number,
   endTime: number,
   targetTime: number,
+  waitForAppliedState?: () => Promise<boolean>,
 ) {
   const timer = page.getByTestId('replay-timer');
   await expect(timer).toBeVisible();
@@ -239,7 +307,29 @@ export async function seekReplay(
   }
 
   const duration = endTime - startTime;
-  const fraction = duration === 0 ? 0 : (targetTime - startTime) / duration;
+  const targetOffset = duration === 0
+    ? 0
+    : Math.min(duration, Math.max(0, targetTime - startTime));
+  const fraction = duration === 0 ? 0 : targetOffset / duration;
   const x = 20 + Math.min(1, Math.max(0, fraction)) * (timerBounds.width - 40);
   await timer.click({ position: { x, y: timerBounds.height / 2 } });
+
+  try {
+    await expect.poll(async () => {
+      const replayTime = Number(await timer.getAttribute('data-replay-time'));
+      return Number.isFinite(replayTime) && Math.abs(replayTime - (targetOffset / 1000)) <= 0.25;
+    }, { timeout: 15000 }).toBe(true);
+  } catch (error) {
+    const replayTime = await timer.getAttribute('data-replay-time');
+    const reason = error instanceof Error ? error.message : String(error);
+    throw new Error([
+      `Replay timer did not settle near ${targetOffset / 1000}s after seeking.`,
+      `Actual replay time: ${replayTime ?? '<none>'}s`,
+      reason,
+    ].join('\n'));
+  }
+
+  if (waitForAppliedState) {
+    await expect.poll(waitForAppliedState, { timeout: 15000 }).toBe(true);
+  }
 }

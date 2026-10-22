@@ -2,13 +2,14 @@ import {
   Group, Input, Radio, rem, Text,
 } from '@mantine/core';
 import { useState, useMemo } from 'react';
+import ClearSelectionButton from './ClearSelectionButton';
 import { ParsedStringOption, RadioResponse } from '../../parser/types';
 import { HorizontalHandler } from './HorizontalHandler';
 import classes from './css/Radio.module.css';
 import inputClasses from './css/Input.module.css';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { InputLabel } from './InputLabel';
-import { OptionLabel } from './OptionLabel';
+import { OptionLabel, useOptionTextTemplate } from './OptionLabel';
 import { parseStringOptions } from '../../utils/stringOptions';
 
 export function RadioInput({
@@ -42,6 +43,9 @@ export function RadioInput({
     options,
     labelLocation,
   } = response;
+  const template = useOptionTextTemplate();
+  const renderedLeftLabel = leftLabel && template(leftLabel, true);
+  const renderedRightLabel = rightLabel && template(rightLabel, true);
 
   const storedAnswer = useStoredAnswer();
   const optionOrders: Record<string, ParsedStringOption[]> = useMemo(() => storedAnswer?.optionOrders ?? {}, [storedAnswer]);
@@ -57,22 +61,34 @@ export function RadioInput({
   return (
     <Radio.Group
       name={`radioInput${response.id}`}
-      label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
+      label={prompt.length > 0 && (
+        <InputLabel
+          prompt={prompt}
+          required={required}
+          index={index}
+          enumerateQuestions={enumerateQuestions}
+          infoText={infoText}
+          clearSelectionButton={(
+            <ClearSelectionButton onClick={() => answer?.onChange?.('')} disabled={disabled} visible={!!answer?.value} />
+          )}
+        />
+      )}
       description={secondaryText}
       key={response.id}
-      {...answer}
+      value={answer?.value}
+      onChange={() => { }}
       error={error}
       errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
       style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
     >
-      {horizontal && label === 'above' && (leftLabel || rightLabel) && (
+      {horizontal && label === 'above' && (renderedLeftLabel || renderedRightLabel) && (
         <Group gap="lg" justify="space-between" mt={0}>
-          {leftLabel && <Text>{leftLabel}</Text>}
-          {rightLabel && <Text>{rightLabel}</Text>}
+          {renderedLeftLabel && <Text>{renderedLeftLabel}</Text>}
+          {renderedRightLabel && <Text>{renderedRightLabel}</Text>}
         </Group>
       )}
       <Group gap="lg" align="flex-end" mt={horizontal ? 0 : 'sm'}>
-        {horizontal && label === 'inline' && leftLabel && <Text>{leftLabel}</Text>}
+        {horizontal && label === 'inline' && renderedLeftLabel && <Text>{renderedLeftLabel}</Text>}
         <HorizontalHandler horizontal={!!horizontal} style={{ flexGrow: 1 }}>
           {orderedOptions.map((radio) => (
             <div
@@ -93,7 +109,17 @@ export function RadioInput({
                 styles={{
                   label: { display: !horizontal ? 'initial' : 'none' },
                 }}
-                onChange={() => setOtherSelected(false)}
+                onChange={() => { }}
+                onClick={() => {
+                  const current = answer?.value;
+                  const cb = answer?.onChange;
+                  if (current === radio.value) {
+                    cb?.('');
+                  } else {
+                    cb?.(radio.value);
+                  }
+                  setOtherSelected(false);
+                }}
                 classNames={{ radio: classes.fixDisabled, label: classes.fixDisabledLabel, icon: classes.fixDisabledIcon }}
               />
             </div>
@@ -113,7 +139,17 @@ export function RadioInput({
                 disabled={disabled}
                 value="other"
                 checked={otherSelected}
-                onClick={(event) => setOtherSelected(event.currentTarget.checked)}
+                onChange={() => { }}
+                onClick={() => {
+                  const cb = answer?.onChange;
+                  if (answer?.value === 'other') {
+                    cb?.('');
+                    setOtherSelected(false);
+                  } else {
+                    cb?.('other');
+                    setOtherSelected(true);
+                  }
+                }}
                 label={!horizontal && (
                   <Input
                     mt={-8}
@@ -129,7 +165,7 @@ export function RadioInput({
             </div>
           )}
         </HorizontalHandler>
-        {horizontal && label === 'inline' && rightLabel && <Text>{rightLabel}</Text>}
+        {horizontal && label === 'inline' && renderedRightLabel && <Text>{renderedRightLabel}</Text>}
       </Group>
       {horizontal && withOther && (
         <Input
@@ -141,10 +177,10 @@ export function RadioInput({
           classNames={{ input: inputClasses.fixDisabled }}
         />
       )}
-      {horizontal && label === 'below' && (leftLabel || rightLabel) && (
+      {horizontal && label === 'below' && (renderedLeftLabel || renderedRightLabel) && (
         <Group gap="lg" justify="space-between" mt="sm">
-          {leftLabel && <Text>{leftLabel}</Text>}
-          {rightLabel && <Text>{rightLabel}</Text>}
+          {renderedLeftLabel && <Text>{renderedLeftLabel}</Text>}
+          {renderedRightLabel && <Text>{renderedRightLabel}</Text>}
         </Group>
       )}
     </Radio.Group>

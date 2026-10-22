@@ -45,6 +45,20 @@ export type SequenceAssignment = {
   isDynamic: boolean; // Whether the study contains dynamic blocks
   stage: string; // The stage of the participant in the study
   conditions?: string[]; // The study condition(s) assigned to this participant.
+  sequenceIndex?: number; // Stable zero-based Latin-square slot for bounded assignment lookup.
+  reusableSequenceIndex?: number; // New vacancy created when a participant rejects a previously reused slot.
+  creationIndex?: number; // Stable zero-based participant creation order.
+};
+
+export type SequenceAllocator = {
+  nextSequenceIndex: number;
+  nextCreationIndex: number;
+  availableSequenceIndexes?: number[]; // Unused replacement vacancies returned by undoing rejection.
+};
+
+export type SequenceAssignmentAllocation = {
+  sequenceIndex: number;
+  creationIndex: number;
 };
 
 export type REVISIT_MODE = 'dataCollectionEnabled' | 'developmentModeEnabled' | 'dataSharingEnabled';
@@ -70,7 +84,7 @@ export interface StageInfo {
   color: string;
 }
 
-interface StageData {
+export interface StageData {
   currentStage: StageInfo;
   allStages: StageInfo[];
 }
@@ -78,6 +92,11 @@ interface StageData {
 type ModesAndStageData = {
   modes: Record<REVISIT_MODE, boolean>;
   stageData: StageData;
+};
+
+export type ParticipantSessionBootstrapData = {
+  modesDocument: Record<REVISIT_MODE, boolean> & { stage?: StageData };
+  sequenceArray: Sequence[];
 };
 
 export interface ConditionData {
@@ -263,8 +282,18 @@ export abstract class StorageEngine {
   // Gets all sequence assignments for the given studyId. The sequence assignments are sorted ascending by timestamp.
   public abstract getAllSequenceAssignments(studyId: string): Promise<SequenceAssignment[]>;
 
+  // Reads one participant's assignment without loading every participant in the study.
+  public abstract getSequenceAssignment(studyId: string, participantId: string): Promise<SequenceAssignment | null>;
+
   // Creates a sequence assignment for the given participantId and sequenceAssignment. Cloud storage engines should use the realtime database to create the sequence assignment and should use the server to prevent race conditions (i.e. using server timestamps).
   protected abstract _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment, withServerTimestamp: boolean): Promise<void>;
+
+  // Atomically reserves a stable sequence slot and creation index and persists the assignment.
+  // Implementations must use a transaction, compare-and-swap counter, or equivalent bounded operation.
+  protected abstract _allocateSequenceAssignment(
+    participantId: string,
+    sequenceAssignment: SequenceAssignment,
+  ): Promise<SequenceAssignmentAllocation>;
 
   // Updates specific top-level fields in an existing sequence assignment without modifying timestamp fields.
   // This operation is a shallow patch (no deep merge for nested objects).
@@ -298,8 +327,19 @@ export abstract class StorageEngine {
   // Gets the modes for the given studyId. The modes are stored as a record with the mode name as the key and a boolean value indicating whether the mode is enabled or not.
   abstract getModes(studyId: string): Promise<Record<REVISIT_MODE, boolean> & { stage?: StageData }>;
 
+  // Read modes for an access decision without creating a missing Supabase record.
+  async getAccessModes(studyId: string): Promise<(Record<REVISIT_MODE, boolean> & { stage?: StageData }) | null> {
+    return this.getModes(studyId);
+  }
+
   // Sets the mode for the given studyId. The mode is stored as a record with the mode name as the key and a boolean value indicating whether the mode is enabled or not.
   abstract setMode(studyId: string, mode: REVISIT_MODE, value: boolean): Promise<void>;
+
+  // Gets the landing-page visibility for the given studyId. This method is used to check whether the study is hidden from the landing page or not.
+  abstract getStudyHiddenFromLandingPage(studyId: string): Promise<boolean>;
+
+  // Sets the landing-page visibility for the given studyId. This method is used to control whether the study is hidden from the landing page or not.
+  abstract setStudyHiddenFromLandingPage(studyId: string, hidden: boolean): Promise<void>;
 
   // Protected helper: Sets the full modes document (including stage data and mode flags)
   protected abstract _setModesDocument(studyId: string, modesDocument: Record<REVISIT_MODE, boolean> & { stage?: StageData }): Promise<void>;
@@ -309,6 +349,9 @@ export abstract class StorageEngine {
 
   // Gets the screen recording URL for the given task and participantId. This method is used to fetch the screen recording video file from the storage engine.
   protected abstract _getScreenRecordingUrl(task: string, participantId?: string): Promise<string | null>;
+
+  // Gets the webcam recording URL for the given task and participantId.
+  protected abstract _getWebcamRecordingUrl(task: string, participantId?: string): Promise<string | null>;
 
   // Gets the transcript URL for the given task and participantId. (Optional - not all storage engines need to implement this, only if they generate transcripts).
   protected _getTranscriptUrl?(task: string, participantId?: string): Promise<string | null>;
@@ -426,8 +469,11 @@ export abstract class StorageEngine {
     }
   }
 
-  private async getModesAndStageData(studyId: string): Promise<ModesAndStageData> {
-    const modesDoc = await this.getModes(studyId);
+  private async getModesAndStageData(
+    studyId: string,
+    existingModesDocument?: Record<REVISIT_MODE, boolean> & { stage?: StageData },
+  ): Promise<ModesAndStageData> {
+    const modesDoc = existingModesDocument ?? await this.getModes(studyId);
     const { stage, ...modeValues } = modesDoc;
 
     if (stage) {
@@ -772,10 +818,7 @@ export abstract class StorageEngine {
 
     // Skip saving config if the active config is already saved in storage
     if (currentConfigHash === configHash) {
-      const storedConfig = await this._getFromStorage(`configs/${configHash}`, 'config');
-      if (storedConfig && Object.keys(storedConfig).length > 0) {
-        return;
-      }
+      return;
     }
 
     // Push the config to storage and cache it, since it won't change
@@ -867,97 +910,56 @@ export abstract class StorageEngine {
   // This function is one of the most critical functions in the storage engine.
   // It uses the notion of sequence intents and assignments to determine the current sequence for the participant.
   // It handles rejected participants and allows for reusing a rejected participant's sequence.
-  protected async _getSequence(conditions?: string[], bootstrapData?: ModesAndStageData) {
+  protected async _getSequence(
+    sequenceArray: Sequence[],
+    conditions?: string[],
+    bootstrapData?: ModesAndStageData,
+  ) {
     if (!this.currentParticipantId) {
       throw new Error('Participant not initialized');
     }
     if (this.studyId === undefined) {
       throw new Error('Study ID is not set');
     }
-    let sequenceAssignments = await this.getAllSequenceAssignments(this.studyId);
-
     const { modes, stageData } = bootstrapData ?? await this.getModesAndStageData(this.studyId);
     const currentStage = stageData.currentStage.stageName;
 
-    // Find all rejected documents
-    const rejectedDocs = sequenceAssignments
-      .filter((doc) => doc.rejected && !doc.claimed);
-    if (rejectedDocs.length > 0) {
-      const firstReject = rejectedDocs[0];
-      const firstRejectTime = firstReject.timestamp;
-      if (modes.dataCollectionEnabled) {
-        // Make the sequence assignment document for the participant
-        const participantSequenceAssignmentData: SequenceAssignment = {
-          participantId: this.currentParticipantId,
-          timestamp: firstRejectTime, // Use the timestamp of the first reject
-          rejected: false,
-          claimed: false,
-          claimedParticipantId: firstReject.participantId,
-          completed: null,
-          createdTime: new Date().getTime(), // Placeholder, will be set to server timestamp in cloud engines
-          total: 0,
-          answered: [],
-          isDynamic: false,
-          stage: currentStage,
-          ...(conditions ? { conditions } : {}),
-        };
-        // Mark the first reject as claimed
-        await this._claimSequenceAssignment(firstReject.participantId, firstReject);
-        // Set the participant's sequence assignment document
-        await this._createSequenceAssignment(this.currentParticipantId, participantSequenceAssignmentData, false);
-      }
-    } else if (modes.dataCollectionEnabled) {
-      const timestamp = new Date().getTime();
-      const participantSequenceAssignmentData: SequenceAssignment = {
-        participantId: this.currentParticipantId,
-        timestamp, // Placeholder, will be set to server timestamp in cloud engines
-        rejected: false,
-        claimed: false,
-        completed: null,
-        createdTime: timestamp, // Placeholder, will be set to server timestamp in cloud engines
-        total: 0,
-        answered: [],
-        isDynamic: false,
-        stage: currentStage,
-        ...(conditions ? { conditions } : {}),
-      };
-      await this._createSequenceAssignment(this.currentParticipantId, participantSequenceAssignmentData, true);
-    }
-
-    // Query all the intents to get a sequence and find our position in the queue
-    sequenceAssignments = await this.getAllSequenceAssignments(this.studyId);
-
-    // Get the latin square
-    const sequenceArray = await this.getSequenceArray();
-    if (!sequenceArray) {
-      throw new Error('Latin square not initialized');
-    }
-
-    // Get the current row
-    const intentIndex = sequenceAssignments.filter((assignment) => !assignment.rejected).findIndex(
-      (assignment) => assignment.participantId === this.currentParticipantId,
-    ) % sequenceArray.length;
     if (sequenceArray.length === 0) {
       throw new Error('Something really bad happened with sequence assignment');
     }
-    // If index = -1, we probably have data collection disabled. Give a random assignment.
-    if (intentIndex === -1) {
+
+    if (!modes.dataCollectionEnabled) {
       return {
         currentRow: sequenceArray[Math.floor(Math.random() * sequenceArray.length)],
         creationIndex: 1,
       };
     }
-    const currentRow = sequenceArray[intentIndex];
+
+    const timestamp = Date.now();
+    const participantSequenceAssignmentData: SequenceAssignment = {
+      participantId: this.currentParticipantId,
+      timestamp,
+      rejected: false,
+      claimed: false,
+      completed: null,
+      createdTime: timestamp,
+      total: 0,
+      answered: [],
+      isDynamic: false,
+      stage: currentStage,
+      ...(conditions ? { conditions } : {}),
+    };
+    const allocation = await this._allocateSequenceAssignment(
+      this.currentParticipantId,
+      participantSequenceAssignmentData,
+    );
+    const currentRow = sequenceArray[allocation.sequenceIndex % sequenceArray.length];
 
     if (!currentRow) {
       throw new Error('Latin square is empty');
     }
 
-    const creationSorted = sequenceAssignments.sort((a, b) => a.createdTime - b.createdTime);
-
-    const creationIndex = creationSorted.findIndex((assignment) => assignment.participantId === this.currentParticipantId) + 1;
-
-    return { currentRow, creationIndex };
+    return { currentRow, creationIndex: allocation.creationIndex + 1 };
   }
 
   // Initializes or resumes a participant session for the given studyId. This will create a new participant data object if it does not exist, or update the existing one.
@@ -966,6 +968,7 @@ export abstract class StorageEngine {
     config: StudyConfig,
     metadata: ParticipantMetadata,
     urlParticipantId?: string,
+    bootstrapData?: ParticipantSessionBootstrapData,
   ) {
     await this.verifyStudyDatabase();
 
@@ -991,7 +994,10 @@ export abstract class StorageEngine {
       throw new Error('Study ID is not set');
     }
 
-    const { modes, stageData } = await this.getModesAndStageData(this.studyId);
+    const { modes, stageData } = await this.getModesAndStageData(
+      this.studyId,
+      bootstrapData?.modesDocument,
+    );
     const currentStage = stageData.currentStage.stageName;
 
     if (isParticipantData(participant)) {
@@ -1004,7 +1010,15 @@ export abstract class StorageEngine {
     const participantConfigHash = await hash(JSON.stringify(config));
     const parsedConditions = parseConditionParam(searchParams.condition);
     const conditions = parsedConditions.length > 0 ? parsedConditions : undefined;
-    const { currentRow, creationIndex } = await this._getSequence(conditions, { modes, stageData });
+    const sequenceArray = bootstrapData?.sequenceArray ?? await this.getSequenceArray();
+    if (!sequenceArray) {
+      throw new Error('Latin square not initialized');
+    }
+    const { currentRow, creationIndex } = await this._getSequence(
+      sequenceArray,
+      conditions,
+      { modes, stageData },
+    );
     this.participantData = {
       participantId: this.currentParticipantId,
       participantConfigHash,
@@ -1497,10 +1511,10 @@ export abstract class StorageEngine {
       throw new Error('Participant not initialized');
     }
 
-    const sequenceAssignments = await this.getAllSequenceAssignments(studyIdToUse);
-    const sequenceAssignment = sequenceAssignments.find(
-      (assignment) => assignment.participantId === participantIdToUse,
-    );
+    if (studyIdToUse !== this.studyId) {
+      await this.initializeStudyDb(studyIdToUse);
+    }
+    const sequenceAssignment = await this._getSequenceAssignment(participantIdToUse);
 
     return sequenceAssignment ? sequenceAssignment.completed !== null : false;
   }
@@ -1560,15 +1574,24 @@ export abstract class StorageEngine {
       return null;
     }
 
-    const asset = new Promise<string>((resolve) => {
+    const asset = new Promise<string>((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.responseType = 'blob';
       xhr.onload = () => {
         const blob = xhr.response;
-
-        const _url = URL.createObjectURL(blob);
-
-        resolve(_url);
+        try {
+          resolve(URL.createObjectURL(blob));
+        } finally {
+          if (url.startsWith('blob:')) {
+            URL.revokeObjectURL(url);
+          }
+        }
+      };
+      xhr.onerror = () => {
+        if (url.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
+        reject(new Error(`Failed to load asset: ${url}`));
       };
       xhr.open('GET', url);
       xhr.send();
@@ -1764,6 +1787,32 @@ export abstract class StorageEngine {
     });
   }
 
+  // Gets the webcam recording for a specific task and participantId.
+  async getWebcamRecording(
+    task: string,
+    participantId: string,
+  ) {
+    const url = await this._getWebcamRecordingUrl(task, participantId);
+    return this.getAsset(url);
+  }
+
+  // Saves the webcam video stream as a separate per-task asset.
+  async saveWebcamRecording(
+    blob: Blob,
+    taskName: string,
+  ) {
+    return this.trackAssetOperation(`webcamRecording/${taskName}`, async () => {
+      if (this.studyId === undefined) {
+        throw new Error('Study ID is not set');
+      }
+      const modes = await this.getModes(this.studyId);
+      if (!modes.dataCollectionEnabled) {
+        throw new Error('Data collection is disabled for this study');
+      }
+      return this.saveAsset('webcamRecording', blob, taskName);
+    });
+  }
+
   // Gets the sequence array from the storage engine.
   async getSequenceArray() {
     await this.verifyStudyDatabase();
@@ -1846,6 +1895,7 @@ export abstract class StorageEngine {
       await this._copyDirectory(`${sourceName}/participants`, `${targetName}/participants`);
       await this._copyDirectory(`${sourceName}/audio`, `${targetName}/audio`);
       await this._copyDirectory(`${sourceName}/screenRecording`, `${targetName}/screenRecording`);
+      await this._copyDirectory(`${sourceName}/webcamRecording`, `${targetName}/webcamRecording`);
       await this._copyDirectory(`${sourceName}/provenance`, `${targetName}/provenance`);
       await this._copyDirectory(sourceName, targetName);
       await this._copyRealtimeData(sourceName, targetName);
@@ -1894,6 +1944,7 @@ export abstract class StorageEngine {
         await this._deleteDirectory(`${deletionTarget}/participants`);
         await this._deleteDirectory(`${deletionTarget}/audio`);
         await this._deleteDirectory(`${deletionTarget}/screenRecording`);
+        await this._deleteDirectory(`${deletionTarget}/webcamRecording`);
         await this._deleteDirectory(`${deletionTarget}/provenance`);
         await this._deleteDirectory(deletionTarget);
         await this._deleteRealtimeData(deletionTarget);
@@ -1963,6 +2014,10 @@ export abstract class StorageEngine {
       await this._copyDirectory(
         `${snapshotName}/screenRecording`,
         `${originalName}/screenRecording`,
+      );
+      await this._copyDirectory(
+        `${snapshotName}/webcamRecording`,
+        `${originalName}/webcamRecording`,
       );
       await this._copyDirectory(
         `${snapshotName}/provenance`,
@@ -2040,6 +2095,30 @@ export abstract class CloudStorageEngine extends StorageEngine {
 
   protected userManagementData: UserManagementData = {};
 
+  abstract getStorageDisconnected(studyId: string): Promise<boolean>;
+
+  protected abstract _setStorageDisconnected(studyId: string, disconnected: boolean): Promise<void>;
+
+  protected abstract getAuthenticatedUser(): Promise<StoredUser | null>;
+
+  async isStorageAdmin() {
+    this.userManagementData = {};
+    const auth = await this.getUserManagementData('authentication');
+    const signedInUser = await this.getAuthenticatedUser();
+    if (!auth?.isEnabled || !signedInUser?.email || !signedInUser.uid) return false;
+    const adminUsers = await this.getUserManagementData('adminUsers');
+    return Boolean(adminUsers?.adminUsersList.some((admin) => admin.email === signedInUser.email
+      && (admin.uid === null || admin.uid === signedInUser.uid)));
+  }
+
+  async setStorageDisconnected(studyId: string, disconnected: boolean) {
+    if (!await this.isStorageAdmin()) {
+      throw new Error('A verified administrator must sign in to change storage.');
+    }
+
+    await this._setStorageDisconnected(studyId, disconnected);
+  }
+
   protected shouldDeferInitialParticipantDataPersistence() {
     return true;
   }
@@ -2114,7 +2193,7 @@ export abstract class CloudStorageEngine extends StorageEngine {
           return false;
         }
       }
-      return true;
+      return this.engine !== 'supabase' || authInfo?.isEnabled === false;
     }
     return false;
   }

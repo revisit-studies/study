@@ -20,6 +20,8 @@ export interface ParticipantMetadata {
   language: string;
   /** The IP address of the participant. */
   ip: string | null;
+  /** The effective color mode chosen when participation starts, retained for resume and replay. Absent in older data. */
+  colorMode?: 'light' | 'dark';
 }
 
 export type ProvenanceTraversalEvent = {
@@ -43,14 +45,24 @@ type MouseMoveEvent = [number, 'mousemove', number[]];
 type ResizeEvent = [number, 'resize', number[]];
 type ScrollEvent = [number, 'scroll', number[]];
 type VisibilityEvent = [number, 'visibility', string];
-export type EventType = MouseMoveEvent | MouseDownEvent | MouseUpEvent | KeydownEvent | KeyupEvent | ScrollEvent | FocusEvent | InputEvent | ResizeEvent | VisibilityEvent;
+// Gamepad input is polled rather than delivered as DOM events, so these timestamps
+// mark when the poll observed the change, within one animation frame of the press.
+type GamepadConnectionEvent = [number, 'gamepadconnection', string];
+type GamepadButtonDownEvent = [number, 'gamepadbuttondown', string];
+type GamepadButtonUpEvent = [number, 'gamepadbuttonup', string];
+type GamepadAxisEvent = [number, 'gamepadaxis', number[]];
+export type EventType = MouseMoveEvent | MouseDownEvent | MouseUpEvent | KeydownEvent | KeyupEvent | ScrollEvent | FocusEvent | InputEvent | ResizeEvent | VisibilityEvent | GamepadConnectionEvent | GamepadButtonDownEvent | GamepadButtonUpEvent | GamepadAxisEvent;
 
 export type ValidationStatus = {
   valid: boolean;
   values: object;
   reason?: StimulusIssueReason;
   message?: string;
+  /** Whether this location has initialized its form values, so answers cleared by visibleIf are not restored from saved answers or defaults. */
+  initialized?: boolean;
 }
+export type AssetStatus = 'loading' | 'ready' | 'error';
+
 export type TrialValidation = Record<
   string,
   {
@@ -58,6 +70,7 @@ export type TrialValidation = Record<
     belowStimulus: ValidationStatus;
     sidebar: ValidationStatus;
     stimulus: ValidationStatus;
+    assetStatus?: AssetStatus;
     provenanceGraph: StoredProvenance;
   }
 >;
@@ -90,14 +103,14 @@ export interface StoredAnswer {
   componentName: string;
   /** The order of the trial in the sequence. */
   trialOrder: string;
-  /** Object whose keys are the "id"s in the Response list of the component in the StudyConfig and whose value is a list of incorrect inputted values from the participant. Only relevant for trials with `provideFeedback` and correct answers enabled. */
+  /** Object whose keys are the "id"s in the Response list of the component in the StudyConfig and whose value is a list of incorrect inputted values from the participant. Only relevant for trials with `provideFeedback` enabled or custom answer-level feedback. */
   incorrectAnswers: Record<string, { id: string, value: unknown[] }>;
   /** Time that the user began interacting with the component in epoch milliseconds. */
   startTime: number;
   /** Time that the user ended interaction with the component in epoch milliseconds. */
   endTime: number;
   /**
-   * A list containing the time (in epoch milliseconds), the action (focus, input, keypress, mousedown, mouseup, mousemove, resize, scroll or visibility), and then either a coordinate pertaining to where the event took place on the screen or string related to such event. Below is an example of the windowEvents list.
+   * A list containing the time (in epoch milliseconds), the action (focus, input, keypress, mousedown, mouseup, mousemove, resize, scroll, visibility, gamepadconnection, gamepadbuttondown, gamepadbuttonup or gamepadaxis), and then either a coordinate pertaining to where the event took place on the screen or string related to such event. Below is an example of the windowEvents list.
    *
    * ```json
    * "windowEvents": [
@@ -149,7 +162,7 @@ export interface StoredAnswer {
 }
 
 /**
- * The CheckAnswerState object is a data structure describing the participant's interaction with an individual component when they click "Check Answer". It is the data structure used as values of the `checkAnswer` object of [StoreState](../StoreState). The general structure for this is below:
+ * The CheckAnswerState object is a data structure describing the participant's interaction with an individual component when they click "Check Answer" or "Next". It is the data structure used as values of the `checkAnswer` object of [StoreState](../StoreState). The general structure for this is below:
  *
  * ```json
  * {
@@ -170,6 +183,8 @@ export interface CheckAnswerState {
   correct: boolean;
   /** The correctness of each response at the last check. Keys are the "id"s in the [Response](../BaseResponse) list of the component in your [StudyConfiguration](../StudyConfig); values indicate whether that response was correct. */
   responses: Record<string, boolean>;
+  /** Answer values captured at the last check, used to keep displayed feedback stable while responses are edited. */
+  checkedAnswers?: StoredAnswer['answer'];
 }
 
 export interface JumpFunctionParameters<T> {
@@ -240,6 +255,7 @@ export interface Sequence {
   orderPath: string;
   order: ComponentBlock['order'] | 'dynamic';
   components: (string | Sequence)[];
+  parameters?: Record<string, unknown>;
   skip: SkipConditions;
   interruptions?: InterruptionBlock[];
   conditional?: boolean;
@@ -248,6 +264,7 @@ export interface Sequence {
 export type FormElementProvenance = {
   form: StoredAnswer['answer'];
   showResponseErrors?: boolean;
+  interactionSource?: 'keyboard' | 'click';
 };
 export type AlertModalState = { show: boolean, message: string, title: string };
 export interface StoreState {
@@ -269,6 +286,7 @@ export interface StoreState {
   analysisIsPlaying: boolean;
   analysisHasAudio: boolean;
   analysisHasScreenRecording: boolean;
+  analysisHasWebcamRecording: boolean;
   analysisCanPlayScreenRecording: boolean;
   provenanceJumpTime: number;
   analysisHasProvenance: boolean;

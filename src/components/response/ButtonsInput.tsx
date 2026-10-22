@@ -1,13 +1,88 @@
 import {
-  Flex, FocusTrap, Radio,
+  Flex, Kbd, Radio,
 } from '@mantine/core';
-import { useMemo } from 'react';
+import {
+  IconArrowDown, IconArrowLeft, IconArrowRight, IconArrowUp,
+} from '@tabler/icons-react';
+import React, { useMemo, useRef } from 'react';
+import ClearSelectionButton from './ClearSelectionButton';
 import { ButtonsResponse, ParsedStringOption } from '../../parser/types';
 import classes from './css/ButtonsInput.module.css';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { InputLabel } from './InputLabel';
 import { OptionLabel } from './OptionLabel';
 import { parseStringOptions } from '../../utils/stringOptions';
+import { KeyMapper } from './KeyMapper';
+
+const renderSymbol = (symbol: string) => (
+  <span
+    style={{
+      fontSize: '1.4em',
+      verticalAlign: '-0.09em',
+    }}
+  >
+    {symbol}
+  </span>
+);
+const renderArrow = (Icon: typeof IconArrowLeft) => (
+  <Icon size={18} stroke={2.5} style={{ verticalAlign: 'middle' }} />
+);
+
+function formatKeyForDisplay(key: string): React.ReactNode {
+  const k = key.toLowerCase().trim();
+  if (k.includes('+')) {
+    return k
+      .split('+')
+      .map((part, index, array) => (
+        <React.Fragment key={index}>
+          {formatKeyForDisplay(part)}
+          {index < array.length - 1 && '+'}
+        </React.Fragment>
+      ));
+  }
+
+  switch (k) {
+    case 'arrowleft':
+      return renderArrow(IconArrowLeft);
+    case 'arrowright':
+      return renderArrow(IconArrowRight);
+    case 'arrowup':
+      return renderArrow(IconArrowUp);
+    case 'arrowdown':
+      return renderArrow(IconArrowDown);
+    case 'enter':
+    case 'return':
+      return renderSymbol('↵');
+    case 'backspace':
+      return renderSymbol('⌫');
+    case 'delete':
+    case 'del':
+      return renderSymbol('⌦');
+    case 'escape':
+    case 'esc':
+      return 'Esc';
+    case 'tab':
+      return renderSymbol('⇥');
+    case 'space':
+      return renderSymbol('⎵');
+    case 'capslock':
+    case 'caps':
+      return renderSymbol('⇪');
+    case 'shift':
+      return renderSymbol('⇧');
+    case 'control':
+    case 'ctrl':
+      return 'Ctrl';
+    case 'alt':
+      return 'Alt';
+    case 'meta':
+    case 'cmd':
+    case 'command':
+      return renderSymbol('⌘');
+    default:
+      return key.toUpperCase();
+  }
+}
 
 export function ButtonsInput({
   response,
@@ -19,17 +94,19 @@ export function ButtonsInput({
 }: {
   response: ButtonsResponse;
   disabled: boolean;
-  answer: { value?: string };
+  answer: { value?: string; onChange?: (value: string, source?: 'keyboard' | 'click') => void };
   error?: string | null;
   index: number;
   enumerateQuestions: boolean;
 }) {
+  const optionRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const {
     prompt,
     required,
     secondaryText,
     options,
     infoText,
+    hideKeyVisual = false,
   } = response;
 
   const storedAnswer = useStoredAnswer();
@@ -40,33 +117,124 @@ export function ButtonsInput({
     [optionOrders, options, response.id],
   );
 
+  const handleValueChange = (value: string, source: 'keyboard' | 'click' = 'click') => {
+    answer?.onChange?.(value, source);
+  };
+
+  const startArrowNavigation = () => {
+    const selectedOption = orderedOptions.find((option) => option.value === answer?.value);
+    const optionToFocus = selectedOption ?? orderedOptions[0];
+    optionRefs.current[optionToFocus.value]?.focus();
+
+    if (!selectedOption) {
+      handleValueChange(optionToFocus.value, 'keyboard');
+    }
+  };
+
   return (
-    <FocusTrap>
-      <Radio.Group
-        name={`radioInput${response.id}`}
-        label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
-        description={secondaryText}
-        key={response.id}
-        {...answer}
-        error={error}
-        errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
-        style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
-      >
-        <Flex justify="space-between" align="center" gap="xl" mt="xs">
-          {orderedOptions.map((radio, idx) => (
+    <Radio.Group
+      name={`radioInput${response.id}`}
+      label={prompt.length > 0 && (
+        <InputLabel
+          prompt={prompt}
+          required={required}
+          index={index}
+          enumerateQuestions={enumerateQuestions}
+          infoText={infoText}
+          clearSelectionButton={(
+            <ClearSelectionButton onClick={() => handleValueChange('')} disabled={disabled} visible={!!answer?.value} />
+          )}
+        />
+      )}
+      description={secondaryText}
+      key={response.id}
+      value={answer?.value}
+      onChange={(value) => handleValueChange(value, 'click')}
+      error={error}
+      errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
+      style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
+    >
+      <KeyMapper
+        options={orderedOptions}
+        onSelect={(val, source) => handleValueChange(val, source ?? 'keyboard')}
+        onArrowNavigation={startArrowNavigation}
+        disabled={disabled}
+      />
+      <Flex justify="space-between" align="center" gap="xl" mt="xs" p="4px">
+        {orderedOptions.map((radio, idx) => {
+          const hasKeyVisual = !hideKeyVisual && Boolean(radio.key);
+
+          return (
             <Radio.Card
               key={`radio-${idx}`}
               value={radio.value}
               disabled={disabled}
-              ta="center"
+              ref={(node) => {
+                if (node) {
+                  optionRefs.current[radio.value] = node;
+                } else {
+                  delete optionRefs.current[radio.value];
+                }
+              }}
               className={classes.root}
-              p="xs"
+              style={{
+                overflow: 'hidden',
+                padding: 0,
+              }}
             >
-              <OptionLabel label={radio.label} infoText={radio.infoText} button />
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'stretch',
+                  minHeight: 'var(--response-button-min-height)',
+                }}
+              >
+                <Flex
+                  align="center"
+                  justify="center"
+                  gap="xs"
+                  style={{ flex: 1, padding: '6px 12px' }}
+                >
+                  <OptionLabel label={radio.label} infoText={radio.infoText} button fw={700} />
+                </Flex>
+
+                {hasKeyVisual && (
+                  <Flex
+                    align="center"
+                    justify="center"
+                    style={{
+                      flexShrink: 0,
+                      alignSelf: 'stretch',
+                    }}
+                  >
+                    <Kbd
+                      size="xs"
+                      aria-hidden="true"
+                      style={{
+                        // backgroundColor: 'transparent',
+                        color: 'inherit',
+                        boxShadow: 'none',
+                        border: 'none',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        padding: '0 12px',
+                        alignSelf: 'stretch',
+                        display: 'flex',
+                        alignItems: 'center',
+                        borderRadius: 0,
+                        borderLeft: '1px solid rgba(255, 255, 255, 0.25)',
+                        backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                      }}
+                    >
+                      {formatKeyForDisplay(radio.key as never)}
+                    </Kbd>
+                  </Flex>
+                )}
+              </div>
             </Radio.Card>
-          ))}
-        </Flex>
-      </Radio.Group>
-    </FocusTrap>
+          );
+        })}
+      </Flex>
+    </Radio.Group>
   );
 }

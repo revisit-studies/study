@@ -1,5 +1,6 @@
 import { Flex } from '@mantine/core';
 import { useRef, useEffect } from 'react';
+import { useStoreSelector } from '../../store/store';
 
 export function RecordingAudioWaveform({
   width = 60,
@@ -22,6 +23,8 @@ export function RecordingAudioWaveform({
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const animationFrameIdRef = useRef<number>(0);
   const mediaStreamRef = useRef<MediaStream | null>(null);
+  const modes = useStoreSelector((state) => state.modes);
+  const { dataCollectionEnabled } = modes;
 
   useEffect(() => {
     let lastTime = 0;
@@ -68,6 +71,10 @@ export function RecordingAudioWaveform({
     };
 
     const setupAudio = async () => {
+      if (!dataCollectionEnabled) {
+        return;
+      }
+
       const canvas = canvasRef.current;
 
       if (!canvas) {
@@ -128,7 +135,7 @@ export function RecordingAudioWaveform({
         audioContextRef.current.close();
       }
     };
-  }, [width, height, fps, fftSize, barColor, barWidth]);
+  }, [width, height, fps, fftSize, barColor, barWidth, dataCollectionEnabled]);
 
   return (
     <Flex>

@@ -127,7 +127,7 @@ export function DeviceWarning({
   return (
     <Modal opened onClose={() => {}} fullScreen withCloseButton={false}>
       <Stack align="center" justify="center">
-        <IconAlertTriangle size={64} color="orange" />
+        <IconAlertTriangle size={64} color="var(--mantine-color-orange-text)" />
         <Title order={3}>{warningTitle}</Title>
         {isRejected && (
           <Text size="md" ta="center" c="red">
@@ -147,8 +147,8 @@ export function DeviceWarning({
         <Flex wrap="wrap" justify="center">
           {!isBrowserAllowed && (
           <Card shadow="sm" padding="lg" radius="md" mx="md" my="md" withBorder w={400}>
-            <Card.Section bg="gray.3" mb="md" p="md" style={{ display: 'flex', justifyContent: 'center' }}>
-              <IconBrowser size={48} color="gray" />
+            <Card.Section bg="light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-5))" mb="md" p="md" style={{ display: 'flex', justifyContent: 'center' }}>
+              <IconBrowser size={48} color="var(--mantine-color-dimmed)" />
             </Card.Section>
             {browsers?.blockedMessage
               ? (
@@ -190,8 +190,8 @@ export function DeviceWarning({
 
           {!isDeviceAllowed && (
           <Card shadow="sm" padding="lg" radius="md" mx="md" my="md" withBorder w={400}>
-            <Card.Section bg="gray.3" mb="md" p="md" style={{ display: 'flex', justifyContent: 'center' }}>
-              <IconDevices size={48} color="gray" />
+            <Card.Section bg="light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-5))" mb="md" p="md" style={{ display: 'flex', justifyContent: 'center' }}>
+              <IconDevices size={48} color="var(--mantine-color-dimmed)" />
             </Card.Section>
             {devices?.blockedMessage
               ? (
@@ -230,8 +230,8 @@ export function DeviceWarning({
 
           {!isInputAllowed && (
           <Card shadow="sm" padding="lg" radius="md" mx="md" my="md" withBorder w={400}>
-            <Card.Section bg="gray.3" mb="md" p="md" style={{ display: 'flex', justifyContent: 'center' }}>
-              <IconHandClick size={48} color="gray" />
+            <Card.Section bg="light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-5))" mb="md" p="md" style={{ display: 'flex', justifyContent: 'center' }}>
+              <IconHandClick size={48} color="var(--mantine-color-dimmed)" />
             </Card.Section>
             {inputs?.blockedMessage
               ? (
@@ -270,8 +270,8 @@ export function DeviceWarning({
 
           {!isDisplayAllowed && (
             <Card shadow="sm" padding="lg" radius="md" mx="md" my="md" withBorder w={400}>
-              <Card.Section bg="gray.3" mb="md" p="md" style={{ display: 'flex', justifyContent: 'center' }}>
-                <IconDeviceDesktop size={48} color="gray" />
+              <Card.Section bg="light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-5))" mb="md" p="md" style={{ display: 'flex', justifyContent: 'center' }}>
+                <IconDeviceDesktop size={48} color="var(--mantine-color-dimmed)" />
               </Card.Section>
               {display?.blockedMessage
                 ? (

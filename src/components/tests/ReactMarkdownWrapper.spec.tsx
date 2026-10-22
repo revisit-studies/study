@@ -60,9 +60,11 @@ describe('ReactMarkdownWrapper', () => {
     expect(container.textContent).toContain('text');
   });
 
-  test('appends asterisk to required text', () => {
+  test('places asterisk before required text', () => {
     const { container } = render(<ReactMarkdownWrapper text="Required field" required />);
     expect(container.textContent).toContain('*');
+    expect(container.textContent.indexOf('*')).toBeLessThan(container.textContent.indexOf('Required'));
+    expect(container.querySelector('.required-asterisk')).not.toBeNull();
   });
 
   test('renders markdown with multiple headings', () => {

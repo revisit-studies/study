@@ -1,17 +1,27 @@
 import {
-  useCallback, useContext, useEffect, useMemo, useRef, useState,
+  useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState,
 } from 'react';
+import { useComputedColorScheme } from '@mantine/core';
 import { useDispatch } from 'react-redux';
 import { useCurrentComponent, useCurrentIdentifier } from '../routes/utils';
 import { useStoreDispatch, useStoreActions, useStoreSelector } from '../store/store';
 import { ParticipantData, WebsiteComponent } from '../parser/types';
-import { PREFIX as BASE_PREFIX } from '../utils/Prefix';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import { ReplayContext } from '../store/hooks/useReplay';
+import { compileTemplate } from '../utils/handlebars';
+import { useTemplateAnswerContext } from '../store/hooks/useTemplateAnswerContext';
+import { getAssetStatus, useAssetStatus, useAssetLoadStatus } from '../store/hooks/useAssetStatus';
+import { useAsyncResource } from '../store/hooks/useAsyncResource';
+import { getStaticAssetByPath } from '../utils/getStaticAsset';
+import { buildIframeSrcDoc, getBaseHref } from '../utils/iframeSrcDoc';
+import { PREFIX as BASE_PREFIX } from '../utils/Prefix';
+import { ResourceNotFound } from '../ResourceNotFound';
 
 const PREFIX = '@REVISIT_COMMS';
 
 export function IframeController({ currentConfig, provState, answers }: { currentConfig: WebsiteComponent; provState?: unknown, answers: ParticipantData['answers'] }) {
+  const studyColorMode = useComputedColorScheme('light');
+  const colorMode = currentConfig.colorMode ?? studyColorMode;
   const {
     setReactiveAnswers, updateProvenance, updateResponseBlockValidation,
   } = useStoreActions();
@@ -32,7 +42,33 @@ export function IframeController({ currentConfig, provState, answers }: { curren
 
   const shouldSendProvenance = !isAnalysis || !replay || hasReplayStarted;
 
+  const templateData = useTemplateAnswerContext();
+  const templatedPath = useMemo(
+    () => (templateData ? compileTemplate(currentConfig.path, currentConfig.parameters ?? {}, { noEscape: true, data: templateData }) : undefined),
+    [currentConfig.path, currentConfig.parameters, templateData],
+  );
+
+  const isExternal = templatedPath?.startsWith('http') ?? false;
+  // External sites can't be fetched and rewritten without their CORS permission, so templating
+  // silently doesn't apply to them.
+  const isTemplated = (currentConfig.templated ?? false) && !isExternal;
+
+  // The template data changes while a trial is in progress (help counter, saved answers). Markdown
+  // re-renders harmlessly, but re-compiling an iframe's srcDoc reloads the page and destroys the
+  // participant's in-frame state, so the stimulus is compiled once from a snapshot taken at load.
+  const templateDataRef = useRef(templateData);
+  useEffect(() => {
+    templateDataRef.current = templateData;
+  }, [templateData]);
+
+  useEffect(() => {
+    if (currentConfig.templated && isExternal) {
+      console.warn(`Ignoring "templated" for website component with external path ${templatedPath}. Templating is only supported for websites served from the study's public folder.`);
+    }
+  }, [currentConfig.templated, isExternal, templatedPath]);
+
   const ref = useRef<HTMLIFrameElement>(null);
+  const [frameDocument, setFrameDocument] = useState<Document | null>(null);
   const stimulusValidationRef = useRef(stimulusValidation);
 
   useEffect(() => {
@@ -46,6 +82,62 @@ export function IframeController({ currentConfig, provState, answers }: { curren
 
   // navigation
   const currentComponent = useCurrentComponent();
+
+  const url = useMemo(() => {
+    if (templatedPath === undefined) return undefined;
+    return templatedPath.startsWith('http')
+      ? templatedPath
+      : `${BASE_PREFIX}${templatedPath}?trialid=${currentComponent}&id=${iframeId}`;
+  }, [templatedPath, currentComponent, iframeId]);
+  // Templated stimuli are fetched without the query string, so the request is cacheable and isn't
+  // busted by the per-mount iframe id.
+  const fetchUrl = isTemplated && templatedPath !== undefined ? `${BASE_PREFIX}${templatedPath}` : url;
+  const requestKey = fetchUrl === undefined ? undefined : `${identifier}:${fetchUrl}:${iframeId}`;
+  const loadWebsite = useCallback(async (): Promise<string | true | undefined> => {
+    if (fetchUrl === undefined || templatedPath === undefined) return undefined;
+    // External iframe responses cannot be inspected without the site's CORS permission.
+    if (new URL(fetchUrl, window.location.href).origin !== window.location.origin) return true;
+    const text = await getStaticAssetByPath(fetchUrl);
+    if (text === undefined) return undefined;
+    if (!isTemplated) return true;
+    return buildIframeSrcDoc(
+      compileTemplate(text, currentConfig.parameters ?? {}, { data: templateDataRef.current }),
+      {
+        baseHref: getBaseHref(templatedPath), documentUrl: new URL(fetchUrl, window.location.href).href, iframeId, trialId: currentComponent,
+      },
+    );
+  }, [fetchUrl, templatedPath, isTemplated, currentConfig.parameters, iframeId, currentComponent]);
+  const { status, value } = useAsyncResource<string | true>(requestKey, loadWebsite);
+  const srcDoc = typeof value === 'string' ? value : undefined;
+  const {
+    status: frameStatus, onLoading, onReady, onError,
+  } = useAssetLoadStatus(requestKey);
+  const assetStatus = getAssetStatus(status, frameStatus);
+
+  const applyColorMode = useCallback(() => {
+    // The iframe hint alone does not override an embedded page's own `light dark` choice.
+    // contentDocument is null for cross-origin pages; those retain the CSS hint below.
+    ref.current?.contentDocument?.documentElement?.style.setProperty('color-scheme', colorMode, 'important');
+  }, [colorMode]);
+
+  useLayoutEffect(applyColorMode, [applyColorMode, srcDoc, url]);
+
+  useLayoutEffect(() => {
+    if (!frameDocument || frameDocument !== ref.current?.contentDocument) return undefined;
+    const frameWindow = frameDocument.defaultView;
+    if (!frameWindow) return undefined;
+    const events = new frameWindow.AbortController();
+    // Internal navigation keeps the iframe URL prop and request key unchanged.
+    frameWindow.addEventListener('pagehide', onLoading, { signal: events.signal });
+    frameWindow.addEventListener('pageshow', () => {
+      applyColorMode();
+      onReady();
+    }, { signal: events.signal });
+    // Abort removes listeners safely even after the frame changes origin.
+    return () => events.abort();
+  }, [frameDocument, applyColorMode, onLoading, onReady]);
+
+  useAssetStatus(assetStatus);
 
   const sendMessage = useCallback(
     (tag: string, message: unknown) => {
@@ -126,22 +218,44 @@ export function IframeController({ currentConfig, provState, answers }: { curren
     return () => window.removeEventListener('message', handler);
   }, [storeDispatch, dispatch, iframeId, currentConfig, sendMessage, setReactiveAnswers, updateProvenance, updateResponseBlockValidation, identifier, isAnalysis, provState, answers, shouldSendProvenance]);
 
+  // While the path is templated inside a dynamic block, templatedPath is undefined until the
+  // block's current iteration resolves — don't load an iframe built from the wrong iteration.
+  if (templatedPath === undefined) {
+    return null;
+  }
+
+  if (assetStatus === 'error') {
+    return <ResourceNotFound path={templatedPath} />;
+  }
+
+  if (isTemplated && srcDoc === undefined) {
+    return null;
+  }
+
   return (
     <iframe
+      key={requestKey}
       ref={ref}
-      inert={(isAnalysis ? '' : undefined) as never}
+      inert={isAnalysis}
       aria-disabled={isAnalysis}
       style={{
         width: '100%',
         flexGrow: 1,
         border: 0,
+        colorScheme: colorMode,
+        // Do not expose the document's automatic theme before onLoad applies the study scheme.
+        visibility: frameStatus === 'ready' ? undefined : 'hidden',
+        // Keep transparent embedded pages readable when their scheme differs from the study.
+        backgroundColor: currentConfig.colorMode ? 'Canvas' : undefined,
         pointerEvents: isAnalysis ? 'none' : undefined,
       }}
-      src={
-        currentConfig.path.startsWith('http')
-          ? currentConfig.path
-          : `${BASE_PREFIX}${currentConfig.path}?trialid=${currentComponent}&id=${iframeId}`
-      }
+      {...(srcDoc !== undefined ? { srcDoc } : { src: url })}
+      onLoad={() => {
+        applyColorMode();
+        setFrameDocument(ref.current?.contentDocument ?? null);
+        onReady();
+      }}
+      onErrorCapture={onError}
     />
   );
 }

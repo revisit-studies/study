@@ -16,6 +16,7 @@ export function Timer({
   debounceUpdateTimer: (time: number, percent: number | undefined) => void;
   xScale: d3.ScaleLinear<number, number>;
 }) {
+  const svgRef = useRef<SVGSVGElement | null>(null);
   const timerRef = useRef<SVGLineElement | null>(null);
 
   const { setSeekTime, replayEvent, forceEmitTimeUpdate } = useReplayContext();
@@ -27,6 +28,7 @@ export function Timer({
         const d3Line = d3.select(timerRef.current);
         d3Line.attr('x1', x).attr('x2', x);
       }
+      svgRef.current?.setAttribute('data-replay-time', String(t));
       debounceUpdateTimer(t * 1000, undefined);
     };
     replayEvent.on('timeupdate', onTimeUpdate);
@@ -50,13 +52,15 @@ export function Timer({
 
   return (
     <svg
+      ref={svgRef}
       data-testid="replay-timer"
+      data-replay-time="0"
       onClick={clickOnSvg}
       style={{
         width, height, position: 'absolute', zIndex: 10000,
       }}
     >
-      <line ref={timerRef} stroke="#e15759" strokeWidth={3} y1={0} y2={height} />
+      <line ref={timerRef} stroke="var(--mantine-color-red-text)" strokeWidth={3} y1={0} y2={height} />
     </svg>
   );
 }
