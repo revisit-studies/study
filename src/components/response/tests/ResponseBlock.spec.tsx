@@ -435,7 +435,7 @@ describe('ResponseBlock', () => {
     const { container } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" status={checkedAnswer} />);
 
     expect(container.querySelector('[data-testid="feedback-alert-q1"]')?.getAttribute('data-title')).toBe('Incorrect Answer');
-    expect(container.querySelector('[data-testid="trial-answer-summary"]')?.textContent).toBe('0 of 1 answers correct; 1 incorrect.');
+    expect(container.querySelector('[data-testid="trial-answer-summary"]')?.textContent).toBeUndefined();
   });
 
   test('shows incorrect feedback beneath a Likert question', async () => {
@@ -2036,7 +2036,7 @@ test('keeps trial totals from the checked snapshot when an answer hides a depend
   const { container } = await renderWithStore(
     <ResponseBlock config={config} location="belowStimulus" status={checkedAnswer} />,
   );
-  expect(container.querySelector('[data-testid="trial-answer-summary"]')?.textContent).toBe('1 of 2 answers correct; 1 incorrect.');
+  expect(container.querySelector('[data-testid="trial-answer-summary"]')?.textContent).toBeUndefined();
   expect(container.querySelector('[data-response-id="dependent"]')).toBeNull();
 });
 
@@ -2075,7 +2075,7 @@ describe('custom training feedback', () => {
     expect(container.querySelector('[data-testid="feedback-alert-q1"]')?.getAttribute('data-fit-height')).toBe('true');
     expect(container.querySelector('[data-testid="feedback-alert-q2"]')?.getAttribute('data-fit-height')).toBe('true');
     expect(container.querySelector('[data-testid="feedback-alert-q1"]')?.textContent).not.toContain('answer-specific hint');
-    expect(container.querySelector('[data-testid="trial-answer-summary"]')?.textContent).toBe('1 of 2 answers correct; 1 incorrect.');
+    expect(container.querySelector('[data-testid="trial-answer-summary"]')?.textContent).toBeUndefined();
   });
 
   test('uses exhausted text after the final failed attempt', async () => {
@@ -2126,8 +2126,8 @@ describe('custom training feedback', () => {
       </>,
     );
     expect(container.textContent).toContain('First correct answer');
-    expect(container.querySelector('[data-testid="trial-answer-summary"]')?.textContent).toBe('1 of 2 answers correct; 1 incorrect.');
-    expect(container.querySelectorAll('[data-testid="trial-answer-summary"]')).toHaveLength(1);
+    expect(container.querySelector('[data-testid="trial-answer-summary"]')?.textContent).toBeUndefined();
+    expect(container.querySelectorAll('[data-testid="trial-answer-summary"]')).toHaveLength(0);
   });
 
   test('shows trial totals when the first checked response is hidden', async () => {
@@ -2160,6 +2160,6 @@ describe('custom training feedback', () => {
     const { container } = await renderWithStore(<ResponseBlock config={hiddenFirstConfig} location="belowStimulus" status={checkedAnswer} />);
 
     expect(container.querySelector('[data-testid="switcher-shortText"][data-response-id="hidden-q"]')).toBeNull();
-    expect(container.querySelector('[data-testid="trial-answer-summary"]')?.textContent).toBe('1 of 2 answers correct; 1 incorrect.');
+    expect(container.querySelector('[data-testid="trial-answer-summary"]')?.textContent).toBeUndefined();
   });
 });

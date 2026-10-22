@@ -588,18 +588,6 @@ export function ResponseBlock({
       return [[response.id, answerStatus]];
     }));
   }, [allResponsesWithDefaults, checkAnswerResponses, checkAnswerScores, checkedAnswerValues, config.correctAnswer, matrixRowFeedback]);
-  const checkedResponses = useMemo(() => allResponsesWithDefaults.filter((response) => (
-    response.type !== 'textOnly'
-      && response.type !== 'divider'
-      && !!checkAnswerResponses
-      && Object.hasOwn(checkAnswerResponses, response.id)
-  )), [allResponsesWithDefaults, checkAnswerResponses]);
-  const correctResponseCount = checkedResponses.filter((response) => checkAnswerResponses?.[response.id]).length;
-  const incorrectResponseCount = checkedResponses.length - correctResponseCount;
-  const feedbackSummaryResponseId = applicableResponses.find((response) => (
-    !response.hidden && response.type !== 'textOnly' && response.type !== 'divider'
-  ))?.id;
-  const showFeedbackSummary = hasCorrectAnswerFeedback && !!checkAnswerResponses && checkedResponses.length > 0;
   const alertConfig = useMemo(() => Object.fromEntries(allResponsesWithDefaults.map((response) => {
     const hiddenAlert = {
       visible: false,
@@ -945,11 +933,6 @@ export function ResponseBlock({
                       attemptsUsed={attemptsUsed}
                       trainingAttempts={trainingAttempts}
                     />
-                    {showFeedbackSummary && response.id === feedbackSummaryResponseId && (
-                      <div data-testid="trial-answer-summary" aria-live="polite">
-                        {`${correctResponseCount} of ${checkedResponses.length} answers correct; ${incorrectResponseCount} incorrect.`}
-                      </div>
-                    )}
                   </div>
                 )
               ) : null}
