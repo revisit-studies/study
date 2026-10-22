@@ -445,6 +445,8 @@ export type ResponseVisibilityCondition = {
 export interface BaseResponse {
   /** The id of the response. This is used to identify the response in the data file. */
   id: string;
+  /** Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked. */
+  path?: string;
   /** The prompt that is displayed to the participant. You can use markdown here to render images, links, etc. */
   prompt: string;
   /** The secondary text that is displayed to the participant under the prompt. This does not accept markdown. */
@@ -1298,6 +1300,8 @@ export interface Answer {
   acceptableLow?: number;
   /** The acceptable high value for the answer. This is used to define a range of acceptable answers. */
   acceptableHigh?: number;
+  /** Minimum score from 0 to 1 required for this answer to be considered correct. Defaults to 1. @minimum 0 @maximum 1 */
+  correctnessThreshold?: number;
   /** Accepted complete answers, usable on their own or in addition to answer. Each entry is a complete value, such as a checkbox selection array or a ranking value-to-position object. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   acceptableAnswers?: any[];

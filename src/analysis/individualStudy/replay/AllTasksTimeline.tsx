@@ -212,9 +212,7 @@ export function AllTasksTimeline({
       const resolvedComponent = component && studyConfig
         ? studyComponentToIndividualComponent(component, studyConfig)
         : undefined;
-      const correctAnswers = answer.correctAnswer?.length
-        ? answer.correctAnswer
-        : resolvedComponent?.correctAnswer;
+      const correctAnswers = answer.correctAnswer ?? resolvedComponent?.correctAnswer;
       const answerStatus = getComponentAnswerStatus(answer, correctAnswers, resolvedComponent?.response);
       const hasAudio = resolvedComponent?.recordAudio ?? studyConfig?.uiConfig?.recordAudio ?? false;
       const hasScreenRecording = resolvedComponent?.recordScreen ?? studyConfig?.uiConfig?.recordScreen ?? false;

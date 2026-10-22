@@ -26,6 +26,12 @@
           "description": "Whether textual answers must match letter case. Defaults to true.",
           "type": "boolean"
         },
+        "correctnessThreshold": {
+          "description": "Minimum score from 0 to 1 required for this answer to be considered correct. Defaults to 1.",
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
         "feedback": {
           "$ref": "#/definitions/ResponseFeedback",
           "description": "Customize correct and incorrect feedback and hints for this response."
@@ -405,6 +411,10 @@
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
         },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
+          "type": "string"
+        },
         "prompt": {
           "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
           "type": "string"
@@ -529,6 +539,10 @@
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "prompt": {
@@ -847,6 +861,10 @@
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
         },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
+          "type": "string"
+        },
         "placeholder": {
           "description": "The placeholder text displayed in the input. Defaults to the format used by `options`.",
           "type": "string"
@@ -1011,6 +1029,10 @@
         "paramCapture": {
           "not": {}
         },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
+          "type": "string"
+        },
         "prompt": {
           "not": {}
         },
@@ -1135,6 +1157,10 @@
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "placeholder": {
@@ -2198,6 +2224,10 @@
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
         },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
+          "type": "string"
+        },
         "prompt": {
           "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
           "type": "string"
@@ -2313,6 +2343,10 @@
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "placeholder": {
@@ -2650,6 +2684,10 @@
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
         },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
+          "type": "string"
+        },
         "prompt": {
           "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
           "type": "string"
@@ -2829,6 +2867,10 @@
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
         },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
+          "type": "string"
+        },
         "prompt": {
           "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
           "type": "string"
@@ -2993,6 +3035,10 @@
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "placeholder": {
@@ -3339,6 +3385,10 @@
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
         },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
+          "type": "string"
+        },
         "prompt": {
           "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
           "type": "string"
@@ -3496,6 +3546,10 @@
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
         },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
+          "type": "string"
+        },
         "prompt": {
           "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
           "type": "string"
@@ -3611,6 +3665,10 @@
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "prompt": {
@@ -3741,6 +3799,10 @@
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "prompt": {
@@ -4014,6 +4076,10 @@
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "prompt": {
@@ -4376,6 +4442,10 @@
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
         },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
+          "type": "string"
+        },
         "placeholder": {
           "description": "The placeholder text that is displayed in the input.",
           "type": "string"
@@ -4500,6 +4570,10 @@
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "prompt": {
@@ -4949,6 +5023,10 @@
         "paramCapture": {
           "not": {}
         },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
+          "type": "string"
+        },
         "prompt": {
           "description": "The markdown text that is displayed to the user.",
           "type": "string"
@@ -5081,6 +5159,10 @@
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked.",
           "type": "string"
         },
         "prompt": {

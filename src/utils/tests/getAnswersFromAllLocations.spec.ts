@@ -1,7 +1,9 @@
 import { describe, expect, test } from 'vitest';
 import type { TrialValidation } from '../../store/types';
 import type { Response } from '../../parser/types';
-import { getAnswersFromAllLocations, getPersistedAnswersFromAllLocations } from '../getAnswersFromAllLocations';
+import { getAnswersFromAllLocations, getPersistedAnswerValues, getPersistedAnswersFromAllLocations } from '../getAnswersFromAllLocations';
+import { resolveResponseVisibility } from '../responseVisibility';
+import { getSavedScoresForAnswer } from '../correctAnswer';
 
 function makeEntry(overrides: Partial<TrialValidation[string]>): TrialValidation[string] {
   return {
@@ -109,6 +111,34 @@ describe('getAnswersFromAllLocations', () => {
       'consent-other': 'ordinary response',
     });
   });
+
+  test('uses the same normalized Other context for live visibility and persisted answers', () => {
+    const responses: Response[] = [
+      {
+        id: 'secret', type: 'radio', prompt: '', options: ['A', 'other'], withOther: true,
+      },
+      {
+        id: 'score', type: 'numerical', prompt: '', path: 'test-response-functions/assets/ContextAwareScore.response.ts',
+      },
+      {
+        id: 'followUp',
+        type: 'shortText',
+        prompt: '',
+        visibleIf: {
+          responseId: 'score', comparison: 'isCorrect', value: true,
+        },
+      },
+    ];
+    const values = {
+      secret: 'A', 'secret-other': 'stale text', score: 1, followUp: 'kept answer',
+    };
+
+    const liveAnswers = resolveResponseVisibility(responses, values).answers;
+    const persistedAnswers = getPersistedAnswerValues(values, responses);
+
+    expect(liveAnswers).toEqual(persistedAnswers);
+    expect(persistedAnswers).toEqual({ secret: 'A', score: 1 });
+  });
 });
 
 test('saved answers omit conditional fields and auxiliary values across locations', () => {
@@ -129,6 +159,26 @@ test('saved answers omit conditional fields and auxiliary values across location
   expect(getPersistedAnswersFromAllLocations(entry, responses)).toEqual({
     attended: 'yes', university: 'other', 'university-other': 'old university', 'university-dontKnow': false,
   });
+});
+
+test('normalizes inactive Other fields before matching a saved score snapshot', () => {
+  const responses: Response[] = [{
+    id: 'choice', type: 'radio', prompt: '', options: ['A', 'other'], withOther: true,
+  }];
+  const entry = makeEntry({
+    belowStimulus: { valid: true, values: { choice: 'A', 'choice-other': '' } },
+  });
+  const checkAnswer = {
+    attemptsUsed: 1,
+    correct: true,
+    responses: { choice: true },
+    scores: { choice: 0.9 },
+    answerSnapshot: { choice: 'A' },
+  };
+
+  const persistedAnswer = getPersistedAnswersFromAllLocations(entry, responses, [], checkAnswer);
+  expect(persistedAnswer).toEqual({ choice: 'A' });
+  expect(getSavedScoresForAnswer(checkAnswer, persistedAnswer)).toEqual({ choice: 0.9 });
 });
 
 test('persistence evaluates isCorrect using the component answer configuration', () => {
