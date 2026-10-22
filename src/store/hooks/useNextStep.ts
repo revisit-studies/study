@@ -71,7 +71,7 @@ export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
     : undefined), [currentComponentConfig, studyConfig]);
   const responseConfig = useMemo(() => responses ?? resolvedComponentConfig?.response ?? [], [responses, resolvedComponentConfig]);
   const correctAnswerConfig = useMemo(() => correctAnswers
-    ?? (storedAnswer?.correctAnswer?.length ? storedAnswer.correctAnswer : undefined)
+    ?? storedAnswer?.correctAnswer
     ?? resolvedComponentConfig?.correctAnswer
     ?? [], [correctAnswers, storedAnswer?.correctAnswer, resolvedComponentConfig]);
 

@@ -8,6 +8,7 @@ import {
   vi,
 } from 'vitest';
 import { useNextStep } from '../useNextStep';
+import type { Answer } from '../../../parser/types';
 
 const mockNavigate = vi.fn();
 const mockShowNotification = vi.fn();
@@ -32,7 +33,7 @@ let mockStoredAnswer: {
   timedOut: boolean;
   helpButtonClickedCount: number;
   parameters: Record<string, string>;
-  correctAnswer: never[];
+  correctAnswer: Answer[];
   optionOrders: Record<string, string>;
   questionOrders: Record<string, string>;
   responseSubmitAttempted?: boolean;
@@ -233,6 +234,8 @@ describe('useNextStep', () => {
   });
 
   test('submits a required unanswered response as incorrect when its threshold is zero', async () => {
+    const correctAnswer = [{ id: 'response', answer: 10, correctnessThreshold: 0 }];
+    mockStoredAnswer.correctAnswer = correctAnswer;
     mockTrialValidation = {
       intro_0: {
         aboveStimulus: { valid: true, values: {} },
@@ -257,7 +260,7 @@ describe('useNextStep', () => {
           response: [{
             id: 'response', type: 'numerical', prompt: 'Number', required: true,
           }],
-          correctAnswer: [{ id: 'response', answer: 10, correctnessThreshold: 0 }],
+          correctAnswer,
         },
       },
     };

@@ -24,9 +24,10 @@ export default defineConfig(({ command, mode }) => {
       environment: 'jsdom',
       exclude: ['./tests/**', 'node_modules/**'],
       // Custom response lookup imports study assets that unit tests do not render.
-      alias: {
-        '@visdesignlab/upset2-react': fileURLToPath(new URL('./src/shims/upset2ReactTest.ts', import.meta.url)),
-      },
+      alias: [
+        { find: /^@excalidraw\/excalidraw$/, replacement: fileURLToPath(new URL('./src/shims/excalidrawTest.ts', import.meta.url)) },
+        { find: '@visdesignlab/upset2-react', replacement: fileURLToPath(new URL('./src/shims/upset2ReactTest.ts', import.meta.url)) },
+      ],
       server: {
         deps: {
           // Trrack ships CJS that re-exports @reduxjs/toolkit; Vite has to

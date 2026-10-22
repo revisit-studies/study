@@ -18,7 +18,7 @@
           "description": "The correct answer to the question."
         },
         "correctnessThreshold": {
-          "description": "Minimum score from 0 to 1 required for this answer to be considered correct. Defaults to 0.8.",
+          "description": "Minimum score from 0 to 1 required for this answer to be considered correct. Defaults to 1.",
           "maximum": 1,
           "minimum": 0,
           "type": "number"

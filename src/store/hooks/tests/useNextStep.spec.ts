@@ -727,6 +727,38 @@ describe('useNextStep', () => {
     });
   });
 
+  test('direct callers preserve an empty dynamic correct-answer override', async () => {
+    const config = createStudyConfig();
+    config.components.trial1 = {
+      type: 'questionnaire',
+      response: [{
+        id: 'q1', type: 'numerical', prompt: 'Answer', path: 'test-response-functions/assets/PartialScore.response.ts',
+      }],
+      correctAnswer: [{ id: 'q1', answer: 10 }],
+    };
+    mockStudyConfig = config;
+    mockStoredAnswer = { ...defaultStoredAnswer, componentName: 'trial1', correctAnswer: [] } as StoredAnswer;
+    mockTrialValidation = {
+      trial1_0: {
+        aboveStimulus: { valid: true, values: {} },
+        belowStimulus: { valid: true, values: { q1: 5 } },
+        sidebar: { valid: true, values: {} },
+        stimulus: { valid: true, values: {} },
+        provenanceGraph: {
+          aboveStimulus: undefined, belowStimulus: undefined, sidebar: undefined, stimulus: undefined,
+        },
+      },
+    };
+
+    const { result } = renderHook(() => useNextStep());
+    await act(async () => { await result.current.goToNextStep(); });
+
+    const savedPayload = mockSaveTrialAnswer.mock.calls[0][0] as StoredAnswer;
+    expect(savedPayload.correctAnswer).toEqual([]);
+    expect(savedPayload.checkAnswer?.scores).toBeUndefined();
+    expect(savedPayload.answer).toEqual({ q1: 5 });
+  });
+
   test('direct callers resolve configured responses and persist their scores with the answer', async () => {
     const config = createStudyConfig();
     config.components.trial1 = {
