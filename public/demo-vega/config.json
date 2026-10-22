@@ -251,6 +251,7 @@
       ]
     },
     "vegademo2": {
+      "previousButton": true,
       "meta": {
         "metadata": 1
       },
