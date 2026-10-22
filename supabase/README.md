@@ -7,6 +7,14 @@ default Storage backend uses persistent local files; MinIO is not required.
 For an existing deployment, follow [MIGRATION.md](MIGRATION.md) **before starting
 this configuration**. Hosted Supabase deployments do not need this migration.
 
+The required Auth override pins upstream `v2.198.0-rc.25` by digest. This release
+candidate includes Supabase's [Go 1.27.3 TLS fix](https://github.com/supabase/auth/pull/2883)
+for the [eMudhra intermediate CA compromise](https://bugzilla.mozilla.org/show_bug.cgi?id=2083449).
+The pinned bundle's default Auth `v2.197.0` predates that fix. Keep this override
+enabled, including when recreating containers or updating the upstream bundle;
+review a replacement stable Auth release before removing it. GitHub OAuth
+configuration remains optional; the TLS fix is required for every deployment.
+
 ## First-time setup
 
 Requirements: a Linux host with Git, Docker Engine, Docker Compose v2 or newer, OpenSSL,
@@ -47,6 +55,8 @@ names: run only one copy per Docker host, or deliberately isolate it.
    sh utils/generate-keys.sh --update-env
    sh utils/add-new-auth-keys.sh --update-env
    printf 'ref=self-hosted/v0.8.3\n' > .supabase-version
+   cp "$revisit_support/docker-compose.auth.yml" .
+   sh run.sh config add auth
    ```
 
    These helpers print secrets; keep their output private. Never commit `.env`.
@@ -81,6 +91,8 @@ names: run only one copy per Docker host, or deliberately isolate it.
    sh run.sh pull
    sh run.sh start
    sh run.sh status
+   test "$(docker inspect supabase-auth --format '{{.Config.Image}}')" = \
+     supabase/gotrue:v2.198.0-rc.25@sha256:b4c104aa7abbb2bc6c0c294072f736230979acfec87c9114fce63f4224e0f357
    ```
 
    Open Studio at `http://localhost:8000` and use your generated
@@ -147,8 +159,8 @@ relying on it, and stop if it is incomplete.
 Review future tagged updates using `sh update.sh --dry-run --to <release-tag>`
 and [upstream update guidance](https://supabase.com/docs/guides/self-hosting/updating).
 The update tool belongs to the downloaded upstream bundle. Review its plan and
-your GitHub override before applying an update; this guide and migration helper
-target the pinned release above. This release includes Storage and Realtime
+the required Auth override and your GitHub settings before applying an update;
+this guide and migration helper target the pinned release above. This release includes Storage and Realtime
 security fixes. Its Storage database migrations are one-way: reverting an image
 alone is unsafe; restore coordinated pre-upgrade backups for rollback. Review
 [upstream release notes](https://github.com/supabase/supabase/blob/self-hosted/v0.8.3/docker/CHANGELOG.md)

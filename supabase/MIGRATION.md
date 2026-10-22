@@ -4,6 +4,10 @@ This procedure targets the previous bundled stack (Postgres 15.8.1.060,
 Supabase Storage v1.11.13, and either the original MinIO images or `main`'s
 `pgsty/silo` + `pgsty/mc` replacement images) and moves it to the release in
 [UPSTREAM](UPSTREAM), using Postgres 17 and Storage v1.81.0's default file backend.
+Auth uses the required upstream `v2.198.0-rc.25` override to include the eMudhra
+TLS fix; keep it enabled after migration and container recreation. This is a
+release candidate, selected because the pinned bundle's stable Auth predates the
+fix. See [README.md](README.md) for the upstream security change.
 Rehearse against a restored copy of your deployment first. New installations
 use [README.md](README.md); hosted Supabase users are unaffected.
 
@@ -147,6 +151,7 @@ test "$(git -C ../supabase-upstream rev-parse HEAD)" = \
 rsync -av --exclude='.env' --exclude='.env.old' --exclude='.supabase-version' \
   --exclude='volumes/db/data*' --exclude='volumes/storage*' \
   ../supabase-upstream/docker/ ./ &&
+cp "$revisit_support/docker-compose.auth.yml" . &&
 cp "$revisit_support/docker-compose.github.yml" .
 ```
 
@@ -194,6 +199,8 @@ Before modifying database files, pull the target images and check the two Node
 services start on this host:
 
 ```sh
+# Auth is required even if GitHub OAuth is disabled.
+sh run.sh config add auth
 # The existing ENABLE_GITHUB_OAUTH value controls whether GitHub sign-in is enabled.
 sh run.sh config add github
 sh run.sh pull
@@ -228,8 +235,16 @@ docker exec -i supabase-db psql -U supabase_admin -d "$postgres_database" \
   -v ON_ERROR_STOP=1 < volumes/db/realtime.sql
 mkdir -p "$migration_backup/upgrade-tmp"
 sudo env TMPDIR="$migration_backup/upgrade-tmp" bash utils/upgrade-pg17.sh &&
-sudo rmdir "$migration_backup/upgrade-tmp"
+sudo rmdir "$migration_backup/upgrade-tmp" &&
+sh run.sh recreate auth
 ```
+
+The pinned upgrade script starts services with explicit Compose files, briefly
+using the bundle's older Auth without the GitHub override. The final command
+immediately recreates Auth with the required TLS and GitHub overrides. Keep
+traffic blocked throughout; if the script fails, keep Auth unused until the
+fixed image is running. Do not use the script's printed startup commands for
+normal operation; use `sh run.sh start` so all saved overrides apply.
 
 Read all output, including migration warnings. This script uses upstream's
 `pg_upgrade` procedure, preserves `data.bak.pg15` and the encryption key, applies
@@ -344,6 +359,8 @@ It can be rerun with the same verified export after fixing an installation error
 python3 migrate-storage.py verify "$migration_backup/objects" \
   --url http://localhost:8000 --database "$postgres_database"
 sh run.sh status
+test "$(docker inspect supabase-auth --format '{{.Config.Image}}')" = \
+  supabase/gotrue:v2.198.0-rc.25@sha256:b4c104aa7abbb2bc6c0c294072f736230979acfec87c9114fce63f4224e0f357
 docker exec supabase-db psql -U supabase_admin -d postgres \
   -c 'SHOW server_version;'
 printf 'ref=self-hosted/v0.8.3\n' > .supabase-version
@@ -448,6 +465,23 @@ with the old service-role key and gateway URL, using the original `POSTGRES_DB`:
 python3 migrate-storage.py verify "$migration_backup/objects" \
   --url http://localhost:8000 --database "$postgres_database"
 ```
+
+**Rollback also restores the old vulnerable Auth image.** Keep application
+traffic blocked and GitHub OAuth/secure email unused until Auth is protected.
+For the original bundled `v2.171.0` image, apply the certificate mitigation:
+
+```sh
+compose_project=$(cat "$migration_backup/compose-project")
+docker compose --project-name "$compose_project" -f docker-compose.yml \
+  exec -T --user root auth apk add --no-cache --upgrade \
+  'ca-certificates>=20261020-r0' 'ca-certificates-bundle>=20261020-r0' &&
+docker compose --project-name "$compose_project" -f docker-compose.yml restart auth
+```
+
+Require a successful package update and healthy Auth before testing sign-in.
+This mitigation is discarded if the old Auth container is recreated; complete the fixed-image migration before
+normal operation, or reapply the mitigation after every recreation. If your
+Auth image or certificate mounts differ, verify a deployment-specific fix first.
 
 Check existing participants/answers and Study Designer login before reopening
 writes. Keep the failed-upgrade directory and original backups until rollback
