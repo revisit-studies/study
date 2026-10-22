@@ -21,7 +21,7 @@ older Storage image cannot safely use that database. Rollback requires the
 coordinated pre-upgrade database, object-store, encryption and configuration
 backups below; changing image tags alone is insufficient.
 
-Requirements: a Linux server, Git, Docker Compose, Bash, curl, OpenSSL, Python 3.11+,
+Requirements: a Linux server, Git, Docker Compose, Bash, curl, rsync, OpenSSL, Python 3.11+,
 root access for the upstream database upgrade, and enough space for the database
 backup/upgrade and two copies of object data. Pre-pull the target images before
 starting the upgrade; allow at least 15 GB additional temporary space for the
@@ -357,14 +357,18 @@ It can be rerun with the same verified export after fixing an installation error
 
 ```sh
 python3 migrate-storage.py verify "$migration_backup/objects" \
-  --url http://localhost:8000 --database "$postgres_database"
-sh run.sh status
+  --url http://localhost:8000 --database "$postgres_database" &&
+sh run.sh status &&
 test "$(docker inspect supabase-auth --format '{{.Config.Image}}')" = \
-  supabase/gotrue:v2.198.0-rc.25@sha256:b4c104aa7abbb2bc6c0c294072f736230979acfec87c9114fce63f4224e0f357
+  supabase/gotrue:v2.198.0-rc.25@sha256:b4c104aa7abbb2bc6c0c294072f736230979acfec87c9114fce63f4224e0f357 &&
 docker exec supabase-db psql -U supabase_admin -d postgres \
-  -c 'SHOW server_version;'
+  -c 'SHOW server_version;' &&
 printf 'ref=self-hosted/v0.8.3\n' > .supabase-version
 ```
+
+Require the entire verification block to succeed. If the Auth image check
+fails, keep writes blocked, enable the required Auth override, run
+`sh run.sh recreate auth`, and repeat verification.
 
 Verification streams every migrated object through the new API and checks its
 SHA-256, Content-Type, and Cache-Control, plus the original database object

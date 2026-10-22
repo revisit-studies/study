@@ -88,12 +88,15 @@ names: run only one copy per Docker host, or deliberately isolate it.
 3. Pull and start the stack:
 
    ```sh
-   sh run.sh pull
-   sh run.sh start
-   sh run.sh status
+   sh run.sh pull &&
+   sh run.sh start &&
+   sh run.sh status &&
    test "$(docker inspect supabase-auth --format '{{.Config.Image}}')" = \
      supabase/gotrue:v2.198.0-rc.25@sha256:b4c104aa7abbb2bc6c0c294072f736230979acfec87c9114fce63f4224e0f357
    ```
+
+   Require this block to succeed, including the exact Auth image check.
+   If it fails, keep the deployment closed to users until corrected.
 
    Open Studio at `http://localhost:8000` and use your generated
    `DASHBOARD_USERNAME` and `DASHBOARD_PASSWORD`. On a server, expose the API
