@@ -14,6 +14,7 @@ import { InputLabel } from './InputLabel';
 import { OptionLabel } from './OptionLabel';
 import { parseStringOptions } from '../../utils/stringOptions';
 import { getMatrixAnswerOptions, isMatrixDontKnowValue, MATRIX_DONT_KNOW_OPTION } from '../../utils/responseOptions';
+import { AnswerStatus } from '../../utils/correctAnswer';
 
 function CheckboxComponent({
   _choices,
@@ -117,6 +118,7 @@ export function MatrixInput({
   disabled,
   error,
   enumerateQuestions,
+  rowFeedback,
 }: {
   response: MatrixResponse;
   answer: { value?: Record<string, string> };
@@ -124,6 +126,7 @@ export function MatrixInput({
   disabled: boolean;
   error?: string | null;
   enumerateQuestions: boolean;
+  rowFeedback?: Record<string, AnswerStatus>;
 }) {
   const { setMatrixAnswersRadio, setMatrixAnswersCheckbox } = useStoreActions();
   const storeDispatch = useStoreDispatch();
@@ -208,6 +211,11 @@ export function MatrixInput({
     (choice) => isMatrixDontKnowValue(choice.value) || isMatrixDontKnowValue(choice.label),
   );
   const separatorAfterIndex = dontKnowIndex > 0 ? dontKnowIndex - 1 : -1;
+  const questionColumn = 1;
+  const answerColumn = 2;
+  const rightLabelColumn = 3;
+  const columns = hasRightQuestionLabels ? 'auto 1fr auto' : 'auto 1fr';
+  const minWidth = 140 + (_n * 80) + (hasRightQuestionLabels ? 140 : 0);
   return (
     <>
       {prompt.length > 0 && (
@@ -227,9 +235,9 @@ export function MatrixInput({
         className="matrix-grid"
         style={{
           display: 'grid',
-          gridTemplateColumns: hasRightQuestionLabels ? 'auto 1fr auto' : 'auto 1fr',
+          gridTemplateColumns: columns,
           gridTemplateRows: 'auto 1fr',
-          '--matrix-min-width': `${140 + (_n * 80) + (hasRightQuestionLabels ? 140 : 0)}px`,
+          '--matrix-min-width': `${minWidth}px`,
         } as CSSProperties}
         m="md"
         mt="xs"
@@ -240,6 +248,8 @@ export function MatrixInput({
           style={{
             borderBottom: '1px solid var(--mantine-color-default-border)',
             borderRight: '1px solid var(--mantine-color-default-border)',
+            gridColumn: questionColumn,
+            gridRow: 1,
           }}
         />
         {/* Column Headers */}
@@ -252,6 +262,8 @@ export function MatrixInput({
             justifyItems: 'stretch',
             borderBottom: '1px solid var(--mantine-color-default-border)',
             position: 'relative',
+            gridColumn: answerColumn,
+            gridRow: 1,
           }}
         >
           {separatorAfterIndex >= 0 && (
@@ -300,6 +312,8 @@ export function MatrixInput({
             style={{
               borderBottom: '1px solid var(--mantine-color-default-border)',
               borderLeft: '1px solid var(--mantine-color-default-border)',
+              gridColumn: rightLabelColumn,
+              gridRow: 1,
             }}
           />
         )}
@@ -309,6 +323,8 @@ export function MatrixInput({
             height: '100%',
             display: 'grid',
             gridTemplateRows: `repeat(${_m}, 1fr)`,
+            gridColumn: questionColumn,
+            gridRow: 2,
           }}
         >
           {orderedQuestions.map((questionKey, idx) => (
@@ -318,8 +334,9 @@ export function MatrixInput({
                 minHeight: '80px',
                 width: '100%',
                 display: 'flex',
-                alignItems: 'safe center',
-                justifyContent: 'end',
+                flexDirection: rowFeedback ? 'column' : 'row',
+                alignItems: rowFeedback ? 'flex-end' : 'safe center',
+                justifyContent: rowFeedback ? 'center' : 'end',
                 borderRight: '1px solid var(--mantine-color-default-border)',
                 backgroundColor: (idx + 1) % 2 === 0 ? 'light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-6))' : 'var(--mantine-color-body)',
               }}
@@ -332,6 +349,18 @@ export function MatrixInput({
                 label={(questionsByValue[questionKey]?.leftLabel || questionsByValue[questionKey]?.label || questionKey)}
                 infoText={questionsByValue[questionKey]?.infoText}
               />
+              {rowFeedback && (
+                <Text
+                  role="status"
+                  size="xs"
+                  c={rowFeedback[questionKey] === 'correct' ? 'green' : rowFeedback[questionKey] === 'partially correct' ? 'orange' : 'red'}
+                  style={{ whiteSpace: 'nowrap' }}
+                  mt={4}
+                  data-testid={`matrix-row-feedback-${questionKey}`}
+                >
+                  {rowFeedback[questionKey]}
+                </Text>
+              )}
             </Box>
           ))}
         </div>
@@ -342,6 +371,8 @@ export function MatrixInput({
             display: 'grid',
             gridTemplateRows: `repeat(${_m},1fr)`,
             position: 'relative',
+            gridColumn: answerColumn,
+            gridRow: 2,
           }}
         >
           {separatorAfterIndex >= 0 && (
@@ -401,6 +432,8 @@ export function MatrixInput({
               height: '100%',
               display: 'grid',
               gridTemplateRows: `repeat(${_m}, 1fr)`,
+              gridColumn: rightLabelColumn,
+              gridRow: 2,
             }}
           >
             {orderedQuestions.map((questionKey, idx) => (

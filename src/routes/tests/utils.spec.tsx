@@ -13,6 +13,9 @@ import {
   useStudyId, useCurrentStep, useCurrentComponent, useCurrentIdentifier,
 } from '../utils';
 
+// Stimulus discovery imports every editor; these host tests do not exercise the drawing engine.
+vi.mock('../../public/libraries/drawing/assets/DrawingEditor', () => ({ default: () => null }));
+
 vi.mock('@trrack/core', () => {
   const mockRegistry = {
     register: vi.fn(() => vi.fn()),

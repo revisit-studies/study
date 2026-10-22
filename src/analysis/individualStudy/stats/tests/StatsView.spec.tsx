@@ -255,6 +255,110 @@ describe('ResponseVisualization', () => {
     expect(spec.encoding.color.scale.range).toEqual(['#69DB7C', '#FFD43B', '#ADB5BD', '#868E96']);
   });
 
+  test('uses canonical acceptance results to color accepted list values', () => {
+    const participantWithAcceptedAlias = {
+      ...answeredParticipant,
+      answers: {
+        trial1_0: {
+          ...answeredParticipant.answers.trial1_0,
+          answer: { q1: 'uSa' },
+        },
+      },
+    } as unknown as ParticipantData;
+    const html = renderToStaticMarkup(
+      <ResponseVisualization
+        {...baseProps}
+        participantData={[participantWithAcceptedAlias]}
+        response={{
+          id: 'q1', type: 'radio', prompt: '', options: ['USA'],
+        }}
+        trialConfig={{
+          ...mockTrialConfig,
+          correctAnswer: [
+            {
+              id: 'q1', answer: 'United States', acceptableAnswers: ['USA'], caseSensitive: false,
+            },
+          ],
+        }}
+      />,
+    );
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const spec = JSON.parse(doc.querySelector('[data-vega-spec]')!.getAttribute('data-vega-spec')!);
+
+    expect(spec.data.values[0].result).toBe('correct');
+    expect(spec.data.values[0].order).toBe(0);
+    expect(spec.encoding.order.field).toBe('order');
+  });
+
+  test('preserves correctness on flattened matrix chart data', () => {
+    const participantWithMatrixAnswer = {
+      ...answeredParticipant,
+      answers: {
+        trial1_0: {
+          ...answeredParticipant.answers.trial1_0,
+          answer: { q1: { Q1: 'A|B' } },
+        },
+      },
+    } as unknown as ParticipantData;
+    const html = renderToStaticMarkup(
+      <ResponseVisualization
+        {...baseProps}
+        participantData={[participantWithMatrixAnswer]}
+        response={{
+          id: 'q1', type: 'matrix-checkbox', prompt: '', questionOptions: ['Q1'], answerOptions: ['A', 'B'],
+        }}
+        trialConfig={{
+          ...mockTrialConfig,
+          correctAnswer: [{ id: 'q1', answer: [['A', 'B']] }],
+        }}
+      />,
+    );
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const spec = JSON.parse(doc.querySelector('[data-vega-spec]')!.getAttribute('data-vega-spec')!);
+
+    expect(spec.data.values).toEqual([
+      {
+        question: 'Q1', value: 'A', result: 'correct', order: 0,
+      },
+      {
+        question: 'Q1', value: 'B', result: 'correct', order: 0,
+      },
+    ]);
+  });
+
+  test('colors matrix alternatives using configured order for numeric row IDs', () => {
+    const participant = {
+      ...answeredParticipant,
+      answers: {
+        trial1_0: {
+          ...answeredParticipant.answers.trial1_0,
+          answer: { q1: { 10: 'A', 2: 'B' } },
+        },
+      },
+    } as unknown as ParticipantData;
+    const html = renderToStaticMarkup(
+      <ResponseVisualization
+        {...baseProps}
+        participantData={[participant]}
+        response={{
+          id: 'q1', type: 'matrix-checkbox', prompt: '', questionOptions: ['10', '2'], answerOptions: ['A', 'B'],
+        }}
+        trialConfig={{ ...mockTrialConfig, correctAnswer: [{ id: 'q1', acceptableAnswers: [[['A'], ['B']]] }] }}
+      />,
+    );
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const spec = JSON.parse(doc.querySelector('[data-vega-spec]')!.getAttribute('data-vega-spec')!);
+
+    expect(spec.data.values).toEqual([
+      {
+        question: '2', value: 'B', result: 'correct', order: 0,
+      },
+      {
+        question: '10', value: 'A', result: 'correct', order: 0,
+      },
+    ]);
+  });
+
   test('metadata type: shows icon and config JSON code block', () => {
     const html = renderToStaticMarkup(
       <ResponseVisualization
@@ -437,6 +541,39 @@ describe('ResponseVisualization', () => {
     expect(spec.data.values[0].result).toBe('correct');
     expect(spec.data.values[0].order).toBe(0);
     expect(spec.transform.some((transform: { calculate?: string }) => transform.calculate?.includes('result'))).toBe(false);
+  });
+
+  test.each([
+    { rules: [{ id: 'q1', answer: 10, correctnessThreshold: 0.7 }], expected: 'correct' },
+    { rules: [], expected: 'partial' },
+  ])('uses saved dynamic grading rules for chart classification: $expected', ({ rules, expected }) => {
+    const answer = { q1: 5 };
+    const participant = {
+      ...mockParticipant,
+      answers: {
+        trial1_0: {
+          answer,
+          correctAnswer: rules,
+          startTime: 1,
+          endTime: 2,
+          componentName: 'trial1',
+          trialOrder: '0',
+          checkAnswer: {
+            attemptsUsed: 1, correct: expected === 'correct', responses: {}, scores: { q1: 0.75 }, answerSnapshot: answer,
+          },
+        },
+      },
+    } as unknown as ParticipantData;
+    const response = { type: 'numerical' as const, id: 'q1', prompt: 'Score' };
+    const html = renderToStaticMarkup(<ResponseVisualization
+      {...baseProps}
+      participantData={[participant]}
+      response={response}
+      trialConfig={{ ...mockTrialConfig, response: [response], correctAnswer: [{ id: 'q1', answer: 10, correctnessThreshold: expected === 'correct' ? 1 : 0.7 }] }}
+    />);
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const spec = JSON.parse(doc.querySelector('[data-vega-spec]')!.getAttribute('data-vega-spec')!);
+    expect(spec.data.values[0].result).toBe(expected);
   });
 
   test('classifies saved scores using the participant archived correctness threshold', () => {

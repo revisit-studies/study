@@ -11,6 +11,7 @@ import { SingleTaskLabelLines } from './SingleTaskLabelLines';
 import { SingleTask } from './SingleTask';
 import { StoredAnswer, StudyConfig } from '../../../parser/types';
 import { getComponentAnswerStatus } from '../../../utils/componentCorrectness';
+import { getCorrectAnswerDisplayValue } from '../../../utils/correctAnswer';
 import { parseConditionParam } from '../../../utils/handleConditionLogic';
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 import {
@@ -234,7 +235,7 @@ export function AllTasksTimeline({
               <Stack gap={0}>
                 {Object.entries(answer.answer).map((a) => {
                   const [id, componentAnswer] = a;
-                  const correctAnswer = correctAnswers?.find((c) => c.id === id)?.answer;
+                  const correctAnswer = getCorrectAnswerDisplayValue(correctAnswers?.find((c) => c.id === id));
                   const participantAnswer = (componentAnswer === undefined || componentAnswer === null || componentAnswer === '')
                     ? 'N/A'
                     : typeof componentAnswer === 'object'

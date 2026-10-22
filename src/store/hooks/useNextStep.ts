@@ -210,6 +210,7 @@ export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
           timedOut: !collectData,
           responseSubmitAttempted,
           checkAnswer: submissionCheckAnswer,
+          correctAnswer: correctAnswerConfig,
         };
         const answersToPersist = { ...answers, [identifier]: toSave };
 
@@ -256,6 +257,7 @@ export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
           answer: answerToPersist,
           timedOut: false,
           checkAnswer: submissionCheckAnswer,
+          correctAnswer: correctAnswerConfig,
         };
       }
 

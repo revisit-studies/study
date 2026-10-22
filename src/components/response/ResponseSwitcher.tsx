@@ -42,6 +42,7 @@ import { CustomResponseField } from '../../store/types';
 import { compileTemplate } from '../../utils/handlebars';
 import { useTemplateAnswerContext } from '../../store/hooks/useTemplateAnswerContext';
 import { OptionTextTemplateContext } from './OptionLabel';
+import { AnswerStatus } from '../../utils/correctAnswer';
 
 export function ResponseSwitcher({
   response,
@@ -58,6 +59,7 @@ export function ResponseSwitcher({
   validationContext,
   customError,
   errors,
+  matrixRowFeedback,
 }: {
   response: Response;
   form: GetInputPropsReturnType;
@@ -73,6 +75,7 @@ export function ResponseSwitcher({
   validationContext?: StoredAnswer['answer'];
   customError?: string | null;
   errors?: boolean;
+  matrixRowFeedback?: Record<string, AnswerStatus>;
 }) {
   const studyConfig = useStudyConfig();
   const isAnalysis = useIsAnalysis();
@@ -428,6 +431,7 @@ export function ResponseSwitcher({
         error={responseError}
         index={index}
         enumerateQuestions={enumerateQuestions}
+        rowFeedback={matrixRowFeedback}
       />
       )}
       {response.type === 'buttons' && (

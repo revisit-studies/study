@@ -2977,7 +2977,7 @@ describe('Parser Warnings', () => {
   });
 
   test('keeps Zach\'s factor demo valid', async () => {
-    const config = readFileSync('public/demo-factors/config.json', 'utf8');
+    const config = readFileSync('public/test-factors/config.json', 'utf8');
     const result = await parseStudyConfig(config);
 
     expect(result.errors).toEqual([]);
@@ -2989,6 +2989,24 @@ describe('Parser Warnings', () => {
     const generatedComponents = Object.values(result.components);
 
     expect(result.errors).toEqual([]);
+    generatedComponents.filter((component) => (
+      'parameters' in component && component.parameters?.taskid === 'test'
+    )).forEach((component) => {
+      expect(component).toMatchObject({
+        type: 'website',
+        response: [{ id: 'test', type: 'reactive' }],
+        correctAnswer: [{ id: 'test', answer: true }],
+      });
+    });
+    generatedComponents.filter((component) => (
+      'parameters' in component && component.parameters?.r1Training !== undefined
+    )).forEach((component) => {
+      expect(component).toMatchObject({
+        type: 'website',
+        response: [{ id: 'training', type: 'reactive' }],
+        correctAnswer: [{ id: 'training', answer: true }],
+      });
+    });
     expect(generatedComponents.filter((component) => (
       'parameters' in component && component.parameters?.taskid === 'test'
     ))).toHaveLength(65);
@@ -3046,7 +3064,7 @@ describe('Parser Warnings', () => {
       ))).toHaveLength(65);
       expect(sequenceComponents.filter((component) => (
         'parameters' in component && component.parameters?.taskid === 'attention'
-      ))).toHaveLength(5);
+      ))).toHaveLength(0);
       expect(sequenceComponents.filter((component) => (
         'parameters' in component && component.parameters?.r1Training !== undefined
       ))).toHaveLength(9);
@@ -3449,5 +3467,87 @@ describe('conditional response config', () => {
       components: { form: { baseComponent: '$conditional.components.form' } },
     }));
     expect(result.errors).toEqual([]);
+  });
+});
+
+describe('training feedback configuration', () => {
+  const makeConfig = () => {
+    const config = JSON.parse(readFileSync('public/demo-training/config.json', 'utf8'));
+    config.components['simple-dropbox'].correctAnswer[0].acceptableAnswers = ['Stacked Bar'];
+    config.components['simple-dropbox'].correctAnswer[0].feedback = {
+      correctText: ['Good choice', 'You got it!'], incorrectText: 'Try again', hints: ['Think about the shape', 'Hint: choose a bar'], exhaustedText: 'Training finished',
+    };
+    return config;
+  };
+
+  test('accepts and preserves alternative answers and answer-specific feedback', async () => {
+    const config = makeConfig();
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.components['simple-dropbox']).toMatchObject(config.components['simple-dropbox']);
+  });
+
+  test.each(['uiConfig', 'component'])('rejects custom feedback at the %s level', async (level) => {
+    const config = makeConfig();
+    const target = level === 'uiConfig' ? config.uiConfig : config.components['simple-dropbox'];
+    target.feedback = { correctText: 'This belongs on an answer' };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors.length).toBeGreaterThan(0);
+  });
+
+  test.each([
+    ['acceptableAnswers', 'Bar'],
+    ['feedback', { correctText: 4 }],
+    ['feedback', { incorrectText: ['Try again', 4] }],
+    ['feedback', { hints: 'Try a bar' }],
+    ['feedback', { hints: ['First hint', 4] }],
+  ])('rejects invalid %s', async (field, value) => {
+    const config = makeConfig();
+    config.components['simple-dropbox'].correctAnswer[0][field] = value;
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors.length).toBeGreaterThan(0);
+  });
+});
+
+describe('standalone correct-answer acceptance rules', () => {
+  const makeConfig = (definition: object) => {
+    const config = JSON.parse(readFileSync('public/demo-answer-feedback/config.json', 'utf8'));
+    config.components['Numeric Ranges'].correctAnswer[0] = { id: 'closed-range', ...definition };
+    return config;
+  };
+
+  test.each([
+    { answer: 0 },
+    { acceptableAnswers: [-3, 0, 3] },
+    { acceptableLow: -1, acceptableHigh: 1 },
+    { acceptableLow: 0 },
+    { acceptableHigh: 0 },
+    { answer: 0, acceptableLow: -1, acceptableHigh: 1 },
+    { answer: 0, acceptableAnswers: [1, 2] },
+  ])('accepts %j', async (definition) => {
+    const config = makeConfig(definition);
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.components['Numeric Ranges'].correctAnswer?.[0]).toEqual({ id: 'closed-range', ...definition });
+  });
+
+  test.each([{}, { acceptableAnswers: [] }])('rejects an empty acceptance rule %j', async (definition) => {
+    const parsed = await parseStudyConfig(JSON.stringify(makeConfig(definition)));
+    expect(parsed.errors).toContainEqual(expect.objectContaining({
+      instancePath: '/components/Numeric Ranges/correctAnswer/0',
+      message: 'A correctAnswer must define an answer, a non-empty acceptableAnswers list, or a numeric bound',
+    }));
+  });
+
+  test('validates acceptance rules inherited from base components', async () => {
+    const config = makeConfig({ acceptableHigh: 0 });
+    config.baseComponents = { rangeBase: config.components['Numeric Ranges'] };
+    config.components['Numeric Ranges'] = { baseComponent: 'rangeBase' };
+    expect((await parseStudyConfig(JSON.stringify(config))).errors).toEqual([]);
+    config.baseComponents.rangeBase.correctAnswer[0] = { id: 'closed-range' };
+    const parsed = await parseStudyConfig(JSON.stringify(config));
+    expect(parsed.errors).toContainEqual(expect.objectContaining({
+      instancePath: '/baseComponents/rangeBase/correctAnswer/0',
+    }));
   });
 });

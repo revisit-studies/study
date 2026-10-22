@@ -30,9 +30,10 @@
     "tutorial",
     "tutorial-replication",
     "demo-html",
-    "demo-factors",
-    "demo-markdown-factors",
+    "test-factors",
+    "test-markdown-factors",
     "demo-stroop-factors",
+    "demo-stroop-html-factors",
     "demo-max-study2",
     "demo-ffl-study",
     "demo-dsf-study",
@@ -41,6 +42,7 @@
     "demo-templating",
     "demo-form-elements",
     "demo-training",
+    "demo-answer-feedback",
     "demo-html-trrack",
     "demo-svelte-trrack",
     "demo-react-trrack",
@@ -80,6 +82,7 @@
     "library-screen-recording",
     "library-webcam-recording",
     "library-smeq",
+    "library-drawing",
     "library-sus",
     "library-ueq",
     "library-ueq-s",
@@ -112,17 +115,21 @@
       "tab": "Demo Studies",
       "path": "demo-html/config.json"
     },
-    "demo-factors": {
-      "tab": "Factor-demos",
-      "path": "demo-factors/config.json"
+    "test-factors": {
+      "path": "test-factors/config.json",
+      "test": true
     },
-    "demo-markdown-factors": {
-      "tab": "Factor-demos",
-      "path": "demo-markdown-factors/config.json"
+    "test-markdown-factors": {
+      "path": "test-markdown-factors/config.json",
+      "test": true
     },
     "demo-stroop-factors": {
       "tab": "Factor-demos",
       "path": "demo-stroop-factors/config.json"
+    },
+    "demo-stroop-html-factors": {
+      "tab": "Factor-demos",
+      "path": "demo-stroop-html-factors/config.json"
     },
     "demo-max-study2": {
       "tab": "Factor-demos",
@@ -163,6 +170,10 @@
     "demo-dark-mode": {
       "tab": "Demo Studies",
       "path": "demo-dark-mode/config.json"
+    },
+    "demo-answer-feedback": {
+      "tab": "Demo Studies",
+      "path": "demo-answer-feedback/config.json"
     },
     "demo-training": {
       "tab": "Demo Studies",
@@ -322,6 +333,11 @@
     "library-smeq": {
       "tab": "Libraries",
       "path": "library-smeq/config.json",
+      "test": true
+    },
+    "library-drawing": {
+      "tab": "Libraries",
+      "path": "library-drawing/config.json",
       "test": true
     },
     "library-sus": {

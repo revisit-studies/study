@@ -11,7 +11,7 @@ import { findIndexOfBlock } from './getSequenceFlatMap';
 import { studyComponentToIndividualComponent } from './handleComponentInheritance';
 import { parseTrialOrder } from './parseTrialOrder';
 
-export type SkipEvaluationAnswer = Pick<StoredAnswer, 'answer' | 'timedOut'> & { checkAnswer?: CheckAnswerState };
+export type SkipEvaluationAnswer = Pick<StoredAnswer, 'answer' | 'timedOut'> & { checkAnswer?: CheckAnswerState; correctAnswer?: StoredAnswer['correctAnswer'] };
 
 export type SkipConditionWithExtents = SkipConditions[number] & {
   firstIndex: number;
@@ -23,14 +23,16 @@ export function areComponentAnswersCorrect(
   componentConfig: IndividualComponent | InheritedComponent,
   studyConfig: StudyConfig,
   checkAnswer?: CheckAnswerState,
+  correctAnswers?: StoredAnswer['correctAnswer'],
 ) {
   const resolvedComponentConfig = studyComponentToIndividualComponent(componentConfig, studyConfig);
 
+  const answerRules = correctAnswers ?? resolvedComponentConfig.correctAnswer;
   const hasSavedScores = Object.keys(checkAnswer?.scores ?? {}).length > 0;
   const hasConfiguredScorer = resolvedComponentConfig.response?.some((response) => (
     hasResponseScorer(response) || isResponseScorerUnavailable(response)
   ));
-  if (!resolvedComponentConfig.correctAnswer?.length
+  if (!answerRules?.length
     && !hasConfiguredScorer
     && !hasSavedScores) {
     return true;
@@ -38,14 +40,14 @@ export function areComponentAnswersCorrect(
 
   return componentAnswersAreCorrect(
     answers,
-    resolvedComponentConfig.correctAnswer,
+    answerRules,
     resolvedComponentConfig.response,
     checkAnswer,
   );
 }
 
 export function getSkipConditionCorrectAnswers(
-  componentsToCheck: Array<[string, Pick<SkipEvaluationAnswer, 'answer' | 'checkAnswer'>]>,
+  componentsToCheck: Array<[string, Pick<SkipEvaluationAnswer, 'answer' | 'checkAnswer' | 'correctAnswer'>]>,
   studyConfig: StudyConfig,
 ) {
   return componentsToCheck.map(([candidateComponentName, responseObj]) => areComponentAnswersCorrect(
@@ -53,6 +55,7 @@ export function getSkipConditionCorrectAnswers(
     studyConfig.components[candidateComponentName.slice(0, candidateComponentName.lastIndexOf('_'))],
     studyConfig,
     responseObj.checkAnswer,
+    responseObj.correctAnswer,
   ));
 }
 
@@ -63,6 +66,7 @@ export function getStoredAnswersForSkipEvaluation(answers: Record<string, Stored
         answer: responseObj.answer,
         timedOut: false,
         checkAnswer: responseObj.checkAnswer,
+        correctAnswer: responseObj.correctAnswer,
       };
     }
     return acc;
@@ -126,6 +130,7 @@ export function conditionIsTriggered(
       studyConfig.components[componentId.slice(0, componentId.lastIndexOf('_'))],
       studyConfig,
       response.checkAnswer,
+      response.correctAnswer,
     ) === false;
   }
 

@@ -1,5 +1,5 @@
 import {
-  ActionIcon, AppShell, Button, Flex, Menu,
+  ActionIcon, AppShell, Button, Flex, Menu, useComputedColorScheme,
 } from '@mantine/core';
 import { Outlet } from 'react-router';
 import {
@@ -36,7 +36,7 @@ import {
 } from '../utils/pdfExport';
 import { hideNotification, showNotification } from '../utils/notifications';
 import { PdfExportMenuItem } from './interface/PdfExportMenuItem';
-import { PREFIX } from '../utils/Prefix';
+import { getStudyLogoUrl } from '../utils/studyLogo';
 
 const STUDY_BROWSER_WIDTH = 360;
 
@@ -48,6 +48,7 @@ export function StepRenderer() {
 
   const isAnalysis = useIsAnalysis();
   const studyConfig = useStudyConfig();
+  const studyColorMode = useComputedColorScheme('light');
   const currentComponent = useCurrentComponent();
 
   const componentConfig = useMemo(() => studyComponentToIndividualComponent(studyConfig.components[currentComponent] || {}, studyConfig), [currentComponent, studyConfig]);
@@ -138,7 +139,8 @@ export function StepRenderer() {
 
     window.addEventListener('focus', focusListener, true);
     window.addEventListener('input', inputListener as () => void);
-    window.addEventListener('keydown', keydownListener);
+    // Record shortcuts even when response controls stop propagation.
+    window.addEventListener('keydown', keydownListener, true);
     window.addEventListener('keyup', keyupListener);
     window.addEventListener('mousedown', mouseDownListener);
     window.addEventListener('mouseup', mouseUpListener);
@@ -150,7 +152,7 @@ export function StepRenderer() {
     return () => {
       window.removeEventListener('focus', focusListener, true);
       window.removeEventListener('input', inputListener as () => void);
-      window.removeEventListener('keydown', keydownListener);
+      window.removeEventListener('keydown', keydownListener, true);
       window.removeEventListener('keyup', keyupListener);
       window.removeEventListener('mousedown', mouseDownListener);
       window.removeEventListener('mouseup', mouseUpListener);
@@ -396,7 +398,7 @@ export function StepRenderer() {
                 {studyConfig.uiConfig.logoPath && (
                   <img
                     alt="Study logo"
-                    src={`${PREFIX}${studyConfig.uiConfig.logoPath}`}
+                    src={getStudyLogoUrl(studyConfig.uiConfig.logoPath, studyColorMode)}
                     style={{ height: 40, maxWidth: 120, objectFit: 'contain' }}
                   />
                 )}

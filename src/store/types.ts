@@ -103,7 +103,7 @@ export interface StoredAnswer {
   componentName: string;
   /** The order of the trial in the sequence. */
   trialOrder: string;
-  /** Object whose keys are the "id"s in the Response list of the component in the StudyConfig and whose value is a list of incorrect inputted values from the participant. Only relevant for trials with `provideFeedback` and correct answers enabled. */
+  /** Object whose keys are the "id"s in the Response list of the component in the StudyConfig and whose value is a list of incorrect inputted values from the participant. Only relevant for trials with `provideFeedback` enabled or custom answer-level feedback. */
   incorrectAnswers: Record<string, { id: string, value: unknown[] }>;
   /** Time that the user began interacting with the component in epoch milliseconds. */
   startTime: number;
@@ -187,6 +187,8 @@ export interface CheckAnswerState {
   scores?: Record<string, number>;
   /** Answers used to calculate responses and scores, so later edits cannot reuse stale results. */
   answerSnapshot?: StoredAnswer['answer'];
+  /** Answer values captured at the last check, used to keep displayed feedback stable while responses are edited. */
+  checkedAnswers?: StoredAnswer['answer'];
 }
 
 export interface JumpFunctionParameters<T> {

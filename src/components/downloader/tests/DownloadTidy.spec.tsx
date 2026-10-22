@@ -197,6 +197,66 @@ describe('getTableData', () => {
     expect(answerRow?.score).toBeUndefined();
   });
 
+  test('exports acceptable answer lists when no exact answer is defined', async () => {
+    const participant = makeParticipant();
+    participant.answers.testComponent_0.correctAnswer = [{
+      id: 'response',
+      acceptableAnswers: ['first accepted value', 'second accepted value'],
+    }];
+    const tableData = await getTableData(
+      ['correctAnswer'],
+      [participant],
+      makeStorageEngine({ 'hash-1': configWithComponentMetadata }),
+      'test-study',
+    );
+
+    expect(tableData.rows[0].correctAnswer).toBe(JSON.stringify(['first accepted value', 'second accepted value']));
+  });
+
+  test('exports numeric bounds when no exact answer is defined', async () => {
+    const configWithRangeAnswer = {
+      ...configWithComponentMetadata,
+      components: {
+        ...configWithComponentMetadata.components,
+        testComponent: {
+          ...configWithComponentMetadata.components.testComponent,
+          correctAnswer: [{ id: 'response', acceptableLow: 1, acceptableHigh: 5 }],
+        },
+      },
+    } as StudyConfig;
+    const participant = makeParticipant();
+    delete (participant.answers.testComponent_0 as Partial<StoredAnswer>).correctAnswer;
+    const tableData = await getTableData(
+      ['correctAnswer'],
+      [participant],
+      makeStorageEngine({ 'hash-1': configWithRangeAnswer }),
+      'test-study',
+    );
+
+    expect(tableData.rows[0].correctAnswer).toBe(JSON.stringify({ acceptableLow: 1, acceptableHigh: 5 }));
+  });
+
+  test.each([
+    [{ id: 'response', acceptableAnswers: ['saved option'] }, JSON.stringify(['saved option'])],
+    [{ id: 'response', acceptableLow: 0, acceptableHigh: 5 }, JSON.stringify({ acceptableLow: 0, acceptableHigh: 5 })],
+  ])('uses a saved answer rule instead of a configured exact answer: %j', async (savedRule, expected) => {
+    const configWithExactAnswer = {
+      ...configWithComponentMetadata,
+      components: {
+        ...configWithComponentMetadata.components,
+        testComponent: {
+          ...configWithComponentMetadata.components.testComponent,
+          correctAnswer: [{ id: 'response', answer: 'configured exact answer' }],
+        },
+      },
+    } as StudyConfig;
+    const participant = makeParticipant();
+    participant.answers.testComponent_0.correctAnswer = [savedRule];
+    const tableData = await getTableData(['correctAnswer'], [participant], makeStorageEngine({ 'hash-1': configWithExactAnswer }), 'test-study');
+
+    expect(tableData.rows[0].correctAnswer).toBe(expected);
+  });
+
   test('falls back to the stored config when a legacy answer omits correctAnswer', async () => {
     const configWithCorrectAnswer = {
       ...configWithComponentMetadata,

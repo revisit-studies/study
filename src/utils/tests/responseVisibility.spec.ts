@@ -303,3 +303,11 @@ describe('comparison conditions', () => {
       .toBe(false);
   });
 });
+
+test('isCorrect visibility recognizes alternative answers', () => {
+  const fields: Response[] = [responses[0], {
+    ...responses[1], visibleIf: { responseId: 'attended', comparison: 'isCorrect', value: true },
+  }];
+  const correctAnswers = [{ id: 'attended', answer: 'yes', acceptableAnswers: ['no'] }];
+  expect(resolveResponseVisibility(fields, { attended: 'no' }, {}, correctAnswers).visibleIds.has('name')).toBe(true);
+});

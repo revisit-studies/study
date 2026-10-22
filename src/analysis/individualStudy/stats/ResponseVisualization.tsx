@@ -76,6 +76,8 @@ export function ResponseVisualization({
       return Object.entries(participant.answers).filter(([key]) => key.slice(0, key.lastIndexOf('_')) === trialId)
         .filter(([, value]) => value.startTime > 0).map(([, value]) => {
           const persistedScores = getSavedScoresForAnswer(value.checkAnswer, value.answer);
+          const participantCorrectAnswers = value.correctAnswer ?? participantTrialConfig?.correctAnswer ?? trialConfig.correctAnswer;
+          const participantCorrectAnswer = participantCorrectAnswers?.find((answer) => answer.id === response.id);
           const participantResponse = participantTrialConfig?.response?.find((item) => item.id === response.id)
             ?? (!hasArchivedConfigs ? response : undefined);
           if (participantResponse?.visibleIf && participantTrialConfig) {
@@ -83,7 +85,7 @@ export function ResponseVisualization({
               participantTrialConfig.response ?? [],
               value.answer,
               {},
-              participantTrialConfig.correctAnswer,
+              participantCorrectAnswers,
               persistedScores,
             );
             if (!visibleIds.has(response.id)) return null;
@@ -95,7 +97,6 @@ export function ResponseVisualization({
             answerData.result = 'unknown';
             answerData.order = 3;
           } else if (participantTrialConfig && participantResponse) {
-            const participantCorrectAnswer = participantTrialConfig.correctAnswer?.find((answer) => answer.id === response.id);
             if (participantCorrectAnswer || hasResponseScorer(participantResponse) || savedScore !== undefined) {
               const participantAnswer = value.answer[response.id];
               const score = savedScore === undefined
@@ -112,18 +113,18 @@ export function ResponseVisualization({
               answerData.result = isCorrect === null ? 'unknown' : isCorrect ? 'correct' : isPartial ? 'partial' : 'incorrect';
               answerData.order = isCorrect === null ? 3 : isCorrect ? 0 : isPartial ? 1 : 2;
             }
-          } else if (!hasArchivedConfigs && (correctAnswer || hasResponseScorer(response) || savedScore !== undefined)) {
+          } else if (!hasArchivedConfigs && (participantCorrectAnswer || hasResponseScorer(response) || savedScore !== undefined)) {
             const participantAnswer = value.answer[response.id];
             const score = savedScore === undefined
-              ? scoreResponseAnswer(participantAnswer, correctAnswer, response, value.answer)
+              ? scoreResponseAnswer(participantAnswer, participantCorrectAnswer, response, value.answer)
               : savedScore;
             const isGradable = isResponseAnsweredForScoring(response, participantAnswer, value.answer);
             const validScore = isGradable && score !== null && Number.isFinite(score) && score >= 0 && score <= 1
               ? score
               : null;
             const isCorrect = isGradable
-              ? isResponseScoreCorrect(validScore, correctAnswer?.correctnessThreshold)
-              : correctAnswer && response.required !== false ? false : null;
+              ? isResponseScoreCorrect(validScore, participantCorrectAnswer?.correctnessThreshold)
+              : participantCorrectAnswer && response.required !== false ? false : null;
             const isPartial = validScore !== null && validScore > 0;
             answerData.result = isCorrect === null ? 'unknown' : isCorrect ? 'correct' : isPartial ? 'partial' : 'incorrect';
             answerData.order = isCorrect === null ? 3 : isCorrect ? 0 : isPartial ? 1 : 2;
@@ -135,7 +136,7 @@ export function ResponseVisualization({
     const flattened = data.flat().filter((row): row is NonNullable<typeof row> => row !== null);
 
     return flattened.filter((row) => row[response.id] !== undefined && row[response.id] !== null && row[response.id] !== '');
-  }, [allConfigs, participantData, response, trialId, correctAnswer, trialConfig]);
+  }, [allConfigs, participantData, response, trialId, trialConfig]);
 
   // Completion times for the metadata timing histogram
   const timingData = useMemo(() => (response.type === 'metadata'
