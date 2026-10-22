@@ -7,7 +7,7 @@ import runpy
 import shutil
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 
 migration = runpy.run_path(str(Path(__file__).parents[1] / "migrate-storage.py"))
@@ -126,6 +126,105 @@ class StorageMigrationTests(unittest.TestCase):
             migration["verify"]("http://example.test", self.export)
         changed = [{**objects[0], "version": "changed"}, objects[1]]
         with patch.dict(migration["verify"].__globals__, objects=lambda database: changed):
+            with self.assertRaisesRegex(ValueError, "metadata changed"):
+                migration["verify"]("http://example.test", self.export)
+
+    def test_file_directory_collisions_fail_before_installing_any_payload(self):
+        second = {**self.obj, "file": "00000001.bin",
+                  "name": "study/participant data.json/existing-version/child"}
+        (self.export / second["file"]).write_bytes(b"existing participant data")
+        self.manifest([self.obj, second])
+        with self.assertRaisesRegex(ValueError, "conflict as files"):
+            migration["install"](self.export, self.target, "stub", "stub")
+        self.assertFalse(self.target.exists())
+        with self.assertRaisesRegex(ValueError, "conflict as files"):
+            migration["check"](self.export, "stub", "stub")
+
+    def test_duplicate_paths_and_missing_exports_fail_before_install(self):
+        for second in ({**self.obj, "file": "00000001.bin"},
+                       {**self.obj, "file": "00000001.bin", "name": "different"}):
+            with self.subTest(name=second["name"]):
+                self.manifest([self.obj, second])
+                if second["name"] == self.obj["name"]:
+                    (self.export / second["file"]).write_bytes(b"existing participant data")
+                    with self.assertRaisesRegex(ValueError, "same file path"):
+                        migration["install"](self.export, self.target, "stub", "stub")
+                    (self.export / second["file"]).unlink()
+                else:
+                    with self.assertRaises(FileNotFoundError):
+                        migration["install"](self.export, self.target, "stub", "stub")
+                self.assertFalse(self.target.exists())
+
+    def test_symlink_escape_is_rejected_without_writing_outside_storage(self):
+        self.manifest([self.obj])
+        self.target.mkdir()
+        outside = Path(self.temp.name) / "outside"
+        outside.mkdir()
+        (self.target / "stub").symlink_to(outside, target_is_directory=True)
+        with self.assertRaisesRegex(ValueError, "escapes destination"):
+            migration["install"](self.export, self.target, "stub", "stub")
+        self.assertEqual(list(outside.iterdir()), [])
+
+    def test_metadata_failure_keeps_payload_unpublished_and_allows_retry(self):
+        self.manifest([self.obj])
+        with patch("os.setxattr", side_effect=OSError("extended attributes unavailable")):
+            with self.assertRaisesRegex(OSError, "extended attributes"):
+                migration["install"](self.export, self.target, "stub", "stub")
+        target = migration["destination"](self.target, "stub", "stub", self.obj)
+        self.assertFalse(target.exists())
+        self.assertFalse(list(self.target.rglob(".revisit-migration-*")))
+        migration["install"](self.export, self.target, "stub", "stub")
+        self.assertEqual(target.read_bytes(), b"existing participant data")
+
+    def test_concurrent_writes_and_interrupted_export_never_publish_a_manifest(self):
+        def response(url, obj):
+            stream = BytesIO(b"existing participant data")
+            stream.headers = {"Content-Type": "application/json", "Cache-Control": "max-age=3600"}
+            return stream
+
+        original = [{"id": "original", "bucket_id": "revisit", "name": "recording",
+                     "metadata": {"size": len(b"existing participant data")}}]
+        directory = self.export / "incomplete"
+        with patch.dict(migration["export"].__globals__, download=response,
+                        objects=Mock(side_effect=[original, [{**original[0], "version": "new"}]])):
+            with self.assertRaisesRegex(ValueError, "metadata changed during export"):
+                migration["export"]("http://example.test", directory)
+        self.assertFalse((directory / "manifest.json").exists())
+        with self.assertRaises(FileExistsError):
+            migration["export"]("http://example.test", directory)
+        for failure in (OSError("connection interrupted"), ValueError("size differs")):
+            directory = directory.with_name(directory.name + "-retry")
+            with patch.dict(migration["export"].__globals__, objects=lambda database: original,
+                            download=Mock(side_effect=failure)):
+                with self.assertRaises(type(failure)):
+                    migration["export"]("http://example.test", directory)
+            self.assertFalse((directory / "manifest.json").exists())
+
+    def test_truncated_http_response_without_database_size_never_completes_export(self):
+        stream = BytesIO(b"partial")
+        stream.headers = {"Content-Length": "100"}
+        directory = self.export / "truncated"
+        obj = {"id": "legacy", "bucket_id": "revisit", "name": "legacy", "metadata": None}
+        with patch.dict(migration["export"].__globals__, objects=lambda database: [obj],
+                        download=lambda url, item: stream):
+            with self.assertRaisesRegex(ValueError, "Content-Length"):
+                migration["export"]("http://example.test", directory)
+        self.assertFalse((directory / "manifest.json").exists())
+
+    def test_verify_rejects_wrong_bytes_headers_and_added_objects(self):
+        obj = {**self.obj, "id": "existing"}
+        self.manifest([obj])
+        for body, content_type, cache in ((b"corrupted", obj["content_type"], obj["cache_control"]),
+                                          (b"existing participant data", "text/plain", obj["cache_control"]),
+                                          (b"existing participant data", obj["content_type"], "no-cache")):
+            stream = BytesIO(body)
+            stream.headers = {"Content-Type": content_type, "Cache-Control": cache}
+            with patch.dict(migration["verify"].__globals__, objects=lambda database: [obj],
+                            download=lambda url, item: stream):
+                with self.assertRaises(ValueError):
+                    migration["verify"]("http://example.test", self.export)
+        with patch.dict(migration["verify"].__globals__,
+                        objects=lambda database: [obj, {**obj, "id": "new"}]):
             with self.assertRaisesRegex(ValueError, "metadata changed"):
                 migration["verify"]("http://example.test", self.export)
 

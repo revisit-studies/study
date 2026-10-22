@@ -43,18 +43,24 @@ def digest(file):
 
 def export(url, directory, database="postgres"):
     directory.mkdir(parents=True, exist_ok=False)
-    manifest = objects(database)
+    original = objects(database)
+    manifest = [dict(obj) for obj in original]
     for index, obj in enumerate(manifest):
         obj["file"] = f"{index:08d}.bin"
         target = directory / obj["file"]
         with download(url, obj) as response, target.open("wb") as output:
+            content_length = response.headers.get("Content-Length")
             obj["content_type"] = response.headers.get("Content-Type", "application/octet-stream")
             obj["cache_control"] = response.headers.get("Cache-Control", "no-cache")
             shutil.copyfileobj(response, output)
+        if content_length is not None and target.stat().st_size != int(content_length):
+            raise ValueError("Downloaded object size differs from HTTP Content-Length")
         obj["sha256"] = digest(target)
         size = (obj.get("metadata") or {}).get("size")
         if size is not None and target.stat().st_size != int(size):
             raise ValueError("Downloaded object size differs from database metadata")
+    if objects(database) != original:
+        raise ValueError("Storage metadata changed during export; keep writes paused and export again")
     (directory / "manifest.json").write_text(json.dumps(manifest, indent=2))
     print(f"Exported {len(manifest)} objects")
 
@@ -72,17 +78,34 @@ def destination(root, bucket, tenant, obj):
     return target
 
 
-def install(directory, root, bucket, tenant):
-    if not hasattr(os, "setxattr"):
-        raise RuntimeError("Install requires Linux extended attributes; see MIGRATION.md")
+def validate_export(directory, root, bucket, tenant):
     manifest = json.loads((directory / "manifest.json").read_text())
+    targets = set()
     # Validate the entire export before changing the destination.
     for index, obj in enumerate(manifest):
         if obj["file"] != f"{index:08d}.bin" or digest(directory / obj["file"]) != obj["sha256"]:
             raise ValueError("Export checksum mismatch")
         target = destination(root, bucket, tenant, obj)
+        if target in targets:
+            raise ValueError("Storage objects map to the same file path")
+        targets.add(target)
         if target.exists() and digest(target) != obj["sha256"]:
             raise ValueError("Destination already contains different data")
+    if any(parent in targets for target in targets for parent in target.parents):
+        raise ValueError("Storage object paths conflict as files and directories; retain S3 storage")
+    return manifest
+
+
+def check(directory, bucket, tenant):
+    with tempfile.TemporaryDirectory() as temporary:
+        manifest = validate_export(directory, Path(temporary) / "storage", bucket, tenant)
+    print(f"Checked {len(manifest)} objects for file-backend compatibility")
+
+
+def install(directory, root, bucket, tenant):
+    if not hasattr(os, "setxattr"):
+        raise RuntimeError("Install requires Linux extended attributes; see MIGRATION.md")
+    manifest = validate_export(directory, root, bucket, tenant)
     root.mkdir(parents=True, exist_ok=True)
     root.chmod(0o755)
     for obj in manifest:
@@ -129,7 +152,7 @@ def verify(url, directory, database="postgres"):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("operation", choices=["export", "install", "verify"])
+    parser.add_argument("operation", choices=["export", "check", "install", "verify"])
     parser.add_argument("directory", type=Path)
     parser.add_argument("--url", default="http://localhost:8000")
     parser.add_argument("--database", default="postgres", help="POSTGRES_DB for export and verify")
@@ -137,7 +160,9 @@ def main():
     parser.add_argument("--bucket", default="stub", help="GLOBAL_S3_BUCKET, not the application bucket")
     parser.add_argument("--tenant", default="stub", help="STORAGE_TENANT_ID (previously TENANT_ID)")
     args = parser.parse_args()
-    if args.operation == "install":
+    if args.operation == "check":
+        check(args.directory, args.bucket, args.tenant)
+    elif args.operation == "install":
         if args.destination is None:
             parser.error("install requires --destination")
         install(args.directory, args.destination, args.bucket, args.tenant)

@@ -26,4 +26,6 @@ jobs:
         run: yarn unittest
 
       - name: Run storage migration tests
-        run: python3 supabase/tests/migrate-storage.spec.py
+        run: |
+          python3 supabase/tests/migrate-storage.spec.py
+          python3 supabase/tests/prepare-pg17-upgrade.spec.py

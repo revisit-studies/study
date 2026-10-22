@@ -1,5 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import { randomUUID } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
 import { createClient } from '@supabase/supabase-js';
 import { expect, Page, test } from '@playwright/test';
 import { ParticipantData } from '../src/storage/types';
@@ -109,6 +110,99 @@ test.describe('Live self-hosted Supabase', () => {
     await expect(page.getByText(/Which color is the (lightest|darkest)\?/)).toBeVisible();
     await expect(page.getByPlaceholder('Select an option')).toHaveValue('A');
     expect(colorAnswers(await readParticipant(participantId!))).toEqual(colorAnswers(participant));
+  });
+
+  test('resumes an unfinished pre-migration participant and preserves the earlier answer', async ({ page }) => {
+    const participantId = process.env.PW_SUPABASE_RESUME_PARTICIPANT;
+    test.skip(!participantId, 'Set PW_SUPABASE_RESUME_PARTICIPANT for the unfinished participant rehearsal');
+    const seed = process.env.PW_SUPABASE_SEED_RESUME === '1';
+    const previous = seed ? null : await readParticipant(participantId!);
+    const earlierAnswer = Object.values(previous?.answers ?? {})
+      .find((answer) => answer.componentName.startsWith('color-trial-') && Object.values(answer.answer).includes('A'));
+    if (!seed) {
+      expect(previous?.participantId).toBe(participantId);
+      expect(earlierAnswer).toBeTruthy();
+      expect(colorAnswers(previous).flatMap((answer) => Object.values(answer))).not.toContain('B');
+    }
+
+    await selectParticipant(page, participantId!);
+    await page.goto('/demo-condition?condition=color');
+    await nextClick(page);
+    const question = page.getByText(/Which color is the (lightest|darkest)\?/);
+    await expect(question).toBeVisible();
+    const firstQuestion = await question.textContent();
+    const response = page.getByPlaceholder('Select an option');
+    if (seed) {
+      await response.click();
+      await page.getByRole('option', { name: 'A', exact: true }).click();
+    } else {
+      await expect(response).toHaveValue('A');
+    }
+    await nextClick(page);
+    await expect(question).toBeVisible();
+    await expect(question).not.toHaveText(firstQuestion!);
+    await expect(response).toHaveValue('');
+    await expect.poll(async () => colorAnswers(await readParticipant(participantId!))
+      .flatMap((answer) => Object.values(answer))).toContain('A');
+
+    if (!seed) {
+      await response.click();
+      await page.getByRole('option', { name: 'B', exact: true }).click();
+      await nextClick(page);
+      await waitForStudyEndMessage(page);
+      await expect.poll(async () => colorAnswers(await readParticipant(participantId!))
+        .flatMap((answer) => Object.values(answer))).toEqual(expect.arrayContaining(['A', 'B']));
+      const current = await readParticipant(participantId!);
+      expect(Object.values(current!.answers).find((answer) => answer.componentName === earlierAnswer!.componentName)?.answer)
+        .toEqual(earlierAnswer!.answer);
+    }
+  });
+
+  test('authenticates a retained Designer account and exports retained answers through the UI', async ({ page }) => {
+    const email = process.env.PW_SUPABASE_DESIGNER_EMAIL;
+    const password = process.env.PW_SUPABASE_DESIGNER_PASSWORD;
+    const participantId = process.env.PW_SUPABASE_EXISTING_PARTICIPANT;
+    test.skip(!email || !password || !participantId, 'Set Designer credentials and the retained participant ID');
+
+    await page.goto('/analysis/stats/demo-condition/manage');
+    await expect(page.getByRole('button', { name: 'Sign In With Supabase' })).toBeVisible();
+
+    // The app's sign-in button uses external GitHub OAuth. Use a real Auth password
+    // session here to exercise account retention, authorization and exports locally.
+    const url = process.env.VITE_SUPABASE_URL!;
+    const client = createClient(url, process.env.VITE_SUPABASE_ANON_KEY!, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { data, error } = await client.auth.signInWithPassword({ email: email!, password: password! });
+    expect(error).toBeNull();
+    expect(data.user?.email).toBe(email);
+    const storageKey = `sb-${new URL(url).hostname.split('.')[0]}-auth-token`;
+    await page.evaluate(({ key, session }) => localStorage.setItem(key, JSON.stringify(session)), {
+      key: storageKey, session: data.session,
+    });
+    await page.goto('/analysis/stats/demo-condition/table');
+    await expect(page.getByRole('columnheader', { name: /^ID Sort by ID/ })).toBeVisible();
+
+    const jsonButton = page.locator('button').filter({ has: page.locator('svg.tabler-icon-database-export') });
+    await expect(jsonButton).toBeEnabled();
+    const jsonDownload = page.waitForEvent('download');
+    await jsonButton.click();
+    const downloaded = await jsonDownload;
+    expect(await downloaded.failure()).toBeNull();
+    const participants = JSON.parse(await readFile((await downloaded.path())!, 'utf8')) as ParticipantData[];
+    const retained = participants.find((participant) => participant.participantId === participantId);
+    expect(retained).toBeTruthy();
+    expect(retained?.answers).toEqual((await readParticipant(participantId!))?.answers);
+
+    const csvButton = page.locator('button').filter({ has: page.locator('svg.tabler-icon-table-export') });
+    await csvButton.click();
+    const exporter = page.getByRole('dialog', { name: 'Tidy CSV Exporter' });
+    await expect(exporter).toBeVisible();
+    const csvDownload = page.waitForEvent('download');
+    await exporter.getByRole('button', { name: 'Download', exact: true }).click();
+    const csv = await csvDownload;
+    expect(await csv.failure()).toBeNull();
+    expect(await readFile((await csv.path())!, 'utf8')).toContain(participantId!);
   });
 
   test('supports binary files, overwrites and signed downloads with a participant session', async ({ request }) => {

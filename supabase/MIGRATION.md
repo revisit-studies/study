@@ -22,8 +22,12 @@ coordinated pre-upgrade database, object-store, encryption and configuration
 backups below; changing image tags alone is insufficient.
 
 Requirements: a Linux server, Git, Docker Compose, Bash, curl, rsync, OpenSSL, Python 3.11+,
-root access for the upstream database upgrade, and enough space for the database
-backup/upgrade and two copies of object data. Pre-pull the target images before
+root access for the upstream database upgrade, and sufficient free disk space.
+Allow at least **three additional object-data copies** beyond the current
+object store (physical backup, API export, and new file storage), plus **two
+additional database copies** (external PG15 backup and PG17 data). Allow extra
+space for filesystem/per-object metadata and a safety margin; measure the
+existing on-disk directories rather than relying only on logical object sizes. Pre-pull the target images before
 starting the upgrade; allow at least 15 GB additional temporary space for the
 upgrade images, extracted binaries, and compressed bundle (also inside the
 Docker VM when using Docker Desktop). The command below puts build files next
@@ -100,15 +104,50 @@ shell history or in the application's `VITE_*` variables.
 
 ```sh
 python3 migrate-storage.py export "$migration_backup/objects" \
-  --url http://localhost:8000 --database "$postgres_database"
+  --url http://localhost:8000 --database "$postgres_database" &&
+python3 migrate-storage.py check "$migration_backup/objects" \
+  --bucket stub --tenant stub
 ```
+
+Use your preserved `GLOBAL_S3_BUCKET` and `TENANT_ID` instead of `stub` for
+`check` and installation. The check validates every export checksum and rejects
+S3 keys that collide as file/directory paths, before any database upgrade. Such
+a layout requires retaining an S3 backend with a separately rehearsed plan.
+Export also refuses to publish a manifest if object metadata changes while it
+runs; keep all writers paused and repeat into a new export directory.
 
 Use your actual gateway URL and preserved `POSTGRES_DB` for both export and
 verification. Keep `postgres_database` in the same shell session. Export includes
-all live objects in every Supabase bucket, not only `revisit`, and fails on missing objects or size mismatches.
+all live objects in every Supabase bucket, not only `revisit`, and fails on
+missing objects, truncated HTTP responses, or size mismatches.
 The export directory must not already exist. An interrupted export must be
 repeated into a new directory; only a completed export contains `manifest.json`.
 It does not copy orphaned MinIO objects absent from the database.
+
+Snapshot the bundled application records, bucket settings, and access policies
+while writes remain paused. Keep this private alongside the other backups:
+
+```sh
+cat > "$migration_backup/check-application.sql" <<'SQL'
+SELECT json_build_object(
+  'records', (SELECT json_agg(r ORDER BY "studyId", "docId") FROM public.revisit r),
+  'buckets', (SELECT json_agg(b ORDER BY id) FROM (
+    SELECT id, name, owner, owner_id, public, created_at, updated_at,
+           file_size_limit, allowed_mime_types
+    FROM storage.buckets
+  ) b),
+  'policies', (SELECT json_agg(p ORDER BY schemaname, tablename, policyname)
+    FROM pg_policies p WHERE schemaname IN ('public', 'storage'))
+);
+SQL
+docker exec -i supabase-db psql -U supabase_admin -d "$postgres_database" \
+  -At -v ON_ERROR_STOP=1 < "$migration_backup/check-application.sql" \
+  > "$migration_backup/application-before.json"
+```
+
+The final verification repeats this query and compares its output. Add separate
+checks for any custom application tables, schemas, extensions, or encrypted data
+identified in your inventory; the bundled snapshot does not certify those.
 
 Stop the old stack **using its old Compose file**, without deleting volumes:
 
@@ -215,7 +254,21 @@ Move the old MinIO data aside and create an empty file-storage directory:
 ```sh
 mv volumes/storage volumes/storage.minio-backup
 mkdir volumes/storage
+sudo python3 - <<'PYTHON'
+import os
+from pathlib import Path
+import tempfile
+with tempfile.TemporaryDirectory(dir="volumes/storage") as temporary:
+    probe = Path(temporary) / "xattr-probe"
+    probe.write_bytes(b"storage preflight")
+    os.setxattr(probe, "user.supabase.content-type", b"application/octet-stream")
+    assert os.getxattr(probe, "user.supabase.content-type") == b"application/octet-stream"
+PYTHON
 ```
+
+Require the filesystem probe to succeed before upgrading the database. An
+unsupported or unwritable filesystem must be fixed while the original database
+and object-store backups are still untouched.
 
 Do **not** apply `revisit.sql`: existing application schema, buckets, and policies
 are retained by the database upgrade.
@@ -233,29 +286,38 @@ docker exec supabase-db pg_isready -U postgres
 # Our previous Compose did not initialize the upstream Realtime schema.
 docker exec -i supabase-db psql -U supabase_admin -d "$postgres_database" \
   -v ON_ERROR_STOP=1 < volumes/db/realtime.sql
-mkdir -p "$migration_backup/upgrade-tmp"
-sudo env TMPDIR="$migration_backup/upgrade-tmp" bash utils/upgrade-pg17.sh &&
+python3 "$revisit_support/prepare-pg17-upgrade.py" \
+  utils/upgrade-pg17.sh "$migration_backup/upgrade-pg17.revisit.sh" &&
+mkdir -p "$migration_backup/upgrade-tmp" &&
+sudo env TMPDIR="$migration_backup/upgrade-tmp" \
+  bash "$migration_backup/upgrade-pg17.revisit.sh" &&
 sudo rmdir "$migration_backup/upgrade-tmp" &&
 sh run.sh recreate auth
 ```
 
-The pinned upgrade script starts services with explicit Compose files, briefly
-using the bundle's older Auth without the GitHub override. The final command
-immediately recreates Auth with the required TLS and GitHub overrides. Keep
-traffic blocked throughout; if the script fails, keep Auth unused until the
-fixed image is running. Do not use the script's printed startup commands for
-normal operation; use `sh run.sh start` so all saved overrides apply.
+The preparation helper leaves the downloaded upstream script unchanged and
+writes a deployment copy that selects the `db-config` volume actually mounted
+by `supabase-db`, starts services using the saved Auth/GitHub overrides, and
+aborts on a failed required SQL migration. It rejects an unexpected upstream
+script before writing the prepared copy. Do not run the unprepared script:
+it guesses the encryption volume, ignores saved overrides during startup, and
+can report success after required migration errors. The final Auth recreation
+and image check confirm the selected configuration. Keep traffic blocked
+throughout; use `sh run.sh start` for normal operation rather than the original
+script's printed commands.
 
 Read all output, including migration warnings. This script uses upstream's
 `pg_upgrade` procedure, preserves `data.bak.pg15` and the encryption key, applies
 required role/extension changes, and starts the new stack. See
 [upstream database upgrade guidance](https://supabase.com/docs/guides/self-hosting/postgres-upgrade-17).
-On a host with multiple `db-config` volumes, stop and resolve the target before
-running: this upstream script selects a matching volume by name.
+The prepared script selects the running database's actual named encryption
+volume even when unrelated or leftover `db-config` volumes exist. A missing
+volume mount is an error; do not substitute another volume.
 
 Require a successful script exit and healthy services.
-**Upgrade complete is not sufficient:** the pinned script warns about failed
-required SQL migrations and can still report success. Keep writes blocked and
+**Upgrade complete is not sufficient:** the prepared copy stops on required
+migration-file failures, but upstream extension reconciliation can still warn
+and continue. Keep writes blocked and
 **stop here** on missing migration files, SQL errors, or migration/extension
 reconciliation failures. Resolve each failure and reapply only its affected SQL
 from `/docker-entrypoint-initdb.d/migrations/` in the target database container
@@ -352,10 +414,19 @@ retain their private permissions.
 Each payload and its HTTP metadata are staged on the destination filesystem
 before an atomic rename, so a failed copy leaves the final object untouched.
 It can be rerun with the same verified export after fixing an installation error.
+A forcibly terminated process can leave `.revisit-migration-*` staging
+directories beside its target objects. Once no migration process is running,
+remove only those incomplete staging directories if they consume needed disk
+space; preserve the exported backup and final object paths. Rerun installation
+and verification before reopening writes.
 
 ## 4. Verify before reopening writes
 
 ```sh
+docker exec -i supabase-db psql -U supabase_admin -d "$postgres_database" \
+  -At -v ON_ERROR_STOP=1 < "$migration_backup/check-application.sql" \
+  > "$migration_backup/application-after.json" &&
+diff "$migration_backup/application-before.json" "$migration_backup/application-after.json" &&
 python3 migrate-storage.py verify "$migration_backup/objects" \
   --url http://localhost:8000 --database "$postgres_database" &&
 sh run.sh status &&
@@ -366,7 +437,9 @@ docker exec supabase-db psql -U supabase_admin -d postgres \
 printf 'ref=self-hosted/v0.8.3\n' > .supabase-version
 ```
 
-Require the entire verification block to succeed. If the Auth image check
+Require the entire verification block to succeed. Any unexplained record,
+bucket, or policy difference must be resolved before reopening writes. Run
+these comparisons before the smoke tests create new participant data. If the Auth image check
 fails, keep writes blocked, enable the required Auth override, run
 `sh run.sh recreate auth`, and repeat verification.
 
@@ -466,6 +539,10 @@ migration. Once the Auth and Storage APIs are ready, verify the restored objects
 with the old service-role key and gateway URL, using the original `POSTGRES_DB`:
 
 ```sh
+docker exec -i supabase-db psql -U supabase_admin -d "$postgres_database" \
+  -At -v ON_ERROR_STOP=1 < "$migration_backup/check-application.sql" \
+  > "$migration_backup/application-restored.json" &&
+diff "$migration_backup/application-before.json" "$migration_backup/application-restored.json" &&
 python3 migrate-storage.py verify "$migration_backup/objects" \
   --url http://localhost:8000 --database "$postgres_database"
 ```

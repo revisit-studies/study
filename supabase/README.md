@@ -178,6 +178,7 @@ Python 3.11+ and no third-party Python packages:
 
 ```sh
 python3 supabase/tests/migrate-storage.spec.py
+python3 supabase/tests/prepare-pg17-upgrade.spec.py
 ```
 
 The opt-in Chromium test is `tests/supabase-live.spec.ts`. It needs an isolated
@@ -188,3 +189,18 @@ repository root with `yarn exec playwright test tests/supabase-live.spec.ts --pr
 Use `PW_SUPABASE_PARTICIPANT_ID` to retain a known UUID before migration and
 `PW_SUPABASE_EXISTING_PARTICIPANT` to verify it afterwards. The test creates real
 participant records; do not point it at production.
+
+For an unfinished-participant rehearsal, set `PW_SUPABASE_RESUME_PARTICIPANT` to
+a fresh UUID and `PW_SUPABASE_SEED_RESUME=1` before migration. Afterwards retain
+the UUID and remove `PW_SUPABASE_SEED_RESUME`; the test retrieves the earlier
+answer in a fresh browser and completes the study. This consumes the unfinished
+fixture, so omit that UUID on subsequent recreation runs.
+
+The Designer export check additionally needs private
+`PW_SUPABASE_DESIGNER_EMAIL` / `PW_SUPABASE_DESIGNER_PASSWORD` values for a
+confirmed test account authorized in the fixture's user-management settings,
+and `PW_SUPABASE_EXISTING_PARTICIPANT` for the original completed participant.
+It uses real password Auth locally to check the retained account and protected
+JSON/CSV export UI. The application's GitHub sign-in button still requires a
+separate real-provider smoke test after deployment; this local test does not
+claim external OAuth or SMTP delivery coverage.
