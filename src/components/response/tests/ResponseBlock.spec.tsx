@@ -90,6 +90,7 @@ vi.mock('@trrack/core', () => ({
   },
   initializeTrrack: vi.fn(() => ({
     apply: mockTrrackApply,
+    getState: () => ({ form: null }),
     currentChange: vi.fn(() => vi.fn()),
     graph: {
       backend: {
@@ -552,6 +553,7 @@ describe('ResponseBlock', () => {
   });
 
   test('records the interaction source of a mapped button answer', async () => {
+    vi.mocked(isEqual).mockImplementation((left, right) => JSON.stringify(left) === JSON.stringify(right));
     const { rerender, studyStore } = await renderWithStore(<ResponseBlock config={baseConfig} location="belowStimulus" />);
     mockTrrackApply.mockClear();
     mockAnswerField.setFieldValue.mockImplementation((id: string, value: unknown) => {

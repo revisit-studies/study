@@ -7,7 +7,7 @@ import {
   ParsedStringOption, ResponseBlockLocation, StudyConfig, ValueOf, Answer, ParticipantData, IndividualComponent,
 } from '../parser/types';
 import type {
-  AssetStatus, AlertModalState, CheckAnswerState, StoredAnswer, TrialValidation, TrrackedProvenance, StoreState, Sequence, ParticipantMetadata, ValidationStatus,
+  AssetStatus, AlertModalState, CheckAnswerState, StoredAnswer, StoredProvenance, TrialValidation, TrrackedProvenance, StoreState, Sequence, ParticipantMetadata, ValidationStatus,
 } from './types';
 import { getSequenceFlatMap } from '../utils/getSequenceFlatMap';
 import { REVISIT_MODE } from '../storage/engines/types';
@@ -421,6 +421,10 @@ export async function studyStoreCreator(
             },
           };
         },
+      },
+      restoreTrialProvenance(state, { payload }: PayloadAction<{ identifier: string; provenance: StoredProvenance }>) {
+        const validation = state.trialValidation[payload.identifier];
+        if (validation) validation.provenanceGraph = payload.provenance;
       },
       updateProvenance: {
         reducer(state, { payload }: PayloadAction<UpdateProvenancePayload>) {

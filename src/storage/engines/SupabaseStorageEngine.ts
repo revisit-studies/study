@@ -24,12 +24,13 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     super('supabase', testing);
   }
 
-  protected async _getFromStorage<T extends StorageObjectType>(prefix: string, type: T, studyId?: string) {
+  protected async _getFromStorage<T extends StorageObjectType>(prefix: string, type: T, studyId?: string, strict = false) {
     const { data, error } = await this.supabase.storage
       .from('revisit')
       .download(`${this.collectionPrefix}${studyId || this.studyId}/${prefix}_${type}`);
 
     if (error) {
+      if (strict && String((error as { statusCode?: string }).statusCode) !== '404') throw error;
       return {} as StorageObject<T>;
     }
 
@@ -37,7 +38,8 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     try {
       const text = await dataToParse.text();
       return JSON.parse(text) as StorageObject<T>;
-    } catch {
+    } catch (parseError) {
+      if (strict) throw parseError;
       // Return the Blob directly if parsing fails
       return dataToParse as StorageObject<T>;
     }

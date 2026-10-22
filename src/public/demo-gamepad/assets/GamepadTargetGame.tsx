@@ -1,6 +1,7 @@
 import {
   useCallback, useEffect, useMemo, useRef, useState,
 } from 'react';
+import { useStudyState } from '../../../store/hooks/useStudyState';
 import {
   Badge, Group, Paper, Stack, Text,
 } from '@mantine/core';
@@ -153,16 +154,21 @@ function GamepadTargetGame({
     };
   }, [targetCount]);
 
-  const trrack = useTrrack({ registry, initialState: INITIAL_STATE });
+  const [savedHits] = useStudyState({ responseId: 'hits', initialState: 0 });
+  const [savedMisses] = useStudyState({ responseId: 'misses', initialState: 0 });
+  const [savedCompleted] = useStudyState({ responseId: 'completed', initialState: false });
+  const trrack = useTrrack({ registry, initialState: { ...INITIAL_STATE, hits: savedHits, misses: savedMisses, completed: savedCompleted } });
 
-  const [game, setGame] = useState<GameState>(INITIAL_STATE);
-  const [reticle, setReticle] = useState<Point>(INITIAL_STATE.reticle);
+  const restoredState = useStudyState({ trrack });
+  const [game, setGame] = useState<GameState>(restoredState);
+  const [reticle, setReticle] = useState<Point>(restoredState.reticle);
 
   // The reticle is the source of truth for hit-testing and is written every frame,
   // so it lives in a ref; the state mirror exists only to drive rendering.
-  const reticleRef = useRef<Point>(INITIAL_STATE.reticle);
-  const gameRef = useRef<GameState>(INITIAL_STATE);
-  const reactionTimesRef = useRef<number[]>([]);
+  const reticleRef = useRef<Point>(restoredState.reticle);
+  const gameRef = useRef<GameState>(restoredState);
+  const [savedMeanReactionTime] = useStudyState<number | null>({ responseId: 'meanReactionTime', initialState: null });
+  const reactionTimesRef = useRef<number[]>(savedMeanReactionTime === null ? [] : Array<number>(restoredState.hits).fill(savedMeanReactionTime));
 
   const isReplay = provenanceState !== undefined;
 
@@ -186,7 +192,7 @@ function GamepadTargetGame({
   }, [setAnswer]);
 
   useEffect(() => {
-    if (!isReplay) publishAnswer(INITIAL_STATE);
+    if (!isReplay) publishAnswer(gameRef.current);
   }, [isReplay, publishAnswer]);
 
   const commit = useCallback((state: GameState) => {

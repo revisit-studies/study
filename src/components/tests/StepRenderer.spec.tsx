@@ -16,6 +16,8 @@ import { StoredAnswer } from '../../store/types';
 import type { UseGamepadOptions } from '../../store/hooks/useGamepad';
 import type { WindowEventsRef } from '../../store/hooks/useWindowEvents';
 
+vi.mock('../../store/hooks/useTrialProvenance', () => ({ TrialProvenanceBoundary: ({ children }: { children: ReactNode }) => children }));
+
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
 const mockDispatch = vi.fn();

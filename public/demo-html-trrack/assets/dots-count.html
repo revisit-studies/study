@@ -243,6 +243,18 @@
         }
     });
 
+    Revisit.onRestore(({ answers, provenanceGraph }) => {
+        const count = answers[taskId];
+        if (!provenanceGraph && Number.isInteger(count) && count >= minDots && count <= maxDots) {
+            const fallback = initializeTrrack({
+                registry,
+                initialState: { dots: Array.from({ length: count }, (_, index) => index + 1) }
+            });
+            trrack.graph.update(trrack.graph.load(fallback.graph.backend));
+        }
+        publishState();
+    });
+    Revisit.completeRegistration();
     publishState();
 
 </script>

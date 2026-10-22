@@ -1,6 +1,7 @@
 import {
   useState, useRef, useEffect, useCallback, useMemo,
 } from 'react';
+import { useStudyState } from '../../../../store/hooks/useStudyState';
 import {
   Stack, List, Text, Container, Button,
 } from '@mantine/core';
@@ -80,6 +81,23 @@ export default function ViewingDistanceCalibration({
   setAnswer,
   useTrrack,
 }: StimulusParams<{ blindspotAngle: number }, ViewingDistanceState>) {
+  const currentAnswer = useStoredAnswer();
+  const storedViewingDistance = Number(currentAnswer?.answer?.['dist-calibration-MM']);
+  const storedBallPositions = useMemo(() => {
+    const value = currentAnswer?.answer?.['ball-positions'];
+    if (typeof value !== 'string') {
+      return [];
+    }
+
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) && parsed.every((position) => typeof position === 'number')
+        ? parsed
+        : [];
+    } catch {
+      return [];
+    }
+  }, [currentAnswer]);
   const { actions, registry } = useMemo(() => {
     const reg = Registry.create();
     return {
@@ -100,11 +118,12 @@ export default function ViewingDistanceCalibration({
   const trrack = useTrrack<ViewingDistanceState>({
     registry,
     initialState: {
-      ballPosition: 740,
-      ballPositions: [],
-      viewingDistance: null,
+      ballPosition: storedBallPositions.at(-1) ?? 740,
+      ballPositions: storedBallPositions,
+      viewingDistance: Number.isFinite(storedViewingDistance) && storedViewingDistance > 0 ? storedViewingDistance : null,
     },
   });
+  const restoredState = useStudyState({ trrack });
   const ballRef = useRef<HTMLDivElement>(null);
   const squareRef = useRef<HTMLDivElement>(null);
   const animationFrameRef = useRef<number | null>(null);
@@ -112,36 +131,19 @@ export default function ViewingDistanceCalibration({
   const isAnalysis = useIsAnalysis();
 
   const ans = useStoreSelector((state) => state.answers);
-  const currentAnswer = useStoredAnswer();
   const cardSizeAnswer = findPreviousCardSizeAnswer(ans, currentAnswer?.trialOrder);
   const pixelsPerMM = Number(cardSizeAnswer?.answer?.pixelsPerMM);
-  const storedViewingDistance = Number(currentAnswer?.answer?.['dist-calibration-MM']);
   const replayState = useMemo(
     () => normalizeViewingDistanceState(provenanceState),
     [provenanceState],
   );
-  const storedBallPositions = useMemo(() => {
-    const value = currentAnswer?.answer?.['ball-positions'];
-    if (typeof value !== 'string') {
-      return [];
-    }
-
-    try {
-      const parsed = JSON.parse(value);
-      return Array.isArray(parsed) && parsed.every((position) => typeof position === 'number')
-        ? parsed
-        : [];
-    } catch {
-      return [];
-    }
-  }, [currentAnswer]);
 
   // States
-  const [ballPositions, setBallPositions] = useState<number[]>([]);
+  const [ballPositions, setBallPositions] = useState<number[]>(restoredState.ballPositions);
   const [isTracking, setIsTracking] = useState(false);
-  const [viewingDistance, setViewingDistance] = useState<number | null>(null);
+  const [viewingDistance, setViewingDistance] = useState<number | null>(restoredState.viewingDistance);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [clickCount, setClickCount] = useState<number>(5);
+  const [clickCount, setClickCount] = useState<number>(Math.max(0, 5 - restoredState.ballPositions.length));
 
   // Calculate viewing distance function
   const calculateViewingDistance = useCallback((positions: number[]) => {
@@ -271,22 +273,6 @@ export default function ViewingDistanceCalibration({
     trrack,
   ]);
 
-  // Reset state when pixelsPerMM changes
-  useEffect(() => {
-    setViewingDistance(null);
-    setIsTracking(false);
-    setBallPositions([]);
-    setClickCount(5);
-    resetBall();
-
-    return () => {
-      setViewingDistance(null);
-      setIsTracking(false);
-      setBallPositions([]);
-      setClickCount(5);
-    };
-  }, []);
-
   useEffect(() => {
     if (replayState) {
       setBallPositions(replayState.ballPositions);
@@ -296,18 +282,8 @@ export default function ViewingDistanceCalibration({
       if (ballRef.current) {
         ballRef.current.style.left = `${replayState.ballPosition}px`;
       }
-      return;
     }
-
-    if (!Number.isFinite(storedViewingDistance) || storedViewingDistance <= 0) {
-      return;
-    }
-
-    setBallPositions(storedBallPositions);
-    setViewingDistance(storedViewingDistance);
-    setIsTracking(false);
-    setClickCount(Math.max(0, 5 - storedBallPositions.length));
-  }, [replayState, storedBallPositions, storedViewingDistance]);
+  }, [replayState]);
 
   // Cleanup animation frame on unmount
   useEffect(() => () => {
@@ -382,7 +358,7 @@ export default function ViewingDistanceCalibration({
               height: '30px',
               backgroundColor: 'rgb(255, 0, 0)',
               borderRadius: '30px',
-              left: '740px',
+              left: `${restoredState.ballPosition}px`,
             }}
           />
           <div

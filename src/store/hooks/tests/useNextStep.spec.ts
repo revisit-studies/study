@@ -29,6 +29,7 @@ let mockModes = { dataCollectionEnabled: true, developmentModeEnabled: false, da
 let mockNavigate = vi.fn();
 let mockFuncIndex: string | null = null;
 let mockAreResponsesValid = true;
+let mockClickedPrevious = false;
 let mockIsAnalysis = false;
 let mockStoredAnswer = defaultStoredAnswer;
 let mockSaveAnswers = vi.fn();
@@ -54,7 +55,7 @@ vi.mock('../../store', () => ({
     sequence: mockSequence,
     answers: mockAnswers,
     modes: mockModes,
-    clickedPrevious: false,
+    clickedPrevious: mockClickedPrevious,
     responseSubmitAttempted: { [mockIdentifier]: true },
     checkAnswer: mockCheckAnswer,
   } as StoreState),
@@ -245,6 +246,7 @@ describe('useNextStep', () => {
     mockAreResponsesValid = true;
     mockIsAnalysis = false;
     mockStoredAnswer = defaultStoredAnswer;
+    mockClickedPrevious = false;
     mockSaveAnswers = vi.fn().mockResolvedValue(undefined);
     mockSaveProvenance = vi.fn().mockResolvedValue(undefined);
     mockFlushPendingParticipantData = vi.fn().mockResolvedValue(undefined);
@@ -315,6 +317,21 @@ describe('useNextStep', () => {
     expect(result.current.isNextDisabled).toBe(false);
   });
 
+  test('retains original visit timing and window events when saving a later visit', async () => {
+    const originalEvent = [100, 'mousedown', [1, 2]] as StoredAnswer['windowEvents'][number];
+    mockStoredAnswer = {
+      ...defaultStoredAnswer, startTime: 50, endTime: 200, windowEvents: [originalEvent],
+    };
+    // A trial reached through Previous is eligible to be saved again.
+    mockClickedPrevious = true;
+    const { result } = renderHook(() => useNextStep());
+    await act(async () => { result.current.goToNextStep(); });
+    const saved = mockSaveTrialAnswer.mock.calls[0][0] as StoredAnswer;
+    expect(saved.startTime).toBe(50);
+    expect(saved.endTime).toBeGreaterThan(200);
+    expect(saved.windowEvents[0]).toEqual(originalEvent);
+  });
+
   test('goToNextStep navigates to next step', async () => {
     const { result } = renderHook(() => useNextStep());
     await act(async () => { await result.current.goToNextStep(); });
@@ -323,6 +340,7 @@ describe('useNextStep', () => {
 
   test('goToNextStep dispatches saveTrialAnswer and clears form state', async () => {
     mockStoredAnswer = defaultStoredAnswer;
+    mockClickedPrevious = false;
     const { result } = renderHook(() => useNextStep());
     await act(async () => { await result.current.goToNextStep(); });
     expect(mockDispatch).toHaveBeenCalled();

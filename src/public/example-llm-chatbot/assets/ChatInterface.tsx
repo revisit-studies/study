@@ -1,6 +1,7 @@
 import {
   useState, useRef, useEffect, type ComponentPropsWithoutRef, type ReactNode,
 } from 'react';
+import { useStudyState } from '../../../store/hooks/useStudyState';
 import { IconMessage, IconSend } from '@tabler/icons-react';
 import {
   Flex,
@@ -154,8 +155,10 @@ Rules:
   const instructions = `${prePrompt}\n\n${toolPolicy}`;
 
   // ---------- State ----------
-  const [messages, setMessages] = useState<ChatMessage[]>(provenanceState?.messages ?? []);
-  const messagesRef = useRef<ChatMessage[]>(provenanceState?.messages ?? []);
+  const restoredState = useStudyState({ trrack });
+  const [initialMessages] = useState(restoredState.messages);
+  const [messages, setMessages] = useState<ChatMessage[]>(provenanceState?.messages ?? restoredState.messages);
+  const messagesRef = useRef<ChatMessage[]>(provenanceState?.messages ?? restoredState.messages);
 
   const [previousResponseId, setPreviousResponseId] = useState<string | null>(null);
 
@@ -163,10 +166,10 @@ Rules:
     if (provenanceState) {
       setMessages(provenanceState.messages);
     } else {
-      setMessages([]);
+      setMessages(initialMessages);
     }
     setPreviousResponseId(null);
-  }, [provenanceState]);
+  }, [provenanceState, initialMessages]);
 
   useEffect(() => {
     if (onMessagesUpdate) {
