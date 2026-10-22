@@ -1,0 +1,10 @@
+Supabase self-hosted/v0.8.3
+Commit: bc27d2661edd09a5d0b8d76ce33da6d4071a756e
+Source: https://github.com/supabase/supabase/tree/self-hosted/v0.8.3/docker
+
+The deployment configuration and scripts are obtained directly from upstream.
+This directory contains only reVISit setup, migration, and integration files.
+
+Required override: docker-compose.auth.yml pins supabase/gotrue:v2.198.0-rc.25
+Digest: sha256:b4c104aa7abbb2bc6c0c294072f736230979acfec87c9114fce63f4224e0f357
+Reason: https://github.com/supabase/auth/pull/2883 (Go 1.27.3 eMudhra TLS fix)

@@ -1,0 +1,4 @@
+# Required until the pinned upstream bundle includes the eMudhra TLS fix.
+services:
+  auth:
+    image: supabase/gotrue:v2.198.0-rc.25@sha256:b4c104aa7abbb2bc6c0c294072f736230979acfec87c9114fce63f4224e0f357
