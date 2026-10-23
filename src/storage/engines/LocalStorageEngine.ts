@@ -1,6 +1,6 @@
 import localforage from 'localforage';
 import {
-  REVISIT_MODE, SequenceAssignment, SequenceAssignmentAllocation, SnapshotDocContent, StorageEngine, StorageObject, StorageObjectType, cleanupModes,
+  StageAllocation, getStageAllocationFromAssignments, REVISIT_MODE, SequenceAssignment, SequenceAssignmentAllocation, SnapshotDocContent, StorageEngine, StorageObject, StorageObjectType, cleanupModes,
 } from './types';
 import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
 
@@ -25,6 +25,8 @@ async function withLocalAllocationLock<T>(key: string, operation: () => Promise<
 }
 
 export class LocalStorageEngine extends StorageEngine {
+  private static lockChains = new Map<string, Promise<void>>();
+
   private studyDatabase = localforage.createInstance({
     name: 'revisit',
   });
@@ -118,7 +120,7 @@ export class LocalStorageEngine extends StorageEngine {
       const existingAssignment = assignmentsByParticipant[participantId];
       const assignments = Object.values(assignmentsByParticipant);
 
-      if (existingAssignment) {
+      if (existingAssignment && !existingAssignment.rejected) {
         const sequenceIndex = existingAssignment.sequenceIndex
           ?? assignments.filter((assignment) => !assignment.rejected)
             .sort((a, b) => a.timestamp - b.timestamp)
@@ -130,7 +132,7 @@ export class LocalStorageEngine extends StorageEngine {
       }
 
       const reusableAssignment = assignments
-        .filter((assignment) => assignment.rejected && !assignment.claimed)
+        .filter((assignment) => assignment.rejected && !assignment.claimed && assignment.participantId !== participantId)
         .sort((a, b) => a.timestamp - b.timestamp)[0];
       const creationIndex = assignments.length;
       const unclaimedAssignments = assignments.filter((assignment) => !assignment.claimed);
@@ -211,6 +213,27 @@ export class LocalStorageEngine extends StorageEngine {
     const sequenceAssignmentPath = `${this.collectionPrefix}${this.studyId}/sequenceAssignment`;
     const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath) || {};
     return sequenceAssignments[participantId] || null;
+  }
+
+  protected async _runWithLock<T>(lockKey: string, operation: () => Promise<T>) {
+    const scopedLockKey = `${this.collectionPrefix}${this.studyId}:${lockKey}`;
+    const previousLock = LocalStorageEngine.lockChains.get(scopedLockKey) ?? Promise.resolve();
+    let releaseLock: (() => void) | undefined;
+    const currentLock = new Promise<void>((resolve) => {
+      releaseLock = resolve;
+    });
+    const queuedLock = previousLock.catch(() => undefined).then(() => currentLock);
+    LocalStorageEngine.lockChains.set(scopedLockKey, queuedLock);
+
+    await previousLock.catch(() => undefined);
+    try {
+      return await operation();
+    } finally {
+      releaseLock?.();
+      if (LocalStorageEngine.lockChains.get(scopedLockKey) === queuedLock) {
+        LocalStorageEngine.lockChains.delete(scopedLockKey);
+      }
+    }
   }
 
   protected async _completeCurrentParticipantRealtime() {
@@ -368,7 +391,7 @@ export class LocalStorageEngine extends StorageEngine {
     return Boolean(await this.studyDatabase.getItem(`${this.collectionPrefix}${studyId}/modes`));
   }
 
-  async setMode(studyId: string, mode: REVISIT_MODE, value: boolean) {
+  protected async _setMode(studyId: string, mode: REVISIT_MODE, value: boolean) {
     const key = `${this.collectionPrefix}${studyId}/modes`;
 
     // Get the modes
@@ -540,5 +563,11 @@ export class LocalStorageEngine extends StorageEngine {
     } else {
       throw new Error(`Snapshot with name ${snapshotName} does not exist`);
     }
+  }
+
+  protected override async getStageAllocation(stage: string): Promise<StageAllocation> {
+    await this.verifyStudyDatabase();
+    const assignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(`${this.collectionPrefix}${this.studyId}/sequenceAssignment`) || {};
+    return getStageAllocationFromAssignments(Object.values(assignments), stage);
   }
 }

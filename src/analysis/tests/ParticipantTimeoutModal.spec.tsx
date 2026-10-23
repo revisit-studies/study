@@ -1,0 +1,169 @@
+import { ReactNode } from 'react';
+import {
+  act, cleanup, fireEvent, render, screen,
+} from '@testing-library/react';
+import {
+  afterEach, beforeEach, describe, expect, test, vi,
+} from 'vitest';
+import {
+  formatElapsedTime, getInProgressParticipantsByElapsedTime, ParticipantTimeoutModal,
+} from '../individualStudy/ParticipantTimeoutModal';
+import { makeParticipant } from '../../tests/utils';
+
+let mockUser: { isAdmin: boolean };
+let mockStorageEngine: { timeoutParticipant: ReturnType<typeof vi.fn> } | undefined;
+
+vi.mock('../../storage/storageEngineHooks', () => ({
+  useStorageEngine: () => ({ storageEngine: mockStorageEngine }),
+}));
+
+vi.mock('../../store/hooks/useAuth', () => ({
+  useAuth: () => ({ user: mockUser }),
+}));
+
+vi.mock('@mantine/core', () => ({
+  Alert: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Button: ({
+    children, onClick, disabled, loading,
+  }: { children: ReactNode; onClick?: () => void; disabled?: boolean; loading?: boolean }) => (
+    <button type="button" onClick={onClick} disabled={disabled || loading}>{children}</button>
+  ),
+  Group: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Modal: ({ opened, children, title }: { opened: boolean; children: ReactNode; title: ReactNode }) => (
+    opened ? (
+      <div>
+        <h2>{title}</h2>
+        {children}
+      </div>
+    ) : null
+  ),
+  Stack: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Text: ({ children }: { children: ReactNode }) => <span>{children}</span>,
+  Tooltip: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+}));
+
+vi.mock('@tabler/icons-react', () => ({
+  IconClockOff: () => <span>clock</span>,
+}));
+
+describe('ParticipantTimeoutModal', () => {
+  beforeEach(() => {
+    mockUser = { isAdmin: true };
+    mockStorageEngine = { timeoutParticipant: vi.fn().mockResolvedValue(undefined) };
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+  });
+
+  test('lists only in-progress participants from longest to shortest', () => {
+    const participants = getInProgressParticipantsByElapsedTime([
+      makeParticipant({ participantId: 'completed', createdTime: 100, completed: true }),
+      makeParticipant({ participantId: 'rejected', createdTime: 100, rejected: { reason: 'test', timestamp: 1 } }),
+      makeParticipant({ participantId: 'short', assignmentCreatedTime: 900 }),
+      makeParticipant({ participantId: 'long', assignmentCreatedTime: 100 }),
+    ], 1000);
+
+    expect(participants.map((participant) => participant.participantId)).toEqual(['long', 'short']);
+    expect(participants.map((participant) => participant.elapsedTime)).toEqual([900, 100]);
+  });
+
+  test('uses assignment start times instead of skewed participant clocks', () => {
+    const participants = getInProgressParticipantsByElapsedTime([
+      { ...makeParticipant({ participantId: 'behind', createdTime: 1 }), assignmentCreatedTime: 800 },
+      { ...makeParticipant({ participantId: 'ahead', createdTime: 10000 }), assignmentCreatedTime: 700 },
+      makeParticipant({ participantId: 'unknown', createdTime: 1 }),
+    ], 1000);
+    expect(participants.map((participant) => [participant.participantId, participant.elapsedTime])).toEqual([
+      ['ahead', 300], ['behind', 200], ['unknown', null],
+    ]);
+  });
+
+  test('formats elapsed time with days, hours, and minutes', () => {
+    expect(formatElapsedTime((((3 * 24 + 7) * 60 + 40) * 60_000))).toBe('3d 7h 40m');
+    expect(formatElapsedTime(2 * 60 * 60_000)).toBe('2h 0m');
+    expect(formatElapsedTime(45 * 60_000)).toBe('45m');
+  });
+
+  test.each([false, true])('refreshes elapsed time when opening Review (controlled: %s)', async (controlled) => {
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
+    const participants = [makeParticipant({ assignmentCreatedTime: 1_000_000 })];
+    const refresh = vi.fn();
+    try {
+      const { rerender } = render(<ParticipantTimeoutModal participants={participants} refresh={refresh} opened={controlled ? false : undefined} />);
+      clock.mockReturnValue(1_000_000 + 2 * 60 * 60_000);
+      await act(async () => {
+        if (controlled) {
+          rerender(<ParticipantTimeoutModal participants={participants} refresh={refresh} opened />);
+        } else {
+          fireEvent.click(screen.getByRole('button', { name: 'Review (1)' }));
+        }
+      });
+      expect(screen.getByText('2h 0m')).toBeDefined();
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
+  test('opens the review modal and times out the chosen participant', async () => {
+    const refresh = vi.fn().mockResolvedValue(undefined);
+    await act(async () => {
+      render(<ParticipantTimeoutModal participants={[makeParticipant({ participantId: 'p1', participantIndex: 2, createdTime: Date.now() - 1000 })]} refresh={refresh} />);
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Review (1)' }));
+    });
+    expect(screen.getByText('In-Progress Participants')).toBeDefined();
+    expect(screen.getByText('p1')).toBeDefined();
+    expect(screen.getByText('Participant 2')).toBeDefined();
+    expect(screen.queryByText('Participant 3')).toBeNull();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Time Out' }));
+    });
+    expect(mockStorageEngine!.timeoutParticipant).toHaveBeenCalledWith('p1');
+    expect(refresh).toHaveBeenCalledOnce();
+  });
+
+  test('shows an error and does not refresh when timing out a participant fails', async () => {
+    mockStorageEngine!.timeoutParticipant.mockRejectedValue(new Error('Storage unavailable'));
+    const refresh = vi.fn();
+    render(<ParticipantTimeoutModal participants={[makeParticipant({ participantId: 'p1', createdTime: 1 })]} refresh={refresh} />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Review (1)' }));
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Time Out' }));
+    });
+
+    expect(screen.getByText('The participant could not be timed out. Please try again.')).toBeDefined();
+    expect(refresh).not.toHaveBeenCalled();
+  });
+
+  test('can be opened without its own review button', () => {
+    render(
+      <ParticipantTimeoutModal
+        hideReviewButton
+        opened
+        description="Showing a filtered set of in-progress participants."
+        participants={[makeParticipant({ participantId: 'p1', createdTime: 1 })]}
+        refresh={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('In-Progress Participants')).toBeDefined();
+    expect(screen.getByText('Showing a filtered set of in-progress participants.')).toBeDefined();
+    expect(screen.getByText('p1')).toBeDefined();
+    expect(screen.queryByRole('button', { name: 'Review (1)' })).toBeNull();
+  });
+
+  test('disables the review button for non-admins', () => {
+    mockUser = { isAdmin: false };
+    render(<ParticipantTimeoutModal participants={[makeParticipant({ createdTime: 1 })]} refresh={vi.fn()} />);
+
+    expect((screen.getByRole('button', { name: 'Review (1)' }) as HTMLButtonElement).disabled).toBe(true);
+  });
+});
