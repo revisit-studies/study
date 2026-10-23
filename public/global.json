@@ -91,6 +91,7 @@
     "library-virtual-chinrest",
     "library-vlat",
     "test-keymapping",
+    "test-response-functions",
     "test-audio",
     "test-device-restriction",
     "test-library",
@@ -362,6 +363,11 @@
     "test-keymapping": {
       "tab": "Tests",
       "path": "test-keymapping/config.json",
+      "test": true
+    },
+    "test-response-functions": {
+      "tab": "Tests",
+      "path": "test-response-functions/config.json",
       "test": true
     },
     "test-audio": {

@@ -188,6 +188,7 @@ export const generateValidation = (
   allResponses: Response[] = responses,
   context: StoredAnswer['answer'] = {},
   correctAnswers: Answer[] = [],
+  persistedScores?: Record<string, number>,
 ): Record<string, (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => string | null> => {
   let validateObj: Record<string, (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => string | null> = {};
   responses.forEach((response) => {
@@ -195,10 +196,10 @@ export const generateValidation = (
       validateObj = {
         ...validateObj,
         [response.id]: (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => (
-          !resolveResponseVisibility(allResponses, { ...context, ...values }, {}, correctAnswers).visibleIds.has(response.id) ? null : generateInvalidResponseErrorMessage(
+          !resolveResponseVisibility(allResponses, { ...context, ...values }, {}, correctAnswers, persistedScores).visibleIds.has(response.id) ? null : generateInvalidResponseErrorMessage(
             response,
             value,
-            values,
+            { ...context, ...values, [response.id]: value },
             {
               customValidate: customResponseValidators[response.id],
               loadError: customResponseLoadErrors[response.id],
@@ -220,12 +221,13 @@ export function useAnswerField(
   context: StoredAnswer['answer'] = {},
   isAnalysis = false,
   correctAnswers: Answer[] = [],
+  persistedScores?: Record<string, number>,
 ) {
   const [_id, setId] = useState<string | number | null>(null);
 
   const answerField = useForm<StoredAnswer['answer']>({
     initialValues: generateInitFields(responses, storedAnswer),
-    validate: generateValidation(responses, customResponseValidators, customResponseLoadErrors, allResponses, context, correctAnswers),
+    validate: generateValidation(responses, customResponseValidators, customResponseLoadErrors, allResponses, context, correctAnswers, persistedScores),
   });
 
   useEffect(() => {
@@ -244,10 +246,11 @@ export function useAnswerField(
       { ...otherValues, ...(isAnalysis ? storedAnswer : answerField.values) },
       isAnalysis ? {} : generateInitFields(responses, {}),
       correctAnswers,
+      persistedScores,
     ).answers;
     const localKeys = new Set(responses.flatMap(responseValueKeys));
     return Object.fromEntries(Object.entries(resolved).filter(([key]) => localKeys.has(key)));
-  }, [allResponses, responses, context, answerField.values, isAnalysis, storedAnswer, correctAnswers]);
+  }, [allResponses, responses, context, answerField.values, isAnalysis, storedAnswer, correctAnswers, persistedScores]);
   const stableValues = useRef(values);
   if (!isEqual(stableValues.current, values)) stableValues.current = values;
 

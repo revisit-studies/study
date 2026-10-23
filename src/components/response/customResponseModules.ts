@@ -1,10 +1,13 @@
 import type { ComponentType } from 'react';
 import { CustomResponse, JsonValue } from '../../parser/types';
-import { CustomResponseParams, CustomResponseValidate } from '../../store/types';
+import {
+  CustomResponseParams, CustomResponseScore, CustomResponseValidate,
+} from '../../store/types';
 
 export type CustomResponseModule = {
   default?: ComponentType<CustomResponseParams<Record<string, unknown>, JsonValue>>;
   validate?: CustomResponseValidate;
+  score?: CustomResponseScore;
 };
 
 let modules: Record<string, CustomResponseModule> | null = null;
@@ -23,16 +26,14 @@ function getModules() {
   return modules;
 }
 
-function getCustomResponseModulePath(response: CustomResponse) {
-  return `../../public/${response.path}`;
-}
-
 export function getCustomResponseModuleLoadError(response: CustomResponse) {
   return `Unable to load custom response module at ${response.path}`;
 }
 
-export function getCustomResponseModule(response: CustomResponse): CustomResponseModule | null {
-  const module = getModules()[getCustomResponseModulePath(response)];
+export function getResponseCodeModule(path: string): CustomResponseModule | null {
+  return getModules()[`../../public/${path}`] ?? null;
+}
 
-  return module ? module as CustomResponseModule : null;
+export function getCustomResponseModule(response: CustomResponse): CustomResponseModule | null {
+  return getResponseCodeModule(response.path);
 }

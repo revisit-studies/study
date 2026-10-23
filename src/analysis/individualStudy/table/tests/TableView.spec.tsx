@@ -124,6 +124,85 @@ beforeEach(() => {
 // ── TableView ─────────────────────────────────────────────────────────────────
 
 describe('TableView', () => {
+  test('uses saved scores in the correctness column', () => {
+    const studyConfig = createMockStudyConfig({
+      components: {
+        trial1: {
+          type: 'questionnaire',
+          response: [{
+            id: 'q1', type: 'numerical', prompt: '', path: 'test-response-functions/assets/PartialScore.response.ts',
+          }],
+        },
+      },
+    });
+    const participant = makeParticipant({
+      answers: {
+        trial1_0: makeStoredAnswer({
+          componentName: 'trial1',
+          answer: { q1: 10 },
+          correctAnswer: [{ id: 'q1', answer: 10 }],
+          endTime: 100,
+          checkAnswer: {
+            attemptsUsed: 1,
+            correct: false,
+            responses: { q1: false },
+            scores: { q1: 0.5 },
+            answerSnapshot: { q1: 10 },
+          },
+        }),
+      },
+    });
+
+    render(<TableView
+      {...defaultProps}
+      studyConfig={studyConfig}
+      allConfigs={{ hash1: studyConfig }}
+      visibleParticipants={[participant]}
+    />);
+    const column = capturedTableOptions!.columns.find(({ header }) => header === 'Correct Answers')!;
+    expect(column.accessorFn!(participant)).toEqual([false]);
+    cleanup();
+  });
+
+  test('includes standalone full-credit saved scores when the configured scorer is unavailable', () => {
+    const studyConfig = createMockStudyConfig({
+      components: {
+        trial1: {
+          type: 'questionnaire',
+          response: [{
+            id: 'q1', type: 'numerical', prompt: '', path: 'missing.response.ts',
+          }],
+        },
+      },
+    });
+    const participant = makeParticipant({
+      answers: {
+        trial1_0: makeStoredAnswer({
+          componentName: 'trial1',
+          answer: { q1: 5 },
+          endTime: 100,
+          checkAnswer: {
+            attemptsUsed: 1,
+            correct: true,
+            responses: { q1: true },
+            scores: { q1: 1 },
+            answerSnapshot: { q1: 5 },
+          },
+        }),
+      },
+    });
+
+    render(<TableView
+      {...defaultProps}
+      studyConfig={studyConfig}
+      allConfigs={{ hash1: studyConfig }}
+      visibleParticipants={[participant]}
+    />);
+    const column = capturedTableOptions!.columns.find(({ header }) => header === 'Correct Answers')!;
+    expect(column.accessorFn!(participant)).toEqual([true]);
+    cleanup();
+  });
+
   test('scores historical visibility rules and refreshes when saved configs load', () => {
     const configFor = (value: string) => createMockStudyConfig({
       components: {

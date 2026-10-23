@@ -1220,6 +1220,65 @@ describe('Next button alignment config parsing', () => {
 });
 
 describe('BaseComponent Macro Expansion', () => {
+  test('rejects a built-in response with a custom module path inherited from an imported library', async () => {
+    const mockLibraryConfig = {
+      $schema: '',
+      description: 'Test library',
+      baseComponents: {
+        customBase: {
+          type: 'questionnaire',
+          response: [{
+            id: 'guess',
+            type: 'custom',
+            prompt: 'Guess',
+            path: 'demo-form-elements/assets/CustomResponseCard.tsx',
+            default: { chartType: 'Bar', confidence: 80 },
+          }],
+        },
+      },
+      components: {
+        inheritedNumerical: {
+          baseComponent: 'customBase',
+          response: [{ id: 'guess', type: 'numerical', prompt: 'Guess' }],
+        },
+      },
+      sequences: {},
+    };
+    vi.mocked(fetch).mockResolvedValueOnce(mockFetchText(JSON.stringify(mockLibraryConfig)));
+
+    const studyConfig = {
+      $schema: '',
+      studyMetadata: {
+        title: 'Test Study',
+        version: '1.0',
+        authors: ['Test'],
+        date: '2024-01-01',
+        description: 'Test',
+        organizations: ['Test Org'],
+      },
+      uiConfig: {
+        contactEmail: 'test@test.com',
+        helpTextPath: '',
+        logoPath: '',
+        withProgressBar: true,
+        autoDownloadStudy: false,
+        withSidebar: false,
+      },
+      importedLibraries: ['testLib'],
+      components: {},
+      sequence: {
+        order: 'fixed',
+        components: ['$testLib.components.inheritedNumerical'],
+      },
+    };
+
+    const result = await parseStudyConfig(JSON.stringify(studyConfig));
+
+    expect(result.errors).not.toContainEqual(expect.objectContaining({
+      instancePath: '/components/$testLib.components.inheritedNumerical/response/0/path',
+    }));
+  });
+
   describe('.co. macro expansion in baseComponent references', () => {
     test('expands .co. to .components. in baseComponent field', async () => {
       const mockLibraryConfig = {
@@ -3301,6 +3360,28 @@ describe('conditional response config', () => {
       components: { form: { ...config.components.form, correctAnswer: [{ id: 'name', answer: 'yes' }] } },
     }));
     expect(wrongId.errors).toContainEqual(expect.objectContaining({
+      message: 'visibleIf isCorrect requires a correctAnswer for response "attended"',
+    }));
+  });
+
+  test('isCorrect accepts a scorer-only controller without a correctAnswer', async () => {
+    const config = configWithCondition(
+      { responseId: 'attended', comparison: 'isCorrect', value: true },
+      { type: 'numerical', path: 'test-response-functions/assets/PartialScore.response.ts' },
+    );
+
+    const result = await parseStudyConfig(JSON.stringify(config));
+    expect(result.errors).toEqual([]);
+  });
+
+  test('isCorrect rejects a validation-only controller without a correctAnswer', async () => {
+    const config = configWithCondition(
+      { responseId: 'attended', comparison: 'isCorrect', value: true },
+      { type: 'numerical', path: 'test-response-functions/assets/EvenNumber.response.ts' },
+    );
+
+    const result = await parseStudyConfig(JSON.stringify(config));
+    expect(result.errors).toContainEqual(expect.objectContaining({
       message: 'visibleIf isCorrect requires a correctAnswer for response "attended"',
     }));
   });

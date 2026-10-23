@@ -15,20 +15,24 @@ import { studyStoreCreator, StudyStoreContext } from '../../../store/store';
 import { ResponseBlock } from '../ResponseBlock';
 import { generateInitFields, useAnswerField } from '../utils';
 import { makeStoredAnswer } from '../../../tests/utils';
-import { responseAnswerIsCorrect } from '../../../utils/correctAnswer';
-import type { compareResponseValues } from '../../../utils/correctAnswer';
 
 // ── mocks ────────────────────────────────────────────────────────────────────
 
 const {
-  mockStoredAnswerData, capturedNextButtonProps, capturedSwitcherProps, mockIsAnalysis, mockCurrentIdentifier, mockNavigate, mockSaveAnswers, mockTrrackApply, mockAnswerField, mockAllowFailedTraining, mockProvideFeedback,
+  mockStoredAnswerData, capturedNextButtonProps, capturedSwitcherProps, mockIsAnalysis, mockCurrentIdentifier, mockNavigate, mockSaveAnswers, mockTrrackApply, mockAnswerField, mockCustomResponseModule, mockShowNotification, mockAllowFailedTraining, mockProvideFeedback,
 } = vi.hoisted(() => ({
   mockStoredAnswerData: {
     formOrder: { response: ['q1'] } as { response: string[] } | undefined,
     questionOrders: {},
     optionOrders: {},
     responseSubmitAttempted: undefined as boolean | undefined,
-    checkAnswer: undefined as { attemptsUsed: number; correct: boolean; responses: Record<string, boolean> } | undefined,
+    checkAnswer: undefined as {
+      attemptsUsed: number;
+      correct: boolean;
+      responses: Record<string, boolean>;
+      scores?: Record<string, number>;
+      answerSnapshot?: StoredAnswer['answer'];
+    } | undefined,
   },
   capturedNextButtonProps: {
     onCheckAnswer: undefined as (() => void) | undefined,
@@ -36,6 +40,7 @@ const {
   capturedSwitcherProps: {
     storedAnswer: undefined as Record<string, unknown> | undefined,
     answerFinalized: undefined as boolean | undefined,
+    matrixRowFeedback: undefined as Record<string, string> | undefined,
     onChange: undefined as ((value: unknown, source?: 'keyboard' | 'click') => void) | undefined,
     indexes: [] as Array<{
       id: string;
@@ -60,7 +65,17 @@ const {
     reset: vi.fn(),
     getInputProps: vi.fn(() => ({ value: '', onChange: vi.fn() })),
   },
+  mockCustomResponseModule: {
+    value: null as {
+      default: () => null;
+      validate?: (value: unknown, values: unknown, response: unknown) => string | boolean | null;
+      score?: (value: unknown, values: unknown, response: unknown, expected?: unknown) => number | boolean | null;
+    } | null,
+  },
+  mockShowNotification: vi.fn(),
 }));
+
+vi.mock('../../../utils/notifications', () => ({ showNotification: mockShowNotification }));
 
 vi.mock('../../../storage/storageEngineHooks', () => {
   const storageEngine = { saveAnswers: mockSaveAnswers, saveProvenance: vi.fn(() => Promise.resolve()) };
@@ -159,23 +174,20 @@ vi.mock('../utils', () => ({
   usesStandaloneDontKnowField: vi.fn(() => false),
 }));
 
-vi.mock('../../../utils/correctAnswer', async (importOriginal) => ({
-  ...await importOriginal<{ compareResponseValues: typeof compareResponseValues }>(),
-  responseAnswerIsCorrect: vi.fn(() => true),
-}));
-
-vi.mock('../customResponseModules', () => ({
-  getCustomResponseModule: vi.fn(() => null),
+vi.mock('../customResponseModules', async (importOriginal) => ({
+  ...await importOriginal(),
+  getCustomResponseModule: vi.fn(() => mockCustomResponseModule.value),
   getCustomResponseModuleLoadError: vi.fn(() => null),
 }));
 
 vi.mock('../ResponseSwitcher', () => ({
   ResponseSwitcher: ({
-    response, storedAnswer, answerFinalized, index, disabled, isDelayedDisabled, form,
+    response, storedAnswer, answerFinalized, index, disabled, isDelayedDisabled, form, matrixRowFeedback,
   }: {
     response: { id: string; type: string };
     storedAnswer?: Record<string, unknown>;
     answerFinalized?: boolean;
+    matrixRowFeedback?: Record<string, string>;
     index: number;
     disabled?: boolean;
     isDelayedDisabled?: boolean;
@@ -183,6 +195,7 @@ vi.mock('../ResponseSwitcher', () => ({
   }) => {
     capturedSwitcherProps.storedAnswer = storedAnswer;
     capturedSwitcherProps.answerFinalized = answerFinalized;
+    capturedSwitcherProps.matrixRowFeedback = matrixRowFeedback;
     capturedSwitcherProps.onChange = form.onChange;
     capturedSwitcherProps.indexes.push({
       id: response.id, index, disabled, isDelayedDisabled,
@@ -319,7 +332,7 @@ function countButtons(container: HTMLElement, label: string) {
 // ── setup ─────────────────────────────────────────────────────────────────────
 
 beforeEach(() => {
-  vi.mocked(responseAnswerIsCorrect).mockReturnValue(true);
+  mockAnswerField.values = { q1: 'correct' };
   vi.mocked(isEqual).mockReturnValue(true);
   mockStoredAnswerData.formOrder = { response: ['q1'] };
   mockStoredAnswerData.responseSubmitAttempted = undefined;
@@ -327,6 +340,7 @@ beforeEach(() => {
   capturedNextButtonProps.onCheckAnswer = undefined;
   capturedSwitcherProps.storedAnswer = undefined;
   capturedSwitcherProps.answerFinalized = undefined;
+  capturedSwitcherProps.matrixRowFeedback = undefined;
   capturedSwitcherProps.onChange = undefined;
   capturedSwitcherProps.indexes = [];
   mockIsAnalysis.value = false;
@@ -335,8 +349,9 @@ beforeEach(() => {
   mockCurrentIdentifier.value = 'trial1_0';
   mockNavigate.mockClear();
   mockSaveAnswers.mockClear();
+  mockShowNotification.mockClear();
   mockTrrackApply.mockClear();
-  mockAnswerField.values = {};
+  mockCustomResponseModule.value = null;
   mockAnswerField.setFieldValue.mockReset();
 });
 
@@ -400,7 +415,7 @@ describe('ResponseBlock', () => {
   });
 
   test('uses the canonical grading result for checkbox correctness', async () => {
-    vi.mocked(responseAnswerIsCorrect).mockReturnValue(false);
+    mockAnswerField.values = { q1: 'incorrect' };
     const checkedAnswer = makeStoredAnswer({
       answer: { q1: ['4'] },
       checkAnswer: {
@@ -421,7 +436,7 @@ describe('ResponseBlock', () => {
     const { container } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" status={checkedAnswer} />);
 
     expect(container.querySelector('[data-testid="feedback-alert-q1"]')?.getAttribute('data-title')).toBe('Incorrect Answer');
-    expect(container.querySelector('[data-testid="trial-answer-summary"]')?.textContent).toBe('0 of 1 answers correct; 1 incorrect.');
+    expect(container.querySelector('[data-testid="trial-answer-summary"]')?.textContent).toBeUndefined();
   });
 
   test('shows incorrect feedback beneath a Likert question', async () => {
@@ -508,6 +523,50 @@ describe('ResponseBlock', () => {
     expect(alert?.getAttribute('data-title')).not.toBe('Correct Answer');
   });
 
+  test.each([
+    {
+      score: 1, correct: true, title: 'Correct Answer', nativeAnswer: 'B',
+    },
+    {
+      score: 0, correct: false, title: 'Incorrect Answer', nativeAnswer: 'A',
+    },
+    {
+      score: 0.5, correct: false, title: 'Partially Correct', nativeAnswer: 'A',
+    },
+  ])('matrix feedback follows custom score $score instead of native answer matching', async ({
+    score, correct, title, nativeAnswer,
+  }) => {
+    const answer = { q1: { row: 'A' } };
+    const status = makeStoredAnswer({
+      answer,
+      checkAnswer: {
+        attemptsUsed: 1,
+        correct,
+        responses: { q1: correct },
+        scores: { q1: score },
+        checkedAnswers: answer,
+        answerSnapshot: answer,
+      },
+    });
+    const config: IndividualComponent = {
+      type: 'questionnaire',
+      provideFeedback: true,
+      response: [{
+        id: 'q1',
+        type: 'matrix-checkbox',
+        prompt: 'Matrix',
+        questionOptions: ['row'],
+        answerOptions: ['A', 'B'],
+        path: 'test-response-functions/assets/ContextAwareScore.response.ts',
+      }],
+      correctAnswer: [{ id: 'q1', answer: [[nativeAnswer]] }],
+    };
+    const { container } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" status={status} />);
+
+    expect(container.querySelector('[data-testid="feedback-alert-q1"]')?.getAttribute('data-title')).toBe(title);
+    expect(capturedSwitcherProps.matrixRowFeedback).toBeUndefined();
+  });
+
   test('keeps checkbox feedback frozen until the next check', async () => {
     vi.mocked(isEqual).mockImplementation((left, right) => JSON.stringify(left) === JSON.stringify(right));
     const checkedAnswer = makeStoredAnswer({
@@ -546,7 +605,6 @@ describe('ResponseBlock', () => {
     });
     expect(container.querySelector('[data-testid="feedback-alert-q1"]')?.getAttribute('data-title')).toBe('Partially Correct');
 
-    vi.mocked(responseAnswerIsCorrect).mockReturnValue(false);
     await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
     expect(store.getState().checkAnswer.trial1_0.checkedAnswers).toEqual({ q1: ['C'] });
     expect(container.querySelector('[data-testid="feedback-alert-q1"]')?.getAttribute('data-title')).toBe('Incorrect Answer');
@@ -884,6 +942,364 @@ describe('ResponseBlock focus recovery', () => {
 // ── Check Answer via keyboard ─────────────────────────────────────────────────
 
 describe('ResponseBlock onCheckAnswer', () => {
+  test('shows a configuration error instead of recording an invalid score', async () => {
+    mockAnswerField.values = { customGuess: { score: 5 } };
+    mockStoredAnswerData.formOrder = { response: ['customGuess'] };
+    mockCustomResponseModule.value = {
+      default: () => null,
+      score: () => 1.5,
+    };
+    const config: IndividualComponent = {
+      ...baseConfig,
+      provideFeedback: true,
+      response: [{
+        id: 'customGuess', type: 'custom', prompt: '', path: 'missing-custom-score.tsx', required: false,
+      }],
+      correctAnswer: [{ id: 'customGuess', answer: { score: 10 } }],
+    };
+
+    const { store } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+    await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
+
+    expect(store.getState().checkAnswer.trial1_0).toBeUndefined();
+    expect(mockShowNotification).toHaveBeenCalledWith(expect.objectContaining({
+      title: 'Unable to Check Answer',
+      color: 'red',
+    }));
+    mockCustomResponseModule.value = null;
+  });
+
+  test('does not equality-grade a response when its custom module is unavailable', async () => {
+    mockAnswerField.values = { customGuess: { score: 10 } };
+    mockStoredAnswerData.formOrder = { response: ['customGuess'] };
+    mockCustomResponseModule.value = null;
+    const config: IndividualComponent = {
+      ...baseConfig,
+      provideFeedback: true,
+      response: [{
+        id: 'customGuess', type: 'custom', prompt: '', path: 'missing-custom-score.tsx', required: false,
+      }],
+      correctAnswer: [{ id: 'customGuess', answer: { score: 10 } }],
+    };
+
+    const { store } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+    await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
+
+    expect(store.getState().checkAnswer.trial1_0).toBeUndefined();
+    expect(mockShowNotification).toHaveBeenCalledWith(expect.objectContaining({
+      title: 'Unable to Check Answer',
+      color: 'red',
+    }));
+  });
+
+  test('scores with the persisted answer values', async () => {
+    mockAnswerField.values = { customGuess: { score: 5 }, choice: 'A', 'choice-other': '' };
+    mockStoredAnswerData.formOrder = { response: ['customGuess', 'choice'] };
+    mockCustomResponseModule.value = {
+      default: () => null,
+      score: (value, values, _response, expected) => {
+        if (expected === undefined) return null;
+        const otherValue = values && typeof values === 'object' && 'choice-other' in values ? 0.25 : 0.5;
+        return ((value as { score: number }).score / (expected as { score: number }).score) * otherValue;
+      },
+    };
+    const customScoredConfig: IndividualComponent = {
+      ...baseConfig,
+      provideFeedback: true,
+      response: [{
+        id: 'customGuess', type: 'custom', prompt: 'Custom score', path: 'test-response-functions/assets/CustomPartialScore.tsx', required: false,
+      }, {
+        id: 'choice', type: 'radio', prompt: 'Choice', options: ['A', 'other'], withOther: true,
+      }],
+      correctAnswer: [{ id: 'customGuess', answer: { score: 10 } }],
+    };
+
+    const { store } = await renderWithStore(<ResponseBlock config={customScoredConfig} location="belowStimulus" />);
+    await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
+    expect(store.getState().checkAnswer.trial1_0).toMatchObject({
+      correct: false,
+      scores: { customGuess: 0.25 },
+      answerSnapshot: { customGuess: { score: 5 }, choice: 'A' },
+    });
+    mockCustomResponseModule.value = null;
+  });
+
+  test('includes scorer-only responses in Check Answer component correctness', async () => {
+    mockAnswerField.values = { q1: 'correct', customScore: 6 };
+    mockStoredAnswerData.formOrder = { response: ['q1', 'customScore'] };
+    mockCustomResponseModule.value = {
+      default: () => null,
+      score: (value) => (value as number) / 10,
+    };
+    const config: IndividualComponent = {
+      ...baseConfig,
+      provideFeedback: true,
+      hideCheckAnswerButton: false,
+      response: [{
+        id: 'q1', type: 'shortText', prompt: 'Answer', required: true,
+      }, {
+        id: 'customScore',
+        type: 'custom',
+        prompt: 'Scored answer',
+        required: true,
+        path: 'test-response-functions/assets/CustomPartialScore.tsx',
+      }],
+      correctAnswer: [{ id: 'q1', answer: 'correct' }],
+    };
+
+    const { container, store } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+    await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
+
+    expect(store.getState().checkAnswer.trial1_0).toMatchObject({
+      correct: false,
+      responses: { q1: true, customScore: false },
+      scores: { customScore: 0.6 },
+    });
+    expect(findButton(container, 'Next')).toHaveProperty('disabled', true);
+    mockCustomResponseModule.value = null;
+  });
+
+  test.each([0, 0.5, 1])('records failed scorer-only attempts once per check (score=%s)', async (score) => {
+    mockAnswerField.values = { q1: 'incorrect', customScore: 5 };
+    mockStoredAnswerData.formOrder = { response: ['q1', 'customScore'] };
+    mockCustomResponseModule.value = { default: () => null, score: () => score };
+    const config: IndividualComponent = {
+      ...baseConfig,
+      provideFeedback: true,
+      response: [
+        { id: 'q1', type: 'shortText', prompt: 'Expected answer' },
+        {
+          id: 'customScore', type: 'custom', prompt: 'Scored answer', path: 'test-response-functions/assets/CustomPartialScore.tsx',
+        },
+      ],
+      correctAnswer: [{ id: 'q1', answer: 'correct' }],
+    };
+    const { store } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+    await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
+    await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
+
+    const history = store.getState().answers.trial1_0.incorrectAnswers;
+    expect(history.q1.value).toEqual(['incorrect', 'incorrect']);
+    if (score < 1) expect(history.customScore.value).toEqual([5, 5]);
+    else expect(history.customScore).toBeUndefined();
+    expect(store.getState().checkAnswer.trial1_0.attemptsUsed).toBe(2);
+  });
+
+  test('enables Check Answer training for a scorer-only component', async () => {
+    mockAnswerField.values = { customScore: 10 };
+    mockStoredAnswerData.formOrder = { response: ['customScore'] };
+    mockCustomResponseModule.value = {
+      default: () => null,
+      score: (value) => (value as number) / 10,
+    };
+    const config: IndividualComponent = {
+      ...baseConfig,
+      provideFeedback: true,
+      allowFailedTraining: false,
+      response: [{
+        id: 'customScore',
+        type: 'custom',
+        prompt: 'Scored answer',
+        required: true,
+        path: 'test-response-functions/assets/CustomPartialScore.tsx',
+      }],
+    };
+
+    const { container, store } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+    expect(capturedNextButtonProps.onCheckAnswer).toBeDefined();
+    await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
+
+    expect(store.getState().checkAnswer.trial1_0).toMatchObject({ correct: true, scores: { customScore: 1 } });
+    expect(findButton(container, 'Next')).toHaveProperty('disabled', false);
+    mockCustomResponseModule.value = null;
+  });
+
+  test('does not pass Check Answer when a required scorer returns no grade', async () => {
+    mockAnswerField.values = { customScore: 5 };
+    mockStoredAnswerData.formOrder = { response: ['customScore'] };
+    mockCustomResponseModule.value = {
+      default: () => null,
+      score: () => null,
+    };
+    const config: IndividualComponent = {
+      ...baseConfig,
+      provideFeedback: true,
+      hideCheckAnswerButton: false,
+      allowFailedTraining: false,
+      response: [{
+        id: 'customScore',
+        type: 'custom',
+        prompt: 'Scored answer',
+        required: true,
+        path: 'test-response-functions/assets/CustomPartialScore.tsx',
+      }],
+    };
+
+    const { container, store } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+    await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
+
+    expect(store.getState().checkAnswer.trial1_0).toMatchObject({
+      correct: false,
+      responses: { customScore: false },
+    });
+    expect(findButton(container, 'Next')).toHaveProperty('disabled', true);
+    mockCustomResponseModule.value = null;
+  });
+
+  test('a required scorer-only response with I do not know ignores its populated default in Check Answer', async () => {
+    mockAnswerField.values = { q1: 'correct', customScore: 10, 'customScore-dontKnow': true };
+    mockStoredAnswerData.formOrder = { response: ['q1', 'customScore'] };
+    mockCustomResponseModule.value = {
+      default: () => null,
+      score: (value) => (value as number) / 10,
+    };
+    const config: IndividualComponent = {
+      ...baseConfig,
+      provideFeedback: true,
+      hideCheckAnswerButton: false,
+      allowFailedTraining: false,
+      response: [{
+        id: 'q1', type: 'shortText', prompt: 'Answer', required: true,
+      }, {
+        id: 'customScore',
+        type: 'custom',
+        prompt: 'Scored answer',
+        required: true,
+        withDontKnow: true,
+        path: 'test-response-functions/assets/CustomPartialScore.tsx',
+      }],
+      correctAnswer: [{ id: 'q1', answer: 'correct' }],
+    };
+
+    const { container, store } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+    await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
+
+    expect(store.getState().checkAnswer.trial1_0).toMatchObject({
+      correct: false,
+      responses: { q1: true, customScore: false },
+    });
+    expect(findButton(container, 'Next')).toHaveProperty('disabled', true);
+    mockCustomResponseModule.value = null;
+  });
+
+  test('does not let a valid validation-only response block a correct Check Answer', async () => {
+    mockAnswerField.values = { q1: 'correct', even: 4 };
+    mockStoredAnswerData.formOrder = { response: ['q1', 'even'] };
+    const config: IndividualComponent = {
+      ...baseConfig,
+      provideFeedback: true,
+      allowFailedTraining: false,
+      response: [
+        {
+          id: 'q1', type: 'shortText', prompt: 'Answer', required: true,
+        },
+        {
+          id: 'even', type: 'numerical', prompt: 'Even number', required: true, path: 'test-response-functions/assets/EvenNumber.response.ts',
+        },
+      ],
+      correctAnswer: [{ id: 'q1', answer: 'correct' }],
+    };
+
+    const { store } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+    await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
+
+    expect(store.getState().checkAnswer.trial1_0).toMatchObject({
+      correct: true,
+      responses: { q1: true },
+    });
+  });
+
+  test('ignores unanswered optional expected responses when checking correctness', async () => {
+    mockAnswerField.values = { q1: 'correct', optional: '' };
+    mockStoredAnswerData.formOrder = { response: ['q1', 'optional'] };
+    const config: IndividualComponent = {
+      ...baseConfig,
+      provideFeedback: true,
+      response: [
+        {
+          id: 'q1', type: 'shortText', prompt: 'Required', required: true,
+        },
+        {
+          id: 'optional', type: 'shortText', prompt: 'Optional', required: false,
+        },
+      ],
+      correctAnswer: [{ id: 'q1', answer: 'correct' }, { id: 'optional', answer: 'also correct' }],
+    };
+
+    const { store } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+    await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
+
+    expect(store.getState().checkAnswer.trial1_0).toMatchObject({
+      correct: true,
+      responses: { q1: true },
+    });
+  });
+
+  test('does not let a zero threshold grade a required unanswered answer as correct', async () => {
+    mockAnswerField.values = { q1: '', 'q1-dontKnow': true };
+    const config: IndividualComponent = {
+      ...baseConfig,
+      provideFeedback: true,
+      response: [{
+        id: 'q1', type: 'numerical', prompt: 'Number', required: true, withDontKnow: true,
+      }],
+      correctAnswer: [{ id: 'q1', answer: 10, correctnessThreshold: 0 }],
+    };
+
+    const { store } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
+    await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
+
+    expect(store.getState().checkAnswer.trial1_0).toMatchObject({
+      correct: false,
+      responses: { q1: false },
+    });
+  });
+
+  test('stores partial scores and shows the percentage while keeping Next disabled', async () => {
+    mockAnswerField.values = { q1: 5 };
+    const scoredConfig: IndividualComponent = {
+      ...baseConfig,
+      provideFeedback: true,
+      hideCheckAnswerButton: false,
+      allowFailedTraining: false,
+      response: [{
+        id: 'q1', type: 'numerical', prompt: 'Score', required: false, path: 'test-response-functions/assets/PartialScore.response.ts',
+      }],
+      correctAnswer: [{ id: 'q1', answer: 10, feedback: { incorrectText: 'Aim higher.', hints: ['Try a larger number.'] } }],
+    };
+    const { container, store } = await renderWithStore(<ResponseBlock config={scoredConfig} location="belowStimulus" />);
+    await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
+    expect(store.getState().checkAnswer.trial1_0).toMatchObject({
+      correct: false, scores: { q1: 0.5 }, answerSnapshot: { q1: 5 },
+    });
+    expect(container.querySelector('[data-testid="feedback-alert-q1"]')?.textContent).toContain('50%');
+    expect(container.textContent).toContain('Aim higher.');
+    expect(container.textContent).toContain('Try a larger number.');
+    expect(findButton(container, 'Next')).toHaveProperty('disabled', true);
+  });
+
+  test('treats a score of 80% as correct for participant feedback when configured', async () => {
+    mockAnswerField.values = { q1: 7 };
+    const scoredConfig: IndividualComponent = {
+      ...baseConfig,
+      provideFeedback: true,
+      allowFailedTraining: false,
+      response: [{
+        id: 'q1',
+        type: 'slider',
+        prompt: 'Score',
+        options: [],
+        required: false,
+        path: 'test-response-functions/assets/SliderScore.ts',
+      }],
+      correctAnswer: [{ id: 'q1', answer: 10, correctnessThreshold: 0.8 }],
+    };
+    const { container, store } = await renderWithStore(<ResponseBlock config={scoredConfig} location="belowStimulus" />);
+    await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
+    expect(store.getState().checkAnswer.trial1_0).toMatchObject({ correct: true, responses: { q1: true }, scores: { q1: 0.8 } });
+    expect(findButton(container, 'Next')).toHaveProperty('disabled', false);
+  });
+
   const feedbackEnterConfig = {
     ...baseConfig,
     nextOnEnter: true,
@@ -892,7 +1308,7 @@ describe('ResponseBlock onCheckAnswer', () => {
   } as IndividualComponent;
 
   test('passes onCheckAnswer to NextButton and grades once when called', async () => {
-    vi.mocked(responseAnswerIsCorrect).mockReturnValue(false);
+    mockAnswerField.values = { q1: 'incorrect' };
     const { container, store } = await renderWithStore(
       <>
         <ResponseBlock config={feedbackEnterConfig} location="aboveStimulus" />
@@ -918,7 +1334,7 @@ describe('ResponseBlock onCheckAnswer', () => {
 
   test('unlocks continuing after all attempts when failed training is allowed', async () => {
     // uiConfig mock sets trainingAttempts: 2
-    vi.mocked(responseAnswerIsCorrect).mockReturnValue(false);
+    mockAnswerField.values = { q1: 'incorrect' };
     const { container, store } = await renderWithStore(<ResponseBlock config={feedbackEnterConfig} location="belowStimulus" />);
     await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
     await act(async () => { capturedNextButtonProps.onCheckAnswer?.(); });
@@ -929,6 +1345,7 @@ describe('ResponseBlock onCheckAnswer', () => {
   });
 
   test('does not pass onCheckAnswer after a correct answer', async () => {
+    mockAnswerField.values = { q1: 'correct' };
     const { container, store } = await renderWithStore(
       <ResponseBlock config={feedbackEnterConfig} location="belowStimulus" />,
     );
@@ -965,15 +1382,18 @@ describe('ResponseBlock feedback on Next', () => {
   };
 
   test.each([undefined, false])('shows Check Answer by default with hideCheckAnswerButton=%s', async (hideCheckAnswerButton) => {
-    const { container, store } = await renderWithStore(
+    mockAnswerField.values = { q1: 'incorrect' };
+    const {
+      container, store, rerender, studyStore,
+    } = await renderWithStore(
       <ResponseBlock config={{ ...answerFeedbackConfig, hideCheckAnswerButton }} location="belowStimulus" />,
     );
     expect(findButton(container, 'Next')).toHaveProperty('disabled', true);
-    vi.mocked(responseAnswerIsCorrect).mockReturnValue(false);
     await act(async () => { fireEvent.click(findButton(container, 'Check Answer')); });
     expect(findButton(container, 'Next')).toHaveProperty('disabled', true);
     expect(container.textContent).toContain('Try again.');
-    vi.mocked(responseAnswerIsCorrect).mockReturnValue(true);
+    mockAnswerField.values = { q1: 'correct' };
+    await act(async () => { rerender(withStore(studyStore, <ResponseBlock config={{ ...answerFeedbackConfig, hideCheckAnswerButton }} location="belowStimulus" />)); });
     await act(async () => { fireEvent.click(findButton(container, 'Check Answer')); });
     expect(store.getState().checkAnswer.trial1_0).toMatchObject({ attemptsUsed: 2, correct: true });
     expect(findButton(container, 'Check Answer')).toHaveProperty('disabled', true);
@@ -994,14 +1414,10 @@ describe('ResponseBlock feedback on Next', () => {
       }],
       correctAnswer: [{ id: 'matrix', acceptableAnswers: [[['A'], ['B']]] }],
     };
-    vi.mocked(responseAnswerIsCorrect).mockImplementation((_answer, _expected, _low, _high, options) => options?.matrixQuestionIds?.join(',') === '10,2');
     const { store } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
 
     act(() => capturedNextButtonProps.onCheckAnswer?.());
 
-    expect(responseAnswerIsCorrect).toHaveBeenCalledWith({ 10: 'A', 2: 'B' }, undefined, undefined, undefined, expect.objectContaining({
-      matrixQuestionIds: ['10', '2'], acceptableAnswers: [[['A'], ['B']]],
-    }));
     expect(store.getState().checkAnswer.trial1_0).toMatchObject({ correct: true, responses: { matrix: true } });
   });
 
@@ -1043,7 +1459,6 @@ describe('ResponseBlock feedback on Next', () => {
     componentFlag, customFeedback, globalFlag, enabled,
   }) => {
     mockProvideFeedback.value = globalFlag;
-    vi.mocked(responseAnswerIsCorrect).mockClear();
     const { container, store } = await renderWithStore(
       <ResponseBlock
         config={{
@@ -1070,7 +1485,6 @@ describe('ResponseBlock feedback on Next', () => {
       expect(mockNavigate).not.toHaveBeenCalled();
     } else {
       expect(store.getState().checkAnswer.trial1_0).toBeUndefined();
-      expect(responseAnswerIsCorrect).not.toHaveBeenCalled();
       expect(container.querySelector('[data-testid="feedback-alert-q1"]')).toBeNull();
       expect(mockNavigate).toHaveBeenCalledTimes(1);
     }
@@ -1102,7 +1516,7 @@ describe('ResponseBlock feedback on Next', () => {
 
   test('incorrect answers do not block continuing by default after attempts run out', async () => {
     mockAllowFailedTraining.value = undefined;
-    vi.mocked(responseAnswerIsCorrect).mockReturnValue(false);
+    mockAnswerField.values = { q1: 'incorrect' };
     const renderBlock = () => <ResponseBlock config={answerFeedbackConfig} location="belowStimulus" />;
     const {
       container, store, rerender, studyStore,
@@ -1123,7 +1537,7 @@ describe('ResponseBlock feedback on Next', () => {
 
   test('component allowFailedTraining explicitly permits continuing after exhaustion', async () => {
     mockAllowFailedTraining.value = undefined;
-    vi.mocked(responseAnswerIsCorrect).mockReturnValue(false);
+    mockAnswerField.values = { q1: 'incorrect' };
     const { container, store } = await renderWithStore(
       <ResponseBlock config={{ ...answerFeedbackConfig, allowFailedTraining: true }} location="belowStimulus" />,
     );
@@ -1148,7 +1562,7 @@ describe('ResponseBlock check-answer state persistence', () => {
   } as IndividualComponent;
 
   test('attempts survive unmount/remount within the same store', async () => {
-    vi.mocked(responseAnswerIsCorrect).mockReturnValue(false);
+    mockAnswerField.values = { q1: 'incorrect' };
     const studyStore = await makeStudyStore();
     const first = render(withStore(studyStore, <ResponseBlock config={feedbackConfig} location="belowStimulus" />));
     const checkBtn = findButton(first.container, 'Next');
@@ -1162,7 +1576,9 @@ describe('ResponseBlock check-answer state persistence', () => {
   });
 
   test('seeds store from a persisted StoredAnswer.checkAnswer (refresh restore)', async () => {
-    const persisted: CheckAnswerState = { attemptsUsed: 2, correct: false, responses: { q1: false } };
+    const persisted: CheckAnswerState = {
+      attemptsUsed: 2, correct: false, responses: { q1: false }, answerSnapshot: {},
+    };
     mockStoredAnswerData.checkAnswer = persisted;
     const { container, store } = await renderWithStore(
       <ResponseBlock config={feedbackConfig} location="belowStimulus" />,
@@ -1183,7 +1599,7 @@ describe('ResponseBlock check-answer state persistence', () => {
   });
 
   test('persists each grading attempt to storage before Next', async () => {
-    vi.mocked(responseAnswerIsCorrect).mockReturnValue(false);
+    mockAnswerField.values = { q1: 'incorrect' };
     mockAnswerField.values = { q1: '42' };
     const { container } = await renderWithStore(
       <ResponseBlock config={feedbackConfig} location="belowStimulus" />,
@@ -1206,7 +1622,7 @@ describe('ResponseBlock check-answer state persistence', () => {
   });
 
   test('saves the graded draft to Redux', async () => {
-    vi.mocked(responseAnswerIsCorrect).mockReturnValue(false);
+    mockAnswerField.values = { q1: 'incorrect' };
     mockAnswerField.values = { q1: '42' };
     const persistedOptionOrders = { q1: [{ label: 'Forty two', value: '42' }] };
     const persistedQuestionOrders = { matrix: ['row2', 'row1'] };
@@ -1236,7 +1652,8 @@ describe('ResponseBlock check-answer state persistence', () => {
   });
 
   test('saves the draft to Redux even when data collection is disabled', async () => {
-    vi.mocked(responseAnswerIsCorrect).mockReturnValue(false);
+    mockAnswerField.values = { q1: 'incorrect' };
+    mockAnswerField.values = { q1: '42' };
     const studyStore = await makeStudyStore({ dataCollectionEnabled: false });
     const { container } = render(withStore(studyStore, <ResponseBlock config={feedbackConfig} location="belowStimulus" />));
     await act(async () => { fireEvent.click(findButton(container, 'Next')); });
@@ -1244,7 +1661,7 @@ describe('ResponseBlock check-answer state persistence', () => {
       attemptsUsed: 1,
       correct: false,
       responses: { q1: false },
-      checkedAnswers: {},
+      checkedAnswers: { q1: '42' },
     });
     expect(mockSaveAnswers).not.toHaveBeenCalled();
   });
@@ -1299,7 +1716,7 @@ describe('ResponseBlock check-answer state persistence', () => {
   });
 
   test('repairs a missing internal identifier from the resolved route key', async () => {
-    vi.mocked(responseAnswerIsCorrect).mockReturnValue(false);
+    mockAnswerField.values = { q1: 'incorrect' };
     const answerWithoutIdentifier = {
       ...makeStoredAnswer({ identifier: 'trial1_0' }),
       identifier: undefined,
@@ -1319,7 +1736,8 @@ describe('ResponseBlock check-answer state persistence', () => {
   test('redirects to the training-failed page after the final failed attempt', async () => {
     vi.useFakeTimers();
     try {
-      vi.mocked(responseAnswerIsCorrect).mockReturnValue(false);
+      mockAnswerField.values = { q1: 'incorrect' };
+      mockAnswerField.values = { q1: 'incorrect' };
       const noFailConfig = { ...feedbackConfig, allowFailedTraining: false } as IndividualComponent;
       const { container } = await renderWithStore(<ResponseBlock config={noFailConfig} location="belowStimulus" />);
       await act(async () => { fireEvent.click(findButton(container, 'Next')); });
@@ -1358,7 +1776,9 @@ describe('ResponseBlock check-answer state persistence', () => {
 
   test('restores mixed per-response feedback in the correct locations', async () => {
     mockStoredAnswerData.formOrder = { response: ['q1', 'q2'] };
-    mockStoredAnswerData.checkAnswer = { attemptsUsed: 1, correct: false, responses: { q1: true, q2: false } };
+    mockStoredAnswerData.checkAnswer = {
+      attemptsUsed: 1, correct: false, responses: { q1: true, q2: false }, answerSnapshot: {},
+    };
     const multiConfig = {
       type: 'questionnaire',
       response: [
@@ -1403,7 +1823,7 @@ describe('ResponseBlock unlimited attempts', () => {
   } as IndividualComponent;
 
   test('keeps Next available for retrying unlimited attempts', async () => {
-    vi.mocked(responseAnswerIsCorrect).mockReturnValue(false);
+    mockAnswerField.values = { q1: 'incorrect' };
     const { container, store } = await renderWithStore(
       <ResponseBlock config={unlimitedConfig} location="belowStimulus" />,
     );
@@ -1419,7 +1839,7 @@ describe('ResponseBlock unlimited attempts', () => {
   });
 
   test('enables Next once the answer is correct', async () => {
-    vi.mocked(responseAnswerIsCorrect).mockReturnValue(true);
+    mockAnswerField.values = { q1: 'correct' };
     const { container } = await renderWithStore(
       <ResponseBlock config={unlimitedConfig} location="belowStimulus" />,
     );
@@ -1436,6 +1856,74 @@ test.each([null, {}])('replay distinguishes an initial form from an empty snapsh
   render(withStore(studyStore, <ResponseBlock config={baseConfig} location="belowStimulus" status={status} />));
   expect(capturedSwitcherProps.storedAnswer).toEqual(form === null ? status.answer : {});
   expect(vi.mocked(useAnswerField).mock.lastCall?.[6]).toEqual(form === null ? status.answer : {});
+});
+
+test('replay only uses saved correctness scores when they match the replayed values', async () => {
+  mockIsAnalysis.value = true;
+  mockStoredAnswerData.formOrder = undefined;
+  vi.mocked(isEqual).mockImplementation((first, second) => JSON.stringify(first) === JSON.stringify(second));
+  const config: IndividualComponent = {
+    type: 'questionnaire',
+    response: [{
+      id: 'controller', type: 'numerical', prompt: '', path: 'test-response-functions/assets/PartialScore.response.ts',
+    }],
+    correctAnswer: [{ id: 'controller', answer: 10 }],
+  };
+  const answer = { controller: 10 };
+  const status = makeStoredAnswer({
+    answer,
+    checkAnswer: {
+      attemptsUsed: 1,
+      correct: true,
+      responses: { controller: true },
+      scores: { controller: 1 },
+      answerSnapshot: answer,
+    },
+  });
+  const studyStore = await makeStudyStore();
+  studyStore.store.dispatch(studyStore.actions.saveAnalysisState({
+    location: 'belowStimulus', prov: { form: { controller: 5 } },
+  }));
+
+  render(withStore(studyStore, <ResponseBlock config={config} location="belowStimulus" status={status} />));
+  expect(vi.mocked(useAnswerField).mock.lastCall?.[9]).toBeUndefined();
+});
+
+test('replay uses matching saved scores before resolving historical follow-up visibility', async () => {
+  mockIsAnalysis.value = true;
+  mockStoredAnswerData.formOrder = undefined;
+  mockAnswerField.values = { controller: 5, followUp: 'detail' };
+  const config: IndividualComponent = {
+    type: 'questionnaire',
+    response: [{
+      id: 'controller', type: 'numerical', prompt: '', path: 'test-response-functions/assets/PartialScore.response.ts',
+    }, {
+      id: 'followUp',
+      type: 'shortText',
+      prompt: 'Follow up',
+      visibleIf: { responseId: 'controller', comparison: 'isCorrect', value: true },
+    }],
+    correctAnswer: [{ id: 'controller', answer: 10 }, { id: 'followUp', answer: 'detail' }],
+  };
+  const answer = { controller: 5, followUp: 'detail' };
+  const status = makeStoredAnswer({
+    answer,
+    checkAnswer: {
+      attemptsUsed: 1,
+      correct: true,
+      responses: { controller: true, followUp: true },
+      scores: { controller: 1 },
+      answerSnapshot: answer,
+    },
+  });
+  const studyStore = await makeStudyStore();
+  studyStore.store.dispatch(studyStore.actions.saveAnalysisState({
+    location: 'belowStimulus', prov: { form: answer },
+  }));
+
+  const { container } = render(withStore(studyStore, <ResponseBlock config={config} location="belowStimulus" status={status} />));
+  expect(vi.mocked(useAnswerField).mock.lastCall?.[9]).toEqual({ controller: 1 });
+  expect(container.querySelector('[data-response-id="followUp"]')).not.toBeNull();
 });
 
 test('replay treats a location snapshot as authoritative when a controller answer was removed', async () => {
@@ -1498,7 +1986,6 @@ test('uses restored answers until another location publishes a complete snapshot
 });
 
 test('Check Answer ignores a conditionally hidden correct answer', async () => {
-  vi.mocked(responseAnswerIsCorrect).mockClear();
   mockStoredAnswerData.formOrder = undefined;
   mockAnswerField.values = { controller: '' };
   const config: IndividualComponent = {
@@ -1516,7 +2003,6 @@ test('Check Answer ignores a conditionally hidden correct answer', async () => {
   };
   const { store } = await renderWithStore(<ResponseBlock config={config} location="belowStimulus" />);
   act(() => capturedNextButtonProps.onCheckAnswer?.());
-  expect(responseAnswerIsCorrect).not.toHaveBeenCalled();
   expect(store.getState().checkAnswer.trial1_0?.correct).toBe(true);
 });
 
@@ -1552,7 +2038,7 @@ test('keeps trial totals from the checked snapshot when an answer hides a depend
   const { container } = await renderWithStore(
     <ResponseBlock config={config} location="belowStimulus" status={checkedAnswer} />,
   );
-  expect(container.querySelector('[data-testid="trial-answer-summary"]')?.textContent).toBe('1 of 2 answers correct; 1 incorrect.');
+  expect(container.querySelector('[data-testid="trial-answer-summary"]')?.textContent).toBeUndefined();
   expect(container.querySelector('[data-response-id="dependent"]')).toBeNull();
 });
 
@@ -1591,7 +2077,7 @@ describe('custom training feedback', () => {
     expect(container.querySelector('[data-testid="feedback-alert-q1"]')?.getAttribute('data-fit-height')).toBe('true');
     expect(container.querySelector('[data-testid="feedback-alert-q2"]')?.getAttribute('data-fit-height')).toBe('true');
     expect(container.querySelector('[data-testid="feedback-alert-q1"]')?.textContent).not.toContain('answer-specific hint');
-    expect(container.querySelector('[data-testid="trial-answer-summary"]')?.textContent).toBe('1 of 2 answers correct; 1 incorrect.');
+    expect(container.querySelector('[data-testid="trial-answer-summary"]')?.textContent).toBeUndefined();
   });
 
   test('uses exhausted text after the final failed attempt', async () => {
@@ -1642,8 +2128,8 @@ describe('custom training feedback', () => {
       </>,
     );
     expect(container.textContent).toContain('First correct answer');
-    expect(container.querySelector('[data-testid="trial-answer-summary"]')?.textContent).toBe('1 of 2 answers correct; 1 incorrect.');
-    expect(container.querySelectorAll('[data-testid="trial-answer-summary"]')).toHaveLength(1);
+    expect(container.querySelector('[data-testid="trial-answer-summary"]')?.textContent).toBeUndefined();
+    expect(container.querySelectorAll('[data-testid="trial-answer-summary"]')).toHaveLength(0);
   });
 
   test('shows trial totals when the first checked response is hidden', async () => {
@@ -1676,6 +2162,6 @@ describe('custom training feedback', () => {
     const { container } = await renderWithStore(<ResponseBlock config={hiddenFirstConfig} location="belowStimulus" status={checkedAnswer} />);
 
     expect(container.querySelector('[data-testid="switcher-shortText"][data-response-id="hidden-q"]')).toBeNull();
-    expect(container.querySelector('[data-testid="trial-answer-summary"]')?.textContent).toBe('1 of 2 answers correct; 1 incorrect.');
+    expect(container.querySelector('[data-testid="trial-answer-summary"]')?.textContent).toBeUndefined();
   });
 });

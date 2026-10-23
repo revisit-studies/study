@@ -151,6 +151,52 @@ describe('getTableData', () => {
     }));
   });
 
+  test('exports the persisted per-response score with its answer', async () => {
+    const participant = makeParticipant();
+    participant.answers.testComponent_0.checkAnswer = {
+      attemptsUsed: 0,
+      correct: false,
+      responses: {},
+      scores: { response: 0.5 },
+      answerSnapshot: { response: 'participant answer' },
+    };
+
+    const tableData = await getTableData(
+      ['answer', 'score'],
+      [participant],
+      makeStorageEngine({ 'hash-1': configWithComponentMetadata }),
+      'test-study',
+    );
+
+    const answerRow = tableData.rows.find((row) => row.participantId === 'p1' && row.responseId === 'response');
+    expect(answerRow).toEqual(expect.objectContaining({
+      answer: 'participant answer',
+      score: '50%',
+    }));
+  });
+
+  test('does not export a saved score when its answer snapshot is stale', async () => {
+    const participant = makeParticipant();
+    participant.answers.testComponent_0.checkAnswer = {
+      attemptsUsed: 0,
+      correct: true,
+      responses: {},
+      scores: { response: 1 },
+      answerSnapshot: { response: 'an earlier answer' },
+    };
+
+    const tableData = await getTableData(
+      ['answer', 'score'],
+      [participant],
+      makeStorageEngine({ 'hash-1': configWithComponentMetadata }),
+      'test-study',
+    );
+
+    const answerRow = tableData.rows.find((row) => row.participantId === 'p1' && row.responseId === 'response');
+    expect(answerRow).toEqual(expect.objectContaining({ answer: 'participant answer' }));
+    expect(answerRow?.score).toBeUndefined();
+  });
+
   test('exports acceptable answer lists when no exact answer is defined', async () => {
     const participant = makeParticipant();
     participant.answers.testComponent_0.correctAnswer = [{

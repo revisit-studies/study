@@ -4,6 +4,7 @@ import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import type { IndividualComponent, JsonValue, Response } from '../../../parser/types';
+import * as responseErrors from '../responseErrors';
 import { ResponseSwitcher } from '../ResponseSwitcher';
 
 // ── mocks ────────────────────────────────────────────────────────────────────
@@ -202,6 +203,41 @@ describe('ResponseSwitcher stored answer locking', () => {
     expect(capturedStringInputProps.disabled).toBe(true);
     expect(capturedStringInputProps.answer).toMatchObject({ value: undefined, readOnly: true });
   });
+});
+
+test('does not replace sibling response values with unsupported auxiliary fields', () => {
+  const generateErrorMessage = vi.spyOn(responseErrors, 'generateErrorMessage');
+  const config: IndividualComponent = {
+    type: 'questionnaire',
+    response: [
+      response,
+      { id: 'q1-other', type: 'shortText', prompt: '' },
+      { id: 'q1-dontKnow', type: 'shortText', prompt: '' },
+    ],
+  };
+
+  render(
+    <ResponseSwitcher
+      response={response}
+      form={form}
+      index={1}
+      config={config}
+      validationContext={{ 'q1-other': 'sibling other', 'q1-dontKnow': 'sibling don’t know' }}
+    />,
+  );
+
+  expect(generateErrorMessage).toHaveBeenCalledWith(
+    response,
+    expect.anything(),
+    undefined,
+    expect.objectContaining({
+      values: expect.objectContaining({
+        'q1-other': 'sibling other',
+        'q1-dontKnow': 'sibling don’t know',
+      }),
+    }),
+  );
+  generateErrorMessage.mockRestore();
 });
 
 describe('ResponseSwitcher style overrides', () => {
