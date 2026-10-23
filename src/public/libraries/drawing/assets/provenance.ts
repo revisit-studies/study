@@ -1,7 +1,10 @@
 import { Registry } from '@trrack/core';
+import type { Trrack } from '@trrack/core';
+import { getProvenanceTraversalEvents } from '../../../../store/provenance';
+import type { TrrackedProvenance } from '../../../../store/types';
 import isEqual from 'lodash.isequal';
 import {
-  DrawingParameters, DrawingScene, DrawingState, DrawingTool,
+  DrawingParameters, DrawingScene, DrawingState, DrawingTool, emptyDrawing,
 } from './types';
 
 /** The host's managed useTrrack hook publishes the resulting graph. */
@@ -67,4 +70,30 @@ export function drawingHistory(initial: DrawingScene) {
     get canUndo() { return past.length > 0; },
     get canRedo() { return future.length > 0; },
   };
+}
+
+/** Rebuild gesture undo/redo from recorded actions rather than starting a new history on return. */
+export function resumedDrawingHistory(trrack: Trrack<DrawingState, string>) {
+  const graph = trrack.graph.backend as TrrackedProvenance;
+  const history = drawingHistory(trrack.getState(trrack.root).state ?? emptyDrawing());
+  let nodeIds = getProvenanceTraversalEvents(graph).map((event) => event.nodeId);
+  if (!nodeIds.length) {
+    nodeIds = [];
+    let node = trrack.current;
+    while ('parent' in node) {
+      nodeIds.unshift(node.id);
+      node = graph.nodes[node.parent];
+    }
+  }
+  nodeIds.forEach((id) => {
+    const node = graph.nodes[id];
+    if (node.label === 'drawEnd' || node.label === 'clearing') {
+      history.commit(trrack.getState(node).state ?? emptyDrawing());
+    } else if (node.label === 'undo') {
+      history.undo();
+    } else if (node.label === 'redo') {
+      history.redo();
+    }
+  });
+  return history;
 }

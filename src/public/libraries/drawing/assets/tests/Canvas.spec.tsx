@@ -10,7 +10,7 @@ import {
 import Canvas from '../Canvas';
 import type DrawingEditor from '../DrawingEditor';
 import { RevisitProvenanceProvider } from '../../../../../store/hooks/useRevisitTrrack';
-import { StimulusParams } from '../../../../../store/types';
+import { TrrackedProvenance, StimulusParams } from '../../../../../store/types';
 import { DrawingParameters, DrawingState, emptyDrawing } from '../types';
 import { sceneWithStroke } from './fixtures';
 
@@ -35,13 +35,13 @@ beforeEach(() => {
 });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
-function mount(parameters: DrawingParameters = {}, provenanceState?: DrawingState, route = '/', answers: StimulusParams<DrawingParameters>['answers'] = {}) {
+function mount(parameters: DrawingParameters = {}, provenanceState?: DrawingState, route = '/', answers: StimulusParams<DrawingParameters>['answers'] = {}, provenance?: TrrackedProvenance) {
   const setAnswer = vi.fn();
   const onProvenanceChange = vi.fn();
   const result = render(
     <MemoryRouter initialEntries={[route]}>
       <MantineProvider>
-        <RevisitProvenanceProvider onProvenanceChange={onProvenanceChange}>
+        <RevisitProvenanceProvider onProvenanceChange={onProvenanceChange} provenance={provenance}>
           {(useTrrack) => <Canvas parameters={parameters} answers={answers} setAnswer={setAnswer} provenanceState={provenanceState} useTrrack={useTrrack} />}
         </RevisitProvenanceProvider>
       </MantineProvider>
@@ -51,6 +51,27 @@ function mount(parameters: DrawingParameters = {}, provenanceState?: DrawingStat
 }
 
 describe('drawing library Canvas', () => {
+  test('resumes the existing graph, editor controls and gesture undo history', () => {
+    const first = mount();
+    const scene = sceneWithStroke('first-visit');
+    act(() => { editor.props!.onChange(scene); editor.props!.onCommit(scene); });
+    fireEvent.click(screen.getByLabelText('Eraser'));
+    const graph = structuredClone(first.onProvenanceChange.mock.lastCall![0]);
+    first.unmount();
+
+    const resumed = mount({}, undefined, '/', {}, graph);
+    expect(editor.props!.initialDrawing).toEqual(scene);
+    expect(editor.props!.tool).toBe('eraser');
+    expect(resumed.onProvenanceChange).not.toHaveBeenCalled();
+    expect((screen.getByRole('button', { name: 'Undo drawing' }) as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(screen.getByRole('button', { name: 'Undo drawing' }));
+    expect(editor.props!.snapshot).toEqual(emptyDrawing());
+    const appended = resumed.onProvenanceChange.mock.lastCall![0];
+    expect(appended.root).toBe(graph.root);
+    expect(Object.keys(appended.nodes)).toHaveLength(Object.keys(graph.nodes).length + 1);
+    expect(appended.traversalEvents.slice(0, graph.traversalEvents.length)).toEqual(graph.traversalEvents);
+  });
+
   test.each(['drawing', 'sketch'])('restores the saved %s response on return and undoes new edits to that scene', (responseId) => {
     const first = mount({ responseId, requireDrawing: true });
     const saved = sceneWithStroke();

@@ -12,6 +12,7 @@ import { IconArrowLeft, IconDotsVertical } from '@tabler/icons-react';
 import { AppAside } from './interface/AppAside';
 import { AppHeader } from './interface/AppHeader';
 import { AppNavBar } from './interface/AppNavBar';
+import { TrialProvenanceBoundary } from '../store/hooks/useTrialProvenance';
 import { HelpModal } from './interface/HelpModal';
 import { AlertModal } from './interface/AlertModal';
 import { ConfigVersionWarningModal } from './interface/ConfigVersionWarningModal';
@@ -411,22 +412,23 @@ export function StepRenderer() {
                   </div>
                 </div>
               </header>
-              <AppNavBar
-                width={sidebarWidth}
-                top={showTitleBar ? 70 : 0}
-                bottom={isAnalysis ? 125 + (hasAudio ? 55 : 0) : 0}
-                sidebarOpen={sidebarOpen}
-              />
-              {/* 10px is the gap between the sidebar and the main content */}
-              <AppShell.Main
-                className="main"
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                }}
-                w={sidebarOpen ? `calc(100% - ${sidebarWidth}px - 10px)` : '100%'}
-              >
-                {!showTitleBar && !showStudyBrowser && developmentModeEnabled && (
+              <TrialProvenanceBoundary>
+                <AppNavBar
+                  width={sidebarWidth}
+                  top={showTitleBar ? 70 : 0}
+                  bottom={isAnalysis ? 125 + (hasAudio ? 55 : 0) : 0}
+                  sidebarOpen={sidebarOpen}
+                />
+                {/* 10px is the gap between the sidebar and the main content */}
+                <AppShell.Main
+                  className="main"
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                  }}
+                  w={sidebarOpen ? `calc(100% - ${sidebarWidth}px - 10px)` : '100%'}
+                >
+                  {!showTitleBar && !showStudyBrowser && developmentModeEnabled && (
                   <Button
                     data-html2canvas-ignore
                     variant="subtle"
@@ -437,19 +439,20 @@ export function StepRenderer() {
                   >
                     Study Browser
                   </Button>
-                )}
-                <div
-                  className="study-content"
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    flexGrow: 1,
-                    minWidth: 0,
-                  }}
-                >
-                  <Outlet />
-                </div>
-              </AppShell.Main>
+                  )}
+                  <div
+                    className="study-content"
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      flexGrow: 1,
+                      minWidth: 0,
+                    }}
+                  >
+                    <Outlet />
+                  </div>
+                </AppShell.Main>
+              </TrialProvenanceBoundary>
             </Flex>
             {isAnalysis && (
             <AnalysisFooter setHasAudio={setHasAudio} key={currentComponent} />

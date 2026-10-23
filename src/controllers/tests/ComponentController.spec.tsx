@@ -47,6 +47,10 @@ let mockStoreActions = {
   setAnalysisCanPlayScreenRecording: vi.fn(),
 };
 
+vi.mock('../../components/interface/RestorationError', () => ({ RestorationError: () => <div>Restoration error</div> }));
+
+vi.mock('../../components/interface/RestorationWarning', () => ({ RestorationWarning: () => null }));
+
 // ── mocks ────────────────────────────────────────────────────────────────────
 
 // Stimulus discovery imports every editor; these host tests do not exercise the drawing engine.

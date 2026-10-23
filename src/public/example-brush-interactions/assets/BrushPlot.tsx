@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { useStudyState } from '../../../store/hooks/useStudyState';
 import { Loader, Stack } from '@mantine/core';
 import {
   useCallback, useEffect, useMemo, useState,
@@ -18,20 +19,6 @@ export function BrushPlot({
   parameters, setAnswer, provenanceState, useTrrack, updateState = () => null,
 }: StimulusParams<BrushParams, {all: {brush: BrushState}}> & {updateState: (b: BrushState) => void}) {
   const [filteredTable, setFilteredTable] = useState<ColumnTable | null>(null);
-  const [brushState, setBrushState] = useState<BrushState>(provenanceState ? (provenanceState.all.brush || provenanceState.all) : {
-    hasBrush: false, x1: 0, y1: 0, x2: 0, y2: 0, ids: [],
-  });
-
-  useEffect(() => {
-    if (provenanceState) {
-      setBrushState(provenanceState.all.brush || provenanceState.all);
-    } else {
-      setBrushState({
-        hasBrush: false, x1: 0, y1: 0, x2: 0, y2: 0, ids: [],
-      });
-    }
-  }, [provenanceState]);
-
   const [data, setData] = useState<any[] | null>(null);
 
   // load data
@@ -83,14 +70,26 @@ export function BrushPlot({
       registry: reg,
     };
   }, []);
-  const trrack = useTrrack({
+  const trrack = useTrrack<{ all: BrushState | { brush: BrushState } }>({
     registry,
     initialState: {
       all: {
-        hasBrush: false, x1: null, x2: null, y1: null, y2: null, ids: [],
+        hasBrush: false, x1: 0, x2: 0, y1: 0, y2: 0, ids: [],
       },
     },
   });
+
+  const restoredState = useStudyState({ trrack });
+  const initialBrush = useMemo(() => ('brush' in restoredState.all ? restoredState.all.brush : restoredState.all), [restoredState]);
+  const [brushState, setBrushState] = useState<BrushState>(provenanceState ? (provenanceState.all.brush || provenanceState.all) : initialBrush);
+
+  useEffect(() => {
+    if (provenanceState) {
+      setBrushState(provenanceState.all.brush || provenanceState.all);
+    } else {
+      setBrushState(initialBrush);
+    }
+  }, [provenanceState, initialBrush]);
 
   const moveBrushCallback = useCallback((selType: SelectionType, state: BrushState) => {
     if (selType === 'drag') {
@@ -157,6 +156,13 @@ export function BrushPlot({
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [brushState, fullTable, parameters, trrack, setAnswer, debouncedCallback, actions]);
+
+  useEffect(() => {
+    if (!fullTable) return;
+    const ids = new Set(brushState.ids);
+    setFilteredTable(brushState.hasBrush
+      ? fullTable.filter(escape((row: any) => ids.has(row[parameters.ids]))) : fullTable);
+  }, [brushState, fullTable, parameters.ids]);
 
   // Which table the bar chart uses, either the base or the filtered table if any selections
   const barsTable = useMemo(() => {

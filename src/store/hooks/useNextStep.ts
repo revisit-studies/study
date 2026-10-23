@@ -204,9 +204,9 @@ export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
         const toSave = {
           ...storedAnswer,
           answer: answerToPersist,
-          startTime,
-          endTime,
-          windowEvents: currentWindowEvents,
+          startTime: storedAnswer.startTime > 0 ? Math.min(storedAnswer.startTime, startTime) : startTime,
+          endTime: Math.max(storedAnswer.endTime, endTime),
+          windowEvents: [...(storedAnswer.windowEvents ?? []), ...currentWindowEvents],
           timedOut: !collectData,
           responseSubmitAttempted,
           checkAnswer: submissionCheckAnswer,

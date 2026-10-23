@@ -110,7 +110,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     }
   }
 
-  protected async _getFromStorage<T extends StorageObjectType>(prefix: string, type: T, studyId?: string) {
+  protected async _getFromStorage<T extends StorageObjectType>(prefix: string, type: T, studyId?: string, strict = false) {
     const storageRef = ref(
       this.storage,
       `${this.collectionPrefix}${studyId || this.studyId}/${prefix}_${type}`,
@@ -121,7 +121,8 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       const blob = await getBlob(storageRef);
       const fullProvStr = await blob.text();
       storageObj = JSON.parse(fullProvStr);
-    } catch {
+    } catch (error) {
+      if (strict && (error as { code?: string }).code !== 'storage/object-not-found') throw error;
       console.warn(
         `${prefix} does not have ${type} for ${this.collectionPrefix}${this.studyId}.`,
       );

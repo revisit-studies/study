@@ -12,6 +12,11 @@ import type { WebsiteComponent } from '../../parser/types';
 import { ReplayContext } from '../../store/hooks/useReplay';
 import { getStaticAssetByPath } from '../../utils/getStaticAsset';
 
+vi.mock('../../components/interface/RestorationWarning', () => ({ RestorationWarning: () => null }));
+
+const mockRetained = vi.hoisted(() => ({ graph: undefined as unknown }));
+vi.mock('../../store/hooks/useTrialProvenance', () => ({ useTrialProvenance: () => mockRetained.graph }));
+
 const mockDispatch = vi.fn();
 const mockSetAssetStatus = vi.fn((payload) => ({ type: 'setAssetStatus', payload }));
 const mockSetReactiveAnswers = vi.fn((payload) => ({ type: 'setReactiveAnswers', payload }));
@@ -69,6 +74,7 @@ vi.mock('../../ResourceNotFound', () => ({
 describe('IframeController', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockRetained.graph = undefined;
     vi.mocked(getStaticAssetByPath).mockResolvedValue('<html></html>');
     mockIsAnalysis.value = false;
     mockCurrentComponent.value = 'countDots';
@@ -81,6 +87,43 @@ describe('IframeController', () => {
   });
 
   const websiteConfig: WebsiteComponent = { type: 'website', path: 'https://example.com', response: [] };
+
+  test('rejects a fresh legacy graph while a revisited website is still registering', () => {
+    mockRetained.graph = { root: 'saved-root' };
+    const { container } = render(<IframeController currentConfig={{ ...websiteConfig, path: 'chart.html' }} answers={{}} />);
+    const iframe = container.querySelector('iframe')!;
+    const iframeId = new URL(iframe.src).searchParams.get('id');
+    const publish = (root: string) => act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        source: iframe.contentWindow,
+        data: { iframeId, type: '@REVISIT_COMMS/PROVENANCE', message: { root } },
+      }));
+    });
+    publish('fresh-root');
+    expect(mockUpdateProvenance).not.toHaveBeenCalled();
+    publish('saved-root');
+    expect(mockUpdateProvenance).toHaveBeenCalledWith(expect.objectContaining({ provenanceGraph: { root: 'saved-root' } }));
+  });
+
+  test('bootstraps an external website without changing its URL and ignores stale acknowledgements', () => {
+    const url = 'https://example.com/chart?signature=keep';
+    const { container } = render(<IframeController currentConfig={{ ...websiteConfig, path: url }} answers={{}} />);
+    const iframe = container.querySelector('iframe')!;
+    const postMessage = vi.spyOn(iframe.contentWindow!, 'postMessage');
+    expect(iframe.src).toBe(url);
+    const receive = (type: string, iframeId: string | null, message: unknown) => act(() => {
+      window.dispatchEvent(new MessageEvent('message', { source: iframe.contentWindow, data: { type: `@REVISIT_COMMS/${type}`, iframeId, message } }));
+    });
+    receive('WINDOW_READY', null, { protocolVersion: 1, documentId: 'document' });
+    const initialization = postMessage.mock.calls.map(([data]) => data).find((data) => data.type === '@REVISIT_COMMS/RESUME');
+    expect(initialization.message.documentId).toBe('document');
+    receive('RESTORED', initialization.iframeId, { protocolVersion: 1, requestId: 'stale' });
+    receive('PROVENANCE', initialization.iframeId, { root: 'new-trial' });
+    expect(mockUpdateProvenance).not.toHaveBeenCalled();
+    receive('RESTORED', initialization.iframeId, { protocolVersion: 1, requestId: initialization.message.requestId });
+    receive('PROVENANCE', initialization.iframeId, { root: 'new-trial' });
+    expect(mockUpdateProvenance).toHaveBeenCalledTimes(1);
+  });
 
   test.each(['light', 'dark', undefined] as const)('applies iframe color mode %s in participation and replay without reloading', (colorMode) => {
     const currentConfig = { ...websiteConfig, colorMode };
@@ -186,6 +229,7 @@ describe('IframeController', () => {
     );
     render(<IframeController currentConfig={websiteConfig} answers={{}} />);
     window.dispatchEvent(new MessageEvent('message', {
+      source: document.querySelector('iframe')!.contentWindow,
       data: { iframeId: '11111111-2222-3333-4444-555555555555', type: '@REVISIT_COMMS/ANSWERS', message: { q1: 'yes' } },
     }));
     await waitFor(() => expect(mockDispatch).toHaveBeenCalledWith({
@@ -204,6 +248,7 @@ describe('IframeController', () => {
     const provenanceGraph = { root: 'root', current: 'root', nodes: {} };
 
     window.dispatchEvent(new MessageEvent('message', {
+      source: document.querySelector('iframe')!.contentWindow,
       data: {
         iframeId: '11111111-2222-3333-4444-555555555555',
         type: '@REVISIT_COMMS/PROVENANCE',
@@ -228,6 +273,7 @@ describe('IframeController', () => {
     };
     render(<IframeController currentConfig={websiteWithParams} answers={{}} />);
     window.dispatchEvent(new MessageEvent('message', {
+      source: document.querySelector('iframe')!.contentWindow,
       data: { iframeId: '11111111-2222-3333-4444-555555555555', type: '@REVISIT_COMMS/WINDOW_READY' },
     }));
     // sendMessage called with STUDY_DATA; ref.current.contentWindow.postMessage fires
@@ -292,6 +338,7 @@ describe('IframeController', () => {
 
     const iframeId = new URL(iframe!.src).searchParams.get('id');
     window.dispatchEvent(new MessageEvent('message', {
+      source: document.querySelector('iframe')!.contentWindow,
       data: {
         type: '@REVISIT_COMMS/WINDOW_READY',
         iframeId,
@@ -333,6 +380,7 @@ describe('IframeController', () => {
     await waitFor(() => expect(iframe.src).toContain('id='));
     const iframeId = new URL(iframe.src).searchParams.get('id');
     window.dispatchEvent(new MessageEvent('message', {
+      source: document.querySelector('iframe')!.contentWindow,
       data: { type: '@REVISIT_COMMS/WINDOW_READY', iframeId },
     }));
 

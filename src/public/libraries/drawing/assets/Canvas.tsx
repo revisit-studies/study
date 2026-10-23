@@ -11,10 +11,11 @@ import throttle from 'lodash.throttle';
 import { StimulusParams } from '../../../../store/types';
 import { useIsAnalysis } from '../../../../store/hooks/useIsAnalysis';
 import { useCurrentIdentifier } from '../../../../routes/utils';
+import { useStudyState } from '../../../../store/hooks/useStudyState';
 import {
   DRAWING_COLORS, DrawingParameters, DrawingScene, DrawingState, DrawingTool, emptyDrawing, hasDrawing,
 } from './types';
-import { drawingHistory, drawingProvenance } from './provenance';
+import { resumedDrawingHistory, drawingProvenance } from './provenance';
 import DrawingEditor from './DrawingEditor';
 
 export default function Canvas({
@@ -30,11 +31,12 @@ export default function Canvas({
   });
   const [definition] = useState(() => drawingProvenance({ ...parameters, initialDrawing: initialScene }));
   const trrack = useTrrack({ registry: definition.registry, initialState: definition.initialState });
-  const [controls, setControls] = useState(definition.initialState);
-  const [restoreScene, setRestoreScene] = useState<DrawingScene | undefined>(undefined);
-  const [history] = useState(() => drawingHistory(initialScene));
+  const restoredState = useStudyState({ trrack });
+  const [controls, setControls] = useState(restoredState);
+  const [restoreScene, setRestoreScene] = useState<DrawingScene | undefined>(restoredState.state ?? initialScene);
+  const [history] = useState(() => resumedDrawingHistory(trrack));
   const [, refreshHistory] = useState(0);
-  const currentScene = useRef(initialScene);
+  const currentScene = useRef(restoredState.state ?? initialScene);
   const requireDrawing = parameters.requireDrawing ?? false;
 
   const publishAnswer = useCallback((scene: DrawingScene) => {
@@ -182,7 +184,7 @@ export default function Canvas({
       </Group>
       <Box className="revisit-drawing-surface" h={parameters.height} style={{ minHeight: 200, flex: parameters.height === undefined ? '1 1 0px' : '0 0 auto' }}>
         <DrawingEditor
-          initialDrawing={initialScene}
+          initialDrawing={restoredState.state ?? initialScene}
           snapshot={readOnly ? provenanceState?.state ?? null : restoreScene}
           readOnly={readOnly}
           color={displayed.color}

@@ -166,3 +166,37 @@ test('Test vega component with reactive response', async ({ page }) => {
   await expect(replaySelects.nth(1)).toHaveValue('Worldwide Gross', { timeout: 15000 });
   expect(await readStoredValue(page, provenanceKey)).toEqual(provenanceBeforeReplay);
 });
+
+test('Vega Previous restores and keeps chart selections and confidence edits', async ({ page }) => {
+  await resetClientStudyState(page);
+  await page.goto('/demo-vega');
+  await nextClick(page);
+  const chart = page.locator('main .vega-embed:visible canvas.marks').first();
+  const selected = page.locator('[class*="mantine-InputWrapper-root"]').filter({ hasText: 'You selected:' }).locator('li').first();
+  const confidence = page.getByRole('slider').first();
+  await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeEnabled();
+  await expect(chart).toBeVisible();
+  const bounds = await chart.boundingBox();
+  if (!bounds) throw new Error('Vega bar chart has no bounds');
+  await chart.click({ position: { x: bounds.width * 0.46, y: bounds.height * 0.45 } });
+  await expect(selected).toHaveText('D');
+  await confidence.press('Home');
+  await confidence.press('ArrowRight');
+  await expect(confidence).toHaveAttribute('aria-valuenow', '1');
+  await nextClick(page);
+  await expect(page.getByText('Select the movie with the highest Worldwide Gross.')).toBeVisible();
+  await page.reload();
+  await page.getByRole('button', { name: 'Previous', exact: true }).click();
+  await expect(selected).toHaveText('D');
+  await expect(confidence).toHaveAttribute('aria-valuenow', '1');
+
+  await chart.click({ position: { x: bounds.width * 0.575, y: bounds.height * 0.45 } });
+  await expect(selected).toHaveText('E');
+  await confidence.press('End');
+  await expect(confidence).toHaveAttribute('aria-valuenow', '100');
+  await nextClick(page);
+  await expect(page.getByText('Select the movie with the highest Worldwide Gross.')).toBeVisible();
+  await page.getByRole('button', { name: 'Previous', exact: true }).click();
+  await expect(selected).toHaveText('E');
+  await expect(confidence).toHaveAttribute('aria-valuenow', '100');
+});
