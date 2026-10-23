@@ -1,0 +1,46 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "WCR: Webcam Recording",
+    "version": "1.0.0",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2026-08-24",
+    "description": "Example study using the webcam-recording library.",
+    "organizations": [
+      "University of Utah",
+      "WPI"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "withSidebar": false,
+    "recordWebcam": true
+  },
+  "importedLibraries": [
+    "webcam-recording"
+  ],
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "library-webcam-recording/assets/webcam-recording.md",
+      "response": []
+    },
+    "demo-recording": {
+      "type": "markdown",
+      "path": "library-webcam-recording/assets/webcam-recording-page.md",
+      "response": []
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "$webcam-recording.components.webcamRecordingPermission",
+      "demo-recording"
+    ]
+  }
+}

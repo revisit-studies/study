@@ -1,0 +1,1 @@
+import{o as e,r as t}from"./rolldown-runtime-C0FnF6B9.js";import{t as n}from"./jsx-runtime-CA2T8_y1.js";var r=t({Bars:()=>a}),i=e(n(),1);function a({data:e,xScale:t,yScale:n,height:r}){return(0,i.jsx)(`g`,{children:e.map((e,a)=>(0,i.jsx)(`rect`,{x:t(e.name),y:n(e.value),width:t.bandwidth(),height:r-n(e.value),fill:`transparent`,stroke:`currentColor`},a))})}export{r as n,a as t};
