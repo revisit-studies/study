@@ -47,6 +47,8 @@ import { ParticipantMetadata, Sequence, StoredAnswer } from '../store/types';
  * We can see at a high level that we are given the answer that the user submitted, the start time for the component, and the end time. In addition to this, we have a list of window events. You can find more information about the StoredAnswer object [here](../StoredAnswer).
  */
 export interface ParticipantData {
+
+  completionCode?: string;
   /** Unique ID associated with the participant */
   participantId: string;
   /** Unique ID corresponding to the Configuration that the participant received. */

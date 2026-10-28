@@ -1037,6 +1037,37 @@ export abstract class StorageEngine {
     await this.persistCurrentParticipantData({ immediate: true });
   }
 
+  async ensureCompletionCode(): Promise<string> {
+    await this.verifyStudyDatabase();
+
+    if (!this.participantData) {
+      throw new Error('Participant data not initialized');
+    }
+
+    // すでにコードがあれば、同じコードを再利用する
+    if (this.participantData.completionCode) {
+      return this.participantData.completionCode;
+    }
+
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    const randomValues = new Uint8Array(8);
+    crypto.getRandomValues(randomValues);
+
+    const code = Array.from(
+      randomValues,
+      (value) => alphabet[value % alphabet.length],
+    ).join('');
+
+    const completionCode = `${code.slice(0, 4)}-${code.slice(4)}`;
+
+    this.participantData.completionCode = completionCode;
+
+    // 既存の参加者データ保存処理を利用する
+    await this.persistCurrentParticipantData({ immediate: true });
+
+    return completionCode;
+  }
+
   async updateStudyCondition(condition: string | string[]) {
     await this.verifyStudyDatabase();
 

@@ -20,7 +20,7 @@
     "autoDownloadStudy": false,
     "withSidebar": false,
     "urlParticipantIdParam": "pid",
-    "studyEndMsg": "ご協力ありがとうございました。回答いただいた範囲まで保存されました。これでアンケートは終了です。"
+    "studyEndMsg":  "ご協力ありがとうございました。回答いただいた範囲まで保存されました。これでアンケートは終了です。\n\n完了コード：{COMPLETION_CODE}を豊原に送ってください。"
   },
   "baseComponents": {
     "global_trial_A_base": {
