@@ -144,6 +144,8 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
           participantId || urlParticipantId,
         );
 
+        await storageEngine.ensureCompletionCode();
+
         if (studyCondition.length > 0 && modes.developmentModeEnabled) {
           const updatedSearchParams = {
             ...participantSession.searchParams,

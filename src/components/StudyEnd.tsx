@@ -28,6 +28,7 @@ export function StudyEnd() {
   const dataCollectionEnabled = useStoreSelector((state) => state.modes.dataCollectionEnabled);
 
   const [completed, setCompleted] = useState(false);
+  const [completionCode, setCompletionCode] = useState('');
   const [finalizeState, setFinalizeState] = useState<StudyEndFinalizeLoopState>(DEFAULT_STUDY_END_FINALIZE_STATE);
   const storageEngineRef = useRef(storageEngine);
   const finalizeLoopRef = useRef<ReturnType<typeof createStudyEndFinalizeLoop> | null>(null);
@@ -59,6 +60,7 @@ export function StudyEnd() {
 
       return () => {
         finalizeLoopRef.current = null;
+        // cancelled = true;
         finalizeLoop.cancel();
         dispatch(setIsSubmittingFinal(false));
       };
@@ -88,6 +90,8 @@ export function StudyEnd() {
 
       setParticipantId(_participantId);
       setParticipantData(_participantData);
+      // console.log('[StudyEnd completion code]', _participantData?.completionCode);
+      setCompletionCode(_participantData?.completionCode ?? '');
       return {
         participantId: _participantId,
         participantData: _participantData,
@@ -151,13 +155,23 @@ export function StudyEnd() {
   const processedStudyEndMsg = useMemo(() => {
     const { studyEndMsg, urlParticipantIdParam } = studyConfig.uiConfig;
 
-    if (!urlParticipantIdParam || !studyEndMsg?.includes('{PARTICIPANT_ID}')) {
-      return studyEndMsg;
+    let message = studyEndMsg
+    || 'Thank you for completing the study. You may close this window now.';
+
+    if (urlParticipantIdParam && message.includes('{PARTICIPANT_ID}')) {
+      message = message.replace(/\{PARTICIPANT_ID\}/g, () => participantId);
     }
 
-    // return the study end message with the participant ID
-    return studyEndMsg.replace(/\{PARTICIPANT_ID\}/g, () => participantId);
-  }, [studyConfig, participantId]);
+    if (message.includes('{COMPLETION_CODE}')) {
+      return message.replace(/\{COMPLETION_CODE\}/g, () => completionCode);
+    }
+
+    if (completionCode) {
+      return `${message}\n\n完了コード：${completionCode}`;
+    }
+
+    return message;
+  }, [studyConfig, participantId, completionCode]);
 
   useEffect(() => {
     const { studyEndAutoRedirectURL, studyEndAutoRedirectDelay } = studyConfig.uiConfig;
