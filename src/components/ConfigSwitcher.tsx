@@ -6,7 +6,7 @@ import {
 } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Timestamp } from 'firebase/firestore';
-import { useSearchParams } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import {
   GlobalConfig, ParsedConfig, StudyConfig,
 } from '../parser/types';
@@ -38,6 +38,7 @@ function ValidStudyCard({
   canViewAnalytics: boolean;
 }) {
   const { storageEngine } = useStorageEngine();
+  const navigate = useNavigate();
 
   const [studyStatusAndTiming, setStudyStatusAndTiming] = useState<{ completed: number; rejected: number; inProgress: number; minTime: Timestamp | number | null; maxTime: Timestamp | number | null } | null>(null);
 
@@ -290,8 +291,7 @@ function ValidStudyCard({
           leftSection={<IconChartHistogram />}
           style={{ marginLeft: 'auto' }}
           variant="default"
-          component="a"
-          href={`${PREFIX}analysis/stats/${url}`}
+          onClick={() => navigate(`${PREFIX}analysis/stats/${url}`)}
         >
           Analyze & Manage Study
         </Button>
@@ -299,8 +299,7 @@ function ValidStudyCard({
         <Button
           leftSection={<IconListCheck />}
           ml={canViewAnalytics ? undefined : 'auto'}
-          component="a"
-          href={studyUrl}
+          onClick={() => navigate(studyUrl)}
         >
           Go to Study
         </Button>

@@ -27,8 +27,10 @@ vi.mock('@mantine/core', async () => ({
     { Main: ({ children }: { children: ReactNode }) => <main>{children}</main> },
   ),
   Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
-  Button: ({ children, onClick, href }: { children: ReactNode; onClick?: () => void; href?: string }) => (
-    href ? <a href={href}>{children}</a> : <button type="button" onClick={onClick}>{children}</button>
+  Button: ({
+    children, onClick, href, component,
+  }: { children: ReactNode; onClick?: () => void; href?: string; component?: string }) => (
+    component === 'a' ? <a href={href}>{children}</a> : <button type="button" onClick={onClick}>{children}</button>
   ),
   Card: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Container: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -140,6 +142,11 @@ function LocationSearch() {
   return <output data-testid="location-search">{search}</output>;
 }
 
+function LocationPath() {
+  const { pathname } = useLocation();
+  return <output data-testid="location-path">{pathname}</output>;
+}
+
 const minimalStudyConfig = makeStudyConfig();
 
 const parsedStudyConfig: ParsedConfig<StudyConfig> = {
@@ -201,6 +208,22 @@ afterEach(() => {
 
 describe('ConfigSwitcher', () => {
   test.each([
+    { label: 'Go to Study', path: '/test-study' },
+    { label: 'Analyze & Manage Study', path: '/analysis/stats/test-study' },
+  ])('uses a button to navigate to $label', async ({ label, path }) => {
+    const view = await act(async () => render(
+      <>
+        <ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigs} />
+        <LocationPath />
+      </>,
+    ));
+
+    fireEvent.click(view.getByRole('button', { name: label }));
+
+    expect(view.getByTestId('location-path').textContent).toBe(path);
+  });
+
+  test.each([
     { engineName: 'firebase', isAdmin: false },
     { engineName: 'supabase', isAdmin: false },
     { engineName: 'localStorage', isAdmin: true },
@@ -224,8 +247,8 @@ describe('ConfigSwitcher', () => {
     const view = await act(async () => render(<ConfigSwitcher globalConfig={globalConfig} studyConfigs={configs} />));
 
     expect(view.getByText('Test Study')).toBeDefined();
-    expect(view.getByRole('link', { name: 'Go to Study' }).getAttribute('href')).toBe('/test-study');
-    expect(view.queryByRole('link', { name: 'Analyze & Manage Study' })).toBeNull();
+    expect(view.getByRole('button', { name: 'Go to Study' })).toBeDefined();
+    expect(view.queryByRole('button', { name: 'Analyze & Manage Study' })).toBeNull();
     expect(view.queryByTestId('status-badges')).toBeNull();
     expect(view.queryByTestId('error-loading-config')).toBeNull();
     expect(view.getByText(/Study Status:/).textContent).toContain('Collecting Data');
@@ -247,7 +270,7 @@ describe('ConfigSwitcher', () => {
     const view = await act(async () => render(<ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigs} />));
 
     expect(view.queryByText('Test Study')).toBeNull();
-    expect(view.queryByRole('link', { name: 'Go to Study' })).toBeNull();
+    expect(view.queryByRole('button', { name: 'Go to Study' })).toBeNull();
     expect(engine.getParticipantsStatusCounts).not.toHaveBeenCalled();
     expect(engine.getConditionData).not.toHaveBeenCalled();
   });
@@ -261,7 +284,7 @@ describe('ConfigSwitcher', () => {
     const view = await act(async () => render(<ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigs} />));
 
     expect(view.queryByText('Test Study')).toBeNull();
-    expect(view.queryByRole('link', { name: 'Go to Study' })).toBeNull();
+    expect(view.queryByRole('button', { name: 'Go to Study' })).toBeNull();
     expect(engine.getParticipantsStatusCounts).not.toHaveBeenCalled();
     expect(engine.getConditionData).not.toHaveBeenCalled();
   });
@@ -298,7 +321,7 @@ describe('ConfigSwitcher', () => {
 
     const view = await act(async () => render(<ConfigSwitcher globalConfig={globalConfig} studyConfigs={configs} />));
 
-    expect(view.getByRole('link', { name: 'Analyze & Manage Study' }).getAttribute('href')).toBe('/analysis/stats/test-study');
+    expect(view.getByRole('button', { name: 'Analyze & Manage Study' })).toBeDefined();
     expect(view.getByTestId('status-badges')).toBeDefined();
     expect(view.getByTestId('error-loading-config')).toBeDefined();
     expect(view.getByText(/Study Status:/)).toBeDefined();
@@ -323,7 +346,7 @@ describe('ConfigSwitcher', () => {
 
     expect(view.queryByTestId('status-badges')).toBeNull();
     expect(view.getByText(/Activity:/)).toBeDefined();
-    expect(view.queryByRole('link', { name: 'Analyze & Manage Study' })).toBeNull();
+    expect(view.queryByRole('button', { name: 'Analyze & Manage Study' })).toBeNull();
     expect(view.getByText(/Study Status:/)).toBeDefined();
     expect(view.getByTitle(/Development mode/)).toBeDefined();
     expect(view.getByRole('option', { name: 'condA' })).toBeDefined();
