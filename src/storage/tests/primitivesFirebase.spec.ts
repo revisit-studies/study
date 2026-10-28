@@ -121,6 +121,15 @@ vi.mock('localforage', () => ({
 }));
 
 vi.mock('firebase/firestore', () => {
+  type QueryConstraint = {
+    type: 'where' | 'limit' | 'orderBy';
+    field?: string;
+    operator?: string;
+    value?: unknown;
+    count?: number;
+    direction?: 'asc' | 'desc';
+  };
+
   function resolveSentinels(data: DocData): DocData {
     const now = Date.now();
     const result: DocData = {};
@@ -146,10 +155,15 @@ vi.mock('firebase/firestore', () => {
     return { _path: `${collPath}/${docId}`, id: docId };
   }
 
-  function mockSetDoc(docRef: { _path: string }, data: DocData, options?: { merge?: boolean }) {
+  function mockSetDoc(docRef: { _path: string }, data: DocData, options?: { merge?: boolean; mergeFields?: string[] }) {
     const resolved = resolveSentinels(data);
-    if (options?.merge) {
-      firestoreData[docRef._path] = { ...(firestoreData[docRef._path] ?? {}), ...resolved };
+    if (options?.merge || options?.mergeFields) {
+      const merged = { ...(firestoreData[docRef._path] ?? {}), ...resolved };
+      // A merging write also honours deleteField(), same as Firestore itself.
+      for (const [key, value] of Object.entries(merged)) {
+        if (value === DELETE_FIELD_SENTINEL) delete merged[key];
+      }
+      firestoreData[docRef._path] = merged;
     } else {
       firestoreData[docRef._path] = resolved;
     }
@@ -180,15 +194,64 @@ vi.mock('firebase/firestore', () => {
     return docs;
   }
 
-  function mockGetDocs(collRef: { _path: string }) {
-    const docs = getDocsInCollection(collRef._path);
+  function mockGetDocs(collRef: { _path: string; _constraints?: QueryConstraint[] }) {
+    let docs = getDocsInCollection(collRef._path);
+    (collRef._constraints ?? []).forEach((constraint) => {
+      if (constraint.type === 'where') {
+        docs = docs.filter((document) => {
+          const fieldValue = document.data()[constraint.field!];
+          if (constraint.operator === '==') return fieldValue === constraint.value;
+          if (constraint.operator === '<' || constraint.operator === '>=') {
+            const toComparableNumber = (value: unknown) => (
+              value
+              && typeof value === 'object'
+              && 'toMillis' in value
+              && typeof value.toMillis === 'function'
+                ? value.toMillis()
+                : Number(value)
+            );
+            const constraintValue = toComparableNumber(constraint.value);
+            const comparableFieldValue = toComparableNumber(fieldValue);
+            if (typeof fieldValue !== typeof constraint.value) return false;
+            return constraint.operator === '<'
+              ? comparableFieldValue < constraintValue
+              : comparableFieldValue >= constraintValue;
+          }
+          if (constraint.operator === '>') {
+            return fieldValue !== undefined
+              && fieldValue !== null
+              && String(fieldValue) > String(constraint.value);
+          }
+          return true;
+        });
+      } else if (constraint.type === 'orderBy') {
+        docs = [...docs].sort((a, b) => {
+          const aValue = a.data()[constraint.field!];
+          const bValue = b.data()[constraint.field!];
+          const toComparableNumber = (value: unknown) => (
+            value
+            && typeof value === 'object'
+            && 'toMillis' in value
+            && typeof value.toMillis === 'function'
+              ? value.toMillis()
+              : Number(value)
+          );
+          const typeComparison = typeof aValue === typeof bValue ? 0 : (typeof aValue === 'number' ? -1 : 1);
+          return (typeComparison || (toComparableNumber(aValue) - toComparableNumber(bValue)))
+            * (constraint.direction === 'desc' ? -1 : 1);
+        });
+      } else if (constraint.type === 'limit') {
+        docs = docs.slice(0, constraint.count);
+      }
+    });
     return Promise.resolve({
       docs,
       forEach: (cb: (d: { id: string; data: () => DocData }) => void) => docs.forEach(cb),
     });
   }
 
-  function mockUpdateDoc(docRef: { _path: string }, data: DocData) {
+  function mockUpdateDoc(docRef: { _path: string }, fields: DocData, fieldValue?: unknown) {
+    const data = fieldValue === undefined ? fields : { [String(fields.key)]: fieldValue };
     const existing = firestoreData[docRef._path];
     if (!existing) return Promise.reject(new Error(`No document to update: ${docRef._path}`));
     const now = Date.now();
@@ -223,24 +286,31 @@ vi.mock('firebase/firestore', () => {
     };
   }
 
-  function mockQuery(collRef: { _path: string }) {
-    return collRef;
-  }
-
-  async function mockGetCountFromServer(collRef: { _path: string }) {
-    const snapshot = await mockGetDocs(collRef);
-    return { data: () => ({ count: snapshot.docs.length }) };
-  }
-
   function mockRunTransaction<T>(
-    _firestore: object,
-    operation: (transaction: {
-      get: typeof mockGetDoc;
-      set: typeof mockSetDoc;
-      update: typeof mockUpdateDoc;
+    _firestore: unknown,
+    updateFunction: (transaction: {
+      get: (docRef: { _path: string; id?: string }) => Promise<unknown>;
+      set: (docRef: { _path: string }, data: DocData, options?: { merge?: boolean; mergeFields?: string[] }) => void;
+      update: (docRef: { _path: string }, data: DocData, value?: unknown) => void;
+      delete: (docRef: { _path: string }) => void;
     }) => Promise<T>,
-  ) {
-    return operation({ get: mockGetDoc, set: mockSetDoc, update: mockUpdateDoc });
+  ): Promise<T> {
+    // Runs the body straight through: the in-memory store has no concurrency,
+    // so there is nothing to retry or roll back.
+    const transaction = {
+      get: mockGetDoc,
+      set: (docRef: { _path: string }, data: DocData, options?: { merge?: boolean; mergeFields?: string[] }) => {
+        mockSetDoc(docRef, data, options);
+      },
+      update: (docRef: { _path: string }, data: DocData, value?: unknown) => {
+        if (!firestoreData[docRef._path]) {
+          throw new Error(`No document to update: ${docRef._path}`);
+        }
+        mockUpdateDoc(docRef, data, value);
+      },
+      delete: (docRef: { _path: string }) => { delete firestoreData[docRef._path]; },
+    };
+    return updateFunction(transaction);
   }
 
   class MockTimestamp {
@@ -254,20 +324,24 @@ vi.mock('firebase/firestore', () => {
   }
 
   return {
+    query: vi.fn((parent, ...constraints) => ({ ...parent, _constraints: constraints })),
+    where: vi.fn((field, operator, value) => ({
+      type: 'where', field, operator, value,
+    })),
+    orderBy: vi.fn((field, direction) => ({ type: 'orderBy', field, direction })),
+    limit: vi.fn((count) => ({ type: 'limit', count })),
+    getCountFromServer: vi.fn(async (reference) => { const snapshot = await mockGetDocs(reference); return { data: () => ({ count: snapshot.docs.length }) }; }),
     collection: vi.fn(mockCollection),
     doc: vi.fn(mockDoc),
     setDoc: vi.fn(mockSetDoc),
     getDoc: vi.fn(mockGetDoc),
     getDocs: vi.fn(mockGetDocs),
-    getCountFromServer: vi.fn(mockGetCountFromServer),
-    query: vi.fn(mockQuery),
-    where: vi.fn(() => ({})),
-    orderBy: vi.fn(() => ({})),
-    limit: vi.fn(() => ({})),
-    runTransaction: vi.fn(mockRunTransaction),
+    getDocsFromServer: vi.fn(mockGetDocs),
+    FieldPath: class { constructor(public key: string) {} },
     updateDoc: vi.fn(mockUpdateDoc),
     onSnapshot: vi.fn(mockOnSnapshot),
     writeBatch: vi.fn(mockWriteBatch),
+    runTransaction: vi.fn(mockRunTransaction),
     deleteField: vi.fn(() => DELETE_FIELD_SENTINEL),
     serverTimestamp: vi.fn(() => SERVER_TS_SENTINEL),
     initializeFirestore: vi.fn(() => ({})),

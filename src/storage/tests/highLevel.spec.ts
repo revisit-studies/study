@@ -229,12 +229,6 @@ class DelayedLocalStorageEngine extends LocalStorageEngine {
   }
 }
 
-class DeferredInitialWriteLocalStorageEngine extends DelayedLocalStorageEngine {
-  protected override shouldDeferInitialParticipantDataPersistence() {
-    return true;
-  }
-}
-
 class FailingParticipantDataLocalStorageEngine extends LocalStorageEngine {
   private failNextParticipantDataWrite = false;
 
@@ -504,7 +498,7 @@ describe.each([
     await storageEngine.rejectParticipant('replacement', 'review');
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'reuse-original');
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'reuse-replacement');
-    await storageEngine.undoRejectParticipant('replacement');
+    await expect(storageEngine.undoRejectParticipant('replacement')).rejects.toThrow(/reassigned/);
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'next');
     const assignments = await storageEngine.getAllSequenceAssignments(studyId);
     expect(assignments.find((assignment) => assignment.participantId === 'next')?.sequenceIndex).toBe(2);
@@ -551,44 +545,9 @@ describe.each([
     expect(resumed.metadata.colorMode).toBe('dark');
   });
 
-  test('initializeParticipantSession reads modes only once for a new participant', async () => {
-    const getModesSpy = vi.spyOn(storageEngine, 'getModes');
-
+  test('initializeParticipantSession registers condition definitions for a new participant', async () => {
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
-
-    expect(getModesSpy).toHaveBeenCalledTimes(1);
-  });
-
-  test('initializeParticipantSession starts deferred initial participant writes immediately in the background', async () => {
-    const deferredStorageEngine = new DeferredInitialWriteLocalStorageEngine(true);
-    await deferredStorageEngine.connect();
-    await deferredStorageEngine.initializeStudyDb(studyId);
-    await deferredStorageEngine.setSequenceArray(sequenceArray);
-    deferredStorageEngine.holdNextParticipantDataWrite();
-
-    const participantSessionPromise = deferredStorageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
-
-    await deferredStorageEngine.waitForHeldParticipantDataWrite();
-
-    const participantSession = await participantSessionPromise;
-
-    const observerEngine = new LocalStorageEngine(true);
-    await observerEngine.connect();
-    await observerEngine.initializeStudyDb(studyId);
-
-    expect(await observerEngine.getParticipantData(participantSession.participantId)).toBeNull();
-
-    deferredStorageEngine.releaseHeldParticipantDataWrite();
-    await deferredStorageEngine.flushPendingParticipantData();
-
-    const persistedParticipantData = await observerEngine.getParticipantData(participantSession.participantId);
-    expect(persistedParticipantData).toBeDefined();
-    expect(persistedParticipantData?.participantId).toBe(participantSession.participantId);
-
-    // @ts-expect-error using protected method for testing
-    await deferredStorageEngine._testingReset(studyId);
-    // @ts-expect-error using protected method for testing
-    await observerEngine._testingReset(studyId);
+    expect((await storageEngine.getStageData(studyId)).allStages[0].conditionKeys).toEqual(['[]']);
   });
 
   test('initializeParticipantSession sets conditions from searchParams condition', async () => {

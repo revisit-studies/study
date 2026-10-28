@@ -1,6 +1,6 @@
 import { ParticipantData } from '../../types';
 import type {
-  CloudStorageEngine, SequenceAssignment, SequenceAssignmentAllocation, StorageEngine,
+  CloudStorageEngine, SequenceAssignment, StorageEngine,
 } from '../types';
 import { StudyConfig } from '../../../parser/types';
 
@@ -14,9 +14,9 @@ export async function waitForAllocationRetry(attempt: number) {
   });
 }
 
-export async function retrySequenceAllocation(
-  allocate: () => Promise<SequenceAssignmentAllocation | null>,
-): Promise<SequenceAssignmentAllocation> {
+export async function retrySequenceAllocation<T>(
+  allocate: () => Promise<T | null>,
+): Promise<T> {
   for (let attempt = 0; attempt < SEQUENCE_ALLOCATION_ATTEMPTS; attempt += 1) {
     if (attempt > 0) {
       // eslint-disable-next-line no-await-in-loop

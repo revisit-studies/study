@@ -3,19 +3,43 @@ import type { ParticipantDataWithStatus } from '../../src/storage/types';
 import type { EditedText } from '../../src/analysis/individualStudy/thinkAloud/types';
 
 const transcript: EditedText[] = Array.from({ length: 45 }, (_, index) => ({
-  text: `Transcript row ${index + 1}`, transcriptMappingStart: index, transcriptMappingEnd: index,
-  selectedTags: [], annotation: '',
+  text: `Transcript row ${index + 1}`,
+  transcriptMappingStart: index,
+  transcriptMappingEnd: index,
+  selectedTags: [],
+  annotation: '',
 }));
 const participant: ParticipantDataWithStatus = {
-  participantId: 'coding-participant', participantIndex: 1, participantConfigHash: 'coding-config',
-  completed: true, rejected: false, stage: '', participantTags: [], searchParams: {},
-  metadata: { userAgent: 'Firefox/130.0', language: 'en', resolution: {}, ip: null },
-  sequence: { order: 'fixed', orderPath: 'root', components: ['task'], skip: [] },
+  participantId: 'coding-participant',
+  participantIndex: 1,
+  participantConfigHash: 'coding-config',
+  completed: true,
+  rejected: false,
+  stage: '',
+  participantTags: [],
+  searchParams: {},
+  metadata: {
+    userAgent: 'Firefox/130.0', language: 'en', resolution: {}, ip: null,
+  },
+  sequence: {
+    order: 'fixed', orderPath: 'root', components: ['task'], skip: [],
+  },
   answers: {
     task_1: {
-      identifier: 'task_1', componentName: 'task', trialOrder: '0', startTime: 1000, endTime: 2000,
-      answer: {}, windowEvents: [], timedOut: false, incorrectAnswers: {}, helpButtonClickedCount: 0,
-      parameters: {}, correctAnswer: [], optionOrders: {}, questionOrders: {},
+      identifier: 'task_1',
+      componentName: 'task',
+      trialOrder: '0',
+      startTime: 1000,
+      endTime: 2000,
+      answer: {},
+      windowEvents: [],
+      timedOut: false,
+      incorrectAnswers: {},
+      helpButtonClickedCount: 0,
+      parameters: {},
+      correctAnswer: [],
+      optionOrders: {},
+      questionOrders: {},
     },
   },
 };
@@ -31,15 +55,18 @@ export async function initializeStorageEngine() {
     getParticipantData: async () => participant,
     getCurrentConfigHash: async () => 'coding-config',
     getAllConfigsFromHash: async () => ({ 'coding-config': await fetch('/coding-scroll/config.json').then((response) => response.json()) }),
-    getTranscription: async () => ({ results: transcript.map((line, index) => ({
-      resultEndTime: `${(index + 1) / transcript.length}s`, languageCode: 'en',
-      alternatives: [{ transcript: line.text, confidence: 1 }],
-    })) }),
+    getTranscription: async () => ({
+      results: transcript.map((line, index) => ({
+        resultEndTime: `${(index + 1) / transcript.length}s`,
+        languageCode: 'en',
+        alternatives: [{ transcript: line.text, confidence: 1 }],
+      })),
+    }),
     getEditedTranscript: async () => structuredClone(editedTranscript),
     saveEditedTranscript: async (_id: string, _email: string, _task: string, lines: EditedText[]) => { editedTranscript = structuredClone(lines); },
     getAudio: async () => '/coding-scroll/audio.wav',
     getAudioUrl: async () => '/coding-scroll/audio.wav',
-    getScreenRecording: async () => new URLSearchParams(window.location.search).has('warning') ? '/coding-scroll/audio.wav' : null,
+    getScreenRecording: async () => (new URLSearchParams(window.location.search).has('warning') ? '/coding-scroll/audio.wav' : null),
     getWebcamRecording: async () => null,
     getProvenance: async () => null,
   });
