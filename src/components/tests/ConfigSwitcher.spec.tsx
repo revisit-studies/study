@@ -19,6 +19,8 @@ import { REVISIT_MODE } from '../../storage/engines/types';
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
+const prefixMock = vi.hoisted(() => ({ value: '/' }));
+
 vi.mock('@mantine/core', async () => ({
   ...await vi.importActual<typeof Mantine>('@mantine/core'),
   Anchor: ({ children, href }: { children: ReactNode; href?: string }) => <a href={href}>{children}</a>,
@@ -78,7 +80,7 @@ vi.mock('../../utils/sanitizeStringForUrl', () => ({
   sanitizeStringForUrl: (s: string) => s,
 }));
 
-vi.mock('../../utils/Prefix', () => ({ PREFIX: '/' }));
+vi.mock('../../utils/Prefix', () => ({ get PREFIX() { return prefixMock.value; } }));
 
 vi.mock('../ErrorLoadingConfig', () => ({
   ErrorLoadingConfig: () => <div data-testid="error-loading-config" />,
@@ -127,11 +129,11 @@ const globalConfig = makeGlobalConfig({
   configs: { 'test-study': { path: 'test-study/config.json' } },
 });
 
-function render(ui: ReactNode, initialEntry = '/') {
+function render(ui: ReactNode, initialEntry = '/', basename = '/') {
   return renderComponent(ui, {
     wrapper: ({ children }) => (
       <Mantine.MantineProvider env="test">
-        <MemoryRouter initialEntries={[initialEntry]}>{children}</MemoryRouter>
+        <MemoryRouter initialEntries={[initialEntry]} basename={basename}>{children}</MemoryRouter>
       </Mantine.MantineProvider>
     ),
   });
@@ -190,6 +192,7 @@ const makeLandingEngine = (modes: Partial<Record<REVISIT_MODE, boolean>> = {}, h
 // ── tests ─────────────────────────────────────────────────────────────────────
 
 beforeEach(() => {
+  prefixMock.value = '/';
   vi.clearAllMocks();
   vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({
     matches: false,
@@ -216,6 +219,25 @@ describe('ConfigSwitcher', () => {
         <ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigs} />
         <LocationPath />
       </>,
+    ));
+
+    fireEvent.click(view.getByRole('button', { name: label }));
+
+    expect(view.getByTestId('location-path').textContent).toBe(path);
+  });
+
+  test.each([
+    { label: 'Go to Study', path: '/test-study' },
+    { label: 'Analyze & Manage Study', path: '/analysis/stats/test-study' },
+  ])('navigates to $label under a non-root base path', async ({ label, path }) => {
+    prefixMock.value = '/study/';
+    const view = await act(async () => render(
+      <>
+        <ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigs} />
+        <LocationPath />
+      </>,
+      '/study/',
+      '/study/',
     ));
 
     fireEvent.click(view.getByRole('button', { name: label }));

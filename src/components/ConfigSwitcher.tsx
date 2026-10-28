@@ -138,8 +138,8 @@ function ValidStudyCard({
 
   const studyUrl = useMemo(
     () => (selectedStudyConditions.length > 0
-      ? `${PREFIX}${url}?condition=${selectedStudyConditions.join(',')}`
-      : `${PREFIX}${url}`),
+      ? `/${url}?condition=${selectedStudyConditions.join(',')}`
+      : `/${url}`),
     [selectedStudyConditions, url],
   );
 
@@ -291,7 +291,7 @@ function ValidStudyCard({
           leftSection={<IconChartHistogram />}
           style={{ marginLeft: 'auto' }}
           variant="default"
-          onClick={() => navigate(`${PREFIX}analysis/stats/${url}`)}
+          onClick={() => navigate(`/analysis/stats/${url}`)}
         >
           Analyze & Manage Study
         </Button>
