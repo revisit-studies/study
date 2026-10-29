@@ -4,6 +4,7 @@ import { act, render, cleanup } from '@testing-library/react';
 import { test, expect, vi, afterEach } from 'vitest';
 import GamepadTargetGame from '../GamepadTargetGame';
 import { RevisitProvenanceProvider } from '../../../../store/hooks/useRevisitTrrack';
+import { StudyStateContext } from '../../../../store/hooks/useStudyState';
 import type { UseGamepadOptions } from '../../../../store/hooks/useGamepad';
 
 const mocks = vi.hoisted(() => ({ onButtonDown: undefined as UseGamepadOptions['onButtonDown'] }));
@@ -58,4 +59,25 @@ test('restored and subsequent targets measure their presentation without changin
   });
   expect(setAnswer.mock.lastCall?.[0].answers).toMatchObject({ hits: 2, completed: true, meanReactionTime: 300 });
   expect(JSON.stringify(saved)).toBe(history);
+});
+
+test('answer-only restoration completes only the remaining targets', async () => {
+  vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() })));
+  vi.spyOn(Math, 'random').mockReturnValue(0.5);
+  const setAnswer = vi.fn();
+  render(
+    <MantineProvider>
+      <StudyStateContext.Provider
+        value={{ answers: { hits: 4, misses: 2, completed: false }, register: () => () => {} }}
+      >
+        <RevisitProvenanceProvider onProvenanceChange={vi.fn()}>
+          {(useTrrack) => <GamepadTargetGame parameters={{ targetCount: 6 }} answers={{}} setAnswer={setAnswer} useTrrack={useTrrack} />}
+        </RevisitProvenanceProvider>
+      </StudyStateContext.Provider>
+    </MantineProvider>,
+  );
+  await act(async () => mocks.onButtonDown?.('X', 2, Date.now()));
+  expect(setAnswer.mock.lastCall?.[0].answers).toMatchObject({ hits: 5, misses: 2, completed: false });
+  await act(async () => mocks.onButtonDown?.('X', 2, Date.now()));
+  expect(setAnswer.mock.lastCall?.[0].answers).toMatchObject({ hits: 6, misses: 2, completed: true });
 });

@@ -302,7 +302,7 @@ function GamepadTargetGame({
     if (isReplay || !connected || gameRef.current.target || gameRef.current.completed) {
       return;
     }
-    spawnNext(0);
+    spawnNext(gameRef.current.hits);
   }, [connected, isReplay, spawnNext]);
 
   // During replay the analysis view drives the scene through provenanceState.
