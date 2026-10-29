@@ -8,9 +8,20 @@ import {
   StageAllocation, REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageObject, StorageObjectType, StoredUser, CloudStorageEngine, UserWrapped, cleanupModes, applyStageUpdates, StageData, SequenceAssignmentAllocation, SequenceAllocator,
 } from './types';
 import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
+import { fetchFreshStorageObject } from './utils/fetchFreshStorageObject';
 
 export class SupabaseStorageEngine extends CloudStorageEngine {
-  private supabase = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY);
+  private supabase = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY, {
+    global: {
+      fetch: (input, init) => {
+        const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+        const method = init?.method ?? (input instanceof Request ? input.method : 'GET');
+        return method.toUpperCase() === 'GET' && url.includes('/storage/v1/object/') && (/\/provenance\//.test(url) || /_participantData(?:\?|$)/.test(url))
+          ? fetchFreshStorageObject(input, init)
+          : fetch(input, init);
+      },
+    },
+  });
 
   protected participantStore = localforage.createInstance({
     name: 'revisit-supabase',

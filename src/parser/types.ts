@@ -8,6 +8,42 @@ export interface JsonObject {
 }
 export type JsonArray = JsonValue[];
 
+/** Primitive values in a participant's declared global store. Types are inferred from initialValue. */
+export type GlobalStoreValue = string | number | boolean;
+export type GlobalStoreValues = Record<string, GlobalStoreValue>;
+export interface GlobalVariableDeclaration extends Pick<ShortTextResponse, 'minCharLength' | 'maxCharLength' | 'minWordLength' | 'maxWordLength' | 'textValidation' | 'builtInValidation'> {
+  initialValue: GlobalStoreValue;
+  /** Inclusive bound, valid only for a numeric initialValue. */
+  min?: number;
+  /** Inclusive bound, valid only for a numeric initialValue. */
+  max?: number;
+  strictMin?: number;
+  strictMax?: number;
+}
+export type GlobalVariableDeclarations = Record<string, GlobalVariableDeclaration | GlobalStoreValue>;
+export type GlobalStoreOperation = 'set' | 'add' | 'subtract' | 'multiply' | 'divide' | 'append' | 'prepend' | 'and' | 'or' | 'toggle';
+/** Transform the operand before applying the action; reverse operations use value op operand. */
+export type GlobalStoreOperandTransform = {
+  operation: 'add' | 'subtract' | 'multiply' | 'divide' | 'subtractFrom' | 'divideInto';
+  value: number;
+} | { operation: 'not' };
+export type GlobalStoreOperand = ({
+  /** Defaults to the current response's submitted answer. */
+  source?: 'answer';
+  value?: never;
+} | {
+  source: 'literal';
+  value: GlobalStoreValue;
+}) & { transforms?: GlobalStoreOperandTransform[] };
+export interface GlobalStoreAction {
+  variable: string;
+  operation: GlobalStoreOperation;
+  /** Omit to use the current answer directly. Not applicable to toggle. */
+  operand?: GlobalStoreOperand;
+}
+/** A numeric literal or an exact reference to a declared numeric store value. */
+export type GlobalStoreNumber = number | `{{globalVariables.${string}}}`;
+
 /**
  * The GlobalConfig is used to generate the list of available studies in the UI.
  * This list is displayed on the landing page when running the app.
@@ -427,8 +463,9 @@ export type ValueCondition =
  * List equality comparisons ignore selection order.
  * Unanswered or conditionally hidden controlling responses never satisfy a condition.
  */
-export type ResponseVisibilityCondition = {
+export type ResponseVisibilityCondition = ({ globalVariable: string; responseId?: never } & ValueCondition) | {
   responseId: string;
+  globalVariable?: never;
 } & (
   | ValueCondition
   | {
@@ -443,6 +480,8 @@ export type ResponseVisibilityCondition = {
  * Therefore, all responses must include these properties.
  */
 export interface BaseResponse {
+  /** Apply these actions to the final submitted answer, in declared order. */
+  onSubmit?: GlobalStoreAction[];
   /** The id of the response. This is used to identify the response in the data file. */
   id: string;
   /** Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked. */
@@ -504,13 +543,13 @@ export interface NumericalResponse extends BaseResponse {
   /** The default value of the response. Specify a numeric value such as `25` or `3.14`. */
   default?: number;
   /** The minimum value that is accepted in the input. */
-  min?: number;
+  min?: GlobalStoreNumber;
   /** The maximum value that is accepted in the input. */
-  max?: number;
+  max?: GlobalStoreNumber;
   /** Only values above this minimum value are accepted in the input. */
-  strictMin?: number;
+  strictMin?: GlobalStoreNumber;
   /** Only values below this maximum value are accepted in the input. */
-  strictMax?: number;
+  strictMax?: GlobalStoreNumber;
 }
 
 /** The validation operations available for short and long text responses. */
@@ -1971,7 +2010,9 @@ export interface RepeatedComponentBlockCondition {
  *
  * Please see the interface definitions for more specific information on the different types of skip conditions.
 */
-export type SkipConditions = (IndividualComponentSingleResponseCondition | IndividualComponentAllResponsesCondition | ComponentBlockCondition | RepeatedComponentBlockCondition)[];
+export type GlobalVariableCondition = { check: 'globalVariable'; variable: string; to: string } & ValueCondition;
+
+export type SkipConditions = (GlobalVariableCondition | IndividualComponentSingleResponseCondition | IndividualComponentAllResponsesCondition | ComponentBlockCondition | RepeatedComponentBlockCondition)[];
 
 /**
  * The DynamicBlock interface is used to define a block where displayed components are controlled by a function. This is useful when you want to generate the sequence based on answers to previous questions or other factors.
@@ -2310,6 +2351,8 @@ export type BaseComponents = Record<string, Partial<IndividualComponent>>;
  * The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration.
  */
 export interface StudyConfig {
+  /** Participant-wide values committed with accepted trial submissions. */
+  globalVariables?: GlobalVariableDeclarations;
   /** A required json schema property. This should point to the github link for the version of the schema you would like. The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration. See examples for more information */
   $schema: string;
   /** The metadata for the study. This is used to identify the study and version in the data file. */

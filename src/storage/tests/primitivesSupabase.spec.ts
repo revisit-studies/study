@@ -1,6 +1,7 @@
 import {
   expect, test, beforeEach, describe, afterEach, vi,
 } from 'vitest';
+import { createClient } from '@supabase/supabase-js';
 import { ParticipantMetadata, StudyConfig } from '../../parser/types';
 import testConfigSimple from './testConfigSimple.json';
 import { generateSequenceArray } from '../../utils/handleRandomSequences';
@@ -178,7 +179,7 @@ vi.mock('@supabase/supabase-js', () => {
 
   return {
     AuthError: class AuthError extends Error { },
-    createClient: () => ({
+    createClient: vi.fn(() => ({
       from: (_table: string) => makeQueryBuilder(() => revisitRows),
       schema: (schemaName: string) => ({
         from: (_table: string) => makeQueryBuilder(() => {
@@ -245,7 +246,7 @@ vi.mock('@supabase/supabase-js', () => {
         signOut: async () => ({ error: null }),
         signInWithOAuth: async () => ({ error: null }),
       },
-    }),
+    })),
   };
 });
 
@@ -324,6 +325,26 @@ describe.each([
     const storedBlob = await storageEngine._getFromStorage('testBlob', 'blob');
     expect(storedBlob).toBeDefined();
     expect(storedBlob).toBeInstanceOf(Object);
+  });
+
+  test('mutable storage reads bypass caches while preserving SDK authorization and other requests', async () => {
+    const clientFetch = vi.mocked(createClient).mock.calls.at(-1)?.[2]?.global?.fetch;
+    expect(clientFetch).toBeDefined();
+    const fetch = vi.fn().mockResolvedValue(new Response('{}'));
+    vi.stubGlobal('fetch', fetch);
+    try {
+      const init = { headers: { Authorization: 'Bearer test', apikey: 'test-key' } };
+      await clientFetch!('https://storage.example/storage/v1/object/revisit/study/provenance/p_trial', init);
+      const request = fetch.mock.calls[0][0] as Request;
+      expect(new URL(request.url).searchParams.has('__revisit_fresh')).toBe(true);
+      expect(request.headers.get('Authorization')).toBe('Bearer test');
+      expect(request.headers.get('apikey')).toBe('test-key');
+      expect(fetch.mock.calls[0][1]).toEqual({ cache: 'no-store' });
+      await clientFetch!('https://storage.example/rest/v1/revisit', init);
+      expect(fetch).toHaveBeenLastCalledWith('https://storage.example/rest/v1/revisit', init);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   test('_verifyStudyDatabase throws error if not initialized', async () => {

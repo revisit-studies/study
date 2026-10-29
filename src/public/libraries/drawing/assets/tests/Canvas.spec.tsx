@@ -42,7 +42,7 @@ function mount(parameters: DrawingParameters = {}, provenanceState?: DrawingStat
     <MemoryRouter initialEntries={[route]}>
       <MantineProvider>
         <RevisitProvenanceProvider onProvenanceChange={onProvenanceChange} provenance={provenance}>
-          {(useTrrack) => <Canvas parameters={parameters} answers={answers} setAnswer={setAnswer} provenanceState={provenanceState} useTrrack={useTrrack} />}
+          {(useTrrack) => <Canvas globalVariables={{}} registerGlobalStoreUpdater={() => () => undefined} parameters={parameters} answers={answers} setAnswer={setAnswer} provenanceState={provenanceState} useTrrack={useTrrack} />}
         </RevisitProvenanceProvider>
       </MantineProvider>
     </MemoryRouter>,

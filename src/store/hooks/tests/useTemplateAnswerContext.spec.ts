@@ -60,3 +60,5 @@ describe('useTemplateAnswerContext', () => {
     }));
   });
 });
+
+vi.mock('../useGlobalStore', () => ({ useGlobalStore: () => ({}), useGlobalStoreUpdaterRegistration: () => () => () => undefined }));

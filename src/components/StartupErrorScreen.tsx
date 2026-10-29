@@ -16,10 +16,12 @@ export function StartupErrorScreen({
   error,
   showDetails = import.meta.env.DEV,
   onReload = () => window.location.reload(),
+  actionLabel = 'Reload',
 }: {
   error: unknown;
   showDetails?: boolean;
   onReload?: () => void;
+  actionLabel?: string;
 }) {
   const headingRef = useRef<HTMLHeadingElement>(null);
 
@@ -58,7 +60,7 @@ export function StartupErrorScreen({
             Something went wrong while loading this page. Please reload and try again.
           </Text>
           <Button size="md" onClick={onReload}>
-            Reload
+            {actionLabel}
           </Button>
           {showDetails && (
             <Code block w="100%" style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>

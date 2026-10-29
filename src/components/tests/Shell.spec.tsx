@@ -1,4 +1,6 @@
-import type { HTMLAttributes, ReactNode } from 'react';
+import {
+  StrictMode, useEffect, type HTMLAttributes, type ReactNode,
+} from 'react';
 import {
   render, act, cleanup, waitFor,
 } from '@testing-library/react';
@@ -18,7 +20,6 @@ import { parseStudyConfig } from '../../parser/parser';
 import { StageCapacityExceededError, StageOnlyDisabledConditionsHaveCapacityError } from '../../storage/engines/types';
 import { useStudyColorMode } from '../AppThemeProvider';
 import type { ParticipantMetadata } from '../../store/types';
-import { getStaticAssetByPath } from '../../utils/getStaticAsset';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
@@ -26,6 +27,20 @@ let mockStudyId = 'test-study';
 let mockSystemColorMode: 'light' | 'dark' = 'light';
 let mockSearchParams = new URLSearchParams();
 let mockStorageEngine: Record<string, ReturnType<typeof vi.fn>> | null = null;
+let routingMountCount = 0;
+let routingUnmountCount = 0;
+let startupErrorWasBlocked: boolean | undefined;
+
+function RoutingMountProbe() {
+  useEffect(() => {
+    routingMountCount += 1;
+    return () => {
+      routingUnmountCount += 1;
+    };
+  }, []);
+
+  return <div data-testid="routing" />;
+}
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
@@ -83,7 +98,13 @@ vi.mock('../ErrorLoadingConfig', () => ({
 }));
 
 vi.mock('../StartupErrorScreen', () => ({
-  StartupErrorScreen: () => <div role="alert">startup fallback</div>,
+  StartupErrorScreen: () => {
+    useEffect(() => {
+      // The real error screen focuses its heading in a passive effect.
+      startupErrorWasBlocked = Boolean(document.querySelector('[role="alert"]')?.closest('[inert]'));
+    }, []);
+    return <div role="alert">startup fallback</div>;
+  },
 }));
 
 vi.mock('../../ResourceNotFound', () => ({
@@ -116,9 +137,11 @@ vi.mock('@mantine/core', () => ({
   Center: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Code: ({ children }: { children: ReactNode }) => <pre>{children}</pre>,
   Image: ({ src }: { src: string }) => <img src={src} alt="" />,
-  LoadingOverlay: ({ visible }: { visible: boolean }) => (
-    visible ? <div data-testid="loading-overlay" /> : null
+  Loader: () => <div data-testid="startup-spinner" />,
+  LoadingOverlay: ({ visible, loaderProps }: { visible: boolean; loaderProps?: { children?: ReactNode } }) => (
+    visible ? <div data-testid="loading-overlay">{loaderProps?.children}</div> : null
   ),
+  Paper: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Stack: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Text: ({ children, ...props }: HTMLAttributes<HTMLParagraphElement>) => <p {...props}>{children}</p>,
   Title: ({ children }: { children: ReactNode }) => <h1>{children}</h1>,
@@ -131,6 +154,10 @@ vi.mock('react-redux', () => ({
 vi.mock('../../store/store', () => ({
   studyStoreCreator: vi.fn().mockResolvedValue({
     store: { getState: vi.fn(() => ({ config: { uiConfig: {} }, metadata: {} })), dispatch: vi.fn(), subscribe: vi.fn() },
+    actions: {
+      setMetadata: vi.fn((metadata) => ({ type: 'setMetadata', payload: metadata })),
+      setParticipantCompleted: vi.fn((completed) => ({ type: 'setParticipantCompleted', payload: completed })),
+    },
   }),
   StudyStoreContext: {
     Provider: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -183,20 +210,35 @@ function setupThemeSession(colorMode: StudyConfig['uiConfig']['colorMode'], save
     isConnected: vi.fn().mockReturnValue(true),
     getEngine: vi.fn().mockReturnValue('firebase'),
   };
-  vi.mocked(studyStoreCreator).mockImplementationOnce(async (_id, runtimeConfig, _sequence, metadata) => ({
-    store: {
-      getState: () => ({ config: runtimeConfig, metadata }),
-      dispatch: vi.fn(),
-      subscribe: vi.fn(),
-    },
-    actions: { setMetadata: vi.fn(), setParticipantCompleted: vi.fn() },
-  }) as unknown as Awaited<ReturnType<typeof studyStoreCreator>>);
+}
+
+function makeStartupEngine() {
+  return {
+    initializeStudyDb: vi.fn().mockResolvedValue(undefined),
+    saveConfig: vi.fn().mockResolvedValue(undefined),
+    getOrCreateSequenceArray: vi.fn().mockResolvedValue(['seq1']),
+    getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
+    initializeParticipantSession: vi.fn().mockResolvedValue({ ...baseSession, metadata: { ip: '' } }),
+    getParticipantCompletionStatus: vi.fn().mockResolvedValue(false),
+    updateParticipantMetadata: vi.fn().mockResolvedValue(undefined),
+    peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
+    isConnected: vi.fn().mockReturnValue(true),
+    getEngine: vi.fn().mockReturnValue('firebase'),
+  };
 }
 
 // ── tests ─────────────────────────────────────────────────────────────────────
 
 describe('Shell', () => {
   beforeEach(() => {
+    vi.mocked(studyStoreCreator).mockImplementation(async (_id, config, _sequence, metadata) => ({
+      store: {
+        getState: () => ({ config, metadata }),
+        dispatch: vi.fn(),
+        subscribe: vi.fn(),
+      },
+      actions: { setMetadata: vi.fn(), setParticipantCompleted: vi.fn() },
+    }) as unknown as Awaited<ReturnType<typeof studyStoreCreator>>);
     mockStudyId = 'test-study';
     mockSystemColorMode = 'light';
     localStorage.removeItem('revisit-user-color-mode');
@@ -205,6 +247,9 @@ describe('Shell', () => {
     })));
     mockSearchParams = new URLSearchParams();
     mockStorageEngine = null;
+    routingMountCount = 0;
+    routingUnmountCount = 0;
+    startupErrorWasBlocked = undefined;
     vi.mocked(getStudyConfig).mockResolvedValue(null);
     vi.mocked(resolveConfigKey).mockReturnValue('test-study');
     vi.mocked(parseConditionParam).mockReturnValue([]);
@@ -354,8 +399,8 @@ describe('Shell', () => {
       mockStorageEngine!.peekCurrentParticipantId = vi.fn().mockResolvedValue(undefined);
 
       render(<Shell globalConfig={globalConfig} />);
-      await waitFor(() => expect(studyStoreCreator).toHaveBeenCalled());
-      const storeArguments = vi.mocked(studyStoreCreator).mock.calls[0];
+      await waitFor(() => expect(vi.mocked(studyStoreCreator).mock.calls.some((args) => args[10]?.title === 'Failed to connect to the storage engine')).toBe(true));
+      const storeArguments = vi.mocked(studyStoreCreator).mock.calls.find((args) => args[10]?.title === 'Failed to connect to the storage engine')!;
       expect(storeArguments[5]?.dataCollectionEnabled).toBe(false);
       expect(storeArguments[10]).toEqual({
         show: true,
@@ -428,17 +473,88 @@ describe('Shell', () => {
       hasRoutes: true,
       hasStore: true,
       isCompletionCheckResolved: false,
-      completionCheckError: null,
     })).toEqual({
       isLoading: true,
       showLoadingMessage: false,
-      showCompletionCheckError: false,
     });
   });
 
   test('shows loading overlay when routes are not yet initialized', async () => {
     const { getByTestId } = await act(async () => render(<Shell globalConfig={globalConfig} />));
     expect(getByTestId('loading-overlay')).toBeDefined();
+  });
+
+  test('mounts the study interface behind an inert barrier while participant startup resolves once', async () => {
+    vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
+    const pendingInitialization = new Promise<void>(() => {});
+
+    mockStorageEngine = {
+      initializeStudyDb: vi.fn(() => pendingInitialization),
+    };
+
+    const { getByTestId } = render(
+      <StrictMode>
+        <Shell globalConfig={globalConfig} />
+      </StrictMode>,
+    );
+
+    await waitFor(() => expect(getByTestId('routing')).toBeDefined());
+    expect(getByTestId('study-loading-barrier')).toBeDefined();
+    expect(getByTestId('study-interface').getAttribute('aria-busy')).toBe('true');
+    expect(getByTestId('study-interface').hasAttribute('inert')).toBe(true);
+    expect(mockStorageEngine.initializeStudyDb).toHaveBeenCalledTimes(1);
+    const preview = vi.mocked(studyStoreCreator).mock.calls[0];
+    expect(preview[1].components).toEqual({});
+    expect(preview[2].components).toEqual([]);
+  });
+
+  test('keeps the preview store mounted until participant completion is authoritative', async () => {
+    vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
+    const pendingCompletion = new Promise<boolean>(() => {});
+    mockStorageEngine = {
+      initializeStudyDb: vi.fn().mockResolvedValue(undefined),
+      saveConfig: vi.fn().mockResolvedValue(undefined),
+      getOrCreateSequenceArray: vi.fn().mockResolvedValue(['seq1']),
+      getModes: vi.fn().mockResolvedValue({
+        developmentModeEnabled: false,
+        dataSharingEnabled: false,
+        dataCollectionEnabled: true,
+      }),
+      initializeParticipantSession: vi.fn().mockResolvedValue(baseSession),
+      getParticipantCompletionStatus: vi.fn(() => pendingCompletion),
+      peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
+      getAllConfigsFromHash: vi.fn().mockResolvedValue({}),
+      isConnected: vi.fn().mockReturnValue(true),
+      getEngine: vi.fn().mockReturnValue('firebase'),
+    };
+
+    const { getByTestId } = render(<Shell globalConfig={globalConfig} />);
+
+    await waitFor(() => expect(mockStorageEngine!.getParticipantCompletionStatus).toHaveBeenCalled());
+    expect(getByTestId('study-loading-barrier')).toBeDefined();
+    expect(getByTestId('study-interface').hasAttribute('inert')).toBe(true);
+  });
+
+  test('routes transient provider startup failures to blocking retry', async () => {
+    vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
+    mockStorageEngine = {
+      initializeStudyDb: vi.fn().mockRejectedValue(new Error('provider unavailable')),
+      getModes: vi.fn().mockResolvedValue({
+        developmentModeEnabled: false,
+        dataSharingEnabled: false,
+        dataCollectionEnabled: true,
+      }),
+      peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
+      isConnected: vi.fn().mockReturnValue(true),
+      getEngine: vi.fn().mockReturnValue(import.meta.env.VITE_STORAGE_ENGINE),
+    };
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    const { getByRole } = render(<Shell globalConfig={globalConfig} />);
+
+    await waitFor(() => expect(getByRole('alert')).toBeDefined());
+    expect(startupErrorWasBlocked).toBe(false);
+    expect(vi.mocked(studyStoreCreator)).toHaveBeenCalledTimes(1);
   });
 
   test('shows startup fallback when study config loading rejects', async () => {
@@ -499,6 +615,7 @@ describe('Shell', () => {
     expect(addEventSpy).toHaveBeenCalledWith('message', expect.any(Function));
     expect(postMessageSpy).toHaveBeenCalledWith({ type: 'revisitWidget/READY' }, '*');
 
+    vi.mocked(parseStudyConfig).mockResolvedValueOnce(mockActiveConfig);
     // Dispatch CONFIG to cover the listener body
     await act(async () => {
       window.dispatchEvent(new MessageEvent('message', {
@@ -516,9 +633,14 @@ describe('Shell', () => {
 
   test('happy path: initializeUserStoreRouting runs and renders study', async () => {
     vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
+    vi.mocked(useRoutes).mockReturnValue(<RoutingMountProbe />);
+    let resolveStudyInitialization: (() => void) | undefined;
+    const studyInitialization = new Promise<void>((resolve) => {
+      resolveStudyInitialization = resolve;
+    });
 
     mockStorageEngine = {
-      initializeStudyDb: vi.fn().mockResolvedValue(undefined),
+      initializeStudyDb: vi.fn(() => studyInitialization),
       saveConfig: vi.fn().mockResolvedValue(undefined),
       getOrCreateSequenceArray: vi.fn().mockResolvedValue(['seq1']),
       getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
@@ -530,8 +652,10 @@ describe('Shell', () => {
       getEngine: vi.fn().mockReturnValue('firebase'),
     };
 
-    render(<Shell globalConfig={globalConfig} />);
+    const { queryByTestId, getByTestId } = render(<Shell globalConfig={globalConfig} />);
     await waitFor(() => expect(mockStorageEngine!.initializeStudyDb).toHaveBeenCalled(), { timeout: 3000 });
+    await waitFor(() => expect(routingMountCount).toBe(1), { timeout: 3000 });
+    await act(async () => resolveStudyInitialization?.());
     await waitFor(() => expect(vi.mocked(studyStoreCreator)).toHaveBeenCalled(), { timeout: 3000 });
     expect(mockStorageEngine.initializeParticipantSession).toHaveBeenCalledWith(
       expect.any(Object),
@@ -548,6 +672,77 @@ describe('Shell', () => {
       },
     );
     await waitFor(() => expect(fetch).toHaveBeenCalled());
+    await waitFor(() => expect(queryByTestId('study-loading-barrier')).toBeNull(), { timeout: 3000 });
+    expect(getByTestId('study-interface').getAttribute('aria-busy')).toBe('false');
+    expect(getByTestId('study-interface').hasAttribute('inert')).toBe(false);
+    expect(routingMountCount).toBe(2);
+    expect(routingUnmountCount).toBe(1);
+  });
+
+  test('keeps finalized participant state when data collection is disabled', async () => {
+    vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
+    const engine = makeStartupEngine();
+    engine.getModes.mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: false });
+    engine.initializeParticipantSession.mockResolvedValue({ ...baseSession, finalized: true });
+    mockStorageEngine = engine;
+    const { queryByTestId } = render(<Shell globalConfig={globalConfig} />);
+    await waitFor(() => expect(queryByTestId('study-loading-barrier')).toBeNull());
+    const participantStore = await vi.mocked(studyStoreCreator).mock.results.at(-1)!.value;
+    expect(participantStore.actions.setParticipantCompleted).toHaveBeenCalledWith(true);
+  });
+
+  test('does not start metadata work when completion resolves after unmount', async () => {
+    vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
+    const engine = makeStartupEngine();
+    let resolveCompletion!: (completed: boolean) => void;
+    engine.getParticipantCompletionStatus.mockImplementation(() => new Promise<boolean>((resolve) => {
+      resolveCompletion = resolve;
+    }));
+    mockStorageEngine = engine;
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    const { unmount } = render(<Shell globalConfig={globalConfig} />);
+    await waitFor(() => expect(engine.getParticipantCompletionStatus).toHaveBeenCalled());
+    unmount();
+    await act(async () => resolveCompletion(false));
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(engine.updateParticipantMetadata).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+  });
+
+  test('does not write metadata when an IP request resolves after unmount', async () => {
+    vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
+    const engine = makeStartupEngine();
+    mockStorageEngine = engine;
+    let resolveIp!: (response: Response) => void;
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(() => new Promise<Response>((resolve) => {
+      resolveIp = resolve;
+    }));
+    const { unmount } = render(<Shell globalConfig={globalConfig} />);
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalled());
+    unmount();
+    await act(async () => resolveIp(new Response(JSON.stringify({ ip: '192.0.2.1' }))));
+    expect(engine.updateParticipantMetadata).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+  });
+
+  test('initializes each replacement widget config once and releases the barrier', async () => {
+    mockStudyId = '__revisit-widget';
+    const engine = makeStartupEngine();
+    engine.getModes.mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: false });
+    mockStorageEngine = engine;
+    const replacementConfig = { ...mockActiveConfig, studyMetadata: { ...mockActiveConfig.studyMetadata, title: 'Replacement' } };
+    vi.mocked(parseStudyConfig).mockResolvedValueOnce(mockActiveConfig).mockResolvedValueOnce(replacementConfig);
+    const { queryByTestId } = render(<StrictMode><Shell globalConfig={globalConfig} /></StrictMode>);
+    const sendConfig = async () => act(async () => {
+      window.dispatchEvent(new MessageEvent('message', { data: { type: 'revisitWidget/CONFIG', payload: '{}' } }));
+    });
+    await sendConfig();
+    await waitFor(() => expect(engine.initializeParticipantSession).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(queryByTestId('study-loading-barrier')).toBeNull());
+    await sendConfig();
+    await waitFor(() => expect(engine.initializeParticipantSession).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(queryByTestId('study-loading-barrier')).toBeNull());
+    expect(engine.saveConfig).toHaveBeenLastCalledWith(replacementConfig);
   });
 
   test.each(['p1', ''])('does not collect or overwrite participant metadata during replay (participantId=%s)', async (participantId) => {
@@ -597,79 +792,6 @@ describe('Shell', () => {
     await waitFor(() => expect(mockStorageEngine!.initializeStudyDb).toHaveBeenCalled(), { timeout: 3000 });
     await waitFor(() => expect(getByTestId('resource-not-found').getAttribute('data-email'))
       .toBe(mockActiveConfig.uiConfig.contactEmail));
-  });
-
-  test('renders an inert first-stimulus preview while a new participant is assigned', async () => {
-    const previewConfig: ParsedConfig<StudyConfig> = {
-      ...mockActiveConfig,
-      components: {
-        intro: {
-          type: 'markdown',
-          path: 'test-study/assets/intro.md',
-          response: [],
-        },
-      },
-      sequence: { order: 'fixed', components: ['intro'] },
-    };
-    vi.mocked(getStudyConfig).mockResolvedValue(previewConfig);
-
-    mockStorageEngine = {
-      initializeStudyDb: vi.fn().mockResolvedValue(undefined),
-      saveConfig: vi.fn().mockResolvedValue(undefined),
-      getOrCreateSequenceArray: vi.fn().mockResolvedValue(['seq1']),
-      getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
-      initializeParticipantSession: vi.fn().mockImplementation(() => new Promise(() => { })),
-      peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
-      isConnected: vi.fn().mockReturnValue(true),
-      getEngine: vi.fn().mockReturnValue('firebase'),
-    };
-
-    vi.mocked(getStaticAssetByPath).mockResolvedValue('# Welcome');
-
-    const { getByTestId, queryByTestId } = render(<Shell globalConfig={globalConfig} />);
-
-    await waitFor(() => expect(getByTestId('startup-preview')).toBeDefined());
-    expect(getByTestId('startup-preview').textContent).toContain('Welcome');
-    expect(queryByTestId('routing')).toBeNull();
-    expect(queryByTestId('loading-overlay')).toBeNull();
-    expect(studyStoreCreator).not.toHaveBeenCalled();
-  });
-
-  test.each([
-    ['a placeholder', 'Hello {{participantName}}'],
-    ['a conditional branch', '{{#if treatment}}Treatment{{else}}Control{{/if}}'],
-  ])('keeps the loading state instead of previewing a Markdown body with %s', async (_, markdown) => {
-    const previewConfig: ParsedConfig<StudyConfig> = {
-      ...mockActiveConfig,
-      components: {
-        intro: {
-          type: 'markdown',
-          path: 'test-study/assets/intro.md',
-          response: [],
-        },
-      },
-      sequence: { order: 'fixed', components: ['intro'] },
-    };
-    vi.mocked(getStudyConfig).mockResolvedValue(previewConfig);
-    vi.mocked(getStaticAssetByPath).mockResolvedValue(markdown);
-
-    mockStorageEngine = {
-      initializeStudyDb: vi.fn().mockResolvedValue(undefined),
-      saveConfig: vi.fn().mockResolvedValue(undefined),
-      getOrCreateSequenceArray: vi.fn().mockResolvedValue(['seq1']),
-      getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
-      initializeParticipantSession: vi.fn().mockImplementation(() => new Promise(() => { })),
-      peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
-      isConnected: vi.fn().mockReturnValue(true),
-      getEngine: vi.fn().mockReturnValue('firebase'),
-    };
-
-    const { queryByTestId } = render(<Shell globalConfig={globalConfig} />);
-
-    await waitFor(() => expect(getStaticAssetByPath).toHaveBeenCalledWith(expect.stringContaining('test-study/assets/intro.md')));
-    await waitFor(() => expect(mockStorageEngine!.initializeParticipantSession).toHaveBeenCalled());
-    expect(queryByTestId('startup-preview')).toBeNull();
-    expect(queryByTestId('loading-overlay')).not.toBeNull();
   });
 
   test('passes the canonical prepared array into participant startup', async () => {
@@ -810,7 +932,15 @@ describe('Shell', () => {
   test('shows startup fallback when participant-store recovery also fails', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
     vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
-    vi.mocked(studyStoreCreator).mockRejectedValueOnce(new Error('fallback store failed'));
+    vi.mocked(studyStoreCreator)
+      .mockResolvedValueOnce({
+        store: { getState: vi.fn(), dispatch: vi.fn(), subscribe: vi.fn() },
+        actions: {
+          setMetadata: vi.fn(),
+          setParticipantCompleted: vi.fn(),
+        },
+      } as never)
+      .mockRejectedValueOnce(new Error('fallback store failed'));
 
     mockStorageEngine = {
       initializeStudyDb: vi.fn().mockRejectedValue(new Error('participant init failed')),

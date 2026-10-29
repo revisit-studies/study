@@ -23,6 +23,7 @@ import { StudyConfig } from '../../parser/types';
 import { Sequence } from '../../store/types';
 import { ParticipantData } from '../types';
 import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
+import { fetchFreshStorageObject } from './utils/fetchFreshStorageObject';
 
 type AllocationState = {
   revision: number;
@@ -293,7 +294,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     }
   }
 
-  protected async _getFromStorage<T extends StorageObjectType>(prefix: string, type: T, studyId?: string, strict = false) {
+  protected async _getFromStorage<T extends StorageObjectType>(prefix: string, type: T, studyId?: string, strict = false, fresh = false) {
     const storageRef = ref(
       this.storage,
       `${this.collectionPrefix}${studyId || this.studyId}/${prefix}_${type}`,
@@ -301,7 +302,14 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
 
     let storageObj: StorageObject<T> = {} as StorageObject<T>;
     try {
-      const blob = await getBlob(storageRef);
+      let blob: Blob;
+      if (fresh) {
+        const response = await fetchFreshStorageObject(await getDownloadURL(storageRef));
+        if (!response.ok) throw Object.assign(new Error('Failed to read current participant history.'), { code: response.status === 404 ? 'storage/object-not-found' : 'storage/download-failed' });
+        blob = await response.blob();
+      } else {
+        blob = await getBlob(storageRef);
+      }
       const fullProvStr = await blob.text();
       storageObj = JSON.parse(fullProvStr);
       if (type === 'participantData' && !isParticipantData(storageObj)) throw new Error('Invalid participant data');

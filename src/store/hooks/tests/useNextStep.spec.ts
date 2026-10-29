@@ -50,7 +50,8 @@ vi.mock('react-router', () => ({
   useParams: () => ({ funcIndex: mockFuncIndex }),
 }));
 
-vi.mock('../../store', () => ({
+vi.mock('../../store', async (importOriginal) => ({
+  ...(await importOriginal() as object),
   useStoreSelector: <T>(selector: (s: StoreState) => T) => selector({
     trialValidation: mockTrialValidation,
     sequence: mockSequence,
@@ -1001,3 +1002,5 @@ describe('useNextStep', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/test-study/2');
   });
 });
+
+vi.mock('../useGlobalStore', () => ({ useGlobalStore: () => ({}), useGlobalStoreUpdaterRegistration: () => () => () => undefined }));

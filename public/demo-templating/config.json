@@ -5,7 +5,7 @@
     "version": "pilot",
     "authors": ["The reVISit Team"],
     "date": "2026-08-20",
-    "description": "A demo of using Handlebars {{variable}} templating (and the lookupAnswersRel/lookupAnswers helpers for referencing other trials' answers) in instructions, paths, markdown/help-text content, response text, and templated website HTML files, and correctAnswer values, showcased through a two-question capital-cities quiz.",
+    "description": "A demo of using Handlebars {{variable}} templating (and the lookupAnswersRel/lookupAnswers helpers for referencing other trials' answers) in instructions, paths, markdown/help-text content, response text, and templated website HTML files, and correctAnswer values, showcased through a two-question capital-cities quiz. Includes global variables read and updated from Markdown, React, and HTML content.",
     "organizations": ["University of Utah", "WPI"]
   },
   "uiConfig": {
@@ -87,7 +87,54 @@
     "summary": {
       "type": "markdown",
       "path": "demo-templating/assets/summary.md",
-      "response": []
+      "response": [],
+      "previousButton": true
+    },
+    "global-markdown": {
+      "type": "markdown",
+      "path": "demo-templating/assets/global-budget.md",
+      "previousButton": true,
+      "response": [
+        {
+          "id": "spend",
+          "type": "numerical",
+          "prompt": "Markdown spending",
+          "default": 10,
+          "min": 0,
+          "max": "{{globalVariables.budget}}",
+          "onSubmit": [
+            {
+              "variable": "budget",
+              "operation": "subtract"
+            }
+          ]
+        }
+      ]
+    },
+    "global-react": {
+      "type": "react-component",
+      "path": "demo-templating/assets/GlobalBudget.tsx",
+      "previousButton": true,
+      "response": [
+        {
+          "id": "spend",
+          "type": "reactive",
+          "prompt": "React spending"
+        }
+      ]
+    },
+    "global-html": {
+      "type": "website",
+      "path": "demo-templating/assets/global-budget.html",
+      "templated": true,
+      "previousButton": true,
+      "response": [
+        {
+          "id": "spend",
+          "type": "reactive",
+          "prompt": "HTML spending"
+        }
+      ]
     }
   },
   "sequence": {
@@ -96,7 +143,24 @@
       "introduction",
       "markdown-template-quiz",
       "html-template-quiz",
+      "global-markdown",
+      "global-react",
+      "global-html",
       "summary"
     ]
+  },
+  "globalVariables": {
+    "budget": 100,
+    "participantLabel": {
+      "initialValue": "Ready",
+      "minCharLength": 1,
+      "maxCharLength": 20,
+      "textValidation": [
+        {
+          "type": "matchesRegex",
+          "value": "^[A-Za-z ]+$"
+        }
+      ]
+    }
   }
 }

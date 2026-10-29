@@ -1,11 +1,13 @@
 import JSZip from 'jszip';
+import { GLOBAL_STORE_TASK } from '../store/globalStoreProvenance';
+import { getGlobalStoreHistory } from '../store/globalStoreHistory';
 import { StorageEngine } from '../storage/engines/types';
 import { StudyConfig } from '../parser/types';
 import { getLegacyStoredAnswerProvenance } from '../store/provenance';
 import type { StoredAnswer } from '../store/types';
 
 type DownloadAnswer = Pick<StoredAnswer, 'endTime' | 'startTime' | 'componentName' | 'trialOrder'>
-  & Partial<Pick<StoredAnswer, 'identifier'>>;
+  & Partial<Pick<StoredAnswer, 'identifier' | 'assetIdentifier'>>;
 
 export async function handleTaskAudio({
   storageEngine,
@@ -210,6 +212,20 @@ async function downloadParticipantsAudio({
   }
 }
 
+async function getParticipantRecordingEntries(storageEngine: StorageEngine, participant: { participantId: string; answers: Record<string, DownloadAnswer> }) {
+  const entries = Object.entries(participant.answers).map(([storedIdentifier, answer]) => ({ storedIdentifier, answer }));
+  if (entries.some(({ answer }) => answer.assetIdentifier)) {
+    const graph = (await storageEngine.getProvenance(GLOBAL_STORE_TASK, participant.participantId))?.globalStore;
+    if (graph) {
+      getGlobalStoreHistory(graph).forEach(({ submission }) => {
+        entries.push({ storedIdentifier: submission.answer.identifier, answer: submission.answer });
+      });
+    }
+  }
+  const byAsset = new Map(entries.filter(({ answer }) => answer.endTime > 0).map((entry) => [entry.answer.assetIdentifier || entry.answer.identifier || entry.storedIdentifier, entry]));
+  return [...byAsset.values()].sort((a, b) => a.answer.startTime - b.answer.startTime);
+}
+
 export async function downloadParticipantsAudioZip({
   storageEngine,
   participants,
@@ -224,23 +240,14 @@ export async function downloadParticipantsAudioZip({
   const namePrefix = fileName || studyId;
   const zip = new JSZip();
 
-  const audioPromises = participants.flatMap((participant) => {
-    const entries = Object.entries(participant.answers)
-      .map(([storedIdentifier, answer]) => ({ storedIdentifier, answer }))
-      .filter(({ answer }) => answer.endTime > 0)
-      .sort((a, b) => a.answer.startTime - b.answer.startTime);
-
-    return entries.map(async ({ storedIdentifier, answer }) => {
-      const identifier = answer.identifier || storedIdentifier;
-
+  const audioPromises = participants.map(async (participant) => {
+    const entries = await getParticipantRecordingEntries(storageEngine, participant);
+    return Promise.all(entries.map(async ({ storedIdentifier, answer }) => {
+      const identifier = answer.assetIdentifier || answer.identifier || storedIdentifier;
       await downloadParticipantsAudio({
-        storageEngine,
-        participantId: participant.participantId,
-        identifier,
-        namePrefix,
-        zip,
+        storageEngine, participantId: participant.participantId, identifier, namePrefix, zip,
       });
-    });
+    }));
   });
 
   await Promise.all(audioPromises);
@@ -311,25 +318,14 @@ export async function downloadParticipantsRecordingsZip({
   const namePrefix = fileName || studyId;
   const zip = new JSZip();
 
-  const recordingPromises = participants.flatMap((participant) => {
-    const entries = Object.entries(participant.answers)
-      .map(([storedIdentifier, answer]) => ({ storedIdentifier, answer }))
-      .filter(({ answer }) => answer.endTime > 0)
-      .sort((a, b) => a.answer.startTime - b.answer.startTime);
-
-    return entries.map(async ({ storedIdentifier, answer }) => {
-      const identifier = answer.identifier || storedIdentifier;
-
+  const recordingPromises = participants.map(async (participant) => {
+    const entries = await getParticipantRecordingEntries(storageEngine, participant);
+    return Promise.all(entries.map(async ({ storedIdentifier, answer }) => {
+      const identifier = answer.assetIdentifier || answer.identifier || storedIdentifier;
       await downloadParticipantsRecordings({
-        storageEngine,
-        participantId: participant.participantId,
-        identifier,
-        namePrefix,
-        includeScreen,
-        includeWebcam,
-        zip,
+        storageEngine, participantId: participant.participantId, identifier, namePrefix, includeScreen, includeWebcam, zip,
       });
-    });
+    }));
   });
 
   await Promise.all(recordingPromises);
@@ -354,12 +350,18 @@ export async function downloadParticipantsProvenanceZip({
   const namePrefix = fileName || studyId;
   const zip = new JSZip();
 
-  const provenancePromises = participants.flatMap((participant) => {
+  const provenancePromises = participants.map(async (participant) => {
+    const globalProvenance = await storageEngine.getProvenance(GLOBAL_STORE_TASK, participant.participantId);
+    const graph = globalProvenance?.globalStore;
+    const history = graph ? getGlobalStoreHistory(graph) : [];
+    if (graph) zip.file(`${namePrefix}_${participant.participantId}_${GLOBAL_STORE_TASK}_provenance.json`, JSON.stringify(globalProvenance, null, 2));
     const entries = Object.entries(participant.answers)
       .filter(([, ans]) => ans.endTime > 0)
       .sort(([, a], [, b]) => a.startTime - b.startTime);
 
-    return entries.map(async ([identifier, ans]) => {
+    const allAnswers = new Map(entries.map(([identifier, answer]) => [identifier, answer]));
+    history.forEach(({ submission }) => { allAnswers.set(submission.answer.identifier, submission.answer); });
+    return Promise.all([...allAnswers].map(async ([identifier, ans]) => {
       await downloadParticipantsProvenance({
         storageEngine,
         participantId: participant.participantId,
@@ -368,7 +370,7 @@ export async function downloadParticipantsProvenanceZip({
         zip,
         answer: ans,
       });
-    });
+    }));
   });
 
   await Promise.all(provenancePromises);

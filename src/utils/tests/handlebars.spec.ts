@@ -25,6 +25,15 @@ describe('compileTemplate', () => {
     expect(compileTemplate('hello {{missing}}', {})).toBe('hello ');
   });
 
+  test('reports undeclared store references in loaded text rather than silently dropping them', () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    expect(compileTemplate('Budget {{globalVariables.missing}}', {}, { data: { globalVariables: { budget: 70 } } })).toBe('Budget {{globalVariables.missing}}');
+    expect(log).toHaveBeenCalledWith('Failed to compile handlebars template', expect.objectContaining({ message: expect.stringContaining('missing') }));
+    expect(compileTemplate('Budget {{globalVariables.budget.value}}', {}, { data: { globalVariables: { budget: 70 } } })).toBe('Budget {{globalVariables.budget.value}}');
+    expect(compileTemplate('{{#ifEquals "globalVariables.missing" "globalVariables.missing"}}literal{{/ifEquals}}', {}, { data: { globalVariables: {} } })).toBe('literal');
+    log.mockRestore();
+  });
+
   test('defaults parameters to an empty object when omitted', () => {
     expect(compileTemplate('hello {{missing}}')).toBe('hello ');
   });
@@ -279,4 +288,8 @@ describe('lookupParameters and lookupCorrectAnswer helpers', () => {
   test('renders empty when the data frame is missing', () => {
     expect(compileTemplate('{{lookupParametersRel -1 "country"}}{{lookupCorrectAnswer 1 "response"}}', {})).toBe('');
   });
+});
+
+test('store templates use the reserved runtime namespace and retain primitive rendering', () => {
+  expect(compileTemplate('{{globalVariables.budget}} / {{globalVariables.eligible}} / {{globalVariables.label}}', { globalVariables: { budget: 999 } }, { data: { globalVariables: { budget: 70, eligible: false, label: 'ready' } } })).toBe('70 / false / ready');
 });

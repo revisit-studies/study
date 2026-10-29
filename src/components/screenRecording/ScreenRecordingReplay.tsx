@@ -8,6 +8,7 @@ import { useSearchParams } from 'react-router';
 import {
   Box, Flex, Group, SegmentedControl, Text,
 } from '@mantine/core';
+import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import {
   useStoreActions,
@@ -183,6 +184,7 @@ export function ScreenRecordingReplay({ webcamOnly = false }: ScreenRecordingRep
   const isAnalysis = useIsAnalysis();
 
   const identifier = useCurrentIdentifier();
+  const assetIdentifier = useStoredAnswer()?.assetIdentifier ?? identifier;
 
   useEffect(
     () => {
@@ -223,8 +225,8 @@ export function ScreenRecordingReplay({ webcamOnly = false }: ScreenRecordingRep
               }
             };
             const [screenUrl, webcamUrl] = await Promise.all([
-              safeGetRecording(() => storageEngine.getScreenRecording(identifier, participantId)),
-              safeGetRecording(() => storageEngine.getWebcamRecording(identifier, participantId)),
+              safeGetRecording(() => storageEngine.getScreenRecording(assetIdentifier, participantId)),
+              safeGetRecording(() => storageEngine.getWebcamRecording(assetIdentifier, participantId)),
             ]);
 
             if (cancelled) {
@@ -288,8 +290,8 @@ export function ScreenRecordingReplay({ webcamOnly = false }: ScreenRecordingRep
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       isAnalysis,
-      identifier,
-      storageEngine,
+      assetIdentifier,
+      identifier, storageEngine,
       participantId,
       storeDispatch,
       setAnalysisHasScreenRecording,
