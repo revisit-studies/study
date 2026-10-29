@@ -1028,3 +1028,5 @@ describe('VegaController — signal and event coverage', () => {
     expect(vi.mocked(fakeView.signal).mock.calls.some(([signalName]) => signalName === 'tooltip')).toBe(false);
   });
 });
+
+vi.mock('../../store/hooks/useGlobalStore', () => ({ useGlobalStore: () => ({}), useGlobalStoreUpdaterRegistration: () => () => () => undefined }));

@@ -1,4 +1,4 @@
-import type { Answer, Response } from '../parser/types';
+import type { Answer, GlobalStoreValues, Response } from '../parser/types';
 import type { StoredAnswer } from '../store/types';
 import { compareResponseValues, isResponseScoreCorrect, scoreResponseAnswer } from './correctAnswer';
 import { usesStandaloneDontKnowField } from '../components/response/responseValidation';
@@ -50,6 +50,7 @@ export function resolveResponseVisibility(
   defaults: StoredAnswer['answer'] = {},
   correctAnswers: Answer[] = [],
   persistedScores: Record<string, number> = {},
+  store: GlobalStoreValues = {},
 ) {
   const normalizedValues = normalizeResponseAnswerValues(values, responses);
   const scoringValues = normalizeResponseAnswerValues({ ...defaults, ...normalizedValues }, responses);
@@ -71,43 +72,47 @@ export function resolveResponseVisibility(
       const condition = response.visibleIf;
       let visible = true;
       if (condition) {
-        const controller = byId.get(condition.responseId);
-        visible = !!controller && visit(controller);
-        const storedValue = answers[condition.responseId];
-        const value = controller?.type === 'numerical' && typeof storedValue === 'string' && storedValue.trim() !== ''
-          ? Number(storedValue) : storedValue;
-        const answered = value !== undefined && value !== null && value !== ''
+        if (condition.globalVariable !== undefined) {
+          visible = Object.hasOwn(store, condition.globalVariable) && compareResponseValues(store[condition.globalVariable], condition.value, condition.comparison);
+        } else {
+          const controller = byId.get(condition.responseId);
+          visible = !!controller && visit(controller);
+          const storedValue = answers[condition.responseId];
+          const value = controller?.type === 'numerical' && typeof storedValue === 'string' && storedValue.trim() !== ''
+            ? Number(storedValue) : storedValue;
+          const answered = value !== undefined && value !== null && value !== ''
           && !(Array.isArray(value) && value.length === 0)
           && (controller?.type !== 'numerical' || (typeof value === 'number' && Number.isFinite(value)))
           && !(controller && usesStandaloneDontKnowField(controller) && answers[`${condition.responseId}-dontKnow`]);
-        visible = visible && answered;
-        if (visible) {
-          if (condition.comparison === 'isCorrect') {
-            const correctAnswer = correctAnswers.find((answer) => answer.id === condition.responseId);
-            if (!correctAnswer && !controller?.path) {
-              visible = false;
-            } else {
-              const persistedScore = persistedScores[condition.responseId];
-              const scoringContext = { ...scoringAnswers };
-              if (controller && usesStandaloneDontKnowField(controller)) {
-                const dontKnowKey = `${controller.id}-dontKnow`;
-                if (Object.hasOwn(normalizedValues, dontKnowKey)) scoringContext[dontKnowKey] = normalizedValues[dontKnowKey];
+          visible = visible && answered;
+          if (visible) {
+            if (condition.comparison === 'isCorrect') {
+              const correctAnswer = correctAnswers.find((answer) => answer.id === condition.responseId);
+              if (!correctAnswer && !controller?.path) {
+                visible = false;
+              } else {
+                const persistedScore = persistedScores[condition.responseId];
+                const scoringContext = { ...scoringAnswers };
+                if (controller && usesStandaloneDontKnowField(controller)) {
+                  const dontKnowKey = `${controller.id}-dontKnow`;
+                  if (Object.hasOwn(normalizedValues, dontKnowKey)) scoringContext[dontKnowKey] = normalizedValues[dontKnowKey];
+                }
+                const score = persistedScore !== undefined && Number.isFinite(persistedScore) && persistedScore >= 0 && persistedScore <= 1
+                  ? persistedScore
+                  : scoreResponseAnswer(
+                    value,
+                    correctAnswer,
+                    controller,
+                    scoringContext,
+                  );
+                const isCorrect = isResponseScoreCorrect(score, correctAnswer?.correctnessThreshold);
+                visible = isCorrect !== null && isCorrect === condition.value;
               }
-              const score = persistedScore !== undefined && Number.isFinite(persistedScore) && persistedScore >= 0 && persistedScore <= 1
-                ? persistedScore
-                : scoreResponseAnswer(
-                  value,
-                  correctAnswer,
-                  controller,
-                  scoringContext,
-                );
-              const isCorrect = isResponseScoreCorrect(score, correctAnswer?.correctnessThreshold);
-              visible = isCorrect !== null && isCorrect === condition.value;
+            } else {
+              visible = compareResponseValues(value, condition.value, condition.comparison, {
+                ignoreArrayOrder: true,
+              });
             }
-          } else {
-            visible = compareResponseValues(value, condition.value, condition.comparison, {
-              ignoreArrayOrder: true,
-            });
           }
         }
         responseValueKeys(response).forEach((key) => {
@@ -155,8 +160,9 @@ export function getApplicableCorrectAnswers(
   values: StoredAnswer['answer'],
   correctAnswers: Answer[] = [],
   persistedScores: Record<string, number> = {},
+  store: GlobalStoreValues = {},
 ): Answer[] {
-  const { visibleIds } = resolveResponseVisibility(responses, values, {}, correctAnswers, persistedScores);
+  const { visibleIds } = resolveResponseVisibility(responses, values, {}, correctAnswers, persistedScores, store);
   const byId = new Map(responses.map((response) => [response.id, response]));
   return correctAnswers.filter((answer) => !byId.get(answer.id)?.visibleIf || visibleIds.has(answer.id));
 }

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Global store HTML purchase</title>
+  <script src="../../revisitUtilities/revisit-communicate.js"></script>
+</head>
+<body>
+  <p>HTML entry budget: <output id="budget">loading</output></p>
+  <p id="template" hidden>Template entry budget: <output id="template-budget" data-value="{{store.budget}}"></output></p>
+  <div id="choices" role="group" aria-label="Purchase choices"></div>
+  <p>Selected cost: <output id="selected">none</output></p>
+  <button id="register-updater">Re-register store updater</button>
+  <script>
+    let selectedCost = null;
+    const costs = [0, 5, 10, 15, 20];
+    const render = () => {
+      document.querySelector('#selected').textContent = selectedCost ?? 'none';
+      document.querySelectorAll('#choices button').forEach((button) => {
+        button.setAttribute('aria-pressed', Number(button.dataset.cost) === selectedCost);
+      });
+    };
+    costs.forEach((cost) => {
+      const button = document.createElement('button');
+      button.textContent = `Spend ${cost}`;
+      button.dataset.cost = cost;
+      button.addEventListener('click', () => {
+        selectedCost = cost;
+        render();
+        Revisit.postAnswers({ selectedCost });
+      });
+      document.querySelector('#choices').append(button);
+    });
+    const templateBudget = document.querySelector('#template-budget');
+    if (/^\d+$/.test(templateBudget.dataset.value)) {
+      templateBudget.textContent = templateBudget.dataset.value;
+      document.querySelector('#template').hidden = false;
+    }
+    Revisit.onGlobalStoreReceive((store) => {
+      document.querySelector('#budget').textContent = store.budget;
+    });
+    const registerUpdater = () => Revisit.registerGlobalStoreUpdater(({ store }) => {
+      if (selectedCost === null) throw new Error('Choose an item before continuing.');
+      return { budget: store.budget - selectedCost };
+    });
+    let unregisterUpdater = registerUpdater();
+    document.querySelector('#register-updater').addEventListener('click', () => {
+      unregisterUpdater();
+      unregisterUpdater = registerUpdater();
+    });
+    Revisit.onRestore(({ answers }) => {
+      selectedCost = answers.selectedCost ?? null;
+      render();
+      Revisit.postAnswers({ selectedCost });
+    });
+    Revisit.completeRegistration();
+    render();
+  </script>
+</body>
+</html>

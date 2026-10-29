@@ -100,7 +100,10 @@
     "test-randomization",
     "test-component-timeout",
     "test-skip-logic",
-    "test-step-logic"
+    "test-step-logic",
+    "test-global-store",
+    "test-global-store-operations",
+    "test-global-store-failures"
   ],
   "configs": {
     "tutorial": {
@@ -432,6 +435,18 @@
       "tab": "Example Studies",
       "path": "example-VLAT-adaptive/config.json",
       "test": true
+    },
+    "test-global-store": {
+      "tab": "Tests",
+      "path": "test-global-store/config.json"
+    },
+    "test-global-store-operations": {
+      "tab": "Tests",
+      "path": "test-global-store-operations/config.json"
+    },
+    "test-global-store-failures": {
+      "tab": "Tests",
+      "path": "test-global-store-failures/config.json"
     }
   }
 }

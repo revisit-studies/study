@@ -7,6 +7,7 @@ import { ReactComponentController } from '../ReactComponentController';
 import { makeStoredAnswer } from '../../tests/utils';
 import type { ReactComponent } from '../../parser/types';
 
+vi.mock('../../store/hooks/useGlobalStore', () => ({ useGlobalStore: () => ({}), useGlobalStoreUpdaterRegistration: () => vi.fn() }));
 vi.mock('../../public/demo-react-trrack/assets/DemoReactTrrack', () => ({ default: () => null }));
 vi.mock('../../store/hooks/useTrialProvenance', () => ({ useTrialProvenance: () => undefined }));
 vi.mock('../../store/hooks/useDesignerPreview', () => ({ useDesignerPreview: () => true }));

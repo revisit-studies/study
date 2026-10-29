@@ -1,5 +1,7 @@
 import { Box, Text } from '@mantine/core';
 import { useMemo } from 'react';
+import { useGlobalStore } from '../../store/hooks/useGlobalStore';
+import { resolveGlobalStoreResponses } from '../../utils/globalStore';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
@@ -18,6 +20,7 @@ export function AppNavBar({
   sidebarOpen: boolean,
 }) {
   // Get the config for the current step
+  const globalStore = useGlobalStore();
   const studyConfig = useStudyConfig();
   const currentComponent = useCurrentComponent();
   const stepConfig = studyConfig.components[currentComponent];
@@ -39,8 +42,8 @@ export function AppNavBar({
   );
 
   const runtimeConfig = useMemo(
-    () => (currentConfig ? { ...currentConfig, parameters: instructionParameters } : null),
-    [currentConfig, instructionParameters],
+    () => (currentConfig ? { ...currentConfig, parameters: instructionParameters, response: resolveGlobalStoreResponses(currentConfig.response ?? [], globalStore) } : null),
+    [currentConfig, instructionParameters, globalStore],
   );
 
   const instruction = useMemo(

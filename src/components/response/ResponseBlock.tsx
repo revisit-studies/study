@@ -9,6 +9,7 @@ import isEqual from 'lodash.isequal';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { useNavigate } from 'react-router';
 import { Registry } from '@trrack/core';
+import { useGlobalStore } from '../../store/hooks/useGlobalStore';
 import {
   IndividualComponent,
   ResponseBlockLocation,
@@ -88,6 +89,8 @@ export function ResponseBlock({
   status,
   style,
 }: Props) {
+  const globalStoreSubmitting = useStoreSelector((state) => state.globalStoreSubmitting);
+  const globalStore = useGlobalStore();
   const storeDispatch = useStoreDispatch();
   const {
     clearResponseAnswers, updateProvenance, updateResponseBlockValidation, saveIncorrectAnswer, saveTrialAnswer, setResponseSubmitAttempt, setStimulusSubmitAttempt, setCheckAnswerResult,
@@ -99,7 +102,7 @@ export function ResponseBlock({
   const currentProvenance = useStoreSelector((state) => state.analysisProvState[location]) as FormElementProvenance | undefined;
 
   const retainedProvenance = useTrialProvenance(location);
-  const restoredForm = useMemo(() => (retainedProvenance
+  const restoredForm = useMemo(() => (retainedProvenance && !retainedProvenance.resetToInitialState
     ? (initializeResumedTrrack({ registry: Registry.create(), initialState: {} }, retainedProvenance).getState() as FormElementProvenance).form
     : undefined), [retainedProvenance]);
   const storedAnswer = useMemo(() => currentProvenance?.form ?? restoredForm ?? status?.answer, [currentProvenance, restoredForm, status]);
@@ -308,6 +311,7 @@ export function ResponseBlock({
       allResponsesWithDefaults,
       config.correctAnswer,
       status?.checkAnswer,
+      globalStore,
     ))
     : undefined;
   const answerValidator = useAnswerField(
@@ -321,13 +325,14 @@ export function ResponseBlock({
     isAnalysis,
     config.correctAnswer,
     persistedVisibilityScores,
+    globalStore,
   );
   const visibilityValues = { ...combinedValues };
   responses.forEach((response) => responseValueKeys(response).forEach((key) => { delete visibilityValues[key]; }));
   const { visibleIds } = resolveResponseVisibility(allResponsesWithDefaults, {
     ...visibilityValues,
     ...answerValidator.values,
-  }, {}, config.correctAnswer, persistedVisibilityScores);
+  }, {}, config.correctAnswer, persistedVisibilityScores, globalStore);
   const applicableResponses = allResponsesWithDefaults.filter((response) => visibleIds.has(response.id));
   useEffect(() => {
     if (isAnalysis) return;
@@ -656,9 +661,10 @@ export function ResponseBlock({
       allResponsesWithDefaults,
       config.correctAnswer,
       currentCheckAnswer,
+      globalStore,
     );
 
-    const applicableCorrectAnswers = getApplicableCorrectAnswers(allResponsesWithDefaults, allAnswers, config.correctAnswer)
+    const applicableCorrectAnswers = getApplicableCorrectAnswers(allResponsesWithDefaults, allAnswers, config.correctAnswer, undefined, globalStore)
       .filter((answer) => {
         const response = allResponsesWithDefaults.find((candidate) => candidate.id === answer.id);
         return response?.required !== false || isResponseAnsweredForScoring(response, allAnswers[answer.id], allAnswers);
@@ -709,6 +715,7 @@ export function ResponseBlock({
       {},
       config.correctAnswer,
       undefined,
+      globalStore,
     ).visibleIds;
     allResponsesWithDefaults.forEach((response) => {
       if (!visibleResponseIds.has(response.id)
@@ -767,7 +774,7 @@ export function ResponseBlock({
       ...(Object.keys(scores).length > 0 ? { scores, answerSnapshot: structuredClone(allAnswers) } : {}),
       checkedAnswers: structuredClone(allAnswers),
     }));
-  }, [allResponsesWithDefaults, attemptsUsed, config, currentCheckAnswer, hasCorrectAnswerFeedback, hasResponseIssues, hasStimulusIssue, identifier, revealResponseErrors, revealStimulusErrors, saveIncorrectAnswer, setCheckAnswerResult, storeDispatch, trialValidation]);
+  }, [globalStore, allResponsesWithDefaults, attemptsUsed, config, currentCheckAnswer, hasCorrectAnswerFeedback, hasResponseIssues, hasStimulusIssue, identifier, revealResponseErrors, revealStimulusErrors, saveIncorrectAnswer, setCheckAnswerResult, storeDispatch, trialValidation]);
 
   const nextButtonText = useMemo(() => config?.nextButtonText ?? studyConfig.uiConfig.nextButtonText ?? 'Next', [config, studyConfig]);
 
@@ -801,7 +808,7 @@ export function ResponseBlock({
       // The resolved route key is authoritative for legacy records that were
       // persisted without their internal identifier.
       identifier,
-      answer: getPersistedAnswersFromAllLocations(trialValidation[identifier], config.response, config.correctAnswer, currentCheckAnswer),
+      answer: getPersistedAnswersFromAllLocations(trialValidation[identifier], config.response, config.correctAnswer, currentCheckAnswer, globalStore),
       checkAnswer: currentCheckAnswer,
     };
 
@@ -917,7 +924,7 @@ export function ResponseBlock({
                           index={currentIndex}
                           config={config}
                           matrixRowFeedback={matrixRowFeedback[response.id]}
-                          disabled={disabledAttempts}
+                          disabled={disabledAttempts || !!globalStoreSubmitting}
                           isDelayedDisabled={isDelayedDisabled}
                           errors={errors}
                         />
@@ -984,7 +991,7 @@ export function ResponseBlock({
           onCheckAnswer={!isAnalysis && hasCorrectAnswerFeedback && !disabledAttempts ? checkAnswerProvideFeedback : undefined}
           checkAnswer={hasCorrectAnswerFeedback && !config.hideCheckAnswerButton ? (
             <Button
-              disabled={isAnalysis || disabledAttempts}
+              disabled={isAnalysis || disabledAttempts || !!globalStoreSubmitting}
               onClick={checkAnswerProvideFeedback}
               aria-label="Check Answer"
               rightSection={(config.nextOnEnter ?? studyConfig.uiConfig.nextOnEnter) ? <Kbd size="xs" aria-hidden="true">↵ Enter</Kbd> : undefined}

@@ -1,6 +1,7 @@
 import {
   describe, expect, test,
 } from 'vitest';
+import { createGlobalStoreSubmission } from '../../../store/globalStoreProvenance';
 import type { StudyConfig } from '../../../parser/types';
 import { Sequence, StoredAnswer } from '../../../store/types';
 import {
@@ -417,4 +418,20 @@ describe('StepsPanel skipped trial detection', () => {
 
     expect([...skippedTrialOrders]).toEqual([]);
   });
+});
+
+test('global skip display uses the committed values at each accepted submission', () => {
+  const sequence: Sequence = {
+    order: 'fixed',
+    orderPath: 'root',
+    skip: [{
+      check: 'globalVariable', variable: 'budget', comparison: 'lessThan', value: 20, to: 'target',
+    }],
+    components: ['decision', 'skipped', 'target'],
+  };
+  const answer = {
+    identifier: 'decision_0', componentName: 'decision', trialOrder: '0', answer: {}, endTime: 20, startTime: 10, timedOut: false,
+  } as StoredAnswer;
+  const { graph } = createGlobalStoreSubmission(undefined, { budget: { initialValue: 100 } }, answer, { budget: 15 }, [], {});
+  expect([...getSkippedTrialOrders(sequence, { decision_0: answer }, { components: {}, sequence } as unknown as StudyConfig, graph)]).toEqual([1]);
 });

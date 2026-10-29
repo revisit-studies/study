@@ -5,6 +5,7 @@ import { MantineProvider } from '@mantine/core';
 import {
   afterEach, describe, expect, test, vi,
 } from 'vitest';
+import { createGlobalStoreSubmission } from '../../../store/globalStoreProvenance';
 import { DownloadTidy, getTableData } from '../DownloadTidy';
 import type { StudyConfig } from '../../../parser/types';
 import type { StorageEngine } from '../../../storage/engines/types';
@@ -797,4 +798,24 @@ describe('DownloadTidy', () => {
     expect(document.body.textContent).toContain('To restore the current config, reload the study page.');
     expect(document.body.textContent).toContain('historical configs that differ from the current config must be restored from a storage snapshot or backup.');
   });
+});
+
+test('optional global-store tidy fields use the accepted active path and leave legacy rows empty', async () => {
+  const participant = makeParticipant();
+  const answer = participant.answers.testComponent_0;
+  const submission = createGlobalStoreSubmission(undefined, { budget: { initialValue: 100 } }, answer, { budget: 70 }, [{
+    variable: 'budget', operation: 'subtract', source: 'response', operand: 30,
+  }], {});
+  participant.globalStoreHead = submission.nodeId;
+  const storage = {
+    getAllConfigsFromHash: vi.fn(async () => ({ 'hash-1': configSimple })),
+    getEngine: () => 'localStorage',
+    getProvenance: vi.fn(async () => ({ globalStore: submission.graph })),
+  } as unknown as StorageEngine;
+  const properties = ['globalStoreBefore', 'globalStoreAfter', 'globalStoreOperations'] as const;
+  const data = await getTableData([...properties], [participant], storage, 'study');
+  expect(data.rows[0]).toMatchObject({ globalStoreBefore: '{"budget":100}', globalStoreAfter: '{"budget":70}' });
+  expect(JSON.parse(data.rows[0].globalStoreOperations as string)[0]).toMatchObject({ operation: 'subtract', operand: 30 });
+  const legacy = await getTableData([...properties], [makeParticipant()], storage, 'study');
+  expect(legacy.rows[0].globalStoreBefore).toBeNull();
 });

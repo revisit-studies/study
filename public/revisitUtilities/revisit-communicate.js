@@ -36,6 +36,9 @@
       fn(message);
     }
   };
+  let onGlobalStoreReceiveCallback = null;
+  let globalStoreUpdater = null;
+  let globalStore;
   const managedTrrackSubscriptions = new Set();
   const managedTrracks = new Set();
   let restoreCallback = null;
@@ -49,10 +52,10 @@
   const documentId = crypto.randomUUID?.() ?? `document-${Date.now()}-${Math.random()}`;
   let announced = null;
   const announce = () => {
-    const version = registrationStarted || registrationComplete || restoreCallback ? 1 : 0;
+    const version = registrationStarted || registrationComplete || restoreCallback || globalStoreUpdater ? 1 : 0;
     if (announced === version) return;
     announced = version;
-    sendMessage('WINDOW_READY', { protocolVersion: version, documentId });
+    sendMessage('WINDOW_READY', { protocolVersion: version, documentId, globalStoreUpdater: !!globalStoreUpdater });
   };
 
   const beginRegistration = () => {
@@ -84,8 +87,11 @@
         for (const managed of managedTrracks) {
           if (request.provenanceGraph) {
             managed.previous = request.provenanceGraph;
-            const graph = structuredClone(request.provenanceGraph);
+            const { resetToInitialState, ...graph } = structuredClone(request.provenanceGraph);
             managed.trrack.graph.update(managed.trrack.graph.load(graph));
+            if (resetToInitialState) {
+              managed.trrack.record({ label: 'Start revised trial', state: structuredClone(managed.initialState), eventType: '__revisit_trial_reset', sideEffects: { do: [], undo: [] } });
+            }
           }
         }
         await restoreCallback?.({
@@ -101,7 +107,7 @@
         if (queuedAnswers !== undefined) sendMessage('ANSWERS', queuedAnswers);
         managedTrracks.forEach((managed) => {
           // Existing graphs are already retained by the host. Only new trials need an initial graph.
-          if (!request.provenanceGraph) managed.publish();
+          if (!request.provenanceGraph || request.provenanceGraph.resetToInitialState) managed.publish();
         });
       }
     } catch {
@@ -170,10 +176,40 @@
         if (callback) callback(data.message);
         else if (registrationStarted) pendingMessages.set(tag, data.message);
       });
+      if (data.type === `${PREFIX}/GLOBAL_STORE`) {
+        globalStore = Object.freeze({ ...data.message });
+        onGlobalStoreReceiveCallback?.(globalStore);
+      }
+      if (data.type === `${PREFIX}/GLOBAL_STORE_UPDATE` && data.message?.documentId === documentId && !resume?.isAnalysis) {
+        const request = data.message;
+        Promise.resolve().then(() => {
+          if (!globalStoreUpdater) throw new Error('The global store updater is no longer registered.');
+          return globalStoreUpdater({ store: Object.freeze({ ...request.store }), answers: Object.freeze(request.answers) });
+        }).then((value) => sendMessage('GLOBAL_STORE_RESULT', { requestId: request.requestId, documentId, value }))
+          .catch((error) => sendMessage('GLOBAL_STORE_RESULT', { requestId: request.requestId, documentId, error: error.message || 'The global store updater failed.' }));
+      }
     }
   });
 
   window.Revisit = {
+    onGlobalStoreReceive: (fn) => {
+      onGlobalStoreReceiveCallback = fn;
+      if (globalStore !== undefined) fn(globalStore);
+      return () => { if (onGlobalStoreReceiveCallback === fn) onGlobalStoreReceiveCallback = null; };
+    },
+    registerGlobalStoreUpdater: (fn) => {
+      if (globalStoreUpdater) throw new Error('Only one global store updater may be registered for a stimulus.');
+      globalStoreUpdater = fn;
+      registrationComplete = true;
+      announced = null;
+      announce();
+      restore();
+      return () => {
+        if (globalStoreUpdater !== fn) return;
+        globalStoreUpdater = null;
+        sendMessage('GLOBAL_STORE_UPDATER', { documentId, enabled: false });
+      };
+    },
     postAnswers: (answers) => {
       publish("ANSWERS", answers);
     },
@@ -189,7 +225,7 @@
       }
 
       const trrack = initializeTrrack(options);
-      const managed = { trrack, previous: undefined, publish: null };
+      const managed = { trrack, initialState: structuredClone(options.initialState), previous: undefined, publish: null };
       managedTrracks.add(managed);
       const publishProvenance = () => {
         const provenance = appendTraversalEvent(

@@ -143,9 +143,26 @@ Handlebars.registerHelper(
   (index: number, responseId: string, options: Handlebars.HelperOptions) => getCorrectAnswer(resolveAbsoluteStep(index, options), responseId),
 );
 
+/** Read actual template paths, excluding quoted literals and comments. */
+export function getStoreTemplateReferences(text: string): string[] {
+  if (!text.includes('store')) return [];
+  const references = new Set<string>();
+  const visit = (node: unknown) => {
+    if (!node || typeof node !== 'object') return;
+    const expression = node as { type?: string; parts?: string[] };
+    if (expression.type === 'PathExpression' && expression.parts?.[0] === 'store' && expression.parts[1]) references.add(expression.parts.slice(1).join('.'));
+    Object.entries(node).forEach(([key, value]) => { if (key !== 'loc') visit(value); });
+  };
+  try { visit(Handlebars.parse(text)); } catch { /* Existing template compilation reports malformed syntax. */ }
+  return [...references];
+}
+
 export function compileTemplate(text: string, parameters: Record<string, unknown> = {}, options?: { noEscape?: boolean; data?: Record<string, unknown> }): string {
   try {
-    return Handlebars.compile(text, { noEscape: options?.noEscape })({ ...parameters, REVISIT: options?.data }, { data: options?.data });
+    const store = options?.data?.store as Record<string, unknown> | undefined;
+    const unknown = getStoreTemplateReferences(text).find((key) => !store || !Object.hasOwn(store, key));
+    if (unknown) throw new Error(`Unknown global store variable "${unknown}"; declare it in globalVariables.`);
+    return Handlebars.compile(text, { noEscape: options?.noEscape })({ ...parameters, store: options?.data?.store, REVISIT: options?.data }, { data: options?.data });
   } catch (e) {
     console.error('Failed to compile handlebars template', e);
     return text;

@@ -1,6 +1,7 @@
 import Ajv from 'ajv';
 import Handlebars from 'handlebars';
 import { parseDocument } from 'yaml';
+import { verifyGlobalStoreConfig } from './globalStore';
 import configSchema from './StudyConfigSchema.json';
 import globalSchema from './GlobalConfigSchema.json';
 import {
@@ -766,6 +767,7 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
   const warnings: ParsedConfig<StudyConfig>['warnings'] = [];
 
   verifyLibraryUsage(studyConfig, errors, warnings, importedLibrariesData);
+  errors.push(...verifyGlobalStoreConfig(studyConfig));
 
   Object.entries(studyConfig.baseComponents ?? {}).forEach(([componentName, component]) => {
     verifyCorrectAnswers(`/baseComponents/${componentName}`, component, errors);
@@ -861,7 +863,7 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
             category: 'invalid-config',
           });
         });
-        if (!response.visibleIf) return;
+        if (!response.visibleIf || response.visibleIf.globalVariable !== undefined) return;
         const condition = response.visibleIf;
         const controller = visibilityResponses.find((candidate) => candidate.id === response.visibleIf?.responseId);
         let message: string | undefined;

@@ -137,11 +137,15 @@ export function checkCheckboxResponseForValidation(
 }
 
 export function checkNumericalResponse(response: NumericalResponse, value: number) {
+  if ([response.min, response.max, response.strictMin, response.strictMax].some((bound) => typeof bound === 'string')) {
+    return 'The numeric constraint could not be resolved from the global store.';
+  }
   const numValue = typeof value === 'string' ? parseFloat(value) : value;
 
-  const {
-    min, max, strictMin, strictMax,
-  } = response;
+  const min = typeof response.min === 'number' ? response.min : undefined;
+  const max = typeof response.max === 'number' ? response.max : undefined;
+  const strictMin = typeof response.strictMin === 'number' ? response.strictMin : undefined;
+  const strictMax = typeof response.strictMax === 'number' ? response.strictMax : undefined;
 
   const failsStrictMin = strictMin !== undefined && numValue <= strictMin;
   const failsStrictMax = strictMax !== undefined && numValue >= strictMax;

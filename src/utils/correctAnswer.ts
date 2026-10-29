@@ -5,6 +5,9 @@ import {
 } from '../parser/types';
 import type { CheckAnswerState } from '../store/types';
 import { getCustomResponseModule, getResponseCodeModule } from '../components/response/customResponseModules';
+import { isResponseAnswered, isResponseDontKnowSelected } from './responseValue';
+
+export { isResponseAnswered, isResponseDontKnowSelected } from './responseValue';
 
 type ResponseFunctionModule = {
   default?: unknown;
@@ -30,16 +33,6 @@ export function getSavedScoresForAnswer(
 
 export function hasSavedScores(checkAnswer?: Pick<CheckAnswerState, 'scores'>) {
   return Object.keys(checkAnswer?.scores ?? {}).length > 0;
-}
-
-export function isResponseAnswered(value: unknown): boolean {
-  if (value === undefined || value === null || value === '') return false;
-  if (Array.isArray(value)) return value.length > 0 && value.some(isResponseAnswered);
-  if (typeof value === 'object') {
-    const values = Object.values(value);
-    return values.length > 0 && values.some(isResponseAnswered);
-  }
-  return true;
 }
 
 export function normalizeResponseValue(response: Response | undefined, value: unknown): unknown {
@@ -72,13 +65,6 @@ export function isResponseScorerUnavailable(response?: Response): boolean {
   return response.type === 'custom'
     ? !getCustomResponseModule(response)
     : !getResponseFunctionModule(response.path);
-}
-
-export function isResponseDontKnowSelected(response: Response | undefined, values: StoredAnswer['answer']): boolean {
-  return !!response?.withDontKnow
-    && response.type !== 'matrix-radio'
-    && response.type !== 'matrix-checkbox'
-    && !!values[`${response.id}-dontKnow`];
 }
 
 export function isResponseAnsweredForScoring(

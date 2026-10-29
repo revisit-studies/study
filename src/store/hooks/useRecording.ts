@@ -1,6 +1,7 @@
 import {
   createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState,
 } from 'react';
+import { useTrialAssetIdentifier } from './useTrialAssetIdentifier';
 import { useStudyConfig } from './useStudyConfig';
 import { useCurrentComponent, useCurrentIdentifier } from '../../routes/utils';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
@@ -73,6 +74,7 @@ export function useRecording() {
   const isMounted = useRef(true);
 
   const currentTrialName = useRef<string | null>(null);
+  const assetIdentifier = useTrialAssetIdentifier();
   const identifier = useCurrentIdentifier();
   const status = useStoredAnswer();
   const isAnalysis = useIsAnalysis();
@@ -361,7 +363,7 @@ export function useRecording() {
 
   // For study with just audio recording
   useEffect(() => {
-    if (!studyConfig || studyHasScreenRecording || studyHasWebcamRecording || !studyHasAudioRecording || !storageEngine || (status && status.endTime > 0) || isAnalysis) {
+    if (!studyConfig || studyHasScreenRecording || studyHasWebcamRecording || !studyHasAudioRecording || !storageEngine || (status && status.endTime > 0 && !studyConfig.globalVariables) || isAnalysis) {
       return;
     }
 
@@ -379,7 +381,7 @@ export function useRecording() {
 
     if (currentComponent !== 'end' && currentTrialName.current !== identifier && (currentComponentHasAudioRecording)) {
       currentTrialName.current = identifier;
-      startAudioRecording(identifier);
+      startAudioRecording(assetIdentifier);
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -387,7 +389,7 @@ export function useRecording() {
 
   // For studies with screen or webcam recording.
   useEffect(() => {
-    if (!studyConfig || !(studyHasScreenRecording || studyHasWebcamRecording) || !storageEngine || (status && status.endTime > 0) || isAnalysis) {
+    if (!studyConfig || !(studyHasScreenRecording || studyHasWebcamRecording) || !storageEngine || (status && status.endTime > 0 && !studyConfig.globalVariables) || isAnalysis) {
       return;
     }
 
@@ -398,7 +400,7 @@ export function useRecording() {
 
     if (currentComponent !== 'end' && isMediaCapturing && currentTrialName.current !== identifier && (currentComponentHasAudioRecording || currentComponentHasScreenRecording || currentComponentHasWebcamRecording)) {
       currentTrialName.current = identifier;
-      startScreenRecording(identifier);
+      startScreenRecording(assetIdentifier);
     }
 
     if (currentComponent === 'end') {

@@ -3,6 +3,7 @@ import {
   useEffect, useMemo, useState,
 } from 'react';
 import { ModuleNamespace } from 'vite/types/hot';
+import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import {
   useFlatSequence, useStoreActions, useStoreDispatch, useStoreSelector,
 } from '../store/store';
@@ -45,7 +46,9 @@ const modules = import.meta.glob(
 ) as Record<string, ModuleNamespace>;
 
 export function useCurrentComponent(): string {
+  const isAnalysis = useIsAnalysis();
   const { funcIndex } = useParams();
+  const globalVariables = useStoreSelector((state) => state.globalVariables);
   const _answers = useStoreSelector((state) => state.answers);
   const studyConfig = useStudyConfig();
   const participantSequence = useStoreSelector((state) => state.sequence);
@@ -104,6 +107,10 @@ export function useCurrentComponent(): string {
 
       if (savedComponentName) return;
 
+      if (!component && isAnalysis && studyConfig.globalVariables !== undefined) {
+        setGeneratedComponent({ name: 'Notfound', scope: generatedScope });
+        return;
+      }
       // in a func component
       if (!component && nextFunc !== null) {
         const configuredBlock = findFuncBlock(flatSequence[currentStep], studyConfig.sequence);
@@ -115,6 +122,7 @@ export function useCurrentComponent(): string {
           }
           : undefined;
         const { component: currCompName, parameters: _params, correctAnswer } = nextFunc({
+          store: Object.freeze({ ...globalVariables }),
           answers: _answers,
           customParameters,
           currentStep,
@@ -142,7 +150,7 @@ export function useCurrentComponent(): string {
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentStep, funcIndex, participantSequence, studyConfig.sequence, savedComponentName, generatedScope]);
+  }, [currentStep, funcIndex, participantSequence, studyConfig.sequence, savedComponentName, generatedScope, isAnalysis]);
 
   if (typeof currentStep === 'number' && flatSequence[currentStep] === 'end') {
     return 'end';

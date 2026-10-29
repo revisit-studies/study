@@ -9,6 +9,8 @@ import { RouteObject, useRoutes, useSearchParams } from 'react-router';
 import {
   Anchor, Button, Center, Code, LoadingOverlay, Stack, Text, Title,
 } from '@mantine/core';
+import { GLOBAL_STORE_TASK } from '../store/globalStoreProvenance';
+import { projectHistoricalGlobalStore } from '../store/globalStoreHistory';
 import {
   GlobalConfig,
   Nullable,
@@ -453,18 +455,35 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
           participantConfig,
           filteredParticipantSequence.parameters || {},
         );
+        const globalProvenance = participantSession.globalStoreHead
+          ? await storageEngine.getProvenance(GLOBAL_STORE_TASK, participantSession.participantId, true) : null;
+        let globalGraph = globalProvenance?.globalStore;
+        let projectedAnswers = participantSession.answers;
+        if (participantSession.globalStoreHead && (!globalGraph || !globalGraph.nodes[participantSession.globalStoreHead])) {
+          throw new Error('The accepted global store history could not be restored. Please reconnect and reload.');
+        }
+        if (globalGraph && participantSession.globalStoreHead) globalGraph.current = participantSession.globalStoreHead as typeof globalGraph.current;
+        const historicalNode = searchParams.has('participantId') ? searchParams.get('globalStoreNode') : null;
+        if (globalGraph && historicalNode) {
+          const historical = projectHistoricalGlobalStore(globalGraph, historicalNode, participantSession.answers);
+          globalGraph = historical.graph;
+          projectedAnswers = historical.answers;
+        }
         // Initialize the redux stores
         const newStore = await studyStoreCreator(
           canonicalStudyId,
           runtimeConfig,
           filteredParticipantSequence,
           participantSession.metadata,
-          participantSession.answers,
+          projectedAnswers,
           resolvedModes,
           participantSession.participantId,
-          false,
+          !!participantSession.finalized,
           false,
           participantSession.participantConfigHash !== activeHash,
+          undefined,
+          globalGraph,
+          participantSession.globalStoreRevision,
         );
 
         if (isCancelled) {
@@ -500,7 +519,7 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
         } else {
           storageEngine.getParticipantCompletionStatus(participantSession.participantId).then((participantCompleted) => {
             if (!isCancelled) {
-              newStore.store.dispatch(newStore.actions.setParticipantCompleted(participantCompleted));
+              newStore.store.dispatch(newStore.actions.setParticipantCompleted(participantCompleted || !!participantSession.finalized));
               setIsCompletionCheckResolved(true);
             }
           }).catch((error) => {
@@ -678,7 +697,7 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
   } else if (routing && store) {
     content = (
       <StudyStoreContext.Provider value={store}>
-        <Provider store={store.store}>{routing}</Provider>
+        <Provider key={searchParams.has('participantId') ? store.store.getState().globalStoreGraph?.current : undefined} store={store.store}>{routing}</Provider>
       </StudyStoreContext.Provider>
     );
   } else if (hasStartupPreview) {

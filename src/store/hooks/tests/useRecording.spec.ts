@@ -24,6 +24,8 @@ let mockRecordingConfig = {
   currentComponentHasClickToRecord: false,
 };
 let mockCurrentComponent = 'intro';
+let mockGlobalStoreEnabled = false;
+let mockGlobalRevision = 0;
 let mockStorageEngine: Record<string, ReturnType<typeof vi.fn>> | null = null;
 let mockStoredAnswer: { endTime: number } | null = null;
 let mockModes = { dataCollectionEnabled: true, developmentModeEnabled: false, dataSharingEnabled: false };
@@ -112,6 +114,7 @@ function renderWithMantine(ui: React.ReactElement) {
 
 vi.mock('../useStudyConfig', () => ({
   useStudyConfig: () => ({
+    globalVariables: mockGlobalStoreEnabled ? { budget: { initialValue: 100 } } : undefined,
     uiConfig: { recordScreenFPS: undefined, recordAudio: false, recordWebcam: false },
     sequence: {
       id: 'root', order: 'fixed', components: ['intro', 'end'], skip: [],
@@ -143,6 +146,7 @@ vi.mock('../useIsAnalysis', () => ({
 vi.mock('../../store', () => ({
   useStoreSelector: (selector: (s: StoreState) => unknown) => selector({
     modes: mockModes,
+    globalStoreRevision: mockGlobalRevision,
   } as StoreState),
 }));
 
@@ -159,6 +163,8 @@ beforeEach(() => {
     currentComponentHasClickToRecord: false,
   };
   mockCurrentComponent = 'intro';
+  mockGlobalStoreEnabled = false;
+  mockGlobalRevision = 0;
   mockStorageEngine = null;
   mockStoredAnswer = null;
   mockModes = { dataCollectionEnabled: true, developmentModeEnabled: false, dataSharingEnabled: false };
@@ -880,6 +886,8 @@ describe('ScreenRecordingPermission component', () => {
         parameters: undefined,
         answers: {},
         useTrrack: vi.fn(),
+        store: {},
+        registerGlobalStoreUpdater: () => () => undefined,
       } as React.ComponentProps<typeof ScreenRecordingPermission>),
     );
 
@@ -910,6 +918,8 @@ describe('ScreenRecordingPermission component', () => {
         parameters: undefined,
         answers: {},
         useTrrack: vi.fn(),
+        store: {},
+        registerGlobalStoreUpdater: () => () => undefined,
       } as React.ComponentProps<typeof ScreenRecordingPermission>),
     );
 
@@ -943,6 +953,8 @@ describe('WebcamRecordingPermission component', () => {
         parameters: undefined,
         answers: {},
         useTrrack: vi.fn(),
+        store: {},
+        registerGlobalStoreUpdater: () => () => undefined,
       } as React.ComponentProps<typeof WebcamRecordingPermission>),
     );
 
@@ -956,4 +968,17 @@ describe('WebcamRecordingPermission component', () => {
     expect(startWebcamCapture).not.toHaveBeenCalled();
     expect(stopScreenCapture).not.toHaveBeenCalled();
   });
+});
+
+test('a previously accepted global-store trial records its revision under a separate media key', async () => {
+  mockGlobalStoreEnabled = true;
+  mockGlobalRevision = 7;
+  mockStoredAnswer = { endTime: 100 };
+  mockRecordingConfig = { ...mockRecordingConfig, studyHasScreenRecording: true, currentComponentHasScreenRecording: true };
+  mockStorageEngine = { saveScreenRecording: vi.fn(async () => {}) };
+  const { result } = renderHook(() => useRecording());
+  act(() => { result.current.startScreenCapture(); });
+  await waitFor(() => expect(result.current.isScreenRecording).toBe(true));
+  act(() => { result.current.stopScreenRecording(); });
+  await waitFor(() => expect(mockStorageEngine!.saveScreenRecording).toHaveBeenCalledWith(expect.any(Blob), 'intro_0__global_7'));
 });

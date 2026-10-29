@@ -6,6 +6,8 @@ import {
   Box, Center, Loader, Text, Title,
 } from '@mantine/core';
 import { IconPlugConnectedX } from '@tabler/icons-react';
+import { resolveGlobalStoreResponses } from '../utils/globalStore';
+import { useGlobalStore } from '../store/hooks/useGlobalStore';
 import { ResponseBlock } from '../components/response/ResponseBlock';
 import { IframeController } from './IframeController';
 import { ImageController } from './ImageController';
@@ -44,6 +46,10 @@ import { getStimulusProvenanceState, getStimulusShowErrorsFromState } from '../c
 // current active stimuli presented to the user
 export function ComponentController() {
   // Get the config for the current step
+  const globalStore = useGlobalStore();
+  const completed = useStoreSelector((state) => state.completed);
+  const globalStoreSubmitting = useStoreSelector((state) => state.globalStoreSubmitting);
+  const globalStoreError = useStoreSelector((state) => state.globalStoreError);
   const studyConfig = useStudyConfig();
   const currentStep = useCurrentStep();
   const currentComponent = useCurrentComponent();
@@ -143,6 +149,7 @@ export function ComponentController() {
 
       return {
         ...toReturn,
+        response: resolveGlobalStoreResponses(toReturn.response ?? [], globalStore),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         parameters: funcParams || (toReturn as any).parameters || {},
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -150,7 +157,7 @@ export function ComponentController() {
       };
     }
     return toReturn as unknown as IndividualComponent;
-  }, [answers, currentComponent, currentIdentifier, stepConfig, studyConfig]);
+  }, [answers, currentComponent, currentIdentifier, stepConfig, studyConfig, globalStore]);
   const hasAnalysisStimulusProvenance = useMemo(
     () => analysisStimulusProvState !== undefined,
     [analysisStimulusProvState],
@@ -219,7 +226,7 @@ export function ComponentController() {
 
   // Automatically forward a user to their last completed trial if they are returning to the study
   useEffect(() => {
-    if (status && status.endTime > 0 && !isAnalysis && !modes.developmentModeEnabled && currentComponent !== 'end' && !currentComponent.startsWith('__') && typeof currentStep === 'number') {
+    if (!studyConfig.globalVariables && status && status.endTime > 0 && !isAnalysis && !modes.developmentModeEnabled && currentComponent !== 'end' && !currentComponent.startsWith('__') && typeof currentStep === 'number') {
       let lastAnsweredTrialOrder = '0';
       Object.values(answers).forEach((a) => {
         if (a.endTime > 0) {
@@ -234,13 +241,13 @@ export function ComponentController() {
         navigate(`/${studyId}/${encryptIndex(indexNumber)}${funcIndexNumber !== undefined ? `/${encryptIndex(funcIndexNumber)}` : ''}${window.location.search}`);
       }
     }
-  }, [answers, currentComponent, currentStep, funcIndex, isAnalysis, modes.developmentModeEnabled, navigate, status, studyId]);
+  }, [studyConfig.globalVariables, answers, currentComponent, currentStep, funcIndex, isAnalysis, modes.developmentModeEnabled, navigate, status, studyId]);
 
   const templateData = useMemo(
     () => ({
-      answers, flatSequence, currentStep, currentComponent, funcIndex: funcIndex ? decryptIndex(funcIndex) : undefined,
+      store: globalStore, answers, flatSequence, currentStep, currentComponent, funcIndex: funcIndex ? decryptIndex(funcIndex) : undefined,
     }),
-    [answers, flatSequence, currentStep, currentComponent, funcIndex],
+    [globalStore, answers, flatSequence, currentStep, currentComponent, funcIndex],
   );
 
   const instruction = useMemo(
@@ -250,7 +257,7 @@ export function ComponentController() {
 
   // We're not using hooks below here, so we can return early if we're at the end of the study.
   // This avoids issues with the component config being undefined for the end of the study.
-  if (currentComponent === 'end') {
+  if (currentComponent === 'end' || (completed && !isAnalysis)) {
     return <StudyEnd />;
   }
 
@@ -303,6 +310,7 @@ export function ComponentController() {
 
   return (
     <>
+      {globalStoreError && <Text role="alert" c="red">{globalStoreError}</Text>}
       {instructionLocation === 'aboveStimulus' && <ReactMarkdownWrapper text={instruction} />}
       <ResponseBlock
         key={`${currentStep}-above-response-block`}
@@ -311,6 +319,7 @@ export function ComponentController() {
         location="aboveStimulus"
       />
       <Box
+        inert={!!globalStoreSubmitting && !isAnalysis}
         id={currentComponent}
         className={`stimulus ${currentConfig.type}`}
         style={stimulusContainerStyle}

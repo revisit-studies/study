@@ -107,7 +107,7 @@ export function ThinkAloudAnalysis({ visibleParticipants, storageEngine, footerR
 
   const [editedTranscript, _setEditedTranscript] = useState<EditedText[]>([]);
 
-  const { value: rawTranscript, status: rawTranscriptStatus } = useAsync(getRawTranscript, [storageEngine, currentTrial, participantId, studyId]);
+  const { value: rawTranscript, status: rawTranscriptStatus } = useAsync(getRawTranscript, [storageEngine, participant?.answers[currentTrial]?.assetIdentifier ?? currentTrial, participantId, studyId]);
 
   const debouncedSave = useMemo(() => {
     if (storageEngine && participantId && currentTrial) {

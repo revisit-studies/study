@@ -9,10 +9,20 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
+import type { GlobalStoreUpdater } from '../../store/types';
 import { IframeController } from '../IframeController';
 import type { WebsiteComponent } from '../../parser/types';
 import { ReplayContext } from '../../store/hooks/useReplay';
 import { getStaticAssetByPath } from '../../utils/getStaticAsset';
+
+const mockStoreUpdater = vi.hoisted(() => ({ current: undefined as GlobalStoreUpdater | undefined }));
+vi.mock('../../store/hooks/useGlobalStore', () => ({
+  useGlobalStore: () => ({}),
+  useGlobalStoreUpdaterRegistration: () => (updater: GlobalStoreUpdater) => {
+    mockStoreUpdater.current = updater;
+    return () => { if (mockStoreUpdater.current === updater) mockStoreUpdater.current = undefined; };
+  },
+}));
 
 vi.mock('../../components/interface/RestorationWarning', () => ({ RestorationWarning: () => null }));
 
@@ -77,6 +87,7 @@ describe('IframeController', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockRetained.graph = undefined;
+    mockStoreUpdater.current = undefined;
     vi.mocked(getStaticAssetByPath).mockResolvedValue('<html></html>');
     mockIsAnalysis.value = false;
     mockCurrentComponent.value = 'countDots';
@@ -138,6 +149,31 @@ describe('IframeController', () => {
     expect(container.querySelector('output')?.textContent).toBe('1,2,3');
     expect(mockUpdateProvenance).not.toHaveBeenCalled();
     expect(mockSetReactiveAnswers).not.toHaveBeenCalled();
+  });
+
+  test('late updater registration and re-registration do not restart a completed document restoration', () => {
+    const { container } = render(<IframeController currentConfig={{ ...websiteConfig, path: 'purchase.html' }} answers={{}} />);
+    const iframe = container.querySelector('iframe')!;
+    const postMessage = vi.spyOn(iframe.contentWindow!, 'postMessage');
+    const receive = (type: string, message: object) => act(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        source: iframe.contentWindow,
+        data: { type: `@REVISIT_COMMS/${type}`, iframeId: new URL(iframe.src).searchParams.get('id'), message },
+      }));
+    });
+    receive('WINDOW_READY', { protocolVersion: 1, documentId: 'document' });
+    const request = postMessage.mock.calls.map(([data]) => data).find((data) => data.type === '@REVISIT_COMMS/RESUME').message;
+    receive('RESTORED', { protocolVersion: 1, requestId: request.requestId });
+    expect(iframe.hasAttribute('inert')).toBe(false);
+    receive('WINDOW_READY', { protocolVersion: 1, documentId: 'document', globalStoreUpdater: true });
+    expect(mockStoreUpdater.current).toBeDefined();
+    expect(iframe.hasAttribute('inert')).toBe(false);
+    receive('GLOBAL_STORE_UPDATER', { documentId: 'document', enabled: false });
+    expect(mockStoreUpdater.current).toBeUndefined();
+    receive('WINDOW_READY', { protocolVersion: 1, documentId: 'document', globalStoreUpdater: true });
+    expect(mockStoreUpdater.current).toBeDefined();
+    expect(iframe.hasAttribute('inert')).toBe(false);
+    expect(postMessage.mock.calls.filter(([data]) => data.type === '@REVISIT_COMMS/RESUME')).toHaveLength(1);
   });
 
   test('rejects a fresh legacy graph while a revisited website is still registering', () => {
@@ -581,4 +617,32 @@ describe('IframeController', () => {
       expect(getStaticAssetByPath).toHaveBeenCalledTimes(1);
     });
   });
+});
+
+test('website updater replies must match the active window, document, and request, and unmount removes registration', async () => {
+  const { container, unmount } = render(<IframeController currentConfig={{ type: 'website', path: 'purchase.html', response: [] }} answers={{}} />);
+  const iframe = container.querySelector('iframe')!;
+  const postMessage = vi.spyOn(iframe.contentWindow!, 'postMessage');
+  const receive = (type: string, message: object, source: MessageEventSource | null = iframe.contentWindow) => act(() => {
+    window.dispatchEvent(new MessageEvent('message', {
+      source,
+      data: {
+        type: `@REVISIT_COMMS/${type}`, iframeId: new URL(iframe.src).searchParams.get('id'), message,
+      },
+    }));
+  });
+  receive('WINDOW_READY', { protocolVersion: 1, documentId: 'document', globalStoreUpdater: true });
+  const result = Promise.resolve(mockStoreUpdater.current!({ store: { budget: 100 }, answers: { cost: 20 } }));
+  const request = postMessage.mock.calls.map(([data]) => data).find((data) => data.type === '@REVISIT_COMMS/GLOBAL_STORE_UPDATE').message;
+  let resolved = false;
+  result.then(() => { resolved = true; });
+  receive('GLOBAL_STORE_RESULT', { ...request, documentId: 'old-document', value: { budget: 1 } });
+  receive('GLOBAL_STORE_RESULT', { ...request, value: { budget: 2 } }, window);
+  receive('GLOBAL_STORE_RESULT', { ...request, requestId: 'old-request', value: { budget: 3 } });
+  await Promise.resolve();
+  expect(resolved).toBe(false);
+  receive('GLOBAL_STORE_RESULT', { ...request, value: { budget: 80 } });
+  await expect(result).resolves.toEqual({ budget: 80 });
+  unmount();
+  expect(mockStoreUpdater.current).toBeUndefined();
 });

@@ -138,3 +138,13 @@ describe('addPathToComponentBlock', () => {
     expect(result).toHaveProperty('orderPath', 'dyn-path');
   });
 });
+
+test('dynamic blocks occupy one outer slot for skip scopes and targets', () => {
+  const dynamic = seq([], { order: 'dynamic', id: 'dynamic', orderPath: 'root-1' });
+  const decision = seq(['decision'], { id: 'decision-block', orderPath: 'root-2' });
+  const target = seq(['target'], { id: 'target-block', orderPath: 'root-3' });
+  const root = seq(['intro', dynamic, decision, target]);
+  expect(getSequenceFlatMap(root)).toEqual(['intro', 'dynamic', 'decision', 'target']);
+  expect(findBlockForStep(root, 2)?.[0].currentBlock.id).toBe('decision-block');
+  expect(findIndexOfBlock(root, 'target-block')).toBe(3);
+});

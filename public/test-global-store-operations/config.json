@@ -1,0 +1,395 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Global Store: Primitive Operations",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2026-10-22",
+    "description": "Regression study for config-declared participant global stores.",
+    "organizations": [
+      "The reVISit Team"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "withSidebar": false,
+    "withProgressBar": true,
+    "nextOnEnter": true,
+    "autoDownloadStudy": false,
+    "studyEndMsg": "Global store study complete.",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "helpTextPath": ""
+  },
+  "globalVariables": {
+    "numberSet": {
+      "initialValue": 12
+    },
+    "numberAdd": {
+      "initialValue": 12
+    },
+    "numberSubtract": {
+      "initialValue": 12
+    },
+    "numberMultiply": {
+      "initialValue": 12
+    },
+    "numberDivide": {
+      "initialValue": 12
+    },
+    "stringSet": {
+      "initialValue": "mid"
+    },
+    "stringAppend": {
+      "initialValue": "mid"
+    },
+    "stringPrepend": {
+      "initialValue": "mid"
+    },
+    "booleanSet": {
+      "initialValue": true
+    },
+    "booleanAnd": {
+      "initialValue": true
+    },
+    "booleanOr": {
+      "initialValue": true
+    },
+    "booleanToggle": {
+      "initialValue": true
+    },
+    "budget": {
+      "initialValue": 100,
+      "min": 0
+    },
+    "orderedNumber": {
+      "initialValue": 10
+    }
+  },
+  "components": {
+    "operations": {
+      "type": "questionnaire",
+      "instruction": "# Primitive operations\n\nEntry budget: {{store.budget}}",
+      "instructionLocation": "aboveStimulus",
+      "previousButton": true,
+      "response": [
+        {
+          "id": "numberSet",
+          "type": "numerical",
+          "prompt": "numberSet",
+          "default": 3,
+          "onSubmit": [
+            {
+              "variable": "numberSet",
+              "operation": "set"
+            }
+          ]
+        },
+        {
+          "id": "numberAdd",
+          "type": "numerical",
+          "prompt": "numberAdd",
+          "default": 3,
+          "onSubmit": [
+            {
+              "variable": "numberAdd",
+              "operation": "add"
+            }
+          ]
+        },
+        {
+          "id": "numberSubtract",
+          "type": "numerical",
+          "prompt": "numberSubtract",
+          "default": 3,
+          "onSubmit": [
+            {
+              "variable": "numberSubtract",
+              "operation": "subtract"
+            }
+          ]
+        },
+        {
+          "id": "numberMultiply",
+          "type": "numerical",
+          "prompt": "numberMultiply",
+          "default": 3,
+          "onSubmit": [
+            {
+              "variable": "numberMultiply",
+              "operation": "multiply"
+            }
+          ]
+        },
+        {
+          "id": "numberDivide",
+          "type": "numerical",
+          "prompt": "numberDivide",
+          "default": 3,
+          "onSubmit": [
+            {
+              "variable": "numberDivide",
+              "operation": "divide"
+            }
+          ]
+        },
+        {
+          "id": "stringSet",
+          "type": "shortText",
+          "prompt": "stringSet",
+          "default": "X",
+          "onSubmit": [
+            {
+              "variable": "stringSet",
+              "operation": "set"
+            }
+          ]
+        },
+        {
+          "id": "stringAppend",
+          "type": "shortText",
+          "prompt": "stringAppend",
+          "default": "X",
+          "onSubmit": [
+            {
+              "variable": "stringAppend",
+              "operation": "append"
+            }
+          ]
+        },
+        {
+          "id": "stringPrepend",
+          "type": "shortText",
+          "prompt": "stringPrepend",
+          "default": "X",
+          "onSubmit": [
+            {
+              "variable": "stringPrepend",
+              "operation": "prepend"
+            }
+          ]
+        },
+        {
+          "id": "booleanSet",
+          "type": "custom",
+          "prompt": "booleanSet",
+          "default": false,
+          "onSubmit": [
+            {
+              "variable": "booleanSet",
+              "operation": "set"
+            }
+          ],
+          "path": "test-global-store/assets/BooleanResponse.tsx"
+        },
+        {
+          "id": "booleanAnd",
+          "type": "custom",
+          "prompt": "booleanAnd",
+          "default": false,
+          "onSubmit": [
+            {
+              "variable": "booleanAnd",
+              "operation": "and"
+            }
+          ],
+          "path": "test-global-store/assets/BooleanResponse.tsx"
+        },
+        {
+          "id": "booleanOr",
+          "type": "custom",
+          "prompt": "booleanOr",
+          "default": false,
+          "onSubmit": [
+            {
+              "variable": "booleanOr",
+              "operation": "or"
+            }
+          ],
+          "path": "test-global-store/assets/BooleanResponse.tsx"
+        },
+        {
+          "id": "booleanToggle",
+          "type": "custom",
+          "prompt": "booleanToggle",
+          "default": false,
+          "onSubmit": [
+            {
+              "variable": "booleanToggle",
+              "operation": "toggle"
+            }
+          ],
+          "path": "test-global-store/assets/BooleanResponse.tsx"
+        },
+        {
+          "id": "optionalCost",
+          "type": "numerical",
+          "prompt": "Optional cost",
+          "location": "belowStimulus",
+          "min": 0,
+          "max": "{{store.budget}}",
+          "onSubmit": [
+            {
+              "variable": "budget",
+              "operation": "subtract"
+            }
+          ],
+          "required": false
+        },
+        {
+          "id": "showCost",
+          "type": "radio",
+          "prompt": "Show conditional cost",
+          "options": [
+            "Show",
+            "Hide"
+          ],
+          "default": "Hide"
+        },
+        {
+          "id": "conditionalCost",
+          "type": "numerical",
+          "prompt": "Conditional cost",
+          "location": "belowStimulus",
+          "min": 0,
+          "max": "{{store.budget}}",
+          "onSubmit": [
+            {
+              "variable": "budget",
+              "operation": "subtract"
+            }
+          ],
+          "default": 5,
+          "visibleIf": {
+            "responseId": "showCost",
+            "comparison": "equals",
+            "value": "Show"
+          }
+        },
+        {
+          "id": "dontKnowCost",
+          "type": "numerical",
+          "prompt": "Unknown cost",
+          "location": "belowStimulus",
+          "min": 0,
+          "max": "{{store.budget}}",
+          "onSubmit": [
+            {
+              "variable": "budget",
+              "operation": "subtract"
+            }
+          ],
+          "withDontKnow": true,
+          "required": false
+        },
+        {
+          "id": "orderAdd",
+          "type": "numerical",
+          "prompt": "Order add",
+          "default": 2,
+          "location": "aboveStimulus",
+          "onSubmit": [
+            {
+              "variable": "orderedNumber",
+              "operation": "add"
+            }
+          ]
+        },
+        {
+          "id": "orderMultiply",
+          "type": "numerical",
+          "prompt": "Order multiply",
+          "default": 3,
+          "onSubmit": [
+            {
+              "variable": "orderedNumber",
+              "operation": "multiply"
+            }
+          ]
+        }
+      ],
+      "responseOrder": "random"
+    },
+    "results": {
+      "type": "questionnaire",
+      "instruction": "# Operation results\n\nEntry budget: {{store.budget}}",
+      "instructionLocation": "aboveStimulus",
+      "previousButton": true,
+      "response": [
+        {
+          "id": "numberSetSummary",
+          "type": "textOnly",
+          "prompt": "numberSet: {{store.numberSet}}"
+        },
+        {
+          "id": "numberAddSummary",
+          "type": "textOnly",
+          "prompt": "numberAdd: {{store.numberAdd}}"
+        },
+        {
+          "id": "numberSubtractSummary",
+          "type": "textOnly",
+          "prompt": "numberSubtract: {{store.numberSubtract}}"
+        },
+        {
+          "id": "numberMultiplySummary",
+          "type": "textOnly",
+          "prompt": "numberMultiply: {{store.numberMultiply}}"
+        },
+        {
+          "id": "numberDivideSummary",
+          "type": "textOnly",
+          "prompt": "numberDivide: {{store.numberDivide}}"
+        },
+        {
+          "id": "stringSetSummary",
+          "type": "textOnly",
+          "prompt": "stringSet: {{store.stringSet}}"
+        },
+        {
+          "id": "stringAppendSummary",
+          "type": "textOnly",
+          "prompt": "stringAppend: {{store.stringAppend}}"
+        },
+        {
+          "id": "stringPrependSummary",
+          "type": "textOnly",
+          "prompt": "stringPrepend: {{store.stringPrepend}}"
+        },
+        {
+          "id": "booleanSetSummary",
+          "type": "textOnly",
+          "prompt": "booleanSet: {{store.booleanSet}}"
+        },
+        {
+          "id": "booleanAndSummary",
+          "type": "textOnly",
+          "prompt": "booleanAnd: {{store.booleanAnd}}"
+        },
+        {
+          "id": "booleanOrSummary",
+          "type": "textOnly",
+          "prompt": "booleanOr: {{store.booleanOr}}"
+        },
+        {
+          "id": "booleanToggleSummary",
+          "type": "textOnly",
+          "prompt": "booleanToggle: {{store.booleanToggle}}"
+        },
+        {
+          "id": "orderedSummary",
+          "type": "textOnly",
+          "prompt": "orderedNumber: {{store.orderedNumber}}"
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "operations",
+      "results"
+    ]
+  }
+}

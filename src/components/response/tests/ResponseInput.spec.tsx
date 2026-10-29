@@ -1766,3 +1766,5 @@ describe('ResponseSwitcher', () => {
     expect(html).toContain('I don&#x27;t know');
   });
 });
+
+vi.mock('../../../store/hooks/useGlobalStore', () => ({ useGlobalStore: () => ({}) }));

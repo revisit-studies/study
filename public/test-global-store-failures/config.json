@@ -1,0 +1,113 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Global Store: Async and Timeout",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2026-10-22",
+    "description": "Regression study for config-declared participant global stores.",
+    "organizations": [
+      "The reVISit Team"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "withSidebar": false,
+    "withProgressBar": true,
+    "nextOnEnter": true,
+    "autoDownloadStudy": false,
+    "studyEndMsg": "Global store study complete.",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "helpTextPath": ""
+  },
+  "globalVariables": {
+    "budget": {
+      "initialValue": 100,
+      "min": 0
+    }
+  },
+  "components": {
+    "updater": {
+      "type": "react-component",
+      "instruction": "# Updater failures\n\nEntry budget: {{store.budget}}",
+      "instructionLocation": "aboveStimulus",
+      "previousButton": true,
+      "response": [
+        {
+          "id": "confidence",
+          "type": "numerical",
+          "prompt": "Confidence",
+          "min": 0,
+          "max": 100
+        },
+        {
+          "id": "conflictingCost",
+          "type": "numerical",
+          "prompt": "Conflicting cost",
+          "required": false,
+          "min": 0,
+          "onSubmit": [
+            {
+              "variable": "budget",
+              "operation": "subtract"
+            }
+          ]
+        }
+      ],
+      "path": "test-global-store/assets/Purchase.tsx",
+      "parameters": {
+        "faultControls": true,
+        "delayMs": 250
+      }
+    },
+    "afterUpdater": {
+      "type": "questionnaire",
+      "instruction": "# After updater\n\nEntry budget: {{store.budget}}",
+      "instructionLocation": "aboveStimulus",
+      "previousButton": true,
+      "response": []
+    },
+    "timeout": {
+      "type": "questionnaire",
+      "instruction": "# Timeout purchase\n\nEntry budget: {{store.budget}}",
+      "instructionLocation": "aboveStimulus",
+      "previousButton": true,
+      "response": [
+        {
+          "id": "timedCost",
+          "type": "numerical",
+          "prompt": "Timed cost",
+          "location": "belowStimulus",
+          "min": 0,
+          "max": "{{store.budget}}",
+          "onSubmit": [
+            {
+              "variable": "budget",
+              "operation": "subtract"
+            }
+          ],
+          "default": 25
+        }
+      ],
+      "nextButtonAutoAdvanceTime": 1500
+    },
+    "afterTimeout": {
+      "type": "questionnaire",
+      "instruction": "# After timeout\n\nEntry budget: {{store.budget}}",
+      "instructionLocation": "aboveStimulus",
+      "previousButton": true,
+      "response": []
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "updater",
+      "afterUpdater",
+      "timeout",
+      "afterTimeout"
+    ]
+  }
+}

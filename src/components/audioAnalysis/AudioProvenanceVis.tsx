@@ -19,15 +19,15 @@ import { TaskProvenanceTimeline } from './TaskProvenanceTimeline';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import { Timer } from './Timer';
 import { youtubeReadableDuration } from '../../utils/humanReadableDuration';
-import { ResponseBlockLocation, StoredAnswer } from '../../parser/types';
+import { StoredAnswer } from '../../parser/types';
 import { useEvent } from '../../store/hooks/useEvent';
 import { encryptIndex } from '../../utils/encryptDecryptIndex';
 import { parseTrialOrder } from '../../utils/parseTrialOrder';
 import { useUpdateProvenance } from './useUpdateProvenance';
 import { useReplayContext } from '../../store/hooks/useReplay';
 import { syncChannel, syncEmitter } from '../../utils/syncReplay';
-import type { StoredProvenance } from '../../store/types';
-import { getLegacyStoredAnswerProvenance } from '../../store/provenance';
+import type { ProvenanceLocation, StoredProvenance } from '../../store/types';
+import { getCombinedProvenance, getLegacyStoredAnswerProvenance } from '../../store/provenance';
 import { getReplaySelection } from './provenanceReplay';
 
 const margin = {
@@ -82,14 +82,16 @@ export function AudioProvenanceVis({
   const [ref, { width }] = useResizeObserver();
   const [waveSurferWidth, setWaveSurferWidth] = useState<number>(0);
 
+  const assetIdentifier = answers[taskName]?.assetIdentifier ?? taskName;
   const startTime = useMemo(() => answers[taskName]?.startTime || 0, [answers, taskName]);
 
   const [currentNode, setCurrentNode] = useState<string | null>(null);
-  const [currentResponseNodes, setCurrentResponseNodes] = useState<Record<ResponseBlockLocation, string | undefined>>({
+  const [currentResponseNodes, setCurrentResponseNodes] = useState<Record<ProvenanceLocation, string | undefined>>({
     aboveStimulus: undefined,
     belowStimulus: undefined,
     sidebar: undefined,
     stimulus: undefined,
+    globalStore: undefined,
   });
   const [currentGlobalNode, setCurrentGlobalNode] = useState<{name: string, time: number} | null>(null);
 
@@ -125,7 +127,7 @@ export function AudioProvenanceVis({
       }
 
       try {
-        const storedProvenance = await storageEngine.getProvenance(taskName, participantId);
+        const storedProvenance = await getCombinedProvenance(storageEngine, taskName, participantId);
         if (!canceled) {
           setStoredProvenanceGraph(storedProvenance ?? legacyProvenanceGraph);
         }
@@ -143,7 +145,7 @@ export function AudioProvenanceVis({
     };
   }, [legacyProvenanceGraph, participantId, storageEngine, taskName]);
 
-  const _setCurrentResponseNodes = useEvent((node: string | null, location: ResponseBlockLocation, createdOn?: number) => {
+  const _setCurrentResponseNodes = useEvent((node: string | null, location: ProvenanceLocation, createdOn?: number) => {
     const graph = provenanceGraph?.[location];
     if (graph && node) {
       const replayEventTime = createdOn ?? graph.nodes[node].createdOn;
@@ -231,6 +233,8 @@ export function AudioProvenanceVis({
   useUpdateProvenance('aboveStimulus', playTime, provenanceGraph?.aboveStimulus, currentResponseNodes.aboveStimulus, _setCurrentResponseNodes, saveProvenance);
 
   useUpdateProvenance('belowStimulus', playTime, provenanceGraph?.belowStimulus, currentResponseNodes.belowStimulus, _setCurrentResponseNodes, saveProvenance);
+
+  useUpdateProvenance('globalStore', playTime, provenanceGraph?.globalStore, currentResponseNodes.globalStore, _setCurrentResponseNodes, saveProvenance);
 
   useUpdateProvenance('sidebar', playTime, provenanceGraph?.sidebar, currentResponseNodes.sidebar, _setCurrentResponseNodes, saveProvenance);
 
@@ -332,8 +336,8 @@ export function AudioProvenanceVis({
           }
 
           const [audioUrl, screenUrl] = await Promise.all([
-            safe(storageEngine.getAudio(taskName, participantId)),
-            safe(storageEngine.getScreenRecording(taskName, participantId)),
+            safe(storageEngine.getAudio(assetIdentifier, participantId)),
+            safe(storageEngine.getScreenRecording(assetIdentifier, participantId)),
           ]);
           const loadedUrls = [audioUrl, screenUrl]
             .filter((url): url is string => !!url && url.startsWith('blob:'));
