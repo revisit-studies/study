@@ -33,13 +33,12 @@ jobs:
       - name: Build main deployment
         run: |
           if [ "$GITHUB_REPOSITORY" = "revisit-studies/study" ]; then
-            VITE_STORAGE_ENGINE=firebase yarn build
+            VITE_STORAGE_ENGINE=firebase VITE_REPO_URL=https://github.com/revisit-studies/study/tree/main/public/ yarn build
           else
             yarn build
           fi
         env:
           VITE_BASE_PATH: "/${{ github.event.repository.name }}/"
-          VITE_REPO_URL: "https://github.com/revisit-studies/study/tree/main/public/"
 
       - uses: actions/checkout@v7
         with:
@@ -80,13 +79,12 @@ jobs:
       - name: Build dev deployment
         run: |
           if [ "$GITHUB_REPOSITORY" = "revisit-studies/study" ]; then
-            VITE_STORAGE_ENGINE=firebase yarn build
+            VITE_STORAGE_ENGINE=firebase VITE_REPO_URL=https://github.com/revisit-studies/study/tree/dev/public/ yarn build
           else
             yarn build
           fi
         env:
           VITE_BASE_PATH: "/${{ github.event.repository.name }}/dev/"
-          VITE_REPO_URL: "https://github.com/revisit-studies/study/tree/dev/public/"
 
       - uses: actions/checkout@v7
         with:
