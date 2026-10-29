@@ -39,6 +39,7 @@ jobs:
           fi
         env:
           VITE_BASE_PATH: "/${{ github.event.repository.name }}/"
+          VITE_REPO_URL: "https://github.com/revisit-studies/study/tree/main/public/"
 
       - uses: actions/checkout@v7
         with:
@@ -54,6 +55,7 @@ jobs:
         run: yarn build
         env:
           VITE_BASE_PATH: "/${{ github.event.repository.name }}/supabase/"
+          VITE_REPO_URL: "https://github.com/revisit-studies/study/tree/main/public/"
           VITE_STORAGE_ENGINE: supabase
 
       - name: Deploy current-only main Supabase snapshot
@@ -84,6 +86,7 @@ jobs:
           fi
         env:
           VITE_BASE_PATH: "/${{ github.event.repository.name }}/dev/"
+          VITE_REPO_URL: "https://github.com/revisit-studies/study/tree/dev/public/"
 
       - uses: actions/checkout@v7
         with:
@@ -99,6 +102,7 @@ jobs:
         run: yarn build
         env:
           VITE_BASE_PATH: "/${{ github.event.repository.name }}/dev-supabase/"
+          VITE_REPO_URL: "https://github.com/revisit-studies/study/tree/dev/public/"
           VITE_STORAGE_ENGINE: supabase
 
       - name: Deploy current-only dev Supabase snapshot

@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { render } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
-  describe, expect, test, vi,
+  afterEach, describe, expect, test, vi,
 } from 'vitest';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 
@@ -37,6 +37,8 @@ vi.mock('@mantine/core', () => ({
 }));
 
 vi.mock('../../utils/Prefix', () => ({ PREFIX: '/' }));
+
+afterEach(() => vi.unstubAllEnvs());
 
 describe('ReactMarkdownWrapper', () => {
   test('renders nothing when text is empty', () => {
@@ -78,6 +80,16 @@ describe('ReactMarkdownWrapper', () => {
     const anchor = container.querySelector('a');
     expect(anchor).not.toBeNull();
     expect(anchor?.href).toContain('example.com');
+  });
+
+  test.each([
+    ['dev', 'main'],
+    ['main', 'dev'],
+  ])('points introduction source links to the deployed %s branch', (branch, originalBranch) => {
+    vi.stubEnv('VITE_REPO_URL', `https://github.com/revisit-studies/study/tree/${branch}/public/`);
+    const { container } = render(<ReactMarkdownWrapper text={`[Config](https://github.com/revisit-studies/study/blob/${originalBranch}/public/demo-codemirror/config.json)`} />);
+
+    expect(container.querySelector('a')?.href).toBe(`https://github.com/revisit-studies/study/blob/${branch}/public/demo-codemirror/config.json`);
   });
 
   test('renders code blocks', () => {
