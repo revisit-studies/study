@@ -29,7 +29,8 @@ vi.mock('@supabase/supabase-js', () => {
     if (col.includes('->')) {
       const arrowIdx = col.indexOf('->');
       const parent = col.slice(0, arrowIdx);
-      const child = col.slice(arrowIdx + 2);
+      // `data->>field` extracts the field as text, so drop the extra '>'.
+      const child = col.slice(arrowIdx + 2).replace(/^>/, '');
       const parentVal = obj[parent];
       return parentVal && typeof parentVal === 'object'
         ? (parentVal as RowData)[child]
@@ -40,11 +41,15 @@ vi.mock('@supabase/supabase-js', () => {
 
   function applyFilters(
     rows: Array<RowData>,
-    filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'like' | 'not' | 'lt' }>,
+    filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'neq' | 'is' | 'like' | 'not' | 'lt' }>,
   ): Array<RowData> {
     return rows.filter((row) => filters.every(({ col, val, type }) => {
       const colVal = getFieldValue(row, col);
-      if (type === 'eq') return colVal === val;
+      // PostgREST compares filter values as text, so `data->>rejected` matches
+      // the string 'false' rather than the boolean.
+      if (type === 'eq') return String(colVal) === String(val);
+      if (type === 'neq') return String(colVal) !== String(val);
+      if (type === 'is') return (colVal ?? null) === val;
       if (type === 'not') return colVal !== null && colVal !== undefined;
       if (type === 'lt') return colVal !== undefined && colVal !== null && colVal < val!;
       return typeof colVal === 'string' && matchLike(colVal, String(val));
@@ -52,9 +57,9 @@ vi.mock('@supabase/supabase-js', () => {
   }
 
   function makeQueryBuilder(getRows: () => Array<RowData>) {
-    let op: 'select' | 'insert' | 'upsert' | 'update' | 'delete' | null = null;
+    let op: 'select' | 'upsert' | 'insert' | 'update' | 'delete' | null = null;
     let payload: RowData | RowData[] | Partial<RowData> | null = null;
-    const filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'like' | 'not' | 'lt' }> = [];
+    const filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'neq' | 'is' | 'like' | 'not' | 'lt' }> = [];
     let isSingle = false;
     let isMaybeSingle = false;
     let requestedCount = false;
@@ -62,18 +67,15 @@ vi.mock('@supabase/supabase-js', () => {
     let resultLimit: number | undefined;
 
     const qb = {
-      select(_fields?: string, options?: { count?: string; head?: boolean }) {
-        if (op === null) op = 'select';
-        requestedCount = options?.count === 'exact';
-        headOnly = options?.head === true;
-        return qb;
-      },
-      insert(row: RowData | RowData[]) { op = 'insert'; payload = row; return qb; },
+      select(_fields?: string, opts?: { count?: string; head?: boolean }) { if (op === null) op = 'select'; requestedCount = opts?.count === 'exact'; headOnly = opts?.head === true; return qb; },
       upsert(row: RowData | RowData[]) { op = 'upsert'; payload = row; return qb; },
+      insert(row: RowData | RowData[]) { op = 'insert'; payload = row; return qb; },
       update(obj: Partial<RowData>) { op = 'update'; payload = obj; return qb; },
       delete() { op = 'delete'; return qb; },
       eq(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'eq' }); return qb; },
-      lt(col: string, val: string | number) { filters.push({ col, val, type: 'lt' }); return qb; },
+      lt(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'lt' }); return qb; },
+      neq(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'neq' }); return qb; },
+      is(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'is' }); return qb; },
       like(col: string, val: string) { filters.push({ col, val, type: 'like' }); return qb; },
       not(col: string, _operator: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'not' }); return qb; },
       order(_col: string, _options?: { ascending?: boolean }) { return qb; },
@@ -113,7 +115,7 @@ vi.mock('@supabase/supabase-js', () => {
             } else {
               resolve({ data: JSON.parse(JSON.stringify(matched)), error: null, count });
             }
-          } else if (op === 'insert' || op === 'upsert') {
+          } else if (op === 'upsert') {
             const toUpsert = (Array.isArray(payload)
               ? payload
               : [payload]) as Array<RowData>;
@@ -134,6 +136,26 @@ vi.mock('@supabase/supabase-js', () => {
               }
             });
             resolve({ data: toUpsert, error: null });
+          } else if (op === 'insert') {
+            const toInsert = (Array.isArray(payload) ? payload : [payload]) as Array<RowData>;
+            const conflict = toInsert.find((row) => rows.some(
+              (existing) => existing.studyId === row.studyId && existing.docId === row.docId,
+            ));
+            if (conflict) {
+              resolve({ data: null, error: { message: 'duplicate key value', code: '23505' } });
+              return;
+            }
+            const inserted = toInsert.map((row) => ({
+              ...row,
+              createdAt: (row.createdAt as string | undefined) ?? new Date().toISOString(),
+            }));
+            rows.push(...inserted);
+            resolve({
+              data: isSingle
+                ? JSON.parse(JSON.stringify(inserted[0]))
+                : JSON.parse(JSON.stringify(inserted)),
+              error: null,
+            });
           } else if (op === 'update') {
             const matched = applyFilters(rows, filters);
             matched.forEach((row) => Object.assign(row, payload as RowData));
@@ -172,7 +194,7 @@ vi.mock('@supabase/supabase-js', () => {
             if (path in storageFiles) {
               return { data: storageFiles[path], error: null };
             }
-            return { data: null, error: { message: 'Object not found' } };
+            return { data: null, error: { message: 'Object not found', status: 400, statusCode: '404' } };
           },
           upload: async (path: string, data: Blob | Buffer | string | object, _opts?: object) => {
             let text: string;
@@ -385,6 +407,19 @@ describe.each([
     expect(updatedModes.dataSharingEnabled).toBe(false);
     expect(updatedModes.dataCollectionEnabled).toBe(false);
     expect(updatedModes.developmentModeEnabled).toBe(true);
+  });
+
+  test('keeps both a mode change and a stage edit that overlap', async () => {
+    await storageEngine.setCurrentStage(studyId, 'Pilot');
+
+    await Promise.all([
+      storageEngine.updateStage(studyId, 'Pilot', { maxParticipants: 7 }),
+      storageEngine.setMode(studyId, 'dataCollectionEnabled', false),
+    ]);
+
+    expect((await storageEngine.getModes(studyId)).dataCollectionEnabled).toBe(false);
+    expect((await storageEngine.getStageData(studyId)).allStages)
+      .toContainEqual(expect.objectContaining({ stageName: 'Pilot', maxParticipants: 7 }));
   });
 
   test('stores a study-scoped disconnect setting after administrator verification', async () => {

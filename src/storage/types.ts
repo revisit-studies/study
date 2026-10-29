@@ -75,4 +75,6 @@ export interface ParticipantData {
 export interface ParticipantDataWithStatus extends ParticipantData {
   /** Whether the participant has completed the study. Derived from sequence assignment status. */
   completed: boolean;
+  /** Assignment registration time in epoch milliseconds; server-generated for cloud engines. */
+  assignmentCreatedTime?: number;
 }

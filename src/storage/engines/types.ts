@@ -1,7 +1,9 @@
 import localforage from 'localforage';
 import throttle from 'lodash.throttle';
 import { v4 as uuidv4 } from 'uuid';
+import { resolveBetweenSubjectsFactorLevels } from '../../parser/libraryParser';
 import { StudyConfig } from '../../parser/types';
+import { DISTINCT_COLOR_PALETTE } from '../../utils/colors';
 import { ParticipantMetadata, Sequence, StoredProvenance } from '../../store/types';
 import { ParticipantData, ParticipantDataWithStatus } from '../types';
 import { hash, isParticipantData } from './utils/storageEngineHelpers';
@@ -11,14 +13,9 @@ import { parseConditionParam } from '../../utils/handleConditionLogic';
 import {
   ParticipantTags, Tag, TaglessEditedText, TranscribedAudio,
 } from '../../analysis/individualStudy/thinkAloud/types';
-import {
-  normalizeStoredProvenance,
-  splitProvenanceFromAnswers,
-} from '../../store/provenance';
-import {
-  SnapshotParticipantCounts,
-  calculateSnapshotParticipantCounts,
-} from './utils/snapshotParticipantCounts';
+import { normalizeStoredProvenance, splitProvenanceFromAnswers } from '../../store/provenance';
+import { SnapshotParticipantCounts, calculateSnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
+import { getStageCombinationTargets } from './utils/stageAllocation';
 
 export interface StoredUser {
   email: string | null,
@@ -45,20 +42,12 @@ export type SequenceAssignment = {
   isDynamic: boolean; // Whether the study contains dynamic blocks
   stage: string; // The stage of the participant in the study
   conditions?: string[]; // The study condition(s) assigned to this participant.
-  sequenceIndex?: number; // Stable zero-based Latin-square slot for bounded assignment lookup.
-  reusableSequenceIndex?: number; // New vacancy created when a participant rejects a previously reused slot.
+  betweenSubjectsCombinationKey?: string; // The between-subjects combination assigned to this participant.
   creationIndex?: number; // Stable zero-based participant creation order.
-};
-
-export type SequenceAllocator = {
-  nextSequenceIndex: number;
-  nextCreationIndex: number;
-  availableSequenceIndexes?: number[]; // Unused replacement vacancies returned by undoing rejection.
-};
-
-export type SequenceAssignmentAllocation = {
-  sequenceIndex: number;
-  creationIndex: number;
+  sequenceIndex?: number; // Stable zero-based allocator slot.
+  reusableSequenceIndex?: number;
+  initialization?: { pending: string[]; complete: boolean }; // Overlapping first uploads share one reservation.
+  sequenceKey?: string; // Config hash and prepared row index, used to balance active task orders.
 };
 
 export type REVISIT_MODE = 'dataCollectionEnabled' | 'developmentModeEnabled' | 'dataSharingEnabled';
@@ -82,6 +71,74 @@ export function cleanupModes(modes: Record<string, boolean>): Record<REVISIT_MOD
 export interface StageInfo {
   stageName: string;
   color: string;
+  /** Maximum number of non-rejected participants allowed in this stage. Undefined means unlimited. */
+  maxParticipants?: number;
+  /** Condition definitions registered for this stage; append-only after its first assignment. */
+  conditionKeys?: string[];
+  /** Disabled between-subjects condition keys. Undefined means every condition is enabled. */
+  disabledBetweenSubjectsCombinations?: string[];
+  /** Legacy manual target participant-count overrides for individual between-subjects conditions. */
+  desiredParticipantsByCombination?: Record<string, number>;
+  /** The active participant allocation strategy. Stages created before this field existed infer manual mode from legacy overrides. */
+  participantAssignmentMode?: 'even' | 'manual';
+  /** Saved manual condition allocations, retained while the stage is using even allocation. */
+  manualDesiredParticipantsByCombination?: Record<string, number>;
+}
+
+/** The fields of a {@link StageInfo} that an admin can change. An omitted field is left alone and a null clears it. */
+export interface StageUpdates {
+  color?: string;
+  conditionKeys?: string[];
+  maxParticipants?: number | null;
+  disabledBetweenSubjectsCombinations?: string[] | null;
+  desiredParticipantsByCombination?: Record<string, number> | null;
+  participantAssignmentMode?: 'even' | 'manual' | null;
+  manualDesiredParticipantsByCombination?: Record<string, number> | null;
+}
+
+export function applyStageUpdates(data: StageData, stageName: string, updates: StageUpdates): StageData {
+  if (!data.allStages.some((stage) => stage.stageName === stageName)) throw new Error(`Stage ${stageName} not found`);
+  return {
+    currentStage: data.currentStage.stageName === stageName && updates.color !== undefined
+      ? { ...data.currentStage, color: updates.color } : data.currentStage,
+    allStages: data.allStages.map((stage) => {
+      if (stage.stageName !== stageName) return stage;
+      const next = { ...stage } as StageInfo & Record<string, unknown>;
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value === null) delete next[key];
+        else if (value !== undefined) next[key] = value;
+      });
+      return next;
+    }),
+  };
+}
+
+export class StageCapacityExceededError extends Error {
+  constructor(public readonly stageName: string) {
+    super(`The ${stageName} stage has reached its participant limit`);
+    this.name = 'StageCapacityExceededError';
+  }
+}
+
+export class StageNoAvailableConditionsError extends Error {
+  constructor(public readonly stageName: string) {
+    super(`The ${stageName} stage has no enabled between-subjects conditions`);
+    this.name = 'StageNoAvailableConditionsError';
+  }
+}
+
+export class StageOnlyDisabledConditionsHaveCapacityError extends Error {
+  constructor(public readonly stageName: string) {
+    super(`The ${stageName} stage only has capacity in disabled between-subjects conditions`);
+    this.name = 'StageOnlyDisabledConditionsHaveCapacityError';
+  }
+}
+
+export class StageConditionCapacityExceededError extends Error {
+  constructor(public readonly stageName: string) {
+    super(`The participant's between-subjects condition in the ${stageName} stage has reached its participant limit`);
+    this.name = 'StageConditionCapacityExceededError';
+  }
 }
 
 export interface StageData {
@@ -89,11 +146,14 @@ export interface StageData {
   allStages: StageInfo[];
 }
 
-type ModesAndStageData = {
+export type ModesAndStageData = {
   modes: Record<REVISIT_MODE, boolean>;
   stageData: StageData;
+  sequenceArray?: Sequence[];
 };
 
+// Reuse the orders prepared during startup. Admission still rechecks policy
+// under its own lock rather than trusting the earlier modes snapshot.
 export type ParticipantSessionBootstrapData = {
   modesDocument: Record<REVISIT_MODE, boolean> & { stage?: StageData };
   sequenceArray: Sequence[];
@@ -104,7 +164,143 @@ export interface ConditionData {
   conditionCounts: Record<string, number>;
 }
 
-const defaultStageColor = '#F05A30';
+const defaultStageColor = DISTINCT_COLOR_PALETTE[0];
+
+// Admission and stage policy changes share one lock so a participant cannot be
+// committed against a stage configuration that changed mid-assignment.
+const ADMISSION_POLICY_LOCK_KEY = 'participant-assignment';
+
+export function getStageParticipantCounts(sequenceAssignments: SequenceAssignment[]) {
+  return sequenceAssignments.reduce<Record<string, number>>((counts, assignment) => {
+    if (!assignment.rejected) {
+      counts[assignment.stage] = (counts[assignment.stage] || 0) + 1;
+    }
+    return counts;
+  }, Object.create(null) as Record<string, number>);
+}
+
+export function getBetweenSubjectsCombinationKey(
+  parameters: Record<string, unknown> | undefined,
+  factorNames: string[],
+) {
+  return JSON.stringify(factorNames.map((factorName) => [factorName, parameters?.[factorName]]));
+}
+
+export function getConfigConditionKeys(config: StudyConfig) {
+  const factors = config.betweenSubjects || [];
+  const combinations = factors.reduce<Record<string, unknown>[]>((rows, factor) => {
+    const levels = resolveBetweenSubjectsFactorLevels(factor, config.factors || {}) || [];
+    return rows.flatMap((row) => levels.map((level) => ({ ...row, [factor]: level })));
+  }, [{}]);
+  return combinations.map((parameters) => getBetweenSubjectsCombinationKey(parameters, factors));
+}
+
+export function assertAppendOnlyConditions(previousKeys: string[], nextKeys: string[]) {
+  if (previousKeys.some((key) => !nextKeys.includes(key))) {
+    throw new Error('Conditions cannot be removed or renamed after participants have joined this stage. Disable recruitment or start a new stage.');
+  }
+}
+
+export function validateStageParticipantLimits(stage: StageInfo, assignments: SequenceAssignment[], previousStage?: StageInfo) {
+  const active = assignments.filter((assignment) => assignment.stage === stage.stageName && !assignment.rejected);
+  if (stage.maxParticipants !== undefined && stage.maxParticipants !== previousStage?.maxParticipants && stage.maxParticipants < active.length) {
+    throw new Error(`The stage maximum cannot be below the ${active.length} participants already assigned`);
+  }
+  const targets = stage.participantAssignmentMode === 'even'
+    ? undefined
+    : stage.manualDesiredParticipantsByCombination ?? stage.desiredParticipantsByCombination;
+  const counts: Record<string, number> = {};
+  active.forEach((assignment) => {
+    if (assignment.betweenSubjectsCombinationKey) {
+      const key = assignment.betweenSubjectsCombinationKey;
+      counts[key] = (counts[key] || 0) + 1;
+    }
+  });
+  const previousTargets = previousStage?.participantAssignmentMode === 'even'
+    ? undefined : previousStage?.manualDesiredParticipantsByCombination ?? previousStage?.desiredParticipantsByCombination;
+  Object.entries(targets || {}).forEach(([key, target]) => {
+    if (target !== previousTargets?.[key] && target < (counts[key] || 0)) {
+      throw new Error(`The condition target cannot be below the ${counts[key]} participants already assigned`);
+    }
+  });
+}
+
+export function isSequenceEnabledForStage(
+  sequence: Sequence,
+  stage: StageInfo,
+  betweenSubjects: string[],
+) {
+  const disabledCombinations = stage.disabledBetweenSubjectsCombinations;
+  if (!disabledCombinations) {
+    return true;
+  }
+
+  return !disabledCombinations.includes(
+    getBetweenSubjectsCombinationKey(sequence.parameters, betweenSubjects),
+  );
+}
+
+export function getDesiredParticipantCountsByCombination(
+  stage: StageInfo,
+  sequenceArray: Sequence[],
+  betweenSubjects: string[],
+) {
+  if (betweenSubjects.length === 0) {
+    return undefined;
+  }
+
+  const combinationKeys = [...new Set(sequenceArray.map((sequence) => (
+    getBetweenSubjectsCombinationKey(sequence.parameters, betweenSubjects)
+  )))];
+  const participantAssignmentMode = stage.participantAssignmentMode
+    ?? (stage.desiredParticipantsByCombination ? 'manual' : 'even');
+  const manuallySpecifiedCounts = participantAssignmentMode === 'manual'
+    ? (stage.manualDesiredParticipantsByCombination ?? stage.desiredParticipantsByCombination)
+    : undefined;
+
+  return getStageCombinationTargets(
+    stage.maxParticipants,
+    combinationKeys,
+    manuallySpecifiedCounts,
+    stage.disabledBetweenSubjectsCombinations,
+  );
+}
+
+// Chooses a sequence from the between-subjects condition furthest from its
+// target, so new participants top up the condition that is behind. Conditions with
+// a target are compared by the fraction of that target already filled, so unequal
+// targets fill in proportion rather than largest-first; without targets the raw
+// participant count is used.
+export function getLeastServedSequence(
+  sequences: Sequence[],
+  combinationCounts: Record<string, number>,
+  desiredParticipantCountsByCombination: Record<string, number> | undefined,
+  betweenSubjects: string[],
+  intentIndex: number,
+  sequenceCounts: Map<Sequence, number>,
+) {
+  const combinationKeys = [...new Set(sequences.map((sequence) => (
+    getBetweenSubjectsCombinationKey(sequence.parameters, betweenSubjects)
+  )))];
+  const servedFractions = combinationKeys.map((combinationKey) => {
+    const count = combinationCounts[combinationKey] || 0;
+    const desiredCount = desiredParticipantCountsByCombination?.[combinationKey];
+
+    return desiredCount ? count / desiredCount : count;
+  });
+  const leastServedFraction = Math.min(...servedFractions);
+
+  const leastServedKeys = combinationKeys.filter((_, index) => servedFractions[index] === leastServedFraction);
+  const combinationKey = leastServedKeys[intentIndex % leastServedKeys.length];
+  const combinationSequences = sequences.filter((sequence) => (
+    getBetweenSubjectsCombinationKey(sequence.parameters, betweenSubjects) === combinationKey
+  ));
+  // Rejections free a particular row, so choose the least-used active row rather
+  // than advancing by a count that loses track of which order was rejected.
+  return combinationSequences.reduce((leastUsed, sequence) => (
+    sequenceCounts.get(sequence)! < sequenceCounts.get(leastUsed)! ? sequence : leastUsed
+  ));
+}
 
 export type StorageObjectType = 'sequenceArray' | 'participantData' | 'config' | string;
 export type StorageObject<T extends StorageObjectType> =
@@ -177,6 +373,19 @@ type ProgressDataWrite = {
   progressData: ProgressData;
 };
 
+export type StageAllocation = { count: number; combinationCounts: Record<string, number>; rowCounts: Record<string, number> };
+
+export function getStageAllocationFromAssignments(all: SequenceAssignment[], stage: string): StageAllocation {
+  const assignments = all.filter((assignment) => assignment.stage === stage && !assignment.rejected);
+  const combinationCounts: Record<string, number> = {};
+  const rowCounts: Record<string, number> = {};
+  assignments.forEach((assignment) => {
+    if (assignment.betweenSubjectsCombinationKey) combinationCounts[assignment.betweenSubjectsCombinationKey] = (combinationCounts[assignment.betweenSubjectsCombinationKey] || 0) + 1;
+    if (assignment.sequenceKey) rowCounts[assignment.sequenceKey] = (rowCounts[assignment.sequenceKey] || 0) + 1;
+  });
+  return { count: assignments.length, combinationCounts, rowCounts };
+}
+
 export abstract class StorageEngine {
   protected engine: 'localStorage' | 'supabase' | 'firebase';
 
@@ -209,6 +418,8 @@ export abstract class StorageEngine {
   private participantDataWriteError: Error | null = null;
 
   private participantDataWriteErrorListeners = new Set<(error: Error) => void>();
+
+  private participantRejectionListeners = new Set<() => void>();
 
   private pendingAssetUploads = new Map<string, Promise<void>>();
 
@@ -247,8 +458,12 @@ export abstract class StorageEngine {
     };
   }
 
-  protected shouldDeferInitialParticipantDataPersistence() {
-    return false;
+  subscribeToCurrentParticipantRejection(callback: () => void) {
+    this.participantRejectionListeners.add(callback);
+
+    return () => {
+      this.participantRejectionListeners.delete(callback);
+    };
   }
 
   /*
@@ -288,13 +503,6 @@ export abstract class StorageEngine {
   // Creates a sequence assignment for the given participantId and sequenceAssignment. Cloud storage engines should use the realtime database to create the sequence assignment and should use the server to prevent race conditions (i.e. using server timestamps).
   protected abstract _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment, withServerTimestamp: boolean): Promise<void>;
 
-  // Atomically reserves a stable sequence slot and creation index and persists the assignment.
-  // Implementations must use a transaction, compare-and-swap counter, or equivalent bounded operation.
-  protected abstract _allocateSequenceAssignment(
-    participantId: string,
-    sequenceAssignment: SequenceAssignment,
-  ): Promise<SequenceAssignmentAllocation>;
-
   // Updates specific top-level fields in an existing sequence assignment without modifying timestamp fields.
   // This operation is a shallow patch (no deep merge for nested objects).
   protected abstract _updateSequenceAssignmentFields(
@@ -309,13 +517,18 @@ export abstract class StorageEngine {
   protected abstract _completeCurrentParticipantRealtime(): Promise<void>;
 
   // Rejects the participant in the realtime database sequence assignments. This must also reverse any claimed sequence assignments.
-  protected abstract _rejectParticipantRealtime(participantId: string): Promise<void>;
+  protected abstract _rejectParticipantRealtime(participantId: string, onlyIncomplete?: boolean): Promise<void | boolean>;
 
   // Unrejects the participant in the realtime database sequence assignments. This must also reverse any claimed sequence assignments.
   protected abstract _undoRejectParticipantRealtime(participantId: string): Promise<void>;
 
   // Helper function to claim a sequence assignment of the given participant in the realtime database.
   protected abstract _claimSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment): Promise<void>;
+
+  // Runs an operation while holding a distributed lock for this study. This is used for
+  // operations whose correctness depends on multiple reads and writes, such as assigning
+  // the final available participant slot or rejecting a participant with a pending save.
+  protected abstract _runWithLock<T>(lockKey: string, operation: () => Promise<T>): Promise<T>;
 
   // Sets up the study database (firestore, indexedDB, etc.) for the given studyId. Also sets the studyId in the storage engine.
   abstract initializeStudyDb(studyId: string): Promise<void>;
@@ -333,7 +546,17 @@ export abstract class StorageEngine {
   }
 
   // Sets the mode for the given studyId. The mode is stored as a record with the mode name as the key and a boolean value indicating whether the mode is enabled or not.
-  abstract setMode(studyId: string, mode: REVISIT_MODE, value: boolean): Promise<void>;
+  // Modes share one document with the stage data, and stage edits rewrite that whole
+  // document, so mode changes hold the same lock to keep either write from replacing
+  // the other with a stale value.
+  async setMode(studyId: string, mode: REVISIT_MODE, value: boolean): Promise<void> {
+    await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, async () => {
+      await this._setMode(studyId, mode, value);
+    });
+  }
+
+  // Engine primitive for setMode. Callers must hold the admission policy lock.
+  protected abstract _setMode(studyId: string, mode: REVISIT_MODE, value: boolean): Promise<void>;
 
   // Gets the landing-page visibility for the given studyId. This method is used to check whether the study is hidden from the landing page or not.
   abstract getStudyHiddenFromLandingPage(studyId: string): Promise<boolean>;
@@ -469,7 +692,22 @@ export abstract class StorageEngine {
     }
   }
 
-  private async getModesAndStageData(
+  private async removeCachedParticipantDataSnapshot(participantId?: string) {
+    const targetParticipantId = participantId || this.currentParticipantId;
+    if (!this.studyId || !targetParticipantId) {
+      return;
+    }
+
+    try {
+      await this.participantStore.removeItem(
+        this.getParticipantDataSnapshotStorageKey(targetParticipantId),
+      );
+    } catch (error) {
+      console.warn('Failed to remove cached participant data:', error);
+    }
+  }
+
+  protected async getModesAndStageData(
     studyId: string,
     existingModesDocument?: Record<REVISIT_MODE, boolean> & { stage?: StageData },
   ): Promise<ModesAndStageData> {
@@ -529,11 +767,32 @@ export abstract class StorageEngine {
     const write = async () => {
       this.participantDataWriteError = null;
       try {
-        await this._pushToStorage(
-          `participants/${participantId}`,
-          'participantData',
-          snapshot,
-        );
+        await this._runWithLock(`participant-${participantId}`, async () => {
+          // An admin can reject a participant in another browser while this
+          // client still has a debounced full-record write pending. The same
+          // lock is held by rejectParticipant, so the check and write cannot
+          // race with a rejection.
+          const latestParticipant = await this._getFromStorage(
+            `participants/${participantId}`,
+            'participantData',
+          );
+          if (isParticipantData(latestParticipant) && latestParticipant.rejected) {
+            if (participantId === this.currentParticipantId) {
+              this.participantData = latestParticipant;
+              this.clearPendingParticipantDataWriteTimer();
+              this.pendingParticipantDataWrite = undefined;
+              await this.cacheParticipantDataSnapshot(latestParticipant, participantId);
+              this.participantRejectionListeners.forEach((listener) => listener());
+            }
+            return;
+          }
+
+          await this._pushToStorage(
+            `participants/${participantId}`,
+            'participantData',
+            snapshot,
+          );
+        });
 
         if (cache) {
           await this._cacheStorageObject(
@@ -751,7 +1010,25 @@ export abstract class StorageEngine {
   }
 
   // Setting current stage
-  async setCurrentStage(studyId: string, stageName: string, color: string = defaultStageColor): Promise<void> {
+  async setCurrentStage(
+    studyId: string,
+    stageName: string,
+    color: string = defaultStageColor,
+    maxParticipants?: number,
+  ): Promise<void> {
+    // The modes document holds every stage, so a read-modify-write of one stage
+    // would otherwise drop a concurrent admin's edit to a different stage.
+    await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, async () => {
+      await this.setCurrentStageUnlocked(studyId, stageName, color, maxParticipants);
+    });
+  }
+
+  private async setCurrentStageUnlocked(
+    studyId: string,
+    stageName: string,
+    color: string,
+    maxParticipants?: number,
+  ): Promise<void> {
     const modesDoc = await this.getModes(studyId);
 
     // Initialize if doesn't exist or invalid
@@ -768,7 +1045,11 @@ export abstract class StorageEngine {
     );
 
     if (existingStageIndex === -1) {
-      modesDoc.stage.allStages.push({ stageName, color });
+      modesDoc.stage.allStages.push({
+        stageName,
+        color,
+        ...(maxParticipants === undefined ? {} : { maxParticipants }),
+      });
     }
 
     modesDoc.stage.currentStage = { stageName, color };
@@ -783,66 +1064,121 @@ export abstract class StorageEngine {
 
   // Updating stage color
   async updateStageColor(studyId: string, stageName: string, color: string): Promise<void> {
-    const modesDoc = await this.getModes(studyId);
-
-    if (!modesDoc.stage) {
-      throw new Error('Stage data not initialized');
-    }
-
-    const updatedAllStages = modesDoc.stage.allStages.map(
-      (s) => (s.stageName === stageName ? { ...s, color } : s),
-    );
-
-    const updatedCurrentStage = modesDoc.stage.currentStage.stageName === stageName
-      ? { ...modesDoc.stage.currentStage, color }
-      : modesDoc.stage.currentStage;
-
-    const updatedStageData = {
-      currentStage: updatedCurrentStage,
-      allStages: updatedAllStages,
-    };
-
-    const updatedModesDoc = {
-      ...modesDoc,
-      stage: updatedStageData,
-    };
-
-    await this._setModesDocument(studyId, updatedModesDoc);
+    await this.updateStage(studyId, stageName, { color });
   }
 
-  // Saves the new config for the study. This will overwrite the existing sequence array so that the new sequences are compatible with the new config.
+  protected async changeStagePolicy(studyId: string, stageName: string, update: (stage: StageInfo) => StageUpdates | Promise<StageUpdates>) {
+    await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, async () => {
+      const stage = (await this.getModes(studyId)).stage?.allStages.find((item) => item.stageName === stageName);
+      if (!stage) throw new Error(`Stage ${stageName} not found`);
+      await this.updateStageUnlocked(studyId, stageName, await update(stage));
+    });
+  }
+
+  async updateStage(studyId: string, stageName: string, updates: StageUpdates): Promise<void> {
+    await this.changeStagePolicy(studyId, stageName, () => updates);
+  }
+
+  async setStageCombinationEnabled(studyId: string, stageName: string, combinationKey: string, enabled: boolean) {
+    await this.changeStagePolicy(studyId, stageName, (stage) => {
+      const disabled = stage.disabledBetweenSubjectsCombinations || [];
+      const next = enabled ? disabled.filter((key) => key !== combinationKey) : [...new Set([...disabled, combinationKey])];
+      return { disabledBetweenSubjectsCombinations: next.length ? next : null };
+    });
+  }
+
+  async setStageParticipantAssignmentMode(studyId: string, stageName: string, mode: 'even' | 'manual', combinationKeys: string[]) {
+    await this.changeStagePolicy(studyId, stageName, (stage) => {
+      if (mode === 'even') return { participantAssignmentMode: mode };
+      const targets = getStageCombinationTargets(
+        stage.maxParticipants,
+        combinationKeys,
+        stage.manualDesiredParticipantsByCombination ?? stage.desiredParticipantsByCombination,
+        stage.disabledBetweenSubjectsCombinations,
+      );
+      if (!targets) throw new Error('Set a stage maximum before assigning participants manually');
+      return {
+        participantAssignmentMode: mode,
+        manualDesiredParticipantsByCombination: targets,
+        maxParticipants: Object.values(targets).reduce((total, count) => total + count, 0),
+      };
+    });
+  }
+
+  async setStageDesiredParticipants(studyId: string, stageName: string, combinationKey: string, desiredParticipants: number, initialDesiredParticipants: Record<string, number>) {
+    await this.changeStagePolicy(studyId, stageName, async (stage) => {
+      const configHash = await this._getCurrentConfigHash();
+      const config = configHash ? await this._getFromStorage(`configs/${configHash}`, 'config', studyId) : undefined;
+      if (configHash && !config?.sequence) throw new Error('The active study configuration could not be loaded. Please try again.');
+      const keys = config?.sequence ? getConfigConditionKeys(config) : stage.conditionKeys ?? Object.keys(initialDesiredParticipants);
+      if ((configHash || stage.conditionKeys) && !keys.includes(combinationKey)) throw new Error('This condition is no longer available. Please reload the study settings.');
+      const saved = stage.manualDesiredParticipantsByCombination ?? stage.desiredParticipantsByCombination;
+      const effective = getStageCombinationTargets(stage.maxParticipants, keys, saved, stage.disabledBetweenSubjectsCombinations) ?? initialDesiredParticipants;
+      const targets = {
+        ...Object.fromEntries(keys.map((key) => [key, effective[key] ?? 0])),
+        [combinationKey]: desiredParticipants,
+      };
+      return {
+        participantAssignmentMode: 'manual',
+        manualDesiredParticipantsByCombination: targets,
+        maxParticipants: Object.values(targets).reduce((total, count) => total + count, 0),
+        conditionKeys: keys,
+      };
+    });
+  }
+
+  protected async updateStageUnlocked(studyId: string, stageName: string, updates: StageUpdates): Promise<void> {
+    const modes = await this.getModes(studyId);
+    if (!modes.stage) throw new Error('Stage data not initialized');
+    const data = applyStageUpdates(modes.stage, stageName, updates);
+    const assignments = await this.getAllSequenceAssignments(studyId);
+    const stage = data.allStages.find((item) => item.stageName === stageName)!;
+    validateStageParticipantLimits(stage, assignments, modes.stage.allStages.find((item) => item.stageName === stageName));
+    if (assignments.some((assignment) => assignment.stage === stageName)) {
+      assertAppendOnlyConditions(modes.stage.allStages.find((item) => item.stageName === stageName)!.conditionKeys || [], stage.conditionKeys || []);
+    }
+    await this._setModesDocument(studyId, { ...modes, stage: data });
+  }
+
+  protected async validateStageConditions(studyId: string, keys: string[]) {
+    const { stageData } = await this.getModesAndStageData(studyId);
+    const stage = stageData.allStages.find((candidate) => candidate.stageName === stageData.currentStage.stageName)!;
+    const assignments = await this.getAllSequenceAssignments(studyId);
+    if (assignments.some((assignment) => assignment.stage === stage.stageName)) {
+      assertAppendOnlyConditions(stage.conditionKeys || [], keys);
+    }
+    return stage;
+  }
+
+  private async registerStageConditions(studyId: string, keys: string[]) {
+    const stage = await this.validateStageConditions(studyId, keys);
+    if (JSON.stringify(stage.conditionKeys) !== JSON.stringify(keys)) {
+      await this.updateStageUnlocked(studyId, stage.stageName, { conditionKeys: keys });
+    }
+  }
+
   async saveConfig(config: StudyConfig) {
-    const currentConfigHash = await this._getCurrentConfigHash();
-    // Hash the provided config
-    const configHash = await hash(JSON.stringify(config));
-
-    // Skip saving config if the active config is already saved in storage
-    if (currentConfigHash === configHash) {
-      return;
-    }
-
-    // Push the config to storage and cache it, since it won't change
-    await this._pushToStorage(
-      `configs/${configHash}`,
-      'config',
-      config,
-    );
-    await this._cacheStorageObject(`configs/${configHash}`, 'config');
-
-    // Clear sequence array if the config has changed.
-    // Keep currentParticipantId so existing participant sessions can continue
-    // against their original participantConfigHash.
-    if (currentConfigHash && currentConfigHash !== configHash) {
-      try {
-        await this._deleteFromStorage('', 'sequenceArray');
-      } catch {
-        // pass, if this happens, we didn't have a sequence array yet
+    await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, async () => {
+      if (!this.studyId) throw new Error('Study ID is not set');
+      const currentConfigHash = await this._getCurrentConfigHash();
+      const configHash = await hash(JSON.stringify(config));
+      if (currentConfigHash === configHash) return;
+      const keys = getConfigConditionKeys(config);
+      await this.validateStageConditions(this.studyId, keys);
+      const storedConfig = currentConfigHash === configHash
+        ? await this._getFromStorage(`configs/${configHash}`, 'config') : null;
+      if (!storedConfig || Object.keys(storedConfig).length === 0) {
+        await this._pushToStorage(`configs/${configHash}`, 'config', config);
+        await this._cacheStorageObject(`configs/${configHash}`, 'config');
       }
-    }
+      // Failed uploads must not advance the append-only condition definitions.
+      await this.activateConfig(configHash, keys);
+    });
+  }
 
-    if (currentConfigHash !== configHash) {
-      await this._setCurrentConfigHash(configHash);
-    }
+  protected async activateConfig(configHash: string, keys: string[]) {
+    await this.registerStageConditions(this.studyId!, keys);
+    if (await this._getCurrentConfigHash() !== configHash) await this._setCurrentConfigHash(configHash);
   }
 
   // Gets all configs from the storage engine based on the provided temporary hashes and studyId.
@@ -911,55 +1247,118 @@ export abstract class StorageEngine {
   // It uses the notion of sequence intents and assignments to determine the current sequence for the participant.
   // It handles rejected participants and allows for reusing a rejected participant's sequence.
   protected async _getSequence(
-    sequenceArray: Sequence[],
-    conditions?: string[],
-    bootstrapData?: ModesAndStageData,
+    conditions: string[] | undefined,
+    bootstrapData: ModesAndStageData,
+    config: StudyConfig,
+    participantConfigHash: string,
   ) {
-    if (!this.currentParticipantId) {
-      throw new Error('Participant not initialized');
+    if (!this.currentParticipantId || !this.studyId) throw new Error('Participant not initialized');
+    const { modes, stageData } = bootstrapData;
+    const stage = stageData.allStages.find((item) => item.stageName === stageData.currentStage.stageName)!;
+    const sequences = bootstrapData.sequenceArray
+      ?? await this.getSequenceArray(await this._getCurrentConfigHash() ? participantConfigHash : undefined);
+    if (!sequences?.length) throw new Error('Latin square not initialized');
+    const existing = modes.dataCollectionEnabled ? await this._getSequenceAssignment(this.currentParticipantId) : null;
+    if (existing && !existing.rejected) {
+      const allocation = await this._allocateSequenceAssignment(this.currentParticipantId, existing);
+      const prefix = `${participantConfigHash}:`;
+      const currentRow = existing.sequenceKey?.startsWith(prefix) ? sequences[Number(existing.sequenceKey.slice(prefix.length))]
+        : existing.sequenceKey === undefined ? sequences[allocation.sequenceIndex % sequences.length] : undefined;
+      if (!currentRow) throw new Error('The unfinished reservation uses a different study configuration. Please contact the study administrator.');
+      return { currentRow, creationIndex: allocation.creationIndex + 1, stage: existing.stage };
     }
-    if (this.studyId === undefined) {
-      throw new Error('Study ID is not set');
+    const betweenSubjects = config.betweenSubjects || [];
+    const keys = getConfigConditionKeys(config);
+    const state = await this.getStageAllocation(stage.stageName, keys);
+    if (JSON.stringify(stage.conditionKeys) !== JSON.stringify(keys)) {
+      if (stage.conditionKeys?.length && await this.hasStageAssignments(stage.stageName)) assertAppendOnlyConditions(stage.conditionKeys || [], keys);
+      await this._setModesDocument(this.studyId, { ...modes, stage: applyStageUpdates(stageData, stage.stageName, { conditionKeys: keys }) });
     }
-    const { modes, stageData } = bootstrapData ?? await this.getModesAndStageData(this.studyId);
-    const currentStage = stageData.currentStage.stageName;
-
-    if (sequenceArray.length === 0) {
-      throw new Error('Something really bad happened with sequence assignment');
+    if (modes.dataCollectionEnabled && stage.maxParticipants !== undefined && state.count >= stage.maxParticipants) {
+      throw new StageCapacityExceededError(stage.stageName);
     }
-
-    if (!modes.dataCollectionEnabled) {
-      return {
-        currentRow: sequenceArray[Math.floor(Math.random() * sequenceArray.length)],
-        creationIndex: 1,
-      };
+    const enabled = sequences.filter((row) => isSequenceEnabledForStage(row, stage, betweenSubjects));
+    if (!enabled.length) throw new StageNoAvailableConditionsError(stage.stageName);
+    const targets = getDesiredParticipantCountsByCombination(stage, sequences, betweenSubjects);
+    const hasCapacity = (row: Sequence) => !modes.dataCollectionEnabled || !targets
+      || (state.combinationCounts[getBetweenSubjectsCombinationKey(row.parameters, betweenSubjects)] || 0) < targets[getBetweenSubjectsCombinationKey(row.parameters, betweenSubjects)];
+    const eligible = enabled.filter(hasCapacity);
+    if (!eligible.length) {
+      if (sequences.some((row) => !isSequenceEnabledForStage(row, stage, betweenSubjects) && hasCapacity(row))) throw new StageOnlyDisabledConditionsHaveCapacityError(stage.stageName);
+      throw new StageCapacityExceededError(stage.stageName);
     }
-
+    if (!modes.dataCollectionEnabled) return { currentRow: eligible[Math.floor(Math.random() * eligible.length)], creationIndex: 1 };
+    const rowCounts = new Map(sequences.map((row, index) => [row, state.rowCounts[`${participantConfigHash}:${index}`] || 0]));
+    const balancedRow = betweenSubjects.length ? getLeastServedSequence(eligible, state.combinationCounts, targets, betweenSubjects, state.count, rowCounts) : undefined;
     const timestamp = Date.now();
-    const participantSequenceAssignmentData: SequenceAssignment = {
+    const allocation = await this._allocateSequenceAssignment(this.currentParticipantId, {
       participantId: this.currentParticipantId,
       timestamp,
+      createdTime: timestamp,
       rejected: false,
       claimed: false,
       completed: null,
-      createdTime: timestamp,
       total: 0,
       answered: [],
       isDynamic: false,
-      stage: currentStage,
+      stage: stage.stageName,
       ...(conditions ? { conditions } : {}),
-    };
-    const allocation = await this._allocateSequenceAssignment(
-      this.currentParticipantId,
-      participantSequenceAssignmentData,
-    );
-    const currentRow = sequenceArray[allocation.sequenceIndex % sequenceArray.length];
+      ...(balancedRow ? {
+        betweenSubjectsCombinationKey: getBetweenSubjectsCombinationKey(balancedRow.parameters, betweenSubjects),
+        sequenceKey: `${participantConfigHash}:${sequences.indexOf(balancedRow)}`,
+      } : {}),
+    });
+    const currentRow = balancedRow ?? eligible[allocation.sequenceIndex % eligible.length];
+    if (!balancedRow) {
+      await this._updateSequenceAssignmentFields(this.currentParticipantId, {
+        sequenceKey: `${participantConfigHash}:${sequences.indexOf(currentRow)}`,
+        betweenSubjectsCombinationKey: getBetweenSubjectsCombinationKey(currentRow.parameters, betweenSubjects),
+      });
+    }
+    return { currentRow, creationIndex: allocation.creationIndex + 1 };
+  }
 
-    if (!currentRow) {
-      throw new Error('Latin square is empty');
+  // Releases a sequence assignment created for the current participant during a
+  // failed initialization. Rejecting the assignment frees the stage slot and
+  // lets the next participant claim it, and reverses any slot this assignment
+  // claimed from an earlier rejection. Failures here are swallowed: the caller
+  // is already reporting the initialization error it is rolling back.
+  protected async releaseInitialSequenceAssignment(_reservation?: { creationIndex: number; reservationToken?: string }) {
+    if (!this.currentParticipantId) {
+      return;
     }
 
-    return { currentRow, creationIndex: allocation.creationIndex + 1 };
+    try {
+      const assignment = await this._getSequenceAssignment(this.currentParticipantId);
+      if (!assignment || assignment.rejected) {
+        return;
+      }
+      await this._rejectParticipantRealtime(this.currentParticipantId);
+    } catch (error) {
+      console.warn('Error releasing the sequence assignment of a failed participant initialization:', error);
+    }
+  }
+
+  // Rejects a sequence assignment that is still active although its participant
+  // record was never written. Callers must hold the admission policy lock and have
+  // checked that the participant record is missing, so the assignment cannot
+  // belong to an initialization that is still in progress.
+  protected async releaseOrphanedSequenceAssignment(participantId: string) {
+    const assignment = await this._getSequenceAssignment(participantId);
+    if (assignment && !assignment.rejected) {
+      await this._rejectParticipantRealtime(participantId);
+    }
+  }
+
+  protected hasAtomicSequenceReservation = false;
+
+  protected async prepareParticipantReservation(participantId: string) {
+    return this._getSequenceAssignment(participantId);
+  }
+
+  // Cloud backends can confirm the reservation before exposing a persisted session.
+  protected async confirmParticipantReservation(_participant: ParticipantData, _reservationToken?: string, _fromCache = false): Promise<boolean> {
+    return true;
   }
 
   // Initializes or resumes a participant session for the given studyId. This will create a new participant data object if it does not exist, or update the existing one.
@@ -978,8 +1377,17 @@ export abstract class StorageEngine {
       throw new Error('Participant not initialized');
     }
 
-    const cachedParticipant = await this.getCachedParticipantDataSnapshot(this.currentParticipantId);
-    if (cachedParticipant) {
+    let cachedParticipant = await this.getCachedParticipantDataSnapshot(this.currentParticipantId);
+    if (cachedParticipant?.rejected) {
+      // An admin may have restored the participant since this browser learned
+      // about the rejection. A rejected cache must not permanently block saves.
+      const current = await this._getFromStorage(`participants/${this.currentParticipantId}`, 'participantData');
+      if (isParticipantData(current)) {
+        cachedParticipant = current;
+        await this.cacheParticipantDataSnapshot(current, this.currentParticipantId);
+      }
+    }
+    if (cachedParticipant && await this.confirmParticipantReservation(cachedParticipant, undefined, true)) {
       this.participantData = cachedParticipant;
       return cachedParticipant;
     }
@@ -994,57 +1402,107 @@ export abstract class StorageEngine {
       throw new Error('Study ID is not set');
     }
 
-    const { modes, stageData } = await this.getModesAndStageData(
-      this.studyId,
-      bootstrapData?.modesDocument,
-    );
-    const currentStage = stageData.currentStage.stageName;
-
-    if (isParticipantData(participant)) {
+    if (isParticipantData(participant) && await this.confirmParticipantReservation(participant)) {
       // Participant already initialized
       this.participantData = participant;
       await this.cacheParticipantDataSnapshot(participant, this.currentParticipantId);
       return participant;
     }
-    // Initialize participant
-    const participantConfigHash = await hash(JSON.stringify(config));
-    const parsedConditions = parseConditionParam(searchParams.condition);
-    const conditions = parsedConditions.length > 0 ? parsedConditions : undefined;
-    const sequenceArray = bootstrapData?.sequenceArray ?? await this.getSequenceArray();
-    if (!sequenceArray) {
-      throw new Error('Latin square not initialized');
-    }
-    const { currentRow, creationIndex } = await this._getSequence(
-      sequenceArray,
-      conditions,
-      { modes, stageData },
-    );
-    this.participantData = {
-      participantId: this.currentParticipantId,
-      participantConfigHash,
-      sequence: currentRow,
-      participantIndex: creationIndex,
-      answers: {},
-      searchParams,
-      conditions,
-      metadata,
-      rejected: false,
-      participantTags: [],
-      stage: currentStage,
-      createdTime: Date.now(),
+
+    const initializeParticipant = async (): Promise<ParticipantData> => {
+      // Another session may have completed initialization while this session waited
+      // for the lock, so always read the participant record again inside it.
+      const existingParticipant = await this._getFromStorage(
+        `participants/${this.currentParticipantId}`,
+        'participantData',
+      );
+      if (isParticipantData(existingParticipant) && await this.confirmParticipantReservation(existingParticipant)) {
+        await this.cacheParticipantDataSnapshot(existingParticipant, this.currentParticipantId);
+        return existingParticipant;
+      }
+
+      // A previous attempt can leave an active assignment with no participant
+      // record when both its participant write and its own cleanup failed. Release
+      // it before counting, so the participant's abandoned slot cannot keep them
+      // out of the stage, and the retry below assigns them afresh.
+      const existingReservation = await this.prepareParticipantReservation(this.currentParticipantId!);
+
+      const { modes, stageData } = await this.getModesAndStageData(this.studyId!, this.cloudEngine ? undefined : bootstrapData?.modesDocument);
+      const currentStage = stageData.currentStage.stageName;
+      const currentStageInfo = stageData.allStages.find((stage) => stage.stageName === currentStage);
+      if (!this.hasAtomicSequenceReservation && modes.dataCollectionEnabled && (!existingReservation || existingReservation.rejected) && currentStageInfo?.maxParticipants !== undefined) {
+        const stageParticipantCounts = await this.getStageAllocation(currentStage, getConfigConditionKeys(config));
+        if (stageParticipantCounts.count >= currentStageInfo.maxParticipants) {
+          throw new StageCapacityExceededError(currentStage);
+        }
+      }
+
+      const participantConfigHash = await hash(JSON.stringify(config));
+      const parsedConditions = parseConditionParam(searchParams.condition);
+      const conditions = parsedConditions.length > 0 ? parsedConditions : undefined;
+      let sequence: { currentRow: Sequence; creationIndex: number; stage?: string; reservationToken?: string };
+      try {
+        sequence = await this._getSequence(conditions, { modes, stageData, sequenceArray: bootstrapData?.sequenceArray }, config, participantConfigHash);
+      } catch (error) {
+        // _getSequence writes the sequence assignment before it picks a row, so a
+        // later failure leaves an assignment that occupies a stage slot with no
+        // participant record for an admin to reject. Release it here, while the
+        // assignment lock is still held, so the slot stays recoverable.
+        await this.releaseInitialSequenceAssignment();
+        throw error;
+      }
+      const { currentRow, creationIndex } = sequence;
+      const participantData: ParticipantData = {
+        participantId: this.currentParticipantId!,
+        participantConfigHash,
+        sequence: currentRow,
+        participantIndex: creationIndex,
+        answers: {},
+        searchParams,
+        conditions,
+        metadata,
+        rejected: false,
+        participantTags: [],
+        stage: sequence.stage ?? currentStage,
+        createdTime: Date.now(),
+      };
+
+      this.participantData = participantData;
+      let participantRecordPersisted = false;
+      try {
+        if (modes.dataCollectionEnabled) {
+          // Do not expose a session until its participant record and assignment
+          // both exist. Otherwise a failed first write can strand a capacity slot
+          // and leave only a browser-local participant snapshot.
+          await this.persistCurrentParticipantData({ immediate: true });
+          participantRecordPersisted = true;
+          if (!await this.confirmParticipantReservation(participantData, sequence.reservationToken)) {
+            throw new Error('The participant reservation changed while joining. Please reload.');
+          }
+        } else {
+          await this.cacheParticipantDataSnapshot(participantData, this.currentParticipantId);
+        }
+      } catch (error) {
+        // After an acknowledged upload, retain the place if confirmation fails.
+        // A retry can confirm the stored record; releasing it would undercount.
+        if (!participantRecordPersisted) await this.releaseInitialSequenceAssignment(sequence);
+        await this.removeCachedParticipantDataSnapshot(this.currentParticipantId);
+        this.participantData = undefined;
+        throw error;
+      }
+
+      return participantData;
     };
 
-    if (modes.dataCollectionEnabled) {
-      if (this.shouldDeferInitialParticipantDataPersistence()) {
-        this.persistCurrentParticipantData({ immediate: true }).catch(() => undefined);
-      } else {
-        await this.persistCurrentParticipantData({ immediate: true });
-      }
-    } else {
-      await this.cacheParticipantDataSnapshot(this.participantData, this.currentParticipantId);
-    }
+    // Atomic reservation engines own admission in the database transaction.
+    // Serialize starts for the same participant without blocking other participants
+    // on a slow upload. Admission itself remains transactional.
+    const initializedParticipant = this.hasAtomicSequenceReservation
+      ? await this._runWithLock(`initialize-participant-${this.currentParticipantId}`, initializeParticipant)
+      : await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, initializeParticipant);
 
-    return this.participantData;
+    this.participantData = initializedParticipant;
+    return initializedParticipant;
   }
 
   // Gets all participant IDs for the given studyId
@@ -1238,7 +1696,48 @@ export abstract class StorageEngine {
   }
 
   // Rejects a participant with the given participantId and reason.
-  async rejectParticipant(participantId: string, reason: string) {
+  async timeoutParticipant(participantId: string): Promise<void> {
+    await this._runWithLock(`participant-${participantId}`, async () => {
+      const assignment = await this._getSequenceAssignment(participantId);
+      if (!assignment || assignment.completed !== null || assignment.rejected) return;
+      await this.rejectParticipantUnlocked(participantId, 'Timed out by admin', true);
+    });
+  }
+
+  async rejectParticipant(participantId: string, reason: string): Promise<void> {
+    const participantRecordMissing = await this._runWithLock(`participant-${participantId}`, () => (
+      this.rejectParticipantUnlocked(participantId, reason)
+    ));
+
+    if (!participantRecordMissing) {
+      return;
+    }
+
+    // Without a participant record, the only thing to reject is an assignment
+    // left behind by an initialization whose writes and cleanup both failed.
+    // Initialization writes the assignment and the record under the admission
+    // lock, so holding it here keeps an initialization still in progress from
+    // being mistaken for an abandoned one.
+    const participantRecordCreated = await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, async () => {
+      const participant = await this._getFromStorage(
+        `participants/${participantId}`,
+        'participantData',
+      );
+      if (isParticipantData(participant)) {
+        return true;
+      }
+      await this.releaseOrphanedSequenceAssignment(participantId);
+      return false;
+    });
+
+    if (participantRecordCreated) {
+      // The participant finished initializing while this call waited for the
+      // lock, so reject the new record through the normal path.
+      await this.rejectParticipant(participantId, reason);
+    }
+  }
+
+  private async rejectParticipantUnlocked(participantId: string, reason: string, onlyIncomplete = false): Promise<boolean> {
     const participant = participantId === this.currentParticipantId && this.participantData
       ? this.participantData
       : await this._getFromStorage(
@@ -1248,13 +1747,12 @@ export abstract class StorageEngine {
     let participantRecordUpdated = false;
 
     try {
-      // If the user doesn't exist or is already rejected, return
-      if (
-        !participant
-        || !isParticipantData(participant)
-        || participant.rejected
-      ) {
-        return;
+      if (!participant || !isParticipantData(participant)) {
+        return true;
+      }
+      // An already rejected participant needs no further changes.
+      if (participant.rejected) {
+        return false;
       }
 
       // Create a copy with rejected flag for storage write
@@ -1274,13 +1772,18 @@ export abstract class StorageEngine {
       );
       participantRecordUpdated = true;
 
-      await this._rejectParticipantRealtime(participantId);
+      const rejected = await this._rejectParticipantRealtime(participantId, onlyIncomplete);
+      if (rejected === false) {
+        await this._pushToStorage(`participants/${participantId}`, 'participantData', participant);
+        return false;
+      }
 
       // Update in-memory state only after the participant record and
       // sequence-assignment updates have both succeeded.
       if (participantId === this.currentParticipantId && this.participantData) {
         this.participantData = rejectedParticipant;
       }
+      return false;
     } catch (error) {
       let realtimeRollbackError: unknown = null;
       try {
@@ -1315,6 +1818,7 @@ export abstract class StorageEngine {
         console.warn('Participant rejection rollback completed with realtime inconsistencies.');
       }
       console.warn('Error rejecting participant:', error);
+      throw normalizeError(error);
     }
   }
 
@@ -1329,49 +1833,59 @@ export abstract class StorageEngine {
 
   // Un-rejects a participant with the given participantId.
   async undoRejectParticipant(participantId: string) {
-    const participant = participantId === this.currentParticipantId && this.participantData
-      ? this.participantData
-      : await this._getFromStorage(
-        `participants/${participantId}`,
-        'participantData',
-      );
-    let participantRecordUpdated = false;
+    // Admin restoration may exceed recruitment limits. Keep the admission lock
+    // to coordinate rejected-slot ownership with new admissions.
+    return await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, () => this._runWithLock(`participant-${participantId}`, async () => {
+      const assignment = await this._getSequenceAssignment(participantId);
+      if (assignment?.claimed) {
+        throw new Error('Cannot undo rejection after the participant slot has been reassigned');
+      }
 
-    try {
+      const participant = participantId === this.currentParticipantId && this.participantData
+        ? this.participantData
+        : await this._getFromStorage(
+          `participants/${participantId}`,
+          'participantData',
+        );
+      let participantRecordUpdated = false;
+
       // If the user doesn't exist, return
       if (!participant || !isParticipantData(participant)) {
         return;
       }
 
-      const restoredParticipant: ParticipantData = {
-        ...participant,
-        rejected: false,
-      };
-      await this._pushToStorage(
-        `participants/${participantId}`,
-        'participantData',
-        restoredParticipant,
-      );
-      participantRecordUpdated = true;
-      await this._undoRejectParticipantRealtime(participantId);
-
-      if (participantId === this.currentParticipantId && this.participantData) {
-        this.participantData = restoredParticipant;
-      }
-    } catch (error) {
       try {
-        if (participantRecordUpdated && participant && isParticipantData(participant)) {
-          await this._pushToStorage(
-            `participants/${participantId}`,
-            'participantData',
-            participant,
-          );
+        const restoredParticipant: ParticipantData = {
+          ...participant,
+          rejected: false,
+        };
+        await this._pushToStorage(
+          `participants/${participantId}`,
+          'participantData',
+          restoredParticipant,
+        );
+        participantRecordUpdated = true;
+        await this._undoRejectParticipantRealtime(participantId);
+
+        if (participantId === this.currentParticipantId && this.participantData) {
+          this.participantData = restoredParticipant;
         }
-      } catch (rollbackError) {
-        console.warn('Error rolling back participant unrejection state:', rollbackError);
+      } catch (error) {
+        try {
+          if (participantRecordUpdated && participant && isParticipantData(participant)) {
+            await this._pushToStorage(
+              `participants/${participantId}`,
+              'participantData',
+              participant,
+            );
+          }
+        } catch (rollbackError) {
+          console.warn('Error rolling back participant unrejection state:', rollbackError);
+        }
+        console.warn('Error undoing participant rejection:', error);
+        throw normalizeError(error);
       }
-      console.warn('Error undoing participant rejection:', error);
-    }
+    }));
   }
 
   // Un-rejects the current participant.
@@ -1385,13 +1899,9 @@ export abstract class StorageEngine {
 
   // Gets all participant IDs for the current studyId or a provided studyId.
   async getAllParticipantsData(studyId: string): Promise<ParticipantDataWithStatus[]> {
-    const participantIds = await this.getAllParticipantIds(studyId);
     const sequenceAssignments = await this.getAllSequenceAssignments(studyId);
-    const completedByParticipantId = new Map(
-      sequenceAssignments.map((assignment) => [assignment.participantId, assignment.completed !== null]),
-    );
-
-    const participantPulls = participantIds.map(async (participantId) => {
+    const participantPulls = sequenceAssignments.map(async (assignment): Promise<ParticipantDataWithStatus | null> => {
+      const { participantId } = assignment;
       const participantData = await this._getFromStorage(
         `participants/${participantId}`,
         'participantData',
@@ -1401,7 +1911,8 @@ export abstract class StorageEngine {
       if (isParticipantData(participantData)) {
         return {
           ...participantData,
-          completed: completedByParticipantId.get(participantId) ?? false,
+          completed: assignment.completed !== null,
+          assignmentCreatedTime: assignment.createdTime,
         } satisfies ParticipantDataWithStatus;
       }
       return null;
@@ -1558,7 +2069,11 @@ export abstract class StorageEngine {
     }
 
     try {
-      await this._completeCurrentParticipantRealtime();
+      await this._runWithLock(`participant-${this.currentParticipantId}`, async () => {
+        const assignment = await this._getSequenceAssignment(this.currentParticipantId!);
+        if (assignment?.rejected) throw new Error('This participant has been timed out or rejected');
+        await this._completeCurrentParticipantRealtime();
+      });
     } catch (error) {
       return {
         status: 'error',
@@ -1826,22 +2341,39 @@ export abstract class StorageEngine {
   }
 
   // Gets the sequence array from the storage engine.
-  async getSequenceArray() {
+  async getSequenceArray(configHash?: string) {
     await this.verifyStudyDatabase();
 
+    const version = configHash ?? await this._getCurrentConfigHash();
     const sequenceArrayDocData = await this._getFromStorage(
-      '',
+      version ? `configs/${version}` : '',
       'sequenceArray',
     );
 
     return Array.isArray(sequenceArrayDocData) ? sequenceArrayDocData : null;
   }
 
+  // Only first-time preparation takes a config-specific lock. Every caller gets
+  // the published array, including callers that waited for another publisher.
+  async getOrCreateSequenceArray(configHash: string, generate: () => Sequence[]) {
+    const existing = await this.getSequenceArray(configHash);
+    if (existing) return existing;
+
+    return this._runWithLock(`prepare-sequences-${configHash}`, async () => {
+      const prepared = await this.getSequenceArray(configHash);
+      if (prepared) return prepared;
+      const sequences = generate();
+      await this.setSequenceArray(sequences, configHash);
+      return sequences;
+    });
+  }
+
   // Sets the sequence array in the storage engine.
-  async setSequenceArray(latinSquare: Sequence[]) {
+  async setSequenceArray(latinSquare: Sequence[], configHash?: string) {
     await this.verifyStudyDatabase();
 
-    await this._pushToStorage('', 'sequenceArray', latinSquare);
+    const version = configHash ?? await this._getCurrentConfigHash();
+    await this._pushToStorage(version ? `configs/${version}` : '', 'sequenceArray', latinSquare);
   }
 
   protected async __testingReset() {
@@ -2096,6 +2628,15 @@ export abstract class StorageEngine {
   ) {
     await this._updateSnapshotParticipantCounts(snapshotName, studyId, participantCounts);
   }
+
+  protected abstract _allocateSequenceAssignment(
+    participantId: string,
+    sequenceAssignment: SequenceAssignment,
+  ): Promise<SequenceAssignmentAllocation>;
+
+  protected async hasStageAssignments(stage: string): Promise<boolean> { return (await this.getAllSequenceAssignments(this.studyId!)).some((assignment) => assignment.stage === stage); }
+
+  protected async getStageAllocation(stage: string, _conditionKeys: string[] = []): Promise<StageAllocation> { return getStageAllocationFromAssignments(await this.getAllSequenceAssignments(this.studyId!), stage); }
 }
 
 export type UserManagementData = { authentication?: { isEnabled: boolean }; adminUsers?: { adminUsersList: StoredUser[] } };
@@ -2129,10 +2670,6 @@ export abstract class CloudStorageEngine extends StorageEngine {
     }
 
     await this._setStorageDisconnected(studyId, disconnected);
-  }
-
-  protected shouldDeferInitialParticipantDataPersistence() {
-    return true;
   }
 
   /*
@@ -2210,3 +2747,14 @@ export abstract class CloudStorageEngine extends StorageEngine {
     return false;
   }
 }
+
+export type SequenceAllocator = {
+  nextSequenceIndex: number;
+  nextCreationIndex: number;
+  availableSequenceIndexes?: number[]; // Unused replacement vacancies returned by undoing rejection.
+};
+
+export type SequenceAssignmentAllocation = {
+  sequenceIndex: number;
+  creationIndex: number;
+};

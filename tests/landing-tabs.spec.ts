@@ -1,6 +1,41 @@
 import { expect, test } from '@playwright/test';
+import { readStoredValue } from './utils';
 
-test('uses configured tabs for grouping, keyboard navigation, and study links', async ({ page }) => {
+test('resumes the saved participant after launching a different study and returning home', async ({ page }) => {
+  await page.route('**/global.json', (route) => route.fulfill({
+    json: {
+      $schema: '',
+      configsList: ['demo-html', 'tutorial'],
+      configs: {
+        'demo-html': { path: 'demo-html/config.json' },
+        tutorial: { path: 'tutorial/config.json' },
+      },
+    },
+  }));
+
+  await page.goto('/demo-html');
+  await expect(page.getByText(/example study.*embed html elements/i)).toBeVisible();
+  const participantId = await readStoredValue<string>(page, 'dev-demo-html/currentParticipantId');
+  expect(participantId).toBeTruthy();
+
+  await page.goto('/');
+  const cards = page.getByRole('tabpanel', { name: 'Studies', exact: true }).locator('.mantine-Card-root');
+  await cards.filter({ hasText: 'A tutorial that you will build with us' }).getByRole('button', { name: 'Go to Study', exact: true }).click();
+  await expect(page).toHaveURL(/\/tutorial\//);
+  await expect(page.getByTestId('app-aside')).toBeVisible();
+  const tutorialParticipantId = await readStoredValue<string>(page, 'dev-tutorial/currentParticipantId');
+  expect(tutorialParticipantId).toBeTruthy();
+  expect(tutorialParticipantId).not.toBe(participantId);
+
+  await page.goBack();
+  await cards.filter({ hasText: 'HTML as a Stimulus' }).getByRole('button', { name: 'Go to Study', exact: true }).click();
+  await expect(page.getByText(/example study.*embed html elements/i)).toBeVisible();
+
+  const assignments = await readStoredValue<Record<string, unknown>>(page, 'dev-demo-html/sequenceAssignment');
+  expect(Object.keys(assignments ?? {})).toEqual([participantId]);
+});
+
+test('uses configured tabs for grouping, keyboard navigation, and study buttons', async ({ page }) => {
   const customLabel = 'Demo Studies';
   const description = 'Browse the **selected studies** or read the [study guide](https://revisit.dev/docs/).';
   await page.route('**/global.json', (route) => route.fulfill({
@@ -39,10 +74,12 @@ test('uses configured tabs for grouping, keyboard navigation, and study links', 
   const customPanel = page.getByRole('tabpanel', { name: customLabel, exact: true });
   await expect(customPanel.locator('strong')).toHaveText('selected studies');
   await expect(customPanel.getByRole('link', { name: 'study guide', exact: true })).toHaveAttribute('href', 'https://revisit.dev/docs/');
-  const studyLinks = customPanel.getByRole('link', { name: 'Go to Study', exact: true });
-  await expect(studyLinks).toHaveCount(2);
-  await expect(studyLinks.nth(0)).toHaveAttribute('href', /\/demo-html(?:\?|$)/);
-  await expect(studyLinks.nth(1)).toHaveAttribute('href', /\/tutorial(?:\?|$)/);
+  const studyButtons = customPanel.getByRole('button', { name: 'Go to Study', exact: true });
+  await expect(studyButtons).toHaveCount(2);
+  await studyButtons.nth(1).click();
+  await expect(page).toHaveURL(/\/tutorial\//);
+
+  await page.goto('/?tab=Demo%20Studies');
 
   await page.getByRole('tab', { name: 'Studies', exact: true }).click();
   await expect(page.getByRole('tabpanel', { name: 'Studies', exact: true })).toContainText('Vega Stimuli Demo');
@@ -50,7 +87,7 @@ test('uses configured tabs for grouping, keyboard navigation, and study links', 
   await page.goto('/?tab=Empty');
   await expect(firstTab).toHaveAttribute('aria-selected', 'true');
   await customTab.click();
-  await studyLinks.first().click();
+  await studyButtons.first().click();
   await expect(page).toHaveURL(/\/demo-html\//);
   await expect(page.getByText(/example study.*embed html elements/i)).toBeVisible();
 });

@@ -111,6 +111,9 @@ vi.mock('../individualStudy/stats/StatsView', () => ({
 vi.mock('../individualStudy/management/ManageView', () => ({
   ManageView: () => <div>ManageView</div>,
 }));
+vi.mock('../individualStudy/management/StageManagementItem', () => ({
+  StageManagementItem: () => <div>StageManagementItem</div>,
+}));
 vi.mock('../individualStudy/management/StorageManagementView', () => ({
   StorageManagementView: () => <div>StorageManagementView</div>,
 }));
@@ -153,6 +156,7 @@ vi.mock('@mantine/core', () => ({
     { Group: ({ children }: { children: ReactNode }) => <div>{children}</div> },
   ),
   Container: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Divider: () => <hr />,
   Flex: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Group: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   LoadingOverlay: ({ visible }: { visible: boolean }) => (visible ? <div data-testid="loading-overlay" /> : null),
@@ -223,6 +227,17 @@ describe('StudyAnalysisTabs', () => {
     expect(html).toContain('Select a study from the header menu to view analysis data.');
   });
 
+  test('opens the Stage Management route for an admin', async () => {
+    mockParams.analysisTab = 'stages';
+    mockStorageEngine!.getAllConfigsFromHash = vi.fn().mockResolvedValue({});
+    mockStorageEngine!.getStageData = vi.fn().mockResolvedValue({ allStages: [] });
+    mockUser = { isAdmin: true };
+    vi.mocked(getStudyConfig).mockResolvedValue({ ...makeStudyConfig(), errors: [], warnings: [] });
+    render(<StudyAnalysisTabs globalConfig={mockGlobalConfig} />);
+    await waitFor(() => expect(screen.getByText('StageManagementItem')).toBeDefined());
+    expect(screen.queryByTestId('not-found')).toBeNull();
+  });
+
   test('shows 404 with the study email for an unknown analysis tab', async () => {
     mockParams.analysisTab = 'df';
     vi.mocked(getStudyConfig).mockResolvedValue({ ...makeStudyConfig(), errors: [], warnings: [] });
@@ -250,6 +265,7 @@ describe('StudyAnalysisTabs', () => {
     expect(html).toContain('Trial Stats');
     expect(html).toContain('Coding');
     expect(html).toContain('Config');
+    expect(html).toContain('Stage Management');
     expect(html).toContain('Manage');
   });
 

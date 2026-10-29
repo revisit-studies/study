@@ -337,7 +337,6 @@ export function StepRenderer() {
             footer={{ height: isAnalysis ? 125 + (hasAudio ? 55 : 0) : 0 }}
             style={{ '--app-shell-aside-offset': '0rem' } as CSSProperties}
           >
-            {asideOpen && <AppAside />}
             {showTitleBar && (
             <AppHeader
               developmentModeEnabled={developmentModeEnabled}
@@ -454,6 +453,7 @@ export function StepRenderer() {
                 </AppShell.Main>
               </TrialProvenanceBoundary>
             </Flex>
+            {asideOpen && <AppAside />}
             {isAnalysis && (
             <AnalysisFooter setHasAudio={setHasAudio} key={currentComponent} />
             )}

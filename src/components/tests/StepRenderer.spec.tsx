@@ -37,6 +37,8 @@ const pdfExportMocks = vi.hoisted(() => ({
   waitForNextPaint: vi.fn((): Promise<void> => Promise.resolve()),
 }));
 let mockShowTitleBar = true;
+let mockShowStudyBrowser = false;
+let mockDevelopmentModeEnabled = false;
 let mockStorageEngine: Pick<LocalStorageEngine, 'subscribeToParticipantDataWriteErrors'> = {
   subscribeToParticipantDataWriteErrors: mockSubscribeToParticipantDataWriteErrors,
 };
@@ -90,6 +92,7 @@ vi.mock('../interface/AppHeader', () => ({
   }) => (
     <button
       type="button"
+      data-testid="app-header"
       disabled={isExportingPdf}
       onClick={() => { onExportPdf?.(); }}
     >
@@ -184,8 +187,8 @@ vi.mock('../../store/hooks/useReplay', () => ({
 
 vi.mock('../../store/store', () => ({
   useStoreSelector: (selector: (s: Record<string, unknown>) => unknown) => selector({
-    showStudyBrowser: false,
-    modes: { developmentModeEnabled: false, dataCollectionEnabled: true },
+    showStudyBrowser: mockShowStudyBrowser,
+    modes: { developmentModeEnabled: mockDevelopmentModeEnabled, dataCollectionEnabled: true },
     completed: false,
     analysisHasScreenRecording: false,
     analysisCanPlayScreenRecording: false,
@@ -305,6 +308,8 @@ describe('StepRenderer', () => {
     pdfExportMocks.showNotification.mockClear();
     pdfExportMocks.waitForNextPaint.mockReset().mockResolvedValue(undefined);
     mockShowTitleBar = true;
+    mockShowStudyBrowser = false;
+    mockDevelopmentModeEnabled = false;
     mockStorageEngine = {
       subscribeToParticipantDataWriteErrors: mockSubscribeToParticipantDataWriteErrors,
     };
@@ -422,6 +427,22 @@ describe('StepRenderer', () => {
   test('renders the app shell', async () => {
     const { getByTestId } = await act(async () => render(<StepRenderer />));
     expect(getByTestId('app-shell')).toBeDefined();
+  });
+
+  test('places the header and main content before the study browser in reading order', async () => {
+    mockShowStudyBrowser = true;
+    mockDevelopmentModeEnabled = true;
+    const { container } = await act(async () => render(<StepRenderer />));
+    const header = container.querySelector('[data-testid="app-header"]');
+    const aside = container.querySelector('[data-testid="app-aside"]');
+    const main = container.querySelector('main');
+    const orderedElements = Array.from(container.querySelectorAll('*'));
+
+    expect(header).not.toBeNull();
+    expect(aside).not.toBeNull();
+    expect(main).not.toBeNull();
+    expect(orderedElements.indexOf(header!)).toBeLessThan(orderedElements.indexOf(main!));
+    expect(orderedElements.indexOf(main!)).toBeLessThan(orderedElements.indexOf(aside!));
   });
 
   test('renders outlet (study content area)', async () => {
