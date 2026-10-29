@@ -200,3 +200,5 @@ describe('AppNavBar', () => {
     expect(html).not.toContain('max-height:');
   });
 });
+
+vi.mock('../../../store/hooks/useGlobalStore', () => ({ useGlobalStore: () => ({}), useGlobalStoreUpdaterRegistration: () => () => () => undefined }));

@@ -7,13 +7,18 @@ import {
   ParsedStringOption, ResponseBlockLocation, StudyConfig, ValueOf, Answer, ParticipantData, IndividualComponent,
 } from '../parser/types';
 import type {
-  AssetStatus, AlertModalState, CheckAnswerState, StoredAnswer, StoredProvenance, TrialValidation, TrrackedProvenance, StoreState, Sequence, ParticipantMetadata, ValidationStatus,
+  ProvenanceLocation, AssetStatus, AlertModalState, CheckAnswerState, StoredAnswer, StoredProvenance, TrialValidation, TrrackedProvenance, StoreState, Sequence, ParticipantMetadata, ValidationStatus,
+  GlobalStoreUpdater,
 } from './types';
+import { parseTrialOrder } from '../utils/parseTrialOrder';
 import { getSequenceFlatMap } from '../utils/getSequenceFlatMap';
 import { REVISIT_MODE } from '../storage/engines/types';
 import { studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
 import { randomizeOptions, randomizeQuestionOrder, randomizeForm } from '../utils/handleResponseRandomization';
 import { getInitialStimulusValidation } from '../components/response/stimulusErrors';
+import { getInitialGlobalVariables } from '../utils/globalStore';
+import type { GlobalStoreGraph } from './globalStoreProvenance';
+import { getGlobalStoreNodeState } from './globalStoreProvenance';
 import { appendProvenanceTraversalEvent } from './provenance';
 
 type UpdateResponseBlockValidationInput = {
@@ -78,6 +83,8 @@ export async function studyStoreCreator(
   storageEngineFailedToConnect: boolean,
   isStalledConfig: boolean = false,
   initialAlertModal?: AlertModalState,
+  globalStoreGraph?: GlobalStoreGraph,
+  globalStoreRevision = 0,
 ) {
   const flatSequence = getSequenceFlatMap(sequence);
   const sequenceParameters = sequence.parameters || {};
@@ -167,6 +174,10 @@ export async function studyStoreCreator(
   );
 
   const initialState: StoreState = {
+    globalVariables: globalStoreGraph ? getGlobalStoreNodeState(globalStoreGraph).values : getInitialGlobalVariables(config.globalVariables),
+    globalStoreGraph,
+    globalStoreRevision,
+    globalStoreSubmitting: false,
     studyId,
     answers: Object.keys(answers).length > 0 ? answers : emptyAnswers,
     sequence,
@@ -209,6 +220,52 @@ export async function studyStoreCreator(
     name: 'storeSlice',
     initialState,
     reducers: {
+      setGlobalStoreSubmitting(state, { payload }: PayloadAction<string | false>) {
+        state.globalStoreSubmitting = payload !== false;
+        state.globalStorePendingIdentifier = payload || undefined;
+        state.globalStorePendingRevision = payload ? state.globalStoreRevision : undefined;
+        if (payload) state.globalStoreError = undefined;
+      },
+      setGlobalStoreError(state, { payload }: PayloadAction<string | undefined>) {
+        state.globalStoreError = payload;
+      },
+      acceptGlobalStoreSubmission(state, { payload }: PayloadAction<{ graph: GlobalStoreGraph; revision: number; answers: ParticipantData['answers']; invalidateAfter?: string }>) {
+        const currentOrder = payload.invalidateAfter ? parseTrialOrder(payload.invalidateAfter) : null;
+        const changed = currentOrder ? Object.keys(state.answers).filter((id) => {
+          const order = parseTrialOrder(state.answers[id].trialOrder);
+          return order.step !== null && currentOrder.step !== null && (order.step > currentOrder.step || (order.step === currentOrder.step && (order.funcIndex ?? -1) > (currentOrder.funcIndex ?? -1)));
+        }) : [];
+        state.answers = payload.answers;
+        state.globalStoreGraph = payload.graph;
+        state.globalVariables = getGlobalStoreNodeState(payload.graph).values;
+        state.globalStoreRevision = payload.revision;
+        state.clickedPrevious = false;
+        state.reactiveAnswers = {};
+        state.matrixAnswers = {};
+        state.rankingAnswers = {};
+        changed.forEach((id) => {
+          delete state.checkAnswer[id];
+          delete state.responseSubmitAttempted[id];
+          delete state.stimulusSubmitAttempted[id];
+          const validation = state.trialValidation[id];
+          if (validation) {
+            ['aboveStimulus', 'belowStimulus', 'sidebar', 'stimulus'].forEach((location) => {
+              validation[location as ResponseBlockLocation] = location === 'stimulus'
+                ? getInitialStimulusValidation(studyComponentToIndividualComponent(state.config.components[state.answers[id]?.componentName] || {}, state.config))
+                : { valid: false, values: {} };
+              const graph = validation.provenanceGraph[location as ResponseBlockLocation];
+              if (graph) {
+                graph.current = graph.root;
+                graph.resetToInitialState = true;
+              }
+            });
+            // Retain old nodes while initializing the next visit from its replacement context.
+          }
+        });
+        Object.entries(state.funcSequence).forEach(([name, components]) => {
+          state.funcSequence[name] = components.filter((component, index) => Object.keys(payload.answers).some((id) => id.startsWith(`${name}_`) && id.endsWith(`_${component}_${index}`)));
+        });
+      },
       setAssetStatus(state, { payload }: PayloadAction<{ identifier: string; status: AssetStatus }>) {
         const validation = state.trialValidation[payload.identifier];
         if (validation) validation.assetStatus = payload.status;
@@ -282,8 +339,9 @@ export async function studyStoreCreator(
         state.reactiveAnswers = action.payload;
       },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      saveAnalysisState(state, { payload }: PayloadAction<{ prov: any, location: ResponseBlockLocation }>) {
+      saveAnalysisState(state, { payload }: PayloadAction<{ prov: any, location: ProvenanceLocation, identifier?: string }>) {
         state.analysisProvState[payload.location] = payload.prov;
+        if (payload.location === 'globalStore') state.analysisGlobalStoreIdentifier = payload.identifier;
       },
       setAnalysisIsPlaying(state, { payload }: PayloadAction<boolean>) {
         state.analysisIsPlaying = payload;
@@ -427,6 +485,7 @@ export async function studyStoreCreator(
         provenance: StoredProvenance;
         responseValues: Partial<Record<ResponseBlockLocation, StoredAnswer['answer']>>;
       }>) {
+        state.globalStoreError = undefined;
         const validation = state.trialValidation[payload.identifier];
         if (!validation) return;
         validation.provenanceGraph = payload.provenance;
@@ -547,7 +606,12 @@ export async function studyStoreCreator(
     },
   );
 
-  return { store, actions: storeSlice.actions };
+  return {
+    store,
+    actions: storeSlice.actions,
+    globalStoreUpdaters: new Map<string, GlobalStoreUpdater>(),
+    trialAssetEntry: undefined as { identifier: string; key: string } | undefined,
+  };
 }
 
 export type StudyStore = Awaited<ReturnType<typeof studyStoreCreator>>;

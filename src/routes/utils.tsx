@@ -3,6 +3,7 @@ import {
   useEffect, useMemo, useState,
 } from 'react';
 import { ModuleNamespace } from 'vite/types/hot';
+import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import {
   useFlatSequence, useStoreActions, useStoreDispatch, useStoreSelector,
 } from '../store/store';
@@ -11,6 +12,8 @@ import { JumpFunctionParameters, JumpFunctionReturnVal } from '../store/types';
 import { findFuncBlock } from '../utils/getSequenceFlatMap';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { getComponent } from '../utils/handleComponentInheritance';
+import { getGlobalStoreContextBeforeTrial } from '../store/globalStoreProvenance';
+import { useGlobalStoreSavePending } from '../store/hooks/useGlobalStoreSavePending';
 
 export function useStudyId(): string {
   const { studyId } = useParams();
@@ -45,7 +48,11 @@ const modules = import.meta.glob(
 ) as Record<string, ModuleNamespace>;
 
 export function useCurrentComponent(): string {
+  const savePending = useGlobalStoreSavePending();
+  const isAnalysis = useIsAnalysis();
   const { funcIndex } = useParams();
+  const globalVariables = useStoreSelector((state) => state.globalVariables);
+  const globalGraph = useStoreSelector((state) => state.globalStoreGraph);
   const _answers = useStoreSelector((state) => state.answers);
   const studyConfig = useStudyConfig();
   const participantSequence = useStoreSelector((state) => state.sequence);
@@ -90,12 +97,13 @@ export function useCurrentComponent(): string {
   }, [currentComponent, currentStep, flatSequence, studyConfig.sequence]);
 
   useEffect(() => {
-    if (!funcIndex && nextFunc && typeof currentStep === 'number') {
+    if (!savePending && !funcIndex && nextFunc && typeof currentStep === 'number') {
       navigate(`/${studyId}/${encryptIndex(currentStep)}/${encryptIndex(0)}${window.location.search}`);
     }
-  }, [currentStep, funcIndex, navigate, nextFunc, studyId]);
+  }, [savePending, currentStep, funcIndex, navigate, nextFunc, studyId]);
 
   useEffect(() => {
+    if (savePending) return;
     if (typeof currentStep === 'number') {
       const component = getComponent(flatSequence[currentStep], studyConfig);
 
@@ -104,6 +112,10 @@ export function useCurrentComponent(): string {
 
       if (savedComponentName) return;
 
+      if (!component && isAnalysis && studyConfig.globalVariables !== undefined) {
+        setGeneratedComponent({ name: 'Notfound', scope: generatedScope });
+        return;
+      }
       // in a func component
       if (!component && nextFunc !== null) {
         const configuredBlock = findFuncBlock(flatSequence[currentStep], studyConfig.sequence);
@@ -114,8 +126,12 @@ export function useCurrentComponent(): string {
             ...(participantBlock?.parameters || {}),
           }
           : undefined;
+        const context = studyConfig.globalVariables !== undefined
+          ? getGlobalStoreContextBeforeTrial(globalGraph, studyConfig.globalVariables, currentStep, decryptedFuncIndex)
+          : { store: globalVariables, answers: _answers };
         const { component: currCompName, parameters: _params, correctAnswer } = nextFunc({
-          answers: _answers,
+          store: Object.freeze({ ...context.store }),
+          answers: context.answers,
           customParameters,
           currentStep,
           currentBlock: flatSequence[currentStep],
@@ -142,7 +158,7 @@ export function useCurrentComponent(): string {
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentStep, funcIndex, participantSequence, studyConfig.sequence, savedComponentName, generatedScope]);
+  }, [savePending, globalGraph, currentStep, funcIndex, participantSequence, studyConfig.sequence, savedComponentName, generatedScope, isAnalysis]);
 
   if (typeof currentStep === 'number' && flatSequence[currentStep] === 'end') {
     return 'end';

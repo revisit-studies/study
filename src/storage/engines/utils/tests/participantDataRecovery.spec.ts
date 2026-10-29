@@ -108,3 +108,10 @@ describe('shouldPreferCachedParticipantData', () => {
     expect(shouldPreferCachedParticipantData(cachedParticipantData, remoteParticipantData)).toBe(false);
   });
 });
+
+test('a newer accepted revision wins even when an earlier edit clears later answers', () => {
+  const remote = makeParticipantData({ globalStoreRevision: 2, answers: { intro_0: makeStoredAnswer('intro_0', 100), intro_1: makeStoredAnswer('intro_1', 200) } });
+  const cached = makeParticipantData({ globalStoreRevision: 3, answers: { intro_0: makeStoredAnswer('intro_0', 300) } });
+  expect(shouldPreferCachedParticipantData(cached, remote)).toBe(true);
+  expect(shouldPreferCachedParticipantData(remote, cached)).toBe(false);
+});

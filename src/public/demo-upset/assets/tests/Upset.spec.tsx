@@ -43,7 +43,7 @@ describe('demo UpSet replay integration', () => {
     const setAnswer = vi.fn();
     render(
       <App
-        parameters={{}}
+        globalVariables={{}} registerGlobalStoreUpdater={() => () => undefined} parameters={{}}
         answers={{}}
         provenanceState={undefined}
         setAnswer={setAnswer}
@@ -81,7 +81,7 @@ describe('demo UpSet replay integration', () => {
     const setAnswer = vi.fn();
     const { container } = render(
       <App
-        parameters={{}}
+        globalVariables={{}} registerGlobalStoreUpdater={() => () => undefined} parameters={{}}
         answers={{}}
         provenanceState={replayState as never}
         setAnswer={setAnswer}

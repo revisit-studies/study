@@ -316,3 +316,15 @@ describe('useCurrentIdentifier', () => {
     expect(result.current).toBe('intro_0');
   });
 });
+
+test('global-store replay never generates a missing historical dynamic trial', () => {
+  mockParams = { studyId: 'test-study', index: '0', funcIndex: '0' };
+  mockSearchParams = new URLSearchParams('participantId=p1');
+  mockStudyConfig.globalVariables = { budget: { initialValue: 100 } };
+  mockFlatSequence = ['myFunc', 'end'];
+  vi.mocked(getComponent).mockReturnValue(null);
+  const { result } = renderHook(useCurrentComponent);
+  expect(result.current).toBe('Notfound');
+  expect(mockStoreDispatch).not.toHaveBeenCalled();
+  delete mockStudyConfig.globalVariables;
+});

@@ -365,6 +365,13 @@
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
+        },
         "optionOrder": {
           "description": "The order in which the buttons are displayed. Defaults to fixed.",
           "enum": [
@@ -493,6 +500,13 @@
         "minSelections": {
           "description": "The minimum number of selections that are required.",
           "type": "number"
+        },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
         },
         "optionOrder": {
           "description": "The order in which the checkboxes are displayed. Defaults to fixed.",
@@ -721,6 +735,13 @@
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
+        },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
@@ -826,6 +847,13 @@
         "min": {
           "description": "The earliest value accepted, using the format selected by `options`. Years must be between `0100` and `9999`.",
           "type": "string"
+        },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
         },
         "options": {
           "description": "Determines whether participants enter or select a date, or select a month or year with a picker. Defaults to `date`.",
@@ -953,6 +981,13 @@
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
+        },
         "paramCapture": {
           "not": {}
         },
@@ -1060,6 +1095,13 @@
         "minSelections": {
           "description": "The minimum number of selections that are required. This will make the dropdown a multiselect dropdown.",
           "type": "number"
+        },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
         },
         "options": {
           "anyOf": [
@@ -1466,6 +1508,250 @@
         "number",
         "boolean"
       ]
+    },
+    "GlobalStoreAction": {
+      "additionalProperties": false,
+      "properties": {
+        "operand": {
+          "$ref": "#/definitions/GlobalStoreOperand",
+          "description": "Omit to use the current answer directly. Not applicable to toggle."
+        },
+        "operation": {
+          "$ref": "#/definitions/GlobalStoreOperation"
+        },
+        "variable": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "variable",
+        "operation"
+      ],
+      "type": "object"
+    },
+    "GlobalStoreNumber": {
+      "description": "A numeric literal or an exact reference to a declared numeric store value.",
+      "type": [
+        "number",
+        "string"
+      ]
+    },
+    "GlobalStoreOperand": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "source": {
+              "const": "answer",
+              "description": "Defaults to the current response's submitted answer.",
+              "type": "string"
+            },
+            "transforms": {
+              "items": {
+                "$ref": "#/definitions/GlobalStoreOperandTransform"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "source": {
+              "const": "literal",
+              "type": "string"
+            },
+            "transforms": {
+              "items": {
+                "$ref": "#/definitions/GlobalStoreOperandTransform"
+              },
+              "type": "array"
+            },
+            "value": {
+              "$ref": "#/definitions/GlobalStoreValue"
+            }
+          },
+          "required": [
+            "source",
+            "value"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "GlobalStoreOperandTransform": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "operation": {
+              "enum": [
+                "add",
+                "subtract",
+                "multiply",
+                "divide",
+                "subtractFrom",
+                "divideInto"
+              ],
+              "type": "string"
+            },
+            "value": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "operation",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "operation": {
+              "const": "not",
+              "type": "string"
+            }
+          },
+          "required": [
+            "operation"
+          ],
+          "type": "object"
+        }
+      ],
+      "description": "Transform the operand before applying the action; reverse operations use value op operand."
+    },
+    "GlobalStoreOperation": {
+      "enum": [
+        "set",
+        "add",
+        "subtract",
+        "multiply",
+        "divide",
+        "append",
+        "prepend",
+        "and",
+        "or",
+        "toggle"
+      ],
+      "type": "string"
+    },
+    "GlobalStoreValue": {
+      "description": "Primitive values in a participant's declared global store. Types are inferred from initialValue.",
+      "type": [
+        "string",
+        "number",
+        "boolean"
+      ]
+    },
+    "GlobalVariableCondition": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "check": {
+              "const": "globalVariable",
+              "type": "string"
+            },
+            "comparison": {
+              "$ref": "#/definitions/EqualityComparison"
+            },
+            "to": {
+              "type": "string"
+            },
+            "value": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              ]
+            },
+            "variable": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "check",
+            "comparison",
+            "to",
+            "value",
+            "variable"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "check": {
+              "const": "globalVariable",
+              "type": "string"
+            },
+            "comparison": {
+              "$ref": "#/definitions/StringComparison"
+            },
+            "to": {
+              "type": "string"
+            },
+            "value": {
+              "type": "string"
+            },
+            "variable": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "check",
+            "comparison",
+            "to",
+            "value",
+            "variable"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "check": {
+              "const": "globalVariable",
+              "type": "string"
+            },
+            "comparison": {
+              "$ref": "#/definitions/NumericComparison"
+            },
+            "to": {
+              "type": "string"
+            },
+            "value": {
+              "type": "number"
+            },
+            "variable": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "check",
+            "comparison",
+            "to",
+            "value",
+            "variable"
+          ],
+          "type": "object"
+        }
+      ],
+      "description": "The SkipConditions interface is used to define skip conditions. This is used to skip to a different component/block based on the response to a component or based on the number of correct/incorrect responses in a block. Skip conditions work recursively: if you have a nested block, the parent blocks' skip conditions will be considered when computing the skip logic.\n\nSkip conditions are evaluated in the order they are defined in the array. If a condition is met, the participant will be redirected to the component or block specified in the `\"to\"` property. If no conditions are met, the participant will continue to the next component in the sequence.\n\nSkip conditions allow you to jump to a different component or block. If you intend to skip to a block, you should specify a block id in the sequence. If you intend to skip to a component, you should specify a component id. Skipping backwards is not supported. Skipping to a repeated component will skip to the first instance of the component after the component that triggered the skip.\n\nPlease see the interface definitions for more specific information on the different types of skip conditions."
     },
     "ImageComponent": {
       "additionalProperties": false,
@@ -2171,6 +2457,13 @@
           "description": "The number of options to render.",
           "type": "number"
         },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
+        },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
@@ -2291,6 +2584,13 @@
         "minWordLength": {
           "description": "The minimum number of whitespace-separated words accepted in the response.",
           "type": "number"
+        },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
@@ -2631,6 +2931,13 @@
           "description": "The minimum amount of answers given per row for the matrix.",
           "type": "number"
         },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
+        },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
@@ -2814,6 +3121,13 @@
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
+        },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
@@ -2977,12 +3291,19 @@
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "max": {
-          "description": "The maximum value that is accepted in the input.",
-          "type": "number"
+          "$ref": "#/definitions/GlobalStoreNumber",
+          "description": "The maximum value that is accepted in the input."
         },
         "min": {
-          "description": "The minimum value that is accepted in the input.",
-          "type": "number"
+          "$ref": "#/definitions/GlobalStoreNumber",
+          "description": "The minimum value that is accepted in the input."
+        },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
@@ -3016,12 +3337,12 @@
           "type": "string"
         },
         "strictMax": {
-          "description": "Only values below this maximum value are accepted in the input.",
-          "type": "number"
+          "$ref": "#/definitions/GlobalStoreNumber",
+          "description": "Only values below this maximum value are accepted in the input."
         },
         "strictMin": {
-          "description": "Only values above this minimum value are accepted in the input.",
-          "type": "number"
+          "$ref": "#/definitions/GlobalStoreNumber",
+          "description": "Only values above this minimum value are accepted in the input."
         },
         "style": {
           "$ref": "#/definitions/Styles",
@@ -3288,6 +3609,13 @@
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
+        },
         "optionOrder": {
           "description": "The order in which the radio buttons are displayed. Defaults to fixed.",
           "enum": [
@@ -3457,6 +3785,13 @@
           "description": "The number of items to rank. Applies only to sublist and categorical ranking widgets.",
           "type": "number"
         },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
+        },
         "options": {
           "description": "The options that are displayed as ranking options, provided as an array of objects, with label and value fields.",
           "items": {
@@ -3577,6 +3912,13 @@
         "numItems": {
           "description": "The number of items to rank. Applies only to sublist and categorical ranking widgets.",
           "type": "number"
+        },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
         },
         "options": {
           "description": "The options that are displayed as ranking options, provided as an array of objects, with label and value fields.",
@@ -3711,6 +4053,13 @@
         "numItems": {
           "description": "The number of items to rank. Applies only to sublist and categorical ranking widgets.",
           "type": "number"
+        },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
         },
         "options": {
           "description": "The options that are displayed as ranking options, provided as an array of objects, with label and value fields.",
@@ -4003,6 +4352,13 @@
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
+        },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
@@ -4220,6 +4576,82 @@
             "comparison": {
               "$ref": "#/definitions/EqualityComparison"
             },
+            "globalVariable": {
+              "type": "string"
+            },
+            "value": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              ]
+            }
+          },
+          "required": [
+            "comparison",
+            "globalVariable",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "comparison": {
+              "$ref": "#/definitions/StringComparison"
+            },
+            "globalVariable": {
+              "type": "string"
+            },
+            "value": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "comparison",
+            "globalVariable",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "comparison": {
+              "$ref": "#/definitions/NumericComparison"
+            },
+            "globalVariable": {
+              "type": "string"
+            },
+            "value": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "comparison",
+            "globalVariable",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "comparison": {
+              "$ref": "#/definitions/EqualityComparison"
+            },
             "responseId": {
               "type": "string"
             },
@@ -4367,6 +4799,13 @@
           "description": "The minimum number of whitespace-separated words accepted in the response.",
           "type": "number"
         },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
+        },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",
           "type": "string"
@@ -4438,9 +4877,11 @@
       "type": "object"
     },
     "SkipConditions": {
-      "description": "The SkipConditions interface is used to define skip conditions. This is used to skip to a different component/block based on the response to a component or based on the number of correct/incorrect responses in a block. Skip conditions work recursively: if you have a nested block, the parent blocks' skip conditions will be considered when computing the skip logic.\n\nSkip conditions are evaluated in the order they are defined in the array. If a condition is met, the participant will be redirected to the component or block specified in the `\"to\"` property. If no conditions are met, the participant will continue to the next component in the sequence.\n\nSkip conditions allow you to jump to a different component or block. If you intend to skip to a block, you should specify a block id in the sequence. If you intend to skip to a component, you should specify a component id. Skipping backwards is not supported. Skipping to a repeated component will skip to the first instance of the component after the component that triggered the skip.\n\nPlease see the interface definitions for more specific information on the different types of skip conditions.",
       "items": {
         "anyOf": [
+          {
+            "$ref": "#/definitions/GlobalVariableCondition"
+          },
           {
             "$ref": "#/definitions/IndividualComponentSingleResponseCondition"
           },
@@ -4489,6 +4930,13 @@
         "location": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
         },
         "options": {
           "description": "This defines the steps in the slider and the extent of the slider as an array of objects that have a label and a value.",
@@ -4799,6 +5247,13 @@
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
+        },
         "paramCapture": {
           "not": {}
         },
@@ -4935,6 +5390,13 @@
         "min": {
           "description": "The earliest time accepted, in the same format as the response value.",
           "type": "string"
+        },
+        "onSubmit": {
+          "description": "Apply these actions to the final submitted answer, in declared order.",
+          "items": {
+            "$ref": "#/definitions/GlobalStoreAction"
+          },
+          "type": "array"
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer `uiConfig.urlParticipantIdParam` if you are capturing a participant ID.",

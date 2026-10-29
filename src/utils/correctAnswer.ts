@@ -1,10 +1,16 @@
 import isEqual from 'lodash.isequal';
+import { compareResponseValues } from './compareResponseValues';
 import { parseStringOptionValue } from './stringOptions';
 import {
-  Answer, JsonValue, MatrixCheckboxResponse, Response, StoredAnswer, ValueCondition,
+  Answer, JsonValue, MatrixCheckboxResponse, Response, StoredAnswer,
 } from '../parser/types';
 import type { CheckAnswerState } from '../store/types';
 import { getCustomResponseModule, getResponseCodeModule } from '../components/response/customResponseModules';
+import { isResponseAnswered, isResponseDontKnowSelected } from './responseValue';
+
+export { compareResponseValues } from './compareResponseValues';
+
+export { isResponseAnswered, isResponseDontKnowSelected } from './responseValue';
 
 type ResponseFunctionModule = {
   default?: unknown;
@@ -30,16 +36,6 @@ export function getSavedScoresForAnswer(
 
 export function hasSavedScores(checkAnswer?: Pick<CheckAnswerState, 'scores'>) {
   return Object.keys(checkAnswer?.scores ?? {}).length > 0;
-}
-
-export function isResponseAnswered(value: unknown): boolean {
-  if (value === undefined || value === null || value === '') return false;
-  if (Array.isArray(value)) return value.length > 0 && value.some(isResponseAnswered);
-  if (typeof value === 'object') {
-    const values = Object.values(value);
-    return values.length > 0 && values.some(isResponseAnswered);
-  }
-  return true;
 }
 
 export function normalizeResponseValue(response: Response | undefined, value: unknown): unknown {
@@ -72,13 +68,6 @@ export function isResponseScorerUnavailable(response?: Response): boolean {
   return response.type === 'custom'
     ? !getCustomResponseModule(response)
     : !getResponseFunctionModule(response.path);
-}
-
-export function isResponseDontKnowSelected(response: Response | undefined, values: StoredAnswer['answer']): boolean {
-  return !!response?.withDontKnow
-    && response.type !== 'matrix-radio'
-    && response.type !== 'matrix-checkbox'
-    && !!values[`${response.id}-dontKnow`];
 }
 
 export function isResponseAnsweredForScoring(
@@ -193,42 +182,6 @@ export function getMatrixCheckboxRowStatuses(
   });
 
   return Object.fromEntries(questions.map((question, index) => [question, bestStatuses[index] ?? 'incorrect']));
-}
-
-/** Compare values without converting strings to numbers. */
-export function compareResponseValues(
-  value: unknown,
-  expected: unknown,
-  comparison: ValueCondition['comparison'],
-  options: { ignoreArrayOrder?: boolean } = {},
-): boolean {
-  if (comparison === 'equals' || comparison === 'doesNotEqual') {
-    const equal = Array.isArray(value) && Array.isArray(expected) && options.ignoreArrayOrder
-      ? isEqual([...value].sort(), [...expected].sort())
-      : isEqual(value, expected);
-    return comparison === 'equals' ? equal : !equal;
-  }
-
-  if (comparison === 'contains' || comparison === 'doesNotContain' || comparison === 'matchesRegex') {
-    if (typeof value !== 'string' || typeof expected !== 'string') return false;
-    if (comparison === 'contains') return value.includes(expected);
-    if (comparison === 'doesNotContain') return !value.includes(expected);
-    try {
-      return new RegExp(expected).test(value);
-    } catch {
-      return false;
-    }
-  }
-
-  if (typeof value !== 'number' || typeof expected !== 'number'
-    || !Number.isFinite(value) || !Number.isFinite(expected)) return false;
-  switch (comparison) {
-    case 'lessThan': return value < expected;
-    case 'lessThanOrEqual': return value <= expected;
-    case 'greaterThan': return value > expected;
-    case 'greaterThanOrEqual': return value >= expected;
-    default: return false;
-  }
 }
 
 export function shouldIgnoreArrayOrder(response?: Response) {

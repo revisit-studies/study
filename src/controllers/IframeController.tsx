@@ -3,6 +3,8 @@ import {
 } from 'react';
 import { useComputedColorScheme } from '@mantine/core';
 import { useDispatch } from 'react-redux';
+import type { GlobalStoreValues } from '../parser/types';
+import { useGlobalStore, useGlobalStoreUpdaterRegistration } from '../store/hooks/useGlobalStore';
 import { useCurrentComponent, useCurrentIdentifier } from '../routes/utils';
 import { useStoreDispatch, useStoreActions, useStoreSelector } from '../store/store';
 import { ParticipantData, WebsiteComponent } from '../parser/types';
@@ -24,6 +26,18 @@ import { responseValueKeys } from '../utils/responseVisibility';
 const PREFIX = '@REVISIT_COMMS';
 
 export function IframeController({ currentConfig, provState, answers }: { currentConfig: WebsiteComponent; provState?: unknown, answers: ParticipantData['answers'] }) {
+  const store = useGlobalStore();
+  const registerGlobalStoreUpdater = useGlobalStoreUpdaterRegistration();
+  const updaterCleanup = useRef<(() => void) | undefined>(undefined);
+  const pendingUpdate = useRef<{ id: string; resolve:(value: GlobalStoreValues) => void; reject: (error: Error) => void } | undefined>(undefined);
+  const documentId = useRef<string | undefined>(undefined);
+  const disposeUpdater = useCallback((message: string) => {
+    updaterCleanup.current?.();
+    updaterCleanup.current = undefined;
+    pendingUpdate.current?.reject(new Error(message));
+    pendingUpdate.current = undefined;
+  }, []);
+  useEffect(() => () => disposeUpdater('The website was closed before its global store update finished.'), [disposeUpdater]);
   const studyColorMode = useComputedColorScheme('light');
   const colorMode = currentConfig.colorMode ?? studyColorMode;
   const {
@@ -37,8 +51,8 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   const [resumeStatus, setResumeStatus] = useState<'unknown' | 'pending' | 'ready' | 'unsupported' | 'error'>('unknown');
   const resumeStatusRef = useRef(resumeStatus);
   const resumeRequest = useRef<string>('');
-  const hostResponseKeys = new Set((currentConfig.response ?? [])
-    .filter((response) => response.type !== 'reactive').flatMap(responseValueKeys));
+  const hostResponseKeys = useMemo(() => new Set((currentConfig.response ?? [])
+    .filter((response) => response.type !== 'reactive').flatMap(responseValueKeys)), [currentConfig.response]);
   const replay = useContext(ReplayContext);
   const initialReplayTime = useRef(replay?.seekTime ?? 0);
   const [hasReplayStarted, setHasReplayStarted] = useState(false);
@@ -139,14 +153,17 @@ export function IframeController({ currentConfig, provState, answers }: { curren
     if (!frameWindow) return undefined;
     const events = new frameWindow.AbortController();
     // Internal navigation keeps the iframe URL prop and request key unchanged.
-    frameWindow.addEventListener('pagehide', onLoading, { signal: events.signal });
+    frameWindow.addEventListener('pagehide', () => {
+      disposeUpdater('The website navigated before its global store update finished.');
+      onLoading();
+    }, { signal: events.signal });
     frameWindow.addEventListener('pageshow', () => {
       applyColorMode();
       onReady();
     }, { signal: events.signal });
     // Abort removes listeners safely even after the frame changes origin.
     return () => events.abort();
-  }, [frameDocument, applyColorMode, onLoading, onReady]);
+  }, [frameDocument, applyColorMode, onLoading, onReady, disposeUpdater]);
 
   useAssetStatus(resumeStatus === 'pending' ? 'loading' : resumeStatus === 'error' ? 'error' : assetStatus);
 
@@ -171,6 +188,8 @@ export function IframeController({ currentConfig, provState, answers }: { curren
     }
   }, [provState, sendMessage, shouldSendProvenance]);
 
+  useEffect(() => { sendMessage('GLOBAL_STORE', store); }, [sendMessage, store]);
+
   useEffect(() => {
     if (answers) {
       sendMessage('ANSWERS', answers);
@@ -182,22 +201,43 @@ export function IframeController({ currentConfig, provState, answers }: { curren
       const { data } = e;
       const isBootstrap = data?.type === `${PREFIX}/WINDOW_READY` && data.message?.protocolVersion === 1;
       if (data && typeof data === 'object' && (iframeId === data.iframeId || isBootstrap) && e.source === ref.current?.contentWindow) {
-        if (data.requestId && data.requestId !== resumeRequest.current) return;
+        if (!isBootstrap && data.requestId && data.requestId !== resumeRequest.current) return;
         switch (data.type) {
-          case `${PREFIX}/WINDOW_READY`:
+          case `${PREFIX}/WINDOW_READY`: {
+            const isNewDocument = documentId.current !== data.message?.documentId;
+            disposeUpdater('The website navigated before its global store update finished.');
+            documentId.current = data.message?.documentId;
             if (data.message?.protocolVersion === 1) {
-              resumeRequest.current = `${iframeId}:${data.message.documentId}`;
-              resumeStatusRef.current = 'pending';
-              setResumeStatus('pending');
-              sendMessage('RESUME', {
-                documentId: data.message.documentId,
-                protocolVersion: 1,
-                requestId: resumeRequest.current,
-                isAnalysis,
-                answers: restoredAnswers,
-                provenanceGraph: isAnalysis ? undefined : provenance,
-              });
+              const requestId = `${iframeId}:${data.message.documentId}`;
+              const needsResume = resumeRequest.current !== requestId;
+              resumeRequest.current = requestId;
+              if (data.message.globalStoreUpdater && !isAnalysis) {
+                updaterCleanup.current = registerGlobalStoreUpdater(({ store: entry, answers: currentAnswers }) => new Promise((resolve, reject) => {
+                  const id = crypto.randomUUID();
+                  pendingUpdate.current = { id, resolve, reject };
+                  sendMessage('GLOBAL_STORE_UPDATE', {
+                    requestId: id, documentId: documentId.current, store: entry, answers: currentAnswers,
+                  });
+                }));
+              }
+              if (isNewDocument || needsResume) {
+                resumeStatusRef.current = 'pending';
+                setResumeStatus('pending');
+                sendMessage('RESUME', {
+                  documentId: data.message.documentId,
+                  protocolVersion: 1,
+                  requestId: resumeRequest.current,
+                  isAnalysis,
+                  answers: restoredAnswers,
+                  provenanceGraph: isAnalysis ? undefined : provenance,
+                });
+              }
+            } else if (isNewDocument) {
+              resumeRequest.current = '';
+              resumeStatusRef.current = 'unknown';
+              setResumeStatus('unknown');
             }
+            sendMessage('GLOBAL_STORE', store);
             if (currentConfig.parameters) {
               sendMessage('STUDY_DATA', currentConfig.parameters);
             }
@@ -207,6 +247,18 @@ export function IframeController({ currentConfig, provState, answers }: { curren
             if (answers) {
               sendMessage('ANSWERS', answers);
             }
+            break;
+          }
+          case `${PREFIX}/GLOBAL_STORE_UPDATER`:
+            if (data.message?.documentId === documentId.current && data.message.enabled === false) {
+              disposeUpdater('The global store updater was removed.');
+            }
+            break;
+          case `${PREFIX}/GLOBAL_STORE_RESULT`:
+            if (data.message?.documentId !== documentId.current || data.message?.requestId !== pendingUpdate.current?.id) return;
+            if (data.message.error) pendingUpdate.current?.reject(new Error(data.message.error));
+            else pendingUpdate.current?.resolve(data.message.value);
+            pendingUpdate.current = undefined;
             break;
           case `${PREFIX}/RESTORATION_CAPABILITY`:
             if (data.message?.requestId !== resumeRequest.current || data.message?.protocolVersion !== 1) return;
@@ -231,20 +283,23 @@ export function IframeController({ currentConfig, provState, answers }: { curren
             break;
           case `${PREFIX}/READY`:
             break;
-          case `${PREFIX}/ANSWERS`:
+          case `${PREFIX}/ANSWERS`: {
             if (isAnalysis || resumeStatusRef.current === 'pending' || resumeStatusRef.current === 'error') return;
+            const stimulusAnswers: ParticipantData['answers'][string]['answer'] = { ...data.message };
+            hostResponseKeys.forEach((key) => { delete stimulusAnswers[key]; });
             stimulusValidationRef.current = {
               valid: true,
-              values: data.message,
+              values: stimulusAnswers,
             };
-            storeDispatch(setReactiveAnswers(data.message));
+            storeDispatch(setReactiveAnswers(stimulusAnswers));
             storeDispatch(updateResponseBlockValidation({
               location: 'stimulus',
               identifier,
               status: true,
-              values: data.message,
+              values: stimulusAnswers,
             }));
             break;
+          }
           case `${PREFIX}/PROVENANCE`: {
             if (isAnalysis || resumeStatusRef.current === 'pending' || resumeStatusRef.current === 'error') return;
             // Legacy initialization may arrive before an asynchronous restoration handler registers.
@@ -265,7 +320,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, [storeDispatch, dispatch, iframeId, currentConfig, sendMessage, setReactiveAnswers, updateProvenance, updateResponseBlockValidation, identifier, isAnalysis, provState, answers, shouldSendProvenance, provenance, restoredAnswers]);
+  }, [store, registerGlobalStoreUpdater, disposeUpdater, storeDispatch, dispatch, iframeId, currentConfig, hostResponseKeys, sendMessage, setReactiveAnswers, updateProvenance, updateResponseBlockValidation, identifier, isAnalysis, provState, answers, shouldSendProvenance, provenance, restoredAnswers]);
 
   // While the path is templated inside a dynamic block, templatedPath is undefined until the
   // block's current iteration resolves — don't load an iframe built from the wrong iteration.

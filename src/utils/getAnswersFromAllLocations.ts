@@ -1,6 +1,6 @@
 import { normalizeResponseAnswerValues, resolveResponseVisibility } from './responseVisibility';
 import { getSavedScoresForAnswer } from './correctAnswer';
-import type { Answer, Response } from '../parser/types';
+import type { Answer, GlobalStoreValues, Response } from '../parser/types';
 import type {
   CheckAnswerState, StoredAnswer, TrialValidation, ValidationStatus,
 } from '../store/types';
@@ -10,10 +10,11 @@ export function getPersistedAnswerValues(
   responses: Response[] = [],
   correctAnswers: Answer[] = [],
   checkAnswer?: CheckAnswerState,
+  store: GlobalStoreValues = {},
 ): StoredAnswer['answer'] {
   const normalizedAnswers = normalizeResponseAnswerValues(currentAnswers, responses);
   const persistedScores = getSavedScoresForAnswer(checkAnswer, normalizedAnswers);
-  const { answers } = resolveResponseVisibility(responses, normalizedAnswers, {}, correctAnswers, persistedScores);
+  const { answers } = resolveResponseVisibility(responses, normalizedAnswers, {}, correctAnswers, persistedScores, store);
   return structuredClone(normalizeResponseAnswerValues(answers, responses));
 }
 
@@ -37,11 +38,13 @@ export function getPersistedAnswersFromAllLocations(
   responses: Response[] = [],
   correctAnswers: Answer[] = [],
   checkAnswer?: CheckAnswerState,
+  store: GlobalStoreValues = {},
 ): StoredAnswer['answer'] {
   return getPersistedAnswerValues(
     getAnswersFromAllLocations(trialValidationEntry),
     responses,
     correctAnswers,
     checkAnswer,
+    store,
   );
 }
