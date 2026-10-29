@@ -6,10 +6,10 @@ import { RestorationError } from '../../components/interface/RestorationError';
 import { useCurrentIdentifier } from '../../routes/utils';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useStoreActions, useStoreDispatch, useStoreSelector } from '../store';
-import type { StoredProvenance } from '../types';
+import type { FormElementProvenance, StoredAnswer, StoredProvenance } from '../types';
 import type { ResponseBlockLocation } from '../../parser/types';
 import { createEmptyProvenance, getLegacyStoredAnswerProvenance } from '../provenance';
-import { validateResumableProvenance } from '../resumeProvenance';
+import { getResumedProvenanceState } from '../resumeProvenance';
 import { useIsAnalysis } from './useIsAnalysis';
 import { ErrorBoundary } from '../../controllers/ErrorBoundary';
 
@@ -44,9 +44,16 @@ function TrialProvenanceLoader({ children }: { children: ReactNode }) {
       Object.entries(retained ?? {}).forEach(([location, graph]) => {
         if (graph) provenance[location as ResponseBlockLocation] = graph;
       });
-      Object.values(provenance).forEach((graph) => { if (graph) validateResumableProvenance(graph); });
+      const responseValues: Partial<Record<ResponseBlockLocation, StoredAnswer['answer']>> = {};
+      Object.entries(provenance).forEach(([location, graph]) => {
+        if (!graph) return;
+        const restored = getResumedProvenanceState(graph) as FormElementProvenance;
+        if (location !== 'stimulus' && restored.form != null) {
+          responseValues[location as ResponseBlockLocation] = restored.form;
+        }
+      });
       if (cancelled) return;
-      dispatch(restoreTrialProvenance({ identifier, provenance }));
+      dispatch(restoreTrialProvenance({ identifier, provenance, responseValues }));
       setResult({ provenance });
     }
     load().catch(() => { if (!cancelled) setResult({ error: true }); });

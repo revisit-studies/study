@@ -29,7 +29,19 @@ A component with no state can call `useStatelessStudyComponent()` from the same 
 
 ## Websites, HTML, and Svelte
 
-Use `revisit-communicate.js`. After creating the chart/editor and its listeners, register restoration and explicitly finish registration:
+Use `revisit-communicate.js`. Call `beginRegistration` before initializing an asynchronous chart/editor that can publish default answers. After creating the chart/editor and its listeners, register restoration and explicitly finish registration:
+
+```js
+Revisit.beginRegistration();
+const editor = await createEditor();
+Revisit.onRestore(async ({ answers }) => {
+  await editor.setValue(answers.response ?? '');
+  Revisit.postAnswers({ response: editor.getValue() });
+});
+Revisit.completeRegistration();
+```
+
+The early call buffers initialization publications even across the document's load event. The latest study parameters, answers, and replay snapshot received during setup are delivered when their corresponding receive handlers register. Replay delivery does not publish participant data. Registering only after defaults have already been published cannot undo their effects on conditional host responses. Synchronous setup can register `onRestore` before publishing answers instead. For a managed graph:
 
 ```js
 const trrack = Revisit.createTrrack({ initializeTrrack, registry, initialState });
@@ -42,7 +54,7 @@ Revisit.completeRegistration();
 
 `createTrrack` imports the retained graph automatically. `onRestore` may return a promise; reVISit waits for it before accepting initialization publications or edits. For answer-only websites, apply the scoped `answers` in `onRestore` and publish the restored answer. Call `completeRegistration` only after asynchronous dependencies and handlers are ready. Failures keep the host's saved history and expose Retry restoration. Do not use the replay-only `onProvenanceReceive` callback as an editable graph-restoration callback.
 
-The version 1 handshake identifies the iframe document and restore request, reports capabilities when registration finishes, and acknowledges successful restoration. Messages from other windows or old requests are ignored. External website URLs remain unchanged; the host assigns the iframe identifier through the versioned handshake. Initialization messages with a different graph root cannot replace retained history while late registration finishes. Late registration upgrades the capability handshake without using a timeout. Older helpers and pages that never finish registration remain unknown; silence is not a failed capability check. Existing legacy publications remain compatible, but a legacy component has no restoration guarantee until migrated. Uninstrumented third-party websites cannot be restored automatically.
+The version 1 handshake identifies the iframe document and restore request, reports capabilities when registration finishes, and acknowledges successful restoration. Messages from other windows or old requests are ignored. External website URLs remain unchanged; the host assigns the iframe identifier through the versioned handshake. Initialization messages with a different graph root cannot replace retained history while late registration finishes. Late registration upgrades the capability handshake without using a timeout. Older helpers and pages that never finish registration remain unknown; silence is not a failed capability check. Pages that do not begin registration retain legacy publication behavior. Existing legacy publications remain compatible, but a legacy component has no restoration guarantee until migrated. Uninstrumented third-party websites cannot be restored automatically.
 
 Analysis replay remains read-only and uses its existing messages. Restoring an editable graph never replays recorded side effects or adds synthetic participant events.
 

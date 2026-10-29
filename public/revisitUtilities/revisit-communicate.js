@@ -26,12 +26,20 @@
     );
   };
 
-  let onDataReceiveCallback = null;
-  let onProvenanceReceiveCallback = null;
-  let onAnswerReceiveCallback = null;
+  const receiveCallbacks = new Map();
+  const pendingMessages = new Map();
+  const onReceive = (tag, fn) => {
+    receiveCallbacks.set(tag, fn);
+    if (pendingMessages.has(tag)) {
+      const message = pendingMessages.get(tag);
+      pendingMessages.delete(tag);
+      fn(message);
+    }
+  };
   const managedTrrackSubscriptions = new Set();
   const managedTrracks = new Set();
   let restoreCallback = null;
+  let registrationStarted = false;
   let registrationComplete = false;
   let resume = null;
   let restoring = false;
@@ -41,15 +49,21 @@
   const documentId = crypto.randomUUID();
   let announced = null;
   const announce = () => {
-    const version = registrationComplete || restoreCallback ? 1 : 0;
+    const version = registrationStarted || registrationComplete || restoreCallback ? 1 : 0;
     if (announced === version) return;
     announced = version;
     sendMessage('WINDOW_READY', { protocolVersion: version, documentId });
   };
 
+  const beginRegistration = () => {
+    registrationStarted = true;
+    legacyMode = false;
+    announce();
+  };
+
   const publish = (tag, message) => {
     if (resume?.isAnalysis) return;
-    if (!legacyMode && (managedTrracks.size > 0 || restoreCallback)) {
+    if (!legacyMode && (registrationStarted || managedTrracks.size > 0 || restoreCallback)) {
       if (!restored || restoring) {
         if (tag === 'ANSWERS') queuedAnswers = message;
         return;
@@ -150,15 +164,12 @@
         }
       }
       if (data.type === `${PREFIX}/RETRY_RESTORE` && data.message?.requestId === resume?.requestId) restore();
-      if (data.type === `${PREFIX}/STUDY_DATA` && onDataReceiveCallback) {
-        onDataReceiveCallback(data.message);
-      }
-      if (data.type === `${PREFIX}/PROVENANCE` && onProvenanceReceiveCallback) {
-        onProvenanceReceiveCallback(data.message);
-      }
-      if (data.type === `${PREFIX}/ANSWERS` && onAnswerReceiveCallback) {
-        onAnswerReceiveCallback(data.message);
-      }
+      ['STUDY_DATA', 'PROVENANCE', 'ANSWERS'].forEach((tag) => {
+        if (data.type !== `${PREFIX}/${tag}`) return;
+        const callback = receiveCallbacks.get(tag);
+        if (callback) callback(data.message);
+        else if (registrationStarted) pendingMessages.set(tag, data.message);
+      });
     }
   });
 
@@ -199,13 +210,13 @@
 
       return trrack;
     },
+    // Call before asynchronous initialization can publish defaults. Legacy pages remain opt-in.
+    beginRegistration,
     // Call after asynchronous editors/charts and their handlers have been initialized.
     onRestore: (fn) => {
       restoreCallback = fn;
-      legacyMode = false;
-      announced = null;
-      announce();
       restored = false;
+      beginRegistration();
       restore();
     },
     completeRegistration: () => {
@@ -223,22 +234,16 @@
         documentWidth: document.documentElement.scrollWidth,
       });
     },
-    onDataReceive: (fn) => {
-      onDataReceiveCallback = fn;
-    },
-    onProvenanceReceive: (fn) => {
-      onProvenanceReceiveCallback = fn;
-    },
-    onAnswersReceive: (fn) => {
-      onAnswerReceiveCallback = fn;
-    },
+    onDataReceive: (fn) => onReceive('STUDY_DATA', fn),
+    onProvenanceReceive: (fn) => onReceive('PROVENANCE', fn),
+    onAnswersReceive: (fn) => onReceive('ANSWERS', fn),
   };
 
   window.addEventListener(
     'load',
     function () {
       announce();
-      if (!restoreCallback && !registrationComplete) {
+      if (!registrationStarted && !restoreCallback && !registrationComplete) {
         // Keep old pages working without treating an absent registration as a failure.
         legacyMode = true;
         if (queuedAnswers !== undefined) publish('ANSWERS', queuedAnswers);

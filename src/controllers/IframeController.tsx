@@ -37,7 +37,8 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   const [resumeStatus, setResumeStatus] = useState<'unknown' | 'pending' | 'ready' | 'unsupported' | 'error'>('unknown');
   const resumeStatusRef = useRef(resumeStatus);
   const resumeRequest = useRef<string>(crypto.randomUUID());
-  const hostResponseKeys = new Set((currentConfig.response ?? []).flatMap(responseValueKeys));
+  const hostResponseKeys = new Set((currentConfig.response ?? [])
+    .filter((response) => response.type !== 'reactive').flatMap(responseValueKeys));
   const replay = useContext(ReplayContext);
   const initialReplayTime = useRef(replay?.seekTime ?? 0);
   const [hasReplayStarted, setHasReplayStarted] = useState(false);

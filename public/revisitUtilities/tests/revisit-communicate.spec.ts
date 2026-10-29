@@ -16,8 +16,12 @@ function setup(query = '?id=frame') {
   const api = (window as unknown as { Revisit: {
     createTrrack: (options: Record<string, unknown>) => ReturnType<typeof initializeTrrack>;
     onRestore: (callback: (state: { answers: Record<string, unknown>; provenanceGraph?: unknown }) => unknown) => void;
+    beginRegistration: () => void;
     completeRegistration: () => void;
     postAnswers: (answers: Record<string, unknown>) => void;
+    onDataReceive: (callback: (data: unknown) => void) => void;
+    onProvenanceReceive: (callback: (data: unknown) => void) => void;
+    onAnswersReceive: (callback: (data: unknown) => void) => void;
   } }).Revisit;
   return {
     api, parent,
@@ -116,4 +120,71 @@ test('external websites receive their iframe identifier through the handshake', 
   helper.send('RESUME', resume);
   await vi.waitFor(() => expect(helper.messages('RESTORED')).toHaveLength(1));
   expect(helper.messages('RESTORED')[0].iframeId).toBe('frame');
+});
+
+
+test('holds answer-only defaults across load until late registration and asynchronous restoration finish', async () => {
+  const helper = setup();
+  helper.api.beginRegistration();
+  helper.load();
+  helper.api.postAnswers({ count: 0 });
+  expect(helper.messages('ANSWERS')).toHaveLength(0);
+  helper.send('RESUME', resume);
+  let finish!: () => void;
+  const ready = new Promise<void>((resolve) => { finish = resolve; });
+  helper.api.onRestore(async ({ answers }) => {
+    await ready;
+    helper.api.postAnswers(answers);
+  });
+  helper.api.completeRegistration();
+  expect(helper.messages('ANSWERS')).toHaveLength(0);
+  expect(helper.messages('RESTORED')).toHaveLength(0);
+  finish();
+  await vi.waitFor(() => expect(helper.messages('RESTORED')).toHaveLength(1));
+  expect(helper.messages('ANSWERS').map((data) => data.message)).toEqual([{ count: 2 }]);
+  helper.api.postAnswers({ count: 3 });
+  expect(helper.messages('ANSWERS').at(-1)?.message).toEqual({ count: 3 });
+});
+
+
+test('pages without early registration retain legacy answer publications', () => {
+  const helper = setup();
+  helper.api.postAnswers({ count: 0 });
+  helper.load();
+  helper.api.postAnswers({ count: 1 });
+  expect(helper.messages('ANSWERS').map((data) => data.message)).toEqual([{ count: 0 }, { count: 1 }]);
+  expect(helper.messages('RESTORATION_CAPABILITY')).toHaveLength(0);
+});
+
+
+test.each([
+  ['STUDY_DATA', 'onDataReceive'],
+  ['PROVENANCE', 'onProvenanceReceive'],
+  ['ANSWERS', 'onAnswersReceive'],
+] as const)('delivers the latest %s snapshot to its late handler', (tag, register) => {
+  const helper = setup();
+  helper.api.beginRegistration();
+  helper.send(tag, { taskId: 'old-task' });
+  helper.send(tag, { taskId: 'configured-task' });
+  const receive = vi.fn();
+  helper.api[register](receive);
+  expect(receive.mock.calls).toEqual([[{ taskId: 'configured-task' }]]);
+  helper.send(tag, { taskId: 'next-task' });
+  expect(receive.mock.calls).toEqual([[{ taskId: 'configured-task' }], [{ taskId: 'next-task' }]]);
+});
+
+
+test('delivering a late replay snapshot cannot publish participant data', async () => {
+  const helper = setup();
+  helper.api.beginRegistration();
+  helper.send('RESUME', { ...resume, isAnalysis: true });
+  helper.send('PROVENANCE', { count: 3 });
+  const receive = vi.fn(() => helper.api.postAnswers({ count: 3 }));
+  helper.api.onRestore(vi.fn());
+  helper.api.completeRegistration();
+  helper.api.onProvenanceReceive(receive);
+  await vi.waitFor(() => expect(helper.messages('RESTORED')).toHaveLength(1));
+  expect(receive).toHaveBeenCalledWith({ count: 3 });
+  expect(helper.messages('ANSWERS')).toHaveLength(0);
+  expect(helper.messages('PROVENANCE')).toHaveLength(0);
 });

@@ -9,12 +9,14 @@ import { getJsonAssetByPath } from '../utils/getStaticAsset';
 import { ResourceNotFound } from '../ResourceNotFound';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { useStoreActions, useStoreDispatch } from '../store/store';
-import { StimulusParams, TrrackedProvenance } from '../store/types';
+import { StimulusParams, StoredAnswer, TrrackedProvenance } from '../store/types';
 import { useCurrentIdentifier } from '../routes/utils';
 import { useEvent } from '../store/hooks/useEvent';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import { useManagedTrrack } from '../store/hooks/useRevisitTrrack';
 import { useTrialProvenance } from '../store/hooks/useTrialProvenance';
+import { useStoredAnswer } from '../store/hooks/useStoredAnswer';
+import { responseValueKeys } from '../utils/responseVisibility';
 import { compileTemplate } from '../utils/handlebars';
 import { useTemplateAnswerContext } from '../store/hooks/useTemplateAnswerContext';
 import { getAssetStatus, useAssetStatus, useAssetLoadStatus } from '../store/hooks/useAssetStatus';
@@ -36,8 +38,14 @@ const InternalVega = Vega as unknown as React.FC<VegaProps>;
 export function VegaController({ currentConfig, provState }: { currentConfig: VegaComponent; provState?: VegaProvState }) {
   const studyConfig = useStudyConfig();
   const storeDispatch = useStoreDispatch();
+  const savedAnswer = useStoredAnswer();
+  const [legacyAnswers] = useState<StoredAnswer['answer']>(() => {
+    const hostResponseKeys = new Set((currentConfig.response ?? [])
+      .filter((response) => response.type !== 'reactive').flatMap(responseValueKeys));
+    return Object.fromEntries(Object.entries(savedAnswer?.answer ?? {}).filter(([key]) => !hostResponseKeys.has(key)));
+  });
   const [stimulusStatus, setStimulusStatus] = useState(false);
-  const [stimulusAnswer, setStimulusAnswer] = useState<Record<string, string | number>>({});
+  const [stimulusAnswer, setStimulusAnswer] = useState<StoredAnswer['answer']>({});
 
   const identifier = useCurrentIdentifier();
   const retainedProvenance = useTrialProvenance('stimulus');
@@ -207,15 +215,19 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
       ]),
     );
     restoringView.current = true;
-    if (!isAnalysis && retainedProvenance) {
-      const restored = trrack.getState() as VegaProvState;
-      Object.entries(restored.signals ?? {}).forEach(([key, value]) => {
+    if (!isAnalysis) {
+      const restored = retainedProvenance ? trrack.getState() as VegaProvState : undefined;
+      Object.entries(restored?.signals ?? {}).forEach(([key, value]) => {
         if (configuredSignalNames.has(key)) newView.signal(key, structuredClone(value));
       });
-      newView.run();
-      const restoredAnswer = restored.signals?.revisitAnswer as { responseId?: string; response?: string | number } | undefined;
-      if (restoredAnswer?.responseId && restoredAnswer.response !== undefined) {
-        const values = { [restoredAnswer.responseId]: restoredAnswer.response };
+      if (restored) newView.run();
+      let values = legacyAnswers;
+      if (Object.hasOwn(restored?.signals ?? {}, 'revisitAnswer')) {
+        const restoredAnswer = restored?.signals?.revisitAnswer as { responseId?: string; response?: string | number } | undefined;
+        values = restoredAnswer?.responseId && restoredAnswer.response !== undefined
+          ? { [restoredAnswer.responseId]: restoredAnswer.response } : {};
+      }
+      if (Object.keys(values).length > 0) {
         setStimulusStatus(true);
         setStimulusAnswer(values);
         setAnswer({ status: true, answers: values });
@@ -224,12 +236,12 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
     setView(newView);
     restoringView.current = false;
     handleViewReady();
-  }, [configuredSignalNames, handleViewReady, isAnalysis, retainedProvenance, setAnswer, trrack]);
+  }, [configuredSignalNames, handleViewReady, isAnalysis, legacyAnswers, retainedProvenance, setAnswer, trrack]);
 
   // Reset answer validation while a new spec loads; asset validation is independent.
   useEffect(() => {
     if (isAnalysis) return;
-    if (!retainedProvenance && (resourceStatus === 'unresolved' || resourceStatus === 'loading')) {
+    if (!retainedProvenance && Object.keys(legacyAnswers).length === 0 && (resourceStatus === 'unresolved' || resourceStatus === 'loading')) {
       const initialValidation = getInitialStimulusValidation(currentConfig);
       storeDispatch(updateResponseBlockValidation({
         location: 'stimulus',
@@ -239,7 +251,7 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
         reason: initialValidation.reason,
       }));
     }
-  }, [isAnalysis, retainedProvenance, resourceStatus, currentConfig, identifier, storeDispatch, updateResponseBlockValidation]);
+  }, [isAnalysis, legacyAnswers, retainedProvenance, resourceStatus, currentConfig, identifier, storeDispatch, updateResponseBlockValidation]);
 
   if (resourceStatus === 'unresolved' || resourceStatus === 'loading') {
     return <div>Loading...</div>;

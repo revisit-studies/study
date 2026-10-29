@@ -270,7 +270,7 @@ export function ResponseBlock({
     [customResponseModules],
   );
   const combinedLiveValues = useMemo<StoredAnswer['answer']>(() => {
-    const initialValues: StoredAnswer['answer'] = generateInitFields(allResponses, storedAnswer || {});
+    const initialValues: StoredAnswer['answer'] = generateInitFields(allResponses, { ...status?.answer, ...storedAnswer });
     // Locations mount independently. Until each publishes a snapshot, use its
     // restored values/defaults so dependents do not clear valid restored answers.
     allResponses.forEach((response) => {
@@ -280,7 +280,7 @@ export function ResponseBlock({
       }
     });
     return { ...initialValues, ...getAnswersFromAllLocations(trialValidation[identifier]) };
-  }, [allResponses, storedAnswer, identifier, trialValidation]);
+  }, [allResponses, status?.answer, storedAnswer, identifier, trialValidation]);
   const combinedAnalysisValues = useMemo(
     () => collectResponseValuesFromAnalysisState(
       analysisProvState as Partial<Record<ResponseBlockLocation, FormElementProvenance>>,

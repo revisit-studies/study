@@ -49,7 +49,8 @@ export function ReactComponentController({ currentConfig, provState, answers }: 
   }), [restoredAnswers]);
   const registerGraph = useCallback(() => stateContext.register('graph'), [stateContext]);
   useEffect(() => { setSettled(true); }, []);
-  const hostResponseKeys = new Set((currentConfig.response ?? []).flatMap(responseValueKeys));
+  const hostResponseKeys = new Set((currentConfig.response ?? [])
+    .filter((response) => response.type !== 'reactive').flatMap(responseValueKeys));
   const hasSavedData = !!provenance || Object.keys(stateContext.answers).some((key) => !hostResponseKeys.has(key));
 
   const storeDispatch = useStoreDispatch();

@@ -707,7 +707,7 @@ describe('ComponentController — effect coverage (render-based)', () => {
     await waitFor(() => expect(vi.mocked(findBlockForStep)).toHaveBeenCalled());
   });
 
-  test('addParticipantTags called when blockForStep becomes non-empty', async () => {
+  test('records block tags on the first mount and after a trial remount', async () => {
     const addTagsSpy = vi.fn().mockResolvedValue(undefined);
     vi.mocked(useStorageEngine).mockReturnValue({
       storageEngine: makeStorageEngine({ addParticipantTags: addTagsSpy }),
@@ -721,14 +721,13 @@ describe('ComponentController — effect coverage (render-based)', () => {
       lastIndex: 0,
     }]);
 
-    const { rerender } = render(<ComponentController />);
-    // Wait for first effect run to call findBlockForStep and update blockForStep state
-    await waitFor(() => expect(vi.mocked(findBlockForStep)).toHaveBeenCalled());
+    const view = render(<ComponentController />);
+    await waitFor(() => expect(addTagsSpy).toHaveBeenCalledWith(['blockA']));
+    view.unmount();
 
-    // Trigger effect re-run by changing currentStep; now blockForStep=['blockA'] in closure
+    addTagsSpy.mockClear();
     vi.mocked(useCurrentStep).mockReturnValue(1);
-    rerender(<ComponentController />);
-
+    render(<ComponentController />);
     await waitFor(() => expect(addTagsSpy).toHaveBeenCalledWith(['blockA']));
   });
 

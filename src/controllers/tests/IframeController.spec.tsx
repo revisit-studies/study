@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
 
+import { readFileSync } from 'node:fs';
+import { runInNewContext } from 'node:vm';
 import {
   act, cleanup, fireEvent, render, waitFor,
 } from '@testing-library/react';
@@ -87,6 +89,49 @@ describe('IframeController', () => {
   });
 
   const websiteConfig: WebsiteComponent = { type: 'website', path: 'https://example.com', response: [] };
+
+  test('delivers a seek made while a website replay handler is still loading', async () => {
+    mockIsAnalysis.value = true;
+    const config: WebsiteComponent = { type: 'website', path: 'demo-svelte-trrack/assets/dots-count.html', response: [] };
+    const answers = {};
+    const renderController = (seekTime: number, provState: { dots: number[] }) => (
+      <ReplayContext.Provider value={{ isPlaying: false, seekTime } as never}>
+        <IframeController currentConfig={config} provState={provState} answers={answers} />
+      </ReplayContext.Provider>
+    );
+    const { container, rerender } = render(renderController(0, { dots: [1] }));
+    const iframe = container.querySelector('iframe')!;
+    const frameId = new URL(iframe.src).searchParams.get('id');
+    type MessageListener = (event: unknown) => void;
+    const listeners = new Map<string, MessageListener>();
+    const parent = { postMessage: (data: unknown) => window.dispatchEvent(new MessageEvent('message', { source: iframe.contentWindow, data })) };
+    const helperWindow = { parent, location: { search: `?id=${frameId}` }, addEventListener: (type: string, fn: (event: unknown) => void) => listeners.set(type, fn) };
+    vi.spyOn(iframe.contentWindow!, 'postMessage').mockImplementation((data: unknown) => listeners.get('message')?.({ source: parent, data }));
+    runInNewContext(readFileSync('public/revisitUtilities/revisit-communicate.js', 'utf8'), {
+      window: helperWindow, URLSearchParams, structuredClone, crypto: { randomUUID: () => 'document' }, Date, console,
+    });
+    const api = (helperWindow as unknown as { Revisit: {
+      beginRegistration: () => void;
+      onRestore: (fn: () => void) => void;
+      completeRegistration: () => void;
+      onProvenanceReceive: (fn: (state: { dots: number[] }) => void) => void;
+    } }).Revisit;
+    const output = document.createElement('output');
+    output.textContent = '1';
+    container.appendChild(output);
+    await act(async () => { api.beginRegistration(); });
+    // Svelte fetches/compiles/imports its component before registering the replay callback.
+    await act(async () => { rerender(renderController(5, { dots: [1, 2, 3] })); });
+    await act(async () => {
+      api.onRestore(() => {});
+      api.completeRegistration();
+      api.onProvenanceReceive((state) => { output.textContent = state.dots.join(','); });
+      listeners.get('load')?.({});
+    });
+    expect(container.querySelector('output')?.textContent).toBe('1,2,3');
+    expect(mockUpdateProvenance).not.toHaveBeenCalled();
+    expect(mockSetReactiveAnswers).not.toHaveBeenCalled();
+  });
 
   test('rejects a fresh legacy graph while a revisited website is still registering', () => {
     mockRetained.graph = { root: 'saved-root' };

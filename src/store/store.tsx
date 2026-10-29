@@ -422,9 +422,22 @@ export async function studyStoreCreator(
           };
         },
       },
-      restoreTrialProvenance(state, { payload }: PayloadAction<{ identifier: string; provenance: StoredProvenance }>) {
+      restoreTrialProvenance(state, { payload }: PayloadAction<{
+        identifier: string;
+        provenance: StoredProvenance;
+        responseValues: Partial<Record<ResponseBlockLocation, StoredAnswer['answer']>>;
+      }>) {
         const validation = state.trialValidation[payload.identifier];
-        if (validation) validation.provenanceGraph = payload.provenance;
+        if (!validation) return;
+        validation.provenanceGraph = payload.provenance;
+        // Visibility must see every restored location before any response form mounts.
+        (['aboveStimulus', 'belowStimulus', 'sidebar'] as const).forEach((location) => {
+          const values = payload.responseValues[location];
+          if (values != null) {
+            validation[location].values = values;
+            validation[location].initialized = true;
+          }
+        });
       },
       updateProvenance: {
         reducer(state, { payload }: PayloadAction<UpdateProvenancePayload>) {

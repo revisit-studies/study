@@ -18,6 +18,6 @@ export function initializeResumedTrrack<State, Event extends string>(
   return trrack;
 }
 
-export function validateResumableProvenance(provenance: TrrackedProvenance) {
-  initializeResumedTrrack({ registry: Registry.create(), initialState: {} }, provenance);
+export function getResumedProvenanceState(provenance: TrrackedProvenance) {
+  return initializeResumedTrrack({ registry: Registry.create(), initialState: {} }, provenance).getState();
 }
