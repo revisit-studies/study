@@ -5,7 +5,7 @@
     "version": "pilot",
     "authors": ["The reVISit Team"],
     "date": "2026-08-20",
-    "description": "A ten-color Stroop test that crosses one reusable color factor with itself and subtracts congruent pairs.",
+    "description": "A Markdown Stroop test with 25 word/ink-color pairs from a five-level color factor and font size assigned between participants.",
     "organizations": ["University of Utah", "WPI", "University of Toronto"]
   },
   "uiConfig": {
@@ -20,57 +20,38 @@
   "factors": {
     "color": [
       "RED",
-      "ORANGE",
       "YELLOW",
       "GREEN",
       "BLUE",
-      "PURPLE",
-      "PINK",
-      "BROWN",
-      "GRAY",
       "BLACK"
     ],
+    "fontSize": ["24px", "48px"],
     "stroopConditions": {
       "action": "cross",
       "factors": ["color", "color"],
       "as": ["word", "inkColor"]
-    },
-    "stroopWithFilter": {
-      "action": "remove",
-      "factor": "stroopConditions",
-      "items": {
-        "action": "zip",
-        "factors": ["color", "color"]
-      }
     }
   },
   "baseComponents": {
     "stroopTrial": {
-      "type": "react-component",
-      "path": "demo-stroop-factors/assets/StroopTrial.tsx",
-      "instruction": "Report the word's ink color, not the color named by the word. Use the buttons or the corresponding number key.",
-      "instructionLocation": "aboveStimulus",
+      "type": "markdown",
+      "path": "demo-stroop-factors/assets/trial.md",
       "nextButtonLocation": "belowStimulus",
       "response": [
         {
           "id": "response",
-          "prompt": "Selected ink color",
+          "prompt": "Report the word's ink color, not the color named by the word. Use the buttons or the corresponding number key.",
+          "secondaryText": "Keyboard shortcuts: 1-5",
           "type": "buttons",
           "options": [
-            "RED",
-            "ORANGE",
-            "YELLOW",
-            "GREEN",
-            "BLUE",
-            "PURPLE",
-            "PINK",
-            "BROWN",
-            "GRAY",
-            "BLACK"
+            {"label": "1. RED", "value": "RED", "key": "1"},
+            {"label": "2. YELLOW", "value": "YELLOW", "key": "2"},
+            {"label": "3. GREEN", "value": "GREEN", "key": "3"},
+            {"label": "4. BLUE", "value": "BLUE", "key": "4"},
+            {"label": "5. BLACK", "value": "BLACK", "key": "5"}
           ],
           "location": "belowStimulus",
-          "required": true,
-          "hidden": true
+          "required": true
         }
       ],
       "correctAnswer": [
@@ -88,14 +69,15 @@
       "response": []
     }
   },
+  "betweenSubjects": ["fontSize"],
   "sequence": {
     "order": "fixed",
     "components": [
       "introduction",
       {
         "type": "factor",
-        "id": "stroopTrials",
-        "factor": "stroopWithFilter",
+        "id": "t",
+        "factor": "stroopConditions",
         "components": "stroopTrial",
         "order": "random"
       }

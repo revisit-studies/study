@@ -1,5 +1,5 @@
 /* eslint-disable no-await-in-loop */
-import { expect, Page } from '@playwright/test';
+import { expect, Locator, Page } from '@playwright/test';
 
 const UPLOADING_MESSAGE = 'Please wait while your answers are uploaded.';
 const DEFAULT_COMPLETED_MESSAGE = 'Thank you for completing the study. You may close this window now.';
@@ -149,6 +149,58 @@ export async function nextClick(page: Page, timeout = 10000) {
   }
 
   throw new Error('Timed out clicking Next button');
+}
+
+export async function moveRankingItem(
+  page: Page,
+  item: string,
+  from: 'available' | 'selected',
+  to: 'available' | 'selected',
+) {
+  const papers = page.locator('div.mantine-Paper-root[data-with-border="true"]');
+  const zone = (which: 'available' | 'selected'): Locator => (which === 'available'
+    ? papers.filter({ has: page.getByText('Available Items', { exact: true }) }).first()
+    : papers.filter({ has: page.getByText('HIGH', { exact: true }) })
+      .filter({ has: page.getByText('LOW', { exact: true }) }).first());
+
+  const sourceZone = zone(from);
+  const targetZone = zone(to);
+  const itemIn = (z: Locator) => z.getByText(item, { exact: true });
+
+  await expect(async () => {
+    const source = itemIn(sourceZone).first()
+      .locator('xpath=ancestor::div[contains(@class,"mantine-Paper-root")][1]');
+    // For "available" the drop target is the "Available Items" text itself.
+    const target = to === 'available'
+      ? targetZone.getByText('Available Items', { exact: true })
+      : targetZone;
+
+    await source.scrollIntoViewIfNeeded();
+    await expect(source).toBeVisible({ timeout: 2000 });
+    await expect(target).toBeVisible({ timeout: 2000 });
+
+    const sourceBox = await source.boundingBox();
+    const targetBox = await target.boundingBox();
+    if (!sourceBox || !targetBox) throw new Error(`Could not measure ${item} or the ${to} target`);
+
+    const sourceX = sourceBox.x + sourceBox.width / 2;
+    const sourceY = sourceBox.y + sourceBox.height / 2;
+    const targetX = targetBox.x + targetBox.width / 2;
+    const targetY = to === 'available'
+      ? targetBox.y + targetBox.height / 2
+      : targetBox.y + Math.max(32, Math.min(targetBox.height - 8, targetBox.height * 0.65));
+
+    await page.mouse.move(sourceX, sourceY);
+    await page.mouse.down();
+    await page.mouse.move(sourceX + 8, sourceY + 8);
+    await page.mouse.move(targetX, targetY, { steps: 12 });
+    await page.mouse.up();
+
+    await expect(itemIn(targetZone)).toBeVisible({ timeout: 2000 });
+    await expect(itemIn(sourceZone)).toHaveCount(0, { timeout: 2000 });
+  }).toPass({ timeout: 15000 });
+
+  await page.waitForTimeout(250);
 }
 
 export async function waitForStudyEndMessage(page: Page, timeout = 30000) {

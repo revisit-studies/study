@@ -1,13 +1,14 @@
 import {
   afterEach, beforeEach, describe, expect, test,
 } from 'vitest';
+import { ParticipantData } from '../../types';
 import testConfigSimple from '../../tests/testConfigSimple.json';
 import { StudyConfig } from '../../../parser/types';
-import { ParticipantMetadata } from '../../../store/types';
+import { ParticipantMetadata, Sequence } from '../../../store/types';
 import { generateSequenceArray } from '../../../utils/handleRandomSequences';
 import { LocalStorageEngine } from '../LocalStorageEngine';
 import {
-  getBetweenSubjectsCombinationKey, getStageParticipantCounts, StageCapacityExceededError, StageConditionCapacityExceededError, StageNoAvailableConditionsError, StageOnlyDisabledConditionsHaveCapacityError, StorageEngine, type SequenceAssignment, type StorageObject, type StorageObjectType,
+  getBetweenSubjectsCombinationKey, getStageParticipantCounts, StageCapacityExceededError, StageNoAvailableConditionsError, StageOnlyDisabledConditionsHaveCapacityError, StorageEngine, type SequenceAssignment, type StorageObject, type StorageObjectType,
 } from '../types';
 
 const studyId = 'stage-capacity-test';
@@ -17,6 +18,12 @@ const betweenSubjectsConfig: StudyConfig = {
   uiConfig: { ...config.uiConfig, numSequences: 10 },
   factors: { version: ['control', 'treatment'] },
   betweenSubjects: ['version'],
+};
+const latinSquareConfig: StudyConfig = {
+  ...betweenSubjectsConfig,
+  uiConfig: { ...betweenSubjectsConfig.uiConfig, numSequences: 4 },
+  components: { ...config.components, secondComponent: config.components.testComponent },
+  sequence: { order: 'latinSquare', components: ['testComponent', 'secondComponent'] },
 };
 const metadata: ParticipantMetadata = {
   userAgent: 'test-user-agent',
@@ -29,13 +36,14 @@ const metadata: ParticipantMetadata = {
 // created the sequence assignment, so failing that write reproduces an
 // initialization that dies with an assignment already on record.
 class FailingAssignmentStorageEngine extends LocalStorageEngine {
-  protected override async _updateSequenceAssignmentFields(): Promise<void> {
+  protected override async _allocateSequenceAssignment(participantId: string, assignment: SequenceAssignment): Promise<never> {
+    await super._allocateSequenceAssignment(participantId, assignment);
     throw new Error('Simulated sequence assignment failure');
   }
 }
 
 class FailingAssignmentCreationStorageEngine extends LocalStorageEngine {
-  protected override async _createSequenceAssignment(): Promise<void> {
+  protected override async _allocateSequenceAssignment(): Promise<never> {
     throw new Error('Simulated assignment creation failure');
   }
 }
@@ -85,6 +93,58 @@ describe('stage capacity', () => {
   afterEach(async () => {
     // @ts-expect-error Protected test-only cleanup.
     await storageEngine._testingReset(studyId);
+  });
+
+  test('allows a target equal to assigned participants but rejects a smaller target', async () => {
+    await storageEngine.updateStage(studyId, 'LIMITED', { maxParticipants: 10 });
+    await storageEngine.setSequenceArray(generateSequenceArray(betweenSubjectsConfig));
+    await storageEngine.initializeParticipantSession({}, betweenSubjectsConfig, metadata, 'assigned');
+    const assignment = (await storageEngine.getAllSequenceAssignments(studyId))[0];
+    const key = assignment.betweenSubjectsCombinationKey!;
+    await expect(storageEngine.setStageDesiredParticipants(studyId, 'LIMITED', key, 0, {})).rejects.toThrow(/already assigned/);
+    await expect(storageEngine.setStageDesiredParticipants(studyId, 'LIMITED', key, 1, {})).resolves.toBeUndefined();
+  });
+
+  test('keeps five assigned B participants while allowing a target of six in A', async () => {
+    await storageEngine.setSequenceArray(generateSequenceArray(betweenSubjectsConfig));
+    await storageEngine.updateStage(studyId, 'LIMITED', { maxParticipants: 10 });
+    const [a, b] = ['control', 'treatment'].map((version) => getBetweenSubjectsCombinationKey({ version }, ['version']));
+    await storageEngine.setStageCombinationEnabled(studyId, 'LIMITED', a, false);
+    for (let index = 0; index < 5; index += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      await storageEngine.initializeParticipantSession({}, betweenSubjectsConfig, metadata, `b-${index}`);
+    }
+    await storageEngine.setStageDesiredParticipants(studyId, 'LIMITED', b, 5, { [a]: 0, [b]: 10 });
+    await storageEngine.setStageDesiredParticipants(studyId, 'LIMITED', a, 6, { [a]: 0, [b]: 5 });
+    const stage = (await storageEngine.getStageData(studyId)).allStages.find((item) => item.stageName === 'LIMITED')!;
+    expect(stage.maxParticipants).toBe(11);
+    expect(stage.manualDesiredParticipantsByCombination).toEqual({ [a]: 6, [b]: 5 });
+    expect(await storageEngine.getAllSequenceAssignments(studyId)).toHaveLength(5);
+  });
+
+  test('refuses to time out a participant who completed after the admin snapshot', async () => {
+    await storageEngine.initializeParticipantSession({}, config, metadata, 'finished');
+    await storageEngine.finalizeParticipant();
+    await storageEngine.timeoutParticipant('finished');
+    expect((await storageEngine.getAllSequenceAssignments(studyId))[0].rejected).toBe(false);
+  });
+
+  test('keeps condition definitions append-only after a participant joins', async () => {
+    await storageEngine.saveConfig(betweenSubjectsConfig);
+    await storageEngine.setSequenceArray(generateSequenceArray(betweenSubjectsConfig));
+    await storageEngine.initializeParticipantSession({}, betweenSubjectsConfig, metadata, 'assigned');
+    const appended = { ...betweenSubjectsConfig, factors: { version: ['control', 'treatment', 'new'] } };
+    await expect(storageEngine.saveConfig(appended)).resolves.toBeUndefined();
+    const removed = { ...appended, factors: { version: ['control', 'new'] } };
+    await expect(storageEngine.saveConfig(removed)).rejects.toThrow(/removed or renamed/);
+  });
+
+  test.each(['constructor', 'toString', '__proto__'])('enforces capacity for a stage named %s', async (stageName) => {
+    await storageEngine.setCurrentStage(studyId, stageName, '#00AAFF', 1);
+    await storageEngine.initializeParticipantSession({}, config, metadata, 'first');
+    expect(getStageParticipantCounts(await storageEngine.getAllSequenceAssignments(studyId))[stageName]).toBe(1);
+    await expect(storageEngine.initializeParticipantSession({}, config, metadata, 'second'))
+      .rejects.toBeInstanceOf(StageCapacityExceededError);
   });
 
   test('counts completed and in-progress participants but excludes rejected participants', () => {
@@ -301,6 +361,77 @@ describe('stage capacity', () => {
     expect(countFor(controlKey)).toBe(countFor(treatmentKey));
   });
 
+  test.each([null, 8])('rotates Latin-square rows within each condition with stage maximum %s', async (maxParticipants) => {
+    const sequences = generateSequenceArray(latinSquareConfig);
+    await storageEngine.setSequenceArray(sequences);
+    await storageEngine.updateStage(studyId, 'LIMITED', { maxParticipants });
+
+    const assignedSequences: Sequence[] = [];
+    for (let index = 0; index < 8; index += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      const participant = await storageEngine.initializeParticipantSession({}, latinSquareConfig, metadata, `participant-${index}`);
+      assignedSequences.push(participant.sequence);
+    }
+
+    ['control', 'treatment'].forEach((version) => {
+      const expectedOrders = sequences.filter((sequence) => sequence.parameters?.version === version)
+        .map((sequence) => sequence.components);
+      expect(new Set(expectedOrders.map((order) => JSON.stringify(order))).size).toBe(2);
+      expect(assignedSequences.filter((sequence) => sequence.parameters?.version === version)
+        .map((sequence) => sequence.components)).toEqual([...expectedOrders, ...expectedOrders]);
+    });
+  });
+
+  test.each([0, 1])('fills the missing order after rejecting participant %s', async (rejectedIndex) => {
+    await storageEngine.setSequenceArray(generateSequenceArray(latinSquareConfig));
+    await storageEngine.updateStage(studyId, 'LIMITED', { maxParticipants: 4 });
+    const participants: ParticipantData[] = [];
+    for (let index = 0; index < 4; index += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      participants.push(await storageEngine.initializeParticipantSession({}, latinSquareConfig, metadata, `participant-${index}`));
+    }
+    const rejected = participants[rejectedIndex];
+    await storageEngine.rejectParticipant(rejected.participantId, 'Timed out');
+    const replacement = await storageEngine.initializeParticipantSession({}, latinSquareConfig, metadata, 'replacement');
+
+    expect(replacement.sequence.parameters).toEqual(rejected.sequence.parameters);
+    expect(replacement.sequence.components).toEqual(rejected.sequence.components);
+  });
+
+  test('initializes manual targets from the saved stage maximum', async () => {
+    const keys = ['control', 'treatment'].map((version) => getBetweenSubjectsCombinationKey({ version }, ['version']));
+    await storageEngine.updateStage(studyId, 'LIMITED', { maxParticipants: 4 });
+
+    await storageEngine.setStageParticipantAssignmentMode(studyId, 'LIMITED', 'manual', keys);
+
+    expect((await storageEngine.getStageData(studyId)).allStages).toContainEqual(expect.objectContaining({
+      stageName: 'LIMITED',
+      maxParticipants: 4,
+      participantAssignmentMode: 'manual',
+      manualDesiredParticipantsByCombination: { [keys[0]]: 2, [keys[1]]: 2 },
+    }));
+  });
+
+  test('restores the enforced maximum when reactivating saved manual targets', async () => {
+    const keys = ['control', 'treatment'].map((version) => getBetweenSubjectsCombinationKey({ version }, ['version']));
+    const targets = { [keys[0]]: 6, [keys[1]]: 8 };
+    await storageEngine.updateStage(studyId, 'LIMITED', {
+      maxParticipants: 14,
+      participantAssignmentMode: 'manual',
+      manualDesiredParticipantsByCombination: targets,
+    });
+    await storageEngine.setStageParticipantAssignmentMode(studyId, 'LIMITED', 'even', keys);
+    await storageEngine.updateStage(studyId, 'LIMITED', { maxParticipants: 2 });
+    await storageEngine.setStageParticipantAssignmentMode(studyId, 'LIMITED', 'manual', keys);
+
+    expect((await storageEngine.getStageData(studyId)).allStages).toContainEqual(expect.objectContaining({
+      stageName: 'LIMITED',
+      maxParticipants: 14,
+      participantAssignmentMode: 'manual',
+      manualDesiredParticipantsByCombination: targets,
+    }));
+  });
+
   test('keeps concurrent edits to different stages', async () => {
     const secondStorageEngine = new LocalStorageEngine(true);
     await secondStorageEngine.connect();
@@ -421,7 +552,7 @@ describe('stage capacity', () => {
       .toEqual({ LIMITED: 1 });
   });
 
-  test('restores a rejected participant only while the stage has room', async () => {
+  test('restores a rejected participant and includes them in recruitment counts', async () => {
     const rejectedParticipant = await storageEngine.initializeParticipantSession({}, config, metadata, 'rejected-participant');
     await storageEngine.rejectParticipant(rejectedParticipant.participantId, 'Test rejection');
     await storageEngine.clearCurrentParticipantId();
@@ -433,7 +564,7 @@ describe('stage capacity', () => {
       .toEqual({ LIMITED: 1 });
   });
 
-  test('serializes restoration with admission so the stage limit is never exceeded', async () => {
+  test('serializes restoration with admission to protect rejected-slot ownership', async () => {
     const rejectedParticipant = await storageEngine.initializeParticipantSession({}, config, metadata, 'rejected-participant');
     await storageEngine.rejectParticipant(rejectedParticipant.participantId, 'Test rejection');
     await storageEngine.clearCurrentParticipantId();
@@ -452,16 +583,16 @@ describe('stage capacity', () => {
       .toEqual({ LIMITED: 1 });
   });
 
-  test('does not restore a participant into a stage that another stage\'s reused slot filled', async () => {
+  test('admin restoration may exceed a full stage limit', async () => {
     // A rejection from an earlier stage is the oldest reusable slot, so the next
     // admission reuses it and leaves the restored participant's slot unclaimed.
     await storageEngine.setCurrentStage(studyId, 'OTHER');
     await storageEngine.initializeParticipantSession({}, config, metadata, 'other-stage-participant');
-    await storageEngine.rejectParticipant('other-stage-participant', 'Test rejection');
     await storageEngine.clearCurrentParticipantId();
     await storageEngine.setCurrentStage(studyId, 'LIMITED');
 
     await storageEngine.initializeParticipantSession({}, config, metadata, 'rejected-participant');
+    await storageEngine.rejectParticipant('other-stage-participant', 'Test rejection');
     await storageEngine.rejectParticipant('rejected-participant', 'Test rejection');
     await storageEngine.clearCurrentParticipantId();
     await storageEngine.initializeParticipantSession({}, config, metadata, 'new-participant');
@@ -469,21 +600,20 @@ describe('stage capacity', () => {
     expect(await storageEngine.getSequenceAssignment(studyId, 'rejected-participant'))
       .toMatchObject({ rejected: true, claimed: false });
 
-    await expect(storageEngine.undoRejectParticipant('rejected-participant'))
-      .rejects.toBeInstanceOf(StageCapacityExceededError);
-
-    expect((await storageEngine.getParticipantData('rejected-participant'))?.rejected).not.toBe(false);
+    await storageEngine.undoRejectParticipant('rejected-participant');
+    expect((await storageEngine.getParticipantData('rejected-participant'))?.rejected).toBe(false);
     expect(getStageParticipantCounts(await storageEngine.getAllSequenceAssignments(studyId)))
-      .toEqual({ LIMITED: 1 });
+      .toEqual({ LIMITED: 2 });
+    await storageEngine.updateStage(studyId, 'LIMITED', { color: '#123456' });
+    await expect(storageEngine.initializeParticipantSession({}, config, metadata, 'blocked')).rejects.toBeInstanceOf(StageCapacityExceededError);
   });
 
-  test('does not restore a participant into a between-subjects condition that is full', async () => {
+  test('admin restoration may exceed a condition target', async () => {
     await storageEngine.setSequenceArray(await generateSequenceArray(betweenSubjectsConfig));
     const controlKey = getBetweenSubjectsCombinationKey({ version: 'control' }, ['version']);
     const treatmentKey = getBetweenSubjectsCombinationKey({ version: 'treatment' }, ['version']);
     await storageEngine.setCurrentStage(studyId, 'OTHER');
     await storageEngine.initializeParticipantSession({}, betweenSubjectsConfig, metadata, 'other-stage-participant');
-    await storageEngine.rejectParticipant('other-stage-participant', 'Test rejection');
     await storageEngine.clearCurrentParticipantId();
     await storageEngine.setCurrentStage(studyId, 'LIMITED');
     await storageEngine.updateStage(studyId, 'LIMITED', {
@@ -499,6 +629,7 @@ describe('stage capacity', () => {
       'rejected-participant',
     );
     const rejectedKey = getBetweenSubjectsCombinationKey(rejectedParticipant.sequence.parameters, ['version']);
+    await storageEngine.rejectParticipant('other-stage-participant', 'Test rejection');
     await storageEngine.rejectParticipant('rejected-participant', 'Test rejection');
     await storageEngine.clearCurrentParticipantId();
     // Only the rejected participant's condition stays open, so the next
@@ -517,9 +648,9 @@ describe('stage capacity', () => {
     );
     expect(getBetweenSubjectsCombinationKey(newParticipant.sequence.parameters, ['version'])).toBe(rejectedKey);
 
-    await expect(storageEngine.undoRejectParticipant('rejected-participant'))
-      .rejects.toBeInstanceOf(StageConditionCapacityExceededError);
-    expect((await storageEngine.getParticipantData('rejected-participant'))?.rejected).not.toBe(false);
+    await storageEngine.undoRejectParticipant('rejected-participant');
+    expect((await storageEngine.getParticipantData('rejected-participant'))?.rejected).toBe(false);
+    expect((await storageEngine.getAllSequenceAssignments(studyId)).filter((assignment) => assignment.stage === 'LIMITED' && !assignment.rejected && assignment.betweenSubjectsCombinationKey === rejectedKey)).toHaveLength(2);
   });
 
   test('repairs its own abandoned assignment when both the initial write and its cleanup failed', async () => {

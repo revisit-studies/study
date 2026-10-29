@@ -1,6 +1,7 @@
 import {
   useCallback, useEffect, useMemo, useRef, useState,
 } from 'react';
+import { useStudyState } from '../../../store/hooks/useStudyState';
 import {
   Badge, Group, Paper, Stack, Text,
 } from '@mantine/core';
@@ -153,16 +154,23 @@ function GamepadTargetGame({
     };
   }, [targetCount]);
 
-  const trrack = useTrrack({ registry, initialState: INITIAL_STATE });
+  const [savedHits] = useStudyState({ responseId: 'hits', initialState: 0 });
+  const [savedMisses] = useStudyState({ responseId: 'misses', initialState: 0 });
+  const [savedCompleted] = useStudyState({ responseId: 'completed', initialState: false });
+  const trrack = useTrrack({ registry, initialState: { ...INITIAL_STATE, hits: savedHits, misses: savedMisses, completed: savedCompleted } });
 
-  const [game, setGame] = useState<GameState>(INITIAL_STATE);
-  const [reticle, setReticle] = useState<Point>(INITIAL_STATE.reticle);
+  const restoredState = useStudyState({ trrack });
+  const [game, setGame] = useState<GameState>(restoredState);
+  const [reticle, setReticle] = useState<Point>(restoredState.reticle);
 
   // The reticle is the source of truth for hit-testing and is written every frame,
   // so it lives in a ref; the state mirror exists only to drive rendering.
-  const reticleRef = useRef<Point>(INITIAL_STATE.reticle);
-  const gameRef = useRef<GameState>(INITIAL_STATE);
-  const reactionTimesRef = useRef<number[]>([]);
+  const reticleRef = useRef<Point>(restoredState.reticle);
+  const gameRef = useRef<GameState>(restoredState);
+  // A resumed target is presented anew; leave its recorded spawn time intact for replay.
+  const targetPresentedAtRef = useRef(Date.now());
+  const [savedMeanReactionTime] = useStudyState<number | null>({ responseId: 'meanReactionTime', initialState: null });
+  const reactionTimesRef = useRef<number[]>(savedMeanReactionTime === null ? [] : Array<number>(restoredState.hits).fill(savedMeanReactionTime));
 
   const isReplay = provenanceState !== undefined;
 
@@ -186,7 +194,7 @@ function GamepadTargetGame({
   }, [setAnswer]);
 
   useEffect(() => {
-    if (!isReplay) publishAnswer(INITIAL_STATE);
+    if (!isReplay) publishAnswer(gameRef.current);
   }, [isReplay, publishAnswer]);
 
   const commit = useCallback((state: GameState) => {
@@ -196,6 +204,7 @@ function GamepadTargetGame({
 
   const spawnNext = useCallback((index: number) => {
     const target = randomTarget(index, targetRadius);
+    targetPresentedAtRef.current = target.spawnedAt;
     trrack.apply(`Target ${index + 1} (${target.button})`, actions.spawnTarget(target));
     commit({ ...gameRef.current, target, round: index, outcome: targetPrompt(target, targetCount) });
   }, [actions, commit, targetCount, targetRadius, trrack]);
@@ -218,7 +227,7 @@ function GamepadTargetGame({
     const hit = onTarget && correctButton;
 
     if (hit) {
-      reactionTimesRef.current.push(Date.now() - target.spawnedAt);
+      reactionTimesRef.current.push(Date.now() - targetPresentedAtRef.current);
     }
 
     const nextRound = hit ? target.index + 1 : target.index;
@@ -293,7 +302,7 @@ function GamepadTargetGame({
     if (isReplay || !connected || gameRef.current.target || gameRef.current.completed) {
       return;
     }
-    spawnNext(0);
+    spawnNext(gameRef.current.hits);
   }, [connected, isReplay, spawnNext]);
 
   // During replay the analysis view drives the scene through provenanceState.

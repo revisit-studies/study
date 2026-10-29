@@ -791,9 +791,7 @@ export function StepsPanel({
           const resolvedComponent = component
             ? studyComponentToIndividualComponent(component, studyConfig)
             : undefined;
-          const correctAnswer = componentAnswer?.correctAnswer?.length
-            ? componentAnswer.correctAnswer
-            : resolvedComponent?.correctAnswer;
+          const correctAnswer = componentAnswer?.correctAnswer ?? resolvedComponent?.correctAnswer;
           const answerStatus = getComponentAnswerStatus(
             componentAnswer,
             correctAnswer,

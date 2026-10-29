@@ -6,7 +6,9 @@ import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import { useRoutes } from 'react-router';
-import { Shell, StudyLoadingOverlay } from '../Shell';
+import {
+  getShellUiState, getStartupErrorMessage, Shell, StudyLoadingOverlay,
+} from '../Shell';
 import type { ParsedConfig, StudyConfig } from '../../parser/types';
 import { getStudyConfig, resolveConfigKey } from '../../utils/fetchConfig';
 import { makeGlobalConfig, makeStudyConfig } from '../../tests/utils';
@@ -169,7 +171,7 @@ function setupThemeSession(colorMode: StudyConfig['uiConfig']['colorMode'], save
   mockStorageEngine = {
     initializeStudyDb: vi.fn().mockResolvedValue(undefined),
     saveConfig: vi.fn().mockResolvedValue(undefined),
-    getSequenceArray: vi.fn().mockResolvedValue(['seq1']),
+    getOrCreateSequenceArray: vi.fn().mockResolvedValue(['seq1']),
     getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
     initializeParticipantSession: vi.fn(async (_params, _config, metadata) => ({
       ...baseSession, metadata: savedMetadata ?? metadata,
@@ -239,7 +241,7 @@ describe('Shell', () => {
     await waitFor(() => expect(mockStorageEngine!.updateParticipantMetadata).toHaveBeenCalledWith(
       expect.objectContaining({ colorMode: expectedMode, ip: '1.2.3.4' }),
     ));
-    expect(mockStorageEngine!.initializeParticipantSession).toHaveBeenCalledWith({}, expect.anything(), expect.objectContaining({ colorMode: expectedMode }), undefined);
+    expect(mockStorageEngine!.initializeParticipantSession).toHaveBeenCalledWith({}, expect.anything(), expect.objectContaining({ colorMode: expectedMode }), undefined, expect.objectContaining({ sequenceArray: ['seq1'] }));
     mockSystemColorMode = 'light';
     view.rerender(<Shell globalConfig={globalConfig} />);
     expect(useStudyColorMode).toHaveBeenLastCalledWith(expectedMode);
@@ -254,7 +256,7 @@ describe('Shell', () => {
 
     const view = render(<Shell globalConfig={globalConfig} />);
 
-    await waitFor(() => expect(mockStorageEngine!.initializeParticipantSession).toHaveBeenCalledWith({}, expect.anything(), expect.objectContaining({ colorMode: systemMode }), undefined));
+    await waitFor(() => expect(mockStorageEngine!.initializeParticipantSession).toHaveBeenCalledWith({}, expect.anything(), expect.objectContaining({ colorMode: systemMode }), undefined, expect.objectContaining({ sequenceArray: ['seq1'] })));
     await waitFor(() => expect(useStudyColorMode).toHaveBeenLastCalledWith(systemMode));
     expect(localStorage.getItem('revisit-user-color-mode')).toBe(appPreference);
     mockSystemColorMode = appPreference;
@@ -341,6 +343,43 @@ describe('Shell', () => {
     expect(getByRole('status').getAttribute('aria-atomic')).toBe('true');
   });
 
+  test.each([false, true])('blocks Firebase index failures outside development mode (resuming: %s)', async (resuming) => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      vi.stubEnv('VITE_STORAGE_ENGINE', 'firebase');
+      if (resuming) mockSearchParams = new URLSearchParams('participantId=existing');
+      setupThemeSession('light');
+      const indexUrl = 'https://console.firebase.google.com/example';
+      mockStorageEngine!.initializeParticipantSession.mockRejectedValue(new Error(`The query requires an index. ${indexUrl}`));
+      mockStorageEngine!.peekCurrentParticipantId = vi.fn().mockResolvedValue(undefined);
+
+      render(<Shell globalConfig={globalConfig} />);
+      await waitFor(() => expect(studyStoreCreator).toHaveBeenCalled());
+      const storeArguments = vi.mocked(studyStoreCreator).mock.calls[0];
+      expect(storeArguments[5]?.dataCollectionEnabled).toBe(false);
+      expect(storeArguments[10]).toEqual({
+        show: true,
+        title: 'Failed to connect to the storage engine',
+        message: resuming ? 'This study session could not be resumed.' : 'There was a problem loading the study.',
+      });
+      expect(storeArguments[10]?.message).not.toContain(indexUrl);
+    } finally {
+      consoleSpy.mockRestore();
+      vi.unstubAllEnvs();
+    }
+  });
+
+  test('explains Firebase index ownership and one-time project scope', () => {
+    const message = getStartupErrorMessage(
+      new Error('The query requires an index. You can create it here: https://console.firebase.google.com/example'),
+    );
+
+    expect(message).toContain('one-time setup for this Firebase project/database');
+    expect(message).toContain('does not need to be repeated for each study');
+    expect(message).toContain('study owner (Study Designer)');
+    expect(message).toContain('https://console.firebase.google.com/example');
+  });
+
   test('cancels the loading message when startup completes before the delay', () => {
     vi.useFakeTimers();
     const clearTimeoutSpy = vi.spyOn(window, 'clearTimeout');
@@ -365,6 +404,36 @@ describe('Shell', () => {
 
     rerender(<StudyLoadingOverlay visible={false} />);
     expect(queryByRole('status')).toBeNull();
+  });
+
+  test('removes loading context once study content is ready while completion verification continues', () => {
+    vi.useFakeTimers();
+
+    const {
+      getByRole, getByTestId, queryByRole, rerender,
+    } = render(<StudyLoadingOverlay visible />);
+
+    act(() => vi.advanceTimersByTime(1500));
+    expect(getByRole('status')).toBeDefined();
+
+    rerender(<StudyLoadingOverlay visible showMessage={false} />);
+
+    expect(getByTestId('loading-overlay')).toBeDefined();
+    expect(queryByRole('status')).toBeNull();
+  });
+
+  test('does not describe ready study content as still loading during completion verification', () => {
+    expect(getShellUiState({
+      isValidStudyId: true,
+      hasRoutes: true,
+      hasStore: true,
+      isCompletionCheckResolved: false,
+      completionCheckError: null,
+    })).toEqual({
+      isLoading: true,
+      showLoadingMessage: false,
+      showCompletionCheckError: false,
+    });
   });
 
   test('shows loading overlay when routes are not yet initialized', async () => {
@@ -451,7 +520,7 @@ describe('Shell', () => {
     mockStorageEngine = {
       initializeStudyDb: vi.fn().mockResolvedValue(undefined),
       saveConfig: vi.fn().mockResolvedValue(undefined),
-      getSequenceArray: vi.fn().mockResolvedValue(['seq1']), // non-null → no setSequenceArray
+      getOrCreateSequenceArray: vi.fn().mockResolvedValue(['seq1']),
       getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
       initializeParticipantSession: vi.fn().mockResolvedValue(baseSession),
       getParticipantCompletionStatus: vi.fn().mockResolvedValue(false),
@@ -464,6 +533,20 @@ describe('Shell', () => {
     render(<Shell globalConfig={globalConfig} />);
     await waitFor(() => expect(mockStorageEngine!.initializeStudyDb).toHaveBeenCalled(), { timeout: 3000 });
     await waitFor(() => expect(vi.mocked(studyStoreCreator)).toHaveBeenCalled(), { timeout: 3000 });
+    expect(mockStorageEngine.initializeParticipantSession).toHaveBeenCalledWith(
+      expect.any(Object),
+      mockActiveConfig,
+      expect.any(Object),
+      undefined,
+      {
+        modesDocument: {
+          developmentModeEnabled: false,
+          dataSharingEnabled: false,
+          dataCollectionEnabled: true,
+        },
+        sequenceArray: ['seq1'],
+      },
+    );
     await waitFor(() => expect(fetch).toHaveBeenCalled());
   });
 
@@ -474,7 +557,7 @@ describe('Shell', () => {
     mockStorageEngine = {
       initializeStudyDb: vi.fn().mockResolvedValue(undefined),
       saveConfig: vi.fn().mockResolvedValue(undefined),
-      getSequenceArray: vi.fn().mockResolvedValue(['seq1']),
+      getOrCreateSequenceArray: vi.fn().mockResolvedValue(['seq1']),
       getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
       initializeParticipantSession: vi.fn().mockResolvedValue(baseSession),
       updateParticipantMetadata: vi.fn().mockResolvedValue(undefined),
@@ -499,7 +582,7 @@ describe('Shell', () => {
     mockStorageEngine = {
       initializeStudyDb: vi.fn().mockResolvedValue(undefined),
       saveConfig: vi.fn().mockResolvedValue(undefined),
-      getSequenceArray: vi.fn().mockResolvedValue(['seq1']), // non-null → no setSequenceArray
+      getOrCreateSequenceArray: vi.fn().mockResolvedValue(['seq1']),
       getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
       initializeParticipantSession: vi.fn().mockResolvedValue(baseSession),
       getParticipantCompletionStatus: vi.fn().mockResolvedValue(false),
@@ -533,7 +616,7 @@ describe('Shell', () => {
     mockStorageEngine = {
       initializeStudyDb: vi.fn().mockResolvedValue(undefined),
       saveConfig: vi.fn().mockResolvedValue(undefined),
-      getSequenceArray: vi.fn().mockResolvedValue(['seq1']),
+      getOrCreateSequenceArray: vi.fn().mockResolvedValue(['seq1']),
       getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
       initializeParticipantSession: vi.fn().mockImplementation(() => new Promise(() => { })),
       peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
@@ -573,7 +656,7 @@ describe('Shell', () => {
     mockStorageEngine = {
       initializeStudyDb: vi.fn().mockResolvedValue(undefined),
       saveConfig: vi.fn().mockResolvedValue(undefined),
-      getSequenceArray: vi.fn().mockResolvedValue(['seq1']),
+      getOrCreateSequenceArray: vi.fn().mockResolvedValue(['seq1']),
       getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
       initializeParticipantSession: vi.fn().mockImplementation(() => new Promise(() => { })),
       peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
@@ -589,14 +672,13 @@ describe('Shell', () => {
     expect(queryByTestId('loading-overlay')).not.toBeNull();
   });
 
-  test('calls setSequenceArray when getSequenceArray returns null', async () => {
+  test('passes the canonical prepared array into participant startup', async () => {
     vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
 
     mockStorageEngine = {
       initializeStudyDb: vi.fn().mockResolvedValue(undefined),
       saveConfig: vi.fn().mockResolvedValue(undefined),
-      getSequenceArray: vi.fn().mockResolvedValue(null), // null → calls setSequenceArray
-      setSequenceArray: vi.fn().mockResolvedValue(undefined),
+      getOrCreateSequenceArray: vi.fn().mockResolvedValue(['saved-order']),
       getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
       initializeParticipantSession: vi.fn().mockResolvedValue(baseSession),
       getParticipantCompletionStatus: vi.fn().mockResolvedValue(false),
@@ -607,7 +689,8 @@ describe('Shell', () => {
     };
 
     render(<Shell globalConfig={globalConfig} />);
-    await waitFor(() => expect(mockStorageEngine!.setSequenceArray).toHaveBeenCalled(), { timeout: 3000 });
+    await waitFor(() => expect(mockStorageEngine!.initializeParticipantSession).toHaveBeenCalledWith({}, expect.anything(), expect.anything(), undefined, { modesDocument: expect.anything(), sequenceArray: ['saved-order'] }));
+    expect(mockStorageEngine!.getOrCreateSequenceArray).toHaveBeenCalledWith(expect.any(String), expect.any(Function));
   });
 
   test('shows the study-full screen when the current stage is at capacity', async () => {
@@ -616,7 +699,7 @@ describe('Shell', () => {
     mockStorageEngine = {
       initializeStudyDb: vi.fn().mockResolvedValue(undefined),
       saveConfig: vi.fn().mockResolvedValue(undefined),
-      getSequenceArray: vi.fn().mockResolvedValue(['seq1']),
+      getOrCreateSequenceArray: vi.fn().mockResolvedValue(['seq1']),
       getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
       initializeParticipantSession: vi.fn().mockRejectedValue(new StageCapacityExceededError('LIMITED')),
       peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
@@ -638,7 +721,7 @@ describe('Shell', () => {
     mockStorageEngine = {
       initializeStudyDb: vi.fn().mockResolvedValue(undefined),
       saveConfig: vi.fn().mockResolvedValue(undefined),
-      getSequenceArray: vi.fn().mockResolvedValue(['seq1']),
+      getOrCreateSequenceArray: vi.fn().mockResolvedValue(['seq1']),
       getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
       initializeParticipantSession: vi.fn().mockRejectedValue(new StageOnlyDisabledConditionsHaveCapacityError('LIMITED')),
       peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
@@ -662,7 +745,7 @@ describe('Shell', () => {
     mockStorageEngine = {
       initializeStudyDb: vi.fn().mockResolvedValue(undefined),
       saveConfig: vi.fn().mockResolvedValue(undefined),
-      getSequenceArray: vi.fn().mockResolvedValue(['seq1']),
+      getOrCreateSequenceArray: vi.fn().mockResolvedValue(['seq1']),
       getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: true, dataSharingEnabled: true, dataCollectionEnabled: true }),
       initializeParticipantSession: vi.fn().mockResolvedValue({
         ...baseSession,
@@ -688,7 +771,7 @@ describe('Shell', () => {
     mockStorageEngine = {
       initializeStudyDb: vi.fn().mockResolvedValue(undefined),
       saveConfig: vi.fn().mockResolvedValue(undefined),
-      getSequenceArray: vi.fn().mockResolvedValue(['seq1']),
+      getOrCreateSequenceArray: vi.fn().mockResolvedValue(['seq1']),
       getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
       initializeParticipantSession: vi.fn().mockResolvedValue({
         ...baseSession,

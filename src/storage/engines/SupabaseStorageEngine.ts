@@ -2,10 +2,16 @@ import { AuthError, createClient } from '@supabase/supabase-js';
 import localforage from 'localforage';
 import { v4 as uuidv4 } from 'uuid';
 import {
-  REVISIT_MODE, RuntimeStudySettings, SequenceAssignment, SnapshotDocContent, StorageObject, StorageObjectType, StoredUser,
-  CloudStorageEngine, UserWrapped, cleanupModes,
+  isParticipantData, rebuildSequenceAllocator, retrySequenceAllocation, SEQUENCE_ALLOCATION_ATTEMPTS, waitForAllocationRetry,
+} from './utils/storageEngineHelpers';
+import {
+  StageAllocation, REVISIT_MODE, RuntimeStudySettings, SequenceAssignment, SnapshotDocContent, StorageObject, StorageObjectType, StoredUser, CloudStorageEngine, UserWrapped, cleanupModes, consumesCapacity, applyStageUpdates, StageData, SequenceAssignmentAllocation, SequenceAllocator,
 } from './types';
 import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
+
+// Signals that a conditional timeout write matched no row, so the stage counts
+// must not change.
+class TimeoutNotAppliedError extends Error {}
 
 export class SupabaseStorageEngine extends CloudStorageEngine {
   private supabase = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY);
@@ -18,20 +24,25 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     super('supabase', testing);
   }
 
-  protected async _getFromStorage<T extends StorageObjectType>(prefix: string, type: T, studyId?: string) {
+  protected async _getFromStorage<T extends StorageObjectType>(prefix: string, type: T, studyId?: string, strict = false) {
     const { data, error } = await this.supabase.storage
       .from('revisit')
       .download(`${this.collectionPrefix}${studyId || this.studyId}/${prefix}_${type}`);
 
     if (error) {
+      const downloadError = error as { status?: number; statusCode?: string };
+      if ((strict || type === 'sequenceArray' || type === 'participantData') && downloadError.status !== 404 && String(downloadError.statusCode) !== '404') throw error;
       return {} as StorageObject<T>;
     }
 
     const dataToParse = this.testing ? new Blob([data as unknown as string], { type: 'application/json' }) : data;
     try {
       const text = await dataToParse.text();
-      return JSON.parse(text) as StorageObject<T>;
-    } catch {
+      const parsed = JSON.parse(text) as StorageObject<T>;
+      if (type === 'participantData' && !isParticipantData(parsed)) throw new Error('Invalid participant data');
+      return parsed;
+    } catch (parseError) {
+      if (strict || type === 'sequenceArray' || type === 'participantData') throw parseError;
       // Return the Blob directly if parsing fails
       return dataToParse as StorageObject<T>;
     }
@@ -101,11 +112,13 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
   }
 
   protected async _verifyStudyDatabase() {
-    const { error } = await this.supabase
+    const { data, error } = await this.supabase
       .from('revisit')
-      .select('*')
-      .eq('studyId', `${this.collectionPrefix}${this.studyId}`);
-    if (error || !this.studyId) {
+      .select('docId')
+      .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
+      .eq('docId', 'connect')
+      .maybeSingle();
+    if (error || !data || !this.studyId) {
       throw new Error('Study database not initialized or does not exist');
     }
   }
@@ -133,6 +146,18 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       })
       .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
       .eq('docId', 'currentConfigHash');
+  }
+
+  protected override async activateConfig(configHash: string, keys: string[]) {
+    const stage = await this.validateStageConditions(this.studyId!, keys);
+    const modes: Record<REVISIT_MODE, boolean> & { stage?: StageData } = await this.getModes(this.studyId!);
+    const studyId = `${this.collectionPrefix}${this.studyId}`;
+    // A single upsert commits both rows in one database transaction.
+    const { error } = await this.supabase.from('revisit').upsert([
+      { studyId, docId: 'metadata', data: { ...modes, stage: applyStageUpdates(modes.stage!, stage.stageName, { conditionKeys: keys }) } },
+      { studyId, docId: 'currentConfigHash', data: { configHash } },
+    ]);
+    if (error) throw new Error('Failed to activate study config');
   }
 
   public async getAllSequenceAssignments(studyId: string) {
@@ -172,39 +197,22 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     } as SequenceAssignment;
   }
 
-  protected async _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment, withServerTimestamp: boolean = false) {
+  protected async _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment, withServerTimestamp = false) {
     await this.verifyStudyDatabase();
-    if (!this.studyId) {
-      throw new Error('Study ID is not set');
-    }
-
-    // Create a sequence assignment for the participant in the study collection
-    const { error } = await this.supabase
-      .from('revisit')
-      .upsert({
-        studyId: `${this.collectionPrefix}${this.studyId}`,
-        docId: `sequenceAssignment_${participantId}`,
-        data: { ...sequenceAssignment, withServerTimestamp },
-      });
-    if (error) {
-      throw new Error(`Failed to create sequence assignment for participant ${participantId}`);
-    }
+    const previous = await this._getSequenceAssignment(participantId);
+    await this.changeStageCounts(previous, sequenceAssignment, async () => {
+      const { error } = await this.supabase.from('revisit').upsert({ studyId: `${this.collectionPrefix}${this.studyId}`, docId: `sequenceAssignment_${participantId}`, data: { ...sequenceAssignment, withServerTimestamp } });
+      if (error) throw new Error(`Failed to create sequence assignment for participant ${participantId}`);
+    });
   }
 
-  private async updateSequenceAssignmentRow(
-    participantId: string,
-    data: Record<string, unknown>,
-    operation: string,
-  ) {
-    const { data: updatedRows, error } = await this.supabase
-      .from('revisit')
-      .update({ data })
-      .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
-      .eq('docId', `sequenceAssignment_${participantId}`)
-      .select('docId');
-    if (error || (updatedRows?.length ?? 0) !== 1) {
-      throw new Error(`Failed to ${operation} sequence assignment for participant ${participantId}`);
-    }
+  private async updateSequenceAssignmentRow(participantId: string, data: Record<string, unknown>, operation: string) {
+    const previous = await this._getSequenceAssignment(participantId);
+    await this.changeStageCounts(previous, data as SequenceAssignment, async () => {
+      const { data: rows, error } = await this.supabase.from('revisit').update({ data }).eq('studyId', `${this.collectionPrefix}${this.studyId}`).eq('docId', `sequenceAssignment_${participantId}`)
+        .select('docId');
+      if (error || rows?.length !== 1) throw new Error(`Failed to ${operation} sequence assignment for participant ${participantId}`);
+    });
   }
 
   protected async _updateSequenceAssignmentFields(participantId: string, updatedFields: Partial<SequenceAssignment>) {
@@ -244,9 +252,12 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       .select('data, createdAt')
       .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
       .eq('docId', `sequenceAssignment_${participantId}`)
-      .single();
+      .maybeSingle();
 
-    if (error || !data) {
+    if (error) {
+      throw new Error('Failed to retrieve sequence assignment');
+    }
+    if (!data) {
       return null;
     }
 
@@ -396,7 +407,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     });
   }
 
-  protected async _rejectParticipantRealtime(participantId: string) {
+  protected async _rejectParticipantRealtime(participantId: string, onlyIncomplete = false) {
     await this.verifyStudyDatabase();
     if (!this.studyId) {
       throw new Error('Study ID is not set');
@@ -415,10 +426,16 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       throw new Error('Failed to retrieve sequence assignment for current participant');
     }
 
+    if (onlyIncomplete && data.data.completed !== null) return false;
+    if (data.data.rejected) return true;
+    const reusableSequenceIndex = data.data.claimedParticipantId
+      ? (await this.reserveSequenceAllocator(await this.getOrCreateSequenceAllocator(), undefined, false)).sequenceIndex : undefined;
     // Update the sequence assignment for the participant to mark it as rejected
     await this.updateSequenceAssignmentRow(
       participantId,
-      { ...data.data, rejected: true, timestamp: new Date().getTime() },
+      {
+        ...data.data, rejected: true, timestamp: new Date().getTime(), ...(reusableSequenceIndex === undefined ? {} : { reusableSequenceIndex }),
+      },
       'reject',
     );
 
@@ -446,7 +463,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
           'release claimed',
         );
       });
-      return;
+      return true;
     }
 
     // Fallback for legacy reused assignments that predate claimedParticipantId.
@@ -454,7 +471,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     // the server timestamp, so it never claimed anything and must not release
     // another participant who happens to share its stored timestamp.
     if (data.data.withServerTimestamp) {
-      return;
+      return true;
     }
     const { data: matchingRows, error: claimedError } = await this.supabase
       .from('revisit')
@@ -465,7 +482,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       .neq('docId', sequenceAssignmentPath);
 
     if (claimedError || !matchingRows) {
-      return;
+      return true;
     }
     // The source of a legacy replacement is claimed, no longer holds a slot,
     // and is not itself a current-format replacement.
@@ -475,7 +492,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       && (candidate.rejected || candidate.autoTimedOutAt !== undefined)
     ));
     if (legacySources.length !== 1) {
-      return;
+      return true;
     }
     const legacyClaimedParticipantId = legacySources[0].data.participantId;
     await this._runWithLock(`participant-${legacyClaimedParticipantId}`, async () => {
@@ -499,6 +516,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
         'release claimed',
       );
     });
+    return true;
   }
 
   protected async _undoRejectParticipantRealtime(participantId: string) {
@@ -520,6 +538,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       throw new Error('Failed to retrieve sequence assignment for current participant');
     }
 
+    if (!data.data.rejected) return;
     const claimedParticipantId = data.data.claimedParticipantId as string | undefined;
     let restoredTimestamp = data.data.withServerTimestamp
       ? new Date(data.createdAt).getTime()
@@ -539,6 +558,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
           throw new Error('Failed to retrieve claimed sequence assignment for unrejection');
         }
 
+        if (claimedData.data.claimed) throw new Error('Cannot restore a participant whose original slot has been reassigned');
         restoredTimestamp = claimedData.data.withServerTimestamp
           ? new Date(claimedData.createdAt).getTime()
           : claimedData.data.timestamp as number | undefined;
@@ -553,12 +573,15 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       });
     }
 
+    const updated = { ...data.data, rejected: false, timestamp: restoredTimestamp };
+    delete updated.reusableSequenceIndex;
     // Update the sequence assignment for the participant to mark it as un-rejected
     await this.updateSequenceAssignmentRow(
       participantId,
-      { ...data.data, rejected: false, timestamp: restoredTimestamp },
+      updated,
       'restore',
     );
+    if (data.data.reusableSequenceIndex !== undefined) await this.returnSequenceIndex(data.data.reusableSequenceIndex as number);
   }
 
   protected async _claimSequenceAssignment(participantId: string) {
@@ -639,19 +662,31 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       if (assignment.completed !== null || assignment.rejected || assignment.autoTimedOutAt !== undefined) {
         return false;
       }
-      const { data: updatedRows, error: updateError } = await this.supabase
-        .from('revisit')
-        .update({ data: { ...assignment, autoTimedOutAt: timedOutAt } })
-        .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
-        .eq('docId', sequenceAssignmentPath)
-        .eq('data->>rejected', 'false')
-        .is('data->>completed', null)
-        .is('data->>autoTimedOutAt', null)
-        .select('docId');
-      if (updateError) {
-        throw new Error(`Failed to mark participant ${participantId} as timed out`);
-      }
-      if ((updatedRows?.length ?? 0) === 1) {
+      const timedOutAssignment = { ...assignment, autoTimedOutAt: timedOutAt };
+      let updated = false;
+      // The timeout releases the slot, so the stage counts move with the write.
+      // They are only adjusted when the conditional write lands.
+      await this.changeStageCounts(await this._getSequenceAssignment(participantId), timedOutAssignment, async () => {
+        const { data: updatedRows, error: updateError } = await this.supabase
+          .from('revisit')
+          .update({ data: timedOutAssignment })
+          .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
+          .eq('docId', sequenceAssignmentPath)
+          .eq('data->>rejected', 'false')
+          .is('data->>completed', null)
+          .is('data->>autoTimedOutAt', null)
+          .select('docId');
+        if (updateError) {
+          throw new Error(`Failed to mark participant ${participantId} as timed out`);
+        }
+        updated = (updatedRows?.length ?? 0) === 1;
+        if (!updated) {
+          throw new TimeoutNotAppliedError();
+        }
+      }).catch((changeError) => {
+        if (!(changeError instanceof TimeoutNotAppliedError)) throw changeError;
+      });
+      if (updated) {
         return true;
       }
 
@@ -995,17 +1030,44 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
   }
 
   protected async _copyRealtimeData(source: string, target: string) {
-    const { data: rows, error } = await this.supabase
-      .from('revisit')
-      .select('createdAt, studyId, docId, data')
-      .eq('studyId', source)
-      .like('docId', 'sequenceAssignment_%');
-    if (error) {
+    const [assignments, allocator] = await Promise.all([
+      this.supabase
+        .from('revisit')
+        .select('createdAt, studyId, docId, data')
+        .eq('studyId', source)
+        .like('docId', 'sequenceAssignment_%'),
+      this.supabase
+        .from('revisit')
+        .select('createdAt, studyId, docId, data')
+        .eq('studyId', source)
+        .eq('docId', 'sequenceAllocator')
+        .maybeSingle(),
+    ]);
+    if (assignments.error || allocator.error) {
       throw new Error('Failed to copy realtime data');
     }
 
     // Batch upload the rows to the target study
-    const toUpload = rows.map((row) => ({
+    const rows = [...assignments.data, allocator.data ?? {
+      docId: 'sequenceAllocator',
+      data: { ...rebuildSequenceAllocator(assignments.data.map((row) => row.data as SequenceAssignment)), version: 0 },
+    }];
+    const stageRows = [...new Set(assignments.data.map((row) => (row.data as SequenceAssignment).stage))].map((stage) => {
+      const active = assignments.data.map((row) => row.data as SequenceAssignment).filter((assignment) => assignment.stage === stage && !assignment.rejected);
+      const combinationCounts: Record<string, number> = {};
+      const rowCounts: Record<string, number> = {};
+      active.forEach((assignment) => {
+        if (assignment.betweenSubjectsCombinationKey) combinationCounts[assignment.betweenSubjectsCombinationKey] = (combinationCounts[assignment.betweenSubjectsCombinationKey] || 0) + 1;
+        if (assignment.sequenceKey) rowCounts[assignment.sequenceKey] = (rowCounts[assignment.sequenceKey] || 0) + 1;
+      });
+      return {
+        docId: `stageAllocation_${encodeURIComponent(stage)}`,
+        data: {
+          count: active.length, combinationCounts, rowCounts, version: 0,
+        },
+      };
+    });
+    const toUpload = [...rows, ...stageRows].map((row) => ({
       ...row,
       studyId: target,
     }));
@@ -1013,19 +1075,16 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       .from('revisit')
       .upsert(toUpload);
     if (uploadError) {
-      console.error('Error uploading realtime data for:', uploadError);
+      throw new Error('Failed to copy realtime data');
     }
   }
 
   protected async _deleteRealtimeData(target: string) {
-    const { error } = await this.supabase
-      .from('revisit')
-      .delete()
-      .eq('studyId', target)
-      .like('docId', 'sequenceAssignment_%');
-    if (error) {
-      throw new Error('Failed to delete realtime data');
-    }
+    const results = await Promise.all([
+      ...['sequenceAssignment_%', 'stageAllocation_%'].map((pattern) => this.supabase.from('revisit').delete().eq('studyId', target).like('docId', pattern)),
+      ...['sequenceAllocator', 'currentConfigHash'].map((docId) => this.supabase.from('revisit').delete().eq('studyId', target).eq('docId', docId)),
+    ]);
+    if (results.some(({ error }) => error)) throw new Error('Failed to delete realtime data');
   }
 
   protected async _addDirectoryNameToSnapshots(
@@ -1318,4 +1377,417 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     const { error } = await this.supabase.auth.signOut();
     if (error) throw error;
   }
+
+  private async getSequenceAllocatorSeed() {
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+    const studyId = `${this.collectionPrefix}${this.studyId}`;
+    const [totalResult, claimedResult] = await Promise.all([
+      this.supabase
+        .from('revisit')
+        .select('docId', { count: 'exact', head: true })
+        .eq('studyId', studyId)
+        .like('docId', 'sequenceAssignment_%'),
+      this.supabase
+        .from('revisit')
+        .select('docId', { count: 'exact', head: true })
+        .eq('studyId', studyId)
+        .like('docId', 'sequenceAssignment_%')
+        .eq('data->claimed', true),
+    ]);
+    if (totalResult.error || claimedResult.error) {
+      throw new Error('Failed to initialize sequence assignment allocator');
+    }
+    return {
+      nextSequenceIndex: (totalResult.count ?? 0) - (claimedResult.count ?? 0),
+      nextCreationIndex: totalResult.count ?? 0,
+      version: 0,
+    };
+  }
+
+  private async getOrCreateSequenceAllocator(): Promise<SupabaseSequenceAllocator> {
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+    const studyId = `${this.collectionPrefix}${this.studyId}`;
+    const allocatorPath = 'sequenceAllocator';
+    const { data: existingAllocator, error: existingAllocatorError } = await this.supabase
+      .from('revisit')
+      .select('data')
+      .eq('studyId', studyId)
+      .eq('docId', allocatorPath)
+      .maybeSingle();
+    if (existingAllocatorError) {
+      throw new Error('Failed to retrieve sequence assignment allocator');
+    }
+    if (existingAllocator) {
+      return existingAllocator.data as SupabaseSequenceAllocator;
+    }
+
+    const seed = await this.getSequenceAllocatorSeed();
+    const { error } = await this.supabase
+      .from('revisit')
+      .insert({ studyId, docId: allocatorPath, data: seed });
+    if (error && error.code !== '23505') {
+      throw new Error('Failed to create sequence assignment allocator');
+    }
+
+    const { data: allocator, error: allocatorError } = await this.supabase
+      .from('revisit')
+      .select('data')
+      .eq('studyId', studyId)
+      .eq('docId', allocatorPath)
+      .single();
+    if (allocatorError || !allocator) {
+      throw new Error('Failed to retrieve sequence assignment allocator');
+    }
+    return allocator.data as typeof seed;
+  }
+
+  private async reserveSequenceAllocator(
+    initialAllocator: SupabaseSequenceAllocator,
+    reusableSequenceIndex?: number,
+    incrementCreationIndex: boolean = true,
+  ): Promise<SequenceAssignmentAllocation> {
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+    const studyId = `${this.collectionPrefix}${this.studyId}`;
+    const allocatorPath = 'sequenceAllocator';
+
+    for (let attempt = 0; attempt < SEQUENCE_ALLOCATION_ATTEMPTS; attempt += 1) {
+      let allocator = initialAllocator;
+      if (attempt > 0) {
+        // eslint-disable-next-line no-await-in-loop
+        await waitForAllocationRetry(attempt);
+        // eslint-disable-next-line no-await-in-loop
+        const { data, error } = await this.supabase
+          .from('revisit')
+          .select('data')
+          .eq('studyId', studyId)
+          .eq('docId', allocatorPath)
+          .single();
+        if (error || !data) {
+          throw new Error('Failed to retrieve sequence assignment allocator');
+        }
+        allocator = data.data as SupabaseSequenceAllocator;
+      }
+
+      const availableSequenceIndex = incrementCreationIndex ? allocator.availableSequenceIndexes?.[0] : undefined;
+      const sequenceIndex = reusableSequenceIndex ?? availableSequenceIndex ?? allocator.nextSequenceIndex;
+      const creationIndex = allocator.nextCreationIndex;
+      const nextAllocator = {
+        ...allocator,
+        ...(availableSequenceIndex !== undefined && reusableSequenceIndex === undefined ? {
+          availableSequenceIndexes: allocator.availableSequenceIndexes?.slice(1),
+        } : {}),
+        nextSequenceIndex: reusableSequenceIndex === undefined && availableSequenceIndex === undefined
+          ? allocator.nextSequenceIndex + 1
+          : allocator.nextSequenceIndex,
+        nextCreationIndex: incrementCreationIndex
+          ? allocator.nextCreationIndex + 1
+          : allocator.nextCreationIndex,
+        version: allocator.version + 1,
+      };
+      // eslint-disable-next-line no-await-in-loop
+      const { data: updatedAllocatorRows, error } = await this.supabase
+        .from('revisit')
+        .update({ data: nextAllocator })
+        .eq('studyId', studyId)
+        .eq('docId', allocatorPath)
+        .eq('data->version', allocator.version)
+        .select('data');
+      if (error) {
+        throw new Error('Failed to reserve a sequence assignment');
+      }
+      if (updatedAllocatorRows?.length === 1) {
+        return { sequenceIndex, creationIndex };
+      }
+    }
+
+    throw new Error('Failed to reserve a sequence assignment after concurrent updates');
+  }
+
+  private async getLegacySequenceIndex(timestamp: number) {
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+    const studyId = `${this.collectionPrefix}${this.studyId}`;
+    const [serverTimestampResult, storedTimestampResult] = await Promise.all([
+      this.supabase
+        .from('revisit')
+        .select('docId', { count: 'exact', head: true })
+        .eq('studyId', studyId)
+        .like('docId', 'sequenceAssignment_%')
+        .eq('data->rejected', false)
+        .eq('data->withServerTimestamp', true)
+        .lt('createdAt', new Date(timestamp).toISOString()),
+      this.supabase
+        .from('revisit')
+        .select('docId', { count: 'exact', head: true })
+        .eq('studyId', studyId)
+        .like('docId', 'sequenceAssignment_%')
+        .eq('data->rejected', false)
+        .eq('data->withServerTimestamp', false)
+        .lt('data->timestamp', timestamp),
+    ]);
+    if (serverTimestampResult.error || storedTimestampResult.error) {
+      throw new Error('Failed to derive legacy sequence assignment index');
+    }
+    return (serverTimestampResult.count ?? 0) + (storedTimestampResult.count ?? 0);
+  }
+
+  private async getLegacyCreationIndex(createdTime: number) {
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+    const { count, error } = await this.supabase
+      .from('revisit')
+      .select('docId', { count: 'exact', head: true })
+      .eq('studyId', `${this.collectionPrefix}${this.studyId}`)
+      .like('docId', 'sequenceAssignment_%')
+      .lt('createdAt', new Date(createdTime).toISOString());
+    if (error) {
+      throw new Error('Failed to derive legacy participant creation index');
+    }
+    return count ?? 0;
+  }
+
+  protected async _allocateSequenceAssignment(
+    participantId: string,
+    sequenceAssignment: SequenceAssignment,
+  ): Promise<SequenceAssignmentAllocation> {
+    return retrySequenceAllocation(() => this.tryAllocateSequenceAssignment(participantId, sequenceAssignment));
+  }
+
+  private async tryAllocateSequenceAssignment(
+    participantId: string,
+    sequenceAssignment: SequenceAssignment,
+  ): Promise<SequenceAssignmentAllocation | null> {
+    await this.verifyStudyDatabase();
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+
+    const existingAssignment = await this._getSequenceAssignment(participantId);
+    if (existingAssignment && !existingAssignment.rejected) {
+      if (
+        existingAssignment.sequenceIndex !== undefined
+        && existingAssignment.creationIndex !== undefined
+      ) {
+        return {
+          sequenceIndex: existingAssignment.sequenceIndex,
+          creationIndex: existingAssignment.creationIndex,
+        };
+      }
+
+      const [sequenceIndex, creationIndex] = await Promise.all([
+        this.getLegacySequenceIndex(existingAssignment.timestamp),
+        this.getLegacyCreationIndex(existingAssignment.createdTime),
+      ]);
+      return {
+        sequenceIndex,
+        creationIndex,
+      };
+    }
+
+    const studyId = `${this.collectionPrefix}${this.studyId}`;
+    const [serverTimestampResult, storedTimestampResult, initialAllocator] = await Promise.all([
+      this.supabase
+        .from('revisit')
+        .select('docId, data, createdAt')
+        .eq('studyId', studyId)
+        .like('docId', 'sequenceAssignment_%')
+        .eq('data->rejected', true)
+        .eq('data->claimed', false)
+        .neq('docId', `sequenceAssignment_${participantId}`)
+        .eq('data->withServerTimestamp', true)
+        .order('createdAt', { ascending: true })
+        .limit(1)
+        .maybeSingle(),
+      this.supabase
+        .from('revisit')
+        .select('docId, data, createdAt')
+        .eq('studyId', studyId)
+        .like('docId', 'sequenceAssignment_%')
+        .eq('data->rejected', true)
+        .eq('data->claimed', false)
+        .neq('docId', `sequenceAssignment_${participantId}`)
+        .eq('data->withServerTimestamp', false)
+        .order('data->timestamp', { ascending: true })
+        .limit(1)
+        .maybeSingle(),
+      this.getOrCreateSequenceAllocator(),
+    ]);
+    if (serverTimestampResult.error || storedTimestampResult.error) {
+      throw new Error('Failed to retrieve rejected sequence assignment');
+    }
+    const reusableRow = [serverTimestampResult.data, storedTimestampResult.data]
+      .filter((row) => row !== null)
+      .sort((a, b) => {
+        const aTimestamp = a.data.withServerTimestamp ? new Date(a.createdAt).getTime() : a.data.timestamp;
+        const bTimestamp = b.data.withServerTimestamp ? new Date(b.createdAt).getTime() : b.data.timestamp;
+        return aTimestamp - bTimestamp;
+      })[0];
+
+    const reusableAssignment = reusableRow?.data as SequenceAssignment | undefined;
+    let reusableSequenceIndex = reusableAssignment?.reusableSequenceIndex
+      ?? reusableAssignment?.sequenceIndex;
+    if (reusableAssignment && reusableSequenceIndex === undefined) {
+      const reusableTimestamp = (reusableAssignment as SequenceAssignment & {
+        withServerTimestamp?: boolean;
+      }).withServerTimestamp
+        ? new Date(reusableRow!.createdAt).getTime()
+        : reusableAssignment.timestamp;
+      reusableSequenceIndex = await this.getLegacySequenceIndex(reusableTimestamp);
+    }
+
+    if (reusableRow && reusableAssignment && reusableSequenceIndex !== undefined) {
+      const { data: claimedRows, error: claimError } = await this.supabase
+        .from('revisit')
+        .update({
+          data: {
+            ...reusableAssignment,
+            claimed: true,
+            sequenceIndex: reusableSequenceIndex,
+          },
+        })
+        .eq('studyId', studyId)
+        .eq('docId', reusableRow.docId)
+        .eq('data->rejected', true)
+        .eq('data->claimed', false)
+        .select('data');
+      if (claimError) {
+        throw new Error('Failed to claim rejected sequence assignment');
+      }
+      if (!claimedRows || claimedRows.length === 0) {
+        return null;
+      }
+    }
+
+    const allocation = await this.reserveSequenceAllocator(
+      initialAllocator,
+      reusableSequenceIndex,
+    );
+
+    await this._createSequenceAssignment(participantId, {
+      ...sequenceAssignment,
+      ...(reusableRow && reusableAssignment ? {
+        timestamp: (reusableAssignment as SequenceAssignment & { withServerTimestamp?: boolean }).withServerTimestamp
+          ? new Date(reusableRow.createdAt).getTime()
+          : reusableAssignment.timestamp,
+        claimedParticipantId: reusableAssignment.participantId,
+      } : {}),
+      sequenceIndex: allocation.sequenceIndex,
+      creationIndex: allocation.creationIndex,
+    }, !reusableAssignment);
+    return allocation;
+  }
+
+  private async returnSequenceIndex(sequenceIndex: number) {
+    const studyId = `${this.collectionPrefix}${this.studyId}`;
+    for (let attempt = 0; attempt < SEQUENCE_ALLOCATION_ATTEMPTS; attempt += 1) {
+      if (attempt > 0) {
+        // eslint-disable-next-line no-await-in-loop
+        await waitForAllocationRetry(attempt);
+      }
+      // eslint-disable-next-line no-await-in-loop
+      const allocator = await this.getOrCreateSequenceAllocator();
+      const nextAllocator: SupabaseSequenceAllocator = {
+        ...allocator,
+        availableSequenceIndexes: [...new Set([
+          ...(allocator.availableSequenceIndexes ?? []), sequenceIndex,
+        ])].sort((a, b) => a - b),
+        version: allocator.version + 1,
+      };
+      // eslint-disable-next-line no-await-in-loop
+      const { data, error } = await this.supabase
+        .from('revisit')
+        .update({ data: nextAllocator })
+        .eq('studyId', studyId)
+        .eq('docId', 'sequenceAllocator')
+        .eq('data->version', allocator.version)
+        .select('data');
+      if (error) {
+        throw new Error('Failed to return an unused sequence assignment');
+      }
+      if (data?.length === 1) {
+        return;
+      }
+    }
+    throw new Error('Failed to return an unused sequence assignment after concurrent updates');
+  }
+
+  protected override async hasStageAssignments(stage: string): Promise<boolean> {
+    const { count, error } = await this.supabase.from('revisit').select('docId', { count: 'exact', head: true })
+      .eq('studyId', `${this.collectionPrefix}${this.studyId}`).like('docId', 'sequenceAssignment_%')
+      .eq('data->stage', stage);
+    if (error) throw new Error('Failed to check stage assignment history');
+    return (count || 0) > 0;
+  }
+
+  protected override async getStageAllocation(stage: string, conditionKeys: string[] = []): Promise<StageAllocation> {
+    const studyId = `${this.collectionPrefix}${this.studyId}`;
+    const docId = `stageAllocation_${encodeURIComponent(stage)}`;
+    const { data, error } = await this.supabase.from('revisit').select('data').eq('studyId', studyId).eq('docId', docId)
+      .maybeSingle();
+    if (error) throw new Error('Failed to read stage allocation');
+    if (data) return data.data as StageAllocation;
+    const counts = await Promise.all([undefined, ...conditionKeys].map((key) => {
+      const request = this.supabase.from('revisit').select('docId', { count: 'exact', head: true }).eq('studyId', studyId).like('docId', 'sequenceAssignment_%')
+        .eq('data->stage', stage)
+        .eq('data->rejected', false)
+        .is('data->>autoTimedOutAt', null);
+      return key === undefined ? request : request.eq('data->betweenSubjectsCombinationKey', key);
+    }));
+    if (counts.some((result) => result.error)) throw new Error('Failed to initialize stage allocation');
+    const initial = {
+      count: counts[0].count || 0, combinationCounts: Object.fromEntries(conditionKeys.map((key, index) => [key, counts[index + 1].count || 0])), rowCounts: {}, version: 0,
+    };
+    const { error: insertError } = await this.supabase.from('revisit').insert({ studyId, docId, data: initial });
+    if (insertError && insertError.code !== '23505') throw new Error('Failed to initialize stage allocation');
+    if (!insertError) return initial;
+    return this.getStageAllocation(stage, conditionKeys);
+  }
+
+  private async changeStageCounts(previous: SequenceAssignment | null, next: SequenceAssignment, write: () => Promise<void>) {
+    const affected = [...new Set([previous?.stage, next.stage].filter((stage): stage is string => stage !== undefined))];
+    const changes = affected.map((stage) => ({
+      stage,
+      // Rejected and auto-timed-out assignments have released their slot.
+      before: previous?.stage === stage && consumesCapacity(previous) ? previous : undefined,
+      after: next.stage === stage && consumesCapacity(next) ? next : undefined,
+    })).filter(({ before, after }) => Boolean(before) !== Boolean(after) || before?.sequenceKey !== after?.sequenceKey || before?.betweenSubjectsCombinationKey !== after?.betweenSubjectsCombinationKey);
+    await Promise.all(changes.map(({ stage }) => this.getStageAllocation(stage)));
+    await write();
+    for (const { stage, before, after } of changes) {
+      let saved = false;
+      for (let attempt = 0; attempt < SEQUENCE_ALLOCATION_ATTEMPTS && !saved; attempt += 1) {
+        // eslint-disable-next-line no-await-in-loop
+        const current = await this.getStageAllocation(stage) as StageAllocation & { version: number };
+        const combinationCounts = { ...current.combinationCounts };
+        const rowCounts = { ...current.rowCounts };
+        if (before?.betweenSubjectsCombinationKey) combinationCounts[before.betweenSubjectsCombinationKey] = Math.max(0, (combinationCounts[before.betweenSubjectsCombinationKey] || 0) - 1);
+        if (after?.betweenSubjectsCombinationKey) combinationCounts[after.betweenSubjectsCombinationKey] = (combinationCounts[after.betweenSubjectsCombinationKey] || 0) + 1;
+        if (before?.sequenceKey) rowCounts[before.sequenceKey] = Math.max(0, (rowCounts[before.sequenceKey] || 0) - 1);
+        if (after?.sequenceKey) rowCounts[after.sequenceKey] = (rowCounts[after.sequenceKey] || 0) + 1;
+        // eslint-disable-next-line no-await-in-loop
+        const result = await this.supabase.from('revisit').update({
+          data: {
+            count: Math.max(0, current.count + Number(Boolean(after)) - Number(Boolean(before))), combinationCounts, rowCounts, version: current.version + 1,
+          },
+        }).eq('studyId', `${this.collectionPrefix}${this.studyId}`).eq('docId', `stageAllocation_${encodeURIComponent(stage)}`)
+          .eq('data->version', current.version)
+          .select('docId');
+        if (result.error) throw new Error('Failed to update stage allocation');
+        saved = result.data?.length === 1;
+      }
+      if (!saved) throw new Error('Failed to update stage allocation after concurrent changes');
+    }
+  }
 }
+
+type SupabaseSequenceAllocator = SequenceAllocator & {
+  version: number;
+};

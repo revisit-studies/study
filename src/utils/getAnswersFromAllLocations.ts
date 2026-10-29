@@ -1,11 +1,20 @@
-import { resolveResponseVisibility } from './responseVisibility';
+import { normalizeResponseAnswerValues, resolveResponseVisibility } from './responseVisibility';
+import { getSavedScoresForAnswer } from './correctAnswer';
 import type { Answer, Response } from '../parser/types';
-import { StoredAnswer, TrialValidation, ValidationStatus } from '../store/types';
+import type {
+  CheckAnswerState, StoredAnswer, TrialValidation, ValidationStatus,
+} from '../store/types';
 
-const OTHER_ANSWER_SUFFIX = '-other';
-
-function isOtherSelected(value: StoredAnswer['answer'][string] | undefined) {
-  return value === 'other' || (Array.isArray(value) && value.includes('__other'));
+export function getPersistedAnswerValues(
+  currentAnswers: StoredAnswer['answer'],
+  responses: Response[] = [],
+  correctAnswers: Answer[] = [],
+  checkAnswer?: CheckAnswerState,
+): StoredAnswer['answer'] {
+  const normalizedAnswers = normalizeResponseAnswerValues(currentAnswers, responses);
+  const persistedScores = getSavedScoresForAnswer(checkAnswer, normalizedAnswers);
+  const { answers } = resolveResponseVisibility(responses, normalizedAnswers, {}, correctAnswers, persistedScores);
+  return structuredClone(normalizeResponseAnswerValues(answers, responses));
 }
 
 // Merge the answer values from all locations of a trial's validation entry into a single answer object
@@ -27,33 +36,12 @@ export function getPersistedAnswersFromAllLocations(
   trialValidationEntry: TrialValidation[string] | undefined,
   responses: Response[] = [],
   correctAnswers: Answer[] = [],
+  checkAnswer?: CheckAnswerState,
 ): StoredAnswer['answer'] {
-  const { answers } = resolveResponseVisibility(responses, getAnswersFromAllLocations(trialValidationEntry), {}, correctAnswers);
-  const responseIds = new Set(responses.map((response) => response.id));
-  const responseIdsWithOther = new Set(
-    responses
-      .filter((response) => (response.type === 'radio' || response.type === 'checkbox') && response.withOther)
-      .map((response) => response.id),
+  return getPersistedAnswerValues(
+    getAnswersFromAllLocations(trialValidationEntry),
+    responses,
+    correctAnswers,
+    checkAnswer,
   );
-
-  const persistedAnswers = Object.fromEntries(
-    Object.entries(answers).filter(([key]) => {
-      if (!key.endsWith(OTHER_ANSWER_SUFFIX)) {
-        return true;
-      }
-
-      if (responseIds.has(key)) {
-        return true;
-      }
-
-      const responseId = key.slice(0, -OTHER_ANSWER_SUFFIX.length);
-      if (!responseIdsWithOther.has(responseId)) {
-        return true;
-      }
-
-      return isOtherSelected(answers[responseId]);
-    }),
-  );
-
-  return structuredClone(persistedAnswers);
 }

@@ -103,7 +103,7 @@ export interface StoredAnswer {
   componentName: string;
   /** The order of the trial in the sequence. */
   trialOrder: string;
-  /** Object whose keys are the "id"s in the Response list of the component in the StudyConfig and whose value is a list of incorrect inputted values from the participant. Only relevant for trials with `provideFeedback` and correct answers enabled. */
+  /** Object whose keys are the "id"s in the Response list of the component in the StudyConfig and whose value is a list of incorrect inputted values from the participant. Only relevant for trials with `provideFeedback` enabled or custom answer-level feedback. */
   incorrectAnswers: Record<string, { id: string, value: unknown[] }>;
   /** Time that the user began interacting with the component in epoch milliseconds. */
   startTime: number;
@@ -157,12 +157,12 @@ export interface StoredAnswer {
   formOrder?: Record<string, string[]>;
   /** Whether required-response errors were revealed for this trial after a Next attempt. */
   responseSubmitAttempted?: boolean;
-  /** Check Answer state for this trial: attempts used and per-response correctness at the last check. */
+  /** Per-response grading state and Check Answer attempts for this trial. */
   checkAnswer?: CheckAnswerState;
 }
 
 /**
- * The CheckAnswerState object is a data structure describing the participant's interaction with an individual component when they click "Check Answer". It is the data structure used as values of the `checkAnswer` object of [StoreState](../StoreState). The general structure for this is below:
+ * The CheckAnswerState object stores per-response grading and Check Answer attempt state for a component. It is used in [StoreState](../StoreState) and persisted with participant answers. Scores are calculated on submission even when Check Answer feedback is disabled.
  *
  * ```json
  * {
@@ -183,6 +183,12 @@ export interface CheckAnswerState {
   correct: boolean;
   /** The correctness of each response at the last check. Keys are the "id"s in the [Response](../BaseResponse) list of the component in your [StudyConfiguration](../StudyConfig); values indicate whether that response was correct. */
   responses: Record<string, boolean>;
+  /** Fractional score for each checked response, when custom scoring is configured. */
+  scores?: Record<string, number>;
+  /** Answers used to calculate responses and scores, so later edits cannot reuse stale results. */
+  answerSnapshot?: StoredAnswer['answer'];
+  /** Answer values captured at the last check, used to keep displayed feedback stable while responses are edited. */
+  checkedAnswers?: StoredAnswer['answer'];
 }
 
 export interface JumpFunctionParameters<T> {
@@ -246,7 +252,14 @@ export type CustomResponseValidate<TValue extends JsonValue = JsonValue> = (
   value: TValue | null,
   values: StoredAnswer['answer'],
   response: CustomResponse,
-) => string | null;
+) => string | boolean | null;
+
+export type CustomResponseScore<TValue extends JsonValue = JsonValue> = (
+  value: TValue | null,
+  values: StoredAnswer['answer'],
+  response: CustomResponse,
+  expected?: unknown,
+) => number | boolean | null;
 
 export interface Sequence {
   id?: string;

@@ -297,9 +297,11 @@ describe('studyStoreCreator', () => {
     const { store, actions } = await studyStoreCreator('test', minimalConfig, minimalSequence, metadata, emptyAnswers, modes, 'p1', false, false);
     expect(store.getState().checkAnswer).toEqual({});
     store.dispatch(actions.setCheckAnswerResult({
-      identifier: 'intro_0', attemptsUsed: 1, correct: false, responses: { q1: false },
+      identifier: 'intro_0', attemptsUsed: 1, correct: false, responses: { q1: false }, scores: { q1: 0.5 },
     }));
-    expect(store.getState().checkAnswer.intro_0).toEqual({ attemptsUsed: 1, correct: false, responses: { q1: false } });
+    expect(store.getState().checkAnswer.intro_0).toEqual({
+      attemptsUsed: 1, correct: false, responses: { q1: false }, scores: { q1: 0.5 },
+    });
     store.dispatch(actions.setCheckAnswerResult({
       identifier: 'intro_0', attemptsUsed: 2, correct: true, responses: { q1: true },
     }));

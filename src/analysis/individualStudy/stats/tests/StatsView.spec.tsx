@@ -16,7 +16,10 @@ import { ResponseVisualization } from '../ResponseVisualization';
 // ── mocks ────────────────────────────────────────────────────────────────────
 
 let mockColorScheme = 'light';
-beforeEach(() => { mockColorScheme = 'light'; });
+beforeEach(() => {
+  mockColorScheme = 'light';
+  vi.mocked(studyComponentToIndividualComponent).mockImplementation((stepConfig) => stepConfig as IndividualComponent);
+});
 
 vi.mock('react-router', () => ({
   useParams: vi.fn(() => ({})),
@@ -94,11 +97,7 @@ vi.mock('../../summary/utils', () => ({
 }));
 
 vi.mock('../../../../utils/handleComponentInheritance', () => ({
-  studyComponentToIndividualComponent: vi.fn(() => ({
-    type: 'questionnaire',
-    response: [],
-
-  })),
+  studyComponentToIndividualComponent: vi.fn((stepConfig: IndividualComponent) => stepConfig),
 }));
 
 // ── fixtures ─────────────────────────────────────────────────────────────────
@@ -254,7 +253,111 @@ describe('ResponseVisualization', () => {
     expect(spec.config.axis).toMatchObject({ labelColor: text, titleColor: text });
     expect(spec.config.header).toEqual({ labelColor: text, titleColor: text });
     expect(spec.config.legend).toEqual({ labelColor: text, titleColor: text });
-    expect(spec.encoding.color.scale.range).toEqual(['#69DB7C', '#ADB5BD']);
+    expect(spec.encoding.color.scale.range).toEqual(['#69DB7C', '#FFD43B', '#ADB5BD', '#868E96']);
+  });
+
+  test('uses canonical acceptance results to color accepted list values', () => {
+    const participantWithAcceptedAlias = {
+      ...answeredParticipant,
+      answers: {
+        trial1_0: {
+          ...answeredParticipant.answers.trial1_0,
+          answer: { q1: 'uSa' },
+        },
+      },
+    } as unknown as ParticipantData;
+    const html = renderToStaticMarkup(
+      <ResponseVisualization
+        {...baseProps}
+        participantData={[participantWithAcceptedAlias]}
+        response={{
+          id: 'q1', type: 'radio', prompt: '', options: ['USA'],
+        }}
+        trialConfig={{
+          ...mockTrialConfig,
+          correctAnswer: [
+            {
+              id: 'q1', answer: 'United States', acceptableAnswers: ['USA'], caseSensitive: false,
+            },
+          ],
+        }}
+      />,
+    );
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const spec = JSON.parse(doc.querySelector('[data-vega-spec]')!.getAttribute('data-vega-spec')!);
+
+    expect(spec.data.values[0].result).toBe('correct');
+    expect(spec.data.values[0].order).toBe(0);
+    expect(spec.encoding.order.field).toBe('order');
+  });
+
+  test('preserves correctness on flattened matrix chart data', () => {
+    const participantWithMatrixAnswer = {
+      ...answeredParticipant,
+      answers: {
+        trial1_0: {
+          ...answeredParticipant.answers.trial1_0,
+          answer: { q1: { Q1: 'A|B' } },
+        },
+      },
+    } as unknown as ParticipantData;
+    const html = renderToStaticMarkup(
+      <ResponseVisualization
+        {...baseProps}
+        participantData={[participantWithMatrixAnswer]}
+        response={{
+          id: 'q1', type: 'matrix-checkbox', prompt: '', questionOptions: ['Q1'], answerOptions: ['A', 'B'],
+        }}
+        trialConfig={{
+          ...mockTrialConfig,
+          correctAnswer: [{ id: 'q1', answer: [['A', 'B']] }],
+        }}
+      />,
+    );
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const spec = JSON.parse(doc.querySelector('[data-vega-spec]')!.getAttribute('data-vega-spec')!);
+
+    expect(spec.data.values).toEqual([
+      {
+        question: 'Q1', value: 'A', result: 'correct', order: 0,
+      },
+      {
+        question: 'Q1', value: 'B', result: 'correct', order: 0,
+      },
+    ]);
+  });
+
+  test('colors matrix alternatives using configured order for numeric row IDs', () => {
+    const participant = {
+      ...answeredParticipant,
+      answers: {
+        trial1_0: {
+          ...answeredParticipant.answers.trial1_0,
+          answer: { q1: { 10: 'A', 2: 'B' } },
+        },
+      },
+    } as unknown as ParticipantData;
+    const html = renderToStaticMarkup(
+      <ResponseVisualization
+        {...baseProps}
+        participantData={[participant]}
+        response={{
+          id: 'q1', type: 'matrix-checkbox', prompt: '', questionOptions: ['10', '2'], answerOptions: ['A', 'B'],
+        }}
+        trialConfig={{ ...mockTrialConfig, correctAnswer: [{ id: 'q1', acceptableAnswers: [[['A'], ['B']]] }] }}
+      />,
+    );
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const spec = JSON.parse(doc.querySelector('[data-vega-spec]')!.getAttribute('data-vega-spec')!);
+
+    expect(spec.data.values).toEqual([
+      {
+        question: '2', value: 'B', result: 'correct', order: 0,
+      },
+      {
+        question: '10', value: 'A', result: 'correct', order: 0,
+      },
+    ]);
   });
 
   test('metadata type: shows icon and config JSON code block', () => {
@@ -394,6 +497,308 @@ describe('ResponseVisualization', () => {
     );
     expect(html).toContain('icon-numerical');
     expect(html).toContain('VegaLite');
+  });
+
+  test('uses saved response scores without replacing their classification in Vega transforms', () => {
+    const participant = {
+      ...mockParticipant,
+      answers: {
+        trial1_0: {
+          answer: {
+            q1: 5,
+          },
+          startTime: 1,
+          endTime: 2,
+          componentName: 'trial1',
+          trialOrder: '0',
+          windowEvents: [],
+          timedOut: false,
+          checkAnswer: {
+            attemptsUsed: 1,
+            correct: true,
+            responses: { q1: true },
+            scores: { q1: 1 },
+            answerSnapshot: { q1: 5 },
+          },
+        },
+      },
+    } as unknown as ParticipantData;
+    const html = renderToStaticMarkup(
+      <ResponseVisualization
+        {...baseProps}
+        participantData={[participant]}
+        response={{
+          type: 'numerical',
+          id: 'q1',
+          prompt: 'Enter number',
+          path: 'test-response-functions/assets/PartialScore.response.ts',
+        }}
+        trialConfig={{ ...mockTrialConfig, correctAnswer: [{ id: 'q1', answer: 10 }] }}
+      />,
+    );
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const spec = JSON.parse(doc.querySelector('[data-vega-spec]')!.getAttribute('data-vega-spec')!);
+
+    expect(spec.data.values[0].result).toBe('correct');
+    expect(spec.data.values[0].order).toBe(0);
+    expect(spec.transform.some((transform: { calculate?: string }) => transform.calculate?.includes('result'))).toBe(false);
+  });
+
+  test.each([
+    { rules: [{ id: 'q1', answer: 10, correctnessThreshold: 0.7 }], expected: 'correct' },
+    { rules: [], expected: 'partial' },
+  ])('uses saved dynamic grading rules for chart classification: $expected', ({ rules, expected }) => {
+    const answer = { q1: 5 };
+    const participant = {
+      ...mockParticipant,
+      answers: {
+        trial1_0: {
+          answer,
+          correctAnswer: rules,
+          startTime: 1,
+          endTime: 2,
+          componentName: 'trial1',
+          trialOrder: '0',
+          checkAnswer: {
+            attemptsUsed: 1, correct: expected === 'correct', responses: {}, scores: { q1: 0.75 }, answerSnapshot: answer,
+          },
+        },
+      },
+    } as unknown as ParticipantData;
+    const response = { type: 'numerical' as const, id: 'q1', prompt: 'Score' };
+    const html = renderToStaticMarkup(<ResponseVisualization
+      {...baseProps}
+      participantData={[participant]}
+      response={response}
+      trialConfig={{ ...mockTrialConfig, response: [response], correctAnswer: [{ id: 'q1', answer: 10, correctnessThreshold: expected === 'correct' ? 1 : 0.7 }] }}
+    />);
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const spec = JSON.parse(doc.querySelector('[data-vega-spec]')!.getAttribute('data-vega-spec')!);
+    expect(spec.data.values[0].result).toBe(expected);
+  });
+
+  test('classifies saved scores using the participant archived correctness threshold', () => {
+    const participant = {
+      ...mockParticipant,
+      answers: {
+        trial1_0: {
+          answer: { q1: 5 },
+          startTime: 1,
+          endTime: 2,
+          componentName: 'trial1',
+          trialOrder: '0',
+          windowEvents: [],
+          timedOut: false,
+          checkAnswer: {
+            attemptsUsed: 1,
+            correct: false,
+            responses: { q1: false },
+            scores: { q1: 0.75 },
+            answerSnapshot: { q1: 5 },
+          },
+        },
+      },
+    } as unknown as ParticipantData;
+    const response = { type: 'numerical' as const, id: 'q1', prompt: 'Enter number' };
+    const html = renderToStaticMarkup(
+      <ResponseVisualization
+        {...baseProps}
+        participantData={[participant]}
+        response={response}
+        trialConfig={{
+          ...mockTrialConfig,
+          response: [response],
+          correctAnswer: [{ id: 'q1', answer: 10, correctnessThreshold: 0.8 }],
+        }}
+        allConfigs={{
+          'hash-1': {
+            ...emptyConfig,
+            components: {
+              trial1: {
+                type: 'questionnaire',
+                response: [response],
+                correctAnswer: [{ id: 'q1', answer: 10, correctnessThreshold: 0.7 }],
+              },
+            },
+          },
+        }}
+      />,
+    );
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const spec = JSON.parse(doc.querySelector('[data-vega-spec]')!.getAttribute('data-vega-spec')!);
+
+    expect(spec.data.values[0].result).toBe('correct');
+  });
+
+  test('does not classify a populated default marked Don\'t Know as correct at a zero threshold', () => {
+    const response = {
+      type: 'numerical' as const,
+      id: 'q1',
+      prompt: 'Enter number',
+      withDontKnow: true,
+    };
+    const participant = {
+      ...mockParticipant,
+      answers: {
+        trial1_0: {
+          answer: { q1: 10, 'q1-dontKnow': true },
+          startTime: 1,
+          endTime: 2,
+          componentName: 'trial1',
+          trialOrder: '0',
+          windowEvents: [],
+          timedOut: false,
+          checkAnswer: {
+            attemptsUsed: 1,
+            correct: false,
+            responses: { q1: false },
+            scores: { q1: 1 },
+            answerSnapshot: { q1: 10, 'q1-dontKnow': true },
+          },
+        },
+      },
+    } as unknown as ParticipantData;
+    const html = renderToStaticMarkup(
+      <ResponseVisualization
+        {...baseProps}
+        participantData={[participant]}
+        response={response}
+        trialConfig={{
+          ...mockTrialConfig,
+          response: [response],
+          correctAnswer: [{ id: 'q1', answer: 10, correctnessThreshold: 0 }],
+        }}
+      />,
+    );
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const spec = JSON.parse(doc.querySelector('[data-vega-spec]')!.getAttribute('data-vega-spec')!);
+
+    expect(spec.data.values[0].result).toBe('incorrect');
+    expect(spec.data.values[0].order).toBe(2);
+  });
+
+  test('marks classification unknown when the participant archived config is unavailable', () => {
+    const participant = {
+      ...mockParticipant,
+      answers: {
+        trial1_0: {
+          answer: { q1: 'A' },
+          startTime: 1,
+          endTime: 2,
+          componentName: 'trial1',
+          trialOrder: '0',
+          windowEvents: [],
+          timedOut: false,
+        },
+      },
+    } as unknown as ParticipantData;
+    const html = renderToStaticMarkup(
+      <ResponseVisualization
+        {...baseProps}
+        participantData={[participant]}
+        response={{
+          type: 'radio', id: 'q1', prompt: 'Pick one', options: ['A', 'B'],
+        }}
+        trialConfig={{ ...mockTrialConfig, correctAnswer: [{ id: 'q1', answer: 'A' }] }}
+        allConfigs={{}}
+      />,
+    );
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const spec = JSON.parse(doc.querySelector('[data-vega-spec]')!.getAttribute('data-vega-spec')!);
+
+    expect(spec.data.values[0].result).toBe('unknown');
+  });
+
+  test('shows response score classifications for scorer-only charts', () => {
+    const participant = {
+      ...mockParticipant,
+      answers: {
+        trial1_0: {
+          answer: { q1: 5 },
+          startTime: 1,
+          endTime: 2,
+          componentName: 'trial1',
+          trialOrder: '0',
+          windowEvents: [],
+          timedOut: false,
+        },
+      },
+    } as unknown as ParticipantData;
+    const response = {
+      type: 'numerical' as const,
+      id: 'q1',
+      prompt: 'Enter number',
+      path: 'test-response-functions/assets/PartialScore.response.ts',
+    };
+    const html = renderToStaticMarkup(
+      <ResponseVisualization
+        {...baseProps}
+        participantData={[participant]}
+        response={response}
+        trialConfig={{ ...mockTrialConfig, response: [response], correctAnswer: [] }}
+      />,
+    );
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const spec = JSON.parse(doc.querySelector('[data-vega-spec]')!.getAttribute('data-vega-spec')!);
+
+    expect(spec.data.values[0].result).toBe('unknown');
+    expect(spec.encoding.color.field).toBe('result');
+  });
+
+  test('uses the saved controller score to exclude historically hidden response charts', () => {
+    const participant = {
+      ...mockParticipant,
+      answers: {
+        trial1_0: {
+          answer: { controller: 10, followUp: 'answer' },
+          startTime: 1,
+          endTime: 2,
+          componentName: 'trial1',
+          trialOrder: '0',
+          windowEvents: [],
+          timedOut: false,
+          checkAnswer: {
+            attemptsUsed: 1,
+            correct: false,
+            responses: { controller: false },
+            scores: { controller: 0.5 },
+            answerSnapshot: { controller: 10, followUp: 'answer' },
+          },
+        },
+      },
+    } as unknown as ParticipantData;
+    const html = renderToStaticMarkup(
+      <ResponseVisualization
+        {...baseProps}
+        participantData={[participant]}
+        response={{
+          type: 'numerical',
+          id: 'followUp',
+          prompt: 'Follow up',
+          visibleIf: { responseId: 'controller', comparison: 'isCorrect', value: true },
+        }}
+        trialConfig={{
+          ...mockTrialConfig,
+          response: [
+            {
+              type: 'numerical',
+              id: 'controller',
+              prompt: 'Score',
+              path: 'test-response-functions/assets/PartialScore.response.ts',
+            },
+            {
+              type: 'numerical',
+              id: 'followUp',
+              prompt: 'Follow up',
+              visibleIf: { responseId: 'controller', comparison: 'isCorrect', value: true },
+            },
+          ],
+          correctAnswer: [{ id: 'controller', answer: 10 }, { id: 'followUp', answer: 3 }],
+        }}
+      />,
+    );
+
+    expect(html).toContain('No responses for this task yet.');
   });
 
   test('slider type: shows slider icon and VegaLite chart', () => {

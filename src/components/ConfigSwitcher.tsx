@@ -18,6 +18,7 @@ import { ParticipantStatusBadges } from '../analysis/interface/ParticipantStatus
 import { ParticipantStatusCounts } from '../storage/participantStatus';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import { StudyModes } from '../storage/engines/types';
+import { startDesignerPreview } from '../store/hooks/useDesignerPreview';
 import { getSequenceConditions } from '../utils/handleConditionLogic';
 import { useStudyRecordings } from '../utils/useStudyRecordings';
 import { useDeviceRules } from '../utils/useDeviceRules';
@@ -283,6 +284,7 @@ function ValidStudyCard({
       </Flex>
       )}
 
+      {/* Reload to keep each study launch isolated from the previous storage session. */}
       <Flex direction="row" align="end" gap="sm" mt="md" wrap="wrap">
         {conditions.length > 0 && (
         <MultiSelect
@@ -309,17 +311,23 @@ function ValidStudyCard({
           leftSection={<IconChartHistogram />}
           style={{ marginLeft: 'auto' }}
           variant="default"
-          component="a"
-          href={`${PREFIX}analysis/stats/${url}`}
+          onClick={() => window.location.assign(`${PREFIX}analysis/stats/${url}`)}
         >
           Analyze & Manage Study
         </Button>
         )}
         <Button
+          variant="default"
+          component="a"
+          href={`${studyUrl}${studyUrl.includes('?') ? '&' : '?'}preview=true`}
+          onClick={() => startDesignerPreview(url)}
+        >
+          Preview
+        </Button>
+        <Button
           leftSection={<IconListCheck />}
           ml={canViewAnalytics ? undefined : 'auto'}
-          component="a"
-          href={studyUrl}
+          onClick={() => window.location.assign(studyUrl)}
         >
           Go to Study
         </Button>

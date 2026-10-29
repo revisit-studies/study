@@ -7,7 +7,7 @@ import {
   ParsedStringOption, ResponseBlockLocation, StudyConfig, ValueOf, Answer, ParticipantData, IndividualComponent,
 } from '../parser/types';
 import type {
-  AssetStatus, AlertModalState, CheckAnswerState, StoredAnswer, TrialValidation, TrrackedProvenance, StoreState, Sequence, ParticipantMetadata, ValidationStatus,
+  AssetStatus, AlertModalState, CheckAnswerState, StoredAnswer, StoredProvenance, TrialValidation, TrrackedProvenance, StoreState, Sequence, ParticipantMetadata, ValidationStatus,
 } from './types';
 import { getSequenceFlatMap } from '../utils/getSequenceFlatMap';
 import { REVISIT_MODE } from '../storage/engines/types';
@@ -422,6 +422,23 @@ export async function studyStoreCreator(
           };
         },
       },
+      restoreTrialProvenance(state, { payload }: PayloadAction<{
+        identifier: string;
+        provenance: StoredProvenance;
+        responseValues: Partial<Record<ResponseBlockLocation, StoredAnswer['answer']>>;
+      }>) {
+        const validation = state.trialValidation[payload.identifier];
+        if (!validation) return;
+        validation.provenanceGraph = payload.provenance;
+        // Visibility must see every restored location before any response form mounts.
+        (['aboveStimulus', 'belowStimulus', 'sidebar'] as const).forEach((location) => {
+          const values = payload.responseValues[location];
+          if (values != null) {
+            validation[location].values = values;
+            validation[location].initialized = true;
+          }
+        });
+      },
       updateProvenance: {
         reducer(state, { payload }: PayloadAction<UpdateProvenancePayload>) {
           if (!state.trialValidation[payload.identifier]) {
@@ -451,7 +468,8 @@ export async function studyStoreCreator(
         state.stimulusSubmitAttempted[payload.identifier] = payload.attempted;
       },
       setCheckAnswerResult(state, { payload }: PayloadAction<{ identifier: string } & CheckAnswerState>) {
-        state.checkAnswer[payload.identifier] = { attemptsUsed: payload.attemptsUsed, correct: payload.correct, responses: payload.responses };
+        const { identifier, ...checkAnswer } = payload;
+        state.checkAnswer[identifier] = checkAnswer;
       },
       saveTrialAnswer(state, { payload }: PayloadAction<{ identifier: string } & StoredAnswer>) {
         state.answers[payload.identifier] = { ...payload };

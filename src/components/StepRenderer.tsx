@@ -1,5 +1,5 @@
 import {
-  ActionIcon, AppShell, Button, Flex, Menu,
+  ActionIcon, AppShell, Button, Flex, Menu, useComputedColorScheme,
 } from '@mantine/core';
 import { Outlet } from 'react-router';
 import {
@@ -12,6 +12,7 @@ import { IconArrowLeft, IconDotsVertical } from '@tabler/icons-react';
 import { AppAside } from './interface/AppAside';
 import { AppHeader } from './interface/AppHeader';
 import { AppNavBar } from './interface/AppNavBar';
+import { TrialProvenanceBoundary } from '../store/hooks/useTrialProvenance';
 import { HelpModal } from './interface/HelpModal';
 import { AlertModal } from './interface/AlertModal';
 import { ConfigVersionWarningModal } from './interface/ConfigVersionWarningModal';
@@ -36,7 +37,7 @@ import {
 } from '../utils/pdfExport';
 import { hideNotification, showNotification } from '../utils/notifications';
 import { PdfExportMenuItem } from './interface/PdfExportMenuItem';
-import { PREFIX } from '../utils/Prefix';
+import { getStudyLogoUrl } from '../utils/studyLogo';
 
 const STUDY_BROWSER_WIDTH = 360;
 
@@ -48,6 +49,7 @@ export function StepRenderer() {
 
   const isAnalysis = useIsAnalysis();
   const studyConfig = useStudyConfig();
+  const studyColorMode = useComputedColorScheme('light');
   const currentComponent = useCurrentComponent();
 
   const componentConfig = useMemo(() => studyComponentToIndividualComponent(studyConfig.components[currentComponent] || {}, studyConfig), [currentComponent, studyConfig]);
@@ -138,7 +140,8 @@ export function StepRenderer() {
 
     window.addEventListener('focus', focusListener, true);
     window.addEventListener('input', inputListener as () => void);
-    window.addEventListener('keydown', keydownListener);
+    // Record shortcuts even when response controls stop propagation.
+    window.addEventListener('keydown', keydownListener, true);
     window.addEventListener('keyup', keyupListener);
     window.addEventListener('mousedown', mouseDownListener);
     window.addEventListener('mouseup', mouseUpListener);
@@ -150,7 +153,7 @@ export function StepRenderer() {
     return () => {
       window.removeEventListener('focus', focusListener, true);
       window.removeEventListener('input', inputListener as () => void);
-      window.removeEventListener('keydown', keydownListener);
+      window.removeEventListener('keydown', keydownListener, true);
       window.removeEventListener('keyup', keyupListener);
       window.removeEventListener('mousedown', mouseDownListener);
       window.removeEventListener('mouseup', mouseUpListener);
@@ -334,7 +337,6 @@ export function StepRenderer() {
             footer={{ height: isAnalysis ? 125 + (hasAudio ? 55 : 0) : 0 }}
             style={{ '--app-shell-aside-offset': '0rem' } as CSSProperties}
           >
-            {asideOpen && <AppAside />}
             {showTitleBar && (
             <AppHeader
               developmentModeEnabled={developmentModeEnabled}
@@ -396,7 +398,7 @@ export function StepRenderer() {
                 {studyConfig.uiConfig.logoPath && (
                   <img
                     alt="Study logo"
-                    src={`${PREFIX}${studyConfig.uiConfig.logoPath}`}
+                    src={getStudyLogoUrl(studyConfig.uiConfig.logoPath, studyColorMode)}
                     style={{ height: 40, maxWidth: 120, objectFit: 'contain' }}
                   />
                 )}
@@ -409,22 +411,23 @@ export function StepRenderer() {
                   </div>
                 </div>
               </header>
-              <AppNavBar
-                width={sidebarWidth}
-                top={showTitleBar ? 70 : 0}
-                bottom={isAnalysis ? 125 + (hasAudio ? 55 : 0) : 0}
-                sidebarOpen={sidebarOpen}
-              />
-              {/* 10px is the gap between the sidebar and the main content */}
-              <AppShell.Main
-                className="main"
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                }}
-                w={sidebarOpen ? `calc(100% - ${sidebarWidth}px - 10px)` : '100%'}
-              >
-                {!showTitleBar && !showStudyBrowser && developmentModeEnabled && (
+              <TrialProvenanceBoundary>
+                <AppNavBar
+                  width={sidebarWidth}
+                  top={showTitleBar ? 70 : 0}
+                  bottom={isAnalysis ? 125 + (hasAudio ? 55 : 0) : 0}
+                  sidebarOpen={sidebarOpen}
+                />
+                {/* 10px is the gap between the sidebar and the main content */}
+                <AppShell.Main
+                  className="main"
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                  }}
+                  w={sidebarOpen ? `calc(100% - ${sidebarWidth}px - 10px)` : '100%'}
+                >
+                  {!showTitleBar && !showStudyBrowser && developmentModeEnabled && (
                   <Button
                     data-html2canvas-ignore
                     variant="subtle"
@@ -435,20 +438,22 @@ export function StepRenderer() {
                   >
                     Study Browser
                   </Button>
-                )}
-                <div
-                  className="study-content"
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    flexGrow: 1,
-                    minWidth: 0,
-                  }}
-                >
-                  <Outlet />
-                </div>
-              </AppShell.Main>
+                  )}
+                  <div
+                    className="study-content"
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      flexGrow: 1,
+                      minWidth: 0,
+                    }}
+                  >
+                    <Outlet />
+                  </div>
+                </AppShell.Main>
+              </TrialProvenanceBoundary>
             </Flex>
+            {asideOpen && <AppAside />}
             {isAnalysis && (
             <AnalysisFooter setHasAudio={setHasAudio} key={currentComponent} />
             )}

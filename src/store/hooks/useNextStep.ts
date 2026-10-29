@@ -21,12 +21,17 @@ import { decryptIndex, encryptIndex } from '../../utils/encryptDecryptIndex';
 import { useIsAnalysis } from './useIsAnalysis';
 import { showNotification } from '../../utils/notifications';
 import {
+  answerSnapshotMatches, getSavedScoresForAnswer, hasResponseScorer, isRequiredResponseUngraded, isResponseAnsweredForScoring, isResponseScoreCorrect, scoreResponseAnswerWithStatus,
+} from '../../utils/correctAnswer';
+import { getApplicableCorrectAnswers, resolveResponseVisibility } from '../../utils/responseVisibility';
+import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
+import {
   conditionIsTriggered,
   getConditionTargetIndex,
   getStoredAnswersForSkipEvaluation,
 } from '../../utils/skipConditions';
 
-export function useNextStep(responses: Response[] = [], correctAnswers: Answer[] = []) {
+export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
   const currentStep = useCurrentStep();
   const participantSequence = useFlatSequence();
 
@@ -58,6 +63,17 @@ export function useNextStep(responses: Response[] = [], correctAnswers: Answer[]
   const isNextDisabled = typeof currentStep !== 'number' || isAnalysis || (assetStatus !== undefined && assetStatus !== 'ready');
 
   const storedAnswer = useStoredAnswer();
+  const currentComponentConfig = storedAnswer?.componentName
+    ? studyConfig.components[storedAnswer.componentName]
+    : undefined;
+  const resolvedComponentConfig = useMemo(() => (currentComponentConfig
+    ? studyComponentToIndividualComponent(currentComponentConfig, studyConfig)
+    : undefined), [currentComponentConfig, studyConfig]);
+  const responseConfig = useMemo(() => responses ?? resolvedComponentConfig?.response ?? [], [responses, resolvedComponentConfig]);
+  const correctAnswerConfig = useMemo(() => correctAnswers
+    ?? storedAnswer?.correctAnswer
+    ?? resolvedComponentConfig?.correctAnswer
+    ?? [], [correctAnswers, storedAnswer?.correctAnswer, resolvedComponentConfig]);
 
   const navigate = useNavigate();
 
@@ -72,7 +88,110 @@ export function useNextStep(responses: Response[] = [], correctAnswers: Answer[]
       }
       // Get answer from across the 3 response blocks and the provenance graph
       const validation = trialValidation[identifier];
-      const answer = getPersistedAnswersFromAllLocations(validation, responses, correctAnswers);
+      const answer = getPersistedAnswersFromAllLocations(validation, responseConfig, correctAnswerConfig, checkAnswerState);
+      const savedScores = getSavedScoresForAnswer(checkAnswerState, answer);
+      const applicableAnswers = collectData ? getApplicableCorrectAnswers(responseConfig, answer, correctAnswerConfig, savedScores) : [];
+      const expectedAnswerIds = new Set(applicableAnswers.map((correctAnswer) => correctAnswer.id));
+      const visibleResponseIds = collectData
+        ? resolveResponseVisibility(responseConfig, answer, {}, correctAnswerConfig, savedScores).visibleIds
+        : new Set<string>();
+      const scores: Record<string, number> = {};
+      const responseScores: Record<string, boolean> = {};
+      const currentScores: Record<string, number> = {};
+      let hasScoringError = false;
+      let hasRequiredExpectedUnanswered = false;
+      applicableAnswers.forEach((correctAnswer) => {
+        const response = responseConfig.find((candidate) => candidate.id === correctAnswer.id);
+        if (response?.required === false && !isResponseAnsweredForScoring(response, answer[correctAnswer.id], answer)) return;
+        if (response?.required !== false && !isResponseAnsweredForScoring(response, answer[correctAnswer.id], answer)) {
+          hasRequiredExpectedUnanswered = true;
+          responseScores[correctAnswer.id] = false;
+          return;
+        }
+        const savedScore = savedScores?.[correctAnswer.id];
+        const { score, error } = savedScore === undefined
+          ? scoreResponseAnswerWithStatus(answer[correctAnswer.id], correctAnswer, response, answer)
+          : { score: savedScore, error: false };
+        if (error) {
+          hasScoringError = true;
+          return;
+        }
+        if (score !== null) {
+          currentScores[correctAnswer.id] = score;
+          responseScores[correctAnswer.id] = isResponseScoreCorrect(score, correctAnswer.correctnessThreshold) ?? false;
+          if (hasResponseScorer(response) || savedScores?.[correctAnswer.id] !== undefined) scores[correctAnswer.id] = score;
+        }
+      });
+      responseConfig.forEach((response) => {
+        if (!visibleResponseIds.has(response.id)
+          || expectedAnswerIds.has(response.id)
+          || !isResponseAnsweredForScoring(response, answer[response.id], answer)
+          || !(hasResponseScorer(response) || !!response.path || Object.hasOwn(savedScores ?? {}, response.id))) return;
+        const savedScore = savedScores?.[response.id];
+        const { score, error } = savedScore === undefined
+          ? scoreResponseAnswerWithStatus(answer[response.id], undefined, response, answer)
+          : { score: savedScore, error: false };
+        if (error) {
+          hasScoringError = true;
+          return;
+        }
+        if (score !== null) {
+          currentScores[response.id] = score;
+          responseScores[response.id] = isResponseScoreCorrect(score) ?? false;
+          scores[response.id] = score;
+        }
+      });
+      const hasRequiredUngradedResponse = responseConfig.some((response) => visibleResponseIds.has(response.id)
+        && !expectedAnswerIds.has(response.id)
+        && isRequiredResponseUngraded(response, answer[response.id], answer));
+      const hasRequiredUnscoredResponse = responseConfig.some((response) => visibleResponseIds.has(response.id)
+        && !expectedAnswerIds.has(response.id)
+        && response.required !== false
+        && hasResponseScorer(response)
+        && !Object.hasOwn(currentScores, response.id));
+      if (hasRequiredUngradedResponse || hasRequiredUnscoredResponse) {
+        responseConfig.forEach((response) => {
+          if (visibleResponseIds.has(response.id)
+            && !expectedAnswerIds.has(response.id)
+            && (isRequiredResponseUngraded(response, answer[response.id], answer)
+              || (response.required !== false && hasResponseScorer(response) && !Object.hasOwn(currentScores, response.id)))) {
+            responseScores[response.id] = false;
+          }
+        });
+      }
+      Object.entries(savedScores ?? {}).forEach(([responseId, score]) => {
+        if (expectedAnswerIds.has(responseId) || responseConfig.some((response) => response.id === responseId)) return;
+        currentScores[responseId] = score;
+        responseScores[responseId] = isResponseScoreCorrect(score, correctAnswerConfig.find((candidate) => candidate.id === responseId)?.correctnessThreshold) === true;
+        scores[responseId] = score;
+      });
+      const staleSavedScoreIds = answerSnapshotMatches(checkAnswerState, answer)
+        ? []
+        : Object.keys(checkAnswerState?.scores ?? {});
+      const hasUnaccountedSavedScore = staleSavedScoreIds
+        .some((responseId) => !Object.hasOwn(currentScores, responseId));
+      let submissionCheckAnswer = checkAnswerState;
+      if (collectData && ((checkAnswerState && (applicableAnswers.length > 0 || Object.keys(checkAnswerState.scores ?? {}).length > 0))
+        || Object.keys(scores).length > 0
+        || hasScoringError
+        || hasRequiredExpectedUnanswered
+        || hasRequiredUngradedResponse
+        || hasRequiredUnscoredResponse)) {
+        const hasSavedScores = Object.keys(scores).length > 0;
+        submissionCheckAnswer = {
+          attemptsUsed: checkAnswerState?.attemptsUsed ?? 0,
+          correct: !hasScoringError && !hasUnaccountedSavedScore
+            && !hasRequiredExpectedUnanswered
+            && !hasRequiredUngradedResponse
+            && !hasRequiredUnscoredResponse
+            && Object.entries(currentScores).every(([responseId, score]) => isResponseScoreCorrect(
+              score,
+              correctAnswerConfig.find((candidate) => candidate.id === responseId)?.correctnessThreshold,
+            ) === true),
+          responses: checkAnswerState ? responseScores : {},
+          ...(hasSavedScores ? { scores, answerSnapshot: structuredClone(answer) } : {}),
+        };
+      }
       const provenanceGraph = validation?.provenanceGraph ? structuredClone(validation.provenanceGraph) : undefined;
       const endTime = Date.now();
       const answerToPersist = collectData ? answer : {};
@@ -85,12 +204,13 @@ export function useNextStep(responses: Response[] = [], correctAnswers: Answer[]
         const toSave = {
           ...storedAnswer,
           answer: answerToPersist,
-          startTime,
-          endTime,
-          windowEvents: currentWindowEvents,
+          startTime: storedAnswer.startTime > 0 ? Math.min(storedAnswer.startTime, startTime) : startTime,
+          endTime: Math.max(storedAnswer.endTime, endTime),
+          windowEvents: [...(storedAnswer.windowEvents ?? []), ...currentWindowEvents],
           timedOut: !collectData,
           responseSubmitAttempted,
-          checkAnswer: checkAnswerState,
+          checkAnswer: submissionCheckAnswer,
+          correctAnswer: correctAnswerConfig,
         };
         const answersToPersist = { ...answers, [identifier]: toSave };
 
@@ -136,6 +256,8 @@ export function useNextStep(responses: Response[] = [], correctAnswers: Answer[]
         answersForSkipEvaluation[identifier] = {
           answer: answerToPersist,
           timedOut: false,
+          checkAnswer: submissionCheckAnswer,
+          correctAnswer: correctAnswerConfig,
         };
       }
 
@@ -171,7 +293,7 @@ export function useNextStep(responses: Response[] = [], correctAnswers: Answer[]
         color: 'red',
       });
     }
-  }, [isNextDisabled, currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, clickedPrevious, sequence, answers, startTime, funcIndex, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, setRankingAnswers, setAlertModal, studyConfig, participantSequence, navigate, studyId, responseSubmitAttempted, checkAnswerState, responses, correctAnswers]);
+  }, [isNextDisabled, currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, clickedPrevious, sequence, answers, startTime, funcIndex, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, setRankingAnswers, setAlertModal, studyConfig, participantSequence, navigate, studyId, responseSubmitAttempted, checkAnswerState, responseConfig, correctAnswerConfig]);
 
   return {
     isNextDisabled,

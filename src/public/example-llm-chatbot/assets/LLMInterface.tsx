@@ -7,6 +7,7 @@ import ChatInterface from './ChatInterface';
 import ImageDisplay from './ImageDisplay';
 import { StimulusParams } from '../../../store/types';
 import { ChatMessage, ChatProvenanceState } from './types';
+import { useStudyState } from '../../../store/hooks/useStudyState';
 
 type ChatTrrackState = {
   messages: ChatMessage[];
@@ -37,10 +38,11 @@ export default function LLMInterface({
             registry: reg,
           };
         }, []);
+  const [savedMessages] = useStudyState({ responseId: 'messages', initialState: '[]' });
   const trrack = useTrrack({
     registry,
     initialState: {
-      messages: [] as ChatMessage[],
+      messages: JSON.parse(savedMessages) as ChatMessage[],
     },
   });
 

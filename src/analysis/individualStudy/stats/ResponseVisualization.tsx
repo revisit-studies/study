@@ -10,17 +10,24 @@ import {
 } from '@tabler/icons-react';
 import { useMemo } from 'react';
 import { VegaLite, VisualizationSpec } from 'react-vega';
-import { IndividualComponent, ParticipantData, Response } from '../../../parser/types';
-import { responseAnswerIsCorrect } from '../../../utils/correctAnswer';
+import {
+  IndividualComponent, ParticipantData, Response, StudyConfig,
+} from '../../../parser/types';
+import {
+  getSavedScoresForAnswer, hasResponseScorer, isResponseAnsweredForScoring, isResponseScoreCorrect, scoreResponseAnswer,
+} from '../../../utils/correctAnswer';
 import { parseDateValue } from '../../../utils/dateTimeValidation';
+import { resolveResponseVisibility } from '../../../utils/responseVisibility';
+import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 
 export function ResponseVisualization({
-  response, participantData, trialId, trialConfig,
+  response, participantData, trialId, trialConfig, allConfigs,
 }: {
   response: Response | { id: 'Config and Timing', type: 'metadata' };
   participantData: ParticipantData[];
   trialId: string;
   trialConfig: IndividualComponent;
+  allConfigs?: Record<string, StudyConfig>;
 }) {
   const [opened, { toggle }] = useDisclosure(true);
   const [ref, dms] = useResizeObserver();
@@ -47,8 +54,7 @@ export function ResponseVisualization({
       return undefined;
     }
 
-    const found = trialConfig.correctAnswer?.find((a) => a.id === response.id);
-    return found;
+    return trialConfig.correctAnswer?.find((a) => a.id === response.id);
   }, [response.id, response.type, trialConfig.correctAnswer]);
 
   const questionData = useMemo(() => {
@@ -56,27 +62,81 @@ export function ResponseVisualization({
       return [];
     }
 
-    const data = participantData.map((p) => Object.entries(p.answers).filter(([key]) => key.slice(0, key.lastIndexOf('_')) === trialId)).map((p) => p.filter(([, value]) => value.startTime > 0).map(([, value]) => {
-      const answerData = { ...value.answer };
+    const data = participantData.map((participant) => {
+      const hasArchivedConfigs = allConfigs !== undefined;
+      const participantStudyConfig = participant.participantConfigHash
+        ? allConfigs?.[participant.participantConfigHash]
+        : undefined;
+      const participantTrialConfig = participant.participantConfigHash && hasArchivedConfigs
+        ? participantStudyConfig?.components[trialId]
+          ? studyComponentToIndividualComponent(participantStudyConfig.components[trialId], participantStudyConfig)
+          : undefined
+        : trialConfig;
+      const missingHistoricalConfig = hasArchivedConfigs && Boolean(participant.participantConfigHash) && !participantTrialConfig;
+      return Object.entries(participant.answers).filter(([key]) => key.slice(0, key.lastIndexOf('_')) === trialId)
+        .filter(([, value]) => value.startTime > 0).map(([, value]) => {
+          const persistedScores = getSavedScoresForAnswer(value.checkAnswer, value.answer);
+          const participantCorrectAnswers = value.correctAnswer ?? participantTrialConfig?.correctAnswer ?? trialConfig.correctAnswer;
+          const participantCorrectAnswer = participantCorrectAnswers?.find((answer) => answer.id === response.id);
+          const participantResponse = participantTrialConfig?.response?.find((item) => item.id === response.id)
+            ?? (!hasArchivedConfigs ? response : undefined);
+          if (participantResponse?.visibleIf && participantTrialConfig) {
+            const { visibleIds } = resolveResponseVisibility(
+              participantTrialConfig.response ?? [],
+              value.answer,
+              {},
+              participantCorrectAnswers,
+              persistedScores,
+            );
+            if (!visibleIds.has(response.id)) return null;
+          }
+          const answerData = { ...value.answer };
+          const savedScore = persistedScores?.[response.id];
 
-      if (correctAnswer) {
-        const participantAnswer = value.answer[response.id];
-        const expectedAnswer = correctAnswer.answer;
+          if (missingHistoricalConfig || (participantTrialConfig && !participantResponse)) {
+            answerData.result = 'unknown';
+            answerData.order = 3;
+          } else if (participantTrialConfig && participantResponse) {
+            if (participantCorrectAnswer || hasResponseScorer(participantResponse) || savedScore !== undefined) {
+              const participantAnswer = value.answer[response.id];
+              const score = savedScore === undefined
+                ? scoreResponseAnswer(participantAnswer, participantCorrectAnswer, participantResponse, value.answer)
+                : savedScore;
+              const isGradable = isResponseAnsweredForScoring(participantResponse, participantAnswer, value.answer);
+              const validScore = isGradable && score !== null && Number.isFinite(score) && score >= 0 && score <= 1
+                ? score
+                : null;
+              const isCorrect = isGradable
+                ? isResponseScoreCorrect(validScore, participantCorrectAnswer?.correctnessThreshold)
+                : participantCorrectAnswer && participantResponse.required !== false ? false : null;
+              const isPartial = validScore !== null && validScore > 0;
+              answerData.result = isCorrect === null ? 'unknown' : isCorrect ? 'correct' : isPartial ? 'partial' : 'incorrect';
+              answerData.order = isCorrect === null ? 3 : isCorrect ? 0 : isPartial ? 1 : 2;
+            }
+          } else if (!hasArchivedConfigs && (participantCorrectAnswer || hasResponseScorer(response) || savedScore !== undefined)) {
+            const participantAnswer = value.answer[response.id];
+            const score = savedScore === undefined
+              ? scoreResponseAnswer(participantAnswer, participantCorrectAnswer, response, value.answer)
+              : savedScore;
+            const isGradable = isResponseAnsweredForScoring(response, participantAnswer, value.answer);
+            const validScore = isGradable && score !== null && Number.isFinite(score) && score >= 0 && score <= 1
+              ? score
+              : null;
+            const isCorrect = isGradable
+              ? isResponseScoreCorrect(validScore, participantCorrectAnswer?.correctnessThreshold)
+              : participantCorrectAnswer && response.required !== false ? false : null;
+            const isPartial = validScore !== null && validScore > 0;
+            answerData.result = isCorrect === null ? 'unknown' : isCorrect ? 'correct' : isPartial ? 'partial' : 'incorrect';
+            answerData.order = isCorrect === null ? 3 : isCorrect ? 0 : isPartial ? 1 : 2;
+          }
 
-        answerData.result = responseAnswerIsCorrect(
-          participantAnswer,
-          expectedAnswer,
-          undefined,
-          undefined,
-          { ignoreArrayOrder: response.type === 'checkbox' || response.type === 'dropdown' },
-        ) ? 'correct' : 'incorrect';
-      }
+          return answerData;
+        });
+    });
+    const flattened = data.flat().filter((row): row is NonNullable<typeof row> => row !== null);
 
-      return answerData;
-    })).flat();
-
-    return data.filter((row) => row[response.id] !== undefined && row[response.id] !== null && row[response.id] !== '');
-  }, [participantData, response.type, trialId, correctAnswer, response.id]);
+    return flattened.filter((row) => row[response.id] !== undefined && row[response.id] !== null && row[response.id] !== '');
+  }, [allConfigs, participantData, response, trialId, trialConfig]);
 
   // Completion times for the metadata timing histogram
   const timingData = useMemo(() => (response.type === 'metadata'
@@ -85,6 +145,7 @@ export function ResponseVisualization({
       .map((p) => p.filter(([_, value]) => value.endTime !== -1).map(([_, value]) => (value.endTime - value.startTime) / 1000))
       .flat()
     : []), [participantData, response.type, trialId]);
+  const hasClassification = questionData.some((row) => Object.hasOwn(row, 'result'));
 
   // eslint-disable-next-line consistent-return
   const vegaLiteSpec = useMemo(() => {
@@ -120,21 +181,13 @@ export function ResponseVisualization({
     }
 
     const correctAnswerSpec = {
-      params: [
-        { name: 'correctAnswer', value: correctAnswer?.answer },
-        { name: 'variable', value: response.id },
-      ],
-      transform: [
-        { calculate: "datum[variable] === correctAnswer ? 'correct' : 'incorrect'", as: 'result' },
-        {
-          calculate: "if(datum.result === 'correct', 0, if(datum.result === 'incorrect', 1, 2))",
-          as: 'order',
-        },
-      ],
       color: {
         field: 'result',
         type: 'nominal',
-        scale: { domain: ['correct', 'incorrect'], range: ['#69DB7C', '#ADB5BD'] },
+        scale: {
+          domain: ['correct', 'partial', 'incorrect', 'unknown'],
+          range: ['#69DB7C', '#FFD43B', '#ADB5BD', '#868E96'],
+        },
       },
       order: { field: 'order' },
     };
@@ -144,22 +197,20 @@ export function ResponseVisualization({
       const data = questionData
         .map((row) => Object.entries(row[response.id] || {}).map(([question, value]) => (response.type === 'matrix-checkbox'
           ? (value as string).split('|').map((option) => ({ question, value: option }))
-          : [{ question, value }])).flat()).flat();
+          : [{ question, value }]).map((entry) => ({ ...entry, result: row.result, order: row.order }))).flat()).flat();
 
       // Histogram
       const spec = {
         ...baseSpec,
         data: { values: data },
         mark: 'bar',
-        params: correctAnswer !== undefined ? correctAnswerSpec.params : undefined,
-        transform: Array.isArray(correctAnswer?.answer) ? undefined : (correctAnswer !== undefined ? correctAnswerSpec.transform : undefined),
         encoding: {
           row: { field: 'question', type: 'nominal', header: { title: 'Question' } },
           x: { field: 'value', type: 'ordinal', title: 'Answer' },
           y: { aggregate: 'count', type: 'quantitative', title: 'Count' },
-          color: correctAnswer !== undefined ? correctAnswerSpec.color : undefined,
+          color: hasClassification ? correctAnswerSpec.color : undefined,
+          order: hasClassification ? correctAnswerSpec.order : undefined,
         },
-        order: correctAnswer !== undefined ? correctAnswerSpec.order : undefined,
         resolve: { scale: { x: 'independent' } },
       };
       return spec;
@@ -192,14 +243,12 @@ export function ResponseVisualization({
         ...baseSpec,
         data: { values: questionData },
         mark: 'bar',
-        params: correctAnswer !== undefined ? correctAnswerSpec.params : undefined,
         transform: [
           {
             bin: response.type === 'likert' ? { step: 1 } : { maxbins: 10 },
             field: response.id,
             as: 'bins',
           },
-          ...(correctAnswer !== undefined ? correctAnswerSpec.transform : []),
         ],
         encoding: {
           x: {
@@ -212,8 +261,8 @@ export function ResponseVisualization({
           y: {
             aggregate: 'count', type: 'quantitative', title: 'Count', stack: true,
           },
-          color: correctAnswer !== undefined ? correctAnswerSpec.color : undefined,
-          order: correctAnswer !== undefined ? correctAnswerSpec.order : undefined,
+          color: hasClassification ? correctAnswerSpec.color : undefined,
+          order: hasClassification ? correctAnswerSpec.order : undefined,
         },
       };
       return spec;
@@ -237,20 +286,19 @@ export function ResponseVisualization({
         ...baseSpec,
         data: { values: questionData },
         mark: 'bar',
-        params: correctAnswer !== undefined ? correctAnswerSpec.params : undefined,
-        transform: Array.isArray(correctAnswer?.answer) ? undefined : (correctAnswer !== undefined ? correctAnswerSpec.transform : undefined),
         encoding: {
           x: {
             field: response.id, type: 'ordinal', title: 'Answer', sort: dateSort,
           },
           y: { aggregate: 'count', type: 'quantitative', title: 'Count' },
-          color: correctAnswer !== undefined ? correctAnswerSpec.color : undefined,
+          color: hasClassification ? correctAnswerSpec.color : undefined,
+          order: hasClassification ? correctAnswerSpec.order : undefined,
         },
       };
       return spec;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps, @typescript-eslint/no-explicit-any
-  }, [chartConfig, participantData, questionData, timingData, response.id, (response as any).max, (response as any).min, (response as any).numItems, (response as any).options, response.type, trialId, correctAnswer]);
+  }, [chartConfig, hasClassification, participantData, questionData, timingData, response.id, (response as any).max, (response as any).min, (response as any).numItems, (response as any).options, response.type, trialId, correctAnswer]);
 
   return (
     <Paper p="lg" withBorder ref={ref}>
@@ -300,7 +348,7 @@ export function ResponseVisualization({
                 spec={vegaLiteSpec as VisualizationSpec}
                 actions={false}
                 height={270}
-                width={(response.type === 'matrix-checkbox' || response.type === 'matrix-radio' ? 500 : (dms.width / 2) - 60 - (correctAnswer === undefined ? 0 : 60))}
+                width={(response.type === 'matrix-checkbox' || response.type === 'matrix-radio' ? 500 : (dms.width / 2) - 60 - (hasClassification ? 60 : 0))}
                 padding={0}
                 style={{ justifySelf: 'center' }}
                 renderer="svg"

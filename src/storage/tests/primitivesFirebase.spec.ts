@@ -10,6 +10,7 @@ import {
   beforeAll, beforeEach, afterAll, afterEach, describe, expect, test, vi,
 } from 'vitest';
 import { getDoc, setDoc } from 'firebase/firestore';
+import { initializeAppCheck, ReCaptchaV3Provider, ReCaptchaEnterpriseProvider } from '@firebase/app-check';
 
 import { type ParticipantMetadata, type StudyConfig } from '../../parser/types';
 import testConfigSimple from './testConfigSimple.json';
@@ -37,6 +38,7 @@ vi.mock('firebase/app', () => ({
 vi.mock('@firebase/app-check', () => ({
   initializeAppCheck: vi.fn(),
   ReCaptchaV3Provider: vi.fn(),
+  ReCaptchaEnterpriseProvider: vi.fn(),
 }));
 
 vi.mock('@firebase/auth', () => ({
@@ -119,6 +121,15 @@ vi.mock('localforage', () => ({
 }));
 
 vi.mock('firebase/firestore', () => {
+  type QueryConstraint = {
+    type: 'where' | 'limit' | 'orderBy';
+    field?: string;
+    operator?: string;
+    value?: unknown;
+    count?: number;
+    direction?: 'asc' | 'desc';
+  };
+
   function resolveSentinels(data: DocData): DocData {
     const now = Date.now();
     const result: DocData = {};
@@ -144,9 +155,9 @@ vi.mock('firebase/firestore', () => {
     return { _path: `${collPath}/${docId}`, id: docId };
   }
 
-  function mockSetDoc(docRef: { _path: string }, data: DocData, options?: { merge?: boolean }) {
+  function mockSetDoc(docRef: { _path: string }, data: DocData, options?: { merge?: boolean; mergeFields?: string[] }) {
     const resolved = resolveSentinels(data);
-    if (options?.merge) {
+    if (options?.merge || options?.mergeFields) {
       const merged = { ...(firestoreData[docRef._path] ?? {}), ...resolved };
       // A merging write also honours deleteField(), same as Firestore itself.
       for (const [key, value] of Object.entries(merged)) {
@@ -183,15 +194,64 @@ vi.mock('firebase/firestore', () => {
     return docs;
   }
 
-  function mockGetDocs(collRef: { _path: string }) {
-    const docs = getDocsInCollection(collRef._path);
+  function mockGetDocs(collRef: { _path: string; _constraints?: QueryConstraint[] }) {
+    let docs = getDocsInCollection(collRef._path);
+    (collRef._constraints ?? []).forEach((constraint) => {
+      if (constraint.type === 'where') {
+        docs = docs.filter((document) => {
+          const fieldValue = document.data()[constraint.field!];
+          if (constraint.operator === '==') return fieldValue === constraint.value;
+          if (constraint.operator === '<' || constraint.operator === '>=') {
+            const toComparableNumber = (value: unknown) => (
+              value
+              && typeof value === 'object'
+              && 'toMillis' in value
+              && typeof value.toMillis === 'function'
+                ? value.toMillis()
+                : Number(value)
+            );
+            const constraintValue = toComparableNumber(constraint.value);
+            const comparableFieldValue = toComparableNumber(fieldValue);
+            if (typeof fieldValue !== typeof constraint.value) return false;
+            return constraint.operator === '<'
+              ? comparableFieldValue < constraintValue
+              : comparableFieldValue >= constraintValue;
+          }
+          if (constraint.operator === '>') {
+            return fieldValue !== undefined
+              && fieldValue !== null
+              && String(fieldValue) > String(constraint.value);
+          }
+          return true;
+        });
+      } else if (constraint.type === 'orderBy') {
+        docs = [...docs].sort((a, b) => {
+          const aValue = a.data()[constraint.field!];
+          const bValue = b.data()[constraint.field!];
+          const toComparableNumber = (value: unknown) => (
+            value
+            && typeof value === 'object'
+            && 'toMillis' in value
+            && typeof value.toMillis === 'function'
+              ? value.toMillis()
+              : Number(value)
+          );
+          const typeComparison = typeof aValue === typeof bValue ? 0 : (typeof aValue === 'number' ? -1 : 1);
+          return (typeComparison || (toComparableNumber(aValue) - toComparableNumber(bValue)))
+            * (constraint.direction === 'desc' ? -1 : 1);
+        });
+      } else if (constraint.type === 'limit') {
+        docs = docs.slice(0, constraint.count);
+      }
+    });
     return Promise.resolve({
       docs,
       forEach: (cb: (d: { id: string; data: () => DocData }) => void) => docs.forEach(cb),
     });
   }
 
-  function mockUpdateDoc(docRef: { _path: string }, data: DocData) {
+  function mockUpdateDoc(docRef: { _path: string }, fields: DocData, fieldValue?: unknown) {
+    const data = fieldValue === undefined ? fields : { [String(fields.key)]: fieldValue };
     const existing = firestoreData[docRef._path];
     if (!existing) return Promise.reject(new Error(`No document to update: ${docRef._path}`));
     const now = Date.now();
@@ -230,8 +290,8 @@ vi.mock('firebase/firestore', () => {
     _firestore: unknown,
     updateFunction: (transaction: {
       get: (docRef: { _path: string; id?: string }) => Promise<unknown>;
-      set: (docRef: { _path: string }, data: DocData, options?: { merge?: boolean }) => void;
-      update: (docRef: { _path: string }, data: DocData) => void;
+      set: (docRef: { _path: string }, data: DocData, options?: { merge?: boolean; mergeFields?: string[] }) => void;
+      update: (docRef: { _path: string }, data: DocData, value?: unknown) => void;
       delete: (docRef: { _path: string }) => void;
     }) => Promise<T>,
   ): Promise<T> {
@@ -239,14 +299,14 @@ vi.mock('firebase/firestore', () => {
     // so there is nothing to retry or roll back.
     const transaction = {
       get: mockGetDoc,
-      set: (docRef: { _path: string }, data: DocData, options?: { merge?: boolean }) => {
+      set: (docRef: { _path: string }, data: DocData, options?: { merge?: boolean; mergeFields?: string[] }) => {
         mockSetDoc(docRef, data, options);
       },
-      update: (docRef: { _path: string }, data: DocData) => {
+      update: (docRef: { _path: string }, data: DocData, value?: unknown) => {
         if (!firestoreData[docRef._path]) {
           throw new Error(`No document to update: ${docRef._path}`);
         }
-        mockUpdateDoc(docRef, data);
+        mockUpdateDoc(docRef, data, value);
       },
       delete: (docRef: { _path: string }) => { delete firestoreData[docRef._path]; },
     };
@@ -257,14 +317,27 @@ vi.mock('firebase/firestore', () => {
     constructor(public seconds: number, public nanoseconds: number) { }
 
     toMillis() { return this.seconds * 1000 + Math.floor(this.nanoseconds / 1e6); }
+
+    static fromMillis(milliseconds: number) {
+      return new MockTimestamp(Math.floor(milliseconds / 1000), (milliseconds % 1000) * 1e6);
+    }
   }
 
   return {
+    query: vi.fn((parent, ...constraints) => ({ ...parent, _constraints: constraints })),
+    where: vi.fn((field, operator, value) => ({
+      type: 'where', field, operator, value,
+    })),
+    orderBy: vi.fn((field, direction) => ({ type: 'orderBy', field, direction })),
+    limit: vi.fn((count) => ({ type: 'limit', count })),
+    getCountFromServer: vi.fn(async (reference) => { const snapshot = await mockGetDocs(reference); return { data: () => ({ count: snapshot.docs.length }) }; }),
     collection: vi.fn(mockCollection),
     doc: vi.fn(mockDoc),
     setDoc: vi.fn(mockSetDoc),
     getDoc: vi.fn(mockGetDoc),
     getDocs: vi.fn(mockGetDocs),
+    getDocsFromServer: vi.fn(mockGetDocs),
+    FieldPath: class { constructor(public key: string) {} },
     updateDoc: vi.fn(mockUpdateDoc),
     onSnapshot: vi.fn(mockOnSnapshot),
     writeBatch: vi.fn(mockWriteBatch),
@@ -305,6 +378,44 @@ beforeAll(() => {
 
 afterAll(() => {
   vi.restoreAllMocks();
+});
+
+describe('Firebase App Check provider selection', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.stubEnv('VITE_RECAPTCHAV3TOKEN', 'legacy-site-key');
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.stubEnv('VITE_FIREBASE_CONFIG', JSON.stringify({ projectId: PROJECT_ID }));
+    vi.stubEnv('VITE_RECAPTCHAV3TOKEN', 'fake-recaptcha-token');
+  });
+
+  test.each([undefined, ''])('keeps v3 when the Enterprise key is %s', (enterpriseKey) => {
+    vi.stubEnv('VITE_RECAPTCHA_ENTERPRISE_SITE_KEY', enterpriseKey);
+    // Constructing the engine initializes App Check without contacting Firebase.
+    const engine = new FirebaseStorageEngine(true);
+    expect(engine).toBeDefined();
+    expect(ReCaptchaV3Provider).toHaveBeenCalledExactlyOnceWith('legacy-site-key');
+    expect(ReCaptchaEnterpriseProvider).not.toHaveBeenCalled();
+    expect(initializeAppCheck).toHaveBeenCalledExactlyOnceWith(expect.anything(), {
+      provider: expect.any(ReCaptchaV3Provider),
+      isTokenAutoRefreshEnabled: true,
+    });
+  });
+
+  test('uses the explicit Enterprise key instead of the legacy key', () => {
+    vi.stubEnv('VITE_RECAPTCHA_ENTERPRISE_SITE_KEY', 'enterprise-site-key');
+    const engine = new FirebaseStorageEngine(true);
+    expect(engine).toBeDefined();
+    expect(ReCaptchaEnterpriseProvider).toHaveBeenCalledExactlyOnceWith('enterprise-site-key');
+    expect(ReCaptchaV3Provider).not.toHaveBeenCalled();
+    expect(initializeAppCheck).toHaveBeenCalledExactlyOnceWith(expect.anything(), {
+      provider: expect.any(ReCaptchaEnterpriseProvider),
+      isTokenAutoRefreshEnabled: true,
+    });
+  });
 });
 
 describe.each([

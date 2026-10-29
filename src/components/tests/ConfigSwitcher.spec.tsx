@@ -19,6 +19,9 @@ import { StudyModes } from '../../storage/engines/types';
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
+const prefixMock = vi.hoisted(() => ({ value: '/' }));
+const assignLocation = vi.fn();
+
 vi.mock('@mantine/core', async () => ({
   ...await vi.importActual<typeof Mantine>('@mantine/core'),
   Anchor: ({ children, href }: { children: ReactNode; href?: string }) => <a href={href}>{children}</a>,
@@ -27,8 +30,10 @@ vi.mock('@mantine/core', async () => ({
     { Main: ({ children }: { children: ReactNode }) => <main>{children}</main> },
   ),
   Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
-  Button: ({ children, onClick, href }: { children: ReactNode; onClick?: () => void; href?: string }) => (
-    href ? <a href={href}>{children}</a> : <button type="button" onClick={onClick}>{children}</button>
+  Button: ({
+    children, onClick, href, component,
+  }: { children: ReactNode; onClick?: () => void; href?: string; component?: string }) => (
+    component === 'a' ? <a href={href}>{children}</a> : <button type="button" onClick={onClick}>{children}</button>
   ),
   Card: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Container: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -38,8 +43,8 @@ vi.mock('@mantine/core', async () => ({
   Divider: () => <hr />,
   Flex: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Image: ({ src, alt }: { src?: string; alt?: string }) => <img src={src} alt={alt} />,
-  MultiSelect: ({ data }: { data: { value: string; label: string }[] }) => (
-    <select aria-label="Conditions">{data.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}</select>
+  MultiSelect: ({ data, onChange }: { data: { value: string; label: string }[]; onChange: (value: string[]) => void }) => (
+    <select aria-label="Conditions" onChange={(event) => onChange([event.target.value])}>{data.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}</select>
   ),
   Skeleton: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
   rem: (v: number) => `${v}px`,
@@ -76,7 +81,7 @@ vi.mock('../../utils/sanitizeStringForUrl', () => ({
   sanitizeStringForUrl: (s: string) => s,
 }));
 
-vi.mock('../../utils/Prefix', () => ({ PREFIX: '/' }));
+vi.mock('../../utils/Prefix', () => ({ get PREFIX() { return prefixMock.value; } }));
 
 vi.mock('../ErrorLoadingConfig', () => ({
   ErrorLoadingConfig: () => <div data-testid="error-loading-config" />,
@@ -127,11 +132,11 @@ const globalConfig = makeGlobalConfig({
   configs: { 'test-study': { path: 'test-study/config.json' } },
 });
 
-function render(ui: ReactNode, initialEntry = '/') {
+function render(ui: ReactNode, initialEntry = '/', basename = '/') {
   return renderComponent(ui, {
     wrapper: ({ children }) => (
       <Mantine.MantineProvider env="test">
-        <MemoryRouter initialEntries={[initialEntry]}>{children}</MemoryRouter>
+        <MemoryRouter initialEntries={[initialEntry]} basename={basename}>{children}</MemoryRouter>
       </Mantine.MantineProvider>
     ),
   });
@@ -185,7 +190,9 @@ const makeLandingEngine = (modes: Partial<StudyModes> = {}, hidden = false) => (
 // ── tests ─────────────────────────────────────────────────────────────────────
 
 beforeEach(() => {
+  prefixMock.value = '/';
   vi.clearAllMocks();
+  vi.stubGlobal('location', { ...window.location, assign: assignLocation });
   vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({
     matches: false,
     addEventListener: vi.fn(),
@@ -202,6 +209,39 @@ afterEach(() => {
 });
 
 describe('ConfigSwitcher', () => {
+  test.each([
+    { label: 'Go to Study', path: '/test-study', prefix: '/' },
+    { label: 'Analyze & Manage Study', path: '/analysis/stats/test-study', prefix: '/' },
+    { label: 'Go to Study', path: '/study/test-study', prefix: '/study/' },
+    { label: 'Analyze & Manage Study', path: '/study/analysis/stats/test-study', prefix: '/study/' },
+  ])('loads a fresh page for $label under $prefix', async ({ label, path, prefix }) => {
+    prefixMock.value = prefix;
+    const view = await act(async () => render(
+      <ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigs} />,
+      prefix,
+      prefix,
+    ));
+
+    fireEvent.click(view.getByRole('button', { name: label }));
+
+    expect(assignLocation).toHaveBeenCalledExactlyOnceWith(path);
+  });
+
+  test('preserves the selected condition when loading a study under a base path', async () => {
+    prefixMock.value = '/study/';
+    vi.mocked(getSequenceConditions).mockReturnValue(['condA']);
+    const view = await act(async () => render(
+      <ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigs} />,
+      '/study/',
+      '/study/',
+    ));
+
+    fireEvent.change(view.getByLabelText('Conditions'), { target: { value: 'condA' } });
+    fireEvent.click(view.getByRole('button', { name: 'Go to Study' }));
+
+    expect(assignLocation).toHaveBeenCalledExactlyOnceWith('/study/test-study?condition=condA');
+  });
+
   test.each([
     { engineName: 'firebase', isAdmin: false },
     { engineName: 'supabase', isAdmin: false },
@@ -226,8 +266,8 @@ describe('ConfigSwitcher', () => {
     const view = await act(async () => render(<ConfigSwitcher globalConfig={globalConfig} studyConfigs={configs} />));
 
     expect(view.getByText('Test Study')).toBeDefined();
-    expect(view.getByRole('link', { name: 'Go to Study' }).getAttribute('href')).toBe('/test-study');
-    expect(view.queryByRole('link', { name: 'Analyze & Manage Study' })).toBeNull();
+    expect(view.getByRole('button', { name: 'Go to Study' })).toBeDefined();
+    expect(view.queryByRole('button', { name: 'Analyze & Manage Study' })).toBeNull();
     expect(view.queryByTestId('status-badges')).toBeNull();
     expect(view.queryByTestId('error-loading-config')).toBeNull();
     expect(view.getByText(/Study Status:/).textContent).toContain('Collecting Data');
@@ -272,7 +312,7 @@ describe('ConfigSwitcher', () => {
     const view = await act(async () => render(<ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigs} />));
 
     expect(view.queryByText('Test Study')).toBeNull();
-    expect(view.queryByRole('link', { name: 'Go to Study' })).toBeNull();
+    expect(view.queryByRole('button', { name: 'Go to Study' })).toBeNull();
     expect(engine.getParticipantsStatusCounts).not.toHaveBeenCalled();
     expect(engine.getConditionData).not.toHaveBeenCalled();
   });
@@ -286,7 +326,7 @@ describe('ConfigSwitcher', () => {
     const view = await act(async () => render(<ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigs} />));
 
     expect(view.queryByText('Test Study')).toBeNull();
-    expect(view.queryByRole('link', { name: 'Go to Study' })).toBeNull();
+    expect(view.queryByRole('button', { name: 'Go to Study' })).toBeNull();
     expect(engine.getParticipantsStatusCounts).not.toHaveBeenCalled();
     expect(engine.getConditionData).not.toHaveBeenCalled();
   });
@@ -323,7 +363,7 @@ describe('ConfigSwitcher', () => {
 
     const view = await act(async () => render(<ConfigSwitcher globalConfig={globalConfig} studyConfigs={configs} />));
 
-    expect(view.getByRole('link', { name: 'Analyze & Manage Study' }).getAttribute('href')).toBe('/analysis/stats/test-study');
+    expect(view.getByRole('button', { name: 'Analyze & Manage Study' })).toBeDefined();
     expect(view.getByTestId('status-badges')).toBeDefined();
     expect(view.getByTestId('status-badges').getAttribute('data-show-timeout-statuses')).toBe('true');
     expect(view.getByTestId('error-loading-config')).toBeDefined();
@@ -366,7 +406,7 @@ describe('ConfigSwitcher', () => {
 
     expect(view.queryByTestId('status-badges')).toBeNull();
     expect(view.getByText(/Activity:/)).toBeDefined();
-    expect(view.queryByRole('link', { name: 'Analyze & Manage Study' })).toBeNull();
+    expect(view.queryByRole('button', { name: 'Analyze & Manage Study' })).toBeNull();
     expect(view.getByText(/Study Status:/)).toBeDefined();
     expect(view.getByTitle(/Development mode/)).toBeDefined();
     expect(view.getByRole('option', { name: 'condA' })).toBeDefined();

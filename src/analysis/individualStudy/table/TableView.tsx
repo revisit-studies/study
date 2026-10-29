@@ -26,6 +26,7 @@ import { youtubeReadableDuration } from '../../../utils/humanReadableDuration';
 import { getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
 import { MetaCell } from './MetaCell';
 import { componentAnswersAreCorrect } from '../../../utils/componentCorrectness';
+import { hasResponseScorer } from '../../../utils/correctAnswer';
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 import { DISTINCT_COLOR_PALETTE } from '../../../utils/colors';
 import { ParticipantTimeoutModal } from '../ParticipantTimeoutModal';
@@ -233,14 +234,23 @@ export function TableView({
       },
       {
         accessorFn: (row: ParticipantDataWithStatus) => Object.values(row.answers)
-          .filter((answer) => (answer.correctAnswer?.length ?? 0) > 0 && answer.endTime > 0)
-          .map((answer) => {
+          .filter((answer) => answer.endTime > 0)
+          .flatMap((answer) => {
             const participantConfig = row.participantConfigHash ? allConfigs[row.participantConfigHash] : studyConfig;
-            if (!participantConfig) return null;
+            if (!participantConfig) {
+              return answer.correctAnswer?.length || Object.keys(answer.checkAnswer?.scores ?? {}).length ? [null] : [];
+            }
             const componentConfig = participantConfig.components[answer.componentName];
             const component = componentConfig ? studyComponentToIndividualComponent(componentConfig, participantConfig) : undefined;
+            const hasSavedScores = Object.keys(answer.checkAnswer?.scores ?? {}).length > 0;
+            if (!answer.correctAnswer?.length && !component?.response?.some(hasResponseScorer) && !hasSavedScores) return [];
 
-            return componentAnswersAreCorrect(answer.answer, answer.correctAnswer, component?.response);
+            return [componentAnswersAreCorrect(
+              answer.answer,
+              answer.correctAnswer,
+              component?.response,
+              answer.checkAnswer,
+            )];
           }),
         header: 'Correct Answers',
         size: 160,

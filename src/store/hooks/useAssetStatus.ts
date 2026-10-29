@@ -29,11 +29,16 @@ export function useAssetLoadStatus<T>(key: T) {
   if (result.key !== key) {
     setResult({ key, status: 'loading' });
   }
+  const onLoading = useCallback(() => {
+    setResult((current) => (current.key === key ? { key, status: 'loading' } : current));
+  }, [key]);
   const onReady = useCallback(() => {
     setResult((current) => (current.key === key ? { key, status: 'ready' } : current));
   }, [key]);
   const onError = useCallback(() => {
     setResult((current) => (current.key === key ? { key, status: 'error' } : current));
   }, [key]);
-  return { status: result.key === key ? result.status : 'loading', onReady, onError };
+  return {
+    status: result.key === key ? result.status : 'loading', onLoading, onReady, onError,
+  };
 }

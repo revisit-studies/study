@@ -2,7 +2,7 @@ import {
   Alert, Button, Group, Modal, Stack, Text, Tooltip,
 } from '@mantine/core';
 import { IconClockOff } from '@tabler/icons-react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { ParticipantDataWithStatus } from '../../storage/types';
 import { getParticipantDataStatus } from '../../storage/participantStatus';
@@ -27,18 +27,6 @@ export function formatElapsedTime(elapsedTime: number) {
   return `${minutes}m`;
 }
 
-function getParticipantStartTime(participant: ParticipantDataWithStatus) {
-  if (participant.createdTime) {
-    return participant.createdTime;
-  }
-
-  const answerStartTimes = Object.values(participant.answers)
-    .map((answer) => answer.startTime)
-    .filter((startTime) => startTime > 0);
-
-  return answerStartTimes.length > 0 ? Math.min(...answerStartTimes) : null;
-}
-
 export function getInProgressParticipantsByElapsedTime(
   participants: ParticipantDataWithStatus[],
   now: number = Date.now(),
@@ -49,10 +37,10 @@ export function getInProgressParticipantsByElapsedTime(
     // finish the study.
     .filter((participant) => getParticipantDataStatus(participant) === 'inProgress')
     .map((participant) => {
-      const startTime = getParticipantStartTime(participant);
+      const startTime = participant.assignmentCreatedTime;
       return {
         ...participant,
-        elapsedTime: startTime === null ? null : Math.max(now - startTime, 0),
+        elapsedTime: startTime === undefined || !Number.isFinite(startTime) ? null : Math.max(now - startTime, 0),
       };
     })
     .sort((a, b) => (b.elapsedTime ?? -1) - (a.elapsedTime ?? -1));
@@ -80,10 +68,7 @@ export function ParticipantTimeoutModal({
   const [timeoutError, setTimeoutError] = useState<string | null>(null);
   const opened = controlledOpened ?? uncontrolledOpened;
 
-  const inProgressParticipants = useMemo(
-    () => getInProgressParticipantsByElapsedTime(participants),
-    [participants],
-  );
+  const inProgressParticipants = getInProgressParticipantsByElapsedTime(participants);
 
   const handleTimeOutParticipant = useCallback(async (participantId: string) => {
     if (!storageEngine || timingOutParticipantIds.includes(participantId)) {
@@ -93,7 +78,7 @@ export function ParticipantTimeoutModal({
     setTimingOutParticipantIds((ids) => [...ids, participantId]);
     setTimeoutError(null);
     try {
-      await storageEngine.rejectParticipant(participantId, 'Timed out by admin');
+      await storageEngine.timeoutParticipant(participantId);
       await refresh();
     } catch (error) {
       console.error('Failed to time out participant:', error);
@@ -151,7 +136,7 @@ export function ParticipantTimeoutModal({
                   <Text fw={500}>
                     Participant
                     {' '}
-                    {participant.participantIndex + 1}
+                    {participant.participantIndex}
                   </Text>
                   <Text size="sm" c="dimmed" truncate="end">{participant.participantId}</Text>
                 </Stack>

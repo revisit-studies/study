@@ -11,6 +11,7 @@ import { SingleTaskLabelLines } from './SingleTaskLabelLines';
 import { SingleTask } from './SingleTask';
 import { StoredAnswer, StudyConfig } from '../../../parser/types';
 import { getComponentAnswerStatus } from '../../../utils/componentCorrectness';
+import { getCorrectAnswerDisplayValue } from '../../../utils/correctAnswer';
 import { parseConditionParam } from '../../../utils/handleConditionLogic';
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 import {
@@ -211,9 +212,7 @@ export function AllTasksTimeline({
       const resolvedComponent = component && studyConfig
         ? studyComponentToIndividualComponent(component, studyConfig)
         : undefined;
-      const correctAnswers = answer.correctAnswer?.length
-        ? answer.correctAnswer
-        : resolvedComponent?.correctAnswer;
+      const correctAnswers = answer.correctAnswer ?? resolvedComponent?.correctAnswer;
       const answerStatus = getComponentAnswerStatus(answer, correctAnswers, resolvedComponent?.response);
       const hasAudio = resolvedComponent?.recordAudio ?? studyConfig?.uiConfig?.recordAudio ?? false;
       const hasScreenRecording = resolvedComponent?.recordScreen ?? studyConfig?.uiConfig?.recordScreen ?? false;
@@ -234,7 +233,7 @@ export function AllTasksTimeline({
               <Stack gap={0}>
                 {Object.entries(answer.answer).map((a) => {
                   const [id, componentAnswer] = a;
-                  const correctAnswer = correctAnswers?.find((c) => c.id === id)?.answer;
+                  const correctAnswer = getCorrectAnswerDisplayValue(correctAnswers?.find((c) => c.id === id));
                   const participantAnswer = (componentAnswer === undefined || componentAnswer === null || componentAnswer === '')
                     ? 'N/A'
                     : typeof componentAnswer === 'object'

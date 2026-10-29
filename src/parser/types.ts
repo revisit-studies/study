@@ -298,11 +298,11 @@ export interface UIConfig {
   previousButtonText?: string;
   /** Whether to redirect a timed out participant to a rejection page. This only works for components where the `nextButtonDisableTime` field is set. */
   timeoutReject?: boolean;
-  /** Controls whether the component should provide feedback to the participant, such as in a training trial. Defaults to false. */
+  /** Enable answer checking and feedback when a component omits provideFeedback and has no answer-level feedback. Defaults to false. */
   provideFeedback?: boolean;
-  /** The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.  */
+  /** The number of answer-checking attempts allowed for the component. Defaults to 2. Check Answer grades responses before Next can continue. With hideCheckAnswerButton, Next performs the check first. Incorrect answers block continuing unless allowFailedTraining is true and attempts are exhausted. The final failed attempt reveals accepted answers. Set -1 for unlimited attempts, requiring a correct answer and hiding the reveal. */
   trainingAttempts?: number;
-  /** Controls whether the component should allow failed training. Defaults to true. */
+  /** Allow continuing with incorrect answers after attempts are exhausted. Defaults to true. */
   allowFailedTraining?: boolean;
   /** Whether or not we want to utilize think-aloud features. If true, will record audio on all components unless deactivated on individual components. Defaults to false. */
   recordAudio?: boolean;
@@ -445,6 +445,8 @@ export type ResponseVisibilityCondition = {
 export interface BaseResponse {
   /** The id of the response. This is used to identify the response in the data file. */
   id: string;
+  /** Path under `src/public/` to response code. Custom responses require a default React component. Any response code module may export `validate(value, values, response)` to return an error message, a boolean validity result, or null for valid input. It may separately export `score(value, values, response, expected?)` to return a boolean or a score from 0 to 1; null uses ordinary correct-answer matching. `expected` is the configured correct answer when correctness is checked. */
+  path?: string;
   /** The prompt that is displayed to the participant. You can use markdown here to render images, links, etc. */
   prompt: string;
   /** The secondary text that is displayed to the participant under the prompt. This does not accept markdown. */
@@ -475,6 +477,8 @@ export interface BaseResponse {
   excludeFromRandomization?: boolean;
   /** Show this response only when another response in this component satisfies the condition. */
   visibleIf?: ResponseVisibilityCondition;
+  /** Delay in milliseconds before an element activates. Must be non-negative; defaults to 0 meaning the element is always active. @minimum 0 */
+  delay?: number;
 }
 
 /**
@@ -1246,10 +1250,22 @@ export interface DividerResponse extends Omit<BaseResponse, 'prompt' | 'infoText
 
 export type Response = NumericalResponse | DateResponse | TimeResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | RankingResponse | ReactiveResponse | CustomResponse | MatrixResponse | ButtonsResponse | TextOnlyResponse | DividerResponse;
 
+/** Custom training messages. Arrays select a message for each answer-checking attempt (first entry for attempt 1), repeating the last entry for later attempts. Tokens: {attemptsUsed} and {attemptsLeft}. */
+export interface ResponseFeedback {
+  /** Message when this response is correct. */
+  correctText?: string | string[];
+  /** Message when this response is incorrect. Also used after the final attempt when exhaustedText is absent. */
+  incorrectText?: string | string[];
+  /** Message when this response is incorrect and all attempts have been used. */
+  exhaustedText?: string | string[];
+  /** Progressive hints shown alongside incorrect feedback while attempts remain. One per trial-wide answer-checking attempt, repeating the final hint for later attempts. */
+  hints?: string[];
+}
+
 /**
  * The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks or if skip logic is required based on the answer.
  *
- * Answers are used to defined correct answers for a task. These are generally used in training tasks or if skip logic is required based on the answer. The answer field is used to define the correct answer to the question. The acceptableLow and acceptableHigh fields are used to define a range of acceptable answers (these are currently only used for training). For example, if the correct answer is 5, and the acceptableLow is 4 and the acceptableHigh is 6, then any answer between 4 and 6 will be considered correct.
+ * Answers are used to defined correct answers for a task. These are generally used in training tasks or if skip logic is required based on the answer. The answer field is used to define the correct answer to the question. The acceptableLow and acceptableHigh fields are used to define a range of acceptable answers (inclusive, also used for skip logic and analysis). For example, if the correct answer is 5, and the acceptableLow is 4 and the acceptableHigh is 6, then any answer between 4 and 6 will be considered correct.
  *
  * Here's an example of how to use the Answer interface to define the correct answer to a question:
  *
@@ -1277,13 +1293,22 @@ export type Response = NumericalResponse | DateResponse | TimeResponse | ShortTe
 export interface Answer {
   /** The id of the answer. This is used to identify the answer in the data file. */
   id: string;
-  /** The correct answer to the question. */
+  /** The exact or preferred answer. Optional when acceptableAnswers or a numeric bound defines accepted answers. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  answer: any;
+  answer?: any;
   /** The acceptable low value for the answer. This is used to define a range of acceptable answers. */
   acceptableLow?: number;
   /** The acceptable high value for the answer. This is used to define a range of acceptable answers. */
   acceptableHigh?: number;
+  /** Minimum score from 0 to 1 required for this answer to be considered correct. Defaults to 1. @minimum 0 @maximum 1 */
+  correctnessThreshold?: number;
+  /** Accepted complete answers, usable on their own or in addition to answer. Each entry is a complete value, such as a checkbox selection array or a ranking value-to-position object. */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  acceptableAnswers?: any[];
+  /** Whether textual answers must match letter case. Defaults to true. */
+  caseSensitive?: boolean;
+  /** Customize correct and incorrect feedback and hints for this response. */
+  feedback?: ResponseFeedback;
 }
 
 /**
@@ -1319,7 +1344,7 @@ export interface BaseIndividualComponent {
   instruction?: string;
   /** The location of the instructions. If present, will override the instruction location setting in the uiConfig. */
   instructionLocation?: ConfigResponseBlockLocation;
-  /** The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files. */
+  /** The parameters passed to the component. These can be used for variable substitution: in a react-component, they're available as the `parameters` prop; in this component's instruction field and its responses' prompt, secondaryText, and infoText fields, they're substituted as Handlebars variables (`{{variable}}`). The same substitution also applies inside markdown files, and inside a website component's HTML file when its `templated` field is true. */
   parameters?: Record<string, unknown>;
   /** The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. If present, will override the help text path set in the uiConfig. */
   helpTextPath?: string;
@@ -1345,11 +1370,13 @@ export interface BaseIndividualComponent {
   previousButton?: boolean;
   /** The text that is displayed on the previous button. If present, will override the previous button text setting in the uiConfig. */
   previousButtonText?: string;
-  /** Controls whether the component should provide feedback to the participant, such as in a training trial. If present, will override the provide feedback setting in the uiConfig. */
+  /** Enable answer checking and feedback. Explicit false disables it even with answer-level feedback. When omitted, answer-level feedback enables it before falling back to uiConfig.provideFeedback. */
   provideFeedback?: boolean;
+  /** Hide the Check Answer button and grade answers on Next instead. Defaults to false. Feedback must be enabled by provideFeedback or answer-level feedback. */
+  hideCheckAnswerButton?: boolean;
   /** The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig. */
   trainingAttempts?: number;
-  /** Controls whether the component should allow failed training. If present, will override the allow failed training setting in the uiConfig. */
+  /** Allow continuing with incorrect answers after attempts are exhausted. Overrides uiConfig.allowFailedTraining. Defaults to true. */
   allowFailedTraining?: boolean;
   /** Whether or not we want to utilize think-aloud features. If present, will override the record audio setting in the uiConfig. */
   recordAudio?: boolean;
@@ -1515,7 +1542,35 @@ export interface ImageComponent extends BaseIndividualComponent {
  *     registry
  *   });
  * ```
-
+ *
+ * As an alternative to passing data over `Revisit.onDataReceive`, you can set `templated` to true. The HTML file is then fetched and compiled as a Handlebars template before it is rendered, exactly like a markdown component's file, so `parameters` (and the `{{REVISIT.*}}` data frame and the `lookupAnswers`, `lookupParameters`, and `lookupCorrectAnswer` helpers and their `Rel` forms) can be substituted directly into the markup:
+ *
+ * ```json
+ * {
+ *   "type": "website",
+ *   "path": "<study-name>/assets/chart.html",
+ *   "templated": true,
+ *   "parameters": {
+ *     "country": "France",
+ *     "barData": "[0.32,0.01,1.2]"
+ *   }
+ * }
+ * ```
+ *
+ * ```html
+ * <h1>Capital of {{country}}</h1>
+ * <script>
+ *   // barData is a pre-serialized JSON string. Triple braces preserve it without HTML escaping.
+ *   // Only insert trusted parameters this way, never participant answers.
+ *   const barData = {{{barData}}};
+ * </script>
+ * ```
+ *
+ * A few things to know about templated websites:
+ * - The file is rendered from its compiled contents rather than from its URL, so it is compiled once when the trial loads and is not re-compiled as answers change.
+ * - Relative paths inside the file (scripts, stylesheets, images) keep working; reVISit injects a `<base>` tag pointing at the file's folder.
+ * - `revisit-communicate.js` keeps working, but the file must reference the shared `revisitUtilities/revisit-communicate.js` rather than an old vendored copy of it.
+ * - `templated` is ignored when `path` points at an external website.
  */
 export interface WebsiteComponent extends BaseIndividualComponent {
   type: 'website';
@@ -1523,6 +1578,8 @@ export interface WebsiteComponent extends BaseIndividualComponent {
   path: string;
   /** The iframe's color scheme. Defaults to the study's color mode. The embedded page must support color schemes. */
   colorMode?: 'light' | 'dark';
+  /** Whether the HTML file should be compiled as a Handlebars template before it is rendered, so that `{{parameter}}` placeholders in the file are substituted. Defaults to false. Only applies to HTML files served from the study's public folder; it is ignored for external websites, which cannot be fetched and rewritten. */
+  templated?: boolean;
 }
 
 /**

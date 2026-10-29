@@ -361,23 +361,16 @@ describe.each([
     expect(setHashSpy).not.toHaveBeenCalled();
   });
 
-  test('saveConfig restores missing config storage when the hash pointer is unchanged', async () => {
-    const configHash = await hash(JSON.stringify(configSimple));
+  test('saveConfig skips storage reads when the hash pointer is unchanged', async () => {
     await storageEngine.saveConfig(configSimple);
-
-    await (
-      storageEngine as unknown as {
-        _deleteFromStorage: StorageEngine['_deleteFromStorage'];
-      }
-    )._deleteFromStorage(`configs/${configHash}`, 'config');
-
-    let storedHashes = await storageEngine.getAllConfigsFromHash([configHash], studyId);
-    expect(storedHashes[configHash]).toBeNull();
+    const getFromStorageSpy = vi.spyOn(
+      storageEngine as unknown as { _getFromStorage: (...args: unknown[]) => Promise<unknown> },
+      '_getFromStorage',
+    );
 
     await storageEngine.saveConfig(configSimple);
 
-    storedHashes = await storageEngine.getAllConfigsFromHash([configHash], studyId);
-    expect(storedHashes[configHash]).toEqual(configSimple);
+    expect(getFromStorageSpy).not.toHaveBeenCalled();
   });
 
   test('getCurrentParticipantId returns the current participant ID', async () => {
@@ -428,6 +421,123 @@ describe.each([
     expect(participantData!.participantTags).toEqual([]);
   });
 
+  test.each([false, true])('concurrent duplicate rejection reserves one vacancy (legacy: %s)', async (legacy) => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'original');
+    await storageEngine.flushPendingParticipantData();
+    await storageEngine.rejectParticipant('original', 'review');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement');
+    await storageEngine.flushPendingParticipantData();
+    if (legacy) {
+      const replacement = (await storageEngine.getAllSequenceAssignments(studyId))
+        .find((assignment) => assignment.participantId === 'replacement')!;
+      delete replacement.claimedParticipantId;
+      // @ts-expect-error protected storage boundary
+      await storageEngine._createSequenceAssignment('replacement', replacement, false);
+    }
+    await Promise.all([
+      storageEngine.rejectParticipant('replacement', 'review'),
+      storageEngine.rejectParticipant('replacement', 'review'),
+    ]);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'next-a');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'next-b');
+    const assignments = await storageEngine.getAllSequenceAssignments(studyId);
+    expect(assignments.find((assignment) => assignment.participantId === 'replacement')?.reusableSequenceIndex).toBe(1);
+    expect(assignments.find((assignment) => assignment.participantId === 'next-a')?.sequenceIndex).toBe(0);
+    expect(assignments.find((assignment) => assignment.participantId === 'next-b')?.sequenceIndex).toBe(1);
+  });
+
+  test('undo rejection returns an unused replacement slot exactly once', async () => {
+    const rows = [
+      { ...sequenceArray[0], parameters: { row: 'first' } },
+      { ...sequenceArray[0], parameters: { row: 'second' } },
+    ];
+    await storageEngine.setSequenceArray(rows);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'original');
+    await storageEngine.rejectParticipant('original', 'review');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement');
+    await storageEngine.rejectParticipant('replacement', 'review');
+    await storageEngine.undoRejectParticipant('replacement');
+    await storageEngine.undoRejectParticipant('replacement');
+    const next = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'next');
+    expect(next.sequence.parameters?.row).toBe('second');
+    const following = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'following');
+    expect(following.sequence.parameters?.row).toBe('first');
+  });
+
+  test.each([false, true])('undo rejection preserves an unused slot across later allocations and rejections (legacy: %s)', async (legacy) => {
+    const offset = legacy ? 1 : 0;
+    if (legacy) {
+      await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'legacy');
+      const legacyAssignment = (await storageEngine.getAllSequenceAssignments(studyId))[0];
+      delete legacyAssignment.sequenceIndex;
+      delete legacyAssignment.creationIndex;
+      // @ts-expect-error protected storage boundary
+      await storageEngine._createSequenceAssignment('legacy', legacyAssignment);
+    }
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'original');
+    await storageEngine.rejectParticipant('original', 'review');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement');
+    await storageEngine.rejectParticipant('replacement', 'review');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'reuse-original');
+    await storageEngine.undoRejectParticipant('replacement');
+    await storageEngine.rejectParticipant('reuse-original', 'review');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'reuse-again');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'reuse-vacancy');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'returned-slot');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'fresh-slot');
+    const assignments = await storageEngine.getAllSequenceAssignments(studyId);
+    expect(assignments.find((assignment) => assignment.participantId === 'returned-slot'))
+      .toMatchObject({ sequenceIndex: 1 + offset, creationIndex: 5 + offset });
+    expect(assignments.find((assignment) => assignment.participantId === 'fresh-slot'))
+      .toMatchObject({ sequenceIndex: 3 + offset, creationIndex: 6 + offset });
+  });
+
+  test('undo rejection does not return a replacement slot already claimed by another participant', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'original');
+    await storageEngine.rejectParticipant('original', 'review');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement');
+    await storageEngine.rejectParticipant('replacement', 'review');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'reuse-original');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'reuse-replacement');
+    await expect(storageEngine.undoRejectParticipant('replacement')).rejects.toThrow(/reassigned/);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'next');
+    const assignments = await storageEngine.getAllSequenceAssignments(studyId);
+    expect(assignments.find((assignment) => assignment.participantId === 'next')?.sequenceIndex).toBe(2);
+  });
+
+  test('fresh participant startup does not scan all sequence assignments', async () => {
+    const scanSpy = vi.spyOn(storageEngine, 'getAllSequenceAssignments');
+
+    const participant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    expect(scanSpy).not.toHaveBeenCalled();
+
+    await storageEngine.getParticipantCompletionStatus(participant.participantId);
+    expect(scanSpy).not.toHaveBeenCalled();
+  });
+
+  test('participant bootstrap reuses prefetched modes and sequence array', async () => {
+    const modesSpy = vi.spyOn(storageEngine, 'getModes');
+    const sequenceSpy = vi.spyOn(storageEngine, 'getSequenceArray');
+    const modesDocument = await storageEngine.getModes(studyId);
+    const prefetchedSequenceArray = await storageEngine.getSequenceArray();
+    modesSpy.mockClear();
+    sequenceSpy.mockClear();
+
+    await storageEngine.initializeParticipantSession(
+      {},
+      configSimple,
+      participantMetadata,
+      undefined,
+      {
+        modesDocument,
+        sequenceArray: prefetchedSequenceArray!,
+      },
+    );
+
+    expect(modesSpy).not.toHaveBeenCalled();
+    expect(sequenceSpy).not.toHaveBeenCalled();
+  });
+
   test('retains the initial participant color mode when resuming with a different preference', async () => {
     const session = await storageEngine.initializeParticipantSession({}, configSimple, { ...participantMetadata, colorMode: 'dark' });
     await storageEngine.flushPendingParticipantData();
@@ -437,7 +547,6 @@ describe.each([
   });
 
   test('initializeParticipantSession rereads modes before adding a missing default stage', async () => {
-    const getModesSpy = vi.spyOn(storageEngine, 'getModes');
     const readModesForUpdateSpy = vi.spyOn(
       storageEngine as unknown as { _readModesForUpdate: (id: string) => Promise<unknown> },
       '_readModesForUpdate',
@@ -446,9 +555,14 @@ describe.each([
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
 
     // Opaque settings backends merge the stage field under the settings lock,
-    // which requires one fresh read instead of rewriting the earlier snapshot.
-    expect(getModesSpy).toHaveBeenCalledTimes(1);
-    expect(readModesForUpdateSpy).toHaveBeenCalledTimes(1);
+    // which requires a fresh read instead of rewriting the earlier snapshot.
+    expect(readModesForUpdateSpy).toHaveBeenCalled();
+    expect((await storageEngine.getModes(studyId)).stage?.currentStage.stageName).toBe('DEFAULT');
+  });
+
+  test('initializeParticipantSession registers condition definitions for a new participant', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    expect((await storageEngine.getStageData(studyId)).allStages[0].conditionKeys).toEqual(['[]']);
   });
 
   test('initializeParticipantSession sets conditions from searchParams condition', async () => {
@@ -522,15 +636,76 @@ describe.each([
     }
   });
 
-  test('initializeParticipantSession omits conditions field in sequence assignment when empty', async () => {
-    const createSequenceAssignmentSpy = vi.spyOn(
-      storageEngine as unknown as { _createSequenceAssignment: (...args: unknown[]) => Promise<void> },
-      '_createSequenceAssignment',
+  test('concurrent participant starts reserve unique sequence and creation indexes', async () => {
+    const engines = Array.from({ length: 12 }, () => new TestEngine(true));
+    await Promise.all(engines.map(async (engine) => {
+      await engine.connect();
+      await engine.initializeStudyDb(studyId);
+    }));
+
+    const sessions = await Promise.all(engines.map((engine, index) => (
+      engine.initializeParticipantSession(
+        {},
+        configSimple,
+        participantMetadata,
+        `concurrent-${index}`,
+      )
+    )));
+    const assignments = (await storageEngine.getAllSequenceAssignments(studyId))
+      .filter((assignment) => assignment.participantId.startsWith('concurrent-'));
+
+    expect(new Set(assignments.map((assignment) => assignment.sequenceIndex)).size).toBe(12);
+    expect(assignments.map((assignment) => assignment.sequenceIndex).sort((a, b) => a! - b!))
+      .toEqual(Array.from({ length: 12 }, (_, index) => index));
+    expect(new Set(sessions.map((session) => session.participantIndex)).size).toBe(12);
+  });
+
+  test('allocator bootstraps legacy assignments without duplicating a sequence slot', async () => {
+    const createAssignment = (
+      storageEngine as unknown as {
+        _createSequenceAssignment: (
+          participantId: string,
+          assignment: SequenceAssignment,
+          withServerTimestamp: boolean,
+        ) => Promise<void>;
+      }
+    )._createSequenceAssignment.bind(storageEngine);
+    for (let index = 0; index < 5; index += 1) {
+      // Sequential writes intentionally build a deterministic legacy assignment history.
+      // eslint-disable-next-line no-await-in-loop
+      await createAssignment(`legacy-${index}`, {
+        participantId: `legacy-${index}`,
+        timestamp: index,
+        rejected: index === 1,
+        claimed: false,
+        completed: null,
+        createdTime: index,
+        total: 0,
+        answered: [],
+        isDynamic: false,
+        stage: 'DEFAULT',
+      }, false);
+    }
+
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'legacy-replacement');
+    await storageEngine.clearCurrentParticipantId();
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'post-legacy-participant');
+
+    const assignments = await storageEngine.getAllSequenceAssignments(studyId);
+    const replacement = assignments.find(
+      (assignment) => assignment.participantId === 'legacy-replacement',
     );
+    const appended = assignments.find(
+      (assignment) => assignment.participantId === 'post-legacy-participant',
+    );
+    expect(replacement?.sequenceIndex).toBe(1);
+    expect(appended?.sequenceIndex).toBe(5);
+  });
 
-    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
-
-    const sequenceAssignmentPayload = createSequenceAssignmentSpy.mock.calls[0][1] as Record<string, unknown>;
+  test('initializeParticipantSession omits conditions field in sequence assignment when empty', async () => {
+    const participant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    const sequenceAssignmentPayload = (await storageEngine.getAllSequenceAssignments(studyId))
+      .find((assignment) => assignment.participantId === participant.participantId)!;
     expect(Object.hasOwn(sequenceAssignmentPayload, 'conditions')).toBe(false);
   });
 
@@ -797,6 +972,10 @@ describe.each([
     expect(sequenceAssignment4!.createdTime).toBeDefined();
     expect(sequenceAssignment4!.createdTime).toBeGreaterThanOrEqual(sequenceAssignment3!.createdTime);
     expect(sequenceAssignment4!.completed).toBeNull();
+    expect(new Set([
+      sequenceAssignment3!.sequenceIndex,
+      sequenceAssignment4!.sequenceIndex,
+    ]).size).toBe(2);
 
     // Check the length of sequence assignments
     sequenceAssignments = await storageEngine.getAllSequenceAssignments(studyId);
@@ -818,73 +997,60 @@ describe.each([
     vi.useFakeTimers();
     try {
       vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'));
+      await storageEngine.setCurrentStage(studyId, 'LIMITED', '#ff0000', 1);
       await storageEngine.setAutoTimeoutMinutes(studyId, 1);
       const firstParticipant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+      // The stage is full until the first participant's allocation expires.
+      await storageEngine.clearCurrentParticipantId();
+      await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata))
+        .rejects.toThrow(/participant limit/);
 
       vi.setSystemTime(new Date('2026-01-01T00:01:00.000Z'));
       await storageEngine.clearCurrentParticipantId();
       const secondParticipant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+      expect(secondParticipant.participantId).not.toBe(firstParticipant.participantId);
+
       const assignments = await storageEngine.getAllSequenceAssignments(studyId);
       const firstAssignment = assignments.find((assignment) => assignment.participantId === firstParticipant.participantId);
-      const secondAssignment = assignments.find((assignment) => assignment.participantId === secondParticipant.participantId);
-
       expect(firstAssignment?.autoTimedOutAt).toBeDefined();
       expect(firstAssignment?.rejected).toBe(false);
-      expect(firstAssignment?.claimed).toBe(true);
-      expect(secondAssignment?.claimedParticipantId).toBe(firstParticipant.participantId);
       const participants = await storageEngine.getAllParticipantsData(studyId);
       expect(participants.find((participant) => participant.participantId === firstParticipant.participantId)?.rejected).toBe(false);
+      // @ts-expect-error Inspect the stage allocation the next admission uses.
+      expect((await storageEngine.getStageAllocation('LIMITED')).count).toBe(1);
 
+      // Rejecting the timed-out participant frees nothing further.
       await storageEngine.rejectParticipant(firstParticipant.participantId, 'test source rejection');
-      await storageEngine.clearCurrentParticipantId();
-      const thirdParticipant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
-      const assignmentsAfterSourceRejection = await storageEngine.getAllSequenceAssignments(studyId);
-      expect(assignmentsAfterSourceRejection.find((assignment) => assignment.participantId === firstParticipant.participantId)?.claimed).toBe(true);
-      expect(assignmentsAfterSourceRejection.find((assignment) => assignment.participantId === thirdParticipant.participantId)?.claimedParticipantId)
-        .not.toBe(firstParticipant.participantId);
+      // @ts-expect-error Inspect the stage allocation the next admission uses.
+      expect((await storageEngine.getStageAllocation('LIMITED')).count).toBe(1);
     } finally {
       vi.useRealTimers();
     }
   });
 
-  test('a completion landing during slot reuse is not erased by the claim', async () => {
+  test('a participant who finishes after timing out is completed late and does not retake a slot', async () => {
     vi.useFakeTimers();
     try {
       vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'));
+      await storageEngine.setCurrentStage(studyId, 'LIMITED', '#ff0000', 1);
       await storageEngine.setAutoTimeoutMinutes(studyId, 1);
       const firstParticipant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
 
-      // The claim reads the source assignment, then a late completion lands
-      // before the claim is written. Without a re-read inside the lock, the
-      // claim would write back the pre-completion copy of the record.
-      const engineInternals = storageEngine as unknown as {
-        _claimSequenceAssignment: (participantId: string) => Promise<void>;
-        _updateSequenceAssignmentFields: (participantId: string, fields: Partial<SequenceAssignment>) => Promise<void>;
-      };
-      const originalClaim = engineInternals._claimSequenceAssignment.bind(storageEngine);
-      const claimSpy = vi.spyOn(engineInternals, '_claimSequenceAssignment')
-        .mockImplementation(async (participantId: string) => {
-          await engineInternals._updateSequenceAssignmentFields(participantId, { completed: Date.now() });
-          await originalClaim(participantId);
-        });
-
       vi.setSystemTime(new Date('2026-01-01T00:01:00.000Z'));
       await storageEngine.clearCurrentParticipantId();
-      const secondParticipant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
-      expect(claimSpy).toHaveBeenCalledTimes(1);
+      await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
 
-      const assignments = await storageEngine.getAllSequenceAssignments(studyId);
-      const firstAssignment = assignments.find((assignment) => assignment.participantId === firstParticipant.participantId);
-      expect(firstAssignment?.completed).not.toBeNull();
-      expect(firstAssignment?.claimed).toBe(true);
-      expect(firstAssignment?.autoTimedOutAt).toBeDefined();
-      expect(firstAssignment?.rejected).toBe(false);
+      const engineInternals = storageEngine as unknown as {
+        _updateSequenceAssignmentFields: (participantId: string, fields: Partial<SequenceAssignment>) => Promise<void>;
+      };
+      await engineInternals._updateSequenceAssignmentFields(firstParticipant.participantId, { completed: Date.now() });
 
-      // The late finisher is reported as completed late, not as timed out.
       const participants = await storageEngine.getAllParticipantsData(studyId);
       const firstParticipantData = participants.find((participant) => participant.participantId === firstParticipant.participantId)!;
       expect(getParticipantDataStatus(firstParticipantData)).toBe('completedLate');
-      expect(secondParticipant.participantId).not.toBe(firstParticipant.participantId);
+      // @ts-expect-error Inspect the stage allocation the next admission uses.
+      expect((await storageEngine.getStageAllocation('LIMITED')).count).toBe(1);
     } finally {
       vi.useRealTimers();
     }

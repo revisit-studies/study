@@ -26,6 +26,7 @@ import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngi
 import { useAsync } from '../../store/hooks/useAsync';
 import { useAuth } from '../../store/hooks/useAuth';
 import { getCleanedDuration } from '../../utils/getCleanedDuration';
+import { getCorrectAnswerDisplayValue, getSavedScoresForAnswer } from '../../utils/correctAnswer';
 import { showNotification } from '../../utils/notifications';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 import { parseConditionParam } from '../../utils/handleConditionLogic';
@@ -43,6 +44,7 @@ const OPTIONAL_COMMON_PROPS = [
   'instruction',
   'responsePrompt',
   'answer',
+  'score',
   'correctAnswer',
   'duration',
   'cleanedDuration',
@@ -158,6 +160,7 @@ function participantDataToRows(
       const completeComponent = trialConfig && studyConfig ? studyComponentToIndividualComponent(trialConfig, studyConfig) : undefined;
       const identifier = getAnswerIdentifier(trialAnswer);
       const taskQualitativeTags = JSON.stringify(qualitativeCodes?.taskTags[identifier] ?? []);
+      const savedScores = getSavedScoresForAnswer(trialAnswer.checkAnswer, trialAnswer.answer);
 
       const duration = trialAnswer.endTime === -1 ? undefined : trialAnswer.endTime - trialAnswer.startTime;
       const cleanedDuration = getCleanedDuration(trialAnswer);
@@ -210,6 +213,10 @@ function participantDataToRows(
         if (properties.includes('answer')) {
           tidyRow.answer = typeof value === 'object' ? JSON.stringify(value) : value;
         }
+        if (properties.includes('score')) {
+          const score = savedScores?.[key];
+          tidyRow.score = score === undefined ? undefined : `${Math.round(score * 100)}%`;
+        }
         if (properties.includes('taskTags')) {
           tidyRow.taskTags = taskQualitativeTags;
         }
@@ -217,9 +224,9 @@ function participantDataToRows(
           tidyRow.transcript = transcripts?.[`${participant.participantId}_${identifier}`] ?? undefined;
         }
         if (properties.includes('correctAnswer')) {
-          const configCorrectAnswer = completeComponent?.correctAnswer?.find((ans) => ans.id === key)?.answer;
-          const answerCorrectAnswer = trialAnswer.correctAnswer?.find((ans) => ans.id === key)?.answer;
-          const correctAnswer = answerCorrectAnswer ?? configCorrectAnswer;
+          const configCorrectAnswer = completeComponent?.correctAnswer?.find((ans) => ans.id === key);
+          const answerCorrectAnswer = trialAnswer.correctAnswer?.find((ans) => ans.id === key);
+          const correctAnswer = getCorrectAnswerDisplayValue(answerCorrectAnswer ?? configCorrectAnswer);
           tidyRow.correctAnswer = typeof correctAnswer === 'object' ? JSON.stringify(correctAnswer) : correctAnswer;
         }
         if (properties.includes('startTime')) {
@@ -400,6 +407,7 @@ export function DownloadTidy({
     'instruction',
     'responsePrompt',
     'answer',
+    'score',
     'correctAnswer',
     'duration',
     'cleanedDuration',

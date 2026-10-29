@@ -32,7 +32,9 @@ import {
 import { shouldUseStimulusValidation } from './stimulusErrors';
 import { getApplicableCorrectAnswers, resolveResponseVisibility, responseValueKeys } from '../../utils/responseVisibility';
 import { ResponseSwitcher } from './ResponseSwitcher';
-import { FeedbackAlert } from './FeedbackAlert';
+import {
+  FeedbackAlert, formatCorrectAnswer, formatTrainingFeedback, getTrainingFeedbackText,
+} from './FeedbackAlert';
 import {
   CustomResponseField, FormElementProvenance, StoredAnswer, TrrackedProvenance,
 } from '../../store/types';
@@ -40,13 +42,19 @@ import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { useNextStep } from '../../store/hooks/useNextStep';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
-import { responseAnswerIsCorrect } from '../../utils/correctAnswer';
+import {
+  getSavedScoresForAnswer, hasResponseScorer, isRequiredResponseUngraded, isResponseAnsweredForScoring, isResponseScoreCorrect, scoreResponseAnswer, scoreResponseAnswerWithStatus,
+  AnswerStatus, evaluateSelectionAnswer, getMatrixCheckboxRowStatuses,
+} from '../../utils/correctAnswer';
 import { getCustomResponseModule, getCustomResponseModuleLoadError } from './customResponseModules';
 import { appendStimulusShowErrorsToGraph } from './stimulusProvenance';
 import { useManagedTrrack } from '../../store/hooks/useRevisitTrrack';
+import { useTrialProvenance } from '../../store/hooks/useTrialProvenance';
+import { initializeResumedTrrack } from '../../store/resumeProvenance';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { showNotification } from '../../utils/notifications';
-import { getAnswersFromAllLocations, getPersistedAnswersFromAllLocations } from '../../utils/getAnswersFromAllLocations';
+import { getAnswersFromAllLocations, getPersistedAnswerValues, getPersistedAnswersFromAllLocations } from '../../utils/getAnswersFromAllLocations';
+import { DelayedResponseWrapper } from './DelayedResponseWrapper';
 
 type Props = {
   status?: StoredAnswer;
@@ -54,16 +62,6 @@ type Props = {
   location: ResponseBlockLocation;
   style?: React.CSSProperties;
 };
-
-function findMatchingStrings(arr1: string[], arr2: string[]): string[] {
-  const matches: string[] = [];
-  for (const str1 of arr1) {
-    if (arr2.includes(str1)) {
-      matches.push(str1);
-    }
-  }
-  return matches;
-}
 
 function collectResponseValuesFromAnalysisState(
   analysisProvState: Partial<Record<ResponseBlockLocation, FormElementProvenance>>,
@@ -100,7 +98,11 @@ export function ResponseBlock({
   const isAnalysis = useIsAnalysis();
   const currentProvenance = useStoreSelector((state) => state.analysisProvState[location]) as FormElementProvenance | undefined;
 
-  const storedAnswer = useMemo(() => currentProvenance?.form ?? status?.answer, [currentProvenance, status]);
+  const retainedProvenance = useTrialProvenance(location);
+  const restoredForm = useMemo(() => (retainedProvenance
+    ? (initializeResumedTrrack({ registry: Registry.create(), initialState: {} }, retainedProvenance).getState() as FormElementProvenance).form
+    : undefined), [retainedProvenance]);
+  const storedAnswer = useMemo(() => currentProvenance?.form ?? restoredForm ?? status?.answer, [currentProvenance, restoredForm, status]);
   const storedAnswerData = useStoredAnswer();
   const formOrders: Record<string, string[]> = useMemo(() => storedAnswerData?.formOrder || {}, [storedAnswerData]);
 
@@ -172,7 +174,7 @@ export function ResponseBlock({
       showResponseErrors: false,
       interactionSource: 'click',
     },
-  }, reportProvenance, identifier);
+  }, reportProvenance, identifier, isAnalysis ? undefined : retainedProvenance);
 
   const reactiveAnswers = useStoreSelector((state) => state.reactiveAnswers);
 
@@ -185,8 +187,11 @@ export function ResponseBlock({
 
   const studyConfig = useStudyConfig();
 
-  const provideFeedback = useMemo(() => config?.provideFeedback ?? studyConfig.uiConfig.provideFeedback, [config, studyConfig]);
-  const hasCorrectAnswerFeedback = !!provideFeedback && ((config?.correctAnswer?.length || 0) > 0);
+  const provideFeedback = useMemo(() => config.provideFeedback
+    ?? (config.correctAnswer?.some((answer) => answer.feedback !== undefined) || studyConfig.uiConfig.provideFeedback), [config, studyConfig]);
+  const hasCorrectAnswerFeedback = !!provideFeedback && (
+    (config?.correctAnswer?.length || 0) > 0 || (config?.response ?? []).some(hasResponseScorer)
+  );
   const allowFailedTraining = useMemo(() => config?.allowFailedTraining ?? studyConfig.uiConfig.allowFailedTraining ?? true, [config, studyConfig]);
   const trainingAttempts = useMemo(() => config?.trainingAttempts ?? studyConfig.uiConfig.trainingAttempts ?? 2, [config, studyConfig]);
   const savedSubmitAttempt = storedAnswerData?.responseSubmitAttempted ?? status?.responseSubmitAttempted ?? false;
@@ -198,13 +203,7 @@ export function ResponseBlock({
   const dataCollectionEnabled = useStoreSelector((state) => state.modes.dataCollectionEnabled);
   const { storageEngine } = useStorageEngine();
   const attemptsUsed = currentCheckAnswer?.attemptsUsed ?? 0;
-  const hasCorrectAnswer = currentCheckAnswer?.correct ?? false;
-  const checkAnswerResponses = currentCheckAnswer?.responses;
   const usedAllAttempts = attemptsUsed >= trainingAttempts && trainingAttempts >= 0;
-  // Unlock Next after a correct answer, or once attempts run out if failed training is allowed. usedAllAttempts excludes -1, so unlimited attempts require a correct answer
-  const enableNextButton = hasCorrectAnswerFeedback && attemptsUsed > 0 && (hasCorrectAnswer || (allowFailedTraining && usedAllAttempts));
-  const bypassValidationForFailedTraining = hasCorrectAnswerFeedback && allowFailedTraining && usedAllAttempts;
-  const disabledAttempts = usedAllAttempts || hasCorrectAnswer;
   const showBtnsInLocation = useMemo(() => location === (config?.nextButtonLocation ?? studyConfig.uiConfig.nextButtonLocation ?? 'belowStimulus'), [config, studyConfig, location]);
   const analysisErrors = useMemo(
     () => ['aboveStimulus', 'belowStimulus', 'sidebar'].some((responseLocation) => (
@@ -271,7 +270,7 @@ export function ResponseBlock({
     [customResponseModules],
   );
   const combinedLiveValues = useMemo<StoredAnswer['answer']>(() => {
-    const initialValues: StoredAnswer['answer'] = generateInitFields(allResponses, storedAnswer || {});
+    const initialValues: StoredAnswer['answer'] = generateInitFields(allResponses, { ...status?.answer, ...storedAnswer });
     // Locations mount independently. Until each publishes a snapshot, use its
     // restored values/defaults so dependents do not clear valid restored answers.
     allResponses.forEach((response) => {
@@ -281,7 +280,7 @@ export function ResponseBlock({
       }
     });
     return { ...initialValues, ...getAnswersFromAllLocations(trialValidation[identifier]) };
-  }, [allResponses, storedAnswer, identifier, trialValidation]);
+  }, [allResponses, status?.answer, storedAnswer, identifier, trialValidation]);
   const combinedAnalysisValues = useMemo(
     () => collectResponseValuesFromAnalysisState(
       analysisProvState as Partial<Record<ResponseBlockLocation, FormElementProvenance>>,
@@ -294,6 +293,23 @@ export function ResponseBlock({
     () => (isAnalysis ? combinedAnalysisValues : combinedLiveValues),
     [combinedAnalysisValues, combinedLiveValues, isAnalysis],
   );
+  const hasCorrectAnswer = currentCheckAnswer?.correct ?? false;
+  const checkAnswerResponses = hasCorrectAnswerFeedback ? currentCheckAnswer?.responses : undefined;
+  const checkedAnswerValues = currentCheckAnswer?.checkedAnswers
+    ?? (savedCheckAnswer ? status?.answer ?? storedAnswer : undefined);
+  const checkAnswerScores = currentCheckAnswer?.scores;
+  // Unlock Next after a correct answer, or once attempts run out if failed training is allowed.
+  const canContinueAfterFeedback = attemptsUsed > 0 && (hasCorrectAnswer || (allowFailedTraining && usedAllAttempts));
+  const bypassValidationForFailedTraining = hasCorrectAnswerFeedback && allowFailedTraining && usedAllAttempts;
+  const disabledAttempts = hasCorrectAnswerFeedback && (usedAllAttempts || hasCorrectAnswer);
+  const persistedVisibilityScores = isAnalysis
+    ? getSavedScoresForAnswer(status?.checkAnswer, getPersistedAnswerValues(
+      combinedValues,
+      allResponsesWithDefaults,
+      config.correctAnswer,
+      status?.checkAnswer,
+    ))
+    : undefined;
   const answerValidator = useAnswerField(
     responsesWithDefaults,
     currentStep,
@@ -304,13 +320,14 @@ export function ResponseBlock({
     combinedValues,
     isAnalysis,
     config.correctAnswer,
+    persistedVisibilityScores,
   );
   const visibilityValues = { ...combinedValues };
   responses.forEach((response) => responseValueKeys(response).forEach((key) => { delete visibilityValues[key]; }));
   const { visibleIds } = resolveResponseVisibility(allResponsesWithDefaults, {
     ...visibilityValues,
     ...answerValidator.values,
-  }, {}, config.correctAnswer);
+  }, {}, config.correctAnswer, persistedVisibilityScores);
   const applicableResponses = allResponsesWithDefaults.filter((response) => visibleIds.has(response.id));
   useEffect(() => {
     if (isAnalysis) return;
@@ -507,10 +524,12 @@ export function ResponseBlock({
     if (isAnalysis) return;
     const interactionSource = lastInteractionSourceRef.current;
     lastInteractionSourceRef.current = 'click';
-    trrack.apply(`Update form field (${interactionSource})`, actions.updateFormAction({
-      values: structuredClone(answerValidator.values),
-      interactionSource,
-    }));
+    if (!isEqual(trrack.getState().form, answerValidator.values)) {
+      trrack.apply(`Update form field (${interactionSource})`, actions.updateFormAction({
+        values: structuredClone(answerValidator.values),
+        interactionSource,
+      }));
+    }
 
     storeDispatch(
       updateResponseBlockValidation({
@@ -540,6 +559,43 @@ export function ResponseBlock({
       }),
     );
   }, [actions, answerValidator, bypassValidationForFailedTraining, identifier, isAnalysis, liveErrors, location, storeDispatch, trrack, updateResponseBlockValidation]);
+  const matrixRowFeedback = useMemo(() => Object.fromEntries(allResponsesWithDefaults.flatMap((response) => {
+    if (response.type !== 'matrix-checkbox' || !checkedAnswerValues || !checkAnswerResponses || !Object.hasOwn(checkAnswerResponses, response.id)) return [];
+    if (checkAnswerScores?.[response.id] !== undefined || hasResponseScorer(response)) return [];
+    const answer = config.correctAnswer?.find((correct) => correct.id === response.id);
+    return answer ? [[response.id, getMatrixCheckboxRowStatuses(response, checkedAnswerValues[response.id], answer)]] : [];
+  })), [allResponsesWithDefaults, checkedAnswerValues, checkAnswerResponses, checkAnswerScores, config.correctAnswer]);
+  const responseStatuses = useMemo(() => {
+    if (!checkAnswerResponses) return {};
+    return Object.fromEntries(allResponsesWithDefaults.flatMap((response) => {
+      if (!Object.hasOwn(checkAnswerResponses, response.id)) return [];
+      const score = checkAnswerScores?.[response.id];
+      if (score !== undefined || hasResponseScorer(response)) {
+        const scoredStatus: AnswerStatus = checkAnswerResponses[response.id]
+          ? 'correct'
+          : score !== undefined && score > 0 ? 'partially correct' : 'incorrect';
+        return [[response.id, scoredStatus]];
+      }
+      const answer = config.correctAnswer?.find((correct) => correct.id === response.id);
+      const answerStatus: AnswerStatus = response.type === 'matrix-checkbox'
+        ? (() => {
+          const rowStatuses = Object.values(matrixRowFeedback[response.id] ?? {});
+          if (rowStatuses.length === 0) return checkAnswerResponses[response.id] ? 'correct' : 'incorrect';
+          if (rowStatuses.every((rowStatus) => rowStatus === 'correct') && checkAnswerResponses[response.id]) return 'correct';
+          if (rowStatuses.every((rowStatus) => rowStatus === 'incorrect')) return 'incorrect';
+          return 'partially correct';
+        })()
+        : response.type === 'checkbox' && answer
+          ? checkAnswerResponses[response.id]
+            ? 'correct'
+            : checkedAnswerValues
+              && evaluateSelectionAnswer(checkedAnswerValues[response.id], answer.answer, answer.acceptableAnswers) === 'partially correct'
+              ? 'partially correct'
+              : 'incorrect'
+          : checkAnswerResponses[response.id] ? 'correct' : 'incorrect';
+      return [[response.id, answerStatus]];
+    }));
+  }, [allResponsesWithDefaults, checkAnswerResponses, checkAnswerScores, checkedAnswerValues, config.correctAnswer, matrixRowFeedback]);
   const alertConfig = useMemo(() => Object.fromEntries(allResponsesWithDefaults.map((response) => {
     const hiddenAlert = {
       visible: false,
@@ -550,12 +606,16 @@ export function ResponseBlock({
     if (!hasCorrectAnswerFeedback || !checkAnswerResponses || !Object.hasOwn(checkAnswerResponses, response.id) || response.type === 'textOnly' || response.type === 'divider') {
       return [response.id, hiddenAlert];
     }
-    if (checkAnswerResponses[response.id]) {
+    const responseFeedback = config.correctAnswer?.find((answer) => answer.id === response.id)?.feedback;
+    const responseStatus = responseStatuses[response.id];
+    const formatMessage = (text: string) => formatTrainingFeedback(text, attemptsUsed, trainingAttempts);
+    if (responseStatus === 'correct') {
       return [response.id, {
-        visible: true, title: 'Correct Answer', message: 'You have answered the question correctly.', color: 'green',
+        visible: true, title: 'Correct Answer', message: formatMessage(getTrainingFeedbackText(responseFeedback?.correctText, attemptsUsed) ?? 'You have answered the question correctly.'), color: 'green', retryAllowed: false, showHelpTextLink: false, fitHeight: responseFeedback !== undefined,
       }];
     }
     let message = '';
+    const partialScore = checkAnswerScores?.[response.id];
     // -1 gives unlimited attempts
     if (trainingAttempts === -1) {
       message = 'Please try again.';
@@ -566,23 +626,18 @@ export function ResponseBlock({
     } else {
       message = `Please try again. You have ${trainingAttempts - attemptsUsed} attempts left.`;
     }
-    if (response.type === 'checkbox') {
-      const correct = config?.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
-      const incorrectValues = storeAnswers[identifier]?.incorrectAnswers?.[response.id]?.value;
-      const lastIncorrect = incorrectValues?.[incorrectValues.length - 1];
-      if (Array.isArray(correct)) {
-        const suppliedAnswer = Array.isArray(lastIncorrect) ? lastIncorrect as string[] : [];
-        const matches = findMatchingStrings(suppliedAnswer, correct);
-
-        const tooManySelected = correct.length === matches.length && suppliedAnswer.length > correct.length ? 'However, you have selected too many boxes. ' : '';
-
-        message = `You have successfully checked ${matches.length}/${correct.length} correct boxes. ${tooManySelected}${message}`;
-      }
+    const exhausted = trainingAttempts >= 0 && attemptsUsed >= trainingAttempts;
+    const isPartiallyCorrect = responseStatus === 'partially correct';
+    message = formatMessage(getTrainingFeedbackText(exhausted ? responseFeedback?.exhaustedText ?? responseFeedback?.incorrectText : responseFeedback?.incorrectText, attemptsUsed) ?? message);
+    if (isPartiallyCorrect) message = `Your answer is partially correct. ${message}`;
+    const hint = exhausted ? undefined : getTrainingFeedbackText(responseFeedback?.hints, attemptsUsed);
+    if (partialScore !== undefined && partialScore >= 0 && partialScore <= 1) {
+      message = `You scored ${Math.round(partialScore * 100)}% on this question. ${message}`;
     }
     return [response.id, {
-      visible: true, title: 'Incorrect Answer', message, color: 'red',
+      visible: true, title: isPartiallyCorrect ? 'Partially Correct' : 'Incorrect Answer', message, color: isPartiallyCorrect ? 'orange' : 'red', retryAllowed: !exhausted, showHelpTextLink: responseFeedback === undefined, fitHeight: responseFeedback !== undefined, hint: hint === undefined ? undefined : formatMessage(hint),
     }];
-  })), [allResponsesWithDefaults, allowFailedTraining, attemptsUsed, checkAnswerResponses, config, hasCorrectAnswerFeedback, identifier, storeAnswers, trainingAttempts]);
+  })), [allResponsesWithDefaults, allowFailedTraining, attemptsUsed, checkAnswerResponses, checkAnswerScores, config, hasCorrectAnswerFeedback, responseStatuses, trainingAttempts]);
   const checkAnswerProvideFeedback = useCallback(() => {
     if (hasStimulusIssue) {
       revealStimulusErrors();
@@ -596,32 +651,109 @@ export function ResponseBlock({
 
     const newAttemptsUsed = attemptsUsed + 1;
 
-    const allAnswers = getAnswersFromAllLocations(trialValidation[identifier]);
+    const allAnswers = getPersistedAnswerValues(
+      getAnswersFromAllLocations(trialValidation[identifier]),
+      allResponsesWithDefaults,
+      config.correctAnswer,
+      currentCheckAnswer,
+    );
 
-    const applicableCorrectAnswers = getApplicableCorrectAnswers(allResponsesWithDefaults, allAnswers, config.correctAnswer);
-    const correctAnswers = Object.fromEntries(
+    const applicableCorrectAnswers = getApplicableCorrectAnswers(allResponsesWithDefaults, allAnswers, config.correctAnswer)
+      .filter((answer) => {
+        const response = allResponsesWithDefaults.find((candidate) => candidate.id === answer.id);
+        return response?.required !== false || isResponseAnsweredForScoring(response, allAnswers[answer.id], allAnswers);
+      });
+    const scores: Record<string, number> = {};
+    const scoringErrors: string[] = [];
+    applicableCorrectAnswers.forEach((answer) => {
+      const response = allResponsesWithDefaults.find((r) => r.id === answer.id);
+      if (response?.path && isResponseAnsweredForScoring(response, allAnswers[answer.id], allAnswers)) {
+        const score = scoreResponseAnswer(
+          allAnswers[answer.id],
+          answer,
+          response,
+          allAnswers,
+        );
+        if (score === null) {
+          scoringErrors.push(response.id);
+        } else if (hasResponseScorer(response)) {
+          scores[answer.id] = score;
+        }
+      }
+    });
+    if (scoringErrors.length > 0) {
+      showNotification({
+        title: 'Unable to Check Answer',
+        message: `The scoring configuration could not be loaded for: ${scoringErrors.join(', ')}. Please contact the study administrator.`,
+        color: 'red',
+      });
+      return;
+    }
+    const responseCorrectness: Record<string, boolean> = Object.fromEntries(
       applicableCorrectAnswers.map((configCorrectAnswer) => {
         const response = allResponsesWithDefaults.find((r) => r.id === configCorrectAnswer.id);
         const suppliedAnswer = allAnswers[configCorrectAnswer.id];
-
-        return [configCorrectAnswer.id, responseAnswerIsCorrect(
-          suppliedAnswer,
-          configCorrectAnswer.answer,
-          configCorrectAnswer.acceptableLow,
-          configCorrectAnswer.acceptableHigh,
-          { ignoreArrayOrder: response?.type === 'checkbox' || response?.type === 'dropdown' },
-        )];
+        if (response?.required !== false && !isResponseAnsweredForScoring(response, suppliedAnswer, allAnswers)) {
+          return [configCorrectAnswer.id, false];
+        }
+        const score = Object.hasOwn(scores, configCorrectAnswer.id)
+          ? scores[configCorrectAnswer.id]
+          : scoreResponseAnswerWithStatus(suppliedAnswer, configCorrectAnswer, response, allAnswers).score;
+        return [configCorrectAnswer.id, isResponseScoreCorrect(score, configCorrectAnswer.correctnessThreshold) === true];
       }),
     );
-    const allCorrect = Object.values(correctAnswers).every((isCorrect) => isCorrect);
+    const expectedAnswerIds = new Set(applicableCorrectAnswers.map((answer) => answer.id));
+    const visibleResponseIds = resolveResponseVisibility(
+      allResponsesWithDefaults,
+      allAnswers,
+      {},
+      config.correctAnswer,
+      undefined,
+    ).visibleIds;
+    allResponsesWithDefaults.forEach((response) => {
+      if (!visibleResponseIds.has(response.id)
+        || expectedAnswerIds.has(response.id)
+        || !response.path
+        || !isResponseAnsweredForScoring(response, allAnswers[response.id], allAnswers)) return;
+
+      const { score, error } = scoreResponseAnswerWithStatus(
+        allAnswers[response.id],
+        undefined,
+        response,
+        allAnswers,
+      );
+      if (error) {
+        scoringErrors.push(response.id);
+      } else if (score !== null) {
+        scores[response.id] = score;
+        responseCorrectness[response.id] = isResponseScoreCorrect(score) === true;
+      } else if (response.required !== false && hasResponseScorer(response)) {
+        responseCorrectness[response.id] = false;
+      }
+    });
+    allResponsesWithDefaults.forEach((response) => {
+      if (visibleResponseIds.has(response.id)
+        && !expectedAnswerIds.has(response.id)
+        && isRequiredResponseUngraded(response, allAnswers[response.id], allAnswers)) {
+        responseCorrectness[response.id] = false;
+      }
+    });
+    if (scoringErrors.length > 0) {
+      showNotification({
+        title: 'Unable to Check Answer',
+        message: `The scoring configuration could not be loaded for: ${[...new Set(scoringErrors)].join(', ')}. Please contact the study administrator.`,
+        color: 'red',
+      });
+      return;
+    }
+    const allCorrect = Object.values(responseCorrectness).every((isCorrect) => isCorrect);
 
     if (hasCorrectAnswerFeedback) {
-      applicableCorrectAnswers.forEach((configCorrectAnswer) => {
-        const response = allResponsesWithDefaults.find((r) => r.id === configCorrectAnswer.id);
-        if (!response || response.type === 'textOnly' || response.type === 'divider') {
+      allResponsesWithDefaults.forEach((response) => {
+        if (response.type === 'textOnly' || response.type === 'divider') {
           return;
         }
-        if (!correctAnswers[response.id]) {
+        if (responseCorrectness[response.id] === false) {
           storeDispatch(saveIncorrectAnswer({ question: identifier, identifier: response.id, answer: allAnswers[response.id] }));
         }
       });
@@ -631,9 +763,11 @@ export function ResponseBlock({
       identifier,
       attemptsUsed: newAttemptsUsed,
       correct: allCorrect,
-      responses: correctAnswers,
+      responses: responseCorrectness,
+      ...(Object.keys(scores).length > 0 ? { scores, answerSnapshot: structuredClone(allAnswers) } : {}),
+      checkedAnswers: structuredClone(allAnswers),
     }));
-  }, [allResponsesWithDefaults, attemptsUsed, config, hasCorrectAnswerFeedback, hasResponseIssues, hasStimulusIssue, identifier, revealResponseErrors, revealStimulusErrors, saveIncorrectAnswer, setCheckAnswerResult, storeDispatch, trialValidation]);
+  }, [allResponsesWithDefaults, attemptsUsed, config, currentCheckAnswer, hasCorrectAnswerFeedback, hasResponseIssues, hasStimulusIssue, identifier, revealResponseErrors, revealStimulusErrors, saveIncorrectAnswer, setCheckAnswerResult, storeDispatch, trialValidation]);
 
   const nextButtonText = useMemo(() => config?.nextButtonText ?? studyConfig.uiConfig.nextButtonText ?? 'Next', [config, studyConfig]);
 
@@ -667,7 +801,7 @@ export function ResponseBlock({
       // The resolved route key is authoritative for legacy records that were
       // persisted without their internal identifier.
       identifier,
-      answer: getPersistedAnswersFromAllLocations(trialValidation[identifier], config.response, config.correctAnswer),
+      answer: getPersistedAnswersFromAllLocations(trialValidation[identifier], config.response, config.correctAnswer, currentCheckAnswer),
       checkAnswer: currentCheckAnswer,
     };
 
@@ -692,7 +826,7 @@ export function ResponseBlock({
 
   // If the user has failed the training, wait 5 seconds and redirect to a fail page
   useEffect(() => {
-    if (isAnalysis || !showBtnsInLocation || currentCheckAnswer === undefined || hasCorrectAnswer || allowFailedTraining || !usedAllAttempts) {
+    if (isAnalysis || !showBtnsInLocation || !hasCorrectAnswerFeedback || currentCheckAnswer === undefined || hasCorrectAnswer || allowFailedTraining || !usedAllAttempts) {
       return undefined;
     }
 
@@ -700,7 +834,7 @@ export function ResponseBlock({
       navigate(`./../__trainingFailed${window.location.search}`);
     }, 5000);
     return () => clearTimeout(timer);
-  }, [allowFailedTraining, currentCheckAnswer, hasCorrectAnswer, isAnalysis, navigate, showBtnsInLocation, usedAllAttempts]);
+  }, [allowFailedTraining, currentCheckAnswer, hasCorrectAnswer, hasCorrectAnswerFeedback, isAnalysis, navigate, showBtnsInLocation, usedAllAttempts]);
 
   const handleNextClick = useCallback(() => {
     if (hasStimulusIssue) {
@@ -721,65 +855,84 @@ export function ResponseBlock({
     <>
       <Box className={`responseBlock responseBlock-${location}`} style={style}>
         {applicableResponses.map((response) => {
-          const configCorrectAnswer = config.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
-          const correctAnswer = configCorrectAnswer === undefined
-            ? undefined
-            : (typeof configCorrectAnswer === 'object' ? JSON.stringify(configCorrectAnswer) : `${configCorrectAnswer}`);
+          const configCorrectAnswer = config.correctAnswer?.find((answer) => answer.id === response.id);
+          const correctAnswer = configCorrectAnswer ? formatCorrectAnswer(configCorrectAnswer) : undefined;
           // Check if this response is in the current location
           const isInCurrentLocation = responses.some((r) => r.id === response.id);
 
-          if (isInCurrentLocation) {
-            // Text and divider responses do not represent numbered questions.
-            if (response.type !== 'textOnly' && response.type !== 'divider') {
+          const isNonQuestion = response.type === 'textOnly' || response.type === 'divider';
+          if (isInCurrentLocation && !response.hidden) {
+            if (isNonQuestion) {
+              if ('restartEnumeration' in response && Boolean(response.restartEnumeration)) {
+                index = 0;
+              }
+              // Do NOT increment index for non-question elements
+            } else {
               index += 1;
-            } else if (response.type === 'textOnly' && response.restartEnumeration) {
-              index = 0;
             }
           }
+          const currentIndex = index;
 
           return (
             <React.Fragment key={`${response.id}-${currentStep}`}>
               {isInCurrentLocation ? (
                 response.hidden ? '' : (
                   <div data-question-id={response.id}>
-                    <ResponseSwitcher
-                      storedAnswer={storedAnswer}
-                      answerFinalized={!!status && status.endTime !== -1}
-                      form={{
-                        ...answerValidator.getInputProps(response.id),
-                        onChange: (value: unknown, source: 'keyboard' | 'click' = 'click') => trackInputChange(response.id, value, source),
-                      }}
-                      dontKnowCheckbox={usesStandaloneDontKnowField(response)
-                        ? {
-                          ...answerValidator.getInputProps(`${response.id}-dontKnow`, { type: 'checkbox' }),
-                        }
-                        : undefined}
-                      otherInput={{
-                        ...answerValidator.getInputProps(`${response.id}-other`),
-                      }}
-                      field={response.type === 'custom'
-                        ? {
-                          getInputProps: () => answerValidator.getInputProps(response.id),
-                          setValue: (value) => answerValidator.setFieldValue(response.id, value),
-                          onBlur: () => answerValidator.getInputProps(response.id).onBlur?.(),
-                        } as CustomResponseField
-                        : undefined}
-                      customError={response.type === 'custom'
-                        ? generateCustomResponseErrorMessage(
-                          response,
-                          answerValidator.values[response.id],
-                          answerValidator.values,
-                          customResponseValidators[response.id],
-                          customResponseLoadErrors[response.id],
-                          { showRequiredErrors: errors },
-                        )
-                        : undefined}
-                      response={response}
-                      index={index}
-                      config={config}
-                      disabled={disabledAttempts}
-                      errors={errors}
-                    />
+                    <DelayedResponseWrapper delay={response.delay}>
+                      {(isDelayedDisabled: boolean) => (
+                        <ResponseSwitcher
+                          storedAnswer={storedAnswer}
+                          answerFinalized={!!status && status.endTime !== -1}
+                          form={{
+                            ...answerValidator.getInputProps(response.id),
+                            onChange: (value: unknown, source: 'keyboard' | 'click' = 'click') => trackInputChange(response.id, value, source),
+                          }}
+                          dontKnowCheckbox={usesStandaloneDontKnowField(response)
+                            ? {
+                              ...answerValidator.getInputProps(`${response.id}-dontKnow`, { type: 'checkbox' }),
+                            }
+                            : undefined}
+                          otherInput={{
+                            ...answerValidator.getInputProps(`${response.id}-other`),
+                          }}
+                          field={response.type === 'custom'
+                            ? {
+                              getInputProps: () => answerValidator.getInputProps(response.id),
+                              setValue: (value) => answerValidator.setFieldValue(response.id, value),
+                              onBlur: () => answerValidator.getInputProps(response.id).onBlur?.(),
+                            } as CustomResponseField
+                            : undefined}
+                          validationContext={{ ...combinedValues, ...answerValidator.values }}
+                          customError={response.type === 'custom'
+                            ? generateCustomResponseErrorMessage(
+                              response,
+                              answerValidator.values[response.id],
+                              { ...combinedValues, ...answerValidator.values },
+                              customResponseValidators[response.id],
+                              customResponseLoadErrors[response.id],
+                              { showRequiredErrors: errors },
+                            )
+                            : undefined}
+                          response={response}
+                          index={currentIndex}
+                          config={config}
+                          matrixRowFeedback={matrixRowFeedback[response.id]}
+                          disabled={disabledAttempts}
+                          isDelayedDisabled={isDelayedDisabled}
+                          errors={errors}
+                        />
+                      )}
+                    </DelayedResponseWrapper>
+                    {response.type === 'likert' && responseStatuses[response.id] && (
+                      <Text
+                        role="status"
+                        size="sm"
+                        mt="xs"
+                        c={responseStatuses[response.id] === 'correct' ? 'green' : responseStatuses[response.id] === 'partially correct' ? 'orange' : 'red'}
+                      >
+                        {responseStatuses[response.id]}
+                      </Text>
+                    )}
                     <FeedbackAlert
                       response={response}
                       correctAnswer={correctAnswer}
@@ -823,23 +976,22 @@ export function ResponseBlock({
 
       {showBtnsInLocation && (
         <NextButton
-          disabled={(hasCorrectAnswerFeedback && !enableNextButton)}
+          disabled={hasCorrectAnswerFeedback && !canContinueAfterFeedback && (!config.hideCheckAnswerButton || disabledAttempts)}
           label={nextButtonText}
           config={config}
           location={location}
           onNext={handleNextClick}
           onCheckAnswer={!isAnalysis && hasCorrectAnswerFeedback && !disabledAttempts ? checkAnswerProvideFeedback : undefined}
-          checkAnswer={showBtnsInLocation && hasCorrectAnswerFeedback ? (
+          checkAnswer={hasCorrectAnswerFeedback && !config.hideCheckAnswerButton ? (
             <Button
-              disabled={disabledAttempts}
-              onClick={() => checkAnswerProvideFeedback()}
-              px={location === 'sidebar' ? 8 : undefined}
+              disabled={isAnalysis || disabledAttempts}
+              onClick={checkAnswerProvideFeedback}
               aria-label="Check Answer"
-              rightSection={(config?.nextOnEnter ?? studyConfig.uiConfig.nextOnEnter) ? <Kbd size="xs" aria-hidden="true">↵ Enter</Kbd> : undefined}
+              rightSection={(config.nextOnEnter ?? studyConfig.uiConfig.nextOnEnter) ? <Kbd size="xs" aria-hidden="true">↵ Enter</Kbd> : undefined}
             >
               Check Answer
             </Button>
-          ) : null}
+          ) : undefined}
         />
       )}
     </>

@@ -81,4 +81,6 @@ export interface ParticipantDataWithStatus extends ParticipantData {
    * `getParticipantDataStatus` rather than combining this with `completed`.
    */
   timedOut?: boolean;
+  /** Assignment registration time in epoch milliseconds; server-generated for cloud engines. */
+  assignmentCreatedTime?: number;
 }

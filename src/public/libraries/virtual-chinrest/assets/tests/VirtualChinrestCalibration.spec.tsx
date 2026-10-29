@@ -50,13 +50,15 @@ vi.mock('../../../../../store/store', () => ({
   useStoreSelector: (selector: (state: { answers: Record<string, unknown> }) => unknown) => selector({ answers: mockAnswers.value }),
 }));
 
-const useTrrack = vi.fn(() => ({ apply: mockApply })) as never;
+const mockUseTrrack = vi.fn(({ initialState }: { initialState: unknown }) => ({ apply: mockApply, getState: () => initialState, currentChange: () => () => true }));
+const useTrrack = mockUseTrrack as never;
 
 describe('VirtualChinrestCalibration replay', () => {
   afterEach(cleanup);
 
   beforeEach(() => {
     mockApply.mockReset();
+    mockUseTrrack.mockClear();
     mockIsAnalysis.value = true;
     mockStoredAnswer.value = {
       componentName: '$virtual-chinrest.components.card-size',
@@ -64,6 +66,62 @@ describe('VirtualChinrestCalibration replay', () => {
       answer: { pixelsPerMM: 5 },
     };
     mockAnswers.value = {};
+  });
+
+  test('seeds a legacy saved calibration into the new graph instead of graph defaults', () => {
+    mockIsAnalysis.value = false;
+    render(<VirtualChinrestCalibration
+      parameters={{ taskid: 'pixelsPerMM' }}
+      itemWidthMM={85.6}
+      itemHeightMM={53.98}
+      fixedCorner="top-left"
+      answers={{}}
+      setAnswer={vi.fn()}
+      useTrrack={useTrrack}
+    />);
+    expect(mockUseTrrack.mock.calls[0][0].initialState).toEqual({ itemWidthPx: 428, isCalibrationComplete: true });
+    expect(mockApply).not.toHaveBeenCalled();
+  });
+
+  test('seeds legacy viewing-distance answers without inventing measurement events', () => {
+    mockIsAnalysis.value = false;
+    mockStoredAnswer.value = {
+      componentName: '$virtual-chinrest.components.viewing-distance', trialOrder: '3',
+      answer: { 'dist-calibration-MM': 600, 'ball-positions': '[400,350]' },
+    };
+    render(<ViewingDistanceCalibration parameters={{ blindspotAngle: 13.5 }} answers={{}} setAnswer={vi.fn()} useTrrack={useTrrack} />);
+    expect(mockUseTrrack.mock.calls[0][0].initialState).toEqual({ ballPosition: 350, ballPositions: [400, 350], viewingDistance: 600 });
+    expect(mockApply).not.toHaveBeenCalled();
+  });
+
+  test('keeps the retained graph ahead of older saved answers', () => {
+    mockIsAnalysis.value = false;
+    mockUseTrrack.mockImplementationOnce(() => ({
+      apply: mockApply,
+      getState: () => ({ itemWidthPx: 370, isCalibrationComplete: false }),
+      currentChange: () => () => true,
+    }));
+    const card = render(<VirtualChinrestCalibration
+      parameters={{ taskid: 'pixelsPerMM' }} itemWidthMM={85.6} itemHeightMM={53.98} fixedCorner="top-left"
+      answers={{}} setAnswer={vi.fn()} useTrrack={useTrrack}
+    />);
+    expect(card.getByTestId('slider').getAttribute('data-value')).toBe('370');
+    expect(card.queryByText(/Calibration Complete/)).toBeNull();
+    card.unmount();
+    mockAnswers.value = {
+      card: { componentName: '$virtual-chinrest.components.card-size', trialOrder: '1', answer: { pixelsPerMM: 5 } },
+    };
+    mockStoredAnswer.value = { trialOrder: '2', answer: { 'dist-calibration-MM': 600, 'ball-positions': '[400,350,300,250,200]' } };
+    mockUseTrrack.mockImplementationOnce(() => ({
+      apply: mockApply,
+      getState: () => ({ ballPosition: 350, ballPositions: [400, 350], viewingDistance: null }),
+      currentChange: () => () => true,
+    }));
+    const distance = render(<ViewingDistanceCalibration parameters={{ blindspotAngle: 13.5 }} answers={{}} setAnswer={vi.fn()} useTrrack={useTrrack} />);
+    expect(distance.getByText(/Remaining measurements:/).textContent).toContain('3');
+    expect(distance.getByTestId('blindspot-ball').style.left).toBe('740px');
+    expect(mockUseTrrack.mock.results.at(-1)?.value.getState()).toEqual({ ballPosition: 350, ballPositions: [400, 350], viewingDistance: null });
+    expect(mockApply).not.toHaveBeenCalled();
   });
 
   test('rehydrates the saved calibration and keeps analysis controls read-only', async () => {

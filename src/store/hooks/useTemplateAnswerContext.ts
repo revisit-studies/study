@@ -5,12 +5,12 @@ import { useCurrentComponent, useCurrentStep } from '../../routes/utils';
 import { decryptIndex } from '../../utils/encryptDecryptIndex';
 
 // Shared Handlebars data frame for every templated string (instructions, help text, markdown
-// stimuli, response prompts). answers/flatSequence/currentStep let the `lookupAnswers` and
-// `lookupAnswersRel` helpers (src/utils/handlebars.ts) walk prior trials to pull in earlier
-// answers. currentComponent/funcIndex are only non-trivial inside a dynamic block, where a
-// single flatSequence step fans out into many answer-bearing iterations; without them,
-// `lookupAnswersRel` can't tell which iteration is "current" and relative lookups would be
-// ambiguous.
+// stimuli, response prompts). answers/flatSequence/currentStep let the lookup helpers
+// (src/utils/handlebars.ts: `lookupAnswers`, `lookupParameters`, `lookupCorrectAnswer` and their
+// `Rel` forms) walk other trials to pull in their answers, parameters, and correct answers.
+// currentComponent/funcIndex are only non-trivial inside a dynamic block, where a single
+// flatSequence step fans out into many answer-bearing iterations; without them, the `Rel`
+// helpers can't tell which iteration is "current" and relative lookups would be ambiguous.
 //
 // This hook holds its own `useCurrentComponent()` instance, separate from the one a parent
 // controller may already have resolved. Inside a dynamic block that resolver starts out as

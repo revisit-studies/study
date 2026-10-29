@@ -4,13 +4,14 @@ import type {
   SkipConditions,
   StudyConfig,
 } from '../parser/types';
-import type { Sequence, StoredAnswer } from '../store/types';
+import type { CheckAnswerState, Sequence, StoredAnswer } from '../store/types';
 import { componentAnswersAreCorrect } from './componentCorrectness';
+import { hasResponseScorer, isResponseScorerUnavailable } from './correctAnswer';
 import { findIndexOfBlock } from './getSequenceFlatMap';
 import { studyComponentToIndividualComponent } from './handleComponentInheritance';
 import { parseTrialOrder } from './parseTrialOrder';
 
-export type SkipEvaluationAnswer = Pick<StoredAnswer, 'answer' | 'timedOut'>;
+export type SkipEvaluationAnswer = Pick<StoredAnswer, 'answer' | 'timedOut'> & { checkAnswer?: CheckAnswerState; correctAnswer?: StoredAnswer['correctAnswer'] };
 
 export type SkipConditionWithExtents = SkipConditions[number] & {
   firstIndex: number;
@@ -21,28 +22,40 @@ export function areComponentAnswersCorrect(
   answers: StoredAnswer['answer'],
   componentConfig: IndividualComponent | InheritedComponent,
   studyConfig: StudyConfig,
+  checkAnswer?: CheckAnswerState,
+  correctAnswers?: StoredAnswer['correctAnswer'],
 ) {
   const resolvedComponentConfig = studyComponentToIndividualComponent(componentConfig, studyConfig);
 
-  if (!resolvedComponentConfig.correctAnswer) {
+  const answerRules = correctAnswers ?? resolvedComponentConfig.correctAnswer;
+  const hasSavedScores = Object.keys(checkAnswer?.scores ?? {}).length > 0;
+  const hasConfiguredScorer = resolvedComponentConfig.response?.some((response) => (
+    hasResponseScorer(response) || isResponseScorerUnavailable(response)
+  ));
+  if (!answerRules?.length
+    && !hasConfiguredScorer
+    && !hasSavedScores) {
     return true;
   }
 
   return componentAnswersAreCorrect(
     answers,
-    resolvedComponentConfig.correctAnswer,
+    answerRules,
     resolvedComponentConfig.response,
+    checkAnswer,
   );
 }
 
 export function getSkipConditionCorrectAnswers(
-  componentsToCheck: Array<[string, Pick<SkipEvaluationAnswer, 'answer'>]>,
+  componentsToCheck: Array<[string, Pick<SkipEvaluationAnswer, 'answer' | 'checkAnswer' | 'correctAnswer'>]>,
   studyConfig: StudyConfig,
 ) {
   return componentsToCheck.map(([candidateComponentName, responseObj]) => areComponentAnswersCorrect(
     responseObj.answer,
     studyConfig.components[candidateComponentName.slice(0, candidateComponentName.lastIndexOf('_'))],
     studyConfig,
+    responseObj.checkAnswer,
+    responseObj.correctAnswer,
   ));
 }
 
@@ -52,6 +65,8 @@ export function getStoredAnswersForSkipEvaluation(answers: Record<string, Stored
       acc[key] = {
         answer: responseObj.answer,
         timedOut: false,
+        checkAnswer: responseObj.checkAnswer,
+        correctAnswer: responseObj.correctAnswer,
       };
     }
     return acc;
@@ -110,11 +125,13 @@ export function conditionIsTriggered(
 
   if (condition.check === 'responses') {
     const [componentId, response] = componentsToCheck[0];
-    return !areComponentAnswersCorrect(
+    return areComponentAnswersCorrect(
       response.answer,
       studyConfig.components[componentId.slice(0, componentId.lastIndexOf('_'))],
       studyConfig,
-    );
+      response.checkAnswer,
+      response.correctAnswer,
+    ) === false;
   }
 
   if (componentsToCheck.length < condition.value) {
@@ -122,8 +139,8 @@ export function conditionIsTriggered(
   }
 
   const correctAnswers = getSkipConditionCorrectAnswers(componentsToCheck, studyConfig);
-  const numCorrect = correctAnswers.filter((correct) => correct).length;
-  const numIncorrect = correctAnswers.length - numCorrect;
+  const numCorrect = correctAnswers.filter((correct) => correct === true).length;
+  const numIncorrect = correctAnswers.filter((correct) => correct === false).length;
 
   return (condition.condition === 'numCorrect' && numCorrect === condition.value)
     || (condition.condition === 'numIncorrect' && numIncorrect === condition.value);

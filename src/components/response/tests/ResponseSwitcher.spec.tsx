@@ -4,17 +4,19 @@ import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
 import type { IndividualComponent, JsonValue, Response } from '../../../parser/types';
+import * as responseErrors from '../responseErrors';
 import { ResponseSwitcher } from '../ResponseSwitcher';
 
 // ── mocks ────────────────────────────────────────────────────────────────────
 
 const {
-  capturedStringInputProps, mockIsAnalysis, mockStoreState, mockCurrentComponent,
+  capturedStringInputProps, capturedCustomInputProps, mockIsAnalysis, mockStoreState, mockCurrentComponent,
 } = vi.hoisted(() => ({
   capturedStringInputProps: {
     disabled: undefined as boolean | undefined,
     answer: undefined as { value?: unknown; readOnly?: boolean } | undefined,
   },
+  capturedCustomInputProps: { disabled: undefined as boolean | undefined },
   mockIsAnalysis: { value: false },
   mockStoreState: {
     sequence: {
@@ -60,7 +62,10 @@ vi.mock('../../../store/store', () => ({
 }));
 
 vi.mock('../CustomResponseInput', () => ({
-  CustomResponseInput: () => null,
+  CustomResponseInput: ({ disabled }: { disabled: boolean }) => {
+    capturedCustomInputProps.disabled = disabled;
+    return null;
+  },
 }));
 
 vi.mock('../StringInput', () => ({
@@ -79,9 +84,10 @@ const response = {
 
 const form = { value: 'live', onChange: vi.fn() } as Parameters<typeof ResponseSwitcher>[0]['form'];
 
-function renderSwitcher({ storedAnswer, answerFinalized }: {
+function renderSwitcher({ storedAnswer, answerFinalized, isDelayedDisabled }: {
   storedAnswer?: Record<string, JsonValue>;
   answerFinalized?: boolean;
+  isDelayedDisabled?: boolean;
 }) {
   return render(
     <ResponseSwitcher
@@ -91,6 +97,7 @@ function renderSwitcher({ storedAnswer, answerFinalized }: {
       config={{} as IndividualComponent}
       storedAnswer={storedAnswer}
       answerFinalized={answerFinalized}
+      isDelayedDisabled={isDelayedDisabled}
     />,
   );
 }
@@ -100,6 +107,7 @@ function renderSwitcher({ storedAnswer, answerFinalized }: {
 beforeEach(() => {
   capturedStringInputProps.disabled = undefined;
   capturedStringInputProps.answer = undefined;
+  capturedCustomInputProps.disabled = undefined;
   mockIsAnalysis.value = false;
   mockCurrentComponent.value = '';
   mockStoreState.completed = false;
@@ -197,6 +205,41 @@ describe('ResponseSwitcher stored answer locking', () => {
   });
 });
 
+test('does not replace sibling response values with unsupported auxiliary fields', () => {
+  const generateErrorMessage = vi.spyOn(responseErrors, 'generateErrorMessage');
+  const config: IndividualComponent = {
+    type: 'questionnaire',
+    response: [
+      response,
+      { id: 'q1-other', type: 'shortText', prompt: '' },
+      { id: 'q1-dontKnow', type: 'shortText', prompt: '' },
+    ],
+  };
+
+  render(
+    <ResponseSwitcher
+      response={response}
+      form={form}
+      index={1}
+      config={config}
+      validationContext={{ 'q1-other': 'sibling other', 'q1-dontKnow': 'sibling don’t know' }}
+    />,
+  );
+
+  expect(generateErrorMessage).toHaveBeenCalledWith(
+    response,
+    expect.anything(),
+    undefined,
+    expect.objectContaining({
+      values: expect.objectContaining({
+        'q1-other': 'sibling other',
+        'q1-dontKnow': 'sibling don’t know',
+      }),
+    }),
+  );
+  generateErrorMessage.mockRestore();
+});
+
 describe('ResponseSwitcher style overrides', () => {
   test('lets an explicit width control the response and releases the input cap', () => {
     const { container } = render(
@@ -233,6 +276,59 @@ describe('ResponseSwitcher style overrides', () => {
     expect(wrapper?.style.borderWidth).toBe('0px');
     expect(wrapper?.style.borderRadius).toBe('0px');
     expect(wrapper?.style.backgroundColor).toBe('white');
+  });
+});
+
+describe('ResponseSwitcher delay state', () => {
+  test('applies inert and delay styling to the response root only while delayed', () => {
+    const delayedResponse = { ...response, delay: 5000 } as Response;
+    const { container, rerender } = render(
+      <ResponseSwitcher
+        response={delayedResponse}
+        form={form}
+        index={1}
+        config={{} as IndividualComponent}
+        isDelayedDisabled
+      />,
+    );
+    const responseElement = container.querySelector('.response') as HTMLDivElement;
+
+    expect(responseElement.getAttribute('data-testid')).toBe('delay-wrapper-q1');
+    expect(responseElement.hasAttribute('inert')).toBe(true);
+    expect(responseElement.getAttribute('tabindex')).toBe('-1');
+    expect(responseElement.style.pointerEvents).toBe('none');
+    expect(responseElement.style.opacity).toBe('0.4');
+    expect(capturedStringInputProps.disabled).toBe(true);
+
+    rerender(
+      <ResponseSwitcher
+        response={delayedResponse}
+        form={form}
+        index={1}
+        config={{} as IndividualComponent}
+        isDelayedDisabled={false}
+      />,
+    );
+
+    expect(responseElement.hasAttribute('inert')).toBe(false);
+    expect(responseElement.style.pointerEvents).toBe('');
+    expect(responseElement.style.opacity).toBe('');
+    expect(capturedStringInputProps.disabled).toBe(false);
+  });
+
+  test.each([true, false])('passes timer-disabled state %s to custom responses', (isDelayedDisabled) => {
+    render(
+      <ResponseSwitcher
+        response={{ id: 'custom', type: 'custom', path: 'custom.tsx' } as Response}
+        form={form}
+        field={{ getInputProps: () => form, setValue: vi.fn(), onBlur: vi.fn() }}
+        index={1}
+        config={{} as IndividualComponent}
+        isDelayedDisabled={isDelayedDisabled}
+      />,
+    );
+
+    expect(capturedCustomInputProps.disabled).toBe(isDelayedDisabled);
   });
 });
 

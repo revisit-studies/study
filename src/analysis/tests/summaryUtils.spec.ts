@@ -97,8 +97,9 @@ function createMockAnswer(overrides: {
   componentName: string;
   startTime: number;
   endTime: number;
-  answer?: Record<string, string | number | boolean | string[]>;
-  correctAnswer?: Array<{ id: string; answer: string | number | boolean | string[] }>;
+  answer?: StoredAnswer['answer'];
+  correctAnswer?: StoredAnswer['correctAnswer'];
+  checkAnswer?: StoredAnswer['checkAnswer'];
   invalidCleanTime?: boolean;
 }): StoredAnswer {
   const { invalidCleanTime = false, ...answerOverrides } = overrides;
@@ -1700,6 +1701,164 @@ describe('utils.tsx', () => {
       const result = getComponentStats(participants, studyConfig);
 
       expect(result[0].correctness).toBe(100);
+    });
+
+    it('should prefer saved partial response scores in component correctness', () => {
+      const participants = [createMockParticipant({
+        participantId: '1',
+        completed: true,
+        answers: {
+          comp1_1: createMockAnswer({
+            componentName: 'comp1',
+            startTime: 1,
+            endTime: 10000,
+            answer: { q1: 5 },
+            correctAnswer: [{ id: 'q1', answer: 10, correctnessThreshold: 0.8 }],
+            checkAnswer: {
+              attemptsUsed: 1,
+              correct: false,
+              responses: { q1: false },
+              scores: { q1: 0.8 },
+              answerSnapshot: { q1: 5 },
+            },
+          }),
+        },
+      })];
+      const studyConfig = makeConfig({
+        components: {
+          comp1: {
+            type: 'questionnaire',
+            response: [{
+              id: 'q1', type: 'numerical', prompt: 'Score', path: 'test-response-functions/assets/PartialScore.response.ts',
+            }],
+          },
+        },
+      });
+
+      expect(getComponentStats(participants, studyConfig)[0]).toMatchObject({
+        correctness: 100,
+        correctCount: 1,
+      });
+    });
+
+    it('does not count validation-only responses as graded correctness', () => {
+      const participants = [createMockParticipant({
+        participantId: '1',
+        completed: true,
+        answers: {
+          comp1_1: createMockAnswer({
+            componentName: 'comp1',
+            startTime: 1,
+            endTime: 10000,
+            answer: { even: '' },
+          }),
+        },
+      })];
+      const studyConfig = makeConfig({
+        components: {
+          comp1: {
+            type: 'questionnaire',
+            response: [{
+              id: 'even', type: 'numerical', prompt: 'Even number', path: 'test-response-functions/assets/EvenNumber.response.ts',
+            }],
+          },
+        },
+      });
+
+      expect(getComponentStats(participants, studyConfig)[0]).toMatchObject({
+        correctness: NaN,
+        correctCount: 0,
+        totalQuestionCount: 0,
+      });
+    });
+
+    it('excludes recursively empty custom and matrix values from grading', () => {
+      const participants = [createMockParticipant({
+        participantId: '1',
+        completed: true,
+        answers: {
+          comp1_1: createMockAnswer({
+            componentName: 'comp1',
+            startTime: 1,
+            endTime: 10000,
+            answer: { custom: {}, matrix: { row: '' } },
+          }),
+        },
+      })];
+      const studyConfig = makeConfig({
+        components: {
+          comp1: {
+            type: 'questionnaire',
+            response: [{
+              id: 'custom',
+              type: 'custom',
+              prompt: 'Custom',
+              required: false,
+              default: {},
+              path: 'test-response-functions/assets/CustomPartialScore.tsx',
+            }, {
+              id: 'matrix',
+              type: 'matrix-radio',
+              prompt: 'Matrix',
+              required: false,
+              answerOptions: ['A', 'B'],
+              questionOptions: ['row'],
+              default: { row: '' },
+              path: 'test-response-functions/assets/EvenNumber.response.ts',
+            }],
+          },
+        },
+      });
+
+      expect(getComponentStats(participants, studyConfig)[0]).toMatchObject({
+        correctness: NaN,
+        correctCount: 0,
+        totalQuestionCount: 0,
+      });
+    });
+
+    it('should use saved scores when determining historical correctness visibility', () => {
+      const participants = [createMockParticipant({
+        participantId: '1',
+        completed: true,
+        answers: {
+          comp1_1: createMockAnswer({
+            componentName: 'comp1',
+            startTime: 1,
+            endTime: 10000,
+            answer: { controller: { score: 5 } },
+            correctAnswer: [{ id: 'controller', answer: { score: 10 } }, { id: 'followUp', answer: 'expected' }],
+            checkAnswer: {
+              attemptsUsed: 1,
+              correct: true,
+              responses: { controller: true },
+              scores: { controller: 1 },
+              answerSnapshot: { controller: { score: 5 } },
+            },
+          }),
+        },
+      })];
+      const studyConfig = makeConfig({
+        components: {
+          comp1: {
+            type: 'questionnaire',
+            response: [{
+              id: 'controller', type: 'custom', prompt: 'Score', path: 'test-response-functions/assets/CustomPartialScore.tsx',
+            }, {
+              id: 'followUp',
+              type: 'shortText',
+              prompt: 'Follow up',
+              visibleIf: { responseId: 'controller', comparison: 'isCorrect', value: false },
+            }],
+          },
+        },
+      });
+
+      expect(getComponentStats(participants, studyConfig)[0]).toMatchObject({
+        correctness: 100,
+        correctCount: 1,
+        totalQuestionCount: 1,
+      });
     });
 
     it('should use each participant config hash when calculating correctness', () => {

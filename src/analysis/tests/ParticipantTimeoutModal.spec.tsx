@@ -11,7 +11,7 @@ import {
 import { makeParticipant } from '../../tests/utils';
 
 let mockUser: { isAdmin: boolean };
-let mockStorageEngine: { rejectParticipant: ReturnType<typeof vi.fn> } | undefined;
+let mockStorageEngine: { timeoutParticipant: ReturnType<typeof vi.fn> } | undefined;
 
 vi.mock('../../storage/storageEngineHooks', () => ({
   useStorageEngine: () => ({ storageEngine: mockStorageEngine }),
@@ -49,7 +49,7 @@ vi.mock('@tabler/icons-react', () => ({
 describe('ParticipantTimeoutModal', () => {
   beforeEach(() => {
     mockUser = { isAdmin: true };
-    mockStorageEngine = { rejectParticipant: vi.fn().mockResolvedValue(undefined) };
+    mockStorageEngine = { timeoutParticipant: vi.fn().mockResolvedValue(undefined) };
   });
 
   afterEach(() => {
@@ -61,8 +61,8 @@ describe('ParticipantTimeoutModal', () => {
     const participants = getInProgressParticipantsByElapsedTime([
       makeParticipant({ participantId: 'completed', createdTime: 100, completed: true }),
       makeParticipant({ participantId: 'rejected', createdTime: 100, rejected: { reason: 'test', timestamp: 1 } }),
-      makeParticipant({ participantId: 'short', createdTime: 900 }),
-      makeParticipant({ participantId: 'long', createdTime: 100 }),
+      makeParticipant({ participantId: 'short', assignmentCreatedTime: 900 }),
+      makeParticipant({ participantId: 'long', assignmentCreatedTime: 100 }),
     ], 1000);
 
     expect(participants.map((participant) => participant.participantId)).toEqual(['long', 'short']);
@@ -97,10 +97,41 @@ describe('ParticipantTimeoutModal', () => {
     expect(screen.queryByRole('button', { name: 'Time Out' })).toBeNull();
   });
 
+  test('uses assignment start times instead of skewed participant clocks', () => {
+    const participants = getInProgressParticipantsByElapsedTime([
+      { ...makeParticipant({ participantId: 'behind', createdTime: 1 }), assignmentCreatedTime: 800 },
+      { ...makeParticipant({ participantId: 'ahead', createdTime: 10000 }), assignmentCreatedTime: 700 },
+      makeParticipant({ participantId: 'unknown', createdTime: 1 }),
+    ], 1000);
+    expect(participants.map((participant) => [participant.participantId, participant.elapsedTime])).toEqual([
+      ['ahead', 300], ['behind', 200], ['unknown', null],
+    ]);
+  });
+
   test('formats elapsed time with days, hours, and minutes', () => {
     expect(formatElapsedTime((((3 * 24 + 7) * 60 + 40) * 60_000))).toBe('3d 7h 40m');
     expect(formatElapsedTime(2 * 60 * 60_000)).toBe('2h 0m');
     expect(formatElapsedTime(45 * 60_000)).toBe('45m');
+  });
+
+  test.each([false, true])('refreshes elapsed time when opening Review (controlled: %s)', async (controlled) => {
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
+    const participants = [makeParticipant({ assignmentCreatedTime: 1_000_000 })];
+    const refresh = vi.fn();
+    try {
+      const { rerender } = render(<ParticipantTimeoutModal participants={participants} refresh={refresh} opened={controlled ? false : undefined} />);
+      clock.mockReturnValue(1_000_000 + 2 * 60 * 60_000);
+      await act(async () => {
+        if (controlled) {
+          rerender(<ParticipantTimeoutModal participants={participants} refresh={refresh} opened />);
+        } else {
+          fireEvent.click(screen.getByRole('button', { name: 'Review (1)' }));
+        }
+      });
+      expect(screen.getByText('2h 0m')).toBeDefined();
+    } finally {
+      clock.mockRestore();
+    }
   });
 
   test('opens the review modal and times out the chosen participant', async () => {
@@ -114,16 +145,18 @@ describe('ParticipantTimeoutModal', () => {
     });
     expect(screen.getByText('In-Progress Participants')).toBeDefined();
     expect(screen.getByText('p1')).toBeDefined();
+    expect(screen.getByText('Participant 2')).toBeDefined();
+    expect(screen.queryByText('Participant 3')).toBeNull();
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Time Out' }));
     });
-    expect(mockStorageEngine!.rejectParticipant).toHaveBeenCalledWith('p1', 'Timed out by admin');
+    expect(mockStorageEngine!.timeoutParticipant).toHaveBeenCalledWith('p1');
     expect(refresh).toHaveBeenCalledOnce();
   });
 
   test('shows an error and does not refresh when timing out a participant fails', async () => {
-    mockStorageEngine!.rejectParticipant.mockRejectedValue(new Error('Storage unavailable'));
+    mockStorageEngine!.timeoutParticipant.mockRejectedValue(new Error('Storage unavailable'));
     const refresh = vi.fn();
     render(<ParticipantTimeoutModal participants={[makeParticipant({ participantId: 'p1', createdTime: 1 })]} refresh={refresh} />);
 

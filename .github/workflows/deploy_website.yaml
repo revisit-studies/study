@@ -30,11 +30,15 @@ jobs:
 
       - run: yarn install --immutable
 
-      - name: Build main Firebase deployment
-        run: yarn build
+      - name: Build main deployment
+        run: |
+          if [ "$GITHUB_REPOSITORY" = "revisit-studies/study" ]; then
+            VITE_STORAGE_ENGINE=firebase yarn build
+          else
+            yarn build
+          fi
         env:
           VITE_BASE_PATH: "/${{ github.event.repository.name }}/"
-          VITE_STORAGE_ENGINE: firebase
 
       - uses: actions/checkout@v7
         with:
@@ -42,16 +46,18 @@ jobs:
           path: .pages
           fetch-depth: 1
 
-      - name: Deploy current-only main Firebase snapshot
+      - name: Deploy current-only main snapshot
         run: .github/scripts/publish-pages-snapshot.sh ./dist '' ./.pages
 
       - name: Build main Supabase deployment
+        if: ${{ github.repository == 'revisit-studies/study' }}
         run: yarn build
         env:
           VITE_BASE_PATH: "/${{ github.event.repository.name }}/supabase/"
           VITE_STORAGE_ENGINE: supabase
 
       - name: Deploy current-only main Supabase snapshot
+        if: ${{ github.repository == 'revisit-studies/study' }}
         run: .github/scripts/publish-pages-snapshot.sh ./dist supabase ./.pages
 
   deploy-dev:
@@ -69,11 +75,15 @@ jobs:
 
       - run: yarn install --immutable
 
-      - name: Build dev Firebase deployment
-        run: yarn build
+      - name: Build dev deployment
+        run: |
+          if [ "$GITHUB_REPOSITORY" = "revisit-studies/study" ]; then
+            VITE_STORAGE_ENGINE=firebase yarn build
+          else
+            yarn build
+          fi
         env:
           VITE_BASE_PATH: "/${{ github.event.repository.name }}/dev/"
-          VITE_STORAGE_ENGINE: firebase
 
       - uses: actions/checkout@v7
         with:
@@ -81,16 +91,18 @@ jobs:
           path: .pages
           fetch-depth: 1
 
-      - name: Deploy current-only dev Firebase snapshot
+      - name: Deploy current-only dev snapshot
         run: .github/scripts/publish-pages-snapshot.sh ./dist dev ./.pages
 
       - name: Build dev Supabase deployment
+        if: ${{ github.repository == 'revisit-studies/study' }}
         run: yarn build
         env:
           VITE_BASE_PATH: "/${{ github.event.repository.name }}/dev-supabase/"
           VITE_STORAGE_ENGINE: supabase
 
       - name: Deploy current-only dev Supabase snapshot
+        if: ${{ github.repository == 'revisit-studies/study' }}
         run: .github/scripts/publish-pages-snapshot.sh ./dist dev-supabase ./.pages
 
   pr-deploy:
@@ -119,9 +131,14 @@ jobs:
 
       - run: yarn install --immutable
 
-      # Build with github environment variables
+      - name: Build PR deployment
+        if: ${{ github.repository != 'revisit-studies/study' }}
+        run: yarn build
+        env:
+          VITE_BASE_PATH: "/${{ github.event.repository.name }}/PR${{ github.event.number }}/"
+
       - name: Build with github environment variables
-        if: ${{ vars.VITE_STORAGE_ENGINE != '' }}
+        if: ${{ github.repository == 'revisit-studies/study' && vars.VITE_STORAGE_ENGINE != '' }}
         run: VITE_STORAGE_ENGINE=$VITE_STORAGE_ENGINE VITE_BASE_PATH=$VITE_BASE_PATH yarn build
         env:
           VITE_STORAGE_ENGINE: ${{ vars.VITE_STORAGE_ENGINE }}
