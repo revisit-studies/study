@@ -104,7 +104,7 @@ export function ComponentController() {
   const storeDispatch = useStoreDispatch();
   const { setAlertModal } = useStoreActions();
   useEffect(() => {
-    if (configuredStorageEngine && storageEngine !== configuredStorageEngine) return;
+    if (startupInteractionBlocked || (configuredStorageEngine && storageEngine !== configuredStorageEngine)) return;
     const configuredEngineName = import.meta.env.VITE_STORAGE_ENGINE;
     const activeStorageEngine = storageEngine?.getEngine();
     if (!configuredEngineName || activeStorageEngine === configuredEngineName) {
@@ -124,7 +124,7 @@ export function ComponentController() {
         title: 'Failed to connect to the storage engine',
       }));
     }
-  }, [configuredStorageEngine, setAlertModal, storageEngine, storeDispatch]);
+  }, [configuredStorageEngine, setAlertModal, startupInteractionBlocked, storageEngine, storeDispatch]);
 
   // Find current block, if it has an ID, add it as a participant tag
   const prevBlockForStepRef = useRef<string[]>([]);

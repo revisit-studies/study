@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { useParams } from 'react-router';
+import { useStartupInteractionBlocked } from '../components/StartupContext';
 import { ResourceNotFound } from '../ResourceNotFound';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { useFlatSequence, useStoreSelector } from '../store/store';
@@ -8,6 +9,7 @@ import { findFuncBlock } from '../utils/getSequenceFlatMap';
 
 export function StudyRouteGuard({ children }: { children: ReactNode }) {
   const { index, funcIndex } = useParams();
+  const startupInteractionBlocked = useStartupInteractionBlocked();
   const studyConfig = useStudyConfig();
   const flatSequence = useFlatSequence();
   const answers = useStoreSelector((state) => state.answers);
@@ -53,5 +55,6 @@ export function StudyRouteGuard({ children }: { children: ReactNode }) {
     }
   }
 
-  return isValid ? children : <ResourceNotFound email={studyConfig.uiConfig.contactEmail} />;
+  if (isValid) return children;
+  return startupInteractionBlocked ? null : <ResourceNotFound email={studyConfig.uiConfig.contactEmail} />;
 }

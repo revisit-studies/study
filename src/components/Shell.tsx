@@ -57,6 +57,7 @@ import { useStudyColorMode } from './AppThemeProvider';
 import {
   StartupInteractionProvider,
   useStartupInteractionBlocked,
+  useStudyStorageReady,
 } from './StartupContext';
 
 type StartupStorageStatus = Pick<StorageEngine, 'getEngine' | 'isConnected'>;
@@ -130,6 +131,13 @@ export function StudyLoadingOverlay({
       )}
     </>
   );
+}
+
+function StudyLayout() {
+  const startupInteractionBlocked = useStartupInteractionBlocked();
+  return startupInteractionBlocked
+    ? <StepRenderer />
+    : <StudyRouteGuard><StepRenderer /></StudyRouteGuard>;
 }
 
 export function StudyIndexRoute() {
@@ -352,6 +360,7 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
   }, []);
   const interfaceRef = useRef<HTMLDivElement>(null);
   const { storageEngine, configuredStorageEngine } = useStorageEngine();
+  const studyStorageReady = useStudyStorageReady();
   const [rawSearchParams] = useSearchParams();
 
   const searchParamsString = rawSearchParams.toString();
@@ -383,15 +392,15 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
       setRoutes([
         {
-          element: <StudyRouteGuard><StepRenderer /></StudyRouteGuard>,
+          element: <StudyLayout />,
           children: [
             {
               path: '/',
-              element: <StudyIndexRoute />,
+              element: <StudyRouteGuard><StudyIndexRoute /></StudyRouteGuard>,
             },
             {
               path: '/:index/:funcIndex?',
-              element: <ComponentController />,
+              element: <StudyRouteGuard><ComponentController /></StudyRouteGuard>,
             },
           ],
         },
@@ -421,7 +430,7 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
           dataCollectionEnabled: false,
         },
         '',
-        true,
+        false,
         false,
       );
 
@@ -443,15 +452,20 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
     };
   }, [activeConfig, canonicalStudyId, initialSystemColorMode, studyCondition]);
 
+  const startupKey = storageEngine && activeConfig && canonicalStudyId
+    ? [
+      canonicalStudyId,
+      participantId ?? '',
+      searchParamsString,
+      startupAttempt,
+    ].join(':')
+    : null;
+
   useEffect(() => {
-    const startupKey = storageEngine && activeConfig && canonicalStudyId
-      ? [
-        canonicalStudyId,
-        participantId ?? '',
-        searchParamsString,
-        startupAttempt,
-      ].join(':')
-      : null;
+    if (!studyStorageReady) {
+      initializationRef.current = null;
+      return undefined;
+    }
 
     if (!startupKey || !activeConfig || !storageEngine || (
       initializationRef.current?.key === startupKey
@@ -753,6 +767,8 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
     participantId,
     studyCondition,
     startupAttempt,
+    startupKey,
+    studyStorageReady,
   ]);
 
   const routing = useRoutes(routes);
@@ -764,7 +780,6 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
     : loadingColorMode;
   useStudyColorMode(studyColorMode);
   const hasConfigErrors = (activeConfig?.errors?.length ?? 0) > 0;
-  const renderedStore = store ?? previewStore;
   const { isLoading, showLoadingMessage, showCompletionCheckError } = getShellUiState({
     isValidStudyId,
     hasRoutes: routes.length > 0,
@@ -774,7 +789,12 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
     hasStageCapacityError: stageEntryError !== null,
   });
   const isInteractionBlocked = isValidStudyId && !startupError && !hasConfigErrors && !stageEntryError
-    && (startupPhase !== 'ready' || isLoading || showCompletionCheckError);
+    && (!studyStorageReady
+      || initializationRef.current?.key !== startupKey
+      || initializationRef.current?.config !== activeConfig
+      || initializationRef.current?.storageEngine !== storageEngine
+      || startupPhase !== 'ready' || isLoading || showCompletionCheckError);
+  const renderedStore = isInteractionBlocked ? previewStore : store ?? previewStore;
 
   useLayoutEffect(() => {
     if (isInteractionBlocked) {
@@ -848,7 +868,7 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
   } else if (!isValidStudyId) {
     content = <ResourceNotFound />;
   } else if (routing && renderedStore) {
-    const startupStoreKey = store ? 'authoritative' : 'preview';
+    const startupStoreKey = renderedStore === store ? 'authoritative' : 'preview';
     content = (
       <StudyStoreContext.Provider key={startupStoreKey} value={renderedStore}>
         <Provider key={searchParams.has('participantId') ? renderedStore.store.getState().globalStoreGraph?.current : undefined} store={renderedStore.store}>{routing}</Provider>
