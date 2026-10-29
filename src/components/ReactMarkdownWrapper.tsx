@@ -42,7 +42,14 @@ const markdownComponents = (inline?: boolean): Partial<Components> => ({
   h4({ node: _, ...props }) { return <Title {...props} order={4} pb={inline ? undefined : 12} />; },
   h5({ node: _, ...props }) { return <Title {...props} order={5} pb={inline ? undefined : 12} />; },
   h6({ node: _, ...props }) { return <Title {...props} order={6} pb={inline ? undefined : 12} />; },
-  a({ node: _, ...props }) { return <Anchor {...props} ref={undefined} />; },
+  a({ node: _, href, ...props }) {
+    const branch = import.meta.env.VITE_REPO_URL?.match(/\/tree\/([^/]+)\/public\/?$/)?.[1];
+    const sourceHref = branch && href?.replace(
+      /^(https:\/\/github\.com\/revisit-studies\/study\/(?:blob|tree)\/)(?:main|dev)(\/.*)$/,
+      `$1${branch}$2`,
+    );
+    return <Anchor {...props} href={sourceHref || href} ref={undefined} />;
+  },
   code({ node: _, ...props }) { return <Code {...props} />; },
   ul({ node: _, ref: _ref, ...props }) { return <List withPadding {...props} pb={inline ? undefined : 8} />; },
   ol({

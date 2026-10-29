@@ -77,7 +77,7 @@ export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
   // Status of the next button. If false, the next button should be disabled
   const isAnalysis = useIsAnalysis();
   const assetStatus = trialValidation[identifier]?.assetStatus;
-  const isNextDisabled = typeof currentStep !== 'number' || isAnalysis || completed || !!submitting || (assetStatus !== undefined && assetStatus !== 'ready');
+  const isNextDisabled = typeof currentStep !== 'number' || isAnalysis || completed || !!submitting || (assetStatus !== undefined && assetStatus !== 'ready' && assetStatus !== 'missing');
 
   const storedAnswer = useStoredAnswer();
   const currentComponentConfig = storedAnswer?.componentName

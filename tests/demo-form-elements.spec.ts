@@ -228,13 +228,13 @@ test('Test questionnaire component with responses and randomizing questions and 
   await nextClick(page);
   await expect(graduationSemester).toHaveAttribute('aria-invalid', 'true');
   await graduationSemester.click();
-  await page.getByRole('option', { name: 'Spring', exact: true }).click();
+  await page.getByRole('option', { name: 'Winter', exact: true }).click();
   await graduationYear.fill('2020');
   await expect(graduationSemester).toHaveCount(0);
   await graduationYear.fill('2021');
   await expect(graduationSemester).toHaveValue('');
   await graduationSemester.click();
-  await page.getByRole('option', { name: 'Fall', exact: true }).click();
+  await page.getByRole('option', { name: 'Summer', exact: true }).click();
   const expectedGraduationYear = page.getByLabel('Expected graduation year');
   await page.getByRole('radio', { name: 'Currently enrolled', exact: true }).check();
   await expect(graduationYear).toHaveCount(0);

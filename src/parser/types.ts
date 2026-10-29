@@ -2268,7 +2268,7 @@ export interface FactorBlock {
   id: string;
   /** Named factor or inline factor expression to materialize at this sequence location. */
   factor: FactorOption;
-  /** One or more base components materialized for every factor condition. */
+  /** One or more base components materialized for every factor condition. Names may include factor parameter templates. */
   components: string | string[];
   order?: ComponentOrder;
   interruptions?: InterruptionBlock[];

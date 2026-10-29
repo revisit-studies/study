@@ -491,11 +491,20 @@ describe('VideoController', () => {
     expect(container.textContent).toContain('test@test.com');
   });
 
-  test('renders video element for a valid YouTube URL', async () => {
+  test('renders an embed container for a valid YouTube URL', async () => {
     vi.spyOn(window, 'requestAnimationFrame').mockImplementation(() => 0);
     const youtubeConfig: VideoComponent = { type: 'video', path: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', response: [] };
     const { container } = render(<VideoController currentConfig={youtubeConfig} />);
-    await waitFor(() => expect(container.querySelector('video')).toBeTruthy());
+    await waitFor(() => expect(container.querySelector('[data-plyr-provider="youtube"]')).toBeTruthy());
+    expect(container.querySelector('[data-plyr-embed-id]')?.getAttribute('data-plyr-embed-id')).toBe(youtubeConfig.path);
+  });
+
+  test('renders an embed container for a valid Vimeo URL', async () => {
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation(() => 0);
+    const vimeoConfig: VideoComponent = { type: 'video', path: 'https://vimeo.com/863362136', response: [] };
+    const { container } = render(<VideoController currentConfig={vimeoConfig} />);
+    await waitFor(() => expect(container.querySelector('[data-plyr-provider="vimeo"]')).toBeTruthy());
+    expect(container.querySelector('[data-plyr-embed-id]')?.getAttribute('data-plyr-embed-id')).toBe(vimeoConfig.path);
   });
 
   test('dispatches store action when forceCompletion is true', async () => {
@@ -507,6 +516,28 @@ describe('VideoController', () => {
     };
     render(<VideoController currentConfig={forceConfig} />);
     await waitFor(() => expect(mockDispatch).toHaveBeenCalled());
+  });
+
+  test('clears force-completion validation when a video fails to load', async () => {
+    vi.mocked(getStaticAssetByPath).mockResolvedValueOnce('video-data');
+    const { container } = render(<VideoController currentConfig={{ ...videoConfig, forceCompletion: true }} />);
+    await waitFor(() => expect(container.querySelector('video')).toBeTruthy());
+    expect(mockStoreActions.updateResponseBlockValidation).toHaveBeenLastCalledWith(expect.objectContaining({ status: false }));
+
+    fireEvent.error(container.querySelector('video')!);
+
+    await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
+    expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith({ identifier: 'trial1_0', status: 'missing' });
+    expect(mockStoreActions.updateResponseBlockValidation).toHaveBeenLastCalledWith(expect.objectContaining({ status: true, values: {} }));
+  });
+
+  test('clears force-completion validation when a video file is missing', async () => {
+    vi.mocked(getStaticAssetByPath).mockResolvedValueOnce(undefined);
+    const { container } = render(<VideoController currentConfig={{ ...videoConfig, forceCompletion: true }} />);
+
+    await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
+    expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith({ identifier: 'trial1_0', status: 'missing' });
+    expect(mockStoreActions.updateResponseBlockValidation).toHaveBeenLastCalledWith(expect.objectContaining({ status: true, values: {} }));
   });
 
   test('renders LoadingOverlay while loading for a local path', () => {

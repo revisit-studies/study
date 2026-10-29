@@ -34,7 +34,7 @@
     "test-markdown-factors",
     "demo-stroop-factors",
     "demo-stroop-html-factors",
-    "demo-max-study2",
+    "test-max-study2",
     "demo-ffl-study",
     "demo-dsf-study",
     "demo-calvi-study",
@@ -133,10 +133,6 @@
     "demo-stroop-html-factors": {
       "tab": "Factor-demos",
       "path": "demo-stroop-html-factors/config.json"
-    },
-    "demo-max-study2": {
-      "tab": "Factor-demos",
-      "path": "demo-max-study2/config.json"
     },
     "demo-ffl-study": {
       "tab": "Factor-demos",
@@ -371,6 +367,11 @@
     "test-response-functions": {
       "tab": "Tests",
       "path": "test-response-functions/config.json",
+      "test": true
+    },
+    "test-max-study2": {
+      "tab": "Tests",
+      "path": "test-max-study2/config.json",
       "test": true
     },
     "test-audio": {

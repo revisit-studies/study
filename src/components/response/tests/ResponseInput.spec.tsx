@@ -686,6 +686,27 @@ describe('CheckBoxInput', () => {
     // horizontal=true → label is the literal string 'Other'
     expect(html).toContain('Other');
   });
+
+  test('clears selected checkboxes and the dont-know answer', () => {
+    const onChange = vi.fn();
+    const onDontKnowChange = vi.fn();
+    const view = render(
+      <CheckBoxInput
+        response={{ ...base, withDontKnow: true }}
+        disabled
+        clearDisabled={false}
+        answer={{ value: ['A'], onChange }}
+        dontKnowCheckbox={{ checked: true, onChange: onDontKnowChange }}
+        index={1}
+        enumerateQuestions={false}
+      />,
+    );
+
+    fireEvent.click(view.getByRole('button', { name: 'Clear selection' }));
+    expect(onChange).toHaveBeenCalledWith([]);
+    expect(onDontKnowChange).toHaveBeenCalledWith(false);
+    cleanup();
+  });
 });
 
 // ── ButtonsInput ──────────────────────────────────────────────────────────────

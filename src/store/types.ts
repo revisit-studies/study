@@ -65,7 +65,7 @@ export type ValidationStatus = {
   /** Whether this location has initialized its form values, so answers cleared by visibleIf are not restored from saved answers or defaults. */
   initialized?: boolean;
 }
-export type AssetStatus = 'loading' | 'ready' | 'error';
+export type AssetStatus = 'loading' | 'ready' | 'missing' | 'error';
 
 export type TrialValidation = Record<
   string,

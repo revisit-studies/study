@@ -1244,7 +1244,7 @@
               "type": "array"
             }
           ],
-          "description": "One or more base components materialized for every factor condition."
+          "description": "One or more base components materialized for every factor condition. Names may include factor parameter templates."
         },
         "conditional": {
           "type": "boolean"
