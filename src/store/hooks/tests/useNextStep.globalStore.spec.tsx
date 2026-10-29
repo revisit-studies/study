@@ -8,6 +8,7 @@ import type { StoreState } from '../../types';
 import { makeStoredAnswer, makeStudyConfig } from '../../../tests/utils';
 import { createGlobalStoreSubmission } from '../../globalStoreProvenance';
 import { useNextStep } from '../useNextStep';
+import { useTrialAssetIdentifier } from '../useTrialAssetIdentifier';
 
 const mocks = vi.hoisted(() => ({
   context: undefined as unknown as StudyStore,
@@ -142,9 +143,20 @@ test.each([10, 30])('a revisit of cost %s saves the current recording and visit 
   await act(async () => { await hook.result.current.goToNextStep(); });
   const saved = mocks.save.mock.calls[0][0].purchase_0;
   expect(saved.answer).toEqual({ cost: 10 });
-  expect(saved.assetIdentifier).toBe('purchase_0__global_1');
+  expect(saved.assetIdentifier).toMatch(/^purchase_0__global_/);
+  expect(saved.assetIdentifier).not.toBe(original.assetIdentifier);
   expect(saved.startTime).toBe(61000);
   expect(saved.endTime).toBe(62000);
   expect(saved.windowEvents).toEqual([]);
   expect(mocks.context.store.getState().answers.purchase_0).toEqual(saved);
+});
+
+test('the accepted answer uses the same unique visit key as the recorder', async () => {
+  const hook = renderHook(() => ({ recorderKey: useTrialAssetIdentifier(), next: useNextStep() }), {
+    wrapper: ({ children }: { children: ReactNode }) => <StudyStoreContext.Provider value={mocks.context}>{children}</StudyStoreContext.Provider>,
+  });
+  const key = hook.result.current.recorderKey;
+  await act(async () => { await hook.result.current.next.goToNextStep(); });
+  expect(mocks.save.mock.calls[0][0].purchase_0.assetIdentifier).toBe(key);
+  expect(mocks.context.store.getState().answers.purchase_0.assetIdentifier).toBe(key);
 });

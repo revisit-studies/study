@@ -12,6 +12,8 @@ import type { StoreState } from '../../types';
 import ScreenRecordingPermission from '../../../public/libraries/screen-recording/assets/ScreenRecording';
 import WebcamRecordingPermission from '../../../public/libraries/webcam-recording/assets/WebcamRecording';
 
+const mockAssetOwner = vi.hoisted(() => ({ trialAssetEntry: undefined as { identifier: string; key: string } | undefined }));
+
 // ── mutable state ─────────────────────────────────────────────────────────────
 
 let mockRecordingConfig = {
@@ -147,7 +149,8 @@ vi.mock('../useIsAnalysis', () => ({
   useIsAnalysis: () => false,
 }));
 
-vi.mock('../../store', () => ({
+vi.mock('../../store', async () => ({
+  StudyStoreContext: (await vi.importActual<typeof React>('react')).createContext(mockAssetOwner),
   useStoreSelector: (selector: (s: StoreState) => unknown) => selector({
     modes: mockModes,
     completed: mockCompleted,
@@ -172,6 +175,7 @@ beforeEach(() => {
   mockCurrentComponent = 'intro';
   mockIdentifier = 'intro_0';
   mockGlobalStoreEnabled = false;
+  mockAssetOwner.trialAssetEntry = undefined;
   mockCompleted = false;
   mockGlobalRevision = 0;
   mockGlobalStoreSubmitting = false;
@@ -1041,10 +1045,11 @@ test('a previously accepted global-store trial records its revision under a sepa
   act(() => { result.current.startScreenCapture(); });
   await waitFor(() => expect(result.current.isScreenRecording).toBe(true));
   act(() => { result.current.stopScreenRecording(); });
-  await waitFor(() => expect(mockStorageEngine!.saveScreenRecording).toHaveBeenCalledWith(expect.any(Blob), 'intro_0__global_7'));
+  await waitFor(() => expect(mockStorageEngine!.saveScreenRecording).toHaveBeenCalledWith(expect.any(Blob), mockAssetOwner.trialAssetEntry!.key));
+  expect(mockAssetOwner.trialAssetEntry!.key).toMatch(/^intro_0__global_/);
 });
 
-test('destination audio waits for acceptance and saves under the same revision as its answer', async () => {
+test('destination audio waits for acceptance and saves under the shared visit key', async () => {
   mockGlobalStoreEnabled = true;
   mockRecordingConfig = { ...mockRecordingConfig, studyHasAudioRecording: true, currentComponentHasAudioRecording: true };
   mockStorageEngine = { saveAudioRecording: vi.fn(async () => {}) };
@@ -1060,11 +1065,12 @@ test('destination audio waits for acceptance and saves under the same revision a
   expect(hook.result.current.isAudioRecording).toBe(false);
   await act(async () => { mockGlobalRevision = 1; hook.rerender(); });
   await waitFor(() => expect(hook.result.current.isAudioRecording).toBe(true));
+  const { key } = mockAssetOwner.trialAssetEntry!;
   act(() => {
     mockCurrentComponent = 'end';
     mockIdentifier = 'end_2';
     mockRecordingConfig.currentComponentHasAudioRecording = false;
     hook.rerender();
   });
-  expect(mockStorageEngine.saveAudioRecording).toHaveBeenLastCalledWith(expect.any(Blob), 'next_1__global_1');
+  expect(mockStorageEngine.saveAudioRecording).toHaveBeenLastCalledWith(expect.any(Blob), key);
 });

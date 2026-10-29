@@ -606,7 +606,12 @@ export async function studyStoreCreator(
     },
   );
 
-  return { store, actions: storeSlice.actions, globalStoreUpdaters: new Map<string, GlobalStoreUpdater>() };
+  return {
+    store,
+    actions: storeSlice.actions,
+    globalStoreUpdaters: new Map<string, GlobalStoreUpdater>(),
+    trialAssetEntry: undefined as { identifier: string; key: string } | undefined,
+  };
 }
 
 export type StudyStore = Awaited<ReturnType<typeof studyStoreCreator>>;

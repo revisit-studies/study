@@ -1,24 +1,23 @@
-import { useRef } from 'react';
+import { useContext } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { useCurrentIdentifier } from '../../routes/utils';
-import { useStoreSelector } from '../store';
+import { StudyStoreContext } from '../store';
 import { useStudyConfig } from './useStudyConfig';
 import { useGlobalStoreSavePending } from './useGlobalStoreSavePending';
 
 /** Each recorded entry has its own asset key; accepted provenance retains the reference. */
 export function useTrialAssetIdentifier() {
   const identifier = useCurrentIdentifier();
-  const revision = useStoreSelector((state) => state.globalStoreRevision ?? 0);
+  const context = useContext(StudyStoreContext);
   const enabled = useStudyConfig().globalVariables !== undefined;
   const savePending = useGlobalStoreSavePending();
-  const entry = useRef<{ identifier: string; enabled: boolean; key: string } | undefined>(undefined);
-  // Keep the entry's key through submission; accepting it increments the revision
-  // before the recorder's final chunk is delivered during navigation.
-  if (entry.current?.identifier !== identifier || entry.current.enabled !== enabled) {
-    if (savePending) {
-      entry.current = undefined;
-      return undefined;
-    }
-    entry.current = { identifier, enabled, key: enabled ? `${identifier}__global_${revision}` : identifier };
+  if (!enabled) return identifier;
+  // Recorder and submitter share one visit key, including through acceptance and delayed mounts.
+  if (context.trialAssetEntry?.identifier === identifier) return context.trialAssetEntry.key;
+  if (savePending) {
+    context.trialAssetEntry = undefined;
+    return undefined;
   }
-  return entry.current.key;
+  context.trialAssetEntry = { identifier, key: `${identifier}__global_${uuidv4()}` };
+  return context.trialAssetEntry.key;
 }
