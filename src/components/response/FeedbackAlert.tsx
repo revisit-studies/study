@@ -35,7 +35,7 @@ export function FeedbackAlert({
       )}
       <br />
       <br />
-      {attemptsUsed >= trainingAttempts && trainingAttempts >= 0 && correctAnswer && ` The correct answer was: ${correctAnswer}.`}
+      {attemptsUsed >= trainingAttempts && trainingAttempts >= 0 && correctAnswer && ` 解答: ${correctAnswer}.`}
     </Alert>
   ) : null;
 }

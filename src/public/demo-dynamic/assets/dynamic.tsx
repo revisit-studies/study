@@ -25,7 +25,7 @@ export default function dynamic({ answers, currentStep, currentBlock }: JumpFunc
     if (isCorrect) {
       message = 'Difficulty increased';
       color = 'green';
-      // If the correct answer was 'Same', finish the dynamic block
+      // If 解答 'Same', finish the dynamic block
       if (lastAnswer.answer.buttonResponse === 'Same' && lastAnswer.parameters.left === lastAnswer.parameters.right) {
         return { component: null };
       }

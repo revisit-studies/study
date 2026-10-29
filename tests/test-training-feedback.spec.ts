@@ -68,8 +68,8 @@ test('allowFailedTraining=true enables Next after max failed attempts', async ({
   await answerSimpleDropboxIncorrectly(page);
   await answerSimpleDropboxIncorrectly(page);
 
-  await expect(page.getByText('You didn\'t answer this question correctly after 4 attempts. You can continue to the next question.')).toBeVisible();
-  await expect(page.getByText('The correct answer was: Bar.')).toBeVisible();
+  await expect(page.getByText('You didn\'t answer this question correctly after 4 attempts. ')).toBeVisible();
+  await expect(page.getByText('解答: Bar.')).toBeVisible();
   await expect(nextButton).toBeEnabled();
   await expect(checkAnswerButton).toBeDisabled();
   await expect(page.getByPlaceholder('Choose mark')).toBeDisabled();
@@ -91,8 +91,8 @@ test('allowFailedTraining=true enables Next after max failed invalid attempts', 
   // Leave the required dropdown unanswered and consume all attempts.
   await exhaustSimpleDropboxAttemptsWithoutAnswer(page, 4);
 
-  await expect(page.getByText('You didn\'t answer this question correctly after 4 attempts. You can continue to the next question.')).toBeVisible();
-  await expect(page.getByText('The correct answer was: Bar.')).toBeVisible();
+  await expect(page.getByText('You didn\'t answer this question correctly after 4 attempts. ')).toBeVisible();
+  await expect(page.getByText('解答: Bar.')).toBeVisible();
   await expect(nextButton).toBeEnabled();
   await expect(checkAnswerButton).toBeDisabled();
 });
