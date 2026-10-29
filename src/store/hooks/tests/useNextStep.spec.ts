@@ -269,6 +269,7 @@ describe('useNextStep', () => {
   test.each<{ status: AssetStatus | undefined; disabled: boolean }>([
     { status: 'loading', disabled: true },
     { status: 'error', disabled: true },
+    { status: 'missing', disabled: false },
     { status: 'ready', disabled: false },
     { status: undefined, disabled: false },
   ])('asset status $status sets disabled=$disabled and guards navigation', async ({ status, disabled }) => {

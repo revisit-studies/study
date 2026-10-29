@@ -1,5 +1,5 @@
 import {
-  forwardRef, RefObject, useCallback, useEffect, useMemo, useRef, useState,
+  forwardRef, Ref, RefObject, useCallback, useEffect, useMemo, useRef, useState,
 } from 'react';
 import {
   APITypes, PlyrOptions, PlyrProps, PlyrSource, usePlyr,
@@ -73,7 +73,7 @@ const CustomPlyrInstance = forwardRef<APITypes, PlyrProps & { endedCallback:() =
           plyr.on('loadeddata', loadedCallback);
           plyr.on('ready', handleReady);
           plyr.on('error', errorCallback);
-          if (plyr.ready || (plyr.media as HTMLMediaElement).readyState >= 2) handleReady();
+          if (plyr.provider !== 'html5' || plyr.ready || (plyr.media as HTMLMediaElement).readyState >= 2) handleReady();
           cleanup = () => {
             try {
               plyr.off('ended', endedCallback);
@@ -99,16 +99,25 @@ const CustomPlyrInstance = forwardRef<APITypes, PlyrProps & { endedCallback:() =
       };
     }, [endedCallback, loadedCallback, errorCallback, ref, source]);
 
-    return (
-      <video
-        ref={raptorRef}
-        className="plyr-react plyr"
-        // Ensure HTML5 videos still trigger completion even if Plyr event wiring fails.
-        onLoadedData={loadedCallback}
-        onError={errorCallback}
-        onEnded={endedCallback}
-      />
-    );
+    return source.sources[0]?.provider === 'vimeo' || source.sources[0]?.provider === 'youtube'
+      ? (
+        <div
+          ref={raptorRef as Ref<HTMLDivElement>}
+          className="plyr-react plyr"
+          data-plyr-provider={source.sources[0].provider}
+          data-plyr-embed-id={source.sources[0].src}
+        />
+      )
+      : (
+        <video
+          ref={raptorRef}
+          className="plyr-react plyr"
+          // Ensure HTML5 videos still trigger completion even if Plyr event wiring fails.
+          onLoadedData={loadedCallback}
+          onError={errorCallback}
+          onEnded={endedCallback}
+        />
+      );
   });
 
 export function VideoController({ currentConfig }: { currentConfig: VideoComponent; }) {
@@ -176,7 +185,7 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
   }, [provider, url, validExternalUrl, requestKey]);
 
   const { status: playerStatus, onReady: loadedCallback, onError: errorCallback } = useAssetLoadStatus(requestKey);
-  const assetStatus = isLoading ? 'loading' : assetFound ? playerStatus : 'error';
+  const assetStatus = isLoading ? 'loading' : !assetFound || playerStatus === 'error' ? 'missing' : playerStatus;
 
   const sources = useMemo<PlyrSource['sources']>(() => {
     if (provider === 'youtube') {
@@ -221,24 +230,22 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
   const isAnalysis = useIsAnalysis();
   useAssetStatus(assetStatus);
 
-  // Require playback completion when configured; asset loading and errors are gated separately.
+  // Require playback completion only while the video is available.
   // Skip analysis mode so replay doesn't mutate stimulus validation.
   useEffect(() => {
-    if (isLoading || !assetFound || isAnalysis) return;
-
-    if (currentConfig.forceCompletion) {
+    if (isLoading || isAnalysis || !currentConfig.forceCompletion) return;
+    if (assetStatus === 'missing' || assetFound) {
       storeDispatch(
         updateResponseBlockValidation({
           location: 'stimulus',
           identifier,
-          status: false,
+          status: assetStatus === 'missing',
           values: {},
-          reason: 'forceCompletion',
-          message: 'Please finish the video to continue.',
+          ...(assetStatus === 'missing' ? {} : { reason: 'forceCompletion', message: 'Please finish the video to continue.' }),
         }),
       );
     }
-  }, [identifier, currentConfig.forceCompletion, storeDispatch, updateResponseBlockValidation, isLoading, assetFound, isAnalysis]);
+  }, [identifier, currentConfig.forceCompletion, storeDispatch, updateResponseBlockValidation, isLoading, assetFound, assetStatus, isAnalysis]);
 
   // Set the validation to valid if forceCompletion is true and the video is played
   const endedCallback = useCallback(() => {
@@ -257,7 +264,7 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
 
   const ref = useRef<APITypes>(null);
 
-  return (!isLoading && assetFound && assetStatus !== 'error' && sources.length > 0)
+  return (!isLoading && assetFound && assetStatus !== 'missing' && sources.length > 0)
     ? (
       // Box required for proper react node handling in the component tree
       <Box>

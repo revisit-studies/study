@@ -9,6 +9,7 @@ import {
 } from '../types';
 import { isDynamicBlock, isFactorBlock } from '../utils';
 import calviConfig from '../../../public/libraries/calvi/config.json';
+import calviStudyConfig from '../../../public/demo-calvi-study/config.json';
 import vlatConfig from '../../../public/libraries/vlat/config.json';
 
 function isComponentBlock(value: string | ComponentBlock | DynamicBlock | FactorBlock): value is ComponentBlock {
@@ -294,6 +295,29 @@ describe('Factor Compiler', () => {
       color_0: 'RED',
       color_1: 'BLUE',
     })).toBe('stroop__color_0=%22RED%22__color_1=%22BLUE%22');
+  });
+
+  test('materializes CALVI library questions from factor-selected component names', () => {
+    const config = {
+      ...calviStudyConfig,
+      baseComponents: Object.fromEntries(Object.entries(calviConfig.components).map(([name, component]) => [
+        `$calvi.components.${name}`, component,
+      ])),
+    } as unknown as StudyConfig;
+    const errors: ParserErrorWarning[] = [];
+    const result = compileFactorBlocks(config.sequence, config, errors);
+    const selectedQuestions = calviStudyConfig.factors.calviQuestion;
+
+    expect(errors).toEqual([]);
+    expect(Object.keys(result.components)).toHaveLength(30);
+    expect(isComponentBlock(result.sequence) && result.sequence.components[0]).toBe('introduction');
+    expect(isComponentBlock(result.sequence) && isComponentBlock(result.sequence.components[1])
+      && result.sequence.components[1].order).toBe('random');
+    selectedQuestions.forEach((question) => {
+      const component = Object.values(result.components).find((item) => item.parameters?.calviQuestion === question);
+      expect(component).toMatchObject(calviConfig.components[question as keyof typeof calviConfig.components]);
+      expect(component?.parameters).toMatchObject({ calviQuestion: question });
+    });
   });
 
   test('creates distinct components for factor values with identical string representations', () => {
