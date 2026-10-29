@@ -85,7 +85,7 @@ export function StudyEnd() {
   const baseFilename = studyConfig.studyMetadata.title.replace(' ', '_');
 
   const refreshParticipantData = useCallback(async () => {
-    if (storageEngine) {
+    if (!startupInteractionBlocked && storageEngine) {
       const participantDataSnapshot = storageEngine.getCurrentParticipantDataSnapshot();
       const [_participantId, _participantData] = await Promise.all([
         storageEngine.getCurrentParticipantId(),
@@ -104,7 +104,7 @@ export function StudyEnd() {
       participantId: '',
       participantData: null,
     };
-  }, [storageEngine]);
+  }, [startupInteractionBlocked, storageEngine]);
 
   useEffect(() => {
     refreshParticipantData();

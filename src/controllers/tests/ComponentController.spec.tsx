@@ -17,6 +17,7 @@ import type {
   VideoComponent,
 } from '../../parser/types';
 import type { StoreState } from '../../store/types';
+import { StartupInteractionProvider } from '../../components/StartupContext';
 import { ComponentController } from '../ComponentController';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { ImageController } from '../ImageController';
@@ -652,6 +653,45 @@ describe('ComponentController — effect coverage (render-based)', () => {
     vi.mocked(useStoreSelector).mockImplementation(
       (selector) => selector(stableState),
     );
+  });
+
+  test('subscribes to participant rejection only after startup is ready', async () => {
+    const subscribe = vi.fn(() => vi.fn());
+    vi.mocked(useStorageEngine).mockReturnValue({
+      storageEngine: makeStorageEngine({ subscribeToCurrentParticipantRejection: subscribe }),
+      setStorageEngine: vi.fn(),
+    });
+    const { rerender } = render(
+      <StartupInteractionProvider value><ComponentController /></StartupInteractionProvider>,
+    );
+    expect(subscribe).not.toHaveBeenCalled();
+    rerender(<StartupInteractionProvider value={false}><ComponentController /></StartupInteractionProvider>);
+    await waitFor(() => expect(subscribe).toHaveBeenCalled());
+  });
+
+  test('loads stimulus assets during preview before the storage engine connects', async () => {
+    vi.mocked(useCurrentComponent).mockReturnValue('testTrial');
+    const state = makeStableState();
+    vi.mocked(useStoreSelector).mockImplementation((selector) => selector(state));
+    vi.mocked(useStorageEngine).mockReturnValue({ storageEngine: undefined, setStorageEngine: vi.fn() });
+    vi.mocked(getStaticAssetByPath).mockResolvedValue('Preview stimulus');
+    const { getByText } = render(
+      <StartupInteractionProvider value><ComponentController /></StartupInteractionProvider>,
+    );
+    await waitFor(() => expect(getByText('Preview stimulus')).toBeDefined());
+    expect(getStaticAssetByPath).toHaveBeenCalled();
+  });
+
+  test('renders preview stimuli before the URL participant has been restored', () => {
+    vi.mocked(useCurrentComponent).mockReturnValue('testTrial');
+    vi.mocked(useSearchParams).mockReturnValueOnce([
+      new URLSearchParams('participantId=other-pid'), vi.fn(),
+    ]);
+    const html = renderToStaticMarkup(
+      <StartupInteractionProvider value><ComponentController /></StartupInteractionProvider>,
+    );
+    expect(html).toContain('ResponseBlock');
+    expect(html).not.toContain('Loader');
   });
 
   test('shows localStorage fallback warning when cloud engine falls back in development', async () => {

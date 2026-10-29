@@ -1,6 +1,7 @@
 import {
   ReactNode,
   useEffect,
+  useLayoutEffect,
   useState,
   useMemo,
   useRef,
@@ -65,24 +66,6 @@ const GENERIC_STARTUP_ERROR = 'There was a problem loading the study.';
 const RESUME_STARTUP_ERROR = 'This study session could not be resumed.';
 const STUDY_LOADING_MESSAGE = 'Loading your study. This may take a moment.';
 const STUDY_LOADING_MESSAGE_DELAY_MS = 1500;
-function getParticipantRoutes() {
-  return [
-    {
-      element: <StudyRouteGuard><StepRenderer /></StudyRouteGuard>,
-      children: [
-        {
-          path: '/',
-          element: <NavigateWithParams to={encryptIndex(0)} replace />,
-        },
-        {
-          path: '/:index/:funcIndex?',
-          element: <ComponentController />,
-        },
-      ],
-    },
-  ];
-}
-
 export function StudyLoadingOverlay({
   visible,
   showMessage = true,
@@ -354,7 +337,19 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
   const [isCompletionCheckResolved, setIsCompletionCheckResolved] = useState(false);
   const [completionCheckError, setCompletionCheckError] = useState<string | null>(null);
   const [startupAttempt, setStartupAttempt] = useState(0);
-  const initializationKeyRef = useRef<string | null>(null);
+  const initializationRef = useRef<{
+    key: string;
+    config: ParsedConfig<StudyConfig>;
+    storageEngine: StorageEngine;
+  } | null>(null);
+  const mountedRef = useRef(false);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
   const interfaceRef = useRef<HTMLDivElement>(null);
   const { storageEngine, configuredStorageEngine } = useStorageEngine();
   const [rawSearchParams] = useSearchParams();
@@ -402,16 +397,23 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
         },
       ]);
 
-      const generatedSequences = await generateSequenceArray(activeConfig);
+      const generatedSequences = await generateSequenceArray({
+        ...activeConfig,
+        uiConfig: { ...activeConfig.uiConfig, numSequences: 1 },
+      });
       const generatedSequence = filterSequenceByCondition(
         generatedSequences[0],
         studyCondition,
       );
       const localPreviewStore = await studyStoreCreator(
         canonicalStudyId,
-        activeConfig,
+        materializeParticipantConfig(activeConfig, generatedSequence.parameters || {}),
         generatedSequence,
-        createEmptyParticipantMetadata(),
+        {
+          ...createEmptyParticipantMetadata(),
+          colorMode: activeConfig.uiConfig.colorMode === 'userPreference'
+            ? initialSystemColorMode : activeConfig.uiConfig.colorMode ?? 'light',
+        },
         {},
         {
           developmentModeEnabled: false,
@@ -439,7 +441,7 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
     return () => {
       isCancelled = true;
     };
-  }, [activeConfig, canonicalStudyId, studyCondition]);
+  }, [activeConfig, canonicalStudyId, initialSystemColorMode, studyCondition]);
 
   useEffect(() => {
     const startupKey = storageEngine && activeConfig && canonicalStudyId
@@ -451,12 +453,18 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
       ].join(':')
       : null;
 
-    if (!startupKey || initializationKeyRef.current === startupKey) {
+    if (!startupKey || !activeConfig || !storageEngine || (
+      initializationRef.current?.key === startupKey
+      && initializationRef.current.config === activeConfig
+      && initializationRef.current.storageEngine === storageEngine
+    )) {
       return undefined;
     }
-    initializationKeyRef.current = startupKey;
+    const initialization = { key: startupKey, config: activeConfig, storageEngine };
+    initializationRef.current = initialization;
 
-    const isCurrentStartup = () => initializationKeyRef.current === startupKey;
+    const isCurrentStartup = () => mountedRef.current
+      && initializationRef.current === initialization;
 
     async function fetchParticipantIp() {
       const ipTimeoutController = new AbortController();
@@ -476,6 +484,7 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
     async function initializeUserStoreRouting() {
       // Check that we have a storage engine and active config (studyId is set for config, but typescript complains)
       if (!storageEngine || !activeConfig || !canonicalStudyId || (activeConfig.errors?.length ?? 0) > 0) return;
+      setStore(null);
       setIsCompletionCheckResolved(false);
       setCompletionCheckError(null);
       setStageEntryError(null);
@@ -488,21 +497,25 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
       try {
         // Make sure that we have a study database and that the study database has a sequence array
         await storageEngine.initializeStudyDb(canonicalStudyId);
+        if (!isCurrentStartup()) return;
 
         const activeHashPromise = hash(JSON.stringify(activeConfig));
 
         await storageEngine.saveConfig(activeConfig);
+        if (!isCurrentStartup()) return;
 
         const activeHash = await activeHashPromise;
         const sequenceArray = await storageEngine.getOrCreateSequenceArray(
           activeHash,
           () => generateSequenceArray(activeConfig, activeConfig.warnings),
         );
+        if (!isCurrentStartup()) return;
 
         // Get or generate participant session
         const searchParamsObject = Object.fromEntries(searchParams.entries());
 
         const resolvedModes = await storageEngine.getModes(canonicalStudyId);
+        if (!isCurrentStartup()) return;
         modes = resolvedModes;
 
         const initialMetadata: ParticipantMetadata = {
@@ -518,12 +531,15 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
           { modesDocument: resolvedModes, sequenceArray },
         );
 
+        if (!isCurrentStartup()) return;
+
         if (studyCondition.length > 0 && resolvedModes.developmentModeEnabled) {
           const updatedSearchParams = {
             ...participantSession.searchParams,
             condition: studyCondition.join(','),
           };
           await storageEngine.updateParticipantSearchParams(updatedSearchParams);
+          if (!isCurrentStartup()) return;
           await storageEngine.updateStudyCondition(studyCondition);
           participantSession = {
             ...participantSession,
@@ -618,7 +634,7 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
         };
 
         if (!resolvedModes.dataCollectionEnabled) {
-          finishStartup(false);
+          finishStartup(!!participantSession.finalized);
         } else {
           storageEngine.getParticipantCompletionStatus(participantSession.participantId).then((participantCompleted) => {
             if (isCurrentStartup()) {
@@ -633,6 +649,7 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
           });
         }
       } catch (error) {
+        if (!isCurrentStartup()) return;
         console.error('Error initializing user store routing:', error);
         if (
           error instanceof StageCapacityExceededError
@@ -664,7 +681,7 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
           ? getInitialStartupAlert(error, developmentModeEnabledForAlert, resumeParticipantId)
           : undefined;
 
-        if (!isStorageFailure) {
+        if (!isStorageFailure && initialAlertModal?.title !== 'Failed to connect to the storage engine') {
           if (isCurrentStartup()) {
             setStartupError({ error, retryParticipantStartup: true });
             setStartupPhase('error');
@@ -759,7 +776,7 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
   const isInteractionBlocked = isValidStudyId && !startupError && !hasConfigErrors && !stageEntryError
     && (startupPhase !== 'ready' || isLoading || showCompletionCheckError);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (isInteractionBlocked) {
       interfaceRef.current?.setAttribute('inert', '');
     } else {
@@ -776,7 +793,7 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
         actionLabel={startupError.retryParticipantStartup ? 'Retry' : 'Reload'}
         onReload={startupError.retryParticipantStartup
           ? () => {
-            initializationKeyRef.current = null;
+            initializationRef.current = null;
             setStartupPhase('participant-loading');
             setStartupAttempt((attempt) => attempt + 1);
           }
@@ -837,7 +854,6 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
         <Provider key={searchParams.has('participantId') ? renderedStore.store.getState().globalStoreGraph?.current : undefined} store={renderedStore.store}>{routing}</Provider>
       </StudyStoreContext.Provider>
     );
-
   } else if (!isLoading) {
     content = <ResourceNotFound email={activeConfig?.uiConfig.contactEmail} />;
   }

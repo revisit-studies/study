@@ -91,14 +91,14 @@ export function ComponentController() {
   useDisableBrowserBack();
 
   useEffect(() => {
-    if (!storageEngine) {
+    if (startupInteractionBlocked || !storageEngine) {
       return undefined;
     }
 
     return storageEngine.subscribeToCurrentParticipantRejection(() => {
       navigate(`./../__timedOut${window.location.search}`);
     });
-  }, [navigate, storageEngine]);
+  }, [navigate, startupInteractionBlocked, storageEngine]);
 
   // Check if we have issues connecting to the database, if so show alert modal
   const storeDispatch = useStoreDispatch();
@@ -281,7 +281,7 @@ export function ComponentController() {
     return <ResourceNotFound email={studyConfig.uiConfig.contactEmail} />;
   }
 
-  if (!storageEngine?.isConnected()) {
+  if (!startupInteractionBlocked && !storageEngine?.isConnected()) {
     return (
       <Center style={{ height: '80vh', flexDirection: 'column', textAlign: 'center' }}>
         <IconPlugConnectedX size={48} stroke={1.5} color="var(--mantine-color-orange-text)" />
@@ -291,7 +291,7 @@ export function ComponentController() {
     );
   }
 
-  if (participantId && storePartId !== participantId) {
+  if (!startupInteractionBlocked && participantId && storePartId !== participantId) {
     return (
       <Center style={{ height: '80vh' }}>
         <Loader />

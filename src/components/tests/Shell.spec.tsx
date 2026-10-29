@@ -16,11 +16,11 @@ import { getStudyConfig, resolveConfigKey } from '../../utils/fetchConfig';
 import { makeGlobalConfig, makeStudyConfig } from '../../tests/utils';
 import { studyStoreCreator } from '../../store/store';
 import { parseConditionParam } from '../../utils/handleConditionLogic';
+import { generateSequenceArray } from '../../utils/handleRandomSequences';
 import { parseStudyConfig } from '../../parser/parser';
 import { StageCapacityExceededError, StageOnlyDisabledConditionsHaveCapacityError } from '../../storage/engines/types';
 import { useStudyColorMode } from '../AppThemeProvider';
 import type { ParticipantMetadata } from '../../store/types';
-import { getStaticAssetByPath } from '../../utils/getStaticAsset';
 import { StartupInteractionProvider } from '../StartupContext';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
@@ -31,6 +31,7 @@ let mockSearchParams = new URLSearchParams();
 let mockStorageEngine: Record<string, ReturnType<typeof vi.fn>> | null = null;
 let routingMountCount = 0;
 let routingUnmountCount = 0;
+let startupErrorWasBlocked: boolean | undefined;
 
 function RoutingMountProbe() {
   useEffect(() => {
@@ -99,7 +100,13 @@ vi.mock('../ErrorLoadingConfig', () => ({
 }));
 
 vi.mock('../StartupErrorScreen', () => ({
-  StartupErrorScreen: () => <div role="alert">startup fallback</div>,
+  StartupErrorScreen: () => {
+    useEffect(() => {
+      // The real error screen focuses its heading in a passive effect.
+      startupErrorWasBlocked = Boolean(document.querySelector('[role="alert"]')?.closest('[inert]'));
+    }, []);
+    return <div role="alert">startup fallback</div>;
+  },
 }));
 
 vi.mock('../../ResourceNotFound', () => ({
@@ -203,20 +210,35 @@ function setupThemeSession(colorMode: StudyConfig['uiConfig']['colorMode'], save
     isConnected: vi.fn().mockReturnValue(true),
     getEngine: vi.fn().mockReturnValue('firebase'),
   };
-  vi.mocked(studyStoreCreator).mockImplementationOnce(async (_id, runtimeConfig, _sequence, metadata) => ({
-    store: {
-      getState: () => ({ config: runtimeConfig, metadata }),
-      dispatch: vi.fn(),
-      subscribe: vi.fn(),
-    },
-    actions: { setMetadata: vi.fn(), setParticipantCompleted: vi.fn() },
-  }) as unknown as Awaited<ReturnType<typeof studyStoreCreator>>);
+}
+
+function makeStartupEngine() {
+  return {
+    initializeStudyDb: vi.fn().mockResolvedValue(undefined),
+    saveConfig: vi.fn().mockResolvedValue(undefined),
+    getOrCreateSequenceArray: vi.fn().mockResolvedValue(['seq1']),
+    getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
+    initializeParticipantSession: vi.fn().mockResolvedValue({ ...baseSession, metadata: { ip: '' } }),
+    getParticipantCompletionStatus: vi.fn().mockResolvedValue(false),
+    updateParticipantMetadata: vi.fn().mockResolvedValue(undefined),
+    peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
+    isConnected: vi.fn().mockReturnValue(true),
+    getEngine: vi.fn().mockReturnValue('firebase'),
+  };
 }
 
 // ── tests ─────────────────────────────────────────────────────────────────────
 
 describe('Shell', () => {
   beforeEach(() => {
+    vi.mocked(studyStoreCreator).mockImplementation(async (_id, config, _sequence, metadata) => ({
+      store: {
+        getState: () => ({ config, metadata }),
+        dispatch: vi.fn(),
+        subscribe: vi.fn(),
+      },
+      actions: { setMetadata: vi.fn(), setParticipantCompleted: vi.fn() },
+    }) as unknown as Awaited<ReturnType<typeof studyStoreCreator>>);
     mockStudyId = 'test-study';
     mockSystemColorMode = 'light';
     localStorage.removeItem('revisit-user-color-mode');
@@ -227,6 +249,7 @@ describe('Shell', () => {
     mockStorageEngine = null;
     routingMountCount = 0;
     routingUnmountCount = 0;
+    startupErrorWasBlocked = undefined;
     vi.mocked(getStudyConfig).mockResolvedValue(null);
     vi.mocked(resolveConfigKey).mockReturnValue('test-study');
     vi.mocked(parseConditionParam).mockReturnValue([]);
@@ -376,8 +399,8 @@ describe('Shell', () => {
       mockStorageEngine!.peekCurrentParticipantId = vi.fn().mockResolvedValue(undefined);
 
       render(<Shell globalConfig={globalConfig} />);
-      await waitFor(() => expect(studyStoreCreator).toHaveBeenCalled());
-      const storeArguments = vi.mocked(studyStoreCreator).mock.calls[0];
+      await waitFor(() => expect(vi.mocked(studyStoreCreator).mock.calls.some((args) => args[10]?.title === 'Failed to connect to the storage engine')).toBe(true));
+      const storeArguments = vi.mocked(studyStoreCreator).mock.calls.find((args) => args[10]?.title === 'Failed to connect to the storage engine')!;
       expect(storeArguments[5]?.dataCollectionEnabled).toBe(false);
       expect(storeArguments[10]).toEqual({
         show: true,
@@ -482,6 +505,10 @@ describe('Shell', () => {
     expect(getByTestId('study-interface').getAttribute('aria-busy')).toBe('true');
     expect(getByTestId('study-interface').hasAttribute('inert')).toBe(true);
     expect(mockStorageEngine.initializeStudyDb).toHaveBeenCalledTimes(1);
+    expect(generateSequenceArray).toHaveBeenCalledWith({
+      ...mockActiveConfig,
+      uiConfig: { ...mockActiveConfig.uiConfig, numSequences: 1 },
+    });
   });
 
   test('mounts the first stimulus provisionally at the root route', () => {
@@ -500,7 +527,7 @@ describe('Shell', () => {
     mockStorageEngine = {
       initializeStudyDb: vi.fn().mockResolvedValue(undefined),
       saveConfig: vi.fn().mockResolvedValue(undefined),
-      getSequenceArray: vi.fn().mockResolvedValue(['seq1']),
+      getOrCreateSequenceArray: vi.fn().mockResolvedValue(['seq1']),
       getModes: vi.fn().mockResolvedValue({
         developmentModeEnabled: false,
         dataSharingEnabled: false,
@@ -539,6 +566,7 @@ describe('Shell', () => {
     const { getByRole } = render(<Shell globalConfig={globalConfig} />);
 
     await waitFor(() => expect(getByRole('alert')).toBeDefined());
+    expect(startupErrorWasBlocked).toBe(false);
     expect(vi.mocked(studyStoreCreator)).toHaveBeenCalledTimes(1);
   });
 
@@ -663,6 +691,72 @@ describe('Shell', () => {
     expect(routingUnmountCount).toBe(1);
   });
 
+  test('keeps finalized participant state when data collection is disabled', async () => {
+    vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
+    const engine = makeStartupEngine();
+    engine.getModes.mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: false });
+    engine.initializeParticipantSession.mockResolvedValue({ ...baseSession, finalized: true });
+    mockStorageEngine = engine;
+    const { queryByTestId } = render(<Shell globalConfig={globalConfig} />);
+    await waitFor(() => expect(queryByTestId('study-loading-barrier')).toBeNull());
+    const participantStore = await vi.mocked(studyStoreCreator).mock.results.at(-1)!.value;
+    expect(participantStore.actions.setParticipantCompleted).toHaveBeenCalledWith(true);
+  });
+
+  test('does not start metadata work when completion resolves after unmount', async () => {
+    vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
+    const engine = makeStartupEngine();
+    let resolveCompletion!: (completed: boolean) => void;
+    engine.getParticipantCompletionStatus.mockImplementation(() => new Promise<boolean>((resolve) => {
+      resolveCompletion = resolve;
+    }));
+    mockStorageEngine = engine;
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    const { unmount } = render(<Shell globalConfig={globalConfig} />);
+    await waitFor(() => expect(engine.getParticipantCompletionStatus).toHaveBeenCalled());
+    unmount();
+    await act(async () => resolveCompletion(false));
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(engine.updateParticipantMetadata).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+  });
+
+  test('does not write metadata when an IP request resolves after unmount', async () => {
+    vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
+    const engine = makeStartupEngine();
+    mockStorageEngine = engine;
+    let resolveIp!: (response: Response) => void;
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(() => new Promise<Response>((resolve) => {
+      resolveIp = resolve;
+    }));
+    const { unmount } = render(<Shell globalConfig={globalConfig} />);
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalled());
+    unmount();
+    await act(async () => resolveIp(new Response(JSON.stringify({ ip: '192.0.2.1' }))));
+    expect(engine.updateParticipantMetadata).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+  });
+
+  test('initializes each replacement widget config once and releases the barrier', async () => {
+    mockStudyId = '__revisit-widget';
+    const engine = makeStartupEngine();
+    engine.getModes.mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: false });
+    mockStorageEngine = engine;
+    const replacementConfig = { ...mockActiveConfig, studyMetadata: { ...mockActiveConfig.studyMetadata, title: 'Replacement' } };
+    vi.mocked(parseStudyConfig).mockResolvedValueOnce(mockActiveConfig).mockResolvedValueOnce(replacementConfig);
+    const { queryByTestId } = render(<StrictMode><Shell globalConfig={globalConfig} /></StrictMode>);
+    const sendConfig = async () => act(async () => {
+      window.dispatchEvent(new MessageEvent('message', { data: { type: 'revisitWidget/CONFIG', payload: '{}' } }));
+    });
+    await sendConfig();
+    await waitFor(() => expect(engine.initializeParticipantSession).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(queryByTestId('study-loading-barrier')).toBeNull());
+    await sendConfig();
+    await waitFor(() => expect(engine.initializeParticipantSession).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(queryByTestId('study-loading-barrier')).toBeNull());
+    expect(engine.saveConfig).toHaveBeenLastCalledWith(replacementConfig);
+  });
+
   test.each(['p1', ''])('does not collect or overwrite participant metadata during replay (participantId=%s)', async (participantId) => {
     mockSearchParams = new URLSearchParams({ participantId });
     vi.mocked(getStudyConfig).mockResolvedValue(mockActiveConfig);
@@ -710,79 +804,6 @@ describe('Shell', () => {
     await waitFor(() => expect(mockStorageEngine!.initializeStudyDb).toHaveBeenCalled(), { timeout: 3000 });
     await waitFor(() => expect(getByTestId('resource-not-found').getAttribute('data-email'))
       .toBe(mockActiveConfig.uiConfig.contactEmail));
-  });
-
-  test('renders an inert first-stimulus preview while a new participant is assigned', async () => {
-    const previewConfig: ParsedConfig<StudyConfig> = {
-      ...mockActiveConfig,
-      components: {
-        intro: {
-          type: 'markdown',
-          path: 'test-study/assets/intro.md',
-          response: [],
-        },
-      },
-      sequence: { order: 'fixed', components: ['intro'] },
-    };
-    vi.mocked(getStudyConfig).mockResolvedValue(previewConfig);
-
-    mockStorageEngine = {
-      initializeStudyDb: vi.fn().mockResolvedValue(undefined),
-      saveConfig: vi.fn().mockResolvedValue(undefined),
-      getOrCreateSequenceArray: vi.fn().mockResolvedValue(['seq1']),
-      getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
-      initializeParticipantSession: vi.fn().mockImplementation(() => new Promise(() => { })),
-      peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
-      isConnected: vi.fn().mockReturnValue(true),
-      getEngine: vi.fn().mockReturnValue('firebase'),
-    };
-
-    vi.mocked(getStaticAssetByPath).mockResolvedValue('# Welcome');
-
-    const { getByTestId, queryByTestId } = render(<Shell globalConfig={globalConfig} />);
-
-    await waitFor(() => expect(getByTestId('startup-preview')).toBeDefined());
-    expect(getByTestId('startup-preview').textContent).toContain('Welcome');
-    expect(queryByTestId('routing')).toBeNull();
-    expect(queryByTestId('loading-overlay')).toBeNull();
-    expect(studyStoreCreator).not.toHaveBeenCalled();
-  });
-
-  test.each([
-    ['a placeholder', 'Hello {{participantName}}'],
-    ['a conditional branch', '{{#if treatment}}Treatment{{else}}Control{{/if}}'],
-  ])('keeps the loading state instead of previewing a Markdown body with %s', async (_, markdown) => {
-    const previewConfig: ParsedConfig<StudyConfig> = {
-      ...mockActiveConfig,
-      components: {
-        intro: {
-          type: 'markdown',
-          path: 'test-study/assets/intro.md',
-          response: [],
-        },
-      },
-      sequence: { order: 'fixed', components: ['intro'] },
-    };
-    vi.mocked(getStudyConfig).mockResolvedValue(previewConfig);
-    vi.mocked(getStaticAssetByPath).mockResolvedValue(markdown);
-
-    mockStorageEngine = {
-      initializeStudyDb: vi.fn().mockResolvedValue(undefined),
-      saveConfig: vi.fn().mockResolvedValue(undefined),
-      getOrCreateSequenceArray: vi.fn().mockResolvedValue(['seq1']),
-      getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: true }),
-      initializeParticipantSession: vi.fn().mockImplementation(() => new Promise(() => { })),
-      peekCurrentParticipantId: vi.fn().mockResolvedValue(undefined),
-      isConnected: vi.fn().mockReturnValue(true),
-      getEngine: vi.fn().mockReturnValue('firebase'),
-    };
-
-    const { queryByTestId } = render(<Shell globalConfig={globalConfig} />);
-
-    await waitFor(() => expect(getStaticAssetByPath).toHaveBeenCalledWith(expect.stringContaining('test-study/assets/intro.md')));
-    await waitFor(() => expect(mockStorageEngine!.initializeParticipantSession).toHaveBeenCalled());
-    expect(queryByTestId('startup-preview')).toBeNull();
-    expect(queryByTestId('loading-overlay')).not.toBeNull();
   });
 
   test('passes the canonical prepared array into participant startup', async () => {
