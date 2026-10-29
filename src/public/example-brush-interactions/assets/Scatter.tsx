@@ -166,7 +166,7 @@ export function Scatter({
       };
     }
     if (brushType === 'Slider Selection') {
-      if (!brushState.hasBrush) {
+      if (!brushState.hasBrush && initializeBrush) {
         setBrushedSpace([[xScale(xMin), yScale(yMax)], [xScale(xMax), yScale(yMin)]], xScale, yScale, null);
       }
 

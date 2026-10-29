@@ -119,7 +119,8 @@ describe('VirtualChinrestCalibration replay', () => {
     }));
     const distance = render(<ViewingDistanceCalibration parameters={{ blindspotAngle: 13.5 }} answers={{}} setAnswer={vi.fn()} useTrrack={useTrrack} />);
     expect(distance.getByText(/Remaining measurements:/).textContent).toContain('3');
-    expect(distance.getByTestId('blindspot-ball').style.left).toBe('350px');
+    expect(distance.getByTestId('blindspot-ball').style.left).toBe('740px');
+    expect(mockUseTrrack.mock.results.at(-1)?.value.getState()).toEqual({ ballPosition: 350, ballPositions: [400, 350], viewingDistance: null });
     expect(mockApply).not.toHaveBeenCalled();
   });
 

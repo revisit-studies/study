@@ -124,7 +124,6 @@ export default function ViewingDistanceCalibration({
     },
   });
   const restoredState = useStudyState({ trrack });
-  const [initialBallPosition] = useState(restoredState.ballPosition);
   const ballRef = useRef<HTMLDivElement>(null);
   const squareRef = useRef<HTMLDivElement>(null);
   const animationFrameRef = useRef<number | null>(null);
@@ -359,7 +358,7 @@ export default function ViewingDistanceCalibration({
               height: '30px',
               backgroundColor: 'rgb(255, 0, 0)',
               borderRadius: '30px',
-              left: `${initialBallPosition}px`,
+              left: '740px',
             }}
           />
           <div
