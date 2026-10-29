@@ -20,6 +20,7 @@ import { REVISIT_MODE } from '../../storage/engines/types';
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
 const prefixMock = vi.hoisted(() => ({ value: '/' }));
+const assignLocation = vi.fn();
 
 vi.mock('@mantine/core', async () => ({
   ...await vi.importActual<typeof Mantine>('@mantine/core'),
@@ -42,8 +43,8 @@ vi.mock('@mantine/core', async () => ({
   Divider: () => <hr />,
   Flex: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Image: ({ src, alt }: { src?: string; alt?: string }) => <img src={src} alt={alt} />,
-  MultiSelect: ({ data }: { data: { value: string; label: string }[] }) => (
-    <select aria-label="Conditions">{data.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}</select>
+  MultiSelect: ({ data, onChange }: { data: { value: string; label: string }[]; onChange: (value: string[]) => void }) => (
+    <select aria-label="Conditions" onChange={(event) => onChange([event.target.value])}>{data.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}</select>
   ),
   Skeleton: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
   rem: (v: number) => `${v}px`,
@@ -144,11 +145,6 @@ function LocationSearch() {
   return <output data-testid="location-search">{search}</output>;
 }
 
-function LocationPath() {
-  const { pathname } = useLocation();
-  return <output data-testid="location-path">{pathname}</output>;
-}
-
 const minimalStudyConfig = makeStudyConfig();
 
 const parsedStudyConfig: ParsedConfig<StudyConfig> = {
@@ -194,6 +190,7 @@ const makeLandingEngine = (modes: Partial<Record<REVISIT_MODE, boolean>> = {}, h
 beforeEach(() => {
   prefixMock.value = '/';
   vi.clearAllMocks();
+  vi.stubGlobal('location', { ...window.location, assign: assignLocation });
   vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({
     matches: false,
     addEventListener: vi.fn(),
@@ -211,38 +208,36 @@ afterEach(() => {
 
 describe('ConfigSwitcher', () => {
   test.each([
-    { label: 'Go to Study', path: '/test-study' },
-    { label: 'Analyze & Manage Study', path: '/analysis/stats/test-study' },
-  ])('uses a button to navigate to $label', async ({ label, path }) => {
+    { label: 'Go to Study', path: '/test-study', prefix: '/' },
+    { label: 'Analyze & Manage Study', path: '/analysis/stats/test-study', prefix: '/' },
+    { label: 'Go to Study', path: '/study/test-study', prefix: '/study/' },
+    { label: 'Analyze & Manage Study', path: '/study/analysis/stats/test-study', prefix: '/study/' },
+  ])('loads a fresh page for $label under $prefix', async ({ label, path, prefix }) => {
+    prefixMock.value = prefix;
     const view = await act(async () => render(
-      <>
-        <ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigs} />
-        <LocationPath />
-      </>,
+      <ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigs} />,
+      prefix,
+      prefix,
     ));
 
     fireEvent.click(view.getByRole('button', { name: label }));
 
-    expect(view.getByTestId('location-path').textContent).toBe(path);
+    expect(assignLocation).toHaveBeenCalledExactlyOnceWith(path);
   });
 
-  test.each([
-    { label: 'Go to Study', path: '/test-study' },
-    { label: 'Analyze & Manage Study', path: '/analysis/stats/test-study' },
-  ])('navigates to $label under a non-root base path', async ({ label, path }) => {
+  test('preserves the selected condition when loading a study under a base path', async () => {
     prefixMock.value = '/study/';
+    vi.mocked(getSequenceConditions).mockReturnValue(['condA']);
     const view = await act(async () => render(
-      <>
-        <ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigs} />
-        <LocationPath />
-      </>,
+      <ConfigSwitcher globalConfig={globalConfig} studyConfigs={studyConfigs} />,
       '/study/',
       '/study/',
     ));
 
-    fireEvent.click(view.getByRole('button', { name: label }));
+    fireEvent.change(view.getByLabelText('Conditions'), { target: { value: 'condA' } });
+    fireEvent.click(view.getByRole('button', { name: 'Go to Study' }));
 
-    expect(view.getByTestId('location-path').textContent).toBe(path);
+    expect(assignLocation).toHaveBeenCalledExactlyOnceWith('/study/test-study?condition=condA');
   });
 
   test.each([

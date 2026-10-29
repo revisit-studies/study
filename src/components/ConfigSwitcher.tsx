@@ -6,7 +6,7 @@ import {
 } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Timestamp } from 'firebase/firestore';
-import { useNavigate, useSearchParams } from 'react-router';
+import { useSearchParams } from 'react-router';
 import {
   GlobalConfig, ParsedConfig, StudyConfig,
 } from '../parser/types';
@@ -38,7 +38,6 @@ function ValidStudyCard({
   canViewAnalytics: boolean;
 }) {
   const { storageEngine } = useStorageEngine();
-  const navigate = useNavigate();
 
   const [studyStatusAndTiming, setStudyStatusAndTiming] = useState<{ completed: number; rejected: number; inProgress: number; minTime: Timestamp | number | null; maxTime: Timestamp | number | null } | null>(null);
 
@@ -138,8 +137,8 @@ function ValidStudyCard({
 
   const studyUrl = useMemo(
     () => (selectedStudyConditions.length > 0
-      ? `/${url}?condition=${selectedStudyConditions.join(',')}`
-      : `/${url}`),
+      ? `${PREFIX}${url}?condition=${selectedStudyConditions.join(',')}`
+      : `${PREFIX}${url}`),
     [selectedStudyConditions, url],
   );
 
@@ -265,6 +264,7 @@ function ValidStudyCard({
       </Flex>
       )}
 
+      {/* Reload to keep each study launch isolated from the previous storage session. */}
       <Flex direction="row" align="end" gap="sm" mt="md" wrap="wrap">
         {conditions.length > 0 && (
         <MultiSelect
@@ -291,7 +291,7 @@ function ValidStudyCard({
           leftSection={<IconChartHistogram />}
           style={{ marginLeft: 'auto' }}
           variant="default"
-          onClick={() => navigate(`/analysis/stats/${url}`)}
+          onClick={() => window.location.assign(`${PREFIX}analysis/stats/${url}`)}
         >
           Analyze & Manage Study
         </Button>
@@ -299,7 +299,7 @@ function ValidStudyCard({
         <Button
           leftSection={<IconListCheck />}
           ml={canViewAnalytics ? undefined : 'auto'}
-          onClick={() => navigate(studyUrl)}
+          onClick={() => window.location.assign(studyUrl)}
         >
           Go to Study
         </Button>

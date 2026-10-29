@@ -1,4 +1,39 @@
 import { expect, test } from '@playwright/test';
+import { readStoredValue } from './utils';
+
+test('resumes the saved participant after launching a different study and returning home', async ({ page }) => {
+  await page.route('**/global.json', (route) => route.fulfill({
+    json: {
+      $schema: '',
+      configsList: ['demo-html', 'tutorial'],
+      configs: {
+        'demo-html': { path: 'demo-html/config.json' },
+        tutorial: { path: 'tutorial/config.json' },
+      },
+    },
+  }));
+
+  await page.goto('/demo-html');
+  await expect(page.getByText(/example study.*embed html elements/i)).toBeVisible();
+  const participantId = await readStoredValue<string>(page, 'dev-demo-html/currentParticipantId');
+  expect(participantId).toBeTruthy();
+
+  await page.goto('/');
+  const cards = page.getByRole('tabpanel', { name: 'Studies', exact: true }).locator('.mantine-Card-root');
+  await cards.filter({ hasText: 'A tutorial that you will build with us' }).getByRole('button', { name: 'Go to Study', exact: true }).click();
+  await expect(page).toHaveURL(/\/tutorial\//);
+  await expect(page.getByTestId('app-aside')).toBeVisible();
+  const tutorialParticipantId = await readStoredValue<string>(page, 'dev-tutorial/currentParticipantId');
+  expect(tutorialParticipantId).toBeTruthy();
+  expect(tutorialParticipantId).not.toBe(participantId);
+
+  await page.goBack();
+  await cards.filter({ hasText: 'HTML as a Stimulus' }).getByRole('button', { name: 'Go to Study', exact: true }).click();
+  await expect(page.getByText(/example study.*embed html elements/i)).toBeVisible();
+
+  const assignments = await readStoredValue<Record<string, unknown>>(page, 'dev-demo-html/sequenceAssignment');
+  expect(Object.keys(assignments ?? {})).toEqual([participantId]);
+});
 
 test('uses configured tabs for grouping, keyboard navigation, and study buttons', async ({ page }) => {
   const customLabel = 'Demo Studies';
