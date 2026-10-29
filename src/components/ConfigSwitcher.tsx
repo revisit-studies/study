@@ -264,6 +264,7 @@ function ValidStudyCard({
       </Flex>
       )}
 
+      {/* Reload to keep each study launch isolated from the previous storage session. */}
       <Flex direction="row" align="end" gap="sm" mt="md" wrap="wrap">
         {conditions.length > 0 && (
         <MultiSelect
@@ -290,8 +291,7 @@ function ValidStudyCard({
           leftSection={<IconChartHistogram />}
           style={{ marginLeft: 'auto' }}
           variant="default"
-          component="a"
-          href={`${PREFIX}analysis/stats/${url}`}
+          onClick={() => window.location.assign(`${PREFIX}analysis/stats/${url}`)}
         >
           Analyze & Manage Study
         </Button>
@@ -299,8 +299,7 @@ function ValidStudyCard({
         <Button
           leftSection={<IconListCheck />}
           ml={canViewAnalytics ? undefined : 'auto'}
-          component="a"
-          href={studyUrl}
+          onClick={() => window.location.assign(studyUrl)}
         >
           Go to Study
         </Button>
