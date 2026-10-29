@@ -48,6 +48,7 @@
   let restoring = false;
   let restored = false;
   let queuedAnswers;
+  let latestAnswers;
   let legacyMode = false;
   const documentId = crypto.randomUUID?.() ?? `document-${Date.now()}-${Math.random()}`;
   let announced = null;
@@ -66,6 +67,7 @@
 
   const publish = (tag, message) => {
     if (resume?.isAnalysis) return;
+    if (tag === 'ANSWERS') latestAnswers = message;
     if (!legacyMode && (registrationStarted || managedTrracks.size > 0 || restoreCallback)) {
       if (!restored || restoring) {
         if (tag === 'ANSWERS') queuedAnswers = message;
@@ -83,7 +85,10 @@
     sendMessage('RESTORATION_CAPABILITY', { protocolVersion: 1, requestId: request.requestId, supported });
     try {
       if (supported && !request.isAnalysis) {
-        if (request.provenanceGraph || Object.keys(request.answers ?? {}).length > 0) queuedAnswers = undefined;
+        if (request.provenanceGraph || Object.keys(request.answers ?? {}).length > 0) {
+          queuedAnswers = undefined;
+          latestAnswers = request.answers;
+        }
         for (const managed of managedTrracks) {
           if (request.provenanceGraph) {
             managed.previous = request.provenanceGraph;
@@ -167,6 +172,15 @@
           resume = data.message;
           restored = false;
           restore();
+        } else if (restored) {
+          // A cached document returns with the same request; acknowledge without resetting its state.
+          const supported = !!restoreCallback;
+          sendMessage('RESTORATION_CAPABILITY', { protocolVersion: 1, requestId: resume.requestId, supported });
+          if (supported) sendMessage('RESTORED', { protocolVersion: 1, requestId: resume.requestId });
+          if (!resume.isAnalysis) {
+            if (latestAnswers !== undefined) sendMessage('ANSWERS', latestAnswers);
+            managedTrracks.forEach((managed) => managed.publish());
+          }
         }
       }
       if (data.type === `${PREFIX}/RETRY_RESTORE` && data.message?.requestId === resume?.requestId) restore();
@@ -289,8 +303,16 @@
     false
   );
   window.addEventListener('pagehide', (event) => {
+    if (globalStoreUpdater) sendMessage('GLOBAL_STORE_UPDATER', { documentId, enabled: false });
     if (!event.persisted) {
       disposeManagedTrracks();
+    }
+  });
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) {
+      announced = null;
+      announce();
+      if (legacyMode && latestAnswers !== undefined) sendMessage('ANSWERS', latestAnswers);
     }
   });
 })();

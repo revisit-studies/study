@@ -14,8 +14,8 @@ export function getGlobalStoreHistory(graph: GlobalStoreGraph) {
       nodeId: node.id,
       createdOn: node.createdOn,
       active: active.has(node.id),
-      before: states[node.parent].values,
-      after: state.values,
+      before: states[state.submission.entryNodeId ?? node.parent].values,
+      after: state.submission.resultValues ?? state.values,
       submission: state.submission,
     }];
   }).sort((first, second) => first.createdOn - second.createdOn);

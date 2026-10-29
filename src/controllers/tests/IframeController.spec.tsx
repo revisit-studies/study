@@ -646,3 +646,24 @@ test('website updater replies must match the active window, document, and reques
   unmount();
   expect(mockStoreUpdater.current).toBeUndefined();
 });
+
+test('navigation to a legacy document disposes its outgoing updater and rejects pending work', async () => {
+  const { container } = render(<IframeController currentConfig={{ type: 'website', path: 'purchase.html', response: [] }} answers={{}} />);
+  const iframe = container.querySelector('iframe')!;
+  const postMessage = vi.spyOn(iframe.contentWindow!, 'postMessage');
+  const receive = (type: string, message: object) => act(() => {
+    window.dispatchEvent(new MessageEvent('message', {
+      source: iframe.contentWindow,
+      data: { type: `@REVISIT_COMMS/${type}`, iframeId: new URL(iframe.src).searchParams.get('id'), message },
+    }));
+  });
+  receive('WINDOW_READY', { protocolVersion: 1, documentId: 'first', globalStoreUpdater: true });
+  const resume = postMessage.mock.calls.map(([data]) => data).find((data) => data.type === '@REVISIT_COMMS/RESUME').message;
+  receive('RESTORED', { protocolVersion: 1, requestId: resume.requestId });
+  const rejected = vi.fn();
+  Promise.resolve(mockStoreUpdater.current!({ store: { budget: 100 }, answers: {} })).catch(rejected);
+  receive('WINDOW_READY', { protocolVersion: 0, documentId: 'second', globalStoreUpdater: false });
+  expect(mockStoreUpdater.current).toBeUndefined();
+  await waitFor(() => expect(rejected).toHaveBeenCalledWith(expect.any(Error)));
+  expect(iframe.hasAttribute('inert')).toBe(false);
+});

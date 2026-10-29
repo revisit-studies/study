@@ -35,3 +35,56 @@ test('delivers only received store snapshots, including to late subscribers, and
   deliver(50);
   expect(late).toHaveBeenCalledTimes(1);
 });
+
+test.each([undefined, 20])('a cached-page return keeps restored state and answers with draft %s', async (draftCost) => {
+  const handlers = new Map<string, MessageHandler>();
+  const parent = { postMessage: vi.fn() };
+  const frame = {
+    location: { search: '?id=frame' },
+    parent,
+    addEventListener: (type: string, handler: MessageHandler) => handlers.set(type, handler),
+    Revisit: undefined as unknown as {
+      registerGlobalStoreUpdater: (fn: () => object) => () => void;
+      onRestore: (fn: () => void) => void;
+      completeRegistration: () => void;
+      postAnswers: (answers: object) => void;
+    },
+  };
+  runInNewContext(readFileSync('public/revisitUtilities/revisit-communicate.js', 'utf8'), { window: frame, URLSearchParams, crypto });
+  frame.Revisit.postAnswers({ selectedCost: 0 });
+  frame.Revisit.registerGlobalStoreUpdater(() => ({}));
+  const restore = vi.fn();
+  frame.Revisit.onRestore(restore);
+  frame.Revisit.completeRegistration();
+  const { documentId } = parent.postMessage.mock.calls.find(([data]) => data.type === '@REVISIT_COMMS/WINDOW_READY')![0].message;
+  const resume = () => handlers.get('message')!({
+    source: parent,
+    data: {
+      type: '@REVISIT_COMMS/RESUME',
+      iframeId: 'frame',
+      message: {
+        documentId, requestId: 'resume', protocolVersion: 1, answers: { selectedCost: 10 },
+      },
+    },
+  });
+  resume();
+  await Promise.resolve();
+  expect(restore).toHaveBeenCalledTimes(1);
+  if (draftCost !== undefined) frame.Revisit.postAnswers({ selectedCost: draftCost });
+  parent.postMessage.mockClear();
+  handlers.get('pagehide')!({ persisted: true });
+  expect(parent.postMessage).toHaveBeenCalledWith(expect.objectContaining({
+    type: '@REVISIT_COMMS/GLOBAL_STORE_UPDATER', message: expect.objectContaining({ enabled: false }),
+  }), '*');
+  parent.postMessage.mockClear();
+  handlers.get('pageshow')?.({ persisted: true });
+  expect(parent.postMessage).toHaveBeenCalledWith(expect.objectContaining({
+    type: '@REVISIT_COMMS/WINDOW_READY', message: expect.objectContaining({ globalStoreUpdater: true }),
+  }), '*');
+  parent.postMessage.mockClear();
+  resume();
+  await Promise.resolve();
+  expect(parent.postMessage).toHaveBeenCalledWith(expect.objectContaining({ type: '@REVISIT_COMMS/RESTORED' }), '*');
+  expect(parent.postMessage).toHaveBeenCalledWith(expect.objectContaining({ type: '@REVISIT_COMMS/ANSWERS', message: { selectedCost: draftCost ?? 10 } }), '*');
+  expect(restore).toHaveBeenCalledTimes(1);
+});

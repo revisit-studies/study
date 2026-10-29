@@ -186,3 +186,24 @@ test('navigation waits for the pending save before restoring the destination and
   await waitFor(() => expect(screen.getByTestId('stimulus')).not.toBeNull());
   expect(mocks.setGlobalStoreSubmitting).toHaveBeenCalledWith(false);
 });
+
+test('returning to the submitting trial does not restore it before the pending save finishes', async () => {
+  const view = mount();
+  await waitFor(() => expect(screen.getByTestId('stimulus')).toBeTruthy());
+  mocks.state.globalStoreSubmitting = true;
+  mocks.state.globalStorePendingIdentifier = 'trial_0';
+  mocks.state.globalStorePendingRevision = 0;
+  mocks.state.globalStoreRevision = 0;
+  const draw = () => view.rerender(<MantineProvider forceColorScheme="light"><TrialProvenanceBoundary><Stimulus /></TrialProvenanceBoundary></MantineProvider>);
+  draw();
+  expect(screen.getByTestId('stimulus')).toBeTruthy();
+  mocks.identifier = 'other_1';
+  draw();
+  mocks.identifier = 'trial_0';
+  draw();
+  expect(screen.getByLabelText('Finishing response save')).toBeTruthy();
+  expect(screen.queryByTestId('stimulus')).toBeNull();
+  mocks.state.globalStoreRevision = 1;
+  draw();
+  await waitFor(() => expect(screen.getByTestId('stimulus')).toBeTruthy());
+});

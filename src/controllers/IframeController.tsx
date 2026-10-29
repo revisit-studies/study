@@ -31,10 +31,13 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   const updaterCleanup = useRef<(() => void) | undefined>(undefined);
   const pendingUpdate = useRef<{ id: string; resolve:(value: GlobalStoreValues) => void; reject: (error: Error) => void } | undefined>(undefined);
   const documentId = useRef<string | undefined>(undefined);
-  useEffect(() => () => {
+  const disposeUpdater = useCallback((message: string) => {
     updaterCleanup.current?.();
-    pendingUpdate.current?.reject(new Error('The website was closed before its global store update finished.'));
+    updaterCleanup.current = undefined;
+    pendingUpdate.current?.reject(new Error(message));
+    pendingUpdate.current = undefined;
   }, []);
+  useEffect(() => () => disposeUpdater('The website was closed before its global store update finished.'), [disposeUpdater]);
   const studyColorMode = useComputedColorScheme('light');
   const colorMode = currentConfig.colorMode ?? studyColorMode;
   const {
@@ -150,14 +153,17 @@ export function IframeController({ currentConfig, provState, answers }: { curren
     if (!frameWindow) return undefined;
     const events = new frameWindow.AbortController();
     // Internal navigation keeps the iframe URL prop and request key unchanged.
-    frameWindow.addEventListener('pagehide', onLoading, { signal: events.signal });
+    frameWindow.addEventListener('pagehide', () => {
+      disposeUpdater('The website navigated before its global store update finished.');
+      onLoading();
+    }, { signal: events.signal });
     frameWindow.addEventListener('pageshow', () => {
       applyColorMode();
       onReady();
     }, { signal: events.signal });
     // Abort removes listeners safely even after the frame changes origin.
     return () => events.abort();
-  }, [frameDocument, applyColorMode, onLoading, onReady]);
+  }, [frameDocument, applyColorMode, onLoading, onReady, disposeUpdater]);
 
   useAssetStatus(resumeStatus === 'pending' ? 'loading' : resumeStatus === 'error' ? 'error' : assetStatus);
 
@@ -197,13 +203,11 @@ export function IframeController({ currentConfig, provState, answers }: { curren
       if (data && typeof data === 'object' && (iframeId === data.iframeId || isBootstrap) && e.source === ref.current?.contentWindow) {
         if (data.requestId && data.requestId !== resumeRequest.current) return;
         switch (data.type) {
-          case `${PREFIX}/WINDOW_READY`:
+          case `${PREFIX}/WINDOW_READY`: {
+            const isNewDocument = documentId.current !== data.message?.documentId;
+            disposeUpdater('The website navigated before its global store update finished.');
+            documentId.current = data.message?.documentId;
             if (data.message?.protocolVersion === 1) {
-              const isNewDocument = documentId.current !== data.message.documentId;
-              updaterCleanup.current?.();
-              updaterCleanup.current = undefined;
-              pendingUpdate.current?.reject(new Error('The website navigated before its global store update finished.'));
-              documentId.current = data.message.documentId;
               resumeRequest.current = `${iframeId}:${data.message.documentId}`;
               if (data.message.globalStoreUpdater && !isAnalysis) {
                 updaterCleanup.current = registerGlobalStoreUpdater(({ store: entry, answers: currentAnswers }) => new Promise((resolve, reject) => {
@@ -226,6 +230,10 @@ export function IframeController({ currentConfig, provState, answers }: { curren
                   provenanceGraph: isAnalysis ? undefined : provenance,
                 });
               }
+            } else if (isNewDocument) {
+              resumeRequest.current = '';
+              resumeStatusRef.current = 'unknown';
+              setResumeStatus('unknown');
             }
             sendMessage('GLOBAL_STORE', store);
             if (currentConfig.parameters) {
@@ -238,11 +246,10 @@ export function IframeController({ currentConfig, provState, answers }: { curren
               sendMessage('ANSWERS', answers);
             }
             break;
+          }
           case `${PREFIX}/GLOBAL_STORE_UPDATER`:
             if (data.message?.documentId === documentId.current && data.message.enabled === false) {
-              updaterCleanup.current?.();
-              updaterCleanup.current = undefined;
-              pendingUpdate.current?.reject(new Error('The global store updater was removed.'));
+              disposeUpdater('The global store updater was removed.');
             }
             break;
           case `${PREFIX}/GLOBAL_STORE_RESULT`:
@@ -308,7 +315,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, [store, registerGlobalStoreUpdater, storeDispatch, dispatch, iframeId, currentConfig, sendMessage, setReactiveAnswers, updateProvenance, updateResponseBlockValidation, identifier, isAnalysis, provState, answers, shouldSendProvenance, provenance, restoredAnswers]);
+  }, [store, registerGlobalStoreUpdater, disposeUpdater, storeDispatch, dispatch, iframeId, currentConfig, sendMessage, setReactiveAnswers, updateProvenance, updateResponseBlockValidation, identifier, isAnalysis, provState, answers, shouldSendProvenance, provenance, restoredAnswers]);
 
   // While the path is templated inside a dynamic block, templatedPath is undefined until the
   // block's current iteration resolves — don't load an iframe built from the wrong iteration.

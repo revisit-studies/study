@@ -121,3 +121,30 @@ test('normal advancement keeps the lock until the destination trial mounts', asy
   expect(mocks.navigate).toHaveBeenCalledTimes(1);
   expect(mocks.context.store.getState().globalStoreSubmitting).toBe(true);
 });
+
+test.each([10, 30])('a revisit of cost %s saves the current recording and visit times', async (originalCost) => {
+  const { store, actions } = mocks.context;
+  const original = makeStoredAnswer({
+    identifier: 'purchase_0',
+    componentName: 'purchase',
+    trialOrder: '0',
+    answer: { cost: originalCost },
+    assetIdentifier: 'purchase_0__global_0',
+    startTime: 1000,
+    endTime: 2000,
+    windowEvents: [[1500, 'focus', 'INPUT']],
+  });
+  const first = createGlobalStoreSubmission(undefined, { budget: { initialValue: 100 } }, original, { budget: 100 - originalCost }, [], {});
+  store.dispatch(actions.acceptGlobalStoreSubmission({ graph: first.graph, answers: { purchase_0: original }, revision: 1 }));
+  const now = vi.spyOn(Date, 'now').mockReturnValue(61000);
+  const hook = mount();
+  now.mockReturnValue(62000);
+  await act(async () => { await hook.result.current.goToNextStep(); });
+  const saved = mocks.save.mock.calls[0][0].purchase_0;
+  expect(saved.answer).toEqual({ cost: 10 });
+  expect(saved.assetIdentifier).toBe('purchase_0__global_1');
+  expect(saved.startTime).toBe(61000);
+  expect(saved.endTime).toBe(62000);
+  expect(saved.windowEvents).toEqual([]);
+  expect(mocks.context.store.getState().answers.purchase_0).toEqual(saved);
+});

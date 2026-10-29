@@ -5,21 +5,22 @@ import type { StimulusParams } from '../../../store/types';
 import { useStudyState } from '../../../store/hooks/useStudyState';
 import { useNextStep } from '../../../store/hooks/useNextStep';
 
-type PurchaseState = { cost: number | null; budgetAtEntry: number };
+type PurchaseState = { cost: number | null; budgetAtEntry: number; zoom: number };
 type Parameters = { faultControls?: boolean; delayMs?: number };
 
 export default function Purchase({
   parameters = {}, setAnswer, useTrrack, provenanceState, store, registerGlobalStoreUpdater,
 }: StimulusParams<Parameters, PurchaseState>) {
   const [initialCost] = useStudyState<number | null>({ responseId: 'selectedCost', initialState: null });
-  const { registry, select } = useMemo(() => {
+  const { registry, select, zoomIn } = useMemo(() => {
     const reg = Registry.create();
     return {
       registry: reg,
       select: reg.register('select-item', (state: PurchaseState, cost: number) => ({ ...state, cost })),
+      zoomIn: reg.register('zoom-in', (state: PurchaseState, amount: number) => ({ ...state, zoom: state.zoom + amount })),
     };
   }, []);
-  const trrack = useTrrack({ registry, initialState: { cost: initialCost, budgetAtEntry: Number(store.budget) } });
+  const trrack = useTrrack({ registry, initialState: { cost: initialCost, budgetAtEntry: Number(store.budget), zoom: 1 } });
   const state = useStudyState({ trrack });
   const displayed = provenanceState ?? state;
   const [rejectUpdate, setRejectUpdate] = useState(false);
@@ -53,6 +54,8 @@ export default function Purchase({
         ))}
       </Group>
       <Text>Selected cost: {displayed.cost ?? 'none'}</Text>
+      <Text>Tracked zoom: {displayed.zoom}</Text>
+      <Button onClick={() => trrack.apply('Zoom in', zoomIn(1))}>Zoom in</Button>
       {parameters.faultControls && (
         <>
           <Checkbox label="Reject update" checked={rejectUpdate} onChange={(event) => setRejectUpdate(event.currentTarget.checked)} />

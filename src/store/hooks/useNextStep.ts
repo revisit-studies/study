@@ -266,9 +266,9 @@ export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
         identifier,
         ...(usesGlobalStore ? { assetIdentifier, globalStoreEntry: { ...entryStore } } : {}),
         answer: answerToPersist,
-        startTime: storedAnswer.startTime > 0 ? Math.min(storedAnswer.startTime, startTime) : startTime,
+        startTime: usesGlobalStore ? startTime : storedAnswer.startTime > 0 ? Math.min(storedAnswer.startTime, startTime) : startTime,
         endTime: Math.max(storedAnswer.endTime, endTime),
-        windowEvents: [...(storedAnswer.windowEvents ?? []), ...currentWindowEvents],
+        windowEvents: [...(usesGlobalStore ? [] : storedAnswer.windowEvents ?? []), ...currentWindowEvents],
         timedOut: !collectData,
         responseSubmitAttempted,
         checkAnswer: submissionCheckAnswer,
@@ -315,7 +315,7 @@ export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
           if (!confirmed || !preparationIsCurrent()) return;
         }
         const replacing = !!getGlobalStoreNodeState(next.graph, next.nodeId).submission?.replaces && !next.unchanged;
-        activeAnswers = next.unchanged ? answers : projectGlobalStoreAnswers(answers, toSave, replacing);
+        activeAnswers = projectGlobalStoreAnswers(answers, toSave, replacing);
         const revision = (live!.globalStoreRevision ?? 0) + 1;
         if (!storageEngine) throw new Error('Storage is unavailable. Please reload and try again.');
         await storageEngine.saveGlobalStoreSubmission(activeAnswers, next.graph, revision, identifier, provenanceGraph ?? {

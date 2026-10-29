@@ -24,8 +24,11 @@ let mockRecordingConfig = {
   currentComponentHasClickToRecord: false,
 };
 let mockCurrentComponent = 'intro';
+let mockIdentifier = 'intro_0';
 let mockGlobalStoreEnabled = false;
 let mockGlobalRevision = 0;
+let mockGlobalStoreSubmitting = false;
+let mockGlobalStorePendingRevision = 0;
 let mockStorageEngine: Record<string, ReturnType<typeof vi.fn>> | null = null;
 let mockStoredAnswer: { endTime: number } | null = null;
 let mockModes = { dataCollectionEnabled: true, developmentModeEnabled: false, dataSharingEnabled: false };
@@ -124,7 +127,7 @@ vi.mock('../useStudyConfig', () => ({
 
 vi.mock('../../../routes/utils', () => ({
   useCurrentComponent: () => mockCurrentComponent,
-  useCurrentIdentifier: () => 'intro_0',
+  useCurrentIdentifier: () => mockIdentifier,
 }));
 
 vi.mock('../../../storage/storageEngineHooks', () => ({
@@ -147,6 +150,8 @@ vi.mock('../../store', () => ({
   useStoreSelector: (selector: (s: StoreState) => unknown) => selector({
     modes: mockModes,
     globalStoreRevision: mockGlobalRevision,
+    globalStoreSubmitting: mockGlobalStoreSubmitting,
+    globalStorePendingRevision: mockGlobalStorePendingRevision,
   } as StoreState),
 }));
 
@@ -163,8 +168,11 @@ beforeEach(() => {
     currentComponentHasClickToRecord: false,
   };
   mockCurrentComponent = 'intro';
+  mockIdentifier = 'intro_0';
   mockGlobalStoreEnabled = false;
   mockGlobalRevision = 0;
+  mockGlobalStoreSubmitting = false;
+  mockGlobalStorePendingRevision = 0;
   mockStorageEngine = null;
   mockStoredAnswer = null;
   mockModes = { dataCollectionEnabled: true, developmentModeEnabled: false, dataSharingEnabled: false };
@@ -981,4 +989,29 @@ test('a previously accepted global-store trial records its revision under a sepa
   await waitFor(() => expect(result.current.isScreenRecording).toBe(true));
   act(() => { result.current.stopScreenRecording(); });
   await waitFor(() => expect(mockStorageEngine!.saveScreenRecording).toHaveBeenCalledWith(expect.any(Blob), 'intro_0__global_7'));
+});
+
+test('destination audio waits for acceptance and saves under the same revision as its answer', async () => {
+  mockGlobalStoreEnabled = true;
+  mockRecordingConfig = { ...mockRecordingConfig, studyHasAudioRecording: true, currentComponentHasAudioRecording: true };
+  mockStorageEngine = { saveAudioRecording: vi.fn(async () => {}) };
+  const hook = renderHook(useRecording);
+  await waitFor(() => expect(hook.result.current.isAudioRecording).toBe(true));
+  act(() => {
+    mockGlobalStoreSubmitting = true;
+    mockCurrentComponent = 'next';
+    mockIdentifier = 'next_1';
+    hook.rerender();
+  });
+  expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledTimes(1);
+  expect(hook.result.current.isAudioRecording).toBe(false);
+  await act(async () => { mockGlobalRevision = 1; hook.rerender(); });
+  await waitFor(() => expect(hook.result.current.isAudioRecording).toBe(true));
+  act(() => {
+    mockCurrentComponent = 'end';
+    mockIdentifier = 'end_2';
+    mockRecordingConfig.currentComponentHasAudioRecording = false;
+    hook.rerender();
+  });
+  expect(mockStorageEngine.saveAudioRecording).toHaveBeenLastCalledWith(expect.any(Blob), 'next_1__global_1');
 });

@@ -18,9 +18,15 @@ test('reload and unchanged Previous preserve the React stimulus, form and accept
   await expectBudget(page, 70);
   await expect(page.getByRole('button', { name: 'Spend 20', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByRole('textbox', { name: /Confidence$/ })).toHaveValue('80');
+  await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
+  await expect(page.getByText('Tracked zoom: 2', { exact: true })).toBeVisible();
   await nextClick(page);
   await expectBudget(page, 50);
   await expect.poll(async () => (await readGlobalStoreParticipant(page))?.globalVariables?.budget).toBe(50);
+  await page.getByRole('button', { name: 'Previous', exact: true }).click();
+  await expect(page.getByText('Tracked zoom: 2', { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByText('Tracked zoom: 2', { exact: true })).toBeVisible();
 });
 
 test('canceling an earlier edit preserves progress and confirmation starts a replacement path', async ({ page }) => {
@@ -76,6 +82,21 @@ test('HTML selection restores after reload and editing does not reload its docum
   await expect(frame.getByRole('button', { name: 'Spend 5', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await nextClick(page);
   await expectBudget(page, 45);
+});
+
+test('HTML navigation to a page without an updater allows submission without the outgoing deduction', async ({ page }) => {
+  await startBudgetStudy(page);
+  await submitFormPurchase(page, 30);
+  await page.getByRole('button', { name: 'Spend 20', exact: true }).click();
+  await fillCost(page, 'Confidence', 80);
+  await nextClick(page);
+  const frame = page.frameLocator('iframe');
+  await frame.getByRole('button', { name: 'Spend 10', exact: true }).click();
+  await frame.getByRole('link', { name: 'Continue without updater', exact: true }).click();
+  await expect(frame.getByRole('heading', { name: 'Passive purchase page', exact: true })).toBeVisible();
+  await nextClick(page);
+  await expect(page.getByRole('heading', { name: 'Templated HTML purchase', exact: true })).toBeVisible();
+  await expectBudget(page, 50);
 });
 
 test('changing the first decision regenerates dynamic trials and changes the active branch', async ({ page }) => {

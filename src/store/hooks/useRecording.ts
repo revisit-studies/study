@@ -379,13 +379,13 @@ export function useRecording() {
       currentTrialName.current = null;
     }
 
-    if (currentComponent !== 'end' && currentTrialName.current !== identifier && (currentComponentHasAudioRecording)) {
+    if (assetIdentifier && currentComponent !== 'end' && currentTrialName.current !== identifier && (currentComponentHasAudioRecording)) {
       currentTrialName.current = identifier;
       startAudioRecording(assetIdentifier);
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentComponent, identifier, currentComponentHasAudioRecording]);
+  }, [assetIdentifier, currentComponent, identifier, currentComponentHasAudioRecording]);
 
   // For studies with screen or webcam recording.
   useEffect(() => {
@@ -398,7 +398,7 @@ export function useRecording() {
       currentTrialName.current = null;
     }
 
-    if (currentComponent !== 'end' && isMediaCapturing && currentTrialName.current !== identifier && (currentComponentHasAudioRecording || currentComponentHasScreenRecording || currentComponentHasWebcamRecording)) {
+    if (assetIdentifier && currentComponent !== 'end' && isMediaCapturing && currentTrialName.current !== identifier && (currentComponentHasAudioRecording || currentComponentHasScreenRecording || currentComponentHasWebcamRecording)) {
       currentTrialName.current = identifier;
       startScreenRecording(assetIdentifier);
     }
@@ -408,7 +408,7 @@ export function useRecording() {
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentComponent, identifier, currentComponentHasAudioRecording, currentComponentHasScreenRecording, currentComponentHasWebcamRecording, isMediaCapturing]);
+  }, [assetIdentifier, currentComponent, identifier, currentComponentHasAudioRecording, currentComponentHasScreenRecording, currentComponentHasWebcamRecording, isMediaCapturing]);
 
   // Start persistent capture. Per-trial recording begins in the navigation effect above.
   const startMediaCapture = useCallback(async ({

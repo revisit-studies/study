@@ -11,9 +11,8 @@ import type { RegisterGlobalStoreUpdater } from '../types';
 export function useGlobalStore() {
   const identifier = useCurrentIdentifier();
   const graph = useStoreSelector((state) => state.globalStoreGraph);
-  const replayValues = useStoreSelector((state) => (state.analysisGlobalStoreIdentifier === identifier ? state.analysisProvState.globalStore?.values : undefined));
   const definitions = useStudyConfig().globalVariables;
-  return useMemo(() => Object.freeze(replayValues ?? getGlobalStoreEntryValues(graph, definitions ?? {}, identifier)), [graph, definitions, identifier, replayValues]);
+  return useMemo(() => Object.freeze(getGlobalStoreEntryValues(graph, definitions ?? {}, identifier)), [graph, definitions, identifier]);
 }
 
 export function useGlobalStoreUpdaterRegistration(): RegisterGlobalStoreUpdater {

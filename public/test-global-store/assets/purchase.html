@@ -11,6 +11,7 @@
   <div id="choices" role="group" aria-label="Purchase choices"></div>
   <p>Selected cost: <output id="selected">none</output></p>
   <button id="register-updater">Re-register store updater</button>
+  <a id="passive-page">Continue without updater</a>
   <script>
     let selectedCost = null;
     const costs = [0, 5, 10, 15, 20];
@@ -54,6 +55,9 @@
       Revisit.postAnswers({ selectedCost });
     });
     Revisit.completeRegistration();
+    const passive = new URL('passive.html', document.baseURI);
+    passive.searchParams.set('id', new URLSearchParams(location.search).get('id') ?? window.__REVISIT_PARAMS__?.id ?? '');
+    document.querySelector('#passive-page').href = passive.href;
     render();
   </script>
 </body>
