@@ -2,7 +2,7 @@ import localforage from 'localforage';
 import throttle from 'lodash.throttle';
 import { v4 as uuidv4 } from 'uuid';
 import { resolveBetweenSubjectsFactorLevels } from '../../parser/libraryParser';
-import { GLOBAL_STORE_TASK, getGlobalStoreNodeState } from '../../store/globalStoreProvenance';
+import { GLOBAL_STORE_TASK, getGlobalStoreNodeState, getGlobalStoreNodeStates } from '../../store/globalStoreProvenance';
 import type { GlobalStoreGraph } from '../../store/globalStoreProvenance';
 import { StudyConfig } from '../../parser/types';
 import { DISTINCT_COLOR_PALETTE } from '../../utils/colors';
@@ -1400,6 +1400,7 @@ export abstract class StorageEngine {
     }
     if (cachedParticipant && await this.confirmParticipantReservation(cachedParticipant, undefined, true)) {
       this.participantData = cachedParticipant;
+      await this.restoreGlobalStoreUploads(cachedParticipant);
       return cachedParticipant;
     }
 
@@ -1954,6 +1955,27 @@ export abstract class StorageEngine {
   // Save the answer into the local participant data and queue a debounced write to storage.
   private localProvenanceKey(task: string, participantId: string) {
     return `${this.collectionPrefix}${this.studyId}/participants/${participantId}/localProvenance/${task}`;
+  }
+
+  /** Rebuild upload work from accepted local history after a reload loses in-memory retries. */
+  private async restoreGlobalStoreUploads(participant: ParticipantData) {
+    if (!participant.globalStoreRevision || !this.studyId) return;
+    const { studyId, currentParticipantId } = this;
+    const saved = await this.participantStore.getItem<StoredProvenance>(
+      this.localProvenanceKey(`${GLOBAL_STORE_TASK}/${participant.globalStoreRevision}`, participant.participantId),
+    );
+    if (!saved?.globalStore || !(await this.getModes(studyId)).dataCollectionEnabled) return;
+    const tasks = new Set(Object.values(getGlobalStoreNodeStates(saved.globalStore))
+      .flatMap((state) => (state.submission ? [state.submission.answer.identifier] : [])));
+    const retained = await Promise.all([...tasks].map(async (task) => ({
+      task, provenance: await this.participantStore.getItem<StoredProvenance>(this.localProvenanceKey(task, participant.participantId)),
+    })));
+    if (this.studyId !== studyId || this.currentParticipantId !== currentParticipantId) throw new Error('The participant session changed while restoring its interaction history.');
+    retained.forEach(({ task, provenance }) => {
+      if (normalizeStoredProvenance(provenance)) this.saveProvenance(provenance, task).catch(() => undefined);
+    });
+    this.saveProvenance(saved, GLOBAL_STORE_TASK).catch(() => undefined);
+    this.scheduleParticipantDataWrite(participant);
   }
 
   /** Accept once locally. Cloud retries upload this snapshot and never rerun store actions. */

@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   getProvenance: vi.fn(),
   dispatch: vi.fn(),
   restoreTrialProvenance: vi.fn((payload) => ({ type: 'restoreTrialProvenance', payload })),
+  setGlobalStoreSubmitting: vi.fn((payload) => ({ type: 'setGlobalStoreSubmitting', payload })),
 }));
 beforeEach(() => {
   vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() })));
@@ -30,7 +31,7 @@ vi.mock('../../../storage/storageEngineHooks', () => ({ useStorageEngine: () => 
 vi.mock('../../store', () => ({
   useStoreSelector: (selector: (state: StoreState) => unknown) => selector(mocks.state),
   useStoreDispatch: () => mocks.dispatch,
-  useStoreActions: () => ({ restoreTrialProvenance: mocks.restoreTrialProvenance }),
+  useStoreActions: () => ({ restoreTrialProvenance: mocks.restoreTrialProvenance, setGlobalStoreSubmitting: mocks.setGlobalStoreSubmitting }),
 }));
 
 function Stimulus() {
@@ -168,4 +169,20 @@ test('invalidated forms do not seed response visibility from the old entry conte
   await waitFor(() => expect(mocks.restoreTrialProvenance).toHaveBeenCalled());
   expect(mocks.restoreTrialProvenance.mock.lastCall?.[0].responseValues).toEqual({});
   expect(mocks.restoreTrialProvenance.mock.lastCall?.[0].provenance.sidebar.resetToInitialState).toBe(true);
+});
+
+test('navigation waits for the pending save before restoring the destination and releasing its lock', async () => {
+  mocks.identifier = 'other_1';
+  mocks.state.globalStoreSubmitting = true;
+  mocks.state.globalStorePendingIdentifier = 'trial_0';
+  mocks.state.globalStorePendingRevision = 0;
+  mocks.state.globalStoreRevision = 0;
+  const view = mount();
+  expect(screen.getByLabelText('Finishing response save')).not.toBeNull();
+  expect(screen.queryByTestId('stimulus')).toBeNull();
+  expect(mocks.dispatch).not.toHaveBeenCalled();
+  mocks.state.globalStoreRevision = 1;
+  view.rerender(<MantineProvider forceColorScheme="light"><TrialProvenanceBoundary><Stimulus /></TrialProvenanceBoundary></MantineProvider>);
+  await waitFor(() => expect(screen.getByTestId('stimulus')).not.toBeNull());
+  expect(mocks.setGlobalStoreSubmitting).toHaveBeenCalledWith(false);
 });

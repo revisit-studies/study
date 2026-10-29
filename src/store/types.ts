@@ -298,6 +298,7 @@ export interface StoreState {
   globalStoreRevision?: number;
   globalStoreSubmitting?: boolean;
   globalStorePendingIdentifier?: string;
+  globalStorePendingRevision?: number;
   globalStoreError?: string;
   studyId: string;
   participantId: string;

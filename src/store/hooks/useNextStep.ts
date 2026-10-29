@@ -286,11 +286,17 @@ export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
             ]);
           }
         } finally { clearTimeout(timer); }
-        const current = context.store.getState();
-        if (route !== window.location.href || current.completed || current.participantId !== live!.participantId
-          || current.globalStoreRevision !== live!.globalStoreRevision
-          || (collectData && updater !== context.globalStoreUpdaters.get(identifier))
-          || !isEqual(answer, getPersistedAnswersFromAllLocations(current.trialValidation[identifier], responseConfig, correctAnswerConfig, checkAnswerState, entryStore))) return;
+        const preparationIsCurrent = () => {
+          const current = context.store.getState();
+          const currentValidation = current.trialValidation[identifier];
+          return route === window.location.href && !current.completed && current.participantId === live!.participantId
+            && current.globalStoreRevision === live!.globalStoreRevision
+            && (!collectData || (updater === context.globalStoreUpdaters.get(identifier)
+              && currentValidation && (currentValidation.assetStatus === undefined || currentValidation.assetStatus === 'ready')
+              && (['aboveStimulus', 'belowStimulus', 'sidebar', 'stimulus'] as const).every((location) => currentValidation[location].valid)))
+            && isEqual(answer, getPersistedAnswersFromAllLocations(currentValidation, responseConfig, correctAnswerConfig, checkAnswerState, entryStore));
+        };
+        if (!preparationIsCurrent()) return;
         const update = collectData
           ? evaluateGlobalStoreUpdates(studyConfig.globalVariables!, entryStore, responseConfig, answer, patch)
           : { values: { ...entryStore }, operations: [] };
@@ -306,7 +312,7 @@ export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
               onClose: () => resolve(false),
             });
           });
-          if (!confirmed || route !== window.location.href) return;
+          if (!confirmed || !preparationIsCurrent()) return;
         }
         const replacing = !!getGlobalStoreNodeState(next.graph, next.nodeId).submission?.replaces && !next.unchanged;
         activeAnswers = next.unchanged ? answers : projectGlobalStoreAnswers(answers, toSave, replacing);
@@ -315,10 +321,12 @@ export function useNextStep(responses?: Response[], correctAnswers?: Answer[]) {
         await storageEngine.saveGlobalStoreSubmission(activeAnswers, next.graph, revision, identifier, provenanceGraph ?? {
           aboveStimulus: undefined, belowStimulus: undefined, sidebar: undefined, stimulus: undefined,
         });
-        if (route !== window.location.href || context.store.getState().participantId !== live!.participantId) return;
+        if (context.store.getState().participantId !== live!.participantId) return;
         storeDispatch(acceptGlobalStoreSubmission({
           graph: next.graph, answers: activeAnswers, revision, invalidateAfter: replacing ? toSave.trialOrder : undefined,
         }));
+        // Local acceptance belongs to this participant even if browser navigation moved on.
+        if (route !== window.location.href) return;
         committedValues = next.unchanged ? update.values : getGlobalStoreNodeState(next.graph).values;
       } else if (dataCollectionEnabled && (storedAnswer.endTime === -1 || clickedPrevious)) {
         const answersToPersist = { ...answers, [identifier]: toSave };

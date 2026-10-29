@@ -157,3 +157,13 @@ Original Check Answer persistence was investigated as a lead, but revisited trai
 ### Follow-up rebase
 
 Rebased onto #1529 at `cf9d36a721d9a200f489d68cd91fed0ccbf21435`. The added gamepad restoration test receives the global-store stimulus props. Focused gamepad tests (2) and typecheck passed; the earlier full-suite results above were not rerun for this small upstream update.
+
+
+## Adversarial findings repair
+
+- Recovery reconstructs pending global and retained trial provenance uploads from the accepted local graph, including inactive trials. It also republishes the recovered participant snapshot before completion, without requiring a manual retry. No separate durable queue or repeated updater execution is introduced.
+- A completed local save publishes its accepted snapshot to the owning participant store even if browser navigation changed. Destination restoration waits for acceptance; a captured submission revision keeps the navigation lock from being released while saving.
+- Earlier-edit confirmation rechecks the participant, completion, revision, effective answers, updater identity, response validity, and asset readiness before persistence.
+- Added 11 regression cases across storage, submission, and restoration boundaries. Core failures and the navigation-lock follow-up were reproduced before their fixes. The original independent recovery reproduction also passes with the repair.
+- Focused validation: 26 tests passed. Complete validation: 214 files, 3,885 tests passed, 1 skipped. Full lint and production build (including typecheck) passed. Delegated Chromium final-source validation: **24 passed** (`/tmp/revisit-1536-fixes-chromium-final.log`), covering all 17 global-store cases and all 7 existing restoration cases.
+- These changes are authorized for commit and push to PR #1536; no merge or deployment is authorized. Live cloud outage and real recording capture remain untested.

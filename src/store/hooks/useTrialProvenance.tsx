@@ -99,13 +99,19 @@ export function TrialProvenanceBoundary({ children }: { children: ReactNode }) {
   const dispatch = useStoreDispatch();
   const { setGlobalStoreSubmitting } = useStoreActions();
   const pendingIdentifier = useStoreSelector((state) => state.globalStorePendingIdentifier);
+  const pendingRevision = useStoreSelector((state) => state.globalStorePendingRevision);
+  const revision = useStoreSelector((state) => state.globalStoreRevision);
   const identifier = useCurrentIdentifier();
   const participantId = useStoreSelector((state) => state.participantId);
   const isAnalysis = useIsAnalysis();
+  const changedDuringSave = !!pendingIdentifier && pendingIdentifier !== identifier;
+  const saveAccepted = pendingRevision !== undefined && (revision ?? 0) > pendingRevision;
   useEffect(() => {
-    if (pendingIdentifier && pendingIdentifier !== identifier) dispatch(setGlobalStoreSubmitting(false));
-  }, [pendingIdentifier, identifier, dispatch, setGlobalStoreSubmitting]);
+    if (!isAnalysis && changedDuringSave && saveAccepted) dispatch(setGlobalStoreSubmitting(false));
+  }, [isAnalysis, changedDuringSave, saveAccepted, dispatch, setGlobalStoreSubmitting]);
   const key = useMemo(() => `${participantId}:${identifier}`, [identifier, participantId]);
+  // Do not snapshot the destination's history while its predecessor is still saving.
+  if (!isAnalysis && changedDuringSave && !saveAccepted) return <Loader aria-label="Finishing response save" />;
   if (isAnalysis) return <Fragment key={key}>{children}</Fragment>;
   return <TrialProvenanceLoader key={key}>{children}</TrialProvenanceLoader>;
 }

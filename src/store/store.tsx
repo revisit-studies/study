@@ -223,6 +223,7 @@ export async function studyStoreCreator(
       setGlobalStoreSubmitting(state, { payload }: PayloadAction<string | false>) {
         state.globalStoreSubmitting = payload !== false;
         state.globalStorePendingIdentifier = payload || undefined;
+        state.globalStorePendingRevision = payload ? state.globalStoreRevision : undefined;
         if (payload) state.globalStoreError = undefined;
       },
       setGlobalStoreError(state, { payload }: PayloadAction<string | undefined>) {
