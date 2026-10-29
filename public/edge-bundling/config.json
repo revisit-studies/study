@@ -20,7 +20,7 @@
     "autoDownloadStudy": false,
     "withSidebar": false,
     "urlParticipantIdParam": "pid",
-    "studyEndMsg":  "ご協力ありがとうございました。回答いただいた範囲まで保存されました。これでアンケートは終了です。\n\n完了コード：{COMPLETION_CODE}を豊原に送ってください。"
+    "studyEndMsg":  "ご協力ありがとうございました。これでアンケートは終了です。\n\n完了コード：{COMPLETION_CODE}を豊原に送ってください。"
   },
   "baseComponents": {
     "global_trial_A_base": {
@@ -29,12 +29,12 @@
         {
           "id": "task_status",
           "type": "textOnly",
-          "prompt": "### 大域タスク：本番問題",
+          "prompt": "### タスクA：本番問題",
           "location": "aboveStimulus"
         },
         {
           "id": "task_answer",
-          "prompt": "青色のクラスターと、\n\n最も多くのエッジで直接接続している\n\nクラスターを1つ選んでください。",
+          "prompt": "オレンジ・緑・赤のうち、\n\n青色のグループとつながる線が\n\n最も多いのは何色のグループですか？",
           "type": "radio",
           "options": [
             {
@@ -61,12 +61,12 @@
         {
           "id": "task_status",
           "type": "textOnly",
-          "prompt": "### 大域タスク：本番問題",
+          "prompt": "### タスクA：本番問題",
           "location": "aboveStimulus"
         },
         {
           "id": "task_answer",
-          "prompt": "オレンジ色のクラスターと、\n\n最も多くのエッジで直接接続している\n\nクラスターを1つ選んでください。",
+          "prompt": "青・緑・赤のうち、\n\nオレンジ色のグループとつながる線が\n\n最も多いのは何色のグループですか？",
           "type": "radio",
           "options": [
             {
@@ -93,12 +93,12 @@
         {
           "id": "task_status",
           "type": "textOnly",
-          "prompt": "### 大域タスク：本番問題",
+          "prompt": "### タスクA：本番問題",
           "location": "aboveStimulus"
         },
         {
           "id": "task_answer",
-          "prompt": "緑色のクラスターと、\n\n最も多くのエッジで直接接続している\n\nクラスターを1つ選んでください。",
+          "prompt": "青・オレンジ・赤のうち、\n\n緑色のグループとつながる線が\n\n最も多いのは何色のグループですか？",
           "type": "radio",
           "options": [
             {
@@ -125,12 +125,12 @@
         {
           "id": "task_status",
           "type": "textOnly",
-          "prompt": "### 大域タスク：本番問題",
+          "prompt": "### タスクA：本番問題",
           "location": "aboveStimulus"
         },
         {
           "id": "task_answer",
-          "prompt": "赤色のクラスターと、\n\n最も多くのエッジで直接接続している\n\nクラスターを1つ選んでください。",
+          "prompt": "青・オレンジ・緑のうち、\n\n赤色のグループとつながる線が\n\n最も多いのは何色のグループですか？",
           "type": "radio",
           "options": [
             {
@@ -157,12 +157,12 @@
         {
           "id": "task_status",
           "type": "textOnly",
-          "prompt": "### 局所タスク：本番問題",
+          "prompt": "### タスクB：本番問題",
           "location": "aboveStimulus"
         },
         {
           "id": "task_answer",
-          "prompt": "【図の見方】丸＝ノード、線＝エッジ、同じ色のノードのまとまり＝クラスター\n\nXで示されたノードと、直接1本のエッジで\n\n接続しているノードを\n\nA・B・Cから1つ選んでください。",
+          "prompt": "Xで示された丸と、\n\n線1本で直接つながっている丸は、\n\nA・B・Cのどれですか？",
           "type": "radio",
           "options": [
             {
@@ -246,7 +246,13 @@
       "type": "image",
       "path": "edge-bundling/assets/network-overview.webp",
       "description": "ネットワーク図の見方",
-      "instruction": "本研究では、ネットワーク図の線の描き方によって、図の見え方や問題への回答がどのように変わるかを調べます。\n\nネットワーク図では、丸がノード、線がノード間のつながりを表します。同じ色のノードのまとまりをクラスターとして扱います。\n\nエッジバンドリングは、多数のエッジを束ねて描くことで、図の複雑さを軽減する可視化手法です。",
+      "instruction": "下の図は、丸と線で物事のつながりを表したネットワーク図です。\n\n
+
+例えば、丸を人、線を友人関係とすると、人同士の交友関係を表すことができます。\n\n
+
+実験では、線のつながりが特に多い丸らを同じ色で表し4つのグループが内包するネットワーク図を使用します。\n\n
+
+本研究では、線の描き方によって、図の見え方や問題への回答がどのように変わるかを調べます。",
       "instructionLocation": "aboveStimulus",
       "response": []
     },
@@ -312,7 +318,7 @@
         },
         {
           "id": "network_experience",
-          "prompt": "ネットワーク図（ノードとエッジからなる図）を見たり扱ったりした経験はありますか？",
+          "prompt": "ネットワーク図（丸と線からなる図）を見たり扱ったりした経験はありますか？",
           "type": "radio",
           "options": [
             {
@@ -335,17 +341,17 @@
     "global_practice_01": {
       "type": "image",
       "path": "edge-bundling/assets/practice/global/global_practice_01.webp",
-      "description": "大域タスク 練習問題",
+      "description": "タスクA 練習問題",
       "response": [
         {
           "id": "practice_status",
           "type": "textOnly",
-          "prompt": "### 大域タスク：練習問題（1/1）\n\nこの1問は練習です。\n\n回答後、本番問題3問に進みます。",
+          "prompt": "### タスクA：練習問題（1/1）\n\nこの1問は練習です。\n\n回答後、本番問題3問に進みます。",
           "location": "aboveStimulus"
         },
         {
           "id": "task_answer",
-          "prompt": "赤色のクラスターと、\n\n最も多くのエッジで直接接続している\n\nクラスターを1つ選んでください。",
+          "prompt": "青・オレンジ・緑のうち、\n\n赤色のグループとつながる線が\n\n最も多いのは何色のグループですか？",
           "type": "radio",
           "options": [
             {
@@ -378,17 +384,17 @@
     "local_practice_01": {
       "type": "image",
       "path": "edge-bundling/assets/practice/local/local_practice_01.webp",
-      "description": "局所タスク 練習問題",
+      "description": "タスクB 練習問題",
       "response": [
         {
           "id": "practice_status",
           "type": "textOnly",
-          "prompt": "### 局所タスク：練習問題（1/1）\n\nこの1問は練習です。回答後、本番問題3問に進みます。",
+          "prompt": "### タスクB：練習問題（1/1）\n\nこの1問は練習です。回答後、本番問題3問に進みます。",
           "location": "aboveStimulus"
         },
         {
           "id": "task_answer",
-          "prompt": "【図の見方】丸＝ノード、線＝エッジ、同じ色のノードのまとまり＝クラスター\n\nXで示されたノードと、直接1本のエッジで\n\n接続しているノードを\n\nA・B・Cから1つ選んでください。",
+          "prompt": "Xで示された丸と、\n\n線1本で直接つながっている丸は、\n\nA・B・Cのどれですか？",
           "type": "radio",
           "options": [
             {
@@ -420,12 +426,12 @@
     },
     "global_ready_01": {
       "type": "questionnaire",
-      "description": "大域タスク 本番問題 1/3 開始前",
+      "description": "タスクA 本番問題 1/3 開始前",
       "response": [
         {
           "id": "trial_ready_text",
           "type": "textOnly",
-          "prompt": "### 大域タスク：本番問題 1/3\n\n次へを押すと問題が表示されます。",
+          "prompt": "### タスクA：本番問題 1/3\n\n次へを押すと問題が表示されます。",
           "location": "belowStimulus"
         }
       ],
@@ -433,12 +439,12 @@
     },
     "global_ready_02": {
       "type": "questionnaire",
-      "description": "大域タスク 本番問題 2/3 開始前",
+      "description": "タスクA 本番問題 2/3 開始前",
       "response": [
         {
           "id": "trial_ready_text",
           "type": "textOnly",
-          "prompt": "### 大域タスク：本番問題 2/3\n\n次へを押すと問題が表示されます。",
+          "prompt": "### タスクA：本番問題 2/3\n\n次へを押すと問題が表示されます。",
           "location": "belowStimulus"
         }
       ],
@@ -446,12 +452,12 @@
     },
     "global_ready_03": {
       "type": "questionnaire",
-      "description": "大域タスク 本番問題 3/3 開始前",
+      "description": "タスクA 本番問題 3/3 開始前",
       "response": [
         {
           "id": "trial_ready_text",
           "type": "textOnly",
-          "prompt": "### 大域タスク：本番問題 3/3\n\n次へを押すと問題が表示されます。",
+          "prompt": "### タスクA：本番問題 3/3\n\n次へを押すと問題が表示されます。",
           "location": "belowStimulus"
         }
       ],
@@ -459,12 +465,12 @@
     },
     "local_ready_01": {
       "type": "questionnaire",
-      "description": "局所タスク 本番問題 1/3 開始前",
+      "description": "タスクB 本番問題 1/3 開始前",
       "response": [
         {
           "id": "trial_ready_text",
           "type": "textOnly",
-          "prompt": "### 局所タスク：本番問題 1/3\n\n次へを押すと問題が表示されます。",
+          "prompt": "### タスクB：本番問題 1/3\n\n次へを押すと問題が表示されます。",
           "location": "belowStimulus"
         }
       ],
@@ -472,12 +478,12 @@
     },
     "local_ready_02": {
       "type": "questionnaire",
-      "description": "局所タスク 本番問題 2/3 開始前",
+      "description": "タスクB 本番問題 2/3 開始前",
       "response": [
         {
           "id": "trial_ready_text",
           "type": "textOnly",
-          "prompt": "### 局所タスク：本番問題 2/3\n\n次へを押すと問題が表示されます。",
+          "prompt": "### タスクB：本番問題 2/3\n\n次へを押すと問題が表示されます。",
           "location": "belowStimulus"
         }
       ],
@@ -485,12 +491,12 @@
     },
     "local_ready_03": {
       "type": "questionnaire",
-      "description": "局所タスク 本番問題 3/3 開始前",
+      "description": "タスクB 本番問題 3/3 開始前",
       "response": [
         {
           "id": "trial_ready_text",
           "type": "textOnly",
-          "prompt": "### 局所タスク：本番問題 3/3\n\n次へを押すと問題が表示されます。",
+          "prompt": "### タスクB：本番問題 3/3\n\n次へを押すと問題が表示されます。",
           "location": "belowStimulus"
         }
       ],
@@ -498,14 +504,14 @@
     },
     "continue_after_global": {
       "type": "questionnaire",
-      "description": "大域タスク終了後の続行確認",
+      "description": "タスクA終了後の続行確認",
       "response": [
         {
           "id": "continue_choice",
-          "prompt": "大域タスクは以上で終了です。続けて局所タスクにも回答しますか？",
+          "prompt": "タスクAは以上で終了です。続けてタスクBにも回答しますか？",
           "type": "buttons",
           "options": [
-            "続けて局所タスクに回答する",
+            "続けてタスクBに回答する",
             "ここで終了"
           ],
           "required": true
@@ -514,14 +520,14 @@
     },
     "continue_after_local": {
       "type": "questionnaire",
-      "description": "局所タスク終了後の続行確認",
+      "description": "タスクB終了後の続行確認",
       "response": [
         {
           "id": "continue_choice",
-          "prompt": "局所タスクは以上で終了です。続けて大域タスクにも回答しますか？",
+          "prompt": "タスクBは以上で終了です。続けてタスクAにも回答しますか？",
           "type": "buttons",
           "options": [
-            "続けて大域タスクに回答する",
+            "続けてタスクAに回答する",
             "ここで終了"
           ],
           "required": true

@@ -255,8 +255,8 @@ export function ResponseBlock({
   }, [answerValidator.values, bypassValidationForFailedTraining, identifier, location, storeDispatch, updateResponseBlockValidation]);
   const [alertConfig, setAlertConfig] = useState(Object.fromEntries(allResponsesWithDefaults.map((response) => ([response.id, {
     visible: false,
-    title: 'Correct Answer',
-    message: 'The correct answer is: ',
+    title: '正解',
+    message: '解答: ',
     color: 'green',
   }]))));
   const updateAlertConfig = (id: string, visible: boolean, title: string, message: string, color: string) => {
@@ -312,7 +312,7 @@ export function ResponseBlock({
             response.id,
             true,
             '正解',
-            '正解です。',
+            '',
             'green',
           );
         } else {
@@ -344,7 +344,7 @@ export function ResponseBlock({
 
             message = `You have successfully checked ${matches.length}/${correct.length} correct boxes. ${tooManySelected}${message}`;
           }
-          updateAlertConfig(response.id, true, 'Incorrect Answer', message, 'red');
+          updateAlertConfig(response.id, true, '不正解', message, 'red');
         }
       });
 
