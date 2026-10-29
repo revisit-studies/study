@@ -167,6 +167,8 @@ function GamepadTargetGame({
   // so it lives in a ref; the state mirror exists only to drive rendering.
   const reticleRef = useRef<Point>(restoredState.reticle);
   const gameRef = useRef<GameState>(restoredState);
+  // A resumed target is presented anew; leave its recorded spawn time intact for replay.
+  const targetPresentedAtRef = useRef(Date.now());
   const [savedMeanReactionTime] = useStudyState<number | null>({ responseId: 'meanReactionTime', initialState: null });
   const reactionTimesRef = useRef<number[]>(savedMeanReactionTime === null ? [] : Array<number>(restoredState.hits).fill(savedMeanReactionTime));
 
@@ -202,6 +204,7 @@ function GamepadTargetGame({
 
   const spawnNext = useCallback((index: number) => {
     const target = randomTarget(index, targetRadius);
+    targetPresentedAtRef.current = target.spawnedAt;
     trrack.apply(`Target ${index + 1} (${target.button})`, actions.spawnTarget(target));
     commit({ ...gameRef.current, target, round: index, outcome: targetPrompt(target, targetCount) });
   }, [actions, commit, targetCount, targetRadius, trrack]);
@@ -224,7 +227,7 @@ function GamepadTargetGame({
     const hit = onTarget && correctButton;
 
     if (hit) {
-      reactionTimesRef.current.push(Date.now() - target.spawnedAt);
+      reactionTimesRef.current.push(Date.now() - targetPresentedAtRef.current);
     }
 
     const nextRound = hit ? target.index + 1 : target.index;

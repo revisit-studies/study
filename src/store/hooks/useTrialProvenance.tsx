@@ -1,5 +1,5 @@
 import {
-  createContext, ReactNode, useContext, useEffect, useMemo, useState,
+  createContext, Fragment, ReactNode, useContext, useEffect, useMemo, useState,
 } from 'react';
 import { Loader } from '@mantine/core';
 import { RestorationError } from '../../components/interface/RestorationError';
@@ -76,6 +76,6 @@ export function TrialProvenanceBoundary({ children }: { children: ReactNode }) {
   const participantId = useStoreSelector((state) => state.participantId);
   const isAnalysis = useIsAnalysis();
   const key = useMemo(() => `${participantId}:${identifier}`, [identifier, participantId]);
-  if (isAnalysis) return children;
+  if (isAnalysis) return <Fragment key={key}>{children}</Fragment>;
   return <TrialProvenanceLoader key={key}>{children}</TrialProvenanceLoader>;
 }

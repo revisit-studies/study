@@ -71,7 +71,9 @@ type UserImageInputItem = {
   content: Array<{ type: 'input_image'; file_id: string }>;
 };
 
-type StreamInputItem = UserTextInputItem | FunctionOutputInputItem | UserImageInputItem;
+type ChatTextInputItem = Pick<ChatMessage, 'role' | 'content'>;
+
+type StreamInputItem = ChatTextInputItem | UserTextInputItem | FunctionOutputInputItem | UserImageInputItem;
 
 type MarkdownCodeProps = ComponentPropsWithoutRef<'code'> & {
   inline?: boolean;
@@ -399,7 +401,7 @@ Rules:
 
   // ---------- Tool selection (non-stream) ----------
   const requestToolSelection = async (
-    userInputItem: UserTextInputItem,
+    inputPayload: StreamInputItem[],
     priorResponseId: string | null,
   ): Promise<ToolSelectionResponse> => {
     const response = await fetch(`${import.meta.env.VITE_OPENAI_API_URL}/v1/responses`, {
@@ -413,7 +415,7 @@ Rules:
         instructions,
         tools: toolDefinitions,
         tool_choice: 'auto',
-        input: [userInputItem],
+        input: inputPayload,
         // Keep this call small; we just want tool requests, not a full answer here.
         max_output_tokens: 64,
         temperature: 0,
@@ -453,15 +455,20 @@ Rules:
         content: [{ type: 'input_text', text: userMessage.content }],
       };
 
+      // Restored transcripts have no server continuation ID, so send their history once.
+      const inputPayload: StreamInputItem[] = priorResponseId
+        ? [userInputItem]
+        : [...messages.map(({ role, content }) => ({ role, content })), userInputItem];
+
       // 1) Non-stream call to decide whether tools are needed.
-      const firstData = await requestToolSelection(userInputItem, priorResponseId);
+      const firstData = await requestToolSelection(inputPayload, priorResponseId);
 
       const firstResponseId: string | null = firstData?.id || firstData?.response?.id || null;
       const functionCalls = tryExtractFunctionCalls(firstData);
 
       if (!functionCalls.length) {
         // No tools requested -> stream the answer directly.
-        const streamResult = await streamAssistantResponse([userInputItem], priorResponseId);
+        const streamResult = await streamAssistantResponse(inputPayload, priorResponseId);
         if (streamResult.streamedResponseId) setPreviousResponseId(streamResult.streamedResponseId);
 
         const fullMessages = messagesRef.current;
