@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>HTML global variables</title>
+  <script src="../../revisitUtilities/revisit-communicate.js"></script>
+</head>
+<body>
+  <h2>HTML global variables</h2>
+  <p>Templated HTML budget: {{globalVariables.budget}}</p>
+  <p>HTML content budget: <output id="budget"></output></p>
+  <p>Participant label: <output id="label"></output></p>
+  <p>JavaScript receives globalVariables through Revisit.onGlobalStoreReceive and reads globalVariables.budget.</p>
+  <button id="spend" disabled>Spend 20 in HTML</button>
+  <p>HTML selected spending: <output id="selected">0</output></p>
+  <script>
+    Revisit.beginRegistration();
+    let spend = 0;
+    const render = () => {
+      document.querySelector('#selected').textContent = spend;
+      Revisit.postAnswers({ spend });
+    };
+    Revisit.onGlobalStoreReceive((globalVariables) => {
+      document.querySelector('#budget').textContent = globalVariables.budget;
+      document.querySelector('#label').textContent = globalVariables.participantLabel;
+      document.querySelector('#spend').disabled = globalVariables.budget < 20;
+    });
+    Revisit.onRestore(({ answers }) => { spend = answers.spend ?? 0; render(); });
+    Revisit.registerGlobalStoreUpdater(({ store: globalVariables }) => ({ budget: globalVariables.budget - spend }));
+    document.querySelector('#spend').addEventListener('click', () => { spend = 20; render(); });
+    Revisit.completeRegistration();
+  </script>
+</body>
+</html>

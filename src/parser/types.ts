@@ -11,21 +11,23 @@ export type JsonArray = JsonValue[];
 /** Primitive values in a participant's declared global store. Types are inferred from initialValue. */
 export type GlobalStoreValue = string | number | boolean;
 export type GlobalStoreValues = Record<string, GlobalStoreValue>;
-export interface GlobalVariableDeclaration {
+export interface GlobalVariableDeclaration extends Pick<ShortTextResponse, 'minCharLength' | 'maxCharLength' | 'minWordLength' | 'maxWordLength' | 'textValidation' | 'builtInValidation'> {
   initialValue: GlobalStoreValue;
   /** Inclusive bound, valid only for a numeric initialValue. */
   min?: number;
   /** Inclusive bound, valid only for a numeric initialValue. */
   max?: number;
+  strictMin?: number;
+  strictMax?: number;
 }
-export type GlobalVariableDeclarations = Record<string, GlobalVariableDeclaration>;
+export type GlobalVariableDeclarations = Record<string, GlobalVariableDeclaration | GlobalStoreValue>;
 export type GlobalStoreOperation = 'set' | 'add' | 'subtract' | 'multiply' | 'divide' | 'append' | 'prepend' | 'and' | 'or' | 'toggle';
 export interface GlobalStoreAction {
   variable: string;
   operation: GlobalStoreOperation;
 }
 /** A numeric literal or an exact reference to a declared numeric store value. */
-export type GlobalStoreNumber = number | `{{store.${string}}}`;
+export type GlobalStoreNumber = number | `{{globalVariables.${string}}}`;
 
 /**
  * The GlobalConfig is used to generate the list of available studies in the UI.

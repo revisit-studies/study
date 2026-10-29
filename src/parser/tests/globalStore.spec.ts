@@ -2,10 +2,11 @@ import { describe, expect, test } from 'vitest';
 import budgetStudy from '../../../public/test-global-store/config.json';
 import operationsStudy from '../../../public/test-global-store-operations/config.json';
 import failuresStudy from '../../../public/test-global-store-failures/config.json';
+import templatingStudy from '../../../public/demo-templating/config.json';
 import { parseStudyConfig } from '../parser';
 
 describe('global store configuration', () => {
-  test.each([budgetStudy, operationsStudy, failuresStudy])('accepts the regression study $studyMetadata.title', async (config) => {
+  test.each([budgetStudy, operationsStudy, failuresStudy, templatingStudy])('accepts the regression study $studyMetadata.title', async (config) => {
     expect((await parseStudyConfig(JSON.stringify(config))).errors).toEqual([]);
   });
 
@@ -22,7 +23,7 @@ describe('global store configuration', () => {
     expect(parsed.errors.some((error) => error.instancePath.includes('onSubmit'))).toBe(true);
   });
 
-  test.each(['{{store.unknown}}', '{{store.label}}', 'Budget {{store.budget}}'])('rejects invalid numeric reference %s', async (value) => {
+  test.each(['{{globalVariables.unknown}}', '{{globalVariables.label}}', 'Budget {{globalVariables.budget}}'])('rejects invalid numeric reference %s', async (value) => {
     const config = structuredClone(budgetStudy);
     config.components.purchase.response[0].max = value;
     const parsed = await parseStudyConfig(JSON.stringify(config));
@@ -31,8 +32,8 @@ describe('global store configuration', () => {
 
   test('rejects undeclared store references in inherited instructions and response text with config paths', async () => {
     const config = structuredClone(budgetStudy);
-    config.components.purchase.instruction = 'Budget {{store.missing}}';
-    config.components.purchase.response[0].prompt = 'Spend {{store.unknown}} from {{store.budget.value}}';
+    config.components.purchase.instruction = 'Budget {{globalVariables.missing}}';
+    config.components.purchase.response[0].prompt = 'Spend {{globalVariables.unknown}} from {{globalVariables.budget.value}}';
     Object.assign(config, { baseComponents: { basePurchase: config.components.purchase } });
     Object.assign(config.components, { purchase: { baseComponent: 'basePurchase' } });
     const parsed = await parseStudyConfig(JSON.stringify(config));

@@ -32,6 +32,7 @@ import { findBlockForStep } from '../../utils/getSequenceFlatMap';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import { useRecordingConfig } from '../../store/hooks/useRecordingConfig';
 import { makeStoredAnswer, makeStorageEngine } from '../../tests/utils';
+import * as templateHelpers from '../../utils/handlebars';
 
 // ── mutable state ────────────────────────────────────────────────────────────
 
@@ -528,6 +529,14 @@ describe('VideoController', () => {
 // ── ComponentController ───────────────────────────────────────────────────────
 
 describe('ComponentController', () => {
+  test('instruction templates receive the globalVariables namespace', () => {
+    const compile = vi.spyOn(templateHelpers, 'compileTemplate');
+    renderToStaticMarkup(<ComponentController />);
+    expect(compile).toHaveBeenCalledWith(expect.any(String), expect.any(Object), expect.objectContaining({
+      data: expect.objectContaining({ globalVariables: {} }),
+    }));
+    compile.mockRestore();
+  });
   beforeEach(() => {
     vi.mocked(useCurrentComponent).mockReturnValue('end');
   });

@@ -31,7 +31,7 @@
   "components": {
     "updater": {
       "type": "react-component",
-      "instruction": "# Updater failures\n\nEntry budget: {{store.budget}}",
+      "instruction": "# Updater failures\n\nEntry budget: {{globalVariables.budget}}",
       "instructionLocation": "aboveStimulus",
       "previousButton": true,
       "response": [
@@ -64,14 +64,14 @@
     },
     "afterUpdater": {
       "type": "questionnaire",
-      "instruction": "# After updater\n\nEntry budget: {{store.budget}}",
+      "instruction": "# After updater\n\nEntry budget: {{globalVariables.budget}}",
       "instructionLocation": "aboveStimulus",
       "previousButton": true,
       "response": []
     },
     "timeout": {
       "type": "questionnaire",
-      "instruction": "# Timeout purchase\n\nEntry budget: {{store.budget}}",
+      "instruction": "# Timeout purchase\n\nEntry budget: {{globalVariables.budget}}",
       "instructionLocation": "aboveStimulus",
       "previousButton": true,
       "response": [
@@ -81,7 +81,7 @@
           "prompt": "Timed cost",
           "location": "belowStimulus",
           "min": 0,
-          "max": "{{store.budget}}",
+          "max": "{{globalVariables.budget}}",
           "onSubmit": [
             {
               "variable": "budget",
@@ -95,7 +95,7 @@
     },
     "afterTimeout": {
       "type": "questionnaire",
-      "instruction": "# After timeout\n\nEntry budget: {{store.budget}}",
+      "instruction": "# After timeout\n\nEntry budget: {{globalVariables.budget}}",
       "instructionLocation": "aboveStimulus",
       "previousButton": true,
       "response": []

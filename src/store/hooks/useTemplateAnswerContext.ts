@@ -31,7 +31,7 @@ export function useTemplateAnswerContext() {
     () => (currentComponent === '__dynamicLoading'
       ? undefined
       : {
-        store, answers, flatSequence, currentStep, currentComponent, funcIndex: decryptedFuncIndex,
+        globalVariables: store, answers, flatSequence, currentStep, currentComponent, funcIndex: decryptedFuncIndex,
       }),
     [store, answers, flatSequence, currentStep, currentComponent, decryptedFuncIndex],
   );

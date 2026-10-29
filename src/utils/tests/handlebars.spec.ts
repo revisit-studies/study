@@ -27,10 +27,10 @@ describe('compileTemplate', () => {
 
   test('reports undeclared store references in loaded text rather than silently dropping them', () => {
     const log = vi.spyOn(console, 'error').mockImplementation(() => {});
-    expect(compileTemplate('Budget {{store.missing}}', {}, { data: { store: { budget: 70 } } })).toBe('Budget {{store.missing}}');
+    expect(compileTemplate('Budget {{globalVariables.missing}}', {}, { data: { globalVariables: { budget: 70 } } })).toBe('Budget {{globalVariables.missing}}');
     expect(log).toHaveBeenCalledWith('Failed to compile handlebars template', expect.objectContaining({ message: expect.stringContaining('missing') }));
-    expect(compileTemplate('Budget {{store.budget.value}}', {}, { data: { store: { budget: 70 } } })).toBe('Budget {{store.budget.value}}');
-    expect(compileTemplate('{{#ifEquals "store.missing" "store.missing"}}literal{{/ifEquals}}', {}, { data: { store: {} } })).toBe('literal');
+    expect(compileTemplate('Budget {{globalVariables.budget.value}}', {}, { data: { globalVariables: { budget: 70 } } })).toBe('Budget {{globalVariables.budget.value}}');
+    expect(compileTemplate('{{#ifEquals "globalVariables.missing" "globalVariables.missing"}}literal{{/ifEquals}}', {}, { data: { globalVariables: {} } })).toBe('literal');
     log.mockRestore();
   });
 
@@ -291,5 +291,5 @@ describe('lookupParameters and lookupCorrectAnswer helpers', () => {
 });
 
 test('store templates use the reserved runtime namespace and retain primitive rendering', () => {
-  expect(compileTemplate('{{store.budget}} / {{store.eligible}} / {{store.label}}', { store: { budget: 999 } }, { data: { store: { budget: 70, eligible: false, label: 'ready' } } })).toBe('70 / false / ready');
+  expect(compileTemplate('{{globalVariables.budget}} / {{globalVariables.eligible}} / {{globalVariables.label}}', { globalVariables: { budget: 999 } }, { data: { globalVariables: { budget: 70, eligible: false, label: 'ready' } } })).toBe('70 / false / ready');
 });

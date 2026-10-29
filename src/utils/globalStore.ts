@@ -1,10 +1,12 @@
 import type {
-  GlobalStoreAction, GlobalStoreOperation, GlobalStoreValue, GlobalStoreValues, GlobalVariableDeclarations, Response,
+  GlobalStoreAction, GlobalStoreOperation, GlobalStoreValue, GlobalStoreValues, GlobalVariableDeclaration, GlobalVariableDeclarations, Response, ParserErrorWarning,
 } from '../parser/types';
 import type { StoredAnswer } from '../store/types';
 import { isResponseAnswered, isResponseDontKnowSelected } from './responseValue';
+import { checkNumericalResponse, checkTextResponse } from './primitiveValidation';
+import { verifyTextResponseConstraints } from './textResponseConstraints';
 
-export const GLOBAL_STORE_REFERENCE = /^\{\{\s*store\.([A-Za-z_][\w-]*)\s*\}\}$/;
+export const GLOBAL_STORE_REFERENCE = /^\{\{\s*globalVariables\.([A-Za-z_][\w-]*)\s*\}\}$/;
 const forbiddenKeys = new Set(['__proto__', 'constructor', 'prototype']);
 const operationsByType: Record<string, GlobalStoreOperation[]> = {
   number: ['set', 'add', 'subtract', 'multiply', 'divide'],
@@ -21,20 +23,26 @@ function isPrimitive(value: unknown): value is GlobalStoreValue {
   return typeof value === 'string' || typeof value === 'boolean' || (typeof value === 'number' && Number.isFinite(value));
 }
 
+export function normalizeGlobalVariableDeclaration(value: GlobalVariableDeclaration | GlobalStoreValue): GlobalVariableDeclaration {
+  return isPrimitive(value) ? { initialValue: value } : value;
+}
+
 function validateValue(key: string, value: unknown, definitions: GlobalVariableDeclarations): asserts value is GlobalStoreValue {
   if (!Object.hasOwn(definitions, key) || forbiddenKeys.has(key)) throw new Error(`Unknown global store variable "${key}"; declare it first.`);
-  const definition = definitions[key];
+  const definition = normalizeGlobalVariableDeclaration(definitions[key]);
   if (!isPrimitive(value)) throw new Error(`Global store variable "${key}" must be a finite number, string, or boolean.`);
   if (typeof value !== typeof definition.initialValue) throw new Error(`Global store variable "${key}" must retain its ${typeof definition.initialValue} type.`);
-  if (typeof value === 'number') {
-    if (definition.min !== undefined && value < definition.min) throw new Error(`The proposed ${key} (${value}) is below its minimum of ${definition.min}. Reduce the total spending to fit the available budget.`);
-    if (definition.max !== undefined && value > definition.max) throw new Error(`The proposed ${key} (${value}) exceeds its maximum of ${definition.max}.`);
-  }
+  const response = { ...definition, id: key, prompt: key };
+  const error = typeof value === 'number'
+    ? checkNumericalResponse({ ...response, type: 'numerical' }, value)
+    : typeof value === 'string' ? checkTextResponse({ ...response, type: 'shortText' }, value) : null;
+  if (error) throw new Error(`Global store variable "${key}": ${error}`);
 }
 
 export function validateGlobalStoreDefinitions(definitions: GlobalVariableDeclarations) {
   const errors: { instancePath: string; message: string }[] = [];
-  Object.entries(definitions).forEach(([key, definition]) => {
+  Object.entries(definitions).forEach(([key, declaration]) => {
+    const definition = normalizeGlobalVariableDeclaration(declaration);
     const path = `/globalVariables/${key}`;
     if (!/^[A-Za-z_][\w-]*$/.test(key) || forbiddenKeys.has(key)) {
       errors.push({ instancePath: path, message: 'Use a non-reserved identifier for a global variable' });
@@ -44,14 +52,32 @@ export function validateGlobalStoreDefinitions(definitions: GlobalVariableDeclar
       errors.push({ instancePath: `${path}/initialValue`, message: 'Provide a finite number, string, or boolean initialValue' });
       return;
     }
-    const { initialValue, min, max } = definition;
-    if ((min !== undefined || max !== undefined) && typeof initialValue !== 'number') {
+    const {
+      initialValue, min, max, strictMin, strictMax,
+    } = definition;
+    const bounds = [min, max, strictMin, strictMax];
+    if (bounds.some((bound) => bound !== undefined) && typeof initialValue !== 'number') {
       errors.push({ instancePath: path, message: 'Only number variables may define min or max' });
       return;
     }
-    if ((min !== undefined && !Number.isFinite(min)) || (max !== undefined && !Number.isFinite(max)) || (min !== undefined && max !== undefined && min > max)) {
+    if (bounds.some((bound) => bound !== undefined && !Number.isFinite(bound)) || (min !== undefined && max !== undefined && min > max)) {
       errors.push({ instancePath: path, message: 'Provide finite, ordered min/max bounds' });
       return;
+    }
+    const textKeys = ['minCharLength', 'maxCharLength', 'minWordLength', 'maxWordLength', 'textValidation', 'builtInValidation'] as const;
+    if (typeof initialValue !== 'string' && textKeys.some((field) => definition[field] !== undefined)) {
+      errors.push({ instancePath: path, message: 'Only string variables may define text validation rules' });
+      return;
+    }
+    if (typeof initialValue === 'string') {
+      const textErrors: ParserErrorWarning[] = [];
+      verifyTextResponseConstraints(path, {
+        response: [{
+          ...definition, id: key, prompt: key, type: 'shortText', required: false,
+        }],
+      }, textErrors, []);
+      textErrors.forEach((error) => errors.push({ instancePath: error.instancePath.replace('/response/0', ''), message: error.message }));
+      if (textErrors.length) return;
     }
     try { validateValue(key, initialValue, definitions); } catch (error) {
       errors.push({ instancePath: `${path}/initialValue`, message: (error as Error).message });
@@ -61,7 +87,7 @@ export function validateGlobalStoreDefinitions(definitions: GlobalVariableDeclar
 }
 
 export function getInitialGlobalVariables(definitions: GlobalVariableDeclarations = {}): GlobalStoreValues {
-  return Object.fromEntries(Object.entries(definitions).map(([key, definition]) => [key, definition.initialValue]));
+  return Object.fromEntries(Object.entries(definitions).map(([key, definition]) => [key, normalizeGlobalVariableDeclaration(definition).initialValue]));
 }
 
 export function globalStoreOperationIsCompatible(operation: GlobalStoreOperation, value: GlobalStoreValue) {
@@ -72,7 +98,7 @@ export function resolveGlobalStoreNumber(value: number | string | undefined, sto
   if (value === undefined) return undefined;
   if (typeof value === 'number' && Number.isFinite(value)) return value;
   const match = typeof value === 'string' ? value.match(GLOBAL_STORE_REFERENCE) : null;
-  if (!match) throw new Error('A numeric constraint must be a finite number or an exact {{store.key}} reference.');
+  if (!match) throw new Error('A numeric constraint must be a finite number or an exact {{globalVariables.key}} reference.');
   if (!Object.hasOwn(store, match[1])) throw new Error(`Unknown global store variable "${match[1]}"; declare it first.`);
   const resolved = store[match[1]];
   if (typeof resolved !== 'number' || !Number.isFinite(resolved)) throw new Error(`Global store reference "${match[1]}" must resolve to a finite number.`);

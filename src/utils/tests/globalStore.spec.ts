@@ -5,6 +5,48 @@ import {
 import type { GlobalVariableDeclarations, NumericalResponse, Response } from '../../parser/types';
 import type { StoredAnswer } from '../../store/types';
 
+test('primitive declarations preserve zero, false and empty strings alongside expanded declarations', () => {
+  const declarations = {
+    budget: 100, zero: 0, enabled: false, label: '', bounded: { initialValue: 2, strictMin: 1 },
+  };
+  expect(validateGlobalStoreDefinitions(declarations)).toEqual([]);
+  expect(getInitialGlobalVariables(declarations)).toEqual({
+    budget: 100, zero: 0, enabled: false, label: '', bounded: 2,
+  });
+  expect(evaluateGlobalStoreUpdates(declarations, getInitialGlobalVariables(declarations), [], {}, { budget: 70 }).values.budget).toBe(70);
+});
+
+test.each([
+  [{ initialValue: 5, strictMin: 0, strictMax: 10 }, 0],
+  [{ initialValue: 'ready', minCharLength: 3, maxCharLength: 6 }, 'too long'],
+  [{ initialValue: 'two words', minWordLength: 2 }, 'one'],
+  [{ initialValue: 'ready', textValidation: [{ type: 'matchesRegex', value: '^(ready|done)$' }] }, 'other'],
+  [{ initialValue: 'study@example.com', builtInValidation: 'email' }, 'invalid'],
+] as const)('validates the final proposed global value using response constraints %j', (declaration, proposed) => {
+  const declarations = { value: structuredClone(declaration) } as GlobalVariableDeclarations;
+  expect(validateGlobalStoreDefinitions(declarations)).toEqual([]);
+  const entry = getInitialGlobalVariables(declarations);
+  expect(() => evaluateGlobalStoreUpdates(declarations, entry, [], {}, { value: proposed })).toThrow(/value/i);
+});
+
+test('string actions validate their combined result rather than the operand', () => {
+  const declarations = { label: { initialValue: 'hello', maxCharLength: 8 } };
+  expect(() => evaluateGlobalStoreUpdates(declarations, { label: 'hello' }, [{
+    id: 'suffix', type: 'shortText', prompt: '', onSubmit: [{ variable: 'label', operation: 'append' }],
+  }], { suffix: 'world' }, {})).toThrow(/label/i);
+});
+
+test.each([
+  { initialValue: 'bad', builtInValidation: 'email' },
+  { initialValue: 'ok', textValidation: [{ type: 'matchesRegex', value: '[' }] },
+  { initialValue: 'ok', minCharLength: -1 },
+  { initialValue: 'ok', minWordLength: 3, maxWordLength: 1 },
+  { initialValue: true, textValidation: [] },
+  { initialValue: 'ok', strictMin: 0 },
+])('rejects invalid initial values and incompatible validation rules %j', (declaration) => {
+  expect(validateGlobalStoreDefinitions({ value: declaration } as GlobalVariableDeclarations).length).toBeGreaterThan(0);
+});
+
 describe('global store updates', () => {
   const definitions: GlobalVariableDeclarations = { budget: { initialValue: 100, min: 0 } };
   const response = (id: string): NumericalResponse => ({
@@ -14,7 +56,7 @@ describe('global store updates', () => {
   test('initial values are copied without changing the config', () => {
     const values = getInitialGlobalVariables(definitions);
     values.budget = 0;
-    expect(definitions.budget.initialValue).toBe(100);
+    expect(definitions.budget).toEqual({ initialValue: 100, min: 0 });
     expect(getInitialGlobalVariables(definitions)).toEqual({ budget: 100 });
   });
 
@@ -101,10 +143,10 @@ describe('global store declarations and references', () => {
   });
 
   test('resolves exact references without coercing their primitive type', () => {
-    expect(resolveGlobalStoreNumber('{{store.budget}}', { budget: 70 })).toBe(70);
+    expect(resolveGlobalStoreNumber('{{globalVariables.budget}}', { budget: 70 })).toBe(70);
     expect(resolveGlobalStoreNumber(0, {})).toBe(0);
-    expect(() => resolveGlobalStoreNumber('{{store.name}}', { name: '70' })).toThrow(/number/i);
-    expect(() => resolveGlobalStoreNumber('Remaining {{store.budget}}', { budget: 70 })).toThrow(/reference/i);
-    expect(() => resolveGlobalStoreNumber('{{store.missing}}', {})).toThrow(/declared|unknown/i);
+    expect(() => resolveGlobalStoreNumber('{{globalVariables.name}}', { name: '70' })).toThrow(/number/i);
+    expect(() => resolveGlobalStoreNumber('Remaining {{globalVariables.budget}}', { budget: 70 })).toThrow(/reference/i);
+    expect(() => resolveGlobalStoreNumber('{{globalVariables.missing}}', {})).toThrow(/declared|unknown/i);
   });
 });

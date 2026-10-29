@@ -70,7 +70,7 @@
   "components": {
     "operations": {
       "type": "questionnaire",
-      "instruction": "# Primitive operations\n\nEntry budget: {{store.budget}}",
+      "instruction": "# Primitive operations\n\nEntry budget: {{globalVariables.budget}}",
       "instructionLocation": "aboveStimulus",
       "previousButton": true,
       "response": [
@@ -228,7 +228,7 @@
           "prompt": "Optional cost",
           "location": "belowStimulus",
           "min": 0,
-          "max": "{{store.budget}}",
+          "max": "{{globalVariables.budget}}",
           "onSubmit": [
             {
               "variable": "budget",
@@ -253,7 +253,7 @@
           "prompt": "Conditional cost",
           "location": "belowStimulus",
           "min": 0,
-          "max": "{{store.budget}}",
+          "max": "{{globalVariables.budget}}",
           "onSubmit": [
             {
               "variable": "budget",
@@ -273,7 +273,7 @@
           "prompt": "Unknown cost",
           "location": "belowStimulus",
           "min": 0,
-          "max": "{{store.budget}}",
+          "max": "{{globalVariables.budget}}",
           "onSubmit": [
             {
               "variable": "budget",
@@ -313,74 +313,74 @@
     },
     "results": {
       "type": "questionnaire",
-      "instruction": "# Operation results\n\nEntry budget: {{store.budget}}",
+      "instruction": "# Operation results\n\nEntry budget: {{globalVariables.budget}}",
       "instructionLocation": "aboveStimulus",
       "previousButton": true,
       "response": [
         {
           "id": "numberSetSummary",
           "type": "textOnly",
-          "prompt": "numberSet: {{store.numberSet}}"
+          "prompt": "numberSet: {{globalVariables.numberSet}}"
         },
         {
           "id": "numberAddSummary",
           "type": "textOnly",
-          "prompt": "numberAdd: {{store.numberAdd}}"
+          "prompt": "numberAdd: {{globalVariables.numberAdd}}"
         },
         {
           "id": "numberSubtractSummary",
           "type": "textOnly",
-          "prompt": "numberSubtract: {{store.numberSubtract}}"
+          "prompt": "numberSubtract: {{globalVariables.numberSubtract}}"
         },
         {
           "id": "numberMultiplySummary",
           "type": "textOnly",
-          "prompt": "numberMultiply: {{store.numberMultiply}}"
+          "prompt": "numberMultiply: {{globalVariables.numberMultiply}}"
         },
         {
           "id": "numberDivideSummary",
           "type": "textOnly",
-          "prompt": "numberDivide: {{store.numberDivide}}"
+          "prompt": "numberDivide: {{globalVariables.numberDivide}}"
         },
         {
           "id": "stringSetSummary",
           "type": "textOnly",
-          "prompt": "stringSet: {{store.stringSet}}"
+          "prompt": "stringSet: {{globalVariables.stringSet}}"
         },
         {
           "id": "stringAppendSummary",
           "type": "textOnly",
-          "prompt": "stringAppend: {{store.stringAppend}}"
+          "prompt": "stringAppend: {{globalVariables.stringAppend}}"
         },
         {
           "id": "stringPrependSummary",
           "type": "textOnly",
-          "prompt": "stringPrepend: {{store.stringPrepend}}"
+          "prompt": "stringPrepend: {{globalVariables.stringPrepend}}"
         },
         {
           "id": "booleanSetSummary",
           "type": "textOnly",
-          "prompt": "booleanSet: {{store.booleanSet}}"
+          "prompt": "booleanSet: {{globalVariables.booleanSet}}"
         },
         {
           "id": "booleanAndSummary",
           "type": "textOnly",
-          "prompt": "booleanAnd: {{store.booleanAnd}}"
+          "prompt": "booleanAnd: {{globalVariables.booleanAnd}}"
         },
         {
           "id": "booleanOrSummary",
           "type": "textOnly",
-          "prompt": "booleanOr: {{store.booleanOr}}"
+          "prompt": "booleanOr: {{globalVariables.booleanOr}}"
         },
         {
           "id": "booleanToggleSummary",
           "type": "textOnly",
-          "prompt": "booleanToggle: {{store.booleanToggle}}"
+          "prompt": "booleanToggle: {{globalVariables.booleanToggle}}"
         },
         {
           "id": "orderedSummary",
           "type": "textOnly",
-          "prompt": "orderedNumber: {{store.orderedNumber}}"
+          "prompt": "orderedNumber: {{globalVariables.orderedNumber}}"
         }
       ]
     }

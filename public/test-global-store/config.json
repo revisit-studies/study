@@ -37,14 +37,14 @@
   "components": {
     "introduction": {
       "type": "questionnaire",
-      "instruction": "# Global store budget study\n\nEntry budget: {{store.budget}}",
+      "instruction": "# Global store budget study\n\nEntry budget: {{globalVariables.budget}}",
       "instructionLocation": "aboveStimulus",
       "previousButton": true,
       "response": []
     },
     "purchase": {
       "type": "questionnaire",
-      "instruction": "# Form purchases\n\nEntry budget: {{store.budget}}",
+      "instruction": "# Form purchases\n\nEntry budget: {{globalVariables.budget}}",
       "instructionLocation": "aboveStimulus",
       "previousButton": true,
       "response": [
@@ -54,7 +54,7 @@
           "prompt": "Above cost",
           "location": "aboveStimulus",
           "min": 0,
-          "max": "{{store.budget}}",
+          "max": "{{globalVariables.budget}}",
           "onSubmit": [
             {
               "variable": "budget",
@@ -68,7 +68,7 @@
           "prompt": "Below cost",
           "location": "belowStimulus",
           "min": 0,
-          "max": "{{store.budget}}",
+          "max": "{{globalVariables.budget}}",
           "onSubmit": [
             {
               "variable": "budget",
@@ -82,7 +82,7 @@
           "prompt": "Sidebar cost",
           "location": "sidebar",
           "min": 0,
-          "max": "{{store.budget}}",
+          "max": "{{globalVariables.budget}}",
           "onSubmit": [
             {
               "variable": "budget",
@@ -94,7 +94,7 @@
     },
     "reactPurchase": {
       "type": "react-component",
-      "instruction": "# React purchase\n\nEntry budget: {{store.budget}}",
+      "instruction": "# React purchase\n\nEntry budget: {{globalVariables.budget}}",
       "instructionLocation": "aboveStimulus",
       "previousButton": true,
       "response": [
@@ -110,7 +110,7 @@
     },
     "htmlPurchase": {
       "type": "website",
-      "instruction": "# HTML purchase\n\nEntry budget: {{store.budget}}",
+      "instruction": "# HTML purchase\n\nEntry budget: {{globalVariables.budget}}",
       "instructionLocation": "aboveStimulus",
       "previousButton": true,
       "response": [],
@@ -118,7 +118,7 @@
     },
     "htmlTemplatedPurchase": {
       "type": "website",
-      "instruction": "# Templated HTML purchase\n\nEntry budget: {{store.budget}}",
+      "instruction": "# Templated HTML purchase\n\nEntry budget: {{globalVariables.budget}}",
       "instructionLocation": "aboveStimulus",
       "previousButton": true,
       "response": [],
@@ -127,7 +127,7 @@
     },
     "dynamicPurchase": {
       "type": "questionnaire",
-      "instruction": "# Dynamic purchase {{iteration}}\n\nEntry budget: {{store.budget}}",
+      "instruction": "# Dynamic purchase {{iteration}}\n\nEntry budget: {{globalVariables.budget}}",
       "instructionLocation": "aboveStimulus",
       "previousButton": true,
       "response": [
@@ -137,7 +137,7 @@
           "prompt": "Dynamic cost",
           "location": "belowStimulus",
           "min": 0,
-          "max": "{{store.budget}}",
+          "max": "{{globalVariables.budget}}",
           "onSubmit": [
             {
               "variable": "budget",
@@ -149,14 +149,14 @@
     },
     "branchDecision": {
       "type": "questionnaire",
-      "instruction": "# Budget decision\n\nEntry budget: {{store.budget}}",
+      "instruction": "# Budget decision\n\nEntry budget: {{globalVariables.budget}}",
       "instructionLocation": "aboveStimulus",
       "previousButton": true,
       "response": []
     },
     "funded": {
       "type": "questionnaire",
-      "instruction": "# Funded branch\n\nEntry budget: {{store.budget}}",
+      "instruction": "# Funded branch\n\nEntry budget: {{globalVariables.budget}}",
       "instructionLocation": "aboveStimulus",
       "previousButton": true,
       "response": [
@@ -175,21 +175,21 @@
     },
     "lowBudget": {
       "type": "questionnaire",
-      "instruction": "# Low budget branch\n\nEntry budget: {{store.budget}}",
+      "instruction": "# Low budget branch\n\nEntry budget: {{globalVariables.budget}}",
       "instructionLocation": "aboveStimulus",
       "previousButton": true,
       "response": []
     },
     "review": {
       "type": "questionnaire",
-      "instruction": "# Review budget\n\nEntry budget: {{store.budget}}",
+      "instruction": "# Review budget\n\nEntry budget: {{globalVariables.budget}}",
       "instructionLocation": "aboveStimulus",
       "previousButton": true,
       "response": [
         {
           "id": "summary",
           "type": "textOnly",
-          "prompt": "Final budget: {{store.budget}}"
+          "prompt": "Final budget: {{globalVariables.budget}}"
         }
       ]
     }

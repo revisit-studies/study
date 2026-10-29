@@ -1766,6 +1766,10 @@
     "GlobalVariableDeclaration": {
       "additionalProperties": false,
       "properties": {
+        "builtInValidation": {
+          "$ref": "#/definitions/BuiltInValidationType",
+          "description": "Applies one predefined format from BuiltInValidationType to the response value."
+        },
         "initialValue": {
           "$ref": "#/definitions/GlobalStoreValue"
         },
@@ -1773,9 +1777,38 @@
           "description": "Inclusive bound, valid only for a numeric initialValue.",
           "type": "number"
         },
+        "maxCharLength": {
+          "description": "The maximum number of characters accepted in the response. Must be greater than 0 when the response is required.",
+          "type": "number"
+        },
+        "maxWordLength": {
+          "description": "The maximum number of whitespace-separated words accepted in the response. Must be greater than 0 when the response is required.",
+          "type": "number"
+        },
         "min": {
           "description": "Inclusive bound, valid only for a numeric initialValue.",
           "type": "number"
+        },
+        "minCharLength": {
+          "description": "The minimum number of characters accepted in the response.",
+          "type": "number"
+        },
+        "minWordLength": {
+          "description": "The minimum number of whitespace-separated words accepted in the response.",
+          "type": "number"
+        },
+        "strictMax": {
+          "type": "number"
+        },
+        "strictMin": {
+          "type": "number"
+        },
+        "textValidation": {
+          "description": "Validation rules applied to the response value in array order.",
+          "items": {
+            "$ref": "#/definitions/TextValidationRule"
+          },
+          "type": "array"
         }
       },
       "required": [
@@ -1785,7 +1818,14 @@
     },
     "GlobalVariableDeclarations": {
       "additionalProperties": {
-        "$ref": "#/definitions/GlobalVariableDeclaration"
+        "anyOf": [
+          {
+            "$ref": "#/definitions/GlobalVariableDeclaration"
+          },
+          {
+            "$ref": "#/definitions/GlobalStoreValue"
+          }
+        ]
       },
       "type": "object"
     },

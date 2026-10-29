@@ -22,7 +22,7 @@ The React updater waits briefly. Reject update produces a recoverable error; tur
 
 ## Config and stimulus API
 
-Declare participant-local primitive values in the Study Config. `initialValue` is required and determines the type for the whole session. Numbers must stay finite; numeric `min`/`max` constraints apply to the combined result of a submission.
+Declare participant-local primitive values in the Study Config, either directly or using an expanded declaration with `initialValue`. The initial value determines the type for the whole session. Numbers must stay finite; numeric constraints apply to the combined result of a submission.
 
 ```json
 {
@@ -39,14 +39,14 @@ Attach actions to a response. Its effective submitted answer is the operand:
 ```json
 {
   "id": "cost", "type": "numerical", "prompt": "Cost",
-  "min": 0, "max": "{{store.budget}}",
+  "min": 0, "max": "{{globalVariables.budget}}",
   "onSubmit": [{ "variable": "budget", "operation": "subtract" }]
 }
 ```
 
 All primitives support `set`; numbers support `add`, `subtract`, `multiply`, `divide`; strings support `append`, `prepend`; booleans support `and`, `or`, `toggle`. Toggle is unary and may be attached to an answered checkbox or structured custom response; empty/unanswered responses still do not trigger it. Actions run in resolved config response order, then action-array order, regardless of displayed question order or placement. Empty optional answers, conditionally hidden fields, and Don't Know operands are skipped; zero and false are retained. Types are never silently coerced. Division by zero, invalid types, unknown variables, non-finite results, or final constraint violations reject the entire proposal.
 
-`{{store.key}}` interpolates values in ordinary templates. An exact reference in a numerical constraint preserves the numeric type. The framework resolves these against the committed state at trial entry. A global visibility condition is `"visibleIf": { "globalVariable": "eligible", "comparison": "equals", "value": true }`. A block skip is `{ "check": "globalVariable", "variable": "budget", "comparison": "lessThan", "value": 20, "to": "lowBudget" }`. These use the existing comparison operators. Dynamic functions receive `store` alongside their existing arguments.
+`{{globalVariables.key}}` interpolates values in ordinary templates. An exact reference in a numerical constraint preserves the numeric type. The framework resolves these against the committed state at trial entry. A global visibility condition is `"visibleIf": { "globalVariable": "eligible", "comparison": "equals", "value": true }`. A block skip is `{ "check": "globalVariable", "variable": "budget", "comparison": "lessThan", "value": 20, "to": "lowBudget" }`. These use the existing comparison operators. Dynamic functions receive `store` alongside their existing arguments.
 
 A React stimulus receives `store` and `registerGlobalStoreUpdater`:
 
@@ -80,3 +80,26 @@ Active answer rows cache their entry values for grading and summary views; these
 Legacy studies and provenance need no migration. Missing pre-feature history is not reconstructed by rerunning callbacks. Arrays, objects, expression evaluation, finalized-session reopening, and concurrent-tab/device editing are outside this feature.
 
 Review regressions also cover a global skip to the end during a dynamic iteration, tracked React entry values after revision (70 before, 90 after), and HTML updater re-registration after restoration. The HTML fixture includes a Re-register store updater control for exercising this lifecycle.
+
+## Declaration shorthand and shared validation
+
+`"globalVariables": { "budget": 100, "eligible": false, "label": "" }` declares primitive values directly. Use the expanded form when constraints are needed:
+
+```json
+{
+  "globalVariables": {
+    "budget": { "initialValue": 100, "min": 0, "strictMax": 200 },
+    "label": {
+      "initialValue": "Ready",
+      "minCharLength": 1,
+      "maxCharLength": 20,
+      "textValidation": [{ "type": "matchesRegex", "value": "^[A-Za-z ]+$" }]
+    },
+    "contact": { "initialValue": "study@example.com", "builtInValidation": "email" }
+  }
+}
+```
+
+Numeric declarations support `min`, `max`, `strictMin`, and `strictMax`. String declarations share response character/word limits, `textValidation`, and built-in email, URL and phone formats. Rules validate the initial value and the final proposed value, including combined form operations and React/HTML updater results. Invalid updates leave accepted state unchanged.
+
+The templating demo includes Markdown, React and HTML content reading the same budget. Markdown uses `\{{globalVariables.budget}}`; React aliases its stimulus `store` prop as `globalVariables` and renders `globalVariables.budget`; HTML reads `globalVariables.budget` inside `Revisit.onGlobalStoreReceive`, and supports the same template expression in markup.
