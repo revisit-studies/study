@@ -16,6 +16,7 @@ import { ErrorLoadingConfig } from './ErrorLoadingConfig';
 import { ReactMarkdownWrapper } from './ReactMarkdownWrapper';
 import { ParticipantStatusBadges } from '../analysis/interface/ParticipantStatusBadges';
 import { useStorageEngine } from '../storage/storageEngineHooks';
+import { startDesignerPreview } from '../store/hooks/useDesignerPreview';
 import { REVISIT_MODE } from '../storage/engines/types';
 import { getSequenceConditions } from '../utils/handleConditionLogic';
 import { useStudyRecordings } from '../utils/useStudyRecordings';
@@ -296,6 +297,14 @@ function ValidStudyCard({
           Analyze & Manage Study
         </Button>
         )}
+        <Button
+          variant="default"
+          component="a"
+          href={`${studyUrl}${studyUrl.includes('?') ? '&' : '?'}preview=true`}
+          onClick={() => startDesignerPreview(url)}
+        >
+          Preview
+        </Button>
         <Button
           leftSection={<IconListCheck />}
           ml={canViewAnalytics ? undefined : 'auto'}

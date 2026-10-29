@@ -49,6 +49,8 @@ import {
 import { getCustomResponseModule, getCustomResponseModuleLoadError } from './customResponseModules';
 import { appendStimulusShowErrorsToGraph } from './stimulusProvenance';
 import { useManagedTrrack } from '../../store/hooks/useRevisitTrrack';
+import { useTrialProvenance } from '../../store/hooks/useTrialProvenance';
+import { initializeResumedTrrack } from '../../store/resumeProvenance';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { showNotification } from '../../utils/notifications';
 import { getAnswersFromAllLocations, getPersistedAnswerValues, getPersistedAnswersFromAllLocations } from '../../utils/getAnswersFromAllLocations';
@@ -96,7 +98,11 @@ export function ResponseBlock({
   const isAnalysis = useIsAnalysis();
   const currentProvenance = useStoreSelector((state) => state.analysisProvState[location]) as FormElementProvenance | undefined;
 
-  const storedAnswer = useMemo(() => currentProvenance?.form ?? status?.answer, [currentProvenance, status]);
+  const retainedProvenance = useTrialProvenance(location);
+  const restoredForm = useMemo(() => (retainedProvenance
+    ? (initializeResumedTrrack({ registry: Registry.create(), initialState: {} }, retainedProvenance).getState() as FormElementProvenance).form
+    : undefined), [retainedProvenance]);
+  const storedAnswer = useMemo(() => currentProvenance?.form ?? restoredForm ?? status?.answer, [currentProvenance, restoredForm, status]);
   const storedAnswerData = useStoredAnswer();
   const formOrders: Record<string, string[]> = useMemo(() => storedAnswerData?.formOrder || {}, [storedAnswerData]);
 
@@ -168,7 +174,7 @@ export function ResponseBlock({
       showResponseErrors: false,
       interactionSource: 'click',
     },
-  }, reportProvenance, identifier);
+  }, reportProvenance, identifier, isAnalysis ? undefined : retainedProvenance);
 
   const reactiveAnswers = useStoreSelector((state) => state.reactiveAnswers);
 
@@ -264,7 +270,7 @@ export function ResponseBlock({
     [customResponseModules],
   );
   const combinedLiveValues = useMemo<StoredAnswer['answer']>(() => {
-    const initialValues: StoredAnswer['answer'] = generateInitFields(allResponses, storedAnswer || {});
+    const initialValues: StoredAnswer['answer'] = generateInitFields(allResponses, { ...status?.answer, ...storedAnswer });
     // Locations mount independently. Until each publishes a snapshot, use its
     // restored values/defaults so dependents do not clear valid restored answers.
     allResponses.forEach((response) => {
@@ -274,7 +280,7 @@ export function ResponseBlock({
       }
     });
     return { ...initialValues, ...getAnswersFromAllLocations(trialValidation[identifier]) };
-  }, [allResponses, storedAnswer, identifier, trialValidation]);
+  }, [allResponses, status?.answer, storedAnswer, identifier, trialValidation]);
   const combinedAnalysisValues = useMemo(
     () => collectResponseValuesFromAnalysisState(
       analysisProvState as Partial<Record<ResponseBlockLocation, FormElementProvenance>>,
@@ -518,10 +524,12 @@ export function ResponseBlock({
     if (isAnalysis) return;
     const interactionSource = lastInteractionSourceRef.current;
     lastInteractionSourceRef.current = 'click';
-    trrack.apply(`Update form field (${interactionSource})`, actions.updateFormAction({
-      values: structuredClone(answerValidator.values),
-      interactionSource,
-    }));
+    if (!isEqual(trrack.getState().form, answerValidator.values)) {
+      trrack.apply(`Update form field (${interactionSource})`, actions.updateFormAction({
+        values: structuredClone(answerValidator.values),
+        interactionSource,
+      }));
+    }
 
     storeDispatch(
       updateResponseBlockValidation({

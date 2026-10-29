@@ -20,14 +20,14 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     super('supabase', testing);
   }
 
-  protected async _getFromStorage<T extends StorageObjectType>(prefix: string, type: T, studyId?: string) {
+  protected async _getFromStorage<T extends StorageObjectType>(prefix: string, type: T, studyId?: string, strict = false) {
     const { data, error } = await this.supabase.storage
       .from('revisit')
       .download(`${this.collectionPrefix}${studyId || this.studyId}/${prefix}_${type}`);
 
     if (error) {
       const downloadError = error as { status?: number; statusCode?: string };
-      if ((type === 'sequenceArray' || type === 'participantData') && downloadError.status !== 404 && downloadError.statusCode !== '404') throw error;
+      if ((strict || type === 'sequenceArray' || type === 'participantData') && downloadError.status !== 404 && String(downloadError.statusCode) !== '404') throw error;
       return {} as StorageObject<T>;
     }
 
@@ -38,7 +38,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       if (type === 'participantData' && !isParticipantData(parsed)) throw new Error('Invalid participant data');
       return parsed;
     } catch (parseError) {
-      if (type === 'sequenceArray' || type === 'participantData') throw parseError;
+      if (strict || type === 'sequenceArray' || type === 'participantData') throw parseError;
       // Return the Blob directly if parsing fails
       return dataToParse as StorageObject<T>;
     }

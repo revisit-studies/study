@@ -16,6 +16,10 @@ import { getStaticAssetByPath } from '../utils/getStaticAsset';
 import { buildIframeSrcDoc, getBaseHref } from '../utils/iframeSrcDoc';
 import { PREFIX as BASE_PREFIX } from '../utils/Prefix';
 import { ResourceNotFound } from '../ResourceNotFound';
+import { RestorationError } from '../components/interface/RestorationError';
+import { useTrialProvenance } from '../store/hooks/useTrialProvenance';
+import { RestorationWarning } from '../components/interface/RestorationWarning';
+import { responseValueKeys } from '../utils/responseVisibility';
 
 const PREFIX = '@REVISIT_COMMS';
 
@@ -29,10 +33,18 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   const dispatch = useDispatch();
   const identifier = useCurrentIdentifier();
   const isAnalysis = useIsAnalysis();
+  const provenance = useTrialProvenance('stimulus');
+  const [resumeStatus, setResumeStatus] = useState<'unknown' | 'pending' | 'ready' | 'unsupported' | 'error'>('unknown');
+  const resumeStatusRef = useRef(resumeStatus);
+  const resumeRequest = useRef<string>('');
+  const hostResponseKeys = new Set((currentConfig.response ?? [])
+    .filter((response) => response.type !== 'reactive').flatMap(responseValueKeys));
   const replay = useContext(ReplayContext);
   const initialReplayTime = useRef(replay?.seekTime ?? 0);
   const [hasReplayStarted, setHasReplayStarted] = useState(false);
   const stimulusValidation = useStoreSelector((state) => state.trialValidation[identifier]?.stimulus);
+  const [restoredAnswers] = useState(() => ({ ...answers[identifier]?.answer, ...stimulusValidation?.values }));
+  const hasSavedData = !!provenance || Object.keys(restoredAnswers).some((key) => !hostResponseKeys.has(key));
 
   useEffect(() => {
     if (replay && (replay.isPlaying || replay.seekTime !== initialReplayTime.current)) {
@@ -85,9 +97,8 @@ export function IframeController({ currentConfig, provState, answers }: { curren
 
   const url = useMemo(() => {
     if (templatedPath === undefined) return undefined;
-    return templatedPath.startsWith('http')
-      ? templatedPath
-      : `${BASE_PREFIX}${templatedPath}?trialid=${currentComponent}&id=${iframeId}`;
+    if (templatedPath.startsWith('http')) return templatedPath;
+    return `${BASE_PREFIX}${templatedPath}?trialid=${currentComponent}&id=${iframeId}`;
   }, [templatedPath, currentComponent, iframeId]);
   // Templated stimuli are fetched without the query string, so the request is cacheable and isn't
   // busted by the per-mount iframe id.
@@ -137,7 +148,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
     return () => events.abort();
   }, [frameDocument, applyColorMode, onLoading, onReady]);
 
-  useAssetStatus(assetStatus);
+  useAssetStatus(resumeStatus === 'pending' ? 'loading' : resumeStatus === 'error' ? 'error' : assetStatus);
 
   const sendMessage = useCallback(
     (tag: string, message: unknown) => {
@@ -169,9 +180,24 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   useEffect(() => {
     const handler = (e: MessageEvent) => {
       const { data } = e;
-      if (typeof data === 'object' && iframeId === data.iframeId) {
+      const isBootstrap = data?.type === `${PREFIX}/WINDOW_READY` && data.message?.protocolVersion === 1;
+      if (data && typeof data === 'object' && (iframeId === data.iframeId || isBootstrap) && e.source === ref.current?.contentWindow) {
+        if (data.requestId && data.requestId !== resumeRequest.current) return;
         switch (data.type) {
           case `${PREFIX}/WINDOW_READY`:
+            if (data.message?.protocolVersion === 1) {
+              resumeRequest.current = `${iframeId}:${data.message.documentId}`;
+              resumeStatusRef.current = 'pending';
+              setResumeStatus('pending');
+              sendMessage('RESUME', {
+                documentId: data.message.documentId,
+                protocolVersion: 1,
+                requestId: resumeRequest.current,
+                isAnalysis,
+                answers: restoredAnswers,
+                provenanceGraph: isAnalysis ? undefined : provenance,
+              });
+            }
             if (currentConfig.parameters) {
               sendMessage('STUDY_DATA', currentConfig.parameters);
             }
@@ -182,10 +208,31 @@ export function IframeController({ currentConfig, provState, answers }: { curren
               sendMessage('ANSWERS', answers);
             }
             break;
+          case `${PREFIX}/RESTORATION_CAPABILITY`:
+            if (data.message?.requestId !== resumeRequest.current || data.message?.protocolVersion !== 1) return;
+            if (data.message.supported === true) {
+              resumeStatusRef.current = 'pending';
+              setResumeStatus('pending');
+            }
+            if (data.message.supported === false) {
+              resumeStatusRef.current = 'unsupported';
+              setResumeStatus('unsupported');
+            }
+            break;
+          case `${PREFIX}/RESTORED`:
+            if (data.message?.requestId !== resumeRequest.current || data.message?.protocolVersion !== 1) return;
+            resumeStatusRef.current = 'ready';
+            setResumeStatus('ready');
+            break;
+          case `${PREFIX}/RESTORATION_ERROR`:
+            if (data.message?.requestId !== resumeRequest.current) return;
+            resumeStatusRef.current = 'error';
+            setResumeStatus('error');
+            break;
           case `${PREFIX}/READY`:
             break;
           case `${PREFIX}/ANSWERS`:
-            if (isAnalysis) return;
+            if (isAnalysis || resumeStatusRef.current === 'pending' || resumeStatusRef.current === 'error') return;
             stimulusValidationRef.current = {
               valid: true,
               values: data.message,
@@ -199,7 +246,9 @@ export function IframeController({ currentConfig, provState, answers }: { curren
             }));
             break;
           case `${PREFIX}/PROVENANCE`: {
-            if (isAnalysis) return;
+            if (isAnalysis || resumeStatusRef.current === 'pending' || resumeStatusRef.current === 'error') return;
+            // Legacy initialization may arrive before an asynchronous restoration handler registers.
+            if (provenance && data.message?.root !== provenance.root) return;
             storeDispatch(updateProvenance({
               location: 'stimulus',
               identifier,
@@ -216,7 +265,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, [storeDispatch, dispatch, iframeId, currentConfig, sendMessage, setReactiveAnswers, updateProvenance, updateResponseBlockValidation, identifier, isAnalysis, provState, answers, shouldSendProvenance]);
+  }, [storeDispatch, dispatch, iframeId, currentConfig, sendMessage, setReactiveAnswers, updateProvenance, updateResponseBlockValidation, identifier, isAnalysis, provState, answers, shouldSendProvenance, provenance, restoredAnswers]);
 
   // While the path is templated inside a dynamic block, templatedPath is undefined until the
   // block's current iteration resolves — don't load an iframe built from the wrong iteration.
@@ -233,29 +282,40 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   }
 
   return (
-    <iframe
-      key={requestKey}
-      ref={ref}
-      inert={isAnalysis}
-      aria-disabled={isAnalysis}
-      style={{
-        width: '100%',
-        flexGrow: 1,
-        border: 0,
-        colorScheme: colorMode,
-        // Do not expose the document's automatic theme before onLoad applies the study scheme.
-        visibility: frameStatus === 'ready' ? undefined : 'hidden',
-        // Keep transparent embedded pages readable when their scheme differs from the study.
-        backgroundColor: currentConfig.colorMode ? 'Canvas' : undefined,
-        pointerEvents: isAnalysis ? 'none' : undefined,
-      }}
-      {...(srcDoc !== undefined ? { srcDoc } : { src: url })}
-      onLoad={() => {
-        applyColorMode();
-        setFrameDocument(ref.current?.contentDocument ?? null);
-        onReady();
-      }}
-      onErrorCapture={onError}
-    />
+    <>
+      <RestorationWarning component={identifier} website visible={hasSavedData && resumeStatus === 'unsupported'} />
+      {resumeStatus === 'error' && (
+        <RestorationError onRetry={() => {
+          resumeStatusRef.current = 'pending';
+          setResumeStatus('pending');
+          sendMessage('RETRY_RESTORE', { requestId: resumeRequest.current });
+        }}
+        />
+      )}
+      <iframe
+        key={requestKey}
+        ref={ref}
+        inert={isAnalysis || resumeStatus === 'pending' || resumeStatus === 'error'}
+        aria-disabled={isAnalysis || resumeStatus === 'pending' || resumeStatus === 'error'}
+        style={{
+          width: '100%',
+          flexGrow: 1,
+          border: 0,
+          colorScheme: colorMode,
+          // Do not expose the document's automatic theme before onLoad applies the study scheme.
+          visibility: frameStatus === 'ready' ? undefined : 'hidden',
+          // Keep transparent embedded pages readable when their scheme differs from the study.
+          backgroundColor: currentConfig.colorMode ? 'Canvas' : undefined,
+          pointerEvents: isAnalysis ? 'none' : undefined,
+        }}
+        {...(srcDoc !== undefined ? { srcDoc } : { src: url })}
+        onLoad={() => {
+          applyColorMode();
+          setFrameDocument(ref.current?.contentDocument ?? null);
+          onReady();
+        }}
+        onErrorCapture={onError}
+      />
+    </>
   );
 }

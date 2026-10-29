@@ -1,6 +1,7 @@
 import {
   useEffect, useRef, useState,
 } from 'react';
+import { useStudyState } from '../../../store/hooks/useStudyState';
 import { Button, Tooltip } from '@mantine/core';
 import * as d3 from 'd3';
 import { StimulusParams } from '../../../store/types';
@@ -28,26 +29,31 @@ function Map({
 }: StimulusParams<MapParameters, MapState>) {
   const svgRef = useRef<SVGSVGElement>(null);
 
+  const [savedSelected] = useStudyState<string[]>({ responseId: 'selectedStates', initialState: [] });
+  const [savedHovered] = useStudyState({ responseId: 'hoveredState', initialState: '' });
+  const trrack = useTrrack({ initialState: { ...initialState, selectedStates: savedSelected, hoveredState: savedHovered }, registry });
+  const restoredState = useStudyState({ trrack });
   const [data, setData] = useState<CsvRow[] | null>(null);
   const [selectedStates, setSelectedStates] = useState<string[]>(
-    provenanceState?.selectedStates ?? [],
+    provenanceState?.selectedStates ?? restoredState.selectedStates,
   );
   const [hoveredState, setHoveredState] = useState<string>(
-    provenanceState?.hoveredState ?? '',
+    provenanceState?.hoveredState ?? restoredState.hoveredState,
   );
-
-  // Initialize Trrack instance
-  const trrack = useTrrack({ initialState, registry });
 
   // Sync selected states to trrack
   useEffect(() => {
-    trrack.apply('select', selectStateAction(selectedStates));
-  }, [selectedStates, trrack]);
+    if (!provenanceState && JSON.stringify(trrack.getState().selectedStates) !== JSON.stringify(selectedStates)) {
+      trrack.apply('select', selectStateAction(selectedStates));
+    }
+  }, [selectedStates, trrack, provenanceState]);
 
   // Sync hovered state to trrack
   useEffect(() => {
-    trrack.apply('hover', hoverStateAction(hoveredState));
-  }, [hoveredState, trrack]);
+    if (!provenanceState && trrack.getState().hoveredState !== hoveredState) {
+      trrack.apply('hover', hoverStateAction(hoveredState));
+    }
+  }, [hoveredState, trrack, provenanceState]);
 
   useEffect(() => {
     setAnswer({
@@ -112,12 +118,12 @@ function Map({
   // Highlight selected states
   useEffect(() => {
     applySelectedStyles(d3.select(svgRef.current), selectedStates);
-  }, [selectedStates]);
+  }, [selectedStates, data]);
 
   // Highlight hovered state
   useEffect(() => {
     applyHoverStyles(d3.select(svgRef.current), hoveredState, selectedStates);
-  }, [hoveredState, selectedStates]);
+  }, [hoveredState, selectedStates, data]);
 
   return (
     <div>

@@ -472,7 +472,7 @@ export abstract class StorageEngine {
   */
   /* Storage ------------------------------------------------------------- */
   // Gets an object from the storage engine. The object is identified by its type and studyId.
-  protected abstract _getFromStorage<T extends StorageObjectType>(prefix: string, type: T, studyId?: string): Promise<StorageObject<T> | null>;
+  protected abstract _getFromStorage<T extends StorageObjectType>(prefix: string, type: T, studyId?: string, strict?: boolean): Promise<StorageObject<T> | null>;
 
   // Pushes an object to the storage engine. The object is identified by its type and studyId.
   protected abstract _pushToStorage<T extends StorageObjectType>(prefix: string, type: T, objectToUpload: StorageObject<T>): Promise<void>;
@@ -2151,6 +2151,7 @@ export abstract class StorageEngine {
   async getProvenance(
     task: string,
     participantId?: string,
+    strict = false,
   ) {
     const targetParticipantId = participantId || this.currentParticipantId;
     if (!targetParticipantId) {
@@ -2160,8 +2161,19 @@ export abstract class StorageEngine {
     const provenanceObject = await this._getFromStorage(
       `provenance/${targetParticipantId}`,
       task,
+      undefined,
+      strict,
     );
 
+    if (strict && provenanceObject != null) {
+      const parsed = typeof Blob !== 'undefined' && provenanceObject instanceof Blob
+        ? JSON.parse(await provenanceObject.text()) : provenanceObject;
+      const normalized = normalizeStoredProvenance(parsed);
+      if (!normalized && (!parsed || typeof parsed !== 'object' || Array.isArray(parsed) || Object.values(parsed).some((value) => value != null))) {
+        throw new Error('Saved interaction history is invalid.');
+      }
+      return normalized;
+    }
     return this.parseProvenanceStorageObject(provenanceObject);
   }
 

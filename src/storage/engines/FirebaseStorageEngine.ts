@@ -293,7 +293,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     }
   }
 
-  protected async _getFromStorage<T extends StorageObjectType>(prefix: string, type: T, studyId?: string) {
+  protected async _getFromStorage<T extends StorageObjectType>(prefix: string, type: T, studyId?: string, strict = false) {
     const storageRef = ref(
       this.storage,
       `${this.collectionPrefix}${studyId || this.studyId}/${prefix}_${type}`,
@@ -306,8 +306,8 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       storageObj = JSON.parse(fullProvStr);
       if (type === 'participantData' && !isParticipantData(storageObj)) throw new Error('Invalid participant data');
     } catch (error) {
-      // Only confirmed absence may trigger replacement or orphan cleanup.
-      if ((type === 'sequenceArray' || type === 'participantData') && (error as { code?: string } | null)?.code !== 'storage/object-not-found') throw error;
+      // Only confirmed absence may trigger replacement, orphan cleanup, or a legacy fallback.
+      if ((strict || type === 'sequenceArray' || type === 'participantData') && (error as { code?: string } | null)?.code !== 'storage/object-not-found') throw error;
       console.warn(
         `${prefix} does not have ${type} for ${this.collectionPrefix}${this.studyId}.`,
       );

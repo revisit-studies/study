@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import drawingConfig from '../public/libraries/drawing/config.json' with { type: 'json' };
+import drawingStudy from '../public/library-drawing/config.json' with { type: 'json' };
 import {
   nextClick,
   readParticipantRecording,
@@ -195,4 +196,64 @@ test('narrow drawing canvas hides native controls and retains study undo and red
   await expect.poll(() => blueInkPixels(page)).toBe(0);
   await page.getByRole('button', { name: 'Redo drawing', exact: true }).click();
   await expect.poll(() => blueInkPixels(page)).toBeGreaterThan(100);
+});
+
+test('drawing resumes controls and gesture undo history after reloading and returning', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 900 });
+  await page.route('**/library-drawing/config.json', (route) => route.fulfill({
+    json: {
+      ...drawingStudy,
+      components: {
+        ...drawingStudy.components,
+        review: {
+          type: 'questionnaire', instruction: 'Review your drawing', instructionLocation: 'aboveStimulus', previousButton: true, response: [],
+        },
+      },
+      sequence: { order: 'fixed', components: [...drawingStudy.sequence.components, 'review'] },
+    },
+  }));
+  await resetClientStudyState(page);
+  await page.goto('/library-drawing');
+  await nextClick(page);
+  const blue = page.getByRole('button', { name: 'Use blue ink', exact: true });
+  const undo = page.getByRole('button', { name: 'Undo drawing', exact: true });
+  const redo = page.getByRole('button', { name: 'Redo drawing', exact: true });
+  await expect(page.getByTestId('drawing-canvas').locator('canvas.static')).toBeVisible();
+  await blue.click();
+  await page.locator('label').filter({ has: page.locator('svg[aria-label="Large"]') }).click();
+  await drawStroke(page);
+  await expect.poll(() => blueInkPixels(page)).toBeGreaterThan(100);
+  await nextClick(page);
+  await expect(page.getByText('Review your drawing')).toBeVisible();
+  const identifier = '$drawing.components.canvas_1';
+  await expect.poll(async () => Boolean(await readParticipantRecording(page, 'library-drawing', identifier))).toBe(true);
+  const first = (await readParticipantRecording(page, 'library-drawing', identifier))!;
+  const provenanceKey = `dev-library-drawing/provenance/${first.participantId}_${identifier}`;
+  await expect.poll(async () => await readStoredValue(page, provenanceKey)).not.toBeNull();
+  const original = await readStoredValue<{ stimulus: { nodes: Record<string, unknown> } }>(page, provenanceKey);
+
+  await page.reload();
+  await page.getByRole('button', { name: 'Previous', exact: true }).click();
+  await expect.poll(() => blueInkPixels(page)).toBeGreaterThan(100);
+  await expect(blue).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('radio', { name: 'Large', exact: true })).toBeChecked();
+  await expect(undo).toBeEnabled();
+  await expect(redo).toBeDisabled();
+  await nextClick(page);
+  await expect(page.getByText('Review your drawing')).toBeVisible();
+  await expect.poll(async () => (await readParticipantRecording(page, 'library-drawing', identifier))?.endTime ?? 0, { timeout: 15000 }).toBeGreaterThan(first.endTime);
+  expect(await readStoredValue(page, provenanceKey)).toEqual(original);
+
+  await page.getByRole('button', { name: 'Previous', exact: true }).click();
+  await expect.poll(() => blueInkPixels(page)).toBeGreaterThan(100);
+  await undo.click();
+  await expect.poll(() => blueInkPixels(page)).toBe(0);
+  await redo.click();
+  await expect.poll(() => blueInkPixels(page)).toBeGreaterThan(100);
+  await drawStroke(page);
+  await nextClick(page);
+  await expect(page.getByText('Review your drawing')).toBeVisible();
+  await expect.poll(async () => Object.keys((await readStoredValue<{ stimulus: { nodes: Record<string, unknown> } }>(page, provenanceKey))?.stimulus.nodes ?? {}).length).toBeGreaterThan(Object.keys(original!.stimulus.nodes).length);
+  const appended = await readStoredValue<{ stimulus: { nodes: Record<string, unknown> } }>(page, provenanceKey);
+  expect(Object.keys(appended!.stimulus.nodes)).toEqual(expect.arrayContaining(Object.keys(original!.stimulus.nodes)));
 });

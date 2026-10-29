@@ -56,11 +56,22 @@ export function useCurrentComponent(): string {
   const storeDispatch = useStoreDispatch();
   const { pushToFuncSequence } = useStoreActions();
 
-  const [indexWhenSettingComponentName, setIndexWhenSettingComponentName] = useState<number | null>(null);
-
   const currentComponent = useMemo(() => (typeof currentStep === 'number' ? getComponent(flatSequence[currentStep], studyConfig) : currentStep.includes('reviewer-') || currentStep.startsWith('__') ? currentStep : null), [currentStep, flatSequence, studyConfig]);
 
-  const [compName, setCompName] = useState('__dynamicLoading');
+  const generatedScope = typeof currentStep === 'number'
+    ? `${flatSequence[currentStep]}_${currentStep}_${funcIndex ? decryptIndex(funcIndex) : 0}` : currentStep;
+  const [generatedComponent, setGeneratedComponent] = useState<{ name: string; scope: string } | null>(null);
+  // Every hook instance must resolve an existing dynamic trial before consumers snapshot its data.
+  const savedComponentName = useMemo(() => {
+    if (typeof currentStep !== 'number' || currentComponent) return undefined;
+    const funcName = flatSequence[currentStep];
+    const index = funcIndex ? decryptIndex(funcIndex) : 0;
+    return Object.entries(_answers).find(([key, answer]) => key.startsWith(`${funcName}_${currentStep}_`)
+      && key.endsWith(`_${index}`)
+      && typeof answer.componentName === 'string'
+      && answer.componentName.length > 0
+      && Boolean(getComponent(answer.componentName, studyConfig)))?.[1].componentName;
+  }, [_answers, currentComponent, currentStep, flatSequence, funcIndex, studyConfig]);
 
   const nextFunc:((params: JumpFunctionParameters<unknown>) => JumpFunctionReturnVal) | null = useMemo(() => {
     if (typeof currentStep === 'number' && !currentComponent) {
@@ -91,23 +102,7 @@ export function useCurrentComponent(): string {
       const funcName = flatSequence[currentStep];
       const decryptedFuncIndex = funcIndex ? decryptIndex(funcIndex) : 0;
 
-      // Restore only answers that resolve to a configured component. Malformed
-      // loading records must not prevent the dynamic function from recreating
-      // the requested iteration.
-      const currentAnswer = Object.entries(_answers).find(([key, answer]) => {
-        const answerCompName = answer.componentName;
-        return key.startsWith(`${funcName}_${currentStep}_`)
-          && key.endsWith(`_${decryptedFuncIndex}`)
-          && typeof answerCompName === 'string'
-          && answerCompName.length > 0
-          && Boolean(getComponent(answerCompName, studyConfig));
-      });
-      const answerCompName = currentAnswer?.[1].componentName;
-      if (answerCompName) {
-        setCompName(answerCompName);
-        setIndexWhenSettingComponentName(decryptedFuncIndex);
-        return;
-      }
+      if (savedComponentName) return;
 
       // in a func component
       if (!component && nextFunc !== null) {
@@ -128,8 +123,7 @@ export function useCurrentComponent(): string {
 
         if (currCompName !== null) {
           if (funcIndex) {
-            setCompName(currCompName);
-            setIndexWhenSettingComponentName(decryptedFuncIndex);
+            setGeneratedComponent({ name: currCompName, scope: generatedScope });
 
             storeDispatch(pushToFuncSequence({
               component: currCompName,
@@ -141,15 +135,14 @@ export function useCurrentComponent(): string {
             }));
           }
         } else {
-          setCompName('__dynamicLoading');
-          setIndexWhenSettingComponentName(null);
+          setGeneratedComponent(null);
 
           navigate(`/${studyId}/${encryptIndex(currentStep + 1)}${window.location.search}`);
         }
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentStep, funcIndex, participantSequence, studyConfig.sequence]);
+  }, [currentStep, funcIndex, participantSequence, studyConfig.sequence, savedComponentName, generatedScope]);
 
   if (typeof currentStep === 'number' && flatSequence[currentStep] === 'end') {
     return 'end';
@@ -157,7 +150,9 @@ export function useCurrentComponent(): string {
     return typeof currentStep === 'number' ? flatSequence[currentStep] : currentStep.replace('reviewer-', '');
   }
 
-  return indexWhenSettingComponentName !== null && funcIndex && decryptIndex(funcIndex) === indexWhenSettingComponentName ? compName : '__dynamicLoading';
+  if (savedComponentName && funcIndex) return savedComponentName;
+  return generatedComponent && funcIndex && generatedComponent.scope === generatedScope
+    ? generatedComponent.name : '__dynamicLoading';
 }
 
 export function useCurrentIdentifier(): string {

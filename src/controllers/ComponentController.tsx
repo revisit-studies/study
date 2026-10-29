@@ -1,5 +1,5 @@
 import {
-  Suspense, useEffect, useMemo, useRef, useState,
+  Suspense, useEffect, useMemo, useRef,
 } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import {
@@ -119,37 +119,21 @@ export function ComponentController() {
   }, [configuredStorageEngine, setAlertModal, storageEngine, storeDispatch]);
 
   // Find current block, if it has an ID, add it as a participant tag
-  const [blockForStep, setBlockForStep] = useState<string[]>([]);
   const prevBlockForStepRef = useRef<string[]>([]);
   useEffect(() => {
-    if (isAnalysis) {
+    if (isAnalysis || !storageEngine) {
       return;
     }
-    async function updateBlockForStep() {
-      // Get all nested block IDs
-      const blockIds = findBlockForStep(sequence, currentStep)
-        ?.map((block) => block.currentBlock.id)
-        .filter((blockId) => blockId !== undefined) as string[] | undefined || [];
-      setBlockForStep(blockIds);
+    const blockForStep = findBlockForStep(sequence, currentStep)
+      ?.map((block) => block.currentBlock.id)
+      .filter((blockId): blockId is string => blockId !== undefined) ?? [];
+
+    const hasChanged = JSON.stringify(prevBlockForStepRef.current) !== JSON.stringify(blockForStep);
+    if (hasChanged && blockForStep.length > 0) {
+      storageEngine.addParticipantTags(blockForStep);
     }
-
-    async function addParticipantTag() {
-      const prevBlockForStep = prevBlockForStepRef.current;
-
-      // Check if blockForStep has actually changed
-      const hasChanged = JSON.stringify(prevBlockForStep) !== JSON.stringify(blockForStep);
-
-      if (hasChanged && blockForStep.length > 0 && storageEngine) {
-        await storageEngine.addParticipantTags(blockForStep);
-      }
-
-      // Update the ref with the current value
-      prevBlockForStepRef.current = blockForStep;
-    }
-
-    updateBlockForStep().then(addParticipantTag);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentStep, storageEngine, sequence]);
+    prevBlockForStepRef.current = blockForStep;
+  }, [currentStep, storageEngine, sequence, isAnalysis]);
 
   const currentConfig = useMemo(() => {
     const toReturn = currentComponent && currentComponent !== 'end' && !currentComponent.startsWith('__') && studyComponentToIndividualComponent(stepConfig, studyConfig) as IndividualComponent;
