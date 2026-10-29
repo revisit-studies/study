@@ -667,3 +667,78 @@ test('navigation to a legacy document disposes its outgoing updater and rejects 
   await waitFor(() => expect(rejected).toHaveBeenCalledWith(expect.any(Error)));
   expect(iframe.hasAttribute('inert')).toBe(false);
 });
+
+test('a document that upgrades from protocol zero receives its initial resume exactly once', () => {
+  const { container } = render(<IframeController currentConfig={{ type: 'website', path: 'purchase.html', response: [] }} answers={{}} />);
+  const iframe = container.querySelector('iframe')!;
+  const sent = vi.spyOn(iframe.contentWindow!, 'postMessage');
+  const announce = (protocolVersion: number) => act(() => {
+    window.dispatchEvent(new MessageEvent('message', {
+      source: iframe.contentWindow,
+      data: {
+        type: '@REVISIT_COMMS/WINDOW_READY',
+        iframeId: new URL(iframe.src).searchParams.get('id'),
+        message: { protocolVersion, documentId: 'late-document' },
+      },
+    }));
+  });
+  announce(0);
+  announce(1);
+  announce(1);
+  expect(sent.mock.calls.filter(([data]) => data.type === '@REVISIT_COMMS/RESUME')).toHaveLength(1);
+});
+
+test('a cached document can reannounce with its previous request after another document', () => {
+  const { container } = render(<IframeController currentConfig={{ type: 'website', path: 'purchase.html', response: [] }} answers={{}} />);
+  const iframe = container.querySelector('iframe')!;
+  const sent = vi.spyOn(iframe.contentWindow!, 'postMessage');
+  const announce = (documentId: string, requestId?: string) => act(() => {
+    window.dispatchEvent(new MessageEvent('message', {
+      source: iframe.contentWindow,
+      data: {
+        type: '@REVISIT_COMMS/WINDOW_READY',
+        iframeId: new URL(iframe.src).searchParams.get('id'),
+        requestId,
+        message: { protocolVersion: 1, documentId, globalStoreUpdater: true },
+      },
+    }));
+  });
+  announce('first');
+  const originalRequest = sent.mock.calls.find(([data]) => data.type === '@REVISIT_COMMS/RESUME')![0].message.requestId;
+  announce('second');
+  announce('first', originalRequest);
+  expect(sent.mock.calls.filter(([data]) => data.type === '@REVISIT_COMMS/RESUME').map(([data]) => data.message.documentId)).toEqual(['first', 'second', 'first']);
+  expect(mockStoreUpdater.current).toBeDefined();
+});
+
+test('stimulus answers exclude host form values and their auxiliary fields', () => {
+  const config: WebsiteComponent = {
+    type: 'website',
+    path: 'purchase.html',
+    response: [
+      { id: 'selectedCost', type: 'reactive', prompt: 'Selected cost' },
+      {
+        id: 'hostCost', type: 'numerical', prompt: 'Cost', withDontKnow: true,
+      },
+      {
+        id: 'hostChoice', type: 'radio', prompt: 'Choice', options: ['first'], withOther: true,
+      },
+    ],
+  };
+  const { container } = render(<IframeController currentConfig={config} answers={{}} />);
+  const iframe = container.querySelector('iframe')!;
+  act(() => {
+    window.dispatchEvent(new MessageEvent('message', {
+      source: iframe.contentWindow,
+      data: {
+        type: '@REVISIT_COMMS/ANSWERS',
+        iframeId: new URL(iframe.src).searchParams.get('id'),
+        message: {
+          selectedCost: 15, hostCost: 10, 'hostCost-dontKnow': true, hostChoice: 'other', 'hostChoice-other': 'stale',
+        },
+      },
+    }));
+  });
+  expect(mockSetReactiveAnswers).toHaveBeenCalledWith({ selectedCost: 15 });
+  expect(mockUpdateResponseBlockValidation).toHaveBeenCalledWith(expect.objectContaining({ values: { selectedCost: 15 } }));
+});

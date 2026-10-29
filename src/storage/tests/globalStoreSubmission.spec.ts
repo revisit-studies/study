@@ -75,6 +75,23 @@ class SubmissionStorage extends LocalStorageEngine {
     this.participantData = { ...structuredClone(participant), participantId: 'next-participant' };
   }
 
+  pauseNextWrite(suffix: string) {
+    const original = this.participantStore.setItem.bind(this.participantStore);
+    let entered!: () => void;
+    let release!: () => void;
+    const paused = new Promise<void>((resolve) => { entered = resolve; });
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    this.participantStore.setItem = async (key, value) => {
+      if (key.endsWith(suffix)) {
+        this.participantStore.setItem = original;
+        entered();
+        await gate;
+      }
+      return original(key, value);
+    };
+    return { paused, release };
+  }
+
   protected async _pushToStorage(prefix: string, type: string, object: unknown) { await this.remoteWrite(prefix, type, object); }
 }
 
@@ -170,6 +187,112 @@ class RecoveryStorage extends SubmissionStorage {
 
   protected async _runWithLock<T>(_key: string, operation: () => Promise<T>) { return operation(); }
 }
+
+test.each([
+  ['metadata', false], ['metadata', true], ['submission', false], ['submission', true],
+] as const)('%s finishing last preserves metadata and accepted progress with collection=%s', async (delayed, collectionEnabled) => {
+  const storage = new RecoveryStorage();
+  storage.collectionEnabled = collectionEnabled;
+  const { graph } = submission();
+  const pause = storage.pauseNextWrite(delayed === 'metadata' ? '/localParticipantData' : '/localProvenance/purchase_0');
+  const metadata = { ...participant.metadata, ip: '127.0.0.99' };
+  const saveMetadata = () => storage.updateParticipantMetadata(metadata);
+  const saveSubmission = () => storage.saveGlobalStoreSubmission({ purchase_0: answer }, graph, 1, 'purchase_0', createEmptyProvenance());
+  const first = delayed === 'metadata' ? saveMetadata() : saveSubmission();
+  await pause.paused;
+  const second = delayed === 'metadata' ? saveSubmission() : saveMetadata();
+  // Let the unblocked operation finish its in-memory writes before releasing the first.
+  await new Promise((resolve) => { setTimeout(resolve, 0); });
+  pause.release();
+  await Promise.all([first, second]);
+  const expected = {
+    metadata, answers: { purchase_0: answer }, globalStoreRevision: 1, globalStoreHead: graph.current,
+  };
+  expect(storage.getCurrentParticipantDataSnapshot()).toMatchObject(expected);
+  const cached = [...storage.local].find(([key]) => key.endsWith('/localParticipantData'))![1];
+  expect(cached).toMatchObject(expected);
+  if (collectionEnabled) {
+    await storage.flushPendingParticipantData();
+    expect(storage.remoteWrite.mock.calls.filter((call) => call[1] === 'participantData').at(-1)?.[2]).toMatchObject(expected);
+  }
+});
+
+test.each(['draft', 'submission'])('a delayed %s write cannot replace accepted answers with Check Answer progress', async (delayed) => {
+  const storage = new RecoveryStorage();
+  storage.collectionEnabled = true;
+  const { graph } = submission();
+  const pause = storage.pauseNextWrite(delayed === 'draft' ? '/localParticipantData' : '/localProvenance/purchase_0');
+  const draft = { ...answer, answer: { cost: 10 }, endTime: -1 };
+  const saveDraft = () => storage.saveAnswers({ purchase_0: draft });
+  const saveSubmission = () => storage.saveGlobalStoreSubmission({ purchase_0: answer }, graph, 1, 'purchase_0', createEmptyProvenance());
+  const first = delayed === 'draft' ? saveDraft() : saveSubmission();
+  await pause.paused;
+  const second = delayed === 'draft' ? saveSubmission() : saveDraft();
+  await new Promise((resolve) => { setTimeout(resolve, 0); });
+  pause.release();
+  await Promise.all([first, second]);
+  const expected = { answers: { purchase_0: answer }, globalStoreRevision: 1 };
+  expect(storage.getCurrentParticipantDataSnapshot()).toMatchObject(expected);
+  expect([...storage.local].find(([key]) => key.endsWith('/localParticipantData'))![1]).toMatchObject(expected);
+  await storage.flushPendingParticipantData();
+  expect(storage.remoteWrite.mock.calls.filter((call) => call[1] === 'participantData').at(-1)?.[2]).toMatchObject(expected);
+});
+
+test.each(['tag', 'submission'])('a delayed %s write preserves automatic block tags and accepted progress', async (delayed) => {
+  const storage = new RecoveryStorage();
+  storage.collectionEnabled = true;
+  const { graph } = submission();
+  const pause = storage.pauseNextWrite(delayed === 'tag' ? '/localParticipantData' : '/localProvenance/purchase_0');
+  const saveTags = () => storage.addParticipantTags(['block-id']);
+  const saveSubmission = () => storage.saveGlobalStoreSubmission({ purchase_0: answer }, graph, 1, 'purchase_0', createEmptyProvenance());
+  const first = delayed === 'tag' ? saveTags() : saveSubmission();
+  await pause.paused;
+  const second = delayed === 'tag' ? saveSubmission() : saveTags();
+  await new Promise((resolve) => { setTimeout(resolve, 0); });
+  pause.release();
+  await Promise.all([first, second]);
+  const expected = { participantTags: ['block-id'], answers: { purchase_0: answer }, globalStoreRevision: 1 };
+  expect(storage.getCurrentParticipantDataSnapshot()).toMatchObject(expected);
+  expect([...storage.local].find(([key]) => key.endsWith('/localParticipantData'))![1]).toMatchObject(expected);
+  await storage.flushPendingParticipantData();
+  expect(storage.remoteWrite.mock.calls.filter((call) => call[1] === 'participantData').at(-1)?.[2]).toMatchObject(expected);
+});
+
+test.each(['metadata', 'finalization'])('a delayed %s write preserves metadata and finalized progress', async (delayed) => {
+  const storage = new RecoveryStorage();
+  const { graph } = submission();
+  await storage.saveGlobalStoreSubmission({ purchase_0: answer }, graph, 1, 'purchase_0', createEmptyProvenance());
+  const pause = storage.pauseNextWrite('/localParticipantData');
+  const metadata = { ...participant.metadata, ip: '127.0.0.99' };
+  const saveMetadata = () => storage.updateParticipantMetadata(metadata);
+  const finalize = () => storage.finalizeParticipant();
+  const first = delayed === 'metadata' ? saveMetadata() : finalize();
+  await pause.paused;
+  const second = delayed === 'metadata' ? finalize() : saveMetadata();
+  await new Promise((resolve) => { setTimeout(resolve, 0); });
+  pause.release();
+  await Promise.all([first, second]);
+  const expected = {
+    metadata, finalized: true, answers: { purchase_0: answer }, globalStoreRevision: 1,
+  };
+  expect(storage.getCurrentParticipantDataSnapshot()).toMatchObject(expected);
+  expect([...storage.local].find(([key]) => key.endsWith('/localParticipantData'))![1]).toMatchObject(expected);
+});
+
+test('queued local updates cannot write into a replacement participant session', async () => {
+  const storage = new RecoveryStorage();
+  const { graph } = submission();
+  const pause = storage.pauseNextWrite('/localProvenance/purchase_0');
+  const submissionWrite = storage.saveGlobalStoreSubmission({ purchase_0: answer }, graph, 1, 'purchase_0', createEmptyProvenance());
+  await pause.paused;
+  const metadataWrite = storage.updateParticipantMetadata({ ...participant.metadata, ip: '127.0.0.99' });
+  const results = Promise.allSettled([submissionWrite, metadataWrite]);
+  await new Promise((resolve) => { setTimeout(resolve, 0); });
+  storage.switchParticipant();
+  pause.release();
+  expect((await results).map((result) => result.status)).toEqual(['rejected', 'rejected']);
+  expect(storage.getCurrentParticipantDataSnapshot()).toMatchObject({ participantId: 'next-participant', metadata: participant.metadata, answers: {} });
+});
 
 test('reload restores failed uploads for accepted history, including invalidated trials, before completion', async () => {
   const storage = new RecoveryStorage();

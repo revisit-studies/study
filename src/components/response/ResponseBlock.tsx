@@ -808,7 +808,9 @@ export function ResponseBlock({
       // The resolved route key is authoritative for legacy records that were
       // persisted without their internal identifier.
       identifier,
-      answer: getPersistedAnswersFromAllLocations(trialValidation[identifier], config.response, config.correctAnswer, currentCheckAnswer, globalStore),
+      answer: studyConfig.globalVariables !== undefined && storedAnswerForIdentifier.endTime > 0
+        ? storedAnswerForIdentifier.answer
+        : getPersistedAnswersFromAllLocations(trialValidation[identifier], config.response, config.correctAnswer, currentCheckAnswer, globalStore),
       checkAnswer: currentCheckAnswer,
     };
 

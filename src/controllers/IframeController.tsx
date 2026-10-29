@@ -51,8 +51,8 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   const [resumeStatus, setResumeStatus] = useState<'unknown' | 'pending' | 'ready' | 'unsupported' | 'error'>('unknown');
   const resumeStatusRef = useRef(resumeStatus);
   const resumeRequest = useRef<string>('');
-  const hostResponseKeys = new Set((currentConfig.response ?? [])
-    .filter((response) => response.type !== 'reactive').flatMap(responseValueKeys));
+  const hostResponseKeys = useMemo(() => new Set((currentConfig.response ?? [])
+    .filter((response) => response.type !== 'reactive').flatMap(responseValueKeys)), [currentConfig.response]);
   const replay = useContext(ReplayContext);
   const initialReplayTime = useRef(replay?.seekTime ?? 0);
   const [hasReplayStarted, setHasReplayStarted] = useState(false);
@@ -201,14 +201,16 @@ export function IframeController({ currentConfig, provState, answers }: { curren
       const { data } = e;
       const isBootstrap = data?.type === `${PREFIX}/WINDOW_READY` && data.message?.protocolVersion === 1;
       if (data && typeof data === 'object' && (iframeId === data.iframeId || isBootstrap) && e.source === ref.current?.contentWindow) {
-        if (data.requestId && data.requestId !== resumeRequest.current) return;
+        if (!isBootstrap && data.requestId && data.requestId !== resumeRequest.current) return;
         switch (data.type) {
           case `${PREFIX}/WINDOW_READY`: {
             const isNewDocument = documentId.current !== data.message?.documentId;
             disposeUpdater('The website navigated before its global store update finished.');
             documentId.current = data.message?.documentId;
             if (data.message?.protocolVersion === 1) {
-              resumeRequest.current = `${iframeId}:${data.message.documentId}`;
+              const requestId = `${iframeId}:${data.message.documentId}`;
+              const needsResume = resumeRequest.current !== requestId;
+              resumeRequest.current = requestId;
               if (data.message.globalStoreUpdater && !isAnalysis) {
                 updaterCleanup.current = registerGlobalStoreUpdater(({ store: entry, answers: currentAnswers }) => new Promise((resolve, reject) => {
                   const id = crypto.randomUUID();
@@ -218,7 +220,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
                   });
                 }));
               }
-              if (isNewDocument) {
+              if (isNewDocument || needsResume) {
                 resumeStatusRef.current = 'pending';
                 setResumeStatus('pending');
                 sendMessage('RESUME', {
@@ -281,20 +283,23 @@ export function IframeController({ currentConfig, provState, answers }: { curren
             break;
           case `${PREFIX}/READY`:
             break;
-          case `${PREFIX}/ANSWERS`:
+          case `${PREFIX}/ANSWERS`: {
             if (isAnalysis || resumeStatusRef.current === 'pending' || resumeStatusRef.current === 'error') return;
+            const stimulusAnswers: ParticipantData['answers'][string]['answer'] = { ...data.message };
+            hostResponseKeys.forEach((key) => { delete stimulusAnswers[key]; });
             stimulusValidationRef.current = {
               valid: true,
-              values: data.message,
+              values: stimulusAnswers,
             };
-            storeDispatch(setReactiveAnswers(data.message));
+            storeDispatch(setReactiveAnswers(stimulusAnswers));
             storeDispatch(updateResponseBlockValidation({
               location: 'stimulus',
               identifier,
               status: true,
-              values: data.message,
+              values: stimulusAnswers,
             }));
             break;
+          }
           case `${PREFIX}/PROVENANCE`: {
             if (isAnalysis || resumeStatusRef.current === 'pending' || resumeStatusRef.current === 'error') return;
             // Legacy initialization may arrive before an asynchronous restoration handler registers.
@@ -315,7 +320,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, [store, registerGlobalStoreUpdater, disposeUpdater, storeDispatch, dispatch, iframeId, currentConfig, sendMessage, setReactiveAnswers, updateProvenance, updateResponseBlockValidation, identifier, isAnalysis, provState, answers, shouldSendProvenance, provenance, restoredAnswers]);
+  }, [store, registerGlobalStoreUpdater, disposeUpdater, storeDispatch, dispatch, iframeId, currentConfig, hostResponseKeys, sendMessage, setReactiveAnswers, updateProvenance, updateResponseBlockValidation, identifier, isAnalysis, provState, answers, shouldSendProvenance, provenance, restoredAnswers]);
 
   // While the path is templated inside a dynamic block, templatedPath is undefined until the
   // block's current iteration resolves — don't load an iframe built from the wrong iteration.
