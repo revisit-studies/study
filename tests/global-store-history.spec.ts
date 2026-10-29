@@ -63,6 +63,22 @@ test('canceling an earlier edit preserves progress and confirmation starts a rep
   ]);
 });
 
+test('revising an earlier answer reinitializes a visited unsubmitted React trial', async ({ page }) => {
+  await startBudgetStudy(page);
+  await submitFormPurchase(page, 30);
+  await expect(page.getByText('Tracked entry budget: 70', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
+  await page.getByRole('button', { name: 'Spend 20', exact: true }).click();
+  await fillCost(page, 'Confidence', 80);
+  await page.getByRole('button', { name: 'Previous', exact: true }).click();
+  await submitFormPurchase(page, 10);
+  await expectBudget(page, 90);
+  await expect(page.getByText('Tracked entry budget: 90', { exact: true })).toBeVisible();
+  await expect(page.getByText('Tracked zoom: 1', { exact: true })).toBeVisible();
+  await expect(page.getByText('Selected cost: none', { exact: true })).toBeVisible();
+  await expect(page.getByRole('textbox', { name: /Confidence$/ })).toHaveValue('');
+});
+
 test('HTML selection restores after reload and editing does not reload its document', async ({ page }) => {
   await startBudgetStudy(page);
   await submitFormPurchase(page, 30);

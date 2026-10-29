@@ -24,7 +24,7 @@ import { ThinkAloudAnalysis } from '../ThinkAloudAnalysis';
 
 // ── mock delegates (declared before vi.mock so hoisted references resolve) ────
 
-const mockThinkAloudFooter = vi.fn(({ onTimeUpdate, setHasAudio }: { onTimeUpdate?: (t: number) => void; setHasAudio?: (b: boolean) => void }) => (
+const mockThinkAloudFooter = vi.fn(({ onTimeUpdate, setHasAudio }: { onTimeUpdate?: (t: number) => void; setHasAudio?: (b: boolean) => void; editedTranscript?: EditedText[]; rawTranscript?: TranscribedAudio | null }) => (
   <div data-testid="think-aloud-footer">
     <button type="button" data-testid="btn-set-has-audio" onClick={() => setHasAudio?.(true)}>setHasAudio</button>
     <button type="button" data-testid="btn-time-update" onClick={() => onTimeUpdate?.(5000)}>timeUpdate</button>
@@ -155,11 +155,11 @@ vi.mock('@mantine/core', async () => ({
   ),
   Select: ({
     leftSection, rightSection, onChange, value, data, label,
-  }: { leftSection?: ReactNode; rightSection?: ReactNode; onChange?: (v: string | null) => void; value?: string; data?: { label: string; value: string }[]; label?: string }) => (
+  }: { leftSection?: ReactNode; rightSection?: ReactNode; onChange?: (v: string | null) => void; value?: string; data?: (string | { label: string; value: string })[]; label?: string }) => (
     <div aria-label={label}>
       {leftSection}
       <select value={value} onChange={(e) => onChange?.(e.target.value)}>
-        {data?.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+        {data?.map((item) => <option key={typeof item === 'string' ? item : item.value} value={typeof item === 'string' ? item : item.value}>{typeof item === 'string' ? item : item.label}</option>)}
       </select>
       {rightSection}
     </div>
@@ -230,7 +230,7 @@ vi.mock('../../../../store/hooks/useEvent', () => ({ useEvent: (fn: (...args: ne
 vi.mock('../../../../storage/storageEngineHooks', () => ({ useStorageEngine: vi.fn(() => ({ storageEngine: undefined })) }));
 vi.mock('../../../../storage/engines/FirebaseStorageEngine', () => ({ FirebaseStorageEngine: class { } }));
 vi.mock('../../../../utils/parseTrialOrder', () => ({ parseTrialOrder: vi.fn(() => ({ step: 0, funcIndex: null })) }));
-vi.mock('lodash.debounce', () => ({ default: (fn: (...args: never[]) => void) => fn }));
+vi.mock('lodash.debounce', () => ({ default: (fn: (...args: never[]) => void) => Object.assign(fn, { flush: vi.fn(), cancel: vi.fn() }) }));
 vi.mock('../../../../components/audioAnalysis/AudioProvenanceVis', () => ({ AudioProvenanceVis: () => <div data-testid="audio-provenance-vis" /> }));
 vi.mock('../../../../utils/encryptDecryptIndex', () => ({ encryptIndex: (i: number) => String(i) }));
 vi.mock('../../../../utils/Prefix', () => ({ PREFIX: '/' }));
@@ -248,12 +248,14 @@ vi.mock('../TranscriptSegmentsVis', () => ({ TranscriptSegmentsVis: () => <div d
 // ── real component references for DOM tests ──────────────────────────────────
 
 let RealThinkAloudFooter: typeof import('../ThinkAloudFooter')['ThinkAloudFooter'];
+let realUseAsync: typeof useAsync;
 let RealTextEditor: typeof import('../TextEditor')['TextEditor'];
 let RealTranscriptLine: typeof import('../TranscriptLine')['TranscriptLine'];
 let RealTranscriptSegmentsVis: typeof import('../TranscriptSegmentsVis')['TranscriptSegmentsVis'];
 let RealTagSelector: typeof import('../tags/TagSelector')['TagSelector'];
 
 beforeAll(async () => {
+  realUseAsync = (await vi.importActual<{ useAsync: typeof useAsync }>('../../../../store/hooks/useAsync')).useAsync;
   RealThinkAloudFooter = ((await vi.importActual('../ThinkAloudFooter')) as typeof import('../ThinkAloudFooter')).ThinkAloudFooter;
   RealTextEditor = ((await vi.importActual('../TextEditor')) as typeof import('../TextEditor')).TextEditor;
   RealTranscriptLine = ((await vi.importActual('../TranscriptLine')) as typeof import('../TranscriptLine')).TranscriptLine;
@@ -376,8 +378,8 @@ describe('ThinkAloudAnalysis (SSR)', () => {
   });
 
   test('shows "No transcripts found" when participant and trial are selected', () => {
-    vi.mocked(useSearchParams).mockReturnValueOnce([new URLSearchParams('participantId=p1'), vi.fn()] as ReturnType<typeof useSearchParams>);
-    vi.mocked(useParams).mockReturnValueOnce({ studyId: 'test-study', trialId: 'trial1' });
+    vi.mocked(useSearchParams).mockReturnValue([new URLSearchParams('participantId=p1'), vi.fn()] as ReturnType<typeof useSearchParams>);
+    vi.mocked(useParams).mockReturnValue({ studyId: 'test-study', trialId: 'trial1' });
     const html = renderToStaticMarkup(
       <ThinkAloudAnalysis visibleParticipants={[]} storageEngine={mockStorageEngine} />,
     );
@@ -448,11 +450,58 @@ describe('ThinkAloudAnalysis (DOM)', () => {
     });
   });
 
+  test('revised recordings load and save their own edited transcript instead of the previous visit', async () => {
+    vi.mocked(useAsync).mockImplementation(realUseAsync);
+    const participant = structuredClone(mockParticipantFull);
+    participant.answers.trial_0.assetIdentifier = 'trial_0__global_2';
+    const storage = {
+      ...makeStorageEngine(),
+      getParticipantData: vi.fn().mockResolvedValue(participant),
+      getTranscription: vi.fn().mockResolvedValue({ results: [{ resultEndTime: '1s', alternatives: [{ transcript: 'new recording' }] }] }),
+      getEditedTranscript: vi.fn(async (_id: string, _email: string, key: string) => (key === 'trial_0' ? [{
+        text: 'old recording', transcriptMappingStart: 0, transcriptMappingEnd: 5, selectedTags: [], annotation: '',
+      }] : [])),
+      saveEditedTranscript: vi.fn(),
+    } as unknown as FirebaseStorageEngine;
+    await act(async () => render(<ThinkAloudAnalysis visibleParticipants={[participant]} storageEngine={storage} />));
+    await waitFor(() => expect(storage.getEditedTranscript).toHaveBeenCalledWith('p1', 'test@test.com', 'trial_0__global_2'));
+    await waitFor(() => expect(storage.saveEditedTranscript).toHaveBeenCalledWith('p1', 'test@test.com', 'trial_0__global_2', [expect.objectContaining({ text: 'new recording', transcriptMappingEnd: 0 })]));
+    expect(storage.saveEditedTranscript).not.toHaveBeenCalledWith('p1', 'test@test.com', 'trial_0', expect.anything());
+  });
+
   test('renders without crashing', async () => {
     const { container } = await act(async () => render(
       <ThinkAloudAnalysis visibleParticipants={[mockParticipant]} storageEngine={mockStorageEngine} />,
     ));
     expect(container).toBeDefined();
+  });
+
+  test('switching recordings clears previous edited text while the new transcript loads, including legacy keys', async () => {
+    vi.mocked(useAsync).mockImplementation(realUseAsync);
+    const participant = structuredClone(mockParticipantFull);
+    const oldText: EditedText[] = [{
+      text: 'legacy recording', transcriptMappingStart: 0, transcriptMappingEnd: 4, selectedTags: [], annotation: '',
+    }];
+    let resolve!: (value: EditedText[]) => void;
+    const pending = new Promise<EditedText[]>((done) => { resolve = done; });
+    const storage = {
+      ...makeStorageEngine(),
+      getParticipantData: vi.fn().mockResolvedValue(participant),
+      getTranscription: vi.fn(async (key: string) => ({
+        results: Array.from({ length: key === 'trial_0' ? 5 : 1 }, (_, index) => ({ resultEndTime: `${index + 1}s`, alternatives: [{ transcript: 'replacement' }] })),
+      })),
+      getEditedTranscript: vi.fn(async (_id: string, _email: string, key: string) => (key === 'trial_0' ? oldText : pending)),
+      saveEditedTranscript: vi.fn(),
+    } as unknown as FirebaseStorageEngine;
+    const view = render(<ThinkAloudAnalysis visibleParticipants={[participant]} storageEngine={storage} />);
+    await waitFor(() => expect(mockThinkAloudFooter.mock.lastCall?.[0].editedTranscript).toEqual(oldText));
+    expect(storage.getEditedTranscript).toHaveBeenCalledWith('p1', 'test@test.com', 'trial_0');
+    participant.answers.trial_0.assetIdentifier = 'trial_0__global_2';
+    view.rerender(<ThinkAloudAnalysis visibleParticipants={[participant]} storageEngine={storage} />);
+    await waitFor(() => expect(storage.getEditedTranscript).toHaveBeenCalledWith('p1', 'test@test.com', 'trial_0__global_2'));
+    expect(mockThinkAloudFooter.mock.lastCall?.[0].editedTranscript).toEqual([]);
+    await act(async () => { resolve([]); });
+    await waitFor(() => expect(storage.saveEditedTranscript).toHaveBeenCalledWith('p1', 'test@test.com', 'trial_0__global_2', [expect.objectContaining({ text: 'replacement', transcriptMappingEnd: 0 })]));
   });
 
   test('shows placeholder text when no participantId', async () => {
@@ -699,7 +748,7 @@ describe('ThinkAloudFooter', () => {
   });
 
   test('next participant remains usable when there is no current task', async () => {
-    const updatedParams = new URLSearchParams('participantId=p1');
+    const updatedParams = new URLSearchParams('participantId=p1&globalStoreNode=old-participant-node&revisitPageId=shared');
     mockSetSearchParams.mockImplementation((updater: (params: URLSearchParams) => void) => {
       updater(updatedParams);
     });
@@ -713,6 +762,8 @@ describe('ThinkAloudFooter', () => {
 
     expect(mockSetSearchParams).toHaveBeenCalled();
     expect(updatedParams.get('participantId')).toBe('p2');
+    expect(updatedParams.has('globalStoreNode')).toBe(false);
+    expect(updatedParams.get('revisitPageId')).toBe('shared');
   });
 
   test('renders all participants in select dropdown', async () => {
@@ -732,6 +783,8 @@ describe('ThinkAloudFooter', () => {
   });
 
   test('participant Select onChange updates search params', async () => {
+    const updatedParams = new URLSearchParams('participantId=p1&globalStoreNode=old-participant-node');
+    mockSetSearchParams.mockImplementation((updater: (params: URLSearchParams) => void) => updater(updatedParams));
     const { getAllByRole } = await act(async () => render(
       <RealThinkAloudFooter {...footerDefaultProps} visibleParticipants={['p1', 'p2']} />,
     ));
@@ -740,6 +793,8 @@ describe('ThinkAloudFooter', () => {
       await act(async () => { fireEvent.change(selects[0], { target: { value: 'p2' } }); });
     }
     expect(mockSetSearchParams).toHaveBeenCalled();
+    expect(updatedParams.get('participantId')).toBe('p2');
+    expect(updatedParams.has('globalStoreNode')).toBe(false);
   });
 
   test('task Select onChange navigates to new task', async () => {

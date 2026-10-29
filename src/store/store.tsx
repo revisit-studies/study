@@ -254,9 +254,12 @@ export async function studyStoreCreator(
                 ? getInitialStimulusValidation(studyComponentToIndividualComponent(state.config.components[state.answers[id]?.componentName] || {}, state.config))
                 : { valid: false, values: {} };
               const graph = validation.provenanceGraph[location as ResponseBlockLocation];
-              if (graph) graph.current = graph.root;
+              if (graph) {
+                graph.current = graph.root;
+                graph.resetToInitialState = true;
+              }
             });
-            // Old graph nodes stay available, but the boundary chooses the root for fresh work.
+            // Retain old nodes while initializing the next visit from its replacement context.
           }
         });
         Object.entries(state.funcSequence).forEach(([name, components]) => {

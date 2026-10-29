@@ -18,6 +18,7 @@ import { syncChannel, syncEmitter } from '../../../utils/syncReplay';
 // ── mocks ────────────────────────────────────────────────────────────────────
 
 let mockColorScheme = 'light';
+let mockSearchParams = new URLSearchParams('participantId=p1');
 
 vi.mock('wavesurfer-react', () => ({
   WaveSurfer: vi.fn(({ children }: { children?: ReactNode }) => <div data-testid="wavesurfer">{children}</div>),
@@ -50,7 +51,7 @@ vi.mock('react-router', () => ({
   useNavigate: () => vi.fn(),
   useParams: () => ({ studyId: 'test-study' }),
   useSearchParams: () => {
-    const params = new URLSearchParams('participantId=p1');
+    const params = mockSearchParams;
     const setParams = vi.fn((updater: (p: URLSearchParams) => void) => {
       if (typeof updater === 'function') updater(params);
     });
@@ -461,6 +462,17 @@ describe('AudioProvenanceVis', () => {
 });
 
 describe('AudioProvenanceVis — syncEmitter listeners', () => {
+  test('a synchronized participant switch clears the previous participant history selection', async () => {
+    mockSearchParams = new URLSearchParams('participantId=p1&globalStoreNode=old-node&revisitPageId=shared');
+    await act(async () => render(<AudioProvenanceVis {...defaultProps} answers={answersWithTask} />));
+    const listener = vi.mocked(syncEmitter.on).mock.calls.find(([event]) => event === 'participantId')?.[1];
+    await act(async () => { listener?.('p2'); });
+    expect(mockSearchParams.get('participantId')).toBe('p2');
+    expect(mockSearchParams.has('globalStoreNode')).toBe(false);
+    expect(mockSearchParams.get('revisitPageId')).toBe('shared');
+    mockSearchParams = new URLSearchParams('participantId=p1');
+  });
+
   test('participantId listener is registered', async () => {
     await act(async () => render(
       <AudioProvenanceVis {...defaultProps} answers={answersWithTask} />,

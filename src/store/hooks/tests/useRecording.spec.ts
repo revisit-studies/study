@@ -26,6 +26,7 @@ let mockRecordingConfig = {
 let mockCurrentComponent = 'intro';
 let mockIdentifier = 'intro_0';
 let mockGlobalStoreEnabled = false;
+let mockCompleted = false;
 let mockGlobalRevision = 0;
 let mockGlobalStoreSubmitting = false;
 let mockGlobalStorePendingRevision = 0;
@@ -149,6 +150,7 @@ vi.mock('../useIsAnalysis', () => ({
 vi.mock('../../store', () => ({
   useStoreSelector: (selector: (s: StoreState) => unknown) => selector({
     modes: mockModes,
+    completed: mockCompleted,
     globalStoreRevision: mockGlobalRevision,
     globalStoreSubmitting: mockGlobalStoreSubmitting,
     globalStorePendingRevision: mockGlobalStorePendingRevision,
@@ -170,6 +172,7 @@ beforeEach(() => {
   mockCurrentComponent = 'intro';
   mockIdentifier = 'intro_0';
   mockGlobalStoreEnabled = false;
+  mockCompleted = false;
   mockGlobalRevision = 0;
   mockGlobalStoreSubmitting = false;
   mockGlobalStorePendingRevision = 0;
@@ -662,6 +665,35 @@ describe('useRecording stopScreenCapture with refs populated', () => {
 // ── stopAudioRecording tests ───────────────────────────────────────────────────
 
 describe('useRecording audio recording effect', () => {
+  test('a completed global-store session cannot restart audio on an earlier answered trial', async () => {
+    mockGlobalStoreEnabled = true;
+    mockCompleted = true;
+    mockStoredAnswer = { endTime: 100 };
+    mockRecordingConfig = { ...mockRecordingConfig, studyHasAudioRecording: true, currentComponentHasAudioRecording: true };
+    mockStorageEngine = { saveAudioRecording: vi.fn(async () => {}) };
+    const { result } = renderHook(() => useRecording());
+    await act(async () => {});
+    expect(navigator.mediaDevices.getUserMedia).not.toHaveBeenCalled();
+    expect(result.current.isAudioRecording).toBe(false);
+  });
+
+  test.each([false, true])('completion stops active audio or discards a pending microphone request (pending=%s)', async (pending) => {
+    mockGlobalStoreEnabled = true;
+    mockRecordingConfig = { ...mockRecordingConfig, studyHasAudioRecording: true, currentComponentHasAudioRecording: true };
+    mockStorageEngine = { saveAudioRecording: vi.fn(async () => {}) };
+    const stream = new MockMediaStream();
+    let resolve!: (value: MediaStream) => void;
+    vi.mocked(navigator.mediaDevices.getUserMedia).mockReturnValue(new Promise((done) => { resolve = done; }));
+    const { result, rerender } = renderHook(() => useRecording());
+    if (!pending) await act(async () => { resolve(stream as unknown as MediaStream); });
+    mockCompleted = true;
+    rerender();
+    if (pending) await act(async () => { resolve(stream as unknown as MediaStream); });
+    expect(stream.getTracks()[0].stop).toHaveBeenCalled();
+    expect(result.current.isAudioRecording).toBe(false);
+    if (pending) expect(mockRecorderStartAudioStates).toHaveLength(0);
+  });
+
   test('audio recording effect triggers startAudioRecording when conditions met', async () => {
     mockRecordingConfig = {
       ...mockRecordingConfig,
@@ -676,6 +708,27 @@ describe('useRecording audio recording effect', () => {
     // getUserMedia was called for audio recording
     expect(vi.mocked(navigator.mediaDevices.getUserMedia)).toHaveBeenCalled();
     expect(result.current.isAudioRecording).toBe(true);
+  });
+
+  test.each([false, true])('completion stops active or pending persistent screen capture (pending=%s)', async (pending) => {
+    mockGlobalStoreEnabled = true;
+    mockRecordingConfig = { ...mockRecordingConfig, studyHasScreenRecording: true, currentComponentHasScreenRecording: true };
+    mockStorageEngine = { saveScreenRecording: vi.fn(async () => {}) };
+    const stream = new MockMediaStream();
+    let resolve!: (value: MediaStream) => void;
+    vi.mocked(navigator.mediaDevices.getDisplayMedia).mockReturnValue(new Promise((done) => { resolve = done; }));
+    const { result, rerender } = renderHook(() => useRecording());
+    act(() => { result.current.startScreenCapture(); });
+    if (!pending) await act(async () => { resolve(stream as unknown as MediaStream); });
+    mockCompleted = true;
+    rerender();
+    if (pending) await act(async () => { resolve(stream as unknown as MediaStream); });
+    expect(stream.getTracks()[0].stop).toHaveBeenCalled();
+    expect(result.current.isScreenCapturing).toBe(false);
+    expect(result.current.isScreenRecording).toBe(false);
+    const requests = vi.mocked(navigator.mediaDevices.getDisplayMedia).mock.calls.length;
+    act(() => { result.current.startScreenCapture(); });
+    expect(navigator.mediaDevices.getDisplayMedia).toHaveBeenCalledTimes(requests);
   });
 
   test('audio effect stopAudioRecording called when currentComponentHasAudioRecording turns false', async () => {

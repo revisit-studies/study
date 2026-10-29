@@ -188,6 +188,7 @@ export function AudioProvenanceVis({
     const participantIdListener = (newId: string) => {
       setSearchParams((params) => {
         params.set('participantId', newId || '');
+        params.delete('globalStoreNode');
         return params;
       });
     };
