@@ -46,7 +46,7 @@
   let restored = false;
   let queuedAnswers;
   let legacyMode = false;
-  const documentId = crypto.randomUUID();
+  const documentId = crypto.randomUUID?.() ?? `document-${Date.now()}-${Math.random()}`;
   let announced = null;
   const announce = () => {
     const version = registrationStarted || registrationComplete || restoreCallback ? 1 : 0;

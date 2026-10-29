@@ -4,14 +4,14 @@ import { initializeTrrack, Registry } from '@trrack/core';
 import { expect, test, vi } from 'vitest';
 
 const source = readFileSync('public/revisitUtilities/revisit-communicate.js', 'utf8');
-function setup(query = '?id=frame') {
+function setup(query = '?id=frame', uuidAvailable = true) {
   const parent = { postMessage: vi.fn() };
   const listeners = new Map<string, (event: unknown) => void>();
   const window = {
     parent, location: { search: query },
     addEventListener: (type: string, handler: (event: unknown) => void) => listeners.set(type, handler),
   };
-  const context = { window, URLSearchParams, structuredClone, crypto: { randomUUID: () => 'document' }, document: { readyState: 'complete' }, Date, console };
+  const context = { window, URLSearchParams, structuredClone, crypto: { randomUUID: uuidAvailable ? () => 'document' : undefined }, document: { readyState: 'complete' }, Date, console };
   runInNewContext(source, context);
   const api = (window as unknown as { Revisit: {
     createTrrack: (options: Record<string, unknown>) => ReturnType<typeof initializeTrrack>;
@@ -187,4 +187,16 @@ test('delivering a late replay snapshot cannot publish participant data', async 
   expect(receive).toHaveBeenCalledWith({ count: 3 });
   expect(helper.messages('ANSWERS')).toHaveLength(0);
   expect(helper.messages('PROVENANCE')).toHaveLength(0);
+});
+
+
+test('completes the website handshake when randomUUID is unavailable', async () => {
+  const helper = setup('?id=frame', false);
+  helper.api.onRestore(vi.fn());
+  helper.api.completeRegistration();
+  const documentId = helper.messages('WINDOW_READY')[0].message.documentId;
+  expect(typeof documentId).toBe('string');
+  expect(documentId.length).toBeGreaterThan(0);
+  helper.send('RESUME', { ...resume, documentId });
+  await vi.waitFor(() => expect(helper.messages('RESTORED')).toHaveLength(1));
 });

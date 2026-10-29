@@ -86,9 +86,16 @@ describe('IframeController', () => {
   afterEach(() => {
     cleanup();
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   const websiteConfig: WebsiteComponent = { type: 'website', path: 'https://example.com', response: [] };
+
+  test('renders website stimuli when randomUUID is unavailable', () => {
+    vi.stubGlobal('crypto', { randomUUID: undefined });
+    const { container } = render(<IframeController currentConfig={websiteConfig} answers={{}} />);
+    expect(container.querySelector('iframe')).not.toBeNull();
+  });
 
   test('delivers a seek made while a website replay handler is still loading', async () => {
     mockIsAnalysis.value = true;

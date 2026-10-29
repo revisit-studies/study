@@ -36,7 +36,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   const provenance = useTrialProvenance('stimulus');
   const [resumeStatus, setResumeStatus] = useState<'unknown' | 'pending' | 'ready' | 'unsupported' | 'error'>('unknown');
   const resumeStatusRef = useRef(resumeStatus);
-  const resumeRequest = useRef<string>(crypto.randomUUID());
+  const resumeRequest = useRef<string>('');
   const hostResponseKeys = new Set((currentConfig.response ?? [])
     .filter((response) => response.type !== 'reactive').flatMap(responseValueKeys));
   const replay = useContext(ReplayContext);

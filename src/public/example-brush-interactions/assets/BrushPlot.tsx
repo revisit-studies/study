@@ -80,6 +80,8 @@ export function BrushPlot({
   });
 
   const restoredState = useStudyState({ trrack });
+  // An uninitialized root has raw defaults; recorded actions wrap the brush snapshot.
+  const initializeBrush = !('brush' in (provenanceState ?? restoredState).all);
   const initialBrush = useMemo(() => ('brush' in restoredState.all ? restoredState.all.brush : restoredState.all), [restoredState]);
   const [brushState, setBrushState] = useState<BrushState>(provenanceState ? (provenanceState.all.brush || provenanceState.all) : initialBrush);
 
@@ -181,7 +183,7 @@ export function BrushPlot({
 
   return data ? (
     <Stack gap="xs">
-      <Scatter brushedPoints={brushState?.ids} data={data} params={parameters} brushType={parameters.brushType} setBrushedSpace={brushedSpaceCallback} brushState={brushState} setFilteredTable={filteredCallback} />
+      <Scatter initializeBrush={initializeBrush} brushedPoints={brushState?.ids} data={data} params={parameters} brushType={parameters.brushType} setBrushedSpace={brushedSpaceCallback} brushState={brushState} setFilteredTable={filteredCallback} />
       <Bar data={data} parameters={parameters} barsTable={barsTable} />
     </Stack>
   ) : <Loader />;
