@@ -831,12 +831,13 @@ export abstract class StorageEngine {
     snapshot: ParticipantData,
     cache: boolean,
   ) {
-    const publicationKey = `${this.studyId}/${participantId}/${GLOBAL_STORE_TASK}`;
+    const { studyId } = this;
+    const publicationKey = `${studyId}/${participantId}/${GLOBAL_STORE_TASK}`;
     const write = async () => {
       this.participantDataWriteError = null;
       try {
         if (snapshot.globalStoreRevision !== undefined) await this.provenanceWriteChains.get(publicationKey);
-        await this._runWithLock(`participant-${participantId}`, async () => {
+        const uploaded = await this._runWithLock(`participant-${participantId}`, async () => {
           // An admin can reject a participant in another browser while this
           // client still has a debounced full-record write pending. The same
           // lock is held by rejectParticipant, so the check and write cannot
@@ -856,8 +857,13 @@ export abstract class StorageEngine {
               await this.cacheParticipantDataSnapshot(latestParticipant, participantId);
               this.participantRejectionListeners.forEach((listener) => listener());
             }
-            return;
+            return false;
           }
+
+          const current = this.participantData;
+          // A newer local acceptance includes earlier tag/metadata mutations and supersedes this projection.
+          if (this.studyId === studyId && this.currentParticipantId === participantId && current?.participantId === participantId
+            && (current.globalStoreRevision ?? 0) > (snapshot.globalStoreRevision ?? 0)) return false;
 
           await this.assertGlobalStoreUploadCurrent(participantId, snapshot, latestParticipant);
 
@@ -866,9 +872,10 @@ export abstract class StorageEngine {
             'participantData',
             snapshot,
           );
+          return true;
         });
 
-        if (cache && snapshot.globalStoreRevision === undefined) {
+        if (uploaded && cache && snapshot.globalStoreRevision === undefined) {
           await this._cacheStorageObject(
             `participants/${participantId}`,
             'participantData',

@@ -226,6 +226,68 @@ class InterleavedStorage extends RemoteRecoveryStorage {
   async runNext() { await this.jobs.shift()?.(); }
 }
 
+class SerializedStorage extends RemoteRecoveryStorage {
+  private participantLock: Promise<void> = Promise.resolve();
+
+  protected async _runWithLock<T>(_key: string, operation: () => Promise<T>): Promise<T> {
+    const pending = this.participantLock.then(operation);
+    this.participantLock = pending.then(() => undefined, () => undefined);
+    return pending;
+  }
+}
+
+test.each([0, 1])('a superseded revision %s tag write does not report a false save conflict', async (revision) => {
+  const storage = new SerializedStorage();
+  storage.collectionEnabled = true;
+  storage.remote.set('participants/participant/participantData', structuredClone(participant));
+  let release!: () => void;
+  let started!: () => void;
+  const entered = new Promise<void>((resolve) => { started = resolve; });
+  const gate = new Promise<void>((resolve) => { release = resolve; });
+  let firstParticipantWrite = true;
+  storage.remoteWrite.mockImplementation(async (prefix, type, value) => {
+    if (type === 'participantData' && firstParticipantWrite) {
+      firstParticipantWrite = false;
+      started();
+      await gate;
+    }
+    storage.remote.set(`${prefix}/${type}`, structuredClone(value));
+    return undefined;
+  });
+  const errors = vi.fn();
+  storage.subscribeToParticipantDataWriteErrors(errors);
+  const initialTags = storage.addParticipantTags(['initial']);
+  await entered;
+  let tagged!: Promise<unknown>;
+  const queueTag = async () => {
+    tagged = storage.addParticipantTags(['next-block']).catch((error) => error);
+    await vi.waitFor(() => expect(storage.getCurrentParticipantDataSnapshot()?.participantTags).toContain('next-block'));
+  };
+  if (revision === 0) await queueTag();
+  const first = submission();
+  await storage.saveGlobalStoreSubmission({ purchase_0: answer }, first.graph, 1, 'purchase_0', createEmptyProvenance());
+  if (revision === 1) await queueTag();
+  await storage.updateParticipantMetadata({ ...participant.metadata, ip: '127.0.0.99' });
+  const later = {
+    ...answer, identifier: 'purchase_1', trialOrder: '1', answer: { cost: 20 },
+  };
+  const second = createGlobalStoreSubmission(first.graph, { budget: 100 }, later, { budget: 50 }, [], {});
+  await storage.saveGlobalStoreSubmission({ purchase_0: answer, purchase_1: later }, second.graph, 2, 'purchase_1', createEmptyProvenance());
+  release();
+  await initialTags;
+  const tagResult = await tagged;
+  await storage.flushPendingParticipantData();
+  expect(errors).not.toHaveBeenCalled();
+  expect(tagResult).toBeUndefined();
+  expect(storage.remote.get('participants/participant/participantData')).toMatchObject({
+    globalStoreRevision: 2,
+    globalStoreHead: second.graph.current,
+    participantTags: ['initial', 'next-block'],
+    metadata: { ip: '127.0.0.99' },
+    answers: { purchase_0: answer, purchase_1: later },
+  });
+});
+
 async function cachedRecovery() {
   const original = new RecoveryStorage();
   const retained = { ...createEmptyProvenance(), stimulus: initializeTrrack({ registry: Registry.create(), initialState: { visit: 1 } }).graph.backend };
