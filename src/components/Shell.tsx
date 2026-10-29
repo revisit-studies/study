@@ -9,7 +9,7 @@ import {
 import { Provider } from 'react-redux';
 import { RouteObject, useRoutes, useSearchParams } from 'react-router';
 import {
-  Anchor, Button, Center, Code, Loader, LoadingOverlay, Paper, Stack, Text, Title,
+  Anchor, Center, Code, Loader, LoadingOverlay, Paper, Stack, Text, Title,
 } from '@mantine/core';
 import { GLOBAL_STORE_TASK } from '../store/globalStoreProvenance';
 import { projectHistoricalGlobalStore } from '../store/globalStoreHistory';
@@ -190,20 +190,17 @@ export function getShellUiState({
   hasRoutes,
   hasStore,
   isCompletionCheckResolved,
-  completionCheckError,
   hasStageCapacityError = false,
 }: {
   isValidStudyId: boolean;
   hasRoutes: boolean;
   hasStore: boolean;
   isCompletionCheckResolved: boolean;
-  completionCheckError: string | null;
   hasStageCapacityError?: boolean;
 }) {
   return {
     isLoading: isValidStudyId && !hasStageCapacityError && (!hasRoutes || !hasStore || !isCompletionCheckResolved),
     showLoadingMessage: isValidStudyId && !hasStageCapacityError && (!hasRoutes || !hasStore),
-    showCompletionCheckError: completionCheckError !== null,
   };
 }
 
@@ -336,7 +333,6 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
   const [previewStore, setPreviewStore] = useState<Nullable<StudyStore>>(null);
   const [store, setStore] = useState<Nullable<StudyStore>>(null);
   const [isCompletionCheckResolved, setIsCompletionCheckResolved] = useState(false);
-  const [completionCheckError, setCompletionCheckError] = useState<string | null>(null);
   const [startupAttempt, setStartupAttempt] = useState(0);
   const initializationRef = useRef<{
     key: string;
@@ -493,7 +489,6 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
       if (!storageEngine || !activeConfig || !canonicalStudyId || (activeConfig.errors?.length ?? 0) > 0) return;
       setStore(null);
       setIsCompletionCheckResolved(false);
-      setCompletionCheckError(null);
       setStageEntryError(null);
       setStartupError(null);
       setStartupPhase('participant-loading');
@@ -773,12 +768,11 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
     : loadingColorMode;
   useStudyColorMode(studyColorMode);
   const hasConfigErrors = (activeConfig?.errors?.length ?? 0) > 0;
-  const { isLoading, showLoadingMessage, showCompletionCheckError } = getShellUiState({
+  const { isLoading, showLoadingMessage } = getShellUiState({
     isValidStudyId,
     hasRoutes: routes.length > 0,
     hasStore: store !== null,
     isCompletionCheckResolved,
-    completionCheckError,
     hasStageCapacityError: stageEntryError !== null,
   });
   const isInteractionBlocked = isValidStudyId && !startupError && !hasConfigErrors && !stageEntryError
@@ -786,7 +780,7 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
       || initializationRef.current?.key !== startupKey
       || initializationRef.current?.config !== activeConfig
       || initializationRef.current?.storageEngine !== storageEngine
-      || startupPhase !== 'ready' || isLoading || showCompletionCheckError);
+      || startupPhase !== 'ready' || isLoading);
   const renderedStore = isInteractionBlocked ? previewStore : store ?? previewStore;
 
   useLayoutEffect(() => {
@@ -874,26 +868,6 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
   return (
     <>
       <StudyLoadingOverlay visible={isInteractionBlocked} showMessage={showLoadingMessage} />
-      {!startupError && !hasConfigErrors && showCompletionCheckError && (
-        <Stack
-          align="center"
-          gap="sm"
-          style={{
-            position: 'fixed',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            zIndex: 1001,
-            maxWidth: 420,
-            textAlign: 'center',
-          }}
-        >
-          <Text>{completionCheckError}</Text>
-          <Button onClick={() => window.location.reload()}>
-            Reload
-          </Button>
-        </Stack>
-      )}
       <div
         ref={interfaceRef}
         data-testid="study-interface"

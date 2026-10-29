@@ -475,11 +475,9 @@ describe('Shell', () => {
       hasRoutes: true,
       hasStore: true,
       isCompletionCheckResolved: false,
-      completionCheckError: null,
     })).toEqual({
       isLoading: true,
       showLoadingMessage: false,
-      showCompletionCheckError: false,
     });
   });
 
