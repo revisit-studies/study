@@ -372,6 +372,17 @@ function cloneParticipantDataSnapshot(participantData: ParticipantData) {
   return structuredClone(participantData);
 }
 
+type GlobalStoreProgress = Pick<ParticipantData, 'globalStoreRevision' | 'globalStoreHead' | 'finalized' | 'rejected'>;
+
+function isStaleGlobalStoreSnapshot(snapshot: GlobalStoreProgress, remote: GlobalStoreProgress) {
+  const revision = snapshot.globalStoreRevision ?? 0;
+  const remoteRevision = remote.globalStoreRevision ?? 0;
+  return remoteRevision > revision
+    || (remoteRevision === revision && remoteRevision > 0 && remote.globalStoreHead !== snapshot.globalStoreHead)
+    || (!!remote.finalized && !snapshot.finalized)
+    || (remote.rejected && !snapshot.rejected);
+}
+
 type AssetRetryOperation = () => Promise<unknown>;
 
 type ProgressData = { total: number; answered: string[]; isDynamic: boolean };
@@ -484,7 +495,7 @@ export abstract class StorageEngine {
   */
   /* Storage ------------------------------------------------------------- */
   // Gets an object from the storage engine. The object is identified by its type and studyId.
-  protected abstract _getFromStorage<T extends StorageObjectType>(prefix: string, type: T, studyId?: string, strict?: boolean): Promise<StorageObject<T> | null>;
+  protected abstract _getFromStorage<T extends StorageObjectType>(prefix: string, type: T, studyId?: string, strict?: boolean, fresh?: boolean): Promise<StorageObject<T> | null>;
 
   // Pushes an object to the storage engine. The object is identified by its type and studyId.
   protected abstract _pushToStorage<T extends StorageObjectType>(prefix: string, type: T, objectToUpload: StorageObject<T>): Promise<void>;
@@ -789,6 +800,30 @@ export abstract class StorageEngine {
     return error;
   }
 
+  private async assertGlobalStoreUploadCurrent(
+    participantId: string,
+    snapshot: GlobalStoreProgress,
+    remoteParticipant?: ParticipantData | null,
+    incomingHistory?: GlobalStoreGraph,
+  ) {
+    const remote = remoteParticipant === undefined
+      ? await this._getFromStorage(`participants/${participantId}`, 'participantData', undefined, true, true)
+      : remoteParticipant;
+    if (snapshot.globalStoreRevision === undefined && (!isParticipantData(remote) || remote.globalStoreRevision === undefined)) return;
+    const conflict = () => new Error('This session has newer progress in another browser. Reload before continuing.');
+    if (isParticipantData(remote) && isStaleGlobalStoreSnapshot(snapshot, remote)) throw conflict();
+    if (!snapshot.globalStoreRevision) return;
+
+    // History can finish uploading before its participant snapshot. Protect that interval too.
+    const uploaded = await this.parseProvenanceStorageObject(await this._getFromStorage(`provenance/${participantId}`, GLOBAL_STORE_TASK, undefined, true, true));
+    if (!uploaded?.globalStore) return;
+    if (!incomingHistory && uploaded.globalStore.current === snapshot.globalStoreHead) return;
+    const local = incomingHistory ?? (await this.participantStore.getItem<StoredProvenance>(
+      this.localProvenanceKey(`${GLOBAL_STORE_TASK}/${snapshot.globalStoreRevision}`, participantId),
+    ))?.globalStore;
+    if (!local?.nodes[uploaded.globalStore.current]) throw conflict();
+  }
+
   private async enqueueParticipantDataWrite(
     participantId: string,
     snapshot: ParticipantData,
@@ -805,6 +840,9 @@ export abstract class StorageEngine {
           const latestParticipant = await this._getFromStorage(
             `participants/${participantId}`,
             'participantData',
+            undefined,
+            true,
+            snapshot.globalStoreRevision !== undefined,
           );
           if (isParticipantData(latestParticipant) && latestParticipant.rejected) {
             if (participantId === this.currentParticipantId) {
@@ -817,6 +855,8 @@ export abstract class StorageEngine {
             return;
           }
 
+          await this.assertGlobalStoreUploadCurrent(participantId, snapshot, latestParticipant);
+
           await this._pushToStorage(
             `participants/${participantId}`,
             'participantData',
@@ -824,7 +864,7 @@ export abstract class StorageEngine {
           );
         });
 
-        if (cache) {
+        if (cache && snapshot.globalStoreRevision === undefined) {
           await this._cacheStorageObject(
             `participants/${participantId}`,
             'participantData',
@@ -1420,6 +1460,18 @@ export abstract class StorageEngine {
       if (isParticipantData(current)) {
         cachedParticipant = current;
         await this.cacheParticipantDataSnapshot(current, this.currentParticipantId);
+      }
+    }
+    if (cachedParticipant && (cachedParticipant.globalStoreRevision !== undefined || config.globalVariables !== undefined)
+      && (await this.getModes(this.studyId!)).dataCollectionEnabled) {
+      const remote = await this._getFromStorage(`participants/${this.currentParticipantId}`, 'participantData', undefined, true, true);
+      if (isParticipantData(remote) && isStaleGlobalStoreSnapshot(cachedParticipant, remote)) {
+        // Trial assets have logical keys, so an older local copy must not shadow the new history.
+        const prefix = this.localProvenanceKey('', this.currentParticipantId);
+        const keys = await this.participantStore.keys();
+        await Promise.all(keys.filter((key) => key.startsWith(prefix)).map((key) => this.participantStore.removeItem(key)));
+        cachedParticipant = remote;
+        await this.cacheParticipantDataSnapshot(remote, this.currentParticipantId, true);
       }
     }
     if (cachedParticipant && await this.confirmParticipantReservation(cachedParticipant, undefined, true)) {
@@ -2274,6 +2326,7 @@ export abstract class StorageEngine {
       task,
       undefined,
       strict,
+      this.participantData?.globalStoreRevision !== undefined,
     );
 
     if (strict && provenanceObject != null) {
@@ -2311,6 +2364,12 @@ export abstract class StorageEngine {
 
     const participantId = this.currentParticipantId;
     const { studyId } = this;
+    const progress: GlobalStoreProgress | undefined = this.participantData ? {
+      globalStoreRevision: this.participantData.globalStoreRevision,
+      globalStoreHead: this.participantData.globalStoreHead,
+      finalized: this.participantData.finalized,
+      rejected: this.participantData.rejected,
+    } : undefined;
     const assetKey = `provenance/${taskName}`;
     const queueKey = `${studyId}/${participantId}/${taskName}`;
     const previous = this.provenanceWriteChains.get(queueKey);
@@ -2330,16 +2389,36 @@ export abstract class StorageEngine {
         throw new Error('Data collection is disabled for this study');
       }
 
-      await this._pushToStorage(
-        `provenance/${participantId}`,
-        taskName,
-        provenanceToSave as unknown as StorageObject<typeof taskName>,
-      );
+      const upload = (provenance = provenanceToSave) => this._pushToStorage(`provenance/${participantId}`, taskName, provenance as unknown as StorageObject<typeof taskName>);
+      if (progress?.globalStoreRevision !== undefined) {
+        await this._runWithLock(`participant-${participantId}`, async () => {
+          let uploadProgress = progress;
+          let provenance = provenanceToSave;
+          const current = this.participantData;
+          if (taskName !== GLOBAL_STORE_TASK && participantId === this.currentParticipantId
+            && current && (current.globalStoreRevision ?? 0) > progress.globalStoreRevision!) {
+            const accepted = await this.participantStore.getItem<StoredProvenance>(
+              this.localProvenanceKey(`${GLOBAL_STORE_TASK}/${current.globalStoreRevision}`, participantId),
+            );
+            if (progress.globalStoreHead && accepted?.globalStore?.nodes[progress.globalStoreHead]) {
+              // A later acceptance in this browser still needs its earlier trial assets.
+              uploadProgress = current;
+              provenance = normalizeStoredProvenance(await this.participantStore.getItem(this.localProvenanceKey(taskName, participantId))) ?? provenance;
+            }
+          }
+          await this.assertGlobalStoreUploadCurrent(participantId, uploadProgress, undefined, provenance.globalStore);
+          await upload(provenance);
+        });
+      } else {
+        await upload();
+      }
 
-      try {
-        await this._cacheStorageObject(`provenance/${participantId}`, taskName);
-      } catch (error) {
-        console.warn(`Failed to update cache headers for provenance ${taskName}:`, error);
+      if (progress?.globalStoreRevision === undefined) {
+        try {
+          await this._cacheStorageObject(`provenance/${participantId}`, taskName);
+        } catch (error) {
+          console.warn(`Failed to update cache headers for provenance ${taskName}:`, error);
+        }
       }
     });
     this.provenanceWriteChains.set(queueKey, write);

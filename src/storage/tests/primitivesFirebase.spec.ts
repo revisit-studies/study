@@ -475,6 +475,23 @@ describe.each([
     await expect(storageEngine._cacheStorageObject('', 'sequenceArray')).resolves.not.toThrow();
   });
 
+  test('fresh history reads bypass cached download URLs and preserve strict failures', async () => {
+    const fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({ visit: 2 })));
+    vi.stubGlobal('fetch', fetch);
+    try {
+      // @ts-expect-error using protected method for testing
+      await storageEngine._pushToStorage('provenance/p', 'trial', { visit: 1 });
+      // @ts-expect-error using protected method for testing
+      expect(await storageEngine._getFromStorage('provenance/p', 'trial', undefined, true, true)).toEqual({ visit: 2 });
+      expect(new URL((fetch.mock.calls[0][0] as Request).url).searchParams.has('__revisit_fresh')).toBe(true);
+      fetch.mockResolvedValue(new Response('', { status: 503 }));
+      // @ts-expect-error using protected method for testing
+      await expect(storageEngine._getFromStorage('provenance/p', 'trial', undefined, true, true)).rejects.toThrow('Failed to read current participant history');
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   test('_getCurrentConfigHash and _setCurrentConfigHash work correctly', async () => {
     // @ts-expect-error using protected method for testing
     const initialHash = await storageEngine._getCurrentConfigHash();

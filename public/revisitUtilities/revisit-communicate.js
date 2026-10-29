@@ -214,7 +214,7 @@
     registerGlobalStoreUpdater: (fn) => {
       if (globalStoreUpdater) throw new Error('Only one global store updater may be registered for a stimulus.');
       globalStoreUpdater = fn;
-      registrationComplete = true;
+      if (!registrationStarted) registrationComplete = true;
       announced = null;
       announce();
       restore();

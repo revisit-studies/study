@@ -4,6 +4,47 @@ import { expect, test, vi } from 'vitest';
 
 type MessageHandler = (event: unknown) => void;
 
+test('registering an updater waits for explicit asynchronous initialization before restoring', async () => {
+  const handlers = new Map<string, MessageHandler>();
+  const parent = { postMessage: vi.fn() };
+  const frame = {
+    location: { search: '?id=frame' },
+    parent,
+    addEventListener: (type: string, handler: MessageHandler) => handlers.set(type, handler),
+    Revisit: undefined as unknown as {
+      beginRegistration: () => void;
+      onRestore: (fn: () => void) => void;
+      registerGlobalStoreUpdater: (fn: () => object) => void;
+      completeRegistration: () => void;
+    },
+  };
+  runInNewContext(readFileSync('public/revisitUtilities/revisit-communicate.js', 'utf8'), { window: frame, URLSearchParams, crypto });
+  let ready = false;
+  const restore = vi.fn(() => { expect(ready).toBe(true); });
+  frame.Revisit.beginRegistration();
+  frame.Revisit.onRestore(restore);
+  const { documentId } = parent.postMessage.mock.calls.find(([data]) => data.type === '@REVISIT_COMMS/WINDOW_READY')![0].message;
+  handlers.get('message')!({
+    source: parent,
+    data: {
+      type: '@REVISIT_COMMS/RESUME',
+      iframeId: 'frame',
+      message: {
+        documentId, requestId: 'resume', protocolVersion: 1, answers: { cost: 10 },
+      },
+    },
+  });
+  frame.Revisit.registerGlobalStoreUpdater(() => ({}));
+  await Promise.resolve();
+  expect(restore).not.toHaveBeenCalled();
+  expect(parent.postMessage.mock.calls.some(([data]) => data.type === '@REVISIT_COMMS/RESTORED')).toBe(false);
+  ready = true;
+  frame.Revisit.completeRegistration();
+  await Promise.resolve();
+  expect(restore).toHaveBeenCalledTimes(1);
+  expect(parent.postMessage.mock.calls.some(([data]) => data.type === '@REVISIT_COMMS/RESTORED')).toBe(true);
+});
+
 test('delivers only received store snapshots, including to late subscribers, and cleans up listeners', () => {
   const handlers = new Map<string, MessageHandler>();
   const parent = { postMessage: vi.fn() };

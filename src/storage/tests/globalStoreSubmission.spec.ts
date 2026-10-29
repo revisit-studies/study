@@ -6,6 +6,7 @@ import type { ParticipantData } from '../types';
 import type { StoredAnswer } from '../../store/types';
 import { createEmptyProvenance } from '../../store/provenance';
 import { createGlobalStoreSubmission, GLOBAL_STORE_TASK } from '../../store/globalStoreProvenance';
+import type { StorageObject, StorageObjectType } from '../engines/types';
 
 const answer: StoredAnswer = {
   identifier: 'purchase_0',
@@ -63,6 +64,7 @@ class SubmissionStorage extends LocalStorageEngine {
       },
       getItem: async (key: string) => this.local.get(key) ?? null,
       removeItem: async (key: string) => { this.local.delete(key); },
+      keys: async () => [...this.local.keys()],
     } as typeof this.participantStore;
   }
 
@@ -187,6 +189,120 @@ class RecoveryStorage extends SubmissionStorage {
 
   protected async _runWithLock<T>(_key: string, operation: () => Promise<T>) { return operation(); }
 }
+
+class RemoteRecoveryStorage extends RecoveryStorage {
+  remote = new Map<string, unknown>();
+
+  remoteRead = vi.fn(async (key: string): Promise<unknown> => this.remote.get(key) ?? null);
+
+  cacheWrite = vi.fn(async (_prefix: string, _type: string) => undefined);
+
+  remoteWrite = vi.fn(async (prefix: string, type: string, object: unknown) => { this.remote.set(`${prefix}/${type}`, structuredClone(object)); return undefined; });
+
+  protected async _getFromStorage<T extends StorageObjectType>(prefix: string, type: T): Promise<StorageObject<T> | null> {
+    return await this.remoteRead(`${prefix}/${type}`) as StorageObject<T> | null;
+  }
+
+  protected async _cacheStorageObject(prefix = '', type = '') { await this.cacheWrite(prefix, type); }
+}
+
+async function cachedRecovery() {
+  const original = new RecoveryStorage();
+  const retained = { ...createEmptyProvenance(), stimulus: initializeTrrack({ registry: Registry.create(), initialState: { visit: 1 } }).graph.backend };
+  const first = createGlobalStoreSubmission(undefined, { budget: 100 }, answer, { budget: 70 }, [], retained);
+  await original.saveGlobalStoreSubmission({ purchase_0: answer }, first.graph, 1, 'purchase_0', retained);
+  const storage = new RemoteRecoveryStorage(original.local);
+  storage.collectionEnabled = true;
+  storage.remote.set('participants/participant/participantData', structuredClone(participant));
+  return { storage, first, retained };
+}
+
+test.each(['newer', 'conflicting', 'finalized'] as const)('cached recovery adopts %s remote progress and discards stale local trial provenance without uploading', async (kind) => {
+  const { storage, first, retained: original } = await cachedRecovery();
+  const retained = { ...createEmptyProvenance(), stimulus: initializeTrrack({ registry: Registry.create(), initialState: { visit: 2 } }).graph.backend };
+  const revisedAnswer = { ...answer, answer: { cost: 10 } };
+  const revised = createGlobalStoreSubmission(kind === 'newer' ? first.graph : undefined, { budget: 100 }, revisedAnswer, { budget: 90 }, [], retained);
+  const selected = kind === 'finalized' ? first.graph : revised.graph;
+  const remote = {
+    ...participant, answers: { purchase_0: kind === 'finalized' ? answer : revisedAnswer }, globalStoreRevision: kind === 'newer' ? 2 : 1, globalStoreHead: selected.current, globalVariables: { budget: kind === 'finalized' ? 70 : 90 }, finalized: kind === 'finalized',
+  };
+  storage.remote.set('participants/participant/participantData', remote);
+  storage.remote.set(`provenance/participant/${GLOBAL_STORE_TASK}`, { ...createEmptyProvenance(), globalStore: selected });
+  storage.remote.set('provenance/participant/purchase_0', kind === 'finalized' ? original : retained);
+  expect(await storage.initializeParticipantSession({}, makeStudyConfig(), participant.metadata)).toEqual(remote);
+  await storage.flushPendingParticipantData();
+  expect(await storage.getProvenance('purchase_0')).toEqual(kind === 'finalized' ? original : retained);
+  expect(storage.remoteWrite).not.toHaveBeenCalled();
+});
+
+test('newer cached acceptance still recovers its uploads when cloud progress is behind', async () => {
+  const { storage, first } = await cachedRecovery();
+  expect((await storage.initializeParticipantSession({}, makeStudyConfig(), participant.metadata)).globalStoreRevision).toBe(1);
+  expect(await storage.finalizeParticipant()).toEqual({ status: 'complete' });
+  expect(storage.remote.get('participants/participant/participantData')).toMatchObject({ globalStoreRevision: 1, globalStoreHead: first.graph.current });
+  expect(storage.remote.get(`provenance/participant/${GLOBAL_STORE_TASK}`)).toMatchObject({ globalStore: { current: first.graph.current } });
+  expect(storage.cacheWrite).not.toHaveBeenCalled();
+});
+
+test('retained trial provenance can retry after this browser accepts and publishes a later trial', async () => {
+  const { storage, first, retained } = await cachedRecovery();
+  await storage.initializeParticipantSession({}, makeStudyConfig(), participant.metadata);
+  await storage.flushPendingParticipantData();
+  await vi.waitFor(() => expect(storage.remote.has('provenance/participant/purchase_0')).toBe(true));
+  storage.remote.delete('provenance/participant/purchase_0');
+  storage.remoteWrite.mockImplementation(async (prefix, type, object) => {
+    if (type === 'purchase_0') throw new Error('Trial temporarily offline');
+    storage.remote.set(`${prefix}/${type}`, structuredClone(object));
+    return undefined;
+  });
+  await expect(storage.saveProvenance(retained, 'purchase_0')).rejects.toThrow('temporarily offline');
+  storage.remoteWrite.mockImplementation(async (prefix, type, object) => {
+    storage.remote.set(`${prefix}/${type}`, structuredClone(object));
+    return undefined;
+  });
+  const laterAnswer = {
+    ...answer, identifier: 'purchase_1', trialOrder: '1', answer: { cost: 20 },
+  };
+  const next = createGlobalStoreSubmission(first.graph, { budget: 100 }, laterAnswer, { budget: 50 }, [], retained);
+  await storage.saveGlobalStoreSubmission({ purchase_0: answer, purchase_1: laterAnswer }, next.graph, 2, 'purchase_1', retained);
+  await storage.flushPendingParticipantData();
+  await vi.waitFor(() => expect(storage.remote.get(`provenance/participant/${GLOBAL_STORE_TASK}`)).toMatchObject({ globalStore: { current: next.graph.current } }));
+  await expect(storage.retryFailedWrites()).resolves.toBeUndefined();
+  expect(storage.remote.get('provenance/participant/purchase_0')).toEqual(retained);
+});
+
+test('recovery cannot publish cached progress when the remote read fails', async () => {
+  const { storage } = await cachedRecovery();
+  storage.remoteRead.mockRejectedValue(new Error('Offline'));
+  await expect(storage.initializeParticipantSession({}, makeStudyConfig(), participant.metadata)).rejects.toThrow('Offline');
+  expect(storage.remoteWrite).not.toHaveBeenCalled();
+  expect([...storage.local.values()].some((value) => (value as ParticipantData)?.globalStoreRevision === 1)).toBe(true);
+});
+
+test('a remote advance after initialization blocks queued participant and history retries', async () => {
+  const { storage, first, retained } = await cachedRecovery();
+  storage.remoteWrite.mockRejectedValue(new Error('Offline'));
+  await storage.initializeParticipantSession({}, makeStudyConfig(), participant.metadata);
+  await expect(storage.flushPendingParticipantData()).rejects.toThrow('Offline');
+  const next = createGlobalStoreSubmission(first.graph, { budget: 100 }, { ...answer, answer: { cost: 10 } }, { budget: 90 }, [], retained);
+  const remote = { ...participant, globalStoreRevision: 2, globalStoreHead: next.graph.current };
+  storage.remote.set('participants/participant/participantData', remote);
+  storage.remote.set(`provenance/participant/${GLOBAL_STORE_TASK}`, { ...createEmptyProvenance(), globalStore: next.graph });
+  storage.remoteWrite.mockReset();
+  await expect(storage.retryFailedWrites()).rejects.toThrow(/newer|another|reload/i);
+  expect(storage.remoteWrite).not.toHaveBeenCalled();
+});
+
+test('newer uploaded history protects its trial assets before the participant snapshot is published', async () => {
+  const { storage, first, retained } = await cachedRecovery();
+  const next = createGlobalStoreSubmission(first.graph, { budget: 100 }, { ...answer, answer: { cost: 10 } }, { budget: 90 }, [], retained);
+  storage.remote.set('participants/participant/participantData', { ...participant, globalStoreRevision: 1, globalStoreHead: first.graph.current });
+  storage.remote.set(`provenance/participant/${GLOBAL_STORE_TASK}`, { ...createEmptyProvenance(), globalStore: next.graph });
+  await storage.initializeParticipantSession({}, makeStudyConfig(), participant.metadata);
+  await expect(storage.flushPendingParticipantData()).rejects.toThrow(/newer|another|reload/i);
+  await expect(storage.saveProvenance(retained, 'purchase_0')).rejects.toThrow(/newer|another|reload/i);
+  expect(storage.remoteWrite).not.toHaveBeenCalled();
+});
 
 test.each([
   ['metadata', false], ['metadata', true], ['submission', false], ['submission', true],
