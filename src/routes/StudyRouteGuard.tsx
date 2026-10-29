@@ -14,6 +14,15 @@ export function StudyRouteGuard({ children }: { children: ReactNode }) {
   const flatSequence = useFlatSequence();
   const answers = useStoreSelector((state) => state.answers);
 
+  if (startupInteractionBlocked) {
+    // Assignment-dependent bounds must wait, but descendants still need safe URL indices.
+    const namedRoute = index?.startsWith('reviewer-') || index === '__trainingFailed' || index === '__timedOut';
+    const validSyntax = index === undefined || namedRoute
+      ? funcIndex === undefined
+      : parseStepIndex(index) !== null && (funcIndex === undefined || parseStepIndex(funcIndex) !== null);
+    return validSyntax ? children : <ResourceNotFound email={studyConfig.uiConfig.contactEmail} />;
+  }
+
   // The study root redirects to the first step.
   let isValid = index === undefined;
   if (index?.startsWith('reviewer-')) {
@@ -56,5 +65,5 @@ export function StudyRouteGuard({ children }: { children: ReactNode }) {
   }
 
   if (isValid) return children;
-  return startupInteractionBlocked ? null : <ResourceNotFound email={studyConfig.uiConfig.contactEmail} />;
+  return <ResourceNotFound email={studyConfig.uiConfig.contactEmail} />;
 }

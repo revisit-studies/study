@@ -9,19 +9,17 @@ import {
 } from 'vitest';
 import { useRoutes } from 'react-router';
 import {
-  getShellUiState, getStartupErrorMessage, Shell, StudyIndexRoute, StudyLoadingOverlay,
+  getShellUiState, getStartupErrorMessage, Shell, StudyLoadingOverlay,
 } from '../Shell';
 import type { ParsedConfig, StudyConfig } from '../../parser/types';
 import { getStudyConfig, resolveConfigKey } from '../../utils/fetchConfig';
 import { makeGlobalConfig, makeStudyConfig } from '../../tests/utils';
 import { studyStoreCreator } from '../../store/store';
 import { parseConditionParam } from '../../utils/handleConditionLogic';
-import { generateSequenceArray } from '../../utils/handleRandomSequences';
 import { parseStudyConfig } from '../../parser/parser';
 import { StageCapacityExceededError, StageOnlyDisabledConditionsHaveCapacityError } from '../../storage/engines/types';
 import { useStudyColorMode } from '../AppThemeProvider';
 import type { ParticipantMetadata } from '../../store/types';
-import { StartupInteractionProvider } from '../StartupContext';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
@@ -505,20 +503,9 @@ describe('Shell', () => {
     expect(getByTestId('study-interface').getAttribute('aria-busy')).toBe('true');
     expect(getByTestId('study-interface').hasAttribute('inert')).toBe(true);
     expect(mockStorageEngine.initializeStudyDb).toHaveBeenCalledTimes(1);
-    expect(generateSequenceArray).toHaveBeenCalledWith({
-      ...mockActiveConfig,
-      uiConfig: { ...mockActiveConfig.uiConfig, numSequences: 1 },
-    });
-  });
-
-  test('mounts the first stimulus provisionally at the root route', () => {
-    const { getByTestId } = render(
-      <StartupInteractionProvider value>
-        <StudyIndexRoute />
-      </StartupInteractionProvider>,
-    );
-
-    expect(getByTestId('component-controller')).toBeDefined();
+    const preview = vi.mocked(studyStoreCreator).mock.calls[0];
+    expect(preview[1].components).toEqual({});
+    expect(preview[2].components).toEqual([]);
   });
 
   test('keeps the preview store mounted until participant completion is authoritative', async () => {
@@ -628,6 +615,7 @@ describe('Shell', () => {
     expect(addEventSpy).toHaveBeenCalledWith('message', expect.any(Function));
     expect(postMessageSpy).toHaveBeenCalledWith({ type: 'revisitWidget/READY' }, '*');
 
+    vi.mocked(parseStudyConfig).mockResolvedValueOnce(mockActiveConfig);
     // Dispatch CONFIG to cover the listener body
     await act(async () => {
       window.dispatchEvent(new MessageEvent('message', {

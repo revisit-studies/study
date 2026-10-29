@@ -9,6 +9,7 @@ import {
 import type { CSSProperties } from 'react';
 import debounce from 'lodash.debounce';
 import { IconArrowLeft, IconDotsVertical } from '@tabler/icons-react';
+import { useStartupInteractionBlocked } from './StartupContext';
 import { GlobalStoreHistory } from './interface/GlobalStoreHistory';
 import { AppAside } from './interface/AppAside';
 import { AppHeader } from './interface/AppHeader';
@@ -49,6 +50,7 @@ export function StepRenderer() {
   const { storageEngine } = useStorageEngine();
 
   const isAnalysis = useIsAnalysis();
+  const startupInteractionBlocked = useStartupInteractionBlocked();
   const studyConfig = useStudyConfig();
   const studyColorMode = useComputedColorScheme('light');
   const currentComponent = useCurrentComponent();
@@ -413,12 +415,14 @@ export function StepRenderer() {
                 </div>
               </header>
               <TrialProvenanceBoundary>
+                {!startupInteractionBlocked && (
                 <AppNavBar
                   width={sidebarWidth}
                   top={showTitleBar ? 70 : 0}
                   bottom={isAnalysis ? 125 + (hasAudio ? 55 : 0) : 0}
                   sidebarOpen={sidebarOpen}
                 />
+                )}
                 {/* 10px is the gap between the sidebar and the main content */}
                 <AppShell.Main
                   className="main"
@@ -449,14 +453,14 @@ export function StepRenderer() {
                       minWidth: 0,
                     }}
                   >
-                    {isAnalysis && <GlobalStoreHistory />}
-                    <Outlet />
+                    {!startupInteractionBlocked && isAnalysis && <GlobalStoreHistory />}
+                    {!startupInteractionBlocked && <Outlet />}
                   </div>
                 </AppShell.Main>
               </TrialProvenanceBoundary>
             </Flex>
             {asideOpen && <AppAside />}
-            {isAnalysis && (
+            {!startupInteractionBlocked && isAnalysis && (
             <AnalysisFooter setHasAudio={setHasAudio} key={currentComponent} />
             )}
           </AppShell>

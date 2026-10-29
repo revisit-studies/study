@@ -29,6 +29,8 @@ import {
 import { ComponentController } from '../controllers/ComponentController';
 import { NavigateWithParams } from '../utils/NavigateWithParams';
 import { StepRenderer } from './StepRenderer';
+import { getComponent } from '../utils/handleComponentInheritance';
+import { PREFIX } from '../utils/Prefix';
 import { StudyRouteGuard } from '../routes/StudyRouteGuard';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import { generateSequenceArray } from '../utils/handleRandomSequences';
@@ -56,7 +58,6 @@ import { materializeParticipantConfig } from '../parser/libraryParser';
 import { useStudyColorMode } from './AppThemeProvider';
 import {
   StartupInteractionProvider,
-  useStartupInteractionBlocked,
   useStudyStorageReady,
 } from './StartupContext';
 
@@ -126,19 +127,14 @@ export function StudyLoadingOverlay({
   ) : null;
 }
 
-function StudyLayout() {
-  const startupInteractionBlocked = useStartupInteractionBlocked();
-  return startupInteractionBlocked
-    ? <StepRenderer />
-    : <StudyRouteGuard><StepRenderer /></StudyRouteGuard>;
-}
-
-export function StudyIndexRoute() {
-  const startupInteractionBlocked = useStartupInteractionBlocked();
-
-  return startupInteractionBlocked
-    ? <ComponentController />
-    : <NavigateWithParams to={encryptIndex(0)} replace />;
+function StudyAssetPrefetch({ config }: { config: StudyConfig }) {
+  const first = config.sequence.order === 'fixed' ? config.sequence.components[0] : undefined;
+  const component = typeof first === 'string' ? getComponent(first, config) : null;
+  if (!component || (component.type !== 'markdown' && component.type !== 'image') || component.path.includes('{{')) {
+    return null;
+  }
+  const href = component.path.startsWith('http') ? component.path : `${PREFIX}${component.path}`;
+  return <link rel="prefetch" as={component.type === 'image' ? 'image' : 'fetch'} href={href} crossOrigin={component.type === 'markdown' ? 'anonymous' : undefined} />;
 }
 
 export function getScreenOrientationType(screen: Screen) {
@@ -381,32 +377,30 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
       setRoutes([
         {
-          element: <StudyLayout />,
+          element: <StudyRouteGuard><StepRenderer /></StudyRouteGuard>,
           children: [
             {
               path: '/',
-              element: <StudyRouteGuard><StudyIndexRoute /></StudyRouteGuard>,
+              element: <NavigateWithParams to={encryptIndex(0)} replace />,
             },
             {
               path: '/:index/:funcIndex?',
-              element: <StudyRouteGuard><ComponentController /></StudyRouteGuard>,
+              element: <ComponentController />,
             },
           ],
         },
       ]);
 
-      const generatedSequences = await generateSequenceArray({
-        ...activeConfig,
-        uiConfig: { ...activeConfig.uiConfig, numSequences: 1 },
-      });
-      const generatedSequence = filterSequenceByCondition(
-        generatedSequences[0],
-        studyCondition,
-      );
+      const previewSequence = {
+        order: 'fixed' as const, components: [], skip: [], orderPath: 'root',
+      };
+      const previewConfig = {
+        ...activeConfig, components: {}, globalVariables: undefined, sequence: { order: 'fixed' as const, components: [] },
+      };
       const localPreviewStore = await studyStoreCreator(
         canonicalStudyId,
-        materializeParticipantConfig(activeConfig, generatedSequence.parameters || {}),
-        generatedSequence,
+        previewConfig,
+        previewSequence,
         {
           ...createEmptyParticipantMetadata(),
           colorMode: activeConfig.uiConfig.colorMode === 'userPreference'
@@ -867,6 +861,7 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
   return (
     <>
+      {isInteractionBlocked && activeConfig && <StudyAssetPrefetch config={activeConfig} />}
       <StudyLoadingOverlay visible={isInteractionBlocked} showMessage={showLoadingMessage} />
       <div
         ref={interfaceRef}

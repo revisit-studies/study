@@ -103,7 +103,7 @@ describe('config-first study startup', () => {
     window.history.replaceState(null, '', '/');
   });
 
-  test('loads the real first stimulus and sidebar before connection and storage selection finish', async () => {
+  test('mounts the layout and prefetches static assets without displaying trial content before startup', async () => {
     const connection = deferred<ReturnType<typeof makeStorageEngine>>();
     const selection = deferred<ReturnType<typeof makeStorageEngine>>();
     const initialization = deferred<void>();
@@ -127,14 +127,11 @@ describe('config-first study startup', () => {
     });
     const view = mountStudy();
 
-    await waitFor(() => expect(view.getByRole('heading', { name: 'First stimulus', hidden: true })).toBeDefined());
-    expect(view.getByText('Sidebar instructions')).toBeDefined();
-    const option = view.getByRole('radio', { name: /Alpha/, hidden: true });
-    await act(async () => {
-      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', bubbles: true, cancelable: true }));
-      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }));
-    });
-    expect(option.getAttribute('aria-checked')).toBe('false');
+    await waitFor(() => expect(view.container.querySelector('.mantine-AppShell-root')).not.toBeNull());
+    expect(document.querySelector('link[rel="prefetch"][href="/intro.md"]')).not.toBeNull();
+    expect(view.queryByText('Sidebar instructions')).toBeNull();
+    expect(view.queryByRole('radio', { hidden: true })).toBeNull();
+    expect(getStaticAssetByPath).not.toHaveBeenCalled();
     expect(view.getByTestId('study-interface').hasAttribute('inert')).toBe(true);
     expect(engine.initializeStudyDb).not.toHaveBeenCalled();
     await act(async () => connection.resolve(engine));
@@ -144,6 +141,68 @@ describe('config-first study startup', () => {
     await act(async () => selection.resolve(engine));
     await waitFor(() => expect(engine.initializeStudyDb).toHaveBeenCalledTimes(1));
     expect(view.getByTestId('study-interface').hasAttribute('inert')).toBe(true);
+  });
+
+  test.each(['!', `${encryptIndex(0)}/!`, `${encryptIndex(0)}/${encryptIndex(-1)}`])('rejects malformed route %s before mounting layout hooks', async (route) => {
+    const engine = makeStorageEngine({ initializeStudyDb: vi.fn(() => new Promise<void>(() => {})) });
+    vi.mocked(initializeStorageEngine).mockResolvedValue(engine);
+    vi.mocked(selectStudyStorageEngine).mockResolvedValue(engine);
+    window.history.replaceState(null, '', `/test-study/${route}`);
+    const view = mountStudy();
+    await waitFor(() => expect(view.getByText('404')).toBeDefined());
+    expect(view.container.querySelector('.mantine-AppShell-root')).toBeNull();
+  });
+
+  test('does not expose a random preview treatment before restoring the assigned sequence', async () => {
+    const participant = deferred<Awaited<ReturnType<ReturnType<typeof makeStorageEngine>['initializeParticipantSession']>>>();
+    const randomizedConfig = {
+      ...config,
+      components: {
+        assigned: {
+          type: 'markdown' as const, path: 'assigned.md', instruction: 'Assigned instructions', response: [],
+        },
+        other: {
+          type: 'markdown' as const, path: 'other.md', instruction: 'Other instructions', response: [],
+        },
+      },
+      sequence: { order: 'random' as const, components: ['other', 'assigned'] },
+    };
+    const assignedSequence = { ...sequence, components: ['assigned', 'other', 'end'] };
+    const engine = makeStorageEngine({
+      saveConfig: vi.fn().mockResolvedValue(undefined),
+      getOrCreateSequenceArray: vi.fn().mockResolvedValue([assignedSequence]),
+      getModes: vi.fn().mockResolvedValue({ developmentModeEnabled: false, dataSharingEnabled: false, dataCollectionEnabled: false }),
+      initializeParticipantSession: vi.fn(() => participant.promise),
+      getAllConfigsFromHash: vi.fn().mockResolvedValue({ saved: randomizedConfig }),
+    });
+    vi.mocked(getStudyConfig).mockResolvedValue(randomizedConfig);
+    vi.mocked(getStaticAssetByPath).mockImplementation(async (path) => (path.endsWith('assigned.md') ? '# Assigned treatment' : '# Other treatment'));
+    vi.mocked(initializeStorageEngine).mockResolvedValue(engine);
+    vi.mocked(selectStudyStorageEngine).mockResolvedValue(engine);
+    window.history.replaceState(null, '', `/test-study/${encryptIndex(0)}`);
+    const view = mountStudy();
+    await waitFor(() => expect(engine.initializeParticipantSession).toHaveBeenCalled());
+    expect(view.container.querySelector('.mantine-AppShell-root')).not.toBeNull();
+    expect(view.queryByText(/Assigned instructions|Other instructions|Assigned treatment|Other treatment/)).toBeNull();
+    expect(getStaticAssetByPath).not.toHaveBeenCalled();
+    await act(async () => participant.resolve({
+      participantId: 'p1',
+      participantConfigHash: 'saved',
+      sequence: assignedSequence,
+      metadata: {
+        language: 'en', userAgent: 'test', resolution: {}, ip: '',
+      },
+      answers: {},
+      searchParams: {},
+      rejected: false,
+      participantTags: [],
+      stage: 'test',
+      createdTime: 0,
+      participantIndex: 0,
+    }));
+    await waitFor(() => expect(view.queryByTestId('study-loading-barrier')).toBeNull());
+    await waitFor(() => expect(view.getByRole('heading', { name: 'Assigned treatment' })).toBeDefined());
+    expect(view.queryByText('Other treatment')).toBeNull();
   });
 
   test('ignores an old initialization while storage is being selected for a changed URL', async () => {
