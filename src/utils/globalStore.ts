@@ -145,8 +145,10 @@ export function evaluateGlobalStoreUpdates(
   const values = { ...entry };
   const operations: AppliedGlobalStoreAction[] = [];
   responses.forEach((response) => {
-    const operand = answers[response.id];
-    if (!isResponseAnswered(operand) || isResponseDontKnowSelected(response, answers)) return;
+    const answer = answers[response.id];
+    if (!isResponseAnswered(answer) || isResponseDontKnowSelected(response, answers)) return;
+    const operand = (response.type === 'numerical' || response.type === 'slider') && typeof answer === 'string' && answer.trim() !== ''
+      ? Number(answer) : answer;
     (response.onSubmit ?? []).forEach((action) => {
       if (!Object.hasOwn(definitions, action.variable)) throw new Error(`Unknown global store variable "${action.variable}"; declare it first.`);
       if (action.operation !== 'toggle' && !isPrimitive(operand)) throw new Error(`Global store action for "${response.id}" requires a finite number, string, or boolean answer.`);

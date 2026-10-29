@@ -13,6 +13,8 @@ import { createGlobalStoreSubmission } from '../../../store/globalStoreProvenanc
 import { WindowEventsContext } from '../../../store/hooks/useWindowEvents';
 import { makeStoredAnswer, makeStudyConfig } from '../../../tests/utils';
 import type { IndividualComponent } from '../../../parser/types';
+import { generateInitFields } from '../utils';
+import { evaluateGlobalStoreUpdates } from '../../../utils/globalStore';
 
 const { saveAnswers } = vi.hoisted(() => ({ saveAnswers: vi.fn(async (_answers: unknown) => {}) }));
 vi.mock('../../../storage/storageEngineHooks', () => ({ useStorageEngine: () => ({ storageEngine: { saveAnswers } }) }));
@@ -26,6 +28,26 @@ afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
   saveAnswers.mockClear();
+});
+
+test('captured numerical fields and untouched sliders submit their numeric store actions', () => {
+  const original = window.location.href;
+  window.history.replaceState({}, '', '?cost=5');
+  try {
+    const responses: IndividualComponent['response'] = [
+      {
+        id: 'captured', type: 'numerical', prompt: '', paramCapture: 'cost', onSubmit: [{ variable: 'budget', operation: 'subtract' }],
+      },
+      {
+        id: 'slider', type: 'slider', prompt: '', options: [{ value: 0, label: '0' }, { value: 100, label: '100' }], startingValue: 10, onSubmit: [{ variable: 'budget', operation: 'subtract' }],
+      },
+    ];
+    const values = generateInitFields(responses, {});
+    expect(values).toMatchObject({ captured: '5', slider: '10' });
+    expect(evaluateGlobalStoreUpdates({ budget: 100 }, { budget: 100 }, responses, values, {}).values.budget).toBe(85);
+  } finally {
+    window.history.replaceState({}, '', original);
+  }
 });
 
 test.each(['unsubmitted', 'accepted'])('Check Answer persists grading progress for a %s global trial', async (status) => {

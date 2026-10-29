@@ -3,9 +3,10 @@ import { initializeTrrack, Registry } from '@trrack/core';
 import { makeSequenceAssignment, makeStudyConfig } from '../../tests/utils';
 import { LocalStorageEngine } from '../engines/LocalStorageEngine';
 import type { ParticipantData } from '../types';
-import type { StoredAnswer } from '../../store/types';
+import type { StoredAnswer, StoredProvenance } from '../../store/types';
 import { createEmptyProvenance } from '../../store/provenance';
 import { createGlobalStoreSubmission, GLOBAL_STORE_TASK } from '../../store/globalStoreProvenance';
+import type { GlobalStoreGraph } from '../../store/globalStoreProvenance';
 import type { StorageObject, StorageObjectType } from '../engines/types';
 
 const answer: StoredAnswer = {
@@ -206,6 +207,25 @@ class RemoteRecoveryStorage extends RecoveryStorage {
   protected async _cacheStorageObject(prefix = '', type = '') { await this.cacheWrite(prefix, type); }
 }
 
+class InterleavedStorage extends RemoteRecoveryStorage {
+  jobs: (() => Promise<void>)[] = [];
+
+  manual = true;
+
+  resume(snapshot: ParticipantData) { this.participantData = structuredClone(snapshot); }
+
+  protected async _runWithLock<T>(_key: string, operation: () => Promise<T>): Promise<T> {
+    if (!this.manual) return operation();
+    return new Promise<T>((resolve, reject) => {
+      this.jobs.push(async () => {
+        try { resolve(await operation()); } catch (error) { reject(error); }
+      });
+    });
+  }
+
+  async runNext() { await this.jobs.shift()?.(); }
+}
+
 async function cachedRecovery() {
   const original = new RecoveryStorage();
   const retained = { ...createEmptyProvenance(), stimulus: initializeTrrack({ registry: Registry.create(), initialState: { visit: 1 } }).graph.backend };
@@ -216,6 +236,79 @@ async function cachedRecovery() {
   storage.remote.set('participants/participant/participantData', structuredClone(participant));
   return { storage, first, retained };
 }
+
+function revisedPurchase(graph: GlobalStoreGraph, retained: StoredProvenance, cost: number) {
+  const trrack = initializeTrrack({ registry: Registry.create(), initialState: {} });
+  trrack.importObject(structuredClone(retained.stimulus!));
+  trrack.record({
+    label: 'Purchase', eventType: 'purchase', state: { cost }, sideEffects: { do: [], undo: [] },
+  });
+  const provenance = { ...retained, stimulus: trrack.graph.backend };
+  const revisedAnswer = { ...answer, answer: { cost } };
+  return { provenance, revisedAnswer, graph: createGlobalStoreSubmission(graph, { budget: 100 }, revisedAnswer, { budget: 100 - cost }, [], provenance).graph };
+}
+
+test.each(['submission', 'recovery'] as const)('an interleaved %s cannot overwrite the winning submission interaction nodes', async (mode) => {
+  const { storage, first, retained } = await cachedRecovery();
+  const snapshot = [...storage.local].find(([key]) => key.endsWith('/localParticipantData'))![1] as ParticipantData;
+  const a = new InterleavedStorage(new Map(storage.local));
+  const b = new InterleavedStorage(new Map(storage.local));
+  a.remote = storage.remote;
+  b.remote = storage.remote;
+  a.collectionEnabled = true;
+  b.collectionEnabled = true;
+  a.resume(snapshot);
+  b.resume(snapshot);
+  a.remote.set('participants/participant/participantData', snapshot);
+  a.remote.set(`provenance/participant/${GLOBAL_STORE_TASK}`, { ...createEmptyProvenance(), globalStore: first.graph });
+  a.remote.set('provenance/participant/purchase_0', retained);
+  const winning = revisedPurchase(first.graph, retained, 10);
+  await a.saveGlobalStoreSubmission({ purchase_0: winning.revisedAnswer }, winning.graph, 2, 'purchase_0', winning.provenance);
+  if (mode === 'submission') {
+    const competing = revisedPurchase(first.graph, retained, 20);
+    await b.saveGlobalStoreSubmission({ purchase_0: competing.revisedAnswer }, competing.graph, 2, 'purchase_0', competing.provenance);
+  } else {
+    await b.initializeParticipantSession({}, makeStudyConfig(), participant.metadata);
+  }
+  await vi.waitFor(() => { expect(a.jobs.length).toBeGreaterThan(0); expect(b.jobs.length).toBeGreaterThan(0); });
+  // Alternate complete lock acquisitions, the ordering that previously split matching graphs.
+  await a.runNext();
+  await b.runNext();
+  await a.runNext();
+  await b.runNext();
+  a.manual = false;
+  b.manual = false;
+  await Promise.allSettled([a.flushPendingParticipantData(), b.flushPendingParticipantData()]);
+  expect(a.remote.get(`provenance/participant/${GLOBAL_STORE_TASK}`)).toMatchObject({ globalStore: { current: winning.graph.current } });
+  const uploaded = a.remote.get('provenance/participant/purchase_0') as typeof retained;
+  expect(uploaded.stimulus!.nodes[winning.provenance.stimulus.current]).toBeDefined();
+});
+
+test('an older bundle cannot clear a newer visit pending trial asset', async () => {
+  const { storage, first, retained } = await cachedRecovery();
+  const a = new InterleavedStorage(new Map(storage.local));
+  a.remote = storage.remote;
+  a.collectionEnabled = true;
+  const snapshot = [...storage.local].find(([key]) => key.endsWith('/localParticipantData'))![1] as ParticipantData;
+  a.resume(snapshot);
+  a.remote.set('participants/participant/participantData', snapshot);
+  a.remote.set(`provenance/participant/${GLOBAL_STORE_TASK}`, { ...createEmptyProvenance(), globalStore: first.graph });
+  const earlier = revisedPurchase(first.graph, retained, 10);
+  const later = revisedPurchase(earlier.graph, earlier.provenance, 5);
+  await a.saveGlobalStoreSubmission({ purchase_0: earlier.revisedAnswer }, earlier.graph, 2, 'purchase_0', earlier.provenance);
+  await a.saveGlobalStoreSubmission({ purchase_0: later.revisedAnswer }, later.graph, 3, 'purchase_0', later.provenance);
+  await vi.waitFor(() => expect(a.jobs.length).toBeGreaterThan(0));
+  await a.runNext();
+  await vi.waitFor(() => expect(a.jobs.length).toBeGreaterThan(0));
+  // A recovery of the now-published earlier boundary may replace unreferenced future nodes.
+  a.remote.set('provenance/participant/purchase_0', earlier.provenance);
+  await a.runNext();
+  a.manual = false;
+  await a.flushPendingParticipantData();
+  const uploaded = a.remote.get('provenance/participant/purchase_0') as typeof retained;
+  expect(uploaded.stimulus!.nodes[later.provenance.stimulus.current]).toBeDefined();
+  expect(a.remote.get('participants/participant/participantData')).toMatchObject({ globalStoreHead: later.graph.current });
+});
 
 test.each(['newer', 'conflicting', 'finalized'] as const)('cached recovery adopts %s remote progress and discards stale local trial provenance without uploading', async (kind) => {
   const { storage, first, retained: original } = await cachedRecovery();
@@ -269,6 +362,33 @@ test('retained trial provenance can retry after this browser accepts and publish
   await vi.waitFor(() => expect(storage.remote.get(`provenance/participant/${GLOBAL_STORE_TASK}`)).toMatchObject({ globalStore: { current: next.graph.current } }));
   await expect(storage.retryFailedWrites()).resolves.toBeUndefined();
   expect(storage.remote.get('provenance/participant/purchase_0')).toEqual(retained);
+});
+
+test('a failed trial bundle does not publish its projection and a later acceptance retries all required trial assets', async () => {
+  const { storage, first, retained } = await cachedRecovery();
+  storage.remoteWrite.mockImplementation(async (prefix, type, object) => {
+    if (type === 'purchase_0') throw new Error('Trial upload offline');
+    storage.remote.set(`${prefix}/${type}`, structuredClone(object));
+    return undefined;
+  });
+  await storage.initializeParticipantSession({}, makeStudyConfig(), participant.metadata);
+  expect((await storage.finalizeParticipant()).status).toBe('error');
+  expect(storage.remote.get(`provenance/participant/${GLOBAL_STORE_TASK}`)).toBeUndefined();
+  expect(storage.remote.get('participants/participant/participantData')).not.toHaveProperty('globalStoreHead');
+  storage.remoteWrite.mockImplementation(async (prefix, type, object) => {
+    storage.remote.set(`${prefix}/${type}`, structuredClone(object));
+    return undefined;
+  });
+  const later = {
+    ...answer, identifier: 'purchase_1', trialOrder: '1', answer: { cost: 20 },
+  };
+  const next = createGlobalStoreSubmission(first.graph, { budget: 100 }, later, { budget: 50 }, [], retained);
+  await storage.saveGlobalStoreSubmission({ purchase_0: answer, purchase_1: later }, next.graph, 2, 'purchase_1', retained);
+  await storage.retryFailedWrites();
+  expect(await storage.finalizeParticipant()).toEqual({ status: 'complete' });
+  expect(storage.remote.get('provenance/participant/purchase_0')).toEqual(retained);
+  expect(storage.remote.get('provenance/participant/purchase_1')).toEqual(retained);
+  expect(storage.remote.get(`provenance/participant/${GLOBAL_STORE_TASK}`)).toMatchObject({ globalStore: { current: next.graph.current } });
 });
 
 test('recovery cannot publish cached progress when the remote read fails', async () => {

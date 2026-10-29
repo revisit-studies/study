@@ -434,6 +434,8 @@ export abstract class StorageEngine {
 
   private provenanceWriteChains = new Map<string, Promise<unknown>>();
 
+  private globalStorePendingTrials = new Map<string, Map<string, number>>();
+
   private participantDataWriteChain: Promise<void> = Promise.resolve();
 
   private localParticipantDataUpdateChain: Promise<void> = Promise.resolve();
@@ -829,9 +831,11 @@ export abstract class StorageEngine {
     snapshot: ParticipantData,
     cache: boolean,
   ) {
+    const publicationKey = `${this.studyId}/${participantId}/${GLOBAL_STORE_TASK}`;
     const write = async () => {
       this.participantDataWriteError = null;
       try {
+        if (snapshot.globalStoreRevision !== undefined) await this.provenanceWriteChains.get(publicationKey);
         await this._runWithLock(`participant-${participantId}`, async () => {
           // An admin can reject a participant in another browser while this
           // client still has a debounced full-record write pending. The same
@@ -971,6 +975,17 @@ export abstract class StorageEngine {
       throw new Error(`Failed to reconnect to ${this.getEngine()} storage engine`);
     }
 
+    if (this.participantData?.globalStoreRevision !== undefined) {
+      const queueKey = `${this.studyId}/${this.currentParticipantId}/${GLOBAL_STORE_TASK}`;
+      await this.provenanceWriteChains.get(queueKey)?.catch(() => undefined);
+      const assetKey = `provenance/${GLOBAL_STORE_TASK}`;
+      const retry = this.failedAssetRetryOperations.get(assetKey);
+      if (retry) {
+        const publication = this.trackAssetOperation(assetKey, retry);
+        this.provenanceWriteChains.set(queueKey, publication);
+        await publication;
+      }
+    }
     await this.persistCurrentParticipantData({ immediate: true });
 
     const { pendingProgressDataWrite } = this;
@@ -2013,6 +2028,14 @@ export abstract class StorageEngine {
     return `${this.collectionPrefix}${this.studyId}/participants/${participantId}/localProvenance/${task}`;
   }
 
+  private queueGlobalStoreProvenance(participant: ParticipantData, graph: GlobalStoreGraph, tasks: string[]) {
+    const queueKey = `${this.studyId}/${participant.participantId}/${GLOBAL_STORE_TASK}`;
+    const pending = this.globalStorePendingTrials.get(queueKey) ?? new Map<string, number>();
+    tasks.forEach((task) => pending.set(task, Math.max(pending.get(task) ?? 0, participant.globalStoreRevision!)));
+    this.globalStorePendingTrials.set(queueKey, pending);
+    this.saveProvenance({ ...createEmptyProvenance(), globalStore: graph }, GLOBAL_STORE_TASK).catch(() => undefined);
+  }
+
   /** Rebuild upload work from accepted local history after a reload loses in-memory retries. */
   private async restoreGlobalStoreUploads(participant: ParticipantData) {
     if (!participant.globalStoreRevision || !this.studyId) return;
@@ -2027,10 +2050,7 @@ export abstract class StorageEngine {
       task, provenance: await this.participantStore.getItem<StoredProvenance>(this.localProvenanceKey(task, participant.participantId)),
     })));
     if (this.studyId !== studyId || this.currentParticipantId !== currentParticipantId) throw new Error('The participant session changed while restoring its interaction history.');
-    retained.forEach(({ task, provenance }) => {
-      if (normalizeStoredProvenance(provenance)) this.saveProvenance(provenance, task).catch(() => undefined);
-    });
-    this.saveProvenance(saved, GLOBAL_STORE_TASK).catch(() => undefined);
+    this.queueGlobalStoreProvenance(participant, saved.globalStore, retained.filter(({ provenance }) => normalizeStoredProvenance(provenance)).map(({ task }) => task));
     this.scheduleParticipantDataWrite(participant);
   }
 
@@ -2073,8 +2093,7 @@ export abstract class StorageEngine {
       }
       if (modes.dataCollectionEnabled) {
         // Start tracking assets before the participant write/finalization can flush.
-        this.saveProvenance(provenance, task).catch(() => undefined);
-        this.saveProvenance({ ...createEmptyProvenance(), globalStore: graph }, GLOBAL_STORE_TASK).catch(() => undefined);
+        this.queueGlobalStoreProvenance(snapshot, graph, [task]);
         this.scheduleParticipantDataWrite(snapshot);
       }
     });
@@ -2326,7 +2345,7 @@ export abstract class StorageEngine {
       task,
       undefined,
       strict,
-      this.participantData?.globalStoreRevision !== undefined,
+      true,
     );
 
     if (strict && provenanceObject != null) {
@@ -2407,7 +2426,38 @@ export abstract class StorageEngine {
             }
           }
           await this.assertGlobalStoreUploadCurrent(participantId, uploadProgress, undefined, provenance.globalStore);
+          const pending = this.globalStorePendingTrials.get(queueKey);
+          const states = taskName === GLOBAL_STORE_TASK && provenance.globalStore
+            ? Object.values(getGlobalStoreNodeStates(provenance.globalStore)) : [];
+          const requiredTasks = new Set(states.flatMap((state) => (state.submission ? [state.submission.answer.identifier] : [])));
+          const trials = await Promise.all([...pending ?? []].filter(([task]) => requiredTasks.has(task)).map(async ([task, revision]) => ({
+            task,
+            revision,
+            provenance: normalizeStoredProvenance(await this.participantStore.getItem(this.localProvenanceKey(task, participantId))),
+          })));
+          // Validate every retained source before publishing any part of the matching boundary.
+          trials.forEach((trial) => {
+            states.filter((state) => state.submission?.answer.identifier === trial.task).forEach(({ submission }) => {
+              Object.entries(submission!.sourceNodes).forEach(([location, source]) => {
+                const graph = trial.provenance?.[location as keyof StoredProvenance];
+                if (!graph || graph.root !== source.root || !graph.nodes[source.current]) throw new Error('The accepted interaction state is missing.');
+              });
+            });
+          });
+          // Await all writes before releasing the lock, including when one of them fails.
+          const uploads = await Promise.allSettled(trials.map((trial) => (trial.provenance
+            ? this._pushToStorage(`provenance/${participantId}`, trial.task, trial.provenance as unknown as StorageObject<typeof trial.task>) : Promise.resolve())));
+          const failed = uploads.find((result): result is PromiseRejectedResult => result.status === 'rejected');
+          if (failed) throw failed.reason;
           await upload(provenance);
+          trials.forEach(({ task, revision }) => {
+            if (pending?.get(task) === revision && revision <= progress.globalStoreRevision!) {
+              pending.delete(task);
+              this.clearAssetUploadError(`provenance/${task}`);
+              this.failedAssetRetryOperations.delete(`provenance/${task}`);
+            }
+          });
+          if (pending?.size === 0) this.globalStorePendingTrials.delete(queueKey);
         });
       } else {
         await upload();
@@ -2587,6 +2637,7 @@ export abstract class StorageEngine {
     this.pendingAssetOperations.clear();
     this.failedAssetUploads.clear();
     this.failedAssetRetryOperations.clear();
+    this.globalStorePendingTrials.clear();
     this.pendingProgressDataWrite = undefined;
     this.assetUploadActivityVersion = 0;
     this.participantData = undefined;

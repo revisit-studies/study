@@ -59,6 +59,33 @@ test('rejects aggregate overspending across response locations without partially
   await expectBudget(page, 0);
 });
 
+test('untouched captured numerical fields and sliders apply numeric global actions', async ({ page }) => {
+  const config = {
+    ...budgetStudy,
+    components: {
+      ...budgetStudy.components,
+      reactPurchase: { ...budgetStudy.components.reactPurchase, previousButton: false },
+      purchase: {
+        ...budgetStudy.components.purchase,
+        response: [
+          { id: 'capturedCost', type: 'numerical', prompt: 'Captured cost', paramCapture: 'cost', min: 0, onSubmit: [{ variable: 'budget', operation: 'subtract' }] },
+          { id: 'sliderCost', type: 'slider', prompt: 'Slider cost', options: [{ value: 0, label: '0' }, { value: 100, label: '100' }], startingValue: 10, onSubmit: [{ variable: 'budget', operation: 'subtract' }] },
+        ],
+      },
+    },
+  };
+  await page.route('**/test-global-store/config.json', (route) => route.fulfill({ json: config }));
+  await openGlobalStoreStudy(page, 'test-global-store?cost=5');
+  await expect(page.getByRole('heading', { name: 'Global store budget study', exact: true })).toBeVisible();
+  await nextClick(page);
+  await expect(page.getByRole('textbox', { name: /Captured cost$/ })).toHaveValue('5');
+  await expect(page.getByRole('textbox', { name: /Captured cost$/ })).toBeDisabled();
+  await expect(page.getByRole('slider')).toHaveAttribute('aria-valuenow', '10');
+  await nextClick(page);
+  await expectBudget(page, 85);
+  await expect.poll(async () => (await readGlobalStoreParticipant(page))?.globalVariables?.budget).toBe(85);
+});
+
 test('evaluates primitive operations and preserves false, zero, hidden and optional values', async ({ page }) => {
   await openGlobalStoreStudy(page, 'test-global-store-operations');
   await expect(page.getByRole('heading', { name: 'Primitive operations', exact: true })).toBeVisible();

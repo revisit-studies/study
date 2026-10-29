@@ -5,6 +5,28 @@ import {
 import type { GlobalVariableDeclarations, NumericalResponse, Response } from '../../parser/types';
 import type { StoredAnswer } from '../../store/types';
 
+test.each(['numerical', 'slider'] as const)('numeric %s form strings act on numeric globals', (type) => {
+  const response = {
+    id: 'cost', type, prompt: '', onSubmit: [{ variable: 'budget', operation: 'subtract' }],
+  } as Response;
+  const result = evaluateGlobalStoreUpdates({ budget: 100 }, { budget: 100 }, [response], { cost: '5' }, {});
+  expect(result.values.budget).toBe(95);
+  expect(result.operations[0].operand).toBe(5);
+});
+
+test.each(['shortText', 'custom', 'reactive'] as const)('numeric globals reject string operands from %s responses', (type) => {
+  const response = {
+    id: 'cost', type, prompt: '', onSubmit: [{ variable: 'budget', operation: 'subtract' }],
+  } as Response;
+  expect(() => evaluateGlobalStoreUpdates({ budget: 100 }, { budget: 100 }, [response], { cost: '5' }, {})).toThrow();
+});
+
+test.each(['5oops', ' ', 'Infinity'])('numeric global operands reject invalid form text %j', (cost) => {
+  expect(() => evaluateGlobalStoreUpdates({ budget: 100 }, { budget: 100 }, [{
+    id: 'cost', type: 'numerical', prompt: '', onSubmit: [{ variable: 'budget', operation: 'subtract' }],
+  }], { cost }, {})).toThrow();
+});
+
 test('primitive declarations preserve zero, false and empty strings alongside expanded declarations', () => {
   const declarations = {
     budget: 100, zero: 0, enabled: false, label: '', bounded: { initialValue: 2, strictMin: 1 },
