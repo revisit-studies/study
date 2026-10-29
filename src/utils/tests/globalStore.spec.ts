@@ -125,6 +125,22 @@ describe('global store updates', () => {
     expect(() => evaluateGlobalStoreUpdates(definitions, { budget: 100 }, [], {}, { budget: Infinity })).toThrow(/finite/i);
   });
 
+  test('one response can apply ordered operations to the same and different variables', () => {
+    const fields: Response[] = [{
+      id: 'amount',
+      type: 'numerical',
+      prompt: '',
+      onSubmit: [
+        { variable: 'budget', operation: 'add' },
+        { variable: 'budget', operation: 'multiply' },
+        { variable: 'total', operation: 'add' },
+      ],
+    }];
+    const initial = { budget: 10, total: 0 };
+    expect(evaluateGlobalStoreUpdates(initial, initial, fields, { amount: 2 }, {}).values).toEqual({ budget: 24, total: 2 });
+    expect(initial).toEqual({ budget: 10, total: 0 });
+  });
+
   test('an updater that returns undefined must not be accepted as a no-op', () => {
     expect(() => evaluateGlobalStoreUpdates(definitions, { budget: 100 }, [], {}, undefined)).toThrow(/plain object/i);
   });
@@ -170,5 +186,101 @@ describe('global store declarations and references', () => {
     expect(() => resolveGlobalStoreNumber('{{globalVariables.name}}', { name: '70' })).toThrow(/number/i);
     expect(() => resolveGlobalStoreNumber('Remaining {{globalVariables.budget}}', { budget: 70 })).toThrow(/reference/i);
     expect(() => resolveGlobalStoreNumber('{{globalVariables.missing}}', {})).toThrow(/declared|unknown/i);
+  });
+});
+
+describe('global store action operands', () => {
+  const evaluate = (operand: unknown, answer: StoredAnswer['answer'][string] = 0.2, initial: number | string | boolean = 100, operation = 'multiply') => evaluateGlobalStoreUpdates({ value: initial }, { value: initial }, [{
+    id: 'input', type: 'custom', path: 'custom.tsx', prompt: '', onSubmit: [{ variable: 'value', operation, operand }],
+  } as Response], { input: answer }, {});
+
+  test('answer is the default source, and transformed operands are recorded with their definition', () => {
+    expect(evaluate(undefined).values.value).toBe(20);
+    expect(evaluate({ source: 'answer' }).values.value).toBe(20);
+    expect(evaluate({ transforms: [{ operation: 'subtractFrom', value: 1 }] }).values.value).toBe(80);
+    const operand = { source: 'answer', transforms: [{ operation: 'subtractFrom', value: 1 }] };
+    const result = evaluate(operand);
+    expect(result.values.value).toBe(80);
+    expect(result.operations).toEqual([{
+      variable: 'value', operation: 'multiply', source: 'input', operand: 0.8, operandDefinition: operand,
+    }]);
+  });
+
+  test.each([
+    ['add', 1, 1.2], ['subtract', 0.1, 0.1], ['multiply', 2, 0.4], ['divide', 2, 0.1], ['subtractFrom', 1, 0.8], ['divideInto', 1, 5],
+  ])('transforms an answer using %s', (operation, value, expected) => {
+    expect(evaluate({ source: 'answer', transforms: [{ operation, value }] }, 0.2, 0, 'set').values.value).toBeCloseTo(expected as number);
+  });
+
+  test.each([[0, 100], [1, 0]])('percentage boundary %s produces %s', (answer, expected) => {
+    expect(evaluate({ transforms: [{ operation: 'subtractFrom', value: 1 }] }, answer).values.value).toBe(expected);
+  });
+
+  test('percentage transforms compose in order and each action starts from the original answer', () => {
+    const actions = [
+      { variable: 'budget', operation: 'multiply', operand: { source: 'answer', transforms: [{ operation: 'divide', value: 100 }, { operation: 'subtractFrom', value: 1 }] } },
+      { variable: 'budget', operation: 'multiply', operand: { source: 'literal', value: 0.9 } },
+      { variable: 'total', operation: 'add' },
+    ];
+    const result = evaluateGlobalStoreUpdates({ budget: 100, total: 0 }, { budget: 100, total: 0 }, [{
+      id: 'input', type: 'numerical', prompt: '', onSubmit: actions,
+    } as Response], { input: '20' }, {});
+    expect(result.values).toEqual({ budget: 72, total: 20 });
+  });
+
+  test('literal transforms do not depend on the type of the triggering answer', () => {
+    expect(evaluate({ source: 'literal', value: 20, transforms: [{ operation: 'divide', value: 100 }, { operation: 'subtractFrom', value: 1 }] }, ['selected']).values.value).toBe(80);
+  });
+
+  test('a later literal cannot hide an overflowing earlier action', () => {
+    const field = {
+      id: 'input',
+      type: 'numerical',
+      prompt: '',
+      onSubmit: [
+        { variable: 'value', operation: 'multiply' },
+        { variable: 'value', operation: 'set', operand: { source: 'literal', value: 1 } },
+      ],
+    } as Response;
+    const entry = { value: Number.MAX_VALUE };
+    expect(() => evaluateGlobalStoreUpdates(entry, entry, [field], { input: 2 }, {})).toThrow(/finite/i);
+    expect(entry.value).toBe(Number.MAX_VALUE);
+  });
+
+  test.each([
+    ['add', 10, 0, 10], ['set', 0, 100, 0], ['append', ', ', 'x', 'x, '], ['prepend', 'prefix:', 'x', 'prefix:x'], ['set', false, true, false],
+  ])('uses literal operands for %s without requiring a scalar answer', (operation, value, initial, expected) => {
+    expect(evaluate({ source: 'literal', value }, ['selected'], initial, operation).values.value).toBe(expected);
+  });
+
+  test.each(['and', 'or', 'set'])('boolean not can feed %s', (operation) => {
+    expect(evaluate({ source: 'answer', transforms: [{ operation: 'not' }] }, true, true, operation).values.value).toBe(operation === 'or');
+  });
+
+  test.each([
+    { source: 'literal', value: Infinity },
+    { source: 'literal', value: '0.2' },
+    { source: 'answer', transforms: [{ operation: 'divide', value: 0 }] },
+    { source: 'answer', transforms: [{ operation: 'not' }] },
+    { source: 'answer', transforms: [{ operation: 'multiply', value: Infinity }] },
+    { source: 'answer', transforms: [{ operation: 'multiply', value: Number.MAX_VALUE }, { operation: 'multiply', value: Number.MAX_VALUE }, { operation: 'multiply', value: 0 }] },
+  ])('rejects invalid operands and intermediate results atomically: %j', (operand) => {
+    expect(() => evaluate(operand)).toThrow();
+  });
+
+  test('reverse division rejects a zero answer and toggle rejects an explicit operand', () => {
+    expect(() => evaluate({ source: 'answer', transforms: [{ operation: 'divideInto', value: 1 }] }, 0)).toThrow(/zero/i);
+    expect(() => evaluate({ transforms: [{ operation: 'subtractFrom', value: 1 }, { operation: 'divideInto', value: 1 }] }, 1)).toThrow(/zero/i);
+    expect(() => evaluate({ source: 'literal', value: true }, true, true, 'toggle')).toThrow(/operand/i);
+  });
+
+  test('literal actions still skip unanswered and Dont Know responses', () => {
+    const field = {
+      id: 'input', type: 'numerical', prompt: '', withDontKnow: true, onSubmit: [{ variable: 'value', operation: 'set', operand: { source: 'literal', value: 0 } }],
+    } as Response;
+    const cases: StoredAnswer['answer'][] = [{}, { input: 5, 'input-dontKnow': true }];
+    cases.forEach((answers) => {
+      expect(evaluateGlobalStoreUpdates({ value: 100 }, { value: 100 }, [field], answers, {}).values.value).toBe(100);
+    });
   });
 });

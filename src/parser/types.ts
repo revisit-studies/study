@@ -22,9 +22,24 @@ export interface GlobalVariableDeclaration extends Pick<ShortTextResponse, 'minC
 }
 export type GlobalVariableDeclarations = Record<string, GlobalVariableDeclaration | GlobalStoreValue>;
 export type GlobalStoreOperation = 'set' | 'add' | 'subtract' | 'multiply' | 'divide' | 'append' | 'prepend' | 'and' | 'or' | 'toggle';
+/** Transform the operand before applying the action; reverse operations use value op operand. */
+export type GlobalStoreOperandTransform = {
+  operation: 'add' | 'subtract' | 'multiply' | 'divide' | 'subtractFrom' | 'divideInto';
+  value: number;
+} | { operation: 'not' };
+export type GlobalStoreOperand = ({
+  /** Defaults to the current response's submitted answer. */
+  source?: 'answer';
+  value?: never;
+} | {
+  source: 'literal';
+  value: GlobalStoreValue;
+}) & { transforms?: GlobalStoreOperandTransform[] };
 export interface GlobalStoreAction {
   variable: string;
   operation: GlobalStoreOperation;
+  /** Omit to use the current answer directly. Not applicable to toggle. */
+  operand?: GlobalStoreOperand;
 }
 /** A numeric literal or an exact reference to a declared numeric store value. */
 export type GlobalStoreNumber = number | `{{globalVariables.${string}}}`;

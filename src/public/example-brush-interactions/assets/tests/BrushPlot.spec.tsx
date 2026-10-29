@@ -55,7 +55,7 @@ test.each([
     { id: 'b', date: '2015-12-31', x: '5', value: '8', category: 'two' },
   ]);
   vi.useFakeTimers();
-  const view = render(<MantineProvider><BrushPlot parameters={parameters} store={{}} registerGlobalStoreUpdater={vi.fn()} answers={{}} setAnswer={vi.fn()} useTrrack={useTrrack as never} updateState={vi.fn()} /></MantineProvider>);
+  const view = render(<MantineProvider><BrushPlot parameters={parameters} globalVariables={{}} registerGlobalStoreUpdater={vi.fn()} answers={{}} setAnswer={vi.fn()} useTrrack={useTrrack as never} updateState={vi.fn()} /></MantineProvider>);
   await act(async () => { await Promise.resolve(); });
   expect(view.container.querySelector(brushType === 'Axis Selection' ? '#brushXRef .selection' : '[role=slider]')).not.toBeNull();
   await act(async () => { await vi.advanceTimersByTimeAsync(150); });
@@ -82,7 +82,7 @@ test('a cleared slider keeps the same controls after returning with its retained
   }
   mocks.csv.mockResolvedValue([{ id: 'a', x: '1', value: '2', category: 'one' }, { id: 'b', x: '5', value: '8', category: 'two' }]);
   vi.useFakeTimers();
-  const mount = () => render(<MantineProvider><BrushPlot parameters={parameters} store={{}} registerGlobalStoreUpdater={vi.fn()} answers={{}} setAnswer={vi.fn()} useTrrack={useTrrack as never} updateState={vi.fn()} /></MantineProvider>);
+  const mount = () => render(<MantineProvider><BrushPlot parameters={parameters} globalVariables={{}} registerGlobalStoreUpdater={vi.fn()} answers={{}} setAnswer={vi.fn()} useTrrack={useTrrack as never} updateState={vi.fn()} /></MantineProvider>);
   const first = mount();
   await act(async () => { await Promise.resolve(); });
   const clear = screen.getByRole('button', { name: 'Clear Selection' }) as HTMLButtonElement;

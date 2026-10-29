@@ -71,7 +71,7 @@ describe('VirtualChinrestCalibration replay', () => {
   test('seeds a legacy saved calibration into the new graph instead of graph defaults', () => {
     mockIsAnalysis.value = false;
     render(<VirtualChinrestCalibration
-      store={{}} registerGlobalStoreUpdater={() => () => undefined} parameters={{ taskid: 'pixelsPerMM' }}
+      globalVariables={{}} registerGlobalStoreUpdater={() => () => undefined} parameters={{ taskid: 'pixelsPerMM' }}
       itemWidthMM={85.6}
       itemHeightMM={53.98}
       fixedCorner="top-left"
@@ -89,7 +89,7 @@ describe('VirtualChinrestCalibration replay', () => {
       componentName: '$virtual-chinrest.components.viewing-distance', trialOrder: '3',
       answer: { 'dist-calibration-MM': 600, 'ball-positions': '[400,350]' },
     };
-    render(<ViewingDistanceCalibration store={{}} registerGlobalStoreUpdater={() => () => undefined} parameters={{ blindspotAngle: 13.5 }} answers={{}} setAnswer={vi.fn()} useTrrack={useTrrack} />);
+    render(<ViewingDistanceCalibration globalVariables={{}} registerGlobalStoreUpdater={() => () => undefined} parameters={{ blindspotAngle: 13.5 }} answers={{}} setAnswer={vi.fn()} useTrrack={useTrrack} />);
     expect(mockUseTrrack.mock.calls[0][0].initialState).toEqual({ ballPosition: 350, ballPositions: [400, 350], viewingDistance: 600 });
     expect(mockApply).not.toHaveBeenCalled();
   });
@@ -102,7 +102,7 @@ describe('VirtualChinrestCalibration replay', () => {
       currentChange: () => () => true,
     }));
     const card = render(<VirtualChinrestCalibration
-      store={{}} registerGlobalStoreUpdater={() => () => undefined} parameters={{ taskid: 'pixelsPerMM' }} itemWidthMM={85.6} itemHeightMM={53.98} fixedCorner="top-left"
+      globalVariables={{}} registerGlobalStoreUpdater={() => () => undefined} parameters={{ taskid: 'pixelsPerMM' }} itemWidthMM={85.6} itemHeightMM={53.98} fixedCorner="top-left"
       answers={{}} setAnswer={vi.fn()} useTrrack={useTrrack}
     />);
     expect(card.getByTestId('slider').getAttribute('data-value')).toBe('370');
@@ -117,7 +117,7 @@ describe('VirtualChinrestCalibration replay', () => {
       getState: () => ({ ballPosition: 350, ballPositions: [400, 350], viewingDistance: null }),
       currentChange: () => () => true,
     }));
-    const distance = render(<ViewingDistanceCalibration store={{}} registerGlobalStoreUpdater={() => () => undefined} parameters={{ blindspotAngle: 13.5 }} answers={{}} setAnswer={vi.fn()} useTrrack={useTrrack} />);
+    const distance = render(<ViewingDistanceCalibration globalVariables={{}} registerGlobalStoreUpdater={() => () => undefined} parameters={{ blindspotAngle: 13.5 }} answers={{}} setAnswer={vi.fn()} useTrrack={useTrrack} />);
     expect(distance.getByText(/Remaining measurements:/).textContent).toContain('3');
     expect(distance.getByTestId('blindspot-ball').style.left).toBe('740px');
     expect(mockUseTrrack.mock.results.at(-1)?.value.getState()).toEqual({ ballPosition: 350, ballPositions: [400, 350], viewingDistance: null });
@@ -127,7 +127,7 @@ describe('VirtualChinrestCalibration replay', () => {
   test('rehydrates the saved calibration and keeps analysis controls read-only', async () => {
     const { getByRole, getByTestId, getByText } = render(
       <VirtualChinrestCalibration
-        store={{}} registerGlobalStoreUpdater={() => () => undefined} parameters={{ taskid: 'pixelsPerMM' }}
+        globalVariables={{}} registerGlobalStoreUpdater={() => () => undefined} parameters={{ taskid: 'pixelsPerMM' }}
         itemWidthMM={85.6}
         itemHeightMM={53.98}
         fixedCorner="top-left"
@@ -151,7 +151,7 @@ describe('VirtualChinrestCalibration replay', () => {
 
   test('replays card-size adjustments from provenance state', async () => {
     const props = {
-      store: {}, registerGlobalStoreUpdater: () => () => undefined,
+      globalVariables: {}, registerGlobalStoreUpdater: () => () => undefined,
       parameters: { taskid: 'pixelsPerMM' },
       itemWidthMM: 85.6,
       itemHeightMM: 53.98,
@@ -195,7 +195,7 @@ describe('VirtualChinrestCalibration replay', () => {
       },
     };
     const props = {
-      store: {}, registerGlobalStoreUpdater: () => () => undefined,
+      globalVariables: {}, registerGlobalStoreUpdater: () => () => undefined,
       parameters: { blindspotAngle: 13.5 },
       answers: {},
       setAnswer: vi.fn(),
@@ -238,7 +238,7 @@ describe('VirtualChinrestCalibration replay', () => {
     };
     const { getByTestId, getByText } = render(
       <ViewingDistanceCalibration
-        store={{}} registerGlobalStoreUpdater={() => () => undefined} parameters={{ blindspotAngle: 13.5 }}
+        globalVariables={{}} registerGlobalStoreUpdater={() => () => undefined} parameters={{ blindspotAngle: 13.5 }}
         answers={{}}
         provenanceState={{ ballPosition: 500 } as never}
         setAnswer={vi.fn()}

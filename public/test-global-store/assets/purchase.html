@@ -37,7 +37,7 @@
       templateBudget.textContent = templateBudget.dataset.value;
       document.querySelector('#template').hidden = false;
     }
-    Revisit.onGlobalStoreReceive((store) => {
+    Revisit.onGlobalVariablesReceive((store) => {
       document.querySelector('#budget').textContent = store.budget;
     });
     const registerUpdater = () => Revisit.registerGlobalStoreUpdater(({ store }) => {

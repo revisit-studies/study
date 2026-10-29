@@ -7,7 +7,7 @@ import type { UseTrrack } from '../../../store/types';
 export default function BrushPlotWrapper({
   state, params, answers, onStateChange, useTrrack,
 }: { state?: BrushState, params: BrushParams, answers: ParticipantData['answers'], onStateChange?: (b: BrushState) => void, useTrrack: UseTrrack }) {
-  const store = useGlobalStore();
+  const globalVariables = useGlobalStore();
   const registerGlobalStoreUpdater = useGlobalStoreUpdaterRegistration();
-  return <BrushPlot store={store} registerGlobalStoreUpdater={registerGlobalStoreUpdater} parameters={params} setAnswer={() => null} provenanceState={state ? { all: state } as any : undefined} updateState={onStateChange || (() => null)} answers={answers} useTrrack={useTrrack} />;
+  return <BrushPlot globalVariables={globalVariables} registerGlobalStoreUpdater={registerGlobalStoreUpdater} parameters={params} setAnswer={() => null} provenanceState={state ? { all: state } as any : undefined} updateState={onStateChange || (() => null)} answers={answers} useTrrack={useTrrack} />;
 }

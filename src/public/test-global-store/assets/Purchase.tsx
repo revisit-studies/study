@@ -9,7 +9,7 @@ type PurchaseState = { cost: number | null; budgetAtEntry: number; zoom: number 
 type Parameters = { faultControls?: boolean; delayMs?: number };
 
 export default function Purchase({
-  parameters = {}, setAnswer, useTrrack, provenanceState, store, registerGlobalStoreUpdater,
+  parameters = {}, setAnswer, useTrrack, provenanceState, globalVariables, registerGlobalStoreUpdater,
 }: StimulusParams<Parameters, PurchaseState>) {
   const [initialCost] = useStudyState<number | null>({ responseId: 'selectedCost', initialState: null });
   const { registry, select, zoomIn } = useMemo(() => {
@@ -20,7 +20,7 @@ export default function Purchase({
       zoomIn: reg.register('zoom-in', (state: PurchaseState, amount: number) => ({ ...state, zoom: state.zoom + amount })),
     };
   }, []);
-  const trrack = useTrrack({ registry, initialState: { cost: initialCost, budgetAtEntry: Number(store.budget), zoom: 1 } });
+  const trrack = useTrrack({ registry, initialState: { cost: initialCost, budgetAtEntry: Number(globalVariables.budget), zoom: 1 } });
   const state = useStudyState({ trrack });
   const displayed = provenanceState ?? state;
   const [rejectUpdate, setRejectUpdate] = useState(false);
@@ -39,7 +39,7 @@ export default function Purchase({
 
   return (
     <Stack>
-      <Text>React entry budget: {String(store.budget)}</Text>
+      <Text>React entry budget: {String(globalVariables.budget)}</Text>
       <Text>Tracked entry budget: {displayed.budgetAtEntry}</Text>
       <Group aria-label="Purchase choices">
         {[0, 5, 10, 15, 20].map((cost) => (

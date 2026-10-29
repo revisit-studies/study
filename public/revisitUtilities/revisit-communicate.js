@@ -36,7 +36,7 @@
       fn(message);
     }
   };
-  let onGlobalStoreReceiveCallback = null;
+  let onGlobalVariablesReceiveCallback = null;
   let globalStoreUpdater = null;
   let globalStore;
   const managedTrrackSubscriptions = new Set();
@@ -192,7 +192,7 @@
       });
       if (data.type === `${PREFIX}/GLOBAL_STORE`) {
         globalStore = Object.freeze({ ...data.message });
-        onGlobalStoreReceiveCallback?.(globalStore);
+        onGlobalVariablesReceiveCallback?.(globalStore);
       }
       if (data.type === `${PREFIX}/GLOBAL_STORE_UPDATE` && data.message?.documentId === documentId && !resume?.isAnalysis) {
         const request = data.message;
@@ -206,10 +206,10 @@
   });
 
   window.Revisit = {
-    onGlobalStoreReceive: (fn) => {
-      onGlobalStoreReceiveCallback = fn;
+    onGlobalVariablesReceive: (fn) => {
+      onGlobalVariablesReceiveCallback = fn;
       if (globalStore !== undefined) fn(globalStore);
-      return () => { if (onGlobalStoreReceiveCallback === fn) onGlobalStoreReceiveCallback = null; };
+      return () => { if (onGlobalVariablesReceiveCallback === fn) onGlobalVariablesReceiveCallback = null; };
     },
     registerGlobalStoreUpdater: (fn) => {
       if (globalStoreUpdater) throw new Error('Only one global store updater may be registered for a stimulus.');

@@ -1,6 +1,6 @@
 import type { ParserErrorWarning, StudyConfig, ValueCondition } from './types';
 import {
-  getInitialGlobalVariables, globalStoreOperationIsCompatible, resolveGlobalStoreNumber, validateGlobalStoreDefinitions,
+  getInitialGlobalVariables, getGlobalStoreOperandType, globalStoreOperationIsCompatible, resolveGlobalStoreNumber, validateGlobalStoreDefinitions,
 } from '../utils/globalStore';
 import { studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
 import { getStoreTemplateReferences } from '../utils/handlebars';
@@ -51,6 +51,17 @@ export function verifyGlobalStoreConfig(config: StudyConfig): ParserErrorWarning
         if (!Object.hasOwn(values, action.variable)) add(actionPath, `Unknown global store variable "${action.variable}"`);
         else if (!globalStoreOperationIsCompatible(action.operation, values[action.variable])) add(actionPath, `Operation "${action.operation}" is incompatible with "${action.variable}"`);
         else if (response.type === 'textOnly' || response.type === 'divider') add(actionPath, 'Store actions require an input response');
+        else if (action.operation === 'toggle') {
+          if (action.operand !== undefined) add(`${actionPath}/operand`, 'Toggle does not accept an operand');
+        } else {
+          const answerType = ['numerical', 'slider'].includes(response.type) ? 'number'
+            : ['shortText', 'longText'].includes(response.type) ? 'string' : undefined;
+          try {
+            const operandType = getGlobalStoreOperandType(action.operand, answerType);
+            const variableType = typeof values[action.variable];
+            if (operandType !== undefined && operandType !== variableType) add(`${actionPath}/operand`, 'The operand type must match the global variable type');
+          } catch (error) { add(`${actionPath}/operand`, (error as Error).message); }
+        }
       });
       if (response.type === 'numerical') {
         (['min', 'max', 'strictMin', 'strictMax'] as const).forEach((field) => {

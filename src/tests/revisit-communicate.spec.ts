@@ -52,13 +52,13 @@ test('delivers only received store snapshots, including to late subscribers, and
     location: { search: '?id=frame' },
     parent,
     addEventListener: (type: string, handler: (event: unknown) => void) => handlers.set(type, handler),
-    Revisit: undefined as unknown as { onGlobalStoreReceive: (fn: (store: { budget: number }) => void) => () => void },
+    Revisit: undefined as unknown as { onGlobalVariablesReceive: (fn: (store: { budget: number }) => void) => () => void },
   };
   runInNewContext(readFileSync('public/revisitUtilities/revisit-communicate.js', 'utf8'), {
     window: frame, URLSearchParams, crypto,
   });
   const early = vi.fn();
-  frame.Revisit.onGlobalStoreReceive(early);
+  frame.Revisit.onGlobalVariablesReceive(early);
   expect(early).not.toHaveBeenCalled();
 
   const deliver = (budget: number) => handlers.get('message')!({
@@ -70,7 +70,7 @@ test('delivers only received store snapshots, including to late subscribers, and
   expect(Object.isFrozen(early.mock.calls[0][0])).toBe(true);
 
   const late = vi.fn();
-  const unsubscribe = frame.Revisit.onGlobalStoreReceive(late);
+  const unsubscribe = frame.Revisit.onGlobalVariablesReceive(late);
   expect(late).toHaveBeenCalledExactlyOnceWith({ budget: 70 });
   unsubscribe();
   deliver(50);

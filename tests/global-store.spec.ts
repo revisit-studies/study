@@ -86,6 +86,42 @@ test('untouched captured numerical fields and sliders apply numeric global actio
   await expect.poll(async () => (await readGlobalStoreParticipant(page))?.globalVariables?.budget).toBe(85);
 });
 
+test('applies transformed answer and literal operands sequentially without changing the answer', async ({ page }) => {
+  const config = {
+    ...budgetStudy,
+    components: {
+      ...budgetStudy.components,
+      purchase: {
+        ...budgetStudy.components.purchase,
+        response: [{
+          id: 'discount',
+          type: 'numerical',
+          prompt: 'Discount proportion',
+          min: 0,
+          max: 1,
+          onSubmit: [
+            {
+              variable: 'budget',
+              operation: 'multiply',
+              operand: { source: 'answer', transforms: [{ operation: 'subtractFrom', value: 1 }] },
+            },
+            { variable: 'budget', operation: 'multiply', operand: { source: 'literal', value: 0.9 } },
+          ],
+        }],
+      },
+    },
+  };
+  await page.route('**/test-global-store/config.json', (route) => route.fulfill({ json: config }));
+  await startBudgetStudy(page);
+  await fillCost(page, 'Discount proportion', 0.2);
+  await nextClick(page);
+  await expectBudget(page, 72);
+  await expect(page.getByText('React entry budget: 72', { exact: true })).toBeVisible();
+  await expect.poll(async () => (await readGlobalStoreParticipant(page))?.globalVariables?.budget).toBe(72);
+  const participant = await readGlobalStoreParticipant(page);
+  expect(participant.answers.purchase_1.answer.discount).toBe(0.2);
+});
+
 test('evaluates primitive operations and preserves false, zero, hidden and optional values', async ({ page }) => {
   await openGlobalStoreStudy(page, 'test-global-store-operations');
   await expect(page.getByRole('heading', { name: 'Primitive operations', exact: true })).toBeVisible();

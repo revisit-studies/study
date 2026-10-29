@@ -1,5 +1,5 @@
 import type {
-  GlobalStoreAction, GlobalStoreOperation, GlobalStoreValue, GlobalStoreValues, GlobalVariableDeclaration, GlobalVariableDeclarations, Response, ParserErrorWarning,
+  GlobalStoreAction, GlobalStoreOperand, GlobalStoreOperation, GlobalStoreValue, GlobalStoreValues, GlobalVariableDeclaration, GlobalVariableDeclarations, Response, ParserErrorWarning,
 } from '../parser/types';
 import type { StoredAnswer } from '../store/types';
 import { isResponseAnswered, isResponseDontKnowSelected } from './responseValue';
@@ -14,9 +14,10 @@ const operationsByType: Record<string, GlobalStoreOperation[]> = {
   boolean: ['set', 'and', 'or', 'toggle'],
 };
 
-export type AppliedGlobalStoreAction = GlobalStoreAction & {
+export type AppliedGlobalStoreAction = Omit<GlobalStoreAction, 'operand'> & {
   source: string;
   operand?: GlobalStoreValue;
+  operandDefinition?: GlobalStoreOperand;
 };
 
 function isPrimitive(value: unknown): value is GlobalStoreValue {
@@ -135,6 +136,43 @@ function applyOperation(current: GlobalStoreValue, operation: GlobalStoreOperati
   }
 }
 
+/** Shared config/runtime type checks, without evaluating answer-dependent arithmetic. */
+export function getGlobalStoreOperandType(operand?: GlobalStoreOperand, answerType?: string): string | undefined {
+  let type = answerType;
+  if (operand?.source === 'literal') {
+    if (!isPrimitive(operand.value)) throw new Error('A literal operand must be a finite number, string, or boolean.');
+    type = typeof operand.value;
+  } else if (operand?.source !== undefined && operand.source !== 'answer') {
+    throw new Error('An operand source must be answer or literal.');
+  }
+  (operand?.transforms ?? []).forEach((transform) => {
+    const required = transform.operation === 'not' ? 'boolean' : 'number';
+    if (type !== undefined && type !== required) throw new Error(`Operand transform "${transform.operation}" requires a ${required} value.`);
+    if (transform.operation !== 'not') {
+      if (!['add', 'subtract', 'multiply', 'divide', 'subtractFrom', 'divideInto'].includes(transform.operation)
+        || !Number.isFinite(transform.value)) throw new Error('Numeric operand transforms require a supported operation and finite value.');
+      if (transform.operation === 'divide' && transform.value === 0) throw new Error('Cannot divide an operand by zero.');
+    }
+    type = required;
+  });
+  return type;
+}
+
+function resolveGlobalStoreOperand(definition: GlobalStoreOperand | undefined, answer: unknown): GlobalStoreValue {
+  const initial = definition?.source === 'literal' ? definition.value : answer;
+  if (!isPrimitive(initial)) throw new Error('A global store operand must be a finite number, string, or boolean.');
+  let value = initial;
+  getGlobalStoreOperandType(definition, typeof answer);
+  (definition?.transforms ?? []).forEach((transform) => {
+    if (transform.operation === 'not') value = !value;
+    else if (transform.operation === 'subtractFrom') value = applyOperation(transform.value, 'subtract', value);
+    else if (transform.operation === 'divideInto') value = applyOperation(transform.value, 'divide', value);
+    else value = applyOperation(value, transform.operation, transform.value);
+    if (!isPrimitive(value)) throw new Error('An operand transform produced a non-finite value.');
+  });
+  return value;
+}
+
 export function evaluateGlobalStoreUpdates(
   definitions: GlobalVariableDeclarations,
   entry: GlobalStoreValues,
@@ -147,13 +185,22 @@ export function evaluateGlobalStoreUpdates(
   responses.forEach((response) => {
     const answer = answers[response.id];
     if (!isResponseAnswered(answer) || isResponseDontKnowSelected(response, answers)) return;
-    const operand = (response.type === 'numerical' || response.type === 'slider') && typeof answer === 'string' && answer.trim() !== ''
+    const normalizedAnswer = (response.type === 'numerical' || response.type === 'slider') && typeof answer === 'string' && answer.trim() !== ''
       ? Number(answer) : answer;
     (response.onSubmit ?? []).forEach((action) => {
       if (!Object.hasOwn(definitions, action.variable)) throw new Error(`Unknown global store variable "${action.variable}"; declare it first.`);
-      if (action.operation !== 'toggle' && !isPrimitive(operand)) throw new Error(`Global store action for "${response.id}" requires a finite number, string, or boolean answer.`);
-      values[action.variable] = applyOperation(values[action.variable], action.operation, isPrimitive(operand) ? operand : undefined);
-      operations.push({ ...action, source: response.id, ...(action.operation === 'toggle' ? {} : { operand: operand as GlobalStoreValue }) });
+      if (action.operation === 'toggle' && action.operand !== undefined) throw new Error('Toggle does not accept an operand.');
+      const operand = action.operation === 'toggle' ? undefined : resolveGlobalStoreOperand(action.operand, normalizedAnswer);
+      const result = applyOperation(values[action.variable], action.operation, operand);
+      if (!isPrimitive(result)) throw new Error(`Global store action for "${response.id}" produced a non-finite value.`);
+      values[action.variable] = result;
+      operations.push({
+        variable: action.variable,
+        operation: action.operation,
+        source: response.id,
+        ...(action.operation === 'toggle' ? {} : { operand }),
+        ...(action.operand ? { operandDefinition: structuredClone(action.operand) } : {}),
+      });
     });
   });
   if (!patch || typeof patch !== 'object' || Array.isArray(patch) || Object.getPrototypeOf(patch) !== Object.prototype) throw new Error('A global store updater must return a plain object of declared key/value updates.');

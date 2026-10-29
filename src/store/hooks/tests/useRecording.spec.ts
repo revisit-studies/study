@@ -951,7 +951,7 @@ describe('ScreenRecordingPermission component', () => {
         parameters: undefined,
         answers: {},
         useTrrack: vi.fn(),
-        store: {},
+        globalVariables: {},
         registerGlobalStoreUpdater: () => () => undefined,
       } as React.ComponentProps<typeof ScreenRecordingPermission>),
     );
@@ -983,7 +983,7 @@ describe('ScreenRecordingPermission component', () => {
         parameters: undefined,
         answers: {},
         useTrrack: vi.fn(),
-        store: {},
+        globalVariables: {},
         registerGlobalStoreUpdater: () => () => undefined,
       } as React.ComponentProps<typeof ScreenRecordingPermission>),
     );
@@ -1018,7 +1018,7 @@ describe('WebcamRecordingPermission component', () => {
         parameters: undefined,
         answers: {},
         useTrrack: vi.fn(),
-        store: {},
+        globalVariables: {},
         registerGlobalStoreUpdater: () => () => undefined,
       } as React.ComponentProps<typeof WebcamRecordingPermission>),
     );

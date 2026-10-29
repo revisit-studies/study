@@ -52,3 +52,42 @@ test('validates inherited form actions against the study declarations', async ()
   Object.assign(config.components, { purchase: { baseComponent: 'basePurchase' } });
   expect((await parseStudyConfig(JSON.stringify(config))).errors.some((error) => error.instancePath.includes('/components/purchase/response/'))).toBe(true);
 });
+
+test.each([
+  {},
+  { transforms: [{ operation: 'subtractFrom', value: 1 }] },
+  { source: 'answer' },
+  { source: 'answer', transforms: [{ operation: 'subtractFrom', value: 1 }] },
+  { source: 'answer', transforms: [{ operation: 'subtractFrom', value: 1 }, { operation: 'divideInto', value: 1 }] },
+  { source: 'literal', value: 0.9, transforms: [{ operation: 'multiply', value: 2 }] },
+])('accepts typed action operands %j', async (operand) => {
+  const config = structuredClone(budgetStudy);
+  Object.assign(config.components.purchase.response[0].onSubmit[0], { operation: 'multiply', operand });
+  expect((await parseStudyConfig(JSON.stringify(config))).errors).toEqual([]);
+});
+
+test.each([
+  { variable: 'eligible', operation: 'and', operand: { source: 'literal', value: false, transforms: [{ operation: 'not' }] } },
+  { variable: 'label', operation: 'append', operand: { source: 'literal', value: ', ' } },
+])('literal operands can have a different type from the triggering response: %j', async (action) => {
+  const config = structuredClone(budgetStudy);
+  Object.assign(config.components.purchase.response[0].onSubmit[0], action);
+  expect((await parseStudyConfig(JSON.stringify(config))).errors).toEqual([]);
+});
+
+test.each([
+  { operation: 'toggle', variable: 'eligible', operand: { source: 'literal', value: true } },
+  { operand: { source: 'literal', value: '10' } },
+  { operand: { source: 'answer', transforms: [{ operation: 'not' }] } },
+  { operand: { source: 'literal', value: false, transforms: [{ operation: 'add', value: 1 }] } },
+  { operand: { source: 'answer', transforms: [{ operation: 'divide', value: 0 }] } },
+  { operand: { source: 'answer', transforms: [{ operation: 'add', value: '1' }] } },
+  { operand: { source: 'literal' } },
+  { operand: { source: 'answer', value: 1 } },
+  { operand: { source: 'other' } },
+])('rejects invalid operand configuration %j', async (action) => {
+  const config = structuredClone(budgetStudy);
+  Object.assign(config.components.purchase.response[0].onSubmit[0], action);
+  const { errors } = await parseStudyConfig(JSON.stringify(config));
+  expect(errors.some((error) => error.instancePath.includes('onSubmit'))).toBe(true);
+});

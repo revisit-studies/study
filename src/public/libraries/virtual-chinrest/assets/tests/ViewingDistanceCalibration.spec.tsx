@@ -27,7 +27,7 @@ function mount(provenance?: TrrackedProvenance) {
     getGraph = () => trrack.graph.backend as TrrackedProvenance;
     return trrack;
   }
-  const view = render(<MantineProvider><ViewingDistanceCalibration parameters={{ blindspotAngle: 13.5 }} store={{}} registerGlobalStoreUpdater={vi.fn()} answers={{}} setAnswer={vi.fn()} useTrrack={useTrrack as never} /></MantineProvider>);
+  const view = render(<MantineProvider><ViewingDistanceCalibration parameters={{ blindspotAngle: 13.5 }} globalVariables={{}} registerGlobalStoreUpdater={vi.fn()} answers={{}} setAnswer={vi.fn()} useTrrack={useTrrack as never} /></MantineProvider>);
   return { ...view, report, getGraph: () => getGraph() };
 }
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });

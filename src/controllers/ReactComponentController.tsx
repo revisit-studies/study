@@ -29,7 +29,7 @@ const modules = import.meta.glob<{ default: ComponentType<StimulusParams<ReactCo
 );
 
 export function ReactComponentController({ currentConfig, provState, answers }: { currentConfig: ReactComponent; provState?: unknown, answers: ParticipantData['answers'] }) {
-  const store = useGlobalStore();
+  const globalVariables = useGlobalStore();
   const registerGlobalStoreUpdater = useGlobalStoreUpdaterRegistration();
   const studyConfig = useStudyConfig();
   const templateData = useTemplateAnswerContext();
@@ -122,7 +122,7 @@ export function ReactComponentController({ currentConfig, provState, answers }: 
               >
                 {(useTrrack) => (
                   <StimulusComponent
-                    store={store}
+                    globalVariables={globalVariables}
                     registerGlobalStoreUpdater={registerGlobalStoreUpdater}
                     parameters={currentConfig.parameters}
                     setAnswer={setAnswer}

@@ -46,9 +46,50 @@ Attach actions to a response. Its effective submitted answer is the operand:
 
 All primitives support `set`; numbers support `add`, `subtract`, `multiply`, `divide`; strings support `append`, `prepend`; booleans support `and`, `or`, `toggle`. Toggle is unary and may be attached to an answered checkbox or structured custom response; empty/unanswered responses still do not trigger it. Actions run in resolved config response order, then action-array order, regardless of displayed question order or placement. Empty optional answers, conditionally hidden fields, and Don't Know operands are skipped; zero and false are retained. Types are never silently coerced. Division by zero, invalid types, unknown variables, non-finite results, or final constraint violations reject the entire proposal.
 
+One response can update several variables, or apply several operations to the same variable. Every action uses that response's submitted value as its operand. For example, with `budget: 100` and `totalSpent: 0`, submitting a cost of 10 with these actions produces `budget: 90` and `totalSpent: 10`:
+
+```json
+"onSubmit": [
+  { "variable": "budget", "operation": "subtract" },
+  { "variable": "totalSpent", "operation": "add" }
+]
+```
+
+### Operand sources and transforms
+
+Omitting `operand`, or omitting its `source`, uses the current response's submitted answer. Each action resolves its own operand from that original answer; transforms do not change the answer saved in participant data. Use `source: "literal"` with a primitive `value` for a fixed operand. Actions still require an answered, visible response; literal operands do not bypass optional-empty or Don't Know handling.
+
+For a numerical `discount` response with `min: 0` and `max: 1`, this action reduces a budget by the submitted proportion:
+
+```json
+{
+  "variable": "budget",
+  "operation": "multiply",
+  "operand": {
+    "source": "answer",
+    "transforms": [{ "operation": "subtractFrom", "value": 1 }]
+  }
+}
+```
+
+A budget of 100 and answer 0.2 produce `100 * (1 - 0.2) = 80`. To accept percentages from 0 to 100 instead, use transforms `[{ "operation": "divide", "value": 100 }, { "operation": "subtractFrom", "value": 1 }]`.
+
+Numeric transforms run in array order and support `add`, `subtract`, `multiply`, `divide`, `subtractFrom`, and `divideInto`, each with a finite numeric `value`. Ordinary operations calculate `operand op value`; reverse operations calculate `value - operand` and `value / operand`. The boolean transform `{ "operation": "not" }` takes no value. String actions accept raw answers or literals without string transforms. Types stay strict, and `toggle` accepts no operand definition.
+
+For different operands in sequential actions:
+
+```json
+"onSubmit": [
+  { "variable": "budget", "operation": "subtract" },
+  { "variable": "budget", "operation": "multiply", "operand": { "source": "literal", "value": 0.9 } }
+]
+```
+
+Starting at 100, answering 10 produces `(100 - 10) * 0.9 = 81`. Literal strings and booleans also work, such as appending a fixed separator or setting a completion flag. Division by zero, incompatible types, and non-finite intermediate results reject the complete proposal. Variable bounds and text constraints validate the final combined values. Provenance records the operand definition and resolved operand, so replay and retries use accepted results rather than rerunning transforms.
+
 `{{globalVariables.key}}` interpolates values in ordinary templates. An exact reference in a numerical constraint preserves the numeric type. The framework resolves these against the committed state at trial entry. A global visibility condition is `"visibleIf": { "globalVariable": "eligible", "comparison": "equals", "value": true }`. A block skip is `{ "check": "globalVariable", "variable": "budget", "comparison": "lessThan", "value": 20, "to": "lowBudget" }`. These use the existing comparison operators. Dynamic functions receive `store` alongside their existing arguments.
 
-A React stimulus receives `store` and `registerGlobalStoreUpdater`:
+A React stimulus receives `globalVariables` and `registerGlobalStoreUpdater`:
 
 ```tsx
 useEffect(() => registerGlobalStoreUpdater(({ store, answers }) => ({
@@ -61,7 +102,7 @@ The callback may return a plain partial object or a Promise of that object. Omit
 A website using `revisitUtilities/revisit-communicate.js` uses the same contract:
 
 ```js
-Revisit.onGlobalStoreReceive((store) => renderBudget(store.budget));
+Revisit.onGlobalVariablesReceive((store) => renderBudget(store.budget));
 const unregister = Revisit.registerGlobalStoreUpdater(({ store, answers }) => ({
   budget: store.budget - selectedCost,
 }));
@@ -102,4 +143,4 @@ Review regressions also cover a global skip to the end during a dynamic iteratio
 
 Numeric declarations support `min`, `max`, `strictMin`, and `strictMax`. String declarations share response character/word limits, `textValidation`, and built-in email, URL and phone formats. Rules validate the initial value and the final proposed value, including combined form operations and React/HTML updater results. Invalid updates leave accepted state unchanged.
 
-The templating demo includes Markdown, React and HTML content reading the same budget. Markdown uses `\{{globalVariables.budget}}`; React aliases its stimulus `store` prop as `globalVariables` and renders `globalVariables.budget`; HTML reads `globalVariables.budget` inside `Revisit.onGlobalStoreReceive`, and supports the same template expression in markup.
+The templating demo includes Markdown, React and HTML content reading the same budget. Markdown uses `\{{globalVariables.budget}}`; React receives the `globalVariables` prop and renders `globalVariables.budget`; HTML reads `globalVariables.budget` inside `Revisit.onGlobalVariablesReceive`, and supports the same template expression in markup.

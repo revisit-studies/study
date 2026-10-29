@@ -1512,6 +1512,10 @@
     "GlobalStoreAction": {
       "additionalProperties": false,
       "properties": {
+        "operand": {
+          "$ref": "#/definitions/GlobalStoreOperand",
+          "description": "Omit to use the current answer directly. Not applicable to toggle."
+        },
         "operation": {
           "$ref": "#/definitions/GlobalStoreOperation"
         },
@@ -1532,6 +1536,92 @@
         "string"
       ]
     },
+    "GlobalStoreOperand": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "source": {
+              "const": "answer",
+              "description": "Defaults to the current response's submitted answer.",
+              "type": "string"
+            },
+            "transforms": {
+              "items": {
+                "$ref": "#/definitions/GlobalStoreOperandTransform"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "source": {
+              "const": "literal",
+              "type": "string"
+            },
+            "transforms": {
+              "items": {
+                "$ref": "#/definitions/GlobalStoreOperandTransform"
+              },
+              "type": "array"
+            },
+            "value": {
+              "$ref": "#/definitions/GlobalStoreValue"
+            }
+          },
+          "required": [
+            "source",
+            "value"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "GlobalStoreOperandTransform": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "operation": {
+              "enum": [
+                "add",
+                "subtract",
+                "multiply",
+                "divide",
+                "subtractFrom",
+                "divideInto"
+              ],
+              "type": "string"
+            },
+            "value": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "operation",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "operation": {
+              "const": "not",
+              "type": "string"
+            }
+          },
+          "required": [
+            "operation"
+          ],
+          "type": "object"
+        }
+      ],
+      "description": "Transform the operand before applying the action; reverse operations use value op operand."
+    },
     "GlobalStoreOperation": {
       "enum": [
         "set",
@@ -1546,6 +1636,14 @@
         "toggle"
       ],
       "type": "string"
+    },
+    "GlobalStoreValue": {
+      "description": "Primitive values in a participant's declared global store. Types are inferred from initialValue.",
+      "type": [
+        "string",
+        "number",
+        "boolean"
+      ]
     },
     "GlobalVariableCondition": {
       "anyOf": [

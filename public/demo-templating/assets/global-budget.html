@@ -10,7 +10,7 @@
   <p>Templated HTML budget: {{globalVariables.budget}}</p>
   <p>HTML content budget: <output id="budget"></output></p>
   <p>Participant label: <output id="label"></output></p>
-  <p>JavaScript receives globalVariables through Revisit.onGlobalStoreReceive and reads globalVariables.budget.</p>
+  <p>JavaScript receives globalVariables through Revisit.onGlobalVariablesReceive and reads globalVariables.budget.</p>
   <button id="spend" disabled>Spend 20 in HTML</button>
   <p>HTML selected spending: <output id="selected">0</output></p>
   <script>
@@ -20,7 +20,7 @@
       document.querySelector('#selected').textContent = spend;
       Revisit.postAnswers({ spend });
     };
-    Revisit.onGlobalStoreReceive((globalVariables) => {
+    Revisit.onGlobalVariablesReceive((globalVariables) => {
       document.querySelector('#budget').textContent = globalVariables.budget;
       document.querySelector('#label').textContent = globalVariables.participantLabel;
       document.querySelector('#spend').disabled = globalVariables.budget < 20;

@@ -221,7 +221,7 @@ export type GlobalStoreUpdater = (context: { store: Readonly<GlobalStoreValues>;
 export type RegisterGlobalStoreUpdater = (updater: GlobalStoreUpdater) => () => void;
 
 export interface StimulusParams<T, S = never> {
-  store: Readonly<GlobalStoreValues>;
+  globalVariables: Readonly<GlobalStoreValues>;
   registerGlobalStoreUpdater: RegisterGlobalStoreUpdater;
   parameters: T;
   provenanceState?: S;
