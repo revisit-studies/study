@@ -100,7 +100,7 @@ export function Scatter({
     return d3.scaleLinear([height + margin.top, margin.top]).domain([yMin - range / 10, yMax + range / 10]).nice();
   }, [height, yMax, yMin]);
 
-  // create brushes
+  // Programmatic moves restore saved bounds; sourceEvent guards exclude them from recording.
   const clearCallback = useMemo(() => {
     if (!xScale || !yScale) {
       return () => null;
@@ -123,7 +123,10 @@ export function Scatter({
         d3.select(brushYRef.current!).call(brushY);
         d3.select(brushXRef.current!).call(brushX);
 
-        if (!brushState.hasBrush) {
+        if (brushState.hasBrush) {
+          d3.select(brushYRef.current!).call(brushY.move, [brushState.y1, brushState.y2]);
+          d3.select(brushXRef.current!).call(brushX.move, [brushState.x1, brushState.x2]);
+        } else {
           d3.select(brushYRef.current!).call(brushY.move, [yScale(yMax), yScale(yMin)]);
           d3.select(brushXRef.current!).call(brushX.move, [xScale(new Date('2015-01-02')), xScale(new Date('2015-12-31'))]);
           setBrushedSpace([[xScale(new Date('2015-01-02')), yScale(yMax)], [xScale(new Date('2015-12-31')), yScale(yMin)]], xScale, yScale, 'drag');
@@ -148,7 +151,8 @@ export function Scatter({
         }
       });
 
-      d3.select(scatterRef.current! as unknown as SVGGElement).call(brush);
+      d3.select(scatterRef.current! as unknown as SVGGElement).call(brush)
+        .call(brush.move, brushState.hasBrush ? [[brushState.x1, brushState.y1], [brushState.x2, brushState.y2]] : null);
 
       return () => {
         d3.select(scatterRef.current! as unknown as SVGGElement).call(brush.move, null);
@@ -167,7 +171,7 @@ export function Scatter({
     }
 
     return () => null;
-  }, [brushState.hasBrush, brushType, brushXRef, brushYRef, height, ref, setBrushedSpace, setFilteredTable, width, xMax, xMin, xScale, yMax, yMin, yScale]);
+  }, [brushState.hasBrush, brushState.x1, brushState.x2, brushState.y1, brushState.y2, brushType, brushXRef, brushYRef, height, ref, setBrushedSpace, setFilteredTable, width, xMax, xMin, xScale, yMax, yMin, yScale]);
 
   const brushedSet = useMemo(() => (brushedPoints.length === 0 ? null : new Set(brushedPoints)), [brushedPoints]);
 
