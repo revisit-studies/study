@@ -1,13 +1,15 @@
 import {
   ReactNode,
   useEffect,
+  useLayoutEffect,
   useState,
   useMemo,
+  useRef,
 } from 'react';
 import { Provider } from 'react-redux';
 import { RouteObject, useRoutes, useSearchParams } from 'react-router';
 import {
-  Anchor, Button, Center, Code, LoadingOverlay, Stack, Text, Title,
+  Anchor, Center, Code, Loader, LoadingOverlay, Paper, Stack, Text, Title,
 } from '@mantine/core';
 import { GLOBAL_STORE_TASK } from '../store/globalStoreProvenance';
 import { projectHistoricalGlobalStore } from '../store/globalStoreHistory';
@@ -27,6 +29,8 @@ import {
 import { ComponentController } from '../controllers/ComponentController';
 import { NavigateWithParams } from '../utils/NavigateWithParams';
 import { StepRenderer } from './StepRenderer';
+import { getComponent } from '../utils/handleComponentInheritance';
+import { PREFIX } from '../utils/Prefix';
 import { StudyRouteGuard } from '../routes/StudyRouteGuard';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import { generateSequenceArray } from '../utils/handleRandomSequences';
@@ -51,34 +55,19 @@ import {
 } from '../utils/handleConditionLogic';
 import { StartupErrorScreen } from './StartupErrorScreen';
 import { materializeParticipantConfig } from '../parser/libraryParser';
-import { loadStaticFirstComponentPreview, type StaticFirstComponentPreview } from '../utils/getStaticFirstComponent';
 import { useStudyColorMode } from './AppThemeProvider';
-import { StartupPreview } from './StartupPreview';
+import {
+  StartupInteractionProvider,
+  useStudyStorageReady,
+} from './StartupContext';
 
 type StartupStorageStatus = Pick<StorageEngine, 'getEngine' | 'isConnected'>;
+type StartupPhase = 'config-loading' | 'participant-loading' | 'ready' | 'error';
 
 const GENERIC_STARTUP_ERROR = 'There was a problem loading the study.';
 const RESUME_STARTUP_ERROR = 'This study session could not be resumed.';
 const STUDY_LOADING_MESSAGE = 'Loading your study. This may take a moment.';
 const STUDY_LOADING_MESSAGE_DELAY_MS = 1500;
-function getParticipantRoutes() {
-  return [
-    {
-      element: <StudyRouteGuard><StepRenderer /></StudyRouteGuard>,
-      children: [
-        {
-          path: '/',
-          element: <NavigateWithParams to={encryptIndex(0)} replace />,
-        },
-        {
-          path: '/:index/:funcIndex?',
-          element: <ComponentController />,
-        },
-      ],
-    },
-  ];
-}
-
 export function StudyLoadingOverlay({
   visible,
   showMessage = true,
@@ -101,31 +90,51 @@ export function StudyLoadingOverlay({
     return () => window.clearTimeout(timeoutId);
   }, [showMessage, visible]);
 
-  return (
-    <>
-      <LoadingOverlay visible={visible} />
-      {visible && showMessage && showDelayedMessage && (
-        <Text
-          role="status"
-          aria-live="polite"
-          aria-atomic="true"
-          style={{
-            position: 'fixed',
-            top: 'calc(50% + 40px)',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 1001,
-            width: 'calc(100% - 32px)',
-            maxWidth: 420,
-            textAlign: 'center',
-            pointerEvents: 'none',
-          }}
-        >
-          {STUDY_LOADING_MESSAGE}
-        </Text>
-      )}
-    </>
-  );
+  return visible ? (
+    <div
+      data-testid="study-loading-barrier"
+      role="dialog"
+      aria-modal="true"
+      aria-busy="true"
+      aria-live="polite"
+      aria-label={STUDY_LOADING_MESSAGE}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 1000,
+        pointerEvents: 'all',
+      }}
+    >
+      <LoadingOverlay
+        visible
+        loaderProps={{
+          style: { width: 'min(420px, calc(100vw - 32px))', height: 'auto' },
+          children: (
+            <Paper p="xl" radius="md" shadow="md" withBorder bg="var(--mantine-color-body)" c="var(--mantine-color-text)">
+              <Stack align="center" gap="md">
+                <Loader />
+                {showMessage && showDelayedMessage && (
+                  <Text role="status" aria-live="polite" aria-atomic="true" ta="center">
+                    {STUDY_LOADING_MESSAGE}
+                  </Text>
+                )}
+              </Stack>
+            </Paper>
+          ),
+        }}
+      />
+    </div>
+  ) : null;
+}
+
+function StudyAssetPrefetch({ config }: { config: StudyConfig }) {
+  const first = config.sequence.order === 'fixed' ? config.sequence.components[0] : undefined;
+  const component = typeof first === 'string' ? getComponent(first, config) : null;
+  if (!component || (component.type !== 'markdown' && component.type !== 'image') || component.path.includes('{{')) {
+    return null;
+  }
+  const href = component.path.startsWith('http') ? component.path : `${PREFIX}${component.path}`;
+  return <link rel="prefetch" as={component.type === 'image' ? 'image' : 'fetch'} href={href} crossOrigin={component.type === 'markdown' ? 'anonymous' : undefined} />;
 }
 
 export function getScreenOrientationType(screen: Screen) {
@@ -177,20 +186,17 @@ export function getShellUiState({
   hasRoutes,
   hasStore,
   isCompletionCheckResolved,
-  completionCheckError,
   hasStageCapacityError = false,
 }: {
   isValidStudyId: boolean;
   hasRoutes: boolean;
   hasStore: boolean;
   isCompletionCheckResolved: boolean;
-  completionCheckError: string | null;
   hasStageCapacityError?: boolean;
 }) {
   return {
     isLoading: isValidStudyId && !hasStageCapacityError && (!hasRoutes || !hasStore || !isCompletionCheckResolved),
     showLoadingMessage: isValidStudyId && !hasStageCapacityError && (!hasRoutes || !hasStore),
-    showCompletionCheckError: completionCheckError !== null,
   };
 }
 
@@ -235,7 +241,11 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
   // Pull study config
   const routeStudyId = useStudyId();
   const [activeConfig, setActiveConfig] = useState<ParsedConfig<StudyConfig> | null>(null);
-  const [startupError, setStartupError] = useState<{ error: unknown } | null>(null);
+  const [startupError, setStartupError] = useState<{
+    error: unknown;
+    retryParticipantStartup?: boolean;
+  } | null>(null);
+  const [startupPhase, setStartupPhase] = useState<StartupPhase>('config-loading');
   const [stageEntryError, setStageEntryError] = useState<
     StageCapacityExceededError | StageNoAvailableConditionsError | StageOnlyDisabledConditionsHaveCapacityError | null
   >(null);
@@ -257,11 +267,13 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
           const config = await getStudyConfig(routeStudyId, globalConfig);
           if (!cancelled) {
             setActiveConfig(config);
+            setStartupPhase('participant-loading');
           }
         } catch (error) {
           console.error('Error loading study config:', error);
           if (!cancelled) {
             setStartupError({ error });
+            setStartupPhase('error');
           }
         }
       };
@@ -280,6 +292,7 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
               const config = await parseStudyConfig(event.data.payload);
               if (!cancelled) {
                 setActiveConfig(config);
+                setStartupPhase('participant-loading');
               }
 
               const sequenceArray = await generateSequenceArray(config, config.warnings);
@@ -290,6 +303,7 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
               console.error('Error loading widget study config:', error);
               if (!cancelled) {
                 setStartupError({ error });
+                setStartupPhase('error');
               }
             }
           };
@@ -312,56 +326,142 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
   }, [globalConfig, routeStudyId]);
 
   const [routes, setRoutes] = useState<RouteObject[]>([]);
+  const [previewStore, setPreviewStore] = useState<Nullable<StudyStore>>(null);
   const [store, setStore] = useState<Nullable<StudyStore>>(null);
   const [isCompletionCheckResolved, setIsCompletionCheckResolved] = useState(false);
-  const [completionCheckError, setCompletionCheckError] = useState<string | null>(null);
-  const [startupPreviewComponent, setStartupPreviewComponent] = useState<StaticFirstComponentPreview | null>(null);
-  const { storageEngine, configuredStorageEngine } = useStorageEngine();
-  const [searchParams] = useSearchParams();
+  const [startupAttempt, setStartupAttempt] = useState(0);
+  const initializationRef = useRef<{
+    key: string;
+    config: ParsedConfig<StudyConfig>;
+    storageEngine: StorageEngine;
+  } | null>(null);
+  const mountedRef = useRef(false);
 
-  const participantId = useMemo(() => searchParams.get('participantId'), [searchParams]);
-  const studyCondition = useMemo(() => parseConditionParam(searchParams.get('condition')), [searchParams]);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+  const interfaceRef = useRef<HTMLDivElement>(null);
+  const { storageEngine, configuredStorageEngine } = useStorageEngine();
+  const studyStorageReady = useStudyStorageReady();
+  const [rawSearchParams] = useSearchParams();
+
+  const searchParamsString = rawSearchParams.toString();
+  const searchParams = useMemo(
+    () => new URLSearchParams(searchParamsString),
+    [searchParamsString],
+  );
+  const participantId = useMemo(
+    () => searchParams.get('participantId'),
+    [searchParams],
+  );
+  const studyCondition = useMemo(
+    () => parseConditionParam(searchParams.get('condition')),
+    [searchParams],
+  );
   const urlParticipantId = useMemo(() => (
     activeConfig?.uiConfig?.urlParticipantIdParam
       ? searchParams.get(activeConfig.uiConfig.urlParticipantIdParam) ?? undefined
       : undefined
   ), [activeConfig, searchParams]);
-  useEffect(() => {
-    let cancelled = false;
-    setStartupPreviewComponent(null);
-
-    if (store || !storageEngine || !activeConfig || !canonicalStudyId
-      || participantId || urlParticipantId || studyCondition.length > 0
-      || (activeConfig.errors?.length ?? 0) > 0) {
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    storageEngine.peekCurrentParticipantId(canonicalStudyId).then(async (existingParticipantId) => {
-      if (cancelled || existingParticipantId) {
-        return;
-      }
-
-      const previewComponent = await loadStaticFirstComponentPreview(activeConfig);
-      if (!previewComponent) {
-        return;
-      }
-
-      if (!cancelled) {
-        setStartupPreviewComponent(previewComponent);
-      }
-    }).catch(() => {
-      // Startup remains unchanged if preview construction is unavailable.
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [storageEngine, activeConfig, canonicalStudyId, participantId, urlParticipantId, studyCondition, store]);
 
   useEffect(() => {
     let isCancelled = false;
+
+    async function initializePreviewStore() {
+      if (!activeConfig || !canonicalStudyId || (activeConfig.errors?.length ?? 0) > 0) {
+        return;
+      }
+
+      setRoutes([
+        {
+          element: <StudyRouteGuard><StepRenderer /></StudyRouteGuard>,
+          children: [
+            {
+              path: '/',
+              element: <NavigateWithParams to={encryptIndex(0)} replace />,
+            },
+            {
+              path: '/:index/:funcIndex?',
+              element: <ComponentController />,
+            },
+          ],
+        },
+      ]);
+
+      const previewSequence = {
+        order: 'fixed' as const, components: [], skip: [], orderPath: 'root',
+      };
+      const previewConfig = {
+        ...activeConfig, components: {}, globalVariables: undefined, sequence: { order: 'fixed' as const, components: [] },
+      };
+      const localPreviewStore = await studyStoreCreator(
+        canonicalStudyId,
+        previewConfig,
+        previewSequence,
+        {
+          ...createEmptyParticipantMetadata(),
+          colorMode: activeConfig.uiConfig.colorMode === 'userPreference'
+            ? initialSystemColorMode : activeConfig.uiConfig.colorMode ?? 'light',
+        },
+        {},
+        {
+          developmentModeEnabled: false,
+          dataSharingEnabled: false,
+          dataCollectionEnabled: false,
+        },
+        '',
+        false,
+        false,
+      );
+
+      if (!isCancelled) {
+        setPreviewStore(localPreviewStore);
+      }
+    }
+
+    initializePreviewStore().catch((error) => {
+      console.error('Error initializing preview study store:', error);
+      if (!isCancelled) {
+        setStartupError({ error });
+        setStartupPhase('error');
+      }
+    });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [activeConfig, canonicalStudyId, initialSystemColorMode, studyCondition]);
+
+  const startupKey = storageEngine && activeConfig && canonicalStudyId
+    ? [
+      canonicalStudyId,
+      participantId ?? '',
+      searchParamsString,
+      startupAttempt,
+    ].join(':')
+    : null;
+
+  useEffect(() => {
+    if (!studyStorageReady) {
+      initializationRef.current = null;
+      return undefined;
+    }
+
+    if (!startupKey || !activeConfig || !storageEngine || (
+      initializationRef.current?.key === startupKey
+      && initializationRef.current.config === activeConfig
+      && initializationRef.current.storageEngine === storageEngine
+    )) {
+      return undefined;
+    }
+    const initialization = { key: startupKey, config: activeConfig, storageEngine };
+    initializationRef.current = initialization;
+
+    const isCurrentStartup = () => mountedRef.current
+      && initializationRef.current === initialization;
 
     async function fetchParticipantIp() {
       const ipTimeoutController = new AbortController();
@@ -381,9 +481,11 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
     async function initializeUserStoreRouting() {
       // Check that we have a storage engine and active config (studyId is set for config, but typescript complains)
       if (!storageEngine || !activeConfig || !canonicalStudyId || (activeConfig.errors?.length ?? 0) > 0) return;
+      setStore(null);
       setIsCompletionCheckResolved(false);
-      setCompletionCheckError(null);
       setStageEntryError(null);
+      setStartupError(null);
+      setStartupPhase('participant-loading');
 
       let modes: Record<REVISIT_MODE, boolean> | null = null;
       const initialColorMode = activeConfig.uiConfig.colorMode === 'userPreference'
@@ -391,21 +493,25 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
       try {
         // Make sure that we have a study database and that the study database has a sequence array
         await storageEngine.initializeStudyDb(canonicalStudyId);
+        if (!isCurrentStartup()) return;
 
         const activeHashPromise = hash(JSON.stringify(activeConfig));
 
         await storageEngine.saveConfig(activeConfig);
+        if (!isCurrentStartup()) return;
 
         const activeHash = await activeHashPromise;
         const sequenceArray = await storageEngine.getOrCreateSequenceArray(
           activeHash,
           () => generateSequenceArray(activeConfig, activeConfig.warnings),
         );
+        if (!isCurrentStartup()) return;
 
         // Get or generate participant session
         const searchParamsObject = Object.fromEntries(searchParams.entries());
 
         const resolvedModes = await storageEngine.getModes(canonicalStudyId);
+        if (!isCurrentStartup()) return;
         modes = resolvedModes;
 
         const initialMetadata: ParticipantMetadata = {
@@ -421,12 +527,15 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
           { modesDocument: resolvedModes, sequenceArray },
         );
 
+        if (!isCurrentStartup()) return;
+
         if (studyCondition.length > 0 && resolvedModes.developmentModeEnabled) {
           const updatedSearchParams = {
             ...participantSession.searchParams,
             condition: studyCondition.join(','),
           };
           await storageEngine.updateParticipantSearchParams(updatedSearchParams);
+          if (!isCurrentStartup()) return;
           await storageEngine.updateStudyCondition(studyCondition);
           participantSession = {
             ...participantSession,
@@ -486,15 +595,21 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
           participantSession.globalStoreRevision,
         );
 
-        if (isCancelled) {
+        if (!isCurrentStartup()) {
           return;
         }
 
-        setStore(newStore);
+        const finishStartup = (participantCompleted: boolean) => {
+          newStore.store.dispatch(newStore.actions.setParticipantCompleted(participantCompleted));
+          setStore(newStore);
+          setIsCompletionCheckResolved(true);
+          setStartupPhase('ready');
 
-        if (resolvedModes.dataCollectionEnabled && !searchParams.has('participantId')) {
+          if (!resolvedModes.dataCollectionEnabled || searchParams.has('participantId')) {
+            return;
+          }
           fetchParticipantIp().then(async (ip) => {
-            if (isCancelled || !ip.ip || participantSession.metadata.ip === ip.ip) {
+            if (!isCurrentStartup() || !ip.ip || participantSession.metadata.ip === ip.ip) {
               return;
             }
 
@@ -506,39 +621,38 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
             await storageEngine.updateParticipantMetadata(metadataWithIp);
 
-            if (!isCancelled) {
+            if (isCurrentStartup()) {
               newStore.store.dispatch(newStore.actions.setMetadata(metadataWithIp));
             }
           }).catch((error) => {
             console.error('Error fetching participant IP:', error);
           });
-        }
+        };
 
         if (!resolvedModes.dataCollectionEnabled) {
-          setIsCompletionCheckResolved(true);
+          finishStartup(!!participantSession.finalized);
         } else {
           storageEngine.getParticipantCompletionStatus(participantSession.participantId).then((participantCompleted) => {
-            if (!isCancelled) {
-              newStore.store.dispatch(newStore.actions.setParticipantCompleted(participantCompleted || !!participantSession.finalized));
-              setIsCompletionCheckResolved(true);
+            if (isCurrentStartup()) {
+              finishStartup(participantCompleted || !!participantSession.finalized);
             }
           }).catch((error) => {
             console.error('Error fetching participant completion status:', error);
-            if (!isCancelled) {
-              setCompletionCheckError('We could not verify whether this study session was already completed. Please reload this page and try again.');
-              // A transient completion-status lookup failure should not block study entry.
-              setIsCompletionCheckResolved(true);
+            if (isCurrentStartup()) {
+              setStartupError({ error, retryParticipantStartup: true });
+              setStartupPhase('error');
             }
           });
         }
       } catch (error) {
+        if (!isCurrentStartup()) return;
         console.error('Error initializing user store routing:', error);
         if (
           error instanceof StageCapacityExceededError
           || error instanceof StageNoAvailableConditionsError
           || error instanceof StageOnlyDisabledConditionsHaveCapacityError
         ) {
-          if (!isCancelled) {
+          if (isCurrentStartup()) {
             setStageEntryError(error);
             setIsCompletionCheckResolved(true);
           }
@@ -562,6 +676,14 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
         const initialAlertModal = !isStorageFailure
           ? getInitialStartupAlert(error, developmentModeEnabledForAlert, resumeParticipantId)
           : undefined;
+
+        if (!isStorageFailure && initialAlertModal?.title !== 'Failed to connect to the storage engine') {
+          if (isCurrentStartup()) {
+            setStartupError({ error, retryParticipantStartup: true });
+            setStartupPhase('error');
+          }
+          return;
+        }
 
         try {
           // Preserve the existing disconnected-storage and participant alert recovery paths.
@@ -591,38 +713,45 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
             initialAlertModal,
           );
 
-          if (isCancelled) {
+          if (!isCurrentStartup()) {
             return;
           }
 
           setStore(emptyStore);
           setIsCompletionCheckResolved(true);
+          setStartupPhase('ready');
         } catch (fallbackError) {
           console.error('Error initializing fallback study store:', fallbackError);
-          if (!isCancelled) {
-            setStartupError({ error });
+          if (isCurrentStartup()) {
+            setStartupError({ error, retryParticipantStartup: true });
+            setStartupPhase('error');
           }
-          return;
         }
       }
-
-      if (isCancelled) {
-        return;
-      }
-
-      // Initialize the routing
-      setRoutes(getParticipantRoutes());
     }
     initializeUserStoreRouting().catch((error) => {
       console.error('Unhandled error initializing user store routing:', error);
-      if (!isCancelled) {
-        setStartupError({ error });
+      if (isCurrentStartup()) {
+        setStartupError({ error, retryParticipantStartup: true });
+        setStartupPhase('error');
       }
     });
-    return () => {
-      isCancelled = true;
-    };
-  }, [storageEngine, configuredStorageEngine, activeConfig, canonicalStudyId, searchParams, participantId, urlParticipantId, studyCondition, initialSystemColorMode]);
+    return undefined;
+  }, [
+    storageEngine,
+    configuredStorageEngine,
+    urlParticipantId,
+    initialSystemColorMode,
+    activeConfig,
+    canonicalStudyId,
+    searchParams,
+    searchParamsString,
+    participantId,
+    studyCondition,
+    startupAttempt,
+    startupKey,
+    studyStorageReady,
+  ]);
 
   const routing = useRoutes(routes);
   const participantState = store?.store.getState();
@@ -633,20 +762,45 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
     : loadingColorMode;
   useStudyColorMode(studyColorMode);
   const hasConfigErrors = (activeConfig?.errors?.length ?? 0) > 0;
-  const { isLoading, showLoadingMessage, showCompletionCheckError } = getShellUiState({
+  const { isLoading, showLoadingMessage } = getShellUiState({
     isValidStudyId,
     hasRoutes: routes.length > 0,
     hasStore: store !== null,
     isCompletionCheckResolved,
-    completionCheckError,
     hasStageCapacityError: stageEntryError !== null,
   });
-  const hasStartupPreview = startupPreviewComponent !== null && store === null;
+  const isInteractionBlocked = isValidStudyId && !startupError && !hasConfigErrors && !stageEntryError
+    && (!studyStorageReady
+      || initializationRef.current?.key !== startupKey
+      || initializationRef.current?.config !== activeConfig
+      || initializationRef.current?.storageEngine !== storageEngine
+      || startupPhase !== 'ready' || isLoading);
+  const renderedStore = isInteractionBlocked ? previewStore : store ?? previewStore;
+
+  useLayoutEffect(() => {
+    if (isInteractionBlocked) {
+      interfaceRef.current?.setAttribute('inert', '');
+    } else {
+      interfaceRef.current?.removeAttribute('inert');
+    }
+  }, [isInteractionBlocked]);
 
   let content: ReactNode = null;
 
   if (startupError) {
-    content = <StartupErrorScreen error={startupError.error} />;
+    content = (
+      <StartupErrorScreen
+        error={startupError.error}
+        actionLabel={startupError.retryParticipantStartup ? 'Retry' : 'Reload'}
+        onReload={startupError.retryParticipantStartup
+          ? () => {
+            initializationRef.current = null;
+            setStartupPhase('participant-loading');
+            setStartupAttempt((attempt) => attempt + 1);
+          }
+          : undefined}
+      />
+    );
   } else if (stageEntryError) {
     content = (
       <Center style={{ height: '80vh', flexDirection: 'column', textAlign: 'center' }}>
@@ -694,42 +848,32 @@ function StudyShell({ globalConfig }: { globalConfig: GlobalConfig }) {
     );
   } else if (!isValidStudyId) {
     content = <ResourceNotFound />;
-  } else if (routing && store) {
+  } else if (routing && renderedStore) {
+    const startupStoreKey = renderedStore === store ? 'authoritative' : 'preview';
     content = (
-      <StudyStoreContext.Provider value={store}>
-        <Provider key={searchParams.has('participantId') ? store.store.getState().globalStoreGraph?.current : undefined} store={store.store}>{routing}</Provider>
+      <StudyStoreContext.Provider key={startupStoreKey} value={renderedStore}>
+        <Provider key={searchParams.has('participantId') ? renderedStore.store.getState().globalStoreGraph?.current : undefined} store={renderedStore.store}>{routing}</Provider>
       </StudyStoreContext.Provider>
     );
-  } else if (hasStartupPreview) {
-    content = <StartupPreview preview={startupPreviewComponent} />;
   } else if (!isLoading) {
     content = <ResourceNotFound email={activeConfig?.uiConfig.contactEmail} />;
   }
 
   return (
     <>
-      <StudyLoadingOverlay visible={!startupError && !hasConfigErrors && isLoading && !hasStartupPreview} showMessage={showLoadingMessage} />
-      {!startupError && !hasConfigErrors && showCompletionCheckError && (
-        <Stack
-          align="center"
-          gap="sm"
-          style={{
-            position: 'fixed',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            zIndex: 1001,
-            maxWidth: 420,
-            textAlign: 'center',
-          }}
-        >
-          <Text>{completionCheckError}</Text>
-          <Button onClick={() => window.location.reload()}>
-            Reload
-          </Button>
-        </Stack>
-      )}
-      {content}
+      {isInteractionBlocked && activeConfig && <StudyAssetPrefetch config={activeConfig} />}
+      <StudyLoadingOverlay visible={isInteractionBlocked} showMessage={showLoadingMessage} />
+      <div
+        ref={interfaceRef}
+        data-testid="study-interface"
+        aria-busy={isInteractionBlocked}
+        aria-hidden={isInteractionBlocked || undefined}
+        style={isInteractionBlocked ? { pointerEvents: 'none', userSelect: 'none' } : undefined}
+      >
+        <StartupInteractionProvider value={isInteractionBlocked}>
+          {content}
+        </StartupInteractionProvider>
+      </div>
     </>
   );
 }

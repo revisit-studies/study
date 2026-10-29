@@ -5,6 +5,7 @@ import { act } from 'react';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
+import { StartupInteractionProvider } from '../../../components/StartupContext';
 import { useGamepad, type GamepadDevice, type UseGamepadOptions } from '../useGamepad';
 
 function makeGamepad({
@@ -29,14 +30,15 @@ function makeGamepad({
   } as unknown as Gamepad;
 }
 
-let frameCallbacks: FrameRequestCallback[] = [];
+let frameCallbacks = new Map<number, FrameRequestCallback>();
+let nextFrameId = 0;
 let pads: (Gamepad | null)[] = [];
 
 /** Runs every frame callback queued since the last step. */
 function step(times = 1) {
   for (let i = 0; i < times; i += 1) {
-    const queued = frameCallbacks;
-    frameCallbacks = [];
+    const queued = Array.from(frameCallbacks.values());
+    frameCallbacks.clear();
     act(() => {
       queued.forEach((callback) => callback(performance.now()));
     });
@@ -50,14 +52,16 @@ function Harness(props: UseGamepadOptions) {
 
 describe('useGamepad', () => {
   beforeEach(() => {
-    frameCallbacks = [];
+    frameCallbacks = new Map();
+    nextFrameId = 0;
     pads = [];
 
     vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
-      frameCallbacks.push(callback);
-      return frameCallbacks.length;
+      nextFrameId += 1;
+      frameCallbacks.set(nextFrameId, callback);
+      return nextFrameId;
     });
-    vi.stubGlobal('cancelAnimationFrame', () => {});
+    vi.stubGlobal('cancelAnimationFrame', (id: number) => { frameCallbacks.delete(id); });
 
     Object.defineProperty(navigator, 'getGamepads', {
       value: () => pads,
@@ -196,6 +200,39 @@ describe('useGamepad', () => {
 
     expect(onFrame.mock.calls[1][1]).toBe(50);
     now.mockRestore();
+  });
+
+  test('suppresses gamepad input during startup and reselection, including an already queued frame', () => {
+    const onFrame = vi.fn();
+    const onButtonDown = vi.fn();
+    const onAxes = vi.fn();
+    const onConnectionChange = vi.fn();
+    const input = <Harness onFrame={onFrame} onButtonDown={onButtonDown} onAxes={onAxes} onConnectionChange={onConnectionChange} />;
+    pads = [makeGamepad({ pressed: [true], axes: [1, 0] })];
+    const { rerender } = render(<StartupInteractionProvider value>{input}</StartupInteractionProvider>);
+    step(3);
+    expect(onFrame).not.toHaveBeenCalled();
+    expect(onButtonDown).not.toHaveBeenCalled();
+    expect(onAxes).not.toHaveBeenCalled();
+    expect(onConnectionChange).not.toHaveBeenCalled();
+    rerender(<StartupInteractionProvider value={false}>{input}</StartupInteractionProvider>);
+    step();
+    expect(onFrame).toHaveBeenCalledTimes(1);
+    expect(onButtonDown).toHaveBeenCalledTimes(1);
+    expect(onAxes).toHaveBeenCalledTimes(1);
+    expect(onConnectionChange).toHaveBeenCalledTimes(1);
+    const queued = Array.from(frameCallbacks.values());
+    rerender(<StartupInteractionProvider value>{input}</StartupInteractionProvider>);
+    act(() => queued.forEach((callback) => callback(performance.now())));
+    step(3);
+    expect(frameCallbacks.size).toBe(0);
+    expect(onFrame).toHaveBeenCalledTimes(1);
+    expect(onButtonDown).toHaveBeenCalledTimes(1);
+    expect(onAxes).toHaveBeenCalledTimes(1);
+    expect(onConnectionChange).toHaveBeenCalledTimes(1);
+    rerender(<StartupInteractionProvider value={false}>{input}</StartupInteractionProvider>);
+    step();
+    expect(onFrame).toHaveBeenCalledTimes(2);
   });
 
   test('does not poll when disabled', () => {

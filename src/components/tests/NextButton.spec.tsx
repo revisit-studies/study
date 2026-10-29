@@ -18,6 +18,7 @@ import { WindowEventsContext } from '../../store/hooks/useWindowEvents';
 import { StudyStoreContext, studyStoreCreator } from '../../store/store';
 import { makeStorageEngine, makeStudyConfig } from '../../tests/utils';
 import { encryptIndex } from '../../utils/encryptDecryptIndex';
+import { StartupInteractionProvider } from '../StartupContext';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
@@ -179,6 +180,36 @@ describe('NextButton', () => {
     mockIsNextDisabled = true;
     const html = renderToStaticMarkup(<NextButton onNext={vi.fn()} />);
     expect(html).toContain('disabled');
+  });
+
+  test('does not start timers or handle Enter while participant startup is blocked', () => {
+    vi.useFakeTimers();
+    mockStudyConfig.uiConfig.nextOnEnter = true;
+    mockStudyConfig.uiConfig.timeoutReject = true;
+    const onNext = vi.fn();
+
+    const { getByRole } = render(
+      <StartupInteractionProvider value>
+        <NextButton
+          config={{
+            type: 'questionnaire',
+            response: [],
+            nextButtonDisableTime: 100,
+            nextButtonAutoAdvanceTime: 100,
+          }}
+          onNext={onNext}
+        />
+      </StartupInteractionProvider>,
+    );
+    act(() => {
+      vi.advanceTimersByTime(500);
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    });
+
+    expect(getByRole('button', { name: 'Next' }).hasAttribute('disabled')).toBe(true);
+    expect(onNext).not.toHaveBeenCalled();
+    expect(mockGoToNextStep).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 
   test('right-aligns the action group by default', () => {

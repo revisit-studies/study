@@ -14,6 +14,7 @@ import {
   shouldMonitorMutedAudio,
   SPEECH_DETECTION_HOLD_MS,
 } from '../../utils/recordingWarnings';
+import { useStartupInteractionBlocked } from '../../components/StartupContext';
 import { useStoreSelector } from '../store';
 
 const SCREEN_PERMISSION_COMPONENT = '$screen-recording.components.screenRecordingPermission';
@@ -79,6 +80,7 @@ export function useRecording() {
   const identifier = useCurrentIdentifier();
   const status = useStoredAnswer();
   const isAnalysis = useIsAnalysis();
+  const startupInteractionBlocked = useStartupInteractionBlocked();
 
   const { storageEngine } = useStorageEngine();
   const { dataCollectionEnabled } = useStoreSelector((state) => state.modes);
@@ -383,7 +385,7 @@ export function useRecording() {
 
   // For study with just audio recording
   useEffect(() => {
-    if (completed || !studyConfig || studyHasScreenRecording || studyHasWebcamRecording || !studyHasAudioRecording || !storageEngine || (status && status.endTime > 0 && !studyConfig.globalVariables) || isAnalysis) {
+    if (startupInteractionBlocked || completed || !studyConfig || studyHasScreenRecording || studyHasWebcamRecording || !studyHasAudioRecording || !storageEngine || (status && status.endTime > 0 && !studyConfig.globalVariables) || isAnalysis) {
       return undefined;
     }
 
@@ -410,11 +412,11 @@ export function useRecording() {
     return undefined;
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [assetIdentifier, currentComponent, identifier, currentComponentHasAudioRecording, completed]);
+  }, [startupInteractionBlocked, assetIdentifier, currentComponent, identifier, currentComponentHasAudioRecording, completed]);
 
   // For studies with screen or webcam recording.
   useEffect(() => {
-    if (completed || !studyConfig || !(studyHasScreenRecording || studyHasWebcamRecording) || !storageEngine || (status && status.endTime > 0 && !studyConfig.globalVariables) || isAnalysis) {
+    if (startupInteractionBlocked || completed || !studyConfig || !(studyHasScreenRecording || studyHasWebcamRecording) || !storageEngine || (status && status.endTime > 0 && !studyConfig.globalVariables) || isAnalysis) {
       return;
     }
 
@@ -433,7 +435,7 @@ export function useRecording() {
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [assetIdentifier, currentComponent, identifier, currentComponentHasAudioRecording, currentComponentHasScreenRecording, currentComponentHasWebcamRecording, isMediaCapturing, completed]);
+  }, [startupInteractionBlocked, assetIdentifier, currentComponent, identifier, currentComponentHasAudioRecording, currentComponentHasScreenRecording, currentComponentHasWebcamRecording, isMediaCapturing, completed]);
 
   // Start persistent capture. Per-trial recording begins in the navigation effect above.
   const startMediaCapture = useCallback(async ({
