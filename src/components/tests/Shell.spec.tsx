@@ -139,9 +139,11 @@ vi.mock('@mantine/core', () => ({
   Center: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Code: ({ children }: { children: ReactNode }) => <pre>{children}</pre>,
   Image: ({ src }: { src: string }) => <img src={src} alt="" />,
-  LoadingOverlay: ({ visible }: { visible: boolean }) => (
-    visible ? <div data-testid="loading-overlay" /> : null
+  Loader: () => <div data-testid="startup-spinner" />,
+  LoadingOverlay: ({ visible, loaderProps }: { visible: boolean; loaderProps?: { children?: ReactNode } }) => (
+    visible ? <div data-testid="loading-overlay">{loaderProps?.children}</div> : null
   ),
+  Paper: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Stack: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Text: ({ children, ...props }: HTMLAttributes<HTMLParagraphElement>) => <p {...props}>{children}</p>,
   Title: ({ children }: { children: ReactNode }) => <h1>{children}</h1>,

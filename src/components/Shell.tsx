@@ -9,7 +9,7 @@ import {
 import { Provider } from 'react-redux';
 import { RouteObject, useRoutes, useSearchParams } from 'react-router';
 import {
-  Anchor, Button, Center, Code, LoadingOverlay, Stack, Text, Title,
+  Anchor, Button, Center, Code, Loader, LoadingOverlay, Paper, Stack, Text, Title,
 } from '@mantine/core';
 import { GLOBAL_STORE_TASK } from '../store/globalStoreProvenance';
 import { projectHistoricalGlobalStore } from '../store/globalStoreHistory';
@@ -89,48 +89,41 @@ export function StudyLoadingOverlay({
     return () => window.clearTimeout(timeoutId);
   }, [showMessage, visible]);
 
-  return (
-    <>
-      {visible && (
-        <div
-          data-testid="study-loading-barrier"
-          role="dialog"
-          aria-modal="true"
-          aria-busy="true"
-          aria-live="polite"
-          aria-label={STUDY_LOADING_MESSAGE}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 1000,
-            pointerEvents: 'all',
-          }}
-        >
-          <LoadingOverlay visible />
-        </div>
-      )}
-      {visible && showMessage && showDelayedMessage && (
-        <Text
-          role="status"
-          aria-live="polite"
-          aria-atomic="true"
-          style={{
-            position: 'fixed',
-            top: 'calc(50% + 40px)',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 1001,
-            width: 'calc(100% - 32px)',
-            maxWidth: 420,
-            textAlign: 'center',
-            pointerEvents: 'none',
-          }}
-        >
-          {STUDY_LOADING_MESSAGE}
-        </Text>
-      )}
-    </>
-  );
+  return visible ? (
+    <div
+      data-testid="study-loading-barrier"
+      role="dialog"
+      aria-modal="true"
+      aria-busy="true"
+      aria-live="polite"
+      aria-label={STUDY_LOADING_MESSAGE}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 1000,
+        pointerEvents: 'all',
+      }}
+    >
+      <LoadingOverlay
+        visible
+        loaderProps={{
+          style: { width: 'min(420px, calc(100vw - 32px))', height: 'auto' },
+          children: (
+            <Paper p="xl" radius="md" shadow="md" withBorder bg="var(--mantine-color-body)" c="var(--mantine-color-text)">
+              <Stack align="center" gap="md">
+                <Loader />
+                {showMessage && showDelayedMessage && (
+                  <Text role="status" aria-live="polite" aria-atomic="true" ta="center">
+                    {STUDY_LOADING_MESSAGE}
+                  </Text>
+                )}
+              </Stack>
+            </Paper>
+          ),
+        }}
+      />
+    </div>
+  ) : null;
 }
 
 function StudyLayout() {
