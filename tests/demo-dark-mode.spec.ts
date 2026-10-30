@@ -75,6 +75,7 @@ async function dragRanking(page: Page, id: string, label: string, zone = 'HIGH')
   await page.mouse.move(end.x + end.width / 2, end.y + end.height / 2, { steps: 12 });
   await page.mouse.up();
   await expect(target.getByText(label, { exact: true })).toBeVisible();
+  await expect(response.locator('.ranking-drag-overlay')).toHaveCount(0);
 }
 
 test('all dark demo controls render and respond under a light system preference', async ({ page }, testInfo) => {
