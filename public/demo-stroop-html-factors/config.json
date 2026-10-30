@@ -5,7 +5,7 @@
     "version": "pilot",
     "authors": ["The reVISit Team"],
     "date": "2026-08-20",
-    "description": "An HTML Stroop test that crosses ten color words with two congruence levels to generate 20 trials.",
+    "description": "An HTML Stroop test that crosses five color words with two congruence levels to generate 10 trials.",
     "organizations": ["University of Utah", "WPI", "University of Toronto"]
   },
   "uiConfig": {
@@ -18,7 +18,7 @@
     "windowEventDebounceTime": 200
   },
   "factors": {
-    "color": ["RED", "ORANGE", "YELLOW", "GREEN", "BLUE", "PURPLE", "PINK", "BROWN", "GRAY", "BLACK"],
+    "color": ["RED", "YELLOW", "GREEN", "BLUE", "BLACK"],
     "congruence": ["neutral", "incongruent"],
     "stroopConditions": {
       "action": "cross",
@@ -34,19 +34,14 @@
         {
           "id": "response",
           "prompt": "Report the word's ink color, not the color named by the word. Use the buttons or the corresponding number key.",
-          "secondaryText": "Keyboard shortcuts: 1-9 and 0",
+          "secondaryText": "Keyboard shortcuts: 1-5",
           "type": "buttons",
           "options": [
             {"label": "1. RED", "value": "RED", "key": "1"},
-            {"label": "2. ORANGE", "value": "ORANGE", "key": "2"},
-            {"label": "3. YELLOW", "value": "YELLOW", "key": "3"},
-            {"label": "4. GREEN", "value": "GREEN", "key": "4"},
-            {"label": "5. BLUE", "value": "BLUE", "key": "5"},
-            {"label": "6. PURPLE", "value": "PURPLE", "key": "6"},
-            {"label": "7. PINK", "value": "PINK", "key": "7"},
-            {"label": "8. BROWN", "value": "BROWN", "key": "8"},
-            {"label": "9. GRAY", "value": "GRAY", "key": "9"},
-            {"label": "0. BLACK", "value": "BLACK", "key": "0"}
+            {"label": "2. YELLOW", "value": "YELLOW", "key": "2"},
+            {"label": "3. GREEN", "value": "GREEN", "key": "3"},
+            {"label": "4. BLUE", "value": "BLUE", "key": "4"},
+            {"label": "5. BLACK", "value": "BLACK", "key": "5"}
           ],
           "location": "belowStimulus",
           "required": true
