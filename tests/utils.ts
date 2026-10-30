@@ -151,6 +151,13 @@ export async function nextClick(page: Page, timeout = 10000) {
   throw new Error('Timed out clicking Next button');
 }
 
+export async function advanceStudyStep(page: Page, advance = () => nextClick(page)) {
+  const previousPath = new URL(page.url()).pathname;
+  await advance();
+  await page.waitForURL((url) => url.pathname !== previousPath, { waitUntil: 'commit', timeout: 30000 });
+  await expect(page.getByTestId('study-interface')).toHaveAttribute('aria-busy', 'false', { timeout: 30000 });
+}
+
 export async function moveRankingItem(
   page: Page,
   item: string,
