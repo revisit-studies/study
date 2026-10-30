@@ -93,6 +93,26 @@ describe.each([
   });
 
   // getAllSequenceAssignments test
+  test('reads only the requested assignment and seeds browser modes once', async () => {
+    const session = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    expect((await storageEngine.getSequenceAssignment(studyId, session.participantId))?.participantId).toBe(session.participantId);
+    expect(await storageEngine.getSequenceAssignment(studyId, 'missing')).toBeNull();
+
+    const local = storageEngine as LocalStorageEngine;
+    await local.initializeModesFrom('new-study', {
+      dataCollectionEnabled: false,
+      developmentModeEnabled: false,
+      dataSharingEnabled: false,
+      stage: { currentStage: { stageName: 'SECOND', color: '#abc' }, allStages: [{ stageName: 'SECOND', color: '#abc' }] },
+    });
+    expect((await local.getModes('new-study')).dataCollectionEnabled).toBe(false);
+    expect((await local.getStageData('new-study')).currentStage.stageName).toBe('SECOND');
+    await local.initializeModesFrom('new-study', { dataCollectionEnabled: true, developmentModeEnabled: true, dataSharingEnabled: true });
+    expect((await local.getModes('new-study')).dataCollectionEnabled).toBe(false);
+    // @ts-expect-error using protected method for testing
+    await local._testingReset('new-study');
+  });
+
   test('getAllSequenceAssignments returns sequence assignment for participant', async () => {
     const participantSession = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
     const { participantId } = participantSession;
@@ -156,6 +176,53 @@ describe.each([
     expect(updatedModes.dataSharingEnabled).toBe(true);
     expect(updatedModes.dataCollectionEnabled).toBe(false);
     expect(updatedModes.developmentModeEnabled).toBe(true);
+  });
+
+  test('landing-page visibility reads and writes do not initialize modes', async () => {
+    // @ts-expect-error inspecting local persistence for testing
+    const getStoredModes = () => storageEngine.studyDatabase.getItem(`${storageEngine.collectionPrefix}${studyId}/modes`);
+    // @ts-expect-error inspecting local persistence for testing
+    const getStoredVisibility = () => storageEngine.studyDatabase.getItem(`${storageEngine.collectionPrefix}${studyId}/hideStudyFromLandingPage`);
+    expect(await getStoredModes()).toBeNull();
+    expect(await storageEngine.getStudyHiddenFromLandingPage(studyId)).toBe(false);
+    expect(await getStoredModes()).toBeNull();
+    expect(await getStoredVisibility()).toBeNull();
+    await storageEngine.setStudyHiddenFromLandingPage(studyId, true);
+    expect(await storageEngine.getStudyHiddenFromLandingPage(studyId)).toBe(true);
+    expect(await getStoredVisibility()).toBe(true);
+    expect(await getStoredModes()).toBeNull();
+  });
+
+  test('landing-page visibility is independent of modes and survives mode and stage updates', async () => {
+    const existingModes = {
+      dataCollectionEnabled: false,
+      developmentModeEnabled: true,
+      dataSharingEnabled: false,
+    };
+    // @ts-expect-error using protected method to seed an existing modes document
+    await storageEngine._setModesDocument(studyId, existingModes);
+
+    expect(await storageEngine.getStudyHiddenFromLandingPage(studyId)).toBe(false);
+
+    await storageEngine.setStudyHiddenFromLandingPage(studyId, true);
+    expect(await storageEngine.getStudyHiddenFromLandingPage(studyId)).toBe(true);
+    expect(await storageEngine.getModes(studyId)).toEqual(existingModes);
+
+    await storageEngine.getStageData(studyId);
+    expect(await storageEngine.getStudyHiddenFromLandingPage(studyId)).toBe(true);
+    await storageEngine.setMode(studyId, 'developmentModeEnabled', false);
+    await storageEngine.setCurrentStage(studyId, 'Pilot');
+    await storageEngine.updateStageColor(studyId, 'Pilot', '#123456');
+    expect(await storageEngine.getStudyHiddenFromLandingPage(studyId)).toBe(true);
+    expect(await storageEngine.getModes(studyId)).not.toHaveProperty('hideStudyFromLandingPage');
+
+    await storageEngine.setStudyHiddenFromLandingPage(studyId, false);
+    expect(await storageEngine.getStudyHiddenFromLandingPage(studyId)).toBe(false);
+    expect(await storageEngine.getModes(studyId)).toMatchObject({
+      ...existingModes,
+      developmentModeEnabled: false,
+      stage: { currentStage: { stageName: 'Pilot', color: '#123456' } },
+    });
   });
 
   test('setMode toggles each ReVISit mode independently', async () => {
@@ -314,6 +381,7 @@ describe.each([
 
     // Ensure source directory exists
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    await storageEngine.setStudyHiddenFromLandingPage(studyId, true);
     // @ts-expect-error using protected method for testing
     const sourceExists = await storageEngine._directoryExists(source);
     expect(sourceExists).toBe(true);
@@ -321,6 +389,7 @@ describe.each([
     // Copy the directory
     // @ts-expect-error using protected method for testing
     await storageEngine._copyDirectory(source, target);
+    expect(await storageEngine.getStudyHiddenFromLandingPage('test-copy')).toBe(false);
 
     // Check if target directory exists
     // @ts-expect-error using protected method for testing
@@ -335,6 +404,10 @@ describe.each([
     // @ts-expect-error using protected method for testing
     const targetDeleted = await storageEngine._directoryExists(target);
     expect(targetDeleted).toBe(false);
+
+    // @ts-expect-error using protected method for testing
+    await storageEngine._deleteDirectory(source);
+    expect(await storageEngine.getStudyHiddenFromLandingPage(studyId)).toBe(true);
   });
 
   // _copyRealtimeData, _deleteRealtimeData test

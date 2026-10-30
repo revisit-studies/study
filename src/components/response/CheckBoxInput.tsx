@@ -3,7 +3,7 @@ import {
 } from '@mantine/core';
 import { useEffect, useMemo, useState } from 'react';
 import { CheckboxResponse, ParsedStringOption } from '../../parser/types';
-import { DONT_KNOW_DEFAULT_VALUE, normalizeCheckboxDontKnowValue } from './utils';
+import { DONT_KNOW_DEFAULT_VALUE, normalizeCheckboxDontKnowValue, normalizeCheckboxValue } from './utils';
 import { HorizontalHandler } from './HorizontalHandler';
 import classes from './css/Checkbox.module.css';
 import inputClasses from './css/Input.module.css';
@@ -11,10 +11,12 @@ import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { InputLabel } from './InputLabel';
 import { OptionLabel } from './OptionLabel';
 import { parseStringOptions } from '../../utils/stringOptions';
+import ClearSelectionButton from './ClearSelectionButton';
 
 export function CheckBoxInput({
   response,
   disabled,
+  clearDisabled = disabled,
   answer,
   error,
   index,
@@ -24,6 +26,7 @@ export function CheckBoxInput({
 }: {
   response: CheckboxResponse;
   disabled: boolean;
+  clearDisabled?: boolean;
   answer: { value?: string[]; onChange?: (value: string[]) => void };
   error?: string | null;
   index: number;
@@ -50,7 +53,7 @@ export function CheckBoxInput({
   );
 
   const [otherSelected, setOtherSelected] = useState(false);
-  const selectedValues = useMemo(() => (Array.isArray(answer.value) ? answer.value : []), [answer.value]);
+  const selectedValues = useMemo(() => normalizeCheckboxValue(answer.value), [answer.value]);
 
   useEffect(() => {
     if (!response.withDontKnow || selectedValues.length === 0) {
@@ -74,9 +77,29 @@ export function CheckBoxInput({
 
   return (
     <Checkbox.Group
-      label={prompt.length > 0 && <InputLabel prompt={prompt} required={required} index={index} enumerateQuestions={enumerateQuestions} infoText={infoText} />}
+      label={prompt.length > 0 && (
+        <InputLabel
+          prompt={prompt}
+          required={required}
+          index={index}
+          enumerateQuestions={enumerateQuestions}
+          infoText={infoText}
+          clearSelectionButton={(
+            <ClearSelectionButton
+              onClick={() => {
+                answer.onChange?.([]);
+                dontKnowCheckbox?.onChange?.(false);
+                setOtherSelected(false);
+              }}
+              disabled={clearDisabled}
+              visible={selectedValues.length > 0 || !!dontKnowCheckbox?.checked}
+            />
+          )}
+        />
+      )}
       description={secondaryText}
       {...answer}
+      value={selectedValues}
       error={error}
       errorProps={{ c: required ? 'red' : 'orange', fz: 'sm', mt: 'xs' }}
       style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}

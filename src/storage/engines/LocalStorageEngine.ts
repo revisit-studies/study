@@ -1,10 +1,32 @@
 import localforage from 'localforage';
 import {
-  REVISIT_MODE, SequenceAssignment, SnapshotDocContent, StorageEngine, StorageObject, StorageObjectType, cleanupModes,
+  StageAllocation, getStageAllocationFromAssignments, REVISIT_MODE, SequenceAssignment, SequenceAssignmentAllocation, SnapshotDocContent, StorageEngine, StorageObject, StorageObjectType, cleanupModes,
 } from './types';
 import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
 
+const localAllocationLocks = new Map<string, Promise<void>>();
+
+async function withLocalAllocationLock<T>(key: string, operation: () => Promise<T>): Promise<T> {
+  const previous = localAllocationLocks.get(key) ?? Promise.resolve();
+  let release: () => void = () => undefined;
+  const current = new Promise<void>((resolve) => { release = resolve; });
+  const queued = previous.then(() => current);
+  localAllocationLocks.set(key, queued);
+  await previous;
+
+  try {
+    return await operation();
+  } finally {
+    release();
+    if (localAllocationLocks.get(key) === queued) {
+      localAllocationLocks.delete(key);
+    }
+  }
+}
+
 export class LocalStorageEngine extends StorageEngine {
+  private static lockChains = new Map<string, Promise<void>>();
+
   private studyDatabase = localforage.createInstance({
     name: 'revisit',
   });
@@ -64,6 +86,12 @@ export class LocalStorageEngine extends StorageEngine {
     return Object.values(sequenceAssignments).sort((a, b) => a.timestamp - b.timestamp);
   }
 
+  public async getSequenceAssignment(studyId: string, participantId: string) {
+    const key = `${this.collectionPrefix}${studyId}/sequenceAssignment`;
+    const assignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(key);
+    return assignments?.[participantId] ?? null;
+  }
+
   protected async _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment) {
     await this.verifyStudyDatabase();
     if (this.studyId === undefined) {
@@ -73,6 +101,85 @@ export class LocalStorageEngine extends StorageEngine {
     const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath) || {};
     sequenceAssignments[participantId] = sequenceAssignment;
     await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
+  }
+
+  protected async _allocateSequenceAssignment(
+    participantId: string,
+    sequenceAssignment: SequenceAssignment,
+  ): Promise<SequenceAssignmentAllocation> {
+    await this.verifyStudyDatabase();
+    if (this.studyId === undefined) {
+      throw new Error('Study ID is not set');
+    }
+
+    const sequenceAssignmentPath = `${this.collectionPrefix}${this.studyId}/sequenceAssignment`;
+    return withLocalAllocationLock(sequenceAssignmentPath, async () => {
+      const assignmentsByParticipant = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(
+        sequenceAssignmentPath,
+      ) || {};
+      const existingAssignment = assignmentsByParticipant[participantId];
+      const assignments = Object.values(assignmentsByParticipant);
+
+      if (existingAssignment && !existingAssignment.rejected) {
+        const sequenceIndex = existingAssignment.sequenceIndex
+          ?? assignments.filter((assignment) => !assignment.rejected)
+            .sort((a, b) => a.timestamp - b.timestamp)
+            .findIndex((assignment) => assignment.participantId === participantId);
+        const creationIndex = existingAssignment.creationIndex
+          ?? assignments.sort((a, b) => a.createdTime - b.createdTime)
+            .findIndex((assignment) => assignment.participantId === participantId);
+        return { sequenceIndex, creationIndex };
+      }
+
+      const reusableAssignment = assignments
+        .filter((assignment) => assignment.rejected && !assignment.claimed && assignment.participantId !== participantId)
+        .sort((a, b) => a.timestamp - b.timestamp)[0];
+      const creationIndex = assignments.length;
+      const unclaimedAssignments = assignments.filter((assignment) => !assignment.claimed);
+      let nextSequenceIndex = unclaimedAssignments.length;
+      if (!reusableAssignment) {
+        const legacySlots = unclaimedAssignments.some((assignment) => assignment.sequenceIndex === undefined)
+          ? new Map(assignments.filter((assignment) => !assignment.rejected)
+            .sort((a, b) => a.timestamp - b.timestamp)
+            .map((assignment, index) => [assignment.participantId, index]))
+          : undefined;
+        // Undo can leave holes below later allocations; reclaim those holes without renumbering participants.
+        const occupiedSlots = new Set(unclaimedAssignments.map((assignment) => (
+          assignment.reusableSequenceIndex ?? assignment.sequenceIndex ?? legacySlots?.get(assignment.participantId)
+        )));
+        nextSequenceIndex = 0;
+        while (occupiedSlots.has(nextSequenceIndex)) {
+          nextSequenceIndex += 1;
+        }
+      }
+      const sequenceIndex = reusableAssignment?.reusableSequenceIndex
+        ?? reusableAssignment?.sequenceIndex
+        ?? (reusableAssignment
+          ? assignments.filter((assignment) => (
+            !assignment.rejected && assignment.timestamp < reusableAssignment.timestamp
+          )).length
+          : nextSequenceIndex);
+
+      if (reusableAssignment) {
+        assignmentsByParticipant[reusableAssignment.participantId] = {
+          ...reusableAssignment,
+          claimed: true,
+          sequenceIndex,
+        };
+      }
+
+      assignmentsByParticipant[participantId] = {
+        ...sequenceAssignment,
+        ...(reusableAssignment ? {
+          timestamp: reusableAssignment.timestamp,
+          claimedParticipantId: reusableAssignment.participantId,
+        } : {}),
+        sequenceIndex,
+        creationIndex,
+      };
+      await this.studyDatabase.setItem(sequenceAssignmentPath, assignmentsByParticipant);
+      return { sequenceIndex, creationIndex };
+    });
   }
 
   protected async _updateSequenceAssignmentFields(participantId: string, updatedFields: Partial<SequenceAssignment>) {
@@ -108,6 +215,27 @@ export class LocalStorageEngine extends StorageEngine {
     return sequenceAssignments[participantId] || null;
   }
 
+  protected async _runWithLock<T>(lockKey: string, operation: () => Promise<T>) {
+    const scopedLockKey = `${this.collectionPrefix}${this.studyId}:${lockKey}`;
+    const previousLock = LocalStorageEngine.lockChains.get(scopedLockKey) ?? Promise.resolve();
+    let releaseLock: (() => void) | undefined;
+    const currentLock = new Promise<void>((resolve) => {
+      releaseLock = resolve;
+    });
+    const queuedLock = previousLock.catch(() => undefined).then(() => currentLock);
+    LocalStorageEngine.lockChains.set(scopedLockKey, queuedLock);
+
+    await previousLock.catch(() => undefined);
+    try {
+      return await operation();
+    } finally {
+      releaseLock?.();
+      if (LocalStorageEngine.lockChains.get(scopedLockKey) === queuedLock) {
+        LocalStorageEngine.lockChains.delete(scopedLockKey);
+      }
+    }
+  }
+
   protected async _completeCurrentParticipantRealtime() {
     if (!this.currentParticipantId) {
       throw new Error('Participant not initialized');
@@ -133,38 +261,54 @@ export class LocalStorageEngine extends StorageEngine {
   protected async _rejectParticipantRealtime(participantId: string) {
     await this.verifyStudyDatabase();
     const sequenceAssignmentPath = `${this.collectionPrefix}${this.studyId}/sequenceAssignment`;
-    const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(sequenceAssignmentPath) || {};
+    await withLocalAllocationLock(sequenceAssignmentPath, async () => {
+      const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(
+        sequenceAssignmentPath,
+      ) || {};
+      const participantSequenceAssignment = sequenceAssignments[participantId];
+      if (!participantSequenceAssignment || participantSequenceAssignment.rejected) {
+        return;
+      }
 
-    const participantSequenceAssignment = sequenceAssignments[participantId];
+      // If this participant reused a rejected slot, release that source slot and create
+      // a distinct vacancy for this rejection.
+      const claimedAssignmentData = participantSequenceAssignment.claimedParticipantId
+        ? sequenceAssignments[participantSequenceAssignment.claimedParticipantId]
+        : Object.values(sequenceAssignments).find(
+          (assignment) => assignment.claimed
+            && assignment.timestamp === participantSequenceAssignment.timestamp,
+        );
+      if (claimedAssignmentData) {
+        const assignments = Object.values(sequenceAssignments);
+        const indexedSlots = assignments.flatMap((assignment) => [
+          assignment.sequenceIndex,
+          assignment.reusableSequenceIndex,
+        ]).filter((index): index is number => index !== undefined);
+        const logicalSlotCount = assignments.filter((assignment) => !assignment.claimed).length;
+        const reusableSequenceIndex = Math.max(
+          logicalSlotCount,
+          indexedSlots.length > 0 ? Math.max(...indexedSlots) + 1 : 0,
+        );
 
-    // If this was a claimed sequence assignment, we need to mark it as available again
-    const claimedAssignmentData = participantSequenceAssignment?.claimedParticipantId
-      ? sequenceAssignments[participantSequenceAssignment.claimedParticipantId]
-      : Object.values(sequenceAssignments).find(
-        (assignment) => assignment.claimed && assignment.timestamp === participantSequenceAssignment.timestamp,
-      );
-    if (participantSequenceAssignment && claimedAssignmentData) {
-      // Mark the claimed assignment as available again
-      claimedAssignmentData.claimed = false;
-      claimedAssignmentData.rejected = true; // Mark it as rejected
+        sequenceAssignments[claimedAssignmentData.participantId] = {
+          ...claimedAssignmentData,
+          claimed: false,
+          rejected: true,
+        };
+        sequenceAssignments[participantId] = {
+          ...participantSequenceAssignment,
+          timestamp: new Date().getTime(),
+          rejected: true,
+          reusableSequenceIndex,
+        };
+      } else {
+        sequenceAssignments[participantId] = {
+          ...participantSequenceAssignment,
+          rejected: true,
+        };
+      }
       await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
-
-      // Delete the participant's sequence assignment
-      // delete sequenceAssignments[participantId];
-      sequenceAssignments[participantId] = {
-        ...participantSequenceAssignment,
-        timestamp: new Date().getTime(),
-        rejected: true,
-      };
-      await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
-      return;
-    }
-
-    // Handle the original participant's sequence assignment
-    if (participantSequenceAssignment) {
-      participantSequenceAssignment.rejected = true;
-      await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
-    }
+    });
   }
 
   protected async _undoRejectParticipantRealtime(participantId: string) {
@@ -174,15 +318,20 @@ export class LocalStorageEngine extends StorageEngine {
 
     const participantSequenceAssignment = sequenceAssignments[participantId];
     if (participantSequenceAssignment) {
-      participantSequenceAssignment.rejected = false;
+      const updatedParticipantSequenceAssignment = {
+        ...participantSequenceAssignment,
+        rejected: false,
+      };
+      delete updatedParticipantSequenceAssignment.reusableSequenceIndex;
       if (participantSequenceAssignment.claimedParticipantId) {
         const claimedAssignmentData = sequenceAssignments[participantSequenceAssignment.claimedParticipantId];
         if (claimedAssignmentData) {
           claimedAssignmentData.claimed = true;
           claimedAssignmentData.rejected = true;
-          participantSequenceAssignment.timestamp = claimedAssignmentData.timestamp;
+          updatedParticipantSequenceAssignment.timestamp = claimedAssignmentData.timestamp;
         }
       }
+      sequenceAssignments[participantId] = updatedParticipantSequenceAssignment;
       await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
     }
   }
@@ -231,7 +380,18 @@ export class LocalStorageEngine extends StorageEngine {
     return defaults;
   }
 
-  async setMode(studyId: string, mode: REVISIT_MODE, value: boolean) {
+  async initializeModesFrom(studyId: string, modes: Awaited<ReturnType<StorageEngine['getModes']>>) {
+    const key = `${this.collectionPrefix}${studyId}/modes`;
+    if (!await this.studyDatabase.getItem(key)) {
+      await this.studyDatabase.setItem(key, modes);
+    }
+  }
+
+  async hasStoredModes(studyId: string) {
+    return Boolean(await this.studyDatabase.getItem(`${this.collectionPrefix}${studyId}/modes`));
+  }
+
+  protected async _setMode(studyId: string, mode: REVISIT_MODE, value: boolean) {
     const key = `${this.collectionPrefix}${studyId}/modes`;
 
     // Get the modes
@@ -248,6 +408,16 @@ export class LocalStorageEngine extends StorageEngine {
   protected async _setModesDocument(studyId: string, modesDocument: Record<string, unknown>): Promise<void> {
     const key = `${this.collectionPrefix}${studyId}/modes`;
     await this.studyDatabase.setItem(key, modesDocument);
+  }
+
+  async getStudyHiddenFromLandingPage(studyId: string): Promise<boolean> {
+    const key = `${this.collectionPrefix}${studyId}/hideStudyFromLandingPage`;
+    return await this.studyDatabase.getItem<boolean>(key) === true;
+  }
+
+  async setStudyHiddenFromLandingPage(studyId: string, hidden: boolean): Promise<void> {
+    const key = `${this.collectionPrefix}${studyId}/hideStudyFromLandingPage`;
+    await this.studyDatabase.setItem(key, hidden);
   }
 
   protected async _getAudioUrl(task: string, participantId?: string) {
@@ -272,6 +442,18 @@ export class LocalStorageEngine extends StorageEngine {
       throw new Error(`ScreenRecording for task ${task} and participant ${participantId || this.currentParticipantId} not found`);
     }
     return URL.createObjectURL(screenRecordingBlob);
+  }
+
+  protected async _getWebcamRecordingUrl(task: string, participantId?: string) {
+    await this.verifyStudyDatabase();
+    if (this.studyId === undefined) {
+      throw new Error('Study ID is not set');
+    }
+    const webcamRecordingBlob = await this._getFromStorage(`webcamRecording/${participantId || this.currentParticipantId}`, task);
+    if (!webcamRecordingBlob) {
+      throw new Error(`WebcamRecording for task ${task} and participant ${participantId || this.currentParticipantId} not found`);
+    }
+    return URL.createObjectURL(webcamRecordingBlob);
   }
 
   protected async _testingReset(studyId: string) {
@@ -301,7 +483,7 @@ export class LocalStorageEngine extends StorageEngine {
     const keys = await this.studyDatabase.keys();
     const sourceKeys = keys.filter((key) => key.startsWith(source));
     const copyPromises = sourceKeys.map(async (key) => {
-      if (key.endsWith('/snapshots') || key.endsWith('modes') || key.endsWith('configHash') || key.endsWith('currentParticipantId')) {
+      if (key.endsWith('/snapshots') || key.endsWith('modes') || key.endsWith('configHash') || key.endsWith('currentParticipantId') || key.endsWith('/hideStudyFromLandingPage')) {
         // Skip copying the snapshots file
         return;
       }
@@ -314,7 +496,7 @@ export class LocalStorageEngine extends StorageEngine {
 
   protected async _deleteDirectory(path: string) {
     const keys = await this.studyDatabase.keys();
-    const targetKeys = keys.filter((key) => key.startsWith(path) && !key.includes('snapshots'));
+    const targetKeys = keys.filter((key) => key.startsWith(path) && !key.includes('snapshots') && !key.endsWith('/hideStudyFromLandingPage'));
     const deletePromises = targetKeys.map((key) => this.studyDatabase.removeItem(key));
     await Promise.all(deletePromises);
   }
@@ -381,5 +563,11 @@ export class LocalStorageEngine extends StorageEngine {
     } else {
       throw new Error(`Snapshot with name ${snapshotName} does not exist`);
     }
+  }
+
+  protected override async getStageAllocation(stage: string): Promise<StageAllocation> {
+    await this.verifyStudyDatabase();
+    const assignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(`${this.collectionPrefix}${this.studyId}/sequenceAssignment`) || {};
+    return getStageAllocationFromAssignments(Object.values(assignments), stage);
   }
 }

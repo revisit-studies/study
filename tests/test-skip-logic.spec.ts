@@ -1,8 +1,14 @@
 /* eslint-disable no-await-in-loop */
-import { test, expect, Page } from '@playwright/test';
-import { nextClick, waitForStudyEndMessage } from './utils';
+import {
+  expect,
+  Page,
+  test,
+} from '@playwright/test';
+import { advanceStudyStep as advanceStep, readStoredValue, waitForStudyEndMessage } from './utils';
 
 test.setTimeout(180000);
+
+type SkipCheck = 'response' | 'responses' | 'attention-check-singular' | 'attention-check-block' | 'nested-responses' | 'nested-responses-block' | 'block-correct' | 'block-incorrect' | 'end';
 
 function getStudyMain(page: Page) {
   return page.getByRole('main');
@@ -10,38 +16,20 @@ function getStudyMain(page: Page) {
 
 async function selectRadioOption(page: Page, label: string, timeout = 10000) {
   const main = getStudyMain(page);
-  await expect.poll(async () => {
-    const radios = main.getByRole('radio', { name: label, exact: true });
-    const count = await radios.count().catch(() => 0);
-
-    for (let i = 0; i < count; i += 1) {
-      const radio = radios.nth(i);
-      const isVisible = await radio.isVisible().catch(() => false);
-      const isEnabled = await radio.isEnabled().catch(() => false);
-      if (isVisible && isEnabled) {
-        await radio.check({ force: true }).catch(async () => {
-          await radio.click({ force: true }).catch(() => {});
-        });
-
-        if (await radio.isChecked().catch(() => false)) {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }, { timeout }).toBe(true);
+  const radio = main.getByRole('radio', { name: label, exact: true }).filter({ visible: true });
+  await radio.check({ timeout });
+  await expect(radio).toBeChecked({ timeout });
 }
 
 async function answerTrial1(page: Page, q1: string, q2: string) {
   await selectRadioOption(page, q1);
   await selectRadioOption(page, q2);
-  await nextClick(page);
+  await advanceStep(page);
 }
 
 async function answerAttentionCheck(page: Page, q1: string) {
   await selectRadioOption(page, q1);
-  await nextClick(page);
+  await advanceStep(page);
 }
 
 async function answerAttentionCheckBlock(page: Page, numIncorrect: number) {
@@ -66,30 +54,30 @@ async function answerAttentionCheckBlock(page: Page, numIncorrect: number) {
 
 async function verifyContinuingComponent(page: Page) {
   await expect(page.getByText('This component exists to show that we didn\'t get skipped over.')).toBeVisible();
-  await nextClick(page);
+  await advanceStep(page);
 }
 
 async function verifyTargetComponent(page: Page) {
   await expect(page.getByText('This component exists to show that we can choose where to skip to.')).toBeVisible();
-  await nextClick(page);
+  await advanceStep(page);
 }
 
 async function verifyTargetBlockComponent(page: Page) {
   await expect(page.getByText('This component exists to show that we can choose a block to skip to.')).toBeVisible();
-  await nextClick(page);
+  await advanceStep(page);
 }
 
 async function verifyStudyEnd(page: Page) {
   await waitForStudyEndMessage(page);
 }
 
-async function getNextParticipant(page: Page) {
-  await page.locator('.studyBrowserMenuDropdown').click();
-  await page.getByRole('menuitem', { name: 'Next Participant' }).click();
-  await expect(page.getByText('Please answer the following questions')).toBeVisible();
+async function startSkipLogicStudy(page: Page) {
+  await page.goto('/test-skip-logic');
+  await expect(page.getByTestId('study-interface')).toHaveAttribute('aria-busy', 'false', { timeout: 30000 });
+  await expect(page.getByText('Please answer the following questions')).toBeVisible({ timeout: 30000 });
 }
 
-async function goToCheck(page: Page, check: 'response' | 'responses' | 'attention-check-singular' | 'attention-check-block' | 'nested-responses' | 'nested-responses-block' | 'block-correct' | 'block-incorrect' | 'end') {
+async function goToCheck(page: Page, check: SkipCheck) {
   if (check === 'response') {
     return;
   }
@@ -164,98 +152,80 @@ async function goToCheck(page: Page, check: 'response' | 'responses' | 'attentio
 }
 
 async function getTags(page: Page) {
-  return page.evaluate(async () => {
-    let db;
-    const request = indexedDB.open('revisit');
-
-    return new Promise((resolve) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      request.onsuccess = async (event: any) => {
-        db = event.target.result;
-        const transaction = db.transaction(['keyvaluepairs'], 'readonly');
-        const store = transaction.objectStore('keyvaluepairs');
-        // const sequenceArrayInternal = store.get('sequenceArray');
-        // sequenceArrayInternal.onsuccess = () => resolve(sequenceArrayInternal.result);
-        const currentParticipant = store.get('dev-test-skip-logic/currentParticipantId');
-        currentParticipant.onsuccess = () => {
-          const participantData = store.get(`dev-test-skip-logic/participants/${currentParticipant.result}_participantData`);
-          participantData.onsuccess = () => {
-            const { participantTags } = participantData.result;
-            resolve(participantTags);
-          };
-        };
-      };
-    });
-  });
+  const participantId = await readStoredValue<string>(page, 'dev-test-skip-logic/currentParticipantId');
+  const participant = await readStoredValue<{ participantTags: string[] }>(page, `dev-test-skip-logic/participants/${participantId}_participantData`);
+  return participant?.participantTags ?? [];
 }
 
-test('evaluates response, block, nested, and attention-check skip conditions', async ({ page }) => {
-  await page.goto('/test-skip-logic');
-
-  // Make sure that we loaded in
-  const introText = await page.getByText('Please answer the following questions');
-  await expect(introText).toBeVisible();
-
-  // ***** All questions are correct *****
+test('evaluates the all-correct skip path', async ({ page }) => {
+  await startSkipLogicStudy(page);
   await goToCheck(page, 'end');
-  // Verify that the participant data has the block id as a tag
+  await expect.poll(() => getTags(page), { timeout: 15000 }).toEqual(expect.arrayContaining(['testBlockId', 'targetBlock']));
   const tags = await getTags(page);
   expect(tags).toContain('testBlockId');
   expect(tags).toContain('targetBlock');
   expect(tags).toHaveLength(2);
-  await getNextParticipant(page);
+});
 
-  // ***** block-incorrect, block requires 2 incorrect to skip *****
+test('evaluates the block-incorrect skip path', async ({ page }) => {
+  await startSkipLogicStudy(page);
   await goToCheck(page, 'block-incorrect');
-  await answerTrial1(page, 'Blue', 'Dog'); // incorrect
-  await answerTrial1(page, 'Blue', 'Dog'); // incorrect
+  await answerTrial1(page, 'Blue', 'Dog');
+  await answerTrial1(page, 'Blue', 'Dog');
   await verifyStudyEnd(page);
-  await getNextParticipant(page);
+});
 
-  // ***** block-correct, block requires 2 correct to skip *****
+test('evaluates the block-correct skip path', async ({ page }) => {
+  await startSkipLogicStudy(page);
   await goToCheck(page, 'block-correct');
-  await answerTrial1(page, 'Blue', 'Cat'); // correct
-  await answerTrial1(page, 'Blue', 'Cat'); // correct
+  await answerTrial1(page, 'Blue', 'Cat');
+  await answerTrial1(page, 'Blue', 'Cat');
   await verifyStudyEnd(page);
-  await getNextParticipant(page);
+});
 
-  // ***** nested-responses, nested responses require 2 correct to skip *****
+test('evaluates the nested-responses skip path', async ({ page }) => {
+  await startSkipLogicStudy(page);
   await goToCheck(page, 'nested-responses');
   await verifyContinuingComponent(page);
-  await answerTrial1(page, 'Blue', 'Dog'); // incorrect
+  await answerTrial1(page, 'Blue', 'Dog');
   await verifyStudyEnd(page);
-  await getNextParticipant(page);
+});
 
-  // ***** nested-responses-block, nested responses block requires 2 incorrect to skip *****
+test('evaluates the nested-responses-block skip path', async ({ page }) => {
+  await startSkipLogicStudy(page);
   await goToCheck(page, 'nested-responses-block');
-  await answerTrial1(page, 'Blue', 'Dog'); // incorrect
-  await answerTrial1(page, 'Blue', 'Dog'); // incorrect
+  await answerTrial1(page, 'Blue', 'Dog');
+  await answerTrial1(page, 'Blue', 'Dog');
   await verifyStudyEnd(page);
-  await getNextParticipant(page);
+});
 
-  // ***** attention-check-block, attention check block requires 2 incorrect to skip *****
+test('evaluates the attention-check-block skip path', async ({ page }) => {
+  await startSkipLogicStudy(page);
   await goToCheck(page, 'attention-check-block');
   await answerAttentionCheckBlock(page, 2);
   await verifyTargetBlockComponent(page);
   await verifyTargetComponent(page);
   await verifyStudyEnd(page);
-  await getNextParticipant(page);
+});
 
-  // ***** attention-check-singular, attention check requires incorrect to skip *****
+test('evaluates the attention-check-singular skip path', async ({ page }) => {
+  await startSkipLogicStudy(page);
   await goToCheck(page, 'attention-check-singular');
-  await answerAttentionCheck(page, 'No'); // incorrect
+  await answerAttentionCheck(page, 'No');
   await verifyStudyEnd(page);
-  await getNextParticipant(page);
+});
 
-  // ***** responses, responses require incorrect to skip *****
+test('evaluates the responses skip path', async ({ page }) => {
+  await startSkipLogicStudy(page);
   await goToCheck(page, 'responses');
-  await answerTrial1(page, 'Blue', 'Dog'); // incorrect
+  await answerTrial1(page, 'Blue', 'Dog');
   await verifyStudyEnd(page);
-  await getNextParticipant(page);
+});
 
-  // ***** response, no must answer part of answer incorrect *****
+test('evaluates the response skip path without a target tag', async ({ page }) => {
+  await startSkipLogicStudy(page);
   await goToCheck(page, 'response');
-  await answerTrial1(page, 'Red', 'Cat'); // incorrect
+  await answerTrial1(page, 'Red', 'Cat');
   await verifyTargetComponent(page);
   await verifyStudyEnd(page);
   const tags2 = await getTags(page);

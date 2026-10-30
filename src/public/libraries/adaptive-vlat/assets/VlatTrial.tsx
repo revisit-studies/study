@@ -3,13 +3,14 @@ import {
   Grid, Radio, Image, Box, Stack,
 } from '@mantine/core';
 import { StimulusParams } from '../../../../store/types';
+import { useStudyState } from '../../../../store/hooks/useStudyState';
 import { VLATQuestions } from './vlatQ';
 
 export default function VlatTrial({ parameters, setAnswer, answers }: StimulusParams<{ activeQuestionIdx: number, qidx: number, score: number }>) {
   const taskid = 'vlatResp';
   const answerKey = `dynamicBlock_1_VlatTrial_${parameters.qidx}`;
   const userAnswer = answers[answerKey]?.answer?.[taskid];
-  const [currentanswer, setCurrentAnswer] = useState<string>(userAnswer ? userAnswer as string : '');
+  const [currentanswer, setCurrentAnswer] = useStudyState<string>({ responseId: taskid, initialState: userAnswer ? userAnswer as string : '' });
   const [answerChecked, setAnswerChecked] = useState(false);
 
   useEffect(() => {

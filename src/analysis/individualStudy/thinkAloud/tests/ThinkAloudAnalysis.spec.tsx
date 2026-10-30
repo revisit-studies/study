@@ -1,4 +1,5 @@
-import { forwardRef, ReactNode } from 'react';
+import { CSSProperties, forwardRef, ReactNode } from 'react';
+import type { isLightColor } from '@mantine/core';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
   render, act, cleanup, fireEvent, waitFor,
@@ -11,10 +12,11 @@ import { useNavigate, useParams, useSearchParams } from 'react-router';
 import type { NavigateFunction } from 'react-router';
 import { EditedText, Tag, TranscribedAudio } from '../types';
 import type { ParticipantData } from '../../../../storage/types';
-import { makeStoredAnswer as makeStoredAnswerBase, makeStorageEngine } from '../../../../tests/utils';
+import { makeParticipant, makeStoredAnswer as makeStoredAnswerBase, makeStorageEngine } from '../../../../tests/utils';
 import type { FirebaseStorageEngine } from '../../../../storage/engines/FirebaseStorageEngine';
 import { useAsync } from '../../../../store/hooks/useAsync';
 import { useReplayContext } from '../../../../store/hooks/useReplay';
+import { handleTaskRecordings } from '../../../../utils/handleDownloadFiles';
 import { Pills } from '../tags/Pills';
 import { AddTagDropdown } from '../tags/AddTagDropdown';
 import { TagEditor } from '../tags/TagEditor';
@@ -22,7 +24,7 @@ import { ThinkAloudAnalysis } from '../ThinkAloudAnalysis';
 
 // ── mock delegates (declared before vi.mock so hoisted references resolve) ────
 
-const mockThinkAloudFooter = vi.fn(({ onTimeUpdate, setHasAudio }: { onTimeUpdate?: (t: number) => void; setHasAudio?: (b: boolean) => void }) => (
+const mockThinkAloudFooter = vi.fn(({ onTimeUpdate, setHasAudio }: { onTimeUpdate?: (t: number) => void; setHasAudio?: (b: boolean) => void; editedTranscript?: EditedText[]; rawTranscript?: TranscribedAudio | null }) => (
   <div data-testid="think-aloud-footer">
     <button type="button" data-testid="btn-set-has-audio" onClick={() => setHasAudio?.(true)}>setHasAudio</button>
     <button type="button" data-testid="btn-time-update" onClick={() => onTimeUpdate?.(5000)}>timeUpdate</button>
@@ -90,7 +92,8 @@ const createMockNavigate = (): NavigateFunction => vi.fn() as unknown as Navigat
 
 // ── mocks ────────────────────────────────────────────────────────────────────
 
-vi.mock('@mantine/core', () => ({
+vi.mock('@mantine/core', async () => ({
+  isLightColor: (await vi.importActual<{ isLightColor: typeof isLightColor }>('@mantine/core')).isLightColor,
   ActionIcon: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => <button type="button" onClick={onClick}>{children}</button>,
   Alert: ({ children }: { children: ReactNode }) => <div role="alert">{children}</div>,
   AppShell: Object.assign(
@@ -133,7 +136,7 @@ vi.mock('@mantine/core', () => ({
   Input: { Placeholder: ({ children }: { children: ReactNode }) => <span>{children}</span> },
   Loader: () => <span>loading</span>,
   Pill: Object.assign(
-    ({ children }: { children: ReactNode }) => <span>{children}</span>,
+    ({ children, styles }: { children: ReactNode; styles?: { root: CSSProperties } }) => <span style={styles?.root}>{children}</span>,
     { Group: ({ children }: { children: ReactNode }) => <div>{children}</div> },
   ),
   PillsInput: Object.assign(
@@ -152,11 +155,11 @@ vi.mock('@mantine/core', () => ({
   ),
   Select: ({
     leftSection, rightSection, onChange, value, data, label,
-  }: { leftSection?: ReactNode; rightSection?: ReactNode; onChange?: (v: string | null) => void; value?: string; data?: { label: string; value: string }[]; label?: string }) => (
+  }: { leftSection?: ReactNode; rightSection?: ReactNode; onChange?: (v: string | null) => void; value?: string; data?: (string | { label: string; value: string })[]; label?: string }) => (
     <div aria-label={label}>
       {leftSection}
       <select value={value} onChange={(e) => onChange?.(e.target.value)}>
-        {data?.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+        {data?.map((item) => <option key={typeof item === 'string' ? item : item.value} value={typeof item === 'string' ? item : item.value}>{typeof item === 'string' ? item : item.label}</option>)}
       </select>
       {rightSection}
     </div>
@@ -186,7 +189,7 @@ vi.mock('@mantine/hooks', () => ({
 vi.mock('@tabler/icons-react', () => ({
   IconArrowLeft: () => null,
   IconArrowRight: () => null,
-  IconDeviceDesktopDown: () => null,
+  IconDeviceDesktopDown: () => <span data-testid="screen-recording-icon" />,
   IconEdit: () => <span>icon-edit</span>,
   IconInfoCircle: () => <span>icon-info</span>,
   IconMusicDown: () => null,
@@ -227,11 +230,11 @@ vi.mock('../../../../store/hooks/useEvent', () => ({ useEvent: (fn: (...args: ne
 vi.mock('../../../../storage/storageEngineHooks', () => ({ useStorageEngine: vi.fn(() => ({ storageEngine: undefined })) }));
 vi.mock('../../../../storage/engines/FirebaseStorageEngine', () => ({ FirebaseStorageEngine: class { } }));
 vi.mock('../../../../utils/parseTrialOrder', () => ({ parseTrialOrder: vi.fn(() => ({ step: 0, funcIndex: null })) }));
-vi.mock('lodash.debounce', () => ({ default: (fn: (...args: never[]) => void) => fn }));
+vi.mock('lodash.debounce', () => ({ default: (fn: (...args: never[]) => void) => Object.assign(fn, { flush: vi.fn(), cancel: vi.fn() }) }));
 vi.mock('../../../../components/audioAnalysis/AudioProvenanceVis', () => ({ AudioProvenanceVis: () => <div data-testid="audio-provenance-vis" /> }));
 vi.mock('../../../../utils/encryptDecryptIndex', () => ({ encryptIndex: (i: number) => String(i) }));
 vi.mock('../../../../utils/Prefix', () => ({ PREFIX: '/' }));
-vi.mock('../../../../utils/handleDownloadFiles', () => ({ handleTaskAudio: vi.fn(), handleTaskScreenRecording: vi.fn() }));
+vi.mock('../../../../utils/handleDownloadFiles', () => ({ handleTaskAudio: vi.fn(), handleTaskRecordings: vi.fn() }));
 vi.mock('../../ParticipantRejectModal', () => ({ ParticipantRejectModal: () => null }));
 vi.mock('../../../../components/audioAnalysis/provenanceColors', () => ({ buildProvenanceLegendEntries: vi.fn(() => []) }));
 vi.mock('../../../../utils/syncReplay', () => ({ revisitPageId: 'test-page-id', syncChannel: { postMessage: vi.fn() } }));
@@ -245,12 +248,14 @@ vi.mock('../TranscriptSegmentsVis', () => ({ TranscriptSegmentsVis: () => <div d
 // ── real component references for DOM tests ──────────────────────────────────
 
 let RealThinkAloudFooter: typeof import('../ThinkAloudFooter')['ThinkAloudFooter'];
+let realUseAsync: typeof useAsync;
 let RealTextEditor: typeof import('../TextEditor')['TextEditor'];
 let RealTranscriptLine: typeof import('../TranscriptLine')['TranscriptLine'];
 let RealTranscriptSegmentsVis: typeof import('../TranscriptSegmentsVis')['TranscriptSegmentsVis'];
 let RealTagSelector: typeof import('../tags/TagSelector')['TagSelector'];
 
 beforeAll(async () => {
+  realUseAsync = (await vi.importActual<{ useAsync: typeof useAsync }>('../../../../store/hooks/useAsync')).useAsync;
   RealThinkAloudFooter = ((await vi.importActual('../ThinkAloudFooter')) as typeof import('../ThinkAloudFooter')).ThinkAloudFooter;
   RealTextEditor = ((await vi.importActual('../TextEditor')) as typeof import('../TextEditor')).TextEditor;
   RealTranscriptLine = ((await vi.importActual('../TranscriptLine')) as typeof import('../TranscriptLine')).TranscriptLine;
@@ -266,9 +271,19 @@ function makeTag(overrides: Partial<Tag> = {}): Tag {
   };
 }
 
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((res) => { resolve = res; });
+  return { promise, resolve };
+}
+
 const mockStorageEngine = makeStorageEngine() as unknown as FirebaseStorageEngine;
 
-afterEach(() => { cleanup(); });
+afterEach(() => {
+  cleanup();
+  vi.mocked(useAsync).mockReset();
+  vi.mocked(useSearchParams).mockReset();
+});
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // SSR TESTS (renderToStaticMarkup)
@@ -295,9 +310,12 @@ describe('Pills', () => {
     expect(html).toBe('');
   });
 
-  test('renders dark text color on a light tag', () => {
-    const html = renderToStaticMarkup(<Pills selectedTags={[makeTag({ color: '#ffffff' })]} />);
-    expect(html).toContain('Confusion');
+  test.each([
+    ['#ffffff', 'black'], ['#fab005', 'black'], ['#82c91e', 'black'], ['#2e2e2e', 'white'], ['#0000ff', 'white'],
+  ])('uses contrasting text on a %s tag without changing its background', (color, foreground) => {
+    const html = renderToStaticMarkup(<Pills selectedTags={[makeTag({ color })]} />);
+    expect(html).toContain(`background-color:${color}`);
+    expect(html).toContain(`;color:${foreground}`);
   });
 
   test('renders with removeFunc', () => {
@@ -360,8 +378,8 @@ describe('ThinkAloudAnalysis (SSR)', () => {
   });
 
   test('shows "No transcripts found" when participant and trial are selected', () => {
-    vi.mocked(useSearchParams).mockReturnValueOnce([new URLSearchParams('participantId=p1'), vi.fn()] as ReturnType<typeof useSearchParams>);
-    vi.mocked(useParams).mockReturnValueOnce({ studyId: 'test-study', trialId: 'trial1' });
+    vi.mocked(useSearchParams).mockReturnValue([new URLSearchParams('participantId=p1'), vi.fn()] as ReturnType<typeof useSearchParams>);
+    vi.mocked(useParams).mockReturnValue({ studyId: 'test-study', trialId: 'trial1' });
     const html = renderToStaticMarkup(
       <ThinkAloudAnalysis visibleParticipants={[]} storageEngine={mockStorageEngine} />,
     );
@@ -432,11 +450,58 @@ describe('ThinkAloudAnalysis (DOM)', () => {
     });
   });
 
+  test('revised recordings load and save their own edited transcript instead of the previous visit', async () => {
+    vi.mocked(useAsync).mockImplementation(realUseAsync);
+    const participant = structuredClone(mockParticipantFull);
+    participant.answers.trial_0.assetIdentifier = 'trial_0__global_2';
+    const storage = {
+      ...makeStorageEngine(),
+      getParticipantData: vi.fn().mockResolvedValue(participant),
+      getTranscription: vi.fn().mockResolvedValue({ results: [{ resultEndTime: '1s', alternatives: [{ transcript: 'new recording' }] }] }),
+      getEditedTranscript: vi.fn(async (_id: string, _email: string, key: string) => (key === 'trial_0' ? [{
+        text: 'old recording', transcriptMappingStart: 0, transcriptMappingEnd: 5, selectedTags: [], annotation: '',
+      }] : [])),
+      saveEditedTranscript: vi.fn(),
+    } as unknown as FirebaseStorageEngine;
+    await act(async () => render(<ThinkAloudAnalysis visibleParticipants={[participant]} storageEngine={storage} />));
+    await waitFor(() => expect(storage.getEditedTranscript).toHaveBeenCalledWith('p1', 'test@test.com', 'trial_0__global_2'));
+    await waitFor(() => expect(storage.saveEditedTranscript).toHaveBeenCalledWith('p1', 'test@test.com', 'trial_0__global_2', [expect.objectContaining({ text: 'new recording', transcriptMappingEnd: 0 })]));
+    expect(storage.saveEditedTranscript).not.toHaveBeenCalledWith('p1', 'test@test.com', 'trial_0', expect.anything());
+  });
+
   test('renders without crashing', async () => {
     const { container } = await act(async () => render(
       <ThinkAloudAnalysis visibleParticipants={[mockParticipant]} storageEngine={mockStorageEngine} />,
     ));
     expect(container).toBeDefined();
+  });
+
+  test('switching recordings clears previous edited text while the new transcript loads, including legacy keys', async () => {
+    vi.mocked(useAsync).mockImplementation(realUseAsync);
+    const participant = structuredClone(mockParticipantFull);
+    const oldText: EditedText[] = [{
+      text: 'legacy recording', transcriptMappingStart: 0, transcriptMappingEnd: 4, selectedTags: [], annotation: '',
+    }];
+    let resolve!: (value: EditedText[]) => void;
+    const pending = new Promise<EditedText[]>((done) => { resolve = done; });
+    const storage = {
+      ...makeStorageEngine(),
+      getParticipantData: vi.fn().mockResolvedValue(participant),
+      getTranscription: vi.fn(async (key: string) => ({
+        results: Array.from({ length: key === 'trial_0' ? 5 : 1 }, (_, index) => ({ resultEndTime: `${index + 1}s`, alternatives: [{ transcript: 'replacement' }] })),
+      })),
+      getEditedTranscript: vi.fn(async (_id: string, _email: string, key: string) => (key === 'trial_0' ? oldText : pending)),
+      saveEditedTranscript: vi.fn(),
+    } as unknown as FirebaseStorageEngine;
+    const view = render(<ThinkAloudAnalysis visibleParticipants={[participant]} storageEngine={storage} />);
+    await waitFor(() => expect(mockThinkAloudFooter.mock.lastCall?.[0].editedTranscript).toEqual(oldText));
+    expect(storage.getEditedTranscript).toHaveBeenCalledWith('p1', 'test@test.com', 'trial_0');
+    participant.answers.trial_0.assetIdentifier = 'trial_0__global_2';
+    view.rerender(<ThinkAloudAnalysis visibleParticipants={[participant]} storageEngine={storage} />);
+    await waitFor(() => expect(storage.getEditedTranscript).toHaveBeenCalledWith('p1', 'test@test.com', 'trial_0__global_2'));
+    expect(mockThinkAloudFooter.mock.lastCall?.[0].editedTranscript).toEqual([]);
+    await act(async () => { resolve([]); });
+    await waitFor(() => expect(storage.saveEditedTranscript).toHaveBeenCalledWith('p1', 'test@test.com', 'trial_0__global_2', [expect.objectContaining({ text: 'replacement', transcriptMappingEnd: 0 })]));
   });
 
   test('shows placeholder text when no participantId', async () => {
@@ -536,6 +601,7 @@ const footerDefaultProps = {
 const mockFooterStorageEngine = {
   getAudioUrl: vi.fn().mockResolvedValue('http://test/audio.mp3'),
   getScreenRecording: vi.fn().mockResolvedValue('http://test/video.mp4'),
+  getWebcamRecording: vi.fn().mockResolvedValue(null),
   saveTags: vi.fn().mockResolvedValue(undefined),
   getTags: vi.fn().mockResolvedValue([]),
   getAllParticipantAndTaskTags: vi.fn().mockResolvedValue(null),
@@ -576,8 +642,113 @@ describe('ThinkAloudFooter', () => {
     expect(mockFooterStorageEngine.getScreenRecording).toHaveBeenCalled();
   });
 
+  test('ignores stale screen recording results after participant changes', async () => {
+    let selectedParticipantId = 'p1';
+    const setSearchParamsForRace = vi.fn();
+    const audioP1 = deferred<string>();
+    const screenP1 = deferred<string>();
+    const audioP2 = deferred<string>();
+    const screenP2 = deferred<string>();
+    const participants = {
+      p1: makeParticipant({
+        participantId: 'p1',
+        answers: { trial_0: makeStoredAnswer({ identifier: 'trial_0', componentName: 'Component 1' }) },
+      }),
+      p2: makeParticipant({
+        participantId: 'p2',
+        answers: { trial_0: makeStoredAnswer({ identifier: 'trial_0', componentName: 'Component 1' }) },
+      }),
+    };
+    const storageEngine = makeStorageEngine({
+      getAudioUrl: vi.fn((_task, participantId) => (
+        participantId === 'p1' ? audioP1.promise : audioP2.promise
+      )),
+      getScreenRecording: vi.fn((_task, participantId) => (
+        participantId === 'p1' ? screenP1.promise : screenP2.promise
+      )),
+    });
+    vi.mocked(useSearchParams).mockImplementation(() => [
+      new URLSearchParams(`participantId=${selectedParticipantId}`), setSearchParamsForRace,
+    ] as ReturnType<typeof useSearchParams>);
+    vi.mocked(useAsync).mockImplementation((_fn, args) => ({
+      value: Array.isArray(args) && args.length === 2 && typeof args[0] === 'string'
+        ? participants[args[0] as 'p1' | 'p2'] ?? null
+        : null,
+      status: 'success',
+      execute: vi.fn(),
+      error: null,
+    }));
+    vi.mocked(handleTaskRecordings).mockClear();
+
+    const view = render(<RealThinkAloudFooter {...footerDefaultProps} storageEngine={storageEngine} />);
+    await waitFor(() => expect(storageEngine.getAudioUrl).toHaveBeenCalledWith('trial_0', 'p1'));
+    audioP1.resolve('audio-p1');
+    await waitFor(() => expect(storageEngine.getScreenRecording).toHaveBeenCalledWith('trial_0', 'p1'));
+
+    selectedParticipantId = 'p2';
+    view.rerender(<RealThinkAloudFooter {...footerDefaultProps} storageEngine={storageEngine} />);
+    expect(view.queryByTestId('screen-recording-icon')).toBeNull();
+
+    await waitFor(() => expect(storageEngine.getAudioUrl).toHaveBeenCalledWith('trial_0', 'p2'));
+    audioP2.resolve('audio-p2');
+    await waitFor(() => expect(storageEngine.getScreenRecording).toHaveBeenCalledWith('trial_0', 'p2'));
+    screenP2.resolve('screen-p2');
+    const screenIcon = await waitFor(() => view.getByTestId('screen-recording-icon'));
+    fireEvent.click(screenIcon.closest('button')!);
+    expect(handleTaskRecordings).toHaveBeenLastCalledWith(expect.objectContaining({
+      includeScreen: true,
+      includeWebcam: false,
+      screenRecordingUrl: 'screen-p2',
+    }));
+
+    screenP1.resolve('screen-p1');
+    await act(async () => { await screenP1.promise; });
+    const liveScreenIcon = view.getByTestId('screen-recording-icon');
+    fireEvent.click(liveScreenIcon.closest('button')!);
+    expect(handleTaskRecordings).toHaveBeenLastCalledWith(expect.objectContaining({
+      participantId: 'p2', identifier: 'trial_0', screenRecordingUrl: 'screen-p2',
+    }));
+  });
+
+  test('hides the previous recording while the next participant loads', async () => {
+    let selectedParticipantId = 'p1';
+    const setSearchParamsForRace = vi.fn();
+    const participants = {
+      p1: makeParticipant({
+        participantId: 'p1',
+        answers: { trial_0: makeStoredAnswer({ identifier: 'trial_0', componentName: 'Component 1' }) },
+      }),
+      p2: makeParticipant({
+        participantId: 'p2',
+        answers: { trial_0: makeStoredAnswer({ identifier: 'trial_0', componentName: 'Component 1' }) },
+      }),
+    };
+    const storageEngine = makeStorageEngine({
+      getAudioUrl: vi.fn((_task, participantId) => Promise.resolve(`audio-${participantId}`)),
+      getScreenRecording: vi.fn((_task, participantId) => Promise.resolve(`screen-${participantId}`)),
+    });
+    vi.mocked(useSearchParams).mockImplementation(() => [
+      new URLSearchParams(`participantId=${selectedParticipantId}`), setSearchParamsForRace,
+    ] as ReturnType<typeof useSearchParams>);
+    vi.mocked(useAsync).mockImplementation((_fn, args) => ({
+      value: Array.isArray(args) && args.length === 2 && typeof args[0] === 'string'
+        ? participants[args[0] as 'p1' | 'p2'] ?? null
+        : null,
+      status: 'success',
+      execute: vi.fn(),
+      error: null,
+    }));
+
+    const view = render(<RealThinkAloudFooter {...footerDefaultProps} storageEngine={storageEngine} />);
+    await waitFor(() => expect(view.getByTestId('screen-recording-icon')).toBeTruthy());
+
+    selectedParticipantId = 'p2';
+    view.rerender(<RealThinkAloudFooter {...footerDefaultProps} storageEngine={storageEngine} />);
+    expect(view.queryByTestId('screen-recording-icon')).toBeNull();
+  });
+
   test('next participant remains usable when there is no current task', async () => {
-    const updatedParams = new URLSearchParams('participantId=p1');
+    const updatedParams = new URLSearchParams('participantId=p1&globalStoreNode=old-participant-node&revisitPageId=shared');
     mockSetSearchParams.mockImplementation((updater: (params: URLSearchParams) => void) => {
       updater(updatedParams);
     });
@@ -591,6 +762,8 @@ describe('ThinkAloudFooter', () => {
 
     expect(mockSetSearchParams).toHaveBeenCalled();
     expect(updatedParams.get('participantId')).toBe('p2');
+    expect(updatedParams.has('globalStoreNode')).toBe(false);
+    expect(updatedParams.get('revisitPageId')).toBe('shared');
   });
 
   test('renders all participants in select dropdown', async () => {
@@ -610,6 +783,8 @@ describe('ThinkAloudFooter', () => {
   });
 
   test('participant Select onChange updates search params', async () => {
+    const updatedParams = new URLSearchParams('participantId=p1&globalStoreNode=old-participant-node');
+    mockSetSearchParams.mockImplementation((updater: (params: URLSearchParams) => void) => updater(updatedParams));
     const { getAllByRole } = await act(async () => render(
       <RealThinkAloudFooter {...footerDefaultProps} visibleParticipants={['p1', 'p2']} />,
     ));
@@ -618,6 +793,8 @@ describe('ThinkAloudFooter', () => {
       await act(async () => { fireEvent.change(selects[0], { target: { value: 'p2' } }); });
     }
     expect(mockSetSearchParams).toHaveBeenCalled();
+    expect(updatedParams.get('participantId')).toBe('p2');
+    expect(updatedParams.has('globalStoreNode')).toBe(false);
   });
 
   test('task Select onChange navigates to new task', async () => {
@@ -632,11 +809,12 @@ describe('ThinkAloudFooter', () => {
         }),
       },
     };
-    vi.mocked(useAsync).mockReturnValueOnce({
-      value: mockParticipantWithAnswers as unknown as ParticipantData, status: 'success', execute: vi.fn(), error: null,
-    }).mockReturnValue({
-      value: null, status: 'success', execute: vi.fn(), error: null,
-    });
+    vi.mocked(useAsync).mockImplementation((fn) => ({
+      value: fn.name === 'getParticipantData' ? (mockParticipantWithAnswers as unknown as ParticipantData) : null,
+      status: 'success',
+      execute: vi.fn(),
+      error: null,
+    }));
     const { getAllByRole } = await act(async () => render(
       <RealThinkAloudFooter {...footerDefaultProps} currentTrial="trial_0" />,
     ));
@@ -761,11 +939,12 @@ describe('ThinkAloudFooter', () => {
         }),
       },
     };
-    vi.mocked(useAsync).mockReturnValueOnce({
-      value: mockParticipantWithAnswers as unknown as ParticipantData, status: 'success', execute: vi.fn(), error: null,
-    }).mockReturnValue({
-      value: null, status: 'success', execute: vi.fn(), error: null,
-    });
+    vi.mocked(useAsync).mockImplementation((fn) => ({
+      value: fn.name === 'getParticipantData' ? (mockParticipantWithAnswers as unknown as ParticipantData) : null,
+      status: 'success',
+      execute: vi.fn(),
+      error: null,
+    }));
     const { getAllByRole } = await act(async () => render(
       <RealThinkAloudFooter {...footerDefaultProps} currentTrial="trial_0" />,
     ));
@@ -950,12 +1129,13 @@ describe('TranscriptLine (DOM)', () => {
 
   test('applies highlight style when current is within start–end range', () => {
     const { container } = render(<RealTranscriptLine {...lineProps} start={0} current={5} end={10} />);
-    expect(container.innerHTML).toContain('rgba(100, 149, 237, 0.3)');
+    expect(container.innerHTML).toContain('var(--mantine-color-blue-light)');
   });
 
   test('does not apply highlight when current is outside range', () => {
     const { container } = render(<RealTranscriptLine {...lineProps} start={0} current={20} end={10} />);
-    expect(container.innerHTML).not.toContain('rgba(100, 149, 237, 0.3)');
+    expect(container.innerHTML).not.toContain('var(--mantine-color-blue-light)');
+    expect(container.innerHTML).toContain('var(--mantine-color-body)');
   });
 
   test('Enter keydown calls addRowCallback', () => {
@@ -1031,7 +1211,7 @@ describe('TranscriptSegmentsVis', () => {
     expect((html.match(/<line /g) || []).length).toBe(2);
   });
 
-  test('highlights the active segment with cornflowerblue stroke', () => {
+  test('uses themed strokes to distinguish active and inactive segments', () => {
     const lines = [
       {
         start: 0, end: 2, lineStart: 0, lineEnd: 1, tags: [],
@@ -1043,8 +1223,8 @@ describe('TranscriptSegmentsVis', () => {
     const html = renderToStaticMarkup(
       <RealTranscriptSegmentsVis transcriptLines={lines} xScale={xScale} startTime={0} currentShownTranscription={0} />,
     );
-    expect(html).toContain('cornflowerblue');
-    expect(html).toContain('lightgray');
+    expect(html).toContain('var(--mantine-color-blue-text)');
+    expect(html).toContain('var(--mantine-color-default-border)');
   });
 
   test('renders ColorSwatch for each tag on a segment', () => {

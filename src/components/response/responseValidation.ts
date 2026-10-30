@@ -1,16 +1,70 @@
 import isEqual from 'lodash.isequal';
+import { checkNumericalResponse, checkTextResponse } from '../../utils/primitiveValidation';
+import {
+  getResponseFunctionModule, getResponseValidationResultError, isResponseAnswered,
+  normalizeResponseValue,
+} from '../../utils/correctAnswer';
 import {
   CheckboxResponse,
+  DateResponse,
   DropdownResponse,
   MatrixResponse,
-  NumericalResponse,
-  RankingResponse,
+  RankingCategoricalResponse,
+  RankingPairwiseResponse,
   Response,
+  TimeResponse,
 } from '../../parser/types';
 import { CustomResponseValidate, StoredAnswer } from '../../store/types';
+import { isValidTime, parseDateValue } from '../../utils/dateTimeValidation';
+import { getDropdownOptions } from '../../utils/dropdownOptions';
+import { isMatrixDontKnowValue } from '../../utils/responseOptions';
 import { parseStringOptions, parseStringOptionValue } from '../../utils/stringOptions';
 
+export { checkNumericalResponse, checkTextResponse } from '../../utils/primitiveValidation';
+
 export const REQUIRED_ERROR_MESSAGE = 'Please answer this question to continue.';
+export const INVALID_DATE_MESSAGE = 'Please select a valid date.';
+
+export function getDateValidationMessage(response: DateResponse, value: string) {
+  const options = response.options ?? 'date';
+  const dateOption = options === 'date' ? 'date' : options;
+  const date = parseDateValue(value, options);
+  if (date === null) {
+    return `Please select a valid ${dateOption}.`;
+  }
+
+  const minDate = response.min ? parseDateValue(response.min, options) : null;
+  const maxDate = response.max ? parseDateValue(response.max, options) : null;
+
+  if (minDate && maxDate && (date < minDate || date > maxDate)) {
+    return `Please select a ${dateOption} between ${response.min} and ${response.max}.`;
+  }
+  if (minDate && date < minDate) {
+    return `Please select a ${dateOption} on or after ${response.min}.`;
+  }
+  if (maxDate && date > maxDate) {
+    return `Please select a ${dateOption} on or before ${response.max}.`;
+  }
+
+  return null;
+}
+
+function getTimeValidationMessage(response: TimeResponse, value: string) {
+  if (!isValidTime(value, response.withSeconds)) {
+    return 'Please select a valid time.';
+  }
+  if (response.min && response.max && (value < response.min || value > response.max)) {
+    return `Please select a time between ${response.min} and ${response.max}.`;
+  }
+  if (response.min && value < response.min) {
+    return `Please select a time at or after ${response.min}.`;
+  }
+  if (response.max && value > response.max) {
+    return `Please select a time at or before ${response.max}.`;
+  }
+
+  return null;
+}
 
 export type ResponseIssueType = 'unanswered' | 'invalid';
 export type ResponseIssueSummary = { unansweredCount: number; invalidCount: number };
@@ -29,23 +83,17 @@ export type ResponseValidationOptions = {
 };
 
 export function isEmptyCustomResponseValue(value: StoredAnswer['answer'][string] | undefined): boolean {
-  if (value === null || value === undefined || value === '') {
-    return true;
-  }
-
-  if (Array.isArray(value)) {
-    return value.length === 0 || value.every((entry) => isEmptyCustomResponseValue(entry));
-  }
-
-  if (typeof value === 'object') {
-    const objectValues = Object.values(value);
-    return objectValues.length === 0 || objectValues.every((entry) => isEmptyCustomResponseValue(entry));
-  }
-
-  return false;
+  return !isResponseAnswered(value);
 }
 
 export function checkDropdownResponse(dropdownResponse: DropdownResponse, value: string[]) {
+  if (dropdownResponse.options === 'countries') {
+    const countryValues = new Set(getDropdownOptions(dropdownResponse).map((option) => option.value));
+    if (value.some((entry) => !countryValues.has(entry))) {
+      return 'Please select a valid country.';
+    }
+  }
+
   const minNotSelected = dropdownResponse.minSelections && value.length < dropdownResponse.minSelections;
   const maxNotSelected = dropdownResponse.maxSelections && value.length > dropdownResponse.maxSelections;
 
@@ -84,23 +132,6 @@ export function checkCheckboxResponseForValidation(
   }
 
   return checkCheckboxResponse(response, value);
-}
-
-export function checkNumericalResponse(response: NumericalResponse, value: number) {
-  const numValue = typeof value === 'string' ? parseFloat(value) : value;
-
-  const { min, max } = response;
-
-  if (min !== undefined && max !== undefined && (numValue < min || numValue > max)) {
-    return `Please enter a value between ${min} and ${max}`;
-  }
-  if (min !== undefined && numValue < min) {
-    return `Please enter a value of ${min} or greater`;
-  }
-  if (max !== undefined && numValue > max) {
-    return `Please enter a value of ${max} or less`;
-  }
-  return null;
 }
 
 // Instance keys (`instance-<index>-<optionValue>`) never collide with option values; legacy keys still parse.
@@ -154,7 +185,96 @@ export function getRankingInstanceIndex(instanceId: string, optionValues: Set<st
   return Number(instanceId.slice(baseItemId.length + 1));
 }
 
-export function checkPairwiseRankingResponse(response: RankingResponse, value: Record<string, string>) {
+function minMaxValidation(min : number | undefined, max: number | undefined, num: number | undefined, rankingType : string) {
+  let items = num;
+  if (items === undefined) {
+    return null;
+  }
+  let rankingSpecificString = '';
+  // 'ranking-sublist' | 'ranking-categorical' | 'ranking-pairwise'
+  switch (rankingType) {
+    case 'ranking-sublist':
+      rankingSpecificString = 'items';
+      break;
+    case 'ranking-categorical':
+      rankingSpecificString = 'items per category';
+      break;
+    case 'ranking-pairwise':
+      rankingSpecificString = 'pairs';
+      items /= 2;
+      break;
+    default:
+      rankingSpecificString = 'items';
+      break;
+  }
+
+  if ((min !== undefined && items < min) || (max !== undefined && items > max)) {
+    if (min !== undefined && max !== undefined) {
+      if (min === max) {
+        return `Please add exactly ${min} ${rankingSpecificString}.`;
+      }
+      return `Please add between ${min} and ${max} ${rankingSpecificString}.`;
+    }
+
+    if (min !== undefined) {
+      return `Please add at least ${min} ${rankingSpecificString}.`;
+    }
+
+    return `Please add at most ${max} ${rankingSpecificString}.`;
+  }
+
+  return null;
+}
+
+function checkCategoricalRankingResponse(response: RankingCategoricalResponse, value: object) {
+  const {
+    min, max, categorizeAll, numItems,
+  } = response;
+  const validCategories = new Set(['HIGH', 'MEDIUM', 'LOW']);
+  const configuredOptionValues = new Set(parseStringOptions(response.options).map((option) => option.value));
+  const entries = Object.entries(value ?? {});
+
+  if (configuredOptionValues.size > 0) {
+    const unknownOptionKeys = entries
+      .filter(([optionKey]) => !configuredOptionValues.has(optionKey))
+      .map(([optionKey]) => optionKey);
+    if (unknownOptionKeys.length > 0) {
+      return 'Please categorize only configured items.';
+    }
+
+    const invalidCategoryEntries = entries
+      .filter(([, category]) => typeof category !== 'string' || !validCategories.has(category))
+      .map(([optionKey]) => optionKey);
+    if (invalidCategoryEntries.length > 0) {
+      return 'Please use only HIGH, MEDIUM, or LOW categories.';
+    }
+  }
+
+  let minMaxError = null;
+  for (const category of ['HIGH', 'MEDIUM', 'LOW'] as const) {
+    const count = entries.filter(([, cat]) => cat === category).length;
+    minMaxError = minMaxValidation(min, max, count, response.type);
+    if (minMaxError) {
+      return minMaxError;
+    }
+  }
+
+  const categorizedItems = entries.length;
+  if (numItems !== undefined && categorizedItems !== numItems) {
+    return `Please categorize exactly ${numItems} items.`;
+  }
+
+  if (categorizeAll && configuredOptionValues.size > 0) {
+    const valueObj = (value ?? {}) as Record<string, unknown>;
+    const missingOptionKeys = [...configuredOptionValues].filter((optionValue) => !Object.hasOwn(valueObj, optionValue));
+    if (missingOptionKeys.length > 0) {
+      return 'Please categorize all items.';
+    }
+  }
+  return null;
+}
+
+export function checkPairwiseRankingResponse(response: RankingPairwiseResponse, value: Record<string, string>) {
   const optionValues = new Set(parseStringOptions(response.options).map((option) => option.value));
   const pairs: Record<string, { high: string[]; low: string[] }> = {};
   let hasInvalidLocation = false;
@@ -197,7 +317,9 @@ export function checkPairwiseRankingResponse(response: RankingResponse, value: R
     return 'This would create a duplicate pair.';
   }
 
-  return null;
+  const num = Object.keys(value).length; // each pair has two items
+  const { min, max } = response;
+  return minMaxValidation(min, max, num, response.type);
 }
 
 export function checkMatrixResponse(response: MatrixResponse, value: Record<string, string>) {
@@ -210,7 +332,31 @@ export function checkMatrixResponse(response: MatrixResponse, value: Record<stri
   if (unanswered) {
     return 'Please answer all questions in the matrix to continue.';
   }
+  if (response.type === 'matrix-checkbox') {
+    const { min, max } = response;
+    if (min !== undefined || max !== undefined) {
+      const requiredAmountOfQuestionsAnswered = expectedQuestionKeys.every((questionKey) => {
+        const rowValue = value[questionKey];
+        if (response.withDontKnow && isMatrixDontKnowValue(rowValue)) {
+          return true;
+        }
+        const rowSelectionCount = rowValue.split('|').length;
+        return (min === undefined || rowSelectionCount >= min) && (max === undefined || rowSelectionCount <= max);
+      });
 
+      if (!requiredAmountOfQuestionsAnswered) {
+        if (min && max) {
+          return `Please select at least ${min} and at most ${max} answers per row.`;
+        }
+
+        if (min) {
+          return `Please select at least ${min} answers per row.`;
+        }
+
+        return `Please select at most ${max} answers per row.`;
+      }
+    }
+  }
   return null;
 }
 
@@ -260,7 +406,7 @@ function createValidationResult(
   };
 }
 
-export function validateResponse(
+function validateResponseBase(
   response: Response,
   value: StoredAnswer['answer'][string] | undefined,
   values: StoredAnswer['answer'],
@@ -268,7 +414,7 @@ export function validateResponse(
 ): ResponseValidationResult {
   const dontKnowChecked = !!values[`${response.id}-dontKnow`];
 
-  if (response.type === 'textOnly' || response.type === 'divider' || response.type === 'reactive') {
+  if (response.type === 'textOnly' || response.type === 'divider') {
     return createValidationResult(response, 'none');
   }
 
@@ -301,8 +447,17 @@ export function validateResponse(
       return createValidationResult(response, 'none');
     }
 
-    const customValidationMessage = customValidate(customValue, values, response);
-    return customValidationMessage
+    let customValidationMessage: unknown;
+    try {
+      customValidationMessage = customValidate(customValue, values, response);
+    } catch (error) {
+      console.error(`Validation function at ${response.path} failed`, error);
+      return createValidationResult(response, 'invalid', { message: `Validation function at ${response.path} failed` });
+    }
+    const resultError = getResponseValidationResultError(customValidationMessage, response.path);
+    if (resultError) return createValidationResult(response, 'invalid', { message: resultError });
+    if (customValidationMessage === false) return createValidationResult(response, 'invalid', { message: 'The response is invalid.' });
+    return typeof customValidationMessage === 'string' && customValidationMessage
       ? createValidationResult(response, 'invalid', { message: customValidationMessage })
       : createValidationResult(response, 'none');
   }
@@ -311,8 +466,65 @@ export function validateResponse(
     return createValidationResult(response, 'none');
   }
 
+  if (response.type === 'reactive') {
+    if (response.requiredValue != null && !isEqual(value, response.requiredValue)) {
+      return createValidationResult(response, 'invalid', { reason: 'requiredValueMismatch' });
+    }
+
+    return createValidationResult(response, 'none');
+  }
+
   if (isOtherSelectionIncomplete(response, value, values)) {
     return createValidationResult(response, 'invalid', { message: 'Please fill in Other to continue.' });
+  }
+
+  if (response.type === 'date') {
+    if (value === null || value === undefined || value === '') {
+      return createValidationResult(response, response.required === false ? 'none' : 'unanswered');
+    }
+    const dateError = typeof value === 'string'
+      ? getDateValidationMessage(response, value)
+      : INVALID_DATE_MESSAGE;
+    if (dateError) {
+      return createValidationResult(response, 'invalid', { message: dateError });
+    }
+    if (response.requiredValue != null && value !== response.requiredValue.toString()) {
+      return createValidationResult(response, 'invalid', { reason: 'requiredValueMismatch' });
+    }
+    return createValidationResult(response, 'none');
+  }
+  if (response.type === 'time') {
+    if (value === null || value === undefined || value === '') {
+      return createValidationResult(response, response.required === false ? 'none' : 'unanswered');
+    }
+    const timeError = typeof value === 'string'
+      ? getTimeValidationMessage(response, value)
+      : 'Please select a valid time.';
+    if (timeError) {
+      return createValidationResult(response, 'invalid', { message: timeError });
+    }
+    if (response.requiredValue != null && value !== response.requiredValue.toString()) {
+      return createValidationResult(response, 'invalid', { reason: 'requiredValueMismatch' });
+    }
+    return createValidationResult(response, 'none');
+  }
+  if (response.type === 'shortText' || response.type === 'longText') {
+    if (value === null || value === undefined || value === '') {
+      return createValidationResult(response, response.required ? 'unanswered' : 'none');
+    }
+
+    if (typeof value !== 'string') {
+      return createValidationResult(response, 'invalid', { message: 'Please enter a valid text response.' });
+    }
+
+    if (response.requiredValue != null && value !== response.requiredValue.toString()) {
+      return createValidationResult(response, 'invalid', { reason: 'requiredValueMismatch' });
+    }
+
+    const textError = checkTextResponse(response, value);
+    return textError
+      ? createValidationResult(response, 'invalid', { message: textError })
+      : createValidationResult(response, 'none');
   }
 
   if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
@@ -331,8 +543,38 @@ export function validateResponse(
     }
 
     if (response.type === 'ranking-sublist' || response.type === 'ranking-categorical' || response.type === 'ranking-pairwise') {
-      if (Object.keys(value).length === 0) {
+      const { min, max } = response;
+
+      if (response.type === 'ranking-sublist') {
+        const optionValues = new Set(parseStringOptions(response.options).map((option) => option.value));
+        const unknownOptionKeys = Object.keys(value).filter((optionKey) => !optionValues.has(optionKey));
+        const configuredEntries = Object.entries(value).filter(([optionKey]) => optionValues.has(optionKey));
+
+        if (unknownOptionKeys.length > 0) {
+          return createValidationResult(response, 'invalid', { message: 'Please rank only configured items.' });
+        }
+
+        if (configuredEntries.length === 0) {
+          return createValidationResult(response, response.required ? 'unanswered' : 'none');
+        }
+
+        const effectiveMax = max ?? response.numItems;
+        const sublistError = minMaxValidation(min, effectiveMax, configuredEntries.length, response.type);
+        return sublistError
+          ? createValidationResult(response, 'invalid', { message: sublistError })
+          : createValidationResult(response, 'none');
+      }
+
+      const numItems = Object.keys(value).length;
+      if (numItems === 0) {
         return createValidationResult(response, response.required ? 'unanswered' : 'none');
+      }
+
+      if (response.type === 'ranking-categorical') {
+        const categoricalError = checkCategoricalRankingResponse(response, value);
+        return categoricalError
+          ? createValidationResult(response, 'invalid', { message: categoricalError })
+          : createValidationResult(response, 'none');
       }
 
       if (response.type === 'ranking-pairwise') {
@@ -349,6 +591,13 @@ export function validateResponse(
   if (Array.isArray(value)) {
     if (value.length === 0) {
       return createValidationResult(response, response.required ? 'unanswered' : 'none');
+    }
+
+    if (response.type === 'dropdown') {
+      const dropdownError = checkDropdownResponse(response, value as string[]);
+      if (dropdownError) {
+        return createValidationResult(response, 'invalid', { message: dropdownError });
+      }
     }
 
     if (response.requiredValue != null && !Array.isArray(response.requiredValue)) {
@@ -387,6 +636,13 @@ export function validateResponse(
     return createValidationResult(response, response.required ? 'unanswered' : 'none');
   }
 
+  if (response.type === 'dropdown') {
+    const dropdownError = checkDropdownResponse(response, [value.toString()]);
+    if (dropdownError) {
+      return createValidationResult(response, 'invalid', { message: dropdownError });
+    }
+  }
+
   if (response.requiredValue != null && value.toString() !== response.requiredValue.toString()) {
     return createValidationResult(response, 'invalid', { reason: 'requiredValueMismatch' });
   }
@@ -399,4 +655,33 @@ export function validateResponse(
   }
 
   return createValidationResult(response, 'none');
+}
+
+export function validateResponse(
+  response: Response,
+  value: StoredAnswer['answer'][string] | undefined,
+  values: StoredAnswer['answer'],
+  options: ResponseValidationOptions = {},
+): ResponseValidationResult {
+  const result = validateResponseBase(response, value, values, options);
+  if (!result.valid || !response.path || response.type === 'custom' || response.type === 'textOnly' || response.type === 'divider'
+    || isEmptyCustomResponseValue(value)
+    || shouldBypassValidationForStandaloneDontKnow(response, !!values[`${response.id}-dontKnow`])) return result;
+
+  const module = getResponseFunctionModule(response.path);
+  if (!module) {
+    return createValidationResult(response, 'invalid', { message: `Unable to load response module at ${response.path}` });
+  }
+  if (!module.validate) return result;
+  let message: unknown;
+  try {
+    message = module.validate(normalizeResponseValue(response, value), values, response);
+  } catch (error) {
+    console.error(`Validation function at ${response.path} failed`, error);
+    return createValidationResult(response, 'invalid', { message: `Validation function at ${response.path} failed` });
+  }
+  const resultError = getResponseValidationResultError(message, response.path);
+  if (resultError) return createValidationResult(response, 'invalid', { message: resultError });
+  if (message === false) return createValidationResult(response, 'invalid', { message: 'The response is invalid.' });
+  return typeof message === 'string' && message ? createValidationResult(response, 'invalid', { message }) : result;
 }

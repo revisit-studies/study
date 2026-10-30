@@ -7,7 +7,7 @@ import {
 import { useEffect, useMemo } from 'react';
 import { StimulusParams, TrrackedProvenance } from '../../../store/types';
 import { useIsAnalysis } from '../../../store/hooks/useIsAnalysis';
-import movies from './movies.json' assert { type: 'json' };
+import movies from './movies.json' with { type: 'json' };
 
 const movieColumns = Object.fromEntries(
   Object.entries(movies[0]).map(([key, value]) => {
@@ -63,7 +63,7 @@ export default function App({
   }, [isAnalysis, provenance, setAnswer]);
 
   return (
-    <div inert={(isAnalysis ? '' : undefined) as never}>
+    <div inert={isAnalysis}>
       <Upset
         data={processedMovies}
         extProvenance={extProvenance}

@@ -16,6 +16,6 @@ export async function shouldProtectAnalysisRoute(
     return true;
   }
 
-  const modes = await storageEngine.getModes(resolvedStudyId);
-  return !modes.dataSharingEnabled;
+  const modes = await storageEngine.getAccessModes(resolvedStudyId);
+  return modes?.dataSharingEnabled !== true;
 }

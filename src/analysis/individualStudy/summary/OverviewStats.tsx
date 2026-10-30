@@ -26,7 +26,7 @@ export function OverviewStats({
           <Text size="sm" c="dimmed">Completed</Text>
         </Flex>
         <Flex direction="column">
-          <Text size="xl" fw="bold" c="yellow">{overviewData.participantCounts.inProgress}</Text>
+          <Text size="xl" fw="bold" c="orange">{overviewData.participantCounts.inProgress}</Text>
           <Text size="sm" c="dimmed">In Progress</Text>
         </Flex>
         <Flex direction="column">
@@ -49,7 +49,7 @@ export function OverviewStats({
           <Flex align="center" gap="xs">
             {hasExcluded && (
               <Tooltip label={`${overviewData.participantsWithInvalidCleanTimeCount} participants with invalid timing data were excluded from the average clean time calculation`}>
-                <IconAlertTriangle size={16} color="orange" />
+                <IconAlertTriangle size={16} color="var(--mantine-color-orange-text)" />
               </Tooltip>
             )}
             <Text size="xl" fw="bold">{convertNumberToString(overviewData.avgCleanTime, 'time')}</Text>

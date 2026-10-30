@@ -17,6 +17,9 @@ import {
   IconBrandPython, IconLayoutColumns, IconTableExport, IconX,
 } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
+import type { GlobalStoreGraph } from '../../store/globalStoreProvenance';
+import { GLOBAL_STORE_TASK } from '../../store/globalStoreProvenance';
+import { getGlobalStoreHistory } from '../../store/globalStoreHistory';
 import { ParticipantDataWithStatus } from '../../storage/types';
 import { Prettify, StudyConfig } from '../../parser/types';
 import { StorageEngine } from '../../storage/engines/types';
@@ -25,6 +28,7 @@ import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngi
 import { useAsync } from '../../store/hooks/useAsync';
 import { useAuth } from '../../store/hooks/useAuth';
 import { getCleanedDuration } from '../../utils/getCleanedDuration';
+import { getCorrectAnswerDisplayValue, getSavedScoresForAnswer } from '../../utils/correctAnswer';
 import { showNotification } from '../../utils/notifications';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 import { parseConditionParam } from '../../utils/handleConditionLogic';
@@ -32,6 +36,9 @@ import { getAnswerIdentifier, getParticipantQualitativeCodes } from './qualitati
 import type { DownloadedQualitativeCodes } from './qualitativeCodes';
 
 const OPTIONAL_COMMON_PROPS = [
+  'globalStoreBefore',
+  'globalStoreAfter',
+  'globalStoreOperations',
   'condition',
   'stage',
   'status',
@@ -42,6 +49,7 @@ const OPTIONAL_COMMON_PROPS = [
   'instruction',
   'responsePrompt',
   'answer',
+  'score',
   'correctAnswer',
   'duration',
   'cleanedDuration',
@@ -55,6 +63,7 @@ const OPTIONAL_COMMON_PROPS = [
   'metaData',
   'participantTags',
   'taskTags',
+  'windowEvents',
 ] as const;
 
 const REQUIRED_PROPS = [
@@ -111,7 +120,9 @@ function participantDataToRows(
   studyConfig?: StudyConfig,
   transcripts?: Record<string, string | null>,
   qualitativeCodes?: DownloadedQualitativeCodes,
+  globalGraph?: GlobalStoreGraph,
 ): [TidyRow[], string[]] {
+  const globalHistory = globalGraph ? getGlobalStoreHistory(globalGraph).filter((entry) => entry.active) : [];
   const percentComplete = ((Object.entries(participant.answers).filter(([_, entry]) => entry.endTime !== -1).length / (Object.entries(participant.answers).length)) * 100).toFixed(2);
   const newHeaders = new Set<string>();
   const participantConditions = parseConditionParam(participant.conditions ?? participant.searchParams?.condition);
@@ -146,6 +157,7 @@ function participantDataToRows(
       const completeComponent = trialConfig && studyConfig ? studyComponentToIndividualComponent(trialConfig, studyConfig) : undefined;
       const identifier = getAnswerIdentifier(trialAnswer);
       const taskQualitativeTags = JSON.stringify(qualitativeCodes?.taskTags[identifier] ?? []);
+      const savedScores = getSavedScoresForAnswer(trialAnswer.checkAnswer, trialAnswer.answer);
 
       const duration = trialAnswer.endTime === -1 ? undefined : trialAnswer.endTime - trialAnswer.startTime;
       const cleanedDuration = getCleanedDuration(trialAnswer);
@@ -159,6 +171,10 @@ function participantDataToRows(
           responseId: key,
         };
 
+        const submission = globalHistory.find((entry) => entry.submission.answer.identifier === identifier);
+        if (properties.includes('globalStoreBefore')) tidyRow.globalStoreBefore = submission ? JSON.stringify(submission.before) : null;
+        if (properties.includes('globalStoreAfter')) tidyRow.globalStoreAfter = submission ? JSON.stringify(submission.after) : null;
+        if (properties.includes('globalStoreOperations')) tidyRow.globalStoreOperations = submission ? JSON.stringify(submission.submission.operations) : null;
         Object.entries(trialAnswer.parameters).forEach(([_key, _value]) => {
           tidyRow[`parameters_${_key}`] = _value;
           newHeaders.add(`parameters_${_key}`);
@@ -198,6 +214,10 @@ function participantDataToRows(
         if (properties.includes('answer')) {
           tidyRow.answer = typeof value === 'object' ? JSON.stringify(value) : value;
         }
+        if (properties.includes('score')) {
+          const score = savedScores?.[key];
+          tidyRow.score = score === undefined ? undefined : `${Math.round(score * 100)}%`;
+        }
         if (properties.includes('taskTags')) {
           tidyRow.taskTags = taskQualitativeTags;
         }
@@ -205,9 +225,9 @@ function participantDataToRows(
           tidyRow.transcript = transcripts?.[`${participant.participantId}_${identifier}`] ?? undefined;
         }
         if (properties.includes('correctAnswer')) {
-          const configCorrectAnswer = completeComponent?.correctAnswer?.find((ans) => ans.id === key)?.answer;
-          const answerCorrectAnswer = trialAnswer.correctAnswer.find((ans) => ans.id === key)?.answer;
-          const correctAnswer = answerCorrectAnswer ?? configCorrectAnswer;
+          const configCorrectAnswer = completeComponent?.correctAnswer?.find((ans) => ans.id === key);
+          const answerCorrectAnswer = trialAnswer.correctAnswer?.find((ans) => ans.id === key);
+          const correctAnswer = getCorrectAnswerDisplayValue(answerCorrectAnswer ?? configCorrectAnswer);
           tidyRow.correctAnswer = typeof correctAnswer === 'object' ? JSON.stringify(correctAnswer) : correctAnswer;
         }
         if (properties.includes('startTime')) {
@@ -234,29 +254,35 @@ function participantDataToRows(
         return tidyRow;
       }).flat();
 
-      const windowEventsCount = {
-        focus: trialAnswer.windowEvents.filter((event) => event[1] === 'focus').length,
-        input: trialAnswer.windowEvents.filter((event) => event[1] === 'input').length,
-        keydown: trialAnswer.windowEvents.filter((event) => event[1] === 'keydown').length,
-        keyup: trialAnswer.windowEvents.filter((event) => event[1] === 'keyup').length,
-        mousemove: trialAnswer.windowEvents.filter((event) => event[1] === 'mousemove').length,
-        mousedown: trialAnswer.windowEvents.filter((event) => event[1] === 'mousedown').length,
-        mouseup: trialAnswer.windowEvents.filter((event) => event[1] === 'mouseup').length,
-        resize: trialAnswer.windowEvents.filter((event) => event[1] === 'resize').length,
-        scroll: trialAnswer.windowEvents.filter((event) => event[1] === 'scroll').length,
-        visibility: trialAnswer.windowEvents.filter((event) => event[1] === 'visibility').length,
-      };
+      if (properties.includes('windowEvents')) {
+        const windowEventsCount = {
+          focus: trialAnswer.windowEvents.filter((event) => event[1] === 'focus').length,
+          input: trialAnswer.windowEvents.filter((event) => event[1] === 'input').length,
+          keydown: trialAnswer.windowEvents.filter((event) => event[1] === 'keydown').length,
+          keyup: trialAnswer.windowEvents.filter((event) => event[1] === 'keyup').length,
+          mousemove: trialAnswer.windowEvents.filter((event) => event[1] === 'mousemove').length,
+          mousedown: trialAnswer.windowEvents.filter((event) => event[1] === 'mousedown').length,
+          mouseup: trialAnswer.windowEvents.filter((event) => event[1] === 'mouseup').length,
+          resize: trialAnswer.windowEvents.filter((event) => event[1] === 'resize').length,
+          scroll: trialAnswer.windowEvents.filter((event) => event[1] === 'scroll').length,
+          visibility: trialAnswer.windowEvents.filter((event) => event[1] === 'visibility').length,
+          gamepadconnection: trialAnswer.windowEvents.filter((event) => event[1] === 'gamepadconnection').length,
+          gamepadbuttondown: trialAnswer.windowEvents.filter((event) => event[1] === 'gamepadbuttondown').length,
+          gamepadbuttonup: trialAnswer.windowEvents.filter((event) => event[1] === 'gamepadbuttonup').length,
+          gamepadaxis: trialAnswer.windowEvents.filter((event) => event[1] === 'gamepadaxis').length,
+        };
 
-      // Add a window events count row for each component
-      rows.push({
-        participantId: participant.participantId,
-        trialId,
-        trialOrder,
-        responseId: 'windowEvents',
-        answer: JSON.stringify(windowEventsCount),
-        ...(properties.includes('condition') ? { condition: conditionValue } : {}),
-        ...(properties.includes('stage') ? { stage: participant.stage } : {}),
-      } as TidyRow);
+        // Add a window events count row for each component
+        rows.push({
+          participantId: participant.participantId,
+          trialId,
+          trialOrder,
+          responseId: 'windowEvents',
+          answer: JSON.stringify(windowEventsCount),
+          ...(properties.includes('condition') ? { condition: conditionValue } : {}),
+          ...(properties.includes('stage') ? { stage: participant.stage } : {}),
+        } as TidyRow);
+      }
 
       return rows;
     }).flat()], Array.from(newHeaders)];
@@ -296,7 +322,7 @@ export async function getTableData(
       const key = `${participantId}_${identifier}`;
 
       try {
-        const t = await (storageEngine as FirebaseStorageEngine).getTranscription(identifier, participantId);
+        const t = await (storageEngine as FirebaseStorageEngine).getTranscription(answer.assetIdentifier ?? identifier, participantId);
         const text = t?.results?.map((r) => r.alternatives?.[0]?.transcript).join(' ');
         transcripts[key] = text || null;
       } catch {
@@ -313,18 +339,23 @@ export async function getTableData(
   const header = combinedProperties
     .filter((p) => p !== 'condition' || hasCondition)
     .filter((p) => p !== 'metaData')
-    .filter((p) => p !== 'participantTags');
+    .filter((p) => p !== 'participantTags')
+    .filter((p) => p !== 'windowEvents');
   const allData = await Promise.all(data.map(async (participant) => {
     const participantConfig = allConfigs[participant.participantConfigHash];
     const qualitativeCodes = selectedProperties.includes('participantTags') || selectedProperties.includes('taskTags')
       ? await getParticipantQualitativeCodes(storageEngine, authEmail, participant)
       : undefined;
+    const globalProvenance = selectedProperties.some((property) => ['globalStoreBefore', 'globalStoreAfter', 'globalStoreOperations'].includes(property)) && participant.globalStoreHead
+      ? await storageEngine.getProvenance(GLOBAL_STORE_TASK, participant.participantId) : null;
     const partDataToRows = await participantDataToRows(
       participant,
       combinedProperties,
       hasStoredStudyConfig(participantConfig) ? participantConfig : undefined,
       transcripts,
       qualitativeCodes,
+      globalProvenance?.globalStore && participant.globalStoreHead
+        ? { ...globalProvenance.globalStore, current: participant.globalStoreHead as GlobalStoreGraph['current'] } : undefined,
     );
 
     return partDataToRows;
@@ -381,6 +412,7 @@ export function DownloadTidy({
     'instruction',
     'responsePrompt',
     'answer',
+    'score',
     'correctAnswer',
     'duration',
     'cleanedDuration',
@@ -539,7 +571,7 @@ export function DownloadTidy({
             const button = (
               <Button
                 key={prop}
-                variant={isSelected ? 'light' : 'white'}
+                variant={isSelected ? 'light' : 'subtle'}
                 color={isSelected ? 'blue' : 'gray'}
                 size="xs"
                 onClick={() => {

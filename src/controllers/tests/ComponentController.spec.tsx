@@ -1,5 +1,7 @@
 import React, { ReactNode } from 'react';
-import { render, waitFor, act } from '@testing-library/react';
+import {
+  render, waitFor, act, fireEvent,
+} from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
@@ -15,6 +17,7 @@ import type {
   VideoComponent,
 } from '../../parser/types';
 import type { StoreState } from '../../store/types';
+import { StartupInteractionProvider } from '../../components/StartupContext';
 import { ComponentController } from '../ComponentController';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { ImageController } from '../ImageController';
@@ -22,7 +25,7 @@ import { MarkdownController } from '../MarkdownController';
 import { ReactComponentController } from '../ReactComponentController';
 import { VegaController } from '../VegaController';
 import { VideoController } from '../VideoController';
-import { useCurrentComponent, useCurrentStep } from '../../routes/utils';
+import { useCurrentComponent, useCurrentIdentifier, useCurrentStep } from '../../routes/utils';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { getStaticAssetByPath, getJsonAssetByPath } from '../../utils/getStaticAsset';
 import { useStoreDispatch, useStoreSelector } from '../../store/store';
@@ -30,6 +33,7 @@ import { findBlockForStep } from '../../utils/getSequenceFlatMap';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import { useRecordingConfig } from '../../store/hooks/useRecordingConfig';
 import { makeStoredAnswer, makeStorageEngine } from '../../tests/utils';
+import * as templateHelpers from '../../utils/handlebars';
 
 // ── mutable state ────────────────────────────────────────────────────────────
 
@@ -37,6 +41,7 @@ let mockVegaImpl: React.FC = () => React.createElement('div', null, 'Vega');
 const mockTrrackApply = vi.fn();
 
 let mockStoreActions = {
+  setAssetStatus: vi.fn(),
   setReactiveAnswers: vi.fn(),
   updateProvenance: vi.fn(),
   updateResponseBlockValidation: vi.fn(),
@@ -44,10 +49,19 @@ let mockStoreActions = {
   setAnalysisCanPlayScreenRecording: vi.fn(),
 };
 
+vi.mock('../../components/interface/RestorationError', () => ({ RestorationError: () => <div>Restoration error</div> }));
+
+vi.mock('../../components/interface/RestorationWarning', () => ({ RestorationWarning: () => null }));
+
 // ── mocks ────────────────────────────────────────────────────────────────────
 
+// Stimulus discovery imports every editor; these host tests do not exercise the drawing engine.
+vi.mock('../../public/libraries/drawing/assets/DrawingEditor', () => ({ default: () => null }));
+
 vi.mock('@mantine/core', () => ({
-  Image: ({ src }: { src?: string }) => <img src={src} alt="img" />,
+  Image: ({ src, onLoad, onError }: { src?: string; onLoad?: () => void; onError?: () => void }) => (
+    <img src={src} onLoad={onLoad} onError={onError} alt="img" />
+  ),
   Text: ({ children }: { children: ReactNode }) => <p>{children}</p>,
   Box: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Center: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -64,7 +78,8 @@ vi.mock('../../ResourceNotFound', () => ({
   ResourceNotFound: ({ path, email }: { path?: string; email?: string }) => (
     <div>
       ResourceNotFound:
-      {path ?? email}
+      {path}
+      {email}
     </div>
   ),
 }));
@@ -92,7 +107,9 @@ vi.mock('../../components/response/ResponseBlock', () => ({
 }));
 
 vi.mock('../../components/screenRecording/ScreenRecordingReplay', () => ({
-  ScreenRecordingReplay: () => <div>ScreenRecordingReplay</div>,
+  ScreenRecordingReplay: ({ webcamOnly }: { webcamOnly?: boolean }) => (
+    <div>{webcamOnly ? 'WebcamOnlyReplay' : 'ScreenRecordingReplay'}</div>
+  ),
 }));
 
 vi.mock('../../utils/getStaticAsset', () => ({
@@ -107,6 +124,7 @@ vi.mock('../../utils/Prefix', () => ({
 vi.mock('../../store/store', () => ({
   useStoreDispatch: vi.fn(() => vi.fn()),
   useStoreActions: vi.fn(() => mockStoreActions),
+  useFlatSequence: vi.fn(() => []),
   useStoreSelector: vi.fn((selector: (s: StoreState) => StoreState[keyof StoreState]) => selector({
     answers: {},
     analysisCanPlayScreenRecording: false,
@@ -308,25 +326,34 @@ describe('ImageController', () => {
     expect(html).toContain('https://example.com/img.png');
   });
 
-  test('renders ResourceNotFound after fetch returns undefined', async () => {
-    vi.mocked(getStaticAssetByPath).mockResolvedValueOnce(undefined);
+  test('renders ResourceNotFound after an image load error', () => {
     const { container } = render(<ImageController currentConfig={{ type: 'image', path: '/missing.png', response: [] }} />);
-    await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
+    fireEvent.error(container.querySelector('img')!);
+    expect(container.textContent).toContain('ResourceNotFound');
+    expect(container.textContent).toContain('test@test.com');
+    expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith({ identifier: 'trial1_0', status: 'error' });
   });
 
-  test('renders img after fetch returns content', async () => {
-    vi.mocked(getStaticAssetByPath).mockResolvedValueOnce('image-data');
+  test('starts loading and becomes ready after the image loads', () => {
     const { container } = render(<ImageController currentConfig={{ type: 'image', path: '/found.png', response: [] }} />);
-    await waitFor(() => expect(container.querySelector('img')).toBeTruthy());
+    expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith({ identifier: 'trial1_0', status: 'loading' });
+    fireEvent.load(container.querySelector('img')!);
+    expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith({ identifier: 'trial1_0', status: 'ready' });
+    expect(container.querySelector('img')).toBeTruthy();
   });
 
-  test('checks absolute image URLs without prefixing them', async () => {
+  test('waits for the new image when its path changes after an error', () => {
+    const { container, rerender } = render(<ImageController currentConfig={{ type: 'image', path: '/missing.png', response: [] }} />);
+    fireEvent.error(container.querySelector('img')!);
+    rerender(<ImageController currentConfig={imageConfig} />);
+    expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith({ identifier: 'trial1_0', status: 'loading' });
+    fireEvent.load(container.querySelector('img')!);
+    expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith({ identifier: 'trial1_0', status: 'ready' });
+  });
+
+  test('uses absolute image URLs without prefixing them', () => {
     const remotePath = 'https://raw.githubusercontent.com/revisit-studies/library-assets/v1/vlat/VLAT1.png';
-    vi.mocked(getStaticAssetByPath).mockResolvedValueOnce('image-data');
-
     const { container } = render(<ImageController currentConfig={{ type: 'image', path: remotePath, response: [] }} />);
-
-    await waitFor(() => expect(getStaticAssetByPath).toHaveBeenCalledWith(remotePath));
     expect(container.querySelector('img')?.getAttribute('src')).toBe(remotePath);
   });
 });
@@ -343,6 +370,7 @@ describe('MarkdownController', () => {
     vi.mocked(getStaticAssetByPath).mockResolvedValueOnce(undefined);
     const { container } = render(<MarkdownController currentConfig={{ type: 'markdown', path: '/missing.md', response: [] }} />);
     await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
+    expect(container.textContent).toContain('test@test.com');
   });
 
   test('renders markdown text after fetch resolves with content', async () => {
@@ -355,11 +383,29 @@ describe('MarkdownController', () => {
 // ── ReactComponentController ──────────────────────────────────────────────────
 
 describe('ReactComponentController', () => {
+  test.each(['render', 'effect'])('renders ResourceNotFound and marks the asset failed after a %s exception', async (failure) => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const path = 'libraries/test/assets/ThrowingStimulus.tsx';
+    const { container } = render(
+      <ReactComponentController
+        currentConfig={{
+          type: 'react-component', path, parameters: { failure }, response: [],
+        }}
+        answers={{}}
+      />,
+    );
+
+    await waitFor(() => expect(container.textContent).toContain(`ResourceNotFound:${path}`));
+    expect(container.textContent).not.toContain('Stimulus initialization failed');
+    expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith({ identifier: 'trial1_0', status: 'error' });
+  });
+
   test('renders ResourceNotFound when the module path is not in import.meta.glob', () => {
     const html = renderToStaticMarkup(
       <ReactComponentController currentConfig={missingReactConfig} answers={{}} />,
     );
     expect(html).toContain('ResourceNotFound');
+    expect(html).toContain('test@test.com');
   });
 });
 
@@ -386,6 +432,40 @@ describe('VegaController', () => {
     vi.mocked(getJsonAssetByPath).mockResolvedValueOnce(undefined);
     const { container } = render(<VegaController currentConfig={{ type: 'vega', path: '/missing.json', response: [] }} />);
     await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
+    expect(container.textContent).toContain('test@test.com');
+  });
+
+  test('resets validation while a changed path is loading after a previous failure', async () => {
+    vi.clearAllMocks();
+    mockStoreActions.updateResponseBlockValidation.mockClear();
+    let resolveNextConfig!: (config: Record<string, unknown>) => void;
+    const nextConfig = new Promise<Record<string, unknown>>((resolve) => {
+      resolveNextConfig = resolve;
+    });
+    vi.mocked(getJsonAssetByPath)
+      .mockResolvedValueOnce(undefined)
+      .mockReturnValueOnce(nextConfig);
+
+    const response = [{
+      id: 'r', type: 'reactive', prompt: 'Complete', required: true,
+    }];
+    const firstConfig = { type: 'vega', path: '/first.json', response } as unknown as VegaComponent;
+    const secondConfig = { type: 'vega', path: '/second.json', response } as unknown as VegaComponent;
+    const { container, rerender } = render(<VegaController currentConfig={firstConfig} />);
+
+    await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
+    expect(container.textContent).toContain('test@test.com');
+    expect(mockStoreActions.updateResponseBlockValidation).toHaveBeenLastCalledWith(expect.objectContaining({ status: false }));
+    expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'error' }));
+
+    rerender(<VegaController currentConfig={secondConfig} />);
+    await waitFor(() => expect(mockStoreActions.updateResponseBlockValidation).toHaveBeenLastCalledWith(expect.objectContaining({ status: false })));
+
+    await act(async () => {
+      resolveNextConfig({ $schema: 'vega', marks: [] });
+    });
+    await waitFor(() => expect(container.textContent).toContain('Vega'));
+    expect(mockStoreActions.updateResponseBlockValidation).toHaveBeenLastCalledWith(expect.objectContaining({ status: false }));
   });
 
   test('renders Vega for an inline config object', async () => {
@@ -408,13 +488,23 @@ describe('VideoController', () => {
     vi.mocked(getStaticAssetByPath).mockResolvedValueOnce(undefined);
     const { container } = render(<VideoController currentConfig={{ type: 'video', path: '/missing.mp4', response: [] }} />);
     await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
+    expect(container.textContent).toContain('test@test.com');
   });
 
-  test('renders video element for a valid YouTube URL', async () => {
+  test('renders an embed container for a valid YouTube URL', async () => {
     vi.spyOn(window, 'requestAnimationFrame').mockImplementation(() => 0);
     const youtubeConfig: VideoComponent = { type: 'video', path: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', response: [] };
     const { container } = render(<VideoController currentConfig={youtubeConfig} />);
-    await waitFor(() => expect(container.querySelector('video')).toBeTruthy());
+    await waitFor(() => expect(container.querySelector('[data-plyr-provider="youtube"]')).toBeTruthy());
+    expect(container.querySelector('[data-plyr-embed-id]')?.getAttribute('data-plyr-embed-id')).toBe(youtubeConfig.path);
+  });
+
+  test('renders an embed container for a valid Vimeo URL', async () => {
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation(() => 0);
+    const vimeoConfig: VideoComponent = { type: 'video', path: 'https://vimeo.com/863362136', response: [] };
+    const { container } = render(<VideoController currentConfig={vimeoConfig} />);
+    await waitFor(() => expect(container.querySelector('[data-plyr-provider="vimeo"]')).toBeTruthy());
+    expect(container.querySelector('[data-plyr-embed-id]')?.getAttribute('data-plyr-embed-id')).toBe(vimeoConfig.path);
   });
 
   test('dispatches store action when forceCompletion is true', async () => {
@@ -426,6 +516,28 @@ describe('VideoController', () => {
     };
     render(<VideoController currentConfig={forceConfig} />);
     await waitFor(() => expect(mockDispatch).toHaveBeenCalled());
+  });
+
+  test('clears force-completion validation when a video fails to load', async () => {
+    vi.mocked(getStaticAssetByPath).mockResolvedValueOnce('video-data');
+    const { container } = render(<VideoController currentConfig={{ ...videoConfig, forceCompletion: true }} />);
+    await waitFor(() => expect(container.querySelector('video')).toBeTruthy());
+    expect(mockStoreActions.updateResponseBlockValidation).toHaveBeenLastCalledWith(expect.objectContaining({ status: false }));
+
+    fireEvent.error(container.querySelector('video')!);
+
+    await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
+    expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith({ identifier: 'trial1_0', status: 'missing' });
+    expect(mockStoreActions.updateResponseBlockValidation).toHaveBeenLastCalledWith(expect.objectContaining({ status: true, values: {} }));
+  });
+
+  test('clears force-completion validation when a video file is missing', async () => {
+    vi.mocked(getStaticAssetByPath).mockResolvedValueOnce(undefined);
+    const { container } = render(<VideoController currentConfig={{ ...videoConfig, forceCompletion: true }} />);
+
+    await waitFor(() => expect(container.textContent).toContain('ResourceNotFound'));
+    expect(mockStoreActions.setAssetStatus).toHaveBeenLastCalledWith({ identifier: 'trial1_0', status: 'missing' });
+    expect(mockStoreActions.updateResponseBlockValidation).toHaveBeenLastCalledWith(expect.objectContaining({ status: true, values: {} }));
   });
 
   test('renders LoadingOverlay while loading for a local path', () => {
@@ -449,6 +561,14 @@ describe('VideoController', () => {
 // ── ComponentController ───────────────────────────────────────────────────────
 
 describe('ComponentController', () => {
+  test('instruction templates receive the globalVariables namespace', () => {
+    const compile = vi.spyOn(templateHelpers, 'compileTemplate');
+    renderToStaticMarkup(<ComponentController />);
+    expect(compile).toHaveBeenCalledWith(expect.any(String), expect.any(Object), expect.objectContaining({
+      data: expect.objectContaining({ globalVariables: {} }),
+    }));
+    compile.mockRestore();
+  });
   beforeEach(() => {
     vi.mocked(useCurrentComponent).mockReturnValue('end');
   });
@@ -480,6 +600,7 @@ describe('ComponentController', () => {
     vi.mocked(useCurrentComponent).mockReturnValue('Notfound');
     const html = renderToStaticMarkup(<ComponentController />);
     expect(html).toContain('ResourceNotFound');
+    expect(html).toContain('test@test.com');
   });
 
   test('renders Loader when participantId in URL does not match store participantId', () => {
@@ -531,18 +652,22 @@ describe('ComponentController — effect coverage (render-based)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useCurrentComponent).mockReturnValue('end');
+    vi.mocked(useCurrentIdentifier).mockReturnValue('trial1_0');
     vi.mocked(useCurrentStep).mockReturnValue(0);
     vi.mocked(useIsAnalysis).mockReturnValue(false);
     vi.mocked(useRecordingConfig).mockReturnValue({
       studyHasScreenRecording: false,
       studyHasAudioRecording: false,
+      studyHasWebcamRecording: false,
       currentComponentHasAudioRecording: false,
       currentComponentHasScreenRecording: false,
+      currentComponentHasWebcamRecording: false,
       currentComponentHasClickToRecord: false,
     });
     vi.mocked(findBlockForStep).mockReturnValue([]);
     vi.mocked(useStoreDispatch).mockReturnValue(vi.fn());
     mockStoreActions = {
+      setAssetStatus: vi.fn(),
       setReactiveAnswers: vi.fn(),
       updateProvenance: vi.fn(),
       updateResponseBlockValidation: vi.fn(),
@@ -559,6 +684,45 @@ describe('ComponentController — effect coverage (render-based)', () => {
     vi.mocked(useStoreSelector).mockImplementation(
       (selector) => selector(stableState),
     );
+  });
+
+  test('subscribes to participant rejection only after startup is ready', async () => {
+    const subscribe = vi.fn(() => vi.fn());
+    vi.mocked(useStorageEngine).mockReturnValue({
+      storageEngine: makeStorageEngine({ subscribeToCurrentParticipantRejection: subscribe }),
+      setStorageEngine: vi.fn(),
+    });
+    const { rerender } = render(
+      <StartupInteractionProvider value><ComponentController /></StartupInteractionProvider>,
+    );
+    expect(subscribe).not.toHaveBeenCalled();
+    rerender(<StartupInteractionProvider value={false}><ComponentController /></StartupInteractionProvider>);
+    await waitFor(() => expect(subscribe).toHaveBeenCalled());
+  });
+
+  test('loads stimulus assets during preview before the storage engine connects', async () => {
+    vi.mocked(useCurrentComponent).mockReturnValue('testTrial');
+    const state = makeStableState();
+    vi.mocked(useStoreSelector).mockImplementation((selector) => selector(state));
+    vi.mocked(useStorageEngine).mockReturnValue({ storageEngine: undefined, setStorageEngine: vi.fn() });
+    vi.mocked(getStaticAssetByPath).mockResolvedValue('Preview stimulus');
+    const { getByText } = render(
+      <StartupInteractionProvider value><ComponentController /></StartupInteractionProvider>,
+    );
+    await waitFor(() => expect(getByText('Preview stimulus')).toBeDefined());
+    expect(getStaticAssetByPath).toHaveBeenCalled();
+  });
+
+  test('renders preview stimuli before the URL participant has been restored', () => {
+    vi.mocked(useCurrentComponent).mockReturnValue('testTrial');
+    vi.mocked(useSearchParams).mockReturnValueOnce([
+      new URLSearchParams('participantId=other-pid'), vi.fn(),
+    ]);
+    const html = renderToStaticMarkup(
+      <StartupInteractionProvider value><ComponentController /></StartupInteractionProvider>,
+    );
+    expect(html).toContain('ResponseBlock');
+    expect(html).not.toContain('Loader');
   });
 
   test('shows localStorage fallback warning when cloud engine falls back in development', async () => {
@@ -597,6 +761,20 @@ describe('ComponentController — effect coverage (render-based)', () => {
     });
   });
 
+  test('does not show a connection warning for a study intentionally using local storage', async () => {
+    vi.stubEnv('VITE_STORAGE_ENGINE', 'firebase');
+    vi.stubEnv('PROD', true);
+    const cloudEngine = makeStorageEngine({ getEngine: vi.fn<() => 'firebase'>(() => 'firebase') });
+    vi.mocked(useStorageEngine).mockReturnValue({
+      storageEngine: makeStorageEngine({ getEngine: vi.fn<() => 'localStorage'>(() => 'localStorage') }),
+      configuredStorageEngine: cloudEngine,
+      setStorageEngine: vi.fn(),
+    });
+    render(<ComponentController />);
+    await act(async () => {});
+    expect(mockStoreActions.setAlertModal).not.toHaveBeenCalled();
+  });
+
   test('isAnalysis=true returns early from block effect', async () => {
     vi.mocked(useIsAnalysis).mockReturnValue(true);
     render(<ComponentController />);
@@ -609,7 +787,7 @@ describe('ComponentController — effect coverage (render-based)', () => {
     await waitFor(() => expect(vi.mocked(findBlockForStep)).toHaveBeenCalled());
   });
 
-  test('addParticipantTags called when blockForStep becomes non-empty', async () => {
+  test('records block tags on the first mount and after a trial remount', async () => {
     const addTagsSpy = vi.fn().mockResolvedValue(undefined);
     vi.mocked(useStorageEngine).mockReturnValue({
       storageEngine: makeStorageEngine({ addParticipantTags: addTagsSpy }),
@@ -623,20 +801,20 @@ describe('ComponentController — effect coverage (render-based)', () => {
       lastIndex: 0,
     }]);
 
-    const { rerender } = render(<ComponentController />);
-    // Wait for first effect run to call findBlockForStep and update blockForStep state
-    await waitFor(() => expect(vi.mocked(findBlockForStep)).toHaveBeenCalled());
+    const view = render(<ComponentController />);
+    await waitFor(() => expect(addTagsSpy).toHaveBeenCalledWith(['blockA']));
+    view.unmount();
 
-    // Trigger effect re-run by changing currentStep; now blockForStep=['blockA'] in closure
+    addTagsSpy.mockClear();
     vi.mocked(useCurrentStep).mockReturnValue(1);
-    rerender(<ComponentController />);
-
+    render(<ComponentController />);
     await waitFor(() => expect(addTagsSpy).toHaveBeenCalledWith(['blockA']));
   });
 
   test('setAnalysisCanPlayScreenRecording dispatched with true', async () => {
     const setAnalysisCanPlaySpy = vi.fn().mockReturnValue('PLAY_ACTION');
     mockStoreActions = {
+      setAssetStatus: vi.fn(),
       setReactiveAnswers: vi.fn(),
       updateProvenance: vi.fn(),
       updateResponseBlockValidation: vi.fn(),
@@ -645,6 +823,18 @@ describe('ComponentController — effect coverage (render-based)', () => {
     };
     render(<ComponentController />);
     await waitFor(() => expect(setAnalysisCanPlaySpy).toHaveBeenCalledWith(true));
+  });
+
+  test('resets recording replay availability for the next dynamic child', async () => {
+    const setAnalysisCanPlaySpy = vi.fn();
+    mockStoreActions.setAnalysisCanPlayScreenRecording = setAnalysisCanPlaySpy;
+    vi.mocked(useCurrentIdentifier).mockReturnValue('block_0_first_0');
+    const view = render(<ComponentController />);
+    await waitFor(() => expect(setAnalysisCanPlaySpy).toHaveBeenCalledTimes(1));
+
+    vi.mocked(useCurrentIdentifier).mockReturnValue('block_0_second_1');
+    view.rerender(<ComponentController />);
+    await waitFor(() => expect(setAnalysisCanPlaySpy).toHaveBeenCalledTimes(2));
   });
 
   test('auto-forward navigates when last answer step > currentStep', async () => {
@@ -670,8 +860,10 @@ describe('ComponentController — effect coverage (render-based)', () => {
     vi.mocked(useRecordingConfig).mockReturnValue({
       studyHasScreenRecording: true,
       studyHasAudioRecording: false,
+      studyHasWebcamRecording: false,
       currentComponentHasAudioRecording: false,
       currentComponentHasScreenRecording: false,
+      currentComponentHasWebcamRecording: false,
       currentComponentHasClickToRecord: false,
     });
     const stableStateCanPlay = makeStableState({ analysisCanPlayScreenRecording: true });
@@ -681,6 +873,32 @@ describe('ComponentController — effect coverage (render-based)', () => {
 
     const { container } = render(<ComponentController />);
     await waitFor(() => expect(container.textContent).toContain('ScreenRecordingReplay'));
+  });
+
+  test('webcam-only replay renders alongside the stimulus', async () => {
+    vi.mocked(useCurrentComponent).mockReturnValue('testTrial');
+    vi.mocked(useIsAnalysis).mockReturnValue(true);
+    vi.mocked(useStorageEngine).mockReturnValue({
+      storageEngine: makeStorageEngine(),
+      setStorageEngine: vi.fn(),
+    });
+    vi.mocked(useRecordingConfig).mockReturnValue({
+      studyHasScreenRecording: false,
+      studyHasAudioRecording: false,
+      studyHasWebcamRecording: true,
+      currentComponentHasAudioRecording: false,
+      currentComponentHasScreenRecording: false,
+      currentComponentHasWebcamRecording: true,
+      currentComponentHasClickToRecord: false,
+    });
+    const stableStateCanPlay = makeStableState({ analysisCanPlayScreenRecording: true });
+    vi.mocked(useStoreSelector).mockImplementation(
+      (selector) => selector(stableStateCanPlay),
+    );
+
+    const { container } = render(<ComponentController />);
+    await waitFor(() => expect(container.textContent).toContain('WebcamOnlyReplay'));
+    expect(container.textContent).toContain('ResponseBlock');
   });
 });
 
@@ -692,6 +910,7 @@ describe('VegaController — signal and event coverage', () => {
     vi.mocked(useIsAnalysis).mockReturnValue(false);
     vi.mocked(useStoreDispatch).mockReturnValue(vi.fn());
     mockStoreActions = {
+      setAssetStatus: vi.fn(),
       setReactiveAnswers: vi.fn(),
       updateProvenance: vi.fn(),
       updateResponseBlockValidation: vi.fn(),
@@ -889,3 +1108,5 @@ describe('VegaController — signal and event coverage', () => {
     expect(vi.mocked(fakeView.signal).mock.calls.some(([signalName]) => signalName === 'tooltip')).toBe(false);
   });
 });
+
+vi.mock('../../store/hooks/useGlobalStore', () => ({ useGlobalStore: () => ({}), useGlobalStoreUpdaterRegistration: () => () => () => undefined }));

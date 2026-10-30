@@ -1,5 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import { generateSliderBreakValues, getDefaultSliderSpacing } from '../sliderBreaks';
+import {
+  generateSliderBreakValues,
+  getDefaultSliderSpacing,
+  getSliderPrecision,
+  getSliderValueFromPosition,
+} from '../sliderBreaks';
 
 describe('getDefaultSliderSpacing', () => {
   test('uses largest power of 10 below the range', () => {
@@ -76,5 +81,53 @@ describe('generateSliderBreakValues', () => {
   test('returns empty array for invalid ranges', () => {
     expect(generateSliderBreakValues(10, 10)).toEqual([]);
     expect(generateSliderBreakValues(20, 10)).toEqual([]);
+  });
+});
+
+describe('getSliderValueFromPosition', () => {
+  test('clamps positions to the configured range', () => {
+    expect(getSliderValueFromPosition(-0.2, 0, 100, 5)).toBe(0);
+    expect(getSliderValueFromPosition(1.2, 0, 100, 5)).toBe(100);
+  });
+
+  test('rounds candidate values using the configured step', () => {
+    expect(getSliderValueFromPosition(0.78, 0, 100, 5)).toBe(80);
+    expect(getSliderValueFromPosition(0.333, 0, 1, 0.01)).toBe(0.33);
+  });
+
+  test('preserves fractional minima when rounding to a step', () => {
+    expect(getSliderValueFromPosition(0.3, 0.05, 1.05, 0.1)).toBe(0.35);
+    expect(getSliderValueFromPosition(0, 0.05, 10.05, 1)).toBe(0.05);
+  });
+
+  test('supports steps written in scientific notation', () => {
+    expect(getSliderValueFromPosition(0.5, 0, 0.000001, 1e-7)).toBe(0.0000005);
+  });
+
+  test('uses the default one-hundredth range step when none is configured', () => {
+    expect(getSliderValueFromPosition(0.914, 0, 150)).toBe(136.5);
+  });
+
+  test('selects the nearest value when snapping is enabled', () => {
+    expect(getSliderValueFromPosition(0.52, 0, 100, 1, [0, 25, 50, 75, 100])).toBe(50);
+    expect(getSliderValueFromPosition(0.63, 0, 100, 1, [0, 25, 50, 75, 100])).toBe(75);
+  });
+
+  test('rounds to the configured step before snapping to the nearest value', () => {
+    expect(getSliderValueFromPosition(0.24, 0, 10, 4, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])).toBe(4);
+    expect(getSliderValueFromPosition(0.5004, 0, 1, 0.001, [0, 1])).toBe(0);
+  });
+
+  test('returns null for invalid input', () => {
+    expect(getSliderValueFromPosition(Number.NaN, 0, 100)).toBeNull();
+    expect(getSliderValueFromPosition(0.5, 10, 10)).toBeNull();
+    expect(getSliderValueFromPosition(0.5, 0, 100, 0)).toBeNull();
+  });
+});
+
+describe('getSliderPrecision', () => {
+  test('accounts for fractional minima and scientific notation steps', () => {
+    expect(getSliderPrecision(0.05, 0.1)).toBe(2);
+    expect(getSliderPrecision(0, 1e-7)).toBe(7);
   });
 });

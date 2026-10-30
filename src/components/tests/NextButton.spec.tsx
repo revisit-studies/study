@@ -1,4 +1,7 @@
 import { ReactNode } from 'react';
+import * as Mantine from '@mantine/core';
+import * as ReactRouter from 'react-router';
+import { Provider } from 'react-redux';
 import {
   render, act, cleanup, screen, fireEvent,
 } from '@testing-library/react';
@@ -6,8 +9,16 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
-import type { IndividualComponent } from '../../parser/types';
+import type { ImageComponent, IndividualComponent } from '../../parser/types';
 import { NextButton } from '../NextButton';
+import { ImageController } from '../../controllers/ImageController';
+import { useNextStep } from '../../store/hooks/useNextStep';
+import { useStudyConfig } from '../../store/hooks/useStudyConfig';
+import { WindowEventsContext } from '../../store/hooks/useWindowEvents';
+import { StudyStoreContext, studyStoreCreator } from '../../store/store';
+import { makeStorageEngine, makeStudyConfig } from '../../tests/utils';
+import { encryptIndex } from '../../utils/encryptDecryptIndex';
+import { StartupInteractionProvider } from '../StartupContext';
 
 // ── mutable state ─────────────────────────────────────────────────────────────
 
@@ -15,6 +26,7 @@ let mockIsNextDisabled = false;
 let mockIdentifier = 'intro_0';
 const mockGoToNextStep = vi.fn();
 const mockNavigate = vi.fn();
+const mockStorageEngine = makeStorageEngine();
 let mockStudyConfig: {
   uiConfig: {
     nextButtonDisableTime: number | undefined;
@@ -36,23 +48,30 @@ let mockStudyConfig: {
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
-vi.mock('../../store/hooks/useNextStep', () => ({
-  useNextStep: () => ({
-    isNextDisabled: mockIsNextDisabled,
-    goToNextStep: mockGoToNextStep,
-  }),
-}));
+vi.mock('../../store/hooks/useNextStep', async () => {
+  const actual = await vi.importActual<{ useNextStep: typeof useNextStep }>('../../store/hooks/useNextStep');
+  return { useNextStep: vi.fn(actual.useNextStep) };
+});
 
-vi.mock('../../store/hooks/useStudyConfig', () => ({
-  useStudyConfig: () => mockStudyConfig,
-}));
+vi.mock('../../store/hooks/useStudyConfig', async () => {
+  const actual = await vi.importActual<{ useStudyConfig: typeof useStudyConfig }>('../../store/hooks/useStudyConfig');
+  return { useStudyConfig: vi.fn(actual.useStudyConfig) };
+});
 
-vi.mock('react-router', () => ({
-  useNavigate: () => mockNavigate,
-}));
+vi.mock('react-router', async () => {
+  const actual = await vi.importActual<typeof ReactRouter>('react-router');
+  return { ...actual, useNavigate: vi.fn(actual.useNavigate) };
+});
 
 vi.mock('../../routes/utils', () => ({
   useCurrentIdentifier: () => mockIdentifier,
+  useCurrentComponent: () => 'image',
+  useCurrentStep: () => 0,
+  useStudyId: () => 'study',
+}));
+
+vi.mock('../../storage/storageEngineHooks', () => ({
+  useStorageEngine: () => ({ storageEngine: mockStorageEngine }),
 }));
 
 vi.mock('../PreviousButton', () => ({
@@ -61,7 +80,8 @@ vi.mock('../PreviousButton', () => ({
   ),
 }));
 
-vi.mock('@mantine/core', () => ({
+vi.mock('@mantine/core', async () => ({
+  ...await vi.importActual<typeof Mantine>('@mantine/core'),
   Alert: ({ children, title }: { children: ReactNode; title?: ReactNode }) => (
     <div role="alert">
       <div>{title}</div>
@@ -69,14 +89,20 @@ vi.mock('@mantine/core', () => ({
     </div>
   ),
   Button: ({
-    children, disabled, onClick, type,
-  }: { children: ReactNode; disabled?: boolean; onClick?: () => void; type?: string }) => (
-    <button type={type === 'submit' ? 'submit' : 'button'} disabled={disabled} onClick={onClick}>
+    children, disabled, onClick, type, rightSection, 'aria-label': ariaLabel,
+  }: { children: ReactNode; disabled?: boolean; onClick?: () => void; type?: string; rightSection?: ReactNode; 'aria-label'?: string }) => (
+    <button type={type === 'submit' ? 'submit' : 'button'} disabled={disabled} onClick={onClick} aria-label={ariaLabel}>
       {children}
+      {rightSection}
     </button>
   ),
   Group: ({ children, justify }: { children: ReactNode; justify?: string }) => (
     <div data-justify={justify}>{children}</div>
+  ),
+  Kbd: ({ children }: { children: ReactNode }) => <kbd>{children}</kbd>,
+  Flex: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  ActionIcon: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => (
+    <button type="button" onClick={onClick}>{children}</button>
   ),
 }));
 
@@ -89,6 +115,9 @@ vi.mock('@tabler/icons-react', () => ({
 
 describe('NextButton', () => {
   beforeEach(() => {
+    vi.mocked(useNextStep).mockImplementation(() => ({ isNextDisabled: mockIsNextDisabled, goToNextStep: mockGoToNextStep }));
+    vi.mocked(useStudyConfig).mockImplementation(() => makeStudyConfig({ uiConfig: mockStudyConfig.uiConfig }));
+    vi.mocked(ReactRouter.useNavigate).mockReturnValue(mockNavigate);
     mockIsNextDisabled = false;
     mockIdentifier = 'intro_0';
     mockNavigate.mockReset();
@@ -107,21 +136,24 @@ describe('NextButton', () => {
     cleanup();
     vi.clearAllMocks();
     vi.useRealTimers();
+    vi.mocked(useNextStep).mockReset();
+    vi.mocked(useStudyConfig).mockReset();
+    vi.mocked(ReactRouter.useNavigate).mockReset();
   });
 
   test('renders Next button with default label', () => {
-    const html = renderToStaticMarkup(<NextButton checkAnswer={null} onNext={vi.fn()} />);
+    const html = renderToStaticMarkup(<NextButton onNext={vi.fn()} />);
     expect(html).toContain('Next');
   });
 
   test('renders button with custom label', () => {
-    const html = renderToStaticMarkup(<NextButton label="Continue" checkAnswer={null} onNext={vi.fn()} />);
+    const html = renderToStaticMarkup(<NextButton label="Continue" onNext={vi.fn()} />);
     expect(html).toContain('Continue');
   });
 
   test('does not render PreviousButton when config.previousButton is false', () => {
     const html = renderToStaticMarkup(
-      <NextButton config={{ type: 'questionnaire', response: [], previousButton: false }} checkAnswer={null} onNext={vi.fn()} />,
+      <NextButton config={{ type: 'questionnaire', response: [], previousButton: false }} onNext={vi.fn()} />,
     );
     expect(html).not.toContain('data-testid="prev-btn"');
   });
@@ -132,7 +164,6 @@ describe('NextButton', () => {
         config={{
           type: 'questionnaire', response: [], previousButton: true, previousButtonText: 'Back',
         }}
-        checkAnswer={null}
         onNext={vi.fn()}
       />,
     );
@@ -141,25 +172,48 @@ describe('NextButton', () => {
   });
 
   test('button is disabled when disabled prop is true', () => {
-    const html = renderToStaticMarkup(<NextButton disabled checkAnswer={null} onNext={vi.fn()} />);
+    const html = renderToStaticMarkup(<NextButton disabled onNext={vi.fn()} />);
     expect(html).toContain('disabled');
   });
 
   test('button is disabled when isNextDisabled is true', () => {
     mockIsNextDisabled = true;
-    const html = renderToStaticMarkup(<NextButton checkAnswer={null} onNext={vi.fn()} />);
+    const html = renderToStaticMarkup(<NextButton onNext={vi.fn()} />);
     expect(html).toContain('disabled');
   });
 
-  test('renders checkAnswer element when provided', () => {
-    const html = renderToStaticMarkup(
-      <NextButton checkAnswer={<div data-testid="check">Check Answer</div>} onNext={vi.fn()} />,
+  test('does not start timers or handle Enter while participant startup is blocked', () => {
+    vi.useFakeTimers();
+    mockStudyConfig.uiConfig.nextOnEnter = true;
+    mockStudyConfig.uiConfig.timeoutReject = true;
+    const onNext = vi.fn();
+
+    const { getByRole } = render(
+      <StartupInteractionProvider value>
+        <NextButton
+          config={{
+            type: 'questionnaire',
+            response: [],
+            nextButtonDisableTime: 100,
+            nextButtonAutoAdvanceTime: 100,
+          }}
+          onNext={onNext}
+        />
+      </StartupInteractionProvider>,
     );
-    expect(html).toContain('Check Answer');
+    act(() => {
+      vi.advanceTimersByTime(500);
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    });
+
+    expect(getByRole('button', { name: 'Next' }).hasAttribute('disabled')).toBe(true);
+    expect(onNext).not.toHaveBeenCalled();
+    expect(mockGoToNextStep).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 
   test('right-aligns the action group by default', () => {
-    const html = renderToStaticMarkup(<NextButton checkAnswer={null} onNext={vi.fn()} />);
+    const html = renderToStaticMarkup(<NextButton onNext={vi.fn()} />);
     expect(html).toContain('data-justify="flex-end"');
   });
 
@@ -175,7 +229,7 @@ describe('NextButton', () => {
       },
     };
 
-    const html = renderToStaticMarkup(<NextButton checkAnswer={null} onNext={vi.fn()} />);
+    const html = renderToStaticMarkup(<NextButton onNext={vi.fn()} />);
     expect(html).toContain(`data-justify="${justify}"`);
   });
 
@@ -192,7 +246,6 @@ describe('NextButton', () => {
         config={{
           type: 'questionnaire', response: [], nextButtonAlignment: 'center',
         }}
-        checkAnswer={null}
         onNext={vi.fn()}
       />,
     );
@@ -200,19 +253,18 @@ describe('NextButton', () => {
   });
 
   test.each(['sidebar', 'aboveStimulus', 'belowStimulus'] as const)(
-    'keeps Previous, Check Answer, and Next in order at %s',
+    'keeps Previous before Next at %s',
     (location) => {
       const html = renderToStaticMarkup(
         <NextButton
           config={{ type: 'questionnaire', response: [], previousButton: true }}
           location={location}
-          checkAnswer={<button type="button">Check Answer</button>}
           onNext={vi.fn()}
         />,
       );
 
-      expect(html.indexOf('Previous')).toBeLessThan(html.indexOf('Check Answer'));
-      expect(html.indexOf('Check Answer')).toBeLessThan(html.indexOf('Next'));
+      expect(html.indexOf('Previous')).toBeLessThan(html.indexOf('Next'));
+      expect(html).not.toContain('Check Answer');
     },
   );
 
@@ -224,7 +276,7 @@ describe('NextButton', () => {
       },
     };
     await act(async () => {
-      render(<NextButton checkAnswer={null} onNext={vi.fn()} />);
+      render(<NextButton onNext={vi.fn()} />);
     });
     expect(screen.getByRole('alert')).toBeDefined();
     expect(screen.getByText('Please wait')).toBeDefined();
@@ -232,7 +284,7 @@ describe('NextButton', () => {
 
   test('does not show "Please wait" alert when no enable time is configured', async () => {
     await act(async () => {
-      render(<NextButton checkAnswer={null} onNext={vi.fn()} />);
+      render(<NextButton onNext={vi.fn()} />);
     });
     expect(screen.queryByRole('alert')).toBeNull();
   });
@@ -246,7 +298,7 @@ describe('NextButton', () => {
       },
     };
     await act(async () => {
-      render(<NextButton checkAnswer={null} onNext={vi.fn()} />);
+      render(<NextButton onNext={vi.fn()} />);
     });
     expect(screen.getByText('Next button disables soon')).toBeDefined();
   });
@@ -261,7 +313,7 @@ describe('NextButton', () => {
       },
     };
     await act(async () => {
-      render(<NextButton checkAnswer={null} onNext={vi.fn()} />);
+      render(<NextButton onNext={vi.fn()} />);
     });
     // Advance past disableTime (100ms) and into the <10000ms window
     await act(async () => {
@@ -269,6 +321,8 @@ describe('NextButton', () => {
     });
     vi.useRealTimers();
     expect(screen.getByText('Next button disabled')).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Proceed' }).hasAttribute('data-html2canvas-ignore'))
+      .toBe(false);
   });
 
   test('does not show "Next button disabled" alert when timeoutReject is true', async () => {
@@ -281,7 +335,7 @@ describe('NextButton', () => {
       },
     };
     await act(async () => {
-      render(<NextButton checkAnswer={null} onNext={vi.fn()} />);
+      render(<NextButton onNext={vi.fn()} />);
     });
     await act(async () => {
       vi.advanceTimersByTime(9500);
@@ -299,7 +353,7 @@ describe('NextButton', () => {
       },
     };
     await act(async () => {
-      render(<NextButton checkAnswer={null} onNext={onNext} />);
+      render(<NextButton onNext={onNext} />);
     });
     await act(async () => {
       window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
@@ -311,7 +365,7 @@ describe('NextButton', () => {
     const onNext = vi.fn();
     mockStudyConfig = { uiConfig: { ...mockStudyConfig.uiConfig, nextOnEnter: true } };
     await act(async () => {
-      render(<NextButton checkAnswer={null} onNext={onNext} />);
+      render(<NextButton onNext={onNext} />);
     });
     const textarea = document.createElement('textarea');
     document.body.appendChild(textarea);
@@ -323,12 +377,34 @@ describe('NextButton', () => {
     }
   });
 
+  test('nextOnEnter: defaultPrevented Enter events are ignored', async () => {
+    const onNext = vi.fn();
+    mockStudyConfig = { uiConfig: { ...mockStudyConfig.uiConfig, nextOnEnter: true } };
+    await act(async () => {
+      render(<NextButton onNext={onNext} />);
+    });
+    const event = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+    event.preventDefault();
+    await act(async () => { window.dispatchEvent(event); });
+    expect(onNext).not.toHaveBeenCalled();
+  });
+
+  test('nextOnEnter: preserves the accessible name while showing the visual hint', async () => {
+    mockStudyConfig = { uiConfig: { ...mockStudyConfig.uiConfig, nextOnEnter: true } };
+    await act(async () => {
+      render(<NextButton onNext={vi.fn()} />);
+    });
+    const button = screen.getByRole('button', { name: 'Next' });
+    expect(button.getAttribute('aria-label')).toBe('Next');
+    expect(screen.getByText('↵')).toBeTruthy();
+  });
+
   test('nextOnEnter: Enter on a focused button is left to its synthesized click', async () => {
     const onNext = vi.fn();
     mockStudyConfig = { uiConfig: { ...mockStudyConfig.uiConfig, nextOnEnter: true } };
     let container!: HTMLElement;
     await act(async () => {
-      ({ container } = render(<NextButton checkAnswer={null} onNext={onNext} />));
+      ({ container } = render(<NextButton onNext={onNext} />));
     });
     const button = container.querySelector('button')!;
     await act(async () => { fireEvent.keyDown(button, { key: 'Enter' }); });
@@ -340,26 +416,54 @@ describe('NextButton', () => {
     const onCheckAnswer = vi.fn();
     mockStudyConfig = { uiConfig: { ...mockStudyConfig.uiConfig, nextOnEnter: true } };
     await act(async () => {
-      render(<NextButton checkAnswer={null} onCheckAnswer={onCheckAnswer} onNext={onNext} />);
+      render(<NextButton onCheckAnswer={onCheckAnswer} onNext={onNext} />);
     });
     await act(async () => { fireEvent.keyDown(window, { key: 'Enter' }); });
     expect(onCheckAnswer).toHaveBeenCalledTimes(1);
     expect(onNext).not.toHaveBeenCalled();
   });
 
-  test('nextOnEnter: Enter runs onCheckAnswer even while the Next button is disabled', async () => {
+  test('clicking Next checks answers before navigating', async () => {
+    const onNext = vi.fn();
+    const onCheckAnswer = vi.fn();
+    const { container, rerender } = render(<NextButton onCheckAnswer={onCheckAnswer} onNext={onNext} />);
+    await act(async () => { fireEvent.click(container.querySelector('button')!); });
+    expect(onCheckAnswer).toHaveBeenCalledTimes(1);
+    expect(onNext).not.toHaveBeenCalled();
+    rerender(<NextButton onNext={onNext} />);
+    await act(async () => { fireEvent.click(container.querySelector('button')!); });
+    expect(onNext).toHaveBeenCalledTimes(1);
+  });
+
+  test('a separate Check Answer button grades while Next waits', async () => {
+    const onNext = vi.fn();
+    const onCheckAnswer = vi.fn();
+    mockStudyConfig = { uiConfig: { ...mockStudyConfig.uiConfig, nextOnEnter: true } };
+    const checkAnswer = <button type="button" onClick={onCheckAnswer}>Check Answer</button>;
+    const { container, rerender } = render(<NextButton disabled checkAnswer={checkAnswer} onCheckAnswer={onCheckAnswer} onNext={onNext} />);
+    await act(async () => { fireEvent.click(container.querySelector('button')!); });
+    await act(async () => { fireEvent.keyDown(window, { key: 'Enter' }); });
+    expect(onCheckAnswer).toHaveBeenCalledTimes(2);
+    expect(onNext).not.toHaveBeenCalled();
+    rerender(<NextButton checkAnswer={checkAnswer} onNext={onNext} />);
+    await act(async () => { fireEvent.click(container.querySelectorAll('button')[1]); });
+    expect(onNext).toHaveBeenCalledTimes(1);
+    expect(onCheckAnswer).toHaveBeenCalledTimes(2);
+  });
+
+  test('nextOnEnter: disabled Next prevents grading', async () => {
     const onNext = vi.fn();
     const onCheckAnswer = vi.fn();
     mockStudyConfig = { uiConfig: { ...mockStudyConfig.uiConfig, nextOnEnter: true } };
     await act(async () => {
-      render(<NextButton checkAnswer={null} onCheckAnswer={onCheckAnswer} onNext={onNext} disabled />);
+      render(<NextButton onCheckAnswer={onCheckAnswer} onNext={onNext} disabled />);
     });
     await act(async () => { fireEvent.keyDown(window, { key: 'Enter' }); });
-    expect(onCheckAnswer).toHaveBeenCalledTimes(1);
+    expect(onCheckAnswer).not.toHaveBeenCalled();
     expect(onNext).not.toHaveBeenCalled();
   });
 
-  test('nextOnEnter: the enable timer gates onNext but not onCheckAnswer', async () => {
+  test('nextOnEnter: the enable timer gates both grading and navigation', async () => {
     const onNext = vi.fn();
     const onCheckAnswer = vi.fn();
     mockStudyConfig = {
@@ -367,13 +471,13 @@ describe('NextButton', () => {
     };
     let rerender!: ReturnType<typeof render>['rerender'];
     await act(async () => {
-      ({ rerender } = render(<NextButton checkAnswer={null} onCheckAnswer={onCheckAnswer} onNext={onNext} />));
+      ({ rerender } = render(<NextButton onCheckAnswer={onCheckAnswer} onNext={onNext} />));
     });
     await act(async () => { fireEvent.keyDown(window, { key: 'Enter' }); });
-    expect(onCheckAnswer).toHaveBeenCalledTimes(1);
+    expect(onCheckAnswer).not.toHaveBeenCalled();
     expect(onNext).not.toHaveBeenCalled();
     await act(async () => {
-      rerender(<NextButton checkAnswer={null} onNext={onNext} />);
+      rerender(<NextButton onNext={onNext} />);
     });
     await act(async () => { fireEvent.keyDown(window, { key: 'Enter' }); });
     expect(onNext).not.toHaveBeenCalled();
@@ -393,7 +497,6 @@ describe('NextButton', () => {
       ({ rerender } = render(
         <NextButton
           config={config}
-          checkAnswer={null}
           onNext={vi.fn()}
         />,
       ));
@@ -412,7 +515,6 @@ describe('NextButton', () => {
       rerender(
         <NextButton
           config={config}
-          checkAnswer={null}
           onNext={vi.fn()}
         />,
       );
@@ -425,5 +527,148 @@ describe('NextButton', () => {
     expect(mockGoToNextStep).toHaveBeenCalledTimes(2);
     expect(mockGoToNextStep).toHaveBeenLastCalledWith(false);
     vi.useRealTimers();
+  });
+});
+
+function AssetTrial({ config }: { config: ImageComponent }) {
+  const { goToNextStep } = useNextStep();
+  const location = ReactRouter.useLocation();
+  return (
+    <>
+      <ImageController currentConfig={config} />
+      <NextButton config={config} onNext={goToNextStep} />
+      <output aria-label="Current route">{location.pathname}</output>
+    </>
+  );
+}
+
+async function renderTrial(overrides: Partial<ImageComponent> = {}) {
+  const component: ImageComponent = {
+    type: 'image', path: 'image.png', response: [], nextOnEnter: true, ...overrides,
+  };
+  const config = makeStudyConfig({
+    components: { image: component, next: { type: 'questionnaire', response: [] } },
+    sequence: { order: 'fixed', components: ['image', 'next'] },
+  });
+  const studyStore = await studyStoreCreator(
+    'study',
+    config,
+    {
+      order: 'fixed', orderPath: 'root', components: ['image', 'next'], skip: [],
+    },
+    {
+      userAgent: '', resolution: {}, language: '', ip: null,
+    },
+    {},
+    {
+      dataCollectionEnabled: true, developmentModeEnabled: false, dataSharingEnabled: false,
+    },
+    'participant',
+    false,
+    false,
+  );
+  const view = render(
+    <Provider store={studyStore.store}>
+      <StudyStoreContext.Provider value={studyStore}>
+        <ReactRouter.MemoryRouter initialEntries={[`/study/${encryptIndex(0)}`]}>
+          <Mantine.MantineProvider env="test">
+            <WindowEventsContext.Provider value={{ current: [] }}>
+              <AssetTrial config={component} />
+            </WindowEventsContext.Provider>
+          </Mantine.MantineProvider>
+        </ReactRouter.MemoryRouter>
+      </StudyStoreContext.Provider>
+    </Provider>,
+  );
+  const image = view.container.querySelector('img')!;
+  return { ...studyStore, image };
+}
+
+function expectNoAdvancement() {
+  expect(screen.getByLabelText('Current route').textContent).toBe(`/study/${encryptIndex(0)}`);
+  expect(mockStorageEngine.saveAnswers).not.toHaveBeenCalled();
+}
+
+describe('NextButton asset validation integration', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockIdentifier = 'image_0';
+    vi.mocked(useNextStep).mockReset();
+    vi.mocked(useStudyConfig).mockReset();
+    vi.mocked(ReactRouter.useNavigate).mockReset();
+    vi.useFakeTimers();
+    vi.stubGlobal('matchMedia', vi.fn(() => ({
+      matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn(),
+    })));
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  test('blocks Enter while loading and allows it after the image loads', async () => {
+    const { image, store } = await renderTrial();
+    expect(screen.getByRole('button', { name: 'Next' }).hasAttribute('disabled')).toBe(true);
+    fireEvent.keyDown(window, { key: 'Enter' });
+    expectNoAdvancement();
+
+    fireEvent.load(image);
+    expect(store.getState().trialValidation.image_0.assetStatus).toBe('ready');
+    fireEvent.keyDown(window, { key: 'Enter' });
+    expect(screen.getByLabelText('Current route').textContent).toBe(`/study/${encryptIndex(1)}`);
+    expect(mockStorageEngine.saveAnswers).toHaveBeenCalledTimes(1);
+  });
+
+  test('keeps Enter blocked after the image fails', async () => {
+    const { image, store } = await renderTrial();
+    fireEvent.error(image);
+    expect(store.getState().trialValidation.image_0.assetStatus).toBe('error');
+    expect(screen.getByRole('button', { name: 'Next' }).hasAttribute('disabled')).toBe(true);
+    fireEvent.keyDown(window, { key: 'Enter' });
+    expectNoAdvancement();
+  });
+
+  test('defers auto-advance until the image loads even after the deadline', async () => {
+    const { image } = await renderTrial({ nextButtonAutoAdvanceTime: 1000 });
+    act(() => vi.advanceTimersByTime(1500));
+    expectNoAdvancement();
+
+    fireEvent.load(image);
+    expect(screen.getByLabelText('Current route').textContent).toBe(`/study/${encryptIndex(1)}`);
+    expect(mockStorageEngine.saveAnswers).toHaveBeenCalledTimes(1);
+  });
+
+  test('does not auto-advance a failed image', async () => {
+    const { image } = await renderTrial({ nextButtonAutoAdvanceTime: 1000 });
+    fireEvent.error(image);
+    act(() => vi.advanceTimersByTime(1500));
+    expectNoAdvancement();
+  });
+
+  test('keeps timeout Proceed disabled until the image loads', async () => {
+    const { image } = await renderTrial({ nextButtonDisableTime: 1000 });
+    act(() => vi.advanceTimersByTime(1500));
+    const proceed = screen.getByRole('button', { name: 'Proceed' });
+    expect(proceed.hasAttribute('disabled')).toBe(true);
+    fireEvent.click(proceed);
+    expectNoAdvancement();
+
+    fireEvent.load(image);
+    expect(proceed.hasAttribute('disabled')).toBe(false);
+    fireEvent.click(proceed);
+    expect(screen.getByLabelText('Current route').textContent).toBe(`/study/${encryptIndex(1)}`);
+    expect(mockStorageEngine.saveAnswers).toHaveBeenCalledTimes(1);
+  });
+
+  test('keeps timeout Proceed disabled after the image fails', async () => {
+    const { image } = await renderTrial({ nextButtonDisableTime: 1000 });
+    fireEvent.error(image);
+    act(() => vi.advanceTimersByTime(1500));
+    const proceed = screen.getByRole('button', { name: 'Proceed' });
+    expect(proceed.hasAttribute('disabled')).toBe(true);
+    fireEvent.click(proceed);
+    expectNoAdvancement();
   });
 });

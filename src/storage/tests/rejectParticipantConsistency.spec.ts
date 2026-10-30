@@ -116,15 +116,13 @@ describe('rejectParticipant — local storage baseline behavior', () => {
     // @ts-expect-error accessing protected method
     storageEngine._pushToStorage = vi.fn().mockRejectedValue(new Error('Storage write failed'));
 
-    // Reject should catch the error and not throw
-    await storageEngine.rejectParticipant(session.participantId, 'Test rejection');
+    await expect(storageEngine.rejectParticipant(session.participantId, 'Test rejection'))
+      .rejects.toThrow('Storage write failed');
 
     // Restore the mock
     // @ts-expect-error accessing protected method
     storageEngine._pushToStorage = originalPushToStorage;
 
-    // BUG: The in-memory participantData IS corrupted (rejected is set)
-    // This test should FAIL until the bug is fixed
     // @ts-expect-error accessing protected property
     expect(storageEngine.participantData?.rejected).toEqual(originalRejected);
     // @ts-expect-error accessing protected property
@@ -147,7 +145,8 @@ describe('rejectParticipant — local storage baseline behavior', () => {
     // @ts-expect-error accessing protected method
     storageEngine._rejectParticipantRealtime = vi.fn().mockRejectedValue(new Error('Realtime rejection failed'));
 
-    await storageEngine.rejectParticipant(session.participantId, 'Test rejection');
+    await expect(storageEngine.rejectParticipant(session.participantId, 'Test rejection'))
+      .rejects.toThrow('Realtime rejection failed');
 
     // @ts-expect-error accessing protected method
     storageEngine._rejectParticipantRealtime = originalRejectParticipantRealtime;
@@ -169,7 +168,8 @@ describe('rejectParticipant — local storage baseline behavior', () => {
       throw new Error('Realtime rejection failed after mutation');
     });
 
-    await storageEngine.rejectParticipant(session.participantId, 'Test rejection');
+    await expect(storageEngine.rejectParticipant(session.participantId, 'Test rejection'))
+      .rejects.toThrow('Realtime rejection failed after mutation');
 
     // @ts-expect-error accessing protected method
     storageEngine._rejectParticipantRealtime = originalRejectParticipantRealtime;

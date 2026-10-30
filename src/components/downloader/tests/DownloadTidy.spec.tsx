@@ -1,14 +1,16 @@
 import {
-  cleanup, render, waitFor,
+  cleanup, fireEvent, render, screen, waitFor, within,
 } from '@testing-library/react';
 import { MantineProvider } from '@mantine/core';
 import {
   afterEach, describe, expect, test, vi,
 } from 'vitest';
+import { createGlobalStoreSubmission } from '../../../store/globalStoreProvenance';
 import { DownloadTidy, getTableData } from '../DownloadTidy';
 import type { StudyConfig } from '../../../parser/types';
 import type { StorageEngine } from '../../../storage/engines/types';
 import type { ParticipantDataWithStatus } from '../../../storage/types';
+import type { StoredAnswer } from '../../../store/types';
 import testConfigSimple from '../../../storage/tests/testConfigSimple.json';
 
 const storageEngineHookMock = vi.hoisted(() => ({
@@ -148,6 +150,152 @@ describe('getTableData', () => {
       responseMax: 10,
       parameters_speed: 'fast',
     }));
+  });
+
+  test('exports the persisted per-response score with its answer', async () => {
+    const participant = makeParticipant();
+    participant.answers.testComponent_0.checkAnswer = {
+      attemptsUsed: 0,
+      correct: false,
+      responses: {},
+      scores: { response: 0.5 },
+      answerSnapshot: { response: 'participant answer' },
+    };
+
+    const tableData = await getTableData(
+      ['answer', 'score'],
+      [participant],
+      makeStorageEngine({ 'hash-1': configWithComponentMetadata }),
+      'test-study',
+    );
+
+    const answerRow = tableData.rows.find((row) => row.participantId === 'p1' && row.responseId === 'response');
+    expect(answerRow).toEqual(expect.objectContaining({
+      answer: 'participant answer',
+      score: '50%',
+    }));
+  });
+
+  test('does not export a saved score when its answer snapshot is stale', async () => {
+    const participant = makeParticipant();
+    participant.answers.testComponent_0.checkAnswer = {
+      attemptsUsed: 0,
+      correct: true,
+      responses: {},
+      scores: { response: 1 },
+      answerSnapshot: { response: 'an earlier answer' },
+    };
+
+    const tableData = await getTableData(
+      ['answer', 'score'],
+      [participant],
+      makeStorageEngine({ 'hash-1': configWithComponentMetadata }),
+      'test-study',
+    );
+
+    const answerRow = tableData.rows.find((row) => row.participantId === 'p1' && row.responseId === 'response');
+    expect(answerRow).toEqual(expect.objectContaining({ answer: 'participant answer' }));
+    expect(answerRow?.score).toBeUndefined();
+  });
+
+  test('exports acceptable answer lists when no exact answer is defined', async () => {
+    const participant = makeParticipant();
+    participant.answers.testComponent_0.correctAnswer = [{
+      id: 'response',
+      acceptableAnswers: ['first accepted value', 'second accepted value'],
+    }];
+    const tableData = await getTableData(
+      ['correctAnswer'],
+      [participant],
+      makeStorageEngine({ 'hash-1': configWithComponentMetadata }),
+      'test-study',
+    );
+
+    expect(tableData.rows[0].correctAnswer).toBe(JSON.stringify(['first accepted value', 'second accepted value']));
+  });
+
+  test('exports numeric bounds when no exact answer is defined', async () => {
+    const configWithRangeAnswer = {
+      ...configWithComponentMetadata,
+      components: {
+        ...configWithComponentMetadata.components,
+        testComponent: {
+          ...configWithComponentMetadata.components.testComponent,
+          correctAnswer: [{ id: 'response', acceptableLow: 1, acceptableHigh: 5 }],
+        },
+      },
+    } as StudyConfig;
+    const participant = makeParticipant();
+    delete (participant.answers.testComponent_0 as Partial<StoredAnswer>).correctAnswer;
+    const tableData = await getTableData(
+      ['correctAnswer'],
+      [participant],
+      makeStorageEngine({ 'hash-1': configWithRangeAnswer }),
+      'test-study',
+    );
+
+    expect(tableData.rows[0].correctAnswer).toBe(JSON.stringify({ acceptableLow: 1, acceptableHigh: 5 }));
+  });
+
+  test.each([
+    [{ id: 'response', acceptableAnswers: ['saved option'] }, JSON.stringify(['saved option'])],
+    [{ id: 'response', acceptableLow: 0, acceptableHigh: 5 }, JSON.stringify({ acceptableLow: 0, acceptableHigh: 5 })],
+  ])('uses a saved answer rule instead of a configured exact answer: %j', async (savedRule, expected) => {
+    const configWithExactAnswer = {
+      ...configWithComponentMetadata,
+      components: {
+        ...configWithComponentMetadata.components,
+        testComponent: {
+          ...configWithComponentMetadata.components.testComponent,
+          correctAnswer: [{ id: 'response', answer: 'configured exact answer' }],
+        },
+      },
+    } as StudyConfig;
+    const participant = makeParticipant();
+    participant.answers.testComponent_0.correctAnswer = [savedRule];
+    const tableData = await getTableData(['correctAnswer'], [participant], makeStorageEngine({ 'hash-1': configWithExactAnswer }), 'test-study');
+
+    expect(tableData.rows[0].correctAnswer).toBe(expected);
+  });
+
+  test('falls back to the stored config when a legacy answer omits correctAnswer', async () => {
+    const configWithCorrectAnswer = {
+      ...configWithComponentMetadata,
+      components: {
+        ...configWithComponentMetadata.components,
+        testComponent: {
+          ...configWithComponentMetadata.components.testComponent,
+          correctAnswer: [{ id: 'response', answer: 'config answer' }],
+        },
+      },
+    } as StudyConfig;
+    const participant = makeParticipant();
+    delete (participant.answers.testComponent_0 as Partial<StoredAnswer>).correctAnswer;
+    const storageEngine = makeStorageEngine({ 'hash-1': configWithCorrectAnswer });
+
+    const tableData = await getTableData(
+      ['correctAnswer'],
+      [participant],
+      storageEngine,
+      'test-study',
+    );
+
+    expect(tableData.rows[0].correctAnswer).toBe('config answer');
+  });
+
+  test('exports a legacy answer without correctAnswer when its config is missing', async () => {
+    const participant = makeParticipant({ participantConfigHash: 'missing-hash' });
+    delete (participant.answers.testComponent_0 as Partial<StoredAnswer>).correctAnswer;
+    const storageEngine = makeStorageEngine({});
+
+    const tableData = await getTableData(
+      ['correctAnswer'],
+      [participant],
+      storageEngine,
+      'test-study',
+    );
+
+    expect(tableData.rows[0].correctAnswer).toBeUndefined();
   });
 
   test('keeps participant-derived rows when configs are missing', async () => {
@@ -359,7 +507,22 @@ describe('getTableData', () => {
     }));
   });
 
-  test('exports empty answer rows and window event counts', async () => {
+  test('omits window event rows by default', async () => {
+    const storageEngine = makeStorageEngine({
+      'hash-1': configSimple,
+    });
+
+    const tableData = await getTableData(
+      ['answer'],
+      [makeParticipant()],
+      storageEngine,
+      'test-study',
+    );
+
+    expect(tableData.rows.find((row) => row.responseId === 'windowEvents')).toBeUndefined();
+  });
+
+  test('exports empty answer rows and selected window event counts', async () => {
     const participant = makeParticipant({
       answers: {
         testComponent_0: {
@@ -386,7 +549,7 @@ describe('getTableData', () => {
     });
 
     const tableData = await getTableData(
-      ['answer'],
+      ['answer', 'windowEvents'],
       [participant],
       storageEngine,
       'test-study',
@@ -401,6 +564,7 @@ describe('getTableData', () => {
       responseId: '',
     }));
     expect(emptyAnswerRow?.answer).toBeUndefined();
+    expect(tableData.header).not.toContain('windowEvents');
     expect(windowEventsRow).toEqual(expect.objectContaining({
       participantId: 'p1',
       trialId: 'testComponent',
@@ -416,6 +580,45 @@ describe('getTableData', () => {
         resize: 1,
         scroll: 1,
         visibility: 1,
+        gamepadconnection: 0,
+        gamepadbuttondown: 0,
+        gamepadbuttonup: 0,
+        gamepadaxis: 0,
+      }),
+    }));
+  });
+
+  test('exports zero window event counts when selected', async () => {
+    const storageEngine = makeStorageEngine({
+      'hash-1': configSimple,
+    });
+
+    const tableData = await getTableData(
+      ['windowEvents'],
+      [makeParticipant()],
+      storageEngine,
+      'test-study',
+    );
+
+    expect(tableData.rows.find((row) => row.responseId === 'windowEvents')).toEqual(expect.objectContaining({
+      participantId: 'p1',
+      trialId: 'testComponent',
+      responseId: 'windowEvents',
+      answer: JSON.stringify({
+        focus: 0,
+        input: 0,
+        keydown: 0,
+        keyup: 0,
+        mousemove: 0,
+        mousedown: 0,
+        mouseup: 0,
+        resize: 0,
+        scroll: 0,
+        visibility: 0,
+        gamepadconnection: 0,
+        gamepadbuttondown: 0,
+        gamepadbuttonup: 0,
+        gamepadaxis: 0,
       }),
     }));
   });
@@ -537,6 +740,42 @@ describe('DownloadTidy', () => {
     vi.clearAllMocks();
   });
 
+  test('exposes window events as an unselected optional property', async () => {
+    storageEngineHookMock.storageEngine = makeStorageEngine({
+      'hash-1': configSimple,
+    });
+
+    render(
+      <MantineProvider>
+        <DownloadTidy
+          opened
+          close={vi.fn()}
+          filename="test-study_tidy.csv"
+          data={[makeParticipant()]}
+          studyId="test-study"
+        />
+      </MantineProvider>,
+    );
+
+    const windowEventsButton = screen.getByRole('button', { name: 'windowEvents' });
+    await waitFor(() => {
+      expect(within(document.body.querySelector('tbody')!).getByText('response')).not.toBeNull();
+    });
+    expect(within(document.body.querySelector('tbody')!).queryByText('windowEvents')).toBeNull();
+
+    fireEvent.click(windowEventsButton);
+
+    await waitFor(() => {
+      expect(within(document.body.querySelector('tbody')!).getByText('windowEvents')).not.toBeNull();
+    });
+
+    fireEvent.click(windowEventsButton);
+
+    await waitFor(() => {
+      expect(within(document.body.querySelector('tbody')!).queryByText('windowEvents')).toBeNull();
+    });
+  });
+
   test('shows an informational warning when selected participants reference missing configs', async () => {
     storageEngineHookMock.storageEngine = makeStorageEngine({});
 
@@ -559,4 +798,24 @@ describe('DownloadTidy', () => {
     expect(document.body.textContent).toContain('To restore the current config, reload the study page.');
     expect(document.body.textContent).toContain('historical configs that differ from the current config must be restored from a storage snapshot or backup.');
   });
+});
+
+test('optional global-store tidy fields use the accepted active path and leave legacy rows empty', async () => {
+  const participant = makeParticipant();
+  const answer = participant.answers.testComponent_0;
+  const submission = createGlobalStoreSubmission(undefined, { budget: { initialValue: 100 } }, answer, { budget: 70 }, [{
+    variable: 'budget', operation: 'subtract', source: 'response', operand: 30,
+  }], {});
+  participant.globalStoreHead = submission.nodeId;
+  const storage = {
+    getAllConfigsFromHash: vi.fn(async () => ({ 'hash-1': configSimple })),
+    getEngine: () => 'localStorage',
+    getProvenance: vi.fn(async () => ({ globalStore: submission.graph })),
+  } as unknown as StorageEngine;
+  const properties = ['globalStoreBefore', 'globalStoreAfter', 'globalStoreOperations'] as const;
+  const data = await getTableData([...properties], [participant], storage, 'study');
+  expect(data.rows[0]).toMatchObject({ globalStoreBefore: '{"budget":100}', globalStoreAfter: '{"budget":70}' });
+  expect(JSON.parse(data.rows[0].globalStoreOperations as string)[0]).toMatchObject({ operation: 'subtract', operand: 30 });
+  const legacy = await getTableData([...properties], [makeParticipant()], storage, 'study');
+  expect(legacy.rows[0].globalStoreBefore).toBeNull();
 });

@@ -1,13 +1,15 @@
-import type { ResponseBlockLocation } from '../parser/types';
+import type { StorageEngine } from '../storage/engines/types';
+import { GLOBAL_STORE_TASK } from './globalStoreProvenance';
 import type {
-  ProvenanceTraversalEvent, StoredAnswer, StoredProvenance, TrrackedProvenance,
+  ProvenanceLocation, ProvenanceTraversalEvent, StoredAnswer, StoredProvenance, TrrackedProvenance,
 } from './types';
 
-export const PROVENANCE_LOCATIONS: ResponseBlockLocation[] = [
+export const PROVENANCE_LOCATIONS: ProvenanceLocation[] = [
   'aboveStimulus',
   'belowStimulus',
   'sidebar',
   'stimulus',
+  'globalStore',
 ];
 
 export type LegacyStoredAnswerWithProvenance = StoredAnswer & {
@@ -133,4 +135,11 @@ export function splitProvenanceFromAnswers(answers: Record<string, StoredAnswer>
     answers: answersWithoutProvenance,
     provenanceByIdentifier,
   };
+}
+
+export async function getCombinedProvenance(storage: Pick<StorageEngine, 'getProvenance'>, task: string, participantId: string) {
+  const [trial, global] = await Promise.all([
+    storage.getProvenance(task, participantId), storage.getProvenance(GLOBAL_STORE_TASK, participantId),
+  ]);
+  return global?.globalStore ? { ...createEmptyProvenance(), ...trial, globalStore: global.globalStore } : trial;
 }

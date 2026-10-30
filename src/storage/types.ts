@@ -1,3 +1,4 @@
+import type { GlobalStoreValues } from '../parser/types';
 import { ParticipantMetadata, Sequence, StoredAnswer } from '../store/types';
 
 /**
@@ -40,9 +41,15 @@ import { ParticipantMetadata, Sequence, StoredAnswer } from '../store/types';
  * Provenance graphs exported from Trrack are stored separately from the participant answer object, using the same per-participant, per-task asset storage pattern as audio and screen recordings.
  *
  *
- * We can see at a high level that we are given the answer that the user submitted, the start time for the component, and the end time. In addition to this, we have a list of window events. You can find more information about the StoredAnswer object [here](../StoredAnswer).
+ * We can see at a high level that we are given the answer that the user submitted, the start time for the component, and the end time. In addition to this, we have a list of window events. You can find more information in {@link StoredAnswer}.
  */
 export interface ParticipantData {
+  /** Current projection of accepted global-store provenance. Absent for legacy studies. */
+  globalVariables?: GlobalStoreValues;
+  globalStoreRevision?: number;
+  globalStoreHead?: string;
+  /** Local completion also locks sessions when cloud collection is disabled. */
+  finalized?: boolean;
   /** Unique ID associated with the participant */
   participantId: string;
   /** Unique ID corresponding to the Configuration that the participant received. */
@@ -75,4 +82,6 @@ export interface ParticipantData {
 export interface ParticipantDataWithStatus extends ParticipantData {
   /** Whether the participant has completed the study. Derived from sequence assignment status. */
   completed: boolean;
+  /** Assignment registration time in epoch milliseconds; server-generated for cloud engines. */
+  assignmentCreatedTime?: number;
 }

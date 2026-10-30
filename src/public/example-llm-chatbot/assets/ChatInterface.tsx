@@ -1,6 +1,7 @@
 import {
   useState, useRef, useEffect, type ComponentPropsWithoutRef, type ReactNode,
 } from 'react';
+import { useStudyState } from '../../../store/hooks/useStudyState';
 import { IconMessage, IconSend } from '@tabler/icons-react';
 import {
   Flex,
@@ -70,7 +71,9 @@ type UserImageInputItem = {
   content: Array<{ type: 'input_image'; file_id: string }>;
 };
 
-type StreamInputItem = UserTextInputItem | FunctionOutputInputItem | UserImageInputItem;
+type ChatTextInputItem = Pick<ChatMessage, 'role' | 'content'>;
+
+type StreamInputItem = ChatTextInputItem | UserTextInputItem | FunctionOutputInputItem | UserImageInputItem;
 
 type MarkdownCodeProps = ComponentPropsWithoutRef<'code'> & {
   inline?: boolean;
@@ -93,13 +96,13 @@ function MarkdownCode({
   return (
     <code
       style={{
-        backgroundColor: inline ? '#e9ecef' : '#f1f3f5',
+        backgroundColor: inline ? 'light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-5))' : 'light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-6))',
         borderRadius: 4,
         padding: inline ? '2px 4px' : '8px',
         display: inline ? 'inline' : 'block',
         overflowX: 'auto',
         fontFamily: 'monospace',
-        color: '#212529',
+        color: 'var(--mantine-color-text)',
       }}
       {...props}
     >
@@ -154,8 +157,10 @@ Rules:
   const instructions = `${prePrompt}\n\n${toolPolicy}`;
 
   // ---------- State ----------
-  const [messages, setMessages] = useState<ChatMessage[]>(provenanceState?.messages ?? []);
-  const messagesRef = useRef<ChatMessage[]>(provenanceState?.messages ?? []);
+  const restoredState = useStudyState({ trrack });
+  const [initialMessages] = useState(restoredState.messages);
+  const [messages, setMessages] = useState<ChatMessage[]>(provenanceState?.messages ?? restoredState.messages);
+  const messagesRef = useRef<ChatMessage[]>(provenanceState?.messages ?? restoredState.messages);
 
   const [previousResponseId, setPreviousResponseId] = useState<string | null>(null);
 
@@ -163,10 +168,10 @@ Rules:
     if (provenanceState) {
       setMessages(provenanceState.messages);
     } else {
-      setMessages([]);
+      setMessages(initialMessages);
     }
     setPreviousResponseId(null);
-  }, [provenanceState]);
+  }, [provenanceState, initialMessages]);
 
   useEffect(() => {
     if (onMessagesUpdate) {
@@ -396,7 +401,7 @@ Rules:
 
   // ---------- Tool selection (non-stream) ----------
   const requestToolSelection = async (
-    userInputItem: UserTextInputItem,
+    inputPayload: StreamInputItem[],
     priorResponseId: string | null,
   ): Promise<ToolSelectionResponse> => {
     const response = await fetch(`${import.meta.env.VITE_OPENAI_API_URL}/v1/responses`, {
@@ -410,7 +415,7 @@ Rules:
         instructions,
         tools: toolDefinitions,
         tool_choice: 'auto',
-        input: [userInputItem],
+        input: inputPayload,
         // Keep this call small; we just want tool requests, not a full answer here.
         max_output_tokens: 64,
         temperature: 0,
@@ -450,15 +455,20 @@ Rules:
         content: [{ type: 'input_text', text: userMessage.content }],
       };
 
+      // Restored transcripts have no server continuation ID, so send their history once.
+      const inputPayload: StreamInputItem[] = priorResponseId
+        ? [userInputItem]
+        : [...messages.map(({ role, content }) => ({ role, content })), userInputItem];
+
       // 1) Non-stream call to decide whether tools are needed.
-      const firstData = await requestToolSelection(userInputItem, priorResponseId);
+      const firstData = await requestToolSelection(inputPayload, priorResponseId);
 
       const firstResponseId: string | null = firstData?.id || firstData?.response?.id || null;
       const functionCalls = tryExtractFunctionCalls(firstData);
 
       if (!functionCalls.length) {
         // No tools requested -> stream the answer directly.
-        const streamResult = await streamAssistantResponse([userInputItem], priorResponseId);
+        const streamResult = await streamAssistantResponse(inputPayload, priorResponseId);
         if (streamResult.streamedResponseId) setPreviousResponseId(streamResult.streamedResponseId);
 
         const fullMessages = messagesRef.current;
@@ -532,10 +542,10 @@ Rules:
       {/* Messages Container */}
       <ScrollArea style={{ flex: 1, minHeight: rem(270), marginBottom: rem(16) }} offsetScrollbars>
         {messages.length === 0 ? (
-          <Flex direction="column" align="center" justify="center" py="xl" style={{ color: '#6B7280' }}>
+          <Flex direction="column" align="center" justify="center" py="xl" style={{ color: 'var(--mantine-color-dimmed)' }}>
             <IconMessage size={48} style={{ opacity: 0.5, marginBottom: rem(12) }} />
             <Text size="lg" fw={500} mb={4}>Start a conversation</Text>
-            <Text size="sm" color="dimmed">
+            <Text size="sm" c="dimmed">
               Ask me anything about the clustered heatmap on the left!
             </Text>
           </Flex>
@@ -553,8 +563,8 @@ Rules:
                   withBorder
                   style={{
                     maxWidth: 400,
-                    backgroundColor: message.role === 'user' ? '#228be6' : '#f8f9fa',
-                    color: message.role === 'user' ? '#fff' : '#212529',
+                    backgroundColor: message.role === 'user' ? 'var(--mantine-color-blue-light)' : 'var(--mantine-color-default)',
+                    color: message.role === 'user' ? 'var(--mantine-color-blue-light-color)' : 'var(--mantine-color-text)',
                   }}
                 >
                   {message.role === 'assistant' ? (
@@ -567,7 +577,7 @@ Rules:
                   ) : (
                     <Text size="sm">{message.content}</Text>
                   )}
-                  <Text size="xs" mt={4} color={message.role === 'user' ? 'blue.1' : 'gray.6'}>
+                  <Text size="xs" mt={4} c={message.role === 'user' ? 'inherit' : 'dimmed'}>
                     {new Date(message.timestamp).toLocaleTimeString()}
                   </Text>
                 </Paper>
@@ -577,7 +587,7 @@ Rules:
         )}
         {isLoading && (
           <Flex justify="flex-start" mt="md">
-            <Paper shadow="xs" radius="md" p="md" withBorder style={{ backgroundColor: '#f8f9fa', color: '#212529' }}>
+            <Paper shadow="xs" radius="md" p="md" withBorder style={{ backgroundColor: 'var(--mantine-color-default)', color: 'var(--mantine-color-text)' }}>
               <Group gap="xs">
                 <Loader size="sm" color="gray" />
                 <Text size="sm">AI is thinking...</Text>
@@ -589,8 +599,8 @@ Rules:
       </ScrollArea>
       {/* Error Display */}
       {error && (
-        <Paper mb="md" p="sm" radius="md" withBorder style={{ backgroundColor: '#fff0f0', borderColor: '#ffe3e3' }}>
-          <Text color="red" size="sm">{error}</Text>
+        <Paper mb="md" p="sm" radius="md" withBorder style={{ backgroundColor: 'var(--mantine-color-red-light)', borderColor: 'var(--mantine-color-red-outline)' }}>
+          <Text c="var(--mantine-color-red-light-color)" size="sm">{error}</Text>
         </Paper>
       )}
       {/* Input Form */}
@@ -620,7 +630,7 @@ Rules:
           <IconSend size={18} />
         </Button>
       </form>
-      <Text mt="md" size="xs" color="dimmed">
+      <Text mt="md" size="xs" c="dimmed">
         Press Enter to send, Shift+Enter for new line. All conversations are recorded for research purposes.
       </Text>
     </Card>

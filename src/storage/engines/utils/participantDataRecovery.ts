@@ -8,6 +8,9 @@ export function shouldPreferCachedParticipantData(
   cachedParticipantData: ParticipantData,
   remoteParticipantData: ParticipantData,
 ) {
+  if ((cachedParticipantData.globalStoreRevision ?? 0) !== (remoteParticipantData.globalStoreRevision ?? 0)) {
+    return (cachedParticipantData.globalStoreRevision ?? 0) > (remoteParticipantData.globalStoreRevision ?? 0);
+  }
   const cachedAnsweredAnswers = getAnsweredParticipantAnswerMetadata(cachedParticipantData.answers);
   const remoteAnsweredAnswers = getAnsweredParticipantAnswerMetadata(remoteParticipantData.answers);
 

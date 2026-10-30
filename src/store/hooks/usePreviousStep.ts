@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router';
+import { getActiveGlobalStoreSubmissions } from '../globalStoreProvenance';
 import { useCurrentStep, useStudyId } from '../../routes/utils';
 import { useIsAnalysis } from './useIsAnalysis';
 import { decryptIndex, encryptIndex } from '../../utils/encryptDecryptIndex';
@@ -9,6 +10,9 @@ import { getSequenceFlatMap, findFuncBlock } from '../../utils/getSequenceFlatMa
 import { useStoreDispatch, useStoreActions, useStoreSelector } from '../store';
 
 export function usePreviousStep() {
+  const graph = useStoreSelector((state) => state.globalStoreGraph);
+  const completed = useStoreSelector((state) => state.completed);
+  const submitting = useStoreSelector((state) => state.globalStoreSubmitting);
   const currentStep = useCurrentStep();
   const { funcIndex } = useParams();
   const studyId = useStudyId();
@@ -20,15 +24,25 @@ export function usePreviousStep() {
   const answers = useStoreSelector((state) => state.answers);
 
   // Status of the previous button. If true, the previous button should be disabled
-  const isPreviousDisabled = typeof currentStep !== 'number' || isAnalysis || (currentStep <= 0 && (!funcIndex || decryptIndex(funcIndex) <= 0));
+  const isPreviousDisabled = typeof currentStep !== 'number' || isAnalysis || completed || !!submitting || (currentStep <= 0 && (!funcIndex || decryptIndex(funcIndex) <= 0));
 
   const buildSearch = useCallback(() => window.location.search, []);
 
   const goToPreviousStep = useCallback(() => {
-    if (typeof currentStep !== 'number') {
+    if (typeof currentStep !== 'number' || completed || submitting) {
       return;
     }
 
+    if (studyConfig.globalVariables && !isAnalysis) {
+      const active = getActiveGlobalStoreSubmissions(graph);
+      const index = active.findIndex((entry) => entry.submission.answer.trialOrder === `${currentStep}${funcIndex ? `_${decryptIndex(funcIndex)}` : ''}`);
+      const previous = index < 0 ? active.at(-1) : active[index - 1];
+      if (!previous) return;
+      const order = parseTrialOrder(previous.submission.answer.trialOrder);
+      if (order.step === null) return;
+      navigate(`/${studyId}/${encryptIndex(order.step)}${order.funcIndex !== null ? `/${encryptIndex(order.funcIndex)}` : ''}${buildSearch()}`);
+      return;
+    }
     const previousStep = currentStep - 1;
     const flatSequence = getSequenceFlatMap(studyConfig.sequence);
 
@@ -68,7 +82,7 @@ export function usePreviousStep() {
         return;
       }
     }
-  }, [answers, buildSearch, currentStep, deleteDynamicBlockAnswers, funcIndex, isAnalysis, navigate, storeDispatch, studyConfig, studyId]);
+  }, [graph, completed, submitting, answers, buildSearch, currentStep, deleteDynamicBlockAnswers, funcIndex, isAnalysis, navigate, storeDispatch, studyConfig, studyId]);
 
   return {
     isPreviousDisabled,

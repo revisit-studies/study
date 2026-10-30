@@ -99,6 +99,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconBan: () => null,
   IconBrandFirebase: () => null,
   IconBrandSupabase: () => null,
+  IconCamera: () => null,
   IconDatabase: () => null,
   IconDeviceDesktop: () => null,
   IconGraph: () => null,

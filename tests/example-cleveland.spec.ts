@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import { test, expect } from '@playwright/test';
-import { nextClick, waitForStudyEndMessage } from './utils';
+import { advanceStudyStep as nextClick, waitForStudyEndMessage } from './utils';
 
 test('Test example cleveland', async ({ page }) => {
   await page.goto('/');
@@ -12,6 +12,7 @@ test('Test example cleveland', async ({ page }) => {
     .getByText('Go to Study')
     .click();
 
+  await expect(page.getByTestId('study-interface')).toHaveAttribute('aria-busy', 'false', { timeout: 30000 });
   await expect(page.getByRole('heading', { name: 'Introduction' })).toBeVisible();
 
   // Click on the next button
@@ -47,14 +48,13 @@ test('Test example cleveland', async ({ page }) => {
     // Check that the visualization is visible
     const vis = await page.getByRole('main').getByRole('img');
     await expect(vis).toBeVisible();
-    const visChildren = await page.locator(visSearchArray[idx]);
-    await expect(await visChildren.count()).toBeGreaterThan(0);
+    await expect(vis.locator(visSearchArray[idx]).first()).toBeVisible();
 
     // Fill in answer guess
     await page.getByPlaceholder('0-100').fill('66');
 
-    // Click on the check answer button
-    await page.getByRole('button', { name: 'Check Answer' }).click();
+    // Grade using the Next button
+    await page.getByRole('button', { name: 'Check Answer', exact: true }).click();
 
     // Check that the correct answer is shown
     const correctAnswer = await page.getByText('You have answered the question correctly.');
@@ -62,10 +62,9 @@ test('Test example cleveland', async ({ page }) => {
 
     // Click on the next button
     await nextClick(page);
-    await page.waitForTimeout(100);
   }
 
-  // Check that the next question does not have a check answer button
+  // The separate Check Answer button is absent
   await expect(await page.getByRole('button', { name: 'Check Answer' })).toBeHidden();
 
   // Check for each question
@@ -79,15 +78,13 @@ test('Test example cleveland', async ({ page }) => {
     // Check that the visualization is visible
     const vis = await page.getByRole('main').getByRole('img');
     await expect(vis).toBeVisible();
-    const visChildren = await page.locator(visSearchArray2[idx]);
-    await expect(await visChildren.count()).toBeGreaterThan(0);
+    await expect(vis.locator(visSearchArray2[idx]).first()).toBeVisible();
 
     // Fill in answer
     await page.getByPlaceholder('0-100').fill('66');
 
     // Click on the next button
     await nextClick(page);
-    await page.waitForTimeout(200);
   }
 
   // Check for the post study survey and fill it out

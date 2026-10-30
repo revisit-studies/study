@@ -1,3 +1,5 @@
+import type { GlobalStoreGraph } from '../../store/globalStoreProvenance';
+import { getActiveGlobalStoreSubmissions } from '../../store/globalStoreProvenance';
 import type { ParticipantData, SkipConditions, StudyConfig } from '../../parser/types';
 import type { Sequence, StoredAnswer } from '../../store/types';
 import { findBlockForStep, getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
@@ -7,6 +9,13 @@ import {
   getConditionTargetIndex,
   type SkipEvaluationAnswer,
 } from '../../utils/skipConditions';
+
+export function formatFactorLevel(value: unknown): string {
+  if (value !== null && typeof value === 'object') {
+    return JSON.stringify(value);
+  }
+  return String(value);
+}
 
 export function getDynamicComponentsForBlock(
   node: Sequence,
@@ -52,6 +61,8 @@ function formatTarget(target: string) {
 export function formatSkipConditionSummary(condition: SkipConditions[number]) {
   const target = formatTarget(condition.to);
 
+  if (condition.check === 'globalVariable') return `If store.${condition.variable} ${condition.comparison} ${JSON.stringify(condition.value)}, skip to ${target}.`;
+
   if (condition.check === 'response') {
     const comparison = condition.comparison === 'equal' ? 'equals' : 'does not equal';
     return `If ${formatReference(condition.name)}.${condition.responseId} ${comparison} ${formatValue(condition.value)}, skip to ${target}.`;
@@ -71,6 +82,7 @@ export function formatSkipConditionSummary(condition: SkipConditions[number]) {
 }
 
 function shouldShowSkipConditionForBlock(condition: SkipConditions[number], sequence: Sequence) {
+  if (condition.check === 'globalVariable') return true;
   if (condition.check === 'block') {
     return getSequenceFlatMap(sequence).length > 0;
   }
@@ -79,7 +91,7 @@ function shouldShowSkipConditionForBlock(condition: SkipConditions[number], sequ
 }
 
 export function getSkipConditionSummariesForBlock(sequence: Sequence) {
-  return sequence.skip
+  return (sequence.skip ?? [])
     .filter((condition) => shouldShowSkipConditionForBlock(condition, sequence))
     .map(formatSkipConditionSummary);
 }
@@ -111,6 +123,7 @@ function getAnswersForSkipEvaluation(participantAnswers: ParticipantData['answer
       acc[key] = {
         answer: responseObj.answer,
         timedOut: false,
+        store: responseObj.globalStoreEntry,
       };
     }
     return acc;
@@ -121,18 +134,20 @@ export function getSkippedTrialOrders(
   sequence: Sequence,
   participantAnswers: ParticipantData['answers'],
   studyConfig: StudyConfig,
+  globalGraph?: GlobalStoreGraph,
 ) {
+  const accepted = getActiveGlobalStoreSubmissions(globalGraph);
   const skippedTrialOrders = new Set<number>();
   const flatSequence = getSequenceFlatMap(sequence);
 
-  getCompletedTopLevelAnswers(participantAnswers).forEach(({ step }) => {
+  getCompletedTopLevelAnswers(participantAnswers).forEach(({ step, identifier }) => {
     const blocksForStep = findBlockForStep(sequence, step);
     if (!blocksForStep) {
       return;
     }
 
     const answersForSkipEvaluation = getAnswersForSkipEvaluation(participantAnswers, step);
-    const skipConditions = blocksForStep.flatMap((block) => block.currentBlock.skip.map((condition) => ({
+    const skipConditions = blocksForStep.flatMap((block) => (block.currentBlock.skip ?? []).map((condition) => ({
       ...condition,
       firstIndex: block.firstIndex,
       lastIndex: step,
@@ -142,6 +157,7 @@ export function getSkippedTrialOrders(
       condition,
       answersForSkipEvaluation,
       studyConfig,
+      accepted.find((entry) => entry.submission.answer.identifier === identifier)?.values,
     ));
 
     if (!triggeredCondition) {

@@ -1,4 +1,6 @@
-import { ReactNode } from 'react';
+import {
+  Children, cloneElement, isValidElement, ReactNode,
+} from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
   render, act, cleanup, screen, fireEvent, waitFor,
@@ -9,16 +11,28 @@ import {
 import { openConfirmModal } from '@mantine/modals';
 import { ManageView } from '../ManageView';
 import { RevisitModesItem } from '../RevisitModesItem';
-import { StageManagementItem } from '../StageManagementItem';
+import {
+  getDefaultDesiredParticipantCounts, getDesiredParticipantCounts, getStageParticipantStatusCounts, StageManagementItem,
+} from '../StageManagementItem';
 import { DataManagementItem } from '../DataManagementItem';
 import { showNotification } from '../../../../utils/notifications';
+import { StudyConfig } from '../../../../parser/types';
+import { getBetweenSubjectsCombinationKey } from '../../../../storage/engines/types';
+import { makeParticipant } from '../../../../tests/utils';
+import { DISTINCT_COLOR_PALETTE } from '../../../../utils/colors';
 
 let mockStorageEngine: {
   getModes: ReturnType<typeof vi.fn>;
   setMode: ReturnType<typeof vi.fn>;
+  getStudyHiddenFromLandingPage: ReturnType<typeof vi.fn>;
+  setStudyHiddenFromLandingPage: ReturnType<typeof vi.fn>;
   getStageData: ReturnType<typeof vi.fn>;
+  getAllSequenceAssignments: ReturnType<typeof vi.fn>;
   setCurrentStage: ReturnType<typeof vi.fn>;
-  updateStageColor: ReturnType<typeof vi.fn>;
+  updateStage: ReturnType<typeof vi.fn>;
+  setStageCombinationEnabled: ReturnType<typeof vi.fn>;
+  setStageDesiredParticipants: ReturnType<typeof vi.fn>;
+  setStageParticipantAssignmentMode: ReturnType<typeof vi.fn>;
   getSnapshots: ReturnType<typeof vi.fn>;
   createSnapshot: ReturnType<typeof vi.fn>;
   renameSnapshot: ReturnType<typeof vi.fn>;
@@ -32,12 +46,31 @@ vi.mock('../../../../storage/storageEngineHooks', () => ({
   useStorageEngine: () => ({ storageEngine: mockStorageEngine }),
 }));
 
+vi.mock('../../ParticipantTimeoutModal', () => ({
+  ParticipantTimeoutModal: ({
+    opened,
+    participants,
+    description,
+  }: {
+    opened?: boolean;
+    participants: { participantId: string }[];
+    description?: string;
+  }) => (opened ? (
+    <div>
+      <div data-testid="timeout-participants">{participants.map((participant) => participant.participantId).join(',')}</div>
+      <div data-testid="timeout-description">{description}</div>
+    </div>
+  ) : null),
+}));
+
 vi.mock('@mantine/core', () => ({
   Paper: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Stack: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Group: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Title: ({ children }: { children: ReactNode }) => <h3>{children}</h3>,
-  Text: ({ children, span }: { children: ReactNode; span?: boolean }) => (span ? <span>{children}</span> : <p>{children}</p>),
+  Text: ({
+    children, span, role,
+  }: { children: ReactNode; span?: boolean; role?: string }) => (span ? <span role={role}>{children}</span> : <p role={role}>{children}</p>),
   Button: ({
     children, onClick, disabled, 'aria-label': ariaLabel,
   }: { children: ReactNode; onClick?: () => void; disabled?: boolean; 'aria-label'?: string }) => (
@@ -46,7 +79,25 @@ vi.mock('@mantine/core', () => ({
   TextInput: ({ onChange, placeholder }: { onChange?: React.ChangeEventHandler<HTMLInputElement>; placeholder?: string }) => (
     <input placeholder={placeholder} onChange={onChange} />
   ),
-  ColorInput: ({ value }: { value?: string }) => <input readOnly value={value ?? ''} />,
+  NumberInput: ({
+    disabled, onBlur, onChange, placeholder, value, 'aria-label': ariaLabel,
+  }: { disabled?: boolean; onBlur?: () => void; onChange?: (value: number | string) => void; placeholder?: string; value?: number | string; 'aria-label'?: string }) => (
+    <input disabled={disabled} aria-label={ariaLabel} placeholder={placeholder} value={value ?? ''} onBlur={onBlur} onChange={(event) => onChange?.(event.currentTarget.value === '' ? '' : Number(event.currentTarget.value))} />
+  ),
+  ColorInput: ({
+    value, onChange, 'aria-label': ariaLabel,
+  }: {
+    value?: string;
+    onChange?: (value: string) => void;
+    'aria-label'?: string;
+  }) => <input aria-label={ariaLabel} value={value ?? ''} onChange={(event) => onChange?.(event.currentTarget.value)} />,
+  ColorPicker: ({
+    value, onChange, 'aria-label': ariaLabel,
+  }: {
+    value?: string;
+    onChange?: (value: string) => void;
+    'aria-label'?: string;
+  }) => <input aria-label={ariaLabel} value={value ?? ''} onChange={(event) => onChange?.(event.currentTarget.value)} />,
   Loader: () => <div>Loading...</div>,
   LoadingOverlay: () => null,
   ActionIcon: ({
@@ -57,14 +108,74 @@ vi.mock('@mantine/core', () => ({
   Radio: ({ checked, onChange, 'aria-label': ariaLabel }: { checked: boolean; onChange?: () => void; 'aria-label'?: string }) => (
     <input type="radio" readOnly checked={checked} onChange={onChange} aria-label={ariaLabel} />
   ),
-  Switch: ({ checked, onChange, 'aria-label': ariaLabel }: { checked?: boolean; onChange?: React.ChangeEventHandler<HTMLInputElement>; 'aria-label'?: string }) => (
-    <input type="checkbox" defaultChecked={checked} onChange={onChange} aria-label={ariaLabel} />
+  Switch: ({
+    checked, label, onChange, 'aria-label': ariaLabel,
+  }: { checked?: boolean; label?: ReactNode; onChange?: React.ChangeEventHandler<HTMLInputElement>; 'aria-label'?: string }) => (
+    <label>
+      {label}
+      <input type="checkbox" checked={checked} onChange={onChange} aria-label={ariaLabel} />
+    </label>
   ),
   Flex: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Modal: ({ opened, children }: { opened: boolean; children: ReactNode }) => (opened ? <div>{children}</div> : null),
-  Tooltip: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Popover: Object.assign(
+    ({ children, opened }: { children: ReactNode; opened?: boolean }) => (
+      <div>
+        {Children.map(children, (child) => (isValidElement<{ opened?: boolean }>(child)
+          ? cloneElement(child, { opened })
+          : child))}
+      </div>
+    ),
+    {
+      Target: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+      Dropdown: ({ children, opened }: { children: ReactNode; opened?: boolean }) => (
+        opened ? <div>{children}</div> : null
+      ),
+    },
+  ),
+  ScrollArea: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Divider: () => <hr />,
+  SegmentedControl: ({
+    data, disabled, onChange, value,
+  }: {
+    data: { label: string; value: string }[];
+    disabled?: boolean;
+    onChange?: (value: string) => void;
+    value?: string;
+  }) => (
+    <div>
+      {data.map((option) => (
+        <button
+          aria-pressed={value === option.value}
+          disabled={disabled}
+          key={option.value}
+          onClick={() => onChange?.(option.value)}
+          type="button"
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  ),
+  Tooltip: ({ children, label, opened }: { children: ReactNode; label?: ReactNode; opened?: boolean }) => (
+    <div>
+      {opened ? <span>{label}</span> : null}
+      {children}
+    </div>
+  ),
   Space: () => <div />,
   Box: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Collapse: ({ children, in: open }: { children: ReactNode; in: boolean }) => (open ? <div>{children}</div> : null),
+  Badge: ({
+    children, component, onClick, 'aria-label': ariaLabel,
+  }: {
+    children: ReactNode;
+    component?: string;
+    onClick?: () => void;
+    'aria-label'?: string;
+  }) => (component === 'button'
+    ? <button type="button" aria-label={ariaLabel} onClick={onClick}>{children}</button>
+    : <span>{children}</span>),
   Table: Object.assign(
     ({ children }: { children: ReactNode }) => <table>{children}</table>,
     {
@@ -77,10 +188,60 @@ vi.mock('@mantine/core', () => ({
   ),
 }));
 
+type MrtColumn = {
+  id?: string;
+  accessorKey?: string;
+  accessorFn?: (row: Record<string, unknown>) => unknown;
+  header: string;
+  Header?: () => ReactNode;
+  Cell?: (props: { row: { original: Record<string, unknown> } }) => ReactNode;
+};
+type MrtTableOptions = {
+  columns: MrtColumn[];
+  data: Record<string, unknown>[];
+  getRowId: (row: Record<string, unknown>) => string;
+};
+
+// mantine-react-table is not transformed by Vitest, so it resolves the real
+// @mantine/core instead of the mock above and then fails without a provider.
+// Render an equivalent plain table so the cells stay assertable.
+vi.mock('mantine-react-table', () => ({
+  useMantineReactTable: (options: MrtTableOptions) => options,
+  MantineReactTable: ({ table }: { table: MrtTableOptions }) => (
+    <table>
+      <thead>
+        <tr>
+          {table.columns.map((column) => (
+            <th key={column.id ?? column.accessorKey}>
+              {column.Header ? column.Header() : column.header}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {table.data.map((row) => (
+          <tr key={table.getRowId(row)}>
+            {table.columns.map((column) => (
+              <td key={column.id ?? column.accessorKey}>
+                {column.Cell
+                  ? column.Cell({ row: { original: row } })
+                  : String((column.accessorFn ? column.accessorFn(row) : row[column.accessorKey as string]) ?? '')}
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  ),
+}));
+
 vi.mock('@tabler/icons-react', () => ({
   IconEdit: () => <span>edit</span>,
   IconCheck: () => <span>check</span>,
+  IconQuestionMark: () => <span>?</span>,
   IconX: () => <span>x</span>,
+  IconChevronDown: () => <span>down</span>,
+  IconChevronUp: () => <span>up</span>,
   IconTrashX: () => <span>trash</span>,
   IconRefresh: () => <span>refresh</span>,
   IconPencil: () => <span>pencil</span>,
@@ -99,7 +260,10 @@ vi.mock('../../../../components/downloader/DownloadButtons', () => ({
 }));
 
 const successResponse = { status: 'SUCCESS', notifications: [] };
-const DEFAULT_STAGE_COLOR = '#F05A30';
+const DEFAULT_STAGE_COLOR = DISTINCT_COLOR_PALETTE[0];
+// getNextStageColor hands out the first unused palette color, so a second stage
+// takes the entry after the default one.
+const FIRST_ADDITIONAL_STAGE_COLOR = DISTINCT_COLOR_PALETTE[1];
 
 const makeEngine = () => ({
   getModes: vi.fn().mockResolvedValue({
@@ -108,12 +272,18 @@ const makeEngine = () => ({
     dataSharingEnabled: false,
   }),
   setMode: vi.fn().mockResolvedValue(undefined),
+  getStudyHiddenFromLandingPage: vi.fn().mockResolvedValue(false),
+  setStudyHiddenFromLandingPage: vi.fn().mockResolvedValue(undefined),
   getStageData: vi.fn().mockResolvedValue({
     currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
     allStages: [{ stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR }],
   }),
+  getAllSequenceAssignments: vi.fn().mockResolvedValue([]),
   setCurrentStage: vi.fn().mockResolvedValue(undefined),
-  updateStageColor: vi.fn().mockResolvedValue(undefined),
+  updateStage: vi.fn().mockResolvedValue(undefined),
+  setStageCombinationEnabled: vi.fn().mockResolvedValue(undefined),
+  setStageDesiredParticipants: vi.fn().mockResolvedValue(undefined),
+  setStageParticipantAssignmentMode: vi.fn().mockResolvedValue(undefined),
   getSnapshots: vi.fn().mockResolvedValue({}),
   createSnapshot: vi.fn().mockResolvedValue(successResponse),
   renameSnapshot: vi.fn().mockResolvedValue(successResponse),
@@ -136,12 +306,14 @@ describe('ManageView', () => {
 
   // ── ManageView layout ────────────────────────────────────────────────────
 
-  test('renders all three management sections', async () => {
+  test('renders the visibility setting in its own card directly after ReVISit Modes', async () => {
     await act(async () => {
       render(<ManageView studyId="my-study" refresh={async () => []} />);
     });
-    expect(screen.getByText('ReVISit Modes')).toBeDefined();
-    expect(screen.getByText('Stage Management')).toBeDefined();
+    const visibilityCard = screen.getByText('Study visibility').parentElement;
+    expect(screen.getByText('Show study on landing page')).toBeDefined();
+    expect(screen.getByText(/^By default, all available studies are publicly visible/).parentElement).toBe(visibilityCard);
+    expect(visibilityCard?.previousElementSibling).toBe(screen.getByText('ReVISit Modes').parentElement);
     expect(screen.getByText('Data Management')).toBeDefined();
   });
 
@@ -160,6 +332,7 @@ describe('ManageView', () => {
     expect(screen.getByText('Data Collection')).toBeDefined();
     expect(screen.getByText('Development Mode')).toBeDefined();
     expect(screen.getByText('Share Data and Make Analytics Interface Public')).toBeDefined();
+    expect(screen.queryByText('Show study on landing page')).toBeNull();
   });
 
   test('RevisitModesItem calls getModes with the provided studyId', async () => {
@@ -210,7 +383,7 @@ describe('ManageView', () => {
       render(<StageManagementItem studyId="test-study" />);
     });
     expect(screen.getByText('Stage Management')).toBeDefined();
-    expect(screen.getByText('DEFAULT')).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Active stage DEFAULT' })).toBeDefined();
     expect(screen.getByText('Add New Stage')).toBeDefined();
   });
 
@@ -228,10 +401,10 @@ describe('ManageView', () => {
       render(<StageManagementItem studyId="test-study" />);
     });
     expect(consoleSpy).toHaveBeenCalledWith('Failed to load stage data:', expect.any(Error));
-    expect(screen.getByText('DEFAULT')).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Active stage DEFAULT' })).toBeDefined();
   });
 
-  test('StageManagementItem handleSetCurrentStage calls setCurrentStage when radio clicked', async () => {
+  test('StageManagementItem confirms before activating a stage', async () => {
     mockStorageEngine!.getStageData.mockResolvedValue({
       currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
       allStages: [
@@ -242,34 +415,43 @@ describe('ManageView', () => {
     await act(async () => {
       render(<StageManagementItem studyId="test-study" />);
     });
-    const reviewRadio = screen.getByRole('radio', { name: 'Set current stage to REVIEW' });
+    const reviewButton = screen.getByRole('button', { name: 'Inactive stage REVIEW' });
     await act(async () => {
-      fireEvent.click(reviewRadio);
+      fireEvent.click(reviewButton);
+    });
+    expect(screen.getByText('New participants will enter REVIEW stage. Existing participant records will remain in their current stages.')).toBeDefined();
+    expect(mockStorageEngine!.setCurrentStage).not.toHaveBeenCalled();
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Yes, activate stage' }));
     });
     expect(mockStorageEngine!.setCurrentStage).toHaveBeenCalledWith('test-study', 'REVIEW', '#00AAFF');
   });
 
-  test('StageManagementItem handleEditStage shows edit inputs, handleCancelEdit resets', async () => {
+  test('StageManagementItem edits stage colors beside the stage name and can cancel', async () => {
     await act(async () => {
       render(<StageManagementItem studyId="test-study" />);
     });
-    const editBtn = screen.getByRole('button', { name: 'Edit stage DEFAULT' });
+    expect(screen.queryByRole('columnheader', { name: 'Edit' })).toBeNull();
+    const editBtn = screen.getByRole('button', { name: 'Edit color for stage DEFAULT' });
     await act(async () => { fireEvent.click(editBtn); });
-    const cancelBtn = screen.getByRole('button', { name: 'Cancel editing stage DEFAULT' });
+    expect(screen.getByLabelText('Color for stage DEFAULT')).toBeDefined();
+    const cancelBtn = screen.getByRole('button', { name: 'Cancel' });
     await act(async () => { fireEvent.click(cancelBtn); });
-    expect(screen.getByRole('button', { name: 'Edit stage DEFAULT' })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Edit color for stage DEFAULT' })).toBeDefined();
   });
 
-  test('StageManagementItem handleSaveEdit calls updateStageColor then refreshes', async () => {
-    mockStorageEngine!.updateStageColor = vi.fn().mockResolvedValue(undefined);
+  test('StageManagementItem saves only the stage color then refreshes', async () => {
+    mockStorageEngine!.updateStage = vi.fn().mockResolvedValue(undefined);
     await act(async () => {
       render(<StageManagementItem studyId="test-study" />);
     });
-    const editBtn = screen.getByRole('button', { name: 'Edit stage DEFAULT' });
+    const editBtn = screen.getByRole('button', { name: 'Edit color for stage DEFAULT' });
     await act(async () => { fireEvent.click(editBtn); });
-    const saveBtn = screen.getByRole('button', { name: 'Save stage DEFAULT' });
+    const saveBtn = screen.getByRole('button', { name: 'Save' });
     await act(async () => { fireEvent.click(saveBtn); });
-    expect(mockStorageEngine!.updateStageColor).toHaveBeenCalledWith('test-study', 'DEFAULT', DEFAULT_STAGE_COLOR);
+    expect(mockStorageEngine!.updateStage).toHaveBeenCalledWith('test-study', 'DEFAULT', {
+      color: DEFAULT_STAGE_COLOR,
+    });
     expect(mockStorageEngine!.getStageData).toHaveBeenCalledTimes(2);
   });
 
@@ -281,6 +463,46 @@ describe('ManageView', () => {
     expect(screen.getByPlaceholderText('Enter stage name')).toBeDefined();
     await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Cancel new stage' })); });
     expect(screen.getByText('Add New Stage')).toBeDefined();
+  });
+
+  test('getDefaultDesiredParticipantCounts evenly distributes a stage maximum', () => {
+    const combinations = [
+      { key: 'a', parameters: {} },
+      { key: 'b', parameters: {} },
+      { key: 'c', parameters: {} },
+      { key: 'd', parameters: {} },
+    ];
+
+    expect(getDefaultDesiredParticipantCounts(10, combinations)).toEqual({
+      a: 3, b: 3, c: 2, d: 2,
+    });
+    expect(getDefaultDesiredParticipantCounts(undefined, combinations)).toEqual({});
+  });
+
+  test('getDesiredParticipantCounts distributes the remaining maximum after overrides', () => {
+    const combinations = [
+      { key: 'a', parameters: {} },
+      { key: 'b', parameters: {} },
+      { key: 'c', parameters: {} },
+      { key: 'd', parameters: {} },
+    ];
+
+    expect(getDesiredParticipantCounts(10, combinations, { a: 4 })).toEqual({
+      a: 4, b: 2, c: 2, d: 2,
+    });
+    expect(getDesiredParticipantCounts(10, combinations, { a: 4, d: 1 })).toEqual({
+      a: 4, b: 3, c: 2, d: 1,
+    });
+  });
+
+  test('getDesiredParticipantCounts shows the targets admission enforces when a condition is disabled', () => {
+    const combinations = [
+      { key: 'a', parameters: {} },
+      { key: 'b', parameters: {} },
+    ];
+
+    expect(getDesiredParticipantCounts(10, combinations, undefined, ['b'])).toEqual({ a: 10, b: 0 });
+    expect(getDesiredParticipantCounts(undefined, combinations, { a: 4 })).toEqual({ a: 4, b: '' });
   });
 
   test('StageManagementItem handleSaveNewStage shows error for invalid name', async () => {
@@ -299,10 +521,10 @@ describe('ManageView', () => {
         allStages: [{ stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR }],
       })
       .mockResolvedValueOnce({
-        currentStage: { stageName: 'NEWSTAGE', color: DEFAULT_STAGE_COLOR },
+        currentStage: { stageName: 'NEWSTAGE', color: FIRST_ADDITIONAL_STAGE_COLOR },
         allStages: [
           { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
-          { stageName: 'NEWSTAGE', color: DEFAULT_STAGE_COLOR },
+          { stageName: 'NEWSTAGE', color: FIRST_ADDITIONAL_STAGE_COLOR },
         ],
       });
     await act(async () => {
@@ -311,8 +533,463 @@ describe('ManageView', () => {
     await act(async () => { fireEvent.click(screen.getByText('Add New Stage')); });
     fireEvent.change(screen.getByPlaceholderText('Enter stage name'), { target: { value: 'NEWSTAGE' } });
     await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Save new stage' })); });
-    expect(mockStorageEngine!.setCurrentStage).toHaveBeenCalledWith('test-study', 'NEWSTAGE', DEFAULT_STAGE_COLOR);
+    expect(mockStorageEngine!.setCurrentStage).toHaveBeenCalledWith('test-study', 'NEWSTAGE', FIRST_ADDITIONAL_STAGE_COLOR);
     expect(mockStorageEngine!.getStageData).toHaveBeenCalledTimes(2);
+  });
+
+  test('StageManagementItem shows each stage participant count and maximum', async () => {
+    mockStorageEngine!.getStageData.mockResolvedValue({
+      currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
+      allStages: [{ stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR, maxParticipants: 5 }],
+    });
+    mockStorageEngine!.getAllParticipantsData.mockResolvedValue([
+      { stage: 'DEFAULT', rejected: false, completed: true },
+      { stage: 'DEFAULT', rejected: false, completed: false },
+      { stage: 'DEFAULT', rejected: { reason: 'test', timestamp: 1 } },
+    ]);
+
+    await act(async () => {
+      render(<StageManagementItem studyId="test-study" />);
+    });
+
+    expect(screen.getByRole('columnheader', { name: 'Current' })).toBeDefined();
+    expect(screen.getByRole('columnheader', { name: 'Completed' })).toBeDefined();
+    expect(screen.getByRole('columnheader', { name: 'Total / Maximum' })).toBeDefined();
+    expect(screen.getAllByText('1')).toHaveLength(2);
+    expect(screen.getByText('2 / 5')).toBeDefined();
+  });
+
+  test('StageManagementItem shows allocation details only for the selected current stage', async () => {
+    mockStorageEngine!.getStageData.mockResolvedValue({
+      currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
+      allStages: [
+        { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR, maxParticipants: 4 },
+        { stageName: 'REVIEW', color: '#00AAFF', maxParticipants: 6 },
+      ],
+    });
+    const studyConfig = {
+      factors: { letter: ['a', 'b'] },
+      betweenSubjects: ['letter'],
+    } as unknown as StudyConfig;
+
+    await act(async () => {
+      render(<StageManagementItem studyId="test-study" studyConfig={studyConfig} />);
+    });
+
+    expect(screen.getByRole('heading', { name: 'Participant limits for DEFAULT' })).toBeDefined();
+    expect(screen.queryByRole('heading', { name: 'Participant limits for REVIEW' })).toBeNull();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Inactive stage REVIEW' }));
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Yes, activate stage' }));
+    });
+
+    expect(screen.getByRole('heading', { name: 'Participant limits for REVIEW' })).toBeDefined();
+    expect(screen.queryByRole('heading', { name: 'Participant limits for DEFAULT' })).toBeNull();
+  });
+
+  test('StageManagementItem reviews only the clicked stage in-progress participants', async () => {
+    mockStorageEngine!.getStageData.mockResolvedValue({
+      currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
+      allStages: [{ stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR }],
+    });
+    mockStorageEngine!.getAllParticipantsData.mockResolvedValue([
+      {
+        participantId: 'in-progress', stage: 'DEFAULT', rejected: false, completed: false,
+      },
+      {
+        participantId: 'completed', stage: 'DEFAULT', rejected: false, completed: true,
+      },
+      {
+        participantId: 'other-stage', stage: 'OTHER', rejected: false, completed: false,
+      },
+      {
+        participantId: 'rejected', stage: 'DEFAULT', rejected: { reason: 'test', timestamp: 1 }, completed: false,
+      },
+    ]);
+
+    await act(async () => {
+      render(<StageManagementItem studyId="test-study" />);
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Review 1 in-progress participant' }));
+    });
+
+    expect(screen.getByTestId('timeout-participants').textContent).toBe('in-progress');
+    expect(screen.getByTestId('timeout-description').textContent).toBe(
+      'Showing only in-progress participants in the DEFAULT stage — not all in-progress participants in the study.',
+    );
+  });
+
+  test('StageManagementItem always shows the current stage condition table below the stage list', async () => {
+    const disabledCombination = getBetweenSubjectsCombinationKey(
+      { letter: 'a', number: 2 },
+      ['letter', 'number'],
+    );
+    mockStorageEngine!.getStageData.mockResolvedValue({
+      currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
+      allStages: [{
+        stageName: 'DEFAULT',
+        color: DEFAULT_STAGE_COLOR,
+        disabledBetweenSubjectsCombinations: [disabledCombination],
+      }],
+    });
+    mockStorageEngine!.getAllParticipantsData.mockResolvedValue([
+      {
+        stage: 'DEFAULT',
+        rejected: false,
+        sequence: { parameters: { letter: 'a', number: 1 } },
+      },
+      {
+        stage: 'DEFAULT',
+        rejected: false,
+        sequence: { parameters: { letter: 'a', number: 2 } },
+      },
+      {
+        stage: 'DEFAULT',
+        rejected: false,
+        sequence: { parameters: { letter: 'b', number: 1 } },
+      },
+    ]);
+    const studyConfig = {
+      factors: { letter: ['a', 'b'], number: [1, 2] },
+      betweenSubjects: ['letter', 'number'],
+    } as unknown as StudyConfig;
+
+    await act(async () => {
+      render(<StageManagementItem studyId="test-study" studyConfig={studyConfig} />);
+    });
+
+    expect(screen.getByRole('heading', { name: 'Participant limits for DEFAULT' })).toBeDefined();
+    expect(screen.getByText('letter')).toBeDefined();
+    expect(screen.getByText('number')).toBeDefined();
+    expect(screen.getAllByLabelText('Information about current participants')).toHaveLength(1);
+    expect(screen.getAllByLabelText('Information about completed participants')).toHaveLength(1);
+    expect(screen.getAllByLabelText('Information about enabled participants')).toHaveLength(1);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('checkbox', { name: 'Enable a / 2 for DEFAULT' }));
+    });
+    expect(screen.getByText('This condition will be available for future participant assignments. Existing participant data will not change.')).toBeDefined();
+    expect(mockStorageEngine!.setStageCombinationEnabled).not.toHaveBeenCalled();
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Yes, enable condition' }));
+    });
+    expect(mockStorageEngine!.setStageCombinationEnabled)
+      .toHaveBeenCalledWith('test-study', 'DEFAULT', disabledCombination, true);
+  });
+
+  test.each(['constructor', 'toString', '__proto__'])('counts participants and saves targets in a stage named %s', async (stageName) => {
+    const key = getBetweenSubjectsCombinationKey({ letter: 'a' }, ['letter']);
+    mockStorageEngine!.getStageData.mockResolvedValue({
+      currentStage: { stageName, color: DEFAULT_STAGE_COLOR },
+      allStages: [{
+        stageName, color: DEFAULT_STAGE_COLOR, maxParticipants: 10, participantAssignmentMode: 'manual', manualDesiredParticipantsByCombination: { [key]: 10 },
+      }],
+    });
+    const participants = [{ ...makeParticipant({ participantId: 'p1', stage: stageName, sequence: { ...makeParticipant().sequence, parameters: { letter: 'a' } } }), completed: false }];
+    mockStorageEngine!.getAllParticipantsData.mockResolvedValue(participants);
+    expect(getStageParticipantStatusCounts(participants)[stageName]).toEqual({ completed: 0, inProgress: 1 });
+    const studyConfig = { factors: { letter: ['a'] }, betweenSubjects: ['letter'] } as unknown as StudyConfig;
+    await act(async () => { render(<StageManagementItem studyId="test-study" studyConfig={studyConfig} />); });
+    const input = screen.getByLabelText(`Desired participants for ${key} in ${stageName}`);
+    await act(async () => { fireEvent.change(input, { target: { value: '11' } }); });
+    await act(async () => { fireEvent.blur(input); });
+    expect(mockStorageEngine!.setStageDesiredParticipants).toHaveBeenCalledWith('test-study', stageName, key, 11, { [key]: 10 });
+  });
+
+  test('keeps unfinished target edits local and saves only the completed number on blur', async () => {
+    const key = getBetweenSubjectsCombinationKey({ letter: 'a' }, ['letter']);
+    mockStorageEngine!.getStageData.mockResolvedValue({
+      currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
+      allStages: [{
+        stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR, maxParticipants: 20, participantAssignmentMode: 'manual', manualDesiredParticipantsByCombination: { [key]: 20 },
+      }],
+    });
+    const studyConfig = { factors: { letter: ['a'] }, betweenSubjects: ['letter'] } as unknown as StudyConfig;
+    await act(async () => { render(<StageManagementItem studyId="test-study" studyConfig={studyConfig} />); });
+    const input = screen.getByLabelText(`Desired participants for ${key} in DEFAULT`) as HTMLInputElement;
+    await act(async () => { fireEvent.change(input, { target: { value: '' } }); });
+    expect(input.value).toBe('');
+    expect(mockStorageEngine!.setStageDesiredParticipants).not.toHaveBeenCalled();
+    await act(async () => { fireEvent.blur(input); });
+    expect(input.value).toBe('20');
+    expect(mockStorageEngine!.setStageDesiredParticipants).not.toHaveBeenCalled();
+    await act(async () => { fireEvent.change(input, { target: { value: '3' } }); });
+    await act(async () => { fireEvent.change(input, { target: { value: '30' } }); });
+    expect(mockStorageEngine!.setStageDesiredParticipants).not.toHaveBeenCalled();
+    await act(async () => { fireEvent.blur(input); });
+    expect(mockStorageEngine!.setStageDesiredParticipants).toHaveBeenCalledTimes(1);
+    expect(mockStorageEngine!.setStageDesiredParticipants).toHaveBeenCalledWith('test-study', 'DEFAULT', key, 30, { [key]: 20 });
+  });
+
+  test.each(['combinationKey', 'enabled', 'desiredParticipants', 'participantStatusCounts'])('keeps controls working with a factor named %s', async (factorName) => {
+    const key = getBetweenSubjectsCombinationKey({ [factorName]: 'A' }, [factorName]);
+    mockStorageEngine!.getStageData.mockResolvedValue({
+      currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
+      allStages: [{
+        stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR, maxParticipants: 10, participantAssignmentMode: 'manual', manualDesiredParticipantsByCombination: { [key]: 10 }, disabledBetweenSubjectsCombinations: [key],
+      }],
+    });
+    mockStorageEngine!.getAllParticipantsData.mockResolvedValue([{
+      participantId: 'collision', stage: 'DEFAULT', rejected: false, completed: false, sequence: { parameters: { [factorName]: 'A' } },
+    }]);
+    const studyConfig = { factors: { [factorName]: ['A'] }, betweenSubjects: [factorName] } as unknown as StudyConfig;
+    await act(async () => { render(<StageManagementItem studyId="test-study" studyConfig={studyConfig} />); });
+    const toggle = screen.getByRole('checkbox', { name: 'Enable A for DEFAULT' }) as HTMLInputElement;
+    expect(toggle.checked).toBe(false);
+    expect(screen.getAllByRole('button', { name: 'Review 1 in-progress participant' })).toHaveLength(2);
+    const target = screen.getByLabelText(`Desired participants for ${key} in DEFAULT`) as HTMLInputElement;
+    expect(target.value).toBe('10');
+    await act(async () => { fireEvent.change(target, { target: { value: '11' } }); });
+    await act(async () => { fireEvent.blur(target); });
+    expect(mockStorageEngine!.setStageDesiredParticipants).toHaveBeenCalledWith('test-study', 'DEFAULT', key, 11, { [key]: 10 });
+    await act(async () => { fireEvent.click(toggle); });
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Yes, enable condition' })); });
+    expect(mockStorageEngine!.setStageCombinationEnabled).toHaveBeenCalledWith('test-study', 'DEFAULT', key, true);
+  });
+
+  test('StageManagementItem populates derived groups and saves their complete condition keys', async () => {
+    const studyConfig = {
+      factors: {
+        task: ['A', 'B'],
+        interface: ['FFL', 'LaTeX'],
+        assignment: { action: 'cross', factors: ['task', 'interface'] },
+      },
+      betweenSubjects: ['assignment'],
+    } as unknown as StudyConfig;
+
+    await act(async () => {
+      render(<StageManagementItem studyId="test-study" studyConfig={studyConfig} />);
+    });
+
+    expect(screen.getAllByRole('checkbox', { name: /^Enable / })).toHaveLength(4);
+    await act(async () => {
+      fireEvent.click(screen.getByRole('checkbox', { name: 'Enable {"task":"A","interface":"FFL"} for DEFAULT' }));
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Yes, disable condition' }));
+    });
+    expect(mockStorageEngine!.setStageCombinationEnabled).toHaveBeenCalledWith(
+      'test-study',
+      'DEFAULT',
+      getBetweenSubjectsCombinationKey({ assignment: { task: 'A', interface: 'FFL' } }, ['assignment']),
+      false,
+    );
+  });
+
+  test.each(['even', 'manual'])('StageManagementItem keeps the cap editable without groups when saved mode is %s', async (participantAssignmentMode) => {
+    mockStorageEngine!.getStageData.mockResolvedValue({
+      currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
+      allStages: [{
+        stageName: 'DEFAULT',
+        color: DEFAULT_STAGE_COLOR,
+        maxParticipants: 10,
+        participantAssignmentMode,
+        manualDesiredParticipantsByCombination: {},
+      }],
+    });
+    await act(async () => {
+      render(<StageManagementItem studyId="test-study" />);
+    });
+
+    expect(screen.queryByRole('button', { name: 'Manually' })).toBeNull();
+    const maximum = screen.getByLabelText('Maximum participants for DEFAULT') as HTMLInputElement;
+    expect(maximum.disabled).toBe(false);
+    expect(maximum.value).toBe('10');
+    await act(async () => { fireEvent.change(maximum, { target: { value: '11' } }); });
+    await act(async () => { fireEvent.blur(maximum); });
+    expect(mockStorageEngine!.updateStage).toHaveBeenCalledWith('test-study', 'DEFAULT', { maxParticipants: 11 });
+  });
+
+  test('StageManagementItem enables a nonzero cap without groups when manual mode was saved', async () => {
+    mockStorageEngine!.getStageData.mockResolvedValue({
+      currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
+      allStages: [{
+        stageName: 'DEFAULT',
+        color: DEFAULT_STAGE_COLOR,
+        participantAssignmentMode: 'manual',
+        manualDesiredParticipantsByCombination: {},
+      }],
+    });
+    await act(async () => {
+      render(<StageManagementItem studyId="test-study" />);
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('checkbox', { name: 'Limit participants' }));
+    });
+
+    expect(mockStorageEngine!.updateStage).toHaveBeenCalledWith('test-study', 'DEFAULT', { maxParticipants: 10 });
+  });
+
+  test('StageManagementItem disables even allocations and enables manual assignments', async () => {
+    const combinations = [
+      getBetweenSubjectsCombinationKey({ letter: 'a' }, ['letter']),
+      getBetweenSubjectsCombinationKey({ letter: 'b' }, ['letter']),
+    ];
+    mockStorageEngine!.getStageData.mockResolvedValue({
+      currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
+      allStages: [{
+        stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR, maxParticipants: 4,
+      }],
+    });
+    const studyConfig = {
+      factors: { letter: ['a', 'b'] },
+      betweenSubjects: ['letter'],
+    } as unknown as StudyConfig;
+
+    await act(async () => {
+      render(<StageManagementItem studyId="test-study" studyConfig={studyConfig} />);
+    });
+
+    expect(screen.queryByLabelText(/Desired participants/)).toBeNull();
+    expect(screen.getByText('Assign participants')).toBeDefined();
+    expect(screen.getByText('Set a maximum number of participants who can enter this stage.')).toBeDefined();
+    expect(screen.getByText('Choose whether that maximum is divided evenly or set for each condition.')).toBeDefined();
+    expect(screen.getByText('Enter the maximum number of participants for this stage.')).toBeDefined();
+    expect(screen.queryByText('Set and save a maximum before allocating participants across conditions.')).toBeNull();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Manually' }));
+    });
+    expect(mockStorageEngine!.setStageParticipantAssignmentMode).toHaveBeenCalledWith('test-study', 'DEFAULT', 'manual', combinations);
+  });
+
+  test('StageManagementItem reports and reloads a failed stage change', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockStorageEngine!.getStageData.mockResolvedValue({
+      currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
+      allStages: [{ stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR, maxParticipants: 4 }],
+    });
+    mockStorageEngine!.setStageParticipantAssignmentMode.mockRejectedValueOnce(new Error('write failed'));
+    const studyConfig = {
+      factors: { letter: ['a', 'b'] },
+      betweenSubjects: ['letter'],
+    } as unknown as StudyConfig;
+
+    await act(async () => {
+      render(<StageManagementItem studyId="test-study" studyConfig={studyConfig} />);
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Manually' }));
+    });
+
+    expect(showNotification).toHaveBeenCalledWith(expect.objectContaining({
+      title: 'Stage settings not saved',
+      color: 'red',
+    }));
+    expect(mockStorageEngine!.getStageData).toHaveBeenCalledTimes(2);
+  });
+
+  test('StageManagementItem sets an initial limit of ten participants per condition group', async () => {
+    mockStorageEngine!.getStageData
+      .mockResolvedValueOnce({
+        currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
+        allStages: [{ stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR }],
+      })
+      .mockResolvedValueOnce({
+        currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
+        allStages: [{ stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR, maxParticipants: 20 }],
+      });
+    const studyConfig = {
+      factors: { letter: ['a', 'b'] },
+      betweenSubjects: ['letter'],
+    } as unknown as StudyConfig;
+
+    await act(async () => {
+      render(<StageManagementItem studyId="test-study" studyConfig={studyConfig} />);
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('checkbox', { name: 'Limit participants' }));
+    });
+
+    expect(mockStorageEngine!.updateStage).toHaveBeenCalledWith('test-study', 'DEFAULT', {
+      maxParticipants: 20,
+    });
+    expect((screen.getByLabelText('Maximum participants for DEFAULT') as HTMLInputElement).value).toBe('20');
+  });
+
+  test('StageManagementItem enables limits at the assigned population when it exceeds the default', async () => {
+    mockStorageEngine!.getStageData.mockResolvedValue({
+      currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
+      allStages: [{ stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR }],
+    });
+    mockStorageEngine!.getAllParticipantsData.mockResolvedValue(Array.from({ length: 11 }, () => ({
+      stage: 'DEFAULT', rejected: false, completed: false,
+    })));
+    await act(async () => { render(<StageManagementItem studyId="test-study" />); });
+    await act(async () => { fireEvent.click(screen.getByRole('checkbox', { name: 'Limit participants' })); });
+    expect(mockStorageEngine!.updateStage).toHaveBeenCalledWith('test-study', 'DEFAULT', { maxParticipants: 11 });
+  });
+
+  test('StageManagementItem restores the saved manual allocation total when limits are re-enabled', async () => {
+    const firstCombination = getBetweenSubjectsCombinationKey({ letter: 'a' }, ['letter']);
+    const secondCombination = getBetweenSubjectsCombinationKey({ letter: 'b' }, ['letter']);
+    mockStorageEngine!.getStageData.mockResolvedValue({
+      currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
+      allStages: [{
+        stageName: 'DEFAULT',
+        color: DEFAULT_STAGE_COLOR,
+        participantAssignmentMode: 'manual',
+        manualDesiredParticipantsByCombination: {
+          [firstCombination]: 6,
+          [secondCombination]: 8,
+        },
+      }],
+    });
+    const studyConfig = {
+      factors: { letter: ['a', 'b'] },
+      betweenSubjects: ['letter'],
+    } as unknown as StudyConfig;
+
+    await act(async () => {
+      render(<StageManagementItem studyId="test-study" studyConfig={studyConfig} />);
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('checkbox', { name: 'Limit participants' }));
+    });
+
+    expect(mockStorageEngine!.updateStage).toHaveBeenCalledWith('test-study', 'DEFAULT', {
+      maxParticipants: 14,
+    });
+  });
+
+  test('StageManagementItem keeps the maximum in sync with manual assignments', async () => {
+    const firstCombination = getBetweenSubjectsCombinationKey({ letter: 'a' }, ['letter']);
+    const secondCombination = getBetweenSubjectsCombinationKey({ letter: 'b' }, ['letter']);
+    mockStorageEngine!.getStageData.mockResolvedValue({
+      currentStage: { stageName: 'DEFAULT', color: DEFAULT_STAGE_COLOR },
+      allStages: [{
+        stageName: 'DEFAULT',
+        color: DEFAULT_STAGE_COLOR,
+        maxParticipants: 4,
+        desiredParticipantsByCombination: {
+          [firstCombination]: 1,
+          [secondCombination]: 2,
+        },
+      }],
+    });
+    const studyConfig = {
+      factors: { letter: ['a', 'b'] },
+      betweenSubjects: ['letter'],
+    } as unknown as StudyConfig;
+
+    await act(async () => {
+      render(<StageManagementItem studyId="test-study" studyConfig={studyConfig} />);
+    });
+
+    expect(screen.queryByRole('alert')).toBeNull();
+    const maximumParticipantInput = screen.getByLabelText('Maximum participants for DEFAULT') as HTMLInputElement;
+    expect(maximumParticipantInput.hasAttribute('disabled')).toBe(true);
+    expect(maximumParticipantInput.value).toBe('3');
+    screen.getAllByLabelText(/Desired participants/).forEach((input) => {
+      expect(input.hasAttribute('disabled')).toBe(false);
+    });
   });
 
   // ── DataManagementItem ───────────────────────────────────────────────────

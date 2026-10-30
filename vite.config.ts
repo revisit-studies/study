@@ -8,7 +8,7 @@ export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd());
 
   return {
-    base: command === 'build' ? env.VITE_BASE_PATH : '/',
+    base: command === 'build' ? (env.VITE_BASE_PATH || '/') : '/',
     plugins: [
       react({ devTarget: 'es2022' }),
     ],
@@ -23,12 +23,25 @@ export default defineConfig(({ command, mode }) => {
     test: {
       environment: 'jsdom',
       exclude: ['./tests/**', 'node_modules/**'],
+      // Custom response lookup imports study assets that unit tests do not render.
+      alias: [
+        { find: /^@excalidraw\/excalidraw$/, replacement: fileURLToPath(new URL('./src/shims/excalidrawTest.ts', import.meta.url)) },
+        { find: '@visdesignlab/upset2-react', replacement: fileURLToPath(new URL('./src/shims/upset2ReactTest.ts', import.meta.url)) },
+      ],
+      server: {
+        deps: {
+          // Trrack ships CJS that re-exports @reduxjs/toolkit; Vite has to
+          // process it for named imports to resolve under Vitest.
+          inline: ['@trrack/core'],
+        },
+      },
+      setupFiles: ['vitest-localstorage-mock'],
       fileParallelism: true,
       maxWorkers: '100%',
       minWorkers: 1,
       coverage: {
         provider: 'v8',
-        include: ['src/**/*.{ts,tsx}'],
+        all: true,
         exclude: [
           ...coverageConfigDefaults.exclude,
           'public/**',
