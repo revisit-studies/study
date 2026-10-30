@@ -41,7 +41,7 @@ import { ParticipantMetadata, Sequence, StoredAnswer } from '../store/types';
  * Provenance graphs exported from Trrack are stored separately from the participant answer object, using the same per-participant, per-task asset storage pattern as audio and screen recordings.
  *
  *
- * We can see at a high level that we are given the answer that the user submitted, the start time for the component, and the end time. In addition to this, we have a list of window events. You can find more information about the StoredAnswer object [here](../StoredAnswer).
+ * We can see at a high level that we are given the answer that the user submitted, the start time for the component, and the end time. In addition to this, we have a list of window events. You can find more information in {@link StoredAnswer}.
  */
 export interface ParticipantData {
   /** Current projection of accepted global-store provenance. Absent for legacy studies. */

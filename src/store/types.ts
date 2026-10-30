@@ -80,7 +80,7 @@ export type TrialValidation = Record<
 >;
 
 /**
- * The StoredAnswer object is a data structure describing the participant's interaction with an individual component. It is the data structure used as values of the `answers` object of [ParticipantData](../ParticipantData). The general structure for this is below:
+ * The StoredAnswer object is a data structure describing the participant's interaction with an individual component. It is the data structure used as values of the `answers` object of {@link ParticipantData}. The general structure for this is below:
  *
  * ```json
  * {
@@ -96,7 +96,7 @@ export type TrialValidation = Record<
  *   ]
  * }
  * ```
- * The `answer` object here uses the "id" in the [Response](../BaseResponse) list of the component in your [StudyConfiguration](../StudyConfig) as its keys. It then contains a list of the answers given. You are also given a start and end time for the participant's interaction with the component. Lastly, a set of windowEvents is given. Below is an example of the windowEvents list.
+ * The `answer` object here uses the "id" in the {@link BaseResponse} list of the component in your {@link StudyConfig} as its keys. It then contains a list of the answers given. You are also given a start and end time for the participant's interaction with the component. Lastly, a set of windowEvents is given. Below is an example of the windowEvents list.
  *
  * Each item in the window event is given a time, a position an event name, and some extra information for the event (for mouse events, this is the location).
  */
@@ -189,7 +189,7 @@ export interface CheckAnswerState {
   attemptsUsed: number;
   /** Whether every response was correct at the last check. */
   correct: boolean;
-  /** The correctness of each response at the last check. Keys are the "id"s in the [Response](../BaseResponse) list of the component in your [StudyConfiguration](../StudyConfig); values indicate whether that response was correct. */
+  /** The correctness of each response at the last check. Keys are the "id"s in the {@link BaseResponse} list of the component in your {@link StudyConfig}; values indicate whether that response was correct. */
   responses: Record<string, boolean>;
   /** Fractional score for each checked response, when custom scoring is configured. */
   scores?: Record<string, number>;
