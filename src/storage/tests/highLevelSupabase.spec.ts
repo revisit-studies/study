@@ -20,6 +20,7 @@ type RowData = Record<string, string | number | boolean | null | object>;
 
 const revisitRows: RowData[] = [];
 const storageFiles: Record<string, string> = {};
+let sqlTimestampWithoutZone = false;
 let failConfigActivation = false;
 let failSequenceReads = false;
 let failParticipantReads = false;
@@ -40,6 +41,11 @@ const supabaseOperations: Array<{
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 vi.mock('@supabase/supabase-js', () => {
+  function databaseTimestamp(value?: string): string {
+    const timestamp = value ?? new Date().toISOString();
+    return sqlTimestampWithoutZone ? timestamp.replace(/Z$/, '') : timestamp;
+  }
+
   function matchLike(value: string, pattern: string): boolean {
     const regexStr = `^${pattern
       .replace(/[.+^${}()|[\]\\]/g, '\\$&')
@@ -182,7 +188,7 @@ vi.mock('@supabase/supabase-js', () => {
             }
             const inserted = toInsert.map((row) => ({
               ...row,
-              createdAt: (row.createdAt as string | undefined) ?? new Date().toISOString(),
+              createdAt: databaseTimestamp(row.createdAt as string | undefined),
             }));
             rows.push(...inserted);
             resolve({ data: isSingle ? inserted[0] : inserted, error: null });
@@ -203,12 +209,12 @@ vi.mock('@supabase/supabase-js', () => {
               if (idx >= 0) {
                 rows[idx] = {
                   ...row,
-                  createdAt: (row.createdAt as string | undefined) ?? rows[idx].createdAt,
+                  createdAt: databaseTimestamp((row.createdAt ?? rows[idx].createdAt) as string),
                 };
               } else {
                 rows.push({
                   ...row,
-                  createdAt: (row.createdAt as string | undefined) ?? new Date().toISOString(),
+                  createdAt: databaseTimestamp(row.createdAt as string | undefined),
                 });
               }
             });
@@ -793,6 +799,35 @@ describe.each([
     await storageEngine.saveConfig(changed);
     await expect(storageEngine.initializeParticipantSession({}, changed, participantMetadata, 'blocked-change'))
       .rejects.toThrow(/append|condition/i);
+  });
+
+  test.each(['UTC', 'America/Denver', 'Asia/Tokyo'])('a retried failed initialization gets a fresh backend timeout start (%s)', async (timezone) => {
+    vi.stubEnv('TZ', timezone);
+    sqlTimestampWithoutZone = true;
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(new Date('2026-10-30T12:00:00Z'));
+      await storageEngine.setCurrentStage(studyId, 'RETRY', '#00AAFF', 2);
+      await storageEngine.setAutoTimeoutMinutes(studyId, 1);
+      // @ts-expect-error Fail the first participant upload after reservation.
+      vi.spyOn(storageEngine, '_pushToStorage').mockRejectedValueOnce(new Error('upload failed'));
+      await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'retrying')).rejects.toThrow('upload failed');
+      const failed = await storageEngine.getSequenceAssignment(studyId, 'retrying');
+      expect(failed?.rejected).toBe(true);
+      vi.setSystemTime(new Date('2026-10-30T12:02:00Z'));
+      await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'retrying');
+      const retried = await storageEngine.getSequenceAssignment(studyId, 'retrying');
+      expect(retried?.createdTime).toBe(new Date('2026-10-30T12:02:00').getTime());
+      await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'newcomer');
+      expect((await storageEngine.getSequenceAssignment(studyId, 'retrying'))?.autoTimedOutAt).toBeUndefined();
+      vi.setSystemTime(new Date('2026-10-30T12:04:00Z'));
+      await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'after-deadline');
+      expect((await storageEngine.getSequenceAssignment(studyId, 'retrying'))?.autoTimedOutAt).toBeDefined();
+    } finally {
+      vi.useRealTimers();
+      sqlTimestampWithoutZone = false;
+      vi.unstubAllEnvs();
+    }
   });
 
   test('retrying a failed replacement never claims its own rejected assignment', async () => {

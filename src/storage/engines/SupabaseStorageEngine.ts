@@ -206,8 +206,17 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
   protected async _createSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment, withServerTimestamp = false) {
     await this.verifyStudyDatabase();
     const previous = await this._getSequenceAssignment(participantId);
+    // An upsert preserves SQL createdAt. A replacement of a rejected attempt
+    // starts a new reservation, whose deadline must use a fresh backend time.
+    const createdAt = previous?.rejected && !sequenceAssignment.rejected
+      ? await this.getServerTimestamp() : undefined;
     await this.changeStageCounts(previous, sequenceAssignment, async () => {
-      const { error } = await this.supabase.from('revisit').upsert({ studyId: `${this.collectionPrefix}${this.studyId}`, docId: `sequenceAssignment_${participantId}`, data: { ...sequenceAssignment, withServerTimestamp } });
+      const { error } = await this.supabase.from('revisit').upsert({
+        studyId: `${this.collectionPrefix}${this.studyId}`,
+        docId: `sequenceAssignment_${participantId}`,
+        data: { ...sequenceAssignment, withServerTimestamp },
+        ...(createdAt === undefined ? {} : { createdAt }),
+      });
       if (error) throw new Error(`Failed to create sequence assignment for participant ${participantId}`);
     });
   }
@@ -621,6 +630,10 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
   }
 
   protected async _getServerTimeMs(): Promise<number> {
+    return new Date(await this.getServerTimestamp()).getTime();
+  }
+
+  private async getServerTimestamp(): Promise<string> {
     await this.verifyStudyDatabase();
     if (!this.studyId) {
       throw new Error('Study ID is not set');
@@ -642,7 +655,9 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     if (error || !data?.createdAt) {
       throw new Error('Failed to read the server clock');
     }
-    return new Date(data.createdAt).getTime();
+    // Preserve the SQL timestamp's timezone-free representation when writing it
+    // back to createdAt; a browser-local Date conversion would shift its value.
+    return data.createdAt;
   }
 
   protected async _markSequenceAssignmentTimedOut(participantId: string, timedOutAt: number, deadline?: number): Promise<boolean> {
