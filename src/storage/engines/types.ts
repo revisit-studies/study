@@ -405,14 +405,27 @@ type ProgressDataWrite = {
 
 export type StageAllocation = { count: number; combinationCounts: Record<string, number>; rowCounts: Record<string, number> };
 
-export function getStageAllocationFromAssignments(all: SequenceAssignment[], stage: string): StageAllocation {
+export type SequenceRowContext = { configHash: string; sequenceCount: number };
+
+export function getStageAllocationFromAssignments(all: SequenceAssignment[], stage: string, sequenceRows?: SequenceRowContext): StageAllocation {
   // Rejected and auto-timed-out assignments have released their slot.
   const assignments = all.filter((assignment) => assignment.stage === stage && consumesCapacity(assignment));
   const combinationCounts: Record<string, number> = {};
   const rowCounts: Record<string, number> = {};
+  const legacyIndexes = new Map<number, number>();
+  if (sequenceRows && assignments.some((assignment) => !assignment.sequenceKey)) {
+    // Match the legacy allocators: an unkeyed order's index is the number of
+    // non-rejected assignments with an earlier timestamp, across all stages.
+    all.filter((assignment) => !assignment.rejected).sort((a, b) => a.timestamp - b.timestamp).forEach((assignment, index) => {
+      if (!legacyIndexes.has(assignment.timestamp)) legacyIndexes.set(assignment.timestamp, index);
+    });
+  }
   assignments.forEach((assignment) => {
     if (assignment.betweenSubjectsCombinationKey) combinationCounts[assignment.betweenSubjectsCombinationKey] = (combinationCounts[assignment.betweenSubjectsCombinationKey] || 0) + 1;
-    if (assignment.sequenceKey) rowCounts[assignment.sequenceKey] = (rowCounts[assignment.sequenceKey] || 0) + 1;
+    const sequenceKey = assignment.sequenceKey || (sequenceRows
+      ? `${sequenceRows.configHash}:${(assignment.sequenceIndex ?? legacyIndexes.get(assignment.timestamp)!) % sequenceRows.sequenceCount}`
+      : undefined);
+    if (sequenceKey) rowCounts[sequenceKey] = (rowCounts[sequenceKey] || 0) + 1;
   });
   return { count: assignments.length, combinationCounts, rowCounts };
 }
@@ -1344,7 +1357,8 @@ export abstract class StorageEngine {
     }
     const betweenSubjects = config.betweenSubjects || [];
     const keys = getConfigConditionKeys(config);
-    const state = await this.getStageAllocation(stage.stageName, keys);
+    const state = await this.getStageAllocation(stage.stageName, keys, modes.dataCollectionEnabled && betweenSubjects.length === 0
+      ? { configHash: participantConfigHash, sequenceCount: sequences.length } : undefined);
     if (JSON.stringify(stage.conditionKeys) !== JSON.stringify(keys)) {
       if (stage.conditionKeys?.length && await this.hasStageAssignments(stage.stageName)) assertAppendOnlyConditions(stage.conditionKeys || [], keys);
       await this._updateModesFields(this.studyId, { stage: applyStageUpdates(stageData, stage.stageName, { conditionKeys: keys }) });
@@ -1383,8 +1397,6 @@ export abstract class StorageEngine {
         sequenceKey: `${participantConfigHash}:${sequences.indexOf(balancedRow)}`,
       } : {}),
     });
-    // Legacy allocations can lack row keys. Keep their sequence-index mapping
-    // until the cached row counts account for every occupied slot.
     const completeRowCounts = Object.values(state.rowCounts).reduce((total, count) => total + count, 0) === state.count;
     const currentRow = balancedRow ?? (completeRowCounts
       ? getLeastServedSequence(eligible, state.combinationCounts, targets, betweenSubjects, state.count, rowCounts)
@@ -2759,7 +2771,9 @@ export abstract class StorageEngine {
 
   protected async hasStageAssignments(stage: string): Promise<boolean> { return (await this.getAllSequenceAssignments(this.studyId!)).some((assignment) => assignment.stage === stage); }
 
-  protected async getStageAllocation(stage: string, _conditionKeys: string[] = []): Promise<StageAllocation> { return getStageAllocationFromAssignments(await this.getAllSequenceAssignments(this.studyId!), stage); }
+  protected async getStageAllocation(stage: string, _conditionKeys: string[] = [], sequenceRows?: SequenceRowContext): Promise<StageAllocation> {
+    return getStageAllocationFromAssignments(await this.getAllSequenceAssignments(this.studyId!), stage, sequenceRows);
+  }
 }
 
 export type UserManagementData = { authentication?: { isEnabled: boolean }; adminUsers?: { adminUsersList: StoredUser[] } };

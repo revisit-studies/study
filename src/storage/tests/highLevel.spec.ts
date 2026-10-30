@@ -314,7 +314,12 @@ describe.each([
   });
 
   // saveConfig and getAllConfigsFromHash tests
-  test.each([2, 8])('replaces a timed-out Latin-square order without rejecting its participant (%s prepared orders)', async (numSequences) => {
+  test.each([
+    { numSequences: 2, legacy: false, expiredLegacy: false },
+    { numSequences: 8, legacy: false, expiredLegacy: false },
+    { numSequences: 2, legacy: true, expiredLegacy: false },
+    { numSequences: 2, legacy: true, expiredLegacy: true },
+  ])('replaces a timed-out Latin-square order ($numSequences rows, legacy: $legacy, expired legacy: $expiredLegacy)', async ({ numSequences, legacy, expiredLegacy }) => {
     const config: StudyConfig = {
       ...configSimple,
       uiConfig: { ...configSimple.uiConfig, numSequences },
@@ -323,11 +328,30 @@ describe.each([
       sequence: { order: 'latinSquare', components: ['testComponent', 'secondComponent'] },
     };
     await storageEngine.saveConfig(config);
-    await storageEngine.setSequenceArray(generateSequenceArray(config));
+    const prepared = generateSequenceArray(config);
+    await storageEngine.setSequenceArray(prepared);
     await storageEngine.setCurrentStage(studyId, 'LIMITED', '#00AAFF', 2);
     await storageEngine.initializeParticipantSession({}, config, participantMetadata, 'completed-order');
     expect(await storageEngine.finalizeParticipant()).toEqual({ status: 'complete' });
+    if (legacy) {
+      const assignment = (await storageEngine.getSequenceAssignment(studyId, 'completed-order'))!;
+      delete assignment.sequenceKey;
+      if (expiredLegacy) {
+        delete assignment.sequenceIndex;
+        assignment.timestamp = 1000;
+      }
+      // @ts-expect-error Seed a completed legacy assignment without a row key.
+      await storageEngine._createSequenceAssignment('completed-order', assignment);
+    }
     const expired = await storageEngine.initializeParticipantSession({}, config, participantMetadata, 'expired-order');
+    if (expiredLegacy) {
+      const assignment = (await storageEngine.getSequenceAssignment(studyId, expired.participantId))!;
+      delete assignment.sequenceKey;
+      delete assignment.sequenceIndex;
+      assignment.timestamp = 2000;
+      // @ts-expect-error Seed a legacy expiring allocation without a row key.
+      await storageEngine._createSequenceAssignment(expired.participantId, assignment);
+    }
     // @ts-expect-error protected backend mutation
     await storageEngine._markSequenceAssignmentTimedOut(expired.participantId, Date.now());
     const replacement = await storageEngine.initializeParticipantSession({}, config, participantMetadata, 'replacement-order');
@@ -339,7 +363,7 @@ describe.each([
     // @ts-expect-error Verify that late completion does not reclaim capacity.
     const allocation = await storageEngine.getStageAllocation('LIMITED');
     expect(allocation.count).toBe(2);
-    expect(Object.values(allocation.rowCounts).sort()).toEqual([1, 1]);
+    if (!legacy) expect(Object.values(allocation.rowCounts).sort()).toEqual([1, 1]);
   });
 
   test('an automatic timeout winning during manual timeout upload preserves late completion', async () => {

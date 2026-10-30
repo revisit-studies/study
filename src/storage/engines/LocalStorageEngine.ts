@@ -1,6 +1,6 @@
 import localforage from 'localforage';
 import {
-  StageAllocation, getStageAllocationFromAssignments, REVISIT_MODE, RuntimeStudySettings, SequenceAssignment, SequenceAssignmentAllocation, SnapshotDocContent, StorageEngine, StorageObject, StorageObjectType, cleanupModes,
+  StageAllocation, SequenceRowContext, getStageAllocationFromAssignments, REVISIT_MODE, RuntimeStudySettings, SequenceAssignment, SequenceAssignmentAllocation, SnapshotDocContent, StorageEngine, StorageObject, StorageObjectType, cleanupModes,
 } from './types';
 import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
 
@@ -626,9 +626,9 @@ export class LocalStorageEngine extends StorageEngine {
     }
   }
 
-  protected override async getStageAllocation(stage: string): Promise<StageAllocation> {
+  protected override async getStageAllocation(stage: string, _conditionKeys: string[] = [], sequenceRows?: SequenceRowContext): Promise<StageAllocation> {
     await this.verifyStudyDatabase();
     const assignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(`${this.collectionPrefix}${this.studyId}/sequenceAssignment`) || {};
-    return getStageAllocationFromAssignments(Object.values(assignments), stage);
+    return getStageAllocationFromAssignments(Object.values(assignments), stage, sequenceRows);
   }
 }

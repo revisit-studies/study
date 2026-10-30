@@ -5,7 +5,7 @@ import {
   isParticipantData, rebuildSequenceAllocator, retrySequenceAllocation, SEQUENCE_ALLOCATION_ATTEMPTS, waitForAllocationRetry,
 } from './utils/storageEngineHelpers';
 import {
-  StageAllocation, REVISIT_MODE, RuntimeStudySettings, SequenceAssignment, SnapshotDocContent, StorageObject, StorageObjectType, StoredUser, CloudStorageEngine, UserWrapped, cleanupModes, consumesCapacity, applyStageUpdates, StageData, SequenceAssignmentAllocation, SequenceAllocator,
+  StageAllocation, SequenceRowContext, REVISIT_MODE, RuntimeStudySettings, SequenceAssignment, SnapshotDocContent, StorageObject, StorageObjectType, StoredUser, CloudStorageEngine, UserWrapped, cleanupModes, consumesCapacity, getStageAllocationFromAssignments, applyStageUpdates, StageData, SequenceAssignmentAllocation, SequenceAllocator,
 } from './types';
 import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
 
@@ -1733,12 +1733,12 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     return count ?? 0;
   }
 
-  protected override async getStageAllocation(stage: string, conditionKeys: string[] = []): Promise<StageAllocation> {
-    return this._runWithLock(`stage-allocation-${stage}`, () => this.readStageAllocation(stage, conditionKeys));
+  protected override async getStageAllocation(stage: string, conditionKeys: string[] = [], sequenceRows?: SequenceRowContext): Promise<StageAllocation> {
+    return this._runWithLock(`stage-allocation-${stage}`, () => this.readStageAllocation(stage, conditionKeys, sequenceRows));
   }
 
   // Callers hold the stage lock, including while a timeout writes its assignment.
-  private async readStageAllocation(stage: string, conditionKeys: string[] = []): Promise<SupabaseStageAllocation> {
+  private async readStageAllocation(stage: string, conditionKeys: string[] = [], sequenceRows?: SequenceRowContext): Promise<SupabaseStageAllocation> {
     const studyId = `${this.collectionPrefix}${this.studyId}`;
     const docId = `stageAllocation_${encodeURIComponent(stage)}`;
     const { data, error } = await this.supabase.from('revisit').select('data').eq('studyId', studyId).eq('docId', docId)
@@ -1746,24 +1746,47 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     if (error) throw new Error('Failed to read stage allocation');
     if (data) {
       const current = data.data as SupabaseStageAllocation;
-      if (!current.needsRebuild) return current;
-      // Recount the cached keys with server aggregates, avoiding a participant
-      // history download (and its API row limit) during recovery.
-      const combinationKeys = Object.keys(current.combinationCounts);
-      const rowKeys = Object.keys(current.rowCounts);
-      const [count, combinations, rows] = await Promise.all([
-        this.countStageAssignments(stage),
-        Promise.all(combinationKeys.map((value) => this.countStageAssignments(stage, { field: 'betweenSubjectsCombinationKey', value }))),
-        Promise.all(rowKeys.map((value) => this.countStageAssignments(stage, { field: 'sequenceKey', value }))),
-      ]);
-      const rebuilt = {
-        ...current,
-        count,
-        combinationCounts: Object.fromEntries(combinationKeys.map((key, index) => [key, combinations[index]])),
-        rowCounts: Object.fromEntries(rowKeys.map((key, index) => [key, rows[index]])),
-        needsRebuild: false,
-        version: current.version + 1,
-      };
+      let legacyRows = !!sequenceRows && Object.values(current.rowCounts).reduce((total, count) => total + count, 0) !== current.count;
+      if (legacyRows) {
+        // Keep ordinary legacy recruitment bounded. A row bootstrap is needed
+        // only after a timeout has released an order from this stage.
+        const timeouts = await this.supabase.from('revisit').select('docId', { count: 'exact', head: true })
+          .eq('studyId', studyId).like('docId', 'sequenceAssignment_%')
+          .eq('data->stage', stage)
+          .not('data->>autoTimedOutAt', 'is', null);
+        if (timeouts.error) throw new Error('Failed to check stage timeouts');
+        legacyRows = (timeouts.count ?? 0) > 0;
+      }
+      if (!current.needsRebuild && !legacyRows) return current;
+      let rebuilt: SupabaseStageAllocation;
+      if (legacyRows) {
+        // Stage writers hold this lock, so bootstrap unknown legacy occupancy
+        // before choosing new orders, without changing returning participants.
+        rebuilt = {
+          ...current,
+          ...getStageAllocationFromAssignments(await this.getAllSequenceAssignments(this.studyId!), stage, sequenceRows),
+          needsRebuild: false,
+          version: current.version + 1,
+        };
+      } else {
+        // Recount the cached keys with server aggregates, avoiding a participant
+        // history download (and its API row limit) during recovery.
+        const combinationKeys = Object.keys(current.combinationCounts);
+        const rowKeys = Object.keys(current.rowCounts);
+        const [count, combinations, rows] = await Promise.all([
+          this.countStageAssignments(stage),
+          Promise.all(combinationKeys.map((value) => this.countStageAssignments(stage, { field: 'betweenSubjectsCombinationKey', value }))),
+          Promise.all(rowKeys.map((value) => this.countStageAssignments(stage, { field: 'sequenceKey', value }))),
+        ]);
+        rebuilt = {
+          ...current,
+          count,
+          combinationCounts: Object.fromEntries(combinationKeys.map((key, index) => [key, combinations[index]])),
+          rowCounts: Object.fromEntries(rowKeys.map((key, index) => [key, rows[index]])),
+          needsRebuild: false,
+          version: current.version + 1,
+        };
+      }
       const result = await this.supabase.from('revisit').update({ data: rebuilt })
         .eq('studyId', studyId).eq('docId', docId)
         .eq('data->version', current.version)
@@ -1777,8 +1800,8 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     };
     const { error: insertError } = await this.supabase.from('revisit').insert({ studyId, docId, data: initial });
     if (insertError && insertError.code !== '23505') throw new Error('Failed to initialize stage allocation');
-    if (!insertError) return initial;
-    return this.readStageAllocation(stage, conditionKeys);
+    if (!insertError && (!sequenceRows || initial.count === 0)) return initial;
+    return this.readStageAllocation(stage, conditionKeys, sequenceRows);
   }
 
   private async changeStageCounts(previous: SequenceAssignment | null, next: SequenceAssignment, write: () => Promise<void>, rebuildAfterWrite = false) {

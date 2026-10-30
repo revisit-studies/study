@@ -15,7 +15,7 @@ import {
 } from '@firebase/auth';
 import { isParticipantData, rebuildSequenceAllocator, retrySequenceAllocation } from './utils/storageEngineHelpers';
 import {
-  StageAllocation, CloudStorageEngine, REVISIT_MODE, StorageObjectType, StorageObject, UserManagementData, SequenceAssignment, SnapshotDocContent, StoredUser, RuntimeStudySettings, cleanupModes, consumesCapacity, isStageParticipantLimitEnabled, ModesAndStageData, StageInfo, StageUpdates, StageData, applyStageUpdates, StageCapacityExceededError, StageNoAvailableConditionsError, StageOnlyDisabledConditionsHaveCapacityError, getBetweenSubjectsCombinationKey, getConfigConditionKeys, getDesiredParticipantCountsByCombination, getLeastServedSequence, getStageParticipantCounts, isSequenceEnabledForStage, assertAppendOnlyConditions, validateStageParticipantLimits, SequenceAssignmentAllocation, SequenceAllocator,
+  StageAllocation, CloudStorageEngine, REVISIT_MODE, StorageObjectType, StorageObject, UserManagementData, SequenceAssignment, SnapshotDocContent, StoredUser, RuntimeStudySettings, cleanupModes, consumesCapacity, isStageParticipantLimitEnabled, ModesAndStageData, StageInfo, StageUpdates, StageData, applyStageUpdates, StageCapacityExceededError, StageNoAvailableConditionsError, StageOnlyDisabledConditionsHaveCapacityError, getBetweenSubjectsCombinationKey, getConfigConditionKeys, getDesiredParticipantCountsByCombination, getLeastServedSequence, getStageAllocationFromAssignments, getStageParticipantCounts, isSequenceEnabledForStage, assertAppendOnlyConditions, validateStageParticipantLimits, SequenceAssignmentAllocation, SequenceAllocator,
 } from './types';
 import { EditedText, TaglessEditedText } from '../../analysis/individualStudy/thinkAloud/types';
 import { DISTINCT_COLOR_PALETTE } from '../../utils/colors';
@@ -152,6 +152,14 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
             currentRow: row, creationIndex: own.creationIndex + 1, stage: own.stage, reservationToken,
           };
         }
+        if (!betweenSubjects.length && Object.values(state.rowCounts).reduce((total, count) => total + count, 0) !== state.count) {
+          // Bootstrap legacy row occupancy once; subsequent reservations persist
+          // these counts in the same transaction as the new allocation.
+          const history = await this.readAllocation(transaction);
+          state.rowCounts = getStageAllocationFromAssignments(history.assignments, stage.stageName, {
+            configHash: participantConfigHash, sequenceCount: sequences.length,
+          }).rowCounts;
+        }
         if (stage.conditionKeys?.length && JSON.stringify(stage.conditionKeys) !== JSON.stringify(conditionKeys) && await this.hasStageAssignments(stage.stageName)) assertAppendOnlyConditions(stage.conditionKeys || [], conditionKeys);
         if (isStageParticipantLimitEnabled(stage) && state.count >= stage.maxParticipants) throw new StageCapacityExceededError(stage.stageName);
         const enabled = sequences.filter((row) => isSequenceEnabledForStage(row, stage, betweenSubjects));
@@ -167,11 +175,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
         const sequenceIndex = source ? source.reusableSequenceIndex ?? source.sequenceIndex ?? legacyIndex : allocator.availableSequenceIndexes?.[0] ?? allocator.nextSequenceIndex;
         if (sequenceIndex === undefined) throw new Error('Unable to determine sequence assignment index');
         const rowCounts = new Map(sequences.map((row, index) => [row, state.rowCounts[`${participantConfigHash}:${index}`] || 0]));
-        // Old assignments without row keys still rely on their sequence index.
-        const completeRowCounts = Object.values(state.rowCounts).reduce((total, count) => total + count, 0) === state.count;
-        const row = betweenSubjects.length || completeRowCounts
-          ? getLeastServedSequence(eligible, state.combinationCounts, targets, betweenSubjects, state.count, rowCounts)
-          : eligible[sequenceIndex % eligible.length];
+        const row = getLeastServedSequence(eligible, state.combinationCounts, targets, betweenSubjects, state.count, rowCounts);
         const key = getBetweenSubjectsCombinationKey(row.parameters, betweenSubjects);
         const sequenceKey = `${participantConfigHash}:${sequences.indexOf(row)}`;
         const assignment: SequenceAssignment = {
@@ -795,18 +799,19 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       const revision = await transaction.get(allocationReference);
       const stageReference = this.stageAllocationReference(assignment.stage);
       const stageSnapshot = await transaction.get(stageReference);
-      if (!stageSnapshot.exists()) {
-        // Bootstrap old stages once. Subsequent timeouts use the cached counts
-        // rather than downloading the complete assignment history each time.
-        const state = await this.readAllocation(transaction);
-        const stateAssignment = state.assignments.find((item) => item.participantId === participantId);
-        if (stateAssignment) stateAssignment.autoTimedOutAt = timedOutAt;
-        transaction.update(this.assignmentReference(participantId), { autoTimedOutAt: serverTimestamp() });
-        this.writeAllocation(transaction, state, assignment.stage);
-        return true;
+      let allocation: StageAllocation;
+      if (stageSnapshot.exists()) {
+        allocation = { rowCounts: {}, ...stageSnapshot.data() } as StageAllocation;
+      } else {
+        // Bootstrap only this stage once, rather than rereading every stage's
+        // assignment history for each expired participant.
+        const assignments = await getDocsFromServer(query(
+          collection(doc(this.studyCollection, 'sequenceAssignment'), 'sequenceAssignment'),
+          where('stage', '==', assignment.stage),
+        ));
+        allocation = getStageAllocationFromAssignments(assignments.docs.map((item) => item.data() as SequenceAssignment), assignment.stage);
       }
 
-      const allocation = { rowCounts: {}, ...stageSnapshot.data() } as StageAllocation;
       const combinationCounts = { ...allocation.combinationCounts };
       const rowCounts = { ...allocation.rowCounts };
       const key = assignment.betweenSubjectsCombinationKey;
