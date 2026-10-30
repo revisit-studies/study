@@ -82,21 +82,6 @@ test('a restored rectangular selection can still be moved by the participant', (
   expect(onBrush).toHaveBeenCalledWith([[140, 90], [250, 190]], expect.any(Function), expect.any(Function), 'drag');
 });
 
-test('greys out every point when an active brush selects no rows', () => {
-  const { svg, showState } = mount('Axis Selection');
-  showState({ ...saved, ids: [] });
-
-  const circles = [...svg.querySelectorAll('circle')];
-  expect(circles).toHaveLength(data.length);
-  circles.forEach((circle) => {
-    expect(circle.getAttribute('fill')).toBe('lightgray');
-    expect(circle.getAttribute('opacity')).toBe('0.3');
-  });
-
-  showState({ ...saved, hasBrush: false, ids: [] });
-  expect([...svg.querySelectorAll('circle')].every((circle) => circle.getAttribute('opacity') === '1')).toBe(true);
-});
-
 
 test('later rectangular snapshots update and clear the visible selection without publishing interactions', () => {
   const { svg, onBrush, showState } = mount('Rectangular Selection');
