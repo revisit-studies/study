@@ -20,7 +20,7 @@
     "autoDownloadStudy": false,
     "withSidebar": false,
     "urlParticipantIdParam": "pid",
-    "studyEndMsg":  "ご協力ありがとうございました。これでアンケートは終了です。\n\n完了コード：{COMPLETION_CODE}を豊原に送ってください。"
+    "studyEndMsg":  "ご協力ありがとうございました。これでアンケートは終了です。\n\n完了コード：{COMPLETION_CODE}"
   },
   "baseComponents": {
     "global_trial_A_base": {
@@ -256,6 +256,7 @@
       "instructionLocation": "aboveStimulus",
       "response": []
     },
+    
     "attributes": {
       "type": "questionnaire",
       "description": "属性回答",
@@ -335,6 +336,21 @@
             }
           ],
           "required": true
+        }
+      ]
+    },
+
+        "enteringID": {
+      "type": "questionnaire",
+      "description": "実験IDの入力",
+      "response": [
+        {
+          "id":"experimentID",
+          "prompt":"実験のIDを入力してください。",
+          "type": "numerical",
+          "max": 9999,
+          "min": 0,
+          "required":true
         }
       ]
     },
@@ -6727,6 +6743,8 @@
       }
     }
   },
+
+
   "sequence": {
     "order": "fixed",
     "skip": [
@@ -6756,9 +6774,15 @@
       }
     ],
     "components": [
+      {"order": "fixed",
+      "id":"enteringID",
+      "conditional":true,
+      "components": ["enteringID"]},
+
       "consent",
       "network_overview",
       "attributes",
+
       {
         "order": "latinSquare",
         "numSamples": 1,
