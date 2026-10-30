@@ -332,6 +332,10 @@ describe.each([
     await storageEngine.setMode(studyId, 'dataCollectionEnabled', true);
     // @ts-expect-error Simulate a setting persisted by an older version.
     await storageEngine._setModesDocument(studyId, { ...await storageEngine.getModes(studyId), stage: await storageEngine.getStageData(studyId), autoTimeoutMinutes: 1 });
+    // Shell activates the deployed config before resuming saved participants.
+    await storageEngine.saveConfig({ ...configSimple, studyMetadata: { ...configSimple.studyMetadata, title: 'Updated title' } });
+    await storageEngine.saveConfig(configSimple);
+    await storageEngine.setSequenceArray(generateSequenceArray(configSimple));
     await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'blocked-newcomer')).rejects.toThrow('Create and activate a new stage');
     expect((await storageEngine.getSequenceAssignment(studyId, existing.participantId))?.autoTimedOutAt).toBeUndefined();
     await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, existing.participantId)).resolves.toMatchObject({ participantId: existing.participantId });

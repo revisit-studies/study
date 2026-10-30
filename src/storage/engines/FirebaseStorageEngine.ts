@@ -15,7 +15,7 @@ import {
 } from '@firebase/auth';
 import { isParticipantData, rebuildSequenceAllocator, retrySequenceAllocation } from './utils/storageEngineHelpers';
 import {
-  assertAutoTimeoutStageSupported, StageAllocation, CloudStorageEngine, REVISIT_MODE, StorageObjectType, StorageObject, UserManagementData, SequenceAssignment, SnapshotDocContent, StoredUser, RuntimeStudySettings, cleanupModes, consumesCapacity, isStageParticipantLimitEnabled, ModesAndStageData, StageInfo, StageUpdates, StageData, applyStageUpdates, StageCapacityExceededError, StageNoAvailableConditionsError, StageOnlyDisabledConditionsHaveCapacityError, getBetweenSubjectsCombinationKey, getConfigConditionKeys, getDesiredParticipantCountsByCombination, getLeastServedSequence, getStageAllocationFromAssignments, getStageParticipantCounts, isSequenceEnabledForStage, assertAppendOnlyConditions, validateStageParticipantLimits, SequenceAssignmentAllocation, SequenceAllocator,
+  shouldValidateAutoTimeoutStage, assertAutoTimeoutStageSupported, StageAllocation, CloudStorageEngine, REVISIT_MODE, StorageObjectType, StorageObject, UserManagementData, SequenceAssignment, SnapshotDocContent, StoredUser, RuntimeStudySettings, cleanupModes, consumesCapacity, isStageParticipantLimitEnabled, ModesAndStageData, StageInfo, StageUpdates, StageData, applyStageUpdates, StageCapacityExceededError, StageNoAvailableConditionsError, StageOnlyDisabledConditionsHaveCapacityError, getBetweenSubjectsCombinationKey, getConfigConditionKeys, getDesiredParticipantCountsByCombination, getLeastServedSequence, getStageAllocationFromAssignments, getStageParticipantCounts, isSequenceEnabledForStage, assertAppendOnlyConditions, validateStageParticipantLimits, SequenceAssignmentAllocation, SequenceAllocator,
 } from './types';
 import { EditedText, TaglessEditedText } from '../../analysis/individualStudy/thinkAloud/types';
 import { DISTINCT_COLOR_PALETTE } from '../../utils/colors';
@@ -941,7 +941,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       };
       const next = await update(current);
       const stageData = next.stage as StageData | undefined;
-      if (next.dataCollectionEnabled && typeof next.autoTimeoutMinutes === 'number') {
+      if (shouldValidateAutoTimeoutStage(current as RuntimeStudySettings, next as RuntimeStudySettings)) {
         assertAutoTimeoutStageSupported(state.assignments, stageData?.currentStage.stageName ?? 'DEFAULT');
       }
       const previous = current.stage as StageData | undefined;

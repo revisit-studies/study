@@ -414,6 +414,12 @@ export class LegacyAutoTimeoutStageError extends Error {
   }
 }
 
+export function shouldValidateAutoTimeoutStage(previous: RuntimeStudySettings, next: RuntimeStudySettings): boolean {
+  return next.dataCollectionEnabled && typeof next.autoTimeoutMinutes === 'number'
+    && (next.autoTimeoutMinutes !== previous.autoTimeoutMinutes || !previous.dataCollectionEnabled
+      || next.stage?.currentStage.stageName !== previous.stage?.currentStage.stageName);
+}
+
 export function assertAutoTimeoutStageSupported(assignments: SequenceAssignment[], stage: string): void {
   if (assignments.some((assignment) => assignment.stage === stage && consumesCapacity(assignment)
     && !assignment.sequenceKey && assignment.sequenceIndex === undefined)) {
@@ -666,7 +672,7 @@ export abstract class StorageEngine {
         }
       });
       const settings = updatedModes as RuntimeStudySettings;
-      if (settings.dataCollectionEnabled && settings.autoTimeoutMinutes !== undefined) {
+      if (shouldValidateAutoTimeoutStage(modes, settings)) {
         assertAutoTimeoutStageSupported(await this.getAllSequenceAssignments(studyId), settings.stage?.currentStage.stageName ?? 'DEFAULT');
       }
       await this._setModesDocument(studyId, settings);
