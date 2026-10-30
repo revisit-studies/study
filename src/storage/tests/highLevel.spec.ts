@@ -14,6 +14,7 @@ import {
   SequenceAssignment, StorageEngine, StorageObject, StorageObjectType,
 } from '../engines/types';
 import { filterSequenceByCondition } from '../../utils/handleConditionLogic';
+import { getParticipantDataStatus } from '../participantStatus';
 
 const studyId = 'test-study';
 const configSimple = testConfigSimple as StudyConfig;
@@ -313,6 +314,120 @@ describe.each([
   });
 
   // saveConfig and getAllConfigsFromHash tests
+  test('blocks undoing a fully unkeyed legacy rejection while auto-timeout is enabled', async () => {
+    await storageEngine.setCurrentStage(studyId, 'LEGACY', '#00AAFF');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'legacy-restored');
+    const assignment = (await storageEngine.getSequenceAssignment(studyId, 'legacy-restored'))!;
+    delete assignment.sequenceKey;
+    delete assignment.sequenceIndex;
+    // @ts-expect-error Seed a fully unkeyed legacy assignment.
+    await storageEngine._createSequenceAssignment('legacy-restored', assignment);
+    await storageEngine.rejectParticipant('legacy-restored', 'review');
+    await storageEngine.setAutoTimeoutMinutes(studyId, 1);
+    // @ts-expect-error Verify rejection is checked before rewriting saved answers.
+    const upload = vi.spyOn(storageEngine, '_pushToStorage');
+    await expect(storageEngine.undoRejectParticipant('legacy-restored')).rejects.toThrow('Create and activate a new stage');
+    expect(upload).not.toHaveBeenCalled();
+    expect((await storageEngine.getSequenceAssignment(studyId, 'legacy-restored'))?.rejected).toBe(true);
+    expect((await storageEngine.getParticipantData('legacy-restored'))?.rejected).toMatchObject({ reason: 'review' });
+    await storageEngine.setAutoTimeoutMinutes(studyId, undefined);
+    await storageEngine.undoRejectParticipant('legacy-restored');
+    expect((await storageEngine.getSequenceAssignment(studyId, 'legacy-restored'))?.rejected).toBe(false);
+    expect((await storageEngine.getParticipantData('legacy-restored'))?.rejected).toBe(false);
+  });
+
+  test('requires a fresh stage for fully unkeyed legacy assignments', async () => {
+    await storageEngine.setCurrentStage(studyId, 'LEGACY', '#00AAFF');
+    const existing = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'legacy-order');
+    const assignment = (await storageEngine.getSequenceAssignment(studyId, existing.participantId))!;
+    delete assignment.sequenceKey;
+    delete assignment.sequenceIndex;
+    // @ts-expect-error Seed a fully unkeyed legacy record without reading answers.
+    await storageEngine._createSequenceAssignment(existing.participantId, assignment);
+    await expect(storageEngine.setAutoTimeoutMinutes(studyId, 1)).rejects.toThrow('Create and activate a new stage');
+    expect((await storageEngine.getModes(studyId)).autoTimeoutMinutes).toBeUndefined();
+    await storageEngine.setMode(studyId, 'dataCollectionEnabled', false);
+    await storageEngine.setAutoTimeoutMinutes(studyId, 1);
+    await expect(storageEngine.setMode(studyId, 'dataCollectionEnabled', true)).rejects.toThrow('Create and activate a new stage');
+    expect((await storageEngine.getModes(studyId)).dataCollectionEnabled).toBe(false);
+    await storageEngine.setAutoTimeoutMinutes(studyId, undefined);
+    await storageEngine.setMode(studyId, 'dataCollectionEnabled', true);
+    // @ts-expect-error Simulate a setting persisted by an older version.
+    await storageEngine._setModesDocument(studyId, { ...await storageEngine.getModes(studyId), stage: await storageEngine.getStageData(studyId), autoTimeoutMinutes: 1 });
+    // Shell activates the deployed config before resuming saved participants.
+    await storageEngine.saveConfig({ ...configSimple, studyMetadata: { ...configSimple.studyMetadata, title: 'Updated title' } });
+    await storageEngine.saveConfig(configSimple);
+    await storageEngine.setSequenceArray(generateSequenceArray(configSimple));
+    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'blocked-newcomer')).rejects.toThrow('Create and activate a new stage');
+    expect((await storageEngine.getSequenceAssignment(studyId, existing.participantId))?.autoTimedOutAt).toBeUndefined();
+    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, existing.participantId)).resolves.toMatchObject({ participantId: existing.participantId });
+    await storageEngine.setAutoTimeoutMinutes(studyId, undefined);
+    await storageEngine.setCurrentStage(studyId, 'FRESH', '#00FFAA');
+    await storageEngine.setAutoTimeoutMinutes(studyId, 1);
+    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'fresh-newcomer')).resolves.toMatchObject({ participantId: 'fresh-newcomer' });
+    await expect(storageEngine.setCurrentStage(studyId, 'LEGACY', '#00AAFF')).rejects.toThrow('Create and activate a new stage');
+  });
+
+  test.each([
+    { numSequences: 2, legacy: false },
+    { numSequences: 8, legacy: false },
+    { numSequences: 2, legacy: true },
+  ])('replaces a timed-out Latin-square order ($numSequences rows, legacy: $legacy)', async ({ numSequences, legacy }) => {
+    const config: StudyConfig = {
+      ...configSimple,
+      uiConfig: { ...configSimple.uiConfig, numSequences },
+      betweenSubjects: [],
+      components: { ...configSimple.components, secondComponent: configSimple.components.testComponent },
+      sequence: { order: 'latinSquare', components: ['testComponent', 'secondComponent'] },
+    };
+    await storageEngine.saveConfig(config);
+    const prepared = generateSequenceArray(config);
+    await storageEngine.setSequenceArray(prepared);
+    await storageEngine.setCurrentStage(studyId, 'LIMITED', '#00AAFF', 2);
+    await storageEngine.initializeParticipantSession({}, config, participantMetadata, 'completed-order');
+    expect(await storageEngine.finalizeParticipant()).toEqual({ status: 'complete' });
+    if (legacy) {
+      const assignment = (await storageEngine.getSequenceAssignment(studyId, 'completed-order'))!;
+      delete assignment.sequenceKey;
+      // @ts-expect-error Seed a completed legacy assignment without a row key.
+      await storageEngine._createSequenceAssignment('completed-order', assignment);
+    }
+    const expired = await storageEngine.initializeParticipantSession({}, config, participantMetadata, 'expired-order');
+    // @ts-expect-error protected backend mutation
+    await storageEngine._markSequenceAssignmentTimedOut(expired.participantId, Date.now());
+    const replacement = await storageEngine.initializeParticipantSession({}, config, participantMetadata, 'replacement-order');
+    expect(replacement.sequence.components).toEqual(expired.sequence.components);
+    expect(await storageEngine.finalizeParticipant()).toEqual({ status: 'complete' });
+    await storageEngine.initializeParticipantSession({}, config, participantMetadata, expired.participantId);
+    expect(await storageEngine.finalizeParticipant()).toEqual({ status: 'complete' });
+    expect((await storageEngine.getSequenceAssignment(studyId, expired.participantId))?.rejected).toBe(false);
+    // @ts-expect-error Verify that late completion does not reclaim capacity.
+    const allocation = await storageEngine.getStageAllocation('LIMITED');
+    expect(allocation.count).toBe(2);
+    if (!legacy) expect(Object.values(allocation.rowCounts).sort()).toEqual([1, 1]);
+  });
+
+  test('an automatic timeout winning during manual timeout upload preserves late completion', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'auto-expired');
+    // @ts-expect-error protected upload boundary
+    const upload = storageEngine._pushToStorage.bind(storageEngine);
+    // @ts-expect-error Simulate the automatic sweep while the manual upload is in flight.
+    vi.spyOn(storageEngine, '_pushToStorage').mockImplementationOnce(async (path, type, data) => {
+      // @ts-expect-error protected backend mutation
+      await storageEngine._markSequenceAssignmentTimedOut('auto-expired', Date.now());
+      return upload(path, type, data);
+    });
+    await storageEngine.timeoutParticipant('auto-expired');
+    const assignment = await storageEngine.getSequenceAssignment(studyId, 'auto-expired');
+    expect(assignment?.autoTimedOutAt).toBeDefined();
+    expect(assignment?.rejected).toBe(false);
+    expect((await storageEngine.getParticipantData('auto-expired'))?.rejected).toBe(false);
+    expect(await storageEngine.finalizeParticipant()).toEqual({ status: 'complete' });
+    // Explicit rejection remains available for a participant whose allocation timed out.
+    await storageEngine.rejectParticipant('auto-expired', 'Explicit rejection');
+    expect((await storageEngine.getSequenceAssignment(studyId, 'auto-expired'))?.rejected).toBe(true);
+  });
+
   test('saveConfig and getAllConfigsFromHash work correctly', async () => {
     const configHash = await hash(JSON.stringify(configSimple));
     await storageEngine.saveConfig(configSimple);
@@ -543,6 +658,20 @@ describe.each([
     expect((await storageEngine.getParticipantData(session.participantId))?.metadata.colorMode).toBe('dark');
     const resumed = await storageEngine.initializeParticipantSession({}, configSimple, { ...participantMetadata, colorMode: 'light' });
     expect(resumed.metadata.colorMode).toBe('dark');
+  });
+
+  test('initializeParticipantSession rereads modes before adding a missing default stage', async () => {
+    const readModesForUpdateSpy = vi.spyOn(
+      storageEngine as unknown as { _readModesForUpdate: (id: string) => Promise<unknown> },
+      '_readModesForUpdate',
+    );
+
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+    // Opaque settings backends merge the stage field under the settings lock,
+    // which requires a fresh read instead of rewriting the earlier snapshot.
+    expect(readModesForUpdateSpy).toHaveBeenCalled();
+    expect((await storageEngine.getModes(studyId)).stage?.currentStage.stageName).toBe('DEFAULT');
   });
 
   test('initializeParticipantSession registers condition definitions for a new participant', async () => {
@@ -976,6 +1105,144 @@ describe.each([
     expect(participantIds).toContain(participantId2);
     expect(participantIds).toContain(participantId3);
     expect(participantIds).toContain(participantId4);
+  });
+
+  test('lazy auto-timeout frees an expired allocation without rejecting its participant data', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'));
+      await storageEngine.setCurrentStage(studyId, 'LIMITED', '#ff0000', 1);
+      await storageEngine.setAutoTimeoutMinutes(studyId, 1);
+      const firstParticipant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+      // The stage is full until the first participant's allocation expires.
+      await storageEngine.clearCurrentParticipantId();
+      await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata))
+        .rejects.toThrow(/participant limit/);
+
+      vi.setSystemTime(new Date('2026-01-01T00:01:00.000Z'));
+      await storageEngine.clearCurrentParticipantId();
+      const secondParticipant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+      expect(secondParticipant.participantId).not.toBe(firstParticipant.participantId);
+
+      const assignments = await storageEngine.getAllSequenceAssignments(studyId);
+      const firstAssignment = assignments.find((assignment) => assignment.participantId === firstParticipant.participantId);
+      expect(firstAssignment?.autoTimedOutAt).toBeDefined();
+      expect(firstAssignment?.rejected).toBe(false);
+      const participants = await storageEngine.getAllParticipantsData(studyId);
+      expect(participants.find((participant) => participant.participantId === firstParticipant.participantId)?.rejected).toBe(false);
+      // @ts-expect-error Inspect the stage allocation the next admission uses.
+      expect((await storageEngine.getStageAllocation('LIMITED')).count).toBe(1);
+
+      // Rejecting the timed-out participant frees nothing further.
+      await storageEngine.rejectParticipant(firstParticipant.participantId, 'test source rejection');
+      // @ts-expect-error Inspect the stage allocation the next admission uses.
+      expect((await storageEngine.getStageAllocation('LIMITED')).count).toBe(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('a participant who finishes after timing out is completed late and does not retake a slot', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'));
+      await storageEngine.setCurrentStage(studyId, 'LIMITED', '#ff0000', 1);
+      await storageEngine.setAutoTimeoutMinutes(studyId, 1);
+      const firstParticipant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+      vi.setSystemTime(new Date('2026-01-01T00:01:00.000Z'));
+      await storageEngine.clearCurrentParticipantId();
+      await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+      const engineInternals = storageEngine as unknown as {
+        _updateSequenceAssignmentFields: (participantId: string, fields: Partial<SequenceAssignment>) => Promise<void>;
+      };
+      await engineInternals._updateSequenceAssignmentFields(firstParticipant.participantId, { completed: Date.now() });
+
+      const participants = await storageEngine.getAllParticipantsData(studyId);
+      const firstParticipantData = participants.find((participant) => participant.participantId === firstParticipant.participantId)!;
+      expect(getParticipantDataStatus(firstParticipantData)).toBe('completedLate');
+      // @ts-expect-error Inspect the stage allocation the next admission uses.
+      expect((await storageEngine.getStageAllocation('LIMITED')).count).toBe(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('auto-timeouts use the backend clock rather than the participant browser clock', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'));
+      await storageEngine.setAutoTimeoutMinutes(studyId, 10);
+      const firstParticipant = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+      // The next participant's clock runs an hour fast. The backend clock has
+      // only advanced a minute, so nothing may be timed out yet.
+      const engineInternals = storageEngine as unknown as { _getServerTimeMs: () => Promise<number> };
+      const serverTimeSpy = vi.spyOn(engineInternals, '_getServerTimeMs')
+        .mockResolvedValue(new Date('2026-01-01T00:01:00.000Z').getTime());
+
+      vi.setSystemTime(new Date('2026-01-01T01:00:00.000Z'));
+      await storageEngine.clearCurrentParticipantId();
+      await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+      expect(serverTimeSpy).toHaveBeenCalled();
+
+      const assignments = await storageEngine.getAllSequenceAssignments(studyId);
+      const firstAssignment = assignments.find((assignment) => assignment.participantId === firstParticipant.participantId);
+      expect(firstAssignment?.autoTimedOutAt).toBeUndefined();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('setAutoTimeoutMinutes leaves a concurrently written stage untouched', async () => {
+    await storageEngine.setCurrentStage(studyId, 'STAGE_A', '#ff0000');
+    await storageEngine.setAutoTimeoutMinutes(studyId, 30);
+
+    const modes = await storageEngine.getModes(studyId);
+    expect(modes.autoTimeoutMinutes).toBe(30);
+    expect(modes.stage?.currentStage.stageName).toBe('STAGE_A');
+    expect(modes.dataCollectionEnabled).toBe(true);
+
+    await storageEngine.setCurrentStage(studyId, 'STAGE_B', '#00ff00');
+    const modesAfterStageChange = await storageEngine.getModes(studyId);
+    expect(modesAfterStageChange.autoTimeoutMinutes).toBe(30);
+    expect(modesAfterStageChange.stage?.currentStage.stageName).toBe('STAGE_B');
+
+    await storageEngine.setAutoTimeoutMinutes(studyId, undefined);
+    const modesAfterDisable = await storageEngine.getModes(studyId);
+    expect(modesAfterDisable.autoTimeoutMinutes).toBeUndefined();
+    expect(modesAfterDisable.stage?.currentStage.stageName).toBe('STAGE_B');
+  });
+
+  test('a settings read paused across a timeout save does not undo it', async () => {
+    await storageEngine.getModes(studyId);
+    const { studyDatabase } = storageEngine as unknown as { studyDatabase: LocalForage };
+    const originalGetItem = studyDatabase.getItem.bind(studyDatabase);
+    let paused = false;
+    vi.spyOn(studyDatabase, 'getItem').mockImplementation(async (key: string) => {
+      const value = await originalGetItem(key);
+      if (!paused && key.endsWith(`${studyId}/modes`)) {
+        // The save lands after this read but before the read returns.
+        paused = true;
+        await storageEngine.setAutoTimeoutMinutes(studyId, 30);
+      }
+      return value;
+    });
+
+    const staleModes = await storageEngine.getModes(studyId);
+    vi.mocked(studyDatabase.getItem).mockRestore();
+
+    expect(staleModes.autoTimeoutMinutes).toBeUndefined();
+    expect((await storageEngine.getModes(studyId)).autoTimeoutMinutes).toBe(30);
+  });
+
+  test('getModes creates the default settings once and setMode updates them', async () => {
+    const [first, second] = await Promise.all([storageEngine.getModes(studyId), storageEngine.getModes(studyId)]);
+    expect(first).toEqual(second);
+    await storageEngine.setMode(studyId, 'dataSharingEnabled', false);
+    expect((await storageEngine.getModes(studyId)).dataSharingEnabled).toBe(false);
   });
 
   // rejectCurrentParticipant test

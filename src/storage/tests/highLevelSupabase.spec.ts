@@ -11,7 +11,7 @@ import { generateSequenceArray } from '../../utils/handleRandomSequences';
 import { hash } from '../engines/utils/storageEngineHelpers';
 import { Sequence } from '../../store/types';
 import {
-  StorageEngine, getBetweenSubjectsCombinationKey, SequenceAssignment, StoredUser,
+  StorageEngine, getBetweenSubjectsCombinationKey, SequenceAssignment, StoredUser, RuntimeStudySettings,
 } from '../engines/types';
 import { filterSequenceByCondition } from '../../utils/handleConditionLogic';
 import { SupabaseStorageEngine } from '../engines/SupabaseStorageEngine';
@@ -20,13 +20,18 @@ type RowData = Record<string, string | number | boolean | null | object>;
 
 const revisitRows: RowData[] = [];
 const storageFiles: Record<string, string> = {};
+let sqlTimestampWithoutZone = false;
 let failConfigActivation = false;
 let failSequenceReads = false;
 let failParticipantReads = false;
 const localStore: Record<string, string | number | object | null> = {};
+const supabaseFailureState = vi.hoisted(() => ({ failNextUpdate: false }));
 let nextSupabaseSelectError: { message: string; code?: string } | null = null;
 let assignmentWriteError = false;
 let rejectedAssignmentError: 'lookup' | 'claim' | null = null;
+let failStageAllocationRebuild = false;
+let loseTimeoutWriteResponse: 'assignment' | 'allocation' | null = null;
+let beforeMetadataInitialization: (() => Promise<void>) | null = null;
 const supabaseOperations: Array<{
   op: string | null;
   filters: Array<{ col: string; type: string; val: string | number | boolean | null }>;
@@ -36,6 +41,11 @@ const supabaseOperations: Array<{
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 vi.mock('@supabase/supabase-js', () => {
+  function databaseTimestamp(value?: string): string {
+    const timestamp = value ?? new Date().toISOString();
+    return sqlTimestampWithoutZone ? timestamp.replace(/Z$/, '') : timestamp;
+  }
+
   function matchLike(value: string, pattern: string): boolean {
     const regexStr = `^${pattern
       .replace(/[.+^${}()|[\]\\]/g, '\\$&')
@@ -60,7 +70,7 @@ vi.mock('@supabase/supabase-js', () => {
 
   function applyFilters(
     rows: Array<RowData>,
-    filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'neq' | 'is' | 'like' | 'not' | 'lt' }>,
+    filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'neq' | 'is' | 'like' | 'not' | 'lt' | 'gt' }>,
   ): Array<RowData> {
     return rows.filter((row) => filters.every(({ col, val, type }) => {
       const colVal = getFieldValue(row, col);
@@ -71,6 +81,7 @@ vi.mock('@supabase/supabase-js', () => {
       if (type === 'is') return (colVal ?? null) === val;
       if (type === 'not') return colVal !== null && colVal !== undefined;
       if (type === 'lt') return colVal !== undefined && colVal !== null && colVal < val!;
+      if (type === 'gt') return colVal !== undefined && colVal !== null && colVal > val!;
       return typeof colVal === 'string' && matchLike(colVal, String(val));
     }));
   }
@@ -78,7 +89,7 @@ vi.mock('@supabase/supabase-js', () => {
   function makeQueryBuilder(getRows: () => Array<RowData>) {
     let op: 'select' | 'insert' | 'upsert' | 'update' | 'delete' | null = null;
     let payload: RowData | RowData[] | Partial<RowData> | null = null;
-    const filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'neq' | 'is' | 'like' | 'not' | 'lt' }> = [];
+    const filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'neq' | 'is' | 'like' | 'not' | 'lt' | 'gt' }> = [];
     let isSingle = false;
     let isMaybeSingle = false;
     let requestedCount = false;
@@ -94,6 +105,7 @@ vi.mock('@supabase/supabase-js', () => {
       delete() { op = 'delete'; return qb; },
       eq(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'eq' }); return qb; },
       lt(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'lt' }); return qb; },
+      gt(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'gt' }); return qb; },
       neq(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'neq' }); return qb; },
       is(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'is' }); return qb; },
       like(col: string, val: string) { filters.push({ col, val, type: 'like' }); return qb; },
@@ -109,7 +121,13 @@ vi.mock('@supabase/supabase-js', () => {
         resolve: (val: { data: RowData | RowData[] | null; error: { message: string; code?: string } | null; count?: number | null }) => void,
         reject?: (err: Error) => void,
       ) {
-        Promise.resolve().then(() => {
+        Promise.resolve().then(async () => {
+          if (beforeMetadataInitialization && (op === 'insert' || op === 'upsert')
+            && (Array.isArray(payload) ? payload : [payload]).some((row) => row?.docId === 'metadata')) {
+            const beforeWrite = beforeMetadataInitialization;
+            beforeMetadataInitialization = null;
+            await beforeWrite();
+          }
           supabaseOperations.push({
             op,
             filters: filters.map((filter) => ({ ...filter })),
@@ -142,7 +160,7 @@ vi.mock('@supabase/supabase-js', () => {
                 return comparison * (orderBy!.ascending ? 1 : -1);
               });
             }
-            if (resultLimit !== undefined) matched = matched.slice(0, resultLimit);
+            if (!headOnly) matched = matched.slice(0, Math.min(resultLimit ?? 1000, 1000));
             if (headOnly) {
               resolve({ data: null, error: null, count });
               return;
@@ -168,11 +186,12 @@ vi.mock('@supabase/supabase-js', () => {
               resolve({ data: null, error: { message: 'duplicate key', code: '23505' } });
               return;
             }
-            toInsert.forEach((row) => rows.push({
+            const inserted = toInsert.map((row) => ({
               ...row,
-              createdAt: (row.createdAt as string | undefined) ?? new Date().toISOString(),
+              createdAt: databaseTimestamp(row.createdAt as string | undefined),
             }));
-            resolve({ data: toInsert, error: null });
+            rows.push(...inserted);
+            resolve({ data: isSingle ? inserted[0] : inserted, error: null });
           } else if (op === 'upsert') {
             if (assignmentWriteError && (Array.isArray(payload) ? payload : [payload]).some((row) => String(row?.docId).startsWith('sequenceAssignment_'))) { resolve({ data: null, error: { message: 'assignment write failed' } }); return; }
             const toUpsert = (Array.isArray(payload)
@@ -190,19 +209,37 @@ vi.mock('@supabase/supabase-js', () => {
               if (idx >= 0) {
                 rows[idx] = {
                   ...row,
-                  createdAt: (row.createdAt as string | undefined) ?? rows[idx].createdAt,
+                  createdAt: databaseTimestamp((row.createdAt ?? rows[idx].createdAt) as string),
                 };
               } else {
                 rows.push({
                   ...row,
-                  createdAt: (row.createdAt as string | undefined) ?? new Date().toISOString(),
+                  createdAt: databaseTimestamp(row.createdAt as string | undefined),
                 });
               }
             });
             resolve({ data: toUpsert, error: null });
           } else if (op === 'update') {
+            if (failStageAllocationRebuild
+              && filters.some((filter) => filter.col === 'docId' && String(filter.val).startsWith('stageAllocation_'))
+              && !((payload as RowData)?.data as RowData)?.needsRebuild) {
+              resolve({ data: null, error: { message: 'stage allocation unavailable' } });
+              return;
+            }
+            if (supabaseFailureState.failNextUpdate) {
+              supabaseFailureState.failNextUpdate = false;
+              resolve({ data: null, error: { message: 'simulated update failure' } });
+              return;
+            }
             const matched = applyFilters(rows, filters);
             matched.forEach((row) => Object.assign(row, payload as RowData));
+            const updated = (payload as RowData)?.data as RowData | undefined;
+            if ((loseTimeoutWriteResponse === 'assignment' && updated?.autoTimedOutAt !== undefined)
+              || (loseTimeoutWriteResponse === 'allocation' && updated?.needsRebuild === false)) {
+              loseTimeoutWriteResponse = null;
+              resolve({ data: null, error: { message: 'write response lost' } });
+              return;
+            }
             resolve({ data: JSON.parse(JSON.stringify(matched)), error: null });
           } else if (op === 'delete') {
             const matched = applyFilters(rows, filters);
@@ -405,6 +442,9 @@ describe.each([
       sequenceArray,
     );
     nextSupabaseSelectError = null;
+    failStageAllocationRebuild = false;
+    loseTimeoutWriteResponse = null;
+    beforeMetadataInitialization = null;
     assignmentWriteError = false;
     rejectedAssignmentError = null;
     supabaseOperations.length = 0;
@@ -412,6 +452,9 @@ describe.each([
 
   afterEach(async () => {
     nextSupabaseSelectError = null;
+    failStageAllocationRebuild = false;
+    loseTimeoutWriteResponse = null;
+    beforeMetadataInitialization = null;
     assignmentWriteError = false;
     rejectedAssignmentError = null;
     // @ts-expect-error using protected method for testing
@@ -553,6 +596,61 @@ describe.each([
     await expect(storageEngine.saveConfig(original)).resolves.toBeUndefined();
     await expect(storageEngine.initializeParticipantSession({}, original, participantMetadata, 'second')).resolves.toBeDefined();
     expect((await storageEngine.getStageData(studyId)).allStages[0].conditionKeys).toHaveLength(1);
+  });
+
+  test("a delayed default initialization preserves another session's saved timeout", async () => {
+    const writer = new SupabaseStorageEngine(true);
+    await writer.connect();
+    await writer.initializeStudyDb(studyId);
+    const metadataIndex = revisitRows.findIndex((row) => row.studyId === `dev-${studyId}` && row.docId === 'metadata');
+    if (metadataIndex >= 0) revisitRows.splice(metadataIndex, 1);
+    beforeMetadataInitialization = () => writer.setAutoTimeoutMinutes(studyId, 30);
+    await storageEngine.getModes(studyId);
+    expect((await storageEngine.getModes(studyId)).autoTimeoutMinutes).toBe(30);
+  });
+
+  test('config activation preserves a concurrent timeout save and its condition definitions', async () => {
+    const original: StudyConfig = { ...configSimple, factors: { group: ['A'] }, betweenSubjects: ['group'] };
+    const appended: StudyConfig = { ...original, factors: { group: ['A', 'B'] } };
+    await storageEngine.saveConfig(original);
+    const activatingSession = new SupabaseStorageEngine(true);
+    await activatingSession.connect();
+    await activatingSession.initializeStudyDb(studyId);
+    const settings = storageEngine as unknown as { _readModesForUpdate: (id: string) => Promise<RuntimeStudySettings> };
+    const read = settings._readModesForUpdate.bind(storageEngine);
+    let readStarted!: () => void;
+    let releaseRead!: () => void;
+    const started = new Promise<void>((resolve) => { readStarted = resolve; });
+    const released = new Promise<void>((resolve) => { releaseRead = resolve; });
+    vi.spyOn(settings, '_readModesForUpdate').mockImplementationOnce(async (id) => {
+      const modes = await read(id);
+      readStarted();
+      await released;
+      return modes;
+    });
+    const saveTimeout = storageEngine.setAutoTimeoutMinutes(studyId, 30);
+    await started;
+    let settingsLockAttempted!: () => void;
+    const attempted = new Promise<void>((resolve) => { settingsLockAttempted = resolve; });
+    const activation = activatingSession as unknown as { _runWithLock: <T>(key: string, operation: () => Promise<T>) => Promise<T> };
+    const lock = activation._runWithLock.bind(activatingSession);
+    vi.spyOn(activation, '_runWithLock').mockImplementation(<T>(key: string, operation: () => Promise<T>) => {
+      if (key === 'participant-assignment' || key === 'study-settings') settingsLockAttempted();
+      return lock(key, operation);
+    });
+    const saveConfig = activatingSession.saveConfig(appended);
+    try {
+      // A coordinated activation waits for the settings save; an uncoordinated one can
+      // commit first and then lose its definitions to the paused stale save.
+      await Promise.race([attempted, saveConfig]);
+    } finally {
+      releaseRead();
+    }
+    await Promise.all([saveTimeout, saveConfig]);
+    const modes = await storageEngine.getModes(studyId);
+    expect(modes.autoTimeoutMinutes).toBe(30);
+    expect(modes.stage?.allStages[0].conditionKeys).toHaveLength(2);
+    expect(await storageEngine.getCurrentConfigHash(studyId)).toBe(await hash(JSON.stringify(appended)));
   });
 
   test('failed config activation commits neither the definitions nor the active hash', async () => {
@@ -701,6 +799,58 @@ describe.each([
     await storageEngine.saveConfig(changed);
     await expect(storageEngine.initializeParticipantSession({}, changed, participantMetadata, 'blocked-change'))
       .rejects.toThrow(/append|condition/i);
+  });
+
+  test('uses UTC timeout deadlines across a browser daylight-saving boundary', async () => {
+    vi.stubEnv('TZ', 'America/New_York');
+    sqlTimestampWithoutZone = true;
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(new Date('2026-11-01T01:59:00Z'));
+      await storageEngine.setCurrentStage(studyId, 'DST', '#00AAFF', 1);
+      await storageEngine.setAutoTimeoutMinutes(studyId, 60);
+      await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'just-started');
+      vi.setSystemTime(new Date('2026-11-01T02:00:00Z'));
+      await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'too-early')).rejects.toThrow('participant limit');
+      expect((await storageEngine.getSequenceAssignment(studyId, 'just-started'))?.createdTime).toBe(Date.parse('2026-11-01T01:59:00Z'));
+      expect((await storageEngine.getAllSequenceAssignments(studyId))[0].createdTime).toBe(Date.parse('2026-11-01T01:59:00Z'));
+      vi.setSystemTime(new Date('2026-11-01T03:00:00Z'));
+      await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'after-deadline');
+      expect((await storageEngine.getSequenceAssignment(studyId, 'just-started'))?.autoTimedOutAt).toBeDefined();
+    } finally {
+      vi.useRealTimers();
+      sqlTimestampWithoutZone = false;
+      vi.unstubAllEnvs();
+    }
+  });
+
+  test.each(['UTC', 'America/Denver', 'Asia/Tokyo'])('a retried failed initialization gets a fresh backend timeout start (%s)', async (timezone) => {
+    vi.stubEnv('TZ', timezone);
+    sqlTimestampWithoutZone = true;
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(new Date('2026-10-30T12:00:00Z'));
+      await storageEngine.setCurrentStage(studyId, 'RETRY', '#00AAFF', 2);
+      await storageEngine.setAutoTimeoutMinutes(studyId, 1);
+      // @ts-expect-error Fail the first participant upload after reservation.
+      vi.spyOn(storageEngine, '_pushToStorage').mockRejectedValueOnce(new Error('upload failed'));
+      await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'retrying')).rejects.toThrow('upload failed');
+      const failed = await storageEngine.getSequenceAssignment(studyId, 'retrying');
+      expect(failed?.rejected).toBe(true);
+      vi.setSystemTime(new Date('2026-10-30T12:02:00Z'));
+      await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'retrying');
+      const retried = await storageEngine.getSequenceAssignment(studyId, 'retrying');
+      expect(retried?.createdTime).toBe(Date.now());
+      await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'newcomer');
+      expect((await storageEngine.getSequenceAssignment(studyId, 'retrying'))?.autoTimedOutAt).toBeUndefined();
+      vi.setSystemTime(new Date('2026-10-30T12:04:00Z'));
+      await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'after-deadline');
+      expect((await storageEngine.getSequenceAssignment(studyId, 'retrying'))?.autoTimedOutAt).toBeDefined();
+    } finally {
+      vi.useRealTimers();
+      sqlTimestampWithoutZone = false;
+      vi.unstubAllEnvs();
+    }
   });
 
   test('retrying a failed replacement never claims its own rejected assignment', async () => {
@@ -1530,6 +1680,35 @@ describe.each([
     expect(configs[configHash]).toEqual(configSimple);
   });
 
+  test.each([false, true])('restoring a snapshot keeps timeout capacity released (completed late: %s)', async (completedLate) => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    const snapshotTime = new Date('2026-02-01T00:00:00Z').getTime() + Number(completedLate) * 86_400_000;
+    vi.setSystemTime(snapshotTime);
+    try {
+      const config: StudyConfig = { ...configSimple, factors: { group: ['A'] }, betweenSubjects: ['group'] };
+      await storageEngine.saveConfig(config);
+      await storageEngine.setSequenceArray(generateSequenceArray(config));
+      await storageEngine.setCurrentStage(studyId, 'LIMITED', '#00AAFF', 1);
+      await storageEngine.initializeParticipantSession({}, config, participantMetadata, 'expired');
+      // @ts-expect-error protected backend mutation
+      await storageEngine._markSequenceAssignmentTimedOut('expired', Date.now());
+      if (completedLate) expect(await storageEngine.finalizeParticipant()).toEqual({ status: 'complete' });
+      expect((await storageEngine.createSnapshot(studyId, false)).status).toBe('SUCCESS');
+      const [snapshot] = Object.keys(await storageEngine.getSnapshots(studyId));
+      vi.setSystemTime(snapshotTime + 1000);
+      expect((await storageEngine.restoreSnapshot(studyId, snapshot)).status).toBe('SUCCESS');
+      // @ts-expect-error Inspect restored cached capacity.
+      const allocation = await storageEngine.getStageAllocation('LIMITED');
+      expect(allocation.count).toBe(0);
+      expect(Object.values(allocation.combinationCounts)).toEqual([]);
+      expect(Object.values(allocation.rowCounts)).toEqual([]);
+      await expect(storageEngine.initializeParticipantSession({}, config, participantMetadata, 'replacement'))
+        .resolves.toMatchObject({ participantId: 'replacement' });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   test.each([false, true])('restoring a snapshot resumes its allocation (legacy: %s)', async (legacy) => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-01-01T00:00:00Z'));
@@ -1935,6 +2114,15 @@ describe.each([
     await expect(fresh._completeCurrentParticipantRealtime()).rejects.toThrow('Participant not initialized');
   });
 
+  test('_completeCurrentParticipantRealtime propagates a rejected assignment update', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    supabaseFailureState.failNextUpdate = true;
+
+    // @ts-expect-error protected
+    await expect(storageEngine._completeCurrentParticipantRealtime())
+      .rejects.toThrow('Failed to complete sequence assignment');
+  });
+
   // ── _rejectParticipantRealtime ───────────────────────────────────────────────
   test('_rejectParticipantRealtime sets rejected=true on the assignment', async () => {
     // Initialize two participants so the claimed-assignment lookup in
@@ -2054,6 +2242,373 @@ describe.each([
     }
   });
 
+  // ── Participant-lock races ───────────────────────────────────────────────────
+  // Pauses the first whole-record assignment write that `shouldPause` selects,
+  // runs `competingWrite` from another session in that window, and then lets the
+  // paused write continue. While the paused write holds the participant lock the
+  // competing write has to wait, so it cannot be overwritten by the stale copy.
+  async function interleaveWithAssignmentWrite(
+    shouldPause: (participantId: string, data: Record<string, unknown>) => boolean,
+    competingWrite: () => Promise<unknown>,
+  ) {
+    const engineInternals = storageEngine as unknown as {
+      updateSequenceAssignmentRow: (participantId: string, data: Record<string, unknown>, operation: string) => Promise<void>;
+    };
+    const originalWrite = engineInternals.updateSequenceAssignmentRow.bind(storageEngine);
+    let competing: Promise<unknown> | undefined;
+    vi.spyOn(engineInternals, 'updateSequenceAssignmentRow').mockImplementation(async (participantId, data, operation) => {
+      if (!competing && shouldPause(participantId, data)) {
+        competing = competingWrite();
+        await Promise.race([
+          competing,
+          new Promise<void>((resolve) => { setTimeout(resolve, 300); }),
+        ]);
+      }
+      await originalWrite(participantId, data, operation);
+    });
+    return () => competing;
+  }
+
+  async function makeSecondSession(participantId?: string) {
+    const otherSession = new SupabaseStorageEngine(true);
+    await otherSession.connect();
+    await otherSession.initializeStudyDb(studyId);
+    if (participantId) {
+      // @ts-expect-error protected
+      otherSession.currentParticipantId = participantId;
+    }
+    return otherSession;
+  }
+
+  test('sweeps expired assignments beyond a full page of completed history', async () => {
+    await storageEngine.setCurrentStage(studyId, 'LIMITED', '#ff0000', 1001);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'z-expired');
+    const source = revisitRows.find((row) => row.studyId === `dev-${studyId}` && row.docId === 'sequenceAssignment_z-expired')!;
+    source.createdAt = new Date(Date.now() - 120_000).toISOString();
+    const assignment = source.data as RowData;
+    for (let index = 0; index < 1000; index += 1) {
+      const participantId = `history-${String(index).padStart(4, '0')}`;
+      revisitRows.push({
+        ...source,
+        docId: `sequenceAssignment_${participantId}`,
+        data: { ...assignment, participantId, completed: Date.now() },
+      });
+    }
+    revisitRows.splice(revisitRows.indexOf(source), 1);
+    revisitRows.push(source);
+    const allocation = revisitRows.find((row) => row.studyId === `dev-${studyId}` && row.docId === 'stageAllocation_LIMITED')!.data as RowData;
+    allocation.count = 1001;
+    allocation.rowCounts = Object.fromEntries(Object.keys(allocation.rowCounts as object).map((key) => [key, 1001]));
+    allocation.combinationCounts = Object.fromEntries(Object.keys(allocation.combinationCounts as object).map((key) => [key, 1001]));
+    await storageEngine.setAutoTimeoutMinutes(studyId, 1);
+
+    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement'))
+      .resolves.toMatchObject({ participantId: 'replacement' });
+    expect((source.data as RowData).autoTimedOutAt).toBeDefined();
+    expect(await storageEngine.getAllSequenceAssignments(studyId)).toHaveLength(1002);
+    // @ts-expect-error protected
+    expect((await storageEngine.getStageAllocation('LIMITED')).count).toBe(1001);
+  });
+
+  test('finalizes a participant through the public path without reacquiring its lock', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'finishing');
+    vi.useFakeTimers();
+    try {
+      const finishing = storageEngine.finalizeParticipant();
+      await vi.advanceTimersByTimeAsync(31_000);
+      expect(await finishing).toEqual({ status: 'complete' });
+      expect(await storageEngine.getParticipantCompletionStatus()).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('repairs a persisted timeout after its capacity write fails across sessions', async () => {
+    await storageEngine.setCurrentStage(studyId, 'LIMITED', '#ff0000', 1);
+    const first = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'expired');
+    failStageAllocationRebuild = true;
+    // @ts-expect-error protected
+    await expect(storageEngine._markSequenceAssignmentTimedOut(first.participantId, Date.now())).rejects.toThrow();
+    expect((await storageEngine.getAllSequenceAssignments(studyId))[0].autoTimedOutAt).toBeDefined();
+    // Repeated outages must keep admission blocked until the stored count is repaired.
+    const retry = await makeSecondSession();
+    await expect(retry.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement')).rejects.toThrow();
+    failStageAllocationRebuild = false;
+    await expect(retry.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement')).resolves.toMatchObject({ participantId: 'replacement' });
+    // @ts-expect-error protected
+    const allocation = await retry.getStageAllocation('LIMITED');
+    expect(allocation.count).toBe(1);
+    expect(Object.values(allocation.rowCounts).reduce((sum, count) => sum + count, 0)).toBe(1);
+    await expect(retry.initializeParticipantSession({}, configSimple, participantMetadata, 'excess')).rejects.toThrow(/participant limit/);
+  });
+
+  test.each(['reject', 'timeout'])('legacy %s rollback retains the admission policy lock', async (operation) => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'legacy-rollback');
+    const assignment = (await storageEngine.getSequenceAssignment(studyId, 'legacy-rollback'))!;
+    delete assignment.sequenceKey;
+    delete assignment.sequenceIndex;
+    // @ts-expect-error Seed legacy order metadata before a failed rejection.
+    await storageEngine._createSequenceAssignment('legacy-rollback', assignment);
+    // @ts-expect-error Inject a failure after the realtime write has committed.
+    const reject = storageEngine._rejectParticipantRealtime.bind(storageEngine);
+    // @ts-expect-error Inspect lock ownership at the existing rollback boundary.
+    vi.spyOn(storageEngine, '_rejectParticipantRealtime').mockImplementationOnce(async (...args: [string, boolean?]) => {
+      await reject(...args);
+      const lock = revisitRows.find((row) => row.studyId === `dev-${studyId}` && row.docId === 'lock_participant-assignment');
+      expect(lock?.data).toMatchObject({ token: expect.any(String) });
+      throw new Error('failed after rejection write');
+    });
+    const rejecting = operation === 'reject'
+      ? storageEngine.rejectParticipant('legacy-rollback', 'review')
+      : storageEngine.timeoutParticipant('legacy-rollback');
+    await expect(rejecting).rejects.toThrow('failed after rejection write');
+    expect((await storageEngine.getSequenceAssignment(studyId, 'legacy-rollback'))?.rejected).toBe(false);
+    expect((await storageEngine.getParticipantData('legacy-rollback'))?.rejected).toBe(false);
+    await expect(storageEngine.setAutoTimeoutMinutes(studyId, 1)).rejects.toThrow('Create and activate a new stage');
+  });
+
+  test('blocks undoing a fully unkeyed legacy rejection while auto-timeout is enabled', async () => {
+    await storageEngine.setCurrentStage(studyId, 'LEGACY', '#00AAFF');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'legacy-restored');
+    const assignment = (await storageEngine.getSequenceAssignment(studyId, 'legacy-restored'))!;
+    delete assignment.sequenceKey;
+    delete assignment.sequenceIndex;
+    // @ts-expect-error Seed a fully unkeyed legacy assignment.
+    await storageEngine._createSequenceAssignment('legacy-restored', assignment);
+    await storageEngine.rejectParticipant('legacy-restored', 'review');
+    await storageEngine.setAutoTimeoutMinutes(studyId, 1);
+    // @ts-expect-error Verify rejection is checked before rewriting saved answers.
+    const upload = vi.spyOn(storageEngine, '_pushToStorage');
+    await expect(storageEngine.undoRejectParticipant('legacy-restored')).rejects.toThrow('Create and activate a new stage');
+    expect(upload).not.toHaveBeenCalled();
+    expect((await storageEngine.getSequenceAssignment(studyId, 'legacy-restored'))?.rejected).toBe(true);
+    expect((await storageEngine.getParticipantData('legacy-restored'))?.rejected).toMatchObject({ reason: 'review' });
+    await storageEngine.setAutoTimeoutMinutes(studyId, undefined);
+    await storageEngine.undoRejectParticipant('legacy-restored');
+    expect((await storageEngine.getSequenceAssignment(studyId, 'legacy-restored'))?.rejected).toBe(false);
+    expect((await storageEngine.getParticipantData('legacy-restored'))?.rejected).toBe(false);
+  });
+
+  test('requires a fresh stage for fully unkeyed legacy assignments', async () => {
+    await storageEngine.setCurrentStage(studyId, 'LEGACY', '#00AAFF');
+    const existing = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'legacy-order');
+    const assignment = (await storageEngine.getSequenceAssignment(studyId, existing.participantId))!;
+    delete assignment.sequenceKey;
+    delete assignment.sequenceIndex;
+    // @ts-expect-error Seed a fully unkeyed legacy record without reading answers.
+    await storageEngine._createSequenceAssignment(existing.participantId, assignment);
+    await expect(storageEngine.setAutoTimeoutMinutes(studyId, 1)).rejects.toThrow('Create and activate a new stage');
+    expect((await storageEngine.getModes(studyId)).autoTimeoutMinutes).toBeUndefined();
+    await storageEngine.setMode(studyId, 'dataCollectionEnabled', false);
+    await storageEngine.setAutoTimeoutMinutes(studyId, 1);
+    await expect(storageEngine.setMode(studyId, 'dataCollectionEnabled', true)).rejects.toThrow('Create and activate a new stage');
+    expect((await storageEngine.getModes(studyId)).dataCollectionEnabled).toBe(false);
+    await storageEngine.setAutoTimeoutMinutes(studyId, undefined);
+    await storageEngine.setMode(studyId, 'dataCollectionEnabled', true);
+    const metadata = revisitRows.find((row) => row.studyId === `dev-${studyId}` && row.docId === 'metadata')!;
+    (metadata.data as RowData).autoTimeoutMinutes = 1;
+    // Shell activates the deployed config before resuming saved participants.
+    await storageEngine.saveConfig({ ...configSimple, studyMetadata: { ...configSimple.studyMetadata, title: 'Updated title' } });
+    await storageEngine.saveConfig(configSimple);
+    await storageEngine.setSequenceArray(generateSequenceArray(configSimple));
+    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'blocked-newcomer')).rejects.toThrow('Create and activate a new stage');
+    expect((await storageEngine.getSequenceAssignment(studyId, existing.participantId))?.autoTimedOutAt).toBeUndefined();
+    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, existing.participantId)).resolves.toMatchObject({ participantId: existing.participantId });
+    await storageEngine.setAutoTimeoutMinutes(studyId, undefined);
+    await storageEngine.setCurrentStage(studyId, 'FRESH', '#00FFAA');
+    await storageEngine.setAutoTimeoutMinutes(studyId, 1);
+    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'fresh-newcomer')).resolves.toMatchObject({ participantId: 'fresh-newcomer' });
+    await expect(storageEngine.setCurrentStage(studyId, 'LEGACY', '#00AAFF')).rejects.toThrow('Create and activate a new stage');
+  });
+
+  test.each([
+    {
+      numSequences: 2, legacy: false, restore: false,
+    },
+    {
+      numSequences: 8, legacy: false, restore: false,
+    },
+    {
+      numSequences: 2, legacy: true, restore: false,
+    },
+    {
+      numSequences: 2, legacy: true, restore: true,
+    },
+  ])('replaces a timed-out Latin-square order ($numSequences rows, legacy: $legacy, restored: $restore)', async ({
+    numSequences, legacy, restore,
+  }) => {
+    if (restore) {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date('2026-03-15T00:00:00Z'));
+    }
+    try {
+      const config: StudyConfig = {
+        ...configSimple,
+        uiConfig: { ...configSimple.uiConfig, numSequences },
+        betweenSubjects: [],
+        components: { ...configSimple.components, secondComponent: configSimple.components.testComponent },
+        sequence: { order: 'latinSquare', components: ['testComponent', 'secondComponent'] },
+      };
+      await storageEngine.saveConfig(config);
+      const prepared = generateSequenceArray(config);
+      await storageEngine.setSequenceArray(prepared);
+      await storageEngine.setCurrentStage(studyId, 'LIMITED', '#00AAFF', 2);
+      await storageEngine.initializeParticipantSession({}, config, participantMetadata, 'completed-order');
+      expect(await storageEngine.finalizeParticipant()).toEqual({ status: 'complete' });
+      if (legacy) {
+        const assignment = (await storageEngine.getSequenceAssignment(studyId, 'completed-order'))!;
+        delete assignment.sequenceKey;
+        // @ts-expect-error Seed a completed legacy assignment without a row key.
+        await storageEngine._createSequenceAssignment('completed-order', assignment);
+        revisitRows.filter((row) => row.studyId === `dev-${studyId}` && String(row.docId).startsWith('stageAllocation_')).forEach((row) => { revisitRows.splice(revisitRows.indexOf(row), 1); });
+      }
+      const expired = await storageEngine.initializeParticipantSession({}, config, participantMetadata, 'expired-order');
+      // @ts-expect-error protected backend mutation
+      await storageEngine._markSequenceAssignmentTimedOut(expired.participantId, Date.now());
+      if (restore) {
+        expect((await storageEngine.createSnapshot(studyId, false)).status).toBe('SUCCESS');
+        const [snapshot] = Object.keys(await storageEngine.getSnapshots(studyId));
+        vi.setSystemTime(new Date('2026-03-15T00:00:01Z'));
+        expect((await storageEngine.restoreSnapshot(studyId, snapshot)).status).toBe('SUCCESS');
+        // Startup prepares the configured orders again after restoring live data.
+        await storageEngine.saveConfig(config);
+        await storageEngine.setSequenceArray(prepared);
+      }
+      const replacement = await storageEngine.initializeParticipantSession({}, config, participantMetadata, 'replacement-order');
+      expect(replacement.sequence.components).toEqual(expired.sequence.components);
+      expect(await storageEngine.finalizeParticipant()).toEqual({ status: 'complete' });
+      await storageEngine.initializeParticipantSession({}, config, participantMetadata, expired.participantId);
+      expect(await storageEngine.finalizeParticipant()).toEqual({ status: 'complete' });
+      expect((await storageEngine.getSequenceAssignment(studyId, expired.participantId))?.rejected).toBe(false);
+      // @ts-expect-error Verify that late completion does not reclaim capacity.
+      const allocation = await storageEngine.getStageAllocation('LIMITED');
+      expect(allocation.count).toBe(2);
+      if (!legacy) expect(Object.values(allocation.rowCounts).sort()).toEqual([1, 1]);
+    } finally {
+      if (restore) vi.useRealTimers();
+    }
+  });
+
+  test('a timeout backlog decrements warm counters without recounting every cached order', async () => {
+    await storageEngine.setCurrentStage(studyId, 'BACKLOG', '#00AAFF', 3);
+    for (let index = 0; index < 3; index += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, `expired-${index}`);
+    }
+    revisitRows.filter((row) => String(row.docId).startsWith('sequenceAssignment_expired-')).forEach((row) => {
+      row.createdAt = new Date(Date.now() - 120_000).toISOString();
+    });
+    const cached = revisitRows.find((row) => row.studyId === `dev-${studyId}` && row.docId === 'stageAllocation_BACKLOG')!.data as RowData;
+    // Former orders remain cached at zero after earlier participants timed out.
+    Object.assign(cached.rowCounts as object, Object.fromEntries(Array.from({ length: 20 }, (_, index) => [`historical:${index}`, 0])));
+    await storageEngine.setAutoTimeoutMinutes(studyId, 1);
+    supabaseOperations.length = 0;
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement');
+    const recounts = supabaseOperations.filter((operation) => operation.headOnly
+      && operation.filters.some((filter) => filter.col === 'data->sequenceKey'));
+    expect(recounts).toHaveLength(0);
+    expect((await storageEngine.getAllSequenceAssignments(studyId)).filter((assignment) => assignment.autoTimedOutAt !== undefined)).toHaveLength(3);
+    // @ts-expect-error Inspect the persisted capacity and row counters.
+    const allocation = await storageEngine.getStageAllocation('BACKLOG');
+    expect(allocation.count).toBe(1);
+    expect(Object.values(allocation.rowCounts).reduce((total, count) => total + count, 0)).toBe(1);
+  });
+
+  test('an auto-timeout frees its slot in the stage allocation', async () => {
+    await storageEngine.setCurrentStage(studyId, 'LIMITED', '#ff0000', 1);
+    const first = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'timeout-first');
+    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'timeout-blocked'))
+      .rejects.toThrow(/participant limit/);
+
+    // @ts-expect-error protected
+    expect(await storageEngine._markSequenceAssignmentTimedOut(first.participantId, Date.now())).toBe(true);
+    // @ts-expect-error protected
+    expect((await storageEngine.getStageAllocation('LIMITED')).count).toBe(0);
+    // A second timeout of the same participant is a no-op and frees nothing more.
+    // @ts-expect-error protected
+    expect(await storageEngine._markSequenceAssignmentTimedOut(first.participantId, Date.now())).toBe(false);
+    // @ts-expect-error protected
+    expect((await storageEngine.getStageAllocation('LIMITED')).count).toBe(0);
+
+    const second = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'timeout-second');
+    expect(second.participantId).toBe('timeout-second');
+    // @ts-expect-error protected
+    expect((await storageEngine.getStageAllocation('LIMITED')).count).toBe(1);
+  });
+
+  test.each(['assignment', 'allocation'] as const)('recovers a timeout whose %s write succeeded without acknowledgement', async (phase) => {
+    await storageEngine.setCurrentStage(studyId, 'LIMITED', '#ff0000', 1);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'expired');
+    loseTimeoutWriteResponse = phase;
+    // @ts-expect-error protected
+    await expect(storageEngine._markSequenceAssignmentTimedOut('expired', Date.now())).rejects.toThrow();
+    const retry = await makeSecondSession();
+    await expect(retry.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement')).resolves.toMatchObject({ participantId: 'replacement' });
+    // @ts-expect-error protected
+    expect((await retry.getStageAllocation('LIMITED')).count).toBe(1);
+    await expect(retry.initializeParticipantSession({}, configSimple, participantMetadata, 'excess')).rejects.toThrow(/participant limit/);
+  });
+
+  test('updateStudyCondition does not erase a concurrent auto-timeout', async () => {
+    const session = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    const adminSession = await makeSecondSession();
+    const getCompeting = await interleaveWithAssignmentWrite(
+      (participantId, data) => participantId === session.participantId && Array.isArray(data.conditions),
+      // @ts-expect-error protected
+      () => adminSession._markSequenceAssignmentTimedOut(session.participantId, Date.now()),
+    );
+
+    await storageEngine.updateStudyCondition('color');
+    await getCompeting();
+
+    const assignment = (await storageEngine.getAllSequenceAssignments(studyId))
+      .find((candidate) => candidate.participantId === session.participantId);
+    expect(assignment?.conditions).toEqual(['color']);
+    expect(assignment?.autoTimedOutAt).toBeDefined();
+  });
+
+  // ── Legacy replacement fallback ──────────────────────────────────────────────
+  test('rejecting a timed-out participant leaves a later participant alone when their timestamps match', async () => {
+    const source = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    // @ts-expect-error protected
+    await storageEngine._markSequenceAssignmentTimedOut(source.participantId, Date.now());
+    await storageEngine.clearCurrentParticipantId();
+    const later = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+    // Force the stored timestamps to collide, as they can when the server and
+    // client clocks agree to the millisecond.
+    const sourceRow = revisitRows.find((row) => row.docId === `sequenceAssignment_${source.participantId}`)!;
+    const laterRow = revisitRows.find((row) => row.docId === `sequenceAssignment_${later.participantId}`)!;
+    (laterRow.data as RowData).timestamp = (sourceRow.data as RowData).timestamp;
+
+    await storageEngine.rejectParticipant(source.participantId, 'test');
+
+    const assignments = await storageEngine.getAllSequenceAssignments(studyId);
+    const laterAssignment = assignments.find((assignment) => assignment.participantId === later.participantId);
+    expect(laterAssignment?.rejected).toBe(false);
+    expect(laterAssignment?.claimed).toBe(false);
+  });
+
+  test('rejecting a legacy replacement without claimedParticipantId still releases its source', async () => {
+    const source = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+    await storageEngine.rejectParticipant(source.participantId, 'test');
+    await storageEngine.clearCurrentParticipantId();
+    const replacement = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
+
+    // Records written before claimedParticipantId existed only share the stored timestamp.
+    const sourceRow = revisitRows.find((row) => row.docId === `sequenceAssignment_${source.participantId}`)!;
+    const replacementRow = revisitRows.find((row) => row.docId === `sequenceAssignment_${replacement.participantId}`)!;
+    delete (replacementRow.data as RowData).claimedParticipantId;
+    (sourceRow.data as RowData).timestamp = (replacementRow.data as RowData).timestamp;
+
+    await storageEngine.rejectParticipant(replacement.participantId, 'test');
+
+    const sourceAssignment = (await storageEngine.getAllSequenceAssignments(studyId))
+      .find((assignment) => assignment.participantId === source.participantId);
+    expect(sourceAssignment?.claimed).toBe(false);
+    expect(sourceAssignment?.rejected).toBe(true);
+  });
+
   // ── _claimSequenceAssignment ─────────────────────────────────────────────────
   test('_claimSequenceAssignment sets claimed=true on the assignment', async () => {
     const session = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata);
@@ -2075,6 +2630,31 @@ describe.each([
     expect(modes.dataCollectionEnabled).toBe(false);
     expect(modes.developmentModeEnabled).toBe(false);
     expect(modes.dataSharingEnabled).toBe(false);
+  });
+
+  test('setAutoTimeoutMinutes leaves the other stored settings alone', async () => {
+    await storageEngine.setMode(studyId, 'dataCollectionEnabled', false);
+    await storageEngine.setCurrentStage(studyId, 'STAGE_A', '#ff0000');
+    await storageEngine.setAutoTimeoutMinutes(studyId, 45);
+
+    const modes = await storageEngine.getModes(studyId);
+    expect(modes.autoTimeoutMinutes).toBe(45);
+    expect(modes.dataCollectionEnabled).toBe(false);
+    expect(modes.stage?.currentStage.stageName).toBe('STAGE_A');
+
+    await storageEngine.setAutoTimeoutMinutes(studyId, undefined);
+    const modesAfterDisable = await storageEngine.getModes(studyId);
+    expect(modesAfterDisable.autoTimeoutMinutes).toBeUndefined();
+    expect(modesAfterDisable.dataCollectionEnabled).toBe(false);
+    expect(modesAfterDisable.stage?.currentStage.stageName).toBe('STAGE_A');
+  });
+
+  test('setAutoTimeoutMinutes persists and removes the setting', async () => {
+    await storageEngine.setAutoTimeoutMinutes(studyId, 60);
+    expect((await storageEngine.getModes(studyId)).autoTimeoutMinutes).toBe(60);
+
+    await storageEngine.setAutoTimeoutMinutes(studyId, undefined);
+    expect((await storageEngine.getModes(studyId)).autoTimeoutMinutes).toBeUndefined();
   });
 
   // ── URL getters ──────────────────────────────────────────────────────────────

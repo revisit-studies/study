@@ -14,7 +14,9 @@ type RowData = Record<string, string | number | boolean | null | object>;
 const revisitRows: RowData[] = [];
 const storageFiles: Record<string, string> = {};
 const localStore: Record<string, string | number | object | null> = {};
-const metadataErrors = { select: false, upsert: false, update: false };
+const metadataErrors = {
+  select: false, upsert: false, insert: false, update: false,
+};
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 vi.mock('@supabase/supabase-js', () => {
@@ -42,7 +44,7 @@ vi.mock('@supabase/supabase-js', () => {
 
   function applyFilters(
     rows: Array<RowData>,
-    filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'neq' | 'is' | 'like' | 'not' | 'lt' }>,
+    filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'neq' | 'is' | 'like' | 'not' | 'lt' | 'gt' }>,
   ): Array<RowData> {
     return rows.filter((row) => filters.every(({ col, val, type }) => {
       const colVal = getFieldValue(row, col);
@@ -53,6 +55,7 @@ vi.mock('@supabase/supabase-js', () => {
       if (type === 'is') return (colVal ?? null) === val;
       if (type === 'not') return colVal !== null && colVal !== undefined;
       if (type === 'lt') return colVal !== undefined && colVal !== null && colVal < val!;
+      if (type === 'gt') return colVal !== undefined && colVal !== null && colVal > val!;
       return typeof colVal === 'string' && matchLike(colVal, String(val));
     }));
   }
@@ -60,12 +63,13 @@ vi.mock('@supabase/supabase-js', () => {
   function makeQueryBuilder(getRows: () => Array<RowData>) {
     let op: 'select' | 'upsert' | 'insert' | 'update' | 'delete' | null = null;
     let payload: RowData | RowData[] | Partial<RowData> | null = null;
-    const filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'neq' | 'is' | 'like' | 'not' | 'lt' }> = [];
+    const filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'neq' | 'is' | 'like' | 'not' | 'lt' | 'gt' }> = [];
     let isSingle = false;
     let isMaybeSingle = false;
     let requestedCount = false;
     let headOnly = false;
     let resultLimit: number | undefined;
+    let orderBy: { col: string; ascending: boolean } | undefined;
 
     const qb = {
       select(_fields?: string, opts?: { count?: string; head?: boolean }) { if (op === null) op = 'select'; requestedCount = opts?.count === 'exact'; headOnly = opts?.head === true; return qb; },
@@ -75,11 +79,15 @@ vi.mock('@supabase/supabase-js', () => {
       delete() { op = 'delete'; return qb; },
       eq(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'eq' }); return qb; },
       lt(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'lt' }); return qb; },
+      gt(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'gt' }); return qb; },
       neq(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'neq' }); return qb; },
       is(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'is' }); return qb; },
       like(col: string, val: string) { filters.push({ col, val, type: 'like' }); return qb; },
       not(col: string, _operator: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'not' }); return qb; },
-      order(_col: string, _options?: { ascending?: boolean }) { return qb; },
+      order(col: string, options?: { ascending?: boolean }) {
+        orderBy = { col, ascending: options?.ascending !== false };
+        return qb;
+      },
       limit(count: number) { resultLimit = count; return qb; },
       single() { isSingle = true; return qb; },
       maybeSingle() { isMaybeSingle = true; return qb; },
@@ -89,9 +97,10 @@ vi.mock('@supabase/supabase-js', () => {
       ) {
         Promise.resolve().then(() => {
           const rows = getRows();
-          if ((op === 'select' && metadataErrors.select) || (op === 'upsert' && metadataErrors.upsert) || (op === 'update' && metadataErrors.update)) {
+          if ((op === 'select' && metadataErrors.select) || (op === 'upsert' && metadataErrors.upsert) || (op === 'insert' && metadataErrors.insert) || (op === 'update' && metadataErrors.update)) {
             metadataErrors.select = false;
             metadataErrors.upsert = false;
+            metadataErrors.insert = false;
             metadataErrors.update = false;
             resolve({ data: null, error: { message: 'Permission denied' } });
             return;
@@ -99,6 +108,10 @@ vi.mock('@supabase/supabase-js', () => {
           if (op === 'select') {
             let matched = applyFilters(rows, filters);
             const count = requestedCount ? matched.length : null;
+            if (orderBy) {
+              const { col, ascending } = orderBy;
+              matched = [...matched].sort((a, b) => String(getFieldValue(a, col) ?? '').localeCompare(String(getFieldValue(b, col) ?? '')) * (ascending ? 1 : -1));
+            }
             if (resultLimit !== undefined) matched = matched.slice(0, resultLimit);
             if (headOnly) {
               resolve({ data: null, error: null, count });
@@ -293,6 +306,7 @@ describe.each([
   afterEach(async () => {
     metadataErrors.select = false;
     metadataErrors.upsert = false;
+    metadataErrors.insert = false;
     metadataErrors.update = false;
     // @ts-expect-error using protected method for testing
     await storageEngine._testingReset(studyId);
@@ -528,9 +542,9 @@ describe.each([
   });
 
   test('getModes rejects failed metadata initialization', async () => {
-    metadataErrors.upsert = true;
+    metadataErrors.insert = true;
     await expect(storageEngine.getModes(studyId)).rejects.toThrow('Failed to update study metadata');
-    metadataErrors.upsert = false;
+    metadataErrors.insert = false;
     expect(await storageEngine.getStudyHiddenFromLandingPage(studyId)).toBe(false);
     expect(await storageEngine.getModes(studyId)).toEqual({
       dataCollectionEnabled: true,
@@ -539,7 +553,7 @@ describe.each([
     });
   });
 
-  test('getModes preserves readable legacy settings when migration fails', async () => {
+  test('getModes normalizes legacy settings without rewriting metadata', async () => {
     revisitRows.push({
       // @ts-expect-error using protected prefix to seed legacy metadata
       studyId: `${storageEngine.collectionPrefix}${studyId}`,
@@ -550,13 +564,13 @@ describe.each([
         analyticsInterfacePubliclyAccessible: false,
       },
     });
-    metadataErrors.update = true;
-
+    const storedBeforeRead = JSON.stringify(revisitRows);
     expect(await storageEngine.getModes(studyId)).toEqual({
       dataCollectionEnabled: true,
       developmentModeEnabled: false,
       dataSharingEnabled: false,
     });
+    expect(JSON.stringify(revisitRows)).toBe(storedBeforeRead);
   });
 
   test('setMode toggles each ReVISit mode independently', async () => {

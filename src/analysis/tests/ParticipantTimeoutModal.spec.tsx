@@ -69,6 +69,34 @@ describe('ParticipantTimeoutModal', () => {
     expect(participants.map((participant) => participant.elapsedTime)).toEqual([900, 100]);
   });
 
+  test('excludes auto-timed-out participants so they cannot be rejected here', () => {
+    const participants = getInProgressParticipantsByElapsedTime([
+      makeParticipant({ participantId: 'timedOut', createdTime: 100, timedOut: true }),
+      makeParticipant({
+        participantId: 'completedLate', createdTime: 100, completed: true, timedOut: true,
+      }),
+      makeParticipant({ participantId: 'inProgress', createdTime: 100 }),
+    ], 1000);
+
+    expect(participants.map((participant) => participant.participantId)).toEqual(['inProgress']);
+  });
+
+  test('does not offer a Time Out button for an auto-timed-out participant', async () => {
+    await act(async () => {
+      render(
+        <ParticipantTimeoutModal
+          hideReviewButton
+          opened
+          participants={[makeParticipant({ participantId: 'p-timed-out', createdTime: 1, timedOut: true })]}
+          refresh={vi.fn()}
+        />,
+      );
+    });
+
+    expect(screen.getByText('There are no in-progress participants.')).toBeDefined();
+    expect(screen.queryByRole('button', { name: 'Time Out' })).toBeNull();
+  });
+
   test('uses assignment start times instead of skewed participant clocks', () => {
     const participants = getInProgressParticipantsByElapsedTime([
       { ...makeParticipant({ participantId: 'behind', createdTime: 1 }), assignmentCreatedTime: 800 },

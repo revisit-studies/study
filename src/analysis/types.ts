@@ -1,8 +1,7 @@
-export interface ParticipantCounts {
+import { ParticipantStatusCounts } from '../storage/participantStatus';
+
+export interface ParticipantCounts extends ParticipantStatusCounts {
   total: number;
-  completed: number;
-  inProgress: number;
-  rejected: number;
 }
 
 export interface OverviewData {

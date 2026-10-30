@@ -255,7 +255,8 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
     countKey: keyof SnapshotParticipantCounts,
   ) => {
     if (participantCounts) {
-      return participantCounts[countKey];
+      // Snapshots taken before auto-timeouts existed have no timed-out counts.
+      return participantCounts[countKey] ?? 0;
     }
 
     if (snapshotCountStatus[snapshotKey] === 'failed') {
@@ -359,6 +360,8 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
                     <Table.Th>Completed</Table.Th>
                     <Table.Th>In Progress</Table.Th>
                     <Table.Th>Rejected</Table.Th>
+                    <Table.Th>Timed Out</Table.Th>
+                    <Table.Th>Completed Late</Table.Th>
                     <Table.Th>Actions</Table.Th>
                   </Table.Tr>
                 </Table.Thead>
@@ -371,6 +374,8 @@ export function DataManagementItem({ studyId, refresh }: { studyId: string, refr
                         <Table.Td>{renderParticipantCount(key, snapshotItem.participantCounts, 'completed')}</Table.Td>
                         <Table.Td>{renderParticipantCount(key, snapshotItem.participantCounts, 'inProgress')}</Table.Td>
                         <Table.Td>{renderParticipantCount(key, snapshotItem.participantCounts, 'rejected')}</Table.Td>
+                        <Table.Td>{renderParticipantCount(key, snapshotItem.participantCounts, 'timedOut')}</Table.Td>
+                        <Table.Td>{renderParticipantCount(key, snapshotItem.participantCounts, 'completedLate')}</Table.Td>
                         <Table.Td>
                           <Flex>
                             <Tooltip label="Rename">

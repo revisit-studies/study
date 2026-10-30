@@ -82,11 +82,17 @@ class TestStorageEngine extends StorageEngine {
 
   protected _claimSequenceAssignment = vi.fn(async () => { });
 
+  protected _markSequenceAssignmentTimedOut = vi.fn(async () => false);
+
+  protected _getServerTimeMs = vi.fn(async () => Date.now());
+
   protected async _runWithLock<T>(_lockKey: string, operation: () => Promise<T>) {
     return await operation();
   }
 
   protected _setModesDocument = vi.fn(async () => { });
+
+  protected _updateModesFields = vi.fn(async () => { });
 
   protected _setMode = vi.fn(async () => { });
 
@@ -205,6 +211,7 @@ export function makeParticipant(overrides: Partial<ParticipantDataWithStatus> & 
       ip: null,
     },
     completed: false,
+    timedOut: false,
     rejected: false,
     participantTags: [],
     stage: 'DEFAULT',

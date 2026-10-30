@@ -8,6 +8,9 @@ import { StudyConfig } from '../../parser/types';
 import { DISTINCT_COLOR_PALETTE } from '../../utils/colors';
 import { ParticipantMetadata, Sequence, StoredProvenance } from '../../store/types';
 import { ParticipantData, ParticipantDataWithStatus } from '../types';
+import {
+  countParticipantStatuses, getSequenceAssignmentStatus, statusConsumesCapacity,
+} from '../participantStatus';
 import { hash, isParticipantData } from './utils/storageEngineHelpers';
 import { shouldPreferCachedParticipantData } from './utils/participantDataRecovery';
 import { RevisitNotification } from '../../utils/notifications';
@@ -44,6 +47,8 @@ export type SequenceAssignment = {
   claimed: boolean;
   claimedParticipantId?: string; // The original rejected participant whose slot this assignment is reusing.
   completed: number | null;
+  /** The time this allocation stopped consuming capacity. Unlike rejection, the participant may still finish. */
+  autoTimedOutAt?: number;
   createdTime: number;
   total: number; // Total number of questions/steps
   answered: string[]; // Number of answered questions
@@ -60,8 +65,17 @@ export type SequenceAssignment = {
 
 export type REVISIT_MODE = 'dataCollectionEnabled' | 'developmentModeEnabled' | 'dataSharingEnabled';
 
-export function cleanupModes(modes: Record<string, boolean>): Record<REVISIT_MODE, boolean> {
-  const cleanedModes: Record<string, boolean> = { ...modes };
+export type RuntimeStudySettings = Record<REVISIT_MODE, boolean> & {
+  stage?: StageData;
+  /** Undefined disables lazy participant timeouts. */
+  autoTimeoutMinutes?: number;
+};
+
+/** The study's runtime settings without the stage data stored alongside them. */
+export type StudyModes = Omit<RuntimeStudySettings, 'stage'>;
+
+export function cleanupModes(modes: Record<string, unknown>): Record<REVISIT_MODE, boolean> {
+  const cleanedModes: Record<string, unknown> = { ...modes };
 
   if ('studyNavigatorEnabled' in modes && !('developmentModeEnabled' in modes)) {
     cleanedModes.developmentModeEnabled = modes.studyNavigatorEnabled;
@@ -81,6 +95,8 @@ export interface StageInfo {
   color: string;
   /** Maximum number of non-rejected participants allowed in this stage. Undefined means unlimited. */
   maxParticipants?: number;
+  /** Whether the saved maximum is enforced. Undefined preserves the legacy behavior of enabling any defined maximum. */
+  participantLimitEnabled?: boolean;
   /** Condition definitions registered for this stage; append-only after its first assignment. */
   conditionKeys?: string[];
   /** Disabled between-subjects condition keys. Undefined means every condition is enabled. */
@@ -98,10 +114,17 @@ export interface StageUpdates {
   color?: string;
   conditionKeys?: string[];
   maxParticipants?: number | null;
+  participantLimitEnabled?: boolean | null;
   disabledBetweenSubjectsCombinations?: string[] | null;
   desiredParticipantsByCombination?: Record<string, number> | null;
   participantAssignmentMode?: 'even' | 'manual' | null;
   manualDesiredParticipantsByCombination?: Record<string, number> | null;
+}
+
+export function isStageParticipantLimitEnabled(
+  stage: StageInfo,
+): stage is StageInfo & { maxParticipants: number } {
+  return stage.maxParticipants !== undefined && stage.participantLimitEnabled !== false;
 }
 
 export function applyStageUpdates(data: StageData, stageName: string, updates: StageUpdates): StageData {
@@ -155,7 +178,7 @@ export interface StageData {
 }
 
 export type ModesAndStageData = {
-  modes: Record<REVISIT_MODE, boolean>;
+  modes: StudyModes;
   stageData: StageData;
   sequenceArray?: Sequence[];
 };
@@ -174,13 +197,18 @@ export interface ConditionData {
 
 const defaultStageColor = DISTINCT_COLOR_PALETTE[0];
 
+/** Whether an allocation still counts against the study's participant limits. */
+export function consumesCapacity(assignment: SequenceAssignment) {
+  return statusConsumesCapacity(getSequenceAssignmentStatus(assignment));
+}
+
 // Admission and stage policy changes share one lock so a participant cannot be
 // committed against a stage configuration that changed mid-assignment.
 const ADMISSION_POLICY_LOCK_KEY = 'participant-assignment';
 
 export function getStageParticipantCounts(sequenceAssignments: SequenceAssignment[]) {
   return sequenceAssignments.reduce<Record<string, number>>((counts, assignment) => {
-    if (!assignment.rejected) {
+    if (consumesCapacity(assignment)) {
       counts[assignment.stage] = (counts[assignment.stage] || 0) + 1;
     }
     return counts;
@@ -210,8 +238,10 @@ export function assertAppendOnlyConditions(previousKeys: string[], nextKeys: str
 }
 
 export function validateStageParticipantLimits(stage: StageInfo, assignments: SequenceAssignment[], previousStage?: StageInfo) {
-  const active = assignments.filter((assignment) => assignment.stage === stage.stageName && !assignment.rejected);
-  if (stage.maxParticipants !== undefined && stage.maxParticipants !== previousStage?.maxParticipants && stage.maxParticipants < active.length) {
+  const active = assignments.filter((assignment) => assignment.stage === stage.stageName && consumesCapacity(assignment));
+  if (isStageParticipantLimitEnabled(stage)
+    && (stage.maxParticipants !== previousStage?.maxParticipants || !previousStage || !isStageParticipantLimitEnabled(previousStage))
+    && stage.maxParticipants < active.length) {
     throw new Error(`The stage maximum cannot be below the ${active.length} participants already assigned`);
   }
   const targets = stage.participantAssignmentMode === 'even'
@@ -253,7 +283,7 @@ export function getDesiredParticipantCountsByCombination(
   sequenceArray: Sequence[],
   betweenSubjects: string[],
 ) {
-  if (betweenSubjects.length === 0) {
+  if (!isStageParticipantLimitEnabled(stage) || betweenSubjects.length === 0) {
     return undefined;
   }
 
@@ -303,8 +333,8 @@ export function getLeastServedSequence(
   const combinationSequences = sequences.filter((sequence) => (
     getBetweenSubjectsCombinationKey(sequence.parameters, betweenSubjects) === combinationKey
   ));
-  // Rejections free a particular row, so choose the least-used active row rather
-  // than advancing by a count that loses track of which order was rejected.
+  // Released allocations free a particular row, so choose the least-used active
+  // row rather than advancing past the order that needs a replacement.
   return combinationSequences.reduce((leastUsed, sequence) => (
     sequenceCounts.get(sequence)! < sequenceCounts.get(leastUsed)! ? sequence : leastUsed
   ));
@@ -394,13 +424,48 @@ type ProgressDataWrite = {
 
 export type StageAllocation = { count: number; combinationCounts: Record<string, number>; rowCounts: Record<string, number> };
 
-export function getStageAllocationFromAssignments(all: SequenceAssignment[], stage: string): StageAllocation {
-  const assignments = all.filter((assignment) => assignment.stage === stage && !assignment.rejected);
+export type SequenceRowContext = { configHash: string; sequenceCount: number };
+
+export class LegacyAutoTimeoutStageError extends Error {
+  constructor() {
+    super('This stage contains legacy assignments without saved order information. Create and activate a new stage before enabling auto-timeout.');
+    this.name = 'LegacyAutoTimeoutStageError';
+  }
+}
+
+export function shouldValidateAutoTimeoutStage(previous: RuntimeStudySettings, next: RuntimeStudySettings): boolean {
+  return next.dataCollectionEnabled && typeof next.autoTimeoutMinutes === 'number'
+    && (next.autoTimeoutMinutes !== previous.autoTimeoutMinutes || !previous.dataCollectionEnabled
+      || next.stage?.currentStage.stageName !== previous.stage?.currentStage.stageName);
+}
+
+export function assertAutoTimeoutStageSupported(assignments: SequenceAssignment[], stage: string): void {
+  if (assignments.some((assignment) => assignment.stage === stage && consumesCapacity(assignment)
+    && !assignment.sequenceKey && assignment.sequenceIndex === undefined)) {
+    throw new LegacyAutoTimeoutStageError();
+  }
+}
+
+export function assertAutoTimeoutRestoreSupported(assignment: SequenceAssignment, modes: RuntimeStudySettings | undefined): void {
+  if (modes?.dataCollectionEnabled && modes.autoTimeoutMinutes !== undefined) {
+    assertAutoTimeoutStageSupported([{ ...assignment, rejected: false }], modes.stage?.currentStage.stageName ?? 'DEFAULT');
+  }
+}
+
+export function getStageAllocationFromAssignments(all: SequenceAssignment[], stage: string, sequenceRows?: SequenceRowContext): StageAllocation {
+  // Rejected and auto-timed-out assignments have released their slot.
+  const assignments = all.filter((assignment) => assignment.stage === stage && consumesCapacity(assignment));
   const combinationCounts: Record<string, number> = {};
   const rowCounts: Record<string, number> = {};
+  if (sequenceRows && all.some((assignment) => assignment.stage === stage && assignment.autoTimedOutAt !== undefined)) {
+    assertAutoTimeoutStageSupported(all, stage);
+  }
   assignments.forEach((assignment) => {
     if (assignment.betweenSubjectsCombinationKey) combinationCounts[assignment.betweenSubjectsCombinationKey] = (combinationCounts[assignment.betweenSubjectsCombinationKey] || 0) + 1;
-    if (assignment.sequenceKey) rowCounts[assignment.sequenceKey] = (rowCounts[assignment.sequenceKey] || 0) + 1;
+    const sequenceKey = assignment.sequenceKey || (sequenceRows && assignment.sequenceIndex !== undefined
+      ? `${sequenceRows.configHash}:${assignment.sequenceIndex % sequenceRows.sequenceCount}`
+      : undefined);
+    if (sequenceKey) rowCounts[sequenceKey] = (rowCounts[sequenceKey] || 0) + 1;
   });
   return { count: assignments.length, combinationCounts, rowCounts };
 }
@@ -548,7 +613,23 @@ export abstract class StorageEngine {
   protected abstract _undoRejectParticipantRealtime(participantId: string): Promise<void>;
 
   // Helper function to claim a sequence assignment of the given participant in the realtime database.
-  protected abstract _claimSequenceAssignment(participantId: string, sequenceAssignment: SequenceAssignment): Promise<void>;
+  protected abstract _claimSequenceAssignment(participantId: string): Promise<void>;
+
+  /**
+   * Atomically marks an eligible assignment as timed out. Returns false when a
+   * concurrent completion, rejection, or timeout made the assignment ineligible.
+   * Sweeps supply their deadline so a fresh reservation at the same ID survives.
+   */
+  protected abstract _markSequenceAssignmentTimedOut(participantId: string, timedOutAt: number, deadline?: number): Promise<boolean>;
+
+  /**
+   * The backend's current time in milliseconds. Timeout eligibility must never
+   * be decided from a participant's browser clock: this code runs when a new
+   * participant opens the study, so a clock that runs fast would time out
+   * active participants and a clock that runs slow would leave stale
+   * assignments consuming capacity.
+   */
+  protected abstract _getServerTimeMs(): Promise<number>;
 
   // Runs an operation while holding a distributed lock for this study. This is used for
   // operations whose correctness depends on multiple reads and writes, such as assigning
@@ -563,7 +644,7 @@ export abstract class StorageEngine {
   abstract connect(): Promise<void>;
 
   // Gets the modes for the given studyId. The modes are stored as a record with the mode name as the key and a boolean value indicating whether the mode is enabled or not.
-  abstract getModes(studyId: string): Promise<Record<REVISIT_MODE, boolean> & { stage?: StageData }>;
+  abstract getModes(studyId: string): Promise<RuntimeStudySettings>;
 
   // Read modes for an access decision without creating a missing Supabase record.
   async getAccessModes(studyId: string): Promise<(Record<REVISIT_MODE, boolean> & { stage?: StageData }) | null> {
@@ -583,6 +664,17 @@ export abstract class StorageEngine {
   // Engine primitive for setMode. Callers must hold the admission policy lock.
   protected abstract _setMode(studyId: string, mode: REVISIT_MODE, value: boolean): Promise<void>;
 
+  async setAutoTimeoutMinutes(studyId: string, minutes: number | undefined): Promise<void> {
+    if (minutes !== undefined && (!Number.isInteger(minutes) || minutes < 1)) {
+      throw new Error('Auto-timeout must be a whole number of minutes greater than zero');
+    }
+    // Write only this field. Rewriting the whole settings document from a copy
+    // read earlier would drop a stage or mode update that landed in between.
+    // Coordinate enabling with rejection restoration and its rollback, so a
+    // legacy assignment cannot become active after the compatibility check.
+    await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, () => this._updateModesFields(studyId, { autoTimeoutMinutes: minutes }));
+  }
+
   // Gets the landing-page visibility for the given studyId. This method is used to check whether the study is hidden from the landing page or not.
   abstract getStudyHiddenFromLandingPage(studyId: string): Promise<boolean>;
 
@@ -590,7 +682,42 @@ export abstract class StorageEngine {
   abstract setStudyHiddenFromLandingPage(studyId: string, hidden: boolean): Promise<void>;
 
   // Protected helper: Sets the full modes document (including stage data and mode flags)
-  protected abstract _setModesDocument(studyId: string, modesDocument: Record<REVISIT_MODE, boolean> & { stage?: StageData }): Promise<void>;
+  protected abstract _setModesDocument(studyId: string, modesDocument: RuntimeStudySettings): Promise<void>;
+
+  /**
+   * Protected helper: merges the given settings fields into the stored document
+   * without touching the fields it was not given. A field set to `undefined` is
+   * removed from the stored document.
+   *
+   * Backends that store the settings as one opaque value cannot merge, so this
+   * default serializes the read-modify-write behind the settings lock. A backend
+   * that can merge field by field should override it and skip the lock.
+   */
+  protected async _updateModesFields(studyId: string, fields: Partial<RuntimeStudySettings>): Promise<void> {
+    await this._runWithLock('study-settings', async () => {
+      const modes = await this._readModesForUpdate(studyId);
+      const updatedModes: Record<string, unknown> = { ...modes };
+      Object.entries(fields).forEach(([field, value]) => {
+        if (value === undefined) {
+          delete updatedModes[field];
+        } else {
+          updatedModes[field] = value;
+        }
+      });
+      const settings = updatedModes as RuntimeStudySettings;
+      if (shouldValidateAutoTimeoutStage(modes, settings)) {
+        assertAutoTimeoutStageSupported(await this.getAllSequenceAssignments(studyId), settings.stage?.currentStage.stageName ?? 'DEFAULT');
+      }
+      await this._setModesDocument(studyId, settings);
+    });
+  }
+
+  // Protected helper: reads the settings that `_updateModesFields` merges into
+  // while it holds the settings lock. An engine whose `getModes` takes that lock
+  // must override this to read without it.
+  protected async _readModesForUpdate(studyId: string): Promise<RuntimeStudySettings> {
+    return await this.getModes(studyId);
+  }
 
   // Gets the audio URL for the given task and participantId. This method is used to fetch the audio file from the storage engine.
   protected abstract _getAudioUrl(task: string, participantId?: string): Promise<string | null>;
@@ -758,10 +885,7 @@ export abstract class StorageEngine {
     const { stage, ...modeValues } = modesDoc;
 
     if (stage) {
-      return {
-        modes: modeValues as Record<REVISIT_MODE, boolean>,
-        stageData: stage,
-      };
+      return { modes: modeValues, stageData: stage };
     }
 
     const defaultStageData: StageData = {
@@ -769,15 +893,9 @@ export abstract class StorageEngine {
       allStages: [{ stageName: 'DEFAULT', color: defaultStageColor }],
     };
 
-    await this._setModesDocument(studyId, {
-      ...(modeValues as Record<REVISIT_MODE, boolean>),
-      stage: defaultStageData,
-    });
+    await this._updateModesFields(studyId, { stage: defaultStageData });
 
-    return {
-      modes: modeValues as Record<REVISIT_MODE, boolean>,
-      stageData: defaultStageData,
-    };
+    return { modes: modeValues, stageData: defaultStageData };
   }
 
   private clearPendingParticipantDataWriteTimer() {
@@ -1151,12 +1269,7 @@ export abstract class StorageEngine {
 
     modesDoc.stage.currentStage = { stageName, color };
 
-    const updatedModesDoc = {
-      ...modesDoc,
-      stage: modesDoc.stage,
-    };
-
-    await this._setModesDocument(studyId, updatedModesDoc);
+    await this._updateModesFields(studyId, { stage: modesDoc.stage });
   }
 
   // Updating stage color
@@ -1234,7 +1347,9 @@ export abstract class StorageEngine {
     if (assignments.some((assignment) => assignment.stage === stageName)) {
       assertAppendOnlyConditions(modes.stage.allStages.find((item) => item.stageName === stageName)!.conditionKeys || [], stage.conditionKeys || []);
     }
-    await this._setModesDocument(studyId, { ...modes, stage: data });
+    // Write only the stage, so a concurrently saved setting such as the
+    // auto-timeout is not replaced with the copy read above.
+    await this._updateModesFields(studyId, { stage: data });
   }
 
   protected async validateStageConditions(studyId: string, keys: string[]) {
@@ -1366,12 +1481,13 @@ export abstract class StorageEngine {
     }
     const betweenSubjects = config.betweenSubjects || [];
     const keys = getConfigConditionKeys(config);
-    const state = await this.getStageAllocation(stage.stageName, keys);
+    const state = await this.getStageAllocation(stage.stageName, keys, modes.dataCollectionEnabled && betweenSubjects.length === 0
+      ? { configHash: participantConfigHash, sequenceCount: sequences.length } : undefined);
     if (JSON.stringify(stage.conditionKeys) !== JSON.stringify(keys)) {
       if (stage.conditionKeys?.length && await this.hasStageAssignments(stage.stageName)) assertAppendOnlyConditions(stage.conditionKeys || [], keys);
-      await this._setModesDocument(this.studyId, { ...modes, stage: applyStageUpdates(stageData, stage.stageName, { conditionKeys: keys }) });
+      await this._updateModesFields(this.studyId, { stage: applyStageUpdates(stageData, stage.stageName, { conditionKeys: keys }) });
     }
-    if (modes.dataCollectionEnabled && stage.maxParticipants !== undefined && state.count >= stage.maxParticipants) {
+    if (modes.dataCollectionEnabled && isStageParticipantLimitEnabled(stage) && state.count >= stage.maxParticipants) {
       throw new StageCapacityExceededError(stage.stageName);
     }
     const enabled = sequences.filter((row) => isSequenceEnabledForStage(row, stage, betweenSubjects));
@@ -1405,14 +1521,61 @@ export abstract class StorageEngine {
         sequenceKey: `${participantConfigHash}:${sequences.indexOf(balancedRow)}`,
       } : {}),
     });
-    const currentRow = balancedRow ?? eligible[allocation.sequenceIndex % eligible.length];
+    const completeRowCounts = Object.values(state.rowCounts).reduce((total, count) => total + count, 0) === state.count;
+    const currentRow = balancedRow ?? (completeRowCounts
+      ? getLeastServedSequence(eligible, state.combinationCounts, targets, betweenSubjects, state.count, rowCounts)
+      : eligible[allocation.sequenceIndex % eligible.length]);
     if (!balancedRow) {
-      await this._updateSequenceAssignmentFields(this.currentParticipantId, {
+      await this.updateSequenceAssignmentFieldsLocked(this.currentParticipantId, {
         sequenceKey: `${participantConfigHash}:${sequences.indexOf(currentRow)}`,
         betweenSubjectsCombinationKey: getBetweenSubjectsCombinationKey(currentRow.parameters, betweenSubjects),
       });
     }
     return { currentRow, creationIndex: allocation.creationIndex + 1 };
+  }
+
+  private async timeoutExpiredAssignments(modes: StudyModes, stage: string): Promise<void> {
+    const timeoutMinutes = modes.autoTimeoutMinutes;
+    if (!modes.dataCollectionEnabled || timeoutMinutes === undefined) {
+      return;
+    }
+
+    const assignments = await this.getAllSequenceAssignments(this.studyId!);
+    assertAutoTimeoutStageSupported(assignments, stage);
+
+    // `createdTime` is written by the backend in the cloud engines, so the
+    // deadline it is compared against has to come from the backend too.
+    const serverNow = await this._getServerTimeMs();
+    const deadline = serverNow - timeoutMinutes * 60_000;
+    const expiredAssignments = assignments.filter((assignment) => (
+      assignment.stage === stage
+      && consumesCapacity(assignment)
+      && assignment.completed === null
+      && Number.isFinite(assignment.createdTime)
+      && assignment.createdTime <= deadline
+    ));
+
+    // Each engine rechecks eligibility in the same operation that writes, so a
+    // participant who finished or was rejected in the meantime keeps their slot.
+    for (const assignment of expiredAssignments) {
+      // Process serially so a failed mutation prevents any subsequent capacity
+      // calculation from using an uncertain allocation state.
+      // eslint-disable-next-line no-await-in-loop
+      await this._markSequenceAssignmentTimedOut(assignment.participantId, serverNow, deadline);
+    }
+  }
+
+  // Patches an assignment while holding its participant lock. Some engines
+  // rewrite the whole record, so an unlocked patch could erase a completion,
+  // rejection, or timeout written in the meantime. Callers that already hold
+  // the participant lock call `_updateSequenceAssignmentFields` directly.
+  private async updateSequenceAssignmentFieldsLocked(
+    participantId: string,
+    updatedFields: Partial<SequenceAssignment>,
+  ) {
+    await this._runWithLock(`participant-${participantId}`, async () => {
+      await this._updateSequenceAssignmentFields(participantId, updatedFields);
+    });
   }
 
   // Releases a sequence assignment created for the current participant during a
@@ -1442,7 +1605,7 @@ export abstract class StorageEngine {
   // belong to an initialization that is still in progress.
   protected async releaseOrphanedSequenceAssignment(participantId: string) {
     const assignment = await this._getSequenceAssignment(participantId);
-    if (assignment && !assignment.rejected) {
+    if (assignment && consumesCapacity(assignment)) {
       await this._rejectParticipantRealtime(participantId);
     }
   }
@@ -1539,8 +1702,9 @@ export abstract class StorageEngine {
 
       const { modes, stageData } = await this.getModesAndStageData(this.studyId!, this.cloudEngine ? undefined : bootstrapData?.modesDocument);
       const currentStage = stageData.currentStage.stageName;
+      await this.timeoutExpiredAssignments(modes, currentStage);
       const currentStageInfo = stageData.allStages.find((stage) => stage.stageName === currentStage);
-      if (!this.hasAtomicSequenceReservation && modes.dataCollectionEnabled && (!existingReservation || existingReservation.rejected) && currentStageInfo?.maxParticipants !== undefined) {
+      if (!this.hasAtomicSequenceReservation && modes.dataCollectionEnabled && (!existingReservation || existingReservation.rejected) && currentStageInfo && isStageParticipantLimitEnabled(currentStageInfo)) {
         const stageParticipantCounts = await this.getStageAllocation(currentStage, getConfigConditionKeys(config));
         if (stageParticipantCounts.count >= currentStageInfo.maxParticipants) {
           throw new StageCapacityExceededError(currentStage);
@@ -1779,7 +1943,7 @@ export abstract class StorageEngine {
       throw new Error('Participant not initialized');
     }
 
-    await this._updateSequenceAssignmentFields(
+    await this.updateSequenceAssignmentFieldsLocked(
       this.currentParticipantId,
       { conditions: this.participantData.conditions },
     );
@@ -1787,17 +1951,19 @@ export abstract class StorageEngine {
 
   // Rejects a participant with the given participantId and reason.
   async timeoutParticipant(participantId: string): Promise<void> {
-    await this._runWithLock(`participant-${participantId}`, async () => {
+    await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, () => this._runWithLock(`participant-${participantId}`, async () => {
       const assignment = await this._getSequenceAssignment(participantId);
-      if (!assignment || assignment.completed !== null || assignment.rejected) return;
+      // An auto-timed-out participant has already released their slot and may
+      // still finish, so a manual timeout must not turn them into a rejection.
+      if (!assignment || assignment.completed !== null || assignment.rejected || assignment.autoTimedOutAt !== undefined) return;
       await this.rejectParticipantUnlocked(participantId, 'Timed out by admin', true);
-    });
+    }));
   }
 
   async rejectParticipant(participantId: string, reason: string): Promise<void> {
-    const participantRecordMissing = await this._runWithLock(`participant-${participantId}`, () => (
+    const participantRecordMissing = await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, () => this._runWithLock(`participant-${participantId}`, () => (
       this.rejectParticipantUnlocked(participantId, reason)
-    ));
+    )));
 
     if (!participantRecordMissing) {
       return;
@@ -1931,6 +2097,10 @@ export abstract class StorageEngine {
         throw new Error('Cannot undo rejection after the participant slot has been reassigned');
       }
 
+      if (assignment?.rejected) {
+        assertAutoTimeoutRestoreSupported(assignment, await this.getModes(this.studyId!));
+      }
+
       const participant = participantId === this.currentParticipantId && this.participantData
         ? this.participantData
         : await this._getFromStorage(
@@ -2002,6 +2172,7 @@ export abstract class StorageEngine {
         return {
           ...participantData,
           completed: assignment.completed !== null,
+          timedOut: assignment.autoTimedOutAt !== undefined,
           assignmentCreatedTime: assignment.createdTime,
         } satisfies ParticipantDataWithStatus;
       }
@@ -2015,16 +2186,12 @@ export abstract class StorageEngine {
   async getParticipantsStatusCounts(studyId: string) {
     const sequenceAssignments = await this.getAllSequenceAssignments(studyId);
 
-    const completed = sequenceAssignments.filter((assignment) => assignment.completed && !assignment.rejected).length;
-    const rejected = sequenceAssignments.filter((assignment) => assignment.rejected).length;
-    const inProgress = sequenceAssignments.length - completed - rejected;
+    const counts = countParticipantStatuses(sequenceAssignments, getSequenceAssignmentStatus);
     const minTime = sequenceAssignments.length > 0 ? sequenceAssignments[0].timestamp : null;
     const maxTime = sequenceAssignments.length > 0 ? sequenceAssignments.at(-1)!.timestamp : null;
 
     return {
-      completed,
-      rejected,
-      inProgress,
+      ...counts,
       minTime,
       maxTime,
     };
@@ -2160,15 +2327,17 @@ export abstract class StorageEngine {
     this.pendingProgressDataWrite = progressDataWrite;
 
     try {
-      const existingAssignment = await this._getSequenceAssignment(targetParticipantId);
+      await this._runWithLock(`participant-${targetParticipantId}`, async () => {
+        const existingAssignment = await this._getSequenceAssignment(targetParticipantId);
 
-      if (existingAssignment) {
-        await this._updateSequenceAssignmentFields(targetParticipantId, {
-          total: progressData.total,
-          answered: progressData.answered,
-          isDynamic: progressData.isDynamic,
-        });
-      }
+        if (existingAssignment) {
+          await this._updateSequenceAssignmentFields(targetParticipantId, {
+            total: progressData.total,
+            answered: progressData.answered,
+            isDynamic: progressData.isDynamic,
+          });
+        }
+      });
 
       if (this.pendingProgressDataWrite === progressDataWrite) {
         this.pendingProgressDataWrite = undefined;
@@ -2896,7 +3065,9 @@ export abstract class StorageEngine {
 
   protected async hasStageAssignments(stage: string): Promise<boolean> { return (await this.getAllSequenceAssignments(this.studyId!)).some((assignment) => assignment.stage === stage); }
 
-  protected async getStageAllocation(stage: string, _conditionKeys: string[] = []): Promise<StageAllocation> { return getStageAllocationFromAssignments(await this.getAllSequenceAssignments(this.studyId!), stage); }
+  protected async getStageAllocation(stage: string, _conditionKeys: string[] = [], sequenceRows?: SequenceRowContext): Promise<StageAllocation> {
+    return getStageAllocationFromAssignments(await this.getAllSequenceAssignments(this.studyId!), stage, sequenceRows);
+  }
 }
 
 export type UserManagementData = { authentication?: { isEnabled: boolean }; adminUsers?: { adminUsersList: StoredUser[] } };

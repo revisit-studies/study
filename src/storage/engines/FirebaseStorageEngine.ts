@@ -15,7 +15,7 @@ import {
 } from '@firebase/auth';
 import { isParticipantData, rebuildSequenceAllocator, retrySequenceAllocation } from './utils/storageEngineHelpers';
 import {
-  StageAllocation, CloudStorageEngine, REVISIT_MODE, StorageObjectType, StorageObject, UserManagementData, SequenceAssignment, SnapshotDocContent, StoredUser, cleanupModes, ModesAndStageData, StageInfo, StageUpdates, StageData, applyStageUpdates, StageCapacityExceededError, StageNoAvailableConditionsError, StageOnlyDisabledConditionsHaveCapacityError, getBetweenSubjectsCombinationKey, getConfigConditionKeys, getDesiredParticipantCountsByCombination, getLeastServedSequence, getStageParticipantCounts, isSequenceEnabledForStage, assertAppendOnlyConditions, validateStageParticipantLimits, SequenceAssignmentAllocation, SequenceAllocator,
+  assertAutoTimeoutRestoreSupported, shouldValidateAutoTimeoutStage, assertAutoTimeoutStageSupported, StageAllocation, CloudStorageEngine, REVISIT_MODE, StorageObjectType, StorageObject, UserManagementData, SequenceAssignment, SnapshotDocContent, StoredUser, RuntimeStudySettings, cleanupModes, consumesCapacity, isStageParticipantLimitEnabled, ModesAndStageData, StageInfo, StageUpdates, StageData, applyStageUpdates, StageCapacityExceededError, StageNoAvailableConditionsError, StageOnlyDisabledConditionsHaveCapacityError, getBetweenSubjectsCombinationKey, getConfigConditionKeys, getDesiredParticipantCountsByCombination, getLeastServedSequence, getStageAllocationFromAssignments, getStageParticipantCounts, isSequenceEnabledForStage, assertAppendOnlyConditions, validateStageParticipantLimits, SequenceAssignmentAllocation, SequenceAllocator,
 } from './types';
 import { EditedText, TaglessEditedText } from '../../analysis/individualStudy/thinkAloud/types';
 import { DISTINCT_COLOR_PALETTE } from '../../utils/colors';
@@ -24,6 +24,8 @@ import { Sequence } from '../../store/types';
 import { ParticipantData } from '../types';
 import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
 import { fetchFreshStorageObject } from './utils/fetchFreshStorageObject';
+
+type FirebaseStageAllocation = StageAllocation & { hasUnkeyedAssignments?: boolean };
 
 type AllocationState = {
   revision: number;
@@ -78,7 +80,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     if (state.hasAllocator) transaction.set(doc(studyCollection, 'sequenceAssignmentAllocator'), { ...state.allocator, nextCreationIndex: state.nextCreationIndex });
     const rowCounts: Record<string, number> = {};
     const counts: Record<string, number> = {};
-    state.assignments.filter((assignment) => assignment.stage === stage && !assignment.rejected).forEach((assignment) => {
+    state.assignments.filter((assignment) => assignment.stage === stage && consumesCapacity(assignment)).forEach((assignment) => {
       if (assignment.sequenceKey) rowCounts[assignment.sequenceKey] = (rowCounts[assignment.sequenceKey] || 0) + 1;
       const key = assignment.betweenSubjectsCombinationKey;
       if (key !== undefined) counts[key] = (counts[key] || 0) + 1;
@@ -87,8 +89,10 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       count: getStageParticipantCounts(state.assignments)[stage] || 0,
       combinationCounts: counts,
       rowCounts,
+      hasUnkeyedAssignments: state.assignments.some((assignment) => assignment.stage === stage && consumesCapacity(assignment)
+        && !assignment.sequenceKey && assignment.sequenceIndex === undefined),
       ...(conditionKeys === undefined ? {} : { conditionKeys }),
-    }, { mergeFields: ['count', 'combinationCounts', 'rowCounts', ...(conditionKeys === undefined ? [] : ['conditionKeys'])] });
+    }, { mergeFields: ['count', 'combinationCounts', 'rowCounts', 'hasUnkeyedAssignments', ...(conditionKeys === undefined ? [] : ['conditionKeys'])] });
   }
 
   protected override async _getSequence(conditions: string[] | undefined, bootstrapData: ModesAndStageData, config: StudyConfig, participantConfigHash: string) {
@@ -142,7 +146,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
         const stageSnapshot = await transaction.get(this.stageAllocationReference(stage.stageName));
         const source = candidate ? (await transaction.get(this.assignmentReference(candidate.id))).data() as SequenceAssignment | undefined : undefined;
         if (!stageSnapshot.exists()) return null;
-        const state = { rowCounts: {}, ...stageSnapshot.data() } as StageAllocation;
+        const state = { rowCounts: {}, ...stageSnapshot.data() } as FirebaseStageAllocation;
         if (own && !own.rejected) {
           const prefix = `${participantConfigHash}:`;
           const row = own.sequenceKey?.startsWith(prefix) ? sequences[Number(own.sequenceKey.slice(prefix.length))]
@@ -153,8 +157,18 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
             currentRow: row, creationIndex: own.creationIndex + 1, stage: own.stage, reservationToken,
           };
         }
+        if (isStageParticipantLimitEnabled(stage) && state.count >= stage.maxParticipants) throw new StageCapacityExceededError(stage.stageName);
+        if (!betweenSubjects.length && !state.hasUnkeyedAssignments && Object.values(state.rowCounts).reduce((total, count) => total + count, 0) !== state.count) {
+          // Cache when legacy rows cannot be reconstructed, so each newcomer
+          // does not repeat the same full-history scan with timeout disabled.
+          const history = await this.readAllocation(transaction);
+          state.hasUnkeyedAssignments = history.assignments.some((assignment) => assignment.stage === stage.stageName && consumesCapacity(assignment)
+            && !assignment.sequenceKey && assignment.sequenceIndex === undefined);
+          state.rowCounts = getStageAllocationFromAssignments(history.assignments, stage.stageName, {
+            configHash: participantConfigHash, sequenceCount: sequences.length,
+          }).rowCounts;
+        }
         if (stage.conditionKeys?.length && JSON.stringify(stage.conditionKeys) !== JSON.stringify(conditionKeys) && await this.hasStageAssignments(stage.stageName)) assertAppendOnlyConditions(stage.conditionKeys || [], conditionKeys);
-        if (stage.maxParticipants !== undefined && state.count >= stage.maxParticipants) throw new StageCapacityExceededError(stage.stageName);
         const enabled = sequences.filter((row) => isSequenceEnabledForStage(row, stage, betweenSubjects));
         if (!enabled.length) throw new StageNoAvailableConditionsError(stage.stageName);
         const targets = getDesiredParticipantCountsByCombination(stage, sequences, betweenSubjects);
@@ -168,7 +182,10 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
         const sequenceIndex = source ? source.reusableSequenceIndex ?? source.sequenceIndex ?? legacyIndex : allocator.availableSequenceIndexes?.[0] ?? allocator.nextSequenceIndex;
         if (sequenceIndex === undefined) throw new Error('Unable to determine sequence assignment index');
         const rowCounts = new Map(sequences.map((row, index) => [row, state.rowCounts[`${participantConfigHash}:${index}`] || 0]));
-        const row = betweenSubjects.length ? getLeastServedSequence(eligible, state.combinationCounts, targets, betweenSubjects, state.count, rowCounts) : eligible[sequenceIndex % eligible.length];
+        const completeRowCounts = Object.values(state.rowCounts).reduce((total, count) => total + count, 0) === state.count;
+        const row = betweenSubjects.length || completeRowCounts
+          ? getLeastServedSequence(eligible, state.combinationCounts, targets, betweenSubjects, state.count, rowCounts)
+          : eligible[sequenceIndex % eligible.length];
         const key = getBetweenSubjectsCombinationKey(row.parameters, betweenSubjects);
         const sequenceKey = `${participantConfigHash}:${sequences.indexOf(row)}`;
         const assignment: SequenceAssignment = {
@@ -204,6 +221,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
           combinationCounts: { ...state.combinationCounts, [key]: (state.combinationCounts[key] || 0) + 1 },
           rowCounts: { ...state.rowCounts, [sequenceKey]: (state.rowCounts[sequenceKey] || 0) + 1 },
           conditionKeys,
+          hasUnkeyedAssignments: state.hasUnkeyedAssignments ?? false,
         });
         transaction.set(doc(this.studyCollection, 'allocation'), { revision: (revision.data()?.revision || 0) + 1, nextCreationIndex: allocator.nextCreationIndex + 1 });
         transaction.set(modesReference, { stage: { ...stages, allStages: stages.allStages.map((item) => (item.stageName === stage.stageName ? { ...item, conditionKeys } : item)) } }, { merge: true });
@@ -406,6 +424,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
         timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toMillis() : data.timestamp,
         createdTime: data.createdTime instanceof Timestamp ? data.createdTime.toMillis() : data.createdTime,
         completed: data.completed instanceof Timestamp ? data.completed.toMillis() : data.completed,
+        autoTimedOutAt: data.autoTimedOutAt instanceof Timestamp ? data.autoTimedOutAt.toMillis() : data.autoTimedOutAt,
       } as SequenceAssignment))
       .sort((a, b) => a.timestamp - b.timestamp);
   }
@@ -445,6 +464,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
           timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toMillis() : data.timestamp,
           createdTime: data.createdTime instanceof Timestamp ? data.createdTime.toMillis() : data.createdTime,
           completed: data.completed instanceof Timestamp ? data.completed.toMillis() : data.completed,
+          autoTimedOutAt: data.autoTimedOutAt instanceof Timestamp ? data.autoTimedOutAt.toMillis() : data.autoTimedOutAt,
         } as SequenceAssignment))
         .sort((a, b) => a.timestamp - b.timestamp);
 
@@ -548,6 +568,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toMillis() : data.timestamp,
       createdTime: data.createdTime instanceof Timestamp ? data.createdTime.toMillis() : data.createdTime,
       completed: data.completed instanceof Timestamp ? data.completed.toMillis() : data.completed,
+      autoTimedOutAt: data.autoTimedOutAt instanceof Timestamp ? data.autoTimedOutAt.toMillis() : data.autoTimedOutAt,
     } as SequenceAssignment;
   }
 
@@ -592,9 +613,32 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
 
     await acquireLock(0);
 
+    let lockRefreshError: unknown;
+    const refreshLock = async () => {
+      const now = Date.now();
+      await runTransaction(this.firestore, async (transaction) => {
+        const snapshot = await transaction.get(lockDocument);
+        const existingLock = snapshot.data()?.[lockKey] as { token?: string } | undefined;
+        if (existingLock?.token !== token) {
+          throw new Error('Study update lock was lost');
+        }
+        transaction.update(lockDocument, new FieldPath(lockKey), { token, expiresAt: now + expiresInMs });
+      });
+    };
+    const refreshTimer = setInterval(() => {
+      refreshLock().catch((error) => {
+        lockRefreshError ??= error;
+      });
+    }, expiresInMs / 3);
+
     try {
-      return await operation();
+      const result = await operation();
+      if (lockRefreshError) {
+        throw lockRefreshError;
+      }
+      return result;
     } finally {
+      clearInterval(refreshTimer);
       await runTransaction(this.firestore, async (transaction) => {
         const snapshot = await transaction.get(lockDocument);
         const existingLock = snapshot.data()?.[lockKey] as { token?: string } | undefined;
@@ -655,7 +699,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
           return false;
         }
       }
-      if (onlyIncomplete && currentAssignment.completed !== null) return false;
+      if (onlyIncomplete && (currentAssignment.completed !== null || currentAssignment.autoTimedOutAt !== undefined)) return false;
       if (assignment.rejected) return true;
       const source = assignment.claimedParticipantId
         ? state.assignments.find((item) => item.participantId === assignment.claimedParticipantId)
@@ -665,7 +709,11 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
         assignment.reusableSequenceIndex = state.allocator.nextSequenceIndex;
         state.allocator.nextSequenceIndex += 1;
         source.claimed = false;
-        transaction.update(this.assignmentReference(source.participantId), { claimed: false, rejected: true });
+        // A timed-out source stays timed out rather than becoming rejected.
+        if (source.autoTimedOutAt === undefined) source.rejected = true;
+        transaction.update(this.assignmentReference(source.participantId), source.autoTimedOutAt === undefined
+          ? { claimed: false, rejected: true }
+          : { claimed: false });
       }
       assignment.rejected = true;
       assignment.timestamp = Date.now();
@@ -683,6 +731,8 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       if (!assignment) throw new Error('Failed to retrieve sequence assignment for current participant');
       if (!assignment.rejected) return;
       if (assignment.claimed) throw new Error('Cannot undo rejection after the participant slot has been reassigned');
+      const modes = (await transaction.get(doc(this.studyCollection, 'modes'))).data() as RuntimeStudySettings | undefined;
+      assertAutoTimeoutRestoreSupported(assignment, modes);
       const source = state.assignments.find((item) => item.participantId === assignment.claimedParticipantId);
       if (source?.claimed) throw new Error('Cannot restore a participant whose original slot has been reassigned');
       if (source) {
@@ -725,6 +775,74 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       transaction.set(doc(this.studyCollection, 'allocation'), {
         revision: state.revision + 1, nextCreationIndex: state.nextCreationIndex,
       });
+    });
+  }
+
+  protected async _getServerTimeMs(): Promise<number> {
+    await this.verifyStudyDatabase();
+    // Firestore has no clock to query, so stamp a document with the server's
+    // time and read the committed value back.
+    const serverTimeDocument = doc(this.studyCollection, 'serverTime');
+    await setDoc(serverTimeDocument, { readAt: serverTimestamp() }, { merge: true });
+    const snapshot = await getDoc(serverTimeDocument);
+    const readAt = snapshot.data()?.readAt;
+    if (!(readAt instanceof Timestamp)) {
+      throw new Error('Failed to read the server clock');
+    }
+    return readAt.toMillis();
+  }
+
+  protected async _markSequenceAssignmentTimedOut(participantId: string, timedOutAt: number, deadline?: number): Promise<boolean> {
+    if (!this.studyId) {
+      throw new Error('Study ID is not set');
+    }
+
+    // The timeout releases the slot, so it shares the allocation transaction that
+    // keeps the stage counts in step with the assignments.
+    return await runTransaction(this.firestore, async (transaction) => {
+      const assignmentSnapshot = await transaction.get(this.assignmentReference(participantId));
+      if (!assignmentSnapshot.exists()) {
+        throw new Error(`Sequence assignment for participant ${participantId} not found`);
+      }
+      const assignment = assignmentSnapshot.data() as SequenceAssignment;
+      const storedCreatedTime = assignmentSnapshot.data()!.createdTime;
+      const createdTime = storedCreatedTime instanceof Timestamp ? storedCreatedTime.toMillis() : storedCreatedTime;
+      if (
+        (deadline !== undefined && (!Number.isFinite(createdTime) || createdTime > deadline))
+        || assignment.completed !== null
+        || assignment.rejected
+        || assignment.autoTimedOutAt !== undefined
+      ) {
+        return false;
+      }
+      const allocationReference = doc(this.studyCollection, 'allocation');
+      const revision = await transaction.get(allocationReference);
+      const stageReference = this.stageAllocationReference(assignment.stage);
+      const stageSnapshot = await transaction.get(stageReference);
+      let allocation: StageAllocation;
+      if (stageSnapshot.exists()) {
+        allocation = { rowCounts: {}, ...stageSnapshot.data() } as StageAllocation;
+      } else {
+        // Bootstrap only this stage once, rather than rereading every stage's
+        // assignment history for each expired participant.
+        const assignments = await getDocsFromServer(query(
+          collection(doc(this.studyCollection, 'sequenceAssignment'), 'sequenceAssignment'),
+          where('stage', '==', assignment.stage),
+        ));
+        allocation = getStageAllocationFromAssignments(assignments.docs.map((item) => item.data() as SequenceAssignment), assignment.stage);
+      }
+
+      const combinationCounts = { ...allocation.combinationCounts };
+      const rowCounts = { ...allocation.rowCounts };
+      const key = assignment.betweenSubjectsCombinationKey;
+      if (key !== undefined) combinationCounts[key] = Math.max(0, (combinationCounts[key] || 0) - 1);
+      if (assignment.sequenceKey) rowCounts[assignment.sequenceKey] = Math.max(0, (rowCounts[assignment.sequenceKey] || 0) - 1);
+      transaction.update(this.assignmentReference(participantId), { autoTimedOutAt: serverTimestamp() });
+      transaction.set(allocationReference, { revision: (revision.data()?.revision || 0) + 1 }, { merge: true });
+      transaction.set(stageReference, { count: Math.max(0, allocation.count - 1), combinationCounts, rowCounts }, {
+        mergeFields: ['count', 'combinationCounts', 'rowCounts'],
+      });
+      return true;
     });
   }
 
@@ -804,7 +922,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     const revisitModesData = await getDoc(revisitModesDoc);
 
     if (revisitModesData.exists()) {
-      const modes = revisitModesData.data() as Record<string, boolean>;
+      const modes = revisitModesData.data() as RuntimeStudySettings;
       const needsUpdate = 'studyNavigatorEnabled' in modes || 'analyticsInterfacePubliclyAccessible' in modes;
 
       if (needsUpdate) {
@@ -827,13 +945,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
   }
 
   protected async _setMode(studyId: string, mode: REVISIT_MODE, value: boolean) {
-    const revisitModesDoc = doc(
-      this.firestore,
-      `${this.collectionPrefix}${studyId}`,
-      'modes',
-    );
-
-    return await setDoc(revisitModesDoc, { [mode]: value }, { merge: true });
+    await this._updateModesFields(studyId, { [mode]: value });
   }
 
   private async updateModesAtomically(studyId: string, update: (modes: Record<string, unknown>) => Record<string, unknown> | Promise<Record<string, unknown>>, configHash?: string) {
@@ -846,6 +958,9 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       };
       const next = await update(current);
       const stageData = next.stage as StageData | undefined;
+      if (shouldValidateAutoTimeoutStage(current as RuntimeStudySettings, next as RuntimeStudySettings)) {
+        assertAutoTimeoutStageSupported(state.assignments, stageData?.currentStage.stageName ?? 'DEFAULT');
+      }
       const previous = current.stage as StageData | undefined;
       const stageStates = stageData ? await Promise.all(stageData.allStages.map((stage) => (
         transaction.get(this.stageAllocationReference(stage.stageName, studyCollection))
@@ -906,6 +1021,16 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
 
   protected async _setModesDocument(studyId: string, modesDocument: Record<string, unknown>): Promise<void> {
     await this.updateModesAtomically(studyId, (current) => ({ ...current, ...modesDocument }));
+  }
+
+  protected async _updateModesFields(studyId: string, fields: Partial<RuntimeStudySettings>): Promise<void> {
+    // Only the given fields change, so a concurrent stage or mode update is not
+    // overwritten from a stale copy. The stage transaction also validates any
+    // stage change against the current assignments.
+    const fieldUpdates = Object.fromEntries(
+      Object.entries(fields).map(([field, value]) => [field, value === undefined ? deleteField() : value]),
+    );
+    await this.updateModesAtomically(studyId, (current) => ({ ...current, ...fieldUpdates }));
   }
 
   async getStudyHiddenFromLandingPage(studyId: string): Promise<boolean> {
@@ -1525,6 +1650,9 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     const reference = this.stageAllocationReference(stage);
     const existing = await getDoc(reference);
     if (existing.exists()) return { rowCounts: {}, ...existing.data() } as StageAllocation;
+    // These counts need not exclude auto-timeouts: every timeout updates its
+    // stage's allocation document in the same transaction, creating it if
+    // needed, so a stage without one has no timed-out assignments.
     const assignments = collection(doc(this.studyCollection, 'sequenceAssignment'), 'sequenceAssignment');
     const counts = await Promise.all([undefined, ...conditionKeys].map((key) => getCountFromServer(query(
       assignments,
