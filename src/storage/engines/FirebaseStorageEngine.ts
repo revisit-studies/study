@@ -24,6 +24,8 @@ import { Sequence } from '../../store/types';
 import { ParticipantData } from '../types';
 import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
 
+type FirebaseStageAllocation = StageAllocation & { hasUnkeyedAssignments?: boolean };
+
 type AllocationState = {
   revision: number;
   nextCreationIndex: number;
@@ -86,8 +88,10 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       count: getStageParticipantCounts(state.assignments)[stage] || 0,
       combinationCounts: counts,
       rowCounts,
+      hasUnkeyedAssignments: state.assignments.some((assignment) => assignment.stage === stage && consumesCapacity(assignment)
+        && !assignment.sequenceKey && assignment.sequenceIndex === undefined),
       ...(conditionKeys === undefined ? {} : { conditionKeys }),
-    }, { mergeFields: ['count', 'combinationCounts', 'rowCounts', ...(conditionKeys === undefined ? [] : ['conditionKeys'])] });
+    }, { mergeFields: ['count', 'combinationCounts', 'rowCounts', 'hasUnkeyedAssignments', ...(conditionKeys === undefined ? [] : ['conditionKeys'])] });
   }
 
   protected override async _getSequence(conditions: string[] | undefined, bootstrapData: ModesAndStageData, config: StudyConfig, participantConfigHash: string) {
@@ -141,7 +145,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
         const stageSnapshot = await transaction.get(this.stageAllocationReference(stage.stageName));
         const source = candidate ? (await transaction.get(this.assignmentReference(candidate.id))).data() as SequenceAssignment | undefined : undefined;
         if (!stageSnapshot.exists()) return null;
-        const state = { rowCounts: {}, ...stageSnapshot.data() } as StageAllocation;
+        const state = { rowCounts: {}, ...stageSnapshot.data() } as FirebaseStageAllocation;
         if (own && !own.rejected) {
           const prefix = `${participantConfigHash}:`;
           const row = own.sequenceKey?.startsWith(prefix) ? sequences[Number(own.sequenceKey.slice(prefix.length))]
@@ -153,10 +157,12 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
           };
         }
         if (isStageParticipantLimitEnabled(stage) && state.count >= stage.maxParticipants) throw new StageCapacityExceededError(stage.stageName);
-        if (!betweenSubjects.length && Object.values(state.rowCounts).reduce((total, count) => total + count, 0) !== state.count) {
-          // Bootstrap legacy row occupancy once; subsequent reservations persist
-          // these counts in the same transaction as the new allocation.
+        if (!betweenSubjects.length && !state.hasUnkeyedAssignments && Object.values(state.rowCounts).reduce((total, count) => total + count, 0) !== state.count) {
+          // Cache when legacy rows cannot be reconstructed, so each newcomer
+          // does not repeat the same full-history scan with timeout disabled.
           const history = await this.readAllocation(transaction);
+          state.hasUnkeyedAssignments = history.assignments.some((assignment) => assignment.stage === stage.stageName && consumesCapacity(assignment)
+            && !assignment.sequenceKey && assignment.sequenceIndex === undefined);
           state.rowCounts = getStageAllocationFromAssignments(history.assignments, stage.stageName, {
             configHash: participantConfigHash, sequenceCount: sequences.length,
           }).rowCounts;
@@ -214,6 +220,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
           combinationCounts: { ...state.combinationCounts, [key]: (state.combinationCounts[key] || 0) + 1 },
           rowCounts: { ...state.rowCounts, [sequenceKey]: (state.rowCounts[sequenceKey] || 0) + 1 },
           conditionKeys,
+          hasUnkeyedAssignments: state.hasUnkeyedAssignments ?? false,
         });
         transaction.set(doc(this.studyCollection, 'allocation'), { revision: (revision.data()?.revision || 0) + 1, nextCreationIndex: allocator.nextCreationIndex + 1 });
         transaction.set(modesReference, { stage: { ...stages, allStages: stages.allStages.map((item) => (item.stageName === stage.stageName ? { ...item, conditionKeys } : item)) } }, { merge: true });

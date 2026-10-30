@@ -823,6 +823,23 @@ describe.each([
     expect((await storageEngine.getParticipantData('finishing'))?.rejected).toBe(false);
   });
 
+  test('does not repeatedly scan fully unkeyed legacy history with timeout disabled', async () => {
+    await storageEngine.setCurrentStage(studyId, 'LEGACY', '#00AAFF');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'legacy-occupant');
+    const assignment = (await storageEngine.getSequenceAssignment(studyId, 'legacy-occupant'))!;
+    delete assignment.sequenceKey;
+    delete assignment.sequenceIndex;
+    // @ts-expect-error Seed a fully unkeyed record from an older study.
+    await storageEngine._createSequenceAssignment('legacy-occupant', assignment);
+    Object.keys(firestoreData).filter((path) => path.startsWith(`dev-${studyId}/allocation/stages/`)).forEach((path) => { delete firestoreData[path]; });
+    vi.mocked(getDocsFromServer).mockClear();
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'first-newcomer');
+    expect(getDocsFromServer).toHaveBeenCalledTimes(1);
+    vi.mocked(getDocsFromServer).mockClear();
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'second-newcomer');
+    expect(getDocsFromServer).not.toHaveBeenCalled();
+  });
+
   test('refuses a full legacy stage before downloading row history', async () => {
     await storageEngine.setCurrentStage(studyId, 'FULL', '#00AAFF', 1);
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'occupant');
