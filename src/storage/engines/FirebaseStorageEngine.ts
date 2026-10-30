@@ -167,7 +167,11 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
         const sequenceIndex = source ? source.reusableSequenceIndex ?? source.sequenceIndex ?? legacyIndex : allocator.availableSequenceIndexes?.[0] ?? allocator.nextSequenceIndex;
         if (sequenceIndex === undefined) throw new Error('Unable to determine sequence assignment index');
         const rowCounts = new Map(sequences.map((row, index) => [row, state.rowCounts[`${participantConfigHash}:${index}`] || 0]));
-        const row = betweenSubjects.length ? getLeastServedSequence(eligible, state.combinationCounts, targets, betweenSubjects, state.count, rowCounts) : eligible[sequenceIndex % eligible.length];
+        // Old assignments without row keys still rely on their sequence index.
+        const completeRowCounts = Object.values(state.rowCounts).reduce((total, count) => total + count, 0) === state.count;
+        const row = betweenSubjects.length || completeRowCounts
+          ? getLeastServedSequence(eligible, state.combinationCounts, targets, betweenSubjects, state.count, rowCounts)
+          : eligible[sequenceIndex % eligible.length];
         const key = getBetweenSubjectsCombinationKey(row.parameters, betweenSubjects);
         const sequenceKey = `${participantConfigHash}:${sequences.indexOf(row)}`;
         const assignment: SequenceAssignment = {
@@ -772,7 +776,6 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     // The timeout releases the slot, so it shares the allocation transaction that
     // keeps the stage counts in step with the assignments.
     return await runTransaction(this.firestore, async (transaction) => {
-      const state = await this.readAllocation(transaction);
       const assignmentSnapshot = await transaction.get(this.assignmentReference(participantId));
       if (!assignmentSnapshot.exists()) {
         throw new Error(`Sequence assignment for participant ${participantId} not found`);
@@ -788,10 +791,32 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       ) {
         return false;
       }
-      const stateAssignment = state.assignments.find((item) => item.participantId === participantId);
-      if (stateAssignment) stateAssignment.autoTimedOutAt = timedOutAt;
+      const allocationReference = doc(this.studyCollection, 'allocation');
+      const revision = await transaction.get(allocationReference);
+      const stageReference = this.stageAllocationReference(assignment.stage);
+      const stageSnapshot = await transaction.get(stageReference);
+      if (!stageSnapshot.exists()) {
+        // Bootstrap old stages once. Subsequent timeouts use the cached counts
+        // rather than downloading the complete assignment history each time.
+        const state = await this.readAllocation(transaction);
+        const stateAssignment = state.assignments.find((item) => item.participantId === participantId);
+        if (stateAssignment) stateAssignment.autoTimedOutAt = timedOutAt;
+        transaction.update(this.assignmentReference(participantId), { autoTimedOutAt: serverTimestamp() });
+        this.writeAllocation(transaction, state, assignment.stage);
+        return true;
+      }
+
+      const allocation = { rowCounts: {}, ...stageSnapshot.data() } as StageAllocation;
+      const combinationCounts = { ...allocation.combinationCounts };
+      const rowCounts = { ...allocation.rowCounts };
+      const key = assignment.betweenSubjectsCombinationKey;
+      if (key !== undefined) combinationCounts[key] = Math.max(0, (combinationCounts[key] || 0) - 1);
+      if (assignment.sequenceKey) rowCounts[assignment.sequenceKey] = Math.max(0, (rowCounts[assignment.sequenceKey] || 0) - 1);
       transaction.update(this.assignmentReference(participantId), { autoTimedOutAt: serverTimestamp() });
-      this.writeAllocation(transaction, state, assignment.stage);
+      transaction.set(allocationReference, { revision: (revision.data()?.revision || 0) + 1 }, { merge: true });
+      transaction.set(stageReference, { count: Math.max(0, allocation.count - 1), combinationCounts, rowCounts }, {
+        mergeFields: ['count', 'combinationCounts', 'rowCounts'],
+      });
       return true;
     });
   }

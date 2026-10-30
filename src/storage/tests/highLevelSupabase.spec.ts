@@ -2284,6 +2284,34 @@ describe.each([
     await expect(retry.initializeParticipantSession({}, configSimple, participantMetadata, 'excess')).rejects.toThrow(/participant limit/);
   });
 
+  test.each([2, 8])('replaces a timed-out Latin-square order without rejecting its participant (%s prepared orders)', async (numSequences) => {
+    const config: StudyConfig = {
+      ...configSimple,
+      uiConfig: { ...configSimple.uiConfig, numSequences },
+      betweenSubjects: [],
+      components: { ...configSimple.components, secondComponent: configSimple.components.testComponent },
+      sequence: { order: 'latinSquare', components: ['testComponent', 'secondComponent'] },
+    };
+    await storageEngine.saveConfig(config);
+    await storageEngine.setSequenceArray(generateSequenceArray(config));
+    await storageEngine.setCurrentStage(studyId, 'LIMITED', '#00AAFF', 2);
+    await storageEngine.initializeParticipantSession({}, config, participantMetadata, 'completed-order');
+    expect(await storageEngine.finalizeParticipant()).toEqual({ status: 'complete' });
+    const expired = await storageEngine.initializeParticipantSession({}, config, participantMetadata, 'expired-order');
+    // @ts-expect-error protected backend mutation
+    await storageEngine._markSequenceAssignmentTimedOut(expired.participantId, Date.now());
+    const replacement = await storageEngine.initializeParticipantSession({}, config, participantMetadata, 'replacement-order');
+    expect(replacement.sequence.components).toEqual(expired.sequence.components);
+    expect(await storageEngine.finalizeParticipant()).toEqual({ status: 'complete' });
+    await storageEngine.initializeParticipantSession({}, config, participantMetadata, expired.participantId);
+    expect(await storageEngine.finalizeParticipant()).toEqual({ status: 'complete' });
+    expect((await storageEngine.getSequenceAssignment(studyId, expired.participantId))?.rejected).toBe(false);
+    // @ts-expect-error Verify that late completion does not reclaim capacity.
+    const allocation = await storageEngine.getStageAllocation('LIMITED');
+    expect(allocation.count).toBe(2);
+    expect(Object.values(allocation.rowCounts).sort()).toEqual([1, 1]);
+  });
+
   test('an auto-timeout frees its slot in the stage allocation', async () => {
     await storageEngine.setCurrentStage(studyId, 'LIMITED', '#ff0000', 1);
     const first = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'timeout-first');

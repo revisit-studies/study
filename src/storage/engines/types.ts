@@ -325,8 +325,8 @@ export function getLeastServedSequence(
   const combinationSequences = sequences.filter((sequence) => (
     getBetweenSubjectsCombinationKey(sequence.parameters, betweenSubjects) === combinationKey
   ));
-  // Rejections free a particular row, so choose the least-used active row rather
-  // than advancing by a count that loses track of which order was rejected.
+  // Released allocations free a particular row, so choose the least-used active
+  // row rather than advancing past the order that needs a replacement.
   return combinationSequences.reduce((leastUsed, sequence) => (
     sequenceCounts.get(sequence)! < sequenceCounts.get(leastUsed)! ? sequence : leastUsed
   ));
@@ -1383,7 +1383,12 @@ export abstract class StorageEngine {
         sequenceKey: `${participantConfigHash}:${sequences.indexOf(balancedRow)}`,
       } : {}),
     });
-    const currentRow = balancedRow ?? eligible[allocation.sequenceIndex % eligible.length];
+    // Legacy allocations can lack row keys. Keep their sequence-index mapping
+    // until the cached row counts account for every occupied slot.
+    const completeRowCounts = Object.values(state.rowCounts).reduce((total, count) => total + count, 0) === state.count;
+    const currentRow = balancedRow ?? (completeRowCounts
+      ? getLeastServedSequence(eligible, state.combinationCounts, targets, betweenSubjects, state.count, rowCounts)
+      : eligible[allocation.sequenceIndex % eligible.length]);
     if (!balancedRow) {
       await this.updateSequenceAssignmentFieldsLocked(this.currentParticipantId, {
         sequenceKey: `${participantConfigHash}:${sequences.indexOf(currentRow)}`,
