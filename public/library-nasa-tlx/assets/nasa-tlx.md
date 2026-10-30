@@ -55,3 +55,7 @@ The overall workload score is calculated by summing all adjusted scores and divi
 Overall Workload = Σ(Adjusted Scores) ÷ 15
 
 This weighted workload score accounts for both perceived intensity and individual prioritization, improving sensitivity and personalization in workload analysis.
+
+### Slider Interaction
+
+On the NASA-TLX rating scales, hovering over the slider track previews the value at the pointer with a temporary tick and numeric tooltip. Moving the pointer does not change the Participant's answer; selecting a value commits it. The preview disappears when the pointer leaves the track and is unavailable when the slider is disabled or read-only during replay.
