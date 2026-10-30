@@ -11,7 +11,7 @@ import { generateSequenceArray } from '../../utils/handleRandomSequences';
 import { hash } from '../engines/utils/storageEngineHelpers';
 import { Sequence } from '../../store/types';
 import {
-  StorageEngine, getBetweenSubjectsCombinationKey, SequenceAssignment, StoredUser,
+  StorageEngine, getBetweenSubjectsCombinationKey, SequenceAssignment, StoredUser, RuntimeStudySettings,
 } from '../engines/types';
 import { filterSequenceByCondition } from '../../utils/handleConditionLogic';
 import { SupabaseStorageEngine } from '../engines/SupabaseStorageEngine';
@@ -581,6 +581,50 @@ describe.each([
     await expect(storageEngine.saveConfig(original)).resolves.toBeUndefined();
     await expect(storageEngine.initializeParticipantSession({}, original, participantMetadata, 'second')).resolves.toBeDefined();
     expect((await storageEngine.getStageData(studyId)).allStages[0].conditionKeys).toHaveLength(1);
+  });
+
+  test('config activation preserves a concurrent timeout save and its condition definitions', async () => {
+    const original: StudyConfig = { ...configSimple, factors: { group: ['A'] }, betweenSubjects: ['group'] };
+    const appended: StudyConfig = { ...original, factors: { group: ['A', 'B'] } };
+    await storageEngine.saveConfig(original);
+    const activatingSession = new SupabaseStorageEngine(true);
+    await activatingSession.connect();
+    await activatingSession.initializeStudyDb(studyId);
+    const settings = storageEngine as unknown as { _readModesForUpdate: (id: string) => Promise<RuntimeStudySettings> };
+    const read = settings._readModesForUpdate.bind(storageEngine);
+    let readStarted!: () => void;
+    let releaseRead!: () => void;
+    const started = new Promise<void>((resolve) => { readStarted = resolve; });
+    const released = new Promise<void>((resolve) => { releaseRead = resolve; });
+    vi.spyOn(settings, '_readModesForUpdate').mockImplementationOnce(async (id) => {
+      const modes = await read(id);
+      readStarted();
+      await released;
+      return modes;
+    });
+    const saveTimeout = storageEngine.setAutoTimeoutMinutes(studyId, 30);
+    await started;
+    let settingsLockAttempted!: () => void;
+    const attempted = new Promise<void>((resolve) => { settingsLockAttempted = resolve; });
+    const activation = activatingSession as unknown as { _runWithLock: <T>(key: string, operation: () => Promise<T>) => Promise<T> };
+    const lock = activation._runWithLock.bind(activatingSession);
+    vi.spyOn(activation, '_runWithLock').mockImplementation(<T>(key: string, operation: () => Promise<T>) => {
+      if (key === 'study-settings') settingsLockAttempted();
+      return lock(key, operation);
+    });
+    const saveConfig = activatingSession.saveConfig(appended);
+    try {
+      // A coordinated activation waits for settings; an uncoordinated one can
+      // commit first and then lose its definitions to the paused stale save.
+      await Promise.race([attempted, saveConfig]);
+    } finally {
+      releaseRead();
+    }
+    await Promise.all([saveTimeout, saveConfig]);
+    const modes = await storageEngine.getModes(studyId);
+    expect(modes.autoTimeoutMinutes).toBe(30);
+    expect(modes.stage?.allStages[0].conditionKeys).toHaveLength(2);
+    expect(await storageEngine.getCurrentConfigHash(studyId)).toBe(await hash(JSON.stringify(appended)));
   });
 
   test('failed config activation commits neither the definitions nor the active hash', async () => {
@@ -1556,6 +1600,35 @@ describe.each([
 
     const configs = await storageEngine.getAllConfigsFromHash([configHash], studyId);
     expect(configs[configHash]).toEqual(configSimple);
+  });
+
+  test.each([false, true])('restoring a snapshot keeps timeout capacity released (completed late: %s)', async (completedLate) => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    const snapshotTime = new Date('2026-02-01T00:00:00Z').getTime() + Number(completedLate) * 86_400_000;
+    vi.setSystemTime(snapshotTime);
+    try {
+      const config: StudyConfig = { ...configSimple, factors: { group: ['A'] }, betweenSubjects: ['group'] };
+      await storageEngine.saveConfig(config);
+      await storageEngine.setSequenceArray(generateSequenceArray(config));
+      await storageEngine.setCurrentStage(studyId, 'LIMITED', '#00AAFF', 1);
+      await storageEngine.initializeParticipantSession({}, config, participantMetadata, 'expired');
+      // @ts-expect-error protected backend mutation
+      await storageEngine._markSequenceAssignmentTimedOut('expired', Date.now());
+      if (completedLate) expect(await storageEngine.finalizeParticipant()).toEqual({ status: 'complete' });
+      expect((await storageEngine.createSnapshot(studyId, false)).status).toBe('SUCCESS');
+      const [snapshot] = Object.keys(await storageEngine.getSnapshots(studyId));
+      vi.setSystemTime(snapshotTime + 1000);
+      expect((await storageEngine.restoreSnapshot(studyId, snapshot)).status).toBe('SUCCESS');
+      // @ts-expect-error Inspect restored cached capacity.
+      const allocation = await storageEngine.getStageAllocation('LIMITED');
+      expect(allocation.count).toBe(0);
+      expect(Object.values(allocation.combinationCounts)).toEqual([]);
+      expect(Object.values(allocation.rowCounts)).toEqual([]);
+      await expect(storageEngine.initializeParticipantSession({}, config, participantMetadata, 'replacement'))
+        .resolves.toMatchObject({ participantId: 'replacement' });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   test.each([false, true])('restoring a snapshot resumes its allocation (legacy: %s)', async (legacy) => {

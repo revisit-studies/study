@@ -265,16 +265,18 @@ export class LocalStorageEngine extends StorageEngine {
     });
   }
 
-  protected async _rejectParticipantRealtime(participantId: string) {
+  protected async _rejectParticipantRealtime(participantId: string, onlyIncomplete = false) {
     await this.verifyStudyDatabase();
     const sequenceAssignmentPath = `${this.collectionPrefix}${this.studyId}/sequenceAssignment`;
-    await withLocalAllocationLock(sequenceAssignmentPath, async () => {
+    return await withLocalAllocationLock(sequenceAssignmentPath, async () => {
       const sequenceAssignments = await this.studyDatabase.getItem<Record<string, SequenceAssignment>>(
         sequenceAssignmentPath,
       ) || {};
       const participantSequenceAssignment = sequenceAssignments[participantId];
+      if (participantSequenceAssignment && onlyIncomplete
+        && (participantSequenceAssignment.completed !== null || participantSequenceAssignment.autoTimedOutAt !== undefined)) return false;
       if (!participantSequenceAssignment || participantSequenceAssignment.rejected) {
-        return;
+        return undefined;
       }
 
       // If this participant reused a rejected slot, release that source slot and create
@@ -316,6 +318,7 @@ export class LocalStorageEngine extends StorageEngine {
         };
       }
       await this.studyDatabase.setItem(sequenceAssignmentPath, sequenceAssignments);
+      return undefined;
     });
   }
 

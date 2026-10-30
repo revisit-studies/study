@@ -150,14 +150,16 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
 
   protected override async activateConfig(configHash: string, keys: string[]) {
     const stage = await this.validateStageConditions(this.studyId!, keys);
-    const modes: Record<REVISIT_MODE, boolean> & { stage?: StageData } = await this.getModes(this.studyId!);
-    const studyId = `${this.collectionPrefix}${this.studyId}`;
-    // A single upsert commits both rows in one database transaction.
-    const { error } = await this.supabase.from('revisit').upsert([
-      { studyId, docId: 'metadata', data: { ...modes, stage: applyStageUpdates(modes.stage!, stage.stageName, { conditionKeys: keys }) } },
-      { studyId, docId: 'currentConfigHash', data: { configHash } },
-    ]);
-    if (error) throw new Error('Failed to activate study config');
+    await this._runWithLock('study-settings', async () => {
+      const modes: Record<REVISIT_MODE, boolean> & { stage?: StageData } = await this.getModes(this.studyId!);
+      const studyId = `${this.collectionPrefix}${this.studyId}`;
+      // A single upsert commits both rows in one database transaction.
+      const { error } = await this.supabase.from('revisit').upsert([
+        { studyId, docId: 'metadata', data: { ...modes, stage: applyStageUpdates(modes.stage!, stage.stageName, { conditionKeys: keys }) } },
+        { studyId, docId: 'currentConfigHash', data: { configHash } },
+      ]);
+      if (error) throw new Error('Failed to activate study config');
+    });
   }
 
   public async getAllSequenceAssignments(studyId: string) {
@@ -428,7 +430,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       throw new Error('Failed to retrieve sequence assignment for current participant');
     }
 
-    if (onlyIncomplete && data.data.completed !== null) return false;
+    if (onlyIncomplete && (data.data.completed !== null || data.data.autoTimedOutAt !== undefined)) return false;
     if (data.data.rejected) return true;
     const reusableSequenceIndex = data.data.claimedParticipantId
       ? (await this.reserveSequenceAllocator(await this.getOrCreateSequenceAllocator(), undefined, false)).sequenceIndex : undefined;
@@ -1057,7 +1059,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       data: { ...rebuildSequenceAllocator(assignments.data.map((row) => row.data as SequenceAssignment)), version: 0 },
     }];
     const stageRows = [...new Set(assignments.data.map((row) => (row.data as SequenceAssignment).stage))].map((stage) => {
-      const active = assignments.data.map((row) => row.data as SequenceAssignment).filter((assignment) => assignment.stage === stage && !assignment.rejected);
+      const active = assignments.data.map((row) => row.data as SequenceAssignment).filter((assignment) => assignment.stage === stage && consumesCapacity(assignment));
       const combinationCounts: Record<string, number> = {};
       const rowCounts: Record<string, number> = {};
       active.forEach((assignment) => {

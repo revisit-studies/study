@@ -673,7 +673,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
           return false;
         }
       }
-      if (onlyIncomplete && currentAssignment.completed !== null) return false;
+      if (onlyIncomplete && (currentAssignment.completed !== null || currentAssignment.autoTimedOutAt !== undefined)) return false;
       if (assignment.rejected) return true;
       const source = assignment.claimedParticipantId
         ? state.assignments.find((item) => item.participantId === assignment.claimedParticipantId)

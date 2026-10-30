@@ -823,6 +823,27 @@ describe.each([
     expect((await storageEngine.getParticipantData('finishing'))?.rejected).toBe(false);
   });
 
+  test('an automatic timeout winning during manual timeout upload preserves late completion', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'auto-expired');
+    // @ts-expect-error protected upload boundary
+    const upload = storageEngine._pushToStorage.bind(storageEngine);
+    // @ts-expect-error Simulate the automatic sweep while the manual upload is in flight.
+    vi.spyOn(storageEngine, '_pushToStorage').mockImplementationOnce(async (path, type, data) => {
+      // @ts-expect-error protected backend mutation
+      await storageEngine._markSequenceAssignmentTimedOut('auto-expired', Date.now());
+      return upload(path, type, data);
+    });
+    await storageEngine.timeoutParticipant('auto-expired');
+    const assignment = await storageEngine.getSequenceAssignment(studyId, 'auto-expired');
+    expect(assignment?.autoTimedOutAt).toBeDefined();
+    expect(assignment?.rejected).toBe(false);
+    expect((await storageEngine.getParticipantData('auto-expired'))?.rejected).toBe(false);
+    expect(await storageEngine.finalizeParticipant()).toEqual({ status: 'complete' });
+    // Explicit rejection remains available for a participant whose allocation timed out.
+    await storageEngine.rejectParticipant('auto-expired', 'Explicit rejection');
+    expect((await storageEngine.getSequenceAssignment(studyId, 'auto-expired'))?.rejected).toBe(true);
+  });
+
   test('a completed participant cannot be timed out by an older admin snapshot', async () => {
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'finished');
     await storageEngine.finalizeParticipant();
