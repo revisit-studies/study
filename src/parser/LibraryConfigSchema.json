@@ -653,7 +653,7 @@
     },
     "ComponentBlockCondition": {
       "additionalProperties": false,
-      "description": "The ComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect components in a block. All answers on all components in the block are checked.\n\nAnswers are checked against the correct answers defined in the IndividualComponent's [CorrectAnswer](../Answer). If no correct answers are defined, the component is considered correct by default.\n\nYou might use this if a participant answers two questions in a block incorrectly. Here's an example of how to use the ComponentBlockCondition:\n\n```json {  ...  \"skip\": [    {      \"check\": \"block\",      \"condition\": \"numIncorrect\",      \"value\": 2,      \"to\": \"end\"    }  ]  ... } ```\n\nIn this example, when the number of components with incorrect responses in the block is two, the participant will be redirected to the end of the study. If the number of incorrect responses is less than two, the participant will continue to the next component in the sequence.\n\nWhen the condition is met, the participant will immediately be redirected to the component or block specified in the `\"to\"` property. If no conditions are met, the participant will continue to the next component in the sequence.",
+      "description": "The ComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect components in a block. All answers on all components in the block are checked.\n\nAnswers are checked against the correct answers defined in the IndividualComponent's  {@link  Answer } . If no correct answers are defined, the component is considered correct by default.\n\nYou might use this if a participant answers two questions in a block incorrectly. Here's an example of how to use the ComponentBlockCondition:\n\n```json {  ...  \"skip\": [    {      \"check\": \"block\",      \"condition\": \"numIncorrect\",      \"value\": 2,      \"to\": \"end\"    }  ]  ... } ```\n\nIn this example, when the number of components with incorrect responses in the block is two, the participant will be redirected to the end of the study. If the number of incorrect responses is less than two, the participant will continue to the next component in the sequence.\n\nWhen the condition is met, the participant will immediately be redirected to the component or block specified in the `\"to\"` property. If no conditions are met, the participant will continue to the next component in the sequence.",
       "properties": {
         "check": {
           "const": "block",
@@ -686,7 +686,7 @@
       "type": "object"
     },
     "ComponentOrder": {
-      "description": "The ComponentBlock interface is used to define order properties within the sequence. This is used to define the order of components in a study and the skip logic. It supports random assignment of trials using a pure random assignment and a [latin square](https://en.wikipedia.org/wiki/Latin_square).\n\nThe pure random assignment is a random assignment with no guarantees. For example, one component _could_ show up in the first position 10 times in a row. However, this situation is unlikely.\n\nHere's a snippet that shows how to use the random order:\n\n```json {  \"order\": \"random\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ] } ``` This snippet would produce a random order of the components in the sequence array. For example, the resulting sequence array could be :\n\n```json [  [\"component2\", \"component3\", \"component1\"],  [\"component1\", \"component3\", \"component2\"],  [\"component3\", \"component1\", \"component2\"],  ... ] ```\n\nThe latin square assignment is a random assignment with some guarantees. It ensures that each component is shown an equal number of times in each position. Here's a snippet that shows how to use the latin square order:\n\n```json {  \"order\": \"latinSquare\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ] } ```\n\nThis snippet would produce a latin square order of the components in the sequence array. Since the latin square guarantees that each component is shown an equal number of times in each position, the resulting sequence array could be:\n\n```json [  [\"component1\", \"component2\", \"component3\"],  [\"component2\", \"component3\", \"component1\"],  [\"component3\", \"component1\", \"component2\"],  ... ] ```\n\nThe fixed assignment is a fixed assignment of components. This is used when you want to show the components in a specific order. Here's a snippet that shows how to use the fixed order:\n\n```json {  \"order\": \"fixed\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ] } ```\n\nThis snippet would produce a fixed order of the components in the sequence array. The resulting sequence array would be:\n\n```json [  [\"component1\", \"component2\", \"component3\"],  [\"component1\", \"component2\", \"component3\"],  [\"component1\", \"component2\", \"component3\"],  ... ] ```\n\nIn addition to the order property, the ComponentBlock interface also includes the `\"numSamples\"` property. This is used to reduce the number of components shown to a participant. This property respects the order property and the guarantees provided by the order property. For example, if you have three components in the components array and you set `\"numSamples\"` to 2, you would randomize across the three components while only showing a participant two of them. Here's a snippet that shows how to use the numSamples property:\n\n```json {  \"order\": \"latinSquare\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ],  \"numSamples\": 2 } ```\n\nThis snippet would produce a latin square order of the components in the sequence array. Since the latin square guarantees that each component is shown an equal number of times in each position, the resulting sequence array could be:\n\n```json [  [\"component1\", \"component2\"],  [\"component2\", \"component3\"],  [\"component3\", \"component1\"],  ... ] ```\n\nThe interruptions property specifies an array of interruptions. These can be used for breaks or attention checks. Interruptions can be deterministic or random. Please see [InterruptionBlock](../../type-aliases/InterruptionBlock) for more specific information.\n\nThe skip property is used to define skip conditions. This is used to skip to a different component or block based on the response to a component or the number of correct or incorrect responses in a block. Please see [SkipConditions](../../type-aliases/SkipConditions) for more specific information.",
+      "description": "The ComponentBlock interface is used to define order properties within the sequence. This is used to define the order of components in a study and the skip logic. It supports random assignment of trials using a pure random assignment and a [latin square](https://en.wikipedia.org/wiki/Latin_square).\n\nThe pure random assignment is a random assignment with no guarantees. For example, one component _could_ show up in the first position 10 times in a row. However, this situation is unlikely.\n\nHere's a snippet that shows how to use the random order:\n\n```json {  \"order\": \"random\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ] } ``` This snippet would produce a random order of the components in the sequence array. For example, the resulting sequence array could be :\n\n```json [  [\"component2\", \"component3\", \"component1\"],  [\"component1\", \"component3\", \"component2\"],  [\"component3\", \"component1\", \"component2\"],  ... ] ```\n\nThe latin square assignment is a random assignment with some guarantees. It ensures that each component is shown an equal number of times in each position. Here's a snippet that shows how to use the latin square order:\n\n```json {  \"order\": \"latinSquare\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ] } ```\n\nThis snippet would produce a latin square order of the components in the sequence array. Since the latin square guarantees that each component is shown an equal number of times in each position, the resulting sequence array could be:\n\n```json [  [\"component1\", \"component2\", \"component3\"],  [\"component2\", \"component3\", \"component1\"],  [\"component3\", \"component1\", \"component2\"],  ... ] ```\n\nThe fixed assignment is a fixed assignment of components. This is used when you want to show the components in a specific order. Here's a snippet that shows how to use the fixed order:\n\n```json {  \"order\": \"fixed\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ] } ```\n\nThis snippet would produce a fixed order of the components in the sequence array. The resulting sequence array would be:\n\n```json [  [\"component1\", \"component2\", \"component3\"],  [\"component1\", \"component2\", \"component3\"],  [\"component1\", \"component2\", \"component3\"],  ... ] ```\n\nIn addition to the order property, the ComponentBlock interface also includes the `\"numSamples\"` property. This is used to reduce the number of components shown to a participant. This property respects the order property and the guarantees provided by the order property. For example, if you have three components in the components array and you set `\"numSamples\"` to 2, you would randomize across the three components while only showing a participant two of them. Here's a snippet that shows how to use the numSamples property:\n\n```json {  \"order\": \"latinSquare\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ],  \"numSamples\": 2 } ```\n\nThis snippet would produce a latin square order of the components in the sequence array. Since the latin square guarantees that each component is shown an equal number of times in each position, the resulting sequence array could be:\n\n```json [  [\"component1\", \"component2\"],  [\"component2\", \"component3\"],  [\"component3\", \"component1\"],  ... ] ```\n\nThe interruptions property specifies an array of interruptions. These can be used for breaks or attention checks. Interruptions can be deterministic or random. Please see  {@link  InterruptionBlock }  for more specific information.\n\nThe skip property is used to define skip conditions. This is used to skip to a different component or block based on the response to a component or the number of correct or incorrect responses in a block. Please see  {@link  SkipConditions }  for more specific information.",
       "enum": [
         "random",
         "latinSquare",
@@ -1231,6 +1231,7 @@
     },
     "FactorBlock": {
       "additionalProperties": false,
+      "description": "Materialize components for each condition selected from a factor.",
       "properties": {
         "components": {
           "anyOf": [
@@ -1281,193 +1282,117 @@
       ],
       "type": "object"
     },
+    "FactorCombinationExpression": {
+      "additionalProperties": false,
+      "description": "Combine factors with a Cartesian product (`cross`) or pair corresponding levels (`zip`).",
+      "properties": {
+        "action": {
+          "enum": [
+            "cross",
+            "zip"
+          ],
+          "type": "string"
+        },
+        "as": {
+          "description": "Optional output parameter names, one for each input factor.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "factors": {
+          "items": {
+            "$ref": "#/definitions/FactorOption"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "action",
+        "factors"
+      ],
+      "type": "object"
+    },
+    "FactorConcatExpression": {
+      "additionalProperties": false,
+      "description": "Append the conditions from each input factor in order.",
+      "properties": {
+        "action": {
+          "const": "concat",
+          "type": "string"
+        },
+        "factors": {
+          "items": {
+            "$ref": "#/definitions/FactorOption"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "action",
+        "factors"
+      ],
+      "type": "object"
+    },
     "FactorExpression": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "properties": {
-            "action": {
-              "enum": [
-                "cross",
-                "zip"
-              ],
-              "type": "string"
-            },
-            "as": {
-              "description": "Optional output parameter names, one for each input factor.",
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            "factors": {
-              "items": {
-                "$ref": "#/definitions/FactorOption"
-              },
-              "type": "array"
-            }
-          },
-          "required": [
-            "action",
-            "factors"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/FactorCombinationExpression"
         },
         {
-          "additionalProperties": false,
-          "properties": {
-            "action": {
-              "const": "concat",
-              "type": "string"
-            },
-            "factors": {
-              "items": {
-                "$ref": "#/definitions/FactorOption"
-              },
-              "type": "array"
-            }
-          },
-          "required": [
-            "action",
-            "factors"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/FactorConcatExpression"
         },
         {
-          "additionalProperties": false,
-          "properties": {
-            "action": {
-              "const": "keep",
-              "type": "string"
-            },
-            "condition": {
-              "$ref": "#/definitions/FactorObject",
-              "description": "Parameter values used to select matching conditions."
-            },
-            "factor": {
-              "$ref": "#/definitions/FactorOption",
-              "description": "Named factor or expression whose conditions are selected."
-            },
-            "items": {
-              "anyOf": [
-                {
-                  "items": {
-                    "$ref": "#/definitions/FactorObject"
-                  },
-                  "type": "array"
-                },
-                {
-                  "$ref": "#/definitions/FactorOption"
-                }
-              ],
-              "description": "Complete factor conditions, or a factor expression that resolves to them, used to select matching conditions."
-            }
-          },
-          "required": [
-            "action",
-            "factor"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/FactorKeepExpression"
         },
         {
-          "additionalProperties": false,
-          "properties": {
-            "action": {
-              "const": "remove",
-              "type": "string"
-            },
-            "condition": {
-              "$ref": "#/definitions/FactorObject",
-              "description": "Parameter values used to select matching conditions."
-            },
-            "factor": {
-              "$ref": "#/definitions/FactorOption",
-              "description": "Named factor or expression whose conditions are selected."
-            },
-            "items": {
-              "anyOf": [
-                {
-                  "items": {
-                    "$ref": "#/definitions/FactorObject"
-                  },
-                  "type": "array"
-                },
-                {
-                  "$ref": "#/definitions/FactorOption"
-                }
-              ],
-              "description": "Complete factor conditions, or a factor expression that resolves to them, used to select matching conditions."
-            }
-          },
-          "required": [
-            "action",
-            "factor"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/FactorRemoveExpression"
         },
         {
-          "additionalProperties": false,
-          "properties": {
-            "action": {
-              "const": "sample",
-              "type": "string"
-            },
-            "factors": {
-              "items": {
-                "$ref": "#/definitions/FactorOption"
-              },
-              "type": "array"
-            },
-            "numSamples": {
-              "description": "Number of conditions randomly selected for each participant.",
-              "minimum": 1,
-              "type": "integer"
-            },
-            "samplingStrategy": {
-              "description": "Whether selected conditions may repeat.",
-              "enum": [
-                "withoutReplacement",
-                "withReplacement"
-              ],
-              "type": "string"
-            }
-          },
-          "required": [
-            "action",
-            "factors",
-            "samplingStrategy",
-            "numSamples"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/FactorSampleExpression"
         },
         {
-          "additionalProperties": false,
-          "properties": {
-            "action": {
-              "const": "repeat",
-              "type": "string"
-            },
-            "factors": {
-              "items": {
-                "$ref": "#/definitions/FactorOption"
-              },
-              "type": "array"
-            },
-            "numRepeats": {
-              "description": "Number of times the concatenated condition sequence is repeated.",
-              "minimum": 1,
-              "type": "integer"
-            }
-          },
-          "required": [
-            "action",
-            "factors",
-            "numRepeats"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/FactorRepeatExpression"
         }
       ],
       "description": "A recursively composable expression over named factors or nested expressions."
+    },
+    "FactorKeepExpression": {
+      "additionalProperties": false,
+      "description": "Retain the selected conditions from a factor.",
+      "properties": {
+        "action": {
+          "const": "keep",
+          "type": "string"
+        },
+        "condition": {
+          "$ref": "#/definitions/FactorObject",
+          "description": "Parameter values used to select matching conditions."
+        },
+        "factor": {
+          "$ref": "#/definitions/FactorOption",
+          "description": "Named factor or expression whose conditions are selected."
+        },
+        "items": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/definitions/FactorObject"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/definitions/FactorOption"
+            }
+          ],
+          "description": "Complete factor conditions, or a factor expression that resolves to them, used to select matching conditions."
+        }
+      },
+      "required": [
+        "action",
+        "factor"
+      ],
+      "type": "object"
     },
     "FactorObject": {
       "additionalProperties": {
@@ -1508,6 +1433,106 @@
         "number",
         "boolean"
       ]
+    },
+    "FactorRemoveExpression": {
+      "additionalProperties": false,
+      "description": "Exclude the selected conditions from a factor.",
+      "properties": {
+        "action": {
+          "const": "remove",
+          "type": "string"
+        },
+        "condition": {
+          "$ref": "#/definitions/FactorObject",
+          "description": "Parameter values used to select matching conditions."
+        },
+        "factor": {
+          "$ref": "#/definitions/FactorOption",
+          "description": "Named factor or expression whose conditions are selected."
+        },
+        "items": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/definitions/FactorObject"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/definitions/FactorOption"
+            }
+          ],
+          "description": "Complete factor conditions, or a factor expression that resolves to them, used to select matching conditions."
+        }
+      },
+      "required": [
+        "action",
+        "factor"
+      ],
+      "type": "object"
+    },
+    "FactorRepeatExpression": {
+      "additionalProperties": false,
+      "description": "Repeat the concatenated input conditions a fixed number of times.",
+      "properties": {
+        "action": {
+          "const": "repeat",
+          "type": "string"
+        },
+        "factors": {
+          "items": {
+            "$ref": "#/definitions/FactorOption"
+          },
+          "type": "array"
+        },
+        "numRepeats": {
+          "description": "Number of times the concatenated condition sequence is repeated.",
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "action",
+        "factors",
+        "numRepeats"
+      ],
+      "type": "object"
+    },
+    "FactorSampleExpression": {
+      "additionalProperties": false,
+      "description": "Select random conditions from the input factors for each participant.",
+      "properties": {
+        "action": {
+          "const": "sample",
+          "type": "string"
+        },
+        "factors": {
+          "items": {
+            "$ref": "#/definitions/FactorOption"
+          },
+          "type": "array"
+        },
+        "numSamples": {
+          "description": "Number of conditions randomly selected for each participant.",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "samplingStrategy": {
+          "description": "Whether selected conditions may repeat.",
+          "enum": [
+            "withoutReplacement",
+            "withReplacement"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "action",
+        "factors",
+        "samplingStrategy",
+        "numSamples"
+      ],
+      "type": "object"
     },
     "GlobalStoreAction": {
       "additionalProperties": false,
@@ -2346,7 +2371,7 @@
         },
         "baseComponents": {
           "$ref": "#/definitions/BaseComponents",
-          "description": "The base components that are used in the study. These components can be used to template other components. See [BaseComponents](../../type-aliases/BaseComponents) for more information."
+          "description": "The base components that are used in the study. These components can be used to template other components. See  {@link  BaseComponents }  for more information."
         },
         "components": {
           "additionalProperties": {
@@ -4420,7 +4445,7 @@
     },
     "RepeatedComponentBlockCondition": {
       "additionalProperties": false,
-      "description": "The RepeatedComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect repeated components. You might use this if you need to check if an attention check was failed multiple times. This is similar to the [ComponentBlockCondition](../ComponentBlockCondition), but it only checks a specific repeated component.\n\nHere's an example of how to use the RepeatedComponentBlockCondition:\n\n```json {  ...  \"skip\": [    {      \"name\": \"attentionCheck\",      \"check\": \"repeatedComponent\",      \"condition\": \"numIncorrect\",      \"value\": 2,      \"to\": \"end\"    }  ]  ... } ```\n\nIn this example, when the number of incorrect responses to the repeated component with the name \"attentionCheck\" is two, the participant will be redirected to the end of the study. If the number of incorrect responses is less than two, the participant will continue to the next component in the sequence.",
+      "description": "The RepeatedComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect repeated components. You might use this if you need to check if an attention check was failed multiple times. This is similar to  {@link  ComponentBlockCondition } , but it only checks a specific repeated component.\n\nHere's an example of how to use the RepeatedComponentBlockCondition:\n\n```json {  ...  \"skip\": [    {      \"name\": \"attentionCheck\",      \"check\": \"repeatedComponent\",      \"condition\": \"numIncorrect\",      \"value\": 2,      \"to\": \"end\"    }  ]  ... } ```\n\nIn this example, when the number of incorrect responses to the repeated component with the name \"attentionCheck\" is two, the participant will be redirected to the end of the study. If the number of incorrect responses is less than two, the participant will continue to the next component in the sequence.",
       "properties": {
         "check": {
           "const": "repeatedComponent",
