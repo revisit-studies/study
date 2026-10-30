@@ -15,7 +15,7 @@ import {
 } from '@firebase/auth';
 import { isParticipantData, rebuildSequenceAllocator, retrySequenceAllocation } from './utils/storageEngineHelpers';
 import {
-  shouldValidateAutoTimeoutStage, assertAutoTimeoutStageSupported, StageAllocation, CloudStorageEngine, REVISIT_MODE, StorageObjectType, StorageObject, UserManagementData, SequenceAssignment, SnapshotDocContent, StoredUser, RuntimeStudySettings, cleanupModes, consumesCapacity, isStageParticipantLimitEnabled, ModesAndStageData, StageInfo, StageUpdates, StageData, applyStageUpdates, StageCapacityExceededError, StageNoAvailableConditionsError, StageOnlyDisabledConditionsHaveCapacityError, getBetweenSubjectsCombinationKey, getConfigConditionKeys, getDesiredParticipantCountsByCombination, getLeastServedSequence, getStageAllocationFromAssignments, getStageParticipantCounts, isSequenceEnabledForStage, assertAppendOnlyConditions, validateStageParticipantLimits, SequenceAssignmentAllocation, SequenceAllocator,
+  assertAutoTimeoutRestoreSupported, shouldValidateAutoTimeoutStage, assertAutoTimeoutStageSupported, StageAllocation, CloudStorageEngine, REVISIT_MODE, StorageObjectType, StorageObject, UserManagementData, SequenceAssignment, SnapshotDocContent, StoredUser, RuntimeStudySettings, cleanupModes, consumesCapacity, isStageParticipantLimitEnabled, ModesAndStageData, StageInfo, StageUpdates, StageData, applyStageUpdates, StageCapacityExceededError, StageNoAvailableConditionsError, StageOnlyDisabledConditionsHaveCapacityError, getBetweenSubjectsCombinationKey, getConfigConditionKeys, getDesiredParticipantCountsByCombination, getLeastServedSequence, getStageAllocationFromAssignments, getStageParticipantCounts, isSequenceEnabledForStage, assertAppendOnlyConditions, validateStageParticipantLimits, SequenceAssignmentAllocation, SequenceAllocator,
 } from './types';
 import { EditedText, TaglessEditedText } from '../../analysis/individualStudy/thinkAloud/types';
 import { DISTINCT_COLOR_PALETTE } from '../../utils/colors';
@@ -723,6 +723,8 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       if (!assignment) throw new Error('Failed to retrieve sequence assignment for current participant');
       if (!assignment.rejected) return;
       if (assignment.claimed) throw new Error('Cannot undo rejection after the participant slot has been reassigned');
+      const modes = (await transaction.get(doc(this.studyCollection, 'modes'))).data() as RuntimeStudySettings | undefined;
+      assertAutoTimeoutRestoreSupported(assignment, modes);
       const source = state.assignments.find((item) => item.participantId === assignment.claimedParticipantId);
       if (source?.claimed) throw new Error('Cannot restore a participant whose original slot has been reassigned');
       if (source) {

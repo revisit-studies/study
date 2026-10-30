@@ -1825,7 +1825,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     return this.readStageAllocation(stage, conditionKeys, sequenceRows);
   }
 
-  private async changeStageCounts(previous: SequenceAssignment | null, next: SequenceAssignment, write: () => Promise<void>, rebuildAfterWrite = false) {
+  private async changeStageCounts(previous: SequenceAssignment | null, next: SequenceAssignment, write: () => Promise<void>, invalidateBeforeWrite = false) {
     const affected = [...new Set([previous?.stage, next.stage].filter((stage): stage is string => stage !== undefined))].sort();
     const changes = affected.map((stage) => ({
       stage,
@@ -1834,31 +1834,29 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       after: next.stage === stage && consumesCapacity(next) ? next : undefined,
     })).filter(({ before, after }) => Boolean(before) !== Boolean(after) || before?.sequenceKey !== after?.sequenceKey || before?.betweenSubjectsCombinationKey !== after?.betweenSubjectsCombinationKey);
     const updateCounts = async () => {
-      await Promise.all(changes.map(({ stage }) => this.readStageAllocation(stage)));
-      if (rebuildAfterWrite) {
+      const allocations = new Map(await Promise.all(changes.map(async ({ stage }) => (
+        [stage, await this.readStageAllocation(stage)] as const
+      ))));
+      if (invalidateBeforeWrite) {
         for (const { stage } of changes) {
           // Persist invalidation BEFORE the assignment write. Any interrupted or
           // unacknowledged write is reconciled from assignments by the next reader.
-          // eslint-disable-next-line no-await-in-loop
-          const current = await this.readStageAllocation(stage);
+          const current = allocations.get(stage)!;
           // eslint-disable-next-line no-await-in-loop
           const result = await this.supabase.from('revisit').update({ data: { ...current, needsRebuild: true, version: current.version + 1 } })
             .eq('studyId', `${this.collectionPrefix}${this.studyId}`).eq('docId', `stageAllocation_${encodeURIComponent(stage)}`)
             .eq('data->version', current.version)
             .select('docId');
           if (result.error || result.data?.length !== 1) throw new Error('Failed to invalidate stage allocation');
+          allocations.set(stage, { ...current, needsRebuild: true, version: current.version + 1 });
         }
       }
       await write();
-      if (rebuildAfterWrite) {
-        await Promise.all(changes.map(({ stage }) => this.readStageAllocation(stage)));
-        return;
-      }
       for (const { stage, before, after } of changes) {
         let saved = false;
         for (let attempt = 0; attempt < SEQUENCE_ALLOCATION_ATTEMPTS && !saved; attempt += 1) {
           // eslint-disable-next-line no-await-in-loop
-          const current = await this.readStageAllocation(stage);
+          const current = invalidateBeforeWrite ? allocations.get(stage)! : await this.readStageAllocation(stage);
           const combinationCounts = { ...current.combinationCounts };
           const rowCounts = { ...current.rowCounts };
           if (before?.betweenSubjectsCombinationKey) combinationCounts[before.betweenSubjectsCombinationKey] = Math.max(0, (combinationCounts[before.betweenSubjectsCombinationKey] || 0) - 1);
@@ -1868,13 +1866,24 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
           // eslint-disable-next-line no-await-in-loop
           const result = await this.supabase.from('revisit').update({
             data: {
-              count: Math.max(0, current.count + Number(Boolean(after)) - Number(Boolean(before))), combinationCounts, rowCounts, version: current.version + 1,
+              ...(invalidateBeforeWrite ? { needsRebuild: false } : {}),
+              count: Math.max(0, current.count + Number(Boolean(after)) - Number(Boolean(before))),
+              combinationCounts,
+              rowCounts,
+              version: current.version + 1,
             },
           }).eq('studyId', `${this.collectionPrefix}${this.studyId}`).eq('docId', `stageAllocation_${encodeURIComponent(stage)}`)
             .eq('data->version', current.version)
             .select('docId');
           if (result.error) throw new Error('Failed to update stage allocation');
           saved = result.data?.length === 1;
+          if (!saved && invalidateBeforeWrite) {
+            // A competing reader may have already rebuilt after our assignment
+            // write. Reconcile from truth instead of applying the delta twice.
+            // eslint-disable-next-line no-await-in-loop
+            await this.readStageAllocation(stage);
+            saved = true;
+          }
         }
         if (!saved) throw new Error('Failed to update stage allocation after concurrent changes');
       }
@@ -1891,5 +1900,5 @@ type SupabaseSequenceAllocator = SequenceAllocator & {
   version: number;
 };
 
-// A timeout invalidates its cached counts durably until a reader rebuilds them.
+// Uncertain timeout writes leave durable invalidation for the next reader to rebuild.
 type SupabaseStageAllocation = StageAllocation & { version: number; needsRebuild?: boolean };

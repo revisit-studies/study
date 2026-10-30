@@ -635,12 +635,12 @@ describe.each([
     const activation = activatingSession as unknown as { _runWithLock: <T>(key: string, operation: () => Promise<T>) => Promise<T> };
     const lock = activation._runWithLock.bind(activatingSession);
     vi.spyOn(activation, '_runWithLock').mockImplementation(<T>(key: string, operation: () => Promise<T>) => {
-      if (key === 'study-settings') settingsLockAttempted();
+      if (key === 'participant-assignment' || key === 'study-settings') settingsLockAttempted();
       return lock(key, operation);
     });
     const saveConfig = activatingSession.saveConfig(appended);
     try {
-      // A coordinated activation waits for settings; an uncoordinated one can
+      // A coordinated activation waits for the settings save; an uncoordinated one can
       // commit first and then lose its definitions to the paused stale save.
       await Promise.race([attempted, saveConfig]);
     } finally {
@@ -2283,7 +2283,7 @@ describe.each([
   test('sweeps expired assignments beyond a full page of completed history', async () => {
     await storageEngine.setCurrentStage(studyId, 'LIMITED', '#ff0000', 1001);
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'z-expired');
-    const source = revisitRows.find((row) => row.docId === 'sequenceAssignment_z-expired')!;
+    const source = revisitRows.find((row) => row.studyId === `dev-${studyId}` && row.docId === 'sequenceAssignment_z-expired')!;
     source.createdAt = new Date(Date.now() - 120_000).toISOString();
     const assignment = source.data as RowData;
     for (let index = 0; index < 1000; index += 1) {
@@ -2296,7 +2296,7 @@ describe.each([
     }
     revisitRows.splice(revisitRows.indexOf(source), 1);
     revisitRows.push(source);
-    const allocation = revisitRows.find((row) => row.docId === 'stageAllocation_LIMITED')!.data as RowData;
+    const allocation = revisitRows.find((row) => row.studyId === `dev-${studyId}` && row.docId === 'stageAllocation_LIMITED')!.data as RowData;
     allocation.count = 1001;
     allocation.rowCounts = Object.fromEntries(Object.keys(allocation.rowCounts as object).map((key) => [key, 1001]));
     allocation.combinationCounts = Object.fromEntries(Object.keys(allocation.combinationCounts as object).map((key) => [key, 1001]));
@@ -2340,6 +2340,53 @@ describe.each([
     expect(allocation.count).toBe(1);
     expect(Object.values(allocation.rowCounts).reduce((sum, count) => sum + count, 0)).toBe(1);
     await expect(retry.initializeParticipantSession({}, configSimple, participantMetadata, 'excess')).rejects.toThrow(/participant limit/);
+  });
+
+  test.each(['reject', 'timeout'])('legacy %s rollback retains the admission policy lock', async (operation) => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'legacy-rollback');
+    const assignment = (await storageEngine.getSequenceAssignment(studyId, 'legacy-rollback'))!;
+    delete assignment.sequenceKey;
+    delete assignment.sequenceIndex;
+    // @ts-expect-error Seed legacy order metadata before a failed rejection.
+    await storageEngine._createSequenceAssignment('legacy-rollback', assignment);
+    // @ts-expect-error Inject a failure after the realtime write has committed.
+    const reject = storageEngine._rejectParticipantRealtime.bind(storageEngine);
+    // @ts-expect-error Inspect lock ownership at the existing rollback boundary.
+    vi.spyOn(storageEngine, '_rejectParticipantRealtime').mockImplementationOnce(async (...args: [string, boolean?]) => {
+      await reject(...args);
+      const lock = revisitRows.find((row) => row.studyId === `dev-${studyId}` && row.docId === 'lock_participant-assignment');
+      expect(lock?.data).toMatchObject({ token: expect.any(String) });
+      throw new Error('failed after rejection write');
+    });
+    const rejecting = operation === 'reject'
+      ? storageEngine.rejectParticipant('legacy-rollback', 'review')
+      : storageEngine.timeoutParticipant('legacy-rollback');
+    await expect(rejecting).rejects.toThrow('failed after rejection write');
+    expect((await storageEngine.getSequenceAssignment(studyId, 'legacy-rollback'))?.rejected).toBe(false);
+    expect((await storageEngine.getParticipantData('legacy-rollback'))?.rejected).toBe(false);
+    await expect(storageEngine.setAutoTimeoutMinutes(studyId, 1)).rejects.toThrow('Create and activate a new stage');
+  });
+
+  test('blocks undoing a fully unkeyed legacy rejection while auto-timeout is enabled', async () => {
+    await storageEngine.setCurrentStage(studyId, 'LEGACY', '#00AAFF');
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'legacy-restored');
+    const assignment = (await storageEngine.getSequenceAssignment(studyId, 'legacy-restored'))!;
+    delete assignment.sequenceKey;
+    delete assignment.sequenceIndex;
+    // @ts-expect-error Seed a fully unkeyed legacy assignment.
+    await storageEngine._createSequenceAssignment('legacy-restored', assignment);
+    await storageEngine.rejectParticipant('legacy-restored', 'review');
+    await storageEngine.setAutoTimeoutMinutes(studyId, 1);
+    // @ts-expect-error Verify rejection is checked before rewriting saved answers.
+    const upload = vi.spyOn(storageEngine, '_pushToStorage');
+    await expect(storageEngine.undoRejectParticipant('legacy-restored')).rejects.toThrow('Create and activate a new stage');
+    expect(upload).not.toHaveBeenCalled();
+    expect((await storageEngine.getSequenceAssignment(studyId, 'legacy-restored'))?.rejected).toBe(true);
+    expect((await storageEngine.getParticipantData('legacy-restored'))?.rejected).toMatchObject({ reason: 'review' });
+    await storageEngine.setAutoTimeoutMinutes(studyId, undefined);
+    await storageEngine.undoRejectParticipant('legacy-restored');
+    expect((await storageEngine.getSequenceAssignment(studyId, 'legacy-restored'))?.rejected).toBe(false);
+    expect((await storageEngine.getParticipantData('legacy-restored'))?.rejected).toBe(false);
   });
 
   test('requires a fresh stage for fully unkeyed legacy assignments', async () => {
@@ -2440,6 +2487,31 @@ describe.each([
     } finally {
       if (restore) vi.useRealTimers();
     }
+  });
+
+  test('a timeout backlog decrements warm counters without recounting every cached order', async () => {
+    await storageEngine.setCurrentStage(studyId, 'BACKLOG', '#00AAFF', 3);
+    for (let index = 0; index < 3; index += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, `expired-${index}`);
+    }
+    revisitRows.filter((row) => String(row.docId).startsWith('sequenceAssignment_expired-')).forEach((row) => {
+      row.createdAt = new Date(Date.now() - 120_000).toISOString();
+    });
+    const cached = revisitRows.find((row) => row.studyId === `dev-${studyId}` && row.docId === 'stageAllocation_BACKLOG')!.data as RowData;
+    // Former orders remain cached at zero after earlier participants timed out.
+    Object.assign(cached.rowCounts as object, Object.fromEntries(Array.from({ length: 20 }, (_, index) => [`historical:${index}`, 0])));
+    await storageEngine.setAutoTimeoutMinutes(studyId, 1);
+    supabaseOperations.length = 0;
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement');
+    const recounts = supabaseOperations.filter((operation) => operation.headOnly
+      && operation.filters.some((filter) => filter.col === 'data->sequenceKey'));
+    expect(recounts).toHaveLength(0);
+    expect((await storageEngine.getAllSequenceAssignments(studyId)).filter((assignment) => assignment.autoTimedOutAt !== undefined)).toHaveLength(3);
+    // @ts-expect-error Inspect the persisted capacity and row counters.
+    const allocation = await storageEngine.getStageAllocation('BACKLOG');
+    expect(allocation.count).toBe(1);
+    expect(Object.values(allocation.rowCounts).reduce((total, count) => total + count, 0)).toBe(1);
   });
 
   test('an auto-timeout frees its slot in the stage allocation', async () => {

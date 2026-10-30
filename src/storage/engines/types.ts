@@ -427,6 +427,12 @@ export function assertAutoTimeoutStageSupported(assignments: SequenceAssignment[
   }
 }
 
+export function assertAutoTimeoutRestoreSupported(assignment: SequenceAssignment, modes: RuntimeStudySettings | undefined): void {
+  if (modes?.dataCollectionEnabled && modes.autoTimeoutMinutes !== undefined) {
+    assertAutoTimeoutStageSupported([{ ...assignment, rejected: false }], modes.stage?.currentStage.stageName ?? 'DEFAULT');
+  }
+}
+
 export function getStageAllocationFromAssignments(all: SequenceAssignment[], stage: string, sequenceRows?: SequenceRowContext): StageAllocation {
   // Rejected and auto-timed-out assignments have released their slot.
   const assignments = all.filter((assignment) => assignment.stage === stage && consumesCapacity(assignment));
@@ -639,7 +645,9 @@ export abstract class StorageEngine {
     }
     // Write only this field. Rewriting the whole settings document from a copy
     // read earlier would drop a stage or mode update that landed in between.
-    await this._updateModesFields(studyId, { autoTimeoutMinutes: minutes });
+    // Coordinate enabling with rejection restoration and its rollback, so a
+    // legacy assignment cannot become active after the compatibility check.
+    await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, () => this._updateModesFields(studyId, { autoTimeoutMinutes: minutes }));
   }
 
   // Gets the landing-page visibility for the given studyId. This method is used to check whether the study is hidden from the landing page or not.
@@ -1853,19 +1861,19 @@ export abstract class StorageEngine {
 
   // Rejects a participant with the given participantId and reason.
   async timeoutParticipant(participantId: string): Promise<void> {
-    await this._runWithLock(`participant-${participantId}`, async () => {
+    await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, () => this._runWithLock(`participant-${participantId}`, async () => {
       const assignment = await this._getSequenceAssignment(participantId);
       // An auto-timed-out participant has already released their slot and may
       // still finish, so a manual timeout must not turn them into a rejection.
       if (!assignment || assignment.completed !== null || assignment.rejected || assignment.autoTimedOutAt !== undefined) return;
       await this.rejectParticipantUnlocked(participantId, 'Timed out by admin', true);
-    });
+    }));
   }
 
   async rejectParticipant(participantId: string, reason: string): Promise<void> {
-    const participantRecordMissing = await this._runWithLock(`participant-${participantId}`, () => (
+    const participantRecordMissing = await this._runWithLock(ADMISSION_POLICY_LOCK_KEY, () => this._runWithLock(`participant-${participantId}`, () => (
       this.rejectParticipantUnlocked(participantId, reason)
-    ));
+    )));
 
     if (!participantRecordMissing) {
       return;
@@ -1997,6 +2005,10 @@ export abstract class StorageEngine {
       const assignment = await this._getSequenceAssignment(participantId);
       if (assignment?.claimed) {
         throw new Error('Cannot undo rejection after the participant slot has been reassigned');
+      }
+
+      if (assignment?.rejected) {
+        assertAutoTimeoutRestoreSupported(assignment, await this.getModes(this.studyId!));
       }
 
       const participant = participantId === this.currentParticipantId && this.participantData
