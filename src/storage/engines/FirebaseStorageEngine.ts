@@ -614,7 +614,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
         if (existingLock?.token !== token) {
           throw new Error('Study update lock was lost');
         }
-        transaction.update(lockDocument, { [lockKey]: { token, expiresAt: now + expiresInMs } });
+        transaction.update(lockDocument, new FieldPath(lockKey), { token, expiresAt: now + expiresInMs });
       });
     };
     const refreshTimer = setInterval(() => {

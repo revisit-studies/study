@@ -264,9 +264,17 @@ vi.mock('firebase/firestore', () => {
     const now = Date.now();
     const updated = { ...existing };
     for (const [key, value] of Object.entries(data)) {
-      if (value === DELETE_FIELD_SENTINEL) delete updated[key];
-      else if (value === SERVER_TS_SENTINEL) updated[key] = now;
-      else updated[key] = value;
+      if (fieldValue === undefined && /[~*/[\]]/.test(key)) throw new Error('Invalid Firestore field path');
+      const segments = fieldValue === undefined ? key.split('.') : [key];
+      let target = updated;
+      segments.slice(0, -1).forEach((segment) => {
+        target[segment] = { ...(target[segment] as DocData | undefined) };
+        target = target[segment] as DocData;
+      });
+      const field = segments[segments.length - 1];
+      if (value === DELETE_FIELD_SENTINEL) delete target[field];
+      else if (value === SERVER_TS_SENTINEL) target[field] = now;
+      else target[field] = value;
     }
     firestoreData[docRef._path] = updated;
     return Promise.resolve();
@@ -779,6 +787,31 @@ describe.each([
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'subject.1');
     expect(Object.values(firestoreData).some((data) => Object.hasOwn(data, 'participant-subject.1'))).toBe(false);
     await expect(storageEngine.updateParticipantMetadata(participantMetadata)).resolves.toBeUndefined();
+  });
+
+  test.each(['subject[1]', 'subject.with.dot'])('renews literal lock keys for custom participant ID %s', async (participantId) => {
+    vi.useFakeTimers();
+    const lockKey = `participant-${participantId}`;
+    let release!: () => void;
+    let started!: () => void;
+    const operationStarted = new Promise<void>((resolve) => { started = resolve; });
+    // @ts-expect-error Exercise the lock timer without a slow real upload.
+    const result = storageEngine._runWithLock(lockKey, async () => {
+      started();
+      return new Promise<string>((resolve) => { release = () => resolve('saved'); });
+    });
+    await operationStarted;
+    try {
+      const originalExpiry = (firestoreData[`dev-${studyId}/locks`][lockKey] as { expiresAt: number }).expiresAt;
+      await vi.advanceTimersByTimeAsync(20_001);
+      expect((firestoreData[`dev-${studyId}/locks`][lockKey] as { expiresAt: number }).expiresAt).toBeGreaterThan(originalExpiry);
+      release();
+      await expect(result).resolves.toBe('saved');
+      expect(firestoreData[`dev-${studyId}/locks`][lockKey]).toBeUndefined();
+    } finally {
+      release();
+      await result.finally(() => vi.useRealTimers());
+    }
   });
 
   test('a failed lock release preserves a successfully saved participant and its reservation', async () => {
