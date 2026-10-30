@@ -801,6 +801,29 @@ describe.each([
       .rejects.toThrow(/append|condition/i);
   });
 
+  test('uses UTC timeout deadlines across a browser daylight-saving boundary', async () => {
+    vi.stubEnv('TZ', 'America/New_York');
+    sqlTimestampWithoutZone = true;
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(new Date('2026-11-01T01:59:00Z'));
+      await storageEngine.setCurrentStage(studyId, 'DST', '#00AAFF', 1);
+      await storageEngine.setAutoTimeoutMinutes(studyId, 60);
+      await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'just-started');
+      vi.setSystemTime(new Date('2026-11-01T02:00:00Z'));
+      await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'too-early')).rejects.toThrow('participant limit');
+      expect((await storageEngine.getSequenceAssignment(studyId, 'just-started'))?.createdTime).toBe(Date.parse('2026-11-01T01:59:00Z'));
+      expect((await storageEngine.getAllSequenceAssignments(studyId))[0].createdTime).toBe(Date.parse('2026-11-01T01:59:00Z'));
+      vi.setSystemTime(new Date('2026-11-01T03:00:00Z'));
+      await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'after-deadline');
+      expect((await storageEngine.getSequenceAssignment(studyId, 'just-started'))?.autoTimedOutAt).toBeDefined();
+    } finally {
+      vi.useRealTimers();
+      sqlTimestampWithoutZone = false;
+      vi.unstubAllEnvs();
+    }
+  });
+
   test.each(['UTC', 'America/Denver', 'Asia/Tokyo'])('a retried failed initialization gets a fresh backend timeout start (%s)', async (timezone) => {
     vi.stubEnv('TZ', timezone);
     sqlTimestampWithoutZone = true;
@@ -817,7 +840,7 @@ describe.each([
       vi.setSystemTime(new Date('2026-10-30T12:02:00Z'));
       await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'retrying');
       const retried = await storageEngine.getSequenceAssignment(studyId, 'retrying');
-      expect(retried?.createdTime).toBe(new Date('2026-10-30T12:02:00').getTime());
+      expect(retried?.createdTime).toBe(Date.now());
       await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'newcomer');
       expect((await storageEngine.getSequenceAssignment(studyId, 'retrying'))?.autoTimedOutAt).toBeUndefined();
       vi.setSystemTime(new Date('2026-10-30T12:04:00Z'));

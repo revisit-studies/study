@@ -9,6 +9,12 @@ import {
 } from './types';
 import { SnapshotParticipantCounts } from './utils/snapshotParticipantCounts';
 
+// Supabase stores createdAt as UTC in a timestamp-without-timezone column.
+// An enrolling browser's timezone (including DST) must not reinterpret it.
+function parseSupabaseTimestamp(timestamp: string): number {
+  return Date.parse(/(?:Z|[+-]\d{2}:?\d{2})$/i.test(timestamp) ? timestamp : `${timestamp}Z`);
+}
+
 // Signals that a conditional timeout write matched no row, so the stage counts
 // must not change.
 class TimeoutNotAppliedError extends Error {}
@@ -179,8 +185,8 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       if (!data.length) return assignments.sort((a, b) => a.timestamp - b.timestamp);
       assignments.push(...data.map((item) => ({
         ...item.data,
-        timestamp: item.data.withServerTimestamp ? new Date(item.createdAt).getTime() : item.data.timestamp,
-        createdTime: new Date(item.createdAt).getTime(),
+        timestamp: item.data.withServerTimestamp ? parseSupabaseTimestamp(item.createdAt) : item.data.timestamp,
+        createdTime: parseSupabaseTimestamp(item.createdAt),
       } as SequenceAssignment)));
       afterDocId = data[data.length - 1].docId;
     }
@@ -198,8 +204,8 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     const assignment = data[0];
     return {
       ...assignment.data,
-      timestamp: assignment.data.withServerTimestamp ? new Date(assignment.createdAt).getTime() : assignment.data.timestamp,
-      createdTime: new Date(assignment.createdAt).getTime(),
+      timestamp: assignment.data.withServerTimestamp ? parseSupabaseTimestamp(assignment.createdAt) : assignment.data.timestamp,
+      createdTime: parseSupabaseTimestamp(assignment.createdAt),
     } as SequenceAssignment;
   }
 
@@ -278,8 +284,8 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
 
     return {
       ...data.data,
-      timestamp: data.data.withServerTimestamp ? new Date(data.createdAt).getTime() : data.data.timestamp,
-      createdTime: new Date(data.createdAt).getTime(),
+      timestamp: data.data.withServerTimestamp ? parseSupabaseTimestamp(data.createdAt) : data.data.timestamp,
+      createdTime: parseSupabaseTimestamp(data.createdAt),
     } as SequenceAssignment;
   }
 
@@ -554,7 +560,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     if (!data.data.rejected) return;
     const claimedParticipantId = data.data.claimedParticipantId as string | undefined;
     let restoredTimestamp = data.data.withServerTimestamp
-      ? new Date(data.createdAt).getTime()
+      ? parseSupabaseTimestamp(data.createdAt)
       : data.data.timestamp as number | undefined;
 
     if (claimedParticipantId) {
@@ -573,7 +579,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
 
         if (claimedData.data.claimed) throw new Error('Cannot restore a participant whose original slot has been reassigned');
         restoredTimestamp = claimedData.data.withServerTimestamp
-          ? new Date(claimedData.createdAt).getTime()
+          ? parseSupabaseTimestamp(claimedData.createdAt)
           : claimedData.data.timestamp as number | undefined;
 
         await this.updateSequenceAssignmentRow(
@@ -630,7 +636,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
   }
 
   protected async _getServerTimeMs(): Promise<number> {
-    return new Date(await this.getServerTimestamp()).getTime();
+    return parseSupabaseTimestamp(await this.getServerTimestamp());
   }
 
   private async getServerTimestamp(): Promise<string> {
@@ -678,7 +684,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       }
 
       const assignment = data.data as SequenceAssignment;
-      const createdTime = new Date(data.createdAt).getTime();
+      const createdTime = parseSupabaseTimestamp(data.createdAt);
       if (assignment.completed !== null || assignment.rejected || assignment.autoTimedOutAt !== undefined
         || (deadline !== undefined && (!Number.isFinite(createdTime) || createdTime > deadline))) {
         return false;
@@ -1636,8 +1642,8 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     const reusableRow = [serverTimestampResult.data, storedTimestampResult.data]
       .filter((row) => row !== null)
       .sort((a, b) => {
-        const aTimestamp = a.data.withServerTimestamp ? new Date(a.createdAt).getTime() : a.data.timestamp;
-        const bTimestamp = b.data.withServerTimestamp ? new Date(b.createdAt).getTime() : b.data.timestamp;
+        const aTimestamp = a.data.withServerTimestamp ? parseSupabaseTimestamp(a.createdAt) : a.data.timestamp;
+        const bTimestamp = b.data.withServerTimestamp ? parseSupabaseTimestamp(b.createdAt) : b.data.timestamp;
         return aTimestamp - bTimestamp;
       })[0];
 
@@ -1648,7 +1654,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       const reusableTimestamp = (reusableAssignment as SequenceAssignment & {
         withServerTimestamp?: boolean;
       }).withServerTimestamp
-        ? new Date(reusableRow!.createdAt).getTime()
+        ? parseSupabaseTimestamp(reusableRow!.createdAt)
         : reusableAssignment.timestamp;
       reusableSequenceIndex = await this.getLegacySequenceIndex(reusableTimestamp);
     }
@@ -1685,7 +1691,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
       ...sequenceAssignment,
       ...(reusableRow && reusableAssignment ? {
         timestamp: (reusableAssignment as SequenceAssignment & { withServerTimestamp?: boolean }).withServerTimestamp
-          ? new Date(reusableRow.createdAt).getTime()
+          ? parseSupabaseTimestamp(reusableRow.createdAt)
           : reusableAssignment.timestamp,
         claimedParticipantId: reusableAssignment.participantId,
       } : {}),
