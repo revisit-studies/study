@@ -85,10 +85,10 @@
     "typedoc": "^0.28.13",
     "typedoc-plugin-markdown": "^4.9.0",
     "use-deep-compare-effect": "^1.8.1",
-    "uuid": "^14.0.2",
+    "uuid": "^14.0.3",
     "vega": "^6.2.0",
     "vega-lite": "^6.4.3",
-    "vite": "^8.2.2",
+    "vite": "^8.2.4",
     "wavesurfer-react": "^3.0.4",
     "wavesurfer.js": "^7.10.1",
     "yaml": "^2.9.0"
@@ -111,7 +111,7 @@
     "@typescript-eslint/eslint-plugin": "^8.44.0",
     "@typescript-eslint/parser": "^8.44.0",
     "@vitejs/plugin-react-swc": "^4.1.0",
-    "@vitest/coverage-v8": "5.0.0",
+    "@vitest/coverage-v8": "5.0.5",
     "eslint": "^9.36.0",
     "eslint-import-resolver-typescript": "^4.4.4",
     "eslint-plugin-import": "^2.32.0",
@@ -123,6 +123,6 @@
     "jsdom": "^29.1.1",
     "lint-staged": "^16.4.0",
     "typescript": "^5.9.2",
-    "vitest": "^5.0.0"
+    "vitest": "^5.0.5"
   }
 }
