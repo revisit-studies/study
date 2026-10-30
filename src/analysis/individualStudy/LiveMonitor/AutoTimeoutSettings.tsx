@@ -4,7 +4,7 @@ import {
 import {
   useCallback, useEffect, useRef, useState,
 } from 'react';
-import { StorageEngine } from '../../../storage/engines/types';
+import { LegacyAutoTimeoutStageError, StorageEngine } from '../../../storage/engines/types';
 import { useAuth } from '../../../store/hooks/useAuth';
 
 const DEFAULT_MINUTES = 60;
@@ -102,7 +102,7 @@ export function AutoTimeoutSettings({
           if (saveId === latestSaveRef.current) {
             setRequestedEnabled(previousMinutes !== undefined);
           }
-          setError('The auto-timeout setting could not be saved.');
+          setError(saveError instanceof LegacyAutoTimeoutStageError ? saveError.message : 'The auto-timeout setting could not be saved.');
         }
         throw saveError;
       }

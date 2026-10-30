@@ -5,7 +5,7 @@ import {
 import {
   afterEach, beforeEach, describe, expect, test, vi,
 } from 'vitest';
-import { StorageEngine } from '../../../../storage/engines/types';
+import { LegacyAutoTimeoutStageError, StorageEngine } from '../../../../storage/engines/types';
 import { AutoTimeoutSettings } from '../AutoTimeoutSettings';
 
 let mockUser: { isAdmin: boolean };
@@ -110,6 +110,16 @@ beforeEach(() => { mockUser = { isAdmin: true }; });
 afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
 describe('AutoTimeoutSettings', () => {
+  test('explains the fresh-stage requirement and rolls back the toggle', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const engine = makeEngine({ setAutoTimeoutMinutes: vi.fn().mockRejectedValue(new LegacyAutoTimeoutStageError()) });
+    const { toggle } = await renderSettings(engine);
+    await act(async () => { fireEvent.click(toggle); });
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Enable auto-timeout' })); });
+    expect(screen.getByText(/Create and activate a new stage/)).toBeTruthy();
+    expect(toggle.checked).toBe(false);
+  });
+
   test('shows the stored minutes and an enabled toggle', async () => {
     const engine = makeEngine({ getModes: vi.fn().mockResolvedValue({ autoTimeoutMinutes: 30 }) });
     const { minutesInput, toggle } = await renderSettings(engine);

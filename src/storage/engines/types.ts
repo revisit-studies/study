@@ -407,23 +407,32 @@ export type StageAllocation = { count: number; combinationCounts: Record<string,
 
 export type SequenceRowContext = { configHash: string; sequenceCount: number };
 
+export class LegacyAutoTimeoutStageError extends Error {
+  constructor() {
+    super('This stage contains legacy assignments without saved order information. Create and activate a new stage before enabling auto-timeout.');
+    this.name = 'LegacyAutoTimeoutStageError';
+  }
+}
+
+export function assertAutoTimeoutStageSupported(assignments: SequenceAssignment[], stage: string): void {
+  if (assignments.some((assignment) => assignment.stage === stage && consumesCapacity(assignment)
+    && !assignment.sequenceKey && assignment.sequenceIndex === undefined)) {
+    throw new LegacyAutoTimeoutStageError();
+  }
+}
+
 export function getStageAllocationFromAssignments(all: SequenceAssignment[], stage: string, sequenceRows?: SequenceRowContext): StageAllocation {
   // Rejected and auto-timed-out assignments have released their slot.
   const assignments = all.filter((assignment) => assignment.stage === stage && consumesCapacity(assignment));
   const combinationCounts: Record<string, number> = {};
   const rowCounts: Record<string, number> = {};
-  const legacyIndexes = new Map<number, number>();
-  if (sequenceRows && assignments.some((assignment) => !assignment.sequenceKey)) {
-    // Match the legacy allocators: an unkeyed order's index is the number of
-    // non-rejected assignments with an earlier timestamp, across all stages.
-    all.filter((assignment) => !assignment.rejected).sort((a, b) => a.timestamp - b.timestamp).forEach((assignment, index) => {
-      if (!legacyIndexes.has(assignment.timestamp)) legacyIndexes.set(assignment.timestamp, index);
-    });
+  if (sequenceRows && all.some((assignment) => assignment.stage === stage && assignment.autoTimedOutAt !== undefined)) {
+    assertAutoTimeoutStageSupported(all, stage);
   }
   assignments.forEach((assignment) => {
     if (assignment.betweenSubjectsCombinationKey) combinationCounts[assignment.betweenSubjectsCombinationKey] = (combinationCounts[assignment.betweenSubjectsCombinationKey] || 0) + 1;
-    const sequenceKey = assignment.sequenceKey || (sequenceRows
-      ? `${sequenceRows.configHash}:${(assignment.sequenceIndex ?? legacyIndexes.get(assignment.timestamp)!) % sequenceRows.sequenceCount}`
+    const sequenceKey = assignment.sequenceKey || (sequenceRows && assignment.sequenceIndex !== undefined
+      ? `${sequenceRows.configHash}:${assignment.sequenceIndex % sequenceRows.sequenceCount}`
       : undefined);
     if (sequenceKey) rowCounts[sequenceKey] = (rowCounts[sequenceKey] || 0) + 1;
   });
@@ -656,7 +665,11 @@ export abstract class StorageEngine {
           updatedModes[field] = value;
         }
       });
-      await this._setModesDocument(studyId, updatedModes as RuntimeStudySettings);
+      const settings = updatedModes as RuntimeStudySettings;
+      if (settings.dataCollectionEnabled && settings.autoTimeoutMinutes !== undefined) {
+        assertAutoTimeoutStageSupported(await this.getAllSequenceAssignments(studyId), settings.stage?.currentStage.stageName ?? 'DEFAULT');
+      }
+      await this._setModesDocument(studyId, settings);
     });
   }
 
@@ -1410,19 +1423,22 @@ export abstract class StorageEngine {
     return { currentRow, creationIndex: allocation.creationIndex + 1 };
   }
 
-  private async timeoutExpiredAssignments(modes: StudyModes): Promise<void> {
+  private async timeoutExpiredAssignments(modes: StudyModes, stage: string): Promise<void> {
     const timeoutMinutes = modes.autoTimeoutMinutes;
     if (!modes.dataCollectionEnabled || timeoutMinutes === undefined) {
       return;
     }
 
+    const assignments = await this.getAllSequenceAssignments(this.studyId!);
+    assertAutoTimeoutStageSupported(assignments, stage);
+
     // `createdTime` is written by the backend in the cloud engines, so the
     // deadline it is compared against has to come from the backend too.
     const serverNow = await this._getServerTimeMs();
     const deadline = serverNow - timeoutMinutes * 60_000;
-    const assignments = await this.getAllSequenceAssignments(this.studyId!);
     const expiredAssignments = assignments.filter((assignment) => (
-      consumesCapacity(assignment)
+      assignment.stage === stage
+      && consumesCapacity(assignment)
       && assignment.completed === null
       && Number.isFinite(assignment.createdTime)
       && assignment.createdTime <= deadline
@@ -1561,8 +1577,8 @@ export abstract class StorageEngine {
       const existingReservation = await this.prepareParticipantReservation(this.currentParticipantId!);
 
       const { modes, stageData } = await this.getModesAndStageData(this.studyId!, this.cloudEngine ? undefined : bootstrapData?.modesDocument);
-      await this.timeoutExpiredAssignments(modes);
       const currentStage = stageData.currentStage.stageName;
+      await this.timeoutExpiredAssignments(modes, currentStage);
       const currentStageInfo = stageData.allStages.find((stage) => stage.stageName === currentStage);
       if (!this.hasAtomicSequenceReservation && modes.dataCollectionEnabled && (!existingReservation || existingReservation.rejected) && currentStageInfo && isStageParticipantLimitEnabled(currentStageInfo)) {
         const stageParticipantCounts = await this.getStageAllocation(currentStage, getConfigConditionKeys(config));

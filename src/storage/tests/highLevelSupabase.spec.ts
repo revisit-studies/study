@@ -2284,24 +2284,49 @@ describe.each([
     await expect(retry.initializeParticipantSession({}, configSimple, participantMetadata, 'excess')).rejects.toThrow(/participant limit/);
   });
 
+  test('requires a fresh stage for fully unkeyed legacy assignments', async () => {
+    await storageEngine.setCurrentStage(studyId, 'LEGACY', '#00AAFF');
+    const existing = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'legacy-order');
+    const assignment = (await storageEngine.getSequenceAssignment(studyId, existing.participantId))!;
+    delete assignment.sequenceKey;
+    delete assignment.sequenceIndex;
+    // @ts-expect-error Seed a fully unkeyed legacy record without reading answers.
+    await storageEngine._createSequenceAssignment(existing.participantId, assignment);
+    await expect(storageEngine.setAutoTimeoutMinutes(studyId, 1)).rejects.toThrow('Create and activate a new stage');
+    expect((await storageEngine.getModes(studyId)).autoTimeoutMinutes).toBeUndefined();
+    await storageEngine.setMode(studyId, 'dataCollectionEnabled', false);
+    await storageEngine.setAutoTimeoutMinutes(studyId, 1);
+    await expect(storageEngine.setMode(studyId, 'dataCollectionEnabled', true)).rejects.toThrow('Create and activate a new stage');
+    expect((await storageEngine.getModes(studyId)).dataCollectionEnabled).toBe(false);
+    await storageEngine.setAutoTimeoutMinutes(studyId, undefined);
+    await storageEngine.setMode(studyId, 'dataCollectionEnabled', true);
+    const metadata = revisitRows.find((row) => row.studyId === `dev-${studyId}` && row.docId === 'metadata')!;
+    (metadata.data as RowData).autoTimeoutMinutes = 1;
+    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'blocked-newcomer')).rejects.toThrow('Create and activate a new stage');
+    expect((await storageEngine.getSequenceAssignment(studyId, existing.participantId))?.autoTimedOutAt).toBeUndefined();
+    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, existing.participantId)).resolves.toMatchObject({ participantId: existing.participantId });
+    await storageEngine.setAutoTimeoutMinutes(studyId, undefined);
+    await storageEngine.setCurrentStage(studyId, 'FRESH', '#00FFAA');
+    await storageEngine.setAutoTimeoutMinutes(studyId, 1);
+    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'fresh-newcomer')).resolves.toMatchObject({ participantId: 'fresh-newcomer' });
+    await expect(storageEngine.setCurrentStage(studyId, 'LEGACY', '#00AAFF')).rejects.toThrow('Create and activate a new stage');
+  });
+
   test.each([
     {
-      numSequences: 2, legacy: false, restore: false, expiredLegacy: false,
+      numSequences: 2, legacy: false, restore: false,
     },
     {
-      numSequences: 8, legacy: false, restore: false, expiredLegacy: false,
+      numSequences: 8, legacy: false, restore: false,
     },
     {
-      numSequences: 2, legacy: true, restore: false, expiredLegacy: false,
+      numSequences: 2, legacy: true, restore: false,
     },
     {
-      numSequences: 2, legacy: true, restore: false, expiredLegacy: true,
+      numSequences: 2, legacy: true, restore: true,
     },
-    {
-      numSequences: 2, legacy: true, restore: true, expiredLegacy: false,
-    },
-  ])('replaces a timed-out Latin-square order ($numSequences rows, legacy: $legacy, restored: $restore, expired legacy: $expiredLegacy)', async ({
-    numSequences, legacy, restore, expiredLegacy,
+  ])('replaces a timed-out Latin-square order ($numSequences rows, legacy: $legacy, restored: $restore)', async ({
+    numSequences, legacy, restore,
   }) => {
     if (restore) {
       vi.useFakeTimers({ toFake: ['Date'] });
@@ -2324,24 +2349,11 @@ describe.each([
       if (legacy) {
         const assignment = (await storageEngine.getSequenceAssignment(studyId, 'completed-order'))!;
         delete assignment.sequenceKey;
-        if (expiredLegacy) {
-          delete assignment.sequenceIndex;
-          assignment.timestamp = 1000;
-        }
         // @ts-expect-error Seed a completed legacy assignment without a row key.
         await storageEngine._createSequenceAssignment('completed-order', assignment);
         revisitRows.filter((row) => row.studyId === `dev-${studyId}` && String(row.docId).startsWith('stageAllocation_')).forEach((row) => { revisitRows.splice(revisitRows.indexOf(row), 1); });
       }
       const expired = await storageEngine.initializeParticipantSession({}, config, participantMetadata, 'expired-order');
-      if (expiredLegacy) {
-        const assignment = (await storageEngine.getSequenceAssignment(studyId, expired.participantId))!;
-        delete assignment.sequenceKey;
-        delete assignment.sequenceIndex;
-        assignment.timestamp = 2000;
-        // @ts-expect-error Seed a legacy expiring allocation without a row key.
-        await storageEngine._createSequenceAssignment(expired.participantId, assignment);
-        revisitRows.filter((row) => row.studyId === `dev-${studyId}` && String(row.docId).startsWith('stageAllocation_')).forEach((row) => { revisitRows.splice(revisitRows.indexOf(row), 1); });
-      }
       // @ts-expect-error protected backend mutation
       await storageEngine._markSequenceAssignmentTimedOut(expired.participantId, Date.now());
       if (restore) {

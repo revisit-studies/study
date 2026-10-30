@@ -15,7 +15,7 @@ import {
 } from '@firebase/auth';
 import { isParticipantData, rebuildSequenceAllocator, retrySequenceAllocation } from './utils/storageEngineHelpers';
 import {
-  StageAllocation, CloudStorageEngine, REVISIT_MODE, StorageObjectType, StorageObject, UserManagementData, SequenceAssignment, SnapshotDocContent, StoredUser, RuntimeStudySettings, cleanupModes, consumesCapacity, isStageParticipantLimitEnabled, ModesAndStageData, StageInfo, StageUpdates, StageData, applyStageUpdates, StageCapacityExceededError, StageNoAvailableConditionsError, StageOnlyDisabledConditionsHaveCapacityError, getBetweenSubjectsCombinationKey, getConfigConditionKeys, getDesiredParticipantCountsByCombination, getLeastServedSequence, getStageAllocationFromAssignments, getStageParticipantCounts, isSequenceEnabledForStage, assertAppendOnlyConditions, validateStageParticipantLimits, SequenceAssignmentAllocation, SequenceAllocator,
+  assertAutoTimeoutStageSupported, StageAllocation, CloudStorageEngine, REVISIT_MODE, StorageObjectType, StorageObject, UserManagementData, SequenceAssignment, SnapshotDocContent, StoredUser, RuntimeStudySettings, cleanupModes, consumesCapacity, isStageParticipantLimitEnabled, ModesAndStageData, StageInfo, StageUpdates, StageData, applyStageUpdates, StageCapacityExceededError, StageNoAvailableConditionsError, StageOnlyDisabledConditionsHaveCapacityError, getBetweenSubjectsCombinationKey, getConfigConditionKeys, getDesiredParticipantCountsByCombination, getLeastServedSequence, getStageAllocationFromAssignments, getStageParticipantCounts, isSequenceEnabledForStage, assertAppendOnlyConditions, validateStageParticipantLimits, SequenceAssignmentAllocation, SequenceAllocator,
 } from './types';
 import { EditedText, TaglessEditedText } from '../../analysis/individualStudy/thinkAloud/types';
 import { DISTINCT_COLOR_PALETTE } from '../../utils/colors';
@@ -152,6 +152,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
             currentRow: row, creationIndex: own.creationIndex + 1, stage: own.stage, reservationToken,
           };
         }
+        if (isStageParticipantLimitEnabled(stage) && state.count >= stage.maxParticipants) throw new StageCapacityExceededError(stage.stageName);
         if (!betweenSubjects.length && Object.values(state.rowCounts).reduce((total, count) => total + count, 0) !== state.count) {
           // Bootstrap legacy row occupancy once; subsequent reservations persist
           // these counts in the same transaction as the new allocation.
@@ -161,7 +162,6 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
           }).rowCounts;
         }
         if (stage.conditionKeys?.length && JSON.stringify(stage.conditionKeys) !== JSON.stringify(conditionKeys) && await this.hasStageAssignments(stage.stageName)) assertAppendOnlyConditions(stage.conditionKeys || [], conditionKeys);
-        if (isStageParticipantLimitEnabled(stage) && state.count >= stage.maxParticipants) throw new StageCapacityExceededError(stage.stageName);
         const enabled = sequences.filter((row) => isSequenceEnabledForStage(row, stage, betweenSubjects));
         if (!enabled.length) throw new StageNoAvailableConditionsError(stage.stageName);
         const targets = getDesiredParticipantCountsByCombination(stage, sequences, betweenSubjects);
@@ -175,7 +175,10 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
         const sequenceIndex = source ? source.reusableSequenceIndex ?? source.sequenceIndex ?? legacyIndex : allocator.availableSequenceIndexes?.[0] ?? allocator.nextSequenceIndex;
         if (sequenceIndex === undefined) throw new Error('Unable to determine sequence assignment index');
         const rowCounts = new Map(sequences.map((row, index) => [row, state.rowCounts[`${participantConfigHash}:${index}`] || 0]));
-        const row = getLeastServedSequence(eligible, state.combinationCounts, targets, betweenSubjects, state.count, rowCounts);
+        const completeRowCounts = Object.values(state.rowCounts).reduce((total, count) => total + count, 0) === state.count;
+        const row = betweenSubjects.length || completeRowCounts
+          ? getLeastServedSequence(eligible, state.combinationCounts, targets, betweenSubjects, state.count, rowCounts)
+          : eligible[sequenceIndex % eligible.length];
         const key = getBetweenSubjectsCombinationKey(row.parameters, betweenSubjects);
         const sequenceKey = `${participantConfigHash}:${sequences.indexOf(row)}`;
         const assignment: SequenceAssignment = {
@@ -925,13 +928,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
   }
 
   protected async _setMode(studyId: string, mode: REVISIT_MODE, value: boolean) {
-    const revisitModesDoc = doc(
-      this.firestore,
-      `${this.collectionPrefix}${studyId}`,
-      'modes',
-    );
-
-    return await setDoc(revisitModesDoc, { [mode]: value }, { merge: true });
+    await this._updateModesFields(studyId, { [mode]: value });
   }
 
   private async updateModesAtomically(studyId: string, update: (modes: Record<string, unknown>) => Record<string, unknown> | Promise<Record<string, unknown>>, configHash?: string) {
@@ -944,6 +941,9 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
       };
       const next = await update(current);
       const stageData = next.stage as StageData | undefined;
+      if (next.dataCollectionEnabled && typeof next.autoTimeoutMinutes === 'number') {
+        assertAutoTimeoutStageSupported(state.assignments, stageData?.currentStage.stageName ?? 'DEFAULT');
+      }
       const previous = current.stage as StageData | undefined;
       const stageStates = stageData ? await Promise.all(stageData.allStages.map((stage) => (
         transaction.get(this.stageAllocationReference(stage.stageName, studyCollection))

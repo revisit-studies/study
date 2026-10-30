@@ -8,7 +8,7 @@ import { ParticipantMetadata, Sequence } from '../../../store/types';
 import { generateSequenceArray } from '../../../utils/handleRandomSequences';
 import { LocalStorageEngine } from '../LocalStorageEngine';
 import {
-  getBetweenSubjectsCombinationKey, getStageParticipantCounts, StageCapacityExceededError, StageNoAvailableConditionsError, StageOnlyDisabledConditionsHaveCapacityError, StorageEngine, type SequenceAssignment, type StorageObject, type StorageObjectType,
+  getStageAllocationFromAssignments, getBetweenSubjectsCombinationKey, getStageParticipantCounts, StageCapacityExceededError, StageNoAvailableConditionsError, StageOnlyDisabledConditionsHaveCapacityError, StorageEngine, type SequenceAssignment, type StorageObject, type StorageObjectType,
 } from '../types';
 
 const studyId = 'stage-capacity-test';
@@ -747,4 +747,26 @@ describe('stage capacity', () => {
     expect((await storageEngine.getStageData(studyId)).allStages[1])
       .not.toHaveProperty('desiredParticipantsByCombination');
   });
+});
+
+test('legacy row occupancy uses saved indices after an earlier assignment is rejected', () => {
+  const record = {
+    stage: 'LEGACY', rejected: false, completed: null, timestamp: 1, createdTime: 1,
+  };
+  const assignments = [
+    {
+      ...record, participantId: 'earlier', rejected: true, sequenceIndex: 0,
+    },
+    {
+      ...record, participantId: 'remaining', timestamp: 2, sequenceIndex: 1,
+    },
+    {
+      ...record, participantId: 'expired', timestamp: 3, sequenceKey: 'config:0', autoTimedOutAt: 4,
+    },
+  ] as SequenceAssignment[];
+  expect(getStageAllocationFromAssignments(assignments, 'LEGACY', { configHash: 'config', sequenceCount: 2 }))
+    .toMatchObject({ count: 1, rowCounts: { 'config:1': 1 } });
+  delete assignments[1].sequenceIndex;
+  expect(() => getStageAllocationFromAssignments(assignments, 'LEGACY', { configHash: 'config', sequenceCount: 2 }))
+    .toThrow('Create and activate a new stage');
 });
