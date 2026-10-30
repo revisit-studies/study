@@ -28,6 +28,8 @@ const supabaseFailureState = vi.hoisted(() => ({ failNextUpdate: false }));
 let nextSupabaseSelectError: { message: string; code?: string } | null = null;
 let assignmentWriteError = false;
 let rejectedAssignmentError: 'lookup' | 'claim' | null = null;
+let failStageAllocationRebuild = false;
+let loseTimeoutWriteResponse: 'assignment' | 'allocation' | null = null;
 const supabaseOperations: Array<{
   op: string | null;
   filters: Array<{ col: string; type: string; val: string | number | boolean | null }>;
@@ -202,6 +204,12 @@ vi.mock('@supabase/supabase-js', () => {
             });
             resolve({ data: toUpsert, error: null });
           } else if (op === 'update') {
+            if (failStageAllocationRebuild
+              && filters.some((filter) => filter.col === 'docId' && String(filter.val).startsWith('stageAllocation_'))
+              && !((payload as RowData)?.data as RowData)?.needsRebuild) {
+              resolve({ data: null, error: { message: 'stage allocation unavailable' } });
+              return;
+            }
             if (supabaseFailureState.failNextUpdate) {
               supabaseFailureState.failNextUpdate = false;
               resolve({ data: null, error: { message: 'simulated update failure' } });
@@ -209,6 +217,13 @@ vi.mock('@supabase/supabase-js', () => {
             }
             const matched = applyFilters(rows, filters);
             matched.forEach((row) => Object.assign(row, payload as RowData));
+            const updated = (payload as RowData)?.data as RowData | undefined;
+            if ((loseTimeoutWriteResponse === 'assignment' && updated?.autoTimedOutAt !== undefined)
+              || (loseTimeoutWriteResponse === 'allocation' && updated?.needsRebuild === false)) {
+              loseTimeoutWriteResponse = null;
+              resolve({ data: null, error: { message: 'write response lost' } });
+              return;
+            }
             resolve({ data: JSON.parse(JSON.stringify(matched)), error: null });
           } else if (op === 'delete') {
             const matched = applyFilters(rows, filters);
@@ -411,6 +426,8 @@ describe.each([
       sequenceArray,
     );
     nextSupabaseSelectError = null;
+    failStageAllocationRebuild = false;
+    loseTimeoutWriteResponse = null;
     assignmentWriteError = false;
     rejectedAssignmentError = null;
     supabaseOperations.length = 0;
@@ -418,6 +435,8 @@ describe.each([
 
   afterEach(async () => {
     nextSupabaseSelectError = null;
+    failStageAllocationRebuild = false;
+    loseTimeoutWriteResponse = null;
     assignmentWriteError = false;
     rejectedAssignmentError = null;
     // @ts-expect-error using protected method for testing
@@ -2107,6 +2126,38 @@ describe.each([
     return otherSession;
   }
 
+  test('finalizes a participant through the public path without reacquiring its lock', async () => {
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'finishing');
+    vi.useFakeTimers();
+    try {
+      const finishing = storageEngine.finalizeParticipant();
+      await vi.advanceTimersByTimeAsync(31_000);
+      expect(await finishing).toEqual({ status: 'complete' });
+      expect(await storageEngine.getParticipantCompletionStatus()).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('repairs a persisted timeout after its capacity write fails across sessions', async () => {
+    await storageEngine.setCurrentStage(studyId, 'LIMITED', '#ff0000', 1);
+    const first = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'expired');
+    failStageAllocationRebuild = true;
+    // @ts-expect-error protected
+    await expect(storageEngine._markSequenceAssignmentTimedOut(first.participantId, Date.now())).rejects.toThrow();
+    expect((await storageEngine.getAllSequenceAssignments(studyId))[0].autoTimedOutAt).toBeDefined();
+    // Repeated outages must keep admission blocked until the stored count is repaired.
+    const retry = await makeSecondSession();
+    await expect(retry.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement')).rejects.toThrow();
+    failStageAllocationRebuild = false;
+    await expect(retry.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement')).resolves.toMatchObject({ participantId: 'replacement' });
+    // @ts-expect-error protected
+    const allocation = await retry.getStageAllocation('LIMITED');
+    expect(allocation.count).toBe(1);
+    expect(Object.values(allocation.rowCounts).reduce((sum, count) => sum + count, 0)).toBe(1);
+    await expect(retry.initializeParticipantSession({}, configSimple, participantMetadata, 'excess')).rejects.toThrow(/participant limit/);
+  });
+
   test('an auto-timeout frees its slot in the stage allocation', async () => {
     await storageEngine.setCurrentStage(studyId, 'LIMITED', '#ff0000', 1);
     const first = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'timeout-first');
@@ -2127,6 +2178,19 @@ describe.each([
     expect(second.participantId).toBe('timeout-second');
     // @ts-expect-error protected
     expect((await storageEngine.getStageAllocation('LIMITED')).count).toBe(1);
+  });
+
+  test.each(['assignment', 'allocation'] as const)('recovers a timeout whose %s write succeeded without acknowledgement', async (phase) => {
+    await storageEngine.setCurrentStage(studyId, 'LIMITED', '#ff0000', 1);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'expired');
+    loseTimeoutWriteResponse = phase;
+    // @ts-expect-error protected
+    await expect(storageEngine._markSequenceAssignmentTimedOut('expired', Date.now())).rejects.toThrow();
+    const retry = await makeSecondSession();
+    await expect(retry.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement')).resolves.toMatchObject({ participantId: 'replacement' });
+    // @ts-expect-error protected
+    expect((await retry.getStageAllocation('LIMITED')).count).toBe(1);
+    await expect(retry.initializeParticipantSession({}, configSimple, participantMetadata, 'excess')).rejects.toThrow(/participant limit/);
   });
 
   test('updateStudyCondition does not erase a concurrent auto-timeout', async () => {

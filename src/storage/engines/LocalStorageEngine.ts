@@ -374,7 +374,7 @@ export class LocalStorageEngine extends StorageEngine {
     return Date.now();
   }
 
-  protected async _markSequenceAssignmentTimedOut(participantId: string, timedOutAt: number): Promise<boolean> {
+  protected async _markSequenceAssignmentTimedOut(participantId: string, timedOutAt: number, deadline?: number): Promise<boolean> {
     return await withLocalAllocationLock(`${this.collectionPrefix}${this.studyId}/sequenceAssignment`, async () => {
       await this.verifyStudyDatabase();
       const sequenceAssignmentPath = `${this.collectionPrefix}${this.studyId}/sequenceAssignment`;
@@ -383,7 +383,8 @@ export class LocalStorageEngine extends StorageEngine {
       if (!assignment) {
         throw new Error(`Sequence assignment for participant ${participantId} not found`);
       }
-      if (assignment.completed !== null || assignment.rejected || assignment.autoTimedOutAt !== undefined) {
+      if (assignment.completed !== null || assignment.rejected || assignment.autoTimedOutAt !== undefined
+        || (deadline !== undefined && (!Number.isFinite(assignment.createdTime) || assignment.createdTime > deadline))) {
         return false;
       }
       assignments[participantId] = { ...assignment, autoTimedOutAt: timedOutAt };

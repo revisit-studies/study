@@ -764,7 +764,7 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
     return readAt.toMillis();
   }
 
-  protected async _markSequenceAssignmentTimedOut(participantId: string, timedOutAt: number): Promise<boolean> {
+  protected async _markSequenceAssignmentTimedOut(participantId: string, timedOutAt: number, deadline?: number): Promise<boolean> {
     if (!this.studyId) {
       throw new Error('Study ID is not set');
     }
@@ -778,8 +778,11 @@ export class FirebaseStorageEngine extends CloudStorageEngine {
         throw new Error(`Sequence assignment for participant ${participantId} not found`);
       }
       const assignment = assignmentSnapshot.data() as SequenceAssignment;
+      const storedCreatedTime = assignmentSnapshot.data()!.createdTime;
+      const createdTime = storedCreatedTime instanceof Timestamp ? storedCreatedTime.toMillis() : storedCreatedTime;
       if (
-        assignment.completed !== null
+        (deadline !== undefined && (!Number.isFinite(createdTime) || createdTime > deadline))
+        || assignment.completed !== null
         || assignment.rejected
         || assignment.autoTimedOutAt !== undefined
       ) {

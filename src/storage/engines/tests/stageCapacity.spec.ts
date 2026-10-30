@@ -95,6 +95,18 @@ describe('stage capacity', () => {
     await storageEngine._testingReset(studyId);
   });
 
+  test('revalidates a saved maximum when re-enabling a participant limit', async () => {
+    await storageEngine.updateStage(studyId, 'LIMITED', { participantLimitEnabled: false });
+    await storageEngine.initializeParticipantSession({}, config, metadata, 'first');
+    await storageEngine.initializeParticipantSession({}, config, metadata, 'second');
+    await expect(storageEngine.updateStage(studyId, 'LIMITED', { participantLimitEnabled: true }))
+      .rejects.toThrow(/2 participants already assigned/);
+    const stage = (await storageEngine.getStageData(studyId)).allStages.find((item) => item.stageName === 'LIMITED');
+    expect(stage?.participantLimitEnabled).toBe(false);
+    await expect(storageEngine.updateStage(studyId, 'LIMITED', { maxParticipants: 2, participantLimitEnabled: true }))
+      .resolves.toBeUndefined();
+  });
+
   test('allows a target equal to assigned participants but rejects a smaller target', async () => {
     await storageEngine.updateStage(studyId, 'LIMITED', { maxParticipants: 10 });
     await storageEngine.setSequenceArray(generateSequenceArray(betweenSubjectsConfig));

@@ -231,7 +231,9 @@ export function assertAppendOnlyConditions(previousKeys: string[], nextKeys: str
 
 export function validateStageParticipantLimits(stage: StageInfo, assignments: SequenceAssignment[], previousStage?: StageInfo) {
   const active = assignments.filter((assignment) => assignment.stage === stage.stageName && consumesCapacity(assignment));
-  if (isStageParticipantLimitEnabled(stage) && stage.maxParticipants !== previousStage?.maxParticipants && stage.maxParticipants < active.length) {
+  if (isStageParticipantLimitEnabled(stage)
+    && (stage.maxParticipants !== previousStage?.maxParticipants || !previousStage || !isStageParticipantLimitEnabled(previousStage))
+    && stage.maxParticipants < active.length) {
     throw new Error(`The stage maximum cannot be below the ${active.length} participants already assigned`);
   }
   const targets = stage.participantAssignmentMode === 'even'
@@ -557,8 +559,9 @@ export abstract class StorageEngine {
   /**
    * Atomically marks an eligible assignment as timed out. Returns false when a
    * concurrent completion, rejection, or timeout made the assignment ineligible.
+   * Sweeps supply their deadline so a fresh reservation at the same ID survives.
    */
-  protected abstract _markSequenceAssignmentTimedOut(participantId: string, timedOutAt: number): Promise<boolean>;
+  protected abstract _markSequenceAssignmentTimedOut(participantId: string, timedOutAt: number, deadline?: number): Promise<boolean>;
 
   /**
    * The backend's current time in milliseconds. Timeout eligibility must never
@@ -1414,7 +1417,7 @@ export abstract class StorageEngine {
       // Process serially so a failed mutation prevents any subsequent capacity
       // calculation from using an uncertain allocation state.
       // eslint-disable-next-line no-await-in-loop
-      await this._markSequenceAssignmentTimedOut(assignment.participantId, serverNow);
+      await this._markSequenceAssignmentTimedOut(assignment.participantId, serverNow, deadline);
     }
   }
 

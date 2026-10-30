@@ -1236,6 +1236,31 @@ describe.each([
     expect(Object.values(state.rowCounts).reduce((total, count) => total + count, 0)).toBe(2);
   });
 
+  test('a delayed timeout sweep preserves a fresh reservation for the same participant', async () => {
+    const first = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'retrying');
+    const path = Object.keys(firestoreData).find((key) => key.endsWith(`/sequenceAssignment/${first.participantId}`))!;
+    firestoreData[path].createdTime = Timestamp.fromMillis(Date.now() - 120_000);
+    await storageEngine.setAutoTimeoutMinutes(studyId, 1);
+    // @ts-expect-error Mock the trusted backend clock at the external boundary.
+    vi.spyOn(storageEngine, '_getServerTimeMs').mockResolvedValue(Date.now());
+    // A failed initial upload can release the old reservation, then a retry
+    // replaces it at the same document ID after the sweep selected it.
+    // @ts-expect-error protected test seam
+    const mark = storageEngine._markSequenceAssignmentTimedOut.bind(storageEngine);
+    // @ts-expect-error protected test seam
+    vi.spyOn(storageEngine, '_markSequenceAssignmentTimedOut').mockImplementationOnce(async (...args: [string, number, number?]) => {
+      firestoreData[path] = {
+        ...firestoreData[path],
+        createdTime: Timestamp.fromMillis(Date.now()),
+        creationIndex: Number(firestoreData[path].creationIndex) + 1,
+      };
+      return mark(...args);
+    });
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'sweeping');
+    const assignment = (await storageEngine.getAllSequenceAssignments(studyId)).find((item) => item.participantId === first.participantId);
+    expect(assignment?.autoTimedOutAt).toBeUndefined();
+  });
+
   test('an auto-timeout frees its slot in the stage allocation', async () => {
     await storageEngine.setCurrentStage(studyId, 'LIMITED', '#ff0000', 1);
     const first = await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'timeout-first');
