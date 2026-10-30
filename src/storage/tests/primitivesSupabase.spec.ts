@@ -13,7 +13,9 @@ type RowData = Record<string, string | number | boolean | null | object>;
 const revisitRows: RowData[] = [];
 const storageFiles: Record<string, string> = {};
 const localStore: Record<string, string | number | object | null> = {};
-const metadataErrors = { select: false, upsert: false, update: false };
+const metadataErrors = {
+  select: false, upsert: false, insert: false, update: false,
+};
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 vi.mock('@supabase/supabase-js', () => {
@@ -94,9 +96,10 @@ vi.mock('@supabase/supabase-js', () => {
       ) {
         Promise.resolve().then(() => {
           const rows = getRows();
-          if ((op === 'select' && metadataErrors.select) || (op === 'upsert' && metadataErrors.upsert) || (op === 'update' && metadataErrors.update)) {
+          if ((op === 'select' && metadataErrors.select) || (op === 'upsert' && metadataErrors.upsert) || (op === 'insert' && metadataErrors.insert) || (op === 'update' && metadataErrors.update)) {
             metadataErrors.select = false;
             metadataErrors.upsert = false;
+            metadataErrors.insert = false;
             metadataErrors.update = false;
             resolve({ data: null, error: { message: 'Permission denied' } });
             return;
@@ -302,6 +305,7 @@ describe.each([
   afterEach(async () => {
     metadataErrors.select = false;
     metadataErrors.upsert = false;
+    metadataErrors.insert = false;
     metadataErrors.update = false;
     // @ts-expect-error using protected method for testing
     await storageEngine._testingReset(studyId);
@@ -517,9 +521,9 @@ describe.each([
   });
 
   test('getModes rejects failed metadata initialization', async () => {
-    metadataErrors.upsert = true;
+    metadataErrors.insert = true;
     await expect(storageEngine.getModes(studyId)).rejects.toThrow('Failed to update study metadata');
-    metadataErrors.upsert = false;
+    metadataErrors.insert = false;
     expect(await storageEngine.getStudyHiddenFromLandingPage(studyId)).toBe(false);
     expect(await storageEngine.getModes(studyId)).toEqual({
       dataCollectionEnabled: true,
@@ -528,7 +532,7 @@ describe.each([
     });
   });
 
-  test('getModes preserves readable legacy settings when migration fails', async () => {
+  test('getModes normalizes legacy settings without rewriting metadata', async () => {
     revisitRows.push({
       // @ts-expect-error using protected prefix to seed legacy metadata
       studyId: `${storageEngine.collectionPrefix}${studyId}`,
@@ -539,13 +543,13 @@ describe.each([
         analyticsInterfacePubliclyAccessible: false,
       },
     });
-    metadataErrors.update = true;
-
+    const storedBeforeRead = JSON.stringify(revisitRows);
     expect(await storageEngine.getModes(studyId)).toEqual({
       dataCollectionEnabled: true,
       developmentModeEnabled: false,
       dataSharingEnabled: false,
     });
+    expect(JSON.stringify(revisitRows)).toBe(storedBeforeRead);
   });
 
   test('setMode toggles each ReVISit mode independently', async () => {

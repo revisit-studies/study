@@ -795,7 +795,7 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     return { ...cleanedModes, dataSharingEnabled: cleanedModes.dataSharingEnabled === true };
   }
 
-  async getModes(studyId: string) {
+  async getModes(studyId: string): Promise<RuntimeStudySettings> {
     const { data, error } = await this.supabase
       .from('revisit')
       .select('data')
@@ -806,23 +806,9 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     }
     const metadata = data[0]?.data;
     if (metadata) {
-      const modes = metadata as RuntimeStudySettings;
-      const needsUpdate = 'studyNavigatorEnabled' in modes || 'analyticsInterfacePubliclyAccessible' in modes;
-      const cleanedModes = cleanupModes(modes) as RuntimeStudySettings;
-
-      if (needsUpdate) {
-        const { error: migrationError } = await this.supabase
-          .from('revisit')
-          .update({ data: cleanedModes })
-          .eq('studyId', `${this.collectionPrefix}${studyId}`)
-          .eq('docId', 'metadata');
-        if (migrationError) {
-          // A failed migration must not discard settings that were successfully read.
-          console.warn('Failed to migrate study metadata:', migrationError);
-        }
-      }
-
-      return cleanedModes;
+      // Normalize legacy fields in memory. An ordinary read must not rewrite
+      // a stale copy over a setting saved by another session.
+      return cleanupModes(metadata as RuntimeStudySettings) as RuntimeStudySettings;
     }
 
     const defaultModes = {
@@ -832,13 +818,16 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
     };
     const { error: defaultModesError } = await this.supabase
       .from('revisit')
-      .upsert({
+      .insert({
         studyId: `${this.collectionPrefix}${studyId}`,
         docId: 'metadata',
         data: defaultModes,
-      })
-      .eq('studyId', `${this.collectionPrefix}${studyId}`)
-      .eq('docId', 'metadata');
+      });
+    if (defaultModesError?.code === '23505') {
+      // Another session initialized the record after our read. Preserve its
+      // settings and read the winning record instead of replacing it.
+      return this.getModes(studyId);
+    }
     if (defaultModesError) {
       throw new Error('Failed to update study metadata');
     }

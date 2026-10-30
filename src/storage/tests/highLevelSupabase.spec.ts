@@ -30,6 +30,7 @@ let assignmentWriteError = false;
 let rejectedAssignmentError: 'lookup' | 'claim' | null = null;
 let failStageAllocationRebuild = false;
 let loseTimeoutWriteResponse: 'assignment' | 'allocation' | null = null;
+let beforeMetadataInitialization: (() => Promise<void>) | null = null;
 const supabaseOperations: Array<{
   op: string | null;
   filters: Array<{ col: string; type: string; val: string | number | boolean | null }>;
@@ -114,7 +115,13 @@ vi.mock('@supabase/supabase-js', () => {
         resolve: (val: { data: RowData | RowData[] | null; error: { message: string; code?: string } | null; count?: number | null }) => void,
         reject?: (err: Error) => void,
       ) {
-        Promise.resolve().then(() => {
+        Promise.resolve().then(async () => {
+          if (beforeMetadataInitialization && (op === 'insert' || op === 'upsert')
+            && (Array.isArray(payload) ? payload : [payload]).some((row) => row?.docId === 'metadata')) {
+            const beforeWrite = beforeMetadataInitialization;
+            beforeMetadataInitialization = null;
+            await beforeWrite();
+          }
           supabaseOperations.push({
             op,
             filters: filters.map((filter) => ({ ...filter })),
@@ -431,6 +438,7 @@ describe.each([
     nextSupabaseSelectError = null;
     failStageAllocationRebuild = false;
     loseTimeoutWriteResponse = null;
+    beforeMetadataInitialization = null;
     assignmentWriteError = false;
     rejectedAssignmentError = null;
     supabaseOperations.length = 0;
@@ -440,6 +448,7 @@ describe.each([
     nextSupabaseSelectError = null;
     failStageAllocationRebuild = false;
     loseTimeoutWriteResponse = null;
+    beforeMetadataInitialization = null;
     assignmentWriteError = false;
     rejectedAssignmentError = null;
     // @ts-expect-error using protected method for testing
@@ -581,6 +590,17 @@ describe.each([
     await expect(storageEngine.saveConfig(original)).resolves.toBeUndefined();
     await expect(storageEngine.initializeParticipantSession({}, original, participantMetadata, 'second')).resolves.toBeDefined();
     expect((await storageEngine.getStageData(studyId)).allStages[0].conditionKeys).toHaveLength(1);
+  });
+
+  test("a delayed default initialization preserves another session's saved timeout", async () => {
+    const writer = new SupabaseStorageEngine(true);
+    await writer.connect();
+    await writer.initializeStudyDb(studyId);
+    const metadataIndex = revisitRows.findIndex((row) => row.studyId === `dev-${studyId}` && row.docId === 'metadata');
+    if (metadataIndex >= 0) revisitRows.splice(metadataIndex, 1);
+    beforeMetadataInitialization = () => writer.setAutoTimeoutMinutes(studyId, 30);
+    await storageEngine.getModes(studyId);
+    expect((await storageEngine.getModes(studyId)).autoTimeoutMinutes).toBe(30);
   });
 
   test('config activation preserves a concurrent timeout save and its condition definitions', async () => {
