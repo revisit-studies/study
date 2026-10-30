@@ -41,7 +41,7 @@ vi.mock('@supabase/supabase-js', () => {
 
   function applyFilters(
     rows: Array<RowData>,
-    filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'neq' | 'is' | 'like' | 'not' | 'lt' }>,
+    filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'neq' | 'is' | 'like' | 'not' | 'lt' | 'gt' }>,
   ): Array<RowData> {
     return rows.filter((row) => filters.every(({ col, val, type }) => {
       const colVal = getFieldValue(row, col);
@@ -52,6 +52,7 @@ vi.mock('@supabase/supabase-js', () => {
       if (type === 'is') return (colVal ?? null) === val;
       if (type === 'not') return colVal !== null && colVal !== undefined;
       if (type === 'lt') return colVal !== undefined && colVal !== null && colVal < val!;
+      if (type === 'gt') return colVal !== undefined && colVal !== null && colVal > val!;
       return typeof colVal === 'string' && matchLike(colVal, String(val));
     }));
   }
@@ -59,12 +60,13 @@ vi.mock('@supabase/supabase-js', () => {
   function makeQueryBuilder(getRows: () => Array<RowData>) {
     let op: 'select' | 'upsert' | 'insert' | 'update' | 'delete' | null = null;
     let payload: RowData | RowData[] | Partial<RowData> | null = null;
-    const filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'neq' | 'is' | 'like' | 'not' | 'lt' }> = [];
+    const filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'neq' | 'is' | 'like' | 'not' | 'lt' | 'gt' }> = [];
     let isSingle = false;
     let isMaybeSingle = false;
     let requestedCount = false;
     let headOnly = false;
     let resultLimit: number | undefined;
+    let orderBy: { col: string; ascending: boolean } | undefined;
 
     const qb = {
       select(_fields?: string, opts?: { count?: string; head?: boolean }) { if (op === null) op = 'select'; requestedCount = opts?.count === 'exact'; headOnly = opts?.head === true; return qb; },
@@ -74,11 +76,15 @@ vi.mock('@supabase/supabase-js', () => {
       delete() { op = 'delete'; return qb; },
       eq(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'eq' }); return qb; },
       lt(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'lt' }); return qb; },
+      gt(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'gt' }); return qb; },
       neq(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'neq' }); return qb; },
       is(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'is' }); return qb; },
       like(col: string, val: string) { filters.push({ col, val, type: 'like' }); return qb; },
       not(col: string, _operator: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'not' }); return qb; },
-      order(_col: string, _options?: { ascending?: boolean }) { return qb; },
+      order(col: string, options?: { ascending?: boolean }) {
+        orderBy = { col, ascending: options?.ascending !== false };
+        return qb;
+      },
       limit(count: number) { resultLimit = count; return qb; },
       single() { isSingle = true; return qb; },
       maybeSingle() { isMaybeSingle = true; return qb; },
@@ -98,6 +104,10 @@ vi.mock('@supabase/supabase-js', () => {
           if (op === 'select') {
             let matched = applyFilters(rows, filters);
             const count = requestedCount ? matched.length : null;
+            if (orderBy) {
+              const { col, ascending } = orderBy;
+              matched = [...matched].sort((a, b) => String(getFieldValue(a, col) ?? '').localeCompare(String(getFieldValue(b, col) ?? '')) * (ascending ? 1 : -1));
+            }
             if (resultLimit !== undefined) matched = matched.slice(0, resultLimit);
             if (headOnly) {
               resolve({ data: null, error: null, count });

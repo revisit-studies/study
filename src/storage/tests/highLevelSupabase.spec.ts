@@ -63,7 +63,7 @@ vi.mock('@supabase/supabase-js', () => {
 
   function applyFilters(
     rows: Array<RowData>,
-    filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'neq' | 'is' | 'like' | 'not' | 'lt' }>,
+    filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'neq' | 'is' | 'like' | 'not' | 'lt' | 'gt' }>,
   ): Array<RowData> {
     return rows.filter((row) => filters.every(({ col, val, type }) => {
       const colVal = getFieldValue(row, col);
@@ -74,6 +74,7 @@ vi.mock('@supabase/supabase-js', () => {
       if (type === 'is') return (colVal ?? null) === val;
       if (type === 'not') return colVal !== null && colVal !== undefined;
       if (type === 'lt') return colVal !== undefined && colVal !== null && colVal < val!;
+      if (type === 'gt') return colVal !== undefined && colVal !== null && colVal > val!;
       return typeof colVal === 'string' && matchLike(colVal, String(val));
     }));
   }
@@ -81,7 +82,7 @@ vi.mock('@supabase/supabase-js', () => {
   function makeQueryBuilder(getRows: () => Array<RowData>) {
     let op: 'select' | 'insert' | 'upsert' | 'update' | 'delete' | null = null;
     let payload: RowData | RowData[] | Partial<RowData> | null = null;
-    const filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'neq' | 'is' | 'like' | 'not' | 'lt' }> = [];
+    const filters: Array<{ col: string; val: string | number | boolean | null; type: 'eq' | 'neq' | 'is' | 'like' | 'not' | 'lt' | 'gt' }> = [];
     let isSingle = false;
     let isMaybeSingle = false;
     let requestedCount = false;
@@ -97,6 +98,7 @@ vi.mock('@supabase/supabase-js', () => {
       delete() { op = 'delete'; return qb; },
       eq(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'eq' }); return qb; },
       lt(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'lt' }); return qb; },
+      gt(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'gt' }); return qb; },
       neq(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'neq' }); return qb; },
       is(col: string, val: string | number | boolean | null) { filters.push({ col, val, type: 'is' }); return qb; },
       like(col: string, val: string) { filters.push({ col, val, type: 'like' }); return qb; },
@@ -145,7 +147,7 @@ vi.mock('@supabase/supabase-js', () => {
                 return comparison * (orderBy!.ascending ? 1 : -1);
               });
             }
-            if (resultLimit !== undefined) matched = matched.slice(0, resultLimit);
+            if (!headOnly) matched = matched.slice(0, Math.min(resultLimit ?? 1000, 1000));
             if (headOnly) {
               resolve({ data: null, error: null, count });
               return;
@@ -171,11 +173,12 @@ vi.mock('@supabase/supabase-js', () => {
               resolve({ data: null, error: { message: 'duplicate key', code: '23505' } });
               return;
             }
-            toInsert.forEach((row) => rows.push({
+            const inserted = toInsert.map((row) => ({
               ...row,
               createdAt: (row.createdAt as string | undefined) ?? new Date().toISOString(),
             }));
-            resolve({ data: toInsert, error: null });
+            rows.push(...inserted);
+            resolve({ data: isSingle ? inserted[0] : inserted, error: null });
           } else if (op === 'upsert') {
             if (assignmentWriteError && (Array.isArray(payload) ? payload : [payload]).some((row) => String(row?.docId).startsWith('sequenceAssignment_'))) { resolve({ data: null, error: { message: 'assignment write failed' } }); return; }
             const toUpsert = (Array.isArray(payload)
@@ -2125,6 +2128,36 @@ describe.each([
     }
     return otherSession;
   }
+
+  test('sweeps expired assignments beyond a full page of completed history', async () => {
+    await storageEngine.setCurrentStage(studyId, 'LIMITED', '#ff0000', 1001);
+    await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'z-expired');
+    const source = revisitRows.find((row) => row.docId === 'sequenceAssignment_z-expired')!;
+    source.createdAt = new Date(Date.now() - 120_000).toISOString();
+    const assignment = source.data as RowData;
+    for (let index = 0; index < 1000; index += 1) {
+      const participantId = `history-${String(index).padStart(4, '0')}`;
+      revisitRows.push({
+        ...source,
+        docId: `sequenceAssignment_${participantId}`,
+        data: { ...assignment, participantId, completed: Date.now() },
+      });
+    }
+    revisitRows.splice(revisitRows.indexOf(source), 1);
+    revisitRows.push(source);
+    const allocation = revisitRows.find((row) => row.docId === 'stageAllocation_LIMITED')!.data as RowData;
+    allocation.count = 1001;
+    allocation.rowCounts = Object.fromEntries(Object.keys(allocation.rowCounts as object).map((key) => [key, 1001]));
+    allocation.combinationCounts = Object.fromEntries(Object.keys(allocation.combinationCounts as object).map((key) => [key, 1001]));
+    await storageEngine.setAutoTimeoutMinutes(studyId, 1);
+
+    await expect(storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'replacement'))
+      .resolves.toMatchObject({ participantId: 'replacement' });
+    expect((source.data as RowData).autoTimedOutAt).toBeDefined();
+    expect(await storageEngine.getAllSequenceAssignments(studyId)).toHaveLength(1002);
+    // @ts-expect-error protected
+    expect((await storageEngine.getStageAllocation('LIMITED')).count).toBe(1001);
+  });
 
   test('finalizes a participant through the public path without reacquiring its lock', async () => {
     await storageEngine.initializeParticipantSession({}, configSimple, participantMetadata, 'finishing');

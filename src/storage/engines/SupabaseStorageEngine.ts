@@ -161,23 +161,27 @@ export class SupabaseStorageEngine extends CloudStorageEngine {
   }
 
   public async getAllSequenceAssignments(studyId: string) {
-    // get all sequence assignments from the study collection
-    const { data, error } = await this.supabase
-      .from('revisit')
-      // select data and created_at
-      .select('data, createdAt')
-      .eq('studyId', `${this.collectionPrefix}${studyId}`)
-      .like('docId', 'sequenceAssignment_%');
-    if (error) {
-      throw new Error('Failed to get sequence assignments');
-    }
-    return data
-      .map((item) => ({
+    const assignments: SequenceAssignment[] = [];
+    let afterDocId: string | undefined;
+    // Use the last returned ID rather than a fixed offset or page length: the
+    // backend may impose a smaller response limit than the requested page size.
+    for (;;) {
+      let request = this.supabase.from('revisit').select('docId, data, createdAt')
+        .eq('studyId', `${this.collectionPrefix}${studyId}`).like('docId', 'sequenceAssignment_%')
+        .order('docId', { ascending: true })
+        .limit(1000);
+      if (afterDocId !== undefined) request = request.gt('docId', afterDocId);
+      // eslint-disable-next-line no-await-in-loop
+      const { data, error } = await request;
+      if (error) throw new Error('Failed to get sequence assignments');
+      if (!data.length) return assignments.sort((a, b) => a.timestamp - b.timestamp);
+      assignments.push(...data.map((item) => ({
         ...item.data,
         timestamp: item.data.withServerTimestamp ? new Date(item.createdAt).getTime() : item.data.timestamp,
         createdTime: new Date(item.createdAt).getTime(),
-      } as SequenceAssignment))
-      .sort((a, b) => a.timestamp - b.timestamp);
+      } as SequenceAssignment)));
+      afterDocId = data[data.length - 1].docId;
+    }
   }
 
   public async getSequenceAssignment(studyId: string, participantId: string) {
